@@ -1,6 +1,6 @@
 # Campaign book export: handoff to the next session
 
-Written at the end of a long session and updated in session 2 (2026-11-05). Read this first, then `docs/BOOK_EXPORT.md`. Sections 27-37 are
+Written at the end of a long session and updated in session 2 (2026-11-05). Read this first, then `docs/BOOK_EXPORT.md`. Sections 27-38 are
 the newest; sections 1-26 are the design and earlier steps and are partly superseded (see "What to distrust" below). Session 1's branch was
 merged into `main`. Work continues on **`book/next`**, which is local only and not pushed; see section 9 and `git log` for its tip. No pull
 request should be opened unless the user asks.
@@ -32,6 +32,7 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: 
 | Book art slots | `Persistence/Book/BookSlots.cs` (slots and keys, `Choose`), `BookArtStore.cs` (`bookart/{campaign}`, tagged party/dm), `Web/Book/BookArtService.cs` (upload checked against the edition's slots), `Components/Campaign/BookArtTray.razor` |
 | Art director | `Core/Book/Ai/BookArtDirector.cs` (prompt, reply reading, per-field checks), `Web/Book/BookArtOutline.cs`, `BookArtDirection.cs` (plan, pre-flight, run), `BookGate.cs` |
 | Drawn-art prompt | `Core/Book/BookArtStyle.cs` (style vocabulary, `BookImagePrompt.Assemble` and its checks) |
+| Drawing | `Web/Book/BookArtDrawing.cs` (picks checked again, run), `BookImages.cs` (picture model per run, reserved allowance), image price in `AiSettings.razor` and `AiProviderService` |
 | Decoder process | `src/Codex.ImageWorker` (only caller of SkiaSharp; talks stdin/stdout via `BookImageWire`) |
 | Strings | `Localization/Resources/Strings.Campaign{,.ru,.he}.resx`, keys `Campaign.Book.*` |
 | Website | `site/` (see `site/README.md`), guide section `#book`, tour row, screenshots `book-panel` and `book-pages`, tools `capture-screenshots.mjs`, `demo-art.py`, `book-pages.py` |
@@ -39,8 +40,8 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: 
 
 ## 3. State: built, verified, and not
 
-Built: everything in `docs/BOOK_EXPORT.md` sections 10-36. Sections 34-36 (book art slots and the GM's own pictures, the style vocabulary
-and prompt, the art director) are on `book/next`, not pushed. The rest: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
+Built: everything in `docs/BOOK_EXPORT.md` sections 10-38. Sections 34-38 (book art slots and the GM's own pictures, the style vocabulary
+and prompt, the art director, wiki links, drawing) are on `book/next`, not pushed. The rest: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
 panel, AI layer steps 1-5 (prices, budget, estimator, section workers, checks, stored build, pre-flight, live progress), two columns, existing pictures
 placed by recorded line, re-encoding/downscaling, out-of-process decoding, website.
 
@@ -50,6 +51,7 @@ the worker, a real-browser look at columns, drop caps, picture placement, panel 
 worker run from that directory, and one run against a real model (a small Anthropic model, section 26, short chapters only).
 
 **Not verified, say so if you rely on any of it:**
+- Drawing (section 38) has only been run against a fake picture server, never a real picture model; Regenerate/Accept is not built.
 - The art director (section 36) has only been run against scripted replies, never a real model. The tray's director section has only been
   drawn in a browser in its no-model state: the pre-flight, Suggest, progress and suggestion lines have not been looked at.
 - The full e2e suite has not been rerun since step 5 of the AI layer; only the book e2e tests were.
@@ -83,6 +85,9 @@ worker run from that directory, and one run against a real model (a small Anthro
 10. **A suggestion, and anything drawn from it, carries the tag of the edition whose source was read** (`BookArtDirection` passes only
    `p.Tag`), and each tray shows only its own edition's suggestions. The director is shown only `BookArtOutline` (cut after `BookWork.Prepare`
    of the whole chapter), under per-request numbers, never slot keys. Chapter builds and director runs share one per-GM `BookGate`.
+11. **Nothing is drawn but what the GM ticked, and every pick is checked again on the server** (`BookArtDrawing.PrepareAsync`). The slot
+   must be the edition's own, with the edition's own current suggestion, and the description must pass the checks. The picture is sanitised,
+   stored under the edition's tag, and counted once against pictures set aside up front (`IBookImages`).
 
 ## 5. What to distrust
 
@@ -150,7 +155,8 @@ Anything that survives is a missing test; add it.
 
 ## 7. Open work, in the order I would take it (the user decides)
 
-1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3, 4 and 5 are done (sections 34-36); 6 and 7 remain.** DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
+1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3-6 are done (sections 34-36, 38); 7 remains, and step 6's
+   Regenerate/Accept (keep 3).** Next: one run against a real text and picture model (the user offered short-lived keys, entered by them in AI settings). DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
    writes the prompt; deny proper nouns and "in the style of"); the art-director call per chapter (masked outline in, `{depicts, visual, mood}` out);
    per-slot generation with cost shown first and nothing drawn without a click; suggested spot and scene slots. Audience-tag every image
    (`BuiltFrom: party|dm`); the party book places only party-built images. The user asked for painterly/linework style choices.

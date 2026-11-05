@@ -767,6 +767,66 @@
   <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>Остановлено: предложения дали {0} из {1} запросов.</value></data>
   <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>Текст изменился с тех пор, как это было предложено.</value></data>
   <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>Предложено:</value></data>
+  <data name="Campaign.Book.Art.Draw.Title" xml:space="preserve"><value>Нарисовать картинки</value></data>
+  <data name="Campaign.Book.Art.Draw.Hint" xml:space="preserve"><value>Отметьте места, которые нужно нарисовать. Каждая картинка рисуется по своему предложению, в стиле этой книги, вашей моделью для картинок. Пока вы не нажмёте «Нарисовать», ничего не рисуется.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoModel" xml:space="preserve"><value>Модель для картинок не настроена.</value></data>
+  <data name="Campaign.Book.Art.Draw.Style" xml:space="preserve"><value>Стиль всех картинок этой книги</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Medium" xml:space="preserve"><value>Техника</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Palette" xml:space="preserve"><value>Цвета</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Line" xml:space="preserve"><value>Линии</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Light" xml:space="preserve"><value>Свет</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Save" xml:space="preserve"><value>Сохранить стиль</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Saved" xml:space="preserve"><value>Стиль сохранён. Уже нарисованные картинки не меняются.</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.painterly" xml:space="preserve"><value>Живописное фэнтези</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.oil" xml:space="preserve"><value>Масляная живопись</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.watercolour" xml:space="preserve"><value>Акварель</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.ink" xml:space="preserve"><value>Тушь и штриховка</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.woodcut" xml:space="preserve"><value>Гравюра на дереве</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.engraving" xml:space="preserve"><value>Гравюра на меди</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.sketch" xml:space="preserve"><value>Набросок на пергаменте</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.muted" xml:space="preserve"><value>Приглушённые</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.earth" xml:space="preserve"><value>Землистые</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.sepia" xml:space="preserve"><value>Сепия</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.mono" xml:space="preserve"><value>Чёрно-белые</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.jewel" xml:space="preserve"><value>Драгоценные</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.cold" xml:space="preserve"><value>Холодные серые и голубые</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.fine" xml:space="preserve"><value>Тонкие</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.medium" xml:space="preserve"><value>Чёткие</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.bold" xml:space="preserve"><value>Жирные</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.natural" xml:space="preserve"><value>Дневной</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.candle" xml:space="preserve"><value>Свечи</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.overcast" xml:space="preserve"><value>Пасмурный</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.moon" xml:space="preserve"><value>Лунный</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.dusk" xml:space="preserve"><value>Сумерки</value></data>
+  <data name="Campaign.Book.Art.Draw.Pick" xml:space="preserve"><value>Нарисовать</value></data>
+  <data name="Campaign.Book.Art.Draw.Visual" xml:space="preserve"><value>Описание для модели картинок (на английском)</value></data>
+  <data name="Campaign.Book.Art.Draw.Summary" xml:space="preserve"><value>Картинок к рисованию: {0}, модель: {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Cost" xml:space="preserve"><value>Около {0} ({1} за картинку).</value></data>
+  <data name="Campaign.Book.Art.Draw.Allowance" xml:space="preserve"><value>Займёт {0} из {1} картинок, оставшихся на сегодня на ключе сервера.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoPrice" xml:space="preserve"><value>Для этой модели не указана цена за картинку, поэтому стоимость не показана.</value></data>
+  <data name="Campaign.Book.Art.Draw.Replaces" xml:space="preserve"><value>Заменит уже стоящую картинку: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.None" xml:space="preserve"><value>Отметьте место с предложением, чтобы нарисовать его.</value></data>
+  <data name="Campaign.Book.Art.Draw.Start" xml:space="preserve"><value>Нарисовать отмеченные ({0})</value></data>
+  <data name="Campaign.Book.Art.Draw.Running" xml:space="preserve"><value>Рисуем… готово {0} из {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Done" xml:space="preserve"><value>Готово: нарисовано {0} из {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Stopped" xml:space="preserve"><value>Остановлено: нарисовано {0} из {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Totals" xml:space="preserve"><value>Всего нарисовано для этой книги: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.TotalsCost" xml:space="preserve"><value>Потрачено: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Drawn" xml:space="preserve"><value>нарисована</value></data>
+  <data name="Campaign.Book.Art.Draw.DrawnStale" xml:space="preserve"><value>нарисована по прежнему описанию или стилю</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.slot" xml:space="preserve"><value>Этого места больше нет в издании.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.suggestion" xml:space="preserve"><value>Для этого места в этом издании нет предложения.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.stale" xml:space="preserve"><value>Текст изменился после предложения. Сначала предложите заново.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.visual" xml:space="preserve"><value>Это описание нельзя использовать: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.repeat" xml:space="preserve"><value>Отмечено дважды.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.many" xml:space="preserve"><value>За один раз рисуется не больше {0} картинок.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.image" xml:space="preserve"><value>Картинку не удалось прочитать; ничего не сохранено.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.failed" xml:space="preserve"><value>Модель картинок не справилась. Сама она не пробует снова.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.auth" xml:space="preserve"><value>Модель картинок отклонила ключ или имя модели.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.ratelimit" xml:space="preserve"><value>Модель картинок перегружена или кредит исчерпан.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.allowance" xml:space="preserve"><value>Дневной лимит картинок на ключе сервера исчерпан.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.cancelled" xml:space="preserve"><value>Остановлено до рисования.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.save" xml:space="preserve"><value>Картинку не удалось сохранить.</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Оформление: {0}. Предпросмотр — та самая страница, из которой печатается PDF.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>Предпросмотр</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Скрыть предпросмотр</value></data>

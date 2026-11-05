@@ -9,7 +9,11 @@ namespace Codex.Web.Book;
 /// <param name="Placed">The edition whose book picture prints here (<see cref="BookArtDocument.Party"/> or <see cref="BookArtDocument.Dm"/>), or null.</param>
 /// <param name="Mine">A picture made for this edition is stored here (the one the GM can remove from this edition's tray).</param>
 /// <param name="Suggestion">The art director's suggestion for this slot, made from this edition's source; never one made from another edition's.</param>
-public sealed record BookTraySlot(string Key, string Kind, string Section, string Label, bool Own, string? Placed, bool Mine, BookTraySuggestion? Suggestion = null);
+/// <param name="Drawn">This edition's picture here was drawn by a picture model; null for an upload or no picture.</param>
+public sealed record BookTraySlot(string Key, string Kind, string Section, string Label, bool Own, string? Placed, bool Mine, BookTraySuggestion? Suggestion = null, BookTrayDrawn? Drawn = null);
+
+/// <param name="Stale">The slot's text, its suggestion's mood or the book's style changed since the picture was drawn. The picture is kept.</param>
+public sealed record BookTrayDrawn(string Visual, bool Stale);
 
 /// <param name="Stale">The slot's text has changed since the suggestion was made.</param>
 public sealed record BookTraySuggestion(string Depicts, string Visual, string Mood, bool Stale);
@@ -17,7 +21,7 @@ public sealed record BookTraySuggestion(string Depicts, string Visual, string Mo
 /// <summary>A chapter's slots, in book order: its header first, then its entries.</summary>
 public sealed record BookTrayChapter(string Id, string Title, IReadOnlyList<BookTraySlot> Slots);
 
-public sealed record BookTray(string Edition, BookTraySlot Cover, IReadOnlyList<BookTrayChapter> Chapters);
+public sealed record BookTray(string Edition, BookTraySlot Cover, IReadOnlyList<BookTrayChapter> Chapters, BookArtStyle Style);
 
 public enum BookArtUpload
 {
@@ -52,22 +56,32 @@ public sealed class BookArtService(BookSourceReader reader, IBookArtRepository s
         var stored = await store.GetAsync(made.Dm);
         var chosen = BookSlots.Choose(made.Slots, stored).ToDictionary(c => c.Slot.Key, c => c.Picture.BuiltFrom, StringComparer.Ordinal);
         var tag = BookSlots.Tag(made.Source.Audience);
-        var mine = stored?.Pictures.Where(p => p.BuiltFrom == tag).Select(p => p.Slot).ToHashSet(StringComparer.Ordinal) ?? [];
+        var pictures = stored?.Pictures.Where(p => p.BuiltFrom == tag).ToDictionary(p => p.Slot, StringComparer.Ordinal) ?? [];
         // Only this edition's suggestions: one made from the GM's source may describe what the party may not know, even in a slot both share.
         var suggested = stored?.Suggestions.Where(x => x.BuiltFrom == tag).ToDictionary(x => x.Slot, StringComparer.Ordinal) ?? [];
-        var inputs = suggested.Count == 0 ? new Dictionary<string, string>()
-            : BookArtOutline.For(made.Source, made.Compiled, made.Entries, made.Slots).SelectMany(c => c.Slots).ToDictionary(o => o.Slot.Key, o => o.Inputs, StringComparer.Ordinal);
+        var outline = suggested.Count == 0 && !pictures.Values.Any(p => p.Origin == "drawn") ? new Dictionary<string, BookOutlineSlot>()
+            : BookArtOutline.For(made.Source, made.Compiled, made.Entries, made.Slots).SelectMany(c => c.Slots).ToDictionary(o => o.Slot.Key, StringComparer.Ordinal);
+        var style = BookArtStyles.Normalize(stored?.Style);
 
-        BookTraySlot Row(BookSlot slot) => new(slot.Key, slot.Kind, slot.Section, slot.Label,
-            slot.Kind == BookSlots.Cover ? made.Source.Campaign.HasCover : slot.Entry?.HasArt == true,
-            chosen.GetValueOrDefault(slot.Key), mine.Contains(slot.Key),
-            suggested.TryGetValue(slot.Key, out var x) ? new BookTraySuggestion(x.Depicts, x.Visual, x.Mood, inputs.GetValueOrDefault(slot.Key) != x.Inputs) : null);
+        BookTraySlot Row(BookSlot slot)
+        {
+            var here = outline.GetValueOrDefault(slot.Key);
+            var idea = suggested.TryGetValue(slot.Key, out var x) ? new BookTraySuggestion(x.Depicts, x.Visual, x.Mood, here?.Inputs != x.Inputs) : null;
+            var drawn = pictures.TryGetValue(slot.Key, out var picture) && picture.Origin == "drawn"
+                // Drawn from an older text when its suggestion is; from an older mood or style when the same visual would hash differently now.
+                ? new BookTrayDrawn(picture.Visual ?? string.Empty, idea == null || idea.Stale || here == null
+                    || BookArtDrawing.InputsOf(here.Kind, picture.Visual ?? string.Empty, x!.Mood, style) != picture.Inputs)
+                : null;
+            return new(slot.Key, slot.Kind, slot.Section, slot.Label,
+                slot.Kind == BookSlots.Cover ? made.Source.Campaign.HasCover : slot.Entry?.HasArt == true,
+                chosen.GetValueOrDefault(slot.Key), pictures.ContainsKey(slot.Key), idea, drawn);
+        }
 
         var cover = Row(made.Slots.First(s => s.Kind == BookSlots.Cover));
         var chapters = made.Compiled.Sections.Select(section => new BookTrayChapter(section.Id,
             made.Slots.First(s => s.Kind == BookSlots.Header && s.Section == section.Id).Label,
             Numbered(made.Slots.Where(s => s.Section == section.Id && s.Kind != BookSlots.Cover).Select(Row).ToList()))).ToList();
-        return new BookTray(edition, cover, chapters);
+        return new BookTray(edition, cover, chapters, style);
     }
 
     /// <summary>Two entries the edition names alike (two strangers, two "Twin"s) get "(1)", "(2)" in book order, so the GM can tell their slots

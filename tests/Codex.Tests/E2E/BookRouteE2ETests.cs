@@ -268,6 +268,7 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         private readonly Task _loop;
         public string Url { get; }
         public List<string> Requests { get; } = [];
+        public List<string> ImagePrompts { get; } = [];
 
         public FakeModelServer()
         {
@@ -292,10 +293,37 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
                     using var reader = new StreamReader(context.Request.InputStream);
                     var body = await reader.ReadToEndAsync();
                     lock (Requests) Requests.Add(body);
+                    // A picture model: one small PNG for every prompt, the prompt kept.
+                    if (context.Request.Url!.AbsolutePath.EndsWith("/images/generations", StringComparison.Ordinal))
+                    {
+                        lock (ImagePrompts) ImagePrompts.Add(System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("prompt").GetString() ?? string.Empty);
+                        using var bitmap = new SkiaSharp.SKBitmap(new SkiaSharp.SKImageInfo(96, 128));
+                        bitmap.Erase(new SkiaSharp.SKColor(40, 60, 90));
+                        var png = Convert.ToBase64String(SkiaSharp.SKImage.FromBitmap(bitmap).Encode(SkiaSharp.SKEncodedImageFormat.Png, 90).ToArray());
+                        var picture = Encoding.UTF8.GetBytes("{\"created\":1,\"data\":[{\"b64_json\":\"" + png + "\"}]}");
+                        context.Response.ContentType = "application/json";
+                        context.Response.ContentLength64 = picture.Length;
+                        await context.Response.OutputStream.WriteAsync(picture);
+                        context.Response.Close();
+                        continue;
+                    }
+
                     var last = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("messages").EnumerateArray().Last().GetProperty("content").GetString() ?? string.Empty;
-                    var from = last.IndexOf("<source>", StringComparison.Ordinal) + "<source>".Length;
-                    var source = last[from..last.IndexOf("</source>", StringComparison.Ordinal)].Trim();
-                    var reply = source.Replace("walks", "strolls");
+                    string reply;
+                    if (!last.Contains("<source>", StringComparison.Ordinal))
+                    {
+                        // The art director: the same harmless picture for every slot it is shown.
+                        var slots = System.Text.RegularExpressions.Regex.Matches(last, @"^Slot (?<n>\d+) \([^)]*\): (?<label>.*)$", System.Text.RegularExpressions.RegexOptions.Multiline)
+                            .Select(m => new { slot = int.Parse(m.Groups["n"].Value), depicts = m.Groups["label"].Value.Trim(), visual = "a lamp burning in a high window above dark water", mood = "serene" });
+                        reply = System.Text.Json.JsonSerializer.Serialize(new { slots });
+                    }
+                    else
+                    {
+                        var from = last.IndexOf("<source>", StringComparison.Ordinal) + "<source>".Length;
+                        var source = last[from..last.IndexOf("</source>", StringComparison.Ordinal)].Trim();
+                        reply = source.Replace("walks", "strolls");
+                    }
+
                     var json = System.Text.Json.JsonSerializer.Serialize(new
                     {
                         id = "x", @object = "chat.completion", created = 0, model = "fake-model",
@@ -407,6 +435,82 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("book-ai-start")).ToBeDisabledAsync(); // "nothing to build"
         await Assertions.Expect(dm.GetByTestId("book-ai-preflight")).ToContainTextAsync("Nothing to build");
         lock (model.Requests) Assert.Equal(before, model.Requests.Count);
+        Assert.Empty(pageErrors);
+    }
+
+    // Step 6 through the real panel: a picture model with a price, a suggestion from the director, the cost shown before anything is drawn,
+    // one ticked place drawn with the description the GM edited, and the picture in the party's book. Nothing is drawn that was not ticked.
+    [Fact]
+    public async Task TheGmTicksASuggestedPlace_SeesThePriceFirst_AndThePartyBookPrintsThePictureDrawn()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bd-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var model = new FakeModelServer();
+
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Lamplight");
+        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor { Id = "bd-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Biography = "Keeps the lighthouse." }]);
+
+        await dm.GotoAsync("/settings/ai");
+        await dm.GetByTestId("ai-add-provider").ClickAsync();
+        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await dm.GetByTestId("ai-name").FillAsync("Fake model");
+        await dm.GetByTestId("ai-url").FillAsync(model.Url);
+        await dm.GetByTestId("ai-model").FillAsync("fake-model");
+        await dm.GetByTestId("ai-save").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model");
+        await dm.GetByTestId("ai-add-image-provider").ClickAsync();
+        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await dm.GetByTestId("ai-name").FillAsync("Fake pictures");
+        await dm.GetByTestId("ai-url").FillAsync(model.Url);
+        await dm.GetByTestId("ai-model").FillAsync("fake-pictures");
+        await dm.GetByTestId("ai-price-image").FillAsync("0.05");
+        await dm.GetByTestId("ai-price-image-label").FillAsync("USD");
+        await dm.GetByTestId("ai-save").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("ai-image-provider-list")).ToContainTextAsync("0.050 USD per picture");
+
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-art-toggle").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-draw-preflight")).ToContainTextAsync("Tick a place");
+        await dm.GetByTestId("book-art-style-medium").SelectOptionAsync("woodcut");
+        await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Style saved");
+
+        await dm.GetByTestId("book-art-suggest").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-director-progress")).ToContainTextAsync("Done");
+        var vera = dm.GetByTestId("book-art-slots").Locator("li", new() { HasText = "Vera" });
+        await Assertions.Expect(vera).ToContainTextAsync("a lamp burning in a high window");
+        Assert.Empty(model.ImagePrompts);
+
+        await vera.GetByRole(AriaRole.Checkbox, new() { Name = "Draw Vera" }).CheckAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-draw-preflight")).ToContainTextAsync("About 0.050 USD");
+        // A name in the description is refused before anything is drawn, and the button counts nothing.
+        var visual = vera.Locator("textarea");
+        await visual.FillAsync("Vera by the lamp");
+        await visual.BlurAsync();
+        await Assertions.Expect(vera.Locator(".field-error")).ToContainTextAsync("can't be used");
+        await Assertions.Expect(dm.GetByTestId("book-art-draw-start")).ToBeDisabledAsync();
+        await visual.FillAsync("a keeper trimming a lamp in a storm");
+        await visual.BlurAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-draw-start")).ToContainTextAsync("Draw selected (1)");
+        Assert.Empty(model.ImagePrompts);
+
+        await dm.GetByTestId("book-art-draw-start").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-draw-progress")).ToContainTextAsync("Done: drew 1 of 1");
+        await Assertions.Expect(vera).ToContainTextAsync("your picture · drawn");
+        var prompt = Assert.Single(model.ImagePrompts);
+        Assert.Contains("a keeper trimming a lamp in a storm", prompt);
+        Assert.Contains("Woodcut print", prompt);
+        Assert.DoesNotContain("Vera", prompt);
+        await Assertions.Expect(dm.GetByTestId("book-art-draw-totals")).ToContainTextAsync("Pictures drawn for this book so far: 1. Cost so far: 0.050 USD.");
+
+        var party = await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party")).TextAsync();
+        Assert.Contains("class=\"art\"", party, StringComparison.Ordinal);
         Assert.Empty(pageErrors);
     }
 }

@@ -767,6 +767,66 @@
   <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>Stopped: {0} of {1} requests gave suggestions.</value></data>
   <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>The text has changed since this was suggested.</value></data>
   <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>Suggested:</value></data>
+  <data name="Campaign.Book.Art.Draw.Title" xml:space="preserve"><value>Draw pictures</value></data>
+  <data name="Campaign.Book.Art.Draw.Hint" xml:space="preserve"><value>Tick the places to draw. Each picture is drawn from its suggestion, in this book's style, by your picture model. Nothing is drawn until you press Draw.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoModel" xml:space="preserve"><value>No picture model is set up.</value></data>
+  <data name="Campaign.Book.Art.Draw.Style" xml:space="preserve"><value>Style for every picture in this book</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Medium" xml:space="preserve"><value>Medium</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Palette" xml:space="preserve"><value>Colours</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Line" xml:space="preserve"><value>Lines</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Light" xml:space="preserve"><value>Light</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Save" xml:space="preserve"><value>Save style</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Saved" xml:space="preserve"><value>Style saved. Pictures already drawn keep their look.</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.painterly" xml:space="preserve"><value>Painterly fantasy</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.oil" xml:space="preserve"><value>Oil painting</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.watercolour" xml:space="preserve"><value>Watercolour</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.ink" xml:space="preserve"><value>Ink and crosshatching</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.woodcut" xml:space="preserve"><value>Woodcut</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.engraving" xml:space="preserve"><value>Copperplate engraving</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.sketch" xml:space="preserve"><value>Sketch on parchment</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.muted" xml:space="preserve"><value>Muted</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.earth" xml:space="preserve"><value>Earth tones</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.sepia" xml:space="preserve"><value>Sepia</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.mono" xml:space="preserve"><value>Black and white</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.jewel" xml:space="preserve"><value>Jewel tones</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.cold" xml:space="preserve"><value>Cold greys and blues</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.fine" xml:space="preserve"><value>Fine</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.medium" xml:space="preserve"><value>Clear</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.bold" xml:space="preserve"><value>Bold</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.natural" xml:space="preserve"><value>Natural</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.candle" xml:space="preserve"><value>Candlelight</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.overcast" xml:space="preserve"><value>Overcast</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.moon" xml:space="preserve"><value>Moonlight</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.dusk" xml:space="preserve"><value>Dusk</value></data>
+  <data name="Campaign.Book.Art.Draw.Pick" xml:space="preserve"><value>Draw</value></data>
+  <data name="Campaign.Book.Art.Draw.Visual" xml:space="preserve"><value>Description for the picture model (in English)</value></data>
+  <data name="Campaign.Book.Art.Draw.Summary" xml:space="preserve"><value>Pictures to draw: {0}, with {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Cost" xml:space="preserve"><value>About {0} ({1} a picture).</value></data>
+  <data name="Campaign.Book.Art.Draw.Allowance" xml:space="preserve"><value>Uses {0} of the {1} pictures left today on the server's key.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoPrice" xml:space="preserve"><value>No price per picture is set for this model, so no cost is shown.</value></data>
+  <data name="Campaign.Book.Art.Draw.Replaces" xml:space="preserve"><value>Replaces the picture already in: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.None" xml:space="preserve"><value>Tick a place that has a suggestion to draw it.</value></data>
+  <data name="Campaign.Book.Art.Draw.Start" xml:space="preserve"><value>Draw selected ({0})</value></data>
+  <data name="Campaign.Book.Art.Draw.Running" xml:space="preserve"><value>Drawing… {0} of {1} done.</value></data>
+  <data name="Campaign.Book.Art.Draw.Done" xml:space="preserve"><value>Done: drew {0} of {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Stopped" xml:space="preserve"><value>Stopped: drew {0} of {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Totals" xml:space="preserve"><value>Pictures drawn for this book so far: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.TotalsCost" xml:space="preserve"><value>Cost so far: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Drawn" xml:space="preserve"><value>drawn</value></data>
+  <data name="Campaign.Book.Art.Draw.DrawnStale" xml:space="preserve"><value>drawn from an older description or style</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.slot" xml:space="preserve"><value>This place is no longer in this edition.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.suggestion" xml:space="preserve"><value>There is no suggestion for this place in this edition.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.stale" xml:space="preserve"><value>The text changed since this was suggested. Suggest again first.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.visual" xml:space="preserve"><value>This description can't be used: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.repeat" xml:space="preserve"><value>Ticked twice.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.many" xml:space="preserve"><value>A run draws at most {0} pictures.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.image" xml:space="preserve"><value>The picture could not be read; nothing was stored.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.failed" xml:space="preserve"><value>The picture model failed. It is not tried again by itself.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.auth" xml:space="preserve"><value>The picture model refused the key or the model name.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.ratelimit" xml:space="preserve"><value>The picture model is busy or out of credit.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.allowance" xml:space="preserve"><value>Today's picture allowance on the server's key is used up.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.cancelled" xml:space="preserve"><value>Stopped before it was drawn.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.save" xml:space="preserve"><value>The picture could not be saved.</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Theme: {0}. The preview is the page the PDF is printed from.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>Preview</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Hide preview</value></data>

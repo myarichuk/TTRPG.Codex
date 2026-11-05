@@ -767,6 +767,66 @@
   <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>נעצר: {0} מתוך {1} בקשות נתנו הצעות.</value></data>
   <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>הטקסט השתנה מאז שזה הוצע.</value></data>
   <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>הוצע:</value></data>
+  <data name="Campaign.Book.Art.Draw.Title" xml:space="preserve"><value>ציור תמונות</value></data>
+  <data name="Campaign.Book.Art.Draw.Hint" xml:space="preserve"><value>סמנו את המקומות לציור. כל תמונה מצוירת לפי ההצעה שלה, בסגנון של הספר הזה, במודל התמונות שלכם. שום דבר לא מצויר עד שלוחצים על „ציור”.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoModel" xml:space="preserve"><value>לא הוגדר מודל תמונות.</value></data>
+  <data name="Campaign.Book.Art.Draw.Style" xml:space="preserve"><value>סגנון לכל התמונות בספר הזה</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Medium" xml:space="preserve"><value>טכניקה</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Palette" xml:space="preserve"><value>צבעים</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Line" xml:space="preserve"><value>קווים</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Light" xml:space="preserve"><value>תאורה</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Save" xml:space="preserve"><value>שמירת הסגנון</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Saved" xml:space="preserve"><value>הסגנון נשמר. תמונות שכבר צוירו נשארות כפי שהן.</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.painterly" xml:space="preserve"><value>פנטזיה ציורית</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.oil" xml:space="preserve"><value>ציור שמן</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.watercolour" xml:space="preserve"><value>צבעי מים</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.ink" xml:space="preserve"><value>דיו והצללה בקווים</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.woodcut" xml:space="preserve"><value>חיתוך עץ</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.engraving" xml:space="preserve"><value>תחריט נחושת</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.sketch" xml:space="preserve"><value>סקיצה על קלף</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.muted" xml:space="preserve"><value>מעומעמים</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.earth" xml:space="preserve"><value>גווני אדמה</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.sepia" xml:space="preserve"><value>ספיה</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.mono" xml:space="preserve"><value>שחור ולבן</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.jewel" xml:space="preserve"><value>גווני אבני חן</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.cold" xml:space="preserve"><value>אפורים וכחולים קרים</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.fine" xml:space="preserve"><value>דקים</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.medium" xml:space="preserve"><value>ברורים</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.bold" xml:space="preserve"><value>עבים</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.natural" xml:space="preserve"><value>טבעית</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.candle" xml:space="preserve"><value>אור נרות</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.overcast" xml:space="preserve"><value>מעוננת</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.moon" xml:space="preserve"><value>אור ירח</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.dusk" xml:space="preserve"><value>דמדומים</value></data>
+  <data name="Campaign.Book.Art.Draw.Pick" xml:space="preserve"><value>לצייר</value></data>
+  <data name="Campaign.Book.Art.Draw.Visual" xml:space="preserve"><value>תיאור למודל התמונות (באנגלית)</value></data>
+  <data name="Campaign.Book.Art.Draw.Summary" xml:space="preserve"><value>תמונות לציור: {0}, במודל {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Cost" xml:space="preserve"><value>בערך {0} ({1} לתמונה).</value></data>
+  <data name="Campaign.Book.Art.Draw.Allowance" xml:space="preserve"><value>ינצל {0} מתוך {1} התמונות שנותרו להיום במפתח של השרת.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoPrice" xml:space="preserve"><value>לא הוגדר מחיר לתמונה במודל הזה, ולכן לא מוצגת עלות.</value></data>
+  <data name="Campaign.Book.Art.Draw.Replaces" xml:space="preserve"><value>יחליף את התמונה שכבר נמצאת ב: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.None" xml:space="preserve"><value>סמנו מקום שיש לו הצעה כדי לצייר אותו.</value></data>
+  <data name="Campaign.Book.Art.Draw.Start" xml:space="preserve"><value>ציור המסומנים ({0})</value></data>
+  <data name="Campaign.Book.Art.Draw.Running" xml:space="preserve"><value>מציירים… הושלמו {0} מתוך {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Done" xml:space="preserve"><value>הסתיים: צוירו {0} מתוך {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Stopped" xml:space="preserve"><value>נעצר: צוירו {0} מתוך {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Totals" xml:space="preserve"><value>תמונות שצוירו לספר הזה עד עכשיו: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.TotalsCost" xml:space="preserve"><value>עלות עד עכשיו: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Drawn" xml:space="preserve"><value>צוירה</value></data>
+  <data name="Campaign.Book.Art.Draw.DrawnStale" xml:space="preserve"><value>צוירה לפי תיאור או סגנון קודמים</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.slot" xml:space="preserve"><value>המקום הזה כבר לא קיים במהדורה.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.suggestion" xml:space="preserve"><value>אין הצעה למקום הזה במהדורה הזו.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.stale" xml:space="preserve"><value>הטקסט השתנה מאז ההצעה. הציעו שוב קודם.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.visual" xml:space="preserve"><value>אי אפשר להשתמש בתיאור הזה: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.repeat" xml:space="preserve"><value>סומן פעמיים.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.many" xml:space="preserve"><value>בכל פעם מצוירות לכל היותר {0} תמונות.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.image" xml:space="preserve"><value>לא ניתן היה לקרוא את התמונה; שום דבר לא נשמר.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.failed" xml:space="preserve"><value>מודל התמונות נכשל. הוא לא מנסה שוב מעצמו.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.auth" xml:space="preserve"><value>מודל התמונות דחה את המפתח או את שם המודל.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.ratelimit" xml:space="preserve"><value>מודל התמונות עמוס או שנגמר האשראי.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.allowance" xml:space="preserve"><value>מכסת התמונות היומית במפתח של השרת נוצלה.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.cancelled" xml:space="preserve"><value>נעצר לפני הציור.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.save" xml:space="preserve"><value>לא ניתן היה לשמור את התמונה.</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>ערכת עיצוב: {0}. התצוגה המקדימה היא הדף שממנו מודפס ה-PDF.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>הסתרת התצוגה המקדימה</value></data>

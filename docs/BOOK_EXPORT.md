@@ -1137,3 +1137,73 @@ names. Tests: `WikiPlayerLinksTests`, mutation-checked (eight mutants).
 
 Still not covered: recaps and notes go through `MentionLinks`/`TextFormatting`, which do not read page links at all. A `[[Page]]` typed there
 prints literally, brackets included, to everyone. Those editors do not offer page links.
+
+## 38. Art step 6: drawing the suggested pictures (done)
+
+The GM draws pictures from the art director's suggestions, one ticked place at a time, in the book's one style. Nothing is drawn without a
+click, and the cost (or the server's allowance) is shown before the click.
+
+**Where it lives:**
+- `Web/Book/BookArtDrawing.cs`: preview and run.
+- `Web/Book/BookImages.cs`: `IBookImages`, the picture model for one run.
+- `AiProviderService`: `ImagePriceFor`, `ReserveImagesAsync`, and a `GenerateImageAsync` overload that draws from a reservation.
+- `BookArtStore.cs`: style, drawing totals, and what a drawn picture was drawn from.
+- The tray: style pickers, a Draw tick and an editable description per suggestion, the draw line, progress and Stop.
+- AI settings: a price per picture for image models, and `AIImage:PricePerImage` / `AIImage:PriceLabel` for the server's key.
+
+**The rules:**
+- **The server checks every pick again when the run starts.** The client sends only slot keys and descriptions. For each pick:
+  - the slot must be one this edition's source makes now;
+  - the suggestion must be this edition's (`BuiltFrom` equal to the edition's tag);
+  - the suggestion must have been made from the slot's current text, so one stored before section 37's fix is "stale" and cannot be drawn;
+  - the description, edited or not, must pass `BookImagePrompt.Check` against the edition's names.
+
+  A pick that fails is listed with its reason ("slot", "suggestion", "stale", "visual", "repeat", "many") and is not drawn.
+- **The prompt is the code's.** `BookImagePrompt.Assemble` combines:
+  - the framing for the slot's kind;
+  - the description;
+  - the suggestion's mood (from the vocabulary);
+  - the book's style;
+  - the fixed negatives.
+
+  The header's framing now keeps the subject in a band, since its 172×62 mm box crops a wide picture.
+- **The tag is the edition's**, the one the suggestion was checked against. The request carries no tag.
+- **Shapes:** cover, portrait and homebrew are Tall; spot is Square; everything else is Wide.
+- **Money and allowance:**
+  - On the server's key the run sets aside N pictures, all or nothing.
+  - Each picture drawn spends one, never counted again (`GenerateImageAsync` with the reservation never falls back to `Take`).
+  - The handle refuses a draw past N.
+  - What was not drawn goes back.
+  - The pre-flight shows N × the price per picture when one is set; on the server's key, the pictures left today; otherwise "no price set".
+- **Pictures:**
+  - Drawn one at a time.
+  - Never retried, since a lost reply may still have been paid for.
+  - A refused key or model, or a rate limit, stops the rest.
+  - The returned bytes go through `BookImageSanitizer` like an upload; a refused picture is counted as drawn but not stored.
+- **Storing:**
+  - A drawn picture replaces the slot's picture for that edition; the pre-flight names every place where it would replace one.
+  - It is stored with origin "drawn", its description, and a hash of kind, description, mood and style.
+  - The tray says "drawn from an older description or style" when the slot's text, the mood or the style changed since. The picture is kept.
+- **One paid run per GM:** a run takes the shared `BookGate`.
+- **At most 12 pictures a run.**
+
+**Tests:**
+- `BookImagesTests`: a run counts each picture once, cannot draw past N, gives back the rest, and is refused whole when it does not fit.
+- `BookArtDrawingTests`: the code's prompt and the edition's tag; refusals for the other edition's slot or suggestion, a stale suggestion and a
+  named description; a refused picture and a refused key; the gate.
+- The e2e `TheGmTicksASuggestedPlace_SeesThePriceFirst_AndThePartyBookPrintsThePictureDrawn`: through the real settings page and tray, with a
+  fake text and picture server in the test process.
+
+Mutants caught: counted twice; no cap; wrong tag; stale drawn; other edition's suggestion drawn; edited description ignored; no gate; no stop
+on a refused key; foreign slot accepted.
+
+**Not done:**
+- **No real picture model has been run on this.** Only a fake server has.
+- **Regenerate and Accept from up to three versions (28.3 item 3) are not built.** Drawing replaces the slot's picture, and the earlier one,
+  paid for, is gone; the pre-flight says which places would be replaced.
+- A description check failure is shown in English.
+- The mood is shown as its English id.
+- The drawing totals are lost if the process dies mid-run, like the director's.
+- Russian and Hebrew strings are written by the model.
+- Style names are translated in the tray, but the prompt is always English, on purpose.
+

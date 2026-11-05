@@ -8,6 +8,7 @@
 @implements IDisposable
 @inject BookArtService Art
 @inject BookArtDirection Director
+@inject BookArtDrawing Drawing
 @inject ILogger<BookArtTray> Logger
 
 @* The book's own pictures (docs/BOOK_EXPORT.md 28.3, step 3): a slot per chapter header, per entry and the cover, as this edition's source makes
@@ -92,9 +93,100 @@
         }
     </div>
 
+    @* Drawing (28.3, step 6): only the places ticked below, from their suggestions, in the book's one style; the cost or allowance first. *@
+    <div class="mt-3" data-testid="book-art-draw">
+        <div class="field-label">@L["Campaign.Book.Art.Draw.Title"]</div>
+        <p class="field-hint">@L["Campaign.Book.Art.Draw.Hint"]</p>
+        @if (tray != null)
+        {
+            <fieldset class="d-flex gap-2 flex-wrap mb-2" disabled="@DrawRunning" data-testid="book-art-style">
+                <legend class="field-hint mb-1">@L["Campaign.Book.Art.Draw.Style"]</legend>
+                @StylePick("medium", L["Campaign.Book.Art.Draw.Style.Medium"], BookArtStyles.Media, "Medium", tray.Style.Medium)
+                @StylePick("palette", L["Campaign.Book.Art.Draw.Style.Palette"], BookArtStyles.Palettes, "Palette", tray.Style.Palette)
+                @StylePick("line", L["Campaign.Book.Art.Draw.Style.Line"], BookArtStyles.Lines, "Line", tray.Style.Line)
+                @StylePick("light", L["Campaign.Book.Art.Draw.Style.Light"], BookArtStyles.Lights, "Light", tray.Style.Light)
+            </fieldset>
+        }
+        @if (drawPreview != null)
+        {
+            <div role="status" aria-live="polite" class="small" data-testid="book-art-draw-preflight">
+                @if (drawPreview.Model == null)
+                {
+                    <div class="small-muted">@L["Campaign.Book.Art.Draw.NoModel"] <a href="/settings/ai">@L["Campaign.Book.Ai.SetUp"]</a></div>
+                }
+                else if (drawPreview.Pictures == 0)
+                {
+                    <div class="small-muted">@L["Campaign.Book.Art.Draw.None"]</div>
+                }
+                else
+                {
+                    <div>@L["Campaign.Book.Art.Draw.Summary", drawPreview.Pictures, drawPreview.Model.Label]</div>
+                    @if (drawPreview.Cost is { } cost && drawPreview.Model.Price is { } price)
+                    {
+                        <div>@L["Campaign.Book.Art.Draw.Cost", AiPrice.Format(cost, price.Label, CultureInfo.CurrentCulture), AiPrice.Format(price.PerImage, price.Label, CultureInfo.CurrentCulture)]</div>
+                    }
+                    else
+                    {
+                        <div class="small-muted">@L["Campaign.Book.Art.Draw.NoPrice"]</div>
+                    }
+                    @if (drawPreview.Model.ServerUsedToday is { Limit: > 0 } server)
+                    {
+                        <div>@L["Campaign.Book.Art.Draw.Allowance", drawPreview.Pictures, Math.Max(0, server.Limit - server.Used)]</div>
+                    }
+                    @if (drawPreview.Items.Where(i => i.Problem == null && i.Replaces).Select(i => i.Label).ToList() is { Count: > 0 } replaced)
+                    {
+                        <div data-testid="book-art-draw-replaces">@L["Campaign.Book.Art.Draw.Replaces", string.Join(", ", replaced)]</div>
+                    }
+                }
+                @if (drawPreview.Totals is { } totals)
+                {
+                    <div class="small-muted" data-testid="book-art-draw-totals">@(totals.Cost > 0
+                        ? L["Campaign.Book.Art.Draw.Totals", totals.Pictures] + " " + L["Campaign.Book.Art.Draw.TotalsCost", AiPrice.Format(totals.Cost, totals.PriceLabel, CultureInfo.CurrentCulture)]
+                        : L["Campaign.Book.Art.Draw.Totals", totals.Pictures])</div>
+                }
+            </div>
+            <div class="d-flex gap-2 flex-wrap mt-1">
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="DrawAsync" Disabled="@(DrawRunning || drawPreview.Model == null || drawPreview.Pictures == 0)" data-testid="book-art-draw-start">
+                    <LucideIcon IconName="image-plus" Size="14" /> @L["Campaign.Book.Art.Draw.Start", drawPreview.Pictures]
+                </CodexButton>
+                @if (DrawRunning)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => drawing?.Cancel()" data-testid="book-art-draw-stop">
+                        <LucideIcon IconName="square" Size="14" /> @L["Campaign.Book.Ai.Stop"]
+                    </CodexButton>
+                }
+            </div>
+        }
+        @if (drawing?.Snapshot() is { } drawn)
+        {
+            <div class="small mt-1" role="status" aria-live="polite" data-testid="book-art-draw-progress">
+                @(drawn.Status switch
+                {
+                    BookRunStatus.Running => L["Campaign.Book.Art.Draw.Running", drawn.Finished, drawn.Rows.Count],
+                    BookRunStatus.Done => L["Campaign.Book.Art.Draw.Done", drawn.Refined, drawn.Rows.Count],
+                    BookRunStatus.Stopped => L["Campaign.Book.Art.Draw.Stopped", drawn.Refined, drawn.Rows.Count],
+                    _ => L["Campaign.Book.Ai.Status.Failed", drawn.Failure ?? string.Empty]
+                })
+                @if (drawn.Rows.Where(r => r.Reason != null).ToList() is { Count: > 0 } notes)
+                {
+                    <ul class="mb-0 ps-3" data-testid="book-art-draw-reasons">
+                        @foreach (var row in notes)
+                        {
+                            <li><bdi dir="auto">@row.Title</bdi>: @L["Campaign.Book.Art.Draw.Reason." + row.Reason]</li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+        @if (drawError != null)
+        {
+            <div class="field-error" role="alert" data-testid="book-art-draw-error">@drawError</div>
+        }
+    </div>
+
     @if (tray != null)
     {
-        <ul class="list-unstyled small mb-2" data-testid="book-art-slots">
+        <ul class="list-unstyled small mt-3 mb-2" data-testid="book-art-slots">
             @Row(tray.Cover, L["Campaign.Book.Art.Cover"])
             @foreach (var chapter in tray.Chapters)
             {
@@ -134,7 +226,7 @@
         var id = "book-art-" + slot.Key;
         <li class="d-flex gap-2 align-items-baseline flex-wrap @(slot.Kind == BookSlots.Header ? "ps-2" : slot.Kind == BookSlots.Entry ? "ps-3" : string.Empty)" data-testid="@id">
             <bdi dir="auto" id="@(id + "-name")">@name</bdi>
-            <span class="small-muted" data-testid="@(id + "-state")">@State(slot)</span>
+            <span class="small-muted" data-testid="@(id + "-state")">@State(slot)@if (slot.Drawn is { } made) { <text> · </text>@(made.Stale ? L["Campaign.Book.Art.Draw.DrawnStale"] : L["Campaign.Book.Art.Draw.Drawn"]) }</span>
             <label class="btn btn-link btn-sm p-0 book-art-file">
                 @(slot.Mine ? L["Campaign.Book.Art.Replace"] : L["Campaign.Book.Art.Upload"])<span class="visually-hidden"> @name</span>
                 <InputFile OnChange="e => UploadAsync(slot, e)" accept="@ArtService.Accept" class="visually-hidden" disabled="@(working != null)" data-testid="@(id + "-file")" />
@@ -151,6 +243,20 @@
                     @if (idea.Stale)
                     {
                         <div>@L["Campaign.Book.Art.Suggest.Stale"]</div>
+                    }
+                    else
+                    {
+                        <div class="form-check mt-1">
+                            <input id="@(id + "-draw")" type="checkbox" class="form-check-input" checked="@picks.ContainsKey(slot.Key)" @onchange="e => TickAsync(slot, idea, e)" disabled="@DrawRunning" data-testid="@(id + "-draw")" />
+                            <label for="@(id + "-draw")" class="form-check-label">@L["Campaign.Book.Art.Draw.Pick"]<span class="visually-hidden"> @name</span></label>
+                        </div>
+                        @if (picks.TryGetValue(slot.Key, out var visual))
+                        {
+                            <label for="@(id + "-visual")" class="field-hint d-block">@L["Campaign.Book.Art.Draw.Visual"]</label>
+                            <textarea id="@(id + "-visual")" class="field-input" rows="2" dir="ltr" lang="en" maxlength="@BookImagePrompt.MaxVisualChars" value="@visual"
+                                      @onchange="e => VisualAsync(slot, e)" disabled="@DrawRunning" aria-describedby="@(id + "-draw-problem")" data-testid="@(id + "-visual")"></textarea>
+                            <div id="@(id + "-draw-problem")" class="field-error" data-testid="@(id + "-draw-problem")">@ProblemOf(slot.Key)</div>
+                        }
                     }
                 </div>
             }
@@ -177,11 +283,122 @@
 
     private async Task LoadAsync()
     {
+        if (shownFor != Edition + "|" + Language) picks.Clear();
         shownFor = Edition + "|" + Language;
         tray = await Art.TrayAsync(Access, Edition, Language);
         direction = await Director.PreviewAsync(Access, Edition, Language, askAll);
         AttachDirector(Director.Find(Access, Edition));
+        await PreviewDrawingAsync();
+        AttachDrawing(Drawing.Find(Access, Edition));
     }
+
+    // The places ticked to draw, each with the description it would be drawn from. Only keys and descriptions go to the server, which checks both.
+    private readonly Dictionary<string, string> picks = new(StringComparer.Ordinal);
+    private BookDrawPreview? drawPreview;
+    private BookRun? drawing;
+    private string? drawError;
+
+    private bool DrawRunning => drawing?.Running == true;
+
+    private List<BookDrawPick> Picks() => picks.Select(p => new BookDrawPick(p.Key, p.Value)).ToList();
+
+    private async Task PreviewDrawingAsync() => drawPreview = await Drawing.PreviewAsync(Access, Edition, Picks(), Language);
+
+    private async Task TickAsync(BookTraySlot slot, BookTraySuggestion idea, ChangeEventArgs e)
+    {
+        if (e.Value is true) picks[slot.Key] = idea.Visual; else picks.Remove(slot.Key);
+        await PreviewDrawingAsync();
+    }
+
+    private async Task VisualAsync(BookTraySlot slot, ChangeEventArgs e)
+    {
+        picks[slot.Key] = e.Value?.ToString() ?? string.Empty;
+        await PreviewDrawingAsync();
+    }
+
+    private string? ProblemOf(string key) => drawPreview?.Items.FirstOrDefault(i => i.Slot == key) is { Problem: { } problem } item
+        ? problem switch
+        {
+            "visual" => L["Campaign.Book.Art.Draw.Problem.visual", string.Join(" ", item.VisualProblems)],
+            "many" => L["Campaign.Book.Art.Draw.Problem.many", BookArtDrawing.MaxPerRun],
+            _ => L["Campaign.Book.Art.Draw.Problem." + problem]
+        }
+        : null;
+
+    private RenderFragment StylePick(string part, string label, IReadOnlyList<BookArtChoice> choices, string key, string current) => __builder =>
+    {
+        <div>
+            <label for="@("book-art-style-" + part)" class="field-hint d-block">@label</label>
+            <select id="@("book-art-style-" + part)" class="field-input" value="@current" @onchange="e => StyleAsync(part, e)" data-testid="@("book-art-style-" + part)">
+                @foreach (var choice in choices)
+                {
+                    <option value="@choice.Id">@L["Campaign.Book.Art.Draw." + key + "." + choice.Id]</option>
+                }
+            </select>
+        </div>
+    };
+
+    private async Task StyleAsync(string part, ChangeEventArgs e)
+    {
+        if (tray == null) return;
+        var value = e.Value?.ToString() ?? string.Empty;
+        var style = part switch
+        {
+            "medium" => tray.Style with { Medium = value },
+            "palette" => tray.Style with { Palette = value },
+            "line" => tray.Style with { Line = value },
+            _ => tray.Style with { Light = value }
+        };
+        var saved = await Drawing.SetStyleAsync(Access, style);
+        (status, failed) = saved ? (L["Campaign.Book.Art.Draw.Style.Saved"], false) : (L["Campaign.Book.Art.NotAllowed"], true);
+        tray = await Art.TrayAsync(Access, Edition, Language);
+        await PreviewDrawingAsync();
+    }
+
+    private async Task DrawAsync()
+    {
+        drawError = null;
+        try
+        {
+            var started = await Drawing.StartAsync(Access, Edition, Picks(), Language);
+            AttachDrawing(started);
+            if (started == null) drawError = L["Campaign.Book.Art.Draw.None"];
+        }
+        catch (BookBuildBusyException)
+        {
+            drawError = L["Campaign.Book.Ai.Busy"];
+        }
+        catch (AiImageNotConfiguredException)
+        {
+            drawError = L["Campaign.Book.Art.Draw.NoModel"];
+        }
+        catch (LocalizedException ex)
+        {
+            drawError = L.Describe(ex);
+        }
+    }
+
+    private void AttachDrawing(BookRun? found)
+    {
+        if (ReferenceEquals(found, drawing)) return;
+        if (drawing != null) drawing.Changed -= OnDrawingChanged;
+        drawing = found;
+        if (drawing != null) drawing.Changed += OnDrawingChanged;
+    }
+
+    private void OnDrawingChanged() => _ = InvokeAsync(async () =>
+    {
+        // A finished run stored pictures: the slots, the preview and the book read them again, and what was drawn is no longer ticked.
+        if (!DrawRunning)
+        {
+            foreach (var row in drawing!.Snapshot().Rows.Where(r => r.Status == BookRowStatus.Refined)) picks.Remove(row.Id);
+            tray = await Art.TrayAsync(Access, Edition, Language);
+            await PreviewDrawingAsync();
+            await Changed.InvokeAsync();
+        }
+
+        StateHasChanged();
+    });
 
     private BookDirectionPreview? direction;
     private BookRun? directing;
@@ -234,6 +451,7 @@
         {
             tray = await Art.TrayAsync(Access, Edition, Language);
             direction = await Director.PreviewAsync(Access, Edition, Language, askAll);
+            await PreviewDrawingAsync();
         }
 
         StateHasChanged();
@@ -246,6 +464,7 @@
     public void Dispose()
     {
         if (directing != null) directing.Changed -= OnDirectorChanged;
+        if (drawing != null) drawing.Changed -= OnDrawingChanged;
     }
 
     private async Task UploadAsync(BookTraySlot slot, InputFileChangeEventArgs e)
