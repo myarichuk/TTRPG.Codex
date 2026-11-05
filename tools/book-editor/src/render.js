@@ -170,17 +170,53 @@ export function fit(doc, root) {
   return pages.filter(p => spills(win, p).length > 0).map(p => pages.indexOf(p) + 1);
 }
 
-/** Each contents line gets the page its chapter landed on, read from the laid-out pages. */
+/**
+ * The number each page prints, as Homebrewery's Blank theme counts them (its `page-numbers` counter): every page counts, except one with
+ * `.skipCounting`, and a page with `.resetCounting` is page 1.
+ */
+export function pageNumbers(root) {
+  let n = 0;
+  return [...root.querySelectorAll('.page')].map(p => {
+    if (p.querySelector('.resetCounting')) n = 1;
+    else if (!p.querySelector('.skipCounting')) n++;
+    return n;
+  });
+}
+
+/**
+ * Each page gets Homebrewery's page number (`<div class="pageNumber auto">`, which a theme places and fills from its counter), unless the
+ * text already wrote one or the page is a cover. It sits beside the columns, not in them, so moving spilled blocks never takes it away.
+ */
+export function numberPages(root) {
+  for (const page of root.querySelectorAll('.page')) {
+    if (page.querySelector('.pageNumber, .frontCover, .insideCover, .backCover')) continue;
+    const n = page.ownerDocument.createElement('div');
+    n.className = 'pageNumber auto';
+    page.append(n);
+  }
+}
+
+/**
+ * Each contents line gets the page its chapter landed on, read from the laid-out pages, in the shape Homebrewery's contents take: the line's
+ * words in one span and the number in a second, which Blank's `.toc` rules join with dot leaders.
+ */
 export function number(root) {
   const pages = [...root.querySelectorAll('.page')];
+  const numbers = pageNumbers(root);
   for (const a of root.querySelectorAll('.toc a[href^="#"]')) {
     const target = root.querySelector('#' + CSS.escape(a.getAttribute('href').slice(1)));
     const page = target && target.closest('.page');
     a.querySelectorAll('.toc-page').forEach(s => s.remove());
+    if (!a.querySelector(':scope > span.toc-words')) {
+      const words = a.ownerDocument.createElement('span');
+      words.className = 'toc-words';
+      words.append(...a.childNodes);
+      a.append(words);
+    }
     if (!page) continue;
     const n = a.ownerDocument.createElement('span');
     n.className = 'toc-page';
-    n.textContent = String(pages.indexOf(page) + 1);
+    n.textContent = String(numbers[pages.indexOf(page)]);
     a.append(n);
   }
 }
@@ -190,6 +226,7 @@ export async function layout(doc, root, markdown, art) {
   draw(doc, root, markdown, art);
   await settle(doc, root);
   const overflow = fit(doc, root);
+  numberPages(root);
   number(root);
   return { pages: root.querySelectorAll('.page').length, overflow };
 }

@@ -7,7 +7,7 @@ import vm from 'node:vm';
 
 // The shipped bundle, not the source: it is what the editor and the print browser run (and the bundle has no expr-eval).
 vm.runInThisContext(readFileSync(new URL('../../src/Codex.Web/wwwroot/lib/book/book-render.js', import.meta.url), 'utf8'));
-const { pagesHtml, clean, pictures, brew } = globalThis.CodexBook;
+const { pagesHtml, clean, pictures, brew, numberPages, number, pageNumbers } = globalThis.CodexBook;
 
 const dom = new JSDOM('<!doctype html><div id="brew"></div>');
 const doc = dom.window.document;
@@ -102,5 +102,20 @@ const maths = drawn('Hit points: $[2+3]. $[constructor.constructor("globalThis.P
 assert.equal(globalThis.PWNED, undefined);
 assert.ok(!maths.includes('>5<') && !/\b5\b/.test(maths), 'no maths was done: ' + maths);
 assert.ok(maths.includes('4'), 'a plain variable still works: ' + maths);
+
+// Page numbers as Homebrewery's Blank counts them: every page counts (the cover too) unless it skips, a reset page is 1; the renderer gives
+// each page Homebrewery's number element, except covers and pages whose text placed one; contents lines take the counted number, in
+// Homebrewery's two-span shape.
+const numbered = drawn('{{frontCover}}\n\n# Book\n\n\\page\n\n{{toc,wide\n# Contents\n\n- [Lore](#ch-lore)\n}}\n\n\\page\n\n{{skipCounting}}\n\nmap\n\n\\page\n\n{{chapter,#ch-lore\n# Lore\n}}\n\n\\page\n\n{{pageNumber,auto}}\n\n{{resetCounting}}\n\nafter');
+assert.deepEqual(pageNumbers(numbered), [1, 2, 2, 3, 1]);
+numberPages(numbered);
+const pagesOf = [...numbered.querySelectorAll('.page')];
+assert.deepEqual(pagesOf.map(p => p.querySelectorAll('.pageNumber').length), [0, 1, 1, 1, 1], 'one number a page, none on the cover');
+assert.ok(pagesOf[1].lastElementChild.matches('.pageNumber.auto'), 'beside the columns, not in them');
+number(numbered);
+const line = numbered.querySelector('.toc a');
+assert.equal(line.innerHTML, '<span class="toc-words">Lore</span><span class="toc-page">3</span>');
+number(numbered);
+assert.equal(numbered.querySelector('.toc a').innerHTML, line.innerHTML, 'numbering again changes nothing');
 
 console.log('book renderer: all checks passed');

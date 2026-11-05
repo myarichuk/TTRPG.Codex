@@ -32,6 +32,24 @@ public class BookDraftPdfTests
             CancellationToken.None);
     }
 
+    /// <summary>Every theme sits on Homebrewery's Blank layout, takes the book's paper size over Blank's Letter, and its page loads nothing.</summary>
+    [Fact]
+    public void EveryTheme_SitsOnBlank_AtTheBooksPaperSize_AndLoadsNothing()
+    {
+        Assert.Contains("counter-reset: page-numbers", BookDraftThemes.Blank, StringComparison.Ordinal);
+        Assert.Contains("naturalcrit/homebrewery", BookDraftThemes.Blank, StringComparison.Ordinal);
+        foreach (var theme in BookDraftThemes.All)
+        {
+            var html = BookDraftHtml.Shell("Saltmere", "en", theme, "A4", null, Font).Html!;
+            var css = html[html.IndexOf("<style id=\"theme\">", StringComparison.Ordinal)..];
+            var blank = css.IndexOf(".columnWrapper {", StringComparison.Ordinal);
+            var size = css.IndexOf("width: 210mm; height: 297mm;", StringComparison.Ordinal);
+            Assert.True(blank > 0 && size > blank, $"{theme.Id}: Blank first, then the book's page size");
+            Assert.DoesNotMatch(@"@import\s*(url|['""])", css);
+            Assert.Empty(System.Text.RegularExpressions.Regex.Matches(css, @"url\(\s*['""]?(?!data:)").Select(m => m.Value));
+        }
+    }
+
     private static string Text(byte[] pdf)
     {
         using var doc = PdfDocument.Open(pdf);

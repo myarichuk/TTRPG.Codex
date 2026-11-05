@@ -17,6 +17,12 @@ Bundled third-party software:
 - PuppeteerSharp (prints campaign books to PDF with a browser already on the machine; it downloads none) - MIT License -
   https://github.com/hardkoded/puppeteer-sharp
 - PdfPig (reads the outline of a printed book to number its table of contents; also used by tests) - Apache License 2.0 - https://github.com/UglyToad/PdfPig
+- The editable book's browser bundles (`src/Codex.Web/wwwroot/lib/book`, built by `tools/book-editor`): marked-hbfm, marked,
+  CodeMirror and their dependencies, each under its own licence, all collected in
+  `src/Codex.Web/wwwroot/lib/book/THIRD-PARTY-NOTICES.txt`.
+- Homebrewery's "Blank" theme layout (`tools/book-editor/themes/blank.less`, compiled into
+  `src/Codex.Core/Book/Themes/blank.css`), trimmed of its fonts and pictures - MIT License, Copyright (c) 2016 Scott Tolksdorf -
+  https://github.com/naturalcrit/homebrewery (the notice is in the same `THIRD-PARTY-NOTICES.txt`)
 
 ### RavenDB
 
@@ -51,6 +57,17 @@ files as `OFL.txt`; the Latin subsets were taken unmodified from the Fontsource 
   Hebrew headings beside Cinzel - `src/Codex.Web/wwwroot/fonts/frank-ruhl-libre/OFL.txt`
 - Assistant, Copyright 2020 The Assistant Project Authors (https://github.com/hafontia/Assistant) - Hebrew body
   text beside Alegreya Sans - `src/Codex.Web/wwwroot/fonts/assistant/OFL.txt`
+
+The Ashen Vellum book theme's typefaces, Latin subsets taken unmodified from their Fontsource packages (5.3.0), each with its
+licence beside it:
+
+- IM Fell English and IM Fell English SC, IM Fell DW Pica and IM Fell DW Pica SC, by Igino Marini
+  (https://iginomarini.com/fell/) - SIL Open Font License 1.1 - `src/Codex.Web/wwwroot/fonts/im-fell-*/OFL.txt`
+- Pirata One, Copyright (c) 2012 Rodrigo Fuenzalida, Nicolas Massi, Reserved Font Name "Pirata" - SIL Open Font License 1.1 -
+  `src/Codex.Web/wwwroot/fonts/pirata-one/OFL.txt`
+- UnifrakturMaguntia, Copyright (c) 2010 j. 'mach' wust, (c) 2009 Peter Wiegel, Reserved Font Name "UnifrakturMaguntia" -
+  SIL Open Font License 1.1 - `src/Codex.Web/wwwroot/fonts/unifrakturmaguntia/OFL.txt`
+- Special Elite, by Astigmatic - Apache License 2.0 - `src/Codex.Web/wwwroot/fonts/special-elite/LICENSE.txt`
 
 ### Launcher artwork
 

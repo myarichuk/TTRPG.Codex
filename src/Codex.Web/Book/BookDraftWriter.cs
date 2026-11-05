@@ -9,10 +9,12 @@ namespace Codex.Web.Book;
 
 /// <summary>
 /// The generator of the editable book (docs/BOOK_EXPORT.md 41.2): a masked source, compiled as the book is compiled today, written out as
-/// Homebrewery-flavoured Markdown for <c>marked-hbfm</c>. It writes only a fixed set of blocks, and every theme styles each one:
+/// Homebrewery-flavoured Markdown for <c>marked-hbfm</c>. It writes only a fixed set of blocks, and every theme styles each one. Where
+/// Homebrewery has a block for the thing, it is Homebrewery's (so CSS written for Homebrewery styles it here too); the rest are ours:
 /// <list type="bullet">
-/// <item><c>{{cover</c> and <c>{{toc</c> on the front pages;</item>
-/// <item><c>{{chapter,#ch-ID}}</c> before a chapter's <c># title</c>, and <c>{{chapter-art</c> under it;</item>
+/// <item>Homebrewery's <c>{{frontCover}}</c> on the title page, with our <c>{{cover-art</c> for its picture, and Homebrewery's <c>{{toc,wide</c>;</item>
+/// <item><c>{{chapter,#ch-ID</c> around a chapter's <c># title</c> (the <c>.chapter</c> block of Homebrewery's chapter templates), and our
+/// <c>{{chapter-art</c> under it;</item>
 /// <item><c>{{entry,#e-SLOT}}</c> before an entry's heading (a Cast member, a place, a page), and <c>{{portrait</c> or <c>{{place</c> under it;</item>
 /// <item><c>{{secret</c> for the GM's secrets, in the GM draft only.</item>
 /// </list>
@@ -26,7 +28,7 @@ namespace Codex.Web.Book;
 public static class BookDraftWriter
 {
     /// <summary>Changes whenever what the generator writes changes: every chapter then looks moved on, and the ones nobody edited simply follow.</summary>
-    public const string Version = "book-draft/v1";
+    public const string Version = "book-draft/v2";
 
     public const string Front = "front";
 
@@ -71,11 +73,13 @@ public static class BookDraftWriter
     private static string FrontPages(BookDocument compiled, IReadOnlyList<BookSlot> slots, IReadOnlySet<string> pictured, bool hasCover)
     {
         var sb = new StringBuilder();
-        sb.Append("{{cover\n# ").Append(BookCompiler.Escape(compiled.Title)).Append("\n\n");
+        // Homebrewery's cover marker: an empty block that tells a theme this page is the front cover. A theme lays the page out from it, and
+        // the renderer prints no page number on it.
+        sb.Append("{{frontCover}}\n\n# ").Append(BookCompiler.Escape(compiled.Title)).Append("\n\n");
         if (!string.IsNullOrWhiteSpace(compiled.Tagline)) sb.Append('*').Append(BookCompiler.Escape(compiled.Tagline)).Append("*\n\n");
         var cover = slots.First(s => s.Kind == BookSlots.Cover);
-        if (hasCover || pictured.Contains(cover.Key)) sb.Append("![](art:").Append(cover.Key).Append(")\n\n");
-        sb.Append("}}\n\n\\page\n\n{{toc\n# ").Append(BookCompiler.Escape(compiled.Labels.Contents)).Append("\n\n");
+        if (hasCover || pictured.Contains(cover.Key)) Art(sb, "cover-art", cover.Label, cover.Key);
+        sb.Append("\\page\n\n{{toc,wide\n# ").Append(BookCompiler.Escape(compiled.Labels.Contents)).Append("\n\n");
         foreach (var section in compiled.Sections)
         {
             var title = slots.First(s => s.Kind == BookSlots.Header && s.Section == section.Id).Label;
@@ -100,7 +104,7 @@ public static class BookDraftWriter
         }
 
         // The compiler writes the title first; the chapter's id and its art come with it.
-        sb.Append("{{chapter,#ch-").Append(section.Id).Append("}}\n").Append(lines[0]).Append("\n\n");
+        sb.Append("{{chapter,#ch-").Append(section.Id).Append('\n').Append(lines[0]).Append("\n}}\n\n");
         if (pictured.Contains(header.Key)) Art(sb, "chapter-art", header.Label, header.Key);
         for (var i = 1; i < lines.Length; i++)
         {
