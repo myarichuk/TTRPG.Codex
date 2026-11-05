@@ -47,3 +47,4 @@ dist/
 .DS_Store
 site/dist/
 site/.capture/
+site/.capture-art/

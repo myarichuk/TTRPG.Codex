@@ -108,7 +108,7 @@ public static class BookThemes
             body { background: transparent; }
             .note, .descriptive { background: rgba(255, 255, 255, .35); }
             .secret { background: rgba(138, 28, 28, .08); }
-            .chapter > h1 + p::first-letter { font-family: "Cinzel", serif; float: {{(layout.Rtl ? "right" : "left")}}; font-size: 4.1em; line-height: .72; padding-inline-end: .06em; padding-top: .04em; }
+            .chapter > h1 + p:not(:has(> em:only-child))::first-letter { font-family: "Cinzel", serif; float: {{(layout.Rtl ? "right" : "left")}}; font-size: 4.1em; line-height: .72; padding-inline-end: .06em; padding-top: .04em; }
             """;
     }
 

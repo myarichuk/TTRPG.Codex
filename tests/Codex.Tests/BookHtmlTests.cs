@@ -72,6 +72,8 @@ public class BookHtmlTests
 
         Assert.DoesNotContain("::first-letter", plain, StringComparison.Ordinal);
         Assert.Contains("::first-letter", parchment, StringComparison.Ordinal);
+        // A paragraph that is all italic (a tagline) is not an opening paragraph and gets no drop cap.
+        Assert.Contains("p:not(:has(> em:only-child))::first-letter", parchment, StringComparison.Ordinal);
         Assert.Contains("float: left", parchment, StringComparison.Ordinal);
         Assert.Contains("float: right", BookThemes.Parchment.Css(new BookLayout("A4", true)), StringComparison.Ordinal);
     }

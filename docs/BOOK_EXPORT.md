@@ -945,3 +945,13 @@ resent. Mutants killed: failures thrown instead of absorbed, the failure answer 
 could see, so the pool now reports `Alive`). Not tested: a real native crash on a real malformed file (the stand-ins exit with a crash code but never touch libjpeg), Windows and macOS hosts.
 
 Still open from section 31.1: the shared two-worker queue is per server, not per user, and the PDF slot is still held while art is read; preview and print can differ near the size cap.
+
+### 33.1 The website (done)
+
+The guide has a section "Print your campaign as a book" (with the optional AI step as a subsection), the home page tour has a row for it, and the install page's troubleshooting
+names the missing-browser case and `CODEX_BOOK_BROWSER`; all in English, Russian and Hebrew. The Russian and Hebrew text is mine and needs a native read. Two new screenshots, `book-panel`
+and `book-pages`, are captured by `site/tools/capture-screenshots.mjs` from the real app (English only: the themes print English, so the other languages fall back to the English shot).
+The capture uploads a cover and three portraits through the app's own upload controls, prints the party edition through `/book/party/pdf` (so the worker process and the printing
+browser both ran), and `site/tools/book-pages.py` lays cover, Cast and a content page side by side. The pictures are **stand-ins drawn by `site/tools/demo-art.py`** (flat shapes made
+with Pillow, not art); the screenshots show how pictures are placed, not what good art looks like. A render of that capture found the drop cap landing on the italic tagline paragraph;
+the theme now skips a paragraph that is all italic. Not shown on the site: the AI build (no model is configured in the capture), the one-column layout, Letter paper, the GM edition.

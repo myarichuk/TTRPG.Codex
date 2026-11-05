@@ -83,6 +83,17 @@
         "bullets": ["A player-facing recap and a separate, secret GM summary", "Table notes that are private or shared", "Each player's journal, private even from the GM"]
       },
       {
+        "shot": "book-pages",
+        "alt": "A printed campaign book: a cover with the campaign picture, a cast page with portraits, and a page in two columns.",
+        "title": "A book of your campaign",
+        "text": "Lay the campaign out as a printable PDF with a cover, contents and one chapter per section, in one column or two, on A4 or Letter. Make one for the players and one for yourself.",
+        "bullets": [
+          "The party edition holds only what a player may read; hidden characters and secrets are left out",
+          "Cover, portraits and place art go in, each after the entry it belongs to",
+          "Optionally, your own AI model tidies the chapters, with the token cost shown first"
+        ]
+      },
+      {
         "shot": "table-light", "alt": "The live table in the light parchment theme.",
         "title": "Dark stone by default, parchment when you prefer",
         "text": "The interface is built for a dim room, with a light theme one click away. Colours meet WCAG AA contrast, controls have names, and motion respects your settings.",
