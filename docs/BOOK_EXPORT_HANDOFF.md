@@ -45,8 +45,8 @@ and prompt, the art director, wiki links, drawing) are on `book/next`, not pushe
 panel, AI layer steps 1-5 (prices, budget, estimator, section workers, checks, stored build, pre-flight, live progress), two columns, existing pictures
 placed by recorded line, re-encoding/downscaling, out-of-process decoding, website.
 
-Verified: unit and integration tests (500 book, localization, backup and campaign tests passed in session 2, including the book e2e tests
-with the art tray's e2e test), the book e2e tests (9) at the commit that added
+Verified: unit and integration tests (759 book, localization, AI, backup, campaign and wiki tests in session 2 at step 6, one failure in
+`WikiSecretsE2ETests` that passed on two reruns, see section 38; all 28 e2e tests passed after it), the book e2e tests (9) at the commit that added
 the worker, a real-browser look at columns, drop caps, picture placement, panel and pages, a real `dotnet publish` containing the worker and a
 worker run from that directory, and one run against a real model (a small Anthropic model, section 26, short chapters only).
 

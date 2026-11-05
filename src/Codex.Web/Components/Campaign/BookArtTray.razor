@@ -250,10 +250,10 @@
                             <input id="@(id + "-draw")" type="checkbox" class="form-check-input" checked="@picks.ContainsKey(slot.Key)" @onchange="e => TickAsync(slot, idea, e)" disabled="@DrawRunning" data-testid="@(id + "-draw")" />
                             <label for="@(id + "-draw")" class="form-check-label">@L["Campaign.Book.Art.Draw.Pick"]<span class="visually-hidden"> @name</span></label>
                         </div>
-                        @if (picks.TryGetValue(slot.Key, out var visual))
+                        @if (picks.TryGetValue(slot.Key, out var ticked))
                         {
                             <label for="@(id + "-visual")" class="field-hint d-block">@L["Campaign.Book.Art.Draw.Visual"]</label>
-                            <textarea id="@(id + "-visual")" class="field-input" rows="2" dir="ltr" lang="en" maxlength="@BookImagePrompt.MaxVisualChars" value="@visual"
+                            <textarea id="@(id + "-visual")" class="field-input" rows="2" dir="ltr" lang="en" maxlength="@BookImagePrompt.MaxVisualChars" value="@ticked.Visual"
                                       @onchange="e => VisualAsync(slot, e)" disabled="@DrawRunning" aria-describedby="@(id + "-draw-problem")" data-testid="@(id + "-visual")"></textarea>
                             <div id="@(id + "-draw-problem")" class="field-error" data-testid="@(id + "-draw-problem")">@ProblemOf(slot.Key)</div>
                         }
@@ -292,27 +292,41 @@
         AttachDrawing(Drawing.Find(Access, Edition));
     }
 
-    // The places ticked to draw, each with the description it would be drawn from. Only keys and descriptions go to the server, which checks both.
-    private readonly Dictionary<string, string> picks = new(StringComparer.Ordinal);
+    // The places ticked to draw: the description each would be drawn from, and the suggestion it was ticked from. Only keys and descriptions go to
+    // the server, which checks both. A tick whose suggestion has since gone, gone stale or been replaced is dropped (Prune), so an old
+    // description cannot ride along under a new suggestion.
+    private readonly Dictionary<string, (string Visual, string From)> picks = new(StringComparer.Ordinal);
     private BookDrawPreview? drawPreview;
     private BookRun? drawing;
     private string? drawError;
 
     private bool DrawRunning => drawing?.Running == true;
 
-    private List<BookDrawPick> Picks() => picks.Select(p => new BookDrawPick(p.Key, p.Value)).ToList();
+    private List<BookDrawPick> Picks() => picks.Select(p => new BookDrawPick(p.Key, p.Value.Visual)).ToList();
 
-    private async Task PreviewDrawingAsync() => drawPreview = await Drawing.PreviewAsync(Access, Edition, Picks(), Language);
+    private async Task PreviewDrawingAsync()
+    {
+        Prune();
+        drawPreview = await Drawing.PreviewAsync(Access, Edition, Picks(), Language);
+    }
+
+    private void Prune()
+    {
+        if (tray == null) return;
+        var current = tray.Chapters.SelectMany(c => c.Slots).Prepend(tray.Cover)
+            .Where(x => x.Suggestion is { Stale: false }).ToDictionary(x => x.Key, x => x.Suggestion!.Visual, StringComparer.Ordinal);
+        foreach (var key in picks.Where(p => current.GetValueOrDefault(p.Key) != p.Value.From).Select(p => p.Key).ToList()) picks.Remove(key);
+    }
 
     private async Task TickAsync(BookTraySlot slot, BookTraySuggestion idea, ChangeEventArgs e)
     {
-        if (e.Value is true) picks[slot.Key] = idea.Visual; else picks.Remove(slot.Key);
+        if (e.Value is true) picks[slot.Key] = (idea.Visual, idea.Visual); else picks.Remove(slot.Key);
         await PreviewDrawingAsync();
     }
 
     private async Task VisualAsync(BookTraySlot slot, ChangeEventArgs e)
     {
-        picks[slot.Key] = e.Value?.ToString() ?? string.Empty;
+        if (picks.TryGetValue(slot.Key, out var pick)) picks[slot.Key] = (e.Value?.ToString() ?? string.Empty, pick.From);
         await PreviewDrawingAsync();
     }
 

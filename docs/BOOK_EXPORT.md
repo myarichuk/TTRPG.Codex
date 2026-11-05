@@ -1186,6 +1186,11 @@ click, and the cost (or the server's allowance) is shown before the click.
   - The tray says "drawn from an older description or style" when the slot's text, the mood or the style changed since. The picture is kept.
 - **One paid run per GM:** a run takes the shared `BookGate`.
 - **At most 12 pictures a run.**
+- **A tick is dropped when its suggestion changes.** The tray keeps, beside each tick, the suggestion it was ticked from, and drops the tick
+  when that suggestion is gone, out of date or replaced. Otherwise an old description could be sent under a new suggestion; the server
+  would accept it as the GM's own edit.
+- **OpenRouter picture errors keep their HTTP status**, as an inner exception, so a refused key or spent credit stops the run. Before
+  this they were read as an unknown failure, and the next picture was tried.
 
 **Tests:**
 - `BookImagesTests`: a run counts each picture once, cannot draw past N, gives back the rest, and is refused whole when it does not fit.
@@ -1201,6 +1206,9 @@ on a refused key; foreign slot accepted.
 - **No real picture model has been run on this.** Only a fake server has.
 - **Regenerate and Accept from up to three versions (28.3 item 3) are not built.** Drawing replaces the slot's picture, and the earlier one,
   paid for, is gone; the pre-flight says which places would be replaced.
+- The tray's tick dropping is not covered by an automated test. The server's checks, which are covered, are the guard that counts.
+- `WikiSecretsE2ETests` failed once in a run of 759 tests during this step, cause not captured, and passed on two reruns (alone, and with the
+  28 e2e tests). It exercises the wiki rendering changed in section 37, so it is a suspect, not a known flake.
 - A description check failure is shown in English.
 - The mood is shown as its English id.
 - The drawing totals are lost if the process dies mid-run, like the director's.
