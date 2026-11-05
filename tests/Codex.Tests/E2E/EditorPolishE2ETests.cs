@@ -146,4 +146,27 @@ public class EditorPolishE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.SaveSheetAsync(dm);
         return id;
     }
+
+    [Fact]
+    public async Task TheInviteStep_LeavesTheLinkSelected_EvenWhenTheBrowserRefusesToCopy()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "ep-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        // The clipboard API refuses (an insecure origin, no permission, a page that is not focused): the code falls back to the old route
+        // through a throwaway text field, which must not take the focus, and the selection, away from the link.
+        await context.AddInitScriptAsync("Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => { window.__refused = (window.__refused || 0) + 1; return Promise.reject(new Error('refused')); } } });");
+        var dm = await context.NewPageAsync();
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        await E2EHelpers.CreateCampaignAsync(dm, "Refused copy");
+        await E2EHelpers.WaitForInteractiveAsync(dm);
+
+        await dm.GetByTestId("setup-invite-copy").ClickAsync();
+
+        Assert.Equal(1, await dm.EvaluateAsync<int>("window.__refused || 0")); // the refusal really happened, so the old route ran
+        await Assertions.Expect(dm.GetByTestId("invite-link")).ToBeFocusedAsync();
+        Assert.True(await dm.EvaluateAsync<bool>("(() => { const f = document.getElementById('invite-link'); return f.selectionStart === 0 && f.selectionEnd === f.value.length && f.value.length > 0; })()"), "the link is selected");
+    }
 }

@@ -592,6 +592,11 @@ window.codex = {
         } catch (e) {
             // fall through to the legacy path
         }
+        // The old route needs a selected field of its own. It must not leave the page's focus and selection behind in it (and then nowhere):
+        // whatever had them gets them back, so a field the caller just selected for the user to copy by hand stays selected.
+        const previous = document.activeElement;
+        const range = previous && 'selectionStart' in previous && previous.selectionStart !== null
+            ? [previous.selectionStart, previous.selectionEnd, previous.selectionDirection] : null;
         const area = document.createElement('textarea');
         area.value = text;
         area.setAttribute('readonly', '');
@@ -605,6 +610,10 @@ window.codex = {
             return false;
         } finally {
             area.remove();
+            if (previous && previous !== document.body && typeof previous.focus === 'function') {
+                previous.focus();
+                if (range) previous.setSelectionRange(range[0], range[1], range[2] || 'none');
+            }
         }
     },
 

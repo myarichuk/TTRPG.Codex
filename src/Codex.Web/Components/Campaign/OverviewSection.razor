@@ -295,8 +295,8 @@
     // rather send it some other way (or when the browser refuses to copy).
     private async Task InviteAsync()
     {
-        await JS.InvokeVoidAsync("codex.selectField", "invite-link");
         var ok = await JS.InvokeAsync<bool>("codex.copyText", InviteLink);
+        await JS.InvokeVoidAsync("codex.selectField", "invite-link"); // last, so whatever the copy did to the focus, the link ends up selected
         Ctx.Notify(ok ? Flash.Success(L["Campaign.Setup.InviteCopied"]) : Flash.Error(L["Campaign.Overview.CopyFailed"]));
     }
 }
