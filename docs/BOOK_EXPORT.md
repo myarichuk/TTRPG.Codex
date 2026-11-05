@@ -1128,5 +1128,12 @@ unwritten page. It also has mentions in the same paragraph: a known actor, a str
 `[[Actor:…|label]]`. Mutants caught: no rewrite; an unlabelled link keeping its title; the label dropped; a visible link dropped; the GM edition
 rewritten; mentions not skipped; mentions matched in lowercase only.
 
-**Not done:** the app's own wiki has the same leak. `WikiRender` renders a link a player may not open as its text (`missingAsText`), and for an
-unlabelled link that text is the hidden page's title.
+The app's own wiki had the same leak: `WikiRender` showed a link a player may not open as its text (`missingAsText`), and for an unlabelled
+link that text is the hidden page's title. Fixed with the same rule in `WikiText.ForReader`, used by `WikiRender.ToHtml` and
+`WikiRender.Summary` for every non-GM reader. That covers page bodies, the GM's "view as players", lore details, map descriptions, the wiki
+list's cards, link previews (`PreviewEndpoints`) and a stranger's line in the cast list. The cast list loads no pages, so there a page link
+always shows only its label. The app rule also drops labelled or other-case text in a mention's form (`[[actor:x|Name]]`), which no reader
+names. Tests: `WikiPlayerLinksTests`, mutation-checked (eight mutants).
+
+Still not covered: recaps and notes go through `MentionLinks`/`TextFormatting`, which do not read page links at all. A `[[Page]]` typed there
+prints literally, brackets included, to everyone. Those editors do not offer page links.

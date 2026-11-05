@@ -16,6 +16,8 @@ public static class WikiRender
         DateTime? newSince = null, string newLabel = "")
     {
         var basePath = $"/campaigns/{campaignId}";
+        // A player is never shown the title of a page they may not open, linked or not.
+        if (dm == null) text = ForPlayer(text, pages);
         return SecretRender.Html(text, run => WikiText.ToHtml(run,
             title =>
             {
@@ -29,7 +31,12 @@ public static class WikiRender
     }
 
     /// <summary>A line of text for a card: mentions named, Markdown, links and secret markers flattened, cut to <paramref name="max"/>
-    /// characters. The DM's (<paramref name="forDm"/>) reads all of it; anyone else's leaves the secret blocks out.</summary>
-    public static string Summary(string? text, MentionDirectory mentions, int max, bool forDm = false) =>
-        TextFormatting.Summary(string.IsNullOrEmpty(text) ? text : mentions.Plain(forDm ? SecretText.WithoutMarkers(text) : SecretText.ForPlayers(text)), max);
+    /// characters. The DM's (<paramref name="forDm"/>) reads all of it; anyone else's leaves the secret blocks out, and names only the
+    /// pages among <paramref name="pages"/> (the ones they may open).</summary>
+    public static string Summary(string? text, IReadOnlyCollection<WikiPageDocument> pages, MentionDirectory mentions, int max, bool forDm = false) =>
+        TextFormatting.Summary(string.IsNullOrEmpty(text) ? text : mentions.Plain(forDm ? SecretText.WithoutMarkers(text) : ForPlayer(SecretText.ForPlayers(text), pages)), max);
+
+    /// <summary>The text with each link to a page outside <paramref name="pages"/> reduced to its own label (<see cref="WikiText.ForReader"/>).</summary>
+    public static string ForPlayer(string? text, IReadOnlyCollection<WikiPageDocument> pages) =>
+        WikiText.ForReader(text, title => WikiLinks.TargetOfTitle(title, pages) != null);
 }

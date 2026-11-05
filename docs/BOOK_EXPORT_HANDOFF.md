@@ -165,8 +165,8 @@ Anything that survives is a missing test; add it.
    a GM-edition warning, custom CSS editor, the Ashen Vellum theme (measured in section 13, not built), `:::for` per-player editions.
 6. ~~The `PartyPreview` empty-user-id bug~~ fixed (session 2): `CampaignAccess.PartyPreview()` now reads as `CampaignAccess.Nobody`, a made-up id per
    preview, the same one the book reader uses; test `PartyPreview_OwnsNoActor_EvenOneStoredWithAnEmptyOwner`, mutation-checked.
-7. ~~A wiki link to a GM-only page prints its title in the party book and outline~~ fixed (BOOK_EXPORT section 37). The app's own wiki still
-   shows that title to a player (`WikiRender`, `missingAsText`); that is outside the book.
+7. ~~A wiki link to a GM-only page prints its title in the party book and outline~~ fixed (BOOK_EXPORT section 37). The app's own wiki had the
+   same leak; fixed with `WikiText.ForReader` (same section).
    **Step 6 rule from this:** party suggestions stored before this fix may hold such a title; they now show as stale. Draw only from a suggestion
    whose inputs are current.
 8. Allowance refund after UTC midnight is subtracted from the new day; transport retries are not in the money range; totals are lost on a process crash. All are in section 28.

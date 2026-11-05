@@ -108,7 +108,7 @@ else
                                     @if (!string.IsNullOrWhiteSpace(location.Description))
                                     {
                                         <details class="place-details">
-                                            <summary class="row-sub">@WikiRender.Summary(location.Description, noteMentions, 140, Ctx.IsDm)</summary>
+                                            <summary class="row-sub">@WikiRender.Summary(location.Description, wikiPages, noteMentions, 140, Ctx.IsDm)</summary>
                                             <div class="rules-text mt-2">@((MarkupString)WikiRender.ToHtml(location.Description, wikiPages, noteMentions, Ctx.Campaign.Id, false, Ctx.IsDm ? DmView.From(L, noteMentions) : null))</div>
                                         </details>
                                     }

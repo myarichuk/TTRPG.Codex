@@ -259,7 +259,8 @@
             // A stranger: what the party has seen of them is all there is.
             // Its mentions read as a player reads them (MentionDirectory), places and items included.
             return string.IsNullOrWhiteSpace(actor.PublicDescription) ? KindLabel(actor.Kind)
-                : TextFormatting.Summary(new MentionDirectory(Ctx.AllActors, Array.Empty<LocationDocument>(), Array.Empty<MentionItem>(), isDm: false) { Words = MentionSources.Words(L) }.Plain(actor.PublicDescription), 120);
+                : WikiRender.Summary(actor.PublicDescription, Array.Empty<WikiPageDocument>(),
+                    new MentionDirectory(Ctx.AllActors, Array.Empty<LocationDocument>(), Array.Empty<MentionItem>(), isDm: false) { Words = MentionSources.Words(L) }, 120);
         }
 
         var parts = new List<string>();
