@@ -865,6 +865,7 @@
   <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>Saved</value></data>
   <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>Not saved yet</value></data>
   <data name="Campaign.Book.Draft.Conflict" xml:space="preserve"><value>This draft was changed in another tab, so nothing more is saved from here. Close and open the editor again.</value></data>
+  <data name="Campaign.Book.Draft.CloseUnsaved" xml:space="preserve"><value>Some of your last changes could not be saved, because the draft changed in another tab. Copy them now if you need them, or close again to close without them.</value></data>
   <data name="Campaign.Book.Draft.SaveFailed" xml:space="preserve"><value>Could not save. Your text is still here.</value></data>
   <data name="Campaign.Book.Draft.TooLarge" xml:space="preserve"><value>This is too long to save.</value></data>
   <data name="Campaign.Book.Draft.NotAllowed" xml:space="preserve"><value>Only the campaign's GM can edit its book.</value></data>

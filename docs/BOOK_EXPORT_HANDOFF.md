@@ -95,7 +95,9 @@ worker run from that directory, and one run against a real model (a small Anthro
    only, its pictures are `art:` references resolved only to party-tagged pictures, and its AI calls see only party text. Beyond that the GM can
    type anything, so the guarantee becomes a warning: the party draft is checked for GM-only text before export. Invariants 2 and 3 still hold for
    drafts: `{{secret}}` blocks (a draft's secrets; never `:::dm`, which Homebrewery's renderer would print) are placeholders in anything sent
-   to a model, and no URL survives the renderer's cleaner (`tools/book-editor/src/render.js`). A draft entry's id is its slot key, never a raw
+   to a model, and no URL survives the renderer's cleaner (`tools/book-editor/src/render.js`). `expr-eval` is never bundled (the build
+   aliases it to a stub and fails if it gets in): `$[...]` maths stays off. The editor renders in the GM's own page, on text players wrote,
+   which is a trust boundary (BOOK_EXPORT 41.9); a renderer update needs `npm audit` and the hostile-draft tests. A draft entry's id is its slot key, never a raw
    id. The only script the print browser runs is the bundled renderer, in a page with every request refused; the page is then printed with
    script off.
 

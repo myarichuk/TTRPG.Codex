@@ -588,4 +588,51 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         Assert.Empty(pageErrors);
     }
+
+    [Fact]
+    public async Task ATabThatOnlyLooksAtAChapter_NeverSavesIt_SoAnotherTabsEditIsNotAConflict()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bdt-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var a = await context.NewPageAsync();
+        await E2EHelpers.LoginAsync(a, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(a, "Two Tabs");
+        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor { Id = "bdt-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Biography = "Keeps the lighthouse.", Visibility = Codex.Persistence.ActorVisibility.Known }]);
+
+        async Task OpenAsync(IPage page)
+        {
+            await E2EHelpers.GoToSectionAsync(page, campaignId, "settings");
+            await page.GetByTestId("book-edition").SelectOptionAsync("party");
+            await page.GetByTestId("book-draft-open").ClickAsync();
+            await Assertions.Expect(page.FrameLocator("[data-testid=book-draft-preview]").Locator(".page").First).ToBeVisibleAsync();
+        }
+
+        await OpenAsync(a);
+        var b = await context.NewPageAsync();
+        await OpenAsync(b);
+
+        // Tab B edits Cast and saves it.
+        await b.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await b.Locator(".cm-content").ClickAsync();
+        await b.Keyboard.PressAsync("ControlOrMeta+End");
+        await b.Keyboard.TypeAsync("\nPUBLIC_TAB_B\n");
+        await Assertions.Expect(b.Locator("[data-testid=book-draft-chapter][data-section=cast] .book-draft-badge-edited")).ToBeVisibleAsync();
+        await Assertions.Expect(b.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+
+        // Tab A only looks: Cast, the stylesheet, the front pages, then closes. Nothing it showed was typed, so nothing is saved or refused.
+        await a.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await a.GetByTestId("book-draft-css").ClickAsync();
+        await a.Locator("[data-testid=book-draft-chapter][data-section=front]").ClickAsync();
+        await a.WaitForTimeoutAsync(1500);
+        await Assertions.Expect(a.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+        await a.GetByTestId("book-draft-close").ClickAsync();
+        await Assertions.Expect(a.GetByTestId("book-draft-dialog")).Not.ToBeVisibleAsync();
+
+        // B's line is still the chapter's.
+        await a.GetByTestId("book-draft-open").ClickAsync();
+        await a.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await Assertions.Expect(a.Locator(".cm-content")).ToContainTextAsync("PUBLIC_TAB_B");
+    }
 }

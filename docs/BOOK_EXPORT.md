@@ -1418,6 +1418,14 @@ The GM asked for `marked-hbfm` as planned (not the app's own renderer, which was
   - **Fitting at draw time**: blocks that spill go onto a continuation page; each fragment of a split block is measured. A block too tall even
     for a page of its own is reported (preview line, `X-Book-Overflow` header on the PDF, a log line), not silently lost.
   - **Contents page numbers** read from the laid-out pages.
+  - **`$[...]` maths is switched off.** `marked-hbfm`'s variables extension evaluates it with `expr-eval`, whose every version has critical
+    advisories (code execution, prototype pollution; `npm audit`: no fix). The build aliases it to `src/no-math.js`, which evaluates nothing,
+    and fails if `expr-eval` gets into a bundle another way. Plain variables still work. `test.mjs` runs the shipped bundle with a hostile
+    expression; a build without the stub fails it.
+  - **A trust boundary:** the editor runs `marked-hbfm` in the app's own page, on a draft that holds text players wrote (a character's
+    biography reaches Cast). Only cleaned output enters the frame, but a parser bug in `marked` or its extensions would run in the GM's
+    signed-in session. The print path is contained (a separate browser, every request refused, printed with script off). The proper fix is to
+    render in a frame with script and an opaque origin (`sandbox="allow-scripts"`, no same-origin), passing strings in and out. Not done.
   - This replaces phase 3's "Fit pages" command for now: what prints is a pure function of the stored Markdown, but it is not the stored
     Markdown. Phase 3 can still write the breaks into the text.
 - **Printing** (`BookPdf`, `BookPrintLayout`):
@@ -1431,19 +1439,26 @@ The GM asked for `marked-hbfm` as planned (not the app's own renderer, which was
 - **Editor** (`Components/Campaign/BookDraftEditor.razor`, opened from the book panel):
   - Chapter list, CodeMirror (Markdown and a stylesheet tab), and the whole book drawn in a frame. The frame is `sandbox="allow-same-origin"`
     (no script; same-origin only so the editor can draw into it and measure), shell CSP `default-src 'none'`, and is scaled to fit by a transform.
-  - Autosave about a second after typing stops. The text goes to the server as a stream (no message-size limit).
-  - A conflict stops saving from that tab and says so.
+  - Autosave about a second after typing stops. Text the editor is given (showing a chapter, a Regenerate) is not typing and is never saved
+    back; `BookDraftE2ETests.ATabThatOnlyLooksAtAChapter...` holds it (without the guard, a tab that only looked turned another tab's edit
+    into a conflict). The text goes to the server as a stream (no message-size limit).
+  - A conflict stops saving from that tab and says so; Close then warns once before closing over text that could not be saved.
   - The stale notice names the changed entries; it offers Regenerate, Keep mine, and Undo after a Regenerate.
   - Start over (with a confirmation) and Download PDF.
 - **Routes**: `GET /campaigns/{id}/book/{edition}/draft/{lang}/art` (the edition's preview pictures by slot, GM only, no-store) and `/pdf`.
 
 **Tests:** `BookDraftTests` (10: party canaries including the masked id, GM secrets, the text conversion, version conflicts, follow and stale
 naming the entry, Regenerate and Undo, keep mine, breaks are not edits, access and posted values, two editions and deletion);
-`BookDraftPdfTests` (5); `tools/book-editor/test.mjs` (the cleaner against hostile drafts, under jsdom); `BookDraftE2ETests` (the dialog: type,
-autosave, preview, stale notice, Regenerate, PDF); the backup test. Mutants caught: entry id written raw; secrets kept in the party draft;
-version check removed; breaks counted as edits.
+`BookDraftPdfTests` (5); `tools/book-editor/test.mjs` (the shipped bundle against hostile drafts, under jsdom); `BookDraftE2ETests` (2: the
+dialog, with typing, autosave, preview, stale notice, Regenerate and PDF; and a tab that only looks never saving); the backup test. Mutants caught: entry id written raw; secrets kept in the party draft;
+version check removed; breaks counted as edits; the `expr-eval` stub left out (`test.mjs`); text the editor is given counted as typing (the
+two-tab e2e).
 
 **Not done, or not verified:**
+- **Deviations from 41.2:** Plain is our own CSS for Homebrewery's page structure, not Blank's layout CSS, and `{{cover`, `{{chapter-art`,
+  `{{portrait`, `{{place` and `{{entry` are our block names. Phase 2 must either bring in Blank's layout (with its licence notice) and map our
+  blocks onto it, or port grimdark onto this CSS. Section 40 showed grimdark working on Blank's layout, not on ours.
+- The editor's renderer runs in the app's page (the trust boundary above).
 - The overflow report reaches the GM only in the preview. The PDF route sets a header, which the panel does not read yet (phase 3).
 - **The preview was seen only in Chrome.** Safari and Firefox were not tried (section 40, finding 3).
 - The editor was not looked at on a phone, in RTL, or with a screen reader.

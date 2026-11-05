@@ -1,8 +1,13 @@
-// Checks of the cleaner against hostile drafts, run with `node test.mjs` (jsdom stands in for a browser; it has no layout, so fitting is
-// tested in the C# suite, which drives a real one).
+// Checks of the renderer's bundle against hostile drafts, run with `npm test` after `npm run build` (jsdom stands in for a browser; it has no
+// layout, so fitting is tested in the C# suite, which drives a real one).
 import { JSDOM } from 'jsdom';
 import assert from 'node:assert/strict';
-import { pagesHtml, clean, pictures, brew } from './src/render.js';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+
+// The shipped bundle, not the source: it is what the editor and the print browser run (and the bundle has no expr-eval).
+vm.runInThisContext(readFileSync(new URL('../../src/Codex.Web/wwwroot/lib/book/book-render.js', import.meta.url), 'utf8'));
+const { pagesHtml, clean, pictures, brew } = globalThis.CodexBook;
 
 const dom = new JSDOM('<!doctype html><div id="brew"></div>');
 const doc = dom.window.document;
@@ -90,5 +95,12 @@ assert.equal(drawn(book).querySelectorAll('.page').length, 3);
 
 // Secret blocks are a styled block, and ":::" is not ours (Homebrewery reads it as a definition list): the generator never writes it.
 assert.ok(drawn('{{secret\nThe truth.\n}}').querySelector('.block.secret'));
+
+// "$[...]" maths is switched off (expr-eval is not in the bundle): a hostile expression evaluates nothing and nothing runs.
+globalThis.PWNED = undefined;
+const maths = drawn('Hit points: $[2+3]. $[constructor.constructor("globalThis.PWNED=1")()] $[x:4] then $[x].').innerHTML;
+assert.equal(globalThis.PWNED, undefined);
+assert.ok(!maths.includes('>5<') && !/\b5\b/.test(maths), 'no maths was done: ' + maths);
+assert.ok(maths.includes('4'), 'a plain variable still works: ' + maths);
 
 console.log('book renderer: all checks passed');

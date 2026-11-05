@@ -167,6 +167,7 @@
         this.pageSize = pageSize;
         message = null;
         confirmStartOver = false;
+        closeWithoutSaving = false;
         view = await Drafts.OpenAsync(Access, edition, language, pageSize);
         if (view == null)
         {
@@ -465,9 +466,20 @@
         }
     }
 
+    private bool closeWithoutSaving;
+
     private async Task CloseAsync()
     {
         await FlushAsync();
+        // Text that could not be saved (the draft changed in another tab) is not thrown away without a word: the first Close says so.
+        if ((dirty.Count > 0 || cssDirty) && !closeWithoutSaving)
+        {
+            closeWithoutSaving = true;
+            message = L["Campaign.Book.Draft.CloseUnsaved"];
+            return;
+        }
+
+        closeWithoutSaving = false;
         await JS.InvokeVoidAsync("codex.closeModal", "book-draft-dialog");
         if (module != null && editorId != null)
         {

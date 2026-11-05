@@ -54,7 +54,8 @@ export async function open(host, frame, book, dotnet, labels) {
       doc: text(state),
       extensions: [basicSetup, keymap.of([indentWithTab]), EditorView.lineWrapping, direction, language.of(markdown()),
         EditorView.updateListener.of(u => {
-          if (!u.docChanged) return;
+          // A chapter put into the editor (shown, replaced by the server) is not typing: it must not be saved back.
+          if (!u.docChanged || state.loading) return;
           const value = u.state.doc.toString();
           if (state.mode === 'css') { state.css = value; state.cssPending = true; } else { chapter(state).markdown = value; state.pending.add(state.current); }
           changed();
@@ -87,7 +88,12 @@ function text(state) {
 }
 
 function load(state, value) {
-  state.view.dispatch({ changes: { from: 0, to: state.view.state.doc.length, insert: value } });
+  state.loading = true;
+  try {
+    state.view.dispatch({ changes: { from: 0, to: state.view.state.doc.length, insert: value } });
+  } finally {
+    state.loading = false;
+  }
 }
 
 /** What is waiting to be saved, taken out of the queue: the server saves it itself, and knows when it is done (before closing, printing,
@@ -108,13 +114,8 @@ export function show(id, section) {
   if (!state) return;
   state.mode = section == null ? 'css' : 'md';
   if (section != null) state.current = section;
-  // Swapping the text must not count as typing it.
-  const listener = state.changed;
-  state.changed = Object.assign(() => {}, { now() {}, cancel() {} });
   state.view.dispatch({ effects: state.language.reconfigure(state.mode === 'css' ? css() : markdown()) });
   load(state, text(state));
-  state.changed = listener;
-  state.changed.cancel();
   state.view.focus();
   if (section != null) scrollTo(state, section);
 }
@@ -125,13 +126,9 @@ export async function replace(id, section, markdown) {
   if (!state) return;
   const c = state.chapters.find(x => x.section === section);
   if (c) c.markdown = markdown; else state.chapters.push({ section, markdown });
-  if (state.mode === 'md' && state.current === section) {
-    const listener = state.changed;
-    state.changed = Object.assign(() => {}, { now() {}, cancel() {} });
-    load(state, markdown);
-    state.changed = listener;
-    state.changed.cancel();
-  }
+  // What the server sent is now the text: nothing of this chapter is waiting to be saved.
+  state.pending.delete(section);
+  if (state.mode === 'md' && state.current === section) load(state, markdown);
   await preview(id);
 }
 

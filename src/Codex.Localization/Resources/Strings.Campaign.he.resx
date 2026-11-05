@@ -865,6 +865,7 @@
   <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>נשמר</value></data>
   <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>עוד לא נשמר</value></data>
   <data name="Campaign.Book.Draft.Conflict" xml:space="preserve"><value>הטיוטה שונתה בלשונית אחרת, ולכן לא נשמר מכאן יותר דבר. סגרו ופתחו שוב את העורך.</value></data>
+  <data name="Campaign.Book.Draft.CloseUnsaved" xml:space="preserve"><value>חלק מהשינויים האחרונים לא נשמרו, כי הטיוטה שונתה בלשונית אחרת. העתיקו אותם אם הם נחוצים, או סגרו שוב כדי לסגור בלעדיהם.</value></data>
   <data name="Campaign.Book.Draft.SaveFailed" xml:space="preserve"><value>השמירה נכשלה. הטקסט שלכם עדיין כאן.</value></data>
   <data name="Campaign.Book.Draft.TooLarge" xml:space="preserve"><value>ארוך מכדי לשמור.</value></data>
   <data name="Campaign.Book.Draft.NotAllowed" xml:space="preserve"><value>רק המנחה של המערכה יכול לערוך את הספר.</value></data>

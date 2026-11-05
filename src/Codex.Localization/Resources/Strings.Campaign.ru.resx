@@ -865,6 +865,7 @@
   <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>Сохранено</value></data>
   <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>Ещё не сохранено</value></data>
   <data name="Campaign.Book.Draft.Conflict" xml:space="preserve"><value>Черновик изменён в другой вкладке, поэтому отсюда больше ничего не сохраняется. Закройте и снова откройте редактор.</value></data>
+  <data name="Campaign.Book.Draft.CloseUnsaved" xml:space="preserve"><value>Часть последних правок не сохранилась: черновик изменили в другой вкладке. Скопируйте их, если они нужны, или нажмите «Закрыть» ещё раз, чтобы закрыть без них.</value></data>
   <data name="Campaign.Book.Draft.SaveFailed" xml:space="preserve"><value>Не удалось сохранить. Ваш текст остался здесь.</value></data>
   <data name="Campaign.Book.Draft.TooLarge" xml:space="preserve"><value>Слишком длинно, чтобы сохранить.</value></data>
   <data name="Campaign.Book.Draft.NotAllowed" xml:space="preserve"><value>Редактировать книгу может только мастер кампании.</value></data>
