@@ -186,6 +186,9 @@ builder.Services.AddSingleton(sp => new Codex.Web.Book.BookBuilds(
 builder.Services.AddSingleton(sp => new Codex.Web.Book.BookArtDirection(
     sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookArtRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookModels>(),
     BookResolver(sp), sp.GetRequiredService<Codex.Web.Book.BookGate>()));
+builder.Services.AddSingleton(sp => new Codex.Web.Book.BookArtDrawing(
+    sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookArtRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookImages>(),
+    BookResolver(sp), sp.GetRequiredService<Codex.Web.Book.BookGate>()));
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 builder.Services.AddScoped<ViewerClock>();
 

@@ -76,7 +76,7 @@ public static class BookArtStyles
     public static readonly IReadOnlyDictionary<string, string> Framing = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["cover"] = "Book cover illustration, one strong central subject, tall composition with calm space at the top",
-        ["header"] = "Very wide panoramic scene for the head of a chapter",
+        ["header"] = "Very wide panoramic scene for the head of a chapter, the subject kept in a band across the middle, nothing important near the top or bottom edge",
         ["portrait"] = "Head-and-shoulders portrait, face clearly visible",
         ["homebrew"] = "Full-figure study of a single subject on a plain ground",
         ["location"] = "Wide establishing view of a place",

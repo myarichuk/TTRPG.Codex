@@ -57,7 +57,7 @@ public partial class BookArtTests : IClassFixture<RavenDbFixture>
     }
 
     /// <summary>A valid PNG of the given width (and one pixel high).</summary>
-    private static byte[] Png(int width)
+    internal static byte[] Png(int width)
     {
         var raw = new byte[1 + width * 3];
         using var zipped = new MemoryStream();
