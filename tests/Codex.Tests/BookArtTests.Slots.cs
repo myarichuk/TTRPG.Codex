@@ -195,6 +195,11 @@ public partial class BookArtTests
         Assert.Equal(BookArtDocument.Party, stranger.Placed);
         Assert.DoesNotContain(tray.Chapters.SelectMany(c => c.Slots), s => s.Label == "a-hidden" || s.Label == "a-unknown");
         Assert.Null(await service.TrayAsync(new CampaignAccess(dm.CampaignId, PlayerUser, CampaignRole.Player), "party", "en"));
+        // The two strangers read alike in the party book; the tray numbers them so the GM can tell their slots apart, from the party's labels only.
+        var strangers = tray.Chapters.Single(c => c.Id == "cast").Slots.Where(s => s.Label.EndsWith(')')).Select(s => s.Label).ToList();
+        Assert.Equal(2, strangers.Count);
+        Assert.Equal(strangers[0][..^4] + " (1)", strangers[0]);
+        Assert.Equal(strangers[0][..^4] + " (2)", strangers[1]);
 
         // Removing from the party tray takes the party's picture only.
         Assert.True(await service.RemoveAsync(dm, "party", KeyOf(party, BookSlots.Entry, "a-unknown")));

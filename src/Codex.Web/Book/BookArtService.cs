@@ -57,8 +57,23 @@ public sealed class BookArtService(BookSourceReader reader, IBookArtRepository s
         var cover = Row(made.Slots.First(s => s.Kind == BookSlots.Cover));
         var chapters = made.Compiled.Sections.Select(section => new BookTrayChapter(section.Id,
             made.Slots.First(s => s.Kind == BookSlots.Header && s.Section == section.Id).Label,
-            made.Slots.Where(s => s.Section == section.Id && s.Kind != BookSlots.Cover).Select(Row).ToList())).ToList();
+            Numbered(made.Slots.Where(s => s.Section == section.Id && s.Kind != BookSlots.Cover).Select(Row).ToList()))).ToList();
         return new BookTray(edition, cover, chapters);
+    }
+
+    /// <summary>Two entries the edition names alike (two strangers, two "Twin"s) get "(1)", "(2)" in book order, so the GM can tell their slots
+    /// apart. The numbers are the tray's only: they come from this edition's labels and nothing else, and never reach the page.</summary>
+    private static List<BookTraySlot> Numbered(List<BookTraySlot> rows)
+    {
+        var repeated = rows.Where(r => r.Kind == BookSlots.Entry).GroupBy(r => r.Label, StringComparer.CurrentCultureIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet(StringComparer.CurrentCultureIgnoreCase);
+        if (repeated.Count == 0) return rows;
+        var seen = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+        return rows.Select(r =>
+        {
+            if (r.Kind != BookSlots.Entry || !repeated.Contains(r.Label)) return r;
+            var n = seen[r.Label] = seen.GetValueOrDefault(r.Label) + 1;
+            return r with { Label = r.Label + " (" + n + ")" };
+        }).ToList();
     }
 
     public async Task<BookArtUpload> UploadAsync(CampaignAccess asked, string edition, string slotKey, byte[] bytes, string contentType, string language = "en")

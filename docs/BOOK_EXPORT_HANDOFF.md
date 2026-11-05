@@ -28,6 +28,8 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: 
 | Composition | `Web/Book/BookComposer.cs` (labels, `Items`, `Overlay` of a stored rewrite, `PlaceArt`) |
 | AI layer | `Core/Book/Ai/*` (blocks, checks, section worker, runner, build key), `Core/Book/BookBudget.cs`, `BookTokens.cs`, `Web/Book/BookBuilds.cs` (stored build, background runs), `BookModels.cs`, `Persistence/Book/BookBuildModels.cs` |
 | Pictures | `Persistence/Book/BookArt.cs` (reader, caps), `Core/Book/BookImages.cs` (structural sanitizer, never decodes), `BookImageScaler.cs`, `BookImageWorker.cs` |
+| Book art slots | `Persistence/Book/BookSlots.cs` (slots and keys, `Choose`), `BookArtStore.cs` (`bookart/{campaign}`, tagged party/dm), `Web/Book/BookArtService.cs` (upload checked against the edition's slots), `Components/Campaign/BookArtTray.razor` |
+| Drawn-art prompt | `Core/Book/BookArtStyle.cs` (style vocabulary, `BookImagePrompt.Assemble` and its checks) |
 | Decoder process | `src/Codex.ImageWorker` (only caller of SkiaSharp; talks stdin/stdout via `BookImageWire`) |
 | Strings | `Localization/Resources/Strings.Campaign{,.ru,.he}.resx`, keys `Campaign.Book.*` |
 | Website | `site/` (see `site/README.md`), guide section `#book`, tour row, screenshots `book-panel` and `book-pages`, tools `capture-screenshots.mjs`, `demo-art.py`, `book-pages.py` |
@@ -68,6 +70,9 @@ worker run from that directory, and one run against a real model (a small Anthro
 6. **One build per GM**: the `_busy` slot in `BookBuilds` is taken before any await.
 7. **A model never sees a picture and cannot move or drop one**; `PlaceArt` runs after `Overlay`.
 8. **The decoder is not in the server process.** Any worker failure returns "keep the picture"; the server never throws on it.
+9. **The party book places only pictures made for the party, in the party's own slots.** The tag is checked in three places (`BookSlots.Choose`,
+   the tag check in `BookArtReader`, and `BookArt.Slot(key, audience)`), and an upload's key must be one of the slots that edition's source makes
+   (`BookArtService`). A stranger's slot is `mask:<id>`, never the actor's.
 
 ## 5. What to distrust
 
@@ -101,6 +106,9 @@ For each, copy the file, apply the change, run the named tests, expect a failure
 - `BookBlocks.Mention` and `BookSectionWorker`: break the mention parity with the renderer; accept a length-cut reply; let a failed retry overwrite a refined chapter.
 - `BookBuildKey`: drop the rules text or checks version from the key.
 - `BookBuilds`: take the busy slot after an await (test: 6 parallel starts).
+- Book art (`BookArtTests.Slots.cs`): let a GM picture through in `BookSlots.Choose`, in the reader's tag check, or in `BookArt.Slot`; key a
+  stranger as `actor:`; skip the slot check in `BookArtService.UploadAsync`; place a header without checking the title line. All six were caught in
+  session 2.
 Anything that survives is a missing test; add it.
 
 **C. Questions to answer by reading code, not docs**

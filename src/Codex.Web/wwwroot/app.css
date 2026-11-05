@@ -1092,6 +1092,8 @@ a.user-chip:active { transform: scale(0.97); }
 }
 .portrait-upload:hover { color: var(--accent); border-color: var(--accent); }
 .portrait-upload:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* The book tray's upload control is a link-styled label around a hidden file input: the ring goes on the label. */
+.book-art-file:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* ---------------------------------------------------------------------------
    Cover art: campaign cards and the workspace header

@@ -145,13 +145,72 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         Assert.Equal(0, await player.GetByTestId("book-panel").CountAsync());
     }
 
+    [Fact]
+    public async Task TheGmPutsAPictureInTheCoverSlot_ThePartyBookShowsIt_AndTheGmTrayCallsItTheParty()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "ba-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Gullwatch");
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        var toggle = dm.GetByTestId("book-art-toggle");
+        await Assertions.Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false");
+        await toggle.ClickAsync();
+        await Assertions.Expect(toggle).ToHaveAttributeAsync("aria-expanded", "true");
+        var slots = dm.GetByTestId("book-art-slots");
+        await Assertions.Expect(slots).ToBeVisibleAsync();
+
+        // The cover is the first row. Its file input can take keyboard focus, and the ring is drawn on its label.
+        var cover = slots.Locator("li").First;
+        await Assertions.Expect(cover).ToContainTextAsync("Cover");
+        await Assertions.Expect(cover).ToContainTextAsync("no picture");
+        var input = cover.Locator("input[type=file]");
+        await input.FocusAsync();
+        Assert.True(await input.EvaluateAsync<bool>("e => document.activeElement === e"));
+        Assert.NotEqual("none", await cover.Locator("label.book-art-file").EvaluateAsync<string>("l => getComputedStyle(l).outlineStyle"));
+
+        using var bitmap = new SkiaSharp.SKBitmap(new SkiaSharp.SKImageInfo(64, 80));
+        bitmap.Erase(new SkiaSharp.SKColor(120, 40, 30));
+        var png = SkiaSharp.SKImage.FromBitmap(bitmap).Encode(SkiaSharp.SKEncodedImageFormat.Png, 90).ToArray();
+        await input.SetInputFilesAsync(new FilePayload { Name = "cover.png", MimeType = "image/png", Buffer = png });
+        await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Picture added.");
+        await Assertions.Expect(slots.Locator("li").First).ToContainTextAsync("your picture");
+        await Assertions.Expect(slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Remove" })).ToBeVisibleAsync();
+
+        // The campaign has no cover of its own, so a cover on the party book's title page is the one just added.
+        var party = await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party");
+        Assert.Equal(200, party.Status);
+        Assert.Contains("class=\"cover-art\"", await party.TextAsync(), StringComparison.Ordinal);
+
+        // In the GM's tray the same cover is the party edition's (it prints in both books), and there is nothing of the GM's to remove.
+        await dm.GetByTestId("book-edition").SelectOptionAsync("dm");
+        await Assertions.Expect(slots.Locator("li").First).ToContainTextAsync("party edition's picture");
+        await Assertions.Expect(slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Remove" })).ToHaveCountAsync(0);
+        Assert.Contains("class=\"cover-art\"", await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/dm")).TextAsync(), StringComparison.Ordinal);
+
+        // Back in the party tray, removing it takes it out of the book.
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Remove" }).ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Picture removed.");
+        await Assertions.Expect(slots.Locator("li").First).ToContainTextAsync("no picture");
+        Assert.DoesNotContain("class=\"cover-art\"", await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party")).TextAsync(), StringComparison.Ordinal);
+        Assert.Empty(pageErrors);
+    }
+
+    [InlineData(500, "could not be printed", "print-failed")]
     [Theory]
     [InlineData(429, "Another book is being printed", "busy")]
     [InlineData(503, "There is no browser to print with", "no-browser")]
     [InlineData(503, "too old to print a book", "browser-too-old")]
     [InlineData(503, "would not start", "launch-failed")]
     [InlineData(504, "took too long", "timeout")]
-    [InlineData(500, "could not be printed", "print-failed")]
     public async Task ARefusedPrintIsSaidOnThePage_NotShownAsAnErrorDocument(int status, string expected, string code)
     {
         const string password = "Correct-Horse-1";

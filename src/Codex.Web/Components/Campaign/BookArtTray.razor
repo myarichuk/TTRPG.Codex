@@ -65,7 +65,7 @@
         <li class="d-flex gap-2 align-items-baseline flex-wrap @(slot.Kind == BookSlots.Header ? "ps-2" : slot.Kind == BookSlots.Entry ? "ps-3" : string.Empty)" data-testid="@id">
             <bdi dir="auto" id="@(id + "-name")">@name</bdi>
             <span class="small-muted" data-testid="@(id + "-state")">@State(slot)</span>
-            <label class="btn btn-link btn-sm p-0">
+            <label class="btn btn-link btn-sm p-0 book-art-file">
                 @(slot.Mine ? L["Campaign.Book.Art.Replace"] : L["Campaign.Book.Art.Upload"])<span class="visually-hidden"> @name</span>
                 <InputFile OnChange="e => UploadAsync(slot, e)" accept="@ArtService.Accept" class="visually-hidden" disabled="@(working != null)" data-testid="@(id + "-file")" />
             </label>

@@ -991,7 +991,12 @@ drop cap in place.
 
 **The tray.** `BookArtTray.razor`, under "Pictures for this book" in the panel, lists the cover, each chapter's header and its entries. Each row shows
 its state: your picture, the party edition's, its own picture, or none. Each row has upload and remove buttons and a status line read out to screen
-readers.
+readers. Entries with the same name, such as two strangers, are numbered "(1)", "(2)" in the tray only; the numbers come from that edition's labels.
+The e2e test `TheGmPutsAPictureInTheCoverSlot...` drives the real tray in the real app:
+- it uploads to the party cover and finds it on the party page;
+- the GM tray then shows it as the party edition's picture;
+- removing it takes it out of the page;
+- the file input takes keyboard focus, and its label draws a focus ring.
 
 Mutants caught: GM pictures accepted for a party slot in `Choose`, in the reader and in the lookup; the mask key replaced by the actor key; the
 service's slot check skipped; the header placed without the title check.
@@ -999,7 +1004,6 @@ service's slot check skipped; the header placed without the title check.
 **Not done:**
 - No thumbnails in the tray; it shows each slot's state only.
 - There is no picture for a slot that no longer exists (it stays stored and the tray does not show it).
-- The upload path has no end-to-end browser test.
 - The Russian and Hebrew strings are written by the model.
 - Restoring a backup does not bring book pictures back. No backup image comes back automatically; a backup only copies them.
 
