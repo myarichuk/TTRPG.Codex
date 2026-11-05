@@ -131,6 +131,8 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         // A lone backtick opens nothing: what follows it is still escaped.
         Assert.Equal("a ` \\<b>\n", BookDraftWriter.Text("a ` <b>", Names, dm: true));
         Assert.Equal("open \n", BookDraftWriter.Text("open [[actor:a1 never closes", Names, dm: true));
+        // A break is the GM's to write: one in campaign text (a player's biography) prints as its words, never breaking or restyling a page.
+        Assert.Equal("Bio\n\n\\\\page {display:none}\n\\\\column\n", BookDraftWriter.Text("Bio\n\n\\page {display:none}\n\\column", Names, dm: false));
         Assert.Equal("Text\n\n{{secret\nThe truth.\n}}\n\n", BookDraftWriter.Text("Text\n:::dm\nThe truth.\n:::", Names, dm: true));
         Assert.Equal("Text\n", BookDraftWriter.Text("Text\n:::dm\nThe truth.\n:::", Names, dm: false));
     }

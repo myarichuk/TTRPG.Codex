@@ -201,7 +201,15 @@ public static class BookDraftWriter
                 continue;
             }
 
-            if (!fenced) lines[i] = EscapeHtml(lines[i]);
+            if (fenced) continue;
+            lines[i] = EscapeHtml(lines[i]);
+            // A page or column break is the GM's to write, not the campaign's: "\page {display:none}" in a biography would break or restyle a
+            // page. Escaped, it prints as the words.
+            if (t.StartsWith(@"\page", StringComparison.Ordinal) || t.StartsWith(@"\column", StringComparison.Ordinal))
+            {
+                var lead = lines[i].Length - lines[i].TrimStart().Length;
+                lines[i] = lines[i][..lead] + "\\" + lines[i][lead..];
+            }
         }
 
         return string.Join('\n', lines);

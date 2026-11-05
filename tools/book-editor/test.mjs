@@ -113,6 +113,12 @@ assert.ok(stp[2].classList.contains('page') && !stp[2].hasAttribute('style'), st
 assert.ok(!styled.innerHTML.includes('CANARY_PAGE') && !styled.innerHTML.includes('onclick'), styled.innerHTML);
 assert.equal(stp[3].getAttribute('style'), 'color:#a00');
 
+// What the generator writes for a break in campaign text ("\\\\page", escaped) is words on the page, not a break.
+const escaped = drawn('Bio\n\n\\\\page {display:none}\n\\\\column\n');
+assert.equal(escaped.querySelectorAll('.page').length, 1);
+assert.equal(escaped.querySelectorAll('.columnSplit').length, 1, 'only the filler column: ' + escaped.innerHTML);
+assert.ok(escaped.textContent.includes('\\page') && escaped.textContent.includes('\\column'), escaped.innerHTML);
+
 // Page numbers as Homebrewery's Blank counts them: every page counts (the cover too) unless it skips, a reset page is 1; the renderer gives
 // each page Homebrewery's number element, except covers and pages whose text placed one; contents lines take the counted number, in
 // Homebrewery's two-span shape.

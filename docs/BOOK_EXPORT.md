@@ -1486,6 +1486,10 @@ The GM asked for option 1 of the phase-1 report: themes on Homebrewery's Blank l
 - **Page numbers and contents as Homebrewery's:** the renderer gives each page Homebrewery's `<div class="pageNumber auto">` (beside the
   columns, so fitting never moves it; none on a cover or where the text placed one), counted as Blank counts (`skipCounting`, `resetCounting`),
   and writes contents lines as two spans, which Blank's `.toc` rules join with dot leaders.
+- **A break in campaign text is escaped** (`BookDraftWriter`): a `\page` or `\column` line in a biography or wiki page prints as its words,
+  so player-written text cannot break, hide or restyle a page now that `\page {…}` styles one. Breaks are the GM's to write.
+  Homebrewery's inline `{…}` and `{{…}}` syntax in campaign text is still read (since phase 1): a player can style or box their own words, with
+  styles cleaned as everywhere; not escaped yet.
 - **`\page {classes,style}`** is read as Homebrewery reads it (marked-hbfm's own inject parser on the `\page` line): plain class names go on
   the page, a style goes through the cleaner. A styled break is now an edit (`BookDraftText.IsBreak`), so a chapter with `\page {reliquary}`
   is not replaced silently when the campaign changes; plain breaks are still layout.
@@ -1529,6 +1533,10 @@ straight after typing (the typed line is saved and drawn in the new theme).
 - RTL: not applicable yet (English only); the sheet's `float: left` drop caps and left-side ribbons would need logical properties first.
 - The preview redraw time was not measured on a large book in the GM's browser; the print browser laid out and printed 44 Ashen Vellum pages
   in about 2.5 s (browser start included).
+- Read back from the PDF, Ashen Vellum's drop cap splits a chapter's first word ("P UBLIC") and its small-caps lead-in and bold (small caps,
+  the faces have no bold) come back in capitals ("T HE TIDE"). Search and copy see that; the long-book test steps around the first paragraph.
+- Plain looks different from phase 1: Blank's page padding (1.4/1.9/1.7 cm), Blank's page number in the corner (switching sides on even
+  pages), Homebrewery's cover and wide contents.
 - Small soft gradients (heading rules, the footer rule, the monster frame, the cover murk) are still written as small pictures each time they
   are drawn (about 4 KB a page).
 - Still from 41.9: Safari and Firefox, the overflow report in the panel, phone, screen reader, `asset:` pictures in free text, the trust
