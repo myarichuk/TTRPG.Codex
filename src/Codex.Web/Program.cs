@@ -172,6 +172,7 @@ builder.Services.AddScoped<Codex.Web.Book.BookArtService>();
 builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.GetSection(Codex.Web.Book.BookPdfOptions.Section));
 builder.Services.AddSingleton<Codex.Web.Book.BookPdf>();
 builder.Services.AddSingleton<Codex.Web.Book.IBookModels, Codex.Web.Book.AiBookModels>();
+builder.Services.AddSingleton<Codex.Web.Book.IBookImages, Codex.Web.Book.AiBookImages>();
 // A singleton that must read a campaign's roles afresh for each request: it asks the (scoped) resolver through a scope of its own.
 builder.Services.AddSingleton<Codex.Web.Book.BookGate>();
 Func<string, string, Task<CampaignAccess?>> BookResolver(IServiceProvider sp) => async (campaignId, userId) =>

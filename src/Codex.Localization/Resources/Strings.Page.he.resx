@@ -244,4 +244,8 @@
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>העתיקו אותם ממחירון הספק. היישום אינו מגיע עם מחירים, ולכן בלעדיהם הוא מציג רק אסימונים ולא עלות מנוחשת.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>מחיר חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>
   <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>קלט {0} / פלט {1} לכל מיליון אסימונים</value></data>
+  <data name="Page.AiSettings.PricePerImage" xml:space="preserve"><value>לכל תמונה</value></data>
+  <data name="Page.AiSettings.PriceImageHint" xml:space="preserve"><value>העתיקו אותו ממחירון הספק. בלעדיו היישום סופר תמונות ואינו מנחש עלות.</value></data>
+  <data name="Page.AiSettings.PriceImageBad" xml:space="preserve"><value>מחיר לתמונה חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>
+  <data name="Page.AiSettings.PriceNoteImage" xml:space="preserve"><value>{0} לכל תמונה</value></data>
 </root>

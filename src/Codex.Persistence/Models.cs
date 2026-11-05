@@ -259,6 +259,9 @@ public class AiProviderConfig
     /// <summary>What the user pays per million output tokens. See <see cref="InputPricePerMTok"/>.</summary>
     public decimal? OutputPricePerMTok { get; set; }
 
+    /// <summary>What the user pays per picture, as they entered it; null when they did not say. Image models only.</summary>
+    public decimal? PricePerImage { get; set; }
+
     /// <summary>A short label for the currency the prices are in ("USD", "$", "credits"). Shown, never interpreted.</summary>
     public string PriceLabel { get; set; } = string.Empty;
 

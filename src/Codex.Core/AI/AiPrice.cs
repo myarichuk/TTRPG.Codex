@@ -5,6 +5,9 @@ namespace Codex.Core.AI;
 /// <summary>The prices in force for a call, as the user entered them (either may be missing).</summary>
 public sealed record AiPriceQuote(decimal? InputPerMTok, decimal? OutputPerMTok, string Label);
 
+/// <summary>What one picture costs, as the user entered it.</summary>
+public sealed record AiImagePrice(decimal PerImage, string Label);
+
 /// <summary>
 /// What a call cost, from prices the user typed in. The app ships no price table: prices change, and the endpoint can be
 /// anything that speaks the OpenAI protocol, so the only honest source is the person paying. With no price the answer is
@@ -15,11 +18,18 @@ public static class AiPrice
     /// <summary>The most a price field accepts (per million tokens); far above any real model, small enough that the sums cannot overflow.</summary>
     public const decimal MaxPerMTok = 100_000m;
 
+    /// <summary>The most a price per picture accepts; far above any real model.</summary>
+    public const decimal MaxPerImage = 10_000m;
+
     public const int MaxLabelLength = 12;
 
     /// <summary>Null unless a price is a usable number: not negative, not above <see cref="MaxPerMTok"/>.</summary>
     public static decimal? Clean(decimal? price) =>
         price is { } p && p >= 0 && p <= MaxPerMTok ? p : null;
+
+    /// <summary>Null unless a price per picture is a usable number: not negative, not above <see cref="MaxPerImage"/>.</summary>
+    public static decimal? CleanImage(decimal? price) =>
+        price is { } p && p >= 0 && p <= MaxPerImage ? p : null;
 
     /// <summary>The cost of the tokens, or null when it cannot be known: a price is missing, or a count is.
     /// A model that is free (both prices 0) costs 0, which is a fact the user stated.</summary>

@@ -36,6 +36,16 @@ public class BookArtDocument
     public int DirectorUnpricedRuns { get; set; }
     public string DirectorPriceLabel { get; set; } = string.Empty;
 
+    /// <summary>The look every picture of this book is drawn in, chosen once for the book (both editions). Null until the GM picks one:
+    /// <see cref="BookArtStyle.Default"/> is used then.</summary>
+    public BookArtStyle? Style { get; set; }
+
+    /// <summary>What drawing pictures has cost, over all runs: pictures drawn, and money where a price per picture was known.</summary>
+    public int DrawnPictures { get; set; }
+    public decimal DrawCost { get; set; }
+    public int DrawUnpricedPictures { get; set; }
+    public string DrawPriceLabel { get; set; } = string.Empty;
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public static string IdFor(string campaignId) => "bookart/" + campaignId;
@@ -54,8 +64,15 @@ public class BookArtPicture
     /// <summary><see cref="BookArtDocument.Party"/> or <see cref="BookArtDocument.Dm"/>: the edition whose slot it was made for.</summary>
     public string BuiltFrom { get; set; } = string.Empty;
 
-    /// <summary>"upload" for a picture the GM chose; later steps add drawn ones.</summary>
+    /// <summary>"upload" for a picture the GM chose, "drawn" for one an image model drew from a suggestion.</summary>
     public string Origin { get; set; } = "upload";
+
+    /// <summary>For a drawn picture: a hash of what it was drawn from (the slot's kind, the visual, the mood and the style), so the tray can say
+    /// "drawn from an older description" without the picture being thrown away. Null for an upload.</summary>
+    public string? Inputs { get; set; }
+
+    /// <summary>For a drawn picture: the short visual description it was drawn from, to draw it again from.</summary>
+    public string? Visual { get; set; }
 
     public string Attachment { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
@@ -96,7 +113,7 @@ public interface IBookArtRepository
 
     /// <summary>Puts <paramref name="image"/> (already through <see cref="BookImageSanitizer"/>) in a slot for one edition, replacing what was there.
     /// False when the caller is not the GM now, the key or edition is malformed, or the campaign holds too many pictures.</summary>
-    Task<bool> PutAsync(CampaignAccess dm, string slot, string builtFrom, string label, BookImage image, string origin = "upload");
+    Task<bool> PutAsync(CampaignAccess dm, string slot, string builtFrom, string label, BookImage image, string origin = "upload", BookArtDrawn? drawn = null);
 
     Task<bool> RemoveAsync(CampaignAccess dm, string slot, string builtFrom);
 
@@ -108,7 +125,16 @@ public interface IBookArtRepository
 
     /// <summary>Adds one run's spend to the director totals. False when the caller is not the GM now.</summary>
     Task<bool> AddDirectorSpendAsync(CampaignAccess dm, BookArtSpend spend);
+
+    /// <summary>Sets the book's drawing style, normalised to the vocabulary. False when the caller is not the GM now.</summary>
+    Task<bool> SetStyleAsync(CampaignAccess dm, BookArtStyle style);
+
+    /// <summary>Adds one drawing run's pictures to the totals; <paramref name="cost"/> null when no price per picture was set.</summary>
+    Task<bool> AddDrawSpendAsync(CampaignAccess dm, int pictures, decimal? cost, string? priceLabel);
 }
+
+/// <summary>What a drawn picture was drawn from (<see cref="BookArtPicture.Inputs"/>, <see cref="BookArtPicture.Visual"/>).</summary>
+public sealed record BookArtDrawn(string Inputs, string Visual);
 
 public class RavenBookArtRepository(RavenDbService dbService) : IBookArtRepository
 {
@@ -122,7 +148,7 @@ public class RavenBookArtRepository(RavenDbService dbService) : IBookArtReposito
         return art != null && art.CampaignId == now.CampaignId ? art : null;
     }
 
-    public async Task<bool> PutAsync(CampaignAccess dm, string slot, string builtFrom, string label, BookImage image, string origin = "upload")
+    public async Task<bool> PutAsync(CampaignAccess dm, string slot, string builtFrom, string label, BookImage image, string origin = "upload", BookArtDrawn? drawn = null)
     {
         if (!BookSlots.IsKey(slot) || !BookArtDocument.IsEdition(builtFrom) || image.Bytes.Length == 0 || image.Bytes.Length > RavenMediaStore.MaxBytes
             || !RavenMediaStore.AllowedContentTypes.Contains(image.ContentType))
@@ -153,7 +179,8 @@ public class RavenBookArtRepository(RavenDbService dbService) : IBookArtReposito
             art.Pictures.Add(new BookArtPicture
             {
                 Slot = slot, BuiltFrom = builtFrom, Origin = origin, Attachment = name, ContentType = image.ContentType,
-                Width = image.Width, Height = image.Height, Bytes = image.Bytes.Length, Label = Clip(label), AddedBy = now.UserId
+                Width = image.Width, Height = image.Height, Bytes = image.Bytes.Length, Label = Clip(label), AddedBy = now.UserId,
+                Inputs = drawn?.Inputs, Visual = drawn == null ? null : Clip(drawn.Visual)
             });
             art.UpdatedAt = DateTime.UtcNow;
             // A new attachment under an existing name replaces it in the same save as the document's list, so the two never disagree.
@@ -227,6 +254,21 @@ public class RavenBookArtRepository(RavenDbService dbService) : IBookArtReposito
             else art.DirectorUnpricedRuns++;
         }
 
+        return true;
+    });
+
+    public Task<bool> SetStyleAsync(CampaignAccess dm, BookArtStyle style) => MutateAsync(dm, art =>
+    {
+        art.Style = BookArtStyles.Normalize(style);
+        return true;
+    });
+
+    public Task<bool> AddDrawSpendAsync(CampaignAccess dm, int pictures, decimal? cost, string? priceLabel) => MutateAsync(dm, art =>
+    {
+        if (pictures <= 0) return false;
+        art.DrawnPictures += pictures;
+        if (cost is { } c) { art.DrawCost += c; art.DrawPriceLabel = priceLabel ?? art.DrawPriceLabel; }
+        else art.DrawUnpricedPictures += pictures;
         return true;
     });
 

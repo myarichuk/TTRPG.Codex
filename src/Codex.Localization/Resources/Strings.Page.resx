@@ -244,4 +244,8 @@
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>Copy these from your provider's price list. The app ships no prices, so without them it shows tokens only, never a guessed cost.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>A price must be a number from 0 to {0}, or empty.</value></data>
   <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>in {0} / out {1} per 1M tokens</value></data>
+  <data name="Page.AiSettings.PricePerImage" xml:space="preserve"><value>Per picture</value></data>
+  <data name="Page.AiSettings.PriceImageHint" xml:space="preserve"><value>Copy this from your provider's price list. Without it the app counts pictures and never guesses a cost.</value></data>
+  <data name="Page.AiSettings.PriceImageBad" xml:space="preserve"><value>A price per picture must be a number from 0 to {0}, or empty.</value></data>
+  <data name="Page.AiSettings.PriceNoteImage" xml:space="preserve"><value>{0} per picture</value></data>
 </root>
