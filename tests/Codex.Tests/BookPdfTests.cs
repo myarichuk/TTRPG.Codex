@@ -102,8 +102,13 @@ public class BookBrowserTests
 
 public class BookPdfTests
 {
+    /// <summary>A CI runner (GitHub sets CI=true) is a non-root Linux user on a distro that refuses Chromium its own sandbox ("No usable sandbox!"):
+    /// the sandbox is switched off there, as the product's own error message says to do in such a container. Elsewhere it is left to decide itself,
+    /// so a developer's machine still prints with the sandbox on.</summary>
+    internal static bool? NoSandbox => string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.OrdinalIgnoreCase) ? true : null;
+
     private static BookPdf Printer(int timeoutSeconds = 90, int maxWaiting = 2, string? profileRoot = null) =>
-        new(Options.Create(new BookPdfOptions { TimeoutSeconds = timeoutSeconds, MaxWaiting = maxWaiting, ProfileRoot = profileRoot }), NullLogger<BookPdf>.Instance);
+        new(Options.Create(new BookPdfOptions { TimeoutSeconds = timeoutSeconds, MaxWaiting = maxWaiting, ProfileRoot = profileRoot, NoSandbox = NoSandbox }), NullLogger<BookPdf>.Instance);
 
     private static Task<BookPdfResult> Print(BookPdf printer, BookPrintJob job, CancellationToken cancel = default, string owner = "dm")
     {
