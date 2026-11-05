@@ -12,14 +12,33 @@ namespace Codex.Persistence;
 /// </summary>
 public static class BookCompiler
 {
-    public static BookDocument Compile(BookSource source, string language, BookLabels? labels = null)
+    public static BookDocument Compile(BookSource source, string language, BookLabels? labels = null) =>
+        Compile(source, language, labels, out _);
+
+    /// <summary>As <see cref="Compile(BookSource, string, BookLabels?)"/>, and says where each entry that can carry a picture has its heading:
+    /// the line, counted in the chapter's own Markdown, written at the moment the heading is written. A picture is placed from this and
+    /// not by looking for the heading's text again, because a body line that reads like the heading would be found first.</summary>
+    public static BookDocument Compile(BookSource source, string language, BookLabels? labels, out IReadOnlyList<BookEntryPosition> entries)
     {
         labels ??= new BookLabels();
         var chapters = new List<BookSection>();
+        var positions = new List<BookEntryPosition>();
+        var current = string.Empty;
+
+        // The heading of an entry, and its position. The chapter is "# title", a blank line, then this builder's text: two lines in.
+        void Head(StringBuilder sb, string prefix, string name, string? kind = null, string owner = "", string sub = "", bool hasArt = false, string placement = "")
+        {
+            var line = 2;
+            foreach (var c in sb.ToString().AsSpan()) if (c == '\n') line++;
+            var heading = prefix + Escape(name);
+            sb.Append(heading).Append("\n\n");
+            if (kind != null) positions.Add(new BookEntryPosition(current, heading, line, kind, owner, sub, name, placement, hasArt));
+        }
 
         void Add(string id, string title, Action<StringBuilder> body)
         {
             var sb = new StringBuilder();
+            current = id;
             body(sb);
             if (sb.Length > 0)
             {
@@ -37,7 +56,7 @@ public static class BookCompiler
         {
             foreach (var actor in source.Actors.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase))
             {
-                sb.Append("## ").Append(Escape(actor.Name)).Append("\n\n");
+                Head(sb, "## ", actor.Name, "portrait", actor.Id, hasArt: actor.HasPortrait, placement: BookArtPlacement.Portrait);
                 Paragraph(sb, actor.PublicDescription);
                 Paragraph(sb, actor.Biography);
             }
@@ -47,10 +66,10 @@ public static class BookCompiler
         {
             foreach (var region in source.Regions.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
             {
-                sb.Append("## ").Append(Escape(region.Name)).Append("\n\n");
+                Head(sb, "## ", region.Name);
                 foreach (var place in region.Locations)
                 {
-                    sb.Append("### ").Append(Escape(place.Name)).Append("\n\n");
+                    Head(sb, "### ", place.Name, "location", region.Id, place.Id, place.HasArt, BookArtPlacement.Place);
                     Paragraph(sb, place.Description);
                 }
             }
@@ -84,7 +103,7 @@ public static class BookCompiler
         {
             foreach (var page in source.Wiki.OrderBy(p => p.Title, StringComparer.CurrentCultureIgnoreCase))
             {
-                sb.Append("## ").Append(Escape(page.Title)).Append("\n\n");
+                Head(sb, "## ", page.Title, "wiki", page.Id, hasArt: page.HasArt, placement: BookArtPlacement.Place);
                 Paragraph(sb, page.Body);
             }
         });
@@ -93,60 +112,34 @@ public static class BookCompiler
         {
             foreach (var entry in source.Homebrew.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase))
             {
-                sb.Append("## ").Append(Escape(entry.Name)).Append("\n\n");
+                Head(sb, "## ", entry.Name, "homebrew", entry.Id, hasArt: entry.HasArt, placement: BookArtPlacement.Portrait);
                 Paragraph(sb, entry.Description);
             }
         });
 
+        entries = positions;
         return new BookDocument(source.Campaign.Name, source.Campaign.Tagline, language, chapters, labels);
     }
 
     /// <summary>
-    /// Where this audience's existing pictures go: after the heading of the entry they belong to, as <c>(section, heading line, which
-    /// repeat of that line)</c>. Only pictures in <paramref name="art"/> are listed, and <paramref name="art"/> was read from the same
-    /// source, so an entry the audience may not see has neither a heading nor an anchor. The anchors are computed beside
-    /// <see cref="Compile"/>, in its order, so the two cannot disagree about which "Vera" a picture is for, and a picture is placed
-    /// after the chapter is written (or rewritten) and never goes through a model.
+    /// The pictures this audience has, matched to the entries <see cref="Compile(BookSource, string, BookLabels?, out IReadOnlyList{BookEntryPosition})"/>
+    /// wrote (so the entries are the audience's own, and the picture flag is the one its source holds: a stranger's mask has none).
+    /// <paramref name="art"/> was read from the same source; an entry it has no picture for is simply not listed.
     /// </summary>
-    public static IReadOnlyList<BookArtAnchor> ArtAnchors(BookSource source, BookArt art)
+    public static IReadOnlyList<BookArtAnchor> ArtAnchors(IReadOnlyList<BookEntryPosition> entries, BookArt art)
     {
         var anchors = new List<BookArtAnchor>();
-        var seen = new Dictionary<(string Section, string Heading), int>();
-
-        void Entry(string section, string prefix, string name, string? asset, string placement)
+        foreach (var entry in entries.Where(e => e.HasArt))
         {
-            var heading = prefix + Escape(name);
-            var repeat = seen.GetValueOrDefault((section, heading));
-            seen[(section, heading)] = repeat + 1;
-            if (asset != null)
+            var asset = entry.Kind switch
             {
-                anchors.Add(new BookArtAnchor(section, heading, repeat, asset, name, placement));
-            }
-        }
-
-        foreach (var actor in source.Actors.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase))
-        {
-            // The flag as the audience's source holds it (a stranger's mask has none): placement does not rely on whoever built the map.
-            Entry("cast", "## ", actor.Name, actor.HasPortrait ? art.Portrait(actor.Id) : null, BookArtPlacement.Portrait);
-        }
-
-        foreach (var region in source.Regions.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
-        {
-            Entry("gazetteer", "## ", region.Name, null, BookArtPlacement.Place);
-            foreach (var place in region.Locations)
-            {
-                Entry("gazetteer", "### ", place.Name, place.HasArt ? art.Location(region.Id, place.Id) : null, BookArtPlacement.Place);
-            }
-        }
-
-        foreach (var page in source.Wiki.OrderBy(p => p.Title, StringComparer.CurrentCultureIgnoreCase))
-        {
-            Entry("pages", "## ", page.Title, page.HasArt ? art.Wiki(page.Id) : null, BookArtPlacement.Place);
-        }
-
-        foreach (var entry in source.Homebrew.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase))
-        {
-            Entry("homebrew", "## ", entry.Name, entry.HasArt ? art.Homebrew(entry.Id) : null, BookArtPlacement.Portrait);
+                "portrait" => art.Portrait(entry.Owner),
+                "location" => art.Location(entry.Owner, entry.Sub),
+                "wiki" => art.Wiki(entry.Owner),
+                "homebrew" => art.Homebrew(entry.Owner),
+                _ => null
+            };
+            if (asset != null) anchors.Add(new BookArtAnchor(entry, asset));
         }
 
         return anchors;
@@ -214,6 +207,9 @@ public static class BookArtPlacement
     public const string Place = "art-place";
 }
 
-/// <summary>One existing picture and the heading it follows. <paramref name="Repeat"/> is 0 for the first entry with that heading line, 1 for the
-/// second, so two characters with one name each get their own picture.</summary>
-public sealed record BookArtAnchor(string Section, string Heading, int Repeat, string Asset, string Alt, string Placement);
+/// <summary>An entry of the compiled book that has a heading of its own, and where that heading is: <paramref name="Line"/> counts lines of the
+/// chapter's Markdown from zero. <paramref name="HasArt"/> is the picture flag the audience's source holds for it.</summary>
+public sealed record BookEntryPosition(string Section, string Heading, int Line, string Kind, string Owner, string Sub, string Alt, string Placement, bool HasArt);
+
+/// <summary>One existing picture and the entry whose heading it follows.</summary>
+public sealed record BookArtAnchor(BookEntryPosition Entry, string Asset);

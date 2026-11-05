@@ -27,48 +27,76 @@ public static class BookComposer
 
     public static BookDocument Compose(BookSource source, string language) => BookCompiler.Compile(source, language, Labels(language));
 
+    /// <summary>As <see cref="Compose(BookSource, string)"/>, with the positions of the headings that can carry a picture (for <see cref="PlaceArt"/>).</summary>
+    public static BookDocument Compose(BookSource source, string language, out IReadOnlyList<BookEntryPosition> entries) =>
+        BookCompiler.Compile(source, language, Labels(language), out entries);
+
     /// <summary>
     /// The document with the audience's existing pictures placed: the cover on the title page and each entry's picture after its heading.
-    /// This runs on the finished chapters (deterministic or rewritten) and never before a model: a model is not shown a picture, cannot
-    /// move or drop one, and the stored-build key does not see them. A rewritten chapter whose heading no longer reads as the entry's
-    /// name simply gets no picture, and <paramref name="placed"/> counts what was placed so a panel can say so.
+    /// This runs on the finished chapters and never before a model: a model is not shown a picture, cannot move or drop one, and the
+    /// stored-build key does not see them.
+    /// <para>Where a picture goes is decided by what is known about the chapter. A chapter that is still exactly what the compiler wrote
+    /// (<paramref name="compiled"/>) is placed by the line the compiler recorded for the entry's heading, so a body line that reads like a
+    /// heading, in an earlier entry or inside a code fence, cannot take the picture. A chapter a model rewrote may have changed the
+    /// order, the repeats and the lines, and the checks only keep the <i>set</i> of heading texts: its picture is placed only when its heading
+    /// is unambiguous (one entry has that text and one line of the chapter reads that way), and otherwise left out. A missing picture
+    /// is the safe failure; a picture under another entry's heading is not. <paramref name="placed"/> counts what was placed.</para>
     /// </summary>
-    public static BookDocument PlaceArt(BookDocument document, BookSource source, BookArt art, out int placed)
+    public static BookDocument PlaceArt(BookDocument document, BookDocument compiled, IReadOnlyList<BookEntryPosition> entries, BookArt art, out int placed)
     {
-        var anchors = BookCompiler.ArtAnchors(source, art);
+        var anchors = BookCompiler.ArtAnchors(entries, art);
         var count = 0;
         var sections = document.Sections.Select(section =>
         {
-            var mine = anchors.Where(a => a.Section == section.Id).ToList();
+            var mine = anchors.Where(a => a.Entry.Section == section.Id).ToList();
             if (mine.Count == 0) return section;
-            var seen = new Dictionary<string, int>(StringComparer.Ordinal);
-            var lines = new List<string>();
-            var fence = false;
-            foreach (var raw in section.Markdown.Split('\n'))
+            var raw = section.Markdown.Split('\n');
+            // Compared trimmed, written back as they were: two trailing spaces are a line break in this dialect.
+            var lines = raw.Select(l => l.TrimEnd('\r', ' ', '\t')).ToList();
+            var pristine = compiled.Sections.Any(c => c.Id == section.Id && c.Markdown == section.Markdown);
+            var inFence = new bool[lines.Count];
+            var fenced = false;
+            for (var i = 0; i < lines.Count; i++)
             {
-                var line = raw.TrimEnd('\r', ' ', '\t');
-                lines.Add(line);
-                // A fenced code block is text, not structure: a line in it that looks like a heading is not one, and a picture block
-                // placed there would print as literal braces.
-                if (line.TrimStart().StartsWith("```", StringComparison.Ordinal) || line.TrimStart().StartsWith("~~~", StringComparison.Ordinal))
-                {
-                    fence = !fence;
-                    continue;
-                }
-
-                if (fence) continue;
-                var repeat = seen.GetValueOrDefault(line);
-                seen[line] = repeat + 1;
-                var anchor = mine.FirstOrDefault(a => a.Heading == line && a.Repeat == repeat);
-                if (anchor == null) continue;
-                count++;
-                lines.Add(string.Empty);
-                lines.Add("{{" + anchor.Placement);
-                lines.Add("![" + BookCompiler.Escape(anchor.Alt) + "](asset:" + anchor.Asset + ")");
-                lines.Add("}}");
+                var t = lines[i].TrimStart();
+                if (t.StartsWith("```", StringComparison.Ordinal) || t.StartsWith("~~~", StringComparison.Ordinal)) { fenced = !fenced; continue; }
+                inFence[i] = fenced;
             }
 
-            return section with { Markdown = string.Join('\n', lines) };
+            var after = new Dictionary<int, BookArtAnchor>();
+            foreach (var anchor in mine)
+            {
+                int at;
+                if (pristine)
+                {
+                    at = anchor.Entry.Line;
+                    if (at < 0 || at >= lines.Count || lines[at] != anchor.Entry.Heading || inFence[at]) continue;
+                }
+                else
+                {
+                    var same = entries.Count(e => e.Section == section.Id && e.Heading == anchor.Entry.Heading);
+                    var found = Enumerable.Range(0, lines.Count).Where(i => !inFence[i] && lines[i] == anchor.Entry.Heading).ToList();
+                    if (same != 1 || found.Count != 1) continue;
+                    at = found[0];
+                }
+
+                after[at] = anchor;
+            }
+
+            if (after.Count == 0) return section;
+            var output = new List<string>();
+            for (var i = 0; i < lines.Count; i++)
+            {
+                output.Add(raw[i]);
+                if (!after.TryGetValue(i, out var anchor)) continue;
+                count++;
+                output.Add(string.Empty);
+                output.Add("{{" + anchor.Entry.Placement);
+                output.Add("![" + BookCompiler.Escape(anchor.Entry.Alt) + "](asset:" + anchor.Asset + ")");
+                output.Add("}}");
+            }
+
+            return section with { Markdown = string.Join('\n', output) };
         }).ToList();
         placed = count + (art.Cover() != null ? 1 : 0);
         return document with { Sections = sections, CoverAsset = art.Cover() };

@@ -213,9 +213,9 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
 
     private static (string Html, int Placed) Page(BookSource source, BookArt art, bool pictures = true)
     {
-        var document = BookComposer.Compose(source, "en");
+        var document = BookComposer.Compose(source, "en", out var entries);
         var chosen = pictures ? art : BookArt.None;
-        document = BookComposer.PlaceArt(document, source, chosen, out var placed);
+        document = BookComposer.PlaceArt(document, BookComposer.Compose(source, "en"), entries, chosen, out var placed);
         var html = BookHtml.Build(document, BookThemes.Plain, new BookHtmlOptions { BoxSecrets = source.Audience == BookAudience.Dm, Mention = BookCompiler.Mentions(source), Image = chosen.DataUri }).Html!;
         return (html, placed);
     }
@@ -265,29 +265,54 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
     }
 
     [Fact]
-    public async Task APictureIsPlacedAfterARewrite_AndAChapterWhoseHeadingChangedGetsNone()
+    public async Task APictureIsPlacedAfterARewriteOnlyWhenItsHeadingIsUnambiguous_AndNeverUnderTheWrongOne()
     {
         var (dm, _) = await SeedAsync();
         var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
         var art = await new BookArtReader(_media).ReadAsync(source);
-        var document = BookComposer.Compose(source, "en");
+        var document = BookComposer.Compose(source, "en", out var entries);
+        string Cast(BookDocument d) => d.Sections.First(x => x.Id == "cast").Markdown;
+        BookDocument Edit(Func<string, string> f) => document with { Sections = document.Sections.Select(x => x.Id == "cast" ? x with { Markdown = f(x.Markdown) } : x).ToList() };
+        BookDocument Place(BookDocument d) => BookComposer.PlaceArt(d, document, entries, art, out _);
+        Assert.Contains("## a\\-known", Cast(document), StringComparison.Ordinal);
 
-        Func<Func<string, string>, BookDocument> edit = f => document with { Sections = document.Sections.Select(x => x.Id == "cast" ? x with { Markdown = f(x.Markdown) } : x).ToList() };
-        var kept = edit(m => m);
-        var renamed = edit(m => m.Replace("## a\\-known", "## Somebody else"));
-        Assert.Contains("## a\\-known", document.Sections.First(x => x.Id == "cast").Markdown, StringComparison.Ordinal);
+        // The compiler's own text: placed by the recorded line.
+        Assert.Contains("asset:", Cast(Place(document)), StringComparison.Ordinal);
+        // A rewrite that kept the heading (even with CRLF and trailing spaces): placed, since the heading is unambiguous.
+        Assert.Contains("asset:", Cast(Place(Edit(m => m.Replace("\n", " \r\n") + "\nMore."))), StringComparison.Ordinal);
+        // A rewrite that renamed it: no picture, rather than a wrong one.
+        Assert.DoesNotContain("asset:", Cast(Place(Edit(m => m.Replace("## a\\-known", "## Somebody else")))), StringComparison.Ordinal);
+        // A rewrite that wrote the heading twice (the checks keep only the set of headings): ambiguous, so none.
+        Assert.DoesNotContain("asset:", Cast(Place(Edit(m => m + "\n\n## a\\-known\n\nAgain."))), StringComparison.Ordinal);
+        // A heading inside a code fence is not a heading.
+        var fenced = Cast(Place(Edit(m => "```\n## a\\-known\n```\n\n" + m)));
+        Assert.StartsWith("```\n## a\\-known\n```", fenced, StringComparison.Ordinal);
+        Assert.DoesNotContain("```\n## a\\-known\n\n{{", fenced, StringComparison.Ordinal);
+        Assert.Contains("asset:", fenced, StringComparison.Ordinal);
+    }
 
-        // Line endings and trailing spaces a rewrite may bring do not matter; a heading inside a code fence is not a heading.
-        var crlf = edit(m => m.Replace("\n", " \r\n"));
-        var fenced = edit(m => "```\n## a\\-known\n```\n\n" + m);
-        Assert.Contains("asset:", BookComposer.PlaceArt(crlf, source, art, out _).Sections.First(x => x.Id == "cast").Markdown, StringComparison.Ordinal);
-        var placed = BookComposer.PlaceArt(fenced, source, art, out _).Sections.First(x => x.Id == "cast").Markdown;
-        Assert.StartsWith("```\n## a\\-known\n```", placed, StringComparison.Ordinal);
-        Assert.DoesNotContain("```\n## a\\-known\n\n{{", placed, StringComparison.Ordinal);
-        Assert.Contains("asset:", placed, StringComparison.Ordinal);
+    [Fact]
+    public async Task ABodyLineThatReadsLikeAnotherEntrysHeading_DoesNotTakeThatEntrysPicture()
+    {
+        var (dm, id) = await SeedAsync();
+        // "History" sorts before "Vera" and its body has a subsection called "Vera"; only the page Vera has art.
+        await _wiki.SaveAsync(new WikiPageDocument { Id = "w-history", CampaignId = id, Slug = "history", Title = "History", Visibility = WikiVisibility.Party, Body = "Old days.\n\n## Vera\n\nA queen, long dead.\n\nLine one  \nLine two" });
+        await _wiki.SaveAsync(new WikiPageDocument { Id = "w-vera", CampaignId = id, Slug = "vera", Title = "Vera", Visibility = WikiVisibility.Party, HasArt = true, ArtVersion = 1, Body = "The harbourmaster." });
+        await PutAsync(dm, "w-vera", RavenMediaStore.EntryArt, 233);
+        var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+        var art = await new BookArtReader(_media).ReadAsync(source);
 
-        Assert.Contains("asset:", BookComposer.PlaceArt(kept, source, art, out _).Sections.First(x => x.Id == "cast").Markdown, StringComparison.Ordinal);
-        Assert.DoesNotContain("asset:", BookComposer.PlaceArt(renamed, source, art, out _).Sections.First(x => x.Id == "cast").Markdown, StringComparison.Ordinal);
+        var document = BookComposer.Compose(source, "en", out var entries);
+        var pages = BookComposer.PlaceArt(document, document, entries, art, out _).Sections.First(x => x.Id == "pages").Markdown;
+
+        var asset = "asset:" + art.Wiki("w-vera");
+        var at = pages.IndexOf(asset, StringComparison.Ordinal);
+        Assert.True(at > 0);
+        // After the page's own heading (the last "## Vera"), not after the subsection of History's body (the first).
+        Assert.True(at > pages.LastIndexOf("## Vera", StringComparison.Ordinal));
+        Assert.DoesNotContain("## Vera\n\n{{", pages.Substring(0, pages.LastIndexOf("## Vera", StringComparison.Ordinal)), StringComparison.Ordinal);
+        // Markdown hard breaks (two trailing spaces) survive placement.
+        Assert.Contains("Line one  \nLine two", pages, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -316,10 +341,12 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
 
         var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
         var art = await new BookArtReader(_media).ReadAsync(source);
-        var anchors = BookCompiler.ArtAnchors(source, art).Where(a => a.Alt == "Twin").ToList();
+        BookComposer.Compose(source, "en", out var entries);
+        var anchors = BookCompiler.ArtAnchors(entries, art).Where(a => a.Entry.Alt == "Twin").ToList();
 
-        Assert.Equal([0, 1], anchors.Select(a => a.Repeat).ToArray());
+        Assert.Equal(2, anchors.Count);
         Assert.NotEqual(anchors[0].Asset, anchors[1].Asset);
+        Assert.True(anchors[0].Entry.Line < anchors[1].Entry.Line);
         var html = Page(source, art).Html;
         Assert.Equal(2, Count(html, ">Twin</h2>.{0,120}?class=\"art-portrait\""));
         // Not just "a picture each": the first Twin's own picture after the first heading, the second's after the second.

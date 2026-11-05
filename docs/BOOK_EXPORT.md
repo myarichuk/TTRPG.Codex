@@ -887,7 +887,7 @@ remembered as itself. The place box is 172 mm in one column (it printed at half 
 page onto a second page). `.art` has a 120 mm height limit. Two dead CSS rules are gone. Vacuous test assertions replaced; mutants (fence, trim, flag, the 15% shortcut) now die.
 
 Open, in the order I would take them:
-1. **Anchoring is still by heading text.** A body line `## Vera` inside an earlier entry (a wiki page "History" with a `## Vera` subsection) still takes Vera's picture,
+1. **(Fixed in section 32.)** ~~Anchoring is still by heading text.~~ A body line `## Vera` inside an earlier entry (a wiki page "History" with a `## Vera` subsection) still takes Vera's picture,
    and the real heading gets none. Always a picture the party may see, so a misplacement, not a leak. A proper fix needs a per-entry marker emitted by `Compile`.
 2. **The decoder runs on player-uploaded portraits**, in-process (see the correction above). Options: decode out of process, scale only DM-uploaded media, or decode in the printing browser.
 3. **One global decoder queue of two**, shared by all users: one DM's first build of many large pictures delays everyone's preview and PDF, and the PDF slot is held meanwhile.
@@ -896,3 +896,25 @@ Open, in the order I would take them:
    shows every picture in the preview and drops some from the PDF ("limit"). The skips are not shown in the panel.
 5. Animated WebP/APNG that need scaling lose all but one frame (untested which); the cache's byte count can drift by one entry under a race; the column and drop-cap tests are
    string checks on the CSS, not on a render.
+
+## 32. Placing a picture by position, not by text (done)
+
+`BookCompiler.Compile(..., out entries)` records, as it writes each entry heading, the line of the chapter's Markdown it wrote it on (`BookEntryPosition`: section,
+heading, line, kind, owner, sub, alt, placement, and the picture flag from the audience's source). `ArtAnchors` now takes those entries and the art map; the old
+re-derivation of the compiler's sort order is gone.
+
+`BookComposer.PlaceArt(document, compiled, entries, art)` places by what is known about each chapter:
+- **A chapter still exactly as the compiler wrote it** is placed by the recorded line (and the line must still read as the heading and be outside a code fence). A body
+  line equal to a heading, in an earlier entry or in a fence, cannot take the picture: the test has a wiki page "History" with a `## Vera` subsection and a page "Vera" with art.
+- **A chapter a model rewrote** is placed only when its heading is unambiguous: exactly one entry in the chapter has that heading text and exactly one non-fenced line reads
+  that way. The checks keep only the *set* of heading texts, so a rewrite may reorder, repeat or drop headings; in those cases there is no picture, which is the safe failure.
+  Consequence: two characters with one name get their pictures in the compiler's text, and **neither** in a rewritten chapter. A rewritten chapter whose entries are
+  renamed also loses its pictures.
+- Lines are compared trimmed and written back as they were, because two trailing spaces are a line break in this dialect (a first version trimmed them and would have
+  removed hard breaks; a test pins that).
+
+No marker is written into the text: a marker would be seen by the model, could be dropped or edited by it, and would put a pseudo-token into headings, the contents and the
+PDF outline. Mutants killed: placing by first text match, accepting ambiguous headings, writing trimmed lines back.
+
+Not done: a rewrite that keeps its headings but moves entries around is placed by heading text and is therefore right only in that each picture follows *its own* heading; a
+`## Name` line in the **body** of a rewritten entry that equals an entry heading makes that heading ambiguous, and its picture is left out.

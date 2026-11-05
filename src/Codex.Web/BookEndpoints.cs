@@ -149,7 +149,8 @@ public static class BookEndpoints
 
         var language = string.IsNullOrWhiteSpace(lang) ? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName : lang;
         var fonts = Path.GetFullPath(Path.Combine(env.WebRootPath, "fonts"));
-        var document = BookComposer.Compose(source, language);
+        var document = BookComposer.Compose(source, language, out var entries);
+        var compiled = document;
         // The DM's stored AI rewrite stands in for a chapter only when asked for ("ai=1") and only for a chapter built from exactly what
         // it is made from now: a chapter that changed, or was hidden from this edition since, prints from the campaign as it is.
         if (ai == "1")
@@ -160,7 +161,7 @@ public static class BookEndpoints
         // The pictures the book already has, read for this edition only (the art reader asks the media store for nothing the source does not
         // hold), placed after the chapters are final. "pics=0" leaves them out: a book with many pictures is a heavy page to preview.
         var art = pics == "0" ? BookArt.None : await artReader.ReadAsync(source, forPrint ? BookArtQuality.Print : BookArtQuality.Preview, cols == "2" ? 2 : 1, cancel);
-        document = BookComposer.PlaceArt(document, source, art, out _);
+        document = BookComposer.PlaceArt(document, compiled, entries, art, out _);
 
         BookHtmlResult Build(IReadOnlyDictionary<string, int>? numbers) => BookHtml.Build(document, chosen, new BookHtmlOptions
         {
