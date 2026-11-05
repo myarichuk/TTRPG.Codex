@@ -1,0 +1,273 @@
+using System.Text.RegularExpressions;
+using Codex.Persistence;
+using Codex.Web.Book;
+
+namespace Codex.Tests;
+
+/// <summary>
+/// The editable book (docs/BOOK_EXPORT.md 41): the generator, the draft store and the service. The party draft is generated from the party source
+/// only, so it holds no <c>CANARY_*</c> string and not even the id of an actor the party knows only by a mask; the GM's edits are the GM's, and a
+/// chapter nobody edited follows the campaign by itself.
+/// </summary>
+[Collection("RavenDb")]
+public class BookDraftTests : IClassFixture<RavenDbFixture>
+{
+    private const string DmUser = "draft_dm_user";
+    private const string PlayerUser = "draft_player_user";
+
+    private readonly CampaignRepository _campaigns;
+    private readonly ActorRepository _actors;
+    private readonly RavenWikiRepository _wiki;
+    private readonly BookSourceReader _reader;
+    private readonly RavenBookDraftRepository _store;
+    private readonly BookDrafts _drafts;
+    private readonly RavenDbService _db;
+
+    public BookDraftTests(RavenDbFixture fixture)
+    {
+        var db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        _actors = new ActorRepository(db);
+        var sessions = new RavenSessionRepository(db);
+        var notes = new RavenNoteRepository(db);
+        var regions = new RegionRepository(db);
+        var facts = new FactRepository(db);
+        var encounters = new RavenEncounterRepository(db);
+        var homebrew = new RavenHomebrewRepository(db);
+        _wiki = new RavenWikiRepository(db);
+        _store = new RavenBookDraftRepository(db);
+        _db = db;
+        _campaigns = new CampaignRepository(db, new NoOpSystemCatalog(), _actors, sessions, notes, regions, facts, homebrew, encounters, _wiki, bookDraftRepository: _store);
+        _reader = new BookSourceReader(_campaigns, _actors, sessions, encounters, facts, notes, regions, homebrew, _wiki);
+        _drafts = new BookDrafts(_reader, _store, new RavenBookArtRepository(db), new BookArtReader(new RavenMediaStore(db)), new CampaignAccessResolver(_campaigns));
+    }
+
+    private async Task<(CampaignAccess Dm, string Id)> SeedAsync()
+    {
+        var id = "draft-" + Guid.NewGuid().ToString("N");
+        await _campaigns.SaveAsync(new CampaignDocument
+        {
+            Id = id, Name = "Saltmere", SystemId = "srd5e", OwnerId = DmUser, Tagline = "PUBLIC_TAGLINE",
+            Description = "PUBLIC_DESCRIPTION\n\n:::dm\nCANARY_CAMPAIGN_DM\n:::",
+            Members = { new CampaignMember { UserId = DmUser, Role = CampaignRole.DM }, new CampaignMember { UserId = PlayerUser, Role = CampaignRole.Player } },
+            ActivePacks = { "srd5e" }
+        });
+        var dm = new CampaignAccess(id, DmUser, CampaignRole.DM);
+        await _actors.SaveAsync(new ActorDocument
+        {
+            Id = "a-vera-" + id, CampaignId = id, Name = "PUBLIC_Vera", Kind = ActorKind.NonPlayerCharacter, Visibility = ActorVisibility.Known,
+            // A mention of the hidden actor whose own label carries its name: the label must never be printed.
+            Biography = "PUBLIC_BIO_VERA met [[actor:a-hidden-" + id + "|CANARY_LABEL]] at <b>dawn</b> & dusk.\n\n:::dm\nCANARY_BIO_DM\n:::"
+        });
+        await _actors.SaveAsync(new ActorDocument { Id = "a-hidden-" + id, CampaignId = id, Name = "CANARY_HIDDEN_NAME", Visibility = ActorVisibility.Hidden, Biography = "CANARY_HIDDEN_BIO" });
+        await _actors.SaveAsync(new ActorDocument
+        {
+            Id = "CANARYID-unknown-" + id, CampaignId = id, Name = "CANARY_UNKNOWN_REALNAME", Visibility = ActorVisibility.Unknown,
+            PublicName = "PUBLIC_hooded stranger", PublicDescription = "PUBLIC_HOODED_LOOK", Biography = "CANARY_UNKNOWN_BIO"
+        });
+        await _wiki.SaveAsync(new WikiPageDocument
+        {
+            Id = "w-dm-" + id, CampaignId = id, Slug = "dm-page", Title = "CANARY_WIKI_DM_TITLE", Body = "CANARY_WIKI_DM_BODY", Visibility = WikiVisibility.DmOnly, AuthorUserId = DmUser
+        });
+        await _wiki.SaveAsync(new WikiPageDocument
+        {
+            Id = "w-party-" + id, CampaignId = id, Slug = "docks", Title = "PUBLIC_Docks", Visibility = WikiVisibility.Party, AuthorUserId = DmUser,
+            Body = "PUBLIC_DOCKS_BODY, see [[CANARY_WIKI_DM_TITLE]] and [[CANARY_WIKI_DM_TITLE|PUBLIC_SHOWN]].\n\n:::dm\nCANARY_WIKI_BLOCK\n:::"
+        });
+        return (dm, id);
+    }
+
+    private Task BioAsync(string campaignId, string biography) => _actors.UpdateAsync("a-vera-" + campaignId, a => a.Biography = biography);
+
+    private static string All(IEnumerable<BookDraftGenerated> chapters) => string.Join("\n", chapters.Select(c => c.Markdown));
+
+    [Fact]
+    public async Task ThePartyDraft_HoldsNoCanary_NotEvenTheIdOfAMaskedActor_AndStillHasThePublicText()
+    {
+        var (dm, id) = await SeedAsync();
+        var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+
+        var markdown = All(BookDraftWriter.Generate(source, "en", null));
+
+        var leaked = Regex.Matches(markdown, @"CANARY\w*").Select(m => m.Value).Distinct().ToList();
+        Assert.True(leaked.Count == 0, "The party draft carries what the party may not read: " + string.Join(", ", leaked));
+        Assert.DoesNotContain(":::", markdown);
+        foreach (var shown in new[] { "PUBLIC\\_Vera", "PUBLIC_BIO_VERA", "PUBLIC\\_hooded stranger", "PUBLIC_HOODED_LOOK", "PUBLIC_DOCKS_BODY", "PUBLIC\\_SHOWN", "PUBLIC\\_TAGLINE" })
+        {
+            Assert.Contains(shown, markdown);
+        }
+
+        // The stranger's entry is keyed by its mask, as the party's slots are.
+        Assert.Contains("{{entry,#e-" + BookSlots.KeyFor("mask:CANARYID-unknown-" + id) + "}}", markdown);
+        // HTML in the campaign's text is text, not markup.
+        Assert.Contains(@"\<b>dawn\</b> \& dusk", markdown);
+    }
+
+    [Fact]
+    public async Task TheGmDraft_BoxesSecretsInSecretBlocks_AndNeverWritesTheAppsOwnMarkers()
+    {
+        var (dm, _) = await SeedAsync();
+        var source = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
+
+        var markdown = All(BookDraftWriter.Generate(source, "en", null));
+
+        Assert.Contains("{{secret\nCANARY_BIO_DM\n}}", markdown);
+        Assert.Contains("CANARY\\_WIKI\\_DM\\_TITLE", markdown);
+        // ":::" is a definition list to Homebrewery's renderer: a secret written that way would print as text.
+        Assert.DoesNotContain(":::", markdown);
+        // The label of a mention is never used; the GM edition names the hidden actor by its name.
+        Assert.DoesNotContain("CANARY_LABEL", markdown);
+        Assert.Contains("CANARY\\_HIDDEN\\_NAME", markdown);
+    }
+
+    [Fact]
+    public void TheCampaignsMarkdown_BecomesDraftMarkdown()
+    {
+        string? Names(string kind, string id) => kind == "actor" && id == "a1" ? "Vera *Holloway*" : null;
+
+        Assert.Equal("Met Vera \\*Holloway\\* and .\n", BookDraftWriter.Text("Met [[actor:a1|Ignored]] and [[actor:a2|CANARY]].", Names, dm: true));
+        Assert.Equal("See Docks and here.\n", BookDraftWriter.Text("See [[Docks]] and [[Old page|here]].", Names, dm: false));
+        Assert.Equal("A map\\.\n", BookDraftWriter.Text("![A map.](asset:a3)", Names, dm: true));
+        Assert.Equal("\\<script>x\\</script> `<kept>` \\& more\n", BookDraftWriter.Text("<script>x</script> `<kept>` & more", Names, dm: true));
+        // A lone backtick opens nothing: what follows it is still escaped.
+        Assert.Equal("a ` \\<b>\n", BookDraftWriter.Text("a ` <b>", Names, dm: true));
+        Assert.Equal("open \n", BookDraftWriter.Text("open [[actor:a1 never closes", Names, dm: true));
+        Assert.Equal("Text\n\n{{secret\nThe truth.\n}}\n\n", BookDraftWriter.Text("Text\n:::dm\nThe truth.\n:::", Names, dm: true));
+        Assert.Equal("Text\n", BookDraftWriter.Text("Text\n:::dm\nThe truth.\n:::", Names, dm: false));
+    }
+
+    [Fact]
+    public async Task AChaptersText_IsSavedOnlyFromItsCurrentVersion_SoAnotherTabCannotOverwriteIt()
+    {
+        var (dm, _) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var cast = view.Chapters.Single(c => c.Section == "cast");
+
+        var first = await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown + "\nPUBLIC_TAB_ONE\n", cast.Version);
+        var second = await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown + "\nTAB_TWO\n", cast.Version);
+
+        Assert.Equal(BookDraftSave.Saved, first.Result);
+        Assert.Equal(BookDraftSave.Conflict, second.Result);
+        Assert.Equal(first.Version, second.Version);
+        var now = (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        Assert.Contains("PUBLIC_TAB_ONE", now.Markdown);
+        Assert.DoesNotContain("TAB_TWO", now.Markdown);
+        Assert.True(now.Edited);
+    }
+
+    [Fact]
+    public async Task WhenTheCampaignChanges_AnUneditedChapterFollows_AndAnEditedOneSaysSo_NamingTheEntry()
+    {
+        var (dm, id) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var cast = view.Chapters.Single(c => c.Section == "cast");
+        var pages = view.Chapters.Single(c => c.Section == "pages");
+        await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown.Replace("PUBLIC_BIO_VERA", "PUBLIC_GM_WORDS"), cast.Version);
+
+        await BioAsync(id, "PUBLIC_NEW_BIO");
+        await _wiki.SaveAsync(new WikiPageDocument
+        {
+            Id = "w-party-" + id, CampaignId = id, Slug = "docks", Title = "PUBLIC_Docks", Visibility = WikiVisibility.Party, AuthorUserId = DmUser, Body = "PUBLIC_NEW_DOCKS"
+        });
+
+        var after = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var castNow = after.Chapters.Single(c => c.Section == "cast");
+        var pagesNow = after.Chapters.Single(c => c.Section == "pages");
+
+        Assert.True(castNow.Stale);
+        Assert.Contains("PUBLIC_GM_WORDS", castNow.Markdown);
+        Assert.Equal(["PUBLIC_Vera"], castNow.Changed);
+        Assert.False(pagesNow.Stale);
+        Assert.False(pagesNow.Edited);
+        Assert.Contains("PUBLIC_NEW_DOCKS", pagesNow.Markdown);
+        Assert.Equal(1, after.Followed!.Updated);
+        Assert.True(pagesNow.Version > pages.Version);
+    }
+
+    [Fact]
+    public async Task Regenerate_TakesTheCampaignsText_AndUndoBringsBackTheGmsText_AndTheNotice()
+    {
+        var (dm, id) = await SeedAsync();
+        var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        var saved = await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown + "\nPUBLIC_MINE\n", cast.Version);
+        await BioAsync(id, "PUBLIC_NEW_BIO");
+
+        // From an older version (another tab) it is refused like any save.
+        Assert.Equal(BookDraftSave.Conflict, (await _drafts.RegenerateAsync(dm, "party", "en", "cast", cast.Version)).Result);
+        var regenerated = await _drafts.RegenerateAsync(dm, "party", "en", "cast", saved.Version);
+        Assert.Equal(BookDraftSave.Saved, regenerated.Result);
+        var fresh = (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        Assert.Contains("PUBLIC_NEW_BIO", fresh.Markdown);
+        Assert.DoesNotContain("PUBLIC_MINE", fresh.Markdown);
+        Assert.False(fresh.Edited);
+        Assert.False(fresh.Stale);
+        Assert.True(fresh.CanUndo);
+
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.UndoAsync(dm, "party", "en", "cast", fresh.Version)).Result);
+        var back = (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        Assert.Contains("PUBLIC_MINE", back.Markdown);
+        Assert.True(back.Stale);
+    }
+
+    [Fact]
+    public async Task KeepMine_HidesTheNotice_UntilTheCampaignChangesAgain()
+    {
+        var (dm, id) = await SeedAsync();
+        var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        var saved = await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown + "\nPUBLIC_MINE\n", cast.Version);
+        await BioAsync(id, "PUBLIC_ONE");
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.KeepAsync(dm, "party", "en", "cast", saved.Version)).Result);
+        Assert.False((await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast").Stale);
+
+        await BioAsync(id, "PUBLIC_TWO");
+        Assert.True((await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast").Stale);
+    }
+
+    [Fact]
+    public async Task PageAndColumnBreaks_AreLayout_NotEdits()
+    {
+        var (dm, id) = await SeedAsync();
+        var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        var fitted = cast.Markdown.Replace("{{entry,", "\\page\n\n{{entry,").Replace("PUBLIC_HOODED_LOOK", "PUBLIC_HOODED_LOOK\n\n\\column\n");
+        await _drafts.SaveChapterAsync(dm, "party", "en", "cast", fitted, cast.Version);
+
+        Assert.False((await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast").Edited);
+
+        // So it still follows the campaign by itself (its breaks are then those of the new text).
+        await BioAsync(id, "PUBLIC_NEW_BIO");
+        var after = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        Assert.Contains("PUBLIC_NEW_BIO", after.Markdown);
+        Assert.False(after.Stale);
+    }
+
+    [Fact]
+    public async Task OnlyTheCampaignsGm_HasADraft_AndAPostedSectionOrLanguageIsChecked()
+    {
+        var (dm, id) = await SeedAsync();
+        var player = new CampaignAccess(id, PlayerUser, CampaignRole.Player);
+        Assert.Null(await _drafts.OpenAsync(player, "party", "en"));
+        Assert.NotNull(await _drafts.OpenAsync(dm, "party", "en"));
+        Assert.Null(await _drafts.GetAsync(player, "party", "en"));
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.SaveChapterAsync(player, "party", "en", "cast", "x", 1)).Result);
+        // A forged role in the access is not believed: the campaign is asked.
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.SaveChapterAsync(new CampaignAccess(id, PlayerUser, CampaignRole.DM), "party", "en", "cast", "x", 1)).Result);
+
+        Assert.Null(await _drafts.OpenAsync(dm, "party", "../en"));
+        Assert.Null(await _drafts.OpenAsync(dm, "both", "en"));
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.SaveChapterAsync(dm, "party", "en", "../../users/x", "x", 1)).Result);
+        Assert.Equal(BookDraftSave.TooLarge, (await _drafts.SaveChapterAsync(dm, "party", "en", "cast", new string('x', BookDraftDocument.MaxChapterChars + 1), 1)).Result);
+    }
+
+    [Fact]
+    public async Task TheTwoEditions_AreTwoDrafts_AndDeletingTheCampaignDeletesBoth()
+    {
+        var (dm, id) = await SeedAsync();
+        var party = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var gm = (await _drafts.OpenAsync(dm, "dm", "en"))!;
+        Assert.DoesNotContain("CANARY", string.Join("", party.Chapters.Select(c => c.Markdown)));
+        Assert.Contains("CANARY", string.Join("", gm.Chapters.Select(c => c.Markdown)));
+
+        Assert.Equal(CampaignDeleteResult.Deleted, await _campaigns.DeleteAsync(id, DmUser));
+        using var session = _db.Store.OpenAsyncSession();
+        Assert.Empty(await session.Advanced.LoadStartingWithAsync<BookDraftChapter>(BookDraftDocument.PrefixFor(id)));
+    }
+}

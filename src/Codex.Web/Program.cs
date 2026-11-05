@@ -168,6 +168,7 @@ builder.Services.AddSingleton(sp => new BookImageScaler(sp.GetRequiredService<IB
 builder.Services.AddSingleton<BookArtReader>();
 builder.Services.AddSingleton<IBookBuildRepository, RavenBookBuildRepository>();
 builder.Services.AddSingleton<IBookArtRepository, RavenBookArtRepository>();
+builder.Services.AddSingleton<IBookDraftRepository, RavenBookDraftRepository>();
 builder.Services.AddScoped<Codex.Web.Book.BookArtService>();
 builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.GetSection(Codex.Web.Book.BookPdfOptions.Section));
 builder.Services.AddSingleton<Codex.Web.Book.BookPdf>();

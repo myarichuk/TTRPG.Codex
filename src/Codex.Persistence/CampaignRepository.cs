@@ -21,7 +21,8 @@ public class CampaignRepository(
     CampaignLifecycleHooks? lifecycle = null,
     ITemplateRepository? templateRepository = null,
     InviteAttempts? inviteAttempts = null,
-    IBookBuildRepository? bookBuildRepository = null) : ICampaignRepository
+    IBookBuildRepository? bookBuildRepository = null,
+    IBookDraftRepository? bookDraftRepository = null) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -149,6 +150,7 @@ public class CampaignRepository(
         if (journalRepository != null) await journalRepository.DeleteAllForCampaignAsync(campaignId);
         if (worldChatRepository != null) await worldChatRepository.DeleteAllForCampaignAsync(campaignId);
         if (bookBuildRepository != null) await bookBuildRepository.DeleteAllForCampaignAsync(campaignId);
+        if (bookDraftRepository != null) await bookDraftRepository.DeleteAllForCampaignAsync(campaignId);
         if (templateRepository != null) await templateRepository.DeleteAllForCampaignAsync(campaignId);
 
         // Attachments (cover art) are deleted with the document; the GM's book pictures are attachments of the book art document.
