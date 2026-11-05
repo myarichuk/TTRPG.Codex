@@ -158,8 +158,9 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         return now == null ? (BookDraftSave.NotAllowed, version) : await store.KeepAsync(made.Dm, edition, language, section, now.Key, version);
     }
 
-    public Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess asked, string edition, string language, string css, string pageSize, int version) =>
-        store.SaveSettingsAsync(asked, edition, language, css, pageSize, version);
+    public Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess asked, string edition, string language, string css, string pageSize, string theme,
+        int version) =>
+        store.SaveSettingsAsync(asked, edition, language, css, pageSize, theme, version);
 
     public Task<bool> StartOverAsync(CampaignAccess asked, string edition, string language) => store.DeleteAsync(asked, edition, language);
 

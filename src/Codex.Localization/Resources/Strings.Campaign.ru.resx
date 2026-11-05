@@ -842,6 +842,9 @@
   <data name="Campaign.Book.Draft.PanelHint" xml:space="preserve"><value>Редактируемая копия этого издания: Markdown, который можно свободно менять, рядом с предпросмотром страниц в том виде, в каком они печатаются. Каждая глава подскажет, если кампания изменилась после вашей правки.</value></data>
   <data name="Campaign.Book.Draft.Open" xml:space="preserve"><value>Открыть редактор: {0}</value></data>
   <data name="Campaign.Book.Draft.Title" xml:space="preserve"><value>Редактор книги: {0}</value></data>
+  <data name="Campaign.Book.Draft.Theme" xml:space="preserve"><value>Оформление</value></data>
+  <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>Простое</value></data>
+  <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Пепельный пергамент</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Скачать PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>Начать заново</value></data>
   <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>Удалить все правки в этом черновике и собрать его заново из кампании?</value></data>

@@ -27,7 +27,11 @@ export function brew(chapters) {
 /** Homebrewery's pages, as marked-hbfm renders them, before cleaning. */
 export function pagesHtml(markdown) {
   return markdown.split(PAGE_BREAK).map((text, i) => {
-    if (text.startsWith('\\page')) text = text.substring(text.indexOf('\n') + 1);
+    let tags = { classes: '', style: '' };
+    if (text.startsWith('\\page')) {
+      tags = pageTags(text.split('\n', 1)[0]);
+      text = text.includes('\n') ? text.substring(text.indexOf('\n') + 1) : '';
+    }
     // Homebrewery's own filler: an empty last column, so a page's columns fill from the left.
     text += '\n\n&nbsp;\n\\column\n&nbsp;';
     let html;
@@ -36,8 +40,28 @@ export function pagesHtml(markdown) {
     } catch (e) {
       html = '<p class="render-failed"></p>';
     }
-    return `<div class="page" id="p${i + 1}"><div class="columnWrapper">${html}</div></div>`;
+    const style = tags.style ? ` style="${tags.style.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"` : '';
+    return `<div class="page${tags.classes}"${style} id="p${i + 1}"><div class="columnWrapper">${html}</div></div>`;
   }).join('');
+}
+
+/**
+ * A page's own classes and styles, as Homebrewery reads them from its "\page {reliquary,background:#000}" line (the first line's injected
+ * tags, through marked-hbfm's own parser). Written into the page's markup here and cleaned with the rest: a class keeps to letters, digits,
+ * dashes and spaces, and a style is dropped whole if anything in it could load or run.
+ */
+function pageTags(line) {
+  let injected;
+  try {
+    injected = hbfm.marked.lexer(line)[0]?.tokens?.find(t => t.injectedTags !== undefined)?.injectedTags;
+  } catch {
+    injected = null;
+  }
+  if (!injected) return { classes: '', style: '' };
+  // Only plain class names: one that is not would make the cleaner drop the whole class attribute, and the page would stop being a page.
+  const classes = String(injected.classes || '').split(/\s+/).filter(c => /^[A-Za-z][\w-]{0,40}$/.test(c) && c !== 'page').map(c => ' ' + c).join('');
+  const style = injected.styles ? Object.entries(injected.styles).map(([k, v]) => `${k}:${v}`).join(';') : '';
+  return { classes, style };
 }
 
 /** The pages, cleaned, as nodes of `doc`. Parsed inert (a template's content runs nothing and loads nothing), then walked. */

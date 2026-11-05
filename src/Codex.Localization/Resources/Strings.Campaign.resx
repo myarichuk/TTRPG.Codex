@@ -842,6 +842,9 @@
   <data name="Campaign.Book.Draft.PanelHint" xml:space="preserve"><value>Make an editable copy of this edition: Markdown you change freely, beside a preview of the pages as they print. Each chapter tells you when the campaign has changed since you edited it.</value></data>
   <data name="Campaign.Book.Draft.Open" xml:space="preserve"><value>Open the editor: {0}</value></data>
   <data name="Campaign.Book.Draft.Title" xml:space="preserve"><value>Book editor: {0}</value></data>
+  <data name="Campaign.Book.Draft.Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>Plain</value></data>
+  <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Ashen Vellum</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Download PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>Start over</value></data>
   <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>Throw away every edit in this draft and make it again from the campaign?</value></data>

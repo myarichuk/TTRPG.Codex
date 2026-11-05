@@ -20,6 +20,15 @@
                 <h2 id="book-draft-title" class="h5 mb-0"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> @L["Campaign.Book.Draft.Title", EditionName]</h2>
                 <span class="small-muted" role="status" aria-live="polite" data-testid="book-draft-save-state">@SaveText</span>
                 <span class="flex-grow-1"></span>
+                <label class="book-draft-theme">
+                    <span>@L["Campaign.Book.Draft.Theme"]</span>
+                    <select class="form-select form-select-sm" value="@view.Theme" @onchange="ThemeAsync" disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-theme">
+                        @foreach (var theme in BookDraftThemes.All)
+                        {
+                            <option value="@theme.Id">@L["Campaign.Book.Draft.Theme." + theme.Id]</option>
+                        }
+                    </select>
+                </label>
                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="DownloadAsync" Disabled="@printing" data-testid="book-draft-download">
                     <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
                 </CodexButton>
@@ -322,7 +331,7 @@
             if (!cssDirty) return;
             var css = await ReadAsync(null);
             if (css == null) return;
-            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, css, view.PageSize, view.Version);
+            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, css, view.PageSize, view.Theme, view.Version);
             if (result == BookDraftSave.Saved)
             {
                 cssDirty = false;
@@ -413,6 +422,29 @@
             if (result == BookDraftSave.Conflict) state = SaveState.Conflict;
             else if (result != BookDraftSave.Saved) message = L["Campaign.Book.Draft.ActionFailed"];
             await RefreshAsync(push: result == BookDraftSave.Saved, section);
+        }
+        finally
+        {
+            working = false;
+        }
+    }
+
+    /// <summary>Another theme: what was typed is saved first, the theme is stored (the chapters are not touched), and the preview is drawn again
+    /// in the new theme's page.</summary>
+    private async Task ThemeAsync(ChangeEventArgs e)
+    {
+        if (working || view == null || e.Value is not string chosen || chosen == view.Theme) return;
+        working = true;
+        message = null;
+        try
+        {
+            await FlushAsync();
+            if (view == null || state == SaveState.Conflict) return;
+            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, view.Css, view.PageSize, chosen, view.Version);
+            if (result == BookDraftSave.Conflict) state = SaveState.Conflict;
+            else if (result != BookDraftSave.Saved) message = L["Campaign.Book.Draft.ActionFailed"];
+            await RefreshAsync(push: false);
+            if (result == BookDraftSave.Saved) openRequested = true;
         }
         finally
         {

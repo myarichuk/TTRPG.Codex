@@ -50,7 +50,6 @@ for (const [pkg, files] of Object.entries({
   'im-fell-dw-pica': ['latin-400-normal', 'latin-400-italic'],
   'im-fell-dw-pica-sc': ['latin-400-normal'],
   'pirata-one': ['latin-400-normal'],
-  'unifrakturmaguntia': ['latin-400-normal'],
   'special-elite': ['latin-400-normal'],
 })) {
   const from = join(here, 'node_modules', '@fontsource', pkg);

@@ -19,19 +19,43 @@ public static class BookDraftThemes
     /// <summary>White pages, Alegreya Sans and Cinzel (the plain book's faces, so the same language gate: English only until the others are proven).</summary>
     public static BookTheme Plain { get; } = new("plain", "Plain", BookThemes.Plain.Languages, BookThemes.Plain.Fonts, PlainCss);
 
-    public static IReadOnlyList<BookTheme> All { get; } = [Plain];
+    /// <summary>
+    /// The dark-fantasy theme: the "Ashen Vellum" sheet the GM supplied, ported onto Blank (<c>Book/Themes/ashen-vellum.css</c>, whose header
+    /// lists what changed). Ash-grey vellum, IM Fell, Pirata One for titles, Special Elite for the GM's secrets. English only: its faces are Latin.
+    /// </summary>
+    public static BookTheme AshenVellum { get; } = new("ashen-vellum", "Ashen Vellum", ["en"],
+        [
+            new("IM Fell English", 400, "normal", "im-fell-english/im-fell-english-latin-400-normal.woff2", BookThemes.Latin),
+            new("IM Fell English", 400, "italic", "im-fell-english/im-fell-english-latin-400-italic.woff2", BookThemes.Latin),
+            new("IM Fell English SC", 400, "normal", "im-fell-english-sc/im-fell-english-sc-latin-400-normal.woff2", BookThemes.Latin),
+            new("IM Fell DW Pica", 400, "normal", "im-fell-dw-pica/im-fell-dw-pica-latin-400-normal.woff2", BookThemes.Latin),
+            new("IM Fell DW Pica", 400, "italic", "im-fell-dw-pica/im-fell-dw-pica-latin-400-italic.woff2", BookThemes.Latin),
+            new("IM Fell DW Pica SC", 400, "normal", "im-fell-dw-pica-sc/im-fell-dw-pica-sc-latin-400-normal.woff2", BookThemes.Latin),
+            new("Pirata One", 400, "normal", "pirata-one/pirata-one-latin-400-normal.woff2", BookThemes.Latin),
+            new("Special Elite", 400, "normal", "special-elite/special-elite-latin-400-normal.woff2", BookThemes.Latin)
+        ],
+        layout => PageCss(layout) + AshenVellumSheet);
+
+    public static IReadOnlyList<BookTheme> All { get; } = [Plain, AshenVellum];
 
     public static BookTheme? Find(string? id) => All.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Homebrewery's Blank layout, as built (MIT; its notice is in <c>wwwroot/lib/book/THIRD-PARTY-NOTICES.txt</c>).</summary>
     public static string Blank { get; } = Resource("blank.css");
 
-    internal static string Resource(string name)
+    // The sheet with its paper textures in place: each {{tile:NAME}} is that embedded picture as a data URI, so a book stores it once.
+    private static readonly string AshenVellumSheet = System.Text.RegularExpressions.Regex.Replace(Resource("ashen-vellum.css"), @"\{\{tile:([\w.-]+)\}\}",
+        m => (m.Groups[1].Value.EndsWith(".jpg", StringComparison.Ordinal) ? "data:image/jpeg;base64," : "data:image/webp;base64,") + Convert.ToBase64String(Bytes(m.Groups[1].Value)));
+
+    internal static string Resource(string name) => Encoding.UTF8.GetString(Bytes(name));
+
+    private static byte[] Bytes(string name)
     {
         using var stream = typeof(BookDraftThemes).Assembly.GetManifestResourceStream("Codex.Core.Book.Themes." + name)
-            ?? throw new InvalidOperationException($"The theme sheet {name} is not embedded.");
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
+            ?? throw new InvalidOperationException($"The theme file {name} is not embedded.");
+        using var copy = new MemoryStream();
+        stream.CopyTo(copy);
+        return copy.ToArray();
     }
 
     private static string Mm(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);

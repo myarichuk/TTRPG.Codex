@@ -237,6 +237,31 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         var after = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
         Assert.Contains("PUBLIC_NEW_BIO", after.Markdown);
         Assert.False(after.Stale);
+        // A break that styles its page is the GM's choice, so it is an edit: the chapter would not be replaced without a word.
+        var dark = await _drafts.SaveChapterAsync(dm, "party", "en", "cast", "\\page {reliquary}\n\n" + after.Markdown, after.Version);
+        Assert.Equal(BookDraftSave.Saved, dark.Result);
+        Assert.True((await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast").Edited);
+    }
+
+    [Fact]
+    public async Task ATheme_IsStoredWithTheDraft_AnUnknownOneIsRefused_AndTheChaptersAreNotTouched()
+    {
+        var (dm, _) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        Assert.Equal("plain", view.Theme);
+        var before = view.Chapters.Select(c => (c.Section, c.Markdown, c.Version)).ToList();
+
+        var (unknown, _) = await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, "../phb", view.Version);
+        Assert.Equal(BookDraftSave.NotAllowed, unknown);
+        var (saved, version) = await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, "Ashen-Vellum", view.Version);
+        Assert.Equal(BookDraftSave.Saved, saved);
+
+        var after = (await _drafts.GetAsync(dm, "party", "en"))!;
+        Assert.Equal("ashen-vellum", after.Theme);
+        Assert.Equal(version, after.Version);
+        Assert.Equal(before, after.Chapters.Select(c => (c.Section, c.Markdown, c.Version)).ToList());
+        // A save from the copy before the change is refused, as for the stylesheet.
+        Assert.Equal(BookDraftSave.Conflict, (await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, "plain", view.Version)).Result);
     }
 
     [Fact]

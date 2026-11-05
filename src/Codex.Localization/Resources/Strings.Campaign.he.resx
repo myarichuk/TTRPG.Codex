@@ -842,6 +842,9 @@
   <data name="Campaign.Book.Draft.PanelHint" xml:space="preserve"><value>עותק לעריכה של המהדורה הזו: Markdown שאפשר לשנות בחופשיות, ליד תצוגה של העמודים כפי שיודפסו. כל פרק יודיע אם המערכה השתנתה מאז שערכתם אותו.</value></data>
   <data name="Campaign.Book.Draft.Open" xml:space="preserve"><value>פתיחת העורך: {0}</value></data>
   <data name="Campaign.Book.Draft.Title" xml:space="preserve"><value>עורך הספר: {0}</value></data>
+  <data name="Campaign.Book.Draft.Theme" xml:space="preserve"><value>ערכת עיצוב</value></data>
+  <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>פשוטה</value></data>
+  <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>קלף אפור</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>הורדת PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>להתחיל מחדש</value></data>
   <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>למחוק את כל העריכות בטיוטה הזו וליצור אותה מחדש מהמערכה?</value></data>

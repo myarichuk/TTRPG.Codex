@@ -576,6 +576,17 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("book-draft-undo")).ToBeVisibleAsync();
         await Assertions.Expect(preview.Locator(".page", new() { HasText = "Rings the bell at dusk." })).ToHaveCountAsync(1);
 
+        // Another theme, straight after typing: what was typed is saved first, the theme is stored, and the preview is drawn again in the new
+        // theme's page with the same text.
+        await dm.Locator(".cm-content").ClickAsync();
+        await dm.Keyboard.PressAsync("ControlOrMeta+End");
+        await dm.Keyboard.TypeAsync("\nPUBLIC_BEFORE_THEME\n");
+        await dm.GetByTestId("book-draft-theme").SelectOptionAsync("ashen-vellum");
+        await Assertions.Expect(preview.Locator("body.theme-ashen-vellum")).ToHaveCountAsync(1);
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "PUBLIC_BEFORE_THEME" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+        await Assertions.Expect(dm.GetByTestId("book-draft-theme")).ToHaveValueAsync("ashen-vellum");
+
         // The draft prints.
         var download = await dm.RunAndWaitForDownloadAsync(() => dm.GetByTestId("book-draft-download").ClickAsync());
         Assert.EndsWith(".pdf", download.SuggestedFilename);

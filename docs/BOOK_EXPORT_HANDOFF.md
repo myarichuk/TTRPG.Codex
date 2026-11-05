@@ -34,15 +34,16 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: 
 | Drawn-art prompt | `Core/Book/BookArtStyle.cs` (style vocabulary, `BookImagePrompt.Assemble` and its checks) |
 | Drawing | `Web/Book/BookArtDrawing.cs` (picks checked again, run), `BookImages.cs` (picture model per run, reserved allowance), image price in `AiSettings.razor` and `AiProviderService` |
 | Decoder process | `src/Codex.ImageWorker` (only caller of SkiaSharp; talks stdin/stdout via `BookImageWire`) |
-| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow), `Web/Book/BookDraftWriter.cs` (generator), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (Plain theme, shell), `Components/Campaign/BookDraftEditor.razor`, `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
+| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow), `Web/Book/BookDraftWriter.cs` (generator), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookDraftEditor.razor`, `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
 | Strings | `Localization/Resources/Strings.Campaign{,.ru,.he}.resx`, keys `Campaign.Book.*` |
 | Website | `site/` (see `site/README.md`), guide section `#book`, tour row, screenshots `book-panel` and `book-pages`, tools `capture-screenshots.mjs`, `demo-art.py`, `book-pages.py` |
 | Tests | `tests/Codex.Tests/Book*Tests.cs`, `E2E/BookRouteE2ETests.cs` |
 
 ## 3. State: built, verified, and not
 
-Built: everything in `docs/BOOK_EXPORT.md` sections 10-39, and phase 1 of the editable book (41.9: draft store, generator, bundled
-`marked-hbfm` renderer with our cleaner and page fitting, Plain theme, print stage, editor dialog, stale notice with Regenerate). Sections 34-39 (book art slots and the GM's own pictures, the style vocabulary
+Built: everything in `docs/BOOK_EXPORT.md` sections 10-39, and phases 1 and 2 of the editable book (41.9: draft store, generator, bundled
+`marked-hbfm` renderer with our cleaner and page fitting, print stage, editor dialog, stale notice with Regenerate; 41.10: every theme on
+Homebrewery's Blank layout, Homebrewery's own blocks, Ashen Vellum with bundled faces and baked paper, theme picker). Sections 34-39 (book art slots and the GM's own pictures, the style vocabulary
 and prompt, the art director, wiki links, drawing, the first real run's fixes) are on `book/next`, not pushed. The rest: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
 panel, AI layer steps 1-5 (prices, budget, estimator, section workers, checks, stored build, pre-flight, live progress), two columns, existing pictures
 placed by recorded line, re-encoding/downscaling, out-of-process decoding, website.
@@ -91,7 +92,7 @@ worker run from that directory, and one run against a real model (a small Anthro
    must be the edition's own, with the edition's own current suggestion, and the description must pass the checks. The picture is sanitised,
    stored under the edition's tag, and counted once against pictures set aside up front (`IBookImages`).
 
-12. **The editable book (section 41; phase 1 built, 41.9) changes invariant 1 for hand-edited drafts.** The party draft is generated from the party source
+12. **The editable book (section 41; phases 1 and 2 built, 41.9 and 41.10) changes invariant 1 for hand-edited drafts.** The party draft is generated from the party source
    only, its pictures are `art:` references resolved only to party-tagged pictures, and its AI calls see only party text. Beyond that the GM can
    type anything, so the guarantee becomes a warning: the party draft is checked for GM-only text before export. Invariants 2 and 3 still hold for
    drafts: `{{secret}}` blocks (a draft's secrets; never `:::dm`, which Homebrewery's renderer would print) are placeholders in anything sent
@@ -167,9 +168,11 @@ Anything that survives is a missing test; add it.
 
 ## 7. Open work, in the order I would take it (the user decides)
 
-0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **Phase 1 is built (41.9).** Next is phase 2 (Ashen Vellum:
-   the grimdark port, fonts after a licence check, theme picker). See the "Not done" list of 41.9 first: the preview in Safari and Firefox and
-   the overflow report in the panel are the gaps a GM will hit. Items 1 (art step 7, keep-three) and 5 (layout)
+0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **Phases 1 and 2 are built (41.9, 41.10).** Next is
+   phase 3 (Fit pages and the print-time overflow report). See the "Not done" lists of 41.9 and 41.10 first: the preview in Safari and Firefox,
+   the overflow report in the panel, and the GM-CSS cleaner's backslash and size limits (they work against "Homebrewery CSS works here") are the
+   gaps a GM will hit. A theme must pass `EveryBlock_UnderEveryTheme...` and `ALongBook_UnderEveryTheme...`; soft transparent gradients and
+   text shadows are what fail them. Items 1 (art step 7, keep-three) and 5 (layout)
    now land inside it rather than in the current HTML route.
 
 1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3-6 are done (sections 34-36, 38); 7 remains, and step 6's

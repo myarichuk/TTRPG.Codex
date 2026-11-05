@@ -103,6 +103,16 @@ assert.equal(globalThis.PWNED, undefined);
 assert.ok(!maths.includes('>5<') && !/\b5\b/.test(maths), 'no maths was done: ' + maths);
 assert.ok(maths.includes('4'), 'a plain variable still works: ' + maths);
 
+// A page's own classes and styles, as Homebrewery reads them from its \page line: a plain class goes on the page (the sheet's dark pages
+// are "\page {reliquary}"); a style that could load anything is dropped, and a class that is not a plain name is left out, never the page's own.
+const styled = drawn('first\n\n\\page {reliquary,soot}\n\ndark\n\n\\page {background:url(https://evil.example/CANARY_PAGE),bad"onclick=x}\n\nthird\n\n\\page {color:#a00}\n\nfourth');
+const stp = [...styled.querySelectorAll('.page')];
+assert.equal(stp.length, 4);
+assert.equal(stp[1].className, 'page reliquary soot');
+assert.ok(stp[2].classList.contains('page') && !stp[2].hasAttribute('style'), stp[2].outerHTML.slice(0, 200));
+assert.ok(!styled.innerHTML.includes('CANARY_PAGE') && !styled.innerHTML.includes('onclick'), styled.innerHTML);
+assert.equal(stp[3].getAttribute('style'), 'color:#a00');
+
 // Page numbers as Homebrewery's Blank counts them: every page counts (the cover too) unless it skips, a reset page is 1; the renderer gives
 // each page Homebrewery's number element, except covers and pages whose text placed one; contents lines take the counted number, in
 // Homebrewery's two-span shape.

@@ -80,7 +80,7 @@ public partial class BookArtTests : IClassFixture<RavenDbFixture>
         return o.ToArray();
     }
 
-    private static uint Crc(byte[] data)
+    internal static uint Crc(byte[] data)
     {
         var crc = 0xFFFFFFFFu;
         foreach (var b in data)

@@ -1311,7 +1311,7 @@ small renderer, an editor page and a print page, run on the test campaign of sec
    with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
    sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
 
-## 41. The editable book: design (chosen by the GM 2026-11-05; phase 1 built, see 41.9)
+## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 and 2 built, see 41.9 and 41.10)
 
 The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
 when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
@@ -1404,6 +1404,7 @@ The GM asked for `marked-hbfm` as planned (not the app's own renderer, which was
   - Deleted with the campaign; written to the daily backup (`book-drafts.json`); left out of the export, like the book art.
 - **Generator** (`Web/Book/BookDraftWriter.cs`): from `BookComposer.Compose` of the edition's masked source.
   - Blocks: `{{cover`, `{{toc`, `{{chapter,#ch-ID}}`, `{{chapter-art`, `{{entry,#e-SLOT}}`, `{{portrait`, `{{place`, `{{secret` (GM draft only).
+    (Phase 2: `{{frontCover}}` with `{{cover-art`, `{{toc,wide`, and `{{chapter,#ch-ID` around the title; 41.10.)
   - **Entry ids are slot keys**: a stranger in the party draft is `mask:`-keyed, so not even the hidden actor's id is in the party's text.
   - **Secrets are `{{secret` blocks, never `:::dm`**: `marked-hbfm` reads `:::` as a definition list and would print the secret as text.
   - The campaign's free text: mentions become the edition's names (never the typed label); wiki links become their words; pictures in free text
@@ -1435,7 +1436,7 @@ The GM asked for `marked-hbfm` as planned (not the app's own renderer, which was
   - Tests (`BookDraftPdfTests`, real Chrome): nothing fetched; hostile markup neither runs nor fetches; long text flows and the contents line
     says where; a too-tall block is reported; a picture resolves only to its slot.
 - **Plain theme** (`Core/Book/BookDraftHtml.cs`, `BookDraftThemes.Plain`): our own CSS for Homebrewery's page structure and every block of the
-  contract, with the plain book's faces. It has the same language gate: **English only**. Nothing is copied from Homebrewery's stylesheets.
+  contract, with the plain book's faces. It has the same language gate: **English only**. (Phase 2 put it on Homebrewery's Blank layout, 41.10.)
 - **Editor** (`Components/Campaign/BookDraftEditor.razor`, opened from the book panel):
   - Chapter list, CodeMirror (Markdown and a stylesheet tab), and the whole book drawn in a frame. The frame is `sandbox="allow-same-origin"`
     (no script; same-origin only so the editor can draw into it and measure), shell CSP `default-src 'none'`, and is scaled to fit by a transform.
@@ -1455,9 +1456,9 @@ version check removed; breaks counted as edits; the `expr-eval` stub left out (`
 two-tab e2e).
 
 **Not done, or not verified:**
-- **Deviations from 41.2:** Plain is our own CSS for Homebrewery's page structure, not Blank's layout CSS, and `{{cover`, `{{chapter-art`,
-  `{{portrait`, `{{place` and `{{entry` are our block names. Phase 2 must either bring in Blank's layout (with its licence notice) and map our
-  blocks onto it, or port grimdark onto this CSS. Section 40 showed grimdark working on Blank's layout, not on ours.
+- ~~**Deviations from 41.2:** Plain is our own CSS for Homebrewery's page structure, not Blank's layout CSS, and `{{cover` is our block
+  name.~~ Done in phase 2 (41.10): every theme sits on Blank, and the generator writes Homebrewery's `{{frontCover}}`, `{{toc,wide` and
+  `{{chapter` where they exist.
 - The editor's renderer runs in the app's page (the trust boundary above).
 - The overflow report reaches the GM only in the preview. The PDF route sets a header, which the panel does not read yet (phase 3).
 - **The preview was seen only in Chrome.** Safari and Firefox were not tried (section 40, finding 3).
@@ -1469,3 +1470,66 @@ two-tab e2e).
 - Chapter order cannot be changed, and the GM cannot add a chapter of their own; they can write anything inside one.
 - The old book route still exists beside the draft (41.7). "Polish with AI" output is not yet an input to the generator.
 
+### 41.10 Phase 2: built (Blank layout, Ashen Vellum, theme picker)
+
+The GM asked for option 1 of the phase-1 report: themes on Homebrewery's Blank layout, so CSS written for Homebrewery works here as there.
+
+- **Blank** (`tools/book-editor/themes/blank.less`): Homebrewery's `themes/V3/Blank/style.less` at commit `3e600a0` (MIT, notice in
+  `THIRD-PARTY-NOTICES.txt` and `LEGAL.md`), with only removals: its `@import`s (the 5e and Journal fonts, Homebrewery's picture assets, icon
+  fonts) and its watercolor, image-mask and credits blocks (they draw Homebrewery's pictures from `/assets` URLs). The build compiles it with
+  `less` into `src/Codex.Core/Book/Themes/blank.css`, embedded. Every theme's page is Blank, then the book's page (paper size over Blank's Letter,
+  every page laid out rather than only those on screen, the screen around the pages), then the theme (`BookDraftThemes.PageCss`).
+- **Homebrewery's blocks where it has them:** the generator writes `{{frontCover}}` (with our `{{cover-art` for its picture), `{{toc,wide`
+  and `{{chapter,#ch-ID` around the title. `{{chapter-art`, `{{entry`, `{{portrait`, `{{place` and `{{secret` are ours (Homebrewery has none).
+  `BookDraftWriter.Version` is `book-draft/v2`, so unedited chapters followed by themselves (seen in the preview); an edited front chapter
+  shows the stale notice.
+- **Page numbers and contents as Homebrewery's:** the renderer gives each page Homebrewery's `<div class="pageNumber auto">` (beside the
+  columns, so fitting never moves it; none on a cover or where the text placed one), counted as Blank counts (`skipCounting`, `resetCounting`),
+  and writes contents lines as two spans, which Blank's `.toc` rules join with dot leaders.
+- **`\page {classes,style}`** is read as Homebrewery reads it (marked-hbfm's own inject parser on the `\page` line): plain class names go on
+  the page, a style goes through the cleaner. A styled break is now an edit (`BookDraftText.IsBreak`), so a chapter with `\page {reliquary}`
+  is not replaced silently when the campaign changes; plain breaks are still layout.
+- **Ashen Vellum** (`src/Codex.Core/Book/Themes/ashen-vellum.css`; its header lists every change from the GM's sheet):
+  - Faces bundled from Fontsource 5.3.0 with their licences: IM Fell English, English SC, DW Pica, DW Pica SC, Pirata One (OFL), Special Elite
+    (Apache 2.0). UnifrakturMaguntia was named by the sheet but drew nothing, so it is not shipped. English only (Latin faces).
+  - **The paper is pictures**, made once by `tools/book-editor/themes/ashen-vellum/make-tiles.sh` from the sheet's own CSS and SVG: page-sized
+    JPEGs (odd, even, soot, reliquary, cover; burnt edges, stains, tint) and WebP tiles for grain and foxing. Measured: with the sheet's soft
+    transparent gradients Chrome wrote five page-sized pictures into **every** page (44 pages, 6.6 MB, 150 KB a page); with the baked paper,
+    1.9 MB (43 KB a page; Plain is 12 KB a page). The stains are softer and fewer than the sheet's generated ones.
+  - **No text-shadow and no text stroke:** Chrome writes each shadow and each stroke into the PDF as another copy of the words, so the
+    cover's title was read back as "SSSaaalllttt..." and every chapter title as "LLoorree". The cover's murk keeps the title legible instead.
+  - **Pictures:** only the generator's `{{chapter-art` is the torn banner (the sheet masked every picture on a chapter page, which put
+    portraits over the text, section 40 finding 1). Portraits float in a ragged frame, place pictures span the column torn along the foot, the
+    cover art fills the cover under the murk. A picture the GM writes is in the flow. A chapter with no art gets the plain heading by itself.
+  - What PHB used to supply is written in (the footer rule's box, the footnote's place, paragraph spacing, the column gap). The sheet's
+    vocabulary stays (`.note .descriptive .monster .quote .tome .credits .artist .frontcredit`, `\page {reliquary}`, `\page {soot}`); `{{secret`
+    is the GM's dossier box in Special Elite with the red frame.
+  - The sheet's `@media print` had no ink-saver left (only `print-color-adjust`), so preview and PDF are the same page.
+- **Theme picker** in the editor bar: what was typed is saved first, the theme is stored (`SaveSettingsAsync` refuses an id the book does not
+  have, and touches no chapter), and the preview is drawn again in the new theme's page. The PDF prints with the stored theme.
+
+**Tests:** `BookDraftPdfTests.EveryTheme_SitsOnBlank...` (Blank first, then the paper size, nothing loaded); `EveryBlock_UnderEveryTheme_KeepsPicturesOffTheText`
+(each theme in Letter and A4, real Chrome: a chapter with art, a portrait on the chapter page, text onto the next page, a place picture there,
+the boxed blocks and a table; no printed word may sit on a portrait or place picture; the chapter's title over its banner is the one
+exception). Putting the sheet's old "every picture on a chapter page" rule back fails it for Ashen Vellum. `ALongBook_UnderEveryTheme_StaysSmall_AndItsTextStaysText`
+(30+ pages; under 60 KB a page; the cover's title read back once; every 37th paragraph found as text). The gradient paper failed it (150 KB a
+page), and so did the shadows and strokes. `BookDraftTests.ATheme_IsStoredWithTheDraft...`, the styled-break line in `PageAndColumnBreaks...`, `test.mjs`
+(page numbers counted as Blank counts, the contents' two spans, `\page` classes and hostile page styles), and the editor e2e test now switches the theme
+straight after typing (the typed line is saved and drawn in the new theme).
+
+**Not done, or not verified:**
+- **CSS written for the PHB theme** (most shared Homebrewery CSS) will not look the same: PHB is not shipped (its fonts and pictures have no
+  clear licence). Only CSS that works on Blank does.
+- **The GM's stylesheet cleaner strips every backslash** (`BookCss.Clean`), so Homebrewery CSS like `content: '\2014'` loses its escape, and
+  its 20,000-character cap (also in the store) cannot hold a sheet the size of Ashen Vellum (38,000). Allowing hex escapes inside quoted
+  strings only, and a larger cap, would close the gap; not done.
+- No `url()` in the GM's CSS but `data:image/`; Homebrewery CSS that loads fonts or pictures from the web will not load them (on purpose).
+- Contrast on Ashen Vellum's paper (WCAG AA for body text, notes and table rows, section 14 item 7) is not measured. The dark pages and the
+  cover were only looked at.
+- RTL: not applicable yet (English only); the sheet's `float: left` drop caps and left-side ribbons would need logical properties first.
+- The preview redraw time was not measured on a large book in the GM's browser; the print browser laid out and printed 44 Ashen Vellum pages
+  in about 2.5 s (browser start included).
+- Small soft gradients (heading rules, the footer rule, the monster frame, the cover murk) are still written as small pictures each time they
+  are drawn (about 4 KB a page).
+- Still from 41.9: Safari and Firefox, the overflow report in the panel, phone, screen reader, `asset:` pictures in free text, the trust
+  boundary of rendering in the GM's page.

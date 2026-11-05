@@ -142,7 +142,8 @@ public interface IBookDraftRepository
     /// </summary>
     Task<BookDraftFollowed?> FollowAsync(CampaignAccess dm, string edition, string language, IReadOnlyList<BookDraftGenerated> generated);
 
-    Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, int version);
+    /// <summary>The draft's theme, paper and GM stylesheet. A theme the book does not have is refused; the chapters are never touched.</summary>
+    Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, string theme, int version);
 
     /// <summary>The draft and all its chapters, gone: "start over".</summary>
     Task<bool> DeleteAsync(CampaignAccess dm, string edition, string language);
@@ -380,9 +381,11 @@ public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepo
     /// still untouched.</summary>
     public static bool Untouched(BookDraftChapter chapter) => BookDraftText.Content(chapter.Markdown) == BookDraftText.Content(chapter.Base);
 
-    public async Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, int version)
+    public async Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, string theme,
+        int version)
     {
         if (css.Length > BookDraftDocument.MaxCssChars) return (BookDraftSave.TooLarge, version);
+        if (Codex.Core.Book.BookDraftThemes.Find(theme) is not { } chosen) return (BookDraftSave.NotAllowed, version);
         if (await GmAsync(dm, edition, language) is not { } now) return (BookDraftSave.NotAllowed, version);
         using var session = dbService.Store.OpenAsyncSession();
         session.Advanced.UseOptimisticConcurrency = true;
@@ -391,6 +394,7 @@ public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepo
         if (draft.Version != version) return (BookDraftSave.Conflict, draft.Version);
         draft.Css = css;
         draft.PageSize = Paper(pageSize);
+        draft.Theme = chosen.Id;
         draft.Version++;
         draft.UpdatedAt = DateTime.UtcNow;
         try
@@ -444,8 +448,9 @@ public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepo
 /// <summary>Reading a draft's Markdown for what it says, apart from how it is laid out.</summary>
 public static class BookDraftText
 {
-    /// <summary>The text without its page and column breaks (<c>\page</c>, <c>\column</c>, alone on a line, with or without Homebrewery's
-    /// <c>{…}</c> options), and without trailing spaces on blank lines: the part an edit is an edit of.</summary>
+    /// <summary>The text without its plain page and column breaks (<c>\page</c>, <c>\column</c>, alone on a line), and without trailing spaces on
+    /// blank lines: the part an edit is an edit of. A break with Homebrewery's <c>{…}</c> options (<c>\page {reliquary}</c>) is kept: it styles the
+    /// page, so it is the GM's edit, and a chapter that has one must not be replaced silently when the campaign changes.</summary>
     public static string Content(string markdown)
     {
         var lines = markdown.ReplaceLineEndings("\n").Split('\n');
@@ -468,7 +473,5 @@ public static class BookDraftText
         return string.Join('\n', collapsed).Trim('\n');
     }
 
-    public static bool IsBreak(string trimmed) =>
-        trimmed is @"\page" or @"\pagebreak" or @"\column" or @"\columnbreak"
-        || (trimmed.StartsWith(@"\page", StringComparison.Ordinal) && trimmed.Length > 5 && trimmed[5..].TrimStart().StartsWith('{') && trimmed.EndsWith('}'));
+    public static bool IsBreak(string trimmed) => trimmed is @"\page" or @"\pagebreak" or @"\column" or @"\columnbreak";
 }

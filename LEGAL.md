@@ -65,8 +65,6 @@ licence beside it:
   (https://iginomarini.com/fell/) - SIL Open Font License 1.1 - `src/Codex.Web/wwwroot/fonts/im-fell-*/OFL.txt`
 - Pirata One, Copyright (c) 2012 Rodrigo Fuenzalida, Nicolas Massi, Reserved Font Name "Pirata" - SIL Open Font License 1.1 -
   `src/Codex.Web/wwwroot/fonts/pirata-one/OFL.txt`
-- UnifrakturMaguntia, Copyright (c) 2010 j. 'mach' wust, (c) 2009 Peter Wiegel, Reserved Font Name "UnifrakturMaguntia" -
-  SIL Open Font License 1.1 - `src/Codex.Web/wwwroot/fonts/unifrakturmaguntia/OFL.txt`
 - Special Elite, by Astigmatic - Apache License 2.0 - `src/Codex.Web/wwwroot/fonts/special-elite/LICENSE.txt`
 
 ### Launcher artwork
