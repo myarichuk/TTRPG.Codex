@@ -131,6 +131,8 @@ public static class BookThemes
         table { font-size: 9pt; }
         """;
 
+    // The contents' page numbers are plain digits on purpose: with font-variant-numeric: tabular-nums some browsers write the alternate digit glyphs
+    // into the PDF without a Unicode mapping, so the numbers print but cannot be selected, searched or read by a text extractor (seen on a CI browser).
     // A portrait is a block and not a float: a float that does not fit the rest of a column moves on without its heading, and Chromium does
     // not keep a heading with a float (seen in a render). A block keeps with its heading (break-after: avoid on the heading) and is never split.
     private static string PlainCss(BookLayout layout)
@@ -175,7 +177,7 @@ public static class BookThemes
             .toc a { color: inherit; text-decoration: none; display: flex; align-items: baseline; gap: .4em; }
             .toc-text { min-width: 0; }
             .toc-leader { flex: 1; min-width: 1em; border-bottom: .75pt dotted #888; }
-            .toc-page { min-width: 2.5ch; text-align: end; font-variant-numeric: tabular-nums; }
+            .toc-page { min-width: 2.5ch; text-align: end; }
             .note, .descriptive { margin: .7em 0; padding: .5em .7em; border: .75pt solid #888; background: #f4f4f4; break-inside: avoid; }
             .descriptive { font-style: italic; }
             .wide { column-span: all; }

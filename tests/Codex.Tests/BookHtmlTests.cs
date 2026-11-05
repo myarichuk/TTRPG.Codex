@@ -101,6 +101,16 @@ public class BookHtmlTests
     }
 
     [Fact]
+    public void TheContentsNumbersAreNotSetInAlternateDigitGlyphs_SoTheyStayTextInThePdf()
+    {
+        foreach (var theme in BookThemes.All)
+        {
+            Assert.DoesNotContain("tabular-nums", theme.Css(new BookLayout("A4", false)), StringComparison.Ordinal);
+            Assert.DoesNotContain("tnum", theme.Css(new BookLayout("A4", false)), StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
     public void EveryFontAThemeNamesIsShipped()
     {
         Assert.NotNull(FontsDirectory());
