@@ -29,6 +29,7 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: 
 | AI layer | `Core/Book/Ai/*` (blocks, checks, section worker, runner, build key), `Core/Book/BookBudget.cs`, `BookTokens.cs`, `Web/Book/BookBuilds.cs` (stored build, background runs), `BookModels.cs`, `Persistence/Book/BookBuildModels.cs` |
 | Pictures | `Persistence/Book/BookArt.cs` (reader, caps), `Core/Book/BookImages.cs` (structural sanitizer, never decodes), `BookImageScaler.cs`, `BookImageWorker.cs` |
 | Book art slots | `Persistence/Book/BookSlots.cs` (slots and keys, `Choose`), `BookArtStore.cs` (`bookart/{campaign}`, tagged party/dm), `Web/Book/BookArtService.cs` (upload checked against the edition's slots), `Components/Campaign/BookArtTray.razor` |
+| Art director | `Core/Book/Ai/BookArtDirector.cs` (prompt, reply reading, per-field checks), `Web/Book/BookArtOutline.cs`, `BookArtDirection.cs` (plan, pre-flight, run), `BookGate.cs` |
 | Drawn-art prompt | `Core/Book/BookArtStyle.cs` (style vocabulary, `BookImagePrompt.Assemble` and its checks) |
 | Decoder process | `src/Codex.ImageWorker` (only caller of SkiaSharp; talks stdin/stdout via `BookImageWire`) |
 | Strings | `Localization/Resources/Strings.Campaign{,.ru,.he}.resx`, keys `Campaign.Book.*` |
@@ -73,6 +74,9 @@ worker run from that directory, and one run against a real model (a small Anthro
 9. **The party book places only pictures made for the party, in the party's own slots.** The tag is checked in three places (`BookSlots.Choose`,
    the tag check in `BookArtReader`, and `BookArt.Slot(key, audience)`), and an upload's key must be one of the slots that edition's source makes
    (`BookArtService`). A stranger's slot is `mask:<id>`, never the actor's.
+10. **A suggestion, and anything drawn from it, carries the tag of the edition whose source was read** (`BookArtDirection` passes only
+   `p.Tag`), and each tray shows only its own edition's suggestions. The director is shown only `BookArtOutline` (cut after `BookWork.Prepare`
+   of the whole chapter), under per-request numbers, never slot keys. Chapter builds and director runs share one per-GM `BookGate`.
 
 ## 5. What to distrust
 
@@ -109,6 +113,8 @@ For each, copy the file, apply the change, run the named tests, expect a failure
 - Book art (`BookArtTests.Slots.cs`): let a GM picture through in `BookSlots.Choose`, in the reader's tag check, or in `BookArt.Slot`; key a
   stranger as `actor:`; skip the slot check in `BookArtService.UploadAsync`; place a header without checking the title line. All six were caught in
   session 2.
+- Art director (`BookArtDirectorTests.cs`): outline without `Prepare`; a slot number that was not sent accepted; visual check skipped; mood as
+  free text; tag not from the source; a gate of its own; tray showing the other edition's suggestions. All seven were caught in session 2.
 Anything that survives is a missing test; add it.
 
 **C. Questions to answer by reading code, not docs**
@@ -132,13 +138,13 @@ Anything that survives is a missing test; add it.
    panel controls, memory of base64 pictures in the preview iframe with 100+ images.
 
 **D. Housekeeping to check**
-- `git status` clean; nothing under `site/.capture*`, `/tmp` scratch, or any API key is committed. A real Anthropic key was pasted into an earlier
-  conversation: treat it as compromised, never write it to a file, and remind the user to revoke it if they have not.
+- `git status` clean; nothing under `site/.capture*`, `/tmp` scratch, or any API key is committed. The Anthropic key pasted into an earlier
+  conversation was a three-hour key and has been revoked (user, session 2). Still: never write a key to a file.
 - No model identifier appears in any committed artifact (code, docs, commit messages, PR text); this is an explicit rule.
 
 ## 7. Open work, in the order I would take it (the user decides)
 
-1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3 and 4 are done (sections 34-35); 5-7 remain.** DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
+1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3, 4 and 5 are done (sections 34-36); 6 and 7 remain.** DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
    writes the prompt; deny proper nouns and "in the style of"); the art-director call per chapter (masked outline in, `{depicts, visual, mood}` out);
    per-slot generation with cost shown first and nothing drawn without a click; suggested spot and scene slots. Audience-tag every image
    (`BuiltFrom: party|dm`); the party book places only party-built images. The user asked for painterly/linework style choices.

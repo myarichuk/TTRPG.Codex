@@ -1,7 +1,13 @@
+@using System.Globalization
+@using Codex.Core.AI
+@using Codex.Core.Book
+@using Codex.Localization
 @using Codex.Persistence
 @using Codex.Web.Book
 @using Codex.Web.Services
+@implements IDisposable
 @inject BookArtService Art
+@inject BookArtDirection Director
 @inject ILogger<BookArtTray> Logger
 
 @* The book's own pictures (docs/BOOK_EXPORT.md 28.3, step 3): a slot per chapter header, per entry and the cover, as this edition's source makes
@@ -19,6 +25,70 @@
         @if (status != null)
         {
             <div class="@(failed ? "field-error" : "small-muted")">@status</div>
+        }
+    </div>
+
+    @* The art director (28.3, step 5): suggests what each slot shows, from this edition's outline. It draws nothing. *@
+    <div class="mt-2" data-testid="book-art-director">
+        <div class="field-label">@L["Campaign.Book.Art.Suggest.Title"]</div>
+        <p class="field-hint">@L["Campaign.Book.Art.Suggest.Hint"]</p>
+        @if (direction != null)
+        {
+            <div role="status" aria-live="polite" class="small" data-testid="book-art-director-preflight">
+                @if (direction.Model == null)
+                {
+                    <div class="small-muted">@L["Campaign.Book.Ai.NoModel"] <a href="/settings/ai">@L["Campaign.Book.Ai.SetUp"]</a></div>
+                }
+                else if (direction.Preflight is not { } flight)
+                {
+                    <div class="small-muted">@L["Campaign.Book.Art.Suggest.Current", direction.Current]</div>
+                }
+                else
+                {
+                    <div>@L["Campaign.Book.Art.Suggest.Summary", direction.Slots, direction.Calls, direction.Model.Label]</div>
+                    <div class="small-muted">@L["Campaign.Book.Art.Suggest.Tokens", Number(flight.InputLow + flight.OutputLow), Number(direction.Cap)]</div>
+                    @if (flight.CostLow is { } low && flight.CostHigh is { } high)
+                    {
+                        <div class="small-muted">@L["Campaign.Book.Ai.Preflight.Cost", Money(low), Money(high)]</div>
+                    }
+                    else
+                    {
+                        <div class="small-muted">@L["Campaign.Book.Ai.Preflight.NoPrice"]</div>
+                    }
+                }
+            </div>
+            <div class="form-check mt-1">
+                <input id="book-art-all" type="checkbox" class="form-check-input" checked="@askAll" @onchange="AllChanged" disabled="@DirectorRunning" data-testid="book-art-all" />
+                <label for="book-art-all" class="form-check-label small">@L["Campaign.Book.Art.Suggest.All"]</label>
+            </div>
+            <div class="d-flex gap-2 flex-wrap mt-1">
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="SuggestAsync" Disabled="@(DirectorRunning || direction.Model == null || direction.Preflight == null)" data-testid="book-art-suggest">
+                    <LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Book.Art.Suggest.Start"]
+                </CodexButton>
+                @if (DirectorRunning)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => directing?.Cancel()" data-testid="book-art-suggest-stop">
+                        <LucideIcon IconName="square" Size="14" /> @L["Campaign.Book.Ai.Stop"]
+                    </CodexButton>
+                }
+            </div>
+            @if (directing?.Snapshot() is { } now)
+            {
+                <div class="small mt-1" role="status" aria-live="polite" data-testid="book-art-director-progress">
+                    @(now.Status switch
+                    {
+                        BookRunStatus.Running => L["Campaign.Book.Art.Suggest.Running", now.Finished, now.Rows.Count],
+                        BookRunStatus.Done => L["Campaign.Book.Art.Suggest.Done", now.Refined, now.Rows.Count],
+                        BookRunStatus.Stopped => L["Campaign.Book.Art.Suggest.Stopped", now.Refined, now.Rows.Count],
+                        _ => L["Campaign.Book.Ai.Status.Failed", now.Failure ?? string.Empty]
+                    })
+                    <span class="small-muted"> · @L["Campaign.Book.Ai.Meter", now.Budget.Calls, Number(now.Budget.InputTokens), Number(now.Budget.OutputTokens)]</span>
+                </div>
+            }
+            @if (directorError != null)
+            {
+                <div class="field-error" role="alert" data-testid="book-art-director-error">@directorError</div>
+            }
         }
     </div>
 
@@ -73,6 +143,17 @@
             {
                 <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => RemoveAsync(slot)" disabled="@(working != null)" aria-describedby="@(id + "-name")" data-testid="@(id + "-remove")">@L["Campaign.Book.Art.Remove"]</button>
             }
+            @if (slot.Suggestion is { } idea)
+            {
+                <div class="w-100 small-muted ps-3" data-testid="@(id + "-suggestion")">
+                    @L["Campaign.Book.Art.Suggested"] <bdi dir="auto">@idea.Depicts</bdi>
+                    <div class="fst-italic" dir="ltr" lang="en">@idea.Visual (@idea.Mood)</div>
+                    @if (idea.Stale)
+                    {
+                        <div>@L["Campaign.Book.Art.Suggest.Stale"]</div>
+                    }
+                </div>
+            }
         </li>
     };
 
@@ -98,6 +179,73 @@
     {
         shownFor = Edition + "|" + Language;
         tray = await Art.TrayAsync(Access, Edition, Language);
+        direction = await Director.PreviewAsync(Access, Edition, Language, askAll);
+        AttachDirector(Director.Find(Access, Edition));
+    }
+
+    private BookDirectionPreview? direction;
+    private BookRun? directing;
+    private bool askAll;
+    private string? directorError;
+
+    private bool DirectorRunning => directing?.Running == true;
+
+    private async Task AllChanged(ChangeEventArgs args)
+    {
+        askAll = args.Value is true;
+        direction = await Director.PreviewAsync(Access, Edition, Language, askAll);
+    }
+
+    private async Task SuggestAsync()
+    {
+        directorError = null;
+        try
+        {
+            var started = await Director.StartAsync(Access, Edition, Language, askAll);
+            AttachDirector(started);
+            if (started == null) directorError = L["Campaign.Book.Failed.Other"];
+        }
+        catch (BookBuildBusyException)
+        {
+            directorError = L["Campaign.Book.Ai.Busy"];
+        }
+        catch (AiNotConfiguredException)
+        {
+            directorError = L["Campaign.Book.Ai.NoModel"];
+        }
+        catch (LocalizedException ex)
+        {
+            directorError = L.Describe(ex);
+        }
+    }
+
+    private void AttachDirector(BookRun? found)
+    {
+        if (ReferenceEquals(found, directing)) return;
+        if (directing != null) directing.Changed -= OnDirectorChanged;
+        directing = found;
+        if (directing != null) directing.Changed += OnDirectorChanged;
+    }
+
+    private void OnDirectorChanged() => _ = InvokeAsync(async () =>
+    {
+        // A finished run stored suggestions: the rows and the estimate read them again.
+        if (!DirectorRunning)
+        {
+            tray = await Art.TrayAsync(Access, Edition, Language);
+            direction = await Director.PreviewAsync(Access, Edition, Language, askAll);
+        }
+
+        StateHasChanged();
+    });
+
+    private static string Number(long value) => value.ToString("N0", CultureInfo.CurrentCulture);
+
+    private string Money(decimal amount) => AiPrice.Format(amount, direction?.Model?.Price?.Label, CultureInfo.CurrentCulture);
+
+    public void Dispose()
+    {
+        if (directing != null) directing.Changed -= OnDirectorChanged;
     }
 
     private async Task UploadAsync(BookTraySlot slot, InputFileChangeEventArgs e)

@@ -755,6 +755,18 @@
   <data name="Campaign.Book.Art.State.Party" xml:space="preserve"><value>картинка издания для группы</value></data>
   <data name="Campaign.Book.Art.State.Own" xml:space="preserve"><value>своя картинка</value></data>
   <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>без картинки</value></data>
+  <data name="Campaign.Book.Art.Suggest.Title" xml:space="preserve"><value>Предложить картинки</value></data>
+  <data name="Campaign.Book.Art.Suggest.Hint" xml:space="preserve"><value>Ваша ИИ-модель читает краткий план этого издания и предлагает, что изобразить в каждом месте. Тайны не отправляются. Ничего не рисуется.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Summary" xml:space="preserve"><value>Мест для предложений: {0}, запросов: {1}, модель: {2}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Tokens" xml:space="preserve"><value>Около {0} токенов; не больше {1}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Current" xml:space="preserve"><value>У всех мест ({0}) есть предложения по их нынешнему тексту.</value></data>
+  <data name="Campaign.Book.Art.Suggest.All" xml:space="preserve"><value>Предложить заново и для мест, где предложение уже есть</value></data>
+  <data name="Campaign.Book.Art.Suggest.Start" xml:space="preserve"><value>Предложить картинки</value></data>
+  <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>Предлагаем… готово запросов: {0} из {1}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>Готово: предложения дали {0} из {1} запросов.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>Остановлено: предложения дали {0} из {1} запросов.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>Текст изменился с тех пор, как это было предложено.</value></data>
+  <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>Предложено:</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Оформление: {0}. Предпросмотр — та самая страница, из которой печатается PDF.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>Предпросмотр</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Скрыть предпросмотр</value></data>

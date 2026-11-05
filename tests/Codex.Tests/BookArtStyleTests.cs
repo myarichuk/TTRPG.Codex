@@ -43,6 +43,17 @@ public class BookArtStyleTests
     }
 
     [Fact]
+    public void AMood_IsAPhraseFromTheVocabulary_AndAnUnknownOneAddsNothing()
+    {
+        var eerie = BookImagePrompt.Assemble("location", Visual, BookArtStyle.Default, "eerie").Prompt!;
+        Assert.Contains(Visual + ", an eerie, uncanny mood. ", eerie, StringComparison.Ordinal);
+        var none = BookImagePrompt.Assemble("location", Visual, BookArtStyle.Default, "in the style of Rutkowski").Prompt!;
+        Assert.Contains(Visual + ". ", none, StringComparison.Ordinal);
+        Assert.DoesNotContain("Rutkowski", none, StringComparison.Ordinal);
+        Assert.All(BookArtStyles.Moods, m => Assert.Empty(BookImagePrompt.Check(m.Phrase)));
+    }
+
+    [Fact]
     public void AnUnknownStyle_FallsBackToTheDefault_RatherThanToNothing()
     {
         var prompt = BookImagePrompt.Assemble("nonsense-kind", Visual, new BookArtStyle("Rutkowski", "", "x", "neon")).Prompt!;
@@ -91,6 +102,6 @@ public class BookArtStyleTests
         // The signature is the guarantee: slot kind, visual, style, names to refuse. A name can reach the prompt only through the visual,
         // and the visual is checked for it.
         var parameters = typeof(BookImagePrompt).GetMethod(nameof(BookImagePrompt.Assemble))!.GetParameters().Select(p => p.Name).ToList();
-        Assert.Equal(["slotKind", "visual", "style", "names"], parameters);
+        Assert.Equal(["slotKind", "visual", "style", "mood", "names"], parameters);
     }
 }

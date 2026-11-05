@@ -173,13 +173,18 @@ builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.
 builder.Services.AddSingleton<Codex.Web.Book.BookPdf>();
 builder.Services.AddSingleton<Codex.Web.Book.IBookModels, Codex.Web.Book.AiBookModels>();
 // A singleton that must read a campaign's roles afresh for each request: it asks the (scoped) resolver through a scope of its own.
+builder.Services.AddSingleton<Codex.Web.Book.BookGate>();
+Func<string, string, Task<CampaignAccess?>> BookResolver(IServiceProvider sp) => async (campaignId, userId) =>
+{
+    using var scope = sp.CreateScope();
+    return await scope.ServiceProvider.GetRequiredService<ICampaignAccessResolver>().ResolveAsync(campaignId, userId);
+};
 builder.Services.AddSingleton(sp => new Codex.Web.Book.BookBuilds(
     sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookBuildRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookModels>(),
-    async (campaignId, userId) =>
-    {
-        using var scope = sp.CreateScope();
-        return await scope.ServiceProvider.GetRequiredService<ICampaignAccessResolver>().ResolveAsync(campaignId, userId);
-    }));
+    BookResolver(sp), gate: sp.GetRequiredService<Codex.Web.Book.BookGate>()));
+builder.Services.AddSingleton(sp => new Codex.Web.Book.BookArtDirection(
+    sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookArtRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookModels>(),
+    BookResolver(sp), sp.GetRequiredService<Codex.Web.Book.BookGate>()));
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 builder.Services.AddScoped<ViewerClock>();
 

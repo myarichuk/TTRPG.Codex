@@ -8,7 +8,11 @@ namespace Codex.Web.Book;
 /// <param name="Own">The subject has its own picture (a portrait, a page's art, the campaign cover) that prints here when the slot is empty.</param>
 /// <param name="Placed">The edition whose book picture prints here (<see cref="BookArtDocument.Party"/> or <see cref="BookArtDocument.Dm"/>), or null.</param>
 /// <param name="Mine">A picture made for this edition is stored here (the one the GM can remove from this edition's tray).</param>
-public sealed record BookTraySlot(string Key, string Kind, string Section, string Label, bool Own, string? Placed, bool Mine);
+/// <param name="Suggestion">The art director's suggestion for this slot, made from this edition's source; never one made from another edition's.</param>
+public sealed record BookTraySlot(string Key, string Kind, string Section, string Label, bool Own, string? Placed, bool Mine, BookTraySuggestion? Suggestion = null);
+
+/// <param name="Stale">The slot's text has changed since the suggestion was made.</param>
+public sealed record BookTraySuggestion(string Depicts, string Visual, string Mood, bool Stale);
 
 /// <summary>A chapter's slots, in book order: its header first, then its entries.</summary>
 public sealed record BookTrayChapter(string Id, string Title, IReadOnlyList<BookTraySlot> Slots);
@@ -33,13 +37,13 @@ public sealed class BookArtService(BookSourceReader reader, IBookArtRepository s
 {
     private static BookAudience? Audience(string edition) => edition switch { "dm" => BookAudience.Dm, "party" => BookAudience.Party, _ => null };
 
-    private async Task<(CampaignAccess Dm, BookSource Source, BookDocument Compiled, IReadOnlyList<BookSlot> Slots)?> SlotsAsync(CampaignAccess asked, string edition, string language)
+    private async Task<(CampaignAccess Dm, BookSource Source, BookDocument Compiled, IReadOnlyList<BookEntryPosition> Entries, IReadOnlyList<BookSlot> Slots)?> SlotsAsync(CampaignAccess asked, string edition, string language)
     {
         if (Audience(edition) is not { } audience) return null;
         if (await resolver.ResolveAsync(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return null;
         if (await reader.ReadAsync(dm, audience) is not { } source) return null;
         var compiled = BookComposer.Compose(source, language, out var entries);
-        return (dm, source, compiled, BookSlots.For(source, compiled, entries));
+        return (dm, source, compiled, entries, BookSlots.For(source, compiled, entries));
     }
 
     public async Task<BookTray?> TrayAsync(CampaignAccess asked, string edition, string language)
@@ -49,10 +53,15 @@ public sealed class BookArtService(BookSourceReader reader, IBookArtRepository s
         var chosen = BookSlots.Choose(made.Slots, stored).ToDictionary(c => c.Slot.Key, c => c.Picture.BuiltFrom, StringComparer.Ordinal);
         var tag = BookSlots.Tag(made.Source.Audience);
         var mine = stored?.Pictures.Where(p => p.BuiltFrom == tag).Select(p => p.Slot).ToHashSet(StringComparer.Ordinal) ?? [];
+        // Only this edition's suggestions: one made from the GM's source may describe what the party may not know, even in a slot both share.
+        var suggested = stored?.Suggestions.Where(x => x.BuiltFrom == tag).ToDictionary(x => x.Slot, StringComparer.Ordinal) ?? [];
+        var inputs = suggested.Count == 0 ? new Dictionary<string, string>()
+            : BookArtOutline.For(made.Source, made.Compiled, made.Entries, made.Slots).SelectMany(c => c.Slots).ToDictionary(o => o.Slot.Key, o => o.Inputs, StringComparer.Ordinal);
 
         BookTraySlot Row(BookSlot slot) => new(slot.Key, slot.Kind, slot.Section, slot.Label,
             slot.Kind == BookSlots.Cover ? made.Source.Campaign.HasCover : slot.Entry?.HasArt == true,
-            chosen.GetValueOrDefault(slot.Key), mine.Contains(slot.Key));
+            chosen.GetValueOrDefault(slot.Key), mine.Contains(slot.Key),
+            suggested.TryGetValue(slot.Key, out var x) ? new BookTraySuggestion(x.Depicts, x.Visual, x.Mood, inputs.GetValueOrDefault(slot.Key) != x.Inputs) : null);
 
         var cover = Row(made.Slots.First(s => s.Kind == BookSlots.Cover));
         var chapters = made.Compiled.Sections.Select(section => new BookTrayChapter(section.Id,

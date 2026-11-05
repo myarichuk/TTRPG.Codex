@@ -1029,3 +1029,62 @@ The style is not stored or chosen anywhere yet; it arrives with drawing (step 6)
 - The capital check works for Latin and Cyrillic scripts. Hebrew has no capitals, so a Hebrew visual is checked only against the names list.
 - A German visual is refused, because German capitalises nouns.
 - The art director (step 5) therefore has to write visuals in English, whatever the book's language.
+
+## 36. Art step 5: the art director (done; nothing is drawn yet)
+
+`BookArtDirector` (Core/Book/Ai) asks a model, one chapter at a time, what each picture slot should show. `BookArtDirection` (Web) plans, prices and
+runs the requests. The suggestions show in the tray under each slot.
+
+**What the model is shown.** `BookArtOutline` builds one outline per chapter: each slot's heading, plus an excerpt of at most 700 characters from its
+entry as that edition reads it. The cover is asked about with the overview.
+- The outline is cut from the chapter after `BookWork.Prepare` has run on the whole chapter, which removes secrets and spells names out.
+- Before that, a marker line replaces each recorded heading line, and the prepared text is then split on those markers.
+- A GM block that is never closed runs to the end of the chapter, so it swallows the next entry's marker. That entry is then sent with its heading
+  and no text. The test seeds a biography with an unclosed `:::dm` and checks that the next entry's text is not sent.
+
+Each request covers at most 20 slots, numbered 1..N within that request. The model never sees a slot key. The names list used for checks is never sent.
+
+**What is kept from the reply.**
+- The reply must be JSON `{slots:[{slot, depicts, visual, mood}]}`. A code fence or a preface is tolerated: everything from the first `{` to the last
+  `}` is read. The reply is capped at 64 KB, with a JSON depth of 8.
+- A slot number that was not sent is ignored. A number given twice drops both entries. A reply with more entries than slots drops everything.
+- Each field is checked on its own, and a slot that fails is dropped alone:
+  - `visual` (English) goes through `BookImagePrompt.Check` against the edition's names. A stranger's mask is a description, not a name, so it is not
+    on the list.
+  - `mood` must be an id from `BookArtStyles.Moods` (ten of them); it maps to a fixed phrase.
+  - `depicts` is for the GM's eyes only, in the book's language. It is checked with `BookChecks.StyleProblems` against that slot's own text: no
+    invented names or numbers, no markup, at most 160 characters.
+- The request is asked again only when the reply cannot be read or nothing in it passed, and only once, with the reasons.
+
+`BookImagePrompt.Assemble` now takes the mood id, and the signature test was updated on purpose.
+
+**Tags, the new invariant 10.** A suggestion carries the tag of the edition whose source was read. The repository is given only that tag. Each
+tray shows only its own edition's suggestions. The GM's outline of Cast includes hidden characters, so a GM suggestion for Vera's slot (which has the
+same key in both editions) can describe what the party may not know. Anything drawn from a suggestion in step 6 must inherit the suggestion's tag,
+not the tag of the tray it was clicked in.
+
+**Money and runs.**
+- The pre-flight is `BookPreflight.Estimate` over the requests, and the panel shows it: about N tokens, never more than the cap, and a cost range or
+  "no price".
+- The cap is fixed: every request twice at the high estimate, plus room for two in flight. The budget enforces it, and the GM does not set it.
+- The server allowance is reserved up front for requests × 2.
+- A refused key, a rate limit or the allowance stops the requests not yet sent.
+- The spend is added once to `BookArtDocument`'s director totals.
+- A refused suggestion write (the user is no longer GM) cancels the run.
+- `BookGate` is now one per-GM gate shared by chapter builds, discards and director runs, so they cannot overlap; a test checks both directions.
+
+**Staleness.** Each suggestion stores a hash of what was sent for its slot. A slot is asked about again only when that hash changes, unless "Suggest
+again" is ticked. Editing one biography re-asks that slot and at most its chapter header, not the whole of Cast. The tray marks an old suggestion as
+"the text has changed".
+
+Mutants caught: sending the outline without `Prepare`; accepting a slot number that was not sent; skipping the visual check; accepting a free-text
+mood; tagging by something other than the source read; a gate of its own; a tray that shows the other edition's suggestions.
+
+**Not done:**
+- No real model has been run on this; only scripted replies.
+- The prompt has not been tuned.
+- The GM cannot edit a suggestion yet (step 6).
+- The tray shows the mood id in English.
+- There is no e2e test of the director button.
+- Russian and Hebrew strings are written by the model.
+- `depicts` in Hebrew gets only the number check, because the name check relies on capitals.

@@ -57,6 +57,21 @@ public static class BookArtStyles
         new("dusk", "low golden dusk light")
     ];
 
+    /// <summary>The mood a picture is drawn in. The art director picks one of these ids; it never writes the words itself.</summary>
+    public static readonly IReadOnlyList<BookArtChoice> Moods =
+    [
+        new("ominous", "an ominous, foreboding mood"),
+        new("serene", "a calm, serene mood"),
+        new("tense", "a tense, watchful mood"),
+        new("triumphant", "a triumphant mood"),
+        new("melancholy", "a melancholy mood"),
+        new("wondrous", "a sense of wonder"),
+        new("eerie", "an eerie, uncanny mood"),
+        new("warm", "a warm, welcoming mood"),
+        new("desolate", "a bleak, desolate mood"),
+        new("festive", "a lively, festive mood")
+    ];
+
     /// <summary>The frame each slot kind is drawn for. Placement is the code's, never the model's.</summary>
     public static readonly IReadOnlyDictionary<string, string> Framing = new Dictionary<string, string>(StringComparer.Ordinal)
     {
@@ -111,7 +126,8 @@ public static partial class BookImagePrompt
         "in the style of", "style of", "in the manner of", "after the style", "inspired by", "by the artist", "artwork by", "painted by", "drawn by", "art by"
     ];
 
-    public static BookImagePromptResult Assemble(string slotKind, string? visual, BookArtStyle? style, IEnumerable<string>? names = null)
+    /// <param name="mood">An id of <see cref="BookArtStyles.Moods"/>; anything else adds no mood.</param>
+    public static BookImagePromptResult Assemble(string slotKind, string? visual, BookArtStyle? style, string? mood = null, IEnumerable<string>? names = null)
     {
         var problems = Check(visual, names);
         if (problems.Count > 0) return new BookImagePromptResult(null, problems);
@@ -119,7 +135,9 @@ public static partial class BookImagePrompt
         var s = BookArtStyles.Normalize(style);
         var description = Clean(visual!);
         var sb = new StringBuilder();
-        sb.Append(framing).Append(": ").Append(description).Append(". ");
+        sb.Append(framing).Append(": ").Append(description);
+        if (BookArtStyles.Find(BookArtStyles.Moods, mood) is { } feeling) sb.Append(", ").Append(feeling.Phrase);
+        sb.Append(". ");
         sb.Append(BookArtStyles.Find(BookArtStyles.Media, s.Medium)!.Phrase).Append(", ")
           .Append(BookArtStyles.Find(BookArtStyles.Palettes, s.Palette)!.Phrase).Append(", ")
           .Append(BookArtStyles.Find(BookArtStyles.Lines, s.Line)!.Phrase).Append(", ")

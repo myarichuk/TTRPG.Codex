@@ -21,6 +21,21 @@ public class BookArtDocument
     public string Id { get; set; } = string.Empty;
     public string CampaignId { get; set; } = string.Empty;
     public List<BookArtPicture> Pictures { get; set; } = new();
+
+    /// <summary>What the art director suggested for each slot, per edition. A suggestion carries the tag of the edition whose source it was
+    /// made from, and anything drawn from it later inherits that tag, not the tray's it was drawn in.</summary>
+    public List<BookArtSuggestion> Suggestions { get; set; } = new();
+
+    /// <summary>What the art director's runs cost, over all runs: tokens, calls, money where prices were known.</summary>
+    public long DirectorInputTokens { get; set; }
+    public long DirectorOutputTokens { get; set; }
+    public int DirectorCalls { get; set; }
+    public int DirectorRuns { get; set; }
+    public bool DirectorEstimated { get; set; }
+    public decimal DirectorCost { get; set; }
+    public int DirectorUnpricedRuns { get; set; }
+    public string DirectorPriceLabel { get; set; } = string.Empty;
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public static string IdFor(string campaignId) => "bookart/" + campaignId;
@@ -55,6 +70,25 @@ public class BookArtPicture
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 }
 
+public class BookArtSuggestion
+{
+    public string Slot { get; set; } = string.Empty;
+    public string BuiltFrom { get; set; } = string.Empty;
+
+    /// <summary>A hash of what the director was shown for this slot (its heading and excerpt, the prompt version): a suggestion whose hash
+    /// differs from the slot's now was made from text that has since changed.</summary>
+    public string Inputs { get; set; } = string.Empty;
+
+    public string Depicts { get; set; } = string.Empty;
+    public string Visual { get; set; } = string.Empty;
+    public string Mood { get; set; } = string.Empty;
+    public string Model { get; set; } = string.Empty;
+    public DateTime MadeAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>A run's spend, added to the document's director totals once.</summary>
+public sealed record BookArtSpend(long InputTokens, long OutputTokens, int Calls, bool Estimated, decimal? Cost, string? PriceLabel);
+
 public interface IBookArtRepository
 {
     /// <summary>The campaign's book art; null for anyone who is not its GM now.</summary>
@@ -67,6 +101,12 @@ public interface IBookArtRepository
     Task<bool> RemoveAsync(CampaignAccess dm, string slot, string builtFrom);
 
     Task DeleteAllForCampaignAsync(string campaignId);
+
+    /// <summary>Stores suggestions for one edition, each replacing that edition's suggestion for its slot. False when the caller is not the GM now.</summary>
+    Task<bool> SaveSuggestionsAsync(CampaignAccess dm, string builtFrom, IReadOnlyList<BookArtSuggestion> suggestions);
+
+    /// <summary>Adds one run's spend to the director totals. False when the caller is not the GM now.</summary>
+    Task<bool> AddDirectorSpendAsync(CampaignAccess dm, BookArtSpend spend);
 }
 
 public class RavenBookArtRepository(RavenDbService dbService) : IBookArtRepository
@@ -143,6 +183,73 @@ public class RavenBookArtRepository(RavenDbService dbService) : IBookArtReposito
             art.UpdatedAt = DateTime.UtcNow;
             var name = BookArtDocument.AttachmentFor(slot, builtFrom);
             if (await session.Advanced.Attachments.ExistsAsync(id, name)) session.Advanced.Attachments.Delete(id, name);
+            try
+            {
+                await session.SaveChangesAsync();
+                return true;
+            }
+            catch (ConcurrencyException) when (attempt < MaxAttempts)
+            {
+            }
+        }
+    }
+
+    public async Task<bool> SaveSuggestionsAsync(CampaignAccess dm, string builtFrom, IReadOnlyList<BookArtSuggestion> suggestions)
+    {
+        if (!BookArtDocument.IsEdition(builtFrom) || suggestions.Any(x => !BookSlots.IsKey(x.Slot))) return false;
+        return await MutateAsync(dm, art =>
+        {
+            foreach (var suggestion in suggestions)
+            {
+                suggestion.BuiltFrom = builtFrom;
+                art.Suggestions.RemoveAll(x => x.Slot == suggestion.Slot && x.BuiltFrom == builtFrom);
+                art.Suggestions.Add(suggestion);
+            }
+
+            // Bounded like the pictures: a slot has at most one suggestion per edition.
+            return art.Suggestions.Count <= BookArtDocument.MaxPictures * 2;
+        });
+    }
+
+    public Task<bool> AddDirectorSpendAsync(CampaignAccess dm, BookArtSpend spend) => MutateAsync(dm, art =>
+    {
+        art.DirectorRuns++;
+        art.DirectorInputTokens += spend.InputTokens;
+        art.DirectorOutputTokens += spend.OutputTokens;
+        art.DirectorCalls += spend.Calls;
+        art.DirectorEstimated |= spend.Estimated;
+        if (spend.Calls > 0)
+        {
+            if (spend.Cost is { } cost) { art.DirectorCost += cost; art.DirectorPriceLabel = spend.PriceLabel ?? art.DirectorPriceLabel; }
+            else art.DirectorUnpricedRuns++;
+        }
+
+        return true;
+    });
+
+    /// <summary>Loads (or creates) the campaign's document, applies <paramref name="mutate"/> and saves under optimistic concurrency, again
+    /// on a conflict. <paramref name="mutate"/> returns false to save nothing.</summary>
+    private async Task<bool> MutateAsync(CampaignAccess dm, Func<BookArtDocument, bool> mutate)
+    {
+        if (await CampaignAccessResolver.NowAsync(dbService.Store, dm) is not { IsDm: true } now) return false;
+        var id = BookArtDocument.IdFor(now.CampaignId);
+        for (var attempt = 1; ; attempt++)
+        {
+            using var session = dbService.Store.OpenAsyncSession();
+            session.Advanced.UseOptimisticConcurrency = true;
+            var art = await session.LoadAsync<BookArtDocument>(id);
+            if (art == null)
+            {
+                art = new BookArtDocument { Id = id, CampaignId = now.CampaignId };
+                await session.StoreAsync(art, id);
+            }
+            else if (art.CampaignId != now.CampaignId)
+            {
+                return false;
+            }
+
+            if (!mutate(art)) return false;
+            art.UpdatedAt = DateTime.UtcNow;
             try
             {
                 await session.SaveChangesAsync();

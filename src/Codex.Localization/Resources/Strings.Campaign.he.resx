@@ -755,6 +755,18 @@
   <data name="Campaign.Book.Art.State.Party" xml:space="preserve"><value>התמונה של מהדורת החבורה</value></data>
   <data name="Campaign.Book.Art.State.Own" xml:space="preserve"><value>התמונה שלו עצמו</value></data>
   <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>אין תמונה</value></data>
+  <data name="Campaign.Book.Art.Suggest.Title" xml:space="preserve"><value>הצעות לתמונות</value></data>
+  <data name="Campaign.Book.Art.Suggest.Hint" xml:space="preserve"><value>מודל ה-AI שלכם קורא תקציר קצר של המהדורה הזו ומציע מה כל תמונה תציג. סודות לא נשלחים. שום דבר לא מצויר.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Summary" xml:space="preserve"><value>{0} מקומות להצעה, ב-{1} בקשות אל {2}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Tokens" xml:space="preserve"><value>בערך {0} טוקנים; לעולם לא יותר מ-{1}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Current" xml:space="preserve"><value>לכל {0} המקומות יש הצעות לפי מה שכתוב בהם עכשיו.</value></data>
+  <data name="Campaign.Book.Art.Suggest.All" xml:space="preserve"><value>להציע שוב גם למקומות שכבר יש להם הצעה</value></data>
+  <data name="Campaign.Book.Art.Suggest.Start" xml:space="preserve"><value>הצעות לתמונות</value></data>
+  <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>מציעים… הושלמו {0} מתוך {1} בקשות.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>הסתיים: {0} מתוך {1} בקשות נתנו הצעות.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>נעצר: {0} מתוך {1} בקשות נתנו הצעות.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>הטקסט השתנה מאז שזה הוצע.</value></data>
+  <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>הוצע:</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>ערכת עיצוב: {0}. התצוגה המקדימה היא הדף שממנו מודפס ה-PDF.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>הסתרת התצוגה המקדימה</value></data>

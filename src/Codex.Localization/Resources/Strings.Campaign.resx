@@ -755,6 +755,18 @@
   <data name="Campaign.Book.Art.State.Party" xml:space="preserve"><value>party edition's picture</value></data>
   <data name="Campaign.Book.Art.State.Own" xml:space="preserve"><value>its own picture</value></data>
   <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>no picture</value></data>
+  <data name="Campaign.Book.Art.Suggest.Title" xml:space="preserve"><value>Suggest pictures</value></data>
+  <data name="Campaign.Book.Art.Suggest.Hint" xml:space="preserve"><value>Your AI model reads a short outline of this edition and suggests what each picture should show. Secrets are not sent. Nothing is drawn.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Summary" xml:space="preserve"><value>{0} places to suggest for, in {1} requests to {2}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Tokens" xml:space="preserve"><value>About {0} tokens; never more than {1}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Current" xml:space="preserve"><value>All {0} places have suggestions made from what they say now.</value></data>
+  <data name="Campaign.Book.Art.Suggest.All" xml:space="preserve"><value>Suggest again for places that already have a suggestion</value></data>
+  <data name="Campaign.Book.Art.Suggest.Start" xml:space="preserve"><value>Suggest pictures</value></data>
+  <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>Suggesting… {0} of {1} requests done.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>Done: {0} of {1} requests gave suggestions.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>Stopped: {0} of {1} requests gave suggestions.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>The text has changed since this was suggested.</value></data>
+  <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>Suggested:</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Theme: {0}. The preview is the page the PDF is printed from.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>Preview</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Hide preview</value></data>
