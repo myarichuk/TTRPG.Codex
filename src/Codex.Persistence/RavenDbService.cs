@@ -75,9 +75,16 @@ public class RavenDbService : IDisposable
             // old schema deserializes with SystemId empty and an ignored "System" field - patch
             // it once so existing campaigns aren't silently orphaned from their rules system.
             store.Operations.Send(new Raven.Client.Documents.Operations.PatchByQueryOperation(
-                "from CampaignDocuments as c where c.SystemId = null and c.System != null " +
-                "update { c.SystemId = c.System; delete c.System; }"))
-                .WaitForCompletion(TimeSpan.FromSeconds(30));
+                new Raven.Client.Documents.Queries.IndexQuery
+                {
+                    Query = "from CampaignDocuments as c where c.SystemId = null and c.System != null " +
+                            "update { c.SystemId = c.System; delete c.System; }"
+                },
+                // Not AllowStale: the patch must see every campaign. A bulk operation on a stale index is refused
+                // outright, though, and a database that was only just opened has its first index still catching up
+                // (seen on a loaded CI runner), so wait for the index instead of failing the start.
+                new Raven.Client.Documents.Queries.QueryOperationOptions { AllowStale = false, StaleTimeout = TimeSpan.FromSeconds(30) }))
+                .WaitForCompletion(TimeSpan.FromSeconds(60));
 
             ReplaceShortInviteCodes(store);
             return store;
