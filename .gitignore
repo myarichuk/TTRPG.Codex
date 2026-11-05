@@ -48,3 +48,6 @@ dist/
 site/dist/
 site/.capture/
 site/.capture-art/
+
+# Embedded RavenDB logs written beside the web project
+src/Codex.Web/RavenServer/

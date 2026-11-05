@@ -288,7 +288,8 @@ public class BookPdfTests
         // The same instance: the line was let go, so the next job runs.
         var after = await Print(printer, "<!doctype html><p>still fine</p>");
         using var pdf = PdfDocument.Open(after.Pdf);
-        Assert.Contains("still fine", pdf.GetPage(1).Text);
+        // NFKC: a host's font may set "fi" as one ligature glyph (macOS Chrome does), which the PDF's text then holds as U+FB01.
+        Assert.Equal(["still", "fine"], pdf.GetPage(1).GetWords().Select(w => w.Text.Normalize(System.Text.NormalizationForm.FormKC)));
     }
 
     [Fact]

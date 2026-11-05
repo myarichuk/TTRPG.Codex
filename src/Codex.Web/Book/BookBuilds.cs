@@ -255,12 +255,6 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
     private async Task ExecuteAsync(BookRun run, Prepared p, BookBuildRequest request, Dictionary<string, string> keys, HashSet<string> todo, BookBudget budget, BookModelHandle? model)
     {
         var build = p.Stored ?? new BookBuildDocument { Audience = p.Edition };
-        // A chapter the book no longer has (deleted, or hidden from this edition) is dropped from the store: nothing may print it again.
-        var present = p.Document.Sections.Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
-        build.Sections.RemoveAll(s => !present.Contains(s.Id));
-        build.Language = BookThemes.Primary(request.Language);
-        build.Style = p.Style;
-
         var chain = Task.CompletedTask;
         var chainGate = new object();
         var totalsDone = 0;
@@ -291,6 +285,13 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
 
         try
         {
+            // Inside the try: whatever breaks here still finishes the run, returns the model and frees the DM's build slot.
+            // A chapter the book no longer has (deleted, or hidden from this edition) is dropped from the store: nothing may print it again.
+            var present = p.Document.Sections.Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
+            build.Sections.RemoveAll(s => !present.Contains(s.Id));
+            build.Language = BookThemes.Primary(request.Language);
+            build.Style = p.Style;
+
             if (model == null)
             {
                 // Nothing to ask: every chapter is built or too short. The store is tidied (dropped chapters) and the run is over.

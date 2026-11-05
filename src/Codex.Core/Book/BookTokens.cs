@@ -6,7 +6,7 @@ namespace Codex.Core.Book;
 /// <summary>
 /// A guess at how many tokens a text is, for the budget and the pre-flight. Only ever a guess: providers tokenise differently and
 /// some report nothing, so everything built on it is labelled an estimate.
-/// <para>The weights were measured, not assumed, against the reported usage of claude-haiku-5-5 (Anthropic's tokenizer) on single-script
+/// <para>The weights were measured, not assumed, against the usage Anthropic's API reported (its tokenizer) on single-script
 /// prose and on Markdown-heavy text (2,000-2,700 characters each; the numbers are pinned in <c>BookTokensTests</c>). They corrected two
 /// guesses of mine: Cyrillic costs only about a fifth more per letter than Latin there, not two to three times; and punctuation, digits and
 /// markup cost about one token or more <i>each</i>, which a letters-only count missed by 2x on a stat-block-like text. Hebrew costs about

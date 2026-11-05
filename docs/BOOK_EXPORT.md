@@ -647,7 +647,7 @@ default provider (OpenAI-compatible or Anthropic) as decided; nothing calls it f
   - A secret is never rewritten by the model; a DM who wants the secrets polished will not get that.
   - A model that returns text a check accepts but that reads badly is not detected.
 
-## 26. First run against a real model (claude-haiku-5-5), and what it changed
+## 26. First run against a real model (a small Anthropic model), and what it changed
 
 A scratch harness outside the repo (the key came in through an environment variable for each run and is in no file) ran `BookSectionWorker` on
 hand-written chapters in English, Russian and Hebrew, then ablated the prompt to test the checks themselves. About 25 calls, a few cents.

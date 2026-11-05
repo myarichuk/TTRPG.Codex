@@ -7,8 +7,7 @@ namespace Codex.Persistence;
 /// note and wiki repositories, <c>SessionEventRedactor</c>), and a second filter written here would drift from them the first time
 /// a field is added. So the party edition is not a filtered DM bundle: every collection is read through the same access-scoped
 /// call a player's page makes, as a player who owns no character. Its user id is made up for each read and equals no stored owner
-/// (not even an empty one, which <see cref="CampaignAccess.PartyPreview"/>'s empty id would), so no "my own comes whole"
-/// carve-out in a repository can apply to it.
+/// (not even an empty one), so no "my own comes whole" carve-out in a repository can apply to it.
 /// <para>The only unscoped reads are the DM edition's encounters, and the session ids, which are enumerated here and then each
 /// session is read through <see cref="ISessionRepository.GetVisibleAsync"/>; the list itself never leaves
 /// <see cref="SessionIdsAsync"/>. Journals and world chats are private and never read.</para>
@@ -164,8 +163,7 @@ public sealed class BookSourceReader(
     }
 
     /// <summary>A player of the campaign who is nobody: no account has this id and no character names it as owner.</summary>
-    internal static CampaignAccess Stranger(string campaignId) =>
-        new(campaignId, "book-reader:" + Guid.NewGuid().ToString("N"), CampaignRole.Player);
+    internal static CampaignAccess Stranger(string campaignId) => CampaignAccess.Nobody(campaignId);
 
     // The one unscoped read: ids and nothing else. Each session is then read through GetVisibleAsync.
     private async Task<IReadOnlyList<string>> SessionIdsAsync(string campaignId) =>

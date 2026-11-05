@@ -41,7 +41,7 @@ placed by recorded line, re-encoding/downscaling, out-of-process decoding, websi
 
 Verified: unit and integration tests (about 380 book and localization tests passed at the last run), the book e2e tests (9) at the commit that added
 the worker, a real-browser look at columns, drop caps, picture placement, panel and pages, a real `dotnet publish` containing the worker and a
-worker run from that directory, and one run against a real model (claude-haiku-5-5, section 26, short chapters only).
+worker run from that directory, and one run against a real model (a small Anthropic model, section 26, short chapters only).
 
 **Not verified, say so if you rely on any of it:**
 - The full e2e suite has not been rerun since step 5 of the AI layer; only the book e2e tests were.
@@ -143,8 +143,8 @@ Anything that survives is a missing test; add it.
    showing skipped pictures in the panel; a per-entry marker is NOT needed (section 32 chose position over markers).
 5. Layout and format: stat-block and table blocks, running footer with the chapter name, picture-frame masks, paper fibre on the page edge, `.md` export with
    a GM-edition warning, custom CSS editor, the Ashen Vellum theme (measured in section 13, not built), `:::for` per-player editions.
-6. The `PartyPreview` empty-user-id bug (found earlier, the suggested-task card has expired): a party preview built with an empty user id; find it,
-   write a failing test, fix it.
+6. ~~The `PartyPreview` empty-user-id bug~~ fixed (session 2): `CampaignAccess.PartyPreview()` now reads as `CampaignAccess.Nobody`, a made-up id per
+   preview, the same one the book reader uses; test `PartyPreview_OwnsNoActor_EvenOneStoredWithAnEmptyOwner`, mutation-checked.
 7. Allowance refund after UTC midnight is subtracted from the new day; a wiki link `[[Some Page]]` to a DM-only page passes its text to the model and
    into the deterministic book; transport retries are not in the money range; totals are lost on a process crash. All are in section 28.
 
@@ -161,3 +161,22 @@ Anything that survives is a missing test; add it.
   others, encode only the new PNGs with `site/tools/optimize-screenshots.py` into a temp directory and merge `manifest.json` by hand.
 - Serena (an MCP code-navigation server) was used and disconnected repeatedly; it is optional.
 - Scratch files lived under `/tmp/claude-0/...` and are gone with the container; nothing needed is only there.
+
+## 9. Session 2 (2026-11-05, macOS host): review results
+
+Branch `claude/nice-brahmagupta-3ugesy` was merged into `main` (pull requests 289 and 290); work continues on `book/next`.
+
+- **A. Run what exists**: build clean; book and localization tests 378 of 379 on the first run. The one failure,
+  `BookPdfTests.AJobThatCannotFinishInTimeIsStopped...`, also fails on clean `main` on macOS: Chrome's font there sets "fi" as one ligature glyph,
+  so the PDF's text held `ﬁne`. The test now compares NFKC-normalized words. Watch for the same in any new PDF text assertion.
+- Fixed: the `PartyPreview` empty id (open work 6); `BookBuilds.ExecuteAsync` did the build document's preparation before its `try`, so a throw
+  there would have left the run "Running" forever, the model handle open and the GM's build slot taken; it is inside the `try` now.
+- Housekeeping: `src/Codex.Web/RavenServer/Logs/server.log` was tracked (since an old HTTPS commit) and changed on every run; untracked and
+  ignored. Model identifiers removed from `docs/` and the `BookTokens` comment (they stay where code needs them: the AI client factory,
+  settings defaults, the price table and their tests; old commit messages cannot be changed).
+- C1 read: `BookChecks.Validate` (refuses `![`, `[[`, `{{`, tags, URLs, markers) is applied on the AI path in `BookSectionWorker`; the renderer
+  needs `![` adjacent, so the check and the renderer agree. A deterministic wiki body may contain `![x](asset:aN)`; the asset map is the
+  audience's own, so at worst it shows another picture that audience may see (wrong place, not a leak).
+- C2 read: `BookImageWire` caps a picture at 64 MiB and the content type at 64 bytes on both directions.
+- macOS: the PDF tests find the installed Chrome; Playwright browsers are not at `/opt/pw-browsers` here.
+- Test runs leave RavenDB data in `$TMPDIR/TestRavenData_*` (18 GB found at the start); clean after each run.

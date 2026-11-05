@@ -1719,6 +1719,32 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task PartyPreview_OwnsNoActor_EvenOneStoredWithAnEmptyOwner()
+    {
+        // An owner id stored as "" (an import, an old document, a hand-edited database) must not read as the preview's own
+        // character: that would hand the DM's "view as players" the stranger's real name and history, which no player sees.
+        var campaignId = "camp-preview-owner-" + Guid.NewGuid();
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var stranger = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "CANARY_Vizier", Kind = ActorKind.NonPlayerCharacter,
+            Visibility = ActorVisibility.Unknown, OwnerUserId = string.Empty, PublicName = "PUBLIC_Hooded", Biography = "CANARY_poisoner"
+        };
+        var hidden = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "CANARY_Hidden", Visibility = ActorVisibility.Hidden, OwnerUserId = string.Empty };
+        foreach (var actor in new[] { stranger, hidden }) await _actorRepository.SaveAsync(actor);
+
+        var preview = dm.PartyPreview()!;
+        Assert.NotEqual(string.Empty, preview.UserId);
+        Assert.NotEqual(preview.UserId, dm.PartyPreview()!.UserId);
+        var listed = (await _actorRepository.GetVisibleForCampaignAsync(preview)).ToList();
+        var mask = Assert.Single(listed);
+        Assert.Equal("PUBLIC_Hooded", mask.Name);
+        Assert.Null(mask.Biography);
+        Assert.Equal("PUBLIC_Hooded", (await _actorRepository.GetVisibleAsync(stranger.Id, preview))!.Name);
+        Assert.Null(await _actorRepository.GetVisibleAsync(hidden.Id, preview));
+    }
+
+    [Fact]
     public async Task PlacesAndHistories_ReachPlayersWithoutTheirDmBlocks_AndAPlayersSaveKeepsThem()
     {
         var campaignId = "camp-secret-text-" + Guid.NewGuid();
