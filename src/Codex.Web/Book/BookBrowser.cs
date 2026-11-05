@@ -12,6 +12,8 @@ public static class BookBrowser
 
     public const string EnvironmentVariable = "CODEX_BOOK_BROWSER";
 
+    private static string Posix(params string[] parts) => string.Join('/', parts.Select((part, i) => i == 0 ? part.TrimEnd('/') : part.Trim('/')));
+
     /// <summary>Where to look, best first. <paramref name="configured"/> wins alone when set.</summary>
     public static IReadOnlyList<string> Candidates(string? configured, Func<string, string?> environment, Func<string, IEnumerable<string>> expand, bool windows, bool mac)
     {
@@ -46,19 +48,20 @@ public static class BookBrowser
         {
             // A browser Playwright already fetched (the e2e suite's, a CI image's) is as good as any other.
             var playwright = environment("PLAYWRIGHT_BROWSERS_PATH");
-            foreach (var root in new[] { playwright, "/opt/pw-browsers", Path.Combine(environment("HOME") ?? "/root", ".cache", "ms-playwright") })
+            foreach (var root in new[] { playwright, "/opt/pw-browsers", Posix(environment("HOME") ?? "/root", ".cache", "ms-playwright") })
             {
                 if (!string.IsNullOrEmpty(root) && root != "0")
                 {
-                    found.AddRange(expand(Path.Combine(root, "chromium-*", "chrome-linux*", "chrome")).OrderByDescending(Build).ThenBy(p => p, StringComparer.Ordinal));
+                    found.AddRange(expand(Posix(root, "chromium-*", "chrome-linux*", "chrome")).OrderByDescending(Build).ThenBy(p => p, StringComparer.Ordinal));
                 }
             }
 
-            foreach (var directory in (environment("PATH") ?? string.Empty).Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+            // This branch is Linux's whatever machine asks (the test asks from Windows): ':' separates the PATH and '/' the names.
+            foreach (var directory in (environment("PATH") ?? string.Empty).Split(':', StringSplitOptions.RemoveEmptyEntries))
             {
                 foreach (var name in new[] { "google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "microsoft-edge", "microsoft-edge-stable" })
                 {
-                    found.Add(Path.Combine(directory, name));
+                    found.Add(Posix(directory, name));
                 }
             }
         }
