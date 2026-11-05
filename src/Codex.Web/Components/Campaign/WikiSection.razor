@@ -271,6 +271,8 @@ else
     private bool aiReady;
     // For a player: when this browser last opened the page, so what was revealed since is marked new; and the same for the cards.
     private DateTime? seenAt;
+    // When the page shown was read from the store: what this browser has seen, so a reveal made after it is still new on the next visit.
+    private DateTime loadedAt;
     private Dictionary<string, DateTime> seenPages = new();
     private string? seenFor;
     private DotNetObjectReference<WikiSection>? selfRef;
@@ -306,6 +308,7 @@ else
 
     private async Task LoadAsync()
     {
+        loadedAt = DateTime.UtcNow;
         pages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
         regions = (await RegionRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
         current = null;
@@ -357,7 +360,9 @@ else
         seenFor = key;
         if (current != null)
         {
-            var was = await JS.InvokeAsync<string?>("codex.seenSince", SeenKey(current.Id), DateTime.UtcNow.ToString("O"));
+            // Seen as of when it was read, not now: a reveal made between the read and this first interactive render was never shown here
+            // (an e2e test caught that gap under load).
+            var was = await JS.InvokeAsync<string?>("codex.seenSince", SeenKey(current.Id), loadedAt.ToString("O"));
             var since = ParseSeen(was);
             var mark = LatestReveal(current) > since ? since : null;
             if (mark != seenAt)

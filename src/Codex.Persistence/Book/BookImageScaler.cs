@@ -48,7 +48,10 @@ public sealed class BookImageScaler(IBookImageDecoder? decoder = null)
     public static BookArtBox BoxFor(string kind, int columns = 2) => kind switch
     {
         "cover" => new(140, 165, false),
-        "portrait" or "homebrew" => new(62, 52, true),
+        // A portrait is 3:4, at most 42 mm wide (34% of a column, see .art-portrait), and cropped from near the top: a face is high in a
+        // portrait, and a wide box cut a tall one's head off (found on a real model's portrait;
+        // an uploaded tall portrait was cut the same way).
+        "portrait" or "homebrew" => new(42, 56, true),
         // A chapter header spans both columns (the text width) whatever the column count.
         "header" => new(172, 62, true),
         // A place picture is as wide as its column: 88 mm in two columns, the text width (172 mm) in one.

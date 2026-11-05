@@ -140,6 +140,28 @@ public class BookArtDrawingTests : IClassFixture<RavenDbFixture>
         Assert.Equal((1, 0.04m, 0), (art.DrawnPictures, art.DrawCost, art.DrawUnpricedPictures));
     }
 
+    // Found on a real model: its visuals run past 200 characters, the stored one was cut at a label's length, and every picture it drew showed
+    // "drawn from an older description" at once. A long visual is kept whole, and the tray calls the picture current until something changes.
+    [Fact]
+    public async Task APictureDrawnFromALongVisual_IsCurrentInTheTray_UntilTheStyleChanges()
+    {
+        var (dm, _) = await SeedAsync();
+        var vera = await SlotOf(dm, "party", "Vera");
+        var visual = string.Join(" ", Enumerable.Repeat("a keeper in a grey coat trims the lamp,", 9)).TrimEnd(',') + ".";
+        Assert.InRange(visual.Length, 300, BookImagePrompt.MaxVisualChars);
+        var drawing = Drawing(new FakeImages());
+
+        Assert.Equal(BookRunStatus.Done, (await Finish((await drawing.StartAsync(dm, "party", [new BookDrawPick(vera, visual)]))!)).Status);
+
+        Assert.Equal(visual, Assert.Single((await _art.GetAsync(dm))!.Pictures).Visual);
+        var trays = new BookArtService(_reader, _art, _resolver);
+        BookTraySlot Vera(BookTray tray) => tray.Chapters.SelectMany(c => c.Slots).Single(s => s.Key == vera);
+        Assert.False(Vera((await trays.TrayAsync(dm, "party", "en"))!).Drawn!.Stale);
+
+        Assert.True(await drawing.SetStyleAsync(dm, new BookArtStyle("woodcut", "sepia", "bold", "dusk")));
+        Assert.True(Vera((await trays.TrayAsync(dm, "party", "en"))!).Drawn!.Stale);
+    }
+
     [Fact]
     public async Task APickIsDrawnOnlyFromThisEditionsCurrentSuggestion_WithAVisualThatPassesTheChecks()
     {

@@ -84,6 +84,20 @@
                         _ => L["Campaign.Book.Ai.Status.Failed", now.Failure ?? string.Empty]
                     })
                     <span class="small-muted"> · @L["Campaign.Book.Ai.Meter", now.Budget.Calls, Number(now.Budget.InputTokens), Number(now.Budget.OutputTokens)]</span>
+                    @* Why a request gave nothing (or only some places), so the GM is not left with a bare count. *@
+                    @if (now.Status != BookRunStatus.Running && now.Rows.Where(r => r.Reason != null).ToList() is { Count: > 0 } notes)
+                    {
+                        <ul class="mb-0 ps-3" data-testid="book-art-director-reasons">
+                            @foreach (var row in notes)
+                            {
+                                <li><bdi dir="auto">@row.Title</bdi>: @DirectorReason(row.Reason!)</li>
+                            }
+                        </ul>
+                    }
+                    @if (now.SaveFailed)
+                    {
+                        <div class="field-error">@L["Campaign.Book.Ai.SaveFailed"]</div>
+                    }
                 </div>
             }
             @if (directorError != null)
@@ -175,6 +189,10 @@
                             <li><bdi dir="auto">@row.Title</bdi>: @L["Campaign.Book.Art.Draw.Reason." + row.Reason]</li>
                         }
                     </ul>
+                }
+                @if (drawn.SaveFailed)
+                {
+                    <div class="field-error">@L["Campaign.Book.Ai.SaveFailed"]</div>
                 }
             </div>
         }
@@ -420,6 +438,13 @@
     private string? directorError;
 
     private bool DirectorRunning => directing?.Running == true;
+
+    private string DirectorReason(string reason) => reason switch
+    {
+        "budget" or "error" or "auth" or "ratelimit" or "allowance" or "cancelled" => L["Campaign.Book.Ai.Reason." + reason],
+        "cutoff" or "unreadable" or "some" => L["Campaign.Book.Art.Suggest.Reason." + reason],
+        _ => L["Campaign.Book.Art.Suggest.Reason.checks"]
+    };
 
     private async Task AllChanged(ChangeEventArgs args)
     {

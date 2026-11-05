@@ -848,7 +848,7 @@ in a hand-written chapter that is not one of the compiler's, and a look at RTL o
 
 `BookImageScaler` (Codex.Persistence, SkiaSharp 3.119.4, MIT; `SkiaSharp.NativeAssets.Linux.NoDependencies` so a Linux host needs no fontconfig; Windows and macOS
 natives come with SkiaSharp itself) sits between `BookImageSanitizer` and the book. A picture is scaled down, never up, to its box at 300 dpi for the PDF
-and 120 dpi for the preview (`BookArtQuality`; the route chooses by `forPrint`). Boxes: cover 140x165 mm (contained), portrait and homebrew 62x52 mm,
+and 120 dpi for the preview (`BookArtQuality`; the route chooses by `forPrint`). Boxes: cover 140x165 mm (contained), portrait and homebrew 62x52 mm (now 42x56, 3:4: see §39),
 place, wiki and location 88x48 mm (filled, so both sides must be covered). Opaque pictures are written as JPEG q85, pictures with any transparency as PNG;
 a result that is not smaller than the source is discarded. `BookArtReader.MaxTotalBytes` now counts what is placed, not what was uploaded.
 
@@ -1208,10 +1208,65 @@ on a refused key; foreign slot accepted.
   paid for, is gone; the pre-flight says which places would be replaced.
 - The tray's tick dropping is not covered by an automated test. The server's checks, which are covered, are the guard that counts.
 - `WikiSecretsE2ETests` failed once in a run of 759 tests during this step, cause not captured, and passed on two reruns (alone, and with the
-  28 e2e tests). It exercises the wiki rendering changed in section 37, so it is a suspect, not a known flake.
+  28 e2e tests). It failed again in the full run of section 39, and that time the cause was read: see section 39.
 - A description check failure is shown in English.
 - The mood is shown as its English id.
 - The drawing totals are lost if the process dies mid-run, like the director's.
 - Russian and Hebrew strings are written by the model.
 - Style names are translated in the tray, but the prompt is always English, on purpose.
 
+
+## 39. First real run of the art director and drawing, and what it changed
+
+The first real run of steps 5 and 6 used a small Anthropic text model and a fast picture model through OpenRouter. It ran in the preview app with a
+throwaway database. The campaign had one chapter (Cast) and two characters with short biographies, in the party edition and the default style.
+The GM entered both keys. Pictures drawn: three (the cover, the Cast header, one portrait). Text: about 5,100 tokens in and 4,500 out over seven
+requests, counting the failed ones and the reruns after each fix.
+
+**What it found, and what changed:**
+- **The director's replies were cut off.** The output limit was 160 tokens per place. The model's JSON for three places stopped mid-string, twice,
+  and the tray only said "0 of 1 requests gave suggestions". The model then used about 370 tokens per place. Now:
+  - The limit is 480 per place (`BookArtDirector.OutputPerSlot`).
+  - A reply that stops at the limit (the provider says so, or it used the whole limit) is asked again, told to be brief (`BookArtDirector.CutOff`).
+  - When it still fails, the reason is `cutoff`, not `unreadable`.
+- **A chapter header's "depicts" was refused for naming the chapter's people.** The header's own text is only its title, so "Vera Holloway" was
+  "a name the book does not hold". The names are now checked against the whole request (the chapter and every place in it). That text is the
+  edition's own, and "depicts" is only shown to the GM. A name in none of it is still refused.
+- **Every drawn picture showed "drawn from an older description or style" at once.** The stored description was cut at 200 characters (a label's
+  length), and the tray hashed the cut text. The model's descriptions run to 300-400 characters. It is now kept up to `BookImagePrompt.MaxVisualChars`.
+  The three pictures of this run keep the old, cut text, so they stay marked until they are drawn again.
+- **A portrait lost its head.** The portrait box was 62x52 mm (wider than tall), cropped from the middle, and portraits are tall. On screen
+  it was 335x197 px. Now:
+  - The box is 3:4, at most 42 mm wide (34% of a column), cropped from 20% down (`.art-portrait`, `BookImageScaler.BoxFor`).
+  - This applies to uploaded portraits too (same box; not looked at with a real upload).
+- **The tray said why a request gave nothing only as a count.** It now lists each request's reason (cut off, unreadable, the checks, budget, key,
+  rate limit, stopped). It also shows "Some results could not be stored" for both runs, which it never did before.
+- **The server log** now has one line per director request whose replies were refused: the checks' own words, never the reply.
+- **Plurals:** "1 requests" is gone. The director's summary, progress and the token meter use plural forms (en, ru, he).
+
+**What went right:**
+- No name reached a picture prompt.
+- The pre-flight's estimates were close.
+- The cover and the portrait were good.
+- Drawing stopped at three, and the tray said "drew 3 of 3".
+- The pictures were stored under the party tag and printed in the party book.
+
+**Not changed, worth knowing:**
+- In the header the model drew a figure whose head touches the top edge, despite the framing's "nothing important near the top or bottom
+  edge". The crop is from the middle.
+- The cover's "depicts" was vague ("a coastline scene named by the chapter title"). It is only for the GM, and the visual was good.
+- With no price set for either model, no cost was shown anywhere. That is by design, but a GM may not notice that no price was set.
+
+**Tests:**
+- `BookArtDirectorReplyTests.AReplyCutOffAtTheLimit_IsAskedAgainMoreBriefly_AndSaysSoWhenItGivesUp` and `AHeaderMayNameThePeopleOfItsChapter`.
+- `BookArtDrawingTests.APictureDrawnFromALongVisual_IsCurrentInTheTray_UntilTheStyleChanges`.
+- The scaler test was updated to the new box.
+- Mutants caught: cut-off not detected; the 200-character clip.
+
+**`WikiSecretsE2ETests`, the failure of section 38, explained (likely).** In the full run (1,647 tests) it failed again: both secrets were shown to the
+player, but only one was marked new. A player's "last seen" time for a wiki page was stamped when the page's first interactive render ran its script,
+not when the page was read. A reveal made in that gap (the test reveals right after the player opens the page, and the full suite is slow) was counted
+as seen, though it was never shown. That is a real bug, if a small one. `WikiSection` now stamps the time the page was read (`loadedAt`). It has not
+been reproduced on demand; the wiki tests then passed three runs in a row. It has nothing to do with section 37.
+
+Full run after these changes: 1,646 of 1,647 passed, the one failure being the test above, before its fix.

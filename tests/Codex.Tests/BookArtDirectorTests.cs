@@ -112,6 +112,43 @@ public class BookArtDirectorReplyTests
         Assert.Equal(0, none.Calls);
     }
 
+    // Found on a real model: a chapter header's "depicts" named the chapter's people and was refused, because only the header's own text
+    // (its title) was read. The names of the call's other slots are the book's; a name in none of them is still refused (see the theory above).
+    [Fact]
+    public void AHeaderMayNameThePeopleOfItsChapter()
+    {
+        var call = new BookDirectorCall("Cast", "en",
+        [
+            new BookDirectorSlot(1, "header", "Cast", ""),
+            new BookDirectorSlot(2, "portrait", "Vera", "Vera keeps the harbour ledgers.")
+        ], ["Vera"]);
+        var (kept, refused, _) = BookArtDirector.Read(call, Reply(Item(1, "Vera on the quay at dusk"), Item(2)));
+        Assert.Equal([1, 2], kept.Select(k => k.Ref).Order());
+        Assert.Empty(refused);
+    }
+
+    // Found on a real model: three portraits' JSON did not fit 160 tokens a slot and stopped mid-string, twice, and the tray only said
+    // "0 of 1". The limit leaves room now; a reply that still stops at it is asked again more briefly, and the run says it was cut off.
+    [Fact]
+    public async Task AReplyCutOffAtTheLimit_IsAskedAgainMoreBriefly_AndSaysSoWhenItGivesUp()
+    {
+        Assert.True(BookArtDirector.MaxOutputFor(Call) >= 2 * 400);
+        var limit = BookArtDirector.MaxOutputFor(Call);
+        var cut = Reply(Item(1))[..40];
+
+        var once = new ScriptedChat((_, call) => call == 1 ? cut : Reply(Item(1), Item(2)), call => new UsageDetails { OutputTokenCount = call == 1 ? limit : 80 });
+        var result = await new BookArtDirector(once, new BookBudget(1_000_000)).RunAsync(Call);
+        Assert.Equal(2, result.Directions.Count);
+        Assert.Contains(BookArtDirector.CutOff, once.Requests[1], StringComparison.Ordinal);
+
+        var always = new ScriptedChat((_, _) => cut, _ => new UsageDetails { OutputTokenCount = limit });
+        Assert.Equal("cutoff", (await new BookArtDirector(always, new BookBudget(1_000_000)).RunAsync(Call)).Reason);
+
+        // A reply that is simply unreadable, well inside the limit, is not called cut off.
+        var short_ = new ScriptedChat((_, _) => cut, _ => new UsageDetails { OutputTokenCount = 20 });
+        Assert.Equal("unreadable", (await new BookArtDirector(short_, new BookBudget(1_000_000)).RunAsync(Call)).Reason);
+    }
+
     [Fact]
     public void ThePrompt_SendsRefsLabelsAndExcerpts_AndNotTheNamesList()
     {

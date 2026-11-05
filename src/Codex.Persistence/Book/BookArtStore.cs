@@ -180,7 +180,7 @@ public class RavenBookArtRepository(RavenDbService dbService) : IBookArtReposito
             {
                 Slot = slot, BuiltFrom = builtFrom, Origin = origin, Attachment = name, ContentType = image.ContentType,
                 Width = image.Width, Height = image.Height, Bytes = image.Bytes.Length, Label = Clip(label), AddedBy = now.UserId,
-                Inputs = drawn?.Inputs, Visual = drawn == null ? null : Clip(drawn.Visual)
+                Inputs = drawn?.Inputs, Visual = drawn == null ? null : Clip(drawn.Visual, BookImagePrompt.MaxVisualChars)
             });
             art.UpdatedAt = DateTime.UtcNow;
             // A new attachment under an existing name replaces it in the same save as the document's list, so the two never disagree.
@@ -314,9 +314,11 @@ public class RavenBookArtRepository(RavenDbService dbService) : IBookArtReposito
         await session.SaveChangesAsync();
     }
 
-    private static string Clip(string? label)
+    // A drawn picture's visual is kept whole (as long as a prompt may take it): the tray hashes it again to tell whether the picture is
+    // current, and a visual cut at a label's length never matched (found on a real model, whose visuals run past 200 characters).
+    private static string Clip(string? label, int max = 200)
     {
         var text = (label ?? string.Empty).Trim();
-        return text.Length <= 200 ? text : text[..200];
+        return text.Length <= max ? text : text[..max];
     }
 }

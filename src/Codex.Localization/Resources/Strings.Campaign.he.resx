@@ -757,15 +757,19 @@
   <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>אין תמונה</value></data>
   <data name="Campaign.Book.Art.Suggest.Title" xml:space="preserve"><value>הצעות לתמונות</value></data>
   <data name="Campaign.Book.Art.Suggest.Hint" xml:space="preserve"><value>מודל ה-AI שלכם קורא תקציר קצר של המהדורה הזו ומציע מה כל תמונה תציג. סודות לא נשלחים. שום דבר לא מצויר.</value></data>
-  <data name="Campaign.Book.Art.Suggest.Summary" xml:space="preserve"><value>{0} מקומות להצעה, ב-{1} בקשות אל {2}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Summary" xml:space="preserve"><value>{0, plural, one{מקום אחד} other{# מקומות}} להצעה, {1, plural, one{בקשה אחת} other{# בקשות}} אל {2}.</value></data>
   <data name="Campaign.Book.Art.Suggest.Tokens" xml:space="preserve"><value>בערך {0} טוקנים; לעולם לא יותר מ-{1}.</value></data>
   <data name="Campaign.Book.Art.Suggest.Current" xml:space="preserve"><value>לכל {0} המקומות יש הצעות לפי מה שכתוב בהם עכשיו.</value></data>
   <data name="Campaign.Book.Art.Suggest.All" xml:space="preserve"><value>להציע שוב גם למקומות שכבר יש להם הצעה</value></data>
   <data name="Campaign.Book.Art.Suggest.Start" xml:space="preserve"><value>הצעות לתמונות</value></data>
-  <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>מציעים… הושלמו {0} מתוך {1} בקשות.</value></data>
-  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>הסתיים: {0} מתוך {1} בקשות נתנו הצעות.</value></data>
-  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>נעצר: {0} מתוך {1} בקשות נתנו הצעות.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>מציעים… הושלמו {0} מתוך {1, plural, one{בקשה אחת} other{# בקשות}}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>הסתיים: {0} מתוך {1, plural, one{בקשה אחת} other{# בקשות}} נתנו הצעות.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>נעצר: {0} מתוך {1, plural, one{בקשה אחת} other{# בקשות}} נתנו הצעות.</value></data>
   <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>הטקסט השתנה מאז שזה הוצע.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.some" xml:space="preserve"><value>לחלק מהמקומות אין הצעה: ההצעות שלהם לא עברו את הבדיקות</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.checks" xml:space="preserve"><value>אף הצעה לא עברה את הבדיקות</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.unreadable" xml:space="preserve"><value>לא ניתן היה לקרוא את התשובה, פעמיים; דבר לא נשמר</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.cutoff" xml:space="preserve"><value>התשובה נקטעה לפני סופה, פעמיים; דבר לא נשמר</value></data>
   <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>הוצע:</value></data>
   <data name="Campaign.Book.Art.Draw.Title" xml:space="preserve"><value>ציור תמונות</value></data>
   <data name="Campaign.Book.Art.Draw.Hint" xml:space="preserve"><value>סמנו את המקומות לציור. כל תמונה מצוירת לפי ההצעה שלה, בסגנון של הספר הזה, במודל התמונות שלכם. שום דבר לא מצויר עד שלוחצים על „ציור”.</value></data>
@@ -884,7 +888,7 @@
   <data name="Campaign.Book.Ai.Discard" xml:space="preserve"><value>מחיקת הבנייה השמורה</value></data>
   <data name="Campaign.Book.Ai.Use" xml:space="preserve"><value>להשתמש בטקסט המלוטש בתצוגה המקדימה וב-PDF (רק בפרקים מעודכנים)</value></data>
   <data name="Campaign.Book.Ai.Progress" xml:space="preserve"><value>{0} מתוך {1} פרקים</value></data>
-  <data name="Campaign.Book.Ai.Meter" xml:space="preserve"><value>{0} בקשות, {1} אסימוני קלט, {2} פלט</value></data>
+  <data name="Campaign.Book.Ai.Meter" xml:space="preserve"><value>{0, plural, one{בקשה אחת} other{# בקשות}}, {1} אסימוני קלט, {2} פלט</value></data>
   <data name="Campaign.Book.Ai.Estimated" xml:space="preserve"><value>הערכה: הספק לא דיווח על צריכה בחלק מהבקשות.</value></data>
   <data name="Campaign.Book.Ai.Money" xml:space="preserve"><value>{0} עד כה</value></data>
   <data name="Campaign.Book.Ai.Totals" xml:space="preserve"><value>כל הריצות של הבנייה: {0} בקשות, {1} אסימוני קלט, {2} פלט.</value></data>

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Codex.Core.AI;
 using Codex.Core.Book;
 using Codex.Persistence;
+using Microsoft.Extensions.Logging;
 
 namespace Codex.Web.Book;
 
@@ -18,7 +19,7 @@ public sealed record BookDirectionPreview(int Slots, int Current, int Calls, Boo
 /// A run takes the same per-GM gate as a chapter build (<see cref="BookGate"/>), reserves the server's requests up front, and is held to a cap
 /// worked out from the estimate before anything is sent.
 /// </summary>
-public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository store, IBookModels models, Func<string, string, Task<CampaignAccess?>> resolve, BookGate gate, TimeProvider? clock = null)
+public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository store, IBookModels models, Func<string, string, Task<CampaignAccess?>> resolve, BookGate gate, TimeProvider? clock = null, Microsoft.Extensions.Logging.ILogger? log = null)
 {
     private readonly ConcurrentDictionary<string, BookRun> _runs = new();
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
@@ -151,6 +152,15 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
                     var result = await director.RunAsync(planned.Call, run.Token);
                     // The first failure every later call would share stops the rest from being sent.
                     if (result.Reason is "auth" or "ratelimit" or "allowance") stop ??= result.Reason;
+                    // What the checks refused, so a chapter that gave nothing can be explained. Only the checks' own words are logged:
+                    // the reply itself is never written down.
+                    if (result.Refused.Count > 0 && log != null)
+                    {
+                        log.LogInformation("Art director, {Chapter}: {Kept} kept after {Attempts} attempt(s), reason {Reason}; refused: {Refused}",
+                            planned.Call.Chapter, result.Directions.Count, result.Attempts, result.Reason ?? "none",
+                            string.Join(" | ", result.Refused.Select(r => r.Key + ": " + string.Join(", ", r.Value))));
+                    }
+
                     if (result.Directions.Count == 0)
                     {
                         run.Row(planned.RowId, BookRowStatus.Kept, result.Reason ?? "checks");

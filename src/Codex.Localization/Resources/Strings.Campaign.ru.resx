@@ -763,9 +763,13 @@
   <data name="Campaign.Book.Art.Suggest.All" xml:space="preserve"><value>Предложить заново и для мест, где предложение уже есть</value></data>
   <data name="Campaign.Book.Art.Suggest.Start" xml:space="preserve"><value>Предложить картинки</value></data>
   <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>Предлагаем… готово запросов: {0} из {1}.</value></data>
-  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>Готово: предложения дали {0} из {1} запросов.</value></data>
-  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>Остановлено: предложения дали {0} из {1} запросов.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>Готово: предложения дали {0} из {1, plural, one{# запроса} other{# запросов}}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>Остановлено: предложения дали {0} из {1, plural, one{# запроса} other{# запросов}}.</value></data>
   <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>Текст изменился с тех пор, как это было предложено.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.some" xml:space="preserve"><value>для некоторых мест предложений нет: их предложения не прошли проверку</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.checks" xml:space="preserve"><value>ни одно предложение не прошло проверку</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.unreadable" xml:space="preserve"><value>ответ дважды не удалось прочитать; ничего не сохранено</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.cutoff" xml:space="preserve"><value>ответ дважды обрывался, не дойдя до конца; ничего не сохранено</value></data>
   <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>Предложено:</value></data>
   <data name="Campaign.Book.Art.Draw.Title" xml:space="preserve"><value>Нарисовать картинки</value></data>
   <data name="Campaign.Book.Art.Draw.Hint" xml:space="preserve"><value>Отметьте места, которые нужно нарисовать. Каждая картинка рисуется по своему предложению, в стиле этой книги, вашей моделью для картинок. Пока вы не нажмёте «Нарисовать», ничего не рисуется.</value></data>

@@ -18,7 +18,8 @@ public sealed record BookDirectorCall(string Chapter, string Language, IReadOnly
 public sealed record BookDirection(int Ref, string Depicts, string Visual, string Mood);
 
 /// <summary>How a call ended: the suggestions that passed, why the others did not (by ref), and a reason when the call itself failed
-/// (<c>budget</c>, <c>error</c>, <c>auth</c>, <c>ratelimit</c>, <c>allowance</c>, <c>cancelled</c>, <c>unreadable</c>).</summary>
+/// (<c>budget</c>, <c>error</c>, <c>auth</c>, <c>ratelimit</c>, <c>allowance</c>, <c>cancelled</c>, <c>unreadable</c>, and <c>cutoff</c> when the
+/// last reply stopped at the output limit before its JSON ended).</summary>
 public sealed record BookDirectorResult(IReadOnlyList<BookDirection> Directions, IReadOnlyDictionary<int, IReadOnlyList<string>> Refused, string? Reason, int Attempts);
 
 public static class BookDirectorPrompts
@@ -90,8 +91,15 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
 
     private const int MaxReplyChars = 64_000;
 
+    /// <summary>What the model is told when its reply stopped at the output limit.</summary>
+    public const string CutOff = "The reply was cut off before the JSON ended. Keep every visual under 40 words and every depicts line short, and reply with the JSON only.";
+
+    /// <summary>The output limit of one call. A suggestion is a "depicts" line, a visual of up to 60 words and a mood, in JSON: a small real
+    /// model's reply was cut off at 160 tokens a slot, and then used 370 a slot of 320's limit; 480 leaves room for a wordy one.</summary>
+    public const int OutputPerSlot = 480;
+
     public static int MaxOutputFor(BookDirectorCall call) =>
-        (int)Math.Clamp(160L * call.Slots.Count + 200, 400, AIClientFactory.AnthropicMaxOutputTokens);
+        (int)Math.Clamp((long)OutputPerSlot * call.Slots.Count + 200, 600, AIClientFactory.AnthropicMaxOutputTokens);
 
     public static BookSectionLoad LoadFor(BookDirectorCall call)
     {
@@ -113,12 +121,15 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
             if (budget.TryReserve(BookTokens.Estimate(system) + BookTokens.Estimate(user), maxOutput) is not { } reservation) return Failed("budget", attempt - 1);
 
             string text;
+            bool cutOff;
             try
             {
                 var response = await chat.GetResponseAsync(
                     [new ChatMessage(ChatRole.System, system), new ChatMessage(ChatRole.User, user)],
                     new ChatOptions { Temperature = temperature, MaxOutputTokens = maxOutput }, ct);
                 text = response.Text ?? string.Empty;
+                // A reply that stopped at the limit: providers say so, and a reply that used the whole limit is taken as one too.
+                cutOff = response.FinishReason == ChatFinishReason.Length || response.Usage?.OutputTokenCount >= maxOutput;
                 reservation.Settle(response.Usage?.InputTokenCount, response.Usage?.OutputTokenCount, BookTokens.Estimate(text));
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -142,9 +153,15 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
 
             var (directions, refused, problem) = Read(call, text);
             if (problem == null && directions.Count > 0) return new BookDirectorResult(directions, refused, null, attempt);
+            // A reply cut off at the limit is asked again more briefly: the same length would be cut off again.
+            if (problem != null && cutOff) problem = CutOff;
             // Only a reply that could not be read at all, or held nothing usable, is asked again; a slot that broke a rule is simply dropped.
             problems = [problem ?? "No slot in the reply passed the rules: " + string.Join("; ", refused.Values.SelectMany(v => v).Distinct().Take(6))];
-            if (attempt == MaxAttempts) return new BookDirectorResult([], refused.Count > 0 ? refused : new Dictionary<int, IReadOnlyList<string>> { [0] = problems }, "unreadable", attempt);
+            if (attempt == MaxAttempts)
+            {
+                return new BookDirectorResult([], refused.Count > 0 ? refused : new Dictionary<int, IReadOnlyList<string>> { [0] = problems },
+                    problem == CutOff ? "cutoff" : "unreadable", attempt);
+            }
         }
 
         return Failed("unreadable", MaxAttempts, problems);
@@ -209,7 +226,9 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
     }
 
     /// <summary>Why one suggestion cannot be kept. The visual goes through <see cref="BookImagePrompt.Check"/> with the edition's names; the
-    /// mood must be one of the vocabulary's ids; what it depicts may name nothing and count nothing its own slot does not.</summary>
+    /// mood must be one of the vocabulary's ids; what it depicts may name nothing and count nothing that the call's own chapter and slots do not. The whole call, not
+    /// the one slot: a chapter header's text is only its title, yet "the keeper and the net-mender on the quay" may rightly name the chapter's
+    /// people (found on a real model). Depicts is only shown to the GM; it never reaches a picture prompt.</summary>
     public static IReadOnlyList<string> Check(BookDirectorCall call, BookDirectorSlot slot, string depicts, string visual, string mood)
     {
         var problems = new List<string>();
@@ -219,7 +238,7 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
         if (line.Length == 0) problems.Add("depicts empty");
         else if (line.Length > BookDirectorPrompts.MaxDepictsChars) problems.Add("depicts too long");
         else if (line.Contains('\n') || line.Contains('<') || line.Contains("[[", StringComparison.Ordinal) || line.Contains("{{", StringComparison.Ordinal)) problems.Add("depicts has markup");
-        else problems.AddRange(BookChecks.StyleProblems(line, call.Chapter + "\n" + slot.Label + "\n" + slot.Text).Select(p => "depicts " + p));
+        else problems.AddRange(BookChecks.StyleProblems(line, call.Chapter + "\n" + string.Join("\n", call.Slots.Select(s => s.Label + "\n" + s.Text))).Select(p => "depicts " + p));
         return problems;
     }
 

@@ -757,15 +757,19 @@
   <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>no picture</value></data>
   <data name="Campaign.Book.Art.Suggest.Title" xml:space="preserve"><value>Suggest pictures</value></data>
   <data name="Campaign.Book.Art.Suggest.Hint" xml:space="preserve"><value>Your AI model reads a short outline of this edition and suggests what each picture should show. Secrets are not sent. Nothing is drawn.</value></data>
-  <data name="Campaign.Book.Art.Suggest.Summary" xml:space="preserve"><value>{0} places to suggest for, in {1} requests to {2}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Summary" xml:space="preserve"><value>{0, plural, one{One place} other{# places}} to suggest for, in {1, plural, one{one request} other{# requests}} to {2}.</value></data>
   <data name="Campaign.Book.Art.Suggest.Tokens" xml:space="preserve"><value>About {0} tokens; never more than {1}.</value></data>
   <data name="Campaign.Book.Art.Suggest.Current" xml:space="preserve"><value>All {0} places have suggestions made from what they say now.</value></data>
   <data name="Campaign.Book.Art.Suggest.All" xml:space="preserve"><value>Suggest again for places that already have a suggestion</value></data>
   <data name="Campaign.Book.Art.Suggest.Start" xml:space="preserve"><value>Suggest pictures</value></data>
-  <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>Suggesting… {0} of {1} requests done.</value></data>
-  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>Done: {0} of {1} requests gave suggestions.</value></data>
-  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>Stopped: {0} of {1} requests gave suggestions.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>Suggesting… {0} of {1, plural, one{# request} other{# requests}} done.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>Done: {0} of {1, plural, one{# request} other{# requests}} gave suggestions.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>Stopped: {0} of {1, plural, one{# request} other{# requests}} gave suggestions.</value></data>
   <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>The text has changed since this was suggested.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.some" xml:space="preserve"><value>some places got no suggestion: theirs failed the checks</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.checks" xml:space="preserve"><value>no suggestion passed the checks</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.unreadable" xml:space="preserve"><value>the reply could not be read, twice; nothing was kept</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.cutoff" xml:space="preserve"><value>the reply was cut off before it ended, twice; nothing was kept</value></data>
   <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>Suggested:</value></data>
   <data name="Campaign.Book.Art.Draw.Title" xml:space="preserve"><value>Draw pictures</value></data>
   <data name="Campaign.Book.Art.Draw.Hint" xml:space="preserve"><value>Tick the places to draw. Each picture is drawn from its suggestion, in this book's style, by your picture model. Nothing is drawn until you press Draw.</value></data>
@@ -884,7 +888,7 @@
   <data name="Campaign.Book.Ai.Discard" xml:space="preserve"><value>Discard the stored build</value></data>
   <data name="Campaign.Book.Ai.Use" xml:space="preserve"><value>Use the polished text in the preview and the PDF (only for chapters that are up to date)</value></data>
   <data name="Campaign.Book.Ai.Progress" xml:space="preserve"><value>{0} of {1} chapters</value></data>
-  <data name="Campaign.Book.Ai.Meter" xml:space="preserve"><value>{0} requests, {1} tokens in, {2} out</value></data>
+  <data name="Campaign.Book.Ai.Meter" xml:space="preserve"><value>{0, plural, one{# request} other{# requests}}, {1} tokens in, {2} out</value></data>
   <data name="Campaign.Book.Ai.Estimated" xml:space="preserve"><value>Estimated: the provider reported no usage for some calls.</value></data>
   <data name="Campaign.Book.Ai.Money" xml:space="preserve"><value>{0} so far</value></data>
   <data name="Campaign.Book.Ai.Totals" xml:space="preserve"><value>All runs of this build: {0} requests, {1} tokens in, {2} out.</value></data>

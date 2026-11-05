@@ -187,10 +187,10 @@ public static class BookThemes
             .art { display: block; max-width: 100%; max-height: 120mm; margin: .6em auto; break-inside: avoid; }
             .title-page.has-cover { padding-top: 6%; break-inside: avoid; }
             .cover-art { display: block; max-width: 78%; max-height: {{(layout.PageSize == "Letter" ? 115 : 150)}}mm; margin: 0 auto 1.2em; object-fit: contain; }
-            .art-portrait { width: 34%; margin: .2em 0 .5em; break-inside: avoid; }
+            .art-portrait { width: 34%; max-width: 42mm; margin: .2em 0 .5em; break-inside: avoid; }
             .art-portrait, .art-place { break-before: avoid; }
             .art-portrait p { margin: 0; }
-            .art-portrait .art { width: 100%; max-height: 52mm; margin: 0; object-fit: cover; }
+            .art-portrait .art { width: 100%; aspect-ratio: 3 / 4; height: auto; max-height: none; margin: 0; object-fit: cover; object-position: 50% 20%; }
             .art-place { margin: .4em 0 .6em; break-inside: avoid; }
             .art-place p { margin: 0; }
             .art-place .art { width: 100%; max-height: 48mm; margin: 0; object-fit: cover; }

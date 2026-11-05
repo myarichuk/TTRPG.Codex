@@ -40,8 +40,8 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: 
 
 ## 3. State: built, verified, and not
 
-Built: everything in `docs/BOOK_EXPORT.md` sections 10-38. Sections 34-38 (book art slots and the GM's own pictures, the style vocabulary
-and prompt, the art director, wiki links, drawing) are on `book/next`, not pushed. The rest: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
+Built: everything in `docs/BOOK_EXPORT.md` sections 10-39. Sections 34-39 (book art slots and the GM's own pictures, the style vocabulary
+and prompt, the art director, wiki links, drawing, the first real run's fixes) are on `book/next`, not pushed. The rest: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
 panel, AI layer steps 1-5 (prices, budget, estimator, section workers, checks, stored build, pre-flight, live progress), two columns, existing pictures
 placed by recorded line, re-encoding/downscaling, out-of-process decoding, website.
 
@@ -51,9 +51,9 @@ the worker, a real-browser look at columns, drop caps, picture placement, panel 
 worker run from that directory, and one run against a real model (a small Anthropic model, section 26, short chapters only).
 
 **Not verified, say so if you rely on any of it:**
-- Drawing (section 38) has only been run against a fake picture server, never a real picture model; Regenerate/Accept is not built.
-- The art director (section 36) has only been run against scripted replies, never a real model. The tray's director section has only been
-  drawn in a browser in its no-model state: the pre-flight, Suggest, progress and suggestion lines have not been looked at.
+- The art director and drawing have had one real run (section 39): one small campaign, one chapter, three pictures, English, party edition,
+  default style, no prices set. Not run for real: the GM edition, two or more chapters, a priced model (the cost lines), Stop mid-run, the
+  server's own keys and allowance. Regenerate/Accept is not built.
 - The full e2e suite has not been rerun since step 5 of the AI layer; only the book e2e tests were.
 - No real-model run of anything after section 26: the stored build, the panel's AI controls and cost display were exercised only with a scripted fake
   chat client and an in-process fake OpenAI server.
@@ -156,7 +156,7 @@ Anything that survives is a missing test; add it.
 ## 7. Open work, in the order I would take it (the user decides)
 
 1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3-6 are done (sections 34-36, 38); 7 remains, and step 6's
-   Regenerate/Accept (keep 3).** Next: one run against a real text and picture model (the user offered short-lived keys, entered by them in AI settings). DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
+   Regenerate/Accept (keep 3).** The first real run is done (section 39). DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
    writes the prompt; deny proper nouns and "in the style of"); the art-director call per chapter (masked outline in, `{depicts, visual, mood}` out);
    per-slot generation with cost shown first and nothing drawn without a click; suggested spot and scene slots. Audience-tag every image
    (`BuiltFrom: party|dm`); the party book places only party-built images. The user asked for painterly/linework style choices.
