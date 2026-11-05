@@ -117,51 +117,53 @@ else
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="plate-bar">
+            <div class="stat-strip" role="list" aria-label="@L["Actor.Sheet.KeyNumbers"]">
+                @if (system?.PrimaryResource is { } vital)
+                {
+                    var hpNow = YamlValues.GetInt(editSheet, vital.Key) ?? 0;
+                    var hpMax = vital.MaxKey != null ? YamlValues.GetInt(editSheet, vital.MaxKey) ?? 0 : 0;
+                    var hpPct = hpMax > 0 ? Math.Clamp(100.0 * hpNow / hpMax, 0, 100) : 0;
+                    var hpBand = hpPct < 25 ? "hp-low" : hpPct < 50 ? "hp-mid" : "hp-high";
+                    <div class="stat-cell stat-hp" role="listitem">
+                        <span class="stat-label">@vital.Label</span>
+                        <span class="stat-value" data-testid="plate-hp">@Bidi.Ltr(hpNow + (hpMax > 0 ? $" / {hpMax}" : ""))</span>
+                        @if (hpMax > 0)
+                        {
+                            <div class="hp-bar @hpBand" role="progressbar" aria-label="@vital.Label" aria-valuemin="0" aria-valuemax="@hpMax" aria-valuenow="@hpNow">
+                                <span style="width:@(hpPct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                            </div>
+                        }
+                    </div>
+                }
+                @if (Rules?.ArmorClass is { } plateAc)
+                {
+                    var acField = system?.ActorFields.FirstOrDefault(f => f.Key == plateAc.Key);
+                    <div class="stat-cell stat-ac" role="listitem">
+                        <span class="stat-label">@(acField?.Abbreviation ?? acField?.Label ?? plateAc.Key)</span>
+                        <span class="stat-value" data-testid="plate-ac">@(evaluation?.ArmorClass is { Active: true } acSummary ? acSummary.Total : YamlValues.GetInt(editSheet, plateAc.Key) ?? 10)</span>
+                    </div>
+                }
+                @foreach (var stat in PlateStats())
+                {
+                    <div class="stat-cell" role="listitem">
+                        <span class="stat-label">@stat.Label</span>
+                        <span class="stat-value">@stat.Value</span>
+                    </div>
+                }
+            </div>
             <div class="plate-save">
                 @if (CanEdit && DirtyCount > 0)
                 {
                     <span class="dirty-note" role="status" data-testid="sheet-dirty">@L["Actor.Sheet.Dirty", DirtyCount]</span>
                 }
-                <CodexButton Variant="CodexButtonVariant.Etched" Icon="arrow-left" OnClick="OnBack" data-testid="sheet-back">@BackLabel</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Rune" Icon="arrow-left" Label="@BackLabel" title="@BackLabel" OnClick="OnBack" data-testid="sheet-back" />
                 @if (CanEdit)
                 {
                     <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" OnClick="SaveAsync" data-testid="sheet-save" data-save-shortcut="" title="@L["Common.SaveShortcut"]">@L["Actor.Sheet.SaveChanges"]</CodexButton>
                 }
             </div>
-        </div>
-        <div class="stat-strip" role="list" aria-label="@L["Actor.Sheet.KeyNumbers"]">
-            @if (system?.PrimaryResource is { } vital)
-            {
-                var hpNow = YamlValues.GetInt(editSheet, vital.Key) ?? 0;
-                var hpMax = vital.MaxKey != null ? YamlValues.GetInt(editSheet, vital.MaxKey) ?? 0 : 0;
-                var hpPct = hpMax > 0 ? Math.Clamp(100.0 * hpNow / hpMax, 0, 100) : 0;
-                var hpBand = hpPct < 25 ? "hp-low" : hpPct < 50 ? "hp-mid" : "hp-high";
-                <div class="stat-cell stat-hp" role="listitem">
-                    <span class="stat-label">@vital.Label</span>
-                    <span class="stat-value" data-testid="plate-hp">@Bidi.Ltr(hpNow + (hpMax > 0 ? $" / {hpMax}" : ""))</span>
-                    @if (hpMax > 0)
-                    {
-                        <div class="hp-bar @hpBand" role="progressbar" aria-label="@vital.Label" aria-valuemin="0" aria-valuemax="@hpMax" aria-valuenow="@hpNow">
-                            <span style="width:@(hpPct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
-                        </div>
-                    }
-                </div>
-            }
-            @if (Rules?.ArmorClass is { } plateAc)
-            {
-                var acField = system?.ActorFields.FirstOrDefault(f => f.Key == plateAc.Key);
-                <div class="stat-cell stat-ac" role="listitem">
-                    <span class="stat-label">@(acField?.Abbreviation ?? acField?.Label ?? plateAc.Key)</span>
-                    <span class="stat-value" data-testid="plate-ac">@(evaluation?.ArmorClass is { Active: true } acSummary ? acSummary.Total : YamlValues.GetInt(editSheet, plateAc.Key) ?? 10)</span>
-                </div>
-            }
-            @foreach (var stat in PlateStats())
-            {
-                <div class="stat-cell" role="listitem">
-                    <span class="stat-label">@stat.Label</span>
-                    <span class="stat-value">@stat.Value</span>
-                </div>
-            }
         </div>
         @if (lastRoll != null)
         {

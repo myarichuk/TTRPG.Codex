@@ -1,19 +1,18 @@
 namespace Codex.Web;
 
 /// <summary>
-/// Where the Data Protection key ring lives: under the server's data directory, so moving or restoring that folder
-/// keeps sign-in cookies and stored AI keys readable (D12). Before this the ring went to the OS user's profile, and
-/// the application name was the install path; the switch signs everyone out once and drops stored AI keys, which
-/// AI settings then asks for again.
+/// The Data Protection key ring: in <see cref="DataFolders.Keys"/>, beside the database by default, so sign-in cookies and
+/// stored AI keys stay readable (D12). Moving or restoring the database means moving its <c>Keys</c> sibling too: without
+/// it, stored AI keys need entering again and everyone signs in once more. The ring is plain XML at rest.
 /// </summary>
 public static class DataProtectionKeys
 {
     public const string ApplicationName = "TTRPG.Codex";
 
-    /// <summary>The key folder for <paramref name="dataDir"/>, created if missing.</summary>
-    public static DirectoryInfo Directory(string dataDir)
+    /// <summary>The key folder, created if missing.</summary>
+    public static DirectoryInfo Directory(string keysDir)
     {
-        var keys = new DirectoryInfo(Path.Combine(Path.GetFullPath(dataDir), "Keys"));
+        var keys = new DirectoryInfo(Path.GetFullPath(keysDir));
         keys.Create();
         return keys;
     }

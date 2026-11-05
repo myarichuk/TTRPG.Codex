@@ -114,11 +114,29 @@ builder.Services.AddRateLimiter(options =>
 });
 
 // Persistence
-var dataDir = builder.Configuration["Codex:DataDirectory"] ?? "RavenData";
+// One absolute data folder and key ring for every way the server is started (DataFolders); older builds' data is brought
+// across first, before anything creates the new folders.
+var configuredDataDir = builder.Configuration["Codex:DataDirectory"];
+var dataFolders = Codex.Web.DataFolders.Resolve(configuredDataDir, builder.Configuration["Codex:KeysDirectory"], builder.Environment.ContentRootPath);
+var dataDir = dataFolders.Data;
+IReadOnlyList<string> migrated;
+try
+{
+    migrated = Codex.Web.LegacyDataMigration.Run(
+        Codex.Web.LegacyDataMigration.Find(configuredDataDir, dataFolders, builder.Environment.ContentRootPath,
+            Directory.GetCurrentDirectory(), Path.Combine(AppContext.BaseDirectory, "RavenDBServer")),
+        dataFolders);
+}
+catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+{
+    Console.Error.WriteLine("CODEX_STARTUP_ERROR: Could not move older data into '" + dataDir + "' (" + ex.Message + "). Shutting down.");
+    Environment.Exit(1);
+    return;
+}
 
 // The data folder is checked before anything writes to it (the Data Protection key folder below is made while services
 // are registered): a read-only folder then stops the server with its plain message for the launcher, not a stack trace.
-if (RavenDbService.CheckWritable(dataDir) is { } unwritable)
+if (RavenDbService.CheckWritable(dataDir, dataFolders.Keys) is { } unwritable)
 {
     // The launcher shows this line to the user (ServerController.StartupProblemPrefix).
     Console.Error.WriteLine("CODEX_STARTUP_ERROR: " + unwritable + " Shutting down.");
@@ -179,7 +197,7 @@ builder.Services.AddHostedService<IdleRuntimeEvictionService>();
 builder.Services.AddSingleton<JsonBackups>();
 builder.Services.AddSingleton(new BackupStatus
 {
-    Folder = Path.GetFullPath(Path.Combine(dataDir, "Backups")),
+    Folder = dataFolders.Backups,
     Enabled = builder.Configuration.GetValue("Codex:Backups:Enabled", true),
     Keep = Math.Max(1, builder.Configuration.GetValue("Codex:Backups:Keep", 7))
 });
@@ -194,9 +212,10 @@ builder.Services.AddSingleton(aiConfig);
 var aiImageConfig = new AIImageConfiguration();
 builder.Configuration.GetSection("AIImage").Bind(aiImageConfig);
 builder.Services.AddSingleton(aiImageConfig);
-// Keys under the data directory, so the folder carries what its cookies and stored AI keys need (D12).
+// The key ring sits beside the database (DataFolders), so cookies and stored AI keys stay readable whatever folder the
+// server is started from (D12).
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(Codex.Web.DataProtectionKeys.Directory(dataDir))
+    .PersistKeysToFileSystem(Codex.Web.DataProtectionKeys.Directory(dataFolders.Keys))
     .SetApplicationName(Codex.Web.DataProtectionKeys.ApplicationName);
 builder.Services.AddSingleton<ServerAiUsage>();
 builder.Services.AddSingleton<AiProviderService>();
@@ -213,6 +232,8 @@ builder.Services.AddHttpClient();
 var app = builder.Build();
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("Data folder: {DataFolder}; key ring: {KeyFolder}.", dataFolders.Data, dataFolders.Keys);
+foreach (var line in migrated) logger.LogWarning("{Migration}", line);
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {
@@ -312,7 +333,7 @@ app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMod
 // with a stack trace is worse than a clear failure. Check the folders, open the store now, and stop with
 // a message in the log (the launcher reports the stop) rather than failing on the first sign-in.
 {
-    var problem = RavenDbService.CheckWritable(dataDir);
+    var problem = RavenDbService.CheckWritable(dataDir, dataFolders.Keys);
     if (problem == null)
     {
         try

@@ -39,7 +39,7 @@
         <p class="small small-muted mb-2">@L["Actor.Sheet.StdArrayLead"]<bdi>@string.Join(", ", attributeRules.StandardArray)</bdi>@L["Actor.Sheet.StdArrayTail"]</p>
     }
 
-    <div class="attr-grid" style="@(Definition.Attributes.Count is > 0 and <= 8 ? $"--attr-count:{Definition.Attributes.Count}" : null)">
+    <div class="attr-grid" style="@(Definition.Attributes.Count is > 0 and <= 8 ? $"--attr-count:{Definition.Attributes.Count};--attr-wrap:{(Definition.Attributes.Count + 1) / 2}" : null)">
         @foreach (var attr in Definition.Attributes)
         {
             var total = summary?.Totals.GetValueOrDefault(attr.Key) ?? (YamlValues.GetInt(Sheet, attr.Key) ?? attr.Default);

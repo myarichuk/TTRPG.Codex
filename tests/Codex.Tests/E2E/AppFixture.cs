@@ -51,7 +51,8 @@ public sealed class AppFixture : IAsyncLifetime
         psi.ArgumentList.Add("--no-launch-profile");
         psi.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
         psi.Environment["ASPNETCORE_URLS"] = BaseUrl;
-        psi.Environment["Codex__DataDirectory"] = _dataDir;
+        // A folder inside the owned one, so its Keys and RavenServer siblings are swept with it.
+        psi.Environment["Codex__DataDirectory"] = Path.Combine(_dataDir, "RavenData");
         // The suite's own set of goblins/hidden-NPC/PCs is seeded through these endpoints (see
         // TestSeeding.cs) rather than a second process writing straight to RavenDB - see the type
         // doc comment above for why.

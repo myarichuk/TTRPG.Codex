@@ -146,10 +146,10 @@ public class RavenDbService : IDisposable
     /// for the first one that can't - so an install into a read-only place fails at startup with the
     /// folder named, not on the first request with a RavenDB stack trace. Null when all is well.
     /// </summary>
-    public static string? CheckWritable(string dataDirectory)
+    public static string? CheckWritable(string dataDirectory, params string[] alsoFolders)
     {
         var data = Path.GetFullPath(dataDirectory);
-        foreach (var folder in new[] { data, Path.GetFullPath(Path.Combine(data, "..", "RavenServer")) })
+        foreach (var folder in new[] { data, Path.GetFullPath(Path.Combine(data, "..", "RavenServer")) }.Concat(alsoFolders.Select(Path.GetFullPath)))
         {
             try
             {

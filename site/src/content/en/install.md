@@ -130,7 +130,7 @@ cd TTRPG.Codex
 dotnet run --project src/Codex.Web
 ```
 
-Open `http://localhost:5183`, create an account and a campaign, and share the invite link. Data lives in an embedded RavenDB under `src/Codex.Web/RavenData`; change it with the `Codex:DataDirectory` setting. Content is loaded from the folders in `Codex:ContentDirectories` in `appsettings.json`. Run the tests with `dotnet test`.
+Open `http://localhost:5183`, create an account and a campaign, and share the invite link. Data lives in an embedded RavenDB in the same per-user folder the installed app uses (on macOS, `~/Library/Application Support/TTRPG.Codex/RavenData`), with the `Keys` folder that protects stored AI keys beside it; change it with the `Codex:DataDirectory` setting. Content is loaded from the folders in `Codex:ContentDirectories` in `appsettings.json`. Run the tests with `dotnet test`.
 
 To let players on your network join a source run, bind to all addresses:
 

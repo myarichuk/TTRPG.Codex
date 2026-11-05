@@ -130,7 +130,7 @@ cd TTRPG.Codex
 dotnet run --project src/Codex.Web
 ```
 
-פותחים את `http://localhost:5183`, יוצרים חשבון וקמפיין, ושולחים את קישור ההזמנה. הנתונים נמצאים ב-RavenDB משובץ תחת `src/Codex.Web/RavenData`; משנים זאת בהגדרה `Codex:DataDirectory`. התוכן נטען מהתיקיות שב-`Codex:ContentDirectories` בקובץ `appsettings.json`. את הבדיקות מריצים בפקודה `dotnet test`.
+פותחים את `http://localhost:5183`, יוצרים חשבון וקמפיין, ושולחים את קישור ההזמנה. הנתונים נמצאים ב-RavenDB משובץ באותה תיקיית משתמש שבה משתמשת האפליקציה המותקנת (ב-macOS: `~/Library/Application Support/TTRPG.Codex/RavenData`), ולצדה התיקייה `Keys` שמגנה על מפתחות הבינה המלאכותית השמורים; משנים זאת בהגדרה `Codex:DataDirectory`. התוכן נטען מהתיקיות שב-`Codex:ContentDirectories` בקובץ `appsettings.json`. את הבדיקות מריצים בפקודה `dotnet test`.
 
 כדי לאפשר לשחקנים ברשת שלכם להצטרף להרצה מקוד המקור, מאזינים לכל הכתובות:
 
