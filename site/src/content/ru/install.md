@@ -130,7 +130,7 @@ cd TTRPG.Codex
 dotnet run --project src/Codex.Web
 ```
 
-Откройте `http://localhost:5183`, создайте учётную запись и кампанию и отправьте ссылку-приглашение. Данные лежат во встроенной базе RavenDB в `src/Codex.Web/RavenData`; путь меняется параметром `Codex:DataDirectory`. Материалы загружаются из папок, перечисленных в `Codex:ContentDirectories` в `appsettings.json`. Тесты запускаются командой `dotnet test`.
+Откройте `http://localhost:5183`, создайте учётную запись и кампанию и отправьте ссылку-приглашение. Данные лежат во встроенной базе RavenDB в той же папке пользователя, что и у установленного приложения (в macOS — `~/Library/Application Support/TTRPG.Codex/RavenData`), а рядом с ней — папка `Keys`, которая защищает сохранённые ключи ИИ; путь меняется параметром `Codex:DataDirectory`. Материалы загружаются из папок, перечисленных в `Codex:ContentDirectories` в `appsettings.json`. Тесты запускаются командой `dotnet test`.
 
 Чтобы пустить игроков из вашей сети при запуске из исходного кода, привяжитесь ко всем адресам:
 

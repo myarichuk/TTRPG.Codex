@@ -1,0 +1,55 @@
+@using System.Security.Claims
+@using Codex.Persistence
+@using Codex.Web.Services
+@using Microsoft.AspNetCore.Components.Routing
+@inject AiProviderService Providers
+@inject IUserRepository UserRepo
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@implements IDisposable
+
+@* A stored AI key that the key ring can no longer read hides every AI button, with nothing else to say why. One line
+   in the shell says it and where to fix it; AI settings itself marks the provider, so the line stays off that page. *@
+@if (unreadable && !OnAiSettings)
+{
+    <div class="ai-key-notice" role="status" data-testid="ai-key-notice">
+        <LucideIcon IconName="key-round" Size="18" />
+        <span>@L["Layout.AiKeyUnreadable"]</span>
+        <a href="/settings/ai">@L["Layout.AiKeyUnreadable.Link"]</a>
+    </div>
+}
+
+@code {
+    private bool unreadable;
+
+    private bool OnAiSettings => Nav.ToBaseRelativePath(Nav.Uri).StartsWith("settings/ai", StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        await CheckAsync();
+    }
+
+    // The shell outlives page changes, so look again on each one: a key entered on AI settings clears the line on leaving.
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        try
+        {
+            await CheckAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (ObjectDisposedException)
+        {
+            // The circuit went away mid-check.
+        }
+    }
+
+    private async Task CheckAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        unreadable = userId != null && Providers.DefaultKeyUnreadable(await UserRepo.GetUserByIdAsync(userId));
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}

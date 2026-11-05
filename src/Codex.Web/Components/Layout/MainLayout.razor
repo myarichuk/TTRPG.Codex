@@ -3,6 +3,7 @@
 <a href="#main-content" class="skip-link">@L["Layout.SkipLink"]</a>
 <AppHeader />
 <main id="main-content" class="page" tabindex="-1">
+    <AiKeyNotice />
     @* An exception escaping a page would otherwise end the circuit and take the header with it (D8); the
        boundary keeps the app shell and offers a way back. ErrorBoundary logs the exception itself. *@
     <ErrorBoundary @ref="boundary">

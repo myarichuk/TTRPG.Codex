@@ -10,7 +10,15 @@ using Microsoft.Extensions.AI;
 namespace Codex.Web.Services;
 
 /// <summary>Thrown by AI features when the user has no working provider; the UI turns it into a link to the settings page.</summary>
-public sealed class AiNotConfiguredException() : LocalizedException("Service.Ai.NotConfigured");
+public class AiNotConfiguredException : LocalizedException
+{
+    public AiNotConfiguredException() : base("Service.Ai.NotConfigured") { }
+
+    protected AiNotConfiguredException(string key) : base(key) { }
+}
+
+/// <summary>The user's model has a key stored that this server's key ring cannot read any more: theirs to enter again.</summary>
+public sealed class AiKeyUnreadableException() : AiNotConfiguredException("Service.Ai.KeyUnreadable");
 
 /// <summary>Thrown by art generation when the user has no image model; chat providers don't count.</summary>
 public sealed class AiImageNotConfiguredException() : LocalizedException("Service.Ai.ImageNotConfigured");
@@ -192,16 +200,26 @@ public sealed class AiProviderService(
         return ServerConfigured && ServerKeyAllowedFor(user) ? "Server default · " + serverConfig.ModelId : null;
     }
 
+    /// <summary>True when the user's default model has a key stored that can't be read any more, which hides their AI
+    /// buttons until they enter it again; the app shell says so (AiKeyNotice).</summary>
+    public bool DefaultKeyUnreadable(UserDocument? user) =>
+        user != null && DefaultProvider(user) is { } provider && NeedsReentry(user.Id, provider.ProtectedApiKey);
+
     public async Task<AiAssistant> AssistantForAsync(string userId)
     {
         var user = await users.GetUserByIdAsync(userId);
-        var client = ClientFor(user) ?? throw new AiNotConfiguredException();
-        return new AiAssistant(client);
+        return new AiAssistant(ClientFor(user) ?? throw NotConfigured(user));
     }
 
     /// <summary>The user's text model itself, for a conversation that calls tools (the world-building chat).</summary>
-    public async Task<IChatClient> ChatClientForAsync(string userId) =>
-        ClientFor(await users.GetUserByIdAsync(userId)) ?? throw new AiNotConfiguredException();
+    public async Task<IChatClient> ChatClientForAsync(string userId)
+    {
+        var user = await users.GetUserByIdAsync(userId);
+        return ClientFor(user) ?? throw NotConfigured(user);
+    }
+
+    private AiNotConfiguredException NotConfigured(UserDocument? user) =>
+        DefaultKeyUnreadable(user) ? new AiKeyUnreadableException() : new AiNotConfiguredException();
 
     public async Task<bool> IsConfiguredForAsync(string userId) => ClientFor(await users.GetUserByIdAsync(userId)) != null;
 

@@ -15,4 +15,5 @@
   <data name="Service.Ai.Unreachable" xml:space="preserve"><value>Не удалось связаться с моделью: {0}</value></data>
   <data name="Service.Art.BadType" xml:space="preserve"><value>Модель изображений прислала файл {0}, который нельзя сохранить. Попробуйте другую модель.</value></data>
   <data name="Service.Art.TooBig" xml:space="preserve"><value>Созданное изображение больше 6 МБ. Выберите меньший размер или другую модель.</value></data>
+  <data name="Service.Ai.KeyUnreadable" xml:space="preserve"><value>Сохранённый ключ ИИ больше не читается. Введите его заново в настройках ИИ.</value></data>
 </root>

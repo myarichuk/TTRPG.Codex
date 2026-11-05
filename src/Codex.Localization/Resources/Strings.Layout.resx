@@ -52,4 +52,6 @@
   <data name="Layout.Picker.MissingTitle" xml:space="preserve"><value>Not in the Library any more. Remove it, or ask the DM to bring the entry back.</value></data>
   <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>Limit reached</value></data>
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Nothing is allowed right now. Check your class, level and the rules above.</value></data>
+  <data name="Layout.AiKeyUnreadable" xml:space="preserve"><value>Your saved AI key can no longer be read, so AI buttons are hidden. Enter the key again to bring them back.</value></data>
+  <data name="Layout.AiKeyUnreadable.Link" xml:space="preserve"><value>Open AI settings</value></data>
 </root>

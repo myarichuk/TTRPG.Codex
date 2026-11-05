@@ -42,9 +42,13 @@ dotnet run --project src/Codex.Web
 
 Open http://localhost:5183, create an account (the first account made on the server's own computer becomes
 server admin; set `Codex:AdminUsername` to name one from elsewhere), create a campaign, and share its invite
-link with players. Data lives in an embedded RavenDB under
-`src/Codex.Web/RavenData` (configurable via `Codex:DataDirectory`). Nothing is fetched from the internet while
-the app runs.
+link with players. Data lives in an embedded RavenDB in your per-user folder, the same one the launchers use
+(`~/Library/Application Support/TTRPG.Codex/RavenData` on macOS, `%LOCALAPPDATA%\TTRPG.Codex\RavenData` on Windows,
+`~/.local/share/ttrpg-codex/RavenData` on Linux; `Codex:DataDirectory` or `CODEX_DATA_HOME` moves it). So a source
+run and the installed app see the same campaigns; run only one at a time. The key ring that protects sign-ins and stored
+AI keys is the `Keys` folder beside `RavenData`: move or back up the two together, or stored AI keys need entering
+again. On first start the server moves data an older build left under `bin/` or `src/Codex.Web/RavenData` into these
+folders. Nothing is fetched from the internet while the app runs.
 
 **Backups.** Every day (and a minute after start, when the last one is older) the server writes a folder under
 `<data>/Backups/`: each campaign as the same JSON **Export campaign** makes, with its images and the players'
@@ -69,7 +73,8 @@ would run it as a program on that computer.
 
 | Setting | What it does |
 | --- | --- |
-| `Codex:DataDirectory` | Where the database, images and backups live. |
+| `Codex:DataDirectory` | Where the database, images and backups live. Default: `RavenData` in the per-user folder; a relative path is taken from the app's folder. |
+| `Codex:KeysDirectory` | Where the Data Protection key ring lives. Default: `Keys` beside the data folder. |
 | `Codex:ContentDirectories` | Folders of systems, packs and plugins to load (a list). `Codex:PluginsDirectory` is the older single folder. |
 | `Codex:AdminUsername` | The account that is server admin, by name. Without it, the first account made on the server's own computer is. |
 | `Authentication:EnableLocalLogin` | `false` hides the name-and-password sign-in, leaving only the external providers configured under `Authentication:`. |

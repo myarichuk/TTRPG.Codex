@@ -52,4 +52,6 @@
   <data name="Layout.Picker.MissingTitle" xml:space="preserve"><value>Этого больше нет в Библиотеке. Уберите его или попросите мастера вернуть запись.</value></data>
   <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>Достигнут предел</value></data>
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Сейчас ничего не доступно. Проверьте класс, уровень и правила выше.</value></data>
+  <data name="Layout.AiKeyUnreadable" xml:space="preserve"><value>Сохранённый ключ ИИ больше не читается, поэтому кнопки ИИ скрыты. Введите ключ заново, чтобы вернуть их.</value></data>
+  <data name="Layout.AiKeyUnreadable.Link" xml:space="preserve"><value>Открыть настройки ИИ</value></data>
 </root>

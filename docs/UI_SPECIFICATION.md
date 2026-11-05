@@ -26,6 +26,15 @@ pair meets WCAG AA. Nothing loads from the internet at runtime, fonts included.
   campaign name, system and role pills, and the eight section links; a "Live" badge appears on
   Table while the runtime is running. Below 992px the rail becomes a horizontal, scroll-snapping
   strip that sticks under the header; the content stacks beneath it.
+- **Fluid width**: the page fills the window (`--content-max` is 2560px, only an ultra-wide screen gets
+  margins); the gutter and the rail (`--rail-w`) scale with the viewport. Layout inside the workspace
+  responds to the space it actually gets, not the window: `.ws-main` is the `main` size container, so
+  Bootstrap `col-lg-*` splits stack below ~50rem (an even 6/6 pair below ~38rem), whatever the rail
+  or the notes drawer took. Running text keeps a readable measure instead (`.wiki-body` 75ch,
+  subtitles 60ch).
+- **Fitted type**: the campaign name in the rail shrinks so its longest word stays on one line
+  (`--title-fit` from the page, sized in `cqi`); ability plates are one row whenever each gets ~4.6rem,
+  else two even rows (`--attr-wrap`), and their numbers scale with the panel.
 - **Loading**: skeleton rows (`LoadingSkeleton`) rather than spinners, so layout doesn't jump.
 - **Sign in / Register** render as static server pages (`[ExcludeFromInteractiveRouting]`) so the
   form always posts with the antiforgery token and an `HttpContext`, no matter how slowly the user
@@ -113,7 +122,7 @@ Controls are owned by the app, not Bootstrap. Every page uses these; Bootstrap's
 | `CodexField` | A label, the control and an optional hint tied together. The control is the caller's, with `class="field-input"` or `"field-select"` (add `field-sm` for compact) and `id="@id"`, the generated id passed to the template. |
 | `CodexCheck` | A checkbox with its label. Plain markup can use `div.field-check` with `input.field-box`. |
 
-Frames: every `.panel`, `.campaign-card`, `.participant`, `.list-picker` and dialog has the two-tone brass border, corner ornaments (one SVG mask, `--corner`, coloured by `--border-strong`) and, for panels, a titled header band. `.pill` is a chamfered plaque. `.divider-orn` is the ornamental rule.
+Frames: every `.panel`, `.campaign-card`, `.participant`, `.list-picker` and dialog has the two-tone brass border, brass corner fittings on all four corners, flush on the border (one masked `::before` layer built from `--corner-tl/tr/br/bl`, coloured by `--border-strong`; an inset bracket read as a resize grip) and, for panels, a titled header band. `.pill` is a chamfered plaque. `.divider-orn` is the ornamental rule.
 
 ## The sheet
 

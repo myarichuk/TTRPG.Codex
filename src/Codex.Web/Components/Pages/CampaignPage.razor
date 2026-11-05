@@ -52,7 +52,7 @@ else
     <div class="workspace @(notesOpen && tableLive ? "beside-notes" : "")">
         <header class="ws-head @(campaign.HasCover ? "has-cover" : "") @(CurrentSection == "overview" ? "" : "ws-head-inner")" style="@(campaign.HasCover ? $"--cover:url('{MediaEndpoints.CoverUrl(campaign)}')" : "")">
             <nav aria-label="@L["Page.Common.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Page.Home.Title"]</a></nav>
-            <h1 data-testid="campaign-title">@campaign.Name</h1>
+            <h1 data-testid="campaign-title" style="--title-fit:@TitleFit(campaign.Name)">@campaign.Name</h1>
             @if (!string.IsNullOrWhiteSpace(campaign.Tagline))
             {
                 <p class="ws-tagline" data-testid="campaign-tagline">@campaign.Tagline</p>
@@ -272,6 +272,10 @@ else
         "templates" => L["Campaign.Templates.Title"],
         _ => L["Page.Campaign.Section.Overview"]
     };
+
+    /// <summary>The longest word's length, at least 8: the rail sizes the name so that word fits on one line.</summary>
+    private static int TitleFit(string name) =>
+        Math.Max(8, name.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Select(w => w.Length).DefaultIfEmpty(0).Max());
 
     private string RoleLabel(CampaignRole role) => role switch
     {

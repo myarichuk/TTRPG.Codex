@@ -188,8 +188,11 @@
     --transition: var(--dur) var(--ease-out);
 
     --header-h: 60px;
-    --content-max: 1240px;
-    --gutter: 1.5rem;
+    /* The page fills the window: only a very wide screen gets margins. Panels inside cap their own text at a readable
+       measure instead (see .wiki-body, .page-subtitle). */
+    --content-max: 2560px;
+    --gutter: clamp(1rem, 0.25rem + 1.9vw, 2.75rem);
+    --rail-w: clamp(13.5rem, 10rem + 4vw, 18rem);
 
     /* Things drawn the same in both themes: the dark veil behind a dialog or sheet, the shadow a sheet casts upward, text
        and shades over a picture (a cover is a photo in either theme), the crit die's brass, and the item rarities. */
@@ -578,7 +581,8 @@ hr { border-color: var(--border); opacity: 1; }
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--frame), var(--shadow-1);
-    padding: var(--space-9) var(--space-10);
+    --panel-pad-y: var(--space-9); --panel-pad-x: var(--space-10);
+    padding: var(--panel-pad-y) var(--panel-pad-x);
     margin-bottom: var(--space-9);
     animation: rise var(--dur-slow) var(--ease-out) backwards;
 }
@@ -610,7 +614,8 @@ hr { border-color: var(--border); opacity: 1; }
 .campaign-card h2 a { color: var(--text); text-decoration: none; }
 .campaign-card h2 a::after { content: ""; position: absolute; inset: 0; }
 .campaign-card h2 a:hover { text-decoration: underline; }
-.campaign-card .card-foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); }
+.campaign-card .card-foot { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-4); }
+.campaign-card .card-foot > .small-muted { flex: 1 1 9rem; }
 .campaign-card .row-actions { position: relative; z-index: 1; }
 .card-new {
     border-style: dashed; border-color: var(--border); box-shadow: none; align-items: center; justify-content: center; text-align: center;
@@ -639,6 +644,11 @@ hr { border-color: var(--border); opacity: 1; }
 .list-row .row-title a:hover { text-decoration: underline; }
 .list-row .row-sub { color: var(--text-3); font-size: var(--fs-md); }
 .row-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: flex-end; }
+/* A picker's result rows keep their Add/Give button on the name's line, so the buttons form one column at the end
+   instead of some rows wrapping and others not. */
+.picker-results > .list-row { flex-wrap: nowrap; }
+.picker-results > .list-row > :first-child { flex: 1 1 auto; min-width: 0; }
+.picker-results > .list-row > :last-child { flex: 0 0 auto; }
 
 .pill {
     display: inline-flex; align-items: center; gap: var(--space-2);
@@ -692,14 +702,20 @@ hr { border-color: var(--border); opacity: 1; }
    --------------------------------------------------------------------------- */
 .workspace {
     display: grid;
-    grid-template-columns: 236px minmax(0, 1fr);
+    grid-template-columns: var(--rail-w) minmax(0, 1fr);
     grid-template-rows: auto 1fr;
     grid-template-areas: "head main" "nav main";
-    column-gap: var(--space-11); row-gap: var(--space-8);
+    column-gap: clamp(var(--space-10), 2vw, var(--space-12)); row-gap: var(--space-8);
     align-items: start;
 }
-.ws-head { grid-area: head; animation: rise var(--dur-slow) var(--ease-out) backwards; }
-.ws-head h1 { font-size: var(--fs-2xl); margin: var(--space-2) 0 var(--space-4); overflow-wrap: anywhere; }
+.ws-head { grid-area: head; container-type: inline-size; animation: rise var(--dur-slow) var(--ease-out) backwards; }
+/* The name shrinks to fit the rail: --title-fit (set by the page from the longest word) keeps that word on one line,
+   between a floor that stays legible and the usual heading size. Words break only when even the floor is too big. */
+.ws-head h1 {
+    font-size: clamp(var(--fs-lg), calc(100cqi / (var(--title-fit, 10) * 0.74)), var(--fs-3xl));
+    line-height: 1.1; margin: var(--space-2) 0 var(--space-4);
+    overflow-wrap: break-word; hyphens: manual; text-wrap: balance;
+}
 .ws-head .pills { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .ws-tagline { margin: -0.25rem 0 var(--space-5); max-width: 60ch; color: var(--text-2); font-style: italic; }
 .campaign-pitch { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -727,7 +743,16 @@ hr { border-color: var(--border); opacity: 1; }
     background: var(--accent);
 }
 .ws-nav .nav-badge { margin-inline-start: auto; }
-.ws-main { grid-area: main; min-width: 0; }
+.ws-main { grid-area: main; min-width: 0; container: main / inline-size; }
+/* Two-column sections split by the space they actually get (after the rail and an open notes drawer), not by the
+   window: an uneven split (8/4, 7/5) stacks below ~50rem, so its side column is never squeezed; an even pair of
+   lists (6/6) holds on down to ~38rem. */
+@container main (max-width: 50rem) {
+    .row > [class*="col-lg-"]:not(.col-lg-6) { flex: 0 0 auto; width: 100%; }
+}
+@container main (max-width: 38rem) {
+    .row > .col-lg-6 { flex: 0 0 auto; width: 100%; }
+}
 
 
 .toolbar { display: flex; flex-wrap: wrap; gap: var(--space-5); align-items: center; margin-bottom: var(--space-8); }
@@ -756,6 +781,10 @@ hr { border-color: var(--border); opacity: 1; }
    --------------------------------------------------------------------------- */
 :root[data-theme="light"] .form-check-input:checked[type="checkbox"] { --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fbf4e0' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e"); }
 .input-group .form-control, .input-group .btn { border-radius: var(--radius-sm); }
+/* In a joined row the text box takes the room and the picker and button keep their natural width; the box never
+   shrinks below a usable size, and the row wraps before it would. */
+.input-group > .field-input { flex: 1 1 8rem; width: 1%; min-width: 7rem; }
+.input-group > .field-select { flex: 0 1 auto; width: auto; }
 .input-group > :not(:first-child) { margin-inline-start: -1px; border-start-start-radius: 0; border-end-start-radius: 0; }
 .input-group > :not(:last-child) { border-start-end-radius: 0; border-end-end-radius: 0; }
 .required-mark { color: var(--danger); margin-inline-start: var(--space-1); }
@@ -977,9 +1006,6 @@ dialog.codex-dialog::backdrop {
    --------------------------------------------------------------------------- */
 /* Beside the side rail the main column is ~230px narrower than the viewport, so Bootstrap's
    two-column split at 992px leaves the side panels cramped; hold off until 1200px there. */
-@media (min-width: 992px) and (max-width: 1199px) {
-    .ws-main [class*="col-lg-"] { flex: 0 0 auto; width: 100%; }
-}
 @media (max-width: 991px) {
     .workspace {
         grid-template-columns: minmax(0, 1fr);
@@ -1015,7 +1041,7 @@ dialog.codex-dialog::backdrop {
     .user-chip span:not(.avatar) { display: none; }
     .user-chip { padding-inline-end: var(--space-2); }
     .page { padding: var(--space-9) var(--gutter) 4rem; }
-    .panel { padding: var(--space-8) var(--space-8); }
+    .panel { --panel-pad-y: var(--space-8); --panel-pad-x: var(--space-8); }
     .list-row { flex-direction: column; align-items: flex-start; }
     /* Stacked, the text takes the row's width and long words (licence URLs) wrap instead of widening the page. */
     .list-row .row-main { width: 100%; overflow-wrap: anywhere; flex: none; }
@@ -1182,6 +1208,10 @@ a.user-chip:active { transform: scale(0.97); }
 .template-start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
 
 .view-as { display: inline-flex; align-items: center; gap: var(--space-4); }
+.ai-key-notice { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); margin: 0 0 var(--space-8); padding: var(--space-4) var(--space-6); border: 1px solid var(--warning); border-radius: var(--radius-md); background: color-mix(in srgb, var(--warning) 10%, var(--surface-2)); color: var(--text); font-size: var(--fs-md); }
+.ai-key-notice > .lucide-icon { color: var(--warning); flex: 0 0 auto; }
+.ai-key-notice > span { flex: 1 1 20rem; }
+.ai-key-notice > a { font-weight: 700; white-space: nowrap; }
 .view-as-note { margin: 0 0 var(--space-6); padding: var(--space-4) var(--space-6); border: 1px dashed var(--arcane); border-radius: var(--radius-md); color: var(--text-2); background: var(--arcane-soft); font-size: var(--fs-md); }
 /* A page's pictures float at the end side of the text (left in Hebrew), framed like the other art, and the text wraps around
    them; a person's portrait sits above the page's own illustration. On a phone they sit above the text. The page grows to hold them. */
@@ -1205,7 +1235,7 @@ a.user-chip:active { transform: scale(0.97); }
     .wiki-figure-portrait, .wiki-figure-portrait.wiki-figure-placeholder { width: min(100%, 9rem); }
     .wiki-figure-placeholder { width: min(100%, 12rem); align-self: center; }
 }
-.wiki-body { font-size: var(--fs-base); line-height: 1.65; }
+.wiki-body { font-size: var(--fs-base); line-height: 1.65; max-width: 75ch; }
 .wiki-body h3 { font-size: var(--fs-lg); margin-top: var(--space-10); }
 .wiki-body h4 { font-size: var(--fs-base); margin-top: var(--space-8); }
 /* Prose is written in the face it is read in; a template's ${fields} and markers line up better in monospace. */
@@ -1353,31 +1383,35 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
 
 /* ---------------------------------------------------------------------------
    Frames (audit 1.3 step 3). A frame is a two-tone brass border (already in
-   --border-strong and --frame), small radii, a titled header band and a pair
-   of corner ornaments. The ornament is one mask, so it takes the border
-   colour in every theme.
+   --border-strong and --frame), small radii, a titled header band and brass
+   corner fittings on all four corners. The fittings sit flush on the border,
+   so they read as part of the frame (an inset pair of brackets looked like a
+   stray glyph and a resize grip). One masked layer draws all four, in the
+   border colour of every theme.
    --------------------------------------------------------------------------- */
 :root {
-    --corner: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M1 17V3a2 2 0 0 1 2-2h14' fill='none' stroke='black' stroke-width='1.6'/%3E%3Cpath d='M6 6l2.2 2.2L6 10.4 3.8 8.2z' fill='black'/%3E%3C/svg%3E");
+    --corner-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg transform='rotate(0 8 8)'%3E%3Cpath d='M1.25 15V4.25a3 3 0 0 1 3-3H15' fill='none' stroke='black' stroke-width='2.5'/%3E%3Cpath d='M6.5 3.5l3 3-3 3-3-3z' fill='black'/%3E%3C/g%3E%3C/svg%3E");
+    --corner-tr: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg transform='rotate(90 8 8)'%3E%3Cpath d='M1.25 15V4.25a3 3 0 0 1 3-3H15' fill='none' stroke='black' stroke-width='2.5'/%3E%3Cpath d='M6.5 3.5l3 3-3 3-3-3z' fill='black'/%3E%3C/g%3E%3C/svg%3E");
+    --corner-br: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg transform='rotate(180 8 8)'%3E%3Cpath d='M1.25 15V4.25a3 3 0 0 1 3-3H15' fill='none' stroke='black' stroke-width='2.5'/%3E%3Cpath d='M6.5 3.5l3 3-3 3-3-3z' fill='black'/%3E%3C/g%3E%3C/svg%3E");
+    --corner-bl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg transform='rotate(270 8 8)'%3E%3Cpath d='M1.25 15V4.25a3 3 0 0 1 3-3H15' fill='none' stroke='black' stroke-width='2.5'/%3E%3Cpath d='M6.5 3.5l3 3-3 3-3-3z' fill='black'/%3E%3C/g%3E%3C/svg%3E");
+    --corner-size: 16px;
 }
 .panel, .campaign-card, .participant, .list-picker, dialog.codex-dialog, .sheet-plate { position: relative; }
 /* An open modal stays fixed to the viewport (relative would make it scroll away with the page); fixed still anchors the corners. */
 dialog.codex-dialog:modal { position: fixed; }
-.panel::before, .panel::after,
-.campaign-card::before, .campaign-card::after,
-.participant::before, .participant::after,
-.list-picker::before, .list-picker::after,
-dialog.codex-dialog::before, dialog.codex-dialog::after {
-    content: ""; position: absolute; width: 18px; height: 18px; pointer-events: none; z-index: 1;
+.panel::before, .campaign-card::before, .participant::before, .list-picker::before, dialog.codex-dialog::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
     background: var(--border-strong);
-    -webkit-mask: var(--corner) center / contain no-repeat; mask: var(--corner) center / contain no-repeat;
+    -webkit-mask: var(--corner-tl) top left / var(--corner-size) no-repeat, var(--corner-tr) top right / var(--corner-size) no-repeat,
+                  var(--corner-br) bottom right / var(--corner-size) no-repeat, var(--corner-bl) bottom left / var(--corner-size) no-repeat;
+    mask: var(--corner-tl) top left / var(--corner-size) no-repeat, var(--corner-tr) top right / var(--corner-size) no-repeat,
+          var(--corner-br) bottom right / var(--corner-size) no-repeat, var(--corner-bl) bottom left / var(--corner-size) no-repeat;
 }
-.panel::before, .campaign-card::before, .participant::before, .list-picker::before, dialog.codex-dialog::before { top: 3px; inset-inline-start: 3px; }
-.panel::after, .campaign-card::after, .participant::after, .list-picker::after, dialog.codex-dialog::after { inset-inline-end: 3px; bottom: 3px; transform: rotate(180deg); }
 
 /* The titled header band: the title sits on a darker strip that runs edge to edge. */
+/* The band's negative margins are the panel's own padding, so it meets the border exactly at every size. */
 .panel > .panel-title:first-child {
-    margin: -1.35rem -1.4rem var(--space-8); padding: var(--space-4) var(--space-10) var(--space-4) var(--space-11);
+    margin: calc(-1 * var(--panel-pad-y)) calc(-1 * var(--panel-pad-x)) var(--space-8); padding: var(--space-4) var(--panel-pad-x) var(--space-4) calc(var(--panel-pad-x) + var(--space-4));
     background: var(--surface-2); border-bottom: 1px solid var(--border); box-shadow: 0 1px 0 var(--frame-inner);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
@@ -1482,36 +1516,66 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .plate-plaques { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
 .plate-save { display: flex; align-items: center; gap: var(--space-5); }
 .sheet-plate .status { margin: var(--space-5) 0 0; }
+/* The plate is one compact band: name and plaques first, then the key numbers with Save beside them; on a wide sheet
+   all three share one line. The breadcrumb repeats the side rail and Back, so the plate leaves it out. A strip of page
+   colour above the sticky plate hides whatever scrolls through the gap under the header. */
+.sheet-plate > .plate-top > .plate-id .breadcrumb-nav { display: none; }
+.sheet-plate::after { content: ""; position: absolute; inset-inline: -2px; bottom: 100%; height: 0.6rem; background: var(--bg); pointer-events: none; }
+.sheet-plate { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6) var(--space-10); }
+.sheet-plate > .plate-top { flex: 1 1 22rem; min-width: 0; }
+.sheet-plate > :not(.plate-top):not(.plate-bar) { flex: 1 0 100%; }
+/* The numbers and Save: beside the name when there is room, else a row of their own with Save at the far end
+   (and under the numbers when even that row is too narrow). */
+.plate-bar { flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-6); min-width: 0; }
+.plate-bar > .stat-strip { margin-top: 0; }
+.plate-bar > .plate-save { margin-inline-start: auto; }
+/* Back is an icon beside Save (its name is the accessible label and tooltip); framed so it still reads as a button. */
+.plate-save { gap: var(--space-4); }
+.plate-save .cx-btn.cx-rune { flex: 0 0 auto; border-color: var(--border-strong); }
+/* Skills and saves run down newspaper columns (alphabetical order still reads top to bottom), so a wide panel
+   keeps each name close to its number instead of a long dotted gap across the page. */
+.skill-list { columns: 19rem; column-gap: var(--space-12); }
+.skill-list > li { break-inside: avoid; }
 .dirty-note { font-size: var(--fs-md); color: var(--warning); font-weight: 700; }
 .stat-strip { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-6); }
 .stat-cell {
     display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 5.2rem;
-    padding: var(--space-2) var(--space-6) var(--space-3); background: var(--surface-2);
+    padding: var(--space-2) var(--space-5) var(--space-3); background: var(--surface-2);
     border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: var(--frame);
 }
-.stat-cell .stat-label { font-variant-caps: all-small-caps; font-weight: 700; letter-spacing: 0.08em; font-size: var(--fs-md); color: var(--text-3); }
+.stat-cell .stat-label { max-width: 6rem; text-align: center; line-height: 1.05; font-variant-caps: all-small-caps; font-weight: 700; letter-spacing: 0.08em; font-size: var(--fs-md); color: var(--text-3); }
 .stat-cell .stat-value { font-family: var(--font-display); font-weight: 600; font-size: var(--fs-2xl); line-height: 1.1; font-variant-numeric: lining-nums tabular-nums; }
-.stat-hp { min-width: 9rem; align-items: stretch; }
+.stat-hp { min-width: 6.5rem; align-items: stretch; }
 .stat-hp .stat-value { text-align: center; }
 .stat-hp .hp-bar { margin-top: var(--space-2); height: 7px; }
 .stat-ac { clip-path: polygon(0 0, 100% 0, 100% 62%, 50% 100%, 0 62%); border: 0; padding-bottom: var(--space-6); min-width: 4.4rem; background: var(--surface-3); box-shadow: none; }
 
 /* Ability plates: the modifier is the big number, the score sits in a medallion. */
 .attr-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: var(--space-6); }
-/* The abilities read as one row of plates, as on a printed sheet, whenever the panel is wide enough for all of
-   them (--attr-count is set for up to eight); a narrow panel falls back to three a row. */
+/* The abilities read as one row of plates, as on a printed sheet, whenever every plate gets at least ~4.6rem; a
+   narrower panel wraps them into two even rows (--attr-wrap = half the count, rounded up). Plates grow with the panel up
+   to 10rem, and the numbers grow with them, so a wide screen gets a bolder row rather than a sparse one. */
 .attr-panel { container-type: inline-size; }
-.attr-grid[style*="--attr-count"] { grid-template-columns: repeat(var(--attr-count), minmax(0, 1fr)); gap: var(--space-5); }
-@container (max-width: 36rem) { .attr-grid[style*="--attr-count"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.attr-grid[style*="--attr-count"] {
+    grid-template-columns: repeat(var(--attr-wrap, 3), minmax(0, 10rem)); justify-content: center; gap: var(--space-5);
+}
+.attr-grid[style*="--attr-count:1;"], .attr-grid[style*="--attr-count:2;"], .attr-grid[style*="--attr-count:3;"] {
+    grid-template-columns: repeat(var(--attr-count), minmax(0, 10rem));
+}
+@container (min-width: 20rem) { .attr-grid[style*="--attr-count:4;"] { grid-template-columns: repeat(4, minmax(0, 10rem)); } }
+@container (min-width: 25.5rem) { .attr-grid[style*="--attr-count:5;"] { grid-template-columns: repeat(5, minmax(0, 10rem)); } }
+@container (min-width: 30.5rem) { .attr-grid[style*="--attr-count:6;"] { grid-template-columns: repeat(6, minmax(0, 10rem)); } }
+@container (min-width: 36rem) { .attr-grid[style*="--attr-count:7;"] { grid-template-columns: repeat(7, minmax(0, 10rem)); } }
+@container (min-width: 41rem) { .attr-grid[style*="--attr-count:8;"] { grid-template-columns: repeat(8, minmax(0, 10rem)); } }
 .attr-box { padding: var(--space-4) var(--space-3) var(--space-5); border-width: 2px; border-radius: var(--radius-md); }
-.attr-box .attr-mod { font-size: var(--fs-3xl); margin: var(--space-1) 0 0; }
+.attr-box .attr-mod { font-size: clamp(1.5rem, 0.85rem + 2.4cqi, 2.7rem); margin: var(--space-1) 0 0; }
 .attr-box .attr-medallion {
-    display: block; width: fit-content; min-width: 3.6rem; margin: var(--space-1) auto var(--space-1);
+    display: block; width: fit-content; min-width: min(3.6rem, 100%); max-width: 100%; margin: var(--space-1) auto var(--space-1);
     padding: var(--space-1) var(--space-4); text-align: center; background: var(--surface); color: var(--text);
     border: 1px solid var(--border-strong); border-radius: 999px; box-shadow: var(--frame);
     font-weight: 700; font-variant-numeric: lining-nums tabular-nums;
 }
-.attr-box .attr-medallion input, .attr-box .attr-medallion select { margin: 0; width: 3.4rem; min-height: 30px; padding: var(--space-1) var(--space-2); border: 0; box-shadow: none; background: transparent; text-align: center; }
+.attr-box .attr-medallion input, .attr-box .attr-medallion select { margin: 0; width: 3.4rem; max-width: 100%; min-height: 30px; padding: var(--space-1) var(--space-2); border: 0; box-shadow: none; background: transparent; text-align: center; }
 
 /* Tabs */
 .sheet-tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-8); border-bottom: 1px solid var(--border-strong); }
@@ -1679,6 +1743,10 @@ a.table-name:hover { text-decoration-color: currentColor; }
 .load-more { margin-top: var(--space-6); text-align: center; }
 .empty-quiet { opacity: 0.8; position: sticky; top: calc(var(--header-h) + 1rem); }
 .library-detail-col { min-width: 0; }
+/* A whole Library row opens its entry, not just the name: the link's hit area is stretched over the row. */
+.list-row:has(> .row-main a[data-testid="library-item"]) { position: relative; cursor: pointer; }
+.list-row > .row-main a[data-testid="library-item"]::after { content: ""; position: absolute; inset: 0; }
+.list-row:has(> .row-main a[aria-current="true"]) { background: var(--accent-soft); box-shadow: inset calc(3px * var(--dir, 1)) 0 0 var(--accent); }
 .ref-subtype { font-style: italic; color: var(--text-2); margin: 0 0 var(--space-5); }
 
 /* ---------------------------------------------------------------------------
@@ -1971,14 +2039,11 @@ html:has(.md-full) { overflow: hidden; }
 
 @media (min-width: 992px) {
     /* Every campaign page makes room for the open drawer: only as much as the drawer would cover, after the
-       space already beside the centred page. Below 1700px, side-by-side columns stack so none gets cramped. */
+       space already beside the page. Side-by-side columns stack by the space left (see the main container query). */
     .workspace.beside-notes {
         margin-inline-end: max(0px, calc(var(--notes-w) + var(--space-8) - var(--gutter) - max(0px, (100vw - var(--content-max)) / 2)));
         transition: margin-inline-end var(--dur) var(--ease-out);
     }
-}
-@media (min-width: 992px) and (max-width: 1699px) {
-    .beside-notes .ws-main .row > [class*="col-lg-"] { flex: 0 0 auto; width: 100%; }
 }
 /* The tab hangs outside the drawer at the page's edge; where the page has no margin beside it, the page keeps clear of it
    (it is about 2.4rem wide). On a phone it sits above the tab bar, not on its last button. */
@@ -2070,9 +2135,15 @@ bdi, .dice, .stat-token { unicode-bidi: isolate; }
 .auth-wrapper > .lang-picker { position: absolute; top: 0.75rem; inset-inline-end: 0.75rem; }
 
 /* Bootstrap ships the LTR build only; the few spacing/alignment utilities the app uses are made logical here. */
-.ms-1 { margin-inline-start: var(--space-2) !important; margin-left: 0 !important; }
-.ms-2 { margin-inline-start: var(--space-4) !important; margin-left: 0 !important; }
-.ms-auto { margin-inline-start: auto !important; margin-left: 0 !important; }
+/* The physical reset comes first: in LTR margin-inline-start IS margin-left, so a reset written after it cancels it. */
+.ms-1 { margin-left: 0 !important; margin-inline-start: var(--space-2) !important; }
+.ms-2 { margin-left: 0 !important; margin-inline-start: var(--space-4) !important; }
+.ms-3 { margin-left: 0 !important; margin-inline-start: var(--space-8) !important; }
+.ms-auto { margin-left: 0 !important; margin-inline-start: auto !important; }
+.me-1 { margin-right: 0 !important; margin-inline-end: var(--space-2) !important; }
+.me-2 { margin-right: 0 !important; margin-inline-end: var(--space-4) !important; }
+.me-3 { margin-right: 0 !important; margin-inline-end: var(--space-8) !important; }
+.me-auto { margin-right: 0 !important; margin-inline-end: auto !important; }
 .text-start { text-align: start !important; }
 
 /* ---------------------------------------------------------------------------
