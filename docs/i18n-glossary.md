@@ -6,7 +6,7 @@ Use these terms everywhere so the interface reads consistently. Machine-drafted 
 |---|---|---|
 | Campaign | Кампания | קמפיין |
 | Session | Сессия | מפגש |
-| Dungeon Master (DM) | Мастер (DM) | שליט המבוך (שה״מ, DM) |
+| Game Master (GM) | Мастер (DM) | שליט המבוך (שה״מ, DM) |
 | Player | Игрок | שחקן |
 | Character | Персонаж | דמות |
 | NPC | НПС | דמות לא-שחקנית (NPC) |

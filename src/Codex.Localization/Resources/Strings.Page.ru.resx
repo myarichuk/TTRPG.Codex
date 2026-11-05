@@ -237,4 +237,11 @@
   <data name="Page.Home.TaglineHint" xml:space="preserve"><value>Видно на карточке кампании и под её названием.</value></data>
   <data name="Page.Home.DescriptionHint" xml:space="preserve"><value>Полное описание на странице обзора кампании. Работает Markdown; дополнить можно позже в настройках.</value></data>
   <data name="Page.Campaign.Section.Build" xml:space="preserve"><value>Строитель мира</value></data>
+  <data name="Page.AiSettings.Price" xml:space="preserve"><value>Цена (необязательно)</value></data>
+  <data name="Page.AiSettings.PriceIn" xml:space="preserve"><value>Вход, за 1 млн токенов</value></data>
+  <data name="Page.AiSettings.PriceOut" xml:space="preserve"><value>Выход, за 1 млн токенов</value></data>
+  <data name="Page.AiSettings.PriceLabel" xml:space="preserve"><value>Обозначение валюты</value></data>
+  <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>Возьмите их из прайс-листа провайдера. Приложение не знает цен, поэтому без них показывает только токены, а не выдуманную стоимость.</value></data>
+  <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>Цена должна быть числом от 0 до {0} или пустой.</value></data>
+  <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>вход {0} / выход {1} за 1 млн токенов</value></data>
 </root>

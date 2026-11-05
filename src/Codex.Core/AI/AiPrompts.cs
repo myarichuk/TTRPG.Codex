@@ -164,14 +164,14 @@ public static class AiPrompts
     {
         var system = r.Audience == AiAudience.Players
             ? "You are the chronicler of a tabletop role-playing campaign. Write the recap the players will read: an in-world account of what the party did and learned this session, in past tense, two to four short paragraphs, followed by a bullet list titled \"Loose threads\" with open questions the party is aware of. Only use what the log says; never invent events, names or outcomes, and never reveal anything the log marks as secret or private. " + StyleFor(r.Language)
-            : "You are the campaign assistant of a tabletop role-playing game master. Write the DM's private session summary with these headings: \"What happened\" (bullets), \"NPCs and places\" (bullets), \"Secrets still hidden\" (what the players do not yet know, from the secret or private material), \"Loose threads\" and \"Hooks for next session\" (two or three concrete suggestions). Only use what the log says; mark anything you infer with \"(inference)\". " + StyleFor(r.Language);
+            : "You are the campaign assistant of a tabletop role-playing game master. Write the GM's private session summary with these headings: \"What happened\" (bullets), \"NPCs and places\" (bullets), \"Secrets still hidden\" (what the players do not yet know, from the secret or private material), \"Loose threads\" and \"Hooks for next session\" (two or three concrete suggestions). Only use what the log says; mark anything you infer with \"(inference)\". " + StyleFor(r.Language);
 
         var sb = new StringBuilder();
         sb.AppendLine($"Campaign: {r.CampaignName} ({r.SystemName})");
         sb.AppendLine($"Session: {(string.IsNullOrWhiteSpace(r.SessionTitle) ? "untitled" : r.SessionTitle)}");
         if (!string.IsNullOrWhiteSpace(r.PreviousDmSummary))
         {
-            sb.AppendLine().AppendLine("Existing DM summary (revise it rather than starting over):").AppendLine(r.PreviousDmSummary);
+            sb.AppendLine().AppendLine("Existing GM summary (revise it rather than starting over):").AppendLine(r.PreviousDmSummary);
         }
 
         AppendList(sb, "Event log", r.Events);
@@ -189,11 +189,11 @@ public static class AiPrompts
     public static (string System, string User) Rewrite(RewriteRequest r)
     {
         var audience = r.Audience == AiAudience.Players
-            ? "The text will be read by the players, so keep anything the facts mark as secret or DM-only out of it."
+            ? "The text will be read by the players, so keep anything the facts mark as secret or GM-only out of it."
             : "The text is for the game master's eyes.";
         // A history may hold the DM's secret blocks; players never see them, so they are kept as they are, not rewritten away.
         var blocks = r.CurrentText.Contains(":::", StringComparison.Ordinal)
-            ? "The current text has DM blocks (a line \":::dm\", text, a line \":::\"); players never see them. Keep every one of them, word for word, with its marker lines. "
+            ? "The current text has GM blocks (a line \":::dm\", text, a line \":::\"); players never see them. Keep every one of them, word for word, with its marker lines. "
             : "";
         var system = $"You are a writing assistant for a tabletop role-playing campaign. You rewrite or write the history, personality and background of a {r.SubjectKind}. Keep every fact given; do not contradict the sheet; keep names as spelled. {audience} {blocks}Reply with the finished text only. {StyleFor(r.Language)}";
 
@@ -212,9 +212,9 @@ public static class AiPrompts
 
     /// <summary>How to keep a secret in a text the players may read, as a prompt says it. See <c>SecretText</c>.</summary>
     public const string SecretBlocks =
-        "Anything the players must not learn yet (a secret, a twist, a trap, what an encounter really is, a DM aside) goes in a DM block: " +
-        "a line \":::dm\", the secret text, then a line \":::\". Players never see a DM block; the game master reveals it when the party learns it. " +
-        "Everything outside DM blocks is what the party may read. Never nest blocks, and keep every \":::dm\" line and \":::\" line that is already in a text. ";
+        "Anything the players must not learn yet (a secret, a twist, a trap, what an encounter really is, a GM aside) goes in a GM block: " +
+        "a line \":::dm\", the secret text, then a line \":::\". Players never see a GM block; the game master reveals it when the party learns it. " +
+        "Everything outside GM blocks is what the party may read. Never nest blocks, and keep every \":::dm\" line and \":::\" line that is already in a text. ";
 
     /// <summary>What a page about a person covers.</summary>
     public const string PersonOutline =
@@ -260,7 +260,7 @@ public static class AiPrompts
         AppendList(sb, "What the campaign already says about the subject", r.Context);
         if (!string.IsNullOrWhiteSpace(r.Structure))
         {
-            sb.AppendLine().AppendLine("The game master's outline for this kind of page. Use its headings, worded as they are and in this order, and keep its DM blocks as DM blocks; " +
+            sb.AppendLine().AppendLine("The game master's outline for this kind of page. Use its headings, worded as they are and in this order, and keep its GM blocks as GM blocks; " +
                                        "‹words› in it say what goes there, and the rest of its text stays as it is. Fill every section; text already under a heading stays under it:")
                 .AppendLine(r.Structure.Trim());
         }
@@ -271,7 +271,7 @@ public static class AiPrompts
         }
 
         sb.AppendLine().AppendLine("Instruction: " + (string.IsNullOrWhiteSpace(r.Instruction)
-            ? "Expand the current notes into a well-structured wiki page with short headings. Keep what they say; put what the party must not know yet in DM blocks."
+            ? "Expand the current notes into a well-structured wiki page with short headings. Keep what they say; put what the party must not know yet in GM blocks."
             : r.Instruction.Trim()));
         sb.AppendLine().AppendLine("Current text:").AppendLine(string.IsNullOrWhiteSpace(r.CurrentText) ? "(none yet - write it from the title and what the campaign says)" : r.CurrentText);
         return (system, sb.ToString());
@@ -497,7 +497,7 @@ public static class AiPrompts
             "Give every entry a \"pitch\" too: one or two plain sentences saying what it is, for lists and the review card. " +
             PlaceOutline + PersonOutline + FactionOutline + QuestOutline +
             OutlinesOf(r.Outlines) +
-            "Add secrets only where a plot lives in them, never as a quota: write each in a DM block of the text it belongs to, and when the party can uncover it in play, also add it as a \"fact\" linked to the entries it is about. " +
+            "Add secrets only where a plot lives in them, never as a quota: write each in a GM block of the text it belongs to, and when the party can uncover it in play, also add it as a \"fact\" linked to the entries it is about. " +
             $"A person who fights or is fought may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose statistics suit them " +
             $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as search_library finds it; leave it out when none fits. " +
             "Invent original names; never use the names of published settings, products, or of characters, places, deities or creatures that belong to a company. ");
@@ -518,7 +518,7 @@ public static class AiPrompts
         }
 
         var sb = new StringBuilder("The game master has an outline for some kinds of page. A page of that kind uses its headings, worded as they are and in their order, " +
-                                   "and keeps its DM blocks as DM blocks; ‹words› in it say what goes there, and the rest of its text stays as it is.\n");
+                                   "and keeps its GM blocks as GM blocks; ‹words› in it say what goes there, and the rest of its text stays as it is.\n");
         foreach (var (kind, outline) in outlines)
         {
             sb.Append($"Outline of a {kind} page:\n{outline.Trim()}\n");

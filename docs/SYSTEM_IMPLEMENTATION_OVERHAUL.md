@@ -58,7 +58,7 @@ rules:
 | Supplier | What it is | Trust | Installed by |
 |---|---|---|---|
 | Built-in | today's `SheetRuleEngine` / `TableRules`, as the default `IRuleHooks` | none needed | ships with the app |
-| Script | a JS function run by Jint (`ScriptRuleHooks`) | sandboxed | DM or admin, in the app |
+| Script | a JS function run by Jint (`ScriptRuleHooks`) | sandboxed | GM or admin, in the app |
 | Compiled | a type in a DLL implementing the hook | full | server owner, by copying files on the server machine |
 
 ### Why this shape
@@ -81,11 +81,11 @@ rules:
    built-in; that is the only fallback.
 3. **The host owns randomness.** Every supplier rolls through `IDiceSource` (`ctx.d(6)` in JS, never `Math.random`), so
    tests can seed it and the log records the dice actually rolled.
-4. **The same failure handling.** A timeout, exception or invalid result produces a DM-facing message naming system,
+4. **The same failure handling.** A timeout, exception or invalid result produces a GM-facing message naming system,
    hook, supplier and (for scripts) line, and falls back to the built-in behaviour. Jint enforces time and memory limits;
    DLL calls are timed and slow ones logged.
 5. **Install rights.**
-   - YAML and scripts can be uploaded in the app by a DM or admin. A server setting can turn scripts off.
+   - YAML and scripts can be uploaded in the app by a GM or admin. A server setting can turn scripts off.
    - DLLs are never uploaded; they are installed only by copying them in on the server machine.
    - The Library labels a system that uses one "contains compiled code".
 6. **Versioned.** A campaign records the system version and a hash of the YAML, each script and each DLL it uses, and
@@ -143,7 +143,7 @@ rules:
 
 ## Open questions
 
-- Should a DM (not only a server admin) be able to install a script system on an internet-facing server? The proposal
+- Should a GM (not only a server admin) be able to install a script system on an internet-facing server? The proposal
   says yes, with low limits and a server switch; confirm.
 - Does a hook see other actors (for example, the roll hook wanting the target's defence)? Starting position: no, only
   the roller's sheet and the request; add a narrow `target` view if a real system needs it.

@@ -87,7 +87,7 @@ entityTypes:                  # what packs for this system may contain
       - { key: classes, label: Classes, type: TagList }
       - { key: features, label: Features, type: Collection }   # rows of {level?, name, description}
   - type: monster
-    actorBlueprint: true                # entries double as creatures the DM can add to the cast
+    actorBlueprint: true                # entries double as creatures the GM can add to the cast
     hitPointsProperty: hitPoints        # which property seeds the primary resource
     attributeProperties: { strength: str, dexterity: dex }   # property -> attribute key
 ```
@@ -137,11 +137,11 @@ likes. Leave `sheetRules` out and anything goes. The SRD system uses every kind 
 
 ```yaml
 sheetRules:
-  enforcement: strict          # strict: players can't save a sheet that breaks a rule (the DM always can)
+  enforcement: strict          # strict: players can't save a sheet that breaks a rule (the GM always can)
                                # warn: show problems but allow saving; off: don't check.
                                # A campaign can override this under Settings > House rules.
   attributes:
-    methods: [point-buy, standard-array]      # what players may pick; the DM also gets "manual"
+    methods: [point-buy, standard-array]      # what players may pick; the GM also gets "manual"
     default: point-buy
     max: 20                                   # cap on base + bonuses
     pointBuy: { budget: 27, min: 8, max: 15, costs: { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 } }
@@ -433,7 +433,7 @@ does not hide it; and as with all packs, a new flavor pack is picked up at the n
 
 ## Homebrew without files
 
-A DM creates homebrew in the campaign's **Library** section. Entries use the same field schema as
+A GM creates homebrew in the campaign's **Library** section. Entries use the same field schema as
 the system's content types, are searchable alongside pack content, can be hidden from players while
 drafting, travel with the campaign export, and can be exported as a pack (zip) with **Export
 homebrew pack** - drop the zip into a content root to share it with another server.

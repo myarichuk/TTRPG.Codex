@@ -421,7 +421,7 @@
             SystemId = Ctx.Campaign.SystemId,
             Kind = "homebrew",
             Description = $"Homebrew content exported from the campaign “{Ctx.Campaign.Name}”.",
-            License = new LicenseInfo { Name = "All rights reserved", Attribution = $"Homebrew by the DM of “{Ctx.Campaign.Name}”." }
+            License = new LicenseInfo { Name = "All rights reserved", Attribution = $"Homebrew by the GM of “{Ctx.Campaign.Name}”." }
         };
         var bytes = await Exporter.ExportToZipBytesAsync(manifest, entries, Ctx.System);
         var href = "data:application/zip;base64," + Convert.ToBase64String(bytes);

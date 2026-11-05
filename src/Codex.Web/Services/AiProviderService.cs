@@ -152,7 +152,7 @@ public sealed class AiProviderService(
         return user.AiProviders.FirstOrDefault(p => p.Id == user.DefaultAiProviderId) ?? user.AiProviders[0];
     }
 
-    public IChatClient? ClientFor(UserDocument? user)
+    public IChatClient? ClientFor(UserDocument? user, ServerAiUsage.Reservation? prepaid = null)
     {
         // The server's key is counted per account, so it is never handed to a session whose account is gone.
         if (user == null) return null;
@@ -178,8 +178,11 @@ public sealed class AiProviderService(
             logger.LogWarning("User {UserId}'s default AI provider {Provider} is incomplete; falling back to the server configuration.", user.Id, provider.Name);
         }
 
-        return ServerKeyAllowedFor(user) && _serverClient.Value is { } server ? new MeteredClient(server, usage, user.Id, IsAdmin(user)) : null;
+        return ServerKeyAllowedFor(user) && _serverClient.Value is { } server ? new MeteredClient(server, usage, user.Id, IsAdmin(user), prepaid) : null;
     }
+
+    /// <summary>True when this user's AI calls go to the server's own key (and so count against their daily allowance).</summary>
+    public bool UsesServerKey(UserDocument? user) => ClientFor(user) is MeteredClient;
 
     public string? Describe(UserDocument? user)
     {
@@ -202,6 +205,47 @@ public sealed class AiProviderService(
     /// <summary>The user's text model itself, for a conversation that calls tools (the world-building chat).</summary>
     public async Task<IChatClient> ChatClientForAsync(string userId) =>
         ClientFor(await users.GetUserByIdAsync(userId)) ?? throw new AiNotConfiguredException();
+
+    /// <summary>Sets aside <paramref name="requests"/> on the server's key for a job that will make many calls, or returns null when
+    /// the user's calls go to their own provider (nothing of the server's to spend). Throws when they do not fit in today's
+    /// allowance. Hand the result to <see cref="ClientFor"/> and dispose it when the job ends.</summary>
+    public async Task<ServerAiUsage.Reservation?> ReserveRequestsAsync(string userId, int requests)
+    {
+        var user = await users.GetUserByIdAsync(userId) ?? throw new AiNotConfiguredException();
+        var provider = DefaultProvider(user);
+        if (provider != null && !Blocked(provider, user) && ClientFor(user) is { } own && own is not MeteredClient)
+        {
+            return null;
+        }
+
+        if (!ServerKeyAllowedFor(user) || !ServerConfigured)
+        {
+            throw new AiNotConfiguredException();
+        }
+
+        return usage.Reserve(user.Id, ServerAiUsage.Kind.Text, requests, IsAdmin(user));
+    }
+
+    /// <summary>The prices of the model <see cref="ClientFor"/> would use for this user: their own provider's, or the optional
+    /// <c>AI:InputPricePerMTok</c>, <c>AI:OutputPricePerMTok</c> and <c>AI:PriceLabel</c> of the server's key. Null when none are set.</summary>
+    public async Task<AiPriceQuote?> PriceForAsync(string userId)
+    {
+        var user = await users.GetUserByIdAsync(userId);
+        var provider = DefaultProvider(user);
+        if (provider != null && !Blocked(provider, user) && ToConfigurationSafe(provider, user))
+        {
+            return provider.InputPricePerMTok == null && provider.OutputPricePerMTok == null ? null
+                : new AiPriceQuote(provider.InputPricePerMTok, provider.OutputPricePerMTok, provider.PriceLabel);
+        }
+
+        var input = configuration.GetValue<decimal?>("AI:InputPricePerMTok");
+        var output = configuration.GetValue<decimal?>("AI:OutputPricePerMTok");
+        return input == null && output == null ? null : new AiPriceQuote(input, output, configuration["AI:PriceLabel"] ?? string.Empty);
+    }
+
+    // The same test ClientFor applies before it uses the user's own provider: a client can be made from it.
+    private bool ToConfigurationSafe(AiProviderConfig provider, UserDocument? user) =>
+        user != null && CachedClient(ToConfiguration(provider, user, null, Confined(user)), Confined(user)) is not null;
 
     public async Task<bool> IsConfiguredForAsync(string userId) => ClientFor(await users.GetUserByIdAsync(userId)) != null;
 
@@ -297,17 +341,23 @@ public sealed class AiProviderService(
 
     /// <summary>The server's own chat client, as one account uses it: each request is counted against their daily allowance
     /// first (F14). The client underneath is shared, so this one never disposes it.</summary>
-    private sealed class MeteredClient(IChatClient inner, ServerAiUsage usage, string userId, bool unlimited) : DelegatingChatClient(inner)
+    private sealed class MeteredClient(IChatClient inner, ServerAiUsage usage, string userId, bool unlimited, ServerAiUsage.Reservation? prepaid = null) : DelegatingChatClient(inner)
     {
+        // A request that was set aside beforehand is spent from there; one beyond it is counted like anyone's.
+        private void Count()
+        {
+            if (prepaid?.TryUse() != true) usage.Take(userId, ServerAiUsage.Kind.Text, unlimited);
+        }
+
         public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
-            usage.Take(userId, ServerAiUsage.Kind.Text, unlimited);
+            Count();
             return base.GetResponseAsync(messages, options, cancellationToken);
         }
 
         public override IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
-            usage.Take(userId, ServerAiUsage.Kind.Text, unlimited);
+            Count();
             return base.GetStreamingResponseAsync(messages, options, cancellationToken);
         }
 

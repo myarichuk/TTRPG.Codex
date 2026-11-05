@@ -83,6 +83,17 @@
         "bullets": ["Пересказ для игроков и отдельная тайная сводка Мастера", "Заметки стола: личные или общие", "Журнал каждого игрока, закрытый даже от Мастера"]
       },
       {
+        "shot": "book-pages",
+        "alt": "Напечатанная книга кампании: обложка с картинкой кампании, страница персонажей с портретами и страница в две колонки.",
+        "title": "Книга вашей кампании",
+        "text": "Соберите кампанию в PDF для печати: обложка, оглавление и по главе на каждый раздел, в одну колонку или в две, на A4 или Letter. Одну книгу — для игроков, другую — для себя.",
+        "bullets": [
+          "Книга для партии содержит только то, что вправе читать игрок: скрытые персонажи и секреты исключены",
+          "Обложка, портреты и иллюстрации мест встают каждая после своей записи",
+          "По желанию ваша модель ИИ приведёт главы в порядок, а стоимость в токенах будет показана заранее"
+        ]
+      },
+      {
         "shot": "table-light", "alt": "Живой стол в светлой теме «пергамент».",
         "title": "По умолчанию тёмный камень, по желанию пергамент",
         "text": "Интерфейс создан для полутёмной комнаты, а светлая тема включается одним щелчком. Контраст соответствует WCAG AA, у элементов есть названия, а анимация учитывает ваши настройки.",
@@ -172,6 +183,6 @@
     "license": "Исходный код доступен по лицензии PolyForm Noncommercial 1.0.0.",
     "project": "Проект", "source": "Исходный код", "releases": "Выпуски", "issues": "Сообщить о проблеме", "legal": "Юридические уведомления", "docs": "Проектная документация",
     "site": "Этот сайт",
-    "base": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License. TTRPG.Codex — независимый проект, не связанный с Wizards of the Coast и не одобренный ею."
+    "base": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode. TTRPG.Codex — независимый проект, не связанный с Wizards of the Coast и не одобренный ею."
   }
 }

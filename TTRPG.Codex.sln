@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codex.Localization", "src\C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codex.TranslationCheck", "tools\Codex.TranslationCheck\Codex.TranslationCheck.csproj", "{2B9C1D42-4AC1-487B-B343-5F7E3A4E3763}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codex.ImageWorker", "src\Codex.ImageWorker\Codex.ImageWorker.csproj", "{FB90E206-DD10-4373-8FA7-46B9AB427855}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -145,6 +147,18 @@ Global
 		{2B9C1D42-4AC1-487B-B343-5F7E3A4E3763}.Release|x64.Build.0 = Release|Any CPU
 		{2B9C1D42-4AC1-487B-B343-5F7E3A4E3763}.Release|x86.ActiveCfg = Release|Any CPU
 		{2B9C1D42-4AC1-487B-B343-5F7E3A4E3763}.Release|x86.Build.0 = Release|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Debug|x64.Build.0 = Debug|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Debug|x86.Build.0 = Debug|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Release|x64.ActiveCfg = Release|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Release|x64.Build.0 = Release|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Release|x86.ActiveCfg = Release|Any CPU
+		{FB90E206-DD10-4373-8FA7-46B9AB427855}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -159,5 +173,6 @@ Global
 		{3F5B5A7B-F679-4A1C-BAF1-C10714E07359} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{3038ECBA-05C4-47C2-8BC9-723BA37D2611} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{2B9C1D42-4AC1-487B-B343-5F7E3A4E3763} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{FB90E206-DD10-4373-8FA7-46B9AB427855} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

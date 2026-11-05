@@ -225,7 +225,7 @@ public class SessionMentionsTests
             player.Select(Describe).OrderBy(x => x));
         Assert.Equal(
             new[] { "Biography", "Comment:Party: [[actor:mara]]", "Comment:Plot: [[actor:mara]]", "Comment:Private: [[actor:mara]]", "Comment:Wiki: [[actor:mara]]",
-                "DM notes", "DM summary", "Journal:Kill [[actor:mara]]", "Recap" },
+                "GM notes", "GM summary", "Journal:Kill [[actor:mara]]", "Recap" },
             dm.Select(Describe).OrderBy(x => x));
         Assert.Equal("harbour", player.Single(w => w.Home == MentionHome.WikiPage).HomeId);
 

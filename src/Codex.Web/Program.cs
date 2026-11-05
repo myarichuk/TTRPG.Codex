@@ -142,6 +142,24 @@ builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
 builder.Services.AddSingleton<IWorldChatRepository, RavenWorldChatRepository>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
+builder.Services.AddSingleton<BookSourceReader>();
+// Pictures are decoded in a separate process (Codex.ImageWorker, built beside the server): a file that crashes the native decoder ends that
+// process, not this one. Without the worker file the book keeps pictures as they are.
+builder.Services.AddSingleton<IBookImageDecoder>(_ => new BookImageWorkerPool(BookImageWorkerLaunch.Beside(AppContext.BaseDirectory)));
+builder.Services.AddSingleton(sp => new BookImageScaler(sp.GetRequiredService<IBookImageDecoder>()));
+builder.Services.AddSingleton<BookArtReader>();
+builder.Services.AddSingleton<IBookBuildRepository, RavenBookBuildRepository>();
+builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.GetSection(Codex.Web.Book.BookPdfOptions.Section));
+builder.Services.AddSingleton<Codex.Web.Book.BookPdf>();
+builder.Services.AddSingleton<Codex.Web.Book.IBookModels, Codex.Web.Book.AiBookModels>();
+// A singleton that must read a campaign's roles afresh for each request: it asks the (scoped) resolver through a scope of its own.
+builder.Services.AddSingleton(sp => new Codex.Web.Book.BookBuilds(
+    sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookBuildRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookModels>(),
+    async (campaignId, userId) =>
+    {
+        using var scope = sp.CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<ICampaignAccessResolver>().ResolveAsync(campaignId, userId);
+    }));
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 builder.Services.AddScoped<ViewerClock>();
 
@@ -283,6 +301,7 @@ if (app.Configuration.GetValue<bool>("Codex:EnableTestSeedEndpoint"))
 Codex.Web.AccountEndpoints.MapAccounts(app);
 Codex.Web.MediaEndpoints.MapMedia(app);
 Codex.Web.PreviewEndpoints.MapPreviews(app);
+Codex.Web.BookEndpoints.MapBooks(app);
 
 // wwwroot under fingerprinted URLs (app.<hash>.css, through @Assets[...]) that the browser keeps for good: a new build is a new URL,
 // so an update is never drawn with the previous styles or scripts (F28). Open to anyone: the sign-in page needs its styles.

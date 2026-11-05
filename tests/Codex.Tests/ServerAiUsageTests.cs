@@ -55,4 +55,50 @@ public class ServerAiUsageTests
         for (var i = 0; i < 50; i++) usage.Take("aria", ServerAiUsage.Kind.Text, unlimited: false);
         Assert.Equal(50, usage.UsedToday("aria", ServerAiUsage.Kind.Text));
     }
+
+    [Fact]
+    public void AReservation_IsAllOrNothing_AndTheUnusedGoesBack()
+    {
+        var usage = Usage(new FakeTimeProvider(), text: 10);
+        usage.Take("aria", ServerAiUsage.Kind.Text, unlimited: false); // 1 used, 9 left
+
+        // 10 do not fit in 9: nothing is taken, so a build is refused at the door, not at section 9 of 10.
+        var refused = Assert.Throws<LocalizedException>(() => usage.Reserve("aria", ServerAiUsage.Kind.Text, 10, unlimited: false));
+        Assert.Equal("Service.Ai.ServerAllowanceSpent", refused.Key);
+        Assert.Equal(1, usage.UsedToday("aria", ServerAiUsage.Kind.Text));
+
+        var reservation = usage.Reserve("aria", ServerAiUsage.Kind.Text, 6, unlimited: false);
+        Assert.Equal(7, usage.UsedToday("aria", ServerAiUsage.Kind.Text));
+        Assert.True(reservation.TryUse());
+        Assert.True(reservation.TryUse());
+        Assert.Equal(4, reservation.Left);
+
+        reservation.Dispose();
+        reservation.Dispose(); // twice is harmless: only the 4 unused go back, once
+        Assert.Equal(3, usage.UsedToday("aria", ServerAiUsage.Kind.Text));
+        Assert.False(reservation.TryUse());
+    }
+
+    [Fact]
+    public void AReservation_CannotWrapAroundOnAHugeCount_AndTheAdminIsNotLimited()
+    {
+        var usage = Usage(new FakeTimeProvider(), text: 10);
+        Assert.Throws<LocalizedException>(() => usage.Reserve("aria", ServerAiUsage.Kind.Text, int.MaxValue, unlimited: false));
+        Assert.Equal(0, usage.UsedToday("aria", ServerAiUsage.Kind.Text));
+        usage.Reserve("admin", ServerAiUsage.Kind.Text, 500, unlimited: true).Dispose();
+        Assert.Equal(0, usage.UsedToday("admin", ServerAiUsage.Kind.Text));
+    }
+
+    [Fact]
+    public async Task ParallelCalls_NeverSpendMoreThanWasReserved()
+    {
+        var usage = Usage(new FakeTimeProvider(), text: 100);
+        using var reservation = usage.Reserve("aria", ServerAiUsage.Kind.Text, 50, unlimited: false);
+        var spent = 0;
+        await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => Task.Run(() =>
+        {
+            for (var i = 0; i < 100; i++) if (reservation.TryUse()) Interlocked.Increment(ref spent);
+        })));
+        Assert.Equal(50, spent);
+    }
 }

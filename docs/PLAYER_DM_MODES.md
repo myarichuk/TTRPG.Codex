@@ -1,6 +1,6 @@
-# Player vs. DM Modes
+# Player vs. GM Modes
 
-TTRPG.Codex supports two primary user roles: **Dungeon Master (DM)** and **Player**. The system uses role-based access to determine what data is displayed and which actions are available.
+TTRPG.Codex supports two primary user roles: **Game Master (GM)** and **Player**. The system uses role-based access to determine what data is displayed and which actions are available.
 
 ## Visibility Logic
 
@@ -8,16 +8,16 @@ The core concept is the **Public/Private Toggle**. Every entity (NPC, Item, Loca
 
 ```mermaid
 graph TD
-    Data[Entity Data] --> DM{User Role?}
-    DM -- DM --> Full[Full Visibility + Edit]
-    DM -- Player --> Status{Public Flag?}
+    Data[Entity Data] --> GM{User Role?}
+    GM -- GM --> Full[Full Visibility + Edit]
+    GM -- Player --> Status{Public Flag?}
     Status -- Yes --> Reveal[Render to User]
     Status -- No --> Hide[Hide or Show Placeholder]
     Hide -- Manual --> Reveal
 ```
 
-## DM Mode (The Architect)
-The DM is the world-builder. Their interface includes:
+## GM Mode (The Architect)
+The GM is the world-builder. Their interface includes:
 - **Campaign Dashboard**: Full overview of all active modules.
 - **Hidden Entities**: NPCs not yet met, secret artifacts, and impending encounters.
 - **Timeline Control**: The ability to add "Future" events or "Hidden" historical lore.
@@ -29,18 +29,18 @@ Players experience the world through their characters.
 - **Character Dashboard**: 
   - Manage stats and bio.
   - **Session Notes**: Append-only notepad linked to specific sessions.
-  - **Shared Visibility**: Notes toggled to "Public" are viewable by all party members; otherwise, they are private to the creator and DM.
-  - **DM Shares**: Specific notes or insights shared by the DM with that player.
+  - **Shared Visibility**: Notes toggled to "Public" are viewable by all party members; otherwise, they are private to the creator and GM.
+  - **GM Shares**: Specific notes or insights shared by the GM with that player.
 
 ## NPC Visibility States
 NPCs use a tiered visibility system to maintain immersion:
 1. **Hidden**: Players have never encountered the NPC. They are completely omitted from the player's Codex.
 2. **Unknown**: Players have seen the NPC but do not know their identity. They appear as "Unknown NPC" with a generic placeholder icon/description.
-3. **Known (Revealed)**: The DM has revealed their identity. Full name, race, and public bio are rendered.
+3. **Known (Revealed)**: The GM has revealed their identity. Full name, race, and public bio are rendered.
 
 ## Interaction Table
 
-| Feature | DM Permission | Player Permission |
+| Feature | GM Permission | Player Permission |
 | :--- | :--- | :--- |
 | **NPCs** | Create, Edit, Toggle Public | View (if Public) |
 | **Encounters** | Full Access | No Access (until triggered) |

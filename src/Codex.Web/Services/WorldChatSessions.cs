@@ -70,7 +70,8 @@ public sealed class WorldChatSessions(WorldBuilderService builder, AiProviderSer
                 default:
                     throw new LocalizedException("WorldBuilder.Error.OnlyDm");
             }
-        }, stillDm: async () => (await accessResolver.ResolveAsync(campaign.Id, access.UserId))?.IsDm == true);
+        }, stillDm: async () => (await accessResolver.ResolveAsync(campaign.Id, access.UserId))?.IsDm == true,
+            price: () => providers.PriceForAsync(access.UserId));
         made.Add(chat);
         return chat;
     }

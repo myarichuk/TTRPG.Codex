@@ -459,7 +459,7 @@
         if (!string.IsNullOrEmpty(draft.ActorId) && Ctx.AllActors.FirstOrDefault(a => a.Id == draft.ActorId) is { } member)
         {
             if (!string.IsNullOrWhiteSpace(member.Biography)) context.Add($"History of {member.Name} (their character in the cast): {TextFormatting.Summary(Mentions.Plain(member.Biography), 1200)}");
-            if (!string.IsNullOrWhiteSpace(member.DmNotes)) context.Add($"The DM's notes on {member.Name}: {TextFormatting.Summary(Mentions.Plain(member.DmNotes), 800)}");
+            if (!string.IsNullOrWhiteSpace(member.DmNotes)) context.Add($"The GM's notes on {member.Name}: {TextFormatting.Summary(Mentions.Plain(member.DmNotes), 800)}");
         }
 
         if (Linked is { } on)

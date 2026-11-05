@@ -168,6 +168,28 @@ One [[ui:Common.Save]] at the bottom of the page saves everything you changed he
 
 With an AI model set up, [[ui:Session.DraftAi]] writes a first draft of the recap. The player draft is built only from material the players could see; secret rolls and private notes never reach it.
 
+## Print your campaign as a book {#book}
+
+[[ui:Page.Campaign.Section.Settings]] holds the [[ui:Campaign.Book.Title]] panel, for the DM. It lays the campaign out as a printable PDF: a title page with the campaign cover, a contents page, and a chapter each for the overview, the cast, the places, the sessions, the lore and the wiki pages. The book is built on the server's own machine from what the campaign holds. Nothing is sent anywhere unless you choose the optional AI step below.
+
+![The Campaign book panel in Settings: edition, look, language, paper, columns and pictures, with the preview open below.](shot:book-panel)
+
+- **Edition.** [[ui:Campaign.Book.Edition.Party]] is made from exactly what a player may read, so hidden characters, DM-only pages and secrets are left out, not blacked out. A character the party has not met appears under their public description only. [[ui:Campaign.Book.Edition.Dm]] has everything you can see, with your secrets in boxes: keep that one behind the screen.
+- **Look.** Plain is white paper and no ink spent on backgrounds. Parchment is warm paper with torn page edges and drop caps. Both are English-only for now: a campaign in Russian or Hebrew is refused for them, and the panel says so, rather than printing in fonts that lack the letters.
+- **Paper and columns.** A4 or Letter, in one or two columns. In two columns each chapter's title runs across the page and its text flows in two balanced columns.
+- **Pictures.** The campaign's own cover, character portraits and the art of places, wiki pages and homebrew entries go in, each after the heading of the entry it belongs to. Each edition uses only pictures that edition may show: a hidden character's portrait never reaches the party book. Pictures are scaled to the size they print at, so a book of large pictures stays a reasonable file. Untick the box for a lighter preview.
+
+![A printed party book: the cover with the campaign's picture, the Cast with two portraits, and a page in two columns.](shot:book-pages)
+
+The preview shows the same page the PDF is printed from. [[ui:Campaign.Book.Download]] prints it on the server with Chrome, Edge or Chromium, one of which must be installed on that machine, and sends you the file.
+
+### Polish the text with AI (optional) {#book-ai}
+
+If you have a text model set up, the panel can rewrite each chapter once in a more book-like voice. It never sends your secrets: those are cut out before the model sees a chapter, put back as boxes afterwards, and a rewrite that adds names, numbers or secrets the campaign does not hold is thrown out for that chapter and printed as written. Before anything is sent, the panel shows how many requests and about how many tokens the build will use (and the money, if you have entered prices), and you choose a token cap. Pressing **[[ui:Campaign.Book.Ai.Start]]** starts it; it keeps running if you close the tab, finished chapters are kept if you stop, and a chapter is only rebuilt when it changed. Tick the "polished text" box to use the result in the preview and the PDF.
+
+> [!NOTE]
+> A rewrite is a tidy-up, not new writing: the model is told to invent nothing. It costs your own tokens, and the estimate is only an estimate.
+
 ## Optional AI {#ai}
 
 AI is off until you set it up, and it never runs by itself. Click your name in the header and choose [[ui:Layout.User.AiSettings]].

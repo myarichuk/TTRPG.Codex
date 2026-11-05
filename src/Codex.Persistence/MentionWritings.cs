@@ -104,12 +104,12 @@ public sealed class MentionWritings
     public static string SourceLabel(WrittenIn source) => source switch
     {
         WrittenIn.Recap => "Recap",
-        WrittenIn.DmSummary => "DM summary",
+        WrittenIn.DmSummary => "GM summary",
         WrittenIn.Comment => "Comment",
         WrittenIn.Journal => "Journal",
         WrittenIn.Biography => "Biography",
         WrittenIn.WikiBody => "Wiki page",
-        _ => "DM notes"
+        _ => "GM notes"
     };
 
     private static bool Has(string? text) => text != null && SessionMentions.HasMentions(text);

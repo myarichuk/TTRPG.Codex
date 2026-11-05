@@ -3,6 +3,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Codex.Core\Codex.Core.csproj" />
     <ProjectReference Include="..\Codex.Persistence\Codex.Persistence.csproj" />
+    <!-- Built and copied beside the server: the process pictures are decoded in. -->
+    <ProjectReference Include="..\Codex.ImageWorker\Codex.ImageWorker.csproj" />
     <ProjectReference Include="..\Codex.Plugin.Abstractions\Codex.Plugin.Abstractions.csproj" />
     <ProjectReference Include="..\Codex.Localization\Codex.Localization.csproj" />
   </ItemGroup>
@@ -17,6 +19,8 @@
 
     <PackageReference Include="AspNet.Security.OAuth.Apple" Version="10.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.7" />
+    <PackageReference Include="PdfPig" Version="0.1.16" />
+    <PackageReference Include="PuppeteerSharp" Version="25.15.0" />
 
   </ItemGroup>
 

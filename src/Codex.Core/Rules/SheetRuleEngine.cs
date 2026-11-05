@@ -844,7 +844,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     }
 
     private static RuleViolation FormulaError(string key, string label) =>
-        new(key, $"{label}: the system's formula for this can't be worked out, so it is left out. The DM can check the system's rules.",
+        new(key, $"{label}: the system's formula for this can't be worked out, so it is left out. The GM can check the system's rules.",
             "Actor.Rule.FormulaError", new object?[] { label });
 
     /// <summary>A formula that names something the sheet doesn't have, or comes out as no number.</summary>

@@ -178,4 +178,7 @@
   <data name="WorldChat.Starter.tags.Text" xml:space="preserve"><value>Посмотри собственные материалы и страницы вики кампании и предложи метки, которые их сгруппируют (по региону, фракции или теме), чтобы я мог экспортировать набор и поделиться им. Используй уже существующие метки.</value></data>
   <data name="WorldChat.Step.Request" xml:space="preserve"><value>Запрос</value></data>
   <data name="WorldChat.Steps.Trouble" xml:space="preserve"><value>{0, plural, one{# потребовал повтора} few{# потребовали повтора} many{# потребовали повтора} other{# потребовали повтора}}</value></data>
+  <data name="WorldChat.Usage.Cost" xml:space="preserve"><value>стоимость {0}</value></data>
+  <data name="WorldChat.Usage.Total" xml:space="preserve"><value>Весь чат: {0} токенов на входе / {1} на выходе</value></data>
+  <data name="WorldChat.Usage.CostPartial" xml:space="preserve"><value>стоимость {0} (цена задана только для {1} из {2} ходов)</value></data>
 </root>

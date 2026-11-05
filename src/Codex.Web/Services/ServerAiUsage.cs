@@ -58,6 +58,98 @@ public sealed class ServerAiUsage(IConfiguration configuration, ILogger<ServerAi
         logger.LogInformation("Server AI key: {Kind} request by user {UserId} ({Used} today).", kind, userId, used);
     }
 
+    /// <summary>Requests set aside for one long job (a book build): counted against the allowance up front, so the job is refused at the
+    /// door instead of dying half way with the money spent. The job's calls draw from it (<see cref="Reservation.TryUse"/>); what
+    /// is left over goes back with <see cref="Reservation.Dispose"/>.</summary>
+    public sealed class Reservation : IDisposable
+    {
+        private readonly ServerAiUsage _owner;
+        private readonly string _userId;
+        private readonly Kind _kind;
+        private int _left;
+
+        internal Reservation(ServerAiUsage owner, string userId, Kind kind, int count)
+        {
+            _owner = owner;
+            _userId = userId;
+            _kind = kind;
+            _left = count;
+        }
+
+        public int Left => Volatile.Read(ref _left);
+
+        /// <summary>Spends one reserved request; false when none is left (the caller then goes through <see cref="Take"/> like anyone).</summary>
+        public bool TryUse()
+        {
+            while (true)
+            {
+                var now = Volatile.Read(ref _left);
+                if (now <= 0)
+                {
+                    return false;
+                }
+
+                if (Interlocked.CompareExchange(ref _left, now - 1, now) == now)
+                {
+                    return true;
+                }
+            }
+        }
+
+        /// <summary>Gives back every request that was not used. Safe to call twice.</summary>
+        public void Dispose()
+        {
+            var unused = Interlocked.Exchange(ref _left, 0);
+            if (unused > 0)
+            {
+                _owner.Refund(_userId, _kind, unused);
+            }
+        }
+    }
+
+    /// <summary>Sets aside <paramref name="count"/> requests for <paramref name="userId"/>, all or nothing: when they do not fit in
+    /// what is left of today's allowance, nothing is taken and <c>Service.Ai.ServerAllowanceSpent</c> is thrown.</summary>
+    public Reservation Reserve(string userId, Kind kind, int count, bool unlimited)
+    {
+        count = Math.Max(0, count);
+        var limit = unlimited ? 0 : LimitOf(kind);
+        var refused = false;
+        lock (_gate)
+        {
+            StartTheDay();
+            var used = _counts.GetValueOrDefault((userId, kind));
+            // Compared in long: a huge count must not wrap around into "fits".
+            if (limit == 0 || (long)used + count <= limit)
+            {
+                _counts[(userId, kind)] = used + count;
+            }
+            else
+            {
+                refused = true;
+            }
+        }
+
+        if (refused)
+        {
+            logger.LogInformation("User {UserId} asked to set aside {Count} {Kind} requests on the server's AI key, which does not fit in today's allowance of {Limit}.", userId, count, kind, limit);
+            throw new LocalizedException("Service.Ai.ServerAllowanceSpent", limit);
+        }
+
+        return new Reservation(this, userId, kind, count);
+    }
+
+    private void Refund(string userId, Kind kind, int count)
+    {
+        lock (_gate)
+        {
+            StartTheDay();
+            if (_counts.TryGetValue((userId, kind), out var used))
+            {
+                _counts[(userId, kind)] = Math.Max(0, used - count);
+            }
+        }
+    }
+
     /// <summary>Everyone who used the server's key today, most first.</summary>
     public IReadOnlyList<Use> Today()
     {

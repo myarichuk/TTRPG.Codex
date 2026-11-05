@@ -167,6 +167,14 @@ public class WorldChatUsage
     public long? InputTokens { get; set; }
     public long? OutputTokens { get; set; }
 
+    /// <summary>The prices that applied when the turn ran, per million tokens, kept with it: a price changed later must not rewrite
+    /// what an old turn cost. Null when the user had entered none.</summary>
+    public decimal? InputPricePerMTok { get; set; }
+
+    public decimal? OutputPricePerMTok { get; set; }
+
+    public string? PriceLabel { get; set; }
+
     /// <summary>How many times the model was called during the turn (once, plus once after each round of tool calls).</summary>
     public int Rounds { get; set; }
 

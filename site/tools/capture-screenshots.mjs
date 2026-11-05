@@ -9,7 +9,8 @@
 // Writes PNGs; tools/optimize-screenshots.py turns them into the WebP files the site ships.
 // It seeds users and characters through the app's own test endpoints (the same ones the Playwright
 // suite uses), drives everything else through the UI, and writes <out>/<lang>/<name>.png.
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -300,6 +301,46 @@ async function captureLanguage(browser, lang) {
   await visit('library', 'library/monster/goblin-boss');
   await visit('settings', 'settings');
   await visit('ai-settings', '/settings/ai');
+
+  // ---- the book (English only: its themes print English) ----
+  if (lang === 'en') {
+    const art = `${OUT}-art`;
+    execFileSync('python3', [join(here, 'demo-art.py'), art], { stdio: 'inherit' });
+    const upload = async (path, file) => {
+      await dm.goto(path); await interactive(dm);
+      await dm.locator('input[type=file]').first().setInputFiles(join(art, file));
+      await settle(dm, 1400);
+    };
+    await upload(`/campaigns/${campaignId}/settings`, 'cover.png'); // the campaign cover goes on the book's title page
+    await upload(`/campaigns/${campaignId}/actors/aria-${run}`, 'aria.png');
+    await upload(`/campaigns/${campaignId}/actors/npc0-${run}`, 'odessa.png');
+    await upload(`/campaigns/${campaignId}/actors/npc1-${run}`, 'bell-ringer.png');
+
+    // The panel in Settings, with the preview open on the party edition in the Parchment theme.
+    await dm.setViewportSize({ width: 1100, height: 1150 });
+    await dm.goto(`/campaigns/${campaignId}/settings`); await interactive(dm);
+    const panel = dm.getByTestId('book-panel');
+    await dm.getByTestId('book-edition').selectOption({ index: 1 });
+    await dm.getByTestId('book-theme').selectOption('parchment');
+    await settle(dm, 500);
+    await dm.getByTestId('book-preview-toggle').click();
+    await dm.getByTestId('book-preview').waitFor();
+    await settle(dm, 2500);
+    // The panel's top just under the page header, like every other screen shot: the controls and the start of the preview.
+    await panel.evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    await dm.evaluate(() => window.scrollBy(0, -78));
+    await shoot(dm, lang, 'book-panel');
+    await dm.setViewportSize({ width: 1100, height: 820 });
+
+    // The printed party book, taken from the real route, and some of its pages laid side by side.
+    const pdfRes = await dmCtx.request.get(`${BASE}/campaigns/${campaignId}/book/party/pdf?lang=en&size=A4&cols=2&pics=1&theme=parchment`, { timeout: 120_000 });
+    if (!pdfRes.ok()) throw new Error(`book pdf: ${pdfRes.status()}`);
+    const pdfFile = join(`${OUT}-art`, 'party.pdf');
+    await writeFile(pdfFile, await pdfRes.body());
+    for (const [name, pages] of Object.entries({ 'book-pages': [1, 4, 6] })) {
+      execFileSync('python3', [join(here, 'book-pages.py'), pdfFile, join(OUT, lang, `${name}.png`), ...pages.map(String)], { stdio: 'inherit' });
+    }
+  }
 
   // ---- what a player sees, on a phone ----
   const phone = await browser.newContext({

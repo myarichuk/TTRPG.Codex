@@ -557,6 +557,32 @@ window.codex = {
         a.remove();
     },
 
+    // Fetches a file the server builds (a printed book can take seconds and can be refused) and saves it, so a refusal is
+    // reported on the page instead of replacing it with an error document. Returns the status and the server's reason.
+    downloadFrom: async function (url) {
+        let response;
+        try {
+            response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+        } catch (e) {
+            return { status: 0, detail: null, code: null };
+        }
+        if (!response.ok) {
+            let detail = null, code = null;
+            try { const problem = await response.json(); detail = problem.detail || null; code = problem.code || null; } catch (e) { /* not JSON */ }
+            return { status: response.status, detail: detail, code: code };
+        }
+        const blob = await response.blob();
+        const disposition = response.headers.get('content-disposition') || '';
+        let name = 'book.pdf';
+        const star = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+        const plain = /filename="?([^";]+)"?/i.exec(disposition);
+        try { if (star) name = decodeURIComponent(star[1]); else if (plain) name = plain[1]; } catch (e) { /* keep the default */ }
+        const href = URL.createObjectURL(blob);
+        window.codex.download(href, name);
+        setTimeout(() => URL.revokeObjectURL(href), 60000);
+        return { status: 200, detail: null, code: null };
+    },
+
     copyText: async function (text) {
         // navigator.clipboard only exists on secure origins; a player on http://192.168.x.x has to
         // take the older execCommand route.
@@ -566,6 +592,11 @@ window.codex = {
         } catch (e) {
             // fall through to the legacy path
         }
+        // The old route needs a selected field of its own. It must not leave the page's focus and selection behind in it (and then nowhere):
+        // whatever had them gets them back, so a field the caller just selected for the user to copy by hand stays selected.
+        const previous = document.activeElement;
+        const range = previous && 'selectionStart' in previous && previous.selectionStart !== null
+            ? [previous.selectionStart, previous.selectionEnd, previous.selectionDirection] : null;
         const area = document.createElement('textarea');
         area.value = text;
         area.setAttribute('readonly', '');
@@ -579,6 +610,10 @@ window.codex = {
             return false;
         } finally {
             area.remove();
+            if (previous && previous !== document.body && typeof previous.focus === 'function') {
+                previous.focus();
+                if (range) previous.setSelectionRange(range[0], range[1], range[2] || 'none');
+            }
         }
     },
 

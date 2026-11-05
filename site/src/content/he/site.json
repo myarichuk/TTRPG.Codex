@@ -83,6 +83,17 @@
         "bullets": ["סיכום לשחקנים וסיכום סודי נפרד לשליט המבוך", "הערות שולחן פרטיות או משותפות", "היומן של כל שחקן, פרטי אפילו משליט המבוך"]
       },
       {
+        "shot": "book-pages",
+        "alt": "ספר קמפיין מודפס: עטיפה עם תמונת הקמפיין, עמוד דמויות עם דיוקנאות ועמוד בשתי עמודות.",
+        "title": "ספר של הקמפיין שלכם",
+        "text": "סדרו את הקמפיין כקובץ PDF להדפסה עם עטיפה, תוכן עניינים ופרק לכל חלק, בעמודה אחת או בשתיים, על A4 או Letter. ספר אחד לשחקנים ואחד לעצמכם.",
+        "bullets": [
+          "מהדורת החבורה כוללת רק מה ששחקן רשאי לקרוא; דמויות נסתרות וסודות מושמטים",
+          "עטיפה, דיוקנאות ואיורי מקומות נכנסים, כל אחד אחרי הערך שלו",
+          "אפשר לבקש ממודל ה-AI שלכם לסדר את הפרקים, כשעלות האסימונים מוצגת מראש"
+        ]
+      },
+      {
         "shot": "table-light", "alt": "השולחן החי בערכת הנושא הבהירה, קלף.",
         "title": "אבן כהה כברירת מחדל, קלף לפי בחירה",
         "text": "הממשק בנוי לחדר מעומעם, וערכת נושא בהירה במרחק לחיצה. הצבעים עומדים בניגודיות WCAG AA, לפקדים יש שמות, והתנועה מכבדת את ההגדרות שלכם.",
@@ -172,6 +183,6 @@
     "license": "קוד זמין ברישיון PolyForm Noncommercial 1.0.0.",
     "project": "הפרויקט", "source": "קוד המקור", "releases": "גרסאות", "issues": "דיווח על בעיה", "legal": "הודעות משפטיות", "docs": "מסמכי תכנון",
     "site": "האתר",
-    "base": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License. TTRPG.Codex הוא פרויקט עצמאי, שאינו קשור ל-Wizards of the Coast ואינו מאושר על ידה."
+    "base": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode. TTRPG.Codex הוא פרויקט עצמאי, שאינו קשור ל-Wizards of the Coast ואינו מאושר על ידה."
   }
 }

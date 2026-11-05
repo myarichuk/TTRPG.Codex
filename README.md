@@ -2,11 +2,11 @@
 
 > ⚠️ **Work in progress.** Features and file formats may still change.
 
-**A self-hosted companion for running tabletop role-playing campaigns.** One DM, any number of
+**A self-hosted companion for running tabletop role-playing campaigns.** One GM, any number of
 players, one browser tab each: a live table with initiative, hit points and conditions; campaign
 prep (cast with portraits, a bestiary, places, a linked world wiki, lore with per-character
 reveal); session recaps, table notes and each player's private journal; a Library of rules content
-that the DM extends with homebrew (equipment, classes, subclasses, feats, spells, creatures) and
+that the GM extends with homebrew (equipment, classes, subclasses, feats, spells, creatures) and
 carries between campaigns; and optional AI drafting on your own key.
 
 Game systems are **data**: a `system.yaml` describes attributes, the character sheet and the kinds
@@ -60,7 +60,7 @@ Content is loaded from the folders in `Codex:ContentDirectories` (`appsettings.j
 a missing base it inherits from) are listed on the About page, and the campaign Library says when there are any.
 
 **Plugins are programs.** Packs (YAML, and `.zip`/`.cdx` archives of it) are data. A `.dll` in any content
-folder, including the DM's "My content" folder the launcher opens, is loaded into the server and runs with
+folder, including the GM's "My content" folder the launcher opens, is loaded into the server and runs with
 everything the server can reach: every campaign, every account, the AI keys. Put a DLL there only if you
 would run it as a program on that computer.
 
@@ -74,7 +74,7 @@ would run it as a program on that computer.
 | `Codex:AdminUsername` | The account that is server admin, by name. Without it, the first account made on the server's own computer is. |
 | `Authentication:EnableLocalLogin` | `false` hides the name-and-password sign-in, leaving only the external providers configured under `Authentication:`. |
 | `Codex:DefaultCulture` | The language for a visitor who has not picked one (`en`, `he`, `ru`); without it the browser's language decides. *Launcher.* |
-| `Codex:PublicUrl` | The address in the invite link a DM copies, when the host knows a better one than the browser's. *Launcher.* |
+| `Codex:PublicUrl` | The address in the invite link a GM copies, when the host knows a better one than the browser's. *Launcher.* |
 | `Codex:RemoteUrl` | A second invite link, for players who reach the host another way (over Tailscale, say). *Launcher.* |
 | `Codex:PublicExposure` | `true` while the server is open to the internet: sign-up needs an invite, only the server admin may use the server's AI key, and nobody can claim server admin. *Launcher*, with Funnel on. |
 | `Codex:StopOnStdinClose` | Stop the server when its standard input closes: how the launcher stops it. *Launcher.* |
@@ -93,7 +93,7 @@ same computer can reach it, which is fine for a desktop app, but anything runnin
 | `src/Codex.Core` | Loading systems and packs, the content registry and search, the ECS world, scripting, text formatting. |
 | `src/Codex.Persistence` | RavenDB documents and repositories; the per-campaign live runtime (single-writer command loop). |
 | `src/Codex.Web` | The Blazor Server UI. |
-| `src/Codex.Launcher` | The Avalonia tray app that starts and stops the server on a DM's computer. |
+| `src/Codex.Launcher` | The Avalonia tray app that starts and stops the server on a GM's computer. |
 | `tools/Codex.ContentImport` | Converts open rules data (5e-bits SRD JSON) into packs. |
 | `content/` | Shipped systems and packs. |
 | `tests/Codex.Tests` | xUnit unit tests and Playwright end-to-end scenarios. |
@@ -113,9 +113,9 @@ someone clicks an AI button.
 What the AI does today:
 
 - **Session recaps**: a player-facing recap from the event log, party notes and open rolls, and a
-  separate DM summary that also sees secret rolls, private notes and the previous summary.
+  separate GM summary that also sees secret rolls, private notes and the previous summary.
   Player drafts are built only from player-visible material.
-- **Histories and bios**: write or rewrite a character's history (player-visible) or the DM's
+- **Histories and bios**: write or rewrite a character's history (player-visible) or the GM's
   private notes on an NPC, without contradicting the sheet.
 - **Level-up advice**: what the next level brings from the Library's class and subclass entries,
   the choices it forces, and picks that fit the sheet and story.

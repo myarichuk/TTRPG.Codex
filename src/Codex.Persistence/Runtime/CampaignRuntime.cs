@@ -699,7 +699,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
         if (cached.CampaignId != access.CampaignId || (!access.IsDm && cached.OwnerUserId != access.UserId))
         {
-            throw new UnauthorizedAccessException("Only the DM or the owning player can edit this sheet.");
+            throw new UnauthorizedAccessException("Only the GM or the owning player can edit this sheet.");
         }
 
         // The table's own view of the character right now: cached document, live state, mirrored sheet.

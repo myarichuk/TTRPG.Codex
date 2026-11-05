@@ -14,6 +14,9 @@ Bundled third-party software:
 - Avalonia 12 (the tray launcher, `src/Codex.Launcher`) and its SkiaSharp and HarfBuzzSharp
   dependencies - MIT License - https://github.com/AvaloniaUI/Avalonia
 - QRCoder (QR codes in the launcher) - MIT License - https://github.com/codebude/QRCoder
+- PuppeteerSharp (prints campaign books to PDF with a browser already on the machine; it downloads none) - MIT License -
+  https://github.com/hardkoded/puppeteer-sharp
+- PdfPig (reads the outline of a printed book to number its table of contents; also used by tests) - Apache License 2.0 - https://github.com/UglyToad/PdfPig
 
 ### RavenDB
 
@@ -71,9 +74,12 @@ Commons Attribution 4.0 International License, available at
 https://creativecommons.org/licenses/by/4.0/legalcode.
 
 - Modified from the original: restructured into YAML entries, layout artefacts removed, structured
-  fields added. No rules were changed.
+  fields added. No rules were intentionally changed.
 - The text was read from the JSON transcription in https://github.com/5e-bits/5e-srd-api
   (`packages/5e-database`, MIT License, Copyright (c) 2018-2020 Adrian Padua, Christopher Ward).
+- Eleven spell descriptions that the transcription ran together or spliced were replaced with the wording of the
+  SRD 5.2.1 itself (`tools/Codex.ContentImport/SpellTextFixes.cs`). The class feature tables' numbers were read from
+  the Markdown transcription at https://github.com/downfallx/dnd-5e-srd-markdown (CC-BY-4.0): numbers only, no rules text.
 - The system is named "Fifth Edition SRD (5.2.1)" and describes itself as "5E compatible", the
   wording the SRD's legal page permits. TTRPG.Codex is not affiliated with or endorsed by Wizards of
   the Coast, and no trademark is used as a product name.

@@ -119,6 +119,11 @@ else if (chat != null)
                     }
                 </header>
 
+                @if (WorldChatView.Total(L, chat.Lines) is { } total)
+                {
+                    <div class="wb-usage px-2" data-testid="world-chat-total">@total</div>
+                }
+
                 <ol id="world-chat-log" class="wb-scroll wb-log" role="log" tabindex="0" aria-label="@L["WorldChat.Conversation"]" aria-live="polite" aria-relevant="additions" data-testid="world-chat-log">
                     @if (chat.Lines.Count == 0 && live == null)
                     {

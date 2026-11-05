@@ -56,6 +56,8 @@ public sealed class AppFixture : IAsyncLifetime
         // TestSeeding.cs) rather than a second process writing straight to RavenDB - see the type
         // doc comment above for why.
         psi.Environment["Codex__EnableTestSeedEndpoint"] = "true";
+        // On a CI runner Chromium cannot start its own sandbox (see BookPdfTests.NoSandbox), and the book's PDF route prints with it.
+        if (BookPdfTests.NoSandbox == true) psi.Environment["Codex__Book__Pdf__NoSandbox"] = "true";
 
         _process = new Process { StartInfo = psi, EnableRaisingEvents = true };
         _process.OutputDataReceived += (_, e) => { if (e.Data != null) lock (_output) _output.AppendLine(e.Data); };
