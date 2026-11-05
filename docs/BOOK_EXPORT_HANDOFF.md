@@ -1,6 +1,6 @@
 # Campaign book export: handoff to the next session
 
-Written at the end of a long session and updated in session 2 (2026-11-05). Read this first, then `docs/BOOK_EXPORT.md`. Sections 27-36 are
+Written at the end of a long session and updated in session 2 (2026-11-05). Read this first, then `docs/BOOK_EXPORT.md`. Sections 27-37 are
 the newest; sections 1-26 are the design and earlier steps and are partly superseded (see "What to distrust" below). Session 1's branch was
 merged into `main`. Work continues on **`book/next`**, which is local only and not pushed; see section 9 and `git log` for its tip. No pull
 request should be opened unless the user asks.
@@ -64,7 +64,8 @@ worker run from that directory, and one run against a real model (a small Anthro
 ## 4. Invariants that must never break (the review checklist starts here)
 
 1. **Audience masking.** The party book is built from the party source only; nothing from the DM source or a DM art map may reach it. Placement
-   re-checks the picture flag from the audience's own source (`BookCompiler.ArtAnchors`). Canary tests use strings like `CANARY_*` and `PUBLIC_*`.
+   re-checks the picture flag from the audience's own source (`BookCompiler.ArtAnchors`). A `[[Page]]` link to a page the party source does
+   not hold prints only its own `|shown` words, never the title (`BookCompiler.PageLinks`). Canary tests use strings like `CANARY_*` and `PUBLIC_*`.
 2. **Secrets never reach a model.** `BookWork.Prepare` cuts `:::dm` and `:::for` into `{{block:N}}`; boxes are rendered from the current campaign at
    print time. A stored build holds no secret text (`BookBuildSection.Blocks` was removed on purpose). Mentions are read the way the renderer reads
    them, fail closed (`BookBlocks.Mention`).
@@ -73,7 +74,7 @@ worker run from that directory, and one run against a real model (a small Anthro
 4. **A stored rewrite prints only while its key matches** the key recomputed from the campaign as read now (`BookBuildKey`); the key covers recipe,
    prompt and checks versions, the rules text as sent, edition, language, style, chapter and block bodies. Model and temperature are deliberately out.
 5. **A failure never replaces a paid rewrite; money is reserved at the worst case** (`BookBudget.WorstCase`) and settled on real usage.
-6. **One build per GM**: the `_busy` slot in `BookBuilds` is taken before any await.
+6. **One paid run per GM**: chapter builds and director runs take the same `BookGate` before any await.
 7. **A model never sees a picture and cannot move or drop one**; `PlaceArt` runs after `Overlay`.
 8. **The decoder is not in the server process.** Any worker failure returns "keep the picture"; the server never throws on it.
 9. **The party book places only pictures made for the party, in the party's own slots.** The tag is checked in three places (`BookSlots.Choose`,
@@ -164,9 +165,10 @@ Anything that survives is a missing test; add it.
    a GM-edition warning, custom CSS editor, the Ashen Vellum theme (measured in section 13, not built), `:::for` per-player editions.
 6. ~~The `PartyPreview` empty-user-id bug~~ fixed (session 2): `CampaignAccess.PartyPreview()` now reads as `CampaignAccess.Nobody`, a made-up id per
    preview, the same one the book reader uses; test `PartyPreview_OwnsNoActor_EvenOneStoredWithAnEmptyOwner`, mutation-checked.
-7. **Before step 6 draws anything:** a wiki link `[[Some Page]]` to a GM-only page puts its link text into the party book, and now also into
-   the party director's outline. The `depicts` check accepts it, because the text is in the slot's own text. A lowercase `visual` could then
-   carry it into a party image prompt. Fix the link text (drop or mask it for the party) first.
+7. ~~A wiki link to a GM-only page prints its title in the party book and outline~~ fixed (BOOK_EXPORT section 37). The app's own wiki still
+   shows that title to a player (`WikiRender`, `missingAsText`); that is outside the book.
+   **Step 6 rule from this:** party suggestions stored before this fix may hold such a title; they now show as stale. Draw only from a suggestion
+   whose inputs are current.
 8. Allowance refund after UTC midnight is subtracted from the new day; transport retries are not in the money range; totals are lost on a process crash. All are in section 28.
 
 ## 8. Practical notes

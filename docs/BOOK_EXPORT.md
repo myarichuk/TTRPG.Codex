@@ -752,8 +752,8 @@ were reproduced by a failing test first (or a mutant the tests now kill).
 
 What the reviewer tried that held: a DM build served to the party (audience is in the key, the id and the overlay guard); hiding an actor or editing
 a secret after a build; injection through `{{`, `:::`, HTML from a model; role re-read in the store; backups listing; guessing an `asset:` id;
-budget overflow. **Not checked by it, and still open**: a wiki link `[[Some Page]]` to a DM-only page is passed to the model (and printed by the
-deterministic book) as the link text.
+budget overflow. **Not checked by it**: a wiki link `[[Some Page]]` to a DM-only page was passed to the model (and printed by the
+deterministic book) as the link text. Fixed in section 37.
 
 ### 28.2 Structure (recommendations, not built)
 
@@ -1088,11 +1088,45 @@ mood; tagging by something other than the source read; a gate of its own; a tray
 - There is no e2e test of the director button.
 - Russian and Hebrew strings are written by the model.
 - `depicts` in Hebrew gets only the number check, because the name check relies on capitals.
-- A party wiki body with `[[Some GM page]]` sends that link text in the party outline (open item 7.7 in the handoff). It passes the `depicts`
-  check because the text is in the slot's own text. Fix it before step 6 turns suggestions into pictures.
 
 Fixed after review:
+- A party wiki body with `[[Some GM page]]` sent that page's title in the party outline, and the `depicts` check let it through because the
+  text was in the slot's own text. Fixed in section 37.
 - The mood is matched in any case, and the vocabulary's id is stored.
 - A quoted slot number (`"1"`) is read.
 - A slot number that was not sent is listed in the reasons given for the retry.
 - A save drops the edition's suggestions for slots that are gone, so the list stays bounded.
+
+## 37. Wiki links in the party edition (done)
+
+A `[[Page]]` link printed its target's title in every edition. In the party edition that named GM-only pages: in the printed book, in the chapter
+text a model is sent, and in the art director's outline, where the `depicts` check could not catch it because the title was in the slot's own
+text.
+
+The compiler now rewrites page links in every free-text paragraph, per edition (`BookCompiler.PageLinks`):
+- The GM edition keeps every link as written.
+- The party edition keeps a link whose page is in the party source, found the way the wiki finds it (`WikiLinks.TargetOfTitle`: by slug or by
+  title, any case).
+- Any other link prints its `|shown` words as escaped plain text, or nothing when it has none (an empty label counts as none). The title is never
+  printed.
+- Anything either reader takes for a stored mention is left to the mention resolvers, which fail closed. `BookWork.Prepare` reads a mention in
+  any case and with spaces before the colon, so the check here does too. A first version matched only lowercase `actor:` and printed the
+  label of `[[Actor:x|The Lich King]]` for a hidden actor; `BookBuildsTests.EveryWayOfWritingAMention_IsClosedToTheModel_WhenItsActorIsHidden`
+  caught it.
+
+The rewrite is done once, in the compiler, because the book, `BookWork.Prepare` and `BookArtOutline` all read the compiled text. The pattern
+matches anything the renderer reads as `[[…]]`, and longer ones too.
+
+Side effects:
+- The party source cannot tell a page the party may not see from one that was never written, so a link to an unwritten page also prints
+  nothing in the party edition.
+- A party chapter whose text changed this way gets a new build key, so a stored rewrite that carried the title is no longer printed.
+
+Test: `BookSourceTests.PartyEdition_NeverPrintsTheTitleOfAPageThePartyMayNotOpen_ThroughALink` covers the title, the slug, another case, an empty
+label and a real label, in the book, the model requests and the outline, and checks that the GM edition keeps links, including one to an
+unwritten page. It also has mentions in the same paragraph: a known actor, a stranger shown by their mask, and a hidden actor written
+`[[Actor:…|label]]`. Mutants caught: no rewrite; an unlabelled link keeping its title; the label dropped; a visible link dropped; the GM edition
+rewritten; mentions not skipped; mentions matched in lowercase only.
+
+**Not done:** the app's own wiki has the same leak. `WikiRender` renders a link a player may not open as its text (`missingAsText`), and for an
+unlabelled link that text is the hidden page's title.

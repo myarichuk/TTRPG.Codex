@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using Codex.Core.Book;
 
 namespace Codex.Persistence;
@@ -21,6 +22,7 @@ public static class BookCompiler
     public static BookDocument Compile(BookSource source, string language, BookLabels? labels, out IReadOnlyList<BookEntryPosition> entries)
     {
         labels ??= new BookLabels();
+        var links = PageLinks(source);
         var chapters = new List<BookSection>();
         var positions = new List<BookEntryPosition>();
         var current = string.Empty;
@@ -48,8 +50,8 @@ public static class BookCompiler
 
         Add("overview", labels.Overview, sb =>
         {
-            Paragraph(sb, source.Campaign.Tagline.Length > 0 ? "*" + Escape(source.Campaign.Tagline) + "*" : null);
-            Paragraph(sb, source.Campaign.Description);
+            Paragraph(sb, links, source.Campaign.Tagline.Length > 0 ? "*" + Escape(source.Campaign.Tagline) + "*" : null);
+            Paragraph(sb, links, source.Campaign.Description);
         });
 
         Add("cast", labels.Cast, sb =>
@@ -57,8 +59,8 @@ public static class BookCompiler
             foreach (var actor in source.Actors.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase))
             {
                 Head(sb, "## ", actor.Name, "portrait", actor.Id, hasArt: actor.HasPortrait, placement: BookArtPlacement.Portrait, subject: BookSlots.ActorSubject(source.Audience, actor));
-                Paragraph(sb, actor.PublicDescription);
-                Paragraph(sb, actor.Biography);
+                Paragraph(sb, links, actor.PublicDescription);
+                Paragraph(sb, links, actor.Biography);
             }
         });
 
@@ -70,7 +72,7 @@ public static class BookCompiler
                 foreach (var place in region.Locations)
                 {
                     Head(sb, "### ", place.Name, "location", region.Id, place.Id, place.HasArt, BookArtPlacement.Place, BookSlots.LocationSubject(region.Id, place.Id));
-                    Paragraph(sb, place.Description);
+                    Paragraph(sb, links, place.Description);
                 }
             }
         });
@@ -80,7 +82,7 @@ public static class BookCompiler
             foreach (var session in source.Sessions)
             {
                 sb.Append("## ").Append(Escape(session.Title)).Append("\n\n");
-                Paragraph(sb, session.Recap);
+                Paragraph(sb, links, session.Recap);
                 if (source.Audience == BookAudience.Dm && !string.IsNullOrWhiteSpace(session.DmSummary))
                 {
                     sb.Append(":::dm\n").Append(session.DmSummary.Trim()).Append("\n:::\n\n");
@@ -94,8 +96,8 @@ public static class BookCompiler
             // lines, or its marker stops being a marker and prints.
             foreach (var fact in source.Facts)
             {
-                Paragraph(sb, "**" + Escape(fact.Summary) + "**");
-                Paragraph(sb, fact.Details);
+                Paragraph(sb, links, "**" + Escape(fact.Summary) + "**");
+                Paragraph(sb, links, fact.Details);
             }
         });
 
@@ -104,7 +106,7 @@ public static class BookCompiler
             foreach (var page in source.Wiki.OrderBy(p => p.Title, StringComparer.CurrentCultureIgnoreCase))
             {
                 Head(sb, "## ", page.Title, "wiki", page.Id, hasArt: page.HasArt, placement: BookArtPlacement.Place, subject: BookSlots.WikiSubject(page.Id));
-                Paragraph(sb, page.Body);
+                Paragraph(sb, links, page.Body);
             }
         });
 
@@ -113,7 +115,7 @@ public static class BookCompiler
             foreach (var entry in source.Homebrew.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase))
             {
                 Head(sb, "## ", entry.Name, "homebrew", entry.Id, hasArt: entry.HasArt, placement: BookArtPlacement.Portrait, subject: BookSlots.HomebrewSubject(entry.Id));
-                Paragraph(sb, entry.Description);
+                Paragraph(sb, links, entry.Description);
             }
         });
 
@@ -172,12 +174,42 @@ public static class BookCompiler
         };
     }
 
-    private static void Paragraph(StringBuilder sb, string? markdown)
+    private static void Paragraph(StringBuilder sb, Func<string, string> links, string? markdown)
     {
         if (!string.IsNullOrWhiteSpace(markdown))
         {
-            sb.Append(markdown.Trim()).Append("\n\n");
+            sb.Append(links(markdown).Trim()).Append("\n\n");
         }
+    }
+
+    // Anything the renderer would read as [[inner]] (BookMarkdownRenderer.Bracket: up to the first "]]", no "[" and no line break inside),
+    // and the longer ones it would not, which are rewritten too: this errs toward rewriting.
+    private static readonly Regex PageLink = new(@"\[\[(?<inner>[^\[\n]*?)\]\]", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(2));
+    // Anything either reader takes for a stored mention (BookWork.Prepare reads one in any case, with spaces before the colon) is left to them:
+    // both fail closed, and a mention's label is never printed. Reading "[[Actor:x|Name]]" as a page link here would print the label.
+    private static readonly Regex StoredMention = new(@"^\s*(actor|place|item)\s*:", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(2));
+
+    /// <summary>
+    /// What a <c>[[Page]]</c> or <c>[[Page|shown]]</c> link in free text may say in this edition. The GM edition keeps every link. The party
+    /// edition keeps a link to a page its source holds (the party may open it); a link to any other page, one the party may not see or one that
+    /// does not exist (the party source cannot tell them apart), prints its <c>|shown</c> words as plain text, the GM's own words for the
+    /// reader, or nothing when it has none: the page's title is never printed, and so never reaches a model either, since the chapter a
+    /// model is shown and the director's outline are both cut from this text. Stored mentions are left to the mention resolver.
+    /// </summary>
+    private static Func<string, string> PageLinks(BookSource source)
+    {
+        if (source.Audience == BookAudience.Dm) return text => text;
+        var pages = source.Wiki;
+        return text => !text.Contains("[[", StringComparison.Ordinal) ? text : PageLink.Replace(text, m =>
+        {
+            var inner = m.Groups["inner"].Value;
+            var pipe = inner.IndexOf('|');
+            var target = (pipe < 0 ? inner : inner[..pipe]).Trim();
+            if (StoredMention.IsMatch(target)) return m.Value;
+            if (target.Length > 0 && WikiLinks.TargetOfTitle(target, pages) != null) return m.Value;
+            var shown = pipe < 0 ? string.Empty : inner[(pipe + 1)..].Trim();
+            return shown.Length == 0 ? string.Empty : Escape(shown);
+        });
     }
 
     /// <summary>A name or title as literal text: every character the dialect treats as markup is escaped, ":" too, so no title can
