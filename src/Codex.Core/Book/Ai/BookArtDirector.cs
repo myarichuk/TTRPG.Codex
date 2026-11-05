@@ -86,8 +86,9 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
 {
     public const int MaxAttempts = 2;
 
-    /// <summary>The most slots one call is asked about; a chapter with more is asked in several calls.</summary>
-    public const int MaxSlotsPerCall = 20;
+    /// <summary>The most slots one call is asked about; a chapter with more is asked in several calls. As many as fit the largest output limit
+    /// at <see cref="OutputPerSlot"/> each: 20 slots would have been given about 400 tokens apiece, near where a real reply was cut off.</summary>
+    public const int MaxSlotsPerCall = (AIClientFactory.AnthropicMaxOutputTokens - 200) / OutputPerSlot;
 
     private const int MaxReplyChars = 64_000;
 

@@ -133,6 +133,9 @@ public class BookArtDirectorReplyTests
     public async Task AReplyCutOffAtTheLimit_IsAskedAgainMoreBriefly_AndSaysSoWhenItGivesUp()
     {
         Assert.True(BookArtDirector.MaxOutputFor(Call) >= 2 * 400);
+        // The largest call still gets the full allowance per slot: the cap on output does not squeeze a long chapter back to the cut-off.
+        var full = new BookDirectorCall("Cast", "en", Enumerable.Range(1, BookArtDirector.MaxSlotsPerCall).Select(n => new BookDirectorSlot(n, "portrait", "P" + n, "")).ToList(), []);
+        Assert.True(BookArtDirector.MaxOutputFor(full) >= BookArtDirector.OutputPerSlot * BookArtDirector.MaxSlotsPerCall);
         var limit = BookArtDirector.MaxOutputFor(Call);
         var cut = Reply(Item(1))[..40];
 

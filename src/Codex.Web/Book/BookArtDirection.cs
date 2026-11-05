@@ -152,8 +152,8 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
                     var result = await director.RunAsync(planned.Call, run.Token);
                     // The first failure every later call would share stops the rest from being sent.
                     if (result.Reason is "auth" or "ratelimit" or "allowance") stop ??= result.Reason;
-                    // What the checks refused, so a chapter that gave nothing can be explained. Only the checks' own words are logged:
-                    // the reply itself is never written down.
+                    // What the checks refused, so a chapter that gave nothing can be explained. The checks' own words are logged, not the
+                    // reply; they may quote a word of it (a name or capitalised word found in a visual), so a campaign name can appear here.
                     if (result.Refused.Count > 0 && log != null)
                     {
                         log.LogInformation("Art director, {Chapter}: {Kept} kept after {Attempts} attempt(s), reason {Reason}; refused: {Refused}",

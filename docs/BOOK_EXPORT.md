@@ -1042,7 +1042,7 @@ entry as that edition reads it. The cover is asked about with the overview.
 - A GM block that is never closed runs to the end of the chapter, so it swallows the next entry's marker. That entry is then sent with its heading
   and no text. The test seeds a biography with an unclosed `:::dm` and checks that the next entry's text is not sent.
 
-Each request covers at most 20 slots, numbered 1..N within that request. The model never sees a slot key. The names list used for checks is never sent.
+Each request covers at most 16 slots (20 before section 39), numbered 1..N within that request. The model never sees a slot key. The names list used for checks is never sent.
 
 **What is kept from the reply.**
 - The reply must be JSON `{slots:[{slot, depicts, visual, mood}]}`. A code fence or a preface is tolerated: everything from the first `{` to the last
@@ -1226,7 +1226,8 @@ requests, counting the failed ones and the reruns after each fix.
 **What it found, and what changed:**
 - **The director's replies were cut off.** The output limit was 160 tokens per place. The model's JSON for three places stopped mid-string, twice,
   and the tray only said "0 of 1 requests gave suggestions". The model then used about 370 tokens per place. Now:
-  - The limit is 480 per place (`BookArtDirector.OutputPerSlot`).
+  - The limit is 480 per place (`BookArtDirector.OutputPerSlot`). A request now asks about at most 16 places (`MaxSlotsPerCall`, from the
+    largest output limit), not 20: twenty would have had about 400 tokens apiece.
   - A reply that stops at the limit (the provider says so, or it used the whole limit) is asked again, told to be brief (`BookArtDirector.CutOff`).
   - When it still fails, the reason is `cutoff`, not `unreadable`.
 - **A chapter header's "depicts" was refused for naming the chapter's people.** The header's own text is only its title, so "Vera Holloway" was
@@ -1264,7 +1265,7 @@ requests, counting the failed ones and the reruns after each fix.
 - Mutants caught: cut-off not detected; the 200-character clip.
 
 **`WikiSecretsE2ETests`, the failure of section 38, explained (likely).** In the full run (1,647 tests) it failed again: both secrets were shown to the
-player, but only one was marked new. A player's "last seen" time for a wiki page was stamped when the page's first interactive render ran its script,
+player, but only one of the two was marked new (count 1, not 0: a "seen" time between the two reveals, as below). A player's "last seen" time for a wiki page was stamped when the page's first interactive render ran its script,
 not when the page was read. A reveal made in that gap (the test reveals right after the player opens the page, and the full suite is slow) was counted
 as seen, though it was never shown. That is a real bug, if a small one. `WikiSection` now stamps the time the page was read (`loadedAt`). It has not
 been reproduced on demand; the wiki tests then passed three runs in a row. It has nothing to do with section 37.
