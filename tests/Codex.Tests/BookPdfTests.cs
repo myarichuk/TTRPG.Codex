@@ -214,13 +214,29 @@ public class BookPdfTests
         // For every entry the number printed in the contents is the page its heading is really on.
         Assert.True(pdf.TryGetBookmarks(out var outline));
         var bookmarks = outline!.GetNodes().OfType<UglyToad.PdfPig.Outline.DocumentBookmarkNode>().ToList();
+        // Read by position, not by the order the browser happened to write the text in: an entry's number is the numeric word at the right end of
+        // the entry's own line. (A text search for "Place 1" followed by digits finds "Place 10" when the numbers are not written next to their titles.)
+        var words = pdf.GetPage(2).GetWords().ToList();
+        int? NumberOf(int entry)
+        {
+            for (var k = 0; k < words.Count - 1; k++)
+            {
+                if (words[k].Text != "Place" || words[k + 1].Text != entry.ToString(System.Globalization.CultureInfo.InvariantCulture)) continue;
+                var line = words[k].BoundingBox.Bottom;
+                var last = words.Where(w => Math.Abs(w.BoundingBox.Bottom - line) < 2).OrderBy(w => w.BoundingBox.Left).Last();
+                if (last.BoundingBox.Left > words[k + 1].BoundingBox.Right && int.TryParse(last.Text, out var n)) return n;
+            }
+
+            return null;
+        }
+
         var checkedEntries = 0;
         foreach (var i in new[] { 1, 7, 15, 30 })
         {
             var place = bookmarks.Last(b => b.Title == $"Place {i}");
-            var line = System.Text.RegularExpressions.Regex.Match(contents, $@"Place {i}\s*(\d+)");
-            Assert.True(line.Success, $"no number for Place {i} in: {contents}");
-            Assert.Equal(place.PageNumber, int.Parse(line.Groups[1].Value));
+            var printed = NumberOf(i);
+            Assert.True(printed != null, $"no number printed beside Place {i} (passes {result.Passes}); words on the contents page: {string.Join(' ', words.Select(w => $"{w.Text}@{w.BoundingBox.Left:0}x{w.BoundingBox.Bottom:0}"))}");
+            Assert.Equal(place.PageNumber, printed!.Value);
             Assert.True(place.PageNumber >= 3);
             checkedEntries++;
         }
