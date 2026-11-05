@@ -135,6 +135,7 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
             using var slots = new SemaphoreSlim(Math.Max(1, model.Concurrency));
             string? stop = null;
             var saving = new SemaphoreSlim(1);
+            var present = p.Outline.SelectMany(c => c.Slots).Select(o => o.Slot.Key).ToHashSet(StringComparer.Ordinal);
 
             async Task One(Planned planned)
             {
@@ -165,7 +166,7 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
                     try
                     {
                         // Tagged with the edition whose source was read: the repository is told nothing else.
-                        if (!await store.SaveSuggestionsAsync(p.Dm, p.Tag, suggestions))
+                        if (!await store.SaveSuggestionsAsync(p.Dm, p.Tag, suggestions, present))
                         {
                             run.SaveFailed();
                             run.Cancel();

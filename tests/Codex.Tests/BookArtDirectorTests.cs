@@ -67,6 +67,18 @@ public class BookArtDirectorReplyTests
         Assert.Contains(refused[1], p => p.StartsWith(reason, StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void AQuotedSlotNumber_AndAMoodInCapitals_AreRead_AndTheMoodIsKeptAsTheVocabularysId()
+    {
+        var (kept, _, problem) = BookArtDirector.Read(Call, Reply(Item(1, mood: "Tense").Replace("\"slot\":1", "\"slot\":\"1\"")));
+        Assert.Null(problem);
+        Assert.Equal("tense", Assert.Single(kept).Mood);
+        // A slot that is not one of the numbers sent is said to be so, for the retry's reasons.
+        var (none, refused, _) = BookArtDirector.Read(Call, Reply(Item(1).Replace("\"slot\":1", "\"slot\":\"first\"")));
+        Assert.Empty(none);
+        Assert.Contains("slot must be one of the numbers given", refused[0]);
+    }
+
     [Theory]
     [InlineData("not json at all")]
     [InlineData("{\"slots\": 3}")]
@@ -249,6 +261,11 @@ public class BookArtDirectionTests : IClassFixture<RavenDbFixture>
         Assert.True(first.Slots > 3);
         Assert.NotNull(first.Preflight);
         await Finish((await director.StartAsync(dm, "party", "en"))!);
+
+        // A suggestion for a slot that has since gone is dropped with the edition's next save.
+        Assert.True(await _art.SaveSuggestionsAsync(dm, BookArtDocument.Party, [new BookArtSuggestion { Slot = BookSlots.KeyFor("actor:gone"), Visual = "x", Mood = "tense" }]));
+        await Finish((await director.StartAsync(dm, "party", "en", all: true))!);
+        Assert.DoesNotContain((await _art.GetAsync(dm))!.Suggestions, x => x.Slot == BookSlots.KeyFor("actor:gone"));
 
         var again = (await director.PreviewAsync(dm, "party", "en"))!;
         Assert.Equal(0, again.Slots);

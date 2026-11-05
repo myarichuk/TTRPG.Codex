@@ -88,7 +88,8 @@ public static class BookArtStyles
     /// <summary>Always last in a prompt: what a printed page must not have, and what image models add unasked.</summary>
     public const string Negative = "No text, no lettering, no letters or numbers, no signature, no watermark, no frame, no border, not a photograph, no photorealism, no modern objects, no real people.";
 
-    public static BookArtChoice? Find(IReadOnlyList<BookArtChoice> list, string? id) => list.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.Ordinal));
+    /// <summary>The choice with this id, whatever its case and surrounding spaces; the ids are lowercase ASCII.</summary>
+    public static BookArtChoice? Find(IReadOnlyList<BookArtChoice> list, string? id) => list.FirstOrDefault(c => string.Equals(c.Id, id?.Trim(), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The style with any unknown id replaced by the default's, so a stored style from an older vocabulary still draws.</summary>
     public static BookArtStyle Normalize(BookArtStyle? style) => new(

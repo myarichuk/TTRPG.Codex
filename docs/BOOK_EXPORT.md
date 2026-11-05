@@ -1088,3 +1088,11 @@ mood; tagging by something other than the source read; a gate of its own; a tray
 - There is no e2e test of the director button.
 - Russian and Hebrew strings are written by the model.
 - `depicts` in Hebrew gets only the number check, because the name check relies on capitals.
+- A party wiki body with `[[Some GM page]]` sends that link text in the party outline (open item 7.7 in the handoff). It passes the `depicts`
+  check because the text is in the slot's own text. Fix it before step 6 turns suggestions into pictures.
+
+Fixed after review:
+- The mood is matched in any case, and the vocabulary's id is stored.
+- A quoted slot number (`"1"`) is read.
+- A slot number that was not sent is listed in the reasons given for the retry.
+- A save drops the edition's suggestions for slots that are gone, so the list stays bounded.

@@ -103,7 +103,8 @@ public interface IBookArtRepository
     Task DeleteAllForCampaignAsync(string campaignId);
 
     /// <summary>Stores suggestions for one edition, each replacing that edition's suggestion for its slot. False when the caller is not the GM now.</summary>
-    Task<bool> SaveSuggestionsAsync(CampaignAccess dm, string builtFrom, IReadOnlyList<BookArtSuggestion> suggestions);
+    /// <paramref name="present"/>, when given, is every slot the edition has now: that edition's suggestions for any other slot are dropped.
+    Task<bool> SaveSuggestionsAsync(CampaignAccess dm, string builtFrom, IReadOnlyList<BookArtSuggestion> suggestions, IReadOnlySet<string>? present = null);
 
     /// <summary>Adds one run's spend to the director totals. False when the caller is not the GM now.</summary>
     Task<bool> AddDirectorSpendAsync(CampaignAccess dm, BookArtSpend spend);
@@ -194,11 +195,13 @@ public class RavenBookArtRepository(RavenDbService dbService) : IBookArtReposito
         }
     }
 
-    public async Task<bool> SaveSuggestionsAsync(CampaignAccess dm, string builtFrom, IReadOnlyList<BookArtSuggestion> suggestions)
+    public async Task<bool> SaveSuggestionsAsync(CampaignAccess dm, string builtFrom, IReadOnlyList<BookArtSuggestion> suggestions, IReadOnlySet<string>? present = null)
     {
         if (!BookArtDocument.IsEdition(builtFrom) || suggestions.Any(x => !BookSlots.IsKey(x.Slot))) return false;
         return await MutateAsync(dm, art =>
         {
+            // Slots that are gone (an entry deleted, hidden or renamed out of this edition) keep no suggestion, so the list stays bounded.
+            if (present != null) art.Suggestions.RemoveAll(x => x.BuiltFrom == builtFrom && !present.Contains(x.Slot));
             foreach (var suggestion in suggestions)
             {
                 suggestion.BuiltFrom = builtFrom;

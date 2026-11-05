@@ -169,7 +169,11 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
             foreach (var item in slots.EnumerateArray())
             {
                 if (item.ValueKind != JsonValueKind.Object) continue;
-                var number = item.TryGetProperty("slot", out var n) && n.ValueKind == JsonValueKind.Number && n.TryGetInt32(out var r) ? r : -1;
+                // A number, or a string of digits (some models quote every value). It is then checked against the numbers sent.
+                var number = !item.TryGetProperty("slot", out var n) ? -1
+                    : n.ValueKind == JsonValueKind.Number && n.TryGetInt32(out var r) ? r
+                    : n.ValueKind == JsonValueKind.String && int.TryParse(n.GetString(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var q) ? q
+                    : -1;
                 raw.Add((number, Str(item, "depicts"), Str(item, "visual"), Str(item, "mood")));
             }
         }
@@ -184,7 +188,11 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
         var kept = new List<BookDirection>();
         foreach (var (number, depicts, visual, mood) in raw)
         {
-            if (!sent.TryGetValue(number, out var slot)) continue;
+            if (!sent.TryGetValue(number, out var slot))
+            {
+                refused[0] = ["slot must be one of the numbers given"];
+                continue;
+            }
             if (counts[number] > 1)
             {
                 refused[number] = ["given more than once"];
@@ -193,7 +201,8 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
 
             var problems = Check(call, slot, depicts, visual, mood);
             if (problems.Count > 0) refused[number] = problems;
-            else kept.Add(new BookDirection(number, depicts.Trim(), visual.Trim(), mood.Trim()));
+            // The vocabulary's own id is kept, whatever case the model wrote it in.
+            else kept.Add(new BookDirection(number, depicts.Trim(), visual.Trim(), BookArtStyles.Find(BookArtStyles.Moods, mood)!.Id));
         }
 
         return (kept, refused, null);
@@ -205,7 +214,7 @@ public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float t
     {
         var problems = new List<string>();
         problems.AddRange(BookImagePrompt.Check(visual, call.Names).Select(p => "visual " + p));
-        if (BookArtStyles.Find(BookArtStyles.Moods, mood.Trim()) == null) problems.Add("mood not in the list");
+        if (BookArtStyles.Find(BookArtStyles.Moods, mood) == null) problems.Add("mood not in the list");
         var line = depicts.Trim();
         if (line.Length == 0) problems.Add("depicts empty");
         else if (line.Length > BookDirectorPrompts.MaxDepictsChars) problems.Add("depicts too long");

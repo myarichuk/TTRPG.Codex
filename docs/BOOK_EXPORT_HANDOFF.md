@@ -1,8 +1,9 @@
 # Campaign book export: handoff to the next session
 
-Written at the end of a long session. Read this first, then `docs/BOOK_EXPORT.md` (sections 27-33 are the newest; sections 1-26 are the
-design and earlier steps and are partly superseded, see "What to distrust" below). Branch: `claude/nice-brahmagupta-3ugesy`, all pushed, tip
-`946a897` at the time of writing. No pull request has been opened and none should be unless the user asks.
+Written at the end of a long session and updated in session 2 (2026-11-05). Read this first, then `docs/BOOK_EXPORT.md`. Sections 27-36 are
+the newest; sections 1-26 are the design and earlier steps and are partly superseded (see "What to distrust" below). Session 1's branch was
+merged into `main`. Work continues on **`book/next`**, which is local only and not pushed; see section 9 and `git log` for its tip. No pull
+request should be opened unless the user asks.
 
 ## 1. What this feature is
 
@@ -38,15 +39,19 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: 
 
 ## 3. State: built, verified, and not
 
-Built and pushed: everything in `docs/BOOK_EXPORT.md` sections 10-33: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
+Built: everything in `docs/BOOK_EXPORT.md` sections 10-36. Sections 34-36 (book art slots and the GM's own pictures, the style vocabulary
+and prompt, the art director) are on `book/next`, not pushed. The rest: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
 panel, AI layer steps 1-5 (prices, budget, estimator, section workers, checks, stored build, pre-flight, live progress), two columns, existing pictures
 placed by recorded line, re-encoding/downscaling, out-of-process decoding, website.
 
-Verified: unit and integration tests (about 380 book and localization tests passed at the last run), the book e2e tests (9) at the commit that added
+Verified: unit and integration tests (500 book, localization, backup and campaign tests passed in session 2, including the book e2e tests
+with the art tray's e2e test), the book e2e tests (9) at the commit that added
 the worker, a real-browser look at columns, drop caps, picture placement, panel and pages, a real `dotnet publish` containing the worker and a
 worker run from that directory, and one run against a real model (a small Anthropic model, section 26, short chapters only).
 
 **Not verified, say so if you rely on any of it:**
+- The art director (section 36) has only been run against scripted replies, never a real model. The tray's director section has only been
+  drawn in a browser in its no-model state: the pre-flight, Suggest, progress and suggestion lines have not been looked at.
 - The full e2e suite has not been rerun since step 5 of the AI layer; only the book e2e tests were.
 - No real-model run of anything after section 26: the stored build, the panel's AI controls and cost display were exercised only with a scripted fake
   chat client and an in-process fake OpenAI server.
@@ -159,8 +164,10 @@ Anything that survives is a missing test; add it.
    a GM-edition warning, custom CSS editor, the Ashen Vellum theme (measured in section 13, not built), `:::for` per-player editions.
 6. ~~The `PartyPreview` empty-user-id bug~~ fixed (session 2): `CampaignAccess.PartyPreview()` now reads as `CampaignAccess.Nobody`, a made-up id per
    preview, the same one the book reader uses; test `PartyPreview_OwnsNoActor_EvenOneStoredWithAnEmptyOwner`, mutation-checked.
-7. Allowance refund after UTC midnight is subtracted from the new day; a wiki link `[[Some Page]]` to a DM-only page passes its text to the model and
-   into the deterministic book; transport retries are not in the money range; totals are lost on a process crash. All are in section 28.
+7. **Before step 6 draws anything:** a wiki link `[[Some Page]]` to a GM-only page puts its link text into the party book, and now also into
+   the party director's outline. The `depicts` check accepts it, because the text is in the slot's own text. A lowercase `visual` could then
+   carry it into a party image prompt. Fix the link text (drop or mask it for the party) first.
+8. Allowance refund after UTC midnight is subtracted from the new day; transport retries are not in the money range; totals are lost on a process crash. All are in section 28.
 
 ## 8. Practical notes
 
