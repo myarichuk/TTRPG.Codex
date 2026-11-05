@@ -1271,3 +1271,42 @@ as seen, though it was never shown. That is a real bug, if a small one. `WikiSec
 been reproduced on demand; the wiki tests then passed three runs in a row. It has nothing to do with section 37.
 
 Full run after these changes: 1,646 of 1,647 passed, the one failure being the test above, before its fix.
+
+## 40. Spike: Homebrewery's engine with an editor and AI editing (nothing in the app; for the GM to decide)
+
+The question was whether to reuse Homebrewery's system: Markdown and CSS on the left, a live preview on the right, AI editing in a dialog, and an
+export that prints a PDF looking like the preview. The spike lives in a session scratchpad, not in the repo. It is a bundled `marked-hbfm` with a
+small renderer, an editor page and a print page, run on the test campaign of section 39 with its three drawn pictures.
+
+**What was found:**
+- **The renderer is a separate MIT package**, `marked-hbfm` 1.0.3 (Homebrewery Flavored Markdown on `marked` 15). It bundles for the browser
+  (about 350 KB, from its ES module entry) and runs in Node too. The preview is the same as Homebrewery's: each `\page` becomes a fixed-size
+  `.page` div with a `.columnWrapper`, styled by the theme CSS and the GM's CSS. Its PDF is the browser printing that page, so the PDF matches
+  the preview. This was shown with Chrome to Chrome, for normal and long text, in Letter and A4.
+- **Grimdark works on Blank's layout alone.** The PHB theme is not needed (its look copies the official 5e book, and its pictures and fonts
+  have no clear licence). Blank's `style.less` still imports the 5e fonts and `assets.less`; only its layout CSS is reusable, and each font and
+  picture needs its own licence check.
+- **A4 works.** The pages reflow; the ribbon and the torn chapter art held at A4.
+- **Size:** grimdark printed 17.8 MB for 4 pages (the full-page stains texture, as section 13 measured); the PHB theme was 1 MB.
+
+**Findings that shape a design:**
+1. **Markdown and theme are coupled.** The same Markdown under the PHB theme was a mess (full-size pictures over the text). Grimdark places every
+   `.page img` absolutely, so a portrait on an overflow page covered the text and one on a chapter page joined the banner. A theme system on this
+   engine needs a contract: the generator emits a fixed set of blocks (chapter art, portrait, place picture, note, read-aloud, stat block,
+   table), and every theme styles each one. A rule for every image breaks that.
+2. **Homebrewery never breaks a page by itself;** text past a page is clipped. The spike's fit pass moved spilled blocks onto new pages, and
+   worked. But a block taller than a page stays clipped, without a warning, and moving rendered blocks means the stored Markdown is not what
+   prints. Better: a "Fit pages" command that writes `\page` and `\column` into the Markdown, an overflow marker in the preview, and a warning or
+   refusal at print time.
+3. **The preview and the PDF come from different browsers in the app.** The preview runs in the GM's browser (maybe Safari or Firefox); the PDF in
+   the server's Chromium. Line breaks can differ, so a page that fits in the preview may overflow in the PDF. The overflow check must also run in
+   the print browser and report what spilled. Untested.
+4. **An edited brew stops following the campaign.** That is the product decision. These do not carry over to a hand-edited copy: the stored
+   build and its staleness, drawn pictures' inputs, "the party book prints only party-tagged pictures", and the no-secrets guarantee. Options:
+   (a) content stays generated live, and the GM edits the theme, CSS and per-block options; (b) a generated brew the GM edits freely, with a
+   per-chapter "changed since you edited" notice and a regenerate button.
+5. **AI editing**, either way: it must not send `:::dm` blocks unmasked; it should return a patch to a selected range, shown as a diff to accept;
+   and it should show the cost first, like the rest of the AI layer. Not tried against a real model.
+6. **Security:** the print path has JavaScript off today. This needs either JS on in the print browser, limited by CSP to our own bundled script,
+   with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
+   sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
