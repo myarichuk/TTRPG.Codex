@@ -855,7 +855,18 @@
   <data name="Campaign.Book.Draft.Chapters" xml:space="preserve"><value>Chapters</value></data>
   <data name="Campaign.Book.Draft.Front" xml:space="preserve"><value>Cover and contents</value></data>
   <data name="Campaign.Book.Draft.Stylesheet" xml:space="preserve"><value>Stylesheet</value></data>
-  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>Your own CSS, applied after the theme. Imports, fonts and addresses are removed.</value></data>
+  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>Your own CSS, applied after the theme. Fonts, pictures and imported stylesheets at https addresses are fetched once by the server and kept with the book; the page itself loads nothing.</value></data>
+  <data name="Campaign.Book.Draft.Web.Fetching" xml:space="preserve"><value>Fetching the fonts, pictures and stylesheets this CSS names…</value></data>
+  <data name="Campaign.Book.Draft.Web.Kept" xml:space="preserve"><value>{0, plural, one{# copy} other{# copies}} of web addresses kept with the book ({1} MB).</value></data>
+  <data name="Campaign.Book.Draft.Web.Failed" xml:space="preserve"><value>{0, plural, one{One address} other{# addresses}} could not be fetched, so the book goes without them:</value></data>
+  <data name="Campaign.Book.Draft.Web.NotPublic" xml:space="preserve"><value>not an address on the public internet</value></data>
+  <data name="Campaign.Book.Draft.Web.Unreachable" xml:space="preserve"><value>the site could not be reached</value></data>
+  <data name="Campaign.Book.Draft.Web.TimedOut" xml:space="preserve"><value>the site took too long</value></data>
+  <data name="Campaign.Book.Draft.Web.Refused" xml:space="preserve"><value>the site answered with error {0}</value></data>
+  <data name="Campaign.Book.Draft.Web.TooLarge" xml:space="preserve"><value>too large to keep</value></data>
+  <data name="Campaign.Book.Draft.Web.NotWhatWasNamed" xml:space="preserve"><value>what came back is not the font, picture or stylesheet the CSS asks for</value></data>
+  <data name="Campaign.Book.Draft.Web.TooManyRedirects" xml:space="preserve"><value>too many redirects</value></data>
+  <data name="Campaign.Book.Draft.Web.Full" xml:space="preserve"><value>the book already keeps as much from the web as it can</value></data>
   <data name="Campaign.Book.Draft.Badge.Stale" xml:space="preserve"><value>changed</value></data>
   <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>edited</value></data>
   <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>The campaign changed since you edited this chapter.</value></data>

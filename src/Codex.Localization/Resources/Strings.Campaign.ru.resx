@@ -855,7 +855,18 @@
   <data name="Campaign.Book.Draft.Chapters" xml:space="preserve"><value>Главы</value></data>
   <data name="Campaign.Book.Draft.Front" xml:space="preserve"><value>Обложка и оглавление</value></data>
   <data name="Campaign.Book.Draft.Stylesheet" xml:space="preserve"><value>Стили</value></data>
-  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>Ваш собственный CSS, применяется поверх темы. Импорты, шрифты и адреса удаляются.</value></data>
+  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>Ваш собственный CSS, применяется поверх темы. Шрифты, картинки и импортированные таблицы стилей по адресам https сервер скачивает один раз и хранит вместе с книгой; сама страница ничего не загружает.</value></data>
+  <data name="Campaign.Book.Draft.Web.Fetching" xml:space="preserve"><value>Скачиваем шрифты, картинки и таблицы стилей, указанные в этом CSS…</value></data>
+  <data name="Campaign.Book.Draft.Web.Kept" xml:space="preserve"><value>{0, plural, one{С книгой хранится # копия} few{С книгой хранятся # копии} many{С книгой хранится # копий} other{С книгой хранится # копии}} веб-адресов ({1} МБ).</value></data>
+  <data name="Campaign.Book.Draft.Web.Failed" xml:space="preserve"><value>{0, plural, one{Не удалось скачать # адрес} few{Не удалось скачать # адреса} many{Не удалось скачать # адресов} other{Не удалось скачать # адреса}}, книга обойдётся без них:</value></data>
+  <data name="Campaign.Book.Draft.Web.NotPublic" xml:space="preserve"><value>это не адрес в открытом интернете</value></data>
+  <data name="Campaign.Book.Draft.Web.Unreachable" xml:space="preserve"><value>сайт недоступен</value></data>
+  <data name="Campaign.Book.Draft.Web.TimedOut" xml:space="preserve"><value>сайт отвечал слишком долго</value></data>
+  <data name="Campaign.Book.Draft.Web.Refused" xml:space="preserve"><value>сайт ответил ошибкой {0}</value></data>
+  <data name="Campaign.Book.Draft.Web.TooLarge" xml:space="preserve"><value>слишком большой файл</value></data>
+  <data name="Campaign.Book.Draft.Web.NotWhatWasNamed" xml:space="preserve"><value>пришёл не тот шрифт, картинка или таблица стилей, которые указаны в CSS</value></data>
+  <data name="Campaign.Book.Draft.Web.TooManyRedirects" xml:space="preserve"><value>слишком много перенаправлений</value></data>
+  <data name="Campaign.Book.Draft.Web.Full" xml:space="preserve"><value>книга уже хранит столько файлов из интернета, сколько может</value></data>
   <data name="Campaign.Book.Draft.Badge.Stale" xml:space="preserve"><value>изменилась</value></data>
   <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>правки</value></data>
   <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>Кампания изменилась после того, как вы правили эту главу.</value></data>

@@ -97,6 +97,34 @@ public class BookDraftChapter
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 
+/// <summary>
+/// The copies of the web addresses a draft's stylesheet names (docs/BOOK_EXPORT.md 41.14): one attachment each on this document, which lives
+/// under the draft's id, so it goes with "start over" and with the campaign. What the attachments are is listed here, so reading them needs no
+/// guess at a name.
+/// </summary>
+public class BookDraftWeb
+{
+    public string Id { get; set; } = string.Empty;
+    public string CampaignId { get; set; } = string.Empty;
+    public List<BookDraftWebEntry> Files { get; set; } = new();
+
+    public static string IdFor(string campaignId, string edition, string language) => BookDraftDocument.IdFor(campaignId, edition, language) + "/web";
+
+    /// <summary>An attachment's name from its address: a hash, so an address never becomes a name.</summary>
+    public static string NameFor(string url) =>
+        "web-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(url)))[..32].ToLowerInvariant();
+}
+
+public sealed class BookDraftWebEntry
+{
+    public string Url { get; set; } = string.Empty;
+    public Codex.Core.Book.BookCssWebKind Kind { get; set; }
+    public string ContentType { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public long Length { get; set; }
+    public DateTime FetchedAt { get; set; }
+}
+
 /// <summary>A chapter as the generator made it now, for a new draft or to compare against a stored one.</summary>
 public sealed record BookDraftGenerated(string Section, string Title, string Markdown, string Key);
 
@@ -149,6 +177,13 @@ public interface IBookDraftRepository
     /// <summary>The draft's theme, paper and GM stylesheet. A theme the book does not have is refused; the chapters are never touched.</summary>
     Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, string theme, bool homebrewery,
         int version);
+
+    /// <summary>The copies of the web addresses the draft's stylesheet names; none when there are none, or for anyone not the campaign's GM now.</summary>
+    Task<Codex.Core.Book.BookCssWeb> WebAsync(CampaignAccess dm, string edition, string language);
+
+    /// <summary>Stores <paramref name="added"/> and removes every copy whose address is not in <paramref name="keep"/> (or added). A copy that is not
+    /// a web address, not a type a copy is stored as, or too large, and a set that would grow past the draft's bounds, are refused whole.</summary>
+    Task<BookDraftSave> SaveWebAsync(CampaignAccess dm, string edition, string language, IReadOnlyList<Codex.Core.Book.BookCssWebFile> added, IReadOnlySet<string> keep);
 
     /// <summary>The draft and all its chapters, gone: "start over".</summary>
     Task<bool> DeleteAsync(CampaignAccess dm, string edition, string language);
@@ -420,6 +455,8 @@ public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepo
         using var session = dbService.Store.OpenAsyncSession();
         var prefix = BookDraftDocument.IdFor(now.CampaignId, edition, language);
         session.Delete(prefix);
+        // Its copies of web addresses (their attachments go with the document).
+        session.Delete(prefix + "/web");
         // Every chapter that ever belonged to it, listed or not.
         foreach (var chapter in await session.Advanced.LoadStartingWithAsync<BookDraftChapter>(prefix + "/chapters/", pageSize: 1024))
         {
@@ -428,6 +465,84 @@ public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepo
 
         await session.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<Codex.Core.Book.BookCssWeb> WebAsync(CampaignAccess dm, string edition, string language)
+    {
+        if (await GmAsync(dm, edition, language) is not { } now) return new Codex.Core.Book.BookCssWeb();
+        using var session = dbService.Store.OpenAsyncSession();
+        var id = BookDraftWeb.IdFor(now.CampaignId, edition, language);
+        var web = await session.LoadAsync<BookDraftWeb>(id);
+        if (web == null || web.CampaignId != now.CampaignId) return new Codex.Core.Book.BookCssWeb();
+        var files = new List<Codex.Core.Book.BookCssWebFile>();
+        foreach (var entry in web.Files)
+        {
+            using var attachment = await session.Advanced.Attachments.GetAsync(id, entry.Name);
+            if (attachment == null) continue;
+            using var buffer = new MemoryStream();
+            await attachment.Stream.CopyToAsync(buffer);
+            files.Add(new Codex.Core.Book.BookCssWebFile(entry.Url, entry.Kind, entry.ContentType, buffer.ToArray()));
+        }
+
+        return new Codex.Core.Book.BookCssWeb(files);
+    }
+
+    public async Task<BookDraftSave> SaveWebAsync(CampaignAccess dm, string edition, string language, IReadOnlyList<Codex.Core.Book.BookCssWebFile> added,
+        IReadOnlySet<string> keep)
+    {
+        if (await GmAsync(dm, edition, language) is not { } now) return BookDraftSave.NotAllowed;
+        foreach (var f in added)
+        {
+            if (Codex.Core.Book.BookCssWeb.Address(f.Url, null) != f.Url || !Codex.Core.Book.BookCssWeb.ContentTypes.Contains(f.ContentType)
+                || f.Bytes.Length == 0 || f.Bytes.Length > Codex.Core.Book.BookCssWeb.MaxBytes(f.Kind))
+            {
+                return BookDraftSave.NotAllowed;
+            }
+        }
+
+        using var session = dbService.Store.OpenAsyncSession();
+        session.Advanced.UseOptimisticConcurrency = true;
+        if (await session.LoadAsync<BookDraftDocument>(BookDraftDocument.IdFor(now.CampaignId, edition, language)) is not { } draft || draft.CampaignId != now.CampaignId)
+        {
+            return BookDraftSave.NotAllowed;
+        }
+
+        var id = BookDraftWeb.IdFor(now.CampaignId, edition, language);
+        var web = await session.LoadAsync<BookDraftWeb>(id);
+        if (web != null && web.CampaignId != now.CampaignId) return BookDraftSave.NotAllowed;
+        if (web == null)
+        {
+            web = new BookDraftWeb { Id = id, CampaignId = now.CampaignId };
+            await session.StoreAsync(web, id);
+        }
+
+        // A copy already kept stays as it is (an attachment is not deleted and stored again in one session).
+        var adding = added.Select(f => f.Url).ToHashSet(StringComparer.Ordinal);
+        foreach (var gone in web.Files.Where(e => !keep.Contains(e.Url) && !adding.Contains(e.Url)).ToList())
+        {
+            session.Advanced.Attachments.Delete(id, gone.Name);
+            web.Files.Remove(gone);
+        }
+
+        var have = web.Files.Select(e => e.Url).ToHashSet(StringComparer.Ordinal);
+        var at = DateTime.UtcNow;
+        foreach (var f in added.DistinctBy(f => f.Url).Where(f => !have.Contains(f.Url)))
+        {
+            var entry = new BookDraftWebEntry { Url = f.Url, Kind = f.Kind, ContentType = f.ContentType, Name = BookDraftWeb.NameFor(f.Url), Length = f.Bytes.Length, FetchedAt = at };
+            web.Files.Add(entry);
+            session.Advanced.Attachments.Store(id, entry.Name, new MemoryStream(f.Bytes), f.ContentType);
+        }
+
+        if (web.Files.Count > Codex.Core.Book.BookCssWeb.MaxFiles || web.Files.Sum(e => e.Length) > Codex.Core.Book.BookCssWeb.MaxTotalBytes) return BookDraftSave.TooLarge;
+        try
+        {
+            await session.SaveChangesAsync();
+            return BookDraftSave.Saved;
+        }
+        catch (ConcurrencyException)
+        {
+            return BookDraftSave.Conflict;
+        }
     }
 
     public async Task DeleteAllForCampaignAsync(string campaignId)

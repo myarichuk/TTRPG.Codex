@@ -314,4 +314,70 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         using var session = _db.Store.OpenAsyncSession();
         Assert.Empty(await session.Advanced.LoadStartingWithAsync<BookDraftChapter>(BookDraftDocument.PrefixFor(id)));
     }
+
+    /// <summary>A site that answers for https://fixture.test/ from a list, so the service's fetches go through the real fetcher and nowhere else.</summary>
+    private sealed class FixtureSite(Dictionary<string, (int Status, string Type, byte[] Body)> pages) : HttpMessageHandler
+    {
+        public int Requests;
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref Requests);
+            var page = pages.TryGetValue(request.RequestUri!.AbsoluteUri, out var p) ? p : (Status: 404, Type: "text/html", Body: "<p>Not found"u8.ToArray());
+            var response = new HttpResponseMessage((System.Net.HttpStatusCode)page.Status) { Content = new ByteArrayContent(page.Body) };
+            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(page.Type);
+            return Task.FromResult(response);
+        }
+    }
+
+    /// <summary>The draft keeps a copy of each web address its stylesheet names (docs/BOOK_EXPORT.md 41.14): fetched once, kept while the sheet
+    /// names it, printed from, and gone with "start over". Only the GM reads or writes them.</summary>
+    [Fact]
+    public async Task TheStylesheetsWebAddresses_AreKeptWithTheDraft_WhileItNamesThem()
+    {
+        var (dm, id) = await SeedAsync();
+        await _drafts.OpenAsync(dm, "party", "en");
+        byte[] png = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3];
+        var site = new FixtureSite(new()
+        {
+            ["https://fixture.test/theme/fonts.css"] = (200, "text/plain", "@font-face{font-family:WebFace;src:url(face.woff2)}\n.page{background:url(tex.png)}"u8.ToArray()),
+            ["https://fixture.test/theme/face.woff2"] = (200, "application/octet-stream", "wOF2\0\u0001\0\0FACE"u8.ToArray()),
+            ["https://fixture.test/theme/tex.png"] = (200, "image/png", png),
+            ["https://fixture.test/note.png"] = (200, "image/png", png)
+        });
+        var webs = new BookDraftWebs(_store, BookWebFetcher.Over(new HttpClient(site), httpsOnly: true), Microsoft.Extensions.Logging.Abstractions.NullLogger<BookDraftWebs>.Instance);
+        const string css = "@import url('https://fixture.test/theme/fonts.css');\n.note{background:url(https://fixture.test/note.png)}\n.gone{background:url(https://fixture.test/gone.png)}";
+
+        var first = (await webs.RefreshAsync(dm, "party", "en", css, CancellationToken.None))!;
+        var asked = site.Requests;
+        var again = (await webs.RefreshAsync(dm, "party", "en", css, CancellationToken.None))!;
+
+        Assert.Equal((4, 4), (first.Fetched, first.Kept));
+        Assert.Equal(("https://fixture.test/gone.png", BookWebProblem.Refused, 404), first.Failed.Select(f => (f.Url, f.Problem, f.Status)).Single());
+        // Kept copies are not fetched again; the one that failed is tried again.
+        Assert.Equal(asked + 1, site.Requests);
+        Assert.Equal((0, 4), (again.Fetched, again.Kept));
+
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveSettingsAsync(dm, "party", "en", css, "Letter", "plain", true, (await _drafts.GetAsync(dm, "party", "en"))!.Version)).Result);
+        var (page, _) = await _drafts.PageAsync(dm, "party", "en", BookArtQuality.Preview, _ => null, CancellationToken.None, withArt: false);
+        var gm = page!.Shell[page.Shell.IndexOf("<style id=\"gm-css\">", StringComparison.Ordinal)..];
+        Assert.Contains("font-family:WebFace", gm);
+        Assert.Contains("data:font/woff2;base64,", gm);
+        Assert.Contains("data:image/png;base64,", gm);
+        Assert.DoesNotContain("fixture.test", gm);
+
+        // Nobody but the GM reads or writes them.
+        var player = new CampaignAccess(id, PlayerUser, CampaignRole.Player);
+        Assert.Empty((await _store.WebAsync(player, "party", "en")).Files);
+        Assert.Equal(BookDraftSave.NotAllowed, await _store.SaveWebAsync(player, "party", "en", [], new HashSet<string>()));
+
+        // A copy the sheet no longer names is let go.
+        var fewer = (await webs.RefreshAsync(dm, "party", "en", "@import url('https://fixture.test/theme/fonts.css');", CancellationToken.None))!;
+        Assert.Equal(3, fewer.Kept);
+        Assert.DoesNotContain((await _store.WebAsync(dm, "party", "en")).Files, f => f.Url.EndsWith("note.png", StringComparison.Ordinal));
+
+        Assert.True(await _drafts.StartOverAsync(dm, "party", "en"));
+        using var session = _db.Store.OpenAsyncSession();
+        Assert.Null(await session.LoadAsync<BookDraftWeb>(BookDraftWeb.IdFor(id, "party", "en")));
+    }
 }

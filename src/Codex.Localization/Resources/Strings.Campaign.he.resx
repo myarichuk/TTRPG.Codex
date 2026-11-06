@@ -855,7 +855,18 @@
   <data name="Campaign.Book.Draft.Chapters" xml:space="preserve"><value>פרקים</value></data>
   <data name="Campaign.Book.Draft.Front" xml:space="preserve"><value>כריכה ותוכן העניינים</value></data>
   <data name="Campaign.Book.Draft.Stylesheet" xml:space="preserve"><value>גיליון סגנונות</value></data>
-  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>CSS משלכם, שחל אחרי ערכת העיצוב. ייבוא, גופנים וכתובות מוסרים.</value></data>
+  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>CSS משלכם, שחל אחרי ערכת העיצוב. גופנים, תמונות וגיליונות סגנון מיובאים בכתובות https השרת מוריד פעם אחת ושומר עם הספר; הדף עצמו לא טוען דבר.</value></data>
+  <data name="Campaign.Book.Draft.Web.Fetching" xml:space="preserve"><value>מורידים את הגופנים, התמונות וגיליונות הסגנון שה-CSS הזה מציין…</value></data>
+  <data name="Campaign.Book.Draft.Web.Kept" xml:space="preserve"><value>{0, plural, one{עותק אחד} two{שני עותקים} other{# עותקים}} של כתובות אינטרנט נשמרים עם הספר ({1} MB).</value></data>
+  <data name="Campaign.Book.Draft.Web.Failed" xml:space="preserve"><value>{0, plural, one{כתובת אחת לא הורדה} two{שתי כתובות לא הורדו} other{# כתובות לא הורדו}}, והספר יסתדר בלעדיהן:</value></data>
+  <data name="Campaign.Book.Draft.Web.NotPublic" xml:space="preserve"><value>זו לא כתובת באינטרנט הפתוח</value></data>
+  <data name="Campaign.Book.Draft.Web.Unreachable" xml:space="preserve"><value>אי אפשר להגיע לאתר</value></data>
+  <data name="Campaign.Book.Draft.Web.TimedOut" xml:space="preserve"><value>האתר ענה לאט מדי</value></data>
+  <data name="Campaign.Book.Draft.Web.Refused" xml:space="preserve"><value>האתר ענה בשגיאה {0}</value></data>
+  <data name="Campaign.Book.Draft.Web.TooLarge" xml:space="preserve"><value>גדול מכדי לשמור</value></data>
+  <data name="Campaign.Book.Draft.Web.NotWhatWasNamed" xml:space="preserve"><value>מה שהגיע אינו הגופן, התמונה או גיליון הסגנון שה-CSS מבקש</value></data>
+  <data name="Campaign.Book.Draft.Web.TooManyRedirects" xml:space="preserve"><value>יותר מדי הפניות</value></data>
+  <data name="Campaign.Book.Draft.Web.Full" xml:space="preserve"><value>הספר כבר שומר כמה שהוא יכול מהאינטרנט</value></data>
   <data name="Campaign.Book.Draft.Badge.Stale" xml:space="preserve"><value>השתנה</value></data>
   <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>נערך</value></data>
   <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>המערכה השתנתה מאז שערכתם את הפרק הזה.</value></data>

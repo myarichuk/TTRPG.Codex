@@ -162,6 +162,9 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         bool homebrewery, int version) =>
         store.SaveSettingsAsync(asked, edition, language, css, pageSize, theme, homebrewery, version);
 
+    /// <summary>The draft's copies of the web addresses its stylesheet names (docs/BOOK_EXPORT.md 41.14).</summary>
+    public Task<BookCssWeb> WebAsync(CampaignAccess asked, string edition, string language) => store.WebAsync(asked, edition, language);
+
     public Task<bool> StartOverAsync(CampaignAccess asked, string edition, string language) => store.DeleteAsync(asked, edition, language);
 
     /// <summary>
@@ -175,7 +178,8 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         if (await GenerateAsync(asked, edition, language) is not { } made) return (null, null);
         if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return (null, null);
         var theme = BookDraftThemes.Find(draft.Document.Theme) ?? BookDraftThemes.Plain;
-        var shell = BookDraftHtml.Shell(made.Source.Campaign.Name, language, theme, draft.Document.PageSize, draft.Document.Css, draft.Document.Homebrewery, font);
+        var web = await store.WebAsync(made.Dm, edition, language);
+        var shell = BookDraftHtml.Shell(made.Source.Campaign.Name, language, theme, draft.Document.PageSize, draft.Document.Css, draft.Document.Homebrewery, font, web);
         if (shell.Html == null) return (null, shell.Refused);
         var markdown = string.Join("\n\n\\page\n\n", draft.Chapters.Select(c => c.Markdown.TrimEnd()));
         var pictures = withArt ? await ArtAsync(made.Dm, made.Source, quality, cancel) : new Dictionary<string, string>();

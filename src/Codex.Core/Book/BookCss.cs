@@ -24,11 +24,17 @@ public static class BookCss
     // Properties from old browsers that load code: the declaration is dropped.
     private static readonly HashSet<string> BannedProperties = new(["behavior", "-moz-binding"], StringComparer.Ordinal);
 
-    // At-rules that fetch (or that make no sense in a page's second stylesheet): the rule is dropped.
-    private static readonly HashSet<string> DroppedAtRules = new(["import", "namespace", "charset"], StringComparer.Ordinal);
+    // At-rules that make no sense in a page's second stylesheet: the rule is dropped. (@import is its sheet's copy, or dropped: Import.)
+    private static readonly HashSet<string> DroppedAtRules = new(["namespace", "charset"], StringComparer.Ordinal);
 
-    public static string Clean(string css, out IReadOnlyList<string> warnings)
+    public static string Clean(string css, out IReadOnlyList<string> warnings) => Clean(css, out warnings, null);
+
+    /// <summary>The sheet cleaned, with the web addresses it names replaced by <paramref name="web"/>'s copies of them (a font or a picture as a
+    /// data URL, an imported sheet as its own rules, cleaned the same way); an address with no copy is dropped as before. <paramref name="web"/>
+    /// notes what was asked for, for the server to fetch.</summary>
+    public static string Clean(string css, out IReadOnlyList<string> warnings, BookCssWeb? web)
     {
+        web?.Reset();
         var found = new List<string>();
         if (css.Length > MaxLength)
         {
@@ -38,17 +44,26 @@ public static class BookCss
 
         var tokens = CssTokenizer.Tokenize(css);
         var output = new StringBuilder(css.Length + 64);
-        var writer = new Writer(tokens, output, found);
+        var writer = new Writer(tokens, output, found, web, null, 0, new HashSet<string>(StringComparer.Ordinal));
         writer.Run();
         warnings = found.Distinct().ToList();
         return output.ToString();
     }
 
-    private sealed class Writer(List<CssToken> tokens, StringBuilder sb, List<string> found)
+    // relativeTo: the address of the sheet being written, when it is an imported one (its relative addresses are relative to it); depth: how
+    // many imports deep it is; chain: the sheets being written, so a sheet that imports itself is not followed.
+    private sealed class Writer(List<CssToken> tokens, StringBuilder sb, List<string> found, BookCssWeb? web, string? relativeTo, int depth, HashSet<string> chain)
     {
         private int i;
         private CssToken? last;
         private CssToken? lastSignificant;
+
+        // An @import counts only before every other rule, as the browser reads it.
+        private bool importsAllowed = true;
+
+        // An imported sheet is written inside the GM's: what it leaves open is closed at its end, and a closer it has no opener for is not
+        // written, so nothing it holds reaches past it.
+        private readonly Stack<CssTokenType> open = new();
 
         // Something was dropped since the last token written: the next is kept apart from the last, or the two could run together into what
         // was never written ("ur<l(" would become "url(").
@@ -57,6 +72,11 @@ public static class BookCss
         public void Run()
         {
             while (i < tokens.Count) Step(inFontFace: false);
+            if (depth == 0) return;
+            while (open.Count > 0)
+            {
+                sb.Append(open.Pop() switch { CssTokenType.LBrace => '}', CssTokenType.LBracket => ']', _ => ')' });
+            }
         }
 
         private void Step(bool inFontFace)
@@ -64,6 +84,9 @@ public static class BookCss
             var t = tokens[i];
             switch (t.Type)
             {
+                case CssTokenType.AtKeyword when t.Lower == "import":
+                    Import();
+                    return;
                 case CssTokenType.AtKeyword when DroppedAtRules.Contains(t.Lower):
                     found.Add("css-at-rule-dropped");
                     SkipAtRule();
@@ -85,7 +108,7 @@ public static class BookCss
                     return;
                 case CssTokenType.Url:
                     i++;
-                    if (Allowed(t.Value, inFontFace)) Emit(t);
+                    if (Resolve(t.Value, inFontFace) is { } resolved) EmitUrl(t, resolved);
                     else
                     {
                         found.Add("css-url-dropped");
@@ -112,12 +135,105 @@ public static class BookCss
         {
             // One space where a comment or a dropped rule left two.
             if (t.Type == CssTokenType.Whitespace && last?.Type == CssTokenType.Whitespace) return;
+            if (depth > 0 && !Balanced(t)) return;
+            if (t.Type != CssTokenType.Whitespace) importsAllowed = false;
             // A comment the browser saw between two tokens kept them apart ("a/**/b" is two words), as does anything dropped between them.
             if ((t.AfterComment || cut) && last != null && last.Type != CssTokenType.Whitespace && t.Type != CssTokenType.Whitespace) sb.Append("/**/");
             t.Write(sb);
             last = t;
             if (t.Type != CssTokenType.Whitespace) lastSignificant = t;
             cut = false;
+        }
+
+        private bool Balanced(CssToken t)
+        {
+            switch (t.Type)
+            {
+                case CssTokenType.LBrace or CssTokenType.LBracket or CssTokenType.LParen:
+                    open.Push(t.Type);
+                    return true;
+                case CssTokenType.Function:
+                    open.Push(CssTokenType.LParen);
+                    return true;
+                case CssTokenType.RBrace or CssTokenType.RBracket or CssTokenType.RParen:
+                    var opener = t.Type switch { CssTokenType.RBrace => CssTokenType.LBrace, CssTokenType.RBracket => CssTokenType.LBracket, _ => CssTokenType.LParen };
+                    if (open.Count == 0 || open.Peek() != opener) return false;
+                    open.Pop();
+                    return true;
+                default:
+                    return true;
+            }
+        }
+
+        // A URL as written, or the copy that replaced it (always url("…"), its string escaped as every string is).
+        private void EmitUrl(CssToken written, string resolved)
+        {
+            if (resolved == written.Value)
+            {
+                Emit(written);
+                return;
+            }
+
+            Emit(new CssToken { Type = CssTokenType.Function, Raw = "url(", Value = "url" });
+            Emit(CssToken.Synthetic(CssTokenType.String, resolved));
+            Emit(CssToken.Synthetic(CssTokenType.RParen, ")"));
+        }
+
+        // @import "a.css" | url(a.css) | url("a.css"), then a media list: the sheet's copy, cleaned as this one is, where the rule was (wrapped in
+        // @media when the rule had a media list). A layer or supports() condition, an import after other rules, one too deep or one that
+        // imports itself, and one with no copy are dropped.
+        private void Import()
+        {
+            var start = i;
+            var end = AtRuleEnd(start);
+            i = end;
+            cut = true;
+            var j = start + 1;
+            while (j < end && tokens[j].Type == CssTokenType.Whitespace) j++;
+            string? url = null;
+            if (j < end && tokens[j].Type is CssTokenType.String or CssTokenType.Url)
+            {
+                url = tokens[j++].Value;
+            }
+            else if (j < end && tokens[j].Type == CssTokenType.Function && tokens[j].Lower == "url")
+            {
+                var k = j + 1;
+                while (k < end && tokens[k].Type == CssTokenType.Whitespace) k++;
+                if (k < end && tokens[k].Type == CssTokenType.String)
+                {
+                    url = tokens[k].Value;
+                    k++;
+                    while (k < end && tokens[k].Type == CssTokenType.Whitespace) k++;
+                    if (k < end && tokens[k].Type == CssTokenType.RParen) j = k + 1;
+                    else url = null;
+                }
+            }
+
+            var media = tokens.Skip(j).Take(end - j).Where(t => t.Type != CssTokenType.Semicolon).ToList();
+            var plainMedia = media.All(t => t.Type is CssTokenType.Ident or CssTokenType.Whitespace or CssTokenType.Comma or CssTokenType.Colon or CssTokenType.LParen
+                or CssTokenType.RParen or CssTokenType.Number or CssTokenType.Dimension or CssTokenType.Percentage && !(t.Type == CssTokenType.Ident && t.Lower == "layer"));
+            var address = url == null ? null : BookCssWeb.Address(url, relativeTo);
+            if (address == null || !importsAllowed || !plainMedia || depth >= BookCssWeb.MaxImportDepth || chain.Contains(address) || web?.Sheet(address) is not { } sheet)
+            {
+                found.Add("css-at-rule-dropped");
+                return;
+            }
+
+            var condition = media.SkipWhile(t => t.Type == CssTokenType.Whitespace).Reverse().SkipWhile(t => t.Type == CssTokenType.Whitespace).Reverse().ToList();
+            sb.Append('\n');
+            if (condition.Count > 0)
+            {
+                sb.Append("@media ");
+                foreach (var t in condition) t.Write(sb);
+                sb.Append("{\n");
+            }
+
+            chain.Add(address);
+            new Writer(CssTokenizer.Tokenize(sheet), sb, found, web, address, depth + 1, chain).Run();
+            chain.Remove(address);
+            if (condition.Count > 0) sb.Append("\n}");
+            sb.Append('\n');
+            last = CssToken.Synthetic(CssTokenType.Whitespace, "\n");
         }
 
         // What was dropped from a value is "none", kept apart from what comes either side of it.
@@ -148,11 +264,19 @@ public static class BookCss
             var k = str == null ? j : j + 1;
             while (k < tokens.Count && tokens[k].Type == CssTokenType.Whitespace) k++;
             var closed = k < tokens.Count && tokens[k].Type == CssTokenType.RParen;
-            if (str != null && closed && Allowed(str.Value, inFontFace))
+            if (str != null && closed && Resolve(str.Value, inFontFace) is { } resolved)
             {
-                Emit(tokens[start]);
-                Emit(str);
-                Emit(tokens[k]);
+                if (resolved == str.Value)
+                {
+                    Emit(tokens[start]);
+                    Emit(str);
+                    Emit(tokens[k]);
+                }
+                else
+                {
+                    EmitUrl(str, resolved);
+                }
+
                 i = k + 1;
                 return;
             }
@@ -161,6 +285,14 @@ public static class BookCss
             found.Add("css-url-dropped");
             SkipFunction();
             Replace();
+        }
+
+        // The URL to write: as written when it names nothing outside the sheet, the copy of a web address, or null (dropped).
+        private string? Resolve(string url, bool inFontFace)
+        {
+            if (Allowed(url, inFontFace)) return url;
+            if (web == null || BookCssWeb.Address(url, relativeTo) is not { } address) return null;
+            return web.Data(address, inFontFace ? BookCssWebKind.Font : BookCssWebKind.Picture);
         }
 
         private static bool Allowed(string url, bool inFontFace)
@@ -182,7 +314,7 @@ public static class BookCss
                 var t = tokens[j];
                 var bad = t.Type switch
                 {
-                    CssTokenType.Url => !Allowed(t.Value, inFontFace: true),
+                    CssTokenType.Url => Resolve(t.Value, inFontFace: true) == null,
                     CssTokenType.BadUrl => true,
                     CssTokenType.Function when t.Lower == "url" => !UrlOk(j),
                     CssTokenType.Function => t.Lower is not ("format" or "local" or "tech" or "var"),
@@ -207,7 +339,7 @@ public static class BookCss
         {
             j++;
             while (j < tokens.Count && tokens[j].Type == CssTokenType.Whitespace) j++;
-            if (j >= tokens.Count || tokens[j].Type != CssTokenType.String || !Allowed(tokens[j].Value, inFontFace: true)) return false;
+            if (j >= tokens.Count || tokens[j].Type != CssTokenType.String || Resolve(tokens[j].Value, inFontFace: true) == null) return false;
             j++;
             while (j < tokens.Count && tokens[j].Type == CssTokenType.Whitespace) j++;
             return j < tokens.Count && tokens[j].Type == CssTokenType.RParen;

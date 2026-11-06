@@ -140,12 +140,21 @@ export async function chapters(id, list) {
   await preview(id);
 }
 
-/** A chapter's text (or the stylesheet's, `section` null), for the server to read as a stream. */
-export function read(id, section) {
+/** A chapter's text (or the stylesheet's, `section` null). */
+function textOf(id, section) {
   const state = editors.get(id);
-  if (!state) return new Uint8Array();
-  const value = section == null ? state.css : (state.chapters.find(c => c.section === section) || { markdown: '' }).markdown;
-  return new TextEncoder().encode(value);
+  if (!state) throw new Error('No such editor.');
+  return section == null ? state.css : (state.chapters.find(c => c.section === section) || { markdown: '' }).markdown;
+}
+
+/** How long the text is: Blazor takes no stream of no bytes, so empty text (the GM deleted it all) is read as this, not as a stream. */
+export function length(id, section) {
+  return textOf(id, section).length;
+}
+
+/** The text as bytes, for the server to read as a stream. */
+export function read(id, section) {
+  return new TextEncoder().encode(textOf(id, section));
 }
 
 /** The GM's stylesheet, cleaned by the server, as the preview should apply it. */

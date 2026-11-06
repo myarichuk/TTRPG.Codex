@@ -1552,8 +1552,9 @@ could not hold a theme. `BookCss.Clean` (`src/Codex.Core/Book/BookCss.cs`) now:
 
 - **Reads the sheet as the browser does**: CSS Syntax Level 3's tokenizer (section 4), escapes decoded before any name is looked at, so
   `\75rl(`, `@\69mport` and `e\78pression(` are seen as what they are.
-- **Checks tokens, not text**: `@import`, `@namespace` and `@charset` rules are dropped (nested ones too); `url()` keeps only `data:image/`
-  and `#fragment` (and `data:font/` inside `@font-face`), anything else becomes `none`; a `@font-face` with any other source is dropped
+- **Checks tokens, not text**: `@import`, `@namespace` and `@charset` rules are dropped (nested ones too; since 41.14 an `@import` the
+  server has a copy of is that sheet, cleaned the same way); `url()` keeps only `data:image/` and `#fragment` (and `data:font/` inside
+  `@font-face`) or the server's copy of a web address (41.14), anything else becomes `none`; a `@font-face` with any other source is dropped
   whole; `image()`, `image-set()`, `src()`, `element()`, `paint()` and `expression()` calls become `none`; `behavior` and `-moz-binding`
   declarations are dropped. Bad strings, bad URLs, `<!--`, `-->`, a stray `<` and a stray backslash are dropped.
 - **Writes back only the tokens**: a token with no escape as it was written, the rest re-escaped (CSSOM's serialize-an-identifier); every
@@ -1613,8 +1614,8 @@ Tests (`BookDraftPdfTests`):
 Not done, or not verified:
 - **Parity is measured for one brew**, in Chrome, against Homebrewery's themes compiled here; not against Homebrewery's live site, and not
   for its Journal and Unearthed Arcana themes or its snippets' markup beyond what the brew uses. (DMG and a community theme: 41.13.)
-- **Pictures a brew's CSS loads from the web** (imgur, Homebrewery's `/assets`) still do not load, by design; fetching them server-side, or
-  uploads, is not built.
+- **Pictures a brew's CSS loads from the web** (imgur, a CDN): the server fetches a copy since 41.14. Homebrewery's own `/assets/...`
+  addresses are relative to its site and still load nothing (there is no address to fetch); uploads are not built.
 - **Markdown parity** beyond variables (41.13): icon shortcodes, definition-list and spacing syntax are not audited.
 - Russian and Hebrew: the layer's faces are Latin; the layout-only theme is English only, like the others.
 - The layer's greys and the layout-only theme's contrast were looked at, not measured; Plain on the layer was looked at for one chapter.
@@ -1652,4 +1653,63 @@ Not done, or not verified:
   both sides). **As a GM would paste it**, its fonts come by `@import` from a CDN, which the cleaner drops: the layout still matches (1 word
   moved by 9 pt, the quote's attribution) but its Cormorant Garamond text prints in a fallback face (Times). Its two font files are data
   fonts (allowed in `@font-face`), but they total 1.26 MB, over the 512 KB cap; the faces it uses come to 388 KB. Its page texture and note
-  frames are imgur pictures and do not load.
+  frames are imgur pictures and do not load. **Since 41.14** the server fetches all of it, and Tasha as pasted matches Homebrewery word for
+  word (77 of 77), pictures and all.
+
+### 41.14 The web addresses a brew's CSS names: fetched once by the server (built 2026-11-06)
+
+A brew's CSS loads its fonts and pictures from the web (`@import` of a font sheet or Google Fonts, `url()` of an imgur texture); the page
+fetches nothing (its policy, and the cleaner), so before this Tasha's Style printed in Times with no texture. Now the **server** fetches each
+https address the GM's stylesheet names, once, keeps a copy with the draft, and the cleaner writes the copy in place of the address. The page
+still fetches nothing.
+
+- **What is fetched is what the cleaner asked for.** `BookCss.Clean(css, out warnings, web)` takes the copies (`BookCssWeb`,
+  `src/Codex.Core/Book/BookCssWeb.cs`): a font or a picture is written as a data URL, an `@import` as the imported sheet's own rules where
+  the rule was, cleaned by the same code (its relative addresses are relative to it; wrapped in `@media` when the rule had a media list;
+  dropped when it has a `layer` or `supports()` condition, comes after another rule, imports itself, or is more than 4 imports deep). While
+  it cleans it notes every address it was asked for and the ones it had no copy of, and that list is what the server fetches
+  (`BookDraftWebs.RefreshAsync`, `src/Codex.Web/Book/BookDraftWebs.cs`), round after round until the sheets fetched import nothing new. So
+  the server never fetches what the page would not have used, nor misses what it would. An imported sheet cannot reach past itself: what it
+  leaves open is closed at its end, a closer with no opener is not written, and its strings are escaped like every string.
+- **Only https, only the public internet** (`BookWebFetcher`): the server's own client (`UseProxy=false`, no cookies, no redirects of its
+  own) checks the address when it connects, so a name that answers differently a second time gains nothing; every address the name gives
+  must be public (not loopback, private, link-local such as a cloud's metadata service, Tailscale's 100.64/10, multicast, documentation, or
+  the IPv6 forms that carry an IPv4 address: IPv4-mapped, 6to4, Teredo, NAT64). Redirects are followed by hand, 4 at most, each checked
+  again. It sends a browser's User-Agent (Google Fonts answers a browser with woff2) and nothing about the server or the GM.
+- **Bounds**: a sheet 3 MB, a font 4 MB, a picture 6 MB, read to the bound whatever the site says its length is; 16 MB and 120 copies a
+  draft; 20 seconds an address. The 512 KB cap stays on the GM's own text.
+- **A copy is what its bytes say**, not what the site says (raw GitHub serves fonts as `text/plain`, imgur can answer a picture with a
+  page): woff2, woff, TrueType, OpenType, a collection or EOT for a face's source; PNG, JPEG, GIF, WebP or AVIF for a picture (not SVG, as
+  uploads do not take it); for a sheet, text with no control characters that is not an HTML page.
+- **Stored** as attachments on `bookdrafts/{campaign}/{edition}/{language}/web` (`BookDraftWeb`), under the draft's id: they go with
+  "start over" and with the campaign. Only the campaign's GM reads or writes them. A copy whose address the sheet no longer names is let go
+  at the next fetch.
+- **When**: after the stylesheet saves (outside the save, so chapters keep saving), and when the editor opens; only addresses with no copy
+  are fetched, a failure is not remembered (the next save tries again), and a newer fetch for the draft cancels an older one. The preview is
+  restyled with the copies when a fetch ends. Printing never fetches: the PDF is printed from the copies. The stylesheet pane says what is
+  kept and lists each address that could not be fetched, with why.
+- **The older one-shot export** (`BookHtml`, its custom CSS) does not fetch: it has no draft to keep copies with.
+- **Fixed on the way**: an empty stylesheet or chapter (the GM deleted it all) could not be saved: Blazor takes no stream of no bytes. The
+  editor now reads the length first.
+
+Measured: Tasha's Style as pasted (two `@import`ed font sheets of 0.35 and 0.91 MB, 2 more faces, 16 imgur pictures): 20 copies, 5.4 MB,
+about 7 to 10 seconds from here; the parity brew then matches Homebrewery word for word (77 of 77), with Tasha's fonts, texture and frames.
+In the editor the preview takes the copies when the fetch ends, and they are there at once when the editor is opened again.
+
+Tests: `BookCssWebTests` (addresses; an imported sheet written in place with its relative addresses as copies; what has no copy noted and
+dropped; a copy of the wrong kind not used; media lists; conditions, late imports, cycles and depth; an imported sheet that tries to reach
+past itself; sniffing; the public-address list; the server's registered fetcher refusing this computer by name and number; redirects,
+errors, pages in place of pictures, and the bounds, against a site on this computer); `BookDraftTests` (copies kept, not fetched twice,
+printed from, let go, GM only, gone with "start over", through the real fetcher over a fixture site);
+`AnImportedThemesFaceAndPictures_Print_FromTheServersCopies` (an imported theme's face, set at the width it sets by hand, and its relative
+picture, in the PDF; neither without the copies). Mutants each fail them: the public check always true, no check at connect, any bytes
+taken as a picture, no balancing of an imported sheet, imports anywhere, and no depth or cycle guard (a stack overflow).
+
+Not done, or not verified:
+- A proxy set for the server is not used by this client, on purpose; a server that can reach the web only through a proxy fetches nothing.
+- No retry and no "fetch again" button: a copy is kept until the sheet stops naming it (a changed file at the same address keeps the old
+  copy until the address leaves the sheet and comes back).
+- Each fetch reads the copies from the database and the preview gets them whole over the circuit (8 MB of stylesheet for Tasha): fine here,
+  not measured on a slow link or a phone.
+- Google Fonts was not fetched in a test (the User-Agent choice is from its documented behaviour); fonts from it are under their own
+  licences, as every font a GM's CSS names is the GM's to use.

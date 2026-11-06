@@ -215,7 +215,7 @@ public static class BookDraftHtml
     public const string ContentSecurityPolicy = BookHtml.ContentSecurityPolicy;
 
     public static BookHtmlResult Shell(string title, string language, BookTheme theme, string pageSize, string? gmCss, bool homebrewery,
-        Func<string, byte[]?> font)
+        Func<string, byte[]?> font, BookCssWeb? web = null)
     {
         if (!theme.Supports(language))
         {
@@ -254,7 +254,7 @@ public static class BookDraftHtml
 
         css.Append(BookDraftThemes.PageCss(layout, homebrewery)).Append(theme.Css(layout));
         IReadOnlyList<string> warnings = [];
-        var custom = string.IsNullOrWhiteSpace(gmCss) ? string.Empty : BookCss.Clean(gmCss, out warnings);
+        var custom = string.IsNullOrWhiteSpace(gmCss) ? string.Empty : BookCss.Clean(gmCss, out warnings, web);
         var html = new StringBuilder();
         html.Append("<!doctype html>\n<html lang=\"").Append(Enc(BookThemes.Primary(language))).Append("\" dir=\"").Append(layout.Rtl ? "rtl" : "ltr").Append("\">\n<head>\n<meta charset=\"utf-8\">\n")
             .Append("<meta http-equiv=\"Content-Security-Policy\" content=\"").Append(ContentSecurityPolicy).Append("\">\n")

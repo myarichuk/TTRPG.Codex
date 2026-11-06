@@ -32,9 +32,9 @@ public class BookDraftPdfTests
         new(Options.Create(new BookPdfOptions { TimeoutSeconds = 90, NoSandbox = BookPdfTests.NoSandbox }), NullLogger<BookPdf>.Instance);
 
     private static async Task<BookPdfResult> PrintAsync(string markdown, IReadOnlyDictionary<string, string>? art = null, string? css = null, BookTheme? theme = null,
-        string pageSize = "Letter", bool homebrewery = true)
+        string pageSize = "Letter", bool homebrewery = true, BookCssWeb? web = null)
     {
-        var shell = BookDraftHtml.Shell("Saltmere", "en", theme ?? BookDraftThemes.Plain, pageSize, css, homebrewery, Font);
+        var shell = BookDraftHtml.Shell("Saltmere", "en", theme ?? BookDraftThemes.Plain, pageSize, css, homebrewery, Font, web);
         Assert.NotNull(shell.Html);
         var printer = Printer();
         using var slot = printer.TryReserve("dm")!;
@@ -227,6 +227,47 @@ public class BookDraftPdfTests
         var off = theirs.Where(t => t.Value.Page != ours[t.Key].Page || Math.Abs(t.Value.X - ours[t.Key].X) > 1 || Math.Abs(t.Value.Y - ours[t.Key].Y) > 1)
             .Select(t => $"{t.Key}: page {t.Value.Page} ({t.Value.X:0.0},{t.Value.Y:0.0}) there, page {ours[t.Key].Page} ({ours[t.Key].X:0.0},{ours[t.Key].Y:0.0}) here").ToList();
         Assert.True(off.Count == 0, $"{pageSize} {onTop}: {off.Count} of {theirs.Count} words moved:\n" + string.Join("\n", off.Take(20)));
+    }
+
+    /// <summary>A stylesheet that imports a theme from the web, as Tasha's Style and Google Fonts are imported (docs/BOOK_EXPORT.md 41.14),
+    /// prints with that theme's face and pictures once the server has copies: the imported sheet's own addresses are relative to it. Without the
+    /// copies it prints as it always did, in the book's own faces and with no picture.</summary>
+    [ChromiumFact]
+    public async Task AnImportedThemesFaceAndPictures_Print_FromTheServersCopies()
+    {
+        const string css = "@import url('https://themes.example/tasha-like/style.css');";
+        var web = new BookCssWeb([
+            new BookCssWebFile("https://themes.example/tasha-like/style.css", BookCssWebKind.Sheet, "text/css", Encoding.UTF8.GetBytes(
+                "@import 'fonts.css';\n.page{background-image:url(img/tex.png);background-repeat:no-repeat;background-size:100% 100%}")),
+            new BookCssWebFile("https://themes.example/tasha-like/fonts.css", BookCssWebKind.Sheet, "text/css", Encoding.UTF8.GetBytes(
+                "@font-face{font-family:'Web Face';src:url('face.woff2') format('woff2')}\n.page h1{font-family:'Web Face'}")),
+            new BookCssWebFile("https://themes.example/tasha-like/face.woff2", BookCssWebKind.Font, "font/woff2", Font("pirata-one/pirata-one-latin-400-normal.woff2")!),
+            new BookCssWebFile("https://themes.example/tasha-like/img/tex.png", BookCssWebKind.Picture, "image/png",
+                File.ReadAllBytes(Path.Combine(TestPaths.RepoRoot, "src", "Codex.Web", "wwwroot", "favicon.png")))
+        ]);
+        const string brew = "# WEBFACE Heading\n\nBody text.";
+        var theme = BookDraftThemes.Find("homebrewery")!;
+
+        var with = (await PrintAsync(brew, css: css, theme: theme, web: web)).Pdf;
+        var without = (await PrintAsync(brew, css: css, theme: theme, web: new BookCssWeb())).Pdf;
+
+        // The face, as the GM could have written it into the sheet by hand.
+        var byHand = (await PrintAsync(brew, theme: theme, css: "@font-face{font-family:'Web Face';src:url(data:font/woff2;base64,"
+            + Convert.ToBase64String(Font("pirata-one/pirata-one-latin-400-normal.woff2")!) + ")}\n.page h1{font-family:'Web Face'}")).Pdf;
+
+        // Chrome writes these faces as Type3, so a face is told by the width it sets the word at.
+        static (double Width, int Pictures) Read(byte[] pdf)
+        {
+            using var doc = PdfDocument.Open(pdf);
+            var page = doc.GetPage(1);
+            return (page.GetWords().First(w => w.Text == "WEBFACE").BoundingBox.Width, page.GetImages().Count());
+        }
+
+        var (width, pictures) = Read(with);
+        var (plainWidth, noPictures) = Read(without);
+        Assert.Equal(Read(byHand).Width, width, 0.5);
+        Assert.True(Math.Abs(width - plainWidth) > 5, $"{width:0.0} with the copies, {plainWidth:0.0} without");
+        Assert.Equal((1, 0), (pictures, noPictures));
     }
 
     private static string Hex(UglyToad.PdfPig.Graphics.Colors.IColor? color)

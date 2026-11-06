@@ -4,6 +4,7 @@
 @implements IAsyncDisposable
 @inject IJSRuntime JS
 @inject BookDrafts Drafts
+@inject BookDraftWebs Webs
 @inject NavigationManager Nav
 @inject IWebHostEnvironment Env
 @inject ILogger<BookDraftEditor> Logger
@@ -117,6 +118,31 @@
                     else
                     {
                         <div class="small-muted px-1 pb-1">@L["Campaign.Book.Draft.StylesheetHint"]</div>
+                        <div class="small px-1 pb-1" role="status" aria-live="polite" data-testid="book-draft-web">
+                            @if (fetching > 0)
+                            {
+                                <span class="small-muted">@L["Campaign.Book.Draft.Web.Fetching"]</span>
+                            }
+                            else if (webReport is { } report)
+                            {
+                                @if (report.Kept > 0)
+                                {
+                                    <span class="small-muted">@L["Campaign.Book.Draft.Web.Kept", report.Kept, Megabytes(report.KeptBytes)]</span>
+                                }
+                                @if (report.Failed.Count > 0)
+                                {
+                                    <div class="field-error" data-testid="book-draft-web-failed">
+                                        @L["Campaign.Book.Draft.Web.Failed", report.Failed.Count]
+                                        <ul class="mb-0 ps-3">
+                                            @foreach (var failure in report.Failed.Take(8))
+                                            {
+                                                <li><bdi dir="ltr" class="text-break">@failure.Url</bdi>: @Problem(failure)</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                }
+                            }
+                        </div>
                     }
                     <div class="book-draft-code" @ref="host" data-testid="book-draft-code"></div>
                     <details class="small mt-1">
@@ -157,6 +183,28 @@
     private readonly HashSet<string> dirty = new(StringComparer.Ordinal);
     private bool cssDirty;
 
+    // The draft's copies of the web addresses its stylesheet names (docs/BOOK_EXPORT.md 41.14), what the last fetch did, and the stylesheet as
+    // last saved (a fetch that ends restyles the preview with it, not with the text it started from).
+    private BookCssWeb web = new();
+    private BookWebReport? webReport;
+    private int fetching;
+    private string savedCss = string.Empty;
+    private readonly CancellationTokenSource closing = new();
+
+    private string Megabytes(long bytes) => (bytes / 1048576.0).ToString(bytes < 1048576 ? "0.00" : "0.0", System.Globalization.CultureInfo.CurrentCulture);
+
+    private string Problem(BookWebFailure failure) => failure.Problem switch
+    {
+        BookWebProblem.NotPublic => L["Campaign.Book.Draft.Web.NotPublic"],
+        BookWebProblem.TimedOut => L["Campaign.Book.Draft.Web.TimedOut"],
+        BookWebProblem.Refused => L["Campaign.Book.Draft.Web.Refused", failure.Status],
+        BookWebProblem.TooLarge => L["Campaign.Book.Draft.Web.TooLarge"],
+        BookWebProblem.NotWhatWasNamed => L["Campaign.Book.Draft.Web.NotWhatWasNamed"],
+        BookWebProblem.TooManyRedirects => L["Campaign.Book.Draft.Web.TooManyRedirects"],
+        BookWebProblem.Full => L["Campaign.Book.Draft.Web.Full"],
+        _ => L["Campaign.Book.Draft.Web.Unreachable"]
+    };
+
     private enum SaveState { Saved, Saving, Conflict, Failed }
 
     private BookDraftChapterView? Current => current == null ? null : view?.Chapters.FirstOrDefault(c => c.Section == current);
@@ -190,6 +238,9 @@
         }
 
         current = view.Chapters.FirstOrDefault(c => c.Stale)?.Section ?? view.Chapters.FirstOrDefault()?.Section;
+        web = await Drafts.WebAsync(Access, edition, language);
+        webReport = null;
+        savedCss = view.Css;
         state = SaveState.Saved;
         dirty.Clear();
         cssDirty = false;
@@ -226,6 +277,8 @@
                 rtl = BookThemes.IsRtl(language)
             }, self, new { overflow = L["Campaign.Book.Draft.Overflow"].ToString() });
             if (current == null) await module.InvokeVoidAsync("show", editorId, null);
+            // An address the last fetch could not reach is tried again.
+            _ = FetchWebAsync();
         }
         catch (JSDisconnectedException)
         {
@@ -248,7 +301,7 @@
         }
 
         var theme = BookDraftThemes.Find(view!.Theme) ?? BookDraftThemes.Plain;
-        return Task.FromResult(BookDraftHtml.Shell(string.Empty, language, theme, view.PageSize, view.Css, view.Homebrewery, Font));
+        return Task.FromResult(BookDraftHtml.Shell(string.Empty, language, theme, view.PageSize, view.Css, view.Homebrewery, Font, web));
     }
 
     private async Task ShowAsync(string? section)
@@ -277,6 +330,7 @@
     private async Task<string?> ReadAsync(string? section)
     {
         if (module == null || editorId == null) return null;
+        if (await module.InvokeAsync<int>("length", editorId, section) == 0) return string.Empty;
         var stream = await module.InvokeAsync<IJSStreamReference>("read", editorId, section);
         await using var read = await stream.OpenReadStreamAsync(BookDraftDocument.MaxChapterChars * 4L + 16);
         using var reader = new StreamReader(read, System.Text.Encoding.UTF8);
@@ -330,6 +384,7 @@
     private async Task SaveCssAsync()
     {
         if (view == null || state == SaveState.Conflict) return;
+        var saved = false;
         await saving.WaitAsync();
         try
         {
@@ -341,8 +396,10 @@
             {
                 cssDirty = false;
                 state = SaveState.Saved;
+                savedCss = css;
+                saved = true;
                 await RefreshAsync(push: false);
-                if (module != null && editorId != null) await module.InvokeVoidAsync("style", editorId, BookCss.Clean(css, out _));
+                if (module != null && editorId != null) await module.InvokeVoidAsync("style", editorId, BookCss.Clean(css, out _, web));
             }
             else
             {
@@ -358,6 +415,45 @@
         finally
         {
             saving.Release();
+            await InvokeAsync(StateHasChanged);
+        }
+
+        // Outside the save: a fetch can take seconds, and chapters keep saving meanwhile.
+        if (saved) _ = FetchWebAsync();
+    }
+
+    /// <summary>Fetches the web addresses the saved stylesheet names and has no copy of, lets go of copies it no longer names, and restyles the
+    /// preview with the copies. A newer save's fetch takes over from this one.</summary>
+    private async Task FetchWebAsync()
+    {
+        if (view == null) return;
+        var css = savedCss;
+        if (!BookDraftWebs.NamesTheWeb(css, new BookCssWeb(web.Files)))
+        {
+            webReport = null;
+            return;
+        }
+
+        fetching++;
+        await InvokeAsync(StateHasChanged);
+        try
+        {
+            var report = await Webs.RefreshAsync(Access, edition, language, css, closing.Token);
+            if (report == null || view == null) return;
+            web = await Drafts.WebAsync(Access, edition, language);
+            webReport = report;
+            if (module != null && editorId != null) await module.InvokeVoidAsync("style", editorId, BookCss.Clean(savedCss, out _, web));
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (Exception ex) when (ex is JSException or InvalidOperationException or IOException)
+        {
+            Logger.LogWarning(ex, "Fetching the book stylesheet's web addresses failed");
+        }
+        finally
+        {
+            fetching--;
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -549,5 +645,7 @@
         }
 
         self?.Dispose();
+        closing.Cancel();
+        closing.Dispose();
     }
 }
