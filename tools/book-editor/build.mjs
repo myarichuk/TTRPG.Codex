@@ -16,8 +16,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const out = join(here, '..', '..', 'src', 'Codex.Web', 'wwwroot', 'lib', 'book');
 mkdirSync(out, { recursive: true });
 
-// expr-eval is never bundled (see src/no-math.js); the build fails if it gets in by another way.
-const common = { alias: { 'expr-eval': join(here, 'src', 'no-math.js') }, bundle: true, minify: true, metafile: true, legalComments: 'none', target: ['es2020'], mainFields: ['module', 'browser', 'main'], logLevel: 'warning' };
+// expr-eval is never bundled (see src/safe-math.js); the build fails if it gets in by another way.
+const common = { alias: { 'expr-eval': join(here, 'src', 'safe-math.js') }, bundle: true, minify: true, metafile: true, legalComments: 'none', target: ['es2020'], mainFields: ['module', 'browser', 'main'], logLevel: 'warning' };
 const render = await build({ ...common, entryPoints: [join(here, 'src', 'render.js')], format: 'iife', globalName: 'CodexBook', outfile: join(out, 'book-render.js') });
 const editor = await build({ ...common, entryPoints: [join(here, 'src', 'editor.js')], format: 'esm', outfile: join(out, 'book-editor.js') });
 
@@ -79,6 +79,15 @@ writeFileSync(join(themes, 'homebrewery-5e.css'),
 // load nowhere, and a picture moves nothing on a page). The test lays the same brew out under it and under the layer, word for word.
 writeFileSync(join(here, '..', '..', 'tests', 'Codex.Tests', 'Fixtures', 'homebrewery-5e-reference.css'),
   `/* Test fixture: Homebrewery's "5e PHB" theme (MIT, commit 3e600a0) compiled whole, with no pictures. Never shipped. */\n${phb.css}`);
+
+// And Homebrewery's 5e DMG theme, which sits on the PHB one, compiled the same way: the test pastes it as a brew's CSS over the layer, and over
+// the PHB theme compiled whole, and the two must still match.
+const dmgLess = readFileSync(join(here, 'themes', 'homebrewery-5e-dmg.less'), 'utf8');
+const dmgSource = dmgLess.replace("@import (less) './themes/assets/assets.less';", pictures.map(n => `@${n} : none;`).join('\n') + '\n@partCoverHeaderDMG : none;');
+if (dmgSource === dmgLess) throw new Error('homebrewery-5e-dmg.less: the assets import moved');
+const dmg = await less.render(dmgSource, { filename: join(here, 'themes', 'homebrewery-5e-dmg.less') });
+writeFileSync(join(here, '..', '..', 'tests', 'Codex.Tests', 'Fixtures', 'homebrewery-5e-dmg.css'),
+  `/* Test fixture: Homebrewery's "5e DMG" theme (MIT, commit 3e600a0) compiled whole, with no pictures. Never shipped. */\n${dmg.css}`);
 
 function layoutOnly(css) {
   const ast = csstree.parse(css, { parseValue: true, parseCustomProperty: false });

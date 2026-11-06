@@ -1422,10 +1422,11 @@ The GM asked for `marked-hbfm` as planned (not the app's own renderer, which was
   - **Fitting at draw time**: blocks that spill go onto a continuation page; each fragment of a split block is measured. A block too tall even
     for a page of its own is reported (preview line, `X-Book-Overflow` header on the PDF, a log line), not silently lost.
   - **Contents page numbers** read from the laid-out pages.
-  - **`$[...]` maths is switched off.** `marked-hbfm`'s variables extension evaluates it with `expr-eval`, whose every version has critical
-    advisories (code execution, prototype pollution; `npm audit`: no fix). The build aliases it to `src/no-math.js`, which evaluates nothing,
-    and fails if `expr-eval` gets into a bundle another way. Plain variables still work. `test.mjs` runs the shipped bundle with a hostile
-    expression; a build without the stub fails it.
+  - **`$[...]` maths is Homebrewery's, without `expr-eval`.** `marked-hbfm`'s variables extension evaluates it with `expr-eval`, whose
+    every version has critical advisories (code execution, prototype pollution; `npm audit`: no fix). The build aliases it to
+    `src/safe-math.js` (41.13): numbers, `+ - * / ^`, brackets and a fixed list of functions, nothing that reads a member or a name that is
+    not a listed function; and the build fails if `expr-eval` gets into a bundle another way. `test.mjs` runs the shipped bundle with hostile
+    expressions.
   - **A trust boundary:** the editor runs `marked-hbfm` in the app's own page, on a draft that holds text players wrote (a character's
     biography reaches Cast). Only cleaned output enters the frame, but a parser bug in `marked` or its extensions would run in the GM's
     signed-in session. The print path is contained (a separate browser, every request refused, printed with script off). The proper fix is to
@@ -1600,19 +1601,55 @@ cover placeholders from an image generator).
 
 Tests (`BookDraftPdfTests`):
 - `UnderTheHomebreweryLayer_ABrewLaysOutAsUnderHomebrewerysOwnTheme`, Letter and A4: a brew of everything PHB styles (headings, drop cap,
-  lists, quote, note, descriptive, table, stat block, column break, wide block, contents) printed under the layer and under Homebrewery's
-  whole theme compiled (test fixture `Fixtures/homebrewery-5e-reference.css`, written by `build.mjs`, never shipped) pasted as the GM's CSS
-  over no layer, with the same faces: all 77 marker words on the same page within 1 pt. Mutants each fail it: paragraph spacing removed,
+  lists, quote, note, descriptive, table, stat block, column break, wide block, contents; since 41.13 a quote with its attribution and a
+  footnote too) printed under the layer and under Homebrewery's whole theme compiled (test fixture `Fixtures/homebrewery-5e-reference.css`,
+  written by `build.mjs`, never shipped) pasted as the GM's CSS over no layer, with the same faces: all 80 marker words on the same page
+  within 1 pt. Mutants each fail it: paragraph spacing removed,
   the h3 size changed, the note's padding changed, the descriptive frame's width changed.
 - The overlap and long-book tests run every theme with the layer at Letter and A4 and without it at Letter, and a theme with faces of its
   own must print in them alone (Plain failed it, with notes in Scaly Sans, before its font rules).
 - `BookDraftTests`: the setting's default for an old draft, and turning it off. The editor's end-to-end test turns it off.
 
 Not done, or not verified:
-- **Parity is measured for one brew**, in Chrome, against Homebrewery's theme compiled here; not against Homebrewery's live site, and not
-  for its other themes (DMG, Journal, Unearthed Arcana) or its snippets' markup beyond what the brew uses.
+- **Parity is measured for one brew**, in Chrome, against Homebrewery's themes compiled here; not against Homebrewery's live site, and not
+  for its Journal and Unearthed Arcana themes or its snippets' markup beyond what the brew uses. (DMG and a community theme: 41.13.)
 - **Pictures a brew's CSS loads from the web** (imgur, Homebrewery's `/assets`) still do not load, by design; fetching them server-side, or
   uploads, is not built.
-- **Markdown parity** (Homebrewery's `$[variables]`, icon shortcodes, definition-list and spacing syntax) is not audited.
+- **Markdown parity** beyond variables (41.13): icon shortcodes, definition-list and spacing syntax are not audited.
 - Russian and Hebrew: the layer's faces are Latin; the layout-only theme is English only, like the others.
 - The layer's greys and the layout-only theme's contrast were looked at, not measured; Plain on the layer was looked at for one chapter.
+
+### 41.13 Homebrewery's variables, its DMG theme and a community theme (checked 2026-11-06)
+
+- **Markdown variables** (`[name]: value`, `$[name]`, hoisting, cross-page, page numbers, links and pictures by variable): Homebrewery's
+  own tests (`tests/markdown/variables.test.js`, commit 3e600a0, MIT) are vendored unchanged in `tools/book-editor/homebrewery-tests` and
+  run on the shipped bundle by `test-homebrewery.mjs` (part of `npm test`). Before: the 32 tests without maths passed and the 24 with maths
+  failed (maths was switched off). Now all 56 pass:
+  - **Maths** is `src/safe-math.js`: what Homebrewery's parser allows (`+ - * / ^`, brackets, `round floor ceil abs`, `min max pow hypot
+    roundTo`, and the extension's own `sign signed toRomans toChar toWords` and their cases). A name is only ever looked up among those
+    functions (an object with no prototype); there is no member access, string or assignment; 500 characters and 40 levels at most. Anything
+    else throws, and the extension leaves the `$[...]` as written. `random` is left out (the preview and the PDF would differ).
+  - **A second render pass** when the brew has a `[`: `marked-hbfm` learns a variable set on a later page only by rendering that page, and
+    Homebrewery's editor, rendering on every keystroke, always has. The print browser renders once, so before this a variable used before
+    its page printed as `$[name]` in the PDF and worked in the preview.
+  - Like Homebrewery, a deleted definition is remembered until the preview is reloaded (`marked-variables` keeps its list for the page's
+    life); the PDF never has it. Not fixed: the package has no way to clear it.
+- **Colour variables** (`--HB_Color_*`), set in a brew's CSS as Homebrewery's users set them on `:root`: measured in the PDF (heading
+  letters' colour, the fills of table stripes, stat block and page). The layout-only theme obeys them. **Plain did not**: on the layer its
+  table stripes and stat block printed in the layer's greys instead of its own beige (a change 41.12 missed), and an override recoloured
+  those but not its headings. Plain now sets the variables on `:root` to its own colours and its rules read them, so it looks as it did and
+  obeys an override, on the layer or off it. Ashen Vellum keeps its own palette and ignores an override, by design. Test:
+  `HomebrewerysColourVariables_SetInABrewsCss_ColourTheBook` (an override under the layout-only theme and Plain, and Plain's own colours
+  with none, no greys); taking Plain's mapping out fails it.
+- **The 5e DMG theme** (`themes/V3/5eDMG/style.less`, vendored as `tools/book-editor/themes/homebrewery-5e-dmg.less`, compiled by
+  `build.mjs` to the fixture `Fixtures/homebrewery-5e-dmg.css`): it sits on PHB and changes only colours, pictures and three things of
+  layout (a quote's first line, the footer's height, the footnote's place). Pasted as the brew's CSS on the layer, the parity brew lays out
+  as under Homebrewery's PHB and DMG whole: 80 of 80 words. Against PHB alone DMG moves 2 of them, and the test fails if our side leaves the
+  DMG CSS out. In Homebrewery DMG is picked from a menu, not pasted; there is no such choice here.
+- **A community theme**: "Tasha's Style" (KaiburrKathHound, a theme brew in Homebrewery's Vault, about 10,500 views; share id
+  `5CxliV-7LFuV`). It has no stated licence, so it was measured once and is not in the repository. It moves 22 of 80 words against PHB
+  alone. With its fonts supplied, the layer matches Homebrewery word for word (77 of 77; its h5s are letter-spaced and read as letters on
+  both sides). **As a GM would paste it**, its fonts come by `@import` from a CDN, which the cleaner drops: the layout still matches (1 word
+  moved by 9 pt, the quote's attribution) but its Cormorant Garamond text prints in a fallback face (Times). Its two font files are data
+  fonts (allowed in `@font-face`), but they total 1.26 MB, over the 512 KB cap; the faces it uses come to 388 KB. Its page texture and note
+  frames are imgur pictures and do not load.

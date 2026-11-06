@@ -129,23 +129,29 @@ public static class BookDraftThemes
     private const string PlainSheet = """
 
             /* Plain */
-            .page { column-gap: 8mm; background: #fff; color: #1f1f1f; font: 9.5pt/1.34 "Alegreya Sans", sans-serif; text-align: start; }
+            /* Plain's colours, through Homebrewery's colour variables: the layer's rules then draw in them, and a brew's CSS that sets one is obeyed. */
+            :root {
+                --HB_Color_Background: #fff; --HB_Color_Accent: #f3eee4; --HB_Color_HeaderUnderline: #b9a98a; --HB_Color_HorizontalRule: #b9a98a;
+                --HB_Color_HeaderText: #5a1414; --HB_Color_MonsterStatBackground: #fbf6ec; --HB_Color_CaptionText: #555; --HB_Color_WatercolorStain: #b9a98a;
+                --HB_Color_Footnotes: #555;
+            }
+            .page { column-gap: 8mm; background: var(--HB_Color_Background); color: #1f1f1f; font: 9.5pt/1.34 "Alegreya Sans", sans-serif; text-align: start; }
             .page p { margin: 0 0 2.2mm; orphans: 2; widows: 2; }
-            .page h1, .page h2, .page h3, .page h4, .page h5, .page h6 { font-family: "Cinzel", serif; font-weight: 400; color: #5a1414; break-after: avoid; margin: 0 0 2mm; line-height: 1.15; }
-            .page h1 { column-span: all; font-size: 21pt; border-bottom: 1.5px solid #5a1414; padding-bottom: 1.5mm; margin-bottom: 4mm; }
+            .page h1, .page h2, .page h3, .page h4, .page h5, .page h6 { font-family: "Cinzel", serif; font-weight: 400; color: var(--HB_Color_HeaderText); break-after: avoid; margin: 0 0 2mm; line-height: 1.15; }
+            .page h1 { column-span: all; font-size: 21pt; border-bottom: 1.5px solid var(--HB_Color_HeaderText); padding-bottom: 1.5mm; margin-bottom: 4mm; }
             .page h2 { font-size: 13pt; margin-top: 3mm; }
             .page h3 { font-size: 11pt; margin-top: 2.5mm; }
             .page h4, .page h5, .page h6 { font-size: 9.5pt; }
             .page ul, .page ol { margin: 0 0 2.2mm; padding-inline-start: 5mm; }
-            .page blockquote { margin: 0 0 2.2mm; padding-inline-start: 3mm; border-inline-start: 2px solid #b9a98a; font-style: italic; }
-            .page hr { border: 0; border-top: 1px solid #b9a98a; margin: 2.5mm 0; }
+            .page blockquote { margin: 0 0 2.2mm; padding-inline-start: 3mm; border-inline-start: 2px solid var(--HB_Color_HorizontalRule); font-style: italic; }
+            .page hr { border: 0; border-top: 1px solid var(--HB_Color_HorizontalRule); margin: 2.5mm 0; }
             .page a { color: inherit; text-decoration: none; }
             .page img { max-width: 100%; }
             .page table { border-collapse: collapse; margin: 0 0 3mm; font-size: 8.8pt; }
-            .page th { text-align: start; border-bottom: 1px solid #5a1414; padding: .6mm 1mm; }
+            .page th { text-align: start; border-bottom: 1px solid var(--HB_Color_HeaderText); padding: .6mm 1mm; }
             .page td { padding: .6mm 1mm; vertical-align: top; }
-            .page tbody tr:nth-child(odd) { background: #f3eee4; }
-            .page .pageNumber { bottom: 8mm; font-size: 8pt; color: #555; }
+            .page tbody tr:nth-child(odd) { background: var(--HB_Color_Accent); }
+            .page .pageNumber { bottom: 8mm; font-size: 8pt; color: var(--HB_Color_Footnotes); }
             /* Plain prints in its own faces wherever the Homebrewery layer names one of its own (those are for a brew's CSS). */
             .page :is(table, .note, .descriptive, .monster, .spellList, .artist, .runeTable th, .toc ul span:last-child, .footnote, .banner, .logo p),
             .page:is(:has(.frontCover), :has(.insideCover), :has(.backCover), :has(.partCover)) :is(p, h2) { font-family: "Alegreya Sans", sans-serif; }
@@ -171,7 +177,7 @@ public static class BookDraftThemes
             .block.note, .block.descriptive { margin: 0 0 3mm; padding: 2.5mm 3mm; background: #f1ebdd; border-inline-start: 2px solid #5a1414; }
             .block.descriptive { font-style: italic; background: #ece6da; border-inline-start-color: #8b7a5a; }
             .block.secret { margin: 0 0 3mm; padding: 2.5mm 3mm; background: #faf0f0; border: 1.2px dashed #8a1c1c; }
-            .block.monster { margin: 0 0 3mm; padding: 2.5mm 3mm; background: #fbf6ec; border-top: 2px solid #5a1414; border-bottom: 2px solid #5a1414; font-size: 8.8pt; }
+            .block.monster { margin: 0 0 3mm; padding: 2.5mm 3mm; background: var(--HB_Color_MonsterStatBackground); border-top: 2px solid var(--HB_Color_HeaderText); border-bottom: 2px solid var(--HB_Color_HeaderText); font-size: 8.8pt; }
             .block.monster h4, .block.monster h3 { margin-top: 0; }
             .block > :last-child { margin-bottom: 0; }
             """;

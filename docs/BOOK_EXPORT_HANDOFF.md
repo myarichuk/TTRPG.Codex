@@ -97,7 +97,7 @@ worker run from that directory, and one run against a real model (a small Anthro
    type anything, so the guarantee becomes a warning: the party draft is checked for GM-only text before export. Invariants 2 and 3 still hold for
    drafts: `{{secret}}` blocks (a draft's secrets; never `:::dm`, which Homebrewery's renderer would print) are placeholders in anything sent
    to a model, and no URL survives the renderer's cleaner (`tools/book-editor/src/render.js`). `expr-eval` is never bundled (the build
-   aliases it to a stub and fails if it gets in): `$[...]` maths stays off. The editor renders in the GM's own page, on text players wrote,
+   aliases it to `src/safe-math.js`, a fixed-list evaluator, and fails if it gets in; Homebrewery's own variable tests run in `npm test`, 41.13). The editor renders in the GM's own page, on text players wrote,
    which is a trust boundary (BOOK_EXPORT 41.9); a renderer update needs `npm audit` and the hostile-draft tests. A draft entry's id is its slot key, never a raw
    id. The only script the print browser runs is the bundled renderer, in a page with every request refused; the page is then printed with
    script off.
@@ -171,7 +171,7 @@ Anything that survives is a missing test; add it.
 0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **Phases 1 and 2 are built (41.9, 41.10).** Next is
    phase 3 (Fit pages and the print-time overflow report). See the "Not done" lists of 41.9 and 41.10 first: the preview in Safari and Firefox,
    and the overflow report in the panel are the gaps a GM will hit (the GM-CSS cleaner's limits are fixed, 41.11; Homebrewery PHB CSS lays out as there on the compatibility layer, 41.12, which every
-   theme sits on and `UnderTheHomebreweryLayer_...` holds to Homebrewery's own theme). A theme must pass `EveryBlock_UnderEveryTheme...` and `ALongBook_UnderEveryTheme...`; soft transparent gradients and
+   theme sits on and `UnderTheHomebreweryLayer_...` holds to Homebrewery's own PHB and DMG themes; variables, colour variables and a community theme, 41.13). A theme must pass `EveryBlock_UnderEveryTheme...` and `ALongBook_UnderEveryTheme...`; soft transparent gradients and
    text shadows are what fail them. Items 1 (art step 7, keep-three) and 5 (layout)
    now land inside it rather than in the current HTML route.
 

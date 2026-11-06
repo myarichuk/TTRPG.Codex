@@ -146,7 +146,7 @@ public class BookDraftPdfTests
     }
 
     /// <summary>A brew that uses what Homebrewery's 5e layout styles: headings of every level, the first paragraph's drop cap, lists, a quote, a
-    /// note, a descriptive box, a table, a stat block, a column break, a wide block and the contents. Every word to compare is a PARITY_ marker.</summary>
+    /// note, a descriptive box, a table, a stat block, a column break, a quote with its attribution, a footnote, a wide block and the contents. Every word to compare is a PARITY_ marker.</summary>
     private static string ParityBrew()
     {
         var md = new StringBuilder("{{toc,wide\n# Contents\n\n- [Lore](#ch-lore)\n}}\n\n\\page\n\n# PARITY_H1 Lore\n\n");
@@ -173,7 +173,9 @@ public class BookDraftPdfTests
         md.Append("***Keen Sight.*** PARITY_M3 The gull has advantage on Wisdom checks that rely on sight.\n### PARITY_M4 Actions\n***Beak.*** PARITY_M5 Melee attack: +4 to hit.\n}}\n\n");
         md.Append("> PARITY_Q1 Every light on this coast was lit by a keeper who drowned.\n\n");
         Para(6);
-        md.Append("\\column\n\nPARITY_C1 After the column break.\n\n{{wide\nPARITY_W1 A wide block runs across both columns of the page.\n}}\n\n");
+        md.Append("\\column\n\nPARITY_C1 After the column break.\n\n");
+        md.Append("{{quote\nPARITY_QQ1 The sea keeps what the lamp forgets, and gives it back at low tide.\n\n{{attribution PARITY_QA Keeper Holloway}}\n}}\n\n");
+        md.Append("{{footnote PARITY_FN Part 1 | Lore}}\n\n{{wide\nPARITY_W1 A wide block runs across both columns of the page.\n}}\n\n");
         Para(30);
         return md.ToString();
     }
@@ -199,12 +201,16 @@ public class BookDraftPdfTests
     /// own 5e PHB theme. The reference is that theme compiled whole (<c>Fixtures/homebrewery-5e-reference.css</c>, its look and all; its pictures
     /// load nowhere, and move nothing) pasted as the GM's stylesheet over no layer, as a GM would paste it, with the same faces.
     /// </summary>
+    /// And so with Homebrewery's 5e DMG theme, which sits on the PHB one: its CSS (<c>Fixtures/homebrewery-5e-dmg.css</c>) pasted on the layer lays
+    /// the brew out as the DMG theme does in Homebrewery.
     [ChromiumTheory]
-    [InlineData("Letter")]
-    [InlineData("A4")]
-    public async Task UnderTheHomebreweryLayer_ABrewLaysOutAsUnderHomebrewerysOwnTheme(string pageSize)
+    [InlineData("Letter", null)]
+    [InlineData("A4", null)]
+    [InlineData("Letter", "homebrewery-5e-dmg.css")]
+    public async Task UnderTheHomebreweryLayer_ABrewLaysOutAsUnderHomebrewerysOwnTheme(string pageSize, string? onTop)
     {
         var reference = File.ReadAllText(Path.Combine(TestPaths.RepoRoot, "tests", "Codex.Tests", "Fixtures", "homebrewery-5e-reference.css"));
+        var extra = onTop == null ? string.Empty : "\n" + File.ReadAllText(Path.Combine(TestPaths.RepoRoot, "tests", "Codex.Tests", "Fixtures", onTop));
         var faces = new StringBuilder();
         foreach (var face in BookDraftThemes.LayerFaces)
         {
@@ -213,14 +219,58 @@ public class BookDraftPdfTests
         }
 
         var brew = ParityBrew();
-        var theirs = Markers((await PrintAsync(brew, css: faces + reference, theme: BookDraftThemes.HomebreweryLayout, pageSize: pageSize, homebrewery: false)).Pdf);
-        var ours = Markers((await PrintAsync(brew, theme: BookDraftThemes.HomebreweryLayout, pageSize: pageSize)).Pdf);
+        var theirs = Markers((await PrintAsync(brew, css: faces + reference + extra, theme: BookDraftThemes.HomebreweryLayout, pageSize: pageSize, homebrewery: false)).Pdf);
+        var ours = Markers((await PrintAsync(brew, css: extra.Length == 0 ? null : extra, theme: BookDraftThemes.HomebreweryLayout, pageSize: pageSize)).Pdf);
 
         Assert.True(theirs.Count >= 60, $"{theirs.Count} markers found under Homebrewery's theme");
         Assert.Equal(theirs.Keys.Order(), ours.Keys.Order());
         var off = theirs.Where(t => t.Value.Page != ours[t.Key].Page || Math.Abs(t.Value.X - ours[t.Key].X) > 1 || Math.Abs(t.Value.Y - ours[t.Key].Y) > 1)
             .Select(t => $"{t.Key}: page {t.Value.Page} ({t.Value.X:0.0},{t.Value.Y:0.0}) there, page {ours[t.Key].Page} ({ours[t.Key].X:0.0},{ours[t.Key].Y:0.0}) here").ToList();
-        Assert.True(off.Count == 0, $"{pageSize}: {off.Count} of {theirs.Count} words moved:\n" + string.Join("\n", off.Take(20)));
+        Assert.True(off.Count == 0, $"{pageSize} {onTop}: {off.Count} of {theirs.Count} words moved:\n" + string.Join("\n", off.Take(20)));
+    }
+
+    private static string Hex(UglyToad.PdfPig.Graphics.Colors.IColor? color)
+    {
+        if (color == null) return "";
+        var (r, g, b) = color.ToRGBValues();
+        return $"#{(int)Math.Round(r * 255):X2}{(int)Math.Round(g * 255):X2}{(int)Math.Round(b * 255):X2}";
+    }
+
+    private static (HashSet<string> Headings, HashSet<string> Fills) Colours(byte[] pdf)
+    {
+        using var doc = PdfDocument.Open(pdf);
+        var pages = doc.GetPages().ToList();
+        var headings = pages.SelectMany(p => p.GetWords()).Where(w => w.Text is "PARITY_H1" or "PARITY_H2" or "PARITY_H3" or "PARITY_M0")
+            .Select(w => Hex(w.Letters[0].Color)).ToHashSet();
+        var fills = pages.SelectMany(p => p.Paths).Where(p => p.IsFilled).Select(p => Hex(p.FillColor)).ToHashSet();
+        return (headings, fills);
+    }
+
+    /// <summary>Homebrewery's colour variables (<c>--HB_Color_*</c>), set in a brew's CSS as Homebrewery's users set them, colour the book as they
+    /// colour Homebrewery's: under the layout-only theme and under Plain, on the layer or off it. (Ashen Vellum keeps its own palette.) And Plain,
+    /// set nothing, keeps its own colours on the layer, not the layer's greys.</summary>
+    [ChromiumTheory]
+    [InlineData("homebrewery", true)]
+    [InlineData("plain", true)]
+    [InlineData("plain", false)]
+    public async Task HomebrewerysColourVariables_SetInABrewsCss_ColourTheBook(string themeId, bool homebrewery)
+    {
+        const string css = ":root{--HB_Color_HeaderText:#C00000;--HB_Color_Accent:#00C000;--HB_Color_MonsterStatBackground:#0000C0;--HB_Color_Background:#FFF0C0}";
+        var theme = BookDraftThemes.Find(themeId)!;
+
+        var set = Colours((await PrintAsync(ParityBrew(), css: css, theme: theme, homebrewery: homebrewery)).Pdf);
+
+        Assert.Equal(["#C00000"], set.Headings);
+        Assert.Contains("#00C000", set.Fills);
+        Assert.Contains("#0000C0", set.Fills);
+        Assert.Contains("#FFF0C0", set.Fills);
+
+        if (themeId != "plain") return;
+        var plain = Colours((await PrintAsync(ParityBrew(), theme: theme, homebrewery: homebrewery)).Pdf);
+        Assert.Equal(["#5A1414"], plain.Headings);
+        Assert.Contains("#F3EEE4", plain.Fills);
+        Assert.Contains("#FBF6EC", plain.Fills);
+        Assert.DoesNotContain(plain.Fills, f => f.Length == 7 && f[1..3] == f[3..5] && f[3..5] == f[5..7] && f is not "#FFFFFF" and not "#000000" and not "#1F1F1F");
     }
 
     /// <summary>A theme with faces of its own prints in them alone: the layer's faces are for a brew's CSS and the layout-only theme, and an

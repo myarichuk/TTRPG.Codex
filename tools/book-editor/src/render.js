@@ -26,7 +26,15 @@ export function brew(chapters) {
 
 /** Homebrewery's pages, as marked-hbfm renders them, before cleaning. */
 export function pagesHtml(markdown) {
-  return markdown.split(PAGE_BREAK).map((text, i) => {
+  const pages = markdown.split(PAGE_BREAK);
+  // Twice when the brew has variables: marked-hbfm learns a variable set on a later page only by rendering that page, and Homebrewery's editor,
+  // rendering on every keystroke, always has. The print browser renders once, so without the first pass its pages would not match the preview.
+  if (markdown.includes('[')) renderPages(pages);
+  return renderPages(pages);
+}
+
+function renderPages(pages) {
+  return pages.map((text, i) => {
     let tags = { classes: '', style: '' };
     if (text.startsWith('\\page')) {
       tags = pageTags(text.split('\n', 1)[0]);

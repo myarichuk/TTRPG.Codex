@@ -96,12 +96,20 @@ assert.equal(drawn(book).querySelectorAll('.page').length, 3);
 // Secret blocks are a styled block, and ":::" is not ours (Homebrewery reads it as a definition list): the generator never writes it.
 assert.ok(drawn('{{secret\nThe truth.\n}}').querySelector('.block.secret'));
 
-// "$[...]" maths is switched off (expr-eval is not in the bundle): a hostile expression evaluates nothing and nothing runs.
+// "$[...]" maths is Homebrewery's (src/safe-math.js, not expr-eval, which is not in the bundle): sums and the listed functions work; a name
+// that is not a listed function, a member, a string or anything else is left as written, and nothing runs.
 globalThis.PWNED = undefined;
-const maths = drawn('Hit points: $[2+3]. $[constructor.constructor("globalThis.PWNED=1")()] $[x:4] then $[x].').innerHTML;
+const maths = drawn('[hp]: 9\n\nHit points: $[2+3*hp]; $[floor(hp/2)]; $[toRomans(hp)]; $[signed(-hp)].\n\n'
+  + '$[constructor.constructor("globalThis.PWNED=1")()] $[constructor(1)] $[__proto__(1)] $[toString(1)] $[hasOwnProperty(1)] $[valueOf()] '
+  + '$[' + '('.repeat(400) + '1' + ')'.repeat(400) + '] $[1e999999]').innerHTML;
 assert.equal(globalThis.PWNED, undefined);
-assert.ok(!maths.includes('>5<') && !/\b5\b/.test(maths), 'no maths was done: ' + maths);
-assert.ok(maths.includes('4'), 'a plain variable still works: ' + maths);
+assert.ok(maths.includes('Hit points: 29; 4; IX; -9.'), 'maths was done: ' + maths);
+assert.ok(maths.includes('proto</strong>(1)]'), '__proto__ was left as written (in bold: it is Markdown)');
+for (const name of ['constructor(1)', 'toString(1)', 'hasOwnProperty(1)', 'valueOf()']) assert.ok(maths.includes('$[' + name + ']'), name + ' was left as written');
+assert.ok(maths.includes('$[((('), 'too deep is left as written');
+
+// A variable set on a later page is known on an earlier one, as in Homebrewery's editor, though the print browser renders the brew once.
+assert.ok(drawn('The $[ship] sails.\n\n\\page\n\n[ship]: Tern').innerHTML.includes('The Tern sails.'));
 
 // A page's own classes and styles, as Homebrewery reads them from its \page line: a plain class goes on the page (the sheet's dark pages
 // are "\page {reliquary}"); a style that could load anything is dropped, and a class that is not a plain name is left out, never the page's own.
