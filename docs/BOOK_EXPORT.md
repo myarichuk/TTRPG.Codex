@@ -1714,5 +1714,8 @@ Not done, or not verified:
 - Each fetch reads the copies from the database and the preview gets them whole over the circuit (8 MB of stylesheet for Tasha): fine here,
   not measured on a slow link or a phone.
 - Fonts a GM's CSS names are under their own licences; they are the GM's to use.
+- Fetching is open to any campaign's GM, also while the server is open to the internet (decided 2026-11-07): unlike the server's AI key
+  (`ExposurePolicy.MayUseServerAi`) it costs no money, and the bounds above hold. A stranger who signs up could still make the server fetch
+  public addresses, up to 16 MB a save.
 - Typing in the stylesheet pane with a large set of copies (Tasha: 8 MB of stylesheet in the preview) was not timed. A fetch that changes
   nothing does not restyle the preview a second time.
