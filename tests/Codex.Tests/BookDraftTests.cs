@@ -352,11 +352,11 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         var asked = site.Requests;
         var again = (await webs.RefreshAsync(dm, "party", "en", css, CancellationToken.None))!;
 
-        Assert.Equal((4, 4), (first.Fetched, first.Kept));
+        Assert.Equal((4, 4, true), (first.Fetched, first.Kept, first.Changed));
         Assert.Equal(("https://fixture.test/gone.png", BookWebProblem.Refused, 404), first.Failed.Select(f => (f.Url, f.Problem, f.Status)).Single());
         // Kept copies are not fetched again; the one that failed is tried again.
         Assert.Equal(asked + 1, site.Requests);
-        Assert.Equal((0, 4), (again.Fetched, again.Kept));
+        Assert.Equal((0, 4, false), (again.Fetched, again.Kept, again.Changed));
 
         Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveSettingsAsync(dm, "party", "en", css, "Letter", "plain", true, (await _drafts.GetAsync(dm, "party", "en"))!.Version)).Result);
         var (page, _) = await _drafts.PageAsync(dm, "party", "en", BookArtQuality.Preview, _ => null, CancellationToken.None, withArt: false);
@@ -373,7 +373,7 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
 
         // A copy the sheet no longer names is let go.
         var fewer = (await webs.RefreshAsync(dm, "party", "en", "@import url('https://fixture.test/theme/fonts.css');", CancellationToken.None))!;
-        Assert.Equal(3, fewer.Kept);
+        Assert.Equal((3, true), (fewer.Kept, fewer.Changed));
         Assert.DoesNotContain((await _store.WebAsync(dm, "party", "en")).Files, f => f.Url.EndsWith("note.png", StringComparison.Ordinal));
 
         Assert.True(await _drafts.StartOverAsync(dm, "party", "en"));

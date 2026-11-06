@@ -5,7 +5,8 @@ using Codex.Persistence;
 namespace Codex.Web.Book;
 
 /// <summary>What a fetch of a draft's web addresses did: how many copies it made, what the draft keeps now, and what could not be fetched.</summary>
-public sealed record BookWebReport(int Fetched, int Kept, long KeptBytes, IReadOnlyList<BookWebFailure> Failed);
+/// <param name="Changed">Copies were added or let go: the preview needs restyling. A fetch that changed nothing leaves it as it is.</param>
+public sealed record BookWebReport(int Fetched, int Kept, long KeptBytes, IReadOnlyList<BookWebFailure> Failed, bool Changed);
 
 /// <summary>
 /// Keeps a draft's copies of the web addresses its stylesheet names in step with the stylesheet (docs/BOOK_EXPORT.md 41.14): every address it
@@ -99,7 +100,7 @@ public sealed class BookDraftWebs(IBookDraftRepository store, BookWebFetcher fet
                 }
             }
 
-            return new BookWebReport(added.Count, kept.Count, kept.Sum(f => (long)f.Bytes.Length), failed);
+            return new BookWebReport(added.Count, kept.Count, kept.Sum(f => (long)f.Bytes.Length), failed, changed);
         }
         catch (OperationCanceledException)
         {

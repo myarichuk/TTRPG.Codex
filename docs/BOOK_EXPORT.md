@@ -1694,7 +1694,9 @@ still fetches nothing.
 
 Measured: Tasha's Style as pasted (two `@import`ed font sheets of 0.35 and 0.91 MB, 2 more faces, 16 imgur pictures): 20 copies, 5.4 MB,
 about 7 to 10 seconds from here; the parity brew then matches Homebrewery word for word (77 of 77), with Tasha's fonts, texture and frames.
-In the editor the preview takes the copies when the fetch ends, and they are there at once when the editor is opened again.
+In the editor the preview takes the copies when the fetch ends, and they are there at once when the editor is opened again. Google Fonts
+(checked once, live, with Pirata One): the sheet is kept as CSS, both subsets come back as woff2, and the heading prints at the width the
+face sets when written into the sheet by hand.
 
 Tests: `BookCssWebTests` (addresses; an imported sheet written in place with its relative addresses as copies; what has no copy noted and
 dropped; a copy of the wrong kind not used; media lists; conditions, late imports, cycles and depth; an imported sheet that tries to reach
@@ -1711,5 +1713,6 @@ Not done, or not verified:
   copy until the address leaves the sheet and comes back).
 - Each fetch reads the copies from the database and the preview gets them whole over the circuit (8 MB of stylesheet for Tasha): fine here,
   not measured on a slow link or a phone.
-- Google Fonts was not fetched in a test (the User-Agent choice is from its documented behaviour); fonts from it are under their own
-  licences, as every font a GM's CSS names is the GM's to use.
+- Fonts a GM's CSS names are under their own licences; they are the GM's to use.
+- Typing in the stylesheet pane with a large set of copies (Tasha: 8 MB of stylesheet in the preview) was not timed. A fetch that changes
+  nothing does not restyle the preview a second time.

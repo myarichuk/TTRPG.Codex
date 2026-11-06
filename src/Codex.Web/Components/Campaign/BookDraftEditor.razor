@@ -440,8 +440,10 @@
         {
             var report = await Webs.RefreshAsync(Access, edition, language, css, closing.Token);
             if (report == null || view == null) return;
-            web = await Drafts.WebAsync(Access, edition, language);
             webReport = report;
+            // Nothing fetched or let go: the preview already has these copies (the save restyled it with them).
+            if (!report.Changed) return;
+            web = await Drafts.WebAsync(Access, edition, language);
             if (module != null && editorId != null) await module.InvokeVoidAsync("style", editorId, BookCss.Clean(savedCss, out _, web));
         }
         catch (JSDisconnectedException)
