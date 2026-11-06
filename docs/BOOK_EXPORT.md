@@ -87,7 +87,9 @@ invisibly (transport retries, temperature fallback, `response_format` fallback, 
 ## 3. Rendering (revised after review)
 
 - **Dialect**: a Homebrewery-compatible subset (see 6 and 8 for the engine choice). The `.md` is *compatible markup*, we do not
-  claim pixel parity, and we do not use the Homebrewery name or the WotC-imitating PHB look. Ship our own theme.
+  claim pixel parity, and we do not use the Homebrewery name or the WotC-imitating PHB look. Ship our own theme. (Revised 2026-11-06,
+  41.12: the user chose Homebrewery parity for adoption. A "Homebrewery compatibility" layer, on by default, carries PHB's layout and the
+  Solbera faces but none of its pictures or colours; the name is used to say what it is compatible with, nothing more.)
 - **Closed network**: images are referenced only by slot or attachment id; no URL survives rendering. The renderer escapes by
   default (reuse the `WikiText` approach, there is no sanitiser package in the repo). The preview iframe is `sandbox`ed with
   no scripts and a CSP of `default-src 'none'; img-src data: 'self'`. The print browser uses `SetContent`, JavaScript off, and
@@ -1523,8 +1525,7 @@ page), and so did the shadows and strokes. `BookDraftTests.ATheme_IsStoredWithTh
 straight after typing (the typed line is saved and drawn in the new theme).
 
 **Not done, or not verified:**
-- **CSS written for the PHB theme** (most shared Homebrewery CSS) will not look the same: PHB is not shipped (its fonts and pictures have no
-  clear licence). Only CSS that works on Blank does.
+- ~~CSS written for the PHB theme will not look the same.~~ Done (41.12): the Homebrewery compatibility layer, with a parity test.
 - ~~The GM's stylesheet cleaner strips every backslash, and its cap is 20,000 characters.~~ Done (41.11): `BookCss.Clean` reads the sheet
   as CSS Syntax Level 3 tokens and writes back only what it checked; escapes survive; the cap is 512,000 characters.
 - No `url()` in the GM's CSS but `data:image/` (and `data:font/` inside `@font-face`); Homebrewery CSS that loads fonts or pictures from the
@@ -1563,3 +1564,49 @@ Tests: `BookCssTests` (escape, comment and join bypasses, the style element, bro
 token, cleaning twice changes nothing). Mutants each fail it: ignoring the join guard, a raw `<` in a re-escaped name, names read without
 decoding escapes, strings written raw, and a fetching `@font-face` kept.
 
+
+### 41.12 The Homebrewery compatibility layer (built 2026-11-06)
+
+Most shared Homebrewery CSS is written on top of its 5e PHB theme, not Blank, so on Blank alone it lands in the wrong places. The user
+chose parity with Homebrewery (people bring their CSS with them) but no PHB look: Homebrewery's PHB is a fan recreation of the official
+book's look, and its pictures have no traceable licence (its issue #723 left that open; its watercolour stains came from imgur links, its
+cover placeholders from an image generator).
+
+- **The layer** (`src/Codex.Core/Book/Themes/homebrewery-5e.css`): Homebrewery's `themes/V3/5ePHB/style.less` (MIT, commit 3e600a0,
+  vendored unchanged as `tools/book-editor/themes/homebrewery-5e.less`) compiled by `build.mjs` and stripped by rule: every picture (its
+  asset variables compile to `none`; `background-image`, `border-image`, masks dropped), every colour turned to the grey of its lightness
+  (so `--HB_Color_*` keep their names), gradients, shadows, text stroke and filters dropped (they cost a raster or a second copy of the
+  text in the PDF), `@font-face` dropped (the server adds the faces). A frame that was a picture keeps its width, transparent: width is
+  layout. The build fails if a `url(`, gradient, shadow, stroke or mask is left.
+- **Its faces** (`wwwroot/fonts/homebrewery-5e`, see its README): Homebrewery's own copies of Solbera's fonts (CC BY-SA 4.0), Overpass
+  (OFL) and Walter Turncoat (Apache 2.0). Homebrewery's copies, not Solbera's originals: Scaly Sans, Scaly Sans Caps, Nodesto and the drop-cap
+  face differ from the originals in widths and line metrics (measured with fontTools), and only Homebrewery's lay a page out as it does.
+  Davek, Iokharic and Rellanic (no known source) and Martel Sans (unused) are left out. About 350 KB, embedded in the shell only when the
+  layer is on; a PDF keeps only the glyphs it uses.
+- **Order**: Blank, the layer, the book's page rules, the theme, the GM's CSS. **A setting on the draft** (`Homebrewery`, on by default; a
+  draft saved before it existed reads as on), a checkbox in the editor's bar, read by the preview shell and the print route alike. The page's
+  body gets `homebrewery-layer` when it is on.
+- **A third theme, "Homebrewery (layout only)"** (`homebrewery`): the layer with black ink on white, thin lines for the frames (drawn as
+  outlines, which take no room), and the generator's own blocks. It sets no size, margin or face of the layer's: it is the theme a
+  Homebrewery brew's CSS matches. Plain and Ashen Vellum sit on the layer too and keep their looks: Plain names its own faces wherever the
+  layer names one, Ashen Vellum already did; both keep the cover title's case (the layer sets it in capitals). On any theme the cover's
+  tagline (the paragraph after its title) gets no drop cap.
+
+Tests (`BookDraftPdfTests`):
+- `UnderTheHomebreweryLayer_ABrewLaysOutAsUnderHomebrewerysOwnTheme`, Letter and A4: a brew of everything PHB styles (headings, drop cap,
+  lists, quote, note, descriptive, table, stat block, column break, wide block, contents) printed under the layer and under Homebrewery's
+  whole theme compiled (test fixture `Fixtures/homebrewery-5e-reference.css`, written by `build.mjs`, never shipped) pasted as the GM's CSS
+  over no layer, with the same faces: all 77 marker words on the same page within 1 pt. Mutants each fail it: paragraph spacing removed,
+  the h3 size changed, the note's padding changed, the descriptive frame's width changed.
+- The overlap and long-book tests run every theme with the layer at Letter and A4 and without it at Letter, and a theme with faces of its
+  own must print in them alone (Plain failed it, with notes in Scaly Sans, before its font rules).
+- `BookDraftTests`: the setting's default for an old draft, and turning it off. The editor's end-to-end test turns it off.
+
+Not done, or not verified:
+- **Parity is measured for one brew**, in Chrome, against Homebrewery's theme compiled here; not against Homebrewery's live site, and not
+  for its other themes (DMG, Journal, Unearthed Arcana) or its snippets' markup beyond what the brew uses.
+- **Pictures a brew's CSS loads from the web** (imgur, Homebrewery's `/assets`) still do not load, by design; fetching them server-side, or
+  uploads, is not built.
+- **Markdown parity** (Homebrewery's `$[variables]`, icon shortcodes, definition-list and spacing syntax) is not audited.
+- Russian and Hebrew: the layer's faces are Latin; the layout-only theme is English only, like the others.
+- The layer's greys, the layout-only theme's contrast and Plain's look on the layer were looked at, not measured.

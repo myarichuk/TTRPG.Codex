@@ -11,7 +11,7 @@ namespace Codex.Web.Book;
 public sealed record BookDraftChapterView(string Section, string Title, string Markdown, int Version, bool Edited, bool Stale, bool Gone, bool CanUndo,
     IReadOnlyList<string> Changed);
 
-public sealed record BookDraftView(string Edition, string Language, string Theme, string PageSize, string Css, int Version, IReadOnlyList<BookDraftChapterView> Chapters,
+public sealed record BookDraftView(string Edition, string Language, string Theme, bool Homebrewery, string PageSize, string Css, int Version, IReadOnlyList<BookDraftChapterView> Chapters,
     BookDraftFollowed? Followed = null);
 
 /// <summary>What a draft is printed or previewed from: the page shell, the brew, and the edition's pictures by slot.</summary>
@@ -66,7 +66,7 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
                 c.PreviousMarkdown != null, edited && moved ? ChangedEntries(c.Base, g!.Markdown) : []);
         }).ToList();
         var d = draft.Document;
-        return new BookDraftView(d.Edition, d.Language, d.Theme, d.PageSize, d.Css, d.Version, chapters, followed);
+        return new BookDraftView(d.Edition, d.Language, d.Theme, d.Homebrewery, d.PageSize, d.Css, d.Version, chapters, followed);
     }
 
     /// <summary>The entries (by the id the generator gives each) whose generated text differs between the base and now, named by their heading now.</summary>
@@ -159,8 +159,8 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
     }
 
     public Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess asked, string edition, string language, string css, string pageSize, string theme,
-        int version) =>
-        store.SaveSettingsAsync(asked, edition, language, css, pageSize, theme, version);
+        bool homebrewery, int version) =>
+        store.SaveSettingsAsync(asked, edition, language, css, pageSize, theme, homebrewery, version);
 
     public Task<bool> StartOverAsync(CampaignAccess asked, string edition, string language) => store.DeleteAsync(asked, edition, language);
 
@@ -175,7 +175,7 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         if (await GenerateAsync(asked, edition, language) is not { } made) return (null, null);
         if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return (null, null);
         var theme = BookDraftThemes.Find(draft.Document.Theme) ?? BookDraftThemes.Plain;
-        var shell = BookDraftHtml.Shell(made.Source.Campaign.Name, language, theme, draft.Document.PageSize, draft.Document.Css, font);
+        var shell = BookDraftHtml.Shell(made.Source.Campaign.Name, language, theme, draft.Document.PageSize, draft.Document.Css, draft.Document.Homebrewery, font);
         if (shell.Html == null) return (null, shell.Refused);
         var markdown = string.Join("\n\n\\page\n\n", draft.Chapters.Select(c => c.Markdown.TrimEnd()));
         var pictures = withArt ? await ArtAsync(made.Dm, made.Source, quality, cancel) : new Dictionary<string, string>();

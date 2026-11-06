@@ -253,9 +253,9 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         Assert.Equal("plain", view.Theme);
         var before = view.Chapters.Select(c => (c.Section, c.Markdown, c.Version)).ToList();
 
-        var (unknown, _) = await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, "../phb", view.Version);
+        var (unknown, _) = await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, "../phb", true, view.Version);
         Assert.Equal(BookDraftSave.NotAllowed, unknown);
-        var (saved, version) = await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, "Ashen-Vellum", view.Version);
+        var (saved, version) = await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, "Ashen-Vellum", true, view.Version);
         Assert.Equal(BookDraftSave.Saved, saved);
 
         var after = (await _drafts.GetAsync(dm, "party", "en"))!;
@@ -263,7 +263,24 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         Assert.Equal(version, after.Version);
         Assert.Equal(before, after.Chapters.Select(c => (c.Section, c.Markdown, c.Version)).ToList());
         // A save from the copy before the change is refused, as for the stylesheet.
-        Assert.Equal(BookDraftSave.Conflict, (await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, "plain", view.Version)).Result);
+        Assert.Equal(BookDraftSave.Conflict, (await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, "plain", true, view.Version)).Result);
+    }
+
+    [Fact]
+    public async Task TheHomebreweryLayer_IsOnForADraftSavedBeforeItExisted_AndTheGmCanTurnItOff()
+    {
+        var (dm, id) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        Assert.True(view.Homebrewery);
+
+        var (saved, _) = await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, view.Theme, false, view.Version);
+        Assert.Equal(BookDraftSave.Saved, saved);
+        Assert.False((await _drafts.GetAsync(dm, "party", "en"))!.Homebrewery);
+
+        // A draft stored before the setting existed has no such field (here: the "off" just saved, taken out again): it reads as on.
+        await _db.Store.Operations.SendAsync(new Raven.Client.Documents.Operations.PatchOperation(BookDraftDocument.IdFor(id, "party", "en"), null,
+            new Raven.Client.Documents.Operations.PatchRequest { Script = "delete this.Homebrewery;" }));
+        Assert.True((await _drafts.GetAsync(dm, "party", "en"))!.Homebrewery);
     }
 
     [Fact]

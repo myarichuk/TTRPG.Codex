@@ -28,6 +28,10 @@ public class BookDraftDocument
     public string Edition { get; set; } = Party;
     public string Language { get; set; } = "en";
     public string Theme { get; set; } = "plain";
+
+    /// <summary>Homebrewery's 5e layout under the theme (docs/BOOK_EXPORT.md 41.12), so CSS written for a Homebrewery brew lands where it does
+    /// there. On unless the GM turns it off; a draft saved before the setting existed reads as on.</summary>
+    public bool Homebrewery { get; set; } = true;
     public string PageSize { get; set; } = "Letter";
 
     /// <summary>The GM's own stylesheet, applied after the theme (cleaned on the way out, as the book's custom CSS always is).</summary>
@@ -143,7 +147,8 @@ public interface IBookDraftRepository
     Task<BookDraftFollowed?> FollowAsync(CampaignAccess dm, string edition, string language, IReadOnlyList<BookDraftGenerated> generated);
 
     /// <summary>The draft's theme, paper and GM stylesheet. A theme the book does not have is refused; the chapters are never touched.</summary>
-    Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, string theme, int version);
+    Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, string theme, bool homebrewery,
+        int version);
 
     /// <summary>The draft and all its chapters, gone: "start over".</summary>
     Task<bool> DeleteAsync(CampaignAccess dm, string edition, string language);
@@ -382,7 +387,7 @@ public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepo
     public static bool Untouched(BookDraftChapter chapter) => BookDraftText.Content(chapter.Markdown) == BookDraftText.Content(chapter.Base);
 
     public async Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, string theme,
-        int version)
+        bool homebrewery, int version)
     {
         if (css.Length > BookDraftDocument.MaxCssChars) return (BookDraftSave.TooLarge, version);
         if (Codex.Core.Book.BookDraftThemes.Find(theme) is not { } chosen) return (BookDraftSave.NotAllowed, version);
@@ -395,6 +400,7 @@ public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepo
         draft.Css = css;
         draft.PageSize = Paper(pageSize);
         draft.Theme = chosen.Id;
+        draft.Homebrewery = homebrewery;
         draft.Version++;
         draft.UpdatedAt = DateTime.UtcNow;
         try

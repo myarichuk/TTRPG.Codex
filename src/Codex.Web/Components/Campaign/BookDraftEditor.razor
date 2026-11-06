@@ -29,6 +29,11 @@
                         }
                     </select>
                 </label>
+                <label class="book-draft-homebrewery" title="@L["Campaign.Book.Draft.Homebrewery.Hint"]">
+                    <input type="checkbox" class="form-check-input" checked="@view.Homebrewery" @onchange="HomebreweryAsync" disabled="@(working || state == SaveState.Conflict)"
+                           data-testid="book-draft-homebrewery" />
+                    <span>@L["Campaign.Book.Draft.Homebrewery"]</span>
+                </label>
                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="DownloadAsync" Disabled="@printing" data-testid="book-draft-download">
                     <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
                 </CodexButton>
@@ -243,7 +248,7 @@
         }
 
         var theme = BookDraftThemes.Find(view!.Theme) ?? BookDraftThemes.Plain;
-        return Task.FromResult(BookDraftHtml.Shell(string.Empty, language, theme, view.PageSize, view.Css, Font));
+        return Task.FromResult(BookDraftHtml.Shell(string.Empty, language, theme, view.PageSize, view.Css, view.Homebrewery, Font));
     }
 
     private async Task ShowAsync(string? section)
@@ -331,7 +336,7 @@
             if (!cssDirty) return;
             var css = await ReadAsync(null);
             if (css == null) return;
-            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, css, view.PageSize, view.Theme, view.Version);
+            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, css, view.PageSize, view.Theme, view.Homebrewery, view.Version);
             if (result == BookDraftSave.Saved)
             {
                 cssDirty = false;
@@ -431,16 +436,23 @@
 
     /// <summary>Another theme: what was typed is saved first, the theme is stored (the chapters are not touched), and the preview is drawn again
     /// in the new theme's page.</summary>
-    private async Task ThemeAsync(ChangeEventArgs e)
+    private Task ThemeAsync(ChangeEventArgs e) =>
+        view == null || e.Value is not string chosen || chosen == view.Theme ? Task.CompletedTask : SettingsAsync(chosen, view.Homebrewery);
+
+    /// <summary>The Homebrewery layout under the theme, on or off: saved as a theme is, and the preview drawn again.</summary>
+    private Task HomebreweryAsync(ChangeEventArgs e) =>
+        view == null || e.Value is not bool on || on == view.Homebrewery ? Task.CompletedTask : SettingsAsync(view.Theme, on);
+
+    private async Task SettingsAsync(string chosen, bool homebrewery)
     {
-        if (working || view == null || e.Value is not string chosen || chosen == view.Theme) return;
+        if (working || view == null) return;
         working = true;
         message = null;
         try
         {
             await FlushAsync();
             if (view == null || state == SaveState.Conflict) return;
-            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, view.Css, view.PageSize, chosen, view.Version);
+            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, view.Css, view.PageSize, chosen, homebrewery, view.Version);
             if (result == BookDraftSave.Conflict) state = SaveState.Conflict;
             else if (result != BookDraftSave.Saved) message = L["Campaign.Book.Draft.ActionFailed"];
             await RefreshAsync(push: false);

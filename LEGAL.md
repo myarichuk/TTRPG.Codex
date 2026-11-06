@@ -23,6 +23,9 @@ Bundled third-party software:
 - Homebrewery's "Blank" theme layout (`tools/book-editor/themes/blank.less`, compiled into
   `src/Codex.Core/Book/Themes/blank.css`), trimmed of its fonts and pictures - MIT License, Copyright (c) 2016 Scott Tolksdorf -
   https://github.com/naturalcrit/homebrewery (the notice is in the same `THIRD-PARTY-NOTICES.txt`)
+- Homebrewery's "5e PHB" theme, as the book's Homebrewery compatibility layer (`tools/book-editor/themes/homebrewery-5e.less`,
+  compiled into `src/Codex.Core/Book/Themes/homebrewery-5e.css` with its pictures, colours, shadows and gradients taken out: its
+  layout only) - MIT License, the same notice. None of Homebrewery's pictures is shipped.
 
 ### RavenDB
 
@@ -66,6 +69,16 @@ licence beside it:
 - Pirata One, Copyright (c) 2012 Rodrigo Fuenzalida, Nicolas Massi, Reserved Font Name "Pirata" - SIL Open Font License 1.1 -
   `src/Codex.Web/wwwroot/fonts/pirata-one/OFL.txt`
 - Special Elite, by Astigmatic - Apache License 2.0 - `src/Codex.Web/wwwroot/fonts/special-elite/LICENSE.txt`
+
+The faces Homebrewery's 5e layout names, for the book's Homebrewery compatibility layer: Homebrewery's own copies (commit 3e600a0),
+unmodified, in `src/Codex.Web/wwwroot/fonts/homebrewery-5e` (its `README.txt` says what each is and where it came from):
+
+- Bookinsanity, Scaly Sans, Scaly Sans Caps, Mr Eaves Small Caps, Nodesto Caps Condensed, Nodesto Caps Wide and Solbera Imitation,
+  by Solbera, with fixes and additions by Ryrok, Ners and LUCASTUCIOUS and changes by Homebrewery's contributors - Creative Commons
+  Attribution-ShareAlike 4.0 International - `CC-BY-SA-4.0.txt` there. Sharing them on under the same licence is what it asks; the
+  book only embeds them in a PDF, which does not make the book itself ShareAlike.
+- Overpass, Copyright 2021 The Overpass Project Authors - SIL Open Font License 1.1 - `overpass-OFL.txt` there
+- Walter Turncoat, Copyright (c) 2010 Font Diner, Inc DBA Sideshow - Apache License 2.0 - `walter-turncoat-LICENSE.txt` there
 
 ### Launcher artwork
 

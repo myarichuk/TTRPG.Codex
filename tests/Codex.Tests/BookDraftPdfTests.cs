@@ -32,9 +32,9 @@ public class BookDraftPdfTests
         new(Options.Create(new BookPdfOptions { TimeoutSeconds = 90, NoSandbox = BookPdfTests.NoSandbox }), NullLogger<BookPdf>.Instance);
 
     private static async Task<BookPdfResult> PrintAsync(string markdown, IReadOnlyDictionary<string, string>? art = null, string? css = null, BookTheme? theme = null,
-        string pageSize = "Letter")
+        string pageSize = "Letter", bool homebrewery = true)
     {
-        var shell = BookDraftHtml.Shell("Saltmere", "en", theme ?? BookDraftThemes.Plain, pageSize, css, Font);
+        var shell = BookDraftHtml.Shell("Saltmere", "en", theme ?? BookDraftThemes.Plain, pageSize, css, homebrewery, Font);
         Assert.NotNull(shell.Html);
         var printer = Printer();
         using var slot = printer.TryReserve("dm")!;
@@ -50,7 +50,7 @@ public class BookDraftPdfTests
         Assert.Contains("naturalcrit/homebrewery", BookDraftThemes.Blank, StringComparison.Ordinal);
         foreach (var theme in BookDraftThemes.All)
         {
-            var html = BookDraftHtml.Shell("Saltmere", "en", theme, "A4", null, Font).Html!;
+            var html = BookDraftHtml.Shell("Saltmere", "en", theme, "A4", null, true, Font).Html!;
             var css = html[html.IndexOf("<style id=\"theme\">", StringComparison.Ordinal)..];
             var blank = css.IndexOf(".columnWrapper {", StringComparison.Ordinal);
             var size = css.IndexOf("width: 210mm; height: 297mm;", StringComparison.Ordinal);
@@ -114,8 +114,12 @@ public class BookDraftPdfTests
         var text = Text(printed.Pdf);
         Assert.Contains("PUBLIC_LAST_PARAGRAPH", text);
         Assert.Contains("Paragraph 159", text);
-        // The chapter begins on the second page, and the contents line says so.
-        Assert.Matches(@"Lore\s*\.*\s*2", text.Split('\n')[0]);
+        // The chapter begins on the second page, and the contents line says so: a "2" on the line of "Lore", to its right. (Positions, not the
+        // order words are stored in: Chrome writes a flex line's items in its own order.)
+        using var doc = PdfDocument.Open(printed.Pdf);
+        var words = doc.GetPage(1).GetWords().ToList();
+        var lore = words.First(w => w.Text == "Lore");
+        Assert.Contains(words, w => w.Text == "2" && Math.Abs(w.BoundingBox.Bottom - lore.BoundingBox.Bottom) < 3 && w.BoundingBox.Left > lore.BoundingBox.Right);
     }
 
     [ChromiumFact]
@@ -141,13 +145,104 @@ public class BookDraftPdfTests
         Assert.Equal(0, printed.BlockedRequests);
     }
 
-    public static TheoryData<string, string> Themes()
+    /// <summary>A brew that uses what Homebrewery's 5e layout styles: headings of every level, the first paragraph's drop cap, lists, a quote, a
+    /// note, a descriptive box, a table, a stat block, a column break, a wide block and the contents. Every word to compare is a PARITY_ marker.</summary>
+    private static string ParityBrew()
     {
-        var data = new TheoryData<string, string>();
+        var md = new StringBuilder("{{toc,wide\n# Contents\n\n- [Lore](#ch-lore)\n}}\n\n\\page\n\n# PARITY_H1 Lore\n\n");
+        md.Append("The PARITY_P0 tide came in grey over the reef, and the keepers of the light wrote down every sail they saw.\n\n");
+        var n = 1;
+        void Para(int count)
+        {
+            for (var i = 0; i < count; i++, n++) md.Append("A PARITY_P").Append(n).Append(" keeper wrote that the ships passed in the night, and that the lamp burned until the oil ran out at dawn.\n\n");
+        }
+
+        Para(4);
+        md.Append("## PARITY_H2 The Reef\n\n");
+        Para(2);
+        md.Append("### PARITY_H3 Wrecks\n\n- PARITY_L1 the Gannet\n- PARITY_L2 the Tern\n\n1. PARITY_O1 first\n2. PARITY_O2 second\n\n#### PARITY_H4 Salvage\n\n");
+        Para(2);
+        md.Append("##### PARITY_H5 Rumours\n\n");
+        md.Append("{{note\n##### PARITY_N0 A note\nPARITY_N1 The ledger has a page torn out, and the keeper will not say who took it.\n}}\n\n");
+        Para(3);
+        md.Append("{{descriptive\nPARITY_D1 The lamp room smells of oil and salt, and the glass is cracked in three places.\n}}\n\n");
+        md.Append("##### PARITY_TC Ships lost\n| PARITY_TH Ship | Year |\n|:---|:---:|\n| PARITY_T1 Gannet | 1311 |\n| PARITY_T2 Tern | 1314 |\n| PARITY_T3 Skua | 1320 |\n\n");
+        Para(3);
+        md.Append("{{monster,frame\n## PARITY_M0 Reef Gull\n*Small beast, unaligned*\n___\n**Armor Class** PARITY_M1 12\n**Hit Points** PARITY_M2 4 (1d6)\n___\n");
+        md.Append("|STR|DEX|CON|INT|WIS|CHA|\n|:---:|:---:|:---:|:---:|:---:|:---:|\n|6 (-2)|14 (+2)|10 (+0)|2 (-4)|12 (+1)|5 (-3)|\n___\n");
+        md.Append("***Keen Sight.*** PARITY_M3 The gull has advantage on Wisdom checks that rely on sight.\n### PARITY_M4 Actions\n***Beak.*** PARITY_M5 Melee attack: +4 to hit.\n}}\n\n");
+        md.Append("> PARITY_Q1 Every light on this coast was lit by a keeper who drowned.\n\n");
+        Para(6);
+        md.Append("\\column\n\nPARITY_C1 After the column break.\n\n{{wide\nPARITY_W1 A wide block runs across both columns of the page.\n}}\n\n");
+        Para(30);
+        return md.ToString();
+    }
+
+    private static Dictionary<string, (int Page, double X, double Y)> Markers(byte[] pdf)
+    {
+        using var doc = PdfDocument.Open(pdf);
+        var found = new Dictionary<string, (int, double, double)>();
+        foreach (var page in doc.GetPages())
+        {
+            foreach (var w in page.GetWords().Where(w => w.Text.Contains("PARITY_", StringComparison.Ordinal)))
+            {
+                var key = w.Text[w.Text.IndexOf("PARITY_", StringComparison.Ordinal)..];
+                found.TryAdd(key, (page.Number, w.BoundingBox.Left, w.BoundingBox.Bottom));
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>
+    /// The point of the Homebrewery layer (docs/BOOK_EXPORT.md 41.12): a brew lays out under it, word for word, where it does under Homebrewery's
+    /// own 5e PHB theme. The reference is that theme compiled whole (<c>Fixtures/homebrewery-5e-reference.css</c>, its look and all; its pictures
+    /// load nowhere, and move nothing) pasted as the GM's stylesheet over no layer, as a GM would paste it, with the same faces.
+    /// </summary>
+    [ChromiumTheory]
+    [InlineData("Letter")]
+    [InlineData("A4")]
+    public async Task UnderTheHomebreweryLayer_ABrewLaysOutAsUnderHomebrewerysOwnTheme(string pageSize)
+    {
+        var reference = File.ReadAllText(Path.Combine(TestPaths.RepoRoot, "tests", "Codex.Tests", "Fixtures", "homebrewery-5e-reference.css"));
+        var faces = new StringBuilder();
+        foreach (var face in BookDraftThemes.LayerFaces)
+        {
+            faces.Append("@font-face{font-family:'").Append(face.Family).Append("';font-weight:").Append(face.Weight).Append(";font-style:").Append(face.Style)
+                .Append(";src:url(data:font/woff2;base64,").Append(Convert.ToBase64String(Font(face.File)!)).Append(") format('woff2')}\n");
+        }
+
+        var brew = ParityBrew();
+        var theirs = Markers((await PrintAsync(brew, css: faces + reference, theme: BookDraftThemes.HomebreweryLayout, pageSize: pageSize, homebrewery: false)).Pdf);
+        var ours = Markers((await PrintAsync(brew, theme: BookDraftThemes.HomebreweryLayout, pageSize: pageSize)).Pdf);
+
+        Assert.True(theirs.Count >= 60, $"{theirs.Count} markers found under Homebrewery's theme");
+        Assert.Equal(theirs.Keys.Order(), ours.Keys.Order());
+        var off = theirs.Where(t => t.Value.Page != ours[t.Key].Page || Math.Abs(t.Value.X - ours[t.Key].X) > 1 || Math.Abs(t.Value.Y - ours[t.Key].Y) > 1)
+            .Select(t => $"{t.Key}: page {t.Value.Page} ({t.Value.X:0.0},{t.Value.Y:0.0}) there, page {ours[t.Key].Page} ({ours[t.Key].X:0.0},{ours[t.Key].Y:0.0}) here").ToList();
+        Assert.True(off.Count == 0, $"{pageSize}: {off.Count} of {theirs.Count} words moved:\n" + string.Join("\n", off.Take(20)));
+    }
+
+    /// <summary>A theme with faces of its own prints in them alone: the layer's faces are for a brew's CSS and the layout-only theme, and an
+    /// element the theme forgot would otherwise come out in Homebrewery's.</summary>
+    private static void OwnFacesOnly(PdfDocument doc, string themeId, string what)
+    {
+        if (BookDraftThemes.Find(themeId)!.Fonts.Count == 0) return;
+        var layerFaces = new[] { "Bookinsanity", "Scaly", "MrEaves", "Nodesto", "Solbera", "Overpass", "Walter" };
+        var stray = doc.GetPages().SelectMany(p => p.Letters).Where(l => l.Value.Trim().Length > 0)
+            .Select(l => l.FontName ?? string.Empty).Distinct().Where(f => layerFaces.Any(x => f.Contains(x, StringComparison.OrdinalIgnoreCase))).ToList();
+        Assert.True(stray.Count == 0, $"{themeId} {what}: printed in the layer's faces: {string.Join(", ", stray)}");
+    }
+
+    /// <summary>Every theme at both paper sizes on the Homebrewery layer (the default), and at Letter without it.</summary>
+    public static TheoryData<string, string, bool> Themes()
+    {
+        var data = new TheoryData<string, string, bool>();
         foreach (var theme in BookDraftThemes.All)
         {
-            data.Add(theme.Id, "Letter");
-            data.Add(theme.Id, "A4");
+            data.Add(theme.Id, "Letter", true);
+            data.Add(theme.Id, "A4", true);
+            data.Add(theme.Id, "Letter", false);
         }
 
         return data;
@@ -189,7 +284,7 @@ public class BookDraftPdfTests
     /// </summary>
     [ChromiumTheory]
     [MemberData(nameof(Themes))]
-    public async Task EveryBlock_UnderEveryTheme_KeepsPicturesOffTheText(string themeId, string pageSize)
+    public async Task EveryBlock_UnderEveryTheme_KeepsPicturesOffTheText(string themeId, string pageSize, bool homebrewery)
     {
         const string banner = "s000000000000000000000001", face = "s000000000000000000000002", place = "s000000000000000000000003";
         var md = new StringBuilder($"{{{{chapter,#ch-cast\n# Cast\n}}}}\n\n{{{{chapter-art\n![The cast](art:{banner})\n}}}}\n\n");
@@ -200,7 +295,7 @@ public class BookDraftPdfTests
         md.Append($"{{{{entry,#e-{place}}}}}\n## The Greywater light\n\n{{{{place\n![The light](art:{place})\n}}}}\n\n");
         for (var i = 0; i < 30; i++) md.Append("PUBLIC_LIGHT_").Append(i).Append(" stands on the last rock of the reef, white by day and burning all night.\n\n");
         var art = new Dictionary<string, string> { [banner] = Png(80, 30, 90), [face] = Png(30, 40, 140), [place] = Png(80, 40, 190) };
-        var printed = await PrintAsync(md.ToString(), art, theme: BookDraftThemes.Find(themeId), pageSize: pageSize);
+        var printed = await PrintAsync(md.ToString(), art, theme: BookDraftThemes.Find(themeId), pageSize: pageSize, homebrewery: homebrewery);
         Assert.Empty(printed.Overflow);
         Assert.Equal(0, printed.BlockedRequests);
 
@@ -220,11 +315,12 @@ public class BookDraftPdfTests
                 var on = words.Where(w => w.BoundingBox.Left < box.Right - 1 && w.BoundingBox.Right > box.Left + 1
                     && w.BoundingBox.Bottom < box.Top - 1 && w.BoundingBox.Top > box.Bottom + 1).Select(w => w.Text).ToList();
                 Assert.True(on.Count == 0,
-                    $"{themeId} {pageSize}, page {page.Number}: words on a picture ({box.Left:0},{box.Bottom:0} {box.Width:0}x{box.Height:0} of a {page.Width:0} page): {string.Join(" ", on.Take(12))}");
+                    $"{themeId} {pageSize} {(homebrewery ? "layer" : "no layer")}, page {page.Number}: words on a picture ({box.Left:0},{box.Bottom:0} {box.Width:0}x{box.Height:0} of a {page.Width:0} page): {string.Join(" ", on.Take(12))}");
             }
         }
 
-        Assert.True(portraits >= 1 && places >= 1, $"{themeId} {pageSize}: the portrait ({portraits}) and the place picture ({places}) were printed");
+        OwnFacesOnly(doc, themeId, $"{pageSize} {(homebrewery ? "layer" : "no layer")}");
+        Assert.True(portraits >= 1 && places >= 1, $"{themeId} {pageSize} {(homebrewery ? "layer" : "no layer")}: the portrait ({portraits}) and the place picture ({places}) were printed");
         var text = Text(printed.Pdf);
         Assert.Contains("PUBLIC_VERA_29", text);
         Assert.Contains("PUBLIC_LIGHT_29", text);
@@ -237,25 +333,27 @@ public class BookDraftPdfTests
     /// </summary>
     [ChromiumTheory]
     [MemberData(nameof(Themes))]
-    public async Task ALongBook_UnderEveryTheme_StaysSmall_AndItsTextStaysText(string themeId, string pageSize)
+    public async Task ALongBook_UnderEveryTheme_StaysSmall_AndItsTextStaysText(string themeId, string pageSize, bool homebrewery)
     {
-        var md = new StringBuilder("{{frontCover}}\n\n# Saltmere\n\n*A coast of wrecks*\n\n\\page\n\n{{chapter,#ch-lore\n# Lore\n}}\n\n");
+        var md = new StringBuilder("{{frontCover}}\n\n# Saltmere\n\n*A coast of wrecks*\n\n\\page\n\n{{toc,wide\n# Contents\n\n- [Lore](#ch-lore)\n}}\n\n\\page\n\n{{chapter,#ch-lore\n# Lore\n}}\n\n");
         for (var i = 0; i < 1400; i++)
         {
             md.Append("PUBLIC_P").Append(i).Append(" The tide came in grey over the reef, and the keepers of the light wrote down every sail they saw.\n\n");
             if (i % 60 == 59) md.Append("{{note\n##### A note\nThe ledger has a page torn out.\n}}\n\n");
         }
 
-        var printed = await PrintAsync(md.ToString(), theme: BookDraftThemes.Find(themeId), pageSize: pageSize);
+        var printed = await PrintAsync(md.ToString(), theme: BookDraftThemes.Find(themeId), pageSize: pageSize, homebrewery: homebrewery);
         Assert.True(printed.Pages >= 30, $"{printed.Pages} pages");
         var perPage = printed.Pdf.Length / printed.Pages;
-        if (Environment.GetEnvironmentVariable("CODEX_BOOK_DUMP") is { } dump) File.WriteAllBytes(Path.Combine(dump, $"{themeId}-{pageSize}.pdf"), printed.Pdf);
-        Console.WriteLine($"{themeId} {pageSize}: {printed.Pages} pages, {printed.Pdf.Length / 1024} KB, {perPage / 1024} KB a page, {printed.Elapsed.TotalSeconds:0.0} s");
-        Assert.True(perPage < 60 * 1024, $"{themeId} {pageSize}: {perPage / 1024} KB a page over {printed.Pages} pages");
+        if (Environment.GetEnvironmentVariable("CODEX_BOOK_DUMP") is { } dump) File.WriteAllBytes(Path.Combine(dump, $"{themeId}-{pageSize}-{homebrewery}.pdf"), printed.Pdf);
+        Console.WriteLine($"{themeId} {pageSize} {(homebrewery ? "layer" : "no layer")}: {printed.Pages} pages, {printed.Pdf.Length / 1024} KB, {perPage / 1024} KB a page, {printed.Elapsed.TotalSeconds:0.0} s");
+        Assert.True(perPage < 60 * 1024, $"{themeId} {pageSize} {(homebrewery ? "layer" : "no layer")}: {perPage / 1024} KB a page over {printed.Pages} pages");
+        using (var printedDoc = PdfDocument.Open(printed.Pdf)) OwnFacesOnly(printedDoc, themeId, $"{pageSize} {(homebrewery ? "layer" : "no layer")}");
         var text = Text(printed.Pdf);
         // Each word once: a shadow or an under-stroke is another copy of the text in the PDF ("SSSaaalll..." when searched or read aloud).
         // (Spaces aside: a letter-spaced line is read back as letters with gaps between them, which is the reader's guess, not a copy.)
-        Assert.StartsWith("SaltmereAcoastofwrecks", text.Replace(" ", string.Empty));
+        // (Case aside too: Homebrewery's layout sets a cover's title in capitals, and a theme may.)
+        Assert.StartsWith("SaltmereAcoastofwrecks", text.Replace(" ", string.Empty), StringComparison.OrdinalIgnoreCase);
         Assert.Contains("\nLore ", text);
         // From the second paragraph: the first one's initial is a drop cap, set apart from its word.
         for (var i = 1; i < 1400; i += 37) Assert.Contains("PUBLIC_P" + i + " ", text);

@@ -845,6 +845,9 @@
   <data name="Campaign.Book.Draft.Theme" xml:space="preserve"><value>Theme</value></data>
   <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>Plain</value></data>
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Ashen Vellum</value></data>
+  <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (layout only)</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Homebrewery compatibility</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Lay pages out as Homebrewery does, so CSS written for a Homebrewery brew works here. No Homebrewery pictures or colours are used.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Download PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>Start over</value></data>
   <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>Throw away every edit in this draft and make it again from the campaign?</value></data>

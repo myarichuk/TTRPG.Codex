@@ -2572,6 +2572,8 @@ dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: 
 .book-draft-bar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: .6rem .9rem; border-bottom: 1px solid var(--border); }
 .book-draft-theme { display: inline-flex; align-items: center; gap: .4rem; margin: 0; font-size: .85rem; }
 .book-draft-theme select { width: auto; }
+.book-draft-homebrewery { display: inline-flex; align-items: center; gap: .35rem; margin: 0; font-size: .85rem; cursor: pointer; }
+.book-draft-homebrewery .form-check-input { margin: 0; }
 .book-draft-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr) minmax(0, 1.1fr); }
 .book-draft-chapters { overflow: auto; padding: .5rem; border-inline-end: 1px solid var(--border); }
 .book-draft-chapter { display: flex; gap: .35rem; align-items: center; width: 100%; text-align: start; background: none; border: 0; border-radius: 4px; padding: .35rem .5rem; color: inherit; font-size: .9rem; }

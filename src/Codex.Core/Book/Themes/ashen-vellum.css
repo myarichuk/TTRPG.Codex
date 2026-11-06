@@ -503,6 +503,7 @@
 	font-size           : 2.55cm;
 	line-height         : .92em;
 	letter-spacing      : .01em;
+	text-transform      : none;
 	color               : var(--gd-bone);
 }
 .page:has(.frontCover) h1::after { display : none; }

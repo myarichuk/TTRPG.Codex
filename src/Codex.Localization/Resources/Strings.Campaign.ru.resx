@@ -845,6 +845,9 @@
   <data name="Campaign.Book.Draft.Theme" xml:space="preserve"><value>Оформление</value></data>
   <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>Простое</value></data>
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Пепельный пергамент</value></data>
+  <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (только макет)</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Совместимость с Homebrewery</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Раскладывать страницы так же, как Homebrewery, чтобы CSS, написанный для Homebrewery, работал здесь. Картинки и цвета Homebrewery не используются.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Скачать PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>Начать заново</value></data>
   <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>Удалить все правки в этом черновике и собрать его заново из кампании?</value></data>

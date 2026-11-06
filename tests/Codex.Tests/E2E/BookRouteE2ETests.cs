@@ -587,6 +587,14 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
         await Assertions.Expect(dm.GetByTestId("book-draft-theme")).ToHaveValueAsync("ashen-vellum");
 
+        // The Homebrewery layer is on by default; turned off, the preview is drawn again without it, and that is stored too.
+        await Assertions.Expect(preview.Locator("body.homebrewery-layer")).ToHaveCountAsync(1);
+        await dm.GetByTestId("book-draft-homebrewery").UncheckAsync();
+        await Assertions.Expect(preview.Locator("body.theme-ashen-vellum:not(.homebrewery-layer)")).ToHaveCountAsync(1);
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "PUBLIC_BEFORE_THEME" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+        await Assertions.Expect(dm.GetByTestId("book-draft-homebrewery")).Not.ToBeCheckedAsync();
+
         // The draft prints.
         var download = await dm.RunAndWaitForDownloadAsync(() => dm.GetByTestId("book-draft-download").ClickAsync());
         Assert.EndsWith(".pdf", download.SuggestedFilename);

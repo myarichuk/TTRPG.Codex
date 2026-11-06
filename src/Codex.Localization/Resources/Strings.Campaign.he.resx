@@ -845,6 +845,9 @@
   <data name="Campaign.Book.Draft.Theme" xml:space="preserve"><value>ערכת עיצוב</value></data>
   <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>פשוטה</value></data>
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>קלף אפור</value></data>
+  <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (פריסה בלבד)</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>תאימות ל-Homebrewery</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>פריסת העמודים כמו ב-Homebrewery, כדי ש-CSS שנכתב ל-Homebrewery יעבוד כאן. התמונות והצבעים של Homebrewery אינם בשימוש.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>הורדת PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>להתחיל מחדש</value></data>
   <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>למחוק את כל העריכות בטיוטה הזו וליצור אותה מחדש מהמערכה?</value></data>

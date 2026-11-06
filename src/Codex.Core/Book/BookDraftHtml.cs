@@ -17,7 +17,13 @@ namespace Codex.Core.Book;
 public static class BookDraftThemes
 {
     /// <summary>White pages, Alegreya Sans and Cinzel (the plain book's faces, so the same language gate: English only until the others are proven).</summary>
-    public static BookTheme Plain { get; } = new("plain", "Plain", BookThemes.Plain.Languages, BookThemes.Plain.Fonts, PlainCss);
+    public static BookTheme Plain { get; } = new("plain", "Plain", BookThemes.Plain.Languages, BookThemes.Plain.Fonts, _ => PlainSheet);
+
+    /// <summary>
+    /// Homebrewery's 5e layout and nothing over it but black ink on white and frames to see the boxes by (docs/BOOK_EXPORT.md 41.12): the
+    /// theme to pick when the GM's CSS was written for a Homebrewery brew, which then lays out as it does there. Its faces are the layer's.
+    /// </summary>
+    public static BookTheme HomebreweryLayout { get; } = new("homebrewery", "Homebrewery layout", ["en"], [], _ => HomebrewerySheet);
 
     /// <summary>
     /// The dark-fantasy theme: the "Ashen Vellum" sheet the GM supplied, ported onto Blank (<c>Book/Themes/ashen-vellum.css</c>, whose header
@@ -34,14 +40,44 @@ public static class BookDraftThemes
             new("Pirata One", 400, "normal", "pirata-one/pirata-one-latin-400-normal.woff2", BookThemes.Latin),
             new("Special Elite", 400, "normal", "special-elite/special-elite-latin-400-normal.woff2", BookThemes.Latin)
         ],
-        layout => PageCss(layout) + AshenVellumSheet);
+        _ => AshenVellumSheet);
 
-    public static IReadOnlyList<BookTheme> All { get; } = [Plain, AshenVellum];
+    public static IReadOnlyList<BookTheme> All { get; } = [Plain, HomebreweryLayout, AshenVellum];
 
     public static BookTheme? Find(string? id) => All.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Homebrewery's Blank layout, as built (MIT; its notice is in <c>wwwroot/lib/book/THIRD-PARTY-NOTICES.txt</c>).</summary>
     public static string Blank { get; } = Resource("blank.css");
+
+    /// <summary>
+    /// The Homebrewery compatibility layer: Homebrewery's 5e PHB theme with no pictures, colours, shadows or gradients, built by
+    /// <c>tools/book-editor/build.mjs</c> (MIT). Its layout only: columns, sizes, spacing, the boxes' geometry, the faces it names.
+    /// </summary>
+    public static string Layer { get; } = Resource("homebrewery-5e.css");
+
+    /// <summary>The faces the layer names, as Homebrewery declares them (<c>themes/fonts/5e/fonts.less</c>), from <c>wwwroot/fonts/homebrewery-5e</c>
+    /// (CC BY-SA 4.0, OFL and Apache 2.0; see its README). Latin only, and not part of any theme's language gate: a theme names its own faces.</summary>
+    public static IReadOnlyList<(string Family, string Weight, string Style, string File)> LayerFaces { get; } =
+    [
+        ("BookInsanityRemake", "normal", "normal", "homebrewery-5e/bookinsanity.woff2"),
+        ("BookInsanityRemake", "bold", "normal", "homebrewery-5e/bookinsanity-bold.woff2"),
+        ("BookInsanityRemake", "normal", "italic", "homebrewery-5e/bookinsanity-italic.woff2"),
+        ("BookInsanityRemake", "bold", "italic", "homebrewery-5e/bookinsanity-bold-italic.woff2"),
+        ("ScalySansRemake", "normal", "normal", "homebrewery-5e/scaly-sans.woff2"),
+        ("ScalySansRemake", "bold", "normal", "homebrewery-5e/scaly-sans-bold.woff2"),
+        ("ScalySansRemake", "normal", "italic", "homebrewery-5e/scaly-sans-italic.woff2"),
+        ("ScalySansRemake", "bold", "italic", "homebrewery-5e/scaly-sans-bold-italic.woff2"),
+        ("ScalySansSmallCapsRemake", "normal", "normal", "homebrewery-5e/scaly-sans-caps.woff2"),
+        ("WalterTurncoat", "normal", "normal", "homebrewery-5e/walterturncoat-regular.woff2"),
+        ("MrEavesRemake", "normal", "normal", "homebrewery-5e/mr-eaves-small-caps.woff2"),
+        ("SolberaImitationRemake", "100 1000", "italic", "homebrewery-5e/solbera-imitation-tweak.woff2"),
+        ("NodestoCapsCondensed", "normal", "normal", "homebrewery-5e/nodesto-caps-condensed.woff2"),
+        ("NodestoCapsCondensed", "bold", "normal", "homebrewery-5e/nodesto-caps-condensed-bold.woff2"),
+        ("NodestoCapsCondensed", "normal", "italic", "homebrewery-5e/nodesto-caps-condensed-italic.woff2"),
+        ("NodestoCapsCondensed", "bold", "italic", "homebrewery-5e/nodesto-caps-condensed-bold-italic.woff2"),
+        ("NodestoCapsWide", "normal", "normal", "homebrewery-5e/nodesto-caps-wide.woff2"),
+        ("Overpass", "500", "normal", "homebrewery-5e/overpass-medium.woff2")
+    ];
 
     // The sheet with its paper textures in place: each {{tile:NAME}} is that embedded picture as a data URI, so a book stores it once.
     private static readonly string AshenVellumSheet = System.Text.RegularExpressions.Regex.Replace(Resource("ashen-vellum.css"), @"\{\{tile:([\w.-]+)\}\}",
@@ -61,14 +97,14 @@ public static class BookDraftThemes
     private static string Mm(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// What every theme starts from: Blank, then the few rules that make it this book's page. The page takes the book's paper size (Blank's is
-    /// Letter); every page is laid out, not only those on screen (Blank leaves pages off screen unrendered, and the renderer measures them all);
-    /// and the screen around the pages, and printing them page for page.
+    /// What every theme starts from: Blank, the layer when it is on, then the few rules that make it this book's page. The page takes the book's
+    /// paper size (Blank's is Letter); every page is laid out, not only those on screen (Blank leaves pages off screen unrendered, and the
+    /// renderer measures them all); and the screen around the pages, and printing them page for page.
     /// </summary>
-    public static string PageCss(BookLayout layout)
+    public static string PageCss(BookLayout layout, bool homebrewery)
     {
         var (w, h) = BookThemes.PageMm(layout);
-        return Blank + $$"""
+        return Blank + (homebrewery ? "\n" + Layer : string.Empty) + $$"""
 
             /* This book's page, on Blank's. */
             @page { size: {{Mm(w)}}mm {{Mm(h)}}mm; margin: 0; }
@@ -78,6 +114,8 @@ public static class BookDraftThemes
             .page { width: {{Mm(w)}}mm; height: {{Mm(h)}}mm; content-visibility: visible; break-after: page; break-inside: avoid; box-shadow: 0 1px 6px rgba(0, 0, 0, .45); }
             /* The generator's blocks that span both columns, in every theme (Blank makes a block inline, which cannot span). */
             .page .block.chapter, .page .block.chapter-art { display: block; column-span: all; }
+            /* The tagline the generator writes under the cover's title is not a chapter's first paragraph: no drop cap, under any theme or layer. */
+            .page:has(.frontCover) h1 + p::first-letter, .page:has(.frontCover) h1 + p::first-line { all: unset; }
             .art-missing { display: block; box-sizing: border-box; min-height: 18mm; border: 1px dashed #9a9a9a; color: #777; font-size: 7.5pt; padding: 2mm; text-align: center; }
             @media print {
               body { background: none; }
@@ -88,9 +126,7 @@ public static class BookDraftThemes
             """;
     }
 
-    private static string PlainCss(BookLayout layout)
-    {
-        return PageCss(layout) + """
+    private const string PlainSheet = """
 
             /* Plain */
             .page { column-gap: 8mm; background: #fff; color: #1f1f1f; font: 9.5pt/1.34 "Alegreya Sans", sans-serif; text-align: start; }
@@ -110,10 +146,16 @@ public static class BookDraftThemes
             .page td { padding: .6mm 1mm; vertical-align: top; }
             .page tbody tr:nth-child(odd) { background: #f3eee4; }
             .page .pageNumber { bottom: 8mm; font-size: 8pt; color: #555; }
+            /* Plain prints in its own faces wherever the Homebrewery layer names one of its own (those are for a brew's CSS). */
+            .page :is(table, .note, .descriptive, .monster, .spellList, .artist, .runeTable th, .toc ul span:last-child, .footnote, .banner, .logo p),
+            .page:is(:has(.frontCover), :has(.insideCover), :has(.backCover), :has(.partCover)) :is(p, h2) { font-family: "Alegreya Sans", sans-serif; }
+            .page :is(h1, h2, h3, h4, h5, h6, .monster h3, .artist h5),
+            .page:is(:has(.frontCover), :has(.insideCover), :has(.backCover), :has(.partCover)) h1,
+            .page :is(p.first-letter, p.drop-cap, h1 + p)::first-letter { font-family: "Cinzel", serif; }
 
             .page:has(.frontCover) { columns: 1; }
             .page:has(.frontCover) .columnWrapper { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-            .page:has(.frontCover) h1 { border: 0; font-size: 30pt; margin-bottom: 4mm; }
+            .page:has(.frontCover) h1 { border: 0; font-size: 30pt; margin-bottom: 4mm; text-transform: none; }
             .page:has(.frontCover) p { font-size: 12pt; font-style: italic; }
             .block.cover-art { margin-top: 6mm; }
             .block.cover-art img, .block.cover-art .art-missing { display: block; width: 100%; max-height: 150mm; object-fit: cover; }
@@ -133,7 +175,27 @@ public static class BookDraftThemes
             .block.monster h4, .block.monster h3 { margin-top: 0; }
             .block > :last-child { margin-bottom: 0; }
             """;
-    }
+
+    // Black on white over the layer, with the frames its pictures drew as thin lines; and the generator's own blocks, which Homebrewery has not.
+    // Nothing here sets a size, a margin or a face of the layer's: that is what makes it the theme a Homebrewery brew's CSS matches.
+    private const string HomebrewerySheet = """
+
+            /* Homebrewery layout. Colours through Homebrewery's own variables, so a brew's CSS that sets them is obeyed. */
+            :root { --HB_Color_Background: #FFFFFF; --HB_Color_HeaderText: #000000; }
+            .page .note { border-color: #8c8c8c; }
+            /* The thick frames the layer keeps (their width is layout) are drawn as a thin line inside them, which takes no room. */
+            .page .descriptive, .page .monster.frame { outline: 1px solid #8c8c8c; outline-offset: -4px; }
+            .page:has(.frontCover) :is(h1, h2, .banner, .footnote) { color: #000; }
+            .page .pageNumber, .page .footnote { color: #444; }
+            .block.cover-art { margin-top: 1cm; }
+            .block.cover-art img, .block.cover-art .art-missing { display: block; width: 100%; max-height: 13cm; object-fit: cover; }
+            .block.chapter-art { margin: 0 0 0.325cm; }
+            .block.chapter-art img, .block.chapter-art .art-missing { display: block; width: 100%; height: 5.6cm; object-fit: cover; }
+            .block.portrait { float: right; width: 38%; max-width: 3.2cm; margin: 0 0 0.2cm 0.3cm; }
+            .block.portrait img, .block.portrait .art-missing { display: block; width: 100%; aspect-ratio: 3 / 4; height: auto; object-fit: cover; object-position: 50% 20%; }
+            .block.place img, .block.place .art-missing { display: block; width: 100%; max-height: 6cm; object-fit: cover; }
+            .block.secret { padding: 0.13cm 0.16cm; border: 1px dashed #000; }
+            """;
 }
 
 /// <summary>
@@ -146,7 +208,8 @@ public static class BookDraftHtml
     /// <summary>As the printed book's: no script, no network; inline style, data images and data fonts only.</summary>
     public const string ContentSecurityPolicy = BookHtml.ContentSecurityPolicy;
 
-    public static BookHtmlResult Shell(string title, string language, BookTheme theme, string pageSize, string? gmCss, Func<string, byte[]?> font)
+    public static BookHtmlResult Shell(string title, string language, BookTheme theme, string pageSize, string? gmCss, bool homebrewery,
+        Func<string, byte[]?> font)
     {
         if (!theme.Supports(language))
         {
@@ -168,14 +231,29 @@ public static class BookDraftHtml
                 .Append(";src:url(data:font/woff2;base64,").Append(Convert.ToBase64String(bytes)).Append(") format(\"woff2\");unicode-range:").Append(face.UnicodeRange).Append(";}\n");
         }
 
-        css.Append(theme.Css(layout));
+        if (homebrewery)
+        {
+            foreach (var face in BookDraftThemes.LayerFaces)
+            {
+                if (font(face.File) is not { } bytes)
+                {
+                    missing.Add(face.File);
+                    continue;
+                }
+
+                css.Append("@font-face{font-family:\"").Append(face.Family).Append("\";font-weight:").Append(face.Weight).Append(";font-style:").Append(face.Style)
+                    .Append(";src:url(data:font/woff2;base64,").Append(Convert.ToBase64String(bytes)).Append(") format(\"woff2\");}\n");
+            }
+        }
+
+        css.Append(BookDraftThemes.PageCss(layout, homebrewery)).Append(theme.Css(layout));
         IReadOnlyList<string> warnings = [];
         var custom = string.IsNullOrWhiteSpace(gmCss) ? string.Empty : BookCss.Clean(gmCss, out warnings);
         var html = new StringBuilder();
         html.Append("<!doctype html>\n<html lang=\"").Append(Enc(BookThemes.Primary(language))).Append("\" dir=\"").Append(layout.Rtl ? "rtl" : "ltr").Append("\">\n<head>\n<meta charset=\"utf-8\">\n")
             .Append("<meta http-equiv=\"Content-Security-Policy\" content=\"").Append(ContentSecurityPolicy).Append("\">\n")
             .Append("<title>").Append(Enc(title)).Append("</title>\n<style id=\"theme\">").Append(css).Append("</style>\n<style id=\"gm-css\">").Append(custom).Append("</style>\n")
-            .Append("</head>\n<body class=\"book-draft theme-").Append(Enc(theme.Id)).Append("\">\n<div id=\"brew\"></div>\n</body>\n</html>\n");
+            .Append("</head>\n<body class=\"book-draft theme-").Append(Enc(theme.Id)).Append(homebrewery ? " homebrewery-layer" : string.Empty).Append("\">\n<div id=\"brew\"></div>\n</body>\n</html>\n");
         return new BookHtmlResult(html.ToString(), null, [], warnings, missing);
     }
 

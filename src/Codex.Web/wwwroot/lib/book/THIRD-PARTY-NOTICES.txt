@@ -1048,7 +1048,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 ================================================================
-Homebrewery "Blank" theme layout (themes/V3/Blank/style.less, commit 3e600a0, trimmed) (MIT)
+Homebrewery "Blank" theme layout (themes/V3/Blank/style.less, commit 3e600a0, trimmed) and "5e PHB" theme layout (themes/V3/5ePHB/style.less, the same commit, layout only, the Homebrewery compatibility layer) (MIT)
 https://github.com/naturalcrit/homebrewery
 
 MIT License
