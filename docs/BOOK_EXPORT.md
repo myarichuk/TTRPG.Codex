@@ -398,7 +398,8 @@ inset escapes the margins. Never a filter-generated image as a full-page backgro
 - **`BookHtml`**: one self-contained document: theme CSS with page size and direction written in (no `var()` in `@page`), fonts as
   data URIs (no font request at all), a CSP meta and header of `default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src
   data:`, chapters rendered with one shared heading-id namespace, a table of contents. The user's CSS goes through `BookCss.Clean`:
-  no `@import`, `@font-face`, `url()` other than `data:image/`, `expression`, `behavior`, `image-set`, no `<`, 20 KB cap.
+  no `@import`, `@font-face`, `url()` other than `data:image/`, `expression`, `behavior`, `image-set`, no `<`, 20 KB cap. (Superseded by
+  the tokenizer of 41.11.)
 - **Route**: `GET /campaigns/{id}/book/{dm|party}?lang=&theme=&size=` (`BookEndpoints`, DM only, `no-store`, `nosniff`). The HTTP-level
   test arrived with section 16.
 - **Measured in Chromium 153 on a real book from this builder (23 A4 pages, three chapters, tables, lists, quotes)**: 0.14 s, 466 KB,
@@ -1397,7 +1398,7 @@ The GM asked for `marked-hbfm` as planned (not the app's own renderer, which was
     chapter order. Each chapter is its own `BookDraftChapter` (`.../chapters/{section}`) with the GM's Markdown, the base, the base's key, the
     previous version (Markdown, base and key, so an undo brings the notice back), "keep mine", and a version number.
   - A save names the version it was made from; any other is refused (`Conflict`), and optimistic concurrency covers the gap between load and save.
-  - Edition, language (`en`, `ru`, `he`) and section are checked before they reach an id. Caps: 400,000 characters a chapter, 20,000 of CSS,
+  - Edition, language (`en`, `ru`, `he`) and section are checked before they reach an id. Caps: 400,000 characters a chapter, 512,000 of CSS (20,000 before 41.11),
     40 chapters.
   - `FollowAsync`: a chapter whose text is still its base takes the new generated text silently; a new chapter is added in place; a chapter the
     campaign no longer has is removed if never edited. `\page`/`\column` lines are not edits (`BookDraftText.Content`).
@@ -1524,10 +1525,10 @@ straight after typing (the typed line is saved and drawn in the new theme).
 **Not done, or not verified:**
 - **CSS written for the PHB theme** (most shared Homebrewery CSS) will not look the same: PHB is not shipped (its fonts and pictures have no
   clear licence). Only CSS that works on Blank does.
-- **The GM's stylesheet cleaner strips every backslash** (`BookCss.Clean`), so Homebrewery CSS like `content: '\2014'` loses its escape, and
-  its 20,000-character cap (also in the store) cannot hold a sheet the size of Ashen Vellum (38,000). Allowing hex escapes inside quoted
-  strings only, and a larger cap, would close the gap; not done.
-- No `url()` in the GM's CSS but `data:image/`; Homebrewery CSS that loads fonts or pictures from the web will not load them (on purpose).
+- ~~The GM's stylesheet cleaner strips every backslash, and its cap is 20,000 characters.~~ Done (41.11): `BookCss.Clean` reads the sheet
+  as CSS Syntax Level 3 tokens and writes back only what it checked; escapes survive; the cap is 512,000 characters.
+- No `url()` in the GM's CSS but `data:image/` (and `data:font/` inside `@font-face`); Homebrewery CSS that loads fonts or pictures from the
+  web will not load them (on purpose).
 - Contrast on Ashen Vellum's paper (WCAG AA for body text, notes and table rows, section 14 item 7) is not measured. The dark pages and the
   cover were only looked at.
 - RTL: not applicable yet (English only); the sheet's `float: left` drop caps and left-side ribbons would need logical properties first.
@@ -1541,3 +1542,24 @@ straight after typing (the typed line is saved and drawn in the new theme).
   are drawn (about 4 KB a page).
 - Still from 41.9: Safari and Firefox, the overflow report in the panel, phone, screen reader, `asset:` pictures in free text, the trust
   boundary of rendering in the GM's page.
+
+### 41.11 The GM's stylesheet, read as CSS (built 2026-11-06)
+
+The regex cleaner removed every backslash to be safe, which broke Homebrewery CSS such as `content: '\2014'`, and its 20,000-character cap
+could not hold a theme. `BookCss.Clean` (`src/Codex.Core/Book/BookCss.cs`) now:
+
+- **Reads the sheet as the browser does**: CSS Syntax Level 3's tokenizer (section 4), escapes decoded before any name is looked at, so
+  `\75rl(`, `@\69mport` and `e\78pression(` are seen as what they are.
+- **Checks tokens, not text**: `@import`, `@namespace` and `@charset` rules are dropped (nested ones too); `url()` keeps only `data:image/`
+  and `#fragment` (and `data:font/` inside `@font-face`), anything else becomes `none`; a `@font-face` with any other source is dropped
+  whole; `image()`, `image-set()`, `src()`, `element()`, `paint()` and `expression()` calls become `none`; `behavior` and `-moz-binding`
+  declarations are dropped. Bad strings, bad URLs, `<!--`, `-->`, a stray `<` and a stray backslash are dropped.
+- **Writes back only the tokens**: a token with no escape as it was written, the rest re-escaped (CSSOM's serialize-an-identifier); every
+  string is re-escaped with `<`, `>` and `&` as hex escapes, so no `<` is ever written and nothing closes the style element. Where a
+  comment or a dropped token stood between two tokens, `/**/` keeps them apart (`ur<l(` must not become `url(`).
+- **Cap: 512,000 characters**, in the cleaner and the store (`BookDraftDocument.MaxCssChars`): a whole Homebrewery theme and a design on top.
+
+Tests: `BookCssTests` (escape, comment and join bypasses, the style element, broken sheets, what Homebrewery's sheets write kept token for
+token, cleaning twice changes nothing). Mutants each fail it: ignoring the join guard, a raw `<` in a re-escaped name, names read without
+decoding escapes, strings written raw, and a fetching `@font-face` kept.
+

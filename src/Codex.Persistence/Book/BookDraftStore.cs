@@ -17,7 +17,7 @@ public class BookDraftDocument
 
     /// <summary>Bounds that hold whatever is posted: a chapter's text, the GM's stylesheet, the number of chapters.</summary>
     public const int MaxChapterChars = 400_000;
-    public const int MaxCssChars = 20_000;
+    public const int MaxCssChars = Codex.Core.Book.BookCss.MaxLength;
     public const int MaxChapters = 40;
 
     /// <summary>Languages a draft can be made in: the app's own. Anything else posted as a language is refused before it reaches an id.</summary>
