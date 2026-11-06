@@ -71,7 +71,8 @@ licence beside it:
 - Special Elite, by Astigmatic - Apache License 2.0 - `src/Codex.Web/wwwroot/fonts/special-elite/LICENSE.txt`
 
 The faces Homebrewery's 5e layout names, for the book's Homebrewery compatibility layer: Homebrewery's own copies (commit 3e600a0),
-unmodified, in `src/Codex.Web/wwwroot/fonts/homebrewery-5e` (its `README.txt` says what each is and where it came from):
+unmodified, except the drop-cap face, Solbera Imitation 1.60 from Solbera's own release converted to WOFF2, in
+`src/Codex.Web/wwwroot/fonts/homebrewery-5e` (its `README.txt` says what each is and where it came from):
 
 - Bookinsanity, Scaly Sans, Scaly Sans Caps, Mr Eaves Small Caps, Nodesto Caps Condensed, Nodesto Caps Wide and Solbera Imitation,
   by Solbera, with fixes and additions by Ryrok, Ners and LUCASTUCIOUS and changes by Homebrewery's contributors - Creative Commons

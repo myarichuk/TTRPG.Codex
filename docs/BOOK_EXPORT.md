@@ -1579,8 +1579,11 @@ cover placeholders from an image generator).
   text in the PDF), `@font-face` dropped (the server adds the faces). A frame that was a picture keeps its width, transparent: width is
   layout. The build fails if a `url(`, gradient, shadow, stroke or mask is left.
 - **Its faces** (`wwwroot/fonts/homebrewery-5e`, see its README): Homebrewery's own copies of Solbera's fonts (CC BY-SA 4.0), Overpass
-  (OFL) and Walter Turncoat (Apache 2.0). Homebrewery's copies, not Solbera's originals: Scaly Sans, Scaly Sans Caps, Nodesto and the drop-cap
-  face differ from the originals in widths and line metrics (measured with fontTools), and only Homebrewery's lay a page out as it does.
+  (OFL) and Walter Turncoat (Apache 2.0). Homebrewery's copies, not Solbera's originals: Scaly Sans, Scaly Sans Caps and Nodesto differ
+  from the originals in widths and line metrics (measured with fontTools), and only Homebrewery's lay a page out as it does. The exception,
+  chosen by the user: the drop-cap face is Solbera Imitation 1.60 from Solbera's release (CC BY-SA in its own metadata), not Homebrewery's
+  tweaked 1.30, whose metadata reads "All Rights Reserved" with no licence. So drop caps differ in size from Homebrewery's, and text beside
+  one wraps differently; the parity test uses the same faces on both sides and cannot see it.
   Davek, Iokharic and Rellanic (no known source) and Martel Sans (unused) are left out. About 350 KB, embedded in the shell only when the
   layer is on; a PDF keeps only the glyphs it uses.
 - **Order**: Blank, the layer, the book's page rules, the theme, the GM's CSS. **A setting on the draft** (`Homebrewery`, on by default; a
@@ -1588,9 +1591,12 @@ cover placeholders from an image generator).
   body gets `homebrewery-layer` when it is on.
 - **A third theme, "Homebrewery (layout only)"** (`homebrewery`): the layer with black ink on white, thin lines for the frames (drawn as
   outlines, which take no room), and the generator's own blocks. It sets no size, margin or face of the layer's: it is the theme a
-  Homebrewery brew's CSS matches. Plain and Ashen Vellum sit on the layer too and keep their looks: Plain names its own faces wherever the
-  layer names one, Ashen Vellum already did; both keep the cover title's case (the layer sets it in capitals). On any theme the cover's
-  tagline (the paragraph after its title) gets no drop cap.
+  Homebrewery brew's CSS matches; it sets colours through the `--HB_Color_*` variables, so a brew's CSS that sets them is obeyed. Plain and
+  Ashen Vellum sit on the layer too, keep their faces (Plain names its own wherever the layer names one; Ashen Vellum already did) and the
+  cover title's case, and take the layer's spacing where they set none. That changes their looks, measured by laying the same chapter out
+  with the layer and without: Plain moved 35 of 41 marker words (paragraph indents, PHB's line height and spacing, box padding, drop caps
+  in Cinzel); the user chose that over Plain off the layer. Ashen Vellum moved 16, by 1.5 to 13 pt, all in its notes, table and stat
+  block. On any theme the cover's tagline (the paragraph after its title) gets no drop cap.
 
 Tests (`BookDraftPdfTests`):
 - `UnderTheHomebreweryLayer_ABrewLaysOutAsUnderHomebrewerysOwnTheme`, Letter and A4: a brew of everything PHB styles (headings, drop cap,
@@ -1609,4 +1615,4 @@ Not done, or not verified:
   uploads, is not built.
 - **Markdown parity** (Homebrewery's `$[variables]`, icon shortcodes, definition-list and spacing syntax) is not audited.
 - Russian and Hebrew: the layer's faces are Latin; the layout-only theme is English only, like the others.
-- The layer's greys, the layout-only theme's contrast and Plain's look on the layer were looked at, not measured.
+- The layer's greys and the layout-only theme's contrast were looked at, not measured; Plain on the layer was looked at for one chapter.

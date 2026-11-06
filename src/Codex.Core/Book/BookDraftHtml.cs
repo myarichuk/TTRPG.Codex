@@ -70,7 +70,7 @@ public static class BookDraftThemes
         ("ScalySansSmallCapsRemake", "normal", "normal", "homebrewery-5e/scaly-sans-caps.woff2"),
         ("WalterTurncoat", "normal", "normal", "homebrewery-5e/walterturncoat-regular.woff2"),
         ("MrEavesRemake", "normal", "normal", "homebrewery-5e/mr-eaves-small-caps.woff2"),
-        ("SolberaImitationRemake", "100 1000", "italic", "homebrewery-5e/solbera-imitation-tweak.woff2"),
+        ("SolberaImitationRemake", "100 1000", "italic", "homebrewery-5e/solbera-imitation.woff2"),
         ("NodestoCapsCondensed", "normal", "normal", "homebrewery-5e/nodesto-caps-condensed.woff2"),
         ("NodestoCapsCondensed", "bold", "normal", "homebrewery-5e/nodesto-caps-condensed-bold.woff2"),
         ("NodestoCapsCondensed", "normal", "italic", "homebrewery-5e/nodesto-caps-condensed-italic.woff2"),
