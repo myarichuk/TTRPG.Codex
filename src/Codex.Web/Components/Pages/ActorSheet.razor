@@ -559,6 +559,12 @@ else
                 </section>
             }
 
+            @if (CanEdit && system != null && currentUserId != null)
+            {
+                <CharacterAssistPanel Character="AssistCharacter" Sheet="editSheet" Campaign="campaign" Access="access" System="system" UserId="@currentUserId"
+                                      Describe="Describe" OnTake="TakeAssist" OnGoThere="GoToHighlight" />
+            }
+
             @if (CanEdit && HasLevel)
             {
                 <section class="panel panel-ai" aria-labelledby="levelup-heading">
@@ -1445,6 +1451,21 @@ else
         levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
         flash = Flash.Info(L["Actor.Sheet.LevelSet", CurrentLevel]);
     }
+
+    /// <summary>The character as the AI reads it for a change: the sheet's edits so far, mentions as plain names.</summary>
+    private ActorDocument AssistCharacter() =>
+        ForAi(ApplyEdits(new ActorDocument { Id = actor!.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography, DmNotes = actor.DmNotes }));
+
+    /// <summary>Changes taken from the AI go on the sheet unsaved, as typed edits do; Save stores them.</summary>
+    private void TakeAssist(Dictionary<string, object> sheet)
+    {
+        editSheet.Clear();
+        foreach (var (key, value) in sheet) editSheet[key] = value;
+        Reevaluate();
+    }
+
+    private void GoToHighlight(string field) =>
+        ShowRule(field.StartsWith(SheetRuleEngine.BasePrefix, StringComparison.Ordinal) ? "attributes" : field);
 
     private void AppendAdviceToNotes()
     {

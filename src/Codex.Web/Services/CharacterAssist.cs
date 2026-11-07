@@ -260,7 +260,7 @@ public sealed class CharacterAssist(CampaignLibrary library, ISystemCatalog cata
             s.LooseWarnings.Clear();
             foreach (var warning in evaluation.Warnings.Where(w => !warned.Contains(w.Message)))
             {
-                if (changes.FirstOrDefault(c => string.Equals(c.Field, warning.Key, StringComparison.OrdinalIgnoreCase)) is { } change) change.Warnings.Add(warning.Message);
+                if (changes.FirstOrDefault(c => string.Equals(c.Field, warning.FieldKey, StringComparison.OrdinalIgnoreCase)) is { } change) change.Warnings.Add(warning.Message);
                 else s.LooseWarnings.Add(warning.Message);
             }
         }
@@ -310,7 +310,7 @@ public sealed class CharacterAssist(CampaignLibrary library, ISystemCatalog cata
             Shown = shown,
             Quantity = quantity,
             Before = chosen == SheetChangeOp.Set ? Raw(s.Sheet, spec) : null,
-            BeforeShown = chosen == SheetChangeOp.Set ? Current(s, spec) : null,
+            BeforeShown = chosen == SheetChangeOp.Set ? ForPeople(s, spec) : null,
             Reason = reason
         };
 
@@ -642,6 +642,13 @@ public sealed class CharacterAssist(CampaignLibrary library, ISystemCatalog cata
         if (raw == null) return "(empty)";
         return spec.Field!.Type == FieldType.EntityReference ? Name(s, spec.Field.TargetEntityType!, raw) : raw;
     }
+
+    /// <summary>A field's value as the review shows it: an entry by its name alone; null when empty.</summary>
+    private static string? ForPeople(CharacterAssistSession s, FieldSpec spec) =>
+        spec.Kind == FieldKind.Attribute ? Current(s, spec)
+        : Raw(s.Sheet, spec) is not { } raw ? null
+        : spec.Field?.Type == FieldType.EntityReference ? s.Resolver.Resolve(spec.Field.TargetEntityType!, raw)?.Name ?? raw
+        : raw;
 
     private static string Listed(IEnumerable<string> items, Func<string, string> show)
     {

@@ -1,6 +1,6 @@
 # Server access, roles and the character vault
 
-Design agreed 2026-11-07. Steps 1 to 4 are built (11 to 13); step 5 is under way (14); 6 is not. It covers who may use a server and what for: the first-time setup, server roles and approval,
+Design agreed 2026-11-07. Steps 1 to 5 are built (11 to 14); 6 is not. It covers who may use a server and what for: the first-time setup, server roles and approval,
 co-GMs, where the server may fetch from, players' own AI keys, and characters that live outside any campaign.
 
 ## 1. What is there today
@@ -113,7 +113,7 @@ Players already bring their own key; this widens what it is for, always built fr
 2. Co-GMs. Built (12).
 3. The fetch list. Built with step 1 (11).
 4. The vault and bringing characters in. Built (13).
-5. AI: notes, character creation and tweaks in both places, the server key per role. Under way (14).
+5. AI: notes, character creation and tweaks in both places, the server key per role. Built (14).
 6. Storage limits, account deletion, export.
 
 ## 11. Step 1 as built (2026-11-07)
@@ -211,7 +211,7 @@ Players already bring their own key; this widens what it is for, always built fr
 - **Left**: vault portraits (and copying a portrait in either direction); picking which missing entries to leave out on an update
   request (everything missing is asked for); AI in the vault (step 5); exporting a vault (step 6).
 
-## 14. Step 5 as built (2026-11-08, under way)
+## 14. Step 5 as built (2026-11-08)
 
 - **The server's key per role**: `ServerSettingsDocument.ServerAi` (`ServerAiRule`: Admins, Game Masters, Everyone), on the admin
   page and as setup step 4 (fetching moved to 5). One rule (`ExposurePolicy.MayUseServerAi`) decides every path to the key: the
@@ -238,3 +238,29 @@ Players already bring their own key; this widens what it is for, always built fr
   through the page's mention directory. It replaces the box only if the box still holds what was sent, and "Put my text back" undoes
   it. Not on table notes or the GM's texts. Tests: the prompt carries only the notes; a reply that keeps every mention is taken, one
   that loses or changes one (or is empty) is refused. Mutants caught: no mention check, items not compared, an empty reply taken.
+- **Asking the AI about a character** (`CharacterAssist`, `CharacterAssistPanel`), on any sheet the caller may edit, in a campaign
+  and in the vault. **Decided**: one request at a time (a box and two buttons, "Propose changes" and "Highlight what fits"), not a
+  stored chat; what it shares with the world builder is the tools and a proposal that saves nothing.
+  - **Tools**: `read_sheet` (a player gets the history without secret blocks and never the GM's notes), `sheet_fields`,
+    `search_library` and `get_entry` (the caller's own Library: in the vault the server's packs only; a player sees no type that is
+    not player-facing and no GM draft), and `propose_changes` or `highlight`. What the campaign wrote reaches the model fenced
+    (`WorldChat.Fenced`). At most 12 model round trips a request.
+  - **A change** is a field, an operation, a value and a reason: `set` a field or an attribute's base score, `append` a paragraph to a
+    long text (never replacing it), `add` or `remove` one entry of a pick list, the inventory (with a quantity) or the skills. A list
+    is never set whole. Other classes, collections, images, resources and derived values are not offered.
+  - **Checked before anyone sees it**: the field may be changed, the value fits (range, options, type), the entry is in the caller's
+    Library (by id, or by exact name), no field is set twice, and the rules still hold with all of them: a new violation goes back to
+    the model to fix; a new warning goes with its change. "Homebrew where the system has none" is the model's own words appended to
+    a text field; it never makes Library or homebrew entries.
+  - **Taking**: the person ticks what to take, seeing live what the rules say about the ticked set; taken changes go on the sheet
+    unsaved and the sheet's Save stores them. A `set` whose field changed since the proposal, or an entry already added or gone, is
+    left out and named.
+  - **Highlights** point at a field, and maybe an entry or a skill, with a reason, and "Go there". They change nothing and are not
+    stored.
+  - Tests (`CharacterAssistTests`): a player's read; refusals (unknown and derived fields, ranges, options, operations, a GM draft, a
+    type players can't open, no reason); the vault sees no campaign homebrew; a rule broken goes back; taking keeps a list's picks and
+    skips a stale set; the tool loop fixing a refused proposal; highlights. Mutants caught: secrets or GM notes in a player's read,
+    no rules check, no stale check, a search or a pick ignoring what players may open, any operation on any field, the sheet unfenced,
+    an add replacing the list. Checked in the browser with a local fake model making tool calls: propose, untick one, take, save, and
+    highlights.
+- **Left**: highlights are not kept on the sheet; other classes are not offered for change; requests show no step-by-step progress.
