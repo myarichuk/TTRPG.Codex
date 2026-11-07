@@ -46,10 +46,17 @@
     private string? previous;
     private string? tidied;
 
-    protected override async Task OnInitializedAsync() => ready = UserId.Length > 0 && await Ai.IsConfiguredAsync(UserId);
+    private string? checkedFor;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
+        // A page may hand over who is signed in only once it has loaded: ask again for each new user id.
+        if (checkedFor != UserId)
+        {
+            checkedFor = UserId;
+            ready = UserId.Length > 0 && await Ai.IsConfiguredAsync(UserId);
+        }
+
         // Typing after a tidy makes the old text no longer the one to put back.
         if (previous != null && Value != tidied) (previous, tidied) = (null, null);
     }
