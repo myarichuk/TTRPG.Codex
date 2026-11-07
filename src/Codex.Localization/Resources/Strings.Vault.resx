@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Vault.Title" xml:space="preserve"><value>My characters</value></data>
+  <data name="Vault.Subtitle" xml:space="preserve"><value>Characters you keep outside any campaign. To play one, open a campaign's Cast and choose Bring a character.</value></data>
+  <data name="Vault.New" xml:space="preserve"><value>New character</value></data>
+  <data name="Vault.Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Vault.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Vault.Required" xml:space="preserve"><value>(required)</value></data>
+  <data name="Vault.System" xml:space="preserve"><value>Game system</value></data>
+  <data name="Vault.SystemHint" xml:space="preserve"><value>A character can join only campaigns of this system. It can't be changed later.</value></data>
+  <data name="Vault.Empty" xml:space="preserve"><value>No characters yet</value></data>
+  <data name="Vault.EmptyBody" xml:space="preserve"><value>Make a character here to keep it for any campaign you join.</value></data>
+  <data name="Vault.Filter" xml:space="preserve"><value>Show</value></data>
+  <data name="Vault.FilterAll" xml:space="preserve"><value>Every game system</value></data>
+  <data name="Vault.Count" xml:space="preserve"><value>{0, plural, one{# character} other{# characters}}</value></data>
+  <data name="Vault.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Vault.DeleteLabel" xml:space="preserve"><value>Delete {0}</value></data>
+  <data name="Vault.DeleteQ" xml:space="preserve"><value>Delete {0}?</value></data>
+  <data name="Vault.DeleteBody" xml:space="preserve"><value>It is deleted from your characters for good. Copies already in campaigns stay there.</value></data>
+  <data name="Vault.Deleted" xml:space="preserve"><value>{0} deleted.</value></data>
+  <data name="Vault.Back" xml:space="preserve"><value>My characters</value></data>
+</root>

@@ -369,4 +369,18 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>מה החבורה רואה</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>דמות עטויה בברדס שמשלמת בכסף ישן ולעולם לא מוסרת שם.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>נחשף לכם</value></data>
+  <data name="Actor.Vault.Title" xml:space="preserve"><value>מהדמויות שלך</value></data>
+  <data name="Actor.Vault.Loading" xml:space="preserve"><value>טוען…</value></data>
+  <data name="Actor.Vault.Gone" xml:space="preserve"><value>הדמות שממנה הגיע העותק הזה כבר לא נמצאת בדמויות שלך.</value></data>
+  <data name="Actor.Vault.From" xml:space="preserve"><value>זה העותק של {0} במערכה. שינויים כאן נשארים במערכה עד שתשלחו אותם בחזרה.</value></data>
+  <data name="Actor.Vault.Push" xml:space="preserve"><value>לעדכן את הדמות שלי מהגיליון הזה</value></data>
+  <data name="Actor.Vault.PushHint" xml:space="preserve"><value>נלקחים הגיליון השמור, השם וההיסטוריה. ההערות והסודות של שליט המבוך נשארים כאן.</value></data>
+  <data name="Actor.Vault.Pushed" xml:space="preserve"><value>{0} עודכנה בדמויות שלך.</value></data>
+  <data name="Actor.Vault.SaveFirst" xml:space="preserve"><value>שמרו קודם את הגיליון, ואז עדכנו את הדמות.</value></data>
+  <data name="Actor.Vault.Pull" xml:space="preserve"><value>לבקש להביא לכאן את הגרסה החדשה שלי</value></data>
+  <data name="Actor.Vault.PullHint" xml:space="preserve"><value>שליט המבוך מאשר את זה קודם. ההערות והסודות שלו בהיסטוריה נשמרים.</value></data>
+  <data name="Actor.Vault.Asked" xml:space="preserve"><value>נשלח לשליט המבוך.</value></data>
+  <data name="Actor.Vault.Waiting" xml:space="preserve"><value>ממתין ששליט המבוך יביא לכאן את הגרסה החדשה.</value></data>
+  <data name="Actor.Vault.Withdraw" xml:space="preserve"><value>לבטל את הבקשה</value></data>
+  <data name="Actor.Vault.NotDone" xml:space="preserve"><value>זה לא הצליח. טענו את הדף מחדש ונסו שוב.</value></data>
 </root>

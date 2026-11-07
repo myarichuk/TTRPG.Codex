@@ -975,4 +975,33 @@
   <data name="Campaign.Settings.Leave.Q" xml:space="preserve"><value>לעזוב את {0}?</value></data>
   <data name="Campaign.Settings.Leave.Hint" xml:space="preserve"><value>הגישה שלכם למערכה תבוטל. הדמויות שלכם יישארו בצוות. כדי לחזור תצטרכו הזמנה חדשה.</value></data>
   <data name="Campaign.Settings.Leave.OwnerHint" xml:space="preserve"><value>כדי לעזוב, הפכו קודם שליט מבוך שותף לבעלים.</value></data>
+  <data name="Campaign.Vault.Bring" xml:space="preserve"><value>להביא דמות</value></data>
+  <data name="Campaign.Vault.Character" xml:space="preserve"><value>דמות</value></data>
+  <data name="Campaign.Vault.NoneForSystem" xml:space="preserve"><value>אף אחת מהדמויות שלך לא נוצרה עבור {0}.</value></data>
+  <data name="Campaign.Vault.OpenVault" xml:space="preserve"><value>לפתוח את הדמויות שלי</value></data>
+  <data name="Campaign.Vault.NothingMissing" xml:space="preserve"><value>במערכה יש כל מה שהדמות משתמשת בו.</value></data>
+  <data name="Campaign.Vault.Missing" xml:space="preserve"><value>{0, plural, one{דבר אחד שאין במערכה} two{# דברים שאין במערכה} other{# דברים שאין במערכה}}</value></data>
+  <data name="Campaign.Vault.MissingHint" xml:space="preserve"><value>שליט המבוך יתבקש להוסיף את מה שתשאירו. סמנו את מה שעדיף להשאיר מחוץ לעותק.</value></data>
+  <data name="Campaign.Vault.LeaveOut" xml:space="preserve"><value>להשאיר בחוץ את {0}</value></data>
+  <data name="Campaign.Vault.BringHint" xml:space="preserve"><value>עותק יצטרף למערכה ברגע ששליט המבוך יאשר אותו. הדמות שלך נשארת בדמויות שלך.</value></data>
+  <data name="Campaign.Vault.Send" xml:space="preserve"><value>לבקש משליט המבוך</value></data>
+  <data name="Campaign.Vault.Sent" xml:space="preserve"><value>נשלח: {0} תצטרף כששליט המבוך יאשר.</value></data>
+  <data name="Campaign.Vault.NotSent" xml:space="preserve"><value>אי אפשר להביא את הדמות הזאת למערכה הזאת. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Campaign.Vault.Waiting" xml:space="preserve"><value>{0, plural, one{ממתינות לשליט המבוך (#)} two{ממתינות לשליט המבוך (#)} other{ממתינות לשליט המבוך (#)}}</value></data>
+  <data name="Campaign.Vault.WaitingHint" xml:space="preserve"><value>שליט המבוך מאשר דמות לפני שהיא מצטרפת לחבורה.</value></data>
+  <data name="Campaign.Vault.PlayedBy" xml:space="preserve"><value>בגילום {0}</value></data>
+  <data name="Campaign.Vault.New" xml:space="preserve"><value>חדשה במערכה</value></data>
+  <data name="Campaign.Vault.Update" xml:space="preserve"><value>גרסה חדשה של {0}</value></data>
+  <data name="Campaign.Vault.AskedFor" xml:space="preserve"><value>מבקש להוסיף: {0}</value></data>
+  <data name="Campaign.Vault.LeftOut" xml:space="preserve"><value>הושאר בחוץ: {0}</value></data>
+  <data name="Campaign.Vault.Accept" xml:space="preserve"><value>לאשר</value></data>
+  <data name="Campaign.Vault.AcceptLabel" xml:space="preserve"><value>לאשר את {0}</value></data>
+  <data name="Campaign.Vault.Accepted" xml:space="preserve"><value>{0} במערכה.</value></data>
+  <data name="Campaign.Vault.NotAccepted" xml:space="preserve"><value>הבקשה כבר לא קיימת או שהשחקן עזב. לא נוסף דבר.</value></data>
+  <data name="Campaign.Vault.Decline" xml:space="preserve"><value>לדחות</value></data>
+  <data name="Campaign.Vault.DeclineLabel" xml:space="preserve"><value>לדחות את {0}</value></data>
+  <data name="Campaign.Vault.Declined" xml:space="preserve"><value>{0} נדחתה.</value></data>
+  <data name="Campaign.Vault.Withdraw" xml:space="preserve"><value>לבטל</value></data>
+  <data name="Campaign.Vault.WithdrawLabel" xml:space="preserve"><value>לבטל את {0}</value></data>
+  <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>הבקשה עבור {0} בוטלה.</value></data>
 </root>

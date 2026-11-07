@@ -975,4 +975,33 @@
   <data name="Campaign.Settings.Leave.Q" xml:space="preserve"><value>Leave {0}?</value></data>
   <data name="Campaign.Settings.Leave.Hint" xml:space="preserve"><value>You lose access to this campaign. Your characters stay in its cast. To come back you need a new invite.</value></data>
   <data name="Campaign.Settings.Leave.OwnerHint" xml:space="preserve"><value>To leave, make a co-GM the owner first.</value></data>
+  <data name="Campaign.Vault.Bring" xml:space="preserve"><value>Bring a character</value></data>
+  <data name="Campaign.Vault.Character" xml:space="preserve"><value>Character</value></data>
+  <data name="Campaign.Vault.NoneForSystem" xml:space="preserve"><value>None of your characters is made for {0}.</value></data>
+  <data name="Campaign.Vault.OpenVault" xml:space="preserve"><value>Open My characters</value></data>
+  <data name="Campaign.Vault.NothingMissing" xml:space="preserve"><value>This campaign has everything the character uses.</value></data>
+  <data name="Campaign.Vault.Missing" xml:space="preserve"><value>{0, plural, one{# thing the campaign doesn't have} other{# things the campaign doesn't have}}</value></data>
+  <data name="Campaign.Vault.MissingHint" xml:space="preserve"><value>The GM is asked to add what you keep. Tick anything you would rather leave out of the copy.</value></data>
+  <data name="Campaign.Vault.LeaveOut" xml:space="preserve"><value>Leave out {0}</value></data>
+  <data name="Campaign.Vault.BringHint" xml:space="preserve"><value>A copy joins the campaign once a GM accepts it. Your character stays in My characters.</value></data>
+  <data name="Campaign.Vault.Send" xml:space="preserve"><value>Ask the GM</value></data>
+  <data name="Campaign.Vault.Sent" xml:space="preserve"><value>Sent: {0} joins once a GM accepts.</value></data>
+  <data name="Campaign.Vault.NotSent" xml:space="preserve"><value>That character can't be brought into this campaign. Reload the page and try again.</value></data>
+  <data name="Campaign.Vault.Waiting" xml:space="preserve"><value>{0, plural, one{Waiting for a GM (#)} other{Waiting for a GM (#)}}</value></data>
+  <data name="Campaign.Vault.WaitingHint" xml:space="preserve"><value>A GM accepts a character before it joins the party.</value></data>
+  <data name="Campaign.Vault.PlayedBy" xml:space="preserve"><value>played by {0}</value></data>
+  <data name="Campaign.Vault.New" xml:space="preserve"><value>New to the campaign</value></data>
+  <data name="Campaign.Vault.Update" xml:space="preserve"><value>A newer version of {0}</value></data>
+  <data name="Campaign.Vault.AskedFor" xml:space="preserve"><value>Asks you to add: {0}</value></data>
+  <data name="Campaign.Vault.LeftOut" xml:space="preserve"><value>Left out: {0}</value></data>
+  <data name="Campaign.Vault.Accept" xml:space="preserve"><value>Accept</value></data>
+  <data name="Campaign.Vault.AcceptLabel" xml:space="preserve"><value>Accept {0}</value></data>
+  <data name="Campaign.Vault.Accepted" xml:space="preserve"><value>{0} is in the campaign.</value></data>
+  <data name="Campaign.Vault.NotAccepted" xml:space="preserve"><value>That request is gone, or its player left. Nothing was added.</value></data>
+  <data name="Campaign.Vault.Decline" xml:space="preserve"><value>Turn down</value></data>
+  <data name="Campaign.Vault.DeclineLabel" xml:space="preserve"><value>Turn down {0}</value></data>
+  <data name="Campaign.Vault.Declined" xml:space="preserve"><value>{0} was turned down.</value></data>
+  <data name="Campaign.Vault.Withdraw" xml:space="preserve"><value>Take back</value></data>
+  <data name="Campaign.Vault.WithdrawLabel" xml:space="preserve"><value>Take back {0}</value></data>
+  <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>Request for {0} taken back.</value></data>
 </root>

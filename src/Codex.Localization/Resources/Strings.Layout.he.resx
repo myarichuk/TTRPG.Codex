@@ -58,4 +58,5 @@
   <data name="Layout.Nav.AdminWaiting" xml:space="preserve"><value>{0, plural, one{חשבון אחד ממתין לאישור} two{# חשבונות ממתינים לאישור} other{# חשבונות ממתינים לאישור}}</value></data>
   <data name="Layout.NotYours" xml:space="preserve"><value>הדף הזה לא פתוח לחשבון שלכם.</value></data>
   <data name="Layout.NotYoursBack" xml:space="preserve"><value>חזרה לקמפיינים שלכם</value></data>
+  <data name="Layout.Nav.Vault" xml:space="preserve"><value>הדמויות שלי</value></data>
 </root>

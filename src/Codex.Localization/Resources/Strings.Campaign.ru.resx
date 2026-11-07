@@ -975,4 +975,33 @@
   <data name="Campaign.Settings.Leave.Q" xml:space="preserve"><value>Покинуть «{0}»?</value></data>
   <data name="Campaign.Settings.Leave.Hint" xml:space="preserve"><value>Вы потеряете доступ к этой кампании. Ваши персонажи останутся в составе. Чтобы вернуться, понадобится новое приглашение.</value></data>
   <data name="Campaign.Settings.Leave.OwnerHint" xml:space="preserve"><value>Чтобы уйти, сначала сделайте владельцем со-мастера.</value></data>
+  <data name="Campaign.Vault.Bring" xml:space="preserve"><value>Привести персонажа</value></data>
+  <data name="Campaign.Vault.Character" xml:space="preserve"><value>Персонаж</value></data>
+  <data name="Campaign.Vault.NoneForSystem" xml:space="preserve"><value>Ни один из ваших персонажей не создан для {0}.</value></data>
+  <data name="Campaign.Vault.OpenVault" xml:space="preserve"><value>Открыть «Мои персонажи»</value></data>
+  <data name="Campaign.Vault.NothingMissing" xml:space="preserve"><value>В кампании есть всё, что использует персонаж.</value></data>
+  <data name="Campaign.Vault.Missing" xml:space="preserve"><value>{0, plural, one{# вещи нет в кампании} few{# вещей нет в кампании} many{# вещей нет в кампании} other{# вещи нет в кампании}}</value></data>
+  <data name="Campaign.Vault.MissingHint" xml:space="preserve"><value>Мастера попросят добавить то, что вы оставите. Отметьте то, что лучше не брать в копию.</value></data>
+  <data name="Campaign.Vault.LeaveOut" xml:space="preserve"><value>Не брать {0}</value></data>
+  <data name="Campaign.Vault.BringHint" xml:space="preserve"><value>Копия войдёт в кампанию, когда мастер её примет. Ваш персонаж останется в «Моих персонажах».</value></data>
+  <data name="Campaign.Vault.Send" xml:space="preserve"><value>Спросить мастера</value></data>
+  <data name="Campaign.Vault.Sent" xml:space="preserve"><value>Отправлено: «{0}» войдёт, когда мастер примет.</value></data>
+  <data name="Campaign.Vault.NotSent" xml:space="preserve"><value>Этого персонажа нельзя привести в эту кампанию. Обновите страницу и попробуйте снова.</value></data>
+  <data name="Campaign.Vault.Waiting" xml:space="preserve"><value>{0, plural, one{Ждут мастера (#)} few{Ждут мастера (#)} many{Ждут мастера (#)} other{Ждут мастера (#)}}</value></data>
+  <data name="Campaign.Vault.WaitingHint" xml:space="preserve"><value>Мастер принимает персонажа, прежде чем тот войдёт в отряд.</value></data>
+  <data name="Campaign.Vault.PlayedBy" xml:space="preserve"><value>играет {0}</value></data>
+  <data name="Campaign.Vault.New" xml:space="preserve"><value>Новый в кампании</value></data>
+  <data name="Campaign.Vault.Update" xml:space="preserve"><value>Новая версия персонажа «{0}»</value></data>
+  <data name="Campaign.Vault.AskedFor" xml:space="preserve"><value>Просит добавить: {0}</value></data>
+  <data name="Campaign.Vault.LeftOut" xml:space="preserve"><value>Не взято: {0}</value></data>
+  <data name="Campaign.Vault.Accept" xml:space="preserve"><value>Принять</value></data>
+  <data name="Campaign.Vault.AcceptLabel" xml:space="preserve"><value>Принять «{0}»</value></data>
+  <data name="Campaign.Vault.Accepted" xml:space="preserve"><value>«{0}» в кампании.</value></data>
+  <data name="Campaign.Vault.NotAccepted" xml:space="preserve"><value>Просьбы больше нет или игрок ушёл. Ничего не добавлено.</value></data>
+  <data name="Campaign.Vault.Decline" xml:space="preserve"><value>Отклонить</value></data>
+  <data name="Campaign.Vault.DeclineLabel" xml:space="preserve"><value>Отклонить «{0}»</value></data>
+  <data name="Campaign.Vault.Declined" xml:space="preserve"><value>«{0}» отклонён.</value></data>
+  <data name="Campaign.Vault.Withdraw" xml:space="preserve"><value>Отозвать</value></data>
+  <data name="Campaign.Vault.WithdrawLabel" xml:space="preserve"><value>Отозвать «{0}»</value></data>
+  <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>Просьба о «{0}» отозвана.</value></data>
 </root>

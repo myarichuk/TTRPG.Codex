@@ -58,4 +58,5 @@
   <data name="Layout.Nav.AdminWaiting" xml:space="preserve"><value>{0, plural, one{# account waiting for approval} other{# accounts waiting for approval}}</value></data>
   <data name="Layout.NotYours" xml:space="preserve"><value>This page is not open to your account.</value></data>
   <data name="Layout.NotYoursBack" xml:space="preserve"><value>Back to your campaigns</value></data>
+  <data name="Layout.Nav.Vault" xml:space="preserve"><value>My characters</value></data>
 </root>

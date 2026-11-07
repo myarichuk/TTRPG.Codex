@@ -217,6 +217,7 @@ builder.Services.AddSingleton<PluginLoader>();
 builder.Services.AddSingleton<ContentPackExporter>();
 builder.Services.AddSingleton<CampaignLibrary>();
 builder.Services.AddScoped<MentionSources>();
+builder.Services.AddScoped<VaultService>();
 builder.Services.AddScoped<WorldChatSessions>();
 builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 builder.Services.AddHostedService<IdleRuntimeEvictionService>();

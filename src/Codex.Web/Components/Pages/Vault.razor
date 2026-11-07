@@ -1,0 +1,166 @@
+@page "/vault"
+@page "/vault/{ActorId}"
+@using System.Security.Claims
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IVaultRepository VaultRepo
+@inject ISystemCatalog Catalog
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@if (!string.IsNullOrEmpty(ActorId))
+{
+    @* One of the caller's vault characters, on the same sheet a campaign uses (docs/SERVER_ACCESS_AND_VAULT.md 8). *@
+    <ActorSheet @key="ActorId" Vault="true" ActorId="@ActorId" BackLabel="@L["Vault.Back"]" OnBack="@(() => Nav.NavigateTo("/vault"))" />
+}
+else
+{
+    <PageTitle>@L["Vault.Title"] | TTRPG.Codex</PageTitle>
+
+    <div class="page-header">
+        <div>
+            <h1><LucideIcon IconName="archive" Size="28" Class="title-icon" /> @L["Vault.Title"]</h1>
+            <p class="page-subtitle">@L["Vault.Subtitle"]</p>
+        </div>
+        <div class="row-actions">
+            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewAsync" Disabled="@(!Catalog.Systems.Any())" data-testid="vault-new">
+                <LucideIcon IconName="user-plus" Size="18" /> @L["Vault.New"]
+            </CodexButton>
+        </div>
+    </div>
+
+    <StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
+
+    @if (characters == null)
+    {
+        <LoadingSkeleton />
+    }
+    else if (characters.Count == 0)
+    {
+        <div class="empty" data-testid="vault-empty">
+            <div class="empty-icon"><LucideIcon IconName="archive" Size="28" /></div>
+            <h2 class="h4">@L["Vault.Empty"]</h2>
+            <p>@L["Vault.EmptyBody"]</p>
+        </div>
+    }
+    else
+    {
+        var systems = characters.Select(c => c.SystemId ?? "").Distinct().OrderBy(SystemName, StringComparer.CurrentCultureIgnoreCase).ToList();
+        @if (systems.Count > 1)
+        {
+            <div class="mb-3" style="max-width:20rem">
+                <label for="vault-filter" class="field-label">@L["Vault.Filter"]</label>
+                <select id="vault-filter" class="field-select" @bind="filter" data-testid="vault-filter">
+                    <option value="">@L["Vault.FilterAll"]</option>
+                    @foreach (var id in systems)
+                    {
+                        <option value="@id">@SystemName(id)</option>
+                    }
+                </select>
+            </div>
+        }
+        <section class="panel" aria-labelledby="vault-list-heading">
+            <div class="panel-title"><h2 id="vault-list-heading" class="h5"><LucideIcon IconName="users" Size="18" Class="title-icon" /> @L["Vault.Count", Shown.Count]</h2></div>
+            <ul class="list-unstyled mb-0" data-testid="vault-list">
+                @foreach (var character in Shown)
+                {
+                    var shown = character;
+                    <li class="list-row" data-testid="vault-character">
+                        <ActorAvatar Actor="character" DisplayName="@character.Name" Size="md" />
+                        <div class="row-main">
+                            <div class="row-title"><a href="/vault/@character.Id">@character.Name</a></div>
+                            <div class="small-muted">@SystemName(character.SystemId ?? "")</div>
+                        </div>
+                        <div class="row-actions">
+    <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Vault.DeleteLabel", character.Name]" title="@L["Vault.Delete"]" OnClick="() => DeleteAsync(shown)" data-testid="vault-delete" />
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    <ConfirmDialog @ref="confirm" />
+
+    <dialog id="vault-new-dialog" class="codex-dialog" aria-labelledby="vault-new-title">
+        <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
+            <div class="dialog-body">
+                <h2 id="vault-new-title">@L["Vault.New"]</h2>
+                <div class="mb-3">
+                    <label for="vn-name" class="field-label">@L["Vault.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Vault.Required"]</span></label>
+                    <input id="vn-name" class="field-input" @bind="newName" required maxlength="@RavenVaultRepository.MaxName" data-testid="vault-new-name" />
+                </div>
+                <div class="mb-1">
+                    <label for="vn-system" class="field-label">@L["Vault.System"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Vault.Required"]</span></label>
+                    <select id="vn-system" class="field-select" @bind="newSystemId" required aria-describedby="vn-system-hint" data-testid="vault-new-system">
+                        @foreach (var system in Catalog.Systems)
+                        {
+                            <option value="@system.Id">@system.Name</option>
+                        }
+                    </select>
+                    <div id="vn-system-hint" class="field-hint">@L["Vault.SystemHint"]</div>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseNewAsync">@L["Common.Cancel"]</CodexButton>
+                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Busy="@createGate.IsBusy" data-testid="vault-new-submit">@L["Vault.Create"]</CodexButton>
+            </div>
+        </form>
+    </dialog>
+}
+
+@code {
+    [Parameter] public string? ActorId { get; set; }
+
+    private string? userId;
+    private List<ActorDocument>? characters;
+    private string filter = "";
+    private string newName = "";
+    private string newSystemId = "";
+    private Flash? flash;
+    private ConfirmDialog confirm = null!;
+    private readonly SaveGate createGate = new();
+
+    private List<ActorDocument> Shown => (characters ?? new()).Where(c => filter.Length == 0 || c.SystemId == filter).ToList();
+
+    private string SystemName(string systemId) => Catalog.GetDisplayName(systemId);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ActorId)) return;
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        characters = userId == null ? new List<ActorDocument>() : (await VaultRepo.GetAllAsync(userId)).ToList();
+    }
+
+    private async Task OpenNewAsync()
+    {
+        newName = "";
+        newSystemId = Catalog.Systems.FirstOrDefault()?.Id ?? "";
+        await JS.InvokeVoidAsync("codex.showModal", "vault-new-dialog");
+        await JS.InvokeVoidAsync("codex.focus", "vn-name");
+    }
+
+    private Task CloseNewAsync() => JS.InvokeVoidAsync("codex.closeModal", "vault-new-dialog").AsTask();
+
+    private Task CreateAsync() => createGate.RunAsync(async () =>
+    {
+        if (userId == null || string.IsNullOrWhiteSpace(newName) || !Catalog.LoadedSystemIds.Contains(newSystemId)) return;
+        var created = await VaultRepo.CreateAsync(userId, newSystemId, newName);
+        await CloseNewAsync();
+        Nav.NavigateTo($"/vault/{created.Id}");
+    });
+
+    private async Task DeleteAsync(ActorDocument character)
+    {
+        if (userId == null) return;
+        if (!await confirm.ShowAsync(L["Vault.DeleteQ", character.Name], L["Vault.DeleteBody"], L["Vault.Delete"], isDestructive: true)) return;
+        if (await VaultRepo.DeleteAsync(character.Id, userId))
+        {
+            characters?.RemoveAll(c => c.Id == character.Id);
+            flash = Flash.Success(L["Vault.Deleted", character.Name]);
+        }
+    }
+}

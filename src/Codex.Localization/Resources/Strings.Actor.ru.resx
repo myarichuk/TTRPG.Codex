@@ -369,4 +369,18 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>Что видит отряд</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>Фигура в капюшоне, платит старым серебром и не называет имени.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Открыто вам</value></data>
+  <data name="Actor.Vault.Title" xml:space="preserve"><value>Из ваших персонажей</value></data>
+  <data name="Actor.Vault.Loading" xml:space="preserve"><value>Загрузка…</value></data>
+  <data name="Actor.Vault.Gone" xml:space="preserve"><value>Персонажа, с которого сделана эта копия, больше нет в «Моих персонажах».</value></data>
+  <data name="Actor.Vault.From" xml:space="preserve"><value>Это копия персонажа «{0}» в кампании. Изменения остаются здесь, пока вы не отправите их обратно.</value></data>
+  <data name="Actor.Vault.Push" xml:space="preserve"><value>Обновить моего персонажа по этому листу</value></data>
+  <data name="Actor.Vault.PushHint" xml:space="preserve"><value>Берёт сохранённый лист, имя и историю. Заметки и секреты мастера остаются здесь.</value></data>
+  <data name="Actor.Vault.Pushed" xml:space="preserve"><value>«{0}» обновлён в «Моих персонажах».</value></data>
+  <data name="Actor.Vault.SaveFirst" xml:space="preserve"><value>Сначала сохраните лист, потом обновите персонажа.</value></data>
+  <data name="Actor.Vault.Pull" xml:space="preserve"><value>Попросить перенести сюда мою новую версию</value></data>
+  <data name="Actor.Vault.PullHint" xml:space="preserve"><value>Сначала это одобряет мастер. Его заметки и секреты в истории сохранятся.</value></data>
+  <data name="Actor.Vault.Asked" xml:space="preserve"><value>Отправлено мастеру.</value></data>
+  <data name="Actor.Vault.Waiting" xml:space="preserve"><value>Ждём, когда мастер перенесёт сюда новую версию.</value></data>
+  <data name="Actor.Vault.Withdraw" xml:space="preserve"><value>Отозвать просьбу</value></data>
+  <data name="Actor.Vault.NotDone" xml:space="preserve"><value>Не получилось. Обновите страницу и попробуйте снова.</value></data>
 </root>

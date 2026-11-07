@@ -1,6 +1,6 @@
 # Server access, roles and the character vault
 
-Design agreed 2026-11-07. Steps 1 to 3 are built (11, 12); 4 to 6 are not. It covers who may use a server and what for: the first-time setup, server roles and approval,
+Design agreed 2026-11-07. Steps 1 to 4 are built (11 to 13); 5 and 6 are not. It covers who may use a server and what for: the first-time setup, server roles and approval,
 co-GMs, where the server may fetch from, players' own AI keys, and characters that live outside any campaign.
 
 ## 1. What is there today
@@ -112,7 +112,7 @@ Players already bring their own key; this widens what it is for, always built fr
 1. Setup wizard, server roles, approval, the admin page and log, migration of existing servers. Built (11).
 2. Co-GMs. Built (12).
 3. The fetch list. Built with step 1 (11).
-4. The vault and bringing characters in.
+4. The vault and bringing characters in. Built (13).
 5. AI: notes, character creation and tweaks in both places, the server key per role.
 6. Storage limits, account deletion, export.
 
@@ -178,3 +178,36 @@ Players already bring their own key; this widens what it is for, always built fr
   `ACoGm_StepsDownThemselvesOnly_AndAnyoneButTheOwnerMayLeave_Async`. Mutants caught: only the owner change checked; only the GM set
   checked; any shrink of the GM set allowed; the owner allowed to leave.
 - **Left for step 6**: passing campaigns on when an account is deleted (the admin page still deletes only accounts in no campaign).
+
+## 13. Step 4 as built (2026-11-07)
+
+- **The vault**: "My characters" (`/vault`) lists the caller's characters, filtered by system when there are several, with New and
+  Delete. A vault character is an `ActorDocument` with no `CampaignId`, a `SystemId` and the caller as owner, read and written only
+  through `IVaultRepository` (`RavenVaultRepository`), which checks the owner on every call. Deleting it takes its waiting requests
+  with it; copies already in campaigns stay.
+- **The sheet**: `/vault/{id}` is the campaign sheet (`ActorSheet`) with `Vault` set. It is built against the server's packs for the
+  system and no campaign's homebrew (`CampaignAccess.Vault`, `VaultService.CampaignFor`), its Library links go to `/library/{system}`,
+  it saves through the vault repository with the same "changed meanwhile" check, and it leaves out what belongs to a campaign: lore,
+  table quotes and mentions, the wiki page, the portrait and its drawing, and the AI buttons (AI in the vault is step 5).
+- **Isolation**: every campaign-side actor read and write refuses a vault character, including an access with no campaign;
+  `DeleteAllForCampaignAsync("")` does nothing; `CampaignAccessResolver.NowAsync` refuses an empty campaign id.
+- **Bringing one in**: Cast has "Bring a character". It lists the caller's characters for the campaign's system and what each uses
+  that the campaign does not have (`SheetReferences`, read through the system's rules: entry fields, pick lists, the inventory, other
+  classes and subclasses). The player ticks what to leave out; the rest is asked of the GM. The request (`CharacterRequestDocument`)
+  waits in Cast, where only GMs and the asker see it. No actor exists until a GM accepts, so a waiting character is in no list, table
+  or book. Accepting adds a copy played by the asker, with `VaultSourceId` set. Requests go with a player who leaves and a campaign
+  that is deleted. Secret blocks typed into a vault history come in as a player reads them.
+- **Back to the vault**: on the player's own copy, "Update my character from this sheet" takes the saved sheet, name and history as a
+  player reads them (no GM notes, no secret or revealed blocks), with mentions turned into plain names.
+- **A newer vault version**: "Ask to bring my newer version here" is a request the GM accepts; it replaces the copy's name and sheet
+  and keeps the GM's secret blocks in the history (`SecretText.KeepSecrets`), through the live table when there is one.
+- **Removing from the cast** stays "Retire" (D17): a GM retires anyone, a player their own character, and a GM restores from the
+  retired list. A retired copy cannot take a newer vault version.
+- **Tests**: `VaultTests` (owner-only access and campaign isolation; requests, GM accept and who sees them; updates only to the
+  asker's own copy; leaving and deleting take requests away; `SheetReferences`). Mutants caught: the vault check in
+  `GetVisibleAsync`, the empty-campaign guards in delete-all and the cast list, the vault filter on recent characters, the GM check
+  on accept, the owner check, the same-system check, the own-copy check on updates, the asker filter on requests, and stripping
+  secret blocks from a request's history.
+- **Left**: vault portraits (and copying a portrait in either direction); picking which missing entries to leave out on an update
+  request (everything missing is asked for); AI in the vault (step 5); exporting a vault (step 6).
+

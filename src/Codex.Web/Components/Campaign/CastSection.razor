@@ -32,6 +32,7 @@
         <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenCreateAsync" data-testid="create-character">
             <LucideIcon IconName="user-plus" Size="18" /> @(Ctx.IsDm ? L["Campaign.Cast.NewDm"] : L["Campaign.Cast.NewPlayer"])
         </CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Etched" Icon="archive" OnClick="() => vaultRequests.OpenAsync()" data-testid="bring-from-vault">@L["Campaign.Vault.Bring"]</CodexButton>
         <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="OpenAiCreateAsync" data-testid="create-character-ai">
             <LucideIcon IconName="sparkles" Size="18" /> @L["Campaign.Cast.CreateWithAi"]
         </CodexButton>
@@ -41,6 +42,8 @@
         }
     </div>
 </div>
+
+<VaultRequests @ref="vaultRequests" />
 
 <div class="row g-3">
     <div class="col-lg-6">
@@ -189,6 +192,7 @@
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
     private ConfirmDialog confirm = null!;
+    private VaultRequests vaultRequests = null!;
     private string newName = string.Empty;
     private ActorKind newKind = ActorKind.NonPlayerCharacter;
     private string newOwnerId = string.Empty;

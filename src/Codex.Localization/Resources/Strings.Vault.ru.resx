@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Vault.Title" xml:space="preserve"><value>Мои персонажи</value></data>
+  <data name="Vault.Subtitle" xml:space="preserve"><value>Персонажи вне всех кампаний. Чтобы сыграть одним из них, откройте «Состав» кампании и нажмите «Привести персонажа».</value></data>
+  <data name="Vault.New" xml:space="preserve"><value>Новый персонаж</value></data>
+  <data name="Vault.Create" xml:space="preserve"><value>Создать</value></data>
+  <data name="Vault.Name" xml:space="preserve"><value>Имя</value></data>
+  <data name="Vault.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Vault.System" xml:space="preserve"><value>Игровая система</value></data>
+  <data name="Vault.SystemHint" xml:space="preserve"><value>Персонаж сможет войти только в кампании этой системы. Потом её не изменить.</value></data>
+  <data name="Vault.Empty" xml:space="preserve"><value>Персонажей пока нет</value></data>
+  <data name="Vault.EmptyBody" xml:space="preserve"><value>Создайте персонажа здесь, чтобы взять его в любую кампанию.</value></data>
+  <data name="Vault.Filter" xml:space="preserve"><value>Показать</value></data>
+  <data name="Vault.FilterAll" xml:space="preserve"><value>Все игровые системы</value></data>
+  <data name="Vault.Count" xml:space="preserve"><value>{0, plural, one{# персонаж} few{# персонажа} many{# персонажей} other{# персонажа}}</value></data>
+  <data name="Vault.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Vault.DeleteLabel" xml:space="preserve"><value>Удалить {0}</value></data>
+  <data name="Vault.DeleteQ" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Vault.DeleteBody" xml:space="preserve"><value>Персонаж будет удалён навсегда. Копии, уже взятые в кампании, останутся там.</value></data>
+  <data name="Vault.Deleted" xml:space="preserve"><value>«{0}» удалён.</value></data>
+  <data name="Vault.Back" xml:space="preserve"><value>Мои персонажи</value></data>
+</root>

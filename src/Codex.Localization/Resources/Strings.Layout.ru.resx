@@ -58,4 +58,5 @@
   <data name="Layout.Nav.AdminWaiting" xml:space="preserve"><value>{0, plural, one{# учётная запись ждёт одобрения} few{# учётные записи ждут одобрения} many{# учётных записей ждут одобрения} other{# учётной записи ждут одобрения}}</value></data>
   <data name="Layout.NotYours" xml:space="preserve"><value>Эта страница недоступна вашей учётной записи.</value></data>
   <data name="Layout.NotYoursBack" xml:space="preserve"><value>Назад к вашим кампаниям</value></data>
+  <data name="Layout.Nav.Vault" xml:space="preserve"><value>Мои персонажи</value></data>
 </root>

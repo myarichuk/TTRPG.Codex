@@ -1,0 +1,82 @@
+@* On the player's own copy of a vault character in a campaign (docs/SERVER_ACCESS_AND_VAULT.md 7): take what is theirs back to the
+   vault, or ask the GM to bring the vault's newer version here. *@
+@using Codex.Persistence
+@inject IVaultRepository VaultRepo
+@inject Codex.Web.Services.VaultService VaultService
+
+<section class="panel" aria-labelledby="vault-copy-heading" data-testid="vault-copy">
+    <div class="panel-title"><h2 id="vault-copy-heading" class="h5"><LucideIcon IconName="archive" Size="18" Class="title-icon" /> @L["Actor.Vault.Title"]</h2></div>
+    @if (!loaded)
+    {
+        <p class="small-muted mb-0">@L["Actor.Vault.Loading"]</p>
+    }
+    else if (source == null)
+    {
+        <p class="small-muted mb-0" data-testid="vault-copy-gone">@L["Actor.Vault.Gone"]</p>
+    }
+    else
+    {
+        <p class="small-muted">@L["Actor.Vault.From", source.Name]</p>
+        <div class="d-flex flex-column gap-2 align-items-start">
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="upload" OnClick="UpdateVaultAsync" Busy="@gate.IsBusy" data-testid="vault-copy-push">@L["Actor.Vault.Push"]</CodexButton>
+            <p class="field-hint mb-0">@L["Actor.Vault.PushHint"]</p>
+            @if (waiting != null)
+            {
+                <p class="mb-0" role="status" data-testid="vault-copy-waiting"><LucideIcon IconName="hourglass" Size="14" /> @L["Actor.Vault.Waiting"]</p>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="WithdrawAsync" data-testid="vault-copy-withdraw">@L["Actor.Vault.Withdraw"]</CodexButton>
+            }
+            else
+            {
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Icon="download" OnClick="AskAsync" Busy="@gate.IsBusy" data-testid="vault-copy-pull">@L["Actor.Vault.Pull"]</CodexButton>
+                <p class="field-hint mb-0">@L["Actor.Vault.PullHint"]</p>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public ActorDocument Actor { get; set; } = null!;
+    [Parameter, EditorRequired] public CampaignDocument Campaign { get; set; } = null!;
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+    /// <summary>The sheet has unsaved edits: what would go to the vault is the saved copy, so they are saved first.</summary>
+    [Parameter] public bool Dirty { get; set; }
+    [Parameter] public EventCallback<Flash> OnMessage { get; set; }
+
+    private bool loaded;
+    private ActorDocument? source;
+    private CharacterRequestDocument? waiting;
+    private readonly SaveGate gate = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        source = Actor.VaultSourceId == null ? null : await VaultRepo.GetAsync(Actor.VaultSourceId, Access.UserId);
+        waiting = (await VaultRepo.GetRequestsAsync(Access)).FirstOrDefault(r => r.ReplacesActorId == Actor.Id);
+        loaded = true;
+    }
+
+    private Task UpdateVaultAsync() => gate.RunAsync(async () =>
+    {
+        if (Dirty)
+        {
+            await OnMessage.InvokeAsync(Flash.Info(L["Actor.Vault.SaveFirst"]));
+            return;
+        }
+
+        var done = await VaultService.UpdateVaultAsync(Actor.Id, Campaign, Access);
+        await OnMessage.InvokeAsync(done ? Flash.Success(L["Actor.Vault.Pushed", source?.Name ?? Actor.Name]) : Flash.Error(L["Actor.Vault.NotDone"]));
+        if (done) source = await VaultRepo.GetAsync(Actor.VaultSourceId!, Access.UserId);
+    });
+
+    private Task AskAsync() => gate.RunAsync(async () =>
+    {
+        if (source == null) return;
+        // Anything the campaign lacks is asked for rather than dropped: the GM sees the list and decides.
+        waiting = await VaultService.AskAsync(source, Campaign, Access, new HashSet<string>(), Actor.Id);
+        await OnMessage.InvokeAsync(waiting != null ? Flash.Success(L["Actor.Vault.Asked"]) : Flash.Error(L["Actor.Vault.NotDone"]));
+    });
+
+    private async Task WithdrawAsync()
+    {
+        if (waiting != null && await VaultRepo.WithdrawAsync(waiting.Id, Access)) waiting = null;
+    }
+}

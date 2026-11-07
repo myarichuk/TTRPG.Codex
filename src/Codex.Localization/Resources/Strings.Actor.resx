@@ -369,4 +369,18 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>What the party sees</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>A hooded figure who pays in old silver and never gives a name.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Revealed to you</value></data>
+  <data name="Actor.Vault.Title" xml:space="preserve"><value>From your characters</value></data>
+  <data name="Actor.Vault.Loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="Actor.Vault.Gone" xml:space="preserve"><value>The character this copy came from is no longer in My characters.</value></data>
+  <data name="Actor.Vault.From" xml:space="preserve"><value>This is the campaign's copy of {0}. Changes here stay in this campaign until you send them back.</value></data>
+  <data name="Actor.Vault.Push" xml:space="preserve"><value>Update my character from this sheet</value></data>
+  <data name="Actor.Vault.PushHint" xml:space="preserve"><value>Takes the saved sheet, name and history. GM notes and secrets stay here.</value></data>
+  <data name="Actor.Vault.Pushed" xml:space="preserve"><value>{0} is updated in My characters.</value></data>
+  <data name="Actor.Vault.SaveFirst" xml:space="preserve"><value>Save the sheet first, then update your character.</value></data>
+  <data name="Actor.Vault.Pull" xml:space="preserve"><value>Ask to bring my newer version here</value></data>
+  <data name="Actor.Vault.PullHint" xml:space="preserve"><value>The GM approves it first. Their notes and secrets in the history are kept.</value></data>
+  <data name="Actor.Vault.Asked" xml:space="preserve"><value>Sent to the GM.</value></data>
+  <data name="Actor.Vault.Waiting" xml:space="preserve"><value>Waiting for the GM to bring your newer version here.</value></data>
+  <data name="Actor.Vault.Withdraw" xml:space="preserve"><value>Take back the request</value></data>
+  <data name="Actor.Vault.NotDone" xml:space="preserve"><value>That didn't work. Reload the page and try again.</value></data>
 </root>
