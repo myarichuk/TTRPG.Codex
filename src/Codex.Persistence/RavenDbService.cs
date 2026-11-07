@@ -184,6 +184,13 @@ public class RavenDbService : IDisposable
     /// </summary>
     public async Task<long> EnsureScheduledBackupAsync(string backupDirectory)
     {
+        // RavenDB does not enforce licence limits for its first minutes after starting, so asking straight away can be accepted
+        // on a licence that refuses it later. Read the licence first so the answer does not depend on when the server started.
+        if (await LicenceAllowsPeriodicBackupAsync() == false)
+        {
+            throw new BackupNotLicensedException();
+        }
+
         var fullPath = Path.GetFullPath(backupDirectory);
         Directory.CreateDirectory(fullPath);
 
@@ -200,6 +207,27 @@ public class RavenDbService : IDisposable
         var result = await Store.Maintenance.SendAsync(new UpdatePeriodicBackupOperation(config));
         _logger?.LogInformation("Scheduled daily RavenDB backup to {BackupDirectory} (task {TaskId}).", fullPath, result.TaskId);
         return result.TaskId;
+    }
+
+    /// <summary>Whether the server's licence includes periodic backups, from its licence status; null when the status
+    /// can't be read or doesn't say, so the backup request itself decides.</summary>
+    public async Task<bool?> LicenceAllowsPeriodicBackupAsync()
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            using var stream = await http.GetStreamAsync(Store.Urls[0].TrimEnd('/') + "/license/status");
+            using var json = await System.Text.Json.JsonDocument.ParseAsync(stream);
+            return json.RootElement.TryGetProperty("HasPeriodicBackup", out var flag)
+                   && flag.ValueKind is System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False
+                ? flag.GetBoolean()
+                : null;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            _logger?.LogDebug(ex, "Could not read the RavenDB licence status.");
+            return null;
+        }
     }
 
     /// <summary>
@@ -226,3 +254,6 @@ public class RavenDbService : IDisposable
         throw new TimeoutException($"No backup file appeared in {backupDirectory} within {timeout}.");
     }
 }
+
+/// <summary>The server's licence does not include periodic backups, so none was scheduled.</summary>
+public sealed class BackupNotLicensedException() : Exception("The RavenDB licence does not include periodic backups.");

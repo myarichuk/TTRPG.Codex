@@ -1188,12 +1188,28 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
-    public async Task ScheduledBackup_ProducesBackupFile_AndIsIdempotent_Async()
+    public async Task ScheduledBackup_ProducesBackupFile_AndIsIdempotent_OrIsRefusedByTheFreeLicence_Async()
     {
         var backupDir = Path.Combine(Path.GetTempPath(), "CodexBackup_" + Guid.NewGuid().ToString("N"));
         try
         {
             await _campaignRepository.SaveAsync(new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner-1", Name = "Back Me Up" });
+
+            // The free licence never includes periodic backups; RavenDB only enforces that a few minutes after it starts, so
+            // without reading the licence first this test passed alone and failed late in the full run.
+            var allowed = await _dbService.LicenceAllowsPeriodicBackupAsync();
+            Assert.NotNull(allowed);
+            using (var http = new HttpClient())
+            {
+                using var status = System.Text.Json.JsonDocument.Parse(await http.GetStringAsync(_dbService.Store.Urls[0].TrimEnd('/') + "/license/status"));
+                if (status.RootElement.GetProperty("Type").GetString() == "None") Assert.False(allowed);
+            }
+
+            if (allowed is not true)
+            {
+                await Assert.ThrowsAsync<BackupNotLicensedException>(() => _dbService.EnsureScheduledBackupAsync(backupDir));
+                return;
+            }
 
             var firstTaskId = await _dbService.EnsureScheduledBackupAsync(backupDir);
             Assert.True(firstTaskId > 0);
