@@ -33,6 +33,20 @@ public enum WebFetchRule
     AnyPublic
 }
 
+/// <summary>Who may fall back to the AI key in the server's own configuration when they have no model of their own
+/// (docs/SERVER_ACCESS_AND_VAULT.md 6). The daily allowance applies to all but the admin.</summary>
+public enum ServerAiRule
+{
+    /// <summary>The server's admin only.</summary>
+    Admins,
+
+    /// <summary>Game Masters (the server role) and admins.</summary>
+    GameMasters,
+
+    /// <summary>Every approved account.</summary>
+    Everyone
+}
+
 /// <summary>The server's own settings, chosen in the first-time setup and changed on the admin page. One document.</summary>
 public class ServerSettingsDocument
 {
@@ -57,6 +71,10 @@ public class ServerSettingsDocument
     public WebFetchRule WebFetch { get; set; } = WebFetchRule.Listed;
     public List<string> FetchSites { get; set; } = DefaultFetchSites.ToList();
 
+    /// <summary>Who may use the server's AI key. Null on a server set up before this setting, which keeps the rule it had: everyone
+    /// at home, only the admin while the server is open to the internet. A new server's setup stores Game Masters.</summary>
+    public ServerAiRule? ServerAi { get; set; }
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public ServerSettingsDocument Copy() => new()
@@ -67,6 +85,7 @@ public class ServerSettingsDocument
         CampaignCreation = CampaignCreation,
         WebFetch = WebFetch,
         FetchSites = FetchSites.ToList(),
+        ServerAi = ServerAi,
         UpdatedAt = UpdatedAt
     };
 
@@ -135,6 +154,9 @@ public interface IServerSettingsStore
 {
     /// <summary>The settings; a server that has none yet gets the defaults a new server starts with (not stored).</summary>
     Task<ServerSettingsDocument> GetAsync();
+
+    /// <summary>The settings for a caller that cannot wait (choosing an AI client): the kept copy, or one read now.</summary>
+    ServerSettingsDocument Get();
 
     /// <summary>Applies <paramref name="change"/> to the stored settings (the defaults when there are none) and stores them.</summary>
     Task<ServerSettingsDocument> UpdateAsync(Action<ServerSettingsDocument> change);

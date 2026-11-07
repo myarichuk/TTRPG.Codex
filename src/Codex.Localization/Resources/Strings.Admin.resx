@@ -101,4 +101,13 @@
   <data name="Admin.Log.RoleTaken" xml:space="preserve"><value>{0} took a role from {1}</value></data>
   <data name="Admin.Log.Deleted" xml:space="preserve"><value>{0} deleted {1}</value></data>
   <data name="Admin.Log.SettingsChanged" xml:space="preserve"><value>{0} changed the server's settings</value></data>
+  <data name="Admin.Setup.ServerAi" xml:space="preserve"><value>Who may use the server's AI key?</value></data>
+  <data name="Admin.Settings.ServerAi" xml:space="preserve"><value>Who can use the server's AI key</value></data>
+  <data name="Admin.Settings.ServerAi.Hint" xml:space="preserve"><value>Someone with no AI model of their own uses the key in the server's configuration, if there is one, with a daily allowance each. Everyone can always add their own model.</value></data>
+  <data name="Admin.Settings.ServerAi.GameMasters" xml:space="preserve"><value>Game Masters</value></data>
+  <data name="Admin.Settings.ServerAi.GameMastersHint" xml:space="preserve"><value>Accounts the admin made Game Masters, and the admin. A player who is a co-GM in someone's campaign is not a Game Master.</value></data>
+  <data name="Admin.Settings.ServerAi.Everyone" xml:space="preserve"><value>Everyone with an approved account</value></data>
+  <data name="Admin.Settings.ServerAi.EveryoneHint" xml:space="preserve"><value>Players too. Each account still has the daily allowance.</value></data>
+  <data name="Admin.Settings.ServerAi.Admins" xml:space="preserve"><value>Admins only</value></data>
+  <data name="Admin.Settings.ServerAi.AdminsHint" xml:space="preserve"><value>Only the server's admins. Everyone else uses their own model.</value></data>
 </root>

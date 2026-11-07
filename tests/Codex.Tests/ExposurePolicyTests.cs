@@ -62,6 +62,32 @@ public class ExposurePolicyTests
     }
 
     [Fact]
+    public void The_admins_choice_decides_who_uses_the_server_ai_key_open_or_not()
+    {
+        var admin = new UserDocument { Roles = new List<string> { "Player", "ServerAdmin" } };
+        var gm = new UserDocument { Roles = new List<string> { "Player", UserRoles.GameMaster } };
+        var player = new UserDocument { Roles = new List<string> { "Player" } };
+
+        foreach (var exposed in new[] { false, true })
+        {
+            Assert.True(ExposurePolicy.MayUseServerAi(exposed, admin, ServerAiRule.Admins));
+            Assert.False(ExposurePolicy.MayUseServerAi(exposed, gm, ServerAiRule.Admins));
+            Assert.False(ExposurePolicy.MayUseServerAi(exposed, player, ServerAiRule.Admins));
+
+            Assert.True(ExposurePolicy.MayUseServerAi(exposed, admin, ServerAiRule.GameMasters));
+            Assert.True(ExposurePolicy.MayUseServerAi(exposed, gm, ServerAiRule.GameMasters));
+            Assert.False(ExposurePolicy.MayUseServerAi(exposed, player, ServerAiRule.GameMasters));
+
+            Assert.True(ExposurePolicy.MayUseServerAi(exposed, player, ServerAiRule.Everyone));
+        }
+
+        // No choice stored: the rule a server always had.
+        Assert.Equal(ServerAiRule.Everyone, ExposurePolicy.ServerAiFor(exposed: false, null));
+        Assert.Equal(ServerAiRule.Admins, ExposurePolicy.ServerAiFor(exposed: true, null));
+        Assert.Equal(ServerAiRule.GameMasters, ExposurePolicy.ServerAiFor(exposed: true, ServerAiRule.GameMasters));
+    }
+
+    [Fact]
     public void Exposure_is_off_unless_the_launcher_turns_it_on()
     {
         IConfiguration Config(string? value) => new ConfigurationBuilder()

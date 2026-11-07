@@ -210,7 +210,11 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>כפתורי הבינה המלאכותית משתמשים כעת ב-{0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>{0} הוסר.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>לא הוגדר</value></data>
-  <data name="Page.AiSettings.ServerShared" xml:space="preserve"><value>כל חשבון בשרת הזה משתמש במודלים האלה כשאין לו מודל משלו, על חשבון המפתח של השרת. כל חשבון רשאי לשלוח {0} בקשות ו־{1} תמונות ביום; למנהל השרת אין הגבלה.</value></data>
+  <data name="Page.AiSettings.ServerWho.Everyone" xml:space="preserve"><value>כל חשבון בשרת הזה משתמש במודלים האלה כשאין לו מודל משלו, על חשבון המפתח של השרת.</value></data>
+  <data name="Page.AiSettings.ServerWho.GameMasters" xml:space="preserve"><value>מנחי משחק ומנהל השרת משתמשים במודלים האלה כשאין להם מודל משלהם, על חשבון המפתח של השרת. שחקנים צריכים מודל משלהם.</value></data>
+  <data name="Page.AiSettings.ServerWho.Admins" xml:space="preserve"><value>רק מנהל השרת משתמש במודלים האלה. כל השאר צריכים מודל משלהם.</value></data>
+  <data name="Page.AiSettings.ServerAllowance" xml:space="preserve"><value>כל חשבון רשאי לשלוח {0} בקשות ו־{1} תמונות ביום; למנהל השרת אין הגבלה.</value></data>
+  <data name="Page.AiSettings.ServerNotYours" xml:space="preserve"><value>החשבון שלך לא יכול להשתמש במפתח של השרת, ולכן כפתורי ה־AI צריכים מודל משלך (למעלה). מנהל השרת קובע מי יכול להשתמש בו.</value></data>
   <data name="Page.AiSettings.ServerUsedByYou" xml:space="preserve"><value>היום השתמשת בהם ל־{0} בקשות ו־{1} תמונות.</value></data>
   <data name="Page.AiSettings.ServerUsedByNoOne" xml:space="preserve"><value>איש לא השתמש בהם היום.</value></data>
   <data name="Page.AiSettings.ServerUsedHeading" xml:space="preserve"><value>שימוש היום:</value></data>

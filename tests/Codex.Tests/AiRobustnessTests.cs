@@ -48,6 +48,35 @@ public class AiRobustnessTests
     }
 
     [Fact]
+    public async Task TheServersKey_GoesOnlyToTheRolesTheAdminChose_AndAPlayerOutsideThemHasNoAiButtons()
+    {
+        var settings = new InMemoryServerSettings(new ServerSettingsDocument { ServerAi = ServerAiRule.GameMasters });
+        var gm = new UserDocument { Id = "users/gm", Roles = { UserRoles.Player, UserRoles.GameMaster } };
+        var player = new UserDocument { Id = "users/player", Roles = { UserRoles.Player } };
+        var users = Substitute.For<IUserRepository>();
+        users.GetUserByIdAsync("users/gm").Returns(gm);
+        users.GetUserByIdAsync("users/player").Returns(player);
+        var service = new AiProviderService(new EphemeralDataProtectionProvider(), users, new AIConfiguration { Provider = "ollama", ModelId = "local" }, new AIImageConfiguration(),
+            Substitute.For<IHttpClientFactory>(), NullLogger<AiProviderService>.Instance, new ConfigurationBuilder().Build(),
+            new ServerAiUsage(new ConfigurationBuilder().Build(), NullLogger<ServerAiUsage>.Instance), settings);
+
+        Assert.True(service.UsesServerKey(gm));
+        Assert.True(await service.IsConfiguredForAsync("users/gm"));
+        Assert.NotNull(service.Describe(gm));
+
+        Assert.Null(service.ClientFor(player));
+        Assert.False(await service.IsConfiguredForAsync("users/player"));
+        Assert.Null(service.Describe(player));
+        Assert.False(service.MayUseServerKey(player));
+        await Assert.ThrowsAsync<AiNotConfiguredException>(() => service.ReserveRequestsAsync("users/player", 3));
+
+        // Opened to everyone, the player falls back to it too; their own model still comes first.
+        await settings.UpdateAsync(s => s.ServerAi = ServerAiRule.Everyone);
+        Assert.True(service.UsesServerKey(player));
+        Assert.Equal(ServerAiRule.Everyone, service.ServerKeyRule);
+    }
+
+    [Fact]
     public void AStoredKey_IsReadableOnlyForTheUserItWasStoredFor()
     {
         var service = new AiProviderService(new EphemeralDataProtectionProvider(), Substitute.For<IUserRepository>(), new AIConfiguration(), new AIImageConfiguration(),

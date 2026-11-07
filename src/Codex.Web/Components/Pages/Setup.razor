@@ -124,7 +124,12 @@
             return;
         }
 
-        await Settings.UpdateAsync(s => s.SetupDone = false);
+        // A new server starts with the safe defaults stored at once; the server's AI key goes to Game Masters.
+        await Settings.UpdateAsync(s =>
+        {
+            s.SetupDone = false;
+            s.ServerAi ??= ServerAiRule.GameMasters;
+        });
         await UserRepository.CreateUserAsync(user);
         await Settings.LogAsync(new AdminLogDocument { ByUserId = user.Id, ByName = user.Username, Action = AdminAction.SetUp, TargetName = user.Username });
 

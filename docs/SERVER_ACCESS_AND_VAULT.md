@@ -1,6 +1,6 @@
 # Server access, roles and the character vault
 
-Design agreed 2026-11-07. Steps 1 to 4 are built (11 to 13); 5 and 6 are not. It covers who may use a server and what for: the first-time setup, server roles and approval,
+Design agreed 2026-11-07. Steps 1 to 4 are built (11 to 13); step 5 is under way (14); 6 is not. It covers who may use a server and what for: the first-time setup, server roles and approval,
 co-GMs, where the server may fetch from, players' own AI keys, and characters that live outside any campaign.
 
 ## 1. What is there today
@@ -113,7 +113,7 @@ Players already bring their own key; this widens what it is for, always built fr
 2. Co-GMs. Built (12).
 3. The fetch list. Built with step 1 (11).
 4. The vault and bringing characters in. Built (13).
-5. AI: notes, character creation and tweaks in both places, the server key per role.
+5. AI: notes, character creation and tweaks in both places, the server key per role. Under way (14).
 6. Storage limits, account deletion, export.
 
 ## 11. Step 1 as built (2026-11-07)
@@ -211,3 +211,17 @@ Players already bring their own key; this widens what it is for, always built fr
 - **Left**: vault portraits (and copying a portrait in either direction); picking which missing entries to leave out on an update
   request (everything missing is asked for); AI in the vault (step 5); exporting a vault (step 6).
 
+## 14. Step 5 as built (2026-11-08, under way)
+
+- **The server's key per role**: `ServerSettingsDocument.ServerAi` (`ServerAiRule`: Admins, Game Masters, Everyone), on the admin
+  page and as setup step 4 (fetching moved to 5). One rule (`ExposurePolicy.MayUseServerAi`) decides every path to the key: the
+  chat client, the picture model, reservations for long jobs, and whether AI buttons show at all (`IsConfiguredForAsync`). It reads
+  the settings without waiting (`IServerSettingsStore.Get`, the kept copy).
+  - **Decided**: the admin's choice stands while the server is open to the internet too, where every account is invited or approved.
+  - **Existing servers** have no value stored and keep the rule they had (everyone at home, the admin alone on the internet) until the
+    admin chooses; a new server's setup stores Game Masters.
+  - **Game Masters** means the server role: a player who is a co-GM in someone else's campaign does not qualify.
+  - AI settings says who may use the key, and tells someone outside the rule that they need a model of their own.
+  - Tests: the rule per role, open and not; the provider refusing a player and serving a GM, then the player once opened to
+    everyone; the copy and the log line. Mutants caught: the stored choice ignored, Game Masters refused, the copy dropping the
+    value, the log missing the change. The setup default was checked in the browser on a new server.

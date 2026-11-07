@@ -18,6 +18,16 @@ public sealed class RavenServerSettingsStore(RavenDbService dbService) : IServer
         return stored.Copy();
     }
 
+    public ServerSettingsDocument Get()
+    {
+        if (cached is { } hit) return hit.Copy();
+        using var session = dbService.Store.OpenSession();
+        var stored = session.Load<ServerSettingsDocument>(ServerSettingsDocument.DocumentId);
+        if (stored == null) return new ServerSettingsDocument();
+        cached = stored;
+        return stored.Copy();
+    }
+
     public async Task<ServerSettingsDocument> UpdateAsync(Action<ServerSettingsDocument> change)
     {
         for (var attempt = 1; ; attempt++)

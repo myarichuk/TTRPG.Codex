@@ -6,6 +6,7 @@
 @inject ICampaignRepository Campaigns
 @inject IServerSettingsStore Settings
 @inject AccountCheck Check
+@inject IConfiguration Configuration
 @inject AuthenticationStateProvider Auth
 
 @* The server admin's page (docs/SERVER_ACCESS_AND_VAULT.md 3): accounts, waiting ones first; the server's settings; and the log. *@
@@ -97,7 +98,7 @@ else
     <section class="mb-5" aria-labelledby="admin-settings">
         <h2 id="admin-settings">@L["Admin.Settings"]</h2>
         <form @onsubmit="SaveSettingsAsync" @onsubmit:preventDefault="true" data-testid="admin-settings-form">
-            <ServerSettingsForm Value="draft" />
+            <ServerSettingsForm Value="draft" Exposed="@ExposurePolicy.IsExposed(Configuration)" />
             <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@busy" data-testid="admin-settings-save">@L["Admin.Settings.Save"]</CodexButton>
         </form>
     </section>
@@ -315,6 +316,7 @@ else
         {
             s.SignUp = chosen.SignUp;
             s.CampaignCreation = chosen.CampaignCreation;
+            s.ServerAi = chosen.ServerAi;
             s.WebFetch = chosen.WebFetch;
             s.FetchSites = chosen.FetchSites.ToList();
         });

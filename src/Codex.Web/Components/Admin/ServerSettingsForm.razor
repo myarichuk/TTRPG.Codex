@@ -23,6 +23,18 @@
     </fieldset>
 }
 
+@if (Part is SettingsPart.ServerAi or SettingsPart.All)
+{
+    var ai = ExposurePolicy.ServerAiFor(Exposed, Value.ServerAi);
+    <fieldset class="mb-4" data-testid="settings-server-ai">
+        <legend class="@LegendClass">@L["Admin.Settings.ServerAi"]</legend>
+        <p class="field-hint">@L["Admin.Settings.ServerAi.Hint"]</p>
+        @Choice("server-ai-gm", "server-ai", ai == ServerAiRule.GameMasters, () => Value.ServerAi = ServerAiRule.GameMasters, "Admin.Settings.ServerAi.GameMasters", "Admin.Settings.ServerAi.GameMastersHint")
+        @Choice("server-ai-everyone", "server-ai", ai == ServerAiRule.Everyone, () => Value.ServerAi = ServerAiRule.Everyone, "Admin.Settings.ServerAi.Everyone", "Admin.Settings.ServerAi.EveryoneHint")
+        @Choice("server-ai-admins", "server-ai", ai == ServerAiRule.Admins, () => Value.ServerAi = ServerAiRule.Admins, "Admin.Settings.ServerAi.Admins", "Admin.Settings.ServerAi.AdminsHint")
+    </fieldset>
+}
+
 @if (Part is SettingsPart.Fetching or SettingsPart.All)
 {
     <fieldset class="mb-4" data-testid="settings-fetch">
@@ -49,7 +61,11 @@
 }
 
 @code {
-    public enum SettingsPart { All, SignUp, Campaigns, Fetching }
+    public enum SettingsPart { All, SignUp, Campaigns, ServerAi, Fetching }
+
+    /// <summary>The server is open to the internet: with no choice stored, only the admin uses the server's key (shown as such).</summary>
+    [Parameter]
+    public bool Exposed { get; set; }
 
     [Parameter, EditorRequired]
     public ServerSettingsDocument Value { get; set; } = null!;

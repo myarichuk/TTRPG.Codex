@@ -101,4 +101,13 @@
   <data name="Admin.Log.RoleTaken" xml:space="preserve"><value>{0} забрал(а) роль у {1}</value></data>
   <data name="Admin.Log.Deleted" xml:space="preserve"><value>{0} удалил(а) {1}</value></data>
   <data name="Admin.Log.SettingsChanged" xml:space="preserve"><value>{0} изменил(а) настройки сервера</value></data>
+  <data name="Admin.Setup.ServerAi" xml:space="preserve"><value>Кто может пользоваться ключом ИИ сервера?</value></data>
+  <data name="Admin.Settings.ServerAi" xml:space="preserve"><value>Кто может пользоваться ключом ИИ сервера</value></data>
+  <data name="Admin.Settings.ServerAi.Hint" xml:space="preserve"><value>Тот, у кого нет своей модели ИИ, использует ключ из настроек сервера, если он есть, — с дневным лимитом на каждого. Свою модель может добавить каждый.</value></data>
+  <data name="Admin.Settings.ServerAi.GameMasters" xml:space="preserve"><value>Мастера</value></data>
+  <data name="Admin.Settings.ServerAi.GameMastersHint" xml:space="preserve"><value>Учётные записи, которые администратор сделал мастерами, и сам администратор. Игрок, который со-мастер в чужой кампании, мастером не считается.</value></data>
+  <data name="Admin.Settings.ServerAi.Everyone" xml:space="preserve"><value>Все с одобренной учётной записью</value></data>
+  <data name="Admin.Settings.ServerAi.EveryoneHint" xml:space="preserve"><value>И игроки тоже. Дневной лимит у каждого остаётся.</value></data>
+  <data name="Admin.Settings.ServerAi.Admins" xml:space="preserve"><value>Только администраторы</value></data>
+  <data name="Admin.Settings.ServerAi.AdminsHint" xml:space="preserve"><value>Только администраторы сервера. Все остальные используют свои модели.</value></data>
 </root>

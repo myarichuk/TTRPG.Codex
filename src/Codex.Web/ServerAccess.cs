@@ -67,6 +67,7 @@ public static class SettingsChange
         var parts = new List<string>();
         if (before.SignUp != after.SignUp) parts.Add($"sign-up: {before.SignUp} → {after.SignUp}");
         if (before.CampaignCreation != after.CampaignCreation) parts.Add($"campaigns: {before.CampaignCreation} → {after.CampaignCreation}");
+        if (before.ServerAi != after.ServerAi) parts.Add($"server AI key: {before.ServerAi?.ToString() ?? "as before"} → {after.ServerAi?.ToString() ?? "as before"}");
         if (before.WebFetch != after.WebFetch) parts.Add($"fetching: {before.WebFetch} → {after.WebFetch}");
         var added = after.FetchSites.Except(before.FetchSites, StringComparer.Ordinal).ToList();
         var removed = before.FetchSites.Except(after.FetchSites, StringComparer.Ordinal).ToList();

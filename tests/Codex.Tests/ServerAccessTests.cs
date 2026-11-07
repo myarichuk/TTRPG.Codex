@@ -156,6 +156,11 @@ public class ServerAccessTests
         Assert.Contains("Approval → Open", text);
         Assert.Contains("added: example.com", text);
         Assert.Contains("removed: i.imgur.com", text);
+
+        // The server's AI key, and a copy that keeps it (the store hands out copies).
+        after.ServerAi = ServerAiRule.GameMasters;
+        Assert.Equal(ServerAiRule.GameMasters, after.Copy().ServerAi);
+        Assert.Contains("server AI key: as before → GameMasters", SettingsChange.Describe(before, after)!);
     }
 
     // The cookie handler's check on every request.
@@ -240,6 +245,11 @@ public class ServerSettingsStoreTests(RavenDbFixture fixture) : IClassFixture<Ra
         Assert.True(moved.SetupDone);
         Assert.Equal(SignUpRule.Approval, moved.SignUp);
         Assert.Equal(WebFetchRule.AnyPublic, moved.WebFetch);
+        // The server's AI key keeps the rule it had (everyone at home, the admin alone on the internet) until the admin chooses.
+        Assert.Null(moved.ServerAi);
+        await settings.UpdateAsync(s => s.ServerAi = ServerAiRule.GameMasters);
+        Assert.Equal(ServerAiRule.GameMasters, settings.Get().ServerAi);
+        Assert.Equal(ServerAiRule.GameMasters, new RavenServerSettingsStore(db).Get().ServerAi);
 
         // Changes keep a clean list, and the log reads back newest first.
         var saved = await settings.UpdateAsync(s => s.FetchSites = ["HTTPS://Example.com/x", "not a site", "example.com"]);

@@ -43,6 +43,7 @@ public static class TestSeedEndpoints
                 s.SetupDone = wanted.SetupDone;
                 s.SignUp = wanted.SignUp;
                 s.CampaignCreation = wanted.CampaignCreation;
+                s.ServerAi = wanted.ServerAi;
                 s.WebFetch = wanted.WebFetch;
                 s.FetchSites = wanted.FetchSites.ToList();
             });

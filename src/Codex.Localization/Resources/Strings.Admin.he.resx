@@ -101,4 +101,13 @@
   <data name="Admin.Log.RoleTaken" xml:space="preserve"><value>{0} לקח/ה תפקיד מ-{1}</value></data>
   <data name="Admin.Log.Deleted" xml:space="preserve"><value>{0} מחק/ה את {1}</value></data>
   <data name="Admin.Log.SettingsChanged" xml:space="preserve"><value>{0} שינה/תה את הגדרות השרת</value></data>
+  <data name="Admin.Setup.ServerAi" xml:space="preserve"><value>מי רשאי להשתמש במפתח ה־AI של השרת?</value></data>
+  <data name="Admin.Settings.ServerAi" xml:space="preserve"><value>מי יכול להשתמש במפתח ה־AI של השרת</value></data>
+  <data name="Admin.Settings.ServerAi.Hint" xml:space="preserve"><value>מי שאין לו מודל AI משלו משתמש במפתח שבהגדרות השרת, אם יש כזה, עם מכסה יומית לכל אחד. כל אחד תמיד יכול להוסיף מודל משלו.</value></data>
+  <data name="Admin.Settings.ServerAi.GameMasters" xml:space="preserve"><value>מנחי משחק</value></data>
+  <data name="Admin.Settings.ServerAi.GameMastersHint" xml:space="preserve"><value>חשבונות שמנהל השרת הפך למנחי משחק, והמנהל עצמו. שחקן שהוא מנחה־שותף בקמפיין של מישהו אחר אינו מנחה משחק.</value></data>
+  <data name="Admin.Settings.ServerAi.Everyone" xml:space="preserve"><value>כל מי שיש לו חשבון מאושר</value></data>
+  <data name="Admin.Settings.ServerAi.EveryoneHint" xml:space="preserve"><value>גם שחקנים. לכל חשבון עדיין יש מכסה יומית.</value></data>
+  <data name="Admin.Settings.ServerAi.Admins" xml:space="preserve"><value>רק מנהלים</value></data>
+  <data name="Admin.Settings.ServerAi.AdminsHint" xml:space="preserve"><value>רק מנהלי השרת. כל השאר משתמשים במודל משלהם.</value></data>
 </root>

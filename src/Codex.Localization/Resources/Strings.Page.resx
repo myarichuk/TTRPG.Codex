@@ -210,7 +210,11 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>AI buttons now use {0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>Removed {0}.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>not configured</value></data>
-  <data name="Page.AiSettings.ServerShared" xml:space="preserve"><value>Every account on this server uses these models when it has none of its own, on the server's key. Each account may make {0} requests and {1} pictures a day; the server's admin has no limit.</value></data>
+  <data name="Page.AiSettings.ServerWho.Everyone" xml:space="preserve"><value>Every account on this server uses these models when it has none of its own, on the server's key.</value></data>
+  <data name="Page.AiSettings.ServerWho.GameMasters" xml:space="preserve"><value>Game Masters and the admin use these models when they have none of their own, on the server's key. Players need a model of their own.</value></data>
+  <data name="Page.AiSettings.ServerWho.Admins" xml:space="preserve"><value>Only the server's admin uses these models. Everyone else needs a model of their own.</value></data>
+  <data name="Page.AiSettings.ServerAllowance" xml:space="preserve"><value>Each account may make {0} requests and {1} pictures a day on it; the server's admin has no limit.</value></data>
+  <data name="Page.AiSettings.ServerNotYours" xml:space="preserve"><value>Your account can't use the server's key, so AI buttons need a model of your own above. The admin chooses who can use it.</value></data>
   <data name="Page.AiSettings.ServerUsedByYou" xml:space="preserve"><value>You have used {0} requests and {1} pictures on them today.</value></data>
   <data name="Page.AiSettings.ServerUsedByNoOne" xml:space="preserve"><value>No one has used them today.</value></data>
   <data name="Page.AiSettings.ServerUsedHeading" xml:space="preserve"><value>Used today:</value></data>

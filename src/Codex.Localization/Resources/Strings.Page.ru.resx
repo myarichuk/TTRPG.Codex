@@ -210,7 +210,11 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>Кнопки ИИ теперь используют {0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>Удалено: {0}.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>не настроено</value></data>
-  <data name="Page.AiSettings.ServerShared" xml:space="preserve"><value>Каждая учётная запись на этом сервере использует эти модели, если у неё нет своих, — за счёт ключа сервера. Каждой учётной записи доступно {0} запросов и {1} изображений в день; у администратора сервера ограничений нет.</value></data>
+  <data name="Page.AiSettings.ServerWho.Everyone" xml:space="preserve"><value>Каждая учётная запись на этом сервере использует эти модели, если у неё нет своих, — за счёт ключа сервера.</value></data>
+  <data name="Page.AiSettings.ServerWho.GameMasters" xml:space="preserve"><value>Мастера и администратор используют эти модели, если у них нет своих, — за счёт ключа сервера. Игрокам нужна своя модель.</value></data>
+  <data name="Page.AiSettings.ServerWho.Admins" xml:space="preserve"><value>Эти модели использует только администратор сервера. Всем остальным нужна своя модель.</value></data>
+  <data name="Page.AiSettings.ServerAllowance" xml:space="preserve"><value>Каждой учётной записи доступно {0} запросов и {1} изображений в день; у администратора сервера ограничений нет.</value></data>
+  <data name="Page.AiSettings.ServerNotYours" xml:space="preserve"><value>Ваша учётная запись не может использовать ключ сервера, поэтому для кнопок ИИ нужна своя модель (выше). Кто может им пользоваться, решает администратор.</value></data>
   <data name="Page.AiSettings.ServerUsedByYou" xml:space="preserve"><value>Сегодня вы использовали {0} запросов и {1} изображений.</value></data>
   <data name="Page.AiSettings.ServerUsedByNoOne" xml:space="preserve"><value>Сегодня ими никто не пользовался.</value></data>
   <data name="Page.AiSettings.ServerUsedHeading" xml:space="preserve"><value>Использовано сегодня:</value></data>

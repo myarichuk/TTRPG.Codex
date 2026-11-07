@@ -37,10 +37,19 @@ public sealed class AiProviderService(
     IHttpClientFactory httpClients,
     ILogger<AiProviderService> logger,
     IConfiguration configuration,
-    ServerAiUsage usage)
+    ServerAiUsage usage,
+    IServerSettingsStore? settings = null)
 {
-    // While the server is open to the internet only its admin may use the key in the server's own configuration.
-    private bool ServerKeyAllowedFor(UserDocument? user) => ExposurePolicy.MayUseServerAi(ExposurePolicy.IsExposed(configuration), user);
+    // Who may use the key in the server's own configuration is the admin's choice (ServerSettingsDocument.ServerAi); every
+    // path to that key (the chat client, the picture model, reservations, the AI buttons showing at all) asks this one rule.
+    private bool ServerKeyAllowedFor(UserDocument? user) =>
+        ExposurePolicy.MayUseServerAi(ExposurePolicy.IsExposed(configuration), user, settings?.Get().ServerAi);
+
+    /// <summary>Whether <paramref name="user"/> may use the server's key at all, whether or not one is configured.</summary>
+    public bool MayUseServerKey(UserDocument? user) => ServerKeyAllowedFor(user);
+
+    /// <summary>Who may use the server's key now, for saying so.</summary>
+    public ServerAiRule ServerKeyRule => ExposurePolicy.ServerAiFor(ExposurePolicy.IsExposed(configuration), settings?.Get().ServerAi);
 
     // A stranger's own provider must not aim at this computer or its network while the server is on the internet.
     // The server's admin owns this computer and may use whatever runs on it.

@@ -4,6 +4,7 @@
 @using System.Security.Claims
 @inject IServerSettingsStore Settings
 @inject NavigationManager Nav
+@inject IConfiguration Configuration
 @inject AuthenticationStateProvider Auth
 
 @* The first-time setup after the admin's account (docs/SERVER_ACCESS_AND_VAULT.md 2): one choice a step, each already set to the safe
@@ -24,7 +25,7 @@
         @if (step < LastStep)
         {
             <p>@L["Admin.Setup.ChangeLater"]</p>
-            <ServerSettingsForm Value="value" Part="Part" />
+            <ServerSettingsForm Value="value" Part="Part" Exposed="@ExposurePolicy.IsExposed(Configuration)" />
         }
         else
         {
@@ -60,8 +61,8 @@
 </div>
 
 @code {
-    /// <summary>1 is the admin's account (<c>/setup</c>); then sign-up, campaigns, fetching, and what to do next.</summary>
-    public const int LastStep = 5;
+    /// <summary>1 is the admin's account (<c>/setup</c>); then sign-up, campaigns, the server's AI key, fetching, and what to do next.</summary>
+    public const int LastStep = 6;
 
     private ServerSettingsDocument? value;
     private ServerSettingsDocument? saved;
@@ -73,6 +74,7 @@
     {
         2 => ServerSettingsForm.SettingsPart.SignUp,
         3 => ServerSettingsForm.SettingsPart.Campaigns,
+        4 => ServerSettingsForm.SettingsPart.ServerAi,
         _ => ServerSettingsForm.SettingsPart.Fetching
     };
 
@@ -80,7 +82,8 @@
     {
         2 => "Admin.Setup.SignUp",
         3 => "Admin.Setup.Campaigns",
-        4 => "Admin.Setup.Fetch",
+        4 => "Admin.Setup.ServerAi",
+        5 => "Admin.Setup.Fetch",
         _ => "Admin.Setup.Done"
     };
 
@@ -110,6 +113,7 @@
             {
                 s.SignUp = chosen.SignUp;
                 s.CampaignCreation = chosen.CampaignCreation;
+                s.ServerAi = chosen.ServerAi;
                 s.WebFetch = chosen.WebFetch;
                 s.FetchSites = chosen.FetchSites.ToList();
                 if (done) s.SetupDone = true;

@@ -42,7 +42,12 @@ else
                 @if (Providers.ServerConfigured || Providers.ServerImageConfigured)
                 {
                     @* Everyone on a LAN server falls back to this key, so say so and show what it has cost today (F14). *@
-                    <p class="small mt-2 mb-1" data-testid="ai-server-shared">@L["Page.AiSettings.ServerShared", Allowance(ServerAiUsage.Kind.Text), Allowance(ServerAiUsage.Kind.Image)]</p>
+                    @* Who falls back to this key is the admin's choice (docs/SERVER_ACCESS_AND_VAULT.md 6); each of them has a daily allowance (F14). *@
+                    <p class="small mt-2 mb-1" data-testid="ai-server-shared">@(Providers.ServerKeyRule switch { ServerAiRule.Admins => L["Page.AiSettings.ServerWho.Admins"], ServerAiRule.GameMasters => L["Page.AiSettings.ServerWho.GameMasters"], _ => L["Page.AiSettings.ServerWho.Everyone"] }) @L["Page.AiSettings.ServerAllowance", Allowance(ServerAiUsage.Kind.Text), Allowance(ServerAiUsage.Kind.Image)]</p>
+                    @if (!Providers.MayUseServerKey(user))
+                    {
+                        <p class="small mb-1" data-testid="ai-server-not-yours">@L["Page.AiSettings.ServerNotYours"]</p>
+                    }
                     @if (serverUse == null)
                     {
                         <p class="small-muted mb-0" data-testid="ai-server-used">@L["Page.AiSettings.ServerUsedByYou", Usage.UsedToday(user.Id, ServerAiUsage.Kind.Text), Usage.UsedToday(user.Id, ServerAiUsage.Kind.Image)]</p>

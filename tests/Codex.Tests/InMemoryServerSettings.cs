@@ -10,6 +10,8 @@ public sealed class InMemoryServerSettings(ServerSettingsDocument? start = null)
 
     public Task<ServerSettingsDocument> GetAsync() => Task.FromResult(value.Copy());
 
+    public ServerSettingsDocument Get() => value.Copy();
+
     public Task<ServerSettingsDocument> UpdateAsync(Action<ServerSettingsDocument> change)
     {
         var next = value.Copy();
