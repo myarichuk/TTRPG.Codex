@@ -21,6 +21,9 @@ public sealed class AiAssistant(IChatClient chat)
     public Task<string> RewriteAsync(RewriteRequest request, CancellationToken ct = default) =>
         CompleteAsync(AiPrompts.Rewrite(request), ct);
 
+    public Task<string> TidyAsync(TidyRequest request, CancellationToken ct = default) =>
+        CompleteAsync(AiPrompts.Tidy(request), ct);
+
     public Task<string> WriteWikiPageAsync(WikiPageRequest request, CancellationToken ct = default) =>
         CompleteAsync(AiPrompts.WikiPage(request), ct);
 

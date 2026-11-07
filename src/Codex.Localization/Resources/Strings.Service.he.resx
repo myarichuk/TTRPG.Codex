@@ -16,4 +16,5 @@
   <data name="Service.Art.BadType" xml:space="preserve"><value>מודל התמונות שלח קובץ {0}, שאי אפשר לשמור. נסו מודל אחר.</value></data>
   <data name="Service.Art.TooBig" xml:space="preserve"><value>התמונה שנוצרה גדולה מ-6MB. בחרו גודל קטן יותר או מודל אחר.</value></data>
   <data name="Service.Ai.KeyUnreadable" xml:space="preserve"><value>לא ניתן עוד לקרוא את מפתח הבינה המלאכותית השמור. הזינו אותו מחדש בהגדרות הבינה המלאכותית.</value></data>
+  <data name="Service.Ai.TidyLostMention" xml:space="preserve"><value>ה־AI שינה או השמיט שם שמקשר לדמות, למקום או לחפץ, ולכן ההערות נשארו כפי שהיו. נסו שוב.</value></data>
 </root>

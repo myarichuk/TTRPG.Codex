@@ -232,3 +232,9 @@ Players already bring their own key; this widens what it is for, always built fr
   draft cannot change those. The sheet's history rewrite (written for players) and the level-up suggestion are on in the vault.
   Checked in the browser with a local fake model: the draft's options came from the server's packs, and a player outside the key's
   rule was not offered the concept start. Mutants caught: the campaign or the owner taken from what the draft filled.
+- **Tidy up**: on a player's own journal (the journal page and the session page's "My journal"), `TidyNotesButton` sends only that
+  text (`AiPrompts.Tidy`: spelling, layout, structure; nothing added or dropped; the notes' own language; mentions as written). The
+  reply is refused (`Service.Ai.TidyLostMention`) when it is empty or names other people, places or items than the notes did, read
+  through the page's mention directory. It replaces the box only if the box still holds what was sent, and "Put my text back" undoes
+  it. Not on table notes or the GM's texts. Tests: the prompt carries only the notes; a reply that keeps every mention is taken, one
+  that loses or changes one (or is empty) is refused. Mutants caught: no mention check, items not compared, an empty reply taken.

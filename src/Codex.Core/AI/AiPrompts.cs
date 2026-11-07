@@ -32,6 +32,9 @@ public sealed record RewriteRequest(
     string? CampaignContext = null,
     string? Language = null);
 
+/// <summary>Someone's own notes to tidy: spelling, formatting and structure, never new facts (docs/SERVER_ACCESS_AND_VAULT.md 6).</summary>
+public sealed record TidyRequest(string Text);
+
 /// <summary>A page of the campaign wiki to write or expand, for the DM.</summary>
 /// <param name="Kind">What the page is about: "lore", "person", "place", "faction" or "quest".</param>
 /// <param name="Related">Titles of other pages it may link to with [[Title]].</param>
@@ -208,6 +211,18 @@ public static class AiPrompts
         sb.AppendLine().AppendLine("Instruction: " + (string.IsNullOrWhiteSpace(r.Instruction) ? "Polish and expand the current text into two or three paragraphs." : r.Instruction.Trim()));
         sb.AppendLine().AppendLine("Current text:").AppendLine(string.IsNullOrWhiteSpace(r.CurrentText) ? "(none yet - write it from the facts)" : r.CurrentText);
         return (system, sb.ToString());
+    }
+
+    /// <summary>Tidies someone's own notes. The notes keep their language (they may not be written in the one the app is read in),
+    /// their facts and their links; only spelling, punctuation and layout change.</summary>
+    public static (string System, string User) Tidy(TidyRequest r)
+    {
+        var system = "You tidy up a player's own notes from a tabletop role-playing campaign. Fix spelling, grammar and punctuation, and give the notes a clear layout " +
+                     "in Markdown: short paragraphs, bullet lists for lists of things, and headings only when the notes are long. Put related points together and drop " +
+                     "exact repeats. Never add anything: no new facts, names, events, guesses, advice or comments, and never drop a fact or a name. Keep the writer's own " +
+                     "voice and the language the notes are written in. Words that start with @, # or $ (\"@Mara of the Tides\", \"#Saltmarsh\") and anything in double " +
+                     "square brackets (\"[[actor:x]]\") link to people, places and items: keep each one exactly as written. Reply with the tidied notes only.";
+        return (system, "Notes:\n" + r.Text);
     }
 
     /// <summary>How to keep a secret in a text the players may read, as a prompt says it. See <c>SecretText</c>.</summary>

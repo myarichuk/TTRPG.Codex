@@ -69,4 +69,11 @@
   <data name="Common.Art.RemoveTitle" xml:space="preserve"><value>Удалить это изображение?</value></data>
   <data name="Common.Art.RemoveBody" xml:space="preserve"><value>Изображение будет удалено. Чтобы вернуть его, добавьте или нарисуйте его заново.</value></data>
   <data name="Common.Art.Remove" xml:space="preserve"><value>Удалить изображение</value></data>
+  <data name="Common.Tidy" xml:space="preserve"><value>Привести в порядок</value></data>
+  <data name="Common.Tidy.Hint" xml:space="preserve"><value>ИИ исправит орфографию и оформление. Он ничего не добавит и сохранит все имена.</value></data>
+  <data name="Common.Tidy.Working" xml:space="preserve"><value>Навожу порядок…</value></data>
+  <data name="Common.Tidy.Done" xml:space="preserve"><value>Готово. Проверьте и сохраните.</value></data>
+  <data name="Common.Tidy.PutBack" xml:space="preserve"><value>Вернуть мой текст</value></data>
+  <data name="Common.Tidy.Changed" xml:space="preserve"><value>Заметки изменились, пока ИИ работал, поэтому ничего не заменено.</value></data>
+  <data name="Common.Tidy.Failed" xml:space="preserve"><value>Не удалось привести заметки в порядок: {0}</value></data>
 </root>

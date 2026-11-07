@@ -69,4 +69,11 @@
   <data name="Common.Art.RemoveTitle" xml:space="preserve"><value>Remove this picture?</value></data>
   <data name="Common.Art.RemoveBody" xml:space="preserve"><value>The picture is deleted. To have it back, add or draw it again.</value></data>
   <data name="Common.Art.Remove" xml:space="preserve"><value>Remove picture</value></data>
+  <data name="Common.Tidy" xml:space="preserve"><value>Tidy up</value></data>
+  <data name="Common.Tidy.Hint" xml:space="preserve"><value>The AI fixes spelling and layout. It adds nothing and keeps every name.</value></data>
+  <data name="Common.Tidy.Working" xml:space="preserve"><value>Tidying…</value></data>
+  <data name="Common.Tidy.Done" xml:space="preserve"><value>Tidied. Check it, then save.</value></data>
+  <data name="Common.Tidy.PutBack" xml:space="preserve"><value>Put my text back</value></data>
+  <data name="Common.Tidy.Changed" xml:space="preserve"><value>The notes changed while the AI worked, so nothing was replaced.</value></data>
+  <data name="Common.Tidy.Failed" xml:space="preserve"><value>Could not tidy the notes: {0}</value></data>
 </root>
