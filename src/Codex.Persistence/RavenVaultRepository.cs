@@ -37,20 +37,20 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
         return clean.Length > MaxName ? clean[..MaxName] : clean;
     }
 
-    public async Task<ActorDocument> CreateAsync(string userId, string systemId, string name)
+    public async Task<ActorDocument> CreateAsync(string userId, string systemId, string name, Action<ActorDocument>? fill = null)
     {
         if (string.IsNullOrEmpty(userId) || string.IsNullOrWhiteSpace(systemId)) throw new ArgumentException("A vault character needs an owner and a system.");
-        var actor = new ActorDocument
-        {
-            Id = Guid.NewGuid().ToString(),
-            CampaignId = string.Empty,
-            SystemId = systemId,
-            OwnerUserId = userId,
-            Kind = ActorKind.PlayerCharacter,
-            Name = CleanName(name, "New character"),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var actor = new ActorDocument { Name = name };
+        fill?.Invoke(actor);
+        actor.Id = Guid.NewGuid().ToString();
+        actor.CampaignId = string.Empty;
+        actor.SystemId = systemId;
+        actor.OwnerUserId = userId;
+        actor.Kind = ActorKind.PlayerCharacter;
+        actor.VaultSourceId = null;
+        actor.Name = CleanName(actor.Name, "New character");
+        actor.CreatedAt = DateTime.UtcNow;
+        actor.UpdatedAt = DateTime.UtcNow;
         using var session = dbService.Store.OpenAsyncSession();
         await session.StoreAsync(actor);
         await session.SaveChangesAsync();

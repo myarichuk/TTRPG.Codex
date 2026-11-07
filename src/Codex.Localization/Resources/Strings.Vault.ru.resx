@@ -23,4 +23,14 @@
   <data name="Vault.DeleteBody" xml:space="preserve"><value>Персонаж будет удалён навсегда. Копии, уже взятые в кампании, останутся там.</value></data>
   <data name="Vault.Deleted" xml:space="preserve"><value>«{0}» удалён.</value></data>
   <data name="Vault.Back" xml:space="preserve"><value>Мои персонажи</value></data>
+  <data name="Vault.StartFrom" xml:space="preserve"><value>Начать с</value></data>
+  <data name="Vault.StartBlank" xml:space="preserve"><value>Пустого листа</value></data>
+  <data name="Vault.StartConcept" xml:space="preserve"><value>Идеи: ИИ набросает лист и историю</value></data>
+  <data name="Vault.Concept" xml:space="preserve"><value>Идея</value></data>
+  <data name="Vault.ConceptPlaceholder" xml:space="preserve"><value>например: бывший пират, ставший храмовым стражем, 3-й уровень.</value></data>
+  <data name="Vault.ConceptHint" xml:space="preserve"><value>ИИ выбирает классы, народы, снаряжение и прочее только из библиотеки сервера для этой системы. Потом проверьте лист.</value></data>
+  <data name="Vault.Generate" xml:space="preserve"><value>Набросать персонажа</value></data>
+  <data name="Vault.Generating" xml:space="preserve"><value>Набрасываю…</value></data>
+  <data name="Vault.NoAi" xml:space="preserve"><value>Для вас не настроена модель ИИ. Добавьте её в настройках ИИ.</value></data>
+  <data name="Vault.AiFailed" xml:space="preserve"><value>ИИ не смог набросать персонажа: {0}</value></data>
 </root>

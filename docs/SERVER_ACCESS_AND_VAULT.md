@@ -188,7 +188,7 @@ Players already bring their own key; this widens what it is for, always built fr
 - **The sheet**: `/vault/{id}` is the campaign sheet (`ActorSheet`) with `Vault` set. It is built against the server's packs for the
   system and no campaign's homebrew (`CampaignAccess.Vault`, `VaultService.CampaignFor`), its Library links go to `/library/{system}`,
   it saves through the vault repository with the same "changed meanwhile" check, and it leaves out what belongs to a campaign: lore,
-  table quotes and mentions, the wiki page, the portrait and its drawing, and the AI buttons (AI in the vault is step 5).
+  table quotes and mentions, the wiki page, and the portrait and its drawing. Its AI buttons came with step 5 (14).
 - **Isolation**: every campaign-side actor read and write refuses a vault character, including an access with no campaign;
   `DeleteAllForCampaignAsync("")` does nothing; `CampaignAccessResolver.NowAsync` refuses an empty campaign id.
 - **Bringing one in**: Cast has "Bring a character". It lists the caller's characters for the campaign's system and what each uses
@@ -225,3 +225,10 @@ Players already bring their own key; this widens what it is for, always built fr
   - Tests: the rule per role, open and not; the provider refusing a player and serving a GM, then the player once opened to
     everyone; the copy and the log line. Mutants caught: the stored choice ignored, Game Masters refused, the copy dropping the
     value, the log missing the change. The setup default was checked in the browser on a new server.
+- **AI in the vault**: New offers a blank sheet or a concept, as Cast does. The draft is made against the server's packs for the
+  system (`VaultService.CampaignFor`, no homebrew), only for someone with a model (their own, or the server's key under its rule).
+  A new vault character starts on the system's starting sheet (`CastService.NewSheet`) either way; `IVaultRepository.CreateAsync`
+  takes what the draft fills and then sets what makes it a vault character (owner, no campaign, no source, player character), so a
+  draft cannot change those. The sheet's history rewrite (written for players) and the level-up suggestion are on in the vault.
+  Checked in the browser with a local fake model: the draft's options came from the server's packs, and a player outside the key's
+  rule was not offered the concept start. Mutants caught: the campaign or the owner taken from what the draft filled.

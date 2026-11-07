@@ -23,4 +23,14 @@
   <data name="Vault.DeleteBody" xml:space="preserve"><value>הדמות תימחק לצמיתות. עותקים שכבר נמצאים במערכות יישארו שם.</value></data>
   <data name="Vault.Deleted" xml:space="preserve"><value>{0} נמחקה.</value></data>
   <data name="Vault.Back" xml:space="preserve"><value>הדמויות שלי</value></data>
+  <data name="Vault.StartFrom" xml:space="preserve"><value>להתחיל מ־</value></data>
+  <data name="Vault.StartBlank" xml:space="preserve"><value>גיליון ריק</value></data>
+  <data name="Vault.StartConcept" xml:space="preserve"><value>רעיון: ה־AI ינסח את הגיליון והיסטוריה</value></data>
+  <data name="Vault.Concept" xml:space="preserve"><value>רעיון</value></data>
+  <data name="Vault.ConceptPlaceholder" xml:space="preserve"><value>למשל: פיראט לשעבר שהפך לשומר מקדש, דרגה 3.</value></data>
+  <data name="Vault.ConceptHint" xml:space="preserve"><value>ה־AI בוחר מחלקות, גזעים, ציוד וכל השאר רק מהספרייה של השרת לשיטה הזו. בדקו את הגיליון אחר כך.</value></data>
+  <data name="Vault.Generate" xml:space="preserve"><value>לנסח את הדמות</value></data>
+  <data name="Vault.Generating" xml:space="preserve"><value>מנסח…</value></data>
+  <data name="Vault.NoAi" xml:space="preserve"><value>לא הוגדר עבורך מודל AI. הוסיפו אחד בהגדרות ה־AI.</value></data>
+  <data name="Vault.AiFailed" xml:space="preserve"><value>ה־AI לא הצליח לנסח דמות: {0}</value></data>
 </root>

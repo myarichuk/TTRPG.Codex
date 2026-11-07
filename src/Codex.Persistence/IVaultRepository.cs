@@ -13,8 +13,9 @@ public interface IVaultRepository
     /// <summary>One of the caller's vault characters, or null when there is none by that id or it is someone else's.</summary>
     Task<ActorDocument?> GetAsync(string actorId, string userId);
 
-    /// <summary>A new, blank player character in the caller's vault, for <paramref name="systemId"/>.</summary>
-    Task<ActorDocument> CreateAsync(string userId, string systemId, string name);
+    /// <summary>A new player character in the caller's vault, for <paramref name="systemId"/>. <paramref name="fill"/> starts its
+    /// sheet and history (the system's defaults, an AI draft); what makes it a vault character is set after it and cannot be changed by it.</summary>
+    Task<ActorDocument> CreateAsync(string userId, string systemId, string name, Action<ActorDocument>? fill = null);
 
     /// <summary>Saves the name, sheet and history of one of the caller's vault characters; its owner, system and place
     /// outside every campaign never change. False when it is not theirs. Throws <c>Actor.Sheet.ChangedMeanwhile</c> when

@@ -32,6 +32,32 @@ public class VaultTests : IClassFixture<RavenDbFixture>
     private static string User() => "user-" + Guid.NewGuid().ToString("N");
 
     [Fact]
+    public async Task ANewVaultCharacter_StartsFromWhatItIsGiven_ButStaysInItsOwnersVault_Async()
+    {
+        var owner = User();
+        var created = await _vault.CreateAsync(owner, "srd5e", "", actor =>
+        {
+            // A draft fills the sheet and the history; it cannot make the character someone else's or put it in a campaign.
+            actor.Name = "Mira";
+            actor.Sheet["species"] = "elf";
+            actor.Biography = "Sailed with the Red Gull.";
+            actor.CampaignId = "campaigns/elsewhere";
+            actor.OwnerUserId = "someone-else";
+            actor.VaultSourceId = "vault-x";
+            actor.Kind = ActorKind.Monster;
+        });
+
+        var stored = (await _vault.GetAsync(created.Id, owner))!;
+        Assert.Equal(("Mira", "elf", "Sailed with the Red Gull."), (stored.Name, stored.Sheet["species"]?.ToString(), stored.Biography));
+        Assert.True(stored.IsVault);
+        Assert.Equal((owner, "srd5e", (string?)null, ActorKind.PlayerCharacter), (stored.OwnerUserId, stored.SystemId, stored.VaultSourceId, stored.Kind));
+        Assert.Null(await _actors.GetVisibleAsync(created.Id, new CampaignAccess("campaigns/elsewhere", "someone-else", CampaignRole.DM)));
+
+        // With no name at all it still gets one.
+        Assert.Equal("New character", (await _vault.CreateAsync(owner, "srd5e", " ")).Name);
+    }
+
+    [Fact]
     public async Task AVaultCharacter_IsItsOwnersAlone_AndNoCampaignAccessReachesIt_Async()
     {
         var owner = User();

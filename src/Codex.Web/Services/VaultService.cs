@@ -1,4 +1,5 @@
 using Codex.Core;
+using Codex.Core.AI;
 using Codex.Core.Rules;
 using Codex.Persistence;
 using Codex.Persistence.Runtime;
@@ -20,8 +21,22 @@ public sealed class VaultService(
     CampaignLibrary library,
     MentionSources mentionSources,
     CampaignRuntimeManager runtime,
-    ComponentRegistry components)
+    ComponentRegistry components,
+    CastService cast)
 {
+    /// <summary>A new character in <paramref name="userId"/>'s vault on the system's starting sheet (the default attribute method),
+    /// or from an AI <paramref name="draft"/> made against the server's packs (<see cref="CampaignFor"/>) with its history.</summary>
+    public Task<ActorDocument> CreateAsync(string userId, string systemId, string name, CharacterDraft? draft = null)
+    {
+        var system = catalog.GetDefinition(systemId);
+        return vault.CreateAsync(userId, systemId, draft?.Name ?? name, actor =>
+        {
+            cast.NewSheet(actor, systemId, system, draft);
+            if (draft != null) actor.Biography = draft.Biography;
+            ActorSheetSync.ApplySheetToState(actor, system, components);
+        });
+    }
+
     /// <summary>What a vault character is built against: the server's packs for its system, no campaign's homebrew.</summary>
     public static CampaignDocument CampaignFor(string systemId) => new() { Id = string.Empty, SystemId = systemId };
 

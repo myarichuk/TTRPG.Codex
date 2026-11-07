@@ -412,8 +412,7 @@ else
                                     Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography" Secrets="@access.IsDm"
                                     Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(busy == "bio")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
-                        @if (!Vault)
-                        {
+                        @* In the vault too (docs/SERVER_ACCESS_AND_VAULT.md 6): the history is the player's own, written for players. *@
                         <div class="ai-row">
                             <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
                             <input id="bio-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.BioInstructionPh"]" @bind="bioInstruction" />
@@ -421,7 +420,6 @@ else
                                 @(string.IsNullOrWhiteSpace(editBiography) ? L["Actor.Sheet.WriteAi"] : L["Actor.Sheet.RewriteAi"])
                             </CodexButton>
                         </div>
-                        }
                         <p id="bio-mention-hint" class="field-hint">@L["Actor.Sheet.MentionHint"]</p>
                     </MarkdownEditor>
                 }
@@ -579,10 +577,7 @@ else
                         <p class="small-muted">@L["Actor.Sheet.LevelUpIntro", CurrentLevel, CurrentLevel + 1]</p>
                         <div class="d-flex gap-2 flex-wrap">
                             <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="trending-up" OnClick="OpenLevelUp" data-testid="levelup-start">@L["Actor.Sheet.LevelUpTo", CurrentLevel + 1]</CodexButton>
-                            @if (Vault)
-                            {
-                            }
-                            else if (busy == "level")
+                            @if (busy == "level")
                             {
                                 <AiWorking Text="@L["Actor.Sheet.Thinking"]" OnStop="aiCall.Stop" TestId="levelup-working" />
                             }

@@ -23,4 +23,14 @@
   <data name="Vault.DeleteBody" xml:space="preserve"><value>It is deleted from your characters for good. Copies already in campaigns stay there.</value></data>
   <data name="Vault.Deleted" xml:space="preserve"><value>{0} deleted.</value></data>
   <data name="Vault.Back" xml:space="preserve"><value>My characters</value></data>
+  <data name="Vault.StartFrom" xml:space="preserve"><value>Start from</value></data>
+  <data name="Vault.StartBlank" xml:space="preserve"><value>A blank sheet</value></data>
+  <data name="Vault.StartConcept" xml:space="preserve"><value>A concept: the AI drafts the sheet and a history</value></data>
+  <data name="Vault.Concept" xml:space="preserve"><value>Concept</value></data>
+  <data name="Vault.ConceptPlaceholder" xml:space="preserve"><value>e.g. A former pirate turned temple guard, level 3.</value></data>
+  <data name="Vault.ConceptHint" xml:space="preserve"><value>The AI picks only classes, species, gear and the rest from the server's Library for this system. Check the sheet afterwards.</value></data>
+  <data name="Vault.Generate" xml:space="preserve"><value>Draft the character</value></data>
+  <data name="Vault.Generating" xml:space="preserve"><value>Drafting…</value></data>
+  <data name="Vault.NoAi" xml:space="preserve"><value>No AI model is set up for you. Add one under AI settings.</value></data>
+  <data name="Vault.AiFailed" xml:space="preserve"><value>The AI could not draft a character: {0}</value></data>
 </root>

@@ -4,11 +4,17 @@
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @using Microsoft.AspNetCore.Components.Authorization
+@using Codex.Web.Services
 @inject IVaultRepository VaultRepo
 @inject ISystemCatalog Catalog
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject AiFeatures Ai
+@inject CampaignLibrary Library
+@inject Codex.Web.Services.VaultService VaultService
+@inject ILogger<Vault> Logger
+@implements IDisposable
 
 @if (!string.IsNullOrEmpty(ActorId))
 {
@@ -84,17 +90,37 @@ else
 
     <ConfirmDialog @ref="confirm" />
 
-    <dialog id="vault-new-dialog" class="codex-dialog" aria-labelledby="vault-new-title">
+    <dialog id="vault-new-dialog" class="codex-dialog" aria-labelledby="vault-new-title" @onclose="aiCall.Stop">
         <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
             <div class="dialog-body">
                 <h2 id="vault-new-title">@L["Vault.New"]</h2>
-                <div class="mb-3">
-                    <label for="vn-name" class="field-label">@L["Vault.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Vault.Required"]</span></label>
-                    <input id="vn-name" class="field-input" @bind="newName" required maxlength="@RavenVaultRepository.MaxName" data-testid="vault-new-name" />
-                </div>
+                @if (aiReady)
+                {
+                    @* The same two starts a campaign offers (docs/SERVER_ACCESS_AND_VAULT.md 6), against the server's packs. *@
+                    <fieldset class="mb-3">
+                        <legend class="field-label">@L["Vault.StartFrom"]</legend>
+                        <div class="field-check"><input id="vn-blank" type="radio" class="field-box" name="vn-start" checked="@(!fromConcept)" disabled="@aiBusy" @onchange="() => fromConcept = false" data-testid="vault-new-blank" /><label for="vn-blank">@L["Vault.StartBlank"]</label></div>
+                        <div class="field-check"><input id="vn-concept" type="radio" class="field-box" name="vn-start" checked="@fromConcept" disabled="@aiBusy" @onchange="() => fromConcept = true" data-testid="vault-new-from-concept" /><label for="vn-concept">@L["Vault.StartConcept"]</label></div>
+                    </fieldset>
+                }
+                @if (fromConcept)
+                {
+                    <div class="mb-3">
+                        <label for="vn-concept-text" class="field-label">@L["Vault.Concept"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Vault.Required"]</span></label>
+                        <textarea id="vn-concept-text" class="field-input" rows="3" required readonly="@aiBusy" @bind="concept" placeholder="@L["Vault.ConceptPlaceholder"]" aria-describedby="vn-concept-hint" data-testid="vault-new-concept"></textarea>
+                        <div id="vn-concept-hint" class="field-hint">@L["Vault.ConceptHint"]</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label for="vn-name" class="field-label">@L["Vault.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Vault.Required"]</span></label>
+                        <input id="vn-name" class="field-input" @bind="newName" required maxlength="@RavenVaultRepository.MaxName" data-testid="vault-new-name" />
+                    </div>
+                }
                 <div class="mb-1">
                     <label for="vn-system" class="field-label">@L["Vault.System"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Vault.Required"]</span></label>
-                    <select id="vn-system" class="field-select" @bind="newSystemId" required aria-describedby="vn-system-hint" data-testid="vault-new-system">
+                    <select id="vn-system" class="field-select" @bind="newSystemId" required disabled="@aiBusy" aria-describedby="vn-system-hint" data-testid="vault-new-system">
                         @foreach (var system in Catalog.Systems)
                         {
                             <option value="@system.Id">@system.Name</option>
@@ -102,10 +128,22 @@ else
                     </select>
                     <div id="vn-system-hint" class="field-hint">@L["Vault.SystemHint"]</div>
                 </div>
+                @if (aiBusy)
+                {
+                    <AiWorking Text="@L["Vault.Generating"]" OnStop="aiCall.Stop" TestId="vault-new-working" />
+                }
+                else if (aiError != null)
+                {
+                    <p class="text-danger mb-0 mt-2" role="alert">@aiError</p>
+                }
+                else if (aiStopped)
+                {
+                    <p class="small-muted mb-0 mt-2" role="status">@L["Common.Ai.Stopped"]</p>
+                }
             </div>
             <div class="dialog-actions">
                 <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseNewAsync">@L["Common.Cancel"]</CodexButton>
-                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Busy="@createGate.IsBusy" data-testid="vault-new-submit">@L["Vault.Create"]</CodexButton>
+                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Busy="@createGate.IsBusy" Disabled="@aiBusy" data-testid="vault-new-submit">@(fromConcept ? L["Vault.Generate"] : L["Vault.Create"])</CodexButton>
             </div>
         </form>
     </dialog>
@@ -122,6 +160,13 @@ else
     private Flash? flash;
     private ConfirmDialog confirm = null!;
     private readonly SaveGate createGate = new();
+    private readonly AiCall aiCall = new();
+    private bool aiReady;
+    private bool fromConcept;
+    private string concept = "";
+    private bool aiBusy;
+    private string? aiError;
+    private bool aiStopped;
 
     private List<ActorDocument> Shown => (characters ?? new()).Where(c => filter.Length == 0 || c.SystemId == filter).ToList();
 
@@ -133,11 +178,16 @@ else
         var state = await AuthStateProvider.GetAuthenticationStateAsync();
         userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         characters = userId == null ? new List<ActorDocument>() : (await VaultRepo.GetAllAsync(userId)).ToList();
+        aiReady = userId != null && await Ai.IsConfiguredAsync(userId);
     }
 
     private async Task OpenNewAsync()
     {
         newName = "";
+        concept = "";
+        fromConcept = false;
+        aiError = null;
+        aiStopped = false;
         newSystemId = Catalog.Systems.FirstOrDefault()?.Id ?? "";
         await JS.InvokeVoidAsync("codex.showModal", "vault-new-dialog");
         await JS.InvokeVoidAsync("codex.focus", "vn-name");
@@ -147,11 +197,62 @@ else
 
     private Task CreateAsync() => createGate.RunAsync(async () =>
     {
-        if (userId == null || string.IsNullOrWhiteSpace(newName) || !Catalog.LoadedSystemIds.Contains(newSystemId)) return;
-        var created = await VaultRepo.CreateAsync(userId, newSystemId, newName);
+        if (userId == null || !Catalog.LoadedSystemIds.Contains(newSystemId)) return;
+        if (fromConcept)
+        {
+            await CreateFromConceptAsync(userId);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newName)) return;
+        var created = await VaultService.CreateAsync(userId, newSystemId, newName);
         await CloseNewAsync();
         Nav.NavigateTo($"/vault/{created.Id}");
     });
+
+    // The draft picks only what the server's packs offer for the system: no campaign, so no homebrew.
+    private async Task CreateFromConceptAsync(string owner)
+    {
+        if (string.IsNullOrWhiteSpace(concept) || aiBusy) return;
+        aiBusy = true;
+        aiError = null;
+        aiStopped = false;
+        var ct = aiCall.Begin();
+        try
+        {
+            var systemId = newSystemId;
+            var campaign = Codex.Web.Services.VaultService.CampaignFor(systemId);
+            var access = CampaignAccess.Vault(owner);
+            var draft = await Ai.CreateCharacterAsync(concept, ActorKind.PlayerCharacter, campaign, Catalog.GetDefinition(systemId), owner,
+                async type => (await Library.OptionsAsync(campaign, access, type, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList(),
+                async type => (await Library.OptionsAsync(campaign, access, type, L.Culture.Name)).Select(i => i.Entry).ToList(), ct);
+            ct.ThrowIfCancellationRequested();
+
+            var created = await VaultService.CreateAsync(owner, systemId, draft.Name, draft);
+            await CloseNewAsync();
+            Nav.NavigateTo($"/vault/{created.Id}");
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            aiStopped = true;
+        }
+        catch (AiNotConfiguredException)
+        {
+            aiError = L["Vault.NoAi"];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "AI character creation failed in the vault");
+            aiError = L["Vault.AiFailed", AiFailureText.For(L, ex)];
+        }
+        finally
+        {
+            aiCall.End(ct);
+            aiBusy = false;
+        }
+    }
+
+    public void Dispose() => aiCall.Dispose();
 
     private async Task DeleteAsync(ActorDocument character)
     {
