@@ -248,4 +248,10 @@
   <data name="Page.AiSettings.PriceImageHint" xml:space="preserve"><value>Возьмите её из прайс-листа провайдера. Без неё приложение считает картинки и не выдумывает стоимость.</value></data>
   <data name="Page.AiSettings.PriceImageBad" xml:space="preserve"><value>Цена за картинку должна быть числом от 0 до {0} или пустой.</value></data>
   <data name="Page.AiSettings.PriceNoteImage" xml:space="preserve"><value>{0} за картинку</value></data>
+  <data name="Page.Setup.Elsewhere" xml:space="preserve"><value>Этот сервер ещё не настроен. Откройте его на компьютере, где он запущен, чтобы создать учётную запись администратора.</value></data>
+  <data name="Page.Register.NeedsApproval" xml:space="preserve"><value>Новые учётные записи одобряет администратор сервера. Войти можно сразу, а пользоваться сервером — после одобрения.</value></data>
+  <data name="Page.Login.Disabled" xml:space="preserve"><value>Эта учётная запись отключена. Обратитесь к администратору сервера.</value></data>
+  <data name="Page.Home.FinishSetup" xml:space="preserve"><value>Сервер работает с безопасными начальными настройками.</value></data>
+  <data name="Page.Home.FinishSetupLink" xml:space="preserve"><value>Завершить настройку</value></data>
+  <data name="Page.Home.JoinOnly" xml:space="preserve"><value>На этом сервере кампании создают мастера. Присоединитесь к кампании по ссылке-приглашению от её мастера или попросите администратора сервера сделать вас мастером.</value></data>
 </root>

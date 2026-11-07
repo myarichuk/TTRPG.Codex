@@ -1,0 +1,142 @@
+@page "/setup"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Identity
+@using Codex.Persistence
+@using Codex.Web.Components.Layout
+@layout AuthLayout
+@inject IUserRepository UserRepository
+@inject IServerSettingsStore Settings
+@inject NavigationManager NavManager
+@inject IConfiguration Configuration
+
+@* The first-time setup (docs/SERVER_ACCESS_AND_VAULT.md 2), step 1: the admin's account. Only while nobody has an account, and only on
+   the server's own computer. The account is made with the safe settings (sign-up needs approval, only Game Masters create campaigns,
+   fetching from the listed sites), so a setup left halfway still leaves a safe server; the other steps, signed in, only change them. *@
+
+<PageTitle>@L["Admin.Setup.Title"] | TTRPG.Codex</PageTitle>
+
+<div class="auth-card">
+    <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="28" /></div>
+    <p class="small-muted mb-1" data-testid="setup-step">@L["Admin.Setup.StepOf", 1, Steps]</p>
+    <h1>@L["Admin.Setup.Heading"]</h1>
+
+    @if (!Allowed)
+    {
+        <div class="status" role="alert" data-testid="not-set-up">
+            <LucideIcon IconName="info" Size="18" /><span>@L["Page.Setup.Elsewhere"]</span>
+        </div>
+    }
+    else
+    {
+        <p>@L["Admin.Setup.Intro"]</p>
+        <EditForm Model="@Model" OnValidSubmit="CreateAsync" FormName="SetupForm">
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="status status-error" role="alert">
+                    <LucideIcon IconName="alert-triangle" Size="18" /><span>@ErrorMessage</span>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label for="username" class="field-label">@L["Page.Auth.Username"]</label>
+                <InputText id="username" class="field-input" autocomplete="username" required @bind-Value="Model!.Username" />
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="field-label">@L["Page.Auth.Password"]</label>
+                <InputText id="password" type="password" class="field-input" autocomplete="new-password" required aria-describedby="password-help" @bind-Value="Model!.Password" />
+                <div id="password-help" class="field-hint">@L["Page.Register.PasswordHelp"]</div>
+            </div>
+
+            <div class="mb-4">
+                <label for="confirmPassword" class="field-label">@L["Page.Register.Confirm"]</label>
+                <InputText id="confirmPassword" type="password" class="field-input" autocomplete="new-password" required @bind-Value="Model!.ConfirmPassword" />
+            </div>
+
+            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Class="w-100" data-testid="setup-create">@L["Admin.Setup.CreateAdmin"]</CodexButton>
+        </EditForm>
+    }
+</div>
+
+@code {
+    /// <summary>The account, then the steps on <c>/setup/server</c>.</summary>
+    public const int Steps = SetupServer.LastStep;
+
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    [SupplyParameterFromForm]
+    public SetupModel? Model { get; set; }
+
+    private bool Allowed { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    private bool Exposed => ExposurePolicy.IsExposed(Configuration);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new();
+        Allowed = await ServerAccess.MaySetUpAsync(UserRepository, Exposed, HttpContext?.Connection.RemoteIpAddress);
+        if (!Allowed && await UserRepository.AnyUsersExistAsync())
+        {
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (HttpContext == null || Model == null || !await ServerAccess.MaySetUpAsync(UserRepository, Exposed, HttpContext.Connection.RemoteIpAddress))
+        {
+            Allowed = false;
+            return;
+        }
+
+        if (PasswordRules.Problem(Model.Username, Model.Password, Model.ConfirmPassword) is { } problem)
+        {
+            ErrorMessage = L[problem];
+            return;
+        }
+
+        var user = new UserDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            Username = Model.Username.Trim(),
+            Roles = [UserRoles.Player, UserRoles.GameMaster, UserRoles.ServerAdmin],
+            Status = AccountStatus.Approved,
+            CreatedAt = DateTime.UtcNow,
+            Culture = SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name)
+        };
+        user.PasswordHash = new PasswordHasher<UserDocument>().HashPassword(user, Model.Password);
+
+        if (!await UserRepository.TryReserveUsernameAsync(user.Username, user.Id))
+        {
+            ErrorMessage = L["Page.Register.Taken"];
+            return;
+        }
+
+        // Two setups at once: only one takes the seat (the other was a second tab, or someone else on this computer).
+        if (!await UserRepository.TryClaimFirstAdminAsync(user.Id))
+        {
+            Allowed = false;
+            return;
+        }
+
+        await Settings.UpdateAsync(s => s.SetupDone = false);
+        await UserRepository.CreateUserAsync(user);
+        await Settings.LogAsync(new AdminLogDocument { ByUserId = user.Id, ByName = user.Username, Action = AdminAction.SetUp, TargetName = user.Username });
+
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, UserPrincipal.For(user));
+        CultureCookie.Write(HttpContext, user.Culture!);
+        NavManager.NavigateTo("/setup/server", forceLoad: true);
+    }
+
+    public class SetupModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

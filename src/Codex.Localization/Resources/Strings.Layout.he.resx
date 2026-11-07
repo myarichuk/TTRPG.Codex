@@ -54,4 +54,8 @@
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>כרגע אין אפשרויות זמינות. בדקו את המקצוע, הדרגה והכללים שמעל.</value></data>
   <data name="Layout.AiKeyUnreadable" xml:space="preserve"><value>לא ניתן עוד לקרוא את מפתח הבינה המלאכותית השמור, ולכן כפתורי הבינה המלאכותית מוסתרים. הזינו את המפתח מחדש כדי להחזיר אותם.</value></data>
   <data name="Layout.AiKeyUnreadable.Link" xml:space="preserve"><value>לפתיחת הגדרות הבינה המלאכותית</value></data>
+  <data name="Layout.Nav.Admin" xml:space="preserve"><value>ניהול</value></data>
+  <data name="Layout.Nav.AdminWaiting" xml:space="preserve"><value>{0, plural, one{חשבון אחד ממתין לאישור} two{# חשבונות ממתינים לאישור} other{# חשבונות ממתינים לאישור}}</value></data>
+  <data name="Layout.NotYours" xml:space="preserve"><value>הדף הזה לא פתוח לחשבון שלכם.</value></data>
+  <data name="Layout.NotYoursBack" xml:space="preserve"><value>חזרה לקמפיינים שלכם</value></data>
 </root>

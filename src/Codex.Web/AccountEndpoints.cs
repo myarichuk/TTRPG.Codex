@@ -23,7 +23,7 @@ public static class AccountEndpoints
 
             await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Results.Redirect("/login");
-        });
+        }).AllowAnonymous(); // an account waiting for approval must be able to sign out; the token still guards it
 
         // Changing language is harmless, so a plain GET (a link in the header and on the sign-in pages) is enough.
         // It sets the cookie, remembers the choice on the signed-in user, then returns to a local page.
@@ -96,10 +96,18 @@ public static class AccountEndpoints
                 }
             }
 
+            var firstAdmin = false;
             if (user == null)
             {
-                // A server open to the internet makes new accounts only for people who arrive with a real invite.
-                if (!await Codex.Web.ExposurePolicy.MaySignUpAsync(Codex.Web.ExposurePolicy.IsExposed(config), returnUrl, campaignRepository))
+                // The sign-up rule (docs/SERVER_ACCESS_AND_VAULT.md 3): open to the internet, only with a real invite.
+                var exposed = Codex.Web.ExposurePolicy.IsExposed(config);
+                var settingsStore = context.RequestServices.GetRequiredService<IServerSettingsStore>();
+                var noAccounts = !await userRepository.AnyUsersExistAsync();
+                var status = await Codex.Web.ServerAccess.NewAccountAsync(settingsStore, exposed, returnUrl, campaignRepository);
+                // The very first account, made on this computer, is the admin's, whatever the rule says.
+                var mayBeFirstAdmin = string.IsNullOrWhiteSpace(config["Codex:AdminUsername"]) && Codex.Web.ExposurePolicy.MayClaimFirstAdmin(exposed, context.Connection.RemoteIpAddress);
+                // A server with no accounts takes only its admin's, from this computer; otherwise the rule decides.
+                if (noAccounts ? !mayBeFirstAdmin : status == null)
                 {
                     await context.SignOutAsync("External");
                     return Results.Redirect("/login?error=invite-only");
@@ -112,6 +120,8 @@ public static class AccountEndpoints
                     Username = baseUsername,
                     Email = email ?? "",
                     Roles = new List<string> { UserRoles.Player },
+                    Status = status ?? AccountStatus.Pending,
+                    CreatedAt = DateTime.UtcNow,
                     Culture = Codex.Localization.SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name),
                     ExternalLogins = new List<ExternalLogin> { new ExternalLogin { Provider = provider, ProviderKey = providerKey } }
                 };
@@ -130,14 +140,26 @@ public static class AccountEndpoints
                 // The first account made on this computer runs the server, but never on an open one (R13). The name is the identity
                 // provider's display name, which the person signing in chooses, so unlike the sign-up form it is never matched
                 // against Codex:AdminUsername.
-                if (string.IsNullOrWhiteSpace(config["Codex:AdminUsername"])
-                    && Codex.Web.ExposurePolicy.MayClaimFirstAdmin(Codex.Web.ExposurePolicy.IsExposed(config), context.Connection.RemoteIpAddress)
-                    && await userRepository.TryClaimFirstAdminAsync(user.Id))
+                if (mayBeFirstAdmin && await userRepository.TryClaimFirstAdminAsync(user.Id))
                 {
                     user.Roles.Add(UserRoles.ServerAdmin);
+                    user.Roles.Add(UserRoles.GameMaster);
+                    user.Status = AccountStatus.Approved;
+                    firstAdmin = !(await settingsStore.GetAsync()).SetupDone;
+                }
+                else if (status == null)
+                {
+                    // Someone else took the seat between the check and now.
+                    await context.SignOutAsync("External");
+                    return Results.Redirect("/login?error=invite-only");
                 }
 
                 await userRepository.CreateUserAsync(user);
+            }
+            else if (user.Status == AccountStatus.Disabled)
+            {
+                await context.SignOutAsync("External");
+                return Results.Redirect("/login?error=disabled");
             }
 
             var newPrincipal = Codex.Web.UserPrincipal.For(user);
@@ -152,6 +174,8 @@ public static class AccountEndpoints
                 returnUrl = "/";
             }
 
+            if (user.Status == AccountStatus.Pending && Codex.Web.ExposurePolicy.InviteCodeFrom(returnUrl) == null) return Results.Redirect(Codex.Web.ServerAccess.WaitingPath);
+            if (firstAdmin) return Results.Redirect("/setup/server");
             return Results.Redirect(returnUrl ?? "/");
         }).AllowAnonymous();
     }

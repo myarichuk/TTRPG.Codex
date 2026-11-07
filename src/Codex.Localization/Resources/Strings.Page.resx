@@ -248,4 +248,10 @@
   <data name="Page.AiSettings.PriceImageHint" xml:space="preserve"><value>Copy this from your provider's price list. Without it the app counts pictures and never guesses a cost.</value></data>
   <data name="Page.AiSettings.PriceImageBad" xml:space="preserve"><value>A price per picture must be a number from 0 to {0}, or empty.</value></data>
   <data name="Page.AiSettings.PriceNoteImage" xml:space="preserve"><value>{0} per picture</value></data>
+  <data name="Page.Setup.Elsewhere" xml:space="preserve"><value>This server is not set up yet. Open it on the computer it runs on to create the admin's account.</value></data>
+  <data name="Page.Register.NeedsApproval" xml:space="preserve"><value>The server's admin approves new accounts. You can sign in right away, and use the server once you are approved.</value></data>
+  <data name="Page.Login.Disabled" xml:space="preserve"><value>This account is turned off. Ask the server's admin.</value></data>
+  <data name="Page.Home.FinishSetup" xml:space="preserve"><value>The server is using its safe first settings.</value></data>
+  <data name="Page.Home.FinishSetupLink" xml:space="preserve"><value>Finish setting it up</value></data>
+  <data name="Page.Home.JoinOnly" xml:space="preserve"><value>On this server, campaigns are created by Game Masters. Join one with an invite link from its GM, or ask the server's admin to make you a Game Master.</value></data>
 </root>

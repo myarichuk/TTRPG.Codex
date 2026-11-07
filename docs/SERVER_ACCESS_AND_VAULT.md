@@ -115,3 +115,39 @@ Players already bring their own key; this widens what it is for, always built fr
 4. The vault and bringing characters in.
 5. AI: notes, character creation and tweaks in both places, the server key per role.
 6. Storage limits, account deletion, export.
+
+## 11. Step 1 as built (2026-11-07)
+
+- **Data**: `UserDocument.Status` (`AccountStatus`: Approved, Pending, Disabled; a stored account with no value reads as Approved),
+  `UserDocument.CreatedAt`, `UserRoles.GameMaster`; one `ServerSettingsDocument` (`server/settings`: setup done, sign-up rule, campaign
+  rule, fetch rule and list) and `AdminLogDocument`s, through `IServerSettingsStore` (`RavenServerSettingsStore`, which keeps a copy).
+- **Setup**: `/setup` (static, this computer only, no accounts yet) makes the admin (Player, Game Master, ServerAdmin) through the same
+  first-admin seat as before, and stores the safe defaults (approval, Game Masters, the site list) at once; `/setup/server` (admin only)
+  is three steps (sign-up, campaigns, fetching) and a last page linking AI settings, the Library and the admin page. A step is saved as it
+  is passed; "Keep the rest as they are" finishes with what is set. `/login` and `/register` send to `/setup` while there are no
+  accounts; elsewhere they say to open it on the server's computer. Server name, language, the AI key and game systems are not steps:
+  the language is the launcher's, the AI key and systems have their own pages.
+- **Sign-up** (`ServerAccess.NewAccount`): an invite approves at once; open to the internet, nothing else may sign up (as before); at
+  home, Open approves, Approval waits, Invite only refuses. External sign-in follows the same rule.
+- **Waiting**: a waiting account carries a `codex:status` claim; the fallback policy refuses it everywhere but `/waiting`, `/logout`,
+  `/set-culture`, sign-in pages and an invite link (`/campaigns/join/…`, now a static page), which joins and approves it, logged as the
+  campaign GM's approval.
+- **Staying true**: the cookie's `OnValidatePrincipal` (`AccountCheck`) re-reads the account (cached ten seconds, forgotten when the admin
+  changes it): disabled or deleted is signed out, a changed status or role gets a new principal. An open page re-checks every 30 seconds
+  (`AccountRevalidation`) and ends on disabled, deleted or waiting; a role change shows on the next page load.
+- **Campaigns**: `ServerAccess.MayCreateCampaigns` reads the stored account, on Home (button, empty state, create) and on restoring a
+  campaign file as a new campaign.
+- **Admin page** (`/admin`, header link with the waiting count): approve; reject (deletes the waiting account and frees its name);
+  turn off and on; Game Master and admin checkboxes; delete only an account in no campaign (passing campaigns on is step 6); never the
+  last admin, and not yourself. Settings (same form as the setup), and the last 100 log entries. Setting changes are logged in English
+  setting names (`sign-up: Approval → Open`).
+- **Existing servers** (`MoveExistingServerAsync`, at start-up, once): accounts stay approved, campaign owners and admins become Game
+  Masters, fetching stays "any public site", sign-up becomes "needs approval", setup counts as done.
+- **Fetch list**: `BookWebFetcher` asks the settings at every hop (`BookWebProblem.NotListed`, "x is not on the server's list of sites");
+  whole-label suffix match; defaults include `rawcdn.githack.com` and `raw.githack.com`, which Tasha's Style uses.
+- **Tests**: `ServerAccessTests` (rules, invite, principal, list matching, the fetcher at a redirect, the cookie check),
+  `ServerSettingsStoreTests` (defaults, the move of an existing server and that it runs once, the list cleaned, the log order, a deleted
+  name freed). Mutants caught: no cookie check; anyone creates; suffix match without the dot; the list checked at the first hop only; an
+  invite ignored. The E2E fixture seeds an admin, which also makes the test server permissive (`/test/seed/settings` changes it).
+- **Not done**: the launcher's "reset the admin's password"; the admin log shows setting changes in English; an open page shows a new role
+  only after a reload; deleting an account that is in a campaign.

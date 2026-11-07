@@ -47,10 +47,6 @@ public static class ExposurePolicy
         return code.Length > 0 && !code.Contains('/') ? Uri.UnescapeDataString(code) : null;
     }
 
-    /// <summary>Open servers take a new account only from someone arriving with a real campaign invite.</summary>
-    public static async Task<bool> MaySignUpAsync(bool exposed, string? returnUrl, ICampaignRepository campaigns) =>
-        !exposed || (InviteCodeFrom(returnUrl) is { } code && await campaigns.InviteCodeExistsAsync(code));
-
     /// <summary>Whether a new account may claim the server's first ServerAdmin seat: never while open to the internet, and only
     /// from this computer. The launcher's "Host" opens the server to the network before the DM has an account, and the first
     /// player to sign up from there must not run the server (R13). <c>Codex:AdminUsername</c> names an admin from anywhere.</summary>

@@ -958,4 +958,5 @@
   <data name="Campaign.Book.Ai.Row.Skipped" xml:space="preserve"><value>קצר מדי</value></data>
   <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>התקרה נמוכה מדי כדי לשלוח אפילו בקשה אחת: הפרק הגדול ביותר דורש שמירה של לפחות {0} אסימונים (המקרה הגרוע, כולל ניסיונות חוזרים).</value></data>
   <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>הערות הסגנון כוללות עובדות שאינן בספר של החבורה ({0}). במהדורה הזו השאירו רק קול וטון: בלי שמות, מספרים ועלילה.</value></data>
+  <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} לא ברשימת האתרים של השרת; מנהל השרת יכול להוסיף אותו</value></data>
 </root>

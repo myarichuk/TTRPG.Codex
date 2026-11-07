@@ -248,4 +248,10 @@
   <data name="Page.AiSettings.PriceImageHint" xml:space="preserve"><value>העתיקו אותו ממחירון הספק. בלעדיו היישום סופר תמונות ואינו מנחש עלות.</value></data>
   <data name="Page.AiSettings.PriceImageBad" xml:space="preserve"><value>מחיר לתמונה חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>
   <data name="Page.AiSettings.PriceNoteImage" xml:space="preserve"><value>{0} לכל תמונה</value></data>
+  <data name="Page.Setup.Elsewhere" xml:space="preserve"><value>השרת הזה עוד לא הוגדר. פתחו אותו במחשב שהוא רץ עליו כדי ליצור את חשבון המנהל.</value></data>
+  <data name="Page.Register.NeedsApproval" xml:space="preserve"><value>מנהל השרת מאשר חשבונות חדשים. אפשר להיכנס מיד, ולהשתמש בשרת אחרי האישור.</value></data>
+  <data name="Page.Login.Disabled" xml:space="preserve"><value>החשבון הזה כבוי. פנו למנהל השרת.</value></data>
+  <data name="Page.Home.FinishSetup" xml:space="preserve"><value>השרת פועל עם הגדרות ההתחלה הבטוחות.</value></data>
+  <data name="Page.Home.FinishSetupLink" xml:space="preserve"><value>לסיום ההגדרה</value></data>
+  <data name="Page.Home.JoinOnly" xml:space="preserve"><value>בשרת הזה קמפיינים יוצרים שליטי מבוך. הצטרפו לקמפיין דרך קישור הזמנה משליט המבוך שלו, או בקשו ממנהל השרת להפוך אתכם לשליטי מבוך.</value></data>
 </root>

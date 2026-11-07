@@ -1,10 +1,18 @@
 @page "/campaigns/join/{InviteCode}"
+@attribute [Authorize(Policy = ServerAccess.SignedIn)]
+@attribute [ExcludeFromInteractiveRouting]
 @using System.Security.Claims
 @using Codex.Persistence
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
+@inject IUserRepository Users
+@inject IServerSettingsStore Settings
+@inject AccountCheck Check
+
+@* Open to an account waiting for approval too (docs/SERVER_ACCESS_AND_VAULT.md 3): a GM's invite approves it, as a player. A page
+   without a circuit, since a waiting account has none. *@
 
 <PageTitle>@L["Page.Join.Title"] | TTRPG.Codex</PageTitle>
 
@@ -58,5 +66,30 @@
         }
 
         (result, joinedCampaignId) = await CampaignRepo.JoinByInviteCodeAsync(InviteCode, userId);
+        if (result is CampaignJoinResult.Joined or CampaignJoinResult.AlreadyMember && ServerAccess.IsWaiting(authState.User))
+        {
+            await ApproveByInviteAsync(userId);
+        }
+    }
+
+    private async Task ApproveByInviteAsync(string userId)
+    {
+        var approved = false;
+        var user = await Users.UpdateUserAsync(userId, u =>
+        {
+            approved = u.Status == AccountStatus.Pending;
+            if (approved) u.Status = AccountStatus.Approved;
+        });
+        Check.Forget(userId);
+        if (!approved || user == null || joinedCampaignId == null || await CampaignRepo.GetAsync(joinedCampaignId) is not { } campaign) return;
+        var gm = await Users.GetUserByIdAsync(campaign.OwnerId);
+        await Settings.LogAsync(new AdminLogDocument
+        {
+            ByUserId = campaign.OwnerId,
+            ByName = gm?.Username ?? string.Empty,
+            Action = AdminAction.Approved,
+            TargetName = user.Username,
+            Detail = campaign.Name
+        });
     }
 }

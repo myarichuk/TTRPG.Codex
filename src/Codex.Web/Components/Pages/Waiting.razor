@@ -1,0 +1,41 @@
+@page "/waiting"
+@attribute [Authorize(Policy = ServerAccess.SignedIn)]
+@attribute [ExcludeFromInteractiveRouting]
+@using Codex.Persistence
+@using System.Security.Claims
+@layout AuthLayout
+@inject IUserRepository Users
+@inject NavigationManager Nav
+
+@* Where an account waiting for approval lands, and the only page it may open (docs/SERVER_ACCESS_AND_VAULT.md 3). *@
+
+<PageTitle>@L["Admin.Waiting.Title"] | TTRPG.Codex</PageTitle>
+
+<div class="auth-card" data-testid="waiting">
+    <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="clock" Size="28" /></div>
+    <h1>@L["Admin.Waiting.Heading"]</h1>
+    <p>@L["Admin.Waiting.Body", HttpContext?.User.Identity?.Name ?? string.Empty]</p>
+    <p class="small-muted">@L["Admin.Waiting.Later"]</p>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="/" class="cx-btn cx-plaque" data-enhance-nav="false">@L["Admin.Waiting.Check"]</a>
+        <form method="post" action="/logout">
+            <AntiforgeryToken />
+            <button type="submit" class="cx-btn cx-etched">@L["Layout.SignOut"]</button>
+        </form>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Approved since: on to the campaigns.
+        var id = HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (id != null && await Users.GetUserByIdAsync(id) is { Status: AccountStatus.Approved })
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+}

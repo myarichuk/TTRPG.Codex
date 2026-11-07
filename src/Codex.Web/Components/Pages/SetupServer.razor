@@ -1,0 +1,163 @@
+@page "/setup/server"
+@attribute [Authorize(Roles = UserRoles.ServerAdmin)]
+@using Codex.Persistence
+@using System.Security.Claims
+@inject IServerSettingsStore Settings
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider Auth
+
+@* The first-time setup after the admin's account (docs/SERVER_ACCESS_AND_VAULT.md 2): one choice a step, each already set to the safe
+   default the account was made with. Leaving halfway keeps those; "Skip" finishes with them. *@
+
+<PageTitle>@L["Admin.Setup.Title"] | TTRPG.Codex</PageTitle>
+
+<div class="setup-page" data-testid="setup-server">
+    @if (value == null)
+    {
+        <LoadingSkeleton />
+    }
+    else
+    {
+        <p class="small-muted mb-1" data-testid="setup-step" aria-live="polite">@L["Admin.Setup.StepOf", step, LastStep]</p>
+        <h1 tabindex="-1" id="setup-heading">@L[Heading]</h1>
+
+        @if (step < LastStep)
+        {
+            <p>@L["Admin.Setup.ChangeLater"]</p>
+            <ServerSettingsForm Value="value" Part="Part" />
+        }
+        else
+        {
+            <p>@L["Admin.Setup.Done.Intro"]</p>
+            <ul class="setup-next">
+                <li><a href="/settings/ai">@L["Admin.Setup.Done.Ai"]</a></li>
+                <li><a href="/library">@L["Admin.Setup.Done.Library"]</a></li>
+                <li><a href="/admin">@L["Admin.Setup.Done.Admin"]</a></li>
+            </ul>
+        }
+
+        @if (error != null)
+        {
+            <p class="text-danger" role="alert">@error</p>
+        }
+
+        <div class="d-flex gap-2 flex-wrap mt-4">
+            @if (step > 2)
+            {
+                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="BackAsync" data-testid="setup-back">@L["Admin.Setup.Back"]</CodexButton>
+            }
+            @if (step < LastStep)
+            {
+                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="NextAsync" Disabled="@saving" data-testid="setup-next">@L["Admin.Setup.Next"]</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="SkipAsync" Disabled="@saving" data-testid="setup-skip">@L["Admin.Setup.Skip"]</CodexButton>
+            }
+            else
+            {
+                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="FinishAsync" Disabled="@saving" data-testid="setup-finish">@L["Admin.Setup.Finish"]</CodexButton>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>1 is the admin's account (<c>/setup</c>); then sign-up, campaigns, fetching, and what to do next.</summary>
+    public const int LastStep = 5;
+
+    private ServerSettingsDocument? value;
+    private ServerSettingsDocument? saved;
+    private int step = 2;
+    private bool saving;
+    private string? error;
+
+    private ServerSettingsForm.SettingsPart Part => step switch
+    {
+        2 => ServerSettingsForm.SettingsPart.SignUp,
+        3 => ServerSettingsForm.SettingsPart.Campaigns,
+        _ => ServerSettingsForm.SettingsPart.Fetching
+    };
+
+    private string Heading => step switch
+    {
+        2 => "Admin.Setup.SignUp",
+        3 => "Admin.Setup.Campaigns",
+        4 => "Admin.Setup.Fetch",
+        _ => "Admin.Setup.Done"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        saved = await Settings.GetAsync();
+        if (saved.SetupDone)
+        {
+            // Done already: the same choices live on the admin page.
+            Nav.NavigateTo("/admin");
+            return;
+        }
+
+        value = saved.Copy();
+    }
+
+    // Each step is kept as it is passed, so a setup left halfway keeps what was chosen.
+    private async Task<bool> SaveAsync(bool done)
+    {
+        if (value == null || saved == null) return false;
+        saving = true;
+        error = null;
+        try
+        {
+            var chosen = value;
+            var stored = await Settings.UpdateAsync(s =>
+            {
+                s.SignUp = chosen.SignUp;
+                s.CampaignCreation = chosen.CampaignCreation;
+                s.WebFetch = chosen.WebFetch;
+                s.FetchSites = chosen.FetchSites.ToList();
+                if (done) s.SetupDone = true;
+            });
+            if (SettingsChange.Describe(saved, stored) is { } change)
+            {
+                var me = (await Auth.GetAuthenticationStateAsync()).User;
+                await Settings.LogAsync(new AdminLogDocument
+                {
+                    ByUserId = me.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty,
+                    ByName = me.Identity?.Name ?? string.Empty,
+                    Action = AdminAction.SettingsChanged,
+                    Detail = change
+                });
+            }
+
+            saved = stored;
+            return true;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            error = L["Admin.Settings.NotSaved"];
+            return false;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task NextAsync()
+    {
+        if (await SaveAsync(done: false)) step++;
+    }
+
+    private Task BackAsync()
+    {
+        step--;
+        return Task.CompletedTask;
+    }
+
+    private async Task SkipAsync()
+    {
+        if (await SaveAsync(done: true)) Nav.NavigateTo("/");
+    }
+
+    private async Task FinishAsync()
+    {
+        if (await SaveAsync(done: true)) Nav.NavigateTo("/");
+    }
+}

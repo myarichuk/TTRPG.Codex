@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Admin.Setup.Title" xml:space="preserve"><value>הגדרת השרת</value></data>
+  <data name="Admin.Setup.StepOf" xml:space="preserve"><value>שלב {0} מתוך {1}</value></data>
+  <data name="Admin.Setup.Heading" xml:space="preserve"><value>צרו את חשבון המנהל</value></data>
+  <data name="Admin.Setup.Intro" xml:space="preserve"><value>החשבון הזה מנהל את השרת: מאשר חשבונות חדשים, מחליט מי יכול ליצור קמפיינים ומשנה את הגדרות השרת. אחר כך כמה בחירות, ולכל אחת כבר נבחרה ברירת מחדל בטוחה.</value></data>
+  <data name="Admin.Setup.CreateAdmin" xml:space="preserve"><value>יצירת חשבון המנהל</value></data>
+  <data name="Admin.Setup.ChangeLater" xml:space="preserve"><value>אפשר לשנות את זה אחר כך בדף הניהול.</value></data>
+  <data name="Admin.Setup.SignUp" xml:space="preserve"><value>מי יכול ליצור חשבון?</value></data>
+  <data name="Admin.Setup.Campaigns" xml:space="preserve"><value>מי יכול ליצור קמפיינים?</value></data>
+  <data name="Admin.Setup.Fetch" xml:space="preserve"><value>מאיפה גיליונות הסגנון של הספר יכולים לטעון גופנים ותמונות?</value></data>
+  <data name="Admin.Setup.Done" xml:space="preserve"><value>השרת מוכן</value></data>
+  <data name="Admin.Setup.Done.Intro" xml:space="preserve"><value>מה אולי תרצו עכשיו:</value></data>
+  <data name="Admin.Setup.Done.Ai" xml:space="preserve"><value>הוספת מודל בינה מלאכותית לכפתורי הבינה המלאכותית</value></data>
+  <data name="Admin.Setup.Done.Library" xml:space="preserve"><value>עיון בספרייה של מערכות המשחק והתוכן</value></data>
+  <data name="Admin.Setup.Done.Admin" xml:space="preserve"><value>פתיחת דף הניהול: חשבונות, הגדרות ויומן</value></data>
+  <data name="Admin.Setup.Back" xml:space="preserve"><value>חזרה</value></data>
+  <data name="Admin.Setup.Next" xml:space="preserve"><value>הבא</value></data>
+  <data name="Admin.Setup.Skip" xml:space="preserve"><value>להשאיר את השאר כמו שהוא</value></data>
+  <data name="Admin.Setup.Finish" xml:space="preserve"><value>סיום</value></data>
+  <data name="Admin.Settings" xml:space="preserve"><value>הגדרות השרת</value></data>
+  <data name="Admin.Settings.Save" xml:space="preserve"><value>שמירת ההגדרות</value></data>
+  <data name="Admin.Settings.Saved" xml:space="preserve"><value>ההגדרות נשמרו.</value></data>
+  <data name="Admin.Settings.NotSaved" xml:space="preserve"><value>לא ניתן היה לשמור את ההגדרות. נסו שוב.</value></data>
+  <data name="Admin.Settings.SignUp" xml:space="preserve"><value>מי יכול ליצור חשבון</value></data>
+  <data name="Admin.Settings.SignUp.Approval" xml:space="preserve"><value>כל אחד, אחרי שהמנהל מאשר</value></data>
+  <data name="Admin.Settings.SignUp.ApprovalHint" xml:space="preserve"><value>חשבונות חדשים ממתינים בדף הניהול. מי שמגיע עם הזמנה לקמפיין מאושר מיד, כשחקן.</value></data>
+  <data name="Admin.Settings.SignUp.InviteOnly" xml:space="preserve"><value>רק מי שקיבל הזמנה לקמפיין</value></data>
+  <data name="Admin.Settings.SignUp.InviteOnlyHint" xml:space="preserve"><value>בלי קישור הזמנה משליט מבוך אי אפשר ליצור חשבון.</value></data>
+  <data name="Admin.Settings.SignUp.Open" xml:space="preserve"><value>כל אחד, מיד</value></data>
+  <data name="Admin.Settings.SignUp.OpenHint" xml:space="preserve"><value>כל מי שמגיע לשרת מקבל חשבון מיד. מתאים לבית, שבו רק הרשת שלכם מגיעה אליו.</value></data>
+  <data name="Admin.Settings.SignUp.Internet" xml:space="preserve"><value>כל עוד השרת פתוח לאינטרנט, חשבון חדש תמיד צריך הזמנה לקמפיין.</value></data>
+  <data name="Admin.Settings.Campaigns" xml:space="preserve"><value>מי יכול ליצור קמפיינים</value></data>
+  <data name="Admin.Settings.Campaigns.GameMasters" xml:space="preserve"><value>שליטי מבוך</value></data>
+  <data name="Admin.Settings.Campaigns.GameMastersHint" xml:space="preserve"><value>המנהל הופך חשבון לשליט מבוך בדף הניהול. כל השאר מצטרפים לקמפיינים כשחקנים.</value></data>
+  <data name="Admin.Settings.Campaigns.Anyone" xml:space="preserve"><value>כל מי שיש לו חשבון מאושר</value></data>
+  <data name="Admin.Settings.Campaigns.AnyoneHint" xml:space="preserve"><value>כל חשבון יכול להריץ קמפיינים משלו.</value></data>
+  <data name="Admin.Settings.Fetch" xml:space="preserve"><value>מאיפה גיליונות הסגנון של הספר יכולים לטעון</value></data>
+  <data name="Admin.Settings.Fetch.Hint" xml:space="preserve"><value>גיליון הסגנון של ספר יכול להפנות לגופנים, לתמונות ולגיליונות סגנון אחרים ברשת. השרת מוריד עותק פעם אחת ושומר אותו עם הספר.</value></data>
+  <data name="Admin.Settings.Fetch.Listed" xml:space="preserve"><value>רק מהאתרים שברשימה הזאת</value></data>
+  <data name="Admin.Settings.Fetch.ListedHint" xml:space="preserve"><value>שירותי גופנים ואתרי התמונות שבהם יוצרים משתמשים. שליט מבוך שצריך אתר אחר מבקש מהמנהל להוסיף אותו.</value></data>
+  <data name="Admin.Settings.Fetch.Any" xml:space="preserve"><value>מכל אתר ציבורי</value></data>
+  <data name="Admin.Settings.Fetch.AnyHint" xml:space="preserve"><value>כל כתובת https באינטרנט. אף פעם לא המחשב הזה או הרשת הביתית שלכם.</value></data>
+  <data name="Admin.Settings.Fetch.Sites" xml:space="preserve"><value>אתרים</value></data>
+  <data name="Admin.Settings.Fetch.SitesHint" xml:space="preserve"><value>אתר אחד בכל שורה, למשל fonts.gstatic.com. אתר כולל גם את השמות שתחתיו.</value></data>
+  <data name="Admin.Settings.Fetch.Bad" xml:space="preserve"><value>לא שם של אתר, הושמט: {0}</value></data>
+  <data name="Admin.Settings.Fetch.Defaults" xml:space="preserve"><value>החזרת הרשימה הראשונה</value></data>
+  <data name="Admin.Waiting.Title" xml:space="preserve"><value>ממתין לאישור</value></data>
+  <data name="Admin.Waiting.Heading" xml:space="preserve"><value>החשבון שלכם ממתין לאישור</value></data>
+  <data name="Admin.Waiting.Body" xml:space="preserve"><value>מנהל השרת מאשר חשבונות חדשים. אחרי ש-{0} יאושר, תוכלו להצטרף לקמפיינים כאן.</value></data>
+  <data name="Admin.Waiting.Later" xml:space="preserve"><value>אם יש לכם קישור הזמנה משליט מבוך, פתחו אותו: הזמנה מאשרת אתכם כשחקנים.</value></data>
+  <data name="Admin.Waiting.Check" xml:space="preserve"><value>בדיקה חוזרת</value></data>
+  <data name="Admin.Title" xml:space="preserve"><value>ניהול</value></data>
+  <data name="Admin.Subtitle" xml:space="preserve"><value>חשבונות, הגדרות השרת ומה שהמנהלים עשו.</value></data>
+  <data name="Admin.Accounts" xml:space="preserve"><value>חשבונות</value></data>
+  <data name="Admin.Accounts.Waiting" xml:space="preserve"><value>{0, plural, one{חשבון אחד ממתין לאישור.} two{# חשבונות ממתינים לאישור.} other{# חשבונות ממתינים לאישור.}}</value></data>
+  <data name="Admin.Accounts.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Admin.Accounts.Status" xml:space="preserve"><value>מצב</value></data>
+  <data name="Admin.Accounts.GameMaster" xml:space="preserve"><value>שליט מבוך</value></data>
+  <data name="Admin.Accounts.Admin" xml:space="preserve"><value>מנהל</value></data>
+  <data name="Admin.Accounts.Since" xml:space="preserve"><value>מאז</value></data>
+  <data name="Admin.Accounts.Actions" xml:space="preserve"><value>פעולות</value></data>
+  <data name="Admin.Accounts.You" xml:space="preserve"><value>(אתם)</value></data>
+  <data name="Admin.Accounts.GameMasterFor" xml:space="preserve"><value>{0} שליט מבוך</value></data>
+  <data name="Admin.Accounts.AdminFor" xml:space="preserve"><value>{0} מנהל</value></data>
+  <data name="Admin.Accounts.LastAdmin" xml:space="preserve"><value>לשרת צריך להיות לפחות מנהל אחד.</value></data>
+  <data name="Admin.Accounts.Pending" xml:space="preserve"><value>ממתין</value></data>
+  <data name="Admin.Accounts.Approved" xml:space="preserve"><value>מאושר</value></data>
+  <data name="Admin.Accounts.Disabled" xml:space="preserve"><value>כבוי</value></data>
+  <data name="Admin.Accounts.Approve" xml:space="preserve"><value>אישור</value></data>
+  <data name="Admin.Accounts.Reject" xml:space="preserve"><value>דחייה</value></data>
+  <data name="Admin.Accounts.Disable" xml:space="preserve"><value>כיבוי</value></data>
+  <data name="Admin.Accounts.Enable" xml:space="preserve"><value>הפעלה</value></data>
+  <data name="Admin.Accounts.Delete" xml:space="preserve"><value>מחיקת החשבון</value></data>
+  <data name="Admin.Accounts.DeleteLabel" xml:space="preserve"><value>מחיקת החשבון {0}</value></data>
+  <data name="Admin.Accounts.Gone" xml:space="preserve"><value>החשבון הזה השתנה או נמחק. הרשימה עודכנה.</value></data>
+  <data name="Admin.Accounts.Approved.Done" xml:space="preserve"><value>{0} אושר.</value></data>
+  <data name="Admin.Accounts.RejectTitle" xml:space="preserve"><value>לדחות את {0}?</value></data>
+  <data name="Admin.Accounts.RejectBody" xml:space="preserve"><value>החשבון יימחק והשם שלו יתפנה. אפשר יהיה להירשם שוב בהמשך.</value></data>
+  <data name="Admin.Accounts.Rejected.Done" xml:space="preserve"><value>{0} נדחה.</value></data>
+  <data name="Admin.Accounts.DisableTitle" xml:space="preserve"><value>לכבות את {0}?</value></data>
+  <data name="Admin.Accounts.DisableBody" xml:space="preserve"><value>הם יוצאו מהמערכת ולא יוכלו להיכנס עד שתפעילו את החשבון שוב. הקמפיינים והדמויות שלהם נשארים.</value></data>
+  <data name="Admin.Accounts.Disabled.Done" xml:space="preserve"><value>{0} כבוי.</value></data>
+  <data name="Admin.Accounts.Enabled.Done" xml:space="preserve"><value>{0} פעיל שוב.</value></data>
+  <data name="Admin.Accounts.InCampaigns" xml:space="preserve"><value>{0} משתתף בקמפיין. כבו את החשבון במקום זה; הוצאה מקמפיינים תגיע בגרסה מאוחרת יותר.</value></data>
+  <data name="Admin.Accounts.DeleteTitle" xml:space="preserve"><value>למחוק את {0}?</value></data>
+  <data name="Admin.Accounts.DeleteBody" xml:space="preserve"><value>החשבון יימחק לצמיתות והשם שלו יתפנה. אי אפשר לבטל את זה.</value></data>
+  <data name="Admin.Accounts.Deleted.Done" xml:space="preserve"><value>{0} נמחק.</value></data>
+  <data name="Admin.Log" xml:space="preserve"><value>יומן</value></data>
+  <data name="Admin.Log.Empty" xml:space="preserve"><value>עדיין אין כלום.</value></data>
+  <data name="Admin.Log.SetUp" xml:space="preserve"><value>{0} הגדיר/ה את השרת</value></data>
+  <data name="Admin.Log.Approved" xml:space="preserve"><value>{0} אישר/ה את {1}</value></data>
+  <data name="Admin.Log.Rejected" xml:space="preserve"><value>{0} דחה/תה את {1}</value></data>
+  <data name="Admin.Log.Disabled" xml:space="preserve"><value>{0} כיבה/תה את {1}</value></data>
+  <data name="Admin.Log.Enabled" xml:space="preserve"><value>{0} הפעיל/ה את {1}</value></data>
+  <data name="Admin.Log.RoleGiven" xml:space="preserve"><value>{0} נתן/ה תפקיד ל-{1}</value></data>
+  <data name="Admin.Log.RoleTaken" xml:space="preserve"><value>{0} לקח/ה תפקיד מ-{1}</value></data>
+  <data name="Admin.Log.Deleted" xml:space="preserve"><value>{0} מחק/ה את {1}</value></data>
+  <data name="Admin.Log.SettingsChanged" xml:space="preserve"><value>{0} שינה/תה את הגדרות השרת</value></data>
+</root>

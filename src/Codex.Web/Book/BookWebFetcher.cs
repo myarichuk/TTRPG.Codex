@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using Codex.Core.Book;
+using Codex.Persistence;
 
 namespace Codex.Web.Book;
 
@@ -21,7 +22,10 @@ public enum BookWebProblem
     TooManyRedirects,
 
     /// <summary>The draft already keeps as many copies, or as many bytes, as it may.</summary>
-    Full
+    Full,
+
+    /// <summary>The site is not on the server's fetch list (docs/SERVER_ACCESS_AND_VAULT.md 5); the admin can add it.</summary>
+    NotListed
 }
 
 public sealed record BookWebFailure(string Url, BookWebProblem Problem, int Status = 0);
@@ -45,27 +49,36 @@ public sealed class BookWebFetcher
 
     private readonly HttpClient client;
     private readonly bool httpsOnly;
+    private readonly Func<string, Task<bool>>? allows;
 
-    public BookWebFetcher(IHttpClientFactory clients) : this(clients.CreateClient(ClientName), httpsOnly: true)
+    public BookWebFetcher(IHttpClientFactory clients, IServerSettingsStore settings) : this(clients.CreateClient(ClientName), httpsOnly: true, Listed(settings))
     {
     }
 
     /// <summary>A fetcher over a client whose handler the caller made: for tests, one that may reach a server on this computer over plain http.
-    /// The server's own is <see cref="Register"/>'s.</summary>
-    public static BookWebFetcher Over(HttpClient client, bool httpsOnly) => new(client, httpsOnly);
+    /// The server's own is <see cref="Register"/>'s. <paramref name="allows"/> says whether a host may be fetched from (null: any).</summary>
+    public static BookWebFetcher Over(HttpClient client, bool httpsOnly, Func<string, Task<bool>>? allows = null) => new(client, httpsOnly, allows);
 
-    private BookWebFetcher(HttpClient client, bool httpsOnly)
+    private BookWebFetcher(HttpClient client, bool httpsOnly, Func<string, Task<bool>>? allows)
     {
         this.client = client;
         this.httpsOnly = httpsOnly;
+        this.allows = allows;
     }
+
+    /// <summary>The server's fetch rule, read afresh for every address and redirect, so the admin's change applies to the next one.</summary>
+    public static Func<string, Task<bool>> Listed(IServerSettingsStore settings) => async host =>
+    {
+        var s = await settings.GetAsync();
+        return s.WebFetch == WebFetchRule.AnyPublic || ServerSettingsDocument.Lists(s.FetchSites, host);
+    };
 
     /// <summary>The fetcher's own client: no proxy, no cookies, no redirects of its own, and a connection only to a public address.</summary>
     public static void Register(IServiceCollection services)
     {
         services.AddHttpClient(ClientName, c => c.Timeout = System.Threading.Timeout.InfiniteTimeSpan)
             .ConfigurePrimaryHttpMessageHandler(() => Handler(IsPublic));
-        services.AddSingleton(sp => new BookWebFetcher(sp.GetRequiredService<IHttpClientFactory>()));
+        services.AddSingleton(sp => new BookWebFetcher(sp.GetRequiredService<IHttpClientFactory>(), sp.GetRequiredService<IServerSettingsStore>()));
     }
 
     public static SocketsHttpHandler Handler(Func<IPAddress, bool> allowed) => new()
@@ -142,6 +155,8 @@ public sealed class BookWebFetcher
             for (var hop = 0; ; hop++)
             {
                 if (at.Scheme != Uri.UriSchemeHttps && (httpsOnly || at.Scheme != Uri.UriSchemeHttp)) return (null, new BookWebFailure(url, BookWebProblem.NotPublic));
+                // The list is checked at every hop: a listed site that redirects elsewhere is not a way around it.
+                if (allows != null && !await allows(at.IdnHost)) return (null, new BookWebFailure(url, BookWebProblem.NotListed));
                 using var request = new HttpRequestMessage(HttpMethod.Get, at);
                 request.Headers.UserAgent.ParseAdd(UserAgent);
                 request.Headers.Accept.ParseAdd(kind switch

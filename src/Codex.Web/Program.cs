@@ -32,6 +32,9 @@ var authBuilder = builder.Services.AddAuthentication(options =>
     {
         options.LoginPath = "/login";
         options.LogoutPath = "/logout";
+        // An account waiting for approval is signed in but may use nothing else (ServerAccess, the fallback policy below).
+        options.AccessDeniedPath = Codex.Web.ServerAccess.WaitingPath;
+        options.Events.OnValidatePrincipal = Codex.Web.AccountCheck.ValidateAsync;
     })
     .AddCookie("External", options =>
     {
@@ -88,10 +91,15 @@ builder.Services.AddAuthorization(options =>
 {
     // Everything requires a signed-in user unless a page opts out with [AllowAnonymous].
     // Authorisation inside a campaign is per-campaign membership (CampaignAccess), not a role.
+    // An account waiting for approval is signed in and may reach only the waiting page (docs/SERVER_ACCESS_AND_VAULT.md 3).
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
+        .RequireAssertion(context => !Codex.Web.ServerAccess.IsWaiting(context.User))
         .Build();
+    options.AddPolicy(Codex.Web.ServerAccess.SignedIn, policy => policy.RequireAuthenticatedUser());
 });
+builder.Services.AddSingleton<Codex.Web.AccountCheck>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, Codex.Web.AccountRevalidation>();
 builder.Services.AddHttpContextAccessor();
 // The pages that tell a visitor whether a password or an invite code is right get a ration per address. Always, not only
 // when open to the internet (R13): on a LAN server the sign-in form is plain HTTP, and anyone on the network can reach it.
@@ -148,6 +156,7 @@ builder.Services.AddSingleton<CampaignLifecycleHooks>();
 builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
 builder.Services.AddSingleton<IActorRepository, ActorRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
+builder.Services.AddSingleton<IServerSettingsStore, RavenServerSettingsStore>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();
 builder.Services.AddSingleton<IRegionRepository, RegionRepository>();
@@ -370,6 +379,13 @@ app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMod
         Console.Error.WriteLine("CODEX_STARTUP_ERROR: " + problem);
         Environment.Exit(1);
     }
+}
+
+// A server made before approval and roles keeps its accounts approved and its campaign owners as Game Masters
+// (docs/SERVER_ACCESS_AND_VAULT.md 3). Once; a new server has no accounts yet and starts with the setup.
+if (await app.Services.GetRequiredService<IServerSettingsStore>().MoveExistingServerAsync())
+{
+    app.Logger.LogInformation("Existing accounts kept approved; campaign owners are Game Masters; sign-up now needs approval.");
 }
 
 // Daily RavenDB backup into the data dir, beside the server's own JSON backups (BackupService). Best-effort: a backup that

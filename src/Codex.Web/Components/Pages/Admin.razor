@@ -1,0 +1,324 @@
+@page "/admin"
+@attribute [Authorize(Roles = UserRoles.ServerAdmin)]
+@using Codex.Persistence
+@using System.Security.Claims
+@inject IUserRepository Users
+@inject ICampaignRepository Campaigns
+@inject IServerSettingsStore Settings
+@inject AccountCheck Check
+@inject AuthenticationStateProvider Auth
+
+@* The server admin's page (docs/SERVER_ACCESS_AND_VAULT.md 3): accounts, waiting ones first; the server's settings; and the log. *@
+
+<PageTitle>@L["Admin.Title"] | TTRPG.Codex</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1>@L["Admin.Title"]</h1>
+        <p class="page-subtitle">@L["Admin.Subtitle"]</p>
+    </div>
+</div>
+
+<StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
+<ConfirmDialog @ref="confirm" />
+
+@if (users == null || settings == null)
+{
+    <LoadingSkeleton />
+}
+else
+{
+    <section class="mb-5" aria-labelledby="admin-accounts">
+        <h2 id="admin-accounts">@L["Admin.Accounts"]</h2>
+        @if (Waiting > 0)
+        {
+            <p data-testid="admin-waiting-count">@L["Admin.Accounts.Waiting", Waiting]</p>
+        }
+        <div class="table-wrap">
+            <table class="table" data-testid="admin-accounts">
+                <thead>
+                    <tr>
+                        <th scope="col">@L["Admin.Accounts.Name"]</th>
+                        <th scope="col">@L["Admin.Accounts.Status"]</th>
+                        <th scope="col">@L["Admin.Accounts.GameMaster"]</th>
+                        <th scope="col">@L["Admin.Accounts.Admin"]</th>
+                        <th scope="col">@L["Admin.Accounts.Since"]</th>
+                        <th scope="col"><span class="visually-hidden">@L["Admin.Accounts.Actions"]</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in users)
+                    {
+                        var u = user;
+                        var isMe = u.Id == myId;
+                        var lastAdmin = IsLastAdmin(u);
+                        <tr data-testid="account-@u.Username">
+                            <th scope="row">@u.Username @if (isMe) { <span class="small-muted">@L["Admin.Accounts.You"]</span> }</th>
+                            <td><span class="pill @StatusPill(u.Status)" data-testid="account-status">@L[StatusKey(u.Status)]</span></td>
+                            <td>
+                                <input type="checkbox" class="field-box" checked="@Has(u, UserRoles.GameMaster)" disabled="@(busy || u.Status != AccountStatus.Approved)"
+                                       aria-label="@L["Admin.Accounts.GameMasterFor", u.Username]" @onchange="e => SetRoleAsync(u, UserRoles.GameMaster, e.Value is true)" data-testid="account-gm" />
+                            </td>
+                            <td>
+                                <input type="checkbox" class="field-box" checked="@Has(u, UserRoles.ServerAdmin)" disabled="@(busy || u.Status != AccountStatus.Approved || lastAdmin)"
+                                       aria-label="@L["Admin.Accounts.AdminFor", u.Username]" title="@(lastAdmin ? L["Admin.Accounts.LastAdmin"] : null)"
+                                       @onchange="e => SetRoleAsync(u, UserRoles.ServerAdmin, e.Value is true)" data-testid="account-admin" />
+                            </td>
+                            <td class="small-muted">@if (u.CreatedAt is { } at) { <LocalTime Value="at" Format="d MMM yyyy" /> }</td>
+                            <td>
+                                <div class="row-actions">
+                                    @switch (u.Status)
+                                    {
+                                        case AccountStatus.Pending:
+                                            <CodexButton Variant="CodexButtonVariant.Plaque" Class="cx-sm" Disabled="@busy" OnClick="() => ApproveAsync(u)" data-testid="account-approve">@L["Admin.Accounts.Approve"]</CodexButton>
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-sm cx-blood" Disabled="@busy" OnClick="() => RejectAsync(u)" data-testid="account-reject">@L["Admin.Accounts.Reject"]</CodexButton>
+                                            break;
+                                        case AccountStatus.Approved when !isMe && !lastAdmin:
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-sm" Disabled="@busy" OnClick="() => DisableAsync(u)" data-testid="account-disable">@L["Admin.Accounts.Disable"]</CodexButton>
+                                            break;
+                                        case AccountStatus.Disabled:
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-sm" Disabled="@busy" OnClick="() => EnableAsync(u)" data-testid="account-enable">@L["Admin.Accounts.Enable"]</CodexButton>
+                                            break;
+                                    }
+                                    @if (u.Status != AccountStatus.Pending && !isMe && !lastAdmin)
+                                    {
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Admin.Accounts.DeleteLabel", u.Username]" title="@L["Admin.Accounts.Delete"]"
+                                                     Disabled="@busy" OnClick="() => DeleteAsync(u)" data-testid="account-delete" />
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="mb-5" aria-labelledby="admin-settings">
+        <h2 id="admin-settings">@L["Admin.Settings"]</h2>
+        <form @onsubmit="SaveSettingsAsync" @onsubmit:preventDefault="true" data-testid="admin-settings-form">
+            <ServerSettingsForm Value="draft" />
+            <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@busy" data-testid="admin-settings-save">@L["Admin.Settings.Save"]</CodexButton>
+        </form>
+    </section>
+
+    <section aria-labelledby="admin-log">
+        <h2 id="admin-log">@L["Admin.Log"]</h2>
+        @if (log.Count == 0)
+        {
+            <p class="small-muted">@L["Admin.Log.Empty"]</p>
+        }
+        else
+        {
+            <ul class="admin-log" data-testid="admin-log">
+                @foreach (var entry in log)
+                {
+                    <li>
+                        <LocalTime Value="entry.At" Format="d MMM yyyy HH:mm" /> ·
+                        @L[LogKey(entry.Action), entry.ByName, entry.TargetName ?? string.Empty]
+                        @if (entry.Action is AdminAction.RoleGiven or AdminAction.RoleTaken)
+                        {
+                            <span class="small-muted"> (@RoleLabel(entry.Detail))</span>
+                        }
+                        else if (!string.IsNullOrEmpty(entry.Detail))
+                        {
+                            <span class="small-muted" dir="auto"> (@entry.Detail)</span>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+}
+
+@code {
+    private List<UserDocument>? users;
+    private ServerSettingsDocument? settings;
+    private ServerSettingsDocument draft = new();
+    private List<AdminLogDocument> log = new();
+    private HashSet<string> inCampaigns = new(StringComparer.Ordinal);
+    private string? myId;
+    private string myName = string.Empty;
+    private bool busy;
+    private Flash? flash;
+    private ConfirmDialog confirm = null!;
+
+    private int Waiting => users?.Count(u => u.Status == AccountStatus.Pending) ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var me = (await Auth.GetAuthenticationStateAsync()).User;
+        myId = me.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        myName = me.Identity?.Name ?? string.Empty;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        users = (await Users.ListAsync()).ToList();
+        settings = await Settings.GetAsync();
+        draft = settings.Copy();
+        log = (await Settings.RecentLogAsync(100)).ToList();
+        inCampaigns = (await Campaigns.GetAllAsync())
+            .SelectMany(c => c.Members.Select(m => m.UserId).Append(c.OwnerId))
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    private static bool Has(UserDocument u, string role) => u.Roles.Contains(role);
+
+    /// <summary>The only approved admin: their admin role, account and access stay, so the server always has someone to run it.</summary>
+    private bool IsLastAdmin(UserDocument u) =>
+        Has(u, UserRoles.ServerAdmin) && u.Status == AccountStatus.Approved
+        && users!.Count(o => Has(o, UserRoles.ServerAdmin) && o.Status == AccountStatus.Approved) == 1;
+
+    private static string StatusKey(AccountStatus s) => s switch
+    {
+        AccountStatus.Pending => "Admin.Accounts.Pending",
+        AccountStatus.Disabled => "Admin.Accounts.Disabled",
+        _ => "Admin.Accounts.Approved"
+    };
+
+    private static string LogKey(AdminAction action) => action switch
+    {
+        AdminAction.SetUp => "Admin.Log.SetUp",
+        AdminAction.Approved => "Admin.Log.Approved",
+        AdminAction.Rejected => "Admin.Log.Rejected",
+        AdminAction.Disabled => "Admin.Log.Disabled",
+        AdminAction.Enabled => "Admin.Log.Enabled",
+        AdminAction.RoleGiven => "Admin.Log.RoleGiven",
+        AdminAction.RoleTaken => "Admin.Log.RoleTaken",
+        AdminAction.Deleted => "Admin.Log.Deleted",
+        _ => "Admin.Log.SettingsChanged"
+    };
+
+    private string RoleLabel(string? role) => role switch
+    {
+        UserRoles.GameMaster => L["Admin.Accounts.GameMaster"],
+        UserRoles.ServerAdmin => L["Admin.Accounts.Admin"],
+        _ => role ?? string.Empty
+    };
+
+    private static string StatusPill(AccountStatus s) => s == AccountStatus.Pending ? "pill-accent" : "";
+
+    private async Task RunAsync(Func<Task<Flash?>> action)
+    {
+        busy = true;
+        try
+        {
+            flash = await action();
+        }
+        finally
+        {
+            busy = false;
+            await LoadAsync();
+        }
+    }
+
+    private Task LogAsync(AdminAction action, UserDocument? target, string? detail = null) =>
+        Settings.LogAsync(new AdminLogDocument { ByUserId = myId ?? string.Empty, ByName = myName, Action = action, TargetName = target?.Username, Detail = detail });
+
+    // Every change re-reads the account and checks the rule against the stored state, not the table on screen.
+    private async Task<UserDocument?> ChangeAsync(UserDocument u, Action<UserDocument> change)
+    {
+        var updated = await Users.UpdateUserAsync(u.Id, change);
+        Check.Forget(u.Id);
+        return updated;
+    }
+
+    private async Task<bool> WouldLeaveNoAdminAsync(UserDocument u)
+    {
+        var all = await Users.ListAsync();
+        return all.Count(o => o.Id != u.Id && o.Roles.Contains(UserRoles.ServerAdmin) && o.Status == AccountStatus.Approved) == 0
+            && u.Roles.Contains(UserRoles.ServerAdmin);
+    }
+
+    private Task ApproveAsync(UserDocument u) => RunAsync(async () =>
+    {
+        if (await ChangeAsync(u, s => { if (s.Status == AccountStatus.Pending) s.Status = AccountStatus.Approved; }) == null) return Flash.Error(L["Admin.Accounts.Gone"]);
+        await LogAsync(AdminAction.Approved, u);
+        return Flash.Success(L["Admin.Accounts.Approved.Done", u.Username]);
+    });
+
+    private async Task RejectAsync(UserDocument u)
+    {
+        if (!await confirm.ShowAsync(L["Admin.Accounts.RejectTitle", u.Username], L["Admin.Accounts.RejectBody"], L["Admin.Accounts.Reject"], isDestructive: true)) return;
+        await RunAsync(async () =>
+        {
+            var stored = await Users.GetUserByIdAsync(u.Id);
+            if (stored is not { Status: AccountStatus.Pending }) return Flash.Error(L["Admin.Accounts.Gone"]);
+            await Users.DeleteAsync(u.Id);
+            Check.Forget(u.Id);
+            await LogAsync(AdminAction.Rejected, u);
+            return Flash.Success(L["Admin.Accounts.Rejected.Done", u.Username]);
+        });
+    }
+
+    private async Task DisableAsync(UserDocument u)
+    {
+        if (!await confirm.ShowAsync(L["Admin.Accounts.DisableTitle", u.Username], L["Admin.Accounts.DisableBody"], L["Admin.Accounts.Disable"], isDestructive: true)) return;
+        await RunAsync(async () =>
+        {
+            if (u.Id == myId || await WouldLeaveNoAdminAsync(u)) return Flash.Error(L["Admin.Accounts.LastAdmin"]);
+            if (await ChangeAsync(u, s => s.Status = AccountStatus.Disabled) == null) return Flash.Error(L["Admin.Accounts.Gone"]);
+            await LogAsync(AdminAction.Disabled, u);
+            return Flash.Success(L["Admin.Accounts.Disabled.Done", u.Username]);
+        });
+    }
+
+    private Task EnableAsync(UserDocument u) => RunAsync(async () =>
+    {
+        if (await ChangeAsync(u, s => { if (s.Status == AccountStatus.Disabled) s.Status = AccountStatus.Approved; }) == null) return Flash.Error(L["Admin.Accounts.Gone"]);
+        await LogAsync(AdminAction.Enabled, u);
+        return Flash.Success(L["Admin.Accounts.Enabled.Done", u.Username]);
+    });
+
+    private Task SetRoleAsync(UserDocument u, string role, bool on) => RunAsync(async () =>
+    {
+        if (!on && role == UserRoles.ServerAdmin && await WouldLeaveNoAdminAsync(u)) return Flash.Error(L["Admin.Accounts.LastAdmin"]);
+        var updated = await ChangeAsync(u, s =>
+        {
+            s.Roles.Remove(role);
+            if (on) s.Roles.Add(role);
+        });
+        if (updated == null) return Flash.Error(L["Admin.Accounts.Gone"]);
+        await LogAsync(on ? AdminAction.RoleGiven : AdminAction.RoleTaken, u, role);
+        return null;
+    });
+
+    private async Task DeleteAsync(UserDocument u)
+    {
+        // Passing campaigns on and taking characters out of them is a later step: until then an account in a campaign is turned off instead.
+        if (inCampaigns.Contains(u.Id))
+        {
+            flash = Flash.Error(L["Admin.Accounts.InCampaigns", u.Username]);
+            return;
+        }
+
+        if (!await confirm.ShowAsync(L["Admin.Accounts.DeleteTitle", u.Username], L["Admin.Accounts.DeleteBody"], L["Admin.Accounts.Delete"], isDestructive: true)) return;
+        await RunAsync(async () =>
+        {
+            if (u.Id == myId || await WouldLeaveNoAdminAsync(u)) return Flash.Error(L["Admin.Accounts.LastAdmin"]);
+            var stillIn = (await Campaigns.GetAllAsync()).Any(c => c.OwnerId == u.Id || c.Members.Any(m => m.UserId == u.Id));
+            if (stillIn) return Flash.Error(L["Admin.Accounts.InCampaigns", u.Username]);
+            if (!await Users.DeleteAsync(u.Id)) return Flash.Error(L["Admin.Accounts.Gone"]);
+            Check.Forget(u.Id);
+            await LogAsync(AdminAction.Deleted, u);
+            return Flash.Success(L["Admin.Accounts.Deleted.Done", u.Username]);
+        });
+    }
+
+    private Task SaveSettingsAsync() => RunAsync(async () =>
+    {
+        var chosen = draft;
+        var before = await Settings.GetAsync();
+        var stored = await Settings.UpdateAsync(s =>
+        {
+            s.SignUp = chosen.SignUp;
+            s.CampaignCreation = chosen.CampaignCreation;
+            s.WebFetch = chosen.WebFetch;
+            s.FetchSites = chosen.FetchSites.ToList();
+        });
+        if (SettingsChange.Describe(before, stored) is { } change) await LogAsync(AdminAction.SettingsChanged, null, change);
+        return Flash.Success(L["Admin.Settings.Saved"]);
+    });
+}

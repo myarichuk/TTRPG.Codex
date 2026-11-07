@@ -254,6 +254,8 @@ public class BookCssWebTests
         using var site = new Site();
         site.Serve("/a.png", "image/png", Png);
         var services = new ServiceCollection();
+        // Any public site: what is checked here is the address, not the list.
+        services.AddSingleton<Codex.Persistence.IServerSettingsStore>(new InMemoryServerSettings(new() { WebFetch = Codex.Persistence.WebFetchRule.AnyPublic }));
         BookWebFetcher.Register(services);
         using var provider = services.BuildServiceProvider();
         var fetcher = provider.GetRequiredService<BookWebFetcher>();
@@ -341,6 +343,8 @@ public class BookCssWebTests
         };
 
         public void Redirect(string path, string to) => routes[path] = r => r.Redirect(Url(to));
+
+        public void RedirectAway(string path, string absolute) => routes[path] = r => r.Redirect(absolute);
 
         public void Status(string path, int status) => routes[path] = r => r.StatusCode = status;
 

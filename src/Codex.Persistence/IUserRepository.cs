@@ -34,4 +34,13 @@ public interface IUserRepository
     /// <c>ExposurePolicy.MayClaimFirstAdmin</c>).
     /// </summary>
     Task<bool> TryClaimFirstAdminAsync(string userId);
+
+    /// <summary>Every account, waiting ones first, then by name: the admin's list.</summary>
+    Task<IReadOnlyList<UserDocument>> ListAsync();
+
+    /// <summary>How many accounts wait for approval.</summary>
+    Task<int> CountPendingAsync();
+
+    /// <summary>Deletes the account and frees its name for someone else. False when there is no such account.</summary>
+    Task<bool> DeleteAsync(string userId);
 }

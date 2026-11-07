@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Admin.Setup.Title" xml:space="preserve"><value>Set up the server</value></data>
+  <data name="Admin.Setup.StepOf" xml:space="preserve"><value>Step {0} of {1}</value></data>
+  <data name="Admin.Setup.Heading" xml:space="preserve"><value>Create the admin's account</value></data>
+  <data name="Admin.Setup.Intro" xml:space="preserve"><value>This account runs the server: it approves new accounts, decides who may create campaigns, and changes the server's settings. Then a few choices, each already set to a safe default.</value></data>
+  <data name="Admin.Setup.CreateAdmin" xml:space="preserve"><value>Create the admin's account</value></data>
+  <data name="Admin.Setup.ChangeLater" xml:space="preserve"><value>You can change this later on the admin page.</value></data>
+  <data name="Admin.Setup.SignUp" xml:space="preserve"><value>Who can create an account?</value></data>
+  <data name="Admin.Setup.Campaigns" xml:space="preserve"><value>Who can create campaigns?</value></data>
+  <data name="Admin.Setup.Fetch" xml:space="preserve"><value>Where may book stylesheets load fonts and pictures from?</value></data>
+  <data name="Admin.Setup.Done" xml:space="preserve"><value>The server is ready</value></data>
+  <data name="Admin.Setup.Done.Intro" xml:space="preserve"><value>What you may want next:</value></data>
+  <data name="Admin.Setup.Done.Ai" xml:space="preserve"><value>Add an AI model for the AI buttons</value></data>
+  <data name="Admin.Setup.Done.Library" xml:space="preserve"><value>Look through the Library of game systems and content</value></data>
+  <data name="Admin.Setup.Done.Admin" xml:space="preserve"><value>Open the admin page: accounts, settings and the log</value></data>
+  <data name="Admin.Setup.Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Admin.Setup.Next" xml:space="preserve"><value>Next</value></data>
+  <data name="Admin.Setup.Skip" xml:space="preserve"><value>Keep the rest as they are</value></data>
+  <data name="Admin.Setup.Finish" xml:space="preserve"><value>Finish</value></data>
+  <data name="Admin.Settings" xml:space="preserve"><value>Server settings</value></data>
+  <data name="Admin.Settings.Save" xml:space="preserve"><value>Save settings</value></data>
+  <data name="Admin.Settings.Saved" xml:space="preserve"><value>Settings saved.</value></data>
+  <data name="Admin.Settings.NotSaved" xml:space="preserve"><value>The settings could not be saved. Try again.</value></data>
+  <data name="Admin.Settings.SignUp" xml:space="preserve"><value>Who can create an account</value></data>
+  <data name="Admin.Settings.SignUp.Approval" xml:space="preserve"><value>Anyone, after the admin approves them</value></data>
+  <data name="Admin.Settings.SignUp.ApprovalHint" xml:space="preserve"><value>New accounts wait on the admin page. Someone who arrives with a campaign invite is approved at once, as a player.</value></data>
+  <data name="Admin.Settings.SignUp.InviteOnly" xml:space="preserve"><value>Only people with a campaign invite</value></data>
+  <data name="Admin.Settings.SignUp.InviteOnlyHint" xml:space="preserve"><value>Without an invite link from a GM, nobody can create an account.</value></data>
+  <data name="Admin.Settings.SignUp.Open" xml:space="preserve"><value>Anyone, at once</value></data>
+  <data name="Admin.Settings.SignUp.OpenHint" xml:space="preserve"><value>Anyone who can reach the server gets an account straight away. Fine at home, where only your own network can reach it.</value></data>
+  <data name="Admin.Settings.SignUp.Internet" xml:space="preserve"><value>While the server is open to the internet, a new account always needs a campaign invite.</value></data>
+  <data name="Admin.Settings.Campaigns" xml:space="preserve"><value>Who can create campaigns</value></data>
+  <data name="Admin.Settings.Campaigns.GameMasters" xml:space="preserve"><value>Game Masters</value></data>
+  <data name="Admin.Settings.Campaigns.GameMastersHint" xml:space="preserve"><value>The admin makes an account a Game Master on the admin page. Everyone else joins campaigns as a player.</value></data>
+  <data name="Admin.Settings.Campaigns.Anyone" xml:space="preserve"><value>Everyone with an approved account</value></data>
+  <data name="Admin.Settings.Campaigns.AnyoneHint" xml:space="preserve"><value>Every account can run its own campaigns.</value></data>
+  <data name="Admin.Settings.Fetch" xml:space="preserve"><value>Where book stylesheets may load from</value></data>
+  <data name="Admin.Settings.Fetch.Hint" xml:space="preserve"><value>A book's stylesheet can name fonts, pictures and other stylesheets on the web. The server fetches a copy once and keeps it with the book.</value></data>
+  <data name="Admin.Settings.Fetch.Listed" xml:space="preserve"><value>Only from the sites on this list</value></data>
+  <data name="Admin.Settings.Fetch.ListedHint" xml:space="preserve"><value>Font services and the picture hosts brews use. A GM who needs another site asks the admin to add it.</value></data>
+  <data name="Admin.Settings.Fetch.Any" xml:space="preserve"><value>From any public site</value></data>
+  <data name="Admin.Settings.Fetch.AnyHint" xml:space="preserve"><value>Any https address on the internet. Never this computer or your home network.</value></data>
+  <data name="Admin.Settings.Fetch.Sites" xml:space="preserve"><value>Sites</value></data>
+  <data name="Admin.Settings.Fetch.SitesHint" xml:space="preserve"><value>One site a line, like fonts.gstatic.com. A site also covers the names under it.</value></data>
+  <data name="Admin.Settings.Fetch.Bad" xml:space="preserve"><value>Not a site name, left out: {0}</value></data>
+  <data name="Admin.Settings.Fetch.Defaults" xml:space="preserve"><value>Put back the first list</value></data>
+  <data name="Admin.Waiting.Title" xml:space="preserve"><value>Waiting for approval</value></data>
+  <data name="Admin.Waiting.Heading" xml:space="preserve"><value>Your account is waiting for approval</value></data>
+  <data name="Admin.Waiting.Body" xml:space="preserve"><value>The server's admin approves new accounts. Once {0} is approved, you can join campaigns here.</value></data>
+  <data name="Admin.Waiting.Later" xml:space="preserve"><value>If you have an invite link from a GM, open it: an invite approves you as a player.</value></data>
+  <data name="Admin.Waiting.Check" xml:space="preserve"><value>Check again</value></data>
+  <data name="Admin.Title" xml:space="preserve"><value>Admin</value></data>
+  <data name="Admin.Subtitle" xml:space="preserve"><value>Accounts, the server's settings, and what admins did.</value></data>
+  <data name="Admin.Accounts" xml:space="preserve"><value>Accounts</value></data>
+  <data name="Admin.Accounts.Waiting" xml:space="preserve"><value>{0, plural, one{# account is waiting for approval.} other{# accounts are waiting for approval.}}</value></data>
+  <data name="Admin.Accounts.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Admin.Accounts.Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Admin.Accounts.GameMaster" xml:space="preserve"><value>Game Master</value></data>
+  <data name="Admin.Accounts.Admin" xml:space="preserve"><value>Admin</value></data>
+  <data name="Admin.Accounts.Since" xml:space="preserve"><value>Since</value></data>
+  <data name="Admin.Accounts.Actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="Admin.Accounts.You" xml:space="preserve"><value>(you)</value></data>
+  <data name="Admin.Accounts.GameMasterFor" xml:space="preserve"><value>{0} is a Game Master</value></data>
+  <data name="Admin.Accounts.AdminFor" xml:space="preserve"><value>{0} is an admin</value></data>
+  <data name="Admin.Accounts.LastAdmin" xml:space="preserve"><value>The server needs at least one admin.</value></data>
+  <data name="Admin.Accounts.Pending" xml:space="preserve"><value>Waiting</value></data>
+  <data name="Admin.Accounts.Approved" xml:space="preserve"><value>Approved</value></data>
+  <data name="Admin.Accounts.Disabled" xml:space="preserve"><value>Turned off</value></data>
+  <data name="Admin.Accounts.Approve" xml:space="preserve"><value>Approve</value></data>
+  <data name="Admin.Accounts.Reject" xml:space="preserve"><value>Reject</value></data>
+  <data name="Admin.Accounts.Disable" xml:space="preserve"><value>Turn off</value></data>
+  <data name="Admin.Accounts.Enable" xml:space="preserve"><value>Turn on</value></data>
+  <data name="Admin.Accounts.Delete" xml:space="preserve"><value>Delete account</value></data>
+  <data name="Admin.Accounts.DeleteLabel" xml:space="preserve"><value>Delete the account {0}</value></data>
+  <data name="Admin.Accounts.Gone" xml:space="preserve"><value>That account has changed or is gone. The list is up to date now.</value></data>
+  <data name="Admin.Accounts.Approved.Done" xml:space="preserve"><value>{0} is approved.</value></data>
+  <data name="Admin.Accounts.RejectTitle" xml:space="preserve"><value>Reject {0}?</value></data>
+  <data name="Admin.Accounts.RejectBody" xml:space="preserve"><value>The account is deleted and its name is free again. They can sign up again later.</value></data>
+  <data name="Admin.Accounts.Rejected.Done" xml:space="preserve"><value>{0} is rejected.</value></data>
+  <data name="Admin.Accounts.DisableTitle" xml:space="preserve"><value>Turn off {0}?</value></data>
+  <data name="Admin.Accounts.DisableBody" xml:space="preserve"><value>They are signed out and cannot sign in until you turn the account on again. Their campaigns and characters stay.</value></data>
+  <data name="Admin.Accounts.Disabled.Done" xml:space="preserve"><value>{0} is turned off.</value></data>
+  <data name="Admin.Accounts.Enabled.Done" xml:space="preserve"><value>{0} is turned on again.</value></data>
+  <data name="Admin.Accounts.InCampaigns" xml:space="preserve"><value>{0} is in a campaign. Turn the account off instead; removing someone from their campaigns comes in a later version.</value></data>
+  <data name="Admin.Accounts.DeleteTitle" xml:space="preserve"><value>Delete {0}?</value></data>
+  <data name="Admin.Accounts.DeleteBody" xml:space="preserve"><value>The account is deleted for good and its name is free again. This cannot be undone.</value></data>
+  <data name="Admin.Accounts.Deleted.Done" xml:space="preserve"><value>{0} is deleted.</value></data>
+  <data name="Admin.Log" xml:space="preserve"><value>Log</value></data>
+  <data name="Admin.Log.Empty" xml:space="preserve"><value>Nothing yet.</value></data>
+  <data name="Admin.Log.SetUp" xml:space="preserve"><value>{0} set up the server</value></data>
+  <data name="Admin.Log.Approved" xml:space="preserve"><value>{0} approved {1}</value></data>
+  <data name="Admin.Log.Rejected" xml:space="preserve"><value>{0} rejected {1}</value></data>
+  <data name="Admin.Log.Disabled" xml:space="preserve"><value>{0} turned off {1}</value></data>
+  <data name="Admin.Log.Enabled" xml:space="preserve"><value>{0} turned on {1}</value></data>
+  <data name="Admin.Log.RoleGiven" xml:space="preserve"><value>{0} gave {1} a role</value></data>
+  <data name="Admin.Log.RoleTaken" xml:space="preserve"><value>{0} took a role from {1}</value></data>
+  <data name="Admin.Log.Deleted" xml:space="preserve"><value>{0} deleted {1}</value></data>
+  <data name="Admin.Log.SettingsChanged" xml:space="preserve"><value>{0} changed the server's settings</value></data>
+</root>

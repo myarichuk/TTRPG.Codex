@@ -54,4 +54,8 @@
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Сейчас ничего не доступно. Проверьте класс, уровень и правила выше.</value></data>
   <data name="Layout.AiKeyUnreadable" xml:space="preserve"><value>Сохранённый ключ ИИ больше не читается, поэтому кнопки ИИ скрыты. Введите ключ заново, чтобы вернуть их.</value></data>
   <data name="Layout.AiKeyUnreadable.Link" xml:space="preserve"><value>Открыть настройки ИИ</value></data>
+  <data name="Layout.Nav.Admin" xml:space="preserve"><value>Администрирование</value></data>
+  <data name="Layout.Nav.AdminWaiting" xml:space="preserve"><value>{0, plural, one{# учётная запись ждёт одобрения} few{# учётные записи ждут одобрения} many{# учётных записей ждут одобрения} other{# учётной записи ждут одобрения}}</value></data>
+  <data name="Layout.NotYours" xml:space="preserve"><value>Эта страница недоступна вашей учётной записи.</value></data>
+  <data name="Layout.NotYoursBack" xml:space="preserve"><value>Назад к вашим кампаниям</value></data>
 </root>

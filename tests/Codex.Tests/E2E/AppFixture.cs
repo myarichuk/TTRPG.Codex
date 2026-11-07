@@ -68,6 +68,9 @@ public sealed class AppFixture : IAsyncLifetime
         _process.BeginErrorReadLine();
 
         await WaitUntilReadyAsync();
+        // A server with no accounts opens on the first-time setup; the suites test a server that has been set up (the seed also
+        // makes it permissive: anyone signs up and creates campaigns, as before approval and roles).
+        (await SeedUserAsync("e2e-admin", "e2e_admin", "E2e-Admin-" + Guid.NewGuid().ToString("N")[..8], "Player", "GameMaster", "ServerAdmin")).EnsureSuccessStatusCode();
 
         _playwright = await Playwright.CreateAsync();
         var options = new BrowserTypeLaunchOptions { Headless = true };
@@ -87,7 +90,7 @@ public sealed class AppFixture : IAsyncLifetime
 
     /// <summary>Seeds a user directly through the app's own repository - same password-hashing
     /// path <c>Register.razor</c> uses, so the real <c>/login</c> form works against it.</summary>
-    public Task SeedUserAsync(string id, string username, string password, params string[] roles) =>
+    public Task<HttpResponseMessage> SeedUserAsync(string id, string username, string password, params string[] roles) =>
         Http.PostAsJsonAsync("/test/seed/users", new[]
         {
             new Codex.Web.TestSeedUser { Id = id, Username = username, Password = password, Roles = roles.ToList() }

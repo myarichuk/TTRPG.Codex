@@ -49,20 +49,6 @@ public class ExposurePolicyTests
         Assert.Equal(expected, ExposurePolicy.InviteCodeFrom(returnUrl));
 
     [Fact]
-    public async Task Sign_up_is_open_at_home_and_needs_a_real_invite_on_an_open_server()
-    {
-        var campaigns = Substitute.For<ICampaignRepository>();
-        campaigns.InviteCodeExistsAsync("real").Returns(true);
-        campaigns.InviteCodeExistsAsync("made-up").Returns(false);
-
-        Assert.True(await ExposurePolicy.MaySignUpAsync(exposed: false, returnUrl: null, campaigns));
-        Assert.True(await ExposurePolicy.MaySignUpAsync(true, "/campaigns/join/real", campaigns));
-        Assert.False(await ExposurePolicy.MaySignUpAsync(true, "/campaigns/join/made-up", campaigns));
-        Assert.False(await ExposurePolicy.MaySignUpAsync(true, "/", campaigns));
-        Assert.False(await ExposurePolicy.MaySignUpAsync(true, null, campaigns));
-    }
-
-    [Fact]
     public void The_server_ai_key_is_the_admins_alone_while_the_server_is_open()
     {
         var admin = new UserDocument { Roles = new List<string> { "Player", "ServerAdmin" } };

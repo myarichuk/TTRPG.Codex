@@ -54,4 +54,8 @@
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Nothing is allowed right now. Check your class, level and the rules above.</value></data>
   <data name="Layout.AiKeyUnreadable" xml:space="preserve"><value>Your saved AI key can no longer be read, so AI buttons are hidden. Enter the key again to bring them back.</value></data>
   <data name="Layout.AiKeyUnreadable.Link" xml:space="preserve"><value>Open AI settings</value></data>
+  <data name="Layout.Nav.Admin" xml:space="preserve"><value>Admin</value></data>
+  <data name="Layout.Nav.AdminWaiting" xml:space="preserve"><value>{0, plural, one{# account waiting for approval} other{# accounts waiting for approval}}</value></data>
+  <data name="Layout.NotYours" xml:space="preserve"><value>This page is not open to your account.</value></data>
+  <data name="Layout.NotYoursBack" xml:space="preserve"><value>Back to your campaigns</value></data>
 </root>

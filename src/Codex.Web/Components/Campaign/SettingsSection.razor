@@ -6,6 +6,7 @@
 @inject ISystemCatalog Catalog
 @inject IContentRegistry Registry
 @inject CampaignExportService ExportService
+@inject IServerSettingsStore ServerSettings
 @inject IMediaStore Media
 @inject NavigationManager Nav
 @inject IConfiguration Config
@@ -503,6 +504,13 @@
 
             if (bundle.Campaign!.Id != Ctx.Campaign.Id)
             {
+                // A copy is a new campaign: only someone who may create campaigns (docs/SERVER_ACCESS_AND_VAULT.md 3).
+                if (!ServerAccess.MayCreateCampaigns(await UserRepo.GetUserByIdAsync(Ctx.UserId), await ServerSettings.GetAsync()))
+                {
+                    Ctx.Notify(Flash.Error(L["Page.Home.JoinOnly"]));
+                    return;
+                }
+
                 // Under new ids, so the file can never land on a campaign that exists (D13).
                 if (await ExportService.ImportAsNewAsync(bundle, Ctx.UserId) is { } restoredId)
                 {

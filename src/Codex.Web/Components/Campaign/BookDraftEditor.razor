@@ -202,6 +202,7 @@
         BookWebProblem.NotWhatWasNamed => L["Campaign.Book.Draft.Web.NotWhatWasNamed"],
         BookWebProblem.TooManyRedirects => L["Campaign.Book.Draft.Web.TooManyRedirects"],
         BookWebProblem.Full => L["Campaign.Book.Draft.Web.Full"],
+        BookWebProblem.NotListed => L["Campaign.Book.Draft.Web.NotListed", new Uri(failure.Url).Host],
         _ => L["Campaign.Book.Draft.Web.Unreachable"]
     };
 
