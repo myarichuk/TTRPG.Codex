@@ -155,6 +155,7 @@ builder.Services.AddSingleton(sp => new RavenDbService(dataDir, logger: sp.GetRe
 builder.Services.AddSingleton<CampaignLifecycleHooks>();
 builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
 builder.Services.AddSingleton<IActorRepository, ActorRepository>();
+builder.Services.AddSingleton<IVaultRepository, RavenVaultRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
 builder.Services.AddSingleton<IServerSettingsStore, RavenServerSettingsStore>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();

@@ -180,6 +180,17 @@ public class ActorDocument
     /// <summary>The wiki page this character was promoted from (<see cref="WikiPageDocument.Id"/>), or empty.</summary>
     public string? WikiPageId { get; set; }
 
+    /// <summary>On a vault character (no <see cref="CampaignId"/>): the game system it is built for. Empty on a campaign's
+    /// actors, whose system is the campaign's (docs/SERVER_ACCESS_AND_VAULT.md 8).</summary>
+    public string? SystemId { get; set; }
+
+    /// <summary>On a campaign's copy of a vault character: the vault character it was brought in from (7).</summary>
+    public string? VaultSourceId { get; set; }
+
+    /// <summary>A character in its owner's vault, outside every campaign.</summary>
+    [Newtonsoft.Json.JsonIgnore]
+    public bool IsVault => string.IsNullOrEmpty(CampaignId);
+
     /// <summary>True once a portrait is stored as the "portrait" attachment; <see cref="PortraitVersion"/> busts caches.</summary>
     public bool HasPortrait { get; set; }
     public int PortraitVersion { get; set; }

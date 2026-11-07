@@ -22,7 +22,8 @@ public class CampaignRepository(
     ITemplateRepository? templateRepository = null,
     InviteAttempts? inviteAttempts = null,
     IBookBuildRepository? bookBuildRepository = null,
-    IBookDraftRepository? bookDraftRepository = null) : ICampaignRepository
+    IBookDraftRepository? bookDraftRepository = null,
+    IVaultRepository? vaultRepository = null) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -137,6 +138,13 @@ public class CampaignRepository(
                 : campaign.Members.RemoveAll(m => string.Equals(m.UserId, userId, StringComparison.Ordinal)) > 0 ? CampaignLeaveResult.Left
                 : CampaignLeaveResult.NotMember;
         });
+
+        // What they asked to bring in goes with them; a GM would otherwise be offered a character for nobody.
+        if (result == CampaignLeaveResult.Left && vaultRepository != null)
+        {
+            await vaultRepository.WithdrawAllAsync(campaignId, userId);
+        }
+
         return result;
     }
 
@@ -174,6 +182,7 @@ public class CampaignRepository(
         if (worldChatRepository != null) await worldChatRepository.DeleteAllForCampaignAsync(campaignId);
         if (bookBuildRepository != null) await bookBuildRepository.DeleteAllForCampaignAsync(campaignId);
         if (bookDraftRepository != null) await bookDraftRepository.DeleteAllForCampaignAsync(campaignId);
+        if (vaultRepository != null) await vaultRepository.DeleteAllRequestsForCampaignAsync(campaignId);
         if (templateRepository != null) await templateRepository.DeleteAllForCampaignAsync(campaignId);
 
         // Attachments (cover art) are deleted with the document; the GM's book pictures are attachments of the book art document.

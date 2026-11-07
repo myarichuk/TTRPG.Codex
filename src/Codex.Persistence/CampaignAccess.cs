@@ -29,6 +29,14 @@ public sealed class CampaignAccess
     /// </summary>
     public CampaignAccess? PartyPreview() => IsDm ? Nobody(CampaignId) : null;
 
+    /// <summary>What a vault character is built against (docs/SERVER_ACCESS_AND_VAULT.md 8): no campaign, so the server's packs and
+    /// nothing of any campaign. Every repository refuses it a campaign's documents, and it writes nothing.</summary>
+    public static CampaignAccess Vault(string userId) => new(string.Empty, userId, CampaignRole.Player);
+
+    /// <summary>The same person reading as a player: what of their own character is theirs to take to their vault, whatever
+    /// their role (a co-GM's history holds the campaign's secrets).</summary>
+    public CampaignAccess AsPlayer() => IsDm ? new CampaignAccess(CampaignId, UserId, CampaignRole.Player) : this;
+
     /// <summary>A player of the campaign who is nobody: no account has this id and no character names it as owner.</summary>
     internal static CampaignAccess Nobody(string campaignId) =>
         new(campaignId, "nobody:" + Guid.NewGuid().ToString("N"), CampaignRole.Player);
