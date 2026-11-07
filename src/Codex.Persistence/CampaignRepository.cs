@@ -84,13 +84,15 @@ public class CampaignRepository(
                 throw new LocalizedException("Campaign.AccessChanged");
             }
 
-            // A co-GM may do what the GM does, except change who owns the campaign or who is a GM in it
-            // (docs/SERVER_ACCESS_AND_VAULT.md 4). Checked on the result, so no edit path can get round it.
+            // A co-GM may do what the GM does, except change who owns the campaign or who else is a GM in it; stepping down
+            // themselves is theirs to do (docs/SERVER_ACCESS_AND_VAULT.md 4). Checked on the result, so no edit path can get round it.
             var owner = campaign.OwnerId;
             var gms = CampaignAccessResolver.GameMasters(campaign);
             mutate(campaign);
-            if (!string.Equals(owner, access.UserId, StringComparison.Ordinal)
-                && (!string.Equals(owner, campaign.OwnerId, StringComparison.Ordinal) || !gms.SetEquals(CampaignAccessResolver.GameMasters(campaign))))
+            if (string.Equals(owner, access.UserId, StringComparison.Ordinal)) return;
+            var after = CampaignAccessResolver.GameMasters(campaign);
+            var steppedDown = gms.Where(g => !string.Equals(g, access.UserId, StringComparison.Ordinal));
+            if (!string.Equals(owner, campaign.OwnerId, StringComparison.Ordinal) || !(after.SetEquals(gms) || after.SetEquals(steppedDown)))
             {
                 throw new LocalizedException("Campaign.OwnerOnly");
             }
@@ -124,6 +126,18 @@ public class CampaignRepository(
         {
             campaign.InviteCode = InviteCodes.New();
         }
+    }
+
+    public async Task<CampaignLeaveResult> LeaveAsync(string campaignId, string userId)
+    {
+        var result = CampaignLeaveResult.NotMember;
+        await UpdateAsync(campaignId, campaign =>
+        {
+            result = string.Equals(campaign.OwnerId, userId, StringComparison.Ordinal) ? CampaignLeaveResult.Owner
+                : campaign.Members.RemoveAll(m => string.Equals(m.UserId, userId, StringComparison.Ordinal)) > 0 ? CampaignLeaveResult.Left
+                : CampaignLeaveResult.NotMember;
+        });
+        return result;
     }
 
     public async Task<CampaignDeleteResult> DeleteAsync(string campaignId, string requestingUserId)

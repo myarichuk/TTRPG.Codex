@@ -74,7 +74,7 @@ else
                 }
                 <div class="card-head">
                     <h2 id="camp-@campaign.Id"><a href="/campaigns/@campaign.Id">@campaign.Name</a></h2>
-                    <span class="pill @(role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(role)</span>
+                    <span class="pill @(role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(role, campaign.OwnerId == currentUserId)</span>
                 </div>
                 <div class="small-muted">@Catalog.GetDisplayName(campaign.SystemId)</div>
                 <p class="mb-0 small campaign-pitch">@(campaign.Pitch() is { Length: > 0 } pitch ? pitch : L["Page.Home.NoDescription"])</p>
@@ -192,9 +192,10 @@ else
         return hash % 360;
     }
 
-    private string RoleLabel(CampaignRole role) => role switch
+    // The owner is the GM; anyone else holding the GM role is a co-GM.
+    private string RoleLabel(CampaignRole role, bool isOwner) => role switch
     {
-        CampaignRole.DM => L["Page.Role.DM"],
+        CampaignRole.DM => isOwner ? L["Page.Role.DM"] : L["Campaign.Settings.Role.CoGm"],
         CampaignRole.Player => L["Page.Role.Player"],
         _ => L["Page.Role.Observer"]
     };

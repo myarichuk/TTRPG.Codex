@@ -967,4 +967,12 @@
   <data name="Campaign.Settings.PassOnBody" xml:space="preserve"><value>Вы останетесь со-мастером. После этого только {0} сможет удалить кампанию, передать её или менять со-мастеров.</value></data>
   <data name="Campaign.Settings.PassedOn" xml:space="preserve"><value>Владелец кампании теперь: {0}.</value></data>
   <data name="Campaign.OwnerOnly" xml:space="preserve"><value>Менять со-мастеров и владельца кампании может только её владелец.</value></data>
+  <data name="Campaign.Settings.StepDown" xml:space="preserve"><value>Стать игроком</value></data>
+  <data name="Campaign.Settings.StepDownQ" xml:space="preserve"><value>Стать игроком?</value></data>
+  <data name="Campaign.Settings.StepDownBody" xml:space="preserve"><value>Вы сразу перестанете видеть заметки мастера, скрытые страницы и скрытых персонажей. Снова сделать вас со-мастером может только владелец.</value></data>
+  <data name="Campaign.Settings.Leave.Title" xml:space="preserve"><value>Покинуть кампанию</value></data>
+  <data name="Campaign.Settings.Leave.Button" xml:space="preserve"><value>Покинуть кампанию</value></data>
+  <data name="Campaign.Settings.Leave.Q" xml:space="preserve"><value>Покинуть «{0}»?</value></data>
+  <data name="Campaign.Settings.Leave.Hint" xml:space="preserve"><value>Вы потеряете доступ к этой кампании. Ваши персонажи останутся в составе. Чтобы вернуться, понадобится новое приглашение.</value></data>
+  <data name="Campaign.Settings.Leave.OwnerHint" xml:space="preserve"><value>Чтобы уйти, сначала сделайте владельцем со-мастера.</value></data>
 </root>

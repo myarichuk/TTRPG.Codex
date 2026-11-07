@@ -166,7 +166,15 @@ Players already bring their own key; this widens what it is for, always built fr
   player, and reads "Only the owner can change who is a co-GM." A member holding the GM role who is not the owner is labelled Co-GM.
 - **Passing the campaign on**: the owner makes a co-GM the owner and stays a co-GM. The new owner needs no server role: owning a
   campaign is not creating one.
+- **Stepping down**: a co-GM's own row has "Step down to player". The store's rule lets a non-owner take away their own GM role and
+  no one else's, in the same change or another; the page then loads afresh as a player's.
+- **Leaving**: any member but the owner leaves from the settings page (`ICampaignRepository.LeaveAsync`, `CampaignLeaveResult`):
+  their membership goes, their characters stay in the cast as a removal leaves them, and coming back takes a new invite. The owner
+  is told to make a co-GM the owner first.
+- **Labels**: the owner shows as GM and every other GM-role member as Co-GM on Home, the campaign header, the overview's member list
+  and the settings page.
 - **Roll log**: a co-GM's own rolls are labelled as the GM's, as the owner's were.
-- **Tests**: `ACoGm_ManagesPlayers_ButOnlyTheOwnerChangesWhoGms_OrPassesTheCampaignOn_Async`. Mutants caught: only the owner change
-  checked; only the GM set checked.
-- **Not done**: a co-GM stepping down by themselves (the owner does it); leaving a campaign as a player.
+- **Tests**: `ACoGm_ManagesPlayers_ButOnlyTheOwnerChangesWhoGms_OrPassesTheCampaignOn_Async`,
+  `ACoGm_StepsDownThemselvesOnly_AndAnyoneButTheOwnerMayLeave_Async`. Mutants caught: only the owner change checked; only the GM set
+  checked; any shrink of the GM set allowed; the owner allowed to leave.
+- **Left for step 6**: passing campaigns on when an account is deleted (the admin page still deletes only accounts in no campaign).

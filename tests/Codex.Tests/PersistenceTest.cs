@@ -2218,6 +2218,51 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         await _campaignRepository.UpdateAsDmAsync(co, c => c.Members.Single(m => m.UserId == "p1").Role = CampaignRole.Player);
     }
 
+    /// <summary>A co-GM may give up their own GM role, and nobody else's in the same change; any member but the owner may leave,
+    /// and their characters stay in the cast. The owner leaves only by passing the campaign on first.</summary>
+    [Fact]
+    public async Task ACoGm_StepsDownThemselvesOnly_AndAnyoneButTheOwnerMayLeave_Async()
+    {
+        var campaignId = "camp-leave-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = campaignId, OwnerId = "owner", Name = "Leaving", SystemId = "srd5e",
+            Members =
+            {
+                new CampaignMember { UserId = "co", Role = CampaignRole.DM }, new CampaignMember { UserId = "co2", Role = CampaignRole.DM },
+                new CampaignMember { UserId = "p1", Role = CampaignRole.Player }
+            }
+        });
+        await _actorRepository.SaveAsync(new ActorDocument { Id = "actor-leave-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Kept", OwnerUserId = "p1" });
+        var co = new CampaignAccess(campaignId, "co", CampaignRole.DM);
+
+        var both = await Assert.ThrowsAsync<LocalizedException>(() => _campaignRepository.UpdateAsDmAsync(co, c =>
+        {
+            c.Members.Single(m => m.UserId == "co").Role = CampaignRole.Player;
+            c.Members.Single(m => m.UserId == "co2").Role = CampaignRole.Player;
+        }));
+        Assert.Equal("Campaign.OwnerOnly", both.Key);
+
+        await _campaignRepository.UpdateAsDmAsync(co, c => c.Members.Single(m => m.UserId == "co").Role = CampaignRole.Player);
+        var stored = (await _campaignRepository.GetAsync(campaignId))!;
+        Assert.Equal(CampaignRole.Player, CampaignAccessResolver.RoleOf(stored, "co"));
+        Assert.Equal(CampaignRole.DM, CampaignAccessResolver.RoleOf(stored, "co2"));
+
+        Assert.Equal(CampaignLeaveResult.Owner, await _campaignRepository.LeaveAsync(campaignId, "owner"));
+        Assert.Equal(CampaignLeaveResult.Left, await _campaignRepository.LeaveAsync(campaignId, "p1"));
+        Assert.Equal(CampaignLeaveResult.Left, await _campaignRepository.LeaveAsync(campaignId, "co2"));
+        Assert.Equal(CampaignLeaveResult.NotMember, await _campaignRepository.LeaveAsync(campaignId, "p1"));
+        Assert.Equal(CampaignLeaveResult.NotMember, await _campaignRepository.LeaveAsync("camp-none-" + Guid.NewGuid(), "p1"));
+
+        stored = (await _campaignRepository.GetAsync(campaignId))!;
+        Assert.Equal("owner", stored.OwnerId);
+        Assert.Null(CampaignAccessResolver.RoleOf(stored, "p1"));
+        Assert.Null(CampaignAccessResolver.RoleOf(stored, "co2"));
+        Assert.Equal(CampaignRole.DM, CampaignAccessResolver.RoleOf(stored, "owner"));
+        Assert.Contains(await _actorRepository.GetVisibleForCampaignAsync(new CampaignAccess(campaignId, "owner", CampaignRole.DM)), a => a.Name == "Kept");
+        Assert.DoesNotContain(await _campaignRepository.GetForUserAsync("p1"), c => c.Id == campaignId);
+    }
+
     /// <summary>F13: every other write reads the role from the stored campaign too. A co-DM demoted while their page is open
     /// writes as the player they now are, and a player removed from the campaign writes nothing, not even their own things.</summary>
     [Fact]

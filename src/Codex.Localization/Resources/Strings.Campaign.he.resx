@@ -967,4 +967,12 @@
   <data name="Campaign.Settings.PassOnBody" xml:space="preserve"><value>אתם תישארו שליטי מבוך שותפים. מעתה רק ל{0} תהיה אפשרות למחוק את המערכה, להעביר אותה הלאה או לקבוע מי שליט מבוך שותף.</value></data>
   <data name="Campaign.Settings.PassedOn" xml:space="preserve"><value>הבעלים של המערכה כעת: {0}.</value></data>
   <data name="Campaign.OwnerOnly" xml:space="preserve"><value>רק הבעלים של המערכה יכולים לקבוע מי שליט מבוך שותף ומי הבעלים.</value></data>
+  <data name="Campaign.Settings.StepDown" xml:space="preserve"><value>חזרה לתפקיד שחקן</value></data>
+  <data name="Campaign.Settings.StepDownQ" xml:space="preserve"><value>לחזור לתפקיד שחקן?</value></data>
+  <data name="Campaign.Settings.StepDownBody" xml:space="preserve"><value>תפסיקו מיד לראות את הערות שליט המבוך, דפים נסתרים ודמויות נסתרות. רק הבעלים יכולים להחזיר אתכם לתפקיד שליט מבוך שותף.</value></data>
+  <data name="Campaign.Settings.Leave.Title" xml:space="preserve"><value>עזיבת המערכה</value></data>
+  <data name="Campaign.Settings.Leave.Button" xml:space="preserve"><value>עזיבת המערכה</value></data>
+  <data name="Campaign.Settings.Leave.Q" xml:space="preserve"><value>לעזוב את {0}?</value></data>
+  <data name="Campaign.Settings.Leave.Hint" xml:space="preserve"><value>הגישה שלכם למערכה תבוטל. הדמויות שלכם יישארו בצוות. כדי לחזור תצטרכו הזמנה חדשה.</value></data>
+  <data name="Campaign.Settings.Leave.OwnerHint" xml:space="preserve"><value>כדי לעזוב, הפכו קודם שליט מבוך שותף לבעלים.</value></data>
 </root>

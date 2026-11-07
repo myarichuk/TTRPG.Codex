@@ -164,7 +164,13 @@
                         }
                         else
                         {
-                            <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(member.Role, isOwner)</span>
+                            <div class="row-actions">
+                                <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(member.Role, isOwner)</span>
+                                @if (!isOwner && member.Role == CampaignRole.DM && member.UserId == Ctx.UserId)
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="StepDownAsync" data-testid="step-down">@L["Campaign.Settings.StepDown"]</CodexButton>
+                                }
+                            </div>
                         }
                     </li>
                 }
@@ -206,6 +212,15 @@
                 <div class="field-hint">@L["Campaign.Settings.NewLinkHint"]</div>
             }
         </section>
+
+        @if (!IsOwner && Ctx.Campaign.Members.Any(m => m.UserId == Ctx.UserId))
+        {
+            <section class="panel" aria-labelledby="leave-heading">
+                <div class="panel-title"><h3 id="leave-heading">@L["Campaign.Settings.Leave.Title"]</h3></div>
+                <p class="small-muted">@L["Campaign.Settings.Leave.Hint"]</p>
+                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="LeaveAsync" data-testid="settings-leave">@L["Campaign.Settings.Leave.Button"]</CodexButton>
+            </section>
+        }
     </div>
 
     @if (Ctx.IsDm)
@@ -236,6 +251,10 @@
                 @if (Ctx.Campaign.OwnerId != Ctx.UserId)
                 {
                     <div class="field-hint">@L["Campaign.Settings.Delete.OwnerOnlyHint"]</div>
+                }
+                else
+                {
+                    <div class="field-hint" data-testid="owner-leave-hint">@L["Campaign.Settings.Leave.OwnerHint"]</div>
                 }
             </section>
         </div>
@@ -395,6 +414,44 @@
         {
             if (campaign.Members.Any(m => m.UserId == member.UserId && m.Role == CampaignRole.DM)) campaign.OwnerId = member.UserId;
         }, L["Campaign.Settings.PassedOn", who]);
+    }
+
+    // A co-GM gives up the GM role themselves; the store lets them take only their own away. Their GM view ends, so the page loads afresh.
+    private async Task StepDownAsync()
+    {
+        if (!await confirm.ShowAsync(L["Campaign.Settings.StepDownQ"], L["Campaign.Settings.StepDownBody"], L["Campaign.Settings.StepDown"], isDestructive: true)) return;
+        try
+        {
+            if (await Ctx.WithCurrentRoleAsync(() => CampaignRepo.UpdateAsDmAsync(Ctx.Access, campaign =>
+                {
+                    if (campaign.OwnerId != Ctx.UserId && campaign.Members.FirstOrDefault(m => m.UserId == Ctx.UserId) is { } me) me.Role = CampaignRole.Player;
+                })))
+            {
+                Nav.NavigateTo(Ctx.BasePath, forceLoad: true);
+            }
+        }
+        catch (LocalizedException ex) when (ex.Key == "Campaign.OwnerOnly")
+        {
+            Ctx.Notify(Flash.Error(L["Campaign.OwnerOnly"]));
+            await Ctx.ReloadAsync();
+        }
+    }
+
+    // Any member but the owner may leave; their characters stay in the cast, and a new invite brings them back.
+    private async Task LeaveAsync()
+    {
+        if (!await confirm.ShowAsync(L["Campaign.Settings.Leave.Q", Ctx.Campaign.Name], L["Campaign.Settings.Leave.Hint"], L["Campaign.Settings.Leave.Button"], isDestructive: true)) return;
+        switch (await CampaignRepo.LeaveAsync(Ctx.Campaign.Id, Ctx.UserId))
+        {
+            case CampaignLeaveResult.Left:
+            case CampaignLeaveResult.NotMember:
+                Nav.NavigateTo("/", forceLoad: true);
+                break;
+            default:
+                Ctx.Notify(Flash.Error(L["Campaign.Settings.Leave.OwnerHint"]));
+                await Ctx.ReloadAsync();
+                break;
+        }
     }
 
     private async Task RemoveMemberAsync(CampaignMember member)

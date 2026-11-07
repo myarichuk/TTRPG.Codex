@@ -967,4 +967,12 @@
   <data name="Campaign.Settings.PassOnBody" xml:space="preserve"><value>You stay a co-GM. From then on only {0} can delete the campaign, pass it on, or change who is a co-GM.</value></data>
   <data name="Campaign.Settings.PassedOn" xml:space="preserve"><value>{0} now owns the campaign.</value></data>
   <data name="Campaign.OwnerOnly" xml:space="preserve"><value>Only the campaign's owner can change who is a co-GM or who owns it.</value></data>
+  <data name="Campaign.Settings.StepDown" xml:space="preserve"><value>Step down to player</value></data>
+  <data name="Campaign.Settings.StepDownQ" xml:space="preserve"><value>Step down to player?</value></data>
+  <data name="Campaign.Settings.StepDownBody" xml:space="preserve"><value>You stop seeing GM notes, hidden pages and hidden characters at once. Only the owner can make you a co-GM again.</value></data>
+  <data name="Campaign.Settings.Leave.Title" xml:space="preserve"><value>Leave the campaign</value></data>
+  <data name="Campaign.Settings.Leave.Button" xml:space="preserve"><value>Leave campaign</value></data>
+  <data name="Campaign.Settings.Leave.Q" xml:space="preserve"><value>Leave {0}?</value></data>
+  <data name="Campaign.Settings.Leave.Hint" xml:space="preserve"><value>You lose access to this campaign. Your characters stay in its cast. To come back you need a new invite.</value></data>
+  <data name="Campaign.Settings.Leave.OwnerHint" xml:space="preserve"><value>To leave, make a co-GM the owner first.</value></data>
 </root>
