@@ -76,6 +76,12 @@ Players already bring their own key; this widens what it is for, always built fr
   or, for NPCs, a Library creature's stat block. Then tweak by hand or ask the AI for a change ("add a fire power", "make them a better
   climber"): the AI proposes changes to the sheet, picking Library entries where the system has them and homebrew text where it does not,
   and the person accepts or drops each one before anything is saved.
+- **Structured, like the world builder chat**: character work runs on tools rather than one free-text answer. The model reads the sheet
+  and the system's schema, lists the Library's real options (classes, species, skills, powers, items), and ends with a proposal of
+  changes, each one a field and a value with a one-line reason. The same tools serve the companion MCP server when it comes.
+- **Highlights** (on request): for a concept like "former pirate" or "ex-smuggler turned priest", the model marks what matters for the
+  story (the attributes to favour, the skills, languages, tools and gear that fit) with a short reason each, shown on the sheet as
+  suggestions the person can take or ignore. Highlights change nothing by themselves.
 - **The server's key per role** (setup step 6): for example "Game Masters may use it", with the daily allowance.
 
 ## 7. Bringing a character into a campaign: a copy
