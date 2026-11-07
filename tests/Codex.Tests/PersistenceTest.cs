@@ -2165,6 +2165,59 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal("After", (await _campaignRepository.UpdateAsDmAsync(owner, c => c.Name = "After"))!.Name);
     }
 
+    /// <summary>docs/SERVER_ACCESS_AND_VAULT.md 4: a co-GM runs the campaign and manages its players, but only the owner changes
+    /// who GMs it or who owns it. Passing the campaign on leaves the old owner a co-GM, with a co-GM's limits.</summary>
+    [Fact]
+    public async Task ACoGm_ManagesPlayers_ButOnlyTheOwnerChangesWhoGms_OrPassesTheCampaignOn_Async()
+    {
+        var campaignId = "camp-cogm-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = campaignId, OwnerId = "owner", Name = "Before", SystemId = "srd5e",
+            Members =
+            {
+                new CampaignMember { UserId = "co", Role = CampaignRole.DM }, new CampaignMember { UserId = "co2", Role = CampaignRole.DM },
+                new CampaignMember { UserId = "p1", Role = CampaignRole.Player }, new CampaignMember { UserId = "p2", Role = CampaignRole.Player }
+            }
+        });
+        var co = new CampaignAccess(campaignId, "co", CampaignRole.DM);
+        var owner = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+
+        async Task RefusedAsync(CampaignAccess who, Action<CampaignDocument> change)
+        {
+            var refused = await Assert.ThrowsAsync<LocalizedException>(() => _campaignRepository.UpdateAsDmAsync(who, change));
+            Assert.Equal("Campaign.OwnerOnly", refused.Key);
+        }
+
+        // What a GM does to the campaign and its players, a co-GM does too.
+        await _campaignRepository.UpdateAsDmAsync(co, c => c.Name = "Renamed");
+        await _campaignRepository.UpdateAsDmAsync(co, c => c.Members.RemoveAll(m => m.UserId == "p2"));
+
+        await RefusedAsync(co, c => c.Members.Single(m => m.UserId == "p1").Role = CampaignRole.DM);
+        await RefusedAsync(co, c => c.Members.Single(m => m.UserId == "co2").Role = CampaignRole.Player);
+        await RefusedAsync(co, c => c.Members.RemoveAll(m => m.UserId == "co2"));
+        await RefusedAsync(co, c => c.OwnerId = "co");
+        await RefusedAsync(co, c => c.Members.Add(new CampaignMember { UserId = "stranger", Role = CampaignRole.DM }));
+
+        var stored = (await _campaignRepository.GetAsync(campaignId))!;
+        Assert.Equal("Renamed", stored.Name);
+        Assert.Equal("owner", stored.OwnerId);
+        Assert.Equal(["co", "co2", "owner"], CampaignAccessResolver.GameMasters(stored).Order(StringComparer.Ordinal));
+        Assert.DoesNotContain(stored.Members, m => m.UserId == "p2");
+
+        // The owner promotes, demotes, and passes the campaign on; they stay a co-GM and lose the owner's say.
+        await _campaignRepository.UpdateAsDmAsync(owner, c => c.Members.Single(m => m.UserId == "p1").Role = CampaignRole.DM);
+        await _campaignRepository.UpdateAsDmAsync(owner, c => c.Members.Single(m => m.UserId == "co2").Role = CampaignRole.Player);
+        await _campaignRepository.UpdateAsDmAsync(owner, c => c.OwnerId = "co");
+
+        stored = (await _campaignRepository.GetAsync(campaignId))!;
+        Assert.Equal("co", stored.OwnerId);
+        Assert.Equal(CampaignRole.DM, CampaignAccessResolver.RoleOf(stored, "owner"));
+        await RefusedAsync(owner, c => c.Members.Single(m => m.UserId == "p1").Role = CampaignRole.Player);
+        Assert.Equal(CampaignDeleteResult.Forbidden, await _campaignRepository.DeleteAsync(campaignId, "owner"));
+        await _campaignRepository.UpdateAsDmAsync(co, c => c.Members.Single(m => m.UserId == "p1").Role = CampaignRole.Player);
+    }
+
     /// <summary>F13: every other write reads the role from the stored campaign too. A co-DM demoted while their page is open
     /// writes as the player they now are, and a player removed from the campaign writes nothing, not even their own things.</summary>
     [Fact]

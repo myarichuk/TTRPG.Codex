@@ -1,6 +1,6 @@
 # Server access, roles and the character vault
 
-Design agreed 2026-11-07, not built yet. It covers who may use a server and what for: the first-time setup, server roles and approval,
+Design agreed 2026-11-07. Steps 1 to 3 are built (11, 12); 4 to 6 are not. It covers who may use a server and what for: the first-time setup, server roles and approval,
 co-GMs, where the server may fetch from, players' own AI keys, and characters that live outside any campaign.
 
 ## 1. What is there today
@@ -109,9 +109,9 @@ Players already bring their own key; this widens what it is for, always built fr
 
 ## 10. Order of building
 
-1. Setup wizard, server roles, approval, the admin page and log, migration of existing servers.
-2. Co-GMs.
-3. The fetch list.
+1. Setup wizard, server roles, approval, the admin page and log, migration of existing servers. Built (11).
+2. Co-GMs. Built (12).
+3. The fetch list. Built with step 1 (11).
 4. The vault and bringing characters in.
 5. AI: notes, character creation and tweaks in both places, the server key per role.
 6. Storage limits, account deletion, export.
@@ -151,3 +151,22 @@ Players already bring their own key; this widens what it is for, always built fr
   invite ignored. The E2E fixture seeds an admin, which also makes the test server permissive (`/test/seed/settings` changes it).
 - **Not done**: the launcher's "reset the admin's password"; the admin log shows setting changes in English; an open page shows a new role
   only after a reload; deleting an account that is in a campaign.
+
+## 12. Step 2 as built (2026-11-07)
+
+- **Most of it was there**: a campaign member could already hold the GM role (`CampaignRole.DM`), every GM check already read the
+  role (`CampaignAccess.IsDm`, `CampaignAccessResolver.RoleOf`, which counts the owner as a GM whatever the member list says), and
+  deleting the campaign already checked `OwnerId`. Step 2 adds the owner's limits on a co-GM and passing the campaign on.
+- **The rule, in the store**: `CampaignRepository.UpdateAsDmAsync` compares the campaign before and after the change; when the caller
+  is not the owner and the owner or the set of GMs (`CampaignAccessResolver.GameMasters`) changed, it refuses with
+  `Campaign.OwnerOnly`. So a co-GM can rename the campaign, change players' roles and remove players, but cannot make or remove
+  co-GMs, demote one, or take the campaign. Restoring a backup over a campaign already keeps its stored members and owner.
+- **Settings page**: the owner's role list offers Co-GM, with a confirmation that says what a co-GM sees and what only the owner can
+  do; a co-GM's row has "Make owner". A co-GM sees the owner and the other co-GMs without controls, can only choose Player for a
+  player, and reads "Only the owner can change who is a co-GM." A member holding the GM role who is not the owner is labelled Co-GM.
+- **Passing the campaign on**: the owner makes a co-GM the owner and stays a co-GM. The new owner needs no server role: owning a
+  campaign is not creating one.
+- **Roll log**: a co-GM's own rolls are labelled as the GM's, as the owner's were.
+- **Tests**: `ACoGm_ManagesPlayers_ButOnlyTheOwnerChangesWhoGms_OrPassesTheCampaignOn_Async`. Mutants caught: only the owner change
+  checked; only the GM set checked.
+- **Not done**: a co-GM stepping down by themselves (the owner does it); leaving a campaign as a player.

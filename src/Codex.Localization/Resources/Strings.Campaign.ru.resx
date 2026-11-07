@@ -299,7 +299,7 @@
   <data name="Campaign.Settings.NewLinkBody" xml:space="preserve"><value>Текущая ссылка сразу перестанет работать. Тем, у кого она есть и кто ещё не присоединился, понадобится новая.</value></data>
   <data name="Campaign.Settings.NewLinkConfirm" xml:space="preserve"><value>Создать ссылку</value></data>
   <data name="Campaign.Settings.RoleQ" xml:space="preserve"><value>Сменить роль {0} на «{1}»?</value></data>
-  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>Мастер видит все секреты этой кампании и может изменить или удалить в ней что угодно.</value></data>
+  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>Со-мастер видит все секреты этой кампании: заметки мастера, скрытые страницы и персонажей. Он может вести игру и менять мир и книгу. Только вы можете удалить кампанию, передать её или менять со-мастеров.</value></data>
   <data name="Campaign.Settings.RoleBody" xml:space="preserve"><value>То, что участник может видеть и делать, изменится сразу после подтверждения.</value></data>
   <data name="Campaign.Settings.RoleConfirm" xml:space="preserve"><value>Сменить роль</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>После создания новой ссылки старая перестанет работать.</value></data>
@@ -959,4 +959,12 @@
   <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>Этот лимит слишком мал, чтобы отправить хотя бы один запрос: для самой большой главы нужно зарезервировать не менее {0} токенов (худший случай, с повторами).</value></data>
   <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>В пожеланиях к стилю есть сведения, которых нет в книге для партии ({0}). Для этого издания оставьте только манеру и тон: без имён, чисел и сюжета.</value></data>
   <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} нет в списке сайтов сервера; администратор сервера может его добавить</value></data>
+  <data name="Campaign.Settings.Role.CoGm" xml:space="preserve"><value>Со-мастер</value></data>
+  <data name="Campaign.Settings.CoGmHint" xml:space="preserve"><value>Менять со-мастеров может только владелец.</value></data>
+  <data name="Campaign.Settings.PassOn" xml:space="preserve"><value>Сделать владельцем</value></data>
+  <data name="Campaign.Settings.PassOnLabel" xml:space="preserve"><value>Сделать {0} владельцем</value></data>
+  <data name="Campaign.Settings.PassOnQ" xml:space="preserve"><value>Сделать {0} владельцем кампании?</value></data>
+  <data name="Campaign.Settings.PassOnBody" xml:space="preserve"><value>Вы останетесь со-мастером. После этого только {0} сможет удалить кампанию, передать её или менять со-мастеров.</value></data>
+  <data name="Campaign.Settings.PassedOn" xml:space="preserve"><value>Владелец кампании теперь: {0}.</value></data>
+  <data name="Campaign.OwnerOnly" xml:space="preserve"><value>Менять со-мастеров и владельца кампании может только её владелец.</value></data>
 </root>

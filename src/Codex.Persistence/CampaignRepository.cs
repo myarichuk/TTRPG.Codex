@@ -84,7 +84,16 @@ public class CampaignRepository(
                 throw new LocalizedException("Campaign.AccessChanged");
             }
 
+            // A co-GM may do what the GM does, except change who owns the campaign or who is a GM in it
+            // (docs/SERVER_ACCESS_AND_VAULT.md 4). Checked on the result, so no edit path can get round it.
+            var owner = campaign.OwnerId;
+            var gms = CampaignAccessResolver.GameMasters(campaign);
             mutate(campaign);
+            if (!string.Equals(owner, access.UserId, StringComparison.Ordinal)
+                && (!string.Equals(owner, campaign.OwnerId, StringComparison.Ordinal) || !gms.SetEquals(CampaignAccessResolver.GameMasters(campaign))))
+            {
+                throw new LocalizedException("Campaign.OwnerOnly");
+            }
         });
 
     /// <summary>1.1: reject a SystemId nothing implements. Skipped until the catalog has actually run

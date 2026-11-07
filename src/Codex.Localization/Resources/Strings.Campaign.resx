@@ -299,7 +299,7 @@
   <data name="Campaign.Settings.NewLinkBody" xml:space="preserve"><value>The current link stops working at once. Anyone who has it and has not joined yet will need the new one.</value></data>
   <data name="Campaign.Settings.NewLinkConfirm" xml:space="preserve"><value>Make new link</value></data>
   <data name="Campaign.Settings.RoleQ" xml:space="preserve"><value>Change {0}'s role to {1}?</value></data>
-  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>A GM sees every secret in this campaign and can change or delete anything in it.</value></data>
+  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>A co-GM sees every secret in this campaign: GM notes, hidden pages and characters. They can run the table and change the world and the book. Only you can delete the campaign, pass it on, or change who is a co-GM.</value></data>
   <data name="Campaign.Settings.RoleBody" xml:space="preserve"><value>What they can see and do changes as soon as you confirm.</value></data>
   <data name="Campaign.Settings.RoleConfirm" xml:space="preserve"><value>Change role</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>Making a new link stops the old one from working.</value></data>
@@ -959,4 +959,12 @@
   <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>This cap is too low to send even one request: the biggest chapter needs at least {0} tokens set aside (its worst case, retries included).</value></data>
   <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>The style notes carry facts the party's book does not hold ({0}). Keep them to voice and tone for this edition: no names, no numbers, no plot.</value></data>
   <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} is not on the server's list of sites; the server's admin can add it</value></data>
+  <data name="Campaign.Settings.Role.CoGm" xml:space="preserve"><value>Co-GM</value></data>
+  <data name="Campaign.Settings.CoGmHint" xml:space="preserve"><value>Only the owner can change who is a co-GM.</value></data>
+  <data name="Campaign.Settings.PassOn" xml:space="preserve"><value>Make owner</value></data>
+  <data name="Campaign.Settings.PassOnLabel" xml:space="preserve"><value>Make {0} the owner</value></data>
+  <data name="Campaign.Settings.PassOnQ" xml:space="preserve"><value>Make {0} the campaign's owner?</value></data>
+  <data name="Campaign.Settings.PassOnBody" xml:space="preserve"><value>You stay a co-GM. From then on only {0} can delete the campaign, pass it on, or change who is a co-GM.</value></data>
+  <data name="Campaign.Settings.PassedOn" xml:space="preserve"><value>{0} now owns the campaign.</value></data>
+  <data name="Campaign.OwnerOnly" xml:space="preserve"><value>Only the campaign's owner can change who is a co-GM or who owns it.</value></data>
 </root>

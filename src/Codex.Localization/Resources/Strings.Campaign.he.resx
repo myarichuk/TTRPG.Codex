@@ -299,7 +299,7 @@
   <data name="Campaign.Settings.NewLinkBody" xml:space="preserve"><value>הקישור הנוכחי יפסיק לעבוד מיד. מי שקיבל אותו ועוד לא הצטרף יצטרך את החדש.</value></data>
   <data name="Campaign.Settings.NewLinkConfirm" xml:space="preserve"><value>יצירת קישור חדש</value></data>
   <data name="Campaign.Settings.RoleQ" xml:space="preserve"><value>לשנות את התפקיד של {0} ל{1}?</value></data>
-  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>שליט מבוך רואה כל סוד במערכה הזו ויכול לשנות או למחוק בה כל דבר.</value></data>
+  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>שליט מבוך שותף רואה כל סוד במערכה הזו: הערות שליט המבוך, דפים ודמויות נסתרים. הוא יכול לנהל את השולחן ולשנות את העולם ואת הספר. רק אתם יכולים למחוק את המערכה, להעביר אותה הלאה או לקבוע מי שליט מבוך שותף.</value></data>
   <data name="Campaign.Settings.RoleBody" xml:space="preserve"><value>מה שהם יכולים לראות ולעשות ישתנה ברגע שתאשרו.</value></data>
   <data name="Campaign.Settings.RoleConfirm" xml:space="preserve"><value>שינוי תפקיד</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>יצירת קישור חדש מבטלת את הקישור הישן.</value></data>
@@ -959,4 +959,12 @@
   <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>התקרה נמוכה מדי כדי לשלוח אפילו בקשה אחת: הפרק הגדול ביותר דורש שמירה של לפחות {0} אסימונים (המקרה הגרוע, כולל ניסיונות חוזרים).</value></data>
   <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>הערות הסגנון כוללות עובדות שאינן בספר של החבורה ({0}). במהדורה הזו השאירו רק קול וטון: בלי שמות, מספרים ועלילה.</value></data>
   <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} לא ברשימת האתרים של השרת; מנהל השרת יכול להוסיף אותו</value></data>
+  <data name="Campaign.Settings.Role.CoGm" xml:space="preserve"><value>שליט מבוך שותף</value></data>
+  <data name="Campaign.Settings.CoGmHint" xml:space="preserve"><value>רק הבעלים יכולים לקבוע מי שליט מבוך שותף.</value></data>
+  <data name="Campaign.Settings.PassOn" xml:space="preserve"><value>הפיכה לבעלים</value></data>
+  <data name="Campaign.Settings.PassOnLabel" xml:space="preserve"><value>להפוך את {0} לבעלים</value></data>
+  <data name="Campaign.Settings.PassOnQ" xml:space="preserve"><value>להפוך את {0} לבעלים של המערכה?</value></data>
+  <data name="Campaign.Settings.PassOnBody" xml:space="preserve"><value>אתם תישארו שליטי מבוך שותפים. מעתה רק ל{0} תהיה אפשרות למחוק את המערכה, להעביר אותה הלאה או לקבוע מי שליט מבוך שותף.</value></data>
+  <data name="Campaign.Settings.PassedOn" xml:space="preserve"><value>הבעלים של המערכה כעת: {0}.</value></data>
+  <data name="Campaign.OwnerOnly" xml:space="preserve"><value>רק הבעלים של המערכה יכולים לקבוע מי שליט מבוך שותף ומי הבעלים.</value></data>
 </root>
