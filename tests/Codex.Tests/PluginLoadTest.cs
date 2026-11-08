@@ -62,8 +62,7 @@ public class PluginLoadTest
         // plugin anywhere. Loading it proves the data-driven path end to end.
         var root = Path.Combine(TestPaths.RepoRoot, "content", "examples", "simple-d6");
         var registry = new ComponentRegistry();
-        var scriptEvaluator = new Codex.Core.Scripting.ScriptEvaluator(NullLogger<Codex.Core.Scripting.ScriptEvaluator>.Instance);
-        var contentRegistry = new ContentRegistry(scriptEvaluator);
+        var contentRegistry = new ContentRegistry();
         var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, registry, new YamlContentPackLoader(contentRegistry));
 
         await loader.LoadAndInitializeAsync(root);

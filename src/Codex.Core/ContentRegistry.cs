@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 
 namespace Codex.Core;
@@ -18,13 +17,7 @@ public class ContentRegistry : IContentRegistry
     private readonly Dictionary<(string System, string Key), Dictionary<string, (Dictionary<string, object> Fields, string PackId)>> _translations = new();
     private readonly Dictionary<string, PackManifest> _packs = new();
     private readonly HashSet<string> _loadedPacks = new();
-    private readonly ScriptEvaluator _scriptEvaluator;
     private readonly object _gate = new();
-
-    public ContentRegistry(ScriptEvaluator scriptEvaluator)
-    {
-        _scriptEvaluator = scriptEvaluator;
-    }
 
     #region Abilities
     public void RegisterAbility(IAbilityDefinition ability, int priority)
@@ -374,25 +367,6 @@ public class ContentRegistry : IContentRegistry
         }
     }
     #endregion
-
-    public Task ExecuteAbilityAsync(string fullId, dynamic context)
-    {
-        var ability = GetAbility(fullId);
-        if (ability == null) return Task.CompletedTask;
-
-        if (ability.Effects != null)
-        {
-            foreach (var effect in ability.Effects)
-            {
-                if (effect.Params != null && effect.Params.TryGetValue("Script", out var scriptObj) && !string.IsNullOrEmpty(scriptObj?.ToString()) && context is AbilityContext abilityContext)
-                {
-                    _scriptEvaluator.Execute(scriptObj.ToString()!, abilityContext);
-                }
-            }
-        }
-
-        return Task.CompletedTask;
-    }
 
     #region Helpers
     // Ties are broken deterministically on PackId (ordinal, highest wins) so the outcome doesn't

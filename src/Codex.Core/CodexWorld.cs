@@ -63,12 +63,6 @@ public sealed class CodexWorld : IDisposable
         entity.Get<ActiveEffectsComponent>().Effects.Add(new ActiveEffect(effectId, sourceId, rounds, expiry, anchorId, string.IsNullOrEmpty(heldBy) ? null : heldBy));
     }
 
-    /// <summary>Scripting convenience (kept for <see cref="Codex.Core.Scripting.ScriptApi"/>): a script
-    /// knows entities, not actor ids, so the effect is anchored to nobody's turn and lasts until the
-    /// table removes it.</summary>
-    public void AddStatus(Entity entity, string effectId, string sourceId, double roundsRemaining) =>
-        AddStatus(entity, effectId, sourceId, (int)Math.Ceiling(roundsRemaining), EffectExpiry.EndOfTurn, string.Empty);
-
     /// <summary>
     /// Advances one turn boundary for the actor <paramref name="anchorId"/>: every timed
     /// <see cref="ActiveEffect"/> anchored to it, on any entity, whose expiry matches

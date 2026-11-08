@@ -1,6 +1,5 @@
 using Codex.Core;
 using Codex.Core.Models;
-using Codex.Core.Scripting;
 using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -11,7 +10,7 @@ namespace Codex.Tests;
 public class GenericContentTests : IDisposable
 {
     private readonly string _tempPath = Path.Combine(Path.GetTempPath(), "CodexGeneric_" + Guid.NewGuid());
-    private readonly ContentRegistry _registry = new(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+    private readonly ContentRegistry _registry = new();
 
     public GenericContentTests() => Directory.CreateDirectory(_tempPath);
 
@@ -228,7 +227,7 @@ public class GenericContentTests : IDisposable
         Assert.DoesNotContain("systemId", yaml);
         Assert.False(yaml.StartsWith('﻿'), "no BOM");
 
-        var fresh = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var fresh = new ContentRegistry();
         await new YamlContentPackLoader(fresh).LoadPackAsync(dir, system);
         var loaded = fresh.GetEntry("demo", "spell", "thunderous-yawn")!;
         Assert.Equal("Thunderous Yawn", loaded.Name);

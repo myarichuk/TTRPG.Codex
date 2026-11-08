@@ -62,8 +62,6 @@ public interface IContentRegistry
     IEnumerable<PackManifest> GetPacks(string? systemId = null);
     PackManifest? GetPack(string packId);
     IEnumerable<string> GetLoadedPacks();
-
-    System.Threading.Tasks.Task ExecuteAbilityAsync(string fullId, dynamic context);
 }
 
 public interface IActorDefinition

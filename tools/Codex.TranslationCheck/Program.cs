@@ -1,5 +1,4 @@
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Codex.TranslationCheck;
@@ -27,7 +26,7 @@ var contentRoot = Arg("--content") ?? "content";
 var systemId = Arg("--system") ?? "srd5e";
 var quiet = args.Contains("--quiet");
 
-var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+var registry = new ContentRegistry();
 var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(registry));
 await loader.LoadAndInitializeAsync(contentRoot);
 var systemFile = Path.Combine(contentRoot, "systems", systemId, "system.yaml");

@@ -1,5 +1,4 @@
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 using Codex.Web.Services;
@@ -184,7 +183,6 @@ builder.Services.AddScoped<ViewerClock>();
 // Game systems and content
 builder.Services.AddSingleton<ComponentRegistry>();
 builder.Services.AddSingleton<ISystemCatalog>(sp => sp.GetRequiredService<PluginLoader>());
-builder.Services.AddSingleton<ScriptEvaluator>();
 builder.Services.AddSingleton<IContentRegistry, ContentRegistry>();
 builder.Services.AddSingleton<IContentPackLoader, YamlContentPackLoader>();
 builder.Services.AddSingleton<PluginLoader>();

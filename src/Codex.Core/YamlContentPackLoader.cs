@@ -341,6 +341,14 @@ public class YamlContentPackLoader : IContentPackLoader
             }
         }
 
+        // Ability scripts were a DynamicExpresso path that never ran at the table and was not a sandbox; it was removed.
+        // A pack that still carries one loads, and its author is told the script is ignored.
+        if (item.Effects?.Any(e => e.Params != null && e.Params.ContainsKey("Script")) == true)
+        {
+            Problem("Ability {AbilityId} in pack {PackId} has a Script effect. Scripts in packs are not supported and it is ignored.",
+                item.Id, item.PackId);
+        }
+
         _registry.RegisterAbility(item, prio);
     }
 

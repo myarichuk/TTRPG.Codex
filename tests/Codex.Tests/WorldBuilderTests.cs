@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Codex.Core.AI;
-using Codex.Core.Scripting;
 using Codex.Core.Systems;
 using Codex.Core.WorldBuilder;
 using Codex.Core;
@@ -444,7 +443,7 @@ public class WorldBuilderTests
     /// <param name="registry">The packs' content, which the Library and the cast both read; empty when null.</param>
     private static Saving Service(IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, ContentRegistry? registry, params HomebrewEntryDocument[] existing)
     {
-        registry ??= new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        registry ??= new ContentRegistry();
         var pages = new List<WikiPageDocument>();
         var entries = new List<HomebrewEntryDocument>();
         var actors = new List<ActorDocument>();
@@ -846,7 +845,7 @@ public class WorldBuilderTests
     /// <summary>A registry holding one pack creature, the Veteran (58 hit points), as a stat block the cast can start from.</summary>
     private static ContentRegistry VeteranPack()
     {
-        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var registry = new ContentRegistry();
         var veteran = new ContentEntry { Id = "veteran", Type = "monster", SystemId = "srd5e", PackId = "srd", Name = "Veteran", Properties = { ["hitPoints"] = 58L, ["challenge"] = "3" } };
         registry.RegisterEntry(veteran, 0);
         registry.RegisterActor(YamlContentPackLoader.ToActorBlueprint(veteran, MonsterType), 0);

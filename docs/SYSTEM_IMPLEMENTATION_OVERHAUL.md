@@ -31,10 +31,11 @@ New findings:
   `ResourcePoolComponent` holds integers only (`Components.cs:41`).
 - **Formulas can't see beyond the sheet's numbers.** `FormulaContext` (`SheetRuleEngine.cs:881`) holds flat numeric
   sheet keys and attribute defaults. Formulas can't read class entries, per-class levels, list items or tables.
-- **A dead and unsafe script path.** `ScriptEvaluator` compiles a pack ability's `Effects[].Params.Script` with
-  DynamicExpresso, referencing DefaultEcs `Entity`. `ContentRegistry.ExecuteAbilityAsync` (line 378) has no callers, so
-  nothing runs today. It should still be deleted, not fixed: `Entity` leads back to the raw `World` that B3 remediation
-  meant to hide, and DynamicExpresso is not a sandbox.
+- **A dead and unsafe script path. Removed 2026-11-08.** `ScriptEvaluator` compiled a pack ability's
+  `Effects[].Params.Script` with DynamicExpresso, referencing DefaultEcs `Entity`; `ContentRegistry.ExecuteAbilityAsync`
+  had no callers. It was deleted rather than fixed: `Entity` leads back to the raw `World` that B3 remediation meant to
+  hide, and DynamicExpresso is not a sandbox. A pack that still carries a `Script` effect loads, with a load warning
+  saying the script is ignored.
 
 ## 2. Design constraints: three systems that are not 5e
 
@@ -64,7 +65,7 @@ R. Talsorian text (`LEGAL.md` records their policy).
 - Death save: roll under BODY with a penalty that grows each time.
 - Advancement by spending Improvement Points, not levels; role abilities have ranks.
 
-**C. Blades in the Dark (the Forged in the Dark SRD, CC-BY; confirm the version before quoting text): the far end.**
+**C. Blades in the Dark (the Forged in the Dark SRD, CC-BY 3.0, see section 8): the far end.**
 No HP, no modifiers, no level, a second kind of sheet, and state that belongs to the campaign.
 - Roll a pool of d6 equal to an action rating, keep the highest: 6 full success, 4–5 partial, 1–3 bad. Two 6s:
   critical. Zero dice: roll 2, keep the lowest.
@@ -295,9 +296,9 @@ From revision 1, still needed:
   campaigns still use asks first. `EnsureKnownSystem` stops throwing on every save.
 
 New:
-- **Delete the legacy ability-script path** (`Scripting/ScriptEvaluator.cs`, `ContentRegistry.ExecuteAbilityAsync`,
-  `Effects[].Params.Script`). It has no callers, it is not a sandbox, and Jint replaces it. A pack that still carries a
-  `Script` gets a load warning.
+- **Delete the legacy ability-script path.** Done 2026-11-08: `Scripting/ScriptEvaluator.cs`,
+  `ContentRegistry.ExecuteAbilityAsync` and `CodexWorld`'s script-only `AddStatus` overload are gone; a pack's `Script`
+  effect gives a load warning.
 - **Systems distributed separately.** Releases ship `content/` next to the executable (`ContentRoots.cs`), so every
   bundled system is inside every past release asset. Systems other than srd5e ship as separate archives installed
   through the in-app install, so withdrawing one (an OGL licence change, a takedown) means removing one download. With
@@ -321,7 +322,7 @@ New:
 
 Each step lands with srd5e unchanged (section 5) and moves at least one reference fixture closer to green.
 
-0. **Cleanups that need no design.** Delete the legacy script path. Finish load errors. Make 5e-named defaults required.
+0. **Cleanups that need no design.** Delete the legacy script path (done). Finish load errors. Make 5e-named defaults required.
    Safe removal (read-only campaigns).
 1. **Fixtures first.** Write the three reference systems (section 2) as `system.yaml`, fixture sheets and expected
    results in `tests/`. They fail; they are the spec. Add the golden srd5e corpus.
@@ -347,7 +348,25 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
 |---|---|---|
 | SRD 3.5 | OGL 1.0a | Fixture now. A content pack later, as a separate download, with the OGL text, Section 15 and designations (section 6). |
 | CPR-shaped homebrew | Own work | Fixture only; mechanics in that shape, no R. Talsorian text, names or trademarks. |
-| Blades in the Dark | Forged in the Dark SRD, CC-BY (confirm version and attribution wording) | Fixture now; SRD text with attribution later if wanted. Not named "Blades in the Dark" beyond the attribution unless the licence allows it. |
+| Blades in the Dark | Forged in the Dark SRD (December 2017), CC-BY 3.0 Unported | Fixture now; SRD text may ship later as a pack (see below). |
+
+Blades / Forged in the Dark, checked 2026-11-08 against the publisher's page (https://bladesinthedark.com/licensing):
+- **Licence.** The SRD contents are under CC-BY 3.0 Unported. Commercial use is not restricted and the licence is not
+  viral, so the app's own licence does not conflict with it. `LicenseInfo` already carries what CC-BY needs.
+- **What it covers.** Only the SRD (the core mechanics pages at https://bladesinthedark.com/basics), not the rulebook.
+  Excluded: anything not in the SRD, the setting of Duskwall / the Shattered Isles, its NPCs, artwork and maps, and
+  translations of the core book. Material must not harm One Seven Design's reputation.
+- **Attribution.** A fixed sentence, placed with our copyright notice and the same size: "This work is based on Blades
+  in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John
+  Harper, ... licensed for our use under the Creative Commons Attribution 3.0 Unported license
+  (http://creativecommons.org/licenses/by/3.0/)". Copy it exactly from the page when the pack is made; the elided words
+  were not recorded here.
+- **Names.** "Blades in the Dark" must not appear in a product's title, and its logo needs permission. The Forged in the
+  Dark logo may be used with the notice "Blades in the Dark™ is a trademark of One Seven Design. The Forged in the Dark
+  Logo is © One Seven Design, and is used with permission." No implied endorsement. So the system is named after the SRD
+  (for example "Forged in the Dark SRD"), never "Blades in the Dark".
+- **Not checked.** The CC-BY 3.0 legal code itself and the SRD's own copyright notice (which the "Copying" section asks
+  us to keep) were not read; read both before shipping text.
 
 ## 9. Open questions
 

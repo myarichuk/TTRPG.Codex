@@ -1,5 +1,4 @@
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -60,7 +59,7 @@ public class ContentTranslationTests : IDisposable
               name: Призрак
             """);
 
-        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var registry = new ContentRegistry();
         var loader = new YamlContentPackLoader(registry);
         await loader.LoadPackAsync(Path.Combine(_root, "base"), Demo);
         await loader.LoadPackAsync(Path.Combine(_root, "ru"), Demo);
@@ -322,7 +321,7 @@ public class ContentTranslationTests : IDisposable
                   - { name: Полёт, description: Он летает. }
             """);
 
-        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var registry = new ContentRegistry();
         var loader = new YamlContentPackLoader(registry);
         await loader.LoadPackAsync(Path.Combine(_root, "base"), Demo);
         await loader.LoadPackAsync(Path.Combine(_root, "ru"), Demo);

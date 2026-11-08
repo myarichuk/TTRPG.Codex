@@ -1,7 +1,6 @@
 using Codex.Core;
 using Codex.Core.Components;
 using Codex.Core.Rules;
-using Codex.Core.Scripting;
 using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -339,7 +338,7 @@ public class SheetVitalsTests
 /// breaks hit points or armor class is caught.</summary>
 public class SrdVitalsScenarioTests : IAsyncLifetime
 {
-    private readonly ContentRegistry _registry = new(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+    private readonly ContentRegistry _registry = new();
     private readonly PluginLoader _loader;
 
     public SrdVitalsScenarioTests()

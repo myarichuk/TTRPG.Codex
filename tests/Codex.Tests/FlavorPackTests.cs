@@ -1,5 +1,4 @@
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -35,7 +34,7 @@ public class FlavorPackTests : IDisposable
 
     private async Task<ContentRegistry> LoadAsync()
     {
-        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var registry = new ContentRegistry();
         var loader = new YamlContentPackLoader(registry);
         await loader.LoadPackAsync(Path.Combine(_root, "base"), Demo);
         await loader.LoadPackAsync(Path.Combine(_root, "flavor-pack"), Demo);
@@ -131,7 +130,7 @@ public class FlavorPackTests : IDisposable
         Write("src/flavor/spell/one.yaml", "- id: bolt\n  flavor: From a zip.\n");
         System.IO.Compression.ZipFile.CreateFromDirectory(Path.Combine(_root, "src"), Path.Combine(_root, "flavor-pack-zip.zip"));
 
-        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var registry = new ContentRegistry();
         var loader = new YamlContentPackLoader(registry);
         await loader.LoadPackAsync(Path.Combine(_root, "base"), Demo);
         await loader.LoadPackAsync(Path.Combine(_root, "flavor-pack-zip.zip"), Demo);
@@ -143,7 +142,7 @@ public class FlavorPackTests : IDisposable
 /// <summary>The shipped flavor overlay covers the SRD pack.</summary>
 public class SrdFlavorTests : IAsyncLifetime
 {
-    private readonly ContentRegistry _registry = new(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+    private readonly ContentRegistry _registry = new();
     private readonly PluginLoader _loader;
 
     public SrdFlavorTests()
