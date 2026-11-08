@@ -40,6 +40,29 @@
                 {
                     <p class="mb-2">@system.Description</p>
                 }
+                @if (Catalog.GetLocalizedDefinition(system.Id)?.Setting is { IsEmpty: false } setting)
+                {
+                    @* The kind of world the game assumes, for a GM homebrewing in it (and what the AI features are told). *@
+                    <details class="mb-2" data-testid="about-system-setting">
+                        <summary>@L["Page.About.Setting"]</summary>
+                        @if (!string.IsNullOrWhiteSpace(setting.Summary))
+                        {
+                            <p class="mt-2 mb-2">@setting.Summary</p>
+                        }
+                        <dl class="wb-fields mb-0">
+                            @SettingRow(L["Page.About.Setting.Genres"], setting.Genres)
+                            @SettingRow(L["Page.About.Setting.Tone"], setting.Tone)
+                            @SettingRow(L["Page.About.Setting.Themes"], setting.Themes)
+                            @SettingRow(L["Page.About.Setting.Technology"], setting.Technology)
+                            @SettingRow(L["Page.About.Setting.Supernatural"], setting.Supernatural)
+                            @SettingRow(L["Page.About.Setting.Factions"], setting.Factions)
+                            @SettingRow(L["Page.About.Setting.Places"], setting.Places)
+                            @SettingRow(L["Page.About.Setting.Play"], setting.Play)
+                            @SettingRow(L["Page.About.Setting.Avoid"], setting.Avoid)
+                            @SettingRow(L["Page.About.Setting.Notes"], setting.Notes)
+                        </dl>
+                    </details>
+                }
                 @if (system.License != null)
                 {
                     <div class="attribution mt-2">
@@ -175,6 +198,17 @@
     private bool IsOther(LoadProblem problem) =>
         !(problem.SystemId != null && Catalog.LoadedSystemIds.Contains(problem.SystemId))
         && !(problem.Source == LoadProblemSource.System && Loader.FailedSystems.Any(f => f.Name == problem.Subject));
+
+    private static RenderFragment SettingRow(string label, IReadOnlyList<string> items) =>
+        SettingRow(label, items.Count == 0 ? null : string.Join(" · ", items));
+
+    private static RenderFragment SettingRow(string label, string? text) => @<text>
+        @if (!string.IsNullOrWhiteSpace(text))
+        {
+            <dt>@label</dt>
+            <dd>@text</dd>
+        }
+    </text>;
 
     private RenderFragment ProblemList(IReadOnlyList<LoadProblem> problems) => @<ul class="mb-0">
         @foreach (var problem in problems)

@@ -160,6 +160,49 @@ public static class AiPrompts
                 + $" Write the entire reply in {name}, and translate every heading you are asked for into {name}.";
     }
 
+    /// <summary>The system's <c>setting:</c> as one paragraph for a prompt, or null when it has none.</summary>
+    public static string? SettingBrief(Codex.Plugin.Abstractions.SystemSetting? setting)
+    {
+        if (setting == null || setting.IsEmpty) return null;
+
+        var parts = new List<string>();
+        void Text(string? label, string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return;
+            var sentence = text.Trim().TrimEnd('.') + ".";
+            parts.Add(label == null ? sentence : $"{label}: {sentence}");
+        }
+
+        void Items(string label, IReadOnlyList<string> items)
+        {
+            var kept = items.Where(i => !string.IsNullOrWhiteSpace(i)).Select(i => i.Trim()).ToList();
+            if (kept.Count > 0) parts.Add($"{label}: {string.Join("; ", kept)}.");
+        }
+
+        Text(null, setting.Summary);
+        Items("Genre", setting.Genres);
+        Items("Tone", setting.Tone);
+        Items("Themes", setting.Themes);
+        Text("Technology", setting.Technology);
+        Text("Beyond the ordinary", setting.Supernatural);
+        Items("Kinds of factions", setting.Factions);
+        Items("Kinds of places", setting.Places);
+        Items("What play looks like", setting.Play);
+        Items("Does not belong", setting.Avoid);
+        Text("Also", setting.Notes);
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>
+    /// The campaign line every content prompt gets, with the system's setting after it. The setting is the game's default
+    /// assumptions: the campaign's own description wins where they differ, and the model invents its own names rather than
+    /// reaching for a published setting the genre words might remind it of.
+    /// </summary>
+    public static string WithSetting(string campaignContext, Codex.Plugin.Abstractions.SystemSetting? setting) =>
+        SettingBrief(setting) is { } brief
+            ? $"{campaignContext}\nThe game's assumed setting, in general terms (where the campaign says otherwise, the campaign wins; invent names of your own, never those of a published setting): {brief}"
+            : campaignContext;
+
     public static (string System, string User) SessionSummary(SessionSummaryRequest r)
     {
         var system = r.Audience == AiAudience.Players

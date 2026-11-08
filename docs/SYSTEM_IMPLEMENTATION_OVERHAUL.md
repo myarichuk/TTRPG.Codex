@@ -13,11 +13,11 @@ Revision 1's list, checked against the code:
 |---|---|---|---|
 | 1 | In-app system install | Not started | The Library imports content-pack zips only (`LibrarySection.razor:32`); a system is still copied into a content folder by hand. |
 | 2 | Reload without restart | Not started | `PluginLoader.LoadAndInitializeAsync` returns once loaded (`PluginLoader.cs:61`); no watcher. |
-| 3 | Load errors visible | Partial | `Warn` now has callers and `LoadWarnings` is shown: a count in the Library (`LibrarySection.razor:44`), the list on About (`About.razor:90`). Missing: `LoadException` has no reader in the UI; warnings are flat strings, not per system with the validator's messages; a system that failed is not listed in the Library as failed. |
-| 4 | d20-shaped vocabulary | Partial | Crit marking moved off text search to a recorded check die (`DiceTerm.IsCheckDie`, `DiceRollResult.CheckDieIndex`), but "check die" still means `Sides == 20` and faces 20/1 (`DiceExpressionParser.cs:14`, `DiceResult.razor:69`). Grammar unchanged: no explode, success count, roll-under, bands. 5e-named defaults unchanged (`"con"`, `"dex"`, `"str"`, `"proficiencyBonus"`, `"level"` in `SheetRules.cs` and `SystemDefinition.cs`). |
+| 3 | Load errors visible | Done (2026-11-08) | `LoadProblem` (source, subject, system, path) and `FailedSystem` (stated id, errors one by one). About groups them per system, lists failed systems, shows paths to the server admin only. The Library counts its own system's; the new-campaign dialog names failed systems. Failed DLLs are reported (they were only logged). Not done: line numbers in validator messages. (`LoadException` was already reported as a warning; the audit's earlier "no reader" was wrong.) |
+| 4 | d20-shaped vocabulary | Partial | Crit marking moved off text search to a recorded check die (`DiceTerm.IsCheckDie`, `DiceRollResult.CheckDieIndex`), but "check die" still means `Sides == 20` and faces 20/1 (`DiceExpressionParser.cs:14`, `DiceResult.razor:69`). Grammar unchanged: no explode, success count, roll-under, bands. Attribute and bonus keys no longer default to 5e names (2026-11-08, see section 6); entry-property names (`hitDie`, `armorBase`...) and `level`/`class` field names still do. |
 | 5 | DLL trust boundary | Not started | Every `*.dll` under `plugins/` is `Assembly.LoadFrom`'d (`PluginLoader.cs:296`); no label, no doc statement. |
 | 6 | Author's reference, JSON schema | Not started | No `system.yaml` reference in `docs/`, no schema file. |
-| 7 | Versioning, safe removal | Not started | A campaign stores a system id only; `EnsureKnownSystem` throws on every save once the id is gone (`CampaignRepository.cs:92`). |
+| 7 | Versioning, safe removal | Partial (2026-11-08) | A campaign whose system is missing is read-only (section 6). Versioning not started: a campaign stores a system id only. |
 | — | `IRuleHooks`, Jint | Not started | No Jint reference; DynamicExpresso 2.17.2 is the only evaluator (`Codex.Core.csproj:14`). No `IDiceSource`. |
 
 New findings:
@@ -284,18 +284,31 @@ any difference in a derived value, violation or warning fails the change.
 ## 6. Alongside the model
 
 From revision 1, still needed:
-- **Load errors, finished.** Structured per system and pack (file, line, validator message). `LoadException` shown. A
-  failed system listed in the Library as failed, not missing.
+- **Load errors, finished.** Done 2026-11-08 except line numbers in validator messages (audit row 3).
 - **Author's reference and JSON schema.** Generated from `SystemDefinition`, published with the docs, referenced from
   `system.yaml` (`# yaml-language-server: $schema=...`) so editors validate as you type.
 - **Install and reload from the app.** Upload a system zip, validate, write, reload. Needs a reloadable
   `PluginLoader`; live tables keep the system they started with until they end.
-- **Less 5e in the defaults.** Keys that default to 5e names become required. srd5e states them explicitly; the loader
-  names the missing key.
-- **Safe removal.** A campaign whose system is missing opens read-only with an explanation. Removing a system that
-  campaigns still use asks first. `EnsureKnownSystem` stops throwing on every save.
+- **Less 5e in the defaults.** Done 2026-11-08 for keys that name an attribute or a derived value: `armorClass.dexAttribute`
+  and `.unarmored`, `hitPoints.attribute`, `skills.bonusKey`, `spellcasting.bonusKey`, `vitals.concentration.saveAttribute`,
+  `vitals.hitDice.attribute` are required, and the loader names a missing one; `proficiencies.strengthAttribute` became
+  optional (left out: no armor Strength check). Entry-property names still default to the SRD's; they only find nothing
+  in a system whose entries lack them, so they wait for the primitives (step 2).
+- **Safe removal.** Done 2026-11-08 for the reading side: the resolved `CampaignAccess` carries `SystemMissing`;
+  `NowAsync` (where every repository write starts) refuses it, as do media writes, live-table sheet saves and starting a
+  table. Saving the campaign document says `Campaign.SystemMissing` instead of throwing a bare exception, except to switch
+  to an installed system, which is the way out. Reads and export work. A banner says so; Settings shows the missing
+  system instead of silently displaying the first installed one. Still open: "removing a system that campaigns use asks
+  first" needs in-app removal, which waits for install/reload.
 
 New:
+- **Systems with no content of their own.** Done 2026-11-08: a `setting:` block in `system.yaml` (genre, tone, themes,
+  technology, the supernatural, kinds of factions and places, what play looks like, what does not belong), in general
+  terms, never a published setting's names (`CONTENT_PACKS.md` says how). The About page shows it; every content prompt
+  gets it after the campaign line (`AiPrompts.WithSetting`), with the campaign winning and names invented. A
+  `system.<lang>.yaml` may translate it for readers. Fixture: `tests/Codex.Tests/Fixtures/crews`, a Forged-in-the-Dark-shaped
+  system with no packs. Tested: the brief, the world-building chat's request; the other content prompts share one helper in
+  `AiFeatures` without a test of their own.
 - **Delete the legacy ability-script path.** Done 2026-11-08: `Scripting/ScriptEvaluator.cs`,
   `ContentRegistry.ExecuteAbilityAsync` and `CodexWorld`'s script-only `AddStatus` overload are gone; a pack's `Script`
   effect gives a load warning.
@@ -322,8 +335,8 @@ New:
 
 Each step lands with srd5e unchanged (section 5) and moves at least one reference fixture closer to green.
 
-0. **Cleanups that need no design.** Delete the legacy script path (done). Finish load errors. Make 5e-named defaults required.
-   Safe removal (read-only campaigns).
+0. **Cleanups that need no design.** Done 2026-11-08: legacy script path deleted, load errors finished, attribute and
+   bonus keys required, read-only campaigns for a missing system, `setting:` for systems with no content.
 1. **Fixtures first.** Write the three reference systems (section 2) as `system.yaml`, fixture sheets and expected
    results in `tests/`. They fail; they are the spec. Add the golden srd5e corpus.
 2. **Values, modifiers, lists with aggregates.** Widen `FormulaContext`; add the built-in function library; move
@@ -348,7 +361,7 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
 |---|---|---|
 | SRD 3.5 | OGL 1.0a | Fixture now. A content pack later, as a separate download, with the OGL text, Section 15 and designations (section 6). |
 | CPR-shaped homebrew | Own work | Fixture only; mechanics in that shape, no R. Talsorian text, names or trademarks. |
-| Blades in the Dark | Forged in the Dark SRD (December 2017), CC-BY 3.0 Unported | Fixture now; SRD text may ship later as a pack (see below). |
+| Blades in the Dark | Forged in the Dark SRD (December 2017), CC-BY 3.0 Unported | Fixture now; SRD text may ship later as a pack (see below). Should that not work out, a system in that shape ships rules-only, with a `setting:` block in genre terms (the `crews` fixture shows how). |
 
 Blades / Forged in the Dark, checked 2026-11-08 against the publisher's page (https://bladesinthedark.com/licensing):
 - **Licence.** The SRD contents are under CC-BY 3.0 Unported. Commercial use is not restricted and the licence is not

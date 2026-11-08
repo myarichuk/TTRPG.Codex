@@ -251,4 +251,15 @@
   <data name="Page.About.HasProblems" xml:space="preserve"><value>Has loading problems</value></data>
   <data name="Page.Home.FailedSystems" xml:space="preserve"><value>Not listed because they did not load: {0}.</value></data>
   <data name="Page.Home.FailedSystemsLink" xml:space="preserve"><value>Why?</value></data>
+  <data name="Page.About.Setting" xml:space="preserve"><value>The world it assumes</value></data>
+  <data name="Page.About.Setting.Genres" xml:space="preserve"><value>Genre</value></data>
+  <data name="Page.About.Setting.Tone" xml:space="preserve"><value>Tone</value></data>
+  <data name="Page.About.Setting.Themes" xml:space="preserve"><value>Themes</value></data>
+  <data name="Page.About.Setting.Technology" xml:space="preserve"><value>Technology</value></data>
+  <data name="Page.About.Setting.Supernatural" xml:space="preserve"><value>Beyond the ordinary</value></data>
+  <data name="Page.About.Setting.Factions" xml:space="preserve"><value>Kinds of factions</value></data>
+  <data name="Page.About.Setting.Places" xml:space="preserve"><value>Kinds of places</value></data>
+  <data name="Page.About.Setting.Play" xml:space="preserve"><value>What play looks like</value></data>
+  <data name="Page.About.Setting.Avoid" xml:space="preserve"><value>Doesn't belong</value></data>
+  <data name="Page.About.Setting.Notes" xml:space="preserve"><value>Also</value></data>
 </root>

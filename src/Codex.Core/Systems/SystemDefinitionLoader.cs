@@ -200,6 +200,14 @@ public static class SystemDefinitionLoader
             yield return concentrationError;
         }
 
+        if (definition.Setting is { } setting)
+        {
+            foreach (var error in ValidateSetting(setting))
+            {
+                yield return error;
+            }
+        }
+
         if (definition.Vitals?.HitDice is { } hitDice
             && RequiredAttributeError(definition, "vitals.hitDice.attribute", hitDice.Attribute) is { } hitDiceError)
         {
@@ -509,6 +517,26 @@ public static class SystemDefinitionLoader
             foreach (var field in referencedFields.Where(f => !fieldKeys.Contains(f!)))
             {
                 yield return $"a sheet rule on '{condition.Property}' refers to actor field '{field}', which does not exist.";
+            }
+        }
+    }
+
+    /// <summary>The setting goes into every prompt that writes content, so it is kept short: a brief, not a setting book.</summary>
+    public const int SettingTextMax = 1200, SettingItemMax = 160, SettingItemsMax = 20;
+
+    private static IEnumerable<string> ValidateSetting(SystemSetting setting)
+    {
+        foreach (var (name, text) in new[] { ("summary", setting.Summary), ("technology", setting.Technology), ("supernatural", setting.Supernatural), ("notes", setting.Notes) })
+        {
+            if (text is { Length: > SettingTextMax }) yield return $"setting.{name} is {text.Length} characters; keep it to {SettingTextMax}.";
+        }
+
+        foreach (var (name, items) in new[] { ("genres", setting.Genres), ("tone", setting.Tone), ("themes", setting.Themes), ("factions", setting.Factions), ("places", setting.Places), ("play", setting.Play), ("avoid", setting.Avoid) })
+        {
+            if (items.Count > SettingItemsMax) yield return $"setting.{name} has {items.Count} items; keep it to {SettingItemsMax}.";
+            foreach (var item in items.Where(i => i is { Length: > SettingItemMax }))
+            {
+                yield return $"setting.{name}: an item is {item.Length} characters; keep each to {SettingItemMax}.";
             }
         }
     }

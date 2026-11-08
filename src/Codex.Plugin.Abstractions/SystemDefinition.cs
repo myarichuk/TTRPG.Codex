@@ -322,6 +322,52 @@ public class AiVocabulary
 }
 
 /// <summary>
+/// What kind of world a system's play assumes, in general terms (<c>setting:</c> in system.yaml): genre, tone, the kinds of
+/// factions and places it is built for. It is for systems that ship no setting content of their own, or whose rules
+/// presume one, so a GM (and the AI features) can homebrew in its spirit. Write genre words, never a published setting's
+/// names or text: "criminal crews in a haunted industrial city", not the city's name. Every part is optional.
+/// </summary>
+public class SystemSetting
+{
+    /// <summary>One short paragraph: the world the game is built to be played in.</summary>
+    public string? Summary { get; set; }
+
+    /// <summary>Genre words ("heist", "gothic horror", "industrial fantasy").</summary>
+    public List<string> Genres { get; set; } = new();
+
+    /// <summary>How play should feel ("grim", "desperate", "darkly funny").</summary>
+    public List<string> Tone { get; set; } = new();
+
+    /// <summary>What stories in it tend to be about ("ambition and its cost", "loyalty under pressure").</summary>
+    public List<string> Themes { get; set; } = new();
+
+    /// <summary>How advanced the world is ("early industrial: rail, gas light, black powder").</summary>
+    public string? Technology { get; set; }
+
+    /// <summary>Magic, psionics, ghosts, gods: what exists beyond the ordinary, and how common it is.</summary>
+    public string? Supernatural { get; set; }
+
+    /// <summary>Kinds of factions, never named ones ("criminal gangs", "a decadent nobility", "a magocracy").</summary>
+    public List<string> Factions { get; set; } = new();
+
+    /// <summary>Kinds of places ("a crowded port city", "slums along the canals").</summary>
+    public List<string> Places { get; set; } = new();
+
+    /// <summary>What play looks like ("a crew takes jobs, then deals with the fallout").</summary>
+    public List<string> Play { get; set; } = new();
+
+    /// <summary>What does not belong ("high-tech gadgets", "noble, untroubled heroes").</summary>
+    public List<string> Avoid { get; set; } = new();
+
+    /// <summary>Anything else a GM homebrewing for the system should know.</summary>
+    public string? Notes { get; set; }
+
+    public bool IsEmpty =>
+        string.IsNullOrWhiteSpace(Summary) && string.IsNullOrWhiteSpace(Technology) && string.IsNullOrWhiteSpace(Supernatural)
+        && string.IsNullOrWhiteSpace(Notes) && Genres.Count + Tone.Count + Themes.Count + Factions.Count + Places.Count + Play.Count + Avoid.Count == 0;
+}
+
+/// <summary>
 /// A whole game system described as data (<c>system.yaml</c>). This is what lets a homebrew system
 /// exist without compiling a plugin: attributes, resources, the actor sheet, the content types its
 /// packs may contain, conditions, and the licence the rules text is under.
@@ -356,6 +402,9 @@ public class SystemDefinition
 
     /// <summary>How the system's own words are put to AI models, so prompts carry no assumptions about any one game.</summary>
     public AiVocabulary Ai { get; set; } = new();
+
+    /// <summary>The kind of world play assumes, in general terms. Null: none (the campaign's own description is the world).</summary>
+    public SystemSetting? Setting { get; set; }
 
     /// <summary>Table rules for hit points, death, damage types, exhaustion, hit dice and rests. Null: none.</summary>
     public VitalsRules? Vitals { get; set; }
@@ -478,6 +527,8 @@ public class SystemDefinition
         copy.Name = t.Name ?? Name;
         copy.Description = t.Description ?? Description;
         copy.Compatibility = t.Compatibility ?? Compatibility;
+        // A translated setting replaces the whole block: its parts read as one text, so they are not mixed across languages.
+        copy.Setting = t.Setting ?? Setting;
         copy.Attributes = Attributes.Select(a => new AttributeDefinition
         {
             Key = a.Key, Default = a.Default, Min = a.Min, Max = a.Max, Modifier = a.Modifier,

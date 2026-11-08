@@ -115,6 +115,51 @@ ai:
 A creature's starting points go to the system's primary resource (`resources`, `isPrimary`), so a "Wounds" system
 shows `Wounds 5/5` on a cast member made from a creature, not a stray `HP`.
 
+### Setting (`setting`)
+
+Some systems ship rules and no content: no packs, no monsters, no lore. Their rules still assume a kind of world (crews
+in a haunted city, a hard-science starship, a pastoral fairy tale). `setting` says what that world is like, in general
+terms, so a GM homebrewing for the system knows what fits. The AI features get it too: every prompt that writes content
+(descriptions, wiki pages, characters, the world-building chat) has it after the campaign's own description, with
+instructions that the campaign wins where they differ and that names are invented, never taken from a published setting.
+The About page shows it under the system. Every part is optional; leave the whole block out for a system with no
+setting of its own (the SRD system has none: a campaign's world is whatever its description says).
+
+```yaml
+setting:
+  summary: >-                                # one short paragraph
+    Criminal crews scrape a living in a cramped, haunted industrial city, paying for every success with heat and debts.
+  genres: [heist, gothic horror, industrial fantasy]
+  tone: [grim, desperate, darkly funny]
+  themes: [ambition and its price, loyalty under pressure]
+  technology: "early industrial: rail, gas lamps, black powder"
+  supernatural: "real, rare and dangerous: restless dead, bargains with strange powers"
+  factions: [rival criminal gangs, a decadent nobility, a corrupt city watch]   # kinds, never names
+  places: [a crowded port city, slums along the canals]                        # kinds, never names
+  play: [the crew plans little and acts fast, every job leaves fallout]
+  avoid: [clean victories, high magic]       # what does not belong
+  notes: Invent the city and its factions for each campaign.
+```
+
+It is a brief, not a setting book: `summary`, `technology`, `supernatural` and `notes` take up to 1,200 characters each,
+the lists up to 20 items of 160 characters. A `system.<lang>.yaml` may carry its own `setting:` block, which replaces
+the whole block for readers of that language; prompts always use the original.
+
+**Write genre, not someone's world.** A setting block describes the kind of world a game is for, in words anyone may
+use: genres, moods, kinds of factions and places, a technology level. Ideas and genre conventions are free to use; what
+a publisher owns is its text, its names and, under some licences, its setting as a whole (the Forged in the Dark SRD
+licence, for one, excludes its setting outright). So:
+
+- Use common nouns: "a magocracy", "a thieves' guild", "a haunted port city". Never a published setting's proper nouns
+  (cities, districts, factions, gods, people) or the coined words it is known for.
+- Write it in your own words. Don't paraphrase a setting's text, and don't list its distinctive inventions one by one:
+  "a city whose lamps burn the blood of sea monsters" is that setting, not the genre.
+- Describe what the rules are built for, not one book's world: if the rules work in any haunted industrial city, say
+  that, and let each campaign invent its own.
+
+This is general guidance for authors, not legal advice; a system that ships under a licence should follow that
+licence's own terms.
+
 ### Field roles (`fieldRoles`)
 
 The actor fields the app reads by what they mean, so a system can call them what it likes. A role left out turns off

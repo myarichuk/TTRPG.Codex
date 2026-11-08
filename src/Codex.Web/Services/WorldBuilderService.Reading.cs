@@ -21,7 +21,7 @@ public sealed partial class WorldBuilderService
         var types = await HomebrewTypesAsync(campaign, access, system);
         return new WorldChatRequest(
             catalog.GetDisplayName(campaign.SystemId),
-            CampaignContext(campaign),
+            AiPrompts.WithSetting(CampaignContext(campaign), system?.Canonical.Setting),
             types.Select(t => $"{t.Type} ({PromptLabel(t.Type, t)}{(t.ActorBlueprint ? ", a " + (system?.Canonical.Ai.Creature ?? "creature") : "")})").ToList(),
             Lang,
             system?.Canonical.Ai.Creature ?? "creature",

@@ -251,4 +251,15 @@
   <data name="Page.About.HasProblems" xml:space="preserve"><value>Есть проблемы при загрузке</value></data>
   <data name="Page.Home.FailedSystems" xml:space="preserve"><value>Не показаны, потому что не загрузились: {0}.</value></data>
   <data name="Page.Home.FailedSystemsLink" xml:space="preserve"><value>Почему?</value></data>
+  <data name="Page.About.Setting" xml:space="preserve"><value>Мир, на который рассчитана игра</value></data>
+  <data name="Page.About.Setting.Genres" xml:space="preserve"><value>Жанр</value></data>
+  <data name="Page.About.Setting.Tone" xml:space="preserve"><value>Тон</value></data>
+  <data name="Page.About.Setting.Themes" xml:space="preserve"><value>Темы</value></data>
+  <data name="Page.About.Setting.Technology" xml:space="preserve"><value>Технологии</value></data>
+  <data name="Page.About.Setting.Supernatural" xml:space="preserve"><value>Сверхъестественное</value></data>
+  <data name="Page.About.Setting.Factions" xml:space="preserve"><value>Виды фракций</value></data>
+  <data name="Page.About.Setting.Places" xml:space="preserve"><value>Виды мест</value></data>
+  <data name="Page.About.Setting.Play" xml:space="preserve"><value>Как проходит игра</value></data>
+  <data name="Page.About.Setting.Avoid" xml:space="preserve"><value>Не к месту</value></data>
+  <data name="Page.About.Setting.Notes" xml:space="preserve"><value>Ещё</value></data>
 </root>

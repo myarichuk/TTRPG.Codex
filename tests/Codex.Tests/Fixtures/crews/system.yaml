@@ -1,0 +1,41 @@
+# A test fixture: a system shaped like a dice-pool crew game that ships no content of its own: no packs, no
+# classes, no hit points, no primary resource. Its setting block is the only thing that says what world it is
+# for. The words are this project's own and stay at the level of genre (no published setting's names, places
+# or distinctive inventions), which is how a setting block should be written.
+id: crews-fixture
+name: Crews (test fixture)
+version: 0.1.0
+description: >-
+  A dice-pool game about a criminal crew, used by the tests as a system with no packs and only a setting to go on.
+license:
+  name: CC0-1.0
+  url: https://creativecommons.org/publicdomain/zero/1.0/
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.
+
+actorFields:
+  - { key: sneak, label: Sneak, type: Number, defaultValue: 0, min: 0, max: 4, category: Actions }
+  - { key: fight, label: Fight, type: Number, defaultValue: 0, min: 0, max: 4, category: Actions }
+  - { key: talk,  label: Talk,  type: Number, defaultValue: 0, min: 0, max: 4, category: Actions }
+  - { key: study, label: Study, type: Number, defaultValue: 0, min: 0, max: 4, category: Actions }
+  - { key: harm,  label: Harm,  type: LongText, category: Condition }
+
+resources:
+  - { key: Stress, label: Stress, maxKey: Stress_Max, default: 0 }
+
+entityTypes:
+  - { type: lore, label: Lore, pluralLabel: Lore, folder: lore }
+
+setting:
+  summary: >-
+    Criminal crews scrape a living in a cramped, haunted industrial city, taking jobs from whoever pays and paying
+    for every success with heat, debts and enemies.
+  genres: [heist, gothic horror, industrial fantasy]
+  tone: [grim, desperate, darkly funny]
+  themes: [ambition and its price, loyalty under pressure, the city always takes its cut]
+  technology: "early industrial: rail, gas lamps, clockwork and black powder; nothing electric in ordinary hands"
+  supernatural: "real, rare and dangerous: restless dead, bargains with strange powers, rituals that cost more than they give"
+  factions: [rival criminal gangs, a decadent nobility, a corrupt city watch, an industrial guild, a secretive cult, dockworkers' unions]
+  places: [a crowded port city, slums along the canals, mansions behind iron gates, districts no one lights at night]
+  play: [the crew plans little and acts fast, every job leaves fallout to deal with, "downtime is for healing, scheming and paying debts"]
+  avoid: [clean victories, heroes the law approves of, high magic]
+  notes: Invent the city, its districts and its factions for each campaign; the system has no setting content of its own.

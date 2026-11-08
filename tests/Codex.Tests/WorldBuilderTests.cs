@@ -523,6 +523,26 @@ public class WorldBuilderTests
         return saving;
     }
 
+    [Fact]
+    public async Task TheChat_IsToldTheSystemsSetting_AfterTheCampaign()
+    {
+        // A system with no content of its own: its setting block is all the chat has to go on.
+        var crews = SystemDefinitionLoader.Load(Path.Combine(TestPaths.RepoRoot, "tests", "Codex.Tests", "Fixtures", "crews", "system.yaml"));
+        var catalog = Substitute.For<ISystemCatalog>();
+        catalog.GetDefinition("crews-fixture").Returns(crews);
+        catalog.GetDisplayName("crews-fixture").Returns("Crews");
+        var homebrew = Substitute.For<IHomebrewRepository>();
+        var service = new WorldBuilderService(catalog, new CampaignLibrary(new ContentRegistry(), homebrew, catalog), homebrew, Substitute.For<IWikiRepository>(),
+            Substitute.For<IFactRepository>(), null!, Substitute.For<IRegionRepository>(), Substitute.For<ICampaignRepository>(), Substitute.For<IActorRepository>(), null!);
+        var campaign = new CampaignDocument { Id = "c1", SystemId = "crews-fixture", Name = "The Long Night" };
+
+        var request = await service.ChatRequestAsync(campaign, Dm);
+
+        Assert.StartsWith("The Long Night", request.CampaignContext);
+        Assert.Contains("Genre: heist; gothic horror; industrial fantasy.", request.CampaignContext);
+        Assert.Contains("Kinds of factions: rival criminal gangs", AiPrompts.WorldChat(request));
+    }
+
     private static readonly CampaignDocument Campaign = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
     private static readonly CampaignAccess Dm = new("c1", "dm", CampaignRole.DM);
 

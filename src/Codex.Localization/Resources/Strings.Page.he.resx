@@ -251,4 +251,15 @@
   <data name="Page.About.HasProblems" xml:space="preserve"><value>יש בעיות טעינה</value></data>
   <data name="Page.Home.FailedSystems" xml:space="preserve"><value>לא מופיעות כי לא נטענו: {0}.</value></data>
   <data name="Page.Home.FailedSystemsLink" xml:space="preserve"><value>למה?</value></data>
+  <data name="Page.About.Setting" xml:space="preserve"><value>העולם שהמשחק מניח</value></data>
+  <data name="Page.About.Setting.Genres" xml:space="preserve"><value>סוגה</value></data>
+  <data name="Page.About.Setting.Tone" xml:space="preserve"><value>אווירה</value></data>
+  <data name="Page.About.Setting.Themes" xml:space="preserve"><value>נושאים</value></data>
+  <data name="Page.About.Setting.Technology" xml:space="preserve"><value>טכנולוגיה</value></data>
+  <data name="Page.About.Setting.Supernatural" xml:space="preserve"><value>מעבר לטבעי</value></data>
+  <data name="Page.About.Setting.Factions" xml:space="preserve"><value>סוגי פלגים</value></data>
+  <data name="Page.About.Setting.Places" xml:space="preserve"><value>סוגי מקומות</value></data>
+  <data name="Page.About.Setting.Play" xml:space="preserve"><value>איך נראה המשחק</value></data>
+  <data name="Page.About.Setting.Avoid" xml:space="preserve"><value>לא שייך</value></data>
+  <data name="Page.About.Setting.Notes" xml:space="preserve"><value>עוד</value></data>
 </root>
