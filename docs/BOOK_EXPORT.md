@@ -2250,7 +2250,7 @@ Not done, or not verified: the footer was looked at in Chromium only, and in Heb
 guess with room (painted art measured 0.3-0.8); a GM's own CSS that styles `.footnote` styles the running footer too; the Markdown file was
 not opened in Homebrewery itself; the Russian and Hebrew text of the new strings is machine-drafted.
 
-## 42. Book-shaped prose: plan (2026-11-08; nothing built)
+## 42. Book-shaped prose (2026-11-08; steps 1 to 3 built, step 4 waits for the user)
 
 The user's decision (handoff item 2): the campaign is the tidied notes, and the AI turns them into prose shaped like the system's own published
 books. What exists already: the system says how its books read (`system.yaml` `ai.bookShape`, for srd5e a description of fifth-edition
@@ -2280,6 +2280,30 @@ difficulty classes. That is the wrong voice for the party edition, which the pla
 player-facing books (a gazetteer or player's guide: what is known, in an in-world voice, no GM advice or checks), or the party edition uses
 the neutral shape. The recommendation is the second description (`ai.playerBookShape`), since it is one paragraph per system and keeps the
 party book from reading as a GM's book with the secrets cut out.
+
+**Decided:** the user said "do it now" without choosing, so the recommendation was taken: `ai.playerBookShape` (srd5e has one: player's guides
+and gazetteers, in the world's voice, no GM advice, no checks). A system without one gets `BookEditPrompts.NeutralPlayerShape`, never the GM's
+`bookShape` and never `NeutralShape` (which speaks of what only the GM needs). Party requests also say outright that the players read the book.
+
+**What was built:**
+- `BookFacts.Check` (Core), run on every preset's reply (shape, shorter, read-aloud, tidy) and never on the GM's own words or the merge, which
+  change facts on purpose. It reads `passage.Text` (pieces as markers), so a name inside a secret is never counted or quoted back on the retry.
+  Names come from `BookCompiler.Names(source)` of the edition being edited (actors, regions, places, pages, homebrew), so the party's are the
+  masks. Matching: Russian stem plus a known case ending (Вера, Веру, Верой; not Мир for мирный), up to three Hebrew prefix letters tried after
+  the whole word (לוורה; מירה whole), Hebrew points dropped, English possessives cut. A name of several words is in the passage when all its
+  words are, kept when any is, added when all are there and none was before (around the passage counts). Capitalised new words are refused as
+  before, except the game's own (ability, resource, condition and field labels). Figures: digits and dice (2d6, 2к6) none dropped and none
+  added; a figure written as a word (three, три, שלושה, ordinals) keeps it. Golden tests in `BookFactsTests`.
+- A preset on a whole chapter goes entry by entry (`BookDraftAi.Parts`: the merge's units, parts a piece crosses joined into one), one budget
+  for all of them, broken off on auth, rate limit, allowance, budget or a stop. A part whose reply fails keeps its text and is listed in the
+  Problems tab with its heading; the rest is offered in one review. A chapter with an entry too long for one request is refused, as before.
+- Edits and merges add what they spent to the edition's totals (`BookSpend`, the build document's counters the book panel already shows).
+- The whole book: More → "Whole book as the book". The cost of every chapter first (`BookPreviewAsync`, chapters too long are named and left
+  out); then one chapter at a time, each reviewed before the next is sent; a chapter the model left unchanged is not shown; "Stop after this
+  chapter". Tested with the fake model only (`BookDraftTests`, `TheGmRewritesTheWholeBookAsTheBook_…` in the browser).
+
+**Not done:** step 4, the one real run. Not seen: how a real model's prose fares against the facts check in Russian and Hebrew (the coverage
+rule is lenient by design; a reply refused twice keeps its entry's text, so the cost of a strict check is a re-ask, never a wrong book).
 
 Not in this plan: stat blocks from the campaign's own creatures (`{{monster` built by code from the sheet, not by the model) are a separate
 step after it; `:::for` per-player editions.

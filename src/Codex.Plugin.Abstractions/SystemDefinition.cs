@@ -324,6 +324,10 @@ public class AiVocabulary
     /// chapters, their furniture (read-aloud boxes, sidebars, stat blocks) and their voice, finishing the sentence "The book should read like
     /// this game's own published books, which are …". Shape and voice only: no book's title, words or trademarks. Null: neutral words.</summary>
     public string? BookShape { get; set; }
+
+    /// <summary>The same for the books the players read (the party edition, docs/BOOK_EXPORT.md 42): a player's guide or a gazetteer, in the
+    /// world's voice, with nothing addressed to the GM. Null: neutral words for a players' book, never <see cref="BookShape"/>.</summary>
+    public string? PlayerBookShape { get; set; }
 }
 
 /// <summary>

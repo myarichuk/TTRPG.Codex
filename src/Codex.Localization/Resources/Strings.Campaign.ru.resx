@@ -1166,4 +1166,22 @@
   <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>Редактор</value></data>
   <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>Полировка ИИ</value></data>
   <data name="Campaign.Book.Draft.Ai.InPane" xml:space="preserve"><value>Запрос к ИИ открыт над главой: отправьте или отмените его либо закончите проверку там.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Parts" xml:space="preserve"><value>По записям: {0} запросов — один на начало главы и по одному на каждую запись.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptParts" xml:space="preserve"><value>{0} част(ей) последней правки ИИ остались как были:</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsHint" xml:space="preserve"><value>Остальная часть главы предложена на проверку. Чтобы повторить для одной из них, выделите её и спросите снова.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsNote" xml:space="preserve"><value>Некоторые записи остались как были: см. «Проблемы».</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.checks" xml:space="preserve"><value>ответ нарушил правила книги или изменил её факты</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.cutoff" xml:space="preserve"><value>ответ оборвался</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.other" xml:space="preserve"><value>запрос не удался или работа остановилась раньше</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook" xml:space="preserve"><value>Вся книга «как в книге»</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Hint" xml:space="preserve"><value>Переписать каждую главу так, как пишут изданные книги этой игры, запись за записью. Сначала показывается стоимость, и каждая глава проверяется до отправки следующей.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Confirm" xml:space="preserve"><value>Переписать {0} глав(ы) «как в книге» с помощью {1}?</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Calls" xml:space="preserve"><value>Всего {0} запросов: по одному на начало каждой главы и на каждую запись.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.TooLong" xml:space="preserve"><value>Пропущены (запись слишком длинная для одного запроса): {0}. Выделяйте их части, чтобы переписать.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Each" xml:space="preserve"><value>Главы отправляются по одной. Вы проверяете каждую до отправки следующей, и ничего не сохраняется, пока вы это не оставите.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Start" xml:space="preserve"><value>Начать</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Progress" xml:space="preserve"><value>Глава {0} из {1}</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stop" xml:space="preserve"><value>Остановиться после этой главы</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stopped" xml:space="preserve"><value>Переписывание всей книги остановится после этой главы.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Done" xml:space="preserve"><value>Вся книга пройдена.</value></data>
 </root>

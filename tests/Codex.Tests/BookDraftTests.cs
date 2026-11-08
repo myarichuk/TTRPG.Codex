@@ -552,7 +552,7 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         // From the biography to inside the secret after it: the selection is widened to take the whole secret.
         var from = chapter.Markdown.IndexOf("PUBLIC_BIO_VERA", StringComparison.Ordinal);
         var to = chapter.Markdown.IndexOf("CANARY_BIO_DM", StringComparison.Ordinal) + 3;
-        var chat = new ScriptedChat((messages, _) => Between(messages.Last().Text!, "<passage>", "</passage>").Replace("PUBLIC_BIO_VERA", "EDITED_BIO"));
+        var chat = new ScriptedChat((messages, _) => Between(messages.Last().Text!, "<passage>", "</passage>").Replace("PUBLIC_BIO_VERA", "EDITED_BIO_VERA"));
         var models = new EditModels(chat);
         var ai = new BookDraftAi(_drafts, models, new BookGate(), new SrdCatalog());
 
@@ -605,15 +605,137 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         Assert.Equal(BookEditOutcome.NoModel, (await none.AskAsync(dm, "party", "en", "cast", cast.Version, at, at + 20, text, "shorter")).Outcome);
         Assert.Equal(0, chat.Calls);
 
-        // Nothing selected: the whole chapter, and the party draft's text is all the model sees.
+        // Nothing selected: the whole chapter, entry by entry, and the party draft's text is all the model sees.
         var whole = await ai.AskAsync(dm, "party", "en", "cast", cast.Version, 0, 0, string.Empty, "tidy");
         Assert.Equal(BookEditOutcome.Ready, whole.Outcome);
         Assert.Equal((0, cast.Markdown.Length), (whole.From, whole.To));
         Assert.Equal(cast.Markdown, whole.Replacement);
-        Assert.DoesNotContain("CANARY", Assert.Single(chat.Requests));
+        Assert.True(chat.Requests.Count > 1);
+        Assert.All(chat.Requests, r => Assert.DoesNotContain("CANARY", r));
         // The gate is let go of after a request, so the next one may run.
         Assert.Equal(BookEditOutcome.Ready, (await ai.AskAsync(dm, "party", "en", "cast", cast.Version, 0, 0, string.Empty, "tidy")).Outcome);
     }
+    // Book-shaped prose (docs/BOOK_EXPORT.md 42): a preset on a whole chapter goes entry by entry, each reply keeps the passage's facts, the party
+    // edition is written for the players, and what is spent is added to the edition's totals.
+    private static string PassageOf(IList<ChatMessage> messages) => Between(messages.Last().Text!, "<passage>", "</passage>");
+
+    [Fact]
+    public async Task AsTheBook_OnAWholeChapter_GoesEntryByEntry_AnEntryThatLosesAName_KeepsItsText_AndThePartyIsWrittenForThePlayers()
+    {
+        var (dm, _) = await SeedAsync();
+        var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        Assert.Contains("PUBLIC\\_hooded stranger", cast.Markdown);
+        // Vera's entry is shaped; the stranger's reply loses the stranger's name, on both tries.
+        var chat = new ScriptedChat((messages, _) => PassageOf(messages).Replace("PUBLIC_BIO_VERA", "SHAPED_BIO_VERA")
+            .Replace("PUBLIC\\_hooded stranger", "A figure").Replace("PUBLIC_HOODED_LOOK", "Cloaked."));
+        var builds = new RavenBookBuildRepository(_db);
+        var ai = new BookDraftAi(_drafts, new EditModels(chat), new BookGate(), new SrdCatalog(), builds);
+
+        var preview = await ai.PreviewAsync(dm, "party", "en", "cast", cast.Version, 0, 0, string.Empty, "shape");
+        Assert.Equal(BookEditOutcome.Ready, preview.Outcome);
+        Assert.True(preview.Calls >= 2);
+        Assert.Equal(0, chat.Calls);
+
+        var proposal = await ai.AskAsync(dm, "party", "en", "cast", cast.Version, 0, 0, string.Empty, "shape");
+        Assert.Equal(BookEditOutcome.Ready, proposal.Outcome);
+        // One request per part, and one retry for the part that failed.
+        Assert.Equal(preview.Calls + 1, chat.Calls);
+        Assert.Contains("SHAPED_BIO_VERA", proposal.Replacement);
+        Assert.Contains("PUBLIC\\_hooded stranger", proposal.Replacement);
+        var kept = Assert.Single(proposal.Kept!);
+        Assert.Equal("checks", kept.Reason);
+        Assert.Contains("PUBLIC_hooded stranger", kept.Label);
+        // The retry was told which name it dropped: one the passage it was sent holds.
+        Assert.Contains(chat.Requests, r => r.Contains("It drops names the passage gives: PUBLIC_hooded stranger"));
+        foreach (var sent in chat.Requests)
+        {
+            Assert.DoesNotContain("CANARY", sent);
+            Assert.Contains("players' edition", sent);
+            Assert.Contains("player's guides", sent);
+            Assert.DoesNotContain("fifth-edition adventures", sent);
+        }
+
+        // What it spent is in the edition's totals, beside the build's.
+        var totals = (await builds.GetAsync(dm, "party"))!;
+        Assert.Equal((chat.Calls, 1), (totals.Calls, totals.Runs));
+        Assert.True(totals.InputTokens > 0);
+        Assert.Null(await builds.GetAsync(dm, "dm"));
+    }
+
+    [Fact]
+    public async Task AnEntryByEntryEdit_StopsAtAKeyTheProviderRefuses_AndTheEntriesNotAskedKeepTheirText()
+    {
+        var (dm, _) = await SeedAsync();
+        var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        var chat = new ScriptedChat((_, _) => throw new HttpRequestException("nope", null, System.Net.HttpStatusCode.Unauthorized));
+        var ai = new BookDraftAi(_drafts, new EditModels(chat), new BookGate(), new SrdCatalog());
+        var calls = (await ai.PreviewAsync(dm, "party", "en", "cast", cast.Version, 0, 0, string.Empty, "shape")).Calls;
+        Assert.True(calls >= 2);
+
+        var proposal = await ai.AskAsync(dm, "party", "en", "cast", cast.Version, 0, 0, string.Empty, "shape");
+        Assert.Equal((BookEditOutcome.Failed, "auth"), (proposal.Outcome, proposal.Reason));
+        Assert.Equal(1, chat.Calls);
+        Assert.Equal(calls, proposal.Kept!.Count);
+        Assert.All(proposal.Kept!, k => Assert.Equal("auth", k.Reason));
+    }
+
+    [Fact]
+    public async Task TheGmsOwnWords_MayChangeAFact_ButAPresetMayNot_AndTheGmEditionTakesTheGmsShape()
+    {
+        var (dm, _) = await SeedAsync();
+        var chapter = (await _drafts.OpenAsync(dm, "dm", "en"))!.Chapters.Single(c => c.Markdown.Contains("PUBLIC_BIO_VERA"));
+        var from = chapter.Markdown.IndexOf("PUBLIC_BIO_VERA", StringComparison.Ordinal);
+        var to = from + "PUBLIC_BIO_VERA".Length;
+        var chat = new ScriptedChat((messages, _) => PassageOf(messages).Replace("PUBLIC_BIO_VERA", "A smith, 40 years at the forge"));
+        var ai = new BookDraftAi(_drafts, new EditModels(chat), new BookGate(), new SrdCatalog());
+
+        var preset = await ai.AskAsync(dm, "dm", "en", chapter.Section, chapter.Version, from, to, chapter.Markdown[from..to], "shorter");
+        Assert.Equal(BookEditOutcome.Failed, preset.Outcome);
+        Assert.Contains(chat.Requests, r => r.Contains("It states numbers that are not in the passage: 40"));
+
+        var own = await ai.AskAsync(dm, "dm", "en", chapter.Section, chapter.Version, from, to, chapter.Markdown[from..to], "Say she has been a smith for 40 years.");
+        Assert.Equal(BookEditOutcome.Ready, own.Outcome);
+        Assert.Contains("fifth-edition adventures", chat.Requests[^1]);
+        Assert.DoesNotContain("players' edition", chat.Requests[^1]);
+    }
+
+    [Fact]
+    public async Task TheWholeBook_IsPricedFirst_ChapterByChapter_AndNothingIsSent()
+    {
+        var (dm, _) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var chat = new ScriptedChat((messages, _) => PassageOf(messages));
+        var ai = new BookDraftAi(_drafts, new EditModels(chat), new BookGate(), new SrdCatalog());
+
+        var book = await ai.BookPreviewAsync(dm, "party", "en", "shape");
+        Assert.Equal(BookEditOutcome.Ready, book.Outcome);
+        Assert.Contains("cast", book.Sections);
+        var each = 0;
+        foreach (var section in book.Sections)
+        {
+            var chapter = view.Chapters.Single(c => c.Section == section);
+            each += (await ai.PreviewAsync(dm, "party", "en", section, chapter.Version, 0, 0, string.Empty, "shape")).Calls;
+        }
+
+        Assert.Equal(each, book.Calls);
+        Assert.NotNull(book.Preflight);
+        Assert.Equal(0, chat.Calls);
+        Assert.Equal(BookEditOutcome.Empty, (await ai.BookPreviewAsync(dm, "party", "en", "Rewrite it all")).Outcome);
+        Assert.Equal(BookEditOutcome.NotAllowed, (await ai.BookPreviewAsync(new CampaignAccess(dm.CampaignId, PlayerUser, CampaignRole.Player), "party", "en", "shape")).Outcome);
+    }
+
+    [Fact]
+    public async Task ThePartyEditionsNames_AreTheMasks_NeverTheGms()
+    {
+        var (dm, _) = await SeedAsync();
+        var party = BookCompiler.Names((await _reader.ReadAsync(dm, BookAudience.Party))!);
+        Assert.Contains("PUBLIC_Vera", party);
+        Assert.Contains("PUBLIC_hooded stranger", party);
+        Assert.DoesNotContain(party, n => n.Contains("CANARY", StringComparison.Ordinal));
+        var gm = BookCompiler.Names((await _reader.ReadAsync(dm, BookAudience.Dm))!);
+        Assert.Contains("CANARY_HIDDEN_NAME", gm);
+    }
+
     // "Bring up to date" (docs/BOOK_EXPORT.md 41.18): the code merges entry by entry, a model sees only the entries both sides changed.
     private static string MineOf(IList<ChatMessage> messages)
     {

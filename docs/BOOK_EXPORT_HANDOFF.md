@@ -188,6 +188,9 @@ Anything that survives is a missing test; add it.
    of its books, and the prompt asks for that one (a field the system's `system.yaml` would carry; nothing is built yet). It is a shape to
    mimic, never a book's words, art or trade dress (`content-system-design`: no trademark names). Real book prose needs pinned facts (names, numbers) separated from open texture, a coverage check (a rewrite can still drop most of a chapter; the 0.12x
    length floor is untuned) and splitting the unit from chapter to `##` entry (a long Cast chapter is re-bought whole after one NPC edit).
+   **Built (BOOK_EXPORT 42, steps 1 to 3):** the facts check both ways (`BookFacts`, en/ru/he), "As the book" on a chapter entry by entry,
+   the whole book chapter by chapter with the cost first, a player-facing shape for the party edition (`ai.playerBookShape`), and edits and
+   merges counted in the spend totals. All tried with the fake model only; **step 4, one real run, waits for the user's yes** (it bills their key).
 3. ~~**Russian and Hebrew books**~~ done for the editable book (BOOK_EXPORT 41.21, 2026-11-08): Plain and Ashen Vellum print both, by
    stand-in faces under the themes' family names, Hebrew pages mirrored (`BookRtl`), coverage read from the font files (`BookFontCoverage`)
    and a Problems-tab check. Left: Hebrew emphasis prints as plain text (no Hebrew italics), no native reader, WebKit and Firefox not tried in

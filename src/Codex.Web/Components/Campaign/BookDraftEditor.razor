@@ -78,6 +78,10 @@
                                         title="@L["Campaign.Book.Draft.MarkdownHint"]" data-testid="book-draft-markdown">
                                     <LucideIcon IconName="file-text" Size="14" /> @L["Campaign.Book.Draft.Markdown"]
                                 </button>
+                                <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="ShapeBookPrepareAsync" disabled="@(AiBusy || working)"
+                                        title="@L["Campaign.Book.Draft.ShapeBook.Hint"]" data-testid="book-draft-shape-book">
+                                    <LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Book.Draft.ShapeBook"]
+                                </button>
                                 <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="StartOverAsync" disabled="@AiBusy" data-testid="book-draft-start-over">
                                     <LucideIcon IconName="rotate-ccw" Size="14" /> @L["Campaign.Book.Draft.StartOver"]
                                 </button>
@@ -231,11 +235,49 @@
                             <div class="book-draft-ai-review" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-review">
                                 <strong id="book-draft-ai-title">@(mergeKey != null ? L["Campaign.Book.Draft.Merge.Review"] : L["Campaign.Book.Draft.Ai.Review"])</strong>
                                 <span class="small-muted" role="status" aria-live="polite" data-review-left data-testid="book-draft-review-left"></span>
+                                @if (shapeRun is { } running)
+                                {
+                                    <span class="small-muted" data-testid="book-draft-shape-progress">@L["Campaign.Book.Draft.ShapeBook.Progress", running.Next, running.Sections.Count]</span>
+                                    <CodexButton Small="true" OnClick="ShapeBookStop" data-testid="book-draft-shape-stop">@L["Campaign.Book.Draft.ShapeBook.Stop"]</CodexButton>
+                                }
                                 <span class="flex-grow-1"></span>
                                 <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="@(() => AiFinishAsync("accepted"))" data-testid="book-draft-review-keep">@L["Campaign.Book.Draft.Ai.KeepAccepted"]</CodexButton>
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiFinishAsync("all"))" data-testid="book-draft-review-all">@L["Campaign.Book.Draft.Ai.AcceptRest"]</CodexButton>
                                 <CodexButton Small="true" OnClick="@(() => AiFinishAsync("none"))" data-testid="book-draft-review-discard">@L["Campaign.Book.Draft.Ai.Discard"]</CodexButton>
                                 <div class="small-muted w-100">@L["Campaign.Book.Draft.Ai.ReviewHint"]</div>
+                            </div>
+                        }
+                        else if (shapePreview is { } book)
+                        {
+                            @* The whole book (docs/BOOK_EXPORT.md 42, step 3): the cost of every chapter first; then each chapter is asked and reviewed in turn. *@
+                            <div class="book-draft-ai-confirm" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-shape-confirm">
+                                <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.ShapeBook.Confirm", book.Sections.Count, book.Model?.Label ?? string.Empty]</strong>
+                                <div class="small-muted" data-testid="book-draft-shape-calls">@L["Campaign.Book.Draft.ShapeBook.Calls", book.Calls]</div>
+                                @if (book.TooLong.Count > 0)
+                                {
+                                    <div class="small-muted" data-testid="book-draft-shape-too-long">@L["Campaign.Book.Draft.ShapeBook.TooLong", string.Join(", ", book.TooLong.Select(TitleOf))]</div>
+                                }
+                                @if (book.Preflight is { } flight)
+                                {
+                                    <div class="small-muted">@L["Campaign.Book.Draft.Ai.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh)]</div>
+                                    @if (flight.CostLow is { } low && flight.CostHigh is { } high)
+                                    {
+                                        <div class="small-muted" data-testid="book-draft-shape-cost">@L["Campaign.Book.Draft.Ai.Cost", Money(low, book.Model?.Price), Money(high, book.Model?.Price)]</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="small-muted">@L["Campaign.Book.Ai.Preflight.NoPrice"]</div>
+                                    }
+                                    @if (book.Model?.ServerUsedToday is { } server && server.Limit > 0)
+                                    {
+                                        <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts * book.Calls]</div>
+                                    }
+                                }
+                                <div class="small-muted">@L["Campaign.Book.Draft.ShapeBook.Each"]</div>
+                                <div class="d-flex gap-2 mt-1">
+                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="ShapeBookStartAsync" data-testid="book-draft-shape-start">@L["Campaign.Book.Draft.ShapeBook.Start"]</CodexButton>
+                                    <CodexButton Small="true" OnClick="ShapeBookCancel" data-testid="book-draft-shape-cancel">@L["Common.Cancel"]</CodexButton>
+                                </div>
                             </div>
                         }
                         else if (mergePreview is { } merge)
@@ -291,6 +333,10 @@
                                 {
                                     <div class="small-muted" data-testid="book-draft-ai-widened">@L["Campaign.Book.Draft.Ai.Widened"]</div>
                                 }
+                                @if (asking.Calls > 1)
+                                {
+                                    <div class="small-muted" data-testid="book-draft-ai-parts">@L["Campaign.Book.Draft.Ai.Parts", asking.Calls]</div>
+                                }
                                 @if (asking.Pieces > 0)
                                 {
                                     <div class="small-muted" data-testid="book-draft-ai-kept">@L["Campaign.Book.Draft.Ai.Kept", asking.Pieces]</div>
@@ -308,11 +354,11 @@
                                     }
                                     @if (asking.Model?.ServerUsedToday is { } server && server.Limit > 0)
                                     {
-                                        <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts]</div>
+                                        <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts * asking.Calls]</div>
                                     }
                                 }
                                 <div class="d-flex gap-2 mt-1">
-                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="AiSendAsync" data-testid="book-draft-ai-send">@L["Campaign.Book.Draft.Ai.Send"]</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AiSendAsync()" data-testid="book-draft-ai-send">@L["Campaign.Book.Draft.Ai.Send"]</CodexButton>
                                     <CodexButton Small="true" OnClick="AiCancelAsync" data-testid="book-draft-ai-cancel">@L["Common.Cancel"]</CodexButton>
                                 </div>
                             </div>
@@ -321,6 +367,10 @@
                         {
                             <div class="d-flex gap-2 align-items-center" role="status" aria-live="polite" data-testid="book-draft-ai-asking">
                                 <span id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Asking"]</span>
+                                @if (shapeRun is { } asked)
+                                {
+                                    <span class="small-muted" data-testid="book-draft-shape-progress">@L["Campaign.Book.Draft.ShapeBook.Progress", asked.Next, asked.Sections.Count]</span>
+                                }
                                 <CodexButton Small="true" OnClick="() => aiStop?.Cancel()" data-testid="book-draft-ai-stop">@L["Campaign.Book.Draft.Ai.Stop"]</CodexButton>
                             </div>
                         }
@@ -513,6 +563,23 @@
                                 }
                             </ul>
                             <div class="small">@L["Campaign.Book.Draft.Pictures.Hint"]</div>
+                        </div>
+                    }
+                    @if (aiKept.Count > 0)
+                    {
+                        @* An entry-by-entry AI edit (docs/BOOK_EXPORT.md 42): the entries whose reply failed kept their text. *@
+                        <div class="field-error" data-testid="book-draft-ai-kept-parts">
+                            @L["Campaign.Book.Draft.Ai.KeptParts", KeptCount]
+                            <ul class="mb-1 ps-3">
+                                @foreach (var (keptSection, part) in aiKept.SelectMany(k => k.Parts.Select(p => (k.Section, p))).Take(24))
+                                {
+                                    <li data-testid="book-draft-ai-kept-part" data-reason="@part.Reason">
+                                        <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @onclick="() => ShowAsync(keptSection)" disabled="@AiBusy"><bdi>@TitleOf(keptSection)</bdi></button>:
+                                        <bdi>@part.Label</bdi> (@KeptReason(part.Reason))
+                                    </li>
+                                }
+                            </ul>
+                            <div class="small">@L["Campaign.Book.Draft.Ai.KeptPartsHint"]</div>
                         </div>
                     }
                     @if (printReport != null)
@@ -1209,7 +1276,22 @@
     /// <summary>What the Problems tab lists: blocks too tall and breaks not placed (Fit pages), pages printed cut off, web addresses not fetched, and
     /// what only the GM edition should have, found in the party draft before it was printed.</summary>
     private int ProblemCount =>
-        (fitReport?.Overflow.Count ?? 0) + (fitReport?.Unplaced.Count ?? 0) + (printReport != null ? 1 : 0) + (webReport?.Failed.Count ?? 0) + (leakReport?.Total ?? 0) + letters.Count + leftOut.Count;
+        (fitReport?.Overflow.Count ?? 0) + (fitReport?.Unplaced.Count ?? 0) + (printReport != null ? 1 : 0) + (webReport?.Failed.Count ?? 0) + (leakReport?.Total ?? 0) + letters.Count + leftOut.Count
+        + KeptCount;
+
+    private int KeptCount => aiKept.Sum(k => k.Parts.Count);
+
+    /// <summary>The entries the last entry-by-entry AI edit left as they were, with their chapter.</summary>
+    private sealed record AiKeptParts(string Section, IReadOnlyList<BookEditKept> Parts);
+
+    private readonly List<AiKeptParts> aiKept = [];
+
+    private string KeptReason(string reason) => reason switch
+    {
+        "checks" => L["Campaign.Book.Draft.Ai.KeptReason.checks"],
+        "cutoff" => L["Campaign.Book.Draft.Ai.KeptReason.cutoff"],
+        _ => L["Campaign.Book.Draft.Ai.KeptReason.other"]
+    };
 
     private string LeakLabel(BookLeak hit) => hit.Kind switch
     {
@@ -1319,7 +1401,7 @@
     private string? aiNote;
     private bool aiNoteError;
 
-    private bool AiBusy => aiAsking || reviewing || aiPending != null || mergePreview != null || mergeSection != null;
+    private bool AiBusy => aiAsking || reviewing || aiPending != null || mergePreview != null || mergeSection != null || shapePreview != null || shapeRun != null;
 
     private static string Number(long value) => value.ToString("N0", System.Globalization.CultureInfo.CurrentCulture);
 
@@ -1401,9 +1483,10 @@
     }
 
     /// <summary>Sends the request and waits for the reply; a reply that passed the checks opens the review. The editor stays locked until the review ends.</summary>
-    private async Task AiSendAsync()
+    private async Task<BookEditProposal?> AiSendAsync()
     {
-        if (aiPending is not { } p || aiAsking || module == null || editorId == null) return;
+        if (aiPending is not { } p || aiAsking || module == null || editorId == null) return null;
+        BookEditProposal? sent = null;
         aiPreview = null;
         aiAsking = true;
         working = true;
@@ -1412,6 +1495,11 @@
         try
         {
             var proposal = await Ai.AskAsync(Access, edition, language, p.Selection.Section, p.Version, p.Selection.From, p.Selection.To, p.Selection.Text, p.Ask, aiStop.Token);
+            sent = proposal;
+            // A whole-book run gathers every chapter's; an edit of its own starts the list again.
+            if (shapeRun == null) aiKept.Clear();
+            aiKept.RemoveAll(k => k.Section == p.Selection.Section);
+            if (proposal.Kept is { Count: > 0 } kept) aiKept.Add(new AiKeptParts(p.Selection.Section, kept));
             var spent = proposal.Tokens == 0 ? null
                 : proposal.Cost is { } cost ? L["Campaign.Book.Draft.Ai.SpentCost", Number(proposal.Tokens), Money(cost, null)].ToString()
                 : L["Campaign.Book.Draft.Ai.Spent", Number(proposal.Tokens)].ToString();
@@ -1437,7 +1525,8 @@
                          }))
             {
                 reviewing = true;
-                if (spent != null) Note(spent, error: false);
+                var keptNote = proposal.Kept is not { Count: > 0 } ? null : L["Campaign.Book.Draft.Ai.KeptPartsNote", proposal.Kept.Count].ToString();
+                if (spent != null || keptNote != null) Note(string.Join(" ", new[] { keptNote, spent }.OfType<string>()), error: keptNote != null);
             }
             else
             {
@@ -1467,6 +1556,8 @@
             working = reviewing;
             if (!reviewing) await AiLockAsync(false);
         }
+
+        return sent;
     }
 
     /// <summary>Ends the review: what the GM kept goes into the chapter as one change, and is saved like typing.</summary>
@@ -1490,6 +1581,92 @@
         {
             Logger.LogWarning(ex, "Ending the AI review failed");
             Note(L["Campaign.Book.Draft.ActionFailed"]);
+            shapeRun = null;
+        }
+
+        if (shapeRun != null) await ShapeBookNextAsync();
+    }
+
+    // "As the book" over the whole book (docs/BOOK_EXPORT.md 42, step 3): the cost of all of it shown first; then one chapter at a time, entry
+    // by entry, each reviewed before the next is sent, so a closed page loses one chapter's reply at most and nothing is saved unreviewed.
+    private sealed class ShapeRun(string ask, IReadOnlyList<string> sections)
+    {
+        public string Ask { get; } = ask;
+        public IReadOnlyList<string> Sections { get; } = sections;
+        public int Next { get; set; }
+    }
+
+    private const string ShapeAsk = "shape";
+    private BookShapePreview? shapePreview;
+    private ShapeRun? shapeRun;
+
+    private async Task ShapeBookPrepareAsync()
+    {
+        moreOpen = false;
+        if (working || AiBusy || view == null) return;
+        aiNote = null;
+        message = null;
+        working = true;
+        try
+        {
+            await FlushAsync();
+            if (state == SaveState.Conflict) return;
+            var preview = await Ai.BookPreviewAsync(Access, edition, language, ShapeAsk);
+            Reveal("ai");
+            if (preview.Outcome != BookEditOutcome.Ready) Note(Outcome(preview.Outcome));
+            else shapePreview = preview;
+        }
+        finally
+        {
+            working = false;
+        }
+    }
+
+    private void ShapeBookCancel() => shapePreview = null;
+
+    /// <summary>Stops the run after the chapter under review: what is in the review stays the GM's to keep or discard.</summary>
+    private void ShapeBookStop()
+    {
+        if (shapeRun == null) return;
+        shapeRun = null;
+        Note(L["Campaign.Book.Draft.ShapeBook.Stopped"], error: false);
+    }
+
+    private async Task ShapeBookStartAsync()
+    {
+        if (shapePreview is not { } book) return;
+        shapePreview = null;
+        aiKept.Clear();
+        shapeRun = new ShapeRun(ShapeAsk, book.Sections);
+        await ShapeBookNextAsync();
+    }
+
+    private async Task ShapeBookNextAsync()
+    {
+        while (shapeRun is { } run && run.Next < run.Sections.Count)
+        {
+            var section = run.Sections[run.Next++];
+            if (view?.Chapters.FirstOrDefault(c => c.Section == section) is not { } chapter) continue;
+            await ShowAsync(section);
+            if (state == SaveState.Conflict) break;
+            await AiLockAsync(true);
+            aiPending = new AiPending(new EditorSelection(section, 0, 0, string.Empty), chapter.Version, run.Ask);
+            StateHasChanged();
+            var proposal = await AiSendAsync();
+            if (reviewing) return;
+            // What would fail the same way for the next chapter ends the run: the key refused, the money or allowance gone, a stop, no model.
+            if (proposal == null || proposal.Outcome is BookEditOutcome.NoModel or BookEditOutcome.Busy or BookEditOutcome.NotAllowed
+                || proposal.Reason is "auth" or "ratelimit" or "allowance" or "budget" or "cancelled")
+            {
+                shapeRun = null;
+                return;
+            }
+        }
+
+        if (shapeRun != null)
+        {
+            shapeRun = null;
+            Note(L["Campaign.Book.Draft.ShapeBook.Done"] + (KeptCount > 0 ? " " + L["Campaign.Book.Draft.Ai.KeptPartsNote", KeptCount] : string.Empty), error: KeptCount > 0);
         }
     }
 

@@ -1166,4 +1166,22 @@
   <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>Edit</value></data>
   <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>AI polish</value></data>
   <data name="Campaign.Book.Draft.Ai.InPane" xml:space="preserve"><value>The AI request is open on the chapter above: send or cancel it, or finish the review, there.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Parts" xml:space="preserve"><value>Entry by entry: {0} requests, one for the chapter's opening and one for each entry.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptParts" xml:space="preserve"><value>{0} part(s) of the last AI edit kept their text:</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsHint" xml:space="preserve"><value>The rest of the chapter was offered for review. Ask again for one of these by selecting it.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsNote" xml:space="preserve"><value>Some entries kept their text: see Problems.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.checks" xml:space="preserve"><value>the reply broke the book's rules or changed its facts</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.cutoff" xml:space="preserve"><value>the reply was cut off</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.other" xml:space="preserve"><value>the request failed, or the run stopped before it</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook" xml:space="preserve"><value>Whole book as the book</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Hint" xml:space="preserve"><value>Rewrite every chapter the way this game's published books read, entry by entry. The cost is shown first, and each chapter is reviewed before the next is sent.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Confirm" xml:space="preserve"><value>Rewrite {0} chapter(s) as the book with {1}?</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Calls" xml:space="preserve"><value>{0} requests in all: one for each chapter's opening and one for each entry.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.TooLong" xml:space="preserve"><value>Left out, with an entry too long for one request: {0}. Select parts of them to rewrite them.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Each" xml:space="preserve"><value>Chapters are sent one at a time. You review each before the next is sent, and nothing is saved until you keep it.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Start" xml:space="preserve"><value>Start</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Progress" xml:space="preserve"><value>Chapter {0} of {1}</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stop" xml:space="preserve"><value>Stop after this chapter</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stopped" xml:space="preserve"><value>The whole-book rewrite stops after this chapter.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Done" xml:space="preserve"><value>The whole book has been through.</value></data>
 </root>

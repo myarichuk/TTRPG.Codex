@@ -51,12 +51,26 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
     }
 
     /// <summary>One chapter of the draft as stored, read as the asking GM may read the campaign now, with the campaign's game system. Null when
-    /// the draft or the chapter is not there, or not the caller's.</summary>
-    public async Task<(CampaignAccess Dm, string SystemId, BookDraftChapterView Chapter)?> ChapterAsync(CampaignAccess asked, string edition, string language, string section)
+    /// the draft or the chapter is not there, or not the caller's. Names: the names this edition gives (<see cref="BookCompiler.Names"/>), for the
+    /// facts check of an AI edit.</summary>
+    public async Task<(CampaignAccess Dm, string SystemId, BookDraftChapterView Chapter, IReadOnlyList<string> Names)?> ChapterAsync(CampaignAccess asked, string edition,
+        string language, string section)
     {
         if (await GenerateAsync(asked, edition, language) is not { } made) return null;
         if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return null;
-        return View(draft, made.Now, null).Chapters.FirstOrDefault(c => c.Section == section) is { } chapter ? (made.Dm, made.Source.Campaign.SystemId, chapter) : null;
+        return View(draft, made.Now, null).Chapters.FirstOrDefault(c => c.Section == section) is { } chapter
+            ? (made.Dm, made.Source.Campaign.SystemId, chapter, BookCompiler.Names(made.Source))
+            : null;
+    }
+
+    /// <summary>Every chapter of the draft as stored, read as <see cref="ChapterAsync"/> reads one, with the edition's names: for an AI run over the
+    /// whole book (docs/BOOK_EXPORT.md 42, step 3), which reads the campaign once and not once per chapter. Null when not the caller's.</summary>
+    public async Task<(CampaignAccess Dm, string SystemId, IReadOnlyList<BookDraftChapterView> Chapters, IReadOnlyList<string> Names)?> ChaptersAsync(CampaignAccess asked,
+        string edition, string language)
+    {
+        if (await GenerateAsync(asked, edition, language) is not { } made) return null;
+        if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return null;
+        return (made.Dm, made.Source.Campaign.SystemId, View(draft, made.Now, null).Chapters, BookCompiler.Names(made.Source));
     }
 
     /// <summary>A chapter's three versions for "Bring up to date", read as the asking GM may read the campaign now; null when not the caller's.</summary>

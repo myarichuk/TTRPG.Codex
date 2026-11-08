@@ -900,6 +900,99 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
     }
 
     /// <summary>
+    /// "As the book" over the whole book (docs/BOOK_EXPORT.md 42, step 3) with a local fake model: the cost of every chapter first and nothing
+    /// sent; then chapter by chapter, entry by entry (one request each), each reviewed before the next is sent; a chapter the model left as it
+    /// was is not shown for review; the party edition's requests are written for the players and carry no secret.
+    /// </summary>
+    [Fact]
+    public async Task TheGmRewritesTheWholeBookAsTheBook_PricedFirst_ReviewedChapterByChapter()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bshape-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var model = new BookAiPanelE2ETests.FakeModelServer();
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        await _app.SeedActorsAsync([
+            new Codex.Web.TestSeedActor
+            {
+                Id = "bshape-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Visibility = Codex.Persistence.ActorVisibility.Known,
+                Biography = "Keeps the lighthouse on the point.\n\n:::dm\nCANARY_SHAPE_SECRET\n:::"
+            },
+            new Codex.Web.TestSeedActor
+            {
+                Id = "bshape-oren-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Oren", Visibility = Codex.Persistence.ActorVisibility.Known,
+                Biography = "Rows out to the lighthouse at dusk."
+            }]);
+
+        await dm.GotoAsync("/settings/ai");
+        await dm.GetByTestId("ai-add-provider").ClickAsync();
+        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await dm.GetByTestId("ai-name").FillAsync("Fake model");
+        await dm.GetByTestId("ai-url").FillAsync(model.Url);
+        await dm.GetByTestId("ai-model").FillAsync("fake-model");
+        await dm.GetByTestId("ai-price-in").FillAsync("1");
+        await dm.GetByTestId("ai-price-out").FillAsync("2");
+        await dm.GetByTestId("ai-price-label").FillAsync("USD");
+        await dm.GetByTestId("ai-save").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model", new() { Timeout = 30_000 });
+
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-dialog")).ToBeVisibleAsync();
+        var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Rows out to the lighthouse" })).ToHaveCountAsync(1, new() { Timeout = 30_000 });
+
+        // The cost of the whole book first; nothing is sent.
+        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await dm.GetByTestId("book-draft-shape-book").ClickAsync();
+        var confirm = dm.GetByTestId("book-draft-shape-confirm");
+        await Assertions.Expect(confirm).ToContainTextAsync("fake-model");
+        await Assertions.Expect(dm.GetByTestId("book-draft-shape-cost")).ToContainTextAsync("USD");
+        lock (model.Requests) Assert.Empty(model.Requests);
+        await dm.GetByTestId("book-draft-shape-start").ClickAsync();
+
+        // The cast chapter, entry by entry: its two entries changed, reviewed before anything else is sent.
+        var review = dm.GetByTestId("book-draft-review");
+        await Assertions.Expect(review).ToBeVisibleAsync(new() { Timeout = 30_000 });
+        await Assertions.Expect(dm.GetByTestId("book-draft-shape-progress")).ToContainTextAsync("Chapter");
+        await Assertions.Expect(dm.GetByTestId("book-draft-review-left")).ToContainTextAsync("2");
+        int sentForCast;
+        lock (model.Requests)
+        {
+            sentForCast = model.Requests.Count;
+            // Each entry is its own passage (the text around it is sent to read only).
+            static string Last(string body) => System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("messages").EnumerateArray().Last().GetProperty("content").GetString() ?? "";
+            static string Passage(string r) => r[(r.IndexOf("<passage>", StringComparison.Ordinal) + 9)..r.IndexOf("</passage>", StringComparison.Ordinal)];
+            var passages = model.Requests.Select(Last).Where(r => r.Contains("<passage>", StringComparison.Ordinal)).Select(Passage).ToList();
+            Assert.Contains(passages, p => p.Contains("Keeps the lighthouse") && !p.Contains("Rows out"));
+            Assert.Contains(passages, p => p.Contains("Rows out") && !p.Contains("Keeps the lighthouse"));
+            Assert.All(model.Requests, r => Assert.DoesNotContain("CANARY_SHAPE_SECRET", r));
+            Assert.All(model.Requests, r => Assert.Contains("players' edition", r));
+        }
+
+        await dm.GetByTestId("book-draft-review-all").ClickAsync();
+        // The rest of the book runs on; chapters with nothing to change are not offered for review, and the run ends.
+        await Assertions.Expect(dm.GetByTestId("book-draft-ai-note")).ToContainTextAsync("whole book", new() { Timeout = 60_000 });
+        await Assertions.Expect(review).ToBeHiddenAsync();
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Rows out to the beacon tower" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+        lock (model.Requests)
+        {
+            Assert.True(model.Requests.Count >= sentForCast);
+            Assert.All(model.Requests, r => Assert.DoesNotContain("CANARY_SHAPE_SECRET", r));
+        }
+
+        Assert.Empty(pageErrors);
+    }
+
+    /// <summary>
     /// "Bring up to date" (docs/BOOK_EXPORT.md 41.18) in a real browser with a local fake model: the GM edits two entries, the campaign then
     /// changes one of them and adds another; the merge says what it will do and cost, sends only the entry both changed (never its secret), opens
     /// the review, and keeping it saves the merge with its new base: the notice goes, the editor takes typing, and Undo brings the notice back.

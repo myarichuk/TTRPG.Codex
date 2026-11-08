@@ -18,8 +18,17 @@ public sealed record BookEditPiece(int Number, string Label, string Text, bool L
 /// </summary>
 public sealed record BookEditPassage(int From, int To, string Original, string Text, string Before, string After, IReadOnlyList<BookEditPiece> Pieces);
 
-/// <summary>What the GM asks for. <paramref name="Shape"/> is how this game's own published books read (the system's <c>ai.bookShape</c>), or null.</summary>
-public sealed record BookEditRequest(string Chapter, string Language, string? SystemName, string? Shape, string Ask, BookEditPassage Passage);
+/// <summary>What the GM asks for. <paramref name="Shape"/> is how this game's own published books read (the system's <c>ai.bookShape</c>, or
+/// <c>ai.playerBookShape</c> for the party edition), or null.</summary>
+public sealed record BookEditRequest(string Chapter, string Language, string? SystemName, string? Shape, string Ask, BookEditPassage Passage)
+{
+    /// <summary>The players' edition: the prompt writes for the players, and a missing shape is <see cref="BookEditPrompts.NeutralPlayerShape"/>.</summary>
+    public bool Party { get; init; }
+
+    /// <summary>The edition's names, when the request must keep the passage's facts (the presets): the reply then passes
+    /// <see cref="BookFacts.Check"/> too. Null for the GM's own words, which may ask for a change of fact.</summary>
+    public BookFactNames? Facts { get; init; }
+}
 
 /// <summary>How an edit ended: the replacement (pieces back in place) when it passed every check, otherwise null and a reason (<c>budget</c>,
 /// <c>checks</c>, <c>cutoff</c>, <c>error</c>, <c>auth</c>, <c>ratelimit</c>, <c>allowance</c>, <c>cancelled</c>).</summary>
@@ -285,6 +294,10 @@ public static class BookEditPrompts
     public const string NeutralShape = "a well-edited published tabletop-roleplaying book: chapters that open with a short overview, clear headings, " +
         "description the GM can read aloud set apart from what only the GM needs, and rules material in sidebars and stat blocks.";
 
+    /// <summary>Neutral words for the players' edition of a game whose system says nothing of its players' books.</summary>
+    public const string NeutralPlayerShape = "a well-edited published players' guide to a tabletop-roleplaying setting: chapters that open with a short " +
+        "overview, clear headings, what is known told in the world's own voice, and lore and rumours in sidebars; nothing addressed to the GM.";
+
     /// <summary>The draft's own blocks, as a prompt names them (the merge's prompt too).</summary>
     public const string BlocksText =
         "The book is written in Markdown with these blocks, each opened by its name on a line of its own and closed by }} on a line of its own:\n" +
@@ -311,9 +324,18 @@ public static class BookEditPrompts
         var system = new StringBuilder()
             .AppendLine("You are the editor of a printed campaign book for " + game + ". The book's GM has selected a passage of one chapter and asks for a change to it. You reply with the passage as it should read instead.")
             .AppendLine()
-            .AppendLine("The book should read like this game's own published books, which are " + (string.IsNullOrWhiteSpace(request.Shape) ? NeutralShape : request.Shape.Trim()))
+            .AppendLine("The book should read like this game's own published books, which are " +
+                        (!string.IsNullOrWhiteSpace(request.Shape) ? request.Shape.Trim() : request.Party ? NeutralPlayerShape : NeutralShape))
             .AppendLine("Take their shape and voice only: copy no published text, and name no published book, company, product or trademark.")
-            .AppendLine()
+            .AppendLine();
+        if (request.Party)
+        {
+            system.AppendLine("This is the players' edition of the book: the players read it. Write for them, in the world's voice: nothing addressed to the GM, " +
+                              "no GM advice, and no checks or difficulty classes.")
+                .AppendLine();
+        }
+
+        system
             .Append(BlocksText)
             .AppendLine()
             .AppendLine("Rules, all of which are checked by a program after you reply; a reply that breaks one is thrown away:")
@@ -376,12 +398,17 @@ public sealed class BookEditWorker(IChatClient chat, BookBudget budget, float te
     }
 
     public Task<BookEditResult> RunAsync(BookEditRequest request, CancellationToken ct = default) =>
-        RunAsync(request.Passage, (problems, previous) => BookEditPrompts.Build(request, problems, previous), MaxOutputFor(request), ct);
+        RunAsync(request.Passage, (problems, previous) => BookEditPrompts.Build(request, problems, previous), MaxOutputFor(request), ct,
+            request.Facts is { } facts
+                ? reply => BookFacts.Check(request.Passage.Text, request.Passage.Before + "\n" + request.Passage.After, reply, facts, request.Language)
+                : null);
 
     /// <summary>Asks for a new text of <paramref name="passage"/> with the prompts <paramref name="build"/> makes (given the last try's problems and
-    /// reply, for the retry), checks it, and puts the pieces back. The merge's conflicts (<c>BookMergeWorker</c>) come through here too.</summary>
+    /// reply, for the retry), checks it, and puts the pieces back. The merge's conflicts (<c>BookMergeWorker</c>) come through here too.
+    /// <paramref name="facts"/>, when given, is a further check of the reply (<see cref="BookFacts.Check"/>): the merge has none, since it
+    /// changes facts on purpose.</summary>
     public async Task<BookEditResult> RunAsync(BookEditPassage passage, Func<IReadOnlyList<string>?, string?, (string System, string User)> build, int maxOutput,
-        CancellationToken ct = default)
+        CancellationToken ct = default, Func<string, IReadOnlyList<string>>? facts = null)
     {
         BookEditResult Failed(string reason, int attempts, IReadOnlyList<string>? problems = null) => new(null, reason, attempts, problems ?? []);
 
@@ -425,7 +452,9 @@ public sealed class BookEditWorker(IChatClient chat, BookBudget budget, float te
 
             try
             {
-                problems = BookDraftEdits.Check(passage, text).ToList();
+                var found = BookDraftEdits.Check(passage, text).ToList();
+                if (facts != null) found.AddRange(facts(text));
+                problems = found;
             }
             catch (RegexMatchTimeoutException)
             {

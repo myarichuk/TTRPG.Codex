@@ -242,6 +242,32 @@ public class BookDraftEditTests
     }
 
     [Fact]
+    public void ThePartyEdition_TakesThePlayersShape_OrNeutralPlayersWords_NeverTheGmsShape()
+    {
+        var srd = SystemDefinitionLoader.Load(Path.Combine(TestPaths.ContentRoot, "systems", "srd5e", "system.yaml"));
+        var passage = BookDraftEdits.Cut(Chapter, 0, Chapter.Length)!;
+        string Party(string? shape)
+        {
+            var (system, user) = BookEditPrompts.Build(new BookEditRequest("Cast", "en", "Test game", shape, "Shorter.", passage) { Party = true });
+            return system + "\n" + user;
+        }
+
+        Assert.False(string.IsNullOrWhiteSpace(srd.Ai.PlayerBookShape));
+        var players = Party(srd.Ai.PlayerBookShape);
+        Assert.Contains("player's guides", players);
+        Assert.Contains("players' edition", players);
+        Assert.DoesNotContain("difficulty class", srd.Ai.PlayerBookShape!.Replace("no checks, saving throws or difficulty classes", ""));
+        var neutral = Party(null);
+        Assert.Contains(BookEditPrompts.NeutralPlayerShape, neutral);
+        Assert.DoesNotContain(BookEditPrompts.NeutralShape, neutral);
+        Assert.DoesNotContain("players' edition", Prompt(passage, srd.Ai.BookShape));
+        foreach (var name in new[] { "Dungeons", "D&D", "Wizards", "Handbook", "Dungeon Master", "Forgotten Realms", "Monster Manual" })
+        {
+            Assert.DoesNotContain(name, srd.Ai.PlayerBookShape!, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
     public void ASelectionOutsideTheChapter_IsRefused()
     {
         Assert.Null(BookDraftEdits.Cut(Chapter, -1, 3));

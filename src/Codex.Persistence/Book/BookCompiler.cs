@@ -174,6 +174,21 @@ public static class BookCompiler
         };
     }
 
+    /// <summary>
+    /// The names this edition gives its people, places, pages and homebrew, for the facts check of an AI edit (docs/BOOK_EXPORT.md 42). They
+    /// come from the source, read for the same audience, so the party edition's are what the party may read (a masked character's mask);
+    /// a party edit is never checked against the GM's names.
+    /// </summary>
+    public static IReadOnlyList<string> Names(BookSource source) =>
+        source.Actors.Select(a => a.Name)
+            .Concat(source.Regions.SelectMany(r => r.Locations.Select(l => l.Name).Prepend(r.Name)))
+            .Concat(source.Wiki.Select(w => w.Title))
+            .Concat(source.Homebrew.Select(h => h.Name))
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Select(n => n.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
     private static void Paragraph(StringBuilder sb, Func<string, string> links, string? markdown)
     {
         if (!string.IsNullOrWhiteSpace(markdown))

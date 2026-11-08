@@ -45,7 +45,8 @@ public enum BookMergeSave { Saved, NotAllowed, Conflict, Moved, TooLarge }
 /// up front. With no conflicts, no model, or when the GM says so, nothing is sent: a conflict is then offered as the campaign's text, which the GM
 /// may reject in the review to keep their own. Nothing is saved until the GM keeps the review (<see cref="SaveAsync"/>).
 /// </summary>
-public sealed class BookDraftMerges(BookDrafts drafts, IBookModels models, BookGate gate, ISystemCatalog catalog, ILogger<BookDraftMerges>? log = null)
+public sealed class BookDraftMerges(BookDrafts drafts, IBookModels models, BookGate gate, ISystemCatalog catalog, IBookBuildRepository? builds = null,
+    ILogger<BookDraftMerges>? log = null)
 {
     private sealed record Prepared(BookDraftMergeInput Input, BookMergePlan Plan, IReadOnlyList<BookMergeRequest> Requests);
 
@@ -128,6 +129,7 @@ public sealed class BookDraftMerges(BookDrafts drafts, IBookModels models, BookG
                         }
 
                         var spent = budget.Snapshot();
+                        await BookSpend.AddAsync(builds, p.Input.Dm, edition, spent, model.Price);
                         tokens = spent.InputTokens + spent.OutputTokens;
                         cost = spent.Cost(model.Price);
                     }

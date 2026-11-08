@@ -1166,4 +1166,22 @@
   <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>עריכה</value></data>
   <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>ליטוש AI</value></data>
   <data name="Campaign.Book.Draft.Ai.InPane" xml:space="preserve"><value>הבקשה ל-AI פתוחה מעל הפרק: שלחו או בטלו אותה, או סיימו שם את הבדיקה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Parts" xml:space="preserve"><value>רשומה אחר רשומה: {0} בקשות, אחת לפתיחת הפרק ואחת לכל רשומה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptParts" xml:space="preserve"><value>{0} חלקים מעריכת ה-AI האחרונה נשארו כפי שהיו:</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsHint" xml:space="preserve"><value>שאר הפרק הוצע לבדיקה. כדי לנסות שוב אחד מהם, סמנו אותו ובקשו שוב.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsNote" xml:space="preserve"><value>חלק מהרשומות נשארו כפי שהיו: ראו 'בעיות'.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.checks" xml:space="preserve"><value>התשובה הפרה את כללי הספר או שינתה את העובדות שלו</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.cutoff" xml:space="preserve"><value>התשובה נקטעה</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.other" xml:space="preserve"><value>הבקשה נכשלה, או שההרצה נעצרה לפניה</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook" xml:space="preserve"><value>כל הספר 'כמו בספר'</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Hint" xml:space="preserve"><value>לשכתב כל פרק כמו בספרים שיצאו למשחק הזה, רשומה אחר רשומה. העלות מוצגת קודם, וכל פרק נבדק לפני שהבא נשלח.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Confirm" xml:space="preserve"><value>לשכתב {0} פרקים 'כמו בספר' עם {1}?</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Calls" xml:space="preserve"><value>{0} בקשות בסך הכול: אחת לפתיחת כל פרק ואחת לכל רשומה.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.TooLong" xml:space="preserve"><value>הושמטו, כי יש בהם רשומה ארוכה מדי לבקשה אחת: {0}. סמנו חלקים מהם כדי לשכתב.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Each" xml:space="preserve"><value>הפרקים נשלחים אחד אחד. אתם בודקים כל אחד לפני שהבא נשלח, ושום דבר לא נשמר עד שתשמרו.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Start" xml:space="preserve"><value>התחלה</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Progress" xml:space="preserve"><value>פרק {0} מתוך {1}</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stop" xml:space="preserve"><value>לעצור אחרי הפרק הזה</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stopped" xml:space="preserve"><value>שכתוב כל הספר ייעצר אחרי הפרק הזה.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Done" xml:space="preserve"><value>כל הספר עבר.</value></data>
 </root>
