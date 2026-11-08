@@ -771,6 +771,10 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "Keeps the beacon tower" })).ToHaveCountAsync(1);
         await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
         await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=cast] .book-draft-badge-edited")).ToBeVisibleAsync();
+        // The editor has the focus back with the cursor after what was kept, not with it selected: the next key types, it does not replace the passage.
+        await dm.Keyboard.TypeAsync(" PUBLIC_AFTER_KEEP");
+        await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "PUBLIC_AFTER_KEEP" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "Keeps the beacon tower" })).ToHaveCountAsync(1);
 
         // A second ask, of the whole chapter (nothing selected), in the GM's own words, discarded: nothing changes, and the editor takes typing again.
         await dm.Locator(".cm-line", new() { HasText = "Keeps the beacon tower" }).ClickAsync();

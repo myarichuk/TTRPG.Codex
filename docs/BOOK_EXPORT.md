@@ -1838,9 +1838,25 @@ Seen in the app (preview, the real-run campaign's GM draft, Cast): a selection a
 named the GM's model, one piece kept back, the token range and that no prices are set; the editor was locked, and after Cancel unlocked
 with nothing sent or changed. No request was sent (a real key is stored there).
 
+**A real model, 2026-11-08** (the GM's own key, the provider's smallest current model, "As the book" on the whole Cast chapter: two
+entries, chapter art, a portrait, five pieces kept back). What it found, each fixed and tested:
+- **The reply's room was too small.** Twice the passage (at least 800) cut both tries off: shaping notes into a book's prose makes them
+  several times longer. Now four times the passage plus 1,200, at least `MinOutputTokens` (2,000), at most the client's ceiling.
+- **It made things up.** The shape asks for each NPC's wants and manner and for GM sidebars; the notes had neither, and the model wrote
+  them ("nobody has taken him seriously since", a sidebar saying how she answers the characters), despite the rule against invented facts.
+  The preset now says to use only what the passage says and to leave out a part of the shape the notes do not fill (`book-edit-2`). On the
+  next run nothing was invented: an overview, a read-aloud box per character, then the notes' facts.
+- **A sidebar opened with its title on the `{{note` line** prints as text, braces and all (marked-hbfm reads a block only from its name
+  alone on the line). The prompt now says a title is a `#####` heading inside, and `Check` refuses a block opened with words after its
+  name unless it closes on that line (an inline span).
+- **After Keep or Accept the rest the kept text was selected with the focus in the editor**, so the next key replaced the whole passage
+  (the whole chapter, after a whole-chapter edit). The cursor now goes after it; the browser test types straight after Keep.
+Both runs kept all five pieces, in place, on the first try. Accept one change, then Accept the rest (with two still open) put all three in;
+the preview showed only the accepted one in between; Ctrl+Z took the whole edit back. A key the provider refuses is reported as such with
+nothing changed, though the "used about" line then counts the input as sent (the budget's rule for any failed call).
+
 Not done, or not verified:
-- A real model has not been tried: how well a small model keeps the markers, and whether "As the book" reads like a sourcebook, is unknown.
-- The `Accept the rest` path differs from `Keep what I accepted` only when some changes are still open; the browser test accepts the only one.
+- One model, one chapter, English only; "Shorter", "Read-aloud box", "Tidy" and a typed request have not met a real model.
 - The AI bar takes room above the Markdown in a narrow window; the merge view's colours are its own defaults (not checked in dark mode).
 - A request is a single call the dialog waits on (Stop cancels it); edits are not in the build's spend totals.
 - The Russian and Hebrew text of `Campaign.Book.Draft.Ai.*` is machine-drafted.

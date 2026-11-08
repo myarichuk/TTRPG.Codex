@@ -207,6 +207,10 @@ public static partial class BookDraftEdits
     [GeneratedRegex(@"(?:[a-z][a-z0-9+.-]{1,12}:/{1,2}|\bwww\.|\bdata:|\bjavascript:|\bmailto:)", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 2000)]
     private static partial Regex Url();
 
+    // A block opened with words after its name ("{{note Running Vera"), not closed on the same line: the renderer prints it as text, braces and all.
+    [GeneratedRegex(@"^[ \t]*\{\{[^\s{}]+[ \t]+(?![^\n]*\}\})\S[^\n]*$", RegexOptions.CultureInvariant | RegexOptions.Multiline, 2000)]
+    private static partial Regex WordyOpener();
+
     // HTML, but not a "<" the draft escaped as "\<" (the generator writes a typed "<" that way, and so may the GM).
     [GeneratedRegex(@"(?<!\\)</?[A-Za-z!][^>]{0,200}>", RegexOptions.CultureInvariant, 2000)]
     private static partial Regex Tag();
@@ -235,6 +239,7 @@ public static partial class BookDraftEdits
         if (bare.Contains("[[", StringComparison.Ordinal)) problems.Add("Do not write [[...]].");
         if (Break().IsMatch(bare)) problems.Add("Do not write \\page or \\column lines.");
         if (bare.Contains(":::", StringComparison.Ordinal)) problems.Add("Do not write lines starting with ':::'.");
+        if (WordyOpener().IsMatch(bare)) problems.Add("Open each block with {{ and its name alone on the line (for example {{note), and put a sidebar's title on the next line as a ##### heading.");
         if (passage.Text.Trim().Length > 0 && reply.Trim().Length == 0) problems.Add("The reply was empty.");
         return problems;
     }
@@ -254,12 +259,14 @@ public static partial class BookDraftEdits
 
 public static class BookEditPrompts
 {
-    public const string Version = "book-edit-1";
+    public const string Version = "book-edit-2";
 
     /// <summary>The asks the editor offers as buttons, in the words the model is sent.</summary>
     public static readonly IReadOnlyDictionary<string, string> Presets = new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["shape"] = "Rewrite this the way this game's published books would present it: their structure, their furniture and their voice.",
+        ["shape"] = "Rewrite this the way this game's published books would present it: their structure, their furniture and their voice. Use only " +
+            "what the passage says: where the books' shape has a part these notes say nothing about (what someone wants, how they act, GM advice), " +
+            "leave that part out rather than make it up.",
         ["shorter"] = "Make this shorter: keep every fact, lose the repetition.",
         ["readaloud"] = "Turn this into read-aloud text the GM reads to the players, in a {{descriptive}} block, followed by what the GM needs to know.",
         ["tidy"] = "Correct the spelling, grammar and layout only; change nothing else."
@@ -280,7 +287,7 @@ public static class BookEditPrompts
             .AppendLine("Take their shape and voice only: copy no published text, and name no published book, company, product or trademark.")
             .AppendLine()
             .AppendLine("The book is written in Markdown with these blocks, each opened by its name on a line of its own and closed by }} on a line of its own:")
-            .AppendLine("- {{note ... }}: a sidebar (advice, a rule, a rumour).")
+            .AppendLine("- {{note ... }}: a sidebar (advice, a rule, a rumour). Its title, if it has one, is a ##### heading on the line after {{note.")
             .AppendLine("- {{descriptive ... }}: read-aloud text, addressed to the players.")
             .AppendLine("- {{monster ... }}: a stat block.")
             .AppendLine("- {{wide ... }}: something across both columns.")
@@ -328,9 +335,14 @@ public sealed class BookEditWorker(IChatClient chat, BookBudget budget, float te
 {
     public const int MaxAttempts = 2;
 
-    /// <summary>The longest reply: the passage's size again (a read-aloud box adds a little), with room, and never past the client's own ceiling.</summary>
+    /// <summary>The least room a reply gets. "As the book" turns a few lines of notes into sourcebook prose several times as long: a real
+    /// model, given twice the passage, was cut off on both tries on a two-entry chapter.</summary>
+    public const int MinOutputTokens = 2000;
+
+    /// <summary>The longest reply: four times the passage (shaping notes into a book's prose lengthens them), with room, and never past the
+    /// client's own ceiling.</summary>
     public static int MaxOutputFor(BookEditRequest request) =>
-        (int)Math.Clamp(BookTokens.Estimate(request.Passage.Text) * 2 + 400, 800, AIClientFactory.AnthropicMaxOutputTokens);
+        (int)Math.Clamp(BookTokens.Estimate(request.Passage.Text) * 4 + 1200, MinOutputTokens, AIClientFactory.AnthropicMaxOutputTokens);
 
     public static BookSectionLoad LoadFor(BookEditRequest request)
     {

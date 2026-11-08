@@ -333,7 +333,7 @@ export function finish(id, how) {
   state.host.hidden = false;
   lock(id, false);
   if (text !== r.original && state.mode === 'md' && state.current === r.section) {
-    state.view.dispatch({ changes: { from: r.from, to: r.to, insert: text }, selection: { anchor: r.from, head: r.from + text.length }, scrollIntoView: true, userEvent: 'input.ai' });
+    state.view.dispatch({ changes: { from: r.from, to: r.to, insert: text }, selection: { anchor: r.from + text.length }, scrollIntoView: true, userEvent: 'input.ai' });
   } else {
     preview(id);
   }

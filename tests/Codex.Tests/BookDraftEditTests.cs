@@ -31,6 +31,43 @@ public class BookDraftEditTests
     }
 
     [Fact]
+    public void AReply_HasRoomToGrowIntoTheBooksProse_AndNeverPastTheClientsCeiling()
+    {
+        var shortOne = new BookEditRequest("Cast", "en", null, null, "Shorter.", BookDraftEdits.Cut(Chapter, 0, Chapter.Length)!);
+        Assert.Equal(BookEditWorker.MinOutputTokens, BookEditWorker.MaxOutputFor(shortOne));
+
+        var prose = string.Join("\n\n", Enumerable.Repeat("A paragraph of the keeper's notes about the reef and the boats.", 60));
+        var longOne = new BookEditRequest("Cast", "en", null, null, "Shorter.", BookDraftEdits.Cut(prose, 0, prose.Length)!);
+        Assert.Equal(BookTokens.Estimate(longOne.Passage.Text) * 4 + 1200, BookEditWorker.MaxOutputFor(longOne));
+        Assert.True(BookEditWorker.MaxOutputFor(longOne) < Codex.Core.AI.AIClientFactory.AnthropicMaxOutputTokens);
+
+        var huge = string.Join("\n\n", Enumerable.Repeat("A paragraph of the keeper's notes about the reef and the boats.", 600));
+        var hugeOne = new BookEditRequest("Cast", "en", null, null, "Shorter.", BookDraftEdits.Cut(huge, 0, huge.Length)!);
+        Assert.Equal(Codex.Core.AI.AIClientFactory.AnthropicMaxOutputTokens, BookEditWorker.MaxOutputFor(hugeOne));
+    }
+
+    [Fact]
+    public void ABlockOpenedWithWordsAfterItsName_IsRefused_BecauseTheBookWouldPrintItsBraces()
+    {
+        var passage = BookDraftEdits.Cut(Chapter, At(Chapter, "PUBLIC_AFTER"), At(Chapter, "\\page"))!;
+        // What a real model wrote for "As the book": the title on the opening line.
+        Assert.Contains(BookDraftEdits.Check(passage, "Text.\n\n{{note Running Vera Holloway\nVera is not a suspect.\n}}\n"), p => p.Contains("#####"));
+        Assert.NotEmpty(BookDraftEdits.Check(passage, "Text.\n\n  {{descriptive The lamp room\nWind.\n}}\n"));
+        // The forms the renderer reads: the name alone, with classes, with a title heading inside, and an inline span closed on its line.
+        foreach (var fine in new[]
+                 {
+                     "Text.\n\n{{note\n##### Running Vera Holloway\nVera is not a suspect.\n}}\n", "{{note,wide\nx\n}}", "{{descriptive\nWind.\n}}",
+                     "A {{pageNumber 3}} span.", "{{wide Across both columns.}}"
+                 })
+        {
+            Assert.Empty(BookDraftEdits.Check(passage, fine));
+        }
+
+        Assert.Contains("##### heading", Prompt(passage));
+        Assert.Contains("leave that part out rather than make it up", Codex.Web.Book.BookDraftAi.AskText("shape"));
+    }
+
+    [Fact]
     public void ASelectionThatStartsInsideASecret_TakesTheWholeSecret_AndItsTextIsNeverSent()
     {
         var from = At(Chapter, "smuggler");
