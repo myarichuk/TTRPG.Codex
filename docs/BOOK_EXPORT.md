@@ -1314,7 +1314,7 @@ small renderer, an editor page and a print page, run on the test campaign of sec
    with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
    sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
 
-## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 and 2 built, see 41.9 and 41.10)
+## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 3 built, see 41.9, 41.10 and 41.15)
 
 The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
 when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
@@ -1386,7 +1386,7 @@ so that two book paths do not drift apart.
 1. **The draft and the editor:** draft store, generator with the block contract, editor dialog (CodeMirror with Markdown and CSS, sandboxed live
    preview), the Plain theme, export through the print browser, the per-chapter stale notice with Regenerate (and silent update of unedited chapters).
 2. **Ashen Vellum:** the grimdark port; fonts bundled after a licence check of each file; theme picker.
-3. **Fit pages** and the print-time overflow report.
+3. **Fit pages** and the print-time overflow report. Built (41.15).
 4. **AI edits** on a selection, with the review overlay.
 5. **Bring up to date:** the block merge, AI only for conflicts, the same overlay.
 6. **The party leak check** before export.
@@ -1464,7 +1464,8 @@ two-tab e2e).
   name.~~ Done in phase 2 (41.10): every theme sits on Blank, and the generator writes Homebrewery's `{{frontCover}}`, `{{toc,wide` and
   `{{chapter` where they exist.
 - The editor's renderer runs in the app's page (the trust boundary above).
-- The overflow report reaches the GM only in the preview. The PDF route sets a header, which the panel does not read yet (phase 3).
+- ~~The overflow report reaches the GM only in the preview.~~ Done in phase 3 (41.15): Fit pages reports it from the print browser, and the
+  editor reads the PDF's header.
 - **The preview was seen only in Chrome.** Safari and Firefox were not tried (section 40, finding 3).
 - The editor was not looked at on a phone, in RTL, or with a screen reader.
 - Russian and Hebrew drafts are made and edited but cannot be printed (the language gate).
@@ -1542,7 +1543,7 @@ straight after typing (the typed line is saved and drawn in the new theme).
   pages), Homebrewery's cover and wide contents.
 - Small soft gradients (heading rules, the footer rule, the monster frame, the cover murk) are still written as small pictures each time they
   are drawn (about 4 KB a page).
-- Still from 41.9: Safari and Firefox, the overflow report in the panel, phone, screen reader, `asset:` pictures in free text, the trust
+- Still from 41.9: Safari and Firefox, ~~the overflow report in the panel~~ (41.15), phone, screen reader, `asset:` pictures in free text, the trust
   boundary of rendering in the GM's page.
 
 ### 41.11 The GM's stylesheet, read as CSS (built 2026-11-06)
@@ -1719,3 +1720,65 @@ Not done, or not verified:
   public addresses, up to 16 MB a save.
 - Typing in the stylesheet pane with a large set of copies (Tasha: 8 MB of stylesheet in the preview) was not timed. A fetch that changes
   nothing does not restyle the preview a second time.
+
+### 41.15 Phase 3: Fit pages and the overflow report (built 2026-11-08)
+
+- **Fit pages** (the editor bar; `BookDrafts.FitAsync`, `BookPdf.FitAsync`, `render.js` `fitText`): what was typed is saved first, then the
+  draft is laid out **in the print browser**, with the PDF's pictures, stylesheet, web copies and paper, so the breaks come from the browser
+  that prints and not from the GM's (which may be Safari or Firefox and break lines differently). Wherever the drawing would move a block
+  onto a page of its own, a `\page {fitted}` line is written before it in that chapter's Markdown. Laid out again until nothing moves (six
+  rounds at most). Each chapter it changed is saved at the version it was read at; one saved meanwhile (another tab) is not overwritten: the
+  run stops there and the editor shows the conflict. The changed chapters are put back in the editor as text the editor is given, not as
+  typing. It takes a place in the printing line (one per GM), like a PDF.
+- **Decided: the breaks it writes say so.** `\page {fitted}` (after a page with classes, `\page {reliquary,fitted}`, as the drawing's own
+  continued page copies them; the page does not get the `fitted` class). A second run takes out its own breaks first and fits again, so
+  after an edit the breaks move instead of piling up, and a plain `\page` the GM typed stays where it is. `\page {fitted}` is layout, not an
+  edit (`BookDraftText.IsBreak`), so a fitted chapter is still "unedited" and still follows the campaign by itself; following it gives the
+  chapter the new generated text, without the breaks, and the drawing continues the pages by itself again until the next Fit pages.
+- **Decided: only `\page` is written, never `\column`.** The drawing moves blocks onto pages, not columns; a column break the GM writes is kept.
+- **Where a block's Markdown starts** (`marking`): for the run only, marked-hbfm's top-level tokens are rendered one at a time (as its parser
+  takes them anyway) and the first element of each gets a `data-fm` tag naming the line its token started on. Nothing is added to the
+  Markdown or between blocks, so rules such as `h1 + p` see the same page (a test draws hostile, table, list, block, column, variable and
+  styled-page brews with and without the tags: the same HTML). A tag is kept only with this run's random prefix; one typed into a draft is
+  dropped. A block whose line cannot be found (a line the variables changed) takes the nearest block above it on its page; when there is
+  none, no break is written and the report lists it.
+- **A heading never ends a page:** the drawing (preview, PDF and Fit pages) moves a run of headings just above a block that spills along with
+  it, unless that would move the page's first block.
+- **The overflow report:**
+  - Fit pages says how many fitted breaks the book has and how many chapters changed (or that nothing changed), lists each block too tall
+    even for a page of its own (page, chapter, first words), and each break it could not place. This is the report **before** the PDF, from
+    the browser that prints it.
+  - The preview names each cut-off page's chapter, and says how many pages run on past where the text breaks them (Fit pages would write
+    those breaks).
+  - The PDF route's `X-Book-Overflow` header is now `7:cast,9:lore` (page numbers and section ids, ASCII only); the editor reads it after the
+    download and says which pages printed cut off, with their chapters. The PDF is still given out: a warning, not a refusal.
+  - Page numbers in the reports count every page from the cover (as a PDF viewer shows them), not the numbers printed on the pages.
+- **The print browser takes the chapters** (`BookPrintLayout.Chapters`) rather than the joined brew, so it knows each page's chapter;
+  the renderer joins them as the editor does.
+
+Tests: `test.mjs` (marking leaves the HTML the same; tags point at their lines; a typed or foreign tag is dropped; the chapters' places in
+the brew and each page's chapter; `\page {fitted}` written and taken out exactly, fitting again writes the same text, the GM's breaks stay);
+`BookDraftPdfTests.FitPages_WritesTheBreaks...` (real Chrome: breaks written, no page continued after them, no page ending in a heading,
+every word printed on the same number of pages, a second run the same, an edit moves the breaks and keeps the GM's own) and
+`FitPages_KeepsAStyledPagesClasses...` (the styled page's classes, a too-tall note named with its chapter and words, by Fit pages and by the
+PDF's header); `FitPages_NeverLeavesAHeadingAtTheFootOfAPage` (40 chapters whose heading lands lower and lower: some break
+falls right before a heading, none right after one); `BookDraftTests` (`\page {fitted}` is layout and `{reliquary,fitted}` is not; Fit pages saves only the chapters it changed,
+at their versions, leaves them unedited, stops at a conflict, and lays nothing out for a player; the header read back);
+`BookDraftE2ETests.TheGmFitsPages...` (the run-on line, Fit pages, the breaks in the editor and saved, a second run changing nothing, the
+too-tall block named before and after the PDF). Mutants, each failing them: headings not kept with their text (survived the first
+long-chapter test, which had no heading at a page's foot; the 40-chapter test was written for it), earlier breaks not taken out, the
+styled page's classes dropped, no block found in the Markdown, a mark kept whatever its prefix (`test.mjs` was too weak for it at first),
+a continued page losing its chapter, fitted breaks counted as edits, a conflict ignored, unchanged chapters saved, the header without
+sections, the editor not reading the header, and the editor not taking the fitted text. One survived: the guard against a break before the
+first line of a page's text, which the drawing never reaches (it never moves a page's first block); kept as a guard.
+Seen in the app (preview, the real-run campaign's Ashen Vellum GM draft, 3 pages): Fit pages ran in the print browser and said every page
+already fits; no server errors.
+
+Not done, or not verified:
+- Safari and Firefox: still not tried (only Chromium is installed for the tests). Fit pages makes them matter less: the breaks come from the
+  print browser, and the drawing still continues pages by itself where the GM's browser differs.
+- A theme or stylesheet change after Fit pages can make the breaks wrong (pages half empty or running on); run it again. Nothing says so yet
+  beyond the run-on line.
+- Keep-together for a short block after a heading in the next column (only page ends are handled).
+- Large books: one Fit pages run on the 44-page Ashen Vellum book was not timed; each round lays the whole book out again.
+- The Russian and Hebrew text of the new strings (`Campaign.Book.Draft.Fit*`, `RunOn`, `PrintedOverflow`) is machine-drafted.

@@ -1006,4 +1006,16 @@
   <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>Request for {0} taken back.</value></data>
   <data name="Campaign.Book.Ai.Reason.storage" xml:space="preserve"><value>the campaign's owner has no storage left</value></data>
   <data name="Campaign.Book.Art.StorageFull" xml:space="preserve"><value>The campaign's owner has no storage left for this picture. Remove some pictures or files, or ask the server's admin for more.</value></data>
+  <data name="Campaign.Book.Draft.Fit" xml:space="preserve"><value>Fit pages</value></data>
+  <data name="Campaign.Book.Draft.FitHint" xml:space="preserve"><value>Writes a page break into the text wherever a page runs over, laid out as the PDF prints. Run it again after editing: it moves the breaks it wrote, never yours.</value></data>
+  <data name="Campaign.Book.Draft.Fitting" xml:space="preserve"><value>Fitting pages…</value></data>
+  <data name="Campaign.Book.Draft.Fit.Done" xml:space="preserve"><value>Page breaks in the book: {0}. Chapters changed: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Nothing" xml:space="preserve"><value>Every page already fits. Nothing changed.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Unplaced" xml:space="preserve"><value>No break could be written before these, so they still move to a new page only when the book is drawn:</value></data>
+  <data name="Campaign.Book.Draft.Fit.TooTall" xml:space="preserve"><value>Too tall for a page even on its own, so these print cut off. Shorten them or split them:</value></data>
+  <data name="Campaign.Book.Draft.Fit.Item" xml:space="preserve"><value>Page {0}, {1}: “{2}”</value></data>
+  <data name="Campaign.Book.Draft.Fit.ItemNoPage" xml:space="preserve"><value>{0}: “{1}”</value></data>
+  <data name="Campaign.Book.Draft.Fit.Failed" xml:space="preserve"><value>Fit pages could not lay the book out. Try again in a moment.</value></data>
+  <data name="Campaign.Book.Draft.RunOn" xml:space="preserve"><value>Pages that run on past where the text breaks them: {0}. Fit pages writes those breaks into the text.</value></data>
+  <data name="Campaign.Book.Draft.PrintedOverflow" xml:space="preserve"><value>The PDF is downloaded, but these pages print cut off: {0}.</value></data>
 </root>

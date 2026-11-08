@@ -1006,4 +1006,16 @@
   <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>Просьба о «{0}» отозвана.</value></data>
   <data name="Campaign.Book.Ai.Reason.storage" xml:space="preserve"><value>у владельца кампании не осталось места</value></data>
   <data name="Campaign.Book.Art.StorageFull" xml:space="preserve"><value>У владельца кампании не осталось места для этого изображения. Удалите часть изображений или файлов или попросите у администратора сервера больше места.</value></data>
+  <data name="Campaign.Book.Draft.Fit" xml:space="preserve"><value>Разбить на страницы</value></data>
+  <data name="Campaign.Book.Draft.FitHint" xml:space="preserve"><value>Вставляет в текст разрыв страницы везде, где страница переполнена, по раскладке, как при печати PDF. После правок запустите снова: переносятся только разрывы, вставленные этой командой, ваши остаются.</value></data>
+  <data name="Campaign.Book.Draft.Fitting" xml:space="preserve"><value>Разбиваем на страницы…</value></data>
+  <data name="Campaign.Book.Draft.Fit.Done" xml:space="preserve"><value>Разрывов страниц в книге: {0}. Изменено глав: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Nothing" xml:space="preserve"><value>Все страницы уже помещаются. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Unplaced" xml:space="preserve"><value>Перед этими местами разрыв вставить не удалось, поэтому они переносятся на новую страницу только при отрисовке книги:</value></data>
+  <data name="Campaign.Book.Draft.Fit.TooTall" xml:space="preserve"><value>Не помещаются даже на отдельную страницу и будут обрезаны при печати. Сократите или разделите их:</value></data>
+  <data name="Campaign.Book.Draft.Fit.Item" xml:space="preserve"><value>Страница {0}, {1}: «{2}»</value></data>
+  <data name="Campaign.Book.Draft.Fit.ItemNoPage" xml:space="preserve"><value>{0}: «{1}»</value></data>
+  <data name="Campaign.Book.Draft.Fit.Failed" xml:space="preserve"><value>Не удалось разложить книгу по страницам. Повторите через минуту.</value></data>
+  <data name="Campaign.Book.Draft.RunOn" xml:space="preserve"><value>Страниц, которые продолжаются дальше разрыва в тексте: {0}. «Разбить на страницы» вставит эти разрывы в текст.</value></data>
+  <data name="Campaign.Book.Draft.PrintedOverflow" xml:space="preserve"><value>PDF скачан, но эти страницы при печати обрезаны: {0}.</value></data>
 </root>

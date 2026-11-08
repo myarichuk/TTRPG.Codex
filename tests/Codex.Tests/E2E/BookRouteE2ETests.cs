@@ -608,6 +608,68 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         Assert.Empty(pageErrors);
     }
 
+    /// <summary>Fit pages from the editor (41.15): the preview says pages run on, Fit pages writes the breaks into the chapter (shown in the
+    /// editor, saved, the chapter not marked edited), and a block too tall for any page is named with its chapter, before the PDF and after it.</summary>
+    [Fact]
+    public async Task TheGmFitsPages_TheBreaksAreWrittenIntoTheText_AndWhatCannotFitIsNamed()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bdf-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl, AcceptDownloads = true });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        var bio = string.Join("\n\n", Enumerable.Range(0, 70).Select(i => $"Line {i} of the keeper's long story, which goes on past one page and then another."));
+        var wall = string.Join(" ", Enumerable.Range(0, 2600).Select(i => "PUBLIC_WALL"));
+        await _app.SeedActorsAsync([
+            new Codex.Web.TestSeedActor { Id = "bdf-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Biography = bio, Visibility = Codex.Persistence.ActorVisibility.Known },
+            new Codex.Web.TestSeedActor { Id = "bdf-wall-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Wall", Biography = wall, Visibility = Codex.Persistence.ActorVisibility.Known }]);
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Line 69 of" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.GetByTestId("book-draft-run-on")).ToBeVisibleAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-overflow")).ToContainTextAsync("Cast");
+
+        await dm.GetByTestId("book-draft-fit").ClickAsync();
+        var report = dm.GetByTestId("book-draft-fit-report");
+        // Fit pages starts the print browser and lays the book out there: seconds, more when the machine is busy.
+        await Assertions.Expect(report).ToContainTextAsync("Page breaks in the book:", new() { Timeout = 60_000 });
+        await Assertions.Expect(dm.GetByTestId("book-draft-fit-too-tall")).ToContainTextAsync("Cast");
+        await Assertions.Expect(dm.GetByTestId("book-draft-fit-too-tall")).ToContainTextAsync("PUBLIC_WALL");
+        await Assertions.Expect(dm.GetByTestId("book-draft-run-on")).ToBeHiddenAsync();
+        await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        // CodeMirror draws only the lines in view: the chapter is scrolled through and read as it goes.
+        await Assertions.Expect(dm.Locator(".cm-content")).ToContainTextAsync("Line 0 of");
+        var lines = await dm.Locator(".cm-scroller").EvaluateAsync<string>(@"async e => {
+            let seen = '';
+            for (let y = 0; y <= e.scrollHeight; y += Math.max(50, e.clientHeight / 2)) {
+                e.scrollTop = y;
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+                seen += [...e.querySelectorAll('.cm-line')].map(l => l.textContent).join('\n') + '\n';
+            }
+            return seen;
+        }");
+        Assert.Contains(@"\page {fitted}", lines);
+        await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=cast] .book-draft-badge-edited")).ToHaveCountAsync(0);
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+
+        // Run again, nothing changes; the report says so.
+        await dm.GetByTestId("book-draft-fit").ClickAsync();
+        await Assertions.Expect(report).ToContainTextAsync("Every page already fits", new() { Timeout = 60_000 });
+
+        // The PDF is given, and what printed cut off is said beside it, with its chapter.
+        var download = await dm.RunAndWaitForDownloadAsync(() => dm.GetByTestId("book-draft-download").ClickAsync());
+        Assert.EndsWith(".pdf", download.SuggestedFilename);
+        await Assertions.Expect(dm.GetByTestId("book-draft-print-overflow")).ToContainTextAsync("(Cast)");
+        Assert.Empty(pageErrors);
+    }
+
     [Fact]
     public async Task ATabThatOnlyLooksAtAChapter_NeverSavesIt_SoAnotherTabsEditIsNotAConflict()
     {

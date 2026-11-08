@@ -19,38 +19,120 @@ const SLOT = /^art:(s[0-9a-f]{24})$/;
 // Nothing in a style may load or run: no url(), no image functions, no escapes that could spell one, no legacy script hooks.
 const UNSAFE_STYLE = /url\s*\(|image-set|image\s*\(|element\s*\(|cross-fade|expression|behavior|binding|@import|\\|javascript:|src\s*\(/i;
 
+// The class Fit pages gives the breaks it writes ("\page {fitted}"), so a second run takes them out before fitting again and leaves the GM's own
+// breaks where they are. The page itself does not get the class.
+export const FIT_CLASS = 'fitted';
+const JOIN = '\n\n\\page\n\n';
+
 /** The draft as one brew: its chapters in order, each starting a page. */
 export function brew(chapters) {
-  return chapters.map(c => c.markdown.replace(/\s+$/, '')).join('\n\n\\page\n\n');
+  return chapters.map(c => c.markdown.replace(/\s+$/, '')).join(JOIN);
 }
 
-/** Homebrewery's pages, as marked-hbfm renders them, before cleaning. */
-export function pagesHtml(markdown) {
+/** Where each chapter starts in `brew(chapters)`, with its section and length there. */
+export function brewMap(chapters) {
+  let at = 0;
+  return chapters.map(c => {
+    const length = c.markdown.replace(/\s+$/, '').length;
+    const entry = { section: c.section ?? null, start: at, length };
+    at += length + JOIN.length;
+    return entry;
+  });
+}
+
+/** Homebrewery's pages, as marked-hbfm renders them, before cleaning. With `marks` (Fit pages), every top-level block is tagged with where its
+ * Markdown starts in `markdown` (see `marking`). */
+export function pagesHtml(markdown, marks) {
   const pages = markdown.split(PAGE_BREAK);
   // Twice when the brew has variables: marked-hbfm learns a variable set on a later page only by rendering that page, and Homebrewery's editor,
   // rendering on every keystroke, always has. The print browser renders once, so without the first pass its pages would not match the preview.
   if (markdown.includes('[')) renderPages(pages);
-  return renderPages(pages);
+  return renderPages(pages, marks);
 }
 
-function renderPages(pages) {
+function renderPages(pages, marks) {
+  let at = 0;
   return pages.map((text, i) => {
+    const start = at;
+    at += text.length;
     let tags = { classes: '', style: '' };
+    let body = start;
     if (text.startsWith('\\page')) {
       tags = pageTags(text.split('\n', 1)[0]);
+      body = start + (text.includes('\n') ? text.indexOf('\n') + 1 : text.length);
       text = text.includes('\n') ? text.substring(text.indexOf('\n') + 1) : '';
     }
+    const source = text;
     // Homebrewery's own filler: an empty last column, so a page's columns fill from the left.
     text += '\n\n&nbsp;\n\\column\n&nbsp;';
     let html;
     try {
-      html = hbfm.render(text, i);
+      html = marks ? marking(marks, source, body, () => hbfm.render(text, i)) : hbfm.render(text, i);
     } catch (e) {
       html = '<p class="render-failed"></p>';
     }
     const style = tags.style ? ` style="${tags.style.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"` : '';
     return `<div class="page${tags.classes}"${style} id="p${i + 1}"><div class="columnWrapper">${html}</div></div>`;
   }).join('');
+}
+
+/**
+ * Renders a page with each of its top-level blocks tagged (`data-fm`) with the offset in the brew where the block's Markdown starts, or -1 where
+ * it cannot be told (a line the variables changed, Homebrewery's filler). marked-hbfm renders through `marked.parser`; for this one call, the
+ * page's top-level tokens go through it one at a time (as the parser takes them anyway, each on its own), so the HTML is the same, and the
+ * first element of each gets the tag. Nothing is added to the Markdown or between blocks: a rule such as `h1 + p` sees the page as it prints.
+ */
+function marking(marks, source, body, render) {
+  const marked = hbfm.marked;
+  const parser = marked.parser;
+  const lines = [];
+  for (let at = 0, n = 0; at <= source.length; n++) {
+    const end = source.indexOf('\n', at);
+    const line = end < 0 ? source.substring(at) : source.substring(at, end);
+    lines.push({ at, line: line.replace(/\s+$/, '') });
+    if (end < 0) break;
+    at = end + 1;
+  }
+  let cursor = 0;
+  const locate = raw => {
+    let first = raw.split('\n').find(l => l.trim()) ?? '';
+    first = first.replace(/\s+$/, '');
+    const column = /^<div class='columnSplit'><\/div>$/.test(first.trim());
+    for (let i = cursor; i < lines.length; i++) {
+      const line = lines[i].line;
+      if (column ? /^\\column(?:break)?$/.test(line.trim()) : line === first) {
+        cursor = i + 1;
+        return body + lines[i].at;
+      }
+    }
+    return -1;
+  };
+  let depth = 0;
+  marked.parser = function (tokens, options) {
+    if (depth++ > 0) {
+      try { return parser.call(this, tokens, options); } finally { depth--; }
+    }
+    try {
+      let html = '';
+      for (const token of tokens) {
+        const one = Object.assign([token], { links: tokens.links });
+        let part = parser.call(this, one, options);
+        if (token.type !== 'space') {
+          const k = marks.at.push(locate(token.raw || '')) - 1;
+          part = part.replace(/^(\s*<[A-Za-z][\w-]*)/, `$1 data-fm="${marks.nonce}-${k}"`);
+        }
+        html += part;
+      }
+      return html;
+    } finally {
+      depth--;
+    }
+  };
+  try {
+    return render();
+  } finally {
+    marked.parser = parser;
+  }
 }
 
 /**
@@ -67,13 +149,13 @@ function pageTags(line) {
   }
   if (!injected) return { classes: '', style: '' };
   // Only plain class names: one that is not would make the cleaner drop the whole class attribute, and the page would stop being a page.
-  const classes = String(injected.classes || '').split(/\s+/).filter(c => /^[A-Za-z][\w-]{0,40}$/.test(c) && c !== 'page').map(c => ' ' + c).join('');
+  const classes = String(injected.classes || '').split(/\s+/).filter(c => /^[A-Za-z][\w-]{0,40}$/.test(c) && c !== 'page' && c !== FIT_CLASS).map(c => ' ' + c).join('');
   const style = injected.styles ? Object.entries(injected.styles).map(([k, v]) => `${k}:${v}`).join(';') : '';
   return { classes, style };
 }
 
 /** The pages, cleaned, as nodes of `doc`. Parsed inert (a template's content runs nothing and loads nothing), then walked. */
-export function clean(doc, html) {
+export function clean(doc, html, nonce) {
   const template = doc.createElement('template');
   template.innerHTML = html;
   const walk = node => {
@@ -87,7 +169,7 @@ export function clean(doc, html) {
           walk(child);
           child.replaceWith(...child.childNodes);
         } else {
-          attributes(child);
+          attributes(child, nonce);
           if (tag === 'img' && !child.hasAttribute('data-art')) child.remove();
           else walk(child);
         }
@@ -101,10 +183,12 @@ export function clean(doc, html) {
   return template.content;
 }
 
-function attributes(el) {
+function attributes(el, nonce) {
   const tag = el.localName;
   const src = tag === 'img' ? el.getAttribute('src') : null;
   for (const { name, value } of [...el.attributes]) {
+    // A Fit pages tag, only as this drawing wrote it: one typed into the draft is dropped like any other attribute.
+    if (name === 'data-fm' && nonce && value.startsWith(nonce + '-') && /^\d+$/.test(value.slice(nonce.length + 1))) continue;
     const keep = ATTRIBUTES.has(name)
       && !(name === 'href' && !/^#[\w-]{1,120}$/.test(value))
       && !(name === 'style' && UNSAFE_STYLE.test(value))
@@ -136,12 +220,25 @@ export function pictures(root, art) {
   }
 }
 
-/** The book drawn into `root` (a div of `doc`). */
-export function draw(doc, root, markdown, art) {
+/** The book drawn into `root` (a div of `doc`). `input` is the brew, or the chapters (`[{section, markdown}]`): then each page knows its
+ * chapter (`data-section`), for the overflow report. With `marks` (Fit pages), blocks carry where their Markdown starts (`marking`). */
+export function draw(doc, root, input, art, marks) {
+  const chapters = Array.isArray(input) ? input : null;
+  const markdown = chapters ? brew(chapters) : String(input ?? '');
   const pages = doc.createElement('div');
   pages.className = 'pages';
-  pages.append(doc.importNode(clean(doc, pagesHtml(markdown)), true));
+  pages.append(doc.importNode(clean(doc, pagesHtml(markdown, marks), marks?.nonce), true));
   pictures(pages, art);
+  if (chapters) {
+    const map = brewMap(chapters);
+    // A page never spans two chapters (they are joined by a break), so its chapter is the last one starting before the page's text ends.
+    let at = 0;
+    const ends = markdown.split(PAGE_BREAK).map(t => (at += t.length));
+    [...pages.querySelectorAll(':scope > .page')].forEach((page, i) => {
+      const chapter = map.filter(c => c.start < ends[i]).pop();
+      if (chapter?.section) page.dataset.section = chapter.section;
+    });
+  }
   root.replaceChildren(pages);
   return pages;
 }
@@ -174,12 +271,21 @@ function spills(win, page) {
     [...el.getClientRects()].some(r => (r.width > 0 || r.height > 0) && ((rtl ? r.right <= left + 1 : r.left >= right - 1) || r.bottom > bottom + 1)));
 }
 
+// A heading never ends a page with its text on the next: a run of headings just above the first block that moves goes with it. Not the page's
+// first block, which would move the whole page.
+function withHeadings(win, wrap, from) {
+  const counted = [...wrap.children].filter(el => counts(win, el));
+  let i = counted.indexOf(from);
+  while (i > 1 && /^H[1-6]$/.test(counted[i - 1].tagName)) i--;
+  return i > 0 ? counted[i] : from;
+}
+
 /**
  * Whatever spills past a page is moved onto a new page after it, until every page fits. It works on the drawn blocks, not the Markdown, so
  * what is stored is not moved; a block too tall for a page of its own stays, and is reported, never silently lost.
- * Returns the pages that still do not fit (their numbers).
+ * Returns the pages that still do not fit (their numbers). `moved`, if given, gets the first block of each page made.
  */
-export function fit(doc, root) {
+export function fit(doc, root, moved) {
   const win = doc.defaultView;
   let made = 0;
   for (let page = root.querySelector('.page'); page && made < 400; page = page.nextElementSibling) {
@@ -187,19 +293,126 @@ export function fit(doc, root) {
     if (!out.length) continue;
     const wrap = page.querySelector('.columnWrapper');
     if (out[0] === [...wrap.children].filter(el => counts(win, el))[0]) continue;
+    const from = withHeadings(win, wrap, out[0]);
     const next = doc.createElement('div');
     next.className = page.className;
     next.dataset.fitted = '1';
+    if (page.dataset.section) next.dataset.section = page.dataset.section;
     const into = doc.createElement('div');
     into.className = 'columnWrapper';
     next.appendChild(into);
-    for (let el = out[0]; el;) { const n = el.nextElementSibling; into.appendChild(el); el = n; }
+    // The element moved first, and the page it came from (its classes are the new page's, as a written break would give them).
+    if (moved) moved.push({ el: from, classes: [...page.classList].filter(c => c !== 'page') });
+    for (let el = from; el;) { const n = el.nextElementSibling; into.appendChild(el); el = n; }
     page.after(next);
     made++;
   }
   const pages = [...root.querySelectorAll('.page')];
   pages.forEach((p, i) => { p.id = 'p' + (i + 1); });
   return pages.filter(p => spills(win, p).length > 0).map(p => pages.indexOf(p) + 1);
+}
+
+// The first words of a page's first block that does not fit, for the report.
+function firstWords(win, page) {
+  const el = spills(win, page)[0];
+  const words = (el?.textContent || '').replace(/\s+/g, ' ').trim().split(' ').slice(0, 8).join(' ');
+  return words.length > 80 ? words.slice(0, 80) + '\u2026' : words;
+}
+
+/** The pages that still do not fit, each with its chapter and the first words of what does not fit. */
+function report(doc, root, pagesOut) {
+  const pages = [...root.querySelectorAll('.page')];
+  return pagesOut.map(n => ({ page: n, section: pages[n - 1]?.dataset.section || null, words: firstWords(doc.defaultView, pages[n - 1]) }));
+}
+
+/** A break line written by Fit pages: "\page {fitted}", or with the classes of the page it continues ("\page {reliquary,fitted}"). */
+export function isFitted(line) {
+  const m = /^\\page(?:break)? *\{([^\n{}]*)\}$/.exec(line.trim());
+  return !!m && m[1].split(',').map(t => t.trim()).includes(FIT_CLASS);
+}
+
+/** A chapter without the breaks an earlier Fit pages wrote (each with the blank line it added); the GM's own breaks stay. */
+export function unfit(markdown) {
+  const lines = markdown.split('\n');
+  const kept = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!isFitted(lines[i])) { kept.push(lines[i]); continue; }
+    // The blank line written after it, when one stood before it.
+    if (i + 1 < lines.length && lines[i + 1] === '' && (kept.length === 0 || kept[kept.length - 1] === '')) i++;
+  }
+  return kept.join('\n');
+}
+
+/**
+ * `markdown` with a fitted break before each offset (each the start of a line). The break is a line of its own; after a blank line it is followed
+ * by one too, so it stands apart, and `unfit` takes out exactly what was put in: the text without its breaks is the text as it was.
+ */
+export function insertBreaks(markdown, breaks) {
+  let text = markdown;
+  for (const { at, classes } of [...breaks].sort((a, b) => b.at - a.at)) {
+    const line = '\\page {' + [...(classes || []), FIT_CLASS].join(',') + '}';
+    const blank = at === 0 || text[at - 1] === '\n' && (at === 1 || text[at - 2] === '\n');
+    text = text.slice(0, at) + line + (blank ? '\n\n' : '\n') + text.slice(at);
+  }
+  return text;
+}
+
+/**
+ * Fit pages (docs/BOOK_EXPORT.md 41.15): the chapters with a "\page {fitted}" written where the drawing would otherwise move a block onto a
+ * page of its own, so the stored Markdown is what prints. Breaks from an earlier run are taken out first. Laid out in `root` of `doc` (the
+ * print browser), as the PDF is. Returns the chapters, the breaks it could not write (a block whose Markdown it could not find), and the pages
+ * that still do not fit (a block taller than a page).
+ */
+export async function fitText(doc, root, chapters, art) {
+  let current = chapters.map(c => ({ section: c.section, markdown: unfit(c.markdown) }));
+  const unplaced = new Map();
+  for (let pass = 0; pass < 6; pass++) {
+    const marks = { nonce: 'f' + Math.random().toString(36).slice(2, 10), at: [] };
+    draw(doc, root, current, art, marks);
+    await settle(doc, root);
+    const moved = [];
+    fit(doc, root, moved);
+    if (!moved.length) break;
+    const map = brewMap(current);
+    const breaks = new Map();
+    for (const { el, classes } of moved) {
+      // The block itself, or the nearest one before it on its page that has a place in the Markdown (the cleaner can leave a block untagged).
+      let at = -1;
+      const page = el.closest('.page');
+      for (let e = el; e && at < 0; e = e.previousElementSibling) {
+        const k = /^[^-]+-(\d+)$/.exec(e.dataset?.fm || '');
+        if (k) at = marks.at[Number(k[1])] ?? -1;
+      }
+      const chapter = at < 0 ? null : map.find(c => at >= c.start && at <= c.start + c.length);
+      const offset = chapter ? at - chapter.start : -1;
+      // A break before the first line of the page's text would only make an empty page.
+      const pageStart = chapter ? pageStartIn(current[map.indexOf(chapter)].markdown, offset) : 0;
+      if (!chapter || offset <= pageStart) {
+        const words = (el.textContent || '').replace(/\s+/g, ' ').trim().split(' ').slice(0, 8).join(' ');
+        unplaced.set(words, { section: page?.dataset.section || null, words });
+        continue;
+      }
+      const list = breaks.get(chapter.section) ?? [];
+      if (!list.some(b => b.at === offset)) list.push({ at: offset, classes });
+      breaks.set(chapter.section, list);
+    }
+    if (!breaks.size) break;
+    current = current.map(c => breaks.has(c.section) ? { section: c.section, markdown: insertBreaks(c.markdown, breaks.get(c.section)) } : c);
+  }
+  draw(doc, root, current, art);
+  await settle(doc, root);
+  const overflow = report(doc, root, fit(doc, root));
+  const runOn = root.querySelectorAll('.page[data-fitted]').length;
+  return { chapters: current, unplaced: [...unplaced.values()], overflow, runOn, pages: root.querySelectorAll('.page').length };
+}
+
+// Where the page holding `offset` starts in a chapter's text: after the last break line before it, or 0.
+function pageStartIn(markdown, offset) {
+  let start = 0;
+  for (const m of markdown.slice(0, offset).matchAll(/^\\page(?:break)?(?: *\{[^\n{}]*\})?$\n?/gm)) start = m.index + m[0].length;
+  // Blank lines after the break are still the top of the page.
+  while (start < offset && /\s/.test(markdown[start])) start++;
+  return start;
 }
 
 /**
@@ -253,19 +466,25 @@ export function number(root) {
   }
 }
 
-/** Draws, settles, fits and numbers: what the preview shows and the PDF prints. */
-export async function layout(doc, root, markdown, art) {
-  draw(doc, root, markdown, art);
+/** Draws, settles, fits and numbers: what the preview shows and the PDF prints. `input` is the brew or the chapters (see `draw`). */
+export async function layout(doc, root, input, art) {
+  draw(doc, root, input, art);
   await settle(doc, root);
-  const overflow = fit(doc, root);
+  const overflow = report(doc, root, fit(doc, root));
+  const runOn = root.querySelectorAll('.page[data-fitted]').length;
   numberPages(root);
   number(root);
-  return { pages: root.querySelectorAll('.page').length, overflow };
+  return { pages: root.querySelectorAll('.page').length, overflow, runOn };
 }
 
 /** For the print browser: the book laid out in this page, and the page as it then is, to be printed with script off. */
-export async function print(markdown, art) {
+export async function print(input, art) {
   const root = document.getElementById('brew');
-  const result = await layout(document, root, markdown, art);
+  const result = await layout(document, root, input, art);
   return { html: '<!doctype html>\n' + document.documentElement.outerHTML, pages: result.pages, overflow: result.overflow };
+}
+
+/** For the print browser: Fit pages on the draft's chapters (`fitText`), laid out in this page. */
+export async function fitPages(chapters, art) {
+  return fitText(document, document.getElementById('brew'), chapters, art);
 }

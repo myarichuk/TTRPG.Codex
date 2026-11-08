@@ -245,6 +245,74 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         Assert.True((await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast").Edited);
     }
 
+    /// <summary>The break Fit pages writes, "\page {fitted}", is layout like a plain one (41.15); with a styled page's classes it is not.</summary>
+    [Fact]
+    public void AFittedBreak_IsLayout_UnlessItStylesThePage()
+    {
+        Assert.True(BookDraftText.IsBreak(@"\page {fitted}"));
+        Assert.True(BookDraftText.IsBreak(@"\page { fitted }"));
+        Assert.False(BookDraftText.IsBreak(@"\page {reliquary,fitted}"));
+        Assert.False(BookDraftText.IsBreak(@"\page {fittedx}"));
+        Assert.True(BookDraftText.IsFitted(@"\page {reliquary,fitted}") && BookDraftText.IsFitted(@" \page {fitted} "));
+        Assert.False(BookDraftText.IsFitted(@"\page") || BookDraftText.IsFitted(@"\page {reliquary}") || BookDraftText.IsFitted("text"));
+        Assert.Equal(BookDraftText.Content("A\n\nB\nC"), BookDraftText.Content("A\n\n\\page {fitted}\n\nB\n\\page {fitted}\nC"));
+    }
+
+    /// <summary>Fit pages saves each chapter it gave breaks to at the version it read, and only those; the breaks leave a chapter unedited.
+    /// A chapter saved meanwhile (another tab) is not overwritten: the run stops there and says so.</summary>
+    [Fact]
+    public async Task FitPages_SavesTheChaptersItChanged_AtTheirVersions_AndStopsAtAConflict()
+    {
+        var (dm, _) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var cast = view.Chapters.Single(c => c.Section == "cast");
+        var untouched = view.Chapters.Where(c => c.Section != "cast").Select(c => (c.Section, c.Version)).ToList();
+        string Fitted(string md) => md.Replace("{{entry,", "\\page {fitted}\n\n{{entry,");
+        Task<BookFitted> Layout(BookDraftPage page) => Task.FromResult(new BookFitted
+        {
+            Chapters = [.. page.Chapters.Select(c => new BookLayoutChapter(c.Section, c.Section == "cast" ? Fitted(c.Markdown) : c.Markdown))],
+            Overflow = [new BookOverflow(4, "cast", "PUBLIC_WORDS")]
+        });
+
+        var report = (await _drafts.FitAsync(dm, "party", "en", _ => null, Layout, CancellationToken.None))!;
+        Assert.Equal(BookDraftSave.Saved, report.Result);
+        Assert.Equal(1, report.Chapters);
+        Assert.True(report.Breaks > 0);
+        Assert.Equal("PUBLIC_WORDS", Assert.Single(report.Overflow).Words);
+        var after = (await _drafts.GetAsync(dm, "party", "en"))!;
+        var fittedCast = after.Chapters.Single(c => c.Section == "cast");
+        Assert.Equal(Fitted(cast.Markdown), fittedCast.Markdown);
+        Assert.False(fittedCast.Edited);
+        Assert.Equal(untouched, after.Chapters.Where(c => c.Section != "cast").Select(c => (c.Section, c.Version)).ToList());
+
+        // Another tab saves the chapter while the book is being laid out: its text stays, and the report says Conflict.
+        async Task<BookFitted> Meanwhile(BookDraftPage page)
+        {
+            var c = page.Chapters.Single(x => x.Section == "cast");
+            await _drafts.SaveChapterAsync(dm, "party", "en", "cast", c.Markdown + "\n\nPUBLIC_OTHER_TAB\n", c.Version);
+            return await Layout(page);
+        }
+
+        var conflict = (await _drafts.FitAsync(dm, "party", "en", _ => null, Meanwhile, CancellationToken.None))!;
+        Assert.Equal(BookDraftSave.Conflict, conflict.Result);
+        Assert.Contains("PUBLIC_OTHER_TAB", (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast").Markdown);
+
+        // Someone who is not the GM gets nothing laid out.
+        var player = new CampaignAccess(dm.CampaignId, PlayerUser, CampaignRole.Player);
+        Assert.Null(await _drafts.FitAsync(player, "party", "en", _ => null, _ => throw new InvalidOperationException("not laid out"), CancellationToken.None));
+    }
+
+    /// <summary>The PDF's overflow header: page numbers and section ids only, read back the same; anything else is skipped.</summary>
+    [Fact]
+    public void TheOverflowHeader_CarriesPagesAndSections_AndReadsBackTheSame()
+    {
+        var header = Codex.Web.BookEndpoints.OverflowHeader([new BookOverflow(7, "cast", "Ж words"), new BookOverflow(9, null, null), new BookOverflow(3, "Bad Section", null)]);
+        Assert.Equal("7:cast,9,3", header);
+        Assert.Equal([(7, "cast"), (9, (string?)null), (3, null)], Codex.Web.BookEndpoints.ReadOverflowHeader(header));
+        Assert.Equal([(2, (string?)"lore"), (5, null)], Codex.Web.BookEndpoints.ReadOverflowHeader("x,2:lore,-1,0:cast,5:<b>,"));
+        Assert.Empty(Codex.Web.BookEndpoints.ReadOverflowHeader(null));
+    }
+
     [Fact]
     public async Task ATheme_IsStoredWithTheDraft_AnUnknownOneIsRefused_AndTheChaptersAreNotTouched()
     {

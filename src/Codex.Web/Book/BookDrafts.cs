@@ -14,8 +14,20 @@ public sealed record BookDraftChapterView(string Section, string Title, string M
 public sealed record BookDraftView(string Edition, string Language, string Theme, bool Homebrewery, string PageSize, string Css, int Version, IReadOnlyList<BookDraftChapterView> Chapters,
     BookDraftFollowed? Followed = null);
 
-/// <summary>What a draft is printed or previewed from: the page shell, the brew, and the edition's pictures by slot.</summary>
-public sealed record BookDraftPage(string Title, string Shell, string Markdown, IReadOnlyDictionary<string, string> Art);
+/// <summary>What a draft is printed or previewed from: the page shell, the brew, its chapters (with the version each was read at), and the
+/// edition's pictures by slot.</summary>
+public sealed record BookDraftPage(string Title, string Shell, string Markdown, IReadOnlyDictionary<string, string> Art, IReadOnlyList<BookDraftPageChapter> Chapters)
+{
+    public IReadOnlyList<BookLayoutChapter> Layout => [.. Chapters.Select(c => new BookLayoutChapter(c.Section, c.Markdown))];
+}
+
+public sealed record BookDraftPageChapter(string Section, string Title, string Markdown, int Version);
+
+/// <summary>What Fit pages did (docs/BOOK_EXPORT.md 41.15). <paramref name="Result"/> is the first save that was refused, or Saved; chapters
+/// before it are saved. <paramref name="Breaks"/> counts the fitted breaks the book has now, <paramref name="Chapters"/> the chapters whose
+/// text changed. <paramref name="Refused"/> is why the draft could not be laid out at all (its language, for one).</summary>
+public sealed record BookDraftFitReport(BookDraftSave Result, int Breaks, int Chapters, IReadOnlyList<BookOverflow> Overflow, IReadOnlyList<BookOverflow> Unplaced,
+    string? Refused = null);
 
 /// <summary>
 /// The editable book's service (docs/BOOK_EXPORT.md 41): makes a draft from the edition's masked source, keeps the chapters nobody edited in step
@@ -183,7 +195,33 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         if (shell.Html == null) return (null, shell.Refused);
         var markdown = string.Join("\n\n\\page\n\n", draft.Chapters.Select(c => c.Markdown.TrimEnd()));
         var pictures = withArt ? await ArtAsync(made.Dm, made.Source, quality, cancel) : new Dictionary<string, string>();
-        return (new BookDraftPage(made.Source.Campaign.Name, shell.Html, markdown, pictures), null);
+        return (new BookDraftPage(made.Source.Campaign.Name, shell.Html, markdown, pictures,
+            [.. draft.Chapters.Select(c => new BookDraftPageChapter(c.Section, c.Title, c.Markdown, c.Version))]), null);
+    }
+
+    /// <summary>
+    /// Fit pages (docs/BOOK_EXPORT.md 41.15): the draft laid out by <paramref name="layout"/> (the print browser, as the PDF is), and each
+    /// chapter whose text it gave breaks to saved at the version it was read at. A chapter changed meanwhile (another tab) is not overwritten:
+    /// the run stops there and says so. Breaks are layout, not edits, so no chapter turns "edited" by them.
+    /// </summary>
+    public async Task<BookDraftFitReport?> FitAsync(CampaignAccess asked, string edition, string language, Func<string, byte[]?> font,
+        Func<BookDraftPage, Task<BookFitted>> layout, CancellationToken cancel)
+    {
+        var (page, refused) = await PageAsync(asked, edition, language, BookArtQuality.Print, font, cancel);
+        if (refused != null) return new BookDraftFitReport(BookDraftSave.NotAllowed, 0, 0, [], [], refused);
+        if (page == null) return null;
+        var fitted = await layout(page);
+        var changed = 0;
+        foreach (var chapter in page.Chapters)
+        {
+            if (fitted.Chapters.FirstOrDefault(c => c.Section == chapter.Section) is not { } after || after.Markdown == chapter.Markdown) continue;
+            var (result, _) = await store.SaveChapterAsync(asked, edition, language, chapter.Section, after.Markdown, chapter.Version);
+            if (result != BookDraftSave.Saved) return new BookDraftFitReport(result, 0, changed, fitted.Overflow, fitted.Unplaced);
+            changed++;
+        }
+
+        var breaks = fitted.Chapters.Sum(c => c.Markdown.ReplaceLineEndings("\n").Split('\n').Count(BookDraftText.IsFitted));
+        return new BookDraftFitReport(BookDraftSave.Saved, breaks, changed, fitted.Overflow, fitted.Unplaced);
     }
 
     /// <summary>The edition's pictures by slot key, as data images: the cover, each chapter's header, and each entry's (the GM's book picture for

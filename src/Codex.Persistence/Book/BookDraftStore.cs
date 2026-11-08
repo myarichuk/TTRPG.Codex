@@ -609,5 +609,17 @@ public static class BookDraftText
         return string.Join('\n', collapsed).Trim('\n');
     }
 
-    public static bool IsBreak(string trimmed) => trimmed is @"\page" or @"\pagebreak" or @"\column" or @"\columnbreak";
+    /// <summary>A plain break: <c>\page</c> or <c>\column</c>, or the <c>\page {fitted}</c> that Fit pages writes (docs/BOOK_EXPORT.md 41.15).
+    /// One with other options (<c>\page {reliquary,fitted}</c>, written after a styled page) styles its page, so it is not.</summary>
+    public static bool IsBreak(string trimmed) =>
+        trimmed is @"\page" or @"\pagebreak" or @"\column" or @"\columnbreak" || PlainFitted.IsMatch(trimmed);
+
+    /// <summary>A break Fit pages wrote, with or without the classes of the page it continues (the renderer's <c>isFitted</c>).</summary>
+    public static bool IsFitted(string line) =>
+        Fitted.Match(line.Trim()) is { Success: true } m && m.Groups[1].Value.Split(',').Any(t => t.Trim() == FitClass);
+
+    public const string FitClass = "fitted";
+
+    private static readonly System.Text.RegularExpressions.Regex PlainFitted = new(@"^\\page(?:break)? *\{ *fitted *\}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+    private static readonly System.Text.RegularExpressions.Regex Fitted = new(@"^\\page(?:break)? *\{([^\n{}]*)\}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 }

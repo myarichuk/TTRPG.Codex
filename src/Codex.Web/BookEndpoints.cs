@@ -90,12 +90,16 @@ public static class BookEndpoints
                 var (page, refused) = await drafts.PageAsync(access, audience, lang, BookArtQuality.Print, file => Font(fonts, file), cancel);
                 if (refused != null) return Results.Problem(refused, statusCode: StatusCodes.Status422UnprocessableEntity);
                 if (page == null) return Results.NotFound();
-                var printed = await pdf.PrintAsync(slot, new BookPrintJob(page.Shell, [], _ => page.Shell) { Layout = new BookPrintLayout(RenderScript(env), page.Markdown, page.Art) }, cancel);
+                var printed = await pdf.PrintAsync(slot, new BookPrintJob(page.Shell, [], _ => page.Shell)
+                {
+                    Layout = new BookPrintLayout(RenderScript(env), page.Markdown, page.Art) { Chapters = page.Layout }
+                }, cancel);
                 if (printed.Overflow.Count > 0)
                 {
-                    // The preview marks these too; the GM sees them there before printing (a report in the panel is phase 3).
+                    // What printed cut off, as this browser laid it out (the GM's may break lines differently): the editor names each page's
+                    // chapter from this. Page numbers and section ids only, which are plain ASCII (BookDraftDocument.IsSection).
                     logs.CreateLogger("Codex.Book").LogWarning("A printed book draft has {Count} pages whose content does not fit", printed.Overflow.Count);
-                    response.Headers["X-Book-Overflow"] = string.Join(",", printed.Overflow);
+                    response.Headers["X-Book-Overflow"] = OverflowHeader(printed.Overflow);
                 }
 
                 Protect(response);
@@ -111,6 +115,17 @@ public static class BookEndpoints
             }
         });
     }
+
+    /// <summary>"7:cast,9:lore": each page that prints cut off, with its chapter when it has one.</summary>
+    public static string OverflowHeader(IEnumerable<BookOverflow> overflow) =>
+        string.Join(",", overflow.Select(o => o.Section is { } section && BookDraftDocument.IsSection(section) ? $"{o.Page}:{section}" : o.Page.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+    /// <summary>The header read back: each page and its section (null when it has none). Anything malformed is skipped.</summary>
+    public static IReadOnlyList<(int Page, string? Section)> ReadOverflowHeader(string? header) =>
+        [.. (header ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(part => part.Split(':', 2))
+            .Where(p => int.TryParse(p[0], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n) && n > 0)
+            .Select(p => (int.Parse(p[0], System.Globalization.CultureInfo.InvariantCulture), p.Length > 1 && BookDraftDocument.IsSection(p[1]) ? p[1] : null))];
 
     private static async Task<CampaignAccess?> GmAsync(string campaignId, ClaimsPrincipal user, ICampaignAccessResolver resolver) =>
         user.FindFirst(ClaimTypes.NameIdentifier)?.Value is { } userId && await resolver.ResolveAsync(campaignId, userId) is { IsDm: true } access ? access : null;

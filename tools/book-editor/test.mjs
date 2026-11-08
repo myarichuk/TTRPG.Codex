@@ -7,7 +7,7 @@ import vm from 'node:vm';
 
 // The shipped bundle, not the source: it is what the editor and the print browser run (and the bundle has no expr-eval).
 vm.runInThisContext(readFileSync(new URL('../../src/Codex.Web/wwwroot/lib/book/book-render.js', import.meta.url), 'utf8'));
-const { pagesHtml, clean, pictures, brew, numberPages, number, pageNumbers } = globalThis.CodexBook;
+const { pagesHtml, clean, pictures, brew, brewMap, numberPages, number, pageNumbers, draw, unfit, insertBreaks, isFitted, FIT_CLASS } = globalThis.CodexBook;
 
 const dom = new JSDOM('<!doctype html><div id="brew"></div>');
 const doc = dom.window.document;
@@ -141,5 +141,66 @@ const line = numbered.querySelector('.toc a');
 assert.equal(line.innerHTML, '<span class="toc-words">Lore</span><span class="toc-page">3</span>');
 number(numbered);
 assert.equal(numbered.querySelector('.toc a').innerHTML, line.innerHTML, 'numbering again changes nothing');
+
+// Fit pages (41.15). Marking a drawing for it changes no HTML: the same brews, drawn with and without the marks, are the same once the marks are
+// taken off, so a rule such as "h1 + p" sees the page as it prints. And each mark points at the line its block starts on.
+const unmark = html => html.replace(/ data-fm="[^"]*"/g, '');
+const fitBrews = [
+  hostile,
+  '{{frontCover}}\n\n# Book\n\n\\page\n\n{{chapter,#ch-lore\n# Lore\n}}\n\n## The Tide\nNo blank line after the heading.\n\n- one\n- two\n\n  still two\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n{{note\n##### Note\nInside a block.\n}}\n\n\\column\n\nAfter the column.\n\n```\ncode\n```\n\n> quoted\n\n<div class="wide">\n\nraw div\n\n</div>\n\nTerm\n:: Definition\n',
+  '[gold]: 12\n\nThe hoard holds $[gold] coins.\n\n\\page {reliquary}\n\nSecond page, $[gold * 2] coins.\n',
+];
+for (const md of fitBrews) {
+  const marks = { nonce: 'ftest', at: [] };
+  const marked = pagesHtml(md, marks);
+  assert.equal(unmark(marked), pagesHtml(md), 'marks change nothing else');
+  const box = doc.createElement('div');
+  box.append(doc.importNode(clean(doc, marked, 'ftest'), true));
+  const tagged = [...box.querySelectorAll('[data-fm]')];
+  assert.ok(tagged.length > 3, 'blocks are tagged: ' + tagged.length);
+  for (const el of tagged) {
+    const at = marks.at[Number(el.dataset.fm.split('-')[1])];
+    if (at < 0) continue;
+    assert.ok(at === 0 || md[at - 1] === '\n', 'a mark is the start of a line: ' + at);
+    const text = md.slice(at, md.indexOf('\n', at) < 0 ? undefined : md.indexOf('\n', at));
+    assert.ok(text.trim().length > 0, 'a mark is a line with words: ' + JSON.stringify(text));
+  }
+  // The heading of the second brew is found where it is, though no blank line follows it.
+  if (md.includes('## The Tide')) {
+    const h = [...box.querySelectorAll('h2')].find(e => e.textContent.includes('The Tide'));
+    assert.equal(marks.at[Number(h.dataset.fm.split('-')[1])], md.indexOf('## The Tide'));
+    const col = [...box.querySelectorAll('.columnSplit[data-fm]')].find(c => c.nextElementSibling?.textContent.includes('After the column'));
+    assert.equal(marks.at[Number(col.dataset.fm.split('-')[1])], md.indexOf('\\column'));
+  }
+}
+// A mark typed into the draft, or one of another drawing, is dropped like any other attribute; so is every mark when nothing is being fitted.
+const typed = doc.createElement('div');
+typed.append(doc.importNode(clean(doc, pagesHtml('<p data-fm="ftest-0">typed</p>\n\n<p data-fm="other2-1">other</p>\n\n<p data-fm="ftest2-x">bad</p>'), 'ftest2'), true));
+assert.equal(typed.querySelectorAll('[data-fm]').length, 0, typed.innerHTML);
+assert.equal(drawn('# A\n\ntext').querySelectorAll('[data-fm]').length, 0);
+
+// The chapters' places in the brew, and each drawn page's chapter.
+const chs = [{ section: 'front', markdown: 'Cover  \n\n' }, { section: 'lore', markdown: '# Lore\n\nOne\n\n\\page\n\nTwo' }];
+const map = brewMap(chs);
+const whole = brew(chs);
+assert.equal(whole.slice(map[1].start, map[1].start + map[1].length), chs[1].markdown);
+const root = doc.getElementById('brew');
+draw(doc, root, chs, {});
+assert.deepEqual([...root.querySelectorAll('.page')].map(p => p.dataset.section), ['front', 'lore', 'lore']);
+
+// The breaks Fit pages writes: "\page {fitted}" (with the continued page's classes), taken out again exactly, and only those: the GM's own stay.
+assert.ok(isFitted('\\page {fitted}') && isFitted('\\page {reliquary,fitted}') && isFitted('  \\page {fitted}  '));
+assert.ok(!isFitted('\\page') && !isFitted('\\page {reliquary}') && !isFitted('\\page {fittedx}') && !isFitted('text \\page {fitted}'));
+for (const [text, at] of [['A\n\nB', 3], ['A\nB', 2], ['A\n\n\nB', 4], ['# A\n\n\\page\n\nB\n\nC', 15]]) {
+  const fitted = insertBreaks(text, [{ at }]);
+  assert.equal(unfit(fitted), text, JSON.stringify(fitted));
+  assert.equal(insertBreaks(unfit(fitted), [{ at }]), fitted, 'fitting again writes the same text');
+}
+assert.equal(insertBreaks('A\n\nB', [{ at: 3, classes: ['reliquary'] }]), 'A\n\n\\page {reliquary,fitted}\n\nB');
+assert.equal(unfit('A\n\n\\page\n\nB\n\n\\page {fitted}\n\nC'), 'A\n\n\\page\n\nB\n\nC');
+// A fitted break draws a page like any other, and the page does not get the class.
+const fp = drawn('A\n\n\\page {reliquary,fitted}\n\nB');
+assert.equal(fp.querySelectorAll('.page')[1].className, 'page reliquary');
+assert.equal(FIT_CLASS, 'fitted');
 
 console.log('book renderer: all checks passed');

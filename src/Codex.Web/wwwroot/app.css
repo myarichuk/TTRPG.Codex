@@ -2587,6 +2587,8 @@ dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: 
 .book-draft-code .cm-editor { height: 100%; font-size: .85rem; }
 .book-draft-code .cm-scroller { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .book-draft-notice { display: flex; gap: .75rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin: 0 0 .5rem; padding: .5rem .75rem; border: 1px solid var(--border-strong); border-inline-start: 3px solid var(--danger, #8a1c1c); border-radius: 4px; background: var(--danger-soft, #fbf0f0); }
+.book-draft-report { font-size: .875rem; }
+.book-draft-report > * { margin: .25rem 0; }
 .book-draft-preview { display: flex; flex-direction: column; min-height: 0; border-inline-start: 1px solid var(--border); }
 .book-draft-frame { flex: 1; width: 100%; border: 0; background: #5b5b5b; }
 @media (max-width: 900px) {

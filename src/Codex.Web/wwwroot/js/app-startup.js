@@ -580,7 +580,7 @@ window.codex = {
         const href = URL.createObjectURL(blob);
         window.codex.download(href, name);
         setTimeout(() => URL.revokeObjectURL(href), 60000);
-        return { status: 200, detail: null, code: null };
+        return { status: 200, detail: null, code: null, overflow: response.headers.get('x-book-overflow') };
     },
 
     copyText: async function (text) {

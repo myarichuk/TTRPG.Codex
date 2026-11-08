@@ -5,6 +5,7 @@
 @inject IJSRuntime JS
 @inject BookDrafts Drafts
 @inject BookDraftWebs Webs
+@inject BookPdf Pdf
 @inject NavigationManager Nav
 @inject IWebHostEnvironment Env
 @inject ILogger<BookDraftEditor> Logger
@@ -35,6 +36,10 @@
                            data-testid="book-draft-homebrewery" />
                     <span>@L["Campaign.Book.Draft.Homebrewery"]</span>
                 </label>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="FitAsync" Disabled="@(working || printing || state == SaveState.Conflict)"
+                             title="@L["Campaign.Book.Draft.FitHint"]" data-testid="book-draft-fit">
+                    <LucideIcon IconName="layers" Size="14" /> @(fitting ? L["Campaign.Book.Draft.Fitting"] : L["Campaign.Book.Draft.Fit"])
+                </CodexButton>
                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="DownloadAsync" Disabled="@printing" data-testid="book-draft-download">
                     <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
                 </CodexButton>
@@ -47,6 +52,40 @@
             {
                 <div class="field-error px-3" role="alert" data-testid="book-draft-error">@message</div>
             }
+            <div class="book-draft-report px-3" role="status" aria-live="polite" data-testid="book-draft-fit-report">
+                @if (fitReport is { } fitted)
+                {
+                    <div>@(fitted.Chapters == 0 && fitted.Result == BookDraftSave.Saved ? L["Campaign.Book.Draft.Fit.Nothing"] : L["Campaign.Book.Draft.Fit.Done", fitted.Breaks, fitted.Chapters])</div>
+                    @if (fitted.Overflow.Count > 0)
+                    {
+                        <div class="field-error" data-testid="book-draft-fit-too-tall">
+                            @L["Campaign.Book.Draft.Fit.TooTall"]
+                            <ul class="mb-0 ps-3">
+                                @foreach (var o in fitted.Overflow.Take(12))
+                                {
+                                    <li>@Item(o)</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (fitted.Unplaced.Count > 0)
+                    {
+                        <div class="small-muted" data-testid="book-draft-fit-unplaced">
+                            @L["Campaign.Book.Draft.Fit.Unplaced"]
+                            <ul class="mb-0 ps-3">
+                                @foreach (var o in fitted.Unplaced.Take(12))
+                                {
+                                    <li>@Item(o)</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                }
+                @if (printReport != null)
+                {
+                    <div class="field-error" data-testid="book-draft-print-overflow">@printReport</div>
+                }
+            </div>
             @if (confirmStartOver)
             {
                 <div class="book-draft-notice" role="alertdialog" aria-labelledby="book-draft-start-over-q">
@@ -152,6 +191,7 @@
                 </div>
                 <div class="book-draft-preview">
                     <div class="field-error small px-1" data-overflow hidden data-testid="book-draft-overflow"></div>
+                    <div class="small-muted small px-1" data-run-on hidden data-testid="book-draft-run-on"></div>
                     <iframe class="book-draft-frame" @ref="frame" sandbox="allow-same-origin" title="@L["Campaign.Book.PreviewTitle"]" data-testid="book-draft-preview"></iframe>
                 </div>
             </div>
@@ -176,6 +216,9 @@
     private bool openRequested;
     private bool printing;
     private bool working;
+    private bool fitting;
+    private BookDraftFitReport? fitReport;
+    private string? printReport;
     private bool confirmStartOver;
     private string? message;
     private SaveState state = SaveState.Saved;
@@ -221,6 +264,14 @@
     };
 
     private string Title(BookDraftChapterView chapter) => chapter.Section == BookDraftWriter.Front ? L["Campaign.Book.Draft.Front"] : chapter.Title;
+
+    private string TitleOf(string? section) =>
+        view?.Chapters.FirstOrDefault(c => c.Section == section) is { } chapter ? Title(chapter) : section ?? string.Empty;
+
+    // A line of the Fit pages report: the page (when there is one), its chapter, and the first words of what it is about.
+    private string Item(BookOverflow o) => o.Page > 0
+        ? L["Campaign.Book.Draft.Fit.Item", o.Page, TitleOf(o.Section), o.Words ?? string.Empty]
+        : L["Campaign.Book.Draft.Fit.ItemNoPage", TitleOf(o.Section), o.Words ?? string.Empty];
 
     /// <summary>Opens the editor on the GM's draft of an edition in a language, making the draft first if there is none.</summary>
     public async Task OpenAsync(string edition, string language, string pageSize)
@@ -276,7 +327,12 @@
                 artUrl = $"{BasePath}/book/{edition}/draft/{language}/art",
                 current,
                 rtl = BookThemes.IsRtl(language)
-            }, self, new { overflow = L["Campaign.Book.Draft.Overflow"].ToString() });
+            }, self, new
+            {
+                overflow = L["Campaign.Book.Draft.Overflow"].ToString(),
+                runOn = L["Campaign.Book.Draft.RunOn"].ToString(),
+                titles = view.Chapters.ToDictionary(c => c.Section, Title)
+            });
             if (current == null) await module.InvokeVoidAsync("show", editorId, null);
             // An address the last fetch could not reach is tried again.
             _ = FetchWebAsync();
@@ -292,15 +348,15 @@
         }
     }
 
-    private Task<BookHtmlResult> ShellAsync()
+    private byte[]? Font(string file)
     {
         var fonts = Path.GetFullPath(Path.Combine(Env.WebRootPath, "fonts"));
-        byte[]? Font(string file)
-        {
-            var path = Path.GetFullPath(Path.Combine(fonts, file));
-            return path.StartsWith(fonts, StringComparison.Ordinal) && File.Exists(path) ? File.ReadAllBytes(path) : null;
-        }
+        var path = Path.GetFullPath(Path.Combine(fonts, file));
+        return path.StartsWith(fonts, StringComparison.Ordinal) && File.Exists(path) ? File.ReadAllBytes(path) : null;
+    }
 
+    private Task<BookHtmlResult> ShellAsync()
+    {
         var theme = BookDraftThemes.Find(view!.Theme) ?? BookDraftThemes.Plain;
         return Task.FromResult(BookDraftHtml.Shell(string.Empty, language, theme, view.PageSize, view.Css, view.Homebrewery, Font, web));
     }
@@ -582,10 +638,79 @@
         await OpenAsync(edition, language, pageSize);
     }
 
+    /// <summary>
+    /// Fit pages (docs/BOOK_EXPORT.md 41.15): what was typed is saved first; the draft is laid out in the print browser, as the PDF is (the GM's
+    /// browser may break lines differently), a break is written wherever a block would run onto a page of its own, and the chapters it changed
+    /// are saved and put back in the editor. The report says what it wrote, what still prints cut off, and what it could not place.
+    /// </summary>
+    private async Task FitAsync()
+    {
+        if (working || view == null) return;
+        working = true;
+        fitting = true;
+        message = null;
+        fitReport = null;
+        printReport = null;
+        try
+        {
+            await FlushAsync();
+            if (view == null || state == SaveState.Conflict) return;
+            using var slot = Pdf.TryReserve(Access.UserId);
+            if (slot == null)
+            {
+                message = L["Campaign.Book.Failed.Busy"];
+                return;
+            }
+
+            var script = BookEndpoints.RenderScript(Env);
+            var report = await Drafts.FitAsync(Access, edition, language, Font,
+                page => Pdf.FitAsync(slot, page.Shell, new BookPrintLayout(script, page.Markdown, page.Art) { Chapters = page.Layout }, closing.Token), closing.Token);
+            if (report == null)
+            {
+                message = L["Campaign.Book.Draft.NotAllowed"];
+                return;
+            }
+
+            if (report.Refused != null)
+            {
+                message = L["Campaign.Book.Failed.Language"];
+                return;
+            }
+
+            if (report.Result == BookDraftSave.Conflict) state = SaveState.Conflict;
+            else if (report.Result == BookDraftSave.TooLarge) message = L["Campaign.Book.Draft.TooLarge"];
+            else if (report.Result != BookDraftSave.Saved) message = L["Campaign.Book.Draft.ActionFailed"];
+            fitReport = report;
+            if (report.Chapters > 0) await RefreshAsync(push: true);
+        }
+        catch (BookPdfTimeoutException)
+        {
+            message = L["Campaign.Book.Failed.Timeout"];
+        }
+        catch (BookPdfUnavailableException)
+        {
+            message = L["Campaign.Book.Failed.NoBrowser"];
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or JSException)
+        {
+            Logger.LogWarning(ex, "Fit pages failed");
+            message = L["Campaign.Book.Draft.Fit.Failed"];
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            fitting = false;
+            working = false;
+        }
+    }
+
     private async Task DownloadAsync()
     {
         printing = true;
         message = null;
+        printReport = null;
         try
         {
             await FlushAsync();
@@ -601,6 +726,12 @@
                     503 => L["Campaign.Book.Failed.NoBrowser"],
                     _ => L["Campaign.Book.Failed.Other"]
                 };
+            }
+            else if (BookEndpoints.ReadOverflowHeader(result.Overflow) is { Count: > 0 } cut)
+            {
+                // As the print browser laid it out, which the preview may not match line for line.
+                printReport = L["Campaign.Book.Draft.PrintedOverflow",
+                    string.Join(", ", cut.Select(o => o.Section is { } section ? $"{o.Page} ({TitleOf(section)})" : o.Page.ToString(System.Globalization.CultureInfo.CurrentCulture)))];
             }
         }
         finally

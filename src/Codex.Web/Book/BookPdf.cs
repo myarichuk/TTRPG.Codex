@@ -34,7 +34,35 @@ public sealed record BookPdfResult(byte[] Pdf, string Browser, int BlockedReques
     /// fit (a block taller than a page of its own), which the PDF shows clipped.</summary>
     public int Pages { get; init; }
 
-    public IReadOnlyList<int> Overflow { get; init; } = [];
+    public IReadOnlyList<BookOverflow> Overflow { get; init; } = [];
+
+    /// <summary>For a Fit pages job (<see cref="BookPrintLayout.Fit"/>): the chapters with their breaks, and what is left. Nothing is printed.</summary>
+    public BookFitted? Fitted { get; init; }
+}
+
+/// <summary>A page of a laid-out book whose content does not fit (a block taller than a page of its own): its place among the pages (1 is the
+/// first, the cover included), the chapter it is in (null when the book was not given as chapters), and the first words of what does not fit.
+/// For a break Fit pages could not write, <paramref name="Page"/> is 0.</summary>
+public sealed record BookOverflow(int Page, string? Section, string? Words);
+
+/// <summary>A chapter's text as the renderer hands it in and back.</summary>
+public sealed record BookLayoutChapter(string Section, string Markdown);
+
+/// <summary>What Fit pages made of a draft (docs/BOOK_EXPORT.md 41.15), laid out in the print browser.</summary>
+public sealed class BookFitted
+{
+    public List<BookLayoutChapter> Chapters { get; set; } = [];
+
+    /// <summary>Blocks that would start a new page, but whose place in the Markdown could not be told, so no break was written before them.</summary>
+    public List<BookOverflow> Unplaced { get; set; } = [];
+
+    /// <summary>Pages that still do not fit with the breaks written: a block taller than a page.</summary>
+    public List<BookOverflow> Overflow { get; set; } = [];
+
+    /// <summary>Pages the drawing still continues by itself with the breaks written (0 when Fit pages placed every break).</summary>
+    public int RunOn { get; set; }
+
+    public int Pages { get; set; }
 }
 
 /// <summary>
@@ -43,7 +71,15 @@ public sealed record BookPdfResult(byte[] Pdf, string Browser, int BlockedReques
 /// (the bundled renderer, never anything from the page), lays out <paramref name="Markdown"/> with <paramref name="Art"/> (slot key to data image),
 /// and the page as it then is, is printed in another page with script off, as every book is.
 /// </summary>
-public sealed record BookPrintLayout(string Script, string Markdown, IReadOnlyDictionary<string, string> Art);
+public sealed record BookPrintLayout(string Script, string Markdown, IReadOnlyDictionary<string, string> Art)
+{
+    /// <summary>The draft as chapters, in place of <see cref="Markdown"/>: the renderer joins them as the editor does, and each page knows its
+    /// chapter, so a page that does not fit is reported with it.</summary>
+    public IReadOnlyList<BookLayoutChapter>? Chapters { get; init; }
+
+    /// <summary>Fit pages: lay the chapters out, write the breaks into their text and return it; nothing is printed.</summary>
+    public bool Fit { get; init; }
+}
 
 /// <summary>A book to print. When <paramref name="Headings"/> is not empty the page is printed, the pages the headings landed on are
 /// read back from the PDF, and <paramref name="WithPageNumbers"/> builds the page again with them in its table of contents; that
@@ -145,6 +181,12 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
     }
 
     public Task<BookPdfResult> PrintAsync(BookPdfSlot slot, string html, CancellationToken cancel) => PrintAsync(slot, BookPrintJob.Single(html), cancel);
+
+    /// <summary>Fit pages (docs/BOOK_EXPORT.md 41.15): the draft's chapters laid out in the print browser, as the PDF is, with a break written
+    /// wherever a block would otherwise be moved onto a page of its own. Takes a place in the same line as printing.</summary>
+    public async Task<BookFitted> FitAsync(BookPdfSlot slot, string shell, BookPrintLayout layout, CancellationToken cancel) =>
+        (await PrintAsync(slot, new BookPrintJob(shell, [], _ => shell) { Layout = layout with { Fit = true } }, cancel)).Fitted
+        ?? throw new InvalidOperationException("Fit pages returned nothing.");
 
     public async Task<BookPdfResult> PrintAsync(BookPdfSlot slot, BookPrintJob job, CancellationToken cancel)
     {
@@ -273,7 +315,7 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
             }
 
             var toPrint = job.Html;
-            var laidOut = (Pages: 0, Overflow: (IReadOnlyList<int>)[]);
+            var laidOut = (Pages: 0, Overflow: (IReadOnlyList<BookOverflow>)[]);
             if (job.Layout is { } layout)
             {
                 // The one page of a job that runs script: ours only. The shell's policy forbids every script element; the renderer is put in
@@ -282,7 +324,15 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
                 await Seal(scratch);
                 await scratch.SetContentAsync(job.Html, new SetContentOptions { WaitUntil = [WaitUntilNavigation.Load], Timeout = (int)limit.TotalMilliseconds }).WaitAsync(token);
                 await scratch.EvaluateExpressionAsync(layout.Script).WaitAsync(token);
-                var result = await scratch.EvaluateFunctionAsync<BookLaidOut>("(markdown, art) => CodexBook.print(markdown, art)", layout.Markdown, layout.Art).WaitAsync(token);
+                object input = layout.Chapters is { } chapters ? chapters.Select(c => new { section = c.Section, markdown = c.Markdown }).ToArray() : layout.Markdown;
+                if (layout.Fit)
+                {
+                    var fitted = await scratch.EvaluateFunctionAsync<BookFitted>("(chapters, art) => CodexBook.fitPages(chapters, art)", input, layout.Art).WaitAsync(token)
+                        ?? throw new InvalidOperationException("The book's renderer returned no fitted chapters.");
+                    return (new BookPdfResult([], product, blocked, clock.Elapsed, 0) { Pages = fitted.Pages, Overflow = fitted.Overflow, Fitted = fitted }, null);
+                }
+
+                var result = await scratch.EvaluateFunctionAsync<BookLaidOut>("(input, art) => CodexBook.print(input, art)", input, layout.Art).WaitAsync(token);
                 if (result?.Html is not { Length: > 0 } drawn)
                 {
                     throw new InvalidOperationException("The book's renderer returned no page.");
@@ -444,5 +494,5 @@ internal sealed class BookLaidOut
 {
     public string? Html { get; set; }
     public int Pages { get; set; }
-    public int[]? Overflow { get; set; }
+    public BookOverflow[]? Overflow { get; set; }
 }

@@ -1006,4 +1006,16 @@
   <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>הבקשה עבור {0} בוטלה.</value></data>
   <data name="Campaign.Book.Ai.Reason.storage" xml:space="preserve"><value>לבעל הקמפיין לא נשאר אחסון</value></data>
   <data name="Campaign.Book.Art.StorageFull" xml:space="preserve"><value>לבעל הקמפיין לא נשאר אחסון לתמונה הזו. הסירו חלק מהתמונות או הקבצים, או בקשו ממנהל השרת עוד מקום.</value></data>
+  <data name="Campaign.Book.Draft.Fit" xml:space="preserve"><value>התאמת עמודים</value></data>
+  <data name="Campaign.Book.Draft.FitHint" xml:space="preserve"><value>מוסיף מעבר עמוד לטקסט בכל מקום שעמוד גולש, לפי הפריסה של ה-PDF המודפס. אחרי עריכה הפעילו שוב: הוא מזיז רק את המעברים שהוא כתב, לעולם לא את שלכם.</value></data>
+  <data name="Campaign.Book.Draft.Fitting" xml:space="preserve"><value>מתאימים עמודים…</value></data>
+  <data name="Campaign.Book.Draft.Fit.Done" xml:space="preserve"><value>מעברי עמוד בספר: {0}. פרקים ששונו: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Nothing" xml:space="preserve"><value>כל העמודים כבר מתאימים. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Unplaced" xml:space="preserve"><value>לא ניתן היה לכתוב מעבר לפני אלה, ולכן הם עוברים לעמוד חדש רק כשהספר מצויר:</value></data>
+  <data name="Campaign.Book.Draft.Fit.TooTall" xml:space="preserve"><value>גבוהים מדי אפילו לעמוד משלהם, ולכן יודפסו חתוכים. קצרו או פצלו אותם:</value></data>
+  <data name="Campaign.Book.Draft.Fit.Item" xml:space="preserve"><value>עמוד {0}, {1}: „{2}”</value></data>
+  <data name="Campaign.Book.Draft.Fit.ItemNoPage" xml:space="preserve"><value>{0}: „{1}”</value></data>
+  <data name="Campaign.Book.Draft.Fit.Failed" xml:space="preserve"><value>לא ניתן היה לפרוס את הספר לעמודים. נסו שוב בעוד רגע.</value></data>
+  <data name="Campaign.Book.Draft.RunOn" xml:space="preserve"><value>עמודים שנמשכים מעבר למקום שבו הטקסט שובר אותם: {0}. „התאמת עמודים” יכתוב את המעברים האלה לטקסט.</value></data>
+  <data name="Campaign.Book.Draft.PrintedOverflow" xml:space="preserve"><value>קובץ ה-PDF הורד, אבל העמודים האלה מודפסים חתוכים: {0}.</value></data>
 </root>

@@ -168,9 +168,9 @@ Anything that survives is a missing test; add it.
 
 ## 7. Open work, in the order I would take it (the user decides)
 
-0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **Phases 1 and 2 are built (41.9, 41.10).** Next is
-   phase 3 (Fit pages and the print-time overflow report). See the "Not done" lists of 41.9 and 41.10 first: the preview in Safari and Firefox,
-   and the overflow report in the panel are the gaps a GM will hit (the GM-CSS cleaner's limits are fixed, 41.11; Homebrewery PHB CSS lays out as there on the compatibility layer, 41.12, which every
+0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **Phases 1 to 3 are built (41.9, 41.10, 41.15).** Next is
+   phase 4 (AI edits on a selection, with the review overlay; its prompts take the book's shape from the system, item 2). See the "Not done"
+   lists of 41.9, 41.10 and 41.15 first: the preview in Safari and Firefox is the gap a GM will hit (the GM-CSS cleaner's limits are fixed, 41.11; Homebrewery PHB CSS lays out as there on the compatibility layer, 41.12, which every
    theme sits on and `UnderTheHomebreweryLayer_...` holds to Homebrewery's own PHB and DMG themes; variables, colour variables and a community theme, 41.13; the fonts, pictures and sheets a brew's CSS names on the web are fetched once by the server and kept with the draft, public https addresses only, 41.14). A theme must pass `EveryBlock_UnderEveryTheme...` and `ALongBook_UnderEveryTheme...`; soft transparent gradients and
    text shadows are what fail them. Items 1 (art step 7, keep-three) and 5 (layout)
    now land inside it rather than in the current HTML route.
@@ -180,8 +180,11 @@ Anything that survives is a missing test; add it.
    writes the prompt; deny proper nouns and "in the style of"); the art-director call per chapter (masked outline in, `{depicts, visual, mood}` out);
    per-slot generation with cost shown first and nothing drawn without a click; suggested spot and scene slots. Audience-tag every image
    (`BuiltFrom: party|dm`); the party book places only party-built images. The user asked for painterly/linework style choices.
-2. **Decision pending from the user: prose or tidied notes.** The rules say "invent nothing", so the model returns text close to the source. Real
-   book prose needs pinned facts (names, numbers) separated from open texture, a coverage check (a rewrite can still drop most of a chapter; the 0.12x
+2. **Decided by the user (2026-11-08): the campaign is the tidied notes, and the AI turns them into prose shaped like the system's own
+   published books**: for 5e, the official sourcebooks' and adventures' voice, chapter breaks and furniture (read-aloud boxes, sidebars,
+   stat blocks where they sit there). The shape is the system's, not 5e's for every book: a system added later brings its own description
+   of its books, and the prompt asks for that one (a field the system's `system.yaml` would carry; nothing is built yet). It is a shape to
+   mimic, never a book's words, art or trade dress (`content-system-design`: no trademark names). Real book prose needs pinned facts (names, numbers) separated from open texture, a coverage check (a rewrite can still drop most of a chapter; the 0.12x
    length floor is untuned) and splitting the unit from chapter to `##` entry (a long Cast chapter is re-bought whole after one NPC edit).
 3. **Russian and Hebrew books**: both themes are English-only. Needs proven coverage (the bundled Forum, Assistant and Frank Ruhl Libre have one
    weight, no bold, no italic) and a preflight.

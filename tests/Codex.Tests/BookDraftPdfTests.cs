@@ -145,6 +145,134 @@ public class BookDraftPdfTests
         Assert.Equal(0, printed.BlockedRequests);
     }
 
+    private static async Task<BookFitted> FitAsync(IReadOnlyList<BookLayoutChapter> chapters, BookTheme? theme = null, string pageSize = "Letter")
+    {
+        var shell = BookDraftHtml.Shell("Saltmere", "en", theme ?? BookDraftThemes.Plain, pageSize, null, true, Font);
+        var printer = Printer();
+        using var slot = printer.TryReserve("dm")!;
+        return await printer.FitAsync(slot, shell.Html!, new BookPrintLayout(Script, string.Empty, new Dictionary<string, string>()) { Chapters = chapters }, CancellationToken.None);
+    }
+
+    private static async Task<BookPdfResult> PrintChaptersAsync(IReadOnlyList<BookLayoutChapter> chapters)
+    {
+        var shell = BookDraftHtml.Shell("Saltmere", "en", BookDraftThemes.Plain, "Letter", null, true, Font);
+        var printer = Printer();
+        using var slot = printer.TryReserve("dm")!;
+        return await printer.PrintAsync(slot, new BookPrintJob(shell.Html!, [], _ => shell.Html!)
+        {
+            Layout = new BookPrintLayout(Script, string.Empty, new Dictionary<string, string>()) { Chapters = chapters }
+        }, CancellationToken.None);
+    }
+
+    // A long chapter of sections of uneven length, each under its own heading, so headings land near the foot of a page somewhere.
+    private static string LongChapter()
+    {
+        var sb = new StringBuilder("{{chapter,#ch-lore\n# Lore\n}}\n\n");
+        for (var i = 0; i < 40; i++)
+        {
+            sb.Append("## Section ").Append(i).Append("\n\n");
+            for (var j = 0; j < 1 + i % 4; j++)
+            {
+                sb.Append("Paragraph ").Append(i).Append('.').Append(j).Append(" of the long chapter, ").Append(string.Concat(Enumerable.Repeat("which runs on and on ", 3 + (i * 7 + j) % 9))).Append("to its end.\n\n");
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>Fit pages (41.15): the breaks are written into the text where the drawing would move blocks, so the stored text lays out with
+    /// nothing moved; a heading never ends a page; running it again writes the same text; and the breaks are not an edit.</summary>
+    [ChromiumFact]
+    public async Task FitPages_WritesTheBreaks_SoTheStoredTextPrintsWithNothingMoved_AndAgainChangesNothing()
+    {
+        var chapters = new List<BookLayoutChapter> { new("front", "{{frontCover}}\n\n# Saltmere\n"), new("lore", LongChapter()) };
+        var fitted = await FitAsync(chapters);
+        var lore = fitted.Chapters.Single(c => c.Section == "lore").Markdown;
+        var breaks = lore.Split('\n').Count(l => l == @"\page {fitted}");
+        Assert.True(breaks >= 3, $"{breaks} breaks written");
+        Assert.Equal(0, fitted.RunOn);
+        Assert.Empty(fitted.Overflow);
+        Assert.Empty(fitted.Unplaced);
+        Assert.Equal(chapters[0].Markdown, fitted.Chapters.Single(c => c.Section == "front").Markdown);
+        Assert.Equal(Codex.Persistence.BookDraftText.Content(chapters[1].Markdown), Codex.Persistence.BookDraftText.Content(lore));
+
+        // No page ends with a heading: the line before each break (blank lines aside) is never one.
+        var lines = lore.Split('\n');
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (lines[i] != @"\page {fitted}") continue;
+            var before = lines.Take(i).Last(l => l.Trim().Length > 0);
+            Assert.False(before.StartsWith('#'), $"a page ends with \"{before}\"");
+        }
+
+        // Every word is still printed, in order, and on as many pages as the drawing had made.
+        var printed = await PrintChaptersAsync(fitted.Chapters);
+        Assert.Empty(printed.Overflow);
+        Assert.Equal(fitted.Pages, printed.Pages);
+        Assert.Contains("Paragraph 39.", Text(printed.Pdf));
+
+        var again = await FitAsync(fitted.Chapters);
+        Assert.Equal(lore, again.Chapters.Single(c => c.Section == "lore").Markdown);
+
+        // After an edit that shortens the chapter, the earlier breaks are moved, not added to: the GM's own plain break stays where it was.
+        var edited = lore.Replace("## Section 3\n", "\\page\n\n## Section 3\n");
+        edited = string.Join('\n', edited.Split('\n').Where(l => !l.StartsWith("Paragraph 1", StringComparison.Ordinal)));
+        var refit = (await FitAsync([chapters[0], new("lore", edited)])).Chapters.Single(c => c.Section == "lore").Markdown;
+        Assert.Contains("\\page\n\n## Section 3\n", refit);
+        Assert.Equal(Codex.Persistence.BookDraftText.Content(edited), Codex.Persistence.BookDraftText.Content(refit));
+        Assert.True(refit.Split('\n').Count(l => l == @"\page {fitted}") < breaks, "fewer pages, fewer breaks");
+    }
+
+    /// <summary>A heading never ends a page: over chapters whose heading lands lower and lower, wherever the text under a heading would start
+    /// the next page, the heading goes with it (some break is written right before a heading, and none right after one).</summary>
+    [ChromiumFact]
+    public async Task FitPages_NeverLeavesAHeadingAtTheFootOfAPage()
+    {
+        var chapters = Enumerable.Range(0, 40).Select(k => new BookLayoutChapter("c" + k,
+            string.Concat(Enumerable.Range(0, 70 + k).Select(i => $"Filler line {i}.\n\n")) + "## Target heading\n\nThe text under the heading, " +
+            string.Concat(Enumerable.Repeat("which goes on for a while ", 12)) + "and ends.\n")).ToList();
+        var fitted = await FitAsync(chapters);
+        Assert.Equal(0, fitted.RunOn);
+        var beforeHeading = 0;
+        foreach (var chapter in fitted.Chapters)
+        {
+            var lines = chapter.Markdown.Split('\n');
+            for (var i = 0; i < lines.Length; i++)
+            {
+                if (lines[i] != @"\page {fitted}") continue;
+                Assert.False(lines.Take(i).Last(l => l.Trim().Length > 0).StartsWith('#'), $"{chapter.Section}: a page ends with its heading");
+                if (lines.Skip(i + 1).First(l => l.Trim().Length > 0) == "## Target heading") beforeHeading++;
+            }
+        }
+
+        Assert.True(beforeHeading > 0, "no heading ever fell at the foot of a page: the test proves nothing");
+    }
+
+    /// <summary>A break after a styled page carries its classes, as the drawing's own continued page does; a block too tall even for a page of
+    /// its own is reported with its chapter and first words, by Fit pages and by printing.</summary>
+    [ChromiumFact]
+    public async Task FitPages_KeepsAStyledPagesClasses_AndReportsABlockTooTallWithItsChapter()
+    {
+        var styled = "Opening.\n\n\\page {reliquary}\n\n" + LongChapter();
+        var big = new StringBuilder("# Big\n\nBefore the note.\n\n{{note\n");
+        for (var i = 0; i < 260; i++) big.Append("Line ").Append(i).Append(" of a note that can never fit on one page.  \n");
+        big.Append("}}\n");
+        var fitted = await FitAsync([new("lore", styled), new("big", big.ToString())]);
+        var lore = fitted.Chapters.Single(c => c.Section == "lore").Markdown;
+        Assert.Contains(@"\page {reliquary,fitted}", lore);
+        Assert.DoesNotContain(lore.Split('\n'), l => l == @"\page {fitted}");
+        var tall = Assert.Single(fitted.Overflow);
+        Assert.Equal("big", tall.Section);
+        Assert.StartsWith("Line 0 of a note", tall.Words);
+        // The note was moved to a page of its own first: a break before it, after the text above it.
+        Assert.Contains("Before the note.\n\n\\page {fitted}\n\n{{note", fitted.Chapters.Single(c => c.Section == "big").Markdown);
+
+        var printed = await PrintChaptersAsync(fitted.Chapters);
+        var cut = Assert.Single(printed.Overflow);
+        Assert.Equal(("big", tall.Page), (cut.Section, cut.Page));
+        Assert.Equal(cut.Page + ":big", Codex.Web.BookEndpoints.OverflowHeader(printed.Overflow));
+    }
+
     /// <summary>A brew that uses what Homebrewery's 5e layout styles: headings of every level, the first paragraph's drop cap, lists, a quote, a
     /// note, a descriptive box, a table, a stat block, a column break, a quote with its attribution, a footnote, a wide block and the contents. Every word to compare is a PARITY_ marker.</summary>
     private static string ParityBrew()

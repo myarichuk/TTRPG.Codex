@@ -509,5 +509,8 @@
         public int Status { get; set; }
         public string? Detail { get; set; }
         public string? Code { get; set; }
+
+        /// <summary>The editable book's <c>X-Book-Overflow</c> header: the pages that print cut off (<see cref="BookEndpoints.OverflowHeader"/>).</summary>
+        public string? Overflow { get; set; }
     }
 }

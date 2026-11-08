@@ -8,7 +8,7 @@ import { keymap } from '@codemirror/view';
 import { indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { css } from '@codemirror/lang-css';
-import { brew, layout } from './render.js';
+import { layout } from './render.js';
 
 const editors = new Map();
 let counter = 0;
@@ -179,13 +179,23 @@ async function preview(id) {
     if (!root) return;
     const scroller = doc.scrollingElement;
     const top = scroller ? scroller.scrollTop : 0;
-    const result = await layout(doc, root, brew(state.chapters), state.art);
+    const result = await layout(doc, root, state.chapters, state.art);
     fitWidth(state.frame, root);
     if (scroller) scroller.scrollTop = top;
-    const status = state.host.closest('[data-book-editor]')?.querySelector('[data-overflow]');
+    const box = state.host.closest('[data-book-editor]');
+    const status = box?.querySelector('[data-overflow]');
     if (status) {
-      status.textContent = result.overflow.length ? (state.labels.overflow || '').replace('{0}', result.overflow.join(', ')) : '';
-      status.hidden = result.overflow.length === 0;
+      // Each page that prints cut off, with its chapter: "page 7 (Cast)".
+      const titles = state.labels.titles || {};
+      const pages = result.overflow.map(o => o.section && titles[o.section] ? `${o.page} (${titles[o.section]})` : String(o.page));
+      status.textContent = pages.length ? (state.labels.overflow || '').replace('{0}', pages.join(', ')) : '';
+      status.hidden = pages.length === 0;
+    }
+    // Pages the drawing continued by itself: Fit pages would write those breaks into the text.
+    const runOn = box?.querySelector('[data-run-on]');
+    if (runOn) {
+      runOn.textContent = result.runOn ? (state.labels.runOn || '').replace('{0}', String(result.runOn)) : '';
+      runOn.hidden = !result.runOn;
     }
   } finally {
     state.rendering = false;
