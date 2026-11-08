@@ -141,9 +141,15 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// <summary>The scores are typed in; no point buy or array argues with them, but they stop at <c>sheetRules.attributes.max</c>.</summary>
     public const string ManualMethod = "manual";
 
-    /// <summary>The scores are a stat block's, as printed (an imported or restatted creature). Like <see cref="ManualMethod"/>, and
-    /// not held to <c>sheetRules.attributes.max</c> either: that cap is character creation's, and a pit fiend prints Strength 26.</summary>
+    /// <summary>The scores are a stat block's, as printed (an imported or restatted creature): the totals are the base scores. No
+    /// creation check, no <c>sheetRules.attributes.max</c> (that cap is character creation's, and a pit fiend prints Strength 26),
+    /// and no background bonuses or increase picks added: a restatted character keeps their feats on the sheet, and the block's
+    /// scores already are what the creature has. Picking another method brings the bonuses and picks back.</summary>
     public const string PrintedMethod = "printed";
+
+    /// <summary>The sheet's attribute method, lower case; the system's default when the sheet names none.</summary>
+    private static string Method(IReadOnlyDictionary<string, object> sheet, AttributeRules rules) =>
+        (YamlValues.GetString(sheet, MethodKey) ?? rules.Default).ToLowerInvariant();
     public const string BasePrefix = "base_";
     public const string BonusPrefix = "bonus_";
 
@@ -334,13 +340,14 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         var rules = Rules!.Attributes;
         if (rules == null || system.Attributes.Count == 0) return;
 
-        var method = (YamlValues.GetString(sheet, MethodKey) ?? rules.Default).ToLowerInvariant();
+        var method = Method(sheet, rules);
+        var printed = method == PrintedMethod;
         var bases = new Dictionary<string, int>();
         var bonuses = new Dictionary<string, int>();
         foreach (var attribute in system.Attributes)
         {
             var baseScore = YamlValues.GetInt(sheet, BasePrefix + attribute.Key) ?? YamlValues.GetInt(sheet, attribute.Key) ?? attribute.Default;
-            var bonus = YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
+            var bonus = printed ? 0 : YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
             bases[attribute.Key] = baseScore;
             if (bonus != 0) bonuses[attribute.Key] = bonus;
         }
@@ -382,7 +389,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         }
 
         var eligible = new List<string>();
-        if (rules.Bonuses is { } bonusRules)
+        if (rules.Bonuses is { } bonusRules && !printed)
         {
             eligible = EligibleBonusAttributes(bonusRules, sheet);
             var allocation = bonuses.Values.Where(v => v > 0).OrderByDescending(v => v).ToList();
@@ -408,7 +415,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         // higher cap can't carry an earlier Ability Score Improvement past its own.
         var increases = new Dictionary<string, int>();
         var running = system.Attributes.ToDictionary(a => a.Key, a => bases[a.Key] + bonuses.GetValueOrDefault(a.Key));
-        var scoreMax = method == PrintedMethod ? null : rules.Max;
+        var scoreMax = printed ? null : rules.Max;
         foreach (var attribute in system.Attributes)
         {
             if (scoreMax.HasValue && running[attribute.Key] > scoreMax.Value)
@@ -417,7 +424,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             }
         }
 
-        if (rules.Increases is { } increaseRules)
+        if (rules.Increases is { } increaseRules && !printed)
         {
             var overCap = new HashSet<string>();
             foreach (var grant in EvaluateIncreases(increaseRules, sheet, result))
@@ -520,8 +527,9 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     public void ApplyAttributeTotals(Dictionary<string, object> sheet)
     {
         if (Rules?.Attributes is not { } rules) return;
+        var printed = Method(sheet, rules) == PrintedMethod;
         var increases = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        if (rules.Increases is { } increaseRules)
+        if (rules.Increases is { } increaseRules && !printed)
         {
             foreach (var raw in RawList(sheet, increaseRules.FromList))
             {
@@ -544,7 +552,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             }
 
             var baseScore = YamlValues.GetInt(sheet, BasePrefix + attribute.Key) ?? attribute.Default;
-            var bonus = YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
+            var bonus = printed ? 0 : YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
             sheet[attribute.Key] = (long)(baseScore + bonus + increases.GetValueOrDefault(attribute.Key));
         }
     }

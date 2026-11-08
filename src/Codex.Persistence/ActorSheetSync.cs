@@ -160,15 +160,14 @@ public static class ActorSheetSync
         }
 
         // A stat block's scores are as printed, not rolled or bought: no character-creation check (point buy 8-15, the cap of 20)
-        // applies. They are the base scores too. Restatting a character keeps the rest of the sheet, but the old base scores and
-        // background bonuses would otherwise win over the block's (the rules total base + bonus), and its point buy would still
-        // argue with a Strength 26.
+        // applies, and the printed method totals the base scores alone. So they are the base scores. Restatting a character keeps
+        // the rest of the sheet, their background bonuses and Ability Score Improvements included; the printed method leaves those
+        // out, and they count again if the DM picks another method.
         actor.Sheet[Codex.Core.Rules.SheetRuleEngine.MethodKey] = Codex.Core.Rules.SheetRuleEngine.PrintedMethod;
         foreach (var attribute in system?.Attributes ?? new List<AttributeDefinition>())
         {
             if (YamlValues.GetInt(blueprint.Properties, attribute.Key) is not { } printed) continue;
             actor.Sheet[Codex.Core.Rules.SheetRuleEngine.BasePrefix + attribute.Key] = (long)printed;
-            actor.Sheet.Remove(Codex.Core.Rules.SheetRuleEngine.BonusPrefix + attribute.Key);
         }
 
         ApplySheetToState(actor, system, registry);

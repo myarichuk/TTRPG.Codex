@@ -99,7 +99,12 @@
     </div>
     <RuleProblemList Problems="Problems" Describe="Describe" TestId="attr-problems" />
 
-    @if (attributeRules?.Bonuses is { } bonusRules && summary != null)
+    @if (attributeRules != null && Printed && (attributeRules.Bonuses != null || attributeRules.Increases != null))
+    {
+        @* The pickers would change nothing: a printed sheet's scores are the stat block's. *@
+        <p class="small small-muted mt-3 mb-0" data-testid="attr-printed-note">@L["Actor.Sheet.PrintedNote"]</p>
+    }
+    else if (attributeRules?.Bonuses is { } bonusRules && summary != null)
     {
         <div class="mt-3" data-testid="attr-bonuses">
             <div class="field-label">@bonusRules.Label</div>
@@ -131,7 +136,7 @@
         </div>
     }
 
-    @if (attributeRules?.Increases is { } increaseRules && Evaluation != null)
+    @if (attributeRules?.Increases is { } increaseRules && Evaluation != null && !Printed)
     {
         <div class="mt-3" data-testid="attr-increases" data-rule-key="increases">
             <div class="field-label">@increaseRules.Label</div>
@@ -206,6 +211,7 @@
 
     private SheetRules? Rules => Definition.SheetRules;
     private string AttrMethod => (YamlValues.GetString(Sheet, SheetRuleEngine.MethodKey) ?? Rules?.Attributes?.Default ?? SheetRuleEngine.ManualMethod).ToLowerInvariant();
+    private bool Printed => AttrMethod == SheetRuleEngine.PrintedMethod;
 
     /// <summary>Players pick from the system's methods; the DM may always set scores by hand or as a stat block prints them (no
     /// cap: the way to lift it from a creature imported before stat blocks were marked). A sheet's own method always shows, so a

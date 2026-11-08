@@ -291,7 +291,8 @@ public class InventoryRules
 public class AttributeRules
 {
     /// <summary>Methods a player may choose from: "point-buy", "standard-array", "manual". The DM can always use "manual" (typed in,
-    /// capped at <see cref="Max"/>) and "printed" (a stat block's scores, as the block prints them: no cap); imported creatures get "printed".</summary>
+    /// capped at <see cref="Max"/>) and "printed" (a stat block's scores as the block prints them: no cap, no bonuses or increases added); imported creatures get
+    /// "printed".</summary>
     public List<string> Methods { get; set; } = new() { "manual" };
 
     public string Default { get; set; } = "manual";

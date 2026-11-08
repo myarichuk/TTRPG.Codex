@@ -317,13 +317,14 @@ New:
 - **Found by the corpus: creatures broke the score cap.** Done 2026-11-08. An imported creature's printed scores above 20 (a
   pit fiend's Strength 26) were reported as "scores can't exceed 20" (`Actor.Rule.ScoreMax`), so under strict enforcement the
   DM overrode a rule problem on every big creature: `SeedFromBlueprint` set the manual method, which skips the
-  character-creation checks but not `sheetRules.attributes.max`. A stat block now sets a method of its own, `printed`: no
-  creation checks and no cap (an increase pick's own cap still holds). `manual` stays capped. The DM can pick "As printed"
+  character-creation checks but not `sheetRules.attributes.max`. A stat block now sets a method of its own, `printed`: the
+  totals are the base scores, with no creation checks, no cap, and no background bonuses or increase picks added. `manual` stays capped. The DM can pick "As printed"
   on any sheet, which is how a creature imported before this gets uncapped (stored sheets are not rewritten). Restatting a
   character had a second fault on the same path: the method was only set when the sheet had none, and the old base scores
   and background bonuses won over the block's (the rules total base + bonus), so a point-buy character with Strength 15 + 2
-  restatted as a pit fiend still had 17. The block's scores are now the base scores, and its attributes' bonuses are cleared.
-  Still open: a restatted character's increase picks (Ability Score Improvement feats) stay on the sheet and add on top. The corpus diff: the
+  restatted as a pit fiend still had 17. The block's scores are now the base scores. The character's bonuses and increase picks
+  (Ability Score Improvement) stay on the sheet, left out while the sheet is printed, so restatting does not throw away
+  their choices and they count again if the DM picks another method; the sheet says so where their pickers were. The corpus diff: the
   ten creatures say `method=printed`, and the five ScoreMax lines of `creature-aboleth` and `creature-pit-fiend` are gone.
 - **Systems with no content of their own.** Done 2026-11-08: a `setting:` block in `system.yaml` (genre, tone, themes,
   technology, the supernatural, kinds of factions and places, what play looks like, what does not belong), in general

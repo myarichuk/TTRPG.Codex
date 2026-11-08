@@ -191,7 +191,8 @@ sheetRules:
   attributes:
     methods: [point-buy, standard-array]      # what players may pick; the GM also gets "manual" and "printed"
     default: point-buy
-    max: 20                                   # cap on base + bonuses; not on "printed" (a creature's stat block, as printed)
+    max: 20                                   # cap on base + bonuses. "printed" (a creature's stat block) has no cap
+                                              # and adds no bonuses or increases: the totals are the scores as printed
     pointBuy: { budget: 27, min: 8, max: 15, costs: { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 } }
     standardArray: [15, 14, 13, 12, 10, 8]
     bonuses:                                  # bonuses granted by a referenced entry

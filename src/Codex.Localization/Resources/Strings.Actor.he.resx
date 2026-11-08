@@ -204,6 +204,7 @@
   <data name="Actor.Sheet.MethodStandardArray" xml:space="preserve"><value>סט סטנדרטי</value></data>
   <data name="Actor.Sheet.MethodManual" xml:space="preserve"><value>ידני</value></data>
   <data name="Actor.Sheet.MethodPrinted" xml:space="preserve"><value>כמו בתיאור</value></data>
+  <data name="Actor.Sheet.PrintedNote" xml:space="preserve"><value>כמו בתיאור: אלה הערכים מתיאור היצור. בונוסי רקע והגדלות תכונה מבחירות אינם מתווספים; בחרו שיטה אחרת כדי להוסיף אותם.</value></data>
   <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>קנייה בנקודות: </value></data>
   <data name="Actor.Sheet.PointBuyTail" xml:space="preserve"><value> מתוך {0, plural, one{נקודה אחת} two{# נקודות} other{# נקודות}} נוצלו. הערכים נעים בין {1} ל-{2} לפני בונוסים.</value></data>
   <data name="Actor.Sheet.StdArrayLead" xml:space="preserve"><value>סט סטנדרטי: חלקו </value></data>
