@@ -1,0 +1,113 @@
+# Reference systems
+
+The spec the system overhaul (`docs/SYSTEM_IMPLEMENTATION_OVERHAUL.md`) is built against: the three constraint systems of
+its section 2, written as data.
+
+| Folder | Shape | What it forces |
+|---|---|---|
+| `d35/` | d20 System Reference Document 3.5 | Per-class progressions summed, typed bonuses that do not stack, three armor classes, skill ranks with class/cross-class costs, synergy, prestige prerequisites, slots that hold spells, hit points below zero, nonlethal damage, damage reduction, threat range and confirmation |
+| `street/` | A street-level homebrew (this project's own numbers) | No levels or classes, a function from a script, a value over a track, thresholds that add up, integer division of odd numbers, explode/implode once, roll-under, armor per location that wears down, advancement by spending points |
+| `crew/` | The Forged in the Dark SRD's mechanics | Dice pools, keep highest, zero dice, criticals by pattern, GM-supplied position and effect, group rolls, stress overflowing into trauma, harm in slots that push up, load chosen per job, a second sheet kind, clocks and faction status owned by the campaign |
+
+Each folder has a `system.yaml` in the **proposed** syntax, a pack with just enough content, and a `spec.yaml` of
+expectations (`street/` also has `rules.js`, its scripted rules). The words and numbers are this project's own; no
+published text is copied (overhaul section 8 records the licences).
+
+This version reads only part of each `system.yaml` (attributes, entity types, condition names). The loader names the
+rest as keys it does not read, and `ReferenceFixtureTests` prints them. Each step of the overhaul makes more of it read.
+
+## How progress is tracked
+
+- `tests/Codex.Tests/Reference/ReferenceRunner.cs` checks every expectation against a host. Today the host is
+  `CurrentEngineHost`, which runs the rules engine as it stands (`SheetRuleEngine.Recompute`). Each result is **pass**,
+  **fail** (tried and got something else) or **unsupported** (the host has nothing that can do it yet, naming the step).
+- `progress.txt` lists the ids that pass. `ReferenceFixtureTests` fails when a listed id stops passing (a regression) and
+  when an unlisted id starts passing. In the second case, add the id in the change that made it pass and update the
+  overhaul doc's audit.
+- The `Report` test prints pass/fail/unsupported per fixture and step, and every failure with what came back.
+- An expectation that only says what must *not* happen ("no problems", "no conditions") passes on a host that checks
+  nothing. So it names, in `requires`, the expectations that show the check exists, and counts only alongside them.
+
+At step 1 nothing passes: 0 of 95.
+
+## spec.yaml
+
+```yaml
+system: ref-d35                 # the system id in ./system.yaml
+sheets:                          # named sheets
+  rogue3:
+    kind: character              # a sheet kind of the system (optional)
+    values: { dex: 16 }          # entered values
+    lists:                       # picks: a list of maps, or a map by key for a keyed list
+      classes: [{ id: rogue, classLevel: 3 }]
+      skills: { tumble: { points: 6 } }
+    tracks: { HP: 18 }           # current values; slot tracks hold a map of level -> texts
+    conditions: [Dying]
+campaign: { clocks: [...] }      # state owned by the campaign (optional)
+expectations:
+  - id: d35.some-rule            # unique, prefixed with the folder name
+    step: 2                      # the overhaul step meant to make it pass
+    sheet: rogue3                # optional for campaign-only expectations
+    with: { values: { dex: 20 } }  # laid over the sheet: maps merge key by key, lists replace; may carry campaign:
+    roll: { definition: attack, inputs: { target: 15 }, dice: [19, 9] }  # or participants: { sheet: [faces] }
+    event: { type: damage, amount: 8, damageType: slashing }             # one action per expectation, or none
+    requires: [d35.other-rule]   # counts only alongside these (for purely negative expectations)
+    expect:
+      values: { BAB: 4 }         # derived values; a dotted key reaches into a keyed list (skills.tumble)
+      violations: [{ field: skills, key: Actor.Rule.RankMax }]   # exactly these, any order; [] for none
+      conditions: [Seriously wounded]   # exactly these hold, with no event
+      outcome: critical          # a roll's named outcome
+      total: 25                  # a roll's total; totals: [26, 16] when one roll leads to another
+      kept: [6]                  # dice kept
+      diceUsed: 2                # faces the roll consumed from the seeded source
+      carries: { position: desperate }   # inputs carried on the result
+      intents: [{ adjust: { track: HP, by: -4 } }]   # exactly these, in order
+      after: { tracks: { HP: 36 }, conditions: [], values: {}, campaign: {} }  # state after the intents applied
+      layout: [Actions, Condition]   # the sheet kind's sections; [] for the generic layout
+    why: "the arithmetic, so a wrong number is caught by reading"
+```
+
+Unknown keys in a spec are refused, so a typo cannot quietly check nothing.
+
+## The vocabulary the fixtures use
+
+This is the concrete form of overhaul section 3, as the three fixtures needed it. It is the starting point for the
+author's reference and JSON schema (overhaul section 6), not a promise of every name.
+
+**Expressions** stay one-liners in DynamicExpresso syntax, with lambdas for aggregates: `sum(classes, c => c.classLevel)`,
+`count(where(actions, a => a.group == 'insight'), a => a.rating >= 1)`, `min(list, i => i.maxDex, default)`, `any`,
+`first`, `where`. Arithmetic is the host's: `floor`, `ceil`, `div` (integer division), `mod(score)` (the attribute
+modifier), `score(key)`, `table(rows, row, column)`, `levelFor(spell, className)`, `progression(name, level)`,
+`modifiers(target)`, `has(condition)`. A list item's properties and fields read as `item.property`.
+
+| Section | Holds |
+|---|---|
+| `functions` | Named functions: `{ formula: "(a, b) => ..." }` (built in) or `{ script: file#export, reads: [...] }` (Jint). Callable from any expression |
+| `progressions` | Named per-level formulas (`bab.good: "level"`) that entries point at by name |
+| `modifierTypes` | `default` stacking, `penalties` stacking, and `types: { dodge: sum }`. Stacking is `sum`, `highest` or `lowest` |
+| `conditionEffects` | By condition name: `modifiers` that apply while it holds. `conditions` stays the list of names |
+| `sheetKinds` | `kind`, `label`, `role` (the host role: `player`, `npc`, `creature`, `shared`), and the parts below |
+| `campaign` | Campaign objects: `clocks` (allowed `segments`, `visibility`) and `tables` (`key`, `itemFields`) |
+| `rolls` | Roll definitions (below) |
+| `events` | By event name: handlers (below) |
+
+Inside a sheet kind:
+
+| Part | Holds |
+|---|---|
+| `values` | `{ key, formula }`, with `modifiers: target or [targets]` to add stacked modifiers, `without: [types]` (or `{ type, positiveOnly }`) to leave some out, and `input: true` with `options` and `default` for values the player picks |
+| `modifiers` | `{ target, amount, type, source, when }`. A target may be a group: `'@armorPenalty'` reaches every key listing that group |
+| `lists` | Picks of a type: `itemFields` (per-pick fields such as `classLevel`, `equipped`, `used`), `modifiersFrom: { property, when }`, `prerequisites: property` (checked on the character without the pick's own levels), `rules` |
+| `keyedLists` | A fixed set of `keys` (with `attribute`, `group`/`groups`, `parameter` for one entry per subject), `itemFields`, `derive` (per-key values as lambdas: `ranks`, `maxRanks`, `value`) and `rules` |
+| `tracks` | `{ key, max, min, start, display: number, boxes or slots }`, plus `thresholds` (each adds its condition while it holds: `atOrBelow`, `below`, `atOrAbove`, `equals`), `bands` (one at a time, the first that matches), `overflow: { into, by, then: reset, carry or keep, ask }`, and for slots `holds`, `levels`, `whenFull: pushUp`, `beyond`. `each` + `levels` generates tracks per list item and level (spell slots per class) |
+| `layout` | Sections of widgets: `values`, `track`, `list`, `table`, `roll`, `modifiers`, or a built-in widget by name |
+| `rules` | `{ check, key, message }`: a problem with that translation key when the check is false |
+
+A roll definition has `dice` (`1d20`) or `pool` + `die` with `zeroDice` and `keep`; `add` (expressions);
+`explode`/`implode` (`{ on, times }`); `inputs` (`{ key, from: roller, gm, weapon or parent, options, default }`);
+`outcomes` (named, the first whose `when` holds, reading `natural`, `total`, `kept`, `dice`, `zeroDice`); `carries`;
+`then` (follow-up rolls or intents); and for group rolls `participants` and `result: best`.
+
+An event handler is `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }`. Intents
+are those of overhaul section 3: `adjust`, `set`, `mark`, `clear`, `condition`, `roll`, `ask` and `log`, each optionally
+naming an `actor`.

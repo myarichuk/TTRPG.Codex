@@ -1,0 +1,124 @@
+# Reference fixture B (docs/SYSTEM_IMPLEMENTATION_OVERHAUL.md, section 2): a street-level homebrew with no levels and no
+# classes, in the shape of a near-future skill game. Its mechanics and numbers are this project's own; nothing is taken
+# from any published game. Written in the syntax the overhaul proposes (../README.md): this version loads it with those
+# sections reported as unknown keys, and spec.yaml says what a host that reads them must make of it. Some rules are
+# scripts (rules.js), which is what step 8 of the overhaul makes run.
+id: ref-street
+name: Reference street homebrew (test fixture)
+version: 0.1.0
+description: >-
+  A stat plus a skill plus a ten-sided die against a difficulty, hit points from two stats, wounds that hinder every
+  action, armor per body location that wears down, and humanity that implants eat into.
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.
+
+# ---- What this version reads today ----
+
+attributes:
+  - { key: BODY, label: Body,      default: 5, min: 2, max: 8 }
+  - { key: WILL, label: Will,      default: 5, min: 2, max: 8 }
+  - { key: REF,  label: Reflexes,  default: 5, min: 2, max: 8 }
+  - { key: DEX,  label: Dexterity, default: 5, min: 2, max: 8 }
+  - { key: TECH, label: Technique, default: 5, min: 2, max: 8 }
+  - { key: INT,  label: Intellect, default: 5, min: 2, max: 8 }
+
+entityTypes:
+  - { type: cyberware, label: Implant, folder: cyberware }
+  - { type: gear,      label: Gear,    folder: gear }
+
+conditions: [Seriously wounded, Mortally wounded]
+
+# ---- The proposed primitives (overhaul section 3) ----
+
+functions:
+  hitPoints: { script: rules.js#hitPoints, reads: [BODY, WILL] }
+  advanceCost: { formula: "(skillLevel) => 20 * skillLevel" }
+
+conditionEffects:
+  Seriously wounded:
+    modifiers: [{ target: '@checks', amount: -2, source: Seriously wounded }]
+
+sheetKinds:
+  - kind: operator
+    label: Operator
+    role: player
+
+    keyedLists:
+      - key: skills
+        label: Skills
+        itemFields: [{ key: level, type: Number, min: 0, max: 10 }]
+        keys:
+          - { key: handgun,    label: Handgun,    attribute: REF, groups: [checks] }
+          - { key: brawling,   label: Brawling,   attribute: DEX, groups: [checks] }
+          - { key: athletics,  label: Athletics,  attribute: DEX, groups: [checks] }
+          - { key: perception, label: Perception, attribute: INT, groups: [checks] }
+        derive:
+          value: "s => score(s.attribute) + s.level"
+
+    lists:
+      - key: cyberware
+        label: Implants
+        type: cyberware
+      - key: armor
+        label: Armor
+        type: gear
+        itemFields: [{ key: location, type: Dropdown, options: [head, body] }]
+
+    values:
+      - { key: HP_Max,       formula: "hitPoints(BODY, WILL)" }
+      - { key: Humanity_Max, formula: "WILL * 10 - sum(cyberware, c => c.humanityLoss)" }
+      - { key: EMP,          formula: "floor(Humanity / 10)" }
+      - { key: SP_head_Max,  formula: "max(where(armor, a => a.location == 'head'), a => a.stoppingPower, 0)" }
+      - { key: SP_body_Max,  formula: "max(where(armor, a => a.location == 'body'), a => a.stoppingPower, 0)" }
+
+    tracks:
+      # Thresholds add effects; several can hold at once. div is the host's integer division (contract rule 4): half of
+      # an odd maximum rounds down in every supplier.
+      - key: HP
+        label: Hit points
+        max: HP_Max
+        min: -10
+        thresholds:
+          - { atOrBelow: "div(HP_Max, 2)", condition: Seriously wounded }
+          - { below: 0, condition: Mortally wounded }
+      - { key: Humanity, label: Humanity, max: Humanity_Max, start: max }
+      - { key: SP_head, label: Head armor, max: SP_head_Max, start: max }
+      - { key: SP_body, label: Body armor, max: SP_body_Max, start: max }
+      - { key: DeathPenalty, label: Death save penalty, min: 0, max: 10, start: 0 }
+      - { key: IP, label: Improvement points, min: 0 }
+
+    layout:
+      - { section: Stats, widgets: [{ widget: values, keys: [BODY, WILL, REF, DEX, TECH, INT, EMP] }] }
+      - { section: Condition, widgets: [{ widget: track, key: HP }, { widget: track, key: Humanity }, { widget: track, key: SP_head }, { widget: track, key: SP_body }] }
+      - { section: Skills, widgets: [{ widget: table, key: skills, columns: [level, value] }, { widget: roll, roll: check }] }
+
+rolls:
+  # A check: stat + skill + d10 against a difficulty. A natural 10 adds one more d10 (once); a natural 1 takes one away
+  # (once). The second die never explodes or implodes again.
+  - key: check
+    dice: 1d10
+    explode: { on: 10, times: 1 }
+    implode: { on: 1, times: 1 }
+    add: ["skills[input.skill].value", "modifiers('@checks')"]
+    inputs:
+      - { key: skill, from: roller }
+      - { key: difficulty, from: gm, label: Difficulty }
+    outcomes:
+      - { name: success, when: "total >= difficulty" }
+      - { name: failure }
+  # A death save: roll a d10 plus the penalty, at or under Body (roll-under). Each save made raises the penalty.
+  - key: deathSave
+    dice: 1d10
+    add: ["DeathPenalty"]
+    outcomes:
+      - { name: success, when: "total <= BODY" }
+      - { name: failure }
+
+events:
+  damage: { script: rules.js#onDamage }
+  turnStart:
+    - { when: "has('Mortally wounded')", intents: [{ roll: { definition: deathSave } }] }
+  roll:
+    - { when: "ev.definition == 'deathSave'", intents: [{ adjust: { track: DeathPenalty, by: 1 } }] }
+  advance: { script: rules.js#onAdvance }

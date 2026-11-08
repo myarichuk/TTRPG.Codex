@@ -1,0 +1,52 @@
+# Progressions name entries of `progressions` in system.yaml. spellsPerDay: a row per class level, a column per spell level.
+- id: fighter
+  name: Fighter
+  properties: { hitDie: 10, bab: good, fort: good, ref: poor, will: poor, skillPoints: 2, classSkills: [climb, jump] }
+- id: cleric
+  name: Cleric
+  properties:
+    hitDie: 8
+    bab: average
+    fort: good
+    ref: poor
+    will: good
+    skillPoints: 2
+    classSkills: [concentration, knowledge, spellcraft]
+    castingAttribute: wis
+    spellsPerDay:
+      - { level: 1, "0": 3, "1": 1 }
+      - { level: 2, "0": 4, "1": 2 }
+      - { level: 3, "0": 4, "1": 2, "2": 1 }
+- id: wizard
+  name: Wizard
+  properties:
+    hitDie: 4
+    bab: poor
+    fort: poor
+    ref: poor
+    will: good
+    skillPoints: 2
+    classSkills: [concentration, knowledge, spellcraft]
+    castingAttribute: int
+    spellsPerDay:
+      - { level: 1, "0": 3, "1": 1 }
+      - { level: 2, "0": 4, "1": 2 }
+- id: rogue
+  name: Rogue
+  properties: { hitDie: 6, bab: average, fort: poor, ref: good, will: poor, skillPoints: 8, classSkills: [balance, climb, hide, jump, tumble] }
+# A prestige class of this fixture's own: entry needs a base attack, ranks and a feat.
+- id: battle-scholar
+  name: Battle Scholar
+  properties:
+    hitDie: 8
+    bab: good
+    fort: good
+    ref: poor
+    will: good
+    skillPoints: 2
+    classSkills: [concentration, knowledge, spellcraft]
+    prestige: true
+    prerequisites:
+      - { value: BAB, atLeast: 5, message: "needs a base attack bonus of +5." }
+      - { value: skills.knowledge.arcana.ranks, atLeast: 8, message: "needs 8 ranks of Knowledge (arcana)." }
+      - { list: feats, contains: combat-casting, message: "needs the Combat Casting feat." }

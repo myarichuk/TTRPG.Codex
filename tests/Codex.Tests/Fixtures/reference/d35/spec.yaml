@@ -1,0 +1,279 @@
+# What a host that reads ./system.yaml must make of it. Each expectation names the overhaul step (section 7) that is meant
+# to make it pass; ../progress.txt lists the ones that pass today. `why` shows the arithmetic, so a wrong number here is
+# caught by reading, not by a host that happens to agree with it. Format: ../README.md.
+system: ref-d35
+
+sheets:
+  fighter3-cleric2:
+    values: { str: 16, dex: 14, con: 14, int: 10, wis: 13, cha: 8 }
+    lists:
+      classes: [{ id: fighter, classLevel: 3 }, { id: cleric, classLevel: 2 }]
+      inventory:
+        - { id: chain-shirt, equipped: true }
+        - { id: heavy-shield, equipped: true }
+        - { id: ring-of-protection-1, equipped: true }
+        - { id: ring-of-protection-2, equipped: true }
+        - { id: amulet-of-natural-armor-1, equipped: true }
+        - { id: cloak-of-resistance-1, equipped: true }
+        - { id: longsword, equipped: true }
+      feats: [{ id: dodge }]
+      hpRolls: [{ roll: 6 }, { roll: 7 }, { roll: 5 }, { roll: 4 }]
+      skills: { climb: { points: 6 }, concentration: { points: 4 }, hide: { points: 2 } }
+      slots_cleric_0: [detect-magic]
+      slots_cleric_1: [bless, bless, cure-light-wounds]
+    tracks: { HP: 42, NL: 0 }
+
+  rogue3:
+    values: { str: 10, dex: 16, con: 12, int: 14, wis: 10, cha: 12 }
+    lists:
+      classes: [{ id: rogue, classLevel: 3 }]
+      hpRolls: [{ roll: 4 }, { roll: 5 }]
+      skills: { tumble: { points: 6 }, balance: { points: 2 }, hide: { points: 6 }, knowledge.arcana: { points: 2 } }
+
+  fighter4-wizard1-scholar1:
+    values: { str: 14, dex: 12, con: 12, int: 15, wis: 10, cha: 10 }
+    lists:
+      classes: [{ id: fighter, classLevel: 4 }, { id: wizard, classLevel: 1 }, { id: battle-scholar, classLevel: 1 }]
+      feats: [{ id: combat-casting }]
+      hpRolls: [{ roll: 5 }, { roll: 5 }, { roll: 5 }, { roll: 2 }, { roll: 4 }]
+      skills: { knowledge.arcana: { points: 8 } }
+
+expectations:
+  # ---- Values over lists, progressions and typed modifiers (step 2) ----
+  - id: d35.level-is-the-sum-of-class-levels
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { level: 5 } }
+    why: "Fighter 3 + Cleric 2."
+  - id: d35.bab-sums-each-classes-own-progression
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { BAB: 4 } }
+    why: "Fighter good at 3 = 3; Cleric average at 2 = floor(2 * 3 / 4) = 1."
+  - id: d35.saves-sum-base-saves-then-add-ability-and-resistance
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { Fort: 9, Ref: 4, Will: 6 } }
+    why: >-
+      Fort: Fighter good(3) = 3, Cleric good(2) = 3, +2 Con, +1 cloak = 9. Ref: poor(3) = 1, poor(2) = 0, +2 Dex, +1 = 4.
+      Will: poor(3) = 1, good(2) = 3, +1 Wis, +1 = 6. Both good Fort saves give their +2: 3.5 adds base saves class by class.
+  - id: d35.same-type-bonuses-do-not-stack-dodge-does
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { AC: 22 } }
+    why: "10 + armor 4 + shield 2 + Dex 2 (cap 4) + deflection 2 (the +1 ring does not stack with the +2) + natural 1 + dodge 1."
+  - id: d35.touch-ac-leaves-out-armor-shield-and-natural
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { AC_Touch: 15 } }
+    why: "10 + Dex 2 + deflection 2 + dodge 1."
+  - id: d35.flat-footed-ac-leaves-out-dex-and-dodge
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { AC_FlatFooted: 19 } }
+    why: "10 + armor 4 + shield 2 + deflection 2 + natural 1."
+  - id: d35.armor-caps-dex-on-ac
+    step: 2
+    sheet: rogue3
+    with: { values: { dex: 20 }, lists: { inventory: [{ id: chain-shirt, equipped: true }] } }
+    expect: { values: { AC: 18, MaxDex: 4 } }
+    why: "Dex 20 is +5, capped at the chain shirt's +4: 10 + 4 + 4."
+  - id: d35.dodge-bonuses-stack-and-conditions-bring-modifiers
+    step: 2
+    sheet: fighter3-cleric2
+    with: { conditions: [Fighting defensively] }
+    expect: { values: { AC: 24, AC_Touch: 17, AC_FlatFooted: 19 } }
+    why: "Fighting defensively adds a +2 dodge bonus, which stacks with the feat's +1; flat-footed loses both."
+  - id: d35.hit-points-are-the-first-die-the-rolls-and-con-per-level
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { HP_Max: 42 } }
+    why: "Fighter d10 in full = 10, rolls 6 + 7 + 5 + 4 = 22, Con +2 x 5 levels = 10."
+  - id: d35.skill-points-are-four-times-over-at-first-level
+    step: 2
+    sheet: rogue3
+    expect: { values: { SkillPoints: 60 } }
+    why: "(8 + Int 2) x 3 levels = 30, plus 3 x 10 more for the first level = 60."
+  - id: d35.skill-points-across-classes
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { SkillPoints: 16 } }
+    why: "Fighter (2 + 0) x 3 = 6, Cleric (2 + 0) x 2 = 4, plus 3 x 2 for the first level, a Fighter level = 16."
+  - id: d35.armor-check-penalty-applies-to-strength-and-dex-skills
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { ArmorCheck: -4, skills.climb: 5, skills.concentration: 6 } }
+    why: "Climb: 6 ranks + Str 3 - 4 (chain shirt -2, shield -2) = 5. Concentration (Con, no penalty): 4 + 2 = 6."
+  - id: d35.cross-class-points-buy-half-ranks
+    step: 2
+    sheet: fighter3-cleric2
+    expect: { values: { skills.hide: -1 } }
+    why: "Neither class lists Hide: 2 points are 1 rank. 1 + Dex 2 - armor check 4 = -1."
+  - id: d35.synergy-from-five-ranks
+    step: 2
+    sheet: rogue3
+    expect: { values: { skills.tumble: 9, skills.balance: 7, skills.jump: 2 } }
+    why: "Tumble 6 ranks + Dex 3. Five ranks of Tumble give +2 synergy to Balance (2 + 3 + 2) and Jump (0 ranks + Str 0 + 2)."
+  - id: d35.a-parametrised-skill-has-one-entry-per-subject
+    step: 2
+    sheet: rogue3
+    expect: { values: { skills.knowledge.arcana: 3 } }
+    why: "Knowledge is not a Rogue skill: 2 points = 1 rank, + Int 2."
+  - id: d35.a-legal-sheet-breaks-no-rule
+    step: 2
+    requires: [d35.class-skill-ranks-are-capped-at-level-plus-three, d35.skill-points-cannot-be-overspent, d35.prestige-prerequisites-are-checked-without-the-prestige-levels]
+    sheet: fighter3-cleric2
+    expect: { violations: [] }
+  - id: d35.class-skill-ranks-are-capped-at-level-plus-three
+    step: 2
+    sheet: rogue3
+    with: { lists: { skills: { tumble: { points: 7 } } } }
+    expect: { violations: [{ field: skills, key: Actor.Rule.RankMax }] }
+    why: "Level 3: at most 6 ranks in a class skill."
+  - id: d35.cross-class-ranks-are-capped-at-half
+    step: 2
+    sheet: rogue3
+    with: { lists: { skills: { knowledge.arcana: { points: 8 } } } }
+    expect: { violations: [{ field: skills, key: Actor.Rule.RankMax }] }
+    why: "8 points are 4 ranks; a cross-class skill takes at most (3 + 3) / 2 = 3."
+  - id: d35.skill-points-cannot-be-overspent
+    step: 2
+    sheet: fighter3-cleric2
+    with: { lists: { skills: { spellcraft: { points: 5 } } } }
+    expect: { violations: [{ field: skills, key: Actor.Rule.SkillPoints }] }
+    why: "6 + 4 + 2 + 5 = 17 points of 16."
+  - id: d35.prestige-prerequisites-are-checked-without-the-prestige-levels
+    step: 2
+    sheet: fighter4-wizard1-scholar1
+    expect: { values: { BAB: 5 }, violations: [{ field: classes, key: Actor.Rule.Prerequisite }] }
+    why: >-
+      With the Battle Scholar level the base attack is 4 + 0 + 1 = 5, but entry is judged on the character before it:
+      4 + 0 = 4, short of +5. Ranks (8) and the feat are there, so one problem only.
+  - id: d35.prestige-prerequisites-met
+    step: 2
+    requires: [d35.prestige-prerequisites-are-checked-without-the-prestige-levels]
+    sheet: fighter4-wizard1-scholar1
+    with: { lists: { classes: [{ id: fighter, classLevel: 5 }, { id: wizard, classLevel: 1 }, { id: battle-scholar, classLevel: 1 }] } }
+    expect: { violations: [] }
+    why: "Fighter 5 + Wizard 1 before the prestige level: base attack 5."
+  - id: d35.prestige-prerequisites-name-each-missing-part
+    step: 2
+    sheet: fighter4-wizard1-scholar1
+    with: { lists: { feats: [], skills: { knowledge.arcana: { points: 4 } } } }
+    expect:
+      violations:
+        - { field: classes, key: Actor.Rule.Prerequisite }
+        - { field: classes, key: Actor.Rule.Prerequisite }
+        - { field: classes, key: Actor.Rule.Prerequisite }
+    why: "Base attack 4, 4 ranks, no feat: three missing parts, three problems."
+
+  # ---- Slot tracks that hold spells, spell levels per class (step 3) ----
+  - id: d35.slots-come-from-the-class-table-plus-bonus-spells
+    step: 3
+    sheet: fighter3-cleric2
+    expect: { values: { slots_cleric_0_Max: 4, slots_cleric_1_Max: 3 } }
+    why: "Cleric level 2 row: 4 / 2. Wis 13 (+1) gives one bonus level-1 slot: floor((1 - 1) / 4) + 1. None at level 0."
+  - id: d35.a-slot-holds-only-a-spell-of-its-class-and-level
+    step: 3
+    sheet: fighter3-cleric2
+    with: { lists: { slots_cleric_1: [bless, magic-missile] } }
+    expect: { violations: [{ field: slots_cleric_1, key: Actor.Rule.SlotHolds }] }
+    why: "Magic missile has no Cleric level."
+  - id: d35.vancian-slots-take-duplicates-but-not-more-than-they-have
+    step: 3
+    sheet: fighter3-cleric2
+    with: { lists: { slots_cleric_1: [bless, bless, bless, cure-light-wounds] } }
+    expect: { violations: [{ field: slots_cleric_1, key: Actor.Rule.TrackFull }] }
+    why: "Bless three times is fine; four spells in three slots is not."
+
+  # ---- Hit point bands, nonlethal damage, damage reduction (steps 3 and 5) ----
+  - id: d35.below-zero-is-dying
+    step: 5
+    sheet: fighter3-cleric2
+    event: { type: damage, amount: 45, damageType: slashing, tags: [magic] }
+    expect: { after: { tracks: { HP: -3 }, conditions: [Dying] } }
+  - id: d35.exactly-zero-is-disabled
+    step: 5
+    sheet: fighter3-cleric2
+    with: { tracks: { HP: 5 } }
+    event: { type: damage, amount: 5, damageType: slashing, tags: [magic] }
+    expect: { after: { tracks: { HP: 0 }, conditions: [Disabled] } }
+  - id: d35.minus-ten-is-dead-and-the-track-stops-there
+    step: 5
+    sheet: fighter3-cleric2
+    with: { tracks: { HP: 5 } }
+    event: { type: damage, amount: 30, damageType: slashing, tags: [magic] }
+    expect: { after: { tracks: { HP: -10 }, conditions: [Dead] } }
+  - id: d35.damage-reduction-subtracts-from-physical-damage
+    step: 5
+    sheet: fighter3-cleric2
+    with: { lists: { damageReduction: [{ amount: 5, bypass: magic }] } }
+    event: { type: damage, amount: 8, damageType: slashing }
+    expect: { after: { tracks: { HP: 39 } } }
+    why: "8 - 5 = 3."
+  - id: d35.damage-reduction-is-bypassed-by-its-tag
+    step: 5
+    sheet: fighter3-cleric2
+    with: { lists: { damageReduction: [{ amount: 5, bypass: magic }] } }
+    event: { type: damage, amount: 8, damageType: slashing, tags: [magic] }
+    expect: { after: { tracks: { HP: 34 } } }
+  - id: d35.damage-reduction-does-not-touch-energy
+    step: 5
+    sheet: fighter3-cleric2
+    with: { lists: { damageReduction: [{ amount: 5, bypass: magic }] } }
+    event: { type: damage, amount: 8, damageType: fire }
+    expect: { after: { tracks: { HP: 34 } } }
+  - id: d35.energy-resistance-subtracts-by-type
+    step: 5
+    sheet: fighter3-cleric2
+    with: { values: { resistances: { fire: 10 } } }
+    event: { type: damage, amount: 15, damageType: fire }
+    expect: { after: { tracks: { HP: 37 } } }
+  - id: d35.nonlethal-equal-to-hit-points-staggers
+    step: 5
+    sheet: fighter3-cleric2
+    with: { tracks: { HP: 6, NL: 0 } }
+    event: { type: damage, amount: 6, damageType: bludgeoning, tags: [nonlethal, magic] }
+    expect: { after: { tracks: { HP: 6, NL: 6 }, conditions: [Staggered] } }
+  - id: d35.nonlethal-beyond-hit-points-knocks-out
+    step: 5
+    sheet: fighter3-cleric2
+    with: { tracks: { HP: 6, NL: 6 } }
+    event: { type: damage, amount: 1, damageType: bludgeoning, tags: [nonlethal, magic] }
+    expect: { after: { tracks: { HP: 6, NL: 7 }, conditions: [Unconscious] } }
+
+  # ---- Rolls: natural results, threat range and confirmation (step 4) ----
+  - id: d35.a-threat-confirmed-is-a-critical
+    step: 4
+    sheet: fighter3-cleric2
+    roll: { definition: attack, inputs: { target: 15, weapon: longsword }, dice: [19, 9] }
+    expect: { outcome: critical, totals: [26, 16] }
+    why: "19 + BAB 4 + Str 3 = 26 hits; 19 is in the longsword's 19-20 threat range, so confirm: 9 + 7 = 16 also hits."
+  - id: d35.a-threat-not-confirmed-is-a-hit
+    step: 4
+    sheet: fighter3-cleric2
+    roll: { definition: attack, inputs: { target: 15, weapon: longsword }, dice: [19, 7] }
+    expect: { outcome: hit, totals: [26, 14] }
+  - id: d35.no-threat-below-the-range
+    step: 4
+    sheet: fighter3-cleric2
+    roll: { definition: attack, inputs: { target: 15, weapon: longsword }, dice: [18] }
+    expect: { outcome: hit, totals: [25] }
+  - id: d35.a-natural-one-misses
+    step: 4
+    sheet: fighter3-cleric2
+    roll: { definition: attack, inputs: { target: 2, weapon: longsword }, dice: [1] }
+    expect: { outcome: miss, totals: [8] }
+  - id: d35.a-natural-twenty-hits-and-threatens
+    step: 4
+    sheet: fighter3-cleric2
+    roll: { definition: attack, inputs: { target: 30, weapon: longsword }, dice: [20, 3] }
+    expect: { outcome: hit, totals: [27, 10] }
+    why: "A natural 20 hits whatever the total; the confirmation (10) misses, so it stays a hit."
+  - id: d35.a-condition-modifies-the-roll
+    step: 4
+    sheet: fighter3-cleric2
+    with: { conditions: [Fighting defensively] }
+    roll: { definition: attack, inputs: { target: 15, weapon: longsword }, dice: [10] }
+    expect: { outcome: miss, totals: [13] }
+    why: "10 + 7 - 4."

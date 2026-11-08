@@ -1,0 +1,3 @@
+# Reference expectations that pass today, one id per line (see README.md). ReferenceFixtureTests fails when a listed one
+# stops passing, and when one passes without being listed: add it here, and update the overhaul doc's account, in the
+# change that made it pass.

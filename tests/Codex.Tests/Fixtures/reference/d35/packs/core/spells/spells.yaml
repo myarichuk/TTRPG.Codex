@@ -1,0 +1,13 @@
+# A spell's level depends on the class casting it.
+- id: detect-magic
+  name: Detect magic
+  properties: { levels: { Cleric: 0, Wizard: 0 } }
+- id: bless
+  name: Bless
+  properties: { levels: { Cleric: 1, Paladin: 1 } }
+- id: cure-light-wounds
+  name: Cure light wounds
+  properties: { levels: { Cleric: 1, Druid: 1, Paladin: 1, Ranger: 2 } }
+- id: magic-missile
+  name: Magic missile
+  properties: { levels: { Sorcerer: 1, Wizard: 1 } }

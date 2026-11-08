@@ -1,0 +1,6 @@
+- id: dodge
+  name: Dodge
+  properties: { modifiers: [{ target: AC, amount: 1, type: dodge }] }
+- id: combat-casting
+  name: Combat Casting
+  properties: { modifiers: [{ target: skills.concentration, amount: 4, type: untyped, when: "input.defensive" }] }

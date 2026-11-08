@@ -1,0 +1,185 @@
+# Reference fixture C (docs/SYSTEM_IMPLEMENTATION_OVERHAUL.md, section 2): the far end. A dice-pool game about a crew, with
+# the mechanics of the Forged in the Dark SRD (overhaul section 8 records its licence, CC-BY 3.0). Only the mechanics,
+# described in this project's words: no SRD text, no setting, no names of its world. Written in the syntax the overhaul
+# proposes (../README.md): this version loads it with those sections reported as unknown keys, and spec.yaml says what
+# a host that reads them must make of it. The setting-only fixture (../../crews) is the same shape seen from the AI's side.
+id: ref-crew
+name: Reference crew dice-pool (test fixture)
+version: 0.1.0
+description: >-
+  No hit points, no modifiers, no levels: dice pools from action dots, stress that overflows into trauma, harm written
+  into slots, a crew sheet beside the characters, and clocks that belong to the campaign.
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.
+
+# ---- What this version reads today ----
+
+entityTypes:
+  - { type: item, label: Item, folder: items }
+
+conditions: [Retired, Dead, Less effect, Reduced dice, Needs help]
+
+# What a character may take as trauma: this fixture's own list.
+traumas: [numb, haunted, reckless, bitter, jumpy, hollow]
+
+# ---- The proposed primitives (overhaul section 3) ----
+
+conditionEffects:
+  Reduced dice:
+    modifiers: [{ target: '@pools', amount: -1, source: Harm }]
+
+sheetKinds:
+  - kind: scoundrel
+    label: Scoundrel
+    role: player
+
+    keyedLists:
+      # Action ratings: a fixed set of keys in three groups, each a number of dots.
+      - key: actions
+        label: Actions
+        itemFields: [{ key: rating, type: Number, min: 0, max: 4, display: dots }]
+        keys:
+          - { key: hunt,     label: Hunt,     group: insight }
+          - { key: study,    label: Study,    group: insight }
+          - { key: survey,   label: Survey,   group: insight }
+          - { key: tinker,   label: Tinker,   group: insight }
+          - { key: finesse,  label: Finesse,  group: prowess }
+          - { key: prowl,    label: Prowl,    group: prowess }
+          - { key: skirmish, label: Skirmish, group: prowess }
+          - { key: wreck,    label: Wreck,    group: prowess }
+          - { key: attune,   label: Attune,   group: resolve }
+          - { key: command,  label: Command,  group: resolve }
+          - { key: consort,  label: Consort,  group: resolve }
+          - { key: sway,     label: Sway,     group: resolve }
+
+    lists:
+      # Load is chosen when a job starts; items are ticked when used, not chosen in advance.
+      - key: items
+        label: Items
+        type: item
+        itemFields: [{ key: used, type: Boolean, default: false }]
+        rules:
+          - { check: "LoadUsed <= LoadMax", key: Actor.Rule.Load, message: "more load used than the chosen load allows ({LoadMax})." }
+
+    values:
+      # An attribute's rating is the number of its actions with at least one dot.
+      - { key: insight, formula: "count(where(actions, a => a.group == 'insight'), a => a.rating >= 1)" }
+      - { key: prowess, formula: "count(where(actions, a => a.group == 'prowess'), a => a.rating >= 1)" }
+      - { key: resolve, formula: "count(where(actions, a => a.group == 'resolve'), a => a.rating >= 1)" }
+      - { key: load,     input: true, options: [light, normal, heavy], default: normal }
+      - { key: LoadMax,  formula: "load == 'light' ? 3 : load == 'heavy' ? 6 : 5" }
+      - { key: LoadUsed, formula: "sum(where(items, i => i.used), i => i.load)" }
+
+    tracks:
+      - key: stress
+        label: Stress
+        max: 9
+        display: boxes
+        overflow: { into: trauma, by: 1, then: reset, ask: { who: player, choices: traumas } }
+      - key: trauma
+        label: Trauma
+        max: 4
+        display: boxes
+        thresholds: [{ atOrAbove: 4, condition: Retired }]
+      # Harm: text in slots, by level. A full level pushes new harm up a level; past level 3 is fatal.
+      - key: harm
+        label: Harm
+        display: slots
+        holds: { type: text }
+        levels:
+          - { level: 1, slots: 2, condition: Less effect }
+          - { level: 2, slots: 2, condition: Reduced dice }
+          - { level: 3, slots: 1, condition: Needs help }
+        whenFull: pushUp
+        beyond: { condition: Dead }
+      - { key: armor, label: Armor, max: 1, display: boxes }
+      - { key: xp_insight, label: Insight experience, max: 6, display: boxes }
+      - { key: xp_prowess, label: Prowess experience, max: 6, display: boxes }
+      - { key: xp_resolve, label: Resolve experience, max: 6, display: boxes }
+      - { key: xp_playbook, label: Playbook experience, max: 8, display: boxes }
+
+    layout:
+      - { section: Actions, widgets: [{ widget: table, key: actions, groupBy: group, columns: [rating] }, { widget: values, keys: [insight, prowess, resolve] }] }
+      - { section: Condition, widgets: [{ widget: track, key: stress }, { widget: track, key: trauma }, { widget: track, key: harm }, { widget: track, key: armor }] }
+      - { section: Load, widgets: [{ widget: values, keys: [load, LoadUsed, LoadMax] }, { widget: list, key: items, columns: [used] }] }
+
+  # The crew is a second sheet kind, with its own tracks.
+  - kind: crew
+    label: Crew
+    role: shared
+    values:
+      - { key: tier, input: true, default: 0 }
+      - { key: turf, input: true, default: 0 }
+      - { key: hold, input: true, options: [weak, strong], default: strong }
+    tracks:
+      - { key: heat, label: Heat, max: 9, display: boxes, overflow: { into: wanted, by: 1, then: carry } }
+      - { key: wanted, label: Wanted level, max: 4, display: boxes }
+      - { key: rep, label: Reputation, max: "12 - turf", display: boxes }
+      - { key: coin, label: Coin, min: 0 }
+
+# State that belongs to the campaign, not to any sheet.
+campaign:
+  clocks:
+    segments: [4, 6, 8, 12]
+    visibility: [gm, players]
+  tables:
+    - key: factions
+      label: Faction status
+      itemFields: [{ key: status, type: Number, min: -3, max: 3, default: 0 }]
+
+rolls:
+  # An action roll: a die per dot, plus bonus dice from inputs. Keep the highest; with no dice, roll two and keep the
+  # lowest. Two or more sixes are a critical (never on the zero-dice roll). Position and effect come from the GM and are
+  # carried on the result for the consequences.
+  - key: action
+    pool: "actions[input.action].rating + input.bonusDice + modifiers('@pools')"
+    die: d6
+    zeroDice: { roll: 2, keep: lowest }
+    keep: { highest: 1 }
+    inputs:
+      - { key: action, from: roller }
+      - { key: bonusDice, from: roller, default: 0, label: Assist, push or bargain }
+      - { key: position, from: gm, options: [controlled, risky, desperate], default: risky }
+      - { key: effect, from: gm, options: [limited, standard, great], default: standard }
+    outcomes:
+      - { name: critical, when: "!zeroDice && count(dice, d => d == 6) >= 2" }
+      - { name: full,     when: "kept == 6" }
+      - { name: partial,  when: "kept >= 4" }
+      - { name: bad }
+    carries: [position, effect]
+  # Resisting a consequence: a die per point of the attribute; stress costs six minus the highest die, and a critical
+  # clears one instead.
+  - key: resistance
+    pool: "score(input.attribute)"
+    die: d6
+    zeroDice: { roll: 2, keep: lowest }
+    keep: { highest: 1 }
+    inputs: [{ key: attribute, from: roller, options: [insight, prowess, resolve] }]
+    outcomes:
+      - { name: critical, when: "!zeroDice && count(dice, d => d == 6) >= 2" }
+      - { name: resisted }
+    then:
+      - { when: "outcome == 'critical'", intents: [{ adjust: { track: stress, by: -1 } }] }
+      - { when: "outcome != 'critical'", intents: [{ adjust: { track: stress, by: "6 - kept" } }] }
+  # A group action: everyone involved rolls the action; the best result counts, and the leader takes a stress for each
+  # participant whose result was bad.
+  - key: group
+    participants: { from: gm, roll: action }
+    result: best
+    then:
+      - { intents: [{ adjust: { actor: leader, track: stress, by: "count(results, r => r.outcome == 'bad')" } }] }
+
+events:
+  # Helping: the helper takes a stress, the roller gets a die (the roll's bonusDice input).
+  assist:
+    - { intents: [{ adjust: { actor: ev.helper, track: stress, by: 1 } }] }
+  roll:
+    # A desperate action roll marks experience in the action's attribute.
+    - { when: "ev.definition == 'action' && ev.inputs.position == 'desperate'", intents: [{ mark: { track: "'xp_' + actions[ev.inputs.action].group" } }] }
+  sessionEnd:
+    # Each question the table answers yes to marks one playbook experience.
+    - { intents: [{ adjust: { track: xp_playbook, by: "count(ev.answers, a => a)" } }] }
+  tick:
+    # Clocks fill segment by segment; a full clock says so in the session log.
+    - { target: campaign.clocks, intents: [{ adjust: { clock: ev.clock, by: ev.by } }] }

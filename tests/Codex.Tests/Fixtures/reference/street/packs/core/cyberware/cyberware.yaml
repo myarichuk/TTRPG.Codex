@@ -1,0 +1,3 @@
+- { id: neural-port, name: Neural port, properties: { humanityLoss: 7 } }
+- { id: chrome-arm,  name: Chrome arm,  properties: { humanityLoss: 14 } }
+- { id: low-light-eyes, name: Low-light eyes, properties: { humanityLoss: 7 } }

@@ -1,0 +1,21 @@
+- id: chain-shirt
+  name: Chain shirt
+  properties: { maxDex: 4, checkPenalty: -2, modifiers: [{ target: AC, amount: 4, type: armor }] }
+- id: heavy-shield
+  name: Heavy shield
+  properties: { checkPenalty: -2, modifiers: [{ target: AC, amount: 2, type: shield }] }
+- id: ring-of-protection-1
+  name: Ring of protection +1
+  properties: { modifiers: [{ target: AC, amount: 1, type: deflection }] }
+- id: ring-of-protection-2
+  name: Ring of protection +2
+  properties: { modifiers: [{ target: AC, amount: 2, type: deflection }] }
+- id: amulet-of-natural-armor-1
+  name: Amulet of natural armor +1
+  properties: { modifiers: [{ target: AC, amount: 1, type: natural }] }
+- id: cloak-of-resistance-1
+  name: Cloak of resistance +1
+  properties: { modifiers: [{ target: '@saves', amount: 1, type: resistance }] }
+- id: longsword
+  name: Longsword
+  properties: { damage: 1d8, threatRange: 19 }

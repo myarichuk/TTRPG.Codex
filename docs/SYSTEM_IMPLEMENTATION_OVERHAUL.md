@@ -1,6 +1,7 @@
 # System implementation overhaul
 
-Status: proposal, revision 2 (2026-11-08). Nothing below is built yet unless the audit says so.
+Status: proposal, revision 2 (2026-11-08). Nothing below is built yet unless the audit or section 7 says so; steps 0 and 1
+are done.
 Revision 1 (2026-11-01) proposed five coarse rule hooks (`IRuleHooks`) with three suppliers. Revision 2 keeps the
 three suppliers but moves the boundary: the problem is not *how* rules run, it is that the host's contract is made of
 5e nouns. A script that computes armor class does not help a system whose armor is per hit location.
@@ -31,6 +32,13 @@ New findings:
   `ResourcePoolComponent` holds integers only (`Components.cs:41`).
 - **Formulas can't see beyond the sheet's numbers.** `FormulaContext` (`SheetRuleEngine.cs:881`) holds flat numeric
   sheet keys and attribute defaults. Formulas can't read class entries, per-class levels, list items or tables.
+- **Unknown keys were silently dropped.** Both YAML loaders ignore keys the model has no property for (so a newer file
+  loads in an older app), which also made a typo (`hitPoint:`) or a whole section this version does not read into
+  nothing, without a word. Since 2026-11-08 `UnknownYamlKeys` names each one by path and the loader reports them as a load
+  problem; the shipped systems have none. It is also what lets the reference fixtures load today and say what is not read.
+- **The sheet's recompute sequence lived in a Razor page.** `ActorSheet.razor` called inherited values, totals,
+  evaluation, slots, hit points and armor class in order; nothing else ran the same sequence. It is now
+  `SheetRuleEngine.Recompute`, which the page, the golden corpus and the reference runner share.
 - **A dead and unsafe script path. Removed 2026-11-08.** `ScriptEvaluator` compiled a pack ability's
   `Effects[].Params.Script` with DynamicExpresso, referencing DefaultEcs `Entity`; `ContentRegistry.ExecuteAbilityAsync`
   had no callers. It was deleted rather than fixed: `Entity` leads back to the raw `World` that B3 remediation meant to
@@ -41,7 +49,8 @@ New findings:
 
 A design is only as general as the systems it was tested against. Three reference systems are the spec. Each is a test
 fixture: a `system.yaml`, any scripts, and fixture sheets with expected results. Nothing ships as content unless its
-licence allows it (section 8).
+licence allows it (section 8). Written 2026-11-08 (step 1): `tests/Codex.Tests/Fixtures/reference`, whose README holds the
+concrete vocabulary and the spec format.
 
 **A. SRD 3.5 (OGL 1.0a): the close cousin.** Same attributes and modifier, so it isolates every place the engine
 assumes 5e's answer.
@@ -279,7 +288,10 @@ homebrew systems written against them don't break overnight.
 
 **Acceptance**: the existing test suite passes unchanged, plus a golden corpus of srd5e sheets (every class at levels 1,
 5, 11, 20, three multiclass builds, imported creatures, manual-mode sheets). Each sheet is evaluated before and after;
-any difference in a derived value, violation or warning fails the change.
+any difference in a derived value, violation or warning fails the change. Built 2026-11-08: `tests/Codex.Tests/Golden/srd5e`,
+67 sheets (four multiclass builds, ten creatures, three manual or rolled sheets, two broken ones) with inputs frozen in
+`sheets.json` and everything `Recompute` writes and reports in `expected.txt`; `CODEX_GOLDEN=update` rewrites it after a
+change that is meant. It already caught one bug (section 6, "found by the corpus").
 
 ## 6. Alongside the model
 
@@ -302,6 +314,12 @@ From revision 1, still needed:
   first" needs in-app removal, which waits for install/reload.
 
 New:
+- **Found by the corpus: creatures break the score cap.** An imported creature's printed scores above 20 (a pit fiend's
+  Strength 26) are reported as "scores can't exceed 20" (`Actor.Rule.ScoreMax`), so under strict enforcement the DM
+  overrides a rule problem on every big creature. `SeedFromBlueprint` sets the manual method to skip character-creation
+  checks, but `sheetRules.attributes.max` applies whatever the method. Open: printed stat blocks should be exempt while a
+  manual character stays capped. The corpus records today's behaviour; fixing it updates `creature-aboleth` and
+  `creature-pit-fiend` only.
 - **Systems with no content of their own.** Done 2026-11-08: a `setting:` block in `system.yaml` (genre, tone, themes,
   technology, the supernatural, kinds of factions and places, what play looks like, what does not belong), in general
   terms, never a published setting's names (`CONTENT_PACKS.md` says how). The About page shows it; every content prompt
@@ -337,8 +355,21 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
 
 0. **Cleanups that need no design.** Done 2026-11-08: legacy script path deleted, load errors finished, attribute and
    bonus keys required, read-only campaigns for a missing system, `setting:` for systems with no content.
-1. **Fixtures first.** Write the three reference systems (section 2) as `system.yaml`, fixture sheets and expected
-   results in `tests/`. They fail; they are the spec. Add the golden srd5e corpus.
+1. **Fixtures first.** Done 2026-11-08. The three reference systems (section 2) are in `tests/Codex.Tests/Fixtures/reference`
+   with 95 expectations, each naming its step; 0 pass, as they should. `progress.txt` lists the ones that pass and
+   `ReferenceFixtureTests` keeps it true in both directions. The golden srd5e corpus is in `tests/Codex.Tests/Golden`.
+   Decisions the fixtures forced, now in the README's vocabulary:
+   - `conditions` stays a list of names (today's syntax); what a condition does goes in `conditionEffects`.
+   - Tracks have `thresholds`, which add effects and can hold together (a serious wound and a mortal one), and `bands`,
+     of which one holds at a time (3.5's disabled, dying, dead).
+   - Overflow says what happens to the excess: `reset` (stress into trauma), `carry` (heat into wanted level), `keep`.
+   - Prerequisites are checked on the character without the pick's own levels; otherwise a prestige class meets its own
+     base attack requirement.
+   - A per-pick field (`classLevel`, `equipped`, `used`) is a list's `itemFields`; a fixed set of keys (skills, actions)
+     is a `keyedList` with `derive` lambdas.
+   - Aggregates take lambdas (`sum(classes, c => c.classLevel)`), which DynamicExpresso can parse, rather than property
+     names in strings.
+   - "No problems" passes on a host that checks nothing, so a purely negative expectation `requires` the positive ones.
 2. **Values, modifiers, lists with aggregates.** Widen `FormulaContext`; add the built-in function library; move
    `derived`, AC, skills and HP onto them. The 3.5 sheet math goes green.
 3. **Tracks.** Thresholds, negative minimums, overflow, boxes and slots. HP bands for 3.5 and CPR; Blades stress/trauma

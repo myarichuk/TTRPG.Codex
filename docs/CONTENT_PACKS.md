@@ -381,8 +381,10 @@ Slot pools become resources: `slots_3` is the remaining level-3 slots and `slots
 The sheet keeps the maximum in step with the classes (a new slot arrives available, a lost slot level
 disappears); the live table spends and regains them and refills them on the named rests.
 
-Validation runs at load. A broken `system.yaml` is reported on the About page under "Content
-warnings" and the system is skipped; nothing else stops loading.
+Validation runs at load. A broken `system.yaml` is skipped and listed on the About page among the systems that failed
+to load, each problem on its own line; nothing else stops loading. A key this version does not read (a misspelling such
+as `hitPoint:`, or a section a newer version understands) does not stop the system either: it is ignored, and the About
+page names it by its path (`sheetRules.hitPoint`) among the system's problems.
 
 ## manifest.yaml
 

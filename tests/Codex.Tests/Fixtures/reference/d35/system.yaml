@@ -1,0 +1,210 @@
+# Reference fixture A (docs/SYSTEM_IMPLEMENTATION_OVERHAUL.md, section 2): a system shaped like the d20 System Reference
+# Document 3.5, the close cousin of 5e. It is written in the syntax the overhaul proposes (section 3; the vocabulary is in
+# ../README.md), most of which this version does not read: it loads with those sections reported as unknown keys, and
+# spec.yaml says what a host that reads them must make of it. Mechanics only, in this project's words, with abridged
+# tables; no SRD text is copied. Should SRD 3.5 text ever be added, the OGL 1.0a applies (overhaul section 8).
+id: ref-d35
+name: Reference d20 3.5-shaped (test fixture)
+version: 0.1.0
+description: >-
+  Classes summed level by level, skills bought with ranks, typed bonuses that do not stack, three armor classes,
+  hit points below zero and spells whose level depends on the class casting them.
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.
+
+# ---- What this version reads today ----
+
+attributes:
+  - { key: str, label: Strength,     abbreviation: STR, default: 10, min: 1, max: 40, modifier: half-minus-five }
+  - { key: dex, label: Dexterity,    abbreviation: DEX, default: 10, min: 1, max: 40, modifier: half-minus-five }
+  - { key: con, label: Constitution, abbreviation: CON, default: 10, min: 1, max: 40, modifier: half-minus-five }
+  - { key: int, label: Intelligence, abbreviation: INT, default: 10, min: 1, max: 40, modifier: half-minus-five }
+  - { key: wis, label: Wisdom,       abbreviation: WIS, default: 10, min: 1, max: 40, modifier: half-minus-five }
+  - { key: cha, label: Charisma,     abbreviation: CHA, default: 10, min: 1, max: 40, modifier: half-minus-five }
+
+entityTypes:
+  - { type: class, label: Class, folder: classes }
+  - { type: item,  label: Item,  folder: gear }
+  - { type: spell, label: Spell, folder: spells }
+  - { type: feat,  label: Feat,  folder: feats }
+
+# ---- The proposed primitives (overhaul section 3) ----
+
+# How bonuses of one type combine on one target. 3.5: bonuses of the same type do not stack (the highest counts), except
+# dodge, untyped and synergy; penalties always add up.
+modifierTypes:
+  default: highest
+  penalties: sum
+  types:
+    dodge: sum
+    untyped: sum
+    synergy: sum
+
+# Named per-level formulas a class entry points at by name; `level` is that class's own level.
+progressions:
+  bab.good:    "level"
+  bab.average: "floor(level * 3 / 4)"
+  bab.poor:    "floor(level / 2)"
+  save.good:   "2 + floor(level / 2)"
+  save.poor:   "floor(level / 3)"
+
+# Condition names, as today; what a condition does is new (conditionEffects).
+conditions: [Disabled, Dying, Dead, Staggered, Unconscious, Fighting defensively]
+conditionEffects:
+  Fighting defensively:
+    modifiers:
+      - { target: AC, amount: 2, type: dodge, source: Fighting defensively }
+      - { target: attack, amount: -4, source: Fighting defensively }
+
+functions:
+  # Bonus slots for a high casting score: from spell level 1, one more for every four points of modifier.
+  bonusSpells: { formula: "(score, level) => level >= 1 && mod(score) >= level ? floor((mod(score) - level) / 4) + 1 : 0" }
+
+sheetKinds:
+  - kind: character
+    label: Character
+    role: player
+
+    lists:
+      # Classes are a list of picks, each with its own level. Character level is their sum.
+      - key: classes
+        label: Classes
+        type: class
+        itemFields: [{ key: classLevel, type: Number, min: 1, default: 1 }]
+        prerequisites: prerequisites      # an entry's own `prerequisites` must hold (prestige classes)
+      - key: inventory
+        label: Equipment
+        type: item
+        itemFields: [{ key: equipped, type: Boolean, default: false }]
+        modifiersFrom: { property: modifiers, when: "i => i.equipped" }
+      - key: feats
+        label: Feats
+        type: feat
+        modifiersFrom: { property: modifiers }
+      - key: damageReduction
+        label: Damage reduction
+        itemFields: [{ key: amount, type: Number }, { key: bypass, type: Text }]
+      - key: hpRolls
+        label: Hit point rolls
+        itemFields: [{ key: roll, type: Number, min: 1 }]
+        description: One roll per character level after the first.
+
+    keyedLists:
+      # Skills: a fixed set of keys, each with ranks bought from skill points. A parametrised skill (Knowledge) takes one
+      # entry per subject: knowledge.arcana, knowledge.religion.
+      - key: skills
+        label: Skills
+        itemFields: [{ key: points, type: Number, min: 0 }]
+        keys:
+          - { key: balance,       label: Balance,       attribute: dex, groups: [armorPenalty] }
+          - { key: climb,         label: Climb,         attribute: str, groups: [armorPenalty] }
+          - { key: concentration, label: Concentration, attribute: con }
+          - { key: hide,          label: Hide,          attribute: dex, groups: [armorPenalty] }
+          - { key: jump,          label: Jump,          attribute: str, groups: [armorPenalty] }
+          - { key: knowledge,     label: Knowledge,     attribute: int, parameter: subject, trainedOnly: true }
+          - { key: spellcraft,    label: Spellcraft,    attribute: int, trainedOnly: true }
+          - { key: tumble,        label: Tumble,        attribute: dex, groups: [armorPenalty], trainedOnly: true }
+        # A skill is a class skill when any of the character's classes lists it; a point buys a rank, or half a rank
+        # in a cross-class skill. Ranks are capped by character level.
+        derive:
+          classSkill: "s => any(classes, c => contains(c.classSkills, s.key))"
+          ranks: "s => s.classSkill ? s.points : s.points / 2"
+          maxRanks: "s => s.classSkill ? level + 3 : (level + 3) / 2"
+          value: "s => floor(s.ranks) + mod(s.attribute)"
+        rules:
+          - { check: "s => s.ranks <= s.maxRanks", key: Actor.Rule.RankMax, message: "{label}: more ranks than the level allows ({maxRanks})." }
+          - { check: "sum(skills, s => s.points) <= SkillPoints", key: Actor.Rule.SkillPoints, message: "more skill points spent than the levels give ({SkillPoints})." }
+
+    values:
+      - { key: level,      formula: "sum(classes, c => c.classLevel)" }
+      - { key: BAB,        formula: "sum(classes, c => progression('bab.' + c.bab, c.classLevel))", modifiers: BAB }
+      - { key: Fort,       formula: "sum(classes, c => progression('save.' + c.fort, c.classLevel)) + mod(con)", modifiers: [Fort, '@saves'] }
+      - { key: Ref,        formula: "sum(classes, c => progression('save.' + c.ref, c.classLevel)) + mod(dex)",  modifiers: [Ref, '@saves'] }
+      - { key: Will,       formula: "sum(classes, c => progression('save.' + c.will, c.classLevel)) + mod(wis)", modifiers: [Will, '@saves'] }
+      # Skill points: (class points + Int modifier, at least 1) per level, four times over at the first character level,
+      # which is the first class's.
+      - key: SkillPoints
+        formula: "sum(classes, c => max(1, c.skillPoints + mod(int)) * c.classLevel) + 3 * max(1, first(classes).skillPoints + mod(int))"
+      # Armor class three ways: the same modifiers, some types left out.
+      - { key: AC,            formula: "10", modifiers: AC }
+      - { key: AC_Touch,      formula: "10", modifiers: AC, without: [armor, shield, natural] }
+      - { key: AC_FlatFooted, formula: "10", modifiers: AC, without: [dodge, { type: dex, positiveOnly: true }] }
+      - { key: MaxDex,        formula: "min(where(inventory, i => i.equipped), i => i.maxDex, 99)" }
+      - { key: ArmorCheck,    formula: "sum(where(inventory, i => i.equipped), i => i.checkPenalty)" }
+      - { key: HP_Max,        formula: "first(classes).hitDie + sum(hpRolls, r => r.roll) + mod(con) * level" }
+
+    modifiers:
+      - { target: AC, amount: "min(mod(dex), MaxDex)", type: dex, source: Dexterity }
+      - { target: '@armorPenalty', amount: "ArmorCheck", type: armorCheck, source: Armor check penalty }
+      - { target: skills.balance, amount: 2, type: synergy, when: "skills.tumble.ranks >= 5", source: Tumble }
+      - { target: skills.jump,    amount: 2, type: synergy, when: "skills.tumble.ranks >= 5", source: Tumble }
+
+    tracks:
+      # Hit points go below zero. One band applies at a time, the first that matches.
+      - key: HP
+        label: Hit points
+        max: HP_Max
+        min: -10
+        bands:
+          - { atOrAbove: 1 }
+          - { equals: 0, condition: Disabled }
+          - { atOrAbove: -9, condition: Dying }
+          - { condition: Dead }
+      # Nonlethal damage: a second track measured against current hit points.
+      - key: NL
+        label: Nonlethal damage
+        min: 0
+        bands:
+          - { below: HP }
+          - { equals: HP, condition: Staggered }
+          - { condition: Unconscious }
+      # Spell slots: one track per casting class per spell level, each slot holding the id of the spell prepared in it
+      # (the same spell may fill several). The class's table gives the slots, the casting score adds bonus slots.
+      - each: "where(classes, c => c.castingAttribute != null)"
+        levels: "0..9"
+        key: "slots_{item.id}_{level}"
+        label: "{item.name} spells, level {level}"
+        display: slots
+        holds: { type: spell, where: "s => levelFor(s, item.name) == level", message: "not a {item.name} spell of level {level}." }
+        max: "table(item.spellsPerDay, item.classLevel, level) + bonusSpells(score(item.castingAttribute), level)"
+
+    layout:
+      - { section: Abilities, widgets: [{ widget: values, keys: [str, dex, con, int, wis, cha] }] }
+      - { section: Combat, widgets: [{ widget: values, keys: [BAB, AC, AC_Touch, AC_FlatFooted, Fort, Ref, Will] }, { widget: track, key: HP }, { widget: track, key: NL }, { widget: modifiers, target: AC }] }
+      - { section: Classes, widgets: [{ widget: list, key: classes, columns: [classLevel] }] }
+      - { section: Skills, widgets: [{ widget: table, key: skills, columns: [points, ranks, value] }] }
+      - { section: Spells, widgets: [{ widget: track, key: "slots_*" }] }
+
+rolls:
+  # An attack: d20 + attack bonus against the target's armor class. A natural 20 hits and a natural 1 misses whatever the
+  # total. A hit whose natural roll is in the weapon's threat range asks for a confirmation roll, which turns it critical
+  # if it would also hit.
+  - key: attack
+    dice: 1d20
+    add: ["BAB", "mod(str)", "modifiers('attack')"]
+    inputs:
+      - { key: target, from: gm, label: Armor class }
+      - { key: threatRange, from: weapon, property: threatRange, default: 20 }
+    outcomes:
+      - { name: miss, when: "natural == 1" }
+      - { name: hit,  when: "natural == 20 || total >= target" }
+      - { name: miss }
+    then:
+      - { when: "outcome == 'hit' && natural >= threatRange", roll: confirm }
+  - key: confirm
+    dice: 1d20
+    add: ["BAB", "mod(str)", "modifiers('attack')"]
+    inputs: [{ key: target, from: parent }]
+    outcomes:
+      - { name: critical, when: "natural != 1 && total >= target", replacesParent: true }
+      - { name: hit, replacesParent: true }
+
+events:
+  # Damage: damage reduction and energy resistance first, then the right track (nonlethal or hit points). Bands follow.
+  damage:
+    builtin: damage
+    track: HP
+    nonlethal: { tag: nonlethal, track: NL }
+    reduction: { list: damageReduction, amount: amount, bypassedByTag: bypass, onlyTypes: [bludgeoning, piercing, slashing] }
+    resistance: { property: resistances }
