@@ -846,6 +846,10 @@
   <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>Простое</value></data>
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Пепельный пергамент</value></data>
   <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (только макет)</value></data>
+  <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(не для этого языка)</value></data>
+  <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>Этих знаков нет ни в одном шрифте оформления. Они напечатаются шрифтом, какой найдётся на сервере, или пустыми квадратами:</value></data>
+  <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>Выберите другое оформление или замените эти знаки (например, эмодзи или буквы другого алфавита).</value></data>
+  <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {и ещё #} few {и ещё #} many {и ещё #} other {и ещё #}}</value></data>
   <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Совместимость с Homebrewery</value></data>
   <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Раскладывать страницы так же, как Homebrewery, чтобы CSS, написанный для Homebrewery, работал здесь. Картинки и цвета Homebrewery не используются.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Скачать PDF</value></data>

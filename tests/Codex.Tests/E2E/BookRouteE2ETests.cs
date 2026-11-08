@@ -43,9 +43,11 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
         Assert.Contains(".pdf", pdf.Headers["content-disposition"]);
         Assert.StartsWith("%PDF-", Encoding.ASCII.GetString((await pdf.BodyAsync()).AsSpan(0, 5)));
 
-        // The theme cannot print Russian: a reason, not a half-English page.
+        // Russian prints (docs/BOOK_EXPORT.md 41.21); a language no theme has faces for gets a reason, not a page in the wrong fonts.
         var russian = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/dm/pdf?lang=ru");
-        Assert.Equal(422, russian.Status);
+        Assert.Equal(200, russian.Status);
+        var german = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/dm/pdf?lang=de");
+        Assert.Equal(422, german.Status);
         Assert.Equal(400, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/dm?theme=nope")).Status);
         Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/everyone")).Status);
         // An enum number is not an edition: "2" must not read as a party book that was never cleaned.
@@ -97,9 +99,9 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         var panel = dm.GetByTestId("book-panel");
         await Assertions.Expect(panel).ToBeVisibleAsync();
 
-        // The theme prints English only: the other languages are listed, and said to be unavailable, instead of failing later.
-        await Assertions.Expect(dm.GetByTestId("book-language").Locator("option[value=ru]")).ToBeDisabledAsync();
-        await Assertions.Expect(dm.GetByTestId("book-language").Locator("option[value=he]")).ToBeDisabledAsync();
+        // The theme prints English, Russian and Hebrew (41.21): every language the app has can be chosen.
+        await Assertions.Expect(dm.GetByTestId("book-language").Locator("option[value=ru]")).ToBeEnabledAsync();
+        await Assertions.Expect(dm.GetByTestId("book-language").Locator("option[value=he]")).ToBeEnabledAsync();
         await Assertions.Expect(dm.GetByTestId("book-language").Locator("option[value=en]")).ToBeEnabledAsync();
 
         // Preview: a frame with no permissions at all, showing the page the PDF is printed from.

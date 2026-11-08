@@ -51,7 +51,12 @@ export async function open(host, frame, book, dotnet, labels) {
 
   const language = new Compartment();
   const locked = new Compartment();
-  const direction = book.rtl ? EditorView.contentAttributes.of({ dir: 'rtl' }) : [];
+  // A Hebrew draft: each line takes its own direction from its first letters, so Hebrew prose reads from the right and a line of markup
+  // ({{frontCover}}, \page, an entry's marker) reads as written instead of mirrored around its punctuation.
+  // (plaintext bidi sets each line's direction; perLineTextDirection makes CodeMirror read it back for the cursor and selection.)
+  const direction = book.rtl
+    ? [EditorView.contentAttributes.of({ dir: 'rtl' }), EditorView.perLineTextDirection.of(true), EditorView.theme({ '.cm-line': { unicodeBidi: 'plaintext' } })]
+    : [];
   // What was typed and not yet handed to the server: chapters by section, and the stylesheet.
   state.pending = new Set();
   state.cssPending = false;

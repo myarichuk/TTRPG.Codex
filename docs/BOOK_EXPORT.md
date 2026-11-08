@@ -1314,7 +1314,7 @@ small renderer, an editor page and a print page, run on the test campaign of sec
    with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
    sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
 
-## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 6 built, see 41.9, 41.10, 41.15, 41.16, 41.18 and 41.19; layout 41.17)
+## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 6 built, see 41.9, 41.10, 41.15, 41.16, 41.18 and 41.19; layout 41.17; Russian and Hebrew 41.21)
 
 The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
 when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
@@ -1468,7 +1468,7 @@ two-tab e2e).
   editor reads the PDF's header.
 - ~~**The preview was seen only in Chrome.** Safari and Firefox were not tried (section 40, finding 3).~~ Tried in WebKit and Firefox (41.20).
 - The editor was not looked at on a phone, in RTL, or with a screen reader.
-- Russian and Hebrew drafts are made and edited but cannot be printed (the language gate).
+- ~~Russian and Hebrew drafts are made and edited but cannot be printed (the language gate).~~ Printed since 41.21 (Plain and Ashen Vellum).
 - There is no per-chapter preview: the whole book is drawn again on each pause in typing. Fine for the test campaign (3 pages); not measured
   on a large one.
 - Pictures in free text (`asset:`) are dropped to their captions (see Generator above).
@@ -1534,7 +1534,8 @@ straight after typing (the typed line is saved and drawn in the new theme).
   web will not load them (on purpose).
 - Contrast on Ashen Vellum's paper (WCAG AA for body text, notes and table rows, section 14 item 7) is not measured. The dark pages and the
   cover were only looked at.
-- RTL: not applicable yet (English only); the sheet's `float: left` drop caps and left-side ribbons would need logical properties first.
+- ~~RTL: not applicable yet (English only); the sheet's `float: left` drop caps and left-side ribbons would need logical properties first.~~
+  Mirrored for Hebrew books since 41.21 (`BookRtl`).
 - The preview redraw time was not measured on a large book in the GM's browser; the print browser laid out and printed 44 Ashen Vellum pages
   in about 2.5 s (browser start included).
 - Read back from the PDF, Ashen Vellum's drop cap splits a chapter's first word ("P UBLIC") and its small-caps lead-in and bold (small caps,
@@ -1618,7 +1619,7 @@ Not done, or not verified:
 - **Pictures a brew's CSS loads from the web** (imgur, a CDN): the server fetches a copy since 41.14. Homebrewery's own `/assets/...`
   addresses are relative to its site and still load nothing (there is no address to fetch); uploads are not built.
 - **Markdown parity** beyond variables (41.13): icon shortcodes, definition-list and spacing syntax are not audited.
-- Russian and Hebrew: the layer's faces are Latin; the layout-only theme is English only, like the others.
+- Russian and Hebrew: the layer's faces are Latin; the layout-only theme is English only (Plain and Ashen Vellum print both since 41.21).
 - The layer's greys and the layout-only theme's contrast were looked at, not measured; Plain on the layer was looked at for one chapter.
 
 ### 41.13 Homebrewery's variables, its DMG theme and a community theme (checked 2026-11-06)
@@ -2060,3 +2061,69 @@ Not done, or not verified:
   Firefox was Playwright's build 132.
 - Phones and tablets; a screen reader; right-to-left text in WebKit and Firefox (Hebrew was laid out in Chromium only).
 - CI's WebKit and Firefox are Linux builds; their line breaking may differ again from macOS's, and the column checks allow 60 px.
+
+### 41.21 Russian and Hebrew books (2026-11-08)
+
+Plain and Ashen Vellum print Russian and Hebrew, in the editable book and (Plain and Parchment) on the older one-shot route; the
+Homebrewery layout theme stays English (its faces are the layer's, Latin only), and the editor's theme picker shows it greyed out, "(not in
+this language)", for a Russian or Hebrew draft.
+
+- **Stand-ins under the theme's own family names.** A face may carry a language (`BookFontFace.Language`): it is that script's letters,
+  declared under the family the theme's sheet already names, for that script's `unicode-range` only, and embedded only in a book of that
+  language (`BookTheme.FontsFor`). So every rule of the theme, and a GM's stylesheet that names the theme's faces, draws Cyrillic or Hebrew
+  in the stand-in with no rule of its own, the way a web font is split into files by script.
+  - Plain: Russian text is Alegreya Sans's own Cyrillic, headings Forum (Cinzel has no Cyrillic); Hebrew text is Assistant, headings Frank
+    Ruhl Libre (both bundled already, for the app itself).
+  - Ashen Vellum (chosen by the user, "old-print set"): Russian, Old Standard TT for every IM Fell face and Ruslan Display for Pirata One's
+    titles, Cousine for the typewriter; Hebrew, David Libre for the IM Fell faces, Frank Ruhl Libre Black for the titles, Assistant for the
+    typewriter (in the monospaced Cousine the narrow Hebrew letters stand in wide cells and read as gaps inside a word).
+  - A stand-in takes only a weight and style the family's Latin faces have (a test holds it): a weight only the stand-in had would win the
+    match for that weight and leave its Latin letters to a system font. The variable Hebrew faces are declared at each weight; their widths
+    at 400 and 700 match a face declared with the full range, so the weight axis is applied (Assistant's default instance is ExtraLight).
+- **Hebrew has no italics here.** No Hebrew face bundled has one, and a slanted Hebrew is the browser's fake, so the Hebrew stand-in in an
+  italic slot is upright: `*emphasis*` in Hebrew prints as plain text in both themes, and Ashen Vellum's bold (small caps) is invisible in
+  Hebrew, which has no capitals. Latin words in a Hebrew book keep their italics.
+- **Hebrew is never letter-spaced**: Ashen Vellum's tracked cover tagline and small-caps lines pulled the letters apart into what read as
+  broken words; a right-to-left page sets `letter-spacing: normal !important` on the page (the GM's own `!important` still wins).
+- **Right to left: the theme's sheets mirrored** (`BookRtl.Mirror`, as the rtlcss tool does). Blank, the PHB layer and Ashen Vellum use
+  physical sides: lists padded on the left, drop caps floated left, an odd page's number on the right. In a Hebrew book `left` and `right`
+  are exchanged in property names, in `float`, `clear`, `text-align` and the background positions, in four-value shorthands and corners;
+  strings, comments and `url()` are kept byte for byte, and transforms, shadows and percentages are drawing, left as drawn. So the first
+  column is the right one, bullets and the drop cap stand on the right, and an odd page's number is on the left (a right-bound book's outer
+  edge). The GM's stylesheet is never mirrored: what the GM writes for a Hebrew book is theirs as written. The renderer and Fit pages
+  already measured `direction: rtl` columns (render.js); Fit pages on Hebrew and Russian leaves nothing run on.
+- **The obelisk.** No IM Fell file has U+2020, and the Fontsource Latin subsets of every face here leave it out although their declared
+  range names it; Ashen Vellum's list markers and page numbers (in English too) drew it in a system font. It now comes from "Ashen
+  Obelisk", Old Standard TT's latin-ext file declared for that one character.
+- **Which letters a file has is read, not assumed** (`BookFontCoverage`): the `cmap` of a WOFF2 (its table directory, the Brotli stream,
+  untransformed cmap), WOFF or TrueType/OpenType file, format 4 or 12, bounded and never throwing on a broken file; tested against
+  fontTools' counts for five of the bundled files and against TTF and WOFF copies of one.
+  - `BookFontCoverageTests` holds every theme and language it declares to it: each letter of the language, its punctuation and digits must be
+    in a bundled face, inside that face's declared range, in every weight and style slot the theme declares.
+  - `BookDraftScriptsTests` asks Chromium itself (`CSS.getPlatformFontsForNode`) which face draws each element of a draft (cover, contents,
+    headings, body, bold, italic, note, descriptive, secret, table, list, page number) and fails on any system font; checks a Hebrew page's
+    geometry (right column first, bullets right, page numbers on the outer edges, no letter-spacing); prints Russian and Hebrew drafts and
+    finds their words in the PDF; and fits Hebrew and Russian chapters.
+- **The editor's check before printing**: the Problems tab lists, by chapter, the characters no face of the theme draws (in its range and
+  in its file): an emoji, a Greek letter, Cyrillic in a Hebrew book. They would print in whatever font the server has, or as boxes. Up to
+  24 a chapter, then "and N more", so a chapter's first foreign alphabet does not hide an emoji after it (seen in the app: a Russian
+  character in a Hebrew book filled the list).
+- **The Markdown pane of a Hebrew draft** gives each line its own direction (`unicode-bidi: plaintext`, and CodeMirror told to read it):
+  Hebrew prose reads from the right, and a line of markup (`{{frontCover}}`, `\page`, an entry's marker) reads as written. Before, every
+  line was right to left and markup came out mirrored around its punctuation (`page\`, `Language check \(delete me\) #`).
+- **Seen in the app** (a throwaway campaign, since deleted): a Hebrew party draft opens right to left, the picker greys out the layout-only
+  theme, Ashen Vellum's preview draws the Hebrew in David Libre and Frank Ruhl Libre Black, the Problems tab names the Russian letters, the
+  emoji and Ω, and the PDF route prints the book (3 pages; its faces David Libre, Frank Ruhl Libre Black, IM Fell, Old Standard TT for the
+  obelisk, and Times and Georgia for exactly the characters the Problems tab named).
+- **The older route** (Plain and Parchment, `BookHtml`) was printed in Hebrew and Russian and looked at: its own CSS already handled right
+  to left (drop cap and first column on the right, odd page number on the left).
+
+Not done, or not verified:
+- Russian and Hebrew were looked at in Chromium only (the preview in WebKit and Firefox was checked in English, 41.20).
+- No native speaker has read a printed page; the stand-in pairings are a type choice, not a measured match of size and colour.
+- Hebrew emphasis is lost (above); niqqud is in the faces' ranges but was not looked at; Yiddish ligatures and the presentation forms were
+  not tried.
+- The SC families' Cyrillic is Old Standard's own lower case, where Latin has small caps.
+- A stand-in file used for several slots is embedded once per slot (about 70 KB more for a Hebrew Ashen Vellum book).
+- The Homebrewery layer's faces have no Cyrillic or Hebrew: a GM's CSS that names them for text prints those letters in a system font
+  (the Problems tab names them only for the layout-only theme).

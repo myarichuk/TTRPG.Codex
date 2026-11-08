@@ -24,7 +24,7 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: 
 | Masked reads | `src/Codex.Persistence/Book/BookSource*.cs` (the only input of the compiler; its constructor is internal) |
 | Compiler | `Persistence/Book/BookCompiler.cs` (chapters; `BookEntryPosition` records each entry heading's line; `ArtAnchors`) |
 | Renderer | `Core/Book/BookMarkdown*.cs` (own Markdown subset; escaped by default; no URLs; `{{block:N}}`; `asset:`/`slot:` images) |
-| Page, themes, CSS | `Core/Book/BookHtml.cs`, `BookTheme.cs` (Plain, Parchment; English only by the language gate), `BookMasks.cs` (torn-edge SVG) |
+| Page, themes, CSS | `Core/Book/BookHtml.cs`, `BookTheme.cs` (Plain, Parchment; English, Russian and Hebrew), `BookMasks.cs` (torn-edge SVG), `BookRtl.cs` (mirrors a theme's sheets for Hebrew), `BookFontCoverage.cs` (a font file's letters) |
 | PDF | `Web/Book/BookPdf.cs`, `BookBrowser.cs` (finds Chrome/Edge/Chromium; `CODEX_BOOK_BROWSER`; one job at a time) |
 | Composition | `Web/Book/BookComposer.cs` (labels, `Items`, `Overlay` of a stored rewrite, `PlaceArt`) |
 | AI layer | `Core/Book/Ai/*` (blocks, checks, section worker, runner, build key), `Core/Book/BookBudget.cs`, `BookTokens.cs`, `Web/Book/BookBuilds.cs` (stored build, background runs), `BookModels.cs`, `Persistence/Book/BookBuildModels.cs` |
@@ -185,8 +185,11 @@ Anything that survives is a missing test; add it.
    of its books, and the prompt asks for that one (a field the system's `system.yaml` would carry; nothing is built yet). It is a shape to
    mimic, never a book's words, art or trade dress (`content-system-design`: no trademark names). Real book prose needs pinned facts (names, numbers) separated from open texture, a coverage check (a rewrite can still drop most of a chapter; the 0.12x
    length floor is untuned) and splitting the unit from chapter to `##` entry (a long Cast chapter is re-bought whole after one NPC edit).
-3. **Russian and Hebrew books**: both themes are English-only. Needs proven coverage (the bundled Forum, Assistant and Frank Ruhl Libre have one
-   weight, no bold, no italic) and a preflight.
+3. ~~**Russian and Hebrew books**~~ done for the editable book (BOOK_EXPORT 41.21, 2026-11-08): Plain and Ashen Vellum print both, by
+   stand-in faces under the themes' family names, Hebrew pages mirrored (`BookRtl`), coverage read from the font files (`BookFontCoverage`)
+   and a Problems-tab check. Left: Hebrew emphasis prints as plain text (no Hebrew italics), no native reader, WebKit and Firefox not tried in
+   these languages, the layout-only theme stays English. Next on this line: the theme wizard (a pasted Homebrewery theme kept per campaign,
+   its languages measured, stand-ins for the scripts its faces lack, previewed), asked for by the user the same day.
 4. Review leftovers: per-user decoder fairness (the queue of two is global and the PDF slot is held while art is read); preview/print cap mismatch and
    showing skipped pictures in the panel; a per-entry marker is NOT needed (section 32 chose position over markers).
 5. Layout and format: stat-block and table blocks, running footer with the chapter name, picture-frame masks, paper fibre on the page edge, `.md` export with

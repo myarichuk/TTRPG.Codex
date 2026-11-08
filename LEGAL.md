@@ -70,6 +70,22 @@ licence beside it:
   `src/Codex.Web/wwwroot/fonts/pirata-one/OFL.txt`
 - Special Elite, by Astigmatic - Apache License 2.0 - `src/Codex.Web/wwwroot/fonts/special-elite/LICENSE.txt`
 
+Its stand-ins for Russian and Hebrew books (the faces above have only Latin letters), also unmodified Fontsource 5.3.0 subsets, each with
+its licence beside it; a book embeds only those of its own language:
+
+- Old Standard TT (Cyrillic regular and italic; and its latin-ext file, used only for the obelisk the theme's lists and page numbers
+  print), Copyright 2011 The Old Standard Project Authors - SIL Open Font License 1.1 - `src/Codex.Web/wwwroot/fonts/old-standard-tt/OFL.txt`
+- Ruslan Display (Cyrillic), Copyright 2011 Oleg Snarsky, Denis Masharov, Vladimir Rabdu - SIL Open Font License 1.1 -
+  `src/Codex.Web/wwwroot/fonts/ruslan-display/OFL.txt`
+- Cousine (Cyrillic), Copyright The Cousine Project Authors (https://github.com/googlefonts/cousine) - SIL Open Font License 1.1 -
+  `src/Codex.Web/wwwroot/fonts/cousine/OFL.txt`
+- David Libre (Hebrew), Copyright 2016 The David Libre Project Authors (https://github.com/meirsadan/david-libre) - SIL Open Font
+  License 1.1 - `src/Codex.Web/wwwroot/fonts/david-libre/OFL.txt`
+- Frank Ruhl Libre Black (Hebrew, weight 900), from the same project as the Frank Ruhl Libre above - `src/Codex.Web/wwwroot/fonts/frank-ruhl-libre/OFL.txt`
+
+The test fixtures `tests/Codex.Tests/Fixtures/Fonts/ruslan-display-cyrillic.{ttf,woff}` are the Ruslan Display file above written out
+as TrueType and WOFF by fontTools, to test the font reader; same licence, beside them.
+
 The faces Homebrewery's 5e layout names, for the book's Homebrewery compatibility layer: Homebrewery's own copies (commit 3e600a0),
 unmodified, except the drop-cap face, Solbera Imitation 1.60 from Solbera's own release converted to WOFF2, in
 `src/Codex.Web/wwwroot/fonts/homebrewery-5e` (its `README.txt` says what each is and where it came from):

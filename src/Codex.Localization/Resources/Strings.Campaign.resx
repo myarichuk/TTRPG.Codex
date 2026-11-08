@@ -846,6 +846,10 @@
   <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>Plain</value></data>
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Ashen Vellum</value></data>
   <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (layout only)</value></data>
+  <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(not in this language)</value></data>
+  <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>These characters are in none of this theme's fonts. They would print in whatever font the server has, or as empty boxes:</value></data>
+  <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>Pick another theme, or change the characters (an emoji or a letter from another alphabet, say).</value></data>
+  <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {and # more} other {and # more}}</value></data>
   <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Homebrewery compatibility</value></data>
   <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Lay pages out as Homebrewery does, so CSS written for a Homebrewery brew works here. No Homebrewery pictures or colours are used.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Download PDF</value></data>

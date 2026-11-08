@@ -32,7 +32,9 @@
                         <select class="form-select form-select-sm" value="@view.Theme" @onchange="ThemeAsync" disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-theme">
                             @foreach (var theme in BookDraftThemes.All)
                             {
-                                <option value="@theme.Id">@L["Campaign.Book.Draft.Theme." + theme.Id]</option>
+                                @* A theme whose faces lack this language's letters cannot be picked (the language gate); the GM sees why. *@
+                                var prints = theme.Supports(language);
+                                <option value="@theme.Id" disabled="@(!prints)">@L["Campaign.Book.Draft.Theme." + theme.Id]@(prints ? "" : " " + L["Campaign.Book.Draft.Theme.NotThisLanguage"])</option>
                             }
                         </select>
                     </label>
@@ -440,6 +442,23 @@
                             </CodexButton>
                         </div>
                     }
+                    @if (letters.Count > 0)
+                    {
+                        @* Characters no face of the theme draws (docs/BOOK_EXPORT.md 41.21): they print in a system font, or as boxes. *@
+                        <div class="field-error" data-testid="book-draft-letters">
+                            @L["Campaign.Book.Draft.Letters.Found"]
+                            <ul class="mb-1 ps-3">
+                                @foreach (var (section, characters, more) in letters)
+                                {
+                                    <li data-testid="book-draft-letter" data-section="@section">
+                                        <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @onclick="() => ShowAsync(section)" disabled="@AiBusy"><bdi>@TitleOf(section)</bdi></button>:
+                                        <bdi class="text-break">@string.Join(" ", characters.EnumerateRunes())</bdi>@(more > 0 ? " " + L["Campaign.Book.Draft.Letters.More", more] : "")
+                                    </li>
+                                }
+                            </ul>
+                            <div class="small">@L["Campaign.Book.Draft.Letters.Hint"]</div>
+                        </div>
+                    }
                     @if (printReport != null)
                     {
                         <div class="field-error" data-testid="book-draft-print-overflow">@printReport</div>
@@ -488,6 +507,28 @@
     private BookDraftFitReport? fitReport;
     private string? printReport;
     private BookLeakReport? leakReport;
+    private IReadOnlyList<(string Section, string Characters, int More)> letters = [];
+
+    // Each bundled face's character map, read once per process (BookFontCoverage).
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, IReadOnlySet<int>?> FontMaps = new(StringComparer.Ordinal);
+
+    /// <summary>The characters of the draft no face of its theme draws, by chapter (the Problems tab).</summary>
+    private void CheckLetters()
+    {
+        if (view == null)
+        {
+            letters = [];
+            return;
+        }
+
+        var theme = BookDraftThemes.Find(view.Theme) ?? BookDraftThemes.Plain;
+        // A theme with no faces of its own (Homebrewery layout) draws in the layer's; checking against nothing would list every letter.
+        var faces = theme.Fonts.Count > 0
+            ? theme.FontsFor(language)
+            : BookDraftThemes.LayerFaces.Select(f => new BookFontFace(f.Family, 400, f.Style, f.File, "U+0-10FFFF")).ToList();
+        letters = BookFontCoverage.Uncovered(view.Chapters.Select(c => (c.Section, c.Markdown)), faces,
+            file => FontMaps.GetOrAdd(file, f => Font(f) is { } bytes ? BookFontCoverage.Read(bytes) : null));
+    }
     private bool confirmStartOver;
     private string? message;
     private SaveState state = SaveState.Saved;
@@ -552,6 +593,7 @@
         confirmStartOver = false;
         closeWithoutSaving = false;
         view = await Drafts.OpenAsync(Access, edition, language, pageSize);
+        CheckLetters();
         if (view == null)
         {
             message = L["Campaign.Book.Draft.NotAllowed"];
@@ -593,7 +635,8 @@
             var shell = await ShellAsync();
             if (shell.Html == null)
             {
-                message = shell.Refused;
+                // The only refusal is the language gate (a theme stored before the draft's language could use it, or one with Latin faces only).
+                message = L["Campaign.Book.Failed.Language"];
                 StateHasChanged();
                 return;
             }
@@ -806,6 +849,7 @@
         if (fresh == null) return;
         var before = view;
         view = fresh;
+        CheckLetters();
         if (!push || module == null || editorId == null) return;
         if (before == null || before.Chapters.Select(c => c.Section).SequenceEqual(fresh.Chapters.Select(c => c.Section)) == false)
         {
@@ -1058,7 +1102,7 @@
     /// <summary>What the Problems tab lists: blocks too tall and breaks not placed (Fit pages), pages printed cut off, web addresses not fetched, and
     /// what only the GM edition should have, found in the party draft before it was printed.</summary>
     private int ProblemCount =>
-        (fitReport?.Overflow.Count ?? 0) + (fitReport?.Unplaced.Count ?? 0) + (printReport != null ? 1 : 0) + (webReport?.Failed.Count ?? 0) + (leakReport?.Total ?? 0);
+        (fitReport?.Overflow.Count ?? 0) + (fitReport?.Unplaced.Count ?? 0) + (printReport != null ? 1 : 0) + (webReport?.Failed.Count ?? 0) + (leakReport?.Total ?? 0) + letters.Count;
 
     private string LeakLabel(BookLeak hit) => hit.Kind switch
     {

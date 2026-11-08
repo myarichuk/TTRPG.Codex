@@ -20,7 +20,10 @@
      template-specific rules for pictures it hosted elsewhere.
    The sheet's class vocabulary stays (.note .descriptive .monster .quote .tome .credits .artist .frontcredit .reliquary .soot ...),
    so a page the GM writes the way the sheet's template did looks as it did there.
-   English only: the faces are Latin.
+   - Russian and Hebrew: the faces are Latin, so each script has stand-ins declared under the same family names (Old Standard TT and
+     Ruslan Display for Cyrillic, David Libre and Frank Ruhl Libre for Hebrew; BookDraftThemes.AshenVellum, docs/BOOK_EXPORT.md 41.21);
+   - the obelisk (U+2020) is in no IM Fell file: the list markers and the page number's draw it from "Ashen Obelisk" (Old Standard
+     TT's latin-ext file, used for that one character), not from whatever system font has it.
    ================================================================== */
 
 /* PALETTE & TOKENS ________________________________________________ */
@@ -141,7 +144,7 @@
 	text-align     : right;
 }
 .page .pageNumber::before,
-.page .pageNumber.auto::before { content : '†  ' / ''; color : var(--gd-hot); }
+.page .pageNumber.auto::before { content : '†  ' / ''; color : var(--gd-hot); font-family : 'Ashen Obelisk', 'IM Fell DW Pica', serif; }
 .page:nth-child(even) .pageNumber { right : auto; left : 1.9cm; text-align : left; }
 
 
@@ -169,7 +172,7 @@
 /* lists: obelisks, not bullets */
 .page ul               { list-style-type : '†  '; }
 .page ul ul            { list-style-type : '·  '; }
-.page li::marker       { color : var(--gd-hot); }
+.page li::marker       { color : var(--gd-hot); font-family : 'Ashen Obelisk', 'IM Fell English', serif; }
 
 .page a                { color : inherit; text-decoration : none; font-weight : inherit; }
 .page a:hover          { text-decoration : underline; text-decoration-color : var(--gd-hot); }

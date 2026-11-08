@@ -87,7 +87,7 @@ public static class BookHtml
 
         var missing = new List<string>();
         var css = new StringBuilder();
-        foreach (var face in theme.Fonts)
+        foreach (var face in theme.FontsFor(book.Language))
         {
             var bytes = options.Font?.Invoke(face.File);
             if (bytes == null)

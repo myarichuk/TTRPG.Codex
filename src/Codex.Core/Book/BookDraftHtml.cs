@@ -16,7 +16,7 @@ namespace Codex.Core.Book;
 /// </summary>
 public static class BookDraftThemes
 {
-    /// <summary>White pages, Alegreya Sans and Cinzel (the plain book's faces, so the same language gate: English only until the others are proven).</summary>
+    /// <summary>White pages, Alegreya Sans and Cinzel (the plain book's faces and languages, Russian and Hebrew by stand-ins, <see cref="BookThemes.Plain"/>).</summary>
     public static BookTheme Plain { get; } = new("plain", "Plain", BookThemes.Plain.Languages, BookThemes.Plain.Fonts, _ => PlainSheet);
 
     /// <summary>
@@ -27,9 +27,9 @@ public static class BookDraftThemes
 
     /// <summary>
     /// The dark-fantasy theme: the "Ashen Vellum" sheet the GM supplied, ported onto Blank (<c>Book/Themes/ashen-vellum.css</c>, whose header
-    /// lists what changed). Ash-grey vellum, IM Fell, Pirata One for titles, Special Elite for the GM's secrets. English only: its faces are Latin.
+    /// lists what changed). Ash-grey vellum, IM Fell, Pirata One for titles, Special Elite for the GM's secrets; for Russian and Hebrew, stand-ins under those names (below, and <see cref="BookFontFace"/>).
     /// </summary>
-    public static BookTheme AshenVellum { get; } = new("ashen-vellum", "Ashen Vellum", ["en"],
+    public static BookTheme AshenVellum { get; } = new("ashen-vellum", "Ashen Vellum", ["en", "ru", "he"],
         [
             new("IM Fell English", 400, "normal", "im-fell-english/im-fell-english-latin-400-normal.woff2", BookThemes.Latin),
             new("IM Fell English", 400, "italic", "im-fell-english/im-fell-english-latin-400-italic.woff2", BookThemes.Latin),
@@ -38,7 +38,29 @@ public static class BookDraftThemes
             new("IM Fell DW Pica", 400, "italic", "im-fell-dw-pica/im-fell-dw-pica-latin-400-italic.woff2", BookThemes.Latin),
             new("IM Fell DW Pica SC", 400, "normal", "im-fell-dw-pica-sc/im-fell-dw-pica-sc-latin-400-normal.woff2", BookThemes.Latin),
             new("Pirata One", 400, "normal", "pirata-one/pirata-one-latin-400-normal.woff2", BookThemes.Latin),
-            new("Special Elite", 400, "normal", "special-elite/special-elite-latin-400-normal.woff2", BookThemes.Latin)
+            new("Special Elite", 400, "normal", "special-elite/special-elite-latin-400-normal.woff2", BookThemes.Latin),
+            // The obelisk of the list markers and page numbers, which no IM Fell file has (the sheet's header).
+            new("Ashen Obelisk", 400, "normal", "old-standard-tt/old-standard-tt-latin-ext-400-normal.woff2", "U+2020"),
+            // Russian: Old Standard TT for the IM Fell faces (an old-print Cyrillic serif), Ruslan Display for Pirata One's titles, Cousine
+            // for the typewriter. The SC families have no Cyrillic small caps: Old Standard's letters stand in, in their own case.
+            new("IM Fell English", 400, "normal", "old-standard-tt/old-standard-tt-cyrillic-400-normal.woff2", BookThemes.Cyrillic, "ru"),
+            new("IM Fell English", 400, "italic", "old-standard-tt/old-standard-tt-cyrillic-400-italic.woff2", BookThemes.Cyrillic, "ru"),
+            new("IM Fell English SC", 400, "normal", "old-standard-tt/old-standard-tt-cyrillic-400-normal.woff2", BookThemes.Cyrillic, "ru"),
+            new("IM Fell DW Pica", 400, "normal", "old-standard-tt/old-standard-tt-cyrillic-400-normal.woff2", BookThemes.Cyrillic, "ru"),
+            new("IM Fell DW Pica", 400, "italic", "old-standard-tt/old-standard-tt-cyrillic-400-italic.woff2", BookThemes.Cyrillic, "ru"),
+            new("IM Fell DW Pica SC", 400, "normal", "old-standard-tt/old-standard-tt-cyrillic-400-normal.woff2", BookThemes.Cyrillic, "ru"),
+            new("Pirata One", 400, "normal", "ruslan-display/ruslan-display-cyrillic-400-normal.woff2", BookThemes.Cyrillic, "ru"),
+            new("Special Elite", 400, "normal", "cousine/cousine-cyrillic-400-normal.woff2", BookThemes.Cyrillic, "ru"),
+            // Hebrew: David Libre for the IM Fell faces (upright in the italic slots, see BookFontFace), Frank Ruhl Libre Black for the titles,
+            // Assistant for the typewriter: in a monospaced Hebrew face (Cousine) the narrow letters stand in wide cells and read as gaps in a word.
+            new("IM Fell English", 400, "normal", "david-libre/david-libre-hebrew-400-normal.woff2", BookThemes.Hebrew, "he"),
+            new("IM Fell English", 400, "italic", "david-libre/david-libre-hebrew-400-normal.woff2", BookThemes.Hebrew, "he"),
+            new("IM Fell English SC", 400, "normal", "david-libre/david-libre-hebrew-400-normal.woff2", BookThemes.Hebrew, "he"),
+            new("IM Fell DW Pica", 400, "normal", "david-libre/david-libre-hebrew-400-normal.woff2", BookThemes.Hebrew, "he"),
+            new("IM Fell DW Pica", 400, "italic", "david-libre/david-libre-hebrew-400-normal.woff2", BookThemes.Hebrew, "he"),
+            new("IM Fell DW Pica SC", 400, "normal", "david-libre/david-libre-hebrew-400-normal.woff2", BookThemes.Hebrew, "he"),
+            new("Pirata One", 400, "normal", "frank-ruhl-libre/frank-ruhl-libre-hebrew-900-normal.woff2", BookThemes.Hebrew, "he"),
+            new("Special Elite", 400, "normal", "assistant/assistant-hebrew-wght-normal.woff2", BookThemes.Hebrew, "he")
         ],
         _ => AshenVellumSheet);
 
@@ -116,6 +138,7 @@ public static class BookDraftThemes
             .page .block.chapter, .page .block.chapter-art { display: block; column-span: all; }
             /* The tagline the generator writes under the cover's title is not a chapter's first paragraph: no drop cap, under any theme or layer. */
             .page:has(.frontCover) h1 + p::first-letter, .page:has(.frontCover) h1 + p::first-line { all: unset; }
+            {{(layout.Rtl ? Unspaced : string.Empty)}}
             .art-missing { display: block; box-sizing: border-box; min-height: 18mm; border: 1px dashed #9a9a9a; color: #777; font-size: 7.5pt; padding: 2mm; text-align: center; }
             @media print {
               body { background: none; }
@@ -125,6 +148,10 @@ public static class BookDraftThemes
             }
             """;
     }
+
+    // Hebrew is never letter-spaced: a theme's tracked small caps and title lines pull its letters apart into what reads as broken words (seen on
+    // Ashen Vellum's cover). Above the GM's stylesheet only by !important; the GM's own !important still wins, being later.
+    private const string Unspaced = ".page, .page *, .page *::first-line, .page *::first-letter { letter-spacing: normal !important; }";
 
     private const string PlainSheet = """
 
@@ -225,7 +252,7 @@ public static class BookDraftHtml
         var layout = BookLayout.For(language, pageSize, 2);
         var css = new StringBuilder();
         var missing = new List<string>();
-        foreach (var face in theme.Fonts)
+        foreach (var face in theme.FontsFor(language))
         {
             if (font(face.File) is not { } bytes)
             {
@@ -252,7 +279,9 @@ public static class BookDraftHtml
             }
         }
 
-        css.Append(BookDraftThemes.PageCss(layout, homebrewery)).Append(theme.Css(layout));
+        // Blank, the layer and the themes are written for left-to-right pages; a right-to-left book gets them mirrored (BookRtl), the GM's CSS as written.
+        var sheets = BookDraftThemes.PageCss(layout, homebrewery) + theme.Css(layout);
+        css.Append(layout.Rtl ? BookRtl.Mirror(sheets) : sheets);
         IReadOnlyList<string> warnings = [];
         var custom = string.IsNullOrWhiteSpace(gmCss) ? string.Empty : BookCss.Clean(gmCss, out warnings, web);
         var html = new StringBuilder();

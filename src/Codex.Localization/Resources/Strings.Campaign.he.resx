@@ -846,6 +846,10 @@
   <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>פשוטה</value></data>
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>קלף אפור</value></data>
   <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (פריסה בלבד)</value></data>
+  <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(לא בשפה הזאת)</value></data>
+  <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>התווים האלה לא נמצאים באף גופן של ערכת העיצוב. הם יודפסו בגופן כלשהו שיש בשרת, או כריבועים ריקים:</value></data>
+  <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>בחרו ערכת עיצוב אחרת, או החליפו את התווים (למשל אימוג׳י או אות מאלפבית אחר).</value></data>
+  <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {ועוד אחד} other {ועוד #}}</value></data>
   <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>תאימות ל-Homebrewery</value></data>
   <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>פריסת העמודים כמו ב-Homebrewery, כדי ש-CSS שנכתב ל-Homebrewery יעבוד כאן. התמונות והצבעים של Homebrewery אינם בשימוש.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>הורדת PDF</value></data>
