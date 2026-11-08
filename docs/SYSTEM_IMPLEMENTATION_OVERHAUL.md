@@ -382,6 +382,17 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
    - "No problems" passes on a host that checks nothing, so a purely negative expectation `requires` the positive ones.
 2. **Values, modifiers, lists with aggregates.** Widen `FormulaContext`; add the built-in function library; move
    `derived`, AC, skills and HP onto them. The 3.5 sheet math goes green.
+   - *The evaluator, done 2026-11-08.* `Codex.Core.Rules.SheetModel` reads the sheet kinds' values, modifiers, lists and
+     keyed lists, with `modifierTypes`, `progressions`, `functions` and `conditionEffects`. `SheetRuleEngine.Evaluate`
+     runs it for a system that has sheet kinds, so its values land in `Derived` and its rules in `Violations`. Every
+     step-2 expectation passes (22 d35, 3 street, 3 crew), plus `street.emp-follows-current-humanity` (step 3), since a
+     track's current value is still a number on the sheet. The golden corpus is unchanged. Rather than widening
+     `FormulaContext`'s dictionary of doubles, the evaluator gives formulas typed parameters: numbers, strings, and
+     lists and items as `DynamicObject`s. DynamicExpresso binds member access dynamically only on a parameter whose
+     static type is one. Lambda parameters are typed by the delegate, and given overloads DynamicExpresso parses a lambda
+     against just one of them. So each aggregate has a single signature: selectors return `double?` and predicates
+     `bool?`. The behaviour this settled is in the reference README.
+   - *Moving srd5e onto it: next.* `derived`, armor class, skills and hit points as declarations, the corpus unchanged.
 3. **Tracks.** Thresholds, negative minimums, overflow, boxes and slots. HP bands for 3.5 and CPR; Blades stress/trauma
    and harm.
 4. **Rolls.** Roll definitions, the grammar extensions (pools, explode/implode, roll-under, success counting), outcomes

@@ -13,8 +13,10 @@ Each folder has a `system.yaml` in the **proposed** syntax, a pack with just eno
 expectations (`street/` also has `rules.js`, its scripted rules). The words and numbers are this project's own; no
 published text is copied (overhaul section 8 records the licences).
 
-This version reads only part of each `system.yaml` (attributes, entity types, condition names). The loader names the
-rest as keys it does not read, and `ReferenceFixtureTests` prints them. Each step of the overhaul makes more of it read.
+This version reads part of each `system.yaml`: attributes, entity types and condition names, and since step 2
+`modifierTypes`, `progressions`, `functions` (formulas), `conditionEffects` and, in each sheet kind, `values`, `modifiers`,
+`lists` and `keyedLists` (`Codex.Core.Rules.SheetModel`). The loader names the rest (tracks, layout, rolls, events, the
+campaign) as keys it does not read, and `ReferenceFixtureTests` prints them. Each step of the overhaul makes more of it read.
 
 ## How progress is tracked
 
@@ -28,7 +30,7 @@ rest as keys it does not read, and `ReferenceFixtureTests` prints them. Each ste
 - An expectation that only says what must *not* happen ("no problems", "no conditions") passes on a host that checks
   nothing. So it names, in `requires`, the expectations that show the check exists, and counts only alongside them.
 
-At step 1 nothing passes: 0 of 95.
+At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's).
 
 ## spec.yaml
 
@@ -79,6 +81,23 @@ author's reference and JSON schema (overhaul section 6), not a promise of every 
 `first`, `where`. Arithmetic is the host's: `floor`, `ceil`, `div` (integer division), `mod(score)` (the attribute
 modifier), `score(key)`, `table(rows, row, column)`, `levelFor(spell, className)`, `progression(name, level)`,
 `modifiers(target)`, `has(condition)`. A list item's properties and fields read as `item.property`.
+
+How they behave, as step 2 built them:
+- `'text'` is a string, as is `"text"`; there are no characters. Every number is a double, so `7 / 2` is 3.5; rounding
+  is `floor`, `ceil` and `div` (integer division, rounding down).
+- An item without a property reads it as null. `sum`, `min` and `max` skip it (a ring with no `maxDex` sets no cap), and
+  a predicate on it does not hold. `min` and `max` over a list take a third argument, the result when nothing is left.
+- `count(list, predicate)` counts; there is no one-argument `count`.
+- `mod(x)` is the attribute modifier of a score (`mod(dex)`) or of an attribute named by key (`mod(s.attribute)`).
+- A named function (`functions:`) takes up to four arguments and returns a number.
+- Values are worked out when first read, so their order does not matter; one that depends on itself is a formula
+  problem (a warning naming it), never a crash. A formula that fails is a warning and leaves its value out.
+- On the sheet, a modifier whose `when` reads `input.` (what only a roll has) does not hold.
+- A keyed entry reads `id` (`knowledge.arcana`), `key` (`knowledge`), its parameter (`subject`: `arcana`), `label`,
+  `attribute`, `group`, `groups`, its fields and its `derive` values. Its `value` adds the modifiers on `list.id`,
+  `list.key` and each `'@group'`.
+- The interpreter knows no .NET types: no `new`, no `typeof`, no static members, no reflection (tested in
+  `SheetModelTests`).
 
 | Section | Holds |
 |---|---|

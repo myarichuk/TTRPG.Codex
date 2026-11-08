@@ -413,6 +413,24 @@ public class SystemDefinition
     /// fields). Null means "no rules": any value goes, which is what a loose homebrew wants.</summary>
     public SheetRules? SheetRules { get; set; }
 
+    // ---- The primitives (docs/SYSTEM_IMPLEMENTATION_OVERHAUL.md, section 3); see SheetKinds.cs ----
+
+    /// <summary>The kinds of sheet the system has, each with its own values, modifiers, lists and keyed lists. Empty for a
+    /// system that only has <see cref="SheetRules"/>.</summary>
+    public List<SheetKindDefinition> SheetKinds { get; set; } = new();
+
+    /// <summary>How bonuses of one type combine on one target.</summary>
+    public ModifierTypesDefinition ModifierTypes { get; set; } = new();
+
+    /// <summary>Named per-level formulas (<c>bab.good: "level"</c>), read by <c>progression(name, level)</c>.</summary>
+    public Dictionary<string, string> Progressions { get; set; } = new();
+
+    /// <summary>Named functions, callable from any formula by name.</summary>
+    public Dictionary<string, FunctionDefinition> Functions { get; set; } = new();
+
+    /// <summary>What a condition does while it holds, by condition name.</summary>
+    public Dictionary<string, ConditionEffectDefinition> ConditionEffects { get; set; } = new();
+
     /// <summary>Translations by language tag ("ru"), filled by the loader from <c>system.&lt;locale&gt;.yaml</c> files.</summary>
     public Dictionary<string, SystemTranslation> Translations { get; set; } = new();
 

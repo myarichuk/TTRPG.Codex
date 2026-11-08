@@ -1,3 +1,35 @@
 # Reference expectations that pass today, one id per line (see README.md). ReferenceFixtureTests fails when a listed one
 # stops passing, and when one passes without being listed: add it here, and update the overhaul doc's account, in the
 # change that made it pass.
+
+# Step 2 (values, modifiers, lists with aggregates): SheetModel over the sheet kinds.
+crew.an-attribute-counts-its-actions-with-dots
+crew.load-used-is-what-was-ticked
+crew.a-light-load-holds-three
+d35.level-is-the-sum-of-class-levels
+d35.bab-sums-each-classes-own-progression
+d35.saves-sum-base-saves-then-add-ability-and-resistance
+d35.same-type-bonuses-do-not-stack-dodge-does
+d35.touch-ac-leaves-out-armor-shield-and-natural
+d35.flat-footed-ac-leaves-out-dex-and-dodge
+d35.armor-caps-dex-on-ac
+d35.dodge-bonuses-stack-and-conditions-bring-modifiers
+d35.hit-points-are-the-first-die-the-rolls-and-con-per-level
+d35.skill-points-are-four-times-over-at-first-level
+d35.skill-points-across-classes
+d35.armor-check-penalty-applies-to-strength-and-dex-skills
+d35.cross-class-points-buy-half-ranks
+d35.synergy-from-five-ranks
+d35.a-parametrised-skill-has-one-entry-per-subject
+d35.a-legal-sheet-breaks-no-rule
+d35.class-skill-ranks-are-capped-at-level-plus-three
+d35.cross-class-ranks-are-capped-at-half
+d35.skill-points-cannot-be-overspent
+d35.prestige-prerequisites-are-checked-without-the-prestige-levels
+d35.prestige-prerequisites-met
+d35.prestige-prerequisites-name-each-missing-part
+street.humanity-is-will-less-what-implants-take
+street.armor-is-per-location
+street.a-skill-is-its-stat-plus-its-level
+# Tagged step 3, passing early: a track's current value is still a number on the sheet, so a value can read it.
+street.emp-follows-current-humanity

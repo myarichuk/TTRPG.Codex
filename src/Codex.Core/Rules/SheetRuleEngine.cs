@@ -70,6 +70,10 @@ public sealed class SheetEvaluation
 {
     public Dictionary<string, object> Derived { get; } = new();
 
+    /// <summary>What the system's sheet kind worked out (<see cref="SheetModel"/>), with every modifier that reached each value;
+    /// null for a system without sheet kinds.</summary>
+    public SheetModelResult? Model { get; set; }
+
     /// <summary>For each derived value, the numbers its formula read (<c>level</c> 3, <c>dex</c> 14), so a page can show
     /// the working (<see cref="FormulaWorking"/>).</summary>
     public Dictionary<string, IReadOnlyDictionary<string, double>> DerivedInputs { get; } = new();
@@ -201,6 +205,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     public SheetEvaluation Evaluate(IReadOnlyDictionary<string, object> sheet)
     {
         var result = new SheetEvaluation();
+        if (system.SheetKinds.Count > 0) EvaluateModel(sheet, result);
         if (Rules == null) return result;
 
         EvaluateAttributes(sheet, result);
@@ -849,6 +854,24 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// <summary>Rest names any slot pool recovers on, in declaration order.</summary>
     public IReadOnlyList<string> RestNames() =>
         Rules?.SlotPools.SelectMany(p => p.RecoversOn).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? new List<string>();
+
+    // ---- The primitives (sheet kinds) ----
+
+    /// <summary>A system with sheet kinds: its values, keyed-list entries and rules (<see cref="SheetModel"/>). Numbers land in
+    /// <see cref="SheetEvaluation.Derived"/> beside the <c>derived</c> ones, whole numbers as <c>long</c>.</summary>
+    private void EvaluateModel(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
+    {
+        var model = new SheetModel(system, resolver, sheet).Evaluate();
+        result.Model = model;
+        foreach (var (key, value) in model.Values)
+        {
+            if (value is not double number) continue;
+            result.Derived[key] = number == Math.Floor(number) ? (long)number : number;
+        }
+
+        result.Violations.AddRange(model.Violations);
+        result.Warnings.AddRange(model.Warnings);
+    }
 
     // ---- Derived ----
 
