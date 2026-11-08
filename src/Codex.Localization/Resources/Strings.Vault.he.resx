@@ -33,4 +33,14 @@
   <data name="Vault.Generating" xml:space="preserve"><value>מנסח…</value></data>
   <data name="Vault.NoAi" xml:space="preserve"><value>לא הוגדר עבורך מודל AI. הוסיפו אחד בהגדרות ה־AI.</value></data>
   <data name="Vault.AiFailed" xml:space="preserve"><value>ה־AI לא הצליח לנסח דמות: {0}</value></data>
+  <data name="Vault.Data.Title" xml:space="preserve"><value>הנתונים שלכם</value></data>
+  <data name="Vault.Data.Intro" xml:space="preserve"><value>הורידו את כל מה ששלכם כקובץ zip אחד: הדמויות כאן, היומנים הפרטיים וכל קמפיין שאתם מנהלים, עם התמונות. מפתחות וסיסמאות אף פעם לא בתוכו.</value></data>
+  <data name="Vault.Data.Export" xml:space="preserve"><value>הורדת הנתונים שלי</value></data>
+  <data name="Vault.Data.Import" xml:space="preserve"><value>ייבוא דמויות</value></data>
+  <data name="Vault.Data.ImportHint" xml:space="preserve"><value>קובץ zip שהורד, או vault.json שבתוכו. הדמויות שבו נוספות כחדשות; הקיימות נשארות.</value></data>
+  <data name="Vault.Data.TooBig" xml:space="preserve"><value>הקובץ גדול מכדי לייבא אותו.</value></data>
+  <data name="Vault.Data.NotAVault" xml:space="preserve"><value>אין בקובץ הזה דמויות לייבוא.</value></data>
+  <data name="Vault.Data.Imported" xml:space="preserve"><value>דמויות שנוספו: {0}.</value></data>
+  <data name="Vault.Data.ImportedSome" xml:space="preserve"><value>דמויות שנוספו: {0}. הושמטו, כי שיטת המשחק שלהן לא בשרת הזה: {1}.</value></data>
+  <data name="Vault.Data.ImportFailed" xml:space="preserve"><value>לא ניתן היה לייבא את הדמויות: {0}</value></data>
 </root>

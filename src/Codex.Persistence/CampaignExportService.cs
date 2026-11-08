@@ -57,8 +57,9 @@ public class CampaignExportService(
             return null;
         }
 
+        // The role as the campaign stores it now, not as the page that asked loaded it: a GM made a player since gets nothing (D15).
         var campaign = await campaigns.GetAsync(access.CampaignId);
-        if (campaign == null)
+        if (campaign == null || CampaignAccessResolver.RoleOf(campaign, access.UserId) != CampaignRole.DM)
         {
             return null;
         }
@@ -312,7 +313,7 @@ public class CampaignExportService(
         }
     }
 
-    private static Dictionary<string, object> NormalizeMap(Dictionary<string, object>? map)
+    internal static Dictionary<string, object> NormalizeMap(Dictionary<string, object>? map)
     {
         map ??= new Dictionary<string, object>();
         foreach (var key in map.Keys.ToList())

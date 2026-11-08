@@ -158,6 +158,7 @@ builder.Services.AddSingleton<IActorRepository, ActorRepository>();
 builder.Services.AddSingleton<IVaultRepository, RavenVaultRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
 builder.Services.AddSingleton<AccountDeletion>();
+builder.Services.AddSingleton<PersonalExport>();
 builder.Services.AddSingleton<IServerSettingsStore, RavenServerSettingsStore>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();

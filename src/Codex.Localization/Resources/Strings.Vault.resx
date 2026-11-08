@@ -33,4 +33,14 @@
   <data name="Vault.Generating" xml:space="preserve"><value>Drafting…</value></data>
   <data name="Vault.NoAi" xml:space="preserve"><value>No AI model is set up for you. Add one under AI settings.</value></data>
   <data name="Vault.AiFailed" xml:space="preserve"><value>The AI could not draft a character: {0}</value></data>
+  <data name="Vault.Data.Title" xml:space="preserve"><value>Your data</value></data>
+  <data name="Vault.Data.Intro" xml:space="preserve"><value>Download everything of yours as one zip file: the characters here, your private journals, and every campaign you run, with its pictures. Keys and passwords are never in it.</value></data>
+  <data name="Vault.Data.Export" xml:space="preserve"><value>Download my data</value></data>
+  <data name="Vault.Data.Import" xml:space="preserve"><value>Import characters</value></data>
+  <data name="Vault.Data.ImportHint" xml:space="preserve"><value>A downloaded zip, or the vault.json inside it. Its characters are added as new ones; any you have stay.</value></data>
+  <data name="Vault.Data.TooBig" xml:space="preserve"><value>That file is too large to import.</value></data>
+  <data name="Vault.Data.NotAVault" xml:space="preserve"><value>That file holds no characters to import.</value></data>
+  <data name="Vault.Data.Imported" xml:space="preserve"><value>Characters added: {0}.</value></data>
+  <data name="Vault.Data.ImportedSome" xml:space="preserve"><value>Characters added: {0}. Left out, as their game system is not on this server: {1}.</value></data>
+  <data name="Vault.Data.ImportFailed" xml:space="preserve"><value>The characters could not be imported: {0}</value></data>
 </root>

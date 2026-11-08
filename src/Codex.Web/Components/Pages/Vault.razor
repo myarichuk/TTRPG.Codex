@@ -14,6 +14,7 @@
 @inject CampaignLibrary Library
 @inject Codex.Web.Services.VaultService VaultService
 @inject ILogger<Vault> Logger
+@inject PersonalExport Export
 @implements IDisposable
 
 @if (!string.IsNullOrEmpty(ActorId))
@@ -80,13 +81,27 @@ else
                             <div class="small-muted">@SystemName(character.SystemId ?? "")</div>
                         </div>
                         <div class="row-actions">
-    <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Vault.DeleteLabel", character.Name]" title="@L["Vault.Delete"]" OnClick="() => DeleteAsync(shown)" data-testid="vault-delete" />
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Vault.DeleteLabel", character.Name]" title="@L["Vault.Delete"]" OnClick="() => DeleteAsync(shown)" data-testid="vault-delete" />
                         </div>
                     </li>
                 }
             </ul>
         </section>
     }
+
+    @* Exporting your own data, and bringing a vault back (docs/SERVER_ACCESS_AND_VAULT.md 15). *@
+    <section class="panel mt-4" aria-labelledby="vault-data-heading" data-testid="vault-data">
+        <div class="panel-title"><h2 id="vault-data-heading" class="h5"><LucideIcon IconName="download" Size="18" Class="title-icon" /> @L["Vault.Data.Title"]</h2></div>
+        <p class="small-muted">@L["Vault.Data.Intro"]</p>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="cx-btn cx-etched cx-sm" href="/account/export" download data-testid="vault-export"><LucideIcon IconName="download" Size="14" /> @L["Vault.Data.Export"]</a>
+            <label class="cx-btn cx-etched cx-sm mb-0" aria-describedby="vault-import-hint">
+                <LucideIcon IconName="upload" Size="14" /> @L["Vault.Data.Import"]
+                <InputFile OnChange="ImportAsync" accept=".json,.zip,application/json,application/zip" class="visually-hidden" disabled="@importing" data-testid="vault-import" />
+            </label>
+        </div>
+        <p id="vault-import-hint" class="field-hint mb-0 mt-2">@L["Vault.Data.ImportHint"]</p>
+    </section>
 
     <ConfirmDialog @ref="confirm" />
 
@@ -167,6 +182,7 @@ else
     private bool aiBusy;
     private string? aiError;
     private bool aiStopped;
+    private bool importing;
 
     private List<ActorDocument> Shown => (characters ?? new()).Where(c => filter.Length == 0 || c.SystemId == filter).ToList();
 
@@ -179,6 +195,40 @@ else
         userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         characters = userId == null ? new List<ActorDocument>() : (await VaultRepo.GetAllAsync(userId)).ToList();
         aiReady = userId != null && await Ai.IsConfiguredAsync(userId);
+    }
+
+    // Adds the characters of a vault file, or of a whole export, as new ones; those of a system not on this server are left out.
+    private async Task ImportAsync(InputFileChangeEventArgs e)
+    {
+        if (userId == null || importing) return;
+        if (e.File.Size > PersonalExport.MaxImportBytes)
+        {
+            flash = Flash.Error(L["Vault.Data.TooBig"]);
+            return;
+        }
+
+        importing = true;
+        try
+        {
+            await using var stream = e.File.OpenReadStream(PersonalExport.MaxImportBytes);
+            var result = await Export.ImportVaultAsync(userId, stream, id => Catalog.LoadedSystemIds.Contains(id));
+            flash = result switch
+            {
+                null => Flash.Error(L["Vault.Data.NotAVault"]),
+                (var added, 0) => Flash.Success(L["Vault.Data.Imported", added]),
+                var (added, skipped) => Flash.Success(L["Vault.Data.ImportedSome", added, skipped])
+            };
+            characters = (await VaultRepo.GetAllAsync(userId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Importing vault characters failed");
+            flash = Flash.Error(L["Vault.Data.ImportFailed", L.Describe(ex)]);
+        }
+        finally
+        {
+            importing = false;
+        }
     }
 
     private async Task OpenNewAsync()

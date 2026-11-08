@@ -27,6 +27,29 @@ public static class AccountEndpoints
 
         // Changing language is harmless, so a plain GET (a link in the header and on the sign-in pages) is enough.
         // It sets the cookie, remembers the choice on the signed-in user, then returns to a local page.
+        // Exporting your own data (docs/SERVER_ACCESS_AND_VAULT.md 15): built in a temporary file, since a zip of pictures can be large
+        // and the response does not allow the zip writer's synchronous writes; the file goes when the response is done.
+        app.MapGet("/account/export", async (HttpContext ctx, PersonalExport export) =>
+        {
+            var userId = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Results.Unauthorized();
+            var username = ctx.User.Identity?.Name ?? "account";
+            var file = new FileStream(Path.GetTempFileName(), FileMode.Open, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+            try
+            {
+                await export.WriteAsync(userId, username, file, ctx.RequestAborted);
+                file.Position = 0;
+            }
+            catch
+            {
+                await file.DisposeAsync();
+                throw;
+            }
+
+            var name = string.Concat(username.Select(c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '_'));
+            return Results.File(file, "application/zip", $"codex-{name}-{DateTime.UtcNow:yyyy-MM-dd}.zip");
+        }).RequireAuthorization();
+
         app.MapGet("/set-culture", async (string culture, string? returnUrl, HttpContext ctx, IUserRepository users) =>
         {
             var tag = Codex.Localization.SupportedCultures.Normalize(culture);

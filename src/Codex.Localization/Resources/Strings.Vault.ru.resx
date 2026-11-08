@@ -33,4 +33,14 @@
   <data name="Vault.Generating" xml:space="preserve"><value>Набрасываю…</value></data>
   <data name="Vault.NoAi" xml:space="preserve"><value>Для вас не настроена модель ИИ. Добавьте её в настройках ИИ.</value></data>
   <data name="Vault.AiFailed" xml:space="preserve"><value>ИИ не смог набросать персонажа: {0}</value></data>
+  <data name="Vault.Data.Title" xml:space="preserve"><value>Ваши данные</value></data>
+  <data name="Vault.Data.Intro" xml:space="preserve"><value>Скачайте всё своё одним zip-файлом: персонажей отсюда, личные журналы и все кампании, которые вы ведёте, с изображениями. Ключей и паролей в нём нет.</value></data>
+  <data name="Vault.Data.Export" xml:space="preserve"><value>Скачать мои данные</value></data>
+  <data name="Vault.Data.Import" xml:space="preserve"><value>Импортировать персонажей</value></data>
+  <data name="Vault.Data.ImportHint" xml:space="preserve"><value>Скачанный zip или vault.json из него. Персонажи добавляются как новые; ваши нынешние остаются.</value></data>
+  <data name="Vault.Data.TooBig" xml:space="preserve"><value>Этот файл слишком велик для импорта.</value></data>
+  <data name="Vault.Data.NotAVault" xml:space="preserve"><value>В этом файле нет персонажей для импорта.</value></data>
+  <data name="Vault.Data.Imported" xml:space="preserve"><value>Добавлено персонажей: {0}.</value></data>
+  <data name="Vault.Data.ImportedSome" xml:space="preserve"><value>Добавлено персонажей: {0}. Пропущено, так как их системы нет на этом сервере: {1}.</value></data>
+  <data name="Vault.Data.ImportFailed" xml:space="preserve"><value>Не удалось импортировать персонажей: {0}</value></data>
 </root>
