@@ -118,5 +118,5 @@
   <data name="Admin.Accounts.Storage" xml:space="preserve"><value>Место</value></data>
   <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} из {1}</value></data>
   <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Место на учётную запись, МБ</value></data>
-  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Изображения и файлы: обложки, портреты, иллюстрации, картинки книги и копии веб-файлов книги. Всё в кампании засчитывается её владельцу, кто бы это ни добавил. Пусто — без ограничения.</value></data>
+  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Изображения и файлы: обложки, портреты, иллюстрации, картинки книги и копии веб-файлов книги. Всё в кампании засчитывается её владельцу, кто бы это ни добавил. Оставьте пустым, чтобы не ограничивать.</value></data>
 </root>

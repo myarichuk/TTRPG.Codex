@@ -82,6 +82,8 @@ public class PersonalExportTests : IClassFixture<RavenDbFixture>
         Assert.Equal(new[] { "My note" }, journals.Single().Entries.Select(e => e.Title));
 
         // The campaigns run, by owner or co-GM, each as the campaign export makes it and with its pictures; not one only played in.
+        var about = Read<JsonElement>(zip, "about.json");
+        Assert.Equal(new[] { "My Table", "Shared Table" }, about.GetProperty("Campaigns").EnumerateArray().Select(c => c.GetString()));
         Assert.Contains("campaigns/My_Table/campaign.json", names);
         Assert.Contains("campaigns/Shared_Table/campaign.json", names);
         Assert.Contains(names, n => n.StartsWith("campaigns/My_Table/images/", StringComparison.Ordinal) && n.EndsWith("cover.png", StringComparison.Ordinal));

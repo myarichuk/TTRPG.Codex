@@ -1,6 +1,6 @@
 # Server access, roles and the character vault
 
-Design agreed 2026-11-07. Steps 1 to 5 are built (11 to 14); 6 is not. It covers who may use a server and what for: the first-time setup, server roles and approval,
+Design agreed 2026-11-07. Steps 1 to 6 are built (11 to 15). It covers who may use a server and what for: the first-time setup, server roles and approval,
 co-GMs, where the server may fetch from, players' own AI keys, and characters that live outside any campaign.
 
 ## 1. What is there today
@@ -114,7 +114,7 @@ Players already bring their own key; this widens what it is for, always built fr
 3. The fetch list. Built with step 1 (11).
 4. The vault and bringing characters in. Built (13).
 5. AI: notes, character creation and tweaks in both places, the server key per role. Built (14).
-6. Storage limits, account deletion, export.
+6. Storage limits, account deletion, export. Built (15).
 
 ## 11. Step 1 as built (2026-11-07)
 
@@ -264,3 +264,37 @@ Players already bring their own key; this widens what it is for, always built fr
     an add replacing the list. Checked in the browser with a local fake model making tool calls: propose, untick one, take, save, and
     highlights.
 - **Left**: highlights are not kept on the sheet; other classes are not offered for change; requests show no step-by-step progress.
+
+## 15. Step 6 as built (2026-11-08)
+
+- **Deleting an account** (`AccountDeletion`, the admin page's delete button). A dialog lists every campaign the account owns with
+  who takes it: one of its co-GMs (the first unless the admin picks another) or the admin. **Decided**: "archived" became "passed to
+  the admin". There is no archived state for every write path to respect; the admin who takes a campaign can pass it on, export it
+  or delete it from its settings, so nothing is lost by default. A pick who is not a co-GM as stored now is not obeyed (the campaign
+  goes to the admin). The account leaves every other campaign as a player who leaves does: its characters stay in those casts and
+  its requests go. Its vault (and the requests for it), private journals, world-builder chats and book builds are deleted. The admin
+  log keeps the name as written. Order: the account is turned off first and deleted last, and a hand-over moves only a campaign its
+  owner still owns, so an attempt that stops half way is run again from the admin page. Not yourself, not the last admin.
+- **Storage limit per account** (`StorageQuota`, `StorageByCampaignIndex`, the admin's "Storage per account, in MB"; none until set).
+  **Decided**: a campaign's pictures and files count against its owner, whoever added them. Attachments record no uploader, and
+  every one sits on a document that names its campaign (or on the campaign), so this needs no migration; the owner can take away
+  what a player added. The index adds up attachment sizes from metadata over every collection, so a new document kind is counted
+  without a change. Checked on every write: covers, portraits, Library, homebrew, place and wiki art (`RavenMediaStore`), book
+  pictures (`RavenBookArtRepository`) and the book's copies of web files (`RavenBookDraftRepository`, refused as too large). A file
+  replaced counts net of the old one. AI drawing is refused before the model is paid (`ArtService.GenerateAsync`,
+  `BookArtDrawing`, which also stops a run at the limit). The reason is said: `Service.Storage.Full`, the book's "no storage left".
+  The admin page shows each account's use (and of the limit).
+- **Your data** (the vault page's panel, `GET /account/export`, `PersonalExport`): one zip of the vault (`vault.json`,
+  `codex-vault/1`), the caller's private journals (`journals.json`; the campaign export leaves them out, being each player's own),
+  and every campaign the caller is a GM of as stored (owner or co-GM), as the campaign export makes it, with its pictures (not the
+  book's: the campaign export leaves those out too). No account data, keys or passwords. "Import characters" takes the zip or its
+  `vault.json` and adds the characters as new ones, owned by the importer; those of a system the server does not have are left out.
+- **Fixed on the way**: the campaign export read the GM role from the page's access, so a GM made a player after the page loaded
+  could still download it; it reads the role as stored now. Wiki and homebrew saves said "failed" for any refused picture; a full
+  storage now says why.
+- Tests: `AccountDeletionTests` (pass-on to the picked co-GM, to the admin with none or with a pick who is no co-GM, leaving, what
+  goes and what stays, running again), `StorageQuotaTests` (owner counting, net of a replaced file, book pictures, per owner, no
+  limit), `PersonalExportTests` (contents, a demoted GM's export, the import round trip).
+- **Left**: an account cannot delete itself (the admin does); one limit for every account, no per-account override; characters
+  played in someone else's campaign are not in the export (the player copies them to the vault first); the export holds no book
+  drafts.

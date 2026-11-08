@@ -314,7 +314,7 @@ public class BookCssWebTests
     /// <summary>A site on this computer, over plain http, for the fetcher made to reach it.</summary>
     internal sealed class Site : IDisposable
     {
-        private readonly HttpListener listener = new();
+        private readonly HttpListener listener;
         private readonly Dictionary<string, Action<HttpListenerResponse>> routes = new(StringComparer.Ordinal);
         private int requests;
 
@@ -323,12 +323,27 @@ public class BookCssWebTests
 
         public Site()
         {
-            var probe = new TcpListener(IPAddress.Loopback, 0);
-            probe.Start();
-            Port = ((IPEndPoint)probe.LocalEndpoint).Port;
-            probe.Stop();
-            listener.Prefixes.Add($"http://127.0.0.1:{Port}/");
-            listener.Start();
+            // A free port is found by asking for one and letting it go, so another listener (or the socket just let go, on macOS)
+            // can still hold it when this one starts: try again on a new port rather than fail the test.
+            for (var attempt = 1; ; attempt++)
+            {
+                var probe = new TcpListener(IPAddress.Loopback, 0);
+                probe.Start();
+                Port = ((IPEndPoint)probe.LocalEndpoint).Port;
+                probe.Stop();
+                listener = new HttpListener();
+                listener.Prefixes.Add($"http://127.0.0.1:{Port}/");
+                try
+                {
+                    listener.Start();
+                    break;
+                }
+                catch (HttpListenerException) when (attempt < 10)
+                {
+                    listener.Close();
+                }
+            }
+
             _ = Task.Run(LoopAsync);
         }
 
