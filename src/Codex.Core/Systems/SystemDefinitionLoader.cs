@@ -25,12 +25,15 @@ public static class SystemDefinitionLoader
     /// (a <c>string[]</c> in <see cref="Exception.Data"/>), so a caller can list them without parsing the message.</summary>
     public const string ErrorsKey = "errors";
 
-    public static SystemDefinition Load(string path)
+    public static SystemDefinition Load(string path) => Load(path, null);
+
+    /// <param name="unknownKeys">Receives the keys the file has and this version does not read (see <see cref="UnknownYamlKeys"/>).</param>
+    public static SystemDefinition Load(string path, ICollection<string>? unknownKeys)
     {
         var yaml = File.ReadAllText(path);
         // Messages name the system's folder, not the full path: they are shown to people who don't run the server.
         var folder = Path.GetFileName(Path.GetDirectoryName(Path.GetFullPath(path)));
-        var definition = Parse(yaml, string.IsNullOrEmpty(folder) ? FileName : $"{folder}/{FileName}");
+        var definition = Parse(yaml, string.IsNullOrEmpty(folder) ? FileName : $"{folder}/{FileName}", unknownKeys);
         LoadTranslations(definition, path);
         return definition;
     }
@@ -61,7 +64,11 @@ public static class SystemDefinitionLoader
         }
     }
 
-    public static SystemDefinition Parse(string yaml, string? sourceName = null)
+    public static SystemDefinition Parse(string yaml, string? sourceName = null) => Parse(yaml, sourceName, null);
+
+    /// <param name="unknownKeys">Receives the keys the file has and this version does not read, as dotted paths. They are
+    /// ignored either way (a file written for a newer version still loads); this lets the caller say so.</param>
+    public static SystemDefinition Parse(string yaml, string? sourceName, ICollection<string>? unknownKeys)
     {
         SystemDefinition? definition;
         try
@@ -83,6 +90,11 @@ public static class SystemDefinitionLoader
         if (errors.Count > 0)
         {
             throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is invalid:\n - " + string.Join("\n - ", errors)), errors.ToArray());
+        }
+
+        if (unknownKeys != null)
+        {
+            foreach (var key in UnknownYamlKeys.Find(yaml, typeof(SystemDefinition), CamelCaseNamingConvention.Instance)) unknownKeys.Add(key);
         }
 
         return definition;

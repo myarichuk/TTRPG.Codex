@@ -48,3 +48,4 @@ dist/
 site/dist/
 site/.capture/
 site/.capture-art/
+tests/Codex.Tests/Golden/**/*.actual.txt

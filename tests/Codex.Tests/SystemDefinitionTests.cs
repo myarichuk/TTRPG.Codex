@@ -123,4 +123,77 @@ public class SystemDefinitionTests
             Assert.Empty(SystemDefinitionLoader.Validate(definition));
         }
     }
+
+    [Fact]
+    public void KeysTheModelDoesNotHave_AreNamedByTheirPath_AndTheSystemStillLoads()
+    {
+        const string yaml = """
+            id: typo
+            name: Typo
+            actorFields: [{ key: class, label: Class, type: EntityReference, targetEntityType: class }]
+            entityTypes: [{ type: class, label: Class }, { type: spell, label: Spell }]
+            resources:
+              - { key: HP, maxkey: HP_Max }
+            sheetRules:
+              hitPoint: { key: HP_Max }
+              lists:
+                - key: spells
+                  targetEntityType: spell
+                  where:
+                    - { property: level, equals: 0, mesage: "not a cantrip." }
+              slotPools:
+                - key: slots
+                  combine: { weights: { full: 1 }, roundng: up }
+            values:
+              - { key: EMP, formula: "floor(Humanity / 10)", reads: [Humanity] }
+            """;
+        var unknown = new List<string>();
+
+        var definition = SystemDefinitionLoader.Parse(yaml, null, unknown);
+
+        Assert.Equal(new[]
+        {
+            "resources[0].maxkey",
+            "sheetRules.hitPoint",
+            "sheetRules.lists[0].where[0].mesage",
+            "sheetRules.slotPools[0].combine.roundng",
+            "values" // what is under an unknown key is not listed again
+        }, unknown);
+        Assert.Equal("typo", definition.Id);
+        Assert.Null(definition.Resources[0].MaxKey);
+    }
+
+    [Fact]
+    public void MapsTakeAnyKey_ButWhatTheyHoldIsChecked()
+    {
+        // weights and armorTraining are maps: their keys are the author's own. A map of objects still checks each object.
+        const string yaml = """
+            id: maps
+            name: Maps
+            actorFields: [{ key: class, label: Class, type: EntityReference, targetEntityType: class }]
+            entityTypes: [{ type: class, label: Class }]
+            sheetRules:
+              proficiencies: { armorTraining: { light: Light, heavy: Heavy } }
+              slotPools:
+                - { key: slots, combine: { weights: { full: 1, third: 0.33 } } }
+            translations:
+              ru: { name: Карты, nmae: x }
+            """;
+        var unknown = new List<string>();
+
+        SystemDefinitionLoader.Parse(yaml, null, unknown);
+
+        Assert.Equal(new[] { "translations.ru.nmae" }, unknown);
+    }
+
+    [Fact]
+    public void ShippedSystems_HaveNoKeysTheLoaderIgnores()
+    {
+        foreach (var file in Directory.GetFiles(TestPaths.ContentRoot, SystemDefinitionLoader.FileName, SearchOption.AllDirectories))
+        {
+            var unknown = new List<string>();
+            SystemDefinitionLoader.Load(file, unknown);
+            Assert.True(unknown.Count == 0, $"{file}: {string.Join(", ", unknown)}");
+        }
+    }
 }

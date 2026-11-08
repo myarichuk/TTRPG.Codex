@@ -169,6 +169,22 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         }
     }
 
+    /// <summary>
+    /// What the sheet page runs after every edit, in its order: values copied from a newly chosen entry, attribute totals, the
+    /// evaluation, then the slot, hit point and armor class values written back onto <paramref name="sheet"/>. One place, so the
+    /// page, the tests and the golden corpus (tests/Codex.Tests/Golden) all run the same sequence.
+    /// </summary>
+    public SheetEvaluation Recompute(Dictionary<string, object> sheet)
+    {
+        ApplyInherited(sheet);
+        ApplyAttributeTotals(sheet);
+        var evaluation = Evaluate(sheet);
+        ApplySlotPools(sheet, evaluation);
+        ApplyHitPoints(sheet, evaluation);
+        ApplyArmorClass(sheet, evaluation);
+        return evaluation;
+    }
+
     public SheetEvaluation Evaluate(IReadOnlyDictionary<string, object> sheet)
     {
         var result = new SheetEvaluation();

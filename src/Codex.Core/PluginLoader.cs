@@ -155,11 +155,17 @@ public class PluginLoader(
             {
                 try
                 {
-                    var definition = SystemDefinitionLoader.Load(systemFile);
+                    var unknownKeys = new List<string>();
+                    var definition = SystemDefinitionLoader.Load(systemFile, unknownKeys);
                     if (!seen.Add(definition.Id))
                     {
                         Warn(new LoadProblem(LoadProblemSource.System, definition.Id, "duplicates an already loaded system and was ignored.", definition.Id, systemFile));
                         continue;
+                    }
+
+                    if (unknownKeys.Count > 0)
+                    {
+                        Warn(new LoadProblem(LoadProblemSource.System, definition.Id, UnknownKeysMessage(unknownKeys), definition.Id, systemFile));
                     }
 
                     logger.LogInformation("Loaded data-driven system {SystemId} from {File}", definition.Id, systemFile);
@@ -350,6 +356,18 @@ public class PluginLoader(
             plugin.RegisterComponents(registry);
             plugin.RegisterSystems(world);
         }
+    }
+
+    /// <summary>How many unknown keys a load problem names before it only counts the rest.</summary>
+    public const int UnknownKeysListed = 12;
+
+    /// <summary>One sentence for all of a system's unknown keys: a misspelt key and a section a later version reads look the same
+    /// from here, and either way the system loads without it.</summary>
+    public static string UnknownKeysMessage(IReadOnlyList<string> keys)
+    {
+        var listed = string.Join(", ", keys.Take(UnknownKeysListed));
+        var more = keys.Count > UnknownKeysListed ? $" and {keys.Count - UnknownKeysListed} more" : "";
+        return $"has keys this version does not read, which are ignored (a misspelling, or a section a newer version understands): {listed}{more}.";
     }
 
     private void Warn(LoadProblem problem)

@@ -1,0 +1,5010 @@
+# Golden srd5e corpus: what SheetRuleEngine.Recompute makes of tests/Codex.Tests/Golden/srd5e/sheets.json.
+# Generated; see Srd5eGoldenCorpusTests for how to update it. Review changes here like code.
+
+## barbarian-1
+sheet HP = 14
+sheet HP_Max = 14
+sheet armorClass = 17
+sheet cha = 11
+sheet con = 14
+sheet darkvision = 60
+sheet dex = 13
+sheet size = Medium
+sheet speciesApplied = dragonborn
+sheet speed = 30
+sheet str = 15
+sheet wis = 14
+derived initiative = 1
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={}
+attributes totals={cha: 11, con: 14, dex: 13, int: 8, str: 15, wis: 14}
+class barbarian level=1 first
+multiclass options=cleric, druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 0: 
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+hp mode=average active=true max=14 modifier=2 extra=0
+hp level 1 Barbarian d12 base=12 mod=2 extra=0 gain=14
+ac mode=auto active=true total=17
+ac line Scale Mail: 14
+ac line Dexterity: +1 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 225
+save str +4 proficient
+save dex +1
+save con +4 proficient
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +1
+skill animal-handling +4 proficient
+skill arcana -1
+skill athletics +4 proficient
+skill deception +0
+skill history -1
+skill insight +4 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +1 proficient
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 14
+passive passiveInvestigation 9
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## barbarian-11
+sheet HP = 104
+sheet HP_Max = 104
+sheet armorClass = 17
+sheet cha = 11
+sheet con = 14
+sheet darkvision = 60
+sheet dex = 13
+sheet size = Medium
+sheet speciesApplied = dragonborn
+sheet speed = 30
+sheet str = 19
+sheet wis = 14
+derived initiative = 1
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={str: 4}
+attributes totals={cha: 11, con: 14, dex: 13, int: 8, str: 19, wis: 14}
+class barbarian level=11 first subclass=path-of-the-berserker
+multiclass options=cleric, druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: path-of-the-berserker
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=104 modifier=2 extra=0
+hp level 1 Barbarian d12 base=12 mod=2 extra=0 gain=14
+hp level 2 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 3 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 4 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 5 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 6 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 7 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 8 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 9 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 10 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 11 Barbarian d12 base=7 mod=2 extra=0 gain=9
+ac mode=auto active=true total=17
+ac line Scale Mail: 14
+ac line Dexterity: +1 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 285
+save str +8 proficient
+save dex +1
+save con +6 proficient
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +1
+skill animal-handling +6 proficient
+skill arcana -1
+skill athletics +8 proficient
+skill deception +0
+skill history -1
+skill insight +6 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +3 proficient
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 16
+passive passiveInvestigation 9
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## barbarian-20
+sheet HP = 225
+sheet HP_Max = 225
+sheet armorClass = 17
+sheet cha = 11
+sheet con = 19
+sheet darkvision = 60
+sheet dex = 13
+sheet size = Medium
+sheet speciesApplied = dragonborn
+sheet speed = 30
+sheet str = 20
+sheet wis = 14
+derived initiative = 1
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={con: 5, str: 5}
+attributes totals={cha: 11, con: 19, dex: 13, int: 8, str: 20, wis: 14}
+class barbarian level=20 first subclass=path-of-the-berserker
+multiclass options=cleric, druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: path-of-the-berserker
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=225 modifier=4 extra=0
+hp level 1 Barbarian d12 base=12 mod=4 extra=0 gain=16
+hp level 2 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 3 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 4 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 5 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 6 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 7 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 8 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 9 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 10 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 11 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 12 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 13 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 14 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 15 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 16 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 17 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 18 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 19 Barbarian d12 base=7 mod=4 extra=0 gain=11
+hp level 20 Barbarian d12 base=7 mod=4 extra=0 gain=11
+ac mode=auto active=true total=17
+ac line Scale Mail: 14
+ac line Dexterity: +1 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 300
+save str +11 proficient
+save dex +1
+save con +10 proficient
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +1
+skill animal-handling +8 proficient
+skill arcana -1
+skill athletics +11 proficient
+skill deception +0
+skill history -1
+skill insight +8 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +5 proficient
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 18
+passive passiveInvestigation 9
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## barbarian-5
+sheet HP = 50
+sheet HP_Max = 50
+sheet armorClass = 17
+sheet cha = 11
+sheet con = 14
+sheet darkvision = 60
+sheet dex = 13
+sheet size = Medium
+sheet speciesApplied = dragonborn
+sheet speed = 30
+sheet str = 17
+sheet wis = 14
+derived initiative = 1
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={str: 2}
+attributes totals={cha: 11, con: 14, dex: 13, int: 8, str: 17, wis: 14}
+class barbarian level=5 first subclass=path-of-the-berserker
+multiclass options=cleric, druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: path-of-the-berserker
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=50 modifier=2 extra=0
+hp level 1 Barbarian d12 base=12 mod=2 extra=0 gain=14
+hp level 2 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 3 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 4 Barbarian d12 base=7 mod=2 extra=0 gain=9
+hp level 5 Barbarian d12 base=7 mod=2 extra=0 gain=9
+ac mode=auto active=true total=17
+ac line Scale Mail: 14
+ac line Dexterity: +1 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 255
+save str +6 proficient
+save dex +1
+save con +5 proficient
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +1
+skill animal-handling +5 proficient
+skill arcana -1
+skill athletics +6 proficient
+skill deception +0
+skill history -1
+skill insight +5 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +2 proficient
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 15
+passive passiveInvestigation 9
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## bard-1
+sheet HP = 12
+sheet HP_Max = 12
+sheet armorClass = 13
+sheet cha = 15
+sheet con = 16
+sheet darkvision = 120
+sheet dex = 14
+sheet size = Medium
+sheet slots_1 = 2
+sheet slots_1_Max = 2
+sheet speciesApplied = dwarf
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 2, dex: 1} increases={}
+attributes totals={cha: 15, con: 16, dex: 14, int: 8, str: 10, wis: 12}
+class bard level=1 first
+multiclass options=fighter, rogue, sorcerer, warlock
+allowed originFeat = 1: alert
+allowed subclass = 0: 
+list cantrips picks=2 limit=2 options=8 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=4 limit=4 options=19 missing=0
+slots slots = {1: 2}
+hp mode=average active=true max=12 modifier=3 extra=1 from Dwarf
+hp level 1 Bard d8 base=8 mod=3 extra=1 gain=12
+ac mode=auto active=true total=13
+ac line Leather Armor: 11
+ac line Dexterity: +2
+item leather-armor x1 equipped
+carried 10 of 150
+save str +0
+save dex +4 proficient
+save con +3
+save int -1
+save wis +1
+save cha +4 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana -1
+skill athletics +0
+skill deception +2
+skill history -1
+skill insight +1
+skill intimidation +2
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +2
+skill persuasion +2
+skill religion -1
+skill sleight-of-hand +4 proficient
+skill stealth +4 proficient
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Bard cha dc=12 attack=+4
+
+## bard-11
+sheet HP = 102
+sheet HP_Max = 102
+sheet armorClass = 13
+sheet cha = 19
+sheet con = 16
+sheet darkvision = 120
+sheet dex = 14
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 2
+sheet slots_5_Max = 2
+sheet slots_6 = 1
+sheet slots_6_Max = 1
+sheet speciesApplied = dwarf
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 2, dex: 1} increases={cha: 4}
+attributes totals={cha: 19, con: 16, dex: 14, int: 8, str: 10, wis: 12}
+class bard level=11 first subclass=college-of-lore
+multiclass options=fighter, rogue, sorcerer, warlock
+allowed originFeat = 1: alert
+allowed subclass = 1: college-of-lore
+list cantrips picks=4 limit=4 options=6 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=16 limit=16 options=82 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1}
+hp mode=average active=true max=102 modifier=3 extra=1 from Dwarf
+hp level 1 Bard d8 base=8 mod=3 extra=1 gain=12
+hp level 2 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 3 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 4 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 5 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 6 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 7 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 8 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 9 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 10 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 11 Bard d8 base=5 mod=3 extra=1 gain=9
+ac mode=auto active=true total=13
+ac line Leather Armor: 11
+ac line Dexterity: +2
+item leather-armor x1 equipped
+carried 10 of 150
+save str +0
+save dex +6 proficient
+save con +3
+save int -1
+save wis +1
+save cha +8 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana -1
+skill athletics +0
+skill deception +4
+skill history -1
+skill insight +1
+skill intimidation +4
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +4
+skill persuasion +4
+skill religion -1
+skill sleight-of-hand +6 proficient
+skill stealth +6 proficient
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Bard cha dc=16 attack=+8
+
+## bard-20
+sheet HP = 223
+sheet HP_Max = 223
+sheet armorClass = 13
+sheet cha = 20
+sheet con = 20
+sheet darkvision = 120
+sheet dex = 15
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 3
+sheet slots_5_Max = 3
+sheet slots_6 = 2
+sheet slots_6_Max = 2
+sheet slots_7 = 2
+sheet slots_7_Max = 2
+sheet slots_8 = 1
+sheet slots_8_Max = 1
+sheet slots_9 = 1
+sheet slots_9_Max = 1
+sheet speciesApplied = dwarf
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 2, dex: 1} increases={cha: 5, con: 4, dex: 1}
+attributes totals={cha: 20, con: 20, dex: 15, int: 8, str: 10, wis: 12}
+class bard level=20 first subclass=college-of-lore
+multiclass options=fighter, rogue, sorcerer, warlock
+allowed originFeat = 1: alert
+allowed subclass = 1: college-of-lore
+list cantrips picks=4 limit=4 options=6 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=22 limit=22 options=98 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:1,dex:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1}
+hp mode=average active=true max=223 modifier=5 extra=1 from Dwarf
+hp level 1 Bard d8 base=8 mod=5 extra=1 gain=14
+hp level 2 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 3 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 4 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 5 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 6 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 7 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 8 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 9 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 10 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 11 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 12 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 13 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 14 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 15 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 16 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 17 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 18 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 19 Bard d8 base=5 mod=5 extra=1 gain=11
+hp level 20 Bard d8 base=5 mod=5 extra=1 gain=11
+ac mode=auto active=true total=13
+ac line Leather Armor: 11
+ac line Dexterity: +2
+item leather-armor x1 equipped
+carried 10 of 150
+save str +0
+save dex +8 proficient
+save con +5
+save int -1
+save wis +1
+save cha +11 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana -1
+skill athletics +0
+skill deception +5
+skill history -1
+skill insight +1
+skill intimidation +5
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +5
+skill persuasion +5
+skill religion -1
+skill sleight-of-hand +8 proficient
+skill stealth +8 proficient
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Bard cha dc=19 attack=+11
+
+## bard-5
+sheet HP = 48
+sheet HP_Max = 48
+sheet armorClass = 13
+sheet cha = 17
+sheet con = 16
+sheet darkvision = 120
+sheet dex = 14
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 2
+sheet slots_3_Max = 2
+sheet speciesApplied = dwarf
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 2, dex: 1} increases={cha: 2}
+attributes totals={cha: 17, con: 16, dex: 14, int: 8, str: 10, wis: 12}
+class bard level=5 first subclass=college-of-lore
+multiclass options=fighter, rogue, sorcerer, warlock
+allowed originFeat = 1: alert
+allowed subclass = 1: college-of-lore
+list cantrips picks=3 limit=3 options=7 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=9 limit=9 options=54 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 2}
+hp mode=average active=true max=48 modifier=3 extra=1 from Dwarf
+hp level 1 Bard d8 base=8 mod=3 extra=1 gain=12
+hp level 2 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 3 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 4 Bard d8 base=5 mod=3 extra=1 gain=9
+hp level 5 Bard d8 base=5 mod=3 extra=1 gain=9
+ac mode=auto active=true total=13
+ac line Leather Armor: 11
+ac line Dexterity: +2
+item leather-armor x1 equipped
+carried 10 of 150
+save str +0
+save dex +5 proficient
+save con +3
+save int -1
+save wis +1
+save cha +6 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana -1
+skill athletics +0
+skill deception +3
+skill history -1
+skill insight +1
+skill intimidation +3
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +3
+skill persuasion +3
+skill religion -1
+skill sleight-of-hand +5 proficient
+skill stealth +5 proficient
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Bard cha dc=14 attack=+6
+
+## broken-cleric1
+sheet HP = 10
+sheet HP_Max = 10
+sheet armorClass = 22
+sheet cha = 11
+sheet con = 14
+sheet darkvision = 120
+sheet dex = 13
+sheet size = Medium
+sheet slots_1 = 2
+sheet slots_1_Max = 2
+sheet speciesApplied = orc
+sheet speed = 30
+sheet str = 18
+sheet wis = 17
+derived initiative = 1
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={}
+attributes totals={cha: 11, con: 14, dex: 13, int: 8, str: 18, wis: 17}
+class cleric level=1 first subclass=evoker
+multiclass options=barbarian, druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 0: 
+list cantrips picks=6 limit=3 options=2 missing=1
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=2 limit=4 options=14 missing=0
+slots slots = {1: 2}
+hp mode=average active=true max=10 modifier=2 extra=0
+hp level 1 Cleric d8 base=8 mod=2 extra=0 gain=10
+ac mode=auto active=true total=22
+ac line Plate Armor: 18
+ac line Shield: +2
+ac line Shield: +2
+item plate-armor x1 equipped
+item shield x1 equipped
+item shield x1 equipped
+carried 77 of 270
+save str +4
+save dex +1
+save con +2
+save int -1
+save wis +5 proficient
+save cha +2 proficient
+skill acrobatics +1
+skill animal-handling +3
+skill arcana -1
+skill athletics +4
+skill deception +0
+skill history +1 proficient
+skill insight +5 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +3
+skill nature -1
+skill perception +3
+skill performance +0
+skill persuasion +0
+skill religion +1 proficient
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +3
+passive passivePerception 13
+passive passiveInsight 15
+passive passiveInvestigation 9
+spellcasting Cleric wis dc=13 attack=+5
+violation attrMethod Actor.Rule.StandardArray: Standard array: assign exactly 15, 14, 13, 12, 10, 8, one score per attribute.
+violation subclass -: Subclass: Cleric gets a subclass at level 3, and you have 1.
+violation subclass Actor.Rule.Choice: Subclass: that subclass belongs to another class.
+violation cantrips Actor.Rule.Pick: Cantrips: Fire Bolt - not on your class's spell list.
+violation cantrips Actor.Rule.NotInLibrary: Cantrips: "no-such-spell" is not in the Library.
+violation cantrips Actor.Rule.Limit: Cantrips: 7 picked, but only 3 allowed at this level.
+violation spells Actor.Rule.Pick: Prepared spells: Fireball - not on your class's spell list.
+violation spells Actor.Rule.Pick: Prepared spells: Fireball - above the highest spell level you can cast.
+violation inventory Actor.Rule.OneShield: Equipment: only one shield can be carried in hand.
+warning inventory Actor.Rule.ArmorUntrained: Plate Armor: Cleric isn't trained with heavy armor. Without training you have disadvantage on checks, attacks and saves that use Strength or Dexterity, and can't cast spells.
+warning inventory Actor.Rule.ArmorStealth: Plate Armor: gives disadvantage on Stealth checks.
+
+## broken-no-class
+sheet armorClass = 9
+derived initiative = -1
+derived proficiencyBonus = 2
+attributes method=point-buy spent=0 budget=27 eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 8, con: 8, dex: 8, int: 8, str: 8, wis: 8}
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=average active=false max=0 modifier=-1 extra=0
+ac mode=auto active=true total=9
+ac line Unarmored: 9
+carried 0 of 120
+save str -1
+save dex -1
+save con -1
+save int -1
+save wis -1
+save cha -1
+skill acrobatics -1
+skill animal-handling -1
+skill arcana -1
+skill athletics -1
+skill deception -1
+skill history -1
+skill insight -1
+skill intimidation -1
+skill investigation -1
+skill medicine -1
+skill nature -1
+skill perception -1
+skill performance -1
+skill persuasion -1
+skill religion -1
+skill sleight-of-hand -1
+skill stealth -1
+skill survival -1
+passive passivePerception 9
+passive passiveInsight 9
+passive passiveInvestigation 9
+
+## cleric-1
+sheet HP = 10
+sheet HP_Max = 10
+sheet armorClass = 17
+sheet cha = 10
+sheet con = 15
+sheet darkvision = 60
+sheet dex = 13
+sheet size = Medium
+sheet slots_1 = 2
+sheet slots_1_Max = 2
+sheet speciesApplied = elf
+sheet speed = 30
+sheet str = 12
+sheet wis = 17
+derived initiative = 1
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 1, wis: 2} increases={}
+attributes totals={cha: 10, con: 15, dex: 13, int: 8, str: 12, wis: 17}
+class cleric level=1 first
+multiclass options=druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 0: 
+list cantrips picks=3 limit=3 options=4 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=4 limit=4 options=11 missing=0
+slots slots = {1: 2}
+hp mode=average active=true max=10 modifier=2 extra=0
+hp level 1 Cleric d8 base=8 mod=2 extra=0 gain=10
+ac mode=auto active=true total=17
+ac line Scale Mail: 14
+ac line Dexterity: +1 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 180
+save str +1
+save dex +1
+save con +2
+save int -1
+save wis +5 proficient
+save cha +2 proficient
+skill acrobatics +1
+skill animal-handling +3
+skill arcana +1 proficient
+skill athletics +1
+skill deception +0
+skill history +1 proficient
+skill insight +5 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +3
+skill nature -1
+skill perception +3
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +3
+passive passivePerception 13
+passive passiveInsight 15
+passive passiveInvestigation 9
+spellcasting Cleric wis dc=13 attack=+5
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## cleric-11
+sheet HP = 91
+sheet HP_Max = 91
+sheet armorClass = 17
+sheet cha = 10
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 13
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 2
+sheet slots_5_Max = 2
+sheet slots_6 = 1
+sheet slots_6_Max = 1
+sheet speciesApplied = elf
+sheet speed = 30
+sheet str = 12
+sheet wis = 20
+derived initiative = 1
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 1, wis: 2} increases={con: 1, wis: 3}
+attributes totals={cha: 10, con: 16, dex: 13, int: 8, str: 12, wis: 20}
+class cleric level=11 first subclass=life-domain
+multiclass options=druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: life-domain
+list cantrips picks=5 limit=5 options=2 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=16 limit=16 options=68 missing=0
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1}
+hp mode=average active=true max=91 modifier=3 extra=0
+hp level 1 Cleric d8 base=8 mod=3 extra=0 gain=11
+hp level 2 Cleric d8 base=5 mod=3 extra=0 gain=8
+hp level 3 Cleric d8 base=5 mod=3 extra=0 gain=8
+hp level 4 Cleric d8 base=5 mod=3 extra=0 gain=8
+hp level 5 Cleric d8 base=5 mod=3 extra=0 gain=8
+hp level 6 Cleric d8 base=5 mod=3 extra=0 gain=8
+hp level 7 Cleric d8 base=5 mod=3 extra=0 gain=8
+hp level 8 Cleric d8 base=5 mod=3 extra=0 gain=8
+hp level 9 Cleric d8 base=5 mod=3 extra=0 gain=8
+hp level 10 Cleric d8 base=5 mod=3 extra=0 gain=8
+hp level 11 Cleric d8 base=5 mod=3 extra=0 gain=8
+ac mode=auto active=true total=17
+ac line Scale Mail: 14
+ac line Dexterity: +1 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 180
+save str +1
+save dex +1
+save con +3
+save int -1
+save wis +9 proficient
+save cha +4 proficient
+skill acrobatics +1
+skill animal-handling +5
+skill arcana +3 proficient
+skill athletics +1
+skill deception +0
+skill history +3 proficient
+skill insight +9 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +5
+skill nature -1
+skill perception +5
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +5
+passive passivePerception 15
+passive passiveInsight 19
+passive passiveInvestigation 9
+spellcasting Cleric wis dc=17 attack=+9
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## cleric-20
+sheet HP = 203
+sheet HP_Max = 203
+sheet armorClass = 18
+sheet cha = 10
+sheet con = 20
+sheet darkvision = 60
+sheet dex = 15
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 3
+sheet slots_5_Max = 3
+sheet slots_6 = 2
+sheet slots_6_Max = 2
+sheet slots_7 = 2
+sheet slots_7_Max = 2
+sheet slots_8 = 1
+sheet slots_8_Max = 1
+sheet slots_9 = 1
+sheet slots_9_Max = 1
+sheet speciesApplied = elf
+sheet speed = 30
+sheet str = 12
+sheet wis = 20
+derived initiative = 2
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 1, wis: 2} increases={con: 5, dex: 2, wis: 3}
+attributes totals={cha: 10, con: 20, dex: 15, int: 8, str: 12, wis: 20}
+class cleric level=20 first subclass=life-domain
+multiclass options=druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: life-domain
+list cantrips picks=5 limit=5 options=2 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=22 limit=22 options=80 missing=0
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1}
+hp mode=average active=true max=203 modifier=5 extra=0
+hp level 1 Cleric d8 base=8 mod=5 extra=0 gain=13
+hp level 2 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 3 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 4 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 5 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 6 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 7 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 8 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 9 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 10 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 11 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 12 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 13 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 14 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 15 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 16 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 17 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 18 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 19 Cleric d8 base=5 mod=5 extra=0 gain=10
+hp level 20 Cleric d8 base=5 mod=5 extra=0 gain=10
+ac mode=auto active=true total=18
+ac line Scale Mail: 14
+ac line Dexterity: +2 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 180
+save str +1
+save dex +2
+save con +5
+save int -1
+save wis +11 proficient
+save cha +6 proficient
+skill acrobatics +2
+skill animal-handling +5
+skill arcana +5 proficient
+skill athletics +1
+skill deception +0
+skill history +5 proficient
+skill insight +11 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +5
+skill nature -1
+skill perception +5
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +5
+passive passivePerception 15
+passive passiveInsight 21
+passive passiveInvestigation 9
+spellcasting Cleric wis dc=19 attack=+11
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## cleric-5
+sheet HP = 38
+sheet HP_Max = 38
+sheet armorClass = 17
+sheet cha = 10
+sheet con = 15
+sheet darkvision = 60
+sheet dex = 13
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 2
+sheet slots_3_Max = 2
+sheet speciesApplied = elf
+sheet speed = 30
+sheet str = 12
+sheet wis = 19
+derived initiative = 1
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 1, wis: 2} increases={wis: 2}
+attributes totals={cha: 10, con: 15, dex: 13, int: 8, str: 12, wis: 19}
+class cleric level=5 first subclass=life-domain
+multiclass options=druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: life-domain
+list cantrips picks=4 limit=4 options=3 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=9 limit=9 options=42 missing=0
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 2}
+hp mode=average active=true max=38 modifier=2 extra=0
+hp level 1 Cleric d8 base=8 mod=2 extra=0 gain=10
+hp level 2 Cleric d8 base=5 mod=2 extra=0 gain=7
+hp level 3 Cleric d8 base=5 mod=2 extra=0 gain=7
+hp level 4 Cleric d8 base=5 mod=2 extra=0 gain=7
+hp level 5 Cleric d8 base=5 mod=2 extra=0 gain=7
+ac mode=auto active=true total=17
+ac line Scale Mail: 14
+ac line Dexterity: +1 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 180
+save str +1
+save dex +1
+save con +2
+save int -1
+save wis +7 proficient
+save cha +3 proficient
+skill acrobatics +1
+skill animal-handling +4
+skill arcana +2 proficient
+skill athletics +1
+skill deception +0
+skill history +2 proficient
+skill insight +7 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +4
+skill nature -1
+skill perception +4
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +4
+passive passivePerception 14
+passive passiveInsight 17
+passive passiveInvestigation 9
+spellcasting Cleric wis dc=15 attack=+7
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## creature-aboleth
+derived initiative = -1
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 18, con: 15, dex: 9, int: 18, str: 21, wis: 15}
+multiclass options=barbarian, bard, cleric, druid, fighter, paladin, sorcerer, warlock, wizard
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=2 extra=0
+ac mode=manual active=false total=9
+ac line Unarmored: 9
+carried 0 of 315
+save str +5
+save dex -1
+save con +2
+save int +4
+save wis +2
+save cha +4
+skill acrobatics -1
+skill animal-handling +2
+skill arcana +4
+skill athletics +5
+skill deception +4
+skill history +4
+skill insight +2
+skill intimidation +4
+skill investigation +4
+skill medicine +2
+skill nature +4
+skill perception +2
+skill performance +4
+skill persuasion +4
+skill religion +4
+skill sleight-of-hand -1
+skill stealth -1
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 12
+passive passiveInvestigation 14
+violation str Actor.Rule.ScoreMax: Strength: scores can't exceed 20.
+
+## creature-badger
+derived initiative = 0
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 5, con: 16, dex: 11, int: 2, str: 10, wis: 12}
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=3 extra=0
+ac mode=manual active=false total=10
+ac line Unarmored: 10
+carried 0 of 150
+save str +0
+save dex +0
+save con +3
+save int -4
+save wis +1
+save cha -3
+skill acrobatics +0
+skill animal-handling +1
+skill arcana -4
+skill athletics +0
+skill deception -3
+skill history -4
+skill insight +1
+skill intimidation -3
+skill investigation -4
+skill medicine +1
+skill nature -4
+skill perception +1
+skill performance -3
+skill persuasion -3
+skill religion -4
+skill sleight-of-hand +0
+skill stealth +0
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 6
+
+## creature-couatl
+derived initiative = 5
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 18, con: 17, dex: 20, int: 18, str: 16, wis: 20}
+multiclass options=barbarian, bard, cleric, druid, fighter, monk, paladin, ranger, rogue, sorcerer, warlock, wizard
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=3 extra=0
+ac mode=manual active=false total=15
+ac line Unarmored: 15
+carried 0 of 240
+save str +3
+save dex +5
+save con +3
+save int +4
+save wis +5
+save cha +4
+skill acrobatics +5
+skill animal-handling +5
+skill arcana +4
+skill athletics +3
+skill deception +4
+skill history +4
+skill insight +5
+skill intimidation +4
+skill investigation +4
+skill medicine +5
+skill nature +4
+skill perception +5
+skill performance +4
+skill persuasion +4
+skill religion +4
+skill sleight-of-hand +5
+skill stealth +5
+skill survival +5
+passive passivePerception 15
+passive passiveInsight 15
+passive passiveInvestigation 14
+
+## creature-ghoul
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 6, con: 10, dex: 15, int: 7, str: 13, wis: 10}
+multiclass options=barbarian, fighter, rogue
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=0 extra=0
+ac mode=manual active=false total=12
+ac line Unarmored: 12
+carried 0 of 195
+save str +1
+save dex +2
+save con +0
+save int -2
+save wis +0
+save cha -2
+skill acrobatics +2
+skill animal-handling +0
+skill arcana -2
+skill athletics +1
+skill deception -2
+skill history -2
+skill insight +0
+skill intimidation -2
+skill investigation -2
+skill medicine +0
+skill nature -2
+skill perception +0
+skill performance -2
+skill persuasion -2
+skill religion -2
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +0
+passive passivePerception 10
+passive passiveInsight 10
+passive passiveInvestigation 8
+
+## creature-gold-dragon-wyrmling
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 16, con: 17, dex: 14, int: 14, str: 19, wis: 11}
+multiclass options=barbarian, bard, fighter, paladin, rogue, sorcerer, warlock, wizard
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=3 extra=0
+ac mode=manual active=false total=12
+ac line Unarmored: 12
+carried 0 of 285
+save str +4
+save dex +2
+save con +3
+save int +2
+save wis +0
+save cha +3
+skill acrobatics +2
+skill animal-handling +0
+skill arcana +2
+skill athletics +4
+skill deception +3
+skill history +2
+skill insight +0
+skill intimidation +3
+skill investigation +2
+skill medicine +0
+skill nature +2
+skill perception +0
+skill performance +3
+skill persuasion +3
+skill religion +2
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +0
+passive passivePerception 10
+passive passiveInsight 10
+passive passiveInvestigation 12
+
+## creature-lamia
+derived initiative = 1
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 16, con: 15, dex: 13, int: 14, str: 16, wis: 15}
+multiclass options=barbarian, bard, cleric, druid, fighter, monk, paladin, ranger, rogue, sorcerer, warlock, wizard
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=2 extra=0
+ac mode=manual active=false total=11
+ac line Unarmored: 11
+carried 0 of 240
+save str +3
+save dex +1
+save con +2
+save int +2
+save wis +2
+save cha +3
+skill acrobatics +1
+skill animal-handling +2
+skill arcana +2
+skill athletics +3
+skill deception +3
+skill history +2
+skill insight +2
+skill intimidation +3
+skill investigation +2
+skill medicine +2
+skill nature +2
+skill perception +2
+skill performance +3
+skill persuasion +3
+skill religion +2
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 12
+passive passiveInvestigation 12
+
+## creature-pit-fiend
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 24, con: 24, dex: 14, int: 22, str: 26, wis: 18}
+multiclass options=barbarian, bard, cleric, druid, fighter, monk, paladin, ranger, rogue, sorcerer, warlock, wizard
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=7 extra=0
+ac mode=manual active=false total=12
+ac line Unarmored: 12
+carried 0 of 390
+save str +8
+save dex +2
+save con +7
+save int +6
+save wis +4
+save cha +7
+skill acrobatics +2
+skill animal-handling +4
+skill arcana +6
+skill athletics +8
+skill deception +7
+skill history +6
+skill insight +4
+skill intimidation +7
+skill investigation +6
+skill medicine +4
+skill nature +6
+skill perception +4
+skill performance +7
+skill persuasion +7
+skill religion +6
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +4
+passive passivePerception 14
+passive passiveInsight 14
+passive passiveInvestigation 16
+violation str Actor.Rule.ScoreMax: Strength: scores can't exceed 20.
+violation con Actor.Rule.ScoreMax: Constitution: scores can't exceed 20.
+violation int Actor.Rule.ScoreMax: Intelligence: scores can't exceed 20.
+violation cha Actor.Rule.ScoreMax: Charisma: scores can't exceed 20.
+
+## creature-specter
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 11, con: 11, dex: 14, int: 10, str: 1, wis: 10}
+multiclass options=fighter, rogue
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=0 extra=0
+ac mode=manual active=false total=12
+ac line Unarmored: 12
+carried 0 of 15
+save str -5
+save dex +2
+save con +0
+save int +0
+save wis +0
+save cha +0
+skill acrobatics +2
+skill animal-handling +0
+skill arcana +0
+skill athletics -5
+skill deception +0
+skill history +0
+skill insight +0
+skill intimidation +0
+skill investigation +0
+skill medicine +0
+skill nature +0
+skill perception +0
+skill performance +0
+skill persuasion +0
+skill religion +0
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +0
+passive passivePerception 10
+passive passiveInsight 10
+passive passiveInvestigation 10
+
+## creature-violet-fungus
+derived initiative = -5
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 1, con: 10, dex: 1, int: 1, str: 3, wis: 3}
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=0 extra=0
+ac mode=manual active=false total=5
+ac line Unarmored: 5
+carried 0 of 45
+save str -4
+save dex -5
+save con +0
+save int -5
+save wis -4
+save cha -5
+skill acrobatics -5
+skill animal-handling -4
+skill arcana -5
+skill athletics -4
+skill deception -5
+skill history -5
+skill insight -4
+skill intimidation -5
+skill investigation -5
+skill medicine -4
+skill nature -5
+skill perception -4
+skill performance -5
+skill persuasion -5
+skill religion -5
+skill sleight-of-hand -5
+skill stealth -5
+skill survival -4
+passive passivePerception 6
+passive passiveInsight 6
+passive passiveInvestigation 5
+
+## creature-young-copper-dragon
+derived initiative = 1
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[]
+attributes bonuses={} increases={}
+attributes totals={cha: 15, con: 17, dex: 12, int: 16, str: 19, wis: 13}
+multiclass options=barbarian, bard, cleric, druid, fighter, paladin, sorcerer, warlock, wizard
+allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
+allowed subclass = 0: 
+list cantrips picks=0 limit=null options=0 missing=0
+list extraOriginFeats picks=0 limit=null options=4 missing=0
+list feats picks=0 limit=null options=0 missing=0
+list fightingStyles picks=0 limit=null options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=null options=0 missing=0
+hp mode=manual active=false max=0 modifier=3 extra=0
+ac mode=manual active=false total=11
+ac line Unarmored: 11
+carried 0 of 285
+save str +4
+save dex +1
+save con +3
+save int +3
+save wis +1
+save cha +2
+skill acrobatics +1
+skill animal-handling +1
+skill arcana +3
+skill athletics +4
+skill deception +2
+skill history +3
+skill insight +1
+skill intimidation +2
+skill investigation +3
+skill medicine +1
+skill nature +3
+skill perception +1
+skill performance +2
+skill persuasion +2
+skill religion +3
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 13
+
+## druid-1
+sheet HP = 11
+sheet HP_Max = 11
+sheet armorClass = 15
+sheet cha = 10
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 14
+sheet size = Small
+sheet slots_1 = 2
+sheet slots_1_Max = 2
+sheet speciesApplied = gnome
+sheet speed = 30
+sheet str = 12
+sheet wis = 15
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 2, dex: 1} increases={}
+attributes totals={cha: 10, con: 16, dex: 14, int: 8, str: 12, wis: 15}
+class druid level=1 first
+multiclass options=cleric, fighter, monk, ranger, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 0: 
+list cantrips picks=2 limit=2 options=9 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=4 limit=4 options=14 missing=0
+slots slots = {1: 2}
+hp mode=average active=true max=11 modifier=3 extra=0
+hp level 1 Druid d8 base=8 mod=3 extra=0 gain=11
+ac mode=auto active=true total=15
+ac line Leather Armor: 11
+ac line Dexterity: +2
+ac line Shield: +2
+item leather-armor x1 equipped
+item shield x1 equipped
+carried 16 of 180
+save str +1
+save dex +2
+save con +3
+save int +1 proficient
+save wis +4 proficient
+save cha +0
+skill acrobatics +2
+skill animal-handling +4 proficient
+skill arcana +1 proficient
+skill athletics +3 proficient
+skill deception +0
+skill history -1
+skill insight +2
+skill intimidation +2 proficient
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 12
+passive passiveInvestigation 9
+spellcasting Druid wis dc=12 attack=+4
+
+## druid-11
+sheet HP = 91
+sheet HP_Max = 91
+sheet armorClass = 15
+sheet cha = 10
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 14
+sheet size = Small
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 2
+sheet slots_5_Max = 2
+sheet slots_6 = 1
+sheet slots_6_Max = 1
+sheet speciesApplied = gnome
+sheet speed = 30
+sheet str = 12
+sheet wis = 19
+derived initiative = 2
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 2, dex: 1} increases={wis: 4}
+attributes totals={cha: 10, con: 16, dex: 14, int: 8, str: 12, wis: 19}
+class druid level=11 first subclass=circle-of-the-land
+multiclass options=cleric, fighter, monk, ranger, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: circle-of-the-land
+list cantrips picks=4 limit=4 options=7 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=16 limit=16 options=79 missing=0
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1}
+hp mode=average active=true max=91 modifier=3 extra=0
+hp level 1 Druid d8 base=8 mod=3 extra=0 gain=11
+hp level 2 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 3 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 4 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 5 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 6 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 7 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 8 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 9 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 10 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 11 Druid d8 base=5 mod=3 extra=0 gain=8
+ac mode=auto active=true total=15
+ac line Leather Armor: 11
+ac line Dexterity: +2
+ac line Shield: +2
+item leather-armor x1 equipped
+item shield x1 equipped
+carried 16 of 180
+save str +1
+save dex +2
+save con +3
+save int +3 proficient
+save wis +8 proficient
+save cha +0
+skill acrobatics +2
+skill animal-handling +8 proficient
+skill arcana +3 proficient
+skill athletics +5 proficient
+skill deception +0
+skill history -1
+skill insight +4
+skill intimidation +4 proficient
+skill investigation -1
+skill medicine +4
+skill nature -1
+skill perception +4
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +4
+passive passivePerception 14
+passive passiveInsight 14
+passive passiveInvestigation 9
+spellcasting Druid wis dc=16 attack=+8
+
+## druid-20
+sheet HP = 203
+sheet HP_Max = 203
+sheet armorClass = 15
+sheet cha = 10
+sheet con = 20
+sheet darkvision = 60
+sheet dex = 15
+sheet size = Small
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 3
+sheet slots_5_Max = 3
+sheet slots_6 = 2
+sheet slots_6_Max = 2
+sheet slots_7 = 2
+sheet slots_7_Max = 2
+sheet slots_8 = 1
+sheet slots_8_Max = 1
+sheet slots_9 = 1
+sheet slots_9_Max = 1
+sheet speciesApplied = gnome
+sheet speed = 30
+sheet str = 12
+sheet wis = 20
+derived initiative = 2
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 2, dex: 1} increases={con: 4, dex: 1, wis: 5}
+attributes totals={cha: 10, con: 20, dex: 15, int: 8, str: 12, wis: 20}
+class druid level=20 first subclass=circle-of-the-land
+multiclass options=cleric, fighter, monk, ranger, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: circle-of-the-land
+list cantrips picks=4 limit=4 options=7 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=22 limit=22 options=91 missing=0
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:1,dex:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1}
+hp mode=average active=true max=203 modifier=5 extra=0
+hp level 1 Druid d8 base=8 mod=5 extra=0 gain=13
+hp level 2 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 3 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 4 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 5 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 6 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 7 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 8 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 9 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 10 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 11 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 12 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 13 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 14 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 15 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 16 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 17 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 18 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 19 Druid d8 base=5 mod=5 extra=0 gain=10
+hp level 20 Druid d8 base=5 mod=5 extra=0 gain=10
+ac mode=auto active=true total=15
+ac line Leather Armor: 11
+ac line Dexterity: +2
+ac line Shield: +2
+item leather-armor x1 equipped
+item shield x1 equipped
+carried 16 of 180
+save str +1
+save dex +2
+save con +5
+save int +5 proficient
+save wis +11 proficient
+save cha +0
+skill acrobatics +2
+skill animal-handling +11 proficient
+skill arcana +5 proficient
+skill athletics +7 proficient
+skill deception +0
+skill history -1
+skill insight +5
+skill intimidation +6 proficient
+skill investigation -1
+skill medicine +5
+skill nature -1
+skill perception +5
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +5
+passive passivePerception 15
+passive passiveInsight 15
+passive passiveInvestigation 9
+spellcasting Druid wis dc=19 attack=+11
+
+## druid-5
+sheet HP = 43
+sheet HP_Max = 43
+sheet armorClass = 15
+sheet cha = 10
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 14
+sheet size = Small
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 2
+sheet slots_3_Max = 2
+sheet speciesApplied = gnome
+sheet speed = 30
+sheet str = 12
+sheet wis = 17
+derived initiative = 2
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 2, dex: 1} increases={wis: 2}
+attributes totals={cha: 10, con: 16, dex: 14, int: 8, str: 12, wis: 17}
+class druid level=5 first subclass=circle-of-the-land
+multiclass options=cleric, fighter, monk, ranger, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: circle-of-the-land
+list cantrips picks=3 limit=3 options=8 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=9 limit=9 options=43 missing=0
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 2}
+hp mode=average active=true max=43 modifier=3 extra=0
+hp level 1 Druid d8 base=8 mod=3 extra=0 gain=11
+hp level 2 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 3 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 4 Druid d8 base=5 mod=3 extra=0 gain=8
+hp level 5 Druid d8 base=5 mod=3 extra=0 gain=8
+ac mode=auto active=true total=15
+ac line Leather Armor: 11
+ac line Dexterity: +2
+ac line Shield: +2
+item leather-armor x1 equipped
+item shield x1 equipped
+carried 16 of 180
+save str +1
+save dex +2
+save con +3
+save int +2 proficient
+save wis +6 proficient
+save cha +0
+skill acrobatics +2
+skill animal-handling +6 proficient
+skill arcana +2 proficient
+skill athletics +4 proficient
+skill deception +0
+skill history -1
+skill insight +3
+skill intimidation +3 proficient
+skill investigation -1
+skill medicine +3
+skill nature -1
+skill perception +3
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +3
+passive passivePerception 13
+passive passiveInsight 13
+passive passiveInvestigation 9
+spellcasting Druid wis dc=14 attack=+6
+
+## fighter-1
+sheet HP = 11
+sheet HP_Max = 11
+sheet armorClass = 18
+sheet cha = 11
+sheet con = 13
+sheet dex = 14
+sheet size = Medium
+sheet speciesApplied = goliath
+sheet speed = 35
+sheet str = 15
+sheet wis = 14
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={}
+attributes totals={cha: 11, con: 13, dex: 14, int: 8, str: 15, wis: 14}
+class fighter level=1 first
+multiclass options=barbarian, cleric, druid, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 0: 
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+hp mode=average active=true max=11 modifier=1 extra=0
+hp level 1 Fighter d10 base=10 mod=1 extra=0 gain=11
+ac mode=auto active=true total=18
+ac line Chain Mail: 16
+ac line Shield: +2
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 225
+save str +4 proficient
+save dex +2
+save con +3 proficient
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +4 proficient
+skill animal-handling +4 proficient
+skill arcana -1
+skill athletics +2
+skill deception +0
+skill history -1
+skill insight +4 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +1 proficient
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 14
+passive passiveInvestigation 9
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## fighter-11
+sheet HP = 81
+sheet HP_Max = 81
+sheet armorClass = 19
+sheet cha = 11
+sheet con = 13
+sheet dex = 15
+sheet size = Medium
+sheet speciesApplied = goliath
+sheet speed = 35
+sheet str = 20
+sheet wis = 14
+derived initiative = 2
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={dex: 1, str: 5}
+attributes totals={cha: 11, con: 13, dex: 15, int: 8, str: 20, wis: 14}
+class fighter level=11 first subclass=champion
+multiclass options=barbarian, cleric, druid, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: champion
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=3 limit=3 options=2 missing=0
+list fightingStyles picks=2 limit=2 options=2 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:1,dex:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=81 modifier=1 extra=0
+hp level 1 Fighter d10 base=10 mod=1 extra=0 gain=11
+hp level 2 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 3 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 4 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 5 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 6 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 7 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 8 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 9 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 10 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 11 Fighter d10 base=6 mod=1 extra=0 gain=7
+ac mode=auto active=true total=19
+ac line Chain Mail: 16
+ac line Shield: +2
+ac line Defense: +1
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 300
+save str +9 proficient
+save dex +2
+save con +5 proficient
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +6 proficient
+skill animal-handling +6 proficient
+skill arcana -1
+skill athletics +5
+skill deception +0
+skill history -1
+skill insight +6 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +3 proficient
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 16
+passive passiveInvestigation 9
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## fighter-20
+sheet HP = 184
+sheet HP_Max = 184
+sheet armorClass = 19
+sheet cha = 11
+sheet con = 16
+sheet dex = 20
+sheet size = Medium
+sheet speciesApplied = goliath
+sheet speed = 35
+sheet str = 20
+sheet wis = 14
+derived initiative = 5
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={con: 3, dex: 6, str: 5}
+attributes totals={cha: 11, con: 16, dex: 20, int: 8, str: 20, wis: 14}
+class fighter level=20 first subclass=champion
+multiclass options=barbarian, cleric, druid, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: champion
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=7 limit=7 options=9 missing=0
+list fightingStyles picks=2 limit=2 options=2 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:1,dex:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=184 modifier=3 extra=0
+hp level 1 Fighter d10 base=10 mod=3 extra=0 gain=13
+hp level 2 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 3 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 4 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 5 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 6 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 7 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 8 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 9 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 10 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 11 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 12 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 13 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 14 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 15 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 16 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 17 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 18 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 19 Fighter d10 base=6 mod=3 extra=0 gain=9
+hp level 20 Fighter d10 base=6 mod=3 extra=0 gain=9
+ac mode=auto active=true total=19
+ac line Chain Mail: 16
+ac line Shield: +2
+ac line Defense: +1
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 300
+save str +11 proficient
+save dex +5
+save con +9 proficient
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +11 proficient
+skill animal-handling +8 proficient
+skill arcana -1
+skill athletics +5
+skill deception +0
+skill history -1
+skill insight +8 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +5 proficient
+skill sleight-of-hand +5
+skill stealth +5
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 18
+passive passiveInvestigation 9
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## fighter-5
+sheet HP = 39
+sheet HP_Max = 39
+sheet armorClass = 18
+sheet cha = 11
+sheet con = 13
+sheet dex = 14
+sheet size = Medium
+sheet speciesApplied = goliath
+sheet speed = 35
+sheet str = 17
+sheet wis = 14
+derived initiative = 2
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={str: 2}
+attributes totals={cha: 11, con: 13, dex: 14, int: 8, str: 17, wis: 14}
+class fighter level=5 first subclass=champion
+multiclass options=barbarian, cleric, druid, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: champion
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=39 modifier=1 extra=0
+hp level 1 Fighter d10 base=10 mod=1 extra=0 gain=11
+hp level 2 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 3 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 4 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 5 Fighter d10 base=6 mod=1 extra=0 gain=7
+ac mode=auto active=true total=18
+ac line Chain Mail: 16
+ac line Shield: +2
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 255
+save str +6 proficient
+save dex +2
+save con +4 proficient
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +5 proficient
+skill animal-handling +5 proficient
+skill arcana -1
+skill athletics +3
+skill deception +0
+skill history -1
+skill insight +5 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +2 proficient
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 15
+passive passiveInvestigation 9
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## manual-fighter5
+sheet cha = 10
+sheet con = 13
+sheet dex = 15
+sheet size = Medium
+sheet speciesApplied = human
+sheet speed = 30
+sheet str = 19
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={dex: 1, str: 2} increases={str: 2}
+attributes totals={cha: 10, con: 13, dex: 15, int: 8, str: 19, wis: 12}
+class fighter level=5 first subclass=champion
+multiclass options=barbarian, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: champion
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=1 limit=1 options=3 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=manual active=false max=39 modifier=1 extra=0
+hp level 1 Fighter d10 base=10 mod=1 extra=0 gain=11
+hp level 2 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 3 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 4 Fighter d10 base=6 mod=1 extra=0 gain=7
+hp level 5 Fighter d10 base=6 mod=1 extra=0 gain=7
+ac mode=manual active=false total=18
+ac line Chain Mail: 16
+ac line Shield: +2
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 285
+save str +7 proficient
+save dex +2
+save con +4 proficient
+save int -1
+save wis +1
+save cha +0
+skill acrobatics +5 proficient
+skill animal-handling +4 proficient
+skill arcana -1
+skill athletics +7 proficient
+skill deception +0
+skill history -1
+skill insight +1
+skill intimidation +3 proficient
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## manual-rogue4-rolled
+sheet HP = 32
+sheet HP_Max = 32
+sheet armorClass = 15
+sheet cha = 10
+sheet con = 15
+sheet dex = 19
+sheet size = Small
+sheet speciesApplied = halfling
+sheet speed = 30
+sheet str = 12
+sheet wis = 13
+derived initiative = 4
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 1, dex: 2} increases={dex: 2}
+attributes totals={cha: 10, con: 15, dex: 19, int: 8, str: 12, wis: 13}
+class rogue level=4 first subclass=thief
+multiclass options=cleric, druid, fighter, monk, ranger
+allowed originFeat = 1: alert
+allowed subclass = 1: thief
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=rolled active=true max=32 modifier=2 extra=0
+hp level 1 Rogue d8 base=8 mod=2 extra=0 gain=10
+hp level 2 Rogue d8 base=6 rolled mod=2 extra=0 gain=8
+hp level 3 Rogue d8 base=2 rolled mod=2 extra=0 gain=4
+hp level 4 Rogue d8 base=8 rolled mod=2 extra=0 gain=10
+ac mode=auto active=true total=15
+ac line Leather Armor: 11
+ac line Dexterity: +4
+item leather-armor x1 equipped
+carried 10 of 180
+save str +1
+save dex +6 proficient
+save con +2
+save int +1 proficient
+save wis +1
+save cha +0
+skill acrobatics +6 proficient
+skill animal-handling +1
+skill arcana -1
+skill athletics +3 proficient
+skill deception +2 proficient
+skill history -1
+skill insight +3 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +6 proficient
+skill stealth +6 proficient
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 13
+passive passiveInvestigation 9
+
+## manual-wizard3-typed-scores
+sheet HP = 17
+sheet HP_Max = 17
+sheet armorClass = 14
+sheet cha = 11
+sheet con = 13
+sheet darkvision = 60
+sheet dex = 18
+sheet int = 22
+sheet size = Small
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 2
+sheet slots_2_Max = 2
+sheet speciesApplied = gnome
+sheet speed = 30
+sheet str = 7
+sheet wis = 9
+derived initiative = 4
+derived proficiencyBonus = 2
+attributes method=manual spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 1, int: 2} increases={}
+attributes totals={cha: 11, con: 13, dex: 18, int: 22, str: 7, wis: 9}
+class wizard level=3 first subclass=evoker
+multiclass options=fighter, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: evoker
+list cantrips picks=3 limit=3 options=12 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=6 limit=6 options=60 missing=0
+slots slots = {1: 4, 2: 2}
+hp mode=average active=true max=17 modifier=1 extra=0
+hp level 1 Wizard d6 base=6 mod=1 extra=0 gain=7
+hp level 2 Wizard d6 base=4 mod=1 extra=0 gain=5
+hp level 3 Wizard d6 base=4 mod=1 extra=0 gain=5
+ac mode=auto active=true total=14
+ac line Unarmored: 14
+carried 0 of 105
+save str -2
+save dex +4
+save con +1
+save int +8 proficient
+save wis +1 proficient
+save cha +0
+skill acrobatics +4
+skill animal-handling -1
+skill arcana +8 proficient
+skill athletics -2
+skill deception +0
+skill history +8 proficient
+skill insight -1
+skill intimidation +0
+skill investigation +6
+skill medicine -1
+skill nature +6
+skill perception -1
+skill performance +0
+skill persuasion +0
+skill religion +6
+skill sleight-of-hand +4
+skill stealth +4
+skill survival -1
+passive passivePerception 9
+passive passiveInsight 9
+passive passiveInvestigation 16
+spellcasting Wizard int dc=16 attack=+8
+violation int Actor.Rule.ScoreMax: Intelligence: scores can't exceed 20.
+
+## monk-1
+sheet HP = 10
+sheet HP_Max = 10
+sheet armorClass = 15
+sheet cha = 10
+sheet con = 14
+sheet dex = 17
+sheet size = Small
+sheet speciesApplied = halfling
+sheet speed = 30
+sheet str = 12
+sheet wis = 14
+derived initiative = 3
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 1, dex: 2} increases={}
+attributes totals={cha: 10, con: 14, dex: 17, int: 8, str: 12, wis: 14}
+class monk level=1 first
+multiclass options=cleric, druid, fighter, ranger, rogue
+allowed originFeat = 1: alert
+allowed subclass = 0: 
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+hp mode=average active=true max=10 modifier=2 extra=0
+hp level 1 Monk d8 base=8 mod=2 extra=0 gain=10
+ac mode=auto active=true total=15
+ac line Monk defense: 15
+carried 0 of 180
+save str +3 proficient
+save dex +5 proficient
+save con +2
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +5 proficient
+skill animal-handling +2
+skill arcana -1
+skill athletics +3 proficient
+skill deception +0
+skill history -1
+skill insight +2
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +5 proficient
+skill stealth +5 proficient
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 12
+passive passiveInvestigation 9
+
+## monk-11
+sheet HP = 80
+sheet HP_Max = 80
+sheet armorClass = 17
+sheet cha = 10
+sheet con = 14
+sheet dex = 20
+sheet size = Small
+sheet speciesApplied = halfling
+sheet speed = 30
+sheet str = 12
+sheet wis = 15
+derived initiative = 5
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 1, dex: 2} increases={dex: 3, wis: 1}
+attributes totals={cha: 10, con: 14, dex: 20, int: 8, str: 12, wis: 15}
+class monk level=11 first subclass=warrior-of-the-open-hand
+multiclass options=cleric, druid, fighter, ranger, rogue
+allowed originFeat = 1: alert
+allowed subclass = 1: warrior-of-the-open-hand
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:1,wis:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=80 modifier=2 extra=0
+hp level 1 Monk d8 base=8 mod=2 extra=0 gain=10
+hp level 2 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 3 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 4 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 5 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 6 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 7 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 8 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 9 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 10 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 11 Monk d8 base=5 mod=2 extra=0 gain=7
+ac mode=auto active=true total=17
+ac line Monk defense: 17
+carried 0 of 180
+save str +5 proficient
+save dex +9 proficient
+save con +2
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +9 proficient
+skill animal-handling +2
+skill arcana -1
+skill athletics +5 proficient
+skill deception +0
+skill history -1
+skill insight +2
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +9 proficient
+skill stealth +9 proficient
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 12
+passive passiveInvestigation 9
+
+## monk-20
+sheet HP = 143
+sheet HP_Max = 143
+sheet armorClass = 20
+sheet cha = 10
+sheet con = 15
+sheet dex = 20
+sheet size = Small
+sheet speciesApplied = halfling
+sheet speed = 30
+sheet str = 12
+sheet wis = 20
+derived initiative = 5
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 1, dex: 2} increases={con: 1, dex: 3, wis: 6}
+attributes totals={cha: 10, con: 15, dex: 20, int: 8, str: 12, wis: 20}
+class monk level=20 first subclass=warrior-of-the-open-hand
+multiclass options=cleric, druid, fighter, ranger, rogue
+allowed originFeat = 1: alert
+allowed subclass = 1: warrior-of-the-open-hand
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:1,wis:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=143 modifier=2 extra=0
+hp level 1 Monk d8 base=8 mod=2 extra=0 gain=10
+hp level 2 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 3 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 4 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 5 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 6 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 7 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 8 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 9 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 10 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 11 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 12 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 13 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 14 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 15 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 16 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 17 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 18 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 19 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 20 Monk d8 base=5 mod=2 extra=0 gain=7
+ac mode=auto active=true total=20
+ac line Monk defense: 20
+carried 0 of 180
+save str +7 proficient
+save dex +11 proficient
+save con +2
+save int -1
+save wis +5
+save cha +0
+skill acrobatics +11 proficient
+skill animal-handling +5
+skill arcana -1
+skill athletics +7 proficient
+skill deception +0
+skill history -1
+skill insight +5
+skill intimidation +0
+skill investigation -1
+skill medicine +5
+skill nature -1
+skill perception +5
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +11 proficient
+skill stealth +11 proficient
+skill survival +5
+passive passivePerception 15
+passive passiveInsight 15
+passive passiveInvestigation 9
+
+## monk-5
+sheet HP = 38
+sheet HP_Max = 38
+sheet armorClass = 16
+sheet cha = 10
+sheet con = 14
+sheet dex = 19
+sheet size = Small
+sheet speciesApplied = halfling
+sheet speed = 30
+sheet str = 12
+sheet wis = 14
+derived initiative = 4
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 1, dex: 2} increases={dex: 2}
+attributes totals={cha: 10, con: 14, dex: 19, int: 8, str: 12, wis: 14}
+class monk level=5 first subclass=warrior-of-the-open-hand
+multiclass options=cleric, druid, fighter, ranger, rogue
+allowed originFeat = 1: alert
+allowed subclass = 1: warrior-of-the-open-hand
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=38 modifier=2 extra=0
+hp level 1 Monk d8 base=8 mod=2 extra=0 gain=10
+hp level 2 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 3 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 4 Monk d8 base=5 mod=2 extra=0 gain=7
+hp level 5 Monk d8 base=5 mod=2 extra=0 gain=7
+ac mode=auto active=true total=16
+ac line Monk defense: 16
+carried 0 of 180
+save str +4 proficient
+save dex +7 proficient
+save con +2
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +7 proficient
+skill animal-handling +2
+skill arcana -1
+skill athletics +4 proficient
+skill deception +0
+skill history -1
+skill insight +2
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +7 proficient
+skill stealth +7 proficient
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 12
+passive passiveInvestigation 9
+
+## multiclass-cleric3-wizard2-fighter1
+sheet HP = 50
+sheet HP_Max = 50
+sheet armorClass = 16
+sheet cha = 9
+sheet con = 14
+sheet darkvision = 120
+sheet dex = 10
+sheet int = 13
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 2
+sheet slots_3_Max = 2
+sheet speciesApplied = dwarf
+sheet speed = 30
+sheet str = 13
+sheet wis = 17
+derived initiative = 0
+derived proficiencyBonus = 3
+attributes method=manual spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={}
+attributes totals={cha: 9, con: 14, dex: 10, int: 13, str: 13, wis: 17}
+class cleric level=3 first subclass=life-domain
+class wizard level=2
+class fighter level=1
+multiclass options=barbarian, druid
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: life-domain
+list cantrips picks=6 limit=6 options=14 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=2 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=11 limit=11 options=49 missing=0
+slots slots = {1: 4, 2: 3, 3: 2}
+hp mode=average active=true max=50 modifier=2 extra=1 from Dwarf
+hp level 1 Cleric d8 base=8 mod=2 extra=1 gain=11
+hp level 2 Cleric d8 base=5 mod=2 extra=1 gain=8
+hp level 3 Cleric d8 base=5 mod=2 extra=1 gain=8
+hp level 4 Wizard d6 base=4 mod=2 extra=1 gain=7
+hp level 5 Wizard d6 base=4 mod=2 extra=1 gain=7
+hp level 6 Fighter d10 base=6 mod=2 extra=1 gain=9
+ac mode=auto active=true total=16
+ac line Scale Mail: 14
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 195
+save str +1
+save dex +0
+save con +2
+save int +1
+save wis +6 proficient
+save cha +2 proficient
+skill acrobatics +0
+skill animal-handling +3
+skill arcana +1
+skill athletics +1
+skill deception -1
+skill history +4 proficient
+skill insight +6 proficient
+skill intimidation -1
+skill investigation +1
+skill medicine +3
+skill nature +1
+skill perception +3
+skill performance -1
+skill persuasion -1
+skill religion +4 proficient
+skill sleight-of-hand +0
+skill stealth +0
+skill survival +3
+passive passivePerception 13
+passive passiveInsight 16
+passive passiveInvestigation 11
+spellcasting Cleric wis dc=14 attack=+6
+spellcasting Wizard int dc=12 attack=+4
+violation cantrips Actor.Rule.LimitForClass: Cantrips: 5 for Wizard, but Wizard allows only 3 at this level.
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## multiclass-paladin6-sorcerer2
+sheet HP = 64
+sheet HP_Max = 64
+sheet armorClass = 18
+sheet cha = 15
+sheet con = 15
+sheet dex = 10
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 2
+sheet slots_3_Max = 2
+sheet speciesApplied = human
+sheet speed = 30
+sheet str = 19
+sheet wis = 12
+derived initiative = 0
+derived proficiencyBonus = 3
+attributes method=manual spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 1, str: 2} increases={str: 2}
+attributes totals={cha: 15, con: 15, dex: 10, int: 8, str: 19, wis: 12}
+class paladin level=6 first subclass=oath-of-devotion
+class sorcerer level=2
+multiclass options=barbarian, bard, fighter, warlock
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: oath-of-devotion
+list cantrips picks=4 limit=4 options=12 missing=0
+list extraOriginFeats picks=1 limit=1 options=3 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=10 limit=10 options=34 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 2}
+hp mode=average active=true max=64 modifier=2 extra=0
+hp level 1 Paladin d10 base=10 mod=2 extra=0 gain=12
+hp level 2 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 3 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 4 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 5 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 6 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 7 Sorcerer d6 base=4 mod=2 extra=0 gain=6
+hp level 8 Sorcerer d6 base=4 mod=2 extra=0 gain=6
+ac mode=auto active=true total=18
+ac line Chain Mail: 16
+ac line Shield: +2
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 285
+save str +4
+save dex +0
+save con +2
+save int -1
+save wis +4 proficient
+save cha +5 proficient
+skill acrobatics +0
+skill animal-handling +1
+skill arcana -1
+skill athletics +7 proficient
+skill deception +2
+skill history -1
+skill insight +4 proficient
+skill intimidation +5 proficient
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +2
+skill persuasion +2
+skill religion -1
+skill sleight-of-hand +0
+skill stealth +0
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 14
+passive passiveInvestigation 9
+spellcasting Paladin cha dc=13 attack=+5
+spellcasting Sorcerer cha dc=13 attack=+5
+violation spells Actor.Rule.LimitForClass: Prepared spells: 5 for Sorcerer, but Sorcerer allows only 4 at this level.
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## multiclass-rogue11-ranger9
+sheet HP = 212
+sheet HP_Max = 212
+sheet armorClass = 16
+sheet con = 20
+sheet darkvision = 60
+sheet dex = 20
+sheet int = 12
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 2
+sheet slots_3_Max = 2
+sheet speciesApplied = elf
+sheet speed = 30
+sheet str = 10
+sheet wis = 15
+derived initiative = 5
+derived proficiencyBonus = 6
+attributes method=manual spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 1, dex: 2} increases={con: 6, dex: 3, wis: 1}
+attributes totals={cha: 8, con: 20, dex: 20, int: 12, str: 10, wis: 15}
+class rogue level=11 first subclass=thief
+class ranger level=9 subclass=hunter
+multiclass options=cleric, druid, fighter, monk
+allowed originFeat = 1: alert
+allowed subclass = 1: thief
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=9 limit=9 options=31 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:1,wis:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 2}
+hp mode=average active=true max=212 modifier=5 extra=0
+hp level 1 Rogue d8 base=8 mod=5 extra=0 gain=13
+hp level 2 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 3 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 4 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 5 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 6 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 7 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 8 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 9 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 10 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 11 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 12 Ranger d10 base=6 mod=5 extra=0 gain=11
+hp level 13 Ranger d10 base=6 mod=5 extra=0 gain=11
+hp level 14 Ranger d10 base=6 mod=5 extra=0 gain=11
+hp level 15 Ranger d10 base=6 mod=5 extra=0 gain=11
+hp level 16 Ranger d10 base=6 mod=5 extra=0 gain=11
+hp level 17 Ranger d10 base=6 mod=5 extra=0 gain=11
+hp level 18 Ranger d10 base=6 mod=5 extra=0 gain=11
+hp level 19 Ranger d10 base=6 mod=5 extra=0 gain=11
+hp level 20 Ranger d10 base=6 mod=5 extra=0 gain=11
+ac mode=auto active=true total=16
+ac line Leather Armor: 11
+ac line Dexterity: +5
+item leather-armor x1 equipped
+carried 10 of 150
+save str +0
+save dex +11 proficient
+save con +5
+save int +7 proficient
+save wis +2
+save cha -1
+skill acrobatics +11 proficient
+skill animal-handling +2
+skill arcana +1
+skill athletics +6 proficient
+skill deception +5 proficient
+skill history +1
+skill insight +8 proficient
+skill intimidation -1
+skill investigation +1
+skill medicine +2
+skill nature +1
+skill perception +2
+skill performance -1
+skill persuasion -1
+skill religion +1
+skill sleight-of-hand +11 proficient
+skill stealth +11 proficient
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 18
+passive passiveInvestigation 11
+spellcasting Ranger wis dc=16 attack=+8
+
+## multiclass-warlock5-sorcerer3
+sheet HP = 56
+sheet HP_Max = 56
+sheet armorClass = 13
+sheet cha = 17
+sheet con = 15
+sheet darkvision = 60
+sheet dex = 14
+sheet int = 10
+sheet pact_3 = 2
+sheet pact_3_Max = 2
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 2
+sheet slots_2_Max = 2
+sheet speciesApplied = tiefling
+sheet speed = 30
+sheet wis = 13
+derived initiative = 2
+derived proficiencyBonus = 3
+attributes method=manual spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 2, wis: 1} increases={cha: 2}
+attributes totals={cha: 17, con: 15, dex: 14, int: 10, str: 8, wis: 13}
+class warlock level=5 first subclass=fiend-patron
+class sorcerer level=3 subclass=draconic-sorcery
+multiclass options=bard, cleric, druid, fighter, monk, ranger, rogue
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: fiend-patron
+list cantrips picks=7 limit=7 options=10 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=12 limit=12 options=57 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 2}
+slots pact = {3: 2}
+hp mode=average active=true max=56 modifier=2 extra=0
+hp level 1 Warlock d8 base=8 mod=2 extra=0 gain=10
+hp level 2 Warlock d8 base=5 mod=2 extra=0 gain=7
+hp level 3 Warlock d8 base=5 mod=2 extra=0 gain=7
+hp level 4 Warlock d8 base=5 mod=2 extra=0 gain=7
+hp level 5 Warlock d8 base=5 mod=2 extra=0 gain=7
+hp level 6 Sorcerer d6 base=4 mod=2 extra=0 gain=6
+hp level 7 Sorcerer d6 base=4 mod=2 extra=0 gain=6
+hp level 8 Sorcerer d6 base=4 mod=2 extra=0 gain=6
+ac mode=auto active=true total=13
+ac line Leather Armor: 11
+ac line Dexterity: +2
+item leather-armor x1 equipped
+carried 10 of 120
+save str -1
+save dex +2
+save con +2
+save int +0
+save wis +4 proficient
+save cha +6 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +3 proficient
+skill athletics -1
+skill deception +6 proficient
+skill history +3 proficient
+skill insight +1
+skill intimidation +3
+skill investigation +0
+skill medicine +1
+skill nature +0
+skill perception +1
+skill performance +3
+skill persuasion +3
+skill religion +0
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 10
+spellcasting Warlock cha dc=14 attack=+6
+spellcasting Sorcerer cha dc=14 attack=+6
+violation cantrips Actor.Rule.LimitForClass: Cantrips: 5 for Sorcerer, but Sorcerer allows only 4 at this level.
+violation spells Actor.Rule.LimitForClass: Prepared spells: 7 for Sorcerer, but Sorcerer allows only 6 at this level.
+warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+
+## paladin-1
+sheet HP = 12
+sheet HP_Max = 12
+sheet armorClass = 18
+sheet cha = 14
+sheet con = 15
+sheet dex = 12
+sheet size = Medium
+sheet slots_1 = 2
+sheet slots_1_Max = 2
+sheet speciesApplied = human
+sheet speed = 30
+sheet str = 15
+sheet wis = 11
+derived initiative = 1
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 2, wis: 1} increases={}
+attributes totals={cha: 14, con: 15, dex: 12, int: 8, str: 15, wis: 11}
+class paladin level=1 first
+multiclass options=barbarian, bard, fighter, sorcerer, warlock
+allowed originFeat = 1: magic-initiate
+allowed subclass = 0: 
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=1 limit=1 options=3 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=2 limit=2 options=11 missing=0
+slots slots = {1: 2}
+hp mode=average active=true max=12 modifier=2 extra=0
+hp level 1 Paladin d10 base=10 mod=2 extra=0 gain=12
+ac mode=auto active=true total=18
+ac line Chain Mail: 16
+ac line Shield: +2
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 225
+save str +2
+save dex +1
+save con +2
+save int -1
+save wis +2 proficient
+save cha +4 proficient
+skill acrobatics +1
+skill animal-handling +0
+skill arcana +1 proficient
+skill athletics +4 proficient
+skill deception +2
+skill history +1 proficient
+skill insight +2 proficient
+skill intimidation +2
+skill investigation -1
+skill medicine +0
+skill nature -1
+skill perception +0
+skill performance +2
+skill persuasion +2
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +0
+passive passivePerception 10
+passive passiveInsight 12
+passive passiveInvestigation 9
+spellcasting Paladin cha dc=12 attack=+4
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## paladin-11
+sheet HP = 92
+sheet HP_Max = 92
+sheet armorClass = 18
+sheet cha = 14
+sheet con = 15
+sheet dex = 12
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet speciesApplied = human
+sheet speed = 30
+sheet str = 19
+sheet wis = 11
+derived initiative = 1
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 2, wis: 1} increases={str: 4}
+attributes totals={cha: 14, con: 15, dex: 12, int: 8, str: 19, wis: 11}
+class paladin level=11 first subclass=oath-of-devotion
+multiclass options=barbarian, bard, fighter, sorcerer, warlock
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: oath-of-devotion
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=1 limit=1 options=3 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=10 limit=10 options=20 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3}
+hp mode=average active=true max=92 modifier=2 extra=0
+hp level 1 Paladin d10 base=10 mod=2 extra=0 gain=12
+hp level 2 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 3 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 4 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 5 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 6 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 7 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 8 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 9 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 10 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 11 Paladin d10 base=6 mod=2 extra=0 gain=8
+ac mode=auto active=true total=18
+ac line Chain Mail: 16
+ac line Shield: +2
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 285
+save str +4
+save dex +1
+save con +2
+save int -1
+save wis +4 proficient
+save cha +6 proficient
+skill acrobatics +1
+skill animal-handling +0
+skill arcana +3 proficient
+skill athletics +8 proficient
+skill deception +2
+skill history +3 proficient
+skill insight +4 proficient
+skill intimidation +2
+skill investigation -1
+skill medicine +0
+skill nature -1
+skill perception +0
+skill performance +2
+skill persuasion +2
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +0
+passive passivePerception 10
+passive passiveInsight 14
+passive passiveInvestigation 9
+spellcasting Paladin cha dc=14 attack=+6
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## paladin-20
+sheet HP = 164
+sheet HP_Max = 164
+sheet armorClass = 18
+sheet cha = 19
+sheet con = 15
+sheet dex = 12
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 2
+sheet slots_5_Max = 2
+sheet speciesApplied = human
+sheet speed = 30
+sheet str = 20
+sheet wis = 11
+derived initiative = 1
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 2, wis: 1} increases={cha: 5, str: 5}
+attributes totals={cha: 19, con: 15, dex: 12, int: 8, str: 20, wis: 11}
+class paladin level=20 first subclass=oath-of-devotion
+multiclass options=barbarian, bard, fighter, sorcerer, warlock
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: oath-of-devotion
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=1 limit=1 options=3 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=15 limit=15 options=23 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|str:1,cha:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 2}
+hp mode=average active=true max=164 modifier=2 extra=0
+hp level 1 Paladin d10 base=10 mod=2 extra=0 gain=12
+hp level 2 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 3 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 4 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 5 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 6 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 7 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 8 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 9 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 10 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 11 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 12 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 13 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 14 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 15 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 16 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 17 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 18 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 19 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 20 Paladin d10 base=6 mod=2 extra=0 gain=8
+ac mode=auto active=true total=18
+ac line Chain Mail: 16
+ac line Shield: +2
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 300
+save str +5
+save dex +1
+save con +2
+save int -1
+save wis +6 proficient
+save cha +10 proficient
+skill acrobatics +1
+skill animal-handling +0
+skill arcana +5 proficient
+skill athletics +11 proficient
+skill deception +4
+skill history +5 proficient
+skill insight +6 proficient
+skill intimidation +4
+skill investigation -1
+skill medicine +0
+skill nature -1
+skill perception +0
+skill performance +4
+skill persuasion +4
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +0
+passive passivePerception 10
+passive passiveInsight 16
+passive passiveInvestigation 9
+spellcasting Paladin cha dc=18 attack=+10
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## paladin-5
+sheet HP = 44
+sheet HP_Max = 44
+sheet armorClass = 18
+sheet cha = 14
+sheet con = 15
+sheet dex = 12
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 2
+sheet slots_2_Max = 2
+sheet speciesApplied = human
+sheet speed = 30
+sheet str = 17
+sheet wis = 11
+derived initiative = 1
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 2, wis: 1} increases={str: 2}
+attributes totals={cha: 14, con: 15, dex: 12, int: 8, str: 17, wis: 11}
+class paladin level=5 first subclass=oath-of-devotion
+multiclass options=barbarian, bard, fighter, sorcerer, warlock
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: oath-of-devotion
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=1 limit=1 options=3 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=6 limit=6 options=18 missing=0
+increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 2}
+hp mode=average active=true max=44 modifier=2 extra=0
+hp level 1 Paladin d10 base=10 mod=2 extra=0 gain=12
+hp level 2 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 3 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 4 Paladin d10 base=6 mod=2 extra=0 gain=8
+hp level 5 Paladin d10 base=6 mod=2 extra=0 gain=8
+ac mode=auto active=true total=18
+ac line Chain Mail: 16
+ac line Shield: +2
+item chain-mail x1 equipped
+item shield x1 equipped
+carried 61 of 255
+save str +3
+save dex +1
+save con +2
+save int -1
+save wis +3 proficient
+save cha +5 proficient
+skill acrobatics +1
+skill animal-handling +0
+skill arcana +2 proficient
+skill athletics +6 proficient
+skill deception +2
+skill history +2 proficient
+skill insight +3 proficient
+skill intimidation +2
+skill investigation -1
+skill medicine +0
+skill nature -1
+skill perception +0
+skill performance +2
+skill persuasion +2
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +0
+passive passivePerception 10
+passive passiveInsight 13
+passive passiveInvestigation 9
+spellcasting Paladin cha dc=13 attack=+5
+warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
+
+## ranger-1
+sheet HP = 12
+sheet HP_Max = 12
+sheet armorClass = 18
+sheet cha = 10
+sheet con = 14
+sheet darkvision = 120
+sheet dex = 17
+sheet size = Medium
+sheet slots_1 = 2
+sheet slots_1_Max = 2
+sheet speciesApplied = orc
+sheet speed = 30
+sheet str = 12
+sheet wis = 14
+derived initiative = 3
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 1, dex: 2} increases={}
+attributes totals={cha: 10, con: 14, dex: 17, int: 8, str: 12, wis: 14}
+class ranger level=1 first
+multiclass options=cleric, druid, fighter, monk, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 0: 
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=2 limit=2 options=11 missing=0
+slots slots = {1: 2}
+hp mode=average active=true max=12 modifier=2 extra=0
+hp level 1 Ranger d10 base=10 mod=2 extra=0 gain=12
+ac mode=auto active=true total=18
+ac line Scale Mail: 14
+ac line Dexterity: +2 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 180
+save str +3 proficient
+save dex +5 proficient
+save con +2
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +3
+skill animal-handling +4 proficient
+skill arcana -1
+skill athletics +3 proficient
+skill deception +0
+skill history -1
+skill insight +4 proficient
+skill intimidation +2 proficient
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +3
+skill stealth +3
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 14
+passive passiveInvestigation 9
+spellcasting Ranger wis dc=12 attack=+4
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## ranger-11
+sheet HP = 92
+sheet HP_Max = 92
+sheet armorClass = 18
+sheet cha = 10
+sheet con = 14
+sheet darkvision = 120
+sheet dex = 20
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet speciesApplied = orc
+sheet speed = 30
+sheet str = 12
+sheet wis = 15
+derived initiative = 5
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 1, dex: 2} increases={dex: 3, wis: 1}
+attributes totals={cha: 10, con: 14, dex: 20, int: 8, str: 12, wis: 15}
+class ranger level=11 first subclass=hunter
+multiclass options=cleric, druid, fighter, monk, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: hunter
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=10 limit=10 options=30 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:1,wis:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3}
+hp mode=average active=true max=92 modifier=2 extra=0
+hp level 1 Ranger d10 base=10 mod=2 extra=0 gain=12
+hp level 2 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 3 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 4 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 5 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 6 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 7 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 8 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 9 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 10 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 11 Ranger d10 base=6 mod=2 extra=0 gain=8
+ac mode=auto active=true total=18
+ac line Scale Mail: 14
+ac line Dexterity: +2 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 180
+save str +5 proficient
+save dex +9 proficient
+save con +2
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +5
+skill animal-handling +6 proficient
+skill arcana -1
+skill athletics +5 proficient
+skill deception +0
+skill history -1
+skill insight +6 proficient
+skill intimidation +4 proficient
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +5
+skill stealth +5
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 16
+passive passiveInvestigation 9
+spellcasting Ranger wis dc=14 attack=+6
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## ranger-20
+sheet HP = 164
+sheet HP_Max = 164
+sheet armorClass = 18
+sheet cha = 10
+sheet con = 15
+sheet darkvision = 120
+sheet dex = 20
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 2
+sheet slots_5_Max = 2
+sheet speciesApplied = orc
+sheet speed = 30
+sheet str = 12
+sheet wis = 20
+derived initiative = 5
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 1, dex: 2} increases={con: 1, dex: 3, wis: 6}
+attributes totals={cha: 10, con: 15, dex: 20, int: 8, str: 12, wis: 20}
+class ranger level=20 first subclass=hunter
+multiclass options=cleric, druid, fighter, monk, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: hunter
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=15 limit=15 options=33 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:1,wis:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|wis:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 2}
+hp mode=average active=true max=164 modifier=2 extra=0
+hp level 1 Ranger d10 base=10 mod=2 extra=0 gain=12
+hp level 2 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 3 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 4 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 5 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 6 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 7 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 8 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 9 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 10 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 11 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 12 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 13 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 14 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 15 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 16 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 17 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 18 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 19 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 20 Ranger d10 base=6 mod=2 extra=0 gain=8
+ac mode=auto active=true total=18
+ac line Scale Mail: 14
+ac line Dexterity: +2 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 180
+save str +7 proficient
+save dex +11 proficient
+save con +2
+save int -1
+save wis +5
+save cha +0
+skill acrobatics +5
+skill animal-handling +11 proficient
+skill arcana -1
+skill athletics +7 proficient
+skill deception +0
+skill history -1
+skill insight +11 proficient
+skill intimidation +6 proficient
+skill investigation -1
+skill medicine +5
+skill nature -1
+skill perception +5
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +5
+skill stealth +5
+skill survival +5
+passive passivePerception 15
+passive passiveInsight 21
+passive passiveInvestigation 9
+spellcasting Ranger wis dc=19 attack=+11
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## ranger-5
+sheet HP = 44
+sheet HP_Max = 44
+sheet armorClass = 18
+sheet cha = 10
+sheet con = 14
+sheet darkvision = 120
+sheet dex = 19
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 2
+sheet slots_2_Max = 2
+sheet speciesApplied = orc
+sheet speed = 30
+sheet str = 12
+sheet wis = 14
+derived initiative = 4
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 1, dex: 2} increases={dex: 2}
+attributes totals={cha: 10, con: 14, dex: 19, int: 8, str: 12, wis: 14}
+class ranger level=5 first subclass=hunter
+multiclass options=cleric, druid, fighter, monk, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: hunter
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=1 limit=1 options=3 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=6 limit=6 options=22 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 2}
+hp mode=average active=true max=44 modifier=2 extra=0
+hp level 1 Ranger d10 base=10 mod=2 extra=0 gain=12
+hp level 2 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 3 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 4 Ranger d10 base=6 mod=2 extra=0 gain=8
+hp level 5 Ranger d10 base=6 mod=2 extra=0 gain=8
+ac mode=auto active=true total=18
+ac line Scale Mail: 14
+ac line Dexterity: +2 (limited to +2)
+ac line Shield: +2
+item scale-mail x1 equipped
+item shield x1 equipped
+carried 51 of 180
+save str +4 proficient
+save dex +7 proficient
+save con +2
+save int -1
+save wis +2
+save cha +0
+skill acrobatics +4
+skill animal-handling +5 proficient
+skill arcana -1
+skill athletics +4 proficient
+skill deception +0
+skill history -1
+skill insight +5 proficient
+skill intimidation +3 proficient
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion -1
+skill sleight-of-hand +4
+skill stealth +4
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 15
+passive passiveInvestigation 9
+spellcasting Ranger wis dc=13 attack=+5
+warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
+
+## rogue-1
+sheet HP = 10
+sheet HP_Max = 10
+sheet armorClass = 13
+sheet cha = 11
+sheet con = 14
+sheet darkvision = 60
+sheet dex = 15
+sheet size = Medium
+sheet speciesApplied = tiefling
+sheet speed = 30
+sheet str = 12
+sheet wis = 15
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={}
+attributes totals={cha: 11, con: 14, dex: 15, int: 8, str: 12, wis: 15}
+class rogue level=1 first
+multiclass options=cleric, druid, fighter, monk, ranger
+allowed originFeat = 1: magic-initiate
+allowed subclass = 0: 
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+hp mode=average active=true max=10 modifier=2 extra=0
+hp level 1 Rogue d8 base=8 mod=2 extra=0 gain=10
+ac mode=auto active=true total=13
+ac line Leather Armor: 11
+ac line Dexterity: +2
+item leather-armor x1 equipped
+carried 10 of 180
+save str +1
+save dex +4 proficient
+save con +2
+save int +1 proficient
+save wis +2
+save cha +0
+skill acrobatics +4 proficient
+skill animal-handling +2
+skill arcana -1
+skill athletics +3 proficient
+skill deception +2 proficient
+skill history -1
+skill insight +4 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +1 proficient
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 14
+passive passiveInvestigation 9
+
+## rogue-11
+sheet HP = 80
+sheet HP_Max = 80
+sheet armorClass = 16
+sheet cha = 11
+sheet con = 15
+sheet darkvision = 60
+sheet dex = 20
+sheet size = Medium
+sheet speciesApplied = tiefling
+sheet speed = 30
+sheet str = 12
+sheet wis = 15
+derived initiative = 5
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={con: 1, dex: 5}
+attributes totals={cha: 11, con: 15, dex: 20, int: 8, str: 12, wis: 15}
+class rogue level=11 first subclass=thief
+multiclass options=cleric, druid, fighter, monk, ranger
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: thief
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=3 limit=3 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=80 modifier=2 extra=0
+hp level 1 Rogue d8 base=8 mod=2 extra=0 gain=10
+hp level 2 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 3 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 4 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 5 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 6 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 7 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 8 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 9 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 10 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 11 Rogue d8 base=5 mod=2 extra=0 gain=7
+ac mode=auto active=true total=16
+ac line Leather Armor: 11
+ac line Dexterity: +5
+item leather-armor x1 equipped
+carried 10 of 180
+save str +1
+save dex +9 proficient
+save con +2
+save int +3 proficient
+save wis +2
+save cha +0
+skill acrobatics +9 proficient
+skill animal-handling +2
+skill arcana -1
+skill athletics +5 proficient
+skill deception +4 proficient
+skill history -1
+skill insight +6 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +3 proficient
+skill sleight-of-hand +5
+skill stealth +5
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 16
+passive passiveInvestigation 9
+
+## rogue-20
+sheet HP = 203
+sheet HP_Max = 203
+sheet armorClass = 16
+sheet cha = 11
+sheet con = 20
+sheet darkvision = 60
+sheet dex = 20
+sheet size = Medium
+sheet speciesApplied = tiefling
+sheet speed = 30
+sheet str = 12
+sheet wis = 16
+derived initiative = 5
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={con: 6, dex: 5, wis: 1}
+attributes totals={cha: 11, con: 20, dex: 20, int: 8, str: 12, wis: 16}
+class rogue level=20 first subclass=thief
+multiclass options=cleric, druid, fighter, monk, ranger
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: thief
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=6 limit=6 options=9 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|dex:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:1,wis:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=203 modifier=5 extra=0
+hp level 1 Rogue d8 base=8 mod=5 extra=0 gain=13
+hp level 2 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 3 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 4 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 5 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 6 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 7 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 8 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 9 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 10 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 11 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 12 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 13 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 14 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 15 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 16 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 17 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 18 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 19 Rogue d8 base=5 mod=5 extra=0 gain=10
+hp level 20 Rogue d8 base=5 mod=5 extra=0 gain=10
+ac mode=auto active=true total=16
+ac line Leather Armor: 11
+ac line Dexterity: +5
+item leather-armor x1 equipped
+carried 10 of 180
+save str +1
+save dex +11 proficient
+save con +5
+save int +5 proficient
+save wis +3
+save cha +0
+skill acrobatics +11 proficient
+skill animal-handling +3
+skill arcana -1
+skill athletics +7 proficient
+skill deception +6 proficient
+skill history -1
+skill insight +9 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +3
+skill nature -1
+skill perception +3
+skill performance +0
+skill persuasion +0
+skill religion +5 proficient
+skill sleight-of-hand +5
+skill stealth +5
+skill survival +3
+passive passivePerception 13
+passive passiveInsight 19
+passive passiveInvestigation 9
+
+## rogue-5
+sheet HP = 38
+sheet HP_Max = 38
+sheet armorClass = 14
+sheet cha = 11
+sheet con = 14
+sheet darkvision = 60
+sheet dex = 17
+sheet size = Medium
+sheet speciesApplied = tiefling
+sheet speed = 30
+sheet str = 12
+sheet wis = 15
+derived initiative = 3
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
+attributes bonuses={cha: 1, wis: 2} increases={dex: 2}
+attributes totals={cha: 11, con: 14, dex: 17, int: 8, str: 12, wis: 15}
+class rogue level=5 first subclass=thief
+multiclass options=cleric, druid, fighter, monk, ranger
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: thief
+list cantrips picks=0 limit=0 options=0 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=0 limit=0 options=0 missing=0
+increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+hp mode=average active=true max=38 modifier=2 extra=0
+hp level 1 Rogue d8 base=8 mod=2 extra=0 gain=10
+hp level 2 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 3 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 4 Rogue d8 base=5 mod=2 extra=0 gain=7
+hp level 5 Rogue d8 base=5 mod=2 extra=0 gain=7
+ac mode=auto active=true total=14
+ac line Leather Armor: 11
+ac line Dexterity: +3
+item leather-armor x1 equipped
+carried 10 of 180
+save str +1
+save dex +6 proficient
+save con +2
+save int +2 proficient
+save wis +2
+save cha +0
+skill acrobatics +6 proficient
+skill animal-handling +2
+skill arcana -1
+skill athletics +4 proficient
+skill deception +3 proficient
+skill history -1
+skill insight +5 proficient
+skill intimidation +0
+skill investigation -1
+skill medicine +2
+skill nature -1
+skill perception +2
+skill performance +0
+skill persuasion +0
+skill religion +2 proficient
+skill sleight-of-hand +3
+skill stealth +3
+skill survival +2
+passive passivePerception 12
+passive passiveInsight 15
+passive passiveInvestigation 9
+
+## sorcerer-1
+sheet HP = 9
+sheet HP_Max = 9
+sheet armorClass = 12
+sheet cha = 15
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 14
+sheet size = Medium
+sheet slots_1 = 2
+sheet slots_1_Max = 2
+sheet speciesApplied = dragonborn
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 2, dex: 1} increases={}
+attributes totals={cha: 15, con: 16, dex: 14, int: 8, str: 10, wis: 12}
+class sorcerer level=1 first
+multiclass options=bard, fighter, rogue, warlock
+allowed originFeat = 1: alert
+allowed subclass = 0: 
+list cantrips picks=4 limit=4 options=12 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=2 limit=2 options=19 missing=0
+slots slots = {1: 2}
+hp mode=average active=true max=9 modifier=3 extra=0
+hp level 1 Sorcerer d6 base=6 mod=3 extra=0 gain=9
+ac mode=auto active=true total=12
+ac line Unarmored: 12
+carried 0 of 150
+save str +0
+save dex +2
+save con +5 proficient
+save int -1
+save wis +1
+save cha +4 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +1 proficient
+skill athletics +0
+skill deception +4 proficient
+skill history -1
+skill insight +1
+skill intimidation +2
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +2
+skill persuasion +2
+skill religion -1
+skill sleight-of-hand +4 proficient
+skill stealth +4 proficient
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Sorcerer cha dc=12 attack=+4
+
+## sorcerer-11
+sheet HP = 79
+sheet HP_Max = 79
+sheet armorClass = 12
+sheet cha = 19
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 14
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 2
+sheet slots_5_Max = 2
+sheet slots_6 = 1
+sheet slots_6_Max = 1
+sheet speciesApplied = dragonborn
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 2, dex: 1} increases={cha: 4}
+attributes totals={cha: 19, con: 16, dex: 14, int: 8, str: 10, wis: 12}
+class sorcerer level=11 first subclass=draconic-sorcery
+multiclass options=bard, fighter, rogue, warlock
+allowed originFeat = 1: alert
+allowed subclass = 1: draconic-sorcery
+list cantrips picks=6 limit=6 options=10 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=16 limit=16 options=89 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1}
+hp mode=average active=true max=79 modifier=3 extra=0
+hp level 1 Sorcerer d6 base=6 mod=3 extra=0 gain=9
+hp level 2 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 3 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 4 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 5 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 6 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 7 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 8 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 9 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 10 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 11 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+ac mode=auto active=true total=12
+ac line Unarmored: 12
+carried 0 of 150
+save str +0
+save dex +2
+save con +7 proficient
+save int -1
+save wis +1
+save cha +8 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +3 proficient
+skill athletics +0
+skill deception +8 proficient
+skill history -1
+skill insight +1
+skill intimidation +4
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +4
+skill persuasion +4
+skill religion -1
+skill sleight-of-hand +6 proficient
+skill stealth +6 proficient
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Sorcerer cha dc=16 attack=+8
+
+## sorcerer-20
+sheet HP = 182
+sheet HP_Max = 182
+sheet armorClass = 12
+sheet cha = 20
+sheet con = 20
+sheet darkvision = 60
+sheet dex = 15
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 3
+sheet slots_5_Max = 3
+sheet slots_6 = 2
+sheet slots_6_Max = 2
+sheet slots_7 = 2
+sheet slots_7_Max = 2
+sheet slots_8 = 1
+sheet slots_8_Max = 1
+sheet slots_9 = 1
+sheet slots_9_Max = 1
+sheet speciesApplied = dragonborn
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 2, dex: 1} increases={cha: 5, con: 4, dex: 1}
+attributes totals={cha: 20, con: 20, dex: 15, int: 8, str: 10, wis: 12}
+class sorcerer level=20 first subclass=draconic-sorcery
+multiclass options=bard, fighter, rogue, warlock
+allowed originFeat = 1: alert
+allowed subclass = 1: draconic-sorcery
+list cantrips picks=6 limit=6 options=10 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=22 limit=22 options=102 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:1,dex:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1}
+hp mode=average active=true max=182 modifier=5 extra=0
+hp level 1 Sorcerer d6 base=6 mod=5 extra=0 gain=11
+hp level 2 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 3 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 4 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 5 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 6 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 7 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 8 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 9 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 10 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 11 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 12 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 13 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 14 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 15 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 16 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 17 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 18 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 19 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+hp level 20 Sorcerer d6 base=4 mod=5 extra=0 gain=9
+ac mode=auto active=true total=12
+ac line Unarmored: 12
+carried 0 of 150
+save str +0
+save dex +2
+save con +11 proficient
+save int -1
+save wis +1
+save cha +11 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +5 proficient
+skill athletics +0
+skill deception +11 proficient
+skill history -1
+skill insight +1
+skill intimidation +5
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +5
+skill persuasion +5
+skill religion -1
+skill sleight-of-hand +8 proficient
+skill stealth +8 proficient
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Sorcerer cha dc=19 attack=+11
+
+## sorcerer-5
+sheet HP = 37
+sheet HP_Max = 37
+sheet armorClass = 12
+sheet cha = 17
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 14
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 2
+sheet slots_3_Max = 2
+sheet speciesApplied = dragonborn
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
+attributes bonuses={con: 2, dex: 1} increases={cha: 2}
+attributes totals={cha: 17, con: 16, dex: 14, int: 8, str: 10, wis: 12}
+class sorcerer level=5 first subclass=draconic-sorcery
+multiclass options=bard, fighter, rogue, warlock
+allowed originFeat = 1: alert
+allowed subclass = 1: draconic-sorcery
+list cantrips picks=5 limit=5 options=11 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=9 limit=9 options=60 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 2}
+hp mode=average active=true max=37 modifier=3 extra=0
+hp level 1 Sorcerer d6 base=6 mod=3 extra=0 gain=9
+hp level 2 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 3 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 4 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+hp level 5 Sorcerer d6 base=4 mod=3 extra=0 gain=7
+ac mode=auto active=true total=12
+ac line Unarmored: 12
+carried 0 of 150
+save str +0
+save dex +2
+save con +6 proficient
+save int -1
+save wis +1
+save cha +6 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +2 proficient
+skill athletics +0
+skill deception +6 proficient
+skill history -1
+skill insight +1
+skill intimidation +3
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +3
+skill persuasion +3
+skill religion -1
+skill sleight-of-hand +5 proficient
+skill stealth +5 proficient
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Sorcerer cha dc=14 attack=+6
+
+## warlock-1
+sheet HP = 12
+sheet HP_Max = 12
+sheet armorClass = 12
+sheet cha = 15
+sheet con = 16
+sheet darkvision = 120
+sheet dex = 13
+sheet pact_1 = 1
+sheet pact_1_Max = 1
+sheet size = Medium
+sheet speciesApplied = dwarf
+sheet speed = 30
+sheet str = 10
+sheet wis = 13
+derived initiative = 1
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 2, wis: 1} increases={}
+attributes totals={cha: 15, con: 16, dex: 13, int: 8, str: 10, wis: 13}
+class warlock level=1 first
+multiclass options=bard, cleric, druid, fighter, monk, ranger, rogue, sorcerer
+allowed originFeat = 1: magic-initiate
+allowed subclass = 0: 
+list cantrips picks=2 limit=2 options=5 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=2 limit=2 options=10 missing=0
+slots pact = {1: 1}
+hp mode=average active=true max=12 modifier=3 extra=1 from Dwarf
+hp level 1 Warlock d8 base=8 mod=3 extra=1 gain=12
+ac mode=auto active=true total=12
+ac line Leather Armor: 11
+ac line Dexterity: +1
+item leather-armor x1 equipped
+carried 10 of 150
+save str +0
+save dex +1
+save con +3
+save int -1
+save wis +3 proficient
+save cha +4 proficient
+skill acrobatics +1
+skill animal-handling +1
+skill arcana +1 proficient
+skill athletics +0
+skill deception +4 proficient
+skill history +1 proficient
+skill insight +1
+skill intimidation +2
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +2
+skill persuasion +2
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Warlock cha dc=12 attack=+4
+warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+
+## warlock-11
+sheet HP = 102
+sheet HP_Max = 102
+sheet armorClass = 12
+sheet cha = 19
+sheet con = 16
+sheet darkvision = 120
+sheet dex = 13
+sheet pact_5 = 3
+sheet pact_5_Max = 3
+sheet size = Medium
+sheet speciesApplied = dwarf
+sheet speed = 30
+sheet str = 10
+sheet wis = 13
+derived initiative = 1
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 2, wis: 1} increases={cha: 4}
+attributes totals={cha: 19, con: 16, dex: 13, int: 8, str: 10, wis: 13}
+class warlock level=11 first subclass=fiend-patron
+multiclass options=bard, cleric, druid, fighter, monk, ranger, rogue, sorcerer
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: fiend-patron
+list cantrips picks=4 limit=4 options=3 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=11 limit=11 options=34 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots pact = {5: 3}
+hp mode=average active=true max=102 modifier=3 extra=1 from Dwarf
+hp level 1 Warlock d8 base=8 mod=3 extra=1 gain=12
+hp level 2 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 3 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 4 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 5 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 6 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 7 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 8 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 9 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 10 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 11 Warlock d8 base=5 mod=3 extra=1 gain=9
+ac mode=auto active=true total=12
+ac line Leather Armor: 11
+ac line Dexterity: +1
+item leather-armor x1 equipped
+carried 10 of 150
+save str +0
+save dex +1
+save con +3
+save int -1
+save wis +5 proficient
+save cha +8 proficient
+skill acrobatics +1
+skill animal-handling +1
+skill arcana +3 proficient
+skill athletics +0
+skill deception +8 proficient
+skill history +3 proficient
+skill insight +1
+skill intimidation +4
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +4
+skill persuasion +4
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Warlock cha dc=16 attack=+8
+warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+
+## warlock-20
+sheet HP = 223
+sheet HP_Max = 223
+sheet armorClass = 13
+sheet cha = 20
+sheet con = 20
+sheet darkvision = 120
+sheet dex = 14
+sheet pact_5 = 4
+sheet pact_5_Max = 4
+sheet size = Medium
+sheet speciesApplied = dwarf
+sheet speed = 30
+sheet str = 10
+sheet wis = 13
+derived initiative = 2
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 2, wis: 1} increases={cha: 5, con: 4, dex: 1}
+attributes totals={cha: 20, con: 20, dex: 14, int: 8, str: 10, wis: 13}
+class warlock level=20 first subclass=fiend-patron
+multiclass options=bard, cleric, druid, fighter, monk, ranger, rogue, sorcerer
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: fiend-patron
+list cantrips picks=4 limit=4 options=3 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=15 limit=15 options=30 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|cha:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:1,dex:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots pact = {5: 4}
+hp mode=average active=true max=223 modifier=5 extra=1 from Dwarf
+hp level 1 Warlock d8 base=8 mod=5 extra=1 gain=14
+hp level 2 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 3 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 4 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 5 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 6 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 7 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 8 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 9 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 10 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 11 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 12 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 13 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 14 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 15 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 16 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 17 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 18 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 19 Warlock d8 base=5 mod=5 extra=1 gain=11
+hp level 20 Warlock d8 base=5 mod=5 extra=1 gain=11
+ac mode=auto active=true total=13
+ac line Leather Armor: 11
+ac line Dexterity: +2
+item leather-armor x1 equipped
+carried 10 of 150
+save str +0
+save dex +2
+save con +5
+save int -1
+save wis +7 proficient
+save cha +11 proficient
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +5 proficient
+skill athletics +0
+skill deception +11 proficient
+skill history +5 proficient
+skill insight +1
+skill intimidation +5
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +5
+skill persuasion +5
+skill religion -1
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Warlock cha dc=19 attack=+11
+warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+
+## warlock-5
+sheet HP = 48
+sheet HP_Max = 48
+sheet armorClass = 12
+sheet cha = 17
+sheet con = 16
+sheet darkvision = 120
+sheet dex = 13
+sheet pact_3 = 2
+sheet pact_3_Max = 2
+sheet size = Medium
+sheet speciesApplied = dwarf
+sheet speed = 30
+sheet str = 10
+sheet wis = 13
+derived initiative = 1
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
+attributes bonuses={con: 2, wis: 1} increases={cha: 2}
+attributes totals={cha: 17, con: 16, dex: 13, int: 8, str: 10, wis: 13}
+class warlock level=5 first subclass=fiend-patron
+multiclass options=bard, cleric, druid, fighter, monk, ranger, rogue, sorcerer
+allowed originFeat = 1: magic-initiate
+allowed subclass = 1: fiend-patron
+list cantrips picks=3 limit=3 options=4 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=6 limit=6 options=27 missing=0
+increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots pact = {3: 2}
+hp mode=average active=true max=48 modifier=3 extra=1 from Dwarf
+hp level 1 Warlock d8 base=8 mod=3 extra=1 gain=12
+hp level 2 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 3 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 4 Warlock d8 base=5 mod=3 extra=1 gain=9
+hp level 5 Warlock d8 base=5 mod=3 extra=1 gain=9
+ac mode=auto active=true total=12
+ac line Leather Armor: 11
+ac line Dexterity: +1
+item leather-armor x1 equipped
+carried 10 of 150
+save str +0
+save dex +1
+save con +3
+save int -1
+save wis +4 proficient
+save cha +6 proficient
+skill acrobatics +1
+skill animal-handling +1
+skill arcana +2 proficient
+skill athletics +0
+skill deception +6 proficient
+skill history +2 proficient
+skill insight +1
+skill intimidation +3
+skill investigation -1
+skill medicine +1
+skill nature -1
+skill perception +1
+skill performance +3
+skill persuasion +3
+skill religion -1
+skill sleight-of-hand +1
+skill stealth +1
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 9
+spellcasting Warlock cha dc=14 attack=+6
+warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+
+## wizard-1
+sheet HP = 9
+sheet HP_Max = 9
+sheet armorClass = 12
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 14
+sheet int = 15
+sheet size = Medium
+sheet slots_1 = 2
+sheet slots_1_Max = 2
+sheet speciesApplied = elf
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 2
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 2, dex: 1} increases={}
+attributes totals={cha: 8, con: 16, dex: 14, int: 15, str: 10, wis: 12}
+class wizard level=1 first
+multiclass options=fighter, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 0: 
+list cantrips picks=3 limit=3 options=12 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=0 limit=0 options=0 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=4 limit=4 options=26 missing=0
+slots slots = {1: 2}
+hp mode=average active=true max=9 modifier=3 extra=0
+hp level 1 Wizard d6 base=6 mod=3 extra=0 gain=9
+ac mode=auto active=true total=12
+ac line Unarmored: 12
+carried 0 of 150
+save str +0
+save dex +2
+save con +3
+save int +4 proficient
+save wis +3 proficient
+save cha -1
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +4 proficient
+skill athletics +2 proficient
+skill deception -1
+skill history +4 proficient
+skill insight +1
+skill intimidation +1 proficient
+skill investigation +2
+skill medicine +1
+skill nature +2
+skill perception +1
+skill performance -1
+skill persuasion -1
+skill religion +2
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 12
+spellcasting Wizard int dc=12 attack=+4
+
+## wizard-11
+sheet HP = 79
+sheet HP_Max = 79
+sheet armorClass = 12
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 14
+sheet int = 19
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 2
+sheet slots_5_Max = 2
+sheet slots_6 = 1
+sheet slots_6_Max = 1
+sheet speciesApplied = elf
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 4
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 2, dex: 1} increases={int: 4}
+attributes totals={cha: 8, con: 16, dex: 14, int: 19, str: 10, wis: 12}
+class wizard level=11 first subclass=evoker
+multiclass options=fighter, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: evoker
+list cantrips picks=5 limit=5 options=10 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=2 limit=2 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=16 limit=16 options=148 missing=0
+increase ability-score-improvement|int:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|int:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1}
+hp mode=average active=true max=79 modifier=3 extra=0
+hp level 1 Wizard d6 base=6 mod=3 extra=0 gain=9
+hp level 2 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 3 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 4 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 5 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 6 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 7 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 8 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 9 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 10 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 11 Wizard d6 base=4 mod=3 extra=0 gain=7
+ac mode=auto active=true total=12
+ac line Unarmored: 12
+carried 0 of 150
+save str +0
+save dex +2
+save con +3
+save int +8 proficient
+save wis +5 proficient
+save cha -1
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +8 proficient
+skill athletics +4 proficient
+skill deception -1
+skill history +8 proficient
+skill insight +1
+skill intimidation +3 proficient
+skill investigation +4
+skill medicine +1
+skill nature +4
+skill perception +1
+skill performance -1
+skill persuasion -1
+skill religion +4
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 14
+spellcasting Wizard int dc=16 attack=+8
+
+## wizard-20
+sheet HP = 182
+sheet HP_Max = 182
+sheet armorClass = 12
+sheet con = 20
+sheet darkvision = 60
+sheet dex = 15
+sheet int = 20
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 3
+sheet slots_3_Max = 3
+sheet slots_4 = 3
+sheet slots_4_Max = 3
+sheet slots_5 = 3
+sheet slots_5_Max = 3
+sheet slots_6 = 2
+sheet slots_6_Max = 2
+sheet slots_7 = 2
+sheet slots_7_Max = 2
+sheet slots_8 = 1
+sheet slots_8_Max = 1
+sheet slots_9 = 1
+sheet slots_9_Max = 1
+sheet speciesApplied = elf
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 6
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 2, dex: 1} increases={con: 4, dex: 1, int: 5}
+attributes totals={cha: 8, con: 20, dex: 15, int: 20, str: 10, wis: 12}
+class wizard level=20 first subclass=evoker
+multiclass options=fighter, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: evoker
+list cantrips picks=5 limit=5 options=10 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=5 limit=5 options=9 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=25 limit=25 options=178 missing=0
+increase ability-score-improvement|int:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|int:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|int:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+increase ability-score-improvement|con:1,dex:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1}
+hp mode=average active=true max=182 modifier=5 extra=0
+hp level 1 Wizard d6 base=6 mod=5 extra=0 gain=11
+hp level 2 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 3 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 4 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 5 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 6 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 7 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 8 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 9 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 10 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 11 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 12 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 13 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 14 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 15 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 16 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 17 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 18 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 19 Wizard d6 base=4 mod=5 extra=0 gain=9
+hp level 20 Wizard d6 base=4 mod=5 extra=0 gain=9
+ac mode=auto active=true total=12
+ac line Unarmored: 12
+carried 0 of 150
+save str +0
+save dex +2
+save con +5
+save int +11 proficient
+save wis +7 proficient
+save cha -1
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +11 proficient
+skill athletics +6 proficient
+skill deception -1
+skill history +11 proficient
+skill insight +1
+skill intimidation +5 proficient
+skill investigation +5
+skill medicine +1
+skill nature +5
+skill perception +1
+skill performance -1
+skill persuasion -1
+skill religion +5
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 15
+spellcasting Wizard int dc=19 attack=+11
+
+## wizard-5
+sheet HP = 37
+sheet HP_Max = 37
+sheet armorClass = 12
+sheet con = 16
+sheet darkvision = 60
+sheet dex = 14
+sheet int = 17
+sheet size = Medium
+sheet slots_1 = 4
+sheet slots_1_Max = 4
+sheet slots_2 = 3
+sheet slots_2_Max = 3
+sheet slots_3 = 2
+sheet slots_3_Max = 2
+sheet speciesApplied = elf
+sheet speed = 30
+sheet str = 10
+sheet wis = 12
+derived initiative = 2
+derived proficiencyBonus = 3
+attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
+attributes bonuses={con: 2, dex: 1} increases={int: 2}
+attributes totals={cha: 8, con: 16, dex: 14, int: 17, str: 10, wis: 12}
+class wizard level=5 first subclass=evoker
+multiclass options=fighter, rogue
+allowed originFeat = 1: savage-attacker
+allowed subclass = 1: evoker
+list cantrips picks=4 limit=4 options=11 missing=0
+list extraOriginFeats picks=0 limit=0 options=4 missing=0
+list feats picks=1 limit=1 options=2 missing=0
+list fightingStyles picks=0 limit=0 options=4 missing=0
+list grantedSpells picks=0 limit=null options=339 missing=0
+list spells picks=9 limit=9 options=86 missing=0
+increase ability-score-improvement|int:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
+slots slots = {1: 4, 2: 3, 3: 2}
+hp mode=average active=true max=37 modifier=3 extra=0
+hp level 1 Wizard d6 base=6 mod=3 extra=0 gain=9
+hp level 2 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 3 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 4 Wizard d6 base=4 mod=3 extra=0 gain=7
+hp level 5 Wizard d6 base=4 mod=3 extra=0 gain=7
+ac mode=auto active=true total=12
+ac line Unarmored: 12
+carried 0 of 150
+save str +0
+save dex +2
+save con +3
+save int +6 proficient
+save wis +4 proficient
+save cha -1
+skill acrobatics +2
+skill animal-handling +1
+skill arcana +6 proficient
+skill athletics +3 proficient
+skill deception -1
+skill history +6 proficient
+skill insight +1
+skill intimidation +2 proficient
+skill investigation +3
+skill medicine +1
+skill nature +3
+skill perception +1
+skill performance -1
+skill persuasion -1
+skill religion +3
+skill sleight-of-hand +2
+skill stealth +2
+skill survival +1
+passive passivePerception 11
+passive passiveInsight 11
+passive passiveInvestigation 13
+spellcasting Wizard int dc=14 attack=+6

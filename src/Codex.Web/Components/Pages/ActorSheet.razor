@@ -905,12 +905,7 @@ else
             return;
         }
 
-        engine.ApplyInherited(editSheet);
-        engine.ApplyAttributeTotals(editSheet);
-        evaluation = engine.Evaluate(editSheet);
-        engine.ApplySlotPools(editSheet, evaluation);
-        engine.ApplyHitPoints(editSheet, evaluation);
-        engine.ApplyArmorClass(editSheet, evaluation);
+        evaluation = engine.Recompute(editSheet);
         fieldOptions = evaluation.AllowedOptions.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, Nm(e)!)).ToList());
