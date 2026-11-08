@@ -847,6 +847,7 @@
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Ashen Vellum</value></data>
   <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (layout only)</value></data>
   <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(not in this language)</value></data>
+  <data name="Campaign.Book.Art.Draw.Guide" xml:space="preserve"><value>Your picture style from AI settings is used for every picture, in place of the choices below:</value></data>
   <data name="Campaign.Book.Credit" xml:space="preserve"><value>Pages made with the awesome {0}</value></data>
   <data name="Campaign.Book.Theme.Empty" xml:space="preserve"><value>Paste the theme's stylesheet first.</value></data>
   <data name="Campaign.Book.Theme.Title" xml:space="preserve"><value>Bring in a theme</value></data>

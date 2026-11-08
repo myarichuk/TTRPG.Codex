@@ -110,6 +110,13 @@
   <data name="Page.About.DatabaseBackupsNotLicensed" xml:space="preserve"><value>The database's own backups are off: its free licence does not allow them. The daily backup above is the one to rely on.</value></data>
   <data name="Page.About.DatabaseBackupsFailed" xml:space="preserve"><value>The database's own backups could not be set up (see the server log). The daily backup above still runs.</value></data>
   <data name="Page.About.DatabaseBackupsUnknown" xml:space="preserve"><value>The database's own backups have not been checked yet.</value></data>
+  <data name="Page.AiSettings.ImageStyle" xml:space="preserve"><value>Picture style</value></data>
+  <data name="Page.AiSettings.ImageStyleHint" xml:space="preserve"><value>Your own words for how every picture you draw should look: portraits, places, the book's art. They go into every picture's prompt as you write them, in place of the built-in style. Name any look you like.</value></data>
+  <data name="Page.AiSettings.ImageStylePlaceholder" xml:space="preserve"><value>e.g. painterly concept art, chunky stylized shapes, saturated colours, visible brush texture</value></data>
+  <data name="Page.AiSettings.ImageStyleTip" xml:space="preserve"><value>Pictures look alike when they are drawn with the same image model and the same words. Leave empty for the built-in style.</value></data>
+  <data name="Page.AiSettings.ImageStyleSave" xml:space="preserve"><value>Save style</value></data>
+  <data name="Page.AiSettings.ImageStyleSaved" xml:space="preserve"><value>Picture style saved.</value></data>
+  <data name="Page.AiSettings.ImageStyleCleared" xml:space="preserve"><value>Picture style cleared: the built-in style is used.</value></data>
   <data name="Page.About.Software" xml:space="preserve"><value>Software</value></data>
   <data name="Page.Campaign.Fallback" xml:space="preserve"><value>Campaign</value></data>
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>Campaign not found</value></data>

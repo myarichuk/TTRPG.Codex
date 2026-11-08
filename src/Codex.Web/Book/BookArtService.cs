@@ -22,7 +22,8 @@ public sealed record BookTraySuggestion(string Depicts, string Visual, string Mo
 /// <summary>A chapter's slots, in book order: its header first, then its entries.</summary>
 public sealed record BookTrayChapter(string Id, string Title, IReadOnlyList<BookTraySlot> Slots);
 
-public sealed record BookTray(string Edition, BookTraySlot Cover, IReadOnlyList<BookTrayChapter> Chapters, BookArtStyle Style);
+/// <param name="Guide">The GM's own style guide (41.23), used in place of <paramref name="Style"/> when set.</param>
+public sealed record BookTray(string Edition, BookTraySlot Cover, IReadOnlyList<BookTrayChapter> Chapters, BookArtStyle Style, string? Guide = null);
 
 public enum BookArtUpload
 {
@@ -41,7 +42,7 @@ public enum BookArtUpload
 /// in one. A key posted from the page is never trusted: the edition's slots are made again from its source and the key must be one of them, so
 /// a picture cannot be filed under a party slot the party edition does not have, and the picture is tagged with the edition it was put in.
 /// </summary>
-public sealed class BookArtService(BookSourceReader reader, IBookArtRepository store, ICampaignAccessResolver resolver)
+public sealed class BookArtService(BookSourceReader reader, IBookArtRepository store, ICampaignAccessResolver resolver, IBookImages? images = null)
 {
     private static BookAudience? Audience(string edition) => edition switch { "dm" => BookAudience.Dm, "party" => BookAudience.Party, _ => null };
 
@@ -66,6 +67,7 @@ public sealed class BookArtService(BookSourceReader reader, IBookArtRepository s
         var outline = suggested.Count == 0 && !pictures.Values.Any(p => p.Origin == "drawn") ? new Dictionary<string, BookOutlineSlot>()
             : BookArtOutline.For(made.Source, made.Compiled, made.Entries, made.Slots).SelectMany(c => c.Slots).ToDictionary(o => o.Slot.Key, StringComparer.Ordinal);
         var style = BookArtStyles.Normalize(stored?.Style);
+        var guide = images == null ? null : await images.StyleAsync(made.Dm.UserId);
 
         BookTraySlot Row(BookSlot slot)
         {
@@ -74,7 +76,7 @@ public sealed class BookArtService(BookSourceReader reader, IBookArtRepository s
             var drawn = pictures.TryGetValue(slot.Key, out var picture) && picture.Origin == "drawn"
                 // Drawn from an older text when its suggestion is; from an older mood or style when the same visual would hash differently now.
                 ? new BookTrayDrawn(picture.Visual ?? string.Empty, idea == null || idea.Stale || here == null
-                    || BookArtDrawing.InputsOf(here.Kind, picture.Visual ?? string.Empty, x!.Mood, style) != picture.Inputs)
+                    || BookArtDrawing.InputsOf(here.Kind, picture.Visual ?? string.Empty, x!.Mood, style, guide) != picture.Inputs)
                 : null;
             return new(slot.Key, slot.Kind, slot.Section, slot.Label,
                 slot.Kind == BookSlots.Cover ? made.Source.Campaign.HasCover : slot.Entry?.HasArt == true,
@@ -85,7 +87,7 @@ public sealed class BookArtService(BookSourceReader reader, IBookArtRepository s
         var chapters = made.Compiled.Sections.Select(section => new BookTrayChapter(section.Id,
             made.Slots.First(s => s.Kind == BookSlots.Header && s.Section == section.Id).Label,
             Numbered(made.Slots.Where(s => s.Section == section.Id && s.Kind != BookSlots.Cover).Select(Row).ToList()))).ToList();
-        return new BookTray(edition, cover, chapters, style);
+        return new BookTray(edition, cover, chapters, style, guide);
     }
 
     /// <summary>Two entries the edition names alike (two strangers, two "Twin"s) get "(1)", "(2)" in book order, so the GM can tell their slots

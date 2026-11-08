@@ -67,6 +67,8 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
         var stored = await store.GetAsync(dm);
         var tag = BookSlots.Tag(which);
         var style = BookArtStyles.Normalize(stored?.Style);
+        // The GM's own style guide, when they wrote one, in place of the book's choices (41.23).
+        var guide = await images.StyleAsync(dm.UserId);
 
         var items = new List<BookDrawItem>();
         var ready = new List<Ready>();
@@ -85,12 +87,12 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
             if (suggestion == null) { items.Add(Refuse("suggestion")); continue; }
             if (suggestion.Inputs != known.Inputs) { items.Add(Refuse("stale")); continue; }
             var visual = string.IsNullOrWhiteSpace(pick.Visual) ? suggestion.Visual : pick.Visual.Trim();
-            var prompt = BookImagePrompt.Assemble(known.Kind, visual, style, suggestion.Mood, names);
+            var prompt = BookImagePrompt.Assemble(known.Kind, visual, style, suggestion.Mood, names, guide);
             if (prompt.Prompt == null) { items.Add(Refuse("visual", prompt.Problems)); continue; }
             if (ready.Count >= MaxPerRun) { items.Add(Refuse("many")); continue; }
 
             items.Add(new BookDrawItem(key, label, replaces, null, []));
-            ready.Add(new Ready(key, label, known.Kind, visual, suggestion.Mood, prompt.Prompt, ShapeFor(known.Kind), InputsOf(known.Kind, visual, suggestion.Mood, style)));
+            ready.Add(new Ready(key, label, known.Kind, visual, suggestion.Mood, prompt.Prompt, ShapeFor(known.Kind), InputsOf(known.Kind, visual, suggestion.Mood, style, guide)));
         }
 
         return new Prepared(dm, tag, style, stored, items, ready);
@@ -105,10 +107,13 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
     };
 
     /// <summary>A hash of what a picture is drawn from, kept beside it so the tray can say it was drawn from an older description.</summary>
-    public static string InputsOf(string kind, string visual, string mood, BookArtStyle style)
+    public static string InputsOf(string kind, string visual, string mood, BookArtStyle style, string? guide = null)
     {
         var s = BookArtStyles.Normalize(style);
-        var text = string.Join('\n', InputsVersion, kind, visual.Trim(), mood, s.Medium, s.Palette, s.Line, s.Light);
+        // With a guide its words are the style; without one the hash is as it always was, so no picture drawn before turns "older".
+        var text = Codex.Core.AI.ImageStyleGuide.Clean(guide) is { } own
+            ? string.Join('\n', InputsVersion, kind, visual.Trim(), mood, "guide", own)
+            : string.Join('\n', InputsVersion, kind, visual.Trim(), mood, s.Medium, s.Palette, s.Line, s.Light);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)), 0, 12).ToLowerInvariant();
     }
 

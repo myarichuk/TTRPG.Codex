@@ -110,6 +110,13 @@
   <data name="Page.About.DatabaseBackupsNotLicensed" xml:space="preserve"><value>הגיבויים של מסד הנתונים עצמו כבויים: הרישיון החינמי שלו לא מאפשר אותם. על הגיבוי היומי שלמעלה אפשר לסמוך.</value></data>
   <data name="Page.About.DatabaseBackupsFailed" xml:space="preserve"><value>לא ניתן היה להגדיר את הגיבויים של מסד הנתונים עצמו (ראו את יומן השרת). הגיבוי היומי שלמעלה ממשיך לפעול.</value></data>
   <data name="Page.About.DatabaseBackupsUnknown" xml:space="preserve"><value>הגיבויים של מסד הנתונים עצמו עוד לא נבדקו.</value></data>
+  <data name="Page.AiSettings.ImageStyle" xml:space="preserve"><value>סגנון התמונות</value></data>
+  <data name="Page.AiSettings.ImageStyleHint" xml:space="preserve"><value>המילים שלכם לאיך כל תמונה צריכה להיראות: דיוקנאות, מקומות, איורי הספר. הן נכנסות כמו שנכתבו לבקשה של כל תמונה, במקום הסגנון המובנה. אפשר לתאר כל סגנון.</value></data>
+  <data name="Page.AiSettings.ImageStylePlaceholder" xml:space="preserve"><value>למשל: קונספט ארט ציורי, צורות מסוגננות ועבות, צבעים רוויים, משיכות מכחול נראות</value></data>
+  <data name="Page.AiSettings.ImageStyleTip" xml:space="preserve"><value>תמונות דומות זו לזו כשאותו מודל מצייר אותן באותן מילים. השאירו ריק לסגנון המובנה.</value></data>
+  <data name="Page.AiSettings.ImageStyleSave" xml:space="preserve"><value>שמירת הסגנון</value></data>
+  <data name="Page.AiSettings.ImageStyleSaved" xml:space="preserve"><value>סגנון התמונות נשמר.</value></data>
+  <data name="Page.AiSettings.ImageStyleCleared" xml:space="preserve"><value>סגנון התמונות נוקה: הסגנון המובנה בשימוש.</value></data>
   <data name="Page.About.Software" xml:space="preserve"><value>תוכנה</value></data>
   <data name="Page.Campaign.Fallback" xml:space="preserve"><value>קמפיין</value></data>
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>הקמפיין לא נמצא</value></data>

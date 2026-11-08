@@ -113,7 +113,12 @@
         <p class="field-hint">@L["Campaign.Book.Art.Draw.Hint"]</p>
         @if (tray != null)
         {
-            <fieldset class="d-flex gap-2 flex-wrap mb-2" disabled="@DrawRunning" data-testid="book-art-style">
+            @if (tray.Guide is { } guide)
+            {
+                @* The GM's own style guide (docs/BOOK_EXPORT.md 41.23) is used for every picture in place of the choices below. *@
+                <div class="field-hint mb-2" data-testid="book-art-style-guide">@L["Campaign.Book.Art.Draw.Guide"] <q class="text-break">@guide</q></div>
+            }
+            <fieldset class="d-flex gap-2 flex-wrap mb-2" disabled="@(DrawRunning || tray.Guide != null)" data-testid="book-art-style">
                 <legend class="field-hint mb-1">@L["Campaign.Book.Art.Draw.Style"]</legend>
                 @StylePick("medium", L["Campaign.Book.Art.Draw.Style.Medium"], BookArtStyles.Media, "Medium", tray.Style.Medium)
                 @StylePick("palette", L["Campaign.Book.Art.Draw.Style.Palette"], BookArtStyles.Palettes, "Palette", tray.Style.Palette)

@@ -32,6 +32,19 @@ else
             @ProviderList(Purpose.Text)
             @ProviderList(Purpose.Image)
 
+            @* The user's own style guide for every picture (docs/BOOK_EXPORT.md 41.23): their words, used as written. *@
+            <section class="panel" aria-labelledby="image-style-heading" data-testid="ai-image-style">
+                <div class="panel-title"><h2 id="image-style-heading" class="h5"><LucideIcon IconName="palette" Size="18" Class="title-icon" /> @L["Page.AiSettings.ImageStyle"]</h2></div>
+                <p class="small mb-2">@L["Page.AiSettings.ImageStyleHint"]</p>
+                <label class="visually-hidden" for="ai-image-style-text">@L["Page.AiSettings.ImageStyle"]</label>
+                <textarea id="ai-image-style-text" class="field-input mb-1" rows="3" maxlength="@ImageStyleGuide.MaxChars" @bind="imageStyle" @bind:event="oninput"
+                          placeholder="@L["Page.AiSettings.ImageStylePlaceholder"]" data-testid="ai-image-style-text"></textarea>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="field-hint flex-grow-1">@L["Page.AiSettings.ImageStyleTip"]</span>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveImageStyleAsync" data-testid="ai-image-style-save">@L["Page.AiSettings.ImageStyleSave"]</CodexButton>
+                </div>
+            </section>
+
             <section class="panel" aria-labelledby="server-heading">
                 <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="18" Class="title-icon" /> @L["Page.AiSettings.ServerHeading"]</h2></div>
                 <p class="mb-1 small">@L["Page.AiSettings.ServerText"]</p>
@@ -313,6 +326,7 @@ else
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         user = userId == null ? null : await UserRepo.GetUserByIdAsync(userId);
+        imageStyle = user?.ImageStyle ?? string.Empty;
         if (user?.Roles.Contains(ExposurePolicy.ServerAdminRole) == true)
         {
             serverUse = new();
@@ -517,6 +531,17 @@ else
             if (p == Purpose.Image) stored.DefaultImageProviderId = provider.Id; else stored.DefaultAiProviderId = provider.Id;
         });
         flash = Flash.Success(L["Common.Undone"]);
+    }
+
+    private string imageStyle = string.Empty;
+
+    private async Task SaveImageStyleAsync()
+    {
+        if (user == null) return;
+        var cleaned = ImageStyleGuide.Clean(imageStyle);
+        await UpdateUserAsync(stored => stored.ImageStyle = cleaned);
+        imageStyle = user.ImageStyle ?? string.Empty;
+        flash = Flash.Success(cleaned == null ? L["Page.AiSettings.ImageStyleCleared"] : L["Page.AiSettings.ImageStyleSaved"]);
     }
 
     /// <summary>Applies <paramref name="change"/> to the user as stored, and shows what is stored afterwards.</summary>

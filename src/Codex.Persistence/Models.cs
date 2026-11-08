@@ -269,6 +269,10 @@ public class UserDocument
 
     public string? DefaultImageProviderId { get; set; }
 
+    /// <summary>The user's own words for how every picture they draw should look (docs/BOOK_EXPORT.md 41.23), used as written in place of the
+    /// built-in style phrases, so pictures drawn with the same model look alike. Null for the built-in style.</summary>
+    public string? ImageStyle { get; set; }
+
     /// <summary>The language this user picked for the interface (en, ru, he). Null follows the server default.</summary>
     public string? Culture { get; set; }
 }

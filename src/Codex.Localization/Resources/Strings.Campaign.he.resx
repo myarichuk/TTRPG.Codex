@@ -847,6 +847,7 @@
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>קלף אפור</value></data>
   <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (פריסה בלבד)</value></data>
   <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(לא בשפה הזאת)</value></data>
+  <data name="Campaign.Book.Art.Draw.Guide" xml:space="preserve"><value>לכל תמונה משמש סגנון התמונות שלכם מהגדרות הבינה המלאכותית, במקום האפשרויות שלמטה:</value></data>
   <data name="Campaign.Book.Credit" xml:space="preserve"><value>העמודים נבנו בעזרת {0} המדהים</value></data>
   <data name="Campaign.Book.Theme.Empty" xml:space="preserve"><value>קודם הדביקו את גיליון הסגנון של ערכת העיצוב.</value></data>
   <data name="Campaign.Book.Theme.Title" xml:space="preserve"><value>הוספת ערכת עיצוב</value></data>

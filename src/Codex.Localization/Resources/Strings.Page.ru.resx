@@ -110,6 +110,13 @@
   <data name="Page.About.DatabaseBackupsNotLicensed" xml:space="preserve"><value>Собственные копии базы данных отключены: её бесплатная лицензия их не разрешает. Полагайтесь на ежедневную копию выше.</value></data>
   <data name="Page.About.DatabaseBackupsFailed" xml:space="preserve"><value>Не удалось настроить собственные копии базы данных (см. журнал сервера). Ежедневная копия выше продолжает работать.</value></data>
   <data name="Page.About.DatabaseBackupsUnknown" xml:space="preserve"><value>Собственные копии базы данных ещё не проверены.</value></data>
+  <data name="Page.AiSettings.ImageStyle" xml:space="preserve"><value>Стиль картинок</value></data>
+  <data name="Page.AiSettings.ImageStyleHint" xml:space="preserve"><value>Ваши слова о том, как должна выглядеть каждая картинка: портреты, места, иллюстрации книги. Они попадают в запрос каждой картинки как написаны, вместо встроенного стиля. Назовите любой стиль, какой хотите.</value></data>
+  <data name="Page.AiSettings.ImageStylePlaceholder" xml:space="preserve"><value>например: живописный концепт-арт, крупные стилизованные формы, насыщенные цвета, заметный мазок</value></data>
+  <data name="Page.AiSettings.ImageStyleTip" xml:space="preserve"><value>Картинки похожи друг на друга, когда их рисует одна и та же модель по одним и тем же словам. Оставьте пустым для встроенного стиля.</value></data>
+  <data name="Page.AiSettings.ImageStyleSave" xml:space="preserve"><value>Сохранить стиль</value></data>
+  <data name="Page.AiSettings.ImageStyleSaved" xml:space="preserve"><value>Стиль картинок сохранён.</value></data>
+  <data name="Page.AiSettings.ImageStyleCleared" xml:space="preserve"><value>Стиль картинок очищен: используется встроенный.</value></data>
   <data name="Page.About.Software" xml:space="preserve"><value>Программное обеспечение</value></data>
   <data name="Page.Campaign.Fallback" xml:space="preserve"><value>Кампания</value></data>
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>Кампания не найдена</value></data>

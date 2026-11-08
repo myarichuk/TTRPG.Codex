@@ -224,7 +224,9 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
     {
         if (quota != null) await quota.EnsureRoomBeforeDrawingAsync(campaignId);
 
-        var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, shape), shape, ct);
+        // The user's own style guide, when they wrote one, in place of the house style (docs/BOOK_EXPORT.md 41.23).
+        var style = await providers.ImageStyleForAsync(userId);
+        var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, shape, style), shape, ct);
         if (!RavenMediaStore.AllowedContentTypes.Contains(image.ContentType))
         {
             throw new LocalizedException("Service.Art.BadType", image.ContentType);

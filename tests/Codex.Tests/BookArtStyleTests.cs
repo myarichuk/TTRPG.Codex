@@ -99,9 +99,10 @@ public class BookArtStyleTests
     [Fact]
     public void ThePrompt_HasNoRoomForASubjectName_TheAssemblerTakesNone()
     {
-        // The signature is the guarantee: slot kind, visual, style, names to refuse. A name can reach the prompt only through the visual,
-        // and the visual is checked for it.
+        // The signature is the guarantee: slot kind, visual, style, names to refuse, and the GM's own style guide (41.23). A campaign's name can
+        // reach the prompt only through the visual, and the visual is checked for it; the guide is read from the GM's own settings, never from
+        // the campaign (BookArtDrawing takes it from IBookImages.StyleAsync for the GM's user id).
         var parameters = typeof(BookImagePrompt).GetMethod(nameof(BookImagePrompt.Assemble))!.GetParameters().Select(p => p.Name).ToList();
-        Assert.Equal(["slotKind", "visual", "style", "mood", "names"], parameters);
+        Assert.Equal(["slotKind", "visual", "style", "mood", "names", "guide"], parameters);
     }
 }

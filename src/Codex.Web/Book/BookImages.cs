@@ -48,10 +48,15 @@ public interface IBookImages
     /// <summary>Sets aside <paramref name="pictures"/> on the server's image key when that is whose it is (all or nothing, refused up front with
     /// the allowance's own message) and returns the model. Throws <see cref="AiImageNotConfiguredException"/> when there is none.</summary>
     Task<BookImageHandle> OpenAsync(string userId, int pictures);
+
+    /// <summary>The user's own style guide for every picture (docs/BOOK_EXPORT.md 41.23), or null for the book's style choices.</summary>
+    Task<string?> StyleAsync(string userId) => Task.FromResult<string?>(null);
 }
 
 public sealed class AiBookImages(AiProviderService providers, IUserRepository users, ServerAiUsage usage) : IBookImages
 {
+    public async Task<string?> StyleAsync(string userId) => Codex.Core.AI.ImageStyleGuide.Clean((await users.GetUserByIdAsync(userId))?.ImageStyle);
+
     public async Task<BookImageInfo?> InfoAsync(string userId)
     {
         var user = await users.GetUserByIdAsync(userId);

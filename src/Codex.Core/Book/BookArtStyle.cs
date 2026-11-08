@@ -128,7 +128,10 @@ public static partial class BookImagePrompt
     ];
 
     /// <param name="mood">An id of <see cref="BookArtStyles.Moods"/>; anything else adds no mood.</param>
-    public static BookImagePromptResult Assemble(string slotKind, string? visual, BookArtStyle? style, string? mood = null, IEnumerable<string>? names = null)
+    /// <param name="guide">The GM's own style guide (<see cref="Codex.Core.AI.ImageStyleGuide"/>): used as written in place of the book's style
+    /// choices. It is the GM's text for their own model, not the campaign's, so it is not held to the checks of the visual description.</param>
+    public static BookImagePromptResult Assemble(string slotKind, string? visual, BookArtStyle? style, string? mood = null, IEnumerable<string>? names = null,
+        string? guide = null)
     {
         var problems = Check(visual, names);
         if (problems.Count > 0) return new BookImagePromptResult(null, problems);
@@ -139,10 +142,18 @@ public static partial class BookImagePrompt
         sb.Append(framing).Append(": ").Append(description);
         if (BookArtStyles.Find(BookArtStyles.Moods, mood) is { } feeling) sb.Append(", ").Append(feeling.Phrase);
         sb.Append(". ");
-        sb.Append(BookArtStyles.Find(BookArtStyles.Media, s.Medium)!.Phrase).Append(", ")
-          .Append(BookArtStyles.Find(BookArtStyles.Palettes, s.Palette)!.Phrase).Append(", ")
-          .Append(BookArtStyles.Find(BookArtStyles.Lines, s.Line)!.Phrase).Append(", ")
-          .Append(BookArtStyles.Find(BookArtStyles.Lights, s.Light)!.Phrase).Append(". ");
+        if (Codex.Core.AI.ImageStyleGuide.Clean(guide) is { } own)
+        {
+            sb.Append(own.TrimEnd('.')).Append(". ");
+        }
+        else
+        {
+            sb.Append(BookArtStyles.Find(BookArtStyles.Media, s.Medium)!.Phrase).Append(", ")
+              .Append(BookArtStyles.Find(BookArtStyles.Palettes, s.Palette)!.Phrase).Append(", ")
+              .Append(BookArtStyles.Find(BookArtStyles.Lines, s.Line)!.Phrase).Append(", ")
+              .Append(BookArtStyles.Find(BookArtStyles.Lights, s.Light)!.Phrase).Append(". ");
+        }
+
         sb.Append(BookArtStyles.Negative);
         return new BookImagePromptResult(sb.ToString(), []);
     }

@@ -318,6 +318,9 @@ public sealed class AiProviderService(
         return ServerImageConfigured && ServerKeyAllowedFor(user) ? serverImageConfig : null;
     }
 
+    /// <summary>The user's own style guide for every picture they draw, or null for the house style (docs/BOOK_EXPORT.md 41.23).</summary>
+    public async Task<string?> ImageStyleForAsync(string userId) => Codex.Core.AI.ImageStyleGuide.Clean((await users.GetUserByIdAsync(userId))?.ImageStyle);
+
     public async Task<bool> IsImageConfiguredForAsync(string userId) => ImageConfigFor(await users.GetUserByIdAsync(userId)) != null;
 
     /// <summary>The picture model this user's art is drawn with, as "name · model", or null when they have none.</summary>

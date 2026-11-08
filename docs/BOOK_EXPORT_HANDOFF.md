@@ -174,6 +174,9 @@ Anything that survives is a missing test; add it.
    text shadows are what fail them. Items 1 (art step 7, keep-three) and 5 (layout)
    now land inside it rather than in the current HTML route.
 
+0b. **Picture style** (BOOK_EXPORT 41.23, 2026-11-08): each user's own words in AI settings, used as written in every picture prompt, in
+   place of the built-in style. Left: per-campaign guides, a reference picture for models that take one.
+
 1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3-6 are done (sections 34-36, 38); 7 remains, and step 6's
    Regenerate/Accept (keep 3).** The first real run is done (section 39). DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
    writes the prompt; deny proper nouns and "in the style of"); the art-director call per chapter (masked outline in, `{depicts, visual, mood}` out);

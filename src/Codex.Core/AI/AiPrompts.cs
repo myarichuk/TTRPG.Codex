@@ -379,7 +379,8 @@ public static class AiPrompts
     }
 
     /// <summary>A text-to-image prompt: the subject, its visual description, and a house style that keeps lettering and frames out.</summary>
-    public static string Image(string subject, string subjectKind, string? visual, ArtShape shape)
+    /// <param name="style">The user's own style guide (<see cref="ImageStyleGuide"/>), in place of the house style; null for the house style.</param>
+    public static string Image(string subject, string subjectKind, string? visual, ArtShape shape, string? style = null)
     {
         // A square is a character's avatar, shown small and cropped: the face has to carry it.
         var shot = shape switch
@@ -389,7 +390,8 @@ public static class AiPrompts
             _ => "Full-figure portrait"
         };
         var details = string.IsNullOrWhiteSpace(visual) ? string.Empty : " " + visual.Trim().TrimEnd('.') + ".";
-        return $"{shot} of {subject}, a {subjectKind}.{details} Painterly fantasy illustration, dramatic natural light, rich muted colours. No text, no lettering, no border, no watermark.";
+        var look = ImageStyleGuide.Clean(style) is { } own ? own.TrimEnd('.') + "." : "Painterly fantasy illustration, dramatic natural light, rich muted colours.";
+        return $"{shot} of {subject}, a {subjectKind}.{details} {look} No text, no lettering, no border, no watermark.";
     }
 
     public static (string System, string User) LevelUp(LevelUpRequest r)

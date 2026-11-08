@@ -47,9 +47,11 @@ public class BookArtDrawingTests : IClassFixture<RavenDbFixture>
     }
 
     /// <summary>A picture model that draws what <paramref name="picture"/> gives, and remembers every prompt and every run it was opened for.</summary>
-    private sealed class FakeImages(Func<int, GeneratedImage>? picture = null, AiImagePrice? price = null) : IBookImages
+    private sealed class FakeImages(Func<int, GeneratedImage>? picture = null, AiImagePrice? price = null, string? guide = null) : IBookImages
     {
         public List<string> Prompts { get; } = [];
+
+        public Task<string?> StyleAsync(string userId) => Task.FromResult(guide);
         public List<ArtShape> Shapes { get; } = [];
         public List<int> Opened { get; } = [];
 
@@ -239,5 +241,42 @@ public class BookArtDrawingTests : IClassFixture<RavenDbFixture>
         var run = (await Drawing(images, gate).StartAsync(dm, "party", [new BookDrawPick(vera)]))!;
         await Finish(run);
         Assert.True(gate.TryEnter(dm.UserId), "the run gives the gate back when it ends");
+    }
+
+    /// <summary>
+    /// The GM's own picture style (docs/BOOK_EXPORT.md 41.23) is used as written, in place of the book's style choices, with whatever names it
+    /// gives (it is the GM's text for their own model); the picture's description is still held to the checks. A picture drawn with it is
+    /// current in the tray until the guide changes.
+    /// </summary>
+    [Fact]
+    public async Task TheGmsOwnPictureStyle_ReplacesTheBooksChoices_AsWritten_AndAChangedStyleMakesAPictureOlder()
+    {
+        var (dm, _) = await SeedAsync();
+        var vera = await SlotOf(dm, "party", "Vera");
+        const string guide = "Stylized hand-painted World of Warcraft concept art,   chunky shapes, saturated colours.";
+        var images = new FakeImages(guide: guide);
+        var drawing = Drawing(images);
+        Assert.True(await drawing.SetStyleAsync(dm, new BookArtStyle("ink", "sepia", "fine", "candle")));
+
+        Assert.Equal(BookRunStatus.Done, (await Finish((await drawing.StartAsync(dm, "party", [new BookDrawPick(vera)]))!)).Status);
+
+        var prompt = Assert.Single(images.Prompts);
+        Assert.Contains(" Stylized hand-painted World of Warcraft concept art, chunky shapes, saturated colours. ", prompt);
+        Assert.DoesNotContain(BookArtStyles.Find(BookArtStyles.Media, "ink")!.Phrase, prompt);
+        Assert.DoesNotContain(BookArtStyles.Find(BookArtStyles.Palettes, "sepia")!.Phrase, prompt);
+        Assert.EndsWith(BookArtStyles.Negative, prompt);
+        // A visual that names someone is still refused: the guide is the GM's, the description is the campaign's.
+        var named = (await drawing.PreviewAsync(dm, "party", [new BookDrawPick(vera, "a portrait of Vera by the sea")]))!;
+        Assert.Contains("capital:Vera", Assert.Single(named.Items).VisualProblems);
+
+        var trays = new BookArtService(_reader, _art, _resolver, images);
+        BookTraySlot Vera(BookTray tray) => tray.Chapters.SelectMany(c => c.Slots).Single(x => x.Key == vera);
+        var tray = (await trays.TrayAsync(dm, "party", "en"))!;
+        Assert.Equal(guide, tray.Guide);
+        Assert.False(Vera(tray).Drawn!.Stale);
+        // The book's own choices do not touch a picture drawn from the guide; another guide does.
+        Assert.True(await drawing.SetStyleAsync(dm, new BookArtStyle("woodcut", "sepia", "bold", "dusk")));
+        Assert.False(Vera((await trays.TrayAsync(dm, "party", "en"))!).Drawn!.Stale);
+        Assert.True(Vera((await new BookArtService(_reader, _art, _resolver, new FakeImages(guide: "Watercolour wash.")).TrayAsync(dm, "party", "en"))!).Drawn!.Stale);
     }
 }

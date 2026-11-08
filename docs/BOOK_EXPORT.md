@@ -2182,3 +2182,30 @@ Not done, or not verified:
 - A family named only in a `font` shorthand without quotes or a comma is not found by the "brings nothing for" note.
 - Stand-ins are by family, not by what the family is used for: a family used for titles and body alike gets one stand-in.
 - The Russian and Hebrew text of `Campaign.Book.Theme.*` and `Campaign.Book.Credit` is machine-drafted.
+
+### 41.23 The user's own picture style (2026-11-08)
+
+The user asked for one style prompt for every generated picture ("painterly concept art in the style of …"), and settled it: what matters is
+that pictures look alike, so the words are left to the user. What keeps pictures alike is the same image model given the same style words
+every time; a style guide is exactly that.
+
+- **Where**: AI settings, under the image models, "Picture style" (`UserDocument.ImageStyle`, at most 600 characters, one line,
+  `ImageStyleGuide.Clean`). Per user, like the image model it goes with; empty means the built-in style.
+- **What it does**: in every picture prompt the user's guide stands, as written, in place of the built-in style phrases. In the app's art
+  slots (`AiPrompts.Image`, portraits, places and the rest) and in the book's drawn pictures (`BookImagePrompt.Assemble`, where it takes the
+  place of the book's medium, palette, line and light; the art tray says so and greys those out). The framing, the picture's description,
+  the mood and the fixed negative ("no text, no watermark …") stay.
+- **Not filtered for names.** The checks that refuse capitalised words, artists and "in the style of" are for the picture's description,
+  which comes from the campaign (and so may carry a campaign's names or a party's secrets). The guide is the user's own text for their own
+  model and carries nothing of a campaign's; it is used as they wrote it. (A guide that names a franchise or a living artist is the user's
+  choice, sent to their own provider; some providers refuse such prompts.) The assembler's parameter list, which a test pins as the
+  guarantee that no subject name can reach a prompt, now has `guide`, read only from the GM's own settings (`IBookImages.StyleAsync`).
+- **Drawn-from-older**: a book picture's input hash covers the guide when there is one (and is what it always was when there is none, so no
+  picture drawn before turns "older"); a changed guide marks pictures drawn with the old one, and the book's own choices no longer do.
+
+Tests: `ImageStyleGuideTests` (cleaning, the app's prompt with and without, the hash), `BookArtDrawingTests` (the guide replaces the book's
+choices as written, names and all; the description is still checked; the tray shows it and its staleness follows the guide). Seen in the app:
+the setting saves and is there after a reload. No picture was drawn (that bills the user's key).
+
+Not done: one guide per user, not per campaign; no reference picture (some models take one, which holds a style better than words); the
+guide is not shown in the art panels outside the book's tray.
