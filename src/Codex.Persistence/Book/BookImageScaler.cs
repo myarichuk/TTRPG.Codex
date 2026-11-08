@@ -24,8 +24,8 @@ public readonly record struct BookArtBox(double WidthMm, double HeightMm, bool F
 /// <para>This is the one place in the book that decodes a picture, so it is narrow on purpose. Only bytes that already passed
 /// <see cref="BookImageSanitizer"/> arrive (a known container, bounded pixels, no metadata). A picture that is already small enough is
 /// <b>not decoded at all</b> and goes on exactly as it was. A picture that fails to decode, is too big to decode safely, or would not
-/// get smaller is kept as the sanitizer left it, so a refusal here can only cost bytes, never a picture. Decoding runs two at a time and
-/// colours are converted to sRGB, since the re-encoded file carries no profile.</para>
+/// get smaller is kept as the sanitizer left it, so a refusal here can only cost bytes, never a picture. Decoding runs two at a time, shared
+/// fairly between users (<see cref="BookFairGate"/>), and colours are converted to sRGB, since the re-encoded file carries no profile.</para>
 /// </summary>
 public sealed class BookImageScaler(IBookImageDecoder? decoder = null)
 {
@@ -40,7 +40,10 @@ public sealed class BookImageScaler(IBookImageDecoder? decoder = null)
     /// <summary>Bytes of results remembered; the whole memory is dropped when it is full, which is cheap and bounded.</summary>
     public const long CacheBytes = 96L * 1024 * 1024;
 
-    private readonly SemaphoreSlim _decoding = new(2);
+    private readonly BookFairGate _decoding = new(2);
+
+    /// <summary>The users the decoding places know now; for the tests.</summary>
+    public int DecodingOwners => _decoding.Owners;
     private readonly ConcurrentDictionary<string, BookImage> _cache = new(StringComparer.Ordinal);
     private long _cached;
 
@@ -68,17 +71,36 @@ public sealed class BookImageScaler(IBookImageDecoder? decoder = null)
         return (Math.Max(1, (int)Math.Round(width * scale)), Math.Max(1, (int)Math.Round(height * scale)));
     }
 
-    public async Task<BookImage> ScaleAsync(BookImage image, string kind, BookArtQuality quality, CancellationToken ct = default, int columns = 2)
+    /// <summary>What a JPEG at quality 85 takes per pixel, at most, for the pictures a book holds (painted and photographed ones run about
+    /// 0.3 to 0.8): the estimate of a scaled picture's size.</summary>
+    public const double EstimatedBytesPerPixel = 1.0;
+
+    /// <summary>
+    /// The bytes <paramref name="image"/> is counted at in the book's size cap: what it would print at, worked out from its pixels without
+    /// decoding it, so the preview and the print count it alike. A picture the print leaves as it is counts its own bytes; one the print
+    /// scales counts its printed pixels at <see cref="EstimatedBytesPerPixel"/>, never more than its own bytes (a scaled picture is never kept
+    /// larger than it was).
+    /// </summary>
+    public static long PrintEstimate(BookImage image, string kind, int columns = 2)
+    {
+        var (w, h) = TargetPixels(BoxFor(kind, columns), image.Width, image.Height, BookArtQuality.Print);
+        if (CloseEnough(image, w, h)) return image.Bytes.Length;
+        return Math.Min(image.Bytes.Length, (long)Math.Ceiling((long)w * h * EstimatedBytesPerPixel));
+    }
+
+    private static bool CloseEnough(BookImage image, int w, int h) => w * 1.15 >= image.Width && h * 1.15 >= image.Height;
+
+    /// <param name="owner">Who the picture is read for (the user asking for the book): places are shared fairly between owners.</param>
+    public async Task<BookImage> ScaleAsync(BookImage image, string kind, BookArtQuality quality, CancellationToken ct = default, int columns = 2, string? owner = null)
     {
         var (w, h) = TargetPixels(BoxFor(kind, columns), image.Width, image.Height, quality);
         // Already as small as it needs to be (a sixth to spare, so a few pixels over does not cost a re-encode): untouched, undecoded.
-        if (w * 1.15 >= image.Width && h * 1.15 >= image.Height) return image;
+        if (CloseEnough(image, w, h)) return image;
 
         var key = Convert.ToHexString(SHA256.HashData(image.Bytes)) + ":" + w + "x" + h;
         if (_cache.TryGetValue(key, out var hit)) return hit;
 
-        await _decoding.WaitAsync(ct);
-        try
+        using (await _decoding.EnterAsync(owner, ct))
         {
             // Another request may have made it while this one waited for a place.
             if (_cache.TryGetValue(key, out hit)) return hit;
@@ -93,10 +115,6 @@ public sealed class BookImageScaler(IBookImageDecoder? decoder = null)
 
             _cache[key] = made;
             return made;
-        }
-        finally
-        {
-            _decoding.Release();
         }
     }
 }

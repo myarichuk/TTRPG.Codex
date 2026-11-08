@@ -43,6 +43,9 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
         Assert.Contains(".pdf", pdf.Headers["content-disposition"]);
         Assert.StartsWith("%PDF-", Encoding.ASCII.GetString((await pdf.BodyAsync()).AsSpan(0, 5)));
 
+        // The draft's Markdown (41.24) is the draft's: with no draft there is nothing to download (the editor makes one when it opens).
+        Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/dm/draft/en/md")).Status);
+
         // Russian prints (docs/BOOK_EXPORT.md 41.21); a language no theme has faces for gets a reason, not a page in the wrong fonts.
         var russian = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/dm/pdf?lang=ru");
         Assert.Equal(200, russian.Status);
@@ -61,7 +64,7 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
         await using var otherContext = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
         var other = await otherContext.NewPageAsync();
         await E2EHelpers.LoginAsync(other, "other_" + otherId, password);
-        foreach (var route in new[] { "dm", "party", "dm/pdf", "party/pdf" })
+        foreach (var route in new[] { "dm", "party", "dm/pdf", "party/pdf", "dm/draft/en/md", "party/draft/en/md" })
         {
             Assert.Equal(404, (await otherContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/{route}")).Status);
         }
@@ -685,6 +688,25 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
             await stream.ReadExactlyAsync(head);
             Assert.Equal("%PDF-", Encoding.ASCII.GetString(head));
         }
+
+        // The Markdown file (41.24) is checked the same way: nothing is downloaded until Download anyway, which then gives the .md.
+        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await dm.GetByTestId("book-draft-markdown").ClickAsync();
+        await Assertions.Expect(hit).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.GetByTestId("book-draft-download-anyway")).ToBeEnabledAsync();
+        Assert.Equal(1, downloads);
+        var md = await dm.RunAndWaitForDownloadAsync(() => dm.GetByTestId("book-draft-download-anyway").ClickAsync());
+        Assert.EndsWith(" (party).md", md.SuggestedFilename);
+        await using (var stream = await md.CreateReadStreamAsync())
+        {
+            var text = await new StreamReader(stream).ReadToEndAsync();
+            Assert.Contains("She knows the vault key lies under the chapel altar.", text);
+            Assert.Contains("{{entry,#e-", text);
+        }
+
+        var route = await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party/draft/en/md");
+        Assert.StartsWith("text/markdown", route.Headers["content-type"]);
+        Assert.Equal("no-store", route.Headers["cache-control"]);
 
         Assert.Empty(pageErrors);
     }

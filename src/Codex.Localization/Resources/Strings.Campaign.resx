@@ -892,6 +892,14 @@
   <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>These characters are in none of this theme's fonts. They would print in whatever font the server has, or as empty boxes:</value></data>
   <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>Pick another theme, or change the characters (an emoji or a letter from another alphabet, say).</value></data>
   <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {and # more} other {and # more}}</value></data>
+  <data name="Campaign.Book.Draft.Pictures.LeftOut" xml:space="preserve"><value>{0, plural, one {# picture is not in the book:} other {# pictures are not in the book:}}</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Limit" xml:space="preserve"><value>the book is full (at most 120 pictures and 64 MB of them, counted at print size)</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Unreadable" xml:space="preserve"><value>the file could not be read</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Hint" xml:space="preserve"><value>The preview and the PDF leave out the same pictures. Use smaller pictures, or take some out of the book.</value></data>
+  <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>Download Markdown (.md)</value></data>
+  <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>The chapters as one Markdown file, for Homebrewery or a text editor. The pictures and the stylesheet are not in it.</value></data>
+  <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>This is the GM edition: it holds every secret. Keep the file away from the players.</value></data>
+  <data name="Campaign.Book.Draft.MarkdownGmYes" xml:space="preserve"><value>Download it</value></data>
   <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Homebrewery compatibility</value></data>
   <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Lay pages out as Homebrewery does, so CSS written for a Homebrewery brew works here. No Homebrewery pictures or colours are used.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Download PDF</value></data>

@@ -193,10 +193,11 @@ Anything that survives is a missing test; add it.
    and a Problems-tab check. Left: Hebrew emphasis prints as plain text (no Hebrew italics), no native reader, WebKit and Firefox not tried in
    these languages, the layout-only theme stays English. The theme wizard followed the same day (41.22): a pasted Homebrewery theme kept per
    campaign, its languages measured from its faces, stand-ins for the scripts they lack, previewed on sample pages in each language.
-4. Review leftovers: per-user decoder fairness (the queue of two is global and the PDF slot is held while art is read); preview/print cap mismatch and
-   showing skipped pictures in the panel; a per-entry marker is NOT needed (section 32 chose position over markers).
-5. Layout and format: stat-block and table blocks, running footer with the chapter name, picture-frame masks, paper fibre on the page edge, `.md` export with
-   a GM-edition warning, custom CSS editor, the Ashen Vellum theme (measured in section 13, not built), `:::for` per-player editions.
+4. ~~Review leftovers~~ done (BOOK_EXPORT 41.24): the decoder is shared fairly between users, the preview and the PDF leave out the same
+   pictures and the editor names them. The printing line's place is still taken before pictures are read, on purpose (41.24).
+5. Layout and format: the running footer and the `.md` file are done (41.24); the custom CSS editor and Ashen Vellum were built with the
+   editable book. Left: stat-block and table blocks (with item 2's book shape), picture-frame masks, paper fibre on the page edge, `:::for`
+   per-player editions.
 6. ~~The `PartyPreview` empty-user-id bug~~ fixed (session 2): `CampaignAccess.PartyPreview()` now reads as `CampaignAccess.Nobody`, a made-up id per
    preview, the same one the book reader uses; test `PartyPreview_OwnsNoActor_EvenOneStoredWithAnEmptyOwner`, mutation-checked.
 7. ~~A wiki link to a GM-only page prints its title in the party book and outline~~ fixed (BOOK_EXPORT section 37). The app's own wiki had the

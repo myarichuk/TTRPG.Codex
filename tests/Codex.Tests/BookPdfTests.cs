@@ -76,6 +76,7 @@ public class BookBrowserTests
         Assert.DoesNotContain('\uFFFD', name);
         Assert.Equal(new string('a', 79) + "\U0001F409 (party).pdf", name);
         Assert.Equal("campaign (dm).pdf", Codex.Web.BookEndpoints.FileName("???", "dm"));
+        Assert.Equal("campaign (party).md", Codex.Web.BookEndpoints.FileName("???", "party", "md"));
     }
 
     [Theory]

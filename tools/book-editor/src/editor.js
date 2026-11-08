@@ -96,7 +96,12 @@ export async function open(host, frame, book, dotnet, labels) {
   await new Promise(r => frame.addEventListener('load', r, { once: true }));
   try {
     const answer = await fetch(book.artUrl, { credentials: 'same-origin', cache: 'no-store' });
-    if (answer.ok) state.art = await answer.json();
+    if (answer.ok) {
+      // The pictures by slot, and the ones the book leaves out (the Problems tab names them).
+      const got = await answer.json();
+      state.art = got.art || {};
+      dotnet.invokeMethodAsync('ArtLeftOut', got.leftOut || []);
+    }
   } catch {
     // No pictures in the preview; the book still draws, with empty boxes where they go.
   }

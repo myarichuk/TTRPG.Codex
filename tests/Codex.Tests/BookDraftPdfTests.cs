@@ -409,7 +409,8 @@ public class BookDraftPdfTests
     {
         using var doc = PdfDocument.Open(pdf);
         var pages = doc.GetPages().ToList();
-        var headings = pages.SelectMany(p => p.GetWords()).Where(w => w.Text is "PARITY_H1" or "PARITY_H2" or "PARITY_H3" or "PARITY_M0")
+        // Above the page's foot: the running footer repeats the chapter's title there, in the footnote's colour (41.24).
+        var headings = pages.SelectMany(p => p.GetWords().Where(w => w.BoundingBox.Bottom > p.Height * 0.08)).Where(w => w.Text is "PARITY_H1" or "PARITY_H2" or "PARITY_H3" or "PARITY_M0")
             .Select(w => Hex(w.Letters[0].Color)).ToHashSet();
         var fills = pages.SelectMany(p => p.Paths).Where(p => p.IsFilled).Select(p => Hex(p.FillColor)).ToHashSet();
         return (headings, fills);
@@ -536,6 +537,19 @@ public class BookDraftPdfTests
                 Assert.True(on.Count == 0,
                     $"{themeId} {pageSize} {(homebrewery ? "layer" : "no layer")}, page {page.Number}: words on a picture ({box.Left:0},{box.Bottom:0} {box.Width:0}x{box.Height:0} of a {page.Width:0} page): {string.Join(" ", on.Take(12))}");
             }
+        }
+
+        // The running footer: every page names its chapter at its foot, below the text, and no word of the text runs into it.
+        foreach (var page in doc.GetPages())
+        {
+            var words = page.GetWords().Where(w => w.Text.Trim().Length > 0).ToList();
+            var foot = words.Where(w => string.Equals(w.Text, "Cast", StringComparison.OrdinalIgnoreCase) && w.BoundingBox.Top < page.Height * 0.08).ToList();
+            var where = $"{themeId} {pageSize} {(homebrewery ? "layer" : "no layer")}, page {page.Number}";
+            var shown = string.Join(" ", words.Where(w => w.BoundingBox.Top < page.Height * 0.08).Select(w => w.Text));
+            Assert.True(foot.Count == 1, $"{where}: the foot of the page reads \"{shown}\"");
+            var box = foot[0].BoundingBox;
+            var lowest = words.Where(w => w != foot[0] && !w.Text.All(c => char.IsDigit(c) || c == '†')).Min(w => w.BoundingBox.Bottom);
+            Assert.True(lowest > box.Top, $"{where}: the text comes down to {lowest:0}, onto the footer at {box.Bottom:0}-{box.Top:0} (\"{shown}\")");
         }
 
         OwnFacesOnly(doc, themeId, $"{pageSize} {(homebrewery ? "layer" : "no layer")}");

@@ -74,6 +74,10 @@
                                         data-testid="book-draft-theme-wizard">
                                     <LucideIcon IconName="palette" Size="14" /> @L["Campaign.Book.Theme.Open"]
                                 </button>
+                                <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="MarkdownAsync" disabled="@printing"
+                                        title="@L["Campaign.Book.Draft.MarkdownHint"]" data-testid="book-draft-markdown">
+                                    <LucideIcon IconName="file-text" Size="14" /> @L["Campaign.Book.Draft.Markdown"]
+                                </button>
                                 <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="StartOverAsync" disabled="@AiBusy" data-testid="book-draft-start-over">
                                     <LucideIcon IconName="rotate-ccw" Size="14" /> @L["Campaign.Book.Draft.StartOver"]
                                 </button>
@@ -90,6 +94,15 @@
             @if (message != null)
             {
                 <div class="field-error book-draft-infobar" role="alert" data-testid="book-draft-error">@message</div>
+            }
+            @if (confirmMarkdown)
+            {
+                @* The GM edition holds every secret (docs/BOOK_EXPORT.md 41.24): said before the file is made. *@
+                <div class="book-draft-notice book-draft-infobar" role="alertdialog" aria-labelledby="book-draft-markdown-q" data-testid="book-draft-markdown-gm">
+                    <span id="book-draft-markdown-q">@L["Campaign.Book.Draft.MarkdownGm"] @L["Campaign.Book.Draft.MarkdownHint"]</span>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => DownloadAsync(true, markdown: true)" data-testid="book-draft-markdown-yes">@L["Campaign.Book.Draft.MarkdownGmYes"]</CodexButton>
+                    <CodexButton Small="true" OnClick="() => confirmMarkdown = false">@L["Common.Cancel"]</CodexButton>
+                </div>
             }
             @if (confirmStartOver)
             {
@@ -459,7 +472,7 @@
                                 }
                             </ul>
                             <div class="small">@L["Campaign.Book.Draft.Leak.Hint"]</div>
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => DownloadAsync(true)" Disabled="@printing" data-testid="book-draft-download-anyway">
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => DownloadAsync(true, leaksForMarkdown)" Disabled="@printing" data-testid="book-draft-download-anyway">
                                 <LucideIcon IconName="download" Size="14" /> @L["Campaign.Book.Draft.Leak.Anyway"]
                             </CodexButton>
                         </div>
@@ -479,6 +492,27 @@
                                 }
                             </ul>
                             <div class="small">@L["Campaign.Book.Draft.Letters.Hint"]</div>
+                        </div>
+                    }
+                    @if (leftOut.Count > 0)
+                    {
+                        @* Pictures the book leaves out (docs/BOOK_EXPORT.md 31.1, item 4): the preview and the PDF leave out the same ones. *@
+                        <div class="field-error" data-testid="book-draft-left-out">
+                            @L["Campaign.Book.Draft.Pictures.LeftOut", leftOut.Count]
+                            <ul class="mb-1 ps-3">
+                                @foreach (var picture in leftOut.Take(24))
+                                {
+                                    <li data-testid="book-draft-left-out-item" data-reason="@picture.Reason">
+                                        <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @onclick="() => ShowAsync(picture.Section)" disabled="@AiBusy"><bdi>@TitleOf(picture.Section)</bdi></button>:
+                                        <bdi>@picture.Label</bdi> (@(picture.Reason == "limit" ? L["Campaign.Book.Draft.Pictures.Limit"] : L["Campaign.Book.Draft.Pictures.Unreadable"]))
+                                    </li>
+                                }
+                                @if (leftOut.Count > 24)
+                                {
+                                    <li>@L["Campaign.Book.Draft.Letters.More", leftOut.Count - 24]</li>
+                                }
+                            </ul>
+                            <div class="small">@L["Campaign.Book.Draft.Pictures.Hint"]</div>
                         </div>
                     }
                     @if (printReport != null)
@@ -530,6 +564,7 @@
     private string? printReport;
     private BookLeakReport? leakReport;
     private IReadOnlyList<(string Section, string Characters, int More)> letters = [];
+    private IReadOnlyList<BookDraftLeftOut> leftOut = [];
     private IReadOnlyList<BookThemeDocument> customThemes = [];
     private bool wizardOpen;
 
@@ -571,6 +606,9 @@
             file => FontMaps.GetOrAdd(file, f => Font(f) is { } bytes ? BookFontCoverage.Read(bytes) : null));
     }
     private bool confirmStartOver;
+    private bool confirmMarkdown;
+    // Which download the party leak check stopped: Download anyway makes that one.
+    private bool leaksForMarkdown;
     private string? message;
     private SaveState state = SaveState.Saved;
     private readonly SemaphoreSlim saving = new(1, 1);
@@ -742,6 +780,14 @@
     {
         dirty.Add(section);
         await SaveAsync(section);
+    }
+
+    /// <summary>The pictures the preview's art left out, as the server sent them with it.</summary>
+    [JSInvokable]
+    public Task ArtLeftOut(List<BookDraftLeftOut>? pictures)
+    {
+        leftOut = pictures ?? [];
+        return InvokeAsync(StateHasChanged);
     }
 
     [JSInvokable]
@@ -1079,19 +1125,35 @@
         }
     }
 
-    /// <summary>Prints the draft. The party edition is first checked for what only the GM edition has (docs/BOOK_EXPORT.md 41.19): with a hit,
-    /// nothing is printed and the Problems tab lists each; <paramref name="anyway"/> (the GM read them) prints all the same.</summary>
-    private async Task DownloadAsync(bool anyway)
+    /// <summary>The draft as a Markdown file (docs/BOOK_EXPORT.md 41.24): the GM edition asks first, the party edition is leak-checked as the PDF is.</summary>
+    private async Task MarkdownAsync()
+    {
+        moreOpen = false;
+        if (edition == "dm")
+        {
+            confirmMarkdown = true;
+            return;
+        }
+
+        await DownloadAsync(false, markdown: true);
+    }
+
+    /// <summary>Prints the draft, or with <paramref name="markdown"/> gives its Markdown. The party edition is first checked for what only the GM
+    /// edition has (docs/BOOK_EXPORT.md 41.19): with a hit, nothing is made and the Problems tab lists each; <paramref name="anyway"/> (the GM
+    /// read them) makes it all the same.</summary>
+    private async Task DownloadAsync(bool anyway, bool markdown = false)
     {
         printing = true;
         message = null;
         printReport = null;
+        confirmMarkdown = false;
         try
         {
             await FlushAsync();
             if (edition == "party" && !anyway)
             {
                 leakReport = await Drafts.LeaksAsync(Access, language);
+                leaksForMarkdown = markdown;
                 if (leakReport is { Total: > 0 })
                 {
                     Reveal("problems");
@@ -1099,7 +1161,7 @@
                 }
             }
 
-            var url = Nav.ToAbsoluteUri($"{BasePath}/book/{edition}/draft/{language}/pdf").ToString();
+            var url = Nav.ToAbsoluteUri($"{BasePath}/book/{edition}/draft/{language}/{(markdown ? "md" : "pdf")}").ToString();
             var result = await JS.InvokeAsync<BookPanel.BookDownload>("codex.downloadFrom", url);
             if (result.Status != 200)
             {
@@ -1147,7 +1209,7 @@
     /// <summary>What the Problems tab lists: blocks too tall and breaks not placed (Fit pages), pages printed cut off, web addresses not fetched, and
     /// what only the GM edition should have, found in the party draft before it was printed.</summary>
     private int ProblemCount =>
-        (fitReport?.Overflow.Count ?? 0) + (fitReport?.Unplaced.Count ?? 0) + (printReport != null ? 1 : 0) + (webReport?.Failed.Count ?? 0) + (leakReport?.Total ?? 0) + letters.Count;
+        (fitReport?.Overflow.Count ?? 0) + (fitReport?.Unplaced.Count ?? 0) + (printReport != null ? 1 : 0) + (webReport?.Failed.Count ?? 0) + (leakReport?.Total ?? 0) + letters.Count + leftOut.Count;
 
     private string LeakLabel(BookLeak hit) => hit.Kind switch
     {

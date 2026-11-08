@@ -7,7 +7,7 @@ import vm from 'node:vm';
 
 // The shipped bundle, not the source: it is what the editor and the print browser run (and the bundle has no expr-eval).
 vm.runInThisContext(readFileSync(new URL('../../src/Codex.Web/wwwroot/lib/book/book-render.js', import.meta.url), 'utf8'));
-const { pagesHtml, clean, pictures, brew, brewMap, numberPages, number, pageNumbers, draw, unfit, insertBreaks, isFitted, FIT_CLASS } = globalThis.CodexBook;
+const { pagesHtml, clean, pictures, brew, brewMap, numberPages, footPages, number, pageNumbers, draw, unfit, insertBreaks, isFitted, FIT_CLASS } = globalThis.CodexBook;
 
 const dom = new JSDOM('<!doctype html><div id="brew"></div>');
 const doc = dom.window.document;
@@ -141,6 +141,17 @@ const line = numbered.querySelector('.toc a');
 assert.equal(line.innerHTML, '<span class="toc-words">Lore</span><span class="toc-page">3</span>');
 number(numbered);
 assert.equal(numbered.querySelector('.toc a').innerHTML, line.innerHTML, 'numbering again changes nothing');
+
+// The running footer: each page the name of the chapter it is in, from the drawn page's own h1; a chapter that starts mid-page names that
+// page; none on the cover or the contents, none where the text wrote its own footnote; beside the columns, and never markup.
+const footed = drawn('{{frontCover}}\n\n# Book\n\n\\page\n\n{{toc,wide\n# Contents\n}}\n\n\\page\n\n{{chapter,#ch-lore\n# Lore <i>&amp;</i> Legend\n}}\n\ntext\n\n\\page\n\nmore\n\n{{chapter,#ch-cast\n# Cast\n}}\n\n\\page\n\nstill cast\n\n\\page\n\n{{footnote MINE}}\n\nown');
+footPages(footed);
+const feet = [...footed.querySelectorAll('.page')].map(p => [...p.querySelectorAll('.footnote')].map(f => f.textContent));
+assert.deepEqual(feet, [[], [], ['Lore & Legend'], ['Cast'], ['Cast'], ['MINE']], JSON.stringify(feet));
+const foot = footed.querySelectorAll('.page')[3].lastElementChild;
+assert.ok(foot.matches('.footnote.auto') && foot.children.length === 0, foot.outerHTML);
+footPages(footed);
+assert.equal(footed.querySelectorAll('.footnote.auto').length, 3, 'footing again adds nothing');
 
 // Fit pages (41.15). Marking a drawing for it changes no HTML: the same brews, drawn with and without the marks, are the same once the marks are
 // taken off, so a rule such as "h1 + p" sees the page as it prints. And each mark points at the line its block starts on.

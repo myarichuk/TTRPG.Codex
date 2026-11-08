@@ -893,9 +893,9 @@ Open, in the order I would take them:
 1. **(Fixed in section 32.)** ~~Anchoring is still by heading text.~~ A body line `## Vera` inside an earlier entry (a wiki page "History" with a `## Vera` subsection) still takes Vera's picture,
    and the real heading gets none. Always a picture the party may see, so a misplacement, not a leak. A proper fix needs a per-entry marker emitted by `Compile`.
 2. **(Fixed in section 33.)** ~~The decoder runs on player-uploaded portraits, in-process (see the correction above).~~ Options: decode out of process, scale only DM-uploaded media, or decode in the printing browser.
-3. **One global decoder queue of two**, shared by all users: one DM's first build of many large pictures delays everyone's preview and PDF, and the PDF slot is held meanwhile.
+3. **(Fixed in 41.24.)** ~~**One global decoder queue of two**, shared by all users:~~ one DM's first build of many large pictures delays everyone's preview and PDF, and the PDF slot is held meanwhile.
    Needs a per-user limit or a time budget that falls back to unscaled bytes.
-4. **Preview and print can differ**: the 64 MB cap counts scaled bytes and preview files are about six times smaller, so a book of roughly 11-64 MB of print-size art
+4. **(Fixed in 41.24.)** ~~**Preview and print can differ**~~: the 64 MB cap counts scaled bytes and preview files are about six times smaller, so a book of roughly 11-64 MB of print-size art
    shows every picture in the preview and drops some from the PDF ("limit"). The skips are not shown in the panel.
 5. Animated WebP/APNG that need scaling lose all but one frame (untested which); the cache's byte count can drift by one entry under a race; the column and drop-cap tests are
    string checks on the CSS, not on a render.
@@ -2209,3 +2209,43 @@ the setting saves and is there after a reload. No picture was drawn (that bills 
 
 Not done: one guide per user, not per campaign; no reference picture (some models take one, which holds a style better than words); the
 guide is not shown in the art panels outside the book's tray.
+
+### 41.24 Small things: fair decoding, one picture cap for preview and print, a running footer, the Markdown file (2026-11-08)
+
+Asked for by the user before the book-shaped prose (handoff item 2). Left for that work: stat-block and table blocks (they come with the
+system's book shape); not small: `:::for` per-player editions; not asked: a picture style per campaign.
+
+- **The decoder is shared fairly between users** (section 31.1, item 3). The scaler's two places are a `BookFairGate`: one user alone may
+  hold both (a self-hosted server usually has one GM), and when a place comes free it goes to the waiting user who holds the fewest, the
+  earliest of them. A GM's first build of many large pictures now delays another's preview by about one picture. The user is the one asking
+  for the book (`BookArtReader.ReadAsync(..., forUser)`), on both book routes. Nothing is kept for a user who holds and waits for nothing.
+  The printing line's place is still taken before the pictures are read, on purpose: it bounds how many books are read at once, and a
+  request that would be turned away costs nothing (only one place per user, so it holds back only that user).
+- **The preview and the PDF leave out the same pictures** (31.1, item 4). The 64 MB cap counted each edition's own bytes, and preview files
+  are about six times smaller, so a book of 11-64 MB of print-size pictures showed them all and printed without some. Now each picture is
+  counted at what it would print at, worked out from its pixels before anything is decoded (`BookImageScaler.PrintEstimate`: its own bytes
+  when the print leaves it as it is, else its printed pixels at 1 byte each, never more than its own bytes), in the same order for both. The
+  print still checks what it really holds, a backstop for a picture larger than its estimate (a PNG with transparency can be).
+- **The pictures left out are named** in the editor's Problems tab: the chapter (a button that opens it), the entry by the label this
+  edition gives it, and why (the book is full, or the file could not be read). Named only through the edition's own slots: a skipped
+  picture carries its slot's key (a hash), never an id, and one whose slot this edition has not is not named. The preview's picture request
+  now answers `{art, leftOut}`.
+- **A running footer**: each page names its chapter at its foot, beside the page number, as Homebrewery's footnote (`<div class="footnote
+  auto">`, `render.js` `footPages`, after Fit pages so it takes no room). Read from the drawn page's own `h1`, so an edition shows only its
+  own text; a page takes the first chapter title on it, else the last before it; none on covers or the contents, none where the text wrote its
+  own `{{footnote`. Plain gained the rule (the layer and Ashen Vellum had one); `EveryBlock_UnderEveryTheme...` now reads the name at every
+  page's foot with no text running into it.
+- **The Markdown file** (More, "Download Markdown (.md)", route `.../draft/{lang}/md`, GM only): the draft's chapters as stored, a page
+  apart, with Fit pages' marks taken out (`BookDraftText.Unfitted`: `\page {reliquary,fitted}` keeps `reliquary`). The party edition goes
+  through the same leak check as its PDF (Download anyway then gives the file); the GM edition asks first, saying it holds every secret. The
+  pictures stay `art:` references and the stylesheet is not in it (the menu item says so). No draft, no file (404): the editor makes the
+  draft when it opens.
+
+Tests: `BookFairGateTests` (one user holds both; the freed place goes to the user holding fewest; a cancelled wait; the scaler shares by
+owner, nothing kept after), `BookArtTests.NearTheSizeCap...` (preview and print leave out the same picture, with its slot), `BookDraftTests`
+(left-out pictures named by label, never an id or a hidden name in the party's; the Markdown file), the renderer's footer checks in
+`test.mjs`, the footer under every theme in print, and the route E2E tests (the `.md` through the leak check, a stranger gets 404).
+
+Not done, or not verified: the footer was looked at in Chromium only, and in Hebrew in one preview (mirrored, beside the page number); the estimate's 1 byte a pixel is a
+guess with room (painted art measured 0.3-0.8); a GM's own CSS that styles `.footnote` styles the running footer too; the Markdown file was
+not opened in Homebrewery itself; the Russian and Hebrew text of the new strings is machine-drafted.

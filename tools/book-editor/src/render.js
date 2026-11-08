@@ -446,6 +446,29 @@ export function numberPages(root) {
   }
 }
 
+const COVERS = '.frontCover, .insideCover, .backCover, .partCover';
+
+/**
+ * A running footer (docs/BOOK_EXPORT.md 28.4): each page gets Homebrewery's footnote (`<div class="footnote auto">`, which a theme places at
+ * the page's foot, beside the page number) with the name of the chapter it is in, read from the drawn page's own `h1`, so an edition can
+ * only ever show its own text. A page takes the first chapter title on it, or else the last one before it. Covers and the contents get none,
+ * nor does a page whose text wrote its own footnote. It sits beside the columns, not in them, so it takes no room from the text.
+ */
+export function footPages(root) {
+  let current = '';
+  for (const page of root.querySelectorAll('.page')) {
+    if (page.querySelector(COVERS)) continue;
+    const titles = [...page.querySelectorAll('h1')].filter(h => !h.closest('.toc')).map(h => h.textContent.trim()).filter(Boolean);
+    const shown = titles[0] || current;
+    if (titles.length) current = titles[titles.length - 1];
+    if (!shown || page.querySelector('.footnote, .toc')) continue;
+    const f = page.ownerDocument.createElement('div');
+    f.className = 'footnote auto';
+    f.textContent = shown;
+    page.append(f);
+  }
+}
+
 /**
  * Each contents line gets the page its chapter landed on, read from the laid-out pages, in the shape Homebrewery's contents take: the line's
  * words in one span and the number in a second, which Blank's `.toc` rules join with dot leaders.
@@ -478,6 +501,7 @@ export async function layout(doc, root, input, art) {
   const overflow = report(doc, root, fit(doc, root));
   const runOn = root.querySelectorAll('.page[data-fitted]').length;
   numberPages(root);
+  footPages(root);
   number(root);
   return { pages: root.querySelectorAll('.page').length, overflow, runOn };
 }

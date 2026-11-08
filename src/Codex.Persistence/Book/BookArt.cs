@@ -2,8 +2,9 @@ using Codex.Core.Book;
 
 namespace Codex.Persistence;
 
-/// <summary>Why one picture is not in a book.</summary>
-public sealed record BookArtSkipped(string Subject, string Reason);
+/// <summary>Why one picture is not in a book, and the key of the slot it was for (a hash, never a raw id), so the editor can name the
+/// entry by the label this edition gives it.</summary>
+public sealed record BookArtSkipped(string Subject, string Reason, string? Slot = null);
 
 /// <summary>
 /// The pictures a book may use, each under an opaque id (<c>a1</c>, <c>a2</c>…) that the renderer's <c>asset:</c> targets name.
@@ -58,7 +59,7 @@ public sealed class BookArt
         return id;
     }
 
-    internal void Skip(string subject, string reason) => _skipped.Add(new BookArtSkipped(subject, reason));
+    internal void Skip(string subject, string reason, string? slot = null) => _skipped.Add(new BookArtSkipped(subject, reason, slot));
 }
 
 /// <summary>
@@ -68,8 +69,12 @@ public sealed class BookArt
 /// is fetched by an id that came from anywhere else, so a picture the audience may not see is never read, not read and then dropped.
 /// Bytes pass through <see cref="BookImageSanitizer"/> (metadata out, type from the bytes, size checked), then <see cref="BookImageScaler"/>
 /// (no bigger than the page can show), and the whole is capped.
+/// <para>The cap is decided the same way for the preview and the print (docs/BOOK_EXPORT.md 31.1, item 4): each picture is counted at the
+/// size it would print at, from its pixels and before anything is decoded (<see cref="BookImageScaler.PrintEstimate"/>), in the same order,
+/// so the preview leaves out exactly the pictures the PDF leaves out. The print also checks what it really holds against the cap, a
+/// backstop for a picture that comes out larger than its estimate.</para>
 /// </summary>
-public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = null)
+public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = null, long maxTotalBytes = BookArtReader.MaxTotalBytes)
 {
     public const int MaxImages = 120;
 
@@ -77,52 +82,63 @@ public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = n
 
     /// <param name="book">The GM's book pictures chosen for this edition's slots (<see cref="BookSlots.Choose"/>); they come first, and an entry or
     /// cover that has one is not read from its own media.</param>
+    /// <param name="forUser">The user the book is read for: the decoder's places are shared fairly between users.</param>
     public async Task<BookArt> ReadAsync(BookSource source, BookArtQuality quality = BookArtQuality.Print, int columns = 2, CancellationToken ct = default,
-        IReadOnlyList<BookSlotPicture>? book = null)
+        IReadOnlyList<BookSlotPicture>? book = null, string? forUser = null)
     {
         var art = new BookArt();
         long total = 0;
+        long counted = 0;
 
-        async Task TryAddAsync(string kind, string owner, string sub, string subject, string documentId, string name, string? scaleKind = null)
+        async Task TryAddAsync(string kind, string owner, string sub, string subject, string slot, string documentId, string name, string? scaleKind = null)
         {
             if (art.Count >= MaxImages)
             {
-                art.Skip(subject, "limit");
+                art.Skip(subject, "limit", slot);
                 return;
             }
 
             var file = await media.GetAsync(documentId, name);
             if (file == null)
             {
-                art.Skip(subject, "missing");
+                art.Skip(subject, "missing", slot);
                 return;
             }
 
             if (file.Bytes.Length > RavenMediaStore.MaxBytes)
             {
-                art.Skip(subject, "too-large");
+                art.Skip(subject, "too-large", slot);
                 return;
             }
 
             var problem = BookImageSanitizer.TrySanitize(file.Bytes, out var image);
             if (problem != BookImageProblem.None || image == null)
             {
-                art.Skip(subject, problem.ToString().ToLowerInvariant());
+                art.Skip(subject, problem.ToString().ToLowerInvariant(), slot);
                 return;
             }
 
-            // Scaled to what its box prints at: the book's size cap counts what is placed, not what was uploaded.
+            // Counted at what its box prints at, whichever quality this is: the cap counts what the PDF places, not what was uploaded, and
+            // the preview leaves out what the PDF would.
+            var estimate = scaler == null ? image.Bytes.Length : BookImageScaler.PrintEstimate(image, scaleKind ?? kind, columns);
+            if (counted + estimate > maxTotalBytes)
+            {
+                art.Skip(subject, "limit", slot);
+                return;
+            }
+
             if (scaler != null)
             {
-                image = await scaler.ScaleAsync(image, scaleKind ?? kind, quality, ct, columns);
+                image = await scaler.ScaleAsync(image, scaleKind ?? kind, quality, ct, columns, forUser);
             }
 
-            if (total + image.Bytes.Length > MaxTotalBytes)
+            if (quality == BookArtQuality.Print && total + image.Bytes.Length > maxTotalBytes)
             {
-                art.Skip(subject, "limit");
+                art.Skip(subject, "limit", slot);
                 return;
             }
 
+            counted += estimate;
             total += image.Bytes.Length;
             art.Add(kind, owner, sub, image);
         }
@@ -139,36 +155,45 @@ public sealed class BookArtReader(IMediaStore media, BookImageScaler? scaler = n
             }
 
             covered.Add(chosen.Slot.Key);
-            await TryAddAsync("slot", chosen.Slot.Key, picture.BuiltFrom, "slot:" + chosen.Slot.Key, BookArtDocument.IdFor(source.Campaign.Id), picture.Attachment, chosen.Slot.ScaleKind);
+            await TryAddAsync("slot", chosen.Slot.Key, picture.BuiltFrom, "slot:" + chosen.Slot.Key, chosen.Slot.Key, BookArtDocument.IdFor(source.Campaign.Id), picture.Attachment, chosen.Slot.ScaleKind);
         }
 
         // The cover is what any member of the campaign sees on the overview, so both editions may carry it.
-        if (source.Campaign.HasCover && !covered.Contains(BookSlots.KeyFor(BookSlots.CoverSubject)))
+        var coverKey = BookSlots.KeyFor(BookSlots.CoverSubject);
+        if (source.Campaign.HasCover && !covered.Contains(coverKey))
         {
-            await TryAddAsync("cover", string.Empty, string.Empty, "cover", source.Campaign.Id, RavenMediaStore.CampaignCover);
+            await TryAddAsync("cover", string.Empty, string.Empty, "cover", coverKey, source.Campaign.Id, RavenMediaStore.CampaignCover);
         }
 
-        foreach (var actor in source.Actors.Where(a => a.HasPortrait && !covered.Contains(BookSlots.KeyFor(BookSlots.ActorSubject(source.Audience, a)))))
+        foreach (var actor in source.Actors.Where(a => a.HasPortrait))
         {
-            await TryAddAsync("portrait", actor.Id, string.Empty, "portrait:" + actor.Id, actor.Id, RavenMediaStore.ActorPortrait);
+            var key = BookSlots.KeyFor(BookSlots.ActorSubject(source.Audience, actor));
+            if (covered.Contains(key)) continue;
+            await TryAddAsync("portrait", actor.Id, string.Empty, "portrait:" + actor.Id, key, actor.Id, RavenMediaStore.ActorPortrait);
         }
 
-        foreach (var page in source.Wiki.Where(p => p.HasArt && !covered.Contains(BookSlots.KeyFor(BookSlots.WikiSubject(p.Id)))))
+        foreach (var page in source.Wiki.Where(p => p.HasArt))
         {
-            await TryAddAsync("wiki", page.Id, string.Empty, "wiki:" + page.Id, page.Id, RavenMediaStore.EntryArt);
+            var key = BookSlots.KeyFor(BookSlots.WikiSubject(page.Id));
+            if (covered.Contains(key)) continue;
+            await TryAddAsync("wiki", page.Id, string.Empty, "wiki:" + page.Id, key, page.Id, RavenMediaStore.EntryArt);
         }
 
         foreach (var region in source.Regions)
         {
-            foreach (var location in region.Locations.Where(l => l.HasArt && !covered.Contains(BookSlots.KeyFor(BookSlots.LocationSubject(region.Id, l.Id)))))
+            foreach (var location in region.Locations.Where(l => l.HasArt))
             {
-                await TryAddAsync("location", region.Id, location.Id, "location:" + location.Id, region.Id, RavenMediaStore.LocationArtName(location.Id));
+                var key = BookSlots.KeyFor(BookSlots.LocationSubject(region.Id, location.Id));
+                if (covered.Contains(key)) continue;
+                await TryAddAsync("location", region.Id, location.Id, "location:" + location.Id, key, region.Id, RavenMediaStore.LocationArtName(location.Id));
             }
         }
 
-        foreach (var entry in source.Homebrew.Where(h => h.HasArt && !covered.Contains(BookSlots.KeyFor(BookSlots.HomebrewSubject(h.Id)))))
+        foreach (var entry in source.Homebrew.Where(h => h.HasArt))
         {
-            await TryAddAsync("homebrew", entry.Id, string.Empty, "homebrew:" + entry.Id, entry.Id, RavenMediaStore.EntryArt);
+            var key = BookSlots.KeyFor(BookSlots.HomebrewSubject(entry.Id));
+            if (covered.Contains(key)) continue;
+            await TryAddAsync("homebrew", entry.Id, string.Empty, "homebrew:" + entry.Id, key, entry.Id, RavenMediaStore.EntryArt);
         }
 
         return art;

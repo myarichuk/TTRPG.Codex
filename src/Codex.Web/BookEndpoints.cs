@@ -77,6 +77,17 @@ public static class BookEndpoints
             return Results.Json(await drafts.ArtAsync(access, audience, BookArtQuality.Preview, cancel));
         });
 
+        // The draft's Markdown as one file, for Homebrewery or a text editor (docs/BOOK_EXPORT.md 41.24). The party edition's leak check and
+        // the GM edition's warning are the editor's, before it asks; this is the GM's own text either way.
+        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/md", async (string campaignId, string audience, string lang, ClaimsPrincipal user, HttpResponse response,
+            ICampaignAccessResolver resolver, BookDrafts drafts) =>
+        {
+            if (await GmAsync(campaignId, user, resolver) is not { } access || BookDrafts.Audience(audience) == null) return Results.NotFound();
+            if (await drafts.MarkdownAsync(access, audience, lang) is not { } made) return Results.NotFound();
+            Protect(response);
+            return Results.File(System.Text.Encoding.UTF8.GetBytes(made.Markdown), "text/markdown; charset=utf-8", FileName(made.Title, audience, "md"));
+        });
+
         app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/pdf", async (string campaignId, string audience, string lang, ClaimsPrincipal user, HttpResponse response,
             ICampaignAccessResolver resolver, BookDrafts drafts, IWebHostEnvironment env, BookPdf pdf, ILoggerFactory logs, CancellationToken cancel) =>
         {
@@ -161,7 +172,7 @@ public static class BookEndpoints
     /// <summary>"Campaign name (dm).pdf" with nothing in it a file system, a header or a reader's eye would be fooled by: a fixed
     /// set of characters Windows and Unix both refuse, no control, format (bidi override, zero width) or separator characters, and a cut
     /// on a whole character, not in the middle of a surrogate pair. The framework encodes what remains.</summary>
-    public static string FileName(string title, string audience)
+    public static string FileName(string title, string audience, string extension = "pdf")
     {
         var kept = new System.Text.StringBuilder();
         foreach (var c in title)
@@ -187,7 +198,7 @@ public static class BookEndpoints
 
         clean = cut.ToString().Trim();
         var edition = audience.Equals("party", StringComparison.OrdinalIgnoreCase) ? "party" : "dm";
-        return (clean.Length == 0 ? "campaign" : clean) + " (" + edition + ").pdf";
+        return (clean.Length == 0 ? "campaign" : clean) + " (" + edition + ")." + extension;
     }
 
     private sealed record Made(string? Html, string Title, IResult? Failure, BookPrintJob? Job = null);
@@ -237,7 +248,7 @@ public static class BookEndpoints
         // The GM's own book pictures go in the slots this edition's source makes, and only those made for this edition (BookSlots.Choose).
         var slots = BookSlots.For(source, compiled, entries);
         var art = pics == "0" ? BookArt.None : await artReader.ReadAsync(source, forPrint ? BookArtQuality.Print : BookArtQuality.Preview, cols == "2" ? 2 : 1, cancel,
-            BookSlots.Choose(slots, await bookArt.GetAsync(access)));
+            BookSlots.Choose(slots, await bookArt.GetAsync(access)), access.UserId);
         document = BookComposer.PlaceArt(document, compiled, entries, art, out _, slots);
 
         BookHtmlResult Build(IReadOnlyDictionary<string, int>? numbers) => BookHtml.Build(document, chosen, new BookHtmlOptions

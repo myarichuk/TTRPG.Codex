@@ -179,6 +179,9 @@ public static class BookDraftThemes
             .page td { padding: .6mm 1mm; vertical-align: top; }
             .page tbody tr:nth-child(odd) { background: var(--HB_Color_Accent); }
             .page .pageNumber { bottom: 8mm; font-size: 8pt; color: var(--HB_Color_Footnotes); }
+            /* The running footer: the chapter's name at the page's foot, beside the page number (Blank places that). */
+            .page .footnote { position: absolute; right: 80px; bottom: 8mm; width: 60%; font-size: 7.5pt; letter-spacing: .06em; text-transform: uppercase; text-align: right; color: var(--HB_Color_Footnotes); }
+            .page:nth-child(even) .footnote { right: auto; left: 80px; text-align: left; }
             /* Plain prints in its own faces wherever the Homebrewery layer names one of its own (those are for a brew's CSS). */
             .page :is(table, .note, .descriptive, .monster, .spellList, .artist, .runeTable th, .toc ul span:last-child, .footnote, .banner, .logo p),
             .page:is(:has(.frontCover), :has(.insideCover), :has(.backCover), :has(.partCover)) :is(p, h2) { font-family: "Alegreya Sans", sans-serif; }

@@ -892,6 +892,14 @@
   <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>Этих знаков нет ни в одном шрифте оформления. Они напечатаются шрифтом, какой найдётся на сервере, или пустыми квадратами:</value></data>
   <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>Выберите другое оформление или замените эти знаки (например, эмодзи или буквы другого алфавита).</value></data>
   <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {и ещё #} few {и ещё #} many {и ещё #} other {и ещё #}}</value></data>
+  <data name="Campaign.Book.Draft.Pictures.LeftOut" xml:space="preserve"><value>{0, plural, one {# иллюстрация не вошла в книгу:} few {# иллюстрации не вошли в книгу:} many {# иллюстраций не вошли в книгу:} other {# иллюстрации не вошли в книгу:}}</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Limit" xml:space="preserve"><value>книга заполнена (не больше 120 иллюстраций и 64 МБ на все, по размеру для печати)</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Unreadable" xml:space="preserve"><value>файл не удалось прочитать</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Hint" xml:space="preserve"><value>Предпросмотр и PDF пропускают одни и те же иллюстрации. Возьмите иллюстрации поменьше или уберите часть из книги.</value></data>
+  <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>Скачать Markdown (.md)</value></data>
+  <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>Все главы одним файлом Markdown — для Homebrewery или текстового редактора. Иллюстраций и таблицы стилей в нём нет.</value></data>
+  <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>Это издание мастера: в нём все секреты. Не показывайте файл игрокам.</value></data>
+  <data name="Campaign.Book.Draft.MarkdownGmYes" xml:space="preserve"><value>Скачать</value></data>
   <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Совместимость с Homebrewery</value></data>
   <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Раскладывать страницы так же, как Homebrewery, чтобы CSS, написанный для Homebrewery, работал здесь. Картинки и цвета Homebrewery не используются.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Скачать PDF</value></data>

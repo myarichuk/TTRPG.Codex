@@ -667,6 +667,15 @@ public static class BookDraftText
 
     public const string FitClass = "fitted";
 
+    /// <summary>A break Fit pages wrote, as a plain Homebrewery break: <c>\page {fitted}</c> is <c>\page</c>, and <c>\page {reliquary,fitted}</c>
+    /// keeps the class it carried (<c>\page {reliquary}</c>). Any other line is as it was.</summary>
+    public static string Unfitted(string line)
+    {
+        if (!IsFitted(line)) return line;
+        var classes = Fitted.Match(line.Trim()).Groups[1].Value.Split(',').Select(t => t.Trim()).Where(t => t.Length > 0 && t != FitClass).ToList();
+        return classes.Count == 0 ? @"\page" : @"\page {" + string.Join(",", classes) + "}";
+    }
+
     private static readonly System.Text.RegularExpressions.Regex PlainFitted = new(@"^\\page(?:break)? *\{ *fitted *\}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
     private static readonly System.Text.RegularExpressions.Regex Fitted = new(@"^\\page(?:break)? *\{([^\n{}]*)\}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 }

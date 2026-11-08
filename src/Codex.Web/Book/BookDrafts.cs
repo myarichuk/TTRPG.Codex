@@ -257,9 +257,23 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
             theme.Homebrewery ?? draft.Document.Homebrewery, font, web);
         if (shell.Html == null) return (null, shell.Refused);
         var markdown = string.Join("\n\n\\page\n\n", draft.Chapters.Select(c => c.Markdown.TrimEnd()));
-        var pictures = withArt ? await ArtAsync(made.Dm, made.Source, quality, cancel) : new Dictionary<string, string>();
+        var pictures = withArt ? (await ArtAsync(made.Dm, made.Source, quality, cancel)).Art : new Dictionary<string, string>();
         return (new BookDraftPage(made.Source.Campaign.Name, shell.Html, markdown, pictures,
             [.. draft.Chapters.Select(c => new BookDraftPageChapter(c.Section, c.Title, c.Markdown, c.Version))]), null);
+    }
+
+    /// <summary>
+    /// The draft as one Markdown file (docs/BOOK_EXPORT.md 41.24): its chapters as stored, joined by page breaks, with Fit pages' breaks written
+    /// as plain ones (<see cref="BookDraftText.Unfitted"/>: the mark is this app's, and means nothing anywhere else). Pictures stay <c>art:</c> references and the stylesheet is
+    /// not in it. Null when not allowed.
+    /// </summary>
+    public async Task<(string Title, string Markdown)?> MarkdownAsync(CampaignAccess asked, string edition, string language)
+    {
+        if (await GenerateAsync(asked, edition, language) is not { } made) return null;
+        if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return null;
+        var chapters = draft.Chapters.Select(c => string.Join("\n", c.Markdown.ReplaceLineEndings("\n").Split('\n')
+            .Select(BookDraftText.Unfitted)).TrimEnd());
+        return (made.Source.Campaign.Name, string.Join("\n\n\\page\n\n", chapters) + "\n");
     }
 
     /// <summary>
@@ -288,22 +302,23 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
     }
 
     /// <summary>The edition's pictures by slot key, as data images: the cover, each chapter's header, and each entry's (the GM's book picture for
-    /// the slot, or the entry's own picture as this source flags it).</summary>
-    public async Task<IReadOnlyDictionary<string, string>> ArtAsync(CampaignAccess asked, string edition, BookArtQuality quality, CancellationToken cancel)
+    /// the slot, or the entry's own picture as this source flags it); and the pictures left out, each by its chapter and the label this edition
+    /// gives its entry. The preview and the print leave out the same ones (<see cref="BookArtReader"/>).</summary>
+    public async Task<BookDraftArt> ArtAsync(CampaignAccess asked, string edition, BookArtQuality quality, CancellationToken cancel)
     {
-        if (Audience(edition) is not { } audience) return new Dictionary<string, string>();
-        if (await resolver.ResolveAsync(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return new Dictionary<string, string>();
-        if (await reader.ReadAsync(dm, audience) is not { } source) return new Dictionary<string, string>();
+        if (Audience(edition) is not { } audience) return BookDraftArt.None;
+        if (await resolver.ResolveAsync(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return BookDraftArt.None;
+        if (await reader.ReadAsync(dm, audience) is not { } source) return BookDraftArt.None;
         return await ArtAsync(dm, source, quality, cancel);
     }
 
-    private async Task<IReadOnlyDictionary<string, string>> ArtAsync(CampaignAccess dm, BookSource source, BookArtQuality quality, CancellationToken cancel)
+    private async Task<BookDraftArt> ArtAsync(CampaignAccess dm, BookSource source, BookArtQuality quality, CancellationToken cancel)
     {
         // The slots' keys do not depend on the language (it only names the chapters).
         var compiled = BookComposer.Compose(source, "en", out var entries);
         var slots = BookSlots.For(source, compiled, entries);
         // Two columns: the scaler sizes each picture for the box it prints in.
-        var pictures = await artReader.ReadAsync(source, quality, 2, cancel, BookSlots.Choose(slots, await art.GetAsync(dm)));
+        var pictures = await artReader.ReadAsync(source, quality, 2, cancel, BookSlots.Choose(slots, await art.GetAsync(dm)), dm.UserId);
         var map = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var anchor in BookCompiler.ArtAnchors(entries, pictures))
         {
@@ -316,6 +331,22 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
             if (asset != null && pictures.DataUri(asset) is { } uri) map[slot.Key] = uri;
         }
 
-        return map;
+        // Named only through this edition's own slots: a picture whose slot the edition does not have is not named at all.
+        var bySlot = slots.ToDictionary(s => s.Key, StringComparer.Ordinal);
+        var left = pictures.Skipped
+            .Select(s => s.Slot != null && bySlot.TryGetValue(s.Slot, out var slot) ? new BookDraftLeftOut(slot.Kind == BookSlots.Cover ? BookDraftWriter.Front : slot.Section, slot.Label, s.Reason) : null)
+            .OfType<BookDraftLeftOut>()
+            .ToList();
+        return new BookDraftArt(map, left);
     }
 }
+
+/// <summary>The edition's pictures by slot key, and the ones left out.</summary>
+public sealed record BookDraftArt(IReadOnlyDictionary<string, string> Art, IReadOnlyList<BookDraftLeftOut> LeftOut)
+{
+    public static readonly BookDraftArt None = new(new Dictionary<string, string>(), []);
+}
+
+/// <summary>A picture that is not in the book: the chapter it is in, the entry's label as this edition gives it, and why (<c>limit</c> when
+/// the book's size cap was reached, else what was wrong with the file).</summary>
+public sealed record BookDraftLeftOut(string Section, string Label, string Reason);

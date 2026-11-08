@@ -83,6 +83,36 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
     private static string All(IEnumerable<BookDraftGenerated> chapters) => string.Join("\n", chapters.Select(c => c.Markdown));
 
     [Fact]
+    public async Task APictureTheBookLeavesOut_IsNamedByItsChapterAndTheEditionsOwnLabel_NeverByAnId()
+    {
+        var (dm, id) = await SeedAsync();
+        var media = new RavenMediaStore(_db);
+        // Vera and the hidden actor have portraits; a cap of one byte leaves every picture out.
+        foreach (var actorId in new[] { "a-vera-" + id, "a-hidden-" + id })
+        {
+            var actor = (await _actors.GetVisibleAsync(actorId, dm))!;
+            actor.HasPortrait = true;
+            actor.PortraitVersion = 1;
+            await _actors.SaveAsync(actor);
+            await media.PutAsync(dm, actorId, RavenMediaStore.ActorPortrait, new MemoryStream(BookArtTests.Png(202)), "image/png");
+        }
+
+        var drafts = new BookDrafts(_reader, _store, new RavenBookArtRepository(_db), new BookArtReader(media, new BookImageScaler(), 1), new CampaignAccessResolver(_campaigns));
+        var party = await drafts.ArtAsync(dm, "party", BookArtQuality.Preview, CancellationToken.None);
+        var gm = await drafts.ArtAsync(dm, "dm", BookArtQuality.Preview, CancellationToken.None);
+
+        Assert.Empty(party.Art);
+        var vera = Assert.Single(party.LeftOut);
+        Assert.Equal(("PUBLIC_Vera", "limit"), (vera.Label, vera.Reason));
+        Assert.True(BookDraftDocument.IsSection(vera.Section), vera.Section);
+        Assert.DoesNotContain(party.LeftOut, l => (l.Label + l.Section).Contains("CANARY") || (l.Label + l.Section).Contains(id));
+        // The GM edition names both, the hidden one by its real name.
+        Assert.Equal(["CANARY_HIDDEN_NAME", "PUBLIC_Vera"], gm.LeftOut.Select(l => l.Label).Order());
+        // Not the GM of this campaign: nothing.
+        Assert.Same(BookDraftArt.None, await drafts.ArtAsync(new CampaignAccess(id, PlayerUser, CampaignRole.Player), "party", BookArtQuality.Preview, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ThePartyDraft_HoldsNoCanary_NotEvenTheIdOfAMaskedActor_AndStillHasThePublicText()
     {
         var (dm, id) = await SeedAsync();
@@ -137,6 +167,34 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         Assert.Equal("Bio\n\n\\\\page {display:none}\n\\\\column\n", BookDraftWriter.Text("Bio\n\n\\page {display:none}\n\\column", Names, dm: false));
         Assert.Equal("Text\n\n{{secret\nThe truth.\n}}\n\n", BookDraftWriter.Text("Text\n:::dm\nThe truth.\n:::", Names, dm: true));
         Assert.Equal("Text\n", BookDraftWriter.Text("Text\n:::dm\nThe truth.\n:::", Names, dm: false));
+    }
+
+    [Fact]
+    public async Task TheMarkdownFile_IsTheEditionsOwnChapters_WithFitPagesMarksTakenOut_AndOnlyForTheGm()
+    {
+        var (dm, id) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var cast = view.Chapters.Single(c => c.Section == "cast");
+        await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown + "\n\\page {fitted}\n\nPUBLIC_AFTER\n\n\\page {reliquary, fitted}\n\nPUBLIC_STYLED\n", cast.Version);
+
+        var (title, markdown) = (await _drafts.MarkdownAsync(dm, "party", "en"))!.Value;
+        Assert.Equal("Saltmere", title);
+        Assert.Contains("PUBLIC_BIO_VERA", markdown);
+        Assert.Contains("\n\\page\n\nPUBLIC_AFTER", markdown);
+        Assert.Contains("\n\\page {reliquary}\n\nPUBLIC_STYLED", markdown);
+        Assert.DoesNotContain(BookDraftText.FitClass, markdown);
+        Assert.DoesNotContain("CANARY", markdown);
+        // Every chapter, in order, a page apart.
+        var at = view.Chapters.Select(c => markdown.IndexOf(c.Markdown.Split('\n')[0], StringComparison.Ordinal)).ToList();
+        Assert.All(at, i => Assert.True(i >= 0));
+        Assert.Equal(at.Order(), at);
+
+        // Only a draft there is: the GM edition has none until it is opened.
+        Assert.Null(await _drafts.MarkdownAsync(dm, "dm", "en"));
+        await _drafts.OpenAsync(dm, "dm", "en");
+        Assert.Contains("CANARY_BIO_DM", (await _drafts.MarkdownAsync(dm, "dm", "en"))!.Value.Markdown);
+        Assert.Null(await _drafts.MarkdownAsync(new CampaignAccess(id, PlayerUser, CampaignRole.Player), "party", "en"));
+        Assert.Null(await _drafts.MarkdownAsync(dm, "neither", "en"));
     }
 
     [Fact]
