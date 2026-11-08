@@ -1084,4 +1084,5 @@
   <data name="Campaign.Book.Tab.Art" xml:space="preserve"><value>Pictures</value></data>
   <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>Edit</value></data>
   <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>AI polish</value></data>
+  <data name="Campaign.Book.Draft.Ai.InPane" xml:space="preserve"><value>The AI request is open on the chapter above: send or cancel it, or finish the review, there.</value></data>
 </root>

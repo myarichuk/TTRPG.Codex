@@ -1084,4 +1084,5 @@
   <data name="Campaign.Book.Tab.Art" xml:space="preserve"><value>תמונות</value></data>
   <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>עריכה</value></data>
   <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>ליטוש AI</value></data>
+  <data name="Campaign.Book.Draft.Ai.InPane" xml:space="preserve"><value>הבקשה ל-AI פתוחה מעל הפרק: שלחו או בטלו אותה, או סיימו שם את הבדיקה.</value></data>
 </root>

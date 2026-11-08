@@ -2642,6 +2642,8 @@ dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: 
 .book-draft-panel-tabs { display: flex; align-items: center; gap: .25rem; padding: 0 .5rem; background: var(--surface-2); }
 .book-draft-panel-body { overflow: auto; padding: .5rem .75rem; font-size: .875rem; }
 .book-draft-panel-body > * + * { margin-top: .35rem; }
+.book-draft-ai-bar { margin: 0 0 .4rem; padding: .45rem .6rem; border: 1px solid var(--border); border-inline-start: 3px solid var(--arcane, #58c2a5); border-radius: 4px; background: var(--arcane-soft, transparent); font-size: .875rem; }
+.book-draft-ai-bar > * + * { margin-top: .25rem; }
 .book-draft-ai-row { display: flex; gap: .35rem; align-items: center; flex-wrap: wrap; }
 .book-draft-ai-input { flex: 1 1 16rem; min-width: 10rem; width: auto; }
 .book-draft-ai-review { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }

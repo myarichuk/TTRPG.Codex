@@ -181,6 +181,65 @@
                                 }
                             </div>
                         }
+                        @* An AI request's pre-flight and its review sit on the Markdown they lock, not in a tab that could be folded away. *@
+                        @if (AiBusy)
+                        {
+                        <div class="book-draft-ai-bar" data-testid="book-draft-ai-bar">
+                        @if (reviewing)
+                        {
+                            <div class="book-draft-ai-review" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-review">
+                                <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Review"]</strong>
+                                <span class="small-muted" role="status" aria-live="polite" data-review-left data-testid="book-draft-review-left"></span>
+                                <span class="flex-grow-1"></span>
+                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="@(() => AiFinishAsync("accepted"))" data-testid="book-draft-review-keep">@L["Campaign.Book.Draft.Ai.KeepAccepted"]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiFinishAsync("all"))" data-testid="book-draft-review-all">@L["Campaign.Book.Draft.Ai.AcceptRest"]</CodexButton>
+                                <CodexButton Small="true" OnClick="@(() => AiFinishAsync("none"))" data-testid="book-draft-review-discard">@L["Campaign.Book.Draft.Ai.Discard"]</CodexButton>
+                                <div class="small-muted w-100">@L["Campaign.Book.Draft.Ai.ReviewHint"]</div>
+                            </div>
+                        }
+                        else if (aiPreview is { } asking && aiPending is { } pending)
+                        {
+                            <div class="book-draft-ai-confirm" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-ai-confirm">
+                                <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Confirm", pending.Whole ? L["Campaign.Book.Draft.Ai.Chapter"] : L["Campaign.Book.Draft.Ai.Selection"], asking.Model?.Label ?? string.Empty]</strong>
+                                @if (!pending.Whole && (asking.From != pending.Selection.From || asking.To != pending.Selection.To))
+                                {
+                                    <div class="small-muted" data-testid="book-draft-ai-widened">@L["Campaign.Book.Draft.Ai.Widened"]</div>
+                                }
+                                @if (asking.Pieces > 0)
+                                {
+                                    <div class="small-muted" data-testid="book-draft-ai-kept">@L["Campaign.Book.Draft.Ai.Kept", asking.Pieces]</div>
+                                }
+                                @if (asking.Preflight is { } flight)
+                                {
+                                    <div class="small-muted">@L["Campaign.Book.Draft.Ai.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh)]</div>
+                                    @if (flight.CostLow is { } low && flight.CostHigh is { } high)
+                                    {
+                                        <div class="small-muted" data-testid="book-draft-ai-cost">@L["Campaign.Book.Draft.Ai.Cost", Money(low, asking.Model?.Price), Money(high, asking.Model?.Price)]</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="small-muted">@L["Campaign.Book.Ai.Preflight.NoPrice"]</div>
+                                    }
+                                    @if (asking.Model?.ServerUsedToday is { } server && server.Limit > 0)
+                                    {
+                                        <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts]</div>
+                                    }
+                                }
+                                <div class="d-flex gap-2 mt-1">
+                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="AiSendAsync" data-testid="book-draft-ai-send">@L["Campaign.Book.Draft.Ai.Send"]</CodexButton>
+                                    <CodexButton Small="true" OnClick="AiCancelAsync" data-testid="book-draft-ai-cancel">@L["Common.Cancel"]</CodexButton>
+                                </div>
+                            </div>
+                        }
+                        else if (aiAsking)
+                        {
+                            <div class="d-flex gap-2 align-items-center" role="status" aria-live="polite" data-testid="book-draft-ai-asking">
+                                <span id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Asking"]</span>
+                                <CodexButton Small="true" OnClick="() => aiStop?.Cancel()" data-testid="book-draft-ai-stop">@L["Campaign.Book.Draft.Ai.Stop"]</CodexButton>
+                            </div>
+                        }
+                        </div>
+                        }
                         @* The editor's own box: the review view is put beside the code by the script, never among Blazor's elements. *@
                         <div class="book-draft-codebox"><div class="book-draft-code" @ref="host" data-testid="book-draft-code"></div></div>
                     </div>
@@ -238,64 +297,14 @@
                     {
                         @* AI edits (docs/BOOK_EXPORT.md 41.4): the selection, or the chapter, sent with its secrets, pictures and breaks kept back; the
                            cost shown before anything is sent; the reply reviewed change by change, and nothing saved until it is accepted. *@
-                        <section class="book-draft-ai" aria-labelledby="book-draft-ai-title" data-testid="book-draft-ai">
-                            @if (reviewing)
+                        <section class="book-draft-ai" aria-labelledby="book-draft-tab-ai" data-testid="book-draft-ai">
+                            @if (AiBusy)
                             {
-                                <div class="book-draft-ai-review" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-review">
-                                    <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Review"]</strong>
-                                    <span class="small-muted" role="status" aria-live="polite" data-review-left data-testid="book-draft-review-left"></span>
-                                    <span class="flex-grow-1"></span>
-                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="@(() => AiFinishAsync("accepted"))" data-testid="book-draft-review-keep">@L["Campaign.Book.Draft.Ai.KeepAccepted"]</CodexButton>
-                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiFinishAsync("all"))" data-testid="book-draft-review-all">@L["Campaign.Book.Draft.Ai.AcceptRest"]</CodexButton>
-                                    <CodexButton Small="true" OnClick="@(() => AiFinishAsync("none"))" data-testid="book-draft-review-discard">@L["Campaign.Book.Draft.Ai.Discard"]</CodexButton>
-                                    <div class="small-muted w-100">@L["Campaign.Book.Draft.Ai.ReviewHint"]</div>
-                                </div>
-                            }
-                            else if (aiPreview is { } asking && aiPending is { } pending)
-                            {
-                                <div class="book-draft-ai-confirm" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-ai-confirm">
-                                    <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Confirm", pending.Whole ? L["Campaign.Book.Draft.Ai.Chapter"] : L["Campaign.Book.Draft.Ai.Selection"], asking.Model?.Label ?? string.Empty]</strong>
-                                    @if (!pending.Whole && (asking.From != pending.Selection.From || asking.To != pending.Selection.To))
-                                    {
-                                        <div class="small-muted" data-testid="book-draft-ai-widened">@L["Campaign.Book.Draft.Ai.Widened"]</div>
-                                    }
-                                    @if (asking.Pieces > 0)
-                                    {
-                                        <div class="small-muted" data-testid="book-draft-ai-kept">@L["Campaign.Book.Draft.Ai.Kept", asking.Pieces]</div>
-                                    }
-                                    @if (asking.Preflight is { } flight)
-                                    {
-                                        <div class="small-muted">@L["Campaign.Book.Draft.Ai.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh)]</div>
-                                        @if (flight.CostLow is { } low && flight.CostHigh is { } high)
-                                        {
-                                            <div class="small-muted" data-testid="book-draft-ai-cost">@L["Campaign.Book.Draft.Ai.Cost", Money(low, asking.Model?.Price), Money(high, asking.Model?.Price)]</div>
-                                        }
-                                        else
-                                        {
-                                            <div class="small-muted">@L["Campaign.Book.Ai.Preflight.NoPrice"]</div>
-                                        }
-                                        @if (asking.Model?.ServerUsedToday is { } server && server.Limit > 0)
-                                        {
-                                            <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts]</div>
-                                        }
-                                    }
-                                    <div class="d-flex gap-2 mt-1">
-                                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="AiSendAsync" data-testid="book-draft-ai-send">@L["Campaign.Book.Draft.Ai.Send"]</CodexButton>
-                                        <CodexButton Small="true" OnClick="AiCancelAsync" data-testid="book-draft-ai-cancel">@L["Common.Cancel"]</CodexButton>
-                                    </div>
-                                </div>
-                            }
-                            else if (aiAsking)
-                            {
-                                <div class="d-flex gap-2 align-items-center" role="status" aria-live="polite" data-testid="book-draft-ai-asking">
-                                    <span id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Asking"]</span>
-                                    <CodexButton Small="true" OnClick="() => aiStop?.Cancel()" data-testid="book-draft-ai-stop">@L["Campaign.Book.Draft.Ai.Stop"]</CodexButton>
-                                </div>
+                                <div class="small-muted" role="status">@L["Campaign.Book.Draft.Ai.InPane"]</div>
                             }
                             else
                             {
                                 <div class="book-draft-ai-row">
-                                    <span id="book-draft-ai-title" class="visually-hidden">@L["Campaign.Book.Draft.Ai.Title"]</span>
                                     @foreach (var preset in BookEditPrompts.Presets.Keys)
                                     {
                                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiPrepareAsync(preset))" Disabled="@(working || state == SaveState.Conflict)"

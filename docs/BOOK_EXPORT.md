@@ -1857,6 +1857,9 @@ The user found the book's UI convoluted and asked for Visual Studio's collapsibl
   - **A panel below** has tabs: Ask AI (phase 4's bar, the pre-flight and the review), Problems (Fit pages' report, pages printed cut off,
     stylesheet addresses not fetched, with a count on the tab) and Blocks (the block reference). Clicking the open tab folds the panel.
     A report opens it on Problems, and asking the AI opens it on Ask AI.
+  - **An AI request's pre-flight (Send, Cancel) and its review (Keep, Accept the rest, Discard) sit on the Markdown pane**, above the code
+    they lock, not in the panel: switching or folding the panel, or a print report opening Problems, never hides the way out of a locked
+    chapter (found in review; the AI browser test switches and folds the panel with the review open).
   - **What is open is kept** in this browser (`localStorage`, `codex.bookEditor.layout`). The tabs take the arrow keys, Home and End.
   - **CodeMirror on the app's colours:** gutters, the active line, the cursor and the selection use the app's variables, and so does a
     highlight style in the bundle (headings brass, links and `art:` references verdigris). The editor is dark or light as the app is;

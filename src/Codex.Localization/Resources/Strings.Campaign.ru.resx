@@ -1084,4 +1084,5 @@
   <data name="Campaign.Book.Tab.Art" xml:space="preserve"><value>Картинки</value></data>
   <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>Редактор</value></data>
   <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>Полировка ИИ</value></data>
+  <data name="Campaign.Book.Draft.Ai.InPane" xml:space="preserve"><value>Запрос к ИИ открыт над главой: отправьте или отмените его либо закончите проверку там.</value></data>
 </root>

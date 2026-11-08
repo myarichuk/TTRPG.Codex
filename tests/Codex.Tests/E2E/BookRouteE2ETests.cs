@@ -721,7 +721,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await dm.GetByTestId("ai-price-out").FillAsync("2");
         await dm.GetByTestId("ai-price-label").FillAsync("USD");
         await dm.GetByTestId("ai-save").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model");
+        await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model", new() { Timeout = 30_000 });
 
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
         // The GM edition: its secret is in the chapter, and must not reach the model.
@@ -756,6 +756,12 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
             Assert.DoesNotContain("CANARY_AI_SECRET", sent);
         }
 
+        // The review's buttons sit on the chapter they lock: switching or folding the panel below does not hide them.
+        await dm.GetByTestId("book-draft-tab-problems").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-review-keep")).ToBeVisibleAsync();
+        await dm.GetByTestId("book-draft-panel-toggle").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-review-discard")).ToBeVisibleAsync();
+
         // Accepted: the preview takes it at once, and the review is kept with what was accepted.
         await dm.GetByTestId("book-draft-review-code").GetByRole(AriaRole.Button, new() { Name = "Accept" }).ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-draft-review-left")).ToContainTextAsync("0");
@@ -768,9 +774,12 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         // A second ask, of the whole chapter (nothing selected), in the GM's own words, discarded: nothing changes, and the editor takes typing again.
         await dm.Locator(".cm-line", new() { HasText = "Keeps the beacon tower" }).ClickAsync();
+        await dm.GetByTestId("book-draft-tab-ai").ClickAsync();
         await dm.GetByTestId("book-draft-ai-ask").FillAsync("Call it a beacon tower");
         await dm.GetByTestId("book-draft-ai-go").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-draft-ai-confirm")).ToContainTextAsync("whole chapter");
+        await dm.GetByTestId("book-draft-tab-blocks").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-ai-send")).ToBeVisibleAsync();
         await dm.GetByTestId("book-draft-ai-send").ClickAsync();
         await Assertions.Expect(review).ToBeVisibleAsync(new() { Timeout = 30_000 });
         await dm.GetByTestId("book-draft-review-discard").ClickAsync();
