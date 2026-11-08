@@ -65,6 +65,9 @@ public class BookDraftEditTests
 
         Assert.Contains("##### heading", Prompt(passage));
         Assert.Contains("leave that part out rather than make it up", Codex.Web.Book.BookDraftAi.AskText("shape"));
+        // A real model's read-aloud box came with a clue, a motive and a DC the notes never had.
+        Assert.Contains("from the passage only: no new facts, motives, events, clues or checks", Codex.Web.Book.BookDraftAi.AskText("readaloud"));
+        Assert.Contains("checks and difficulty classes", Prompt(passage));
     }
 
     [Fact]

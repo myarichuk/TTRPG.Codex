@@ -1855,8 +1855,16 @@ Both runs kept all five pieces, in place, on the first try. Accept one change, t
 the preview showed only the accepted one in between; Ctrl+Z took the whole edit back. A key the provider refuses is reported as such with
 nothing changed, though the "used about" line then counts the input as sent (the budget's rule for any failed call).
 
+The other asks, same model and chapter, each discarded after reading: **Shorter** (Vera's paragraph) kept every fact, barely shorter
+because the notes were already terse. **Tidy** (whole chapter) changed only a blank line after each entry marker, which renders the same.
+**A typed request** ("as an entry in a ship's log, written by a passing captain") kept every fact and invented only the framing it asked
+for. **Read-aloud box** (Tomas's paragraph) wrote a good box but then gave the GM a clue, a motive, a village-elders scene and a DC 12
+Insight check that the notes never had; the preset now limits the box to what the passage describes and the GM's part to the passage's
+facts, and the general rule names what may not be invented (what someone knows, wants or did, events, clues, checks and DCs;
+`book-edit-3`). Run again, it added nothing but a mild "more worried than he lets on".
+
 Not done, or not verified:
-- One model, one chapter, English only; "Shorter", "Read-aloud box", "Tidy" and a typed request have not met a real model.
+- One model, one chapter, English only.
 - The AI bar takes room above the Markdown in a narrow window; the merge view's colours are its own defaults (not checked in dark mode).
 - A request is a single call the dialog waits on (Stop cancels it); edits are not in the build's spend totals.
 - The Russian and Hebrew text of `Campaign.Book.Draft.Ai.*` is machine-drafted.
