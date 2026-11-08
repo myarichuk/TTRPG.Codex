@@ -651,6 +651,10 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         {
             Id = "bdl-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Visibility = Codex.Persistence.ActorVisibility.Known,
             Biography = "Keeps the lighthouse.\n\n:::dm\nThe vault key lies under the chapel altar.\n:::"
+        }, new Codex.Web.TestSeedActor
+        {
+            // A portrait the book cannot read: the Problems tab names it (41.24).
+            Id = "bdl-oren-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Oren the ferryman", Visibility = Codex.Persistence.ActorVisibility.Known, HasPortrait = true
         }]);
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
 
@@ -663,6 +667,12 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await dm.Keyboard.TypeAsync("\nShe knows the vault key lies under the chapel altar.\n");
         // Straight to Download: what was typed is saved first, and that is what is checked.
         await dm.GetByTestId("book-draft-download").ClickAsync();
+
+        var leftOut = dm.GetByTestId("book-draft-left-out-item");
+        await Assertions.Expect(leftOut).ToHaveCountAsync(1, new() { Timeout = 30_000 });
+        await Assertions.Expect(leftOut).ToContainTextAsync("Oren the ferryman");
+        await Assertions.Expect(leftOut).ToContainTextAsync("the file could not be read");
+        await Assertions.Expect(leftOut).ToHaveAttributeAsync("data-reason", "missing");
 
         var leaks = dm.GetByTestId("book-draft-leaks");
         await Assertions.Expect(leaks).ToBeVisibleAsync(new() { Timeout = 30_000 });

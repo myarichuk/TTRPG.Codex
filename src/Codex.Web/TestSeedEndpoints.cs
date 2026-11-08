@@ -66,7 +66,9 @@ public static class TestSeedEndpoints
                     Visibility = seed.Visibility,
                     PublicName = seed.PublicName,
                     PublicDescription = seed.PublicDescription,
-                    Biography = seed.Biography
+                    Biography = seed.Biography,
+                    HasPortrait = seed.HasPortrait,
+                    PortraitVersion = seed.HasPortrait ? 1 : 0
                 };
 
                 foreach (var (key, value) in seed.Sheet ?? new Dictionary<string, object>())
