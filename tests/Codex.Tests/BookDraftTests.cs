@@ -614,7 +614,9 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
     {
         var (dm, id) = await SeedAsync();
         var vera = (await _drafts.OpenAsync(dm, "dm", "en"))!.Chapters.Single(c => c.Markdown.Contains("CANARY_BIO_DM"));
-        var saved = await _drafts.SaveChapterAsync(dm, "dm", "en", vera.Section, vera.Markdown.Replace("PUBLIC_BIO_VERA met", "PUBLIC_GM_VERA met"), vera.Version);
+        // Fitted, as most books will be by then: a break inside the entry is the GM's layout, not a piece to line up.
+        var saved = await _drafts.SaveChapterAsync(dm, "dm", "en", vera.Section,
+            vera.Markdown.Replace("PUBLIC_BIO_VERA met", "PUBLIC_GM_VERA met").Replace("{{secret", "\\page {fitted}\n\n{{secret"), vera.Version);
         await BioAsync(id, "PUBLIC_BIO_VERA met no one at PUBLIC_NEW_DUSK.\n\n:::dm\nCANARY_BIO_DM\n:::");
         var chat = new ScriptedChat((messages, _) => MineOf(messages) + "\n\nPUBLIC_NEW_DUSK, merged.");
         var models = new EditModels(chat);
@@ -636,6 +638,7 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         Assert.Contains("met no one at PUBLIC_NEW_DUSK", sent);
         Assert.Contains("{{secret\nCANARY_BIO_DM\n}}", proposal.Replacement);
         Assert.Contains("PUBLIC_NEW_DUSK, merged.", proposal.Replacement);
+        Assert.Contains("\\page {fitted}\n\n{{secret", proposal.Replacement);
 
         // The campaign changed again while the GM reviewed: nothing is saved, and the notice stays.
         await BioAsync(id, "PUBLIC_THIRD");

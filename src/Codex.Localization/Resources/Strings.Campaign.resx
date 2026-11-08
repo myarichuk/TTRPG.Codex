@@ -880,7 +880,7 @@
   <data name="Campaign.Book.Draft.Merge.Conflicts" xml:space="preserve"><value>Changed by both you and the campaign: {0}.</value></data>
   <data name="Campaign.Book.Draft.Merge.Send" xml:space="preserve"><value>{0} of them go to {1} to be merged; nothing else is sent.</value></data>
   <data name="Campaign.Book.Draft.Merge.NoModel" xml:space="preserve"><value>No AI model is set up, so for those the campaign's text is shown. Reject it to keep yours.</value></data>
-  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>{0} of them hold secrets or pictures that changed too, so the campaign's text is shown for those.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>{0} of them can't go to the AI (their secrets or pictures changed too, or they are too long), so the campaign's text is shown for those.</value></data>
   <data name="Campaign.Book.Draft.Merge.WithAi" xml:space="preserve"><value>Merge with AI</value></data>
   <data name="Campaign.Book.Draft.Merge.WithoutAi" xml:space="preserve"><value>Without AI</value></data>
   <data name="Campaign.Book.Draft.Merge.ShowChanges" xml:space="preserve"><value>Show the changes</value></data>

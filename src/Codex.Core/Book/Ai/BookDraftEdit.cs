@@ -49,6 +49,9 @@ public static partial class BookDraftEdits
     /// <summary>The longest request the GM may type.</summary>
     public const int MaxAskChars = 600;
 
+    /// <summary>The label of a page or column break among a passage's pieces.</summary>
+    public const string BreakLabel = "a page or column break";
+
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(2);
     // The generator's blocks that are not prose. A secret is not listed: it is found by its own test below, the one path for it.
     private static readonly HashSet<string> Kept = new(StringComparer.OrdinalIgnoreCase)
@@ -173,7 +176,7 @@ public static partial class BookDraftEdits
         }
 
         foreach (Match m in Picture().Matches(chapter)) spans.Add(new Span(m.Index, m.Index + m.Length, "a picture"));
-        foreach (Match m in Break().Matches(chapter)) spans.Add(new Span(m.Index, m.Index + m.Length, "a page or column break"));
+        foreach (Match m in Break().Matches(chapter)) spans.Add(new Span(m.Index, m.Index + m.Length, BreakLabel));
         return spans;
     }
 

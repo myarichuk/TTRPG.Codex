@@ -1926,7 +1926,9 @@ The stale notice of an edited chapter now offers **Bring up to date** beside Reg
   case, with the server's requests set aside up front. The model gets the base and the campaign's version with every piece left out
   (`BookDraftEdits.Bare`) and the GM's version cut like an AI edit, pieces as markers. **The pieces are settled by the code**: matched by kind
   and order, the campaign's piece where the GM left it as it was, the GM's otherwise. When the GM's and the campaign's pieces do not line up
-  (the campaign added a secret to an entry the GM rewrote), no model is asked. The reply passes the AI edit's checks (`BookEditWorker`,
+  (the campaign added a secret to an entry the GM rewrote), no model is asked. Page and column breaks are not lined up with anything (the
+  generated versions have none, and after Fit pages nearly every entry holds one): they stay markers the model must keep, and come back
+  where the GM had them. A review found that, before it was fixed, a fitted book's conflicts would almost all have skipped the model. The reply passes the AI edit's checks (`BookEditWorker`,
   one retry); the prompt says to keep the GM's wording, order and additions, apply every change of fact, and invent nothing.
 - **A conflict with no answer is shown as the campaign's text** (no model, pieces that do not line up, a reply that failed its checks, or
   the GM pressing "Without AI"), which the GM accepts or rejects in the review: rejecting keeps their own. So Bring up to date works with no
@@ -1943,7 +1945,7 @@ The stale notice of an edited chapter now offers **Bring up to date** beside Reg
 
 Tests: `BookDraftMergeTests` (lossless split, marker lines only, duplicates refused; the per-unit table; blank lines, trailing spaces and
 breaks not edits, a kept unit keeping its breaks; new entries placed, gone ones offered for removal, a GM deletion kept or offered back,
-the GM's order; eight spellings of a secret in all three versions never in the prompt, and the campaign's changed secret put back; a piece both
+the GM's order; a fitted conflict still sendable with its breaks back in place; eight spellings of a secret in all three versions never in the prompt, and the campaign's changed secret put back; a piece both
 changed stays the GM's; pieces that do not line up keep the model out; a reply retried once, then left to the campaign's text);
 `BookDraftTests.AMerge*` (no conflict: nothing sent, the campaign's and the GM's units, nothing saved until kept, an old version refused,
 keeping moves the base, Undo brings back text and notice; a conflict alone sent, no secret, the campaign moving again refuses the save;
@@ -1951,7 +1953,7 @@ a player, an old version, nothing to bring in, another run, no model and a faili
 `BookDraftE2ETests.TheGmBringsAnEditedChapterUpToDate...` (real browser, a fake model: two GM edits, the campaign changes one entry and adds
 one; the pre-flight with the model and the cost and nothing sent; only the conflict sent, without its secret; Accept the rest; the notice
 gone, the GM's other edit kept, the new entry in the editor and the preview; typing works; Undo brings the notice back). Mutants, each
-failing them (14 of 14): the campaign's unit taken as the GM's, blank lines counted, the campaign's piece ignored, pieces not lined up,
+failing them (15 of 15): breaks lined up as pieces (fails the fitted-conflict tests), the campaign's unit taken as the GM's, blank lines counted, the campaign's piece ignored, pieces not lined up,
 gone entries kept, new entries at the end, GM deletions undone, a moved campaign saved, the merge not undoable, the base not moved, the gate
 never let go of, the model's reply dropped, every entry sent; in the page, a kept review not saved. And phase 4's opener check now refuses
 only a `{{note Title` the reply brought, not one the GM typed (tested, and its mutant fails).

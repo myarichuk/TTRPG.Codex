@@ -880,7 +880,7 @@
   <data name="Campaign.Book.Draft.Merge.Conflicts" xml:space="preserve"><value>Изменено и вами, и кампанией: {0}.</value></data>
   <data name="Campaign.Book.Draft.Merge.Send" xml:space="preserve"><value>{0} из них уйдут в {1} для слияния; больше ничего не отправляется.</value></data>
   <data name="Campaign.Book.Draft.Merge.NoModel" xml:space="preserve"><value>Модель ИИ не настроена, поэтому для них показан текст кампании. Отклоните его, чтобы оставить свой.</value></data>
-  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>В {0} из них изменились и секреты или картинки, поэтому для них показан текст кампании.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>{0} из них нельзя отправить ИИ (в них изменились и секреты или картинки, или они слишком длинные), поэтому для них показан текст кампании.</value></data>
   <data name="Campaign.Book.Draft.Merge.WithAi" xml:space="preserve"><value>Слить с ИИ</value></data>
   <data name="Campaign.Book.Draft.Merge.WithoutAi" xml:space="preserve"><value>Без ИИ</value></data>
   <data name="Campaign.Book.Draft.Merge.ShowChanges" xml:space="preserve"><value>Показать изменения</value></data>

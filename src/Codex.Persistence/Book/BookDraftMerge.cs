@@ -180,16 +180,22 @@ public static class BookDraftMerge
     {
         if (unit.Kind != BookMergeKind.Conflict) return null;
         if (BookDraftEdits.Cut(unit.Mine, 0, unit.Mine.Length) is not { } mine || BookDraftEdits.Cut(unit.Theirs, 0, unit.Theirs.Length) is not { } theirs) return null;
-        if (mine.Pieces.Count != theirs.Pieces.Count || mine.Pieces.Zip(theirs.Pieces).Any(p => p.First.Label != p.Second.Label)) return null;
-        var @base = BookDraftEdits.Cut(unit.Base, 0, unit.Base.Length);
-        var lined = @base != null && @base.Pieces.Count == mine.Pieces.Count && @base.Pieces.Zip(mine.Pieces).All(p => p.First.Label == p.Second.Label);
-        var pieces = mine.Pieces.Select((p, i) =>
+        // Page and column breaks are the GM's layout (Fit pages writes them; generated text has none): they are not lined up with anything,
+        // and go back as the GM had them, through their markers.
+        var m = Kept(mine);
+        var t = Kept(theirs);
+        if (m.Count != t.Count || m.Zip(t).Any(p => p.First.Label != p.Second.Label)) return null;
+        var b = BookDraftEdits.Cut(unit.Base, 0, unit.Base.Length) is { } cut ? Kept(cut) : null;
+        var lined = b != null && b.Count == m.Count && b.Zip(m).All(p => p.First.Label == p.Second.Label);
+        var settled = m.Select((p, i) =>
         {
-            var t = theirs.Pieces[i].Text;
-            var b = lined ? @base!.Pieces[i].Text : null;
+            var was = lined ? b![i].Text : null;
             // The campaign's piece when the GM left it as it was; the GM's when the campaign did not change it, or both did.
-            return b != null && Same(p.Text, b) && !Same(t, b) ? p with { Text = t } : p;
-        }).ToList();
+            return was != null && Same(p.Text, was) && !Same(t[i].Text, was) ? p with { Text = t[i].Text } : p;
+        }).ToDictionary(p => p.Number);
+        var pieces = mine.Pieces.Select(p => settled.GetValueOrDefault(p.Number, p)).ToList();
         return new BookMergeConflict(unit.Id, mine with { Pieces = pieces }, BookDraftEdits.Bare(unit.Base), BookDraftEdits.Bare(unit.Theirs));
     }
+
+    private static List<BookEditPiece> Kept(BookEditPassage passage) => [.. passage.Pieces.Where(p => p.Label != BookDraftEdits.BreakLabel)];
 }

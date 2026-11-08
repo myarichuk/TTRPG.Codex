@@ -143,6 +143,21 @@ public class BookDraftMergeTests
     }
 
     [Fact]
+    public void AFittedConflict_StillGoesToTheModel_AndItsBreaksComeBackWhereTheGmHadThem()
+    {
+        // Fit pages put a break inside the GM's Vera entry and one after it; the base and the campaign's version, generated, have none.
+        var gmVera = Vera.Replace("Vera keeps the light.", "GM_WORDS Vera keeps the light.\n\n\\column").Replace("CANARY_VERA\n}}\n\n", "CANARY_VERA\n}}\n\n\\page {fitted}\n\n");
+        var unit = Unit(Plan(Head + Tom + gmVera + Ann, Head + Tom + Vera.Replace("keeps the light", "keeps the NEW_FACT light") + Ann), "e-vera");
+        Assert.Equal(BookMergeKind.Conflict, unit.Kind);
+        var conflict = BookDraftMerge.Conflict(unit);
+        Assert.NotNull(conflict);
+        Assert.Equal(2, conflict.Mine.Pieces.Count(p => p.Label == BookDraftEdits.BreakLabel));
+        var merged = BookDraftEdits.Restore(conflict.Mine, conflict.Mine.Text.Replace("keeps the light", "keeps the NEW_FACT light"));
+        Assert.Contains("GM_WORDS Vera keeps the NEW_FACT light.\n\n\\column\n", merged);
+        Assert.Contains("CANARY_VERA\n}}\n\n\\page {fitted}\n", merged);
+    }
+
+    [Fact]
     public void APieceBothChanged_StaysTheGms_AndPiecesThatDoNotLineUp_KeepTheConflictFromAnyModel()
     {
         string Entry(string words, string pieces) => "{{entry,#e-vera}}\n## Vera\n\n" + words + "\n\n" + pieces + "\n\n";

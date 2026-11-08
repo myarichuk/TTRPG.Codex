@@ -880,7 +880,7 @@
   <data name="Campaign.Book.Draft.Merge.Conflicts" xml:space="preserve"><value>שונה גם על ידיכם וגם במערכה: {0}.</value></data>
   <data name="Campaign.Book.Draft.Merge.Send" xml:space="preserve"><value>{0} מהם נשלחים אל {1} למיזוג; שום דבר אחר לא נשלח.</value></data>
   <data name="Campaign.Book.Draft.Merge.NoModel" xml:space="preserve"><value>לא הוגדר מודל בינה מלאכותית, ולכן מוצג עבורם הטקסט של המערכה. דחו אותו כדי להשאיר את שלכם.</value></data>
-  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>ב-{0} מהם השתנו גם סודות או תמונות, ולכן מוצג עבורם הטקסט של המערכה.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>את {0} מהם אי אפשר לשלוח לבינה המלאכותית (השתנו בהם גם סודות או תמונות, או שהם ארוכים מדי), ולכן מוצג עבורם הטקסט של המערכה.</value></data>
   <data name="Campaign.Book.Draft.Merge.WithAi" xml:space="preserve"><value>למזג עם בינה מלאכותית</value></data>
   <data name="Campaign.Book.Draft.Merge.WithoutAi" xml:space="preserve"><value>בלי בינה מלאכותית</value></data>
   <data name="Campaign.Book.Draft.Merge.ShowChanges" xml:space="preserve"><value>להציג את השינויים</value></data>
