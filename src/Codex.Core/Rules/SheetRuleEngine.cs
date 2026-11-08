@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Codex.Plugin.Abstractions;
-using DynamicExpresso;
 
 namespace Codex.Core.Rules;
 
@@ -884,9 +883,9 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         {
             try
             {
-                var value = EvaluateFormula(values, derived.Formula);
+                var value = EvaluateFormula(sheet, values, derived.Formula);
                 result.Derived[derived.Key] = value;
-                result.DerivedInputs[derived.Key] = CompiledFormulas[derived.Formula].Names.ToDictionary(n => n, n => values[n]);
+                result.DerivedInputs[derived.Key] = SheetFormulas.For(system).Names(derived.Formula).Where(values.ContainsKey).ToDictionary(n => n, n => values[n]);
                 // A later formula may use an earlier one ("pb" in "passive_perception").
                 if (IsIdentifier(derived.Key)) values.TryAdd(derived.Key, value);
             }
@@ -902,31 +901,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         new(key, $"{label}: the system's formula for this can't be worked out, so it is left out. The GM can check the system's rules.",
             "Actor.Rule.FormulaError", new object?[] { label });
 
-    /// <summary>A formula that names something the sheet doesn't have, or comes out as no number.</summary>
-    private sealed class FormulaException(string message) : Exception(message);
-
-    // Formulas come from content packs, which anyone can import. Each is parsed once (not on every render of every viewer)
-    // on an interpreter that knows no types, so `new string('a', 1000000000)` does not parse, with the five functions below
-    // as its whole surface (R7).
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (Lambda Lambda, string[] Names)> CompiledFormulas = new();
-
-    private static (Lambda Lambda, string[] Names) Compile(string formula)
+    /// <summary>Works out a formula of <c>sheetRules</c> (a derived value, carrying capacity, unarmored armor class) on the same
+    /// interpreter as the sheet kinds' (<see cref="SheetFormulas"/>): its names read <paramref name="values"/> first (the
+    /// sheet's numbers with field defaults, and the derived values before it), then anything else the sheet has. Rounded down.</summary>
+    private long EvaluateFormula(IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, double> values, string formula)
     {
-        var interpreter = new Interpreter(InterpreterOptions.None)
-            .SetFunction("floor", (Func<double, double>)Math.Floor)
-            .SetFunction("ceil", (Func<double, double>)Math.Ceiling)
-            .SetFunction("max", (Func<double, double, double>)Math.Max)
-            .SetFunction("min", (Func<double, double, double>)Math.Min)
-            .SetFunction("mod", (Func<double, double>)(score => AttributeDefinition.HalfMinusFive((int)Math.Floor(score))));
-        var names = interpreter.DetectIdentifiers(formula).UnknownIdentifiers.ToArray();
-        return (interpreter.Parse(formula, names.Select(n => new Parameter(n, typeof(double))).ToArray()), names);
-    }
-
-    private static long EvaluateFormula(IReadOnlyDictionary<string, double> values, string formula)
-    {
-        var (lambda, names) = CompiledFormulas.GetOrAdd(formula, Compile);
-        var args = names.Select(name => values.TryGetValue(name, out var value) ? (object)value : throw new FormulaException($"no number called \"{name}\"")).ToArray();
-        var result = Convert.ToDouble(lambda.Invoke(args), CultureInfo.InvariantCulture);
+        var result = SheetFormulas.Number(new SheetModel(system, resolver, sheet).Formula(formula, values));
         // 10/(level-level) is infinity, and a cast would make it long.MinValue without a word.
         if (!double.IsFinite(result) || Math.Abs(result) > 1e15) throw new FormulaException("not a number a sheet can hold");
         return (long)Math.Floor(result);

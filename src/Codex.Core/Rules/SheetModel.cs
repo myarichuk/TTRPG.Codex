@@ -139,6 +139,17 @@ public sealed class SheetModel
         return _sheet.TryGetValue(name, out var raw) ? Plain(raw) : null;
     }
 
+    /// <summary>Runs one formula on the sheet, its names read from <paramref name="numbers"/> first. For the formulas of
+    /// <c>sheetRules</c>, which predate sheet kinds.</summary>
+    public object? Formula(string formula, IReadOnlyDictionary<string, double> numbers)
+    {
+        using var _ = Enter();
+        var arguments = _formulas.Names(formula)
+            .Select(n => (n, numbers.TryGetValue(n, out var number) ? number : Resolve(n) ?? throw new FormulaException($"no number called \"{n}\"")))
+            .ToList();
+        return _formulas.Run(formula, arguments);
+    }
+
     /// <summary>A path into the sheet (<c>BAB</c>, <c>skills.knowledge.arcana.ranks</c>), or null.</summary>
     public object? Path(string path)
     {

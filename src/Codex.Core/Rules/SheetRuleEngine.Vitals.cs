@@ -65,7 +65,7 @@ public sealed partial class SheetRuleEngine
         {
             try
             {
-                result.CarryingCapacity = EvaluateFormula(FormulaContext(sheet), rules.Capacity);
+                result.CarryingCapacity = EvaluateFormula(sheet, FormulaContext(sheet), rules.Capacity);
             }
             catch (Exception)
             {
@@ -236,7 +236,7 @@ public sealed partial class SheetRuleEngine
             var options = new List<(string Kind, string Label, long Value, ContentEntry? Entry)>();
             try
             {
-                options.Add(("unarmored", "Unarmored", EvaluateFormula(values, rules.Unarmored), null));
+                options.Add(("unarmored", "Unarmored", EvaluateFormula(sheet, values, rules.Unarmored), null));
             }
             catch (Exception)
             {
@@ -250,7 +250,7 @@ public sealed partial class SheetRuleEngine
                 if (shielded && !shieldAllowed) continue;
                 try
                 {
-                    options.Add(("defense", $"{cls.Entry.Name} defense", EvaluateFormula(values, formula!.ToString()!), cls.Entry));
+                    options.Add(("defense", $"{cls.Entry.Name} defense", EvaluateFormula(sheet, values, formula!.ToString()!), cls.Entry));
                 }
                 catch (Exception)
                 {
