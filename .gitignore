@@ -38,6 +38,7 @@ coverage/
 *.sln.iml
 .serena/
 .claude/launch.json
+.claude/worktrees/
 
 # Embedded RavenDB data (dev default under src/Codex.Web)
 RavenData/
