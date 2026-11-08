@@ -188,7 +188,8 @@ public sealed class BookDraftAi(BookDrafts drafts, IBookModels models, BookGate 
         var sections = new List<string>();
         var requests = new List<BookEditRequest>();
         var tooLong = new List<string>();
-        foreach (var chapter in found.Chapters.Where(c => !c.Gone))
+        // The cover and contents are the book's title and its list of chapters, not prose: a whole-book run leaves them alone.
+        foreach (var chapter in found.Chapters.Where(c => !c.Gone && c.Section != BookDraftWriter.Front))
         {
             var (outcome, p) = Prepare(found.Dm, found.SystemId, chapter, found.Names, edition, language, chapter.Version, 0, 0, string.Empty, ask, words);
             // A chapter with an entry too long for one request is left out of the run, and said so.

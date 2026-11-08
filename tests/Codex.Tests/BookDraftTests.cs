@@ -710,6 +710,8 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         var book = await ai.BookPreviewAsync(dm, "party", "en", "shape");
         Assert.Equal(BookEditOutcome.Ready, book.Outcome);
         Assert.Contains("cast", book.Sections);
+        // The cover and contents are the book's title and its list of chapters: not rewritten.
+        Assert.DoesNotContain(BookDraftWriter.Front, book.Sections);
         var each = 0;
         foreach (var section in book.Sections)
         {
