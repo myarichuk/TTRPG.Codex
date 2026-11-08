@@ -312,7 +312,8 @@ Players already bring their own key; this widens what it is for, always built fr
   server's only admin cannot delete their account, by either way (`LastAdmin`). On success the account is signed out to the sign-in
   page, which says it was deleted, and the admin log says who deleted their own account. `AccountDeletion` now hands over first and
   deletes the account's own things only once it owns nothing: if a campaign appears meanwhile, your own deletion turns the account back
-  on as it was (an admin's still leaves it off, to delete again).
+  on as it was and says so (an admin's still leaves it off, to delete again). Appearing only after the vault and the rest went, the
+  account stays with them gone; it cannot be put back, and the message does not say nothing was deleted.
 - **Storage limit per account** (`UserDocument.StorageLimitMb`; the admin page's pencil beside each account's use). Null follows the
   server's limit, 0 is no limit for that account, a number is its own limit in MB, larger or smaller than the server's. It counts
   even when the server has none. `StorageQuota` reads the campaign owner's limit on every check (`LimitFor`, `LimitBytesFor`), and the
@@ -327,7 +328,10 @@ Players already bring their own key; this widens what it is for, always built fr
   sites' files, fetched again from the addresses the stylesheet names.
 - **Fixed on the way**: the book panel's "open the draft" button asked for an icon the app does not have ("pencil") and drew an
   empty circle; it uses "edit-3", as every other edit button does. The server's only admin sees why their account stays in the
-  dialog itself, before typing a password.
+  dialog itself, before typing a password. An account set to "no limit" reads "of no limit", not "of 0 MB". The tests' database
+  fixture deleted the embedded server's own folder when the first test class ended, under every class still running in it: their
+  indexes lost their journal files and were marked errored, so a class failed at random depending on which one ended first (seen as
+  "index is marked as errored" in the step 6 classes). The folder now stays until the process ends.
 - Tests: `AccountDeletionTests` (your own: no co-GM or a wrong pick changes nothing, picked co-GMs take them; the only admin; the
   confirmation), `StorageQuotaTests` (the limit table; an own limit with and without the server's), `PersonalExportTests` (played
   characters without the GM's secrets, imported on their own; the book).

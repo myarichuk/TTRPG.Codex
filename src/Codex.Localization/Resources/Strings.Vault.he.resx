@@ -57,4 +57,5 @@
   <data name="Vault.Delete.NeedsOwner" xml:space="preserve"><value>כל קמפיין בבעלותך צריך מנחה־שותף שיקבל אותו. דבר לא נמחק.</value></data>
   <data name="Vault.Delete.LastAdmin" xml:space="preserve"><value>את/ה המנהל/ת היחיד/ה של השרת. קודם יש למנות מישהו אחר למנהל. דבר לא נמחק.</value></data>
   <data name="Vault.Delete.LastAdminFirst" xml:space="preserve"><value>את/ה המנהל/ת היחיד/ה של השרת, ולכן החשבון נשאר. קודם יש למנות מישהו אחר למנהל בעמוד הניהול.</value></data>
+  <data name="Vault.Delete.Meanwhile" xml:space="preserve"><value>בזמן מחיקת החשבון הופיע קמפיין שלך, ולכן החשבון נשאר. יש להעביר את הקמפיין הזה ולמחוק שוב.</value></data>
 </root>

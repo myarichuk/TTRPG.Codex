@@ -57,4 +57,5 @@
   <data name="Vault.Delete.NeedsOwner" xml:space="preserve"><value>Every campaign you own needs a co-GM to take it. Nothing was deleted.</value></data>
   <data name="Vault.Delete.LastAdmin" xml:space="preserve"><value>You are the server's only admin. Make someone else an admin first. Nothing was deleted.</value></data>
   <data name="Vault.Delete.LastAdminFirst" xml:space="preserve"><value>You are the server's only admin, so your account stays. Make someone else an admin on the admin page first.</value></data>
+  <data name="Vault.Delete.Meanwhile" xml:space="preserve"><value>A campaign of yours appeared while your account was being deleted, so the account stays. Pass that campaign on, then delete again.</value></data>
 </root>

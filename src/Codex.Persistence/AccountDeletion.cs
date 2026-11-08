@@ -14,7 +14,7 @@ public enum AccountDeletionResult
     NotFound,
 
     /// <summary>A campaign it owns appeared while it was being deleted. Deleted by an admin, the account is left turned off, to be
-    /// deleted again; deleting your own, it is turned back on.</summary>
+    /// deleted again; deleting your own, it is turned back on. Its own things may be gone already, if the campaign appeared late.</summary>
     StillOwns,
 
     /// <summary>Deleting your own account: a campaign you own has no co-GM picked to take it (or none at all). Nothing was changed.</summary>
@@ -90,7 +90,7 @@ public sealed class AccountDeletion(RavenDbService db, ICampaignRepository campa
         await DeleteOwnedAsync<BookBuildDocument>(b => b.OwnerUserId == userId);
 
         // Never an owner of nobody: a campaign made while this ran stops the deletion, and running it again passes that one on too.
-        if (await StillOwnsAsync(userId)) return AccountDeletionResult.StillOwns;
+        if (await StillOwnsAsync(userId)) return await KeptAsync(userId, fallbackOwner, status);
 
         await users.DeleteAsync(userId);
         return AccountDeletionResult.Deleted;

@@ -57,4 +57,5 @@
   <data name="Vault.Delete.NeedsOwner" xml:space="preserve"><value>Каждой вашей кампании нужен соведущий, который её получит. Ничего не удалено.</value></data>
   <data name="Vault.Delete.LastAdmin" xml:space="preserve"><value>Вы единственный администратор сервера. Сначала назначьте администратором кого-то ещё. Ничего не удалено.</value></data>
   <data name="Vault.Delete.LastAdminFirst" xml:space="preserve"><value>Вы единственный администратор сервера, поэтому учётная запись остаётся. Сначала назначьте администратором кого-то ещё на странице администратора.</value></data>
+  <data name="Vault.Delete.Meanwhile" xml:space="preserve"><value>Пока удалялась учётная запись, появилась ваша кампания, поэтому учётная запись остаётся. Передайте эту кампанию и удалите снова.</value></data>
 </root>

@@ -70,9 +70,7 @@ public static class AccountEndpoints
             var form = await ctx.Request.ReadFormAsync();
             if (!OwnDeletion.Confirms(user, form["confirm"].ToString())) return Results.LocalRedirect("/vault?delete=wrong");
 
-            var newOwners = form.Where(f => f.Key.StartsWith(OwnDeletion.PassPrefix, StringComparison.Ordinal))
-                .ToDictionary(f => f.Key[OwnDeletion.PassPrefix.Length..], f => f.Value.ToString(), StringComparer.Ordinal);
-            var result = await deletion.DeleteAsync(userId, null, newOwners);
+            var result = await deletion.DeleteAsync(userId, null, OwnDeletion.NewOwnersFrom(form));
             check.Forget(userId);
             switch (result)
             {
@@ -84,6 +82,8 @@ public static class AccountEndpoints
                     return Results.LocalRedirect("/vault?delete=admin");
                 case AccountDeletionResult.NotFound:
                     return Results.Redirect("/login");
+                case AccountDeletionResult.StillOwns:
+                    return Results.LocalRedirect("/vault?delete=meanwhile");
                 default:
                     return Results.LocalRedirect("/vault?delete=owners");
             }
@@ -260,4 +260,9 @@ public static class OwnDeletion
     }
 
     public static bool HasPassword(UserDocument user) => !string.IsNullOrEmpty(user.PasswordHash);
+
+    /// <summary>Who takes each campaign, from the form's <c>pass:&lt;campaign id&gt;</c> fields: campaign id to co-GM id.</summary>
+    public static IReadOnlyDictionary<string, string> NewOwnersFrom(IEnumerable<KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues>> form) =>
+        form.Where(f => f.Key.StartsWith(PassPrefix, StringComparison.Ordinal) && f.Key.Length > PassPrefix.Length && !string.IsNullOrEmpty(f.Value.ToString()))
+            .ToDictionary(f => f.Key[PassPrefix.Length..], f => f.Value.ToString(), StringComparer.Ordinal);
 }

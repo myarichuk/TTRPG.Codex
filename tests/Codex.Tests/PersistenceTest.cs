@@ -32,7 +32,10 @@ public class RavenDbFixture : IDisposable
     public void Dispose()
     {
         DropDatabase();
-        TestTempData.DeleteDirectory(DbPath);
+        // The first fixture's folder is the embedded server's own, which every later class's database still runs in (their index
+        // journals and scratch files are there): deleting it under them marks their indexes errored, at random, depending on which
+        // class ends first. That folder goes when the process ends (DeleteOnExit); any other is empty or nearly so.
+        if (!Directory.Exists(Path.Combine(DbPath, "Databases"))) TestTempData.DeleteDirectory(DbPath);
     }
 
     // The embedded server is one per process, so this class's database lives in the server's folder (the first fixture's), not in

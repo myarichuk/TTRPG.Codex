@@ -195,4 +195,23 @@ public class AccountDeletionTests : IClassFixture<RavenDbFixture>
         Assert.False(Codex.Web.OwnDeletion.Confirms(external, "Miranda"));
         Assert.False(Codex.Web.OwnDeletion.Confirms(external, null));
     }
+
+    [Fact]
+    public void TheFormsPicks_NameEachCampaignAndItsCoGm_AndNothingElse()
+    {
+        var campaign = Guid.NewGuid().ToString();
+        var form = new Microsoft.AspNetCore.Http.FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
+        {
+            ["pass:" + campaign] = "co-gm-id",
+            ["pass:campaigns/abc-1"] = "other-gm",
+            ["pass:"] = "nobody",
+            ["pass:empty"] = "",
+            ["confirm"] = "secret",
+            ["__RequestVerificationToken"] = "t"
+        });
+        var picks = Codex.Web.OwnDeletion.NewOwnersFrom(form);
+        Assert.Equal(2, picks.Count);
+        Assert.Equal("co-gm-id", picks[campaign]);
+        Assert.Equal("other-gm", picks["campaigns/abc-1"]);
+    }
 }

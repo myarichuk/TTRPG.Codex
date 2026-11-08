@@ -388,6 +388,7 @@ else
         var shown = StorageQuota.LimitBytesFor(u.StorageLimitMb, settings?.StorageLimitMb) is { } limit
             ? L["Admin.Accounts.StorageOf", used, StorageQuota.Megabytes(limit)]
             : used;
+        if (u.StorageLimitMb == 0) shown = L["Admin.Accounts.StorageOf", used, L["Admin.Accounts.Limit.NoneShort"]];
         return u.StorageLimitMb == null ? shown : L["Admin.Accounts.StorageOwn", shown];
     }
 
