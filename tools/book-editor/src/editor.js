@@ -11,6 +11,7 @@ import { css } from '@codemirror/lang-css';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { unifiedMergeView, getOriginalDoc, getChunks, acceptChunk, rejectChunk, goToNextChunk, goToPreviousChunk } from '@codemirror/merge';
+import { reviewDiffConfig } from './review-diff.js';
 import { layout } from './render.js';
 
 // The Markdown's and the stylesheet's colours from the app's own palette (CSS variables), so the editor is dark or light as the app is.
@@ -337,7 +338,8 @@ export function review(id, proposal, labels) {
       doc: proposal.replacement,
       extensions: [basicSetup, bookHighlight, EditorView.lineWrapping, state.direction, markdown(), EditorState.readOnly.of(true),
         EditorState.phrases.of({ Accept: words.accept || 'Accept', Reject: words.reject || 'Reject' }),
-        unifiedMergeView({ original: proposal.original, highlightChanges: true, gutter: true, mergeControls: true, syntaxHighlightDeletions: false }),
+        unifiedMergeView({ original: proposal.original, highlightChanges: true, gutter: true, mergeControls: true, syntaxHighlightDeletions: false,
+          diffConfig: reviewDiffConfig }),
         // From the keyboard: Alt-Down and Alt-Up go from change to change, Ctrl-Enter accepts the one at the cursor, Ctrl-Backspace rejects it.
         keymap.of([
           { key: 'Alt-ArrowDown', run: goToNextChunk },

@@ -326,6 +326,12 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
                         // An AI edit of the editable book: the passage back, one word changed.
                         var from = last.IndexOf("<passage>", StringComparison.Ordinal) + "<passage>".Length;
                         reply = last[from..last.IndexOf("</passage>", StringComparison.Ordinal)].Trim().Replace("lighthouse", "beacon tower");
+                        // Rewritten throughout, as a real model does "as the book": every prose line's words in reverse order.
+                        if (reply.Contains("REWRITE_WHOLE", StringComparison.Ordinal))
+                        {
+                            reply = string.Join("\n", reply.Split('\n').Select(l => l.StartsWith("{{", StringComparison.Ordinal) || l.StartsWith('#') || l.StartsWith("}}", StringComparison.Ordinal)
+                                ? l : string.Join(' ', l.Split(' ').Reverse())));
+                        }
                     }
                     else if (!last.Contains("<source>", StringComparison.Ordinal))
                     {
@@ -907,6 +913,8 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
     [Fact]
     public async Task TheGmRewritesTheWholeBookAsTheBook_PricedFirst_ReviewedChapterByChapter()
     {
+        // Long enough that a diff of the whole chapter gives up on precision, as it did on the real run (one change for the chapter).
+        static string Long(string who) => string.Join(' ', Enumerable.Range(0, 120).Select(i => who + "word" + i));
         const string password = "Correct-Horse-1";
         var dmId = "bshape-dm-" + Guid.NewGuid();
         await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
@@ -921,12 +929,12 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
             new Codex.Web.TestSeedActor
             {
                 Id = "bshape-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Visibility = Codex.Persistence.ActorVisibility.Known,
-                Biography = "Keeps the lighthouse on the point.\n\n:::dm\nCANARY_SHAPE_SECRET\n:::"
+                Biography = "Keeps the lighthouse on the point. REWRITE_WHOLE " + Long("vera") + "\n\n:::dm\nCANARY_SHAPE_SECRET\n:::"
             },
             new Codex.Web.TestSeedActor
             {
                 Id = "bshape-oren-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Oren", Visibility = Codex.Persistence.ActorVisibility.Known,
-                Biography = "Rows out to the lighthouse at dusk."
+                Biography = "Rows out to the lighthouse at dusk. REWRITE_WHOLE " + Long("oren")
             }]);
 
         await dm.GotoAsync("/settings/ai");
@@ -962,6 +970,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         var review = dm.GetByTestId("book-draft-review");
         await Assertions.Expect(review).ToBeVisibleAsync(new() { Timeout = 30_000 });
         await Assertions.Expect(dm.GetByTestId("book-draft-shape-progress")).ToContainTextAsync("Chapter");
+        // Every line rewritten, and still one change per entry: each can be accepted or rejected on its own.
         await Assertions.Expect(dm.GetByTestId("book-draft-review-left")).ToContainTextAsync("2");
         int sentForCast;
         lock (model.Requests)
@@ -977,11 +986,17 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
             Assert.All(model.Requests, r => Assert.Contains("players' edition", r));
         }
 
+        // Oren's change rejected, Vera's accepted: only Vera's entry is rewritten.
+        var code = dm.GetByTestId("book-draft-review-code");
+        await code.GetByRole(AriaRole.Button, new() { Name = "Reject" }).First.ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-review-left")).ToContainTextAsync("1");
         await dm.GetByTestId("book-draft-review-all").ClickAsync();
         // The rest of the book runs on; chapters with nothing to change are not offered for review, and the run ends.
         await Assertions.Expect(dm.GetByTestId("book-draft-ai-note")).ToContainTextAsync("whole book", new() { Timeout = 60_000 });
         await Assertions.Expect(review).ToBeHiddenAsync();
-        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Rows out to the beacon tower" })).ToHaveCountAsync(1);
+        // One entry kept as it was, the other rewritten (which is which follows the chapter's order).
+        var kept = await dm.Locator(".cm-content").InnerTextAsync();
+        Assert.True(kept.Contains("Rows out to the lighthouse at dusk.") ^ kept.Contains("Keeps the lighthouse on the point."), kept);
         await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
         lock (model.Requests)
         {

@@ -2310,7 +2310,10 @@ secret never sent, and the voice was the players' book (in-world, no checks), wi
 - The model adds texture the facts check cannot see: "drinks more freely than he rows", "never comes into the light", coins "older than any
   currency now minted". No name or figure, so it passes; the review is where the GM catches it.
 - Every line of the chapter changed, so the review offered the whole chapter as one change: accept or reject it whole, not entry by entry.
-  Worth a follow-up (one review chunk per entry).
+  Fixed the same day: the merge view's own diff gives up on precision past its scan limit and reports the chapter as one change; the review
+  now diffs entry by entry between the entry markers both texts share (`tools/book-editor/src/review-diff.js`, `test-review.mjs`), so
+  each entry is its own change to accept or reject. Texts whose markers do not line up (a merge that adds or drops entries) are diffed
+  whole, with a higher limit.
 Not tried for real: Russian and Hebrew, the GM edition, a chapter long enough for an entry to fail.
 
 **Not done before the real run:** step 4, the one real run. Not seen: how a real model's prose fares against the facts check in Russian and Hebrew (the coverage
