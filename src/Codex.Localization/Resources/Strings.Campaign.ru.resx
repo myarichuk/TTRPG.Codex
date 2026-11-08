@@ -871,10 +871,28 @@
   <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>правки</value></data>
   <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>Кампания изменилась после того, как вы правили эту главу.</value></data>
   <data name="Campaign.Book.Draft.StaleEntries" xml:space="preserve"><value>Изменилось: {0}.</value></data>
-  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>«Собрать заново» заменит ваш текст текущим текстом кампании; это можно отменить. «Оставить мой» скроет это сообщение, пока кампания снова не изменится.</value></data>
+  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>«Обновить» вносит изменения кампании и сохраняет ваши правки; каждое изменение вы проверяете сами. «Собрать заново» заменит ваш текст текстом кампании. Оба действия можно отменить. «Оставить мой» скроет это сообщение, пока кампания снова не изменится.</value></data>
   <data name="Campaign.Book.Draft.Regenerate" xml:space="preserve"><value>Собрать заново</value></data>
   <data name="Campaign.Book.Draft.Keep" xml:space="preserve"><value>Оставить мой</value></data>
-  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>Отменить последнюю пересборку</value></data>
+  <data name="Campaign.Book.Draft.Merge.Button" xml:space="preserve"><value>Обновить</value></data>
+  <data name="Campaign.Book.Draft.Merge.Confirm" xml:space="preserve"><value>Обновить эту главу по кампании?</value></data>
+  <data name="Campaign.Book.Draft.Merge.Summary" xml:space="preserve"><value>Из кампании: {0}. Ваше сохранено: {1}. Новое: {2}. Предложено убрать: {3}. Предложено вернуть: {4}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Conflicts" xml:space="preserve"><value>Изменено и вами, и кампанией: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Send" xml:space="preserve"><value>{0} из них уйдут в {1} для слияния; больше ничего не отправляется.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NoModel" xml:space="preserve"><value>Модель ИИ не настроена, поэтому для них показан текст кампании. Отклоните его, чтобы оставить свой.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>В {0} из них изменились и секреты или картинки, поэтому для них показан текст кампании.</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithAi" xml:space="preserve"><value>Слить с ИИ</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithoutAi" xml:space="preserve"><value>Без ИИ</value></data>
+  <data name="Campaign.Book.Draft.Merge.ShowChanges" xml:space="preserve"><value>Показать изменения</value></data>
+  <data name="Campaign.Book.Draft.Merge.Review" xml:space="preserve"><value>Проверьте изменения кампании</value></data>
+  <data name="Campaign.Book.Draft.Merge.Ready" xml:space="preserve"><value>Слито ИИ: {0}. Показано как текст кампании: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Saved" xml:space="preserve"><value>Глава обновлена.</value></data>
+  <data name="Campaign.Book.Draft.Merge.FitAgain" xml:space="preserve"><value>Запустите «Разбить на страницы» снова: текст сдвинулся.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Same" xml:space="preserve"><value>Обновлено: изменения кампании уже были в вашем тексте.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Moved" xml:space="preserve"><value>Кампания снова изменилась, пока вы проверяли, поэтому ничего не сохранено. Обновите главу ещё раз.</value></data>
+  <data name="Campaign.Book.Draft.Merge.UpToDate" xml:space="preserve"><value>Эта глава уже обновлена.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Duplicate" xml:space="preserve"><value>Одна запись встречается в этой главе дважды, поэтому слить нельзя. Уберите копию или используйте «Собрать заново» или «Оставить мой».</value></data>
+  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>Отменить последнее обновление</value></data>
   <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>В кампании больше нет этой главы. Удалите её текст, если он не должен печататься.</value></data>
   <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>Доступные блоки</value></data>
   <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (для зачитывания), {{{{secret}}}} (издание мастера), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} и {{{{wide}}}}; каждый закрывается строкой }}}}. Строка \page начинает страницу, \column — колонку. Картинка: ![подпись](art:…), только из этого издания.</value></data>

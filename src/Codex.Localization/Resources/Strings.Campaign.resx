@@ -871,10 +871,28 @@
   <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>edited</value></data>
   <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>The campaign changed since you edited this chapter.</value></data>
   <data name="Campaign.Book.Draft.StaleEntries" xml:space="preserve"><value>Changed: {0}.</value></data>
-  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>Regenerate replaces your text with the campaign's as it is now; you can undo it. Keep mine hides this until the campaign changes again.</value></data>
+  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>Bring up to date takes in the campaign's changes and keeps your edits, and you review each change. Regenerate replaces your text with the campaign's. Both can be undone. Keep mine hides this until the campaign changes again.</value></data>
   <data name="Campaign.Book.Draft.Regenerate" xml:space="preserve"><value>Regenerate</value></data>
   <data name="Campaign.Book.Draft.Keep" xml:space="preserve"><value>Keep mine</value></data>
-  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>Undo the last regenerate</value></data>
+  <data name="Campaign.Book.Draft.Merge.Button" xml:space="preserve"><value>Bring up to date</value></data>
+  <data name="Campaign.Book.Draft.Merge.Confirm" xml:space="preserve"><value>Bring this chapter up to date?</value></data>
+  <data name="Campaign.Book.Draft.Merge.Summary" xml:space="preserve"><value>From the campaign: {0}. Yours kept: {1}. New: {2}. Offered for removal: {3}. Offered back: {4}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Conflicts" xml:space="preserve"><value>Changed by both you and the campaign: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Send" xml:space="preserve"><value>{0} of them go to {1} to be merged; nothing else is sent.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NoModel" xml:space="preserve"><value>No AI model is set up, so for those the campaign's text is shown. Reject it to keep yours.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>{0} of them hold secrets or pictures that changed too, so the campaign's text is shown for those.</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithAi" xml:space="preserve"><value>Merge with AI</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithoutAi" xml:space="preserve"><value>Without AI</value></data>
+  <data name="Campaign.Book.Draft.Merge.ShowChanges" xml:space="preserve"><value>Show the changes</value></data>
+  <data name="Campaign.Book.Draft.Merge.Review" xml:space="preserve"><value>Review the campaign's changes</value></data>
+  <data name="Campaign.Book.Draft.Merge.Ready" xml:space="preserve"><value>Merged by the AI: {0}. Shown as the campaign's text: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Saved" xml:space="preserve"><value>Brought up to date.</value></data>
+  <data name="Campaign.Book.Draft.Merge.FitAgain" xml:space="preserve"><value>Run Fit pages again: the text moved.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Same" xml:space="preserve"><value>Up to date: the campaign's changes were already in your text.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Moved" xml:space="preserve"><value>The campaign changed again while you reviewed, so nothing was saved. Bring it up to date again.</value></data>
+  <data name="Campaign.Book.Draft.Merge.UpToDate" xml:space="preserve"><value>This chapter is already up to date.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Duplicate" xml:space="preserve"><value>An entry is in this chapter twice, so it cannot be merged. Remove the copy, or use Regenerate or Keep mine.</value></data>
+  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>Undo the last update</value></data>
   <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>The campaign no longer has this chapter. Delete its text if it should not be printed.</value></data>
   <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>Blocks you can use</value></data>
   <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (read aloud), {{{{secret}}}} (GM edition), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} and {{{{wide}}}}, each closed by }}}} on its own line. A line \page starts a page and \column a column. A picture is ![caption](art:…), one of this edition's own.</value></data>

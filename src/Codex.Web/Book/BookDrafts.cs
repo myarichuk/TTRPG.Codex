@@ -23,6 +23,10 @@ public sealed record BookDraftPage(string Title, string Shell, string Markdown, 
 
 public sealed record BookDraftPageChapter(string Section, string Title, string Markdown, int Version);
 
+/// <summary>What "Bring up to date" reads of a chapter (docs/BOOK_EXPORT.md 41.18): the GM's text, its base, the version, and the chapter as the
+/// campaign makes it now (null when the campaign no longer has it). <paramref name="Moved"/>: the campaign changed since the base.</summary>
+public sealed record BookDraftMergeInput(CampaignAccess Dm, string SystemId, string Title, string Markdown, string Base, int Version, bool Moved, BookDraftGenerated? Now);
+
 /// <summary>What Fit pages did (docs/BOOK_EXPORT.md 41.15). <paramref name="Result"/> is the first save that was refused, or Saved; chapters
 /// before it are saved. <paramref name="Breaks"/> counts the fitted breaks the book has now, <paramref name="Chapters"/> the chapters whose
 /// text changed. <paramref name="Refused"/> is why the draft could not be laid out at all (its language, for one).</summary>
@@ -53,6 +57,29 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         if (await GenerateAsync(asked, edition, language) is not { } made) return null;
         if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return null;
         return View(draft, made.Now, null).Chapters.FirstOrDefault(c => c.Section == section) is { } chapter ? (made.Dm, made.Source.Campaign.SystemId, chapter) : null;
+    }
+
+    /// <summary>A chapter's three versions for "Bring up to date", read as the asking GM may read the campaign now; null when not the caller's.</summary>
+    public async Task<BookDraftMergeInput?> MergeInputAsync(CampaignAccess asked, string edition, string language, string section)
+    {
+        if (await GenerateAsync(asked, edition, language) is not { } made) return null;
+        if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return null;
+        if (draft.Chapters.FirstOrDefault(c => c.Section == section) is not { } chapter) return null;
+        var now = made.Now.FirstOrDefault(g => g.Section == section);
+        return new BookDraftMergeInput(made.Dm, made.Source.Campaign.SystemId, chapter.Title, chapter.Markdown, chapter.Base, chapter.Version,
+            now != null && now.Key != chapter.BaseKey, now);
+    }
+
+    /// <summary>Keeps a merge: <paramref name="markdown"/> becomes the chapter's text and the campaign's chapter now its base. The campaign is read
+    /// here, never taken from the page; when it has moved on from <paramref name="key"/> (the version the merge was made against) nothing is saved
+    /// and the result is null, so the GM merges again rather than marking changes seen that were never shown.</summary>
+    public async Task<(BookDraftSave Result, int Version)?> SaveMergeAsync(CampaignAccess asked, string edition, string language, string section, int version,
+        string markdown, string key)
+    {
+        if (await GenerateAsync(asked, edition, language) is not { } made) return (BookDraftSave.NotAllowed, version);
+        if (made.Now.FirstOrDefault(g => g.Section == section) is not { } now) return (BookDraftSave.NotAllowed, version);
+        if (now.Key != key) return null;
+        return await store.MergeAsync(made.Dm, edition, language, now, markdown, version);
     }
 
     /// <summary>Whether the GM has a draft of this edition and language (without making one).</summary>

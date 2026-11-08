@@ -341,6 +341,25 @@ export function finish(id, how) {
   return text !== r.original;
 }
 
+/**
+ * Ends a review without writing into the chapter, and returns the text kept ('accepted' or 'all'), or null for 'none'. For "Bring up to date"
+ * (docs/BOOK_EXPORT.md 41.18): the server saves the kept text together with the chapter's new base, and the page then puts it in the editor,
+ * so it is not in the editor's undo history (Ctrl-Z there would bring back the old text over the new base, and the notice would not come back).
+ * The chapter stays locked until the page unlocks it.
+ */
+export function take(id, how) {
+  const state = editors.get(id);
+  const r = state?.review;
+  if (!r) return null;
+  const text = how === 'all' ? r.view.state.doc.toString() : how === 'accepted' ? getOriginalDoc(r.view.state).toString() : null;
+  r.view.destroy();
+  r.holder.remove();
+  state.review = null;
+  state.host.hidden = false;
+  preview(id);
+  return text;
+}
+
 export function close(id) {
   const state = editors.get(id);
   if (!state) return;

@@ -871,10 +871,28 @@
   <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>נערך</value></data>
   <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>המערכה השתנתה מאז שערכתם את הפרק הזה.</value></data>
   <data name="Campaign.Book.Draft.StaleEntries" xml:space="preserve"><value>השתנה: {0}.</value></data>
-  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>"ליצור מחדש" מחליף את הטקסט שלכם בטקסט של המערכה כפי שהוא עכשיו; אפשר לבטל. "להשאיר את שלי" מסתיר את ההודעה עד שהמערכה תשתנה שוב.</value></data>
+  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>"לעדכן" מכניס את השינויים של המערכה ושומר על העריכות שלכם, ואתם בודקים כל שינוי. "ליצור מחדש" מחליף את הטקסט שלכם בטקסט של המערכה. אפשר לבטל את שניהם. "להשאיר את שלי" מסתיר את ההודעה עד שהמערכה תשתנה שוב.</value></data>
   <data name="Campaign.Book.Draft.Regenerate" xml:space="preserve"><value>ליצור מחדש</value></data>
   <data name="Campaign.Book.Draft.Keep" xml:space="preserve"><value>להשאיר את שלי</value></data>
-  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>ביטול היצירה מחדש האחרונה</value></data>
+  <data name="Campaign.Book.Draft.Merge.Button" xml:space="preserve"><value>לעדכן</value></data>
+  <data name="Campaign.Book.Draft.Merge.Confirm" xml:space="preserve"><value>לעדכן את הפרק הזה לפי המערכה?</value></data>
+  <data name="Campaign.Book.Draft.Merge.Summary" xml:space="preserve"><value>מהמערכה: {0}. שלכם נשמר: {1}. חדש: {2}. מוצע להסרה: {3}. מוצע להחזרה: {4}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Conflicts" xml:space="preserve"><value>שונה גם על ידיכם וגם במערכה: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Send" xml:space="preserve"><value>{0} מהם נשלחים אל {1} למיזוג; שום דבר אחר לא נשלח.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NoModel" xml:space="preserve"><value>לא הוגדר מודל בינה מלאכותית, ולכן מוצג עבורם הטקסט של המערכה. דחו אותו כדי להשאיר את שלכם.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>ב-{0} מהם השתנו גם סודות או תמונות, ולכן מוצג עבורם הטקסט של המערכה.</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithAi" xml:space="preserve"><value>למזג עם בינה מלאכותית</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithoutAi" xml:space="preserve"><value>בלי בינה מלאכותית</value></data>
+  <data name="Campaign.Book.Draft.Merge.ShowChanges" xml:space="preserve"><value>להציג את השינויים</value></data>
+  <data name="Campaign.Book.Draft.Merge.Review" xml:space="preserve"><value>בדקו את השינויים מהמערכה</value></data>
+  <data name="Campaign.Book.Draft.Merge.Ready" xml:space="preserve"><value>מוזג על ידי הבינה המלאכותית: {0}. מוצג כטקסט המערכה: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Saved" xml:space="preserve"><value>הפרק עודכן.</value></data>
+  <data name="Campaign.Book.Draft.Merge.FitAgain" xml:space="preserve"><value>הריצו שוב "התאמת עמודים": הטקסט זז.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Same" xml:space="preserve"><value>מעודכן: השינויים של המערכה כבר היו בטקסט שלכם.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Moved" xml:space="preserve"><value>המערכה השתנתה שוב בזמן הבדיקה, ולכן שום דבר לא נשמר. עדכנו שוב.</value></data>
+  <data name="Campaign.Book.Draft.Merge.UpToDate" xml:space="preserve"><value>הפרק הזה כבר מעודכן.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Duplicate" xml:space="preserve"><value>רשומה מופיעה בפרק הזה פעמיים, ולכן אי אפשר למזג. הסירו את העותק, או השתמשו ב"ליצור מחדש" או "להשאיר את שלי".</value></data>
+  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>ביטול העדכון האחרון</value></data>
   <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>למערכה כבר אין את הפרק הזה. מחקו את הטקסט שלו אם אין להדפיס אותו.</value></data>
   <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>בלוקים לשימוש</value></data>
   <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (להקראה), {{{{secret}}}} (מהדורת המנחה), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} ו-{{{{wide}}}}; כל אחד נסגר בשורה }}}}. שורה \page פותחת עמוד ו-\column טור. תמונה: ![כיתוב](art:…), רק של המהדורה הזו.</value></data>

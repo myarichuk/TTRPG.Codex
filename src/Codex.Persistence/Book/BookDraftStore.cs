@@ -164,6 +164,11 @@ public interface IBookDraftRepository
     /// <summary>Back to what the chapter was before the last Regenerate; what it is now becomes the previous version.</summary>
     Task<(BookDraftSave Result, int Version)> UndoAsync(CampaignAccess dm, string edition, string language, string section, int version);
 
+    /// <summary>A merge the GM kept ("Bring up to date", docs/BOOK_EXPORT.md 41.18): <paramref name="markdown"/> is the chapter's text, and
+    /// <paramref name="now"/> becomes its base, so the notice goes and the next merge starts from here. The chapter as it was becomes the
+    /// previous version, all three parts, so Undo brings the notice back.</summary>
+    Task<(BookDraftSave Result, int Version)> MergeAsync(CampaignAccess dm, string edition, string language, BookDraftGenerated now, string markdown, int version);
+
     /// <summary>"Keep mine": the notice stays away until the campaign changes from <paramref name="key"/>.</summary>
     Task<(BookDraftSave Result, int Version)> KeepAsync(CampaignAccess dm, string edition, string language, string section, string key, int version);
 
@@ -289,6 +294,20 @@ public class RavenBookDraftRepository(RavenDbService dbService, StorageQuota? qu
             chapter.KeptKey = null;
             return true;
         });
+
+    public Task<(BookDraftSave Result, int Version)> MergeAsync(CampaignAccess dm, string edition, string language, BookDraftGenerated now, string markdown, int version) =>
+        markdown.Length > BookDraftDocument.MaxChapterChars
+            ? Task.FromResult((BookDraftSave.TooLarge, version))
+            : ChangeChapterAsync(dm, edition, language, now.Section, version, (chapter, at) =>
+            {
+                Remember(chapter, at);
+                chapter.Markdown = markdown;
+                chapter.Base = Fit(now.Markdown);
+                chapter.BaseKey = now.Key;
+                chapter.Title = Clip(now.Title, 200);
+                chapter.KeptKey = null;
+                return true;
+            });
 
     public Task<(BookDraftSave Result, int Version)> UndoAsync(CampaignAccess dm, string edition, string language, string section, int version) =>
         ChangeChapterAsync(dm, edition, language, section, version, (chapter, at) =>

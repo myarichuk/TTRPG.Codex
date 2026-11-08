@@ -168,9 +168,8 @@ Anything that survives is a missing test; add it.
 
 ## 7. Open work, in the order I would take it (the user decides)
 
-0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **Phases 1 to 4 are built (41.9, 41.10, 41.15, 41.16).**
-   Next is phase 5 (Bring up to date: the block merge, AI only for conflicts, the same review overlay; phase 4's `BookDraftEdits.Cut` and
-   the overlay are there to reuse). See the "Not done" lists of 41.9, 41.10, 41.15 and 41.16 first: the preview in Safari and Firefox is the gap a GM will hit (the GM-CSS cleaner's limits are fixed, 41.11; Homebrewery PHB CSS lays out as there on the compatibility layer, 41.12, which every
+0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **Phases 1 to 5 are built (41.9, 41.10, 41.15, 41.16, 41.18).**
+   Next is phase 6 (the party leak check before export, 41.5). See the "Not done" lists of 41.9, 41.10, 41.15, 41.16 and 41.18 first: the preview in Safari and Firefox is the gap a GM will hit (the GM-CSS cleaner's limits are fixed, 41.11; Homebrewery PHB CSS lays out as there on the compatibility layer, 41.12, which every
    theme sits on and `UnderTheHomebreweryLayer_...` holds to Homebrewery's own PHB and DMG themes; variables, colour variables and a community theme, 41.13; the fonts, pictures and sheets a brew's CSS names on the web are fetched once by the server and kept with the draft, public https addresses only, 41.14). A theme must pass `EveryBlock_UnderEveryTheme...` and `ALongBook_UnderEveryTheme...`; soft transparent gradients and
    text shadows are what fail them. Items 1 (art step 7, keep-three) and 5 (layout)
    now land inside it rather than in the current HTML route.

@@ -1314,7 +1314,7 @@ small renderer, an editor page and a print page, run on the test campaign of sec
    with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
    sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
 
-## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 4 built, see 41.9, 41.10, 41.15 and 41.16; layout 41.17)
+## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 5 built, see 41.9, 41.10, 41.15, 41.16 and 41.18; layout 41.17)
 
 The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
 when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
@@ -1388,7 +1388,7 @@ so that two book paths do not drift apart.
 2. **Ashen Vellum:** the grimdark port; fonts bundled after a licence check of each file; theme picker.
 3. **Fit pages** and the print-time overflow report. Built (41.15).
 4. **AI edits** on a selection, with the review overlay. Built (41.16).
-5. **Bring up to date:** the block merge, AI only for conflicts, the same overlay.
+5. **Bring up to date:** the block merge, AI only for conflicts, the same overlay. Built (41.18).
 6. **The party leak check** before export.
 
 ### 41.9 Phase 1: built
@@ -1905,3 +1905,64 @@ the panel folded; Fit pages opening the folded panel on Problems; at 820 px (sta
 
 Not done: the panes cannot be resized by dragging (fixed proportions), and the panel's height is fixed; the folded preview's off-screen
 drawing has no test that it is measured rather than only drawn.
+
+### 41.18 Phase 5: Bring up to date (built 2026-11-08)
+
+The stale notice of an edited chapter now offers **Bring up to date** beside Regenerate and Keep mine (`BookDraftMerge`, `BookMergePrompts`,
+`BookDraftMerges`, `editor.js` `take`).
+
+- **The unit is the entry.** A chapter splits, losslessly, into its head (title, chapter picture, anything before the first entry) and one unit
+  per `{{entry,#e-…}}` marker. Base, mine and the campaign's version are matched **by entry id**, never by a line diff: this is what phase 4
+  kept the markers safe for. An id that is in a version twice (a copied entry) refuses the merge with a message; Regenerate and Keep mine still work.
+- **Units are compared without page or column breaks, blank lines or trailing spaces**, so Fit pages and a model's tidying (a blank line after an
+  entry marker, seen in the real Tidy run) never make a unit "edited", and never make a paid conflict. A unit the merge keeps is the GM's text
+  exactly, breaks included, so the review is not full of deleted `\page {fitted}` lines; after a merge that had fitted breaks the GM is told to
+  fit pages again.
+- **Per unit, by the code:** the campaign did not change it, the GM's; the GM did not, the campaign's; both made the same change, the GM's;
+  otherwise a **conflict**. An entry new in the campaign goes in after the entry the campaign puts before it (or after the head); one the
+  campaign no longer has (hidden or deleted) is offered for removal; one the GM deleted stays deleted unless the campaign changed it since,
+  when it is offered back. The GM's order is kept.
+- **Only a conflict goes to a model**, one call each, in turn, under the per-GM `BookGate` and one `BookBudget` capped at every call's worst
+  case, with the server's requests set aside up front. The model gets the base and the campaign's version with every piece left out
+  (`BookDraftEdits.Bare`) and the GM's version cut like an AI edit, pieces as markers. **The pieces are settled by the code**: matched by kind
+  and order, the campaign's piece where the GM left it as it was, the GM's otherwise. When the GM's and the campaign's pieces do not line up
+  (the campaign added a secret to an entry the GM rewrote), no model is asked. The reply passes the AI edit's checks (`BookEditWorker`,
+  one retry); the prompt says to keep the GM's wording, order and additions, apply every change of fact, and invent nothing.
+- **A conflict with no answer is shown as the campaign's text** (no model, pieces that do not line up, a reply that failed its checks, or
+  the GM pressing "Without AI"), which the GM accepts or rejects in the review: rejecting keeps their own. So Bring up to date works with no
+  model at all, and one failed conflict does not sink the merge. With no conflicts nothing could be sent, and the review opens at once.
+- **The pre-flight** (only when there are conflicts) says how many entries come from the campaign, stay the GM's, are new, are offered for
+  removal or back, and conflict; how many of those go to which model, the token range and the cost. Merge with AI, Without AI, Cancel.
+- **The review** is phase 4's overlay over the whole chapter. **Keeping it is not typing**: `take` ends the review without writing into the
+  editor, the server saves the kept text **with the campaign's chapter as its new base** (`BookDraftStore.MergeAsync`; the previous text,
+  base and key are remembered), and the editor then takes the saved text. So the notice goes, the next merge starts from here, and **Undo**
+  (the existing button, now "Undo the last update") takes back text and base together, which brings the notice back; Ctrl+Z in the editor
+  cannot undo the text while leaving the new base. The campaign is read again on save, never taken from the page: if it moved on since the
+  merge was made, nothing is saved and the GM is told to bring it up to date again. Discard saves nothing. Partly accepted is still a merge:
+  what was rejected stays as the GM's edit against the new base. The stale notice is hidden while a merge is open.
+
+Tests: `BookDraftMergeTests` (lossless split, marker lines only, duplicates refused; the per-unit table; blank lines, trailing spaces and
+breaks not edits, a kept unit keeping its breaks; new entries placed, gone ones offered for removal, a GM deletion kept or offered back,
+the GM's order; eight spellings of a secret in all three versions never in the prompt, and the campaign's changed secret put back; a piece both
+changed stays the GM's; pieces that do not line up keep the model out; a reply retried once, then left to the campaign's text);
+`BookDraftTests.AMerge*` (no conflict: nothing sent, the campaign's and the GM's units, nothing saved until kept, an old version refused,
+keeping moves the base, Undo brings back text and notice; a conflict alone sent, no secret, the campaign moving again refuses the save;
+a player, an old version, nothing to bring in, another run, no model and a failing model each handled, the gate let go of);
+`BookDraftE2ETests.TheGmBringsAnEditedChapterUpToDate...` (real browser, a fake model: two GM edits, the campaign changes one entry and adds
+one; the pre-flight with the model and the cost and nothing sent; only the conflict sent, without its secret; Accept the rest; the notice
+gone, the GM's other edit kept, the new entry in the editor and the preview; typing works; Undo brings the notice back). Mutants, each
+failing them (14 of 14): the campaign's unit taken as the GM's, blank lines counted, the campaign's piece ignored, pieces not lined up,
+gone entries kept, new entries at the end, GM deletions undone, a moved campaign saved, the merge not undoable, the base not moved, the gate
+never let go of, the model's reply dropped, every entry sent; in the page, a kept review not saved. And phase 4's opener check now refuses
+only a `{{note Title` the reply brought, not one the GM typed (tested, and its mutant fails).
+Seen in the app (preview, a throwaway campaign as the real-run GM, deleted after): two GM edits, the campaign changing one and adding one;
+the pre-flight named the GM's model, one conflict and the token range; Without AI opened the review with the new entry and the campaign's
+line; Accept the rest kept the GM's other edit, added the entry, cleared the notice; Undo brought it back; Discard left the chapter as it was.
+No model was sent anything.
+
+Not done, or not verified:
+- A real model has not merged a conflict.
+- Entries are the unit: two edits of one entry by both sides are one conflict, however far apart in it; prose before the first entry is
+  the head, one unit.
+- An entry the GM moved into another chapter is, to the merge, deleted from one and unknown in the other.
+- The Russian and Hebrew text of `Campaign.Book.Draft.Merge.*` is machine-drafted.

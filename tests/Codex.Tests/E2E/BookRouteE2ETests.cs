@@ -310,7 +310,13 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
 
                     var last = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("messages").EnumerateArray().Last().GetProperty("content").GetString() ?? string.Empty;
                     string reply;
-                    if (last.Contains("<passage>", StringComparison.Ordinal))
+                    if (last.Contains("\n<mine>\n", StringComparison.Ordinal))
+                    {
+                        // A conflict of "Bring up to date": the GM's entry back, with the campaign's new fact in it.
+                        var from = last.IndexOf("\n<mine>\n", StringComparison.Ordinal) + "\n<mine>\n".Length;
+                        reply = last[from..last.IndexOf("\n</mine>", from, StringComparison.Ordinal)].Trim().Replace("on the point", "on the far point");
+                    }
+                    else if (last.Contains("<passage>", StringComparison.Ordinal))
                     {
                         // An AI edit of the editable book: the passage back, one word changed.
                         var from = last.IndexOf("<passage>", StringComparison.Ordinal) + "<passage>".Length;
@@ -795,6 +801,120 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await dm.Keyboard.PressAsync("End");
         await dm.Keyboard.TypeAsync(" PUBLIC_TYPED");
         await Assertions.Expect(preview.Locator(".page", new() { HasText = "PUBLIC_TYPED" })).ToHaveCountAsync(1);
+        Assert.Empty(pageErrors);
+    }
+
+    /// <summary>
+    /// "Bring up to date" (docs/BOOK_EXPORT.md 41.18) in a real browser with a local fake model: the GM edits two entries, the campaign then
+    /// changes one of them and adds another; the merge says what it will do and cost, sends only the entry both changed (never its secret), opens
+    /// the review, and keeping it saves the merge with its new base: the notice goes, the editor takes typing, and Undo brings the notice back.
+    /// </summary>
+    [Fact]
+    public async Task TheGmBringsAnEditedChapterUpToDate_OnlyTheConflictGoesToTheModel_AndUndoBringsTheNoticeBack()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bmg-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var model = new BookAiPanelE2ETests.FakeModelServer();
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        var veraId = "bmg-vera-" + Guid.NewGuid();
+        Codex.Web.TestSeedActor Vera(string bio) => new()
+        {
+            Id = veraId, CampaignId = campaignId, Name = "Vera", Visibility = Codex.Persistence.ActorVisibility.Known,
+            Biography = bio + "\n\nHer log is kept dry.\n\n:::dm\nCANARY_MERGE_SECRET\n:::"
+        };
+        await _app.SeedActorsAsync([
+            Vera("Keeps the lighthouse on the point."),
+            new Codex.Web.TestSeedActor { Id = "bmg-tom-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Tomas", Visibility = Codex.Persistence.ActorVisibility.Known, Biography = "Tom mends nets." }
+        ]);
+
+        await dm.GotoAsync("/settings/ai");
+        await dm.GetByTestId("ai-add-provider").ClickAsync();
+        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await dm.GetByTestId("ai-name").FillAsync("Fake model");
+        await dm.GetByTestId("ai-url").FillAsync(model.Url);
+        await dm.GetByTestId("ai-model").FillAsync("fake-model");
+        await dm.GetByTestId("ai-price-in").FillAsync("1");
+        await dm.GetByTestId("ai-price-out").FillAsync("2");
+        await dm.GetByTestId("ai-price-label").FillAsync("USD");
+        await dm.GetByTestId("ai-save").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model", new() { Timeout = 30_000 });
+
+        // The GM edits Vera's line and Tom's.
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("book-edition").SelectOptionAsync("dm");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-dialog")).ToBeVisibleAsync();
+        await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        foreach (var (line, words) in new[] { ("Keeps the lighthouse", " PUBLIC_GM_WORDS"), ("Tom mends nets", " PUBLIC_GM_TOM") })
+        {
+            await dm.Locator(".cm-line", new() { HasText = line }).ClickAsync();
+            await dm.Keyboard.PressAsync("End");
+            await dm.Keyboard.TypeAsync(words);
+        }
+
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved", new() { Timeout = 15_000 });
+        await dm.GetByTestId("book-draft-close").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-dialog")).ToBeHiddenAsync();
+
+        // The campaign changes Vera's biography and gains Ann.
+        await _app.SeedActorsAsync([
+            Vera("Keeps the lighthouse on the far point."),
+            new Codex.Web.TestSeedActor { Id = "bmg-ann-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Ann", Visibility = Codex.Persistence.ActorVisibility.Known, Biography = "PUBLIC_ANN sells fish." }
+        ]);
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-stale")).ToBeVisibleAsync();
+
+        // The pre-flight: what the merge does, and that one entry goes to the model at a price; nothing sent yet.
+        await dm.GetByTestId("book-draft-merge").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-merge-conflicts")).ToContainTextAsync("1");
+        await Assertions.Expect(dm.GetByTestId("book-draft-merge-confirm")).ToContainTextAsync("fake-model");
+        await Assertions.Expect(dm.GetByTestId("book-draft-merge-cost")).ToContainTextAsync("USD");
+        lock (model.Requests) Assert.Empty(model.Requests);
+        await dm.GetByTestId("book-draft-merge-ai").ClickAsync();
+
+        var review = dm.GetByTestId("book-draft-review");
+        await Assertions.Expect(review).ToBeVisibleAsync(new() { Timeout = 30_000 });
+        await Assertions.Expect(review).ToContainTextAsync("campaign");
+        lock (model.Requests)
+        {
+            var sent = Assert.Single(model.Requests);
+            Assert.Contains("PUBLIC_GM_WORDS", sent);
+            Assert.DoesNotContain("CANARY_MERGE_SECRET", sent);
+            // Only the conflict: Tom's entry (the GM's alone) and Ann's (the campaign's alone) are merged by the code.
+            Assert.DoesNotContain("PUBLIC_GM_TOM", sent);
+            Assert.DoesNotContain("PUBLIC_ANN", sent);
+        }
+
+        await dm.GetByTestId("book-draft-review-all").ClickAsync();
+        await Assertions.Expect(review).ToBeHiddenAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-stale")).ToBeHiddenAsync();
+        await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "on the far point. PUBLIC_GM_WORDS" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "PUBLIC_GM_TOM" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "PUBLIC_ANN" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "CANARY_MERGE_SECRET" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.GetByTestId("book-draft-ai-note")).ToContainTextAsync("up to date");
+        var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "PUBLIC_ANN" })).ToHaveCountAsync(1);
+
+        // The editor takes typing again, and its own undo history does not hold the merge.
+        await dm.Locator(".cm-line", new() { HasText = "PUBLIC_GM_TOM" }).ClickAsync();
+        await dm.Keyboard.PressAsync("End");
+        await dm.Keyboard.TypeAsync(" PUBLIC_TYPED");
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "PUBLIC_TYPED" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved", new() { Timeout = 15_000 });
+
+        // Undo takes the merge back with its base: the notice returns.
+        await dm.GetByTestId("book-draft-undo").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-stale")).ToBeVisibleAsync();
+        await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "PUBLIC_ANN" })).ToHaveCountAsync(0);
         Assert.Empty(pageErrors);
     }
 

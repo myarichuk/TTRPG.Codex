@@ -63,6 +63,12 @@ public class BookDraftEditTests
             Assert.Empty(BookDraftEdits.Check(passage, fine));
         }
 
+        // One the GM typed is theirs: a reply that keeps it is not refused for it (or every edit of that passage would fail twice).
+        var typed = "Text.\n\n{{note Running Vera\nVera.\n}}\n";
+        var theirs = BookDraftEdits.Cut(typed, 0, typed.Length)!;
+        Assert.Empty(BookDraftEdits.Check(theirs, typed.Replace("Text.", "Shorter.")));
+        Assert.NotEmpty(BookDraftEdits.Check(theirs, typed + "\n{{note Another title\nx\n}}\n"));
+
         Assert.Contains("##### heading", Prompt(passage));
         Assert.Contains("leave that part out rather than make it up", Codex.Web.Book.BookDraftAi.AskText("shape"));
         // A real model's read-aloud box came with a clue, a motive and a DC the notes never had.

@@ -7,6 +7,7 @@
 @inject BookDraftWebs Webs
 @inject BookPdf Pdf
 @inject BookDraftAi Ai
+@inject BookDraftMerges Merges
 @inject NavigationManager Nav
 @inject IWebHostEnvironment Env
 @inject ILogger<BookDraftEditor> Logger
@@ -143,7 +144,8 @@
                     <div class="book-draft-pane-body book-draft-edit-body">
                         @if (Current is { } shown)
                         {
-                            @if (shown.Stale)
+                            @* While a merge is open its own bar says what is going on; the notice comes back if it is let go of. *@
+                            @if (shown.Stale && mergeSection == null)
                             {
                                 <div class="book-draft-notice" role="status" data-testid="book-draft-stale">
                                     <div>
@@ -155,10 +157,13 @@
                                         <div class="small-muted">@L["Campaign.Book.Draft.StaleHint"]</div>
                                     </div>
                                     <div class="d-flex gap-2 flex-wrap">
-                                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => RegenerateAsync(shown.Section)" Disabled="@working" data-testid="book-draft-regenerate">
+                                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => MergePrepareAsync(shown.Section)" Disabled="@(working || AiBusy)" data-testid="book-draft-merge">
+                                            <LucideIcon IconName="git-merge" Size="14" /> @L["Campaign.Book.Draft.Merge.Button"]
+                                        </CodexButton>
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RegenerateAsync(shown.Section)" Disabled="@(working || AiBusy)" data-testid="book-draft-regenerate">
                                             <LucideIcon IconName="refresh-cw" Size="14" /> @L["Campaign.Book.Draft.Regenerate"]
                                         </CodexButton>
-                                        <CodexButton Small="true" OnClick="() => KeepAsync(shown.Section)" Disabled="@working" data-testid="book-draft-keep">@L["Campaign.Book.Draft.Keep"]</CodexButton>
+                                        <CodexButton Small="true" OnClick="() => KeepAsync(shown.Section)" Disabled="@(working || AiBusy)" data-testid="book-draft-keep">@L["Campaign.Book.Draft.Keep"]</CodexButton>
                                     </div>
                                 </div>
                             }
@@ -188,13 +193,58 @@
                         @if (reviewing)
                         {
                             <div class="book-draft-ai-review" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-review">
-                                <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Review"]</strong>
+                                <strong id="book-draft-ai-title">@(mergeKey != null ? L["Campaign.Book.Draft.Merge.Review"] : L["Campaign.Book.Draft.Ai.Review"])</strong>
                                 <span class="small-muted" role="status" aria-live="polite" data-review-left data-testid="book-draft-review-left"></span>
                                 <span class="flex-grow-1"></span>
                                 <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="@(() => AiFinishAsync("accepted"))" data-testid="book-draft-review-keep">@L["Campaign.Book.Draft.Ai.KeepAccepted"]</CodexButton>
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiFinishAsync("all"))" data-testid="book-draft-review-all">@L["Campaign.Book.Draft.Ai.AcceptRest"]</CodexButton>
                                 <CodexButton Small="true" OnClick="@(() => AiFinishAsync("none"))" data-testid="book-draft-review-discard">@L["Campaign.Book.Draft.Ai.Discard"]</CodexButton>
                                 <div class="small-muted w-100">@L["Campaign.Book.Draft.Ai.ReviewHint"]</div>
+                            </div>
+                        }
+                        else if (mergePreview is { } merge)
+                        {
+                            <div class="book-draft-ai-confirm" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-merge-confirm">
+                                <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Merge.Confirm"]</strong>
+                                <div class="small-muted" data-testid="book-draft-merge-summary">@L["Campaign.Book.Draft.Merge.Summary", merge.Theirs, merge.Mine, merge.Added, merge.Removed, merge.Restored]</div>
+                                <div class="small" data-testid="book-draft-merge-conflicts">@L["Campaign.Book.Draft.Merge.Conflicts", merge.Conflicts]</div>
+                                @if (merge.Sendable > 0 && merge.Model is { } model && merge.Preflight is { } flight)
+                                {
+                                    <div class="small-muted">@L["Campaign.Book.Draft.Merge.Send", merge.Sendable, model.Label]</div>
+                                    <div class="small-muted">@L["Campaign.Book.Draft.Ai.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh)]</div>
+                                    @if (flight.CostLow is { } low && flight.CostHigh is { } high)
+                                    {
+                                        <div class="small-muted" data-testid="book-draft-merge-cost">@L["Campaign.Book.Draft.Ai.Cost", Money(low, model.Price), Money(high, model.Price)]</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="small-muted">@L["Campaign.Book.Ai.Preflight.NoPrice"]</div>
+                                    }
+                                    @if (model.ServerUsedToday is { } server && server.Limit > 0)
+                                    {
+                                        <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts * merge.Sendable]</div>
+                                    }
+                                }
+                                else if (merge.Sendable > 0)
+                                {
+                                    <div class="small-muted" data-testid="book-draft-merge-nomodel">@L["Campaign.Book.Draft.Merge.NoModel"]</div>
+                                }
+                                @if (merge.Conflicts > merge.Sendable)
+                                {
+                                    <div class="small-muted">@L["Campaign.Book.Draft.Merge.NotSendable", merge.Conflicts - merge.Sendable]</div>
+                                }
+                                <div class="d-flex gap-2 mt-1 flex-wrap">
+                                    @if (merge.Sendable > 0 && merge.Model != null)
+                                    {
+                                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => MergeRunAsync(true)" data-testid="book-draft-merge-ai">@L["Campaign.Book.Draft.Merge.WithAi"]</CodexButton>
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MergeRunAsync(false)" data-testid="book-draft-merge-plain">@L["Campaign.Book.Draft.Merge.WithoutAi"]</CodexButton>
+                                    }
+                                    else
+                                    {
+                                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => MergeRunAsync(false)" data-testid="book-draft-merge-plain">@L["Campaign.Book.Draft.Merge.ShowChanges"]</CodexButton>
+                                    }
+                                    <CodexButton Small="true" OnClick="MergeCancelAsync" data-testid="book-draft-merge-cancel">@L["Common.Cancel"]</CodexButton>
+                                </div>
                             </div>
                         }
                         else if (aiPreview is { } asking && aiPending is { } pending)
@@ -1056,7 +1106,7 @@
     private string? aiNote;
     private bool aiNoteError;
 
-    private bool AiBusy => aiAsking || reviewing || aiPending != null;
+    private bool AiBusy => aiAsking || reviewing || aiPending != null || mergePreview != null || mergeSection != null;
 
     private static string Number(long value) => value.ToString("N0", System.Globalization.CultureInfo.CurrentCulture);
 
@@ -1210,6 +1260,12 @@
     private async Task AiFinishAsync(string how)
     {
         if (!reviewing || module == null || editorId == null) return;
+        if (mergeKey != null)
+        {
+            await MergeFinishAsync(how);
+            return;
+        }
+
         reviewing = false;
         working = false;
         try
@@ -1224,6 +1280,190 @@
         }
     }
 
+    // "Bring up to date" (docs/BOOK_EXPORT.md 41.18): the pre-flight, the run, and the review, which is kept through the server, not typed in.
+    private BookMergePreview? mergePreview;
+    private string? mergeSection;
+    private int mergeVersion;
+    private string? mergeKey;
+    private bool mergeHadBreaks;
+
+    private string MergeOutcome(BookMergeOutcome outcome) => outcome switch
+    {
+        BookMergeOutcome.UpToDate => L["Campaign.Book.Draft.Merge.UpToDate"],
+        BookMergeOutcome.Duplicate => L["Campaign.Book.Draft.Merge.Duplicate"],
+        BookMergeOutcome.Stale => L["Campaign.Book.Draft.Ai.Stale"],
+        BookMergeOutcome.Busy => L["Campaign.Book.Draft.Ai.Busy"],
+        _ => L["Campaign.Book.Draft.NotAllowed"]
+    };
+
+    /// <summary>What was typed is saved, and the server says what the merge would do. With no conflicts nothing could be sent, so the review
+    /// opens at once; otherwise the pre-flight waits on the Markdown with the cost, and the chapter is locked so it stays what was merged.</summary>
+    private async Task MergePrepareAsync(string section)
+    {
+        if (working || AiBusy || module == null || editorId == null) return;
+        aiNote = null;
+        message = null;
+        working = true;
+        var direct = false;
+        try
+        {
+            await FlushAsync();
+            if (state == SaveState.Conflict) return;
+            if (view?.Chapters.FirstOrDefault(c => c.Section == section) is not { } chapter) return;
+            var preview = await Merges.PreviewAsync(Access, edition, language, section, chapter.Version);
+            if (preview.Outcome != BookMergeOutcome.Ready)
+            {
+                Reveal("ai");
+                Note(MergeOutcome(preview.Outcome));
+                return;
+            }
+
+            if (current != section) await ShowAsync(section);
+            mergeSection = section;
+            mergeVersion = chapter.Version;
+            await AiLockAsync(true);
+            if (preview.Conflicts == 0) direct = true;
+            else mergePreview = preview;
+        }
+        finally
+        {
+            working = false;
+        }
+
+        if (direct) await MergeRunAsync(false);
+    }
+
+    private async Task MergeCancelAsync()
+    {
+        mergePreview = null;
+        mergeSection = null;
+        await AiLockAsync(false);
+    }
+
+    /// <summary>Makes the merge (the conflicts sent to the model only with <paramref name="useAi"/>) and opens it for review against the chapter.</summary>
+    private async Task MergeRunAsync(bool useAi)
+    {
+        if (mergeSection is not { } section || module == null || editorId == null || aiAsking) return;
+        mergePreview = null;
+        aiAsking = useAi;
+        working = true;
+        aiNote = null;
+        aiStop = CancellationTokenSource.CreateLinkedTokenSource(closing.Token);
+        try
+        {
+            var proposal = await Merges.MergeAsync(Access, edition, language, section, mergeVersion, useAi, aiStop.Token);
+            var spent = proposal.Tokens == 0 ? null
+                : proposal.Cost is { } cost ? L["Campaign.Book.Draft.Ai.SpentCost", Number(proposal.Tokens), Money(cost, null)].ToString()
+                : L["Campaign.Book.Draft.Ai.Spent", Number(proposal.Tokens)].ToString();
+            var said = proposal.Conflicts == 0 ? null : L["Campaign.Book.Draft.Merge.Ready", proposal.Merged, proposal.Fallback].ToString();
+            if (proposal.Fallback > 0 && proposal.Reason is "auth" or "ratelimit" or "allowance" or "budget" or "cancelled") said += " " + L["Campaign.Book.Draft.Ai.Failed." + proposal.Reason];
+            var words = string.Join(" ", new[] { said, spent }.Where(w => !string.IsNullOrEmpty(w)));
+            if (proposal.Outcome != BookMergeOutcome.Ready || proposal.Replacement == null)
+            {
+                Note(MergeOutcome(proposal.Outcome));
+            }
+            else if (proposal.Replacement == proposal.Original)
+            {
+                // Nothing in the GM's text changes: the chapter's base moves on, and the notice goes.
+                var (result, _) = await Merges.SaveAsync(Access, edition, language, section, mergeVersion, proposal.Original, proposal.Key);
+                MergeSaved(result, L["Campaign.Book.Draft.Merge.Same"]);
+                await RefreshAsync(push: true, section);
+            }
+            else if (await module.InvokeAsync<bool>("review", editorId,
+                         new { section, from = 0, to = proposal.Original.Length, original = proposal.Original, replacement = proposal.Replacement },
+                         new
+                         {
+                             accept = L["Campaign.Book.Draft.Ai.Accept"].ToString(), reject = L["Campaign.Book.Draft.Ai.Reject"].ToString(),
+                             left = L["Campaign.Book.Draft.Ai.Left"].ToString(), label = L["Campaign.Book.Draft.Merge.Review"].ToString()
+                         }))
+            {
+                reviewing = true;
+                mergeKey = proposal.Key;
+                mergeHadBreaks = proposal.Original.ReplaceLineEndings("\n").Split('\n').Any(BookDraftText.IsFitted);
+                if (words.Length > 0) Note(words, error: false);
+            }
+            else
+            {
+                Note(L["Campaign.Book.Draft.Ai.Stale"]);
+            }
+        }
+        catch (LocalizedException ex)
+        {
+            Note(L.Describe(ex));
+        }
+        catch (JSException ex)
+        {
+            Logger.LogWarning(ex, "Showing the merge failed");
+            Note(L["Campaign.Book.Draft.ActionFailed"]);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            aiAsking = false;
+            aiStop?.Dispose();
+            aiStop = null;
+            working = reviewing;
+            if (!reviewing)
+            {
+                mergeSection = null;
+                await AiLockAsync(false);
+            }
+        }
+    }
+
+    private void MergeSaved(BookMergeSave result, string done)
+    {
+        Reveal("ai");
+        switch (result)
+        {
+            case BookMergeSave.Saved:
+                Note(done, error: false);
+                break;
+            case BookMergeSave.Moved:
+                Note(L["Campaign.Book.Draft.Merge.Moved"]);
+                break;
+            case BookMergeSave.Conflict:
+                state = SaveState.Conflict;
+                break;
+            default:
+                Note(L["Campaign.Book.Draft.ActionFailed"]);
+                break;
+        }
+    }
+
+    /// <summary>Ends a merge's review: what the GM kept is saved by the server together with the chapter's new base (Undo takes both back), and
+    /// then put in the editor. Discard saves nothing, and the notice stays.</summary>
+    private async Task MergeFinishAsync(string how)
+    {
+        reviewing = false;
+        var key = mergeKey!;
+        var section = mergeSection!;
+        mergeKey = null;
+        try
+        {
+            var text = await module!.InvokeAsync<string?>("take", editorId, how);
+            if (text != null)
+            {
+                var (result, _) = await Merges.SaveAsync(Access, edition, language, section, mergeVersion, text, key);
+                MergeSaved(result, L["Campaign.Book.Draft.Merge.Saved"] + (mergeHadBreaks ? " " + L["Campaign.Book.Draft.Merge.FitAgain"] : string.Empty));
+                await RefreshAsync(push: true, section);
+            }
+        }
+        catch (JSException ex)
+        {
+            Logger.LogWarning(ex, "Ending the merge's review failed");
+            Note(L["Campaign.Book.Draft.ActionFailed"]);
+        }
+        finally
+        {
+            mergeSection = null;
+            working = false;
+            await AiLockAsync(false);
+        }
+    }
+
     private bool closeWithoutSaving;
 
     private async Task CloseAsync()
@@ -1232,6 +1472,7 @@
         aiStop?.Cancel();
         if (reviewing) await AiFinishAsync("none");
         if (aiPending != null) await AiCancelAsync();
+        if (mergePreview != null) await MergeCancelAsync();
         await FlushAsync();
         // Text that could not be saved (the draft changed in another tab) is not thrown away without a word: the first Close says so.
         if ((dirty.Count > 0 || cssDirty) && !closeWithoutSaving)

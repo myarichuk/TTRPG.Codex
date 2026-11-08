@@ -556,4 +556,131 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         // The gate is let go of after a request, so the next one may run.
         Assert.Equal(BookEditOutcome.Ready, (await ai.AskAsync(dm, "party", "en", "cast", cast.Version, 0, 0, string.Empty, "tidy")).Outcome);
     }
+    // "Bring up to date" (docs/BOOK_EXPORT.md 41.18): the code merges entry by entry, a model sees only the entries both sides changed.
+    private static string MineOf(IList<ChatMessage> messages)
+    {
+        var text = messages.Last().Text!;
+        var from = text.IndexOf("\n<mine>\n", StringComparison.Ordinal) + 8;
+        return text[from..text.IndexOf("\n</mine>", from, StringComparison.Ordinal)].Trim('\n');
+    }
+
+    private async Task<BookDraftChapterView> ChapterAsync(CampaignAccess dm, string edition, Func<BookDraftChapterView, bool> which) =>
+        (await _drafts.GetAsync(dm, edition, "en"))!.Chapters.Single(which);
+
+    [Fact]
+    public async Task AMergeWithNoConflict_SendsNothing_TakesTheCampaignsAndKeepsTheGms_AndKeepingItMovesTheBase_WhichUndoTakesBack()
+    {
+        var (dm, id) = await SeedAsync();
+        var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        var saved = await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown.Replace("PUBLIC_HOODED_LOOK", "PUBLIC_GM_LOOK"), cast.Version);
+        await BioAsync(id, "PUBLIC_NEW_BIO");
+        var chat = new ScriptedChat((messages, _) => MineOf(messages));
+        var merges = new BookDraftMerges(_drafts, new EditModels(chat), new BookGate(), new NoOpSystemCatalog());
+        var stale = await ChapterAsync(dm, "party", c => c.Section == "cast");
+        Assert.True(stale.Stale);
+
+        var preview = await merges.PreviewAsync(dm, "party", "en", "cast", saved.Version);
+        Assert.Equal((BookMergeOutcome.Ready, 1, 1, 0), (preview.Outcome, preview.Theirs, preview.Mine, preview.Conflicts));
+        Assert.Null(preview.Preflight);
+
+        var proposal = await merges.MergeAsync(dm, "party", "en", "cast", saved.Version, useAi: false);
+        Assert.Equal(BookMergeOutcome.Ready, proposal.Outcome);
+        Assert.Equal(stale.Markdown, proposal.Original);
+        Assert.Contains("PUBLIC_GM_LOOK", proposal.Replacement);
+        Assert.Contains("PUBLIC_NEW_BIO", proposal.Replacement);
+        Assert.DoesNotContain("PUBLIC_BIO_VERA", proposal.Replacement);
+        Assert.Equal(0, chat.Calls);
+        // Nothing is saved until the GM keeps the review, and then only at the version it was made from.
+        Assert.Equal(stale.Markdown, (await ChapterAsync(dm, "party", c => c.Section == "cast")).Markdown);
+        Assert.Equal(BookMergeSave.Conflict, (await merges.SaveAsync(dm, "party", "en", "cast", saved.Version - 1, proposal.Replacement!, proposal.Key)).Result);
+
+        Assert.Equal(BookMergeSave.Saved, (await merges.SaveAsync(dm, "party", "en", "cast", saved.Version, proposal.Replacement!, proposal.Key)).Result);
+        var merged = await ChapterAsync(dm, "party", c => c.Section == "cast");
+        Assert.Equal(proposal.Replacement, merged.Markdown);
+        Assert.False(merged.Stale);
+        Assert.True(merged.Edited);
+        Assert.True(merged.CanUndo);
+        Assert.Equal(BookMergeOutcome.UpToDate, (await merges.PreviewAsync(dm, "party", "en", "cast", merged.Version)).Outcome);
+
+        // Undo takes back the text and the base together: the GM's old text, and the notice with it.
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.UndoAsync(dm, "party", "en", "cast", merged.Version)).Result);
+        var back = await ChapterAsync(dm, "party", c => c.Section == "cast");
+        Assert.Equal(stale.Markdown, back.Markdown);
+        Assert.True(back.Stale);
+    }
+
+    [Fact]
+    public async Task AMergesConflict_AloneGoesToTheModel_WithNoSecret_AndKeepingItIsRefusedOnceTheCampaignMovesAgain()
+    {
+        var (dm, id) = await SeedAsync();
+        var vera = (await _drafts.OpenAsync(dm, "dm", "en"))!.Chapters.Single(c => c.Markdown.Contains("CANARY_BIO_DM"));
+        var saved = await _drafts.SaveChapterAsync(dm, "dm", "en", vera.Section, vera.Markdown.Replace("PUBLIC_BIO_VERA met", "PUBLIC_GM_VERA met"), vera.Version);
+        await BioAsync(id, "PUBLIC_BIO_VERA met no one at PUBLIC_NEW_DUSK.\n\n:::dm\nCANARY_BIO_DM\n:::");
+        var chat = new ScriptedChat((messages, _) => MineOf(messages) + "\n\nPUBLIC_NEW_DUSK, merged.");
+        var models = new EditModels(chat);
+        var merges = new BookDraftMerges(_drafts, models, new BookGate(), new SrdCatalog());
+
+        var preview = await merges.PreviewAsync(dm, "dm", "en", vera.Section, saved.Version);
+        Assert.Equal((1, 1), (preview.Conflicts, preview.Sendable));
+        Assert.NotNull(preview.Preflight);
+        Assert.Equal("Test · model-x", preview.Model!.Label);
+        Assert.Equal(0, chat.Calls);
+
+        var proposal = await merges.MergeAsync(dm, "dm", "en", vera.Section, saved.Version, useAi: true);
+        Assert.Equal((1, 1, 0), (proposal.Conflicts, proposal.Merged, proposal.Fallback));
+        var sent = Assert.Single(chat.Requests);
+        // The GM edition names the hidden actor (CANARY_HIDDEN_NAME is only hidden from the party); its secrets are never sent.
+        Assert.DoesNotContain("CANARY_BIO_DM", sent);
+        Assert.DoesNotContain("{{secret", sent);
+        Assert.Contains("PUBLIC_GM_VERA", sent);
+        Assert.Contains("met no one at PUBLIC_NEW_DUSK", sent);
+        Assert.Contains("{{secret\nCANARY_BIO_DM\n}}", proposal.Replacement);
+        Assert.Contains("PUBLIC_NEW_DUSK, merged.", proposal.Replacement);
+
+        // The campaign changed again while the GM reviewed: nothing is saved, and the notice stays.
+        await BioAsync(id, "PUBLIC_THIRD");
+        Assert.Equal(BookMergeSave.Moved, (await merges.SaveAsync(dm, "dm", "en", vera.Section, saved.Version, proposal.Replacement!, proposal.Key)).Result);
+        var after = await ChapterAsync(dm, "dm", c => c.Section == vera.Section);
+        Assert.Equal(saved.Version, after.Version);
+        Assert.True(after.Stale);
+    }
+
+    [Fact]
+    public async Task AMerge_IsRefusedForAPlayer_AnOldVersion_AnotherRun_OrNothingToBringIn_AndWithoutAModelOffersTheCampaignsText()
+    {
+        var (dm, id) = await SeedAsync();
+        var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        var saved = await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown.Replace("PUBLIC_BIO_VERA", "PUBLIC_GM_VERA"), cast.Version);
+        var chat = new ScriptedChat((_, _) => "No blocks at all.");
+        var merges = new BookDraftMerges(_drafts, new EditModels(chat), new BookGate(), new NoOpSystemCatalog());
+
+        Assert.Equal(BookMergeOutcome.UpToDate, (await merges.PreviewAsync(dm, "party", "en", "cast", saved.Version)).Outcome);
+        await BioAsync(id, "PUBLIC_NEW_BIO");
+        Assert.Equal(BookMergeOutcome.Stale, (await merges.PreviewAsync(dm, "party", "en", "cast", saved.Version - 1)).Outcome);
+        Assert.Equal(BookMergeOutcome.NotAllowed, (await merges.PreviewAsync(new CampaignAccess(id, PlayerUser, CampaignRole.Player), "party", "en", "cast", saved.Version)).Outcome);
+        Assert.Equal(BookMergeOutcome.NotAllowed, (await merges.MergeAsync(new CampaignAccess(id, PlayerUser, CampaignRole.Player), "party", "en", "cast", saved.Version, false)).Outcome);
+
+        var gate = new BookGate();
+        Assert.True(gate.TryEnter(DmUser));
+        var busy = new BookDraftMerges(_drafts, new EditModels(chat), gate, new NoOpSystemCatalog());
+        Assert.Equal(BookMergeOutcome.Busy, (await busy.MergeAsync(dm, "party", "en", "cast", saved.Version, useAi: true)).Outcome);
+        Assert.False(gate.TryEnter(DmUser));
+
+        // No model: the conflict is the campaign's text, for the GM to accept or reject.
+        var none = new BookDraftMerges(_drafts, new EditModels(chat, refuse: new Codex.Web.Services.AiNotConfiguredException(), none: true), new BookGate(), new NoOpSystemCatalog());
+        var preview = await none.PreviewAsync(dm, "party", "en", "cast", saved.Version);
+        Assert.Equal((1, 1), (preview.Conflicts, preview.Sendable));
+        Assert.Null(preview.Model);
+        var plain = await none.MergeAsync(dm, "party", "en", "cast", saved.Version, useAi: true);
+        Assert.Equal((0, 1, "nomodel"), (plain.Merged, plain.Fallback, plain.Reason));
+        Assert.Contains("PUBLIC_NEW_BIO", plain.Replacement);
+        Assert.DoesNotContain("PUBLIC_GM_VERA", plain.Replacement);
+
+        // A model whose replies fail the checks: the same, after its two tries, and the gate is let go of.
+        var failing = await merges.MergeAsync(dm, "party", "en", "cast", saved.Version, useAi: true);
+        Assert.Equal((0, 1, "checks"), (failing.Merged, failing.Fallback, failing.Reason));
+        Assert.Equal(BookEditWorker.MaxAttempts, chat.Calls);
+        Assert.Equal(BookMergeOutcome.Ready, (await merges.MergeAsync(dm, "party", "en", "cast", saved.Version, useAi: true)).Outcome);
+        Assert.Equal(0, (await merges.MergeAsync(dm, "party", "en", "cast", saved.Version, useAi: false)).Merged);
+    }
 }
