@@ -223,6 +223,7 @@ sheetRules:
 
   # Warnings, not rules: a feat or feature may grant training the class lacks.
   proficiencies:
+    strengthAttribute: str          # an armor's Strength minimum is checked against this
     armorTraining: { light: Light Armor, medium: Medium Armor, heavy: Heavy Armor, shield: Shields }
     allArmor: All armor             # a Fighter's "All armor" covers every armor but shields
     pluralSuffix: s                 # "Longswords" training covers a Longsword
@@ -232,6 +233,7 @@ sheetRules:
   armorClass:
     key: armorClass
     unarmored: "10 + mod(dex)"
+    dexAttribute: dex
     bonusLists: [feats, fightingStyles]
 
   inventory:

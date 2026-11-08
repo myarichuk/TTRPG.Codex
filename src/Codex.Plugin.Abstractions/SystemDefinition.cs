@@ -210,8 +210,8 @@ public class ConcentrationRules
     /// <summary>The condition a concentrating creature carries.</summary>
     public string Condition { get; set; } = "Concentrating";
 
-    /// <summary>The attribute whose save keeps concentration when the creature takes damage.</summary>
-    public string SaveAttribute { get; set; } = "con";
+    /// <summary>Required: the attribute whose save keeps concentration when the creature takes damage (5e: "con").</summary>
+    public string SaveAttribute { get; set; } = string.Empty;
 
     /// <summary>The save's difficulty: half the damage taken, never below <see cref="MinimumDc"/> or above <see cref="MaximumDc"/>.</summary>
     public int MinimumDc { get; set; } = 10;
@@ -270,8 +270,8 @@ public class HitDiceRules
     /// <summary>Creature property with the dice expression ("2d6") that gives count and die.</summary>
     public string? CreatureDiceProperty { get; set; } = "hitDice";
 
-    /// <summary>Attribute whose modifier is added to each die spent.</summary>
-    public string Attribute { get; set; } = "con";
+    /// <summary>Required: the attribute whose modifier is added to each die spent (5e: "con").</summary>
+    public string Attribute { get; set; } = string.Empty;
 
     public string MaxKey => Key + "_Max";
 }

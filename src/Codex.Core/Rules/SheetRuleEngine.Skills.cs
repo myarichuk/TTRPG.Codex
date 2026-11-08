@@ -156,8 +156,8 @@ public sealed partial class SheetRuleEngine
                     result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: {cls.Name} isn't trained with {training.ToLowerInvariant()}. Without training you have disadvantage on checks, attacks and saves that use Strength or Dexterity, and can't cast spells.", "Actor.Rule.ArmorUntrained", new object?[] { entry, cls, training.ToLowerInvariant() }));
                 }
 
-                var needed = ToDouble(Property(entry, rules.StrengthProperty));
-                var score = result.Attributes?.Totals.GetValueOrDefault(strength) ?? YamlValues.GetInt(sheet, strength) ?? 10;
+                var needed = strength == null ? null : ToDouble(Property(entry, rules.StrengthProperty));
+                var score = strength == null ? 0 : result.Attributes?.Totals.GetValueOrDefault(strength) ?? YamlValues.GetInt(sheet, strength) ?? 10;
                 if (needed is > 0 && score < needed.Value)
                 {
                     result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: needs Strength {(int)needed.Value}, or your Speed drops by 10 feet.", "Actor.Rule.ArmorStrength", new object?[] { entry, (int)needed.Value }));

@@ -237,6 +237,7 @@ public class ContentTranslationTests : IDisposable
             - { key: feats, label: Feats, targetEntityType: feat }
           skills:
             label: Skills
+            bonusKey: proficiencyBonus
             list:
               - { key: athl, label: Athletics, attribute: str }
             passives:

@@ -133,7 +133,10 @@ fieldRoles:
 ### Sheet rules (`sheetRules`)
 
 What a character sheet may contain is data too, so a homebrew can be as strict or as loose as it
-likes. Leave `sheetRules` out and anything goes. The SRD system uses every kind of rule:
+likes. Leave `sheetRules` out and anything goes. A key that names one of your attributes or derived values
+(`attribute`, `dexAttribute`, `bonusKey`, and in `vitals` `saveAttribute` and `hitDice.attribute`) has no default:
+a section you use must state it, so a system never picks up a fifth-edition name such as `con` by accident. The
+loader names any that are missing. The SRD system uses every kind of rule:
 
 ```yaml
 sheetRules:
@@ -229,7 +232,7 @@ sheetRules:
   hitPoints:                                  # maximum hit points from the classes' hit dice
     key: HP_Max                               # sheet key written (the primary resource's max key)
     currentKey: HP                            # follows the maximum: a larger one arrives as health
-    attribute: con                            # modifier added per level
+    attribute: con                            # required: modifier added per level
     dieProperty: hitDie                       # class property: "d10"
     firstLevel: full-die                      # the first level: full-die (the default) or average
     average: half-plus-one                    # a level's average: half-plus-one (6 for a d10, the default) or half (5)
@@ -241,21 +244,23 @@ sheetRules:
       appliedKey: speciesApplied              # sheet key remembering which entry was copied
       copy: { speed: speed, size: size, darkvision: darkvision }   # entry property: sheet key
   skills:                                     # saving throws, skills and passive scores
-    bonusKey: proficiencyBonus                # a derived field
+    bonusKey: proficiencyBonus                # required: a derived field
     list: [{ key: perception, label: Perception, attribute: wis }]
     passives: [{ key: passivePerception, label: Passive Perception, skill: perception }]
     classChoicesProperty: skillChoices        # the first class's count ("Choose 2: ..."); more chosen beyond the background is a warning
   spellcasting:                               # save DC and attack per class with a spellcastingAbility property
                                               # a class with a slot table and no ability, or the reverse, is a warning
-    bonusKey: proficiencyBonus
+    bonusKey: proficiencyBonus                # required: a derived field
     saveBase: 8
   proficiencies:                              # warnings for equipped armor and weapons the first class isn't trained in
+    strengthAttribute: str                    # checked against an armor's strength property (left out: not checked)
     armorTraining: { light: Light Armor, medium: Medium Armor, heavy: Heavy Armor, shield: Shields }
     allArmor: All armor                       # a training that covers every armor but shields (none if left out)
     pluralSuffix: s                           # dropped when matching a weapon to a training by name ("Longswords")
   armorClass:                                 # armor class from equipment, class features and bonuses
     key: armorClass
-    unarmored: "10 + mod(dex)"                # formula used with no body armor (best of this and class formulas)
+    unarmored: "10 + mod(dex)"                # required: formula used with no body armor (best of this and class formulas)
+    dexAttribute: dex                         # required: added to body armor's base, up to its cap
     bonusLists: [feats, fightingStyles]       # picks here may add armorClassBonus (a fighting style)
   inventory:                                  # what a character carries; stored as "item-id|qty:2,equipped:1"
     key: inventory

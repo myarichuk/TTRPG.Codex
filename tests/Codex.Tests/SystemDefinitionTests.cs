@@ -56,6 +56,23 @@ public class SystemDefinitionTests
         Assert.Contains(expectedFragment, ex.Message);
     }
 
+    // Keys naming an attribute or a derived value have no 5e default: a section that leaves one out is an error naming it.
+    [Theory]
+    [InlineData("id: ok\nname: X\nattributes:\n  - key: a\nactorFields:\n  - { key: lvl, label: L, type: Number }\n  - { key: cls, label: C, type: EntityReference, targetEntityType: c }\nentityTypes:\n  - type: c\nsheetRules:\n  armorClass: { unarmored: \"10\" }\n", "sheetRules.armorClass.dexAttribute is required")]
+    [InlineData("id: ok\nname: X\nattributes:\n  - key: a\nactorFields:\n  - { key: lvl, label: L, type: Number }\n  - { key: cls, label: C, type: EntityReference, targetEntityType: c }\nentityTypes:\n  - type: c\nsheetRules:\n  armorClass: { dexAttribute: a }\n", "sheetRules.armorClass.unarmored is required")]
+    [InlineData("id: ok\nname: X\nattributes:\n  - key: a\nactorFields:\n  - { key: lvl, label: L, type: Number }\n  - { key: cls, label: C, type: EntityReference, targetEntityType: c }\nentityTypes:\n  - type: c\nsheetRules:\n  armorClass: { unarmored: \"10\", dexAttribute: dex }\n", "dexAttribute 'dex' is not one of the system's attributes")]
+    [InlineData("id: ok\nname: X\nattributes:\n  - key: a\nactorFields:\n  - { key: lvl, label: L, type: Number }\n  - { key: cls, label: C, type: EntityReference, targetEntityType: c }\nentityTypes:\n  - type: c\nsheetRules:\n  hitPoints: { classField: cls, levelField: lvl }\n", "sheetRules.hitPoints.attribute is required")]
+    [InlineData("id: ok\nname: X\nattributes:\n  - key: a\nactorFields:\n  - { key: lvl, label: L, type: Number }\n  - { key: cls, label: C, type: EntityReference, targetEntityType: c }\nentityTypes:\n  - type: c\nsheetRules:\n  skills: { list: [] }\n", "sheetRules.skills.bonusKey is required")]
+    [InlineData("id: ok\nname: X\nattributes:\n  - key: a\nactorFields:\n  - { key: lvl, label: L, type: Number }\n  - { key: cls, label: C, type: EntityReference, targetEntityType: c }\nentityTypes:\n  - type: c\nsheetRules:\n  spellcasting: { saveBase: 8 }\n", "sheetRules.spellcasting.bonusKey is required")]
+    [InlineData("id: ok\nname: X\nattributes:\n  - key: a\nactorFields:\n  - { key: lvl, label: L, type: Number }\n  - { key: cls, label: C, type: EntityReference, targetEntityType: c }\nentityTypes:\n  - type: c\nsheetRules:\n  proficiencies: { strengthAttribute: str }\n", "strengthAttribute 'str' is not one of the system's attributes")]
+    [InlineData("id: ok\nname: X\nattributes:\n  - key: a\nactorFields:\n  - { key: lvl, label: L, type: Number }\n  - { key: cls, label: C, type: EntityReference, targetEntityType: c }\nentityTypes:\n  - type: c\nvitals:\n  concentration: { condition: C }\n", "vitals.concentration.saveAttribute is required")]
+    [InlineData("id: ok\nname: X\nattributes:\n  - key: a\nactorFields:\n  - { key: lvl, label: L, type: Number }\n  - { key: cls, label: C, type: EntityReference, targetEntityType: c }\nentityTypes:\n  - type: c\nvitals:\n  hitDice: { key: HD }\n", "vitals.hitDice.attribute is required")]
+    public void Parse_RuleSectionsMustNameTheirAttributesAndBonuses(string yaml, string expectedFragment)
+    {
+        var ex = Assert.Throws<InvalidDataException>(() => SystemDefinitionLoader.Parse(yaml));
+        Assert.Contains(expectedFragment, ex.Message);
+    }
+
     [Fact]
     public void Parse_NotYaml_ExplainsItself()
     {

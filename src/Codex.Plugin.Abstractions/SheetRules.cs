@@ -100,7 +100,9 @@ public class PassiveRule
 public class SkillRules
 {
     public string Label { get; set; } = "Skills";
-    public string BonusKey { get; set; } = "proficiencyBonus";
+
+    /// <summary>Required: the derived value skill and save bonuses add (5e: "proficiencyBonus").</summary>
+    public string BonusKey { get; set; } = string.Empty;
     public string ProficienciesKey { get; set; } = "skillProficiencies";
     public string ExpertiseKey { get; set; } = "skillExpertise";
     public string ClassField { get; set; } = "class";
@@ -124,7 +126,9 @@ public class SkillRules
 public class SpellcastingRules
 {
     public string AbilityProperty { get; set; } = "spellcastingAbility";
-    public string BonusKey { get; set; } = "proficiencyBonus";
+
+    /// <summary>Required: the derived value save DCs and attack bonuses add (5e: "proficiencyBonus").</summary>
+    public string BonusKey { get; set; } = string.Empty;
     public int SaveBase { get; set; } = 8;
 }
 
@@ -144,7 +148,9 @@ public class ProficiencyRules
 
     /// <summary>Item property holding the Strength an armor needs, and the one flagging Stealth disadvantage.</summary>
     public string StrengthProperty { get; set; } = "strength";
-    public string StrengthAttribute { get; set; } = "str";
+    /// <summary>The attribute an armor's Strength minimum is checked against (5e: "str"). No default: a system without
+    /// strength minimums leaves it out and none is checked.</summary>
+    public string? StrengthAttribute { get; set; }
     public string StealthProperty { get; set; } = "stealth";
 
     /// <summary>Equipment tags that mark a weapon.</summary>
@@ -182,8 +188,8 @@ public class HitPointRules
     /// <summary>Class entry property holding the hit die, like "d10".</summary>
     public string DieProperty { get; set; } = "hitDie";
 
-    /// <summary>Attribute whose modifier is added per level.</summary>
-    public string Attribute { get; set; } = "con";
+    /// <summary>Required: the attribute whose modifier is added per level (5e: "con").</summary>
+    public string Attribute { get; set; } = string.Empty;
 
     public int MinimumPerLevel { get; set; } = 1;
 
@@ -229,10 +235,12 @@ public class ArmorClassRules
     public string Key { get; set; } = "armorClass";
     public string ModeKey { get; set; } = "acMode";
 
-    /// <summary>Formula over the sheet's numbers when nothing is worn and no class formula is better.</summary>
-    public string Unarmored { get; set; } = "10 + mod(dex)";
+    /// <summary>Required: the formula over the sheet's numbers when nothing is worn and no class formula is better
+    /// (5e: "10 + mod(dex)").</summary>
+    public string Unarmored { get; set; } = string.Empty;
 
-    public string DexAttribute { get; set; } = "dex";
+    /// <summary>Required: the attribute added to body armor's base, up to its cap (5e: "dex").</summary>
+    public string DexAttribute { get; set; } = string.Empty;
 
     /// <summary>Class entry property with an unarmored formula, and the one saying a shield is still allowed.</summary>
     public string ClassFormulaProperty { get; set; } = "unarmoredDefense";

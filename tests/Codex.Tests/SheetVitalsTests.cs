@@ -32,7 +32,7 @@ public class SheetVitalsTests
             - { key: feats, label: Feats, targetEntityType: feat }
           multiclass: { key: multiclass, classField: class, levelField: level, classLevelKey: classLevel }
           hitPoints: { attribute: con, dieProperty: hitDie, default: average }
-          armorClass: { unarmored: "10 + mod(dex)", bonusLists: [feats] }
+          armorClass: { unarmored: "10 + mod(dex)", dexAttribute: dex, bonusLists: [feats] }
           inventory: { types: [equipment] }
         """;
 

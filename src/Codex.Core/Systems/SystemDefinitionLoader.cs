@@ -177,6 +177,18 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        if (definition.Vitals?.Concentration is { } concentration
+            && RequiredAttributeError(definition, "vitals.concentration.saveAttribute", concentration.SaveAttribute) is { } concentrationError)
+        {
+            yield return concentrationError;
+        }
+
+        if (definition.Vitals?.HitDice is { } hitDice
+            && RequiredAttributeError(definition, "vitals.hitDice.attribute", hitDice.Attribute) is { } hitDiceError)
+        {
+            yield return hitDiceError;
+        }
+
         var attributeKeys = definition.Attributes.Select(a => a.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var resourceKeys = definition.Resources.SelectMany(r => new[] { r.Key, r.MaxKey }).Where(k => k != null).ToHashSet(StringComparer.OrdinalIgnoreCase)!;
         foreach (var field in definition.ActorFields)
@@ -216,6 +228,14 @@ public static class SystemDefinitionLoader
     {
         var rules = definition.SheetRules;
         if (rules == null) yield break;
+
+        // Keys that name an attribute or a derived value have no default: a system states them, so it never
+        // binds silently to a 5e name ("con", "proficiencyBonus") it happens to share or lack.
+        string? AttributeError(string path, string key) => RequiredAttributeError(definition, path, key);
+        string? DerivedKeyError(string path, string key) =>
+            string.IsNullOrWhiteSpace(key) ? $"{path} is required (the sheetRules.derived key it adds)."
+            : rules.Derived.Any(d => d.Key == key) ? null
+            : $"{path} '{key}' is not a sheetRules.derived key.";
 
         if (rules.Enforcement.ToLowerInvariant() is not ("strict" or "warn" or "off"))
         {
@@ -345,15 +365,18 @@ public static class SystemDefinitionLoader
                 yield return $"sheetRules.skills passive '{passive.Key}' reads skill '{passive.Skill}', which is not declared.";
             }
 
-            if (!rules.Derived.Any(d => d.Key == skills.BonusKey))
-            {
-                yield return $"sheetRules.skills.bonusKey '{skills.BonusKey}' is not a sheetRules.derived key.";
-            }
+            if (DerivedKeyError("sheetRules.skills.bonusKey", skills.BonusKey) is { } error) yield return error;
         }
 
-        if (rules.Spellcasting is { } spellcasting && !rules.Derived.Any(d => d.Key == spellcasting.BonusKey))
+        if (rules.Spellcasting is { } spellcasting && DerivedKeyError("sheetRules.spellcasting.bonusKey", spellcasting.BonusKey) is { } spellError)
         {
-            yield return $"sheetRules.spellcasting.bonusKey '{spellcasting.BonusKey}' is not a sheetRules.derived key.";
+            yield return spellError;
+        }
+
+        if (rules.Proficiencies?.StrengthAttribute is { } strengthAttribute
+            && AttributeError("sheetRules.proficiencies.strengthAttribute", strengthAttribute) is { } strengthError)
+        {
+            yield return strengthError;
         }
 
         if (rules.HitPoints?.PerLevelBonus is { } perLevel && !referenceFields.Contains(perLevel.Field))
@@ -411,10 +434,7 @@ public static class SystemDefinitionLoader
                 yield return $"sheetRules.hitPoints.levelField '{hitPoints.LevelField}' is not an actor field.";
             }
 
-            if (!definition.Attributes.Any(a => a.Key.Equals(hitPoints.Attribute, StringComparison.OrdinalIgnoreCase)))
-            {
-                yield return $"sheetRules.hitPoints.attribute '{hitPoints.Attribute}' is not one of the system's attributes.";
-            }
+            if (AttributeError("sheetRules.hitPoints.attribute", hitPoints.Attribute) is { } error) yield return error;
 
             foreach (var mode in hitPoints.Modes.Where(m => m is not ("average" or "rolled" or "manual")))
             {
@@ -439,9 +459,11 @@ public static class SystemDefinitionLoader
                 yield return $"sheetRules.armorClass.bonusLists '{list}' is not a sheetRules.lists key.";
             }
 
-            if (!definition.Attributes.Any(a => a.Key.Equals(armorClass.DexAttribute, StringComparison.OrdinalIgnoreCase)))
+            if (AttributeError("sheetRules.armorClass.dexAttribute", armorClass.DexAttribute) is { } error) yield return error;
+
+            if (string.IsNullOrWhiteSpace(armorClass.Unarmored))
             {
-                yield return $"sheetRules.armorClass.dexAttribute '{armorClass.DexAttribute}' is not one of the system's attributes.";
+                yield return "sheetRules.armorClass.unarmored is required (a formula such as \"10 + mod(dex)\").";
             }
 
             if (fieldKeys.Contains(armorClass.ModeKey))
@@ -473,6 +495,11 @@ public static class SystemDefinitionLoader
             }
         }
     }
+
+    private static string? RequiredAttributeError(SystemDefinition definition, string path, string key) =>
+        string.IsNullOrWhiteSpace(key) ? $"{path} is required (one of the system's attribute keys)."
+        : definition.Attributes.Any(a => a.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) ? null
+        : $"{path} '{key}' is not one of the system's attributes.";
 
     private static IEnumerable<string> Duplicates(IEnumerable<string> keys) =>
         keys.Where(k => !string.IsNullOrWhiteSpace(k))
