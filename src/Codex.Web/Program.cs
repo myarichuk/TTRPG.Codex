@@ -269,6 +269,10 @@ using (var scope = app.Services.CreateScope())
     logger.LogInformation("Loading systems and content packs from: {Roots}", string.Join(", ", roots));
     await loader.LoadAndInitializeAsync(roots);
     logger.LogInformation("Loaded systems: {Systems}", string.Join(", ", loader.LoadedSystemIds));
+
+    // One-time upgrades of stored documents; some need the systems, so they run after loading them.
+    var store = scope.ServiceProvider.GetRequiredService<RavenDbService>().Store;
+    foreach (var line in Codex.Persistence.DatabaseUpgrades.Run(store, loader.GetDefinition)) logger.LogWarning("{Upgrade}", line);
 }
 
 if (Codex.Web.ExposurePolicy.IsExposed(app.Configuration))

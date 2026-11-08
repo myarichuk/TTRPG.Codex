@@ -319,7 +319,11 @@ New:
   DM overrode a rule problem on every big creature: `SeedFromBlueprint` set the manual method, which skips the
   character-creation checks but not `sheetRules.attributes.max`. A stat block now sets a method of its own, `printed`: the
   totals are the base scores, with no creation checks, no cap, and no background bonuses or increase picks added. `manual` stays capped. The DM can pick "As printed"
-  on any sheet, which is how a creature imported before this gets uncapped (stored sheets are not rewritten). Restatting a
+  on any sheet. Creatures imported before this are switched once, at the first start after it (`DatabaseUpgrades`,
+  `2026-11-08.printed-stat-blocks`): a sheet from a stat block that says manual becomes printed when that leaves every score
+  as it is, which is the case unless the DM has since given it a bonus or an increase; those stay manual and the log names
+  them. The upgrade is recorded in the database (`codex/upgrades`), so a DM who sets a creature back to manual later is not
+  overruled on the next start. Restatting a
   character had a second fault on the same path: the method was only set when the sheet had none, and the old base scores
   and background bonuses won over the block's (the rules total base + bonus), so a point-buy character with Strength 15 + 2
   restatted as a pit fiend still had 17. The block's scores are now the base scores. The character's bonuses and increase picks
