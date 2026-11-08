@@ -28,9 +28,18 @@ public sealed class BookDraftWebs(IBookDraftRepository store, BookWebFetcher fet
         return have.Used.Count > 0 || have.Files.Count > 0;
     }
 
-    public async Task<BookWebReport?> RefreshAsync(CampaignAccess dm, string edition, string language, string css, CancellationToken cancel)
+    public Task<BookWebReport?> RefreshAsync(CampaignAccess dm, string edition, string language, string css, CancellationToken cancel) =>
+        RefreshAsync($"{dm.CampaignId}/{edition}/{language}", () => store.WebAsync(dm, edition, language),
+            (added, keep) => store.SaveWebAsync(dm, edition, language, added, keep), css, cancel);
+
+    /// <summary>The same for a theme the GM brought in (docs/BOOK_EXPORT.md 41.22): its copies are kept with the theme, under the same bounds.</summary>
+    public Task<BookWebReport?> RefreshThemeAsync(CampaignAccess dm, string themeKey, string css, CancellationToken cancel) =>
+        RefreshAsync($"{dm.CampaignId}/theme/{themeKey}", () => store.ThemeWebAsync(dm, themeKey),
+            (added, keep) => store.SaveThemeWebAsync(dm, themeKey, added, keep), css, cancel);
+
+    private async Task<BookWebReport?> RefreshAsync(string key, Func<Task<BookCssWeb>> load,
+        Func<IReadOnlyList<BookCssWebFile>, IReadOnlySet<string>, Task<BookDraftSave>> save, string css, CancellationToken cancel)
     {
-        var key = $"{dm.CampaignId}/{edition}/{language}";
         using var mine = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         running.AddOrUpdate(key, mine, (_, old) =>
         {
@@ -46,7 +55,7 @@ public sealed class BookDraftWebs(IBookDraftRepository store, BookWebFetcher fet
         });
         try
         {
-            var have = await store.WebAsync(dm, edition, language);
+            var have = await load();
             var files = have.Files.ToDictionary(f => f.Url, StringComparer.Ordinal);
             var tried = new HashSet<string>(StringComparer.Ordinal);
             var failed = new List<BookWebFailure>();
@@ -92,7 +101,7 @@ public sealed class BookDraftWebs(IBookDraftRepository store, BookWebFetcher fet
             var changed = added.Count > 0 || have.Files.Any(f => !keep.Contains(f.Url));
             if (changed)
             {
-                var saved = await store.SaveWebAsync(dm, edition, language, added.Where(f => keep.Contains(f.Url)).ToList(), keep);
+                var saved = await save(added.Where(f => keep.Contains(f.Url)).ToList(), keep);
                 if (saved != BookDraftSave.Saved)
                 {
                     logger.LogInformation("The book's web copies were not saved: {Result}", saved);

@@ -193,6 +193,17 @@ export function read(id, section) {
   return new TextEncoder().encode(textOf(id, section));
 }
 
+/** A text field's value as bytes, read by the server as a stream (the theme wizard's pasted stylesheet: a message to the server is capped at
+ * 32 KB, and a theme with its fonts written in is far more). */
+export function fieldBytes(field) {
+  return new TextEncoder().encode(field.value);
+}
+
+/** A text field filled from the server (a theme opened for editing). */
+export function setField(field, value) {
+  field.value = value;
+}
+
 /** The GM's stylesheet, cleaned by the server, as the preview should apply it. */
 export function style(id, cleaned) {
   const state = editors.get(id);
@@ -241,6 +252,21 @@ async function preview(id) {
 
 // The pages scaled to the frame's width. A transform moves nothing on the page (the fit above measured the same lines); the space the
 // unscaled pages would take below is given back.
+/**
+ * The theme wizard's preview (docs/BOOK_EXPORT.md 41.22): `shell` drawn in `frame` with `markdown` laid out in it, no editor and no pictures.
+ * The frame is sandboxed with no script, as the editor's is; this page draws into it.
+ */
+export async function sample(frame, shell, markdown) {
+  frame.srcdoc = shell;
+  await new Promise(r => frame.addEventListener('load', r, { once: true }));
+  const doc = frame.contentDocument;
+  const root = doc && doc.getElementById('brew');
+  if (!root) return 0;
+  const result = await layout(doc, root, markdown, {});
+  fitWidth(frame, root);
+  return result.pages;
+}
+
 function fitWidth(frame, root) {
   const page = root.querySelector('.page');
   if (!page) return;

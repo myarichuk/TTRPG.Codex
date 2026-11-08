@@ -147,7 +147,7 @@ public enum BookDraftSave
 /// <summary>What the follow pass did: chapters made to follow the campaign without asking (they were never edited), added and removed.</summary>
 public sealed record BookDraftFollowed(int Updated, int Added, int Removed);
 
-public interface IBookDraftRepository
+public partial interface IBookDraftRepository
 {
     /// <summary>The draft; null when there is none, and for anyone who is not the campaign's GM now.</summary>
     Task<BookDraft?> GetAsync(CampaignAccess dm, string edition, string language);
@@ -196,7 +196,7 @@ public interface IBookDraftRepository
     Task DeleteAllForCampaignAsync(string campaignId);
 }
 
-public class RavenBookDraftRepository(RavenDbService dbService, StorageQuota? quota = null) : IBookDraftRepository
+public partial class RavenBookDraftRepository(RavenDbService dbService, StorageQuota? quota = null) : IBookDraftRepository
 {
     private const int MaxAttempts = 8;
 
@@ -444,16 +444,32 @@ public class RavenBookDraftRepository(RavenDbService dbService, StorageQuota? qu
         bool homebrewery, int version)
     {
         if (css.Length > BookDraftDocument.MaxCssChars) return (BookDraftSave.TooLarge, version);
-        if (Codex.Core.Book.BookDraftThemes.Find(theme) is not { } chosen) return (BookDraftSave.NotAllowed, version);
         if (await GmAsync(dm, edition, language) is not { } now) return (BookDraftSave.NotAllowed, version);
         using var session = dbService.Store.OpenAsyncSession();
         session.Advanced.UseOptimisticConcurrency = true;
+        // A built-in theme, or one of this campaign's own that the wizard finished (docs/BOOK_EXPORT.md 41.22).
+        string chosen;
+        if (Codex.Core.Book.BookDraftThemes.Find(theme) is { } builtIn)
+        {
+            chosen = builtIn.Id;
+        }
+        else if (theme.StartsWith(Codex.Core.Book.BookCustomTheme.Prefix, StringComparison.Ordinal) && theme[Codex.Core.Book.BookCustomTheme.Prefix.Length..] is var key
+                 && BookThemeDocument.IsKey(key) && await session.LoadAsync<BookThemeDocument>(BookThemeDocument.IdFor(now.CampaignId, key)) is { Ready: true } own
+                 && own.CampaignId == now.CampaignId)
+        {
+            chosen = theme;
+        }
+        else
+        {
+            return (BookDraftSave.NotAllowed, version);
+        }
+
         var draft = await session.LoadAsync<BookDraftDocument>(BookDraftDocument.IdFor(now.CampaignId, edition, language));
         if (draft == null || draft.CampaignId != now.CampaignId) return (BookDraftSave.NotAllowed, version);
         if (draft.Version != version) return (BookDraftSave.Conflict, draft.Version);
         draft.Css = css;
         draft.PageSize = Paper(pageSize);
-        draft.Theme = chosen.Id;
+        draft.Theme = chosen;
         draft.Homebrewery = homebrewery;
         draft.Version++;
         draft.UpdatedAt = DateTime.UtcNow;
@@ -526,7 +542,19 @@ public class RavenBookDraftRepository(RavenDbService dbService, StorageQuota? qu
             return BookDraftSave.NotAllowed;
         }
 
-        var id = BookDraftWeb.IdFor(now.CampaignId, edition, language);
+        return await StoreWebAsync(session, now.CampaignId, BookDraftWeb.IdFor(now.CampaignId, edition, language), added, keep);
+    }
+
+    private static bool Copyable(IReadOnlyList<Codex.Core.Book.BookCssWebFile> added) => added.All(f =>
+        Codex.Core.Book.BookCssWeb.Address(f.Url, null) == f.Url && Codex.Core.Book.BookCssWeb.ContentTypes.Contains(f.ContentType)
+        && f.Bytes.Length > 0 && f.Bytes.Length <= Codex.Core.Book.BookCssWeb.MaxBytes(f.Kind));
+
+    /// <summary>The copies kept on the web document <paramref name="id"/> (a draft's or a campaign theme's), in the open session, which also
+    /// holds what they belong to under optimistic concurrency.</summary>
+    private async Task<BookDraftSave> StoreWebAsync(Raven.Client.Documents.Session.IAsyncDocumentSession session, string campaignId, string id,
+        IReadOnlyList<Codex.Core.Book.BookCssWebFile> added, IReadOnlySet<string> keep)
+    {
+        var now = new { CampaignId = campaignId };
         var web = await session.LoadAsync<BookDraftWeb>(id);
         if (web != null && web.CampaignId != now.CampaignId) return BookDraftSave.NotAllowed;
         if (web == null)

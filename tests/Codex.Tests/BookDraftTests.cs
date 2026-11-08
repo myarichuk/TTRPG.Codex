@@ -727,4 +727,20 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         // Nothing the party may read is reported, though it is all over the chapter.
         Assert.DoesNotContain(report.Hits, h => h.Text.Contains("PUBLIC"));
     }
+
+    /// <summary>A theme the GM brought into the campaign (41.22) prints into the party book too, so the leak check looks in its stylesheet.</summary>
+    [Fact]
+    public async Task TheLeakCheck_LooksInACampaignThemesStylesheet_WhenThePartyDraftUsesIt()
+    {
+        var (dm, _) = await SeedAsync();
+        var party = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var (_, theme) = await _store.SaveThemeAsync(dm, null, "Tasha", ".page::before { content: \"CANARY_HIDDEN_NAME\"; }", true, ["en"],
+            new Dictionary<string, Dictionary<string, string>>(), ready: true, 0);
+        Assert.Equal(0, (await _drafts.LeaksAsync(dm, "en"))!.Total);
+
+        await _drafts.SaveSettingsAsync(dm, "party", "en", "", party.PageSize, BookCustomTheme.Prefix + theme!.Key, true, party.Version);
+
+        var report = (await _drafts.LeaksAsync(dm, "en"))!;
+        Assert.Contains(report.Hits, h => h is { Section: BookLeakCheck.Css, Kind: BookLeakKind.HiddenName });
+    }
 }

@@ -847,6 +847,47 @@
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Пепельный пергамент</value></data>
   <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (только макет)</value></data>
   <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(не для этого языка)</value></data>
+  <data name="Campaign.Book.Credit" xml:space="preserve"><value>Страницы сделаны с помощью замечательного {0}</value></data>
+  <data name="Campaign.Book.Theme.Empty" xml:space="preserve"><value>Сначала вставьте таблицу стилей оформления.</value></data>
+  <data name="Campaign.Book.Theme.Title" xml:space="preserve"><value>Добавить оформление</value></data>
+  <data name="Campaign.Book.Theme.Open" xml:space="preserve"><value>Добавить оформление…</value></data>
+  <data name="Campaign.Book.Theme.Steps" xml:space="preserve"><value>Шаги</value></data>
+  <data name="Campaign.Book.Theme.Step1" xml:space="preserve"><value>Стили</value></data>
+  <data name="Campaign.Book.Theme.Step2" xml:space="preserve"><value>Языки</value></data>
+  <data name="Campaign.Book.Theme.Step3" xml:space="preserve"><value>Просмотр</value></data>
+  <data name="Campaign.Book.Theme.Yours" xml:space="preserve"><value>Оформления этой кампании</value></data>
+  <data name="Campaign.Book.Theme.Unfinished" xml:space="preserve"><value>не закончено</value></data>
+  <data name="Campaign.Book.Theme.Edit" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Campaign.Book.Theme.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Campaign.Book.Theme.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Campaign.Book.Theme.Css" xml:space="preserve"><value>Таблица стилей</value></data>
+  <data name="Campaign.Book.Theme.CssHint" xml:space="preserve"><value>Вставьте оформление Homebrewery или вкладку Style из брю как есть. Шрифты и картинки, которые оно грузит из сети, сервер скачает один раз и сохранит вместе с оформлением.</value></data>
+  <data name="Campaign.Book.Theme.OnLayer" xml:space="preserve"><value>Поверх макета Homebrewery 5e (как оформления для PHB)</value></data>
+  <data name="Campaign.Book.Theme.Next" xml:space="preserve"><value>Скачать и проверить</value></data>
+  <data name="Campaign.Book.Theme.Fetching" xml:space="preserve"><value>Скачивание…</value></data>
+  <data name="Campaign.Book.Theme.NotFetched" xml:space="preserve"><value>{0, plural, one {Не удалось скачать # адрес:} few {Не удалось скачать # адреса:} many {Не удалось скачать # адресов:} other {Не удалось скачать # адреса:}}</value></data>
+  <data name="Campaign.Book.Theme.Unbrought" xml:space="preserve"><value>Оно называет шрифты, которых не приносит с собой; они напечатаются тем, что есть на сервере: {0}</value></data>
+  <data name="Campaign.Book.Theme.NoFaces" xml:space="preserve"><value>В нём не нашлось шрифта с латинскими буквами. Его текст напечатается системным шрифтом.</value></data>
+  <data name="Campaign.Book.Theme.LanguagesHint" xml:space="preserve"><value>На каких языках печатать это оформление. Где в его шрифтах нет букв языка, их заменит встроенный шрифт того же рода.</value></data>
+  <data name="Campaign.Book.Theme.Language.en" xml:space="preserve"><value>Английский</value></data>
+  <data name="Campaign.Book.Theme.Language.ru" xml:space="preserve"><value>Русский</value></data>
+  <data name="Campaign.Book.Theme.Language.he" xml:space="preserve"><value>Иврит</value></data>
+  <data name="Campaign.Book.Theme.Covered" xml:space="preserve"><value>В его шрифтах эти буквы есть.</value></data>
+  <data name="Campaign.Book.Theme.Lacking" xml:space="preserve"><value>В этих шрифтах букв нет; вместо них:</value></data>
+  <data name="Campaign.Book.Theme.NoStandIn" xml:space="preserve"><value>(нет: системный шрифт)</value></data>
+  <data name="Campaign.Book.Theme.Kind.Serif" xml:space="preserve"><value>с засечками</value></data>
+  <data name="Campaign.Book.Theme.Kind.Sans" xml:space="preserve"><value>без засечек</value></data>
+  <data name="Campaign.Book.Theme.Kind.Display" xml:space="preserve"><value>для заголовков</value></data>
+  <data name="Campaign.Book.Theme.Kind.Mono" xml:space="preserve"><value>машинописный</value></data>
+  <data name="Campaign.Book.Theme.Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="Campaign.Book.Theme.ToPreview" xml:space="preserve"><value>Просмотр</value></data>
+  <data name="Campaign.Book.Theme.PreviewIn" xml:space="preserve"><value>Образец страниц на языке:</value></data>
+  <data name="Campaign.Book.Theme.PreviewTitle" xml:space="preserve"><value>Образец страниц в этом оформлении</value></data>
+  <data name="Campaign.Book.Theme.Letters" xml:space="preserve"><value>Эти знаки не рисует ни один шрифт оформления: {0}</value></data>
+  <data name="Campaign.Book.Theme.Save" xml:space="preserve"><value>Сохранить и выбрать</value></data>
+  <data name="Campaign.Book.Theme.TooLarge" xml:space="preserve"><value>Таблица стилей слишком длинная, или у кампании уже предельное число оформлений (20).</value></data>
+  <data name="Campaign.Book.Theme.Conflict" xml:space="preserve"><value>Это оформление изменили в другой вкладке. Закройте мастер и откройте снова.</value></data>
+  <data name="Campaign.Book.Theme.Group" xml:space="preserve"><value>Оформления кампании</value></data>
   <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>Этих знаков нет ни в одном шрифте оформления. Они напечатаются шрифтом, какой найдётся на сервере, или пустыми квадратами:</value></data>
   <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>Выберите другое оформление или замените эти знаки (например, эмодзи или буквы другого алфавита).</value></data>
   <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {и ещё #} few {и ещё #} many {и ещё #} other {и ещё #}}</value></data>

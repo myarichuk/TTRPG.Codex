@@ -847,6 +847,47 @@
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Ashen Vellum</value></data>
   <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (layout only)</value></data>
   <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(not in this language)</value></data>
+  <data name="Campaign.Book.Credit" xml:space="preserve"><value>Pages made with the awesome {0}</value></data>
+  <data name="Campaign.Book.Theme.Empty" xml:space="preserve"><value>Paste the theme's stylesheet first.</value></data>
+  <data name="Campaign.Book.Theme.Title" xml:space="preserve"><value>Bring in a theme</value></data>
+  <data name="Campaign.Book.Theme.Open" xml:space="preserve"><value>Bring in a theme…</value></data>
+  <data name="Campaign.Book.Theme.Steps" xml:space="preserve"><value>Steps</value></data>
+  <data name="Campaign.Book.Theme.Step1" xml:space="preserve"><value>Stylesheet</value></data>
+  <data name="Campaign.Book.Theme.Step2" xml:space="preserve"><value>Languages</value></data>
+  <data name="Campaign.Book.Theme.Step3" xml:space="preserve"><value>Preview</value></data>
+  <data name="Campaign.Book.Theme.Yours" xml:space="preserve"><value>This campaign's themes</value></data>
+  <data name="Campaign.Book.Theme.Unfinished" xml:space="preserve"><value>not finished</value></data>
+  <data name="Campaign.Book.Theme.Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Campaign.Book.Theme.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Campaign.Book.Theme.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Campaign.Book.Theme.Css" xml:space="preserve"><value>Stylesheet</value></data>
+  <data name="Campaign.Book.Theme.CssHint" xml:space="preserve"><value>Paste a Homebrewery theme or a brew's Style tab, as it is. Fonts and pictures it loads from the web are fetched once by the server and kept with the theme.</value></data>
+  <data name="Campaign.Book.Theme.OnLayer" xml:space="preserve"><value>Sits on Homebrewery's 5e layout (as a theme for the PHB does)</value></data>
+  <data name="Campaign.Book.Theme.Next" xml:space="preserve"><value>Fetch and measure</value></data>
+  <data name="Campaign.Book.Theme.Fetching" xml:space="preserve"><value>Fetching…</value></data>
+  <data name="Campaign.Book.Theme.NotFetched" xml:space="preserve"><value>{0, plural, one {One address could not be fetched:} other {# addresses could not be fetched:}}</value></data>
+  <data name="Campaign.Book.Theme.Unbrought" xml:space="preserve"><value>It names fonts it does not bring, which print in whatever the server has: {0}</value></data>
+  <data name="Campaign.Book.Theme.NoFaces" xml:space="preserve"><value>No font with Latin letters was found in it. Its text would print in a system font.</value></data>
+  <data name="Campaign.Book.Theme.LanguagesHint" xml:space="preserve"><value>Which languages this theme prints. Where its fonts lack a language's letters, a bundled font of the same kind stands in for them.</value></data>
+  <data name="Campaign.Book.Theme.Language.en" xml:space="preserve"><value>English</value></data>
+  <data name="Campaign.Book.Theme.Language.ru" xml:space="preserve"><value>Russian</value></data>
+  <data name="Campaign.Book.Theme.Language.he" xml:space="preserve"><value>Hebrew</value></data>
+  <data name="Campaign.Book.Theme.Covered" xml:space="preserve"><value>Its own fonts have these letters.</value></data>
+  <data name="Campaign.Book.Theme.Lacking" xml:space="preserve"><value>These fonts lack the letters; drawn instead in:</value></data>
+  <data name="Campaign.Book.Theme.NoStandIn" xml:space="preserve"><value>(none: a system font)</value></data>
+  <data name="Campaign.Book.Theme.Kind.Serif" xml:space="preserve"><value>serif</value></data>
+  <data name="Campaign.Book.Theme.Kind.Sans" xml:space="preserve"><value>sans</value></data>
+  <data name="Campaign.Book.Theme.Kind.Display" xml:space="preserve"><value>titles</value></data>
+  <data name="Campaign.Book.Theme.Kind.Mono" xml:space="preserve"><value>typewriter</value></data>
+  <data name="Campaign.Book.Theme.Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Campaign.Book.Theme.ToPreview" xml:space="preserve"><value>Preview</value></data>
+  <data name="Campaign.Book.Theme.PreviewIn" xml:space="preserve"><value>Sample pages in:</value></data>
+  <data name="Campaign.Book.Theme.PreviewTitle" xml:space="preserve"><value>Sample pages under this theme</value></data>
+  <data name="Campaign.Book.Theme.Letters" xml:space="preserve"><value>No font of this theme draws these characters: {0}</value></data>
+  <data name="Campaign.Book.Theme.Save" xml:space="preserve"><value>Keep and use this theme</value></data>
+  <data name="Campaign.Book.Theme.TooLarge" xml:space="preserve"><value>The stylesheet is too long, or the campaign has as many themes as it may keep (20).</value></data>
+  <data name="Campaign.Book.Theme.Conflict" xml:space="preserve"><value>This theme was changed in another tab. Close the wizard and open it again.</value></data>
+  <data name="Campaign.Book.Theme.Group" xml:space="preserve"><value>This campaign's themes</value></data>
   <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>These characters are in none of this theme's fonts. They would print in whatever font the server has, or as empty boxes:</value></data>
   <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>Pick another theme, or change the characters (an emoji or a letter from another alphabet, say).</value></data>
   <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {and # more} other {and # more}}</value></data>

@@ -847,6 +847,47 @@
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>קלף אפור</value></data>
   <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (פריסה בלבד)</value></data>
   <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(לא בשפה הזאת)</value></data>
+  <data name="Campaign.Book.Credit" xml:space="preserve"><value>העמודים נבנו בעזרת {0} המדהים</value></data>
+  <data name="Campaign.Book.Theme.Empty" xml:space="preserve"><value>קודם הדביקו את גיליון הסגנון של ערכת העיצוב.</value></data>
+  <data name="Campaign.Book.Theme.Title" xml:space="preserve"><value>הוספת ערכת עיצוב</value></data>
+  <data name="Campaign.Book.Theme.Open" xml:space="preserve"><value>הוספת ערכת עיצוב…</value></data>
+  <data name="Campaign.Book.Theme.Steps" xml:space="preserve"><value>שלבים</value></data>
+  <data name="Campaign.Book.Theme.Step1" xml:space="preserve"><value>גיליון סגנון</value></data>
+  <data name="Campaign.Book.Theme.Step2" xml:space="preserve"><value>שפות</value></data>
+  <data name="Campaign.Book.Theme.Step3" xml:space="preserve"><value>תצוגה מקדימה</value></data>
+  <data name="Campaign.Book.Theme.Yours" xml:space="preserve"><value>ערכות העיצוב של המערכה</value></data>
+  <data name="Campaign.Book.Theme.Unfinished" xml:space="preserve"><value>לא הושלמה</value></data>
+  <data name="Campaign.Book.Theme.Edit" xml:space="preserve"><value>עריכה</value></data>
+  <data name="Campaign.Book.Theme.Delete" xml:space="preserve"><value>מחיקה</value></data>
+  <data name="Campaign.Book.Theme.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Campaign.Book.Theme.Css" xml:space="preserve"><value>גיליון סגנון</value></data>
+  <data name="Campaign.Book.Theme.CssHint" xml:space="preserve"><value>הדביקו ערכת עיצוב של Homebrewery או את לשונית Style של מסמך, כמו שהיא. גופנים ותמונות שהיא טוענת מהרשת יורדו פעם אחת על ידי השרת וישמרו עם ערכת העיצוב.</value></data>
+  <data name="Campaign.Book.Theme.OnLayer" xml:space="preserve"><value>מעל הפריסה של Homebrewery 5e (כמו ערכות עיצוב ל-PHB)</value></data>
+  <data name="Campaign.Book.Theme.Next" xml:space="preserve"><value>הורדה ובדיקה</value></data>
+  <data name="Campaign.Book.Theme.Fetching" xml:space="preserve"><value>מוריד…</value></data>
+  <data name="Campaign.Book.Theme.NotFetched" xml:space="preserve"><value>{0, plural, one {כתובת אחת לא הורדה:} other {# כתובות לא הורדו:}}</value></data>
+  <data name="Campaign.Book.Theme.Unbrought" xml:space="preserve"><value>היא מציינת גופנים שאינה מביאה איתה, והם יודפסו במה שיש בשרת: {0}</value></data>
+  <data name="Campaign.Book.Theme.NoFaces" xml:space="preserve"><value>לא נמצא בה גופן עם אותיות לטיניות. הטקסט שלה יודפס בגופן מערכת.</value></data>
+  <data name="Campaign.Book.Theme.LanguagesHint" xml:space="preserve"><value>באילו שפות ערכת העיצוב מדפיסה. כשבגופנים שלה אין אותיות של שפה, גופן מובנה מאותו סוג יחליף אותן.</value></data>
+  <data name="Campaign.Book.Theme.Language.en" xml:space="preserve"><value>אנגלית</value></data>
+  <data name="Campaign.Book.Theme.Language.ru" xml:space="preserve"><value>רוסית</value></data>
+  <data name="Campaign.Book.Theme.Language.he" xml:space="preserve"><value>עברית</value></data>
+  <data name="Campaign.Book.Theme.Covered" xml:space="preserve"><value>האותיות האלה נמצאות בגופנים שלה.</value></data>
+  <data name="Campaign.Book.Theme.Lacking" xml:space="preserve"><value>בגופנים האלה אין את האותיות; במקומם:</value></data>
+  <data name="Campaign.Book.Theme.NoStandIn" xml:space="preserve"><value>(ללא: גופן מערכת)</value></data>
+  <data name="Campaign.Book.Theme.Kind.Serif" xml:space="preserve"><value>עם סריפים</value></data>
+  <data name="Campaign.Book.Theme.Kind.Sans" xml:space="preserve"><value>בלי סריפים</value></data>
+  <data name="Campaign.Book.Theme.Kind.Display" xml:space="preserve"><value>לכותרות</value></data>
+  <data name="Campaign.Book.Theme.Kind.Mono" xml:space="preserve"><value>מכונת כתיבה</value></data>
+  <data name="Campaign.Book.Theme.Back" xml:space="preserve"><value>חזרה</value></data>
+  <data name="Campaign.Book.Theme.ToPreview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
+  <data name="Campaign.Book.Theme.PreviewIn" xml:space="preserve"><value>עמודי דוגמה ב:</value></data>
+  <data name="Campaign.Book.Theme.PreviewTitle" xml:space="preserve"><value>עמודי דוגמה בערכת העיצוב הזאת</value></data>
+  <data name="Campaign.Book.Theme.Letters" xml:space="preserve"><value>אף גופן של ערכת העיצוב לא מצייר את התווים האלה: {0}</value></data>
+  <data name="Campaign.Book.Theme.Save" xml:space="preserve"><value>שמירה ובחירה</value></data>
+  <data name="Campaign.Book.Theme.TooLarge" xml:space="preserve"><value>גיליון הסגנון ארוך מדי, או שלמערכה כבר יש את המספר המרבי של ערכות עיצוב (20).</value></data>
+  <data name="Campaign.Book.Theme.Conflict" xml:space="preserve"><value>ערכת העיצוב שונתה בלשונית אחרת. סגרו את האשף ופתחו אותו שוב.</value></data>
+  <data name="Campaign.Book.Theme.Group" xml:space="preserve"><value>ערכות העיצוב של המערכה</value></data>
   <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>התווים האלה לא נמצאים באף גופן של ערכת העיצוב. הם יודפסו בגופן כלשהו שיש בשרת, או כריבועים ריקים:</value></data>
   <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>בחרו ערכת עיצוב אחרת, או החליפו את התווים (למשל אימוג׳י או אות מאלפבית אחר).</value></data>
   <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {ועוד אחד} other {ועוד #}}</value></data>

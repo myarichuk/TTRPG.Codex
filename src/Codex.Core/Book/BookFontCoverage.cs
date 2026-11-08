@@ -80,9 +80,22 @@ public static class BookFontCoverage
     /// print browser's system has, or as a box.
     /// </summary>
     public static IReadOnlyList<(string Section, string Characters, int More)> Uncovered(IEnumerable<(string Section, string Text)> chapters,
-        IReadOnlyList<BookFontFace> faces, Func<string, IReadOnlySet<int>?> map, int perChapter = 24)
+        IReadOnlyList<BookFontFace> faces, Func<string, IReadOnlySet<int>?> map, int perChapter = 24) =>
+        Uncovered(chapters, faces.Select(f => new BookThemeFace(f.Family, f.Weight.ToString(System.Globalization.CultureInfo.InvariantCulture), f.Style,
+            Ranges(f.UnicodeRange) ?? [], map(f.File))).ToList(), perChapter);
+
+    /// <summary>The same, for faces already measured (a theme the GM brought in, with its stand-ins). A face with no range draws all it has.</summary>
+    public static IReadOnlyList<(string Section, string Characters, int More)> Uncovered(IEnumerable<(string Section, string Text)> chapters,
+        IReadOnlyList<BookThemeFace> faces, int perChapter = 24)
     {
-        var drawn = faces.Select(f => (Ranges: Ranges(f.UnicodeRange) ?? [], Map: map(f.File))).Where(f => f.Map != null).ToList();
+        // By family: a letter counts as drawn only when every family that draws text has it (a family whose faces have the Latin letters).
+        // Which family an element uses is the stylesheet's business; a letter only some families have prints in a system font wherever the
+        // others are used (seen: a campaign theme's text face fell back to Times for Cyrillic while the layer's faces, unused there, had it).
+        var families = faces.Where(f => f.Map != null).GroupBy(f => f.Family, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.Select(f => (Ranges: f.Range ?? [(0, 0x10FFFF)], Map: f.Map!)).ToList()).ToList();
+        bool Has(List<(IReadOnlyList<(int From, int To)> Ranges, IReadOnlySet<int> Map)> family, int c) => family.Any(f => In(f.Ranges, c) && f.Map.Contains(c));
+        var textFamilies = families.Where(f => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".All(c => Has(f, c))).ToList();
+        if (textFamilies.Count == 0) textFamilies = families;
         var known = new Dictionary<int, bool>();
         var result = new List<(string, string, int)>();
         foreach (var (section, text) in chapters)
@@ -95,7 +108,9 @@ public static class BookFontCoverage
                 if (found.Contains(c) || more.Contains(c) || !Drawable(rune)) continue;
                 if (!known.TryGetValue(c, out var covered))
                 {
-                    covered = drawn.Any(f => In(f.Ranges, c) && f.Map!.Contains(c));
+                    // Letters are held to every text family (a script falls back where any one lacks it); digits, punctuation and symbols to
+                    // any face, as a display face may carry none and the Markdown's own marks ({, #, [) never print anyway.
+                    covered = Rune.IsLetter(rune) ? textFamilies.Count > 0 && textFamilies.All(f => Has(f, c)) : families.Any(f => Has(f, c));
                     known[c] = covered;
                 }
 

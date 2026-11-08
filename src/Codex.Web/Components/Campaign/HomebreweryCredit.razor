@@ -1,0 +1,11 @@
+@* The book's credit to Homebrewery (docs/BOOK_EXPORT.md 41.22): its renderer, its Blank layout and its 5e layer are what the editable book is
+   built on. MIT asks only for its notice (wwwroot/lib/book/THIRD-PARTY-NOTICES.txt); this visible thanks is the GM's own wish. *@
+@{
+    var text = L["Campaign.Book.Credit"].ToString();
+    var at = text.IndexOf("{0}", StringComparison.Ordinal);
+}
+<span class="book-credit @Class" data-testid="book-homebrewery-credit">@(at < 0 ? text : text[..at])<a href="https://homebrewery.naturalcrit.com/" target="_blank" rel="noopener">Homebrewery</a>@(at < 0 ? "" : text[(at + 3)..])</span>
+
+@code {
+    [Parameter] public string? Class { get; set; }
+}

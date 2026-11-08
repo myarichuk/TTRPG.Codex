@@ -97,6 +97,13 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         var needles = BookLeakCheck.Needles(gm, party.Source,
             gmNow.Select(c => c.Markdown).Concat(gmDraft?.Chapters.Select(c => c.Markdown) ?? []));
         var chapters = draft.Chapters.Select(c => (c.Section, c.Markdown)).Append((BookLeakCheck.Css, draft.Document.Css));
+        // A theme the GM brought in prints into the party book too: its stylesheet is looked in as the draft's own is (invariant 12).
+        if (draft.Document.Theme.StartsWith(BookCustomTheme.Prefix, StringComparison.Ordinal)
+            && await store.ThemeAsync(party.Dm, draft.Document.Theme[BookCustomTheme.Prefix.Length..]) is { } own)
+        {
+            chapters = chapters.Append((BookLeakCheck.Css, own.Css));
+        }
+
         return BookLeakCheck.Find(needles, party.Now.Select(c => c.Markdown), chapters);
     }
 
@@ -243,9 +250,11 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
     {
         if (await GenerateAsync(asked, edition, language) is not { } made) return (null, null);
         if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return (null, null);
-        var theme = BookDraftThemes.Find(draft.Document.Theme) ?? BookDraftThemes.Plain;
+        // A built-in theme or one the GM brought into the campaign (41.22), resolved as the editor's preview resolves it.
+        var theme = await new BookThemeCatalog(store).ResolveAsync(made.Dm, draft.Document.Theme, language, font);
         var web = await store.WebAsync(made.Dm, edition, language);
-        var shell = BookDraftHtml.Shell(made.Source.Campaign.Name, language, theme, draft.Document.PageSize, draft.Document.Css, draft.Document.Homebrewery, font, web);
+        var shell = BookDraftHtml.Shell(made.Source.Campaign.Name, language, theme.Theme, draft.Document.PageSize, draft.Document.Css,
+            theme.Homebrewery ?? draft.Document.Homebrewery, font, web);
         if (shell.Html == null) return (null, shell.Refused);
         var markdown = string.Join("\n\n\\page\n\n", draft.Chapters.Select(c => c.Markdown.TrimEnd()));
         var pictures = withArt ? await ArtAsync(made.Dm, made.Source, quality, cancel) : new Dictionary<string, string>();

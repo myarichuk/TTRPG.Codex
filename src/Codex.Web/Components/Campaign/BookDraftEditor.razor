@@ -5,6 +5,8 @@
 @inject IJSRuntime JS
 @inject BookDrafts Drafts
 @inject BookDraftWebs Webs
+@inject BookThemeCatalog Catalog
+@inject IBookDraftRepository ThemeStore
 @inject BookPdf Pdf
 @inject BookDraftAi Ai
 @inject BookDraftMerges Merges
@@ -36,6 +38,17 @@
                                 var prints = theme.Supports(language);
                                 <option value="@theme.Id" disabled="@(!prints)">@L["Campaign.Book.Draft.Theme." + theme.Id]@(prints ? "" : " " + L["Campaign.Book.Draft.Theme.NotThisLanguage"])</option>
                             }
+                            @if (customThemes.Count > 0)
+                            {
+                                @* The themes the GM brought into this campaign with the theme wizard (docs/BOOK_EXPORT.md 41.22). *@
+                                <optgroup label="@L["Campaign.Book.Theme.Group"]">
+                                    @foreach (var own in customThemes)
+                                    {
+                                        var prints = own.Languages.Contains(BookThemes.Primary(language));
+                                        <option value="@(BookCustomTheme.Prefix + own.Key)" disabled="@(!prints)">@own.Name@(prints ? "" : " " + L["Campaign.Book.Draft.Theme.NotThisLanguage"])</option>
+                                    }
+                                </optgroup>
+                            }
                         </select>
                     </label>
                     <label class="book-draft-homebrewery" title="@L["Campaign.Book.Draft.Homebrewery.Hint"]">
@@ -57,6 +70,10 @@
                         @if (moreOpen)
                         {
                             <div class="book-draft-menu" role="menu" @onkeydown="@(e => { if (e.Key == "Escape") moreOpen = false; })">
+                                <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="() => { moreOpen = false; wizardOpen = true; }" disabled="@(AiBusy || working)"
+                                        data-testid="book-draft-theme-wizard">
+                                    <LucideIcon IconName="palette" Size="14" /> @L["Campaign.Book.Theme.Open"]
+                                </button>
                                 <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="StartOverAsync" disabled="@AiBusy" data-testid="book-draft-start-over">
                                     <LucideIcon IconName="rotate-ccw" Size="14" /> @L["Campaign.Book.Draft.StartOver"]
                                 </button>
@@ -66,6 +83,10 @@
                 </div>
                 <button type="button" class="book-draft-close" @onclick="CloseAsync" title="@L["Common.Close"]" aria-label="@L["Common.Close"]" data-testid="book-draft-close"><LucideIcon IconName="x" Size="18" /></button>
             </header>
+            @if (wizardOpen)
+            {
+                <BookThemeWizard Access="Access" Language="@language" Font="Font" OnClose="WizardClosedAsync" />
+            }
             @if (message != null)
             {
                 <div class="field-error book-draft-infobar" role="alert" data-testid="book-draft-error">@message</div>
@@ -338,6 +359,7 @@
                         }
                     </div>
                     <span class="flex-grow-1"></span>
+                    <HomebreweryCredit Class="me-2" />
                     <button type="button" class="book-draft-pane-btn" @onclick="TogglePanelAsync" aria-expanded="@(panelOpen ? "true" : "false")"
                             title="@(panelOpen ? L["Campaign.Book.Draft.Collapse"] : L["Campaign.Book.Draft.Expand"])" aria-label="@L[panelOpen ? "Campaign.Book.Draft.CollapseNamed" : "Campaign.Book.Draft.ExpandNamed", L["Campaign.Book.Draft.Panel"]]" data-testid="book-draft-panel-toggle">
                         <LucideIcon IconName="@(panelOpen ? "chevron-down" : "chevron-up")" Size="14" />
@@ -508,12 +530,22 @@
     private string? printReport;
     private BookLeakReport? leakReport;
     private IReadOnlyList<(string Section, string Characters, int More)> letters = [];
+    private IReadOnlyList<BookThemeDocument> customThemes = [];
+    private bool wizardOpen;
+
+    /// <summary>The wizard closed: the campaign's themes read again, and the theme it saved, if any, chosen for this draft.</summary>
+    private async Task WizardClosedAsync((string Id, bool Homebrewery)? chosen)
+    {
+        wizardOpen = false;
+        customThemes = (await ThemeStore.ThemesAsync(Access)).Where(t => t.Ready).ToList();
+        if (chosen is { } c && view != null) await SettingsAsync(c.Id, c.Homebrewery);
+    }
 
     // Each bundled face's character map, read once per process (BookFontCoverage).
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, IReadOnlySet<int>?> FontMaps = new(StringComparer.Ordinal);
 
     /// <summary>The characters of the draft no face of its theme draws, by chapter (the Problems tab).</summary>
-    private void CheckLetters()
+    private async Task CheckLettersAsync()
     {
         if (view == null)
         {
@@ -521,12 +553,21 @@
             return;
         }
 
-        var theme = BookDraftThemes.Find(view.Theme) ?? BookDraftThemes.Plain;
+        var resolved = await Catalog.ResolveAsync(Access, view.Theme, language, Font);
+        var chapters = view.Chapters.Select(c => (c.Section, c.Markdown));
+        if (resolved.Faces is { } measured)
+        {
+            // A theme the GM brought in: its own faces, the layer's when it sits on it, and the stand-ins for this language.
+            letters = BookFontCoverage.Uncovered(chapters, measured);
+            return;
+        }
+
+        var theme = resolved.Theme;
         // A theme with no faces of its own (Homebrewery layout) draws in the layer's; checking against nothing would list every letter.
         var faces = theme.Fonts.Count > 0
             ? theme.FontsFor(language)
             : BookDraftThemes.LayerFaces.Select(f => new BookFontFace(f.Family, 400, f.Style, f.File, "U+0-10FFFF")).ToList();
-        letters = BookFontCoverage.Uncovered(view.Chapters.Select(c => (c.Section, c.Markdown)), faces,
+        letters = BookFontCoverage.Uncovered(chapters, faces,
             file => FontMaps.GetOrAdd(file, f => Font(f) is { } bytes ? BookFontCoverage.Read(bytes) : null));
     }
     private bool confirmStartOver;
@@ -593,7 +634,8 @@
         confirmStartOver = false;
         closeWithoutSaving = false;
         view = await Drafts.OpenAsync(Access, edition, language, pageSize);
-        CheckLetters();
+        customThemes = (await ThemeStore.ThemesAsync(Access)).Where(t => t.Ready).ToList();
+        await CheckLettersAsync();
         if (view == null)
         {
             message = L["Campaign.Book.Draft.NotAllowed"];
@@ -679,10 +721,11 @@
         return path.StartsWith(fonts, StringComparison.Ordinal) && File.Exists(path) ? File.ReadAllBytes(path) : null;
     }
 
-    private Task<BookHtmlResult> ShellAsync()
+    private async Task<BookHtmlResult> ShellAsync()
     {
-        var theme = BookDraftThemes.Find(view!.Theme) ?? BookDraftThemes.Plain;
-        return Task.FromResult(BookDraftHtml.Shell(string.Empty, language, theme, view.PageSize, view.Css, view.Homebrewery, Font, web));
+        // A built-in theme or one of the campaign's own (41.22), resolved as the PDF resolves it.
+        var theme = await Catalog.ResolveAsync(Access, view!.Theme, language, Font);
+        return BookDraftHtml.Shell(string.Empty, language, theme.Theme, view.PageSize, view.Css, theme.Homebrewery ?? view.Homebrewery, Font, web);
     }
 
     private async Task ShowAsync(string? section)
@@ -849,7 +892,7 @@
         if (fresh == null) return;
         var before = view;
         view = fresh;
-        CheckLetters();
+        await CheckLettersAsync();
         if (!push || module == null || editorId == null) return;
         if (before == null || before.Chapters.Select(c => c.Section).SequenceEqual(fresh.Chapters.Select(c => c.Section)) == false)
         {
@@ -918,7 +961,9 @@
     /// <summary>Another theme: what was typed is saved first, the theme is stored (the chapters are not touched), and the preview is drawn again
     /// in the new theme's page.</summary>
     private Task ThemeAsync(ChangeEventArgs e) =>
-        view == null || e.Value is not string chosen || chosen == view.Theme ? Task.CompletedTask : SettingsAsync(chosen, view.Homebrewery);
+        view == null || e.Value is not string chosen || chosen == view.Theme ? Task.CompletedTask
+        // A campaign theme brings its own choice of the layer; a built-in one keeps the draft's.
+        : SettingsAsync(chosen, customThemes.FirstOrDefault(t => BookCustomTheme.Prefix + t.Key == chosen)?.Homebrewery ?? view.Homebrewery);
 
     /// <summary>The Homebrewery layout under the theme, on or off: saved as a theme is, and the preview drawn again.</summary>
     private Task HomebreweryAsync(ChangeEventArgs e) =>

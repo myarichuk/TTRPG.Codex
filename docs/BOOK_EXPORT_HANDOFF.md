@@ -188,8 +188,8 @@ Anything that survives is a missing test; add it.
 3. ~~**Russian and Hebrew books**~~ done for the editable book (BOOK_EXPORT 41.21, 2026-11-08): Plain and Ashen Vellum print both, by
    stand-in faces under the themes' family names, Hebrew pages mirrored (`BookRtl`), coverage read from the font files (`BookFontCoverage`)
    and a Problems-tab check. Left: Hebrew emphasis prints as plain text (no Hebrew italics), no native reader, WebKit and Firefox not tried in
-   these languages, the layout-only theme stays English. Next on this line: the theme wizard (a pasted Homebrewery theme kept per campaign,
-   its languages measured, stand-ins for the scripts its faces lack, previewed), asked for by the user the same day.
+   these languages, the layout-only theme stays English. The theme wizard followed the same day (41.22): a pasted Homebrewery theme kept per
+   campaign, its languages measured from its faces, stand-ins for the scripts they lack, previewed on sample pages in each language.
 4. Review leftovers: per-user decoder fairness (the queue of two is global and the PDF slot is held while art is read); preview/print cap mismatch and
    showing skipped pictures in the panel; a per-entry marker is NOT needed (section 32 chose position over markers).
 5. Layout and format: stat-block and table blocks, running footer with the chapter name, picture-frame masks, paper fibre on the page edge, `.md` export with

@@ -28,17 +28,8 @@ public class BookFontCoverageTests
         }
     }
 
-    /// <summary>What a book in each language must be able to print: its letters, its own punctuation, digits and the common marks.</summary>
-    public static string Needed(string language)
-    {
-        const string common = "0123456789.,;:!?()%&-–—…'\"";
-        return language switch
-        {
-            "ru" => common + string.Concat(Enumerable.Range(0x410, 0x40).Select(c => (char)c)) + "Ёё«»„“№",
-            "he" => common + string.Concat(Enumerable.Range(0x5D0, 0x1B).Select(c => (char)c)) + "־׳״₪",
-            _ => common + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz“”‘’"
-        };
-    }
+    /// <summary>What a book in each language must be able to print: the same list the theme wizard measures with (<see cref="BookScripts"/>).</summary>
+    public static string Needed(string language) => BookScripts.Needed(language);
 
     public static TheoryData<string, string> ThemesAndLanguages()
     {

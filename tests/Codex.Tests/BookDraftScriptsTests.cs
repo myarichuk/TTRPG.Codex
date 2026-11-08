@@ -4,6 +4,7 @@ using Codex.Web.Book;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
+using Codex.Persistence;
 using UglyToad.PdfPig;
 
 namespace Codex.Tests;
@@ -23,40 +24,10 @@ public class BookDraftScriptsTests
         return File.Exists(path) ? File.ReadAllBytes(path) : null;
     }
 
-    private sealed record Words(string Title, string Tagline, string Contents, string Chapter, string Name, string Paragraph, string NoteTitle, string Note,
-        string Descriptive, string Secret, string Ship, string Lost, string A, string B, string Item1, string Item2);
+    // The sample pages the theme wizard previews on (cover, contents, every block the themes style), in each language.
+    private static IReadOnlyDictionary<string, BookThemeSample.Words> Text => BookThemeSample.Text;
 
-    private static readonly Dictionary<string, Words> Text = new(StringComparer.Ordinal)
-    {
-        ["ru"] = new("Хроники Солтмира", "Кампания для четырёх игроков у холодного моря", "Содержание", "Действующие лица", "Вера Холлоуэй",
-            "Вера держит маяк Грейуотер и ведёт **книгу всех кораблей**, что проходят риф ночью. Она *помнит каждый шторм* с тех пор, как колокольня упала в море — «и никто не спрашивает дважды», № 5, 1311 год.",
-            "Заметка смотрителя", "Смотритель знает больше, чем говорит.", "В фонарной пахнет маслом и солью.", "Она спрятала вырванную страницу в фонарной.",
-            "Корабль", "Пропал", "Олуша", "Крачка", "Ёж и ёлка", "Щедрый Жук"),
-        ["he"] = new("דברי הימים של סולטמיר", "מערכה לארבעה שחקנים לחוף ים קר", "תוכן העניינים", "הדמויות", "ורה הולוויי",
-            "ורה שומרת על המגדלור של גרייווטר ומנהלת **פנקס של כל ספינה** שעוברת את השונית בלילה. היא *זוכרת כל סערה* מאז שמגדל הפעמון נפל לים — \"ואיש אינו שואל פעמיים\", 5 ₪, שנת 1311. בית־הספר ז׳ורז׳, צה״ל.",
-            "הערת השומר", "השומר יודע יותר ממה שהוא אומר.", "חדר הפנס מריח שמן ומלח.", "היא החביאה את הדף הקרוע בחדר הפנס.", "ספינה", "אבדה", "סולה", "שחפית",
-            "ךםןףץ", "אבגדהוזחטיכלמנסעפצקרשת"),
-        ["en"] = new("Saltmere Chronicle", "A campaign for four players by a cold sea", "Contents", "Cast", "Vera Holloway",
-            "Vera keeps the Greywater lamp and a **ledger of every ship** that passes the reef at night. She *remembers every storm* since the bell tower fell into the sea — “and nobody asks twice”, No. 5, the year 1311.",
-            "A keeper's note", "The keeper knows more than she says.", "The lamp room smells of oil and salt.", "She hid the torn page in the lamp room.",
-            "Ship", "Lost", "Gannet", "Tern", "Quick fox", "Jumping")
-    };
-
-    /// <summary>A draft as the generator writes one: cover, contents, a chapter with an entry, a heading of each level the themes style, the
-    /// boxed blocks, a table, a list, and text enough for two columns.</summary>
-    private static string Draft(string language)
-    {
-        var w = Text[language];
-        var md = new StringBuilder();
-        md.Append($"{{{{frontCover}}}}\n\n# {w.Title}\n\n{w.Tagline}\n\n\\page\n\n{{{{toc,wide\n# {w.Contents}\n\n- [{w.Chapter}](#ch-cast)\n}}}}\n\n\\page\n\n");
-        md.Append($"{{{{chapter,#ch-cast\n# {w.Chapter}\n}}}}\n\n{w.Paragraph}\n\n{{{{entry,#e-s1}}}}\n## {w.Name}\n\n");
-        for (var i = 0; i < 9; i++) md.Append(w.Paragraph).Append("\n\n");
-        md.Append($"### {w.NoteTitle}\n\n{{{{note\n##### {w.NoteTitle}\n{w.Note}\n}}}}\n\n{{{{descriptive\n{w.Descriptive}\n}}}}\n\n{{{{secret\n{w.Secret}\n}}}}\n\n");
-        md.Append($"{{{{monster,frame\n## {w.Name}\n*{w.Descriptive}*\n___\n**{w.Ship}** 12\n\n{w.Note}\n}}}}\n\n");
-        md.Append($"| {w.Ship} | {w.Lost} |\n|---|---|\n| {w.A} | 1311 |\n| {w.B} | 1314 |\n\n- {w.Item1}\n- {w.Item2}\n\n");
-        for (var i = 0; i < 10; i++) md.Append(w.Paragraph).Append("\n\n");
-        return md.ToString();
-    }
+    private static string Draft(string language) => BookThemeSample.Markdown(language);
 
     public static TheoryData<string, string> ThemesAndLanguages()
     {
@@ -69,9 +40,12 @@ public class BookDraftScriptsTests
         return data;
     }
 
-    private static async Task<(IPlaywright Playwright, IBrowser Browser, IPage Page)> DrawAsync(string themeId, string language)
+    private static Task<(IPlaywright Playwright, IBrowser Browser, IPage Page)> DrawAsync(string themeId, string language) =>
+        DrawAsync(BookDraftThemes.Find(themeId)!, language, true);
+
+    private static async Task<(IPlaywright Playwright, IBrowser Browser, IPage Page)> DrawAsync(BookTheme theme, string language, bool homebrewery)
     {
-        var shell = BookDraftHtml.Shell("Saltmere", language, BookDraftThemes.Find(themeId)!, "A4", null, true, Font);
+        var shell = BookDraftHtml.Shell("Saltmere", language, theme, "A4", null, homebrewery, Font);
         Assert.NotNull(shell.Html);
         Assert.Empty(shell.MissingFonts);
         var playwright = await Playwright.CreateAsync();
@@ -91,6 +65,20 @@ public class BookDraftScriptsTests
     {
         var (playwright, browser, page) = await DrawAsync(themeId, language);
         try
+        {
+            var system = await SystemFontsAsync(page);
+            Assert.True(system.Count == 0, $"{themeId} ({language}) draws in system fonts:\n" + string.Join("\n", system.Distinct()));
+        }
+        finally
+        {
+            await browser.DisposeAsync();
+            playwright.Dispose();
+        }
+    }
+
+    /// <summary>Which elements of the drawn sample a system font draws, as the browser itself reports (every kind of element must be measured).</summary>
+    private static async Task<List<string>> SystemFontsAsync(IPage page)
+    {
         {
             string[] selectors = [".page:has(.frontCover) h1", ".page:has(.frontCover) p", ".toc h1", ".toc li", ".page h1", ".page h2", ".page h3", ".page h5",
                 ".page p", ".page p strong", ".page p em", ".page .note p", ".page .descriptive p", ".page .secret p", ".page .monster", ".page td", ".page th", ".page li", ".pageNumber"];
@@ -129,7 +117,40 @@ public class BookDraftScriptsTests
             }
 
             Assert.True(unmeasured.Count == 0, "nothing measured for: " + string.Join(", ", unmeasured));
-            Assert.True(system.Count == 0, $"{themeId} ({language}) draws in system fonts:\n" + string.Join("\n", system.Distinct()));
+            return system;
+        }
+    }
+
+    /// <summary>
+    /// A theme the GM brought in (41.22) whose faces have Latin letters only: with the stand-ins the wizard proposes, a Hebrew book draws every
+    /// element in a bundled face (the stand-ins are declared after the theme's own faces, which have no range, and still win for Hebrew); with
+    /// none chosen, the Hebrew is left to a system font, which is what the check would then say.
+    /// </summary>
+    [ChromiumTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task APastedThemeWithLatinFacesOnly_PrintsHebrewInItsStandIns(bool standIns)
+    {
+        string Face(string family, string file, string style = "normal") =>
+            $"@font-face {{ font-family: '{family}'; font-style: {style}; font-weight: 400; src: url(data:font/woff2;base64,{Convert.ToBase64String(Font(file)!)}) format('woff2'); }}\n";
+        var css = Face("Saltmere Text", "im-fell-english/im-fell-english-latin-400-normal.woff2") + Face("Saltmere Text", "im-fell-english/im-fell-english-latin-400-italic.woff2", "italic")
+            + Face("Saltmere Titles", "pirata-one/pirata-one-latin-400-normal.woff2")
+            + ".page { font-family: 'Saltmere Text', serif; } .page :is(h1, h2, h3, h4, h5, h6) { font-family: 'Saltmere Titles', serif; }";
+        var faces = BookThemeCatalog.Measure(css, false, new BookCssWeb(), Font);
+        var he = faces.Languages.Single(l => l.Language == "he");
+        Assert.Equal(["Saltmere Text", "Saltmere Titles"], he.Lacking.Order());
+        var chosen = new Dictionary<string, Dictionary<string, string>>
+        {
+            ["he"] = standIns ? he.Lacking.ToDictionary(f => f, f => BookStandIns.Propose(f, "he")!.Id) : []
+        };
+        var theme = BookThemeCatalog.Build("custom:test", "Saltmere", css, false, ["en", "he"], chosen, new BookCssWeb(), "he", Font).Theme;
+
+        var (playwright, browser, page) = await DrawAsync(theme, "he", false);
+        try
+        {
+            var system = await SystemFontsAsync(page);
+            if (standIns) Assert.True(system.Count == 0, "drawn in system fonts:\n" + string.Join("\n", system.Distinct()));
+            else Assert.NotEmpty(system);
         }
         finally
         {

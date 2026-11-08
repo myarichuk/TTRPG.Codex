@@ -83,6 +83,13 @@ its licence beside it; a book embeds only those of its own language:
   License 1.1 - `src/Codex.Web/wwwroot/fonts/david-libre/OFL.txt`
 - Frank Ruhl Libre Black (Hebrew, weight 900), from the same project as the Frank Ruhl Libre above - `src/Codex.Web/wwwroot/fonts/frank-ruhl-libre/OFL.txt`
 
+For the stand-ins the theme wizard offers (docs/BOOK_EXPORT.md 41.22), the bold Cyrillic of Old Standard TT and Cousine and the bold Hebrew of
+David Libre, from the same unmodified Fontsource 5.3.0 packages and under the same licences as above.
+
+The book's pages are made with Homebrewery (https://homebrewery.naturalcrit.com/, by naturalcrit, MIT): its notice is in
+`src/Codex.Web/wwwroot/lib/book/THIRD-PARTY-NOTICES.txt`, and the book editor, the theme wizard and the About page credit it visibly, by the
+maintainer's wish, though MIT asks only for the notice.
+
 The test fixtures `tests/Codex.Tests/Fixtures/Fonts/ruslan-display-cyrillic.{ttf,woff}` are the Ruslan Display file above written out
 as TrueType and WOFF by fontTools, to test the font reader; same licence, beside them.
 

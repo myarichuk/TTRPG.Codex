@@ -1099,4 +1099,78 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await a.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
         await Assertions.Expect(a.Locator(".cm-content")).ToContainTextAsync("PUBLIC_TAB_B");
     }
+
+    /// <summary>
+    /// The theme wizard (docs/BOOK_EXPORT.md 41.22) on a Hebrew party draft: a pasted theme whose faces have Latin letters only is measured, a
+    /// stand-in is proposed for each of its families for Hebrew, the sample pages draw under it, and once kept it is the draft's theme, the
+    /// preview carries its stand-ins, it prints, and the wizard lists it. The pasted sheet is far over a message's 32 KB (its faces are written
+    /// in), as a real one often is.
+    /// </summary>
+    [Fact]
+    public async Task ThePastedThemesLatinFaces_GetHebrewStandIns_AndTheThemeIsKeptAndPrints()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "btw-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor
+        {
+            Id = "btw-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "ורה הולוויי", Visibility = Codex.Persistence.ActorVisibility.Known,
+            Biography = "ורה שומרת על המגדלור של גרייווטר."
+        }]);
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("book-language").SelectOptionAsync("he");
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-dialog")).ToBeVisibleAsync();
+        await Assertions.Expect(dm.GetByTestId("book-homebrewery-credit").Locator("a[href='https://homebrewery.naturalcrit.com/']")).ToBeVisibleAsync();
+
+        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await dm.GetByTestId("book-draft-theme-wizard").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-theme-wizard")).ToBeVisibleAsync();
+        await dm.GetByTestId("book-theme-name").FillAsync("Saltmere vellum");
+        // The theme's faces as data, read from the app's own bundled files (no address outside the test is fetched).
+        await dm.EvaluateAsync(@"async () => {
+            const b64 = async u => { const a = new Uint8Array(await (await fetch(u)).arrayBuffer()); let s = ''; for (let i = 0; i < a.length; i += 8192) s += String.fromCharCode(...a.subarray(i, i + 8192)); return btoa(s); };
+            const text = await b64('/fonts/im-fell-english/im-fell-english-latin-400-normal.woff2'), titles = await b64('/fonts/pirata-one/pirata-one-latin-400-normal.woff2');
+            document.querySelector('[data-testid=book-theme-css]').value =
+                `@font-face { font-family: 'Saltmere Text'; src: url(data:font/woff2;base64,${text}) format('woff2'); }\n` +
+                `@font-face { font-family: 'Saltmere Titles'; src: url(data:font/woff2;base64,${titles}) format('woff2'); }\n` +
+                `.page { font-family: 'Saltmere Text', serif; } .page :is(h1, h2, h3) { font-family: 'Saltmere Titles', serif; }`; }");
+        await dm.GetByTestId("book-theme-homebrewery").UncheckAsync();
+        await dm.GetByTestId("book-theme-next").ClickAsync();
+
+        var hebrew = dm.Locator("[data-testid=book-theme-language][data-language=he]");
+        await Assertions.Expect(hebrew.Locator("[data-testid=book-theme-standin]")).ToHaveCountAsync(2);
+        await Assertions.Expect(hebrew.Locator("[data-testid=book-theme-standin][data-family='Saltmere Text']")).ToHaveValueAsync("he-david");
+        await Assertions.Expect(hebrew.Locator("[data-testid=book-theme-standin][data-family='Saltmere Titles']")).ToHaveValueAsync("he-frank-ruhl-black");
+        await Assertions.Expect(hebrew.GetByTestId("book-theme-language-on")).ToBeCheckedAsync();
+        await Assertions.Expect(dm.Locator("[data-testid=book-theme-language][data-language=en] [data-testid=book-theme-covered]")).ToBeVisibleAsync();
+
+        await dm.GetByTestId("book-theme-preview-next").ClickAsync();
+        var sample = dm.FrameLocator("[data-testid=book-theme-preview]");
+        await Assertions.Expect(sample.Locator(".page", new() { HasText = "ורה הולוויי" }).First).ToBeVisibleAsync();
+        await Assertions.Expect(dm.GetByTestId("book-theme-letters")).ToHaveCountAsync(0);
+        await dm.GetByTestId("book-theme-save").ClickAsync();
+
+        await Assertions.Expect(dm.GetByTestId("book-theme-wizard")).ToHaveCountAsync(0);
+        await Assertions.Expect(dm.GetByTestId("book-draft-theme")).ToHaveValueAsync(new System.Text.RegularExpressions.Regex("^custom:[0-9a-f]{32}$"));
+        await Assertions.Expect(dm.GetByTestId("book-draft-homebrewery")).Not.ToBeCheckedAsync();
+        var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
+        await Assertions.Expect(preview.Locator("style#theme")).ToHaveCountAsync(1);
+        Assert.Contains("Stand-ins for this book", await dm.FrameLocator("[data-testid=book-draft-preview]").Locator("style#theme").TextContentAsync() ?? "");
+        var pdf = await context.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book/party/draft/he/pdf");
+        Assert.Equal(200, pdf.Status);
+
+        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await dm.GetByTestId("book-draft-theme-wizard").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-theme-item")).ToContainTextAsync("Saltmere vellum");
+        Assert.Empty(pageErrors);
+    }
 }

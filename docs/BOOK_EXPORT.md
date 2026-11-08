@@ -2127,3 +2127,58 @@ Not done, or not verified:
 - A stand-in file used for several slots is embedded once per slot (about 70 KB more for a Hebrew Ashen Vellum book).
 - The Homebrewery layer's faces have no Cyrillic or Hebrew: a GM's CSS that names them for text prints those letters in a system font
   (the Problems tab names them only for the layout-only theme).
+
+### 41.22 The theme wizard: a Homebrewery theme brought into a campaign, for the languages it can print (2026-11-08)
+
+Asked for by the user: paste a Homebrewery theme (the PHB-style sheets, a community theme like Tasha's), see it work, and say which languages it
+is for. The editor's ⋯ menu has "Bring in a theme…"; the wizard sits over the editor, in its dialog.
+
+- **1. Stylesheet**: a name, the sheet as pasted, and whether it sits on Homebrewery's 5e layer (on by default, as a theme for the PHB does).
+  The sheet is read from the page as a stream (`fieldBytes`): a message to the server is capped at 32 KB, and a theme with its fonts written
+  in is far over it (seen: the first try never reached the server). "Fetch and measure" keeps the theme, unfinished, and fetches every web
+  address its sheet names into copies kept with the theme (`BookDraftWebs.RefreshThemeAsync`, the same fetcher, bounds and rules as a
+  draft's, 41.14), then measures it.
+- **2. Languages**: every `@font-face` the cleaned sheet declares is read (`BookCustomTheme.Faces`; its file's letters by `BookFontCoverage`),
+  the layer's too when it sits on it. A family with the Latin letters is a text family; one without (dice, icons) is not held to a language.
+  For each language the wizard shows which text families draw its letters and, for each that does not, proposes a bundled stand-in of the
+  same kind (`BookStandIns.Propose`: serif, sans, titles, typewriter, from the family's name; Hebrew has no typewriter stand-in, 41.21). The GM
+  can change or clear each. It also names the families the sheet uses but brings nothing for (Georgia, a font it forgot): they print in
+  whatever the server has. English is always on; a language is ticked when its letters are all drawn or stand-ins are chosen.
+- **3. Preview**: the sample pages (`BookThemeSample`: cover, contents, every block, a monster block, a table, in each language) drawn under
+  the theme exactly as a book would be, in a frame with no script (the editor's `sample`), with a button per chosen language and a line naming
+  any character no face draws. "Keep and use this theme" saves it finished and makes it the draft's theme, with its own choice of the layer.
+- **Stored with the campaign** (`BookThemeDocument`, under `bookdrafts/{campaign}/themes/`, so it goes with the campaign and its copies with
+  it): name, sheet, layer, the languages, the stand-ins by language and family (only ids the catalogue has, for that language). The GM only;
+  20 a campaign; a save from an older copy is refused. A draft names it `custom:{key}`; settings accept it only when it is this campaign's and
+  finished; a deleted theme prints in Plain.
+- **Resolved in one place** (`BookThemeCatalog`): the editor's preview, its check of characters, the PDF and Fit pages all build the theme the
+  same way: the cleaned sheet, then the stand-ins for the book's language, one `@font-face` per slot each lacking family declares (its weight
+  and style copied as written, so a range or keyword is kept; anything else is written as `normal`), for the script's range only, after the
+  theme's own faces. A pasted face usually has no range, so the stand-in must win for its script by order: it does in Chromium, WebKit and
+  Firefox (the Hebrew of a Latin-only family measured the width of David Libre, not of the fallback serif, in all three). For a Hebrew book
+  the sheet is mirrored like the built-in themes' (41.21); the GM's own per-draft stylesheet still is not.
+- **The party leak check** looks in a campaign theme's sheet too (it prints into the party book; invariant 12).
+- **The check of characters, sharpened.** It had counted a letter as drawn when any face had it; a campaign theme's text face then fell back
+  to Times for Cyrillic while the layer's faces, which that text never uses, had it, and the check said nothing (seen in the app: the PDF held
+  Times). Now a letter counts only when every text family has it; digits, punctuation and symbols when any face does (a display face may have
+  none, and the Markdown's own marks never print).
+- **Credit**: "Pages made with the awesome Homebrewery", linked, in the editor's panel strip and the wizard's footer, and a paragraph on the
+  About page (the user's wish; MIT asks only for the notice).
+
+Tests: `BookThemeWizardTests` (measuring, proposals, the stand-ins' slots, order and range, a descriptor that could close the rule, storage,
+GM only, other campaigns, unfinished, conflict, the cap, deletion with the campaign, resolving); `BookDraftScriptsTests` (a pasted
+Latin-only theme draws a Hebrew book in bundled faces only with its stand-ins, and in a system font without); the leak check with a campaign
+theme; an end-to-end run of the wizard on a Hebrew party draft (proposals, preview, kept, chosen, previewed with its stand-ins, printed,
+listed). Mutations: 7 of 8 killed; the survivor (the campaign field checked again after loading by an id that already names the campaign) is
+the same defence in depth as the drafts' and cannot be reached.
+
+Seen in the app (a throwaway campaign, since deleted): a 92 KB pasted theme with two Latin faces on the layer, on a Hebrew party draft: the
+proposals, the Russian and Hebrew sample pages, the theme kept and chosen, the PDF printed in its faces and the stand-ins.
+
+Not done, or not verified:
+- No real Homebrewery theme from the web was brought in through the wizard here (the fetching itself is 41.14's, tried on Tasha's then);
+  a theme whose faces come as `@import`ed sheets is measured from the copies, untried end to end.
+- On the layer, each of its ten families gets its own row and stand-in: right, but long; there is no "same for all".
+- A family named only in a `font` shorthand without quotes or a comma is not found by the "brings nothing for" note.
+- Stand-ins are by family, not by what the family is used for: a family used for titles and body alike gets one stand-in.
+- The Russian and Hebrew text of `Campaign.Book.Theme.*` and `Campaign.Book.Credit` is machine-drafted.
