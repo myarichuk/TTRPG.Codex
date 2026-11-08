@@ -1004,4 +1004,6 @@
   <data name="Campaign.Vault.Withdraw" xml:space="preserve"><value>Отозвать</value></data>
   <data name="Campaign.Vault.WithdrawLabel" xml:space="preserve"><value>Отозвать «{0}»</value></data>
   <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>Просьба о «{0}» отозвана.</value></data>
+  <data name="Campaign.Book.Ai.Reason.storage" xml:space="preserve"><value>у владельца кампании не осталось места</value></data>
+  <data name="Campaign.Book.Art.StorageFull" xml:space="preserve"><value>У владельца кампании не осталось места для этого изображения. Удалите часть изображений или файлов или попросите у администратора сервера больше места.</value></data>
 </root>

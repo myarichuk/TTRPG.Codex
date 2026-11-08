@@ -86,7 +86,6 @@
   <data name="Admin.Accounts.DisableBody" xml:space="preserve"><value>Пользователь выйдет из системы и не сможет войти, пока вы снова не включите учётную запись. Кампании и персонажи останутся.</value></data>
   <data name="Admin.Accounts.Disabled.Done" xml:space="preserve"><value>{0}: отключено.</value></data>
   <data name="Admin.Accounts.Enabled.Done" xml:space="preserve"><value>{0}: снова включено.</value></data>
-  <data name="Admin.Accounts.InCampaigns" xml:space="preserve"><value>{0} участвует в кампании. Вместо удаления отключите учётную запись; удаление из кампаний появится в следующей версии.</value></data>
   <data name="Admin.Accounts.DeleteTitle" xml:space="preserve"><value>Удалить {0}?</value></data>
   <data name="Admin.Accounts.DeleteBody" xml:space="preserve"><value>Учётная запись будет удалена навсегда, а имя снова станет свободным. Это нельзя отменить.</value></data>
   <data name="Admin.Accounts.Deleted.Done" xml:space="preserve"><value>{0}: удалено.</value></data>
@@ -110,4 +109,14 @@
   <data name="Admin.Settings.ServerAi.EveryoneHint" xml:space="preserve"><value>И игроки тоже. Дневной лимит у каждого остаётся.</value></data>
   <data name="Admin.Settings.ServerAi.Admins" xml:space="preserve"><value>Только администраторы</value></data>
   <data name="Admin.Settings.ServerAi.AdminsHint" xml:space="preserve"><value>Только администраторы сервера. Все остальные используют свои модели.</value></data>
+  <data name="Admin.Accounts.Delete.Owned" xml:space="preserve"><value>Кампании {0} и кому они перейдут</value></data>
+  <data name="Admin.Accounts.Delete.ToCoGm" xml:space="preserve"><value>{0} (со-мастер)</value></data>
+  <data name="Admin.Accounts.Delete.ToYou" xml:space="preserve"><value>Вам</value></data>
+  <data name="Admin.Accounts.Delete.OwnedHint" xml:space="preserve"><value>Кампания без со-мастера переходит к вам. Потом её можно передать, выгрузить или удалить в её настройках.</value></data>
+  <data name="Admin.Accounts.Delete.Leaves" xml:space="preserve"><value>{0} покидает другие кампании, где участвует ({1}). Персонажи, которых он играет там, остаются в составе.</value></data>
+  <data name="Admin.Accounts.Delete.Goes" xml:space="preserve"><value>Вместе с учётной записью удаляются: персонажи в хранилище ({0}), личные журналы, беседы конструктора мира и сборки книг.</value></data>
+  <data name="Admin.Accounts.Storage" xml:space="preserve"><value>Место</value></data>
+  <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} из {1}</value></data>
+  <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Место на учётную запись, МБ</value></data>
+  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Изображения и файлы: обложки, портреты, иллюстрации, картинки книги и копии веб-файлов книги. Всё в кампании засчитывается её владельцу, кто бы это ни добавил. Пусто — без ограничения.</value></data>
 </root>

@@ -1004,4 +1004,6 @@
   <data name="Campaign.Vault.Withdraw" xml:space="preserve"><value>לבטל</value></data>
   <data name="Campaign.Vault.WithdrawLabel" xml:space="preserve"><value>לבטל את {0}</value></data>
   <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>הבקשה עבור {0} בוטלה.</value></data>
+  <data name="Campaign.Book.Ai.Reason.storage" xml:space="preserve"><value>לבעל הקמפיין לא נשאר אחסון</value></data>
+  <data name="Campaign.Book.Art.StorageFull" xml:space="preserve"><value>לבעל הקמפיין לא נשאר אחסון לתמונה הזו. הסירו חלק מהתמונות או הקבצים, או בקשו ממנהל השרת עוד מקום.</value></data>
 </root>

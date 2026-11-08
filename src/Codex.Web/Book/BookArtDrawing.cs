@@ -35,7 +35,8 @@ public sealed record BookDrawTotals(int Pictures, decimal Cost, int Unpriced, st
 /// replaces what the slot held. Pictures are drawn one at a time, set aside up front on the server's key, never retried, and a run takes
 /// the same per-GM gate as chapter builds and the art director (<see cref="BookGate"/>).
 /// </summary>
-public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository store, IBookImages images, Func<string, string, Task<CampaignAccess?>> resolve, BookGate gate, TimeProvider? clock = null)
+public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository store, IBookImages images, Func<string, string, Task<CampaignAccess?>> resolve, BookGate gate, TimeProvider? clock = null,
+    StorageQuota? quota = null)
 {
     public const int MaxPerRun = 12;
 
@@ -151,6 +152,12 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
     private async Task<BookRun?> StartCoreAsync(CampaignAccess asked, string edition, IReadOnlyList<BookDrawPick> picks, string language)
     {
         if (await PrepareAsync(asked, edition, picks, language) is not { } p || p.Ready.Count == 0) return null;
+        // No room left for the pictures: refused before any is paid for (docs/SERVER_ACCESS_AND_VAULT.md 15).
+        if (quota != null && !await quota.HasRoomAsync(p.Dm.CampaignId))
+        {
+            throw new LocalizedException("Service.Storage.FullBeforeDrawing", quota.LimitBytes is { } limit ? StorageQuota.Megabytes(limit) : string.Empty);
+        }
+
         var model = await images.OpenAsync(p.Dm.UserId, p.Ready.Count);
         try
         {
@@ -179,6 +186,14 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
                 if (stop != null || run.Token.IsCancellationRequested)
                 {
                     run.Row(item.Slot, BookRowStatus.Skipped, stop ?? "cancelled");
+                    continue;
+                }
+
+                // The limit reached by the pictures already drawn: the rest are not drawn, so none is paid for and then thrown away.
+                if (quota != null && !await quota.HasRoomAsync(p.Dm.CampaignId))
+                {
+                    stop = "storage";
+                    run.Row(item.Slot, BookRowStatus.Skipped, stop);
                     continue;
                 }
 
@@ -220,7 +235,19 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
                 }
 
                 // The edition's tag, the one the suggestion was checked against: the request names no tag.
-                if (!await store.PutAsync(p.Dm, item.Slot, p.Tag, item.Label, image, "drawn", new BookArtDrawn(item.Inputs, item.Visual)))
+                bool stored;
+                try
+                {
+                    stored = await store.PutAsync(p.Dm, item.Slot, p.Tag, item.Label, image, "drawn", new BookArtDrawn(item.Inputs, item.Visual));
+                }
+                catch (LocalizedException ex) when (ex.Key == "Service.Storage.Full")
+                {
+                    stop = "storage";
+                    run.Row(item.Slot, BookRowStatus.Kept, stop);
+                    continue;
+                }
+
+                if (!stored)
                 {
                     run.SaveFailed();
                     run.Cancel();

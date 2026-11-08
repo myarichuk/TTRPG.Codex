@@ -75,6 +75,10 @@ public class ServerSettingsDocument
     /// at home, only the admin while the server is open to the internet. A new server's setup stores Game Masters.</summary>
     public ServerAiRule? ServerAi { get; set; }
 
+    /// <summary>How many megabytes of pictures and files each account may keep (docs/SERVER_ACCESS_AND_VAULT.md 15). Null, as on every
+    /// server until the admin sets one, is no limit.</summary>
+    public int? StorageLimitMb { get; set; }
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public ServerSettingsDocument Copy() => new()
@@ -86,6 +90,7 @@ public class ServerSettingsDocument
         WebFetch = WebFetch,
         FetchSites = FetchSites.ToList(),
         ServerAi = ServerAi,
+        StorageLimitMb = StorageLimitMb,
         UpdatedAt = UpdatedAt
     };
 

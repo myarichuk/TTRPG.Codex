@@ -157,6 +157,7 @@ builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
 builder.Services.AddSingleton<IActorRepository, ActorRepository>();
 builder.Services.AddSingleton<IVaultRepository, RavenVaultRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
+builder.Services.AddSingleton<AccountDeletion>();
 builder.Services.AddSingleton<IServerSettingsStore, RavenServerSettingsStore>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();
@@ -168,6 +169,7 @@ builder.Services.AddSingleton<IWikiRepository, RavenWikiRepository>();
 builder.Services.AddSingleton<ITemplateRepository, RavenTemplateRepository>();
 builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
 builder.Services.AddSingleton<IWorldChatRepository, RavenWorldChatRepository>();
+builder.Services.AddSingleton<StorageQuota>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddSingleton<BookSourceReader>();
@@ -203,7 +205,7 @@ builder.Services.AddSingleton(sp => new Codex.Web.Book.BookArtDirection(
     BookResolver(sp), sp.GetRequiredService<Codex.Web.Book.BookGate>(), log: sp.GetRequiredService<ILoggerFactory>().CreateLogger<Codex.Web.Book.BookArtDirection>()));
 builder.Services.AddSingleton(sp => new Codex.Web.Book.BookArtDrawing(
     sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookArtRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookImages>(),
-    BookResolver(sp), sp.GetRequiredService<Codex.Web.Book.BookGate>()));
+    BookResolver(sp), sp.GetRequiredService<Codex.Web.Book.BookGate>(), quota: sp.GetRequiredService<StorageQuota>()));
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 builder.Services.AddScoped<ViewerClock>();
 

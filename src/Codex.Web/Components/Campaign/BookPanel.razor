@@ -486,7 +486,7 @@
 
     private string Reason(string reason) => reason switch
     {
-        "budget" or "checks" or "error" or "auth" or "ratelimit" or "allowance" or "cancelled" => L["Campaign.Book.Ai.Reason." + reason],
+        "budget" or "checks" or "error" or "auth" or "ratelimit" or "allowance" or "storage" or "cancelled" => L["Campaign.Book.Ai.Reason." + reason],
         _ => reason
     };
 

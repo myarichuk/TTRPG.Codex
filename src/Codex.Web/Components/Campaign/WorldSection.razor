@@ -646,7 +646,7 @@ else
     }
 
     private Task<ArtImage> GenerateLocationArtAsync(CancellationToken ct) =>
-        Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide, ct);
+        Art.GenerateAsync(Ctx.UserId, Ctx.Campaign.Id, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide, ct);
 
     // ---- Deleting (U7): a place can be undone (its art stays on the region for an hour); a region, with its places and their art, cannot. ----
 

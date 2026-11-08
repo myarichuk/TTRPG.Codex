@@ -86,7 +86,6 @@
   <data name="Admin.Accounts.DisableBody" xml:space="preserve"><value>הם יוצאו מהמערכת ולא יוכלו להיכנס עד שתפעילו את החשבון שוב. הקמפיינים והדמויות שלהם נשארים.</value></data>
   <data name="Admin.Accounts.Disabled.Done" xml:space="preserve"><value>{0} כבוי.</value></data>
   <data name="Admin.Accounts.Enabled.Done" xml:space="preserve"><value>{0} פעיל שוב.</value></data>
-  <data name="Admin.Accounts.InCampaigns" xml:space="preserve"><value>{0} משתתף בקמפיין. כבו את החשבון במקום זה; הוצאה מקמפיינים תגיע בגרסה מאוחרת יותר.</value></data>
   <data name="Admin.Accounts.DeleteTitle" xml:space="preserve"><value>למחוק את {0}?</value></data>
   <data name="Admin.Accounts.DeleteBody" xml:space="preserve"><value>החשבון יימחק לצמיתות והשם שלו יתפנה. אי אפשר לבטל את זה.</value></data>
   <data name="Admin.Accounts.Deleted.Done" xml:space="preserve"><value>{0} נמחק.</value></data>
@@ -110,4 +109,14 @@
   <data name="Admin.Settings.ServerAi.EveryoneHint" xml:space="preserve"><value>גם שחקנים. לכל חשבון עדיין יש מכסה יומית.</value></data>
   <data name="Admin.Settings.ServerAi.Admins" xml:space="preserve"><value>רק מנהלים</value></data>
   <data name="Admin.Settings.ServerAi.AdminsHint" xml:space="preserve"><value>רק מנהלי השרת. כל השאר משתמשים במודל משלהם.</value></data>
+  <data name="Admin.Accounts.Delete.Owned" xml:space="preserve"><value>הקמפיינים של {0} ולמי כל אחד עובר</value></data>
+  <data name="Admin.Accounts.Delete.ToCoGm" xml:space="preserve"><value>{0} (שותף לניהול)</value></data>
+  <data name="Admin.Accounts.Delete.ToYou" xml:space="preserve"><value>אליכם</value></data>
+  <data name="Admin.Accounts.Delete.OwnedHint" xml:space="preserve"><value>קמפיין בלי שותף לניהול עובר אליכם. אחר כך אפשר להעביר, לייצא או למחוק אותו מההגדרות שלו.</value></data>
+  <data name="Admin.Accounts.Delete.Leaves" xml:space="preserve"><value>{0} עוזב את שאר הקמפיינים שהוא משתתף בהם ({1}). הדמויות שלו שם נשארות בצוות.</value></data>
+  <data name="Admin.Accounts.Delete.Goes" xml:space="preserve"><value>נמחקים עם החשבון: הדמויות בכספת ({0}), היומנים הפרטיים, שיחות בונה העולם ובניות הספר.</value></data>
+  <data name="Admin.Accounts.Storage" xml:space="preserve"><value>אחסון</value></data>
+  <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} מתוך {1}</value></data>
+  <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>אחסון לכל חשבון, ב-MB</value></data>
+  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>תמונות וקבצים: עטיפות, דיוקנאות, איורים, תמונות הספר ועותקי קבצי הרשת של הספר. כל מה שבקמפיין נספר לבעליו, לא משנה מי הוסיף. ריק — ללא הגבלה.</value></data>
 </root>

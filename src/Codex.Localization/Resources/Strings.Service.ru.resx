@@ -17,4 +17,6 @@
   <data name="Service.Art.TooBig" xml:space="preserve"><value>Созданное изображение больше 6 МБ. Выберите меньший размер или другую модель.</value></data>
   <data name="Service.Ai.KeyUnreadable" xml:space="preserve"><value>Сохранённый ключ ИИ больше не читается. Введите его заново в настройках ИИ.</value></data>
   <data name="Service.Ai.TidyLostMention" xml:space="preserve"><value>ИИ изменил или потерял имя-ссылку на персонажа, место или предмет, поэтому заметки оставлены как были. Попробуйте ещё раз.</value></data>
+  <data name="Service.Storage.Full" xml:space="preserve"><value>Для этого нет места: владелец кампании хранит {0} из {1}, доступных учётной записи. Удалите часть изображений или файлов или попросите у администратора сервера больше места.</value></data>
+  <data name="Service.Storage.FullBeforeDrawing" xml:space="preserve"><value>Ничего не нарисовано: владелец кампании занял все {0} своего места. Удалите часть изображений или файлов или попросите у администратора сервера больше места.</value></data>
 </root>

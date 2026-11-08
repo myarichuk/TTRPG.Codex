@@ -136,7 +136,7 @@ public interface IBookArtRepository
 /// <summary>What a drawn picture was drawn from (<see cref="BookArtPicture.Inputs"/>, <see cref="BookArtPicture.Visual"/>).</summary>
 public sealed record BookArtDrawn(string Inputs, string Visual);
 
-public class RavenBookArtRepository(RavenDbService dbService) : IBookArtRepository
+public class RavenBookArtRepository(RavenDbService dbService, StorageQuota? quota = null) : IBookArtRepository
 {
     private const int MaxAttempts = 8;
 
@@ -159,6 +159,12 @@ public class RavenBookArtRepository(RavenDbService dbService) : IBookArtReposito
         if (await CampaignAccessResolver.NowAsync(dbService.Store, dm) is not { IsDm: true } now) return false;
         var id = BookArtDocument.IdFor(now.CampaignId);
         var name = BookArtDocument.AttachmentFor(slot, builtFrom);
+        if (quota != null)
+        {
+            using var sizing = dbService.Store.OpenAsyncSession();
+            await quota.EnsureRoomAsync(now.CampaignId, image.Bytes.Length, StorageQuota.SizeOf(sizing, await sizing.LoadAsync<BookArtDocument>(id), name));
+        }
+
         for (var attempt = 1; ; attempt++)
         {
             using var session = dbService.Store.OpenAsyncSession();

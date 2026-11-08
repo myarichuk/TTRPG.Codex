@@ -1,4 +1,5 @@
 using Codex.Core.Book;
+using Codex.Localization;
 using Codex.Persistence;
 using Codex.Web.Services;
 
@@ -29,7 +30,10 @@ public enum BookArtUpload
     NotAllowed,
     BadImage,
     NoSuchSlot,
-    Full
+    Full,
+
+    /// <summary>The campaign's owner has no room left for it (docs/SERVER_ACCESS_AND_VAULT.md 15).</summary>
+    StorageFull
 }
 
 /// <summary>
@@ -113,7 +117,17 @@ public sealed class BookArtService(BookSourceReader reader, IBookArtRepository s
         if (await SlotsAsync(asked, edition, language) is not { } made) return BookArtUpload.NotAllowed;
         var slot = made.Slots.FirstOrDefault(s => s.Key == slotKey);
         if (slot == null) return BookArtUpload.NoSuchSlot;
-        return await store.PutAsync(made.Dm, slot.Key, BookSlots.Tag(made.Source.Audience), slot.Label, image)
+        bool stored;
+        try
+        {
+            stored = await store.PutAsync(made.Dm, slot.Key, BookSlots.Tag(made.Source.Audience), slot.Label, image);
+        }
+        catch (LocalizedException ex) when (ex.Key == "Service.Storage.Full")
+        {
+            return BookArtUpload.StorageFull;
+        }
+
+        return stored
             ? BookArtUpload.Stored
             : (await store.GetAsync(made.Dm))?.Pictures.Count >= BookArtDocument.MaxPictures ? BookArtUpload.Full : BookArtUpload.NotAllowed;
     }

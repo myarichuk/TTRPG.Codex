@@ -3,11 +3,13 @@
 @using Codex.Persistence
 @using System.Security.Claims
 @inject IUserRepository Users
-@inject ICampaignRepository Campaigns
 @inject IServerSettingsStore Settings
 @inject AccountCheck Check
 @inject IConfiguration Configuration
 @inject AuthenticationStateProvider Auth
+@inject AccountDeletion Deletion
+@inject StorageQuota Quota
+@inject IJSRuntime JS
 
 @* The server admin's page (docs/SERVER_ACCESS_AND_VAULT.md 3): accounts, waiting ones first; the server's settings; and the log. *@
 
@@ -22,6 +24,49 @@
 
 <StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
 <ConfirmDialog @ref="confirm" />
+
+@* Deleting an account (docs/SERVER_ACCESS_AND_VAULT.md 15): who takes each campaign it owns, and what goes with it. *@
+<dialog id="account-delete-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="account-delete-title" data-testid="account-delete-dialog">
+    @if (deleting is { } d && deletePlan is { } plan)
+    {
+        <div class="dialog-body">
+            <h2 id="account-delete-title">@L["Admin.Accounts.DeleteTitle", d.Username]</h2>
+            <p>@L["Admin.Accounts.DeleteBody"]</p>
+            @if (plan.Owned.Count > 0)
+            {
+                <fieldset class="mb-3">
+                    <legend class="field-label">@L["Admin.Accounts.Delete.Owned", d.Username]</legend>
+                    @foreach (var owned in plan.Owned)
+                    {
+                        var campaignId = owned.CampaignId;
+                        <div class="mb-2" data-testid="delete-owned">
+                            <label for="pass-@campaignId" class="field-label" dir="auto">@owned.Name</label>
+                            <select id="pass-@campaignId" class="field-select" value="@newOwners.GetValueOrDefault(campaignId, "")" @onchange="e => newOwners[campaignId] = e.Value?.ToString() ?? string.Empty" data-testid="delete-pass-to">
+                                @foreach (var coGm in owned.CoGms)
+                                {
+                                    <option value="@coGm">@L["Admin.Accounts.Delete.ToCoGm", NameOf(coGm)]</option>
+                                }
+                                <option value="">@L["Admin.Accounts.Delete.ToYou"]</option>
+                            </select>
+                        </div>
+                    }
+                    <p class="field-hint mb-0">@L["Admin.Accounts.Delete.OwnedHint"]</p>
+                </fieldset>
+            }
+            <ul class="mb-0" data-testid="delete-goes">
+                @if (plan.Memberships > 0)
+                {
+                    <li>@L["Admin.Accounts.Delete.Leaves", d.Username, plan.Memberships]</li>
+                }
+                <li>@L["Admin.Accounts.Delete.Goes", plan.VaultCharacters]</li>
+            </ul>
+        </div>
+        <div class="dialog-actions">
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseDeleteAsync">@L["Common.Cancel"]</CodexButton>
+            <CodexButton Variant="CodexButtonVariant.Plaque" Class="cx-blood" Busy="@busy" OnClick="ConfirmDeleteAsync" data-testid="account-delete-confirm">@L["Admin.Accounts.Delete"]</CodexButton>
+        </div>
+    }
+</dialog>
 
 @if (users == null || settings == null)
 {
@@ -44,6 +89,7 @@ else
                         <th scope="col">@L["Admin.Accounts.GameMaster"]</th>
                         <th scope="col">@L["Admin.Accounts.Admin"]</th>
                         <th scope="col">@L["Admin.Accounts.Since"]</th>
+                        <th scope="col">@L["Admin.Accounts.Storage"]</th>
                         <th scope="col"><span class="visually-hidden">@L["Admin.Accounts.Actions"]</span></th>
                     </tr>
                 </thead>
@@ -66,6 +112,7 @@ else
                                        @onchange="e => SetRoleAsync(u, UserRoles.ServerAdmin, e.Value is true)" data-testid="account-admin" />
                             </td>
                             <td class="small-muted">@if (u.CreatedAt is { } at) { <LocalTime Value="at" Format="d MMM yyyy" /> }</td>
+                            <td class="small-muted" data-testid="account-storage">@StorageOf(u)</td>
                             <td>
                                 <div class="row-actions">
                                     @switch (u.Status)
@@ -99,6 +146,13 @@ else
         <h2 id="admin-settings">@L["Admin.Settings"]</h2>
         <form @onsubmit="SaveSettingsAsync" @onsubmit:preventDefault="true" data-testid="admin-settings-form">
             <ServerSettingsForm Value="draft" Exposed="@ExposurePolicy.IsExposed(Configuration)" />
+            @* Not a setup step: a server starts with no limit (docs/SERVER_ACCESS_AND_VAULT.md 15). *@
+            <div class="mb-4">
+                <label for="admin-storage-limit" class="field-label">@L["Admin.Settings.StorageLimit"]</label>
+                <input id="admin-storage-limit" type="number" min="1" max="1000000" step="1" class="field-input" style="max-width: 12rem"
+                       @bind="draft.StorageLimitMb" aria-describedby="admin-storage-hint" data-testid="admin-storage-limit" />
+                <div id="admin-storage-hint" class="field-hint">@L["Admin.Settings.StorageLimitHint"]</div>
+            </div>
             <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Disabled="@busy" data-testid="admin-settings-save">@L["Admin.Settings.Save"]</CodexButton>
         </form>
     </section>
@@ -137,7 +191,10 @@ else
     private ServerSettingsDocument? settings;
     private ServerSettingsDocument draft = new();
     private List<AdminLogDocument> log = new();
-    private HashSet<string> inCampaigns = new(StringComparer.Ordinal);
+    private UserDocument? deleting;
+    private AccountDeletionPlan? deletePlan;
+    private Dictionary<string, string> newOwners = new(StringComparer.Ordinal);
+    private IReadOnlyDictionary<string, long> storage = new Dictionary<string, long>();
     private string? myId;
     private string myName = string.Empty;
     private bool busy;
@@ -160,9 +217,7 @@ else
         settings = await Settings.GetAsync();
         draft = settings.Copy();
         log = (await Settings.RecentLogAsync(100)).ToList();
-        inCampaigns = (await Campaigns.GetAllAsync())
-            .SelectMany(c => c.Members.Select(m => m.UserId).Append(c.OwnerId))
-            .ToHashSet(StringComparer.Ordinal);
+        storage = await Quota.ByOwnerAsync();
     }
 
     private static bool Has(UserDocument u, string role) => u.Roles.Contains(role);
@@ -286,26 +341,41 @@ else
         return null;
     });
 
+    private string StorageOf(UserDocument u)
+    {
+        var used = StorageQuota.Megabytes(storage.GetValueOrDefault(u.Id));
+        return settings?.StorageLimitMb is { } mb ? L["Admin.Accounts.StorageOf", used, StorageQuota.Megabytes(mb * 1024L * 1024L)] : used;
+    }
+
+    private string NameOf(string userId) => users?.FirstOrDefault(u => u.Id == userId)?.Username ?? userId;
+
+    // The dialog says who takes each campaign the account owns (its first co-GM unless the admin picks another, or the admin) and what goes.
     private async Task DeleteAsync(UserDocument u)
     {
-        // Passing campaigns on and taking characters out of them is a later step: until then an account in a campaign is turned off instead.
-        if (inCampaigns.Contains(u.Id))
-        {
-            flash = Flash.Error(L["Admin.Accounts.InCampaigns", u.Username]);
-            return;
-        }
+        deleting = u;
+        deletePlan = await Deletion.PlanAsync(u.Id);
+        newOwners = deletePlan.Owned.ToDictionary(o => o.CampaignId, o => o.CoGms.FirstOrDefault() ?? string.Empty, StringComparer.Ordinal);
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", "account-delete-dialog");
+    }
 
-        if (!await confirm.ShowAsync(L["Admin.Accounts.DeleteTitle", u.Username], L["Admin.Accounts.DeleteBody"], L["Admin.Accounts.Delete"], isDestructive: true)) return;
+    private Task CloseDeleteAsync() => JS.InvokeVoidAsync("codex.closeModal", "account-delete-dialog").AsTask();
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (deleting is not { } u) return;
+        var chosen = newOwners.Where(p => p.Value.Length > 0).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
+        await CloseDeleteAsync();
         await RunAsync(async () =>
         {
             if (u.Id == myId || await WouldLeaveNoAdminAsync(u)) return Flash.Error(L["Admin.Accounts.LastAdmin"]);
-            var stillIn = (await Campaigns.GetAllAsync()).Any(c => c.OwnerId == u.Id || c.Members.Any(m => m.UserId == u.Id));
-            if (stillIn) return Flash.Error(L["Admin.Accounts.InCampaigns", u.Username]);
-            if (!await Users.DeleteAsync(u.Id)) return Flash.Error(L["Admin.Accounts.Gone"]);
+            var result = await Deletion.DeleteAsync(u.Id, myId!, chosen);
             Check.Forget(u.Id);
+            if (result == AccountDeletionResult.NotFound) return Flash.Error(L["Admin.Accounts.Gone"]);
             await LogAsync(AdminAction.Deleted, u);
             return Flash.Success(L["Admin.Accounts.Deleted.Done", u.Username]);
         });
+        (deleting, deletePlan) = (null, null);
     }
 
     private Task SaveSettingsAsync() => RunAsync(async () =>
@@ -317,6 +387,7 @@ else
             s.SignUp = chosen.SignUp;
             s.CampaignCreation = chosen.CampaignCreation;
             s.ServerAi = chosen.ServerAi;
+            s.StorageLimitMb = chosen.StorageLimitMb is > 0 ? chosen.StorageLimitMb : null;
             s.WebFetch = chosen.WebFetch;
             s.FetchSites = chosen.FetchSites.ToList();
         });

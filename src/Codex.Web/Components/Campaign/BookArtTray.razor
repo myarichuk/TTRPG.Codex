@@ -441,7 +441,7 @@
 
     private string DirectorReason(string reason) => reason switch
     {
-        "budget" or "error" or "auth" or "ratelimit" or "allowance" or "cancelled" => L["Campaign.Book.Ai.Reason." + reason],
+        "budget" or "error" or "auth" or "ratelimit" or "allowance" or "storage" or "cancelled" => L["Campaign.Book.Ai.Reason." + reason],
         "cutoff" or "unreadable" or "some" => L["Campaign.Book.Art.Suggest.Reason." + reason],
         _ => L["Campaign.Book.Art.Suggest.Reason.checks"]
     };
@@ -534,6 +534,7 @@
                 BookArtUpload.BadImage => (L["Campaign.Book.Art.BadImage"], true),
                 BookArtUpload.NoSuchSlot => (L["Campaign.Book.Art.NoSlot"], true),
                 BookArtUpload.Full => (L["Campaign.Book.Art.Full"], true),
+                BookArtUpload.StorageFull => (L["Campaign.Book.Art.StorageFull"], true),
                 _ => (L["Campaign.Book.Art.NotAllowed"], true)
             };
             if (result == BookArtUpload.Stored)

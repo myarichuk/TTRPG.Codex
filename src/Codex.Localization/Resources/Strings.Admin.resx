@@ -86,7 +86,6 @@
   <data name="Admin.Accounts.DisableBody" xml:space="preserve"><value>They are signed out and cannot sign in until you turn the account on again. Their campaigns and characters stay.</value></data>
   <data name="Admin.Accounts.Disabled.Done" xml:space="preserve"><value>{0} is turned off.</value></data>
   <data name="Admin.Accounts.Enabled.Done" xml:space="preserve"><value>{0} is turned on again.</value></data>
-  <data name="Admin.Accounts.InCampaigns" xml:space="preserve"><value>{0} is in a campaign. Turn the account off instead; removing someone from their campaigns comes in a later version.</value></data>
   <data name="Admin.Accounts.DeleteTitle" xml:space="preserve"><value>Delete {0}?</value></data>
   <data name="Admin.Accounts.DeleteBody" xml:space="preserve"><value>The account is deleted for good and its name is free again. This cannot be undone.</value></data>
   <data name="Admin.Accounts.Deleted.Done" xml:space="preserve"><value>{0} is deleted.</value></data>
@@ -110,4 +109,14 @@
   <data name="Admin.Settings.ServerAi.EveryoneHint" xml:space="preserve"><value>Players too. Each account still has the daily allowance.</value></data>
   <data name="Admin.Settings.ServerAi.Admins" xml:space="preserve"><value>Admins only</value></data>
   <data name="Admin.Settings.ServerAi.AdminsHint" xml:space="preserve"><value>Only the server's admins. Everyone else uses their own model.</value></data>
+  <data name="Admin.Accounts.Delete.Owned" xml:space="preserve"><value>Campaigns {0} owns, and who takes each</value></data>
+  <data name="Admin.Accounts.Delete.ToCoGm" xml:space="preserve"><value>{0} (co-GM)</value></data>
+  <data name="Admin.Accounts.Delete.ToYou" xml:space="preserve"><value>You</value></data>
+  <data name="Admin.Accounts.Delete.OwnedHint" xml:space="preserve"><value>A campaign with no co-GM passes to you. You can then pass it on, export it or delete it from its settings.</value></data>
+  <data name="Admin.Accounts.Delete.Leaves" xml:space="preserve"><value>{0} leaves the other campaigns they are in ({1}). The characters they play there stay in those casts.</value></data>
+  <data name="Admin.Accounts.Delete.Goes" xml:space="preserve"><value>Gone with the account: the characters in their vault ({0}), their private journals, world-builder chats and book builds.</value></data>
+  <data name="Admin.Accounts.Storage" xml:space="preserve"><value>Storage</value></data>
+  <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Storage per account, in MB</value></data>
+  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Pictures and files: covers, portraits, art, book pictures and the book's copies of web files. A campaign's count against its owner, whoever added them. Empty for no limit.</value></data>
 </root>

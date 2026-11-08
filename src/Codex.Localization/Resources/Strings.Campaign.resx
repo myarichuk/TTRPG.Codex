@@ -1004,4 +1004,6 @@
   <data name="Campaign.Vault.Withdraw" xml:space="preserve"><value>Take back</value></data>
   <data name="Campaign.Vault.WithdrawLabel" xml:space="preserve"><value>Take back {0}</value></data>
   <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>Request for {0} taken back.</value></data>
+  <data name="Campaign.Book.Ai.Reason.storage" xml:space="preserve"><value>the campaign's owner has no storage left</value></data>
+  <data name="Campaign.Book.Art.StorageFull" xml:space="preserve"><value>The campaign's owner has no storage left for this picture. Remove some pictures or files, or ask the server's admin for more.</value></data>
 </root>

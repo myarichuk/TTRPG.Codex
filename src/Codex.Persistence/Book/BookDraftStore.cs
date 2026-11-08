@@ -191,7 +191,7 @@ public interface IBookDraftRepository
     Task DeleteAllForCampaignAsync(string campaignId);
 }
 
-public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepository
+public class RavenBookDraftRepository(RavenDbService dbService, StorageQuota? quota = null) : IBookDraftRepository
 {
     private const int MaxAttempts = 8;
 
@@ -518,8 +518,10 @@ public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepo
 
         // A copy already kept stays as it is (an attachment is not deleted and stored again in one session).
         var adding = added.Select(f => f.Url).ToHashSet(StringComparer.Ordinal);
+        long freed = 0;
         foreach (var gone in web.Files.Where(e => !keep.Contains(e.Url) && !adding.Contains(e.Url)).ToList())
         {
+            freed += gone.Length;
             session.Advanced.Attachments.Delete(id, gone.Name);
             web.Files.Remove(gone);
         }
@@ -534,6 +536,19 @@ public class RavenBookDraftRepository(RavenDbService dbService) : IBookDraftRepo
         }
 
         if (web.Files.Count > Codex.Core.Book.BookCssWeb.MaxFiles || web.Files.Sum(e => e.Length) > Codex.Core.Book.BookCssWeb.MaxTotalBytes) return BookDraftSave.TooLarge;
+        if (quota != null)
+        {
+            // The account's storage limit (docs/SERVER_ACCESS_AND_VAULT.md 15) refuses these copies as too large for what is left.
+            try
+            {
+                await quota.EnsureRoomAsync(now.CampaignId, added.Where(f => !have.Contains(f.Url)).DistinctBy(f => f.Url).Sum(f => (long)f.Bytes.Length), freed);
+            }
+            catch (Codex.Localization.LocalizedException ex) when (ex.Key == "Service.Storage.Full")
+            {
+                return BookDraftSave.TooLarge;
+            }
+        }
+
         try
         {
             await session.SaveChangesAsync();
