@@ -2316,7 +2316,7 @@ secret never sent, and the voice was the players' book (in-world, no checks), wi
   whole, with a higher limit.
 Not tried for real: Russian and Hebrew, the GM edition, a chapter long enough for an entry to fail.
 
-**Not done before the real run:** step 4, the one real run. Not seen: how a real model's prose fares against the facts check in Russian and Hebrew (the coverage
+**Still not seen:** how a real model's prose fares against the facts check in Russian and Hebrew (the coverage
 rule is lenient by design; a reply refused twice keeps its entry's text, so the cost of a strict check is a re-ask, never a wrong book).
 
 Not in this plan: stat blocks from the campaign's own creatures (`{{monster` built by code from the sheet, not by the model) are a separate

@@ -190,7 +190,7 @@ Anything that survives is a missing test; add it.
    length floor is untuned) and splitting the unit from chapter to `##` entry (a long Cast chapter is re-bought whole after one NPC edit).
    **Built (BOOK_EXPORT 42, steps 1 to 3):** the facts check both ways (`BookFacts`, en/ru/he), "As the book" on a chapter entry by entry,
    the whole book chapter by chapter with the cost first, a player-facing shape for the party edition (`ai.playerBookShape`), and edits and
-   merges counted in the spend totals. All tried with the fake model only; **step 4, one real run, waits for the user's yes** (it bills their key).
+   merges counted in the spend totals. Step 4, one real run, done 2026-11-08 (English, party edition; BOOK_EXPORT 42): facts and mask kept, invented texture is left to the review, which now offers one change per entry. Not tried for real: Russian, Hebrew, the GM edition.
 3. ~~**Russian and Hebrew books**~~ done for the editable book (BOOK_EXPORT 41.21, 2026-11-08): Plain and Ashen Vellum print both, by
    stand-in faces under the themes' family names, Hebrew pages mirrored (`BookRtl`), coverage read from the font files (`BookFontCoverage`)
    and a Problems-tab check. Left: Hebrew emphasis prints as plain text (no Hebrew italics), no native reader, WebKit and Firefox not tried in
