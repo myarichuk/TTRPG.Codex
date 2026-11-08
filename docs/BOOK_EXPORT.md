@@ -1962,8 +1962,13 @@ the pre-flight named the GM's model, one conflict and the token range; Without A
 line; Accept the rest kept the GM's other edit, added the entry, cleared the notice; Undo brought it back; Discard left the chapter as it was.
 No model was sent anything.
 
+**A real model, 2026-11-08** (the GM's own key, the provider's smallest current model, a throwaway campaign deleted after): the GM had
+rewritten Vera's entry in their own words with a bold "Habits." paragraph; the campaign then changed "thirty winters" to "forty" and added
+a limp. One conflict, one call, about 1,500 tokens, first try: the GM's wording and paragraph kept, "forty" and the limp put in where they
+fit, the secret back as it was, nothing invented. Accept, then Keep: saved, the notice gone, the preview updated.
+
 Not done, or not verified:
-- A real model has not merged a conflict.
+- One real merge, one model, English only; a conflict whose entry holds a fitted break has met only the test model.
 - Entries are the unit: two edits of one entry by both sides are one conflict, however far apart in it; prose before the first entry is
   the head, one unit.
 - An entry the GM moved into another chapter is, to the merge, deleted from one and unknown in the other.
