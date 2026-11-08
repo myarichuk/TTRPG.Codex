@@ -2249,3 +2249,37 @@ owner, nothing kept after), `BookArtTests.NearTheSizeCap...` (preview and print 
 Not done, or not verified: the footer was looked at in Chromium only, and in Hebrew in one preview (mirrored, beside the page number); the estimate's 1 byte a pixel is a
 guess with room (painted art measured 0.3-0.8); a GM's own CSS that styles `.footnote` styles the running footer too; the Markdown file was
 not opened in Homebrewery itself; the Russian and Hebrew text of the new strings is machine-drafted.
+
+## 42. Book-shaped prose: plan (2026-11-08; nothing built)
+
+The user's decision (handoff item 2): the campaign is the tidied notes, and the AI turns them into prose shaped like the system's own published
+books. What exists already: the system says how its books read (`system.yaml` `ai.bookShape`, for srd5e a description of fifth-edition
+adventures and setting books, shape and voice only), and "As the book" (`BookEditPrompts.Presets["shape"]`) asks for that shape on a
+selection or a whole chapter, reviewed in the merge view before anything is saved. What is missing is a way to do the whole book, and the
+safety that a book-length rewrite needs.
+
+**Where:** in the editable book's AI edits (41.16), not the older one-shot build (`BookSectionWorker`). Shaped text is the GM's text once
+accepted, so the per-entry merge of 41.18 already brings it up to date entry by entry: no stored prose layer, and an NPC edit later costs one
+entry's merge, not the chapter (the "re-bought whole" problem of the old build does not arise here).
+
+**Order of work, each step tested before the next:**
+1. **Facts kept, both ways** (`BookFacts`, in Core, no UI). The names and numbers a passage holds are taken from the edition's own source
+   (entry headings, mention labels as this edition resolves them, so the party's are the masks), not from capital letters, which Hebrew lacks.
+   Numbers: digits, dice, difficulty classes. A reply may add none (the existing checks, widened from capitals to the source's names) and may
+   drop none (new: the coverage check; for shaping it replaces the 0.12 length floor, since shaping lengthens text). Matching tolerates
+   Russian endings (Вера, Веру) and Hebrew prefix letters (לוורה), with golden tests in all three languages, mutation-checked.
+2. **"As the book" on a chapter, one call per entry**: the chapter's head and each `{{entry` unit (the merge's splitter), each through the
+   existing checks, the facts check and the restore. A unit that fails keeps its text and is named in the Problems tab; the rest are offered
+   for review. Calls go through `BookBudget`, so edits count in the spend totals (41.16 left them out).
+3. **The whole book**: the cost shown first, nothing without a click, progress per chapter, and review chapter by chapter in the existing
+   overlay (accept, reject, or accept part). Built and tested against the fake model only.
+4. **One real run**, on a throwaway campaign, only after the user agrees to it (it bills their key).
+
+**For the user to decide:** `ai.bookShape` describes a GM's adventure: read-aloud boxes, "what happens if the characters…", checks and
+difficulty classes. That is the wrong voice for the party edition, which the players read. Either the system gets a second description for
+player-facing books (a gazetteer or player's guide: what is known, in an in-world voice, no GM advice or checks), or the party edition uses
+the neutral shape. The recommendation is the second description (`ai.playerBookShape`), since it is one paragraph per system and keeps the
+party book from reading as a GM's book with the secrets cut out.
+
+Not in this plan: stat blocks from the campaign's own creatures (`{{monster` built by code from the sheet, not by the model) are a separate
+step after it; `:::for` per-player editions.
