@@ -2302,7 +2302,18 @@ and gazetteers, in the world's voice, no GM advice, no checks). A system without
   out); then one chapter at a time, each reviewed before the next is sent; a chapter the model left unchanged is not shown; "Stop after this
   chapter". Tested with the fake model only (`BookDraftTests`, `TheGmRewritesTheWholeBookAsTheBook_…` in the browser).
 
-**Not done:** step 4, the one real run. Not seen: how a real model's prose fares against the facts check in Russian and Hebrew (the coverage
+**Step 4, the real run (2026-11-08, with the user's yes):** a throwaway English campaign, party edition, three people (one masked), the whole
+book on the user's small text model. The first try stopped at its first request (the stored key was refused) and showed the cover and contents
+were in the run: fixed, the whole-book run now leaves them alone. The second try: one chapter, three requests, about 7,800 tokens, all three
+entries passed first time. Every figure (12 years, 3 debts, 2 pages, 2 copper, twice a day) and every name kept, the mask kept, the GM's
+secret never sent, and the voice was the players' book (in-world, no checks), with a titled sidebar where the notes had a detail. Seen:
+- The model adds texture the facts check cannot see: "drinks more freely than he rows", "never comes into the light", coins "older than any
+  currency now minted". No name or figure, so it passes; the review is where the GM catches it.
+- Every line of the chapter changed, so the review offered the whole chapter as one change: accept or reject it whole, not entry by entry.
+  Worth a follow-up (one review chunk per entry).
+Not tried for real: Russian and Hebrew, the GM edition, a chapter long enough for an entry to fail.
+
+**Not done before the real run:** step 4, the one real run. Not seen: how a real model's prose fares against the facts check in Russian and Hebrew (the coverage
 rule is lenient by design; a reply refused twice keeps its entry's text, so the cost of a strict check is a re-ask, never a wrong book).
 
 Not in this plan: stat blocks from the campaign's own creatures (`{{monster` built by code from the sheet, not by the model) are a separate
