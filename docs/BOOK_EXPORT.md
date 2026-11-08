@@ -1314,7 +1314,7 @@ small renderer, an editor page and a print page, run on the test campaign of sec
    with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
    sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
 
-## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 4 built, see 41.9, 41.10, 41.15 and 41.16)
+## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 4 built, see 41.9, 41.10, 41.15 and 41.16; layout 41.17)
 
 The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
 when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
@@ -1844,3 +1844,37 @@ Not done, or not verified:
 - The AI bar takes room above the Markdown in a narrow window; the merge view's colours are its own defaults (not checked in dark mode).
 - A request is a single call the dialog waits on (Stop cancels it); edits are not in the build's spend totals.
 - The Russian and Hebrew text of `Campaign.Book.Draft.Ai.*` is machine-drafted.
+
+### 41.17 The book's layout, like an IDE (built 2026-11-08, asked for by the user)
+
+The user found the book's UI convoluted and asked for Visual Studio's collapsible tool windows as the model.
+- **The editor** (`BookDraftEditor.razor`):
+  - **The toolbar** is one row: theme, the Homebrewery layout, Fit pages, Download PDF (the primary button), and More (Start over, still
+    confirmed). Close is an X on the title's row; in a narrow window the tools wrap below the title.
+  - **Three panes**, Chapters | Markdown | Preview, each with a header. Chapters and Preview fold to a thin strip with their name and open
+    again on a click. The Markdown pane's header names the chapter, its Edited or Stale badge, and Undo.
+  - **A folded preview is still drawn**, off the screen, so the run-on and cut-off lines (now in the preview's header area) keep measuring it.
+  - **A panel below** has tabs: Ask AI (phase 4's bar, the pre-flight and the review), Problems (Fit pages' report, pages printed cut off,
+    stylesheet addresses not fetched, with a count on the tab) and Blocks (the block reference). Clicking the open tab folds the panel.
+    A report opens it on Problems, and asking the AI opens it on Ask AI.
+  - **What is open is kept** in this browser (`localStorage`, `codex.bookEditor.layout`). The tabs take the arrow keys, Home and End.
+  - **CodeMirror on the app's colours:** gutters, the active line, the cursor and the selection use the app's variables, and so does a
+    highlight style in the bundle (headings brass, links and `art:` references verdigris). The editor is dark or light as the app is;
+    before, it was a white box in a dark dialog.
+- **The book panel** in campaign settings: the edition picker stays on top, and the rest is in tabs: Print (look, language, paper,
+  columns, pictures, preview, download), Pictures (the picture tray, which opens and reads its slots the first time its tab is shown), Edit
+  (the editable book) and AI polish. A player sees only Print, with no tab strip. Hidden tabs are hidden, not removed, so what was typed in
+  one is still there. The editor dialog sits outside the tabs.
+- Icons the layout uses that the app's set lacked (`more-horizontal`, `panel-left-close`/`-open`, `chevron-up`, `printer`, `blocks`, and
+  `palette`, which the Stylesheet entry had always asked for and drawn as a circle) were added from Lucide.
+
+Tests: the book browser tests click the tab they need; `TheEditorsPanesFold...` (both panes fold and open; typing still draws the folded
+preview; the panel's tabs move with the arrow keys; the layout is the same after the page is loaded again; Start over behind More, still
+asking); the Fit test now also checks that the report opens the Problems tab with a count of 1. Mutants: the layout never saved (caught by the
+reload); the report not opening Problems (it survived at first, because the test read the report's text, which a hidden tab still has; the
+visibility check was added for it).
+Seen in the app (preview, the real-run campaign): the settings panel's tabs; the editor at 1400 px with both panes open, both folded, and
+the panel folded; Fit pages opening the folded panel on Problems; at 820 px (stacked, Close on the title row); and under the light theme.
+
+Not done: the panes cannot be resized by dragging (fixed proportions), and the panel's height is fixed; the folded preview's off-screen
+drawing has no test that it is measured rather than only drawn.

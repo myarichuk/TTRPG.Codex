@@ -1068,4 +1068,20 @@
   <data name="Campaign.Book.Draft.Ai.Reject" xml:space="preserve"><value>Reject</value></data>
   <data name="Campaign.Book.Draft.Ai.ReviewLabel" xml:space="preserve"><value>The AI's change, for review</value></data>
   <data name="Campaign.Book.Draft.Ai.ReviewHint" xml:space="preserve"><value>Accept or reject each change, or all at once. Alt+Down and Alt+Up go from change to change; Ctrl+Enter accepts the one at the cursor and Ctrl+Backspace rejects it. The preview shows what you have accepted so far.</value></data>
+  <data name="Campaign.Book.Draft.Tools" xml:space="preserve"><value>Book tools</value></data>
+  <data name="Campaign.Book.Draft.More" xml:space="preserve"><value>More actions</value></data>
+  <data name="Campaign.Book.Draft.Collapse" xml:space="preserve"><value>Collapse</value></data>
+  <data name="Campaign.Book.Draft.Expand" xml:space="preserve"><value>Expand</value></data>
+  <data name="Campaign.Book.Draft.CollapseNamed" xml:space="preserve"><value>Collapse {0}</value></data>
+  <data name="Campaign.Book.Draft.ExpandNamed" xml:space="preserve"><value>Show {0}</value></data>
+  <data name="Campaign.Book.Draft.Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="Campaign.Book.Draft.Panel" xml:space="preserve"><value>Tools panel</value></data>
+  <data name="Campaign.Book.Draft.Problems" xml:space="preserve"><value>Problems</value></data>
+  <data name="Campaign.Book.Draft.NoProblems" xml:space="preserve"><value>No problems found. Fit pages, a download or the stylesheet's web addresses report here.</value></data>
+  <data name="Campaign.Book.Draft.BlocksTab" xml:space="preserve"><value>Blocks</value></data>
+  <data name="Campaign.Book.Draft.Ai.PickChapter" xml:space="preserve"><value>Choose a chapter to ask the AI about it; the stylesheet is not sent.</value></data>
+  <data name="Campaign.Book.Tab.Print" xml:space="preserve"><value>Print</value></data>
+  <data name="Campaign.Book.Tab.Art" xml:space="preserve"><value>Pictures</value></data>
+  <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>Edit</value></data>
+  <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>AI polish</value></data>
 </root>

@@ -232,6 +232,11 @@
     /// <summary>Raised after a picture is put in or taken out, so the preview can be drawn again.</summary>
     [Parameter] public EventCallback Changed { get; set; }
 
+    /// <summary>True while the tray's tab is the one shown: the tray opens (and reads its slots) the first time it is, not before.</summary>
+    [Parameter] public bool Shown { get; set; }
+
+    private bool openedOnce;
+
     private BookTray? tray;
     private bool open;
     private string? status;
@@ -289,6 +294,13 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        if (Shown && !open && !openedOnce)
+        {
+            openedOnce = true;
+            await ToggledAsync();
+            return;
+        }
+
         // The slots are the edition's and named in the book's language: a change of either reads them again, but only once the tray is open.
         if (open && shownFor != Edition + "|" + Language) await LoadAsync();
     }

@@ -160,9 +160,9 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
 
         await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        // The Pictures tab opens the tray (and reads its slots) the first time it is shown.
         var toggle = dm.GetByTestId("book-art-toggle");
-        await Assertions.Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false");
-        await toggle.ClickAsync();
+        await dm.GetByTestId("book-tab-art").ClickAsync();
         await Assertions.Expect(toggle).ToHaveAttributeAsync("aria-expanded", "true");
         var slots = dm.GetByTestId("book-art-slots");
         await Assertions.Expect(slots).ToBeVisibleAsync();
@@ -378,6 +378,7 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
 
         // No model yet: the panel says so, and offers the way to set one up instead of a button that fails.
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("book-tab-ai").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-ai-nomodel")).ToBeVisibleAsync();
         await Assertions.Expect(dm.GetByTestId("book-ai-start")).ToBeDisabledAsync();
 
@@ -395,6 +396,7 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model");
 
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("book-tab-ai").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-ai-model")).ToContainTextAsync("fake-model");
 
         // The estimate comes first: the chapters, the requests, tokens as a range, and money from the prices set. Nothing was sent.
@@ -431,7 +433,9 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         Assert.DoesNotContain("strolls", party);
 
         // The checkbox points the preview at it.
+        await dm.GetByTestId("book-tab-print").ClickAsync();
         await dm.GetByTestId("book-preview-toggle").ClickAsync();
+        await dm.GetByTestId("book-tab-ai").ClickAsync();
         await dm.GetByTestId("book-ai-use").CheckAsync();
         await Assertions.Expect(dm.GetByTestId("book-preview")).ToHaveAttributeAsync("src", new System.Text.RegularExpressions.Regex("ai=1"));
 
@@ -482,7 +486,7 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
 
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
         await dm.GetByTestId("book-edition").SelectOptionAsync("party");
-        await dm.GetByTestId("book-art-toggle").ClickAsync();
+        await dm.GetByTestId("book-tab-art").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-art-draw-preflight")).ToContainTextAsync("Tick a place");
         await dm.GetByTestId("book-art-style-medium").SelectOptionAsync("woodcut");
         await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Style saved");
@@ -547,6 +551,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
 
         await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
         await dm.GetByTestId("book-draft-open").ClickAsync();
         var dialog = dm.GetByTestId("book-draft-dialog");
         await Assertions.Expect(dialog).ToBeVisibleAsync();
@@ -569,6 +574,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await _app.SeedActorsAsync([new Codex.Web.TestSeedActor { Id = veraId, CampaignId = campaignId, Name = "Vera", Biography = "Rings the bell at dusk.", Visibility = Codex.Persistence.ActorVisibility.Known }]);
         await dm.GetByTestId("book-draft-close").ClickAsync();
         await Assertions.Expect(dialog).Not.ToBeVisibleAsync();
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
         await dm.GetByTestId("book-draft-open").ClickAsync();
         var stale = dm.GetByTestId("book-draft-stale");
         await Assertions.Expect(stale).ToBeVisibleAsync();
@@ -636,6 +642,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
 
         await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
         await dm.GetByTestId("book-draft-open").ClickAsync();
         var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
         await Assertions.Expect(preview.Locator(".page", new() { HasText = "Line 69 of" })).ToHaveCountAsync(1);
@@ -648,6 +655,10 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(report).ToContainTextAsync("Page breaks in the book:", new() { Timeout = 60_000 });
         await Assertions.Expect(dm.GetByTestId("book-draft-fit-too-tall")).ToContainTextAsync("Cast");
         await Assertions.Expect(dm.GetByTestId("book-draft-fit-too-tall")).ToContainTextAsync("PUBLIC_WALL");
+        // The report opens the panel on its own tab, whatever tab was open.
+        await Assertions.Expect(dm.GetByTestId("book-draft-tab-problems")).ToHaveAttributeAsync("aria-selected", "true");
+        await Assertions.Expect(dm.GetByTestId("book-draft-fit-too-tall")).ToBeVisibleAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-problems-count")).ToHaveTextAsync("1");
         await Assertions.Expect(dm.GetByTestId("book-draft-run-on")).ToBeHiddenAsync();
         await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
         // CodeMirror draws only the lines in view: the chapter is scrolled through and read as it goes.
@@ -715,6 +726,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
         // The GM edition: its secret is in the chapter, and must not reach the model.
         await dm.GetByTestId("book-edition").SelectOptionAsync("dm");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
         await dm.GetByTestId("book-draft-open").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-draft-dialog")).ToBeVisibleAsync();
         var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
@@ -773,6 +785,76 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         Assert.Empty(pageErrors);
     }
 
+    /// <summary>
+    /// The editor's layout (docs/BOOK_EXPORT.md 41.17): the chapters and the preview fold to a strip and open again, what is open is remembered
+    /// when the editor is opened again, a folded preview is still drawn (the editor still measures it), the panel's tabs move with the arrow
+    /// keys, and Start over is behind More.
+    /// </summary>
+    [Fact]
+    public async Task TheEditorsPanesFoldAndAreRemembered_TheFoldedPreviewStillDraws_AndThePanelTabsTakeTheArrowKeys()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bly-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        var dialog = dm.GetByTestId("book-draft-dialog");
+        await Assertions.Expect(dialog).ToBeVisibleAsync();
+
+        // Both side panes fold to a strip; the chapter list is gone, the Markdown stays.
+        await dm.GetByTestId("book-draft-pane-chapters-toggle").ClickAsync();
+        await dm.GetByTestId("book-draft-pane-preview-toggle").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-chapters")).ToHaveCountAsync(0);
+        await Assertions.Expect(dm.GetByTestId("book-draft-pane-chapters-toggle")).ToHaveAttributeAsync("aria-expanded", "false");
+        await Assertions.Expect(dm.GetByTestId("book-draft-pane-preview-toggle")).ToHaveAttributeAsync("aria-expanded", "false");
+        await Assertions.Expect(dm.GetByTestId("book-draft-code")).ToBeVisibleAsync();
+
+        // Typing still draws the folded preview: it is laid out off the screen, so the editor can measure it.
+        await dm.Locator(".cm-content").ClickAsync();
+        await dm.Keyboard.PressAsync("ControlOrMeta+End");
+        await dm.Keyboard.TypeAsync("\nPUBLIC_FOLDED_LINE\n");
+        var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "PUBLIC_FOLDED_LINE" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+
+        // The panel's tabs: the arrow keys move between them, and the open one shows its content.
+        await dm.GetByTestId("book-draft-tab-ai").FocusAsync();
+        await dm.Keyboard.PressAsync("ArrowRight");
+        await Assertions.Expect(dm.GetByTestId("book-draft-tab-problems")).ToHaveAttributeAsync("aria-selected", "true");
+        await Assertions.Expect(dm.GetByTestId("book-draft-tab-problems")).ToBeFocusedAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-fit-report")).ToBeVisibleAsync();
+        await dm.Keyboard.PressAsync("ArrowRight");
+        await Assertions.Expect(dm.GetByTestId("book-draft-tab-blocks")).ToHaveAttributeAsync("aria-selected", "true");
+        await Assertions.Expect(dm.GetByTestId("book-draft-ai")).ToBeHiddenAsync();
+
+        // Opened again after the page is loaded again, the editor is as it was left: the layout is kept in this browser.
+        await dm.GetByTestId("book-draft-close").ClickAsync();
+        await Assertions.Expect(dialog).ToBeHiddenAsync();
+        await dm.ReloadAsync();
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        await Assertions.Expect(dialog).ToBeVisibleAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-pane-chapters-toggle")).ToHaveAttributeAsync("aria-expanded", "false");
+        await Assertions.Expect(dm.GetByTestId("book-draft-tab-blocks")).ToHaveAttributeAsync("aria-selected", "true");
+        await dm.GetByTestId("book-draft-pane-chapters-toggle").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-chapters")).ToBeVisibleAsync();
+
+        // Start over is behind More, and still asks first.
+        await Assertions.Expect(dm.GetByTestId("book-draft-start-over")).ToHaveCountAsync(0);
+        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await dm.GetByTestId("book-draft-start-over").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-start-over-yes")).ToBeVisibleAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-start-over")).ToHaveCountAsync(0);
+        Assert.Empty(pageErrors);
+    }
+
     [Fact]
     public async Task ATabThatOnlyLooksAtAChapter_NeverSavesIt_SoAnotherTabsEditIsNotAConflict()
     {
@@ -789,6 +871,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         {
             await E2EHelpers.GoToSectionAsync(page, campaignId, "settings");
             await page.GetByTestId("book-edition").SelectOptionAsync("party");
+            await page.GetByTestId("book-tab-draft").ClickAsync();
             await page.GetByTestId("book-draft-open").ClickAsync();
             await Assertions.Expect(page.FrameLocator("[data-testid=book-draft-preview]").Locator(".page").First).ToBeVisibleAsync();
         }
@@ -815,6 +898,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(a.GetByTestId("book-draft-dialog")).Not.ToBeVisibleAsync();
 
         // B's line is still the chapter's.
+        await a.GetByTestId("book-tab-draft").ClickAsync();
         await a.GetByTestId("book-draft-open").ClickAsync();
         await a.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
         await Assertions.Expect(a.Locator(".cm-content")).ToContainTextAsync("PUBLIC_TAB_B");

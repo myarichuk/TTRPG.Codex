@@ -8,8 +8,23 @@ import { keymap } from '@codemirror/view';
 import { indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { css } from '@codemirror/lang-css';
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { tags } from '@lezer/highlight';
 import { unifiedMergeView, getOriginalDoc, getChunks, acceptChunk, rejectChunk, goToNextChunk, goToPreviousChunk } from '@codemirror/merge';
 import { layout } from './render.js';
+
+// The Markdown's and the stylesheet's colours from the app's own palette (CSS variables), so the editor is dark or light as the app is.
+const bookHighlight = syntaxHighlighting(HighlightStyle.define([
+  { tag: tags.heading, color: 'var(--accent)', fontWeight: 'bold' },
+  { tag: [tags.link, tags.url], color: 'var(--arcane)' },
+  { tag: tags.emphasis, fontStyle: 'italic' },
+  { tag: tags.strong, fontWeight: 'bold' },
+  { tag: [tags.processingInstruction, tags.meta, tags.contentSeparator, tags.labelName], color: 'var(--text-3)' },
+  { tag: tags.quote, color: 'var(--text-2)' },
+  { tag: [tags.keyword, tags.propertyName, tags.tagName], color: 'var(--accent)' },
+  { tag: [tags.string, tags.number, tags.atom, tags.color], color: 'var(--arcane)' },
+  { tag: tags.comment, color: 'var(--text-3)', fontStyle: 'italic' }
+]));
 
 const editors = new Map();
 let counter = 0;
@@ -54,7 +69,7 @@ export async function open(host, frame, book, dotnet, labels) {
     parent: host,
     state: EditorState.create({
       doc: text(state),
-      extensions: [basicSetup, keymap.of([indentWithTab]), EditorView.lineWrapping, direction, language.of(markdown()), locked.of([]),
+      extensions: [basicSetup, bookHighlight, keymap.of([indentWithTab]), EditorView.lineWrapping, direction, language.of(markdown()), locked.of([]),
         EditorView.updateListener.of(u => {
           // A chapter put into the editor (shown, replaced by the server) is not typing: it must not be saved back.
           if (!u.docChanged || state.loading) return;
@@ -282,7 +297,7 @@ export function review(id, proposal, labels) {
     parent: holder,
     state: EditorState.create({
       doc: proposal.replacement,
-      extensions: [basicSetup, EditorView.lineWrapping, state.direction, markdown(), EditorState.readOnly.of(true),
+      extensions: [basicSetup, bookHighlight, EditorView.lineWrapping, state.direction, markdown(), EditorState.readOnly.of(true),
         EditorState.phrases.of({ Accept: words.accept || 'Accept', Reject: words.reject || 'Reject' }),
         unifiedMergeView({ original: proposal.original, highlightChanges: true, gutter: true, mergeControls: true, syntaxHighlightDeletions: false }),
         // From the keyboard: Alt-Down and Alt-Up go from change to change, Ctrl-Enter accepts the one at the cursor, Ctrl-Backspace rejects it.

@@ -1068,4 +1068,20 @@
   <data name="Campaign.Book.Draft.Ai.Reject" xml:space="preserve"><value>Отклонить</value></data>
   <data name="Campaign.Book.Draft.Ai.ReviewLabel" xml:space="preserve"><value>Правка ИИ на проверку</value></data>
   <data name="Campaign.Book.Draft.Ai.ReviewHint" xml:space="preserve"><value>Примите или отклоните каждое изменение или все сразу. Alt+Вниз и Alt+Вверх переходят между изменениями; Ctrl+Enter принимает изменение у курсора, Ctrl+Backspace отклоняет. Предпросмотр показывает принятое на сейчас.</value></data>
+  <data name="Campaign.Book.Draft.Tools" xml:space="preserve"><value>Инструменты книги</value></data>
+  <data name="Campaign.Book.Draft.More" xml:space="preserve"><value>Другие действия</value></data>
+  <data name="Campaign.Book.Draft.Collapse" xml:space="preserve"><value>Свернуть</value></data>
+  <data name="Campaign.Book.Draft.Expand" xml:space="preserve"><value>Развернуть</value></data>
+  <data name="Campaign.Book.Draft.CollapseNamed" xml:space="preserve"><value>Свернуть: {0}</value></data>
+  <data name="Campaign.Book.Draft.ExpandNamed" xml:space="preserve"><value>Показать: {0}</value></data>
+  <data name="Campaign.Book.Draft.Preview" xml:space="preserve"><value>Предпросмотр</value></data>
+  <data name="Campaign.Book.Draft.Panel" xml:space="preserve"><value>Панель инструментов</value></data>
+  <data name="Campaign.Book.Draft.Problems" xml:space="preserve"><value>Проблемы</value></data>
+  <data name="Campaign.Book.Draft.NoProblems" xml:space="preserve"><value>Проблем не найдено. Сюда пишут «Разбить на страницы», скачивание и веб-адреса таблицы стилей.</value></data>
+  <data name="Campaign.Book.Draft.BlocksTab" xml:space="preserve"><value>Блоки</value></data>
+  <data name="Campaign.Book.Draft.Ai.PickChapter" xml:space="preserve"><value>Выберите главу, чтобы спросить ИИ о ней; таблица стилей не отправляется.</value></data>
+  <data name="Campaign.Book.Tab.Print" xml:space="preserve"><value>Печать</value></data>
+  <data name="Campaign.Book.Tab.Art" xml:space="preserve"><value>Картинки</value></data>
+  <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>Редактор</value></data>
+  <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>Полировка ИИ</value></data>
 </root>

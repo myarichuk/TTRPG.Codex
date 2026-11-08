@@ -18,142 +18,224 @@
 <dialog id="book-draft-dialog" class="codex-dialog book-draft-dialog" aria-labelledby="book-draft-title" @oncancel="CloseAsync" data-testid="book-draft-dialog">
     @if (view != null)
     {
+        @* Laid out like an IDE: one toolbar; the chapters, the Markdown and the preview side by side, the outer two collapsible to a strip;
+           a panel below with tabs (Ask AI, Problems, Blocks), collapsible too. What is open is remembered in this browser. *@
         <div class="book-draft" data-book-editor>
             <header class="book-draft-bar">
                 <h2 id="book-draft-title" class="h5 mb-0"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> @L["Campaign.Book.Draft.Title", EditionName]</h2>
                 <span class="small-muted" role="status" aria-live="polite" data-testid="book-draft-save-state">@SaveText</span>
                 <span class="flex-grow-1"></span>
-                <label class="book-draft-theme">
-                    <span>@L["Campaign.Book.Draft.Theme"]</span>
-                    <select class="form-select form-select-sm" value="@view.Theme" @onchange="ThemeAsync" disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-theme">
-                        @foreach (var theme in BookDraftThemes.All)
+                <div class="book-draft-tools" role="toolbar" aria-label="@L["Campaign.Book.Draft.Tools"]">
+                    <label class="book-draft-theme">
+                        <span>@L["Campaign.Book.Draft.Theme"]</span>
+                        <select class="form-select form-select-sm" value="@view.Theme" @onchange="ThemeAsync" disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-theme">
+                            @foreach (var theme in BookDraftThemes.All)
+                            {
+                                <option value="@theme.Id">@L["Campaign.Book.Draft.Theme." + theme.Id]</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="book-draft-homebrewery" title="@L["Campaign.Book.Draft.Homebrewery.Hint"]">
+                        <input type="checkbox" class="form-check-input" checked="@view.Homebrewery" @onchange="HomebreweryAsync" disabled="@(working || state == SaveState.Conflict)"
+                               data-testid="book-draft-homebrewery" />
+                        <span>@L["Campaign.Book.Draft.Homebrewery"]</span>
+                    </label>
+                    <span class="book-draft-sep" aria-hidden="true"></span>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="FitAsync" Disabled="@(working || printing || state == SaveState.Conflict)"
+                                 title="@L["Campaign.Book.Draft.FitHint"]" data-testid="book-draft-fit">
+                        <LucideIcon IconName="layers" Size="14" /> @(fitting ? L["Campaign.Book.Draft.Fitting"] : L["Campaign.Book.Draft.Fit"])
+                    </CodexButton>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="DownloadAsync" Disabled="@printing" data-testid="book-draft-download">
+                        <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
+                    </CodexButton>
+                    <div class="book-draft-more">
+                        <button type="button" class="cx-btn cx-etched cx-sm" @onclick="() => moreOpen = !moreOpen" aria-haspopup="menu" aria-expanded="@(moreOpen ? "true" : "false")"
+                                title="@L["Campaign.Book.Draft.More"]" aria-label="@L["Campaign.Book.Draft.More"]" data-testid="book-draft-more"><LucideIcon IconName="more-horizontal" Size="14" /></button>
+                        @if (moreOpen)
                         {
-                            <option value="@theme.Id">@L["Campaign.Book.Draft.Theme." + theme.Id]</option>
+                            <div class="book-draft-menu" role="menu" @onkeydown="@(e => { if (e.Key == "Escape") moreOpen = false; })">
+                                <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="StartOverAsync" disabled="@AiBusy" data-testid="book-draft-start-over">
+                                    <LucideIcon IconName="rotate-ccw" Size="14" /> @L["Campaign.Book.Draft.StartOver"]
+                                </button>
+                            </div>
                         }
-                    </select>
-                </label>
-                <label class="book-draft-homebrewery" title="@L["Campaign.Book.Draft.Homebrewery.Hint"]">
-                    <input type="checkbox" class="form-check-input" checked="@view.Homebrewery" @onchange="HomebreweryAsync" disabled="@(working || state == SaveState.Conflict)"
-                           data-testid="book-draft-homebrewery" />
-                    <span>@L["Campaign.Book.Draft.Homebrewery"]</span>
-                </label>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="FitAsync" Disabled="@(working || printing || state == SaveState.Conflict)"
-                             title="@L["Campaign.Book.Draft.FitHint"]" data-testid="book-draft-fit">
-                    <LucideIcon IconName="layers" Size="14" /> @(fitting ? L["Campaign.Book.Draft.Fitting"] : L["Campaign.Book.Draft.Fit"])
-                </CodexButton>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="DownloadAsync" Disabled="@printing" data-testid="book-draft-download">
-                    <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
-                </CodexButton>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="StartOverAsync" Disabled="@AiBusy" data-testid="book-draft-start-over">
-                    <LucideIcon IconName="rotate-ccw" Size="14" /> @L["Campaign.Book.Draft.StartOver"]
-                </CodexButton>
-                <CodexButton Small="true" OnClick="CloseAsync" data-testid="book-draft-close">@L["Common.Close"]</CodexButton>
+                    </div>
+                </div>
+                <button type="button" class="book-draft-close" @onclick="CloseAsync" title="@L["Common.Close"]" aria-label="@L["Common.Close"]" data-testid="book-draft-close"><LucideIcon IconName="x" Size="18" /></button>
             </header>
             @if (message != null)
             {
-                <div class="field-error px-3" role="alert" data-testid="book-draft-error">@message</div>
+                <div class="field-error book-draft-infobar" role="alert" data-testid="book-draft-error">@message</div>
             }
-            <div class="book-draft-report px-3" role="status" aria-live="polite" data-testid="book-draft-fit-report">
-                @if (fitReport is { } fitted)
-                {
-                    <div>@(fitted.Chapters == 0 && fitted.Result == BookDraftSave.Saved ? L["Campaign.Book.Draft.Fit.Nothing"] : L["Campaign.Book.Draft.Fit.Done", fitted.Breaks, fitted.Chapters])</div>
-                    @if (fitted.Overflow.Count > 0)
-                    {
-                        <div class="field-error" data-testid="book-draft-fit-too-tall">
-                            @L["Campaign.Book.Draft.Fit.TooTall"]
-                            <ul class="mb-0 ps-3">
-                                @foreach (var o in fitted.Overflow.Take(12))
-                                {
-                                    <li>@Item(o)</li>
-                                }
-                            </ul>
-                        </div>
-                    }
-                    @if (fitted.Unplaced.Count > 0)
-                    {
-                        <div class="small-muted" data-testid="book-draft-fit-unplaced">
-                            @L["Campaign.Book.Draft.Fit.Unplaced"]
-                            <ul class="mb-0 ps-3">
-                                @foreach (var o in fitted.Unplaced.Take(12))
-                                {
-                                    <li>@Item(o)</li>
-                                }
-                            </ul>
-                        </div>
-                    }
-                }
-                @if (printReport != null)
-                {
-                    <div class="field-error" data-testid="book-draft-print-overflow">@printReport</div>
-                }
-            </div>
             @if (confirmStartOver)
             {
-                <div class="book-draft-notice" role="alertdialog" aria-labelledby="book-draft-start-over-q">
+                <div class="book-draft-notice book-draft-infobar" role="alertdialog" aria-labelledby="book-draft-start-over-q">
                     <span id="book-draft-start-over-q">@L["Campaign.Book.Draft.StartOverAsk"]</span>
                     <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="StartOverConfirmedAsync" data-testid="book-draft-start-over-yes">@L["Campaign.Book.Draft.StartOverYes"]</CodexButton>
                     <CodexButton Small="true" OnClick="() => confirmStartOver = false">@L["Common.Cancel"]</CodexButton>
                 </div>
             }
-            <div class="book-draft-main">
-                <nav class="book-draft-chapters" aria-label="@L["Campaign.Book.Draft.Chapters"]" data-testid="book-draft-chapters">
-                    <ul class="list-unstyled mb-0">
-                        @foreach (var chapter in view.Chapters)
-                        {
+            <div class="book-draft-main @(chaptersOpen ? null : "chapters-closed") @(previewOpen ? null : "preview-closed")">
+                @* ---- Chapters ---- *@
+                @if (chaptersOpen)
+                {
+                    <nav class="book-draft-pane book-draft-chapters" aria-label="@L["Campaign.Book.Draft.Chapters"]" data-testid="book-draft-chapters">
+                        <div class="book-draft-pane-head">
+                            <span>@L["Campaign.Book.Draft.Chapters"]</span>
+                            <button type="button" class="book-draft-pane-btn" @onclick="() => TogglePaneAsync(Pane.Chapters)" aria-expanded="true"
+                                    title="@L["Campaign.Book.Draft.Collapse"]" aria-label="@L["Campaign.Book.Draft.CollapseNamed", L["Campaign.Book.Draft.Chapters"]]" data-testid="book-draft-pane-chapters-toggle">
+                                <LucideIcon IconName="panel-left-close" Size="14" />
+                            </button>
+                        </div>
+                        <ul class="list-unstyled mb-0 book-draft-pane-body">
+                            @foreach (var chapter in view.Chapters)
+                            {
+                                <li>
+                                    <button type="button" class="book-draft-chapter @(current == chapter.Section ? "active" : null)" aria-current="@(current == chapter.Section ? "true" : null)"
+                                            @onclick="() => ShowAsync(chapter.Section)" disabled="@AiBusy" data-testid="book-draft-chapter" data-section="@chapter.Section">
+                                        <LucideIcon IconName="file-text" Size="14" />
+                                        <bdi dir="auto">@Title(chapter)</bdi>
+                                        @if (chapter.Stale || chapter.Gone)
+                                        {
+                                            <span class="badge book-draft-badge-stale" title="@L["Campaign.Book.Draft.Stale"]">@L["Campaign.Book.Draft.Badge.Stale"]</span>
+                                        }
+                                        else if (chapter.Edited)
+                                        {
+                                            <span class="badge book-draft-badge-edited">@L["Campaign.Book.Draft.Badge.Edited"]</span>
+                                        }
+                                    </button>
+                                </li>
+                            }
                             <li>
-                                <button type="button" class="book-draft-chapter @(current == chapter.Section ? "active" : null)" aria-current="@(current == chapter.Section ? "true" : null)"
-                                        @onclick="() => ShowAsync(chapter.Section)" disabled="@AiBusy" data-testid="book-draft-chapter" data-section="@chapter.Section">
-                                    <bdi dir="auto">@Title(chapter)</bdi>
-                                    @if (chapter.Stale || chapter.Gone)
-                                    {
-                                        <span class="badge book-draft-badge-stale" title="@L["Campaign.Book.Draft.Stale"]">@L["Campaign.Book.Draft.Badge.Stale"]</span>
-                                    }
-                                    else if (chapter.Edited)
-                                    {
-                                        <span class="badge book-draft-badge-edited">@L["Campaign.Book.Draft.Badge.Edited"]</span>
-                                    }
+                                <button type="button" class="book-draft-chapter @(current == null ? "active" : null)" aria-current="@(current == null ? "true" : null)" @onclick="() => ShowAsync(null)" disabled="@AiBusy" data-testid="book-draft-css">
+                                    <LucideIcon IconName="palette" Size="14" /> <bdi>@L["Campaign.Book.Draft.Stylesheet"]</bdi>
                                 </button>
                             </li>
+                        </ul>
+                    </nav>
+                }
+                else
+                {
+                    <button type="button" class="book-draft-strip" @onclick="() => TogglePaneAsync(Pane.Chapters)" aria-expanded="false"
+                            aria-label="@L["Campaign.Book.Draft.ExpandNamed", L["Campaign.Book.Draft.Chapters"]]" data-testid="book-draft-pane-chapters-toggle">
+                        <LucideIcon IconName="panel-left-open" Size="14" /> <span>@L["Campaign.Book.Draft.Chapters"]</span>
+                    </button>
+                }
+
+                @* ---- The Markdown (or the stylesheet) ---- *@
+                <section class="book-draft-pane book-draft-edit" aria-labelledby="book-draft-edit-title">
+                    <div class="book-draft-pane-head">
+                        <span id="book-draft-edit-title"><LucideIcon IconName="@(Current == null ? "palette" : "file-text")" Size="14" /> <bdi dir="auto">@(Current is { } open ? Title(open) : L["Campaign.Book.Draft.Stylesheet"])</bdi></span>
+                        @if (Current is { } c && (c.Stale || c.Gone))
+                        {
+                            <span class="badge book-draft-badge-stale">@L["Campaign.Book.Draft.Badge.Stale"]</span>
                         }
-                        <li>
-                            <button type="button" class="book-draft-chapter @(current == null ? "active" : null)" aria-current="@(current == null ? "true" : null)" @onclick="() => ShowAsync(null)" disabled="@AiBusy" data-testid="book-draft-css">
-                                <LucideIcon IconName="palette" Size="14" /> @L["Campaign.Book.Draft.Stylesheet"]
+                        else if (Current is { Edited: true })
+                        {
+                            <span class="badge book-draft-badge-edited">@L["Campaign.Book.Draft.Badge.Edited"]</span>
+                        }
+                        <span class="flex-grow-1"></span>
+                        @if (Current is { CanUndo: true } undoable)
+                        {
+                            <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => UndoAsync(undoable.Section)" disabled="@working" data-testid="book-draft-undo">@L["Campaign.Book.Draft.Undo"]</button>
+                        }
+                    </div>
+                    <div class="book-draft-pane-body book-draft-edit-body">
+                        @if (Current is { } shown)
+                        {
+                            @if (shown.Stale)
+                            {
+                                <div class="book-draft-notice" role="status" data-testid="book-draft-stale">
+                                    <div>
+                                        <strong>@L["Campaign.Book.Draft.Stale"]</strong>
+                                        @if (shown.Changed.Count > 0)
+                                        {
+                                            <span class="small-muted"> @L["Campaign.Book.Draft.StaleEntries", string.Join(", ", shown.Changed)]</span>
+                                        }
+                                        <div class="small-muted">@L["Campaign.Book.Draft.StaleHint"]</div>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => RegenerateAsync(shown.Section)" Disabled="@working" data-testid="book-draft-regenerate">
+                                            <LucideIcon IconName="refresh-cw" Size="14" /> @L["Campaign.Book.Draft.Regenerate"]
+                                        </CodexButton>
+                                        <CodexButton Small="true" OnClick="() => KeepAsync(shown.Section)" Disabled="@working" data-testid="book-draft-keep">@L["Campaign.Book.Draft.Keep"]</CodexButton>
+                                    </div>
+                                </div>
+                            }
+                            else if (shown.Gone)
+                            {
+                                <div class="book-draft-notice" role="status" data-testid="book-draft-gone">@L["Campaign.Book.Draft.Gone"]</div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="small-muted px-1 pb-1">@L["Campaign.Book.Draft.StylesheetHint"]</div>
+                            <div class="small px-1 pb-1" role="status" aria-live="polite" data-testid="book-draft-web">
+                                @if (fetching > 0)
+                                {
+                                    <span class="small-muted">@L["Campaign.Book.Draft.Web.Fetching"]</span>
+                                }
+                                else if (webReport is { Kept: > 0 } kept)
+                                {
+                                    <span class="small-muted">@L["Campaign.Book.Draft.Web.Kept", kept.Kept, Megabytes(kept.KeptBytes)]</span>
+                                }
+                            </div>
+                        }
+                        @* The editor's own box: the review view is put beside the code by the script, never among Blazor's elements. *@
+                        <div class="book-draft-codebox"><div class="book-draft-code" @ref="host" data-testid="book-draft-code"></div></div>
+                    </div>
+                </section>
+
+                @* ---- The preview. Collapsed, it is still drawn (off the screen): the reports measure it. ---- *@
+                @if (!previewOpen)
+                {
+                    <button type="button" class="book-draft-strip" @onclick="() => TogglePaneAsync(Pane.Preview)" aria-expanded="false"
+                            aria-label="@L["Campaign.Book.Draft.ExpandNamed", L["Campaign.Book.Draft.Preview"]]" data-testid="book-draft-pane-preview-toggle">
+                        <LucideIcon IconName="panel-right-open" Size="14" /> <span>@L["Campaign.Book.Draft.Preview"]</span>
+                    </button>
+                }
+                <section class="book-draft-pane book-draft-preview @(previewOpen ? null : "offstage")" aria-labelledby="book-draft-preview-title" aria-hidden="@(previewOpen ? null : "true")">
+                    <div class="book-draft-pane-head">
+                        <span id="book-draft-preview-title"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.Book.Draft.Preview"]</span>
+                        <span class="flex-grow-1"></span>
+                        <button type="button" class="book-draft-pane-btn" @onclick="() => TogglePaneAsync(Pane.Preview)" aria-expanded="true"
+                                title="@L["Campaign.Book.Draft.Collapse"]" aria-label="@L["Campaign.Book.Draft.CollapseNamed", L["Campaign.Book.Draft.Preview"]]" data-testid="@(previewOpen ? "book-draft-pane-preview-toggle" : null)">
+                            <LucideIcon IconName="panel-right-close" Size="14" />
+                        </button>
+                    </div>
+                    <div class="field-error small px-2" data-overflow hidden data-testid="book-draft-overflow"></div>
+                    <div class="small-muted small px-2" data-run-on hidden data-testid="book-draft-run-on"></div>
+                    <iframe class="book-draft-frame" @ref="frame" sandbox="allow-same-origin" title="@L["Campaign.Book.PreviewTitle"]" data-testid="book-draft-preview"></iframe>
+                </section>
+            </div>
+
+            @* ---- The panel: Ask AI, Problems, Blocks ---- *@
+            <section class="book-draft-panel @(panelOpen ? null : "closed")" data-testid="book-draft-dock">
+                <div class="book-draft-panel-tabs">
+                    <div class="cx-tabs" role="tablist" aria-label="@L["Campaign.Book.Draft.Panel"]" @onkeydown="PanelKeyAsync">
+                        @foreach (var (tab, icon, label) in PanelTabs)
+                        {
+                            var selected = panelOpen && panelTab == tab;
+                            <button type="button" role="tab" id="@("book-draft-tab-" + tab)" class="cx-tab" aria-selected="@(selected ? "true" : "false")" aria-controls="@("book-draft-tabpanel-" + tab)"
+                                    tabindex="@(panelTab == tab ? 0 : -1)" @onclick="() => ShowTabAsync(tab)" data-testid="@("book-draft-tab-" + tab)">
+                                <LucideIcon IconName="@icon" Size="14" /> @label
+                                @if (tab == "problems" && ProblemCount > 0)
+                                {
+                                    <span class="cx-tab-badge" data-testid="book-draft-problems-count">@ProblemCount</span>
+                                }
                             </button>
-                        </li>
-                    </ul>
-                </nav>
-                <div class="book-draft-edit">
-                    @if (Current is { } shown)
+                        }
+                    </div>
+                    <span class="flex-grow-1"></span>
+                    <button type="button" class="book-draft-pane-btn" @onclick="TogglePanelAsync" aria-expanded="@(panelOpen ? "true" : "false")"
+                            title="@(panelOpen ? L["Campaign.Book.Draft.Collapse"] : L["Campaign.Book.Draft.Expand"])" aria-label="@L[panelOpen ? "Campaign.Book.Draft.CollapseNamed" : "Campaign.Book.Draft.ExpandNamed", L["Campaign.Book.Draft.Panel"]]" data-testid="book-draft-panel-toggle">
+                        <LucideIcon IconName="@(panelOpen ? "chevron-down" : "chevron-up")" Size="14" />
+                    </button>
+                </div>
+
+                <div id="book-draft-tabpanel-ai" role="tabpanel" aria-labelledby="book-draft-tab-ai" class="book-draft-panel-body" hidden="@(!panelOpen || panelTab != "ai")">
+                    @if (Current is { } shownForAi)
                     {
-                        @if (shown.Stale)
-                        {
-                            <div class="book-draft-notice" role="status" data-testid="book-draft-stale">
-                                <div>
-                                    <strong>@L["Campaign.Book.Draft.Stale"]</strong>
-                                    @if (shown.Changed.Count > 0)
-                                    {
-                                        <span class="small-muted"> @L["Campaign.Book.Draft.StaleEntries", string.Join(", ", shown.Changed)]</span>
-                                    }
-                                    <div class="small-muted">@L["Campaign.Book.Draft.StaleHint"]</div>
-                                </div>
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => RegenerateAsync(shown.Section)" Disabled="@working" data-testid="book-draft-regenerate">
-                                        <LucideIcon IconName="refresh-cw" Size="14" /> @L["Campaign.Book.Draft.Regenerate"]
-                                    </CodexButton>
-                                    <CodexButton Small="true" OnClick="() => KeepAsync(shown.Section)" Disabled="@working" data-testid="book-draft-keep">@L["Campaign.Book.Draft.Keep"]</CodexButton>
-                                </div>
-                            </div>
-                        }
-                        else if (shown.Gone)
-                        {
-                            <div class="book-draft-notice" role="status" data-testid="book-draft-gone">@L["Campaign.Book.Draft.Gone"]</div>
-                        }
-                        @if (shown.CanUndo)
-                        {
-                            <div class="small px-1 pb-1">
-                                <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => UndoAsync(shown.Section)" disabled="@working" data-testid="book-draft-undo">@L["Campaign.Book.Draft.Undo"]</button>
-                            </div>
-                        }
                         @* AI edits (docs/BOOK_EXPORT.md 41.4): the selection, or the chapter, sent with its secrets, pictures and breaks kept back; the
                            cost shown before anything is sent; the reply reviewed change by change, and nothing saved until it is accepted. *@
                         <section class="book-draft-ai" aria-labelledby="book-draft-ai-title" data-testid="book-draft-ai">
@@ -212,19 +294,19 @@
                             }
                             else
                             {
-                                <div class="d-flex gap-1 flex-wrap align-items-center">
-                                    <span id="book-draft-ai-title" class="small fw-semibold"><LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Book.Draft.Ai.Title"]</span>
+                                <div class="book-draft-ai-row">
+                                    <span id="book-draft-ai-title" class="visually-hidden">@L["Campaign.Book.Draft.Ai.Title"]</span>
                                     @foreach (var preset in BookEditPrompts.Presets.Keys)
                                     {
                                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiPrepareAsync(preset))" Disabled="@(working || state == SaveState.Conflict)"
                                                      title="@L["Campaign.Book.Draft.Ai.Preset." + preset + ".Hint"]" data-testid="@("book-draft-ai-" + preset)">@L["Campaign.Book.Draft.Ai.Preset." + preset]</CodexButton>
                                     }
-                                </div>
-                                <div class="d-flex gap-1 mt-1">
                                     <label for="book-draft-ai-ask" class="visually-hidden">@L["Campaign.Book.Draft.Ai.AskLabel"]</label>
-                                    <input id="book-draft-ai-ask" class="form-control form-control-sm" maxlength="@BookDraftEdits.MaxAskChars" placeholder="@L["Campaign.Book.Draft.Ai.AskPlaceholder"]"
+                                    <input id="book-draft-ai-ask" class="form-control form-control-sm book-draft-ai-input" maxlength="@BookDraftEdits.MaxAskChars" placeholder="@L["Campaign.Book.Draft.Ai.AskPlaceholder"]"
                                            @bind="aiText" @bind:event="oninput" @onkeydown="AiKeyAsync" disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-ai-ask" />
-                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AiPrepareAsync(null)" Disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-ai-go">@L["Campaign.Book.Draft.Ai.Ask"]</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AiPrepareAsync(null)" Disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-ai-go">
+                                        <LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Book.Draft.Ai.Ask"]
+                                    </CodexButton>
                                 </div>
                                 <div class="small-muted">@L["Campaign.Book.Draft.Ai.Hint"]</div>
                             }
@@ -236,45 +318,66 @@
                     }
                     else
                     {
-                        <div class="small-muted px-1 pb-1">@L["Campaign.Book.Draft.StylesheetHint"]</div>
-                        <div class="small px-1 pb-1" role="status" aria-live="polite" data-testid="book-draft-web">
-                            @if (fetching > 0)
-                            {
-                                <span class="small-muted">@L["Campaign.Book.Draft.Web.Fetching"]</span>
-                            }
-                            else if (webReport is { } report)
-                            {
-                                @if (report.Kept > 0)
+                        <div class="small-muted">@L["Campaign.Book.Draft.Ai.PickChapter"]</div>
+                    }
+                </div>
+
+                <div id="book-draft-tabpanel-problems" role="tabpanel" aria-labelledby="book-draft-tab-problems" class="book-draft-panel-body book-draft-report" hidden="@(!panelOpen || panelTab != "problems")"
+                     data-testid="book-draft-fit-report">
+                    @if (ProblemCount == 0 && fitReport == null)
+                    {
+                        <div class="small-muted">@L["Campaign.Book.Draft.NoProblems"]</div>
+                    }
+                    @if (fitReport is { } fitted)
+                    {
+                        <div role="status" aria-live="polite">@(fitted.Chapters == 0 && fitted.Result == BookDraftSave.Saved ? L["Campaign.Book.Draft.Fit.Nothing"] : L["Campaign.Book.Draft.Fit.Done", fitted.Breaks, fitted.Chapters])</div>
+                        @if (fitted.Overflow.Count > 0)
+                        {
+                            <div class="field-error" data-testid="book-draft-fit-too-tall">
+                                @L["Campaign.Book.Draft.Fit.TooTall"]
+                                <ul class="mb-0 ps-3">
+                                    @foreach (var o in fitted.Overflow.Take(12))
+                                    {
+                                        <li>@Item(o)</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                        @if (fitted.Unplaced.Count > 0)
+                        {
+                            <div class="small-muted" data-testid="book-draft-fit-unplaced">
+                                @L["Campaign.Book.Draft.Fit.Unplaced"]
+                                <ul class="mb-0 ps-3">
+                                    @foreach (var o in fitted.Unplaced.Take(12))
+                                    {
+                                        <li>@Item(o)</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    }
+                    @if (printReport != null)
+                    {
+                        <div class="field-error" data-testid="book-draft-print-overflow">@printReport</div>
+                    }
+                    @if (webReport is { Failed.Count: > 0 } failedWeb)
+                    {
+                        <div class="field-error" data-testid="book-draft-web-failed">
+                            @L["Campaign.Book.Draft.Web.Failed", failedWeb.Failed.Count]
+                            <ul class="mb-0 ps-3">
+                                @foreach (var failure in failedWeb.Failed.Take(8))
                                 {
-                                    <span class="small-muted">@L["Campaign.Book.Draft.Web.Kept", report.Kept, Megabytes(report.KeptBytes)]</span>
+                                    <li><bdi dir="ltr" class="text-break">@failure.Url</bdi>: @Problem(failure)</li>
                                 }
-                                @if (report.Failed.Count > 0)
-                                {
-                                    <div class="field-error" data-testid="book-draft-web-failed">
-                                        @L["Campaign.Book.Draft.Web.Failed", report.Failed.Count]
-                                        <ul class="mb-0 ps-3">
-                                            @foreach (var failure in report.Failed.Take(8))
-                                            {
-                                                <li><bdi dir="ltr" class="text-break">@failure.Url</bdi>: @Problem(failure)</li>
-                                            }
-                                        </ul>
-                                    </div>
-                                }
-                            }
+                            </ul>
                         </div>
                     }
-                    <div class="book-draft-code" @ref="host" data-testid="book-draft-code"></div>
-                    <details class="small mt-1">
-                        <summary>@L["Campaign.Book.Draft.Blocks"]</summary>
-                        <p class="small-muted mb-0">@L["Campaign.Book.Draft.BlocksHint"]</p>
-                    </details>
                 </div>
-                <div class="book-draft-preview">
-                    <div class="field-error small px-1" data-overflow hidden data-testid="book-draft-overflow"></div>
-                    <div class="small-muted small px-1" data-run-on hidden data-testid="book-draft-run-on"></div>
-                    <iframe class="book-draft-frame" @ref="frame" sandbox="allow-same-origin" title="@L["Campaign.Book.PreviewTitle"]" data-testid="book-draft-preview"></iframe>
+
+                <div id="book-draft-tabpanel-blocks" role="tabpanel" aria-labelledby="book-draft-tab-blocks" class="book-draft-panel-body" hidden="@(!panelOpen || panelTab != "blocks")">
+                    <p class="small mb-0">@L["Campaign.Book.Draft.BlocksHint"]</p>
                 </div>
-            </div>
+            </section>
         </div>
     }
 </dialog>
@@ -384,6 +487,12 @@
     {
         if (!openRequested || view == null) return;
         openRequested = false;
+        if (!layoutRead)
+        {
+            await ReadLayoutAsync();
+            StateHasChanged();
+        }
+
         await JS.InvokeVoidAsync("codex.guardModal", "book-draft-dialog");
         await JS.InvokeVoidAsync("codex.showModal", "book-draft-dialog");
         try
@@ -578,6 +687,7 @@
             var report = await Webs.RefreshAsync(Access, edition, language, css, closing.Token);
             if (report == null || view == null) return;
             webReport = report;
+            if (report.Failed.Count > 0) Reveal("problems");
             // Nothing fetched or let go: the preview already has these copies (the save restyled it with them).
             if (!report.Changed) return;
             web = await Drafts.WebAsync(Access, edition, language);
@@ -707,6 +817,7 @@
 
     private async Task StartOverAsync()
     {
+        moreOpen = false;
         await FlushAsync();
         confirmStartOver = true;
     }
@@ -761,6 +872,7 @@
             else if (report.Result == BookDraftSave.TooLarge) message = L["Campaign.Book.Draft.TooLarge"];
             else if (report.Result != BookDraftSave.Saved) message = L["Campaign.Book.Draft.ActionFailed"];
             fitReport = report;
+            Reveal("problems");
             if (report.Chapters > 0) await RefreshAsync(push: true);
         }
         catch (BookPdfTimeoutException)
@@ -810,6 +922,7 @@
             else if (BookEndpoints.ReadOverflowHeader(result.Overflow) is { Count: > 0 } cut)
             {
                 // As the print browser laid it out, which the preview may not match line for line.
+                Reveal("problems");
                 printReport = L["Campaign.Book.Draft.PrintedOverflow",
                     string.Join(", ", cut.Select(o => o.Section is { } section ? $"{o.Page} ({TitleOf(section)})" : o.Page.ToString(System.Globalization.CultureInfo.CurrentCulture)))];
             }
@@ -818,6 +931,103 @@
         {
             printing = false;
         }
+    }
+
+    // The layout (docs/BOOK_EXPORT.md 41.17): which panes are open and the panel's tab, remembered in this browser.
+    private enum Pane { Chapters, Preview }
+
+    private const string LayoutKey = "codex.bookEditor.layout";
+    private bool chaptersOpen = true;
+    private bool previewOpen = true;
+    private bool panelOpen = true;
+    private string panelTab = "ai";
+    private bool moreOpen;
+    private bool layoutRead;
+
+    private (string Tab, string Icon, string Label)[] PanelTabs =>
+    [
+        ("ai", "sparkles", L["Campaign.Book.Draft.Ai.Title"]),
+        ("problems", "alert-triangle", L["Campaign.Book.Draft.Problems"]),
+        ("blocks", "blocks", L["Campaign.Book.Draft.BlocksTab"])
+    ];
+
+    /// <summary>What the Problems tab lists: blocks too tall and breaks not placed (Fit pages), pages printed cut off, web addresses not fetched.</summary>
+    private int ProblemCount =>
+        (fitReport?.Overflow.Count ?? 0) + (fitReport?.Unplaced.Count ?? 0) + (printReport != null ? 1 : 0) + (webReport?.Failed.Count ?? 0);
+
+    private async Task ReadLayoutAsync()
+    {
+        if (layoutRead) return;
+        layoutRead = true;
+        try
+        {
+            var saved = await JS.InvokeAsync<string?>("localStorage.getItem", LayoutKey);
+            if (saved?.Split('|') is [var chapters, var preview, var panel, var tab])
+            {
+                chaptersOpen = chapters != "0";
+                previewOpen = preview != "0";
+                panelOpen = panel != "0";
+                if (tab is "ai" or "problems" or "blocks") panelTab = tab;
+            }
+        }
+        catch (JSException)
+        {
+            // Storage refused (a private window): the default layout.
+        }
+    }
+
+    private async Task SaveLayoutAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", LayoutKey, $"{(chaptersOpen ? 1 : 0)}|{(previewOpen ? 1 : 0)}|{(panelOpen ? 1 : 0)}|{panelTab}");
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    private Task TogglePaneAsync(Pane pane)
+    {
+        if (pane == Pane.Chapters) chaptersOpen = !chaptersOpen;
+        else previewOpen = !previewOpen;
+        return SaveLayoutAsync();
+    }
+
+    private Task TogglePanelAsync()
+    {
+        panelOpen = !panelOpen;
+        return SaveLayoutAsync();
+    }
+
+    private Task ShowTabAsync(string tab)
+    {
+        // A second click on the open tab folds the panel, as an IDE's does.
+        if (panelOpen && panelTab == tab) panelOpen = false;
+        else (panelOpen, panelTab) = (true, tab);
+        return SaveLayoutAsync();
+    }
+
+    /// <summary>Opens the panel on a tab because something there needs the GM (a report, the review); not remembered as their choice.</summary>
+    private void Reveal(string tab) => (panelOpen, panelTab) = (true, tab);
+
+    // Left and right move between the panel's tabs, Home and End to the first and last.
+    private async Task PanelKeyAsync(KeyboardEventArgs e)
+    {
+        var tabs = PanelTabs.Select(t => t.Tab).ToList();
+        var at = tabs.IndexOf(panelTab);
+        var next = e.Key switch
+        {
+            "ArrowRight" => (at + 1) % tabs.Count,
+            "ArrowLeft" => (at + tabs.Count - 1) % tabs.Count,
+            "Home" => 0,
+            "End" => tabs.Count - 1,
+            _ => -1
+        };
+        if (next < 0) return;
+        (panelOpen, panelTab) = (true, tabs[next]);
+        await SaveLayoutAsync();
+        await JS.InvokeVoidAsync("codex.focusById", "book-draft-tab-" + panelTab);
     }
 
     // AI edits: what is about to be sent (after the pre-flight), the call under way, the review open, and what the last one said.
@@ -896,6 +1106,7 @@
             }
 
             await AiLockAsync(true);
+            Reveal("ai");
             aiPending = new AiPending(selection, chapter.Version, ask);
             aiPreview = preview;
         }
