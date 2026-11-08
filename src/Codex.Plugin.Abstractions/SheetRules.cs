@@ -290,12 +290,13 @@ public class InventoryRules
 /// <summary>How ability scores are generated and adjusted.</summary>
 public class AttributeRules
 {
-    /// <summary>Methods a player may choose from: "point-buy", "standard-array", "manual". The DM can always use manual.</summary>
+    /// <summary>Methods a player may choose from: "point-buy", "standard-array", "manual". The DM can always use "manual" (typed in,
+    /// capped at <see cref="Max"/>) and "printed" (a stat block's scores, as the block prints them: no cap); imported creatures get "printed".</summary>
     public List<string> Methods { get; set; } = new() { "manual" };
 
     public string Default { get; set; } = "manual";
 
-    /// <summary>Upper bound on a final score (base plus bonuses).</summary>
+    /// <summary>Upper bound on a final score (base plus bonuses), except on a "printed" sheet.</summary>
     public int? Max { get; set; }
 
     public PointBuyRules? PointBuy { get; set; }

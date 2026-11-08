@@ -94,10 +94,85 @@ public class ActorSheetSyncTests
         Assert.Equal(7L, actor.Sheet["HP"]);
         Assert.Equal(15L, actor.Sheet["armorClass"]);
         // Scores as the stat block prints them: the sheet's rules must not hold them to point buy.
-        Assert.Equal("manual", actor.Sheet[SheetRuleEngine.MethodKey]);
+        Assert.Equal(SheetRuleEngine.PrintedMethod, actor.Sheet[SheetRuleEngine.MethodKey]);
         var pool = registry.Hydrate(actor.State).OfType<ResourcePoolComponent>().Single();
         Assert.Equal(7, pool.Get("HP"));
         Assert.Equal(8, registry.Hydrate(actor.State).OfType<AttributesComponent>().Single().Get("str"));
+    }
+
+    private static readonly SystemDefinition Capped = SystemDefinitionLoader.Parse("""
+        id: capped
+        name: Capped
+        attributes:
+          - { key: str, label: Strength, default: 10, modifier: half-minus-five }
+          - { key: dex, label: Dexterity, default: 10, modifier: half-minus-five }
+        sheetRules:
+          attributes:
+            methods: [point-buy, manual]
+            default: point-buy
+            max: 20
+            pointBuy: { budget: 27, min: 8, max: 15 }
+        """);
+
+    private static ActorDefinition PitFiend() => new()
+    {
+        Id = "pit-fiend", SystemId = "capped", Name = "Pit Fiend",
+        Properties = { ["str"] = 26L, ["dex"] = 14L }
+    };
+
+    private static (Dictionary<string, object> Sheet, SheetEvaluation Evaluation) Recomputed(ActorDocument actor)
+    {
+        var sheet = new Dictionary<string, object>(actor.Sheet);
+        return (sheet, new SheetRuleEngine(Capped, NullEntryResolver.Instance).Recompute(sheet));
+    }
+
+    [Fact]
+    public void AStatBlocksScores_AreAsPrinted_AboveTheCapCharactersAreHeldTo()
+    {
+        var creature = new ActorDocument();
+        ActorSheetSync.SeedFromBlueprint(creature, PitFiend(), Capped, Registry());
+
+        var (sheet, evaluation) = Recomputed(creature);
+
+        Assert.Equal(SheetRuleEngine.PrintedMethod, creature.Sheet[SheetRuleEngine.MethodKey]);
+        Assert.Equal(26L, sheet["str"]);
+        Assert.Empty(evaluation.Violations);
+    }
+
+    [Fact]
+    public void ScoresTypedInByHand_StillStopAtTheCap()
+    {
+        var typed = new ActorDocument { Sheet = { [SheetRuleEngine.MethodKey] = "manual", [SheetRuleEngine.BasePrefix + "str"] = 26L } };
+
+        var (_, evaluation) = Recomputed(typed);
+
+        Assert.Equal("str", Assert.Single(evaluation.Violations, v => v.Key == "Actor.Rule.ScoreMax").FieldKey);
+    }
+
+    [Fact]
+    public void RestattingACharacter_TakesTheBlocksScores_NotTheOldBaseAndBonuses()
+    {
+        var character = new ActorDocument
+        {
+            Sheet =
+            {
+                [SheetRuleEngine.MethodKey] = "point-buy",
+                [SheetRuleEngine.BasePrefix + "str"] = 15L,
+                [SheetRuleEngine.BonusPrefix + "str"] = 2L,
+                [SheetRuleEngine.BasePrefix + "dex"] = 12L,
+                ["str"] = 17L,
+                ["notes"] = "kept"
+            }
+        };
+
+        ActorSheetSync.SeedFromBlueprint(character, PitFiend(), Capped, Registry());
+        var (sheet, evaluation) = Recomputed(character);
+
+        Assert.Equal(26L, sheet["str"]);
+        Assert.Equal(14L, sheet["dex"]);
+        Assert.Equal(SheetRuleEngine.PrintedMethod, character.Sheet[SheetRuleEngine.MethodKey]);
+        Assert.Equal("kept", character.Sheet["notes"]);
+        Assert.Empty(evaluation.Violations);
     }
 
     [Fact]

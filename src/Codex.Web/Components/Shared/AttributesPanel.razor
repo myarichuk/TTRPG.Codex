@@ -205,15 +205,18 @@
     [Parameter] public EventCallback<RollRequest> OnRoll { get; set; }
 
     private SheetRules? Rules => Definition.SheetRules;
-    private string AttrMethod => (YamlValues.GetString(Sheet, SheetRuleEngine.MethodKey) ?? Rules?.Attributes?.Default ?? "manual").ToLowerInvariant();
+    private string AttrMethod => (YamlValues.GetString(Sheet, SheetRuleEngine.MethodKey) ?? Rules?.Attributes?.Default ?? SheetRuleEngine.ManualMethod).ToLowerInvariant();
 
-    /// <summary>Players pick from the system's methods; the DM may always set scores by hand.</summary>
+    /// <summary>Players pick from the system's methods; the DM may always set scores by hand or as a stat block prints them (no
+    /// cap: the way to lift it from a creature imported before stat blocks were marked). A sheet's own method always shows, so a
+    /// player looking at a restatted character sees "As printed" and not the first method in the list.</summary>
     private IEnumerable<string> AvailableMethods
     {
         get
         {
-            var methods = Rules?.Attributes?.Methods ?? new List<string> { "manual" };
-            return IsDm ? methods.Append("manual").Distinct() : methods;
+            IEnumerable<string> methods = Rules?.Attributes?.Methods ?? new List<string> { SheetRuleEngine.ManualMethod };
+            if (IsDm) methods = methods.Append(SheetRuleEngine.ManualMethod).Append(SheetRuleEngine.PrintedMethod);
+            return methods.Append(AttrMethod).Distinct();
         }
     }
 
@@ -221,6 +224,7 @@
     {
         "point-buy" => L["Actor.Sheet.MethodPointBuy"],
         "standard-array" => L["Actor.Sheet.MethodStandardArray"],
+        SheetRuleEngine.PrintedMethod => L["Actor.Sheet.MethodPrinted"],
         _ => L["Actor.Sheet.MethodManual"]
     };
 
@@ -242,7 +246,9 @@
 
     private Task SetMethod(string? method)
     {
-        if (string.IsNullOrEmpty(method)) return Task.CompletedTask;
+        // Only a method the picker offers: the value comes from the browser, and "manual" or "printed" from a player would step
+        // around the checks the system holds them to.
+        if (string.IsNullOrEmpty(method) || !AvailableMethods.Contains(method)) return Task.CompletedTask;
         Sheet[SheetRuleEngine.MethodKey] = method;
         if (method == "point-buy" && Rules?.Attributes?.PointBuy is { } pointBuy)
         {

@@ -314,12 +314,17 @@ From revision 1, still needed:
   first" needs in-app removal, which waits for install/reload.
 
 New:
-- **Found by the corpus: creatures break the score cap.** An imported creature's printed scores above 20 (a pit fiend's
-  Strength 26) are reported as "scores can't exceed 20" (`Actor.Rule.ScoreMax`), so under strict enforcement the DM
-  overrides a rule problem on every big creature. `SeedFromBlueprint` sets the manual method to skip character-creation
-  checks, but `sheetRules.attributes.max` applies whatever the method. Open: printed stat blocks should be exempt while a
-  manual character stays capped. The corpus records today's behaviour; fixing it updates `creature-aboleth` and
-  `creature-pit-fiend` only.
+- **Found by the corpus: creatures broke the score cap.** Done 2026-11-08. An imported creature's printed scores above 20 (a
+  pit fiend's Strength 26) were reported as "scores can't exceed 20" (`Actor.Rule.ScoreMax`), so under strict enforcement the
+  DM overrode a rule problem on every big creature: `SeedFromBlueprint` set the manual method, which skips the
+  character-creation checks but not `sheetRules.attributes.max`. A stat block now sets a method of its own, `printed`: no
+  creation checks and no cap (an increase pick's own cap still holds). `manual` stays capped. The DM can pick "As printed"
+  on any sheet, which is how a creature imported before this gets uncapped (stored sheets are not rewritten). Restatting a
+  character had a second fault on the same path: the method was only set when the sheet had none, and the old base scores
+  and background bonuses won over the block's (the rules total base + bonus), so a point-buy character with Strength 15 + 2
+  restatted as a pit fiend still had 17. The block's scores are now the base scores, and its attributes' bonuses are cleared.
+  Still open: a restatted character's increase picks (Ability Score Improvement feats) stay on the sheet and add on top. The corpus diff: the
+  ten creatures say `method=printed`, and the five ScoreMax lines of `creature-aboleth` and `creature-pit-fiend` are gone.
 - **Systems with no content of their own.** Done 2026-11-08: a `setting:` block in `system.yaml` (genre, tone, themes,
   technology, the supernatural, kinds of factions and places, what play looks like, what does not belong), in general
   terms, never a published setting's names (`CONTENT_PACKS.md` says how). The About page shows it; every content prompt

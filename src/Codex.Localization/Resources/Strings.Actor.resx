@@ -203,6 +203,7 @@
   <data name="Actor.Sheet.MethodPointBuy" xml:space="preserve"><value>Point buy</value></data>
   <data name="Actor.Sheet.MethodStandardArray" xml:space="preserve"><value>Standard array</value></data>
   <data name="Actor.Sheet.MethodManual" xml:space="preserve"><value>Manual</value></data>
+  <data name="Actor.Sheet.MethodPrinted" xml:space="preserve"><value>As printed</value></data>
   <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>Point buy: </value></data>
   <data name="Actor.Sheet.PointBuyTail" xml:space="preserve"><value> of {0, plural, one{# point} other{# points}} spent. Scores run from {1} to {2} before bonuses.</value></data>
   <data name="Actor.Sheet.StdArrayLead" xml:space="preserve"><value>Standard array: assign </value></data>

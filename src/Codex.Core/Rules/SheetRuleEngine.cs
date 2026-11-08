@@ -137,6 +137,13 @@ public sealed class SheetEvaluation
 public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResolver resolver)
 {
     public const string MethodKey = "attrMethod";
+
+    /// <summary>The scores are typed in; no point buy or array argues with them, but they stop at <c>sheetRules.attributes.max</c>.</summary>
+    public const string ManualMethod = "manual";
+
+    /// <summary>The scores are a stat block's, as printed (an imported or restatted creature). Like <see cref="ManualMethod"/>, and
+    /// not held to <c>sheetRules.attributes.max</c> either: that cap is character creation's, and a pit fiend prints Strength 26.</summary>
+    public const string PrintedMethod = "printed";
     public const string BasePrefix = "base_";
     public const string BonusPrefix = "bonus_";
 
@@ -369,7 +376,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                 result.Violations.Add(new RuleViolation(MethodKey, $"Standard array: assign exactly {string.Join(", ", rules.StandardArray)}, one score per attribute.", "Actor.Rule.StandardArray", new object?[] { string.Join(", ", rules.StandardArray) }));
             }
         }
-        else if (!rules.Methods.Contains(method, StringComparer.OrdinalIgnoreCase) && method != "manual")
+        else if (!rules.Methods.Contains(method, StringComparer.OrdinalIgnoreCase) && method is not (ManualMethod or PrintedMethod))
         {
             result.Violations.Add(new RuleViolation(MethodKey, $"Unknown attribute method \"{method}\"."));
         }
@@ -401,11 +408,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         // higher cap can't carry an earlier Ability Score Improvement past its own.
         var increases = new Dictionary<string, int>();
         var running = system.Attributes.ToDictionary(a => a.Key, a => bases[a.Key] + bonuses.GetValueOrDefault(a.Key));
+        var scoreMax = method == PrintedMethod ? null : rules.Max;
         foreach (var attribute in system.Attributes)
         {
-            if (rules.Max.HasValue && running[attribute.Key] > rules.Max.Value)
+            if (scoreMax.HasValue && running[attribute.Key] > scoreMax.Value)
             {
-                result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {rules.Max.Value}.", "Actor.Rule.ScoreMax", new object?[] { attribute.Label, rules.Max.Value }));
+                result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {scoreMax.Value}.", "Actor.Rule.ScoreMax", new object?[] { attribute.Label, scoreMax.Value }));
             }
         }
 
@@ -420,7 +428,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                     if (attribute == null) continue;
                     increases[attribute.Key] = increases.GetValueOrDefault(attribute.Key) + amount;
                     running[attribute.Key] += amount;
-                    var cap = grant.Cap ?? rules.Max;
+                    var cap = grant.Cap ?? scoreMax;
                     if (cap.HasValue && running[attribute.Key] > cap.Value && overCap.Add(attribute.Key))
                     {
                         result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {cap.Value} with {grant.Pick.Entry.Name}.", "Actor.Rule.ScoreCap", new object?[] { attribute.Label, cap.Value, grant.Pick.Entry }));

@@ -203,6 +203,7 @@
   <data name="Actor.Sheet.MethodPointBuy" xml:space="preserve"><value>Покупка очков</value></data>
   <data name="Actor.Sheet.MethodStandardArray" xml:space="preserve"><value>Стандартный набор</value></data>
   <data name="Actor.Sheet.MethodManual" xml:space="preserve"><value>Вручную</value></data>
+  <data name="Actor.Sheet.MethodPrinted" xml:space="preserve"><value>Как в описании</value></data>
   <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>Покупка очков: </value></data>
   <data name="Actor.Sheet.PointBuyTail" xml:space="preserve"><value> из {0, plural, one{# очка} few{# очков} many{# очков} other{# очка}} потрачено. Значения идут от {1} до {2} до учёта бонусов.</value></data>
   <data name="Actor.Sheet.StdArrayLead" xml:space="preserve"><value>Стандартный набор: распределите </value></data>

@@ -1127,7 +1127,7 @@ warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Ste
 ## creature-aboleth
 derived initiative = -1
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 18, con: 15, dex: 9, int: 18, str: 21, wis: 15}
 multiclass options=barbarian, bard, cleric, druid, fighter, paladin, sorcerer, warlock, wizard
@@ -1170,12 +1170,11 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 12
 passive passiveInvestigation 14
-violation str Actor.Rule.ScoreMax: Strength: scores can't exceed 20.
 
 ## creature-badger
 derived initiative = 0
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 5, con: 16, dex: 11, int: 2, str: 10, wis: 12}
 allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
@@ -1221,7 +1220,7 @@ passive passiveInvestigation 6
 ## creature-couatl
 derived initiative = 5
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 18, con: 17, dex: 20, int: 18, str: 16, wis: 20}
 multiclass options=barbarian, bard, cleric, druid, fighter, monk, paladin, ranger, rogue, sorcerer, warlock, wizard
@@ -1268,7 +1267,7 @@ passive passiveInvestigation 14
 ## creature-ghoul
 derived initiative = 2
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 6, con: 10, dex: 15, int: 7, str: 13, wis: 10}
 multiclass options=barbarian, fighter, rogue
@@ -1315,7 +1314,7 @@ passive passiveInvestigation 8
 ## creature-gold-dragon-wyrmling
 derived initiative = 2
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 16, con: 17, dex: 14, int: 14, str: 19, wis: 11}
 multiclass options=barbarian, bard, fighter, paladin, rogue, sorcerer, warlock, wizard
@@ -1362,7 +1361,7 @@ passive passiveInvestigation 12
 ## creature-lamia
 derived initiative = 1
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 16, con: 15, dex: 13, int: 14, str: 16, wis: 15}
 multiclass options=barbarian, bard, cleric, druid, fighter, monk, paladin, ranger, rogue, sorcerer, warlock, wizard
@@ -1409,7 +1408,7 @@ passive passiveInvestigation 12
 ## creature-pit-fiend
 derived initiative = 2
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 24, con: 24, dex: 14, int: 22, str: 26, wis: 18}
 multiclass options=barbarian, bard, cleric, druid, fighter, monk, paladin, ranger, rogue, sorcerer, warlock, wizard
@@ -1452,15 +1451,11 @@ skill survival +4
 passive passivePerception 14
 passive passiveInsight 14
 passive passiveInvestigation 16
-violation str Actor.Rule.ScoreMax: Strength: scores can't exceed 20.
-violation con Actor.Rule.ScoreMax: Constitution: scores can't exceed 20.
-violation int Actor.Rule.ScoreMax: Intelligence: scores can't exceed 20.
-violation cha Actor.Rule.ScoreMax: Charisma: scores can't exceed 20.
 
 ## creature-specter
 derived initiative = 2
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 11, con: 11, dex: 14, int: 10, str: 1, wis: 10}
 multiclass options=fighter, rogue
@@ -1507,7 +1502,7 @@ passive passiveInvestigation 10
 ## creature-violet-fungus
 derived initiative = -5
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 1, con: 10, dex: 1, int: 1, str: 3, wis: 3}
 allowed originFeat = 4: alert, magic-initiate, savage-attacker, skilled
@@ -1553,7 +1548,7 @@ passive passiveInvestigation 5
 ## creature-young-copper-dragon
 derived initiative = 1
 derived proficiencyBonus = 2
-attributes method=manual spent=0 budget=null eligible=[]
+attributes method=printed spent=0 budget=null eligible=[]
 attributes bonuses={} increases={}
 attributes totals={cha: 15, con: 17, dex: 12, int: 16, str: 19, wis: 13}
 multiclass options=barbarian, bard, cleric, druid, fighter, paladin, sorcerer, warlock, wizard
