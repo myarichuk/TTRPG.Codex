@@ -19,7 +19,7 @@ public sealed class VaultService(
     IActorRepository actors,
     ISystemCatalog catalog,
     CampaignLibrary library,
-    MentionSources mentionSources,
+    PlayedCharacters played,
     CampaignRuntimeManager runtime,
     ComponentRegistry components,
     CastService cast)
@@ -98,8 +98,7 @@ public sealed class VaultService(
         return await runtime.TrySaveActorAsync(copy, before, access, system);
     }
 
-    /// <summary>Updates the vault character the caller's campaign copy came from, with what of it is theirs: the sheet and history
-    /// as a player reads them (no GM notes, no secret or revealed blocks), mentions turned into plain names.</summary>
+    /// <summary>Updates the vault character the caller's campaign copy came from, with what of it is theirs (<see cref="PlayedCharacters.AsTheirsAsync"/>).</summary>
     public async Task<bool> UpdateVaultAsync(string actorId, CampaignDocument campaign, CampaignAccess access)
     {
         var asPlayer = access.AsPlayer();
@@ -108,10 +107,7 @@ public sealed class VaultService(
             return false;
         }
 
-        var cast = await actors.GetVisibleForCampaignAsync(asPlayer);
-        var mentions = await mentionSources.DirectoryAsync(campaign, asPlayer, cast);
-        var sheet = copy.Sheet.ToDictionary(kv => kv.Key, kv => kv.Value is string text ? mentions.Plain(text) : kv.Value);
-        var biography = copy.Biography == null ? null : mentions.Plain(copy.Biography);
-        return await vault.UpdateFromCopyAsync(sourceId, access.UserId, copy.Name, sheet, biography);
+        var theirs = (await played.AsTheirsAsync(campaign, asPlayer, await actors.GetVisibleForCampaignAsync(asPlayer), [copy])).Single();
+        return await vault.UpdateFromCopyAsync(sourceId, access.UserId, theirs.Name, theirs.Sheet, theirs.Biography);
     }
 }

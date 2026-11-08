@@ -18,13 +18,28 @@ public class VaultBundle
 /// <summary>One campaign's journal entries of the caller's, with the campaign's name to tell them apart.</summary>
 public sealed record JournalExport(string CampaignId, string CampaignName, List<JournalEntryDocument> Entries);
 
+/// <summary>A campaign's book in the personal export (<c>book.json</c>): its drafts, each edition and language there is, and its
+/// pictures' record (the pictures themselves are files beside it).</summary>
+public sealed record BookExport(List<BookDraft> Drafts, BookArtDocument? Art);
+
+/// <summary>The characters someone plays in a campaign they do not run, as that player reads them: what the GM keeps from them (GM
+/// notes, secret blocks) is not there, and mentions of the campaign's things are plain names. Made where mentions are read.</summary>
+public interface IPlayedCharacters
+{
+    /// <param name="player">The player's access to <paramref name="campaign"/>: a player's, as their role there is stored.</param>
+    Task<IReadOnlyList<ActorDocument>> ForExportAsync(CampaignDocument campaign, CampaignAccess player);
+}
+
 /// <summary>
-/// Exporting your own data (docs/SERVER_ACCESS_AND_VAULT.md 9, built in 15), as one zip: the vault (<c>vault.json</c>), the private
-/// journals (<c>journals.json</c>: the campaign export leaves them out, being each player's own), and every campaign the caller is a
-/// GM of as the campaign export makes it, with its pictures. Nothing of anyone else's that the caller could not already export: the
-/// GM role is read from the campaign as stored, and no account data, key or password is in it.
+/// Exporting your own data (docs/SERVER_ACCESS_AND_VAULT.md 9, built in 15 and 16), as one zip: the vault (<c>vault.json</c>), the
+/// characters played in others' campaigns as their player reads them (<c>played.json</c>, the vault's format, with portraits), the
+/// private journals (<c>journals.json</c>: the campaign export leaves them out, being each player's own), and every campaign the
+/// caller is a GM of as the campaign export makes it, with its pictures and its book (drafts and pictures). Nothing of anyone else's
+/// that the caller could not already read: the GM role is read from the campaign as stored, and no account data, key or password is
+/// in it.
 /// </summary>
-public sealed class PersonalExport(RavenDbService db, ICampaignRepository campaigns, IVaultRepository vault, CampaignExportService export)
+public sealed class PersonalExport(RavenDbService db, ICampaignRepository campaigns, IVaultRepository vault, CampaignExportService export,
+    IPlayedCharacters? played = null, IBookDraftRepository? drafts = null, IBookArtRepository? bookArt = null)
 {
     public const string Format = "codex-export/1";
 
@@ -40,8 +55,32 @@ public sealed class PersonalExport(RavenDbService db, ICampaignRepository campai
         var mine = (await campaigns.GetForUserAsync(userId)).ToList();
         var gm = mine.Where(c => CampaignAccessResolver.RoleOf(c, userId) == CampaignRole.DM).OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
-        await JsonAsync(zip, "about.json", new { Format, ExportedAt = DateTime.UtcNow, Username = username, Campaigns = gm.Select(c => c.Name).ToList() }, ct);
+        var playedIn = mine.Where(c => !gm.Contains(c)).OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        var characters = new List<(CampaignDocument Campaign, ActorDocument Character)>();
+        if (played != null)
+        {
+            foreach (var campaign in playedIn)
+            {
+                characters.AddRange((await played.ForExportAsync(campaign, new CampaignAccess(campaign.Id, userId, CampaignRole.Player))).Select(a => (campaign, a)));
+            }
+        }
+
+        await JsonAsync(zip, "about.json", new
+        {
+            Format,
+            ExportedAt = DateTime.UtcNow,
+            Username = username,
+            Campaigns = gm.Select(c => c.Name).ToList(),
+            Played = characters.Select(p => new { Campaign = p.Campaign.Name, Character = p.Character.Name }).ToList()
+        }, ct);
         await JsonAsync(zip, "vault.json", new VaultBundle { Characters = (await vault.GetAllAsync(userId)).ToList() }, ct);
+        // In the vault's format, so it can be imported on its own; importing the whole zip takes only vault.json, so nothing comes twice.
+        await JsonAsync(zip, "played.json", new VaultBundle { Characters = characters.Select(p => p.Character).ToList() }, ct);
+        foreach (var (_, character) in characters)
+        {
+            await ImagesAsync(zip, character.Id, $"played/images/{Safe(character.Id)}", ct, RavenMediaStore.ActorPortrait);
+        }
+
         await JsonAsync(zip, "journals.json", await JournalsAsync(userId, mine), ct);
 
         var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -61,7 +100,31 @@ public sealed class PersonalExport(RavenDbService db, ICampaignRepository campai
             {
                 await ImagesAsync(zip, owner, $"campaigns/{folder}/images/{Safe(owner)}", ct);
             }
+
+            await BookAsync(zip, new CampaignAccess(campaign.Id, userId, CampaignRole.DM), $"campaigns/{folder}", ct);
         }
+    }
+
+    // The book: every draft there is (each edition, each language) and its pictures. The book's copies of web files are left out: they
+    // are other sites' files, fetched again from the addresses the stylesheet names.
+    private async Task BookAsync(ZipArchive zip, CampaignAccess dm, string folder, CancellationToken ct)
+    {
+        var found = new List<BookDraft>();
+        if (drafts != null)
+        {
+            foreach (var edition in new[] { BookDraftDocument.Party, BookDraftDocument.Dm })
+            {
+                foreach (var language in BookDraftDocument.Languages.Order(StringComparer.Ordinal))
+                {
+                    if (await drafts.GetAsync(dm, edition, language) is { } draft) found.Add(draft);
+                }
+            }
+        }
+
+        var art = bookArt == null ? null : await bookArt.GetAsync(dm);
+        if (found.Count == 0 && art == null) return;
+        await JsonAsync(zip, $"{folder}/book.json", new BookExport(found, art), ct);
+        if (art != null) await ImagesAsync(zip, art.Id, $"{folder}/book-images", ct);
     }
 
     /// <summary>Reads a vault file, or the personal export holding one, and adds its characters to the caller's vault as new ones;
@@ -146,11 +209,11 @@ public sealed class PersonalExport(RavenDbService db, ICampaignRepository campai
             .ToList();
     }
 
-    private async Task ImagesAsync(ZipArchive zip, string documentId, string folder, CancellationToken ct)
+    private async Task ImagesAsync(ZipArchive zip, string documentId, string folder, CancellationToken ct, string? only = null)
     {
         using var session = db.Store.OpenAsyncSession();
         if (await session.LoadAsync<object>(documentId) is not { } document) return;
-        foreach (var attachment in session.Advanced.Attachments.GetNames(document))
+        foreach (var attachment in session.Advanced.Attachments.GetNames(document).Where(a => only == null || a.Name == only))
         {
             using var stored = await session.Advanced.Attachments.GetAsync(documentId, attachment.Name);
             if (stored == null) continue;

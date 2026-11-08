@@ -158,7 +158,10 @@ builder.Services.AddSingleton<IActorRepository, ActorRepository>();
 builder.Services.AddSingleton<IVaultRepository, RavenVaultRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
 builder.Services.AddSingleton<AccountDeletion>();
-builder.Services.AddSingleton<PersonalExport>();
+// Scoped: the characters played elsewhere are read with the mentions, which are.
+builder.Services.AddScoped<PersonalExport>();
+builder.Services.AddScoped<PlayedCharacters>();
+builder.Services.AddScoped<IPlayedCharacters>(sp => sp.GetRequiredService<PlayedCharacters>());
 builder.Services.AddSingleton<IServerSettingsStore, RavenServerSettingsStore>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();

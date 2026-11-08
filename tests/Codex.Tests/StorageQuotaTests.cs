@@ -25,6 +25,13 @@ public class StorageQuotaTests : IClassFixture<RavenDbFixture>
 
     private static string User() => "user-" + Guid.NewGuid().ToString("N");
 
+    private async Task<string> AccountAsync(int? limitMb)
+    {
+        var user = new UserDocument { Id = User(), Username = "u" + Guid.NewGuid().ToString("N")[..8], StorageLimitMb = limitMb };
+        await new RavenUserRepository(_db).CreateUserAsync(user);
+        return user.Id;
+    }
+
     private async Task<CampaignDocument> CampaignAsync(string owner, params string[] players)
     {
         var campaign = new CampaignDocument { Id = "campaigns/" + Guid.NewGuid().ToString("N"), OwnerId = owner, Name = "Camp", SystemId = "srd5e" };
@@ -61,7 +68,7 @@ public class StorageQuotaTests : IClassFixture<RavenDbFixture>
         try
         {
             await PutAsync(gm, campaign.Id, RavenMediaStore.CampaignCover, 600 * Kb);
-            Assert.Equal(1024L * 1024, _quota.LimitBytes);
+            Assert.Equal(1024L * 1024, _quota.LimitFor(null));
             Assert.Equal(600 * Kb, await _quota.UsedByAsync(owner));
 
             // The player's portrait would take the owner past 1 MB: refused, and the owner's use says why.
@@ -108,9 +115,51 @@ public class StorageQuotaTests : IClassFixture<RavenDbFixture>
         var campaign = await CampaignAsync(owner);
         await LimitAsync(null);
         await PutAsync(new CampaignAccess(campaign.Id, owner, CampaignRole.DM), campaign.Id, RavenMediaStore.CampaignCover, 5 * 1024 * Kb);
-        Assert.Null(_quota.LimitBytes);
+        Assert.Null(_quota.LimitFor(null));
         Assert.True(await _quota.HasRoomAsync(campaign.Id));
         await _quota.EnsureRoomAsync(campaign.Id, long.MaxValue / 2);
+        await _quota.EnsureRoomBeforeDrawingAsync(campaign.Id);
         Assert.Equal(5L * 1024 * Kb, await _quota.UsedByAsync(owner));
+    }
+
+    [Theory]
+    [InlineData(null, null, null)]
+    [InlineData(null, 5, 5)]
+    [InlineData(0, 5, null)]
+    [InlineData(2, null, 2)]
+    [InlineData(2, 5, 2)]
+    [InlineData(8, 5, 8)]
+    public void AnAccountsOwnLimit_TakesThePlaceOfTheServers_ZeroBeingNone(int? account, int? server, int? expectedMb)
+    {
+        Assert.Equal(expectedMb * 1024L * 1024L, StorageQuota.LimitBytesFor(account, server));
+    }
+
+    [Fact]
+    public async Task AnAccountsOwnLimit_IsKept_WithOrWithoutOneForTheServer_Async()
+    {
+        var (limited, free, bigger) = (await AccountAsync(1), await AccountAsync(0), await AccountAsync(3));
+        var (small, open, large) = (await CampaignAsync(limited), await CampaignAsync(free), await CampaignAsync(bigger));
+        Task Put(string owner, CampaignDocument c, int kb) => PutAsync(new CampaignAccess(c.Id, owner, CampaignRole.DM), c.Id, RavenMediaStore.CampaignCover, kb * Kb);
+
+        // No limit for the server: the account's own 1 MB is still kept, before drawing too.
+        await LimitAsync(null);
+        await Put(limited, small, 1024);
+        Assert.Equal("Service.Storage.Full", (await Assert.ThrowsAsync<LocalizedException>(() => Put(limited, small, 1025))).Key);
+        Assert.Equal("Service.Storage.FullBeforeDrawing", (await Assert.ThrowsAsync<LocalizedException>(() => _quota.EnsureRoomBeforeDrawingAsync(small.Id))).Key);
+
+        await LimitAsync(1);
+        try
+        {
+            // The server's 1 MB: an account with none set aside takes more, one with a larger limit takes up to that.
+            await Put(free, open, 2048);
+            Assert.True(await _quota.HasRoomAsync(open.Id));
+            await Put(bigger, large, 2048);
+            Assert.True(await _quota.HasRoomAsync(large.Id));
+            await Assert.ThrowsAsync<LocalizedException>(() => Put(bigger, large, 3073));
+        }
+        finally
+        {
+            await LimitAsync(null);
+        }
     }
 }

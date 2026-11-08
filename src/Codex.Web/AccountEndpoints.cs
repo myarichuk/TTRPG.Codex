@@ -50,6 +50,45 @@ public static class AccountEndpoints
             return Results.File(file, "application/zip", $"codex-{name}-{DateTime.UtcNow:yyyy-MM-dd}.zip");
         }).RequireAuthorization();
 
+        // Deleting your own account (docs/SERVER_ACCESS_AND_VAULT.md 16): a form post, since only a request can clear the cookie. The
+        // password says it is you (an account that signs in only elsewhere types its name), and every campaign you own goes to the
+        // co-GM picked for it ("pass:<campaign id>").
+        app.MapPost("/account/delete", async (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, IUserRepository users,
+            AccountDeletion deletion, AccountCheck check, IServerSettingsStore settings) =>
+        {
+            try
+            {
+                await antiforgery.ValidateRequestAsync(ctx);
+            }
+            catch (Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException)
+            {
+                return Results.BadRequest("Invalid antiforgery token.");
+            }
+
+            var userId = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null || await users.GetUserByIdAsync(userId) is not { } user) return Results.Redirect("/login");
+            var form = await ctx.Request.ReadFormAsync();
+            if (!OwnDeletion.Confirms(user, form["confirm"].ToString())) return Results.LocalRedirect("/vault?delete=wrong");
+
+            var newOwners = form.Where(f => f.Key.StartsWith(OwnDeletion.PassPrefix, StringComparison.Ordinal))
+                .ToDictionary(f => f.Key[OwnDeletion.PassPrefix.Length..], f => f.Value.ToString(), StringComparer.Ordinal);
+            var result = await deletion.DeleteAsync(userId, null, newOwners);
+            check.Forget(userId);
+            switch (result)
+            {
+                case AccountDeletionResult.Deleted:
+                    await settings.LogAsync(new AdminLogDocument { ByUserId = userId, ByName = user.Username, Action = AdminAction.DeletedOwn, TargetName = user.Username });
+                    await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    return Results.LocalRedirect("/login?deleted=1");
+                case AccountDeletionResult.LastAdmin:
+                    return Results.LocalRedirect("/vault?delete=admin");
+                case AccountDeletionResult.NotFound:
+                    return Results.Redirect("/login");
+                default:
+                    return Results.LocalRedirect("/vault?delete=owners");
+            }
+        }).RequireAuthorization();
+
         app.MapGet("/set-culture", async (string culture, string? returnUrl, HttpContext ctx, IUserRepository users) =>
         {
             var tag = Codex.Localization.SupportedCultures.Normalize(culture);
@@ -202,4 +241,23 @@ public static class AccountEndpoints
             return Results.Redirect(returnUrl ?? "/");
         }).AllowAnonymous();
     }
+}
+
+/// <summary>What deleting your own account asks (docs/SERVER_ACCESS_AND_VAULT.md 16).</summary>
+public static class OwnDeletion
+{
+    /// <summary>The form field naming who takes a campaign: this, then the campaign's id.</summary>
+    public const string PassPrefix = "pass:";
+
+    /// <summary>Whether <paramref name="typed"/> says it is <paramref name="user"/>: their password, or for an account with none (it signs
+    /// in only with another service) their name.</summary>
+    public static bool Confirms(UserDocument user, string? typed)
+    {
+        if (string.IsNullOrEmpty(typed)) return false;
+        if (!HasPassword(user)) return string.Equals(typed.Trim(), user.Username, StringComparison.OrdinalIgnoreCase);
+        var result = new Microsoft.AspNetCore.Identity.PasswordHasher<UserDocument>().VerifyHashedPassword(user, user.PasswordHash, typed);
+        return result is Microsoft.AspNetCore.Identity.PasswordVerificationResult.Success or Microsoft.AspNetCore.Identity.PasswordVerificationResult.SuccessRehashNeeded;
+    }
+
+    public static bool HasPassword(UserDocument user) => !string.IsNullOrEmpty(user.PasswordHash);
 }

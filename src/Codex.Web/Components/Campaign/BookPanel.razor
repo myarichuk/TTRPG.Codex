@@ -91,7 +91,7 @@
             <h4 class="h6">@L["Campaign.Book.Draft.PanelTitle"]</h4>
             <p class="small-muted">@L["Campaign.Book.Draft.PanelHint"]</p>
             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="EditDraftAsync" data-testid="book-draft-open">
-                <LucideIcon IconName="pencil" Size="14" /> @L["Campaign.Book.Draft.Open", edition == "dm" ? L["Campaign.Book.Edition.Dm"] : L["Campaign.Book.Edition.Party"]]
+                <LucideIcon IconName="edit-3" Size="14" /> @L["Campaign.Book.Draft.Open", edition == "dm" ? L["Campaign.Book.Edition.Dm"] : L["Campaign.Book.Edition.Party"]]
             </CodexButton>
         </div>
         <BookDraftEditor @ref="draftEditor" Access="Ctx.Access" BasePath="@Ctx.BasePath" />

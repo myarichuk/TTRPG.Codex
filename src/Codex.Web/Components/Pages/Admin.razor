@@ -68,6 +68,40 @@
     }
 </dialog>
 
+@* One account's storage limit (docs/SERVER_ACCESS_AND_VAULT.md 16): the server's, none, or its own. *@
+<dialog id="account-limit-dialog" class="codex-dialog" aria-labelledby="account-limit-title" data-testid="account-limit-dialog">
+    @if (limiting is { } lu)
+    {
+        <form @onsubmit="SaveLimitAsync" @onsubmit:preventDefault="true">
+            <div class="dialog-body">
+                <h2 id="account-limit-title">@L["Admin.Accounts.Limit.Title", lu.Username]</h2>
+                <fieldset>
+                    <legend class="visually-hidden">@L["Admin.Accounts.Limit.Title", lu.Username]</legend>
+                    <div class="field-check mb-2">
+                        <input id="limit-server" type="radio" class="field-box" name="limit-kind" checked="@(limitKind == LimitKind.Server)" @onchange="() => limitKind = LimitKind.Server" data-testid="limit-server" />
+                        <label for="limit-server">@L["Admin.Accounts.Limit.Server", ServerLimitText]</label>
+                    </div>
+                    <div class="field-check mb-2">
+                        <input id="limit-none" type="radio" class="field-box" name="limit-kind" checked="@(limitKind == LimitKind.None)" @onchange="() => limitKind = LimitKind.None" data-testid="limit-none" />
+                        <label for="limit-none">@L["Admin.Accounts.Limit.None"]</label>
+                    </div>
+                    <div class="field-check mb-2">
+                        <input id="limit-own" type="radio" class="field-box" name="limit-kind" checked="@(limitKind == LimitKind.Own)" @onchange="() => limitKind = LimitKind.Own" data-testid="limit-own" />
+                        <label for="limit-own">@L["Admin.Accounts.Limit.Own"]</label>
+                    </div>
+                    <label for="limit-mb" class="field-label">@L["Admin.Accounts.Limit.Mb"]</label>
+                    <input id="limit-mb" type="number" min="1" max="1000000" step="1" class="field-input" style="max-width: 12rem" @bind="limitMb"
+                           @onfocus="() => limitKind = LimitKind.Own" data-testid="limit-mb" />
+                </fieldset>
+            </div>
+            <div class="dialog-actions">
+                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseLimitAsync">@L["Common.Cancel"]</CodexButton>
+                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Busy="@busy" data-testid="limit-save">@L["Common.Save"]</CodexButton>
+            </div>
+        </form>
+    }
+</dialog>
+
 @if (users == null || settings == null)
 {
     <LoadingSkeleton />
@@ -112,7 +146,11 @@ else
                                        @onchange="e => SetRoleAsync(u, UserRoles.ServerAdmin, e.Value is true)" data-testid="account-admin" />
                             </td>
                             <td class="small-muted">@if (u.CreatedAt is { } at) { <LocalTime Value="at" Format="d MMM yyyy" /> }</td>
-                            <td class="small-muted" data-testid="account-storage">@StorageOf(u)</td>
+                            <td class="small-muted">
+                                <span data-testid="account-storage">@StorageOf(u)</span>
+                                <CodexButton Variant="CodexButtonVariant.Rune" Icon="edit-3" Label="@L["Admin.Accounts.Limit.Change", u.Username]" title="@L["Admin.Accounts.Limit.Change", u.Username]"
+                                             Disabled="@busy" OnClick="() => OpenLimitAsync(u)" data-testid="account-limit" />
+                            </td>
                             <td>
                                 <div class="row-actions">
                                     @switch (u.Status)
@@ -244,6 +282,8 @@ else
         AdminAction.RoleGiven => "Admin.Log.RoleGiven",
         AdminAction.RoleTaken => "Admin.Log.RoleTaken",
         AdminAction.Deleted => "Admin.Log.Deleted",
+        AdminAction.DeletedOwn => "Admin.Log.DeletedOwn",
+        AdminAction.StorageLimitSet => "Admin.Log.StorageLimitSet",
         _ => "Admin.Log.SettingsChanged"
     };
 
@@ -345,8 +385,58 @@ else
     {
         if (storage == null) return L["Admin.Accounts.StorageCounting"];
         var used = StorageQuota.Megabytes(storage.GetValueOrDefault(u.Id));
-        return settings?.StorageLimitMb is { } mb ? L["Admin.Accounts.StorageOf", used, StorageQuota.Megabytes(mb * 1024L * 1024L)] : used;
+        var shown = StorageQuota.LimitBytesFor(u.StorageLimitMb, settings?.StorageLimitMb) is { } limit
+            ? L["Admin.Accounts.StorageOf", used, StorageQuota.Megabytes(limit)]
+            : used;
+        return u.StorageLimitMb == null ? shown : L["Admin.Accounts.StorageOwn", shown];
     }
+
+    private enum LimitKind { Server, None, Own }
+
+    private UserDocument? limiting;
+    private LimitKind limitKind;
+    private int? limitMb;
+
+    private string ServerLimitText => settings?.StorageLimitMb is { } mb ? $"{mb} MB" : L["Admin.Accounts.Limit.NoneShort"];
+
+    private async Task OpenLimitAsync(UserDocument u)
+    {
+        limiting = u;
+        (limitKind, limitMb) = u.StorageLimitMb switch
+        {
+            null => (LimitKind.Server, settings?.StorageLimitMb),
+            0 => (LimitKind.None, settings?.StorageLimitMb),
+            var mb => (LimitKind.Own, mb)
+        };
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", "account-limit-dialog");
+    }
+
+    private Task CloseLimitAsync() => JS.InvokeVoidAsync("codex.closeModal", "account-limit-dialog").AsTask();
+
+    private async Task SaveLimitAsync()
+    {
+        if (limiting is not { } u) return;
+        if (limitKind == LimitKind.Own && limitMb is not > 0)
+        {
+            flash = Flash.Error(L["Admin.Accounts.Limit.NeedsMb"]);
+            return;
+        }
+
+        int? chosen = limitKind switch { LimitKind.Server => null, LimitKind.None => 0, _ => limitMb };
+        await CloseLimitAsync();
+        await RunAsync(async () =>
+        {
+            var before = (await Users.GetUserByIdAsync(u.Id))?.StorageLimitMb;
+            if (await Users.UpdateUserAsync(u.Id, s => s.StorageLimitMb = chosen) == null) return Flash.Error(L["Admin.Accounts.Gone"]);
+            if (before != chosen) await LogAsync(AdminAction.StorageLimitSet, u, $"{LimitLog(before)} → {LimitLog(chosen)}");
+            return Flash.Success(L["Admin.Accounts.Limit.Saved", u.Username]);
+        });
+        limiting = null;
+    }
+
+    // The log's detail is kept as written, like the server's settings changes.
+    private static string LimitLog(int? mb) => mb switch { null => "the server's", 0 => "no limit", var n => $"{n} MB" };
 
     private string NameOf(string userId) => users?.FirstOrDefault(u => u.Id == userId)?.Username ?? userId;
 
@@ -374,6 +464,7 @@ else
             Check.Forget(u.Id);
             if (result == AccountDeletionResult.NotFound) return Flash.Error(L["Admin.Accounts.Gone"]);
             if (result == AccountDeletionResult.StillOwns) return Flash.Error(L["Admin.Accounts.Delete.StillOwns", u.Username]);
+            if (result == AccountDeletionResult.LastAdmin) return Flash.Error(L["Admin.Accounts.LastAdmin"]);
             await LogAsync(AdminAction.Deleted, u);
             return Flash.Success(L["Admin.Accounts.Deleted.Done", u.Username]);
         });

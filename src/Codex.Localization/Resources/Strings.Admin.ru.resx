@@ -118,7 +118,19 @@
   <data name="Admin.Accounts.Storage" xml:space="preserve"><value>Место</value></data>
   <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} из {1}</value></data>
   <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Место на учётную запись, МБ</value></data>
-  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Изображения и файлы: обложки, портреты, иллюстрации, картинки книги и копии веб-файлов книги. Всё в кампании засчитывается её владельцу, кто бы это ни добавил. Оставьте пустым, чтобы не ограничивать.</value></data>
+  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Изображения и файлы: обложки, портреты, иллюстрации, картинки книги и копии веб-файлов книги. Всё в кампании засчитывается её владельцу, кто бы это ни добавил. Оставьте пустым, чтобы не ограничивать. Собственный лимит учётной записи, заданный в её строке выше, заменяет этот.</value></data>
   <data name="Admin.Accounts.StorageCounting" xml:space="preserve"><value>подсчёт…</value></data>
   <data name="Admin.Accounts.Delete.StillOwns" xml:space="preserve"><value>{0} создал кампанию во время удаления. Учётная запись отключена; удалите её ещё раз, чтобы передать и эту кампанию.</value></data>
+  <data name="Admin.Log.DeletedOwn" xml:space="preserve"><value>{0} удалил(а) свою учётную запись</value></data>
+  <data name="Admin.Log.StorageLimitSet" xml:space="preserve"><value>{0} изменил(а) лимит хранилища для {1}</value></data>
+  <data name="Admin.Accounts.StorageOwn" xml:space="preserve"><value>{0} (свой лимит)</value></data>
+  <data name="Admin.Accounts.Limit.Change" xml:space="preserve"><value>Изменить лимит хранилища для {0}</value></data>
+  <data name="Admin.Accounts.Limit.Title" xml:space="preserve"><value>Лимит хранилища для {0}</value></data>
+  <data name="Admin.Accounts.Limit.Server" xml:space="preserve"><value>Как у сервера ({0})</value></data>
+  <data name="Admin.Accounts.Limit.NoneShort" xml:space="preserve"><value>без лимита</value></data>
+  <data name="Admin.Accounts.Limit.None" xml:space="preserve"><value>Без лимита для этой учётной записи</value></data>
+  <data name="Admin.Accounts.Limit.Own" xml:space="preserve"><value>Собственный лимит</value></data>
+  <data name="Admin.Accounts.Limit.Mb" xml:space="preserve"><value>Собственный лимит, в МБ</value></data>
+  <data name="Admin.Accounts.Limit.NeedsMb" xml:space="preserve"><value>Укажите, сколько МБ, или выберите другой вариант.</value></data>
+  <data name="Admin.Accounts.Limit.Saved" xml:space="preserve"><value>Лимит хранилища для {0} сохранён.</value></data>
 </root>

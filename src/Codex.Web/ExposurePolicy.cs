@@ -17,7 +17,9 @@ public static class ExposurePolicy
 
     /// <summary>The pages and endpoints where a visitor can learn whether a password or an invite code is right.</summary>
     public static bool IsGuessable(PathString path) =>
-        path.StartsWithSegments("/login") || path.StartsWithSegments("/register") || path.StartsWithSegments("/campaigns/join");
+        path.StartsWithSegments("/login") || path.StartsWithSegments("/register") || path.StartsWithSegments("/campaigns/join")
+        // Deleting your own account asks for the password, so it is a place to try passwords too.
+        || path.StartsWithSegments("/account/delete");
 
     /// <summary>The rate-limit bucket for a client: its address, or for IPv6 its whole /64, which one subscriber can rotate through freely.</summary>
     public static string ClientKey(IPAddress? address)

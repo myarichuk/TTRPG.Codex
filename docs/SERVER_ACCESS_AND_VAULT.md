@@ -1,6 +1,6 @@
 # Server access, roles and the character vault
 
-Design agreed 2026-11-07. Steps 1 to 6 are built (11 to 15). It covers who may use a server and what for: the first-time setup, server roles and approval,
+Design agreed 2026-11-07. Steps 1 to 6 are built (11 to 15), and what step 6 left (16). It covers who may use a server and what for: the first-time setup, server roles and approval,
 co-GMs, where the server may fetch from, players' own AI keys, and characters that live outside any campaign.
 
 ## 1. What is there today
@@ -300,6 +300,36 @@ Players already bring their own key; this widens what it is for, always built fr
   written to is always counted, even one made a moment ago. Deleting an account checks, last, that it owns no campaign; one made
   meanwhile leaves the account turned off, to be deleted again.
 - **Left**: before drawing, the check is only that some room is left, so a picture larger than what is left is still drawn (and
-  paid for) and then refused; an account cannot delete itself (the admin does); one limit for every account, no per-account override; characters
-  played in someone else's campaign are not in the export (the player copies them to the vault first); the export holds no book
-  drafts.
+  paid for) and then refused. The rest of what was left here is built in 16.
+
+## 16. What step 6 left, as built (2026-11-08)
+
+- **Deleting your own account** (the vault page's "Your data" panel, `POST /account/delete`, `OwnDeletion`). A dialog lists every
+  campaign you own with a co-GM to pick for each, and what goes. **Decided**: a campaign with no co-GM blocks the deletion ("make a
+  player a co-GM, or delete the campaign, first"); it is never handed to an admin who did not choose to take it, and a pick who is
+  not a co-GM as stored now refuses it too (`AccountDeletionResult.NeedsNewOwner`), before anything changes. The password confirms it
+  (an account that signs in only elsewhere types its name); the post is antiforgery-checked and rationed like the sign-in page. The
+  server's only admin cannot delete their account, by either way (`LastAdmin`). On success the account is signed out to the sign-in
+  page, which says it was deleted, and the admin log says who deleted their own account. `AccountDeletion` now hands over first and
+  deletes the account's own things only once it owns nothing: if a campaign appears meanwhile, your own deletion turns the account back
+  on as it was (an admin's still leaves it off, to delete again).
+- **Storage limit per account** (`UserDocument.StorageLimitMb`; the admin page's pencil beside each account's use). Null follows the
+  server's limit, 0 is no limit for that account, a number is its own limit in MB, larger or smaller than the server's. It counts
+  even when the server has none. `StorageQuota` reads the campaign owner's limit on every check (`LimitFor`, `LimitBytesFor`), and the
+  check before drawing is one call (`EnsureRoomBeforeDrawingAsync`) for the art and book drawing. A change goes in the admin log with
+  from what to what. The account column says "(own limit)".
+- **Characters played elsewhere** in the export (`played.json`, the vault's format, with portraits under `played/`; `about.json` names
+  them with their campaigns). Each comes as its player reads it, through `PlayedCharacters`, which taking a copy to the vault now uses
+  too: no GM notes, no secret or revealed blocks, mentions as plain names. `played.json` imports on its own; importing the whole zip
+  takes only `vault.json`, so nothing comes twice.
+- **Books** in the export: each campaign run has `book.json` (every draft, each edition and language, with its chapters, and the
+  pictures' record) and its pictures under `book-images/`. **Decided**: the book's copies of web files are left out: they are other
+  sites' files, fetched again from the addresses the stylesheet names.
+- **Fixed on the way**: the book panel's "open the draft" button asked for an icon the app does not have ("pencil") and drew an
+  empty circle; it uses "edit-3", as every other edit button does. The server's only admin sees why their account stays in the
+  dialog itself, before typing a password.
+- Tests: `AccountDeletionTests` (your own: no co-GM or a wrong pick changes nothing, picked co-GMs take them; the only admin; the
+  confirmation), `StorageQuotaTests` (the limit table; an own limit with and without the server's), `PersonalExportTests` (played
+  characters without the GM's secrets, imported on their own; the book).
+- **Left**: the Russian and Hebrew text added in 15 and 16 was machine-drafted and wants a reader of each; the picture larger than the
+  room left (above).

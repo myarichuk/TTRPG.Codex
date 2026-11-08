@@ -2,7 +2,7 @@ using Codex.Persistence;
 
 namespace Codex.Tests;
 
-/// <summary>Deleting an account (docs/SERVER_ACCESS_AND_VAULT.md 9, built in 15).</summary>
+/// <summary>Deleting an account (docs/SERVER_ACCESS_AND_VAULT.md 9, built in 15), and your own (16).</summary>
 public class AccountDeletionTests : IClassFixture<RavenDbFixture>
 {
     private readonly RavenDbService _db;
@@ -23,9 +23,9 @@ public class AccountDeletionTests : IClassFixture<RavenDbFixture>
         _deletion = new AccountDeletion(_db, _campaigns, _vault, _users);
     }
 
-    private async Task<string> UserAsync()
+    private async Task<string> UserAsync(params string[] roles)
     {
-        var user = new UserDocument { Username = "u" + Guid.NewGuid().ToString("N")[..10], Status = AccountStatus.Approved };
+        var user = new UserDocument { Username = "u" + Guid.NewGuid().ToString("N")[..10], Status = AccountStatus.Approved, Roles = roles.ToList() };
         await _users.CreateUserAsync(user);
         return user.Id;
     }
@@ -135,5 +135,64 @@ public class AccountDeletionTests : IClassFixture<RavenDbFixture>
         Assert.Equal(CampaignRole.DM, taken.Members.Single(m => m.UserId == admin).Role);
 
         await Assert.ThrowsAsync<ArgumentException>(() => _deletion.DeleteAsync(admin, admin));
+    }
+
+    [Fact]
+    public async Task DeletingYourOwn_NeedsACoGmPickedForEveryCampaignYouOwn_OrNothingChanges_Async()
+    {
+        var (me, coGm, player) = (await UserAsync(), await UserAsync(), await UserAsync());
+        var shared = await CampaignAsync(me, (coGm, CampaignRole.DM), (player, CampaignRole.Player));
+        var alone = await CampaignAsync(me, (player, CampaignRole.Player));
+        await _vault.CreateAsync(me, "srd5e", "Mine");
+
+        // A campaign with no co-GM, or a pick who is no co-GM of it, stops it before anything changes: no admin is handed it.
+        Assert.Equal(AccountDeletionResult.NeedsNewOwner, await _deletion.DeleteAsync(me, null, new Dictionary<string, string> { [shared.Id] = coGm }));
+        Assert.Equal(AccountDeletionResult.NeedsNewOwner,
+            await _deletion.DeleteAsync(me, null, new Dictionary<string, string> { [shared.Id] = coGm, [alone.Id] = player }));
+        Assert.Equal(AccountStatus.Approved, (await _users.GetUserByIdAsync(me))!.Status);
+        Assert.Equal((me, me), ((await _campaigns.GetAsync(shared.Id))!.OwnerId, (await _campaigns.GetAsync(alone.Id))!.OwnerId));
+        Assert.Single(await _vault.GetAllAsync(me));
+
+        // Made a co-GM, the player can take the second.
+        await _campaigns.UpdateAsync(alone.Id, c => c.Members.Single(m => m.UserId == player).Role = CampaignRole.DM);
+        Assert.Equal(AccountDeletionResult.Deleted,
+            await _deletion.DeleteAsync(me, null, new Dictionary<string, string> { [shared.Id] = coGm, [alone.Id] = player }));
+        Assert.Equal((coGm, player), ((await _campaigns.GetAsync(shared.Id))!.OwnerId, (await _campaigns.GetAsync(alone.Id))!.OwnerId));
+        Assert.Null(await _users.GetUserByIdAsync(me));
+        Assert.Empty(await _vault.GetAllAsync(me));
+
+        // With no fallback, a hand-over to someone who is no co-GM does nothing.
+        var kept = await CampaignAsync(coGm, (player, CampaignRole.Player));
+        await _campaigns.UpdateAsync(kept.Id, c => AccountDeletion.HandOver(c, coGm, player, null));
+        Assert.Equal(coGm, (await _campaigns.GetAsync(kept.Id))!.OwnerId);
+    }
+
+    [Fact]
+    public async Task TheServersOnlyAdmin_IsNotDeleted_ByAnyone_Async()
+    {
+        var only = await UserAsync(UserRoles.ServerAdmin);
+        var other = await UserAsync();
+        Assert.Equal(AccountDeletionResult.LastAdmin, await _deletion.DeleteAsync(only, null));
+        Assert.Equal(AccountDeletionResult.LastAdmin, await _deletion.DeleteAsync(only, other));
+        Assert.Equal(AccountStatus.Approved, (await _users.GetUserByIdAsync(only))!.Status);
+
+        // With a second admin, either may go.
+        await UserAsync(UserRoles.ServerAdmin);
+        Assert.Equal(AccountDeletionResult.Deleted, await _deletion.DeleteAsync(only, null));
+    }
+
+    [Fact]
+    public void YourOwnDeletion_IsConfirmedByYourPassword_OrYourNameWhenYouHaveNone()
+    {
+        var local = new UserDocument { Username = "Mira" };
+        local.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<UserDocument>().HashPassword(local, "right horse 7");
+        Assert.True(Codex.Web.OwnDeletion.Confirms(local, "right horse 7"));
+        Assert.False(Codex.Web.OwnDeletion.Confirms(local, "Mira"));
+        Assert.False(Codex.Web.OwnDeletion.Confirms(local, ""));
+
+        var external = new UserDocument { Username = "Mira" };
+        Assert.True(Codex.Web.OwnDeletion.Confirms(external, " mira "));
+        Assert.False(Codex.Web.OwnDeletion.Confirms(external, "Miranda"));
+        Assert.False(Codex.Web.OwnDeletion.Confirms(external, null));
     }
 }

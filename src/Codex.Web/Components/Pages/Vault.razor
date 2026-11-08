@@ -15,6 +15,8 @@
 @inject Codex.Web.Services.VaultService VaultService
 @inject ILogger<Vault> Logger
 @inject PersonalExport Export
+@inject AccountDeletion Deletion
+@inject IUserRepository Users
 @implements IDisposable
 
 @if (!string.IsNullOrEmpty(ActorId))
@@ -101,7 +103,74 @@ else
             </label>
         </div>
         <p id="vault-import-hint" class="field-hint mb-0 mt-2">@L["Vault.Data.ImportHint"]</p>
+        @* Deleting your own account (docs/SERVER_ACCESS_AND_VAULT.md 16), beside the download that keeps a copy. *@
+        <div class="mt-3">
+            <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-sm cx-blood" Icon="trash-2" OnClick="OpenDeleteAsync" data-testid="own-delete">@L["Vault.Delete.Open"]</CodexButton>
+        </div>
     </section>
+
+    <dialog id="own-delete-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="own-delete-title" data-testid="own-delete-dialog">
+        @if (deletePlan is { } plan)
+        {
+            var blocked = lastAdmin || plan.Owned.Any(o => o.CoGms.Count == 0);
+            @* A plain post: only a request can sign you out once the account is gone. *@
+            <form method="post" action="/account/delete">
+                <AntiforgeryToken />
+                <div class="dialog-body">
+                    <h2 id="own-delete-title">@L["Vault.Delete.Title"]</h2>
+                    <p>@L["Vault.Delete.Body"]</p>
+                    @if (lastAdmin)
+                    {
+                        <p class="text-danger" data-testid="own-delete-last-admin">@L["Vault.Delete.LastAdminFirst"]</p>
+                    }
+                    @if (plan.Owned.Count > 0)
+                    {
+                        <fieldset class="mb-3">
+                            <legend class="field-label">@L["Vault.Delete.Owned"]</legend>
+                            @foreach (var owned in plan.Owned)
+                            {
+                                if (owned.CoGms.Count == 0)
+                                {
+                                    <p class="text-danger mb-2" data-testid="own-delete-no-cogm">@L["Vault.Delete.NoCoGm", owned.Name]</p>
+                                    continue;
+                                }
+
+                                <div class="mb-2" data-testid="own-delete-owned">
+                                    <label for="own-pass-@owned.CampaignId" class="field-label">@owned.Name</label>
+                                    <select id="own-pass-@owned.CampaignId" name="@(OwnDeletion.PassPrefix + owned.CampaignId)" class="field-select" data-testid="own-delete-pass-to">
+                                        @foreach (var coGm in owned.CoGms)
+                                        {
+                                            <option value="@coGm">@L["Admin.Accounts.Delete.ToCoGm", names.GetValueOrDefault(coGm, coGm)]</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        </fieldset>
+                    }
+                    <ul data-testid="own-delete-goes">
+                        @if (plan.Memberships > 0)
+                        {
+                            <li>@L["Vault.Delete.Leaves", plan.Memberships]</li>
+                        }
+                        <li>@L["Vault.Delete.Goes", plan.VaultCharacters]</li>
+                    </ul>
+                    @if (!blocked)
+                    {
+                        <label for="own-delete-confirm" class="field-label">@(hasPassword ? L["Vault.Delete.Password"] : L["Vault.Delete.TypeName", myName])</label>
+                        <input id="own-delete-confirm" name="confirm" type="@(hasPassword ? "password" : "text")" autocomplete="@(hasPassword ? "current-password" : "off")"
+                               class="field-input" required data-testid="own-delete-confirm" />
+                    }
+                </div>
+                <div class="dialog-actions">
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseDeleteAsync">@L["Common.Cancel"]</CodexButton>
+                    @if (!blocked)
+                    {
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Blood" data-testid="own-delete-submit">@L["Vault.Delete.Confirm"]</CodexButton>
+                    }
+                </div>
+            </form>
+        }
+    </dialog>
 
     <ConfirmDialog @ref="confirm" />
 
@@ -167,6 +236,15 @@ else
 @code {
     [Parameter] public string? ActorId { get; set; }
 
+    // Why deleting your own account was refused, from /account/delete; only its own codes say anything.
+    [SupplyParameterFromQuery(Name = "delete")] public string? DeleteRefused { get; set; }
+
+    private AccountDeletionPlan? deletePlan;
+    private Dictionary<string, string> names = new(StringComparer.Ordinal);
+    private bool hasPassword;
+    private bool lastAdmin;
+    private string myName = string.Empty;
+
     private string? userId;
     private List<ActorDocument>? characters;
     private string filter = "";
@@ -195,7 +273,34 @@ else
         userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         characters = userId == null ? new List<ActorDocument>() : (await VaultRepo.GetAllAsync(userId)).ToList();
         aiReady = userId != null && await Ai.IsConfiguredAsync(userId);
+        flash = DeleteRefused switch
+        {
+            "wrong" => Flash.Error(L["Vault.Delete.Wrong"]),
+            "owners" => Flash.Error(L["Vault.Delete.NeedsOwner"]),
+            "admin" => Flash.Error(L["Vault.Delete.LastAdmin"]),
+            _ => flash
+        };
     }
+
+    // The dialog says who takes each campaign you own (one of its co-GMs; one with none has to be passed on or deleted first) and what goes.
+    private async Task OpenDeleteAsync()
+    {
+        if (userId == null || await Users.GetUserByIdAsync(userId) is not { } me) return;
+        (hasPassword, myName) = (OwnDeletion.HasPassword(me), me.Username);
+        lastAdmin = me.Roles.Contains(UserRoles.ServerAdmin) && me.Status == AccountStatus.Approved
+            && !(await Users.ListAsync()).Any(o => o.Id != me.Id && o.Roles.Contains(UserRoles.ServerAdmin) && o.Status == AccountStatus.Approved);
+        deletePlan = await Deletion.PlanAsync(userId);
+        names = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var id in deletePlan.Owned.SelectMany(o => o.CoGms).Distinct())
+        {
+            names[id] = (await Users.GetUserByIdAsync(id))?.Username ?? id;
+        }
+
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", "own-delete-dialog");
+    }
+
+    private Task CloseDeleteAsync() => JS.InvokeVoidAsync("codex.closeModal", "own-delete-dialog").AsTask();
 
     // Adds the characters of a vault file, or of a whole export, as new ones; those of a system not on this server are left out.
     private async Task ImportAsync(InputFileChangeEventArgs e)

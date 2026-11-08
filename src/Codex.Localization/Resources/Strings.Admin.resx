@@ -118,7 +118,19 @@
   <data name="Admin.Accounts.Storage" xml:space="preserve"><value>Storage</value></data>
   <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} of {1}</value></data>
   <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Storage per account, in MB</value></data>
-  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Pictures and files: covers, portraits, art, book pictures and the book's copies of web files. Everything in a campaign counts against its owner, whoever added it. Leave empty for no limit.</value></data>
+  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Pictures and files: covers, portraits, art, book pictures and the book's copies of web files. Everything in a campaign counts against its owner, whoever added it. Leave empty for no limit. An account's own limit, set from its row above, takes the place of this one.</value></data>
   <data name="Admin.Accounts.StorageCounting" xml:space="preserve"><value>counting…</value></data>
   <data name="Admin.Accounts.Delete.StillOwns" xml:space="preserve"><value>{0} made a campaign while being deleted. The account is turned off; delete it again to pass that campaign on too.</value></data>
+  <data name="Admin.Log.DeletedOwn" xml:space="preserve"><value>{0} deleted their own account</value></data>
+  <data name="Admin.Log.StorageLimitSet" xml:space="preserve"><value>{0} changed the storage limit of {1}</value></data>
+  <data name="Admin.Accounts.StorageOwn" xml:space="preserve"><value>{0} (own limit)</value></data>
+  <data name="Admin.Accounts.Limit.Change" xml:space="preserve"><value>Change the storage limit of {0}</value></data>
+  <data name="Admin.Accounts.Limit.Title" xml:space="preserve"><value>Storage limit for {0}</value></data>
+  <data name="Admin.Accounts.Limit.Server" xml:space="preserve"><value>The server's ({0})</value></data>
+  <data name="Admin.Accounts.Limit.NoneShort" xml:space="preserve"><value>no limit</value></data>
+  <data name="Admin.Accounts.Limit.None" xml:space="preserve"><value>No limit for this account</value></data>
+  <data name="Admin.Accounts.Limit.Own" xml:space="preserve"><value>Its own limit</value></data>
+  <data name="Admin.Accounts.Limit.Mb" xml:space="preserve"><value>Its own limit, in MB</value></data>
+  <data name="Admin.Accounts.Limit.NeedsMb" xml:space="preserve"><value>Say how many MB, or pick another choice.</value></data>
+  <data name="Admin.Accounts.Limit.Saved" xml:space="preserve"><value>The storage limit of {0} is saved.</value></data>
 </root>

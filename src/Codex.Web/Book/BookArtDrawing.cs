@@ -153,10 +153,7 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
     {
         if (await PrepareAsync(asked, edition, picks, language) is not { } p || p.Ready.Count == 0) return null;
         // No room left for the pictures: refused before any is paid for (docs/SERVER_ACCESS_AND_VAULT.md 15).
-        if (quota != null && !await quota.HasRoomAsync(p.Dm.CampaignId))
-        {
-            throw new LocalizedException("Service.Storage.FullBeforeDrawing", quota.LimitBytes is { } limit ? StorageQuota.Megabytes(limit) : string.Empty);
-        }
+        if (quota != null) await quota.EnsureRoomBeforeDrawingAsync(p.Dm.CampaignId);
 
         var model = await images.OpenAsync(p.Dm.UserId, p.Ready.Count);
         try

@@ -34,13 +34,27 @@
   <data name="Vault.NoAi" xml:space="preserve"><value>No AI model is set up for you. Add one under AI settings.</value></data>
   <data name="Vault.AiFailed" xml:space="preserve"><value>The AI could not draft a character: {0}</value></data>
   <data name="Vault.Data.Title" xml:space="preserve"><value>Your data</value></data>
-  <data name="Vault.Data.Intro" xml:space="preserve"><value>Download everything of yours as one zip file: the characters here, your private journals, and every campaign you run, with its pictures. Keys and passwords are never in it.</value></data>
+  <data name="Vault.Data.Intro" xml:space="preserve"><value>Download everything of yours as one zip file: the characters here, the characters you play in other people's campaigns (as you see them), your private journals, and every campaign you run, with its pictures and its book. Keys and passwords are never in it.</value></data>
   <data name="Vault.Data.Export" xml:space="preserve"><value>Download my data</value></data>
   <data name="Vault.Data.Import" xml:space="preserve"><value>Import characters</value></data>
-  <data name="Vault.Data.ImportHint" xml:space="preserve"><value>A downloaded zip, or the vault.json inside it. Its characters are added as new ones; any you have stay.</value></data>
+  <data name="Vault.Data.ImportHint" xml:space="preserve"><value>A downloaded zip, or the vault.json or played.json inside it. Its characters are added as new ones; any you have stay. A whole zip brings back only the characters that were here.</value></data>
   <data name="Vault.Data.TooBig" xml:space="preserve"><value>That file is too large to import.</value></data>
   <data name="Vault.Data.NotAVault" xml:space="preserve"><value>That file holds no characters to import.</value></data>
   <data name="Vault.Data.Imported" xml:space="preserve"><value>Characters added: {0}.</value></data>
   <data name="Vault.Data.ImportedSome" xml:space="preserve"><value>Characters added: {0}. Left out, as their game system is not on this server: {1}.</value></data>
   <data name="Vault.Data.ImportFailed" xml:space="preserve"><value>The characters could not be imported: {0}</value></data>
+  <data name="Vault.Delete.Open" xml:space="preserve"><value>Delete my account</value></data>
+  <data name="Vault.Delete.Title" xml:space="preserve"><value>Delete your account?</value></data>
+  <data name="Vault.Delete.Body" xml:space="preserve"><value>Your account is deleted for good. This cannot be undone, so download your data first if you want a copy.</value></data>
+  <data name="Vault.Delete.Owned" xml:space="preserve"><value>Campaigns you own, and the co-GM who takes each</value></data>
+  <data name="Vault.Delete.NoCoGm" xml:space="preserve"><value>{0} has no other GM. Make a player a co-GM in its settings, or delete the campaign, first.</value></data>
+  <data name="Vault.Delete.Leaves" xml:space="preserve"><value>You leave the other campaigns you are in ({0}). The characters you play there stay in those casts.</value></data>
+  <data name="Vault.Delete.Goes" xml:space="preserve"><value>Gone with the account: the characters here ({0}), your private journals, world-builder chats and book builds.</value></data>
+  <data name="Vault.Delete.Password" xml:space="preserve"><value>Your password, to confirm</value></data>
+  <data name="Vault.Delete.TypeName" xml:space="preserve"><value>Type your name, {0}, to confirm</value></data>
+  <data name="Vault.Delete.Confirm" xml:space="preserve"><value>Delete my account</value></data>
+  <data name="Vault.Delete.Wrong" xml:space="preserve"><value>That was not your password (or name). Nothing was deleted.</value></data>
+  <data name="Vault.Delete.NeedsOwner" xml:space="preserve"><value>Every campaign you own needs a co-GM to take it. Nothing was deleted.</value></data>
+  <data name="Vault.Delete.LastAdmin" xml:space="preserve"><value>You are the server's only admin. Make someone else an admin first. Nothing was deleted.</value></data>
+  <data name="Vault.Delete.LastAdminFirst" xml:space="preserve"><value>You are the server's only admin, so your account stays. Make someone else an admin on the admin page first.</value></data>
 </root>

@@ -250,6 +250,10 @@ public class UserDocument
     /// <summary>When the account was made; null for accounts made before this was kept.</summary>
     public DateTime? CreatedAt { get; set; }
 
+    /// <summary>This account's own storage limit, in MB (docs/SERVER_ACCESS_AND_VAULT.md 16): null follows the server's
+    /// (<see cref="ServerSettingsDocument.StorageLimitMb"/>), 0 is no limit, more is that many MB.</summary>
+    public int? StorageLimitMb { get; set; }
+
     public List<ExternalLogin> ExternalLogins { get; set; } = new();
 
     /// <summary>The chat-model providers this user configured (their own keys). Keys are stored

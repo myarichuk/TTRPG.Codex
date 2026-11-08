@@ -21,6 +21,13 @@
     <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="28" /></div>
     <h1>@L["Page.Login.Heading"]</h1>
 
+    @if (QueryDeleted == "1" && string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="status status-success" role="status" data-testid="login-account-deleted">
+            <LucideIcon IconName="check" Size="18" /><span>@L["Page.Login.AccountDeleted"]</span>
+        </div>
+    }
+
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
         <div class="status status-error" role="alert">
@@ -81,6 +88,10 @@
 
     [SupplyParameterFromQuery(Name = "error")]
     public string? QueryError { get; set; }
+
+    // Set by deleting your own account (docs/SERVER_ACCESS_AND_VAULT.md 16); only "1" says anything.
+    [SupplyParameterFromQuery(Name = "deleted")]
+    public string? QueryDeleted { get; set; }
 
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }

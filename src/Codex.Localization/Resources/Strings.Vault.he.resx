@@ -34,13 +34,27 @@
   <data name="Vault.NoAi" xml:space="preserve"><value>לא הוגדר עבורך מודל AI. הוסיפו אחד בהגדרות ה־AI.</value></data>
   <data name="Vault.AiFailed" xml:space="preserve"><value>ה־AI לא הצליח לנסח דמות: {0}</value></data>
   <data name="Vault.Data.Title" xml:space="preserve"><value>הנתונים שלכם</value></data>
-  <data name="Vault.Data.Intro" xml:space="preserve"><value>הורידו את כל מה ששלכם כקובץ zip אחד: הדמויות כאן, היומנים הפרטיים וכל קמפיין שאתם מנהלים, עם התמונות. מפתחות וסיסמאות אף פעם לא בתוכו.</value></data>
+  <data name="Vault.Data.Intro" xml:space="preserve"><value>הורדה של כל מה ששלך כקובץ zip אחד: הדמויות כאן, הדמויות שבהן את/ה משחק/ת בקמפיינים של אחרים (כפי שאת/ה רואה אותן), היומנים הפרטיים שלך, וכל קמפיין שאת/ה מנחה, עם התמונות והספר שלו. מפתחות וסיסמאות לעולם אינם בו.</value></data>
   <data name="Vault.Data.Export" xml:space="preserve"><value>הורדת הנתונים שלי</value></data>
   <data name="Vault.Data.Import" xml:space="preserve"><value>ייבוא דמויות</value></data>
-  <data name="Vault.Data.ImportHint" xml:space="preserve"><value>קובץ zip שהורד, או vault.json שבתוכו. הדמויות שבו נוספות כחדשות; הקיימות נשארות.</value></data>
+  <data name="Vault.Data.ImportHint" xml:space="preserve"><value>קובץ zip שהורד, או vault.json או played.json שבתוכו. הדמויות שבו נוספות כחדשות; הקיימות נשארות. zip שלם מחזיר רק את הדמויות שהיו כאן.</value></data>
   <data name="Vault.Data.TooBig" xml:space="preserve"><value>הקובץ גדול מכדי לייבא אותו.</value></data>
   <data name="Vault.Data.NotAVault" xml:space="preserve"><value>אין בקובץ הזה דמויות לייבוא.</value></data>
   <data name="Vault.Data.Imported" xml:space="preserve"><value>דמויות שנוספו: {0}.</value></data>
   <data name="Vault.Data.ImportedSome" xml:space="preserve"><value>דמויות שנוספו: {0}. הושמטו, כי שיטת המשחק שלהן לא בשרת הזה: {1}.</value></data>
   <data name="Vault.Data.ImportFailed" xml:space="preserve"><value>לא ניתן היה לייבא את הדמויות: {0}</value></data>
+  <data name="Vault.Delete.Open" xml:space="preserve"><value>מחיקת החשבון שלי</value></data>
+  <data name="Vault.Delete.Title" xml:space="preserve"><value>למחוק את החשבון שלך?</value></data>
+  <data name="Vault.Delete.Body" xml:space="preserve"><value>החשבון יימחק לצמיתות. אי אפשר לבטל זאת, לכן כדאי להוריד קודם את הנתונים שלך אם ברצונך לשמור עותק.</value></data>
+  <data name="Vault.Delete.Owned" xml:space="preserve"><value>קמפיינים בבעלותך, ומנחה־שותף שיקבל כל אחד</value></data>
+  <data name="Vault.Delete.NoCoGm" xml:space="preserve"><value>ב־{0} אין מנחה נוסף. קודם יש להפוך שחקן למנחה־שותף בהגדרות הקמפיין, או למחוק אותו.</value></data>
+  <data name="Vault.Delete.Leaves" xml:space="preserve"><value>תצא/י משאר הקמפיינים שבהם את/ה משתתף/ת ({0}). הדמויות שלך שם יישארו בהם.</value></data>
+  <data name="Vault.Delete.Goes" xml:space="preserve"><value>יימחקו עם החשבון: הדמויות כאן ({0}), היומנים הפרטיים שלך, שיחות בניית העולם ובניות הספרים.</value></data>
+  <data name="Vault.Delete.Password" xml:space="preserve"><value>הסיסמה שלך, לאישור</value></data>
+  <data name="Vault.Delete.TypeName" xml:space="preserve"><value>יש להקליד את שמך, {0}, לאישור</value></data>
+  <data name="Vault.Delete.Confirm" xml:space="preserve"><value>מחיקת החשבון</value></data>
+  <data name="Vault.Delete.Wrong" xml:space="preserve"><value>זו לא הסיסמה (או השם) שלך. דבר לא נמחק.</value></data>
+  <data name="Vault.Delete.NeedsOwner" xml:space="preserve"><value>כל קמפיין בבעלותך צריך מנחה־שותף שיקבל אותו. דבר לא נמחק.</value></data>
+  <data name="Vault.Delete.LastAdmin" xml:space="preserve"><value>את/ה המנהל/ת היחיד/ה של השרת. קודם יש למנות מישהו אחר למנהל. דבר לא נמחק.</value></data>
+  <data name="Vault.Delete.LastAdminFirst" xml:space="preserve"><value>את/ה המנהל/ת היחיד/ה של השרת, ולכן החשבון נשאר. קודם יש למנות מישהו אחר למנהל בעמוד הניהול.</value></data>
 </root>

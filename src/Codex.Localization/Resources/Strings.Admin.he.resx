@@ -118,7 +118,19 @@
   <data name="Admin.Accounts.Storage" xml:space="preserve"><value>אחסון</value></data>
   <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} מתוך {1}</value></data>
   <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>אחסון לכל חשבון, ב-MB</value></data>
-  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>תמונות וקבצים: עטיפות, דיוקנאות, איורים, תמונות הספר ועותקי קבצי הרשת של הספר. כל מה שבקמפיין נספר לבעליו, לא משנה מי הוסיף. השאירו ריק ללא הגבלה.</value></data>
+  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>תמונות וקבצים: עטיפות, דיוקנאות, איורים, תמונות הספר ועותקי קבצי הרשת של הספר. כל מה שבקמפיין נספר לבעליו, לא משנה מי הוסיף. השאירו ריק ללא הגבלה. מגבלה של חשבון עצמו, שנקבעה בשורה שלו למעלה, באה במקום זו.</value></data>
   <data name="Admin.Accounts.StorageCounting" xml:space="preserve"><value>סופר…</value></data>
   <data name="Admin.Accounts.Delete.StillOwns" xml:space="preserve"><value>{0} יצר קמפיין בזמן המחיקה. החשבון כבוי; מחקו אותו שוב כדי להעביר גם את הקמפיין הזה.</value></data>
+  <data name="Admin.Log.DeletedOwn" xml:space="preserve"><value>{0} מחק/ה את החשבון שלו/ה</value></data>
+  <data name="Admin.Log.StorageLimitSet" xml:space="preserve"><value>{0} שינה/תה את מגבלת האחסון של {1}</value></data>
+  <data name="Admin.Accounts.StorageOwn" xml:space="preserve"><value>{0} (מגבלה משלו)</value></data>
+  <data name="Admin.Accounts.Limit.Change" xml:space="preserve"><value>שינוי מגבלת האחסון של {0}</value></data>
+  <data name="Admin.Accounts.Limit.Title" xml:space="preserve"><value>מגבלת אחסון עבור {0}</value></data>
+  <data name="Admin.Accounts.Limit.Server" xml:space="preserve"><value>של השרת ({0})</value></data>
+  <data name="Admin.Accounts.Limit.NoneShort" xml:space="preserve"><value>ללא הגבלה</value></data>
+  <data name="Admin.Accounts.Limit.None" xml:space="preserve"><value>ללא הגבלה לחשבון הזה</value></data>
+  <data name="Admin.Accounts.Limit.Own" xml:space="preserve"><value>מגבלה משלו</value></data>
+  <data name="Admin.Accounts.Limit.Mb" xml:space="preserve"><value>המגבלה שלו, ב־MB</value></data>
+  <data name="Admin.Accounts.Limit.NeedsMb" xml:space="preserve"><value>יש לציין כמה MB, או לבחור אפשרות אחרת.</value></data>
+  <data name="Admin.Accounts.Limit.Saved" xml:space="preserve"><value>מגבלת האחסון של {0} נשמרה.</value></data>
 </root>

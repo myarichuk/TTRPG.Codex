@@ -136,7 +136,13 @@ public enum AdminAction
     RoleGiven,
     RoleTaken,
     Deleted,
-    SettingsChanged
+    SettingsChanged,
+
+    /// <summary>Someone deleted their own account (docs/SERVER_ACCESS_AND_VAULT.md 16).</summary>
+    DeletedOwn,
+
+    /// <summary>An admin set one account's storage limit; the detail says from what to what.</summary>
+    StorageLimitSet
 }
 
 public class AdminLogDocument

@@ -43,16 +43,20 @@ public class StorageByCampaignIndex : AbstractJavaScriptIndexCreationTask
 }
 
 /// <summary>
-/// The storage limit per account (docs/SERVER_ACCESS_AND_VAULT.md 9, built in 15). Attachments do not record who uploaded them, so a
-/// campaign's pictures and files count against its owner, whoever added them: a player's portrait in someone's campaign counts against
-/// that campaign's owner, who can take it away. The limit is the admin's <see cref="ServerSettingsDocument.StorageLimitMb"/>; with none,
-/// nothing is refused.
+/// The storage limit per account (docs/SERVER_ACCESS_AND_VAULT.md 9, built in 15 and 16). Attachments do not record who uploaded them,
+/// so a campaign's pictures and files count against its owner, whoever added them: a player's portrait in someone's campaign counts
+/// against that campaign's owner, who can take it away. The limit is the owner's own (<see cref="UserDocument.StorageLimitMb"/>) when
+/// the admin set one, otherwise the server's (<see cref="ServerSettingsDocument.StorageLimitMb"/>); with neither, nothing is refused.
 /// </summary>
 public sealed class StorageQuota(RavenDbService db, IServerSettingsStore settings)
 {
     private static readonly TimeSpan IndexWait = TimeSpan.FromSeconds(15);
 
-    public long? LimitBytes => settings.Get().StorageLimitMb is { } mb ? Math.Max(0, mb) * 1024L * 1024L : null;
+    /// <summary>The limit an account has, in bytes; null for none. Its own when set (0 being none), otherwise the server's.</summary>
+    public static long? LimitBytesFor(int? accountMb, int? serverMb) => (accountMb ?? serverMb) is { } mb and > 0 ? mb * 1024L * 1024L : null;
+
+    /// <summary>The limit <paramref name="account"/> has now, in bytes; null for none.</summary>
+    public long? LimitFor(UserDocument? account) => LimitBytesFor(account?.StorageLimitMb, settings.Get().StorageLimitMb);
 
     /// <summary>What each account keeps: the bytes of the campaigns it owns, by owner id. Accounts that keep nothing are left out.
     /// Null while the count is still being made (an index catching up, as on the first start after it was added).</summary>
@@ -88,26 +92,40 @@ public sealed class StorageQuota(RavenDbService db, IServerSettingsStore setting
         return await UsedByAsync(session, userId, null);
     }
 
-    /// <summary>Whether the owner of <paramref name="campaignId"/> has room left: checked before a picture is drawn for money, so a
-    /// limit reached refuses before the model is paid, not after. (A picture larger than the room left is still drawn, then refused.)</summary>
+    /// <summary>Whether the owner of <paramref name="campaignId"/> has room left. (A picture larger than the room left is still drawn,
+    /// then refused.)</summary>
     public async Task<bool> HasRoomAsync(string campaignId)
     {
-        if (LimitBytes is not { } limit) return true;
         using var session = db.Store.OpenAsyncSession();
-        var owner = (await session.LoadAsync<CampaignDocument>(campaignId))?.OwnerId;
-        return owner == null || await UsedByAsync(session, owner, campaignId) < limit;
+        if (await OwnerAsync(session, campaignId) is not ({ } owner, { } limit)) return true;
+        return await UsedByAsync(session, owner, campaignId) < limit;
+    }
+
+    /// <summary>Refuses with <c>Service.Storage.FullBeforeDrawing</c> when the owner of <paramref name="campaignId"/> has no room left:
+    /// checked before a picture is drawn for money, so a limit reached refuses before the model is paid, not after.</summary>
+    public async Task EnsureRoomBeforeDrawingAsync(string campaignId)
+    {
+        using var session = db.Store.OpenAsyncSession();
+        if (await OwnerAsync(session, campaignId) is not ({ } owner, { } limit)) return;
+        if (await UsedByAsync(session, owner, campaignId) >= limit) throw new LocalizedException("Service.Storage.FullBeforeDrawing", Megabytes(limit));
     }
 
     /// <summary>Refuses with <c>Service.Storage.Full</c> when keeping <paramref name="adding"/> more bytes in <paramref name="campaignId"/>,
     /// in place of <paramref name="replacing"/> bytes it already keeps, would take its owner over the limit.</summary>
     public async Task EnsureRoomAsync(string campaignId, long adding, long replacing = 0)
     {
-        if (LimitBytes is not { } limit || adding <= replacing) return;
+        if (adding <= replacing) return;
         using var session = db.Store.OpenAsyncSession();
-        var owner = (await session.LoadAsync<CampaignDocument>(campaignId))?.OwnerId;
-        if (owner == null) return;
+        if (await OwnerAsync(session, campaignId) is not ({ } owner, { } limit)) return;
         var used = await UsedByAsync(session, owner, campaignId);
         if (used - replacing + adding > limit) throw new LocalizedException("Service.Storage.Full", Megabytes(used), Megabytes(limit));
+    }
+
+    // The campaign's owner and the limit they have; no owner when the campaign is gone.
+    private async Task<(string? Owner, long? Limit)> OwnerAsync(IAsyncDocumentSession session, string campaignId)
+    {
+        if ((await session.LoadAsync<CampaignDocument>(campaignId))?.OwnerId is not { } owner) return (null, null);
+        return (owner, LimitFor(await session.LoadAsync<UserDocument>(owner)));
     }
 
     /// <summary>The size of the attachment <paramref name="name"/> on <paramref name="entity"/>, loaded in <paramref name="session"/>;

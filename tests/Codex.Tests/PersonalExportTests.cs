@@ -1,10 +1,13 @@
 using System.IO.Compression;
 using System.Text.Json;
+using Codex.Core.Book;
 using Codex.Persistence;
+using Codex.Web.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Codex.Tests;
 
-/// <summary>Exporting your own data, and bringing a vault back (docs/SERVER_ACCESS_AND_VAULT.md 9, built in 15).</summary>
+/// <summary>Exporting your own data, and bringing a vault back (docs/SERVER_ACCESS_AND_VAULT.md 9, built in 15 and 16).</summary>
 public class PersonalExportTests : IClassFixture<RavenDbFixture>
 {
     private readonly RavenDbService _db;
@@ -13,6 +16,8 @@ public class PersonalExportTests : IClassFixture<RavenDbFixture>
     private readonly CampaignRepository _campaigns;
     private readonly CampaignExportService _campaignExport;
     private readonly RavenMediaStore _media;
+    private readonly RavenBookDraftRepository _drafts;
+    private readonly RavenBookArtRepository _bookArt;
     private readonly PersonalExport _export;
 
     public PersonalExportTests(RavenDbFixture fixture)
@@ -25,7 +30,12 @@ public class PersonalExportTests : IClassFixture<RavenDbFixture>
         _campaignExport = new CampaignExportService(_campaigns, _actors, new RavenSessionRepository(_db), new RavenEncounterRepository(_db), new FactRepository(_db),
             new RavenNoteRepository(_db), new RegionRepository(_db), new RavenHomebrewRepository(_db));
         _media = new RavenMediaStore(_db);
-        _export = new PersonalExport(_db, _campaigns, _vault, _campaignExport);
+        _drafts = new RavenBookDraftRepository(_db);
+        _bookArt = new RavenBookArtRepository(_db);
+        var registry = new Codex.Core.ContentRegistry(new Codex.Core.Scripting.ScriptEvaluator(NullLogger<Codex.Core.Scripting.ScriptEvaluator>.Instance));
+        var mentions = new MentionSources(new RegionRepository(_db), new CampaignLibrary(registry, new RavenHomebrewRepository(_db), new NoOpSystemCatalog()),
+            new RavenSessionRepository(_db), new RavenNoteRepository(_db), new RavenJournalRepository(_db), new RavenWikiRepository(_db), Codex.Localization.Localizer.For("en"));
+        _export = new PersonalExport(_db, _campaigns, _vault, _campaignExport, new PlayedCharacters(_actors, mentions), _drafts, _bookArt);
     }
 
     private static string User() => "user-" + Guid.NewGuid().ToString("N");
@@ -135,5 +145,66 @@ public class PersonalExportTests : IClassFixture<RavenDbFixture>
         Assert.Equal((1, 1), await _export.ImportVaultAsync(next, whole, id => id == "srd5e"));
         Assert.Null(await _export.ImportVaultAsync(next, new MemoryStream("{\"Format\":\"codex-campaign/1\"}"u8.ToArray()), _ => true));
         Assert.Null(await _export.ImportVaultAsync(next, new MemoryStream("not json"u8.ToArray()), _ => true));
+    }
+
+    [Fact]
+    public async Task TheCharactersPlayedElsewhere_ComeAsTheirPlayerReadsThem_AndImportOnTheirOwn_Async()
+    {
+        var (me, gm, other) = (User(), User(), User());
+        var table = await CampaignAsync(gm, "Their Table", (me, CampaignRole.Player), (other, CampaignRole.Player));
+        var mine = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = table.Id, OwnerUserId = me, Kind = ActorKind.PlayerCharacter, Name = "Brann",
+            DmNotes = "Brann is the lost heir.", Biography = "Grew up on the docks.\n:::dm\nHis father lives.\n:::",
+            Sheet = new Dictionary<string, object> { ["level"] = 4L, ["notes"] = "Owes Tam.\n:::dm\nTam is a spy.\n:::" }
+        };
+        await _actors.SaveAsync(mine);
+        await _actors.SaveAsync(new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = table.Id, OwnerUserId = other, Kind = ActorKind.PlayerCharacter, Name = "Not mine" });
+        await _media.PutAsync(new CampaignAccess(table.Id, me, CampaignRole.Player), mine.Id, RavenMediaStore.ActorPortrait, new MemoryStream(new byte[] { 7, 7 }), "image/png");
+
+        using var zip = await ExportAsync(me);
+        var played = Read<VaultBundle>(zip, "played.json");
+        var brann = Assert.Single(played.Characters);
+        Assert.Equal(("Brann", "srd5e", me), (brann.Name, brann.SystemId, brann.OwnerUserId));
+        Assert.Null(brann.DmNotes);
+        Assert.Equal("Grew up on the docks.", brann.Biography!.Trim());
+        Assert.Equal("Owes Tam.", brann.Sheet["notes"].ToString()!.Trim());
+        Assert.Contains(zip.Entries, e => e.FullName.StartsWith("played/images/", StringComparison.Ordinal) && e.FullName.EndsWith("portrait.png", StringComparison.Ordinal));
+        Assert.DoesNotContain(zip.Entries, e =>
+        {
+            var text = new StreamReader(e.Open()).ReadToEnd();
+            return text.Contains("lost heir", StringComparison.Ordinal) || text.Contains("father lives", StringComparison.Ordinal) || text.Contains("is a spy", StringComparison.Ordinal);
+        });
+        Assert.Equal("Brann", Read<System.Text.Json.JsonElement>(zip, "about.json").GetProperty("Played")[0].GetProperty("Character").GetString());
+
+        // played.json imports on its own; the whole zip brings only vault.json, so nothing comes twice.
+        using var file = new MemoryStream();
+        await using (var entry = zip.GetEntry("played.json")!.Open()) await entry.CopyToAsync(file);
+        file.Position = 0;
+        Assert.Equal((1, 0), await _export.ImportVaultAsync(me, file, id => id == "srd5e"));
+        Assert.Equal("Grew up on the docks.", Assert.Single(await _vault.GetAllAsync(me)).Biography!.Trim());
+    }
+
+    [Fact]
+    public async Task ACampaignRun_ComesWithItsBook_DraftsAndPictures_Async()
+    {
+        var me = User();
+        var campaign = await CampaignAsync(me, "Book Table");
+        var dm = new CampaignAccess(campaign.Id, me, CampaignRole.DM);
+        Assert.NotNull(await _drafts.CreateAsync(dm, BookDraftDocument.Dm, "en", [new BookDraftGenerated("intro", "Intro", "# The Gull", "k1")]));
+        Assert.True(await _bookArt.PutAsync(dm, "s" + new string('b', 24), BookArtDocument.Dm, "Map", new BookImage(new byte[] { 1, 2, 3 }, "image/png", 10, 10)));
+
+        using var zip = await ExportAsync(me);
+        var book = Read<System.Text.Json.JsonElement>(zip, "campaigns/Book_Table/book.json");
+        var draft = Assert.Single(book.GetProperty("Drafts").EnumerateArray());
+        Assert.Equal("dm", draft.GetProperty("Document").GetProperty("Edition").GetString());
+        Assert.Equal("# The Gull", draft.GetProperty("Chapters")[0].GetProperty("Markdown").GetString());
+        Assert.Single(book.GetProperty("Art").GetProperty("Pictures").EnumerateArray());
+        Assert.Contains(zip.Entries, e => e.FullName.StartsWith("campaigns/Book_Table/book-images/", StringComparison.Ordinal));
+
+        // A campaign with no book has no book file.
+        await CampaignAsync(me, "Bare Table");
+        using var again = await ExportAsync(me);
+        Assert.Null(again.GetEntry("campaigns/Bare_Table/book.json"));
     }
 }

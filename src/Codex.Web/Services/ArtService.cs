@@ -222,10 +222,7 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
     /// campaign's owner has no room left (docs/SERVER_ACCESS_AND_VAULT.md 15).</summary>
     public async Task<ArtImage> GenerateAsync(string userId, string campaignId, string subject, string subjectKind, string? visual, ArtShape shape, CancellationToken ct = default)
     {
-        if (quota != null && !await quota.HasRoomAsync(campaignId))
-        {
-            throw new LocalizedException("Service.Storage.FullBeforeDrawing", quota.LimitBytes is { } limit ? StorageQuota.Megabytes(limit) : string.Empty);
-        }
+        if (quota != null) await quota.EnsureRoomBeforeDrawingAsync(campaignId);
 
         var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, shape), shape, ct);
         if (!RavenMediaStore.AllowedContentTypes.Contains(image.ContentType))
