@@ -42,6 +42,8 @@ function debounce(fn, ms) {
  * `dotnet` gets Changed(section) after typing stops, and CssChanged() for the stylesheet.
  */
 export async function open(host, frame, book, dotnet, labels) {
+  // One editor per host: one still opening (a theme picked twice in quick succession) is closed before another is made, or both would stay.
+  for (const [other, s] of editors) if (s.host === host) close(other);
   const id = 'e' + (++counter);
   const state = { host, frame, dotnet, chapters: book.chapters.map(c => ({ ...c })), css: book.css || '', current: book.current, mode: 'md',
     art: {}, rendering: false, again: false, labels: labels || {} };

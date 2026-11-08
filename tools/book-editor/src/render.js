@@ -246,7 +246,12 @@ export function draw(doc, root, input, art, marks) {
 /** Waits for the pictures and the fonts: the layout is measured after both. */
 export async function settle(doc, root) {
   await Promise.all([...root.querySelectorAll('img')].map(i => i.complete ? null : new Promise(r => { i.onload = r; i.onerror = r; })));
-  if (doc.fonts) await doc.fonts.ready;
+  if (!doc.fonts) return;
+  // A face loads when text that uses it is drawn, and `ready` waits only for loads already started. Safari's engine had started none when the
+  // new pages were measured, so its first drawing was measured in fallback faces and broke pages early (docs/BOOK_EXPORT.md 41.20). Every
+  // face the page declares is loaded first (the theme's and the GM stylesheet's, all inline); a face that fails is measured without, as before.
+  await Promise.all([...doc.fonts].map(f => f.load().catch(() => null)));
+  await doc.fonts.ready;
 }
 
 // Absolutely placed art and Homebrewery's own end-of-page filler (an empty paragraph after a column break) never count.

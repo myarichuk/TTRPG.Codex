@@ -1466,7 +1466,7 @@ two-tab e2e).
 - The editor's renderer runs in the app's page (the trust boundary above).
 - ~~The overflow report reaches the GM only in the preview.~~ Done in phase 3 (41.15): Fit pages reports it from the print browser, and the
   editor reads the PDF's header.
-- **The preview was seen only in Chrome.** Safari and Firefox were not tried (section 40, finding 3).
+- ~~**The preview was seen only in Chrome.** Safari and Firefox were not tried (section 40, finding 3).~~ Tried in WebKit and Firefox (41.20).
 - The editor was not looked at on a phone, in RTL, or with a screen reader.
 - Russian and Hebrew drafts are made and edited but cannot be printed (the language gate).
 - There is no per-chapter preview: the whole book is drawn again on each pause in typing. Fine for the test campaign (3 pages); not measured
@@ -1775,8 +1775,8 @@ Seen in the app (preview, the real-run campaign's Ashen Vellum GM draft, 3 pages
 already fits; no server errors.
 
 Not done, or not verified:
-- Safari and Firefox: still not tried (only Chromium is installed for the tests). Fit pages makes them matter less: the breaks come from the
-  print browser, and the drawing still continues pages by itself where the GM's browser differs.
+- ~~Safari and Firefox: still not tried~~ (41.20). Fit pages makes them matter less: the breaks come from the print browser, and the
+  drawing still continues pages by itself where the GM's browser differs.
 - A theme or stylesheet change after Fit pages can make the breaks wrong (pages half empty or running on); run it again. Nothing says so yet
   beyond the run-on line.
 - Keep-together for a short block after a heading in the next column (only page ends are handled).
@@ -2024,3 +2024,39 @@ Not done, or not verified:
 - A generic name is noisy: a hidden actor called "Goblin" or a planned session called "Session 6" is reported wherever the party draft
   says the word. It is a warning, with Download anyway; no filter is built.
 - The Russian and Hebrew text of `Campaign.Book.Draft.Leak.*` is machine-drafted.
+
+### 41.20 The preview in Safari's engine and Firefox (2026-11-08)
+
+The preview is drawn by the GM's own browser; only Chromium had ever drawn it. Playwright's WebKit (the engine of Safari) and Firefox are now
+installed for the tests (and in CI), and `BookDraftEnginesE2ETests` runs the editor in all three (`AppFixture.EngineAsync`; an engine a
+machine lacks is passed over).
+
+What was compared, on an eight-character Cast in both editions under Plain and Ashen Vellum: every computed size, line height, colour and
+face of the body, headings and secret boxes; every face's load state; the page box and the columns; the run-on and overflow notices; and
+each page's first and last words. Styles, faces (all loaded), page sizes and page counts are the same in the three. Where a page breaks
+differs by a block now and then: WebKit lays a paragraph 1 to 2 px shorter, and that adds up over a page. No preview can match that; it is
+why Fit pages takes its breaks from the print browser (41.15), and the PDF is always the server's Chromium.
+
+Found and fixed:
+- **WebKit measured the first drawing in fallback faces.** A face loads when text using it is drawn, and `document.fonts.ready` waits only
+  for loads already started; WebKit had started none when the new pages were measured, so the drawing broke pages early and the first
+  columns ended short of the foot (93 px in the test), until the next redraw. `settle` now loads every face the page declares (the theme's
+  own, bundled) before waiting. Undoing it fails the WebKit test.
+- **Two editors after themes picked quickly.** Picking a theme closes the editor and opens a new one, and opening waits for the preview to
+  draw; a second pick in that wait closed only the old editor, so two stayed on the page (seen in Firefox, then in Chromium too with four
+  quick picks). Opening now closes any editor already in its place, and the page keeps only the last opening's editor. Undoing the first
+  fails the test in Chromium and Firefox; the second (an earlier opening that ends last is not taken) has no test that reaches it.
+- A first idea, a fixed height for Homebrewery's column box because WebKit seemed to balance the columns, was dropped: the half-empty
+  pages were the fallback faces above, and with the faces loaded first the change made no difference anywhere.
+
+The test checks, in each engine: the preview draws, the run-on notice comes, every page that reached its second column has a full first
+one, the first drawing in a fresh browser is the one drawn again, four quick theme picks leave one editor, typing saves and shows, and no
+page error. WebKit logs that it blocked a script in the preview frame when the test reads the frame while it loads; that is the test
+driver's own script (with a pause first, six runs of six were clean, and the app draws in that pause), and the test lets that one message
+pass.
+
+Not done, or not verified:
+- **Real Safari** was not driven: Playwright's WebKit is Safari's engine, not Safari (its own font loading and print settings may differ).
+  Firefox was Playwright's build 132.
+- Phones and tablets; a screen reader; right-to-left text in WebKit and Firefox (Hebrew was laid out in Chromium only).
+- CI's WebKit and Firefox are Linux builds; their line breaking may differ again from macOS's, and the column checks allow 60 px.

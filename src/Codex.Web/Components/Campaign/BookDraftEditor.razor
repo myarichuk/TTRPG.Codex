@@ -475,6 +475,7 @@
     private ElementReference host;
     private ElementReference frame;
     private string? editorId;
+    private int openings;
     private BookDraftView? view;
     private string edition = "party";
     private string language = "en";
@@ -586,6 +587,9 @@
             module ??= await JS.InvokeAsync<IJSObjectReference>("import", "/" + Assets["lib/book/book-editor.js"]);
             self ??= DotNetObjectReference.Create(this);
             if (editorId != null) await module.InvokeVoidAsync("close", editorId);
+            // Opening waits for the preview to draw; another opening may start meanwhile (a theme picked twice quickly). Only the last one's
+            // editor is kept: the script closes an earlier one when the next starts, and an earlier one that ends last is not taken.
+            var opening = ++openings;
             var shell = await ShellAsync();
             if (shell.Html == null)
             {
@@ -594,7 +598,7 @@
                 return;
             }
 
-            editorId = await module.InvokeAsync<string>("open", host, frame, new
+            var opened = await module.InvokeAsync<string>("open", host, frame, new
             {
                 chapters = view.Chapters.Select(c => new { section = c.Section, markdown = c.Markdown }),
                 css = view.Css,
@@ -608,6 +612,8 @@
                 runOn = L["Campaign.Book.Draft.RunOn"].ToString(),
                 titles = view.Chapters.ToDictionary(c => c.Section, Title)
             });
+            if (opening != openings) return;
+            editorId = opened;
             if (current == null) await module.InvokeVoidAsync("show", editorId, null);
             // An address the last fetch could not reach is tried again.
             _ = FetchWebAsync();
