@@ -392,7 +392,13 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      static type is one. Lambda parameters are typed by the delegate, and given overloads DynamicExpresso parses a lambda
      against just one of them. So each aggregate has a single signature: selectors return `double?` and predicates
      `bool?`. The behaviour this settled is in the reference README.
-   - *Moving srd5e onto it: next.* `derived`, armor class, skills and hit points as declarations, the corpus unchanged.
+   - *One interpreter, done 2026-11-08.* srd5e's `derived`, carrying capacity and unarmored / class-defense armor class
+     formulas run on `SheetFormulas`; the old private interpreter is gone. Corpus unchanged.
+   - *Deferred to step 6 (decided 2026-11-08): srd5e's skills, armor class and hit points as declarations.* Those stages
+     produce structured summaries the 5e panels read (armor class lines tied to items with dex caps, per-level hit point
+     rows, skill proficiency and expertise). Re-expressing them now would translate into primitives and straight back for
+     the same panels: churn and corpus risk for no visible change. Step 6 decides what the built-in widgets read, and moves
+     them then. So does 5e's `base: best` modifier type (section 3), which only 5e armor class needs.
 3. **Tracks.** Thresholds, negative minimums, overflow, boxes and slots. HP bands for 3.5 and CPR; Blades stress/trauma
    and harm.
 4. **Rolls.** Roll definitions, the grammar extensions (pools, explode/implode, roll-under, success counting), outcomes
@@ -400,6 +406,7 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
 5. **Events → intents.** Re-express damage, death saves, concentration and rests in `TableRules` as built-in handlers.
 6. **Layout and sheet kinds.** `ActorSheet` renders from layout; the 5e panels become built-in widgets. Blades' crew as a
    second sheet kind. This is the largest UI step.
+   srd5e's skills, armor class (with `base: best`) and hit points move onto the primitives here, deferred from step 2.
 7. **Campaign objects.** Clocks and faction tables. Blades goes green except for scripted parts.
 8. **Jint.** Functions first, then event handlers; `codex.d.ts`; `Codex.SystemCheck`. The CPR fixture's scripted rules
    go green.
