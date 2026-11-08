@@ -28,6 +28,10 @@
             var packs = Registry.GetPacks(system.Id).ToList();
             <article class="mb-4" aria-labelledby="sys-@system.Id" data-testid="about-system">
                 <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-2">@(system.IsDataDriven ? L["Page.About.DataDriven"] : L["Page.About.Compiled"])</span></h3>
+                @if (Loader.LoadProblems.Any(p => string.Equals(p.SystemId, system.Id, StringComparison.OrdinalIgnoreCase)))
+                {
+                    <a class="small" href="/about#problems-@system.Id"><LucideIcon IconName="alert-triangle" Size="14" /> @L["Page.About.HasProblems"]</a>
+                }
                 @if (system.Compatibility != null)
                 {
                     <div class="small-muted">@system.Compatibility</div>
@@ -87,17 +91,47 @@
         }
     </section>
 
-    @if (Loader.LoadWarnings.Count > 0)
+    @if (Loader.LoadProblems.Count > 0 || Loader.FailedSystems.Count > 0)
     {
-        <section class="panel" aria-labelledby="warnings-heading">
+        <section class="panel" aria-labelledby="warnings-heading" data-testid="about-load-problems">
             <div class="panel-title"><h2 id="warnings-heading">@L["Page.About.Warnings"]</h2></div>
             <p class="small-muted">@L["Page.About.WarningsIntro"]</p>
-            <ul class="mb-0">
-                @foreach (var warning in Loader.LoadWarnings)
-                {
-                    <li>@warning</li>
-                }
-            </ul>
+
+            @foreach (var system in Catalog.Systems)
+            {
+                var problems = Loader.LoadProblems.Where(p => string.Equals(p.SystemId, system.Id, StringComparison.OrdinalIgnoreCase)).ToList();
+                if (problems.Count == 0) continue;
+                <h3 id="problems-@system.Id" class="h6 mt-3">@system.Name</h3>
+                @ProblemList(problems)
+            }
+
+            @if (Loader.FailedSystems.Count > 0)
+            {
+                <h3 class="h6 mt-3">@L["Page.About.FailedSystems"]</h3>
+                <p class="small-muted">@L["Page.About.FailedSystemsIntro"]</p>
+                <ul class="mb-0" data-testid="about-failed-systems">
+                    @foreach (var failed in Loader.FailedSystems)
+                    {
+                        <li>
+                            <strong>@failed.Name</strong>
+                            <ul>
+                                @foreach (var error in failed.Errors)
+                                {
+                                    <li>@error</li>
+                                }
+                            </ul>
+                            <AuthorizeView Roles="@ExposurePolicy.ServerAdminRole"><div class="small-muted">@L["Page.About.OnTheServer"] <code>@failed.Path</code></div></AuthorizeView>
+                        </li>
+                    }
+                </ul>
+            }
+
+            @{ var other = Loader.LoadProblems.Where(IsOther).ToList(); }
+            @if (other.Count > 0)
+            {
+                <h3 class="h6 mt-3">@L["Page.About.OtherProblems"]</h3>
+                @ProblemList(other)
+            }
         </section>
     }
 
@@ -137,6 +171,24 @@
 </div>
 
 @code {
+    // Problems shown under neither a loaded system nor a failed one: the loader's own, packs for a system that is not here.
+    private bool IsOther(LoadProblem problem) =>
+        !(problem.SystemId != null && Catalog.LoadedSystemIds.Contains(problem.SystemId))
+        && !(problem.Source == LoadProblemSource.System && Loader.FailedSystems.Any(f => f.Name == problem.Subject));
+
+    private RenderFragment ProblemList(IReadOnlyList<LoadProblem> problems) => @<ul class="mb-0">
+        @foreach (var problem in problems)
+        {
+            <li>
+                @problem.Text
+                @if (problem.Path != null)
+                {
+                    <AuthorizeView Roles="@ExposurePolicy.ServerAdminRole"><div class="small-muted">@L["Page.About.OnTheServer"] <code>@problem.Path</code></div></AuthorizeView>
+                }
+            </li>
+        }
+    </ul>;
+
     private RenderFragment License(LicenseInfo license) => builder =>
     {
         if (license.Url != null)

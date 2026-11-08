@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICampaignRepository CampaignRepo
 @inject ISystemCatalog Catalog
+@inject Codex.Core.PluginLoader Loader
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IJSRuntime JS
@@ -99,6 +100,14 @@ else
                 @if (SelectedSystem?.Description is { } description)
                 {
                     <div class="field-hint">@description</div>
+                }
+                @if (Loader.FailedSystems.Count > 0)
+                {
+                    @* A system with a broken system.yaml is not in the list above; say which, so the GM doesn't hunt for it. *@
+                    <div class="field-hint" data-testid="new-campaign-failed-systems">
+                        <LucideIcon IconName="alert-triangle" Size="14" /> @L["Page.Home.FailedSystems", string.Join(", ", Loader.FailedSystems.Select(f => f.Name))]
+                        <a href="/about#warnings-heading">@L["Page.Home.FailedSystemsLink"]</a>
+                    </div>
                 }
             </div>
             <div class="mb-3">

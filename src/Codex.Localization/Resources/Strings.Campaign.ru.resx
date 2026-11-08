@@ -810,4 +810,10 @@
   <data name="Campaign.Book.Ai.Row.Skipped" xml:space="preserve"><value>слишком короткая</value></data>
   <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>Этот лимит слишком мал, чтобы отправить хотя бы один запрос: для самой большой главы нужно зарезервировать не менее {0} токенов (худший случай, с повторами).</value></data>
   <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>В пожеланиях к стилю есть сведения, которых нет в книге для партии ({0}). Для этого издания оставьте только манеру и тон: без имён, чисел и сюжета.</value></data>
+  <data name="Campaign.SystemMissing" xml:space="preserve"><value>Игровая система этой кампании, «{0}», не установлена, поэтому кампанию нельзя изменить.</value></data>
+  <data name="Campaign.SystemMissingTitle" xml:space="preserve"><value>Только чтение: игровая система отсутствует</value></data>
+  <data name="Campaign.SystemMissingGm" xml:space="preserve"><value>Эта кампания использует игровую систему «{0}», которая не установлена на этом сервере. Всё можно читать и экспортировать, но ничего нельзя изменить, и стол не запустится. Установите систему снова и перезапустите приложение или выберите другую систему в настройках.</value></data>
+  <data name="Campaign.SystemMissingFailed" xml:space="preserve"><value>Система есть, но не загрузилась; причины указаны на странице «О проекте и лицензии».</value></data>
+  <data name="Campaign.SystemMissingPlayer" xml:space="preserve"><value>Эта кампания использует игровую систему «{0}», которая не установлена на этом сервере. Всё можно читать, но ничего нельзя изменить, пока мастер это не исправит.</value></data>
+  <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (не установлена)</value></data>
 </root>

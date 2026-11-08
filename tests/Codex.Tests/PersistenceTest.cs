@@ -64,6 +64,17 @@ public class NoOpSystemCatalog : Codex.Plugin.Abstractions.ISystemCatalog
     public IEnumerable<Codex.Plugin.Abstractions.UISchema> GetUISchemas(string systemId) => Enumerable.Empty<Codex.Plugin.Abstractions.UISchema>();
 }
 
+/// <summary>A catalog that has finished loading and knows exactly these systems.</summary>
+public class LoadedSystemCatalog(params string[] ids) : Codex.Plugin.Abstractions.ISystemCatalog
+{
+    public bool IsLoaded => true;
+    public IReadOnlySet<string> LoadedSystemIds { get; } = new HashSet<string>(ids);
+    public IEnumerable<Codex.Plugin.Abstractions.SystemSummary> Systems => Enumerable.Empty<Codex.Plugin.Abstractions.SystemSummary>();
+    public string GetDisplayName(string systemId) => systemId;
+    public Codex.Plugin.Abstractions.SystemDefinition? GetDefinition(string systemId) => null;
+    public IEnumerable<Codex.Plugin.Abstractions.UISchema> GetUISchemas(string systemId) => Enumerable.Empty<Codex.Plugin.Abstractions.UISchema>();
+}
+
 /// <summary>Every test class that spins up its own embedded RavenDB instance shares this
 /// collection so xUnit never runs two of them in parallel. Different classes each racing to start
 /// (or query) the same underlying EmbeddedServer.Instance process is flaky under load - not a bug
@@ -2097,6 +2108,52 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
 
     /// <summary>D15: a page resolves the caller's role once, when it opens. A co-DM demoted while their Settings page is open
     /// must not keep a DM's powers on it: the writes read the role from the campaign as stored.</summary>
+    [Fact]
+    public async Task ACampaignWhoseSystemIsMissing_IsReadOnly_ButExports_AndTheGmCanSwitchItToAnInstalledSystem_Async()
+    {
+        var campaignId = "camp-nosystem-" + Guid.NewGuid();
+        // Stored while its system was installed (the default repository never rejects an id)...
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = campaignId, OwnerId = "owner", Name = "Orphan", SystemId = "withdrawn",
+            Members = { new CampaignMember { UserId = "p1", Role = CampaignRole.Player } }
+        });
+        var actor = new ActorDocument { Id = "actor-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Kept", OwnerUserId = "p1" };
+        Assert.True(await _actorRepository.TrySaveAsync(actor, (await new CampaignAccessResolver(_campaignRepository).ResolveAsync(campaignId, "owner"))!));
+
+        // ...and opened after it was removed.
+        var catalog = new LoadedSystemCatalog("srd5e");
+        var campaigns = new CampaignRepository(_dbService, catalog, _actorRepository, _sessionRepository, _noteRepository, _regionRepository, _factRepository, _homebrewRepository, _encounterRepository, _wikiRepository, _journalRepository, _worldChatRepository,
+            templateRepository: _templateRepository);
+        var resolver = new CampaignAccessResolver(campaigns, catalog);
+        var gm = (await resolver.ResolveAsync(campaignId, "owner"))!;
+        var player = (await resolver.ResolveAsync(campaignId, "p1"))!;
+        Assert.True(gm.SystemMissing);
+        Assert.True(player.SystemMissing);
+        Assert.True(gm.PartyPreview()!.SystemMissing);
+
+        // Reads work; writes through this access are refused, by the GM and by the owning player alike.
+        Assert.Single(await _actorRepository.GetVisibleForCampaignAsync(gm));
+        Assert.False(await _actorRepository.TrySaveAsync(new ActorDocument { Id = actor.Id, CampaignId = campaignId, Name = "Renamed", OwnerUserId = "p1" }, player));
+        Assert.False(await _actorRepository.TryDeleteAsync(actor.Id, gm));
+        Assert.Equal("Kept", (await _actorRepository.GetVisibleAsync(actor.Id, gm))!.Name);
+        var art = await Assert.ThrowsAsync<LocalizedException>(() => _mediaStore.PutAsync(gm, campaignId, RavenMediaStore.CampaignCover, new MemoryStream(new byte[] { 0x89, 0x50, 0x4E, 0x47 }), "image/png"));
+        Assert.Equal("Campaign.SystemMissing", art.Key);
+        var rename = await Assert.ThrowsAsync<LocalizedException>(() => campaigns.UpdateAsDmAsync(gm, c => c.Name = "Changed"));
+        Assert.Equal("Campaign.SystemMissing", rename.Key);
+        Assert.Equal("withdrawn", rename.Args.Single());
+
+        // Exporting is reading: it still works, so a GM can take everything elsewhere.
+        var bundle = await new CampaignExportService(campaigns, _actorRepository, _sessionRepository, _encounterRepository, _factRepository, _noteRepository, _regionRepository, _homebrewRepository, _wikiRepository, _templateRepository).ExportAsync(gm);
+        Assert.Equal("Orphan", bundle!.Campaign!.Name);
+
+        // The way out: choose an installed system. Then the campaign is writable again.
+        await campaigns.UpdateAsDmAsync(gm, c => c.SystemId = "srd5e");
+        var after = (await resolver.ResolveAsync(campaignId, "owner"))!;
+        Assert.False(after.SystemMissing);
+        Assert.True(await _actorRepository.TryDeleteAsync(actor.Id, after));
+    }
+
     [Fact]
     public async Task ACoDmDemotedWhileTheirPageIsOpen_CanNoLongerChangeTheCampaign_ItsArt_OrOthersNotes_Async()
     {

@@ -3,6 +3,7 @@ using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using NSubstitute;
@@ -111,6 +112,60 @@ public class PluginLoadTest
         finally
         {
             Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public async Task LoadProblems_SayWhatEachIsAbout_WhichSystemItBelongsTo_AndKeepPathsOutOfTheMessage()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "LoadProblems_" + Guid.NewGuid());
+        void Write(string relative, string text)
+        {
+            var path = Path.Combine(root, relative);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, text);
+        }
+
+        try
+        {
+            Write("good/system.yaml", "id: good\nname: Good\n");
+            Write("good/packs/addon/manifest.json", """{ "id": "addon", "name": "Addon", "version": "1.0.0", "systemId": "good", "dependencies": ["nowhere"] }""");
+            Write("elsewhere/manifest.json", """{ "id": "stray", "name": "Stray", "version": "1.0.0", "systemId": "absent" }""");
+            Write("broken/system.yaml", "id: broken\nname: Broken\nattributes:\n  - key: a\n  - key: a\n");
+            File.WriteAllBytes(Path.Combine(root, "junk.dll"), new byte[] { 1, 2, 3, 4 });
+
+            var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(new ContentRegistry()));
+            await loader.LoadAndInitializeAsync(root);
+
+            Assert.Equal(new[] { "good" }, loader.LoadedSystemIds);
+
+            // A broken system.yaml is a failed system, named by the id it states, with its errors one by one.
+            var failed = Assert.Single(loader.FailedSystems);
+            Assert.Equal("broken", failed.Id);
+            Assert.Contains(failed.Errors, e => e.Contains("declared more than once"));
+            Assert.EndsWith(Path.Combine("broken", "system.yaml"), failed.Path);
+
+            // A plugin that failed is reported; it used to reach only the server log.
+            Assert.Contains(loader.LoadProblems, p => p.Source == LoadProblemSource.Plugin && p.Subject == "junk.dll");
+
+            // A pack problem belongs to its system.
+            var dependency = Assert.Single(loader.LoadProblems, p => p.Subject == "addon");
+            Assert.Equal("good", dependency.SystemId);
+            Assert.Contains("nowhere", dependency.Message);
+
+            // A system's problems, and those that belong to no system, but not another system's.
+            var forGood = loader.ProblemsFor("good").ToList();
+            Assert.Contains(dependency, forGood);
+            Assert.Contains(forGood, p => p.Subject == "junk.dll");
+            Assert.DoesNotContain(forGood, p => p.Subject == "stray" || p.SystemId == "broken");
+
+            // Messages are shown to people who don't run the server: no paths in them.
+            Assert.All(loader.LoadProblems, p => Assert.DoesNotContain(root, p.Message));
+            Assert.All(failed.Errors, e => Assert.DoesNotContain(root, e));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
         }
     }
 }

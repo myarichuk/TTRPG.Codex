@@ -244,4 +244,11 @@
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>העתיקו אותם ממחירון הספק. היישום אינו מגיע עם מחירים, ולכן בלעדיהם הוא מציג רק אסימונים ולא עלות מנוחשת.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>מחיר חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>
   <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>קלט {0} / פלט {1} לכל מיליון אסימונים</value></data>
+  <data name="Page.About.FailedSystems" xml:space="preserve"><value>מערכות שלא נטענו</value></data>
+  <data name="Page.About.FailedSystemsIntro" xml:space="preserve"><value>המערכות האלה נמצאו, אבל יש שגיאות בקבצים שלהן, ולכן אף קמפיין לא יכול להשתמש בהן עד שהקובץ יתוקן והאפליקציה תופעל מחדש.</value></data>
+  <data name="Page.About.OtherProblems" xml:space="preserve"><value>בעיות אחרות</value></data>
+  <data name="Page.About.OnTheServer" xml:space="preserve"><value>בשרת:</value></data>
+  <data name="Page.About.HasProblems" xml:space="preserve"><value>יש בעיות טעינה</value></data>
+  <data name="Page.Home.FailedSystems" xml:space="preserve"><value>לא מופיעות כי לא נטענו: {0}.</value></data>
+  <data name="Page.Home.FailedSystemsLink" xml:space="preserve"><value>למה?</value></data>
 </root>

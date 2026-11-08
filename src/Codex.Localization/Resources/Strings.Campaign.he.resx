@@ -810,4 +810,10 @@
   <data name="Campaign.Book.Ai.Row.Skipped" xml:space="preserve"><value>קצר מדי</value></data>
   <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>התקרה נמוכה מדי כדי לשלוח אפילו בקשה אחת: הפרק הגדול ביותר דורש שמירה של לפחות {0} אסימונים (המקרה הגרוע, כולל ניסיונות חוזרים).</value></data>
   <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>הערות הסגנון כוללות עובדות שאינן בספר של החבורה ({0}). במהדורה הזו השאירו רק קול וטון: בלי שמות, מספרים ועלילה.</value></data>
+  <data name="Campaign.SystemMissing" xml:space="preserve"><value>מערכת המשחק של הקמפיין הזה, '{0}', אינה מותקנת, ולכן אי אפשר לשנות את הקמפיין.</value></data>
+  <data name="Campaign.SystemMissingTitle" xml:space="preserve"><value>לקריאה בלבד: מערכת המשחק חסרה</value></data>
+  <data name="Campaign.SystemMissingGm" xml:space="preserve"><value>הקמפיין הזה משתמש במערכת המשחק '{0}', שאינה מותקנת בשרת הזה. אפשר לקרוא ולייצא הכול, אבל אי אפשר לשנות דבר, וגם אי אפשר להפעיל את השולחן. התקינו שוב את המערכת והפעילו מחדש את האפליקציה, או בחרו מערכת אחרת בהגדרות.</value></data>
+  <data name="Campaign.SystemMissingFailed" xml:space="preserve"><value>המערכת קיימת אבל לא נטענה; הסיבות מופיעות בדף 'אודות ורישיונות'.</value></data>
+  <data name="Campaign.SystemMissingPlayer" xml:space="preserve"><value>הקמפיין הזה משתמש במערכת המשחק '{0}', שאינה מותקנת בשרת הזה. אפשר לקרוא הכול, אבל אי אפשר לשנות דבר עד ששליט המבוך יסדר את זה.</value></data>
+  <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (לא מותקנת)</value></data>
 </root>

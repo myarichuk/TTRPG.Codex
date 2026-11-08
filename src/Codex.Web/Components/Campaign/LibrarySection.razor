@@ -37,11 +37,12 @@
     }
 </div>
 
-@if (Ctx.IsDm && Loader.LoadWarnings.Count > 0)
+@if (Ctx.IsDm && Loader.ProblemsFor(Ctx.Campaign.SystemId).Count() is > 0 and var problemCount)
 {
-    @* An entry that failed to load is simply missing below; say so, and where the reasons are (R13). *@
+    @* An entry that failed to load is simply missing below; say so, and where the reasons are (R13). Only this
+       campaign's system and problems that belong to no system count: another system's broken pack is not missing here. *@
     <p class="small-muted mb-3" role="status" data-testid="library-load-problems">
-        <LucideIcon IconName="alert-triangle" Size="14" /> @L["Campaign.Library.LoadProblems", Loader.LoadWarnings.Count]
+        <LucideIcon IconName="alert-triangle" Size="14" /> @L["Campaign.Library.LoadProblems", problemCount]
         <a href="/about#warnings-heading">@L["Campaign.Library.LoadProblemsLink"]</a>
     </p>
 }

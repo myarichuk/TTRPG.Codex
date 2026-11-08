@@ -28,10 +28,23 @@ public class PluginLoader(
     public IReadOnlySet<string> LoadedSystemIds { get; private set; } = new HashSet<string>();
 
 
-    /// <summary>Problems found while loading that a DM should see (bad manifest, invalid system.yaml...).</summary>
-    public IReadOnlyList<string> LoadWarnings => _warnings;
+    /// <summary>Problems found while loading that a GM should see (bad manifest, invalid system.yaml...), each with what
+    /// it is about and the system it belongs to.</summary>
+    public IReadOnlyList<LoadProblem> LoadProblems => _problems;
 
-    private readonly List<string> _warnings = new();
+    /// <summary>The same problems as one line each.</summary>
+    public IReadOnlyList<string> LoadWarnings => _problems.Select(p => p.Text).ToList();
+
+    /// <summary>Systems that were found but did not load, with why.</summary>
+    public IReadOnlyList<FailedSystem> FailedSystems => _failedSystems;
+
+    /// <summary>The problems that belong to <paramref name="systemId"/>, and those that belong to no system.</summary>
+    public IEnumerable<LoadProblem> ProblemsFor(string systemId) =>
+        _problems.Where(p => p.SystemId == null || string.Equals(p.SystemId, systemId, StringComparison.OrdinalIgnoreCase));
+
+    private readonly List<LoadProblem> _problems = new();
+    private List<string> _roots = new();
+    private readonly List<FailedSystem> _failedSystems = new();
     private Dictionary<string, ICodexSystemPlugin> _pluginsBySystemId = new();
 
     public IEnumerable<SystemSummary> Systems => _pluginsBySystemId.Values
@@ -65,9 +78,11 @@ public class PluginLoader(
 
             IsLoading = true;
             LoadException = null;
-            _warnings.Clear();
+            _problems.Clear();
+            _failedSystems.Clear();
 
             var roots = contentRoots.Where(Directory.Exists).Select(Path.GetFullPath).Distinct().ToList();
+            _roots = roots.OrderByDescending(r => r.Length).ToList();
             foreach (var missing in contentRoots.Where(r => !Directory.Exists(r)))
             {
                 logger.LogWarning("Content root '{Root}' does not exist", missing);
@@ -100,7 +115,7 @@ public class PluginLoader(
             catch (Exception ex)
             {
                 LoadException = ex;
-                _warnings.Add($"Loading systems and content packs stopped part-way: {ex.Message}");
+                Add(new LoadProblem(LoadProblemSource.Loader, "loader", $"Loading systems and content packs stopped part-way: {ex.Message}"));
                 logger.LogError(ex, "Plugin loading failed");
             }
             finally
@@ -126,7 +141,7 @@ public class PluginLoader(
             {
                 if (!seen.Add(plugin.SystemId))
                 {
-                    Warn($"System '{plugin.SystemId}' is provided twice; the second copy (from {root}) was ignored.");
+                    Warn(new LoadProblem(LoadProblemSource.Plugin, plugin.SystemId, "is provided twice; the second copy was ignored.", plugin.SystemId, root));
                     continue;
                 }
 
@@ -143,7 +158,7 @@ public class PluginLoader(
                     var definition = SystemDefinitionLoader.Load(systemFile);
                     if (!seen.Add(definition.Id))
                     {
-                        Warn($"System '{definition.Id}' in {systemFile} duplicates an already loaded system and was ignored.");
+                        Warn(new LoadProblem(LoadProblemSource.System, definition.Id, "duplicates an already loaded system and was ignored.", definition.Id, systemFile));
                         continue;
                     }
 
@@ -152,7 +167,11 @@ public class PluginLoader(
                 }
                 catch (Exception ex)
                 {
-                    Warn($"Could not load {systemFile}: {ex.Message}");
+                    var id = DeclaredId(systemFile);
+                    var name = id ?? Path.GetFileName(Path.GetDirectoryName(systemFile)) ?? SystemDefinitionLoader.FileName;
+                    var errors = SystemDefinitionLoader.ErrorsOf(ex);
+                    _failedSystems.Add(new FailedSystem(id, name, errors.Select(WithoutRoots).ToList(), systemFile));
+                    Warn(new LoadProblem(LoadProblemSource.System, name, $"did not load: {string.Join(" ", errors)}", id, systemFile));
                     logger.LogError(ex, "Failed to load system definition {File}", systemFile);
                 }
             }
@@ -191,7 +210,8 @@ public class PluginLoader(
             }
             catch (Exception ex)
             {
-                Warn($"Could not read the manifest of the pack at {packPath}: {ex.Message}");
+                Warn(new LoadProblem(LoadProblemSource.Pack, Path.GetFileName(packPath!.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)),
+                    $"its manifest could not be read: {ex.Message}", Path: packPath));
                 logger.LogError(ex, "Failed to read manifest for content pack at {Path}", packPath);
             }
         }
@@ -202,13 +222,13 @@ public class PluginLoader(
 
             if (!manifest.IsAppVersionCompatible(appVersion))
             {
-                Warn($"Pack '{manifest.Id}' needs app version {manifest.MinAppVersion} (this is {appVersion}) and was skipped.");
+                Warn(new LoadProblem(LoadProblemSource.Pack, manifest.Id, $"needs app version {manifest.MinAppVersion} (this is {appVersion}) and was skipped.", manifest.SystemId, packPath));
                 continue;
             }
 
             if (!activeSystemIds.Contains(manifest.SystemId))
             {
-                Warn($"Pack '{manifest.Id}' is for system '{manifest.SystemId}', which is not loaded, and was skipped.");
+                Warn(new LoadProblem(LoadProblemSource.Pack, manifest.Id, $"is for system '{manifest.SystemId}', which is not loaded, and was skipped.", manifest.SystemId, packPath));
                 continue;
             }
 
@@ -220,12 +240,15 @@ public class PluginLoader(
             }
             catch (Exception ex)
             {
-                Warn($"Pack '{manifest.Id}' failed to load: {ex.Message}");
+                Warn(new LoadProblem(LoadProblemSource.Pack, manifest.Id, $"failed to load: {ex.Message}", manifest.SystemId, packPath));
                 logger.LogError(ex, "Failed to load content pack from {Path}", packPath);
             }
 
             // Entries the pack loader skipped or loaded without what they inherit: already logged there.
-            _warnings.AddRange(contentPackLoader.TakeProblems());
+            foreach (var problem in contentPackLoader.TakeProblems())
+            {
+                Add(new LoadProblem(LoadProblemSource.Pack, manifest.Id, problem, manifest.SystemId, packPath));
+            }
         }
     }
 
@@ -241,7 +264,7 @@ public class PluginLoader(
         {
             if (!pathById.TryAdd(manifest.Id, path))
             {
-                Warn($"Pack id '{manifest.Id}' appears at both {pathById[manifest.Id]} and {path}; both will load and the higher priority/pack ordering wins per entry.");
+                Warn(new LoadProblem(LoadProblemSource.Pack, manifest.Id, "appears twice; both copies load and, entry by entry, the higher priority wins.", manifest.SystemId, path));
             }
         }
 
@@ -267,7 +290,7 @@ public class PluginLoader(
             {
                 if (!pathById.TryGetValue(dependencyId, out var dependencyPath))
                 {
-                    Warn($"Pack '{manifest.Id}' depends on '{dependencyId}', which was not found. It still loads, but inherited content may be missing.");
+                    Warn(new LoadProblem(LoadProblemSource.Pack, manifest.Id, $"depends on '{dependencyId}', which was not found. It still loads, but inherited content may be missing.", manifest.SystemId, path));
                     continue;
                 }
 
@@ -310,6 +333,8 @@ public class PluginLoader(
             }
             catch (Exception ex)
             {
+                // A compiled plugin that fails used to be only in the server log: the GM saw its system simply missing.
+                Warn(new LoadProblem(LoadProblemSource.Plugin, Path.GetFileName(file), $"did not load: {ex.Message}", Path: file));
                 logger.LogError(ex, "Failed to load plugin from {File}", file);
             }
         }
@@ -327,10 +352,44 @@ public class PluginLoader(
         }
     }
 
-    private void Warn(string message)
+    private void Warn(LoadProblem problem)
     {
-        _warnings.Add(message);
-        logger.LogWarning("{Message}", message);
+        Add(problem);
+        logger.LogWarning("{Problem} ({Path})", problem.Text, problem.Path);
+    }
+
+    /// <summary>Every problem goes through here: exception messages (.NET's, YamlDotNet's) carry full paths, and the message
+    /// is shown to people who don't run the server, so the content roots are cut out and paths are left relative to them.</summary>
+    private void Add(LoadProblem problem) => _problems.Add(problem with { Message = WithoutRoots(problem.Message) });
+
+    private string WithoutRoots(string message)
+    {
+        foreach (var root in _roots)
+        {
+            message = message.Replace(root + Path.DirectorySeparatorChar, string.Empty, StringComparison.Ordinal)
+                .Replace(root + Path.AltDirectorySeparatorChar, string.Empty, StringComparison.Ordinal)
+                .Replace(root, ".", StringComparison.Ordinal);
+        }
+
+        return message;
+    }
+
+    /// <summary>The <c>id:</c> a system file states, read line by line so it works even when the YAML is broken.</summary>
+    private static string? DeclaredId(string systemFile)
+    {
+        try
+        {
+            foreach (var line in File.ReadLines(systemFile))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(line, @"^id:\s*[""']?([a-z0-9][a-z0-9_-]*)[""']?\s*(#.*)?$");
+                if (match.Success) return match.Groups[1].Value;
+            }
+        }
+        catch (IOException)
+        {
+        }
+
+        return null;
     }
 
     /// <summary>Recursive file search that skips build output and hidden folders.</summary>

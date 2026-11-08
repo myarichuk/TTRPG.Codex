@@ -95,6 +95,11 @@ public class RavenMediaStore(RavenDbService dbService) : IMediaStore
     private static async Task EnsureMayWriteAsync(Raven.Client.Documents.Session.IAsyncDocumentSession session, CampaignAccess access, string documentId)
     {
         var campaign = await session.LoadAsync<CampaignDocument>(access.CampaignId);
+        if (campaign != null && access.SystemMissing)
+        {
+            throw new Codex.Localization.LocalizedException("Campaign.SystemMissing", campaign.SystemId);
+        }
+
         var role = campaign == null ? null : CampaignAccessResolver.RoleOf(campaign, access.UserId);
         var allowed = role != null && (documentId == access.CampaignId
             ? role == CampaignRole.DM

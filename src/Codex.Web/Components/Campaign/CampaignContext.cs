@@ -45,6 +45,9 @@ public sealed class CampaignContext
     }
 
     public bool IsDm => Access.IsDm;
+
+    /// <summary>The campaign's game system is not installed: read-only (<see cref="CampaignAccess.SystemMissing"/>).</summary>
+    public bool SystemMissing => Access.SystemMissing;
     public string BasePath => $"/campaigns/{Campaign.Id}";
     public IReadOnlySet<string> OwnedActorIds => AllActors.Where(a => a.OwnerUserId == UserId).Select(a => a.Id).ToHashSet();
 }

@@ -244,4 +244,11 @@
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>Copy these from your provider's price list. The app ships no prices, so without them it shows tokens only, never a guessed cost.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>A price must be a number from 0 to {0}, or empty.</value></data>
   <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>in {0} / out {1} per 1M tokens</value></data>
+  <data name="Page.About.FailedSystems" xml:space="preserve"><value>Systems that did not load</value></data>
+  <data name="Page.About.FailedSystemsIntro" xml:space="preserve"><value>These systems were found, but their files have errors, so no campaign can use them until the file is fixed and the app restarted.</value></data>
+  <data name="Page.About.OtherProblems" xml:space="preserve"><value>Other problems</value></data>
+  <data name="Page.About.OnTheServer" xml:space="preserve"><value>On the server:</value></data>
+  <data name="Page.About.HasProblems" xml:space="preserve"><value>Has loading problems</value></data>
+  <data name="Page.Home.FailedSystems" xml:space="preserve"><value>Not listed because they did not load: {0}.</value></data>
+  <data name="Page.Home.FailedSystemsLink" xml:space="preserve"><value>Why?</value></data>
 </root>

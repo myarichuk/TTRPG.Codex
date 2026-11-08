@@ -12,6 +12,7 @@
 @inject IActorRepository ActorRepo
 @inject ICampaignAccessResolver AccessResolver
 @inject ISystemCatalog Catalog
+@inject Codex.Core.PluginLoader Loader
 @inject CampaignRuntimeManager RuntimeManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JS
@@ -121,6 +122,20 @@ else
 
         <div class="ws-main">
             <StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
+
+            @if (access.SystemMissing)
+            {
+                @* The campaign's system is not installed: the store refuses every write through this access, so say so
+                   up front instead of letting edits fail one by one. *@
+                <section class="ws-readonly" role="status" aria-labelledby="readonly-title" data-testid="campaign-system-missing">
+                    <h2 id="readonly-title" class="h6 mb-1"><LucideIcon IconName="lock" Size="16" /> @L["Campaign.SystemMissingTitle"]</h2>
+                    <p class="mb-0">@(access.IsDm ? L["Campaign.SystemMissingGm", campaign.SystemId] : L["Campaign.SystemMissingPlayer", campaign.SystemId])</p>
+                    @if (access.IsDm && Loader.FailedSystems.Any(f => f.Id == campaign.SystemId))
+                    {
+                        <p class="mb-0 mt-1"><a href="/about#warnings-heading">@L["Campaign.SystemMissingFailed"]</a></p>
+                    }
+                </section>
+            }
 
             @* U2: a character sheet or a session is a window inside the campaign, not a page of its own: the rail, the tab bar
                and the notes drawer stay, and the section it was opened from stays alive under it (hidden), so going back

@@ -21,10 +21,16 @@ public static class SystemDefinitionLoader
         .IgnoreUnmatchedProperties()
         .Build();
 
+    /// <summary>The key under which a thrown <see cref="InvalidDataException"/> carries its problems, one sentence each
+    /// (a <c>string[]</c> in <see cref="Exception.Data"/>), so a caller can list them without parsing the message.</summary>
+    public const string ErrorsKey = "errors";
+
     public static SystemDefinition Load(string path)
     {
         var yaml = File.ReadAllText(path);
-        var definition = Parse(yaml, path);
+        // Messages name the system's folder, not the full path: they are shown to people who don't run the server.
+        var folder = Path.GetFileName(Path.GetDirectoryName(Path.GetFullPath(path)));
+        var definition = Parse(yaml, string.IsNullOrEmpty(folder) ? FileName : $"{folder}/{FileName}");
         LoadTranslations(definition, path);
         return definition;
     }
@@ -64,22 +70,33 @@ public static class SystemDefinitionLoader
         }
         catch (Exception ex)
         {
-            throw new InvalidDataException($"{sourceName ?? "system.yaml"} is not a valid system definition: {Describe(ex)}", ex);
+            throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is not a valid system definition: {Describe(ex)}", ex),
+                $"not a valid system definition: {Describe(ex)}");
         }
 
         if (definition == null)
         {
-            throw new InvalidDataException($"{sourceName ?? "system.yaml"} is empty.");
+            throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is empty."), "the file is empty.");
         }
 
         var errors = Validate(definition).ToList();
         if (errors.Count > 0)
         {
-            throw new InvalidDataException($"{sourceName ?? "system.yaml"} is invalid:\n - " + string.Join("\n - ", errors));
+            throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is invalid:\n - " + string.Join("\n - ", errors)), errors.ToArray());
         }
 
         return definition;
     }
+
+    private static InvalidDataException WithErrors(InvalidDataException ex, params string[] errors)
+    {
+        ex.Data[ErrorsKey] = errors;
+        return ex;
+    }
+
+    /// <summary>The problems a failed <see cref="Parse"/> or <see cref="Load"/> found, one sentence each.</summary>
+    public static IReadOnlyList<string> ErrorsOf(Exception ex) =>
+        ex.Data[ErrorsKey] as string[] ?? new[] { ex.Message };
 
     /// <summary>Every problem that would make the definition unusable, as plain sentences.</summary>
     public static IEnumerable<string> Validate(SystemDefinition definition)

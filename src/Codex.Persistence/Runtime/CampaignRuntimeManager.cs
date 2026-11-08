@@ -70,6 +70,12 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             throw new InvalidOperationException("Only the campaign's GM can start its runtime.");
         }
 
+        // A table runs the system's rules; with the system gone there are none to run, and the campaign is read-only.
+        if (dmAccess.SystemMissing)
+        {
+            throw new Codex.Localization.LocalizedException("Campaign.SystemMissing", campaign.SystemId);
+        }
+
         // One start (or end) per campaign at a time (R6): two "Start table" clicks used to both open a session and both
         // patch the campaign before one of them lost the race to publish its runtime.
         var gate = GateFor(campaign.Id);
@@ -152,6 +158,9 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     /// <param name="baselineSheet">The sheet as the editor loaded it, so fields it did not change keep their live value.</param>
     public async Task<bool> TrySaveActorAsync(ActorDocument edited, IReadOnlyDictionary<string, object>? baselineSheet, CampaignAccess access, SystemDefinition? system)
     {
+        // The repository refuses this access too (NowAsync); the live-table path below reads the role itself, so it checks here.
+        if (access.SystemMissing) return false;
+
         var runtime = TryGet(access.CampaignId);
         if (runtime == null || !runtime.HasActor(edited.Id))
         {
@@ -166,7 +175,7 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             return false;
         }
 
-        access = role == access.Role ? access : new CampaignAccess(access.CampaignId, access.UserId, role);
+        access = role == access.Role ? access : new CampaignAccess(access.CampaignId, access.UserId, role, access.SystemMissing);
         try
         {
             await runtime.EnqueueAsync(new ReplaceActorCommand(edited, baselineSheet, access, system));

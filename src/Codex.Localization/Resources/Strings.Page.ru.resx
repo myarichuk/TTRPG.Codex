@@ -244,4 +244,11 @@
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>Возьмите их из прайс-листа провайдера. Приложение не знает цен, поэтому без них показывает только токены, а не выдуманную стоимость.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>Цена должна быть числом от 0 до {0} или пустой.</value></data>
   <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>вход {0} / выход {1} за 1 млн токенов</value></data>
+  <data name="Page.About.FailedSystems" xml:space="preserve"><value>Системы, которые не загрузились</value></data>
+  <data name="Page.About.FailedSystemsIntro" xml:space="preserve"><value>Эти системы найдены, но в их файлах есть ошибки, поэтому ни одна кампания не может их использовать, пока файл не исправят и приложение не перезапустят.</value></data>
+  <data name="Page.About.OtherProblems" xml:space="preserve"><value>Другие проблемы</value></data>
+  <data name="Page.About.OnTheServer" xml:space="preserve"><value>На сервере:</value></data>
+  <data name="Page.About.HasProblems" xml:space="preserve"><value>Есть проблемы при загрузке</value></data>
+  <data name="Page.Home.FailedSystems" xml:space="preserve"><value>Не показаны, потому что не загрузились: {0}.</value></data>
+  <data name="Page.Home.FailedSystemsLink" xml:space="preserve"><value>Почему?</value></data>
 </root>

@@ -13,11 +13,17 @@ public sealed class CampaignAccess
     public CampaignRole Role { get; }
     public bool IsDm => Role == CampaignRole.DM;
 
-    internal CampaignAccess(string campaignId, string userId, CampaignRole role)
+    /// <summary>The campaign's game system is not installed (removed, or it failed to load). Everything can still be read,
+    /// but nothing is written through this access: repository writes refuse it, as they refuse a party preview. The way
+    /// out is to install the system again, or for a GM to choose another one in Settings.</summary>
+    public bool SystemMissing { get; }
+
+    internal CampaignAccess(string campaignId, string userId, CampaignRole role, bool systemMissing = false)
     {
         CampaignId = campaignId;
         UserId = userId;
         Role = role;
+        SystemMissing = systemMissing;
     }
 
     /// <summary>
@@ -26,7 +32,7 @@ public sealed class CampaignAccess
     /// could drift from it. Only a DM gets one (a player has nothing more to preview), and it can read but never write:
     /// it is a player's access, and its user id matches no one.
     /// </summary>
-    public CampaignAccess? PartyPreview() => IsDm ? new CampaignAccess(CampaignId, string.Empty, CampaignRole.Player) : null;
+    public CampaignAccess? PartyPreview() => IsDm ? new CampaignAccess(CampaignId, string.Empty, CampaignRole.Player, SystemMissing) : null;
 }
 
 public interface ICampaignAccessResolver

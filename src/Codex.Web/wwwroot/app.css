@@ -2460,6 +2460,9 @@ dialog.wb-raw-dialog { width: min(880px, 96vw); }
 .wb-reader-body { font-size: var(--fs-base); line-height: 1.62; overflow-wrap: anywhere; }
 .wb-callout { display: flex; align-items: baseline; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-radius: var(--radius-sm); background: var(--surface-2); font-size: var(--fs-md); color: var(--text-2); }
 .wb-callout-warning { background: var(--warning-soft); color: var(--warning); }
+/* A campaign whose game system is missing: read-only, said once at the top of the workspace. */
+.ws-readonly { margin: 0 0 var(--space-6); padding: var(--space-5) var(--space-6); background: var(--warning-soft); color: var(--text); border: 1px solid var(--warning); border-radius: var(--radius-md); }
+.ws-readonly h2 { color: var(--warning); display: flex; align-items: center; gap: var(--space-2); }
 .wb-fields { display: grid; grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr); gap: var(--space-2) var(--space-7); margin: 0 0 var(--space-6); font-size: var(--fs-md); }
 .wb-fields dt { font-weight: 500; color: var(--text-3); }
 .wb-fields dd { margin: 0; overflow-wrap: anywhere; }

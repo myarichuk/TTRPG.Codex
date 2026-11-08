@@ -95,7 +95,7 @@ public class CampaignRepository(
             && !string.IsNullOrEmpty(campaign.SystemId)
             && !systemCatalog.LoadedSystemIds.Contains(campaign.SystemId))
         {
-            throw new InvalidOperationException($"SystemId '{campaign.SystemId}' is not a loaded system plugin.");
+            throw new LocalizedException("Campaign.SystemMissing", campaign.SystemId);
         }
     }
 
