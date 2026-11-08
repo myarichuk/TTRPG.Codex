@@ -1096,6 +1096,15 @@
   <data name="Campaign.Book.Draft.Panel" xml:space="preserve"><value>חלונית הכלים</value></data>
   <data name="Campaign.Book.Draft.Problems" xml:space="preserve"><value>בעיות</value></data>
   <data name="Campaign.Book.Draft.NoProblems" xml:space="preserve"><value>לא נמצאו בעיות. כאן מדווחים התאמת העמודים, ההורדה וכתובות הרשת של גיליון הסגנונות.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Found" xml:space="preserve"><value>{0, plural, one{בספר של השחקנים יש דבר אחד} two{בספר של השחקנים יש שני דברים} other{בספר של השחקנים יש # דברים}} שצריכים להיות רק במהדורת מנהל המשחק. בדקו כל אחד לפני שמוסרים את הספר:</value></data>
+  <data name="Campaign.Book.Draft.Leak.Secret" xml:space="preserve"><value>מילים מסוד</value></data>
+  <data name="Campaign.Book.Draft.Leak.SecretIn" xml:space="preserve"><value>מילים מסוד ב„{0}”</value></data>
+  <data name="Campaign.Book.Draft.Leak.HiddenName" xml:space="preserve"><value>שם של דמות נסתרת</value></data>
+  <data name="Campaign.Book.Draft.Leak.RealName" xml:space="preserve"><value>השם האמיתי של „{0}”</value></data>
+  <data name="Campaign.Book.Draft.Leak.GmOnly" xml:space="preserve"><value>משהו שיש רק במהדורת מנהל המשחק</value></data>
+  <data name="Campaign.Book.Draft.Leak.More" xml:space="preserve"><value>{0, plural, one{ועוד אחד} two{ועוד שניים} other{ועוד #}}</value></data>
+  <data name="Campaign.Book.Draft.Leak.Hint" xml:space="preserve"><value>זו רק אזהרה: אפשר להוריד את הספר גם כך.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Anyway" xml:space="preserve"><value>להוריד בכל זאת</value></data>
   <data name="Campaign.Book.Draft.BlocksTab" xml:space="preserve"><value>בלוקים</value></data>
   <data name="Campaign.Book.Draft.Ai.PickChapter" xml:space="preserve"><value>בחרו פרק כדי לשאול עליו את ה-AI; גיליון הסגנונות לא נשלח.</value></data>
   <data name="Campaign.Book.Tab.Print" xml:space="preserve"><value>הדפסה</value></data>

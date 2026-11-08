@@ -686,4 +686,45 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         Assert.Equal(BookMergeOutcome.Ready, (await merges.MergeAsync(dm, "party", "en", "cast", saved.Version, useAi: true)).Outcome);
         Assert.Equal(0, (await merges.MergeAsync(dm, "party", "en", "cast", saved.Version, useAi: false)).Merged);
     }
+
+    [Fact]
+    public async Task TheLeakCheck_FindsEveryCanaryPastedIntoThePartyDraft_AndNothingInTheDraftAsGenerated()
+    {
+        var (dm, _) = await SeedAsync();
+        var party = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var gm = (await _drafts.OpenAsync(dm, "dm", "en"))!;
+
+        // The party draft as the campaign makes it says nothing only the GM edition has.
+        Assert.Equal(0, (await _drafts.LeaksAsync(dm, "en"))!.Total);
+        Assert.Null(await _drafts.LeaksAsync(new CampaignAccess(dm.CampaignId, PlayerUser, CampaignRole.Player), "en"));
+
+        // A secret the GM typed into the GM draft, which the campaign never had.
+        var gmCast = gm.Chapters.Single(c => c.Section == "cast");
+        await _drafts.SaveChapterAsync(dm, "dm", "en", "cast", gmCast.Markdown + "\n{{secret\nGM_TYPED the vault key is under the altar\n}}\n", gmCast.Version);
+        // Pasted across, as the GM edition prints them (escaped) and as typed.
+        var cast = party.Chapters.Single(c => c.Section == "cast");
+        const string pasted = "CANARY\\_BIO\\_DM. CANARY_HIDDEN_NAME and CANARY_UNKNOWN_REALNAME read CANARY_WIKI_DM_TITLE: CANARY_WIKI_DM_BODY, " +
+            "CANARY_WIKI_BLOCK, CANARY_HIDDEN_BIO, CANARY_UNKNOWN_BIO, CANARY_CAMPAIGN_DM. The *vault key* is under the altar.";
+        await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown + "\n" + pasted + "\n", cast.Version);
+        await _drafts.SaveSettingsAsync(dm, "party", "en", ".page::after { content: \"CANARY_HIDDEN_NAME\"; }", party.PageSize, party.Theme, party.Homebrewery, party.Version);
+
+        var report = (await _drafts.LeaksAsync(dm, "en"))!;
+
+        var found = report.Hits.Where(h => h.Section == "cast").Select(h => (h.Kind, Text: Regex.Replace(h.Text, @"[\\*]", ""))).ToList();
+        Assert.Contains((BookLeakKind.Secret, "CANARY_BIO_DM"), found);
+        Assert.Contains((BookLeakKind.Secret, "CANARY_WIKI_BLOCK"), found);
+        Assert.Contains((BookLeakKind.Secret, "CANARY_CAMPAIGN_DM"), found);
+        Assert.Contains((BookLeakKind.Secret, "GM_TYPED the vault key is under the altar"), found);
+        Assert.Contains((BookLeakKind.HiddenName, "CANARY_HIDDEN_NAME"), found);
+        Assert.Contains((BookLeakKind.RealName, "CANARY_UNKNOWN_REALNAME"), found);
+        Assert.Contains((BookLeakKind.GmOnly, "CANARY_WIKI_DM_TITLE"), found);
+        Assert.Contains((BookLeakKind.GmOnly, "CANARY_WIKI_DM_BODY"), found);
+        Assert.Contains((BookLeakKind.GmOnly, "CANARY_HIDDEN_BIO"), found);
+        Assert.Contains((BookLeakKind.GmOnly, "CANARY_UNKNOWN_BIO"), found);
+        Assert.Equal("PUBLIC_hooded stranger", report.Hits.Single(h => h.Kind == BookLeakKind.RealName).From);
+        Assert.Equal("PUBLIC_Vera", report.Hits.Single(h => h.Text.Contains("CANARY_BIO_DM")).From);
+        Assert.Contains(report.Hits, h => h is { Section: BookLeakCheck.Css, Kind: BookLeakKind.HiddenName });
+        // Nothing the party may read is reported, though it is all over the chapter.
+        Assert.DoesNotContain(report.Hits, h => h.Text.Contains("PUBLIC"));
+    }
 }

@@ -1096,6 +1096,15 @@
   <data name="Campaign.Book.Draft.Panel" xml:space="preserve"><value>Панель инструментов</value></data>
   <data name="Campaign.Book.Draft.Problems" xml:space="preserve"><value>Проблемы</value></data>
   <data name="Campaign.Book.Draft.NoProblems" xml:space="preserve"><value>Проблем не найдено. Сюда пишут «Разбить на страницы», скачивание и веб-адреса таблицы стилей.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Found" xml:space="preserve"><value>{0, plural, one{В книге для игроков # место} few{В книге для игроков # места} many{В книге для игроков # мест} other{В книге для игроков # места}} из того, что должно быть только в книге ведущего. Проверьте каждое, прежде чем отдавать книгу:</value></data>
+  <data name="Campaign.Book.Draft.Leak.Secret" xml:space="preserve"><value>слова секрета</value></data>
+  <data name="Campaign.Book.Draft.Leak.SecretIn" xml:space="preserve"><value>слова секрета из «{0}»</value></data>
+  <data name="Campaign.Book.Draft.Leak.HiddenName" xml:space="preserve"><value>имя скрытого персонажа</value></data>
+  <data name="Campaign.Book.Draft.Leak.RealName" xml:space="preserve"><value>настоящее имя персонажа «{0}»</value></data>
+  <data name="Campaign.Book.Draft.Leak.GmOnly" xml:space="preserve"><value>то, что есть только в книге ведущего</value></data>
+  <data name="Campaign.Book.Draft.Leak.More" xml:space="preserve"><value>{0, plural, one{и ещё #} few{и ещё #} many{и ещё #} other{и ещё #}}</value></data>
+  <data name="Campaign.Book.Draft.Leak.Hint" xml:space="preserve"><value>Это только предупреждение: книгу можно скачать и так.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Anyway" xml:space="preserve"><value>Всё равно скачать</value></data>
   <data name="Campaign.Book.Draft.BlocksTab" xml:space="preserve"><value>Блоки</value></data>
   <data name="Campaign.Book.Draft.Ai.PickChapter" xml:space="preserve"><value>Выберите главу, чтобы спросить ИИ о ней; таблица стилей не отправляется.</value></data>
   <data name="Campaign.Book.Tab.Print" xml:space="preserve"><value>Печать</value></data>

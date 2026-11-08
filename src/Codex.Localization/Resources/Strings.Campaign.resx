@@ -1096,6 +1096,15 @@
   <data name="Campaign.Book.Draft.Panel" xml:space="preserve"><value>Tools panel</value></data>
   <data name="Campaign.Book.Draft.Problems" xml:space="preserve"><value>Problems</value></data>
   <data name="Campaign.Book.Draft.NoProblems" xml:space="preserve"><value>No problems found. Fit pages, a download or the stylesheet's web addresses report here.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Found" xml:space="preserve"><value>{0, plural, one{One thing in the party book} other{# things in the party book}} only the GM edition should have. Look at each before you hand the book out:</value></data>
+  <data name="Campaign.Book.Draft.Leak.Secret" xml:space="preserve"><value>words of a secret</value></data>
+  <data name="Campaign.Book.Draft.Leak.SecretIn" xml:space="preserve"><value>words of a secret in {0}</value></data>
+  <data name="Campaign.Book.Draft.Leak.HiddenName" xml:space="preserve"><value>the name of a hidden character</value></data>
+  <data name="Campaign.Book.Draft.Leak.RealName" xml:space="preserve"><value>the real name of {0}</value></data>
+  <data name="Campaign.Book.Draft.Leak.GmOnly" xml:space="preserve"><value>something only the GM edition has</value></data>
+  <data name="Campaign.Book.Draft.Leak.More" xml:space="preserve"><value>{0, plural, one{and one more} other{and # more}}</value></data>
+  <data name="Campaign.Book.Draft.Leak.Hint" xml:space="preserve"><value>This is a warning: you can still download the book as it is.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Anyway" xml:space="preserve"><value>Download anyway</value></data>
   <data name="Campaign.Book.Draft.BlocksTab" xml:space="preserve"><value>Blocks</value></data>
   <data name="Campaign.Book.Draft.Ai.PickChapter" xml:space="preserve"><value>Choose a chapter to ask the AI about it; the stylesheet is not sent.</value></data>
   <data name="Campaign.Book.Tab.Print" xml:space="preserve"><value>Print</value></data>

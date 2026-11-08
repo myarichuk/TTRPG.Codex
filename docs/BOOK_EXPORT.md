@@ -1314,7 +1314,7 @@ small renderer, an editor page and a print page, run on the test campaign of sec
    with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
    sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
 
-## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 5 built, see 41.9, 41.10, 41.15, 41.16 and 41.18; layout 41.17)
+## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 6 built, see 41.9, 41.10, 41.15, 41.16, 41.18 and 41.19; layout 41.17)
 
 The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
 when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
@@ -1389,7 +1389,7 @@ so that two book paths do not drift apart.
 3. **Fit pages** and the print-time overflow report. Built (41.15).
 4. **AI edits** on a selection, with the review overlay. Built (41.16).
 5. **Bring up to date:** the block merge, AI only for conflicts, the same overlay. Built (41.18).
-6. **The party leak check** before export.
+6. **The party leak check** before export. Built (41.19).
 
 ### 41.9 Phase 1: built
 
@@ -1973,3 +1973,54 @@ Not done, or not verified:
   the head, one unit.
 - An entry the GM moved into another chapter is, to the merge, deleted from one and unknown in the other.
 - The Russian and Hebrew text of `Campaign.Book.Draft.Merge.*` is machine-drafted.
+
+### 41.19 Phase 6: the party leak check (built 2026-11-08)
+
+Download in the party edition first looks in the party draft for what only the GM edition has (`BookLeakCheck`, `BookDrafts.LeaksAsync`).
+With a hit nothing is printed: the Problems tab opens on a list of each hit, with its chapter (a button that opens it), what it is, and its
+first words, and **Download anyway** prints the book as it is. A warning, not a refusal (41.5). The GM edition is not checked.
+
+- **What only the GM edition has is found by comparing the two editions' sources**, both read as the GM may read the campaign now, never by a
+  visibility rule of the check's own (it would drift from the repositories', as `BookSourceReader` warns of a second filter):
+  - a character the party source does not have (its name), or has under another name (a stranger: the real name, shown with the name they go
+    by); the history of either;
+  - a page, place, session or homebrew entry the party source does not have: its title and its text; a fact it does not have: its words;
+  - every session's GM summary;
+  - every secret block of the GM edition, as the generator prints it (mentions as the names the GM edition gives), and every `{{secret` block
+    of the GM's own GM draft in that language, so a secret the GM typed into the GM book, which the campaign never had, is found too.
+- **Anything the generated party draft says is allowed.** It is made from the party source alone, so a phrase in it is not a leak, even when a
+  secret repeats it or a hidden character's name is a word the party's text uses. This is what keeps the check quiet on a draft nobody pasted
+  into: the generated party draft has no hit (tested on the canary campaign).
+- **Compared as words**: letters and digits, lower case, accents and Hebrew points dropped, anything else a gap. The generator's escapes,
+  Markdown emphasis, line breaks and case do not hide a hit, and a name matches only whole words ("Ash" is not in "ashes"). A name or title
+  is looked for whole; a secret or other text by **any six words in a row**, so half of one pasted is still found; a text of fewer than three
+  words, or a name under three letters, is not looked for. The party draft's stylesheet is looked in too (a `content:` prints).
+- One hit per thing and chapter; the first 20 are listed, the rest counted.
+
+Tests: `BookLeakCheckTests` (a secret found escaped, re-cased, re-wrapped, with emphasis, or half of it; names whole words only; what the
+party draft says never a hit, window by window; short ones not looked for; Hebrew points and Russian case; the stylesheet; the cap; secret
+blocks read with their entry, nested blocks inside; the needles: a stranger by their real name and not their alias, a hidden character and
+their history with mentions as names, a GM-only page's title and body, nothing the party has; a GM session summary, of a session the
+party has too, and a planned session's title and recap; a secret in two drafts one needle);
+`BookDraftTests.TheLeakCheck_...` (the canary campaign: the party draft as generated has no hit, a player gets nothing, and every canary
+pasted in, escaped or not, is found with its kind, a GM-typed secret of the GM draft and the stylesheet included, and nothing public);
+`BookDraftE2ETests.ASecretPastedIntoThePartyDraft_...` (real browser: a secret typed into Cast, Download straight after; the warning with
+the chapter, "words of a secret in Vera" and the secret's words, on the Problems tab; nothing downloaded; the hit opens Cast; Download
+anyway gives the PDF). Mutants, each
+failing them (13 of 13): what the party draft says not subtracted, case kept, points kept, secrets matched only whole, a stranger's real name
+not looked for, the GM draft's secrets not read, no text of GM-only things, short ones looked for, the list not capped, nested blocks ending
+a secret, a stranger's history not looked for, a known character's history looked for (its public words reported), a GM session summary not looked for. One that survived
+showed that taking the generator's markup out before comparing changed nothing, so the check does not.
+Seen in the app (preview, a throwaway campaign deleted after): a known character with a GM secret, a hidden one and a stranger; a line typed
+into the party Cast with the secret's words in other case, the hidden name and the stranger's real name, then Download straight away. The
+Problems tab opened with three hits, each with Cast, what it is and its words (the secret named with Vera's entry); nothing about the
+public text; Download anyway printed the PDF.
+
+Not done, or not verified:
+- A secret paraphrased, a name declined (Вера, Веру) or with a Hebrew prefix letter (לוורה) is not found; nor a secret translated.
+- What the GM typed into the GM draft is looked for only inside its `{{secret` blocks: GM-only prose written outside one is the GM's to judge.
+- A GM-only page's or character's picture pasted as an `art:` reference is not checked here; pictures still resolve only to the party's (41.5).
+- Encounters are not looked for (their names are generic, and the whole of them is the GM's).
+- A generic name is noisy: a hidden actor called "Goblin" or a planned session called "Session 6" is reported wherever the party draft
+  says the word. It is a warning, with Download anyway; no filter is built.
+- The Russian and Hebrew text of `Campaign.Book.Draft.Leak.*` is machine-drafted.

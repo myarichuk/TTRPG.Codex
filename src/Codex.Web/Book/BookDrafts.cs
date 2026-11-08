@@ -82,6 +82,24 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         return await store.MergeAsync(made.Dm, edition, language, now, markdown, version);
     }
 
+    /// <summary>
+    /// The party leak check (docs/BOOK_EXPORT.md 41.5, 41.19): what only the GM edition has, found in the party draft of
+    /// <paramref name="language"/> as stored (its chapters and stylesheet). Both editions are read as the asking GM may read the campaign now;
+    /// the GM edition's secrets as generated and as the GM's own draft of it has them. Null when not the caller's, or there is no party draft.
+    /// </summary>
+    public async Task<BookLeakReport?> LeaksAsync(CampaignAccess asked, string language)
+    {
+        if (await GenerateAsync(asked, "party", language) is not { } party) return null;
+        if (await store.GetAsync(party.Dm, "party", language) is not { } draft) return null;
+        if (await reader.ReadAsync(party.Dm, BookAudience.Dm) is not { } gm) return null;
+        var gmNow = BookDraftWriter.Generate(gm, language, await art.GetAsync(party.Dm));
+        var gmDraft = await store.GetAsync(party.Dm, "dm", language);
+        var needles = BookLeakCheck.Needles(gm, party.Source,
+            gmNow.Select(c => c.Markdown).Concat(gmDraft?.Chapters.Select(c => c.Markdown) ?? []));
+        var chapters = draft.Chapters.Select(c => (c.Section, c.Markdown)).Append((BookLeakCheck.Css, draft.Document.Css));
+        return BookLeakCheck.Find(needles, party.Now.Select(c => c.Markdown), chapters);
+    }
+
     /// <summary>Whether the GM has a draft of this edition and language (without making one).</summary>
     public async Task<bool> ExistsAsync(CampaignAccess asked, string edition, string language) =>
         Audience(edition) != null && await store.GetAsync(asked, edition, language) != null;

@@ -46,7 +46,7 @@
                                  title="@L["Campaign.Book.Draft.FitHint"]" data-testid="book-draft-fit">
                         <LucideIcon IconName="layers" Size="14" /> @(fitting ? L["Campaign.Book.Draft.Fitting"] : L["Campaign.Book.Draft.Fit"])
                     </CodexButton>
-                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="DownloadAsync" Disabled="@printing" data-testid="book-draft-download">
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => DownloadAsync(false)" Disabled="@printing" data-testid="book-draft-download">
                         <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
                     </CodexButton>
                     <div class="book-draft-more">
@@ -415,6 +415,31 @@
                             </div>
                         }
                     }
+                    @if (leakReport is { Total: > 0 } leaks)
+                    {
+                        @* The party leak check (docs/BOOK_EXPORT.md 41.19): a warning, not a refusal. Each hit opens its chapter. *@
+                        <div class="field-error" role="alert" data-testid="book-draft-leaks">
+                            @L["Campaign.Book.Draft.Leak.Found", leaks.Total]
+                            <ul class="mb-1 ps-3">
+                                @foreach (var hit in leaks.Hits)
+                                {
+                                    <li data-testid="book-draft-leak" data-kind="@hit.Kind">
+                                        <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @onclick="() => ShowAsync(hit.Section.Length == 0 ? null : hit.Section)"
+                                                disabled="@AiBusy"><bdi>@(hit.Section.Length == 0 ? L["Campaign.Book.Draft.Stylesheet"] : TitleOf(hit.Section))</bdi></button>:
+                                        @LeakLabel(hit) <bdi class="text-break">“@Snippet(hit.Text)”</bdi>
+                                    </li>
+                                }
+                                @if (leaks.Total > leaks.Hits.Count)
+                                {
+                                    <li>@L["Campaign.Book.Draft.Leak.More", leaks.Total - leaks.Hits.Count]</li>
+                                }
+                            </ul>
+                            <div class="small">@L["Campaign.Book.Draft.Leak.Hint"]</div>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => DownloadAsync(true)" Disabled="@printing" data-testid="book-draft-download-anyway">
+                                <LucideIcon IconName="download" Size="14" /> @L["Campaign.Book.Draft.Leak.Anyway"]
+                            </CodexButton>
+                        </div>
+                    }
                     @if (printReport != null)
                     {
                         <div class="field-error" data-testid="book-draft-print-overflow">@printReport</div>
@@ -461,6 +486,7 @@
     private bool fitting;
     private BookDraftFitReport? fitReport;
     private string? printReport;
+    private BookLeakReport? leakReport;
     private bool confirmStartOver;
     private string? message;
     private SaveState state = SaveState.Saved;
@@ -534,6 +560,7 @@
         current = view.Chapters.FirstOrDefault(c => c.Stale)?.Section ?? view.Chapters.FirstOrDefault()?.Section;
         web = await Drafts.WebAsync(Access, edition, language);
         webReport = null;
+        leakReport = null;
         savedCss = view.Css;
         state = SaveState.Saved;
         dirty.Clear();
@@ -957,7 +984,9 @@
         }
     }
 
-    private async Task DownloadAsync()
+    /// <summary>Prints the draft. The party edition is first checked for what only the GM edition has (docs/BOOK_EXPORT.md 41.19): with a hit,
+    /// nothing is printed and the Problems tab lists each; <paramref name="anyway"/> (the GM read them) prints all the same.</summary>
+    private async Task DownloadAsync(bool anyway)
     {
         printing = true;
         message = null;
@@ -965,6 +994,16 @@
         try
         {
             await FlushAsync();
+            if (edition == "party" && !anyway)
+            {
+                leakReport = await Drafts.LeaksAsync(Access, language);
+                if (leakReport is { Total: > 0 })
+                {
+                    Reveal("problems");
+                    return;
+                }
+            }
+
             var url = Nav.ToAbsoluteUri($"{BasePath}/book/{edition}/draft/{language}/pdf").ToString();
             var result = await JS.InvokeAsync<BookPanel.BookDownload>("codex.downloadFrom", url);
             if (result.Status != 200)
@@ -1010,9 +1049,26 @@
         ("blocks", "blocks", L["Campaign.Book.Draft.BlocksTab"])
     ];
 
-    /// <summary>What the Problems tab lists: blocks too tall and breaks not placed (Fit pages), pages printed cut off, web addresses not fetched.</summary>
+    /// <summary>What the Problems tab lists: blocks too tall and breaks not placed (Fit pages), pages printed cut off, web addresses not fetched, and
+    /// what only the GM edition should have, found in the party draft before it was printed.</summary>
     private int ProblemCount =>
-        (fitReport?.Overflow.Count ?? 0) + (fitReport?.Unplaced.Count ?? 0) + (printReport != null ? 1 : 0) + (webReport?.Failed.Count ?? 0);
+        (fitReport?.Overflow.Count ?? 0) + (fitReport?.Unplaced.Count ?? 0) + (printReport != null ? 1 : 0) + (webReport?.Failed.Count ?? 0) + (leakReport?.Total ?? 0);
+
+    private string LeakLabel(BookLeak hit) => hit.Kind switch
+    {
+        BookLeakKind.Secret when hit.From is { Length: > 0 } from => L["Campaign.Book.Draft.Leak.SecretIn", from],
+        BookLeakKind.Secret => L["Campaign.Book.Draft.Leak.Secret"],
+        BookLeakKind.HiddenName => L["Campaign.Book.Draft.Leak.HiddenName"],
+        BookLeakKind.RealName => L["Campaign.Book.Draft.Leak.RealName", hit.From ?? string.Empty],
+        _ => L["Campaign.Book.Draft.Leak.GmOnly"]
+    };
+
+    // A secret can run for paragraphs: its first words, on one line.
+    private static string Snippet(string text)
+    {
+        var line = string.Join(' ', text.Split((char[])['\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        return line.Length <= 140 ? line : line[..140].TrimEnd() + "…";
+    }
 
     private async Task ReadLayoutAsync()
     {

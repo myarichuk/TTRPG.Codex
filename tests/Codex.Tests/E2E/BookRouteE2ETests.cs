@@ -626,6 +626,67 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         Assert.Empty(pageErrors);
     }
 
+    /// <summary>The party leak check (41.19): a secret the GM pastes into the party draft stops Download with a warning naming it and its chapter,
+    /// and "Download anyway" prints the book all the same.</summary>
+    [Fact]
+    public async Task ASecretPastedIntoThePartyDraft_IsNamedBeforeDownload_AndDownloadAnywayStillPrints()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bdl-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl, AcceptDownloads = true });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        var downloads = 0;
+        dm.Download += (_, _) => downloads++;
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor
+        {
+            Id = "bdl-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Visibility = Codex.Persistence.ActorVisibility.Known,
+            Biography = "Keeps the lighthouse.\n\n:::dm\nThe vault key lies under the chapel altar.\n:::"
+        }]);
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await dm.Locator(".cm-content").ClickAsync();
+        await dm.Keyboard.PressAsync("ControlOrMeta+End");
+        await dm.Keyboard.TypeAsync("\nShe knows the vault key lies under the chapel altar.\n");
+        // Straight to Download: what was typed is saved first, and that is what is checked.
+        await dm.GetByTestId("book-draft-download").ClickAsync();
+
+        var leaks = dm.GetByTestId("book-draft-leaks");
+        await Assertions.Expect(leaks).ToBeVisibleAsync(new() { Timeout = 30_000 });
+        await Assertions.Expect(leaks).ToContainTextAsync("only the GM edition should have");
+        var hit = dm.GetByTestId("book-draft-leak");
+        await Assertions.Expect(hit).ToHaveCountAsync(1);
+        await Assertions.Expect(hit).ToContainTextAsync("Cast");
+        await Assertions.Expect(hit).ToContainTextAsync("words of a secret in Vera");
+        await Assertions.Expect(hit).ToContainTextAsync("The vault key lies under the chapel altar.");
+        await Assertions.Expect(dm.GetByTestId("book-draft-tab-problems")).ToHaveAttributeAsync("aria-selected", "true");
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+        Assert.Equal(0, downloads);
+
+        // The hit opens its chapter.
+        await dm.Locator("[data-testid=book-draft-chapter][data-section=front]").ClickAsync();
+        await hit.Locator("button").ClickAsync();
+        await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=cast]")).ToHaveAttributeAsync("aria-current", "true");
+
+        var download = await dm.RunAndWaitForDownloadAsync(() => dm.GetByTestId("book-draft-download-anyway").ClickAsync());
+        await using (var stream = await download.CreateReadStreamAsync())
+        {
+            var head = new byte[5];
+            await stream.ReadExactlyAsync(head);
+            Assert.Equal("%PDF-", Encoding.ASCII.GetString(head));
+        }
+
+        Assert.Empty(pageErrors);
+    }
+
     /// <summary>Fit pages from the editor (41.15): the preview says pages run on, Fit pages writes the breaks into the chapter (shown in the
     /// editor, saved, the chapter not marked edited), and a block too tall for any page is named with its chapter, before the PDF and after it.</summary>
     [Fact]
