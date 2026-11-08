@@ -54,11 +54,21 @@ public sealed class StorageQuota(RavenDbService db, IServerSettingsStore setting
 
     public long? LimitBytes => settings.Get().StorageLimitMb is { } mb ? Math.Max(0, mb) * 1024L * 1024L : null;
 
-    /// <summary>What each account keeps: the bytes of the campaigns it owns, by owner id. Accounts that keep nothing are left out.</summary>
-    public async Task<IReadOnlyDictionary<string, long>> ByOwnerAsync()
+    /// <summary>What each account keeps: the bytes of the campaigns it owns, by owner id. Accounts that keep nothing are left out.
+    /// Null while the count is still being made (an index catching up, as on the first start after it was added).</summary>
+    public async Task<IReadOnlyDictionary<string, long>?> ByOwnerAsync()
     {
         using var session = db.Store.OpenAsyncSession();
-        var byCampaign = await AllAsync(session);
+        Dictionary<string, long> byCampaign;
+        try
+        {
+            byCampaign = await AllAsync(session);
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
+
         var owners = new Dictionary<string, long>(StringComparer.Ordinal);
         if (byCampaign.Count == 0) return owners;
         var campaigns = await session.LoadAsync<CampaignDocument>(byCampaign.Keys);
@@ -75,28 +85,28 @@ public sealed class StorageQuota(RavenDbService db, IServerSettingsStore setting
     public async Task<long> UsedByAsync(string userId)
     {
         using var session = db.Store.OpenAsyncSession();
-        return await UsedByAsync(session, userId);
+        return await UsedByAsync(session, userId, null);
     }
 
     /// <summary>Whether the owner of <paramref name="campaignId"/> has room left: checked before a picture is drawn for money, so a
-    /// limit reached refuses before the model is paid, not after.</summary>
+    /// limit reached refuses before the model is paid, not after. (A picture larger than the room left is still drawn, then refused.)</summary>
     public async Task<bool> HasRoomAsync(string campaignId)
     {
         if (LimitBytes is not { } limit) return true;
         using var session = db.Store.OpenAsyncSession();
         var owner = (await session.LoadAsync<CampaignDocument>(campaignId))?.OwnerId;
-        return owner == null || await UsedByAsync(session, owner) < limit;
+        return owner == null || await UsedByAsync(session, owner, campaignId) < limit;
     }
 
-    /// <summary>Refuses with <c>Storage.Full</c> when keeping <paramref name="adding"/> more bytes in <paramref name="campaignId"/>, in
-    /// place of <paramref name="replacing"/> bytes it already keeps, would take its owner over the limit.</summary>
+    /// <summary>Refuses with <c>Service.Storage.Full</c> when keeping <paramref name="adding"/> more bytes in <paramref name="campaignId"/>,
+    /// in place of <paramref name="replacing"/> bytes it already keeps, would take its owner over the limit.</summary>
     public async Task EnsureRoomAsync(string campaignId, long adding, long replacing = 0)
     {
         if (LimitBytes is not { } limit || adding <= replacing) return;
         using var session = db.Store.OpenAsyncSession();
         var owner = (await session.LoadAsync<CampaignDocument>(campaignId))?.OwnerId;
         if (owner == null) return;
-        var used = await UsedByAsync(session, owner);
+        var used = await UsedByAsync(session, owner, campaignId);
         if (used - replacing + adding > limit) throw new LocalizedException("Service.Storage.Full", Megabytes(used), Megabytes(limit));
     }
 
@@ -116,15 +126,29 @@ public sealed class StorageQuota(RavenDbService db, IServerSettingsStore setting
     /// <summary>Megabytes for a person to read, one decimal.</summary>
     public static string Megabytes(long bytes) => (bytes / (1024d * 1024d)).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " MB";
 
-    private static async Task<long> UsedByAsync(IAsyncDocumentSession session, string userId)
+    // The campaign being written to is counted whatever the campaign list says: one made moments ago may not be in it yet. Both
+    // queries wait for their index, and when it is still catching up (a large server's first start with the index) they take what it
+    // has counted so far rather than fail the upload.
+    private static async Task<long> UsedByAsync(IAsyncDocumentSession session, string userId, string? campaignId)
     {
-        var owned = await session.Query<CampaignDocument>().Where(c => c.OwnerId == userId).Select(c => c.Id).ToListAsync();
+        var owned = await WaitedOrStaleAsync(() => session.Query<CampaignDocument>().Where(c => c.OwnerId == userId).Select(c => c.Id));
+        if (campaignId != null && !owned.Contains(campaignId)) owned.Add(campaignId);
         if (owned.Count == 0) return 0;
-        var results = await session.Query<StorageByCampaignIndex.Result, StorageByCampaignIndex>()
-            .Customize(x => x.WaitForNonStaleResults(IndexWait))
-            .Where(r => r.CampaignId.In(owned))
-            .ToListAsync();
+        var results = await WaitedOrStaleAsync(() => session.Query<StorageByCampaignIndex.Result, StorageByCampaignIndex>().Where(r => r.CampaignId.In(owned)));
         return results.Sum(r => r.Bytes);
+    }
+
+    // A query is made twice rather than reused: customizing a Raven query changes it in place.
+    private static async Task<List<T>> WaitedOrStaleAsync<T>(Func<IRavenQueryable<T>> query)
+    {
+        try
+        {
+            return await query().Customize(x => x.WaitForNonStaleResults(IndexWait)).ToListAsync();
+        }
+        catch (TimeoutException)
+        {
+            return await query().ToListAsync();
+        }
     }
 
     private static async Task<Dictionary<string, long>> AllAsync(IAsyncDocumentSession session)

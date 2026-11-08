@@ -104,8 +104,21 @@ public sealed class PersonalExport(RavenDbService db, ICampaignRepository campai
             {
                 using var zip = new ZipArchive(buffer, ZipArchiveMode.Read, leaveOpen: true);
                 if (zip.GetEntry("vault.json") is not { } entry || entry.Length > MaxImportBytes) return null;
-                await using var stream = entry.Open();
-                return Checked(await JsonSerializer.DeserializeAsync<VaultBundle>(stream));
+                // The size an archive states is its own claim: read at most the bound, whatever it says.
+                using var json = new MemoryStream();
+                await using (var stream = entry.Open())
+                {
+                    var chunk = new byte[81920];
+                    int read;
+                    while ((read = await stream.ReadAsync(chunk)) > 0)
+                    {
+                        if (json.Length + read > MaxImportBytes) return null;
+                        json.Write(chunk, 0, read);
+                    }
+                }
+
+                json.Position = 0;
+                return Checked(await JsonSerializer.DeserializeAsync<VaultBundle>(json));
             }
 
             return Checked(await JsonSerializer.DeserializeAsync<VaultBundle>(buffer));

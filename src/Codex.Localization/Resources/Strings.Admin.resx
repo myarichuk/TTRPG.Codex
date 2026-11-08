@@ -119,4 +119,6 @@
   <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} of {1}</value></data>
   <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Storage per account, in MB</value></data>
   <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Pictures and files: covers, portraits, art, book pictures and the book's copies of web files. Everything in a campaign counts against its owner, whoever added it. Leave empty for no limit.</value></data>
+  <data name="Admin.Accounts.StorageCounting" xml:space="preserve"><value>counting…</value></data>
+  <data name="Admin.Accounts.Delete.StillOwns" xml:space="preserve"><value>{0} made a campaign while being deleted. The account is turned off; delete it again to pass that campaign on too.</value></data>
 </root>

@@ -119,4 +119,6 @@
   <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} מתוך {1}</value></data>
   <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>אחסון לכל חשבון, ב-MB</value></data>
   <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>תמונות וקבצים: עטיפות, דיוקנאות, איורים, תמונות הספר ועותקי קבצי הרשת של הספר. כל מה שבקמפיין נספר לבעליו, לא משנה מי הוסיף. השאירו ריק ללא הגבלה.</value></data>
+  <data name="Admin.Accounts.StorageCounting" xml:space="preserve"><value>סופר…</value></data>
+  <data name="Admin.Accounts.Delete.StillOwns" xml:space="preserve"><value>{0} יצר קמפיין בזמן המחיקה. החשבון כבוי; מחקו אותו שוב כדי להעביר גם את הקמפיין הזה.</value></data>
 </root>

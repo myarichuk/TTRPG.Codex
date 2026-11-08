@@ -8,7 +8,14 @@ public sealed record OwnedCampaign(string CampaignId, string Name, IReadOnlyList
 /// <summary>What deleting an account touches, for the admin to read before confirming.</summary>
 public sealed record AccountDeletionPlan(IReadOnlyList<OwnedCampaign> Owned, int Memberships, int VaultCharacters);
 
-public enum AccountDeletionResult { Deleted, NotFound }
+public enum AccountDeletionResult
+{
+    Deleted,
+    NotFound,
+
+    /// <summary>A campaign it owns appeared while it was being deleted; the account is left turned off, to be deleted again.</summary>
+    StillOwns
+}
 
 /// <summary>
 /// Deleting an account (docs/SERVER_ACCESS_AND_VAULT.md 9, built in 15). Every campaign it owns passes to one of its co-GMs, chosen by
@@ -59,6 +66,16 @@ public sealed class AccountDeletion(RavenDbService db, ICampaignRepository campa
         await DeleteOwnedAsync<JournalEntryDocument>(j => j.OwnerUserId == userId);
         await DeleteOwnedAsync<WorldChatDocument>(c => c.OwnerUserId == userId);
         await DeleteOwnedAsync<BookBuildDocument>(b => b.OwnerUserId == userId);
+
+        // Never an owner of nobody: a campaign made while this ran (or missed by the list) stops the deletion, and running it again
+        // passes that one on too.
+        using (var session = db.Store.OpenAsyncSession())
+        {
+            if (await session.Query<CampaignDocument>().Customize(x => x.WaitForNonStaleResults()).AnyAsync(c => c.OwnerId == userId))
+            {
+                return AccountDeletionResult.StillOwns;
+            }
+        }
 
         await users.DeleteAsync(userId);
         return AccountDeletionResult.Deleted;

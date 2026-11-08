@@ -194,7 +194,7 @@ else
     private UserDocument? deleting;
     private AccountDeletionPlan? deletePlan;
     private Dictionary<string, string> newOwners = new(StringComparer.Ordinal);
-    private IReadOnlyDictionary<string, long> storage = new Dictionary<string, long>();
+    private IReadOnlyDictionary<string, long>? storage;
     private string? myId;
     private string myName = string.Empty;
     private bool busy;
@@ -343,6 +343,7 @@ else
 
     private string StorageOf(UserDocument u)
     {
+        if (storage == null) return L["Admin.Accounts.StorageCounting"];
         var used = StorageQuota.Megabytes(storage.GetValueOrDefault(u.Id));
         return settings?.StorageLimitMb is { } mb ? L["Admin.Accounts.StorageOf", used, StorageQuota.Megabytes(mb * 1024L * 1024L)] : used;
     }
@@ -372,6 +373,7 @@ else
             var result = await Deletion.DeleteAsync(u.Id, myId!, chosen);
             Check.Forget(u.Id);
             if (result == AccountDeletionResult.NotFound) return Flash.Error(L["Admin.Accounts.Gone"]);
+            if (result == AccountDeletionResult.StillOwns) return Flash.Error(L["Admin.Accounts.Delete.StillOwns", u.Username]);
             await LogAsync(AdminAction.Deleted, u);
             return Flash.Success(L["Admin.Accounts.Deleted.Done", u.Username]);
         });

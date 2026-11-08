@@ -119,4 +119,6 @@
   <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} из {1}</value></data>
   <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Место на учётную запись, МБ</value></data>
   <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Изображения и файлы: обложки, портреты, иллюстрации, картинки книги и копии веб-файлов книги. Всё в кампании засчитывается её владельцу, кто бы это ни добавил. Оставьте пустым, чтобы не ограничивать.</value></data>
+  <data name="Admin.Accounts.StorageCounting" xml:space="preserve"><value>подсчёт…</value></data>
+  <data name="Admin.Accounts.Delete.StillOwns" xml:space="preserve"><value>{0} создал кампанию во время удаления. Учётная запись отключена; удалите её ещё раз, чтобы передать и эту кампанию.</value></data>
 </root>

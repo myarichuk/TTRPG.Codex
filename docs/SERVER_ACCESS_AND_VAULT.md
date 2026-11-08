@@ -295,6 +295,11 @@ Players already bring their own key; this widens what it is for, always built fr
 - Tests: `AccountDeletionTests` (pass-on to the picked co-GM, to the admin with none or with a pick who is no co-GM, leaving, what
   goes and what stays, running again), `StorageQuotaTests` (owner counting, net of a replaced file, book pictures, per owner, no
   limit), `PersonalExportTests` (contents, a demoted GM's export, the import round trip).
-- **Left**: an account cannot delete itself (the admin does); one limit for every account, no per-account override; characters
+- **Index timing**: the counts wait for the index, and while it is still catching up (the first start of a large server after the
+  upgrade) take what it has counted so far: an upload is never failed for that, and the admin page shows "counting…". The campaign
+  written to is always counted, even one made a moment ago. Deleting an account checks, last, that it owns no campaign; one made
+  meanwhile leaves the account turned off, to be deleted again.
+- **Left**: before drawing, the check is only that some room is left, so a picture larger than what is left is still drawn (and
+  paid for) and then refused; an account cannot delete itself (the admin does); one limit for every account, no per-account override; characters
   played in someone else's campaign are not in the export (the player copies them to the vault first); the export holds no book
   drafts.
