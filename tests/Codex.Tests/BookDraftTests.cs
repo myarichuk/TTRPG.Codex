@@ -1,3 +1,5 @@
+using Codex.Core.Book;
+using Microsoft.Extensions.AI;
 using System.Text.RegularExpressions;
 using Codex.Persistence;
 using Codex.Web.Book;
@@ -447,5 +449,111 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         Assert.True(await _drafts.StartOverAsync(dm, "party", "en"));
         using var session = _db.Store.OpenAsyncSession();
         Assert.Null(await session.LoadAsync<BookDraftWeb>(BookDraftWeb.IdFor(id, "party", "en")));
+    }
+
+    // AI edits (docs/BOOK_EXPORT.md 41.4, phase 4): a scripted model, and the game system's own definition, so its book shape is what is sent.
+    private sealed class EditModels(IChatClient chat, Exception? refuse = null, bool none = false) : IBookModels
+    {
+        public int Opened { get; private set; }
+
+        public Task<BookModelInfo?> InfoAsync(string userId) => Task.FromResult(none ? null : new BookModelInfo("Test · model-x", null, null));
+
+        public Task<BookModelHandle> OpenAsync(string userId, int requests)
+        {
+            if (refuse != null) throw refuse;
+            Opened++;
+            return Task.FromResult(new BookModelHandle(chat, "Test · model-x", 1, null, null));
+        }
+    }
+
+    private sealed class SrdCatalog : Codex.Plugin.Abstractions.ISystemCatalog
+    {
+        private readonly Codex.Plugin.Abstractions.SystemDefinition _srd =
+            Codex.Core.Systems.SystemDefinitionLoader.Load(Path.Combine(TestPaths.ContentRoot, "systems", "srd5e", "system.yaml"));
+
+        public bool IsLoaded => true;
+        public IReadOnlySet<string> LoadedSystemIds { get; } = new HashSet<string> { "srd5e" };
+        public IEnumerable<Codex.Plugin.Abstractions.SystemSummary> Systems => [];
+        public string GetDisplayName(string systemId) => systemId == "srd5e" ? _srd.Name : systemId;
+        public Codex.Plugin.Abstractions.SystemDefinition? GetDefinition(string systemId) => systemId == "srd5e" ? _srd : null;
+        public IEnumerable<Codex.Plugin.Abstractions.UISchema> GetUISchemas(string systemId) => [];
+    }
+
+    private static string Between(string text, string open, string close)
+    {
+        var from = text.IndexOf(open, StringComparison.Ordinal) + open.Length;
+        return text[from..text.IndexOf(close, from, StringComparison.Ordinal)].Trim('\n');
+    }
+
+    [Fact]
+    public async Task AnAiEdit_OfTheGmDraft_SendsNoSecret_TakesTheSystemsShape_AndSavesNothing()
+    {
+        var (dm, _) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "dm", "en"))!;
+        var chapter = view.Chapters.Single(c => c.Markdown.Contains("CANARY_BIO_DM"));
+        // From the biography to inside the secret after it: the selection is widened to take the whole secret.
+        var from = chapter.Markdown.IndexOf("PUBLIC_BIO_VERA", StringComparison.Ordinal);
+        var to = chapter.Markdown.IndexOf("CANARY_BIO_DM", StringComparison.Ordinal) + 3;
+        var chat = new ScriptedChat((messages, _) => Between(messages.Last().Text!, "<passage>", "</passage>").Replace("PUBLIC_BIO_VERA", "EDITED_BIO"));
+        var models = new EditModels(chat);
+        var ai = new BookDraftAi(_drafts, models, new BookGate(), new SrdCatalog());
+
+        var preview = await ai.PreviewAsync(dm, "dm", "en", chapter.Section, chapter.Version, from, to, chapter.Markdown[from..to], "shorter");
+        Assert.Equal(BookEditOutcome.Ready, preview.Outcome);
+        Assert.True(preview.To > to);
+        Assert.Equal(0, chat.Calls);
+
+        var proposal = await ai.AskAsync(dm, "dm", "en", chapter.Section, chapter.Version, from, to, chapter.Markdown[from..to], "shorter");
+        Assert.Equal(BookEditOutcome.Ready, proposal.Outcome);
+        Assert.Equal(preview.From, proposal.From);
+        Assert.Equal(chapter.Markdown[proposal.From..proposal.To], proposal.Original);
+        var sent = Assert.Single(chat.Requests);
+        Assert.DoesNotContain("CANARY_BIO_DM", sent);
+        Assert.Contains("fifth-edition adventures", sent);
+        Assert.Contains(BookEditPrompts.Presets["shorter"], sent);
+        Assert.Contains("{{secret\nCANARY_BIO_DM\n}}", proposal.Replacement);
+        Assert.Contains("EDITED_BIO", proposal.Replacement);
+        // Nothing is saved until the GM accepts it in the editor.
+        var after = (await _drafts.GetAsync(dm, "dm", "en"))!.Chapters.Single(c => c.Section == chapter.Section);
+        Assert.Equal((chapter.Markdown, chapter.Version), (after.Markdown, after.Version));
+    }
+
+    [Fact]
+    public async Task AnAiEdit_IsRefusedBeforeSending_WhenTheTextMovedOn_AnotherRunIsUnderWay_OrThereIsNoModel()
+    {
+        var (dm, _) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var cast = view.Chapters.Single(c => c.Section == "cast");
+        var chat = new ScriptedChat((messages, _) => Between(messages.Last().Text!, "<passage>", "</passage>"));
+        var ai = new BookDraftAi(_drafts, new EditModels(chat), new BookGate(), new NoOpSystemCatalog());
+        var at = cast.Markdown.IndexOf("PUBLIC", StringComparison.Ordinal);
+        var text = cast.Markdown.Substring(at, 20);
+
+        Assert.Equal(BookEditOutcome.Stale, (await ai.AskAsync(dm, "party", "en", "cast", cast.Version + 1, at, at + 20, text, "shorter")).Outcome);
+        Assert.Equal(BookEditOutcome.Stale, (await ai.AskAsync(dm, "party", "en", "cast", cast.Version, at + 1, at + 21, text, "shorter")).Outcome);
+        Assert.Equal(BookEditOutcome.Empty, (await ai.AskAsync(dm, "party", "en", "cast", cast.Version, at, at + 20, text, "  ")).Outcome);
+        Assert.Equal(BookEditOutcome.TooLong, (await ai.AskAsync(dm, "party", "en", "cast", cast.Version, at, at + 20, text, new string('x', BookDraftEdits.MaxAskChars + 1))).Outcome);
+        Assert.Equal(BookEditOutcome.NotAllowed, (await ai.AskAsync(new CampaignAccess(dm.CampaignId, PlayerUser, CampaignRole.Player), "party", "en", "cast", cast.Version, at, at + 20, text, "shorter")).Outcome);
+
+        var gate = new BookGate();
+        Assert.True(gate.TryEnter(DmUser));
+        var busy = new BookDraftAi(_drafts, new EditModels(chat), gate, new NoOpSystemCatalog());
+        Assert.Equal(BookEditOutcome.Busy, (await busy.AskAsync(dm, "party", "en", "cast", cast.Version, at, at + 20, text, "shorter")).Outcome);
+        // The gate it did not take is not let go of: the other run still holds it.
+        Assert.False(gate.TryEnter(DmUser));
+
+        var none = new BookDraftAi(_drafts, new EditModels(chat, refuse: new Codex.Web.Services.AiNotConfiguredException(), none: true), new BookGate(), new NoOpSystemCatalog());
+        Assert.Equal(BookEditOutcome.NoModel, (await none.PreviewAsync(dm, "party", "en", "cast", cast.Version, at, at + 20, text, "shorter")).Outcome);
+        Assert.Equal(BookEditOutcome.NoModel, (await none.AskAsync(dm, "party", "en", "cast", cast.Version, at, at + 20, text, "shorter")).Outcome);
+        Assert.Equal(0, chat.Calls);
+
+        // Nothing selected: the whole chapter, and the party draft's text is all the model sees.
+        var whole = await ai.AskAsync(dm, "party", "en", "cast", cast.Version, 0, 0, string.Empty, "tidy");
+        Assert.Equal(BookEditOutcome.Ready, whole.Outcome);
+        Assert.Equal((0, cast.Markdown.Length), (whole.From, whole.To));
+        Assert.Equal(cast.Markdown, whole.Replacement);
+        Assert.DoesNotContain("CANARY", Assert.Single(chat.Requests));
+        // The gate is let go of after a request, so the next one may run.
+        Assert.Equal(BookEditOutcome.Ready, (await ai.AskAsync(dm, "party", "en", "cast", cast.Version, 0, 0, string.Empty, "tidy")).Outcome);
     }
 }

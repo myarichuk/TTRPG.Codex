@@ -1018,4 +1018,54 @@
   <data name="Campaign.Book.Draft.Fit.Failed" xml:space="preserve"><value>לא ניתן היה לפרוס את הספר לעמודים. נסו שוב בעוד רגע.</value></data>
   <data name="Campaign.Book.Draft.RunOn" xml:space="preserve"><value>עמודים שנמשכים מעבר למקום שבו הטקסט שובר אותם: {0}. „התאמת עמודים” יכתוב את המעברים האלה לטקסט.</value></data>
   <data name="Campaign.Book.Draft.PrintedOverflow" xml:space="preserve"><value>קובץ ה-PDF הורד, אבל העמודים האלה מודפסים חתוכים: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Title" xml:space="preserve"><value>לשאול את ה-AI</value></data>
+  <data name="Campaign.Book.Draft.Ai.Hint" xml:space="preserve"><value>בחרו קטע, או כלום בשביל הפרק כולו. סודות, תמונות ושבירות עמוד לא נשלחים, ושום דבר לא משתנה עד שתאשרו.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape" xml:space="preserve"><value>כמו בספר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape.Hint" xml:space="preserve"><value>לכתוב מחדש כפי שהספרים שיצאו למשחק הזה מציגים זאת</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter" xml:space="preserve"><value>קצר יותר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter.Hint" xml:space="preserve"><value>לשמור כל עובדה, להוריד חזרות</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud" xml:space="preserve"><value>קטע להקראה</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud.Hint" xml:space="preserve"><value>להפוך לטקסט שמנחה המשחק מקריא לשחקנים</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy" xml:space="preserve"><value>לסדר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy.Hint" xml:space="preserve"><value>איות, דקדוק ועימוד בלבד</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskLabel" xml:space="preserve"><value>או כתבו מה לשנות</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskPlaceholder" xml:space="preserve"><value>או כתבו מה לשנות, למשל: בקול של יומן ספינה</value></data>
+  <data name="Campaign.Book.Draft.Ai.Ask" xml:space="preserve"><value>לשאול</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoAsk" xml:space="preserve"><value>כתבו קודם מה לשנות.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Confirm" xml:space="preserve"><value>לשלוח את {0} אל {1}?</value></data>
+  <data name="Campaign.Book.Draft.Ai.Selection" xml:space="preserve"><value>הבחירה</value></data>
+  <data name="Campaign.Book.Draft.Ai.Chapter" xml:space="preserve"><value>הפרק כולו</value></data>
+  <data name="Campaign.Book.Draft.Ai.Widened" xml:space="preserve"><value>הבחירה הורחבה כדי לא לחתוך סוד, תמונה או שבירת עמוד.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Kept" xml:space="preserve"><value>נשמרים בצד ולא נשלחים: {0} (סודות, תמונות, שבירות עמוד או סימונים).</value></data>
+  <data name="Campaign.Book.Draft.Ai.Tokens" xml:space="preserve"><value>בערך {0} עד {1} טוקנים פנימה ולכל היותר {2} החוצה, בכל ניסיון. הערכה: הספירה של הספק תהיה שונה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Cost" xml:space="preserve"><value>בערך {0} עד {1} לפי המחירים שלכם; הסכום העליון אם יידרש ניסיון שני.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Allowance" xml:space="preserve"><value>על המפתח של השרת: נוצלו היום {0} מתוך {1} בקשות; זה שומר עד {2}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Send" xml:space="preserve"><value>לשלוח</value></data>
+  <data name="Campaign.Book.Draft.Ai.Asking" xml:space="preserve"><value>שואלים את ה-AI…</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stop" xml:space="preserve"><value>לעצור</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stale" xml:space="preserve"><value>הפרק השתנה מאז שנקרא. נסו שוב.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Empty" xml:space="preserve"><value>אין כאן שום דבר שה-AI רשאי לשנות.</value></data>
+  <data name="Campaign.Book.Draft.Ai.TooLong" xml:space="preserve"><value>זה ארוך מדי לעריכה אחת. בחרו קטע קצר יותר.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Busy" xml:space="preserve"><value>ריצת AI אחרת שלכם כבר פועלת. נסו שוב כשתסתיים.</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoModel" xml:space="preserve"><value>הגדירו קודם מודל AI בהגדרות ה-AI.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.checks" xml:space="preserve"><value>התשובה של ה-AI הפרה פעמיים את כללי הספר. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cutoff" xml:space="preserve"><value>התשובה של ה-AI נקטעה לפני סופה. שום דבר לא השתנה; נסו קטע קצר יותר.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.budget" xml:space="preserve"><value>העריכה הגיעה לתקרת ההוצאה. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.auth" xml:space="preserve"><value>ספק ה-AI דחה את המפתח או את המודל. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.ratelimit" xml:space="preserve"><value>ספק ה-AI מגביל בקשות. נסו מאוחר יותר.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.allowance" xml:space="preserve"><value>מכסת ה-AI של השרת להיום נוצלה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cancelled" xml:space="preserve"><value>נעצר. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.error" xml:space="preserve"><value>לא ניתן היה להגיע ל-AI. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Spent" xml:space="preserve"><value>נוצלו כ-{0} טוקנים.</value></data>
+  <data name="Campaign.Book.Draft.Ai.SpentCost" xml:space="preserve"><value>נוצלו כ-{0} טוקנים, בערך {1}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Same" xml:space="preserve"><value>ה-AI לא שינה דבר.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Review" xml:space="preserve"><value>בדקו את השינוי של ה-AI</value></data>
+  <data name="Campaign.Book.Draft.Ai.Left" xml:space="preserve"><value>נותרו {0} שינויים</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeepAccepted" xml:space="preserve"><value>לשמור את מה שאישרתי</value></data>
+  <data name="Campaign.Book.Draft.Ai.AcceptRest" xml:space="preserve"><value>לאשר את השאר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Discard" xml:space="preserve"><value>לבטל</value></data>
+  <data name="Campaign.Book.Draft.Ai.Accept" xml:space="preserve"><value>לאשר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Reject" xml:space="preserve"><value>לדחות</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewLabel" xml:space="preserve"><value>השינוי של ה-AI, לבדיקה</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewHint" xml:space="preserve"><value>אשרו או דחו כל שינוי, או את כולם יחד. Alt+למטה ו-Alt+למעלה עוברים בין שינויים; Ctrl+Enter מאשר את השינוי שליד הסמן ו-Ctrl+Backspace דוחה אותו. התצוגה המקדימה מראה את מה שאישרתם עד כה.</value></data>
 </root>

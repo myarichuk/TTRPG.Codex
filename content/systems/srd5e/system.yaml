@@ -61,6 +61,16 @@ ai:
   advancementChoices: [subclass, feats, spells, fighting styles]
   advancementChanges: [hit points, proficiency bonus, new resources]
   primaryResourceBasis: the level, class and constitution
+  # How this game's published adventures and setting books read: shape and voice only, never a title, a sentence or a trademark of theirs.
+  bookShape: >-
+    fifth-edition adventures and setting books. A chapter opens with a short overview of what it holds and how it fits the adventure,
+    then goes place by place or scene by scene under numbered or named headings. Each place or scene starts with read-aloud text in a
+    boxed block: a few sentences in the second person and the present tense, saying only what the characters see, hear and smell, never
+    what they think or must do. The GM's text follows in a plain, confident, practical voice: who is here, what they want, what happens if
+    the characters do this or that, with checks and saving throws named by ability and difficulty class. Rules notes, variants and GM
+    advice sit in short sidebars with a title. Creatures appear by name with a stat block where they fight. Non-player characters get a
+    line or two each of appearance, wants and manner. No purple prose: short paragraphs, concrete details, lists where the GM looks
+    things up at the table.
 
 conditions:
   [Blinded, Charmed, Deafened, Exhaustion, Frightened, Grappled, Incapacitated, Invisible,

@@ -6,6 +6,7 @@
 @inject BookDrafts Drafts
 @inject BookDraftWebs Webs
 @inject BookPdf Pdf
+@inject BookDraftAi Ai
 @inject NavigationManager Nav
 @inject IWebHostEnvironment Env
 @inject ILogger<BookDraftEditor> Logger
@@ -43,7 +44,7 @@
                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="DownloadAsync" Disabled="@printing" data-testid="book-draft-download">
                     <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
                 </CodexButton>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="StartOverAsync" data-testid="book-draft-start-over">
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="StartOverAsync" Disabled="@AiBusy" data-testid="book-draft-start-over">
                     <LucideIcon IconName="rotate-ccw" Size="14" /> @L["Campaign.Book.Draft.StartOver"]
                 </CodexButton>
                 <CodexButton Small="true" OnClick="CloseAsync" data-testid="book-draft-close">@L["Common.Close"]</CodexButton>
@@ -101,7 +102,7 @@
                         {
                             <li>
                                 <button type="button" class="book-draft-chapter @(current == chapter.Section ? "active" : null)" aria-current="@(current == chapter.Section ? "true" : null)"
-                                        @onclick="() => ShowAsync(chapter.Section)" data-testid="book-draft-chapter" data-section="@chapter.Section">
+                                        @onclick="() => ShowAsync(chapter.Section)" disabled="@AiBusy" data-testid="book-draft-chapter" data-section="@chapter.Section">
                                     <bdi dir="auto">@Title(chapter)</bdi>
                                     @if (chapter.Stale || chapter.Gone)
                                     {
@@ -115,7 +116,7 @@
                             </li>
                         }
                         <li>
-                            <button type="button" class="book-draft-chapter @(current == null ? "active" : null)" aria-current="@(current == null ? "true" : null)" @onclick="() => ShowAsync(null)" data-testid="book-draft-css">
+                            <button type="button" class="book-draft-chapter @(current == null ? "active" : null)" aria-current="@(current == null ? "true" : null)" @onclick="() => ShowAsync(null)" disabled="@AiBusy" data-testid="book-draft-css">
                                 <LucideIcon IconName="palette" Size="14" /> @L["Campaign.Book.Draft.Stylesheet"]
                             </button>
                         </li>
@@ -153,6 +154,85 @@
                                 <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => UndoAsync(shown.Section)" disabled="@working" data-testid="book-draft-undo">@L["Campaign.Book.Draft.Undo"]</button>
                             </div>
                         }
+                        @* AI edits (docs/BOOK_EXPORT.md 41.4): the selection, or the chapter, sent with its secrets, pictures and breaks kept back; the
+                           cost shown before anything is sent; the reply reviewed change by change, and nothing saved until it is accepted. *@
+                        <section class="book-draft-ai" aria-labelledby="book-draft-ai-title" data-testid="book-draft-ai">
+                            @if (reviewing)
+                            {
+                                <div class="book-draft-ai-review" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-review">
+                                    <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Review"]</strong>
+                                    <span class="small-muted" role="status" aria-live="polite" data-review-left data-testid="book-draft-review-left"></span>
+                                    <span class="flex-grow-1"></span>
+                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="@(() => AiFinishAsync("accepted"))" data-testid="book-draft-review-keep">@L["Campaign.Book.Draft.Ai.KeepAccepted"]</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiFinishAsync("all"))" data-testid="book-draft-review-all">@L["Campaign.Book.Draft.Ai.AcceptRest"]</CodexButton>
+                                    <CodexButton Small="true" OnClick="@(() => AiFinishAsync("none"))" data-testid="book-draft-review-discard">@L["Campaign.Book.Draft.Ai.Discard"]</CodexButton>
+                                    <div class="small-muted w-100">@L["Campaign.Book.Draft.Ai.ReviewHint"]</div>
+                                </div>
+                            }
+                            else if (aiPreview is { } asking && aiPending is { } pending)
+                            {
+                                <div class="book-draft-ai-confirm" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-ai-confirm">
+                                    <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Confirm", pending.Whole ? L["Campaign.Book.Draft.Ai.Chapter"] : L["Campaign.Book.Draft.Ai.Selection"], asking.Model?.Label ?? string.Empty]</strong>
+                                    @if (!pending.Whole && (asking.From != pending.Selection.From || asking.To != pending.Selection.To))
+                                    {
+                                        <div class="small-muted" data-testid="book-draft-ai-widened">@L["Campaign.Book.Draft.Ai.Widened"]</div>
+                                    }
+                                    @if (asking.Pieces > 0)
+                                    {
+                                        <div class="small-muted" data-testid="book-draft-ai-kept">@L["Campaign.Book.Draft.Ai.Kept", asking.Pieces]</div>
+                                    }
+                                    @if (asking.Preflight is { } flight)
+                                    {
+                                        <div class="small-muted">@L["Campaign.Book.Draft.Ai.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh)]</div>
+                                        @if (flight.CostLow is { } low && flight.CostHigh is { } high)
+                                        {
+                                            <div class="small-muted" data-testid="book-draft-ai-cost">@L["Campaign.Book.Draft.Ai.Cost", Money(low, asking.Model?.Price), Money(high, asking.Model?.Price)]</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="small-muted">@L["Campaign.Book.Ai.Preflight.NoPrice"]</div>
+                                        }
+                                        @if (asking.Model?.ServerUsedToday is { } server && server.Limit > 0)
+                                        {
+                                            <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts]</div>
+                                        }
+                                    }
+                                    <div class="d-flex gap-2 mt-1">
+                                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="AiSendAsync" data-testid="book-draft-ai-send">@L["Campaign.Book.Draft.Ai.Send"]</CodexButton>
+                                        <CodexButton Small="true" OnClick="AiCancelAsync" data-testid="book-draft-ai-cancel">@L["Common.Cancel"]</CodexButton>
+                                    </div>
+                                </div>
+                            }
+                            else if (aiAsking)
+                            {
+                                <div class="d-flex gap-2 align-items-center" role="status" aria-live="polite" data-testid="book-draft-ai-asking">
+                                    <span id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Asking"]</span>
+                                    <CodexButton Small="true" OnClick="() => aiStop?.Cancel()" data-testid="book-draft-ai-stop">@L["Campaign.Book.Draft.Ai.Stop"]</CodexButton>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="d-flex gap-1 flex-wrap align-items-center">
+                                    <span id="book-draft-ai-title" class="small fw-semibold"><LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Book.Draft.Ai.Title"]</span>
+                                    @foreach (var preset in BookEditPrompts.Presets.Keys)
+                                    {
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiPrepareAsync(preset))" Disabled="@(working || state == SaveState.Conflict)"
+                                                     title="@L["Campaign.Book.Draft.Ai.Preset." + preset + ".Hint"]" data-testid="@("book-draft-ai-" + preset)">@L["Campaign.Book.Draft.Ai.Preset." + preset]</CodexButton>
+                                    }
+                                </div>
+                                <div class="d-flex gap-1 mt-1">
+                                    <label for="book-draft-ai-ask" class="visually-hidden">@L["Campaign.Book.Draft.Ai.AskLabel"]</label>
+                                    <input id="book-draft-ai-ask" class="form-control form-control-sm" maxlength="@BookDraftEdits.MaxAskChars" placeholder="@L["Campaign.Book.Draft.Ai.AskPlaceholder"]"
+                                           @bind="aiText" @bind:event="oninput" @onkeydown="AiKeyAsync" disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-ai-ask" />
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AiPrepareAsync(null)" Disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-ai-go">@L["Campaign.Book.Draft.Ai.Ask"]</CodexButton>
+                                </div>
+                                <div class="small-muted">@L["Campaign.Book.Draft.Ai.Hint"]</div>
+                            }
+                            @if (aiNote != null)
+                            {
+                                <div class="small @(aiNoteError ? "field-error" : "small-muted")" role="status" aria-live="polite" data-testid="book-draft-ai-note">@aiNote</div>
+                            }
+                        </section>
                     }
                     else
                     {
@@ -740,10 +820,198 @@
         }
     }
 
+    // AI edits: what is about to be sent (after the pre-flight), the call under way, the review open, and what the last one said.
+    private sealed record EditorSelection(string Section, int From, int To, string Text);
+
+    private sealed record AiPending(EditorSelection Selection, int Version, string Ask)
+    {
+        public bool Whole => Selection.From == Selection.To;
+    }
+
+    private string aiText = string.Empty;
+    private AiPending? aiPending;
+    private BookEditPreview? aiPreview;
+    private bool aiAsking;
+    private bool reviewing;
+    private CancellationTokenSource? aiStop;
+    private string? aiNote;
+    private bool aiNoteError;
+
+    private bool AiBusy => aiAsking || reviewing || aiPending != null;
+
+    private static string Number(long value) => value.ToString("N0", System.Globalization.CultureInfo.CurrentCulture);
+
+    private static string Money(decimal amount, Codex.Core.AI.AiPriceQuote? price) =>
+        Codex.Core.AI.AiPrice.Format(amount, price?.Label ?? string.Empty, System.Globalization.CultureInfo.CurrentCulture);
+
+    private void Note(string text, bool error = true)
+    {
+        aiNote = text;
+        aiNoteError = error;
+    }
+
+    private string Outcome(BookEditOutcome outcome) => outcome switch
+    {
+        BookEditOutcome.Stale => L["Campaign.Book.Draft.Ai.Stale"],
+        BookEditOutcome.Empty => L["Campaign.Book.Draft.Ai.Empty"],
+        BookEditOutcome.TooLong => L["Campaign.Book.Draft.Ai.TooLong"],
+        BookEditOutcome.Busy => L["Campaign.Book.Draft.Ai.Busy"],
+        BookEditOutcome.NoModel => L["Campaign.Book.Draft.Ai.NoModel"],
+        _ => L["Campaign.Book.Draft.NotAllowed"]
+    };
+
+    private async Task AiLockAsync(bool on)
+    {
+        if (module != null && editorId != null) await module.InvokeVoidAsync("lock", editorId, on);
+    }
+
+    private Task AiKeyAsync(KeyboardEventArgs e) => e.Key == "Enter" ? AiPrepareAsync(null) : Task.CompletedTask;
+
+    /// <summary>The pre-flight: what was typed is saved, the selection read, and the server says what it would send (the selection widened to whole
+    /// pieces) and cost. Nothing is sent; the editor is locked so the text stays what the server checked.</summary>
+    private async Task AiPrepareAsync(string? preset)
+    {
+        if (working || AiBusy || view == null || module == null || editorId == null || current == null) return;
+        aiNote = null;
+        message = null;
+        var ask = preset ?? aiText.Trim();
+        if (ask.Length == 0)
+        {
+            Note(L["Campaign.Book.Draft.Ai.NoAsk"]);
+            return;
+        }
+
+        working = true;
+        try
+        {
+            await FlushAsync();
+            if (state == SaveState.Conflict) return;
+            var selection = await module.InvokeAsync<EditorSelection?>("selection", editorId);
+            if (selection == null || view?.Chapters.FirstOrDefault(c => c.Section == selection.Section) is not { } chapter) return;
+            var preview = await Ai.PreviewAsync(Access, edition, language, selection.Section, chapter.Version, selection.From, selection.To, selection.Text, ask);
+            if (preview.Outcome != BookEditOutcome.Ready)
+            {
+                Note(Outcome(preview.Outcome));
+                return;
+            }
+
+            await AiLockAsync(true);
+            aiPending = new AiPending(selection, chapter.Version, ask);
+            aiPreview = preview;
+        }
+        catch (JSException ex)
+        {
+            Logger.LogWarning(ex, "Reading the editor's selection failed");
+            Note(L["Campaign.Book.Draft.ActionFailed"]);
+        }
+        finally
+        {
+            working = false;
+        }
+    }
+
+    private async Task AiCancelAsync()
+    {
+        aiPending = null;
+        aiPreview = null;
+        await AiLockAsync(false);
+    }
+
+    /// <summary>Sends the request and waits for the reply; a reply that passed the checks opens the review. The editor stays locked until the review ends.</summary>
+    private async Task AiSendAsync()
+    {
+        if (aiPending is not { } p || aiAsking || module == null || editorId == null) return;
+        aiPreview = null;
+        aiAsking = true;
+        working = true;
+        aiNote = null;
+        aiStop = CancellationTokenSource.CreateLinkedTokenSource(closing.Token);
+        try
+        {
+            var proposal = await Ai.AskAsync(Access, edition, language, p.Selection.Section, p.Version, p.Selection.From, p.Selection.To, p.Selection.Text, p.Ask, aiStop.Token);
+            var spent = proposal.Tokens == 0 ? null
+                : proposal.Cost is { } cost ? L["Campaign.Book.Draft.Ai.SpentCost", Number(proposal.Tokens), Money(cost, null)].ToString()
+                : L["Campaign.Book.Draft.Ai.Spent", Number(proposal.Tokens)].ToString();
+            if (proposal.Outcome == BookEditOutcome.Failed)
+            {
+                Note(L["Campaign.Book.Draft.Ai.Failed." + (proposal.Reason is "checks" or "cutoff" or "budget" or "auth" or "ratelimit" or "allowance" or "cancelled" ? proposal.Reason : "error")]
+                     + (spent == null ? string.Empty : " " + spent));
+            }
+            else if (proposal.Outcome != BookEditOutcome.Ready || proposal.Replacement == null)
+            {
+                Note(Outcome(proposal.Outcome));
+            }
+            else if (proposal.Replacement == proposal.Original)
+            {
+                Note(L["Campaign.Book.Draft.Ai.Same"] + (spent == null ? string.Empty : " " + spent), error: false);
+            }
+            else if (await module.InvokeAsync<bool>("review", editorId,
+                         new { section = p.Selection.Section, from = proposal.From, to = proposal.To, original = proposal.Original, replacement = proposal.Replacement },
+                         new
+                         {
+                             accept = L["Campaign.Book.Draft.Ai.Accept"].ToString(), reject = L["Campaign.Book.Draft.Ai.Reject"].ToString(),
+                             left = L["Campaign.Book.Draft.Ai.Left"].ToString(), label = L["Campaign.Book.Draft.Ai.ReviewLabel"].ToString()
+                         }))
+            {
+                reviewing = true;
+                if (spent != null) Note(spent, error: false);
+            }
+            else
+            {
+                Note(L["Campaign.Book.Draft.Ai.Stale"]);
+            }
+        }
+        catch (LocalizedException ex)
+        {
+            // Refused before anything was sent: the server's allowance, or no model.
+            Note(L.Describe(ex));
+        }
+        catch (JSException ex)
+        {
+            Logger.LogWarning(ex, "Showing the AI edit failed");
+            Note(L["Campaign.Book.Draft.ActionFailed"]);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            aiAsking = false;
+            aiPending = null;
+            aiStop?.Dispose();
+            aiStop = null;
+            // A review open counts as work under way: the theme, Fit pages and Regenerate would redraw the chapter under it.
+            working = reviewing;
+            if (!reviewing) await AiLockAsync(false);
+        }
+    }
+
+    /// <summary>Ends the review: what the GM kept goes into the chapter as one change, and is saved like typing.</summary>
+    private async Task AiFinishAsync(string how)
+    {
+        if (!reviewing || module == null || editorId == null) return;
+        reviewing = false;
+        working = false;
+        try
+        {
+            var changed = await module.InvokeAsync<bool>("finish", editorId, how);
+            if (changed) await FlushAsync();
+        }
+        catch (JSException ex)
+        {
+            Logger.LogWarning(ex, "Ending the AI review failed");
+            Note(L["Campaign.Book.Draft.ActionFailed"]);
+        }
+    }
+
     private bool closeWithoutSaving;
 
     private async Task CloseAsync()
     {
+        // An open review or pre-flight is let go of: nothing of it was saved.
+        aiStop?.Cancel();
+        if (reviewing) await AiFinishAsync("none");
+        if (aiPending != null) await AiCancelAsync();
         await FlushAsync();
         // Text that could not be saved (the draft changed in another tab) is not thrown away without a word: the first Close says so.
         if ((dirty.Count > 0 || cssDirty) && !closeWithoutSaving)

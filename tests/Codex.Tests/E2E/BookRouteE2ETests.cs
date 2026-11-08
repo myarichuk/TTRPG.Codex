@@ -262,7 +262,7 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
 
     public BookAiPanelE2ETests(AppFixture app) => _app = app;
 
-    private sealed class FakeModelServer : IAsyncDisposable
+    internal sealed class FakeModelServer : IAsyncDisposable
     {
         private readonly System.Net.HttpListener _listener = new();
         private readonly Task _loop;
@@ -310,7 +310,13 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
 
                     var last = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("messages").EnumerateArray().Last().GetProperty("content").GetString() ?? string.Empty;
                     string reply;
-                    if (!last.Contains("<source>", StringComparison.Ordinal))
+                    if (last.Contains("<passage>", StringComparison.Ordinal))
+                    {
+                        // An AI edit of the editable book: the passage back, one word changed.
+                        var from = last.IndexOf("<passage>", StringComparison.Ordinal) + "<passage>".Length;
+                        reply = last[from..last.IndexOf("</passage>", StringComparison.Ordinal)].Trim().Replace("lighthouse", "beacon tower");
+                    }
+                    else if (!last.Contains("<source>", StringComparison.Ordinal))
                     {
                         // The art director: the same harmless picture for every slot it is shown.
                         var slots = System.Text.RegularExpressions.Regex.Matches(last, @"^Slot (?<n>\d+) \([^)]*\): (?<label>.*)$", System.Text.RegularExpressions.RegexOptions.Multiline)
@@ -667,6 +673,103 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         var download = await dm.RunAndWaitForDownloadAsync(() => dm.GetByTestId("book-draft-download").ClickAsync());
         Assert.EndsWith(".pdf", download.SuggestedFilename);
         await Assertions.Expect(dm.GetByTestId("book-draft-print-overflow")).ToContainTextAsync("(Cast)");
+        Assert.Empty(pageErrors);
+    }
+
+    /// <summary>
+    /// AI edits (docs/BOOK_EXPORT.md 41.4): the GM selects a line, asks for it shorter, sees the cost before anything is sent, and reviews the
+    /// reply change by change; the preview shows only what was accepted; what is kept is saved like typing, and a discarded reply changes nothing.
+    /// The model (a local process) is sent no secret.
+    /// </summary>
+    [Fact]
+    public async Task TheGmAsksAiToEditASelection_ReviewsTheChange_AndOnlyWhatIsAcceptedIsSaved()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bai-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var model = new BookAiPanelE2ETests.FakeModelServer();
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor
+        {
+            Id = "bai-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Visibility = Codex.Persistence.ActorVisibility.Known,
+            Biography = "Keeps the lighthouse on the point.\n\nHer lighthouse log is kept dry.\n\n:::dm\nCANARY_AI_SECRET\n:::"
+        }]);
+
+        await dm.GotoAsync("/settings/ai");
+        await dm.GetByTestId("ai-add-provider").ClickAsync();
+        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await dm.GetByTestId("ai-name").FillAsync("Fake model");
+        await dm.GetByTestId("ai-url").FillAsync(model.Url);
+        await dm.GetByTestId("ai-model").FillAsync("fake-model");
+        await dm.GetByTestId("ai-price-in").FillAsync("1");
+        await dm.GetByTestId("ai-price-out").FillAsync("2");
+        await dm.GetByTestId("ai-price-label").FillAsync("USD");
+        await dm.GetByTestId("ai-save").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model");
+
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        // The GM edition: its secret is in the chapter, and must not reach the model.
+        await dm.GetByTestId("book-edition").SelectOptionAsync("dm");
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-dialog")).ToBeVisibleAsync();
+        var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
+        await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Keeps the lighthouse" })).ToHaveCountAsync(1);
+
+        // The line is selected and the GM asks for it shorter: the cost first, nothing sent.
+        await dm.Locator(".cm-line", new() { HasText = "Keeps the lighthouse" }).ClickAsync();
+        await dm.Keyboard.PressAsync("Home");
+        await dm.Keyboard.PressAsync("Shift+End");
+        await dm.GetByTestId("book-draft-ai-shorter").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-ai-confirm")).ToContainTextAsync("fake-model");
+        await Assertions.Expect(dm.GetByTestId("book-draft-ai-cost")).ToContainTextAsync("USD");
+        lock (model.Requests) Assert.Empty(model.Requests);
+        await dm.GetByTestId("book-draft-ai-send").ClickAsync();
+
+        // The review: one change, nothing accepted yet, so the preview still has the old words.
+        var review = dm.GetByTestId("book-draft-review");
+        await Assertions.Expect(review).ToBeVisibleAsync(new() { Timeout = 30_000 });
+        await Assertions.Expect(dm.GetByTestId("book-draft-review-left")).ToContainTextAsync("1");
+        await Assertions.Expect(dm.GetByTestId("book-draft-code")).ToBeHiddenAsync();
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Keeps the lighthouse" })).ToHaveCountAsync(1);
+        lock (model.Requests)
+        {
+            var sent = Assert.Single(model.Requests);
+            Assert.Contains("Keeps the lighthouse", sent);
+            Assert.DoesNotContain("CANARY_AI_SECRET", sent);
+        }
+
+        // Accepted: the preview takes it at once, and the review is kept with what was accepted.
+        await dm.GetByTestId("book-draft-review-code").GetByRole(AriaRole.Button, new() { Name = "Accept" }).ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-review-left")).ToContainTextAsync("0");
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Keeps the beacon tower" })).ToHaveCountAsync(1);
+        await dm.GetByTestId("book-draft-review-keep").ClickAsync();
+        await Assertions.Expect(review).ToBeHiddenAsync();
+        await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "Keeps the beacon tower" })).ToHaveCountAsync(1);
+        await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved");
+        await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=cast] .book-draft-badge-edited")).ToBeVisibleAsync();
+
+        // A second ask, of the whole chapter (nothing selected), in the GM's own words, discarded: nothing changes, and the editor takes typing again.
+        await dm.Locator(".cm-line", new() { HasText = "Keeps the beacon tower" }).ClickAsync();
+        await dm.GetByTestId("book-draft-ai-ask").FillAsync("Call it a beacon tower");
+        await dm.GetByTestId("book-draft-ai-go").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-ai-confirm")).ToContainTextAsync("whole chapter");
+        await dm.GetByTestId("book-draft-ai-send").ClickAsync();
+        await Assertions.Expect(review).ToBeVisibleAsync(new() { Timeout = 30_000 });
+        await dm.GetByTestId("book-draft-review-discard").ClickAsync();
+        await Assertions.Expect(review).ToBeHiddenAsync();
+        await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "Her lighthouse log" })).ToHaveCountAsync(1);
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "Her lighthouse log" })).ToHaveCountAsync(1);
+        lock (model.Requests) Assert.All(model.Requests, r => Assert.DoesNotContain("CANARY_AI_SECRET", r));
+        await dm.Locator(".cm-line", new() { HasText = "Keeps the beacon tower" }).ClickAsync();
+        await dm.Keyboard.PressAsync("End");
+        await dm.Keyboard.TypeAsync(" PUBLIC_TYPED");
+        await Assertions.Expect(preview.Locator(".page", new() { HasText = "PUBLIC_TYPED" })).ToHaveCountAsync(1);
         Assert.Empty(pageErrors);
     }
 

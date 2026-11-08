@@ -1018,4 +1018,54 @@
   <data name="Campaign.Book.Draft.Fit.Failed" xml:space="preserve"><value>Fit pages could not lay the book out. Try again in a moment.</value></data>
   <data name="Campaign.Book.Draft.RunOn" xml:space="preserve"><value>Pages that run on past where the text breaks them: {0}. Fit pages writes those breaks into the text.</value></data>
   <data name="Campaign.Book.Draft.PrintedOverflow" xml:space="preserve"><value>The PDF is downloaded, but these pages print cut off: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Title" xml:space="preserve"><value>Ask AI</value></data>
+  <data name="Campaign.Book.Draft.Ai.Hint" xml:space="preserve"><value>Select a passage, or nothing for the whole chapter. Secrets, pictures and page breaks are never sent, and nothing changes until you accept it.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape" xml:space="preserve"><value>As the book</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape.Hint" xml:space="preserve"><value>Rewrite it the way this game's published books present it</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter" xml:space="preserve"><value>Shorter</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter.Hint" xml:space="preserve"><value>Keep every fact, lose the repetition</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud" xml:space="preserve"><value>Read-aloud box</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud.Hint" xml:space="preserve"><value>Turn it into text the GM reads to the players</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy" xml:space="preserve"><value>Tidy</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy.Hint" xml:space="preserve"><value>Spelling, grammar and layout only</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskLabel" xml:space="preserve"><value>Or say what to change</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskPlaceholder" xml:space="preserve"><value>Or say what to change, e.g. in the voice of a ship's log</value></data>
+  <data name="Campaign.Book.Draft.Ai.Ask" xml:space="preserve"><value>Ask</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoAsk" xml:space="preserve"><value>Say what to change first.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Confirm" xml:space="preserve"><value>Send {0} to {1}?</value></data>
+  <data name="Campaign.Book.Draft.Ai.Selection" xml:space="preserve"><value>the selection</value></data>
+  <data name="Campaign.Book.Draft.Ai.Chapter" xml:space="preserve"><value>the whole chapter</value></data>
+  <data name="Campaign.Book.Draft.Ai.Widened" xml:space="preserve"><value>The selection was widened so that a secret, a picture or a page break is not cut in two.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Kept" xml:space="preserve"><value>Kept back and not sent: {0} (secrets, pictures, page breaks or markers).</value></data>
+  <data name="Campaign.Book.Draft.Ai.Tokens" xml:space="preserve"><value>About {0} to {1} tokens in and at most {2} out, per try. An estimate: your provider's own count will differ.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Cost" xml:space="preserve"><value>Roughly {0} to {1} at your prices, the upper figure if it needs a second try.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Allowance" xml:space="preserve"><value>On the server's key: {0} of {1} requests used today; this sets aside up to {2}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Send" xml:space="preserve"><value>Send</value></data>
+  <data name="Campaign.Book.Draft.Ai.Asking" xml:space="preserve"><value>Asking the AI…</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stale" xml:space="preserve"><value>The chapter changed since it was read. Try again.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Empty" xml:space="preserve"><value>There is nothing there the AI may change.</value></data>
+  <data name="Campaign.Book.Draft.Ai.TooLong" xml:space="preserve"><value>That is too long for one edit. Select a shorter passage.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Busy" xml:space="preserve"><value>Another AI run of yours is under way. Try again when it ends.</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoModel" xml:space="preserve"><value>Set up an AI model in AI settings first.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.checks" xml:space="preserve"><value>The AI's reply broke the book's rules twice. Nothing changed.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cutoff" xml:space="preserve"><value>The AI's reply was cut off before it ended. Nothing changed; try a shorter passage.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.budget" xml:space="preserve"><value>The edit reached its spending cap. Nothing changed.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.auth" xml:space="preserve"><value>The AI provider refused the key or the model. Nothing changed.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.ratelimit" xml:space="preserve"><value>The AI provider is limiting requests. Try again later.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.allowance" xml:space="preserve"><value>The server's AI allowance for today is used up.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cancelled" xml:space="preserve"><value>Stopped. Nothing changed.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.error" xml:space="preserve"><value>The AI could not be reached. Nothing changed.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Spent" xml:space="preserve"><value>Used about {0} tokens.</value></data>
+  <data name="Campaign.Book.Draft.Ai.SpentCost" xml:space="preserve"><value>Used about {0} tokens, roughly {1}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Same" xml:space="preserve"><value>The AI changed nothing.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Review" xml:space="preserve"><value>Review the AI's change</value></data>
+  <data name="Campaign.Book.Draft.Ai.Left" xml:space="preserve"><value>{0} changes left</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeepAccepted" xml:space="preserve"><value>Keep what I accepted</value></data>
+  <data name="Campaign.Book.Draft.Ai.AcceptRest" xml:space="preserve"><value>Accept the rest</value></data>
+  <data name="Campaign.Book.Draft.Ai.Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="Campaign.Book.Draft.Ai.Accept" xml:space="preserve"><value>Accept</value></data>
+  <data name="Campaign.Book.Draft.Ai.Reject" xml:space="preserve"><value>Reject</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewLabel" xml:space="preserve"><value>The AI's change, for review</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewHint" xml:space="preserve"><value>Accept or reject each change, or all at once. Alt+Down and Alt+Up go from change to change; Ctrl+Enter accepts the one at the cursor and Ctrl+Backspace rejects it. The preview shows what you have accepted so far.</value></data>
 </root>

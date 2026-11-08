@@ -1314,7 +1314,7 @@ small renderer, an editor page and a print page, run on the test campaign of sec
    with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
    sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
 
-## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 3 built, see 41.9, 41.10 and 41.15)
+## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 4 built, see 41.9, 41.10, 41.15 and 41.16)
 
 The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
 when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
@@ -1362,7 +1362,7 @@ For each chapter (and inside it, each entry), the base's key is compared with th
   the result as accepted so far.
 - **AI edits** use the same overlay: the GM selects a passage (or a block, or a chapter) and asks ("make this a read-aloud box", "shorter",
   "in the voice of a ship's log"). The model returns a replacement for that range only; nothing changes until it is accepted.
-- **Secrets:** in the GM draft every `:::dm` block is swapped for a placeholder before sending and put back after; the model never sees a secret
+- **Secrets:** in the GM draft every `{{secret` block (drafts never use `:::dm`, invariant 12) is swapped for a placeholder before sending and put back after; the model never sees a secret
   and cannot change one. In the party draft the model sees only the party draft and the party-masked source.
 
 ### 41.5 What changes for the party guarantee
@@ -1387,7 +1387,7 @@ so that two book paths do not drift apart.
    preview), the Plain theme, export through the print browser, the per-chapter stale notice with Regenerate (and silent update of unedited chapters).
 2. **Ashen Vellum:** the grimdark port; fonts bundled after a licence check of each file; theme picker.
 3. **Fit pages** and the print-time overflow report. Built (41.15).
-4. **AI edits** on a selection, with the review overlay.
+4. **AI edits** on a selection, with the review overlay. Built (41.16).
 5. **Bring up to date:** the block merge, AI only for conflicts, the same overlay.
 6. **The party leak check** before export.
 
@@ -1782,3 +1782,65 @@ Not done, or not verified:
 - Keep-together for a short block after a heading in the next column (only page ends are handled).
 - Large books: one Fit pages run on the 44-page Ashen Vellum book was not timed; each round lays the whole book out again.
 - The Russian and Hebrew text of the new strings (`Campaign.Book.Draft.Fit*`, `RunOn`, `PrintedOverflow`) is machine-drafted.
+
+### 41.16 Phase 4: AI edits on a selection (built 2026-11-08)
+
+- **Asking** (the "Ask AI" bar above a chapter's Markdown; `BookDraftAi`, `BookDraftEdits`, `BookEditWorker`, `editor.js` `selection`/`review`/`finish`):
+  the GM selects a passage, or nothing for the whole chapter, and presses a preset (As the book, Shorter, Read-aloud box, Tidy;
+  `BookEditPrompts.Presets`) or types a request (600 characters at most). What was typed is saved first; the server reads the chapter **as
+  stored**, at the version the editor had, and refuses (Stale) unless the selected text is exactly what is stored there. The page's
+  offsets are trusted only that far.
+- **The pre-flight sends nothing:** it names the model, whether the selection or the whole chapter goes, whether the selection was widened, how many
+  pieces are kept back, the token range and the cost at the GM's prices (or that no prices are set), and the server allowance. The editor
+  is locked from here until the review ends, so the text stays what the server checked. Send, or Cancel.
+- **What the model never sees** (`BookDraftEdits.Cut`, found in the whole chapter before the selection is looked at, so a selection that starts or
+  ends inside a piece takes the whole piece): every `{{secret` block (nested, inline, with other classes, any case; one never closed runs to
+  the end of the chapter), every HTML element with a `secret` class (unclosed: to the end), pictures (`![…](…)`, `{{portrait`, `{{place`,
+  `{{chapter-art`, `{{cover-art`), the generator's markers (`{{chapter,#ch-…`, `{{entry,#e-…}}`, the cover, the contents, any block with an
+  `#id`), and page and column breaks. Inside the passage each is `{{block:N}}` with a label; in the text before (1,500 characters) and after
+  (600) it is left out. The model therefore cannot change a secret, move or drop a picture, lose an entry's id (which phase 5's merge reads),
+  or touch the fitted breaks.
+- **The reply** must keep every block exactly once, on a line of its own where it stood on one, and carry no secret, entry, chapter or picture
+  block, link, web address, picture, HTML (a `\<` the draft escaped is not HTML), `[[…]]`, `\page`/`\column` or `:::`. A reply cut off by the
+  length limit is refused even if it passes, because a whole-chapter edit cut short would drop the chapter's end. One retry with the problems,
+  then nothing changes. Pieces go back where their markers are, and the passage keeps its own blank lines at either end.
+- **The book's shape comes from the game system** (the user's decision, handoff §7 item 2): `ai.bookShape` in `system.yaml`
+  (`AiVocabulary.BookShape`) finishes "the book should read like this game's own published books, which are …". srd5e describes
+  fifth-edition adventures' structure and furniture (an overview, keyed places, read-aloud boxes in the second person, sidebars, stat blocks,
+  checks by ability and DC) with no title, trademark or sentence of theirs; a system that says nothing gets neutral words. The prompt also
+  names the draft's own blocks (`{{note`, `{{descriptive`, `{{monster`, `{{wide`), so "make this a read-aloud box" can be done.
+- **Money:** the per-GM `BookGate` before anything is awaited (Busy otherwise), the server's requests set aside up front (two: the try and
+  its retry), a `BookBudget` capped at both attempts' worst case, settled on real usage; what was used is shown after. Not stored anywhere
+  (the build's spend totals do not include edits).
+- **The review overlay:** the reply opens in a read-only CodeMirror view in the chapter editor's place (`@codemirror/merge`'s unified view,
+  pinned 6.12.3; the same author's package as the editor), each change with Accept and Reject, deleted text struck through and new text
+  marked word by word inside changed lines. Alt+Up and Alt+Down go from change to change; Ctrl+Enter accepts and Ctrl+Backspace rejects the one at the
+  cursor. The bar says how many changes are left and offers Keep what I accepted, Accept the rest, Discard. **The preview draws the chapter
+  with only the changes accepted so far.** What is kept goes into the chapter as one change, as if typed: it is saved by the ordinary save
+  (with its conflict check), and Ctrl+Z in the editor takes it back. While the review is open, typing, the chapter list, the theme, Fit pages,
+  Regenerate and Start over are off; closing the editor discards it.
+
+Tests: `BookDraftEditTests` (a selection starting or ending inside a secret takes all of it; a secret beside the passage is left out of the
+text around it; eight spellings of a secret, each cut at every 3rd/5th character pair, never reach the prompt and always restore to the same
+chapter; pictures, markers and breaks kept back; a reply missing, doubling, inlining or inventing a block, or carrying any forbidden thing, is
+refused; a cut-off reply is never offered; a retry carries the problem; srd5e's shape reaches the prompt with no trademark in it, simple-d6
+gets the neutral words); `BookDraftTests.AnAiEdit_*` (the GM draft's secret never sent and put back, the shape sent, nothing saved; stale
+version, moved text, no request, a too-long request, a player, a busy gate (left held), no model: refused before sending; the whole chapter
+when nothing is selected; the gate let go of after a run); `BookDraftE2ETests.TheGmAsksAiToEditASelection...` (real browser, a local fake
+model: select a line, the cost shown and nothing sent, the review with the editor hidden, the preview unchanged until Accept and changed
+after, kept text saved and marked edited, a whole-chapter ask in the GM's words discarded with nothing changed, the GM edition's secret never sent).
+Mutants, each failing them: no widening at the start, a block closed at its first "}}", HTML secrets not found, a missing block not flagged,
+the own-line rule dropped, cut-off ignored, secrets left in the text after, blank lines lost on restore, the stored-text check dropped, the
+gate never let go of, no gate, no shape sent, the preview drawing the unaccepted text, Discard keeping the reply. One survived at first: only
+the first class read as `secret` — harmless, because `secret` was also in the list of kept blocks; that second path was removed so the secret
+test is the one path, and the mutant now fails two tests.
+Seen in the app (preview, the real-run campaign's GM draft, Cast): a selection across Tomas's paragraph and Vera's entry marker; the pre-flight
+named the GM's model, one piece kept back, the token range and that no prices are set; the editor was locked, and after Cancel unlocked
+with nothing sent or changed. No request was sent (a real key is stored there).
+
+Not done, or not verified:
+- A real model has not been tried: how well a small model keeps the markers, and whether "As the book" reads like a sourcebook, is unknown.
+- The `Accept the rest` path differs from `Keep what I accepted` only when some changes are still open; the browser test accepts the only one.
+- The AI bar takes room above the Markdown in a narrow window; the merge view's colours are its own defaults (not checked in dark mode).
+- A request is a single call the dialog waits on (Stop cancels it); edits are not in the build's spend totals.
+- The Russian and Hebrew text of `Campaign.Book.Draft.Ai.*` is machine-drafted.

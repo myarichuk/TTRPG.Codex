@@ -8,6 +8,7 @@ import { keymap } from '@codemirror/view';
 import { indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { css } from '@codemirror/lang-css';
+import { unifiedMergeView, getOriginalDoc, getChunks, acceptChunk, rejectChunk, goToNextChunk, goToPreviousChunk } from '@codemirror/merge';
 import { layout } from './render.js';
 
 const editors = new Map();
@@ -32,6 +33,7 @@ export async function open(host, frame, book, dotnet, labels) {
   editors.set(id, state);
 
   const language = new Compartment();
+  const locked = new Compartment();
   const direction = book.rtl ? EditorView.contentAttributes.of({ dir: 'rtl' }) : [];
   // What was typed and not yet handed to the server: chapters by section, and the stylesheet.
   state.pending = new Set();
@@ -52,7 +54,7 @@ export async function open(host, frame, book, dotnet, labels) {
     parent: host,
     state: EditorState.create({
       doc: text(state),
-      extensions: [basicSetup, keymap.of([indentWithTab]), EditorView.lineWrapping, direction, language.of(markdown()),
+      extensions: [basicSetup, keymap.of([indentWithTab]), EditorView.lineWrapping, direction, language.of(markdown()), locked.of([]),
         EditorView.updateListener.of(u => {
           // A chapter put into the editor (shown, replaced by the server) is not typing: it must not be saved back.
           if (!u.docChanged || state.loading) return;
@@ -64,6 +66,8 @@ export async function open(host, frame, book, dotnet, labels) {
     })
   });
   state.language = language;
+  state.locked = locked;
+  state.direction = direction;
 
   // The frame is sandboxed with no script; allow-same-origin only so this page can draw into it and measure what it drew.
   frame.srcdoc = book.shell;
@@ -77,6 +81,14 @@ export async function open(host, frame, book, dotnet, labels) {
   await preview(id);
   scrollTo(state, state.current);
   return id;
+}
+
+// The chapters as the preview draws them: during a review, the chapter with only the changes accepted so far.
+function shown(state) {
+  const r = state.review;
+  if (!r) return state.chapters;
+  return state.chapters.map(c => c.section !== r.section ? c
+    : { ...c, markdown: c.markdown.slice(0, r.from) + getOriginalDoc(r.view.state).toString() + c.markdown.slice(r.to) });
 }
 
 function chapter(state) {
@@ -124,6 +136,8 @@ export function show(id, section) {
 export async function replace(id, section, markdown) {
   const state = editors.get(id);
   if (!state) return;
+  // The chapter under review was replaced: the review is of text that is gone.
+  if (state.review?.section === section) finish(id, 'none');
   const c = state.chapters.find(x => x.section === section);
   if (c) c.markdown = markdown; else state.chapters.push({ section, markdown });
   // What the server sent is now the text: nothing of this chapter is waiting to be saved.
@@ -179,7 +193,7 @@ async function preview(id) {
     if (!root) return;
     const scroller = doc.scrollingElement;
     const top = scroller ? scroller.scrollTop : 0;
-    const result = await layout(doc, root, state.chapters, state.art);
+    const result = await layout(doc, root, shown(state), state.art);
     fitWidth(state.frame, root);
     if (scroller) scroller.scrollTop = top;
     const box = state.host.closest('[data-book-editor]');
@@ -221,9 +235,101 @@ function scrollTo(state, section) {
   else if (doc && doc.scrollingElement && section === 'front') doc.scrollingElement.scrollTop = 0;
 }
 
+/** The editor's selection in the chapter shown: where it starts and ends, and its text (the server checks it is what it stores there). Null
+ * for the stylesheet. Nothing selected: from equals to, and the server takes the whole chapter. */
+export function selection(id) {
+  const state = editors.get(id);
+  if (!state || state.mode !== 'md') return null;
+  const range = state.view.state.selection.main;
+  return { section: state.current, from: range.from, to: range.to, text: state.view.state.sliceDoc(range.from, range.to) };
+}
+
+/** Typing on or off: off while an AI edit is asked for and while it is reviewed, so what the model was sent is still what is there. */
+export function lock(id, on) {
+  const state = editors.get(id);
+  if (!state) return;
+  state.view.dispatch({ effects: state.locked.reconfigure(on ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : []) });
+}
+
+/**
+ * Shows an AI edit for review (docs/BOOK_EXPORT.md 41.4): the passage in a read-only view of its own, each change with Accept and Reject, deleted
+ * text struck through and new text marked, word by word inside a changed line. The chapter's editor is locked and hidden meanwhile, and the
+ * preview draws the chapter with only the changes accepted so far. Nothing is saved until finish(). False (and nothing shown) when the
+ * chapter's text there is no longer what the model was sent.
+ */
+export function review(id, proposal, labels) {
+  const state = editors.get(id);
+  if (!state || state.mode !== 'md' || state.review || state.current !== proposal.section) return false;
+  const doc = state.view.state.doc;
+  if (proposal.to > doc.length || doc.sliceString(proposal.from, proposal.to) !== proposal.original) return false;
+  lock(id, true);
+  const holder = state.host.ownerDocument.createElement('div');
+  holder.className = 'book-draft-review-code';
+  holder.dataset.testid = 'book-draft-review-code';
+  state.host.after(holder);
+  state.host.hidden = true;
+  const words = labels || {};
+  // The count of changes left goes in the review bar, which the server draws just after this returns: until it is there, try again shortly.
+  const count = (tries = 40) => {
+    const left = state.host.closest('[data-book-editor]')?.querySelector('[data-review-left]');
+    if (!left) { if (tries > 0 && state.review?.view === view) setTimeout(() => count(tries - 1), 50); return; }
+    const n = view ? getChunks(view.state)?.chunks.length ?? 0 : 0;
+    left.textContent = (words.left || '{0}').replace('{0}', String(n));
+  };
+  const repaint = debounce(() => preview(id), 250);
+  let view = null;
+  view = new EditorView({
+    parent: holder,
+    state: EditorState.create({
+      doc: proposal.replacement,
+      extensions: [basicSetup, EditorView.lineWrapping, state.direction, markdown(), EditorState.readOnly.of(true),
+        EditorState.phrases.of({ Accept: words.accept || 'Accept', Reject: words.reject || 'Reject' }),
+        unifiedMergeView({ original: proposal.original, highlightChanges: true, gutter: true, mergeControls: true, syntaxHighlightDeletions: false }),
+        // From the keyboard: Alt-Down and Alt-Up go from change to change, Ctrl-Enter accepts the one at the cursor, Ctrl-Backspace rejects it.
+        keymap.of([
+          { key: 'Alt-ArrowDown', run: goToNextChunk },
+          { key: 'Alt-ArrowUp', run: goToPreviousChunk },
+          { key: 'Mod-Enter', run: v => acceptChunk(v) },
+          { key: 'Mod-Backspace', run: v => rejectChunk(v) }
+        ]),
+        EditorView.contentAttributes.of({ 'aria-label': words.label || '' }),
+        EditorView.updateListener.of(u => { if (u.docChanged || u.transactions.some(t => t.effects.length)) { count(); repaint(); } })]
+    })
+  });
+  state.review = { section: proposal.section, from: proposal.from, to: proposal.to, original: proposal.original, view, holder };
+  count();
+  view.focus();
+  preview(id);
+  return true;
+}
+
+/**
+ * Ends a review. `how` is 'accepted' (only the changes accepted), 'all' (every change not rejected), or 'none'. What is kept goes into the
+ * chapter as one change, as if typed: it is saved like typing, and Ctrl-Z in the editor takes it back.
+ */
+export function finish(id, how) {
+  const state = editors.get(id);
+  const r = state?.review;
+  if (!r) return false;
+  const text = how === 'all' ? r.view.state.doc.toString() : how === 'accepted' ? getOriginalDoc(r.view.state).toString() : r.original;
+  r.view.destroy();
+  r.holder.remove();
+  state.review = null;
+  state.host.hidden = false;
+  lock(id, false);
+  if (text !== r.original && state.mode === 'md' && state.current === r.section) {
+    state.view.dispatch({ changes: { from: r.from, to: r.to, insert: text }, selection: { anchor: r.from, head: r.from + text.length }, scrollIntoView: true, userEvent: 'input.ai' });
+  } else {
+    preview(id);
+  }
+  state.view.focus();
+  return text !== r.original;
+}
+
 export function close(id) {
   const state = editors.get(id);
   if (!state) return;
+  if (state.review) { state.review.view.destroy(); state.review.holder.remove(); state.review = null; }
   state.changed.cancel();
   state.view.destroy();
   editors.delete(id);

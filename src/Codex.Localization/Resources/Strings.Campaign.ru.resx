@@ -1018,4 +1018,54 @@
   <data name="Campaign.Book.Draft.Fit.Failed" xml:space="preserve"><value>Не удалось разложить книгу по страницам. Повторите через минуту.</value></data>
   <data name="Campaign.Book.Draft.RunOn" xml:space="preserve"><value>Страниц, которые продолжаются дальше разрыва в тексте: {0}. «Разбить на страницы» вставит эти разрывы в текст.</value></data>
   <data name="Campaign.Book.Draft.PrintedOverflow" xml:space="preserve"><value>PDF скачан, но эти страницы при печати обрезаны: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Title" xml:space="preserve"><value>Спросить ИИ</value></data>
+  <data name="Campaign.Book.Draft.Ai.Hint" xml:space="preserve"><value>Выделите отрывок или ничего — тогда вся глава. Секреты, картинки и разрывы страниц не отправляются, и ничего не меняется, пока вы не примете правку.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape" xml:space="preserve"><value>Как в книге</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape.Hint" xml:space="preserve"><value>Переписать так, как это подают изданные книги этой игры</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter" xml:space="preserve"><value>Короче</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter.Hint" xml:space="preserve"><value>Сохранить все факты, убрать повторы</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud" xml:space="preserve"><value>Текст для чтения вслух</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud.Hint" xml:space="preserve"><value>Сделать текст, который ведущий читает игрокам</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy" xml:space="preserve"><value>Привести в порядок</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy.Hint" xml:space="preserve"><value>Только орфография, грамматика и разметка</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskLabel" xml:space="preserve"><value>Или скажите, что изменить</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskPlaceholder" xml:space="preserve"><value>Или скажите, что изменить, например: в стиле судового журнала</value></data>
+  <data name="Campaign.Book.Draft.Ai.Ask" xml:space="preserve"><value>Спросить</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoAsk" xml:space="preserve"><value>Сначала скажите, что изменить.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Confirm" xml:space="preserve"><value>Отправить {0} в {1}?</value></data>
+  <data name="Campaign.Book.Draft.Ai.Selection" xml:space="preserve"><value>выделенное</value></data>
+  <data name="Campaign.Book.Draft.Ai.Chapter" xml:space="preserve"><value>всю главу</value></data>
+  <data name="Campaign.Book.Draft.Ai.Widened" xml:space="preserve"><value>Выделение расширено, чтобы не разрезать секрет, картинку или разрыв страницы.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Kept" xml:space="preserve"><value>Не отправляется, остаётся как есть: {0} (секреты, картинки, разрывы страниц или метки).</value></data>
+  <data name="Campaign.Book.Draft.Ai.Tokens" xml:space="preserve"><value>Примерно от {0} до {1} токенов на вход и не более {2} на выход за попытку. Это оценка: у провайдера счёт будет другим.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Cost" xml:space="preserve"><value>Примерно от {0} до {1} по вашим ценам; верхняя цифра — если понадобится вторая попытка.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Allowance" xml:space="preserve"><value>На ключе сервера: сегодня использовано {0} из {1} запросов; эта правка резервирует до {2}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Send" xml:space="preserve"><value>Отправить</value></data>
+  <data name="Campaign.Book.Draft.Ai.Asking" xml:space="preserve"><value>Спрашиваем ИИ…</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stop" xml:space="preserve"><value>Остановить</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stale" xml:space="preserve"><value>Глава изменилась после чтения. Попробуйте ещё раз.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Empty" xml:space="preserve"><value>Здесь нет ничего, что ИИ может изменить.</value></data>
+  <data name="Campaign.Book.Draft.Ai.TooLong" xml:space="preserve"><value>Слишком длинно для одной правки. Выделите отрывок короче.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Busy" xml:space="preserve"><value>Уже идёт другой ваш запуск ИИ. Попробуйте, когда он закончится.</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoModel" xml:space="preserve"><value>Сначала настройте модель ИИ в настройках ИИ.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.checks" xml:space="preserve"><value>Ответ ИИ дважды нарушил правила книги. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cutoff" xml:space="preserve"><value>Ответ ИИ оборвался, не закончившись. Ничего не изменилось; попробуйте отрывок короче.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.budget" xml:space="preserve"><value>Правка достигла предела расходов. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.auth" xml:space="preserve"><value>Провайдер ИИ отклонил ключ или модель. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.ratelimit" xml:space="preserve"><value>Провайдер ИИ ограничивает запросы. Попробуйте позже.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.allowance" xml:space="preserve"><value>Лимит ИИ сервера на сегодня исчерпан.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cancelled" xml:space="preserve"><value>Остановлено. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.error" xml:space="preserve"><value>Не удалось связаться с ИИ. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Spent" xml:space="preserve"><value>Использовано около {0} токенов.</value></data>
+  <data name="Campaign.Book.Draft.Ai.SpentCost" xml:space="preserve"><value>Использовано около {0} токенов, примерно {1}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Same" xml:space="preserve"><value>ИИ ничего не изменил.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Review" xml:space="preserve"><value>Проверьте правку ИИ</value></data>
+  <data name="Campaign.Book.Draft.Ai.Left" xml:space="preserve"><value>Осталось изменений: {0}</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeepAccepted" xml:space="preserve"><value>Оставить принятое</value></data>
+  <data name="Campaign.Book.Draft.Ai.AcceptRest" xml:space="preserve"><value>Принять остальное</value></data>
+  <data name="Campaign.Book.Draft.Ai.Discard" xml:space="preserve"><value>Отбросить</value></data>
+  <data name="Campaign.Book.Draft.Ai.Accept" xml:space="preserve"><value>Принять</value></data>
+  <data name="Campaign.Book.Draft.Ai.Reject" xml:space="preserve"><value>Отклонить</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewLabel" xml:space="preserve"><value>Правка ИИ на проверку</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewHint" xml:space="preserve"><value>Примите или отклоните каждое изменение или все сразу. Alt+Вниз и Alt+Вверх переходят между изменениями; Ctrl+Enter принимает изменение у курсора, Ctrl+Backspace отклоняет. Предпросмотр показывает принятое на сейчас.</value></data>
 </root>

@@ -46,6 +46,15 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         return (dm, source, BookDraftWriter.Generate(source, language, await art.GetAsync(dm)));
     }
 
+    /// <summary>One chapter of the draft as stored, read as the asking GM may read the campaign now, with the campaign's game system. Null when
+    /// the draft or the chapter is not there, or not the caller's.</summary>
+    public async Task<(CampaignAccess Dm, string SystemId, BookDraftChapterView Chapter)?> ChapterAsync(CampaignAccess asked, string edition, string language, string section)
+    {
+        if (await GenerateAsync(asked, edition, language) is not { } made) return null;
+        if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return null;
+        return View(draft, made.Now, null).Chapters.FirstOrDefault(c => c.Section == section) is { } chapter ? (made.Dm, made.Source.Campaign.SystemId, chapter) : null;
+    }
+
     /// <summary>Whether the GM has a draft of this edition and language (without making one).</summary>
     public async Task<bool> ExistsAsync(CampaignAccess asked, string edition, string language) =>
         Audience(edition) != null && await store.GetAsync(asked, edition, language) != null;
