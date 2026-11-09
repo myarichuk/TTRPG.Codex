@@ -15,6 +15,9 @@ public sealed class SheetModelResult
 
     public List<RuleViolation> Violations { get; } = new();
 
+    /// <summary>The conditions that hold: the sheet's own, and those its tracks' thresholds and bands bring.</summary>
+    public List<string> Conditions { get; } = new();
+
     /// <summary>Formulas that could not be worked out: the GM's to fix, never the player's.</summary>
     public List<RuleViolation> Warnings { get; } = new();
 
@@ -41,6 +44,7 @@ public sealed class SheetModel
     internal static SheetModel Need() => _current ?? throw new FormulaException("no sheet is being worked out");
 
     public const string ConditionsKey = "conditions";
+    public const string MaxSuffix = "_Max";
     public const string KindKey = "kind";
 
     private readonly SystemDefinition _system;
@@ -106,6 +110,15 @@ public sealed class SheetModel
             }
         }
 
+        foreach (var track in Tracks())
+        {
+            if (track.Definition.Max != null && Guard(track.Key + MaxSuffix, track.Label, () => TrackMax(track)) is { } max) _result.Values[track.Key + MaxSuffix] = max;
+            if (track.Definition.Holds is { } holds && !holds.Type.Equals("text", StringComparison.OrdinalIgnoreCase)) CheckSlots(track, holds);
+            CheckRange(track);
+        }
+
+        _result.Conditions.AddRange(Conditions());
+
         foreach (var list in Kind.Lists) Check(list.Key, list.Rules);
         foreach (var list in Kind.KeyedLists) Check(list.Key, list.Rules);
         if (_checkPrerequisites)
@@ -138,6 +151,7 @@ public sealed class SheetModel
     {
         if (_valueDefinitions.ContainsKey(name)) return Value(name);
         if (_lists.TryGetValue(name, out var list)) return list;
+        if (name.EndsWith(MaxSuffix, StringComparison.Ordinal) && Tracks().FirstOrDefault(t => t.Key + MaxSuffix == name) is { } track) return TrackMax(track);
         if (name == "input") return FormulaItem.Empty;
         if (_system.Attributes.FirstOrDefault(a => a.Key == name) is { } attribute) return ScoreOf(attribute);
         return _sheet.TryGetValue(name, out var raw) ? Plain(raw) : null;
@@ -222,7 +236,7 @@ public sealed class SheetModel
     }
 
     /// <summary>Runs a formula, with <paramref name="item"/> bound to <paramref name="parameter"/> when it is a lambda.</summary>
-    private object? Run(string formula, FormulaItem? item = null, string? parameter = null)
+    private object? Run(string formula, FormulaItem? item = null, string? parameter = null, IReadOnlyDictionary<string, object>? extra = null)
     {
         var arguments = new List<(string, object)>();
         foreach (var name in _formulas.Names(formula))
@@ -230,6 +244,12 @@ public sealed class SheetModel
             if (name == parameter && item != null)
             {
                 arguments.Add((name, item));
+                continue;
+            }
+
+            if (extra != null && extra.TryGetValue(name, out var bound))
+            {
+                arguments.Add((name, bound));
                 continue;
             }
 
@@ -427,7 +447,7 @@ public sealed class SheetModel
             }
         }
 
-        foreach (var condition in _conditions)
+        foreach (var condition in Conditions())
         {
             if (_system.ConditionEffects.FirstOrDefault(e => string.Equals(e.Key, condition, StringComparison.OrdinalIgnoreCase)).Value is not { } effect) continue;
             foreach (var m in effect.Modifiers) modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source ?? condition, m.When, null));
@@ -500,6 +520,190 @@ public sealed class SheetModel
             return false;
         }
     }
+
+    // ---- Tracks ----
+
+    /// <summary>A track as the sheet has it: a declared one, or one of those an <c>each</c> makes, with what its formulas read
+    /// besides the sheet (<c>item</c>, <c>level</c>).</summary>
+    private sealed record Track(string Key, string? Label, TrackDefinition Definition, IReadOnlyDictionary<string, object> Bindings);
+
+    private List<Track>? _tracks;
+    private bool _expandingTracks;
+    private List<string>? _allConditions;
+    private bool _workingConditions;
+
+    private List<Track> Tracks()
+    {
+        if (_tracks != null) return _tracks;
+        if (_expandingTracks) throw new FormulaException("a track's \"each\" depends on the tracks it makes");
+        _expandingTracks = true;
+        var tracks = new List<Track>();
+        try
+        {
+            foreach (var definition in Kind?.Tracks ?? new List<TrackDefinition>())
+            {
+                if (definition.Each == null)
+                {
+                    tracks.Add(new Track(definition.Key, definition.Label, definition, new Dictionary<string, object>()));
+                    continue;
+                }
+
+                if (Guard(definition.Key, definition.Label, () => Run(definition.Each)) is not FormulaList items) continue;
+                foreach (var item in items)
+                {
+                    foreach (var level in Levels(definition.Levels).DefaultIfEmpty(-1))
+                    {
+                        var bindings = new Dictionary<string, object> { ["item"] = item };
+                        if (level >= 0) bindings["level"] = (double)level;
+                        tracks.Add(new Track(Template(definition.Key, item, level, key: true), definition.Label is { } label ? Template(label, item, level) : null, definition, bindings));
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _expandingTracks = false;
+        }
+
+        return _tracks = tracks;
+    }
+
+    /// <summary><c>"0..9"</c>, or a list of numbers or of <c>{ level }</c> maps.</summary>
+    private static IEnumerable<int> Levels(object? levels)
+    {
+        switch (levels)
+        {
+            case string range when range.Split("..") is [var from, var to] && int.TryParse(from, out var a) && int.TryParse(to, out var b):
+                return Enumerable.Range(a, Math.Max(0, b - a + 1));
+            case IEnumerable list and not string:
+                return list.Cast<object?>().Select(l => l is IDictionary<object, object> m ? At(m, "level") : l is IDictionary<string, object> n ? At(n, "level") : l)
+                    .Select(YamlValues.ToNumber).Where(n => n.HasValue).Select(n => (int)n!.Value).ToList();
+            default:
+                return Enumerable.Empty<int>();
+        }
+    }
+
+    /// <summary><c>"slots_{item.id}_{level}"</c> filled in: <c>slots_cleric_1</c>.</summary>
+    private static string Template(string template, FormulaItem item, int level, bool key = false) =>
+        System.Text.RegularExpressions.Regex.Replace(template, @"\{(item\.(\w+)|level)\}", m =>
+            m.Groups[2].Success ? (item.Get(m.Groups[2].Value)?.ToString() is { } text ? key ? text.ToLowerInvariant() : text : "")
+            : level.ToString(CultureInfo.InvariantCulture));
+
+    private double TrackMax(Track track) => SheetFormulas.Number(Run(track.Definition.Max!, extra: track.Bindings));
+
+    /// <summary>The conditions that hold: the sheet's own, and those the tracks' thresholds and bands bring.</summary>
+    private List<string> Conditions()
+    {
+        if (_allConditions != null) return _allConditions;
+        // A threshold reads values, a value may take modifiers, and a condition brings modifiers: going round is a formula problem.
+        if (_workingConditions) throw new FormulaException("a track's threshold depends on the conditions it brings");
+        _workingConditions = true;
+        var conditions = new List<string>(_conditions);
+        try
+        {
+            foreach (var track in Tracks())
+            {
+                if (YamlValues.ToNumber(_sheet.GetValueOrDefault(track.Key)) is not { } current) continue;
+                foreach (var threshold in track.Definition.Thresholds)
+                {
+                    if (threshold.Condition != null && Matches(track, threshold, current)) conditions.Add(threshold.Condition);
+                }
+
+                if (track.Definition.Bands.FirstOrDefault(b => Matches(track, b, current)) is { Condition: { } band }) conditions.Add(band);
+            }
+
+            // Slots in levels (harm): each level with something in it brings its condition.
+            foreach (var track in Tracks().Where(t => t.Definition.Each == null && t.Definition.Levels is IEnumerable and not string))
+            {
+                if (_sheet.GetValueOrDefault(track.Key) is not IDictionary<string, object> filled) continue;
+                foreach (var level in ((IEnumerable)track.Definition.Levels!).Cast<object?>())
+                {
+                    var map = level as IDictionary<object, object>;
+                    if (map == null || YamlValues.ToNumber(At(map, "level")) is not { } number || At(map, "condition")?.ToString() is not { } condition) continue;
+                    var key = number.ToString(CultureInfo.InvariantCulture);
+                    if (filled.TryGetValue(key, out var texts) && texts is IEnumerable list and not string && list.Cast<object?>().Any(t => !string.IsNullOrWhiteSpace(t?.ToString())))
+                    {
+                        conditions.Add(condition);
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _workingConditions = false;
+        }
+
+        return _allConditions = conditions.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    /// <summary>Whether <paramref name="current"/> meets every comparison of <paramref name="threshold"/>; one that cannot be
+    /// worked out does not hold (and is a warning).</summary>
+    private bool Matches(Track track, TrackThresholdDefinition threshold, double current)
+    {
+        bool Compare(string? formula, Func<double, bool> test) =>
+            formula == null || (Guard($"{track.Key}:{formula}", track.Label, () => Run(formula, extra: track.Bindings)) is { } bound && test(SheetFormulas.Number(bound)));
+
+        return Compare(threshold.AtOrBelow, x => current <= x) && Compare(threshold.Below, x => current < x)
+            && Compare(threshold.AtOrAbove, x => current >= x) && Compare(threshold.Above, x => current > x)
+            && Compare(threshold.Equals, x => current == x);
+    }
+
+    /// <summary>A slot track's contents: each must be an entry of the type its slots hold that passes their <c>where</c>
+    /// (<see cref="TrackHoldsDefinition"/>), and there must be no more than the track's maximum. The same entry may fill
+    /// several slots (a prepared spell, twice).</summary>
+    private void CheckSlots(Track track, TrackHoldsDefinition holds)
+    {
+        var held = SheetRuleEngine.RawList(_sheet, track.Key);
+        if (held.Count == 0) return;
+        var label = track.Label ?? track.Key;
+        foreach (var id in held.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var entry = _resolver.Resolve(holds.Type, id);
+            var fits = entry != null && (holds.Where == null || Guard(track.Key + ":holds", label, () =>
+            {
+                var (parameter, body) = SheetFormulas.SplitLambda(holds.Where);
+                return Run(body, EntryItem(entry), parameter, track.Bindings);
+            }) is true);
+            if (fits) continue;
+            var name = entry?.Name ?? id;
+            var message = $"{label}: {name} is {Fill(holds.Message ?? "not something these slots can hold.", track)}";
+            _result.Violations.Add(new RuleViolation(track.Key, message, "Actor.Rule.SlotHolds", new object?[] { label, name }));
+        }
+
+        if (track.Definition.Max != null && Guard(track.Key + MaxSuffix, label, () => TrackMax(track)) is double max && held.Count > max)
+        {
+            _result.Violations.Add(new RuleViolation(track.Key, $"{label}: {held.Count} in {max:0} slots.", "Actor.Rule.TrackFull", new object?[] { label, held.Count, max }));
+        }
+    }
+
+    /// <summary>A numeric track's current value must be within its minimum (0 unless it says; it may be negative, 3.5's -10) and
+    /// its maximum. A track the sheet has no number for, or whose maximum cannot be worked out, is not judged.</summary>
+    private void CheckRange(Track track)
+    {
+        if (YamlValues.ToNumber(_sheet.GetValueOrDefault(track.Key)) is not { } current) return;
+        var label = track.Label ?? track.Key;
+        var min = track.Definition.Min is { } low ? Guard(track.Key + ":min", label, () => Run(low, extra: track.Bindings)) is { } m ? SheetFormulas.Number(m) : (double?)null : 0d;
+        var max = track.Definition.Max != null ? Guard(track.Key + MaxSuffix, label, () => TrackMax(track)) as double? : null;
+        if ((min is { } floor && current < floor) || (max is { } ceiling && current > ceiling))
+        {
+            var range = max is { } top ? $"{min ?? 0:0} to {top:0}" : $"at least {min ?? 0:0}";
+            _result.Violations.Add(new RuleViolation(track.Key, $"{label}: {current:0} is outside {range}.", "Actor.Rule.TrackRange", new object?[] { label, current, min, max }));
+        }
+    }
+
+    private static FormulaItem EntryItem(ContentEntry entry) => new(name =>
+        name switch
+        {
+            "id" => entry.Id,
+            "name" => entry.Name,
+            _ => entry.Properties.TryGetValue(name, out var value) ? Plain(value) : null
+        });
+
+    /// <summary>A track's message with <c>{item.name}</c> and <c>{level}</c> filled in.</summary>
+    private static string Fill(string message, Track track) =>
+        System.Text.RegularExpressions.Regex.Replace(message, @"\{(item\.(\w+)|level)\}", m =>
+            m.Groups[2].Success ? (track.Bindings.GetValueOrDefault("item") as FormulaItem)?.Get(m.Groups[2].Value)?.ToString() ?? m.Value
+            : track.Bindings.GetValueOrDefault("level") is double level ? level.ToString(CultureInfo.InvariantCulture) : m.Value);
 
     // ---- Rules and prerequisites ----
 
@@ -612,11 +816,12 @@ public sealed class SheetModel
     internal double CallFunction(string name, params object?[] arguments)
     {
         if (_formulas.Function(name) is not { } function) throw new FormulaException($"no function called \"{name}\"");
-        var bound = new List<(string, object)>();
-        foreach (var n in _formulas.Names(function.Body))
+        // Every parameter is bound, even one the body's identifiers do not list: a parameter may share its name with a built-in
+        // (bonusSpells(score, level) and score(key)), and then the parser takes it for the function.
+        var bound = function.Parameters.Select((p, i) => (p, Plain(arguments[i]) ?? throw new FormulaException($"no value for \"{p}\""))).ToList();
+        foreach (var n in _formulas.Names(function.Body).Where(n => !function.Parameters.Contains(n)))
         {
-            var index = Array.IndexOf(function.Parameters, n);
-            bound.Add((n, index >= 0 ? Plain(arguments[index]) ?? throw new FormulaException($"no value for \"{n}\"") : Resolve(n) ?? throw new FormulaException($"nothing called \"{n}\"")));
+            bound.Add((n, Resolve(n) ?? throw new FormulaException($"nothing called \"{n}\"")));
         }
 
         return SheetFormulas.Number(_formulas.Run(function.Body, bound));
@@ -624,5 +829,5 @@ public sealed class SheetModel
 
     internal double ModifierTotal(string target) => Stack("modifiers:" + target, new[] { target }, null);
 
-    internal bool Has(string? condition) => _conditions.Any(c => string.Equals(c, condition, StringComparison.OrdinalIgnoreCase));
+    internal bool Has(string? condition) => Conditions().Any(c => string.Equals(c, condition, StringComparison.OrdinalIgnoreCase));
 }

@@ -361,6 +361,148 @@ public class SheetModelTests
         Assert.DoesNotContain(result.Violations, v => v.Key == "Actor.Rule.Prerequisite");
     }
 
+    // ---- Tracks (step 3) ----
+
+    /// <summary>Thresholds add up, several at once; of the bands, the first that matches holds and no other. A track's maximum
+    /// reads as <c>{key}_Max</c>, a threshold may be a formula, and a condition a threshold brings brings its modifiers too.</summary>
+    [Fact]
+    public void Thresholds_AddUp_ButOnlyOneBandHolds_AndTheirConditionsBringModifiers()
+    {
+        const string kind = """
+                values:
+                  - { key: Speed, formula: "30", modifiers: Speed }
+                tracks:
+                  - key: HP
+                    max: "str * 2"
+                    min: -10
+                    thresholds:
+                      - { atOrBelow: "div(HP_Max, 2)", condition: Hasted }
+                      - { below: 0, condition: Dying }
+                    bands:
+                      - { atOrAbove: 1 }
+                      - { equals: 0, condition: Disabled }
+                      - { condition: Down }
+            """;
+        Dictionary<string, object> At(long hp) => new() { ["str"] = 11L, ["HP"] = hp };
+
+        var healthy = Evaluate(kind, At(20));
+        Assert.Equal(22d, ValueOf(healthy, "HP_Max"));
+        Assert.Empty(healthy.Conditions);
+        Assert.Equal(30d, ValueOf(healthy, "Speed"));
+
+        var hurt = Evaluate(kind, At(11));
+        Assert.Equal(new[] { "Hasted" }, hurt.Conditions);
+        Assert.Equal(40d, ValueOf(hurt, "Speed"));
+
+        Assert.Equal(new[] { "Hasted", "Disabled" }, Evaluate(kind, At(0)).Conditions);
+        Assert.Equal(new[] { "Hasted", "Dying", "Down" }, Evaluate(kind, At(-3)).Conditions);
+    }
+
+    /// <summary>A threshold that reads a value whose modifiers come from the condition that threshold brings goes round: the
+    /// GM's formula problem, a warning, not a hang or a stack overflow.</summary>
+    [Fact]
+    public void AThresholdThatDependsOnItsOwnCondition_IsAWarning()
+    {
+        var result = Evaluate("""
+                values:
+                  - { key: Speed, formula: "30", modifiers: Speed }
+                tracks:
+                  - key: HP
+                    thresholds: [{ atOrBelow: Speed, condition: Hasted }]
+            """, new Dictionary<string, object> { ["HP"] = 5L });
+
+        Assert.NotEmpty(result.Warnings);
+    }
+
+    /// <summary><c>each</c> makes a track per item and level, its key and label filled in and its formulas reading
+    /// <c>item</c> and <c>level</c>; a slot track holds entries that pass its <c>where</c>, the same one more than once, but
+    /// no more than its maximum.</summary>
+    [Fact]
+    public void EachMakesATrackPerItemAndLevel_AndSlotsHoldOnlyWhatFits()
+    {
+        const string kind = """
+                lists:
+                  - key: gear
+                    label: Gear
+                    type: item
+                    itemFields: [{ key: rank, type: Number, default: 1 }]
+                tracks:
+                  - each: "where(gear, g => g.charged)"
+                    levels: "1..2"
+                    key: "charges_{item.id}_{level}"
+                    label: "{item.name}, tier {level}"
+                    display: slots
+                    max: "item.rank + level"
+                    holds: { type: item, where: "s => s.tier == level", message: "not a tier {level} charge." }
+            """;
+        var entries = new[]
+        {
+            new ContentEntry { Id = "wand", Type = "item", Name = "Wand", Properties = { ["charged"] = true } },
+            new ContentEntry { Id = "rock", Type = "item", Name = "Rock" },
+            new ContentEntry { Id = "spark", Type = "item", Name = "Spark", Properties = { ["tier"] = 1L } },
+            new ContentEntry { Id = "blast", Type = "item", Name = "Blast", Properties = { ["tier"] = 2L } }
+        };
+        var gear = new List<object> { new Dictionary<string, object> { ["id"] = "wand", ["rank"] = 1L }, "rock" };
+
+        var fine = Evaluate(kind, new Dictionary<string, object> { ["gear"] = gear, ["charges_wand_1"] = new List<object> { "spark", "spark" } }, entries);
+        Assert.Equal(2d, ValueOf(fine, "charges_wand_1_Max"));
+        Assert.Equal(3d, ValueOf(fine, "charges_wand_2_Max"));
+        Assert.False(fine.Values.ContainsKey("charges_rock_1_Max"));
+        Assert.Empty(fine.Violations);
+
+        var wrong = Evaluate(kind, new Dictionary<string, object> { ["gear"] = gear, ["charges_wand_1"] = new List<object> { "spark", "blast", "spark" } }, entries);
+        Assert.Equal(new[] { ("charges_wand_1", "Actor.Rule.SlotHolds"), ("charges_wand_1", "Actor.Rule.TrackFull") },
+            wrong.Violations.Select(v => (v.FieldKey, v.Key)).ToArray());
+        Assert.Equal("Wand, tier 1: Blast is not a tier 1 charge.", wrong.Violations[0].Message);
+    }
+
+    /// <summary>A numeric track stays within its minimum (which may be negative) and maximum; a track with slots in levels
+    /// brings the condition of each level that has something in it.</summary>
+    [Fact]
+    public void ATrackStaysInRange_AndFilledLevelsBringTheirConditions()
+    {
+        const string kind = """
+                tracks:
+                  - { key: HP, max: 10, min: -10 }
+                  - { key: stress, max: 9 }
+                  - key: harm
+                    display: slots
+                    holds: { type: text }
+                    levels:
+                      - { level: 1, slots: 2, condition: Less effect }
+                      - { level: 2, slots: 2, condition: Reduced dice }
+            """;
+        var fine = Evaluate(kind, new Dictionary<string, object>
+        {
+            ["HP"] = -10L, ["stress"] = 9L,
+            ["harm"] = new Dictionary<string, object> { ["1"] = new List<object> { "bruised" }, ["2"] = new List<object>() }
+        });
+        Assert.Empty(fine.Violations);
+        Assert.Equal(new[] { "Less effect" }, fine.Conditions);
+
+        var out_ = Evaluate(kind, new Dictionary<string, object> { ["HP"] = -11L, ["stress"] = 10L });
+        Assert.Equal(new[] { ("HP", "Actor.Rule.TrackRange"), ("stress", "Actor.Rule.TrackRange") }, out_.Violations.Select(v => (v.FieldKey, v.Key)).ToArray());
+        Assert.Equal("HP: -11 is outside -10 to 10.", out_.Violations[0].Message);
+    }
+
+    /// <summary>A named function's parameter may share its name with a built-in: <c>bonusSpells(score, level)</c> beside
+    /// <c>score(key)</c>. The parser would take the name for the function, so parameters are renamed in the body.</summary>
+    [Fact]
+    public void AFunctionParameter_MayShareItsNameWithABuiltIn()
+    {
+        var system = SystemDefinitionLoader.Parse("""
+            id: shadow
+            name: Shadow
+            attributes:
+              - { key: wis, label: Wisdom, default: 10, modifier: half-minus-five }
+            functions:
+              bonus: { formula: "(score, level) => mod(score) >= level ? score(\"wis\") + level : 0" }
+            """);
+        var model = new SheetModel(system, NullEntryResolver.Instance, new Dictionary<string, object> { ["wis"] = 14L });
+        // bonus(13, 1): mod 1 >= 1, so Wisdom 14 + 1 = 15. bonus(8, 1): mod -1, so 0.
+        Assert.Equal(15d, model.Formula("bonus(13, 1) + bonus(8, 1)", new Dictionary<string, double>()));
+    }
+
     [Fact]
     public void ASystemWithoutSheetKinds_HasNoModel()
     {

@@ -33,3 +33,11 @@ street.armor-is-per-location
 street.a-skill-is-its-stat-plus-its-level
 # Tagged step 3, passing early: a track's current value is still a number on the sheet, so a value can read it.
 street.emp-follows-current-humanity
+
+# Step 3 (tracks): maxima, slot tracks per class and level, thresholds and bands. Street's thresholds compare against
+# HP_Max, which its rules.js works out (step 8), so street.half-hit-points-is-seriously-wounded, street.just-above-half-is-not
+# and street.below-zero-is-both wait for Jint.
+d35.slots-come-from-the-class-table-plus-bonus-spells
+d35.a-slot-holds-only-a-spell-of-its-class-and-level
+d35.vancian-slots-take-duplicates-but-not-more-than-they-have
+crew.reputation-shrinks-with-turf

@@ -415,6 +415,21 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      them then. So does 5e's `base: best` modifier type (section 3), which only 5e armor class needs.
 3. **Tracks.** Thresholds, negative minimums, overflow, boxes and slots. HP bands for 3.5 and CPR; Blades stress/trauma
    and harm.
+   - *Done 2026-11-09, on the sheet.* `SheetModel` reads `tracks`:
+     - maxima as `{key}_Max`;
+     - thresholds (several hold) and bands (one holds), whose conditions bring their `conditionEffects`;
+     - tracks per item and level (`each`), so d35 has one spell-slot track per casting class and level;
+     - slot tracks checking what they hold and how many (`SlotHolds`, `TrackFull`);
+     - range checks with negative minimums (`TrackRange`);
+     - slots in levels bringing each filled level's condition (Blades' harm).
+
+     The reference runner asks the evaluator for conditions. 33 of 95 pass: every step-3 expectation but street's three
+     thresholds, which compare against `HP_Max`, and street works that out in `rules.js` (step 8). Their step tag is
+     early. A named function's parameter that shares a name with a built-in (`bonusSpells(score, …)`) was taken for the
+     built-in; parameters are now renamed in the body.
+   - *Left for step 5 (events):* overflow (stress into trauma), `whenFull: pushUp` and `beyond` (harm), and the start
+     values and live-table mirroring of tracks (`ResourcePoolComponent`). All of them act when a track changes, which is a
+     table command.
 4. **Rolls.** Roll definitions, the grammar extensions (pools, explode/implode, roll-under, success counting), outcomes
    and inputs. `DiceResult` reads the outcome. Add `IDiceSource`.
 5. **Events → intents.** Re-express damage, death saves, concentration and rests in `TableRules` as built-in handlers.

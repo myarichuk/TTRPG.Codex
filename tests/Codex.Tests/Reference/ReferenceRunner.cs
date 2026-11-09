@@ -195,8 +195,15 @@ public sealed class CurrentEngineHost : IReferenceHost
             return CheckOr<IReadOnlyList<(string, string)>>.Of(evaluation.Violations.Select(v => (v.FieldKey, v.Key ?? "")).ToList());
         }
 
-        public CheckOr<IReadOnlyList<string>> Conditions(Dictionary<string, object> sheet) =>
-            CheckOr<IReadOnlyList<string>>.No("conditions come only from the combat console; tracks have no thresholds or bands (step 3)");
+        public CheckOr<IReadOnlyList<string>> Conditions(Dictionary<string, object> sheet)
+        {
+            // A system with sheet kinds has tracks whose thresholds and bands bring conditions (SheetModel); one without has
+            // only the combat console's.
+            var (_, evaluation) = Evaluate(sheet);
+            return evaluation.Model is { } model
+                ? CheckOr<IReadOnlyList<string>>.Of(model.Conditions)
+                : CheckOr<IReadOnlyList<string>>.No("conditions come only from the combat console: the system has no sheet kinds, so no tracks with thresholds or bands (step 3)");
+        }
 
         private (Dictionary<string, object> Sheet, SheetEvaluation Evaluation) Evaluate(Dictionary<string, object> input)
         {

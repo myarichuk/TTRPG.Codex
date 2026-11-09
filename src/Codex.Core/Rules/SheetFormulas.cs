@@ -72,7 +72,10 @@ public sealed partial class SheetFormulas
         {
             if (function.Formula == null || LambdaHead().Match(function.Formula) is not { Success: true } head) continue;
             var parameters = head.Groups["params"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            _functions[name] = (function.Formula[head.Length..], parameters);
+            // The parser takes a name it knows as a function before a parameter of that name (bonusSpells(score, level) and
+            // score(key)), so the parameters are renamed in the body: __p0, __p1... A name followed by '(' stays the function.
+            var renamed = parameters.Select((_, i) => "__p" + i).ToArray();
+            _functions[name] = (RenameParameters(function.Formula[head.Length..], parameters, renamed), renamed);
             var captured = name;
             switch (parameters.Length)
             {
@@ -82,6 +85,45 @@ public sealed partial class SheetFormulas
                 case 4: _interpreter.SetFunction(name, (Func<object?, object?, object?, object?, double>)((a, b, c, d) => SheetModel.Need().CallFunction(captured, a, b, c, d))); break;
             }
         }
+    }
+
+    /// <summary>Replaces each of <paramref name="from"/> with the matching <paramref name="to"/> where it stands as a name: not
+    /// inside a string, not after a '.', not followed by '('.</summary>
+    internal static string RenameParameters(string body, string[] from, string[] to)
+    {
+        var result = new StringBuilder(body.Length);
+        for (var i = 0; i < body.Length;)
+        {
+            var c = body[i];
+            if (c is '\'' or '"')
+            {
+                var end = i + 1;
+                while (end < body.Length && body[end] != c) end += body[end] == '\\' ? 2 : 1;
+                end = Math.Min(end + 1, body.Length);
+                result.Append(body, i, end - i);
+                i = end;
+                continue;
+            }
+
+            if (char.IsLetter(c) || c == '_')
+            {
+                var start = i;
+                while (i < body.Length && (char.IsLetterOrDigit(body[i]) || body[i] == '_')) i++;
+                var word = body[start..i];
+                var next = i;
+                while (next < body.Length && char.IsWhiteSpace(body[next])) next++;
+                var member = start > 0 && body[start - 1] == '.';
+                var call = next < body.Length && body[next] == '(';
+                var index = Array.IndexOf(from, word);
+                result.Append(index >= 0 && !member && !call ? to[index] : word);
+                continue;
+            }
+
+            result.Append(c);
+            i++;
+        }
+
+        return result.ToString();
     }
 
     /// <summary>A named function's body and parameter names, or null. A named function takes up to four arguments and returns a

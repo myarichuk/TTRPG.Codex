@@ -30,7 +30,7 @@ campaign) as keys it does not read, and `ReferenceFixtureTests` prints them. Eac
 - An expectation that only says what must *not* happen ("no problems", "no conditions") passes on a host that checks
   nothing. So it names, in `requires`, the expectations that show the check exists, and counts only alongside them.
 
-At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's).
+At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33.
 
 ## spec.yaml
 
@@ -102,6 +102,22 @@ How they behave, as step 2 built them:
   2000 characters, or nested more than 32 brackets deep, is refused before parsing. All of it is tested in
   `SheetModelTests`.
 - Inside a string, a backslash escapes the next quote: `'it\'s'`, `"say \"hi\""`.
+- A named function's parameters may share a name with a built-in (`bonusSpells(score, level)` beside `score(key)`).
+
+Tracks, as step 3 built them:
+- A track's current value is the sheet's number under its key; its maximum reads as `{key}_Max`. A slot track's value is
+  the list of what its slots hold (`slots_cleric_1: [bless, bless]`), or for slots in levels a map of level to texts.
+- `thresholds` each add their condition while they hold, several at once; of the `bands`, the first that matches holds.
+  A comparison may be a number or a formula; a line with none matches always. Conditions they bring bring their
+  `conditionEffects` too; a threshold that depends on its own condition is a formula problem.
+- `each` + `levels` (`"0..9"`) makes one track per item and level; its `key`, `label` and `holds.message` fill in
+  `{item.<property>}` and `{level}`, and its formulas read `item` and `level`. Keys are lower-cased.
+- A slot track checks that each thing held is an entry of `holds.type` passing `holds.where`
+  (`Actor.Rule.SlotHolds`), the same one any number of times, and no more than the maximum (`Actor.Rule.TrackFull`).
+- A numeric track's value must lie within `min` (default 0, may be negative) and its maximum (`Actor.Rule.TrackRange`).
+- Slots in `levels` bring the condition of each level that has something in it.
+- `overflow`, `whenFull: pushUp` and `beyond` act when a track changes, which is events' work (step 5); the loader still
+  names them as not read.
 
 | Section | Holds |
 |---|---|

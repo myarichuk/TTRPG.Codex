@@ -19,6 +19,7 @@ public sealed class SheetKindDefinition
     public List<ModifierDefinition> Modifiers { get; set; } = new();
     public List<PickListDefinition> Lists { get; set; } = new();
     public List<KeyedListDefinition> KeyedLists { get; set; } = new();
+    public List<TrackDefinition> Tracks { get; set; } = new();
 }
 
 /// <summary>A number (or a choice) on the sheet: worked out by <see cref="Formula"/>, or entered (<see cref="Input"/>).</summary>
@@ -160,4 +161,66 @@ public sealed class FunctionDefinition
 public sealed class ConditionEffectDefinition
 {
     public List<ModifierDefinition> Modifiers { get; set; } = new();
+}
+
+/// <summary>
+/// A resource with a current value (overhaul section 3): hit points, stress, armor per location, spell slots. Its current value
+/// is a number on the sheet under <see cref="Key"/>, or for a slot track the list of what its slots hold. Formulas read the
+/// current value by the key and the maximum as <c>{key}_Max</c>. Overflow, <c>whenFull</c> and <c>beyond</c> act when the
+/// track changes, which is events' work (overhaul step 5), so they are not read yet.
+/// </summary>
+public sealed class TrackDefinition
+{
+    /// <summary>The key, or for <see cref="Each"/> a template: <c>"slots_{item.id}_{level}"</c>.</summary>
+    public string Key { get; set; } = string.Empty;
+    public string? Label { get; set; }
+
+    /// <summary>A number or a formula; none for an open-ended track (improvement points).</summary>
+    public string? Max { get; set; }
+
+    public string? Min { get; set; }
+
+    /// <summary>Where a new sheet starts: a number, or <c>max</c>.</summary>
+    public string? Start { get; set; }
+
+    /// <summary><c>number</c> (default), <c>boxes</c> or <c>slots</c>.</summary>
+    public string Display { get; set; } = "number";
+
+    /// <summary>Each adds its condition while it holds; several can hold at once.</summary>
+    public List<TrackThresholdDefinition> Thresholds { get; set; } = new();
+
+    /// <summary>The first that matches adds its condition; exactly one holds at a time.</summary>
+    public List<TrackThresholdDefinition> Bands { get; set; } = new();
+
+    /// <summary>For a slot track, what a slot may hold.</summary>
+    public TrackHoldsDefinition? Holds { get; set; }
+
+    /// <summary>With <see cref="Each"/>, the levels to make a track for: <c>"0..9"</c>. On a slot track, its levels of slots.</summary>
+    public object? Levels { get; set; }
+
+    /// <summary>A list formula: one track per item (and per level), its formulas reading <c>item</c> and <c>level</c>.</summary>
+    public string? Each { get; set; }
+}
+
+/// <summary>A comparison of the track's current value with a number or formula, and the condition it brings. No comparison
+/// matches always (a band's last, catch-all line).</summary>
+public sealed class TrackThresholdDefinition
+{
+    public string? AtOrBelow { get; set; }
+    public string? Below { get; set; }
+    public string? AtOrAbove { get; set; }
+    public string? Above { get; set; }
+
+    /// <summary>Equal to (YAML <c>equals</c>; named so as not to hide <see cref="object.Equals(object)"/> for callers).</summary>
+    public new string? Equals { get; set; }
+
+    public string? Condition { get; set; }
+}
+
+/// <summary>What a slot holds: entries of <see cref="Type"/> (a spell id) that pass <see cref="Where"/>, or <c>text</c>.</summary>
+public sealed class TrackHoldsDefinition
+{
+    public string Type { get; set; } = "text";
+    public string? Where { get; set; }
+    public string? Message { get; set; }
 }
