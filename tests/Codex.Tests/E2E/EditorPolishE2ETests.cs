@@ -198,7 +198,10 @@ public class EditorPolishE2ETests : IClassFixture<AppFixture>
 
         await dm.GetByTestId("setup-invite-copy").ClickAsync();
 
-        Assert.Equal(1, await dm.EvaluateAsync<int>("window.__refused || 0")); // the refusal really happened, so the old route ran
+        // The copy runs after a round trip to the server and back into the page, so wait for the refusal rather than read the
+        // counter straight after the click (on a loaded machine it was still 0). Then: it really happened, once, so the old route ran.
+        await dm.WaitForFunctionAsync("(window.__refused || 0) >= 1");
+        Assert.Equal(1, await dm.EvaluateAsync<int>("window.__refused || 0"));
         await Assertions.Expect(dm.GetByTestId("invite-link")).ToBeFocusedAsync();
         Assert.True(await dm.EvaluateAsync<bool>("(() => { const f = document.getElementById('invite-link'); return f.selectionStart === 0 && f.selectionEnd === f.value.length && f.value.length > 0; })()"), "the link is selected");
     }
