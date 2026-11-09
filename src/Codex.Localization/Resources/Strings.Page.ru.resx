@@ -264,4 +264,28 @@
   <data name="Page.About.Setting.Play" xml:space="preserve"><value>Как проходит игра</value></data>
   <data name="Page.About.Setting.Avoid" xml:space="preserve"><value>Не к месту</value></data>
   <data name="Page.About.Setting.Notes" xml:space="preserve"><value>Ещё</value></data>
+  <data name="Page.About.Version" xml:space="preserve"><value>Версия {0}</value></data>
+  <data name="Page.About.Install" xml:space="preserve"><value>Установить систему</value></data>
+  <data name="Page.About.InstallHint" xml:space="preserve"><value>Система — это zip-архив её папки: system.yaml, переводы, скрипты и пакеты контента, не больше {0} МБ. Перед установкой он проверяется. Систему со скомпилированным кодом (DLL) загрузить нельзя: её папку копирует на сервер тот, кто его запускает.</value></data>
+  <data name="Page.About.InstallChoose" xml:space="preserve"><value>Выбрать zip с системой</value></data>
+  <data name="Page.About.InstallScripts" xml:space="preserve"><value>скрипты</value></data>
+  <data name="Page.About.InstallPacks" xml:space="preserve"><value>Пакетов контента: {0}</value></data>
+  <data name="Page.About.InstallReplaces" xml:space="preserve"><value>Заменяет установленную версию {0}, по которой играют кампании: {1}. С этого момента они играют по новой версии, и каждому мастеру покажут, что изменилось. Идущий стол работает по старой версии до конца.</value></data>
+  <data name="Page.About.InstallSame" xml:space="preserve"><value>Она совпадает с установленной версией.</value></data>
+  <data name="Page.About.InstallCannot" xml:space="preserve"><value>Установить нельзя:</value></data>
+  <data name="Page.About.InstallWarnings" xml:space="preserve"><value>Установится с проблемами ({0}), их покажет страница «О проекте и лицензии»</value></data>
+  <data name="Page.About.InstallConfirm" xml:space="preserve"><value>Установить</value></data>
+  <data name="Page.About.InstallReplace" xml:space="preserve"><value>Заменить установленную версию</value></data>
+  <data name="Page.About.InstallNotAllowed" xml:space="preserve"><value>Вам нельзя устанавливать системы на этот сервер.</value></data>
+  <data name="Page.About.InstallTooBig" xml:space="preserve"><value>Не удалось прочитать файл (система — не больше {0} МБ): {1}</value></data>
+  <data name="Page.About.Installed" xml:space="preserve"><value>Система «{0}» установлена.</value></data>
+  <data name="Page.About.Reload" xml:space="preserve"><value>Перезагрузить системы</value></data>
+  <data name="Page.About.ReloadHint" xml:space="preserve"><value>Заново читает все папки систем — после изменений на диске сервера. Идущие столы сохраняют свою систему до конца. Скомпилированному плагину нужен перезапуск.</value></data>
+  <data name="Page.About.Reloaded" xml:space="preserve"><value>Системы перезагружены. Добавлены: {0}. Удалены: {1}. Изменены: {2}.</value></data>
+  <data name="Page.About.ReloadedNothing" xml:space="preserve"><value>Системы перезагружены; ничего не изменилось.</value></data>
+  <data name="Page.About.Remove" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Page.About.RemoveTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Page.About.RemoveUsed" xml:space="preserve"><value>По системе «{0}» играют кампании: {1}. После удаления их можно читать и экспортировать, но не менять, пока систему не установят снова или их мастера не выберут другую. Идущий стол сохраняет её до конца.</value></data>
+  <data name="Page.About.RemoveUnused" xml:space="preserve"><value>Ни одна кампания не играет по системе «{0}».</value></data>
+  <data name="Page.About.Removed" xml:space="preserve"><value>Система «{0}» удалена.</value></data>
 </root>

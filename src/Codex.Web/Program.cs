@@ -187,6 +187,9 @@ builder.Services.AddSingleton<ISystemCatalog>(sp => sp.GetRequiredService<Plugin
 builder.Services.AddSingleton<IContentRegistry, ContentRegistry>();
 builder.Services.AddSingleton<IContentPackLoader, YamlContentPackLoader>();
 builder.Services.AddSingleton<PluginLoader>();
+builder.Services.AddSingleton(sp => new SystemInstaller(sp.GetRequiredService<PluginLoader>(), sp.GetRequiredService<ICampaignRepository>(),
+    builder.Configuration, sp.GetRequiredService<ILogger<SystemInstaller>>(),
+    SystemInstaller.ResolveRoot(builder.Configuration, dataFolders, builder.Environment.ContentRootPath)));
 builder.Services.AddSingleton<ContentPackExporter>();
 builder.Services.AddSingleton<CampaignLibrary>();
 builder.Services.AddScoped<MentionSources>();
@@ -273,7 +276,10 @@ using (var scope = app.Services.CreateScope())
 {
     var loader = scope.ServiceProvider.GetRequiredService<PluginLoader>();
     var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-    var roots = ContentRoots.Resolve(app.Configuration, env.ContentRootPath);
+    // Systems installed from the app live in their own folder, read after the shipped and configured ones (overhaul step 10).
+    var installer = scope.ServiceProvider.GetRequiredService<SystemInstaller>();
+    installer.Prepare();
+    var roots = ContentRoots.Resolve(app.Configuration, env.ContentRootPath).Append(installer.Root).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     logger.LogInformation("Loading systems and content packs from: {Roots}", string.Join(", ", roots));
     loader.ScriptsAllowed = app.Configuration.GetValue("Codex:Systems:Scripts", true);

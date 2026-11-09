@@ -812,7 +812,7 @@
   <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>The style notes carry facts the party's book does not hold ({0}). Keep them to voice and tone for this edition: no names, no numbers, no plot.</value></data>
   <data name="Campaign.SystemMissing" xml:space="preserve"><value>This campaign's game system, '{0}', is not installed, so the campaign can't be changed.</value></data>
   <data name="Campaign.SystemMissingTitle" xml:space="preserve"><value>Read-only: the game system is missing</value></data>
-  <data name="Campaign.SystemMissingGm" xml:space="preserve"><value>This campaign uses the game system '{0}', which is not installed on this server. You can read and export everything, but nothing can be changed and the table can't start. Install the system again and restart the app, or choose another system in Settings.</value></data>
+  <data name="Campaign.SystemMissingGm" xml:space="preserve"><value>This campaign uses the game system '{0}', which is not installed on this server. You can read and export everything, but nothing can be changed and the table can't start. Install the system again (on the About page), or choose another system in Settings.</value></data>
   <data name="Campaign.SystemMissingFailed" xml:space="preserve"><value>The system is there but did not load; the reasons are on the About page.</value></data>
   <data name="Campaign.SystemMissingPlayer" xml:space="preserve"><value>This campaign uses the game system '{0}', which is not installed on this server. You can read everything, but nothing can be changed until the GM sorts it out.</value></data>
   <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (not installed)</value></data>

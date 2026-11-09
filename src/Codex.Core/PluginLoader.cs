@@ -59,6 +59,11 @@ public class PluginLoader(
     private List<string> _roots = new();
     private IReadOnlyList<string> _configuredRoots = Array.Empty<string>();
     private Dictionary<string, ICodexSystemPlugin> _pluginsBySystemId = new();
+    private Dictionary<string, string> _sources = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string> _buildingSources = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The file a loaded system came from: its system.yaml, or a compiled plugin's DLL. Null when it is not loaded.</summary>
+    public string? GetSource(string systemId) => _sources.GetValueOrDefault(systemId);
 
     /// <summary>Each plugin DLL loaded, by full path, with what it held and its hash then. .NET cannot load a second copy of an
     /// assembly from the same path into the default context, so a reload keeps these and says when the file has changed.</summary>
@@ -182,6 +187,7 @@ public class PluginLoader(
         Exception? error = null;
         Dictionary<string, ICodexSystemPlugin>? plugins = null;
         var staging = contentPackLoader.Staging();
+        _buildingSources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         try
         {
             var roots = _configuredRoots.Where(Directory.Exists).Select(Path.GetFullPath).Distinct().ToList();
@@ -230,6 +236,7 @@ public class PluginLoader(
 
         staging.Commit();
         _pluginsBySystemId = plugins ?? new Dictionary<string, ICodexSystemPlugin>();
+        _sources = _buildingSources;
         LoadedSystemIds = _pluginsBySystemId.Keys.ToHashSet();
         _problems = problems;
         _failedSystems = failed;
@@ -254,6 +261,7 @@ public class PluginLoader(
                 }
 
                 plugins.Add(plugin);
+                if (_loadedDlls.FirstOrDefault(d => d.Value.Plugins.Contains(plugin)).Key is { } dll) _buildingSources[plugin.SystemId] = dll;
             }
         }
 
@@ -284,13 +292,14 @@ public class PluginLoader(
                         Warn(new LoadProblem(LoadProblemSource.System, definition.Id, UnknownKeysMessage(unknownKeys), definition.Id, systemFile));
                     }
 
-                    foreach (var problem in Rules.SheetRolls.Problems(definition).Concat(Rules.SheetEvents.Problems(definition)).Concat(Rules.SheetLayout.Problems(definition)).Concat(Rules.CampaignObjects.DefinitionProblems(definition)).Concat(Rules.SystemScripts.Problems(definition)).Concat(Rules.CompiledSuppliers.Problems(definition)))
+                    foreach (var problem in ProblemsOf(definition))
                     {
                         Warn(new LoadProblem(LoadProblemSource.System, definition.Id, problem, definition.Id, systemFile));
                     }
 
                     logger.LogInformation("Loaded data-driven system {SystemId} from {File}", definition.Id, systemFile);
                     plugins.Add(new DataDrivenSystemPlugin(definition));
+                    _buildingSources[definition.Id] = Path.GetFullPath(systemFile);
                 }
                 catch (Exception ex)
                 {
@@ -513,6 +522,12 @@ public class PluginLoader(
         }
     }
 
+    /// <summary>What is wrong with a loaded definition that still lets it load: rolls, events, layout, campaign objects, scripts
+    /// and compiled code that do not fit. The install check (<see cref="SystemArchive"/>) reports the same.</summary>
+    public static IEnumerable<string> ProblemsOf(SystemDefinition definition) =>
+        Rules.SheetRolls.Problems(definition).Concat(Rules.SheetEvents.Problems(definition)).Concat(Rules.SheetLayout.Problems(definition))
+            .Concat(Rules.CampaignObjects.DefinitionProblems(definition)).Concat(Rules.SystemScripts.Problems(definition)).Concat(Rules.CompiledSuppliers.Problems(definition));
+
     /// <summary>How many unknown keys a load problem names before it only counts the rest.</summary>
     public const int UnknownKeysListed = 12;
 
@@ -548,7 +563,7 @@ public class PluginLoader(
     }
 
     /// <summary>The <c>id:</c> a system file states, read line by line so it works even when the YAML is broken.</summary>
-    private static string? DeclaredId(string systemFile)
+    public static string? DeclaredId(string systemFile)
     {
         try
         {

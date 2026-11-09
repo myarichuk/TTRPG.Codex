@@ -6,6 +6,10 @@
 @inject IContentRegistry Registry
 @inject PluginLoader Loader
 @inject Codex.Web.Services.BackupStatus Backups
+@inject SystemInstaller Installer
+@inject AuthenticationStateProvider AuthStateProvider
+
+<ConfirmDialog @ref="confirm" />
 
 <PageTitle>@L["Page.About.Title"] | TTRPG.Codex</PageTitle>
 
@@ -36,6 +40,16 @@
                 @if (Loader.LoadProblems.Any(p => string.Equals(p.SystemId, system.Id, StringComparison.OrdinalIgnoreCase)))
                 {
                     <a class="small" href="/about#problems-@system.Id"><LucideIcon IconName="alert-triangle" Size="14" /> @L["Page.About.HasProblems"]</a>
+                }
+                @if (system.Version != null)
+                {
+                    <div class="small-muted" data-testid="about-system-version">@L["Page.About.Version", system.Version]</div>
+                }
+                @if (mayInstall && Installer.IsInstalled(system.Id))
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-1" OnClick="() => RemoveAsync(system)" Busy="removing" data-testid="remove-system">
+                        <LucideIcon IconName="trash-2" Size="14" /> @L["Page.About.Remove"]
+                    </CodexButton>
                 }
                 @if (system.Compatibility != null)
                 {
@@ -119,6 +133,9 @@
         }
     </section>
 
+    <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+    <SystemInstallPanel OnChanged="StateHasChanged" />
+
     @if (Loader.LoadProblems.Count > 0 || Loader.FailedSystems.Count > 0)
     {
         <section class="panel" aria-labelledby="warnings-heading" data-testid="about-load-problems">
@@ -199,6 +216,37 @@
 </div>
 
 @code {
+    private ConfirmDialog? confirm;
+    private System.Security.Claims.ClaimsPrincipal? user;
+    private bool mayInstall;
+    private bool removing;
+    private Flash? flash;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        mayInstall = Installer.MayInstall(user);
+    }
+
+    /// <summary>Removes an installed system once asked: its campaigns become read-only until it is installed again.</summary>
+    private async Task RemoveAsync(SystemSummary system)
+    {
+        if (confirm == null || user == null) return;
+        var using_ = await Installer.CampaignsUsingAsync(system.Id);
+        var body = using_ > 0 ? L["Page.About.RemoveUsed", system.Name, using_] : L["Page.About.RemoveUnused", system.Name];
+        if (!await confirm.ShowAsync(L["Page.About.RemoveTitle", system.Name], body, L["Page.About.Remove"], isDestructive: true)) return;
+        removing = true;
+        try
+        {
+            var result = await Installer.RemoveAsync(system.Id, user);
+            flash = result.Succeeded ? Flash.Success(L["Page.About.Removed", system.Name]) : Flash.Error(result.Error ?? "");
+        }
+        finally
+        {
+            removing = false;
+        }
+    }
+
     // Problems shown under neither a loaded system nor a failed one: the loader's own, packs for a system that is not here.
     private bool IsOther(LoadProblem problem) =>
         !(problem.SystemId != null && Catalog.LoadedSystemIds.Contains(problem.SystemId))
