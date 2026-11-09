@@ -87,6 +87,16 @@ public class CampaignRepository(
             mutate(campaign);
         });
 
+    /// <summary>The GM has seen what changed in the campaign's system: the campaign now records the system as it is loaded.</summary>
+    public Task<CampaignDocument?> AcceptSystemAsync(CampaignAccess access) =>
+        UpdateAsDmAsync(access, campaign =>
+        {
+            if (systemCatalog.GetFingerprint(campaign.SystemId) is { } fingerprint)
+            {
+                campaign.SystemStamp = SystemStamp.Of(campaign.SystemId, fingerprint, DateTime.UtcNow);
+            }
+        });
+
     /// <summary>1.1: reject a SystemId nothing implements. Skipped until the catalog has actually run
     /// once - refusing every save during the plugin-loading window at startup would be worse
     /// than the gap it closes.</summary>
@@ -100,9 +110,17 @@ public class CampaignRepository(
         }
     }
 
-    private static void Normalize(CampaignDocument campaign)
+    private void Normalize(CampaignDocument campaign)
     {
         campaign.UpdatedAt = DateTime.UtcNow;
+
+        // The system the campaign plays under, recorded when it is first known: at creation, on a switch, and for a campaign
+        // stored before stamps existed. Accepting a changed system's changes records it again (AcceptSystem).
+        if ((campaign.SystemStamp == null || campaign.SystemStamp.SystemId != campaign.SystemId)
+            && systemCatalog.GetFingerprint(campaign.SystemId) is { } fingerprint)
+        {
+            campaign.SystemStamp = SystemStamp.Of(campaign.SystemId, fingerprint, campaign.UpdatedAt);
+        }
 
         // A campaign always has its owner as at least a DM member - membership, not OwnerId, is
         // what the access layer (1.4) actually checks.

@@ -117,6 +117,52 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         await manager.EvictAsync(campaignId);
     }
 
+    /// <summary>Overhaul step 10: a table keeps the system it started with through a reload, and the session records each
+    /// system it was played under.</summary>
+    [Fact]
+    public async Task ATable_KeepsItsSystemThroughAReload_AndTheSessionRecordsEachSystemItRanUnder_Async()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "codex-runtime-reload-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(Path.Combine(root, "street"));
+        var yaml = Path.Combine(root, "street", "system.yaml");
+        File.WriteAllText(yaml, "id: street\nname: Street\nversion: 1.0.0\n");
+        try
+        {
+            var hooks = new CampaignLifecycleHooks();
+            var campaigns = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository,
+                new RavenNoteRepository(_dbService), new RegionRepository(_dbService), new FactRepository(_dbService),
+                new RavenHomebrewRepository(_dbService), _encounterRepository, lifecycle: hooks);
+            var loader = new Codex.Core.PluginLoader(NullLogger<Codex.Core.PluginLoader>.Instance, _componentRegistry, Substitute.For<IContentPackLoader>());
+            await loader.LoadAndInitializeAsync(root);
+            var manager = new CampaignRuntimeManager(_actorRepository, _sessionRepository, campaigns, _encounterRepository, _componentRegistry, loader, NullLoggerFactory.Instance, hooks);
+            var campaignId = Guid.NewGuid().ToString();
+            var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Night City", SystemId = "street" };
+            await campaigns.SaveAsync(campaign);
+            var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+
+            var runtime = await manager.GetOrStartAsync(campaign, dm);
+            File.WriteAllText(yaml, "id: street\nname: Street\nversion: 1.1.0\n");
+            Assert.Equal(new[] { "street" }, (await loader.ReloadAsync()).Changed);
+
+            Assert.Equal("1.0.0", runtime.System!.Version);
+            Assert.Same(runtime, await manager.GetOrStartAsync(campaign, dm));
+
+            // Ended and started again, the same session runs under the new system, and says so.
+            await manager.EvictIdleAsync(TimeSpan.Zero, DateTime.UtcNow.AddHours(1));
+            var restarted = await manager.GetOrStartAsync(campaign, dm);
+            Assert.Equal("1.1.0", restarted.System!.Version);
+            var session = (await _sessionRepository.GetAsync(restarted.ActiveSession!.Id))!;
+            Assert.Equal(new[] { "1.0.0", "1.1.0" }, session.SystemStamps.Select(s => s.Version));
+            await manager.EvictIdleAsync(TimeSpan.Zero, DateTime.UtcNow.AddHours(1));
+            Assert.Equal(2, (await manager.GetOrStartAsync(campaign, dm)).ActiveSession!.SystemStamps.Count);
+            await manager.EvictAsync(campaignId);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     /// <summary>R6: two "Start table" clicks at once used to open two sessions and patch the campaign twice before one runtime
     /// lost the race to publish.</summary>
     [Fact]

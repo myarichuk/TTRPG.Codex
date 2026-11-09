@@ -818,4 +818,13 @@
   <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (не установлена)</value></data>
   <data name="Campaign.Cast.SheetKind" xml:space="preserve"><value>Лист</value></data>
   <data name="Campaign.Cast.SheetKindByRole" xml:space="preserve"><value>По виду персонажа</value></data>
+  <data name="Campaign.SystemChanged.Title" xml:space="preserve"><value>Система «{0}» изменилась с тех пор, как кампания играла по ней в последний раз</value></data>
+  <data name="Campaign.SystemChanged.Body" xml:space="preserve"><value>Её правила уже не те, что кампания записала {0}. Листы и стол уже работают по новым правилам; ничего сохранённого не изменилось. Стол, который шёл, когда система изменилась, работает по старым правилам до конца.</value></data>
+  <data name="Campaign.SystemChanged.Version" xml:space="preserve"><value>Версия {0} теперь {1}</value></data>
+  <data name="Campaign.SystemChanged.Added" xml:space="preserve"><value>Добавлен файл {0}</value></data>
+  <data name="Campaign.SystemChanged.Removed" xml:space="preserve"><value>Удалён файл {0}</value></data>
+  <data name="Campaign.SystemChanged.Changed" xml:space="preserve"><value>Изменён файл {0}</value></data>
+  <data name="Campaign.SystemChanged.Compiled" xml:space="preserve"><value>скомпилированный код, который работает с правами сервера</value></data>
+  <data name="Campaign.SystemChanged.Accept" xml:space="preserve"><value>Понятно</value></data>
+  <data name="Campaign.SystemChanged.Accepted" xml:space="preserve"><value>Теперь кампания записала систему такой, какая она есть.</value></data>
 </root>

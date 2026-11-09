@@ -23,6 +23,10 @@ public static class DatabaseUpgrades
     /// manual method, which caps scores at the system's maximum (a pit fiend's Strength 26 showed a problem).</summary>
     public const string PrintedStatBlocks = "2026-11-08.printed-stat-blocks";
 
+    /// <summary>Campaigns stored before they recorded their system (overhaul step 10) record it as it is at this start, so a
+    /// later change to the system is one the GM is told about.</summary>
+    public const string SystemStamps = "2026-11-09.system-stamps";
+
     /// <summary>The upgrades a database has had.</summary>
     public sealed class Ledger
     {
@@ -42,6 +46,7 @@ public static class DatabaseUpgrades
 
         var applied = ledger.Applied.Count;
         if (!ledger.Applied.Contains(PrintedStatBlocks) && PrintStatBlocks(store, systemFor, log)) ledger.Applied.Add(PrintedStatBlocks);
+        if (!ledger.Applied.Contains(SystemStamps) && StampSystems(store, systemFor, log)) ledger.Applied.Add(SystemStamps);
 
         if (ledger.Applied.Count == applied) return log;
         using (var session = store.OpenSession())
@@ -120,6 +125,55 @@ public static class DatabaseUpgrades
         }
 
         if (switching.Count > 0) log.Add($"Stat blocks as printed: {switching.Count} creature sheet(s) switched from manual; their scores are unchanged.");
+        return complete;
+    }
+
+    /// <summary>
+    /// <see cref="SystemStamps"/>: each campaign without a <see cref="CampaignDocument.SystemStamp"/> gets its system's
+    /// fingerprint as loaded now. True when every one was decided, false when one's system is not loaded (it is retried on the
+    /// next start; saving the campaign stamps it too).
+    /// </summary>
+    internal static bool StampSystems(IDocumentStore store, Func<string, SystemDefinition?> systemFor, List<string> log)
+    {
+        var unstamped = new List<(string Id, string SystemId)>();
+        using (var session = store.OpenSession())
+        {
+            using var campaigns = session.Advanced.Stream(session.Query<CampaignDocument>(), out var stats);
+            if (!FromCollection(stats, log)) return false;
+            while (campaigns.MoveNext())
+            {
+                if (campaigns.Current.Document.SystemStamp == null) unstamped.Add((campaigns.Current.Id, campaigns.Current.Document.SystemId));
+            }
+        }
+
+        var complete = true;
+        var now = DateTime.UtcNow;
+        var stamped = 0;
+        foreach (var batch in unstamped.Chunk(256))
+        {
+            using var session = store.OpenSession();
+            foreach (var campaign in session.Load<CampaignDocument>(batch.Select(c => c.Id)).Values)
+            {
+                if (campaign == null || campaign.SystemStamp != null) continue;
+                if (systemFor(campaign.SystemId) is not { } system)
+                {
+                    complete = false;
+                    log.Add($"System stamps: campaign '{campaign.Name}' ({campaign.Id}) waits for system '{campaign.SystemId}', which is not loaded.");
+                    continue;
+                }
+
+                // A definition no loader read (a compiled plugin's own) has no fingerprint here; saving the campaign stamps it
+                // from the catalog, which knows the plugin's DLL.
+                if (system.Fingerprint is not { } fingerprint) continue;
+
+                campaign.SystemStamp = SystemStamp.Of(campaign.SystemId, fingerprint, now);
+                stamped++;
+            }
+
+            session.SaveChanges();
+        }
+
+        if (stamped > 0) log.Add($"System stamps: {stamped} campaign(s) now record the system they play under.");
         return complete;
     }
 

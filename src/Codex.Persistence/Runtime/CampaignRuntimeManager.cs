@@ -97,6 +97,7 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             var session = await OpenSessionAsync(campaign, sessionId);
             var encounter = await FindOpenEncounterAsync(session);
             var plugin = pluginLoader.GetPlugin(campaign.SystemId);
+            session = await StampSessionAsync(session, campaign.SystemId);
 
             var runtime = new CampaignRuntime(
                 campaign.Id,
@@ -455,6 +456,16 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         }
 
         return session;
+    }
+
+    /// <summary>Records on the session the system the table starts under, when it is not the one it last ran under (overhaul
+    /// section 6, "Determinism"). The table keeps this system until it ends, whatever is reloaded meanwhile.</summary>
+    private async Task<SessionDocument> StampSessionAsync(SessionDocument session, string systemId)
+    {
+        if (pluginLoader.GetFingerprint(systemId) is not { } fingerprint) return session;
+        if (session.SystemStamps.LastOrDefault() is { } last && last.ChangesTo(systemId, fingerprint).Count == 0 && last.SystemId == systemId) return session;
+        var stamp = SystemStamp.Of(systemId, fingerprint, DateTime.UtcNow);
+        return await sessionRepository.UpdateAsync(session.Id, stored => stored.SystemStamps.Add(stamp)) ?? session;
     }
 
     /// <summary>How long a Live session may sit without anything logged before a plain start treats it as over.</summary>

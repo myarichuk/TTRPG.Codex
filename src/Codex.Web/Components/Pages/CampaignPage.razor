@@ -137,6 +137,8 @@ else
                 </section>
             }
 
+            <SystemChangedNotice Campaign="campaign" Access="access" OnAccepted="SystemAcceptedAsync" />
+
             @* U2: a character sheet or a session is a window inside the campaign, not a page of its own: the rail, the tab bar
                and the notes drawer stay, and the section it was opened from stays alive under it (hidden), so going back
                finds it as it was, scrolled where it was, with no loading skeleton. *@
@@ -431,6 +433,12 @@ else
 
         loadedCampaignId = CampaignId;
         loading = false;
+    }
+
+    private async Task SystemAcceptedAsync()
+    {
+        await ReloadAsync();
+        flash = Flash.Success(L["Campaign.SystemChanged.Accepted"]);
     }
 
     public void Dispose() => RuntimeManager.RuntimeChanged -= OnRuntimeChanged;

@@ -1,3 +1,4 @@
+using Codex.Plugin.Abstractions;
 namespace Codex.Persistence;
 
 public enum CampaignRole
@@ -27,6 +28,12 @@ public class CampaignDocument
     /// System-&gt;SystemId compare-exchange migration in <see cref="RavenDbService"/> (1.1).
     /// </summary>
     public string SystemId { get; set; } = string.Empty;
+
+    /// <summary>The system as the campaign last played under it (overhaul section 4, rule 8): its version and file hashes. Set
+    /// when the campaign is made or switched to another system, and when the GM accepts the system's changes; the campaign page
+    /// tells the GM what changed when the loaded system differs. Null for a campaign stored before step 10 until it is next
+    /// saved.</summary>
+    public SystemStamp? SystemStamp { get; set; }
 
     /// <summary>The one-line pitch on the campaign's card and under its title; at most <see cref="MaxTagline"/> characters.</summary>
     public string Tagline { get; set; } = string.Empty;
@@ -278,8 +285,40 @@ public enum SessionStatus
     Completed
 }
 
+/// <summary>What a system was, as a campaign or a session keeps it: the <see cref="SystemFingerprint"/> of the system it was
+/// played under, with the system's id and when it was recorded.</summary>
+public sealed class SystemStamp
+{
+    public string SystemId { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
+
+    /// <summary>Each file of the system's rules (<c>system.yaml</c>, <c>rules.js</c>, <c>Street.dll</c>) with its SHA-256.</summary>
+    public Dictionary<string, string> Files { get; set; } = new();
+
+    public DateTime RecordedAt { get; set; }
+
+    public static SystemStamp Of(string systemId, SystemFingerprint fingerprint, DateTime recordedAt) => new()
+    {
+        SystemId = systemId,
+        Version = fingerprint.Version,
+        Files = new Dictionary<string, string>(fingerprint.Files),
+        RecordedAt = recordedAt
+    };
+
+    public SystemFingerprint Fingerprint() => new(Version, Files);
+
+    /// <summary>What differs in <paramref name="now"/> from this stamp; empty when it is the same system as it was, or when
+    /// either is unknown (a stamp of another system says nothing about this one).</summary>
+    public IReadOnlyList<SystemChange> ChangesTo(string systemId, SystemFingerprint? now) =>
+        now == null || !string.Equals(SystemId, systemId, StringComparison.Ordinal) ? Array.Empty<SystemChange>() : now.ChangesSince(Fingerprint());
+}
+
 public class SessionDocument
 {
+    /// <summary>The system each time a table ran this session, in order, one entry per different system (overhaul section 6,
+    /// "Determinism"): a session reopened after the rules changed says so.</summary>
+    public List<SystemStamp> SystemStamps { get; set; } = new();
+
     public string Id { get; set; } = string.Empty;
     public string CampaignId { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;

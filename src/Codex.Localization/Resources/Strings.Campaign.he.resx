@@ -818,4 +818,13 @@
   <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (לא מותקנת)</value></data>
   <data name="Campaign.Cast.SheetKind" xml:space="preserve"><value>גיליון</value></data>
   <data name="Campaign.Cast.SheetKindByRole" xml:space="preserve"><value>לפי סוג הדמות</value></data>
+  <data name="Campaign.SystemChanged.Title" xml:space="preserve"><value>המערכת {0} השתנתה מאז שהמערכה שוחקה לפיה בפעם האחרונה</value></data>
+  <data name="Campaign.SystemChanged.Body" xml:space="preserve"><value>הכללים שלה אינם אלה שהמערכה רשמה ב-{0}. הדפים והשולחן כבר משתמשים בכללים החדשים; שום דבר שמור לא השתנה. שולחן שרץ כשהמערכת השתנתה ממשיך בכללים הישנים עד שהוא נגמר.</value></data>
+  <data name="Campaign.SystemChanged.Version" xml:space="preserve"><value>גרסה {0} היא עכשיו {1}</value></data>
+  <data name="Campaign.SystemChanged.Added" xml:space="preserve"><value>הקובץ {0} נוסף</value></data>
+  <data name="Campaign.SystemChanged.Removed" xml:space="preserve"><value>הקובץ {0} הוסר</value></data>
+  <data name="Campaign.SystemChanged.Changed" xml:space="preserve"><value>הקובץ {0} השתנה</value></data>
+  <data name="Campaign.SystemChanged.Compiled" xml:space="preserve"><value>קוד מהודר, שרץ עם ההרשאות של השרת</value></data>
+  <data name="Campaign.SystemChanged.Accept" xml:space="preserve"><value>הבנתי</value></data>
+  <data name="Campaign.SystemChanged.Accepted" xml:space="preserve"><value>המערכה רושמת עכשיו את המערכת כפי שהיא.</value></data>
 </root>
