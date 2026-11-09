@@ -394,6 +394,20 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      `bool?`. The behaviour this settled is in the reference README.
    - *One interpreter, done 2026-11-08.* srd5e's `derived`, carrying capacity and unarmored / class-defense armor class
      formulas run on `SheetFormulas`; the old private interpreter is gone. Corpus unchanged.
+     One change of meaning for a `sheetRules` formula: a whole number is a double, so dividing two negative-signed
+     constants rounds down (`-7 / 2` was -3, truncated; it is now `floor(-3.5)`, -4). Nothing in srd5e divides constants.
+   - *Review, fixed 2026-11-09.* A formula could call public instance methods on the values it held. Each
+     `.Replace('a', 'aa')` doubles a string, so forty in a row ask for a terabyte, and `str.ToString()` reaches a string
+     from any number. The deleted interpreter had the same hole. `FormulaSandbox` now walks every parsed formula once,
+     before it is cached. It allows calls to the built-ins, string concatenation, and dynamic member reads,
+     operators and conversions; it refuses method calls, CLR member reads, `new`, indexing and assignment. Also fixed:
+     - formulas over 2000 characters or 32 brackets deep are refused before parsing, since a parser stack overflow kills
+       the process;
+     - backslash escapes in strings now work;
+     - prerequisites remove the right pick when a malformed list holds a non-pick;
+     - formula names are cached per formula, not detected under a lock on every evaluation;
+     - `DatabaseUpgrades` checks that it read the actor collection itself, not a possibly stale index, before recording
+       the upgrade as done.
    - *Deferred to step 6 (decided 2026-11-08): srd5e's skills, armor class and hit points as declarations.* Those stages
      produce structured summaries the 5e panels read (armor class lines tied to items with dex caps, per-level hit point
      rows, skill proficiency and expertise). Re-expressing them now would translate into primitives and straight back for

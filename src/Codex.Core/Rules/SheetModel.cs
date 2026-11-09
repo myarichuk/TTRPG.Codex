@@ -51,6 +51,10 @@ public sealed class SheetModel
     private readonly Dictionary<string, ValueDefinition> _valueDefinitions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, object?> _values = new(StringComparer.Ordinal);
     private readonly Dictionary<string, FormulaList> _lists = new(StringComparer.Ordinal);
+
+    /// <summary>For each pick list, where each item is in the sheet's raw list: a raw element that is neither a map nor an id is
+    /// skipped, so the two need not line up.</summary>
+    private readonly Dictionary<string, List<int>> _rawIndex = new(StringComparer.Ordinal);
     private readonly HashSet<string> _working = new(StringComparer.Ordinal);
     private readonly List<string> _conditions;
     private List<Modifier>? _modifiers;
@@ -154,10 +158,18 @@ public sealed class SheetModel
     public object? Path(string path)
     {
         using var _ = Enter();
-        var parts = path.Split('.');
-        var at = Resolve(parts[0]);
-        foreach (var part in parts.Skip(1)) at = (at as FormulaItem)?.Get(part);
-        return at;
+        try
+        {
+            var parts = path.Split('.');
+            var at = Resolve(parts[0]);
+            foreach (var part in parts.Skip(1)) at = (at as FormulaItem)?.Get(part);
+            return at;
+        }
+        catch (Exception)
+        {
+            // A derive along the path that cannot be worked out: there is no value there (its own formula reports why).
+            return null;
+        }
     }
 
     private object? Value(string key)
@@ -241,10 +253,13 @@ public sealed class SheetModel
     private FormulaList PickList(PickListDefinition list)
     {
         var items = new List<FormulaItem>();
+        var rawIndex = _rawIndex[list.Key] = new List<int>();
         if (_sheet.TryGetValue(list.Key, out var raw) && raw is IEnumerable picks and not string)
         {
+            var position = -1;
             foreach (var pick in picks)
             {
+                position++;
                 var fields = pick switch
                 {
                     IDictionary<string, object> map => map,
@@ -259,6 +274,7 @@ public sealed class SheetModel
                     _result.Violations.Add(new RuleViolation(list.Key, $"{list.Label}: \"{id}\" is not in the Library.", "Actor.Rule.NotInLibrary", new object?[] { list.Label, id }));
                 }
 
+                rawIndex.Add(position);
                 items.Add(new FormulaItem(name =>
                 {
                     if (fields.TryGetValue(name, out var value)) return Plain(value);
@@ -510,7 +526,15 @@ public sealed class SheetModel
         var message = System.Text.RegularExpressions.Regex.Replace(rule.Message ?? rule.Key, @"\{(\w+)\}", m =>
         {
             var name = m.Groups[1].Value;
-            var value = item?.Get(name) ?? (_valueDefinitions.ContainsKey(name) ? Value(name) : null);
+            object? value;
+            try
+            {
+                value = item?.Get(name) ?? (_valueDefinitions.ContainsKey(name) ? Value(name) : null);
+            }
+            catch (Exception)
+            {
+                value = null;
+            }
             return value switch
             {
                 double d => d.ToString("0.##", CultureInfo.InvariantCulture),
@@ -530,7 +554,8 @@ public sealed class SheetModel
         for (var index = 0; index < items.Count; index++)
         {
             if (items[index].Get(list.Prerequisites!) is not IEnumerable prerequisites || prerequisites is string) continue;
-            var without = new Dictionary<string, object>(_sheet) { [list.Key] = picks.Where((_, i) => i != index).ToList() };
+            var position = _rawIndex[list.Key][index];
+            var without = new Dictionary<string, object>(_sheet) { [list.Key] = picks.Where((_, i) => i != position).ToList() };
             var before = new SheetModel(_system, _resolver, without, checkPrerequisites: false);
             var name = items[index].Get("name")?.ToString() ?? items[index].Get("id")?.ToString();
             foreach (var prerequisite in prerequisites.OfType<IDictionary<string, object>>())

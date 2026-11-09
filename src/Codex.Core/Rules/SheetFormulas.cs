@@ -59,6 +59,7 @@ public sealed partial class SheetFormulas
     private readonly Interpreter _interpreter;
     private readonly ConcurrentDictionary<(string Formula, string Signature), Lambda> _compiled = new();
     private readonly ConcurrentDictionary<string, (string Body, string[] Parameters)> _functions = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, IReadOnlyList<string>> _names = new(StringComparer.Ordinal);
 
     public static SheetFormulas For(SystemDefinition system) => BySystem.GetValue(system, s => new SheetFormulas(s));
 
@@ -100,16 +101,16 @@ public sealed partial class SheetFormulas
     [GeneratedRegex(@"\b([A-Za-z_]\w*)\s*=>")]
     private static partial Regex InnerLambdaParameter();
 
-    /// <summary>The names a formula reads that are not its own lambdas' parameters.</summary>
-    public IReadOnlyList<string> Names(string formula)
+    /// <summary>The names a formula reads that are not its own lambdas' parameters. Worked out once per formula.</summary>
+    public IReadOnlyList<string> Names(string formula) => _names.GetOrAdd(formula, f =>
     {
-        var text = Prepare(formula);
+        var text = Prepare(f);
         var own = InnerLambdaParameter().Matches(text).Select(m => m.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
         lock (_interpreter)
         {
             return _interpreter.DetectIdentifiers(text).UnknownIdentifiers.Where(n => !own.Contains(n)).Distinct().ToList();
         }
-    }
+    });
 
     /// <summary>Runs <paramref name="formula"/> with each name bound to a value (a double, string, bool or <see cref="FormulaItem"/>).</summary>
     public object? Run(string formula, IReadOnlyList<(string Name, object Value)> arguments)
@@ -118,10 +119,14 @@ public sealed partial class SheetFormulas
         var lambda = _compiled.GetOrAdd((formula, signature), key =>
         {
             var parameters = arguments.Select(a => new Parameter(a.Name, TypeOf(a.Value))).ToArray();
+            Lambda parsed;
             lock (_interpreter)
             {
-                return _interpreter.Parse(Prepare(key.Formula), parameters);
+                parsed = _interpreter.Parse(Prepare(key.Formula), parameters);
             }
+
+            FormulaSandbox.Check(parsed.Expression);
+            return parsed;
         });
         return lambda.Invoke(arguments.Select(a => a.Value).ToArray());
     }
@@ -136,11 +141,20 @@ public sealed partial class SheetFormulas
         _ => typeof(object)
     };
 
-    /// <summary>Single-quoted strings become double-quoted, integer literals doubles.</summary>
+    /// <summary>The longest formula, and the deepest nesting of brackets, a formula may have. The parser is recursive, and a
+    /// stack overflow cannot be caught: a pathological formula must be refused before it reaches it.</summary>
+    public const int MaxLength = 2000;
+    public const int MaxDepth = 32;
+
+    /// <summary>Single-quoted strings become double-quoted, integer literals doubles. A backslash escapes the next character
+    /// inside a string (<c>'it\'s'</c>). Refuses a formula longer than <see cref="MaxLength"/> or nested deeper than
+    /// <see cref="MaxDepth"/>.</summary>
     internal static string Prepare(string formula)
     {
+        if (formula.Length > MaxLength) throw new FormulaException($"longer than {MaxLength} characters");
         var text = new StringBuilder(formula.Length + 8);
         var code = new StringBuilder();
+        var depth = 0;
         void Flush()
         {
             text.Append(IntegerLiteral().Replace(code.ToString(), "$1.0"));
@@ -152,16 +166,31 @@ public sealed partial class SheetFormulas
             var c = formula[i];
             if (c is not ('\'' or '"'))
             {
+                if (c is '(' or '[' or '{' && ++depth > MaxDepth) throw new FormulaException($"nested deeper than {MaxDepth}");
+                if (c is ')' or ']' or '}') depth--;
                 code.Append(c);
                 continue;
             }
 
             Flush();
-            var end = formula.IndexOf(c, i + 1);
-            if (end < 0) end = formula.Length;
-            var content = formula[(i + 1)..Math.Min(end, formula.Length)];
-            text.Append('"').Append(content.Replace("\"", "\\\"")).Append('"');
-            i = end;
+            var content = new StringBuilder();
+            var j = i + 1;
+            for (; j < formula.Length && formula[j] != c; j++)
+            {
+                if (formula[j] == '\\' && j + 1 < formula.Length)
+                {
+                    var next = formula[++j];
+                    // \' and \" are the quote itself; any other escape is kept for the parser (\n, \\).
+                    if (next is '\'' or '"') content.Append(next);
+                    else content.Append('\\').Append(next);
+                    continue;
+                }
+
+                content.Append(formula[j]);
+            }
+
+            text.Append('"').Append(content.ToString().Replace("\"", "\\\"")).Append('"');
+            i = j;
         }
 
         Flush();

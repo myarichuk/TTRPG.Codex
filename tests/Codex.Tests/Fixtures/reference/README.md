@@ -96,8 +96,12 @@ How they behave, as step 2 built them:
 - A keyed entry reads `id` (`knowledge.arcana`), `key` (`knowledge`), its parameter (`subject`: `arcana`), `label`,
   `attribute`, `group`, `groups`, its fields and its `derive` values. Its `value` adds the modifiers on `list.id`,
   `list.key` and each `'@group'`.
-- The interpreter knows no .NET types: no `new`, no `typeof`, no static members, no reflection (tested in
-  `SheetModelTests`).
+- The interpreter knows no .NET types: no `new`, no `typeof`, no static members, no reflection. Every parsed formula is
+  also checked (`FormulaSandbox`): it may call the built-in functions and nothing else, so no `.Replace(...)`,
+  `.PadLeft(...)` or `.Length` on what it holds, and read members only of its own items and lists. A formula longer than
+  2000 characters, or nested more than 32 brackets deep, is refused before parsing. All of it is tested in
+  `SheetModelTests`.
+- Inside a string, a backslash escapes the next quote: `'it\'s'`, `"say \"hi\""`.
 
 | Section | Holds |
 |---|---|

@@ -286,6 +286,81 @@ public class SheetModelTests
         Assert.Single(result.Warnings);
     }
 
+    /// <summary>R7, the review's finding: DynamicExpresso lets a formula call public instance methods on what it holds, and
+    /// each <c>Replace('a', 'aa')</c> doubles a string, so forty of them ask for a terabyte. Every parsed formula is checked
+    /// (<see cref="FormulaSandbox"/>): no method calls but the built-ins, no member reads on .NET types, no dynamic calls.</summary>
+    [Theory]
+    [InlineData("'a'.Replace('a', 'aa').Replace('a', 'aa').Length")]
+    [InlineData("str.ToString().Replace('1', '11').Length")]
+    [InlineData("'abc'.Length")]
+    [InlineData("first(gear).name.Replace('a', 'aa') == 'x' ? 1 : 0")]
+    [InlineData("first(gear).name.PadLeft(1000000000) == 'x' ? 1 : 0")]
+    [InlineData("str.CompareTo(1)")]
+    public void AFormula_CannotCallMethodsOnWhatItHolds(string formula)
+    {
+        var result = Evaluate($$"""
+                lists:
+                  - { key: gear, label: Gear }
+                values:
+                  - { key: x, formula: "{{formula}}" }
+            """, new Dictionary<string, object> { ["str"] = 10L, ["gear"] = new List<object> { new Dictionary<string, object> { ["id"] = "a", ["name"] = "aaaa" } } });
+
+        Assert.Null(ValueOf(result, "x"));
+        Assert.Single(result.Warnings);
+    }
+
+    /// <summary>The parser is recursive and a stack overflow kills the process, so a formula nested too deep, or too long, is
+    /// refused before it is parsed: a warning, like any formula problem.</summary>
+    [Fact]
+    public void AFormulaNestedTooDeep_OrTooLong_IsAWarning_NotACrash()
+    {
+        var deep = new string('(', 5000) + "1" + new string(')', 5000);
+        var long_ = string.Join(" + ", Enumerable.Repeat("1", 1500));
+        var result = Evaluate($$"""
+                values:
+                  - { key: deep, formula: "{{deep}}" }
+                  - { key: long, formula: "{{long_}}" }
+                  - { key: fine, formula: "{{new string('(', 20) + "2" + new string(')', 20)}}" }
+            """, new Dictionary<string, object>());
+
+        Assert.Null(ValueOf(result, "deep"));
+        Assert.Null(ValueOf(result, "long"));
+        Assert.Equal(2d, ValueOf(result, "fine"));
+        Assert.Equal(2, result.Warnings.Count);
+    }
+
+    [Theory]
+    [InlineData("'it\\'s'", "it's")]
+    [InlineData("\"say \\\"hi\\\"\"", "say \"hi\"")]
+    [InlineData("'a \"quote\"'", "a \"quote\"")]
+    [InlineData("\"it's\"", "it's")]
+    public void QuotesInsideStrings_CanBeEscaped(string literal, string expected)
+    {
+        Assert.Equal(expected, Assert.IsType<string>(SheetFormulas.For(System("")).Run(literal, Array.Empty<(string, object)>())));
+    }
+
+    /// <summary>A malformed pick list (a number among the picks) must not make the prerequisite check remove the wrong pick:
+    /// the pick judged is taken out by its place in the raw list.</summary>
+    [Fact]
+    public void Prerequisites_AreJudgedWithoutThePickItself_EvenAfterAMalformedPick()
+    {
+        var result = Evaluate("""
+                lists:
+                  - { key: gear, label: Gear, type: item, prerequisites: needs }
+                values:
+                  - { key: n, formula: "count(gear, g => g.id == 'base')" }
+            """,
+            new Dictionary<string, object> { ["gear"] = new List<object> { 7L, "base", "advanced" } },
+            new ContentEntry { Id = "base", Type = "item", Name = "Base" },
+            new ContentEntry
+            {
+                Id = "advanced", Type = "item", Name = "Advanced",
+                Properties = { ["needs"] = new List<object> { new Dictionary<string, object> { ["list"] = "gear", ["contains"] = "base", ["message"] = "needs Base." } } }
+            });
+
+        Assert.DoesNotContain(result.Violations, v => v.Key == "Actor.Rule.Prerequisite");
+    }
+
     [Fact]
     public void ASystemWithoutSheetKinds_HasNoModel()
     {

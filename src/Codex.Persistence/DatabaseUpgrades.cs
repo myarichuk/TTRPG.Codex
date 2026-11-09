@@ -67,12 +67,14 @@ public static class DatabaseUpgrades
         var candidates = new List<(string Id, string Name, string CampaignId, Dictionary<string, object> Sheet)>();
         using (var session = store.OpenSession())
         {
-            using (var campaigns = session.Advanced.Stream(session.Query<CampaignDocument>()))
+            using (var campaigns = session.Advanced.Stream(session.Query<CampaignDocument>(), out var campaignStats))
             {
+                if (!FromCollection(campaignStats, log)) return false;
                 while (campaigns.MoveNext()) systemOfCampaign[campaigns.Current.Id] = campaigns.Current.Document.SystemId;
             }
 
-            using var actors = session.Advanced.Stream(session.Query<ActorDocument>());
+            using var actors = session.Advanced.Stream(session.Query<ActorDocument>(), out var actorStats);
+            if (!FromCollection(actorStats, log)) return false;
             while (actors.MoveNext())
             {
                 var actor = actors.Current.Document;
@@ -119,6 +121,18 @@ public static class DatabaseUpgrades
 
         if (switching.Count > 0) log.Add($"Stat blocks as printed: {switching.Count} creature sheet(s) switched from manual; their scores are unchanged.");
         return complete;
+    }
+
+    /// <summary>
+    /// A query with no filter is served from the collection itself, never from an index, so it cannot be stale. An index
+    /// that is still catching up at start-up would hide documents, and the upgrade would be recorded as done without them.
+    /// So this checks that the stream really came from the collection; if not, the run counts as unfinished and is retried.
+    /// </summary>
+    internal static bool FromCollection(Raven.Client.Documents.Session.StreamQueryStatistics stats, List<string> log)
+    {
+        if (stats.IndexName?.StartsWith("collection/", StringComparison.OrdinalIgnoreCase) == true) return true;
+        log.Add($"Database upgrade: read through index '{stats.IndexName}', which may be stale; it runs again on the next start.");
+        return false;
     }
 
     /// <summary>Each score that the printed method would total differently from manual on <paramref name="sheet"/>, as
