@@ -6,25 +6,66 @@ using Codex.SystemCheck;
 using Microsoft.Extensions.Logging.Abstractions;
 
 // Usage:
-//   dotnet run --project tools/Codex.SystemCheck -- <system folder> [--types] [--quiet]
+//   dotnet run --project tools/Codex.SystemCheck -- <system folder> [--types] [--pack <file.zip>] [--quiet]
+//   dotnet run --project tools/Codex.SystemCheck -- --schema <folder>
 //
 // Loads the system in the folder (its system.yaml, scripts and packs) the way the server does and lists every problem the
 // loader finds: unknown keys, handlers, rolls, layouts, campaign objects, scripts. When the folder has a spec.yaml (format:
 // tests/Codex.Tests/Fixtures/reference/README.md), runs each expectation and says what it came to. --types writes codex.d.ts
-// beside system.yaml, for completion in a script editor. --quiet lists only what is wrong.
+// beside system.yaml, for completion in a script editor. --pack writes the system as the zip the app's install takes, once the
+// check passes (a system with compiled code cannot be one: it is installed by copying its folder). --quiet lists only what is
+// wrong.
 //
-// Exit code 0 when the system loads and no expectation fails; 1 when the system does not load or an expectation fails; 2 for
-// a wrong command line. Problems the loader reports do not fail the check: the server loads such a system too.
+// --schema writes system.schema.json (into <folder>/schema) and SYSTEM_YAML_REFERENCE.md (into <folder>), generated from the
+// app's model: the repository keeps them in docs/.
+//
+// Exit code 0 when the system loads and no expectation fails; 1 when the system does not load, an expectation fails or the
+// archive cannot be written; 2 for a wrong command line. Problems the loader reports do not fail the check: the server loads
+// such a system too.
 
-var folder = args.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal));
-if (folder == null || !Directory.Exists(folder))
+string? Option(string name) => Array.IndexOf(args, name) is var at and >= 0 && at + 1 < args.Length ? args[at + 1] : null;
+
+if (args.Contains("--schema"))
 {
-    Console.Error.WriteLine("usage: <system folder> [--types] [--quiet]");
+    if (Option("--schema") is not { } docs)
+    {
+        Console.Error.WriteLine("usage: --schema <folder>");
+        return 2;
+    }
+
+    Directory.CreateDirectory(Path.Combine(docs, "schema"));
+    File.WriteAllText(Path.Combine(docs, "schema", SystemSchema.SchemaFile), SystemSchema.Json());
+    File.WriteAllText(Path.Combine(docs, SystemSchema.ReferenceFile), SystemSchema.Reference());
+    Console.WriteLine($"WROTE   {Path.Combine(docs, "schema", SystemSchema.SchemaFile)}");
+    Console.WriteLine($"WROTE   {Path.Combine(docs, SystemSchema.ReferenceFile)}");
+    return 0;
+}
+
+var pack = Option("--pack");
+var folder = args.Where((a, i) => !a.StartsWith("--", StringComparison.Ordinal) && (i == 0 || args[i - 1] != "--pack")).FirstOrDefault();
+if (folder == null || !Directory.Exists(folder) || (args.Contains("--pack") && pack == null))
+{
+    Console.Error.WriteLine("usage: <system folder> [--types] [--pack <file.zip>] [--quiet]  |  --schema <folder>");
     return 2;
 }
 
 var quiet = args.Contains("--quiet");
-return SystemCheck.Run(Path.GetFullPath(folder), args.Contains("--types"), quiet, Console.Out);
+var code = SystemCheck.Run(Path.GetFullPath(folder), args.Contains("--types"), quiet, Console.Out);
+if (code != 0 || pack == null) return code;
+
+using (var output = File.Create(pack))
+{
+    if (SystemArchive.Write(folder, output) is { Count: > 0 } refused)
+    {
+        output.Close();
+        File.Delete(pack);
+        foreach (var why in refused) Console.WriteLine($"FAILED  {why}");
+        return 1;
+    }
+}
+
+if (!quiet) Console.WriteLine($"WROTE   {Path.GetFullPath(pack)}");
+return 0;
 
 namespace Codex.SystemCheck
 {

@@ -4,6 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- The summaries are the descriptions in the system.yaml schema and reference (Codex.Core.Systems.SystemSchema). Not every
+         member has one, which is not a warning. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1573;CS1572;CS1574;CS1584;CS1658;CS1734</NoWarn>
   </PropertyGroup>
 
 </Project>

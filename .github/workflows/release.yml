@@ -125,8 +125,33 @@ jobs:
             dist/*.pkg
             dist/*-setup.exe
 
+  # Systems other than the bundled ones (content/systems/bundled.txt) are released as their own archives, installed from the
+  # app's About page, so withdrawing one means removing one download (overhaul section 6).
+  systems:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Pack separate systems
+        run: packaging/pack-systems.sh dist
+
+      - name: Upload system archives
+        uses: actions/upload-artifact@v7
+        with:
+          name: packages-systems
+          if-no-files-found: ignore
+          path: dist/system-*.zip
+
   release:
-    needs: [version, package]
+    needs: [version, package, systems]
     runs-on: ubuntu-latest
     permissions:
       contents: write

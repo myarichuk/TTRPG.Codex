@@ -12,13 +12,13 @@ Revision 1's list, checked against the code:
 
 | # | Item | Status | Evidence |
 |---|---|---|---|
-| 1 | In-app system install | Not started | The Library imports content-pack zips only (`LibrarySection.razor:32`); a system is still copied into a content folder by hand. |
-| 2 | Reload without restart | Not started | `PluginLoader.LoadAndInitializeAsync` returns once loaded (`PluginLoader.cs:61`); no watcher. |
+| 1 | In-app system install | Done (2026-11-09) | About installs, replaces and removes systems from a zip (step 10). The Library's pack import is unchanged. |
+| 2 | Reload without restart | Done (2026-11-09) | `PluginLoader.ReloadAsync`, staged and swapped in one step (step 10). No file watcher: install, removal and the admin's *Reload systems* trigger it. |
 | 3 | Load errors visible | Done (2026-11-08) | `LoadProblem` (source, subject, system, path) and `FailedSystem` (stated id, errors one by one). About groups them per system, lists failed systems, shows paths to the server admin only. The Library counts its own system's; the new-campaign dialog names failed systems. Failed DLLs are reported (they were only logged). Not done: line numbers in validator messages. (`LoadException` was already reported as a warning; the audit's earlier "no reader" was wrong.) |
 | 4 | d20-shaped vocabulary | Partial | Crit marking moved off text search to a recorded check die (`DiceTerm.IsCheckDie`, `DiceRollResult.CheckDieIndex`), but "check die" still means `Sides == 20` and faces 20/1 (`DiceExpressionParser.cs:14`, `DiceResult.razor:69`). Grammar unchanged: no explode, success count, roll-under, bands. Attribute and bonus keys no longer default to 5e names (2026-11-08, see section 6); entry-property names (`hitDie`, `armorBase`...) and `level`/`class` field names still do. |
-| 5 | DLL trust boundary | Not started | Every `*.dll` under `plugins/` is `Assembly.LoadFrom`'d (`PluginLoader.cs:296`); no label, no doc statement. |
-| 6 | Author's reference, JSON schema | Not started | No `system.yaml` reference in `docs/`, no schema file. |
-| 7 | Versioning, safe removal | Partial (2026-11-08) | A campaign whose system is missing is read-only (section 6). Versioning not started: a campaign stores a system id only. |
+| 5 | DLL trust boundary | Done (2026-11-09) | Labelled and documented (step 9); never uploaded, only copied onto the server (step 10). Before, every `*.dll` under `plugins/` is `Assembly.LoadFrom`'d (`PluginLoader.cs:296`); no label, no doc statement. |
+| 6 | Author's reference, JSON schema | Done (2026-11-09) | `docs/SYSTEM_YAML_REFERENCE.md` and `docs/schema/system.schema.json`, generated from the model (step 10). |
+| 7 | Versioning, safe removal | Done (2026-11-09) | Campaign and session stamps; removal asks first (step 10). Before, a campaign whose system is missing is read-only (section 6). Versioning not started: a campaign stores a system id only. |
 | — | `IRuleHooks`, Jint | Not started | No Jint reference; DynamicExpresso 2.17.2 is the only evaluator (`Codex.Core.csproj:14`). No `IDiceSource`. |
 
 New findings:
@@ -717,6 +717,64 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      - **A function's `parts`** are read and kept, as a script's are, and shown nowhere yet (as at step 8).
 10. **Install, reload, versioning, separate distribution.** The JSON schema and reference docs land alongside, from
     step 2 onwards.
+   - *Done 2026-11-09.*
+
+     **Reload.** `PluginLoader.ReloadAsync` reads every content root again:
+     - Systems, packs and problems are built beside the old ones and published in one step. The content registry is filled
+       through a staging loader (`IContentPackLoader.Staging`/`Commit`) and swapped in under its lock (`ContentRegistry.ReplaceWith`).
+     - A reload that fails leaves the old set. `SystemsReload` says what was added, removed and changed (by fingerprint).
+     - A table keeps the definition it started with until it ends: `CampaignRuntime.System` is taken at start.
+     - A system folder's DLLs are read from their bytes (never locked) into a load context keyed by their hashes, so a
+       replaced DLL gets a new context.
+     - `Codex:Systems:Scripts: false` fails a system that names a script, saying why (rule 7).
+
+     **Versions** (rule 8). `SystemFingerprint` is the version and SHA-256 of system.yaml, its translations, its scripts and
+     every DLL beside it, with line endings normalized. `ChangesSince` lists the version and each file added, removed or changed.
+     - `CampaignDocument.SystemStamp` is recorded when a campaign is made, switched or first saved, and by the upgrade
+       `2026-11-09.system-stamps` for campaigns stored before.
+     - The GM sees `SystemChangedNotice` on the campaign page (compiled code marked) until *Got it* (`AcceptSystemAsync`, GM only).
+     - `SessionDocument.SystemStamps` records each system a table ran the session under.
+
+     **Install** (rule 7, section 6). `SystemArchive` (Core) checks a zip:
+     - unpacked into a hidden staging folder: no rooted path, `..` or link; at most 2000 entries, 16 MB a file and 64 MB in
+       all, counted as written;
+     - never compiled code of any kind; scripts refused when they are off;
+     - exactly one system.yaml, loaded as the server loads it; each pack must be for it and is loaded for its problems.
+
+     `SystemInstaller` (Web) puts systems in `Codex:Systems:InstallDirectory` (default `Systems` beside the database), a
+     content root:
+     - Rights: the admin; anyone signed in with `Codex:Systems:GmInstall`, never while exposed. Reload is the admin's.
+     - A checked upload is a plan (what it replaces, the changes, how many campaigns use it) only its sender can install, once.
+       Installing moves it into place and reloads, putting the old folder back if the new one does not load.
+     - Only systems in the install folder can be replaced or removed. Removal asks first, naming the campaigns that become
+       read-only.
+     - About has the install panel, *Reload systems* and *Remove*. Driven once in Chromium: install, a campaign on it,
+       replace (1.0.0 to 1.1.0, one campaign), the GM's notice and *Got it*, remove (read-only banner), reload.
+
+     **Distribution.** `content/systems/bundled.txt` lists the systems inside the app (srd5e). `packaging/content-for-release.sh`
+     and `package.ps1` leave the others out; `packaging/pack-systems.sh` (the release's `systems` job) writes each as
+     `system-<id>-<version>.zip` with `Codex.SystemCheck <folder> --pack`, which refuses compiled code.
+
+     **Schema and reference.** `SystemSchema` generates both from `SystemDefinition`, by the property rules `UnknownYamlKeys`
+     uses, with the model's XML summaries (Abstractions now writes its XML docs). `Codex.SystemCheck --schema docs` writes them;
+     a test keeps them current, and checks every system.yaml in the repository against the schema with what the loader also
+     reports as unknown as the only allowed flags. A text property accepts any scalar, as the loader does (`min: 0` is a
+     formula). Runtime-only properties are `[NotInYaml]`: left out, and reported as unknown keys. srd5e and simple-d6 name the
+     schema in their first line.
+   - *Not done, and why:*
+     - **Half the keys have no description.** 238 of 466 properties have no XML summary, so the reference leaves them blank.
+       Writing them is documentation work on the model, not step 10's.
+     - **The schema's URL** points at `main`, where it lands when this branch merges; the in-repo systems name it by relative path.
+     - **Compiled plugins are not reloaded.** .NET cannot load a second copy from one path into the default context; About
+       says when the file changed, and a restart loads it.
+     - **No unloading.** A replaced system DLL's old load context stays in memory until a restart. Unloading it while a live
+       table may still JIT a call through it could fail that call.
+     - **Mixed rules during a live table.** A sheet saved while a table runs after a reload is checked with the new definition
+       while the table applies the old one, until the table ends.
+     - **No file watcher.** A change copied onto disk waits for *Reload systems* or a restart.
+     - **Rolls are not stamped.** A session records its systems, not which version each roll used; one session rarely spans two.
+     - **No E2E test** for install: the shared E2E app's content roots would gain a system. The services are tested (17 tests),
+       and the page was driven once.
 
 ## 8. Content and licences for the reference systems
 

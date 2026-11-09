@@ -176,14 +176,14 @@ public class SystemDefinitionTests
               proficiencies: { armorTraining: { light: Light, heavy: Heavy } }
               slotPools:
                 - { key: slots, combine: { weights: { full: 1, third: 0.33 } } }
-            translations:
-              ru: { name: Карты, nmae: x }
+            widgets:
+              cyberware: { type: "Acme.Street.Cyberware, Acme.Street", lable: x }
             """;
         var unknown = new List<string>();
 
         SystemDefinitionLoader.Parse(yaml, null, unknown);
 
-        Assert.Equal(new[] { "translations.ru.nmae" }, unknown);
+        Assert.Equal(new[] { "widgets.cyberware.lable" }, unknown);
     }
 
     [Fact]

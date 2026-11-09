@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../docs/schema/system.schema.json
 # Fifth Edition SRD - a data-driven system definition for TTRPG.Codex.
 #
 # The rules text this system's packs carry comes from the System Reference Document 5.2.1 by

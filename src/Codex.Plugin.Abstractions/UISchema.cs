@@ -84,6 +84,7 @@ public class FieldDefinition
 
     /// <summary>Set on a localized copy of a system: dropdown/tag value -> text to show. Values themselves never change,
     /// because the rules compare them; use <see cref="Display"/> wherever one is shown.</summary>
+    [NotInYaml]
     public Dictionary<string, string>? OptionLabels { get; set; }
 
     /// <summary>The text to show for a stored dropdown/tag value; the value itself when it has no translation.</summary>

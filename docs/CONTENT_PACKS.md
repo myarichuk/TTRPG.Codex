@@ -3,9 +3,11 @@
 Everything a game needs - attributes, the character sheet, classes, spells, monsters, places, lore -
 is data. TTRPG.Codex loads it from **content roots** at startup:
 
-- `plugins/` and `content/` next to the published executable (what a release ships), and
+- `plugins/` and `content/` next to the published executable (what a release ships),
 - the folders listed under `Codex:ContentDirectories` in `appsettings.json` (the repo's `content/`
-  by default when running from source).
+  by default when running from source), and
+- the folder systems installed from the app live in (`Codex:Systems:InstallDirectory`; by default `Systems` beside the
+  database's folder). See [Installing, reloading and versions](#installing-reloading-and-versions).
 
 Inside a content root the layout is free-form; the loader looks for three kinds of thing anywhere
 below it (skipping `bin/`, `obj/` and dot-folders):
@@ -32,6 +34,15 @@ content/
 ```
 
 ## system.yaml
+
+Every key, with its type and what it is, is in the generated [reference](SYSTEM_YAML_REFERENCE.md), and the same model is a
+JSON schema ([schema/system.schema.json](schema/system.schema.json)). Point an editor with a YAML language server (VS Code's
+YAML extension, JetBrains IDEs) at it with a first line, and it completes keys and flags a misspelt one as you type, as the
+loader would at start:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/myarichuk/TTRPG.Codex/main/docs/schema/system.schema.json
+```
 
 ```yaml
 id: simple-d6                 # lower-case, stable; campaigns reference it
@@ -387,6 +398,44 @@ Validation runs at load. A broken `system.yaml` is skipped and listed on the Abo
 to load, each problem on its own line; nothing else stops loading. A key this version does not read (a misspelling such
 as `hitPoint:`, or a section a newer version understands) does not stop the system either: it is ignored, and the About
 page names it by its path (`sheetRules.hitPoint`) among the system's problems.
+
+## Installing, reloading and versions
+
+**Installing from the app.** About > *Install a system* takes a zip of one system's folder (system.yaml at its top or under
+one folder, with its translations, scripts and packs; `Codex.SystemCheck <folder> --pack system.zip` writes one). The upload
+is unpacked into a staging folder and checked as the server loads a system: an entry outside the folder, a link, more than
+2000 entries or 64 MB, compiled code of any kind, a second system.yaml, a pack for another system, or a load error refuses
+it; load problems are listed as warnings. Nothing is installed until you press *Install*, and the page says first what it
+replaces, what changed, and how many campaigns play under it. Installing moves the folder into place and reloads; if the new
+copy does not load, the old one is put back.
+
+- **Who.** The server's admin. With `Codex:Systems:GmInstall: true`, anyone signed in, except while the server is open to the
+  internet. Reloading is the admin's alone.
+- **Scripts.** `Codex:Systems:Scripts: false` turns scripts off: an upload naming one is refused, and an installed system
+  naming one does not load (About says why).
+- **Compiled code** is never uploaded. A system with a DLL is installed by copying its folder onto the server, by whoever
+  runs it; About > *Reload systems* then picks it up without a restart.
+- **What the app may change.** Only systems in its own install folder. One shipped with the app or copied into another
+  content folder by hand is the server's: an upload with its id is refused, and it has no *Remove*.
+- **Removing** asks first and says how many campaigns play under the system. They become read-only (readable, exportable)
+  until it is installed again or their GM picks another system.
+
+**Reloading.** An install, a removal and *Reload systems* read every content root again. The new systems and packs are built
+beside the old ones and put in place in one step, so nobody sees a half-loaded library, and a reload that fails leaves the
+old ones. A table that is running keeps the system it started with until it ends. Two things need a restart: a compiled
+plugin (`ICodexSystemPlugin`, a DLL directly in a content root), which .NET cannot load twice from one path (About says when
+the file has changed), and memory: a system DLL that was replaced stays loaded until the server restarts, because a live
+table may still be calling it.
+
+**Versions** (section 4, rule 8 of the overhaul). A campaign records the system it plays under: the `version` system.yaml
+states and a SHA-256 of system.yaml, each translation, each script and each DLL beside it (line endings do not count). When
+the loaded system differs, the campaign's GM sees what changed (the version, and each file added, removed or changed, a DLL
+marked as compiled code) until they press *Got it*. A session records each system a table ran it under. Bump `version` when
+the rules change: it is what a GM reads first.
+
+**Distribution.** A release ships the systems listed in `content/systems/bundled.txt` (srd5e) inside the app. Every other
+system under `content/systems/` is released as its own `system-<id>-<version>.zip` (`packaging/pack-systems.sh`), installed
+from About, so withdrawing one means removing one download.
 
 ## manifest.yaml
 

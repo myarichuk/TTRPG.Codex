@@ -61,12 +61,13 @@ public static class UnknownYamlKeys
         }
     }
 
-    private static Dictionary<string, PropertyInfo> Properties(Type type, INamingConvention naming)
+    internal static Dictionary<string, PropertyInfo> Properties(Type type, INamingConvention naming)
     {
         var result = new Dictionary<string, PropertyInfo>(StringComparer.Ordinal);
         foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            if (property.SetMethod is not { IsPublic: true } || property.GetIndexParameters().Length > 0 || property.IsDefined(typeof(YamlIgnoreAttribute))) continue;
+            if (property.SetMethod is not { IsPublic: true } || property.GetIndexParameters().Length > 0 || property.IsDefined(typeof(YamlIgnoreAttribute))
+                || property.IsDefined(typeof(Codex.Plugin.Abstractions.NotInYamlAttribute))) continue;
             var alias = property.GetCustomAttribute<YamlMemberAttribute>()?.Alias;
             // A derived class may hide a base property ("new object? Equals"): the most derived one is what the deserializer fills.
             result.TryAdd(alias ?? naming.Apply(property.Name), property);
@@ -75,7 +76,7 @@ public static class UnknownYamlKeys
         return result;
     }
 
-    private static Type? DictionaryValueType(Type type)
+    internal static Type? DictionaryValueType(Type type)
     {
         foreach (var candidate in Implemented(type))
         {
@@ -89,7 +90,7 @@ public static class UnknownYamlKeys
         return typeof(IDictionary).IsAssignableFrom(type) ? typeof(object) : null;
     }
 
-    private static Type? ListItemType(Type type)
+    internal static Type? ListItemType(Type type)
     {
         if (type.IsArray) return type.GetElementType();
         foreach (var candidate in Implemented(type))

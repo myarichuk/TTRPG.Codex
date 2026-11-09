@@ -452,6 +452,7 @@ public class SystemDefinition
     public Dictionary<string, object> Events { get; set; } = new();
 
     /// <summary>Translations by language tag ("ru"), filled by the loader from <c>system.&lt;locale&gt;.yaml</c> files.</summary>
+    [NotInYaml]
     public Dictionary<string, SystemTranslation> Translations { get; set; } = new();
 
     private readonly Dictionary<string, string> _scripts = new(System.StringComparer.Ordinal);
@@ -709,18 +710,23 @@ public class SystemDefinition
     }
 
     /// <summary>Set on a localized copy: condition name as the rules know it -> name to show.</summary>
+    [NotInYaml]
     public Dictionary<string, string>? ConditionLabels { get; set; }
 
     /// <summary>Set on a localized copy: shared word (a rest, a damage type, a school) as the rules know it -> text to show.</summary>
+    [NotInYaml]
     public Dictionary<string, string>? ValueLabels { get; set; }
 
     /// <summary>Set on a localized copy: group heading as the system names it ("Combat") -> heading to show.</summary>
+    [NotInYaml]
     public Dictionary<string, string>? CategoryLabels { get; set; }
 
     /// <summary>Set on a localized copy: rule-condition message as system.yaml words it -> text to show.</summary>
+    [NotInYaml]
     public Dictionary<string, string>? MessageLabels { get; set; }
 
     /// <summary>Set on a localized copy: the word after a resource's label in its maximum field ("(max)").</summary>
+    [NotInYaml]
     public string? MaxSuffix { get; set; }
 
     /// <summary>The heading to show for a group of fields; the name itself when this copy has no translation.</summary>
@@ -783,3 +789,8 @@ public class SystemDefinition
         }
     }
 }
+
+/// <summary>A property the app sets rather than the author (a translation read from its own file, a label set on a localized
+/// copy): system.yaml has no such key. The schema leaves it out, and the loader reports it as a key this version does not read.</summary>
+[System.AttributeUsage(System.AttributeTargets.Property)]
+public sealed class NotInYamlAttribute : System.Attribute;
