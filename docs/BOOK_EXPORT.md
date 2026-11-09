@@ -2456,3 +2456,47 @@ page breaks; the file name ignoring the player; a player with no character liste
 
 **Not done:** a player cannot download their own book themselves (the book is the GM's; a player may already open all of it in the app); the
 note's position inside a long entry is its end, not beside the paragraph it came from; the contents page does not list a chapter only the player has.
+
+## 46. Layout: stat blocks and tables, picture frames, torn page edges (2026-11-09)
+
+**First, a leak fixed in the party book.** Players cannot open homebrew of a type the system does not mark `playerFacing` (srd5e's creatures,
+simple-d6's foes) in the Library (`CampaignLibrary.CanRead`), but the party book printed every *published* homebrew entry. The reader now leaves
+those types out of the party edition (`BookSourceReader`, given the system catalog; a type the system does not describe is read as the Library
+reads it). Canary test in `BookSourceTests` (`CANARY_PUBLISHED_MONSTER`), mutation-checked.
+
+**Stat blocks and tables** (`BookStatBlocks`, written by the draft generator after a homebrew entry's text, before its spot). Built by code from the
+campaign's own homebrew and the system's description of the entry's type, never by a model, and with no game's words in the code:
+- a type the system marks `actorBlueprint` (a creature) is Homebrewery's `{{monster,frame`: the name; a type line of the type's `summaryFields`; its
+  plain fields grouped by the system's categories as `**Label** value` lines; the scores row from the system's `attributes` (abbreviation, and the
+  modifier rule the system gives, none for a system without one) for the fields `attributeProperties` maps; each `Collection` field as a heading
+  with its rows as `***Name.*** description`;
+- any other type is a `{{properties` block: a two-column table of its plain fields under the type's label, and its collections below;
+- labels and dropdown values in the book's language (`SystemDefinition.Localize`, `FieldDefinition.Display`); long text (the entry's prose),
+  references and pictures are not printed as values;
+- every value goes through the draft writer's text path (mentions as the edition names them, a hidden actor as nothing; secret blocks as the
+  edition may read them; HTML escaped), then onto one line with every brace and bar escaped, so a value cannot close the block, open another or
+  make a table cell;
+- each block carries an id (`#sb-KEY`, `#pt-KEY`, KEY the entry's slot key), and an AI edit keeps back any block with an id
+  (`BookDraftEdits.Cut`, labelled "a stat block" / "a table of numbers"), so no number of them reaches a model. A GM's own `{{monster` without an
+  id stays theirs to edit;
+- a type the system does not describe, or an entry with nothing to print, gets no block; without the catalog the generator writes none.
+The generator's version is now `book-draft/v3`, so every chapter nobody edited follows by itself and an edited homebrew chapter shows the stale
+notice once. Every theme styles `.properties` (`.monster` it already did); `EveryBlock_UnderEveryTheme…` prints one of each and requires their
+text. Not done: the old HTML route and the AI build (sections 25-36) print no stat blocks; NPC actors' sheets and encounters get none; the type line
+is the summary fields in the system's order (srd5e: "2, undead, Medium"), not a game's own phrasing.
+
+**Picture frames.** A class on a picture's block, in every theme (`BookDraftThemes.PageCss`): `torn` (a mask from `BookMasks.Frame`, the page
+edge's tear on a 100 by 100 box, two seeds alternating), `oval` and `round`. The Blocks tab's hint names them. A soft "vignette" frame was tried and
+left out: Chrome prints a gradient mask as a soft mask that macOS's PDF renderer (Preview) draws wrong, with the unmasked picture beside it.
+
+**Torn page edges.** A draft setting (More → Torn page edges; `BookDraftDocument.Edge`, off by default, kept when other settings are saved without
+it). `BookMasks.FibreEdge`: the §24 tear, shallow (within 4.5 mm of the page's edge, small corner bites, clear of the running footer), the outside
+white, the line, and two fainter broken fibre lines just inside it, drawn in each page's `::before` (no theme or the layer uses it), two seeds for
+facing pages. Measured: a dash pattern made Chromium print one shape per dash, about 30 KB a page; the fibres are broken by their points instead
+(sub-paths), about 2.6 KB a page. Test: `FramesAndTornEdges_Print_AsVector_AtAFewKilobytesAPage` (nothing fetched, no page-sized picture, under
+6 KB a page, the footer on every page).
+
+**Tests:** `BookStatBlocksTests` (srd5e creature, a simple-d6 foe with no modifier rule, a type not described, a table in English and Russian, hostile
+values, the generator placing a block and an AI edit keeping it back), `BookMasksFrameTests`, the settings test in `BookDraftTests`, the two print tests.
+Mutants caught: the modifier rule hard-coded; no escaping; no id; no text path; the block not written; the edge reset by another setting; the edge
+always on; the party filter for hidden types.

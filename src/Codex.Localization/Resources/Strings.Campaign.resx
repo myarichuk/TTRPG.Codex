@@ -923,6 +923,8 @@
   <data name="Campaign.Book.Draft.OnlyFor" xml:space="preserve"><value>Only for {0}</value></data>
   <data name="Campaign.Book.Draft.ForPlayer" xml:space="preserve"><value>PDF for a player</value></data>
   <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>That player's own copy of the party book: what only their characters were told is added in notes. Nothing is stored.</value></data>
+  <data name="Campaign.Book.Draft.Edge" xml:space="preserve"><value>Torn page edges</value></data>
+  <data name="Campaign.Book.Draft.EdgeHint" xml:space="preserve"><value>Every page's edge torn, with the paper's fibres showing. The text and the footer stay clear of it.</value></data>
   <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>Download Markdown (.md)</value></data>
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>The chapters as one Markdown file, for Homebrewery or a text editor. The pictures and the stylesheet are not in it.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>This is the GM edition: it holds every secret. Keep the file away from the players.</value></data>
@@ -976,7 +978,7 @@
   <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>Undo the last update</value></data>
   <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>The campaign no longer has this chapter. Delete its text if it should not be printed.</value></data>
   <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>Blocks you can use</value></data>
-  <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (read aloud), {{{{secret}}}} (GM edition), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} and {{{{wide}}}}, each closed by }}}} on its own line. A line \page starts a page and \column a column. A picture is ![caption](art:…), one of this edition's own.</value></data>
+  <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (read aloud), {{{{secret}}}} (GM edition), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} and {{{{wide}}}}, each closed by }}}} on its own line. A line \page starts a page and \column a column. A picture is ![caption](art:…), one of this edition's own; its block takes a frame: {{{{portrait,torn}}}}, oval or round.</value></data>
   <data name="Campaign.Book.Draft.Saving" xml:space="preserve"><value>Saving…</value></data>
   <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>Saved</value></data>
   <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>Not saved yet</value></data>

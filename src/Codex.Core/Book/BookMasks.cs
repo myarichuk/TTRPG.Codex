@@ -112,6 +112,89 @@ public static class BookMasks
         return svg.ToString();
     }
 
+    /// <summary>
+    /// A picture's torn frame (docs/BOOK_EXPORT.md 46): a mask, white inside a ragged outline and nothing outside, on a 100 by 100 box stretched
+    /// to the picture, so the picture looks torn from a print. The same tear as the page edge's, scaled to a picture: a few percent deep.
+    /// </summary>
+    public static string Frame(ulong seed)
+    {
+        var path = Closed(Outline(new Rng(seed), 100, 100, depth: 2.2, rough: 1.4, chip: 5.5, detail: 6, max: 9));
+        return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\"><path fill=\"#fff\" d=\"" + path + "\"/></svg>";
+    }
+
+    /// <summary>
+    /// A page's torn edge with paper fibre (docs/BOOK_EXPORT.md 46): <see cref="PageEdge"/>'s shape, the outside filled with
+    /// <paramref name="outside"/>, and inside the line a few fainter broken strokes, drawn as the same line drawn smaller toward the page's
+    /// centre, which is how the fibres show where paper is torn. Plain paths and strokes only, so it prints as vector.
+    /// </summary>
+    public static string FibreEdge(ulong seed, double widthMm, double heightMm, string outside = "#ffffff", string line = "#9c8a62")
+    {
+        var w = Math.Round(widthMm, 2);
+        var h = Math.Round(heightMm, 2);
+        // Shallow, with small corner bites: the running footer and page numbers sit in the margin, and must stay clear of it.
+        var rng = new Rng(seed);
+        var points = Outline(rng, w, h, depth: 1.6, rough: 1.1, chip: 3.2, detail: 6, max: 4.5);
+        var path = Closed(points);
+        var svg = new StringBuilder();
+        svg.Append("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ").Append(Num(w)).Append(' ').Append(Num(h)).Append("\" preserveAspectRatio=\"none\">");
+        svg.Append("<path fill=\"").Append(Colour(outside)).Append("\" fill-rule=\"evenodd\" d=\"M0 0H").Append(Num(w)).Append('V').Append(Num(h)).Append("H0Z").Append(path).Append("\"/>");
+        // Every path is printed on every page (the PDF does not share them), so they are few: 64 points a side, two fibres.
+        foreach (var (inset, width, opacity) in new[] { (0.5, ".22", ".5"), (1.2, ".14", ".3") })
+        {
+            var sx = Num((w - 2 * inset) / w);
+            var sy = Num((h - 2 * inset) / h);
+            svg.Append("<path fill=\"none\" stroke=\"").Append(Colour(line)).Append("\" stroke-width=\"").Append(width).Append("\" stroke-opacity=\"").Append(opacity)
+                .Append("\" transform=\"translate(").Append(Num(inset)).Append(' ').Append(Num(inset)).Append(") scale(").Append(sx).Append(' ').Append(sy)
+                .Append(")\" d=\"").Append(Broken(points, rng)).Append("\"/>");
+        }
+
+        svg.Append("<path fill=\"none\" stroke=\"").Append(Colour(line)).Append("\" stroke-width=\".3\" stroke-linejoin=\"round\" d=\"").Append(path).Append("\"/>");
+        return svg.Append("</svg>").ToString();
+    }
+
+    // The ragged outline alone, as PageEdge draws it, in a w by h box: corners as single vertices with their own bite, sides torn between them,
+    // never deeper than max.
+    private static List<(double X, double Y)> Outline(Rng rng, double w, double h, double depth, double rough, double chip, int detail, double max)
+    {
+        var steps = 1 << detail;
+        var k = new double[4];
+        for (var c = 0; c < 4; c++) k[c] = depth + rng.Next() * (chip - depth);
+        double Inset(double from, double to, double t, double tear) => Math.Clamp(from + (to - from) * t + tear, Math.Min(0.35, depth), max);
+        var top = Tear(rng, steps, rough);
+        var right = Tear(rng, steps, rough);
+        var bottom = Tear(rng, steps, rough);
+        var left = Tear(rng, steps, rough);
+        var points = new List<(double, double)>();
+        for (var i = 0; i < steps; i++) { var t = (double)i / steps; points.Add((k[0] + (w - k[1] - k[0]) * t, Inset(k[0], k[1], t, top[i]))); }
+        for (var i = 0; i < steps; i++) { var t = (double)i / steps; points.Add((w - Inset(k[1], k[2], t, right[i]), k[1] + (h - k[2] - k[1]) * t)); }
+        for (var i = 0; i < steps; i++) { var t = (double)i / steps; points.Add((w - k[2] - (w - k[2] - k[3]) * t, h - Inset(k[2], k[3], t, bottom[i]))); }
+        for (var i = 0; i < steps; i++) { var t = (double)i / steps; points.Add((Inset(k[3], k[0], t, left[i]), h - k[3] - (h - k[3] - k[0]) * t)); }
+        return points;
+    }
+
+    private static string Closed(IReadOnlyList<(double X, double Y)> points)
+    {
+        var path = new StringBuilder();
+        for (var i = 0; i < points.Count; i++) path.Append(i == 0 ? 'M' : 'L').Append(Num(points[i].X)).Append(' ').Append(Num(points[i].Y));
+        return path.Append('Z').ToString();
+    }
+
+    // The outline in short runs with gaps between, as separate sub-paths: a broken line drawn by its points, not by a dash pattern (a printed dash
+    // pattern becomes one shape per dash, and costs a page tens of kilobytes).
+    private static string Broken(IReadOnlyList<(double X, double Y)> points, Rng rng)
+    {
+        var path = new StringBuilder();
+        var i = (int)(rng.Next() * 3);
+        while (i < points.Count - 1)
+        {
+            var run = 2 + (int)(rng.Next() * 5);
+            for (var j = 0; j <= run && i + j < points.Count; j++) path.Append(j == 0 ? 'M' : 'L').Append(Num(points[i + j].X)).Append(' ').Append(Num(points[i + j].Y));
+            i += run + 1 + (int)(rng.Next() * 3);
+        }
+
+        return path.ToString();
+    }
+
     /// <summary>The shape as a CSS <c>url()</c> value.</summary>
     public static string DataUri(string svg) => "url(\"data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg)) + "\")";
 

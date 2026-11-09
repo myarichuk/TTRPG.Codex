@@ -123,6 +123,10 @@ public static class BookDraftThemes
     /// paper size (Blank's is Letter); every page is laid out, not only those on screen (Blank leaves pages off screen unrendered, and the
     /// renderer measures them all); and the screen around the pages, and printing them page for page.
     /// </summary>
+    // Two torn frames, so two pictures side by side are not torn alike.
+    private static readonly string TornA = BookMasks.DataUri(BookMasks.Frame(0x7E57AB1E));
+    private static readonly string TornB = BookMasks.DataUri(BookMasks.Frame(0x5EEDF00D));
+
     public static string PageCss(BookLayout layout, bool homebrewery)
     {
         var (w, h) = BookThemes.PageMm(layout);
@@ -139,6 +143,12 @@ public static class BookDraftThemes
             /* The tagline the generator writes under the cover's title is not a chapter's first paragraph: no drop cap, under any theme or layer. */
             .page:has(.frontCover) h1 + p::first-letter, .page:has(.frontCover) h1 + p::first-line { all: unset; }
             {{(layout.Rtl ? Unspaced : string.Empty)}}
+            /* Picture frames (46), in every theme: a class on a picture's block. Shape only, so a theme's colours and borders stay its own. */
+            .page .block:is(.oval, .round) :is(img, .art-missing) { border-radius: 50%; }
+            .page .block.round :is(img, .art-missing) { aspect-ratio: 1; object-fit: cover; }
+            /* No soft (gradient) frame: Chrome prints it as a soft mask that macOS's PDF viewer draws wrong (46). */
+            .page .block.torn img { -webkit-mask: {{TornA}} 0 0 / 100% 100% no-repeat; mask: {{TornA}} 0 0 / 100% 100% no-repeat; }
+            .page .block.torn:nth-of-type(2n) img { -webkit-mask: {{TornB}} 0 0 / 100% 100% no-repeat; mask: {{TornB}} 0 0 / 100% 100% no-repeat; }
             .art-missing { display: block; box-sizing: border-box; min-height: 18mm; border: 1px dashed #9a9a9a; color: #777; font-size: 7.5pt; padding: 2mm; text-align: center; }
             @media print {
               body { background: none; }
@@ -253,8 +263,28 @@ public static class BookDraftHtml
     /// <summary>As the printed book's: no script, no network; inline style, data images and data fonts only.</summary>
     public const string ContentSecurityPolicy = BookHtml.ContentSecurityPolicy;
 
+    /// <summary>
+    /// Torn page edges with paper fibre (docs/BOOK_EXPORT.md 46): <see cref="BookMasks.FibreEdge"/> laid over each page, two seeds for facing pages.
+    /// Drawn in <c>::before</c>, which no theme or the layer uses (both draw footers in <c>::after</c>), over the page and under nothing that
+    /// takes a click; shallow enough to stay clear of the running footer. The outside is white: the paper a PDF is printed on.
+    /// </summary>
+    public static string EdgeCss(BookLayout layout)
+    {
+        var (w, h) = BookThemes.PageMm(layout);
+        var odd = BookMasks.DataUri(BookMasks.FibreEdge(0xED6E0001, w, h));
+        var even = BookMasks.DataUri(BookMasks.FibreEdge(0xED6E0002, w, h));
+        return $$"""
+
+            /* Torn page edges (46). */
+            .page { position: relative; }
+            .page::before { content: ""; position: absolute; inset: 0; z-index: 90; pointer-events: none; background: {{odd}} 0 0 / 100% 100% no-repeat; }
+            .page:nth-child(2n)::before { background-image: {{even}}; }
+            """;
+    }
+
+    /// <para><paramref name="edge"/>: torn page edges with paper fibre over every page (<see cref="EdgeCss"/>).</para>
     public static BookHtmlResult Shell(string title, string language, BookTheme theme, string pageSize, string? gmCss, bool homebrewery,
-        Func<string, byte[]?> font, BookCssWeb? web = null)
+        Func<string, byte[]?> font, BookCssWeb? web = null, bool edge = false)
     {
         if (!theme.Supports(language))
         {
@@ -292,7 +322,7 @@ public static class BookDraftHtml
         }
 
         // Blank, the layer and the themes are written for left-to-right pages; a right-to-left book gets them mirrored (BookRtl), the GM's CSS as written.
-        var sheets = BookDraftThemes.PageCss(layout, homebrewery) + theme.Css(layout);
+        var sheets = BookDraftThemes.PageCss(layout, homebrewery) + theme.Css(layout) + (edge ? EdgeCss(layout) : string.Empty);
         css.Append(layout.Rtl ? BookRtl.Mirror(sheets) : sheets);
         IReadOnlyList<string> warnings = [];
         var custom = string.IsNullOrWhiteSpace(gmCss) ? string.Empty : BookCss.Clean(gmCss, out warnings, web);

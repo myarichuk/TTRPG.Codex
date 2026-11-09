@@ -32,6 +32,9 @@ public class BookDraftDocument
     /// <summary>Homebrewery's 5e layout under the theme (docs/BOOK_EXPORT.md 41.12), so CSS written for a Homebrewery brew lands where it does
     /// there. On unless the GM turns it off; a draft saved before the setting existed reads as on.</summary>
     public bool Homebrewery { get; set; } = true;
+
+    /// <summary>Torn page edges with paper fibre (docs/BOOK_EXPORT.md 46), over whatever the theme draws. Off unless the GM turns it on.</summary>
+    public bool Edge { get; set; }
     public string PageSize { get; set; } = "Letter";
 
     /// <summary>The GM's own stylesheet, applied after the theme (cleaned on the way out, as the book's custom CSS always is).</summary>
@@ -180,8 +183,9 @@ public partial interface IBookDraftRepository
     Task<BookDraftFollowed?> FollowAsync(CampaignAccess dm, string edition, string language, IReadOnlyList<BookDraftGenerated> generated);
 
     /// <summary>The draft's theme, paper and GM stylesheet. A theme the book does not have is refused; the chapters are never touched.</summary>
+    /// <para><paramref name="edge"/>: torn page edges on or off; null leaves them as they are.</para>
     Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, string theme, bool homebrewery,
-        int version);
+        int version, bool? edge = null);
 
     /// <summary>The copies of the web addresses the draft's stylesheet names; none when there are none, or for anyone not the campaign's GM now.</summary>
     Task<Codex.Core.Book.BookCssWeb> WebAsync(CampaignAccess dm, string edition, string language);
@@ -441,7 +445,7 @@ public partial class RavenBookDraftRepository(RavenDbService dbService, StorageQ
     public static bool Untouched(BookDraftChapter chapter) => BookDraftText.Content(chapter.Markdown) == BookDraftText.Content(chapter.Base);
 
     public async Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, string theme,
-        bool homebrewery, int version)
+        bool homebrewery, int version, bool? edge = null)
     {
         if (css.Length > BookDraftDocument.MaxCssChars) return (BookDraftSave.TooLarge, version);
         if (await GmAsync(dm, edition, language) is not { } now) return (BookDraftSave.NotAllowed, version);
@@ -471,6 +475,7 @@ public partial class RavenBookDraftRepository(RavenDbService dbService, StorageQ
         draft.PageSize = Paper(pageSize);
         draft.Theme = chosen;
         draft.Homebrewery = homebrewery;
+        if (edge is { } torn) draft.Edge = torn;
         draft.Version++;
         draft.UpdatedAt = DateTime.UtcNow;
         try

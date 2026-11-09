@@ -923,6 +923,8 @@
   <data name="Campaign.Book.Draft.OnlyFor" xml:space="preserve"><value>רק עבור {0}</value></data>
   <data name="Campaign.Book.Draft.ForPlayer" xml:space="preserve"><value>PDF לשחקן</value></data>
   <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>עותק אישי של ספר החבורה לשחקן הזה: מה שנאמר רק לדמויות שלו נוסף בהערות. דבר אינו נשמר.</value></data>
+  <data name="Campaign.Book.Draft.Edge" xml:space="preserve"><value>שולי דף קרועים</value></data>
+  <data name="Campaign.Book.Draft.EdgeHint" xml:space="preserve"><value>שולי כל דף קרועים, וסיבי הנייר נראים. הטקסט והכותרת התחתונה אינם נפגעים.</value></data>
   <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>הורדת Markdown (.md)</value></data>
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>כל הפרקים בקובץ Markdown אחד, ל-Homebrewery או לעורך טקסט. התמונות וגיליון הסגנונות אינם בו.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>זו מהדורת המנחה: יש בה כל הסודות. שמרו את הקובץ הרחק מהשחקנים.</value></data>
@@ -976,7 +978,7 @@
   <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>ביטול העדכון האחרון</value></data>
   <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>למערכה כבר אין את הפרק הזה. מחקו את הטקסט שלו אם אין להדפיס אותו.</value></data>
   <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>בלוקים לשימוש</value></data>
-  <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (להקראה), {{{{secret}}}} (מהדורת המנחה), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} ו-{{{{wide}}}}; כל אחד נסגר בשורה }}}}. שורה \page פותחת עמוד ו-\column טור. תמונה: ![כיתוב](art:…), רק של המהדורה הזו.</value></data>
+  <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (להקראה), {{{{secret}}}} (מהדורת המנחה), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} ו-{{{{wide}}}}; כל אחד נסגר בשורה }}}}. שורה \page פותחת עמוד ו-\column טור. תמונה: ![כיתוב](art:…), רק של המהדורה הזו; לבלוק שלה אפשר לתת מסגרת: {{{{portrait,torn}}}}, ‏oval או round.</value></data>
   <data name="Campaign.Book.Draft.Saving" xml:space="preserve"><value>שומר…</value></data>
   <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>נשמר</value></data>
   <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>עוד לא נשמר</value></data>

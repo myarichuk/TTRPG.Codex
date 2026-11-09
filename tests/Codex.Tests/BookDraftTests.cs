@@ -412,6 +412,26 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
     }
 
     [Fact]
+    public async Task TornEdges_AreOffUntilTheGmTurnsThemOn_AreKeptByOtherSettings_AndReachThePrintedShell()
+    {
+        var (dm, _) = await SeedAsync();
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        Assert.False(view.Edge);
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, view.Theme, true, view.Version, edge: true)).Result);
+        view = (await _drafts.GetAsync(dm, "party", "en"))!;
+        Assert.True(view.Edge);
+        // Another setting saved without saying: the edge stays.
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, view.Theme, false, view.Version)).Result);
+        view = (await _drafts.GetAsync(dm, "party", "en"))!;
+        Assert.True(view.Edge);
+        var (page, _) = await _drafts.PageAsync(dm, "party", "en", BookArtQuality.Preview, _ => null, CancellationToken.None, withArt: false);
+        Assert.Contains(".page::before", page!.Shell);
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveSettingsAsync(dm, "party", "en", view.Css, view.PageSize, view.Theme, false, view.Version, edge: false)).Result);
+        (page, _) = await _drafts.PageAsync(dm, "party", "en", BookArtQuality.Preview, _ => null, CancellationToken.None, withArt: false);
+        Assert.DoesNotContain(".page::before", page!.Shell);
+    }
+
+    [Fact]
     public async Task OnlyTheCampaignsGm_HasADraft_AndAPostedSectionOrLanguageIsChecked()
     {
         var (dm, id) = await SeedAsync();

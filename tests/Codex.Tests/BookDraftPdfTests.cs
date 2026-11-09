@@ -32,9 +32,9 @@ public class BookDraftPdfTests
         new(Options.Create(new BookPdfOptions { TimeoutSeconds = 90, NoSandbox = BookPdfTests.NoSandbox }), NullLogger<BookPdf>.Instance);
 
     private static async Task<BookPdfResult> PrintAsync(string markdown, IReadOnlyDictionary<string, string>? art = null, string? css = null, BookTheme? theme = null,
-        string pageSize = "Letter", bool homebrewery = true, BookCssWeb? web = null)
+        string pageSize = "Letter", bool homebrewery = true, BookCssWeb? web = null, bool edge = false)
     {
-        var shell = BookDraftHtml.Shell("Saltmere", "en", theme ?? BookDraftThemes.Plain, pageSize, css, homebrewery, Font, web);
+        var shell = BookDraftHtml.Shell("Saltmere", "en", theme ?? BookDraftThemes.Plain, pageSize, css, homebrewery, Font, web, edge);
         Assert.NotNull(shell.Html);
         var printer = Printer();
         using var slot = printer.TryReserve("dm")!;
@@ -495,6 +495,36 @@ public class BookDraftPdfTests
         Chunk("IDAT", zipped.ToArray());
         Chunk("IEND", []);
         return "data:image/png;base64," + Convert.ToBase64String(o.ToArray());
+    }
+
+    /// <summary>Frames and torn edges (46): a torn, an oval and a round picture print with nothing fetched, the torn edge prints as vector at a
+    /// few kilobytes a page (a dash pattern cost tens), and the running footer is still on every page.</summary>
+    [ChromiumFact]
+    public async Task FramesAndTornEdges_Print_AsVector_AtAFewKilobytesAPage()
+    {
+        const string face = "s000000000000000000000002", spot = "s000000000000000000000004", face2 = "s000000000000000000000007";
+        var md = new StringBuilder("{{chapter,#ch-cast\n# Cast\n}}\n\n");
+        md.Append($"## Vera\n\n{{{{portrait,torn\n![Vera](art:{face})\n}}}}\n\nVera keeps the Greywater lamp.\n\n{{{{spot,round\n![Ledger](art:{spot})\n}}}}\n\n");
+        md.Append($"## Oren\n\n{{{{portrait,oval\n![Oren](art:{face2})\n}}}}\n\n");
+        for (var i = 0; i < 160; i++) md.Append("PUBLIC_EDGE_").Append(i).Append(" A long chronicle runs on, page after page, to see what the edge costs a book.\n\n");
+        var art = new Dictionary<string, string> { [face] = Png(30, 40, 140), [spot] = Png(40, 40, 60), [face2] = Png(30, 40, 30) };
+
+        var plain = await PrintAsync(md.ToString(), art);
+        var torn = await PrintAsync(md.ToString(), art, edge: true);
+        Assert.Equal(0, torn.BlockedRequests);
+        Assert.Empty(torn.Overflow);
+        using var doc = PdfDocument.Open(torn.Pdf);
+        Assert.True(doc.NumberOfPages >= 4, doc.NumberOfPages.ToString());
+        var perPage = (torn.Pdf.Length - plain.Pdf.Length) / (double)doc.NumberOfPages;
+        Assert.True(perPage < 6_000, $"the torn edge costs {perPage:0} bytes a page");
+        foreach (var page in doc.GetPages())
+        {
+            // The edge is drawn, not pictured; and the footer is still there.
+            Assert.DoesNotContain(page.GetImages(), i => i.Bounds.Width > page.Width * 0.9);
+            Assert.Contains(page.GetWords(), w => string.Equals(w.Text, "Cast", StringComparison.OrdinalIgnoreCase) && w.BoundingBox.Top < page.Height * 0.08);
+        }
+
+        Assert.Contains("PUBLIC_EDGE_159", Text(torn.Pdf));
     }
 
     /// <summary>

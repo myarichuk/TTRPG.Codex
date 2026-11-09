@@ -74,6 +74,10 @@
                                         data-testid="book-draft-theme-wizard">
                                     <LucideIcon IconName="palette" Size="14" /> @L["Campaign.Book.Theme.Open"]
                                 </button>
+                                <button type="button" role="menuitemcheckbox" aria-checked="@(view.Edge ? "true" : "false")" class="book-draft-menu-item"
+                                        @onclick="EdgeAsync" disabled="@(working || state == SaveState.Conflict)" title="@L["Campaign.Book.Draft.EdgeHint"]" data-testid="book-draft-edge">
+                                    <LucideIcon IconName="@(view.Edge ? "check" : "square")" Size="14" /> @L["Campaign.Book.Draft.Edge"]
+                                </button>
                                 <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="MarkdownAsync" disabled="@printing"
                                         title="@L["Campaign.Book.Draft.MarkdownHint"]" data-testid="book-draft-markdown">
                                     <LucideIcon IconName="file-text" Size="14" /> @L["Campaign.Book.Draft.Markdown"]
@@ -863,7 +867,7 @@
     {
         // A built-in theme or one of the campaign's own (41.22), resolved as the PDF resolves it.
         var theme = await Catalog.ResolveAsync(Access, view!.Theme, language, Font);
-        return BookDraftHtml.Shell(string.Empty, language, theme.Theme, view.PageSize, view.Css, theme.Homebrewery ?? view.Homebrewery, Font, web);
+        return BookDraftHtml.Shell(string.Empty, language, theme.Theme, view.PageSize, view.Css, theme.Homebrewery ?? view.Homebrewery, Font, web, view.Edge);
     }
 
     private async Task ShowAsync(string? section)
@@ -1121,7 +1125,14 @@
     private Task HomebreweryAsync(ChangeEventArgs e) =>
         view == null || e.Value is not bool on || on == view.Homebrewery ? Task.CompletedTask : SettingsAsync(view.Theme, on);
 
-    private async Task SettingsAsync(string chosen, bool homebrewery)
+    /// <summary>Torn page edges (docs/BOOK_EXPORT.md 46), on or off: saved with the settings, and the preview drawn again.</summary>
+    private Task EdgeAsync()
+    {
+        moreOpen = false;
+        return view == null ? Task.CompletedTask : SettingsAsync(view.Theme, view.Homebrewery, !view.Edge);
+    }
+
+    private async Task SettingsAsync(string chosen, bool homebrewery, bool? edge = null)
     {
         if (working || view == null) return;
         working = true;
@@ -1130,7 +1141,7 @@
         {
             await FlushAsync();
             if (view == null || state == SaveState.Conflict) return;
-            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, view.Css, view.PageSize, chosen, homebrewery, view.Version);
+            var (result, _) = await Drafts.SaveSettingsAsync(Access, edition, language, view.Css, view.PageSize, chosen, homebrewery, view.Version, edge);
             if (result == BookDraftSave.Conflict) state = SaveState.Conflict;
             else if (result != BookDraftSave.Saved) message = L["Campaign.Book.Draft.ActionFailed"];
             await RefreshAsync(push: false);
