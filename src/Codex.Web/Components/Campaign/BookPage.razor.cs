@@ -907,7 +907,7 @@ public partial class BookPage : IAsyncDisposable
         if (e.Button != 0) return;
         try
         {
-            splitWidth = await JS.InvokeAsync<int>("codex.dragSplitter", "book-body", "book-pane-source", SplitMin, BookThemes.IsRtl(language));
+            splitWidth = await JS.InvokeAsync<int>("codex.dragSplitter", "book-body", "book-pane-source", SplitMin, PageRtl);
             await SaveSplitAsync();
         }
         catch (Exception ex) when (ex is JSException or JSDisconnectedException)
@@ -915,10 +915,14 @@ public partial class BookPage : IAsyncDisposable
         }
     }
 
+    /// <summary>The page's own direction, the app's language (<c>&lt;html dir&gt;</c>): the panes, the splitter and the dock's tabs are laid out by
+    /// it, not by the book's language, which may differ.</summary>
+    internal static bool PageRtl => BookThemes.IsRtl(CultureInfo.CurrentUICulture.Name);
+
     /// <summary>Left and Right move the splitter by 24 px (the other way round on a right-to-left page); Home or Escape-less double click resets.</summary>
     internal async Task SplitKeyAsync(KeyboardEventArgs e)
     {
-        var rtl = BookThemes.IsRtl(language);
+        var rtl = PageRtl;
         var grow = e.Key switch { "ArrowRight" => !rtl, "ArrowLeft" => rtl, _ => (bool?)null };
         if (grow == null) return;
         try
@@ -1055,15 +1059,17 @@ public partial class BookPage : IAsyncDisposable
     /// <summary>Opens the panel on a tab because something there needs the GM (a report, the review); not remembered as their choice.</summary>
     internal void Reveal(string tab) => (panelOpen, panelTab) = (true, tab);
 
-    // Left and right move between the panel's tabs, Home and End to the first and last.
+    // Left and right move between the panel's tabs the way they are drawn (on a right-to-left page the next tab is to the left), Home and End
+    // to the first and last.
     internal async Task PanelKeyAsync(KeyboardEventArgs e)
     {
         var tabs = PanelTabs.Select(t => t.Tab).ToList();
         var at = tabs.IndexOf(panelTab);
+        var forward = PageRtl ? "ArrowLeft" : "ArrowRight";
         var next = e.Key switch
         {
-            "ArrowRight" => (at + 1) % tabs.Count,
-            "ArrowLeft" => (at + tabs.Count - 1) % tabs.Count,
+            "ArrowRight" or "ArrowLeft" when e.Key == forward => (at + 1) % tabs.Count,
+            "ArrowRight" or "ArrowLeft" => (at + tabs.Count - 1) % tabs.Count,
             "Home" => 0,
             "End" => tabs.Count - 1,
             _ => -1

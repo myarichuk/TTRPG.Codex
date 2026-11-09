@@ -2672,3 +2672,28 @@ covers it now.
 | e2e `TheDmSeesTheCostFirst_RunsTheBuild_...` (skipped since 49) | Deleted. Cost first and review: `TheGmAsksAiToEditASelection_...` (which now also checks `book-ai-totals`) and `TheGmRewritesTheWholeBookAsTheBook_PricedFirst_...` |
 
 **Handoff invariants rewritten:** 4 (a stored rewrite) and 7 (`PlaceArt` after `Overlay`) described deleted code; see the handoff.
+
+**Mutation checks (by hand, from backup copies; handoff 6B items that still apply):** `BookSlots.Choose` taking a GM picture for the party, `BookArt.Slot`
+ignoring the audience, the draft writer finding a heading by its text, `BookCompiler.PageLinks` printing a GM-only page's title, `BookDraftEdits.Cut`
+leaving a `{{secret` block or a `<div class="secret">` in the passage, `BookWork.Prepare` printing a hidden mention's label: all caught.
+`BookCompiler.ArtAnchors` without its picture-flag check **survived** the ported tests (the page never names an unflagged entry's picture, but the map
+sent to the browser did); `ArtReadForTheDm_...` now also checks the map, and catches it.
+
+**Found while looking at it in Hebrew, fixed:** the dock's tabs moved with Left and Right as on a left-to-right page, and the splitter took its
+direction from the book's language rather than the page's. Both now follow the page (`BookPage.PageRtl`, the app's language): on a Hebrew page Left
+goes to the tab drawn on the left, and an English book in the Hebrew app no longer turns the splitter round.
+
+**Result:** book and localization tests 750 passed (the count fell from 838 with the old route's tests); editor tests pass; the site builds.
+Looked at by hand in Chromium, English and Hebrew: Settings has only the link, the Book page and its dock, the dock tabs and splitter by keyboard
+in Hebrew, and the old PDF address serves no book.
+
+**Not done / not verified:**
+- `site/tools/capture-screenshots.mjs` still drives the old panel, the old route and Parchment, so the screenshots cannot be retaken until it is
+  rewritten for the Book page. The `book-panel` shot is still the old panel; its caption now describes the Book page.
+- The ru and he guide's book sections were rewritten from the English by the model, not read by a native speaker.
+- The old addresses `/campaigns/{id}/book-file/{dm|party}[/pdf]` fall through to the app's own pages (200, no book) rather than answering 404.
+- The totals line (`book-ai-totals`) is checked by one e2e test, not looked at by eye; no AI was run in the preview.
+- The right-to-left keys have no e2e test (checked by hand only).
+- `BookMarkdownRenderer` stays only for `BookWork.Prepare`'s secret boxes, which the art director's outline throws away; it could shrink to the
+  grammar that function needs. Old `BookBuildDocument.Sections` stay in the database.
+- The full test suite outside Book and Localization was not run.
