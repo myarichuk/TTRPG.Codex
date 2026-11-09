@@ -1,3 +1,4 @@
+using Codex.Core;
 using Codex.Localization;
 using Codex.Persistence;
 using Codex.Web.Services;
@@ -39,6 +40,22 @@ public class SecretRenderTests
         // Not looked before, or nothing newer: the text as one, no marks.
         Assert.Equal(Plain("Old.\n\nNews.\n\nOld news."), SecretRender.Html(text, Plain, null));
         Assert.Equal(Plain("Old.\n\nNews.\n\nOld news."), SecretRender.Html(text, Plain, null, new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc), "New"));
+    }
+
+    [Fact]
+    public void ARevealInTheSameSecondAsTheLastLook_IsStillNew()
+    {
+        // Reveals are stamped to the second, the last look to the tick: seen at 14:05:07.700, revealed at 14:05:07.900.
+        var revealedAt = new DateTime(2026, 10, 29, 14, 5, 7, 900, DateTimeKind.Utc);
+        var text = SecretText.SetAudience("Old.\n\n:::dm\nNews.\n:::", 0, "News.", SecretAudience.Party, null, revealedAt)!;
+        Assert.Contains(":::party 2026-10-29T14:05:07Z", text);
+        var since = Codex.Web.Components.Campaign.WikiPageText.SeenBefore(new DateTime(2026, 10, 29, 14, 5, 7, 700, DateTimeKind.Utc).ToString("O"));
+        Assert.Contains("<div class=\"secret-new\">", SecretRender.Html(text, Plain, null, since, "New"));
+
+        // A look in a later second still leaves it as read, and nothing stored reads as never looked.
+        var later = Codex.Web.Components.Campaign.WikiPageText.SeenBefore("2026-10-29T14:05:08.0000000Z");
+        Assert.Equal(Plain("Old.\n\nNews."), SecretRender.Html(text, Plain, null, later, "New"));
+        Assert.Null(Codex.Web.Components.Campaign.WikiPageText.SeenBefore(null));
     }
 
     [Fact]

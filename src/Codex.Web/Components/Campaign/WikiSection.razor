@@ -377,8 +377,7 @@ else
 
     private static string SeenKey(string pageId) => $"codex-wiki-seen:{pageId}";
 
-    private static DateTime? ParseSeen(string? iso) =>
-        DateTime.TryParse(iso, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var at) ? at : null;
+    private static DateTime? ParseSeen(string? iso) => WikiPageText.SeenBefore(iso);
 
     /// <summary>The blocks of a page the DM can reveal or hide: not inside a DM block (revealing those would show nothing),
     /// and not the players' versions, which are already the players'.</summary>

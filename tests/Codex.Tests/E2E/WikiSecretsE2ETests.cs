@@ -51,6 +51,9 @@ public class WikiSecretsE2ETests : IClassFixture<AppFixture>
         // The player reads the page before anything is revealed, so the reveal is new to them afterwards.
         await E2EHelpers.GotoInteractiveAsync(player, $"/campaigns/{campaignId}/wiki/saltmere");
         await Assertions.Expect(player.GetByTestId("wiki-body")).ToHaveTextAsync("A quiet village.");
+        // The text is there from the prerender; the visit is noted (in this browser) only once the page has loaded on the
+        // circuit. Reveal before that and the reveals would be older than the visit, and not new.
+        await player.WaitForFunctionAsync("() => Object.keys(localStorage).some(k => k.startsWith('codex-wiki-seen:'))");
 
         // The block's own Reveal asks in a dialog that shows the whole secret, the party picked to begin with.
         await dm.GetByTestId("secret-party-0").ClickAsync();

@@ -26,7 +26,14 @@ public class EditorPolishE2ETests : IClassFixture<AppFixture>
         await _app.SeedUserAsync(playerId, "p_" + playerId, password, "Player");
 
         var options = new BrowserNewContextOptions { BaseURL = _app.BaseUrl };
-        await using var dmContext = await _app.Browser.NewContextAsync(options);
+        // Without the permission, Chromium lets navigator.clipboard write only within the click's user activation (5 s):
+        // on a busy machine the circuit's round trip outlasts it, the copy is refused, and whether the invite field is seen
+        // focused came down to when the assertion happened to look. With it, the copy below succeeds however slow the run.
+        await using var dmContext = await _app.Browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            BaseURL = _app.BaseUrl,
+            Permissions = new[] { "clipboard-read", "clipboard-write" }
+        });
         await using var playerContext = await _app.Browser.NewContextAsync(options);
         var dm = await dmContext.NewPageAsync();
         var player = await playerContext.NewPageAsync();
@@ -40,7 +47,10 @@ public class EditorPolishE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("setup-Page")).ToHaveAttributeAsync("data-done", "false");
         await Assertions.Expect(dm.GetByTestId("setup-Invite")).ToHaveAttributeAsync("data-done", "false");
         // The invite step copies the link and shows it, selected, where it is on the page.
+        // Focus is checked once the copy has finished (its toast), not while it may still be moving focus about.
         await dm.GetByTestId("setup-invite-copy").ClickAsync();
+        await E2EHelpers.ExpectStatusAsync(dm, "Invite link copied.");
+        Assert.Equal(await dm.GetByTestId("invite-link").InputValueAsync(), await dm.EvaluateAsync<string>("() => navigator.clipboard.readText()"));
         await Assertions.Expect(dm.GetByTestId("invite-link")).ToBeFocusedAsync();
         await E2EHelpers.JoinAsync(player, await E2EHelpers.ReadInviteLinkAsync(dm, campaignId));
         await Assertions.Expect(player.GetByTestId("setup-checklist")).ToHaveCountAsync(0);
@@ -128,6 +138,29 @@ public class EditorPolishE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(player.GetByTestId("hover-card")).ToContainTextAsync("Hooded stranger");
         await player.Keyboard.PressAsync("Escape");
         await Assertions.Expect(player.GetByTestId("hover-card")).ToBeHiddenAsync();
+    }
+
+    [Fact]
+    public async Task ACopyTheBrowserRefuses_LeavesTheSelectedFieldSelected()
+    {
+        // The async clipboard is refused on plain HTTP and once a click's user activation has lapsed; the older route then
+        // copies from a text area of its own, and must hand focus and selection back to the field the reader was shown.
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync("/login");
+        var result = await page.EvaluateAsync<JsonElement>("""
+            async () => {
+              Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: () => Promise.reject(new DOMException('Write permission denied.', 'NotAllowedError')) } });
+              const field = document.getElementById('username');
+              field.value = 'http://example/campaigns/join/abc';
+              codex.selectField('username');
+              await codex.copyText(field.value);
+              return { active: document.activeElement.id, start: field.selectionStart, end: field.selectionEnd, length: field.value.length };
+            }
+            """);
+        Assert.Equal("username", result.GetProperty("active").GetString());
+        Assert.Equal(0, result.GetProperty("start").GetInt32());
+        Assert.Equal(result.GetProperty("length").GetInt32(), result.GetProperty("end").GetInt32());
     }
 
     private static async Task<string> CreateNpcAsync(IPage dm, string campaignId, string name, string visibility, string history, string? publicName = null)

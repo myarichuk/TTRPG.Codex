@@ -15,7 +15,7 @@ public class TemplateGrammarE2ETests
     {
         var script = await File.ReadAllTextAsync(Path.Combine(FindRepo(), "src", "Codex.Web", "wwwroot", "js", "app-startup.js"));
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+        await using var browser = await playwright.Chromium.LaunchAsync(AppFixture.LaunchOptions());
         var page = await browser.NewPageAsync();
         await page.SetContentAsync("<!doctype html><html><body></body></html>");
         await page.AddScriptTagAsync(new PageAddScriptTagOptions { Content = script });

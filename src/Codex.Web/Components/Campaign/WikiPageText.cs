@@ -37,4 +37,21 @@ public static class WikiPageText
     /// <summary>When the newest of the blocks the reader may read on a page was revealed, if any says.</summary>
     public static DateTime? LatestReveal(WikiPageDocument page) =>
         SecretText.Parse(page.Body).Where(s => s.Audience is SecretAudience.Party or SecretAudience.Some).Max(s => s.RevealedAt);
+
+    /// <summary>
+    /// When this browser last saw a page (as <c>codex.seenSince</c> stored it), as a time a reveal is compared with: a block
+    /// revealed after it is new. Reveals are stamped to the whole second (<see cref="SecretText"/>), the visit to the tick, so
+    /// a reveal in the same second as the visit would read as older and never be marked new; the visit is taken back to just
+    /// before its second, and such a reveal counts as after it.
+    /// </summary>
+    public static DateTime? SeenBefore(string? iso)
+    {
+        if (!DateTime.TryParse(iso, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var at))
+        {
+            return null;
+        }
+
+        return at.AddTicks(-(at.Ticks % TimeSpan.TicksPerSecond) - 1);
+    }
 }
