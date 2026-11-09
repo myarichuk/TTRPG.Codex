@@ -233,4 +233,26 @@
   <data name="Combat.Mention.Source.Comment" xml:space="preserve"><value>תגובה</value></data>
   <data name="Combat.Mention.Source.Biography" xml:space="preserve"><value>ביוגרפיה</value></data>
   <data name="Combat.Mention.Source.DmNotes" xml:space="preserve"><value>הערות שליט המבוך</value></data>
+  <data name="Combat.Objects.Title" xml:space="preserve"><value>מערכה</value></data>
+  <data name="Combat.Objects.Clocks" xml:space="preserve"><value>שעונים</value></data>
+  <data name="Combat.Objects.NoClocks" xml:space="preserve"><value>אין עדיין שעונים.</value></data>
+  <data name="Combat.Objects.ClockLabel" xml:space="preserve"><value>{0}: {1} מלאים מתוך {2}</value></data>
+  <data name="Combat.Objects.GmOnly" xml:space="preserve"><value>למנחה בלבד</value></data>
+  <data name="Combat.Objects.Shown" xml:space="preserve"><value>מוצג לשחקנים</value></data>
+  <data name="Combat.Objects.Untick" xml:space="preserve"><value>הורד מקטע מ־{0}</value></data>
+  <data name="Combat.Objects.Tick" xml:space="preserve"><value>הוסף מקטע ל־{0}</value></data>
+  <data name="Combat.Objects.Segments" xml:space="preserve"><value>מקטעים</value></data>
+  <data name="Combat.Objects.Visibility" xml:space="preserve"><value>מי רואה</value></data>
+  <data name="Combat.Objects.RemoveClock" xml:space="preserve"><value>הסר את {0}</value></data>
+  <data name="Combat.Objects.NewClock" xml:space="preserve"><value>שעון חדש</value></data>
+  <data name="Combat.Objects.AddClock" xml:space="preserve"><value>הוסף שעון</value></data>
+  <data name="Combat.Objects.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Combat.Objects.Remove" xml:space="preserve"><value>הסר</value></data>
+  <data name="Combat.Objects.Lower" xml:space="preserve"><value>הורד את {0}</value></data>
+  <data name="Combat.Objects.Raise" xml:space="preserve"><value>העלה את {0}</value></data>
+  <data name="Combat.Objects.NoRows" xml:space="preserve"><value>אין עדיין.</value></data>
+  <data name="Combat.Objects.NewRow" xml:space="preserve"><value>הוסף ל־{0}</value></data>
+  <data name="Combat.Objects.AddRow" xml:space="preserve"><value>הוסף</value></data>
+  <data name="Combat.Objects.RemoveRow" xml:space="preserve"><value>הסר את {0}</value></data>
+  <data name="Combat.Objects.NotChanged" xml:space="preserve"><value>שום דבר לא השתנה: השם תפוס, ריק, או שכבר אינו קיים.</value></data>
 </root>

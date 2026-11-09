@@ -399,4 +399,10 @@
   <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>הסרת {0}</value></data>
   <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>בשימוש {0} מתוך {1}</value></data>
   <data name="Actor.Sheet.RollAtTable" xml:space="preserve"><value>ההטלה נעשתה ליד השולחן: היא ביומן ההטלות המשותף, ומה שהיא עולה הוחל שם.</value></data>
+  <data name="Actor.Rule.ClockSegments" xml:space="preserve"><value>{0}: לשעון יש {2} מקטעים, לא {1}.</value></data>
+  <data name="Actor.Rule.ClockFilled" xml:space="preserve"><value>{0}: {1} מלאים מתוך {2}.</value></data>
+  <data name="Actor.Rule.ClockVisibility" xml:space="preserve"><value>{0}: "{1}" אינו אפשרות; שעון שמור למנחה או מוצג לשחקנים.</value></data>
+  <data name="Actor.Rule.Range" xml:space="preserve"><value>{0}: {1} {2} מחוץ לטווח {3}.</value></data>
+  <data name="Actor.Rule.CampaignDuplicate" xml:space="preserve"><value>לשניים יש את השם {0}.</value></data>
+  <data name="Actor.Rule.CampaignUnnamed" xml:space="preserve"><value>לאחד אין שם.</value></data>
 </root>

@@ -17,8 +17,9 @@ This version reads part of each `system.yaml`: attributes, entity types and cond
 `modifierTypes`, `progressions`, `functions` (formulas), `conditionEffects` and, in each sheet kind, `values`, `modifiers`,
 `lists` and `keyedLists` (`Codex.Core.Rules.SheetModel`); since step 3 `tracks`; since step 4 `rolls`
 (`Codex.Core.Rules.SheetRolls`); since step 5 `events` and the parts of tracks that act when a track changes
-(`Codex.Core.Rules.SheetEvents`, `SheetIntents`); since step 6 each sheet kind's `layout` (`Codex.Core.Rules.SheetLayout`).
-The loader names the rest (the campaign) as keys it does not read, and `ReferenceFixtureTests` checks that it is the only one. Each step of the overhaul makes more of it read.
+(`Codex.Core.Rules.SheetEvents`, `SheetIntents`); since step 6 each sheet kind's `layout` (`Codex.Core.Rules.SheetLayout`);
+since step 7 `campaign` (`Codex.Core.Rules.CampaignObjects`). Every key is read now, and `ReferenceFixtureTests` checks that
+the loader names none as unread.
 
 ## How progress is tracked
 
@@ -124,7 +125,7 @@ Events and intents, as step 5 built them:
 - An event is `{ type, ...fields }`. Its handler (`events.<type>`) is a list of `{ when, intents }` lines, each adding its
   intents when its `when` holds (no `when`: always), or `{ builtin: name, ...options }`, or `{ script }` (step 8; the loader
   warns, and the event does nothing until then). A handler reads the sheet and the event (`ev.amount`, `ev.inputs.position`)
-  and returns intents; it changes nothing. A line with `target` acts on campaign objects (step 7).
+  and returns intents; it changes nothing. A line with `target` acts on campaign objects (below).
 - In an intent's fields, `by`, `to`, `level` and `slot` are formulas. `key` (a log line's translation key), `definition` and
   `who` are names. Any other text is itself when it is a bare word or words (`stress`, `cut hand`), otherwise a formula
   (`ev.helper`, `'xp_' + actions[ev.inputs.action].group`). `actor` names whose sheet; none is the sheet the event is on.
@@ -183,6 +184,28 @@ Layout, as step 6 built it:
   top-level layout in a system with sheet kinds, and sections without a name, without widgets or named twice.
 - `modifierTypes` has a fourth rule, `best`: exactly one modifier of the type counts, the greatest. 5e's armor class base is
   one (`base: best`): worn armor, else the best of Unarmored Defense, each class's defense and 10 + Dexterity.
+
+Campaign objects, as step 7 built them (`Codex.Core.Rules.CampaignObjects`):
+- The system's `campaign` says what a campaign may keep: `clocks` (`segments`, the sizes allowed, any from 2 when empty;
+  `visibility`, of `gm` and `players`, the first a new clock's) and `tables` (`key`, `label`, `itemFields` with their
+  bounds, `visibility`: `players` unless `gm`). The state is the campaign's: `clocks: [{ name, segments, filled,
+  visibility }]` and, per table, `<key>: [{ name, ...fields }]`. Names are how intents find things, case aside.
+- An intent that names a `clock` or a `table` is the campaign's: `adjust { clock, by }`, `set { clock, to }`,
+  `adjust { table, row, field, by }`, `set { table, row, field, to }` (no `field`: the table's first number field). A clock
+  stays between empty and full, a field within its `min` and `max`. A clock that fills raises
+  `log { key: clock.full, args: [name] }`, once. One that names nothing the campaign has is left for the table.
+- A handler line's `target: campaign.clocks` or `target: campaign.<table>` says its intents are the campaign's: on the
+  clocks each must name its clock; on a table, the table is filled in when the intent names none. An event of an intent kind
+  that names a clock or table is that intent, applied to the campaign (a clock ticked by hand).
+- Problems, under `campaign.clocks` or `campaign.<table>`: a size the system does not have (`Actor.Rule.ClockSegments`), a
+  clock filled past its segments (`ClockFilled`), a visibility not allowed (`ClockVisibility`), two with one name
+  (`CampaignDuplicate`) or none (`CampaignUnnamed`), and a field outside its bounds (`Range`). The loader names clock sizes
+  under 2, visibilities other than `gm` and `players`, a table called `clocks`, defined twice or with a field `name`, and a
+  handler `target` the system does not have.
+- Stored as a document of its own per campaign (`CampaignObjectsDocument`), in the export, deleted with the campaign. The GM
+  changes them on the Table section; with the table live, through it (`CampaignEventCommand`, `EditCampaignObjectsCommand`),
+  so the change is in the session log and written back key by key. A player sees only what is not kept for the GM, and a log
+  line naming such a thing (`EventTerm.GmOnly`) is left out of a player's log.
 
 Rolls, as step 4 built them:
 - Inputs: each declared input is what the request supplied, else for `from: parent` the parent roll's, for `from: weapon`

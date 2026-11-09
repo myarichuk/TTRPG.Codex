@@ -97,3 +97,8 @@ d35.nonlethal-beyond-hit-points-knocks-out
 # Step 6 (layout and sheet kinds): each sheet kind's declared layout, and the generic one for a kind without.
 crew.each-sheet-kind-has-its-own-layout
 crew.a-kind-without-a-layout-gets-a-generic-one
+
+# Step 7 (campaign objects): clocks and tables owned by the campaign, their rules, and handler lines with a campaign target.
+crew.a-clock-fills-and-says-so
+crew.clock-sizes-are-the-systems
+crew.faction-status-stays-in-range

@@ -21,10 +21,14 @@ public sealed class SheetEventResult
 
     /// <summary>What applying them did to the sheet, and what is left for the table (<see cref="SheetIntentResult.Left"/>).</summary>
     public SheetIntentResult Applied { get; init; } = new();
+
+    /// <summary>What the campaign's intents did to its objects; null when no campaign state was given, and they are left for
+    /// the table with the rest.</summary>
+    public CampaignIntentResult? Campaign { get; init; }
 }
 
 /// <summary>A handler that cannot run: a formula that fails, a builtin that does not exist. <see cref="NotYet"/> is set when
-/// the handler is one this version does not run at all (a script, a campaign object), saying why.</summary>
+/// the handler is one this version does not run at all (a script), saying why.</summary>
 public sealed class SheetEventException(string message, string? notYet = null) : Exception(message)
 {
     public string? NotYet { get; } = notYet;
@@ -42,6 +46,10 @@ public sealed class SheetEventException(string message, string? notYet = null) :
 /// <c>ev</c>.</para>
 /// <para>An event whose type is a kind of intent (<c>adjust</c>, <c>set</c>, <c>mark</c>, <c>clear</c>, <c>condition</c>) is
 /// that intent, applied straight to the sheet: it is the table's own edit, and no handler runs for it.</para>
+/// <para>A line with <c>target: campaign.clocks</c> or <c>target: campaign.&lt;table&gt;</c> acts on the campaign's objects
+/// (<see cref="CampaignObjects"/>): its intents name a clock, or a table's row (the target's table when they name none). An
+/// intent that names a clock or a table is the campaign's wherever it comes from, and is applied to the campaign state when
+/// <see cref="Raise"/> is given one.</para>
 /// </summary>
 public static partial class SheetEvents
 {
@@ -76,17 +84,33 @@ public static partial class SheetEvents
     /// <summary>Raises <paramref name="ev"/> on <paramref name="sheet"/>: runs its handlers, then applies the intents for this
     /// sheet. <paramref name="self"/> is the sheet's actor id, so an intent naming it applies too.</summary>
     /// <exception cref="SheetEventException">A handler that cannot run.</exception>
-    public static SheetEventResult Raise(SystemDefinition system, IEntryResolver resolver, Dictionary<string, object> sheet, SheetEvent ev, string? self = null)
+    /// <param name="campaign">The campaign's objects, which the campaign's intents change; null leaves those for the table.</param>
+    public static SheetEventResult Raise(SystemDefinition system, IEntryResolver resolver, Dictionary<string, object> sheet, SheetEvent ev, string? self = null,
+        Dictionary<string, object>? campaign = null)
     {
         var direct = DirectKinds.Contains(ev.Type, StringComparer.Ordinal);
         var intents = direct ? new List<SheetIntent>() : Handle(system, resolver, sheet, ev).ToList();
         var toApply = direct
-            ? new[] { new SheetIntent(ev.Type, ev.Fields.GetValueOrDefault("actor")?.ToString(), ev.Fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => YamlValues.Normalize(f.Value), StringComparer.Ordinal)) }
-            : (IEnumerable<SheetIntent>)intents;
-        var applied = SheetIntents.Apply(system, resolver, sheet, toApply, self);
-        var result = new SheetEventResult { Applied = applied };
+            ? new List<SheetIntent> { new(ev.Type, ev.Fields.GetValueOrDefault("actor")?.ToString(), ev.Fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => YamlValues.Normalize(f.Value), StringComparer.Ordinal)) }
+            : intents;
+        var forCampaign = toApply.Where(CampaignObjects.IsFor).ToList();
+        var applied = SheetIntents.Apply(system, resolver, sheet, toApply.Where(i => !CampaignObjects.IsFor(i)), self);
+        CampaignIntentResult? onCampaign = null;
+        if (campaign != null)
+        {
+            onCampaign = CampaignObjects.Apply(system, campaign, forCampaign);
+            applied.Left.AddRange(onCampaign.Left);
+            applied.Left.AddRange(onCampaign.Raised);
+        }
+        else
+        {
+            applied.Left.AddRange(forCampaign);
+        }
+
+        var result = new SheetEventResult { Applied = applied, Campaign = onCampaign };
         result.Intents.AddRange(intents);
         result.Intents.AddRange(applied.Raised);
+        if (onCampaign != null) result.Intents.AddRange(onCampaign.Raised);
         return result;
     }
 
@@ -113,15 +137,13 @@ public static partial class SheetEvents
                 foreach (var line in lines.Cast<object?>())
                 {
                     if (line is not IDictionary<string, object> entry) throw new SheetEventException($"A {ev.Type} handler line is not {{ when, intents }}.");
-                    if (entry.TryGetValue("target", out var target))
-                    {
-                        throw new SheetEventException($"A {ev.Type} handler acts on {target}.", "campaign objects (clocks, faction tables) come in overhaul step 7");
-                    }
-
+                    var target = entry.TryGetValue("target", out var named) ? Target(system, ev, named?.ToString()) : null;
                     if (entry.Get("when")?.ToString() is { } when && Evaluate(model, ev, "when", when, names) is not true) continue;
                     foreach (var intent in entry.Get("intents") as IEnumerable ?? Array.Empty<object>())
                     {
-                        intents.Add(Intent(model, ev, intent, names));
+                        var made = Intent(model, ev, intent, names);
+                        if (target is { } on) made = OnTarget(ev, on, made);
+                        intents.Add(made);
                     }
                 }
 
@@ -129,6 +151,35 @@ public static partial class SheetEvents
             default:
                 throw new SheetEventException($"The {ev.Type} handler is neither {{ builtin }}, {{ script }} nor a list of {{ when, intents }}.");
         }
+    }
+
+    // ---- Campaign targets ----
+
+    /// <summary>What a line's <c>target</c> names: <c>clocks</c>, or a table's key.</summary>
+    private static string Target(SystemDefinition system, SheetEvent ev, string? target) =>
+        TargetProblem(system, target) is { } problem ? throw new SheetEventException($"A {ev.Type} handler line: {problem}") : target!["campaign.".Length..];
+
+    /// <summary>Why a line's <c>target</c> is not one the system has; null when it is.</summary>
+    internal static string? TargetProblem(SystemDefinition system, string? target)
+    {
+        const string prefix = "campaign.";
+        if (target == null || !target.StartsWith(prefix, StringComparison.Ordinal)) return $"target is campaign.clocks or campaign.<table>, not \"{target}\".";
+        var key = target[prefix.Length..];
+        if (key == CampaignObjects.ClocksKey) return system.Campaign?.Clocks == null ? "the target is the campaign's clocks, and the system has no clocks." : null;
+        return CampaignObjects.TableOf(system, key) == null ? $"the target is the campaign table \"{key}\", which the system does not have." : null;
+    }
+
+    /// <summary>A target line's intent, naming its table when it names none; one for the clocks must name its clock.</summary>
+    private static SheetIntent OnTarget(SheetEvent ev, string target, SheetIntent intent)
+    {
+        if (target == CampaignObjects.ClocksKey)
+        {
+            return intent.Fields.ContainsKey("clock") ? intent : throw new SheetEventException($"A {ev.Type} handler's {intent.Kind} acts on the clocks, and names no clock.");
+        }
+
+        if (intent.Fields.ContainsKey("table")) return intent;
+        var fields = new Dictionary<string, object?>(intent.Fields, StringComparer.Ordinal) { ["table"] = target };
+        return intent with { Fields = fields };
     }
 
     // ---- Intents from a handler line ----
@@ -334,6 +385,11 @@ public static partial class SheetEvents
                         {
                             problems.Add($"A {type} handler line is not {{ when, intents }}.");
                             continue;
+                        }
+
+                        if (entry.TryGetValue("target", out var target) && TargetProblem(system, target?.ToString()) is { } targetProblem)
+                        {
+                            problems.Add($"A {type} handler line: {targetProblem}");
                         }
 
                         foreach (var intent in intents.Cast<object?>())

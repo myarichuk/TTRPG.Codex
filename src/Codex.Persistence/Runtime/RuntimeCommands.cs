@@ -1107,3 +1107,50 @@ internal static class LogTerms
     public static EventTerm Resource(CampaignRuntime runtime, string key) =>
         EventTerm.Resource(key, runtime.System?.Resources.FirstOrDefault(r => r.Key == key)?.Label ?? key);
 }
+
+/// <summary>An event that is the campaign's (overhaul step 7): a clock ticked (<c>adjust { clock, by }</c>), a faction's status
+/// moved, or a declared event with no actor whose handlers act on the campaign's objects. GM only, which the caller checks.</summary>
+public sealed record CampaignEventCommand(string Type, IReadOnlyDictionary<string, object?> Fields) : IRuntimeCommand
+{
+    private TableEvents.Outcome _outcome = TableEvents.Outcome.None;
+
+    public IReadOnlyCollection<string> AffectedActorIds => _outcome.Touched;
+
+    /// <summary>Once applied: why the handler could not run, or null.</summary>
+    public string? Failed => _outcome.Failed;
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        if (runtime.System is not { } system || !Codex.Core.Rules.SheetEvents.Handles(system, Type)) return;
+        _outcome = TableEvents.RaiseOnCampaign(runtime, new Codex.Core.Rules.SheetEvent(Type, Fields));
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("Campaign", _outcome.Messages.Count > 0 ? _outcome.Messages : new[] { EventMessage.Of("Campaign.Nothing", Type) },
+            _outcome.Touched.Count > 0 ? _outcome.Touched.Distinct().ToArray() : null);
+}
+
+/// <summary>The GM changing the campaign's objects themselves (a clock added, renamed or resized; a faction added): the edit
+/// runs on the table's copy and returns false to change nothing. <see cref="Said"/> is what the log says; a message about
+/// something kept for the GM names it with <see cref="EventTerm.GmOnly"/>.</summary>
+public sealed record EditCampaignObjectsCommand(Func<Dictionary<string, object>, bool> Edit, EventMessage Said) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    /// <summary>Once applied: whether the edit changed anything.</summary>
+    public bool Changed { get; private set; }
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var state = runtime.CampaignObjectState;
+        var before = Codex.Core.Rules.CampaignObjects.Copy(state);
+        Changed = Edit(state);
+        if (!Changed) return;
+        foreach (var key in state.Keys.Union(before.Keys).Where(k => !Codex.Core.YamlValues.SameValue(state.GetValueOrDefault(k), before.GetValueOrDefault(k))).ToList())
+        {
+            runtime.CampaignKeyWritten(key);
+        }
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Campaign", new[] { Changed ? Said : EventMessage.Of("Campaign.Unchanged") });
+}

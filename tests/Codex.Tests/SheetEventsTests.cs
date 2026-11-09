@@ -256,7 +256,7 @@ public class SheetEventsTests
     }
 
     [Fact]
-    public void AHandlerThatCannotRun_SaysWhy_AndScriptsAndCampaignObjectsWaitForTheirSteps()
+    public void AHandlerThatCannotRun_SaysWhy_AndScriptsWaitForTheirStep()
     {
         var system = System("""
             {
@@ -273,7 +273,9 @@ public class SheetEventsTests
         Assert.Contains("nothing called \"nothing\"", Raise("broken").Message);
         Assert.Null(Raise("broken").NotYet);
         Assert.Contains("step 8", Raise("scripted").NotYet);
-        Assert.Contains("step 7", Raise("tick").NotYet);
+        // A clock line on a system with no clocks is a mistake, not a step to wait for (campaign objects are step 7's).
+        Assert.Contains("has no clocks", Raise("tick").Message);
+        Assert.Null(Raise("tick").NotYet);
         Assert.Contains("not a built-in handler", Raise("odd").Message);
         Assert.Empty(SheetEvents.Raise(system, NullEntryResolver.Instance, sheet, SheetEvent.Of("unhandled")).Intents);
         Assert.Empty(sheet);

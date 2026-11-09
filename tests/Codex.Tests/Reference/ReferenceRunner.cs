@@ -50,8 +50,12 @@ public interface IReferenceSystem
     /// roll, <paramref name="participants"/> are the sheets joining it, by spec sheet id.</summary>
     CheckOr<RollCheck> Roll(Dictionary<string, object> sheet, string? sheetId, SpecRoll roll, IReadOnlyDictionary<string, Dictionary<string, object>> participants);
 
-    /// <summary>Raises the spec's event on the sheet and applies what it asks of that sheet.</summary>
-    CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev);
+    /// <summary>Raises the spec's event on the sheet and applies what it asks of that sheet and of the campaign's objects
+    /// (<paramref name="campaign"/>, changed in place).</summary>
+    CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev, Dictionary<string, object> campaign);
+
+    /// <summary>The problems the host reports for the campaign's objects, as (field, key).</summary>
+    CheckOr<IReadOnlyList<(string Field, string Key)>> CampaignViolations(Dictionary<string, object> campaign);
 
     /// <summary>The sheet kind's declared layout, as its section names; empty when the generic one is used.</summary>
     CheckOr<IReadOnlyList<string>> Layout(Dictionary<string, object> sheet);
@@ -124,6 +128,7 @@ public static class ReferenceRunner
         if ((expectation.With?.Campaign != null || expect.After?.Campaign != null || (expectation.Sheet == null && expectation.Event != null))
             && system.HasNoCampaignObjects is { } noCampaign) return Result(CheckStatus.Unsupported, noCampaign);
         var sheet = SpecSheets.Compose(spec, expectation);
+        var campaign = SpecSheets.Campaign(spec, expectation);
         var problems = new List<string>();
 
         if (expect.Layout is { } layout)
@@ -167,7 +172,7 @@ public static class ReferenceRunner
 
         if (expectation.Event is { } ev)
         {
-            var raised = system.Raise(sheet, expectation.Sheet, ev);
+            var raised = system.Raise(sheet, expectation.Sheet, ev, campaign);
             if (raised.Unsupported is { } why) return Result(CheckStatus.Unsupported, why);
             if (raised.Value!.Failed is { } failed) return Result(CheckStatus.Fail, $"the event failed: {failed}");
             if (expect.Intents is { } wanted)
@@ -213,7 +218,28 @@ public static class ReferenceRunner
                 }
             }
 
-            if (after.Campaign != null) return Result(CheckStatus.Unsupported, "there are no clocks or campaign tables (step 7)");
+            // Each named object is found by name in the campaign's list, and only the fields named are compared.
+            foreach (var (key, wanted) in YamlValues.NormalizeMap(after.Campaign))
+            {
+                var actual = (YamlValues.Normalize(campaign.GetValueOrDefault(key)) as System.Collections.IEnumerable)?.Cast<object?>().OfType<IDictionary<string, object>>().ToList()
+                    ?? new List<IDictionary<string, object>>();
+                foreach (var entry in (wanted as System.Collections.IEnumerable)?.Cast<object?>().OfType<IDictionary<string, object>>() ?? Enumerable.Empty<IDictionary<string, object>>())
+                {
+                    var name = entry.TryGetValue("name", out var n) ? n?.ToString() : null;
+                    var found = actual.FirstOrDefault(a => string.Equals(a.TryGetValue("name", out var m) ? m?.ToString() : null, name, StringComparison.Ordinal));
+                    if (found == null)
+                    {
+                        problems.Add($"after, campaign {key}: no {name}");
+                        continue;
+                    }
+
+                    foreach (var (field, value) in entry.Where(f => f.Key != "name"))
+                    {
+                        var has = found.TryGetValue(field, out var got) ? got : null;
+                        if (!Same(has, value)) problems.Add($"after, campaign {key} {name} {field}: {Describe(has)}, expected {Describe(value)}");
+                    }
+                }
+            }
         }
 
         if (expect.Values != null)
@@ -229,10 +255,14 @@ public static class ReferenceRunner
 
         if (expect.Violations != null)
         {
-            var found = system.Violations(sheet);
+            // The sheet's problems when the expectation is about a sheet, and the campaign's always: the spec's own campaign
+            // breaks no rule, so only what the expectation lays over it can.
+            var found = expectation.Sheet != null ? system.Violations(sheet) : CheckOr<IReadOnlyList<(string Field, string Key)>>.Of(Array.Empty<(string, string)>());
             if (found.Unsupported is { } why) return Result(CheckStatus.Unsupported, why);
+            var onCampaign = system.CampaignViolations(campaign);
+            if (onCampaign.Unsupported is { } whyNot) return Result(CheckStatus.Unsupported, whyNot);
             var wanted = expect.Violations.Select(v => (v.Field, v.Key)).OrderBy(v => v).ToList();
-            var actual = found.Value!.OrderBy(v => v).ToList();
+            var actual = found.Value!.Concat(onCampaign.Value!).OrderBy(v => v).ToList();
             if (!wanted.SequenceEqual(actual))
             {
                 problems.Add($"violations: [{string.Join("; ", actual.Select(v => $"{v.Field} {v.Key}"))}], expected [{string.Join("; ", wanted.Select(v => $"{v.Field} {v.Key}"))}]");
@@ -269,7 +299,7 @@ public static class ReferenceRunner
 
 /// <summary>
 /// The rules engine as it is: <see cref="SheetRuleEngine.Recompute"/> over the fixture's system and packs, a value being any
-/// number it leaves on the sheet or derives. It has no campaign objects, and says so.
+/// number it leaves on the sheet or derives, and <see cref="CampaignObjects"/> for the campaign's.
 /// </summary>
 public sealed class CurrentEngineHost : IReferenceHost
 {
@@ -299,7 +329,10 @@ public sealed class CurrentEngineHost : IReferenceHost
 
         public CheckOr<IReadOnlyList<string>> Layout(Dictionary<string, object> sheet) =>
             CheckOr<IReadOnlyList<string>>.Of(SheetLayout.Declared(definition, sheet).Select(s => s.Section).ToList());
-        public string? HasNoCampaignObjects => "there are no clocks or campaign tables (step 7)";
+        public string? HasNoCampaignObjects => null;
+
+        public CheckOr<IReadOnlyList<(string Field, string Key)>> CampaignViolations(Dictionary<string, object> campaign) =>
+            CheckOr<IReadOnlyList<(string, string)>>.Of(CampaignObjects.Problems(definition, campaign).Select(v => (v.FieldKey, v.Key ?? "")).ToList());
 
         public CheckOr<IReadOnlyDictionary<string, double>> Values(Dictionary<string, object> sheet)
         {
@@ -353,14 +386,14 @@ public sealed class CurrentEngineHost : IReferenceHost
             return CheckOr<RollCheck>.Of(new RollCheck(result.Outcome, result.Totals().ToList(), result.Kept, dice.Used + joining.Sum(p => p.Source.Used), result.Carries, after));
         }
 
-        public CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev)
+        public CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev, Dictionary<string, object> campaign)
         {
             var fields = YamlValues.NormalizeMap(ev.Where(f => f.Key != "type").ToDictionary(f => f.Key, f => f.Value))
                 .ToDictionary(f => f.Key, f => (object?)f.Value, StringComparer.Ordinal);
             var after = new Dictionary<string, object>(sheet);
             try
             {
-                var result = SheetEvents.Raise(definition, this, after, new SheetEvent(ev.GetValueOrDefault("type")?.ToString() ?? "", fields), sheetId);
+                var result = SheetEvents.Raise(definition, this, after, new SheetEvent(ev.GetValueOrDefault("type")?.ToString() ?? "", fields), sheetId, campaign);
                 return CheckOr<EventCheck>.Of(new EventCheck(result.Intents.Select(Shape).ToList(), after));
             }
             catch (SheetEventException ex) when (ex.NotYet is { } notYet)

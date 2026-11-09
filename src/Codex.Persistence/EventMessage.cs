@@ -93,6 +93,12 @@ public sealed record EventTerm(string Kind, string Key, string Text)
     /// <summary>An actor this reader cannot see, put in place of its name by <see cref="SessionEventRedactor"/>.</summary>
     public const string UnseenKind = "unseen";
 
+    /// <summary>Something only the GM may know of (a clock kept for the GM): a message naming one is not in a player's log
+    /// (<see cref="SessionEventRedactor"/>).</summary>
+    public const string GmOnlyKind = "gm";
+
+    public static EventTerm GmOnly(string text) => new(GmOnlyKind, text, text);
+
     public static EventTerm Condition(string name) => new(ConditionKind, name, name);
     public static EventTerm DamageType(string type) => new(DamageTypeKind, type, type);
     public static EventTerm Rest(string name) => new(RestKind, name, name);

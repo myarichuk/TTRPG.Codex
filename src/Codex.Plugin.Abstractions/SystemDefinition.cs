@@ -423,6 +423,10 @@ public class SystemDefinition
     /// built-in widgets, in the order the sheet has always had them (Codex.Core.Rules.SheetLayout).</summary>
     public List<LayoutSection> Layout { get; set; } = new();
 
+    /// <summary>State the campaign owns rather than a sheet: clocks and tables (faction status, a party treasure). Null: none.
+    /// The state itself is the campaign's (Codex.Core.Rules.CampaignObjects).</summary>
+    public CampaignObjectsDefinition? Campaign { get; set; }
+
     /// <summary>How bonuses of one type combine on one target.</summary>
     public ModifierTypesDefinition ModifierTypes { get; set; } = new();
 

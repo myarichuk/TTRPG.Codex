@@ -399,4 +399,10 @@
   <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>Убрать «{0}»</value></data>
   <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>занято {0} из {1}</value></data>
   <data name="Actor.Sheet.RollAtTable" xml:space="preserve"><value>Бросок сделан за столом: он в общем журнале, а его цена учтена там.</value></data>
+  <data name="Actor.Rule.ClockSegments" xml:space="preserve"><value>{0}: у часов бывает {2} сегментов, а не {1}.</value></data>
+  <data name="Actor.Rule.ClockFilled" xml:space="preserve"><value>{0}: заполнено {1} из {2}.</value></data>
+  <data name="Actor.Rule.ClockVisibility" xml:space="preserve"><value>{0}: «{1}» — не вариант; часы видит либо только ведущий, либо все игроки.</value></data>
+  <data name="Actor.Rule.Range" xml:space="preserve"><value>{0}: {1} {2} вне диапазона {3}.</value></data>
+  <data name="Actor.Rule.CampaignDuplicate" xml:space="preserve"><value>Два объекта названы «{0}».</value></data>
+  <data name="Actor.Rule.CampaignUnnamed" xml:space="preserve"><value>У одного нет имени.</value></data>
 </root>

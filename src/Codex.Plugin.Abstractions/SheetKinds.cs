@@ -304,3 +304,34 @@ public sealed class TrackHoldsDefinition
     public string? Where { get; set; }
     public string? Message { get; set; }
 }
+
+/// <summary>
+/// What a system lets a campaign keep beside its sheets (overhaul section 3, "Campaign objects"): clocks, and tables of named
+/// rows with fields (Blades' faction status). The campaign holds the state; this says what is allowed.
+/// </summary>
+public sealed class CampaignObjectsDefinition
+{
+    /// <summary>Clocks: null when the system has none.</summary>
+    public ClockRulesDefinition? Clocks { get; set; }
+
+    public List<CampaignTableDefinition> Tables { get; set; } = new();
+}
+
+/// <summary>The clocks a campaign may keep: the sizes allowed (empty: any size from 2), and who may see one.</summary>
+public sealed class ClockRulesDefinition
+{
+    public List<int> Segments { get; set; } = new();
+
+    /// <summary><c>gm</c> (the GM alone) and <c>players</c> (everyone at the table); the first is a new clock's.</summary>
+    public List<string> Visibility { get; set; } = new() { "gm", "players" };
+}
+
+/// <summary>A table of named rows, each with the <see cref="ItemFields"/> (status from -3 to 3). Who may see it is the table's:
+/// <c>players</c> (the default) or <c>gm</c>.</summary>
+public sealed class CampaignTableDefinition
+{
+    public string Key { get; set; } = string.Empty;
+    public string? Label { get; set; }
+    public List<ItemFieldDefinition> ItemFields { get; set; } = new();
+    public string Visibility { get; set; } = "players";
+}

@@ -20,6 +20,7 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     private readonly ComponentRegistry componentRegistry;
     private readonly PluginLoader pluginLoader;
     private readonly ILoggerFactory loggerFactory;
+    private readonly ICampaignObjectsRepository? campaignObjects;
     private readonly ConcurrentDictionary<string, CampaignRuntime> _runtimes = new();
 
     /// <param name="lifecycle">When given, a campaign's runtime is stopped just before the campaign is
@@ -32,8 +33,10 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         ComponentRegistry componentRegistry,
         PluginLoader pluginLoader,
         ILoggerFactory loggerFactory,
-        CampaignLifecycleHooks? lifecycle = null)
+        CampaignLifecycleHooks? lifecycle = null,
+        ICampaignObjectsRepository? campaignObjects = null)
     {
+        this.campaignObjects = campaignObjects;
         this.actorRepository = actorRepository;
         this.sessionRepository = sessionRepository;
         this.campaignRepository = campaignRepository;
@@ -122,6 +125,11 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
                 }
 
                 runtime.Hydrate((await actorRepository.GetVisibleForCampaignAsync(dmAccess)).Where(a => !a.Retired));
+                if (campaignObjects != null)
+                {
+                    runtime.CampaignObjectsStore = campaignObjects;
+                    runtime.HydrateCampaignObjects((await campaignObjects.GetDocumentAsync(campaign.Id))?.State);
+                }
             }
             catch
             {
@@ -137,6 +145,58 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         {
             gate.Release();
         }
+    }
+
+    /// <summary>The GM changing the campaign's clocks and tables (overhaul step 7): through the table when it is live, so the
+    /// change is the table's and in its log, else straight to the stored objects. <paramref name="edit"/> returns false to change
+    /// nothing, and may run more than once on the stored path (once per write that lost a race). Returns whether it changed
+    /// anything; false for anyone but the GM.</summary>
+    public async Task<bool> TryChangeCampaignObjectsAsync(CampaignAccess access, Func<Dictionary<string, object>, bool> edit, EventMessage said)
+    {
+        if (!access.IsDm || access.SystemMissing) return false;
+        if (TryGet(access.CampaignId) is { } runtime)
+        {
+            var command = new EditCampaignObjectsCommand(edit, said);
+            await runtime.EnqueueAsync(command);
+            return command.Changed;
+        }
+
+        if (campaignObjects == null) return false;
+        var changed = false;
+        var saved = await campaignObjects.TryChangeAsync(access, state => changed = edit(state));
+        return saved != null && changed;
+    }
+
+    /// <summary>Raises an event that is the campaign's (a clock ticked, or a declared event with no actor): at the table when it
+    /// is live, else on the stored objects alone (what it asks of actors waits for a table). Returns why it could not, or null.
+    /// GM only.</summary>
+    public async Task<string?> RaiseCampaignEventAsync(CampaignAccess access, SystemDefinition system, string type, IReadOnlyDictionary<string, object?> fields)
+    {
+        if (!access.IsDm || access.SystemMissing) return "Only the GM changes the campaign's objects.";
+        if (TryGet(access.CampaignId) is { } runtime)
+        {
+            var command = new CampaignEventCommand(type, fields);
+            await runtime.EnqueueAsync(command);
+            return command.Failed;
+        }
+
+        if (campaignObjects == null) return "The campaign's objects are not stored here.";
+        string? failed = null;
+        await campaignObjects.TryChangeAsync(access, state =>
+        {
+            try
+            {
+                var raised = Codex.Core.Rules.SheetEvents.Raise(system, Codex.Core.Rules.NullEntryResolver.Instance, new Dictionary<string, object>(),
+                    new Codex.Core.Rules.SheetEvent(type, fields), null, state);
+                return raised.Campaign is { Changed.Count: > 0 };
+            }
+            catch (Exception ex) when (ex is Codex.Core.Rules.SheetEventException or Codex.Core.Rules.FormulaException)
+            {
+                failed = ex.Message;
+                return false;
+            }
+        });
+        return failed;
     }
 
     private CampaignRuntime? TryGetRunning(string campaignId, string? sessionId)

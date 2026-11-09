@@ -164,4 +164,18 @@
   <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: the table does not do {1} yet.</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} rolled {1}: {2} ({3}).</value></data>
+  <data name="Event.Type.Campaign" xml:space="preserve"><value>Campaign</value></data>
+  <data name="Event.Campaign.ClockChanged" xml:space="preserve"><value>{0}: {1} → {2} of {3}.</value></data>
+  <data name="Event.Campaign.ClockFull" xml:space="preserve"><value>{0} is full.</value></data>
+  <data name="Event.Campaign.RowChanged" xml:space="preserve"><value>{0}, {1}: {2} {3} → {4}.</value></data>
+  <data name="Event.Campaign.NotThere" xml:space="preserve"><value>The campaign has nothing called {0}.</value></data>
+  <data name="Event.Campaign.Failed" xml:space="preserve"><value>The system rule for {0} could not run ({1}).</value></data>
+  <data name="Event.Campaign.Nothing" xml:space="preserve"><value>{0}: nothing changes.</value></data>
+  <data name="Event.Campaign.Unchanged" xml:space="preserve"><value>The campaign's clocks and tables: nothing changes.</value></data>
+  <data name="Event.Campaign.ClockAdded" xml:space="preserve"><value>New clock: {0}, {1} segments.</value></data>
+  <data name="Event.Campaign.ClockEdited" xml:space="preserve"><value>Clock {0} changed.</value></data>
+  <data name="Event.Campaign.ClockRemoved" xml:space="preserve"><value>Clock {0} removed.</value></data>
+  <data name="Event.Campaign.RowAdded" xml:space="preserve"><value>{0}: {1} added.</value></data>
+  <data name="Event.Campaign.RowEdited" xml:space="preserve"><value>{0}: {1} changed.</value></data>
+  <data name="Event.Campaign.RowRemoved" xml:space="preserve"><value>{0}: {1} removed.</value></data>
 </root>

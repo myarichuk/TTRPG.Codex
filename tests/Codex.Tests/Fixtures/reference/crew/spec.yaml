@@ -200,7 +200,7 @@ expectations:
     event: { type: tick, clock: the vault's alarm, by: 3 }
     expect:
       after: { campaign: { clocks: [{ name: the vault's alarm, filled: 6 }] } }
-      intents: [{ log: { key: clock.full, args: [the vault's alarm] } }]
+      intents: [{ adjust: { clock: the vault's alarm, by: 3 } }, { log: { key: clock.full, args: [the vault's alarm] } }]
     why: "4 + 3 on six segments: full at 6, the extra segment is lost."
   - id: crew.clock-sizes-are-the-systems
     step: 7

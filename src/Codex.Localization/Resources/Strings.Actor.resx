@@ -399,4 +399,10 @@
   <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>Remove {0}</value></data>
   <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>{0} of {1} used</value></data>
   <data name="Actor.Sheet.RollAtTable" xml:space="preserve"><value>Rolled at the table: it is in the shared roll log, and what it costs was applied there.</value></data>
+  <data name="Actor.Rule.ClockSegments" xml:space="preserve"><value>{0}: a clock has {2} segments, not {1}.</value></data>
+  <data name="Actor.Rule.ClockFilled" xml:space="preserve"><value>{0}: {1} filled of {2} segments.</value></data>
+  <data name="Actor.Rule.ClockVisibility" xml:space="preserve"><value>{0}: no one is "{1}"; a clock is kept for the GM or shown to the players.</value></data>
+  <data name="Actor.Rule.Range" xml:space="preserve"><value>{0}: {1} {2} is outside {3}.</value></data>
+  <data name="Actor.Rule.CampaignDuplicate" xml:space="preserve"><value>Two are named {0}.</value></data>
+  <data name="Actor.Rule.CampaignUnnamed" xml:space="preserve"><value>One has no name.</value></data>
 </root>

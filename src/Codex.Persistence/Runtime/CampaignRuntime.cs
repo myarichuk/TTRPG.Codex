@@ -39,6 +39,10 @@ public sealed class CampaignRuntime : IAsyncDisposable
     // Sheet keys the table itself changed (an event's intents: a slot track, the sheet's conditions), by actor: the next persist
     // writes exactly these from the cached sheet, so a field nobody at the table touched is never written over.
     private readonly Dictionary<string, HashSet<string>> _pendingSheetKeys = new();
+    // The campaign's clocks and tables (overhaul step 7), loop-owned like the actors, and the keys the table changed since the
+    // last persist: the persist writes exactly those, so a key nobody at the table touched is never written over.
+    private Dictionary<string, object> _campaignObjects = new();
+    private readonly HashSet<string> _pendingCampaignKeys = new(StringComparer.Ordinal);
     // Hydrated ids, readable from any thread: lets a caller decide between the runtime and the
     // repository without touching the loop-owned dictionaries.
     private readonly ConcurrentDictionary<string, byte> _hydratedIds = new();
@@ -79,6 +83,10 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// <summary>The campaign's library for the rules the table runs (an event handler reading an item, a track's maximum from a
     /// class): set by the host when the table starts. None knows no entries.</summary>
     public Codex.Core.Rules.IEntryResolver Resolver { get; set; } = Codex.Core.Rules.NullEntryResolver.Instance;
+
+    /// <summary>Where the campaign's clocks and tables are written back; set by the host when the table starts. None: they
+    /// change at the table and are not stored.</summary>
+    public ICampaignObjectsRepository? CampaignObjectsStore { get; set; }
 
     /// <summary>The live session commands log to (3.2) and read back from - a combat console
     /// reads <see cref="SessionDocument.RollLog"/> and <see cref="SessionDocument.Notes"/>
@@ -146,6 +154,20 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
         PublishSnapshot();
     }
+
+    /// <summary>Takes the campaign's clocks and tables as stored. Called once, with <see cref="Hydrate"/>.</summary>
+    public void HydrateCampaignObjects(IReadOnlyDictionary<string, object>? state)
+    {
+        _campaignObjects = Codex.Core.Rules.CampaignObjects.Copy(state);
+        PublishSnapshot();
+    }
+
+    /// <summary>The campaign's clocks and tables as the table has them now. Loop-owned: only a command may read or change it; a
+    /// page reads <see cref="RuntimeSnapshot.Campaign"/>.</summary>
+    internal Dictionary<string, object> CampaignObjectState => _campaignObjects;
+
+    /// <summary>A command changed this key of the campaign's objects: the next persist writes it.</summary>
+    internal void CampaignKeyWritten(string key) => _pendingCampaignKeys.Add(key);
 
     /// <summary>Hydrates one actor into the live ECS world - the common step behind both the
     /// startup <see cref="Hydrate"/> pass and <c>HydrateActorCommand</c> (3.7), which adds a
@@ -647,6 +669,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
                     var affectedActorIds = _dirtyActorIds.ToArray();
 
                     await PersistDirtyAsync();
+                    await PersistCampaignObjectsAsync();
                     await AppendSessionEventAsync(queued.Command);
                     await PersistEncounterAsync();
                     PublishSnapshot();
@@ -737,6 +760,14 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _dirtyActorIds.Clear();
         _pendingSheetWrites.Clear();
         _pendingSheetKeys.Clear();
+    }
+
+    private async Task PersistCampaignObjectsAsync()
+    {
+        if (_pendingCampaignKeys.Count == 0) return;
+        var keys = _pendingCampaignKeys.ToList();
+        _pendingCampaignKeys.Clear();
+        if (CampaignObjectsStore != null) await CampaignObjectsStore.WriteKeysAsync(CampaignId, Codex.Core.Rules.CampaignObjects.Copy(_campaignObjects), keys);
     }
 
     /// <summary>Applies a sheet save made while the table is live (see <c>ReplaceActorCommand</c>):
@@ -873,7 +904,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
             _activeSession?.RollLog.ToArray() ?? Array.Empty<RollLogEntry>(),
             _activeSession?.Notes.ToArray() ?? Array.Empty<SessionNote>(),
             actors,
-            _rosterVersion);
+            _rosterVersion,
+            Codex.Core.Rules.CampaignObjects.Copy(_campaignObjects));
     }
 
     /// <summary>Write-through for the initiative tracker (3.5), mirroring

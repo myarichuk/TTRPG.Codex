@@ -185,8 +185,8 @@ GM-owned), and the sheet kind is system data on the actor.
 
 ### Campaign objects
 Tracks and tables owned by the campaign, not an actor: Blades clocks and faction status, a 3.5 party treasure, a CPR
-reputation track. They have the same track semantics, visibility (GM only or shown to players), and live in the
-campaign document.
+reputation track. They have the same track semantics, visibility (GM only or shown to players), and live beside the
+campaign document, in one of their own (step 7 says why).
 
 ### Layout
 A sheet kind's layout is data: sections of widgets bound to keys.
@@ -532,8 +532,8 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
        cannot yet say what those rules do: end the effects another creature holds by concentrating, kill (which ends what
        the dead one held and its turn counters), and count death saves both ways (three successes stabilise, three failures
        kill) on counters the ECS keeps, not the sheet. Re-expressing them means intents for those, death saves as tracks with
-       thresholds, and the host reacting to `Dead`, against 60 encounter and runtime tests that pin today's behaviour. That
-       is a step of its own, best taken with step 8, when a script handler will need the same vocabulary.
+       thresholds, and the host reacting to `Dead`, against 60 encounter and runtime tests that pin today's behaviour. Moved
+       to step 8 (decided 2026-11-09), where a script handler needs the same vocabulary.
      - srd5e's skills (a keyed list with a 0/1/2 multiplier) and hit point maximum (a built-in `hitPoints` function) were
        not moved: the panels read `SkillScore` and `HitPointSummary`, which the stages already produce from the same inputs,
        so moving them changes no result and no panel. They move when a system other than 5e needs those functions.
@@ -541,8 +541,39 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
        they are not in the session log. The table has no control for raising an arbitrary declared event (`sessionEnd` with
        its answers); `RaiseEventCommand` exists for one.
 7. **Campaign objects.** Clocks and faction tables. Blades goes green except for scripted parts.
+   - *Done 2026-11-09.* `Codex.Core.Rules.CampaignObjects` reads the system's `campaign` (clock sizes and visibilities,
+     tables of named rows with bounded fields) and the campaign's state beside it:
+     - problems under `campaign.clocks` and `campaign.<table>`: sizes, fills, visibilities, duplicate or missing names,
+       fields out of range; the loader checks the section itself and every handler line's `target`;
+     - intents that name a `clock` or a `table` (`adjust`, `set`), kept within bounds; a clock that fills raises its
+       `clock.full` log line once;
+     - copy-on-write edits for the GM (add, resize, show or hide, rename and remove clocks; add, edit and remove rows), and
+       what a player may see.
+
+     `SheetEvents` runs `target` lines and sends the campaign's intents to the campaign state when given one, else leaves them
+     for the table. The state is a document of its own (`CampaignObjectsDocument`, `CampaignObjects/{campaignId}`), not a
+     field of the campaign: a clock ticks every few minutes at the table, and the campaign document is saved whole from
+     Settings, so sharing it would have each lose the other's writes. It is exported and deleted with the campaign.
+     The live table holds it like an actor: loaded at start, changed by commands (`CampaignEventCommand` for a tick or an
+     event with no actor, `EditCampaignObjectsCommand` for the GM's edits; an actor's event or roll whose intents reach a
+     clock changes it too), written back key by key, in the snapshot. Without a table the GM's changes go to the store.
+     The Table section has a panel for them: clocks drawn as segmented faces with tick buttons, each table's rows with −/+
+     for number fields. A player sees what is not kept for the GM, live while the table runs. A log line naming
+     something kept for the GM (`EventTerm.GmOnly`) is left out of a player's log by `SessionEventRedactor`.
+
+     83 of 95 pass: every step-7 expectation. One fixture fix: `crew.a-clock-fills-and-says-so` expected only the `log`
+     intent, but `expect.intents` is the handler's intents and then what the changes raised, so the `adjust` comes first.
+     Every key of the three fixtures' `system.yaml` is read now. The remaining 12 are street's scripted rules (step 8): its
+     functions, the thresholds and checks that read `HP_Max`, and its scripted handlers.
+   - *Not done, and why:* undo does not cover the campaign's objects (it is per creature, and a clock is no creature; the GM
+     ticks back with −). A sheet formula cannot read a clock or a faction's status: nothing in the fixtures asks for it, and
+     it would make a sheet's values depend on campaign state the sheet page does not load.
 8. **Jint.** Functions first, then event handlers; `codex.d.ts`; `Codex.SystemCheck`. The CPR fixture's scripted rules
    go green.
+   Moved here from step 6: srd5e's damage, death saves, concentration and rests as built-in handlers returning intents. The
+   intent vocabulary grows by what they need and a script handler needs too: ending effects another creature holds
+   (concentration), killing (which ends what the dead one held and its turn counters), and counters the table keeps beside
+   the sheet (death saves both ways). Today's `TableRules` code and its 60 encounter and runtime tests are the oracle.
 9. **Compiled supplier.** Functions and widget DLLs, with the same contract tests.
 10. **Install, reload, versioning, separate distribution.** The JSON schema and reference docs land alongside, from
     step 2 onwards.

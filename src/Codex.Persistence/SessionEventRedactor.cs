@@ -63,7 +63,10 @@ public static class SessionEventRedactor
             }
 
             var exact = evt.PlayerDescription == null || own;
-            var parts = (exact ? evt.Parts : evt.PlayerParts ?? new List<EventMessage>()).Select(p => Named(p, names)).ToList();
+            var said = exact ? evt.Parts : evt.PlayerParts ?? new List<EventMessage>();
+            // A message about something kept for the GM (a clock) is not the player's; an event made only of those is not either.
+            var parts = said.Where(p => !GmOnly(p)).Select(p => Named(p, names)).ToList();
+            if (parts.Count == 0 && said.Count > 0) continue;
             result.Add(new SessionEvent
             {
                 Type = evt.Type,
@@ -79,6 +82,9 @@ public static class SessionEventRedactor
     }
 
     private static readonly Codex.Localization.Localizer English = Codex.Localization.Localizer.For("en");
+
+    private static bool GmOnly(EventMessage message) =>
+        message.Kinds.Any(k => k.StartsWith(EventTerm.GmOnlyKind + ":", StringComparison.Ordinal)) || message.Inner.Any(GmOnly);
 
     /// <summary>The message with every actor named as this audience knows them (F20): the log stores real names, so a stranger
     /// the party has met would otherwise be named for real, and a hidden creature named as where damage came from.</summary>

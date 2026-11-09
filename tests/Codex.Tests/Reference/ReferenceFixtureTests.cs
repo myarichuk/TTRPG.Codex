@@ -26,7 +26,7 @@ public class ReferenceFixtureTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task EachFixtureLoadsToday_WithOnlyTheCampaignNotRead()
+    public async Task EachFixtureLoadsToday_WithEveryKeyRead()
     {
         foreach (var root in ReferenceRunner.FixtureRoots())
         {
@@ -37,15 +37,12 @@ public class ReferenceFixtureTests(ITestOutputHelper output)
 
             Assert.Equal(new[] { spec.System }, loader.LoadedSystemIds);
             Assert.Empty(loader.FailedSystems);
-            // The only problems are the unknown keys and the handlers that are scripts (step 8): the packs load, every entry is
-            // where its type says, and the rolls, events, tracks and layouts are well formed. Since step 6 the one key not read
-            // is crew's campaign objects (step 7).
+            // The only problems are the handlers that are scripts (step 8): the packs load, every entry is where its type says,
+            // and the rolls, events, tracks, layouts and campaign objects are well formed. Since step 7 every key is read.
             var unknown = new List<string>();
             SystemDefinitionLoader.Load(Path.Combine(root, SystemDefinitionLoader.FileName), unknown);
-            Assert.Equal(spec.System == "ref-crew" ? new[] { "campaign" } : Array.Empty<string>(), unknown.Select(k => k.Split('.')[0]).Distinct());
-            var problems = loader.ProblemsFor(spec.System).Where(p => !p.Message.Contains("is a script, which this version does not run")).ToList();
-            if (unknown.Count == 0) Assert.Empty(problems);
-            else Assert.Contains("keys this version does not read", Assert.Single(problems).Message);
+            Assert.Empty(unknown);
+            Assert.Empty(loader.ProblemsFor(spec.System).Where(p => !p.Message.Contains("is a script, which this version does not run")));
             Assert.NotEmpty(registry.GetPacks(spec.System));
 
             output.WriteLine($"{Path.GetFileName(root)} ({spec.System}): not read yet: {string.Join(", ", unknown)}");

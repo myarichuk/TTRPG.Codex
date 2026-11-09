@@ -1,4 +1,5 @@
 using Codex.Core;
+using Codex.Core.Rules;
 using Codex.Core.Systems;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -157,6 +158,15 @@ public static class SpecSheets
         }
 
         if (part.Conditions != null) sheet["conditions"] = part.Conditions.Cast<object>().ToList();
+    }
+
+    /// <summary>The campaign's objects for an expectation: the spec's, with the expectation's <c>with.campaign</c> over them
+    /// (each key's list replaces the spec's).</summary>
+    public static Dictionary<string, object> Campaign(ReferenceSpec spec, SpecExpectation expectation)
+    {
+        var campaign = CampaignObjects.Copy(YamlValues.NormalizeMap(spec.Campaign));
+        foreach (var (key, value) in YamlValues.NormalizeMap(expectation.With?.Campaign)) campaign[key] = value;
+        return campaign;
     }
 
     /// <summary>Maps merge key by key, anything else replaces.</summary>

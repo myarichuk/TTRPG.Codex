@@ -155,6 +155,7 @@ builder.Services.AddSingleton<IEncounterRepository, RavenEncounterRepository>();
 builder.Services.AddSingleton<IHomebrewRepository, RavenHomebrewRepository>();
 builder.Services.AddSingleton<IWikiRepository, RavenWikiRepository>();
 builder.Services.AddSingleton<ITemplateRepository, RavenTemplateRepository>();
+builder.Services.AddSingleton<ICampaignObjectsRepository, RavenCampaignObjectsRepository>();
 builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
 builder.Services.AddSingleton<IWorldChatRepository, RavenWorldChatRepository>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
