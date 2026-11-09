@@ -506,21 +506,23 @@ public class BookDraftPdfTests
     [MemberData(nameof(Themes))]
     public async Task EveryBlock_UnderEveryTheme_KeepsPicturesOffTheText(string themeId, string pageSize, bool homebrewery)
     {
-        const string banner = "s000000000000000000000001", face = "s000000000000000000000002", place = "s000000000000000000000003";
+        const string banner = "s000000000000000000000001", face = "s000000000000000000000002", place = "s000000000000000000000003", spot = "s000000000000000000000004";
         var md = new StringBuilder($"{{{{chapter,#ch-cast\n# Cast\n}}}}\n\n{{{{chapter-art\n![The cast](art:{banner})\n}}}}\n\n");
         md.Append($"{{{{entry,#e-{face}}}}}\n## Vera Holloway\n\n{{{{portrait\n![Vera](art:{face})\n}}}}\n\n");
         for (var i = 0; i < 30; i++) md.Append("PUBLIC_VERA_").Append(i).Append(" keeps the Greywater lamp and a ledger of every ship that passes the reef at night.\n\n");
+        // An entry's spot closes it (28.3, step 7): a small square after its text, before the next block.
+        md.Append($"{{{{spot\n![The ledger](art:{spot})\n}}}}\n\n");
         md.Append("{{note\n##### A note\nThe keeper knows more than she says.\n}}\n\n{{descriptive\nThe lamp room smells of oil and salt.\n}}\n\n");
         md.Append("{{secret\nShe hid the torn page in the lamp room.\n}}\n\n| Ship | Lost |\n|---|---|\n| Gannet | 1311 |\n| Tern | 1314 |\n\n");
         md.Append($"{{{{entry,#e-{place}}}}}\n## The Greywater light\n\n{{{{place\n![The light](art:{place})\n}}}}\n\n");
         for (var i = 0; i < 30; i++) md.Append("PUBLIC_LIGHT_").Append(i).Append(" stands on the last rock of the reef, white by day and burning all night.\n\n");
-        var art = new Dictionary<string, string> { [banner] = Png(80, 30, 90), [face] = Png(30, 40, 140), [place] = Png(80, 40, 190) };
+        var art = new Dictionary<string, string> { [banner] = Png(80, 30, 90), [face] = Png(30, 40, 140), [place] = Png(80, 40, 190), [spot] = Png(40, 40, 60) };
         var printed = await PrintAsync(md.ToString(), art, theme: BookDraftThemes.Find(themeId), pageSize: pageSize, homebrewery: homebrewery);
         Assert.Empty(printed.Overflow);
         Assert.Equal(0, printed.BlockedRequests);
 
         using var doc = PdfDocument.Open(printed.Pdf);
-        int portraits = 0, places = 0;
+        int portraits = 0, places = 0, spots = 0;
         foreach (var page in doc.GetPages())
         {
             // The chapter's title is printed over its banner and ribbon on purpose; every other word must keep off every picture.
@@ -532,6 +534,7 @@ public class BookDraftPdfTests
                 if (box.Width > page.Width * 0.8 || box.Width < 20) continue;
                 if (box.Height / box.Width is > 1.2 and < 1.45) portraits++;
                 if (box.Width / box.Height is > 1.7 and < 2.3) places++;
+                if (box.Width / box.Height is > 0.9 and < 1.1 && box.Width < page.Width * 0.3) spots++;
                 var on = words.Where(w => w.BoundingBox.Left < box.Right - 1 && w.BoundingBox.Right > box.Left + 1
                     && w.BoundingBox.Bottom < box.Top - 1 && w.BoundingBox.Top > box.Bottom + 1).Select(w => w.Text).ToList();
                 Assert.True(on.Count == 0,
@@ -553,7 +556,7 @@ public class BookDraftPdfTests
         }
 
         OwnFacesOnly(doc, themeId, $"{pageSize} {(homebrewery ? "layer" : "no layer")}");
-        Assert.True(portraits >= 1 && places >= 1, $"{themeId} {pageSize} {(homebrewery ? "layer" : "no layer")}: the portrait ({portraits}) and the place picture ({places}) were printed");
+        Assert.True(portraits >= 1 && places >= 1 && spots >= 1, $"{themeId} {pageSize} {(homebrewery ? "layer" : "no layer")}: the portrait ({portraits}), the place picture ({places}) and the spot ({spots}) were printed");
         var text = Text(printed.Pdf);
         Assert.Contains("PUBLIC_VERA_29", text);
         Assert.Contains("PUBLIC_LIGHT_29", text);

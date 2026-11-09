@@ -81,7 +81,8 @@ public static class BookCompiler
         {
             foreach (var session in source.Sessions)
             {
-                sb.Append("## ").Append(Escape(session.Title)).Append("\n\n");
+                // Each session is an entry, so it has a scene picture's place (28.3, step 7) and is a unit of its own for AI edits.
+                Head(sb, "## ", session.Title, "scene", session.Id, placement: BookArtPlacement.Place, subject: BookSlots.SessionSubject(session.Id));
                 Paragraph(sb, links, session.Recap);
                 if (source.Audience == BookAudience.Dm && !string.IsNullOrWhiteSpace(session.DmSummary))
                 {

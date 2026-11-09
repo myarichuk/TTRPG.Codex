@@ -15,12 +15,21 @@ public class BookArtDocument
     public const string Party = "party";
     public const string Dm = "dm";
 
-    /// <summary>A campaign's book art is bounded: a slot holds at most one picture per edition, and a book has well under this many slots.</summary>
+    /// <summary>A campaign's book art is bounded: the pictures in use and the earlier versions kept beside them, together.</summary>
     public const int MaxPictures = 600;
+
+    /// <summary>The most versions of one slot's picture an edition keeps, the one in use counted (docs/BOOK_EXPORT.md 28.3, item 3: "keep 3").
+    /// A new picture past this drops the oldest earlier version, which the pre-flight says before anything is drawn.</summary>
+    public const int MaxVersions = 3;
 
     public string Id { get; set; } = string.Empty;
     public string CampaignId { get; set; } = string.Empty;
     public List<BookArtPicture> Pictures { get; set; } = new();
+
+    /// <summary>Earlier versions of a slot's picture, put back by a new one: kept so a picture paid for is not lost, and so the GM can
+    /// choose which prints (<see cref="IBookArtRepository.UseAsync"/>). Nothing that builds a book reads this list; only
+    /// <see cref="Pictures"/> prints.</summary>
+    public List<BookArtPicture> Kept { get; set; } = new();
 
     /// <summary>What the art director suggested for each slot, per edition. A suggestion carries the tag of the edition whose source it was
     /// made from, and anything drawn from it later inherits that tag, not the tray's it was drawn in.</summary>
@@ -52,8 +61,44 @@ public class BookArtDocument
 
     public static bool IsEdition(string? builtFrom) => builtFrom is Party or Dm;
 
-    /// <summary>The attachment a picture is stored under. Never one of the names a media route serves ("cover", "portrait", "art", ...).</summary>
+    /// <summary>The start of every attachment name a slot's pictures are stored under, for one edition. Never one of the names a media route
+    /// serves ("cover", "portrait", "art", ...).</summary>
     public static string AttachmentFor(string slot, string builtFrom) => "book-" + builtFrom + "-" + slot;
+
+    /// <summary>A new picture's own attachment name: the slot's, and a part of its own, so an earlier version keeps its bytes when a new one comes.
+    /// Pictures stored before versions were kept have the slot's name alone.</summary>
+    public static string NewAttachment(string slot, string builtFrom) =>
+        AttachmentFor(slot, builtFrom) + "-" + Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(4)).ToLowerInvariant();
+
+    /// <summary>The form of every attachment name: the slot's, alone or with an 8-digit part.</summary>
+    public static bool IsAttachment(string? name, string slot, string builtFrom)
+    {
+        var start = AttachmentFor(slot, builtFrom);
+        if (name == null || !name.StartsWith(start, StringComparison.Ordinal)) return false;
+        var rest = name.AsSpan(start.Length);
+        return rest.Length == 0 || rest.Length == 9 && rest[0] == '-' && rest[1..].IndexOfAnyExcept("0123456789abcdef") < 0;
+    }
+
+    /// <summary>One slot's versions for one edition: the one in use (if any) and the kept ones, newest first.</summary>
+    public IEnumerable<BookArtPicture> Versions(string slot, string builtFrom) =>
+        Pictures.Where(p => p.Slot == slot && p.BuiltFrom == builtFrom)
+            .Concat(Kept.Where(p => p.Slot == slot && p.BuiltFrom == builtFrom).OrderByDescending(p => p.AddedAt));
+
+    /// <summary>The kept version a new picture in this slot would drop, or null when there is room for it.</summary>
+    public BookArtPicture? DroppedByNew(string slot, string builtFrom) =>
+        Versions(slot, builtFrom).Count() < MaxVersions ? null
+            : Kept.Where(p => p.Slot == slot && p.BuiltFrom == builtFrom).OrderBy(p => p.KeptAt ?? p.AddedAt).FirstOrDefault();
+
+    /// <summary>Moves a slot's picture in use (for one edition) among the kept.</summary>
+    public void PutBack(string slot, string builtFrom, DateTime at)
+    {
+        foreach (var used in Pictures.Where(p => p.Slot == slot && p.BuiltFrom == builtFrom).ToList())
+        {
+            Pictures.Remove(used);
+            used.KeptAt = at;
+            Kept.Add(used);
+        }
+    }
 }
 
 public class BookArtPicture
@@ -85,6 +130,10 @@ public class BookArtPicture
 
     public string AddedBy { get; set; } = string.Empty;
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>When it last stopped being the one in use; null while it is. The kept version that went out of use longest ago is the one a new
+    /// picture drops.</summary>
+    public DateTime? KeptAt { get; set; }
 }
 
 public class BookArtSuggestion
@@ -111,11 +160,18 @@ public interface IBookArtRepository
     /// <summary>The campaign's book art; null for anyone who is not its GM now.</summary>
     Task<BookArtDocument?> GetAsync(CampaignAccess dm);
 
-    /// <summary>Puts <paramref name="image"/> (already through <see cref="BookImageSanitizer"/>) in a slot for one edition, replacing what was there.
+    /// <summary>Puts <paramref name="image"/> (already through <see cref="BookImageSanitizer"/>) in a slot for one edition, in use from now on. The
+    /// picture it puts back is kept as an earlier version; past <see cref="BookArtDocument.MaxVersions"/> the oldest earlier version goes.
     /// False when the caller is not the GM now, the key or edition is malformed, or the campaign holds too many pictures.</summary>
     Task<bool> PutAsync(CampaignAccess dm, string slot, string builtFrom, string label, BookImage image, string origin = "upload", BookArtDrawn? drawn = null);
 
-    Task<bool> RemoveAsync(CampaignAccess dm, string slot, string builtFrom);
+    /// <summary>Takes a picture out of a slot for one edition. With <paramref name="attachment"/> null, the one in use goes among the kept versions
+    /// (it may have been paid for) and none is in use; with an attachment name, that version is deleted for good, bytes and all.</summary>
+    Task<bool> RemoveAsync(CampaignAccess dm, string slot, string builtFrom, string? attachment = null);
+
+    /// <summary>Puts a kept version of a slot's picture in use for its edition, and the one in use until now among the kept. Only a version kept
+    /// under this slot and this edition: a picture made for the GM's edition can never be put in use in the party's. False when there is none.</summary>
+    Task<bool> UseAsync(CampaignAccess dm, string slot, string builtFrom, string attachment);
 
     Task DeleteAllForCampaignAsync(string campaignId);
 
@@ -158,11 +214,14 @@ public class RavenBookArtRepository(RavenDbService dbService, StorageQuota? quot
 
         if (await CampaignAccessResolver.NowAsync(dbService.Store, dm) is not { IsDm: true } now) return false;
         var id = BookArtDocument.IdFor(now.CampaignId);
-        var name = BookArtDocument.AttachmentFor(slot, builtFrom);
+        var name = BookArtDocument.NewAttachment(slot, builtFrom);
         if (quota != null)
         {
+            // The new picture has a name of its own and replaces nothing; what it frees is the oldest version it drops, if it drops one.
             using var sizing = dbService.Store.OpenAsyncSession();
-            await quota.EnsureRoomAsync(now.CampaignId, image.Bytes.Length, StorageQuota.SizeOf(sizing, await sizing.LoadAsync<BookArtDocument>(id), name));
+            var current = await sizing.LoadAsync<BookArtDocument>(id);
+            var freed = current?.DroppedByNew(slot, builtFrom) is { } dropping ? StorageQuota.SizeOf(sizing, current, dropping.Attachment) : 0;
+            await quota.EnsureRoomAsync(now.CampaignId, image.Bytes.Length, freed);
         }
 
         for (var attempt = 1; ; attempt++)
@@ -180,8 +239,17 @@ public class RavenBookArtRepository(RavenDbService dbService, StorageQuota? quot
                 return false;
             }
 
-            art.Pictures.RemoveAll(p => p.Slot == slot && p.BuiltFrom == builtFrom);
-            if (art.Pictures.Count >= BookArtDocument.MaxPictures) return false;
+            // The one in use goes among the kept; past the most versions a slot keeps, the oldest kept one goes, its bytes in the same save.
+            if (art.DroppedByNew(slot, builtFrom) is { } dropped)
+            {
+                art.Kept.Remove(dropped);
+                await DeleteAttachmentAsync(session, id, dropped.Attachment);
+            }
+
+            art.PutBack(slot, builtFrom, DateTime.UtcNow);
+            if (art.Pictures.Count + art.Kept.Count >= BookArtDocument.MaxPictures) return false;
+            // A name of its own: one already listed (a one-in-four-billion chance) would have its bytes written over.
+            while (art.Pictures.Concat(art.Kept).Any(p => p.Attachment == name)) name = BookArtDocument.NewAttachment(slot, builtFrom);
             art.Pictures.Add(new BookArtPicture
             {
                 Slot = slot, BuiltFrom = builtFrom, Origin = origin, Attachment = name, ContentType = image.ContentType,
@@ -189,7 +257,7 @@ public class RavenBookArtRepository(RavenDbService dbService, StorageQuota? quot
                 Inputs = drawn?.Inputs, Visual = drawn == null ? null : Clip(drawn.Visual, BookImagePrompt.MaxVisualChars)
             });
             art.UpdatedAt = DateTime.UtcNow;
-            // A new attachment under an existing name replaces it in the same save as the document's list, so the two never disagree.
+            // The attachment is stored in the same save as the document's list, so the two never disagree.
             session.Advanced.Attachments.Store(id, name, new MemoryStream(image.Bytes, writable: false), image.ContentType);
             try
             {
@@ -202,9 +270,10 @@ public class RavenBookArtRepository(RavenDbService dbService, StorageQuota? quot
         }
     }
 
-    public async Task<bool> RemoveAsync(CampaignAccess dm, string slot, string builtFrom)
+    public async Task<bool> RemoveAsync(CampaignAccess dm, string slot, string builtFrom, string? attachment = null)
     {
         if (!BookSlots.IsKey(slot) || !BookArtDocument.IsEdition(builtFrom)) return false;
+        if (attachment != null && !BookArtDocument.IsAttachment(attachment, slot, builtFrom)) return false;
         if (await CampaignAccessResolver.NowAsync(dbService.Store, dm) is not { IsDm: true } now) return false;
         var id = BookArtDocument.IdFor(now.CampaignId);
         for (var attempt = 1; ; attempt++)
@@ -213,10 +282,25 @@ public class RavenBookArtRepository(RavenDbService dbService, StorageQuota? quot
             session.Advanced.UseOptimisticConcurrency = true;
             var art = await session.LoadAsync<BookArtDocument>(id);
             if (art == null || art.CampaignId != now.CampaignId) return true;
-            if (art.Pictures.RemoveAll(p => p.Slot == slot && p.BuiltFrom == builtFrom) == 0) return true;
+            if (attachment == null)
+            {
+                // Out of the book, not out of the store: it stays a version the GM can put back or delete.
+                if (!art.Pictures.Any(p => p.Slot == slot && p.BuiltFrom == builtFrom)) return true;
+                art.PutBack(slot, builtFrom, DateTime.UtcNow);
+            }
+            else
+            {
+                var gone = art.Pictures.Concat(art.Kept).Where(p => p.Slot == slot && p.BuiltFrom == builtFrom && p.Attachment == attachment).ToList();
+                if (gone.Count == 0) return true;
+                foreach (var picture in gone)
+                {
+                    art.Pictures.Remove(picture);
+                    art.Kept.Remove(picture);
+                    await DeleteAttachmentAsync(session, id, picture.Attachment);
+                }
+            }
+
             art.UpdatedAt = DateTime.UtcNow;
-            var name = BookArtDocument.AttachmentFor(slot, builtFrom);
-            if (await session.Advanced.Attachments.ExistsAsync(id, name)) session.Advanced.Attachments.Delete(id, name);
             try
             {
                 await session.SaveChangesAsync();
@@ -226,6 +310,27 @@ public class RavenBookArtRepository(RavenDbService dbService, StorageQuota? quot
             {
             }
         }
+    }
+
+    public async Task<bool> UseAsync(CampaignAccess dm, string slot, string builtFrom, string attachment)
+    {
+        if (!BookSlots.IsKey(slot) || !BookArtDocument.IsEdition(builtFrom) || !BookArtDocument.IsAttachment(attachment, slot, builtFrom)) return false;
+        return await MutateAsync(dm, art =>
+        {
+            // Only a version kept under this very slot and edition: the tag is the version's own, and must be the edition asked for.
+            var chosen = art.Kept.FirstOrDefault(p => p.Slot == slot && p.BuiltFrom == builtFrom && p.Attachment == attachment);
+            if (chosen == null) return false;
+            art.PutBack(slot, builtFrom, DateTime.UtcNow);
+            art.Kept.Remove(chosen);
+            chosen.KeptAt = null;
+            art.Pictures.Add(chosen);
+            return true;
+        });
+    }
+
+    private static async Task DeleteAttachmentAsync(Raven.Client.Documents.Session.IAsyncDocumentSession session, string id, string name)
+    {
+        if (await session.Advanced.Attachments.ExistsAsync(id, name)) session.Advanced.Attachments.Delete(id, name);
     }
 
     public async Task<bool> SaveSuggestionsAsync(CampaignAccess dm, string builtFrom, IReadOnlyList<BookArtSuggestion> suggestions, IReadOnlySet<string>? present = null)

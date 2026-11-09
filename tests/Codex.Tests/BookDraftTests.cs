@@ -177,7 +177,7 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         var cast = view.Chapters.Single(c => c.Section == "cast");
         await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown + "\n\\page {fitted}\n\nPUBLIC_AFTER\n\n\\page {reliquary, fitted}\n\nPUBLIC_STYLED\n", cast.Version);
 
-        var (title, markdown) = (await _drafts.MarkdownAsync(dm, "party", "en"))!.Value;
+        var (title, markdown, _) = (await _drafts.MarkdownAsync(dm, "party", "en"))!.Value;
         Assert.Equal("Saltmere", title);
         Assert.Contains("PUBLIC_BIO_VERA", markdown);
         Assert.Contains("\n\\page\n\nPUBLIC_AFTER", markdown);

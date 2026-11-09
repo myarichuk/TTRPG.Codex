@@ -1207,8 +1207,7 @@ on a refused key; foreign slot accepted.
 
 **Not done:**
 - **No real picture model has been run on this.** Only a fake server has.
-- **Regenerate and Accept from up to three versions (28.3 item 3) are not built.** Drawing replaces the slot's picture, and the earlier one,
-  paid for, is gone; the pre-flight says which places would be replaced.
+- ~~Regenerate and Accept from up to three versions (28.3 item 3)~~ built in section 43.
 - The tray's tick dropping is not covered by an automated test. The server's checks, which are covered, are the guard that counts.
 - `WikiSecretsE2ETests` failed once in a run of 759 tests during this step, cause not captured, and passed on two reruns (alone, and with the
   28 e2e tests). It failed again in the full run of section 39, and that time the cause was read: see section 39.
@@ -2321,3 +2320,139 @@ rule is lenient by design; a reply refused twice keeps its entry's text, so the 
 
 Not in this plan: stat blocks from the campaign's own creatures (`{{monster` built by code from the sheet, not by the model) are a separate
 step after it; `:::for` per-player editions.
+
+## 43. Art: keep three versions, draw again, choose which prints (2026-11-09)
+
+Step 6's leftover from 28.3 item 3 ("Regenerate (keep 3), Accept"). Step 7 of 28.3 item 6 is section 44.
+
+**What changed:** a new picture in a slot, drawn or uploaded, no longer throws away the one it replaces. Each slot keeps up to three
+versions per edition (`BookArtDocument.MaxVersions`), the one in use counted, and the GM chooses which one prints.
+
+**The store (`BookArtStore.cs`):**
+- `Pictures` still holds at most one picture per slot and edition: the one in use, the only one anything that builds a book reads.
+  Earlier versions are in a separate list, `Kept`, which `BookSlots.Choose`, `BookArtReader` and `BookArt.Slot` never see. The three
+  layers of the audience gate (section 34) are unchanged.
+- Every new picture has an attachment name of its own (`book-<edition>-<slot>-<8 hex>`; `NewAttachment`), so a kept version keeps its
+  bytes. Pictures stored before this keep the old name (`book-<edition>-<slot>`); readers use the stored `Attachment`, as they did.
+  `IsAttachment` accepts only those two forms, for that slot and edition.
+- `PutAsync` moves the one in use to `Kept` (stamping `KeptAt`) and puts the new one in use. When the slot already has three versions,
+  the kept one that went out of use longest ago (`DroppedByNew`: oldest `KeptAt`) is dropped, its attachment deleted in the same save.
+  The storage quota counts the new picture in full and credits the dropped one's size. `MaxPictures` (600) counts both lists.
+- `UseAsync(dm, slot, edition, attachment)` puts a kept version in use and the one in use among the kept. The version must be kept under
+  that very slot **and edition**: a GM-edition version cannot be put in use in the party edition, whatever name is posted.
+- `RemoveAsync(dm, slot, edition, attachment?)`: with no attachment ("Take out" in the tray) it moves the one in use among the kept
+  versions, so a paid picture is never lost by that button, and the slot has "no picture in use"; with one it deletes that version and
+  its bytes, after the tray's confirm.
+- A new picture's name is checked against every name listed before it is stored (a random 8-digit part could repeat).
+- The backup walks every attachment of the document, so kept versions are in it.
+
+**Drawing:** "Draw again" is the Draw tick on a slot that has a drawn picture: the same path as before (`BookArtDrawing.PrepareAsync`, the
+same checks, reservation and gate). The pre-flight says which places keep the picture in use as an earlier version, and, in the error
+colour, which places already keep three, so drawing deletes the oldest earlier one, which was paid for (`BookDrawItem.Drops`). That is
+said before the click.
+
+**The tray:** a slot with kept versions has "Versions (N)". It opens a list, the one in use first: a small picture of each (scaled for the
+live preview of its box, `BookArtService.VersionsAsync`), drawn or added and when, "drawn from an older description or style", "In use" or
+"Use this one", and Delete. Delete asks first ("can't be brought back"; Keep it / Delete for good); the Delete button stays where it is
+while it asks and "Keep it" puts focus back on it. Dates show in the GM's own time zone (`LocalTime`). The service checks the GM and the
+slot again for the list; use and delete go through the store's checks.
+- **Places that are gone:** a picture stored for a place the edition no longer has (an entry deleted, hidden, renamed or revealed) prints
+  nowhere but counts against the 600 and the owner's storage. The tray says how many ("Pictures for places no longer in this edition (N)")
+  and lists them, with a picture each, for the GM to delete (`BookArtService.GoneAsync`). The place may come back, so nothing deletes them
+  on its own.
+
+**Tests:**
+- `BookArtTests.ASlotKeepsThreeVersions_OnlyTheOneInUsePrints_AndAFourthDropsTheOldestKept`: the page prints only the one in use, a kept
+  one put in use prints in both books, a fourth drops the one out of use longest and its bytes, Remove leaves the kept, Delete takes one.
+- `BookArtTests.AVersionKeptForTheGmEdition_IsNeverUsedInTheParty_AndTheVersionListIsTheEditionsOwn`: store and service refuse a GM version
+  for the party, a renamed and a made-up name, and a player; the list is the edition's own, with pictures.
+- `BookArtDrawingTests.DrawingAgain_KeepsTheEarlierPicture_AndThePreflightSaysWhenANewOneDropsAPaidVersion`.
+- `BookArtTests.APictureStoredUnderTheOldName_IsKept_UsedAndDeletedByIt` (and every refused name form) and
+  `PicturesForAPlaceThatIsGone_AreListedForTheGmToDelete`; `StorageQuotaTests.ABookPictureThatDropsAnOldVersion_IsCountedNetOfIt_Async`;
+  the drawing test also checks a kept version is marked older when the style changes.
+- The e2e `TheGmTicksASuggestedPlace_…` now draws again, opens the versions, puts the first in use, deletes one through the confirm (focus
+  back on Delete after "Keep it"), and draws to three versions, where the pre-flight warns of the paid one a fourth would delete.
+- Mutants caught: the edition check and the name check in `UseAsync` together (each alone is covered by the other), the put-back,
+  dropping by date added, the dropped bytes kept, the version count, Remove deleting kept ones, one name for every version, no `Drops`,
+  the version list or the use naming another edition, the quota credit, "Take out" deleting, and the gone list counting the other edition.
+- A review by a second model found no path for a GM picture into the party book; its other findings (Take out deleted a paid picture
+  without asking, unseen pictures for gone places, focus lost in the confirm, small tray state slips, name uniqueness, ru/he wording,
+  missing tests) are fixed above.
+
+**Not done:**
+- No real picture model has been run on drawing again; only the fake server.
+
+## 44. Art step 7: spots and Chronicle scenes (2026-11-09)
+
+The last step of 28.3 item 6: the two kinds of place the art director may suggest rather than code laying them all out.
+
+**Chronicle scenes.** Each session of the Chronicle is now an entry (`BookCompiler`: `Head(... "scene", session.Id, Place, session:<id>)`), so it
+has a slot keyed `session:<id>`, an `{{entry` marker in the draft, and its own unit for AI edits (section 42). The compiled Markdown is the same
+text as before; the draft's Chronicle gains the markers, so an edited Chronicle chapter shows the stale notice once. A scene is drawn wide
+(`ShapeFor`), boxed like a place picture, and the director is told "a scene from this session".
+
+**Spots.** Every entry has a spot slot (`BookSlots.Spot`, key `spot:<the entry's subject>`, so a stranger's spot is the mask's), a small square
+that closes the entry. It is never asked about alone:
+- The outline carries it beside its entry (`BookOutlineSlot.SpotOf`), hashed with kind "spot".
+- The director's request marks the entry "a small closing picture may be suggested"; the reply may add `"spot": {depicts, visual, mood}` to that
+  entry's item, at most `MaxSpotsPerCall` (2) a reply, checked like any suggestion. A spot that fails, is not allowed, or is one too many is
+  dropped alone; the entry's own suggestion stays. The output limit allows for the two.
+- The planner asks only the entries; a spot suggestion is saved under the spot's key, from the spot's outline hash, with the edition's tag.
+- The tray shows a spot ("Small picture after …") only once it has a suggestion or a picture (in use or kept), right after its entry, numbered
+  with it when two entries read alike.
+- Drawing is the usual path: square, framing "spot", scaled to a 34 mm box.
+- The draft writes `{{spot` with `art:<key>` after the entry's text, before the next entry's marker, only when the spot holds a picture. AI
+  edits keep `{{spot` back like the other picture blocks.
+- Every theme styles `.spot` (Plain and the Homebrewery layer: a centred 30 mm square; Ashen Vellum: the portrait's ragged frame, no soft
+  gradient mask). `EveryBlock_UnderEveryTheme…` now prints a spot and requires it.
+- The old HTML route does not place spots (it places only headers, the cover and entries' own pictures); it is to be retired (41.7).
+
+**Tests:** `BookArtDirectorReplyTests.ASpot_IsKeptOnlyWhereAllowed_AtMostTwo_AndABadOneCostsOnlyItself`;
+`BookArtDrawingTests.ASpotSuggestedWithItsEntry_IsShownDrawnSquare_AndClosesTheEntryInTheDraft_AndASessionIsAnEntry` (only places are asked,
+one spot per entry exists, the suggestion is saved under the spot and tagged, the tray shows one spot after its entry, drawn square from the
+spot framing, the draft closes Vera's entry with it, and the session is an entry); the theme block test above.
+
+**Also fixed here:** a chapter clicked in the editor before its script had started was ignored (`BookDraftEditor.ShowAsync` returned while the
+module was loading); it is now remembered and shown once the editor opens. Found as a failing e2e on a loaded machine.
+
+**Not done:** no browser test drives a spot through the tray; no real model has suggested a spot; the spot's mood and size are not tuned.
+
+## 45. A party book per player (2026-11-09)
+
+The party draft is what a player who owns no character may read; a `:::for` block, which a GM writes for one or more characters, is never in
+it. A player's own book is the party draft with what their characters may read added: in the party draft's editor, **More → PDF for a player**
+lists each player of the campaign now who owns a character, by their characters' names, and gives that player's copy as a PDF named
+`<campaign> (<character names>).pdf`. The Markdown route takes the same `?player=<user id>`.
+
+**What is read.** `BookSourceReader.ReadForPlayerAsync(dm, player)` reads the party edition through that player's own access (not the stranger
+the party edition is read as), so every repository shows what that player may open: `:::for` blocks for their characters in others' texts,
+lore revealed to their characters, their own character (its own `:::for` blocks, which the repository keeps apart in `RevealedToReader`, go at
+the end of its history). Every text is then cleaned for the characters they own (`Clean(text, owned)`, which matters for the campaign's own
+text: no repository reads that). It refuses (null) for anyone who is not a Player member now (the GM, a co-GM, someone who left, a stranger) and
+for a player who owns no character. `PlayersAsync` lists the same people for the menu. Owner and author ids are cleared as for the party.
+
+**How the copy is made** (`BookPlayerBook.Overlay`). Both sources are compiled; each chapter is split into units (the text before its first entry,
+then each entry, by the line the compiler recorded), and each unit's paragraphs are compared, keyed by the entry's slot key, which is the same in
+both copies. The party's compile is a subsequence of the player's (the same compiler, the same records, more of each text kept), so what the
+player's copy has off their longest common subsequence is that player's. Those paragraphs are written as the draft writes campaign text
+(`BookDraftWriter.Text`, mentions as the player's edition names them: a hidden actor is nothing, a stranger its mask), in one
+`{{note` per unit headed "Only for <names>":
+- an entry's note goes after the entry in the stored draft, before the next entry's marker and before any page break leading to it, so the GM's
+  edits stay as they are and the note stays on the entry's page;
+- the text before a chapter's first entry gets its note before that entry (lore and the overview have none, so at the chapter's end);
+- a unit the draft has no marker for (the GM deleted it, or only this player has the entry) goes at the chapter's end; a chapter the party draft
+  has not got (only lore revealed to them, say) is added at the book's end, not in the contents.
+
+The copy is made when it is asked for and is never stored or sent to a model. Pictures are the party's, read for the party's source. The party
+leak check (41.19) runs before it as before the party's own PDF, since the copy is that draft. Fit pages' breaks are the party draft's: a note can
+push text past one, and Fit pages is not run on a player's copy.
+
+**Tests:** `BookPlayerBookTests` (a player's book has their blocks, the block shared with another player, lore revealed to them, their own
+character's block and the campaign text's, and none of another player's, the GM's, a `:::for` nested in `:::dm`, or a hidden actor's name or label;
+each note under its own entry, the GM's edits kept, a deleted entry's note at the chapter's end, a note before the GM's page break; who is refused;
+the PDF's page and file name; `Extra`), and `BookRouteE2ETests.TheGmDownloadsOnePlayersOwnBook_NamedByTheirCharacter_WithWhatOnlyTheyWereTold`.
+Mutants run by hand and caught: no diff; no edition check; the own character's blocks dropped; cleaning without the owned set; no backing over
+page breaks; the file name ignoring the player; a player with no character listed; no entry anchor.
+
+**Not done:** a player cannot download their own book themselves (the book is the GM's; a player may already open all of it in the app); the
+note's position inside a long entry is its end, not beside the paragraph it came from; the contents page does not list a chapter only the player has.

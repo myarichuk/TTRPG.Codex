@@ -15,7 +15,8 @@ namespace Codex.Web.Book;
 /// <item>Homebrewery's <c>{{frontCover}}</c> on the title page, with our <c>{{cover-art</c> for its picture, and Homebrewery's <c>{{toc,wide</c>;</item>
 /// <item><c>{{chapter,#ch-ID</c> around a chapter's <c># title</c> (the <c>.chapter</c> block of Homebrewery's chapter templates), and our
 /// <c>{{chapter-art</c> under it;</item>
-/// <item><c>{{entry,#e-SLOT}}</c> before an entry's heading (a Cast member, a place, a page), and <c>{{portrait</c> or <c>{{place</c> under it;</item>
+/// <item><c>{{entry,#e-SLOT}}</c> before an entry's heading (a Cast member, a place, a page, a session), <c>{{portrait</c> or <c>{{place</c> under
+/// it, and <c>{{spot</c> at its end when its spot holds a picture;</item>
 /// <item><c>{{secret</c> for the GM's secrets, in the GM draft only.</item>
 /// </list>
 /// <para>An entry's id is its picture slot's key (<see cref="BookSlots.KeyFor"/>), the hash of what the slot is about as the edition sees it, never
@@ -106,12 +107,22 @@ public static class BookDraftWriter
         // The compiler writes the title first; the chapter's id and its art come with it.
         sb.Append("{{chapter,#ch-").Append(section.Id).Append('\n').Append(lines[0]).Append("\n}}\n\n");
         if (pictured.Contains(header.Key)) Art(sb, "chapter-art", header.Label, header.Key);
+        BookEntryPosition? open = null;
+        // An entry's spot (28.3, step 7) closes it: after its text, before the next entry's marker.
+        void Close()
+        {
+            if (open != null && pictured.Contains(BookSlots.SpotKey(open))) Art(sb, "spot", open.Alt, BookSlots.SpotKey(open));
+            open = null;
+        }
+
         for (var i = 1; i < lines.Length; i++)
         {
             // An entry's heading is found by the line the compiler recorded when it wrote it, never by its text (BookComposer.PlaceArt).
             if (entries.TryGetValue(i, out var entry) && lines[i] == entry.Heading)
             {
                 Flush();
+                Close();
+                open = entry;
                 sb.Append("{{entry,#e-").Append(entry.SlotKey).Append("}}\n").Append(lines[i]).Append("\n\n");
                 if (entry.HasArt || pictured.Contains(entry.SlotKey))
                 {
@@ -125,6 +136,7 @@ public static class BookDraftWriter
         }
 
         Flush();
+        Close();
         return sb.ToString().TrimEnd('\n') + "\n";
     }
 

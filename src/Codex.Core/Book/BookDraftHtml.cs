@@ -10,7 +10,7 @@ namespace Codex.Core.Book;
 /// (<c>.page</c> with its two columns, <c>.columnWrapper</c>, <c>.columnSplit</c>, <c>.block</c>, <c>.pageNumber</c>, <c>.toc</c>, <c>.wide</c>) and
 /// CSS written for Homebrewery lays out here as it does there.
 /// <para>On top of it, every theme styles every block of the generator's contract: Homebrewery's <c>.frontCover</c> page and <c>.toc</c>, and our
-/// <c>.cover-art</c>, <c>.chapter</c>, <c>.chapter-art</c>, <c>.entry</c>, <c>.portrait</c>, <c>.place</c> and <c>.secret</c>, with Homebrewery's
+/// <c>.cover-art</c>, <c>.chapter</c>, <c>.chapter-art</c>, <c>.entry</c>, <c>.portrait</c>, <c>.place</c>, <c>.spot</c> and <c>.secret</c>, with Homebrewery's
 /// <c>.note</c>, <c>.descriptive</c> and <c>.monster</c> and tables. A theme that styles only some of them is not a theme: the same Markdown under
 /// another theme's rule for "every picture" put a portrait over the text (section 40). No theme copies a published book's look.</para>
 /// </summary>
@@ -204,6 +204,8 @@ public static class BookDraftThemes
             .block.portrait img, .block.portrait .art-missing { display: block; width: 100%; aspect-ratio: 3 / 4; height: auto; object-fit: cover; object-position: 50% 20%; }
             .block.place { margin: 0 0 2.5mm; }
             .block.place img, .block.place .art-missing { display: block; width: 100%; max-height: 62mm; object-fit: cover; }
+            .block.spot { clear: both; width: 30mm; margin: 1mm auto 3mm; }
+            .block.spot img, .block.spot .art-missing { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; }
             .block.note, .block.descriptive { margin: 0 0 3mm; padding: 2.5mm 3mm; background: #f1ebdd; border-inline-start: 2px solid #5a1414; }
             .block.descriptive { font-style: italic; background: #ece6da; border-inline-start-color: #8b7a5a; }
             .block.secret { margin: 0 0 3mm; padding: 2.5mm 3mm; background: #faf0f0; border: 1.2px dashed #8a1c1c; }
@@ -230,6 +232,8 @@ public static class BookDraftThemes
             .block.portrait { float: right; width: 38%; max-width: 3.2cm; margin: 0 0 0.2cm 0.3cm; }
             .block.portrait img, .block.portrait .art-missing { display: block; width: 100%; aspect-ratio: 3 / 4; height: auto; object-fit: cover; object-position: 50% 20%; }
             .block.place img, .block.place .art-missing { display: block; width: 100%; max-height: 6cm; object-fit: cover; }
+            .block.spot { clear: both; width: 3cm; margin: 0.1cm auto 0.3cm; }
+            .block.spot img, .block.spot .art-missing { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; }
             .block.secret { padding: 0.13cm 0.16cm; border: 1px dashed #000; }
             """;
 }

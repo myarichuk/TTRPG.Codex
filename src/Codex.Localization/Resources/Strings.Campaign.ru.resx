@@ -739,13 +739,14 @@
   <data name="Campaign.Book.Art.HintParty" xml:space="preserve"><value>Добавьте картинку на обложку, над главой или рядом с записью. Добавленное здесь печатается и в издании для группы, и в издании мастера. Скрытых персонажей здесь нет, а незнакомцы показаны такими, какими их знает группа.</value></data>
   <data name="Campaign.Book.Art.Cover" xml:space="preserve"><value>Обложка</value></data>
   <data name="Campaign.Book.Art.Header" xml:space="preserve"><value>Над главой</value></data>
+  <data name="Campaign.Book.Art.Spot" xml:space="preserve"><value>Маленькая картинка после: {0}</value></data>
   <data name="Campaign.Book.Art.Upload" xml:space="preserve"><value>Добавить картинку</value></data>
   <data name="Campaign.Book.Art.Replace" xml:space="preserve"><value>Заменить</value></data>
-  <data name="Campaign.Book.Art.Remove" xml:space="preserve"><value>Убрать</value></data>
+  <data name="Campaign.Book.Art.Remove" xml:space="preserve"><value>Убрать из книги</value></data>
   <data name="Campaign.Book.Art.Loading" xml:space="preserve"><value>Загружаем места для картинок…</value></data>
   <data name="Campaign.Book.Art.Uploading" xml:space="preserve"><value>Добавляем картинку…</value></data>
   <data name="Campaign.Book.Art.Stored" xml:space="preserve"><value>Картинка добавлена.</value></data>
-  <data name="Campaign.Book.Art.Removed" xml:space="preserve"><value>Картинка убрана.</value></data>
+  <data name="Campaign.Book.Art.Removed" xml:space="preserve"><value>Картинка убрана из книги. Она осталась среди версий: её можно вернуть или удалить.</value></data>
   <data name="Campaign.Book.Art.BadImage" xml:space="preserve"><value>Этот файл не подходит. Нужна картинка PNG, JPEG, WebP, GIF или AVIF до 6 МБ.</value></data>
   <data name="Campaign.Book.Art.NoSlot" xml:space="preserve"><value>Этого места в издании больше нет: возможно, его скрыли или переименовали.</value></data>
   <data name="Campaign.Book.Art.Full" xml:space="preserve"><value>В книге этой кампании уже предельное число картинок. Сначала уберите одну.</value></data>
@@ -808,7 +809,30 @@
   <data name="Campaign.Book.Art.Draw.Cost" xml:space="preserve"><value>Около {0} ({1} за картинку).</value></data>
   <data name="Campaign.Book.Art.Draw.Allowance" xml:space="preserve"><value>Займёт {0} из {1} картинок, оставшихся на сегодня на ключе сервера.</value></data>
   <data name="Campaign.Book.Art.Draw.NoPrice" xml:space="preserve"><value>Для этой модели не указана цена за картинку, поэтому стоимость не показана.</value></data>
-  <data name="Campaign.Book.Art.Draw.Replaces" xml:space="preserve"><value>Заменит уже стоящую картинку: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Replaces" xml:space="preserve"><value>Картинка, которая сейчас стоит, сохранится как прежняя версия: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Drops" xml:space="preserve"><value>В этих местах уже 3 версии, поэтому новая удалит самую старую из прежних, за которую уже заплачено: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.PickAgain" xml:space="preserve"><value>Нарисовать ещё раз</value></data>
+  <data name="Campaign.Book.Art.Versions.Show" xml:space="preserve"><value>Версии ({0})</value></data>
+  <data name="Campaign.Book.Art.Versions.Hide" xml:space="preserve"><value>Скрыть версии</value></data>
+  <data name="Campaign.Book.Art.Versions.Hint" xml:space="preserve"><value>Для каждого места в этом издании хранится до 3 версий картинки. В книгу идёт только выбранная.</value></data>
+  <data name="Campaign.Book.Art.Versions.Loading" xml:space="preserve"><value>Загружаем версии…</value></data>
+  <data name="Campaign.Book.Art.Versions.InUse" xml:space="preserve"><value>Выбрана</value></data>
+  <data name="Campaign.Book.Art.Versions.Use" xml:space="preserve"><value>Выбрать эту</value></data>
+  <data name="Campaign.Book.Art.Versions.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Campaign.Book.Art.Versions.Confirm" xml:space="preserve"><value>Удалить эту версию насовсем? Вернуть её будет нельзя.</value></data>
+  <data name="Campaign.Book.Art.Versions.Yes" xml:space="preserve"><value>Удалить насовсем</value></data>
+  <data name="Campaign.Book.Art.Versions.No" xml:space="preserve"><value>Оставить</value></data>
+  <data name="Campaign.Book.Art.Versions.Drawn" xml:space="preserve"><value>нарисована</value></data>
+  <data name="Campaign.Book.Art.Versions.Uploaded" xml:space="preserve"><value>добавлена</value></data>
+  <data name="Campaign.Book.Art.Versions.Stale" xml:space="preserve"><value>нарисована по прежнему описанию или стилю</value></data>
+  <data name="Campaign.Book.Art.Versions.NoPicture" xml:space="preserve"><value>Эту картинку не удаётся показать.</value></data>
+  <data name="Campaign.Book.Art.Versions.Alt" xml:space="preserve"><value>{0}, версия {1}</value></data>
+  <data name="Campaign.Book.Art.Versions.Used" xml:space="preserve"><value>Выбрана другая картинка.</value></data>
+  <data name="Campaign.Book.Art.Versions.Deleted" xml:space="preserve"><value>Версия удалена.</value></data>
+  <data name="Campaign.Book.Art.Gone.Hint" xml:space="preserve"><value>Они никуда не печатаются, но занимают место в лимите картинок книги и в вашем хранилище. Место может вернуться, если снова показать или переименовать его.</value></data>
+  <data name="Campaign.Book.Art.Gone.Hide" xml:space="preserve"><value>Скрыть картинки мест, которых больше нет</value></data>
+  <data name="Campaign.Book.Art.Gone.Show" xml:space="preserve"><value>Картинки мест, которых больше нет в этом издании ({0})</value></data>
+  <data name="Campaign.Book.Art.State.KeptOnly" xml:space="preserve"><value>картинка не выбрана</value></data>
   <data name="Campaign.Book.Art.Draw.None" xml:space="preserve"><value>Отметьте место с предложением, чтобы нарисовать его.</value></data>
   <data name="Campaign.Book.Art.Draw.Start" xml:space="preserve"><value>Нарисовать отмеченные ({0})</value></data>
   <data name="Campaign.Book.Art.Draw.Running" xml:space="preserve"><value>Рисуем… готово {0} из {1}.</value></data>
@@ -896,6 +920,9 @@
   <data name="Campaign.Book.Draft.Pictures.Limit" xml:space="preserve"><value>книга заполнена (не больше 120 иллюстраций и 64 МБ на все, по размеру для печати)</value></data>
   <data name="Campaign.Book.Draft.Pictures.Unreadable" xml:space="preserve"><value>файл не удалось прочитать</value></data>
   <data name="Campaign.Book.Draft.Pictures.Hint" xml:space="preserve"><value>Предпросмотр и PDF пропускают одни и те же иллюстрации. Возьмите иллюстрации поменьше или уберите часть из книги.</value></data>
+  <data name="Campaign.Book.Draft.OnlyFor" xml:space="preserve"><value>Только для: {0}</value></data>
+  <data name="Campaign.Book.Draft.ForPlayer" xml:space="preserve"><value>PDF для игрока</value></data>
+  <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>Собственный экземпляр книги группы для этого игрока: то, что знали только его персонажи, добавлено в заметках. Ничего не сохраняется.</value></data>
   <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>Скачать Markdown (.md)</value></data>
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>Все главы одним файлом Markdown — для Homebrewery или текстового редактора. Иллюстраций и таблицы стилей в нём нет.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>Это издание мастера: в нём все секреты. Не показывайте файл игрокам.</value></data>

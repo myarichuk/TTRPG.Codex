@@ -22,12 +22,14 @@ public class BookArtDrawingTests : IClassFixture<RavenDbFixture>
     private readonly BookSourceReader _reader;
     private readonly CampaignAccessResolver _resolver;
     private readonly RavenBookArtRepository _art;
+    private readonly RavenMediaStore _media;
+    private readonly RavenSessionRepository _sessions;
 
     public BookArtDrawingTests(RavenDbFixture fixture)
     {
         var db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
         _actors = new ActorRepository(db);
-        var sessions = new RavenSessionRepository(db);
+        var sessions = _sessions = new RavenSessionRepository(db);
         var notes = new RavenNoteRepository(db);
         var regions = new RegionRepository(db);
         var facts = new FactRepository(db);
@@ -38,6 +40,7 @@ public class BookArtDrawingTests : IClassFixture<RavenDbFixture>
         _reader = new BookSourceReader(_campaigns, _actors, sessions, encounters, facts, notes, regions, homebrew, wiki);
         _resolver = new CampaignAccessResolver(_campaigns);
         _art = new RavenBookArtRepository(db);
+        _media = new RavenMediaStore(db);
     }
 
     private sealed class FakeModels(IChatClient chat) : IBookModels
@@ -162,6 +165,105 @@ public class BookArtDrawingTests : IClassFixture<RavenDbFixture>
 
         Assert.True(await drawing.SetStyleAsync(dm, new BookArtStyle("woodcut", "sepia", "bold", "dusk")));
         Assert.True(Vera((await trays.TrayAsync(dm, "party", "en"))!).Drawn!.Stale);
+    }
+
+    // Step 7 (28.3): the director may suggest a spot with an entry, never alone; the tray shows only spots that have one; a spot is drawn square
+    // from its own suggestion, and the draft closes its entry with it. A session of the Chronicle is an entry too, with a scene's place.
+    [Fact]
+    public async Task ASpotSuggestedWithItsEntry_IsShownDrawnSquare_AndClosesTheEntryInTheDraft_AndASessionIsAnEntry()
+    {
+        var id = "spot-" + Guid.NewGuid().ToString("N");
+        await _campaigns.SaveAsync(new CampaignDocument
+        {
+            Id = id, Name = "Ashfall", SystemId = "srd5e", OwnerId = DmUser, Description = "The coast burns.",
+            Members = { new CampaignMember { UserId = DmUser, Role = CampaignRole.DM } }, ActivePacks = { "srd5e" }
+        });
+        await _actors.SaveAsync(new ActorDocument { Id = "a-vera-" + id, CampaignId = id, Name = "Vera", Visibility = ActorVisibility.Known, Biography = "Keeps the ledgers." });
+        await _actors.SaveAsync(new ActorDocument { Id = "a-oskar-" + id, CampaignId = id, Name = "Oskar", Visibility = ActorVisibility.Known, Biography = "Mends nets." });
+        await _sessions.SaveAsync(new SessionDocument { Id = "s-one-" + id, CampaignId = id, Title = "The wreck", Status = SessionStatus.Completed, Recap = "The party found the wreck at low tide." });
+        var dm = new CampaignAccess(id, DmUser, CampaignRole.DM);
+
+        var asked = new List<string>();
+        string WithSpot(IList<ChatMessage> messages, int n)
+        {
+            var user = messages.Last().Text;
+            asked.Add(user);
+            var items = Regex.Matches(user, @"^Slot (?<n>\d+) \([^)]*\): (?<label>.*)$", RegexOptions.Multiline).Select(m =>
+            {
+                var item = "{\"slot\":" + m.Groups["n"].Value + ",\"depicts\":\"" + m.Groups["label"].Value.Trim() + "\",\"visual\":\"a figure in a grey cloak on a wet stone quay at dusk\",\"mood\":\"tense\"";
+                return m.Groups["label"].Value.Trim() == "Vera" ? item + ",\"spot\":{\"depicts\":\"The ledger\",\"visual\":\"an open ledger and a brass pen\",\"mood\":\"serene\"}}" : item + "}";
+            });
+            return "{\"slots\":[" + string.Join(",", items) + "]}";
+        }
+
+        var director = new BookArtDirection(_reader, _art, new FakeModels(new ScriptedChat(WithSpot)), _resolver.ResolveAsync, new BookGate());
+        Assert.Equal(BookRunStatus.Done, (await Finish((await director.StartAsync(dm, "party", "en"))!)).Status);
+        // A spot is never asked about as a place of its own: one line per entry, the header and the cover, and the scene's place for the session.
+        Assert.Contains(asked, a => a.Contains("(a scene from this session; a small closing picture may be suggested): The wreck", StringComparison.Ordinal));
+
+        var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+        var compiled = BookComposer.Compose(source, "en", out var entries);
+        var places = BookSlots.For(source, compiled, entries);
+        Assert.Equal(places.Count(x => x.Kind != BookSlots.Spot), asked.Sum(a => Regex.Matches(a, @"^Slot \d+ ", RegexOptions.Multiline).Count));
+        Assert.Equal(entries.Count, places.Count(x => x.Kind == BookSlots.Spot));
+        var veraEntry = entries.Single(e => e.Alt == "Vera");
+        var spot = BookSlots.SpotKey(veraEntry);
+        var stored = (await _art.GetAsync(dm))!;
+        Assert.Equal("an open ledger and a brass pen", stored.Suggestions.Single(x => x.Slot == spot).Visual);
+        Assert.Equal(BookArtDocument.Party, stored.Suggestions.Single(x => x.Slot == spot).BuiltFrom);
+
+        var tray = (await new BookArtService(_reader, _art, _resolver).TrayAsync(dm, "party", "en"))!;
+        var cast = tray.Chapters.Single(c => c.Id == "cast").Slots;
+        Assert.Single(cast, r => r.Kind == BookSlots.Spot);
+        Assert.Equal(spot, cast[cast.ToList().FindIndex(r => r.Key == veraEntry.SlotKey) + 1].Key);
+        Assert.Contains(tray.Chapters.Single(c => c.Id == "chronicle").Slots, r => r.Kind == BookSlots.Entry && r.Label == "The wreck");
+
+        var images = new FakeImages();
+        Assert.Equal(BookRunStatus.Done, (await Finish((await Drawing(images).StartAsync(dm, "party", [new BookDrawPick(spot)]))!)).Status);
+        Assert.Equal(ArtShape.Square, Assert.Single(images.Shapes));
+        Assert.StartsWith(BookArtStyles.Framing["spot"] + ": an open ledger and a brass pen", Assert.Single(images.Prompts));
+
+        var draft = BookDraftWriter.Generate((await _reader.ReadAsync(dm, BookAudience.Party))!, "en", await _art.GetAsync(dm));
+        var castText = draft.Single(c => c.Section == "cast").Markdown;
+        var spotAt = castText.IndexOf("{{spot\n![Vera](art:" + spot + ")\n}}", StringComparison.Ordinal);
+        Assert.True(spotAt > castText.IndexOf("Keeps the ledgers.", StringComparison.Ordinal));
+        var oskar = castText.IndexOf("## Oskar", StringComparison.Ordinal);
+        Assert.True(oskar < castText.IndexOf("## Vera", StringComparison.Ordinal) ? spotAt > oskar : spotAt < oskar);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(castText, @"\{\{spot"));
+        var chronicle = draft.Single(c => c.Section == "chronicle").Markdown;
+        Assert.Contains("{{entry,#e-" + BookSlots.KeyFor(BookSlots.SessionSubject("s-one-" + id)) + "}}\n## The wreck", chronicle, StringComparison.Ordinal);
+    }
+
+    // Regenerate (28.3, item 3): drawing a slot again keeps the picture it puts back, up to three versions; the third draw says first that the
+    // next one drops the oldest earlier version, which was paid for, and the fourth does drop it.
+    [Fact]
+    public async Task DrawingAgain_KeepsTheEarlierPicture_AndThePreflightSaysWhenANewOneDropsAPaidVersion()
+    {
+        var (dm, _) = await SeedAsync();
+        var vera = await SlotOf(dm, "party", "Vera");
+        var drawing = Drawing(new FakeImages(n => new GeneratedImage(BookArtTests.Png(300 + n), "image/png")));
+
+        for (var drawn = 1; drawn <= 4; drawn++)
+        {
+            var item = Assert.Single((await drawing.PreviewAsync(dm, "party", [new BookDrawPick(vera)]))!.Items);
+            Assert.Equal(drawn > 1, item.Replaces);
+            Assert.Equal(drawn > BookArtDocument.MaxVersions, item.Drops);
+            Assert.Equal(BookRunStatus.Done, (await Finish((await drawing.StartAsync(dm, "party", [new BookDrawPick(vera)]))!)).Status);
+        }
+
+        var art = (await _art.GetAsync(dm))!;
+        Assert.Equal(304, Assert.Single(art.Pictures).Width);
+        Assert.Equal(new[] { 302, 303 }, art.Kept.Select(p => p.Width).Order());
+        Assert.All(art.Kept, p => Assert.Equal((vera, BookArtDocument.Party, "drawn"), (p.Slot, p.BuiltFrom, p.Origin)));
+        Assert.Equal(4, art.DrawnPictures);
+
+        // The version list marks every drawn version older once the style changes.
+        var trays = new BookArtService(_reader, _art, _resolver, media: _media);
+        Assert.All((await trays.VersionsAsync(dm, "party", vera))!, v => Assert.False(v.Stale));
+        Assert.True(await drawing.SetStyleAsync(dm, new BookArtStyle("woodcut", "sepia", "bold", "dusk")));
+        var versions = (await trays.VersionsAsync(dm, "party", vera))!;
+        Assert.Equal(3, versions.Count);
+        Assert.All(versions, v => Assert.True(v.Stale));
     }
 
     [Fact]

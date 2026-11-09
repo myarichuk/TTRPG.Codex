@@ -41,7 +41,7 @@ public sealed record BookEditResult(string? Replacement, string? Reason, int Att
 /// <item>a <c>{{secret</c> block (also one inside another block, also an inline one, also <c>secret</c> among other classes), and an HTML element
 /// with a <c>secret</c> class; one that is never closed runs to the end of the chapter, so it fails closed;</item>
 /// <item>the generator's blocks that are not prose: <c>{{chapter</c> (the chapter's title and its id), <c>{{entry,#e-…}}</c> (an entry's id, which
-/// the stale notice and the merge read), pictures (<c>{{portrait</c>, <c>{{place</c>, <c>{{chapter-art</c>, <c>{{cover-art</c>, any
+/// the stale notice and the merge read), pictures (<c>{{portrait</c>, <c>{{place</c>, <c>{{spot</c>, <c>{{chapter-art</c>, <c>{{cover-art</c>, any
 /// <c>![…](…)</c>), the cover and the contents, and any block that carries an <c>#id</c>;</item>
 /// <item>page and column breaks, typed or fitted.</item>
 /// </list>
@@ -65,7 +65,7 @@ public static partial class BookDraftEdits
     // The generator's blocks that are not prose. A secret is not listed: it is found by its own test below, the one path for it.
     private static readonly HashSet<string> Kept = new(StringComparer.OrdinalIgnoreCase)
     {
-        "chapter", "entry", "portrait", "place", "chapter-art", "cover-art", "frontCover", "insideCover", "partCover", "backCover", "toc"
+        "chapter", "entry", "portrait", "place", "spot", "chapter-art", "cover-art", "frontCover", "insideCover", "partCover", "backCover", "toc"
     };
 
     [GeneratedRegex(@"!\[[^\]\n]{0,400}\]\([^)\n]{0,2000}\)", RegexOptions.CultureInvariant, 2000)]
@@ -207,7 +207,7 @@ public static partial class BookDraftEdits
     }
 
     private static string Label(string[] classes) =>
-        classes.Any(c => c is "portrait" or "place" or "chapter-art" or "cover-art") ? "a picture"
+        classes.Any(c => c is "portrait" or "place" or "spot" or "chapter-art" or "cover-art") ? "a picture"
         : classes.Any(c => c == "chapter") ? "the chapter's title"
         : classes.Any(c => c == "entry") ? "the next entry's marker"
         : "a block the program keeps";
@@ -216,7 +216,7 @@ public static partial class BookDraftEdits
     [GeneratedRegex(@"\{\{block:(?<n>\d{1,4})\}\}", RegexOptions.CultureInvariant, 2000)]
     private static partial Regex Marker();
 
-    [GeneratedRegex(@"\{\{\s*[^\s}]*\b(?:secret|entry|chapter|portrait|place|chapter-art|cover-art|frontCover|toc)\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 2000)]
+    [GeneratedRegex(@"\{\{\s*[^\s}]*\b(?:secret|entry|chapter|portrait|place|spot|chapter-art|cover-art|frontCover|toc)\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 2000)]
     private static partial Regex KeptBlock();
 
     [GeneratedRegex(@"(?:[a-z][a-z0-9+.-]{1,12}:/{1,2}|\bwww\.|\bdata:|\bjavascript:|\bmailto:)", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 2000)]

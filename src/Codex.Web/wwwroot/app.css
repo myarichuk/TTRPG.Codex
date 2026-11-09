@@ -2600,6 +2600,7 @@ dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: 
 .book-draft-menu { position: absolute; inset-inline-end: 0; top: calc(100% + 4px); z-index: 5; min-width: 12rem; padding: .25rem; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
 .book-draft-menu-item { display: flex; gap: .5rem; align-items: center; width: 100%; padding: .4rem .6rem; background: none; border: 0; border-radius: 3px; color: var(--text); text-align: start; font-size: .875rem; }
 .book-draft-menu-item:hover, .book-draft-menu-item:focus-visible { background: var(--accent-soft); }
+.book-draft-menu-label { padding: .45rem .6rem .15rem; border-top: 1px solid var(--border); margin-top: .2rem; color: var(--text-2); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
 .book-draft-close { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; padding: 0; background: none; border: 1px solid transparent; border-radius: 4px; color: var(--text-2); }
 .book-draft-close:hover, .book-draft-close:focus-visible { border-color: var(--border); color: var(--text); }
 .book-draft-infobar { margin: .4rem .6rem 0; }

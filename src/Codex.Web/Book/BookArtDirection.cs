@@ -29,7 +29,8 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
     public BookRun? Find(CampaignAccess dm, string edition) => _runs.GetValueOrDefault(KeyOf(dm.CampaignId, dm.UserId, edition));
 
     /// <summary>One call to make: a chapter (or a part of one) and how its local refs map back to slots.</summary>
-    private sealed record Planned(string RowId, string Title, BookDirectorCall Call, IReadOnlyDictionary<int, BookOutlineSlot> Refs);
+    // Spots: for a ref whose entry has a spot place, that spot's outline slot; the director may suggest it with its entry, never alone.
+    private sealed record Planned(string RowId, string Title, BookDirectorCall Call, IReadOnlyDictionary<int, BookOutlineSlot> Refs, IReadOnlyDictionary<int, BookOutlineSlot> Spots);
 
     private sealed record Prepared(CampaignAccess Dm, BookSource Source, string Tag, IReadOnlyList<BookOutlineChapter> Outline, BookArtDocument? Stored, IReadOnlyList<Planned> Calls, int Current);
 
@@ -50,14 +51,17 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
         var upToDate = 0;
         foreach (var chapter in outline)
         {
-            var todo = chapter.Slots.Where(s => all || current.GetValueOrDefault(s.Slot.Key) != s.Inputs).ToList();
-            upToDate += chapter.Slots.Count - todo.Count;
+            var spotOf = chapter.Slots.Where(s => s.SpotOf != null).ToDictionary(s => s.SpotOf!, StringComparer.Ordinal);
+            var places = chapter.Slots.Where(s => s.SpotOf == null).ToList();
+            var todo = places.Where(s => all || current.GetValueOrDefault(s.Slot.Key) != s.Inputs).ToList();
+            upToDate += places.Count - todo.Count;
             for (var part = 0; part * BookArtDirector.MaxSlotsPerCall < todo.Count; part++)
             {
                 var chunk = todo.Skip(part * BookArtDirector.MaxSlotsPerCall).Take(BookArtDirector.MaxSlotsPerCall).ToList();
                 var refs = chunk.Select((s, i) => (Ref: i + 1, Slot: s)).ToDictionary(x => x.Ref, x => x.Slot);
-                var call = new BookDirectorCall(chapter.Title, language, refs.Select(r => new BookDirectorSlot(r.Key, r.Value.Kind, r.Value.Slot.Label, r.Value.Text)).ToList(), names);
-                calls.Add(new Planned(chapter.Id + "#" + part, part == 0 ? chapter.Title : chapter.Title + " (" + (part + 1) + ")", call, refs));
+                var spots = refs.Where(r => spotOf.ContainsKey(r.Value.Slot.Key)).ToDictionary(r => r.Key, r => spotOf[r.Value.Slot.Key]);
+                var call = new BookDirectorCall(chapter.Title, language, refs.Select(r => new BookDirectorSlot(r.Key, r.Value.Kind, r.Value.Slot.Label, r.Value.Text, spots.ContainsKey(r.Key))).ToList(), names);
+                calls.Add(new Planned(chapter.Id + "#" + part, part == 0 ? chapter.Title : chapter.Title + " (" + (part + 1) + ")", call, refs, spots));
             }
         }
 
@@ -172,6 +176,12 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
                         Slot = planned.Refs[d.Ref].Slot.Key, Inputs = planned.Refs[d.Ref].Inputs,
                         Depicts = d.Depicts, Visual = d.Visual, Mood = d.Mood, Model = model.Model
                     }).ToList();
+                    // A spot suggested with its entry goes to the entry's own spot place, made from the same text.
+                    suggestions.AddRange(result.Directions.Where(d => d.Spot != null && planned.Spots.ContainsKey(d.Ref)).Select(d => new BookArtSuggestion
+                    {
+                        Slot = planned.Spots[d.Ref].Slot.Key, Inputs = planned.Spots[d.Ref].Inputs,
+                        Depicts = d.Spot!.Depicts, Visual = d.Spot.Visual, Mood = d.Spot.Mood, Model = model.Model
+                    }));
                     await saving.WaitAsync();
                     try
                     {
