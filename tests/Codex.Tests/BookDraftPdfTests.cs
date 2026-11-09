@@ -347,7 +347,8 @@ public class BookDraftPdfTests
         }
 
         var brew = ParityBrew();
-        var theirs = Markers((await PrintAsync(brew, css: faces + reference + extra, theme: BookDraftThemes.HomebreweryLayout, pageSize: pageSize, homebrewery: false)).Pdf);
+        // Homebrewery's own preview frame loads its reset before any brew's CSS (measured on homebrewery.naturalcrit.com), so the reference side has it too.
+        var theirs = Markers((await PrintAsync(brew, css: faces + BookDraftThemes.HomebreweryReset + reference + extra, theme: BookDraftThemes.HomebreweryLayout, pageSize: pageSize, homebrewery: false)).Pdf);
         var ours = Markers((await PrintAsync(brew, css: extra.Length == 0 ? null : extra, theme: BookDraftThemes.HomebreweryLayout, pageSize: pageSize)).Pdf);
 
         Assert.True(theirs.Count >= 60, $"{theirs.Count} markers found under Homebrewery's theme");
@@ -638,5 +639,23 @@ public class BookDraftPdfTests
         // From the second paragraph: the first one's initial is a drop cap, set apart from its word.
         for (var i = 1; i < 1400; i += 37) Assert.Contains("PUBLIC_P" + i + " ", text);
         Assert.Contains("PUBLIC_P1399", text);
+    }
+
+    /// <summary>
+    /// Homebrewery's preview frame zeroes every element's margin before the layer and any brew (measured on homebrewery.naturalcrit.com: an h1 has
+    /// margin-top 0, so Tasha's 205px of chapter padding puts its title 258px from the page's top, on its ribbon). Under the layer the same holds
+    /// here: without the reset the browser's 0.67em above an h1 pushed such a title 21px, a line, below where the brew put it.
+    /// </summary>
+    [ChromiumFact]
+    public async Task UnderTheLayer_AChapterTitle_SitsWhereTheBrewsPaddingPutsIt()
+    {
+        var printed = await PrintAsync("{{chapter,#ch-cast\n# Cast\n}}\n\nVera keeps the lamp.\n", css: ".page .chapter { column-span: all; display: block; padding-top: 205px; }",
+            theme: BookDraftThemes.HomebreweryLayout, pageSize: "Letter");
+        using var doc = PdfDocument.Open(printed.Pdf);
+        var page = doc.GetPage(1);
+        var title = page.GetWords().First(w => w.Text == "Cast");
+        var fromTop = (page.Height - title.BoundingBox.Top) * 96 / 72;
+        // PdfPig measures from the glyphs' tops: 284 with the reset, 306 with the browser's own 0.67em above the h1.
+        Assert.True(fromTop < 295, $"The title starts {fromTop:0}px down; the page's 53px and the chapter's 205px put it at about 284 (as measured here).");
     }
 }

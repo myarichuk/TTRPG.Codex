@@ -130,7 +130,8 @@ public static class BookDraftThemes
     public static string PageCss(BookLayout layout, bool homebrewery)
     {
         var (w, h) = BookThemes.PageMm(layout);
-        return Blank + (homebrewery ? "\n" + Layer : string.Empty) + $$"""
+        // The layer is Homebrewery's, so it comes with Homebrewery's reset, which it and every brew were written against.
+        return Blank + (homebrewery ? "\n/* Homebrewery's reset, as its preview frame has it. */\n" + HomebreweryReset + Layer : string.Empty) + $$"""
 
             /* This book's page, on Blank's. */
             @page { size: {{Mm(w)}}mm {{Mm(h)}}mm; margin: 0; }
@@ -226,6 +227,16 @@ public static class BookDraftThemes
             .block.properties h5 { margin: 1.5mm 0 1mm; }
             .block > :last-child { margin-bottom: 0; }
             """;
+
+    /// <summary>
+    /// The reset Homebrewery's preview frame loads (<c>brewRenderer.css</c>, MIT, as served by homebrewery.naturalcrit.com): every layer's and every
+    /// brew's CSS is written against it, so without it the browser's own margins (an h1's 0.67em above it, a paragraph's, a list's) move
+    /// everything a brew placed by hand, such as Tasha's chapter title on its ribbon. <c>:where</c> keeps its specificity at nothing: any rule of
+    /// the layer or of a brew wins over it. Used with the layer (a book printed without it keeps the browser's margins, as Plain and Ashen Vellum were drawn).
+    /// </summary>
+    public const string HomebreweryReset =
+        ":where(html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, button, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video) "
+        + "{ font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; vertical-align: baseline; border: 0; margin: 0; padding: 0; font-size: 100%; }\n";
 
     // Black on white over the layer, with the frames its pictures drew as thin lines; and the generator's own blocks, which Homebrewery has not.
     // Nothing here sets a size, a margin or a face of the layer's: that is what makes it the theme a Homebrewery brew's CSS matches.

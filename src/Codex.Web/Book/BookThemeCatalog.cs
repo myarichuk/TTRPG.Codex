@@ -54,7 +54,8 @@ public sealed class BookThemeCatalog(IBookDraftRepository store)
         var faces = homebrewery ? own.Concat(BookCustomTheme.LayerFaces(font)).ToList() : own.ToList();
         var chosen = standIns.TryGetValue(BookThemes.Primary(language), out var c) ? c : new Dictionary<string, string>();
         // The stand-ins after the theme's own faces: for their script's letters they are tried first.
-        var sheet = cleaned + "\n/* Stand-ins for this book's language (docs/BOOK_EXPORT.md 41.21). */\n" + BookCustomTheme.StandInCss(faces, language, chosen, font);
+        // A theme on the Homebrewery layer was written against Homebrewery's reset (an h1 has no margin above it there), so it gets it first.
+        var sheet = (homebrewery ? BookDraftThemes.HomebreweryReset : string.Empty) + cleaned + "\n/* Stand-ins for this book's language (docs/BOOK_EXPORT.md 41.21). */\n" + BookCustomTheme.StandInCss(faces, language, chosen, font);
         var maps = new Dictionary<string, IReadOnlySet<int>?>(StringComparer.Ordinal);
         var drawn = faces.Concat(BookCustomTheme.StandInFaces(faces, language, chosen,
             file => maps.TryGetValue(file, out var m) ? m : maps[file] = font(file) is { } b ? BookFontCoverage.Read(b) : null)).ToList();
