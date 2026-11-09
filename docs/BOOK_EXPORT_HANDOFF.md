@@ -146,6 +146,9 @@ For each, copy the file, apply the change, run the named tests, expect a failure
 - Player books (`BookPlayerBookTests.cs`): no diff in `Overlay`; no edition check in `BookDrafts.PrintedAsync`; drop the own character's
   `RevealedToReader`; clean with no owned set; no backing over page breaks; ignore the player in `FileName`; list a player with no character; no
   entry anchor. All eight were caught.
+- Stat blocks, frames, edges (`BookStatBlocksTests.cs`, `BookMasksFrameTests.cs`): modifier rule hard-coded; no escaping; no id on the block;
+  values not through the text path; the block not written; the edge reset by another setting; the edge always on; no party filter for
+  non-playerFacing homebrew. All eight were caught.
 Anything that survives is a missing test; add it.
 
 **C. Questions to answer by reading code, not docs**
@@ -205,9 +208,9 @@ Anything that survives is a missing test; add it.
    campaign, its languages measured from its faces, stand-ins for the scripts they lack, previewed on sample pages in each language.
 4. ~~Review leftovers~~ done (BOOK_EXPORT 41.24): the decoder is shared fairly between users, the preview and the PDF leave out the same
    pictures and the editor names them. The printing line's place is still taken before pictures are read, on purpose (41.24).
-5. Layout and format: the running footer and the `.md` file are done (41.24); the custom CSS editor and Ashen Vellum were built with the
-   editable book. Left: stat-block and table blocks (with item 2's book shape), picture-frame masks, paper fibre on the page edge, `:::for`
-   per-player editions.
+5. ~~Layout and format~~ done (2026-11-09): per-player editions (BOOK_EXPORT 45); stat blocks and tables built from the system's fields,
+   picture frames (torn, oval, round), torn page edges with fibre (46); suggestions and help in the editor (47). Left: stat blocks for NPC sheets
+   and encounters, and on the old HTML route; a soft "vignette" frame (macOS Preview draws Chrome's gradient masks wrong).
 6. ~~The `PartyPreview` empty-user-id bug~~ fixed (session 2): `CampaignAccess.PartyPreview()` now reads as `CampaignAccess.Nobody`, a made-up id per
    preview, the same one the book reader uses; test `PartyPreview_OwnsNoActor_EvenOneStoredWithAnEmptyOwner`, mutation-checked.
 7. ~~A wiki link to a GM-only page prints its title in the party book and outline~~ fixed (BOOK_EXPORT section 37). The app's own wiki had the

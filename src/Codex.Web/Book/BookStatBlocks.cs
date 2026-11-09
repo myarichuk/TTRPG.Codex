@@ -130,7 +130,7 @@ public static class BookStatBlocks
             var text = item.TryGetValue("description", out var d) && d is IConvertible ? Convert.ToString(d, CultureInfo.InvariantCulture) : null;
             var shownText = string.IsNullOrWhiteSpace(text) ? string.Empty : Inline(text, mention, dm);
             if (string.IsNullOrWhiteSpace(name) && shownText.Length == 0) continue;
-            rows.Add((BookCompiler.Escape(name ?? string.Empty), shownText));
+            rows.Add((string.IsNullOrWhiteSpace(name) ? string.Empty : Inline(name, mention, dm), shownText));
         }
 
         return rows;

@@ -230,7 +230,7 @@
         @if (tray.Gone > 0)
         {
             <div class="small mb-2" data-testid="book-art-gone">
-                <button type="button" class="btn btn-link btn-sm p-0" @onclick="ToggleGoneAsync" disabled="@(working != null)" aria-expanded="@(gone != null ? "true" : "false")"
+                <button id="book-art-gone-toggle" type="button" class="btn btn-link btn-sm p-0" @onclick="ToggleGoneAsync" disabled="@(working != null)" aria-expanded="@(gone != null ? "true" : "false")"
                         aria-controls="@(gone != null ? "book-art-gone-list" : null)" data-testid="book-art-gone-toggle">
                     @(gone != null ? L["Campaign.Book.Art.Gone.Hide"] : L["Campaign.Book.Art.Gone.Show", tray.Gone])
                 </button>
@@ -242,7 +242,7 @@
                             @for (var i = 0; i < gone.Count; i++)
                             {
                                 var item = gone[i];
-                                @VersionItem(item.Slot, item.Label, "book-art-gone-" + i, item.Version, i + 1, canUse: false)
+                                @VersionItem(item.Slot, item.Label, "book-art-gone-" + i, item.Version, i + 1, canUse: false, after: ["book-art-gone-toggle"])
                             }
                         </ul>
                     </div>
@@ -290,11 +290,11 @@
             </label>
             @if (slot.Mine)
             {
-                <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => RemoveAsync(slot)" disabled="@(working != null)" aria-describedby="@(id + "-name")" data-testid="@(id + "-remove")">@L["Campaign.Book.Art.Remove"]</button>
+                <button id="@(id + "-remove")" type="button" class="btn btn-link btn-sm p-0" @onclick="() => RemoveAsync(slot)" disabled="@(working != null)" aria-describedby="@(id + "-name")" data-testid="@(id + "-remove")">@L["Campaign.Book.Art.Remove"]</button>
             }
             @if (slot.Kept > 0)
             {
-                <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => ToggleVersionsAsync(slot)" disabled="@(working != null)" aria-expanded="@(versions.ContainsKey(slot.Key) ? "true" : "false")"
+                <button id="@(id + "-versions-toggle")" type="button" class="btn btn-link btn-sm p-0" @onclick="() => ToggleVersionsAsync(slot)" disabled="@(working != null)" aria-expanded="@(versions.ContainsKey(slot.Key) ? "true" : "false")"
                         aria-controls="@(versions.ContainsKey(slot.Key) ? id + "-versions" : null)" aria-describedby="@(id + "-name")" data-testid="@(id + "-versions-toggle")">
                     @(versions.ContainsKey(slot.Key) ? L["Campaign.Book.Art.Versions.Hide"] : L["Campaign.Book.Art.Versions.Show", slot.Kept + (slot.Mine ? 1 : 0)])
                 </button>
@@ -357,7 +357,7 @@
                 <ul class="list-unstyled d-flex gap-3 flex-wrap mb-1">
                     @for (var i = 0; i < list.Count; i++)
                     {
-                        @VersionItem(slot.Key, name, id + "-v" + i, list[i], i + 1, canUse: true)
+                        @VersionItem(slot.Key, name, id + "-v" + i, list[i], i + 1, canUse: true, after: [id + "-versions-toggle", id + "-remove"])
                     }
                 </ul>
             }
@@ -365,8 +365,8 @@
     };
 
     // One version: its picture, when it was made, and what can be done with it. Delete stays where it is while it asks, so the keyboard keeps its
-    // place; "Keep it" puts focus back on it.
-    private RenderFragment VersionItem(string slotKey, string name, string id, BookTrayVersion version, int number, bool canUse) => __builder =>
+    // place; "Keep it" puts focus back on it. Once deleted, the item is gone, so focus goes to the first of <paramref name="after"/> still there.
+    private RenderFragment VersionItem(string slotKey, string name, string id, BookTrayVersion version, int number, bool canUse, string[] after) => __builder =>
     {
         var label = L["Campaign.Book.Art.Versions.Alt", name, number];
         <li class="d-flex flex-column gap-1 align-items-start" data-testid="book-art-version" data-in-use="@(version.InUse ? "true" : "false")">
@@ -406,7 +406,7 @@
                 <div id="@(id + "-confirm")" class="d-flex flex-column gap-1">
                     <span role="alert" class="small">@L["Campaign.Book.Art.Versions.Confirm"]</span>
                     <span class="d-flex gap-2">
-                        <button type="button" class="btn btn-link btn-sm p-0 text-danger" @onclick="() => DeleteVersionAsync(slotKey, version)" disabled="@(working != null)" data-testid="book-art-version-delete-yes">@L["Campaign.Book.Art.Versions.Yes"]</button>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-danger" @onclick="() => DeleteVersionAsync(slotKey, version, after)" disabled="@(working != null)" data-testid="book-art-version-delete-yes">@L["Campaign.Book.Art.Versions.Yes"]</button>
                         <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => KeepAsync(id)" data-testid="book-art-version-delete-no">@L["Campaign.Book.Art.Versions.No"]</button>
                     </span>
                 </div>
@@ -474,7 +474,7 @@
         }
     }
 
-    private async Task DeleteVersionAsync(string slotKey, BookTrayVersion version)
+    private async Task DeleteVersionAsync(string slotKey, BookTrayVersion version, string[] after)
     {
         if (working != null) return;
         working = slotKey;
@@ -490,6 +490,10 @@
         {
             working = null;
         }
+
+        // The deleted item and its button are gone: focus goes to what stands for the slot now, not to the page.
+        StateHasChanged();
+        foreach (var target in Enumerable.Reverse(after)) await JS.InvokeVoidAsync("codex.focus", target);
     }
 
     // The versions shown are read again with the slots, so a picture drawn, used or deleted shows at once; a slot left with none closes.

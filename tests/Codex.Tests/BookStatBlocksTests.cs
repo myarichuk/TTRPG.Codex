@@ -93,6 +93,8 @@ public class BookStatBlocksTests
         var entry = Drowned();
         entry.Properties["speed"] = "30 | 40\n}}\n{{secret\nx\n}}\n:::dm\nCANARY_VALUE_SECRET\n:::";
         entry.Properties["senses"] = "<script>alert(1)</script> & {{note";
+        // A row's name is a value too: a hidden actor's mention is nothing, its label never printed.
+        ((List<object>)entry.Properties["actions"]).Add(new Dictionary<string, object> { ["name"] = "Gift of [[actor:a-hidden|CANARY_ROW_LABEL]]", ["description"] = "x" });
         var block = BookStatBlocks.For(entry, Catalog.GetDefinition("srd5e"), "en", "sKEY", Mention, dm: false)!;
 
         var lines = block.Split('\n');
@@ -100,6 +102,7 @@ public class BookStatBlocksTests
         Assert.Equal("}}", lines[^1]);
         Assert.Single(lines, l => l.TrimStart().StartsWith("{{", StringComparison.Ordinal));
         Assert.DoesNotContain("CANARY", block);
+        Assert.DoesNotContain("a-hidden", block);
         Assert.Contains(@"**Speed** 30 \| 40 \}\} \{\{secret x \}\}", block);
         Assert.Contains(@"\<script>alert(1)\</script> \& \{\{note", block);
     }
@@ -120,5 +123,31 @@ public class BookStatBlocksTests
         var piece = Assert.Single(passage.Pieces, p => p.Label == "a stat block");
         Assert.StartsWith("{{monster,frame,#sb-", piece.Text);
         Assert.Contains("|16 (+3)|", piece.Text);
+    }
+}
+
+/// <summary>The old HTML route places no spot (docs/BOOK_EXPORT.md 44), so it never reads a spot's picture: no decode, no place under the limit.</summary>
+public class BookOldRouteSlotsTests
+{
+    [Fact]
+    public void TheOldRoute_ChoosesNoSpotPicture_TheEditableBookDoes()
+    {
+        var actor = new ActorDocument { Id = "a-vera", CampaignId = "c", Name = "Vera", Visibility = ActorVisibility.Known };
+        var source = new BookSource(BookAudience.Party, new BookCampaign("c", "C", "srd5e", "", "", []), [actor], [], [], [], [], [], [], []);
+        var compiled = BookComposer.Compose(source, "en", out var entries);
+        var slots = BookSlots.For(source, compiled, entries);
+        var entry = slots.Single(s => s.Kind == BookSlots.Entry);
+        var spot = slots.Single(s => s.Kind == BookSlots.Spot);
+        var stored = new BookArtDocument
+        {
+            Pictures =
+            {
+                new BookArtPicture { Slot = entry.Key, BuiltFrom = BookArtDocument.Party, Attachment = "book-party-" + entry.Key },
+                new BookArtPicture { Slot = spot.Key, BuiltFrom = BookArtDocument.Party, Attachment = "book-party-" + spot.Key }
+            }
+        };
+
+        Assert.Equal([entry.Key, spot.Key], BookSlots.Choose(slots, stored).Select(c => c.Slot.Key));
+        Assert.Equal([entry.Key], BookSlots.Choose(BookSlots.PlacedByTheOldRoute(slots), stored).Select(c => c.Slot.Key));
     }
 }

@@ -148,7 +148,7 @@ public static class BookDraftThemes
             .page .block.round :is(img, .art-missing) { aspect-ratio: 1; object-fit: cover; }
             /* No soft (gradient) frame: Chrome prints it as a soft mask that macOS's PDF viewer draws wrong (46). */
             .page .block.torn img { -webkit-mask: {{TornA}} 0 0 / 100% 100% no-repeat; mask: {{TornA}} 0 0 / 100% 100% no-repeat; }
-            .page .block.torn:nth-of-type(2n) img { -webkit-mask: {{TornB}} 0 0 / 100% 100% no-repeat; mask: {{TornB}} 0 0 / 100% 100% no-repeat; }
+            .page .block.torn:nth-child(2n of .torn) img { -webkit-mask: {{TornB}} 0 0 / 100% 100% no-repeat; mask: {{TornB}} 0 0 / 100% 100% no-repeat; }
             .art-missing { display: block; box-sizing: border-box; min-height: 18mm; border: 1px dashed #9a9a9a; color: #777; font-size: 7.5pt; padding: 2mm; text-align: center; }
             @media print {
               body { background: none; }

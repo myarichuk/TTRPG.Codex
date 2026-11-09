@@ -566,6 +566,8 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Version deleted.");
         await Assertions.Expect(versions).ToHaveCountAsync(0);
         await Assertions.Expect(vera).ToContainTextAsync("your picture · drawn");
+        // The deleted item is gone and the slot has no versions left to show: focus is on what stands for the slot now, not on the page.
+        await Assertions.Expect(vera.Locator("[data-testid$='-remove']")).ToBeFocusedAsync();
         Assert.Equal(2, model.ImagePrompts.Count);
 
         // Two more draws make three versions; ticking a fourth says first, in the pre-flight, that it deletes a paid one.
@@ -887,6 +889,8 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await dm.GetByTestId("book-draft-more").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-draft-assist")).ToHaveAttributeAsync("aria-checked", "true");
         await dm.GetByTestId("book-draft-assist").ClickAsync();
+        // The menu closed: focus is back on the button that opened it.
+        await Assertions.Expect(dm.GetByTestId("book-draft-more")).ToBeFocusedAsync();
         await dm.Locator(".cm-content").ClickAsync();
         await dm.Keyboard.PressAsync("ControlOrMeta+End");
         await dm.Keyboard.TypeAsync("\n{{");

@@ -259,7 +259,7 @@ public static class BookEndpoints
         // The pictures the book already has, read for this edition only (the art reader asks the media store for nothing the source does not
         // hold), placed after the chapters are final. "pics=0" leaves them out: a book with many pictures is a heavy page to preview.
         // The GM's own book pictures go in the slots this edition's source makes, and only those made for this edition (BookSlots.Choose).
-        var slots = BookSlots.For(source, compiled, entries);
+        var slots = BookSlots.PlacedByTheOldRoute(BookSlots.For(source, compiled, entries));
         var art = pics == "0" ? BookArt.None : await artReader.ReadAsync(source, forPrint ? BookArtQuality.Print : BookArtQuality.Preview, cols == "2" ? 2 : 1, cancel,
             BookSlots.Choose(slots, await bookArt.GetAsync(access)), access.UserId);
         document = BookComposer.PlaceArt(document, compiled, entries, art, out _, slots);

@@ -92,6 +92,10 @@ public static class BookSlots
         return slots;
     }
 
+    /// <summary>The slots the old HTML route places pictures in (docs/BOOK_EXPORT.md 44): all but the spots, which only the editable book prints.
+    /// A spot's picture is then never read there, so it costs no decode and no place under the picture limit.</summary>
+    public static IReadOnlyList<BookSlot> PlacedByTheOldRoute(IEnumerable<BookSlot> slots) => [.. slots.Where(s => s.Kind != Spot)];
+
     /// <summary>For each slot, the stored picture this audience may have there: the party edition takes only pictures made for the party;
     /// the GM edition takes its own, and a party picture where it has none (anything the party may see, the GM may too).</summary>
     public static IReadOnlyList<BookSlotPicture> Choose(IReadOnlyList<BookSlot> slots, BookArtDocument? stored)

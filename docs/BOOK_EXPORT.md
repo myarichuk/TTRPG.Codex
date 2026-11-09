@@ -2486,7 +2486,7 @@ text. Not done: the old HTML route and the AI build (sections 25-36) print no st
 is the summary fields in the system's order (srd5e: "2, undead, Medium"), not a game's own phrasing.
 
 **Picture frames.** A class on a picture's block, in every theme (`BookDraftThemes.PageCss`): `torn` (a mask from `BookMasks.Frame`, the page
-edge's tear on a 100 by 100 box, two seeds alternating), `oval` and `round`. The Blocks tab's hint names them. A soft "vignette" frame was tried and
+edge's tear on a 100 by 100 box; two seeds, alternating among the torn pictures next to each other), `oval` and `round`. The Blocks tab's hint names them. A soft "vignette" frame was tried and
 left out: Chrome prints a gradient mask as a soft mask that macOS's PDF renderer (Preview) draws wrong, with the unmasked picture beside it.
 
 **Torn page edges.** A draft setting (More → Torn page edges; `BookDraftDocument.Edge`, off by default, kept when other settings are saved without

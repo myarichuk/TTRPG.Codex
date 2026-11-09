@@ -65,7 +65,7 @@
                         <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
                     </CodexButton>
                     <div class="book-draft-more">
-                        <button type="button" class="cx-btn cx-etched cx-sm" @onclick="ToggleMoreAsync" aria-haspopup="menu" aria-expanded="@(moreOpen ? "true" : "false")"
+                        <button id="book-draft-more" type="button" class="cx-btn cx-etched cx-sm" @onclick="ToggleMoreAsync" aria-haspopup="menu" aria-expanded="@(moreOpen ? "true" : "false")"
                                 title="@L["Campaign.Book.Draft.More"]" aria-label="@L["Campaign.Book.Draft.More"]" data-testid="book-draft-more"><LucideIcon IconName="more-horizontal" Size="14" /></button>
                         @if (moreOpen)
                         {
@@ -1131,10 +1131,24 @@
         view == null || e.Value is not bool on || on == view.Homebrewery ? Task.CompletedTask : SettingsAsync(view.Theme, on);
 
     /// <summary>Torn page edges (docs/BOOK_EXPORT.md 46), on or off: saved with the settings, and the preview drawn again.</summary>
-    private Task EdgeAsync()
+    private async Task EdgeAsync()
     {
         moreOpen = false;
-        return view == null ? Task.CompletedTask : SettingsAsync(view.Theme, view.Homebrewery, !view.Edge);
+        if (view != null) await SettingsAsync(view.Theme, view.Homebrewery, !view.Edge);
+        await MoreFocusAsync();
+    }
+
+    // A menu item that closes the menu would leave focus nowhere: it goes back to the button that opened it.
+    private async Task MoreFocusAsync()
+    {
+        StateHasChanged();
+        try
+        {
+            await JS.InvokeVoidAsync("codex.focus", "book-draft-more");
+        }
+        catch (JSException)
+        {
+        }
     }
 
     private async Task SettingsAsync(string chosen, bool homebrewery, bool? edge = null)
@@ -1334,6 +1348,7 @@
         }
 
         if (module != null && editorId != null) await module.InvokeVoidAsync("setAssist", editorId, assistOn);
+        await MoreFocusAsync();
     }
 
     /// <summary>What the editor's suggestions need: this edition's picture slots by their labels, and the help in the GM's language.</summary>
