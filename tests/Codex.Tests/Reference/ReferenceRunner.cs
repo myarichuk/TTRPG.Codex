@@ -50,6 +50,9 @@ public interface IReferenceSystem
     /// roll, <paramref name="participants"/> are the sheets joining it, by spec sheet id.</summary>
     CheckOr<RollCheck> Roll(Dictionary<string, object> sheet, string? sheetId, SpecRoll roll, IReadOnlyDictionary<string, Dictionary<string, object>> participants);
 
+    /// <summary>Raises the spec's event on the sheet and applies what it asks of that sheet.</summary>
+    CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev);
+
     string? CannotRoll { get; }
     string? CannotRaiseEvents { get; }
     string? CannotLayOut { get; }
@@ -59,6 +62,10 @@ public interface IReferenceSystem
 /// <summary>What a roll came to, as a spec reads it: <see cref="After"/> is the roller's sheet once the roll's intents were applied.</summary>
 public sealed record RollCheck(string? Outcome, IReadOnlyList<double> Totals, IReadOnlyList<int> Kept, int DiceUsed,
     IReadOnlyDictionary<string, object?> Carries, Dictionary<string, object> After);
+
+/// <summary>What an event came to, as a spec reads it: the intents, each <c>{ kind: { actor?, fields } }</c>, and the sheet once
+/// those for it were applied.</summary>
+public sealed record EventCheck(IReadOnlyList<Dictionary<string, object?>> Intents, Dictionary<string, object> After, string? Failed = null);
 
 /// <summary>A result, or why the host cannot produce one.</summary>
 public readonly record struct CheckOr<T>(T? Value, string? Unsupported)
@@ -113,9 +120,9 @@ public static class ReferenceRunner
         if (expect.Layout != null && system.CannotLayOut is { } noLayout) return Result(CheckStatus.Unsupported, noLayout);
         if ((expectation.With?.Campaign != null || expect.After?.Campaign != null || (expectation.Sheet == null && expectation.Event != null))
             && system.HasNoCampaignObjects is { } noCampaign) return Result(CheckStatus.Unsupported, noCampaign);
-        if (expectation.Event != null || expect.Layout != null)
+        if (expect.Layout != null)
         {
-            return Result(CheckStatus.Unsupported, "this runner checks events and layout once a host can do them; extend ReferenceRunner.Check");
+            return Result(CheckStatus.Unsupported, "this runner checks layout once a host can do it; extend ReferenceRunner.Check");
         }
 
         var sheet = SpecSheets.Compose(spec, expectation);
@@ -150,9 +157,28 @@ public static class ReferenceRunner
             sheet = made.After;
         }
 
+        if (expectation.Event is { } ev)
+        {
+            var raised = system.Raise(sheet, expectation.Sheet, ev);
+            if (raised.Unsupported is { } why) return Result(CheckStatus.Unsupported, why);
+            if (raised.Value!.Failed is { } failed) return Result(CheckStatus.Fail, $"the event failed: {failed}");
+            if (expect.Intents is { } wanted)
+            {
+                var actual = Describe(raised.Value!.Intents);
+                var expected = Describe(wanted.Select(YamlValues.Normalize).ToList());
+                if (actual != expected) problems.Add($"intents: {actual}, expected {expected}");
+            }
+
+            sheet = raised.Value!.After;
+        }
+        else if (expect.Intents != null)
+        {
+            return Result(CheckStatus.Unsupported, "intents are checked for events; extend ReferenceRunner.Check for a roll's");
+        }
+
         if (expect.After is { } after)
         {
-            if (expectation.Roll == null) return Result(CheckStatus.Unsupported, "state after an event needs events (step 5)");
+            if (expectation.Roll == null && expectation.Event == null) return Result(CheckStatus.Fail, "after needs a roll or an event");
             foreach (var (key, wanted) in YamlValues.NormalizeMap(after.Tracks))
             {
                 var actual = YamlValues.Normalize(sheet.GetValueOrDefault(key));
@@ -260,7 +286,7 @@ public sealed class CurrentEngineHost : IReferenceHost
         public string Id => definition.Id;
 
         public string? CannotRoll => null;
-        public string? CannotRaiseEvents => "the table hard-codes damage, death saves and rests; there are no event handlers (step 5)";
+        public string? CannotRaiseEvents => null;
         public string? CannotLayOut => "the sheet page composes fixed panels; there is no layout (step 6)";
         public string? HasNoCampaignObjects => "there are no clocks or campaign tables (step 7)";
 
@@ -312,8 +338,37 @@ public sealed class CurrentEngineHost : IReferenceHost
 
             // Only what the roll asks of the roller's own sheet; the others' sheets are not the expectation's.
             var after = new Dictionary<string, object>(sheet);
-            SheetIntents.Apply(definition, this, after, result.AllIntents().Where(i => i.Actor == null || i.Actor == sheetId));
+            SheetIntents.Apply(definition, this, after, result.AllIntents(), sheetId);
             return CheckOr<RollCheck>.Of(new RollCheck(result.Outcome, result.Totals().ToList(), result.Kept, dice.Used + joining.Sum(p => p.Source.Used), result.Carries, after));
+        }
+
+        public CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev)
+        {
+            var fields = YamlValues.NormalizeMap(ev.Where(f => f.Key != "type").ToDictionary(f => f.Key, f => f.Value))
+                .ToDictionary(f => f.Key, f => (object?)f.Value, StringComparer.Ordinal);
+            var after = new Dictionary<string, object>(sheet);
+            try
+            {
+                var result = SheetEvents.Raise(definition, this, after, new SheetEvent(ev.GetValueOrDefault("type")?.ToString() ?? "", fields), sheetId);
+                return CheckOr<EventCheck>.Of(new EventCheck(result.Intents.Select(Shape).ToList(), after));
+            }
+            catch (SheetEventException ex) when (ex.NotYet is { } notYet)
+            {
+                return CheckOr<EventCheck>.No($"{ex.Message} {char.ToUpperInvariant(notYet[0])}{notYet[1..]}.");
+            }
+            catch (SheetEventException ex)
+            {
+                return CheckOr<EventCheck>.Of(new EventCheck(Array.Empty<Dictionary<string, object?>>(), sheet, ex.Message));
+            }
+        }
+
+        /// <summary><c>{ kind: { actor?, fields } }</c>, as a spec writes an intent.</summary>
+        private static Dictionary<string, object?> Shape(SheetIntent intent)
+        {
+            var fields = new Dictionary<string, object?>(StringComparer.Ordinal);
+            if (intent.Actor != null) fields["actor"] = intent.Actor;
+            foreach (var (key, value) in intent.Fields) fields[key] = value;
+            return new Dictionary<string, object?> { [intent.Kind] = fields };
         }
 
         private (Dictionary<string, object> Sheet, SheetEvaluation Evaluation) Evaluate(Dictionary<string, object> input)

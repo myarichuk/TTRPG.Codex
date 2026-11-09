@@ -5,6 +5,16 @@ using Codex.Plugin.Abstractions;
 namespace Codex.Core.Rules;
 
 /// <summary>One modifier that reached a target, and whether it counted (a lower bonus of a type that does not stack does not).</summary>
+/// <summary>A track as it stands on one sheet: its definition, its bounds and declared start worked out (null where there are
+/// none or they cannot be worked out), and for slots in levels, the levels.</summary>
+public sealed record SheetTrack(string Key, string? Label, TrackDefinition Definition, double? Min, double? Max, double? Start, IReadOnlyList<SheetSlotLevel> Levels)
+{
+    public bool IsSlots => Definition.Display.Equals("slots", StringComparison.OrdinalIgnoreCase) || Definition.Holds != null;
+}
+
+/// <summary>One level of a slot track in levels: how many slots, and the condition anything in it brings.</summary>
+public sealed record SheetSlotLevel(int Level, int Slots, string? Condition);
+
 public sealed record AppliedModifier(string Type, double Amount, string? Source, bool Counted);
 
 /// <summary>What <see cref="SheetModel"/> works out for a sheet.</summary>
@@ -203,13 +213,42 @@ public sealed class SheetModel
     }
 
     /// <summary>A track's least and greatest value (null where it has none), or null when the sheet kind has no such track.</summary>
-    public (double? Min, double? Max)? TrackBounds(string key)
+    public (double? Min, double? Max)? TrackBounds(string key) => TrackOf(key) is { } track ? (track.Min, track.Max) : null;
+
+    /// <summary>The sheet kind's track with this key (one an <c>each</c> makes included) as it stands on this sheet, or null.
+    /// A bound that cannot be worked out is null (and a warning).</summary>
+    public SheetTrack? TrackOf(string key)
     {
         using var _ = Enter();
         if (Tracks().FirstOrDefault(t => t.Key == key) is not { } track) return null;
         var min = track.Definition.Min is { } low ? Guard(track.Key + ":min", track.Label, () => Run(low, extra: track.Bindings)) is { } m ? SheetFormulas.Number(m) : (double?)null : 0d;
         var max = track.Definition.Max != null ? Guard(track.Key + MaxSuffix, track.Label, () => TrackMax(track)) as double? : null;
-        return (min, max);
+        double? start = track.Definition.Start switch
+        {
+            null => null,
+            "max" => max,
+            "min" => min ?? 0,
+            { } formula => Guard(track.Key + ":start", track.Label, () => Run(formula, extra: track.Bindings)) is { } s ? SheetFormulas.Number(s) : null
+        };
+        var levels = new List<SheetSlotLevel>();
+        if (track.Definition.Each == null && track.Definition.Levels is IEnumerable list and not string)
+        {
+            foreach (var level in list.Cast<object?>())
+            {
+                var map = level as IDictionary<object, object>;
+                if (map == null || YamlValues.ToNumber(At(map, "level")) is not { } number) continue;
+                levels.Add(new SheetSlotLevel((int)number, (int)(YamlValues.ToNumber(At(map, "slots")) ?? 1), At(map, "condition")?.ToString()));
+            }
+        }
+
+        return new SheetTrack(track.Key, track.Label, track.Definition, min, max, start, levels);
+    }
+
+    /// <summary>The keys of the sheet kind's tracks, those an <c>each</c> makes included, in declaration order.</summary>
+    public IReadOnlyList<string> TrackKeys()
+    {
+        using var _ = Enter();
+        return Tracks().Select(t => t.Key).ToList();
     }
 
     /// <summary>A path into the sheet (<c>BAB</c>, <c>skills.knowledge.arcana.ranks</c>), or null.</summary>

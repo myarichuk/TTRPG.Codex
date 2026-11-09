@@ -70,3 +70,26 @@ crew.resistance-costs-six-minus-the-highest-die
 crew.a-six-resists-for-free
 crew.a-resistance-critical-clears-a-stress
 crew.a-group-action-takes-the-best-and-costs-the-leader
+
+# Step 5 (events -> intents): declared handlers ({ when, intents }), the built-in damage handler (damage reduction, energy
+# resistance, nonlethal), events that are intents, overflow (reset, carry, ask), boxes and slots that push up, beyond.
+crew.stress-overflow-marks-trauma-and-clears-stress
+crew.the-fourth-trauma-retires
+crew.harm-goes-into-a-free-slot-of-its-level
+crew.a-full-level-pushes-harm-up
+crew.harm-past-the-last-level-is-fatal
+crew.a-desperate-roll-marks-experience-in-its-attribute
+crew.session-end-answers-mark-playbook-experience
+crew.helping-costs-the-helper-a-stress
+crew.heat-overflow-raises-wanted-level-and-keeps-the-rest
+street.mortally-wounded-rolls-a-death-save-each-turn
+street.each-death-save-raises-the-penalty
+d35.below-zero-is-dying
+d35.exactly-zero-is-disabled
+d35.minus-ten-is-dead-and-the-track-stops-there
+d35.damage-reduction-subtracts-from-physical-damage
+d35.damage-reduction-is-bypassed-by-its-tag
+d35.damage-reduction-does-not-touch-energy
+d35.energy-resistance-subtracts-by-type
+d35.nonlethal-equal-to-hit-points-staggers
+d35.nonlethal-beyond-hit-points-knocks-out

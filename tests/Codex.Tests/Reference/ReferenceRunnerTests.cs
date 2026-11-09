@@ -22,6 +22,8 @@ public class ReferenceRunnerTests : IDisposable
               derived:
                 - { key: bonus, label: Bonus, formula: "2 + (level - 1) / 4" }
               attributes: { methods: [manual], default: manual, max: 20 }
+            events:
+              advance: { script: rules.js#onAdvance }
             """);
     }
 
@@ -76,14 +78,17 @@ public class ReferenceRunnerTests : IDisposable
     public void WhatTheEngineCannotDo_IsUnsupported_NamingTheStep_AndAnUndefinedRollFails()
     {
         var roll = Run(new SpecExpectation { Id = "t.roll", Sheet = "hero", Roll = new SpecRoll { Definition = "check", Dice = { 6 } }, Expect = { Outcome = "full" } });
-        var ev = Run(new SpecExpectation { Id = "t.event", Sheet = "hero", Event = new() { ["type"] = "turnStart" }, Expect = { Intents = new() } });
+        var unhandled = Run(new SpecExpectation { Id = "t.event", Sheet = "hero", Event = new() { ["type"] = "turnStart" }, Expect = { Intents = new() } });
+        var scripted = Run(new SpecExpectation { Id = "t.script", Sheet = "hero", Event = new() { ["type"] = "advance" }, Expect = { Intents = new() } });
         var conditions = Run(new SpecExpectation { Id = "t.cond", Sheet = "hero", Expect = { Conditions = new() { "Down" } } });
 
         // A roll the system does not define is the system's problem, and fails saying so.
         Assert.Equal(CheckStatus.Fail, roll.Status);
         Assert.Contains("no roll called \"check\"", roll.Detail);
-        Assert.Equal(CheckStatus.Unsupported, ev.Status);
-        Assert.Contains("step 5", ev.Detail);
+        // An event nothing handles does nothing; one a script handles waits for scripts.
+        Assert.Equal(CheckStatus.Pass, unhandled.Status);
+        Assert.Equal(CheckStatus.Unsupported, scripted.Status);
+        Assert.Contains("step 8", scripted.Detail);
         Assert.Equal(CheckStatus.Unsupported, conditions.Status);
         Assert.Contains("step 3", conditions.Detail);
     }

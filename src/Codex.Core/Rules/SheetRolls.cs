@@ -26,7 +26,8 @@ public sealed class SheetRollRequest
 }
 
 /// <summary>Something a roll asks the table to do (overhaul section 3, "Events → intents"): <c>adjust</c> a track and so on.
-/// <see cref="Actor"/> names whose sheet; null is the roller's. Applying them is the table's (step 5).</summary>
+/// <see cref="Actor"/> names whose sheet; null is the sheet's own. <see cref="SheetIntents.Apply"/> does what they ask of one
+/// sheet and leaves the rest for the table.</summary>
 public sealed record SheetIntent(string Kind, string? Actor, IReadOnlyDictionary<string, object?> Fields);
 
 /// <summary>What a roll came to.</summary>

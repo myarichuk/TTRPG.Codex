@@ -37,8 +37,10 @@ public class ReferenceFixtureTests(ITestOutputHelper output)
 
             Assert.Equal(new[] { spec.System }, loader.LoadedSystemIds);
             Assert.Empty(loader.FailedSystems);
-            // The only problem is the unknown keys: the packs load and every entry is where its type says.
-            var problem = Assert.Single(loader.ProblemsFor(spec.System));
+            // The only problems are the unknown keys and the handlers that are scripts (step 8): the packs load, every entry is
+            // where its type says, and the rolls, events and tracks are well formed.
+            var problems = loader.ProblemsFor(spec.System).Where(p => !p.Message.Contains("is a script, which this version does not run")).ToList();
+            var problem = Assert.Single(problems);
             Assert.Contains("keys this version does not read", problem.Message);
             Assert.Contains("sheetKinds", problem.Message);
             Assert.NotEmpty(registry.GetPacks(spec.System));

@@ -168,7 +168,7 @@ public class PluginLoader(
                         Warn(new LoadProblem(LoadProblemSource.System, definition.Id, UnknownKeysMessage(unknownKeys), definition.Id, systemFile));
                     }
 
-                    foreach (var problem in Rules.SheetRolls.Problems(definition))
+                    foreach (var problem in Rules.SheetRolls.Problems(definition).Concat(Rules.SheetEvents.Problems(definition)))
                     {
                         Warn(new LoadProblem(LoadProblemSource.System, definition.Id, problem, definition.Id, systemFile));
                     }

@@ -20,9 +20,6 @@ entityTypes:
 
 conditions: [Retired, Dead, Less effect, Reduced dice, Needs help]
 
-# What a character may take as trauma: this fixture's own list.
-traumas: [numb, haunted, reckless, bitter, jumpy, hollow]
-
 # ---- The proposed primitives (overhaul section 3) ----
 
 conditionEffects:
@@ -76,7 +73,8 @@ sheetKinds:
         label: Stress
         max: 9
         display: boxes
-        overflow: { into: trauma, by: 1, then: reset, ask: { who: player, choices: traumas } }
+        # Past nine: a trauma, stress clears, and the player picks which trauma (this fixture's own list).
+        overflow: { into: trauma, by: 1, then: reset, ask: { who: player, choices: [numb, haunted, reckless, bitter, jumpy, hollow] } }
       - key: trauma
         label: Trauma
         max: 4
@@ -174,6 +172,9 @@ events:
   # Helping: the helper takes a stress, the roller gets a die (the roll's bonusDice input).
   assist:
     - { intents: [{ adjust: { actor: ev.helper, track: stress, by: 1 } }] }
+  # Harm is written into a free slot of its level; the track pushes it up when the level is full.
+  harm:
+    - { intents: [{ mark: { track: harm, level: ev.level, text: ev.text } }] }
   roll:
     # A desperate action roll marks experience in the action's attribute.
     - { when: "ev.definition == 'action' && ev.inputs.position == 'desperate'", intents: [{ mark: { track: "'xp_' + actions[ev.inputs.action].group" } }] }

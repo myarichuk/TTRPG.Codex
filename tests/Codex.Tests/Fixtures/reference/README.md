@@ -16,8 +16,9 @@ published text is copied (overhaul section 8 records the licences).
 This version reads part of each `system.yaml`: attributes, entity types and condition names; since step 2
 `modifierTypes`, `progressions`, `functions` (formulas), `conditionEffects` and, in each sheet kind, `values`, `modifiers`,
 `lists` and `keyedLists` (`Codex.Core.Rules.SheetModel`); since step 3 `tracks`; since step 4 `rolls`
-(`Codex.Core.Rules.SheetRolls`). The loader names the rest (layout, events, the campaign, and the parts of tracks that act
-when a track changes) as keys it does not read, and `ReferenceFixtureTests` prints them. Each step of the overhaul makes more of it read.
+(`Codex.Core.Rules.SheetRolls`); since step 5 `events` and the parts of tracks that act when a track changes
+(`Codex.Core.Rules.SheetEvents`, `SheetIntents`). The loader names the rest (layout, the campaign) as keys it does not read,
+and `ReferenceFixtureTests` prints them. Each step of the overhaul makes more of it read.
 
 ## How progress is tracked
 
@@ -31,7 +32,7 @@ when a track changes) as keys it does not read, and `ReferenceFixtureTests` prin
 - An expectation that only says what must *not* happen ("no problems", "no conditions") passes on a host that checks
   nothing. So it names, in `requires`, the expectations that show the check exists, and counts only alongside them.
 
-At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58.
+At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58. After step 5: 78.
 
 ## spec.yaml
 
@@ -117,8 +118,39 @@ Tracks, as step 3 built them:
   (`Actor.Rule.SlotHolds`), the same one any number of times, and no more than the maximum (`Actor.Rule.TrackFull`).
 - A numeric track's value must lie within `min` (default 0, may be negative) and its maximum (`Actor.Rule.TrackRange`).
 - Slots in `levels` bring the condition of each level that has something in it.
-- `overflow`, `whenFull: pushUp` and `beyond` act when a track changes, which is events' work (step 5); the loader still
-  names them as not read.
+- `overflow`, `whenFull: pushUp`, `beyond` and `start` act when a track changes (below, events).
+
+Events and intents, as step 5 built them:
+- An event is `{ type, ...fields }`. Its handler (`events.<type>`) is a list of `{ when, intents }` lines, each adding its
+  intents when its `when` holds (no `when`: always), or `{ builtin: name, ...options }`, or `{ script }` (step 8; the loader
+  warns, and the event does nothing until then). A handler reads the sheet and the event (`ev.amount`, `ev.inputs.position`)
+  and returns intents; it changes nothing. A line with `target` acts on campaign objects (step 7).
+- In an intent's fields, `by`, `to`, `level` and `slot` are formulas. `key` (a log line's translation key), `definition` and
+  `who` are names. Any other text is itself when it is a bare word or words (`stress`, `cut hand`), otherwise a formula
+  (`ev.helper`, `'xp_' + actions[ev.inputs.action].group`). `actor` names whose sheet; none is the sheet the event is on.
+- An event whose type is a kind of intent (`adjust`, `set`, `mark`, `clear`, `condition`) is that intent, applied as it
+  comes: the table's own edit, with no handler. `expect.intents` is what the handlers returned, then what the changes raised
+  (an overflow's `ask`), in order.
+- Applying intents to the sheet: `adjust` and `set` keep a numeric track within its bounds. A rise past the maximum of a track
+  with `overflow` adds `by` (1 unset; a formula may read `excess`) to `into`, which may overflow in turn, then `reset`s to the
+  minimum, `carry`s what went past (once round per filling) or `keep`s the maximum, and raises its `ask`. Overflows stop 8
+  deep. `set` never overflows. `mark` and `clear` move a box track by one (or `by`); on a slot track they put `text` into a
+  free slot or take it out. Slots in levels fill `level` (the first, unset); a full level puts it a level up with
+  `whenFull: pushUp`, and past the last brings `beyond`'s condition onto the sheet. `condition { add | remove }` changes the
+  sheet's own conditions. Thresholds and bands are not applied: they follow from the new values. What the sheet cannot do
+  (another actor's intents, `roll`, `ask`, `log`, a full level that does not push up) is left for the table.
+- A track the sheet has no value for starts at `start` (`max`, `min`, a number or formula); with none declared, at nothing
+  (0, within its bounds). Recompute writes each numeric track's maximum (`{key}_Max`) and its declared start onto the
+  sheet, and the table mirrors numeric tracks into its pools; slot tracks stay text on the sheet.
+- `builtin: damage` takes `{ amount, damageType, tags }`: damage reduction first (the best `amount` among the sheet's
+  `reduction.list` entries whose `bypassedByTag` property is not one of the tags, for `onlyTypes`), then resistance (the
+  sheet's `resistance.property` map, by type); what is left adds to the `nonlethal` track when the event has its `tag`, and
+  otherwise comes off `track`.
+- Aggregates take a list reached through a member as well (`count(ev.answers, a => a)`); a list of flags counts its `true`s,
+  and `contains` finds text in a list of text.
+- The loader warns about a handler of the wrong shape, an unknown builtin or intent kind, a script handler, a handler for an
+  intent kind (it never runs), an overflow into a track that is not there, without a maximum, or with an unknown `then`, and
+  `whenFull`/`beyond` on anything but slots in levels.
 
 Rolls, as step 4 built them:
 - Inputs: each declared input is what the request supplied, else for `from: parent` the parent roll's, for `from: weapon`
@@ -144,8 +176,8 @@ Rolls, as step 4 built them:
 - A group roll has `participants: { roll }` instead of dice: each participant makes that roll with the group's inputs and
   their own dice, and `result: best` (or `worst`) is the participant outcome earliest (or latest) in that roll's outcomes.
 - Intents are `{ kind: { fields } }`. `by` and `to` are worked out when the roll is made (`6 - kept`); `actor` naming an
-  input is whoever that input names (`leader`). The roll returns them; `SheetIntents.Apply` applies `adjust` and `set` to a
-  track within its minimum and maximum. Overflow and the rest are the table's (step 5).
+  input is whoever that input names (`leader`). The roll returns them, and `SheetIntents.Apply` applies them as it applies an
+  event's (above).
 - `score(key)` reads a value of the sheet kind when no attribute has that key (Blades' `insight`), and formulas may read an
   entry by a key worked out in the formula: `skills[input.skill].value`. Die faces compare as numbers: `d => d == 6`.
 - The loader warns about a roll with not exactly one of `dice`, `pool` or `participants`, a pool without a die, a roll

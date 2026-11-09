@@ -434,6 +434,11 @@ public class SystemDefinition
     /// <summary>Named rolls with inputs and outcomes (see Rolls.cs).</summary>
     public List<RollDefinition> Rolls { get; set; } = new();
 
+    /// <summary>Event handlers by event name (<c>damage</c>, <c>turnStart</c>, <c>roll</c>): <c>{ builtin: name, ...options }</c>,
+    /// <c>{ script: file#export }</c>, or a list of <c>{ when, intents }</c> lines. Read as YAML gives it, and parsed by
+    /// Codex.Core.Rules.SheetEvents, since a handler is written in either shape.</summary>
+    public Dictionary<string, object> Events { get; set; } = new();
+
     /// <summary>Translations by language tag ("ru"), filled by the loader from <c>system.&lt;locale&gt;.yaml</c> files.</summary>
     public Dictionary<string, SystemTranslation> Translations { get; set; } = new();
 

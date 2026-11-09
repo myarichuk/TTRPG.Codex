@@ -25,7 +25,13 @@ public class FormulaItem(Func<string, object?> member) : DynamicObject
     /// <summary>The number this item stands for, when it stands for one (a die's face); null otherwise.</summary>
     public virtual double? Value => null;
 
+    /// <summary>The flag this item stands for, when it stands for one (an answer in a list of answers); null otherwise.</summary>
+    public virtual bool? Flag => null;
+
     public static implicit operator double?(FormulaItem? item) => item?.Value;
+    public static implicit operator bool?(FormulaItem? item) => item?.Flag;
+    public static bool operator ==(FormulaItem? a, bool b) => a?.Flag == b;
+    public static bool operator !=(FormulaItem? a, bool b) => a?.Flag != b;
     public static bool operator ==(FormulaItem? a, double b) => a?.Value == b;
     public static bool operator !=(FormulaItem? a, double b) => a?.Value != b;
     public static bool operator <(FormulaItem? a, double b) => a?.Value < b;
@@ -53,6 +59,18 @@ public class FormulaItem(Func<string, object?> member) : DynamicObject
 public sealed class FormulaNumber(double value) : FormulaItem(_ => null)
 {
     public override double? Value => value;
+}
+
+/// <summary>A flag in a list formulas aggregate over: an answer in <c>count(ev.answers, a => a)</c>.</summary>
+public sealed class FormulaFlag(bool value) : FormulaItem(_ => null)
+{
+    public override bool? Flag => value;
+}
+
+/// <summary>Text in a list formulas read: a name in <c>contains(ev.names, 'x')</c>.</summary>
+public sealed class FormulaText(string? value) : FormulaItem(_ => null)
+{
+    public override string? ToString() => value;
 }
 
 /// <summary>A list as formulas see it: its items to aggregate over, and (for a keyed list) its entries by key as members
@@ -280,6 +298,14 @@ public sealed partial class SheetFormulas
         _ => throw new FormulaException($"\"{value}\" is not a number")
     };
 
+    /// <summary>What an aggregate goes over: a list; null (a member an item does not have) is none.</summary>
+    private static IEnumerable<FormulaItem> Items(object? list) => list switch
+    {
+        null => Array.Empty<FormulaItem>(),
+        IEnumerable<FormulaItem> items => items,
+        _ => throw new FormulaException($"\"{list}\" is not a list")
+    };
+
     private static IEnumerable<double> Selected(IEnumerable<FormulaItem> list, Func<FormulaItem, double?> select) =>
         list.Select(select).Where(v => v.HasValue).Select(v => v!.Value);
 
@@ -294,14 +320,16 @@ public sealed partial class SheetFormulas
         // One delegate type per function: DynamicExpresso parses a lambda's body against the parameter's type, and given
         // overloads it takes one of them, not the one that fits. Selectors return double? and predicates bool?, so a member an
         // item does not have (null) is skipped, or does not hold, instead of failing the formula.
-        it.SetFunction("max", (Func<IEnumerable<FormulaItem>, Func<FormulaItem, double?>, object?, double>)((l, f, d) => Selected(l, f).DefaultIfEmpty(Number(d)).Max()));
-        it.SetFunction("min", (Func<IEnumerable<FormulaItem>, Func<FormulaItem, double?>, object?, double>)((l, f, d) => Selected(l, f).DefaultIfEmpty(Number(d)).Min()));
-        it.SetFunction("sum", (Func<IEnumerable<FormulaItem>, Func<FormulaItem, double?>, double>)((l, f) => Selected(l, f).Sum()));
-        it.SetFunction("count", (Func<IEnumerable<FormulaItem>, Func<FormulaItem, bool?>, double>)((l, f) => l.Count(i => f(i) == true)));
-        it.SetFunction("any", (Func<IEnumerable<FormulaItem>, Func<FormulaItem, bool?>, bool>)((l, f) => l.Any(i => f(i) == true)));
-        it.SetFunction("all", (Func<IEnumerable<FormulaItem>, Func<FormulaItem, bool?>, bool>)((l, f) => l.All(i => f(i) == true)));
-        it.SetFunction("where", (Func<IEnumerable<FormulaItem>, Func<FormulaItem, bool?>, FormulaList>)((l, f) => new FormulaList(l.Where(i => f(i) == true).ToList())));
-        it.SetFunction("first", (Func<IEnumerable<FormulaItem>, FormulaItem>)(l => l.FirstOrDefault() ?? FormulaItem.Empty));
+        // The list is object, not IEnumerable<FormulaItem>: a list reached through a member (ev.answers, item.levels) is
+        // dynamic, and the parser will not pass a dynamic argument to a parameter of another type.
+        it.SetFunction("max", (Func<object?, Func<FormulaItem, double?>, object?, double>)((l, f, d) => Selected(Items(l), f).DefaultIfEmpty(Number(d)).Max()));
+        it.SetFunction("min", (Func<object?, Func<FormulaItem, double?>, object?, double>)((l, f, d) => Selected(Items(l), f).DefaultIfEmpty(Number(d)).Min()));
+        it.SetFunction("sum", (Func<object?, Func<FormulaItem, double?>, double>)((l, f) => Selected(Items(l), f).Sum()));
+        it.SetFunction("count", (Func<object?, Func<FormulaItem, bool?>, double>)((l, f) => Items(l).Count(i => f(i) == true)));
+        it.SetFunction("any", (Func<object?, Func<FormulaItem, bool?>, bool>)((l, f) => Items(l).Any(i => f(i) == true)));
+        it.SetFunction("all", (Func<object?, Func<FormulaItem, bool?>, bool>)((l, f) => Items(l).All(i => f(i) == true)));
+        it.SetFunction("where", (Func<object?, Func<FormulaItem, bool?>, FormulaList>)((l, f) => new FormulaList(Items(l).Where(i => f(i) == true).ToList())));
+        it.SetFunction("first", (Func<object?, FormulaItem>)(l => Items(l).FirstOrDefault() ?? FormulaItem.Empty));
         it.SetFunction("contains", (Func<object?, object?, bool>)Contains);
         it.SetFunction("levelFor", (Func<object?, object?, double>)LevelFor);
         it.SetFunction("table", (Func<object?, object?, object?, double>)Table);
@@ -318,7 +346,7 @@ public sealed partial class SheetFormulas
         return collection switch
         {
             null or string => false,
-            IEnumerable<FormulaItem> items => items.Any(i => string.Equals(i.Get("id")?.ToString(), wanted, StringComparison.OrdinalIgnoreCase)),
+            IEnumerable<FormulaItem> items => items.Any(i => string.Equals((i is FormulaText ? i : i.Get("id"))?.ToString(), wanted, StringComparison.OrdinalIgnoreCase)),
             IEnumerable items => items.Cast<object?>().Any(i => string.Equals(i?.ToString(), wanted, StringComparison.OrdinalIgnoreCase)),
             _ => false
         };

@@ -166,8 +166,8 @@ public sealed class ConditionEffectDefinition
 /// <summary>
 /// A resource with a current value (overhaul section 3): hit points, stress, armor per location, spell slots. Its current value
 /// is a number on the sheet under <see cref="Key"/>, or for a slot track the list of what its slots hold. Formulas read the
-/// current value by the key and the maximum as <c>{key}_Max</c>. Overflow, <c>whenFull</c> and <c>beyond</c> act when the
-/// track changes, which is events' work (overhaul step 5), so they are not read yet.
+/// current value by the key and the maximum as <c>{key}_Max</c>. <see cref="Overflow"/>, <see cref="WhenFull"/> and
+/// <see cref="Beyond"/> act when the track changes (Codex.Core.Rules.SheetIntents).
 /// </summary>
 public sealed class TrackDefinition
 {
@@ -200,6 +200,46 @@ public sealed class TrackDefinition
 
     /// <summary>A list formula: one track per item (and per level), its formulas reading <c>item</c> and <c>level</c>.</summary>
     public string? Each { get; set; }
+
+    /// <summary>What a rise past the maximum does: stress into trauma, heat into wanted level. Null: the track stops at its
+    /// maximum.</summary>
+    public TrackOverflowDefinition? Overflow { get; set; }
+
+    /// <summary>For slots in levels: <c>pushUp</c>, a full level puts what it is given in the next level up. Null: a full level
+    /// takes nothing more.</summary>
+    public string? WhenFull { get; set; }
+
+    /// <summary>For slots in levels: what pushing past the last level brings (Blades' fatal harm).</summary>
+    public TrackBeyondDefinition? Beyond { get; set; }
+}
+
+/// <summary><c>{ into, by, then, ask }</c>: a rise past the maximum adds <see cref="By"/> to <see cref="Into"/>, and the track
+/// is then <c>reset</c> to its minimum (stress), <c>carry</c>-s what went past (heat), or <c>keep</c>-s its maximum.</summary>
+public sealed class TrackOverflowDefinition
+{
+    public string Into { get; set; } = string.Empty;
+
+    /// <summary>A number or a formula (reading <c>excess</c>, how far past the maximum); 1 when unset.</summary>
+    public string? By { get; set; }
+
+    /// <summary><c>reset</c>, <c>carry</c> or <c>keep</c>.</summary>
+    public string Then { get; set; } = "keep";
+
+    /// <summary>A choice the host asks for once it overflowed (which trauma).</summary>
+    public TrackAskDefinition? Ask { get; set; }
+}
+
+public sealed class TrackAskDefinition
+{
+    /// <summary><c>player</c> or <c>gm</c>.</summary>
+    public string Who { get; set; } = "player";
+
+    public List<string> Choices { get; set; } = new();
+}
+
+public sealed class TrackBeyondDefinition
+{
+    public string? Condition { get; set; }
 }
 
 /// <summary>A comparison of the track's current value with a number or formula, and the condition it brings. No comparison

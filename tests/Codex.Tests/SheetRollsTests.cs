@@ -204,7 +204,7 @@ public class SheetRollsTests
         var left = SheetIntents.Apply(System(rolls), new Entries(), sheet, result.AllIntents());
 
         Assert.Equal(9d, result.Intents.Single().Fields["by"]);
-        Assert.Empty(left);
+        Assert.Empty(left.Left);
         Assert.Equal(9L, sheet["stress"]); // 2 + 9, kept within the maximum of 9
     }
 

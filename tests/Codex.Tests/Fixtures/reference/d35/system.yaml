@@ -151,11 +151,13 @@ sheetKinds:
           - { equals: 0, condition: Disabled }
           - { atOrAbove: -9, condition: Dying }
           - { condition: Dead }
-      # Nonlethal damage: a second track measured against current hit points.
+      # Nonlethal damage: a second track measured against current hit points. None at all is nothing, whatever the hit points
+      # (a dying character with no nonlethal damage is not also unconscious from it).
       - key: NL
         label: Nonlethal damage
         min: 0
         bands:
+          - { equals: 0 }
           - { below: HP }
           - { equals: HP, condition: Staggered }
           - { condition: Unconscious }

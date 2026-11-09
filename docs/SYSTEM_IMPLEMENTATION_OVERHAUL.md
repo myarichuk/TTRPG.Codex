@@ -460,9 +460,44 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      `street.a-serious-wound-takes-two-from-every-check`, which needs street's `HP_Max` threshold (step 8). Its step tag is
      early, like the step-3 threshold ones.
 5. **Events → intents.** Re-express damage, death saves, concentration and rests in `TableRules` as built-in handlers.
+   - *Done 2026-11-09, on the sheet.* `Codex.Core.Rules.SheetEvents` runs the system's `events`:
+     - lines of `{ when, intents }`, whose formulas read the sheet and the event as `ev`;
+     - `builtin: damage`, with damage reduction (the best that applies, bypassed by tag, for some types), resistance by
+       type, and a nonlethal track;
+     - events that are intents (`adjust`, `mark`...), which are the table's own edits and apply as they come.
+
+     A handler returns intents and changes nothing. `SheetIntents.Apply` then does what they ask of the sheet:
+     - overflow (`reset`, `carry`, `keep`, its `ask`; stopping 8 deep);
+     - boxes; slots, and slots in levels that push up and bring `beyond`'s condition;
+     - the sheet's own conditions.
+
+     It leaves the rest for the table: another actor's intents, rolls, asks and log lines. Track starts are read, and
+     Recompute writes each numeric track's maximum and declared start onto the sheet. `ActorSheetSync` mirrors numeric tracks
+     into `ResourcePoolComponent`; slot tracks stay text on the sheet. Script handlers are warned about and wait for step 8;
+     campaign targets wait for step 7.
+
+     78 of 95 pass: every step-5 expectation.
+     - Two fixture fixes: Blades' trauma choices are inline in the overflow's `ask`, not a top-level list nothing reads.
+       3.5's nonlethal bands start with `equals: 0`, so a dying character with no nonlethal damage is not also unconscious.
+     - Aggregates now take a list reached through a member (`count(ev.answers, a => a)`): the parser would not pass a
+       dynamic argument to a parameter typed as a list.
+     - Found on the way: `Derived` held whole numbers as `double`, not the `long` its comment promises. A conditional
+       `x ? (long)n : n` is a double.
+   - *Not done, and why (decided 2026-11-09): the live table still runs 5e's damage, death saves, concentration and rests as
+     `TableRules`' own code, and does not raise declared events.*
+     - Intents act on tracks, and srd5e's hit points are not a track until step 6 moves them, with skills and armor class.
+       Re-expressing its damage as intents now would mean intents on a pool the model does not know, translated back at
+       once.
+     - A system with sheet kinds has no usable sheet in the app until step 6's layout. The runtime also has no library to
+       work a track's formula out with: it reads what Recompute left on the sheet.
+     - So the table raising declared events (damage, heal, turnStart, rest) lands in step 6, with srd5e's hit points as a
+       track and a library resolver handed to the runtime (the layout's `roll` widget needs one too, for `from: weapon`).
+       Until then the engine and its tests carry the behaviour.
 6. **Layout and sheet kinds.** `ActorSheet` renders from layout; the 5e panels become built-in widgets. Blades' crew as a
    second sheet kind. This is the largest UI step.
    srd5e's skills, armor class (with `base: best`) and hit points move onto the primitives here, deferred from step 2.
+   The live table raises declared events here too, and srd5e's damage, death saves, concentration and rests become built-in
+   handlers over its hit point track, deferred from step 5.
 7. **Campaign objects.** Clocks and faction tables. Blades goes green except for scripted parts.
 8. **Jint.** Functions first, then event handlers; `codex.d.ts`; `Codex.SystemCheck`. The CPR fixture's scripted rules
    go green.

@@ -195,6 +195,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         ApplyInherited(sheet);
         ApplyAttributeTotals(sheet);
         var evaluation = Evaluate(sheet);
+        ApplyTracks(sheet);
         ApplySlotPools(sheet, evaluation);
         ApplyHitPoints(sheet, evaluation);
         ApplyArmorClass(sheet, evaluation);
@@ -865,11 +866,29 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         foreach (var (key, value) in model.Values)
         {
             if (value is not double number) continue;
-            result.Derived[key] = number == Math.Floor(number) ? (long)number : number;
+            result.Derived[key] = number == Math.Floor(number) ? (object)(long)number : number;
         }
 
         result.Violations.AddRange(model.Violations);
         result.Warnings.AddRange(model.Warnings);
+    }
+
+    /// <summary>A system with sheet kinds: each numeric track's maximum onto the sheet as <c>{key}_Max</c>, and its declared
+    /// <c>start</c> where the sheet has no value yet. The live table reads both from the sheet (its pool mirrors them, see
+    /// ActorSheetSync), since it has no library to work a formula out with. Slot tracks hold what the player writes, and tracks
+    /// an <c>each</c> makes are slots; neither is written.</summary>
+    private void ApplyTracks(Dictionary<string, object> sheet)
+    {
+        if (system.SheetKinds.Count == 0) return;
+        var model = new SheetModel(system, resolver, sheet);
+        foreach (var key in model.TrackKeys())
+        {
+            if (model.TrackOf(key) is not { IsSlots: false, Definition.Each: null } track) continue;
+            if (track.Max is { } max) sheet[key + SheetModel.MaxSuffix] = Whole(max);
+            if (!sheet.ContainsKey(key) && track.Start is { } start) sheet[key] = Whole(start);
+        }
+
+        static object Whole(double value) => value == Math.Floor(value) && Math.Abs(value) < long.MaxValue ? (object)(long)value : value;
     }
 
     // ---- Derived ----
