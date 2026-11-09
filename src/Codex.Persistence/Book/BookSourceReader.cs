@@ -30,7 +30,19 @@ public sealed class BookSourceReader(
 {
     /// <summary>The campaign's book source for <paramref name="audience"/>, or null when the caller is not the campaign's DM
     /// (a player has nothing to print that they cannot already open) or the campaign is gone.</summary>
-    public async Task<BookSource?> ReadAsync(CampaignAccess dm, BookAudience audience)
+    public Task<BookSource?> ReadAsync(CampaignAccess dm, BookAudience audience) => ReadAsync(dm, audience, null);
+
+    /// <summary>
+    /// The party edition as one player of the campaign reads it (docs/BOOK_EXPORT.md 45): every collection through that player's own access, so
+    /// what the repositories show them (their characters, lore revealed to those characters) is what is read, and every text cleaned of the
+    /// blocks their characters may not read. Null for a DM who asks for someone who is not a player of the campaign now (a co-GM, a stranger,
+    /// someone who left) or who owns no character in it: such a person has no book of their own. The source's owner ids are cleared as the
+    /// party's are; <see cref="BookSource.OwnedActorIds"/> says whose book it is.
+    /// </summary>
+    public Task<BookSource?> ReadForPlayerAsync(CampaignAccess dm, string playerUserId) =>
+        string.IsNullOrWhiteSpace(playerUserId) ? Task.FromResult<BookSource?>(null) : ReadAsync(dm, BookAudience.Party, playerUserId);
+
+    private async Task<BookSource?> ReadAsync(CampaignAccess dm, BookAudience audience, string? player)
     {
         // A number cast to the enum is neither edition, and it would read as a stranger without being cleaned like one.
         if (!Enum.IsDefined(audience))
@@ -43,16 +55,28 @@ public sealed class BookSourceReader(
             return null;
         }
 
-        var reader = audience == BookAudience.Dm ? dm : Stranger(dm.CampaignId);
         if (await campaigns.GetAsync(dm.CampaignId) is not { } campaign)
         {
             return null;
         }
 
-        var party = audience == BookAudience.Party;
-        var clean = party ? (Func<string?, string?>)Clean : text => text;
+        // A player's own book is read as that player, and only for someone the campaign has as a player now.
+        if (player != null && (audience != BookAudience.Party || CampaignAccessResolver.RoleOf(campaign, player) != CampaignRole.Player))
+        {
+            return null;
+        }
 
+        var reader = audience == BookAudience.Dm ? dm : player != null ? new CampaignAccess(dm.CampaignId, player, CampaignRole.Player) : Stranger(dm.CampaignId);
+        var party = audience == BookAudience.Party;
         var cast = (await actors.GetVisibleForCampaignAsync(reader)).Where(a => !a.Retired).ToList();
+        IReadOnlySet<string> owned = player == null ? new HashSet<string>()
+            : cast.Where(a => a.OwnerUserId == player).Select(a => a.Id).ToHashSet(StringComparer.Ordinal);
+        if (player != null && owned.Count == 0)
+        {
+            return null;
+        }
+
+        var clean = party ? (Func<string?, string?>)(text => Clean(text, owned)) : text => text;
         foreach (var actor in cast)
         {
             actor.Biography = clean(actor.Biography);
@@ -90,7 +114,7 @@ public sealed class BookSourceReader(
             readSessions.Add(session);
         }
 
-        var lore = (await facts.GetVisibleForCampaignAsync(reader, new HashSet<string>())).ToList();
+        var lore = (await facts.GetVisibleForCampaignAsync(reader, owned)).ToList();
         foreach (var fact in lore)
         {
             fact.Details = clean(fact.Details);
@@ -159,7 +183,7 @@ public sealed class BookSourceReader(
             pages,
             tableNotes,
             entries,
-            fights);
+            fights) { OwnedActorIds = owned.Order(StringComparer.Ordinal).ToList() };
     }
 
     /// <summary>A player of the campaign who is nobody: no account has this id and no character names it as owner.</summary>
@@ -171,14 +195,17 @@ public sealed class BookSourceReader(
 
     /// <summary>What a player who owns no character reads of <paramref name="text"/>, with no marker lines. Throws when one is
     /// left, which would mean the secret-block grammar and this check disagree: a book is not made from that text.</summary>
-    internal static string? Clean(string? text)
+    internal static string? Clean(string? text) => Clean(text, null);
+
+    /// <summary>What a player owning <paramref name="owned"/> reads of <paramref name="text"/>, with no marker lines (see above).</summary>
+    internal static string? Clean(string? text, IReadOnlySet<string>? owned)
     {
         if (text == null)
         {
             return null;
         }
 
-        var result = SecretText.ForPlayers(text);
+        var result = SecretText.ForPlayers(text, owned);
         if (result.Split('\n').Any(line => SecretText.IsMarkerLine(line.TrimEnd('\r'))))
         {
             throw new InvalidOperationException("A secret-block marker survived reading a text for the party edition; the book is not built.");
