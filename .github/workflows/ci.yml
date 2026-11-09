@@ -26,7 +26,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # ubuntu-latest is now 26.04, for which Playwright has no browser packages yet (install --with-deps fails); 24.04 until it does.
+        os: [ubuntu-24.04, windows-latest]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
