@@ -210,6 +210,8 @@ public static partial class BookDraftEdits
         classes.Any(c => c is "portrait" or "place" or "spot" or "chapter-art" or "cover-art") ? "a picture"
         : classes.Any(c => c == "chapter") ? "the chapter's title"
         : classes.Any(c => c == "entry") ? "the next entry's marker"
+        : classes.Any(c => c == "monster") ? "a stat block"
+        : classes.Any(c => c == "properties") ? "a table of numbers"
         : "a block the program keeps";
 
     // The reply's own markers, and what a reply may not carry.

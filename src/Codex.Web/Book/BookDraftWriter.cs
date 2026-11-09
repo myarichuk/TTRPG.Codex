@@ -29,7 +29,7 @@ namespace Codex.Web.Book;
 public static class BookDraftWriter
 {
     /// <summary>Changes whenever what the generator writes changes: every chapter then looks moved on, and the ones nobody edited simply follow.</summary>
-    public const string Version = "book-draft/v2";
+    public const string Version = "book-draft/v3";
 
     public const string Front = "front";
 
@@ -42,7 +42,10 @@ public static class BookDraftWriter
     private static readonly Regex Picture = new(@"!\[(?<alt>[^\]\n]{0,300})\]\([^)\n]{0,500}\)", Flags, Timeout);
 
     /// <summary>Every chapter of the edition's draft as the campaign makes it now: the front pages first, then the book's chapters.</summary>
-    public static IReadOnlyList<BookDraftGenerated> Generate(BookSource source, string language, BookArtDocument? stored)
+    /// <para><paramref name="system"/>: the campaign's game system, for the stat blocks and tables of its homebrew (<see cref="BookStatBlocks"/>);
+    /// without it, an entry is its text only.</para>
+    public static IReadOnlyList<BookDraftGenerated> Generate(BookSource source, string language, BookArtDocument? stored,
+        Codex.Plugin.Abstractions.SystemDefinition? system = null)
     {
         var compiled = BookComposer.Compose(source, language, out var entries);
         var slots = BookSlots.For(source, compiled, entries);
@@ -50,6 +53,9 @@ public static class BookDraftWriter
         var pictured = BookSlots.Choose(slots, stored).Select(c => c.Slot.Key).ToHashSet(StringComparer.Ordinal);
         var mention = BookCompiler.Mentions(source);
         var dm = source.Audience == BookAudience.Dm;
+        var homebrew = source.Homebrew.ToDictionary(h => h.Id, StringComparer.Ordinal);
+        string? Numbers(BookEntryPosition entry) =>
+            entry.Kind == "homebrew" && homebrew.TryGetValue(entry.Owner, out var h) ? BookStatBlocks.For(h, system, language, entry.SlotKey, mention, dm) : null;
 
         var chapters = new List<BookDraftGenerated>();
         var front = FrontPages(compiled, slots, pictured, source.Campaign.HasCover);
@@ -58,7 +64,7 @@ public static class BookDraftWriter
         {
             var header = slots.First(s => s.Kind == BookSlots.Header && s.Section == section.Id);
             var mine = entries.Where(e => e.Section == section.Id).ToDictionary(e => e.Line);
-            chapters.Add(Made(section.Id, header.Label, Chapter(section, header, mine, pictured, mention, dm)));
+            chapters.Add(Made(section.Id, header.Label, Chapter(section, header, mine, pictured, mention, dm, Numbers)));
         }
 
         return chapters;
@@ -67,7 +73,7 @@ public static class BookDraftWriter
     private static BookDraftGenerated Made(string section, string title, string markdown) => new(section, title, markdown, KeyOf(markdown));
 
     /// <summary>What a chapter's generated text is keyed by: the generator's version and the text itself. The generator reads nothing but the
-    /// masked source and the edition's pictures, so the same campaign makes the same key, and any change to what it would write moves it.</summary>
+    /// masked source, the edition's pictures and the system's description of its homebrew types, so the same campaign makes the same key, and any change to what it would write moves it.</summary>
     public static string KeyOf(string markdown) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Version + "\n" + markdown)), 0, 16).ToLowerInvariant();
 
@@ -91,7 +97,7 @@ public static class BookDraftWriter
     }
 
     private static string Chapter(BookSection section, BookSlot header, IReadOnlyDictionary<int, BookEntryPosition> entries, IReadOnlySet<string> pictured,
-        Func<string, string, string?> mention, bool dm)
+        Func<string, string, string?> mention, bool dm, Func<BookEntryPosition, string?> numbers)
     {
         var lines = section.Markdown.ReplaceLineEndings("\n").Split('\n');
         var sb = new StringBuilder();
@@ -108,9 +114,10 @@ public static class BookDraftWriter
         sb.Append("{{chapter,#ch-").Append(section.Id).Append('\n').Append(lines[0]).Append("\n}}\n\n");
         if (pictured.Contains(header.Key)) Art(sb, "chapter-art", header.Label, header.Key);
         BookEntryPosition? open = null;
-        // An entry's spot (28.3, step 7) closes it: after its text, before the next entry's marker.
+        // An entry's numbers (its stat block or table, 46) follow its text; its spot (28.3, step 7) closes it, before the next entry's marker.
         void Close()
         {
+            if (open != null && numbers(open) is { } block) sb.Append(block).Append("\n\n");
             if (open != null && pictured.Contains(BookSlots.SpotKey(open))) Art(sb, "spot", open.Alt, BookSlots.SpotKey(open));
             open = null;
         }

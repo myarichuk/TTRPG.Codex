@@ -514,6 +514,16 @@ public class BookDraftPdfTests
         md.Append($"{{{{spot\n![The ledger](art:{spot})\n}}}}\n\n");
         md.Append("{{note\n##### A note\nThe keeper knows more than she says.\n}}\n\n{{descriptive\nThe lamp room smells of oil and salt.\n}}\n\n");
         md.Append("{{secret\nShe hid the torn page in the lamp room.\n}}\n\n| Ship | Lost |\n|---|---|\n| Gannet | 1311 |\n| Tern | 1314 |\n\n");
+        // A homebrew entry's table of numbers, as the generator writes it (46).
+        md.Append("{{properties,#pt-s000000000000000000000005\n| Lamp | |\n|:---|:---|\n| Weight | PUBLIC_PROP_WEIGHT 3 lb |\n\n##### Uses\n***Signal.*** Seen from the reef.\n}}\n\n");
+        // And a creature's stat block, as the generator writes it from the system's fields (46).
+        var gull = new Codex.Persistence.HomebrewEntryDocument
+        {
+            Id = "h-gull", Type = "monster", Name = "Reef Gull", Properties = { ["size"] = "Small", ["creatureType"] = "beast", ["armorClass"] = 12, ["hitPoints"] = 4,
+                ["strength"] = 6, ["dexterity"] = 14, ["constitution"] = 10, ["intelligence"] = 2, ["wisdom"] = 12, ["charisma"] = 5,
+                ["actions"] = new List<object> { new Dictionary<string, object> { ["name"] = "Beak", ["description"] = "PUBLIC_STAT_BEAK Melee attack: +4 to hit." } } }
+        };
+        md.Append(BookStatBlocks.For(gull, new BookTestCatalog().GetDefinition("srd5e"), "en", "s000000000000000000000006", (_, _) => null, dm: false)).Append("\n\n");
         md.Append($"{{{{entry,#e-{place}}}}}\n## The Greywater light\n\n{{{{place\n![The light](art:{place})\n}}}}\n\n");
         for (var i = 0; i < 30; i++) md.Append("PUBLIC_LIGHT_").Append(i).Append(" stands on the last rock of the reef, white by day and burning all night.\n\n");
         var art = new Dictionary<string, string> { [banner] = Png(80, 30, 90), [face] = Png(30, 40, 140), [place] = Png(80, 40, 190), [spot] = Png(40, 40, 60) };
@@ -532,6 +542,8 @@ public class BookDraftPdfTests
                 var box = image.Bounds;
                 // The chapter's banner is as wide as the text or wider; the paper's textures are the page or a tile of it.
                 if (box.Width > page.Width * 0.8 || box.Width < 20) continue;
+                // A frame's or the paper's texture (Ashen Vellum's stat block frame is one) runs off the page; a picture never does.
+                if (box.Bottom < 0 || box.Left < 0 || box.Top > page.Height || box.Right > page.Width) continue;
                 if (box.Height / box.Width is > 1.2 and < 1.45) portraits++;
                 if (box.Width / box.Height is > 1.7 and < 2.3) places++;
                 if (box.Width / box.Height is > 0.9 and < 1.1 && box.Width < page.Width * 0.3) spots++;
@@ -561,6 +573,8 @@ public class BookDraftPdfTests
         Assert.Contains("PUBLIC_VERA_29", text);
         Assert.Contains("PUBLIC_LIGHT_29", text);
         Assert.Contains("Greywater", text);
+        Assert.Contains("PUBLIC_PROP_WEIGHT", text);
+        Assert.Contains("PUBLIC_STAT_BEAK", text);
     }
 
     /// <summary>

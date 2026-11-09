@@ -10,7 +10,7 @@ namespace Codex.Core.Book;
 /// (<c>.page</c> with its two columns, <c>.columnWrapper</c>, <c>.columnSplit</c>, <c>.block</c>, <c>.pageNumber</c>, <c>.toc</c>, <c>.wide</c>) and
 /// CSS written for Homebrewery lays out here as it does there.
 /// <para>On top of it, every theme styles every block of the generator's contract: Homebrewery's <c>.frontCover</c> page and <c>.toc</c>, and our
-/// <c>.cover-art</c>, <c>.chapter</c>, <c>.chapter-art</c>, <c>.entry</c>, <c>.portrait</c>, <c>.place</c>, <c>.spot</c> and <c>.secret</c>, with Homebrewery's
+/// <c>.cover-art</c>, <c>.chapter</c>, <c>.chapter-art</c>, <c>.entry</c>, <c>.portrait</c>, <c>.place</c>, <c>.spot</c>, <c>.secret</c> and <c>.properties</c> (a homebrew entry's table of numbers), with Homebrewery's
 /// <c>.note</c>, <c>.descriptive</c> and <c>.monster</c> and tables. A theme that styles only some of them is not a theme: the same Markdown under
 /// another theme's rule for "every picture" put a portrait over the text (section 40). No theme copies a published book's look.</para>
 /// </summary>
@@ -211,6 +211,9 @@ public static class BookDraftThemes
             .block.secret { margin: 0 0 3mm; padding: 2.5mm 3mm; background: #faf0f0; border: 1.2px dashed #8a1c1c; }
             .block.monster { margin: 0 0 3mm; padding: 2.5mm 3mm; background: var(--HB_Color_MonsterStatBackground); border-top: 2px solid var(--HB_Color_HeaderText); border-bottom: 2px solid var(--HB_Color_HeaderText); font-size: 8.8pt; }
             .block.monster h4, .block.monster h3 { margin-top: 0; }
+            .block.properties { clear: both; margin: 0 0 3mm; break-inside: avoid; }
+            .block.properties table { width: 100%; margin: 0 0 1.5mm; }
+            .block.properties h5 { margin: 1.5mm 0 1mm; }
             .block > :last-child { margin-bottom: 0; }
             """;
 
@@ -235,6 +238,8 @@ public static class BookDraftThemes
             .block.spot { clear: both; width: 3cm; margin: 0.1cm auto 0.3cm; }
             .block.spot img, .block.spot .art-missing { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; }
             .block.secret { padding: 0.13cm 0.16cm; border: 1px dashed #000; }
+            .block.properties { clear: both; margin: 0 0 0.3cm; break-inside: avoid; }
+            .block.properties table { width: 100%; }
             """;
 }
 

@@ -40,7 +40,8 @@ public sealed record BookDraftFitReport(BookDraftSave Result, int Breaks, int Ch
 /// with the campaign, says which edited chapters the campaign moved on from, and replaces one on Regenerate. Every call reads the campaign as the
 /// asking GM may read it now; a key, a section or a language posted from the page is checked by the store before it reaches an id.
 /// </summary>
-public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository store, IBookArtRepository art, BookArtReader artReader, ICampaignAccessResolver resolver)
+public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository store, IBookArtRepository art, BookArtReader artReader, ICampaignAccessResolver resolver,
+    Codex.Plugin.Abstractions.ISystemCatalog? systems = null)
 {
     public static BookAudience? Audience(string edition) => edition switch { "dm" => BookAudience.Dm, "party" => BookAudience.Party, _ => null };
 
@@ -49,7 +50,7 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         if (Audience(edition) is not { } audience || !BookDraftDocument.IsLanguage(language)) return null;
         if (await resolver.ResolveAsync(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return null;
         if (await reader.ReadAsync(dm, audience) is not { } source) return null;
-        return (dm, source, BookDraftWriter.Generate(source, language, await art.GetAsync(dm)));
+        return (dm, source, BookDraftWriter.Generate(source, language, await art.GetAsync(dm), systems?.GetDefinition(source.Campaign.SystemId)));
     }
 
     /// <summary>One chapter of the draft as stored, read as the asking GM may read the campaign now, with the campaign's game system. Null when
@@ -108,7 +109,7 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         if (await GenerateAsync(asked, "party", language) is not { } party) return null;
         if (await store.GetAsync(party.Dm, "party", language) is not { } draft) return null;
         if (await reader.ReadAsync(party.Dm, BookAudience.Dm) is not { } gm) return null;
-        var gmNow = BookDraftWriter.Generate(gm, language, await art.GetAsync(party.Dm));
+        var gmNow = BookDraftWriter.Generate(gm, language, await art.GetAsync(party.Dm), systems?.GetDefinition(gm.Campaign.SystemId));
         var gmDraft = await store.GetAsync(party.Dm, "dm", language);
         var needles = BookLeakCheck.Needles(gm, party.Source,
             gmNow.Select(c => c.Markdown).Concat(gmDraft?.Chapters.Select(c => c.Markdown) ?? []));
