@@ -26,7 +26,8 @@ public sealed class BookSourceReader(
     INoteRepository notes,
     IRegionRepository regions,
     IHomebrewRepository homebrew,
-    IWikiRepository wiki)
+    IWikiRepository wiki,
+    Codex.Plugin.Abstractions.ISystemCatalog? systems = null)
 {
     /// <summary>The campaign's book source for <paramref name="audience"/>, or null when the caller is not the campaign's DM
     /// (a player has nothing to print that they cannot already open) or the campaign is gone.</summary>
@@ -186,6 +187,15 @@ public sealed class BookSourceReader(
         }
 
         var entries = (await homebrew.GetVisibleForCampaignAsync(reader)).ToList();
+        if (party)
+        {
+            // What players may open of the campaign's homebrew (CampaignLibrary.CanRead): a type the system does not mark playerFacing (its
+            // creatures, say) stays the GM's even when published. A type the system does not describe is read as the Library reads it.
+            var hidden = systems?.GetDefinition(campaign.SystemId)?.EntityTypes.Where(t => !t.PlayerFacing).Select(t => t.Type)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+            entries = entries.Where(e => !hidden.Contains(e.Type)).ToList();
+        }
+
         foreach (var entry in entries)
         {
             entry.Description = clean(entry.Description);

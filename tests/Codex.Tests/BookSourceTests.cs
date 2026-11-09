@@ -38,7 +38,7 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         _homebrew = new RavenHomebrewRepository(db);
         _wiki = new RavenWikiRepository(db);
         _campaigns = new CampaignRepository(db, new NoOpSystemCatalog(), _actors, _sessions, _notes, _regions, _facts, _homebrew, _encounters, _wiki);
-        _reader = new BookSourceReader(_campaigns, _actors, _sessions, _encounters, _facts, _notes, _regions, _homebrew, _wiki);
+        _reader = new BookSourceReader(_campaigns, _actors, _sessions, _encounters, _facts, _notes, _regions, _homebrew, _wiki, new BookTestCatalog());
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         var missing = new[]
         {
             "CANARY_HIDDEN_NAME", "CANARY_WIKI_DM_BODY", "CANARY_FACT_DM", "CANARY_HIDDEN_PLACE", "CANARY_LOCK", "CANARY_DMSUMMARY",
-            "CANARY_SECRET_NOTE", "CANARY_EFFECT", "CANARY_BIO_DM_VERA", "CANARY_UNPUBLISHED", ":::dm"
+            "CANARY_SECRET_NOTE", "CANARY_EFFECT", "CANARY_BIO_DM_VERA", "CANARY_UNPUBLISHED", "CANARY_PUBLISHED_MONSTER", ":::dm"
         }.Where(text => !json.Contains(text, StringComparison.Ordinal)).ToList();
         Assert.True(missing.Count == 0, "The DM edition lost the DM's own material: " + string.Join(", ", missing));
 
@@ -415,7 +415,13 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         await _notes.CreateNoteAsync(new NoteDocument { Id = "note-private", CampaignId = id, TargetId = "wiki:docks", AuthorId = PlayerUser, Content = "CANARY_PRIVATE_NOTE", Visibility = CommentVisibility.Private });
         await _notes.CreateNoteAsync(new NoteDocument { Id = "note-public", CampaignId = id, TargetId = "wiki:docks", AuthorId = PlayerUser, Content = "PUBLIC_NOTE", Visibility = CommentVisibility.Public });
         await _homebrew.SaveAsync(new HomebrewEntryDocument { Id = "h-unpub", CampaignId = id, EntryId = "unpub", Type = "monster", Name = "CANARY_UNPUBLISHED", IsPublished = false, AuthorUserId = DmUser });
-        await _homebrew.SaveAsync(new HomebrewEntryDocument { Id = "h-pub", CampaignId = id, EntryId = "beast", Type = "monster", Name = "PUBLIC_Homebrew Beast", IsPublished = true, AuthorUserId = DmUser });
+        await _homebrew.SaveAsync(new HomebrewEntryDocument { Id = "h-pub", CampaignId = id, EntryId = "beast", Type = "magic-item", Name = "PUBLIC_Homebrew Beast", IsPublished = true, AuthorUserId = DmUser });
+        // Published, but of a type players may not open in the Library (the system's creatures): the GM's, as in the app.
+        await _homebrew.SaveAsync(new HomebrewEntryDocument
+        {
+            Id = "h-monster", CampaignId = id, EntryId = "drowned", Type = "monster", Name = "CANARY_PUBLISHED_MONSTER", IsPublished = true, AuthorUserId = DmUser,
+            Properties = { ["armorClass"] = 13 }
+        });
         await _encounters.SaveAsync(new EncounterDocument
         {
             Id = "e-fight", CampaignId = id, SessionId = "s-done",
