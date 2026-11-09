@@ -245,7 +245,17 @@
 	line-height  : 1em;
 	color        : var(--gd-head);
 	text-indent  : 0;
+	/* Pirata One has no italic: a lead-in written in italics would slant the initial into the line beside it. */
+	font-style   : normal;
+	font-weight  : normal;
+	font-variant : normal;
 }
+/* A lead-in shorter than its initial (two italic lines, say) holds the initial whole, so it never hangs into the paragraph after it. */
+.page p.first-letter,
+.page p.drop-cap,
+.page h1 + p,
+.page h1 + .quote { display : flow-root; }
+.page:has(.frontCover) h1 + p { display : block; }
 
 /* rules */
 .page hr {
@@ -743,6 +753,10 @@
 	color          : var(--gd-bone);
 }
 .page:has(.chapter-art) .chapter:not(.intro) h1::after { display : none; }
+/* the title is centred on the ribbon it is printed on (the ribbon's left and width below), not on the page's text box */
+.page:has(.chapter-art) .chapter:not(.intro) h1             { width : 83%; margin-left : -5%; }
+.page:has(.chapter-art) .chapter.short:not(.intro) h1       { width : 69%; margin-left : 4%; }
+.page:has(.chapter-art) .chapter.long:not(.intro) h1        { width : 93%; margin-left : -10%; }
 
 /* the iron ribbon the title is printed on */
 .page:has(.chapter-art) .chapter:not(.intro)::after {
@@ -775,7 +789,14 @@
 	font-size     : 1.9cm;
 	line-height   : 1em;
 	color         : var(--gd-head);
+	font-style    : normal;
+	font-weight   : normal;
+	font-variant  : normal;
+	text-shadow   : none;
 }
+.page .chapter + p,
+.page .chapter + .chapter-art + p,
+.page .chapter + .quote { display : flow-root; }
 .page .chapter + .quote::first-letter { font-size : 88px; margin-left : -4px; }
 .page .chapter + p::first-line,
 .page .chapter + .chapter-art + p::first-line,
