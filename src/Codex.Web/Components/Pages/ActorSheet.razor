@@ -1122,8 +1122,21 @@ else
     /// mark) is applied to the sheet being edited, to be saved with it; what it asks of others is said.</summary>
     private async Task RollDefinitionAsync(SheetRollRequest request)
     {
-        if (system == null || resolver == null) return;
+        if (system == null || resolver == null || actor == null || currentUserId == null) return;
         sheetRollNote = null;
+
+        // With the table live, the roll is the table's: made on the live sheet, in the shared roll log, its costs applied there.
+        var live = RuntimeManager.TryGet(CampaignId);
+        if (live?.ActiveSession != null && live.HasActor(actor.Id))
+        {
+            var command = new MakeRollCommand(actor.Id, currentUserId, request);
+            await live.EnqueueAsync(command);
+            sheetRoll = command.Rolled;
+            if (command.Failed != null) flash = Flash.Error(L["Actor.Sheet.RollFailed", command.Failed]);
+            else sheetRollNote = L["Actor.Sheet.RollAtTable"];
+            return;
+        }
+
         try
         {
             sheetRoll = SheetRolls.Roll(system, resolver, editSheet, request, new RandomDiceSource());

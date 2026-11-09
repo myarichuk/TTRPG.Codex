@@ -398,4 +398,5 @@
   <data name="Actor.Widget.Remove" xml:space="preserve"><value>Убрать</value></data>
   <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>Убрать «{0}»</value></data>
   <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>занято {0} из {1}</value></data>
+  <data name="Actor.Sheet.RollAtTable" xml:space="preserve"><value>Бросок сделан за столом: он в общем журнале, а его цена учтена там.</value></data>
 </root>

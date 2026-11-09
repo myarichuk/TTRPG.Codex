@@ -150,4 +150,18 @@
   <data name="Event.Type.Revived" xml:space="preserve"><value>החייאה</value></data>
   <data name="Event.Type.Undo" xml:space="preserve"><value>ביטול</value></data>
   <data name="Event.Type.ActorVisibility" xml:space="preserve"><value>נראות</value></data>
+  <data name="Event.Type.SheetEvent" xml:space="preserve"><value>גיליון</value></data>
+  <data name="Event.Sheet.Failed" xml:space="preserve"><value>{0}: כלל המערכת עבור {1} לא רץ ({2}).</value></data>
+  <data name="Event.Sheet.NotAtTable" xml:space="preserve"><value>{0} לא ליד השולחן, ולכן {1} לא בוצע.</value></data>
+  <data name="Event.Sheet.Nothing" xml:space="preserve"><value>{0}: {1}, שום דבר לא משתנה.</value></data>
+  <data name="Event.Sheet.ConditionAdded" xml:space="preserve"><value>{0}: כעת {1}.</value></data>
+  <data name="Event.Sheet.ConditionRemoved" xml:space="preserve"><value>{0}: כבר לא {1}.</value></data>
+  <data name="Event.Sheet.TrackChanged" xml:space="preserve"><value>{0}: {1} {2} ← {3}.</value></data>
+  <data name="Event.Sheet.SlotsChanged" xml:space="preserve"><value>{0}: {1} מכיל {2}.</value></data>
+  <data name="Event.Sheet.RollAsked" xml:space="preserve"><value>{0} צריך להטיל {1}.</value></data>
+  <data name="Event.Sheet.AskGm" xml:space="preserve"><value>המנחה בוחר עבור {0}: {1}.</value></data>
+  <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>השחקן של {0} בוחר: {1}.</value></data>
+  <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
+  <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: השולחן עדיין לא מבצע {1}.</value></data>
+  <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0}: הטלת {1} — {2} ({3}).</value></data>
 </root>

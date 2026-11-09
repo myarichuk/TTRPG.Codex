@@ -50,6 +50,10 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     /// </summary>
     public event Action<string>? RuntimeChanged;
 
+    /// <summary>Loads the campaign's library for the rules a table runs (packs and homebrew), set by the host. The table reads
+    /// it when it starts; an entry added while it runs is seen by the next table. None: the table knows no entries.</summary>
+    public Func<CampaignDocument, CampaignAccess, SystemDefinition, Task<Codex.Core.Rules.IEntryResolver>>? EntryResolvers { get; set; }
+
     public CampaignRuntime? TryGet(string campaignId) => _runtimes.GetValueOrDefault(campaignId);
 
     /// <summary>Starts a campaign's runtime if it isn't already running, hydrating it from every
@@ -110,6 +114,11 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
                 if (plugin != null)
                 {
                     pluginLoader.InitializePlugins(new[] { plugin }, runtime.World);
+                }
+
+                if (EntryResolvers != null && plugin?.Definition is { SheetKinds.Count: > 0 } definition)
+                {
+                    runtime.Resolver = await EntryResolvers(campaign, dmAccess, definition);
                 }
 
                 runtime.Hydrate((await actorRepository.GetVisibleForCampaignAsync(dmAccess)).Where(a => !a.Retired));

@@ -398,4 +398,5 @@
   <data name="Actor.Widget.Remove" xml:space="preserve"><value>הסרה</value></data>
   <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>הסרת {0}</value></data>
   <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>בשימוש {0} מתוך {1}</value></data>
+  <data name="Actor.Sheet.RollAtTable" xml:space="preserve"><value>ההטלה נעשתה ליד השולחן: היא ביומן ההטלות המשותף, ומה שהיא עולה הוחל שם.</value></data>
 </root>

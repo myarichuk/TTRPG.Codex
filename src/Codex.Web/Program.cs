@@ -229,6 +229,14 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
+// A table running a system with sheet kinds reads the campaign's library (an item a handler names, a class a track's maximum
+// reads), loaded once when the table starts.
+{
+    var library = app.Services.GetRequiredService<CampaignLibrary>();
+    app.Services.GetRequiredService<Codex.Persistence.Runtime.CampaignRuntimeManager>().EntryResolvers =
+        async (campaign, access, system) => await CachedEntryResolver.LoadAsync(library, campaign, access, system);
+}
+
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Data folder: {DataFolder}; key ring: {KeyFolder}.", dataFolders.Data, dataFolders.Keys);
 foreach (var line in migrated) logger.LogWarning("{Migration}", line);

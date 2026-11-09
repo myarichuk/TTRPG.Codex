@@ -498,6 +498,48 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
    srd5e's skills, armor class (with `base: best`) and hit points move onto the primitives here, deferred from step 2.
    The live table raises declared events here too, and srd5e's damage, death saves, concentration and rests become built-in
    handlers over its hit point track, deferred from step 5.
+   - *Done 2026-11-09.* Layout is data, and the sheet page renders it:
+     - `SheetKindDefinition.Layout` (and a top-level `layout` for a system without sheet kinds) holds sections of widgets.
+       `SheetLayout` gives a sheet its kind's declared layout, the generic one for a kind without (every value, track, list
+       and keyed list), or the built-in widgets in the order the sheet always had them. srd5e declares that layout, asking for
+       the 5e panels by name (`attributes`, `skills`, `fields`, `classes`, `library`, `picks`, `inventory`, `hit-points`,
+       `armor-class`, `slots`, `level-up`). The loader names unknown widgets, keys a kind does not have, missing rolls,
+       built-in widgets on a sheet kind, and duplicate or empty sections.
+     - `ActorSheet` builds its tabs and aside from the layout. The 5e panels are built-in widgets and render as before (the
+       browser suite is unchanged). The generic widgets are `SheetWidget`, which reads `SheetView` (values, tracks, rows,
+       modifier breakdowns, from `SheetModel`) and writes through `SheetEdits` and `SheetIntents`, so a box track's +
+       overflows as the table's would. A new actor gets a sheet kind (by its role, or picked); the crew is a second kind.
+     - The `roll` widget makes a definition roll: on the page, or with the table live, at the table (`MakeRollCommand`: in
+       the shared roll log with its outcome, its intents applied there).
+     - The live table raises declared events (`TableEvents`). For a system with sheet kinds, damage and healing go to its
+       `damage`/`heal` handlers instead of the vitals rules, the turn order raises `turnEnd` and `turnStart`, a rest raises
+       `rest`, and `RaiseEventCommand` raises any other. The handler sees the cached sheet with the live pools and conditions
+       over it; numeric tracks go back to the pools, slot tracks and the sheet's conditions to the stored sheet key by key,
+       conditions also as statuses. Another actor's direct intents are applied to them; rolls, asks and log lines are
+       logged. Undo covers the sheet keys a change wrote. The table gets the campaign's library when it starts
+       (`CampaignRuntimeManager.EntryResolvers`).
+     - 5e's armor class runs on the primitives: its candidates and bonuses are typed modifiers through `ModifierStacking`,
+       the routine `SheetModel` uses, with a new stacking rule `best` (`base: best` in srd5e's `modifierTypes`). 5e's
+       resources and slot pools are tracks the model knows (hit points from 0 to `HP_Max`), so intents act on them.
+       The golden corpus is unchanged.
+     - Fixed on the way: an entered value's or a per-pick field's YAML default (`default: 0`) reached formulas as text; two
+       equal bonuses of a `highest` type both counted; `CachedEntryResolver` did not load a sheet kind's entry types.
+     - 80 of 95 pass: both step-6 expectations. The remaining 15 are campaign objects (step 7) and street's scripted rules
+       (step 8).
+   - *Not done, and why (decided 2026-11-09):*
+     - srd5e's damage, death saves, concentration and rests still run as `TableRules`' own code, not as built-in handlers
+       returning intents. The precondition step 5 named is met (hit points are a track the model knows), but the intents
+       cannot yet say what those rules do: end the effects another creature holds by concentrating, kill (which ends what
+       the dead one held and its turn counters), and count death saves both ways (three successes stabilise, three failures
+       kill) on counters the ECS keeps, not the sheet. Re-expressing them means intents for those, death saves as tracks with
+       thresholds, and the host reacting to `Dead`, against 60 encounter and runtime tests that pin today's behaviour. That
+       is a step of its own, best taken with step 8, when a script handler will need the same vocabulary.
+     - srd5e's skills (a keyed list with a 0/1/2 multiplier) and hit point maximum (a built-in `hitPoints` function) were
+       not moved: the panels read `SkillScore` and `HitPointSummary`, which the stages already produce from the same inputs,
+       so moving them changes no result and no panel. They move when a system other than 5e needs those functions.
+     - Track edits on the sheet page while the table is live are saved through the sheet merge, not as table commands, so
+       they are not in the session log. The table has no control for raising an arbitrary declared event (`sessionEnd` with
+       its answers); `RaiseEventCommand` exists for one.
 7. **Campaign objects.** Clocks and faction tables. Blades goes green except for scripted parts.
 8. **Jint.** Functions first, then event handlers; `codex.d.ts`; `Codex.SystemCheck`. The CPR fixture's scripted rules
    go green.

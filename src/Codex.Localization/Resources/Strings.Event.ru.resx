@@ -150,4 +150,18 @@
   <data name="Event.Type.Revived" xml:space="preserve"><value>Возвращение</value></data>
   <data name="Event.Type.Undo" xml:space="preserve"><value>Отмена</value></data>
   <data name="Event.Type.ActorVisibility" xml:space="preserve"><value>Видимость</value></data>
+  <data name="Event.Type.SheetEvent" xml:space="preserve"><value>Лист</value></data>
+  <data name="Event.Sheet.Failed" xml:space="preserve"><value>{0}: правило системы для «{1}» не сработало ({2}).</value></data>
+  <data name="Event.Sheet.NotAtTable" xml:space="preserve"><value>{0} нет за столом, поэтому «{1}» не применено.</value></data>
+  <data name="Event.Sheet.Nothing" xml:space="preserve"><value>{0}: {1}, ничего не меняется.</value></data>
+  <data name="Event.Sheet.ConditionAdded" xml:space="preserve"><value>{0}: теперь {1}.</value></data>
+  <data name="Event.Sheet.ConditionRemoved" xml:space="preserve"><value>{0}: больше не {1}.</value></data>
+  <data name="Event.Sheet.TrackChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
+  <data name="Event.Sheet.SlotsChanged" xml:space="preserve"><value>{0}: {1} — {2}.</value></data>
+  <data name="Event.Sheet.RollAsked" xml:space="preserve"><value>{0} должен бросить «{1}».</value></data>
+  <data name="Event.Sheet.AskGm" xml:space="preserve"><value>Мастер выбирает за {0}: {1}.</value></data>
+  <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>Игрок, ведущий {0}, выбирает: {1}.</value></data>
+  <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
+  <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: стол пока не умеет «{1}».</value></data>
+  <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} бросает «{1}»: {2} ({3}).</value></data>
 </root>

@@ -150,4 +150,18 @@
   <data name="Event.Type.Revived" xml:space="preserve"><value>Revival</value></data>
   <data name="Event.Type.Undo" xml:space="preserve"><value>Undo</value></data>
   <data name="Event.Type.ActorVisibility" xml:space="preserve"><value>Visibility</value></data>
+  <data name="Event.Type.SheetEvent" xml:space="preserve"><value>Sheet</value></data>
+  <data name="Event.Sheet.Failed" xml:space="preserve"><value>{0}: the system rule for {1} could not run ({2}).</value></data>
+  <data name="Event.Sheet.NotAtTable" xml:space="preserve"><value>{0} is not at the table, so the {1} for them was not made.</value></data>
+  <data name="Event.Sheet.Nothing" xml:space="preserve"><value>{0}: {1}, nothing changes.</value></data>
+  <data name="Event.Sheet.ConditionAdded" xml:space="preserve"><value>{0} is now {1}.</value></data>
+  <data name="Event.Sheet.ConditionRemoved" xml:space="preserve"><value>{0} is no longer {1}.</value></data>
+  <data name="Event.Sheet.TrackChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
+  <data name="Event.Sheet.SlotsChanged" xml:space="preserve"><value>{0}: {1} holds {2}.</value></data>
+  <data name="Event.Sheet.RollAsked" xml:space="preserve"><value>{0} is to roll {1}.</value></data>
+  <data name="Event.Sheet.AskGm" xml:space="preserve"><value>The GM chooses for {0}: {1}.</value></data>
+  <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>The player of {0} chooses: {1}.</value></data>
+  <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
+  <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: the table does not do {1} yet.</value></data>
+  <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} rolled {1}: {2} ({3}).</value></data>
 </root>

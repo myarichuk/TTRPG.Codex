@@ -17,8 +17,8 @@ This version reads part of each `system.yaml`: attributes, entity types and cond
 `modifierTypes`, `progressions`, `functions` (formulas), `conditionEffects` and, in each sheet kind, `values`, `modifiers`,
 `lists` and `keyedLists` (`Codex.Core.Rules.SheetModel`); since step 3 `tracks`; since step 4 `rolls`
 (`Codex.Core.Rules.SheetRolls`); since step 5 `events` and the parts of tracks that act when a track changes
-(`Codex.Core.Rules.SheetEvents`, `SheetIntents`). The loader names the rest (layout, the campaign) as keys it does not read,
-and `ReferenceFixtureTests` prints them. Each step of the overhaul makes more of it read.
+(`Codex.Core.Rules.SheetEvents`, `SheetIntents`); since step 6 each sheet kind's `layout` (`Codex.Core.Rules.SheetLayout`).
+The loader names the rest (the campaign) as keys it does not read, and `ReferenceFixtureTests` checks that it is the only one. Each step of the overhaul makes more of it read.
 
 ## How progress is tracked
 
@@ -32,7 +32,7 @@ and `ReferenceFixtureTests` prints them. Each step of the overhaul makes more of
 - An expectation that only says what must *not* happen ("no problems", "no conditions") passes on a host that checks
   nothing. So it names, in `requires`, the expectations that show the check exists, and counts only alongside them.
 
-At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58. After step 5: 78.
+At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58. After step 5: 78. After step 6: 80.
 
 ## spec.yaml
 
@@ -151,6 +151,38 @@ Events and intents, as step 5 built them:
 - The loader warns about a handler of the wrong shape, an unknown builtin or intent kind, a script handler, a handler for an
   intent kind (it never runs), an overflow into a track that is not there, without a maximum, or with an unknown `then`, and
   `whenFull`/`beyond` on anything but slots in levels.
+- A list in an intent's fields (a log line's `args`) is text, element by element, except an element that is a dotted path
+  (`ev.helper`, `item.name`), which is read. So a clock named "the vault's alarm" stays its name.
+
+At the table, as step 6 built it (`Codex.Persistence.Runtime.TableEvents`):
+- For a system with sheet kinds, damage and healing from the combat console raise `damage` and `heal` (`{ amount,
+  damageType, critical, source }`) when the system handles them, instead of the table's vitals rules; the next turn raises
+  `turnEnd` for whose turn ended and `turnStart` for whose begins; a rest raises `rest` (`{ name }`) after the rest's own
+  rules. `RaiseEventCommand` raises any declared event, or an intent kind as the GM's edit.
+- The handler runs on the sheet as the table has it: the cached sheet with the live pools over its numeric tracks, and the
+  table's conditions joined to the sheet's own. What it changes goes back where the table keeps it: numeric tracks to the
+  pools, slot tracks and the sheet's conditions to the stored sheet (only the keys it changed), conditions also as statuses.
+- What is left: another actor's `adjust`, `set`, `mark`, `clear` or `condition` is applied to that actor (one level deep);
+  `roll`, `ask` and `log` go to the session log. A handler that cannot run is said in the log and changes nothing.
+- A roll from a sheet's `roll` widget while the table is live is the table's (`MakeRollCommand`): in the shared roll log
+  with its outcome and mark, its intents applied as an event's. Both are undone like damage, sheet keys included.
+
+Layout, as step 6 built it:
+- A sheet kind's `layout` is a list of sections `{ section, label, icon, aside, widgets }`. A section is a tab, or with
+  `aside: true` shown beside every tab. A kind without one gets the generic layout: one section with every value, track
+  (generated tracks by their prefix: `slots_*`), list and keyed list.
+- Widgets: `values` (`keys`: values, attributes, `{track}_Max`, `list.id`), `track` (`key`, or `prefix*` for generated
+  ones; numbers get − and +, boxes are clicked, slots take text, slots in levels a level and text), `list` and `table`
+  (`key`, `columns` of per-pick fields, entry properties or derived values, `groupBy`), `roll` (`roll`: the roll's inputs
+  from the roller, the GM or a weapon, then the button), `text` (`key`) and `modifiers` (`target`: each modifier that
+  reached it, and whether it counted). A per-pick field is edited in place; everything else is worked out.
+- A system without sheet kinds may lay out its sheet at the top level (`layout:`) with the host's built-in widgets:
+  `attributes`, `skills`, `fields`, `classes`, `library`, `picks`, `inventory`, `hit-points`, `armor-class`, `slots`,
+  `level-up`. srd5e does; a system without a layout gets the same.
+- The loader names an unknown widget, a key the kind does not have, a missing roll, a built-in widget on a sheet kind, a
+  top-level layout in a system with sheet kinds, and sections without a name, without widgets or named twice.
+- `modifierTypes` has a fourth rule, `best`: exactly one modifier of the type counts, the greatest. 5e's armor class base is
+  one (`base: best`): worn armor, else the best of Unarmored Defense, each class's defense and 10 + Dexterity.
 
 Rolls, as step 4 built them:
 - Inputs: each declared input is what the request supplied, else for `from: parent` the parent roll's, for `from: weapon`
@@ -188,7 +220,7 @@ Rolls, as step 4 built them:
 |---|---|
 | `functions` | Named functions: `{ formula: "(a, b) => ..." }` (built in) or `{ script: file#export, reads: [...] }` (Jint). Callable from any expression |
 | `progressions` | Named per-level formulas (`bab.good: "level"`) that entries point at by name |
-| `modifierTypes` | `default` stacking, `penalties` stacking, and `types: { dodge: sum }`. Stacking is `sum`, `highest` or `lowest` |
+| `modifierTypes` | `default` stacking, `penalties` stacking, and `types: { dodge: sum }`. Stacking is `sum`, `highest`, `lowest` or `best` |
 | `conditionEffects` | By condition name: `modifiers` that apply while it holds. `conditions` stays the list of names |
 | `sheetKinds` | `kind`, `label`, `role` (the host role: `player`, `npc`, `creature`, `shared`), and the parts below |
 | `campaign` | Campaign objects: `clocks` (allowed `segments`, `visibility`) and `tables` (`key`, `itemFields`) |
@@ -204,7 +236,7 @@ Inside a sheet kind:
 | `lists` | Picks of a type: `itemFields` (per-pick fields such as `classLevel`, `equipped`, `used`), `modifiersFrom: { property, when }`, `prerequisites: property` (checked on the character without the pick's own levels), `rules` |
 | `keyedLists` | A fixed set of `keys` (with `attribute`, `group`/`groups`, `parameter` for one entry per subject), `itemFields`, `derive` (per-key values as lambdas: `ranks`, `maxRanks`, `value`) and `rules` |
 | `tracks` | `{ key, max, min, start, display: number, boxes or slots }`, plus `thresholds` (each adds its condition while it holds: `atOrBelow`, `below`, `atOrAbove`, `equals`), `bands` (one at a time, the first that matches), `overflow: { into, by, then: reset, carry or keep, ask }`, and for slots `holds`, `levels`, `whenFull: pushUp`, `beyond`. `each` + `levels` generates tracks per list item and level (spell slots per class) |
-| `layout` | Sections of widgets: `values`, `track`, `list`, `table`, `roll`, `modifiers`, or a built-in widget by name |
+| `layout` | Sections of widgets: `values`, `track`, `list`, `table`, `roll`, `text`, `modifiers` (above, "Layout") |
 | `rules` | `{ check, key, message }`: a problem with that translation key when the check is false |
 
 A roll definition has `dice` (`1d20`) or `pool` + `die` with `zeroDice` and `keep`; `add` (expressions);

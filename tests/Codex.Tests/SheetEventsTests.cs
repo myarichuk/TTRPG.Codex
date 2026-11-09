@@ -350,4 +350,26 @@ public class SheetEventsTests
         Assert.Contains(problems, p => p.Contains("whenFull and beyond are for slots in levels"));
         Assert.Empty(SheetEvents.Problems(System()));
     }
+
+    [Fact]
+    public void A5eSheet_HasItsHitPointsTemporaryHitPointsAndSlotsAsTracks_SoIntentsActOnThem()
+    {
+        var srd = SystemDefinitionLoader.Load(Path.Combine(TestPaths.RepoRoot, "content", "systems", "srd5e", SystemDefinitionLoader.FileName));
+        var sheet = new Dictionary<string, object> { ["HP"] = 7L, ["HP_Max"] = 12L, ["TempHP"] = 3L, ["slots_1"] = 2L, ["slots_1_Max"] = 4L };
+
+        var model = new SheetModel(srd, NullEntryResolver.Instance, sheet);
+        Assert.Equal(new[] { "HP", "TempHP", "slots_1" }, model.TrackKeys());
+        Assert.Equal((0d, 12d), (model.TrackOf("HP")!.Min!.Value, model.TrackOf("HP")!.Max!.Value));
+        Assert.Null(model.TrackOf("TempHP")!.Max);
+
+        var applied = SheetIntents.Apply(srd, NullEntryResolver.Instance, sheet, new[]
+        {
+            Intent("adjust", ("track", "HP"), ("by", -20)),
+            Intent("adjust", ("track", "slots_1"), ("by", 5)),
+            Intent("adjust", ("track", "TempHP"), ("by", -1))
+        });
+
+        Assert.Equal((0L, 4L, 2L), ((long)sheet["HP"], (long)sheet["slots_1"], (long)sheet["TempHP"]));
+        Assert.Empty(applied.Left);
+    }
 }

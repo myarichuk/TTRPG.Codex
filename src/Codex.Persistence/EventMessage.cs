@@ -83,6 +83,9 @@ public sealed record EventTerm(string Kind, string Key, string Text)
     public const string SlotKind = "slot";
     public const string UserKind = "user";
 
+    /// <summary>A word of the campaign's system: a track's label, an event's or a log line's key (overhaul step 6).</summary>
+    public const string SystemKind = "system";
+
     /// <summary>An actor, by id: each reader sees the name they know it by (a stranger's public name), or "someone" for one
     /// they cannot see (F20). The stored text is the real name, the DM's.</summary>
     public const string ActorKind = "actor";

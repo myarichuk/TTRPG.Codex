@@ -289,6 +289,11 @@ sheetRules:
       includeCasterTypes: [pact]
       recoversOn: [Short Rest, Long Rest]
 
+# How typed bonuses combine (overhaul section 3). Armor class's base is the best of its candidates: worn armor with its Dexterity,
+# else Unarmored Defense, a class's own defense or 10 + Dexterity. Everything else adds up.
+modifierTypes:
+  types: { base: best }
+
 # The sheet's layout: tabs of widgets, and an aside shown beside every tab. These are the host's built-in widgets, which read
 # sheetRules above; a system with sheet kinds lays out its own keys with the generic widgets (values, track, list, table,
 # roll, text, modifiers). Leaving it out gives the same layout.

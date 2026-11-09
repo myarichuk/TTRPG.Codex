@@ -177,7 +177,8 @@ public sealed class SheetModel
     {
         if (_valueDefinitions.ContainsKey(name)) return Value(name);
         if (_lists.TryGetValue(name, out var list)) return list;
-        if (name.EndsWith(MaxSuffix, StringComparison.Ordinal) && Tracks().FirstOrDefault(t => t.Key + MaxSuffix == name) is { } track) return TrackMax(track);
+        // A track whose maximum is the sheet's own number under that name (5e's HP_Max) reads the sheet.
+        if (name.EndsWith(MaxSuffix, StringComparison.Ordinal) && Tracks().FirstOrDefault(t => t.Key + MaxSuffix == name) is { } track && track.Definition.Max != name) return TrackMax(track);
         if (name == "input") return _input;
         if (_system.Attributes.FirstOrDefault(a => a.Key == name) is { } attribute) return ScoreOf(attribute);
         return _sheet.TryGetValue(name, out var raw) ? Plain(raw) : null;
@@ -606,22 +607,10 @@ public sealed class SheetModel
 
         var applied = new List<AppliedModifier>();
         var total = 0d;
-        foreach (var group in reached.GroupBy(r => (r.Modifier.Type, Penalty: r.Amount < 0)))
+        foreach (var (modifier, type, amount, counts) in ModifierStacking.Stack(reached.Select(r => (r.Modifier.Type, r.Amount, r.Modifier)), _system.ModifierTypes))
         {
-            var rule = group.Key.Penalty ? _system.ModifierTypes.Penalties
-                : _system.ModifierTypes.Types.GetValueOrDefault(group.Key.Type) ?? _system.ModifierTypes.Default;
-            var counted = rule.ToLowerInvariant() switch
-            {
-                "highest" => new[] { group.MaxBy(r => Math.Abs(r.Amount)) },
-                "lowest" => new[] { group.MinBy(r => Math.Abs(r.Amount)) },
-                _ => group.ToArray()
-            };
-            foreach (var r in group)
-            {
-                var counts = counted.Contains(r);
-                if (counts) total += r.Amount;
-                applied.Add(new AppliedModifier(r.Modifier.Type, r.Amount, r.Modifier.Source, counts));
-            }
+            if (counts) total += amount;
+            applied.Add(new AppliedModifier(type, amount, modifier.Source, counts));
         }
 
         _result.Modifiers[key] = applied;
@@ -661,6 +650,7 @@ public sealed class SheetModel
         var tracks = new List<Track>();
         try
         {
+            if (Kind == null) tracks.AddRange(ResourceTracks());
             foreach (var definition in Kind?.Tracks ?? new List<TrackDefinition>())
             {
                 if (definition.Each == null)
@@ -687,6 +677,28 @@ public sealed class SheetModel
         }
 
         return _tracks = tracks;
+    }
+
+    /// <summary>
+    /// A system without sheet kinds (srd5e) still has tracks the model knows, so intents can act on them (overhaul step 6): its
+    /// resources (hit points up to <c>HP_Max</c>, temporary hit points) and the slot pools the sheet has (<c>slots_3</c> up to
+    /// <c>slots_3_Max</c>), each from 0. What reaching 0 does stays the table's vitals rules.
+    /// </summary>
+    private IEnumerable<Track> ResourceTracks()
+    {
+        var none = new Dictionary<string, object>();
+        foreach (var resource in _system.Resources)
+        {
+            yield return new Track(resource.Key, resource.Label, new TrackDefinition { Key = resource.Key, Label = resource.Label, Max = resource.MaxKey, Min = "0" }, none);
+        }
+
+        foreach (var pool in _system.SheetRules?.SlotPools ?? new List<SlotPoolRule>())
+        {
+            foreach (var key in _sheet.Keys.Where(k => pool.Owns(k) && !k.EndsWith(MaxSuffix, StringComparison.Ordinal)).Order(StringComparer.Ordinal))
+            {
+                yield return new Track(key, null, new TrackDefinition { Key = key, Max = key + MaxSuffix, Min = "0" }, none);
+            }
+        }
     }
 
     /// <summary><c>"0..9"</c>, or a list of numbers or of <c>{ level }</c> maps.</summary>

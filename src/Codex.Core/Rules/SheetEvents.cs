@@ -178,6 +178,16 @@ public static partial class SheetEvents
                 };
             case IDictionary<string, object> map:
                 return map.ToDictionary(p => p.Key, p => Field(model, ev, kind, $"{key}.{p.Key}", p.Value, names), StringComparer.Ordinal);
+            // A list's elements are text (a clock's name, which may hold an apostrophe), except a dotted path, which is read:
+            // a log line's args: [ev.helper].
+            case System.Collections.IEnumerable list and not string:
+                return list.Cast<object?>().Select(element => element is string path && DottedPath().IsMatch(path)
+                    ? Evaluate(model, ev, $"{kind}'s {key}", path, names) switch
+                    {
+                        FormulaItem item and not FormulaList => item.Value ?? (object?)item.Flag,
+                        var result => result
+                    }
+                    : SheetModel.Plain(element) ?? YamlValues.Normalize(element)).ToList();
             default:
                 return SheetModel.Plain(value) ?? YamlValues.Normalize(value);
         }
@@ -186,6 +196,10 @@ public static partial class SheetEvents
     /// <summary>A word or words, nothing a formula would add: <c>stress</c>, <c>Less effect</c>, <c>xp_playbook</c>.</summary>
     [GeneratedRegex(@"^[\p{L}_][\p{L}\p{N}_\- ]*$")]
     private static partial Regex BareWords();
+
+    /// <summary>A name with one or more members: <c>ev.helper</c>, <c>item.name</c>.</summary>
+    [GeneratedRegex(@"^[\p{L}_][\p{L}\p{N}_]*(\.[\p{L}_][\p{L}\p{N}_]*)+$")]
+    private static partial Regex DottedPath();
 
     private static object? Evaluate(SheetModel model, SheetEvent ev, string what, string formula, Dictionary<string, object> names)
     {

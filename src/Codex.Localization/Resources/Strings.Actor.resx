@@ -398,4 +398,5 @@
   <data name="Actor.Widget.Remove" xml:space="preserve"><value>Remove</value></data>
   <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>Remove {0}</value></data>
   <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>{0} of {1} used</value></data>
+  <data name="Actor.Sheet.RollAtTable" xml:space="preserve"><value>Rolled at the table: it is in the shared roll log, and what it costs was applied there.</value></data>
 </root>
