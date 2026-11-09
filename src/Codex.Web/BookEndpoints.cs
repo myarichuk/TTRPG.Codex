@@ -17,7 +17,7 @@ public static class BookEndpoints
 {
     public static void MapBooks(this WebApplication app)
     {
-        app.MapGet("/campaigns/{campaignId}/book/{audience}", async (string campaignId, string audience, string? lang, string? theme, string? size, string? cols, string? pics, string? ai,
+        app.MapGet("/campaigns/{campaignId}/book-file/{audience}", async (string campaignId, string audience, string? lang, string? theme, string? size, string? cols, string? pics, string? ai,
             ClaimsPrincipal user, HttpResponse response, ICampaignAccessResolver resolver, BookSourceReader reader, IBookBuildRepository builds, BookArtReader artReader, IBookArtRepository bookArt, IWebHostEnvironment env, CancellationToken cancel) =>
         {
             var made = await BuildAsync(campaignId, audience, lang, theme, size, cols, pics, ai, user, resolver, reader, builds, artReader, bookArt, env, cancel: cancel);
@@ -31,7 +31,7 @@ public static class BookEndpoints
         });
 
         // The same page, printed: what the live preview shows is what comes out.
-        app.MapGet("/campaigns/{campaignId}/book/{audience}/pdf", async (string campaignId, string audience, string? lang, string? theme, string? size, string? cols, string? pics, string? ai,
+        app.MapGet("/campaigns/{campaignId}/book-file/{audience}/pdf", async (string campaignId, string audience, string? lang, string? theme, string? size, string? cols, string? pics, string? ai,
             ClaimsPrincipal user, HttpResponse response, ICampaignAccessResolver resolver, BookSourceReader reader, IBookBuildRepository builds, BookArtReader artReader, IBookArtRepository bookArt, IWebHostEnvironment env, BookPdf pdf, CancellationToken cancel) =>
         {
             // A place in the printing line is taken before the campaign is read and the page built, so a request that would be
@@ -68,7 +68,7 @@ public static class BookEndpoints
         });
 
         // The editable book (docs/BOOK_EXPORT.md 41). Its preview draws in the GM's browser; these give it the edition's pictures and print it.
-        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/art", async (string campaignId, string audience, string lang, ClaimsPrincipal user, HttpResponse response,
+        app.MapGet("/campaigns/{campaignId}/book-file/{audience}/draft/{lang}/art", async (string campaignId, string audience, string lang, ClaimsPrincipal user, HttpResponse response,
             ICampaignAccessResolver resolver, BookDrafts drafts, CancellationToken cancel) =>
         {
             if (await GmAsync(campaignId, user, resolver) is not { } access || BookDrafts.Audience(audience) == null) return Results.NotFound();
@@ -80,7 +80,7 @@ public static class BookEndpoints
         // The draft's Markdown as one file, for Homebrewery or a text editor (docs/BOOK_EXPORT.md 41.24). The party edition's leak check and
         // the GM edition's warning are the editor's, before it asks; this is the GM's own text either way.
         // ?player=<user id>: that player's own copy of the party draft (45), named by their characters.
-        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/md", async (string campaignId, string audience, string lang, string? player, ClaimsPrincipal user,
+        app.MapGet("/campaigns/{campaignId}/book-file/{audience}/draft/{lang}/md", async (string campaignId, string audience, string lang, string? player, ClaimsPrincipal user,
             HttpResponse response, ICampaignAccessResolver resolver, BookDrafts drafts) =>
         {
             if (await GmAsync(campaignId, user, resolver) is not { } access || BookDrafts.Audience(audience) == null) return Results.NotFound();
@@ -89,7 +89,7 @@ public static class BookEndpoints
             return Results.File(System.Text.Encoding.UTF8.GetBytes(made.Markdown), "text/markdown; charset=utf-8", FileName(made.Title, audience, "md", made.Player));
         });
 
-        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/pdf", async (string campaignId, string audience, string lang, string? player, ClaimsPrincipal user,
+        app.MapGet("/campaigns/{campaignId}/book-file/{audience}/draft/{lang}/pdf", async (string campaignId, string audience, string lang, string? player, ClaimsPrincipal user,
             HttpResponse response, ICampaignAccessResolver resolver, BookDrafts drafts, IWebHostEnvironment env, BookPdf pdf, ILoggerFactory logs, CancellationToken cancel) =>
         {
             if (await GmAsync(campaignId, user, resolver) is not { } access || BookDrafts.Audience(audience) == null) return Results.NotFound();

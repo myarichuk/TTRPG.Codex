@@ -1,0 +1,51 @@
+@inherits BookPart
+@using Codex.Core.Book
+@using Codex.Persistence
+@using Codex.Web.Book
+@using static Codex.Web.Components.Campaign.BookPage
+
+@* The chapters (docs/BOOK_EXPORT.md 49; the heading tree under each comes with step 4 of the source-book editor): a chapter opens in the Source. *@
+        @if (chaptersOpen)
+        {
+            <nav class="book-draft-pane book-draft-chapters" aria-label="@L["Campaign.Book.Draft.Chapters"]" data-testid="book-draft-chapters">
+                <div class="book-draft-pane-head">
+                    <span>@L["Campaign.Book.Draft.Chapters"]</span>
+                    <button type="button" class="book-draft-pane-btn" @onclick="() => TogglePaneAsync(Pane.Chapters)" aria-expanded="true"
+                            title="@L["Campaign.Book.Draft.Collapse"]" aria-label="@L["Campaign.Book.Draft.CollapseNamed", L["Campaign.Book.Draft.Chapters"]]" data-testid="book-draft-pane-chapters-toggle">
+                        <LucideIcon IconName="panel-left-close" Size="14" />
+                    </button>
+                </div>
+                <ul class="list-unstyled mb-0 book-draft-pane-body">
+                    @foreach (var chapter in view.Chapters)
+                    {
+                        <li>
+                            <button type="button" class="book-draft-chapter @(current == chapter.Section ? "active" : null)" aria-current="@(current == chapter.Section ? "true" : null)"
+                                    @onclick="() => ShowAsync(chapter.Section)" disabled="@AiBusy" data-testid="book-draft-chapter" data-section="@chapter.Section">
+                                <LucideIcon IconName="file-text" Size="14" />
+                                <bdi dir="auto">@Title(chapter)</bdi>
+                                @if (chapter.Stale || chapter.Gone)
+                                {
+                                    <span class="badge book-draft-badge-stale" title="@L["Campaign.Book.Draft.Stale"]">@L["Campaign.Book.Draft.Badge.Stale"]</span>
+                                }
+                                else if (chapter.Edited)
+                                {
+                                    <span class="badge book-draft-badge-edited">@L["Campaign.Book.Draft.Badge.Edited"]</span>
+                                }
+                            </button>
+                        </li>
+                    }
+                    <li>
+                        <button type="button" class="book-draft-chapter @(current == null ? "active" : null)" aria-current="@(current == null ? "true" : null)" @onclick="() => ShowAsync(null)" disabled="@AiBusy" data-testid="book-draft-css">
+                            <LucideIcon IconName="palette" Size="14" /> <bdi>@L["Campaign.Book.Draft.Stylesheet"]</bdi>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        }
+        else
+        {
+            <button type="button" class="book-draft-strip" @onclick="() => TogglePaneAsync(Pane.Chapters)" aria-expanded="false"
+                    aria-label="@L["Campaign.Book.Draft.ExpandNamed", L["Campaign.Book.Draft.Chapters"]]" data-testid="book-draft-pane-chapters-toggle">
+                <LucideIcon IconName="panel-left-open" Size="14" /> <span>@L["Campaign.Book.Draft.Chapters"]</span>
+            </button>
+        }

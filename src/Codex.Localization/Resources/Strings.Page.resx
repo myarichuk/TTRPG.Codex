@@ -266,4 +266,5 @@
   <data name="Page.Home.FinishSetupLink" xml:space="preserve"><value>Finish setting it up</value></data>
   <data name="Page.Home.JoinOnly" xml:space="preserve"><value>On this server, campaigns are created by Game Masters. Join one with an invite link from its GM, or ask the server's admin to make you a Game Master.</value></data>
   <data name="Page.Login.AccountDeleted" xml:space="preserve"><value>Your account is deleted.</value></data>
+  <data name="Page.Campaign.Section.Book" xml:space="preserve"><value>Book</value></data>
 </root>

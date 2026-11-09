@@ -2556,3 +2556,61 @@ draft's Markdown and PDF are still refused by `BookDrafts`). `BuildAsync` taking
 - The old route keeps two guards and only their sum is tested over HTTP (above).
 - The app was not looked at as a player by hand; the e2e test drives the real app in Chromium as a joined player, in English only.
 - The ru and he guide sentences are written by the model, not read by a native speaker.
+
+## 49. The Book page (2026-11-10; step 1 of the source-book editor)
+
+The editable book left its dialog. It is a page of the campaign, `/campaigns/{id}/book/{edition}/{chapter?}`, GM only, and Settings keeps one line
+and a link to it.
+
+**Built:**
+- **Routes.** The page goes through `CampaignPage` (`Section = "book"`, `Arg1` = edition, `Arg2` = chapter). The minimal-API file routes it would have
+  collided with moved to `/campaigns/{id}/book-file/{edition}[/pdf]` and `.../book-file/{edition}/draft/{lang}/{art|md|pdf}`; every caller
+  (`codex.downloadFrom`, the editor's `artUrl`, the old panel, the tests) was updated. `edition` is `gm` or `party`; none, or anything else,
+  redirects (replace) to `gm`. `chapter` is a section id or `style` (the stylesheet); `codex.replaceUrl` keeps it in the address with
+  `history.replaceState` (Blazor's own history state is passed through), so a reload or a link comes back to it. A non-GM who opens the address
+  sees the campaign's "not found" text and no book (`BookRouteE2ETests`).
+- **Rail.** "Book" (`book-open`) is the last item of World, GM only, in the side rail, the phone tab bar's More menu and nowhere for others.
+  Settings shows `book-settings-line` and the link `book-settings-link`.
+- **Layout.** `.workspace.book-mode` hides the campaign header, rail and tab bar; `.book-page` fills the window under the app header. Top bar:
+  back link with the campaign's name, "Book", the edition control (two buttons, `aria-pressed`; switching saves what was typed first), the save
+  state (`role=status`), the theme select, Fit pages, Download PDF and "⋯". The "⋯" menu holds: bring in a theme, **Lay out like Homebrewery**
+  (moved from the bar), torn page edges, suggestions and help, language, paper, Download Markdown, PDF for a player (party only), Whole book as
+  the book, Start over. Language and paper are there because the old panel was the only place that chose them (see below).
+- **Panes.** Outline 240 px | Source (at least 360 px, 1fr) | splitter 6 px | Preview (1.1fr). The splitter is `role=separator`,
+  `aria-orientation=vertical`, draggable (`codex.dragSplitter`; the promise ends at mouse-up with the width), Left/Right move it 24 px (the other
+  way round on a right-to-left page), a double click resets it; the width is kept in `localStorage` (`codex.bookEditor.split`). The Outline and the
+  Preview fold to a 32 px strip (a folded Preview is still drawn off screen, as before). Under 900 px one pane shows at a time with a
+  Source/Preview toggle.
+- **Dock.** 116 px under the panes, collapsible, tabs **Ask AI | Pictures | Problems** (the Blocks tab is gone; its snippet bar is step 4).
+  Pictures holds `BookArtTray`, and a picture put in or taken out redraws the preview (`refreshArt` in `editor.js`).
+- **Leaving.** A `NavigationLock` saves what was typed first. Text the server does not have (typed and refused, a conflict) asks: stay, or leave
+  without it; closing the tab asks through the browser.
+- **Code.** `BookPage.razor` (+ `.razor.cs`: route, state, everything the old editor did) composes `BookToolbar`, `BookOutline`, `BookSource`,
+  `BookPreview` and `BookDock`, which derive from `BookPart`. **Deviation from the plan:** there is no separate `BookEditorState` class. The ~80
+  fields stay on `BookPage` (internal), and `BookPart` names the ones the parts' markup uses; a part has no state of its own, and an event in a
+  part draws the whole page (`IHandleEvent`), as the single editor did. `BookDownload` is its own type. `BookDraftEditor.razor` is deleted; no
+  `<dialog>` is left in the book. `BookPanel.razor` is no longer mounted anywhere (the Print, Pictures-tab and AI polish tabs went with Settings'
+  panel); the file waits for step 2.
+- **Kept `data-testid`s** (`book-draft-*`); renamed or new: `book-page` (was `book-draft-dialog`), `book-edition-dm|party` (buttons),
+  `book-splitter`, `book-draft-tab-art` (was `book-draft-tab-blocks`), `book-draft-art`, `book-draft-language-{tag}`,
+  `book-draft-paper-{A4|Letter}`, `book-draft-leave*`, `book-settings-line|link`, `book-back`. `book-draft-homebrewery` is a menu item now
+  (`aria-checked`).
+- **Strings** (`Campaign.Book.Page.*`, `Page.Campaign.Section.Book`) in en, ru, he; the Homebrewery label reads "Lay out like Homebrewery".
+
+**Tests.** Every e2e test that opened the editor through Settings opens it through `E2EHelpers.OpenBookAsync`. Rewritten: the panel test
+(now the page, the address, the edition control, a PDF, and a player who finds nothing), the cover-slot test (dock), the refused-print test (the
+draft's PDF route; the old panel's per-code messages, including the no-browser setup sentence, are now the page's), the panes/panel-tabs test
+(arrow keys over Ask AI, Pictures, Problems; layout kept across a reload), the Hebrew theme test (language from the "⋯" menu). Skipped, with the reason
+in the attribute: `BookAiPanelE2ETests.TheDmSeesTheCostFirst_...` (the AI polish tab is not reachable; step 2 maps its checks).
+
+**Not done / not verified:**
+- Paper size and book language had no place in the plan's bar; they are in "⋯" so they do not vanish with the old panel. The language starts as the
+  app's (when a theme can print it), else the one last chosen in this browser.
+- The site guide (en) was corrected where it named the old tabs; **ru and he guides and the screenshots** (`site/tools/capture-screenshots.mjs`
+  drives the old panel and dialog) were not touched.
+- The outline is still the chapter list with the stylesheet in it; the heading tree, snippet bar, Style and Theme tabs are steps 4 and 5.
+- Looked at by hand in Chromium (English, 1400 px wide): the layout, the splitter keys, the edition switch, the Pictures tab, the chapter in the
+  address. **Not looked at:** Hebrew (RTL) by eye, a phone width, keyboard-only use end to end, Safari and Firefox, the leave prompt by hand.
+- The leave prompt (`book-draft-leave`) has no e2e test. Typing is handed to the server 900 ms after it stops; a page reloaded inside that window loses it (the dialog's Close flushed first). Found by the stale-chapter test.
+- Result: book and localization tests 838 passed, 1 skipped (the AI polish tab test); editor tests pass.
+- A change of language or edition while an AI review or a merge is open is refused by `AiBusy`; leaving the page lets go of the review.

@@ -108,14 +108,6 @@
             <BookArtTray Access="Ctx.Access" Edition="@edition" Language="@language" Changed="ArtChanged" Shown="@(tab == "art")" />
         </div>
 
-        <div id="book-tabpanel-draft" role="tabpanel" aria-labelledby="book-tab-draft" hidden="@(tab != "draft")" data-testid="book-draft-panel">
-            <h4 class="h6">@L["Campaign.Book.Draft.PanelTitle"]</h4>
-            <p class="small-muted">@L["Campaign.Book.Draft.PanelHint"]</p>
-            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="EditDraftAsync" data-testid="book-draft-open">
-                <LucideIcon IconName="edit-3" Size="14" /> @L["Campaign.Book.Draft.Open", edition == "dm" ? L["Campaign.Book.Edition.Dm"] : L["Campaign.Book.Edition.Party"]]
-            </CodexButton>
-        </div>
-
         <div id="book-tabpanel-ai" role="tabpanel" aria-labelledby="book-tab-ai" hidden="@(tab != "ai")" data-testid="book-ai">
             <h4 class="h6">@L["Campaign.Book.Ai.Title"]</h4>
             <p class="small-muted">@L["Campaign.Book.Ai.Hint"]</p>
@@ -268,8 +260,6 @@
             </div>
         </div>
 
-        @* A dialog: outside the tabs, so a hidden tab never hides it. *@
-        <BookDraftEditor @ref="draftEditor" Access="Ctx.Access" BasePath="@Ctx.BasePath" />
 </section>
 }
 
@@ -280,7 +270,6 @@
     [
         ("print", "printer", L["Campaign.Book.Tab.Print"]),
         ("art", "image", L["Campaign.Book.Tab.Art"]),
-        ("draft", "edit-3", L["Campaign.Book.Tab.Draft"]),
         ("ai", "sparkles", L["Campaign.Book.Tab.Ai"])
     ];
 
@@ -309,10 +298,6 @@
     private string? errorDetail;
 
     private string themeId = BookThemes.Plain.Id;
-    private BookDraftEditor? draftEditor;
-
-    // The editable book of the edition and language chosen above; it is made from the campaign the first time.
-    private Task EditDraftAsync() => draftEditor?.OpenAsync(edition, language, size == "Letter" ? "Letter" : "A4") ?? Task.CompletedTask;
 
     private BookTheme Theme => BookThemes.Find(themeId) ?? BookThemes.Plain;
 
@@ -327,7 +312,7 @@
     }
 
     private string PageUrl(bool pdf = false) =>
-        $"{Ctx.BasePath}/book/{edition}{(pdf ? "/pdf" : string.Empty)}?lang={Uri.EscapeDataString(language)}&size={Uri.EscapeDataString(size)}&cols={columns}&pics={(pictures ? "1" : "0")}&theme={Theme.Id}{(useAi ? "&ai=1" : string.Empty)}&_={previewStamp}";
+        $"{Ctx.BasePath}/book-file/{edition}{(pdf ? "/pdf" : string.Empty)}?lang={Uri.EscapeDataString(language)}&size={Uri.EscapeDataString(size)}&cols={columns}&pics={(pictures ? "1" : "0")}&theme={Theme.Id}{(useAi ? "&ai=1" : string.Empty)}&_={previewStamp}";
 
     private int previewStamp;
 
@@ -538,15 +523,5 @@
     public void Dispose()
     {
         if (run != null) run.Changed -= OnRunChanged;
-    }
-
-    public sealed class BookDownload
-    {
-        public int Status { get; set; }
-        public string? Detail { get; set; }
-        public string? Code { get; set; }
-
-        /// <summary>The editable book's <c>X-Book-Overflow</c> header: the pages that print cut off (<see cref="BookEndpoints.OverflowHeader"/>).</summary>
-        public string? Overflow { get; set; }
     }
 }

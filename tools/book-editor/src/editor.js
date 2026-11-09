@@ -167,6 +167,22 @@ export function flush(id) {
   return result;
 }
 
+/** The edition's pictures read again (one was put in or taken out in the dock), and the preview drawn with them. */
+export async function refreshArt(id, artUrl) {
+  const state = editors.get(id);
+  if (!state) return;
+  try {
+    const answer = await fetch(artUrl, { credentials: 'same-origin', cache: 'no-store' });
+    if (!answer.ok) return;
+    const got = await answer.json();
+    state.art = got.art || {};
+    state.dotnet.invokeMethodAsync('ArtLeftOut', got.leftOut || []);
+  } catch {
+    return;
+  }
+  await preview(id);
+}
+
 /** Shows another chapter, or the stylesheet (`section` null). */
 export function show(id, section) {
   const state = editors.get(id);

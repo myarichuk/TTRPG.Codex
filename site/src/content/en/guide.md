@@ -170,31 +170,31 @@ With an AI model set up, [[ui:Session.DraftAi]] writes a first draft of the reca
 
 ## Print your campaign as a book {#book}
 
-[[ui:Page.Campaign.Section.Settings]] holds the [[ui:Campaign.Book.Title]] panel, for the GM only: players do not see the book, and its pages and files are refused to them. It turns the campaign into a book you can edit, then print as a PDF: a title page with the campaign cover, a contents page, and a chapter each for the overview, the cast, the places, the sessions, the lore and the wiki pages. The book is built on the server's own machine from what the campaign holds. Nothing is sent anywhere unless you choose an AI step, and each of those shows its cost first.
+[[ui:Page.Campaign.Section.Book]], the last item under World in the campaign's side rail, opens the book on a page of its own, for the GM only (Settings has a link to it): players do not see the book, and its pages and files are refused to them. It turns the campaign into a book you can edit, then print as a PDF: a title page with the campaign cover, a contents page, and a chapter each for the overview, the cast, the places, the sessions, the lore and the wiki pages. The book is built on the server's own machine from what the campaign holds. Nothing is sent anywhere unless you choose an AI step, and each of those shows its cost first.
 
-The panel has four tabs: **[[ui:Campaign.Book.Tab.Print]]**, **[[ui:Campaign.Book.Tab.Art]]**, **[[ui:Campaign.Book.Tab.Draft]]** and **[[ui:Campaign.Book.Tab.Ai]]**.
+The page has a bar on top, the chapters on the left, the chapter's text in the middle and the printed pages on the right, and a dock below with three tabs: **[[ui:Campaign.Book.Draft.Ai.Title]]**, **[[ui:Campaign.Book.Tab.Art]]** and **[[ui:Campaign.Book.Draft.Problems]]**. Drag the bar between the text and the pages to change their widths, or focus it and press Left or Right. The address names the edition and the chapter, so a reload or a link comes back to the same place.
 
 ![The Campaign book panel in Settings: edition, look, language, paper and columns, with the preview open below.](shot:book-panel)
 
 ### Pick an edition {#book-editions}
 
-Choose the edition at the top of the panel before anything else. Each edition is a separate book with its own pictures and its own edits.
+Choose the edition in the bar at the top before anything else. Each edition is a separate book with its own pictures and its own edits.
 
 - **[[ui:Campaign.Book.Edition.Party]]** is made from exactly what a player may read. Hidden characters, DM-only pages and secrets are left out, not blacked out, and a character the party has not met appears under their public description only. This is the one to hand out.
 - **[[ui:Campaign.Book.Edition.Dm]]** has everything you can see, with your secrets in boxes. Keep it behind the screen.
 
 ### Look, language and paper {#book-look}
 
-On the [[ui:Campaign.Book.Tab.Print]] tab, pick the [[ui:Campaign.Book.Look]] (Plain or Parchment), the language, the paper (A4 or Letter) and one column or two. [[ui:Campaign.Book.Preview]] shows the page the PDF is printed from, and [[ui:Campaign.Book.Download]] prints it as it is. Use this tab for a quick book you do not need to touch.
+The theme list in the bar sets the look. Under the three dots you pick the language and the paper (A4 or Letter). The pages on the right are what the PDF is printed from, and **[[ui:Campaign.Book.Draft.Download]]** prints them as they are. A book you have not touched already follows the campaign, so for a quick copy open the page and download it.
 
-To change the words, open the editor instead.
+To change the words, type in the middle pane.
 
 ### Open the editor {#book-editor}
 
-1. Open the [[ui:Campaign.Book.Tab.Draft]] tab and press **[[ui:Campaign.Book.Draft.Open]]**, with the edition you chose.
-2. The editor opens in its own window with three panes: the chapters on the left, the chapter's text in the middle and the printed pages on the right. Fold the chapters or the preview with the small button on their headers when you want more room.
+1. Open [[ui:Page.Campaign.Section.Book]] and choose the edition.
+2. The page has three panes: the chapters on the left, the chapter's text in the middle and the printed pages on the right. Fold the chapters or the preview with the small button on their headers when you want more room.
 3. Type in the middle pane. It is Markdown, and the pages on the right follow as you type. Changes are saved on their own: the title says *Saved* when they are.
-4. Under the panes, a tray has three tabs: [[ui:Campaign.Book.Draft.Ai.Title]], [[ui:Campaign.Book.Draft.Problems]] (what needs your attention) and [[ui:Campaign.Book.Draft.BlocksTab]] (the boxes you can use, such as a note or read-aloud text).
+4. Under the panes, the dock has three tabs: [[ui:Campaign.Book.Draft.Ai.Title]], [[ui:Campaign.Book.Tab.Art]] and [[ui:Campaign.Book.Draft.Problems]] (what needs your attention).
 5. The theme list in the toolbar sets the look: [[ui:Campaign.Book.Draft.Theme.plain]] or [[ui:Campaign.Book.Draft.Theme.ashen-vellum]]. Under the three dots, **[[ui:Campaign.Book.Theme.Open]]** brings in a Homebrewery theme of your own.
 
 ![The book editor: chapters, the Markdown of the Cast chapter, the printed pages beside it, and the Ask AI bar below.](shot:book-editor)
@@ -218,7 +218,7 @@ Text does not always break into pages where you would like. **[[ui:Campaign.Book
 
 ### Pictures {#book-pictures}
 
-The [[ui:Campaign.Book.Tab.Art]] tab is the tray. Open **[[ui:Campaign.Book.Art.Title]]** to see every place a picture can go: the cover, above a chapter, and beside an entry.
+The [[ui:Campaign.Book.Tab.Art]] tab of the dock is the tray. Open **[[ui:Campaign.Book.Art.Title]]** to see every place a picture can go: the cover, above a chapter, and beside an entry.
 
 - **Your own pictures.** [[ui:Campaign.Book.Art.Upload]] puts one in a place (PNG, JPEG, WebP, GIF or AVIF, under 6 MB). [[ui:Campaign.Book.Art.Replace]] and [[ui:Campaign.Book.Art.Remove]] change it later. A picture added in the party edition prints in both books. One added in the GM edition prints in the GM book only.
 - **The art director.** With a text model set up, **[[ui:Campaign.Book.Art.Suggest.Start]]** reads a short outline of the edition, without secrets, and suggests what each picture could show. Before it sends anything, the tray says how many requests it needs, about how many tokens, and the cost if you entered prices. Suggestions are text only.
@@ -268,7 +268,7 @@ Some things only one player's character was told. Write them for that character 
 
 ### Other languages {#book-languages}
 
-The book follows the language you pick on the [[ui:Campaign.Book.Tab.Print]] tab, in English, Russian or Hebrew. Each language has its own copy of the book, with its own edits, because the chapter titles are translated. The Plain and Ashen Vellum themes print Russian and Hebrew, and Hebrew is mirrored right to left. The Homebrewery layout is English only, and the editor greys it out for the other two.
+The book follows the language you pick under the three dots on the Book page (it starts with the language of the app), in English, Russian or Hebrew. Each language has its own copy of the book, with its own edits, because the chapter titles are translated. The Plain and Ashen Vellum themes print Russian and Hebrew, and Hebrew is mirrored right to left. The Homebrewery layout is English only, and the editor greys it out for the other two.
 
 ## Optional AI {#ai}
 

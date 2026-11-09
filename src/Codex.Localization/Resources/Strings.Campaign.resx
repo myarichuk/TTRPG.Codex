@@ -949,7 +949,7 @@
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>The chapters as one Markdown file, for Homebrewery or a text editor. The pictures and the stylesheet are not in it.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>This is the GM edition: it holds every secret. Keep the file away from the players.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGmYes" xml:space="preserve"><value>Download it</value></data>
-  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Homebrewery compatibility</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Lay out like Homebrewery</value></data>
   <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Lay pages out as Homebrewery does, so CSS written for a Homebrewery brew works here. No Homebrewery pictures or colours are used.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Download PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>Start over</value></data>
@@ -1233,4 +1233,13 @@
   <data name="Campaign.Book.Draft.ShapeBook.Stop" xml:space="preserve"><value>Stop after this chapter</value></data>
   <data name="Campaign.Book.Draft.ShapeBook.Stopped" xml:space="preserve"><value>The whole-book rewrite stops after this chapter.</value></data>
   <data name="Campaign.Book.Draft.ShapeBook.Done" xml:space="preserve"><value>The whole book has been through.</value></data>
+  <data name="Campaign.Book.Page.Title" xml:space="preserve"><value>Book</value></data>
+  <data name="Campaign.Book.Page.SettingsLine" xml:space="preserve"><value>The campaign book has its own page.</value></data>
+  <data name="Campaign.Book.Page.SettingsLink" xml:space="preserve"><value>Open the book</value></data>
+  <data name="Campaign.Book.Page.LeaveAsk" xml:space="preserve"><value>Some of your last changes could not be saved, because the draft changed in another tab. Copy them now if you need them, or leave without them.</value></data>
+  <data name="Campaign.Book.Page.LeaveStay" xml:space="preserve"><value>Stay on the page</value></data>
+  <data name="Campaign.Book.Page.LeaveYes" xml:space="preserve"><value>Leave without them</value></data>
+  <data name="Campaign.Book.Page.Panes" xml:space="preserve"><value>Book panes</value></data>
+  <data name="Campaign.Book.Page.Source" xml:space="preserve"><value>Source</value></data>
+  <data name="Campaign.Book.Page.Splitter" xml:space="preserve"><value>Width of the source and the preview</value></data>
 </root>

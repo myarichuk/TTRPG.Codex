@@ -266,4 +266,5 @@
   <data name="Page.Home.FinishSetupLink" xml:space="preserve"><value>Завершить настройку</value></data>
   <data name="Page.Home.JoinOnly" xml:space="preserve"><value>На этом сервере кампании создают мастера. Присоединитесь к кампании по ссылке-приглашению от её мастера или попросите администратора сервера сделать вас мастером.</value></data>
   <data name="Page.Login.AccountDeleted" xml:space="preserve"><value>Ваша учётная запись удалена.</value></data>
+  <data name="Page.Campaign.Section.Book" xml:space="preserve"><value>Книга</value></data>
 </root>

@@ -949,7 +949,7 @@
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>Все главы одним файлом Markdown — для Homebrewery или текстового редактора. Иллюстраций и таблицы стилей в нём нет.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>Это издание мастера: в нём все секреты. Не показывайте файл игрокам.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGmYes" xml:space="preserve"><value>Скачать</value></data>
-  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Совместимость с Homebrewery</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Верстать как Homebrewery</value></data>
   <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Раскладывать страницы так же, как Homebrewery, чтобы CSS, написанный для Homebrewery, работал здесь. Картинки и цвета Homebrewery не используются.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Скачать PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>Начать заново</value></data>
@@ -1233,4 +1233,13 @@
   <data name="Campaign.Book.Draft.ShapeBook.Stop" xml:space="preserve"><value>Остановиться после этой главы</value></data>
   <data name="Campaign.Book.Draft.ShapeBook.Stopped" xml:space="preserve"><value>Переписывание всей книги остановится после этой главы.</value></data>
   <data name="Campaign.Book.Draft.ShapeBook.Done" xml:space="preserve"><value>Вся книга пройдена.</value></data>
+  <data name="Campaign.Book.Page.Title" xml:space="preserve"><value>Книга</value></data>
+  <data name="Campaign.Book.Page.SettingsLine" xml:space="preserve"><value>У книги кампании есть своя страница.</value></data>
+  <data name="Campaign.Book.Page.SettingsLink" xml:space="preserve"><value>Открыть книгу</value></data>
+  <data name="Campaign.Book.Page.LeaveAsk" xml:space="preserve"><value>Часть последних правок не удалось сохранить: черновик изменили в другой вкладке. Скопируйте их сейчас, если они нужны, или уйдите без них.</value></data>
+  <data name="Campaign.Book.Page.LeaveStay" xml:space="preserve"><value>Остаться на странице</value></data>
+  <data name="Campaign.Book.Page.LeaveYes" xml:space="preserve"><value>Уйти без них</value></data>
+  <data name="Campaign.Book.Page.Panes" xml:space="preserve"><value>Области книги</value></data>
+  <data name="Campaign.Book.Page.Source" xml:space="preserve"><value>Текст</value></data>
+  <data name="Campaign.Book.Page.Splitter" xml:space="preserve"><value>Ширина текста и предпросмотра</value></data>
 </root>

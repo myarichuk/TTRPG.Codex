@@ -1,0 +1,206 @@
+@inherits BookPart
+@using Codex.Core.Book
+@using Codex.Persistence
+@using Codex.Web.Book
+@using static Codex.Web.Components.Campaign.BookPage
+
+    <section class="book-draft-panel @(panelOpen ? null : "closed")" data-testid="book-draft-dock">
+        <div class="book-draft-panel-tabs">
+            <div class="cx-tabs" role="tablist" aria-label="@L["Campaign.Book.Draft.Panel"]" @onkeydown="PanelKeyAsync">
+                @foreach (var (tab, icon, label) in PanelTabs)
+                {
+                    var selected = panelOpen && panelTab == tab;
+                    <button type="button" role="tab" id="@("book-draft-tab-" + tab)" class="cx-tab" aria-selected="@(selected ? "true" : "false")" aria-controls="@("book-draft-tabpanel-" + tab)"
+                            tabindex="@(panelTab == tab ? 0 : -1)" @onclick="() => ShowTabAsync(tab)" data-testid="@("book-draft-tab-" + tab)">
+                        <LucideIcon IconName="@icon" Size="14" /> @label
+                        @if (tab == "problems" && ProblemCount > 0)
+                        {
+                            <span class="cx-tab-badge" data-testid="book-draft-problems-count">@ProblemCount</span>
+                        }
+                    </button>
+                }
+            </div>
+            <span class="flex-grow-1"></span>
+            <HomebreweryCredit Class="me-2" />
+            <button type="button" class="book-draft-pane-btn" @onclick="TogglePanelAsync" aria-expanded="@(panelOpen ? "true" : "false")"
+                    title="@(panelOpen ? L["Campaign.Book.Draft.Collapse"] : L["Campaign.Book.Draft.Expand"])" aria-label="@L[panelOpen ? "Campaign.Book.Draft.CollapseNamed" : "Campaign.Book.Draft.ExpandNamed", L["Campaign.Book.Draft.Panel"]]" data-testid="book-draft-panel-toggle">
+                <LucideIcon IconName="@(panelOpen ? "chevron-down" : "chevron-up")" Size="14" />
+            </button>
+        </div>
+
+        <div id="book-draft-tabpanel-ai" role="tabpanel" aria-labelledby="book-draft-tab-ai" class="book-draft-panel-body" hidden="@(!panelOpen || panelTab != "ai")">
+            @if (Current is { } shownForAi)
+            {
+                @* AI edits (docs/BOOK_EXPORT.md 41.4): the selection, or the chapter, sent with its secrets, pictures and breaks kept back; the
+                   cost shown before anything is sent; the reply reviewed change by change, and nothing saved until it is accepted. *@
+                <section class="book-draft-ai" aria-labelledby="book-draft-tab-ai" data-testid="book-draft-ai">
+                    @if (AiBusy)
+                    {
+                        <div class="small-muted" role="status">@L["Campaign.Book.Draft.Ai.InPane"]</div>
+                    }
+                    else
+                    {
+                        <div class="book-draft-ai-row">
+                            @foreach (var preset in BookEditPrompts.Presets.Keys)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiPrepareAsync(preset))" Disabled="@(working || state == SaveState.Conflict)"
+                                             title="@L["Campaign.Book.Draft.Ai.Preset." + preset + ".Hint"]" data-testid="@("book-draft-ai-" + preset)">@L["Campaign.Book.Draft.Ai.Preset." + preset]</CodexButton>
+                            }
+                            <label for="book-draft-ai-ask" class="visually-hidden">@L["Campaign.Book.Draft.Ai.AskLabel"]</label>
+                            <input id="book-draft-ai-ask" class="form-control form-control-sm book-draft-ai-input" maxlength="@BookDraftEdits.MaxAskChars" placeholder="@L["Campaign.Book.Draft.Ai.AskPlaceholder"]"
+                                   @bind="aiText" @bind:event="oninput" @onkeydown="AiKeyAsync" disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-ai-ask" />
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AiPrepareAsync(null)" Disabled="@(working || state == SaveState.Conflict)" data-testid="book-draft-ai-go">
+                                <LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Book.Draft.Ai.Ask"]
+                            </CodexButton>
+                        </div>
+                        <div class="small-muted">@L["Campaign.Book.Draft.Ai.Hint"]</div>
+                    }
+                    @if (aiNote != null)
+                    {
+                        <div class="small @(aiNoteError ? "field-error" : "small-muted")" role="status" aria-live="polite" data-testid="book-draft-ai-note">@aiNote</div>
+                    }
+                </section>
+            }
+            else
+            {
+                <div class="small-muted">@L["Campaign.Book.Draft.Ai.PickChapter"]</div>
+            }
+        </div>
+
+        <div id="book-draft-tabpanel-problems" role="tabpanel" aria-labelledby="book-draft-tab-problems" class="book-draft-panel-body book-draft-report" hidden="@(!panelOpen || panelTab != "problems")"
+             data-testid="book-draft-fit-report">
+            @if (ProblemCount == 0 && fitReport == null)
+            {
+                <div class="small-muted">@L["Campaign.Book.Draft.NoProblems"]</div>
+            }
+            @if (fitReport is { } fitted)
+            {
+                <div role="status" aria-live="polite">@(fitted.Chapters == 0 && fitted.Result == BookDraftSave.Saved ? L["Campaign.Book.Draft.Fit.Nothing"] : L["Campaign.Book.Draft.Fit.Done", fitted.Breaks, fitted.Chapters])</div>
+                @if (fitted.Overflow.Count > 0)
+                {
+                    <div class="field-error" data-testid="book-draft-fit-too-tall">
+                        @L["Campaign.Book.Draft.Fit.TooTall"]
+                        <ul class="mb-0 ps-3">
+                            @foreach (var o in fitted.Overflow.Take(12))
+                            {
+                                <li>@Item(o)</li>
+                            }
+                        </ul>
+                    </div>
+                }
+                @if (fitted.Unplaced.Count > 0)
+                {
+                    <div class="small-muted" data-testid="book-draft-fit-unplaced">
+                        @L["Campaign.Book.Draft.Fit.Unplaced"]
+                        <ul class="mb-0 ps-3">
+                            @foreach (var o in fitted.Unplaced.Take(12))
+                            {
+                                <li>@Item(o)</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
+            @if (leakReport is { Total: > 0 } leaks)
+            {
+                @* The party leak check (docs/BOOK_EXPORT.md 41.19): a warning, not a refusal. Each hit opens its chapter. *@
+                <div class="field-error" role="alert" data-testid="book-draft-leaks">
+                    @L["Campaign.Book.Draft.Leak.Found", leaks.Total]
+                    <ul class="mb-1 ps-3">
+                        @foreach (var hit in leaks.Hits)
+                        {
+                            <li data-testid="book-draft-leak" data-kind="@hit.Kind">
+                                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @onclick="() => ShowAsync(hit.Section.Length == 0 ? null : hit.Section)"
+                                        disabled="@AiBusy"><bdi>@(hit.Section.Length == 0 ? L["Campaign.Book.Draft.Stylesheet"] : TitleOf(hit.Section))</bdi></button>:
+                                @LeakLabel(hit) <bdi class="text-break">“@Snippet(hit.Text)”</bdi>
+                            </li>
+                        }
+                        @if (leaks.Total > leaks.Hits.Count)
+                        {
+                            <li>@L["Campaign.Book.Draft.Leak.More", leaks.Total - leaks.Hits.Count]</li>
+                        }
+                    </ul>
+                    <div class="small">@L["Campaign.Book.Draft.Leak.Hint"]</div>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => DownloadAsync(true, leaksForMarkdown, leaksForPlayer)" Disabled="@printing" data-testid="book-draft-download-anyway">
+                        <LucideIcon IconName="download" Size="14" /> @L["Campaign.Book.Draft.Leak.Anyway"]
+                    </CodexButton>
+                </div>
+            }
+            @if (letters.Count > 0)
+            {
+                @* Characters no face of the theme draws (docs/BOOK_EXPORT.md 41.21): they print in a system font, or as boxes. *@
+                <div class="field-error" data-testid="book-draft-letters">
+                    @L["Campaign.Book.Draft.Letters.Found"]
+                    <ul class="mb-1 ps-3">
+                        @foreach (var (section, characters, more) in letters)
+                        {
+                            <li data-testid="book-draft-letter" data-section="@section">
+                                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @onclick="() => ShowAsync(section)" disabled="@AiBusy"><bdi>@TitleOf(section)</bdi></button>:
+                                <bdi class="text-break">@string.Join(" ", characters.EnumerateRunes())</bdi>@(more > 0 ? " " + L["Campaign.Book.Draft.Letters.More", more] : "")
+                            </li>
+                        }
+                    </ul>
+                    <div class="small">@L["Campaign.Book.Draft.Letters.Hint"]</div>
+                </div>
+            }
+            @if (leftOut.Count > 0)
+            {
+                @* Pictures the book leaves out (docs/BOOK_EXPORT.md 31.1, item 4): the preview and the PDF leave out the same ones. *@
+                <div class="field-error" data-testid="book-draft-left-out">
+                    @L["Campaign.Book.Draft.Pictures.LeftOut", leftOut.Count]
+                    <ul class="mb-1 ps-3">
+                        @foreach (var picture in leftOut.Take(24))
+                        {
+                            <li data-testid="book-draft-left-out-item" data-reason="@picture.Reason">
+                                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @onclick="() => ShowAsync(picture.Section)" disabled="@AiBusy"><bdi>@TitleOf(picture.Section)</bdi></button>:
+                                <bdi>@picture.Label</bdi> (@(picture.Reason == "limit" ? L["Campaign.Book.Draft.Pictures.Limit"] : L["Campaign.Book.Draft.Pictures.Unreadable"]))
+                            </li>
+                        }
+                        @if (leftOut.Count > 24)
+                        {
+                            <li>@L["Campaign.Book.Draft.Letters.More", leftOut.Count - 24]</li>
+                        }
+                    </ul>
+                    <div class="small">@L["Campaign.Book.Draft.Pictures.Hint"]</div>
+                </div>
+            }
+            @if (aiKept.Count > 0)
+            {
+                @* An entry-by-entry AI edit (docs/BOOK_EXPORT.md 42): the entries whose reply failed kept their text. *@
+                <div class="field-error" data-testid="book-draft-ai-kept-parts">
+                    @L["Campaign.Book.Draft.Ai.KeptParts", KeptCount]
+                    <ul class="mb-1 ps-3">
+                        @foreach (var (keptSection, part) in aiKept.SelectMany(k => k.Parts.Select(p => (k.Section, p))).Take(24))
+                        {
+                            <li data-testid="book-draft-ai-kept-part" data-reason="@part.Reason">
+                                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @onclick="() => ShowAsync(keptSection)" disabled="@AiBusy"><bdi>@TitleOf(keptSection)</bdi></button>:
+                                <bdi>@part.Label</bdi> (@KeptReason(part.Reason))
+                            </li>
+                        }
+                    </ul>
+                    <div class="small">@L["Campaign.Book.Draft.Ai.KeptPartsHint"]</div>
+                </div>
+            }
+            @if (printReport != null)
+            {
+                <div class="field-error" data-testid="book-draft-print-overflow">@printReport</div>
+            }
+            @if (webReport is { Failed.Count: > 0 } failedWeb)
+            {
+                <div class="field-error" data-testid="book-draft-web-failed">
+                    @L["Campaign.Book.Draft.Web.Failed", failedWeb.Failed.Count]
+                    <ul class="mb-0 ps-3">
+                        @foreach (var failure in failedWeb.Failed.Take(8))
+                        {
+                            <li><bdi dir="ltr" class="text-break">@failure.Url</bdi>: @Problem(failure)</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+
+        <div id="book-draft-tabpanel-art" role="tabpanel" aria-labelledby="book-draft-tab-art" class="book-draft-panel-body" hidden="@(!panelOpen || panelTab != "art")" data-testid="book-draft-art">
+            @* The edition's picture slots (docs/BOOK_EXPORT.md 34 to 44): upload, suggest, draw. A picture put in or taken out shows in the preview at once. *@
+            <BookArtTray Access="Access" Edition="@edition" Language="@language" Changed="ArtChangedAsync" Shown="@(panelOpen && panelTab == "art")" />
+        </div>
+    </section>

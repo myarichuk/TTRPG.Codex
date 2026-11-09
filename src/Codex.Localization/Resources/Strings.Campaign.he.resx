@@ -949,7 +949,7 @@
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>כל הפרקים בקובץ Markdown אחד, ל-Homebrewery או לעורך טקסט. התמונות וגיליון הסגנונות אינם בו.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>זו מהדורת המנחה: יש בה כל הסודות. שמרו את הקובץ הרחק מהשחקנים.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGmYes" xml:space="preserve"><value>להוריד</value></data>
-  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>תאימות ל-Homebrewery</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>לעצב כמו Homebrewery</value></data>
   <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>פריסת העמודים כמו ב-Homebrewery, כדי ש-CSS שנכתב ל-Homebrewery יעבוד כאן. התמונות והצבעים של Homebrewery אינם בשימוש.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>הורדת PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>להתחיל מחדש</value></data>
@@ -1233,4 +1233,13 @@
   <data name="Campaign.Book.Draft.ShapeBook.Stop" xml:space="preserve"><value>לעצור אחרי הפרק הזה</value></data>
   <data name="Campaign.Book.Draft.ShapeBook.Stopped" xml:space="preserve"><value>שכתוב כל הספר ייעצר אחרי הפרק הזה.</value></data>
   <data name="Campaign.Book.Draft.ShapeBook.Done" xml:space="preserve"><value>כל הספר עבר.</value></data>
+  <data name="Campaign.Book.Page.Title" xml:space="preserve"><value>ספר</value></data>
+  <data name="Campaign.Book.Page.SettingsLine" xml:space="preserve"><value>לספר הקמפיין יש עמוד משלו.</value></data>
+  <data name="Campaign.Book.Page.SettingsLink" xml:space="preserve"><value>לפתוח את הספר</value></data>
+  <data name="Campaign.Book.Page.LeaveAsk" xml:space="preserve"><value>חלק מהשינויים האחרונים שלך לא נשמרו, כי הטיוטה השתנתה בלשונית אחרת. העתק אותם עכשיו אם הם נחוצים, או צא בלעדיהם.</value></data>
+  <data name="Campaign.Book.Page.LeaveStay" xml:space="preserve"><value>להישאר בעמוד</value></data>
+  <data name="Campaign.Book.Page.LeaveYes" xml:space="preserve"><value>לצאת בלעדיהם</value></data>
+  <data name="Campaign.Book.Page.Panes" xml:space="preserve"><value>חלוניות הספר</value></data>
+  <data name="Campaign.Book.Page.Source" xml:space="preserve"><value>טקסט</value></data>
+  <data name="Campaign.Book.Page.Splitter" xml:space="preserve"><value>רוחב הטקסט והתצוגה המקדימה</value></data>
 </root>

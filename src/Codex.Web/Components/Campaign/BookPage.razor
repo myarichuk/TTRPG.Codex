@@ -1,0 +1,98 @@
+@using Codex.Core.Book
+@using Codex.Persistence
+@using Codex.Web.Book
+@inject IJSRuntime JS
+@inject BookDrafts Drafts
+@inject BookDraftWebs Webs
+@inject BookThemeCatalog Catalog
+@inject IBookDraftRepository ThemeStore
+@inject BookPdf Pdf
+@inject BookDraftAi Ai
+@inject BookDraftMerges Merges
+@inject NavigationManager Nav
+@inject IWebHostEnvironment Env
+@inject ILogger<BookPage> Logger
+
+<PageTitle>@L["Campaign.Book.Page.Title"] | @Ctx.Campaign.Name | TTRPG.Codex</PageTitle>
+
+@* The book of one edition (docs/BOOK_EXPORT.md 49): a toolbar; the outline, the Markdown and the book as it prints side by side; a dock below. The
+   page is the GM's alone. Leaving it with text the server does not have asks first. *@
+<NavigationLock OnBeforeInternalNavigation="LeavingAsync" ConfirmExternalNavigation="@Unsaved" />
+
+@if (view == null)
+{
+    @if (message != null)
+    {
+        <div class="field-error" role="alert" data-testid="book-draft-error">@message</div>
+    }
+    else
+    {
+        <LoadingSkeleton Rows="4" />
+    }
+}
+else
+{
+    <CascadingValue Value="this" IsFixed="true">
+        <div class="book-draft book-page" data-book-editor data-testid="book-page">
+            <BookToolbar Stamp="@(++renders)" />
+            @if (wizardOpen)
+            {
+                <BookThemeWizard Access="Access" Language="@language" Font="Font" OnClose="WizardClosedAsync" />
+            }
+            @if (message != null)
+            {
+                <div class="field-error book-draft-infobar" role="alert" data-testid="book-draft-error">@message@if (messageDetail != null) { <text> </text><bdi dir="ltr">@messageDetail</bdi> }</div>
+            }
+            @if (confirmMarkdown)
+            {
+                @* The GM edition holds every secret (docs/BOOK_EXPORT.md 41.24): said before the file is made. *@
+                <div class="book-draft-notice book-draft-infobar" role="alertdialog" aria-labelledby="book-draft-markdown-q" data-testid="book-draft-markdown-gm">
+                    <span id="book-draft-markdown-q">@L["Campaign.Book.Draft.MarkdownGm"] @L["Campaign.Book.Draft.MarkdownHint"]</span>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => DownloadAsync(true, markdown: true)" data-testid="book-draft-markdown-yes">@L["Campaign.Book.Draft.MarkdownGmYes"]</CodexButton>
+                    <CodexButton Small="true" OnClick="() => confirmMarkdown = false">@L["Common.Cancel"]</CodexButton>
+                </div>
+            }
+            @if (confirmStartOver)
+            {
+                <div class="book-draft-notice book-draft-infobar" role="alertdialog" aria-labelledby="book-draft-start-over-q">
+                    <span id="book-draft-start-over-q">@L["Campaign.Book.Draft.StartOverAsk"]</span>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="StartOverConfirmedAsync" data-testid="book-draft-start-over-yes">@L["Campaign.Book.Draft.StartOverYes"]</CodexButton>
+                    <CodexButton Small="true" OnClick="() => confirmStartOver = false">@L["Common.Cancel"]</CodexButton>
+                </div>
+            }
+            @if (leaveAsked != null)
+            {
+                <div class="book-draft-notice book-draft-infobar" role="alertdialog" aria-labelledby="book-draft-leave-q" data-testid="book-draft-leave">
+                    <span id="book-draft-leave-q">@L["Campaign.Book.Page.LeaveAsk"]</span>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="LeaveStay" data-testid="book-draft-leave-stay">@L["Campaign.Book.Page.LeaveStay"]</CodexButton>
+                    <CodexButton Small="true" OnClick="LeaveAnyway" data-testid="book-draft-leave-yes">@L["Campaign.Book.Page.LeaveYes"]</CodexButton>
+                </div>
+            }
+
+            @* Under 900 px wide one pane shows at a time. *@
+            <div class="book-mobile-toggle cx-tabs" role="tablist" aria-label="@L["Campaign.Book.Page.Panes"]">
+                @foreach (var pane in new[] { "source", "preview" })
+                {
+                    <button type="button" role="tab" class="cx-tab" aria-selected="@(mobilePane == pane ? "true" : "false")" @onclick="() => ShowMobilePane(pane)"
+                            data-testid="@("book-pane-" + pane + "-tab")">@(pane == "source" ? L["Campaign.Book.Page.Source"] : L["Campaign.Book.Draft.Preview"])</button>
+                }
+            </div>
+
+            <div id="book-body" class="book-body @(chaptersOpen ? null : "outline-closed") @(previewOpen ? null : "preview-closed") @(splitWidth > 0 ? "sized" : null)"
+                 data-pane="@mobilePane" style="@(splitWidth > 0 ? $"--book-src:{splitWidth}px" : null)">
+                <BookOutline Stamp="@(++renders)" />
+                <BookSource Stamp="@(++renders)" />
+                @if (previewOpen)
+                {
+                    @* The splitter: drag it, or Left and Right (24 px); a double click puts it back. *@
+                    <div class="book-splitter" role="separator" aria-orientation="vertical" tabindex="0" aria-label="@L["Campaign.Book.Page.Splitter"]"
+                         aria-valuemin="@BookPage.SplitMin" aria-valuenow="@(splitWidth > 0 ? splitWidth : null)"
+                         @onmousedown="SplitDragAsync" @onkeydown="SplitKeyAsync" @ondblclick="SplitResetAsync" data-testid="book-splitter"></div>
+                }
+                <BookPreview Stamp="@(++renders)" />
+            </div>
+
+            <BookDock Stamp="@(++renders)" />
+        </div>
+    </CascadingValue>
+}
