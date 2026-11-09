@@ -16,7 +16,9 @@ public sealed record BookDraftView(string Edition, string Language, string Theme
 
 /// <summary>What a draft is printed or previewed from: the page shell, the brew, its chapters (with the version each was read at), and the
 /// edition's pictures by slot.</summary>
-public sealed record BookDraftPage(string Title, string Shell, string Markdown, IReadOnlyDictionary<string, string> Art, IReadOnlyList<BookDraftPageChapter> Chapters)
+/// <param name="Player">For one player's own book (docs/BOOK_EXPORT.md 45): their characters' names, which the file is named by.</param>
+public sealed record BookDraftPage(string Title, string Shell, string Markdown, IReadOnlyDictionary<string, string> Art, IReadOnlyList<BookDraftPageChapter> Chapters,
+    string? Player = null)
 {
     public IReadOnlyList<BookLayoutChapter> Layout => [.. Chapters.Select(c => new BookLayoutChapter(c.Section, c.Markdown))];
 }
@@ -259,21 +261,47 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
     /// read for this edition only (<see cref="BookSlots.Choose"/>: the party draft gets only the party's). Null when not allowed; a shell of null
     /// with a reason when the theme cannot print the language.
     /// </summary>
+    /// <para><paramref name="player"/>: one player's own copy of the party draft (<see cref="PrintedAsync"/>); null when that player has none.</para>
     public async Task<(BookDraftPage? Page, string? Refused)> PageAsync(CampaignAccess asked, string edition, string language, BookArtQuality quality,
-        Func<string, byte[]?> font, CancellationToken cancel, bool withArt = true)
+        Func<string, byte[]?> font, CancellationToken cancel, bool withArt = true, string? player = null)
     {
         if (await GenerateAsync(asked, edition, language) is not { } made) return (null, null);
         if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return (null, null);
+        if (await PrintedAsync(made.Dm, made.Source, draft, edition, language, player) is not { } printed) return (null, null);
         // A built-in theme or one the GM brought into the campaign (41.22), resolved as the editor's preview resolves it.
         var theme = await new BookThemeCatalog(store).ResolveAsync(made.Dm, draft.Document.Theme, language, font);
         var web = await store.WebAsync(made.Dm, edition, language);
         var shell = BookDraftHtml.Shell(made.Source.Campaign.Name, language, theme.Theme, draft.Document.PageSize, draft.Document.Css,
             theme.Homebrewery ?? draft.Document.Homebrewery, font, web);
         if (shell.Html == null) return (null, shell.Refused);
-        var markdown = string.Join("\n\n\\page\n\n", draft.Chapters.Select(c => c.Markdown.TrimEnd()));
+        var markdown = string.Join("\n\n\\page\n\n", printed.Chapters.Select(c => c.Markdown.TrimEnd()));
+        // The party's pictures, read for the party's source: a player's copy adds text, never a picture.
         var pictures = withArt ? (await ArtAsync(made.Dm, made.Source, quality, cancel)).Art : new Dictionary<string, string>();
-        return (new BookDraftPage(made.Source.Campaign.Name, shell.Html, markdown, pictures,
-            [.. draft.Chapters.Select(c => new BookDraftPageChapter(c.Section, c.Title, c.Markdown, c.Version))]), null);
+        return (new BookDraftPage(made.Source.Campaign.Name, shell.Html, markdown, pictures, printed.Chapters, printed.Player), null);
+    }
+
+    /// <summary>
+    /// The players who have a book of their own, for the party draft's "Download PDF for…" (docs/BOOK_EXPORT.md 45). Empty for anyone but the
+    /// campaign's GM.
+    /// </summary>
+    public async Task<IReadOnlyList<BookPlayer>> PlayersAsync(CampaignAccess asked) =>
+        await resolver.ResolveAsync(asked.CampaignId, asked.UserId) is { IsDm: true } dm ? await reader.PlayersAsync(dm) : [];
+
+    /// <summary>
+    /// The draft's chapters as they print: as stored, or for <paramref name="player"/> their own copy of the party draft, with what only their
+    /// characters may read in notes (<see cref="BookPlayerBook"/>), and their characters' names. Null when a player is asked for and has no book
+    /// (not the party edition, not a player of the campaign now, no character).
+    /// </summary>
+    private async Task<(IReadOnlyList<BookDraftPageChapter> Chapters, string? Player)?> PrintedAsync(CampaignAccess dm, BookSource party, BookDraft draft,
+        string edition, string language, string? player)
+    {
+        IReadOnlyList<BookDraftPageChapter> stored = [.. draft.Chapters.Select(c => new BookDraftPageChapter(c.Section, c.Title, c.Markdown, c.Version))];
+        if (player == null) return (stored, null);
+        if (Audience(edition) != BookAudience.Party || await reader.ReadForPlayerAsync(dm, player) is not { } theirs) return null;
+        var names = string.Join(", ", theirs.Actors.Where(a => theirs.OwnedActorIds.Contains(a.Id)).Select(a => a.Name.Trim())
+            .Where(n => n.Length > 0).Order(StringComparer.CurrentCulture));
+        var heading = string.Format(System.Globalization.CultureInfo.InvariantCulture, Codex.Localization.Localizer.For(language)["Campaign.Book.Draft.OnlyFor"], names);
+        return (BookPlayerBook.Overlay(stored, party, theirs, language, heading), names);
     }
 
     /// <summary>
@@ -281,13 +309,15 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
     /// as plain ones (<see cref="BookDraftText.Unfitted"/>: the mark is this app's, and means nothing anywhere else). Pictures stay <c>art:</c> references and the stylesheet is
     /// not in it. Null when not allowed.
     /// </summary>
-    public async Task<(string Title, string Markdown)?> MarkdownAsync(CampaignAccess asked, string edition, string language)
+    /// <para><paramref name="player"/>: one player's own copy of the party draft, as for the PDF; <c>Player</c> is then their characters' names.</para>
+    public async Task<(string Title, string Markdown, string? Player)?> MarkdownAsync(CampaignAccess asked, string edition, string language, string? player = null)
     {
         if (await GenerateAsync(asked, edition, language) is not { } made) return null;
         if (await store.GetAsync(made.Dm, edition, language) is not { } draft) return null;
-        var chapters = draft.Chapters.Select(c => string.Join("\n", c.Markdown.ReplaceLineEndings("\n").Split('\n')
+        if (await PrintedAsync(made.Dm, made.Source, draft, edition, language, player) is not { } printed) return null;
+        var chapters = printed.Chapters.Select(c => string.Join("\n", c.Markdown.ReplaceLineEndings("\n").Split('\n')
             .Select(BookDraftText.Unfitted)).TrimEnd());
-        return (made.Source.Campaign.Name, string.Join("\n\n\\page\n\n", chapters) + "\n");
+        return (made.Source.Campaign.Name, string.Join("\n\n\\page\n\n", chapters) + "\n", printed.Player);
     }
 
     /// <summary>

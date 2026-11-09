@@ -42,6 +42,25 @@ public sealed class BookSourceReader(
     public Task<BookSource?> ReadForPlayerAsync(CampaignAccess dm, string playerUserId) =>
         string.IsNullOrWhiteSpace(playerUserId) ? Task.FromResult<BookSource?>(null) : ReadAsync(dm, BookAudience.Party, playerUserId);
 
+    /// <summary>The players who have a book of their own (<see cref="ReadForPlayerAsync"/>): each Player member of the campaign now who owns a
+    /// character in it, with those characters' names, for the GM to choose by. Empty for anyone but the campaign's DM.</summary>
+    public async Task<IReadOnlyList<BookPlayer>> PlayersAsync(CampaignAccess dm)
+    {
+        if (!dm.IsDm || await campaigns.GetAsync(dm.CampaignId) is not { } campaign)
+        {
+            return [];
+        }
+
+        var cast = (await actors.GetVisibleForCampaignAsync(dm)).Where(a => !a.Retired && !string.IsNullOrEmpty(a.OwnerUserId)).ToList();
+        return campaign.Members
+            .Where(m => CampaignAccessResolver.RoleOf(campaign, m.UserId) == CampaignRole.Player)
+            .Select(m => new BookPlayer(m.UserId, cast.Where(a => a.OwnerUserId == m.UserId).Select(a => a.Name).Order(StringComparer.CurrentCulture).ToList()))
+            .Where(p => p.Characters.Count > 0)
+            .DistinctBy(p => p.UserId)
+            .OrderBy(p => p.Characters[0], StringComparer.CurrentCulture)
+            .ToList();
+    }
+
     private async Task<BookSource?> ReadAsync(CampaignAccess dm, BookAudience audience, string? player)
     {
         // A number cast to the enum is neither edition, and it would read as a stranger without being cleaned like one.
@@ -79,6 +98,14 @@ public sealed class BookSourceReader(
         var clean = party ? (Func<string?, string?>)(text => Clean(text, owned)) : text => text;
         foreach (var actor in cast)
         {
+            // The player's own character comes with the blocks revealed to it apart (the repository keeps them out of the text they edit); in
+            // their book they are part of its history, after the rest.
+            if (player != null && actor.RevealedToReader is { Length: > 0 } toThem)
+            {
+                actor.Biography = (actor.Biography ?? string.Empty).TrimEnd() + "\n\n" + toThem;
+            }
+
+            actor.RevealedToReader = null;
             actor.Biography = clean(actor.Biography);
             actor.PublicDescription = clean(actor.PublicDescription);
             if (party)

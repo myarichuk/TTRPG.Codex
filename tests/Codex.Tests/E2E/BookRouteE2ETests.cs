@@ -774,6 +774,68 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         Assert.Empty(pageErrors);
     }
 
+    /// <summary>A player's own book (45): the party draft's menu lists each player by their characters; their PDF is named by them, and their
+    /// copy has what only their character was told, which the party's own has not.</summary>
+    [Fact]
+    public async Task TheGmDownloadsOnePlayersOwnBook_NamedByTheirCharacter_WithWhatOnlyTheyWereTold()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bpp-dm-" + Guid.NewGuid();
+        var playerId = "bpp-pl-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await _app.SeedUserAsync(playerId, "pl_" + playerId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl, AcceptDownloads = true });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        var invite = await E2EHelpers.ReadInviteLinkAsync(dm, campaignId);
+        await using (var playerContext = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl }))
+        {
+            var player = await playerContext.NewPageAsync();
+            await E2EHelpers.LoginAsync(player, "pl_" + playerId, password);
+            await E2EHelpers.JoinAsync(player, invite);
+        }
+
+        var mira = "bpp-mira-" + Guid.NewGuid();
+        await _app.SeedActorsAsync([
+            new Codex.Web.TestSeedActor { Id = mira, CampaignId = campaignId, Name = "Mira", Kind = Codex.Persistence.ActorKind.PlayerCharacter, OwnerUserId = playerId },
+            new Codex.Web.TestSeedActor
+            {
+                Id = "bpp-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Visibility = Codex.Persistence.ActorVisibility.Known,
+                Biography = "Keeps the lighthouse.\n\n:::for [[actor:" + mira + "]]\nShe told Mira where the bell is buried.\n:::"
+            }]);
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=cast]")).ToBeVisibleAsync(new() { Timeout = 30_000 });
+
+        await dm.GetByTestId("book-draft-more").ClickAsync();
+        var forPlayer = dm.GetByTestId("book-draft-for-player");
+        await Assertions.Expect(forPlayer).ToHaveCountAsync(1);
+        await Assertions.Expect(forPlayer).ToHaveTextAsync("Mira");
+        var download = await dm.RunAndWaitForDownloadAsync(() => forPlayer.ClickAsync());
+        Assert.Equal("Saltmere Chronicle (Mira).pdf", download.SuggestedFilename);
+        await using (var stream = await download.CreateReadStreamAsync())
+        {
+            var head = new byte[5];
+            await stream.ReadExactlyAsync(head);
+            Assert.Equal("%PDF-", Encoding.ASCII.GetString(head));
+        }
+
+        var theirs = await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party/draft/en/md?player={Uri.EscapeDataString(playerId)}")).TextAsync();
+        Assert.Contains("She told Mira where the bell is buried.", theirs);
+        Assert.Contains("##### Only for Mira", theirs);
+        var party = await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party/draft/en/md")).TextAsync();
+        Assert.Contains("Keeps the lighthouse.", party);
+        Assert.DoesNotContain("bell", party);
+        // Someone who is not a player of the campaign has no book.
+        Assert.Equal(404, (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party/draft/en/md?player={Uri.EscapeDataString(dmId)}")).Status);
+        Assert.Empty(pageErrors);
+    }
+
     /// <summary>Fit pages from the editor (41.15): the preview says pages run on, Fit pages writes the breaks into the chapter (shown in the
     /// editor, saved, the chapter not marked edited), and a block too tall for any page is named with its chapter, before the PDF and after it.</summary>
     [Fact]

@@ -2416,3 +2416,43 @@ spot framing, the draft closes Vera's entry with it, and the session is an entry
 module was loading); it is now remembered and shown once the editor opens. Found as a failing e2e on a loaded machine.
 
 **Not done:** no browser test drives a spot through the tray; no real model has suggested a spot; the spot's mood and size are not tuned.
+
+## 45. A party book per player (2026-11-09)
+
+The party draft is what a player who owns no character may read; a `:::for` block, which a GM writes for one or more characters, is never in
+it. A player's own book is the party draft with what their characters may read added: in the party draft's editor, **More → PDF for a player**
+lists each player of the campaign now who owns a character, by their characters' names, and gives that player's copy as a PDF named
+`<campaign> (<character names>).pdf`. The Markdown route takes the same `?player=<user id>`.
+
+**What is read.** `BookSourceReader.ReadForPlayerAsync(dm, player)` reads the party edition through that player's own access (not the stranger
+the party edition is read as), so every repository shows what that player may open: `:::for` blocks for their characters in others' texts,
+lore revealed to their characters, their own character (its own `:::for` blocks, which the repository keeps apart in `RevealedToReader`, go at
+the end of its history). Every text is then cleaned for the characters they own (`Clean(text, owned)`, which matters for the campaign's own
+text: no repository reads that). It refuses (null) for anyone who is not a Player member now (the GM, a co-GM, someone who left, a stranger) and
+for a player who owns no character. `PlayersAsync` lists the same people for the menu. Owner and author ids are cleared as for the party.
+
+**How the copy is made** (`BookPlayerBook.Overlay`). Both sources are compiled; each chapter is split into units (the text before its first entry,
+then each entry, by the line the compiler recorded), and each unit's paragraphs are compared, keyed by the entry's slot key, which is the same in
+both copies. The party's compile is a subsequence of the player's (the same compiler, the same records, more of each text kept), so what the
+player's copy has off their longest common subsequence is that player's. Those paragraphs are written as the draft writes campaign text
+(`BookDraftWriter.Text`, mentions as the player's edition names them: a hidden actor is nothing, a stranger its mask), in one
+`{{note` per unit headed "Only for <names>":
+- an entry's note goes after the entry in the stored draft, before the next entry's marker and before any page break leading to it, so the GM's
+  edits stay as they are and the note stays on the entry's page;
+- the text before a chapter's first entry gets its note before that entry (lore and the overview have none, so at the chapter's end);
+- a unit the draft has no marker for (the GM deleted it, or only this player has the entry) goes at the chapter's end; a chapter the party draft
+  has not got (only lore revealed to them, say) is added at the book's end, not in the contents.
+
+The copy is made when it is asked for and is never stored or sent to a model. Pictures are the party's, read for the party's source. The party
+leak check (41.19) runs before it as before the party's own PDF, since the copy is that draft. Fit pages' breaks are the party draft's: a note can
+push text past one, and Fit pages is not run on a player's copy.
+
+**Tests:** `BookPlayerBookTests` (a player's book has their blocks, the block shared with another player, lore revealed to them, their own
+character's block and the campaign text's, and none of another player's, the GM's, a `:::for` nested in `:::dm`, or a hidden actor's name or label;
+each note under its own entry, the GM's edits kept, a deleted entry's note at the chapter's end, a note before the GM's page break; who is refused;
+the PDF's page and file name; `Extra`), and `BookRouteE2ETests.TheGmDownloadsOnePlayersOwnBook_NamedByTheirCharacter_WithWhatOnlyTheyWereTold`.
+Mutants run by hand and caught: no diff; no edition check; the own character's blocks dropped; cleaning without the owned set; no backing over
+page breaks; the file name ignoring the player; a player with no character listed; no entry anchor.
+
+**Not done:** a player cannot download their own book themselves (the book is the GM's; a player may already open all of it in the app); the
+note's position inside a long entry is its end, not beside the paragraph it came from; the contents page does not list a chapter only the player has.

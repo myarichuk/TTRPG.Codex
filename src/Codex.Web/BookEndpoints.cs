@@ -79,17 +79,18 @@ public static class BookEndpoints
 
         // The draft's Markdown as one file, for Homebrewery or a text editor (docs/BOOK_EXPORT.md 41.24). The party edition's leak check and
         // the GM edition's warning are the editor's, before it asks; this is the GM's own text either way.
-        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/md", async (string campaignId, string audience, string lang, ClaimsPrincipal user, HttpResponse response,
-            ICampaignAccessResolver resolver, BookDrafts drafts) =>
+        // ?player=<user id>: that player's own copy of the party draft (45), named by their characters.
+        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/md", async (string campaignId, string audience, string lang, string? player, ClaimsPrincipal user,
+            HttpResponse response, ICampaignAccessResolver resolver, BookDrafts drafts) =>
         {
             if (await GmAsync(campaignId, user, resolver) is not { } access || BookDrafts.Audience(audience) == null) return Results.NotFound();
-            if (await drafts.MarkdownAsync(access, audience, lang) is not { } made) return Results.NotFound();
+            if (await drafts.MarkdownAsync(access, audience, lang, Player(player)) is not { } made) return Results.NotFound();
             Protect(response);
-            return Results.File(System.Text.Encoding.UTF8.GetBytes(made.Markdown), "text/markdown; charset=utf-8", FileName(made.Title, audience, "md"));
+            return Results.File(System.Text.Encoding.UTF8.GetBytes(made.Markdown), "text/markdown; charset=utf-8", FileName(made.Title, audience, "md", made.Player));
         });
 
-        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/pdf", async (string campaignId, string audience, string lang, ClaimsPrincipal user, HttpResponse response,
-            ICampaignAccessResolver resolver, BookDrafts drafts, IWebHostEnvironment env, BookPdf pdf, ILoggerFactory logs, CancellationToken cancel) =>
+        app.MapGet("/campaigns/{campaignId}/book/{audience}/draft/{lang}/pdf", async (string campaignId, string audience, string lang, string? player, ClaimsPrincipal user,
+            HttpResponse response, ICampaignAccessResolver resolver, BookDrafts drafts, IWebHostEnvironment env, BookPdf pdf, ILoggerFactory logs, CancellationToken cancel) =>
         {
             if (await GmAsync(campaignId, user, resolver) is not { } access || BookDrafts.Audience(audience) == null) return Results.NotFound();
             // The place in the line first, as for the book: a request that would be turned away costs nothing.
@@ -98,7 +99,8 @@ public static class BookEndpoints
             try
             {
                 var fonts = Path.GetFullPath(Path.Combine(env.WebRootPath, "fonts"));
-                var (page, refused) = await drafts.PageAsync(access, audience, lang, BookArtQuality.Print, file => Font(fonts, file), cancel);
+                var (page, refused) = await drafts.PageAsync(access, audience, lang, BookArtQuality.Print, file => Font(fonts, file), cancel,
+                    player: Player(player));
                 if (refused != null) return Results.Problem(refused, statusCode: StatusCodes.Status422UnprocessableEntity);
                 if (page == null) return Results.NotFound();
                 var printed = await pdf.PrintAsync(slot, new BookPrintJob(page.Shell, [], _ => page.Shell)
@@ -114,7 +116,7 @@ public static class BookEndpoints
                 }
 
                 Protect(response);
-                return Results.File(printed.Pdf, "application/pdf", FileName(page.Title, audience));
+                return Results.File(printed.Pdf, "application/pdf", FileName(page.Title, audience, player: page.Player));
             }
             catch (BookPdfTimeoutException timeout)
             {
@@ -126,6 +128,9 @@ public static class BookEndpoints
             }
         });
     }
+
+    // An empty ?player= is no player: the party's own book. Anything else is checked by the reader (a player of the campaign now, with a character).
+    private static string? Player(string? player) => string.IsNullOrWhiteSpace(player) ? null : player;
 
     /// <summary>"7:cast,9:lore": each page that prints cut off, with its chapter when it has one.</summary>
     public static string OverflowHeader(IEnumerable<BookOverflow> overflow) =>
@@ -172,7 +177,17 @@ public static class BookEndpoints
     /// <summary>"Campaign name (dm).pdf" with nothing in it a file system, a header or a reader's eye would be fooled by: a fixed
     /// set of characters Windows and Unix both refuse, no control, format (bidi override, zero width) or separator characters, and a cut
     /// on a whole character, not in the middle of a surrogate pair. The framework encodes what remains.</summary>
-    public static string FileName(string title, string audience, string extension = "pdf")
+    /// <para>One player's own book (<paramref name="player"/>, their characters' names) is named by them in place of the edition:
+    /// "Campaign name (Mira, Tor).pdf".</para>
+    public static string FileName(string title, string audience, string extension = "pdf", string? player = null)
+    {
+        var clean = Kept(title, 80);
+        var edition = player != null && Kept(player, 60) is { Length: > 0 } who ? who
+            : audience.Equals("party", StringComparison.OrdinalIgnoreCase) ? "party" : "dm";
+        return (clean.Length == 0 ? "campaign" : clean) + " (" + edition + ")." + extension;
+    }
+
+    private static string Kept(string title, int max)
     {
         var kept = new System.Text.StringBuilder();
         foreach (var c in title)
@@ -191,14 +206,12 @@ public static class BookEndpoints
         var clean = kept.ToString().Trim();
         var elements = System.Globalization.StringInfo.GetTextElementEnumerator(clean);
         var cut = new System.Text.StringBuilder();
-        for (var count = 0; count < 80 && elements.MoveNext(); count++)
+        for (var count = 0; count < max && elements.MoveNext(); count++)
         {
             cut.Append(elements.GetTextElement());
         }
 
-        clean = cut.ToString().Trim();
-        var edition = audience.Equals("party", StringComparison.OrdinalIgnoreCase) ? "party" : "dm";
-        return (clean.Length == 0 ? "campaign" : clean) + " (" + edition + ")." + extension;
+        return cut.ToString().Trim();
     }
 
     private sealed record Made(string? Html, string Title, IResult? Failure, BookPrintJob? Job = null);

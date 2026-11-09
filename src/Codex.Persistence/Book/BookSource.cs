@@ -69,3 +69,7 @@ public sealed class BookSource
     /// <summary>Always empty in the party edition: encounters have no player-scoped read, and are the DM's.</summary>
     public IReadOnlyList<EncounterDocument> Encounters { get; }
 }
+
+/// <summary>A player who has a book of their own: their account and the names of the characters they own, which is how the GM picks them and
+/// what the book's file and notes are named by.</summary>
+public sealed record BookPlayer(string UserId, IReadOnlyList<string> Characters);

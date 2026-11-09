@@ -920,6 +920,9 @@
   <data name="Campaign.Book.Draft.Pictures.Limit" xml:space="preserve"><value>книга заполнена (не больше 120 иллюстраций и 64 МБ на все, по размеру для печати)</value></data>
   <data name="Campaign.Book.Draft.Pictures.Unreadable" xml:space="preserve"><value>файл не удалось прочитать</value></data>
   <data name="Campaign.Book.Draft.Pictures.Hint" xml:space="preserve"><value>Предпросмотр и PDF пропускают одни и те же иллюстрации. Возьмите иллюстрации поменьше или уберите часть из книги.</value></data>
+  <data name="Campaign.Book.Draft.OnlyFor" xml:space="preserve"><value>Только для: {0}</value></data>
+  <data name="Campaign.Book.Draft.ForPlayer" xml:space="preserve"><value>PDF для игрока</value></data>
+  <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>Собственный экземпляр книги группы для этого игрока: то, что знали только его персонажи, добавлено в заметках. Ничего не сохраняется.</value></data>
   <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>Скачать Markdown (.md)</value></data>
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>Все главы одним файлом Markdown — для Homebrewery или текстового редактора. Иллюстраций и таблицы стилей в нём нет.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>Это издание мастера: в нём все секреты. Не показывайте файл игрокам.</value></data>

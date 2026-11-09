@@ -920,6 +920,9 @@
   <data name="Campaign.Book.Draft.Pictures.Limit" xml:space="preserve"><value>the book is full (at most 120 pictures and 64 MB of them, counted at print size)</value></data>
   <data name="Campaign.Book.Draft.Pictures.Unreadable" xml:space="preserve"><value>the file could not be read</value></data>
   <data name="Campaign.Book.Draft.Pictures.Hint" xml:space="preserve"><value>The preview and the PDF leave out the same pictures. Use smaller pictures, or take some out of the book.</value></data>
+  <data name="Campaign.Book.Draft.OnlyFor" xml:space="preserve"><value>Only for {0}</value></data>
+  <data name="Campaign.Book.Draft.ForPlayer" xml:space="preserve"><value>PDF for a player</value></data>
+  <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>That player's own copy of the party book: what only their characters were told is added in notes. Nothing is stored.</value></data>
   <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>Download Markdown (.md)</value></data>
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>The chapters as one Markdown file, for Homebrewery or a text editor. The pictures and the stylesheet are not in it.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>This is the GM edition: it holds every secret. Keep the file away from the players.</value></data>

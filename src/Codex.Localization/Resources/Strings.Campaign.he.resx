@@ -920,6 +920,9 @@
   <data name="Campaign.Book.Draft.Pictures.Limit" xml:space="preserve"><value>הספר מלא (עד 120 תמונות ו-64MB בסך הכול, לפי גודל ההדפסה)</value></data>
   <data name="Campaign.Book.Draft.Pictures.Unreadable" xml:space="preserve"><value>לא ניתן היה לקרוא את הקובץ</value></data>
   <data name="Campaign.Book.Draft.Pictures.Hint" xml:space="preserve"><value>התצוגה המקדימה וה-PDF משמיטים את אותן התמונות. השתמשו בתמונות קטנות יותר, או הוציאו חלק מהספר.</value></data>
+  <data name="Campaign.Book.Draft.OnlyFor" xml:space="preserve"><value>רק עבור {0}</value></data>
+  <data name="Campaign.Book.Draft.ForPlayer" xml:space="preserve"><value>PDF לשחקן</value></data>
+  <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>עותק אישי של ספר החבורה לשחקן הזה: מה שנאמר רק לדמויות שלו נוסף בהערות. דבר אינו נשמר.</value></data>
   <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>הורדת Markdown (.md)</value></data>
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>כל הפרקים בקובץ Markdown אחד, ל-Homebrewery או לעורך טקסט. התמונות וגיליון הסגנונות אינם בו.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>זו מהדורת המנחה: יש בה כל הסודות. שמרו את הקובץ הרחק מהשחקנים.</value></data>

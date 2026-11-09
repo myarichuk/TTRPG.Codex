@@ -102,6 +102,9 @@ worker run from that directory, and one run against a real model (a small Anthro
    which is a trust boundary (BOOK_EXPORT 41.9); a renderer update needs `npm audit` and the hostile-draft tests. A draft entry's id is its slot key, never a raw
    id. The only script the print browser runs is the bundled renderer, in a page with every request refused; the page is then printed with
    script off.
+13. **A player's own book (section 45) holds only what that player may open.** It is read through that player's access and cleaned for their
+   characters, only for a Player member now who owns one, only from the party draft, only for the GM, and it is never stored or sent to a model;
+   its pictures are the party's. `BookPlayerBook.Overlay` adds only paragraphs of that player's compile.
 
 ## 5. What to distrust
 
@@ -140,6 +143,9 @@ For each, copy the file, apply the change, run the named tests, expect a failure
   session 2.
 - Art director (`BookArtDirectorTests.cs`): outline without `Prepare`; a slot number that was not sent accepted; visual check skipped; mood as
   free text; tag not from the source; a gate of its own; tray showing the other edition's suggestions. All seven were caught in session 2.
+- Player books (`BookPlayerBookTests.cs`): no diff in `Overlay`; no edition check in `BookDrafts.PrintedAsync`; drop the own character's
+  `RevealedToReader`; clean with no owned set; no backing over page breaks; ignore the player in `FileName`; list a player with no character; no
+  entry anchor. All eight were caught.
 Anything that survives is a missing test; add it.
 
 **C. Questions to answer by reading code, not docs**

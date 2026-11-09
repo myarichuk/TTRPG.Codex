@@ -65,7 +65,7 @@
                         <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
                     </CodexButton>
                     <div class="book-draft-more">
-                        <button type="button" class="cx-btn cx-etched cx-sm" @onclick="() => moreOpen = !moreOpen" aria-haspopup="menu" aria-expanded="@(moreOpen ? "true" : "false")"
+                        <button type="button" class="cx-btn cx-etched cx-sm" @onclick="ToggleMoreAsync" aria-haspopup="menu" aria-expanded="@(moreOpen ? "true" : "false")"
                                 title="@L["Campaign.Book.Draft.More"]" aria-label="@L["Campaign.Book.Draft.More"]" data-testid="book-draft-more"><LucideIcon IconName="more-horizontal" Size="14" /></button>
                         @if (moreOpen)
                         {
@@ -78,6 +78,20 @@
                                         title="@L["Campaign.Book.Draft.MarkdownHint"]" data-testid="book-draft-markdown">
                                     <LucideIcon IconName="file-text" Size="14" /> @L["Campaign.Book.Draft.Markdown"]
                                 </button>
+                                @if (edition == "party" && players.Count > 0)
+                                {
+                                    @* Each player's own copy (docs/BOOK_EXPORT.md 45): the party draft with what only their characters may read. *@
+                                    <div class="book-draft-menu-label" role="presentation" id="book-draft-for-label">@L["Campaign.Book.Draft.ForPlayer"]</div>
+                                    <div role="group" aria-labelledby="book-draft-for-label">
+                                        @foreach (var player in players)
+                                        {
+                                            <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="() => PlayerDownloadAsync(player)" disabled="@printing"
+                                                    title="@L["Campaign.Book.Draft.ForPlayerHint"]" data-testid="book-draft-for-player" data-player="@player.UserId">
+                                                <LucideIcon IconName="user" Size="14" /> <bdi>@string.Join(", ", player.Characters)</bdi>
+                                            </button>
+                                        }
+                                    </div>
+                                }
                                 <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="ShapeBookPrepareAsync" disabled="@(AiBusy || working)"
                                         title="@L["Campaign.Book.Draft.ShapeBook.Hint"]" data-testid="book-draft-shape-book">
                                     <LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Book.Draft.ShapeBook"]
@@ -522,7 +536,7 @@
                                 }
                             </ul>
                             <div class="small">@L["Campaign.Book.Draft.Leak.Hint"]</div>
-                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => DownloadAsync(true, leaksForMarkdown)" Disabled="@printing" data-testid="book-draft-download-anyway">
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => DownloadAsync(true, leaksForMarkdown, leaksForPlayer)" Disabled="@printing" data-testid="book-draft-download-anyway">
                                 <LucideIcon IconName="download" Size="14" /> @L["Campaign.Book.Draft.Leak.Anyway"]
                             </CodexButton>
                         </div>
@@ -676,6 +690,24 @@
     private bool confirmMarkdown;
     // Which download the party leak check stopped: Download anyway makes that one.
     private bool leaksForMarkdown;
+    private string? leaksForPlayer;
+
+    // The players who have a book of their own, read when the menu opens (a player may have joined since the editor did).
+    private IReadOnlyList<BookPlayer> players = [];
+
+    private async Task ToggleMoreAsync()
+    {
+        moreOpen = !moreOpen;
+        if (moreOpen && edition == "party") players = await Drafts.PlayersAsync(Access);
+    }
+
+    /// <summary>One player's own book as a PDF (docs/BOOK_EXPORT.md 45). The party draft is leak-checked first, as for the party's own PDF: their copy
+    /// is that draft with their notes added.</summary>
+    private async Task PlayerDownloadAsync(BookPlayer player)
+    {
+        moreOpen = false;
+        await DownloadAsync(false, player: player.UserId);
+    }
     private string? message;
     private SaveState state = SaveState.Saved;
     private readonly SemaphoreSlim saving = new(1, 1);
@@ -1215,7 +1247,7 @@
     /// <summary>Prints the draft, or with <paramref name="markdown"/> gives its Markdown. The party edition is first checked for what only the GM
     /// edition has (docs/BOOK_EXPORT.md 41.19): with a hit, nothing is made and the Problems tab lists each; <paramref name="anyway"/> (the GM
     /// read them) makes it all the same.</summary>
-    private async Task DownloadAsync(bool anyway, bool markdown = false)
+    private async Task DownloadAsync(bool anyway, bool markdown = false, string? player = null)
     {
         printing = true;
         message = null;
@@ -1228,6 +1260,7 @@
             {
                 leakReport = await Drafts.LeaksAsync(Access, language);
                 leaksForMarkdown = markdown;
+                leaksForPlayer = player;
                 if (leakReport is { Total: > 0 })
                 {
                     Reveal("problems");
@@ -1235,7 +1268,8 @@
                 }
             }
 
-            var url = Nav.ToAbsoluteUri($"{BasePath}/book/{edition}/draft/{language}/{(markdown ? "md" : "pdf")}").ToString();
+            var url = Nav.ToAbsoluteUri($"{BasePath}/book/{edition}/draft/{language}/{(markdown ? "md" : "pdf")}"
+                + (player != null ? "?player=" + Uri.EscapeDataString(player) : string.Empty)).ToString();
             var result = await JS.InvokeAsync<BookPanel.BookDownload>("codex.downloadFrom", url);
             if (result.Status != 200)
             {
