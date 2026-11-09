@@ -16,7 +16,7 @@ public sealed record BookDirectionPreview(int Slots, int Current, int Calls, Boo
 /// The art director's runs (docs/BOOK_EXPORT.md 28.3, step 5): for each chapter of an edition, a model is asked what each picture slot should show,
 /// and what passes the checks is stored as that edition's suggestion. Nothing is drawn. The model is shown only the outline of the edition
 /// (<see cref="BookArtOutline"/>) and replies under numbers local to each call; the suggestions are tagged with the edition whose source was read.
-/// A run takes the same per-GM gate as a chapter build (<see cref="BookGate"/>), reserves the server's requests up front, and is held to a cap
+/// A run takes the same per-GM gate as the draft's AI edits and drawing (<see cref="BookGate"/>), reserves the server's requests up front, and is held to a cap
 /// worked out from the estimate before anything is sent.
 /// </summary>
 public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository store, IBookModels models, Func<string, string, Task<CampaignAccess?>> resolve, BookGate gate, TimeProvider? clock = null, Microsoft.Extensions.Logging.ILogger? log = null)

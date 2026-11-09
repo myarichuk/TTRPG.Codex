@@ -34,7 +34,7 @@ public sealed record BookDrawTotals(int Pictures, decimal Cost, int Unpriced, st
 /// <see cref="BookImagePrompt.Check"/> against the edition's names. The prompt is assembled by code from the slot's kind, that visual, the
 /// suggestion's mood and the book's style. The picture is stored under the edition's tag, run through the sanitizer like an upload, and
 /// is put in use, the one it puts back kept as an earlier version (at most <see cref="BookArtDocument.MaxVersions"/>). Pictures are drawn one at a time, set aside up front on the server's key, never retried, and a run takes
-/// the same per-GM gate as chapter builds and the art director (<see cref="BookGate"/>).
+/// the same per-GM gate as the draft's AI edits and the art director (<see cref="BookGate"/>).
 /// </summary>
 public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository store, IBookImages images, Func<string, string, Task<CampaignAccess?>> resolve, BookGate gate, TimeProvider? clock = null,
     StorageQuota? quota = null)

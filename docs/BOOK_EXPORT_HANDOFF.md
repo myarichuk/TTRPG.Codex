@@ -81,8 +81,8 @@ worker run from that directory, and one run against a real model (a small Anthro
 4. **Nothing a model writes reaches the book without the GM's review.** (Was: a stored rewrite prints only while its key matches; the stored
    rewrite and `BookBuildKey` are deleted, section 50.) An AI edit or merge comes back as a proposal of changes; only what the GM accepts is saved,
    at the chapter's version, and a reply that fails `BookChecks`/`BookFacts` is never offered.
-5. **A failure never replaces a paid rewrite; money is reserved at the worst case** (`BookBudget.WorstCase`) and settled on real usage.
-6. **One paid run per GM**: chapter builds and director runs take the same `BookGate` before any await.
+5. **A failure never replaces what the GM has; money is reserved at the worst case** (`BookBudget.WorstCase`) and settled on real usage.
+6. **One paid run per GM**: AI edits, merges, director runs and drawings take the same `BookGate` before any await.
 7. **A model never sees a picture and cannot move or drop one**: an AI edit is sent the passage with pictures, markers, breaks and secrets cut out
    on the server (`BookDraftEdits.Cut`), and a reply must give back every piece once (`BookDraftEditTests`). (Was: `PlaceArt` after `Overlay`.)
 8. **The decoder is not in the server process.** Any worker failure returns "keep the picture"; the server never throws on it.
@@ -92,7 +92,7 @@ worker run from that directory, and one run against a real model (a small Anthro
    section 43) are read by nothing that builds a book, and a kept version is put in use only under its own slot and edition (`UseAsync`).
 10. **A suggestion, and anything drawn from it, carries the tag of the edition whose source was read** (`BookArtDirection` passes only
    `p.Tag`), and each tray shows only its own edition's suggestions. The director is shown only `BookArtOutline` (cut after `BookWork.Prepare`
-   of the whole chapter), under per-request numbers, never slot keys. Chapter builds and director runs share one per-GM `BookGate`.
+   of the whole chapter), under per-request numbers, never slot keys. Every paid run shares one per-GM `BookGate` (invariant 6).
 11. **Nothing is drawn but what the GM ticked, and every pick is checked again on the server** (`BookArtDrawing.PrepareAsync`). The slot
    must be the edition's own, with the edition's own current suggestion, and the description must pass the checks. The picture is sanitised,
    stored under the edition's tag, and counted once against pictures set aside up front (`IBookImages`).
@@ -147,7 +147,7 @@ For each, copy the file, apply the change, run the named tests, expect a failure
   and `BookBuilds` are deleted, 50; a length-cut reply is `BookDraftEditTests.AReplyCutOffByTheLengthLimit_...`.)
 - `BookDraftEdits.Cut`: leave a `{{secret` block in the passage (test: `BookSourceTests.DmEdition_KeepsItsSecretsOutOfTheModel_...`).
 - Book art (`BookArtTests.Slots.cs`): let a GM picture through in `BookSlots.Choose`, in the reader's tag check, or in `BookArt.Slot`; key a
-  stranger as `actor:`; skip the slot check in `BookArtService.UploadAsync`; place a header without checking the title line. All six were caught in
+  stranger as `actor:`; skip the slot check in `BookArtService.UploadAsync`. All were caught in
   session 2.
 - Art director (`BookArtDirectorTests.cs`): outline without `Prepare`; a slot number that was not sent accepted; visual check skipped; mood as
   free text; tag not from the source; a gate of its own; tray showing the other edition's suggestions. All seven were caught in session 2.

@@ -124,7 +124,7 @@ public static class BookDraftWriter
 
         for (var i = 1; i < lines.Length; i++)
         {
-            // An entry's heading is found by the line the compiler recorded when it wrote it, never by its text (BookComposer.PlaceArt).
+            // An entry's heading is found by the line the compiler recorded when it wrote it, never by its text: a body line that reads like a heading, in an earlier entry or a code fence, cannot take the entry.
             if (entries.TryGetValue(i, out var entry) && lines[i] == entry.Heading)
             {
                 Flush();

@@ -2660,7 +2660,7 @@ covers it now.
 | `BookHtmlTests.ThePageFetchesNothing`, `CustomCss*` | `BookDraftPdfTests.EveryTheme_SitsOnBlank_..._AndLoadsNothing`, `HostileMarkupInADraft_NeitherRunsNorFetches`, `BookCssTests` |
 | `BookHtmlTests.EveryFontAThemeNamesIsShipped` | `BookFontCoverageTests` (draft themes only now) |
 | `BookHtmlTests` columns, drop cap, cover, contents numbers, heading ids, paper CSS | Gone with the old page's own layout |
-| `BookAiTests` worker and runner tests | Gone with them. `ASecretIsCutOut...` and `AMention_IsGivenAsAName...` are `BookWorkTests` on `BookWork.Prepare` (the director's input); `BookChecksTests` and the concurrency theory stay |
+| `BookAiTests` worker and runner tests | Gone with them. `ASecretIsCutOut...` and `AMention_IsGivenAsAName...` are `BookWorkTests` on `BookWork.Prepare` (the director's input); `APromptInjectedIntoTheSource_...` is `BookDraftEditTests.APromptInjectedIntoTheCampaign_IsMaterial_NotAnInstruction` on the draft's edit prompt; `BookChecksTests` and the concurrency theory stay |
 | `BookBuildTests` (keys, builds, the stored DM build never in the party book, a character hidden or a chapter edited after the build) | No stored rewrite prints any more, so the store-overlay tests have nothing to hold. Secrets out of the model: the `BookSourceTests` above and `BookDraftEditTests.NoSecretReachesTheModel_...`; cost first: `BookDraftTests.TheWholeBook_IsPricedFirst_...`; one paid run per GM: `BookArtDirectorTests.OnePaidRunPerGm_...` and `BookDraftTests.AnAiEdit_IsRefusedBeforeSending_..._AnotherRunIsUnderWay_...`; a cut-off reply: `BookDraftEditTests.AReplyCutOffByTheLengthLimit_...` |
 | `BookBuildTests` store tests (only the GM, deleted with the campaign, not in export or backup) | `BookSpendTests` |
 | `BookPdfTests.APlainBookPrintsToAPdf...` | `BookDraftPdfTests.ThePlainTheme_PrintsInItsOwnFacesOnly_AtTheBooksPaperSize` |
@@ -2675,7 +2675,9 @@ covers it now.
 
 **Mutation checks (by hand, from backup copies; handoff 6B items that still apply):** `BookSlots.Choose` taking a GM picture for the party, `BookArt.Slot`
 ignoring the audience, the draft writer finding a heading by its text, `BookCompiler.PageLinks` printing a GM-only page's title, `BookDraftEdits.Cut`
-leaving a `{{secret` block or a `<div class="secret">` in the passage, `BookWork.Prepare` printing a hidden mention's label: all caught.
+leaving a `{{secret` block or a `<div class="secret">` in the passage, `BookWork.Prepare` printing a hidden mention's label, the reader's tag
+check letting a GM picture into a party source, a stranger keyed `actor:` instead of `mask:`, and the art director taking a gate of its own (against the
+rewritten `OnePaidRunPerGm_...`): all caught.
 `BookCompiler.ArtAnchors` without its picture-flag check **survived** the ported tests (the page never names an unflagged entry's picture, but the map
 sent to the browser did); `ArtReadForTheDm_...` now also checks the map, and catches it.
 
@@ -2683,7 +2685,7 @@ sent to the browser did); `ArtReadForTheDm_...` now also checks the map, and cat
 direction from the book's language rather than the page's. Both now follow the page (`BookPage.PageRtl`, the app's language): on a Hebrew page Left
 goes to the tab drawn on the left, and an English book in the Hebrew app no longer turns the splitter round.
 
-**Result:** book and localization tests 750 passed (the count fell from 838 with the old route's tests); editor tests pass; the site builds.
+**Result (on the final commit):** book and localization tests 751 passed (the count fell from 838 with the old route's tests); editor tests pass; the site builds.
 Looked at by hand in Chromium, English and Hebrew: Settings has only the link, the Book page and its dock, the dock tabs and splitter by keyboard
 in Hebrew, and the old PDF address serves no book.
 
