@@ -17,7 +17,9 @@ src = Path(sys.argv[1])
 out = Path(sys.argv[2]) if len(sys.argv) > 2 else Path(__file__).resolve().parent.parent / "src" / "assets" / "shots"
 
 total_in = total_out = 0
-manifest = {}
+manifest_file = out / "manifest.json"
+# Keep the sizes of shots this run does not touch, so a partial capture (for example --book-only) does not drop the rest.
+manifest = json.loads(manifest_file.read_text()) if manifest_file.exists() else {}
 for png in sorted(src.glob("*/*.png")):
     lang = png.parent.name
     dest = out / lang / (png.stem + ".webp")
@@ -31,7 +33,7 @@ for png in sorted(src.glob("*/*.png")):
 
 print(f"total {total_in // 1024} KB -> {total_out // 1024} KB")
 
-(out / "manifest.json").write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
+manifest_file.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
 
 og_source = src / "en" / "table.png"
 if og_source.exists():

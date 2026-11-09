@@ -23,6 +23,9 @@ const BASE = args.base ?? 'http://127.0.0.1:5199';
 const OUT = resolve(args.out ?? join(here, '..', '.capture'));
 const LANGS = (args.langs ?? 'en,ru,he').split(',');
 const PASSWORD = 'Correct-Horse-1';
+const PY = args.python ?? 'python3'; // needs Pillow (and poppler's pdftoppm for the printed-pages shot)
+// --book-only: set the demo campaign up and take only the book's screens (the rest are unchanged, so rerunning them is wasted time).
+const BOOK_ONLY = 'book-only' in args || process.argv.includes('--book-only');
 
 const KIND = { pc: 0, npc: 1, monster: 2 };
 const VIS = { Hidden: 0, Unknown: 1, Known: 2 };
@@ -72,7 +75,7 @@ async function captureLanguage(browser, lang) {
 
   // 1100 px wide: shown at about 650 px on the page, so the app's own text stays readable.
   const desktop = { width: 1100, height: 820 };
-  const dmCtx = await browser.newContext({ baseURL: BASE, viewport: desktop, locale: lang, deviceScaleFactor: 1 });
+  const dmCtx = await browser.newContext({ baseURL: BASE, viewport: desktop, locale: lang, colorScheme: 'dark', deviceScaleFactor: 1 });
   const dm = await dmCtx.newPage();
   // Leaving an editor with unsaved text asks first; the script always means to leave.
   dm.on('dialog', (dialog) => dialog.accept());
@@ -125,7 +128,7 @@ async function captureLanguage(browser, lang) {
   const invite = await dm.getByTestId('invite-link').inputValue();
   const playerPages = [];
   for (let i = 0; i < d.players.length; i++) {
-    const ctx = await browser.newContext({ baseURL: BASE, viewport: desktop, locale: lang });
+    const ctx = await browser.newContext({ baseURL: BASE, viewport: desktop, locale: lang, colorScheme: 'dark' });
     const page = await ctx.newPage();
     await setCulture(page, d.tag, '/login');
     await login(page, names.players[i]);
@@ -140,6 +143,7 @@ async function captureLanguage(browser, lang) {
   await dm.getByTestId('setup-checklist').waitFor();
   await shoot(dm, lang, 'setup');
 
+  const goTop = (page) => page.evaluate(() => window.scrollTo(0, 0));
   const section = async (page, s) => { await page.goto(`/campaigns/${campaignId}/${s}`); await interactive(page); };
 
   // ---- world: places, wiki, lore, a session ----
@@ -206,6 +210,7 @@ async function captureLanguage(browser, lang) {
   await dm.getByRole('button', { name: ui['Session.SaveRecap'] }).first().click();
   await settle(dm, 900);
 
+  if (!BOOK_ONLY) {
   // ---- live table ----
   await section(dm, 'table');
   await dm.getByTestId('start-table').click();
@@ -232,7 +237,6 @@ async function captureLanguage(browser, lang) {
   await dm.locator(`[data-testid='participant-row'][data-actor-id='bram-${run}']`).getByTestId('select-participant').click().catch(() => {});
   await dm.evaluate(() => window.scrollTo(0, 0));
 
-  const goTop = (page) => page.evaluate(() => window.scrollTo(0, 0));
 
   // ---- DM desktop shots ----
   await dm.setViewportSize({ width: 1100, height: 900 });
@@ -302,10 +306,15 @@ async function captureLanguage(browser, lang) {
   await visit('settings', 'settings');
   await visit('ai-settings', '/settings/ai');
 
-  // ---- the book (English only: its themes print English) ----
-  if (lang === 'en') {
+  }
+
+  // ---- the book: print panel, pictures, the editor ----
+  // Nothing here asks a model or draws a picture, and no key is ever entered: the AI and picture screens are shown as they
+  // are before a run (the "set up a model" notes and the choices), and the editor's Ask AI bar is only ever in view, never used.
+  {
+    await dm.evaluate(() => localStorage.removeItem('codex-theme')); // the app is dark unless the reader chose otherwise
     const art = `${OUT}-art`;
-    execFileSync('python3', [join(here, 'demo-art.py'), art], { stdio: 'inherit' });
+    execFileSync(PY, [join(here, 'demo-art.py'), art], { stdio: 'inherit' });
     const upload = async (path, file) => {
       await dm.goto(path); await interactive(dm);
       await dm.locator('input[type=file]').first().setInputFiles(join(art, file));
@@ -316,35 +325,110 @@ async function captureLanguage(browser, lang) {
     await upload(`/campaigns/${campaignId}/actors/npc0-${run}`, 'odessa.png');
     await upload(`/campaigns/${campaignId}/actors/npc1-${run}`, 'bell-ringer.png');
 
-    // The panel in Settings, with the preview open on the party edition in the Parchment theme.
-    await dm.setViewportSize({ width: 1100, height: 1150 });
-    await dm.goto(`/campaigns/${campaignId}/settings`); await interactive(dm);
-    const panel = dm.getByTestId('book-panel');
-    await dm.getByTestId('book-edition').selectOption({ index: 1 });
+    const openBook = async (height = 1150) => {
+      await dm.setViewportSize({ width: 1100, height });
+      await dm.goto(`/campaigns/${campaignId}/settings`); await interactive(dm);
+      await dm.getByTestId('book-edition').selectOption('party');
+      await settle(dm, 400);
+      console.log('  theme', await dm.evaluate(() => [document.documentElement.dataset.theme, localStorage.getItem('codex-theme')]).catch(() => '?'));
+    };
+    const panelTop = async () => {
+      // The panel's top just under the page header, like every other screen shot.
+      await dm.getByTestId('book-panel').evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
+      await dm.evaluate(() => window.scrollBy({ top: -78, behavior: 'instant' }));
+    };
+
+    // Print tab: the party edition in the Parchment look with the preview open.
+    await openBook();
     await dm.getByTestId('book-theme').selectOption('parchment');
     await settle(dm, 500);
     await dm.getByTestId('book-preview-toggle').click();
     await dm.getByTestId('book-preview').waitFor();
     await settle(dm, 2500);
-    // The panel's top just under the page header, like every other screen shot: the controls and the start of the preview.
-    await panel.evaluate((el) => el.scrollIntoView({ block: 'start' }));
-    await dm.evaluate(() => window.scrollBy(0, -78));
+    await panelTop();
     await shoot(dm, lang, 'book-panel');
-    await dm.setViewportSize({ width: 1100, height: 820 });
 
     // The printed party book, taken from the real route, and some of its pages laid side by side.
-    const pdfRes = await dmCtx.request.get(`${BASE}/campaigns/${campaignId}/book/party/pdf?lang=en&size=A4&cols=2&pics=1&theme=parchment`, { timeout: 120_000 });
+    const pdfRes = await dmCtx.request.get(`${BASE}/campaigns/${campaignId}/book/party/pdf?lang=${lang}&size=A4&cols=2&pics=1&theme=parchment`, { timeout: 120_000 });
     if (!pdfRes.ok()) throw new Error(`book pdf: ${pdfRes.status()}`);
-    const pdfFile = join(`${OUT}-art`, 'party.pdf');
+    const pdfFile = join(`${OUT}-art`, `party-${lang}.pdf`);
     await writeFile(pdfFile, await pdfRes.body());
-    for (const [name, pages] of Object.entries({ 'book-pages': [1, 4, 6] })) {
-      execFileSync('python3', [join(here, 'book-pages.py'), pdfFile, join(OUT, lang, `${name}.png`), ...pages.map(String)], { stdio: 'inherit' });
+    try { execFileSync(PY, [join(here, 'book-pages.py'), pdfFile, join(OUT, lang, 'book-pages.png'), '1', '4', '6'], { stdio: 'inherit' }); } catch { console.warn('  book-pages skipped (needs poppler pdftoppm)'); }
+
+    // Pictures tab: the tray with its slots, the art director's choices and the drawing choices, before any run.
+    await openBook(1500);
+    await dm.getByTestId('book-tab-art').click();
+    // The tray opens by itself the first time its tab is shown; open it by hand only if it did not.
+    if (!(await dm.getByTestId('book-art-director').waitFor({ timeout: 5000 }).then(() => true, () => false))) await dm.getByTestId('book-art-toggle').click();
+    await dm.getByTestId('book-art-director').waitFor();
+    await settle(dm, 1500);
+    await panelTop();
+    await shoot(dm, lang, 'book-art');
+
+    // The editor, party edition.
+    await openBook(900);
+    await dm.getByTestId('book-tab-draft').click();
+    await dm.getByTestId('book-draft-open').click();
+    const dialog = dm.getByTestId('book-draft-dialog');
+    await dialog.waitFor();
+    await dm.getByTestId('book-draft-preview').waitFor();
+    await settle(dm, 3000);
+    const sections = await dm.getByTestId('book-draft-chapter').evaluateAll((els) => els.map((e) => e.getAttribute('data-section')));
+    console.log('  chapters', sections.join(','));
+    const chapter = (name) => dm.locator(`[data-testid=book-draft-chapter][data-section="${name}"]`);
+    const type = async (text) => {
+      await dm.locator('[data-testid=book-draft-code] .cm-content').click();
+      await dm.keyboard.press('ControlOrMeta+End');
+      await dm.keyboard.type(text);
+      await settle(dm, 1800);
+    };
+    await chapter(sections.find((x) => /cast/i.test(x)) ?? sections[1]).click();
+    await settle(dm, 2000);
+    await shoot(dm, lang, 'book-editor');
+
+    // The leak check: a hidden character's name typed into the party's Cast, then Download. Nothing is printed while hits are listed.
+    await type(`\n\n${d.npcs[2].name}`);
+    await dm.getByTestId('book-draft-download').click();
+    await dm.getByTestId('book-draft-leaks').waitFor({ timeout: 30_000 }).catch(async (e) => { await dm.screenshot({ path: join(OUT, 'debug-leak.png') }); throw e; });
+    await settle(dm, 800);
+    await shoot(dm, lang, 'book-leak');
+
+    // A stale chapter: the GM edited the Pages chapter, then the campaign gained a page.
+    const pagesChapter = sections.find((x) => /pages/i.test(x));
+    if (pagesChapter) {
+      await chapter(pagesChapter).click();
+      await settle(dm, 1500);
+      await type(`\n\n${d.bookNote}`);
+      await dm.getByTestId('book-draft-close').click();
+      await settle(dm, 800);
+      const p = d.newPage;
+      await dm.goto(`/campaigns/${campaignId}/wiki/new?title=${encodeURIComponent(p.title)}`);
+      await interactive(dm);
+      await dm.getByTestId('wiki-kind-select').selectOption(p.kind);
+      await dm.getByTestId('wiki-body').fill(p.body);
+      await dm.getByTestId('wiki-body').press('Tab');
+      await settle(dm, 300);
+      await dm.getByTestId('wiki-visibility').selectOption('Party');
+      await dm.getByTestId('wiki-save').click();
+      await dm.getByTestId('wiki-page').waitFor();
+      await settle(dm, 600);
+      await openBook(900);
+      await dm.getByTestId('book-tab-draft').click();
+      await dm.getByTestId('book-draft-open').click();
+      await dialog.waitFor();
+      await settle(dm, 2500);
+      await chapter(pagesChapter).click();
+      await dm.getByTestId('book-draft-stale').waitFor({ timeout: 30_000 });
+      await settle(dm, 1500);
+      await shoot(dm, lang, 'book-stale');
     }
+    await dm.setViewportSize({ width: 1100, height: 820 });
   }
 
+  if (!BOOK_ONLY) {
   // ---- what a player sees, on a phone ----
   const phone = await browser.newContext({
-    baseURL: BASE, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: lang,
+    baseURL: BASE, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: lang, colorScheme: 'dark',
   });
   const pp = await phone.newPage();
   await setCulture(pp, d.tag, '/login');
@@ -356,11 +440,13 @@ async function captureLanguage(browser, lang) {
   await shoot(pp, lang, 'phone-sheet');
   await phone.close();
 
+  }
+
   for (const { ctx } of playerPages) await ctx.close();
   await dmCtx.close();
 }
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(args.chrome ? { executablePath: args.chrome } : {});
 try {
   for (const lang of LANGS) await captureLanguage(browser, lang);
 } finally {
