@@ -250,6 +250,9 @@ public class SheetModelTests
                 modifiers:
                   - { target: '@heavy', amount: -1, source: Armor }
                   - { target: skills.lore, amount: 1, source: Library }
+                values:
+                  - { key: byIndex, formula: "skills['cli' + 'mb'].value + skills[which].points" }
+                  - { key: which, input: true, default: climb }
             """,
             new Dictionary<string, object>
             {
@@ -264,6 +267,8 @@ public class SheetModelTests
         Assert.Equal(6d, ValueOf(result, "skills.climb"));
         Assert.Equal(-1d, ValueOf(result, "skills.sneak"));
         Assert.Equal(3d, ValueOf(result, "skills.lore.history"));
+        // An entry by a key worked out in the formula (a roll's skills[input.skill]).
+        Assert.Equal(11d, ValueOf(result, "byIndex"));
         var problem = Assert.Single(result.Violations);
         Assert.Equal(("skills", "Too.Many", "Climb: at most 4 (5)."), (problem.FieldKey, problem.Key, problem.Message));
     }
@@ -296,6 +301,7 @@ public class SheetModelTests
     [InlineData("first(gear).name.Replace('a', 'aa') == 'x' ? 1 : 0")]
     [InlineData("first(gear).name.PadLeft(1000000000) == 'x' ? 1 : 0")]
     [InlineData("str.CompareTo(1)")]
+    [InlineData("first(gear)['name'].Replace('a', 'aa') == 'x' ? 1 : 0")]
     public void AFormula_CannotCallMethodsOnWhatItHolds(string formula)
     {
         var result = Evaluate($$"""

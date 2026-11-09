@@ -1,6 +1,8 @@
 @* One resolved roll: what it was for, each die as a face (dropped dice struck through), the modifier,
-   and the total in display type. A natural 20 or 1 on the roll's one d20 check die is marked in words as well as colour.
-   Rolls without a die breakdown (older entries, death saves, hit dice) show their text instead. *@
+   and the total in display type. A roll made from a system's roll definition shows its named outcome, and is marked
+   critical or fumble from that outcome, never from the dice. Otherwise a natural 20 or 1 on the roll's one d20 check die is
+   marked in words as well as colour. Rolls without a die breakdown (older entries, death saves, hit dice) show their text
+   instead. *@
 
 <div class="@Css" data-testid="dice-result">
     <div class="dice-head">
@@ -9,6 +11,10 @@
             <strong class="dice-label">@Label</strong>
         }
         <span class="dice-expr small-muted"><bdi>@Expression</bdi></span>
+        @if (!string.IsNullOrEmpty(Outcome))
+        {
+            <span class="pill @OutcomeClass" data-testid="dice-outcome" aria-label="@L["Actor.Dice.Outcome", Outcome]">@Outcome</span>
+        }
         @if (Secret)
         {
             <span class="pill">@L["Actor.Dice.Secret"]</span>
@@ -64,8 +70,22 @@
     private static readonly System.Text.RegularExpressions.Regex PlainD20 = new(@"^\s*(?:1?d20(?!\d)|adv|dis)(?:\s*[+-]\s*\d+)*\s*$",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-    // Only the d20 a check is read from gets crit/fumble marking; other dice have no such meaning.
-    private int? CheckDie => CheckDieIndex ?? (Kept.Count == 1 && PlainD20.IsMatch(Expression) ? 0 : null);
+    /// <summary>The roll definition's named outcome (<c>partial</c>, <c>critical</c>); null for a roll typed as an expression.</summary>
+    [Parameter] public string? Outcome { get; set; }
+
+    /// <summary>How the outcome is marked: <c>critical</c>, <c>fumble</c> or null.</summary>
+    [Parameter] public string? Mark { get; set; }
+
+    private string OutcomeClass => Mark switch
+    {
+        "critical" => "dice-outcome die-crit",
+        "fumble" => "dice-outcome die-fumble",
+        _ => "dice-outcome"
+    };
+
+    // Only the d20 a check is read from gets crit/fumble marking; other dice have no such meaning. A roll with an outcome is
+    // marked by the outcome instead: on a d6 pool, or a d20 whose natural 20 the system says is no critical, a face means nothing.
+    private int? CheckDie => Outcome != null ? null : CheckDieIndex ?? (Kept.Count == 1 && PlainD20.IsMatch(Expression) ? 0 : null);
     private bool IsCrit(int index) => index == CheckDie && Kept[index] == 20;
     private bool IsFumble(int index) => index == CheckDie && Kept[index] == 1;
     private string FaceClass(int index) => IsCrit(index) ? "die die-crit" : IsFumble(index) ? "die die-fumble" : "die";

@@ -432,6 +432,33 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      table command.
 4. **Rolls.** Roll definitions, the grammar extensions (pools, explode/implode, roll-under, success counting), outcomes
    and inputs. `DiceResult` reads the outcome. Add `IDiceSource`.
+   - *Done 2026-11-09.* `Codex.Core.Rules.SheetRolls` makes the system's `rolls` against a sheet:
+     - inputs, each recorded with who supplied it;
+     - dice or pools with zero-dice rules and keep;
+     - explode and implode per die;
+     - adds;
+     - outcomes, with roll-under as a `when` like any other;
+     - follow-up rolls that can replace their parent's outcome (3.5's confirmation);
+     - intents with amounts worked out at the roll;
+     - group rolls.
+
+     Faces come from `IDiceSource`: `RandomDiceSource`, and `SequenceDiceSource` for tests and fixtures.
+     `StandardDiceRoller` takes one too. Its grammar gains exploding dice (`3d6!`) and success counting (`5d10>=8`).
+     `SheetIntents.Apply` applies `adjust` and `set` to a track within its bounds, so a roll's cost can be checked. Overflow
+     and the rest stay step 5's.
+
+     `DiceResult` and `RollLogEntry` carry the outcome and its mark (`critical`, `fumble`). The display marks from the
+     mark, and never from a d20 face when there is an outcome. Nothing in the app makes a definition roll yet: the layout's
+     `roll` widget is step 6.
+
+     Formulas gained what the fixtures' rolls read:
+     - entries by a computed key (`skills[input.skill]`); the sandbox allows index reads, which are getters;
+     - die faces that compare as numbers (`d => d == 6`);
+     - `score(key)` falling back to a value.
+
+     The loader warns about malformed roll definitions. 58 of 95 pass: every step-4 expectation but
+     `street.a-serious-wound-takes-two-from-every-check`, which needs street's `HP_Max` threshold (step 8). Its step tag is
+     early, like the step-3 threshold ones.
 5. **Events → intents.** Re-express damage, death saves, concentration and rests in `TableRules` as built-in handlers.
 6. **Layout and sheet kinds.** `ActorSheet` renders from layout; the 5e panels become built-in widgets. Blades' crew as a
    second sheet kind. This is the largest UI step.

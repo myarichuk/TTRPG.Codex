@@ -2,6 +2,7 @@ using System.Globalization;
 using Codex.Core;
 using Codex.Core.Rules;
 using Codex.Plugin.Abstractions;
+using Codex.Plugin.Abstractions.Dice;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Codex.Tests.Reference;
@@ -44,11 +45,20 @@ public interface IReferenceSystem
     CheckOr<IReadOnlyList<(string Field, string Key)>> Violations(Dictionary<string, object> sheet);
 
     CheckOr<IReadOnlyList<string>> Conditions(Dictionary<string, object> sheet);
+
+    /// <summary>Makes a roll on the sheet with the spec's faces, and applies what it asks of the roller's sheet. For a group
+    /// roll, <paramref name="participants"/> are the sheets joining it, by spec sheet id.</summary>
+    CheckOr<RollCheck> Roll(Dictionary<string, object> sheet, string? sheetId, SpecRoll roll, IReadOnlyDictionary<string, Dictionary<string, object>> participants);
+
     string? CannotRoll { get; }
     string? CannotRaiseEvents { get; }
     string? CannotLayOut { get; }
     string? HasNoCampaignObjects { get; }
 }
+
+/// <summary>What a roll came to, as a spec reads it: <see cref="After"/> is the roller's sheet once the roll's intents were applied.</summary>
+public sealed record RollCheck(string? Outcome, IReadOnlyList<double> Totals, IReadOnlyList<int> Kept, int DiceUsed,
+    IReadOnlyDictionary<string, object?> Carries, Dictionary<string, object> After);
 
 /// <summary>A result, or why the host cannot produce one.</summary>
 public readonly record struct CheckOr<T>(T? Value, string? Unsupported)
@@ -103,13 +113,74 @@ public static class ReferenceRunner
         if (expect.Layout != null && system.CannotLayOut is { } noLayout) return Result(CheckStatus.Unsupported, noLayout);
         if ((expectation.With?.Campaign != null || expect.After?.Campaign != null || (expectation.Sheet == null && expectation.Event != null))
             && system.HasNoCampaignObjects is { } noCampaign) return Result(CheckStatus.Unsupported, noCampaign);
-        if (expectation.Roll != null || expectation.Event != null || expect.Layout != null)
+        if (expectation.Event != null || expect.Layout != null)
         {
-            return Result(CheckStatus.Unsupported, "this runner checks rolls, events and layout once a host can do them; extend ReferenceRunner.Check");
+            return Result(CheckStatus.Unsupported, "this runner checks events and layout once a host can do them; extend ReferenceRunner.Check");
         }
 
         var sheet = SpecSheets.Compose(spec, expectation);
         var problems = new List<string>();
+
+        if (expectation.Roll is { } roll)
+        {
+            var participants = (roll.Participants?.Keys ?? Enumerable.Empty<string>())
+                .ToDictionary(id => id, id => SpecSheets.Compose(spec, new SpecExpectation { Sheet = id }), StringComparer.Ordinal);
+            var rolled = system.Roll(sheet, expectation.Sheet, roll, participants);
+            if (rolled.Unsupported is { } why) return Result(CheckStatus.Unsupported, why);
+            var made = rolled.Value!;
+            if (expect.Outcome != null && expect.Outcome != made.Outcome) problems.Add($"outcome: {made.Outcome ?? "none"}, expected {expect.Outcome}");
+            if (expect.Total is { } total && (made.Totals.Count == 0 || Math.Abs(made.Totals[0] - total) > 1e-9))
+            {
+                problems.Add($"total: {(made.Totals.Count == 0 ? "none" : Show(made.Totals[0]))}, expected {Show(total)}");
+            }
+
+            if (expect.Totals != null && !expect.Totals.SequenceEqual(made.Totals))
+            {
+                problems.Add($"totals: [{string.Join(", ", made.Totals.Select(Show))}], expected [{string.Join(", ", expect.Totals.Select(Show))}]");
+            }
+
+            if (expect.Kept != null && !expect.Kept.SequenceEqual(made.Kept)) problems.Add($"kept: [{string.Join(", ", made.Kept)}], expected [{string.Join(", ", expect.Kept)}]");
+            if (expect.DiceUsed is { } used && used != made.DiceUsed) problems.Add($"dice used: {made.DiceUsed}, expected {used}");
+            foreach (var (key, wanted) in expect.Carries ?? new Dictionary<string, object>())
+            {
+                var carried = made.Carries.GetValueOrDefault(key);
+                if (!string.Equals(carried?.ToString(), wanted?.ToString(), StringComparison.Ordinal)) problems.Add($"carries {key}: {carried ?? "nothing"}, expected {wanted}");
+            }
+
+            sheet = made.After;
+        }
+
+        if (expect.After is { } after)
+        {
+            if (expectation.Roll == null) return Result(CheckStatus.Unsupported, "state after an event needs events (step 5)");
+            foreach (var (key, wanted) in YamlValues.NormalizeMap(after.Tracks))
+            {
+                var actual = YamlValues.Normalize(sheet.GetValueOrDefault(key));
+                if (!Same(actual, wanted)) problems.Add($"after, {key}: {Describe(actual)}, expected {Describe(wanted)}");
+            }
+
+            if (after.Values != null)
+            {
+                var values = system.Values(sheet);
+                if (values.Unsupported is { } why) return Result(CheckStatus.Unsupported, why);
+                foreach (var (key, wanted) in after.Values)
+                {
+                    if (!values.Value!.TryGetValue(key, out var actual) || Math.Abs(actual - wanted) > 1e-9) problems.Add($"after, {key}: {(values.Value.ContainsKey(key) ? Show(actual) : "no value")}, expected {Show(wanted)}");
+                }
+            }
+
+            if (after.Conditions != null)
+            {
+                var found = system.Conditions(sheet);
+                if (found.Unsupported is { } why) return Result(CheckStatus.Unsupported, why);
+                if (!after.Conditions.Order(StringComparer.Ordinal).SequenceEqual(found.Value!.Order(StringComparer.Ordinal)))
+                {
+                    problems.Add($"after, conditions: [{string.Join(", ", found.Value!)}], expected [{string.Join(", ", after.Conditions)}]");
+                }
+            }
+
+            if (after.Campaign != null) return Result(CheckStatus.Unsupported, "there are no clocks or campaign tables (step 7)");
+        }
 
         if (expect.Values != null)
         {
@@ -147,6 +218,19 @@ public static class ReferenceRunner
     }
 
     private static string Show(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+
+    /// <summary>Numbers by value (a long and a double of the same number are the same), the rest by their YAML shape.</summary>
+    private static bool Same(object? actual, object? wanted) =>
+        YamlValues.ToNumber(actual) is { } a && YamlValues.ToNumber(wanted) is { } w ? Math.Abs(a - w) < 1e-9 : Describe(actual) == Describe(wanted);
+
+    private static string Describe(object? value) => value switch
+    {
+        null => "nothing",
+        IDictionary<string, object> map => "{" + string.Join(", ", map.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key}: {Describe(p.Value)}")) + "}",
+        System.Collections.IEnumerable list and not string => "[" + string.Join(", ", list.Cast<object?>().Select(Describe)) + "]",
+        double or long or int => Show(Convert.ToDouble(value, CultureInfo.InvariantCulture)),
+        _ => value.ToString() ?? ""
+    };
 }
 
 /// <summary>
@@ -175,7 +259,7 @@ public sealed class CurrentEngineHost : IReferenceHost
     {
         public string Id => definition.Id;
 
-        public string? CannotRoll => "the dice parser rolls expressions; there are no roll definitions with inputs and outcomes (step 4)";
+        public string? CannotRoll => null;
         public string? CannotRaiseEvents => "the table hard-codes damage, death saves and rests; there are no event handlers (step 5)";
         public string? CannotLayOut => "the sheet page composes fixed panels; there is no layout (step 6)";
         public string? HasNoCampaignObjects => "there are no clocks or campaign tables (step 7)";
@@ -203,6 +287,33 @@ public sealed class CurrentEngineHost : IReferenceHost
             return evaluation.Model is { } model
                 ? CheckOr<IReadOnlyList<string>>.Of(model.Conditions)
                 : CheckOr<IReadOnlyList<string>>.No("conditions come only from the combat console: the system has no sheet kinds, so no tracks with thresholds or bands (step 3)");
+        }
+
+        public CheckOr<RollCheck> Roll(Dictionary<string, object> sheet, string? sheetId, SpecRoll roll, IReadOnlyDictionary<string, Dictionary<string, object>> participants)
+        {
+            var dice = new SequenceDiceSource(roll.Dice);
+            var joining = participants.Select(p => (p.Key, p.Value, Source: new SequenceDiceSource(roll.Participants![p.Key]))).ToList();
+            var request = new SheetRollRequest
+            {
+                Definition = roll.Definition,
+                Inputs = YamlValues.NormalizeMap(roll.Inputs).ToDictionary(i => i.Key, i => (object?)i.Value, StringComparer.Ordinal),
+                Participants = joining.Select(p => new RollParticipant(p.Key, p.Value, p.Source)).ToList()
+            };
+
+            SheetRollResult result;
+            try
+            {
+                result = SheetRolls.Roll(definition, this, sheet, request, dice);
+            }
+            catch (Exception ex) when (ex is RollException or InvalidOperationException)
+            {
+                return CheckOr<RollCheck>.Of(new RollCheck($"(the roll failed: {ex.Message})", Array.Empty<double>(), Array.Empty<int>(), dice.Used, new Dictionary<string, object?>(), sheet));
+            }
+
+            // Only what the roll asks of the roller's own sheet; the others' sheets are not the expectation's.
+            var after = new Dictionary<string, object>(sheet);
+            SheetIntents.Apply(definition, this, after, result.AllIntents().Where(i => i.Actor == null || i.Actor == sheetId));
+            return CheckOr<RollCheck>.Of(new RollCheck(result.Outcome, result.Totals().ToList(), result.Kept, dice.Used + joining.Sum(p => p.Source.Used), result.Carries, after));
         }
 
         private (Dictionary<string, object> Sheet, SheetEvaluation Evaluation) Evaluate(Dictionary<string, object> input)

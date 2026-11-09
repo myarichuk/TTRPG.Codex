@@ -13,10 +13,11 @@ Each folder has a `system.yaml` in the **proposed** syntax, a pack with just eno
 expectations (`street/` also has `rules.js`, its scripted rules). The words and numbers are this project's own; no
 published text is copied (overhaul section 8 records the licences).
 
-This version reads part of each `system.yaml`: attributes, entity types and condition names, and since step 2
+This version reads part of each `system.yaml`: attributes, entity types and condition names; since step 2
 `modifierTypes`, `progressions`, `functions` (formulas), `conditionEffects` and, in each sheet kind, `values`, `modifiers`,
-`lists` and `keyedLists` (`Codex.Core.Rules.SheetModel`). The loader names the rest (tracks, layout, rolls, events, the
-campaign) as keys it does not read, and `ReferenceFixtureTests` prints them. Each step of the overhaul makes more of it read.
+`lists` and `keyedLists` (`Codex.Core.Rules.SheetModel`); since step 3 `tracks`; since step 4 `rolls`
+(`Codex.Core.Rules.SheetRolls`). The loader names the rest (layout, events, the campaign, and the parts of tracks that act
+when a track changes) as keys it does not read, and `ReferenceFixtureTests` prints them. Each step of the overhaul makes more of it read.
 
 ## How progress is tracked
 
@@ -30,7 +31,7 @@ campaign) as keys it does not read, and `ReferenceFixtureTests` prints them. Eac
 - An expectation that only says what must *not* happen ("no problems", "no conditions") passes on a host that checks
   nothing. So it names, in `requires`, the expectations that show the check exists, and counts only alongside them.
 
-At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33.
+At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58.
 
 ## spec.yaml
 
@@ -98,7 +99,7 @@ How they behave, as step 2 built them:
   `list.key` and each `'@group'`.
 - The interpreter knows no .NET types: no `new`, no `typeof`, no static members, no reflection. Every parsed formula is
   also checked (`FormulaSandbox`): it may call the built-in functions and nothing else, so no `.Replace(...)`,
-  `.PadLeft(...)` or `.Length` on what it holds, and read members only of its own items and lists. A formula longer than
+  `.PadLeft(...)` or `.Length` on what it holds, and read members (and entries by key) only of its own items and lists. A formula longer than
   2000 characters, or nested more than 32 brackets deep, is refused before parsing. All of it is tested in
   `SheetModelTests`.
 - Inside a string, a backslash escapes the next quote: `'it\'s'`, `"say \"hi\""`.
@@ -118,6 +119,38 @@ Tracks, as step 3 built them:
 - Slots in `levels` bring the condition of each level that has something in it.
 - `overflow`, `whenFull: pushUp` and `beyond` act when a track changes, which is events' work (step 5); the loader still
   names them as not read.
+
+Rolls, as step 4 built them:
+- Inputs: each declared input is what the request supplied, else for `from: parent` the parent roll's, for `from: weapon`
+  the `property` of the item the `weapon` input names (a pick on the sheet, else the library's entry), else its `default`.
+  One with none of these fails the roll naming it, as does a value not among its `options`. Inputs the definition does not
+  declare pass through. The result records each input's value and who supplied it (`roller`, `gm`, `weapon`, `parent`,
+  `default`, or whatever the caller names).
+- Formulas read the sheet, every input by its key (`target`) and as `input.key`; then `natural` (the first die as rolled),
+  `kept` (the kept dice added up), `dice` (every face, explosions included) and `zeroDice`; then `total` for the outcomes;
+  then `outcome` and, for a group roll, `results` (each participant's `actor`, `outcome`, `total`). Modifiers whose `when`
+  reads `input.` hold or not by the roll's inputs. A formula that fails fails the roll, naming the formula.
+- `dice` is one group of dice (`1d20`, `4d6kh3`) with an optional number. A `pool` of fewer than one die rolls `zeroDice`
+  instead, or fails without it; more than 100 fails. `keep` keeps the highest or lowest N by value.
+- `explode` and `implode` act per die: a die showing `on` adds (or takes away) another die, which explodes (or implodes)
+  again while it shows `on`, up to `times` (100 at most). An imploding die's dice never explode, nor the reverse. A die's
+  value is its face plus what it exploded into, less what it imploded by.
+- Outcomes: the first whose `when` holds; one without `when` always does. `mark: critical` or `fumble` is how the dice
+  display marks it; unset, an outcome named `critical` or `fumble` is marked so. The display marks from this, never from a
+  face.
+- `then`: each line whose `when` holds (reading `outcome`) makes its `roll` (which sees the parent's inputs) and adds its
+  `intents`. A follow-up whose outcome has `replacesParent` becomes the parent's outcome. Rolls leading to rolls stop at 8
+  deep. `totals` lists the roll's total, then each follow-up's.
+- A group roll has `participants: { roll }` instead of dice: each participant makes that roll with the group's inputs and
+  their own dice, and `result: best` (or `worst`) is the participant outcome earliest (or latest) in that roll's outcomes.
+- Intents are `{ kind: { fields } }`. `by` and `to` are worked out when the roll is made (`6 - kept`); `actor` naming an
+  input is whoever that input names (`leader`). The roll returns them; `SheetIntents.Apply` applies `adjust` and `set` to a
+  track within its minimum and maximum. Overflow and the rest are the table's (step 5).
+- `score(key)` reads a value of the sheet kind when no attribute has that key (Blades' `insight`), and formulas may read an
+  entry by a key worked out in the formula: `skills[input.skill].value`. Die faces compare as numbers: `d => d == 6`.
+- The loader warns about a roll with not exactly one of `dice`, `pool` or `participants`, a pool without a die, a roll
+  defined twice, an input from somewhere other than `roller`, `gm`, `weapon` or `parent`, and a `then` or `participants`
+  naming a roll that is not defined.
 
 | Section | Holds |
 |---|---|

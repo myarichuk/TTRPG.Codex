@@ -13,8 +13,8 @@ namespace Codex.Core.Rules;
 /// <list type="bullet">
 /// <item>calls: only the registered built-in functions (invoked as delegates), lambdas passed to them, and the string
 /// concatenation <c>+</c> compiles to;</item>
-/// <item>dynamic operations: reading a member (<c>c.classLevel</c>), operators and conversions. Not calling a member
-/// (<c>c.name.Replace(...)</c>), setting one, or indexing;</item>
+/// <item>dynamic operations: reading a member (<c>c.classLevel</c>) or an index (<c>skills[input.skill]</c>), operators and
+/// conversions. Not calling a member (<c>c.name.Replace(...)</c>) or setting anything;</item>
 /// <item>no static or instance member reads on CLR types (<c>x.Length</c> on a string), no <c>new</c>, no arrays, no
 /// assignment.</item>
 /// </list>
@@ -58,13 +58,18 @@ public static class FormulaSandbox
             }
         }
 
-        // DynamicExpresso's own binders (internal): reading a member is allowed; calling a method or indexing is not.
-        private const string LateGetMember = "DynamicExpresso.Resolution.LateGetMemberCallSiteBinder";
+        // DynamicExpresso's own binders (internal): reading a member or an index is allowed; calling a method is not. An index
+        // read is a getter (a keyed list's entry, a string's character), which can neither change nor grow anything.
+        private static readonly HashSet<string> LateReads = new(StringComparer.Ordinal)
+        {
+            "DynamicExpresso.Resolution.LateGetMemberCallSiteBinder",
+            "DynamicExpresso.Resolution.LateInvokeIndexCallSiteBinder"
+        };
 
         private static void CheckBinder(CallSiteBinder binder)
         {
-            if (binder is GetMemberBinder or BinaryOperationBinder or UnaryOperationBinder or ConvertBinder) return;
-            if (binder.GetType().FullName == LateGetMember) return;
+            if (binder is GetMemberBinder or GetIndexBinder or BinaryOperationBinder or UnaryOperationBinder or ConvertBinder) return;
+            if (LateReads.Contains(binder.GetType().FullName!)) return;
             throw Refused(binder is InvokeMemberBinder invoke ? $"calls {invoke.Name}"
                 : binder.GetType().Name.Contains("Invoke", StringComparison.Ordinal) ? "calls a method" : "uses an operation formulas do not have");
         }

@@ -73,13 +73,17 @@ public class ReferenceRunnerTests : IDisposable
     }
 
     [Fact]
-    public void WhatTheEngineCannotDo_IsUnsupported_NamingTheStep()
+    public void WhatTheEngineCannotDo_IsUnsupported_NamingTheStep_AndAnUndefinedRollFails()
     {
         var roll = Run(new SpecExpectation { Id = "t.roll", Sheet = "hero", Roll = new SpecRoll { Definition = "check", Dice = { 6 } }, Expect = { Outcome = "full" } });
+        var ev = Run(new SpecExpectation { Id = "t.event", Sheet = "hero", Event = new() { ["type"] = "turnStart" }, Expect = { Intents = new() } });
         var conditions = Run(new SpecExpectation { Id = "t.cond", Sheet = "hero", Expect = { Conditions = new() { "Down" } } });
 
-        Assert.Equal(CheckStatus.Unsupported, roll.Status);
-        Assert.Contains("step 4", roll.Detail);
+        // A roll the system does not define is the system's problem, and fails saying so.
+        Assert.Equal(CheckStatus.Fail, roll.Status);
+        Assert.Contains("no roll called \"check\"", roll.Detail);
+        Assert.Equal(CheckStatus.Unsupported, ev.Status);
+        Assert.Contains("step 5", ev.Detail);
         Assert.Equal(CheckStatus.Unsupported, conditions.Status);
         Assert.Contains("step 3", conditions.Detail);
     }

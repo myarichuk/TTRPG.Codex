@@ -29,7 +29,8 @@
                     <strong>@RollerName(entry)</strong>
                 }
                 <DiceResult Compact="true" Label="@entry.Label" Expression="@entry.Expression" Kept="entry.Kept" Dropped="entry.Dropped"
-                            Modifier="entry.Modifier" CheckDieIndex="entry.CheckDieIndex" Total="entry.Total" Text="@entry.Result" Secret="entry.IsSecret" />
+                            Modifier="entry.Modifier" CheckDieIndex="entry.CheckDieIndex" Total="entry.Total" Text="@entry.Result" Secret="entry.IsSecret"
+                            Outcome="@entry.Outcome" Mark="@entry.Mark" />
             </div>
         }
     </div>

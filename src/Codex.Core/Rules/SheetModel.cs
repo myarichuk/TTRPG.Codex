@@ -52,6 +52,9 @@ public sealed class SheetModel
     private readonly IReadOnlyDictionary<string, object> _sheet;
     private readonly SheetFormulas _formulas;
     private readonly bool _checkPrerequisites;
+
+    /// <summary>The inputs of the roll being made, as <c>input.</c> reads them; empty on the sheet.</summary>
+    private readonly FormulaItem _input;
     private readonly Dictionary<string, ValueDefinition> _valueDefinitions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, object?> _values = new(StringComparer.Ordinal);
     private readonly Dictionary<string, FormulaList> _lists = new(StringComparer.Ordinal);
@@ -74,8 +77,17 @@ public sealed class SheetModel
     {
     }
 
-    private SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, bool checkPrerequisites)
+    /// <summary>The sheet as a roll sees it: <c>input.</c> reads <paramref name="input"/>, so modifiers whose <c>when</c> reads
+    /// an input hold or not by the roll's inputs.</summary>
+    public SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, object?> input)
+        : this(system, resolver, sheet, checkPrerequisites: true, input)
     {
+    }
+
+    private SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, bool checkPrerequisites,
+        IReadOnlyDictionary<string, object?>? input = null)
+    {
+        _input = input == null ? FormulaItem.Empty : new FormulaItem(name => input.TryGetValue(name, out var value) ? Plain(value) : null);
         _system = system;
         _resolver = resolver;
         _sheet = sheet;
@@ -152,7 +164,7 @@ public sealed class SheetModel
         if (_valueDefinitions.ContainsKey(name)) return Value(name);
         if (_lists.TryGetValue(name, out var list)) return list;
         if (name.EndsWith(MaxSuffix, StringComparison.Ordinal) && Tracks().FirstOrDefault(t => t.Key + MaxSuffix == name) is { } track) return TrackMax(track);
-        if (name == "input") return FormulaItem.Empty;
+        if (name == "input") return _input;
         if (_system.Attributes.FirstOrDefault(a => a.Key == name) is { } attribute) return ScoreOf(attribute);
         return _sheet.TryGetValue(name, out var raw) ? Plain(raw) : null;
     }
@@ -166,6 +178,38 @@ public sealed class SheetModel
             .Select(n => (n, numbers.TryGetValue(n, out var number) ? number : Resolve(n) ?? throw new FormulaException($"no number called \"{n}\"")))
             .ToList();
         return _formulas.Run(formula, arguments);
+    }
+
+    /// <summary>Runs one formula on the sheet, <paramref name="names"/> read first (a roll's <c>natural</c>, <c>total</c>,
+    /// <c>dice</c>). A name neither binds nor the sheet has, or a formula that fails, throws <see cref="FormulaException"/>.</summary>
+    public object? Run(string formula, IReadOnlyDictionary<string, object> names)
+    {
+        try
+        {
+            return Run(formula, extra: names);
+        }
+        catch (Exception ex) when (ex is not FormulaException and not StackOverflowException)
+        {
+            throw new FormulaException(ex.Message);
+        }
+    }
+
+    /// <summary>The pick on the sheet with this id, in any of its lists (the weapon a roll is made with), or null.</summary>
+    public FormulaItem? Item(string id)
+    {
+        using var _ = Enter();
+        return Kind?.Lists.Select(l => _lists[l.Key]).SelectMany(l => l)
+            .FirstOrDefault(i => string.Equals(i.Get("id")?.ToString(), id, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>A track's least and greatest value (null where it has none), or null when the sheet kind has no such track.</summary>
+    public (double? Min, double? Max)? TrackBounds(string key)
+    {
+        using var _ = Enter();
+        if (Tracks().FirstOrDefault(t => t.Key == key) is not { } track) return null;
+        var min = track.Definition.Min is { } low ? Guard(track.Key + ":min", track.Label, () => Run(low, extra: track.Bindings)) is { } m ? SheetFormulas.Number(m) : (double?)null : 0d;
+        var max = track.Definition.Max != null ? Guard(track.Key + MaxSuffix, track.Label, () => TrackMax(track)) as double? : null;
+        return (min, max);
     }
 
     /// <summary>A path into the sheet (<c>BAB</c>, <c>skills.knowledge.arcana.ranks</c>), or null.</summary>
@@ -402,7 +446,7 @@ public sealed class SheetModel
         : null;
 
     /// <summary>A sheet or YAML value as formulas see it: numbers as doubles, "true"/"false" as booleans, the rest as it is.</summary>
-    private static object? Plain(object? value) => value switch
+    internal static object? Plain(object? value) => value switch
     {
         null => null,
         double or string or bool or FormulaItem => value is string s && bool.TryParse(s, out var flag) ? flag : value,
@@ -792,10 +836,11 @@ public sealed class SheetModel
 
     internal double Score(object? key)
     {
+        // An attribute's score, or a value of the sheet kind named by key (Blades' insight is a count of actions, not an attribute).
         var name = key?.ToString();
-        return _system.Attributes.FirstOrDefault(a => string.Equals(a.Key, name, StringComparison.OrdinalIgnoreCase)) is { } attribute
-            ? ScoreOf(attribute)
-            : throw new FormulaException($"no attribute called \"{name}\"");
+        if (_system.Attributes.FirstOrDefault(a => string.Equals(a.Key, name, StringComparison.OrdinalIgnoreCase)) is { } attribute) return ScoreOf(attribute);
+        if (name != null && _valueDefinitions.ContainsKey(name)) return SheetFormulas.Number(Value(name));
+        throw new FormulaException($"no attribute or value called \"{name}\"");
     }
 
     /// <summary><c>mod(dex)</c> (a score) or <c>mod('dex')</c>, <c>mod(s.attribute)</c> (an attribute's key).</summary>

@@ -142,3 +142,62 @@ public class DiceExpressionTests
         Assert.Equal(checkIndex, new StandardDiceRoller(new Random(5)).Roll(expression).CheckDieIndex);
     }
 }
+
+/// <summary>The grammar extensions of overhaul step 4 (exploding dice, counting successes) and the dice source.</summary>
+public class DiceGrammarExtensionTests
+{
+    [Fact]
+    public void ExplodingDice_AddADieForEachHighestFace_AndTheAddedDiceExplodeToo()
+    {
+        var result = new StandardDiceRoller(new SequenceDiceSource(new[] { 6, 2, 6, 3 })).Roll("2d6!");
+
+        // 6 and 2 rolled; the 6 brings another (6), which brings another (3).
+        Assert.Equal(new[] { 6, 2, 6, 3 }, result.Kept);
+        Assert.Equal(17, result.Total);
+    }
+
+    [Fact]
+    public void ExplodingDice_StopAtTheLimit()
+    {
+        var result = new StandardDiceRoller(new SequenceDiceSource(Enumerable.Repeat(2, 200))).Roll("1d2!");
+
+        Assert.Equal(1 + StandardDiceRoller.MaxExplosions, result.Kept.Count);
+    }
+
+    [Fact]
+    public void CountingSuccesses_TotalsTheDiceAtOrOverTheTarget()
+    {
+        var result = new StandardDiceRoller(new SequenceDiceSource(new[] { 8, 3, 10, 7, 9 })).Roll("5d10>=8+1");
+
+        Assert.Equal(3, result.Successes);
+        Assert.Equal(4, result.Total);
+        Assert.Contains("(3 successes)", result.ToString());
+    }
+
+    [Theory]
+    [InlineData("5d10>=8+1d6")]
+    [InlineData("5d10>=11")]
+    [InlineData("5d10>=0")]
+    public void CountingSuccesses_InEveryTermOrNone_AndOnAFaceTheDieHas(string expression)
+    {
+        Assert.Throws<FormatException>(() => DiceExpressionParser.Parse(expression));
+    }
+
+    [Fact]
+    public void AnExplodingD20_IsNoCheckDie()
+    {
+        Assert.Null(DiceExpressionParser.Parse("1d20!").CheckDie);
+        Assert.NotNull(DiceExpressionParser.Parse("1d20").CheckDie);
+    }
+
+    [Fact]
+    public void ASequenceSource_HandsOutItsFacesInOrder_AndRefusesWhatItCannot()
+    {
+        var source = new SequenceDiceSource(new[] { 3, 7 });
+
+        Assert.Equal(3, source.Roll(6));
+        Assert.Throws<InvalidOperationException>(() => source.Roll(6)); // a d6 cannot show 7
+        Assert.Equal(1, source.Used);
+        Assert.Throws<InvalidOperationException>(() => source.Roll(6)); // nothing left
+    }
+}

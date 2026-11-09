@@ -39,6 +39,7 @@
   <data name="Actor.Dice.Secret" xml:space="preserve"><value>סודי</value></data>
   <data name="Actor.Dice.Faces" xml:space="preserve"><value>קוביות</value></data>
   <data name="Actor.Dice.Nat20" xml:space="preserve"><value>20 טבעי</value></data>
+  <data name="Actor.Dice.Outcome" xml:space="preserve"><value>תוצאה: {0}</value></data>
   <data name="Actor.Dice.Nat1" xml:space="preserve"><value>1 טבעי</value></data>
   <data name="Actor.Dice.Dropped" xml:space="preserve"><value>הושמטה</value></data>
   <data name="Actor.Dice.Plus" xml:space="preserve"><value>פלוס {0}</value></data>

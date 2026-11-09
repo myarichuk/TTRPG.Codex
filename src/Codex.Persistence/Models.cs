@@ -415,6 +415,13 @@ public class RollLogEntry
     /// (or predates this, R8).</summary>
     public int? CheckDieIndex { get; set; }
 
+    /// <summary>For a roll made from the system's roll definition, its named outcome (<c>partial</c>); null otherwise.</summary>
+    public string? Outcome { get; set; }
+
+    /// <summary>How <see cref="Outcome"/> is marked: <c>critical</c>, <c>fumble</c> or null. The display marks from this, never
+    /// from the dice.</summary>
+    public string? Mark { get; set; }
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 

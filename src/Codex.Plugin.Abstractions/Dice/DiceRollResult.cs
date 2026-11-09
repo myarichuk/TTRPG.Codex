@@ -17,6 +17,10 @@ public sealed record DiceRollResult(
     /// read from that die only; null when the roll has none (<c>1d200</c>, <c>2d6</c>) or more than one (R8).</summary>
     public int? CheckDieIndex { get; init; }
 
+    /// <summary>For a roll that counts successes (<c>5d10&gt;=8</c>), how many; <see cref="Total"/> is then the successes plus
+    /// the modifier. Null for a roll that adds its dice.</summary>
+    public int? Successes { get; init; }
+
     public override string ToString()
     {
         var kept = string.Join(", ", Kept);
@@ -27,6 +31,7 @@ public sealed record DiceRollResult(
             < 0 => $" - {-Modifier}",
             _ => string.Empty
         };
-        return $"[{kept}]{suffix}{modifierText} = {Total}";
+        var counted = Successes is { } n ? $" ({n} successes)" : string.Empty;
+        return $"[{kept}]{suffix}{counted}{modifierText} = {Total}";
     }
 }

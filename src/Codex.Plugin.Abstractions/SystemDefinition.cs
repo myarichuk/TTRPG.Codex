@@ -431,6 +431,9 @@ public class SystemDefinition
     /// <summary>What a condition does while it holds, by condition name.</summary>
     public Dictionary<string, ConditionEffectDefinition> ConditionEffects { get; set; } = new();
 
+    /// <summary>Named rolls with inputs and outcomes (see Rolls.cs).</summary>
+    public List<RollDefinition> Rolls { get; set; } = new();
+
     /// <summary>Translations by language tag ("ru"), filled by the loader from <c>system.&lt;locale&gt;.yaml</c> files.</summary>
     public Dictionary<string, SystemTranslation> Translations { get; set; } = new();
 

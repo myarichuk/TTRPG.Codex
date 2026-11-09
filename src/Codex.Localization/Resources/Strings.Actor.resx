@@ -39,6 +39,7 @@
   <data name="Actor.Dice.Secret" xml:space="preserve"><value>secret</value></data>
   <data name="Actor.Dice.Faces" xml:space="preserve"><value>Dice</value></data>
   <data name="Actor.Dice.Nat20" xml:space="preserve"><value>natural 20</value></data>
+  <data name="Actor.Dice.Outcome" xml:space="preserve"><value>Outcome: {0}</value></data>
   <data name="Actor.Dice.Nat1" xml:space="preserve"><value>natural 1</value></data>
   <data name="Actor.Dice.Dropped" xml:space="preserve"><value>dropped</value></data>
   <data name="Actor.Dice.Plus" xml:space="preserve"><value>plus {0}</value></data>

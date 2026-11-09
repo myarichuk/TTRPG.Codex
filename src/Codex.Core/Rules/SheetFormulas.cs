@@ -22,11 +22,37 @@ public class FormulaItem(Func<string, object?> member) : DynamicObject
 
     public object? Get(string name) => member(name);
 
+    /// <summary>The number this item stands for, when it stands for one (a die's face); null otherwise.</summary>
+    public virtual double? Value => null;
+
+    public static implicit operator double?(FormulaItem? item) => item?.Value;
+    public static bool operator ==(FormulaItem? a, double b) => a?.Value == b;
+    public static bool operator !=(FormulaItem? a, double b) => a?.Value != b;
+    public static bool operator <(FormulaItem? a, double b) => a?.Value < b;
+    public static bool operator >(FormulaItem? a, double b) => a?.Value > b;
+    public static bool operator <=(FormulaItem? a, double b) => a?.Value <= b;
+    public static bool operator >=(FormulaItem? a, double b) => a?.Value >= b;
+    public override bool Equals(object? obj) => ReferenceEquals(this, obj);
+    public override int GetHashCode() => base.GetHashCode();
+
     public override bool TryGetMember(GetMemberBinder binder, out object? result)
     {
         result = member(binder.Name);
         return true;
     }
+
+    /// <summary>A member by a name worked out in the formula: <c>skills[input.skill]</c>.</summary>
+    public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object? result)
+    {
+        result = indexes is [{ } key] ? member(Convert.ToString(key, CultureInfo.InvariantCulture) ?? "") : null;
+        return true;
+    }
+}
+
+/// <summary>A number in a list formulas aggregate over: a die's face in <c>count(dice, d => d == 6)</c>.</summary>
+public sealed class FormulaNumber(double value) : FormulaItem(_ => null)
+{
+    public override double? Value => value;
 }
 
 /// <summary>A list as formulas see it: its items to aggregate over, and (for a keyed list) its entries by key as members

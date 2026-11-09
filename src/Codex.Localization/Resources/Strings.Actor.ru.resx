@@ -39,6 +39,7 @@
   <data name="Actor.Dice.Secret" xml:space="preserve"><value>секретный</value></data>
   <data name="Actor.Dice.Faces" xml:space="preserve"><value>Кости</value></data>
   <data name="Actor.Dice.Nat20" xml:space="preserve"><value>натуральная 20</value></data>
+  <data name="Actor.Dice.Outcome" xml:space="preserve"><value>Итог: {0}</value></data>
   <data name="Actor.Dice.Nat1" xml:space="preserve"><value>натуральная 1</value></data>
   <data name="Actor.Dice.Dropped" xml:space="preserve"><value>отброшена</value></data>
   <data name="Actor.Dice.Plus" xml:space="preserve"><value>плюс {0}</value></data>

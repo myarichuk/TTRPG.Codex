@@ -168,6 +168,11 @@ public class PluginLoader(
                         Warn(new LoadProblem(LoadProblemSource.System, definition.Id, UnknownKeysMessage(unknownKeys), definition.Id, systemFile));
                     }
 
+                    foreach (var problem in Rules.SheetRolls.Problems(definition))
+                    {
+                        Warn(new LoadProblem(LoadProblemSource.System, definition.Id, problem, definition.Id, systemFile));
+                    }
+
                     logger.LogInformation("Loaded data-driven system {SystemId} from {File}", definition.Id, systemFile);
                     plugins.Add(new DataDrivenSystemPlugin(definition));
                 }

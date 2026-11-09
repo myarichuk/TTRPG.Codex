@@ -139,7 +139,7 @@ rolls:
     keep: { highest: 1 }
     inputs:
       - { key: action, from: roller }
-      - { key: bonusDice, from: roller, default: 0, label: Assist, push or bargain }
+      - { key: bonusDice, from: roller, default: 0, label: "Assist, push or bargain" }
       - { key: position, from: gm, options: [controlled, risky, desperate], default: risky }
       - { key: effect, from: gm, options: [limited, standard, great], default: standard }
     outcomes:

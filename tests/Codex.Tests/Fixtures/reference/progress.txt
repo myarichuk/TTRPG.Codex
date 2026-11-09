@@ -41,3 +41,32 @@ d35.slots-come-from-the-class-table-plus-bonus-spells
 d35.a-slot-holds-only-a-spell-of-its-class-and-level
 d35.vancian-slots-take-duplicates-but-not-more-than-they-have
 crew.reputation-shrinks-with-turf
+
+# Step 4 (rolls): definitions with inputs, pools, keep, zero dice, explode/implode once, roll-under, outcomes, follow-up
+# rolls, intents and group rolls. street.a-serious-wound-takes-two-from-every-check needs the Seriously wounded threshold,
+# which compares against HP_Max (rules.js, step 8).
+d35.a-threat-confirmed-is-a-critical
+d35.a-threat-not-confirmed-is-a-hit
+d35.no-threat-below-the-range
+d35.a-natural-one-misses
+d35.a-natural-twenty-hits-and-threatens
+d35.a-condition-modifies-the-roll
+street.a-check-adds-stat-skill-and-die
+street.a-ten-explodes-once
+street.the-second-ten-does-not-explode
+street.a-one-implodes-once
+street.a-death-save-is-rolled-under-body
+street.a-death-save-over-body-fails
+crew.a-six-is-a-full-success
+crew.four-or-five-is-partial
+crew.one-to-three-is-bad
+crew.two-sixes-are-critical
+crew.zero-dice-roll-two-and-keep-the-lowest
+crew.zero-dice-never-crit
+crew.bonus-dice-join-the-pool
+crew.position-and-effect-are-carried-on-the-result
+crew.harm-takes-a-die-from-every-pool
+crew.resistance-costs-six-minus-the-highest-die
+crew.a-six-resists-for-free
+crew.a-resistance-critical-clears-a-stress
+crew.a-group-action-takes-the-best-and-costs-the-leader
