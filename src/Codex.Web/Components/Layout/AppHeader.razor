@@ -1,4 +1,5 @@
 @using Microsoft.AspNetCore.Components.Authorization
+@using Codex.Persistence
 @inject IJSRuntime JS
 
 <header class="app-header">
@@ -13,9 +14,17 @@
                 <NavLink href="" Match="NavLinkMatch.All">
                     <LucideIcon IconName="compass" Size="18" /><span>@L["Layout.Nav.Campaigns"]</span>
                 </NavLink>
+                <NavLink href="vault">
+                    <LucideIcon IconName="archive" Size="18" /><span>@L["Layout.Nav.Vault"]</span>
+                </NavLink>
                 <NavLink href="library">
                     <LucideIcon IconName="book-open" Size="18" /><span>@L["Layout.Nav.Library"]</span>
                 </NavLink>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="@UserRoles.ServerAdmin">
+            <Authorized>
+                <AdminLink />
             </Authorized>
         </AuthorizeView>
         <NavLink href="about">

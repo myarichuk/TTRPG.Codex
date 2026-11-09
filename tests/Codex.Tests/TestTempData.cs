@@ -79,8 +79,7 @@ public static class TestTempData
 
     /// <summary>
     /// Deletes <paramref name="path"/> when the test process ends. RavenDB's embedded server is one per process, so only the first
-    /// fixture's folder is really used, and that fixture disposes it while later classes still run; what is left would sit there
-    /// (in RAM, on tmpfs) until the next run's sweep. Nothing needs the data once the process is going.
+    /// fixture's folder is really used, and it has to outlive that fixture, since later classes still run in it; this deletes it. Nothing needs the data once the process is going.
     /// </summary>
     public static void DeleteOnExit(string path)
     {

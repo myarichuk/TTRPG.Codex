@@ -1,0 +1,33 @@
+/* Test fixture: Homebrewery's "5e DMG" theme (MIT, commit 3e600a0) compiled whole, with no pictures. Never shipped. */
+:root {
+  --HB_Color_Accent: #EBCEC3;
+  --HB_Color_Footnotes: #5C5C5C;
+}
+.page {
+  background-image: url('/assets/DMG_background.png');
+  background-size: cover;
+  /* TABLES WITHIN NOTES */
+  /* DROP CAP */
+}
+.page .note table tbody tr:nth-child(odd) {
+  background: #FFFFFF;
+}
+.page p.first-letter::first-letter,
+.page p.drop-cap::first-letter,
+.page h1 + p::first-letter {
+  color: black;
+  background-image: unset;
+}
+.page .quote p:first-child::first-line {
+  all: unset;
+}
+.page::after {
+  height: 58px;
+  background-image: url('/assets/DMG_footerAccent.png');
+}
+.page .footnote {
+  bottom: 40px;
+}
+.page:has(.partCover) .partCover {
+  background-image: none;
+}

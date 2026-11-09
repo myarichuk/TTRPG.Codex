@@ -319,6 +319,15 @@ public class AiVocabulary
 
     /// <summary>What a starting value of the primary resource should depend on ("the level, class and constitution"). Null: the sheet as a whole.</summary>
     public string? PrimaryResourceBasis { get; set; }
+
+    /// <summary>How this game's own published books read, for the campaign book's AI edits to take after (docs/BOOK_EXPORT.md 41.4): their
+    /// chapters, their furniture (read-aloud boxes, sidebars, stat blocks) and their voice, finishing the sentence "The book should read like
+    /// this game's own published books, which are …". Shape and voice only: no book's title, words or trademarks. Null: neutral words.</summary>
+    public string? BookShape { get; set; }
+
+    /// <summary>The same for the books the players read (the party edition, docs/BOOK_EXPORT.md 42): a player's guide or a gazetteer, in the
+    /// world's voice, with nothing addressed to the GM. Null: neutral words for a players' book, never <see cref="BookShape"/>.</summary>
+    public string? PlayerBookShape { get; set; }
 }
 
 /// <summary>

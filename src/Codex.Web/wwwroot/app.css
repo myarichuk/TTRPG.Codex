@@ -1092,6 +1092,8 @@ a.user-chip:active { transform: scale(0.97); }
 }
 .portrait-upload:hover { color: var(--accent); border-color: var(--accent); }
 .portrait-upload:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* The book tray's upload control is a link-styled label around a hidden file input: the ring goes on the label. */
+.book-art-file:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* ---------------------------------------------------------------------------
    Cover art: campaign cards and the workspace header
@@ -2564,4 +2566,123 @@ a.hover-card-title:hover { text-decoration: underline; }
 .setup-why { font-size: var(--fs-xs); color: var(--text-3); }
 
 /* The campaign book preview: a page of paper in a frame. */
+/* The editable book's editor: the whole window, chapters | Markdown | the book as it prints. */
+/* The book editor (docs/BOOK_EXPORT.md 41.17), laid out like an IDE: a toolbar; chapters | Markdown | preview, the outer two collapsible to a
+   strip; a panel below with tabs, collapsible too. */
+dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: none; height: calc(100vh - 1.5rem); max-height: none; padding: 0; }
+.book-draft { display: flex; flex-direction: column; height: 100%; }
+/* The theme wizard (docs/BOOK_EXPORT.md 41.22): over the editor, inside its dialog. */
+.book-draft { position: relative; }
+.book-theme-wizard { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(0, 0, 0, .55); }
+.book-theme-wizard-box { display: flex; flex-direction: column; width: min(960px, 100%); max-height: 100%; background: var(--surface, var(--bg)); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 8px 32px rgba(0, 0, 0, .5); }
+.book-theme-wizard-bar { display: flex; align-items: center; gap: 1rem; padding: .6rem .9rem; border-bottom: 1px solid var(--border); }
+.book-theme-wizard-bar .book-draft-close { margin-inline-start: auto; }
+.book-theme-steps { display: flex; gap: .75rem; margin: 0; padding: 0; list-style: none; font-size: .8rem; color: var(--text-3); }
+.book-theme-steps .current { color: var(--accent); font-weight: 600; }
+.book-theme-steps .done { color: var(--text-2); }
+.book-theme-body { flex: 1 1 auto; overflow: auto; padding: .9rem; }
+.book-theme-css { font-family: ui-monospace, monospace; font-size: .8rem; }
+.book-theme-preview-body { display: flex; flex-direction: column; min-height: 0; }
+.book-theme-preview { flex: 1 1 auto; width: 100%; min-height: 60vh; border: 1px solid var(--border); border-radius: 4px; background: #5b5b5b; }
+.book-theme-wizard-foot { display: flex; justify-content: flex-end; gap: .5rem; padding: .6rem .9rem; border-top: 1px solid var(--border); }
+.book-credit { font-size: .75rem; color: var(--text-3); white-space: nowrap; }
+.book-credit a { color: var(--text-2); }
+.book-theme-languages th { width: 10rem; vertical-align: top; }
+.book-draft-bar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: .4rem .6rem; border-bottom: 1px solid var(--border); }
+.book-draft-tools { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.book-draft-close { order: 2; }
+.book-draft-sep { width: 1px; align-self: stretch; margin: .15rem .15rem; background: var(--border); }
+.book-draft-theme { display: inline-flex; align-items: center; gap: .4rem; margin: 0; font-size: .85rem; }
+.book-draft-theme select { width: auto; }
+.book-draft-homebrewery { display: inline-flex; align-items: center; gap: .35rem; margin: 0; font-size: .85rem; cursor: pointer; }
+.book-draft-homebrewery .form-check-input { margin: 0; }
+.book-draft-more { position: relative; }
+.book-draft-menu { position: absolute; inset-inline-end: 0; top: calc(100% + 4px); z-index: 5; min-width: 12rem; padding: .25rem; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+.book-draft-menu-item { display: flex; gap: .5rem; align-items: center; width: 100%; padding: .4rem .6rem; background: none; border: 0; border-radius: 3px; color: var(--text); text-align: start; font-size: .875rem; }
+.book-draft-menu-item:hover, .book-draft-menu-item:focus-visible { background: var(--accent-soft); }
+.book-draft-menu-label { padding: .45rem .6rem .15rem; border-top: 1px solid var(--border); margin-top: .2rem; color: var(--text-2); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+.book-draft-close { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; padding: 0; background: none; border: 1px solid transparent; border-radius: 4px; color: var(--text-2); }
+.book-draft-close:hover, .book-draft-close:focus-visible { border-color: var(--border); color: var(--text); }
+.book-draft-infobar { margin: .4rem .6rem 0; }
+
+.book-draft-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr) minmax(0, 1.1fr); position: relative; }
+.book-draft-main.chapters-closed { grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 1.1fr); }
+.book-draft-main.preview-closed { grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr) 2rem; }
+.book-draft-main.chapters-closed.preview-closed { grid-template-columns: 2rem minmax(0, 1fr) 2rem; }
+.book-draft-pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.book-draft-pane + .book-draft-pane, .book-draft-strip + .book-draft-pane, .book-draft-pane + .book-draft-strip { border-inline-start: 1px solid var(--border); }
+.book-draft-pane-head { display: flex; align-items: center; gap: .4rem; min-height: 2rem; padding: .2rem .5rem; border-bottom: 1px solid var(--rule); background: var(--surface-2);
+    font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); }
+.book-draft-pane-head bdi { text-transform: none; letter-spacing: 0; font-size: .85rem; color: var(--text); }
+.book-draft-pane-body { flex: 1; min-height: 0; overflow: auto; }
+.book-draft-pane-btn { display: inline-flex; align-items: center; justify-content: center; width: 1.6rem; height: 1.6rem; padding: 0; margin-inline-start: auto; background: none;
+    border: 1px solid transparent; border-radius: 3px; color: var(--text-2); }
+.book-draft-pane-btn:hover, .book-draft-pane-btn:focus-visible { border-color: var(--border); color: var(--text); }
+/* A collapsed pane: a thin strip with its name, read top to bottom; a click opens it again. */
+.book-draft-strip { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: .5rem 0; background: var(--surface-2); border: 0; color: var(--text-2);
+    font-size: .75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.book-draft-strip span { writing-mode: vertical-rl; }
+.book-draft-strip:hover, .book-draft-strip:focus-visible { color: var(--text); background: var(--surface-3); }
+.book-draft-chapters .book-draft-pane-body { padding: .35rem; }
+.book-draft-chapter { display: flex; gap: .4rem; align-items: center; width: 100%; text-align: start; background: none; border: 0; border-radius: 4px; padding: .3rem .45rem; color: inherit; font-size: .9rem; }
+.book-draft-chapter:hover { background: var(--surface-2, rgba(127,127,127,.08)); }
+.book-draft-chapter.active { background: var(--accent-soft, rgba(127,127,127,.16)); font-weight: 600; }
+.book-draft-chapter bdi { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.book-draft-badge-stale { background: var(--danger-soft, #f6dede); color: var(--danger, #8a1c1c); font-weight: 500; }
+.book-draft-badge-edited { background: var(--surface-3, #eee); color: var(--text-2, #666); font-weight: 500; }
+.book-draft-edit-body { display: flex; flex-direction: column; padding: .4rem; overflow: hidden; }
+.book-draft-codebox { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.book-draft-code, .book-draft-review-code { flex: 1; min-height: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+.book-draft-code[hidden] { display: none; }
+.book-draft-review-code { border-inline-start: 3px solid var(--arcane, #58c2a5); }
+/* CodeMirror on the app's own colours, dark or light as the app is. */
+.book-draft-codebox .cm-editor { height: 100%; font-size: .85rem; background: var(--surface); color: var(--text); }
+.book-draft-codebox .cm-scroller { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.book-draft-codebox .cm-gutters { background: var(--surface-2); color: var(--text-3); border-inline-end: 1px solid var(--rule); }
+.book-draft-codebox .cm-activeLine { background: rgba(127, 127, 127, .08); }
+.book-draft-codebox .cm-activeLineGutter { background: rgba(127, 127, 127, .14); color: var(--text-2); }
+.book-draft-codebox .cm-cursor { border-left-color: var(--accent); }
+.book-draft-codebox .cm-editor .cm-selectionBackground, .book-draft-codebox .cm-editor ::selection { background: var(--accent-glow) !important; }
+.book-draft-codebox .cm-editor.cm-focused { outline: 1px solid var(--accent); outline-offset: -1px; }
+.book-draft-codebox .cm-foldPlaceholder { background: var(--surface-3); border-color: var(--border); color: var(--text-2); }
+.book-draft-codebox .tok-heading, .book-draft-codebox .cm-header { color: var(--accent); }
+.book-draft-codebox .cm-matchingBracket { background: var(--accent-soft); }
+.book-draft-review-code .cm-deletedChunk del, .book-draft-review-code .cm-deletedText { text-decoration: line-through; }
+.book-draft-review-code .cm-chunkButtons button { font-size: .8rem; padding: 0 .4rem; margin-inline-end: .25rem; }
+.book-draft-notice { display: flex; gap: .75rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin: 0 0 .4rem; padding: .5rem .75rem; border: 1px solid var(--border-strong); border-inline-start: 3px solid var(--danger, #8a1c1c); border-radius: 4px; background: var(--danger-soft, #fbf0f0); }
+.book-draft-preview { position: relative; }
+.book-draft-frame { flex: 1; width: 100%; border: 0; background: #5b5b5b; }
+/* A collapsed preview is still drawn, off the screen: the run-on and cut-off reports measure it. */
+.book-draft-preview.offstage { position: absolute; top: 0; inset-inline-start: -200vw; width: 60vw; height: 100%; visibility: hidden; }
+
+/* The panel below: tabs, and the open tab's content. */
+.book-draft-panel { display: flex; flex-direction: column; max-height: 40%; border-top: 1px solid var(--border); background: var(--surface); }
+.book-draft-panel-tabs { display: flex; align-items: center; gap: .25rem; padding: 0 .5rem; background: var(--surface-2); }
+.book-draft-panel-body { overflow: auto; padding: .5rem .75rem; font-size: .875rem; }
+.book-draft-panel-body > * + * { margin-top: .35rem; }
+.book-draft-ai-bar { margin: 0 0 .4rem; padding: .45rem .6rem; border: 1px solid var(--border); border-inline-start: 3px solid var(--arcane, #58c2a5); border-radius: 4px; background: var(--arcane-soft, transparent); font-size: .875rem; }
+.book-draft-ai-bar > * + * { margin-top: .25rem; }
+.book-draft-ai-row { display: flex; gap: .35rem; align-items: center; flex-wrap: wrap; }
+.book-draft-ai-input { flex: 1 1 16rem; min-width: 10rem; width: auto; }
+.book-draft-ai-review { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+
+/* Tabs (the book editor's panel, the book panel): a row of buttons, the selected one underlined. */
+.cx-tabs { display: flex; gap: .15rem; flex-wrap: wrap; }
+.cx-tab { display: inline-flex; align-items: center; gap: .35rem; padding: .4rem .65rem; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--text-2); font-size: .85rem; }
+.cx-tab:hover { color: var(--text); }
+.cx-tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.cx-tab:focus-visible { outline: 1px solid var(--accent); outline-offset: -2px; }
+.book-tabs { margin: .75rem 0 .5rem; border-bottom: 1px solid var(--rule); }
+.cx-tab-badge { min-width: 1.2rem; padding: 0 .3rem; border-radius: 999px; background: var(--danger-soft); color: var(--danger); font-size: .72rem; font-weight: 700; text-align: center; }
+
+@media (max-width: 900px) {
+    .book-draft-main, .book-draft-main.chapters-closed, .book-draft-main.preview-closed, .book-draft-main.chapters-closed.preview-closed {
+        grid-template-columns: 1fr; grid-template-rows: auto minmax(16rem, 1fr) minmax(20rem, 1fr); overflow: auto; }
+    .book-draft-pane + .book-draft-pane, .book-draft-strip + .book-draft-pane, .book-draft-pane + .book-draft-strip { border-inline-start: 0; border-top: 1px solid var(--border); }
+    .book-draft-chapters { max-height: 9rem; }
+    .book-draft-strip { flex-direction: row; justify-content: center; padding: .35rem; }
+    .book-draft-strip span { writing-mode: horizontal-tb; }
+    /* The toolbar under the title, the close button staying on the title's row. */
+    .book-draft-tools { order: 3; flex-basis: 100%; }
+}
 .book-preview { display: block; width: 100%; height: min(70vh, 640px); margin-top: .75rem; border: 1px solid var(--border-strong); border-radius: 4px; background: #fff; }

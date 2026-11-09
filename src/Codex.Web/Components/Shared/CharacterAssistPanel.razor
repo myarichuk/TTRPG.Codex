@@ -1,0 +1,237 @@
+@* Asking the AI for changes to this sheet, or for what fits the character (docs/SERVER_ACCESS_AND_VAULT.md 6). The model works
+   through tools (CharacterAssist), every change it proposes is checked before it shows here, and the person ticks what to take.
+   Taking puts the changes on the sheet unsaved: the sheet's own Save stores them, with its "changed meanwhile" check. *@
+@using Codex.Core.Rules
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@using Codex.Web.Services
+@implements IDisposable
+@inject CharacterAssist Assist
+@inject AiFeatures Ai
+@inject AiProviderService Providers
+@inject ILogger<CharacterAssistPanel> Logger
+
+@if (ready)
+{
+    <section class="panel panel-ai" aria-labelledby="assist-heading" data-testid="assist">
+        <div class="panel-title"><h2 id="assist-heading" class="h5"><LucideIcon IconName="sparkles" Size="18" Class="title-icon" /> @L["Actor.Assist.Title"]</h2></div>
+        <p class="small-muted">@L["Actor.Assist.Intro"]</p>
+        <label for="assist-instruction" class="field-label">@L["Actor.Assist.Instruction"]</label>
+        <textarea id="assist-instruction" class="field-input" rows="2" readonly="@busy" @bind="instruction" placeholder="@L["Actor.Assist.Placeholder"]" aria-describedby="assist-hint" data-testid="assist-instruction"></textarea>
+        <p id="assist-hint" class="field-hint">@L["Actor.Assist.Hint"]</p>
+        @if (busy)
+        {
+            <AiWorking Text="@L["Actor.Assist.Working"]" OnStop="call.Stop" TestId="assist-working" />
+        }
+        else
+        {
+            <div class="d-flex gap-2 flex-wrap">
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="() => AskAsync(false)" data-testid="assist-propose">@L["Actor.Assist.Propose"]</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="star" OnClick="() => AskAsync(true)" data-testid="assist-highlight">@L["Actor.Assist.Highlight"]</CodexButton>
+            </div>
+        }
+        @if (message != null)
+        {
+            <p class="mt-2 mb-0 @(failed ? "text-danger" : "small-muted")" role="@(failed ? "alert" : "status")" data-testid="assist-message">@message</p>
+        }
+
+        @if (result is { } shown && !busy)
+        {
+            @if (!string.IsNullOrWhiteSpace(shown.Note))
+            {
+                <p class="mt-3 mb-2" data-testid="assist-note">@shown.Note</p>
+            }
+
+            @if (shown.Changes.Count > 0)
+            {
+                <fieldset class="mt-2" data-testid="assist-changes">
+                    <legend class="field-label">@L["Actor.Assist.Changes", shown.Changes.Count]</legend>
+                    @for (var i = 0; i < shown.Changes.Count; i++)
+                    {
+                        var index = i;
+                        var change = shown.Changes[i];
+                        <div class="form-check mb-2" data-testid="assist-change">
+                            <input id="assist-change-@i" type="checkbox" class="form-check-input" checked="@ticked.Contains(index)" @onchange="e => Tick(index, e.Value is true)" />
+                            <label for="assist-change-@i" class="form-check-label">
+                                <strong>@change.Label:</strong> @What(change)
+                                <span class="d-block small-muted">@change.Reason</span>
+                            </label>
+                        </div>
+                    }
+                    @if (problems.Count > 0)
+                    {
+                        <div class="small mt-2" role="status" data-testid="assist-rules">
+                            <p class="mb-1">@L["Actor.Assist.RulesSay"]</p>
+                            <ul class="mb-0">
+                                @foreach (var problem in problems)
+                                {
+                                    <li>@problem</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    <div class="d-flex gap-2 flex-wrap mt-2">
+                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="check" OnClick="TakeAsync" Disabled="@(ticked.Count == 0)" data-testid="assist-take">@L["Actor.Assist.Take", ticked.Count]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="Drop" data-testid="assist-drop">@L["Actor.Assist.Drop"]</CodexButton>
+                    </div>
+                </fieldset>
+            }
+
+            @if (shown.Highlights.Count > 0)
+            {
+                <div class="mt-2" data-testid="assist-highlights">
+                    <p class="field-label mb-1">@L["Actor.Assist.Highlights", shown.Highlights.Count]</p>
+                    <ul class="list-unstyled mb-1">
+                        @foreach (var highlight in shown.Highlights)
+                        {
+                            var target = highlight.Field;
+                            <li class="mb-2" data-testid="assist-highlight-item">
+                                <strong>@highlight.Label@(highlight.Shown is { } what ? ": " + what : "")</strong>
+                                <span class="d-block small-muted">@highlight.Reason</span>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => OnGoThere.InvokeAsync(target)">@L["Actor.Assist.GoThere"]</CodexButton>
+                            </li>
+                        }
+                    </ul>
+                    <p class="field-hint mb-0">@L["Actor.Assist.HighlightsKept"]</p>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-1" OnClick="Drop">@L["Actor.Assist.Dismiss"]</CodexButton>
+                </div>
+            }
+        }
+    </section>
+}
+
+@code {
+    /// <summary>The character for the model to read: name, kind, history (mentions as plain names). Read when asked.</summary>
+    [Parameter, EditorRequired] public Func<ActorDocument> Character { get; set; } = null!;
+    /// <summary>The sheet as the page holds it now, edits not yet saved included.</summary>
+    [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = null!;
+    [Parameter, EditorRequired] public CampaignDocument Campaign { get; set; } = null!;
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+    [Parameter, EditorRequired] public SystemDefinition System { get; set; } = null!;
+    [Parameter, EditorRequired] public string UserId { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public Func<RuleViolation, string> Describe { get; set; } = null!;
+    /// <summary>Puts the taken changes on the page's sheet (unsaved).</summary>
+    [Parameter] public EventCallback<Dictionary<string, object>> OnTake { get; set; }
+    /// <summary>Opens the place on the sheet a highlight is about.</summary>
+    [Parameter] public EventCallback<string> OnGoThere { get; set; }
+
+    private readonly AiCall call = new();
+    private string? checkedFor;
+    private bool ready;
+    private bool busy;
+    private string instruction = string.Empty;
+    private string? message;
+    private bool failed;
+    private CharacterAssistResult? result;
+    private CharacterAssistSession? session;
+    private readonly HashSet<int> ticked = new();
+    private List<string> problems = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (checkedFor != UserId)
+        {
+            checkedFor = UserId;
+            ready = UserId.Length > 0 && await Ai.IsConfiguredAsync(UserId);
+        }
+    }
+
+    private async Task AskAsync(bool highlights)
+    {
+        if (busy) return;
+        if (!highlights && string.IsNullOrWhiteSpace(instruction))
+        {
+            (message, failed) = (L["Actor.Assist.NeedsText"], true);
+            return;
+        }
+
+        busy = true;
+        (message, failed, result) = (null, false, null);
+        var ct = call.Begin();
+        try
+        {
+            var started = await Assist.StartAsync(Character(), Sheet, Campaign, Access) ?? throw new InvalidOperationException("The system is not loaded.");
+            var model = await Providers.ChatClientForAsync(UserId);
+            var answer = await Assist.RunAsync(started, model, instruction, highlights, L.Culture.Name, ct);
+            ct.ThrowIfCancellationRequested();
+            (session, result) = (started, answer);
+            ticked.Clear();
+            for (var i = 0; i < answer.Changes.Count; i++) ticked.Add(i);
+            Recheck();
+            if (answer.Changes.Count == 0 && answer.Highlights.Count == 0) message = L["Actor.Assist.Nothing"];
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            message = L["Common.Ai.Stopped"];
+        }
+        catch (AiNotConfiguredException)
+        {
+            (message, failed) = (L["Actor.Sheet.NoAiProvider"], true);
+        }
+        catch (Exception ex)
+        {
+            if (ex is not Codex.Localization.LocalizedException) Logger.LogError(ex, "Asking the AI about a character failed");
+            (message, failed) = (L["Actor.Assist.Failed", AiFailureText.For(L, ex)], true);
+        }
+        finally
+        {
+            call.End(ct);
+            busy = false;
+        }
+    }
+
+    private string What(SheetChange change) => change.Op switch
+    {
+        SheetChangeOp.Set => L["Actor.Assist.Set", change.BeforeShown ?? L["Actor.Assist.Empty"], change.Shown],
+        SheetChangeOp.Append => L["Actor.Assist.Append", change.Shown],
+        SheetChangeOp.Add => change.Quantity > 1 ? L["Actor.Assist.AddMany", change.Shown, change.Quantity] : L["Actor.Assist.Add", change.Shown],
+        _ => L["Actor.Assist.Remove", change.Shown]
+    };
+
+    private void Tick(int index, bool on)
+    {
+        if (on) ticked.Add(index);
+        else ticked.Remove(index);
+        Recheck();
+    }
+
+    private IEnumerable<SheetChange> Chosen() => result == null ? Enumerable.Empty<SheetChange>() : result.Changes.Where((_, i) => ticked.Contains(i));
+
+    // What the rules say about the ticked changes taken together, beyond what they say about the sheet now: a spell kept without
+    // the class change it needs shows here before it is taken.
+    private void Recheck()
+    {
+        problems = new List<string>();
+        if (session == null || result == null || ticked.Count == 0) return;
+        var engine = new SheetRuleEngine(System, session.Resolver);
+        var now = engine.Evaluate(Sheet);
+        var (after, _) = CharacterAssist.Apply(System, Sheet, Chosen());
+        var then = engine.Evaluate(after);
+        var known = now.Violations.Concat(now.Warnings).Select(v => v.Message).ToHashSet(StringComparer.Ordinal);
+        problems = then.Violations.Concat(then.Warnings).Where(v => !known.Contains(v.Message)).Select(Describe).Distinct().ToList();
+    }
+
+    private async Task TakeAsync()
+    {
+        if (result == null) return;
+        var chosen = Chosen().ToList();
+        var (sheet, skipped) = CharacterAssist.Apply(System, Sheet, chosen);
+        await OnTake.InvokeAsync(sheet);
+        message = skipped.Count == 0
+            ? L["Actor.Assist.Taken", chosen.Count]
+            : L["Actor.Assist.TakenSome", chosen.Count - skipped.Count, string.Join(", ", skipped.Select(c => $"{c.Label} ({c.Shown})"))];
+        failed = false;
+        (result, session) = (null, null);
+        ticked.Clear();
+        problems = new List<string>();
+    }
+
+    private void Drop()
+    {
+        (result, session, message) = (null, null, null);
+        ticked.Clear();
+        problems = new List<string>();
+    }
+
+    public void Dispose() => call.Dispose();
+}

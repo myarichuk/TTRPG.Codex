@@ -11,7 +11,7 @@ namespace Codex.Tests;
 /// 1xx and all of the 2xx, and the media store must never even be asked for a picture the audience may not see.
 /// </summary>
 [Collection("RavenDb")]
-public class BookArtTests : IClassFixture<RavenDbFixture>
+public partial class BookArtTests : IClassFixture<RavenDbFixture>
 {
     private const string DmUser = "art_dm_user";
     private const string PlayerUser = "art_player_user";
@@ -27,6 +27,8 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
     private readonly RavenWikiRepository _wiki;
     private readonly BookSourceReader _reader;
     private readonly RecordingMedia _media;
+    private readonly RavenDbService _db;
+    private readonly RavenBookArtRepository _bookArt;
 
     public BookArtTests(RavenDbFixture fixture)
     {
@@ -42,6 +44,8 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
         _campaigns = new CampaignRepository(db, new NoOpSystemCatalog(), _actors, _sessions, _notes, _regions, _facts, _homebrew, _encounters, _wiki);
         _reader = new BookSourceReader(_campaigns, _actors, _sessions, _encounters, _facts, _notes, _regions, _homebrew, _wiki);
         _media = new RecordingMedia(new RavenMediaStore(db));
+        _db = db;
+        _bookArt = new RavenBookArtRepository(db);
     }
 
     private sealed class RecordingMedia(IMediaStore inner) : IMediaStore
@@ -53,7 +57,7 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
     }
 
     /// <summary>A valid PNG of the given width (and one pixel high).</summary>
-    private static byte[] Png(int width)
+    internal static byte[] Png(int width)
     {
         var raw = new byte[1 + width * 3];
         using var zipped = new MemoryStream();
@@ -76,7 +80,7 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
         return o.ToArray();
     }
 
-    private static uint Crc(byte[] data)
+    internal static uint Crc(byte[] data)
     {
         var crc = 0xFFFFFFFFu;
         foreach (var b in data)
@@ -194,6 +198,55 @@ public class BookArtTests : IClassFixture<RavenDbFixture>
         Assert.Equal(plain.Count, scaled.Count);
         Assert.Null(scaled.Portrait("a-hidden"));
         Assert.Null(scaled.Wiki("w-dm"));
+    }
+
+    /// <summary>A noisy photo-like JPEG: big enough that the scaler shrinks it, and not trivially compressible.</summary>
+    private static byte[] Noisy(int width, int height, int seed)
+    {
+        var random = new Random(seed);
+        using var bitmap = new SkiaSharp.SKBitmap(new SkiaSharp.SKImageInfo(width, height, SkiaSharp.SKColorType.Rgba8888, SkiaSharp.SKAlphaType.Opaque));
+        var pixels = bitmap.GetPixelSpan();
+        for (var i = 0; i < pixels.Length; i += 4) { var p = i / 4; pixels[i] = (byte)(p % width / 10 + random.Next(16)); pixels[i + 1] = (byte)(p / width / 12 + random.Next(16)); pixels[i + 2] = (byte)random.Next(40); pixels[i + 3] = 255; }
+        return SkiaSharp.SKImage.FromBitmap(bitmap).Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 92).ToArray();
+    }
+
+    [Fact]
+    public async Task NearTheSizeCap_ThePreviewLeavesOutExactlyWhatThePrintLeavesOut_AndSaysWhichSlot()
+    {
+        var (dm, _) = await SeedAsync();
+        var cover = Noisy(2400, 3000, 5);
+        var portrait = Noisy(2400, 3000, 6);
+        await _media.PutAsync(dm, dm.CampaignId, RavenMediaStore.CampaignCover, new MemoryStream(cover), "image/jpeg");
+        await _media.PutAsync(dm, "a-known", RavenMediaStore.ActorPortrait, new MemoryStream(portrait), "image/jpeg");
+        var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+        Assert.True(source.Campaign.HasCover);
+
+        long Estimate(byte[] bytes, string kind)
+        {
+            Assert.Equal(BookImageProblem.None, BookImageSanitizer.TrySanitize(bytes, out var image));
+            return BookImageScaler.PrintEstimate(image!, kind);
+        }
+
+        // Room for the cover and not for the portrait after it, counted at print size. The preview's own files are about six times smaller,
+        // so a cap that counted them would let the portrait into the preview and not into the PDF.
+        var cap = Estimate(cover, "cover") + Estimate(portrait, "portrait") - 1;
+        var scaler = new BookImageScaler();
+        var print = await new BookArtReader(_media, scaler, cap).ReadAsync(source, BookArtQuality.Print, forUser: dm.UserId);
+        var preview = await new BookArtReader(_media, scaler, cap).ReadAsync(source, BookArtQuality.Preview, forUser: dm.UserId);
+
+        Assert.True(preview.AllImages().Sum(i => (long)i.Bytes.Length) + Estimate(portrait, "portrait") <= cap, "the preview's own bytes would have room");
+        foreach (var art in new[] { print, preview })
+        {
+            Assert.NotNull(art.Cover());
+            Assert.Null(art.Portrait("a-known"));
+            var left = Assert.Single(art.Skipped, s => s.Subject == "portrait:a-known");
+            Assert.Equal("limit", left.Reason);
+            var actor = source.Actors.Single(a => a.Id == "a-known");
+            Assert.Equal(BookSlots.KeyFor(BookSlots.ActorSubject(BookAudience.Party, actor)), left.Slot);
+        }
+
+        Assert.Equal(print.Skipped.Select(s => s.Subject), preview.Skipped.Select(s => s.Subject));
+        Assert.Equal(print.Count, preview.Count);
     }
 
     [Fact]

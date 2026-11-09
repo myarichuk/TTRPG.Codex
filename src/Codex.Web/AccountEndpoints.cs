@@ -23,10 +23,72 @@ public static class AccountEndpoints
 
             await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Results.Redirect("/login");
-        });
+        }).AllowAnonymous(); // an account waiting for approval must be able to sign out; the token still guards it
 
         // Changing language is harmless, so a plain GET (a link in the header and on the sign-in pages) is enough.
         // It sets the cookie, remembers the choice on the signed-in user, then returns to a local page.
+        // Exporting your own data (docs/SERVER_ACCESS_AND_VAULT.md 15): built in a temporary file, since a zip of pictures can be large
+        // and the response does not allow the zip writer's synchronous writes; the file goes when the response is done.
+        app.MapGet("/account/export", async (HttpContext ctx, PersonalExport export) =>
+        {
+            var userId = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Results.Unauthorized();
+            var username = ctx.User.Identity?.Name ?? "account";
+            var file = new FileStream(Path.GetTempFileName(), FileMode.Open, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+            try
+            {
+                await export.WriteAsync(userId, username, file, ctx.RequestAborted);
+                file.Position = 0;
+            }
+            catch
+            {
+                await file.DisposeAsync();
+                throw;
+            }
+
+            var name = string.Concat(username.Select(c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '_'));
+            return Results.File(file, "application/zip", $"codex-{name}-{DateTime.UtcNow:yyyy-MM-dd}.zip");
+        }).RequireAuthorization();
+
+        // Deleting your own account (docs/SERVER_ACCESS_AND_VAULT.md 16): a form post, since only a request can clear the cookie. The
+        // password says it is you (an account that signs in only elsewhere types its name), and every campaign you own goes to the
+        // co-GM picked for it ("pass:<campaign id>").
+        app.MapPost("/account/delete", async (HttpContext ctx, Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, IUserRepository users,
+            AccountDeletion deletion, AccountCheck check, IServerSettingsStore settings) =>
+        {
+            try
+            {
+                await antiforgery.ValidateRequestAsync(ctx);
+            }
+            catch (Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException)
+            {
+                return Results.BadRequest("Invalid antiforgery token.");
+            }
+
+            var userId = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null || await users.GetUserByIdAsync(userId) is not { } user) return Results.Redirect("/login");
+            var form = await ctx.Request.ReadFormAsync();
+            if (!OwnDeletion.Confirms(user, form["confirm"].ToString())) return Results.LocalRedirect("/vault?delete=wrong");
+
+            var result = await deletion.DeleteAsync(userId, null, OwnDeletion.NewOwnersFrom(form));
+            check.Forget(userId);
+            switch (result)
+            {
+                case AccountDeletionResult.Deleted:
+                    await settings.LogAsync(new AdminLogDocument { ByUserId = userId, ByName = user.Username, Action = AdminAction.DeletedOwn, TargetName = user.Username });
+                    await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    return Results.LocalRedirect("/login?deleted=1");
+                case AccountDeletionResult.LastAdmin:
+                    return Results.LocalRedirect("/vault?delete=admin");
+                case AccountDeletionResult.NotFound:
+                    return Results.Redirect("/login");
+                case AccountDeletionResult.StillOwns:
+                    return Results.LocalRedirect("/vault?delete=meanwhile");
+                default:
+                    return Results.LocalRedirect("/vault?delete=owners");
+            }
+        }).RequireAuthorization();
+
         app.MapGet("/set-culture", async (string culture, string? returnUrl, HttpContext ctx, IUserRepository users) =>
         {
             var tag = Codex.Localization.SupportedCultures.Normalize(culture);
@@ -96,10 +158,18 @@ public static class AccountEndpoints
                 }
             }
 
+            var firstAdmin = false;
             if (user == null)
             {
-                // A server open to the internet makes new accounts only for people who arrive with a real invite.
-                if (!await Codex.Web.ExposurePolicy.MaySignUpAsync(Codex.Web.ExposurePolicy.IsExposed(config), returnUrl, campaignRepository))
+                // The sign-up rule (docs/SERVER_ACCESS_AND_VAULT.md 3): open to the internet, only with a real invite.
+                var exposed = Codex.Web.ExposurePolicy.IsExposed(config);
+                var settingsStore = context.RequestServices.GetRequiredService<IServerSettingsStore>();
+                var noAccounts = !await userRepository.AnyUsersExistAsync();
+                var status = await Codex.Web.ServerAccess.NewAccountAsync(settingsStore, exposed, returnUrl, campaignRepository);
+                // The very first account, made on this computer, is the admin's, whatever the rule says.
+                var mayBeFirstAdmin = string.IsNullOrWhiteSpace(config["Codex:AdminUsername"]) && Codex.Web.ExposurePolicy.MayClaimFirstAdmin(exposed, context.Connection.RemoteIpAddress);
+                // A server with no accounts takes only its admin's, from this computer; otherwise the rule decides.
+                if (noAccounts ? !mayBeFirstAdmin : status == null)
                 {
                     await context.SignOutAsync("External");
                     return Results.Redirect("/login?error=invite-only");
@@ -112,6 +182,8 @@ public static class AccountEndpoints
                     Username = baseUsername,
                     Email = email ?? "",
                     Roles = new List<string> { UserRoles.Player },
+                    Status = status ?? AccountStatus.Pending,
+                    CreatedAt = DateTime.UtcNow,
                     Culture = Codex.Localization.SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name),
                     ExternalLogins = new List<ExternalLogin> { new ExternalLogin { Provider = provider, ProviderKey = providerKey } }
                 };
@@ -130,14 +202,26 @@ public static class AccountEndpoints
                 // The first account made on this computer runs the server, but never on an open one (R13). The name is the identity
                 // provider's display name, which the person signing in chooses, so unlike the sign-up form it is never matched
                 // against Codex:AdminUsername.
-                if (string.IsNullOrWhiteSpace(config["Codex:AdminUsername"])
-                    && Codex.Web.ExposurePolicy.MayClaimFirstAdmin(Codex.Web.ExposurePolicy.IsExposed(config), context.Connection.RemoteIpAddress)
-                    && await userRepository.TryClaimFirstAdminAsync(user.Id))
+                if (mayBeFirstAdmin && await userRepository.TryClaimFirstAdminAsync(user.Id))
                 {
                     user.Roles.Add(UserRoles.ServerAdmin);
+                    user.Roles.Add(UserRoles.GameMaster);
+                    user.Status = AccountStatus.Approved;
+                    firstAdmin = !(await settingsStore.GetAsync()).SetupDone;
+                }
+                else if (status == null)
+                {
+                    // Someone else took the seat between the check and now.
+                    await context.SignOutAsync("External");
+                    return Results.Redirect("/login?error=invite-only");
                 }
 
                 await userRepository.CreateUserAsync(user);
+            }
+            else if (user.Status == AccountStatus.Disabled)
+            {
+                await context.SignOutAsync("External");
+                return Results.Redirect("/login?error=disabled");
             }
 
             var newPrincipal = Codex.Web.UserPrincipal.For(user);
@@ -152,7 +236,33 @@ public static class AccountEndpoints
                 returnUrl = "/";
             }
 
+            if (user.Status == AccountStatus.Pending && Codex.Web.ExposurePolicy.InviteCodeFrom(returnUrl) == null) return Results.Redirect(Codex.Web.ServerAccess.WaitingPath);
+            if (firstAdmin) return Results.Redirect("/setup/server");
             return Results.Redirect(returnUrl ?? "/");
         }).AllowAnonymous();
     }
+}
+
+/// <summary>What deleting your own account asks (docs/SERVER_ACCESS_AND_VAULT.md 16).</summary>
+public static class OwnDeletion
+{
+    /// <summary>The form field naming who takes a campaign: this, then the campaign's id.</summary>
+    public const string PassPrefix = "pass:";
+
+    /// <summary>Whether <paramref name="typed"/> says it is <paramref name="user"/>: their password, or for an account with none (it signs
+    /// in only with another service) their name.</summary>
+    public static bool Confirms(UserDocument user, string? typed)
+    {
+        if (string.IsNullOrEmpty(typed)) return false;
+        if (!HasPassword(user)) return string.Equals(typed.Trim(), user.Username, StringComparison.OrdinalIgnoreCase);
+        var result = new Microsoft.AspNetCore.Identity.PasswordHasher<UserDocument>().VerifyHashedPassword(user, user.PasswordHash, typed);
+        return result is Microsoft.AspNetCore.Identity.PasswordVerificationResult.Success or Microsoft.AspNetCore.Identity.PasswordVerificationResult.SuccessRehashNeeded;
+    }
+
+    public static bool HasPassword(UserDocument user) => !string.IsNullOrEmpty(user.PasswordHash);
+
+    /// <summary>Who takes each campaign, from the form's <c>pass:&lt;campaign id&gt;</c> fields: campaign id to co-GM id.</summary>
+    public static IReadOnlyDictionary<string, string> NewOwnersFrom(IEnumerable<KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues>> form) =>
+        form.Where(f => f.Key.StartsWith(PassPrefix, StringComparison.Ordinal) && f.Key.Length > PassPrefix.Length && !string.IsNullOrEmpty(f.Value.ToString()))
+            .ToDictionary(f => f.Key[PassPrefix.Length..], f => f.Value.ToString(), StringComparer.Ordinal);
 }

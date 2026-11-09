@@ -17,6 +17,15 @@ Bundled third-party software:
 - PuppeteerSharp (prints campaign books to PDF with a browser already on the machine; it downloads none) - MIT License -
   https://github.com/hardkoded/puppeteer-sharp
 - PdfPig (reads the outline of a printed book to number its table of contents; also used by tests) - Apache License 2.0 - https://github.com/UglyToad/PdfPig
+- The editable book's browser bundles (`src/Codex.Web/wwwroot/lib/book`, built by `tools/book-editor`): marked-hbfm, marked,
+  CodeMirror and their dependencies, each under its own licence, all collected in
+  `src/Codex.Web/wwwroot/lib/book/THIRD-PARTY-NOTICES.txt`.
+- Homebrewery's "Blank" theme layout (`tools/book-editor/themes/blank.less`, compiled into
+  `src/Codex.Core/Book/Themes/blank.css`), trimmed of its fonts and pictures - MIT License, Copyright (c) 2016 Scott Tolksdorf -
+  https://github.com/naturalcrit/homebrewery (the notice is in the same `THIRD-PARTY-NOTICES.txt`)
+- Homebrewery's "5e PHB" theme, as the book's Homebrewery compatibility layer (`tools/book-editor/themes/homebrewery-5e.less`,
+  compiled into `src/Codex.Core/Book/Themes/homebrewery-5e.css` with its pictures, colours, shadows and gradients taken out: its
+  layout only) - MIT License, the same notice. None of Homebrewery's pictures is shipped.
 
 ### RavenDB
 
@@ -51,6 +60,49 @@ files as `OFL.txt`; the Latin subsets were taken unmodified from the Fontsource 
   Hebrew headings beside Cinzel - `src/Codex.Web/wwwroot/fonts/frank-ruhl-libre/OFL.txt`
 - Assistant, Copyright 2020 The Assistant Project Authors (https://github.com/hafontia/Assistant) - Hebrew body
   text beside Alegreya Sans - `src/Codex.Web/wwwroot/fonts/assistant/OFL.txt`
+
+The Ashen Vellum book theme's typefaces, Latin subsets taken unmodified from their Fontsource packages (5.3.0), each with its
+licence beside it:
+
+- IM Fell English and IM Fell English SC, IM Fell DW Pica and IM Fell DW Pica SC, by Igino Marini
+  (https://iginomarini.com/fell/) - SIL Open Font License 1.1 - `src/Codex.Web/wwwroot/fonts/im-fell-*/OFL.txt`
+- Pirata One, Copyright (c) 2012 Rodrigo Fuenzalida, Nicolas Massi, Reserved Font Name "Pirata" - SIL Open Font License 1.1 -
+  `src/Codex.Web/wwwroot/fonts/pirata-one/OFL.txt`
+- Special Elite, by Astigmatic - Apache License 2.0 - `src/Codex.Web/wwwroot/fonts/special-elite/LICENSE.txt`
+
+Its stand-ins for Russian and Hebrew books (the faces above have only Latin letters), also unmodified Fontsource 5.3.0 subsets, each with
+its licence beside it; a book embeds only those of its own language:
+
+- Old Standard TT (Cyrillic regular and italic; and its latin-ext file, used only for the obelisk the theme's lists and page numbers
+  print), Copyright 2011 The Old Standard Project Authors - SIL Open Font License 1.1 - `src/Codex.Web/wwwroot/fonts/old-standard-tt/OFL.txt`
+- Ruslan Display (Cyrillic), Copyright 2011 Oleg Snarsky, Denis Masharov, Vladimir Rabdu - SIL Open Font License 1.1 -
+  `src/Codex.Web/wwwroot/fonts/ruslan-display/OFL.txt`
+- Cousine (Cyrillic), Copyright The Cousine Project Authors (https://github.com/googlefonts/cousine) - SIL Open Font License 1.1 -
+  `src/Codex.Web/wwwroot/fonts/cousine/OFL.txt`
+- David Libre (Hebrew), Copyright 2016 The David Libre Project Authors (https://github.com/meirsadan/david-libre) - SIL Open Font
+  License 1.1 - `src/Codex.Web/wwwroot/fonts/david-libre/OFL.txt`
+- Frank Ruhl Libre Black (Hebrew, weight 900), from the same project as the Frank Ruhl Libre above - `src/Codex.Web/wwwroot/fonts/frank-ruhl-libre/OFL.txt`
+
+For the stand-ins the theme wizard offers (docs/BOOK_EXPORT.md 41.22), the bold Cyrillic of Old Standard TT and Cousine and the bold Hebrew of
+David Libre, from the same unmodified Fontsource 5.3.0 packages and under the same licences as above.
+
+The book's pages are made with Homebrewery (https://homebrewery.naturalcrit.com/, by naturalcrit, MIT): its notice is in
+`src/Codex.Web/wwwroot/lib/book/THIRD-PARTY-NOTICES.txt`, and the book editor, the theme wizard and the About page credit it visibly, by the
+maintainer's wish, though MIT asks only for the notice.
+
+The test fixtures `tests/Codex.Tests/Fixtures/Fonts/ruslan-display-cyrillic.{ttf,woff}` are the Ruslan Display file above written out
+as TrueType and WOFF by fontTools, to test the font reader; same licence, beside them.
+
+The faces Homebrewery's 5e layout names, for the book's Homebrewery compatibility layer: Homebrewery's own copies (commit 3e600a0),
+unmodified, except the drop-cap face, Solbera Imitation 1.60 from Solbera's own release converted to WOFF2, in
+`src/Codex.Web/wwwroot/fonts/homebrewery-5e` (its `README.txt` says what each is and where it came from):
+
+- Bookinsanity, Scaly Sans, Scaly Sans Caps, Mr Eaves Small Caps, Nodesto Caps Condensed, Nodesto Caps Wide and Solbera Imitation,
+  by Solbera, with fixes and additions by Ryrok, Ners and LUCASTUCIOUS and changes by Homebrewery's contributors - Creative Commons
+  Attribution-ShareAlike 4.0 International - `CC-BY-SA-4.0.txt` there. Sharing them on under the same licence is what it asks; the
+  book only embeds them in a PDF, which does not make the book itself ShareAlike.
+- Overpass, Copyright 2021 The Overpass Project Authors - SIL Open Font License 1.1 - `overpass-OFL.txt` there
+- Walter Turncoat, Copyright (c) 2010 Font Diner, Inc DBA Sideshow - Apache License 2.0 - `walter-turncoat-LICENSE.txt` there
 
 ### Launcher artwork
 

@@ -1,0 +1,120 @@
+@using Codex.Persistence
+
+@* The server's settings (docs/SERVER_ACCESS_AND_VAULT.md 2, 3, 5): the setup shows one part a step, the admin page all of them. It edits
+   Value in place; the page saves it. *@
+
+@if (Part is SettingsPart.SignUp or SettingsPart.All)
+{
+    <fieldset class="mb-4" data-testid="settings-signup">
+        <legend class="@LegendClass">@L["Admin.Settings.SignUp"]</legend>
+        @Choice("signup-approval", "signup", Value.SignUp == SignUpRule.Approval, () => Value.SignUp = SignUpRule.Approval, "Admin.Settings.SignUp.Approval", "Admin.Settings.SignUp.ApprovalHint")
+        @Choice("signup-invite", "signup", Value.SignUp == SignUpRule.InviteOnly, () => Value.SignUp = SignUpRule.InviteOnly, "Admin.Settings.SignUp.InviteOnly", "Admin.Settings.SignUp.InviteOnlyHint")
+        @Choice("signup-open", "signup", Value.SignUp == SignUpRule.Open, () => Value.SignUp = SignUpRule.Open, "Admin.Settings.SignUp.Open", "Admin.Settings.SignUp.OpenHint")
+        <p class="field-hint mb-0">@L["Admin.Settings.SignUp.Internet"]</p>
+    </fieldset>
+}
+
+@if (Part is SettingsPart.Campaigns or SettingsPart.All)
+{
+    <fieldset class="mb-4" data-testid="settings-campaigns">
+        <legend class="@LegendClass">@L["Admin.Settings.Campaigns"]</legend>
+        @Choice("campaigns-gm", "campaigns", Value.CampaignCreation == CampaignCreationRule.GameMasters, () => Value.CampaignCreation = CampaignCreationRule.GameMasters, "Admin.Settings.Campaigns.GameMasters", "Admin.Settings.Campaigns.GameMastersHint")
+        @Choice("campaigns-anyone", "campaigns", Value.CampaignCreation == CampaignCreationRule.Anyone, () => Value.CampaignCreation = CampaignCreationRule.Anyone, "Admin.Settings.Campaigns.Anyone", "Admin.Settings.Campaigns.AnyoneHint")
+    </fieldset>
+}
+
+@if (Part is SettingsPart.ServerAi or SettingsPart.All)
+{
+    var ai = ExposurePolicy.ServerAiFor(Exposed, Value.ServerAi);
+    <fieldset class="mb-4" data-testid="settings-server-ai">
+        <legend class="@LegendClass">@L["Admin.Settings.ServerAi"]</legend>
+        <p class="field-hint">@L["Admin.Settings.ServerAi.Hint"]</p>
+        @Choice("server-ai-gm", "server-ai", ai == ServerAiRule.GameMasters, () => Value.ServerAi = ServerAiRule.GameMasters, "Admin.Settings.ServerAi.GameMasters", "Admin.Settings.ServerAi.GameMastersHint")
+        @Choice("server-ai-everyone", "server-ai", ai == ServerAiRule.Everyone, () => Value.ServerAi = ServerAiRule.Everyone, "Admin.Settings.ServerAi.Everyone", "Admin.Settings.ServerAi.EveryoneHint")
+        @Choice("server-ai-admins", "server-ai", ai == ServerAiRule.Admins, () => Value.ServerAi = ServerAiRule.Admins, "Admin.Settings.ServerAi.Admins", "Admin.Settings.ServerAi.AdminsHint")
+    </fieldset>
+}
+
+@if (Part is SettingsPart.Fetching or SettingsPart.All)
+{
+    <fieldset class="mb-4" data-testid="settings-fetch">
+        <legend class="@LegendClass">@L["Admin.Settings.Fetch"]</legend>
+        <p class="field-hint">@L["Admin.Settings.Fetch.Hint"]</p>
+        @Choice("fetch-listed", "fetch", Value.WebFetch == WebFetchRule.Listed, () => Value.WebFetch = WebFetchRule.Listed, "Admin.Settings.Fetch.Listed", "Admin.Settings.Fetch.ListedHint")
+        @Choice("fetch-any", "fetch", Value.WebFetch == WebFetchRule.AnyPublic, () => Value.WebFetch = WebFetchRule.AnyPublic, "Admin.Settings.Fetch.Any", "Admin.Settings.Fetch.AnyHint")
+
+        @if (Value.WebFetch == WebFetchRule.Listed)
+        {
+            <div class="mt-3">
+                <label for="fetch-sites" class="field-label">@L["Admin.Settings.Fetch.Sites"]</label>
+                <textarea id="fetch-sites" class="field-input" rows="8" spellcheck="false" dir="ltr" aria-describedby="fetch-sites-hint @(BadSites.Count > 0 ? "fetch-sites-bad" : "")"
+                          value="@sitesText" @onchange="SitesChanged" data-testid="fetch-sites"></textarea>
+                <div id="fetch-sites-hint" class="field-hint">@L["Admin.Settings.Fetch.SitesHint"]</div>
+                @if (BadSites.Count > 0)
+                {
+                    <p id="fetch-sites-bad" class="text-danger small mb-0" role="alert" data-testid="fetch-sites-bad">@L["Admin.Settings.Fetch.Bad", string.Join(", ", BadSites)]</p>
+                }
+                <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-sm mt-2" OnClick="RestoreSites" data-testid="fetch-sites-defaults">@L["Admin.Settings.Fetch.Defaults"]</CodexButton>
+            </div>
+        }
+    </fieldset>
+}
+
+@code {
+    public enum SettingsPart { All, SignUp, Campaigns, ServerAi, Fetching }
+
+    /// <summary>The server is open to the internet: with no choice stored, only the admin uses the server's key (shown as such).</summary>
+    [Parameter]
+    public bool Exposed { get; set; }
+
+    [Parameter, EditorRequired]
+    public ServerSettingsDocument Value { get; set; } = null!;
+
+    [Parameter]
+    public SettingsPart Part { get; set; } = SettingsPart.All;
+
+    // One part a step sits under the step's own heading, which asks the same question.
+    private string LegendClass => Part == SettingsPart.All ? "field-label" : "visually-hidden";
+
+    private string sitesText = string.Empty;
+    private ServerSettingsDocument? shown;
+
+    /// <summary>Lines of the site list that are not a site name; they are left out when saved.</summary>
+    public List<string> BadSites { get; private set; } = new();
+
+    protected override void OnParametersSet()
+    {
+        if (!ReferenceEquals(shown, Value))
+        {
+            shown = Value;
+            sitesText = string.Join("\n", Value.FetchSites);
+            BadSites = new();
+        }
+    }
+
+    private void SitesChanged(ChangeEventArgs e)
+    {
+        sitesText = e.Value?.ToString() ?? string.Empty;
+        var lines = sitesText.Split('\n', ',').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
+        BadSites = lines.Where(l => ServerSettingsDocument.Site(l) == null).ToList();
+        Value.FetchSites = lines.Select(ServerSettingsDocument.Site).OfType<string>().Distinct(StringComparer.Ordinal).ToList();
+    }
+
+    private void RestoreSites()
+    {
+        Value.FetchSites = ServerSettingsDocument.DefaultFetchSites.ToList();
+        sitesText = string.Join("\n", Value.FetchSites);
+        BadSites = new();
+    }
+
+    private RenderFragment Choice(string id, string name, bool selected, Action choose, string label, string hint) => __builder =>
+    {
+        <div class="field-check align-items-start mb-2">
+            <input id="@id" type="radio" class="field-box" name="@name" checked="@selected" @onchange="choose" aria-describedby="@(id)-hint" data-testid="@id" />
+            <div>
+                <label for="@id">@L[label]</label>
+                <div id="@(id)-hint" class="field-hint">@L[hint]</div>
+            </div>
+        </div>
+    };
+}

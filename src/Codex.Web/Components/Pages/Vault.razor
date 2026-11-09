@@ -1,0 +1,423 @@
+@page "/vault"
+@page "/vault/{ActorId}"
+@using System.Security.Claims
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@using Microsoft.AspNetCore.Components.Authorization
+@using Codex.Web.Services
+@inject IVaultRepository VaultRepo
+@inject ISystemCatalog Catalog
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject AiFeatures Ai
+@inject CampaignLibrary Library
+@inject Codex.Web.Services.VaultService VaultService
+@inject ILogger<Vault> Logger
+@inject PersonalExport Export
+@inject AccountDeletion Deletion
+@inject IUserRepository Users
+@implements IDisposable
+
+@if (!string.IsNullOrEmpty(ActorId))
+{
+    @* One of the caller's vault characters, on the same sheet a campaign uses (docs/SERVER_ACCESS_AND_VAULT.md 8). *@
+    <ActorSheet @key="ActorId" Vault="true" ActorId="@ActorId" BackLabel="@L["Vault.Back"]" OnBack="@(() => Nav.NavigateTo("/vault"))" />
+}
+else
+{
+    <PageTitle>@L["Vault.Title"] | TTRPG.Codex</PageTitle>
+
+    <div class="page-header">
+        <div>
+            <h1><LucideIcon IconName="archive" Size="28" Class="title-icon" /> @L["Vault.Title"]</h1>
+            <p class="page-subtitle">@L["Vault.Subtitle"]</p>
+        </div>
+        <div class="row-actions">
+            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewAsync" Disabled="@(!Catalog.Systems.Any())" data-testid="vault-new">
+                <LucideIcon IconName="user-plus" Size="18" /> @L["Vault.New"]
+            </CodexButton>
+        </div>
+    </div>
+
+    <StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
+
+    @if (characters == null)
+    {
+        <LoadingSkeleton />
+    }
+    else if (characters.Count == 0)
+    {
+        <div class="empty" data-testid="vault-empty">
+            <div class="empty-icon"><LucideIcon IconName="archive" Size="28" /></div>
+            <h2 class="h4">@L["Vault.Empty"]</h2>
+            <p>@L["Vault.EmptyBody"]</p>
+        </div>
+    }
+    else
+    {
+        var systems = characters.Select(c => c.SystemId ?? "").Distinct().OrderBy(SystemName, StringComparer.CurrentCultureIgnoreCase).ToList();
+        @if (systems.Count > 1)
+        {
+            <div class="mb-3" style="max-width:20rem">
+                <label for="vault-filter" class="field-label">@L["Vault.Filter"]</label>
+                <select id="vault-filter" class="field-select" @bind="filter" data-testid="vault-filter">
+                    <option value="">@L["Vault.FilterAll"]</option>
+                    @foreach (var id in systems)
+                    {
+                        <option value="@id">@SystemName(id)</option>
+                    }
+                </select>
+            </div>
+        }
+        <section class="panel" aria-labelledby="vault-list-heading">
+            <div class="panel-title"><h2 id="vault-list-heading" class="h5"><LucideIcon IconName="users" Size="18" Class="title-icon" /> @L["Vault.Count", Shown.Count]</h2></div>
+            <ul class="list-unstyled mb-0" data-testid="vault-list">
+                @foreach (var character in Shown)
+                {
+                    var shown = character;
+                    <li class="list-row" data-testid="vault-character">
+                        <ActorAvatar Actor="character" DisplayName="@character.Name" Size="md" />
+                        <div class="row-main">
+                            <div class="row-title"><a href="/vault/@character.Id">@character.Name</a></div>
+                            <div class="small-muted">@SystemName(character.SystemId ?? "")</div>
+                        </div>
+                        <div class="row-actions">
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="trash-2" Label="@L["Vault.DeleteLabel", character.Name]" title="@L["Vault.Delete"]" OnClick="() => DeleteAsync(shown)" data-testid="vault-delete" />
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    @* Exporting your own data, and bringing a vault back (docs/SERVER_ACCESS_AND_VAULT.md 15). *@
+    <section class="panel mt-4" aria-labelledby="vault-data-heading" data-testid="vault-data">
+        <div class="panel-title"><h2 id="vault-data-heading" class="h5"><LucideIcon IconName="download" Size="18" Class="title-icon" /> @L["Vault.Data.Title"]</h2></div>
+        <p class="small-muted">@L["Vault.Data.Intro"]</p>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="cx-btn cx-etched cx-sm" href="/account/export" download data-testid="vault-export"><LucideIcon IconName="download" Size="14" /> @L["Vault.Data.Export"]</a>
+            <label class="cx-btn cx-etched cx-sm mb-0" aria-describedby="vault-import-hint">
+                <LucideIcon IconName="upload" Size="14" /> @L["Vault.Data.Import"]
+                <InputFile OnChange="ImportAsync" accept=".json,.zip,application/json,application/zip" class="visually-hidden" disabled="@importing" data-testid="vault-import" />
+            </label>
+        </div>
+        <p id="vault-import-hint" class="field-hint mb-0 mt-2">@L["Vault.Data.ImportHint"]</p>
+        @* Deleting your own account (docs/SERVER_ACCESS_AND_VAULT.md 16), beside the download that keeps a copy. *@
+        <div class="mt-3">
+            <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-sm cx-blood" Icon="trash-2" OnClick="OpenDeleteAsync" data-testid="own-delete">@L["Vault.Delete.Open"]</CodexButton>
+        </div>
+    </section>
+
+    <dialog id="own-delete-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="own-delete-title" data-testid="own-delete-dialog">
+        @if (deletePlan is { } plan)
+        {
+            var blocked = lastAdmin || plan.Owned.Any(o => o.CoGms.Count == 0);
+            @* A plain post: only a request can sign you out once the account is gone. *@
+            <form method="post" action="/account/delete">
+                <AntiforgeryToken />
+                <div class="dialog-body">
+                    <h2 id="own-delete-title">@L["Vault.Delete.Title"]</h2>
+                    <p>@L["Vault.Delete.Body"]</p>
+                    @if (lastAdmin)
+                    {
+                        <p class="text-danger" data-testid="own-delete-last-admin">@L["Vault.Delete.LastAdminFirst"]</p>
+                    }
+                    @if (plan.Owned.Count > 0)
+                    {
+                        <fieldset class="mb-3">
+                            <legend class="field-label">@L["Vault.Delete.Owned"]</legend>
+                            @foreach (var owned in plan.Owned)
+                            {
+                                if (owned.CoGms.Count == 0)
+                                {
+                                    <p class="text-danger mb-2" data-testid="own-delete-no-cogm">@L["Vault.Delete.NoCoGm", owned.Name]</p>
+                                    continue;
+                                }
+
+                                <div class="mb-2" data-testid="own-delete-owned">
+                                    <label for="own-pass-@owned.CampaignId" class="field-label">@owned.Name</label>
+                                    <select id="own-pass-@owned.CampaignId" name="@(OwnDeletion.PassPrefix + owned.CampaignId)" class="field-select" data-testid="own-delete-pass-to">
+                                        @foreach (var coGm in owned.CoGms)
+                                        {
+                                            <option value="@coGm">@L["Admin.Accounts.Delete.ToCoGm", names.GetValueOrDefault(coGm, coGm)]</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        </fieldset>
+                    }
+                    <ul data-testid="own-delete-goes">
+                        @if (plan.Memberships > 0)
+                        {
+                            <li>@L["Vault.Delete.Leaves", plan.Memberships]</li>
+                        }
+                        <li>@L["Vault.Delete.Goes", plan.VaultCharacters]</li>
+                    </ul>
+                    @if (!blocked)
+                    {
+                        <label for="own-delete-confirm" class="field-label">@(hasPassword ? L["Vault.Delete.Password"] : L["Vault.Delete.TypeName", myName])</label>
+                        <input id="own-delete-confirm" name="confirm" type="@(hasPassword ? "password" : "text")" autocomplete="@(hasPassword ? "current-password" : "off")"
+                               class="field-input" required data-testid="own-delete-confirm" />
+                    }
+                </div>
+                <div class="dialog-actions">
+                    <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseDeleteAsync">@L["Common.Cancel"]</CodexButton>
+                    @if (!blocked)
+                    {
+                        <CodexButton Type="submit" Variant="CodexButtonVariant.Blood" data-testid="own-delete-submit">@L["Vault.Delete.Confirm"]</CodexButton>
+                    }
+                </div>
+            </form>
+        }
+    </dialog>
+
+    <ConfirmDialog @ref="confirm" />
+
+    <dialog id="vault-new-dialog" class="codex-dialog" aria-labelledby="vault-new-title" @onclose="aiCall.Stop">
+        <form @onsubmit="CreateAsync" @onsubmit:preventDefault="true">
+            <div class="dialog-body">
+                <h2 id="vault-new-title">@L["Vault.New"]</h2>
+                @if (aiReady)
+                {
+                    @* The same two starts a campaign offers (docs/SERVER_ACCESS_AND_VAULT.md 6), against the server's packs. *@
+                    <fieldset class="mb-3">
+                        <legend class="field-label">@L["Vault.StartFrom"]</legend>
+                        <div class="field-check"><input id="vn-blank" type="radio" class="field-box" name="vn-start" checked="@(!fromConcept)" disabled="@aiBusy" @onchange="() => fromConcept = false" data-testid="vault-new-blank" /><label for="vn-blank">@L["Vault.StartBlank"]</label></div>
+                        <div class="field-check"><input id="vn-concept" type="radio" class="field-box" name="vn-start" checked="@fromConcept" disabled="@aiBusy" @onchange="() => fromConcept = true" data-testid="vault-new-from-concept" /><label for="vn-concept">@L["Vault.StartConcept"]</label></div>
+                    </fieldset>
+                }
+                @if (fromConcept)
+                {
+                    <div class="mb-3">
+                        <label for="vn-concept-text" class="field-label">@L["Vault.Concept"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Vault.Required"]</span></label>
+                        <textarea id="vn-concept-text" class="field-input" rows="3" required readonly="@aiBusy" @bind="concept" placeholder="@L["Vault.ConceptPlaceholder"]" aria-describedby="vn-concept-hint" data-testid="vault-new-concept"></textarea>
+                        <div id="vn-concept-hint" class="field-hint">@L["Vault.ConceptHint"]</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label for="vn-name" class="field-label">@L["Vault.Name"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Vault.Required"]</span></label>
+                        <input id="vn-name" class="field-input" @bind="newName" required maxlength="@RavenVaultRepository.MaxName" data-testid="vault-new-name" />
+                    </div>
+                }
+                <div class="mb-1">
+                    <label for="vn-system" class="field-label">@L["Vault.System"] <span class="required-mark" aria-hidden="true">*</span><span class="visually-hidden">@L["Vault.Required"]</span></label>
+                    <select id="vn-system" class="field-select" @bind="newSystemId" required disabled="@aiBusy" aria-describedby="vn-system-hint" data-testid="vault-new-system">
+                        @foreach (var system in Catalog.Systems)
+                        {
+                            <option value="@system.Id">@system.Name</option>
+                        }
+                    </select>
+                    <div id="vn-system-hint" class="field-hint">@L["Vault.SystemHint"]</div>
+                </div>
+                @if (aiBusy)
+                {
+                    <AiWorking Text="@L["Vault.Generating"]" OnStop="aiCall.Stop" TestId="vault-new-working" />
+                }
+                else if (aiError != null)
+                {
+                    <p class="text-danger mb-0 mt-2" role="alert">@aiError</p>
+                }
+                else if (aiStopped)
+                {
+                    <p class="small-muted mb-0 mt-2" role="status">@L["Common.Ai.Stopped"]</p>
+                }
+            </div>
+            <div class="dialog-actions">
+                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseNewAsync">@L["Common.Cancel"]</CodexButton>
+                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Busy="@createGate.IsBusy" Disabled="@aiBusy" data-testid="vault-new-submit">@(fromConcept ? L["Vault.Generate"] : L["Vault.Create"])</CodexButton>
+            </div>
+        </form>
+    </dialog>
+}
+
+@code {
+    [Parameter] public string? ActorId { get; set; }
+
+    // Why deleting your own account was refused, from /account/delete; only its own codes say anything.
+    [SupplyParameterFromQuery(Name = "delete")] public string? DeleteRefused { get; set; }
+
+    private AccountDeletionPlan? deletePlan;
+    private Dictionary<string, string> names = new(StringComparer.Ordinal);
+    private bool hasPassword;
+    private bool lastAdmin;
+    private string myName = string.Empty;
+
+    private string? userId;
+    private List<ActorDocument>? characters;
+    private string filter = "";
+    private string newName = "";
+    private string newSystemId = "";
+    private Flash? flash;
+    private ConfirmDialog confirm = null!;
+    private readonly SaveGate createGate = new();
+    private readonly AiCall aiCall = new();
+    private bool aiReady;
+    private bool fromConcept;
+    private string concept = "";
+    private bool aiBusy;
+    private string? aiError;
+    private bool aiStopped;
+    private bool importing;
+
+    private List<ActorDocument> Shown => (characters ?? new()).Where(c => filter.Length == 0 || c.SystemId == filter).ToList();
+
+    private string SystemName(string systemId) => Catalog.GetDisplayName(systemId);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ActorId)) return;
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        characters = userId == null ? new List<ActorDocument>() : (await VaultRepo.GetAllAsync(userId)).ToList();
+        aiReady = userId != null && await Ai.IsConfiguredAsync(userId);
+        flash = DeleteRefused switch
+        {
+            "wrong" => Flash.Error(L["Vault.Delete.Wrong"]),
+            "owners" => Flash.Error(L["Vault.Delete.NeedsOwner"]),
+            "admin" => Flash.Error(L["Vault.Delete.LastAdmin"]),
+            "meanwhile" => Flash.Error(L["Vault.Delete.Meanwhile"]),
+            _ => flash
+        };
+    }
+
+    // The dialog says who takes each campaign you own (one of its co-GMs; one with none has to be passed on or deleted first) and what goes.
+    private async Task OpenDeleteAsync()
+    {
+        if (userId == null || await Users.GetUserByIdAsync(userId) is not { } me) return;
+        (hasPassword, myName) = (OwnDeletion.HasPassword(me), me.Username);
+        lastAdmin = me.Roles.Contains(UserRoles.ServerAdmin) && me.Status == AccountStatus.Approved
+            && !(await Users.ListAsync()).Any(o => o.Id != me.Id && o.Roles.Contains(UserRoles.ServerAdmin) && o.Status == AccountStatus.Approved);
+        deletePlan = await Deletion.PlanAsync(userId);
+        names = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var id in deletePlan.Owned.SelectMany(o => o.CoGms).Distinct())
+        {
+            names[id] = (await Users.GetUserByIdAsync(id))?.Username ?? id;
+        }
+
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", "own-delete-dialog");
+    }
+
+    private Task CloseDeleteAsync() => JS.InvokeVoidAsync("codex.closeModal", "own-delete-dialog").AsTask();
+
+    // Adds the characters of a vault file, or of a whole export, as new ones; those of a system not on this server are left out.
+    private async Task ImportAsync(InputFileChangeEventArgs e)
+    {
+        if (userId == null || importing) return;
+        if (e.File.Size > PersonalExport.MaxImportBytes)
+        {
+            flash = Flash.Error(L["Vault.Data.TooBig"]);
+            return;
+        }
+
+        importing = true;
+        try
+        {
+            await using var stream = e.File.OpenReadStream(PersonalExport.MaxImportBytes);
+            var result = await Export.ImportVaultAsync(userId, stream, id => Catalog.LoadedSystemIds.Contains(id));
+            flash = result switch
+            {
+                null => Flash.Error(L["Vault.Data.NotAVault"]),
+                (var added, 0) => Flash.Success(L["Vault.Data.Imported", added]),
+                var (added, skipped) => Flash.Success(L["Vault.Data.ImportedSome", added, skipped])
+            };
+            characters = (await VaultRepo.GetAllAsync(userId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Importing vault characters failed");
+            flash = Flash.Error(L["Vault.Data.ImportFailed", L.Describe(ex)]);
+        }
+        finally
+        {
+            importing = false;
+        }
+    }
+
+    private async Task OpenNewAsync()
+    {
+        newName = "";
+        concept = "";
+        fromConcept = false;
+        aiError = null;
+        aiStopped = false;
+        newSystemId = Catalog.Systems.FirstOrDefault()?.Id ?? "";
+        await JS.InvokeVoidAsync("codex.showModal", "vault-new-dialog");
+        await JS.InvokeVoidAsync("codex.focus", "vn-name");
+    }
+
+    private Task CloseNewAsync() => JS.InvokeVoidAsync("codex.closeModal", "vault-new-dialog").AsTask();
+
+    private Task CreateAsync() => createGate.RunAsync(async () =>
+    {
+        if (userId == null || !Catalog.LoadedSystemIds.Contains(newSystemId)) return;
+        if (fromConcept)
+        {
+            await CreateFromConceptAsync(userId);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newName)) return;
+        var created = await VaultService.CreateAsync(userId, newSystemId, newName);
+        await CloseNewAsync();
+        Nav.NavigateTo($"/vault/{created.Id}");
+    });
+
+    // The draft picks only what the server's packs offer for the system: no campaign, so no homebrew.
+    private async Task CreateFromConceptAsync(string owner)
+    {
+        if (string.IsNullOrWhiteSpace(concept) || aiBusy) return;
+        aiBusy = true;
+        aiError = null;
+        aiStopped = false;
+        var ct = aiCall.Begin();
+        try
+        {
+            var systemId = newSystemId;
+            var campaign = Codex.Web.Services.VaultService.CampaignFor(systemId);
+            var access = CampaignAccess.Vault(owner);
+            var draft = await Ai.CreateCharacterAsync(concept, ActorKind.PlayerCharacter, campaign, Catalog.GetDefinition(systemId), owner,
+                async type => (await Library.OptionsAsync(campaign, access, type, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList(),
+                async type => (await Library.OptionsAsync(campaign, access, type, L.Culture.Name)).Select(i => i.Entry).ToList(), ct);
+            ct.ThrowIfCancellationRequested();
+
+            var created = await VaultService.CreateAsync(owner, systemId, draft.Name, draft);
+            await CloseNewAsync();
+            Nav.NavigateTo($"/vault/{created.Id}");
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            aiStopped = true;
+        }
+        catch (AiNotConfiguredException)
+        {
+            aiError = L["Vault.NoAi"];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "AI character creation failed in the vault");
+            aiError = L["Vault.AiFailed", AiFailureText.For(L, ex)];
+        }
+        finally
+        {
+            aiCall.End(ct);
+            aiBusy = false;
+        }
+    }
+
+    public void Dispose() => aiCall.Dispose();
+
+    private async Task DeleteAsync(ActorDocument character)
+    {
+        if (userId == null) return;
+        if (!await confirm.ShowAsync(L["Vault.DeleteQ", character.Name], L["Vault.DeleteBody"], L["Vault.Delete"], isDestructive: true)) return;
+        if (await VaultRepo.DeleteAsync(character.Id, userId))
+        {
+            characters?.RemoveAll(c => c.Id == character.Id);
+            flash = Flash.Success(L["Vault.Deleted", character.Name]);
+        }
+    }
+}

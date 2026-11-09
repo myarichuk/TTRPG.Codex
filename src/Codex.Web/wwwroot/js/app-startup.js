@@ -580,7 +580,7 @@ window.codex = {
         const href = URL.createObjectURL(blob);
         window.codex.download(href, name);
         setTimeout(() => URL.revokeObjectURL(href), 60000);
-        return { status: 200, detail: null, code: null };
+        return { status: 200, detail: null, code: null, overflow: response.headers.get('x-book-overflow') };
     },
 
     copyText: async function (text) {
@@ -623,6 +623,11 @@ window.codex = {
         if (el && el.showModal && !el.open) el.showModal();
     },
     // Escape on a guarded dialog doesn't close it; the component's oncancel handler decides (asking before discarding work).
+    // Moves focus to an element by id (a tab the arrow keys moved to).
+    focusById: function (id) {
+        const el = document.getElementById(id);
+        if (el) el.focus();
+    },
     guardModal: function (id) {
         const el = document.getElementById(id);
         if (el && !el.dataset.guarded) {

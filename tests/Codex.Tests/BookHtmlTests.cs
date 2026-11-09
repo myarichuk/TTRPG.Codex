@@ -31,12 +31,15 @@ public class BookHtmlTests
     [InlineData("en", true)]
     [InlineData("en-US", true)]
     [InlineData("EN", true)]
-    [InlineData("ru", false)]
-    [InlineData("he", false)]
-    [InlineData("he-IL", false)]
+    [InlineData("ru", true)]
+    [InlineData("he", true)]
+    [InlineData("he-IL", true)]
+    [InlineData("de", false)]
+    [InlineData("ar", false)]
     [InlineData("", false)]
-    public void ThePlainThemeCoversEnglishOnly_AndRefusesTheRestInsteadOfPrintingThemInTheWrongFonts(string language, bool supported)
+    public void ThePlainThemePrintsEnglishRussianAndHebrew_AndRefusesTheRestInsteadOfPrintingThemInTheWrongFonts(string language, bool supported)
     {
+        // Which faces cover which letters is BookFontCoverageTests'; this is the gate.
         Assert.Equal(supported, BookThemes.Plain.Supports(language));
 
         var built = BookHtml.Build(Book(language: language), BookThemes.Plain, new BookHtmlOptions { Font = Font });
@@ -120,21 +123,6 @@ public class BookHtmlTests
 
             Assert.NotNull(built.Html);
             Assert.Empty(built.MissingFonts);
-        }
-    }
-
-    [Fact]
-    public void AThemeIsHeldToTheLanguagesItsFontsCover()
-    {
-        // The plain theme declares English, so it must name a Latin face for each weight a book uses; a theme that declares
-        // Russian or Hebrew must name faces for those scripts. This is the check that makes adding a language to a theme a decision.
-        foreach (var theme in BookThemes.All)
-        {
-            foreach (var language in theme.Languages)
-            {
-                var needed = language switch { "ru" => "cyrillic", "he" => "hebrew", _ => "latin" };
-                Assert.Contains(theme.Fonts, f => f.File.Contains(needed, StringComparison.Ordinal));
-            }
         }
     }
 

@@ -61,6 +61,13 @@ python3 site/tools/optimize-screenshots.py site/.capture
 The demo campaign (names, texts, languages) is `tools/demo-data.mjs`. If a screen changes, rerun and commit the
 WebP files.
 
+Options for step 2: `--book-only true` sets the campaign up and takes only the book's screens (the print panel,
+the pictures tray and the editor: its chapters, Ask AI, the party leak check and a stale chapter); `--chrome <path>`
+uses an installed Chrome when Playwright's own browser is not downloaded; `--python <path>` picks the Python that
+has Pillow. The printed-pages picture (`book-pages`) also needs poppler's `pdftoppm`, and is skipped without it.
+Nothing in the script asks a model or draws a picture, and it never types a key: the AI and picture screens are
+taken before any run.
+
 ## Deployment
 
 `.github/workflows/pages.yml` builds, checks and deploys on every push to `main` that touches the site or the

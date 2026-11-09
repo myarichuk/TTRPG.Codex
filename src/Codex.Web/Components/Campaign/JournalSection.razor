@@ -86,6 +86,7 @@ else
                             <MarkdownEditor Id="journal-text" Title="@(string.IsNullOrWhiteSpace(editing.Title) ? L["Campaign.Journal.Field.Text"] : editing.Title)" Rows="10" @bind-Value="editing.Body"
                                             Mentions="@mentionsJson" DescribedBy="journal-mention-hint" TestId="journal-body"
                                             Preview="@(text => MentionLinks.ToHtml(mentions.Encode(text), mentions, Ctx.Campaign.Id))">
+                                <TidyNotesButton @bind-Value="editing.Body" Mentions="mentions" UserId="@Ctx.UserId" TestId="journal-tidy" />
                                 <p id="journal-mention-hint" class="field-hint">@L["Campaign.Journal.MentionHint"]</p>
                             </MarkdownEditor>
                         </div>

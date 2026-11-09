@@ -13,6 +13,7 @@ public class CampaignAccessResolver(ICampaignRepository campaignRepository) : IC
     /// someone removed from the campaign writes nothing (F13). A preview's access (no user) comes back null too.</summary>
     public static async Task<CampaignAccess?> NowAsync(Raven.Client.Documents.IDocumentStore store, CampaignAccess access)
     {
+        if (string.IsNullOrEmpty(access.CampaignId)) return null;
         using var session = store.OpenAsyncSession();
         var campaign = await session.LoadAsync<CampaignDocument>(access.CampaignId);
         return campaign == null || RoleOf(campaign, access.UserId) is not { } role ? null
@@ -34,5 +35,13 @@ public class CampaignAccessResolver(ICampaignRepository campaignRepository) : IC
         }
 
         return campaign.Members.FirstOrDefault(m => string.Equals(m.UserId, userId, StringComparison.Ordinal))?.Role;
+    }
+
+    /// <summary>Everyone who GMs the campaign: the owner and the members holding the GM role (co-GMs).</summary>
+    public static HashSet<string> GameMasters(CampaignDocument campaign)
+    {
+        var gms = campaign.Members.Where(m => m.Role == CampaignRole.DM).Select(m => m.UserId).ToHashSet(StringComparer.Ordinal);
+        if (!string.IsNullOrEmpty(campaign.OwnerId)) gms.Add(campaign.OwnerId);
+        return gms;
     }
 }

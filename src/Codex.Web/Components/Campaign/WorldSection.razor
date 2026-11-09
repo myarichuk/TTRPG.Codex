@@ -108,7 +108,7 @@ else
                                     @if (!string.IsNullOrWhiteSpace(location.Description))
                                     {
                                         <details class="place-details">
-                                            <summary class="row-sub">@WikiRender.Summary(location.Description, noteMentions, 140, Ctx.IsDm)</summary>
+                                            <summary class="row-sub">@WikiRender.Summary(location.Description, wikiPages, noteMentions, 140, Ctx.IsDm)</summary>
                                             <div class="rules-text mt-2">@((MarkupString)WikiRender.ToHtml(location.Description, wikiPages, noteMentions, Ctx.Campaign.Id, false, Ctx.IsDm ? DmView.From(L, noteMentions) : null))</div>
                                         </details>
                                     }
@@ -646,7 +646,7 @@ else
     }
 
     private Task<ArtImage> GenerateLocationArtAsync(CancellationToken ct) =>
-        Art.GenerateAsync(Ctx.UserId, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide, ct);
+        Art.GenerateAsync(Ctx.UserId, Ctx.Campaign.Id, editingLocation!.Name, $"place in {editingRegion!.Name}", TextFormatting.Summary(editingLocation.Description, 300), ArtShape.Wide, ct);
 
     // ---- Deleting (U7): a place can be undone (its art stays on the region for an hour); a region, with its places and their art, cannot. ----
 

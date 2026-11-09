@@ -110,6 +110,13 @@
   <data name="Page.About.DatabaseBackupsNotLicensed" xml:space="preserve"><value>הגיבויים של מסד הנתונים עצמו כבויים: הרישיון החינמי שלו לא מאפשר אותם. על הגיבוי היומי שלמעלה אפשר לסמוך.</value></data>
   <data name="Page.About.DatabaseBackupsFailed" xml:space="preserve"><value>לא ניתן היה להגדיר את הגיבויים של מסד הנתונים עצמו (ראו את יומן השרת). הגיבוי היומי שלמעלה ממשיך לפעול.</value></data>
   <data name="Page.About.DatabaseBackupsUnknown" xml:space="preserve"><value>הגיבויים של מסד הנתונים עצמו עוד לא נבדקו.</value></data>
+  <data name="Page.AiSettings.ImageStyle" xml:space="preserve"><value>סגנון התמונות</value></data>
+  <data name="Page.AiSettings.ImageStyleHint" xml:space="preserve"><value>המילים שלכם לאיך כל תמונה צריכה להיראות: דיוקנאות, מקומות, איורי הספר. הן נכנסות כמו שנכתבו לבקשה של כל תמונה, במקום הסגנון המובנה. אפשר לתאר כל סגנון.</value></data>
+  <data name="Page.AiSettings.ImageStylePlaceholder" xml:space="preserve"><value>למשל: קונספט ארט ציורי, צורות מסוגננות ועבות, צבעים רוויים, משיכות מכחול נראות</value></data>
+  <data name="Page.AiSettings.ImageStyleTip" xml:space="preserve"><value>תמונות דומות זו לזו כשאותו מודל מצייר אותן באותן מילים. השאירו ריק לסגנון המובנה.</value></data>
+  <data name="Page.AiSettings.ImageStyleSave" xml:space="preserve"><value>שמירת הסגנון</value></data>
+  <data name="Page.AiSettings.ImageStyleSaved" xml:space="preserve"><value>סגנון התמונות נשמר.</value></data>
+  <data name="Page.AiSettings.ImageStyleCleared" xml:space="preserve"><value>סגנון התמונות נוקה: הסגנון המובנה בשימוש.</value></data>
   <data name="Page.About.Software" xml:space="preserve"><value>תוכנה</value></data>
   <data name="Page.Campaign.Fallback" xml:space="preserve"><value>קמפיין</value></data>
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>הקמפיין לא נמצא</value></data>
@@ -210,7 +217,11 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>כפתורי הבינה המלאכותית משתמשים כעת ב-{0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>{0} הוסר.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>לא הוגדר</value></data>
-  <data name="Page.AiSettings.ServerShared" xml:space="preserve"><value>כל חשבון בשרת הזה משתמש במודלים האלה כשאין לו מודל משלו, על חשבון המפתח של השרת. כל חשבון רשאי לשלוח {0} בקשות ו־{1} תמונות ביום; למנהל השרת אין הגבלה.</value></data>
+  <data name="Page.AiSettings.ServerWho.Everyone" xml:space="preserve"><value>כל חשבון בשרת הזה משתמש במודלים האלה כשאין לו מודל משלו, על חשבון המפתח של השרת.</value></data>
+  <data name="Page.AiSettings.ServerWho.GameMasters" xml:space="preserve"><value>מנחי משחק ומנהל השרת משתמשים במודלים האלה כשאין להם מודל משלהם, על חשבון המפתח של השרת. שחקנים צריכים מודל משלהם.</value></data>
+  <data name="Page.AiSettings.ServerWho.Admins" xml:space="preserve"><value>רק מנהל השרת משתמש במודלים האלה. כל השאר צריכים מודל משלהם.</value></data>
+  <data name="Page.AiSettings.ServerAllowance" xml:space="preserve"><value>כל חשבון רשאי לשלוח {0} בקשות ו־{1} תמונות ביום; למנהל השרת אין הגבלה.</value></data>
+  <data name="Page.AiSettings.ServerNotYours" xml:space="preserve"><value>החשבון שלך לא יכול להשתמש במפתח של השרת, ולכן כפתורי ה־AI צריכים מודל משלך (למעלה). מנהל השרת קובע מי יכול להשתמש בו.</value></data>
   <data name="Page.AiSettings.ServerUsedByYou" xml:space="preserve"><value>היום השתמשת בהם ל־{0} בקשות ו־{1} תמונות.</value></data>
   <data name="Page.AiSettings.ServerUsedByNoOne" xml:space="preserve"><value>איש לא השתמש בהם היום.</value></data>
   <data name="Page.AiSettings.ServerUsedHeading" xml:space="preserve"><value>שימוש היום:</value></data>
@@ -244,4 +255,15 @@
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>העתיקו אותם ממחירון הספק. היישום אינו מגיע עם מחירים, ולכן בלעדיהם הוא מציג רק אסימונים ולא עלות מנוחשת.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>מחיר חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>
   <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>קלט {0} / פלט {1} לכל מיליון אסימונים</value></data>
+  <data name="Page.AiSettings.PricePerImage" xml:space="preserve"><value>לכל תמונה</value></data>
+  <data name="Page.AiSettings.PriceImageHint" xml:space="preserve"><value>העתיקו אותו ממחירון הספק. בלעדיו היישום סופר תמונות ואינו מנחש עלות.</value></data>
+  <data name="Page.AiSettings.PriceImageBad" xml:space="preserve"><value>מחיר לתמונה חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>
+  <data name="Page.AiSettings.PriceNoteImage" xml:space="preserve"><value>{0} לכל תמונה</value></data>
+  <data name="Page.Setup.Elsewhere" xml:space="preserve"><value>השרת הזה עוד לא הוגדר. פתחו אותו במחשב שהוא רץ עליו כדי ליצור את חשבון המנהל.</value></data>
+  <data name="Page.Register.NeedsApproval" xml:space="preserve"><value>מנהל השרת מאשר חשבונות חדשים. אפשר להיכנס מיד, ולהשתמש בשרת אחרי האישור.</value></data>
+  <data name="Page.Login.Disabled" xml:space="preserve"><value>החשבון הזה כבוי. פנו למנהל השרת.</value></data>
+  <data name="Page.Home.FinishSetup" xml:space="preserve"><value>השרת פועל עם הגדרות ההתחלה הבטוחות.</value></data>
+  <data name="Page.Home.FinishSetupLink" xml:space="preserve"><value>לסיום ההגדרה</value></data>
+  <data name="Page.Home.JoinOnly" xml:space="preserve"><value>בשרת הזה קמפיינים יוצרים שליטי מבוך. הצטרפו לקמפיין דרך קישור הזמנה משליט המבוך שלו, או בקשו ממנהל השרת להפוך אתכם לשליטי מבוך.</value></data>
+  <data name="Page.Login.AccountDeleted" xml:space="preserve"><value>החשבון שלך נמחק.</value></data>
 </root>

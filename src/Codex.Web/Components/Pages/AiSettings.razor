@@ -32,6 +32,19 @@ else
             @ProviderList(Purpose.Text)
             @ProviderList(Purpose.Image)
 
+            @* The user's own style guide for every picture (docs/BOOK_EXPORT.md 41.23): their words, used as written. *@
+            <section class="panel" aria-labelledby="image-style-heading" data-testid="ai-image-style">
+                <div class="panel-title"><h2 id="image-style-heading" class="h5"><LucideIcon IconName="palette" Size="18" Class="title-icon" /> @L["Page.AiSettings.ImageStyle"]</h2></div>
+                <p class="small mb-2">@L["Page.AiSettings.ImageStyleHint"]</p>
+                <label class="visually-hidden" for="ai-image-style-text">@L["Page.AiSettings.ImageStyle"]</label>
+                <textarea id="ai-image-style-text" class="field-input mb-1" rows="3" maxlength="@ImageStyleGuide.MaxChars" @bind="imageStyle" @bind:event="oninput"
+                          placeholder="@L["Page.AiSettings.ImageStylePlaceholder"]" data-testid="ai-image-style-text"></textarea>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="field-hint flex-grow-1">@L["Page.AiSettings.ImageStyleTip"]</span>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveImageStyleAsync" data-testid="ai-image-style-save">@L["Page.AiSettings.ImageStyleSave"]</CodexButton>
+                </div>
+            </section>
+
             <section class="panel" aria-labelledby="server-heading">
                 <div class="panel-title"><h2 id="server-heading" class="h5"><LucideIcon IconName="shield" Size="18" Class="title-icon" /> @L["Page.AiSettings.ServerHeading"]</h2></div>
                 <p class="mb-1 small">@L["Page.AiSettings.ServerText"]</p>
@@ -42,7 +55,12 @@ else
                 @if (Providers.ServerConfigured || Providers.ServerImageConfigured)
                 {
                     @* Everyone on a LAN server falls back to this key, so say so and show what it has cost today (F14). *@
-                    <p class="small mt-2 mb-1" data-testid="ai-server-shared">@L["Page.AiSettings.ServerShared", Allowance(ServerAiUsage.Kind.Text), Allowance(ServerAiUsage.Kind.Image)]</p>
+                    @* Who falls back to this key is the admin's choice (docs/SERVER_ACCESS_AND_VAULT.md 6); each of them has a daily allowance (F14). *@
+                    <p class="small mt-2 mb-1" data-testid="ai-server-shared">@(Providers.ServerKeyRule switch { ServerAiRule.Admins => L["Page.AiSettings.ServerWho.Admins"], ServerAiRule.GameMasters => L["Page.AiSettings.ServerWho.GameMasters"], _ => L["Page.AiSettings.ServerWho.Everyone"] }) @L["Page.AiSettings.ServerAllowance", Allowance(ServerAiUsage.Kind.Text), Allowance(ServerAiUsage.Kind.Image)]</p>
+                    @if (!Providers.MayUseServerKey(user))
+                    {
+                        <p class="small mb-1" data-testid="ai-server-not-yours">@L["Page.AiSettings.ServerNotYours"]</p>
+                    }
                     @if (serverUse == null)
                     {
                         <p class="small-muted mb-0" data-testid="ai-server-used">@L["Page.AiSettings.ServerUsedByYou", Usage.UsedToday(user.Id, ServerAiUsage.Kind.Text), Usage.UsedToday(user.Id, ServerAiUsage.Kind.Image)]</p>
@@ -137,6 +155,23 @@ else
                                 </div>
                             </div>
                             <div class="field-hint">@L["Page.AiSettings.PriceHint"]</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <div class="field-label">@L["Page.AiSettings.Price"]</div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <div>
+                                    <label for="ai-price-image" class="field-hint">@L["Page.AiSettings.PricePerImage"]</label>
+                                    <input id="ai-price-image" type="number" min="0" step="any" class="field-input" @bind="editing.PricePerImage" data-testid="ai-price-image" aria-invalid="@Invalid("price")" aria-describedby="ai-price-image-hint" />
+                                </div>
+                                <div>
+                                    <label for="ai-price-image-label" class="field-hint">@L["Page.AiSettings.PriceLabel"]</label>
+                                    <input id="ai-price-image-label" class="field-input" maxlength="@AiPrice.MaxLabelLength" @bind="editing.PriceLabel" placeholder="USD" data-testid="ai-price-image-label" />
+                                </div>
+                            </div>
+                            <div id="ai-price-image-hint" class="field-hint">@L["Page.AiSettings.PriceImageHint"]</div>
                         </div>
                     }
                     <div class="mb-3">
@@ -291,6 +326,7 @@ else
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         user = userId == null ? null : await UserRepo.GetUserByIdAsync(userId);
+        imageStyle = user?.ImageStyle ?? string.Empty;
         if (user?.Roles.Contains(ExposurePolicy.ServerAdminRole) == true)
         {
             serverUse = new();
@@ -335,6 +371,7 @@ else
             ProtectedApiKey = provider.ProtectedApiKey,
             InputPricePerMTok = provider.InputPricePerMTok,
             OutputPricePerMTok = provider.OutputPricePerMTok,
+            PricePerImage = provider.PricePerImage,
             PriceLabel = provider.PriceLabel,
             CreatedAt = provider.CreatedAt
         };
@@ -363,6 +400,11 @@ else
     /// <summary>"in 0.15 / out 0.6 USD per 1M tokens · " for a provider with prices, nothing for one without.</summary>
     private string PriceNote(AiProviderConfig provider)
     {
+        if (AiPrice.CleanImage(provider.PricePerImage) is { } perImage)
+        {
+            return L["Page.AiSettings.PriceNoteImage", AiPrice.Format(perImage, provider.PriceLabel, System.Globalization.CultureInfo.CurrentCulture)] + " · ";
+        }
+
         if (AiPrice.Clean(provider.InputPricePerMTok) is not { } input || AiPrice.Clean(provider.OutputPricePerMTok) is not { } output) return string.Empty;
         var culture = System.Globalization.CultureInfo.CurrentCulture;
         return L["Page.AiSettings.PriceNote", AiPrice.Format(input, null, culture), AiPrice.Format(output, provider.PriceLabel, culture)] + " · ";
@@ -396,12 +438,19 @@ else
                 return;
             }
 
+            editing.PricePerImage = null;
             editing.PriceLabel = AiPrice.CleanLabel(editing.PriceLabel);
         }
         else
         {
+            if (editing.PricePerImage != null && AiPrice.CleanImage(editing.PricePerImage) == null)
+            {
+                Refuse(L["Page.AiSettings.PriceImageBad", AiPrice.MaxPerImage.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)], "price");
+                return;
+            }
+
             editing.InputPricePerMTok = editing.OutputPricePerMTok = null;
-            editing.PriceLabel = string.Empty;
+            editing.PriceLabel = AiPrice.CleanLabel(editing.PriceLabel);
         }
 
         if (!string.IsNullOrWhiteSpace(plainKey))
@@ -482,6 +531,17 @@ else
             if (p == Purpose.Image) stored.DefaultImageProviderId = provider.Id; else stored.DefaultAiProviderId = provider.Id;
         });
         flash = Flash.Success(L["Common.Undone"]);
+    }
+
+    private string imageStyle = string.Empty;
+
+    private async Task SaveImageStyleAsync()
+    {
+        if (user == null) return;
+        var cleaned = ImageStyleGuide.Clean(imageStyle);
+        await UpdateUserAsync(stored => stored.ImageStyle = cleaned);
+        imageStyle = user.ImageStyle ?? string.Empty;
+        flash = Flash.Success(cleaned == null ? L["Page.AiSettings.ImageStyleCleared"] : L["Page.AiSettings.ImageStyleSaved"]);
     }
 
     /// <summary>Applies <paramref name="change"/> to the user as stored, and shows what is stored afterwards.</summary>

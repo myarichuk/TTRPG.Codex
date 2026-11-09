@@ -4,7 +4,19 @@
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
             <NotAuthorized>
-                <RedirectToLogin />
+                @if (context.User.Identity?.IsAuthenticated == true)
+                {
+                    @* Signed in, but the page is someone else's (the admin page): say so rather than offer a sign-in form. *@
+                    <div class="empty" role="alert" data-testid="not-yours">
+                        <div class="empty-icon"><LucideIcon IconName="lock" Size="28" /></div>
+                        <h1 class="h4">@L["Layout.NotYours"]</h1>
+                        <p><a href="/">@L["Layout.NotYoursBack"]</a></p>
+                    </div>
+                }
+                else
+                {
+                    <RedirectToLogin />
+                }
             </NotAuthorized>
         </AuthorizeRouteView>
     </Found>

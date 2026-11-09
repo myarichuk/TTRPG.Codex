@@ -1,0 +1,17 @@
+@using Codex.Persistence
+@inject IUserRepository Users
+
+@* The admin page in the header, with how many accounts wait for approval. *@
+<NavLink href="admin" data-testid="nav-admin">
+    <LucideIcon IconName="shield-check" Size="18" /><span>@L["Layout.Nav.Admin"]</span>
+    @if (waiting > 0)
+    {
+        <span class="pill pill-accent nav-badge" data-testid="nav-admin-waiting">@waiting<span class="visually-hidden"> @L["Layout.Nav.AdminWaiting", waiting]</span></span>
+    }
+</NavLink>
+
+@code {
+    private int waiting;
+
+    protected override async Task OnInitializedAsync() => waiting = await Users.CountPendingAsync();
+}

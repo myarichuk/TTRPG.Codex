@@ -32,6 +32,9 @@ public sealed class TestSeedActor
     public string? PublicDescription { get; set; }
     public string? Biography { get; set; }
 
+    /// <summary>Marks the actor as having a portrait without storing one: a picture the book cannot read (a test of what it leaves out).</summary>
+    public bool HasPortrait { get; set; }
+
     /// <summary>Extra sheet fields (attribute scores, level, class reference...) to seed verbatim.</summary>
     public Dictionary<string, object>? Sheet { get; set; }
 }

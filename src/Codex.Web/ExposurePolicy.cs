@@ -17,7 +17,9 @@ public static class ExposurePolicy
 
     /// <summary>The pages and endpoints where a visitor can learn whether a password or an invite code is right.</summary>
     public static bool IsGuessable(PathString path) =>
-        path.StartsWithSegments("/login") || path.StartsWithSegments("/register") || path.StartsWithSegments("/campaigns/join");
+        path.StartsWithSegments("/login") || path.StartsWithSegments("/register") || path.StartsWithSegments("/campaigns/join")
+        // Deleting your own account asks for the password, so it is a place to try passwords too.
+        || path.StartsWithSegments("/account/delete");
 
     /// <summary>The rate-limit bucket for a client: its address, or for IPv6 its whole /64, which one subscriber can rotate through freely.</summary>
     public static string ClientKey(IPAddress? address)
@@ -47,18 +49,28 @@ public static class ExposurePolicy
         return code.Length > 0 && !code.Contains('/') ? Uri.UnescapeDataString(code) : null;
     }
 
-    /// <summary>Open servers take a new account only from someone arriving with a real campaign invite.</summary>
-    public static async Task<bool> MaySignUpAsync(bool exposed, string? returnUrl, ICampaignRepository campaigns) =>
-        !exposed || (InviteCodeFrom(returnUrl) is { } code && await campaigns.InviteCodeExistsAsync(code));
-
     /// <summary>Whether a new account may claim the server's first ServerAdmin seat: never while open to the internet, and only
     /// from this computer. The launcher's "Host" opens the server to the network before the DM has an account, and the first
     /// player to sign up from there must not run the server (R13). <c>Codex:AdminUsername</c> names an admin from anywhere.</summary>
     public static bool MayClaimFirstAdmin(bool exposed, IPAddress? client) => !exposed && client != null && IPAddress.IsLoopback(client);
 
-    /// <summary>The key in the server's own configuration belongs to whoever runs the server.</summary>
-    public static bool MayUseServerAi(bool exposed, UserDocument? user) =>
-        !exposed || user?.Roles.Contains(ServerAdminRole) == true;
+    /// <summary>Whether <paramref name="user"/> may fall back to the key in the server's own configuration. The admin's choice
+    /// (<paramref name="rule"/>) stands whether or not the server is open to the internet, where every account is invited or
+    /// approved. With no choice stored (a server from before the setting), the rule it always had: everyone at home, only the admin
+    /// while open to the internet. "Game Masters" is the server role, not a co-GM seat in someone else's campaign.</summary>
+    public static bool MayUseServerAi(bool exposed, UserDocument? user, ServerAiRule? rule = null)
+    {
+        var admin = user?.Roles.Contains(ServerAdminRole) == true;
+        return ServerAiFor(exposed, rule) switch
+        {
+            ServerAiRule.Admins => admin,
+            ServerAiRule.GameMasters => admin || user?.Roles.Contains(UserRoles.GameMaster) == true,
+            _ => true
+        };
+    }
+
+    /// <summary>The rule in force: the stored choice, or for a server with none the one it always had.</summary>
+    public static ServerAiRule ServerAiFor(bool exposed, ServerAiRule? rule) => rule ?? (exposed ? ServerAiRule.Admins : ServerAiRule.Everyone);
 
     /// <summary>Whether an address a user typed in points at this computer or its private network: a name with no dots,
     /// <c>localhost</c>, <c>*.local</c>, or a loopback, link-local, private or tailnet address. While the server is open to

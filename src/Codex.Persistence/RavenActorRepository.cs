@@ -14,7 +14,8 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
     {
         using var session = dbService.Store.OpenAsyncSession();
         var actor = await session.LoadAsync<ActorDocument>(actorId);
-        if (actor == null || actor.CampaignId != access.CampaignId)
+        // A vault character has no campaign: an access without one must not reach it (docs/SERVER_ACCESS_AND_VAULT.md 8).
+        if (actor == null || actor.IsVault || actor.CampaignId != access.CampaignId)
         {
             return null;
         }
@@ -146,6 +147,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
     public async Task<IEnumerable<ActorDocument>> GetVisibleForCampaignAsync(CampaignAccess access)
     {
+        if (string.IsNullOrEmpty(access.CampaignId)) return Array.Empty<ActorDocument>();
         using var session = dbService.Store.OpenAsyncSession();
         var query = session.Query<ActorDocument, ActorsByCampaignIndex>()
             .Customize(x => x.WaitForNonStaleResults())
@@ -435,7 +437,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
     {
         using var session = dbService.Store.OpenAsyncSession();
         var actor = await session.LoadAsync<ActorDocument>(actorId);
-        return actor != null && actor.CampaignId == access.CampaignId ? actor : null;
+        return actor != null && !actor.IsVault && actor.CampaignId == access.CampaignId ? actor : null;
     }
 
 
@@ -504,6 +506,8 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
 
     public async Task DeleteAllForCampaignAsync(string campaignId)
     {
+        // Every vault character has an empty campaign id: deleting "no campaign" would empty every vault.
+        if (string.IsNullOrEmpty(campaignId)) return;
         using var session = dbService.Store.OpenAsyncSession();
         var toDelete = await session.Query<ActorDocument, ActorsByCampaignIndex>()
             .Customize(x => x.WaitForNonStaleResults())
@@ -522,7 +526,7 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
     {
         using var session = dbService.Store.OpenAsyncSession();
         var query = session.Query<ActorDocument, ActorsByCampaignIndex>()
-            .Where(a => a.OwnerUserId == ownerUserId);
+            .Where(a => a.OwnerUserId == ownerUserId && a.CampaignId != string.Empty);
 
         query = sortByCreated
             ? query.OrderByDescending(a => a.CreatedAt)

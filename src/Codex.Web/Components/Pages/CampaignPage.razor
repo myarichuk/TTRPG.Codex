@@ -59,7 +59,7 @@ else
             }
             <div class="pills">
                 <span class="pill">@Catalog.GetDisplayName(campaign.SystemId)</span>
-                <span class="pill @(access.IsDm ? "pill-accent" : "")" data-testid="my-role">@RoleLabel(access.Role)</span>
+                <span class="pill @(access.IsDm ? "pill-accent" : "")" data-testid="my-role">@RoleLabel(access.Role, campaign.OwnerId == access.UserId)</span>
             </div>
         </header>
 
@@ -277,9 +277,10 @@ else
     private static int TitleFit(string name) =>
         Math.Max(8, name.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Select(w => w.Length).DefaultIfEmpty(0).Max());
 
-    private string RoleLabel(CampaignRole role) => role switch
+    // The owner is the GM; anyone else holding the GM role is a co-GM.
+    private string RoleLabel(CampaignRole role, bool isOwner) => role switch
     {
-        CampaignRole.DM => L["Page.Role.DM"],
+        CampaignRole.DM => isOwner ? L["Page.Role.DM"] : L["Campaign.Settings.Role.CoGm"],
         CampaignRole.Player => L["Page.Role.Player"],
         _ => L["Page.Role.Observer"]
     };

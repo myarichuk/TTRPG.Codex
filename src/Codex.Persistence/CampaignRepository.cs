@@ -21,7 +21,9 @@ public class CampaignRepository(
     CampaignLifecycleHooks? lifecycle = null,
     ITemplateRepository? templateRepository = null,
     InviteAttempts? inviteAttempts = null,
-    IBookBuildRepository? bookBuildRepository = null) : ICampaignRepository
+    IBookBuildRepository? bookBuildRepository = null,
+    IBookDraftRepository? bookDraftRepository = null,
+    IVaultRepository? vaultRepository = null) : ICampaignRepository
 {
     public async Task<IEnumerable<CampaignDocument>> GetAllAsync()
     {
@@ -83,7 +85,18 @@ public class CampaignRepository(
                 throw new LocalizedException("Campaign.AccessChanged");
             }
 
+            // A co-GM may do what the GM does, except change who owns the campaign or who else is a GM in it; stepping down
+            // themselves is theirs to do (docs/SERVER_ACCESS_AND_VAULT.md 4). Checked on the result, so no edit path can get round it.
+            var owner = campaign.OwnerId;
+            var gms = CampaignAccessResolver.GameMasters(campaign);
             mutate(campaign);
+            if (string.Equals(owner, access.UserId, StringComparison.Ordinal)) return;
+            var after = CampaignAccessResolver.GameMasters(campaign);
+            var steppedDown = gms.Where(g => !string.Equals(g, access.UserId, StringComparison.Ordinal));
+            if (!string.Equals(owner, campaign.OwnerId, StringComparison.Ordinal) || !(after.SetEquals(gms) || after.SetEquals(steppedDown)))
+            {
+                throw new LocalizedException("Campaign.OwnerOnly");
+            }
         });
 
     /// <summary>1.1: reject a SystemId nothing implements. Skipped until the catalog has actually run
@@ -114,6 +127,25 @@ public class CampaignRepository(
         {
             campaign.InviteCode = InviteCodes.New();
         }
+    }
+
+    public async Task<CampaignLeaveResult> LeaveAsync(string campaignId, string userId)
+    {
+        var result = CampaignLeaveResult.NotMember;
+        await UpdateAsync(campaignId, campaign =>
+        {
+            result = string.Equals(campaign.OwnerId, userId, StringComparison.Ordinal) ? CampaignLeaveResult.Owner
+                : campaign.Members.RemoveAll(m => string.Equals(m.UserId, userId, StringComparison.Ordinal)) > 0 ? CampaignLeaveResult.Left
+                : CampaignLeaveResult.NotMember;
+        });
+
+        // What they asked to bring in goes with them; a GM would otherwise be offered a character for nobody.
+        if (result == CampaignLeaveResult.Left && vaultRepository != null)
+        {
+            await vaultRepository.WithdrawAllAsync(campaignId, userId);
+        }
+
+        return result;
     }
 
     public async Task<CampaignDeleteResult> DeleteAsync(string campaignId, string requestingUserId)
@@ -149,9 +181,12 @@ public class CampaignRepository(
         if (journalRepository != null) await journalRepository.DeleteAllForCampaignAsync(campaignId);
         if (worldChatRepository != null) await worldChatRepository.DeleteAllForCampaignAsync(campaignId);
         if (bookBuildRepository != null) await bookBuildRepository.DeleteAllForCampaignAsync(campaignId);
+        if (bookDraftRepository != null) await bookDraftRepository.DeleteAllForCampaignAsync(campaignId);
+        if (vaultRepository != null) await vaultRepository.DeleteAllRequestsForCampaignAsync(campaignId);
         if (templateRepository != null) await templateRepository.DeleteAllForCampaignAsync(campaignId);
 
-        // Attachments (cover art) are deleted with the document.
+        // Attachments (cover art) are deleted with the document; the GM's book pictures are attachments of the book art document.
+        session.Delete(BookArtDocument.IdFor(campaignId));
         session.Delete(campaign);
         await session.SaveChangesAsync();
         return CampaignDeleteResult.Deleted;

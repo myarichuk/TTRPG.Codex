@@ -10,6 +10,8 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject IUserRepository Users
+@inject IServerSettingsStore Settings
 
 <PageTitle>@L["Page.Home.Title"] | TTRPG.Codex</PageTitle>
 
@@ -18,10 +20,20 @@
         <h1>@L["Page.Home.Title"]</h1>
         <p class="page-subtitle">@L["Page.Home.Subtitle"]</p>
     </div>
-    <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign">
-        <LucideIcon IconName="plus" Size="18" /> @L["Page.Home.New"]
-    </CodexButton>
+    @if (mayCreate)
+    {
+        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign">
+            <LucideIcon IconName="plus" Size="18" /> @L["Page.Home.New"]
+        </CodexButton>
+    }
 </div>
+
+@if (finishSetup)
+{
+    <div class="status mb-3" role="note" data-testid="finish-setup">
+        <LucideIcon IconName="settings" Size="18" /><span>@L["Page.Home.FinishSetup"] <a href="/setup/server">@L["Page.Home.FinishSetupLink"]</a></span>
+    </div>
+}
 
 <StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
 
@@ -34,8 +46,15 @@ else if (campaigns.Count == 0)
     <div class="empty">
         <div class="empty-icon"><LucideIcon IconName="compass" Size="28" /></div>
         <h2>@L["Page.Home.EmptyTitle"]</h2>
-        <p>@L["Page.Home.EmptyText"]</p>
-        <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign-empty">@L["Page.Home.CreateFirst"]</CodexButton>
+        @if (mayCreate)
+        {
+            <p>@L["Page.Home.EmptyText"]</p>
+            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenNewDialogAsync" data-testid="new-campaign-empty">@L["Page.Home.CreateFirst"]</CodexButton>
+        }
+        else
+        {
+            <p data-testid="join-only">@L["Page.Home.JoinOnly"]</p>
+        }
     </div>
 }
 else
@@ -55,7 +74,7 @@ else
                 }
                 <div class="card-head">
                     <h2 id="camp-@campaign.Id"><a href="/campaigns/@campaign.Id">@campaign.Name</a></h2>
-                    <span class="pill @(role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(role)</span>
+                    <span class="pill @(role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(role, campaign.OwnerId == currentUserId)</span>
                 </div>
                 <div class="small-muted">@Catalog.GetDisplayName(campaign.SystemId)</div>
                 <p class="mb-0 small campaign-pitch">@(campaign.Pitch() is { Length: > 0 } pitch ? pitch : L["Page.Home.NoDescription"])</p>
@@ -71,10 +90,13 @@ else
                 </div>
             </article>
         }
-        <button type="button" class="campaign-card card-new" @onclick="OpenNewDialogAsync" aria-label="@L["Page.Home.New"]">
-            <LucideIcon IconName="plus" Size="28" />
-            <span class="fw-semibold">@L["Page.Home.New"]</span>
-        </button>
+        @if (mayCreate)
+        {
+            <button type="button" class="campaign-card card-new" @onclick="OpenNewDialogAsync" aria-label="@L["Page.Home.New"]">
+                <LucideIcon IconName="plus" Size="28" />
+                <span class="fw-semibold">@L["Page.Home.New"]</span>
+            </button>
+        }
     </div>
 }
 
@@ -136,6 +158,12 @@ else
     private string? createError;
     private bool creating;
 
+    /// <summary>Whether this account may create campaigns (ServerAccess.MayCreateCampaigns); checked again on create.</summary>
+    private bool mayCreate;
+
+    /// <summary>The admin made their account but has not finished the setup steps.</summary>
+    private bool finishSetup;
+
     private SystemSummary? SelectedSystem => Catalog.Systems.FirstOrDefault(s => s.Id == newSystemId);
 
     protected override async Task OnInitializedAsync()
@@ -143,6 +171,10 @@ else
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         newSystemId = Catalog.Systems.FirstOrDefault()?.Id ?? string.Empty;
+        var settings = await Settings.GetAsync();
+        var me = currentUserId == null ? null : await Users.GetUserByIdAsync(currentUserId);
+        mayCreate = ServerAccess.MayCreateCampaigns(me, settings);
+        finishSetup = !settings.SetupDone && me?.Roles.Contains(UserRoles.ServerAdmin) == true;
         await LoadAsync();
     }
 
@@ -160,9 +192,10 @@ else
         return hash % 360;
     }
 
-    private string RoleLabel(CampaignRole role) => role switch
+    // The owner is the GM; anyone else holding the GM role is a co-GM.
+    private string RoleLabel(CampaignRole role, bool isOwner) => role switch
     {
-        CampaignRole.DM => L["Page.Role.DM"],
+        CampaignRole.DM => isOwner ? L["Page.Role.DM"] : L["Campaign.Settings.Role.CoGm"],
         CampaignRole.Player => L["Page.Role.Player"],
         _ => L["Page.Role.Observer"]
     };
@@ -203,6 +236,13 @@ else
         if (string.IsNullOrWhiteSpace(newSystemId))
         {
             createError = L["Page.Home.NoSystem"];
+            return;
+        }
+
+        if (!ServerAccess.MayCreateCampaigns(await Users.GetUserByIdAsync(currentUserId), await Settings.GetAsync()))
+        {
+            mayCreate = false;
+            createError = L["Page.Home.JoinOnly"];
             return;
         }
 

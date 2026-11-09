@@ -151,7 +151,9 @@ public static class AiImageGenerator
         var body = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InvalidOperationException($"The image service answered {(int)response.StatusCode}: {ErrorMessage(body)}");
+            // The status rides along inside, so AiFailure can tell a refused key or spent credit from any other failure.
+            var message = $"The image service answered {(int)response.StatusCode}: {ErrorMessage(body)}";
+            throw new InvalidOperationException(message, new HttpRequestException(message, null, response.StatusCode));
         }
 
         return ParseImagesResponse(body) ?? throw new InvalidOperationException("The image model returned no picture.");

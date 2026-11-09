@@ -21,6 +21,23 @@
             </select>
             <div class="field-hint">@(edition == "dm" ? L["Campaign.Book.Edition.DmHint"] : L["Campaign.Book.Edition.PartyHint"])</div>
         </div>
+    </div>
+
+    @* The rest in tabs (an IDE's tool tabs): printing, the pictures, the editable book, AI polish. A player has only printing. Inactive tabs
+       are hidden, not removed, so what was typed or ticked in one is still there on coming back. *@
+    @if (Ctx.Access.IsDm)
+    {
+        <div class="cx-tabs book-tabs" role="tablist" aria-label="@L["Campaign.Book.Title"]" @onkeydown="TabKey">
+            @foreach (var (id, icon, label) in Tabs)
+            {
+                <button type="button" role="tab" id="@("book-tab-" + id)" class="cx-tab" aria-selected="@(tab == id ? "true" : "false")" aria-controls="@("book-tabpanel-" + id)"
+                        tabindex="@(tab == id ? 0 : -1)" @onclick="() => tab = id" data-testid="@("book-tab-" + id)"><LucideIcon IconName="@icon" Size="14" /> @label</button>
+            }
+        </div>
+    }
+
+    <div id="book-tabpanel-print" role="@(Ctx.Access.IsDm ? "tabpanel" : null)" aria-labelledby="@(Ctx.Access.IsDm ? "book-tab-print" : null)" hidden="@(tab != "print")">
+    <div class="row g-2">
         <div class="col-12">
             <label for="book-theme" class="field-label">@L["Campaign.Book.Look"]</label>
             <select id="book-theme" class="field-input" @bind="themeId" @bind:after="ThemeChanged" data-testid="book-theme">
@@ -79,11 +96,30 @@
         }
     </div>
 
+    @if (showPreview)
+    {
+        @* The page is the one the PDF is printed from. It is sandboxed with no permissions at all (no script, no same-origin) and
+           the page's own policy allows no fetch, so what a campaign's text holds cannot reach the app around it. *@
+        <iframe id="book-preview-frame" class="book-preview" sandbox="" title="@L["Campaign.Book.PreviewTitle"]" src="@PageUrl()" loading="lazy" data-testid="book-preview"></iframe>
+    }
+    </div>
+
 
     @if (Ctx.Access.IsDm)
     {
-        <hr class="my-3" />
-        <div data-testid="book-ai">
+        <div id="book-tabpanel-art" role="tabpanel" aria-labelledby="book-tab-art" hidden="@(tab != "art")">
+            <BookArtTray Access="Ctx.Access" Edition="@edition" Language="@language" Changed="ArtChanged" Shown="@(tab == "art")" />
+        </div>
+
+        <div id="book-tabpanel-draft" role="tabpanel" aria-labelledby="book-tab-draft" hidden="@(tab != "draft")" data-testid="book-draft-panel">
+            <h4 class="h6">@L["Campaign.Book.Draft.PanelTitle"]</h4>
+            <p class="small-muted">@L["Campaign.Book.Draft.PanelHint"]</p>
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="EditDraftAsync" data-testid="book-draft-open">
+                <LucideIcon IconName="edit-3" Size="14" /> @L["Campaign.Book.Draft.Open", edition == "dm" ? L["Campaign.Book.Edition.Dm"] : L["Campaign.Book.Edition.Party"]]
+            </CodexButton>
+        </div>
+
+        <div id="book-tabpanel-ai" role="tabpanel" aria-labelledby="book-tab-ai" hidden="@(tab != "ai")" data-testid="book-ai">
             <h4 class="h6">@L["Campaign.Book.Ai.Title"]</h4>
             <p class="small-muted">@L["Campaign.Book.Ai.Hint"]</p>
 
@@ -236,15 +272,35 @@
         </div>
     }
 
-    @if (showPreview)
+    @if (Ctx.Access.IsDm)
     {
-        @* The page is the one the PDF is printed from. It is sandboxed with no permissions at all (no script, no same-origin) and
-           the page's own policy allows no fetch, so what a campaign's text holds cannot reach the app around it. *@
-        <iframe id="book-preview-frame" class="book-preview" sandbox="" title="@L["Campaign.Book.PreviewTitle"]" src="@PageUrl()" loading="lazy" data-testid="book-preview"></iframe>
+        @* A dialog: outside the tabs, so a hidden tab never hides it. *@
+        <BookDraftEditor @ref="draftEditor" Access="Ctx.Access" BasePath="@Ctx.BasePath" />
     }
 </section>
 
 @code {
+    private string tab = "print";
+
+    private (string Id, string Icon, string Label)[] Tabs =>
+    [
+        ("print", "printer", L["Campaign.Book.Tab.Print"]),
+        ("art", "image", L["Campaign.Book.Tab.Art"]),
+        ("draft", "edit-3", L["Campaign.Book.Tab.Draft"]),
+        ("ai", "sparkles", L["Campaign.Book.Tab.Ai"])
+    ];
+
+    // Left and right move between the tabs, Home and End to the first and last.
+    private async Task TabKey(KeyboardEventArgs e)
+    {
+        var ids = Tabs.Select(t => t.Id).ToList();
+        var at = ids.IndexOf(tab);
+        var next = e.Key switch { "ArrowRight" => (at + 1) % ids.Count, "ArrowLeft" => (at + ids.Count - 1) % ids.Count, "Home" => 0, "End" => ids.Count - 1, _ => -1 };
+        if (next < 0) return;
+        tab = ids[next];
+        await JS.InvokeVoidAsync("codex.focusById", "book-tab-" + tab);
+    }
+
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
     private string edition = "dm";
@@ -259,6 +315,10 @@
     private string? errorDetail;
 
     private string themeId = BookThemes.Plain.Id;
+    private BookDraftEditor? draftEditor;
+
+    // The editable book of the edition and language chosen above; it is made from the campaign the first time.
+    private Task EditDraftAsync() => draftEditor?.OpenAsync(edition, language, size == "Letter" ? "Letter" : "A4") ?? Task.CompletedTask;
 
     private BookTheme Theme => BookThemes.Find(themeId) ?? BookThemes.Plain;
 
@@ -291,6 +351,13 @@
         // The stored build belongs to one edition and one language: what is current changes with them.
         Attach(Builds.Find(Ctx.Access, edition));
         _ = PreviewAsync();
+    }
+
+    // A picture put in or taken out of a slot shows in the preview at once.
+    private void ArtChanged()
+    {
+        done = false;
+        previewStamp++;
     }
 
     private void TogglePreview()
@@ -461,7 +528,7 @@
 
     private string Reason(string reason) => reason switch
     {
-        "budget" or "checks" or "error" or "auth" or "ratelimit" or "allowance" or "cancelled" => L["Campaign.Book.Ai.Reason." + reason],
+        "budget" or "checks" or "error" or "auth" or "ratelimit" or "allowance" or "storage" or "cancelled" => L["Campaign.Book.Ai.Reason." + reason],
         _ => reason
     };
 
@@ -484,5 +551,8 @@
         public int Status { get; set; }
         public string? Detail { get; set; }
         public string? Code { get; set; }
+
+        /// <summary>The editable book's <c>X-Book-Overflow</c> header: the pages that print cut off (<see cref="BookEndpoints.OverflowHeader"/>).</summary>
+        public string? Overflow { get; set; }
     }
 }

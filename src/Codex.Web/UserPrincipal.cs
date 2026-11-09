@@ -21,6 +21,7 @@ public static class UserPrincipal
         }
 
         claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        if (user.Status == AccountStatus.Pending) claims.Add(new Claim(ServerAccess.StatusClaim, nameof(AccountStatus.Pending)));
         return new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
     }
 }

@@ -23,7 +23,7 @@
                 var levelInputId = "class-level-" + classId;
                 <li class="list-row py-1" data-testid="class-row">
                     <span>
-                        <a href="/campaigns/@CampaignId/library/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(EntryName(cls.Entry) ?? classId)</a>
+                        <a href="@LibraryPath/@(cls.Entry?.Type ?? "class")/@Uri.EscapeDataString(classId)" class="fw-semibold">@(EntryName(cls.Entry) ?? classId)</a>
                         @if (cls.IsFirst)
                         {
                             <span class="small-muted"> · @L["Actor.Sheet.FirstClass"]</span>
@@ -88,7 +88,8 @@
 @code {
     [Parameter, EditorRequired] public MulticlassRules Multiclass { get; set; } = null!;
     [Parameter, EditorRequired] public SheetEvaluation Evaluation { get; set; } = null!;
-    [Parameter] public string CampaignId { get; set; } = string.Empty;
+    /// <summary>Where the Library is: a campaign's, or the server's for a vault character.</summary>
+    [Parameter] public string LibraryPath { get; set; } = string.Empty;
     [Parameter] public int CurrentLevel { get; set; }
     [Parameter] public bool CanEdit { get; set; }
     [Parameter, EditorRequired] public Func<ContentEntry?, string?> EntryName { get; set; } = null!;

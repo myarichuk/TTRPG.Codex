@@ -171,12 +171,15 @@ public static class PreviewEndpoints
             var mentions = WikiText.HasMentions(visible)
                 ? await mentionSources.DirectoryAsync(campaign, access, await actors.GetVisibleForCampaignAsync(access))
                 : MentionDirectory.Empty;
-            return new Preview(title, sub, WikiRender.Summary(text, mentions, length, access.IsDm), image, href, await LinksAsync(visible, mentions, href));
+            IReadOnlyCollection<WikiPageDocument> pages = visible.Contains("[[", StringComparison.Ordinal)
+                ? (await wiki.GetVisibleForCampaignAsync(access)).ToList()
+                : Array.Empty<WikiPageDocument>();
+            return new Preview(title, sub, WikiRender.Summary(text, pages, mentions, length, access.IsDm), image, href, LinksFor(visible, pages, mentions, href));
         }
 
         // Each thing the text names that the caller may open, once: mentions as this viewer knows them, and [[links]] to pages
         // they may read. A link back to the card's own target is left out.
-        private async Task<IReadOnlyList<PreviewLink>> LinksAsync(string text, MentionDirectory mentions, string self)
+        private IReadOnlyList<PreviewLink> LinksFor(string text, IReadOnlyCollection<WikiPageDocument> pages, MentionDirectory mentions, string self)
         {
             if (!text.Contains("[[", StringComparison.Ordinal))
             {
@@ -195,7 +198,6 @@ public static class PreviewEndpoints
             var titles = WikiText.ExtractLinks(text);
             if (titles.Count > 0)
             {
-                var pages = (await wiki.GetVisibleForCampaignAsync(access)).ToList();
                 foreach (var title in titles)
                 {
                     if (WikiLinks.TargetOfTitle(title, pages) is { } page)

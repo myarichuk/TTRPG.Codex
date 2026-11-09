@@ -1,8 +1,9 @@
 # Campaign book export: handoff to the next session
 
-Written at the end of a long session. Read this first, then `docs/BOOK_EXPORT.md` (sections 27-33 are the newest; sections 1-26 are the
-design and earlier steps and are partly superseded, see "What to distrust" below). Branch: `claude/nice-brahmagupta-3ugesy`, all pushed, tip
-`946a897` at the time of writing. No pull request has been opened and none should be unless the user asks.
+Written at the end of a long session and updated in session 2 (2026-11-05). Read this first, then `docs/BOOK_EXPORT.md`. Sections 27-38 are
+the newest; sections 1-26 are the design and earlier steps and are partly superseded (see "What to distrust" below). Session 1's branch was
+merged into `main`. Work continues on **`book/next`**, which is local only and not pushed; see section 9 and `git log` for its tip. No pull
+request should be opened unless the user asks.
 
 ## 1. What this feature is
 
@@ -23,27 +24,39 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: 
 | Masked reads | `src/Codex.Persistence/Book/BookSource*.cs` (the only input of the compiler; its constructor is internal) |
 | Compiler | `Persistence/Book/BookCompiler.cs` (chapters; `BookEntryPosition` records each entry heading's line; `ArtAnchors`) |
 | Renderer | `Core/Book/BookMarkdown*.cs` (own Markdown subset; escaped by default; no URLs; `{{block:N}}`; `asset:`/`slot:` images) |
-| Page, themes, CSS | `Core/Book/BookHtml.cs`, `BookTheme.cs` (Plain, Parchment; English only by the language gate), `BookMasks.cs` (torn-edge SVG) |
+| Page, themes, CSS | `Core/Book/BookHtml.cs`, `BookTheme.cs` (Plain, Parchment; English, Russian and Hebrew), `BookMasks.cs` (torn-edge SVG), `BookRtl.cs` (mirrors a theme's sheets for Hebrew), `BookFontCoverage.cs` (a font file's letters) |
 | PDF | `Web/Book/BookPdf.cs`, `BookBrowser.cs` (finds Chrome/Edge/Chromium; `CODEX_BOOK_BROWSER`; one job at a time) |
 | Composition | `Web/Book/BookComposer.cs` (labels, `Items`, `Overlay` of a stored rewrite, `PlaceArt`) |
 | AI layer | `Core/Book/Ai/*` (blocks, checks, section worker, runner, build key), `Core/Book/BookBudget.cs`, `BookTokens.cs`, `Web/Book/BookBuilds.cs` (stored build, background runs), `BookModels.cs`, `Persistence/Book/BookBuildModels.cs` |
 | Pictures | `Persistence/Book/BookArt.cs` (reader, caps), `Core/Book/BookImages.cs` (structural sanitizer, never decodes), `BookImageScaler.cs`, `BookImageWorker.cs` |
+| Book art slots | `Persistence/Book/BookSlots.cs` (slots and keys, `Choose`), `BookArtStore.cs` (`bookart/{campaign}`, tagged party/dm), `Web/Book/BookArtService.cs` (upload checked against the edition's slots), `Components/Campaign/BookArtTray.razor` |
+| Art director | `Core/Book/Ai/BookArtDirector.cs` (prompt, reply reading, per-field checks), `Web/Book/BookArtOutline.cs`, `BookArtDirection.cs` (plan, pre-flight, run), `BookGate.cs` |
+| Drawn-art prompt | `Core/Book/BookArtStyle.cs` (style vocabulary, `BookImagePrompt.Assemble` and its checks) |
+| Drawing | `Web/Book/BookArtDrawing.cs` (picks checked again, run), `BookImages.cs` (picture model per run, reserved allowance), image price in `AiSettings.razor` and `AiProviderService` |
 | Decoder process | `src/Codex.ImageWorker` (only caller of SkiaSharp; talks stdin/stdout via `BookImageWire`) |
+| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow), `Web/Book/BookDraftWriter.cs` (generator), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookDraftEditor.razor`, `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
 | Strings | `Localization/Resources/Strings.Campaign{,.ru,.he}.resx`, keys `Campaign.Book.*` |
 | Website | `site/` (see `site/README.md`), guide section `#book`, tour row, screenshots `book-panel` and `book-pages`, tools `capture-screenshots.mjs`, `demo-art.py`, `book-pages.py` |
 | Tests | `tests/Codex.Tests/Book*Tests.cs`, `E2E/BookRouteE2ETests.cs` |
 
 ## 3. State: built, verified, and not
 
-Built and pushed: everything in `docs/BOOK_EXPORT.md` sections 10-33: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
+Built: everything in `docs/BOOK_EXPORT.md` sections 10-39, and phases 1 and 2 of the editable book (41.9: draft store, generator, bundled
+`marked-hbfm` renderer with our cleaner and page fitting, print stage, editor dialog, stale notice with Regenerate; 41.10: every theme on
+Homebrewery's Blank layout, Homebrewery's own blocks, Ashen Vellum with bundled faces and baked paper, theme picker). Sections 34-39 (book art slots and the GM's own pictures, the style vocabulary
+and prompt, the art director, wiki links, drawing, the first real run's fixes) are on `book/next`, not pushed. The rest: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
 panel, AI layer steps 1-5 (prices, budget, estimator, section workers, checks, stored build, pre-flight, live progress), two columns, existing pictures
 placed by recorded line, re-encoding/downscaling, out-of-process decoding, website.
 
-Verified: unit and integration tests (about 380 book and localization tests passed at the last run), the book e2e tests (9) at the commit that added
+Verified: unit and integration tests (759 book, localization, AI, backup, campaign and wiki tests in session 2 at step 6, one failure in
+`WikiSecretsE2ETests` that passed on two reruns, see section 38; all 28 e2e tests passed after it), the book e2e tests (9) at the commit that added
 the worker, a real-browser look at columns, drop caps, picture placement, panel and pages, a real `dotnet publish` containing the worker and a
-worker run from that directory, and one run against a real model (claude-haiku-5-5, section 26, short chapters only).
+worker run from that directory, and one run against a real model (a small Anthropic model, section 26, short chapters only).
 
 **Not verified, say so if you rely on any of it:**
+- The art director and drawing have had one real run (section 39): one small campaign, one chapter, three pictures, English, party edition,
+  default style, no prices set. Not run for real: the GM edition, two or more chapters, a priced model (the cost lines), Stop mid-run, the
+  server's own keys and allowance. Regenerate/Accept is not built.
 - The full e2e suite has not been rerun since step 5 of the AI layer; only the book e2e tests were.
 - No real-model run of anything after section 26: the stored build, the panel's AI controls and cost display were exercised only with a scripted fake
   chat client and an in-process fake OpenAI server.
@@ -56,7 +69,8 @@ worker run from that directory, and one run against a real model (claude-haiku-5
 ## 4. Invariants that must never break (the review checklist starts here)
 
 1. **Audience masking.** The party book is built from the party source only; nothing from the DM source or a DM art map may reach it. Placement
-   re-checks the picture flag from the audience's own source (`BookCompiler.ArtAnchors`). Canary tests use strings like `CANARY_*` and `PUBLIC_*`.
+   re-checks the picture flag from the audience's own source (`BookCompiler.ArtAnchors`). A `[[Page]]` link to a page the party source does
+   not hold prints only its own `|shown` words, never the title (`BookCompiler.PageLinks`). Canary tests use strings like `CANARY_*` and `PUBLIC_*`.
 2. **Secrets never reach a model.** `BookWork.Prepare` cuts `:::dm` and `:::for` into `{{block:N}}`; boxes are rendered from the current campaign at
    print time. A stored build holds no secret text (`BookBuildSection.Blocks` was removed on purpose). Mentions are read the way the renderer reads
    them, fail closed (`BookBlocks.Mention`).
@@ -65,9 +79,32 @@ worker run from that directory, and one run against a real model (claude-haiku-5
 4. **A stored rewrite prints only while its key matches** the key recomputed from the campaign as read now (`BookBuildKey`); the key covers recipe,
    prompt and checks versions, the rules text as sent, edition, language, style, chapter and block bodies. Model and temperature are deliberately out.
 5. **A failure never replaces a paid rewrite; money is reserved at the worst case** (`BookBudget.WorstCase`) and settled on real usage.
-6. **One build per GM**: the `_busy` slot in `BookBuilds` is taken before any await.
+6. **One paid run per GM**: chapter builds and director runs take the same `BookGate` before any await.
 7. **A model never sees a picture and cannot move or drop one**; `PlaceArt` runs after `Overlay`.
 8. **The decoder is not in the server process.** Any worker failure returns "keep the picture"; the server never throws on it.
+9. **The party book places only pictures made for the party, in the party's own slots.** The tag is checked in three places (`BookSlots.Choose`,
+   the tag check in `BookArtReader`, and `BookArt.Slot(key, audience)`), and an upload's key must be one of the slots that edition's source makes
+   (`BookArtService`). A stranger's slot is `mask:<id>`, never the actor's. Earlier versions of a slot's picture (`BookArtDocument.Kept`,
+   section 43) are read by nothing that builds a book, and a kept version is put in use only under its own slot and edition (`UseAsync`).
+10. **A suggestion, and anything drawn from it, carries the tag of the edition whose source was read** (`BookArtDirection` passes only
+   `p.Tag`), and each tray shows only its own edition's suggestions. The director is shown only `BookArtOutline` (cut after `BookWork.Prepare`
+   of the whole chapter), under per-request numbers, never slot keys. Chapter builds and director runs share one per-GM `BookGate`.
+11. **Nothing is drawn but what the GM ticked, and every pick is checked again on the server** (`BookArtDrawing.PrepareAsync`). The slot
+   must be the edition's own, with the edition's own current suggestion, and the description must pass the checks. The picture is sanitised,
+   stored under the edition's tag, and counted once against pictures set aside up front (`IBookImages`).
+
+12. **The editable book (section 41; phases 1 and 2 built, 41.9 and 41.10) changes invariant 1 for hand-edited drafts.** The party draft is generated from the party source
+   only, its pictures are `art:` references resolved only to party-tagged pictures, and its AI calls see only party text. Beyond that the GM can
+   type anything, so the guarantee becomes a warning: the party draft is checked for GM-only text before export. Invariants 2 and 3 still hold for
+   drafts: `{{secret}}` blocks (a draft's secrets; never `:::dm`, which Homebrewery's renderer would print) are placeholders in anything sent
+   to a model (an AI edit cuts them, and pictures, markers and breaks, from the whole chapter on the server: `BookDraftEdits.Cut`, 41.16), and no URL survives the renderer's cleaner (`tools/book-editor/src/render.js`). `expr-eval` is never bundled (the build
+   aliases it to `src/safe-math.js`, a fixed-list evaluator, and fails if it gets in; Homebrewery's own variable tests run in `npm test`, 41.13). The editor renders in the GM's own page, on text players wrote,
+   which is a trust boundary (BOOK_EXPORT 41.9); a renderer update needs `npm audit` and the hostile-draft tests. A draft entry's id is its slot key, never a raw
+   id. The only script the print browser runs is the bundled renderer, in a page with every request refused; the page is then printed with
+   script off.
+13. **A player's own book (section 45) holds only what that player may open.** It is read through that player's access and cleaned for their
+   characters, only for a Player member now who owns one, only from the party draft, only for the GM, and it is never stored or sent to a model;
+   its pictures are the party's. `BookPlayerBook.Overlay` adds only paragraphs of that player's compile.
 
 ## 5. What to distrust
 
@@ -101,6 +138,17 @@ For each, copy the file, apply the change, run the named tests, expect a failure
 - `BookBlocks.Mention` and `BookSectionWorker`: break the mention parity with the renderer; accept a length-cut reply; let a failed retry overwrite a refined chapter.
 - `BookBuildKey`: drop the rules text or checks version from the key.
 - `BookBuilds`: take the busy slot after an await (test: 6 parallel starts).
+- Book art (`BookArtTests.Slots.cs`): let a GM picture through in `BookSlots.Choose`, in the reader's tag check, or in `BookArt.Slot`; key a
+  stranger as `actor:`; skip the slot check in `BookArtService.UploadAsync`; place a header without checking the title line. All six were caught in
+  session 2.
+- Art director (`BookArtDirectorTests.cs`): outline without `Prepare`; a slot number that was not sent accepted; visual check skipped; mood as
+  free text; tag not from the source; a gate of its own; tray showing the other edition's suggestions. All seven were caught in session 2.
+- Player books (`BookPlayerBookTests.cs`): no diff in `Overlay`; no edition check in `BookDrafts.PrintedAsync`; drop the own character's
+  `RevealedToReader`; clean with no owned set; no backing over page breaks; ignore the player in `FileName`; list a player with no character; no
+  entry anchor. All eight were caught.
+- Stat blocks, frames, edges (`BookStatBlocksTests.cs`, `BookMasksFrameTests.cs`): modifier rule hard-coded; no escaping; no id on the block;
+  values not through the text path; the block not written; the edge reset by another setting; the edge always on; no party filter for
+  non-playerFacing homebrew. All eight were caught.
 Anything that survives is a missing test; add it.
 
 **C. Questions to answer by reading code, not docs**
@@ -124,29 +172,52 @@ Anything that survives is a missing test; add it.
    panel controls, memory of base64 pictures in the preview iframe with 100+ images.
 
 **D. Housekeeping to check**
-- `git status` clean; nothing under `site/.capture*`, `/tmp` scratch, or any API key is committed. A real Anthropic key was pasted into an earlier
-  conversation: treat it as compromised, never write it to a file, and remind the user to revoke it if they have not.
+- `git status` clean; nothing under `site/.capture*`, `/tmp` scratch, or any API key is committed. The Anthropic key pasted into an earlier
+  conversation was a three-hour key and has been revoked (user, session 2). Still: never write a key to a file.
 - No model identifier appears in any committed artifact (code, docs, commit messages, PR text); this is an explicit rule.
 
 ## 7. Open work, in the order I would take it (the user decides)
 
-1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7): DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
+0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **All six phases are built (41.9, 41.10, 41.15, 41.16, 41.18, 41.19).**
+   What is left is the "Not done" lists of 41.9, 41.10, 41.15, 41.16, 41.18 and 41.19: the preview in Safari's engine and Firefox is checked and two bugs fixed (41.20; real Safari not driven) (the GM-CSS cleaner's limits are fixed, 41.11; Homebrewery PHB CSS lays out as there on the compatibility layer, 41.12, which every
+   theme sits on and `UnderTheHomebreweryLayer_...` holds to Homebrewery's own PHB and DMG themes; variables, colour variables and a community theme, 41.13; the fonts, pictures and sheets a brew's CSS names on the web are fetched once by the server and kept with the draft, public https addresses only, 41.14). A theme must pass `EveryBlock_UnderEveryTheme...` and `ALongBook_UnderEveryTheme...`; soft transparent gradients and
+   text shadows are what fail them. Items 1 (art step 7, keep-three) and 5 (layout)
+   now land inside it rather than in the current HTML route.
+
+0b. **Picture style** (BOOK_EXPORT 41.23, 2026-11-08): each user's own words in AI settings, used as written in every picture prompt, in
+   place of the built-in style. Left: per-campaign guides, a reference picture for models that take one.
+
+1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3-6 are done (sections 34-36, 38), and step 6's Regenerate/Accept
+   (keep 3) is done (section 43); step 7, spots and Chronicle scenes, is done (section 44).** The first real run is done (section 39). DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
    writes the prompt; deny proper nouns and "in the style of"); the art-director call per chapter (masked outline in, `{depicts, visual, mood}` out);
    per-slot generation with cost shown first and nothing drawn without a click; suggested spot and scene slots. Audience-tag every image
    (`BuiltFrom: party|dm`); the party book places only party-built images. The user asked for painterly/linework style choices.
-2. **Decision pending from the user: prose or tidied notes.** The rules say "invent nothing", so the model returns text close to the source. Real
-   book prose needs pinned facts (names, numbers) separated from open texture, a coverage check (a rewrite can still drop most of a chapter; the 0.12x
+2. **Decided by the user (2026-11-08): the campaign is the tidied notes, and the AI turns them into prose shaped like the system's own
+   published books**: for 5e, the official sourcebooks' and adventures' voice, chapter breaks and furniture (read-aloud boxes, sidebars,
+   stat blocks where they sit there). The shape is the system's, not 5e's for every book: a system added later brings its own description
+   of its books, and the prompt asks for that one (a field the system's `system.yaml` would carry; nothing is built yet). It is a shape to
+   mimic, never a book's words, art or trade dress (`content-system-design`: no trademark names). Real book prose needs pinned facts (names, numbers) separated from open texture, a coverage check (a rewrite can still drop most of a chapter; the 0.12x
    length floor is untuned) and splitting the unit from chapter to `##` entry (a long Cast chapter is re-bought whole after one NPC edit).
-3. **Russian and Hebrew books**: both themes are English-only. Needs proven coverage (the bundled Forum, Assistant and Frank Ruhl Libre have one
-   weight, no bold, no italic) and a preflight.
-4. Review leftovers: per-user decoder fairness (the queue of two is global and the PDF slot is held while art is read); preview/print cap mismatch and
-   showing skipped pictures in the panel; a per-entry marker is NOT needed (section 32 chose position over markers).
-5. Layout and format: stat-block and table blocks, running footer with the chapter name, picture-frame masks, paper fibre on the page edge, `.md` export with
-   a GM-edition warning, custom CSS editor, the Ashen Vellum theme (measured in section 13, not built), `:::for` per-player editions.
-6. The `PartyPreview` empty-user-id bug (found earlier, the suggested-task card has expired): a party preview built with an empty user id; find it,
-   write a failing test, fix it.
-7. Allowance refund after UTC midnight is subtracted from the new day; a wiki link `[[Some Page]]` to a DM-only page passes its text to the model and
-   into the deterministic book; transport retries are not in the money range; totals are lost on a process crash. All are in section 28.
+   **Built (BOOK_EXPORT 42, steps 1 to 3):** the facts check both ways (`BookFacts`, en/ru/he), "As the book" on a chapter entry by entry,
+   the whole book chapter by chapter with the cost first, a player-facing shape for the party edition (`ai.playerBookShape`), and edits and
+   merges counted in the spend totals. Step 4, one real run, done 2026-11-08 (English, party edition; BOOK_EXPORT 42): facts and mask kept, invented texture is left to the review, which now offers one change per entry. Not tried for real: Russian, Hebrew, the GM edition.
+3. ~~**Russian and Hebrew books**~~ done for the editable book (BOOK_EXPORT 41.21, 2026-11-08): Plain and Ashen Vellum print both, by
+   stand-in faces under the themes' family names, Hebrew pages mirrored (`BookRtl`), coverage read from the font files (`BookFontCoverage`)
+   and a Problems-tab check. Left: Hebrew emphasis prints as plain text (no Hebrew italics), no native reader, WebKit and Firefox not tried in
+   these languages, the layout-only theme stays English. The theme wizard followed the same day (41.22): a pasted Homebrewery theme kept per
+   campaign, its languages measured from its faces, stand-ins for the scripts they lack, previewed on sample pages in each language.
+4. ~~Review leftovers~~ done (BOOK_EXPORT 41.24): the decoder is shared fairly between users, the preview and the PDF leave out the same
+   pictures and the editor names them. The printing line's place is still taken before pictures are read, on purpose (41.24).
+5. ~~Layout and format~~ done (2026-11-09): per-player editions (BOOK_EXPORT 45); stat blocks and tables built from the system's fields,
+   picture frames (torn, oval, round), torn page edges with fibre (46); suggestions and help in the editor (47). Left: stat blocks for NPC sheets
+   and encounters, and on the old HTML route; a soft "vignette" frame (macOS Preview draws Chrome's gradient masks wrong).
+6. ~~The `PartyPreview` empty-user-id bug~~ fixed (session 2): `CampaignAccess.PartyPreview()` now reads as `CampaignAccess.Nobody`, a made-up id per
+   preview, the same one the book reader uses; test `PartyPreview_OwnsNoActor_EvenOneStoredWithAnEmptyOwner`, mutation-checked.
+7. ~~A wiki link to a GM-only page prints its title in the party book and outline~~ fixed (BOOK_EXPORT section 37). The app's own wiki had the
+   same leak; fixed with `WikiText.ForReader` (same section).
+   **Step 6 rule from this:** party suggestions stored before this fix may hold such a title; they now show as stale. Draw only from a suggestion
+   whose inputs are current.
+8. Allowance refund after UTC midnight is subtracted from the new day; transport retries are not in the money range; totals are lost on a process crash. All are in section 28.
 
 ## 8. Practical notes
 
@@ -161,3 +232,22 @@ Anything that survives is a missing test; add it.
   others, encode only the new PNGs with `site/tools/optimize-screenshots.py` into a temp directory and merge `manifest.json` by hand.
 - Serena (an MCP code-navigation server) was used and disconnected repeatedly; it is optional.
 - Scratch files lived under `/tmp/claude-0/...` and are gone with the container; nothing needed is only there.
+
+## 9. Session 2 (2026-11-05, macOS host): review results
+
+Branch `claude/nice-brahmagupta-3ugesy` was merged into `main` (pull requests 289 and 290); work continues on `book/next`.
+
+- **A. Run what exists**: build clean; book and localization tests 378 of 379 on the first run. The one failure,
+  `BookPdfTests.AJobThatCannotFinishInTimeIsStopped...`, also fails on clean `main` on macOS: Chrome's font there sets "fi" as one ligature glyph,
+  so the PDF's text held `ﬁne`. The test now compares NFKC-normalized words. Watch for the same in any new PDF text assertion.
+- Fixed: the `PartyPreview` empty id (open work 6); `BookBuilds.ExecuteAsync` did the build document's preparation before its `try`, so a throw
+  there would have left the run "Running" forever, the model handle open and the GM's build slot taken; it is inside the `try` now.
+- Housekeeping: `src/Codex.Web/RavenServer/Logs/server.log` was tracked (since an old HTTPS commit) and changed on every run; untracked and
+  ignored. Model identifiers removed from `docs/` and the `BookTokens` comment (they stay where code needs them: the AI client factory,
+  settings defaults, the price table and their tests; old commit messages cannot be changed).
+- C1 read: `BookChecks.Validate` (refuses `![`, `[[`, `{{`, tags, URLs, markers) is applied on the AI path in `BookSectionWorker`; the renderer
+  needs `![` adjacent, so the check and the renderer agree. A deterministic wiki body may contain `![x](asset:aN)`; the asset map is the
+  audience's own, so at worst it shows another picture that audience may see (wrong place, not a leak).
+- C2 read: `BookImageWire` caps a picture at 64 MiB and the content type at 64 bytes on both directions.
+- macOS: the PDF tests find the installed Chrome; Playwright browsers are not at `/opt/pw-browsers` here.
+- Test runs leave RavenDB data in `$TMPDIR/TestRavenData_*` (18 GB found at the start); clean after each run.

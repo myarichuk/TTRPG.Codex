@@ -369,4 +369,45 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>What the party sees</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>A hooded figure who pays in old silver and never gives a name.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Revealed to you</value></data>
+  <data name="Actor.Vault.Title" xml:space="preserve"><value>From your characters</value></data>
+  <data name="Actor.Vault.Loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="Actor.Vault.Gone" xml:space="preserve"><value>The character this copy came from is no longer in My characters.</value></data>
+  <data name="Actor.Vault.From" xml:space="preserve"><value>This is the campaign's copy of {0}. Changes here stay in this campaign until you send them back.</value></data>
+  <data name="Actor.Vault.Push" xml:space="preserve"><value>Update my character from this sheet</value></data>
+  <data name="Actor.Vault.PushHint" xml:space="preserve"><value>Takes the saved sheet, name and history. GM notes and secrets stay here.</value></data>
+  <data name="Actor.Vault.Pushed" xml:space="preserve"><value>{0} is updated in My characters.</value></data>
+  <data name="Actor.Vault.SaveFirst" xml:space="preserve"><value>Save the sheet first, then update your character.</value></data>
+  <data name="Actor.Vault.Pull" xml:space="preserve"><value>Ask to bring my newer version here</value></data>
+  <data name="Actor.Vault.PullHint" xml:space="preserve"><value>The GM approves it first. Their notes and secrets in the history are kept.</value></data>
+  <data name="Actor.Vault.Asked" xml:space="preserve"><value>Sent to the GM.</value></data>
+  <data name="Actor.Vault.Waiting" xml:space="preserve"><value>Waiting for the GM to bring your newer version here.</value></data>
+  <data name="Actor.Vault.Withdraw" xml:space="preserve"><value>Take back the request</value></data>
+  <data name="Actor.Vault.NotDone" xml:space="preserve"><value>That didn't work. Reload the page and try again.</value></data>
+  <data name="Actor.Assist.Title" xml:space="preserve"><value>Ask the AI</value></data>
+  <data name="Actor.Assist.Intro" xml:space="preserve"><value>Ask for a change, or for what fits this character. The AI picks from the Library this character may use. Nothing changes until you take it, and nothing is kept until you save.</value></data>
+  <data name="Actor.Assist.Instruction" xml:space="preserve"><value>What should change?</value></data>
+  <data name="Actor.Assist.Placeholder" xml:space="preserve"><value>e.g. Make them a better climber, or add a fire power.</value></data>
+  <data name="Actor.Assist.Hint" xml:space="preserve"><value>For highlights, this box can hold the concept (“former pirate”); empty, the AI reads the history.</value></data>
+  <data name="Actor.Assist.Propose" xml:space="preserve"><value>Propose changes</value></data>
+  <data name="Actor.Assist.Highlight" xml:space="preserve"><value>Highlight what fits</value></data>
+  <data name="Actor.Assist.Working" xml:space="preserve"><value>Reading the sheet and the Library…</value></data>
+  <data name="Actor.Assist.NeedsText" xml:space="preserve"><value>Say what should change first.</value></data>
+  <data name="Actor.Assist.Nothing" xml:space="preserve"><value>The AI proposed nothing. Try saying it another way.</value></data>
+  <data name="Actor.Assist.Failed" xml:space="preserve"><value>The AI couldn't answer: {0}</value></data>
+  <data name="Actor.Assist.Changes" xml:space="preserve"><value>Proposed changes ({0})</value></data>
+  <data name="Actor.Assist.Set" xml:space="preserve"><value>{0} → {1}</value></data>
+  <data name="Actor.Assist.Empty" xml:space="preserve"><value>nothing</value></data>
+  <data name="Actor.Assist.Append" xml:space="preserve"><value>add “{0}”</value></data>
+  <data name="Actor.Assist.Add" xml:space="preserve"><value>+ {0}</value></data>
+  <data name="Actor.Assist.AddMany" xml:space="preserve"><value>+ {0} ×{1}</value></data>
+  <data name="Actor.Assist.Remove" xml:space="preserve"><value>− {0}</value></data>
+  <data name="Actor.Assist.RulesSay" xml:space="preserve"><value>With the ticked changes, the rules say:</value></data>
+  <data name="Actor.Assist.Take" xml:space="preserve"><value>Take the ticked changes ({0})</value></data>
+  <data name="Actor.Assist.Drop" xml:space="preserve"><value>Drop them all</value></data>
+  <data name="Actor.Assist.Taken" xml:space="preserve"><value>{0} changes are on the sheet. Save to keep them.</value></data>
+  <data name="Actor.Assist.TakenSome" xml:space="preserve"><value>{0} changes are on the sheet. These no longer fit what the sheet holds now and were left out: {1}. Save to keep the rest.</value></data>
+  <data name="Actor.Assist.Highlights" xml:space="preserve"><value>What fits ({0})</value></data>
+  <data name="Actor.Assist.GoThere" xml:space="preserve"><value>Go there</value></data>
+  <data name="Actor.Assist.HighlightsKept" xml:space="preserve"><value>Highlights change nothing and are not kept.</value></data>
+  <data name="Actor.Assist.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
 </root>

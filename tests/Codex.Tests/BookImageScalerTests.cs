@@ -42,9 +42,9 @@ public class BookImageScalerTests
         var (pw, ph) = BookImageScaler.TargetPixels(portrait, 3000, 4000, BookArtQuality.Print);
         var (vw, vh) = BookImageScaler.TargetPixels(portrait, 3000, 4000, BookArtQuality.Preview);
 
-        // A filled box needs both sides covered: 62 mm wide at 300 dpi is 733 px, and the height then follows the aspect.
-        Assert.Equal(733, pw);
-        Assert.True(ph >= 52 * 300 / 25.4);
+        // A filled box needs both sides covered: 42 mm wide at 300 dpi is 497 px, and the height then follows the aspect.
+        Assert.Equal(497, pw);
+        Assert.True(ph >= 56 * 300 / 25.4);
         Assert.True(vw < pw && vh < ph);
         Assert.Equal((200, 300), BookImageScaler.TargetPixels(portrait, 200, 300, BookArtQuality.Print)); // never up
 

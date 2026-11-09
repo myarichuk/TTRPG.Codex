@@ -17,6 +17,7 @@ public sealed record BackupResult(string Folder, int Campaigns, int Images, int 
 /// users.json                               accounts and their AI settings; never an API key
 /// campaigns/&lt;id&gt;/campaign.json            restore with Settings → "restore it as a new campaign"
 /// campaigns/&lt;id&gt;/journals.json
+/// campaigns/&lt;id&gt;/book-drafts.json         the GM's edited book (drafts and chapters), which an export leaves out
 /// campaigns/&lt;id&gt;/images/&lt;document&gt;/&lt;name&gt;.&lt;ext&gt;
 /// </code>
 /// A backup is written under a ".partial" name and renamed when complete, so a folder with the final name is whole.
@@ -52,12 +53,15 @@ public sealed class JsonBackups(RavenDbService db, ICampaignRepository campaigns
             Directory.CreateDirectory(folder);
             await File.WriteAllTextAsync(Path.Combine(folder, "campaign.json"), CampaignExportService.Serialize(bundle), ct);
             await WriteJsonAsync(Path.Combine(folder, "journals.json"), await JournalsAsync(campaign.Id), ct);
+            await WriteJsonAsync(Path.Combine(folder, "book-drafts.json"), await BookDraftsAsync(campaign.Id), ct);
 
             var owners = new[] { campaign.Id }
                 .Concat(bundle.Actors.Select(a => a.Id))
                 .Concat(bundle.Homebrew.Select(h => h.Id))
                 .Concat(bundle.Regions.Select(r => r.Id))
-                .Concat(bundle.Wiki.Select(p => p.Id));
+                .Concat(bundle.Wiki.Select(p => p.Id))
+                // The GM's book pictures cost money to draw; the export leaves them out, the backup keeps them.
+                .Append(BookArtDocument.IdFor(campaign.Id));
             foreach (var owner in owners.Where(id => !string.IsNullOrEmpty(id)))
             {
                 imageCount += await WriteImagesAsync(owner, Path.Combine(folder, "images", Safe(owner)), ct);
@@ -132,6 +136,26 @@ public sealed class JsonBackups(RavenDbService db, ICampaignRepository campaigns
         }
 
         return written;
+    }
+
+    /// <summary>The GM's book drafts: hand-written work, so the backup keeps it, drafts and their chapters as stored.</summary>
+    private async Task<object> BookDraftsAsync(string campaignId)
+    {
+        using var session = db.Store.OpenAsyncSession();
+        var drafts = new List<BookDraftDocument>();
+        var chapters = new List<BookDraftChapter>();
+        foreach (var edition in new[] { BookDraftDocument.Party, BookDraftDocument.Dm })
+        {
+            foreach (var language in BookDraftDocument.Languages)
+            {
+                var id = BookDraftDocument.IdFor(campaignId, edition, language);
+                if (await session.LoadAsync<BookDraftDocument>(id) is not { } draft) continue;
+                drafts.Add(draft);
+                chapters.AddRange(await session.Advanced.LoadStartingWithAsync<BookDraftChapter>(id + "/chapters/", pageSize: 1024));
+            }
+        }
+
+        return new { Drafts = drafts, Chapters = chapters };
     }
 
     private async Task<List<JournalEntryDocument>> JournalsAsync(string campaignId)

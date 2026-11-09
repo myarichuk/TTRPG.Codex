@@ -643,7 +643,7 @@ else
     private string ResolveRollerName(RollLogEntry entry) =>
         entry.ActorId != null
             ? ActorsById.GetValueOrDefault(entry.ActorId)?.Name ?? (Access.IsDm ? entry.ActorId : L["Combat.SomeoneUnseen"])
-            : (entry.RollerUserId == CurrentUserId ? L["Combat.You"] : entry.RollerUserId == Campaign.OwnerId ? L["Combat.Dm"] : L["Combat.Player"]);
+            : (entry.RollerUserId == CurrentUserId ? L["Combat.You"] : CampaignAccessResolver.RoleOf(Campaign, entry.RollerUserId) == CampaignRole.DM ? L["Combat.Dm"] : L["Combat.Player"]);
 
     public async ValueTask DisposeAsync()
     {

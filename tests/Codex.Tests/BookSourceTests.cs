@@ -38,7 +38,7 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         _homebrew = new RavenHomebrewRepository(db);
         _wiki = new RavenWikiRepository(db);
         _campaigns = new CampaignRepository(db, new NoOpSystemCatalog(), _actors, _sessions, _notes, _regions, _facts, _homebrew, _encounters, _wiki);
-        _reader = new BookSourceReader(_campaigns, _actors, _sessions, _encounters, _facts, _notes, _regions, _homebrew, _wiki);
+        _reader = new BookSourceReader(_campaigns, _actors, _sessions, _encounters, _facts, _notes, _regions, _homebrew, _wiki, new BookTestCatalog());
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         var missing = new[]
         {
             "CANARY_HIDDEN_NAME", "CANARY_WIKI_DM_BODY", "CANARY_FACT_DM", "CANARY_HIDDEN_PLACE", "CANARY_LOCK", "CANARY_DMSUMMARY",
-            "CANARY_SECRET_NOTE", "CANARY_EFFECT", "CANARY_BIO_DM_VERA", "CANARY_UNPUBLISHED", ":::dm"
+            "CANARY_SECRET_NOTE", "CANARY_EFFECT", "CANARY_BIO_DM_VERA", "CANARY_UNPUBLISHED", "CANARY_PUBLISHED_MONSTER", ":::dm"
         }.Where(text => !json.Contains(text, StringComparison.Ordinal)).ToList();
         Assert.True(missing.Count == 0, "The DM edition lost the DM's own material: " + string.Join(", ", missing));
 
@@ -217,6 +217,53 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         Assert.DoesNotContain(":::", SourcesIn(requests), StringComparison.Ordinal);
         Assert.Contains("CANARY_BIO_DM_VERA", html, StringComparison.Ordinal);
         Assert.Contains("class=\"secret secret-dm\"", html, StringComparison.Ordinal);
+    }
+
+    // A party page that links to a GM-only page: the party edition prints the link's own words and never the hidden page's title, in the
+    // book, in what a model is sent, and in the art director's outline. A link to a page the party may open stays a link.
+    [Fact]
+    public async Task PartyEdition_NeverPrintsTheTitleOfAPageThePartyMayNotOpen_ThroughALink()
+    {
+        var (dm, id) = await SeedAsync();
+        await _wiki.SaveAsync(new WikiPageDocument
+        {
+            Id = "w-tower", CampaignId = id, Slug = "tower", Title = "LINKSECRET Tower", Body = "LINKSECRET_BODY",
+            Visibility = WikiVisibility.DmOnly, AuthorUserId = DmUser
+        });
+        await _wiki.SaveAsync(new WikiPageDocument
+        {
+            Id = "w-harbour", CampaignId = id, Slug = "harbour", Title = "PUBLIC_Harbour", Visibility = WikiVisibility.Party, AuthorUserId = DmUser,
+            Body = "Seen from [[LINKSECRET Tower]], by its slug [[tower]], spelled [[ linksecret tower ]], with an empty label [[LINKSECRET Tower|]], "
+                   + "and named for the reader [[LINKSECRET Tower|PUBLIC the old tower]]. The way to [[PUBLIC_Docks]] is open. [[Not Written Yet]]. Meet [[actor:a-known]] and [[actor:a-unknown]], not [[Actor:a-hidden|LINKSECRET lich]]."
+        });
+
+        var party = (await _reader.ReadAsync(dm, BookAudience.Party))!;
+        var compiled = Codex.Web.Book.BookComposer.Compose(party, "en", out var entries);
+        var html = Codex.Core.Book.BookHtml.Build(compiled, Codex.Core.Book.BookThemes.Plain,
+            new Codex.Core.Book.BookHtmlOptions { Mention = BookCompiler.Mentions(party) }).Html!;
+        var (requests, _, _) = await ThroughAModelAsync(party);
+        var outline = string.Join("\n", Codex.Web.Book.BookArtOutline.For(party, compiled, entries, BookSlots.For(party, compiled, entries))
+            .SelectMany(c => c.Slots).Select(s => s.Text));
+
+        foreach (var (where, text) in new[] { ("book", html), ("model requests", requests), ("director outline", outline) })
+        {
+            Assert.DoesNotContain("linksecret", text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("[[tower]]", text, StringComparison.Ordinal);
+            Assert.True(text.Contains("PUBLIC the old tower", StringComparison.Ordinal), where + " lost the link's own words");
+        }
+
+        Assert.Contains("<span class=\"wikilink\"><bdi>PUBLIC_Docks</bdi></span>", html, StringComparison.Ordinal);
+        // Mentions are the mention resolver's: named as the party knows them, and a hidden one's label is never printed (the check above).
+        Assert.Contains("Meet PUBLIC_Vera and PUBLIC_hooded stranger, not .", Regex.Replace(html, "<[^>]+>", string.Empty), StringComparison.Ordinal);
+
+        // The GM edition is the GM's own: every link keeps its text.
+        var gm = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
+        var gmHtml = Codex.Core.Book.BookHtml.Build(BookCompiler.Compile(gm, "en"), Codex.Core.Book.BookThemes.Plain,
+            new Codex.Core.Book.BookHtmlOptions { BoxSecrets = true, Mention = BookCompiler.Mentions(gm) }).Html!;
+        Assert.Contains("<span class=\"wikilink\"><bdi>LINKSECRET Tower</bdi></span>", gmHtml, StringComparison.Ordinal);
+        Assert.Contains("<span class=\"wikilink\"><bdi>Not Written Yet</bdi></span>", gmHtml, StringComparison.Ordinal);
+        // The party source cannot tell a page that is not written from one it may not see, so both print nothing.
+        Assert.DoesNotContain("Not Written Yet", html, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -368,7 +415,13 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         await _notes.CreateNoteAsync(new NoteDocument { Id = "note-private", CampaignId = id, TargetId = "wiki:docks", AuthorId = PlayerUser, Content = "CANARY_PRIVATE_NOTE", Visibility = CommentVisibility.Private });
         await _notes.CreateNoteAsync(new NoteDocument { Id = "note-public", CampaignId = id, TargetId = "wiki:docks", AuthorId = PlayerUser, Content = "PUBLIC_NOTE", Visibility = CommentVisibility.Public });
         await _homebrew.SaveAsync(new HomebrewEntryDocument { Id = "h-unpub", CampaignId = id, EntryId = "unpub", Type = "monster", Name = "CANARY_UNPUBLISHED", IsPublished = false, AuthorUserId = DmUser });
-        await _homebrew.SaveAsync(new HomebrewEntryDocument { Id = "h-pub", CampaignId = id, EntryId = "beast", Type = "monster", Name = "PUBLIC_Homebrew Beast", IsPublished = true, AuthorUserId = DmUser });
+        await _homebrew.SaveAsync(new HomebrewEntryDocument { Id = "h-pub", CampaignId = id, EntryId = "beast", Type = "magic-item", Name = "PUBLIC_Homebrew Beast", IsPublished = true, AuthorUserId = DmUser });
+        // Published, but of a type players may not open in the Library (the system's creatures): the GM's, as in the app.
+        await _homebrew.SaveAsync(new HomebrewEntryDocument
+        {
+            Id = "h-monster", CampaignId = id, EntryId = "drowned", Type = "monster", Name = "CANARY_PUBLISHED_MONSTER", IsPublished = true, AuthorUserId = DmUser,
+            Properties = { ["armorClass"] = 13 }
+        });
         await _encounters.SaveAsync(new EncounterDocument
         {
             Id = "e-fight", CampaignId = id, SessionId = "s-done",

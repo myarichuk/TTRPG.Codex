@@ -299,7 +299,7 @@
   <data name="Campaign.Settings.NewLinkBody" xml:space="preserve"><value>Текущая ссылка сразу перестанет работать. Тем, у кого она есть и кто ещё не присоединился, понадобится новая.</value></data>
   <data name="Campaign.Settings.NewLinkConfirm" xml:space="preserve"><value>Создать ссылку</value></data>
   <data name="Campaign.Settings.RoleQ" xml:space="preserve"><value>Сменить роль {0} на «{1}»?</value></data>
-  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>Мастер видит все секреты этой кампании и может изменить или удалить в ней что угодно.</value></data>
+  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>Со-мастер видит все секреты этой кампании: заметки мастера, скрытые страницы и персонажей. Он может вести игру и менять мир и книгу. Только вы можете удалить кампанию, передать её или менять со-мастеров.</value></data>
   <data name="Campaign.Settings.RoleBody" xml:space="preserve"><value>То, что участник может видеть и делать, изменится сразу после подтверждения.</value></data>
   <data name="Campaign.Settings.RoleConfirm" xml:space="preserve"><value>Сменить роль</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>После создания новой ссылки старая перестанет работать.</value></data>
@@ -734,6 +734,127 @@
   <data name="Campaign.Book.Columns.Two" xml:space="preserve"><value>Две колонки</value></data>
   <data name="Campaign.Book.Pictures" xml:space="preserve"><value>Включить картинки кампании</value></data>
   <data name="Campaign.Book.Pictures.Hint" xml:space="preserve"><value>Обложка, портреты и иллюстрации мест и страниц — только то, что видно выбранному изданию. Без них предпросмотр легче.</value></data>
+  <data name="Campaign.Book.Art.Title" xml:space="preserve"><value>Иллюстрации книги</value></data>
+  <data name="Campaign.Book.Art.HintDm" xml:space="preserve"><value>Добавьте картинку на обложку, над главой или рядом с записью. Добавленное здесь печатается только в издании мастера. Чтобы картинка была в обеих книгах, добавьте её в издании для группы.</value></data>
+  <data name="Campaign.Book.Art.HintParty" xml:space="preserve"><value>Добавьте картинку на обложку, над главой или рядом с записью. Добавленное здесь печатается и в издании для группы, и в издании мастера. Скрытых персонажей здесь нет, а незнакомцы показаны такими, какими их знает группа.</value></data>
+  <data name="Campaign.Book.Art.Cover" xml:space="preserve"><value>Обложка</value></data>
+  <data name="Campaign.Book.Art.Header" xml:space="preserve"><value>Над главой</value></data>
+  <data name="Campaign.Book.Art.Spot" xml:space="preserve"><value>Маленькая картинка после: {0}</value></data>
+  <data name="Campaign.Book.Art.Upload" xml:space="preserve"><value>Добавить картинку</value></data>
+  <data name="Campaign.Book.Art.Replace" xml:space="preserve"><value>Заменить</value></data>
+  <data name="Campaign.Book.Art.Remove" xml:space="preserve"><value>Убрать из книги</value></data>
+  <data name="Campaign.Book.Art.Loading" xml:space="preserve"><value>Загружаем места для картинок…</value></data>
+  <data name="Campaign.Book.Art.Uploading" xml:space="preserve"><value>Добавляем картинку…</value></data>
+  <data name="Campaign.Book.Art.Stored" xml:space="preserve"><value>Картинка добавлена.</value></data>
+  <data name="Campaign.Book.Art.Removed" xml:space="preserve"><value>Картинка убрана из книги. Она осталась среди версий: её можно вернуть или удалить.</value></data>
+  <data name="Campaign.Book.Art.BadImage" xml:space="preserve"><value>Этот файл не подходит. Нужна картинка PNG, JPEG, WebP, GIF или AVIF до 6 МБ.</value></data>
+  <data name="Campaign.Book.Art.NoSlot" xml:space="preserve"><value>Этого места в издании больше нет: возможно, его скрыли или переименовали.</value></data>
+  <data name="Campaign.Book.Art.Full" xml:space="preserve"><value>В книге этой кампании уже предельное число картинок. Сначала уберите одну.</value></data>
+  <data name="Campaign.Book.Art.NotAllowed" xml:space="preserve"><value>Менять картинки книги может только мастер кампании.</value></data>
+  <data name="Campaign.Book.Art.Failed" xml:space="preserve"><value>Картинка не добавлена: {0}</value></data>
+  <data name="Campaign.Book.Art.State.Mine" xml:space="preserve"><value>ваша картинка</value></data>
+  <data name="Campaign.Book.Art.State.Party" xml:space="preserve"><value>картинка издания для группы</value></data>
+  <data name="Campaign.Book.Art.State.Own" xml:space="preserve"><value>своя картинка</value></data>
+  <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>без картинки</value></data>
+  <data name="Campaign.Book.Art.Suggest.Title" xml:space="preserve"><value>Предложить картинки</value></data>
+  <data name="Campaign.Book.Art.Suggest.Hint" xml:space="preserve"><value>Ваша ИИ-модель читает краткий план этого издания и предлагает, что изобразить в каждом месте. Тайны не отправляются. Ничего не рисуется.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Summary" xml:space="preserve"><value>Мест для предложений: {0}, запросов: {1}, модель: {2}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Tokens" xml:space="preserve"><value>Около {0} токенов; не больше {1}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Current" xml:space="preserve"><value>У всех мест ({0}) есть предложения по их нынешнему тексту.</value></data>
+  <data name="Campaign.Book.Art.Suggest.All" xml:space="preserve"><value>Предложить заново и для мест, где предложение уже есть</value></data>
+  <data name="Campaign.Book.Art.Suggest.Start" xml:space="preserve"><value>Предложить картинки</value></data>
+  <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>Предлагаем… готово запросов: {0} из {1}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>Готово: предложения дали {0} из {1, plural, one{# запроса} other{# запросов}}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>Остановлено: предложения дали {0} из {1, plural, one{# запроса} other{# запросов}}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>Текст изменился с тех пор, как это было предложено.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.some" xml:space="preserve"><value>для некоторых мест предложений нет: их предложения не прошли проверку</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.checks" xml:space="preserve"><value>ни одно предложение не прошло проверку</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.unreadable" xml:space="preserve"><value>ответ дважды не удалось прочитать; ничего не сохранено</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.cutoff" xml:space="preserve"><value>ответ дважды обрывался, не дойдя до конца; ничего не сохранено</value></data>
+  <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>Предложено:</value></data>
+  <data name="Campaign.Book.Art.Draw.Title" xml:space="preserve"><value>Нарисовать картинки</value></data>
+  <data name="Campaign.Book.Art.Draw.Hint" xml:space="preserve"><value>Отметьте места, которые нужно нарисовать. Каждая картинка рисуется по своему предложению, в стиле этой книги, вашей моделью для картинок. Пока вы не нажмёте «Нарисовать», ничего не рисуется.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoModel" xml:space="preserve"><value>Модель для картинок не настроена.</value></data>
+  <data name="Campaign.Book.Art.Draw.Style" xml:space="preserve"><value>Стиль всех картинок этой книги</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Medium" xml:space="preserve"><value>Техника</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Palette" xml:space="preserve"><value>Цвета</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Line" xml:space="preserve"><value>Линии</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Light" xml:space="preserve"><value>Свет</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Save" xml:space="preserve"><value>Сохранить стиль</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Saved" xml:space="preserve"><value>Стиль сохранён. Уже нарисованные картинки не меняются.</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.painterly" xml:space="preserve"><value>Живописное фэнтези</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.oil" xml:space="preserve"><value>Масляная живопись</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.watercolour" xml:space="preserve"><value>Акварель</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.ink" xml:space="preserve"><value>Тушь и штриховка</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.woodcut" xml:space="preserve"><value>Гравюра на дереве</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.engraving" xml:space="preserve"><value>Гравюра на меди</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.sketch" xml:space="preserve"><value>Набросок на пергаменте</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.muted" xml:space="preserve"><value>Приглушённые</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.earth" xml:space="preserve"><value>Землистые</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.sepia" xml:space="preserve"><value>Сепия</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.mono" xml:space="preserve"><value>Чёрно-белые</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.jewel" xml:space="preserve"><value>Драгоценные</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.cold" xml:space="preserve"><value>Холодные серые и голубые</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.fine" xml:space="preserve"><value>Тонкие</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.medium" xml:space="preserve"><value>Чёткие</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.bold" xml:space="preserve"><value>Жирные</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.natural" xml:space="preserve"><value>Дневной</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.candle" xml:space="preserve"><value>Свечи</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.overcast" xml:space="preserve"><value>Пасмурный</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.moon" xml:space="preserve"><value>Лунный</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.dusk" xml:space="preserve"><value>Сумерки</value></data>
+  <data name="Campaign.Book.Art.Draw.Pick" xml:space="preserve"><value>Нарисовать</value></data>
+  <data name="Campaign.Book.Art.Draw.Visual" xml:space="preserve"><value>Описание для модели картинок (на английском)</value></data>
+  <data name="Campaign.Book.Art.Draw.Summary" xml:space="preserve"><value>Картинок к рисованию: {0}, модель: {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Cost" xml:space="preserve"><value>Около {0} ({1} за картинку).</value></data>
+  <data name="Campaign.Book.Art.Draw.Allowance" xml:space="preserve"><value>Займёт {0} из {1} картинок, оставшихся на сегодня на ключе сервера.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoPrice" xml:space="preserve"><value>Для этой модели не указана цена за картинку, поэтому стоимость не показана.</value></data>
+  <data name="Campaign.Book.Art.Draw.Replaces" xml:space="preserve"><value>Картинка, которая сейчас стоит, сохранится как прежняя версия: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Drops" xml:space="preserve"><value>В этих местах уже 3 версии, поэтому новая удалит самую старую из прежних, за которую уже заплачено: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.PickAgain" xml:space="preserve"><value>Нарисовать ещё раз</value></data>
+  <data name="Campaign.Book.Art.Versions.Show" xml:space="preserve"><value>Версии ({0})</value></data>
+  <data name="Campaign.Book.Art.Versions.Hide" xml:space="preserve"><value>Скрыть версии</value></data>
+  <data name="Campaign.Book.Art.Versions.Hint" xml:space="preserve"><value>Для каждого места в этом издании хранится до 3 версий картинки. В книгу идёт только выбранная.</value></data>
+  <data name="Campaign.Book.Art.Versions.Loading" xml:space="preserve"><value>Загружаем версии…</value></data>
+  <data name="Campaign.Book.Art.Versions.InUse" xml:space="preserve"><value>Выбрана</value></data>
+  <data name="Campaign.Book.Art.Versions.Use" xml:space="preserve"><value>Выбрать эту</value></data>
+  <data name="Campaign.Book.Art.Versions.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Campaign.Book.Art.Versions.Confirm" xml:space="preserve"><value>Удалить эту версию насовсем? Вернуть её будет нельзя.</value></data>
+  <data name="Campaign.Book.Art.Versions.Yes" xml:space="preserve"><value>Удалить насовсем</value></data>
+  <data name="Campaign.Book.Art.Versions.No" xml:space="preserve"><value>Оставить</value></data>
+  <data name="Campaign.Book.Art.Versions.Drawn" xml:space="preserve"><value>нарисована</value></data>
+  <data name="Campaign.Book.Art.Versions.Uploaded" xml:space="preserve"><value>добавлена</value></data>
+  <data name="Campaign.Book.Art.Versions.Stale" xml:space="preserve"><value>нарисована по прежнему описанию или стилю</value></data>
+  <data name="Campaign.Book.Art.Versions.NoPicture" xml:space="preserve"><value>Эту картинку не удаётся показать.</value></data>
+  <data name="Campaign.Book.Art.Versions.Alt" xml:space="preserve"><value>{0}, версия {1}</value></data>
+  <data name="Campaign.Book.Art.Versions.Used" xml:space="preserve"><value>Выбрана другая картинка.</value></data>
+  <data name="Campaign.Book.Art.Versions.Deleted" xml:space="preserve"><value>Версия удалена.</value></data>
+  <data name="Campaign.Book.Art.Gone.Hint" xml:space="preserve"><value>Они никуда не печатаются, но занимают место в лимите картинок книги и в вашем хранилище. Место может вернуться, если снова показать или переименовать его.</value></data>
+  <data name="Campaign.Book.Art.Gone.Hide" xml:space="preserve"><value>Скрыть картинки мест, которых больше нет</value></data>
+  <data name="Campaign.Book.Art.Gone.Show" xml:space="preserve"><value>Картинки мест, которых больше нет в этом издании ({0})</value></data>
+  <data name="Campaign.Book.Art.State.KeptOnly" xml:space="preserve"><value>картинка не выбрана</value></data>
+  <data name="Campaign.Book.Art.Draw.None" xml:space="preserve"><value>Отметьте место с предложением, чтобы нарисовать его.</value></data>
+  <data name="Campaign.Book.Art.Draw.Start" xml:space="preserve"><value>Нарисовать отмеченные ({0})</value></data>
+  <data name="Campaign.Book.Art.Draw.Running" xml:space="preserve"><value>Рисуем… готово {0} из {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Done" xml:space="preserve"><value>Готово: нарисовано {0} из {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Stopped" xml:space="preserve"><value>Остановлено: нарисовано {0} из {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Totals" xml:space="preserve"><value>Всего нарисовано для этой книги: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.TotalsCost" xml:space="preserve"><value>Потрачено: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Drawn" xml:space="preserve"><value>нарисована</value></data>
+  <data name="Campaign.Book.Art.Draw.DrawnStale" xml:space="preserve"><value>нарисована по прежнему описанию или стилю</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.slot" xml:space="preserve"><value>Этого места больше нет в издании.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.suggestion" xml:space="preserve"><value>Для этого места в этом издании нет предложения.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.stale" xml:space="preserve"><value>Текст изменился после предложения. Сначала предложите заново.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.visual" xml:space="preserve"><value>Это описание нельзя использовать: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.repeat" xml:space="preserve"><value>Отмечено дважды.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.many" xml:space="preserve"><value>За один раз рисуется не больше {0} картинок.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.image" xml:space="preserve"><value>Картинку не удалось прочитать; ничего не сохранено.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.failed" xml:space="preserve"><value>Модель картинок не справилась. Сама она не пробует снова.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.auth" xml:space="preserve"><value>Модель картинок отклонила ключ или имя модели.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.ratelimit" xml:space="preserve"><value>Модель картинок перегружена или кредит исчерпан.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.allowance" xml:space="preserve"><value>Дневной лимит картинок на ключе сервера исчерпан.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.cancelled" xml:space="preserve"><value>Остановлено до рисования.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.save" xml:space="preserve"><value>Картинку не удалось сохранить.</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Оформление: {0}. Предпросмотр — та самая страница, из которой печатается PDF.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>Предпросмотр</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Скрыть предпросмотр</value></data>
@@ -741,6 +862,154 @@
   <data name="Campaign.Book.Download" xml:space="preserve"><value>Скачать PDF</value></data>
   <data name="Campaign.Book.Printing" xml:space="preserve"><value>Печать…</value></data>
   <data name="Campaign.Book.Done" xml:space="preserve"><value>Книга скачана.</value></data>
+  <data name="Campaign.Book.Draft.PanelTitle" xml:space="preserve"><value>Редактирование книги</value></data>
+  <data name="Campaign.Book.Draft.PanelHint" xml:space="preserve"><value>Редактируемая копия этого издания: Markdown, который можно свободно менять, рядом с предпросмотром страниц в том виде, в каком они печатаются. Каждая глава подскажет, если кампания изменилась после вашей правки.</value></data>
+  <data name="Campaign.Book.Draft.Open" xml:space="preserve"><value>Открыть редактор: {0}</value></data>
+  <data name="Campaign.Book.Draft.Title" xml:space="preserve"><value>Редактор книги: {0}</value></data>
+  <data name="Campaign.Book.Draft.Theme" xml:space="preserve"><value>Оформление</value></data>
+  <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>Простое</value></data>
+  <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Пепельный пергамент</value></data>
+  <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (только макет)</value></data>
+  <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(не для этого языка)</value></data>
+  <data name="Campaign.Book.Art.Draw.Guide" xml:space="preserve"><value>Для каждой картинки используется ваш стиль из настроек ИИ вместо вариантов ниже:</value></data>
+  <data name="Campaign.Book.Credit" xml:space="preserve"><value>Страницы сделаны с помощью замечательного {0}</value></data>
+  <data name="Campaign.Book.Theme.Empty" xml:space="preserve"><value>Сначала вставьте таблицу стилей оформления.</value></data>
+  <data name="Campaign.Book.Theme.Title" xml:space="preserve"><value>Добавить оформление</value></data>
+  <data name="Campaign.Book.Theme.Open" xml:space="preserve"><value>Добавить оформление…</value></data>
+  <data name="Campaign.Book.Theme.Steps" xml:space="preserve"><value>Шаги</value></data>
+  <data name="Campaign.Book.Theme.Step1" xml:space="preserve"><value>Стили</value></data>
+  <data name="Campaign.Book.Theme.Step2" xml:space="preserve"><value>Языки</value></data>
+  <data name="Campaign.Book.Theme.Step3" xml:space="preserve"><value>Просмотр</value></data>
+  <data name="Campaign.Book.Theme.Yours" xml:space="preserve"><value>Оформления этой кампании</value></data>
+  <data name="Campaign.Book.Theme.Unfinished" xml:space="preserve"><value>не закончено</value></data>
+  <data name="Campaign.Book.Theme.Edit" xml:space="preserve"><value>Изменить</value></data>
+  <data name="Campaign.Book.Theme.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Campaign.Book.Theme.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Campaign.Book.Theme.Css" xml:space="preserve"><value>Таблица стилей</value></data>
+  <data name="Campaign.Book.Theme.CssHint" xml:space="preserve"><value>Вставьте оформление Homebrewery или вкладку Style из брю как есть. Шрифты и картинки, которые оно грузит из сети, сервер скачает один раз и сохранит вместе с оформлением.</value></data>
+  <data name="Campaign.Book.Theme.OnLayer" xml:space="preserve"><value>Поверх макета Homebrewery 5e (как оформления для PHB)</value></data>
+  <data name="Campaign.Book.Theme.Next" xml:space="preserve"><value>Скачать и проверить</value></data>
+  <data name="Campaign.Book.Theme.Fetching" xml:space="preserve"><value>Скачивание…</value></data>
+  <data name="Campaign.Book.Theme.NotFetched" xml:space="preserve"><value>{0, plural, one {Не удалось скачать # адрес:} few {Не удалось скачать # адреса:} many {Не удалось скачать # адресов:} other {Не удалось скачать # адреса:}}</value></data>
+  <data name="Campaign.Book.Theme.Unbrought" xml:space="preserve"><value>Оно называет шрифты, которых не приносит с собой; они напечатаются тем, что есть на сервере: {0}</value></data>
+  <data name="Campaign.Book.Theme.NoFaces" xml:space="preserve"><value>В нём не нашлось шрифта с латинскими буквами. Его текст напечатается системным шрифтом.</value></data>
+  <data name="Campaign.Book.Theme.LanguagesHint" xml:space="preserve"><value>На каких языках печатать это оформление. Где в его шрифтах нет букв языка, их заменит встроенный шрифт того же рода.</value></data>
+  <data name="Campaign.Book.Theme.Language.en" xml:space="preserve"><value>Английский</value></data>
+  <data name="Campaign.Book.Theme.Language.ru" xml:space="preserve"><value>Русский</value></data>
+  <data name="Campaign.Book.Theme.Language.he" xml:space="preserve"><value>Иврит</value></data>
+  <data name="Campaign.Book.Theme.Covered" xml:space="preserve"><value>В его шрифтах эти буквы есть.</value></data>
+  <data name="Campaign.Book.Theme.Lacking" xml:space="preserve"><value>В этих шрифтах букв нет; вместо них:</value></data>
+  <data name="Campaign.Book.Theme.NoStandIn" xml:space="preserve"><value>(нет: системный шрифт)</value></data>
+  <data name="Campaign.Book.Theme.Kind.Serif" xml:space="preserve"><value>с засечками</value></data>
+  <data name="Campaign.Book.Theme.Kind.Sans" xml:space="preserve"><value>без засечек</value></data>
+  <data name="Campaign.Book.Theme.Kind.Display" xml:space="preserve"><value>для заголовков</value></data>
+  <data name="Campaign.Book.Theme.Kind.Mono" xml:space="preserve"><value>машинописный</value></data>
+  <data name="Campaign.Book.Theme.Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="Campaign.Book.Theme.ToPreview" xml:space="preserve"><value>Просмотр</value></data>
+  <data name="Campaign.Book.Theme.PreviewIn" xml:space="preserve"><value>Образец страниц на языке:</value></data>
+  <data name="Campaign.Book.Theme.PreviewTitle" xml:space="preserve"><value>Образец страниц в этом оформлении</value></data>
+  <data name="Campaign.Book.Theme.Letters" xml:space="preserve"><value>Эти знаки не рисует ни один шрифт оформления: {0}</value></data>
+  <data name="Campaign.Book.Theme.Save" xml:space="preserve"><value>Сохранить и выбрать</value></data>
+  <data name="Campaign.Book.Theme.TooLarge" xml:space="preserve"><value>Таблица стилей слишком длинная, или у кампании уже предельное число оформлений (20).</value></data>
+  <data name="Campaign.Book.Theme.Conflict" xml:space="preserve"><value>Это оформление изменили в другой вкладке. Закройте мастер и откройте снова.</value></data>
+  <data name="Campaign.Book.Theme.Group" xml:space="preserve"><value>Оформления кампании</value></data>
+  <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>Этих знаков нет ни в одном шрифте оформления. Они напечатаются шрифтом, какой найдётся на сервере, или пустыми квадратами:</value></data>
+  <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>Выберите другое оформление или замените эти знаки (например, эмодзи или буквы другого алфавита).</value></data>
+  <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {и ещё #} few {и ещё #} many {и ещё #} other {и ещё #}}</value></data>
+  <data name="Campaign.Book.Draft.Pictures.LeftOut" xml:space="preserve"><value>{0, plural, one {# иллюстрация не вошла в книгу:} few {# иллюстрации не вошли в книгу:} many {# иллюстраций не вошли в книгу:} other {# иллюстрации не вошли в книгу:}}</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Limit" xml:space="preserve"><value>книга заполнена (не больше 120 иллюстраций и 64 МБ на все, по размеру для печати)</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Unreadable" xml:space="preserve"><value>файл не удалось прочитать</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Hint" xml:space="preserve"><value>Предпросмотр и PDF пропускают одни и те же иллюстрации. Возьмите иллюстрации поменьше или уберите часть из книги.</value></data>
+  <data name="Campaign.Book.Draft.OnlyFor" xml:space="preserve"><value>Только для: {0}</value></data>
+  <data name="Campaign.Book.Draft.ForPlayer" xml:space="preserve"><value>PDF для игрока</value></data>
+  <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>Собственный экземпляр книги группы для этого игрока: то, что знали только его персонажи, добавлено в заметках. Ничего не сохраняется.</value></data>
+  <data name="Campaign.Book.Draft.Edge" xml:space="preserve"><value>Рваные края страниц</value></data>
+  <data name="Campaign.Book.Draft.EdgeHint" xml:space="preserve"><value>Края каждой страницы оборваны, видны волокна бумаги. Текст и колонтитул остаются в стороне.</value></data>
+  <data name="Campaign.Book.Draft.Assist" xml:space="preserve"><value>Подсказки и справка</value></data>
+  <data name="Campaign.Book.Draft.AssistHint" xml:space="preserve"><value>При наборе: блоки после {{{{, рамки картинок, \page и \column, картинки этого издания после art:. Наведите указатель на блок, картинку или метку записи, чтобы узнать, что это.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.note" xml:space="preserve"><value>Заметка или врезка в рамке, со своим заголовком.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.descriptive" xml:space="preserve"><value>Текст для зачитывания: то, что слышат игроки.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.secret" xml:space="preserve"><value>Секрет мастера: печатается только в издании мастера, в рамке.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.monster" xml:space="preserve"><value>Блок характеристик. Добавьте ,frame для рамки.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.portrait" xml:space="preserve"><value>Портрет рядом с текстом. Внутрь — картинка: ![подпись](art:…).</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.place" xml:space="preserve"><value>Картинка во всю ширину колонки.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.spot" xml:space="preserve"><value>Маленькая картинка в конце записи.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.wide" xml:space="preserve"><value>Во всю ширину страницы, через обе колонки.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.quote" xml:space="preserve"><value>Цитата; {{{{attribution …}}}} — кто её сказал.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.torn" xml:space="preserve"><value>Картинка словно вырвана из отпечатка.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.oval" xml:space="preserve"><value>Картинка в овале.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.round" xml:space="preserve"><value>Картинка в круге.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.frame" xml:space="preserve"><value>Рамка вокруг блока характеристик.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.page" xml:space="preserve"><value>Начинает новую страницу.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.column" xml:space="preserve"><value>Начинает следующую колонку.</value></data>
+  <data name="Campaign.Book.Draft.Help.Slot" xml:space="preserve"><value>Картинка: {0}</value></data>
+  <data name="Campaign.Book.Draft.Help.Entry" xml:space="preserve"><value>Здесь начинается запись «{0}». Эту строку ведёт программа: оставьте её как есть.</value></data>
+  <data name="Campaign.Book.Draft.Help.GmOnly" xml:space="preserve"><value>Секрет мастера: издание группы его никогда не печатает, здесь ему не место.</value></data>
+  <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>Скачать Markdown (.md)</value></data>
+  <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>Все главы одним файлом Markdown — для Homebrewery или текстового редактора. Иллюстраций и таблицы стилей в нём нет.</value></data>
+  <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>Это издание мастера: в нём все секреты. Не показывайте файл игрокам.</value></data>
+  <data name="Campaign.Book.Draft.MarkdownGmYes" xml:space="preserve"><value>Скачать</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Совместимость с Homebrewery</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Раскладывать страницы так же, как Homebrewery, чтобы CSS, написанный для Homebrewery, работал здесь. Картинки и цвета Homebrewery не используются.</value></data>
+  <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Скачать PDF</value></data>
+  <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>Начать заново</value></data>
+  <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>Удалить все правки в этом черновике и собрать его заново из кампании?</value></data>
+  <data name="Campaign.Book.Draft.StartOverYes" xml:space="preserve"><value>Удалить мои правки</value></data>
+  <data name="Campaign.Book.Draft.Chapters" xml:space="preserve"><value>Главы</value></data>
+  <data name="Campaign.Book.Draft.Front" xml:space="preserve"><value>Обложка и оглавление</value></data>
+  <data name="Campaign.Book.Draft.Stylesheet" xml:space="preserve"><value>Стили</value></data>
+  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>Ваш собственный CSS, применяется поверх темы. Шрифты, картинки и импортированные таблицы стилей по адресам https сервер скачивает один раз и хранит вместе с книгой; сама страница ничего не загружает.</value></data>
+  <data name="Campaign.Book.Draft.Web.Fetching" xml:space="preserve"><value>Скачиваем шрифты, картинки и таблицы стилей, указанные в этом CSS…</value></data>
+  <data name="Campaign.Book.Draft.Web.Kept" xml:space="preserve"><value>{0, plural, one{С книгой хранится # копия} few{С книгой хранятся # копии} many{С книгой хранится # копий} other{С книгой хранится # копии}} веб-адресов ({1} МБ).</value></data>
+  <data name="Campaign.Book.Draft.Web.Failed" xml:space="preserve"><value>{0, plural, one{Не удалось скачать # адрес} few{Не удалось скачать # адреса} many{Не удалось скачать # адресов} other{Не удалось скачать # адреса}}, книга обойдётся без них:</value></data>
+  <data name="Campaign.Book.Draft.Web.NotPublic" xml:space="preserve"><value>это не адрес в открытом интернете</value></data>
+  <data name="Campaign.Book.Draft.Web.Unreachable" xml:space="preserve"><value>сайт недоступен</value></data>
+  <data name="Campaign.Book.Draft.Web.TimedOut" xml:space="preserve"><value>сайт отвечал слишком долго</value></data>
+  <data name="Campaign.Book.Draft.Web.Refused" xml:space="preserve"><value>сайт ответил ошибкой {0}</value></data>
+  <data name="Campaign.Book.Draft.Web.TooLarge" xml:space="preserve"><value>слишком большой файл</value></data>
+  <data name="Campaign.Book.Draft.Web.NotWhatWasNamed" xml:space="preserve"><value>пришёл не тот шрифт, картинка или таблица стилей, которые указаны в CSS</value></data>
+  <data name="Campaign.Book.Draft.Web.TooManyRedirects" xml:space="preserve"><value>слишком много перенаправлений</value></data>
+  <data name="Campaign.Book.Draft.Web.Full" xml:space="preserve"><value>книга уже хранит столько файлов из интернета, сколько может</value></data>
+  <data name="Campaign.Book.Draft.Badge.Stale" xml:space="preserve"><value>изменилась</value></data>
+  <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>правки</value></data>
+  <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>Кампания изменилась после того, как вы правили эту главу.</value></data>
+  <data name="Campaign.Book.Draft.StaleEntries" xml:space="preserve"><value>Изменилось: {0}.</value></data>
+  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>«Обновить» вносит изменения кампании и сохраняет ваши правки; каждое изменение вы проверяете сами. «Собрать заново» заменит ваш текст текстом кампании. Оба действия можно отменить. «Оставить мой» скроет это сообщение, пока кампания снова не изменится.</value></data>
+  <data name="Campaign.Book.Draft.Regenerate" xml:space="preserve"><value>Собрать заново</value></data>
+  <data name="Campaign.Book.Draft.Keep" xml:space="preserve"><value>Оставить мой</value></data>
+  <data name="Campaign.Book.Draft.Merge.Button" xml:space="preserve"><value>Обновить</value></data>
+  <data name="Campaign.Book.Draft.Merge.Confirm" xml:space="preserve"><value>Обновить эту главу по кампании?</value></data>
+  <data name="Campaign.Book.Draft.Merge.Summary" xml:space="preserve"><value>Из кампании: {0}. Ваше сохранено: {1}. Новое: {2}. Предложено убрать: {3}. Предложено вернуть: {4}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Conflicts" xml:space="preserve"><value>Изменено и вами, и кампанией: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Send" xml:space="preserve"><value>{0} из них уйдут в {1} для слияния; больше ничего не отправляется.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NoModel" xml:space="preserve"><value>Модель ИИ не настроена, поэтому для них показан текст кампании. Отклоните его, чтобы оставить свой.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>{0} из них нельзя отправить ИИ (в них изменились и секреты или картинки, или они слишком длинные), поэтому для них показан текст кампании.</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithAi" xml:space="preserve"><value>Слить с ИИ</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithoutAi" xml:space="preserve"><value>Без ИИ</value></data>
+  <data name="Campaign.Book.Draft.Merge.ShowChanges" xml:space="preserve"><value>Показать изменения</value></data>
+  <data name="Campaign.Book.Draft.Merge.Review" xml:space="preserve"><value>Проверьте изменения кампании</value></data>
+  <data name="Campaign.Book.Draft.Merge.Ready" xml:space="preserve"><value>Слито ИИ: {0}. Показано как текст кампании: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Saved" xml:space="preserve"><value>Глава обновлена.</value></data>
+  <data name="Campaign.Book.Draft.Merge.FitAgain" xml:space="preserve"><value>Запустите «Разбить на страницы» снова: текст сдвинулся.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Same" xml:space="preserve"><value>Обновлено: изменения кампании уже были в вашем тексте.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Moved" xml:space="preserve"><value>Кампания снова изменилась, пока вы проверяли, поэтому ничего не сохранено. Обновите главу ещё раз.</value></data>
+  <data name="Campaign.Book.Draft.Merge.UpToDate" xml:space="preserve"><value>Эта глава уже обновлена.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Duplicate" xml:space="preserve"><value>Одна запись встречается в этой главе дважды, поэтому слить нельзя. Уберите копию или используйте «Собрать заново» или «Оставить мой».</value></data>
+  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>Отменить последнее обновление</value></data>
+  <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>В кампании больше нет этой главы. Удалите её текст, если он не должен печататься.</value></data>
+  <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>Доступные блоки</value></data>
+  <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (для зачитывания), {{{{secret}}}} (издание мастера), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} и {{{{wide}}}}; каждый закрывается строкой }}}}. Строка \page начинает страницу, \column — колонку. Картинка: ![подпись](art:…), только из этого издания; её блоку можно задать рамку: {{{{portrait,torn}}}}, oval или round.</value></data>
+  <data name="Campaign.Book.Draft.Saving" xml:space="preserve"><value>Сохранение…</value></data>
+  <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>Сохранено</value></data>
+  <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>Ещё не сохранено</value></data>
+  <data name="Campaign.Book.Draft.Conflict" xml:space="preserve"><value>Черновик изменён в другой вкладке, поэтому отсюда больше ничего не сохраняется. Закройте и снова откройте редактор.</value></data>
+  <data name="Campaign.Book.Draft.CloseUnsaved" xml:space="preserve"><value>Часть последних правок не сохранилась: черновик изменили в другой вкладке. Скопируйте их, если они нужны, или нажмите «Закрыть» ещё раз, чтобы закрыть без них.</value></data>
+  <data name="Campaign.Book.Draft.SaveFailed" xml:space="preserve"><value>Не удалось сохранить. Ваш текст остался здесь.</value></data>
+  <data name="Campaign.Book.Draft.TooLarge" xml:space="preserve"><value>Слишком длинно, чтобы сохранить.</value></data>
+  <data name="Campaign.Book.Draft.NotAllowed" xml:space="preserve"><value>Редактировать книгу может только мастер кампании.</value></data>
+  <data name="Campaign.Book.Draft.EditorFailed" xml:space="preserve"><value>Редактор не запустился. Обновите страницу и попробуйте снова.</value></data>
+  <data name="Campaign.Book.Draft.ActionFailed" xml:space="preserve"><value>Не получилось. Обновите страницу и попробуйте снова.</value></data>
+  <data name="Campaign.Book.Draft.Overflow" xml:space="preserve"><value>Не помещается даже на отдельную страницу и будет обрезано при печати: страница {0}.</value></data>
   <data name="Campaign.Book.Failed.Language" xml:space="preserve"><value>Это оформление пока не умеет печатать на этом языке.</value></data>
   <data name="Campaign.Book.Failed.Busy" xml:space="preserve"><value>Сейчас печатается другая книга. Повторите через минуту.</value></data>
   <data name="Campaign.Book.Failed.NoBrowser" xml:space="preserve"><value>На этом компьютере нет браузера для печати.</value></data>
@@ -810,4 +1079,158 @@
   <data name="Campaign.Book.Ai.Row.Skipped" xml:space="preserve"><value>слишком короткая</value></data>
   <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>Этот лимит слишком мал, чтобы отправить хотя бы один запрос: для самой большой главы нужно зарезервировать не менее {0} токенов (худший случай, с повторами).</value></data>
   <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>В пожеланиях к стилю есть сведения, которых нет в книге для партии ({0}). Для этого издания оставьте только манеру и тон: без имён, чисел и сюжета.</value></data>
+  <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} нет в списке сайтов сервера; администратор сервера может его добавить</value></data>
+  <data name="Campaign.Settings.Role.CoGm" xml:space="preserve"><value>Со-мастер</value></data>
+  <data name="Campaign.Settings.CoGmHint" xml:space="preserve"><value>Менять со-мастеров может только владелец.</value></data>
+  <data name="Campaign.Settings.PassOn" xml:space="preserve"><value>Сделать владельцем</value></data>
+  <data name="Campaign.Settings.PassOnLabel" xml:space="preserve"><value>Сделать {0} владельцем</value></data>
+  <data name="Campaign.Settings.PassOnQ" xml:space="preserve"><value>Сделать {0} владельцем кампании?</value></data>
+  <data name="Campaign.Settings.PassOnBody" xml:space="preserve"><value>Вы останетесь со-мастером. После этого только {0} сможет удалить кампанию, передать её или менять со-мастеров.</value></data>
+  <data name="Campaign.Settings.PassedOn" xml:space="preserve"><value>Владелец кампании теперь: {0}.</value></data>
+  <data name="Campaign.OwnerOnly" xml:space="preserve"><value>Менять со-мастеров и владельца кампании может только её владелец.</value></data>
+  <data name="Campaign.Settings.StepDown" xml:space="preserve"><value>Стать игроком</value></data>
+  <data name="Campaign.Settings.StepDownQ" xml:space="preserve"><value>Стать игроком?</value></data>
+  <data name="Campaign.Settings.StepDownBody" xml:space="preserve"><value>Вы сразу перестанете видеть заметки мастера, скрытые страницы и скрытых персонажей. Снова сделать вас со-мастером может только владелец.</value></data>
+  <data name="Campaign.Settings.Leave.Title" xml:space="preserve"><value>Покинуть кампанию</value></data>
+  <data name="Campaign.Settings.Leave.Button" xml:space="preserve"><value>Покинуть кампанию</value></data>
+  <data name="Campaign.Settings.Leave.Q" xml:space="preserve"><value>Покинуть «{0}»?</value></data>
+  <data name="Campaign.Settings.Leave.Hint" xml:space="preserve"><value>Вы потеряете доступ к этой кампании. Ваши персонажи останутся в составе. Чтобы вернуться, понадобится новое приглашение.</value></data>
+  <data name="Campaign.Settings.Leave.OwnerHint" xml:space="preserve"><value>Чтобы уйти, сначала сделайте владельцем со-мастера.</value></data>
+  <data name="Campaign.Vault.Bring" xml:space="preserve"><value>Привести персонажа</value></data>
+  <data name="Campaign.Vault.Character" xml:space="preserve"><value>Персонаж</value></data>
+  <data name="Campaign.Vault.NoneForSystem" xml:space="preserve"><value>Ни один из ваших персонажей не создан для {0}.</value></data>
+  <data name="Campaign.Vault.OpenVault" xml:space="preserve"><value>Открыть «Мои персонажи»</value></data>
+  <data name="Campaign.Vault.NothingMissing" xml:space="preserve"><value>В кампании есть всё, что использует персонаж.</value></data>
+  <data name="Campaign.Vault.Missing" xml:space="preserve"><value>{0, plural, one{# вещи нет в кампании} few{# вещей нет в кампании} many{# вещей нет в кампании} other{# вещи нет в кампании}}</value></data>
+  <data name="Campaign.Vault.MissingHint" xml:space="preserve"><value>Мастера попросят добавить то, что вы оставите. Отметьте то, что лучше не брать в копию.</value></data>
+  <data name="Campaign.Vault.LeaveOut" xml:space="preserve"><value>Не брать {0}</value></data>
+  <data name="Campaign.Vault.BringHint" xml:space="preserve"><value>Копия войдёт в кампанию, когда мастер её примет. Ваш персонаж останется в «Моих персонажах».</value></data>
+  <data name="Campaign.Vault.Send" xml:space="preserve"><value>Спросить мастера</value></data>
+  <data name="Campaign.Vault.Sent" xml:space="preserve"><value>Отправлено: «{0}» войдёт, когда мастер примет.</value></data>
+  <data name="Campaign.Vault.NotSent" xml:space="preserve"><value>Этого персонажа нельзя привести в эту кампанию. Обновите страницу и попробуйте снова.</value></data>
+  <data name="Campaign.Vault.Waiting" xml:space="preserve"><value>{0, plural, one{Ждут мастера (#)} few{Ждут мастера (#)} many{Ждут мастера (#)} other{Ждут мастера (#)}}</value></data>
+  <data name="Campaign.Vault.WaitingHint" xml:space="preserve"><value>Мастер принимает персонажа, прежде чем тот войдёт в отряд.</value></data>
+  <data name="Campaign.Vault.PlayedBy" xml:space="preserve"><value>играет {0}</value></data>
+  <data name="Campaign.Vault.New" xml:space="preserve"><value>Новый в кампании</value></data>
+  <data name="Campaign.Vault.Update" xml:space="preserve"><value>Новая версия персонажа «{0}»</value></data>
+  <data name="Campaign.Vault.AskedFor" xml:space="preserve"><value>Просит добавить: {0}</value></data>
+  <data name="Campaign.Vault.LeftOut" xml:space="preserve"><value>Не взято: {0}</value></data>
+  <data name="Campaign.Vault.Accept" xml:space="preserve"><value>Принять</value></data>
+  <data name="Campaign.Vault.AcceptLabel" xml:space="preserve"><value>Принять «{0}»</value></data>
+  <data name="Campaign.Vault.Accepted" xml:space="preserve"><value>«{0}» в кампании.</value></data>
+  <data name="Campaign.Vault.NotAccepted" xml:space="preserve"><value>Просьбы больше нет или игрок ушёл. Ничего не добавлено.</value></data>
+  <data name="Campaign.Vault.Decline" xml:space="preserve"><value>Отклонить</value></data>
+  <data name="Campaign.Vault.DeclineLabel" xml:space="preserve"><value>Отклонить «{0}»</value></data>
+  <data name="Campaign.Vault.Declined" xml:space="preserve"><value>«{0}» отклонён.</value></data>
+  <data name="Campaign.Vault.Withdraw" xml:space="preserve"><value>Отозвать</value></data>
+  <data name="Campaign.Vault.WithdrawLabel" xml:space="preserve"><value>Отозвать «{0}»</value></data>
+  <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>Просьба о «{0}» отозвана.</value></data>
+  <data name="Campaign.Book.Ai.Reason.storage" xml:space="preserve"><value>у владельца кампании не осталось места</value></data>
+  <data name="Campaign.Book.Art.StorageFull" xml:space="preserve"><value>У владельца кампании не осталось места для этого изображения. Удалите часть изображений или файлов или попросите у администратора сервера больше места.</value></data>
+  <data name="Campaign.Book.Draft.Fit" xml:space="preserve"><value>Разбить на страницы</value></data>
+  <data name="Campaign.Book.Draft.FitHint" xml:space="preserve"><value>Вставляет в текст разрыв страницы везде, где страница переполнена, по раскладке, как при печати PDF. После правок запустите снова: переносятся только разрывы, вставленные этой командой, ваши остаются.</value></data>
+  <data name="Campaign.Book.Draft.Fitting" xml:space="preserve"><value>Разбиваем на страницы…</value></data>
+  <data name="Campaign.Book.Draft.Fit.Done" xml:space="preserve"><value>Разрывов страниц в книге: {0}. Изменено глав: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Nothing" xml:space="preserve"><value>Все страницы уже помещаются. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Unplaced" xml:space="preserve"><value>Перед этими местами разрыв вставить не удалось, поэтому они переносятся на новую страницу только при отрисовке книги:</value></data>
+  <data name="Campaign.Book.Draft.Fit.TooTall" xml:space="preserve"><value>Не помещаются даже на отдельную страницу и будут обрезаны при печати. Сократите или разделите их:</value></data>
+  <data name="Campaign.Book.Draft.Fit.Item" xml:space="preserve"><value>Страница {0}, {1}: «{2}»</value></data>
+  <data name="Campaign.Book.Draft.Fit.ItemNoPage" xml:space="preserve"><value>{0}: «{1}»</value></data>
+  <data name="Campaign.Book.Draft.Fit.Failed" xml:space="preserve"><value>Не удалось разложить книгу по страницам. Повторите через минуту.</value></data>
+  <data name="Campaign.Book.Draft.RunOn" xml:space="preserve"><value>Страниц, которые продолжаются дальше разрыва в тексте: {0}. «Разбить на страницы» вставит эти разрывы в текст.</value></data>
+  <data name="Campaign.Book.Draft.PrintedOverflow" xml:space="preserve"><value>PDF скачан, но эти страницы при печати обрезаны: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Title" xml:space="preserve"><value>Спросить ИИ</value></data>
+  <data name="Campaign.Book.Draft.Ai.Hint" xml:space="preserve"><value>Выделите отрывок или ничего — тогда вся глава. Секреты, картинки и разрывы страниц не отправляются, и ничего не меняется, пока вы не примете правку.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape" xml:space="preserve"><value>Как в книге</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape.Hint" xml:space="preserve"><value>Переписать так, как это подают изданные книги этой игры</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter" xml:space="preserve"><value>Короче</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter.Hint" xml:space="preserve"><value>Сохранить все факты, убрать повторы</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud" xml:space="preserve"><value>Текст для чтения вслух</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud.Hint" xml:space="preserve"><value>Сделать текст, который ведущий читает игрокам</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy" xml:space="preserve"><value>Привести в порядок</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy.Hint" xml:space="preserve"><value>Только орфография, грамматика и разметка</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskLabel" xml:space="preserve"><value>Или скажите, что изменить</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskPlaceholder" xml:space="preserve"><value>Или скажите, что изменить, например: в стиле судового журнала</value></data>
+  <data name="Campaign.Book.Draft.Ai.Ask" xml:space="preserve"><value>Спросить</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoAsk" xml:space="preserve"><value>Сначала скажите, что изменить.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Confirm" xml:space="preserve"><value>Отправить {0} в {1}?</value></data>
+  <data name="Campaign.Book.Draft.Ai.Selection" xml:space="preserve"><value>выделенное</value></data>
+  <data name="Campaign.Book.Draft.Ai.Chapter" xml:space="preserve"><value>всю главу</value></data>
+  <data name="Campaign.Book.Draft.Ai.Widened" xml:space="preserve"><value>Выделение расширено, чтобы не разрезать секрет, картинку или разрыв страницы.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Kept" xml:space="preserve"><value>Не отправляется, остаётся как есть: {0} (секреты, картинки, разрывы страниц или метки).</value></data>
+  <data name="Campaign.Book.Draft.Ai.Tokens" xml:space="preserve"><value>Примерно от {0} до {1} токенов на вход и не более {2} на выход за попытку. Это оценка: у провайдера счёт будет другим.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Cost" xml:space="preserve"><value>Примерно от {0} до {1} по вашим ценам; верхняя цифра — если понадобится вторая попытка.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Allowance" xml:space="preserve"><value>На ключе сервера: сегодня использовано {0} из {1} запросов; эта правка резервирует до {2}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Send" xml:space="preserve"><value>Отправить</value></data>
+  <data name="Campaign.Book.Draft.Ai.Asking" xml:space="preserve"><value>Спрашиваем ИИ…</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stop" xml:space="preserve"><value>Остановить</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stale" xml:space="preserve"><value>Глава изменилась после чтения. Попробуйте ещё раз.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Empty" xml:space="preserve"><value>Здесь нет ничего, что ИИ может изменить.</value></data>
+  <data name="Campaign.Book.Draft.Ai.TooLong" xml:space="preserve"><value>Слишком длинно для одной правки. Выделите отрывок короче.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Busy" xml:space="preserve"><value>Уже идёт другой ваш запуск ИИ. Попробуйте, когда он закончится.</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoModel" xml:space="preserve"><value>Сначала настройте модель ИИ в настройках ИИ.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.checks" xml:space="preserve"><value>Ответ ИИ дважды нарушил правила книги. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cutoff" xml:space="preserve"><value>Ответ ИИ оборвался, не закончившись. Ничего не изменилось; попробуйте отрывок короче.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.budget" xml:space="preserve"><value>Правка достигла предела расходов. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.auth" xml:space="preserve"><value>Провайдер ИИ отклонил ключ или модель. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.ratelimit" xml:space="preserve"><value>Провайдер ИИ ограничивает запросы. Попробуйте позже.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.allowance" xml:space="preserve"><value>Лимит ИИ сервера на сегодня исчерпан.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cancelled" xml:space="preserve"><value>Остановлено. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.error" xml:space="preserve"><value>Не удалось связаться с ИИ. Ничего не изменилось.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Spent" xml:space="preserve"><value>Использовано около {0} токенов.</value></data>
+  <data name="Campaign.Book.Draft.Ai.SpentCost" xml:space="preserve"><value>Использовано около {0} токенов, примерно {1}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Same" xml:space="preserve"><value>ИИ ничего не изменил.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Review" xml:space="preserve"><value>Проверьте правку ИИ</value></data>
+  <data name="Campaign.Book.Draft.Ai.Left" xml:space="preserve"><value>Осталось изменений: {0}</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeepAccepted" xml:space="preserve"><value>Оставить принятое</value></data>
+  <data name="Campaign.Book.Draft.Ai.AcceptRest" xml:space="preserve"><value>Принять остальное</value></data>
+  <data name="Campaign.Book.Draft.Ai.Discard" xml:space="preserve"><value>Отбросить</value></data>
+  <data name="Campaign.Book.Draft.Ai.Accept" xml:space="preserve"><value>Принять</value></data>
+  <data name="Campaign.Book.Draft.Ai.Reject" xml:space="preserve"><value>Отклонить</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewLabel" xml:space="preserve"><value>Правка ИИ на проверку</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewHint" xml:space="preserve"><value>Примите или отклоните каждое изменение или все сразу. Alt+Вниз и Alt+Вверх переходят между изменениями; Ctrl+Enter принимает изменение у курсора, Ctrl+Backspace отклоняет. Предпросмотр показывает принятое на сейчас.</value></data>
+  <data name="Campaign.Book.Draft.Tools" xml:space="preserve"><value>Инструменты книги</value></data>
+  <data name="Campaign.Book.Draft.More" xml:space="preserve"><value>Другие действия</value></data>
+  <data name="Campaign.Book.Draft.Collapse" xml:space="preserve"><value>Свернуть</value></data>
+  <data name="Campaign.Book.Draft.Expand" xml:space="preserve"><value>Развернуть</value></data>
+  <data name="Campaign.Book.Draft.CollapseNamed" xml:space="preserve"><value>Свернуть: {0}</value></data>
+  <data name="Campaign.Book.Draft.ExpandNamed" xml:space="preserve"><value>Показать: {0}</value></data>
+  <data name="Campaign.Book.Draft.Preview" xml:space="preserve"><value>Предпросмотр</value></data>
+  <data name="Campaign.Book.Draft.Panel" xml:space="preserve"><value>Панель инструментов</value></data>
+  <data name="Campaign.Book.Draft.Problems" xml:space="preserve"><value>Проблемы</value></data>
+  <data name="Campaign.Book.Draft.NoProblems" xml:space="preserve"><value>Проблем не найдено. Сюда пишут «Разбить на страницы», скачивание и веб-адреса таблицы стилей.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Found" xml:space="preserve"><value>{0, plural, one{В книге для игроков # место} few{В книге для игроков # места} many{В книге для игроков # мест} other{В книге для игроков # места}} из того, что должно быть только в книге ведущего. Проверьте каждое, прежде чем отдавать книгу:</value></data>
+  <data name="Campaign.Book.Draft.Leak.Secret" xml:space="preserve"><value>слова секрета</value></data>
+  <data name="Campaign.Book.Draft.Leak.SecretIn" xml:space="preserve"><value>слова секрета из «{0}»</value></data>
+  <data name="Campaign.Book.Draft.Leak.HiddenName" xml:space="preserve"><value>имя скрытого персонажа</value></data>
+  <data name="Campaign.Book.Draft.Leak.RealName" xml:space="preserve"><value>настоящее имя персонажа «{0}»</value></data>
+  <data name="Campaign.Book.Draft.Leak.GmOnly" xml:space="preserve"><value>то, что есть только в книге ведущего</value></data>
+  <data name="Campaign.Book.Draft.Leak.More" xml:space="preserve"><value>{0, plural, one{и ещё #} few{и ещё #} many{и ещё #} other{и ещё #}}</value></data>
+  <data name="Campaign.Book.Draft.Leak.Hint" xml:space="preserve"><value>Это только предупреждение: книгу можно скачать и так.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Anyway" xml:space="preserve"><value>Всё равно скачать</value></data>
+  <data name="Campaign.Book.Draft.BlocksTab" xml:space="preserve"><value>Блоки</value></data>
+  <data name="Campaign.Book.Draft.Ai.PickChapter" xml:space="preserve"><value>Выберите главу, чтобы спросить ИИ о ней; таблица стилей не отправляется.</value></data>
+  <data name="Campaign.Book.Tab.Print" xml:space="preserve"><value>Печать</value></data>
+  <data name="Campaign.Book.Tab.Art" xml:space="preserve"><value>Картинки</value></data>
+  <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>Редактор</value></data>
+  <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>Полировка ИИ</value></data>
+  <data name="Campaign.Book.Draft.Ai.InPane" xml:space="preserve"><value>Запрос к ИИ открыт над главой: отправьте или отмените его либо закончите проверку там.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Parts" xml:space="preserve"><value>По записям: {0} запросов — один на начало главы и по одному на каждую запись.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptParts" xml:space="preserve"><value>{0} част(ей) последней правки ИИ остались как были:</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsHint" xml:space="preserve"><value>Остальная часть главы предложена на проверку. Чтобы повторить для одной из них, выделите её и спросите снова.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsNote" xml:space="preserve"><value>Некоторые записи остались как были: см. «Проблемы».</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.checks" xml:space="preserve"><value>ответ нарушил правила книги или изменил её факты</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.cutoff" xml:space="preserve"><value>ответ оборвался</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.other" xml:space="preserve"><value>запрос не удался или работа остановилась раньше</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook" xml:space="preserve"><value>Вся книга «как в книге»</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Hint" xml:space="preserve"><value>Переписать каждую главу так, как пишут изданные книги этой игры, запись за записью. Сначала показывается стоимость, и каждая глава проверяется до отправки следующей.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Confirm" xml:space="preserve"><value>Переписать {0} глав(ы) «как в книге» с помощью {1}?</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Calls" xml:space="preserve"><value>Всего {0} запросов: по одному на начало каждой главы и на каждую запись.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.TooLong" xml:space="preserve"><value>Пропущены (запись слишком длинная для одного запроса): {0}. Выделяйте их части, чтобы переписать.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Each" xml:space="preserve"><value>Главы отправляются по одной. Вы проверяете каждую до отправки следующей, и ничего не сохраняется, пока вы это не оставите.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Start" xml:space="preserve"><value>Начать</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Progress" xml:space="preserve"><value>Глава {0} из {1}</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stop" xml:space="preserve"><value>Остановиться после этой главы</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stopped" xml:space="preserve"><value>Переписывание всей книги остановится после этой главы.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Done" xml:space="preserve"><value>Вся книга пройдена.</value></data>
 </root>

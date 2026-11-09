@@ -90,6 +90,19 @@ public class MockUserRepository : IUserRepository
         return Task.FromResult(true);
     }
 
+    public Task<IReadOnlyList<UserDocument>> ListAsync() =>
+        Task.FromResult<IReadOnlyList<UserDocument>>(_usersById.Values.OrderBy(u => u.Status == AccountStatus.Pending ? 0 : 1).ThenBy(u => u.Username).ToList());
+
+    public Task<int> CountPendingAsync() => Task.FromResult(_usersById.Values.Count(u => u.Status == AccountStatus.Pending));
+
+    public async Task<bool> DeleteAsync(string userId)
+    {
+        if (!_usersById.TryGetValue(userId, out var user)) return false;
+        await DeleteUserAsync(userId);
+        _reservedUsernames.Remove(user.Username.Trim().ToLowerInvariant());
+        return true;
+    }
+
     // Clear state between tests
     public void Reset()
     {

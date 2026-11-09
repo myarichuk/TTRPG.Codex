@@ -42,14 +42,27 @@ public static class BookComposer
     /// is unambiguous (one entry has that text and one line of the chapter reads that way), and otherwise left out. A missing picture
     /// is the safe failure; a picture under another entry's heading is not. <paramref name="placed"/> counts what was placed.</para>
     /// </summary>
-    public static BookDocument PlaceArt(BookDocument document, BookDocument compiled, IReadOnlyList<BookEntryPosition> entries, BookArt art, out int placed)
+    /// <para><paramref name="slots"/> (this edition's, <see cref="BookSlots.For"/>) adds what the GM put in the book's own slots: a header under
+    /// each chapter's title (only when the chapter still begins with its title line) and a cover in place of the campaign's.</para>
+    public static BookDocument PlaceArt(BookDocument document, BookDocument compiled, IReadOnlyList<BookEntryPosition> entries, BookArt art, out int placed,
+        IReadOnlyList<BookSlot>? slots = null)
     {
         var anchors = BookCompiler.ArtAnchors(entries, art);
+        var headers = new Dictionary<string, (string Asset, string Alt)>(StringComparer.Ordinal);
+        string? cover = null;
+        foreach (var slot in slots ?? [])
+        {
+            if (art.Slot(slot.Key, slot.Audience) is not { } asset) continue;
+            if (slot.Kind == BookSlots.Header) headers[slot.Section] = (asset, slot.Label);
+            else if (slot.Kind == BookSlots.Cover) cover = asset;
+        }
+
         var count = 0;
         var sections = document.Sections.Select(section =>
         {
             var mine = anchors.Where(a => a.Entry.Section == section.Id).ToList();
-            if (mine.Count == 0) return section;
+            var header = headers.TryGetValue(section.Id, out var h) ? h : default((string Asset, string Alt)?);
+            if (mine.Count == 0 && header == null) return section;
             var raw = section.Markdown.Split('\n');
             // Compared trimmed, written back as they were: two trailing spaces are a line break in this dialect.
             var lines = raw.Select(l => l.TrimEnd('\r', ' ', '\t')).ToList();
@@ -83,23 +96,37 @@ public static class BookComposer
                 after[at] = anchor;
             }
 
-            if (after.Count == 0) return section;
+            // The header goes under the title, which is the chapter's first line whoever wrote the chapter (a rewrite gets its title from code).
+            var headed = header is { } top && lines.Count > 0 && lines[0].StartsWith("# ", StringComparison.Ordinal) ? top : default((string Asset, string Alt)?);
+            if (after.Count == 0 && headed == null) return section;
             var output = new List<string>();
             for (var i = 0; i < lines.Count; i++)
             {
                 output.Add(raw[i]);
+                if (i == 0 && headed is { } art0)
+                {
+                    count++;
+                    Block(output, BookArtPlacement.Header, art0.Alt, art0.Asset);
+                }
+
                 if (!after.TryGetValue(i, out var anchor)) continue;
                 count++;
-                output.Add(string.Empty);
-                output.Add("{{" + anchor.Entry.Placement);
-                output.Add("![" + BookCompiler.Escape(anchor.Entry.Alt) + "](asset:" + anchor.Asset + ")");
-                output.Add("}}");
+                Block(output, anchor.Entry.Placement, anchor.Entry.Alt, anchor.Asset);
             }
 
             return section with { Markdown = string.Join('\n', output) };
         }).ToList();
-        placed = count + (art.Cover() != null ? 1 : 0);
-        return document with { Sections = sections, CoverAsset = art.Cover() };
+        cover ??= art.Cover();
+        placed = count + (cover != null ? 1 : 0);
+        return document with { Sections = sections, CoverAsset = cover };
+    }
+
+    private static void Block(List<string> output, string placement, string alt, string asset)
+    {
+        output.Add(string.Empty);
+        output.Add("{{" + placement);
+        output.Add("![" + BookCompiler.Escape(alt) + "](asset:" + asset + ")");
+        output.Add("}}");
     }
 
     /// <summary>Each chapter prepared for a model, by id. The language is the primary subtag, so "en" and "en-US" are one key.</summary>

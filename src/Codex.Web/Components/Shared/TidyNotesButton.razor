@@ -1,0 +1,110 @@
+@* "Tidy up" for someone's own notes (docs/SERVER_ACCESS_AND_VAULT.md 6): spelling, layout and structure, never new facts. Only the
+   notes go to the model. The tidied text replaces the box only if the box still holds what was sent, and can be put back. *@
+@using Codex.Persistence
+@using Codex.Web.Services
+@implements IDisposable
+@inject AiFeatures Ai
+@inject ILogger<TidyNotesButton> Logger
+
+@if (ready)
+{
+    <div class="ai-row" data-testid="@TestId">
+        @if (busy)
+        {
+            <AiWorking Text="@L["Common.Tidy.Working"]" OnStop="call.Stop" TestId="@($"{TestId}-working")" />
+        }
+        else
+        {
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" Icon="sparkles" OnClick="TidyAsync" Disabled="@string.IsNullOrWhiteSpace(Value)"
+                         title="@L["Common.Tidy.Hint"]" data-testid="@($"{TestId}-run")">@L["Common.Tidy"]</CodexButton>
+        }
+        @if (message != null)
+        {
+            <span class="small @(failed ? "text-danger" : "small-muted")" role="status" data-testid="@($"{TestId}-status")">@message</span>
+        }
+        @if (previous != null && !busy)
+        {
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="PutBackAsync" data-testid="@($"{TestId}-undo")">@L["Common.Tidy.PutBack"]</CodexButton>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>The notes as the box holds them now.</summary>
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    /// <summary>Reads typed mentions as the page saves them, so a tidy that loses one is refused.</summary>
+    [Parameter, EditorRequired] public MentionDirectory Mentions { get; set; } = MentionDirectory.Empty;
+    [Parameter, EditorRequired] public string UserId { get; set; } = string.Empty;
+    [Parameter] public string TestId { get; set; } = "tidy";
+
+    private readonly AiCall call = new();
+    private bool ready;
+    private bool busy;
+    private string? message;
+    private bool failed;
+    private string? previous;
+    private string? tidied;
+
+    private string? checkedFor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // A page may hand over who is signed in only once it has loaded: ask again for each new user id.
+        if (checkedFor != UserId)
+        {
+            checkedFor = UserId;
+            ready = UserId.Length > 0 && await Ai.IsConfiguredAsync(UserId);
+        }
+
+        // Typing after a tidy makes the old text no longer the one to put back.
+        if (previous != null && Value != tidied) (previous, tidied) = (null, null);
+    }
+
+    private async Task TidyAsync()
+    {
+        if (busy || string.IsNullOrWhiteSpace(Value)) return;
+        var sent = Value;
+        busy = true;
+        message = null;
+        failed = false;
+        var ct = call.Begin();
+        try
+        {
+            var result = await Ai.TidyNotesAsync(sent, Mentions.Encode, UserId, ct);
+            if (Value != sent)
+            {
+                (message, failed) = (L["Common.Tidy.Changed"], true);
+                return;
+            }
+
+            (previous, tidied) = (sent, result);
+            message = L["Common.Tidy.Done"];
+            await ValueChanged.InvokeAsync(result);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            message = L["Common.Ai.Stopped"];
+        }
+        catch (Exception ex)
+        {
+            if (ex is not Codex.Localization.LocalizedException) Logger.LogError(ex, "Tidying notes failed");
+            (message, failed) = (L["Common.Tidy.Failed", AiFailureText.For(L, ex)], true);
+        }
+        finally
+        {
+            call.End(ct);
+            busy = false;
+        }
+    }
+
+    private async Task PutBackAsync()
+    {
+        if (previous == null) return;
+        var back = previous;
+        (previous, tidied, message) = (null, null, L["Common.Undone"]);
+        await ValueChanged.InvokeAsync(back);
+    }
+
+    public void Dispose() => call.Dispose();
+}

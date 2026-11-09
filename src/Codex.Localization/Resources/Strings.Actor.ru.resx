@@ -369,4 +369,45 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>Что видит отряд</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>Фигура в капюшоне, платит старым серебром и не называет имени.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Открыто вам</value></data>
+  <data name="Actor.Vault.Title" xml:space="preserve"><value>Из ваших персонажей</value></data>
+  <data name="Actor.Vault.Loading" xml:space="preserve"><value>Загрузка…</value></data>
+  <data name="Actor.Vault.Gone" xml:space="preserve"><value>Персонажа, с которого сделана эта копия, больше нет в «Моих персонажах».</value></data>
+  <data name="Actor.Vault.From" xml:space="preserve"><value>Это копия персонажа «{0}» в кампании. Изменения остаются здесь, пока вы не отправите их обратно.</value></data>
+  <data name="Actor.Vault.Push" xml:space="preserve"><value>Обновить моего персонажа по этому листу</value></data>
+  <data name="Actor.Vault.PushHint" xml:space="preserve"><value>Берёт сохранённый лист, имя и историю. Заметки и секреты мастера остаются здесь.</value></data>
+  <data name="Actor.Vault.Pushed" xml:space="preserve"><value>«{0}» обновлён в «Моих персонажах».</value></data>
+  <data name="Actor.Vault.SaveFirst" xml:space="preserve"><value>Сначала сохраните лист, потом обновите персонажа.</value></data>
+  <data name="Actor.Vault.Pull" xml:space="preserve"><value>Попросить перенести сюда мою новую версию</value></data>
+  <data name="Actor.Vault.PullHint" xml:space="preserve"><value>Сначала это одобряет мастер. Его заметки и секреты в истории сохранятся.</value></data>
+  <data name="Actor.Vault.Asked" xml:space="preserve"><value>Отправлено мастеру.</value></data>
+  <data name="Actor.Vault.Waiting" xml:space="preserve"><value>Ждём, когда мастер перенесёт сюда новую версию.</value></data>
+  <data name="Actor.Vault.Withdraw" xml:space="preserve"><value>Отозвать просьбу</value></data>
+  <data name="Actor.Vault.NotDone" xml:space="preserve"><value>Не получилось. Обновите страницу и попробуйте снова.</value></data>
+  <data name="Actor.Assist.Title" xml:space="preserve"><value>Спросить ИИ</value></data>
+  <data name="Actor.Assist.Intro" xml:space="preserve"><value>Попросите изменение или подсказку, что подходит персонажу. ИИ выбирает из библиотеки, доступной этому персонажу. Ничего не меняется, пока вы не примете, и не сохраняется, пока вы не сохраните.</value></data>
+  <data name="Actor.Assist.Instruction" xml:space="preserve"><value>Что изменить?</value></data>
+  <data name="Actor.Assist.Placeholder" xml:space="preserve"><value>например: пусть лучше лазает, или добавь огненную силу.</value></data>
+  <data name="Actor.Assist.Hint" xml:space="preserve"><value>Для подсказок здесь можно описать идею («бывший пират»); если пусто, ИИ прочтёт историю.</value></data>
+  <data name="Actor.Assist.Propose" xml:space="preserve"><value>Предложить изменения</value></data>
+  <data name="Actor.Assist.Highlight" xml:space="preserve"><value>Подсказать, что подходит</value></data>
+  <data name="Actor.Assist.Working" xml:space="preserve"><value>Читаю лист и библиотеку…</value></data>
+  <data name="Actor.Assist.NeedsText" xml:space="preserve"><value>Сначала напишите, что изменить.</value></data>
+  <data name="Actor.Assist.Nothing" xml:space="preserve"><value>ИИ ничего не предложил. Попробуйте сформулировать иначе.</value></data>
+  <data name="Actor.Assist.Failed" xml:space="preserve"><value>ИИ не смог ответить: {0}</value></data>
+  <data name="Actor.Assist.Changes" xml:space="preserve"><value>Предложенные изменения ({0})</value></data>
+  <data name="Actor.Assist.Set" xml:space="preserve"><value>{0} → {1}</value></data>
+  <data name="Actor.Assist.Empty" xml:space="preserve"><value>пусто</value></data>
+  <data name="Actor.Assist.Append" xml:space="preserve"><value>добавить «{0}»</value></data>
+  <data name="Actor.Assist.Add" xml:space="preserve"><value>+ {0}</value></data>
+  <data name="Actor.Assist.AddMany" xml:space="preserve"><value>+ {0} ×{1}</value></data>
+  <data name="Actor.Assist.Remove" xml:space="preserve"><value>− {0}</value></data>
+  <data name="Actor.Assist.RulesSay" xml:space="preserve"><value>С отмеченными изменениями правила говорят:</value></data>
+  <data name="Actor.Assist.Take" xml:space="preserve"><value>Принять отмеченные ({0})</value></data>
+  <data name="Actor.Assist.Drop" xml:space="preserve"><value>Отбросить все</value></data>
+  <data name="Actor.Assist.Taken" xml:space="preserve"><value>Изменений на листе: {0}. Сохраните, чтобы оставить их.</value></data>
+  <data name="Actor.Assist.TakenSome" xml:space="preserve"><value>Изменений на листе: {0}. Эти уже не подходят к тому, что сейчас на листе, и пропущены: {1}. Сохраните, чтобы оставить остальное.</value></data>
+  <data name="Actor.Assist.Highlights" xml:space="preserve"><value>Что подходит ({0})</value></data>
+  <data name="Actor.Assist.GoThere" xml:space="preserve"><value>Перейти</value></data>
+  <data name="Actor.Assist.HighlightsKept" xml:space="preserve"><value>Подсказки ничего не меняют и не сохраняются.</value></data>
+  <data name="Actor.Assist.Dismiss" xml:space="preserve"><value>Скрыть</value></data>
 </root>

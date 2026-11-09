@@ -91,12 +91,12 @@ public sealed class BackupService(JsonBackups backups, BackupStatus status, ILog
 public static class BackupFailures
 {
     /// <summary>Whether the database refused a backup because its licence does not allow one (RavenDB's
-    /// <c>LicenseLimitException</c>, wherever it sits in the chain), rather than because something is wrong.</summary>
+    /// <c>LicenseLimitException</c>, wherever it sits in the chain, or our own check of the licence before asking), rather than because something is wrong.</summary>
     public static bool IsLicenceRefusal(Exception ex)
     {
         for (var current = ex; current != null; current = current.InnerException)
         {
-            if (current.GetType().Name == "LicenseLimitException") return true;
+            if (current is Codex.Persistence.BackupNotLicensedException || current.GetType().Name == "LicenseLimitException") return true;
         }
 
         return false;

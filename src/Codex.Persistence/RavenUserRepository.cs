@@ -101,4 +101,45 @@ public class RavenUserRepository(RavenDbService dbService) : IUserRepository
             return false;
         }
     }
+
+    public async Task<IReadOnlyList<UserDocument>> ListAsync()
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        var all = new List<UserDocument>();
+        await using var stream = await session.Advanced.StreamAsync(session.Query<UserDocument>());
+        while (await stream.MoveNextAsync()) all.Add(stream.Current.Document);
+        return all
+            .OrderBy(u => u.Status == AccountStatus.Pending ? 0 : 1)
+            .ThenBy(u => u.Username, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    public async Task<int> CountPendingAsync()
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        return await session.Query<UserDocument>().CountAsync(u => u.Status == AccountStatus.Pending);
+    }
+
+    public async Task<bool> DeleteAsync(string userId)
+    {
+        string username;
+        using (var session = dbService.Store.OpenAsyncSession())
+        {
+            var user = await session.LoadAsync<UserDocument>(userId);
+            if (user == null) return false;
+            username = user.Username;
+            session.Delete(user);
+            await session.SaveChangesAsync();
+        }
+
+        // The name is held by a compare-exchange value (TryReserveUsernameAsync); without this it stays taken for good.
+        var key = $"usernames/{username.Trim().ToLowerInvariant()}";
+        var held = await dbService.Store.Operations.SendAsync(new Raven.Client.Documents.Operations.CompareExchange.GetCompareExchangeValueOperation<string>(key));
+        if (held != null && held.Value == userId)
+        {
+            await dbService.Store.Operations.SendAsync(new Raven.Client.Documents.Operations.CompareExchange.DeleteCompareExchangeValueOperation<string>(key, held.Index));
+        }
+
+        return true;
+    }
 }

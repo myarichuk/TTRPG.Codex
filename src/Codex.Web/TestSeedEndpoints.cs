@@ -10,8 +10,21 @@ public static class TestSeedEndpoints
 {
     public static void MapTestSeeding(this WebApplication app)
     {
-        app.MapPost("/test/seed/users", async (List<Codex.Web.TestSeedUser> users, IUserRepository userRepository) =>
+        app.MapPost("/test/seed/users", async (List<Codex.Web.TestSeedUser> users, IUserRepository userRepository, IServerSettingsStore settings) =>
         {
+            // A seeded server skips the first-time setup and lets anyone sign up and create campaigns, as servers did before
+            // approval and roles; a test of those rules sets them with /test/seed/settings.
+            if (!(await settings.GetAsync()).SetupDone)
+            {
+                await settings.UpdateAsync(s =>
+                {
+                    s.SetupDone = true;
+                    s.SignUp = SignUpRule.Open;
+                    s.CampaignCreation = CampaignCreationRule.Anyone;
+                    s.WebFetch = WebFetchRule.AnyPublic;
+                });
+            }
+
             foreach (var seed in users)
             {
                 var user = new UserDocument { Id = seed.Id, Username = seed.Username, Roles = seed.Roles };
@@ -20,6 +33,20 @@ public static class TestSeedEndpoints
                 await userRepository.CreateUserAsync(user);
             }
 
+            return Results.Ok();
+        }).AllowAnonymous();
+
+        app.MapPost("/test/seed/settings", async (ServerSettingsDocument wanted, IServerSettingsStore settings) =>
+        {
+            await settings.UpdateAsync(s =>
+            {
+                s.SetupDone = wanted.SetupDone;
+                s.SignUp = wanted.SignUp;
+                s.CampaignCreation = wanted.CampaignCreation;
+                s.ServerAi = wanted.ServerAi;
+                s.WebFetch = wanted.WebFetch;
+                s.FetchSites = wanted.FetchSites.ToList();
+            });
             return Results.Ok();
         }).AllowAnonymous();
 
@@ -39,7 +66,9 @@ public static class TestSeedEndpoints
                     Visibility = seed.Visibility,
                     PublicName = seed.PublicName,
                     PublicDescription = seed.PublicDescription,
-                    Biography = seed.Biography
+                    Biography = seed.Biography,
+                    HasPortrait = seed.HasPortrait,
+                    PortraitVersion = seed.HasPortrait ? 1 : 0
                 };
 
                 foreach (var (key, value) in seed.Sheet ?? new Dictionary<string, object>())

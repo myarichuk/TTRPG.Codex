@@ -69,4 +69,11 @@
   <data name="Common.Art.RemoveTitle" xml:space="preserve"><value>להסיר את התמונה?</value></data>
   <data name="Common.Art.RemoveBody" xml:space="preserve"><value>התמונה תימחק. כדי להחזיר אותה צריך להוסיף או לצייר אותה שוב.</value></data>
   <data name="Common.Art.Remove" xml:space="preserve"><value>הסרת התמונה</value></data>
+  <data name="Common.Tidy" xml:space="preserve"><value>לסדר</value></data>
+  <data name="Common.Tidy.Hint" xml:space="preserve"><value>ה־AI יתקן איות ועימוד. הוא לא מוסיף דבר ושומר כל שם.</value></data>
+  <data name="Common.Tidy.Working" xml:space="preserve"><value>מסדר…</value></data>
+  <data name="Common.Tidy.Done" xml:space="preserve"><value>סודר. בדקו ושמרו.</value></data>
+  <data name="Common.Tidy.PutBack" xml:space="preserve"><value>להחזיר את הטקסט שלי</value></data>
+  <data name="Common.Tidy.Changed" xml:space="preserve"><value>ההערות השתנו בזמן שה־AI עבד, ולכן לא הוחלף דבר.</value></data>
+  <data name="Common.Tidy.Failed" xml:space="preserve"><value>לא הצלחנו לסדר את ההערות: {0}</value></data>
 </root>

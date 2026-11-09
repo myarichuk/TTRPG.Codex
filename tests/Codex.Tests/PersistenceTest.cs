@@ -32,7 +32,10 @@ public class RavenDbFixture : IDisposable
     public void Dispose()
     {
         DropDatabase();
-        TestTempData.DeleteDirectory(DbPath);
+        // The first fixture's folder is the embedded server's own, which every later class's database still runs in (their index
+        // journals and scratch files are there): deleting it under them marks their indexes errored, at random, depending on which
+        // class ends first. That folder goes when the process ends (DeleteOnExit); any other is empty or nearly so.
+        if (!Directory.Exists(Path.Combine(DbPath, "Databases"))) TestTempData.DeleteDirectory(DbPath);
     }
 
     // The embedded server is one per process, so this class's database lives in the server's folder (the first fixture's), not in
@@ -1188,12 +1191,28 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
-    public async Task ScheduledBackup_ProducesBackupFile_AndIsIdempotent_Async()
+    public async Task ScheduledBackup_ProducesBackupFile_AndIsIdempotent_OrIsRefusedByTheFreeLicence_Async()
     {
         var backupDir = Path.Combine(Path.GetTempPath(), "CodexBackup_" + Guid.NewGuid().ToString("N"));
         try
         {
             await _campaignRepository.SaveAsync(new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner-1", Name = "Back Me Up" });
+
+            // The free licence never includes periodic backups; RavenDB only enforces that a few minutes after it starts, so
+            // without reading the licence first this test passed alone and failed late in the full run.
+            var allowed = await _dbService.LicenceAllowsPeriodicBackupAsync();
+            Assert.NotNull(allowed);
+            using (var http = new HttpClient())
+            {
+                using var status = System.Text.Json.JsonDocument.Parse(await http.GetStringAsync(_dbService.Store.Urls[0].TrimEnd('/') + "/license/status"));
+                if (status.RootElement.GetProperty("Type").GetString() == "None") Assert.False(allowed);
+            }
+
+            if (allowed is not true)
+            {
+                await Assert.ThrowsAsync<BackupNotLicensedException>(() => _dbService.EnsureScheduledBackupAsync(backupDir));
+                return;
+            }
 
             var firstTaskId = await _dbService.EnsureScheduledBackupAsync(backupDir);
             Assert.True(firstTaskId > 0);
@@ -1400,6 +1419,9 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             var png = new byte[] { 0x89, 0x50, 0x4E, 0x47, 9 };
             await _mediaStore.PutAsync(dm, actor.Id, RavenMediaStore.ActorPortrait, new MemoryStream(png), "image/png");
             Assert.True(await _journalRepository.TrySaveAsync(new JournalEntryDocument { Title = "Dear diary" }, Access(campaignId, "p1", CampaignRole.Player)));
+            // The GM's edited book is hand-written work: the backup keeps it, though an export leaves it out.
+            var drafts = new RavenBookDraftRepository(_dbService);
+            Assert.NotNull(await drafts.CreateAsync(dm, "party", "en", [new BookDraftGenerated("cast", "Cast", "# Cast\n\nHAND_WRITTEN_DRAFT", "k1")]));
             var keyholder = "user-" + Guid.NewGuid();
             await _userRepository.CreateUserAsync(new UserDocument
             {
@@ -1417,6 +1439,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             Assert.Contains(bundle.Actors, a => a.Id == actor.Id);
             Assert.Equal(png, await File.ReadAllBytesAsync(Path.Combine(folder, "images", actor.Id, "portrait.png")));
             Assert.Contains("Dear diary", await File.ReadAllTextAsync(Path.Combine(folder, "journals.json")));
+            Assert.Contains("HAND_WRITTEN_DRAFT", await File.ReadAllTextAsync(Path.Combine(folder, "book-drafts.json")));
 
             var users = await File.ReadAllTextAsync(Path.Combine(written.Folder, "users.json"));
             Assert.Contains("keyholder-", users);
@@ -1716,6 +1739,32 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         var seen = Assert.Single(await _wikiRepository.GetVisibleForCampaignAsync(preview));
         Assert.Equal("Seen", seen.Body);
         Assert.Equal(SaveOutcome.Refused, await _wikiRepository.TrySaveAsync(new WikiPageDocument { Title = "Nope" }, preview));
+    }
+
+    [Fact]
+    public async Task PartyPreview_OwnsNoActor_EvenOneStoredWithAnEmptyOwner()
+    {
+        // An owner id stored as "" (an import, an old document, a hand-edited database) must not read as the preview's own
+        // character: that would hand the DM's "view as players" the stranger's real name and history, which no player sees.
+        var campaignId = "camp-preview-owner-" + Guid.NewGuid();
+        var dm = Access(campaignId, "dm", CampaignRole.DM);
+        var stranger = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "CANARY_Vizier", Kind = ActorKind.NonPlayerCharacter,
+            Visibility = ActorVisibility.Unknown, OwnerUserId = string.Empty, PublicName = "PUBLIC_Hooded", Biography = "CANARY_poisoner"
+        };
+        var hidden = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "CANARY_Hidden", Visibility = ActorVisibility.Hidden, OwnerUserId = string.Empty };
+        foreach (var actor in new[] { stranger, hidden }) await _actorRepository.SaveAsync(actor);
+
+        var preview = dm.PartyPreview()!;
+        Assert.NotEqual(string.Empty, preview.UserId);
+        Assert.NotEqual(preview.UserId, dm.PartyPreview()!.UserId);
+        var listed = (await _actorRepository.GetVisibleForCampaignAsync(preview)).ToList();
+        var mask = Assert.Single(listed);
+        Assert.Equal("PUBLIC_Hooded", mask.Name);
+        Assert.Null(mask.Biography);
+        Assert.Equal("PUBLIC_Hooded", (await _actorRepository.GetVisibleAsync(stranger.Id, preview))!.Name);
+        Assert.Null(await _actorRepository.GetVisibleAsync(hidden.Id, preview));
     }
 
     [Fact]
@@ -2133,6 +2182,104 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         // The owner is a DM whatever the member list says, and their writes go through.
         var owner = (await resolver.ResolveAsync(campaignId, "owner"))!;
         Assert.Equal("After", (await _campaignRepository.UpdateAsDmAsync(owner, c => c.Name = "After"))!.Name);
+    }
+
+    /// <summary>docs/SERVER_ACCESS_AND_VAULT.md 4: a co-GM runs the campaign and manages its players, but only the owner changes
+    /// who GMs it or who owns it. Passing the campaign on leaves the old owner a co-GM, with a co-GM's limits.</summary>
+    [Fact]
+    public async Task ACoGm_ManagesPlayers_ButOnlyTheOwnerChangesWhoGms_OrPassesTheCampaignOn_Async()
+    {
+        var campaignId = "camp-cogm-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = campaignId, OwnerId = "owner", Name = "Before", SystemId = "srd5e",
+            Members =
+            {
+                new CampaignMember { UserId = "co", Role = CampaignRole.DM }, new CampaignMember { UserId = "co2", Role = CampaignRole.DM },
+                new CampaignMember { UserId = "p1", Role = CampaignRole.Player }, new CampaignMember { UserId = "p2", Role = CampaignRole.Player }
+            }
+        });
+        var co = new CampaignAccess(campaignId, "co", CampaignRole.DM);
+        var owner = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+
+        async Task RefusedAsync(CampaignAccess who, Action<CampaignDocument> change)
+        {
+            var refused = await Assert.ThrowsAsync<LocalizedException>(() => _campaignRepository.UpdateAsDmAsync(who, change));
+            Assert.Equal("Campaign.OwnerOnly", refused.Key);
+        }
+
+        // What a GM does to the campaign and its players, a co-GM does too.
+        await _campaignRepository.UpdateAsDmAsync(co, c => c.Name = "Renamed");
+        await _campaignRepository.UpdateAsDmAsync(co, c => c.Members.RemoveAll(m => m.UserId == "p2"));
+
+        await RefusedAsync(co, c => c.Members.Single(m => m.UserId == "p1").Role = CampaignRole.DM);
+        await RefusedAsync(co, c => c.Members.Single(m => m.UserId == "co2").Role = CampaignRole.Player);
+        await RefusedAsync(co, c => c.Members.RemoveAll(m => m.UserId == "co2"));
+        await RefusedAsync(co, c => c.OwnerId = "co");
+        await RefusedAsync(co, c => c.Members.Add(new CampaignMember { UserId = "stranger", Role = CampaignRole.DM }));
+
+        var stored = (await _campaignRepository.GetAsync(campaignId))!;
+        Assert.Equal("Renamed", stored.Name);
+        Assert.Equal("owner", stored.OwnerId);
+        Assert.Equal(["co", "co2", "owner"], CampaignAccessResolver.GameMasters(stored).Order(StringComparer.Ordinal));
+        Assert.DoesNotContain(stored.Members, m => m.UserId == "p2");
+
+        // The owner promotes, demotes, and passes the campaign on; they stay a co-GM and lose the owner's say.
+        await _campaignRepository.UpdateAsDmAsync(owner, c => c.Members.Single(m => m.UserId == "p1").Role = CampaignRole.DM);
+        await _campaignRepository.UpdateAsDmAsync(owner, c => c.Members.Single(m => m.UserId == "co2").Role = CampaignRole.Player);
+        await _campaignRepository.UpdateAsDmAsync(owner, c => c.OwnerId = "co");
+
+        stored = (await _campaignRepository.GetAsync(campaignId))!;
+        Assert.Equal("co", stored.OwnerId);
+        Assert.Equal(CampaignRole.DM, CampaignAccessResolver.RoleOf(stored, "owner"));
+        await RefusedAsync(owner, c => c.Members.Single(m => m.UserId == "p1").Role = CampaignRole.Player);
+        Assert.Equal(CampaignDeleteResult.Forbidden, await _campaignRepository.DeleteAsync(campaignId, "owner"));
+        await _campaignRepository.UpdateAsDmAsync(co, c => c.Members.Single(m => m.UserId == "p1").Role = CampaignRole.Player);
+    }
+
+    /// <summary>A co-GM may give up their own GM role, and nobody else's in the same change; any member but the owner may leave,
+    /// and their characters stay in the cast. The owner leaves only by passing the campaign on first.</summary>
+    [Fact]
+    public async Task ACoGm_StepsDownThemselvesOnly_AndAnyoneButTheOwnerMayLeave_Async()
+    {
+        var campaignId = "camp-leave-" + Guid.NewGuid();
+        await _campaignRepository.SaveAsync(new CampaignDocument
+        {
+            Id = campaignId, OwnerId = "owner", Name = "Leaving", SystemId = "srd5e",
+            Members =
+            {
+                new CampaignMember { UserId = "co", Role = CampaignRole.DM }, new CampaignMember { UserId = "co2", Role = CampaignRole.DM },
+                new CampaignMember { UserId = "p1", Role = CampaignRole.Player }
+            }
+        });
+        await _actorRepository.SaveAsync(new ActorDocument { Id = "actor-leave-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Kept", OwnerUserId = "p1" });
+        var co = new CampaignAccess(campaignId, "co", CampaignRole.DM);
+
+        var both = await Assert.ThrowsAsync<LocalizedException>(() => _campaignRepository.UpdateAsDmAsync(co, c =>
+        {
+            c.Members.Single(m => m.UserId == "co").Role = CampaignRole.Player;
+            c.Members.Single(m => m.UserId == "co2").Role = CampaignRole.Player;
+        }));
+        Assert.Equal("Campaign.OwnerOnly", both.Key);
+
+        await _campaignRepository.UpdateAsDmAsync(co, c => c.Members.Single(m => m.UserId == "co").Role = CampaignRole.Player);
+        var stored = (await _campaignRepository.GetAsync(campaignId))!;
+        Assert.Equal(CampaignRole.Player, CampaignAccessResolver.RoleOf(stored, "co"));
+        Assert.Equal(CampaignRole.DM, CampaignAccessResolver.RoleOf(stored, "co2"));
+
+        Assert.Equal(CampaignLeaveResult.Owner, await _campaignRepository.LeaveAsync(campaignId, "owner"));
+        Assert.Equal(CampaignLeaveResult.Left, await _campaignRepository.LeaveAsync(campaignId, "p1"));
+        Assert.Equal(CampaignLeaveResult.Left, await _campaignRepository.LeaveAsync(campaignId, "co2"));
+        Assert.Equal(CampaignLeaveResult.NotMember, await _campaignRepository.LeaveAsync(campaignId, "p1"));
+        Assert.Equal(CampaignLeaveResult.NotMember, await _campaignRepository.LeaveAsync("camp-none-" + Guid.NewGuid(), "p1"));
+
+        stored = (await _campaignRepository.GetAsync(campaignId))!;
+        Assert.Equal("owner", stored.OwnerId);
+        Assert.Null(CampaignAccessResolver.RoleOf(stored, "p1"));
+        Assert.Null(CampaignAccessResolver.RoleOf(stored, "co2"));
+        Assert.Equal(CampaignRole.DM, CampaignAccessResolver.RoleOf(stored, "owner"));
+        Assert.Contains(await _actorRepository.GetVisibleForCampaignAsync(new CampaignAccess(campaignId, "owner", CampaignRole.DM)), a => a.Name == "Kept");
+        Assert.DoesNotContain(await _campaignRepository.GetForUserAsync("p1"), c => c.Id == campaignId);
     }
 
     /// <summary>F13: every other write reads the role from the stored campaign too. A co-DM demoted while their page is open
