@@ -38,7 +38,7 @@ public class BookDraftPdfTests
         Assert.NotNull(shell.Html);
         var printer = Printer();
         using var slot = printer.TryReserve("dm")!;
-        return await printer.PrintAsync(slot, new BookPrintJob(shell.Html!, [], _ => shell.Html!) { Layout = new BookPrintLayout(Script, markdown, art ?? new Dictionary<string, string>()) },
+        return await printer.PrintAsync(slot, new BookPrintJob(shell.Html!) { Layout = new BookPrintLayout(Script, markdown, art ?? new Dictionary<string, string>()) },
             CancellationToken.None);
     }
 
@@ -71,6 +71,36 @@ public class BookDraftPdfTests
     {
         using var doc = PdfDocument.Open(pdf);
         return doc.NumberOfPages;
+    }
+
+    [ChromiumFact]
+    public async Task ThePlainTheme_PrintsInItsOwnFacesOnly_AtTheBooksPaperSize()
+    {
+        var chapters = string.Join("\n\n", Enumerable.Range(1, 40).Select(i => $"## Place {i}\n\nThe gulls of place {i} are loud and the tide is late.\n"));
+        var result = await PrintAsync("{{chapter,#ch-coast}}\n# Coast\n\n" + chapters, pageSize: "A4");
+
+        Assert.StartsWith("%PDF-", System.Text.Encoding.ASCII.GetString(result.Pdf, 0, 5));
+        Assert.Equal(0, result.BlockedRequests);
+        using var pdf = PdfDocument.Open(result.Pdf);
+        Assert.True(pdf.NumberOfPages >= 2, $"pages: {pdf.NumberOfPages}");
+
+        var text = string.Join("\n", pdf.GetPages().Select(p => p.Text));
+                Assert.Contains("The gulls of place 40 are loud", text);
+
+        // Only the theme's own faces are embedded: nothing fell back to a system font. Cinzel is a variable font and Chromium
+        // embeds those as Type 3 (§15 of docs/BOOK_EXPORT.md), so "Type3" is Cinzel here; any other name would be a fallback.
+        var letters = pdf.GetPages().SelectMany(p => p.Letters).ToList();
+        var fonts = letters.Select(l => l.FontName ?? "").Where(n => n.Length > 0).Select(n => n[(n.IndexOf('+') + 1)..]).Distinct().ToList();
+        Assert.NotEmpty(fonts);
+        Assert.Contains(fonts, f => f.Replace(" ", "").StartsWith("AlegreyaSans", StringComparison.Ordinal));
+        Assert.All(fonts, f => Assert.Matches("^(AlegreyaSans|Cinzel|Type3)", f.Replace(" ", "")));
+        // Type 3 may only be the headings' face: its letters are all ones the headings spell, never a body paragraph's.
+        var headingLetters = "CoastPlace0123456789 ".ToHashSet();
+        Assert.All(letters.Where(l => l.FontName == "Type3" || (l.FontName ?? "").EndsWith("Type3", StringComparison.Ordinal)), l => Assert.Contains(l.Value[0], headingLetters));
+
+        // The page size is the one the theme asked for (A4), not the browser's default.
+        Assert.InRange(pdf.GetPage(1).Width, 594, 596);
+        Assert.InRange(pdf.GetPage(1).Height, 841, 843);
     }
 
     [ChromiumFact]
@@ -158,7 +188,7 @@ public class BookDraftPdfTests
         var shell = BookDraftHtml.Shell("Saltmere", "en", BookDraftThemes.Plain, "Letter", null, true, Font);
         var printer = Printer();
         using var slot = printer.TryReserve("dm")!;
-        return await printer.PrintAsync(slot, new BookPrintJob(shell.Html!, [], _ => shell.Html!)
+        return await printer.PrintAsync(slot, new BookPrintJob(shell.Html!)
         {
             Layout = new BookPrintLayout(Script, string.Empty, new Dictionary<string, string>()) { Chapters = chapters }
         }, CancellationToken.None);

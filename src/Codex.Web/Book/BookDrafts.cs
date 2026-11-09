@@ -375,6 +375,16 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         var slots = BookSlots.For(source, compiled, entries);
         // Two columns: the scaler sizes each picture for the box it prints in.
         var pictures = await artReader.ReadAsync(source, quality, 2, cancel, BookSlots.Choose(slots, await art.GetAsync(dm)), dm.UserId);
+        return Map(source, pictures);
+    }
+
+    /// <summary>The edition's picture map from pictures read for it: an entry's picture by its anchor (the flag as this source has it,
+    /// <see cref="BookCompiler.ArtAnchors"/>), a header's and the cover's by this edition's own slots (<see cref="BookArt.Slot"/>). Even
+    /// handed pictures read for the other edition, it names nothing this source does not make. Public for its tests.</summary>
+    public static BookDraftArt Map(BookSource source, BookArt pictures)
+    {
+        var compiled = BookComposer.Compose(source, "en", out var entries);
+        var slots = BookSlots.For(source, compiled, entries);
         var map = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var anchor in BookCompiler.ArtAnchors(entries, pictures))
         {

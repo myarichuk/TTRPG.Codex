@@ -23,15 +23,32 @@ public partial class BookArtTests
         return image!;
     }
 
-    /// <summary>The page as the route makes it: this edition's slots, the GM's stored pictures chosen for them, read and placed.</summary>
-    private async Task<(string Html, BookArt Art)> BookPageAsync(CampaignAccess dm, BookAudience audience, Func<BookDocument, BookDocument>? rewrite = null)
+    /// <summary>The book as the editor draws it and the PDF prints it: this edition's draft as generated, with each <c>art:</c> reference
+    /// resolved through this edition's picture map (<see cref="BookDrafts.ArtAsync"/>: the GM's stored pictures chosen for its slots, read and
+    /// mapped). A reference the map does not name stays a reference, which the renderer draws as nothing.</summary>
+    private async Task<(string Html, BookArt Art)> BookPageAsync(CampaignAccess dm, BookAudience audience)
     {
-        var (source, compiled, entries, slots) = await SlotsAsync(dm, audience);
-        var art = await new BookArtReader(_media).ReadAsync(source, book: BookSlots.Choose(slots, await _bookArt.GetAsync(dm)));
-        var document = rewrite?.Invoke(compiled) ?? compiled;
-        document = BookComposer.PlaceArt(document, compiled, entries, art, out _, slots);
-        var html = BookHtml.Build(document, BookThemes.Parchment, new BookHtmlOptions { BoxSecrets = audience == BookAudience.Dm, Mention = BookCompiler.Mentions(source), Image = art.DataUri }).Html!;
-        return (html, art);
+        var (source, _, _, slots) = await SlotsAsync(dm, audience);
+        var stored = await _bookArt.GetAsync(dm);
+        var art = await new BookArtReader(_media).ReadAsync(source, book: BookSlots.Choose(slots, stored));
+        var drafts = new BookDrafts(_reader, new RavenBookDraftRepository(_db), _bookArt, new BookArtReader(_media), new CampaignAccessResolver(_campaigns));
+        var map = (await drafts.ArtAsync(dm, audience == BookAudience.Dm ? "dm" : "party", BookArtQuality.Print, CancellationToken.None)).Art;
+        return (Resolved(BookDraftWriter.Generate(source, "en", stored), map, out _), art);
+    }
+
+    /// <summary>The draft's chapters with every <c>art:KEY</c> the map names replaced by its picture; <paramref name="placed"/> counts them.</summary>
+    internal static string Resolved(IEnumerable<BookDraftGenerated> chapters, IReadOnlyDictionary<string, string> map, out int placed)
+    {
+        var count = 0;
+        var page = System.Text.RegularExpressions.Regex.Replace(string.Join("\n", chapters.Select(c => c.Markdown)), @"\(art:(?<key>[^)\s]+)\)",
+            m =>
+            {
+                if (!map.TryGetValue(m.Groups["key"].Value, out var uri)) return m.Value;
+                count++;
+                return "(" + uri + ")";
+            });
+        placed = count;
+        return page;
     }
 
     private static string Uri(int width) => Image(width).DataUri();
@@ -96,11 +113,10 @@ public partial class BookArtTests
         Assert.DoesNotContain(Uri(154), gmHtml, StringComparison.Ordinal);
 
         // Even handed the map read for the GM, the party's entries and slots ask for party pictures only.
-        var (source, compiled, entries, slots) = await SlotsAsync(dm, BookAudience.Party);
+        var source = (await SlotsAsync(dm, BookAudience.Party)).Source;
         var gm = await SlotsAsync(dm, BookAudience.Dm);
         var gmArt = await new BookArtReader(_media).ReadAsync(gm.Source, book: BookSlots.Choose(gm.Slots, await _bookArt.GetAsync(dm)));
-        var placed = BookComposer.PlaceArt(compiled, compiled, entries, gmArt, out _, slots);
-        var md = string.Join("\n", placed.Sections.Select(s => s.Markdown));
+        var placed = BookDrafts.Map(source, gmArt).Art;
         // ...and the lookup gives a party entry nothing made for the GM, even from the GM's map.
         Assert.Null(gmArt.Slot(KeyOf(party, BookSlots.Entry, "a-known"), BookAudience.Party));
         Assert.NotNull(gmArt.Slot(KeyOf(party, BookSlots.Entry, "a-known"), BookAudience.Dm));
@@ -108,11 +124,9 @@ public partial class BookArtTests
         Assert.Equal(3, gmOnly.Count); // a positive control: the GM's map does hold them
         foreach (var asset in gmOnly)
         {
-            Assert.DoesNotContain("asset:" + asset + ")", md, StringComparison.Ordinal);
-            Assert.NotEqual(asset, placed.CoverAsset);
+            Assert.DoesNotContain(gmArt.DataUri(asset)!, placed.Values);
         }
 
-        _ = source;
     }
 
     [Fact]
@@ -135,7 +149,7 @@ public partial class BookArtTests
         Assert.DoesNotContain(Uri(201), partyHtml, StringComparison.Ordinal);
         Assert.DoesNotContain(_media.Reads, r => r.StartsWith("a-known/", StringComparison.Ordinal) || r.EndsWith("/" + RavenMediaStore.CampaignCover, StringComparison.Ordinal));
         // The stranger's picture is placed under the stranger's heading.
-        Assert.Matches(@"(?s)class=""art-portrait""><p[^>]*><img class=""art"" src=""" + System.Text.RegularExpressions.Regex.Escape(Uri(225)), partyHtml);
+        Assert.Matches(@"\{\{entry,#e-" + KeyOf(party, BookSlots.Entry, "a-unknown") + @"\}\}\n## [^\n]+\n\n\{\{portrait\n!\[[^\]\n]*\]\(" + System.Text.RegularExpressions.Regex.Escape(Uri(225)), partyHtml);
 
         var (gmHtml, _) = await BookPageAsync(dm, BookAudience.Dm);
         foreach (var w in new[] { 221, 222, 124 }) Assert.Contains(Uri(w), gmHtml, StringComparison.Ordinal);
@@ -145,23 +159,14 @@ public partial class BookArtTests
     }
 
     [Fact]
-    public async Task AChapterHeader_GoesUnderTheTitle_InARewriteToo_AndTheDropCapStillFindsTheFirstParagraph()
+    public async Task AChapterHeader_GoesUnderTheTitle()
     {
         var (dm, _) = await SeedAsync();
         var party = (await SlotsAsync(dm, BookAudience.Party)).Slots;
         Assert.True(await _bookArt.PutAsync(dm, KeyOf(party, BookSlots.Header, section: "cast"), BookArtDocument.Party, "Cast", Image(231)));
 
         var (html, _) = await BookPageAsync(dm, BookAudience.Party);
-        Assert.Matches(@"(?s)<h1[^>]*>Cast</h1>\s*<div class=""art-header""><p[^>]*><img class=""art"" src=""" + System.Text.RegularExpressions.Regex.Escape(Uri(231)), html);
-        Assert.Contains(".chapter > h1 + .art-header + p", html, StringComparison.Ordinal);
-
-        // A rewritten chapter starts with the title code wrote, so its header is placed the same way.
-        BookDocument Cast(BookDocument d, string markdown) => d with { Sections = d.Sections.Select(s => s.Id == "cast" ? s with { Markdown = markdown } : s).ToList() };
-        var (rewritten, _) = await BookPageAsync(dm, BookAudience.Party, d => Cast(d, "# Cast\n\nThe people of the coast, newly told."));
-        Assert.Matches(@"(?s)<h1[^>]*>Cast</h1>\s*<div class=""art-header"">", rewritten);
-        // A chapter that does not begin with its title gets no header rather than one in the wrong place.
-        var (untitled, _) = await BookPageAsync(dm, BookAudience.Party, d => Cast(d, "Just text.\n\n# Cast"));
-        Assert.DoesNotContain("art-header\"", untitled, StringComparison.Ordinal);
+        Assert.Matches(@"\{\{chapter,#ch-cast\n# Cast\n\}\}\n\n\{\{chapter-art\n!\[[^\]\n]*\]\(" + System.Text.RegularExpressions.Regex.Escape(Uri(231)), html);
     }
 
     [Fact]

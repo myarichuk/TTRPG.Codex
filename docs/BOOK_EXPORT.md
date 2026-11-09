@@ -2614,3 +2614,61 @@ in the attribute: `BookAiPanelE2ETests.TheDmSeesTheCostFirst_...` (the AI polish
 - The leave prompt (`book-draft-leave`) has no e2e test. Typing is handed to the server 900 ms after it stops; a page reloaded inside that window loses it (the dialog's Close flushed first). Found by the stale-chapter test.
 - Result: book and localization tests 838 passed, 1 skipped (the AI polish tab test); editor tests pass.
 - A change of language or edition while an AI review or a merge is open is refused by `AiBusy`; leaving the page lets go of the review.
+
+## 50. One pipeline: the old print route is gone (2026-11-10; step 2 of the source-book editor)
+
+The Book page (49) is the only way to see or print the book. A draft nobody edited follows the campaign, so "print it right away" is: open
+Book, Download PDF. Parchment was dropped, not ported (the user's choice): Plain with **Torn page edges** (46) is most of it.
+
+**Deleted:**
+- `BookPanel.razor` (the Print, AI polish and old Pictures tabs) and the routes `/campaigns/{id}/book-file/{dm|party}` and `.../pdf`, with
+  `BookEndpoints.BuildAsync`. What is left in `BookEndpoints` is the draft's `art`, `md` and `pdf`.
+- The old renderer's page: `BookHtml` (its records `BookSection`, `BookLabels`, `BookDocument`, `BookHtmlResult` moved to `BookDocument.cs`;
+  `BookSection.Blocks` and `BookDocument.CoverAsset` went with it; the page policy is `BookDraftHtml.ContentSecurityPolicy`), `BookThemes.Plain`
+  (its faces moved into `BookDraftThemes.Plain`), `BookThemes.Parchment`, `All`, `Find` and their CSS.
+- The AI polish: `BookBuilds`, `BookBuildRunner`, `BookSectionWorker`, `BookBuildKey`, `BookPrompts`, `BookWorkItem`; `BookComposer.Overlay`,
+  `PlaceArt`, `Items`, `Stored`, `TooShort`, `Edition`; `BookSlots.PlacedByTheOldRoute`.
+- The PDF's two-pass page numbers (`BookPages`, `BookPrintJob.Headings`/`WithPageNumbers`, `BookPdfResult.Passes`): only the old page had them;
+  the draft's contents get their numbers from the renderer.
+- 58 strings only the panel used, in en, ru and he.
+
+**Kept, because the draft or art path uses it:** `BookComposer.Compose`/`Labels`, `BookCompiler`, `BookMarkdown`/`BookMarkdownRenderer` (`BookWork.Prepare`
+renders secret boxes with it, and the art director's outline is prepared by it), `BookWork.Prepare`, `BookChecks`, `BookFacts`, `BookSlots`, `BookArt*`,
+`BookMasks`, `BookCss`, `BookFontCoverage`, `BookRtl`, `BookThemes.Primary`/`IsRtl`/`PageMm` and the script ranges, `BookLayout`, `BookTheme`. Moved:
+the run types the art director and drawing share (`BookRun`, `BookRunRow`, `BookRunSnapshot`, `BookBuildBusyException`) to `BookRun.cs`;
+`BookSectionWorker.Clean` to `BookEditWorker.Clean`; `BookBuildRunner.ConcurrencyFor` to `BookModelConcurrency.For`. New: `BookDrafts.Map`, the
+edition's picture map from pictures already read (what `ArtAsync` returns), public so a test can hand it pictures read for the other edition.
+
+**Stored builds.** `BookBuildDocument` stays: it holds the edition's spend totals, which the draft's AI edits and merges add to (`BookSpend`).
+Its stored chapters (`Sections`, `Style`, `Language`) are no longer read; old documents are left as they are. The totals line the AI polish tab
+showed is now under the Ask AI tab (`book-ai-totals`, "AI work on this edition so far: ...", `BookSpend.ReadAsync`).
+
+**Test map.** Every masking or canary test of the old route was ported to the draft path before the code went, or is named here with what
+covers it now.
+
+| Old test | Now |
+|---|---|
+| `BookSourceTests.PartyBook_AsHtml_CarriesNoDmOnlyData_AndStillHasThePublicText` | `PartyDraft_CarriesNoDmOnlyData_AndStillHasThePublicText` (same seed, the generated draft, escapes read back) |
+| `BookSourceTests.DmBook_AsHtml_BoxesTheDmsSecrets_AndStillHasNoAccountId` | `GmDraft_BoxesTheGmsSecrets_AndStillHasNoAccountId` |
+| `BookSourceTests.PartyEdition_SendsNoDmOnlyDataToTheModel_...`, `DmEdition_KeepsItsSecretsOutOfTheModel_...` | Same names: every chapter of the draft as the server cuts it before an AI edit (`BookDraftEdits.Cut`) |
+| `BookSourceTests.PartyEdition_NeverPrintsTheTitleOfAPageThePartyMayNotOpen_ThroughALink` | Same name: the party draft, its cut passages and the director's outline; the GM draft keeps the titles |
+| `BookArtTests.ArtReadForTheDm_NeverReachesAPartyDocument_...`, `PartyBook_PlacesOnly...`, `DmBook_PlacesEveryPicture...`, `ABodyLineThatReadsLikeAnotherEntrysHeading...`, `TwoEntriesWithOneName...` | Same names: the draft with its `art:` references resolved through `BookDrafts.Map` (the DM's pictures handed to the party's map in the first) |
+| `BookArtTests.Slots` (GM picture never in the party book, party picture in both, keep three) | Same names; the page is the draft resolved through `BookDrafts.ArtAsync`, and "even handed the GM's map" goes through `BookDrafts.Map` |
+| `BookArtTests.APictureIsPlacedAfterARewriteOnlyWhenItsHeadingIsUnambiguous...`, `AChapterHeader_..._InARewriteToo...` (rewrite half) | Gone with the stored rewrite: nothing prints a model's chapter except through the GM's review. The draft writer places by recorded line: `ABodyLineThatReadsLikeAnotherEntrysHeading...`. The header half is `AChapterHeader_GoesUnderTheTitle` |
+| `BookArtTests.PicturesOff_PlacesNothing...` | Gone (`pics=0` was the old route's) |
+| `BookHtmlTests` language gate, `TheTitleIsEscaped`, `ACampaignNameThatLooksLikeMarkupIsJustAName`, `TheDmSummaryIsInTheDmBookOnlyAndIsBoxed`, `EveryChapterTitleIsTranslated` | `BookDraftShellTests` (the shell, the generator) |
+| `BookHtmlTests.ThePageFetchesNothing`, `CustomCss*` | `BookDraftPdfTests.EveryTheme_SitsOnBlank_..._AndLoadsNothing`, `HostileMarkupInADraft_NeitherRunsNorFetches`, `BookCssTests` |
+| `BookHtmlTests.EveryFontAThemeNamesIsShipped` | `BookFontCoverageTests` (draft themes only now) |
+| `BookHtmlTests` columns, drop cap, cover, contents numbers, heading ids, paper CSS | Gone with the old page's own layout |
+| `BookAiTests` worker and runner tests | Gone with them. `ASecretIsCutOut...` and `AMention_IsGivenAsAName...` are `BookWorkTests` on `BookWork.Prepare` (the director's input); `BookChecksTests` and the concurrency theory stay |
+| `BookBuildTests` (keys, builds, the stored DM build never in the party book, a character hidden or a chapter edited after the build) | No stored rewrite prints any more, so the store-overlay tests have nothing to hold. Secrets out of the model: the `BookSourceTests` above and `BookDraftEditTests.NoSecretReachesTheModel_...`; cost first: `BookDraftTests.TheWholeBook_IsPricedFirst_...`; one paid run per GM: `BookArtDirectorTests.OnePaidRunPerGm_...` and `BookDraftTests.AnAiEdit_IsRefusedBeforeSending_..._AnotherRunIsUnderWay_...`; a cut-off reply: `BookDraftEditTests.AReplyCutOffByTheLengthLimit_...` |
+| `BookBuildTests` store tests (only the GM, deleted with the campaign, not in export or backup) | `BookSpendTests` |
+| `BookPdfTests.APlainBookPrintsToAPdf...` | `BookDraftPdfTests.ThePlainTheme_PrintsInItsOwnFacesOnly_AtTheBooksPaperSize` |
+| `BookPdfTests.TheContentsCarryThePages...`, `ABookWithNoHeadingsPrintsOnce`, `TheParchmentEdge...`; `BookMasksTests` Parchment tests | Gone (two-pass numbers, Parchment). The draft's contents numbers: `BookDraftPdfTests.TextLongerThanAPage_..._TheContentsSayWhere`; its edges: `FramesAndTornEdges_Print_AsVector_...` |
+| `BookStatBlocksTests.TheOldRoute_ChoosesNoSpotPicture_...` | `BookSpotSlotsTests.TheEditableBook_ChoosesASpotPicture_BesideTheEntrysOwn` |
+| e2e `OnlyTheDmGetsABook_AsAPageOrAsAPdf_...` | `OnlyTheGmGetsABook_AsMarkdownOrAsAPdf_AndNothingButAnEditionIsOne` (draft routes; the old ones answer 404) |
+| e2e `APlayerOfTheCampaign_GetsNoBook_...` | Same, old-route rows taken out |
+| e2e cover slot, drawn picture ("the party book shows it") | The edition's picture map (`draft/en/art`) |
+| e2e `TheDmSeesTheCostFirst_RunsTheBuild_...` (skipped since 49) | Deleted. Cost first and review: `TheGmAsksAiToEditASelection_...` (which now also checks `book-ai-totals`) and `TheGmRewritesTheWholeBookAsTheBook_PricedFirst_...` |
+
+**Handoff invariants rewritten:** 4 (a stored rewrite) and 7 (`PlaceArt` after `Overlay`) described deleted code; see the handoff.

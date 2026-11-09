@@ -174,7 +174,7 @@ With an AI model set up, [[ui:Session.DraftAi]] writes a first draft of the reca
 
 The page has a bar on top, the chapters on the left, the chapter's text in the middle and the printed pages on the right, and a dock below with three tabs: **[[ui:Campaign.Book.Draft.Ai.Title]]**, **[[ui:Campaign.Book.Tab.Art]]** and **[[ui:Campaign.Book.Draft.Problems]]**. Drag the bar between the text and the pages to change their widths, or focus it and press Left or Right. The address names the edition and the chapter, so a reload or a link comes back to the same place.
 
-![The Campaign book panel in Settings: edition, look, language, paper and columns, with the preview open below.](shot:book-panel)
+![The Book page: the chapters, the chapter's text, the printed pages and the dock below.](shot:book-panel)
 
 ### Pick an edition {#book-editions}
 
@@ -240,7 +240,7 @@ All of this is optional, and it never runs by itself. Nothing reaches a model be
 - **The cost, first.** Before anything is sent, you see the model, how many requests, about how many tokens, and what that is in money if you have entered prices in AI settings. Press **[[ui:Campaign.Book.Draft.Ai.Send]]** to go on, or Cancel.
 - **You review everything.** The model's answer is never written straight into the book. It comes up as a list of changes, with what goes struck through and what comes in marked. Accept or reject each one, then **[[ui:Campaign.Book.Draft.Ai.KeepAccepted]]**, **[[ui:Campaign.Book.Draft.Ai.AcceptRest]]** or **[[ui:Campaign.Book.Draft.Ai.Discard]]**. A reply that adds names, numbers or secrets the campaign does not hold is refused.
 
-The [[ui:Campaign.Book.Tab.Ai]] tab in the panel is an older, simpler step: it rewrites each chapter once, for the Print tab's book. Before it sends anything, it shows the requests and tokens and asks for a token cap. Pressing **[[ui:Campaign.Book.Ai.Start]]** starts it; it keeps running if you close the tab, and finished chapters are kept if you stop.
+The [[ui:Campaign.Book.Draft.Ai.Title]] tab also says what this edition's AI work has cost so far, over every run.
 
 > [!NOTE]
 > A rewrite is a tidy-up, not new writing: the model is told to invent nothing. It costs your own tokens, and the estimate is only an estimate.

@@ -186,6 +186,7 @@ public partial class BookPage : IAsyncDisposable
             : view.Chapters.FirstOrDefault(c => c.Section == ChapterRoute)?.Section
               ?? view.Chapters.FirstOrDefault(c => c.Stale)?.Section ?? view.Chapters.FirstOrDefault()?.Section;
         web = await Drafts.WebAsync(Access, edition, language);
+        await ReadSpendAsync();
         webReport = null;
         leakReport = null;
         savedCss = view.Css;
@@ -1092,6 +1093,17 @@ public partial class BookPage : IAsyncDisposable
 
     internal bool AiBusy => aiAsking || reviewing || aiPending != null || mergePreview != null || mergeSection != null || shapePreview != null || shapeRun != null;
 
+    /// <summary>What this edition's AI edits and merges have cost over all their runs (docs/BOOK_EXPORT.md 42, step 2), for the Ask AI tab.</summary>
+    internal BookBuildTotals? spendTotals;
+
+    private async Task ReadSpendAsync() => spendTotals = await BookSpend.ReadAsync(Builds, Access, edition);
+
+    internal string? SpendLine => spendTotals is not { } t ? null
+        : L["Campaign.Book.Ai.Totals", t.Calls, Number(t.InputTokens), Number(t.OutputTokens)]
+          + (t.Estimated ? " " + L["Campaign.Book.Ai.Estimated"] : string.Empty)
+          + (t.Cost <= 0 ? string.Empty
+              : " " + L[t.UnpricedRuns == 0 ? "Campaign.Book.Ai.TotalsCost" : "Campaign.Book.Ai.TotalsCostPartial", Codex.Core.AI.AiPrice.Format(t.Cost, t.PriceLabel, System.Globalization.CultureInfo.CurrentCulture)]);
+
     internal static string Number(long value) => value.ToString("N0", System.Globalization.CultureInfo.CurrentCulture);
 
     internal static string Money(decimal amount, Codex.Core.AI.AiPriceQuote? price) =>
@@ -1185,6 +1197,7 @@ public partial class BookPage : IAsyncDisposable
         {
             var proposal = await Ai.AskAsync(Access, edition, language, p.Selection.Section, p.Version, p.Selection.From, p.Selection.To, p.Selection.Text, p.Ask, aiStop.Token);
             sent = proposal;
+            if (proposal.Tokens > 0) await ReadSpendAsync();
             // A whole-book run gathers every chapter's; an edit of its own starts the list again.
             if (shapeRun == null) aiKept.Clear();
             aiKept.RemoveAll(k => k.Section == p.Selection.Section);
@@ -1431,6 +1444,7 @@ public partial class BookPage : IAsyncDisposable
         try
         {
             var proposal = await Merges.MergeAsync(Access, edition, language, section, mergeVersion, useAi, aiStop.Token);
+            if (proposal.Tokens > 0) await ReadSpendAsync();
             var spent = proposal.Tokens == 0 ? null
                 : proposal.Cost is { } cost ? L["Campaign.Book.Draft.Ai.SpentCost", Number(proposal.Tokens), Money(cost, null)].ToString()
                 : L["Campaign.Book.Draft.Ai.Spent", Number(proposal.Tokens)].ToString();

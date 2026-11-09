@@ -382,6 +382,19 @@ public sealed class BookEditWorker(IChatClient chat, BookBudget budget, float te
 {
     public const int MaxAttempts = 2;
 
+    /// <summary>A reply as text: line endings normalised, and a code fence a model put around the whole of it taken off.</summary>
+    internal static string Clean(string? reply)
+    {
+        var text = (reply ?? string.Empty).ReplaceLineEndings("\n").Trim();
+        if (text.StartsWith("```", StringComparison.Ordinal) && text.EndsWith("```", StringComparison.Ordinal) && text.Length > 6)
+        {
+            var firstLine = text.IndexOf('\n');
+            if (firstLine > 0) text = text[(firstLine + 1)..^3].Trim();
+        }
+
+        return text;
+    }
+
     /// <summary>The least room a reply gets. "As the book" turns a few lines of notes into sourcebook prose several times as long: a real
     /// model, given twice the passage, was cut off on both tries on a two-entry chapter.</summary>
     public const int MinOutputTokens = 2000;
@@ -429,7 +442,7 @@ public sealed class BookEditWorker(IChatClient chat, BookBudget budget, float te
                 var response = await chat.GetResponseAsync(
                     [new ChatMessage(ChatRole.System, system), new ChatMessage(ChatRole.User, user)],
                     new ChatOptions { Temperature = temperature, MaxOutputTokens = maxOutput }, ct);
-                text = BookSectionWorker.Clean(response.Text);
+                text = Clean(response.Text);
                 cutOff = response.FinishReason == ChatFinishReason.Length || response.Usage?.OutputTokenCount >= maxOutput;
                 reservation.Settle(response.Usage?.InputTokenCount, response.Usage?.OutputTokenCount, BookTokens.Estimate(text));
             }

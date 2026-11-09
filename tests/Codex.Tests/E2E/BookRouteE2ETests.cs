@@ -12,7 +12,7 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
     public BookRouteE2ETests(AppFixture app) => _app = app;
 
     [Fact]
-    public async Task OnlyTheDmGetsABook_AsAPageOrAsAPdf_AndTheLanguageGateAnswersWithAReason()
+    public async Task OnlyTheGmGetsABook_AsMarkdownOrAsAPdf_AndNothingButAnEditionIsOne()
     {
         const string password = "Correct-Horse-1";
         var dmId = "bk-dm-" + Guid.NewGuid();
@@ -25,51 +25,61 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
         var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
 
-        foreach (var audience in new[] { "dm", "party" })
-        {
-            var page = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/{audience}");
-            Assert.Equal(200, page.Status);
-            Assert.StartsWith("text/html", page.Headers["content-type"]);
-            Assert.Equal("no-store", page.Headers["cache-control"]);
-            Assert.Contains("default-src 'none'", page.Headers["content-security-policy"]);
-            Assert.Contains("Saltmere Chronicle", await page.TextAsync());
-        }
-
-        var pdf = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/party/pdf");
-        Assert.True(pdf.Status == 200, $"pdf status {pdf.Status}: {await pdf.TextAsync()}");
-        Assert.Equal("application/pdf", pdf.Headers["content-type"]);
-        Assert.Equal("no-store", pdf.Headers["cache-control"]);
-        Assert.Contains("attachment", pdf.Headers["content-disposition"]);
-        Assert.Contains(".pdf", pdf.Headers["content-disposition"]);
-        Assert.StartsWith("%PDF-", Encoding.ASCII.GetString((await pdf.BodyAsync()).AsSpan(0, 5)));
-
-        // The draft's Markdown (41.24) is the draft's: with no draft there is nothing to download (the editor makes one when it opens).
+        // The draft's files (41.24) are the draft's: with no draft there is nothing to download (the Book page makes one when it opens).
         Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/dm/draft/en/md")).Status);
+        Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/dm/draft/en/pdf")).Status);
 
-        // Russian prints (docs/BOOK_EXPORT.md 41.21); a language no theme has faces for gets a reason, not a page in the wrong fonts.
-        var russian = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/dm/pdf?lang=ru");
-        Assert.Equal(200, russian.Status);
-        var german = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/dm/pdf?lang=de");
-        Assert.Equal(422, german.Status);
-        Assert.Equal(400, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/dm?theme=nope")).Status);
-        Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/everyone")).Status);
-        // An enum number is not an edition: "2" must not read as a party book that was never cleaned.
-        foreach (var number in new[] { "0", "1", "2", "-1" })
+        foreach (var edition in new[] { "dm", "party" })
         {
-            Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/{number}")).Status);
-            Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/{number}/pdf")).Status);
+            await E2EHelpers.OpenBookAsync(dm, campaignId, edition);
+            await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=front]")).ToBeVisibleAsync(new() { Timeout = 30_000 });
+
+            var md = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/{edition}/draft/en/md");
+            Assert.Equal(200, md.Status);
+            Assert.StartsWith("text/markdown", md.Headers["content-type"]);
+            Assert.Equal("no-store", md.Headers["cache-control"]);
+            Assert.Contains("Saltmere Chronicle", await md.TextAsync());
+
+            var pdf = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/{edition}/draft/en/pdf");
+            Assert.True(pdf.Status == 200, $"pdf status {pdf.Status}: {await pdf.TextAsync()}");
+            Assert.Equal("application/pdf", pdf.Headers["content-type"]);
+            Assert.Equal("no-store", pdf.Headers["cache-control"]);
+            Assert.Contains("default-src 'none'", pdf.Headers["content-security-policy"]);
+            Assert.Contains("attachment", pdf.Headers["content-disposition"]);
+            Assert.Contains(".pdf", pdf.Headers["content-disposition"]);
+            Assert.StartsWith("%PDF-", Encoding.ASCII.GetString((await pdf.BodyAsync()).AsSpan(0, 5)));
         }
 
-        // Somebody who is not this campaign's DM gets nothing, and cannot tell a campaign from no campaign.
+        // Only "dm" and "party" are editions; an enum number must not read as a party book that was never cleaned. (The language gate, a theme
+        // that refuses a language with 422 instead of printing it in the wrong fonts, is BookDraftShellTests'; a language with no draft is nothing.)
+        Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/dm/draft/de/pdf")).Status);
+        foreach (var edition in new[] { "everyone", "0", "1", "2", "-1" })
+        {
+            foreach (var file in new[] { "md", "pdf", "art" })
+            {
+                Assert.Equal(404, (await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/{edition}/draft/en/{file}")).Status);
+            }
+        }
+
+        // The old route's page and PDF (deleted, BOOK_EXPORT 50) are gone: the address falls through to the app's own pages, never a book.
+        foreach (var gone in new[] { "dm", "party", "dm/pdf", "party/pdf" })
+        {
+            var old = await dmContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/{gone}");
+            Assert.False(old.Headers.TryGetValue("content-type", out var type) && type.StartsWith("application/pdf", StringComparison.Ordinal), gone);
+            Assert.False(old.Headers.ContainsKey("content-disposition"), gone);
+            Assert.DoesNotContain("class=\"chapter", await old.TextAsync(), StringComparison.Ordinal);
+        }
+
+        // Somebody who is not this campaign's GM gets nothing, and cannot tell a campaign from no campaign.
         await using var otherContext = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
         var other = await otherContext.NewPageAsync();
         await E2EHelpers.LoginAsync(other, "other_" + otherId, password);
-        foreach (var route in new[] { "dm", "party", "dm/pdf", "party/pdf", "dm/draft/en/md", "party/draft/en/md" })
+        foreach (var route in new[] { "dm/draft/en/md", "party/draft/en/md", "dm/draft/en/pdf", "party/draft/en/pdf", "dm/draft/en/art", "party/draft/en/art" })
         {
             Assert.Equal(404, (await otherContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/{route}")).Status);
         }
 
-        Assert.Equal(404, (await otherContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/no-such-campaign/book-file/dm")).Status);
+        Assert.Equal(404, (await otherContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/no-such-campaign/book-file/dm/draft/en/md")).Status);
     }
 
     /// <summary>The book is the GM's alone (BOOK_EXPORT 48): a Player member of the campaign gets 404 on every book route, for either edition,
@@ -106,7 +116,7 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
         var routes = new List<string>();
         foreach (var edition in new[] { "dm", "party" })
         {
-            routes.AddRange([edition, edition + "/pdf", edition + "/draft/en/md", edition + "/draft/en/pdf", edition + "/draft/en/art"]);
+            routes.AddRange([edition + "/draft/en/md", edition + "/draft/en/pdf", edition + "/draft/en/art"]);
         }
 
         // The player's own copy of the party book (45) is a GM tool too.
@@ -130,8 +140,7 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
     }
 }
 
-/// <summary>The campaign book panel in Settings: preview in a locked frame, a real PDF download, the language gate shown before it
-/// is hit, and nothing at all for a player.</summary>
+/// <summary>The Book page: preview, a real PDF download, the cover slot, a refused print said on the page, and nothing at all for a player.</summary>
 [Collection("RavenDb")]
 public class BookPanelE2ETests : IClassFixture<AppFixture>
 {
@@ -221,6 +230,15 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         Assert.DoesNotContain("Saltmere", await player.Locator(".ws-main").InnerTextAsync(), StringComparison.Ordinal);
     }
 
+    // The pictures an edition's book prints: its picture map, the one the preview and the PDF both use (BookDrafts.ArtAsync).
+    internal static async Task<int> PicturesAsync(IBrowserContext context, string campaignId, string edition)
+    {
+        var art = await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book-file/{edition}/draft/en/art");
+        Assert.Equal(200, art.Status);
+        using var json = System.Text.Json.JsonDocument.Parse(await art.TextAsync());
+        return json.RootElement.GetProperty("art").EnumerateObject().Count(p => p.Value.GetString()!.StartsWith("data:image/", StringComparison.Ordinal));
+    }
+
     [Fact]
     public async Task TheGmPutsAPictureInTheCoverSlot_ThePartyBookShowsIt_AndTheGmTrayCallsItTheParty()
     {
@@ -259,15 +277,13 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Take out" })).ToBeVisibleAsync();
 
         // The campaign has no cover of its own, so a cover on the party book's title page is the one just added.
-        var party = await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book-file/party");
-        Assert.Equal(200, party.Status);
-        Assert.Contains("class=\"cover-art\"", await party.TextAsync(), StringComparison.Ordinal);
+        Assert.Equal(1, await PicturesAsync(context, campaignId, "party"));
 
         // In the GM's tray the same cover is the party edition's (it prints in both books), and there is nothing of the GM's to remove.
         await dm.GetByTestId("book-edition-dm").ClickAsync();
         await Assertions.Expect(slots.Locator("li").First).ToContainTextAsync("party edition's picture", new() { Timeout = 30_000 });
         await Assertions.Expect(slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Take out" })).ToHaveCountAsync(0);
-        Assert.Contains("class=\"cover-art\"", await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book-file/dm")).TextAsync(), StringComparison.Ordinal);
+        Assert.Equal(1, await PicturesAsync(context, campaignId, "dm"));
 
         // Back in the party tray, removing it takes it out of the book.
         await dm.GetByTestId("book-edition-party").ClickAsync();
@@ -275,7 +291,7 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         await slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Take out" }).ClickAsync();
         await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Picture taken out of the book.");
         await Assertions.Expect(slots.Locator("li").First).ToContainTextAsync("no picture");
-        Assert.DoesNotContain("class=\"cover-art\"", await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book-file/party")).TextAsync(), StringComparison.Ordinal);
+        Assert.Equal(0, await PicturesAsync(context, campaignId, "party"));
         Assert.Empty(pageErrors);
     }
 
@@ -326,9 +342,9 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
 }
 
 /// <summary>
-/// The AI polish in the book panel, end to end: a DM adds an OpenAI-compatible model through AI settings (a fake server in this
-/// process stands in for it, and writes its own request log), sees what the build would cost before anything is sent, runs it, watches
-/// the progress, and prints from the stored result. The model is sent no secret, and the page says what was spent.
+/// The book's paid AI work end to end, on an OpenAI-compatible model the GM adds through AI settings (a fake server in this process stands in
+/// for it, and writes its own request log): the art director and drawing, priced first. Its <see cref="FakeModelServer"/> serves the draft's
+/// AI tests too.
 /// </summary>
 [Collection("RavenDb")]
 public class BookAiPanelE2ETests : IClassFixture<AppFixture>
@@ -443,100 +459,6 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         }
     }
 
-    [Fact(Skip = "The AI polish tab left Settings with the old Print tab (BOOK_EXPORT 49); step 2 maps its masking checks to the draft path and removes the route.")]
-    public async Task TheDmSeesTheCostFirst_RunsTheBuild_AndPrintsFromTheStoredChapters()
-    {
-        const string password = "Correct-Horse-1";
-        var dmId = "ba-dm-" + Guid.NewGuid();
-        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
-        await using var model = new FakeModelServer();
-
-        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
-        var dm = await context.NewPageAsync();
-        var pageErrors = new List<string>();
-        dm.PageError += (_, e) => pageErrors.Add(e);
-        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
-        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
-        var story = string.Join(' ', Enumerable.Repeat("The keeper of the light walks the cliff path at dusk and trims the lamp.", 6));
-        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor
-        {
-            Id = "ba-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Biography = story + "\n\n:::dm\nCANARY_E2E_SECRET\n:::"
-        }]);
-
-        // No model yet: the panel says so, and offers the way to set one up instead of a button that fails.
-        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
-        await dm.GetByTestId("book-tab-ai").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("book-ai-nomodel")).ToBeVisibleAsync();
-        await Assertions.Expect(dm.GetByTestId("book-ai-start")).ToBeDisabledAsync();
-
-        // A model, with prices.
-        await dm.GotoAsync("/settings/ai");
-        await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
-        await dm.GetByTestId("ai-name").FillAsync("Fake model");
-        await dm.GetByTestId("ai-url").FillAsync(model.Url);
-        await dm.GetByTestId("ai-model").FillAsync("fake-model");
-        await dm.GetByTestId("ai-price-in").FillAsync("1");
-        await dm.GetByTestId("ai-price-out").FillAsync("2");
-        await dm.GetByTestId("ai-price-label").FillAsync("USD");
-        await dm.GetByTestId("ai-save").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model");
-
-        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
-        await dm.GetByTestId("book-tab-ai").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("book-ai-model")).ToContainTextAsync("fake-model");
-
-        // The estimate comes first: the chapters, the requests, tokens as a range, and money from the prices set. Nothing was sent.
-        await Assertions.Expect(dm.GetByTestId("book-ai-preflight")).ToContainTextAsync("requests");
-        await Assertions.Expect(dm.GetByTestId("book-ai-preflight")).ToContainTextAsync("USD");
-        await Assertions.Expect(dm.GetByTestId("book-ai-chapters")).ToContainTextAsync("not built yet");
-        Assert.Empty(model.Requests);
-
-        await dm.GetByTestId("book-ai-start").ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("book-ai-progress")).ToContainTextAsync("Build finished");
-        await Assertions.Expect(dm.GetByTestId("book-ai-progress")).ToContainTextAsync("tokens in");
-        await Assertions.Expect(dm.GetByTestId("book-ai-progress")).ToContainTextAsync("USD");
-        await Assertions.Expect(dm.GetByTestId("book-ai-chapters")).ToContainTextAsync("up to date");
-        await Assertions.Expect(dm.GetByTestId("book-ai-totals")).ToBeVisibleAsync();
-
-        // What the model was sent: the chapter, never the DM's secret.
-        string requests;
-        lock (model.Requests) requests = string.Join("\n", model.Requests);
-        Assert.Contains("keeper of the light", requests);
-        Assert.DoesNotContain("CANARY_E2E_SECRET", requests);
-
-        // The preview and the PDF print from the stored rewrite when asked; the secret is still boxed, by code.
-        var plain = await context.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/dm");
-        var plainText = await plain.TextAsync();
-        Assert.Contains("walks the cliff path", plainText);
-        var polished = await context.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/dm?ai=1");
-        var polishedText = await polished.TextAsync();
-        Assert.Contains("strolls the cliff path", polishedText);
-        Assert.Contains("CANARY_E2E_SECRET", polishedText);
-        Assert.Contains("class=\"secret secret-dm\"", polishedText);
-        // The party edition was never built: asking for it gets the book as written, and no secret.
-        var party = await (await context.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/{campaignId}/book-file/party?ai=1")).TextAsync();
-        Assert.DoesNotContain("CANARY_E2E_SECRET", party);
-        Assert.DoesNotContain("strolls", party);
-
-        // The checkbox points the preview at it.
-        await dm.GetByTestId("book-tab-print").ClickAsync();
-        await dm.GetByTestId("book-preview-toggle").ClickAsync();
-        await dm.GetByTestId("book-tab-ai").ClickAsync();
-        await dm.GetByTestId("book-ai-use").CheckAsync();
-        await Assertions.Expect(dm.GetByTestId("book-preview")).ToHaveAttributeAsync("src", new System.Text.RegularExpressions.Regex("ai=1"));
-
-        // A second build sends nothing: every chapter is current.
-        int before;
-        lock (model.Requests) before = model.Requests.Count;
-        await Assertions.Expect(dm.GetByTestId("book-ai-start")).ToBeDisabledAsync(); // "nothing to build"
-        await Assertions.Expect(dm.GetByTestId("book-ai-preflight")).ToContainTextAsync("Nothing to build");
-        lock (model.Requests) Assert.Equal(before, model.Requests.Count);
-        Assert.Empty(pageErrors);
-    }
-
-    // Step 6 through the real panel: a picture model with a price, a suggestion from the director, the cost shown before anything is drawn,
-    // one ticked place drawn with the description the GM edited, and the picture in the party's book. Nothing is drawn that was not ticked.
     [Fact]
     public async Task TheGmTicksASuggestedPlace_SeesThePriceFirst_AndThePartyBookPrintsThePictureDrawn()
     {
@@ -654,8 +576,7 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         await vera.GetByRole(AriaRole.Checkbox, new() { Name = "Draw again Vera" }).UncheckAsync();
         Assert.Equal(4, model.ImagePrompts.Count);
 
-        var party = await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book-file/party")).TextAsync();
-        Assert.Contains("class=\"art\"", party, StringComparison.Ordinal);
+        Assert.True(await BookPanelE2ETests.PicturesAsync(context, campaignId, "party") >= 1, "the party book has the picture drawn");
         Assert.Empty(pageErrors);
     }
 }
@@ -1121,6 +1042,8 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.Locator(".cm-line", new() { HasText = "Her lighthouse log" })).ToHaveCountAsync(1);
         await Assertions.Expect(preview.Locator(".page", new() { HasText = "Her lighthouse log" })).ToHaveCountAsync(1);
         lock (model.Requests) Assert.All(model.Requests, r => Assert.DoesNotContain("CANARY_AI_SECRET", r));
+        // What the edition's AI work has cost so far, over every run (the line the AI polish tab used to show, BOOK_EXPORT 50).
+        await Assertions.Expect(dm.GetByTestId("book-ai-totals")).ToContainTextAsync("AI work on this edition so far:");
         await dm.Locator(".cm-line", new() { HasText = "Keeps the beacon tower" }).ClickAsync();
         await dm.Keyboard.PressAsync("End");
         await dm.Keyboard.TypeAsync(" PUBLIC_TYPED");

@@ -13,6 +13,28 @@ namespace Codex.Web.Book;
 /// <param name="ServerUsedToday">On the server's key: requests this account used today, and the daily allowance (0 for none); null on the user's own provider.</param>
 public sealed record BookModelInfo(string Label, AiPriceQuote? Price, (int Used, int Limit)? ServerUsedToday);
 
+/// <summary>How many calls a book's runs make at once: one for a model on this machine or this network (Ollama queues requests until they
+/// time out), two for a hosted one.</summary>
+public static class BookModelConcurrency
+{
+    /// <summary>1 for an address on this machine or a private network, 2 otherwise.</summary>
+    public static int For(string? endpoint)
+    {
+        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)) return 2;
+        var host = uri.Host.Trim('[', ']');
+        if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || host.EndsWith(".local", StringComparison.OrdinalIgnoreCase) || host.EndsWith(".lan", StringComparison.OrdinalIgnoreCase) || !host.Contains('.') && !host.Contains(':'))
+        {
+            return 1;
+        }
+
+        if (!System.Net.IPAddress.TryParse(host, out var ip)) return 2;
+        if (System.Net.IPAddress.IsLoopback(ip)) return 1;
+        if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) return ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal || (ip.GetAddressBytes()[0] & 0xFE) == 0xFC ? 1 : 2;
+        var b = ip.GetAddressBytes();
+        return b[0] == 10 || b[0] == 192 && b[1] == 168 || b[0] == 172 && b[1] is >= 16 and <= 31 || b[0] == 169 && b[1] == 254 || b[0] == 100 && b[1] is >= 64 and <= 127 ? 1 : 2;
+    }
+}
+
 /// <summary>A model opened for one build. Dispose it when the build ends: it hands back the server requests that were set aside and not used.</summary>
 public sealed class BookModelHandle(IChatClient chat, string model, int concurrency, AiPriceQuote? price, IDisposable? reservation) : IDisposable
 {
@@ -59,7 +81,7 @@ public sealed class AiBookModels(AiProviderService providers, IUserRepository us
             var client = providers.ClientFor(user, reservation) ?? throw new AiNotConfiguredException();
             var provider = providers.DefaultProvider(user);
             var endpoint = providers.UsesServerKey(user) ? serverConfig.Endpoint : provider?.BaseUrl;
-            return new BookModelHandle(client, providers.Describe(user) ?? string.Empty, BookBuildRunner.ConcurrencyFor(endpoint), await providers.PriceForAsync(userId), reservation);
+            return new BookModelHandle(client, providers.Describe(user) ?? string.Empty, BookModelConcurrency.For(endpoint), await providers.PriceForAsync(userId), reservation);
         }
         catch
         {

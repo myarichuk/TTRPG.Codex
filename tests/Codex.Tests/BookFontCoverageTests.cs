@@ -46,12 +46,11 @@ public class BookFontCoverageTests
     }
 
     private static IEnumerable<(string Route, BookTheme Theme)> Themes() =>
-        BookThemes.All.Select(t => ("book", t)).Concat(BookDraftThemes.All.Select(t => ("draft", t))).Where(t => t.Item2.Fonts.Count > 0);
+        BookDraftThemes.All.Select(t => ("draft", t)).Where(t => t.Item2.Fonts.Count > 0);
 
     private static BookTheme Theme(string id)
     {
-        var (route, name) = (id[..id.IndexOf(':', StringComparison.Ordinal)], id[(id.IndexOf(':', StringComparison.Ordinal) + 1)..]);
-        return route == "book" ? BookThemes.Find(name)! : BookDraftThemes.Find(name)!;
+        return BookDraftThemes.Find(id[(id.IndexOf(':', StringComparison.Ordinal) + 1)..])!;
     }
 
     [Theory]

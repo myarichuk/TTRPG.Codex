@@ -59,6 +59,10 @@
                     {
                         <div class="small @(aiNoteError ? "field-error" : "small-muted")" role="status" aria-live="polite" data-testid="book-draft-ai-note">@aiNote</div>
                     }
+                    @if (P.SpendLine is { } spend)
+                    {
+                        <div class="small-muted" data-testid="book-ai-totals">@spend</div>
+                    }
                 </section>
             }
             else
