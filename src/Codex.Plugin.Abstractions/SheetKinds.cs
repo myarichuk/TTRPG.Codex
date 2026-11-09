@@ -188,8 +188,9 @@ public sealed class ModifierTypesDefinition
     public Dictionary<string, string> Types { get; set; } = new();
 }
 
-/// <summary>A named function: a one-line <see cref="Formula"/> (<c>"(a, b) => a + b"</c>), or (later steps) a script or a
-/// compiled type.</summary>
+/// <summary>A named function: a one-line <see cref="Formula"/> (<c>"(a, b) => a + b"</c>), a <see cref="Script"/> export
+/// (<c>rules.js#hitPoints</c>), or a compiled <see cref="Type"/> (<c>"Acme.Street.HitPoints, Acme.Street"</c>, an
+/// <see cref="ICodexFunction"/>). One of them.</summary>
 public sealed class FunctionDefinition
 {
     public string? Formula { get; set; }
@@ -334,4 +335,12 @@ public sealed class CampaignTableDefinition
     public string? Label { get; set; }
     public List<ItemFieldDefinition> ItemFields { get; set; } = new();
     public string Visibility { get; set; } = "players";
+}
+
+/// <summary>A widget a DLL supplies: <see cref="Type"/> names an <see cref="ICodexWidget"/> (<c>"Acme.Street.Cyberware,
+/// Acme.Street"</c>).</summary>
+public sealed class WidgetDefinition
+{
+    public string? Type { get; set; }
+    public string? Label { get; set; }
 }

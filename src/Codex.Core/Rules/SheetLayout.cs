@@ -151,6 +151,13 @@ public static class SheetLayout
 
         if (!GenericWidgets.Contains(name))
         {
+            // One the system's DLL supplies: whether its type loads is CompiledSuppliers.Problems' to say. It is handed a sheet
+            // kind's view, as the generic widgets read one.
+            if (system.Widgets.ContainsKey(name))
+            {
+                if (kind == null) yield return $"{name} is the system's own widget, which reads a sheet kind's view, and the system has no sheet kinds; it shows nothing.";
+                yield break;
+            }
             yield return string.IsNullOrWhiteSpace(name) ? "a widget needs a name." : $"there is no widget called {name}.";
             yield break;
         }

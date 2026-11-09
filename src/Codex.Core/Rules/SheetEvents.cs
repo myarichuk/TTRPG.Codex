@@ -140,6 +140,8 @@ public static partial class SheetEvents
                 };
             case IDictionary<string, object> map when map.TryGetValue("script", out var script):
                 return Scripted(system, model, sheet, ev, script?.ToString() ?? "", dice);
+            case IDictionary<string, object> map when map.TryGetValue("type", out var type):
+                return Compiled(system, model, sheet, ev, type?.ToString() ?? "", dice);
             case IEnumerable lines and not string and not IDictionary<string, object>:
                 var intents = new List<SheetIntent>();
                 foreach (var line in lines.Cast<object?>())
@@ -157,7 +159,7 @@ public static partial class SheetEvents
 
                 return intents;
             default:
-                throw new SheetEventException($"The {ev.Type} handler is neither {{ builtin }}, {{ script }} nor a list of {{ when, intents }}.");
+                throw new SheetEventException($"The {ev.Type} handler is neither {{ builtin }}, {{ script }}, {{ type }} nor a list of {{ when, intents }}.");
         }
     }
 
@@ -205,6 +207,42 @@ public static partial class SheetEvents
 
         return intents;
     }
+
+    /// <summary><c>{ type: "Namespace.Type, Assembly" }</c>: a compiled <see cref="ICodexEventHandler"/>, handed what a script
+    /// handler is (<see cref="CompiledSuppliers"/>); its intents are checked as a script's are.</summary>
+    private static IReadOnlyList<SheetIntent> Compiled(SystemDefinition system, SheetModel model, IReadOnlyDictionary<string, object> sheet, SheetEvent ev, string typeName,
+        IDiceSource? dice)
+    {
+        var context = new SystemScripts.HandlerContext(model.CallNamed, sides => (dice ?? RandomDiceSource.Shared).Roll(sides));
+        IReadOnlyList<(string Kind, IReadOnlyDictionary<string, object?> Fields)> returned;
+        try
+        {
+            returned = CompiledSuppliers.Handler(system, ev.Type, typeName, ev.Fields, ScriptView(system, model, sheet), context);
+        }
+        catch (FormulaException ex)
+        {
+            throw new SheetEventException(ex.Message);
+        }
+
+        var intents = new List<SheetIntent>();
+        foreach (var (kind, fields) in returned)
+        {
+            if (!IntentKinds.Contains(kind, StringComparer.Ordinal))
+            {
+                throw new SheetEventException($"The {ev.Type} handler ({typeName}) returned \"{kind}\", which is not an intent ({string.Join(", ", IntentKinds)}).");
+            }
+
+            intents.Add(new SheetIntent(kind, fields.TryGetValue("actor", out var actor) ? actor?.ToString() : null,
+                fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => f.Value, StringComparer.Ordinal)));
+        }
+
+        return intents;
+    }
+
+    /// <summary>The sheet as a script or compiled handler reads it, or a compiled widget: plain data made afresh (see
+    /// <see cref="ScriptView(SystemDefinition, SheetModel, IReadOnlyDictionary{string, object})"/>).</summary>
+    public static Dictionary<string, object?> PlainView(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet) =>
+        ScriptView(system, new SheetModel(system, resolver, sheet), sheet);
 
     /// <summary>
     /// The sheet as a script handler reads it, plain data made afresh: <c>kind</c>; <c>attributes</c> (scores by key);
@@ -500,6 +538,9 @@ public static partial class SheetEvents
                     break;
                 case IDictionary<string, object> map when map.ContainsKey("script"):
                     // Checked with the system's other scripts (SystemScripts.Problems).
+                    break;
+                case IDictionary<string, object> map when map.ContainsKey("type"):
+                    // Checked with the system's other compiled code (CompiledSuppliers.Problems).
                     break;
                 case IEnumerable lines and not string and not IDictionary<string, object>:
                     foreach (var line in lines.Cast<object?>())

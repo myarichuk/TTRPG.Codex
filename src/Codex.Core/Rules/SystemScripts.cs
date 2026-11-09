@@ -194,7 +194,7 @@ public sealed class SystemScripts
         return value;
     }
 
-    private static string? CacheKey(string reference, IReadOnlyList<object?> arguments)
+    internal static string? CacheKey(string reference, IReadOnlyList<object?> arguments)
     {
         var key = new System.Text.StringBuilder(reference);
         foreach (var argument in arguments)

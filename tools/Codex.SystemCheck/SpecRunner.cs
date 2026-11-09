@@ -44,6 +44,9 @@ public interface IReferenceSystem
     /// <summary>The problems the host reports for the sheet, as (field, key).</summary>
     CheckOr<IReadOnlyList<(string Field, string Key)>> Violations(Dictionary<string, object> sheet);
 
+    /// <summary>The warnings the host gives the GM for the sheet (what could not be worked out, and why), as (field, key).</summary>
+    CheckOr<IReadOnlyList<(string Field, string Key)>> Warnings(Dictionary<string, object> sheet);
+
     CheckOr<IReadOnlyList<string>> Conditions(Dictionary<string, object> sheet);
 
     /// <summary>Makes a roll on the sheet with the spec's faces, and applies what it asks of the roller's sheet. For a group
@@ -52,7 +55,8 @@ public interface IReferenceSystem
 
     /// <summary>Raises the spec's event on the sheet and applies what it asks of that sheet and of the campaign's objects
     /// (<paramref name="campaign"/>, changed in place).</summary>
-    CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev, Dictionary<string, object> campaign);
+    /// <param name="dice">The faces a handler's dice (<c>ctx.d</c>, a compiled handler's <c>D</c>) are handed, in order; null rolls at random.</param>
+    CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev, Dictionary<string, object> campaign, IReadOnlyList<int>? dice = null);
 
     /// <summary>The problems the host reports for the campaign's objects, as (field, key).</summary>
     CheckOr<IReadOnlyList<(string Field, string Key)>> CampaignViolations(Dictionary<string, object> campaign);
@@ -167,7 +171,7 @@ public static class ReferenceRunner
 
         if (expectation.Event is { } ev)
         {
-            var raised = system.Raise(sheet, expectation.Sheet, ev, campaign);
+            var raised = system.Raise(sheet, expectation.Sheet, ev, campaign, expectation.Dice);
             if (raised.Unsupported is { } why) return Result(CheckStatus.Unsupported, why);
             if (raised.Value!.Failed is { } failed) return Result(CheckStatus.Fail, $"the event failed: {failed}");
             if (expect.Intents is { } wanted)
@@ -264,6 +268,18 @@ public static class ReferenceRunner
             }
         }
 
+        if (expect.Warnings != null)
+        {
+            var found = system.Warnings(sheet);
+            if (found.Unsupported is { } why) return Result(CheckStatus.Unsupported, why);
+            var wanted = expect.Warnings.Select(v => (v.Field, v.Key)).OrderBy(v => v).ToList();
+            var actual = found.Value!.OrderBy(v => v).ToList();
+            if (!wanted.SequenceEqual(actual))
+            {
+                problems.Add($"warnings: [{string.Join("; ", actual.Select(v => $"{v.Field} {v.Key}"))}], expected [{string.Join("; ", wanted.Select(v => $"{v.Field} {v.Key}"))}]");
+            }
+        }
+
         if (expect.Conditions != null)
         {
             var found = system.Conditions(sheet);
@@ -344,6 +360,12 @@ public sealed class CurrentEngineHost : IReferenceHost
             return CheckOr<IReadOnlyList<(string, string)>>.Of(evaluation.Violations.Select(v => (v.FieldKey, v.Key ?? "")).ToList());
         }
 
+        public CheckOr<IReadOnlyList<(string Field, string Key)>> Warnings(Dictionary<string, object> sheet)
+        {
+            var (_, evaluation) = Evaluate(sheet);
+            return CheckOr<IReadOnlyList<(string, string)>>.Of(evaluation.Warnings.Select(v => (v.FieldKey, v.Key ?? "")).ToList());
+        }
+
         public CheckOr<IReadOnlyList<string>> Conditions(Dictionary<string, object> sheet)
         {
             // A system with sheet kinds has tracks whose thresholds and bands bring conditions (SheetModel); one without has
@@ -381,14 +403,15 @@ public sealed class CurrentEngineHost : IReferenceHost
             return CheckOr<RollCheck>.Of(new RollCheck(result.Outcome, result.Totals().ToList(), result.Kept, dice.Used + joining.Sum(p => p.Source.Used), result.Carries, after));
         }
 
-        public CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev, Dictionary<string, object> campaign)
+        public CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev, Dictionary<string, object> campaign, IReadOnlyList<int>? dice = null)
         {
             var fields = YamlValues.NormalizeMap(ev.Where(f => f.Key != "type").ToDictionary(f => f.Key, f => f.Value))
                 .ToDictionary(f => f.Key, f => (object?)f.Value, StringComparer.Ordinal);
             var after = new Dictionary<string, object>(sheet);
             try
             {
-                var result = SheetEvents.Raise(definition, this, after, new SheetEvent(ev.GetValueOrDefault("type")?.ToString() ?? "", fields), sheetId, campaign);
+                var result = SheetEvents.Raise(definition, this, after, new SheetEvent(ev.GetValueOrDefault("type")?.ToString() ?? "", fields), sheetId, campaign,
+                    dice == null ? null : new SequenceDiceSource(dice));
                 return CheckOr<EventCheck>.Of(new EventCheck(result.Intents.Select(Shape).ToList(), after));
             }
             catch (SheetEventException ex)

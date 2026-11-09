@@ -92,6 +92,8 @@
   <data name="Page.About.NoSystemsAfter" xml:space="preserve"><value> under one of the content folders and restart.</value></data>
   <data name="Page.About.DataDriven" xml:space="preserve"><value>data-driven</value></data>
   <data name="Page.About.Compiled" xml:space="preserve"><value>compiled plugin</value></data>
+  <data name="Page.About.ContainsCompiledCode" xml:space="preserve"><value>contains compiled code</value></data>
+  <data name="Page.About.ContainsCompiledCodeHint" xml:space="preserve"><value>Its DLLs run on the server with the server's rights; they are installed only by copying them onto the server.</value></data>
   <data name="Page.About.Licence" xml:space="preserve"><value>Licence:</value></data>
   <data name="Page.About.Modified" xml:space="preserve"><value>modified from the original</value></data>
   <data name="Page.About.Source" xml:space="preserve"><value>source:</value></data>

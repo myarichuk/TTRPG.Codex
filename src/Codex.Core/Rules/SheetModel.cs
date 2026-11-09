@@ -348,23 +348,27 @@ public sealed class SheetModel
             if (_result.Warnings.All(w => w.FieldKey != key))
             {
                 var name = label ?? key;
-                _result.Warnings.Add(ScriptFailure(ex) is { } script
-                    ? new RuleViolation(key, $"{name}: the system's script failed, so it is left out. {script.Message}", "Actor.Rule.ScriptError", new object?[] { name, script.Message })
-                    : new RuleViolation(key,
+                _result.Warnings.Add(SupplierFailure(ex) switch
+                {
+                    ScriptException script => new RuleViolation(key, $"{name}: the system's script failed, so it is left out. {script.Message}", "Actor.Rule.ScriptError", new object?[] { name, script.Message }),
+                    CompiledException compiled => new RuleViolation(key, $"{name}: the system's compiled code failed, so it is left out. {compiled.Message}", "Actor.Rule.CompiledError", new object?[] { name, compiled.Message }),
+                    _ => new RuleViolation(key,
                         $"{name}: the system's formula for this can't be worked out, so it is left out. The GM can check the system's rules.",
-                        "Actor.Rule.FormulaError", new object?[] { name }));
+                        "Actor.Rule.FormulaError", new object?[] { name })
+                });
             }
 
             return null;
         }
     }
 
-    /// <summary>The script failure behind <paramref name="ex"/>, through the wrapping a formula's call puts round it.</summary>
-    internal static ScriptException? ScriptFailure(Exception? ex)
+    /// <summary>The script or compiled failure behind <paramref name="ex"/>, through the wrapping a formula's call puts round
+    /// it: a <see cref="ScriptException"/> or a <see cref="CompiledException"/>.</summary>
+    internal static FormulaException? SupplierFailure(Exception? ex)
     {
         for (var at = ex; at != null; at = at.InnerException)
         {
-            if (at is ScriptException script) return script;
+            if (at is ScriptException or CompiledException) return (FormulaException)at;
         }
 
         return null;
@@ -966,22 +970,27 @@ public sealed class SheetModel
     {
         if (!_system.Functions.ContainsKey(name)) throw new FormulaException($"no function called \"{name}\"");
         using var _ = Enter();
-        var expected = _system.Functions[name].Script != null ? arguments.Count : _formulas.Function(name)?.Parameters.Length ?? 0;
+        var function = _system.Functions[name];
+        var expected = function.Type != null ? CompiledSuppliers.Arity(_system, function.Type) ?? arguments.Count
+            : function.Script != null ? arguments.Count : _formulas.Function(name)?.Parameters.Length ?? 0;
         if (arguments.Count != expected) throw new FormulaException($"{name} takes {expected} arguments, not {arguments.Count}");
         return CallFunction(name, arguments.ToArray());
     }
 
     internal double CallFunction(string name, params object?[] arguments)
     {
-        if (_system.Functions.TryGetValue(name, out var definition) && definition.Script is { } script)
+        if (_system.Functions.TryGetValue(name, out var definition) && (definition.Type ?? definition.Script) is { } supplied)
         {
-            return SystemScripts.For(_system).Function(name, script, arguments.Select(a => Plain(a) switch
+            var plain = arguments.Select(a => Plain(a) switch
             {
-                FormulaList => throw new FormulaException($"{name} is a script function, which takes numbers, text and flags, not a list"),
+                FormulaList => throw new FormulaException($"{name} is a {(definition.Type != null ? "compiled" : "script")} function, which takes numbers, text and flags, not a list"),
                 FormulaText text => text.ToString(),
                 FormulaItem item => item.Value ?? (object?)item.Flag,
-                var plain => plain
-            }).ToList()).Value;
+                var value => value
+            }).ToList();
+            return definition.Type != null
+                ? CompiledSuppliers.Function(_system, name, supplied, plain).Value
+                : SystemScripts.For(_system).Function(name, supplied, plain).Value;
         }
 
         if (_formulas.Function(name) is not { } function) throw new FormulaException($"no function called \"{name}\"");

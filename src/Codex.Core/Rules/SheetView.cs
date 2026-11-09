@@ -123,8 +123,30 @@ public sealed class SheetView
         "roll" => _system.Rolls.Any(r => r.Key == widget.Roll),
         "text" => widget.Key != null,
         "modifiers" => widget.Target != null,
-        _ => false
+        _ => IsCompiled(widget)
     };
+
+    /// <summary>Whether the widget is one the system's DLL supplies (<see cref="SystemDefinition.Widgets"/>); a host widget of the
+    /// same name is the host's.</summary>
+    public bool IsCompiled(LayoutWidget widget) =>
+        _system.Widgets.ContainsKey(widget.Widget) && !SheetLayout.GenericWidgets.Contains(widget.Widget) && !SheetLayout.BuiltinWidgets.ContainsKey(widget.Widget);
+
+    /// <summary>What a compiled widget shows (<see cref="CompiledSuppliers.Widget"/>), handed the sheet as a handler reads it, or
+    /// why it cannot be shown.</summary>
+    /// <param name="language">The reader's language tag, for the widget's own text.</param>
+    public (WidgetContent? Content, string? Failure) Compiled(LayoutWidget widget, string language)
+    {
+        try
+        {
+            var label = widget.Label ?? (_system.Widgets.TryGetValue(widget.Widget, out var definition) ? definition.Label : null);
+            var request = new WidgetRequest(SheetEvents.ScriptView(_system, _model, Sheet), widget.Key, widget.Keys, label, language);
+            return (CompiledSuppliers.Widget(_system, widget.Widget, request), null);
+        }
+        catch (FormulaException ex)
+        {
+            return (null, ex.Message);
+        }
+    }
 
     /// <summary>A number as a sheet shows it: whole numbers without a decimal point.</summary>
     public static string Format(object? value, IFormatProvider? culture = null) => value switch

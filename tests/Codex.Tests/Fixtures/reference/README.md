@@ -58,10 +58,12 @@ expectations:
     with: { values: { dex: 20 } }  # laid over the sheet: maps merge key by key, lists replace; may carry campaign:
     roll: { definition: attack, inputs: { target: 15 }, dice: [19, 9] }  # or participants: { sheet: [faces] }
     event: { type: damage, amount: 8, damageType: slashing }             # one action per expectation, or none
+    dice: [4]                    # for an event: the faces its handler's dice (ctx.d) are handed
     requires: [d35.other-rule]   # counts only alongside these (for purely negative expectations)
     expect:
       values: { BAB: 4 }         # derived values; a dotted key reaches into a keyed list (skills.tumble)
       violations: [{ field: skills, key: Actor.Rule.RankMax }]   # exactly these, any order; [] for none
+      warnings: [{ field: HP_Max, key: Actor.Rule.ScriptError }]  # the GM's warnings (what failed to work out), the same way
       conditions: [Seriously wounded]   # exactly these hold, with no event
       outcome: critical          # a roll's named outcome
       total: 25                  # a roll's total; totals: [26, 16] when one roll leads to another
@@ -237,6 +239,29 @@ Scripts, as step 8 built them (`Codex.Core.Rules.SystemScripts`, Jint):
 - `Codex.SystemCheck --types` writes `codex.d.ts` with the system's own names, for `// @ts-check` in an editor. The street
   fixture's `rules.js` reads it, and a test keeps the committed one current.
 
+Compiled code, as step 9 built it (`Codex.Core.Rules.CompiledSuppliers`; the interfaces in `Codex.Plugin.Abstractions`,
+`Compiled.cs`):
+- system.yaml names a type as `{ type: "Namespace.Type, Assembly" }`: a function (`functions.<name>`, an `ICodexFunction`), a
+  handler (`events.<type>`, an `ICodexEventHandler`) or a widget (`widgets.<name>`, an `ICodexWidget`, placed in a layout as
+  `{ widget: <name> }`). The assembly must be a DLL directly beside system.yaml; it is loaded into that folder's own
+  `AssemblyLoadContext`, and what the host has (Codex.Plugin.Abstractions above all) comes from the host. A host type cannot
+  be named. Only a system.yaml read from disk loads DLLs; a system parsed from text never does.
+- The type must be public and concrete with a public parameterless constructor and implement what its place needs; a
+  function's `Arity` is 0 to 4. Anything else is a load problem naming the type and why, and the function has no value, the
+  event fails, the widget says it cannot be shown.
+- The contract is the script's: plain data in, copied, and plain data out, copied (numbers become doubles; anything that is
+  not a number, text, flag, list or map fails the call). A function returns a `CodexValue` (a number, with optional parts) and
+  is cached by its arguments. A handler gets `ev`, the same `sheet` view a script gets, and an `ICodexContext` (`Call` for a
+  named function, `D` for a die through the host); it returns `CodexIntent`s, checked as a script's are. `CodexMath` is the
+  host's `floor`, `ceil` and `div`, the same code formulas run.
+- A widget gets the sheet view and its layout entry (`key`, `keys`, `label`) and the reader's language, and returns blocks
+  the host draws in the sheet's style: heading, text, row (label, value, note), pills, and action (a button whose intents
+  apply to the sheet as a track widget's do). It is never handed the page.
+- A failure (a throw, or a result that is not plain data) names the system, the function, handler or widget, and the type:
+  on the sheet as the GM's warning `Actor.Rule.CompiledError`, at the table as a failed event. Nothing limits time or memory:
+  compiled code runs in the server's process with its rights. About marks a data system that names compiled code "contains
+  compiled code", as it marks a compiled plugin.
+
 Rolls, as step 4 built them:
 - Inputs: each declared input is what the request supplied, else for `from: parent` the parent roll's, for `from: weapon`
   the `property` of the item the `weapon` input names (a pick on the sheet, else the library's entry), else its `default`.
@@ -271,7 +296,8 @@ Rolls, as step 4 built them:
 
 | Section | Holds |
 |---|---|
-| `functions` | Named functions: `{ formula: "(a, b) => ..." }` (built in) or `{ script: file#export }` (Jint). Callable from any expression |
+| `functions` | Named functions: `{ formula: "(a, b) => ..." }` (built in), `{ script: file#export }` (Jint) or `{ type: "Namespace.Type, Assembly" }` (compiled). Callable from any expression |
+| `widgets` | Sheet widgets a DLL supplies: `{ type: "Namespace.Type, Assembly", label }`, placed in a layout by name |
 | `progressions` | Named per-level formulas (`bab.good: "level"`) that entries point at by name |
 | `modifierTypes` | `default` stacking, `penalties` stacking, and `types: { dodge: sum }`. Stacking is `sum`, `highest`, `lowest` or `best` |
 | `conditionEffects` | By condition name: `modifiers` that apply while it holds. `conditions` stays the list of names |
@@ -289,7 +315,7 @@ Inside a sheet kind:
 | `lists` | Picks of a type: `itemFields` (per-pick fields such as `classLevel`, `equipped`, `used`), `modifiersFrom: { property, when }`, `prerequisites: property` (checked on the character without the pick's own levels), `rules` |
 | `keyedLists` | A fixed set of `keys` (with `attribute`, `group`/`groups`, `parameter` for one entry per subject), `itemFields`, `derive` (per-key values as lambdas: `ranks`, `maxRanks`, `value`) and `rules` |
 | `tracks` | `{ key, max, min, start, display: number, boxes or slots }`, plus `thresholds` (each adds its condition while it holds: `atOrBelow`, `below`, `atOrAbove`, `equals`), `bands` (one at a time, the first that matches), `overflow: { into, by, then: reset, carry or keep, ask }`, and for slots `holds`, `levels`, `whenFull: pushUp`, `beyond`. `each` + `levels` generates tracks per list item and level (spell slots per class) |
-| `layout` | Sections of widgets: `values`, `track`, `list`, `table`, `roll`, `text`, `modifiers` (above, "Layout") |
+| `layout` | Sections of widgets: `values`, `track`, `list`, `table`, `roll`, `text`, `modifiers` (above, "Layout"), and the system's own `widgets` by name |
 | `rules` | `{ check, key, message }`: a problem with that translation key when the check is false |
 
 A roll definition has `dice` (`1d20`) or `pool` + `die` with `zeroDice` and `keep`; `add` (expressions);
@@ -297,6 +323,7 @@ A roll definition has `dice` (`1d20`) or `pool` + `die` with `zeroDice` and `kee
 `outcomes` (named, the first whose `when` holds, reading `natural`, `total`, `kept`, `dice`, `zeroDice`); `carries`;
 `then` (follow-up rolls or intents); and for group rolls `participants` and `result: best`.
 
-An event handler is `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }`. Intents
+An event handler is `{ builtin: name, ...options }`, `{ script: file#export }`, `{ type: "Namespace.Type, Assembly" }`, or a
+list of `{ when, intents }`. Intents
 are those of overhaul section 3: `adjust`, `set`, `mark`, `clear`, `condition`, `roll`, `ask` and `log`, each optionally
 naming an `actor`.

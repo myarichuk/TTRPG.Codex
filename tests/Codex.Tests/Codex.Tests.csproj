@@ -35,7 +35,13 @@
     <ProjectReference Include="..\..\tools\Codex.ContentImport\Codex.ContentImport.csproj" />
     <ProjectReference Include="..\..\tools\Codex.TranslationCheck\Codex.TranslationCheck.csproj" />
     <ProjectReference Include="..\..\tools\Codex.SystemCheck\Codex.SystemCheck.csproj" />
+    <!-- Built, not referenced: SupplierContractTests copies its DLL beside the contract fixture's system.yaml, as an author would. -->
+    <ProjectReference Include="..\Codex.ContractFixture\Codex.ContractFixture.csproj" ReferenceOutputAssembly="false" OutputItemType="ContractFixtureAssembly" />
   </ItemGroup>
+
+  <Target Name="CopyContractFixture" AfterTargets="Build">
+    <Copy SourceFiles="@(ContractFixtureAssembly)" DestinationFolder="$(OutDir)contract-fixture" SkipUnchangedFiles="true" />
+  </Target>
 
   <ItemGroup>
     <!-- Cases both template parsers (LiveTemplate.cs and app-startup.js) are run against. -->

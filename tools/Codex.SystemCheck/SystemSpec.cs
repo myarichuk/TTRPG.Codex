@@ -63,6 +63,9 @@ public sealed class SpecExpectation
     /// <summary>An event raised on the sheet (or the campaign): <c>type</c> plus its own fields.</summary>
     public Dictionary<string, object>? Event { get; set; }
 
+    /// <summary>For an event: the faces its handler's dice are handed, in order (a script's <c>ctx.d</c>).</summary>
+    public List<int>? Dice { get; set; }
+
     public SpecExpect Expect { get; set; } = new();
 
     /// <summary>Expectations this one counts only alongside. "No problems" passes vacuously on a host that checks nothing, so an
@@ -89,6 +92,10 @@ public sealed class SpecExpect
     /// <summary>Exactly these problems, as (field, key) pairs, in any order; empty: none.</summary>
     public List<SpecViolation>? Violations { get; set; }
 
+    /// <summary>Exactly these warnings for the GM (a formula, script or compiled function that failed), as (field, key) pairs, in
+    /// any order; empty: none.</summary>
+    public List<SpecViolation>? Warnings { get; set; }
+
     /// <summary>Exactly these conditions hold, from thresholds and bands, with no event raised.</summary>
     public List<string>? Conditions { get; set; }
 
@@ -112,12 +119,12 @@ public sealed class SpecExpect
 
     /// <summary>Says only what must not happen: no problems, no conditions, no layout of its own.</summary>
     public bool IsOnlyNegative =>
-        (Violations is { Count: 0 } || Conditions is { Count: 0 } || Layout is { Count: 0 })
+        (Violations is { Count: 0 } || Warnings is { Count: 0 } || Conditions is { Count: 0 } || Layout is { Count: 0 })
         && Violations is null or { Count: 0 } && Conditions is null or { Count: 0 } && Layout is null or { Count: 0 }
         && Values == null && Outcome == null && Total == null && Totals == null && Kept == null && DiceUsed == null && Carries == null
-        && Intents == null && After == null;
+        && Intents == null && After == null && Warnings is null or { Count: 0 };
 
-    public bool IsEmpty => Values == null && Violations == null && Conditions == null && Outcome == null && Total == null && Totals == null
+    public bool IsEmpty => Values == null && Violations == null && Warnings == null && Conditions == null && Outcome == null && Total == null && Totals == null
         && Kept == null && DiceUsed == null && Carries == null && Intents == null && After == null && Layout == null;
 }
 

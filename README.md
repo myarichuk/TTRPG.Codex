@@ -65,8 +65,10 @@ a missing base it inherits from) are listed on the About page, and the campaign 
 
 **Plugins are programs.** Packs (YAML, and `.zip`/`.cdx` archives of it) are data. A `.dll` in any content
 folder, including the GM's "My content" folder the launcher opens, is loaded into the server and runs with
-everything the server can reach: every campaign, every account, the AI keys. Put a DLL there only if you
-would run it as a program on that computer.
+everything the server can reach: every campaign, every account, the AI keys. That holds for a DLL beside a
+`system.yaml` that names a type in it (a compiled function, event handler or sheet widget) as much as for a
+whole plugin; About marks such a system "contains compiled code". Put a DLL there only if you would run it as
+a program on that computer.
 
 **Settings.** Each goes in `appsettings.json`, or in an environment variable with `__` for `:`
 (`Codex__DataDirectory`). The tray launcher sets the ones marked *launcher* itself.

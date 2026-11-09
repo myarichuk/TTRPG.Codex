@@ -4,7 +4,7 @@
 @using System.Globalization
 
 @* One generic widget of a sheet kind's layout (overhaul step 6): values, track, list, table, roll, text or modifiers, bound to the
-   system's own keys. What it shows comes from SheetView (Codex.Core); what it changes goes through SheetEdits and, for tracks,
+   system's own keys; or one the system's DLL supplies (step 9), which says what to show as plain data and is drawn here. What it shows comes from SheetView (Codex.Core); what it changes goes through SheetEdits and, for tracks,
    SheetIntents, so overflow and pushing up follow the same rules as at the table. The page re-runs the rules on Changed. *@
 
 @switch (Widget.Widget.ToLowerInvariant())
@@ -295,6 +295,54 @@
             }
         </div>
         break;
+
+    default:
+        @if (View.IsCompiled(Widget))
+        {
+            var (content, failure) = CompiledContent;
+            <div class="sheet-compiled" data-testid="@($"compiled-{Widget.Widget}")">
+                @if (content == null)
+                {
+                    <p class="small-muted mb-0" role="status">@L["Actor.Widget.CompiledFailed"] <span class="d-block small">@failure</span></p>
+                }
+                else
+                {
+                    @foreach (var block in content.Blocks)
+                    {
+                        @switch (block)
+                        {
+                            case WidgetHeading heading:
+                                <div class="field-label">@heading.Text</div>
+                                break;
+                            case WidgetText text:
+                                <p class="small mb-2">@text.Text</p>
+                                break;
+                            case WidgetRow row:
+                                <dl class="sheet-values mb-2">
+                                    <div class="sheet-value">
+                                        <dt>@row.Label</dt>
+                                        <dd><span class="stat-numeral"><bdi>@row.Value</bdi></span> @if (row.Note != null) { <span class="small-muted ms-1">@row.Note</span> }</dd>
+                                    </div>
+                                </dl>
+                                break;
+                            case WidgetPills pills:
+                                <div class="mb-2">
+                                    @if (pills.Label != null) { <div class="field-label">@pills.Label</div> }
+                                    <span class="d-flex flex-wrap gap-1">
+                                        @foreach (var item in pills.Items) { <span class="pill">@item</span> }
+                                    </span>
+                                </div>
+                                break;
+                            case WidgetAction action:
+                                var pressed = action;
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(!CanEdit)" OnClick="() => ActAsync(pressed)">@action.Label</CodexButton>
+                                break;
+                        }
+                    }
+                }
+            </div>
+        }
+        break;
 }
 
 @code {
@@ -317,6 +365,36 @@
     [Parameter] public EventCallback<SheetRollRequest> OnRoll { get; set; }
 
     private readonly string id = "w-" + Guid.NewGuid().ToString("N")[..6];
+
+    // A compiled widget is asked once per worked-out sheet (the page makes a new SheetView on every edit), not on every render.
+    private SheetView? compiledFor;
+    private (WidgetContent? Content, string? Failure) compiled;
+
+    private (WidgetContent? Content, string? Failure) CompiledContent
+    {
+        get
+        {
+            if (!ReferenceEquals(compiledFor, View))
+            {
+                compiled = View.Compiled(Widget, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+                compiledFor = View;
+            }
+
+            return compiled;
+        }
+    }
+
+    /// <summary>A compiled widget's button: its intents apply to the sheet as a track widget's do; what the sheet cannot do itself
+    /// goes to the page.</summary>
+    private async Task ActAsync(WidgetAction action)
+    {
+        if (!CanEdit) return;
+        var intents = action.Intents.Select(i => new SheetIntent(i.Kind, i.Fields.TryGetValue("actor", out var actor) ? actor?.ToString() : null,
+            i.Fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => f.Value, StringComparer.Ordinal))).ToList();
+        var applied = SheetIntents.Apply(Definition, Resolver, Sheet, intents);
+        if (applied.Left.Count > 0) await Left.InvokeAsync(applied.Left);
+        await Changed.InvokeAsync();
+    }
     private readonly Dictionary<string, string?> inputs = new(StringComparer.Ordinal);
     private string markText = "";
     private int markLevel = 1;

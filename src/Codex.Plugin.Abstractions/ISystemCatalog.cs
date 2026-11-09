@@ -3,7 +3,9 @@ using System.Collections.Generic;
 namespace Codex.Plugin.Abstractions;
 
 /// <summary>One loaded system as the UI sees it.</summary>
-public record SystemSummary(string Id, string Name, string? Description, string? Compatibility, LicenseInfo? License, bool IsDataDriven);
+/// <param name="ContainsCompiledCode">A compiled plugin, or a data system whose system.yaml names types in its DLLs (overhaul
+/// section 4, rule 7): code that runs with the server's rights, which the Library says.</param>
+public record SystemSummary(string Id, string Name, string? Description, string? Compatibility, LicenseInfo? License, bool IsDataDriven, bool ContainsCompiledCode = false);
 
 /// <summary>
 /// The set of system plugin ids currently loaded into the process. Persistence uses this to

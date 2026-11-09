@@ -114,6 +114,13 @@ public sealed partial class SheetFormulas
         Builtins(_interpreter);
         foreach (var (name, function) in system.Functions)
         {
+            if (function.Type != null)
+            {
+                // A compiled function takes the arguments its Arity says; one that cannot be had is not callable at all.
+                if (CompiledSuppliers.Arity(system, function.Type) is { } compiled) Register(name, compiled);
+                continue;
+            }
+
             if (function.Script != null)
             {
                 // A script function takes the parameters its export declares (rules.js's hitPoints(body, will): two).
@@ -326,10 +333,11 @@ public sealed partial class SheetFormulas
 
     private static void Builtins(Interpreter it)
     {
-        it.SetFunction("floor", (Func<object?, double>)(x => Math.Floor(Number(x))));
-        it.SetFunction("ceil", (Func<object?, double>)(x => Math.Ceiling(Number(x))));
+        it.SetFunction("floor", (Func<object?, double>)(x => CodexMath.Floor(Number(x))));
+        it.SetFunction("ceil", (Func<object?, double>)(x => CodexMath.Ceil(Number(x))));
         it.SetFunction("abs", (Func<object?, double>)(x => Math.Abs(Number(x))));
-        it.SetFunction("div", (Func<object?, object?, double>)((a, b) => Math.Floor(Number(a) / Number(b))));
+        // The compiled supplier rounds with the same CodexMath (rule 4).
+        it.SetFunction("div", (Func<object?, object?, double>)((a, b) => CodexMath.Div(Number(a), Number(b))));
         it.SetFunction("max", (Func<object?, object?, double>)((a, b) => Math.Max(Number(a), Number(b))));
         it.SetFunction("min", (Func<object?, object?, double>)((a, b) => Math.Min(Number(a), Number(b))));
         // One delegate type per function: DynamicExpresso parses a lambda's body against the parameter's type, and given

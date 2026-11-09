@@ -27,7 +27,12 @@
         {
             var packs = Registry.GetPacks(system.Id).ToList();
             <article class="mb-4" aria-labelledby="sys-@system.Id" data-testid="about-system">
-                <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-2">@(system.IsDataDriven ? L["Page.About.DataDriven"] : L["Page.About.Compiled"])</span></h3>
+                <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-2">@(system.IsDataDriven ? L["Page.About.DataDriven"] : L["Page.About.Compiled"])</span>
+                    @if (system.IsDataDriven && system.ContainsCompiledCode)
+                    {
+                        <span class="pill ms-1" title="@L["Page.About.ContainsCompiledCodeHint"]" data-testid="about-system-compiled">@L["Page.About.ContainsCompiledCode"]</span>
+                    }
+                </h3>
                 @if (Loader.LoadProblems.Any(p => string.Equals(p.SystemId, system.Id, StringComparison.OrdinalIgnoreCase)))
                 {
                     <a class="small" href="/about#problems-@system.Id"><LucideIcon IconName="alert-triangle" Size="14" /> @L["Page.About.HasProblems"]</a>

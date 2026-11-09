@@ -92,6 +92,8 @@
   <data name="Page.About.NoSystemsAfter" xml:space="preserve"><value> באחת מתיקיות התוכן והפעילו מחדש.</value></data>
   <data name="Page.About.DataDriven" xml:space="preserve"><value>מבוסס נתונים</value></data>
   <data name="Page.About.Compiled" xml:space="preserve"><value>תוסף מקומפל</value></data>
+  <data name="Page.About.ContainsCompiledCode" xml:space="preserve"><value>מכיל קוד מהודר</value></data>
+  <data name="Page.About.ContainsCompiledCodeHint" xml:space="preserve"><value>קובצי ה-DLL שלו רצים בשרת עם ההרשאות של השרת; מתקינים אותם רק בהעתקה לשרת.</value></data>
   <data name="Page.About.Licence" xml:space="preserve"><value>רישיון:</value></data>
   <data name="Page.About.Modified" xml:space="preserve"><value>שונה מהמקור</value></data>
   <data name="Page.About.Source" xml:space="preserve"><value>מקור:</value></data>

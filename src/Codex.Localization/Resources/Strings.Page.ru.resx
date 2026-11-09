@@ -92,6 +92,8 @@
   <data name="Page.About.NoSystemsAfter" xml:space="preserve"><value> в одну из папок с материалами и перезапустите приложение.</value></data>
   <data name="Page.About.DataDriven" xml:space="preserve"><value>на данных</value></data>
   <data name="Page.About.Compiled" xml:space="preserve"><value>скомпилированный плагин</value></data>
+  <data name="Page.About.ContainsCompiledCode" xml:space="preserve"><value>содержит скомпилированный код</value></data>
+  <data name="Page.About.ContainsCompiledCodeHint" xml:space="preserve"><value>Его библиотеки DLL выполняются на сервере с правами сервера; их устанавливают, только копируя на сервер.</value></data>
   <data name="Page.About.Licence" xml:space="preserve"><value>Лицензия:</value></data>
   <data name="Page.About.Modified" xml:space="preserve"><value>изменено относительно оригинала</value></data>
   <data name="Page.About.Source" xml:space="preserve"><value>источник:</value></data>

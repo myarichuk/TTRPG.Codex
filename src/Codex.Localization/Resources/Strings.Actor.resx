@@ -334,6 +334,7 @@
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" is not in the Library.</value></data>
   <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: the system's formula for this can't be worked out, so it is left out. The GM can check the system's rules.</value></data>
   <data name="Actor.Rule.ScriptError" xml:space="preserve"><value>{0}: the system's script failed, so it is left out. {1}</value></data>
+  <data name="Actor.Rule.CompiledError" xml:space="preserve"><value>{0}: the system's compiled code failed, so it is left out. {1}</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} - {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} can only be taken once.</value></data>
@@ -381,6 +382,7 @@
   <data name="Actor.Widget.AddTo" xml:space="preserve"><value>Add to {0}</value></data>
   <data name="Actor.Widget.Box" xml:space="preserve"><value>Box {0} of {1}</value></data>
   <data name="Actor.Widget.Choose" xml:space="preserve"><value>Choose…</value></data>
+  <data name="Actor.Widget.CompiledFailed" xml:space="preserve"><value>This widget cannot be shown.</value></data>
   <data name="Actor.Widget.Clear" xml:space="preserve"><value>Clear {0}</value></data>
   <data name="Actor.Widget.Empty" xml:space="preserve"><value>Nothing here yet.</value></data>
   <data name="Actor.Widget.Free" xml:space="preserve"><value>Free</value></data>

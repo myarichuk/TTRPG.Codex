@@ -48,7 +48,8 @@ public class PluginLoader(
     private Dictionary<string, ICodexSystemPlugin> _pluginsBySystemId = new();
 
     public IEnumerable<SystemSummary> Systems => _pluginsBySystemId.Values
-        .Select(p => new SystemSummary(p.SystemId, p.DisplayName, p.Definition?.Description, p.Definition?.Compatibility, p.Definition?.License, p is DataDrivenSystemPlugin))
+        .Select(p => new SystemSummary(p.SystemId, p.DisplayName, p.Definition?.Description, p.Definition?.Compatibility, p.Definition?.License, p is DataDrivenSystemPlugin,
+            p is not DataDrivenSystemPlugin || (p.Definition != null && Rules.CompiledSuppliers.Names(p.Definition))))
         .OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase)
         .ToList();
 
@@ -168,7 +169,7 @@ public class PluginLoader(
                         Warn(new LoadProblem(LoadProblemSource.System, definition.Id, UnknownKeysMessage(unknownKeys), definition.Id, systemFile));
                     }
 
-                    foreach (var problem in Rules.SheetRolls.Problems(definition).Concat(Rules.SheetEvents.Problems(definition)).Concat(Rules.SheetLayout.Problems(definition)).Concat(Rules.CampaignObjects.DefinitionProblems(definition)).Concat(Rules.SystemScripts.Problems(definition)))
+                    foreach (var problem in Rules.SheetRolls.Problems(definition).Concat(Rules.SheetEvents.Problems(definition)).Concat(Rules.SheetLayout.Problems(definition)).Concat(Rules.CampaignObjects.DefinitionProblems(definition)).Concat(Rules.SystemScripts.Problems(definition)).Concat(Rules.CompiledSuppliers.Problems(definition)))
                     {
                         Warn(new LoadProblem(LoadProblemSource.System, definition.Id, problem, definition.Id, systemFile));
                     }
@@ -322,6 +323,10 @@ public class PluginLoader(
             logger.LogWarning("Plugins directory '{PluginsDirectory}' does not exist", pluginsDirectory);
             return plugins;
         }
+
+        // A folder with a system.yaml is a data system's: its DLLs are the system's compiled suppliers, which the system's own
+        // load context loads (Rules.CompiledSuppliers), not plugins of the host's.
+        if (File.Exists(Path.Combine(pluginsDirectory, SystemDefinitionLoader.FileName))) return plugins;
 
         foreach (var file in Directory.GetFiles(pluginsDirectory, "*.dll"))
         {

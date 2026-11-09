@@ -15,6 +15,7 @@ below it (skipping `bin/`, `obj/` and dot-folders):
 | **System** | `system.yaml` | A game system: attributes, resources, sheet fields, content types, conditions, dice. |
 | **Pack** | `manifest.yaml` (or legacy `manifest.json`), or a `.zip`/`.cdx` archive | Content for one system: rules, a setting, or homebrew. |
 | **Compiled plugin** | `*.dll` directly in the root | An `ICodexSystemPlugin` for behaviour data can't express (custom dice, ECS systems). |
+| **Compiled supplier** | `*.dll` beside a `system.yaml` that names a type in it (`{ type: "Namespace.Type, Assembly" }`) | A function, event handler or sheet widget of that system (`ICodexFunction`, `ICodexEventHandler`, `ICodexWidget`), loaded into the system's own load context. A folder with a `system.yaml` is never scanned for plugins. |
 
 The shipped tree:
 

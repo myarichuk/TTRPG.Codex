@@ -635,9 +635,86 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      - **srd5e's handlers are not named in system.yaml.** The table calls them for a system with `vitals:`, and a sheet-kind
        system cannot name them as `{ builtin }` (its own `builtin: damage` is the primitives' one).
      - **Arithmetic** is the same in formulas and scripts because both are doubles (`7 / 2` is 3.5 in each), so scripts are
-       given no `div` or `floor` of the host's. The contract tests across all three suppliers wait for the compiled one
+       given no `div` or `floor` of the host's. The contract tests across all three suppliers came with the compiled one
        (step 9).
 9. **Compiled supplier.** Functions and widget DLLs, with the same contract tests.
+   - *Done 2026-11-09.* **The contract** is in `Codex.Plugin.Abstractions` (`Compiled.cs`), the only thing a system's DLL
+     references:
+     - `ICodexFunction`: an `Arity` from 0 to 4, and `Call(arguments)` returning a `CodexValue`, which is a number with optional
+       parts.
+     - `ICodexEventHandler`: `Handle(ev, sheet, ctx)` returning `CodexIntent`s. `ctx` is an `ICodexContext` with `Call` and `D`.
+     - `ICodexWidget`: `Render(request)` returning `WidgetContent`, made of heading, text, row, pills and action blocks.
+     - `CodexMath`: the host's `Floor`, `Ceil` and `Div`. Formulas' `floor`, `ceil` and `div` now call it, so it is one piece
+       of code (rule 4).
+
+     **Naming a type.** system.yaml names one as `{ type: "Namespace.Type, Assembly" }`:
+     - in `functions`, or as an event handler;
+     - in the new top-level `widgets: { name: { type, label } }`, which a layout places by name.
+
+     **Loading.** `Codex.Core.Rules.CompiledSuppliers` resolves every name when `SystemDefinitionLoader.Load` reads a
+     system.yaml from disk. `Parse` never loads a DLL.
+     - The assembly must be a DLL directly beside system.yaml. It goes into that folder's own `AssemblyLoadContext`, so two
+       systems may carry different versions of a dependency.
+     - What the host has resolves to the host's copy, Codex.Plugin.Abstractions above all, or the interfaces would be other
+       types. A name the host has is refused, so a system cannot instantiate a host type.
+     - Each type is instantiated once and kept in `SystemDefinition.Compiled`, which localized copies share.
+     - `PluginLoader` no longer scans a folder holding a system.yaml for `ICodexSystemPlugin`s: those DLLs are the system's
+       own.
+
+     **Checks at load** (the doc's "checked against the function's signature"):
+     - the type is public and concrete, with a public parameterless constructor;
+     - it implements the interface its place needs;
+     - a function's arity is 0 to 4;
+     - nothing else is named in the same place.
+
+     Each mismatch is a load problem naming the type and why, shown with the system on About.
+
+     **Calls** (rules 1 and 5):
+     - Plain data is copied in and copied out. Numbers become doubles; any other object fails the call.
+     - A function is cached by its arguments, as a script's is.
+     - A failure is a `CompiledException` naming the system, what was being worked out and the type. On the sheet it is the
+       GM's warning `Actor.Rule.CompiledError`, the script's twin. At the table it is a failed event, as a script's is.
+
+     **Widgets.**
+     - `SheetView.Compiled` hands the widget the same sheet view a handler gets, and `SheetWidget` draws the blocks in the
+       sheet's style. The widget is asked once per edit, not per render.
+     - An action's intents go through `SheetIntents.Apply`, as a track widget's do. What the sheet cannot do itself goes to
+       the page.
+
+     **The Library label** (rule 7). `SystemSummary.ContainsCompiledCode` is set for a compiled plugin and for a data system
+     that names compiled code. About marks the latter "contains compiled code", with a note that it runs with the server's
+     rights.
+
+     **Contract tests.** `tests/Codex.Tests/Fixtures/contract` writes the same functions and handlers three ways:
+     - as formulas and handler lines;
+     - in `rules.js`;
+     - in `tests/Codex.ContractFixture`, a class library referencing Abstractions only, which the test build copies into
+       `contract-fixture/`.
+
+     `SupplierContractTests` installs the DLL beside a temporary copy and runs the spec. All 13 expectations pass:
+     - the same hit points, the same `div(-7, 2) = -4`, flags and text arguments;
+     - the same failure handling, as warnings naming the supplier;
+     - the same intents from the hit handler in all three;
+     - the same seeded die and `call` in the script and compiled `locate`.
+
+     **The spec format gained two fields:**
+     - `dice` for an event: the faces a handler's dice are handed.
+     - `expect.warnings`: the GM's warnings, which `violations` never held.
+
+     The page was driven once in Chromium: the widget shows on the sheet, its button takes HP from 12 to 13, and About shows
+     the label. No E2E test keeps that, because the shared E2E app's content roots would gain a system.
+   - *Not done, and why:*
+     - **No limits.** A DLL is not stopped at a time or memory limit. It runs in the server's process with its rights, which the
+       docs say plainly.
+     - **No unloading.** The load context is not collectible, so replacing a DLL needs a restart. That is part of step 10's
+       reload, as are install rights and the hashes of DLLs (rules 7 and 8).
+     - **A widget's text is the widget's own.** It is given the reader's language and translates itself. The system's
+       `system.<lang>.yaml` does not reach it, and its `label` in `widgets:` is not translated either.
+     - **Not the book or the AI.** A widget's blocks are not yet read by the book's stat blocks or the AI's view of a sheet
+       (section 3, "Layout").
+     - **Not for whole plugins.** An `ICodexSystemPlugin` cannot supply these per function. A plugin that wants them ships a
+       system.yaml beside its DLL.
+     - **A function's `parts`** are read and kept, as a script's are, and shown nowhere yet (as at step 8).
 10. **Install, reload, versioning, separate distribution.** The JSON schema and reference docs land alongside, from
     step 2 onwards.
 

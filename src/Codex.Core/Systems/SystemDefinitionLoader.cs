@@ -36,6 +36,8 @@ public static class SystemDefinitionLoader
         var definition = Parse(yaml, string.IsNullOrEmpty(folder) ? FileName : $"{folder}/{FileName}", unknownKeys);
         LoadTranslations(definition, path);
         LoadScripts(definition, path);
+        // Compiled code is found only here, beside a system.yaml on the server's disk: Parse alone never loads a DLL.
+        if (Path.GetDirectoryName(Path.GetFullPath(path)) is { } directory) Rules.CompiledSuppliers.Resolve(definition, directory);
         return definition;
     }
 

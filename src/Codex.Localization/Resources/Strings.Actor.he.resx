@@ -334,6 +334,7 @@
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" אינו בספרייה.</value></data>
   <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: אי אפשר לחשב את הנוסחה של השיטה לערך הזה, ולכן הוא מושמט. מנהל המשחק יכול לבדוק את חוקי השיטה.</value></data>
   <data name="Actor.Rule.ScriptError" xml:space="preserve"><value>{0}: הסקריפט של השיטה נכשל, ולכן הערך מושמט. {1}</value></data>
+  <data name="Actor.Rule.CompiledError" xml:space="preserve"><value>{0}: הקוד המהודר של השיטה נכשל, ולכן הערך מושמט. {1}</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} – {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: אפשר לקחת את {1} פעם אחת בלבד.</value></data>
@@ -381,6 +382,7 @@
   <data name="Actor.Widget.AddTo" xml:space="preserve"><value>הוספה אל {0}</value></data>
   <data name="Actor.Widget.Box" xml:space="preserve"><value>תיבה {0} מתוך {1}</value></data>
   <data name="Actor.Widget.Choose" xml:space="preserve"><value>בחירה…</value></data>
+  <data name="Actor.Widget.CompiledFailed" xml:space="preserve"><value>לא ניתן להציג את הווידג'ט הזה.</value></data>
   <data name="Actor.Widget.Clear" xml:space="preserve"><value>ניקוי {0}</value></data>
   <data name="Actor.Widget.Empty" xml:space="preserve"><value>אין כאן עדיין דבר.</value></data>
   <data name="Actor.Widget.Free" xml:space="preserve"><value>פנוי</value></data>

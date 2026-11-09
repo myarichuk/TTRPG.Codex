@@ -334,6 +334,7 @@
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: «{1}» нет в Библиотеке.</value></data>
   <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: формулу системы для этого значения не удаётся вычислить, поэтому оно пропущено. Мастер может проверить правила системы.</value></data>
   <data name="Actor.Rule.ScriptError" xml:space="preserve"><value>{0}: скрипт системы завершился с ошибкой, поэтому значение пропущено. {1}</value></data>
+  <data name="Actor.Rule.CompiledError" xml:space="preserve"><value>{0}: скомпилированный код системы завершился с ошибкой, поэтому значение пропущено. {1}</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} — {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} можно взять только один раз.</value></data>
@@ -381,6 +382,7 @@
   <data name="Actor.Widget.AddTo" xml:space="preserve"><value>Добавить в «{0}»</value></data>
   <data name="Actor.Widget.Box" xml:space="preserve"><value>Клетка {0} из {1}</value></data>
   <data name="Actor.Widget.Choose" xml:space="preserve"><value>Выберите…</value></data>
+  <data name="Actor.Widget.CompiledFailed" xml:space="preserve"><value>Этот виджет не удаётся показать.</value></data>
   <data name="Actor.Widget.Clear" xml:space="preserve"><value>Убрать «{0}»</value></data>
   <data name="Actor.Widget.Empty" xml:space="preserve"><value>Здесь пока пусто.</value></data>
   <data name="Actor.Widget.Free" xml:space="preserve"><value>Свободно</value></data>

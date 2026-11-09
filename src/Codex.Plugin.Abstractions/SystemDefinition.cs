@@ -436,6 +436,10 @@ public class SystemDefinition
     /// <summary>Named functions, callable from any formula by name.</summary>
     public Dictionary<string, FunctionDefinition> Functions { get; set; } = new();
 
+    /// <summary>Widgets a DLL supplies (<c>{ type: "Acme.Street.Cyberware, Acme.Street" }</c>), placed by name in a layout like
+    /// the host's own (<c>{ widget: cyberware }</c>).</summary>
+    public Dictionary<string, WidgetDefinition> Widgets { get; set; } = new();
+
     /// <summary>What a condition does while it holds, by condition name.</summary>
     public Dictionary<string, ConditionEffectDefinition> ConditionEffects { get; set; } = new();
 
@@ -460,6 +464,17 @@ public class SystemDefinition
 
     /// <summary>Adds a script file's source, under the name <c>{ script: file#export }</c> uses.</summary>
     public void AddScript(string file, string source) => _scripts[file] = source;
+
+    private readonly Dictionary<string, CompiledSupplier> _compiled = new(System.StringComparer.Ordinal);
+
+    /// <summary>The compiled types the system names (overhaul step 9), by the name system.yaml gives (<c>"Acme.Street.HitPoints,
+    /// Acme.Street"</c>), as the loader found them in the DLLs beside system.yaml: each an instance, or why there is none. Not part
+    /// of system.yaml; a localized copy shares them.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyDictionary<string, CompiledSupplier> Compiled => _compiled;
+
+    /// <summary>Adds what a compiled type name came to.</summary>
+    public void AddCompiled(string typeName, CompiledSupplier supplier) => _compiled[typeName] = supplier;
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SystemDefinition> _localized = new();
     private SystemDefinition? _canonical;
