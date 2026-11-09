@@ -276,6 +276,7 @@ using (var scope = app.Services.CreateScope())
     var roots = ContentRoots.Resolve(app.Configuration, env.ContentRootPath);
 
     logger.LogInformation("Loading systems and content packs from: {Roots}", string.Join(", ", roots));
+    loader.ScriptsAllowed = app.Configuration.GetValue("Codex:Systems:Scripts", true);
     await loader.LoadAndInitializeAsync(roots);
     logger.LogInformation("Loaded systems: {Systems}", string.Join(", ", loader.LoadedSystemIds));
 

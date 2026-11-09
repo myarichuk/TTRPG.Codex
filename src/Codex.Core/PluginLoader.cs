@@ -27,6 +27,15 @@ public class PluginLoader(
     public Exception? LoadException { get; private set; }
     public IReadOnlySet<string> LoadedSystemIds { get; private set; } = new HashSet<string>();
 
+    /// <summary>Whether a system may name scripts (<c>Codex:Systems:Scripts</c>, overhaul section 4, rule 7). Off, a system
+    /// that names one does not load, and says why: its rules would be missing a part, which is worse than not having it.</summary>
+    public bool ScriptsAllowed { get; set; } = true;
+
+    /// <summary>How many times the systems have been loaded: 1 after the start, one more for each <see cref="ReloadAsync"/>.</summary>
+    public int Generation { get; private set; }
+
+    /// <summary>The content roots the systems were loaded from, as given (missing ones included).</summary>
+    public IReadOnlyList<string> ContentRoots => _configuredRoots;
 
     /// <summary>Problems found while loading that a GM should see (bad manifest, invalid system.yaml...), each with what
     /// it is about and the system it belongs to.</summary>
@@ -42,14 +51,22 @@ public class PluginLoader(
     public IEnumerable<LoadProblem> ProblemsFor(string systemId) =>
         _problems.Where(p => p.SystemId == null || string.Equals(p.SystemId, systemId, StringComparison.OrdinalIgnoreCase));
 
-    private readonly List<LoadProblem> _problems = new();
+    // What readers see is swapped whole at the end of a load (a reload builds the next set beside it): the lists are never
+    // changed once published.
+    private List<LoadProblem> _problems = new();
+    private List<LoadProblem>? _building;
+    private List<FailedSystem> _failedSystems = new();
     private List<string> _roots = new();
-    private readonly List<FailedSystem> _failedSystems = new();
+    private IReadOnlyList<string> _configuredRoots = Array.Empty<string>();
     private Dictionary<string, ICodexSystemPlugin> _pluginsBySystemId = new();
+
+    /// <summary>Each plugin DLL loaded, by full path, with what it held and its hash then. .NET cannot load a second copy of an
+    /// assembly from the same path into the default context, so a reload keeps these and says when the file has changed.</summary>
+    private readonly Dictionary<string, (List<ICodexSystemPlugin> Plugins, string Hash, string Version)> _loadedDlls = new(StringComparer.OrdinalIgnoreCase);
 
     public IEnumerable<SystemSummary> Systems => _pluginsBySystemId.Values
         .Select(p => new SystemSummary(p.SystemId, p.DisplayName, p.Definition?.Description, p.Definition?.Compatibility, p.Definition?.License, p is DataDrivenSystemPlugin,
-            p is not DataDrivenSystemPlugin || (p.Definition != null && Rules.CompiledSuppliers.Names(p.Definition))))
+            p is not DataDrivenSystemPlugin || (p.Definition != null && Rules.CompiledSuppliers.Names(p.Definition)), GetFingerprint(p.SystemId)?.Version))
         .OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase)
         .ToList();
 
@@ -58,6 +75,23 @@ public class PluginLoader(
 
     public SystemDefinition? GetDefinition(string systemId) =>
         _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.Definition : null;
+
+    /// <summary>What the loaded system is (overhaul section 4, rule 8): a data system's version and file hashes, or a compiled
+    /// plugin's assembly version and the hash of its DLL as it was loaded. Null for a system that is not loaded.</summary>
+    public SystemFingerprint? GetFingerprint(string systemId)
+    {
+        if (!_pluginsBySystemId.TryGetValue(systemId, out var plugin)) return null;
+        if (plugin is DataDrivenSystemPlugin) return plugin.Definition?.Fingerprint;
+        foreach (var (path, loaded) in _loadedDlls)
+        {
+            if (loaded.Plugins.Contains(plugin))
+            {
+                return new SystemFingerprint(plugin.Definition?.Version ?? loaded.Version, new Dictionary<string, string> { [Path.GetFileName(path)] = loaded.Hash });
+            }
+        }
+
+        return plugin.Definition?.Fingerprint;
+    }
 
     public IEnumerable<UISchema> GetUISchemas(string systemId) =>
         _pluginsBySystemId.TryGetValue(systemId, out var plugin) ? plugin.GetUISchemas() : Enumerable.Empty<UISchema>();
@@ -78,46 +112,10 @@ public class PluginLoader(
             }
 
             IsLoading = true;
-            LoadException = null;
-            _problems.Clear();
-            _failedSystems.Clear();
-
-            var roots = contentRoots.Where(Directory.Exists).Select(Path.GetFullPath).Distinct().ToList();
-            _roots = roots.OrderByDescending(r => r.Length).ToList();
-            foreach (var missing in contentRoots.Where(r => !Directory.Exists(r)))
-            {
-                logger.LogWarning("Content root '{Root}' does not exist", missing);
-            }
-
+            _configuredRoots = contentRoots.ToList();
             try
             {
-                var plugins = await Task.Run(() => DiscoverPlugins(roots));
-
-                // Core components every system relies on, registered once regardless of plugin.
-                // Conditions (ActiveEffectsComponent) are stored too: their anchor is an actor id,
-                // so a condition survives the table being ended and restarted.
-                registry.Register<ResourcePoolComponent>();
-                registry.Register<AttributesComponent>();
-                registry.Register<StatModifierComponent>();
-                registry.Register<TagsComponent>();
-                registry.Register<ActiveEffectsComponent>();
-
-                foreach (var plugin in plugins)
-                {
-                    logger.LogInformation("Initializing system: {SystemId} ({Name})", plugin.SystemId, plugin.DisplayName);
-                    plugin.RegisterComponents(registry);
-                }
-
-                _pluginsBySystemId = plugins.ToDictionary(p => p.SystemId);
-                LoadedSystemIds = _pluginsBySystemId.Keys.ToHashSet();
-
-                await LoadContentPacksAsync(roots, LoadedSystemIds);
-            }
-            catch (Exception ex)
-            {
-                LoadException = ex;
-                Add(new LoadProblem(LoadProblemSource.Loader, "loader", $"Loading systems and content packs stopped part-way: {ex.Message}"));
-                logger.LogError(ex, "Plugin loading failed");
+                await LoadCoreAsync(reload: false);
             }
             finally
             {
@@ -131,7 +129,116 @@ public class PluginLoader(
         }
     }
 
-    private List<ICodexSystemPlugin> DiscoverPlugins(IReadOnlyList<string> roots)
+    /// <summary>
+    /// Reads every system and content pack again from the same content roots (overhaul step 10), for a system installed,
+    /// replaced or removed while the server runs. The new systems and packs are built beside the old ones and put in place in
+    /// one step; until then, and if the reload fails, the app goes on with the old ones. A table already running keeps the
+    /// definition it started with until it ends. A compiled plugin (<c>ICodexSystemPlugin</c>) is kept as it was: a changed one
+    /// needs a restart, and its load problem says so.
+    /// </summary>
+    public async Task<SystemsReload> ReloadAsync()
+    {
+        await _semaphore.WaitAsync();
+        try
+        {
+            if (!IsLoaded) throw new InvalidOperationException("The systems have not been loaded yet.");
+            var before = _pluginsBySystemId.Keys.ToDictionary(id => id, GetFingerprint, StringComparer.Ordinal);
+            IsLoading = true;
+            try
+            {
+                if (await LoadCoreAsync(reload: true) is { } failed)
+                {
+                    return new SystemsReload(Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), WithoutRoots(failed.Message));
+                }
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+
+            var after = _pluginsBySystemId.Keys.ToDictionary(id => id, GetFingerprint, StringComparer.Ordinal);
+            return new SystemsReload(
+                after.Keys.Where(id => !before.ContainsKey(id)).Order(StringComparer.Ordinal).ToList(),
+                before.Keys.Where(id => !after.ContainsKey(id)).Order(StringComparer.Ordinal).ToList(),
+                after.Where(a => before.TryGetValue(a.Key, out var was) && Changed(was, a.Value)).Select(a => a.Key).Order(StringComparer.Ordinal).ToList(),
+                null);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+
+        static bool Changed(SystemFingerprint? was, SystemFingerprint? now) =>
+            was == null || now == null ? was != now : now.ChangesSince(was).Count > 0;
+    }
+
+    /// <summary>Loads everything into a new set and publishes it. On a reload that fails part-way nothing is published and the
+    /// failure is returned; the first load publishes what it got, as it always has, with the failure as a problem.</summary>
+    private async Task<Exception?> LoadCoreAsync(bool reload)
+    {
+        var problems = new List<LoadProblem>();
+        var failed = new List<FailedSystem>();
+        _building = problems;
+        Exception? error = null;
+        Dictionary<string, ICodexSystemPlugin>? plugins = null;
+        var staging = contentPackLoader.Staging();
+        try
+        {
+            var roots = _configuredRoots.Where(Directory.Exists).Select(Path.GetFullPath).Distinct().ToList();
+            _roots = roots.OrderByDescending(r => r.Length).ToList();
+            foreach (var missing in _configuredRoots.Where(r => !Directory.Exists(r)))
+            {
+                logger.LogWarning("Content root '{Root}' does not exist", missing);
+            }
+
+            try
+            {
+                var discovered = await Task.Run(() => DiscoverPlugins(roots, failed));
+
+                // Core components every system relies on, registered once regardless of plugin.
+                // Conditions (ActiveEffectsComponent) are stored too: their anchor is an actor id,
+                // so a condition survives the table being ended and restarted.
+                registry.Register<ResourcePoolComponent>();
+                registry.Register<AttributesComponent>();
+                registry.Register<StatModifierComponent>();
+                registry.Register<TagsComponent>();
+                registry.Register<ActiveEffectsComponent>();
+
+                foreach (var plugin in discovered)
+                {
+                    logger.LogInformation("Initializing system: {SystemId} ({Name})", plugin.SystemId, plugin.DisplayName);
+                    plugin.RegisterComponents(registry);
+                }
+
+                var found = discovered.ToDictionary(p => p.SystemId);
+                plugins = found;
+                await LoadContentPacksAsync(roots, found.Keys.ToHashSet(), staging, id => found.GetValueOrDefault(id)?.Definition);
+            }
+            catch (Exception ex)
+            {
+                error = ex;
+                Add(new LoadProblem(LoadProblemSource.Loader, "loader", $"Loading systems and content packs stopped part-way: {ex.Message}"));
+                logger.LogError(ex, "Plugin loading failed");
+            }
+        }
+        finally
+        {
+            _building = null;
+        }
+
+        if (reload && error != null) return error;
+
+        staging.Commit();
+        _pluginsBySystemId = plugins ?? new Dictionary<string, ICodexSystemPlugin>();
+        LoadedSystemIds = _pluginsBySystemId.Keys.ToHashSet();
+        _problems = problems;
+        _failedSystems = failed;
+        LoadException = error;
+        Generation++;
+        return null;
+    }
+
+    private List<ICodexSystemPlugin> DiscoverPlugins(IReadOnlyList<string> roots, List<FailedSystem> failedSystems)
     {
         var plugins = new List<ICodexSystemPlugin>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -164,6 +271,14 @@ public class PluginLoader(
                         continue;
                     }
 
+                    if (!ScriptsAllowed && Rules.SystemScripts.FilesNamed(definition).ToList() is { Count: > 0 } scripts)
+                    {
+                        var stated = $"names scripts ({string.Join(", ", scripts)}), and this server has scripts turned off (Codex:Systems:Scripts).";
+                        failedSystems.Add(new FailedSystem(definition.Id, definition.Name, new[] { stated }, systemFile));
+                        Warn(new LoadProblem(LoadProblemSource.System, definition.Name, $"did not load: it {stated}", definition.Id, systemFile));
+                        continue;
+                    }
+
                     if (unknownKeys.Count > 0)
                     {
                         Warn(new LoadProblem(LoadProblemSource.System, definition.Id, UnknownKeysMessage(unknownKeys), definition.Id, systemFile));
@@ -182,7 +297,7 @@ public class PluginLoader(
                     var id = DeclaredId(systemFile);
                     var name = id ?? Path.GetFileName(Path.GetDirectoryName(systemFile)) ?? SystemDefinitionLoader.FileName;
                     var errors = SystemDefinitionLoader.ErrorsOf(ex);
-                    _failedSystems.Add(new FailedSystem(id, name, errors.Select(WithoutRoots).ToList(), systemFile));
+                    failedSystems.Add(new FailedSystem(id, name, errors.Select(WithoutRoots).ToList(), systemFile));
                     Warn(new LoadProblem(LoadProblemSource.System, name, $"did not load: {string.Join(" ", errors)}", id, systemFile));
                     logger.LogError(ex, "Failed to load system definition {File}", systemFile);
                 }
@@ -197,7 +312,10 @@ public class PluginLoader(
 
     // Internal (rather than private) so tests can exercise dependency-ordered pack loading
     // directly, without needing a real plugin assembly on disk just to populate activeSystemIds.
-    internal async Task LoadContentPacksAsync(IEnumerable<string> contentRoots, IReadOnlySet<string> activeSystemIds)
+    internal Task LoadContentPacksAsync(IEnumerable<string> contentRoots, IReadOnlySet<string> activeSystemIds) =>
+        LoadContentPacksAsync(contentRoots, activeSystemIds, contentPackLoader, GetDefinition);
+
+    private async Task LoadContentPacksAsync(IEnumerable<string> contentRoots, IReadOnlySet<string> activeSystemIds, IContentPackLoader packLoader, Func<string, SystemDefinition?> definitionOf)
     {
         var packPaths = new List<string>();
         foreach (var root in contentRoots.Where(Directory.Exists))
@@ -218,7 +336,7 @@ public class PluginLoader(
         {
             try
             {
-                manifestsByPath[packPath!] = await contentPackLoader.ReadManifestAsync(packPath!);
+                manifestsByPath[packPath!] = await packLoader.ReadManifestAsync(packPath!);
             }
             catch (Exception ex)
             {
@@ -248,7 +366,7 @@ public class PluginLoader(
             {
                 logger.LogInformation("Loading content pack: {PackName} ({PackId}) for system {SystemId}",
                     manifest.Name, manifest.Id, manifest.SystemId);
-                await contentPackLoader.LoadPackAsync(packPath, GetDefinition(manifest.SystemId));
+                await packLoader.LoadPackAsync(packPath, definitionOf(manifest.SystemId));
             }
             catch (Exception ex)
             {
@@ -257,7 +375,7 @@ public class PluginLoader(
             }
 
             // Entries the pack loader skipped or loaded without what they inherit: already logged there.
-            foreach (var problem in contentPackLoader.TakeProblems())
+            foreach (var problem in packLoader.TakeProblems())
             {
                 Add(new LoadProblem(LoadProblemSource.Pack, manifest.Id, problem, manifest.SystemId, packPath));
             }
@@ -330,9 +448,33 @@ public class PluginLoader(
 
         foreach (var file in Directory.GetFiles(pluginsDirectory, "*.dll"))
         {
+            var full = Path.GetFullPath(file);
+            string hash;
+            try
+            {
+                hash = SystemFingerprint.Hash(full);
+            }
+            catch (IOException ex)
+            {
+                Warn(new LoadProblem(LoadProblemSource.Plugin, Path.GetFileName(file), $"could not be read: {ex.Message}", Path: file));
+                continue;
+            }
+
+            if (_loadedDlls.TryGetValue(full, out var known))
+            {
+                if (known.Hash != hash)
+                {
+                    Warn(new LoadProblem(LoadProblemSource.Plugin, Path.GetFileName(file), "has changed since the server started. The copy already loaded stays in use until the server is restarted.", known.Plugins.FirstOrDefault()?.SystemId, file));
+                }
+
+                plugins.AddRange(known.Plugins);
+                continue;
+            }
+
             try
             {
                 var assembly = Assembly.LoadFrom(file);
+                var found = new List<ICodexSystemPlugin>();
                 var pluginTypes = assembly.GetTypes()
                     .Where(t => typeof(ICodexSystemPlugin).IsAssignableFrom(t) &&
                                 t is { IsInterface: false, IsAbstract: false } &&
@@ -343,9 +485,12 @@ public class PluginLoader(
                     if (Activator.CreateInstance(type) is ICodexSystemPlugin plugin)
                     {
                         logger.LogInformation("Loaded plugin: {SystemId}", plugin.SystemId);
-                        plugins.Add(plugin);
+                        found.Add(plugin);
                     }
                 }
+
+                _loadedDlls[full] = (found, hash, assembly.GetName().Version?.ToString() ?? "1.0.0");
+                plugins.AddRange(found);
             }
             catch (Exception ex)
             {
@@ -388,7 +533,7 @@ public class PluginLoader(
 
     /// <summary>Every problem goes through here: exception messages (.NET's, YamlDotNet's) carry full paths, and the message
     /// is shown to people who don't run the server, so the content roots are cut out and paths are left relative to them.</summary>
-    private void Add(LoadProblem problem) => _problems.Add(problem with { Message = WithoutRoots(problem.Message) });
+    private void Add(LoadProblem problem) => (_building ?? _problems).Add(problem with { Message = WithoutRoots(problem.Message) });
 
     private string WithoutRoots(string message)
     {
@@ -456,3 +601,7 @@ public class PluginLoader(
         }
     }
 }
+
+/// <summary>What a <see cref="PluginLoader.ReloadAsync"/> did: the systems that appeared, went and changed (by fingerprint), or
+/// why it did nothing.</summary>
+public sealed record SystemsReload(IReadOnlyList<string> Added, IReadOnlyList<string> Removed, IReadOnlyList<string> Changed, string? Error);

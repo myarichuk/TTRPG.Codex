@@ -5,7 +5,8 @@ namespace Codex.Plugin.Abstractions;
 /// <summary>One loaded system as the UI sees it.</summary>
 /// <param name="ContainsCompiledCode">A compiled plugin, or a data system whose system.yaml names types in its DLLs (overhaul
 /// section 4, rule 7): code that runs with the server's rights, which the Library says.</param>
-public record SystemSummary(string Id, string Name, string? Description, string? Compatibility, LicenseInfo? License, bool IsDataDriven, bool ContainsCompiledCode = false);
+/// <param name="Version">The version it says it is, as loaded (<see cref="SystemFingerprint.Version"/>).</param>
+public record SystemSummary(string Id, string Name, string? Description, string? Compatibility, LicenseInfo? License, bool IsDataDriven, bool ContainsCompiledCode = false, string? Version = null);
 
 /// <summary>
 /// The set of system plugin ids currently loaded into the process. Persistence uses this to
@@ -27,6 +28,10 @@ public interface ISystemCatalog
 
     /// <summary>The data definition behind a system, or null for a compiled plugin without one.</summary>
     SystemDefinition? GetDefinition(string systemId);
+
+    /// <summary>What the loaded system is, its version and file hashes (overhaul section 4, rule 8), or null when it is not
+    /// loaded. A campaign compares it with the one it last played under.</summary>
+    SystemFingerprint? GetFingerprint(string systemId) => GetDefinition(systemId)?.Fingerprint;
 
     /// <summary>
     /// The UI schemas a loaded system plugin publishes for <paramref name="systemId"/>, or empty

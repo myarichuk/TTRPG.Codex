@@ -476,6 +476,16 @@ public class SystemDefinition
     /// <summary>Adds what a compiled type name came to.</summary>
     public void AddCompiled(string typeName, CompiledSupplier supplier) => _compiled[typeName] = supplier;
 
+    /// <summary>The version and file hashes the loader found (overhaul step 10), or null for a definition that was only parsed.
+    /// Not part of system.yaml; a localized copy shares it.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public SystemFingerprint? Fingerprint => _fingerprint;
+
+    private SystemFingerprint? _fingerprint;
+
+    /// <summary>Sets what <see cref="Fingerprint"/> gives: the loader's, once it has read every file.</summary>
+    public void SetFingerprint(SystemFingerprint fingerprint) => _fingerprint = fingerprint;
+
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SystemDefinition> _localized = new();
     private SystemDefinition? _canonical;
 

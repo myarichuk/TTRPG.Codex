@@ -38,7 +38,28 @@ public static class SystemDefinitionLoader
         LoadScripts(definition, path);
         // Compiled code is found only here, beside a system.yaml on the server's disk: Parse alone never loads a DLL.
         if (Path.GetDirectoryName(Path.GetFullPath(path)) is { } directory) Rules.CompiledSuppliers.Resolve(definition, directory);
+        definition.SetFingerprint(FingerprintOf(definition, path));
         return definition;
+    }
+
+    /// <summary>
+    /// The version and the hash of each file the system's rules come from (overhaul section 4, rule 8): system.yaml, each
+    /// translation that loaded, each script that loaded and every DLL beside system.yaml, whether or not system.yaml names it
+    /// (a dependency changes what a named type does).
+    /// </summary>
+    public static SystemFingerprint FingerprintOf(SystemDefinition definition, string systemYamlPath)
+    {
+        var directory = Path.GetDirectoryName(Path.GetFullPath(systemYamlPath))!;
+        var files = new SortedDictionary<string, string>(StringComparer.Ordinal) { [FileName] = SystemFingerprint.Hash(systemYamlPath) };
+        foreach (var locale in definition.Translations.Keys)
+        {
+            var file = Path.Combine(directory, $"system.{locale}.yaml");
+            if (File.Exists(file)) files[$"system.{locale}.yaml"] = SystemFingerprint.Hash(file);
+        }
+
+        foreach (var (name, source) in definition.Scripts) files[name.Replace('\\', '/')] = SystemFingerprint.HashText(source);
+        foreach (var dll in Directory.GetFiles(directory, "*.dll")) files[Path.GetFileName(dll)] = SystemFingerprint.Hash(dll);
+        return new SystemFingerprint(definition.Version, files);
     }
 
     /// <summary>The largest script file a system may have.</summary>

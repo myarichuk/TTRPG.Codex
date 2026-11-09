@@ -152,6 +152,30 @@ public sealed class SupplierContractTests : IDisposable
     }
 
     [Fact]
+    public void AChangedDll_GetsANewLoadContext_WhileWhatWasLoadedFromTheOldOneKeepsWorking()
+    {
+        // A reload (overhaul step 10) reads the folder again: the same DLLs give the same types, a DLL added, removed or
+        // replaced gives a fresh context, and a table that started before keeps its instances.
+        var folder = Installed();
+        var yaml = Path.Combine(folder, SystemDefinitionLoader.FileName);
+        var name = string.Format(Type, "Half");
+        var before = SystemDefinitionLoader.Load(yaml);
+        var old = (ICodexFunction)before.Compiled[name].Instance!;
+
+        File.Copy(Dll, Path.Combine(folder, "Extra.dll"));
+        var after = SystemDefinitionLoader.Load(yaml);
+
+        Assert.NotSame(old.GetType(), after.Compiled[name].Instance!.GetType());
+        Assert.Equal(3, old.Call(new object?[] { 7.0 }).Value);
+        Assert.Contains("Extra.dll", after.Fingerprint!.Files.Keys);
+        Assert.Equal(new[] { new SystemChange(SystemChangeKind.Added, "Extra.dll", null, after.Fingerprint.Files["Extra.dll"]) }, after.Fingerprint.ChangesSince(before.Fingerprint!));
+
+        // The DLL is read from its bytes: the file is free to be replaced or deleted while it is loaded.
+        File.Delete(Path.Combine(folder, "Extra.dll"));
+        File.Delete(Path.Combine(folder, Path.GetFileName(Dll)));
+    }
+
+    [Fact]
     public void AHandlerThatReturnsWhatIsNotPlainData_FailsTheEvent_NamingTheType()
     {
         var folder = Installed();

@@ -17,4 +17,14 @@ public interface IContentPackLoader
     /// <summary>What went wrong in the packs loaded since the last call (an entry that did not parse, a base it inherits
     /// from that is missing), in English, for the DM to see; the list is emptied.</summary>
     IReadOnlyList<string> TakeProblems() => Array.Empty<string>();
+
+    /// <summary>A loader that fills a fresh, empty registry instead of this one's, for a reload: the packs load there while
+    /// the app keeps reading the old content, and <see cref="Commit"/> on it puts the new content in place. A loader that
+    /// cannot stage returns itself, and its packs load straight into its registry.</summary>
+    IContentPackLoader Staging() => this;
+
+    /// <summary>On a loader from <see cref="Staging"/>: what it loaded replaces the content of the registry it was staged from.</summary>
+    void Commit()
+    {
+    }
 }

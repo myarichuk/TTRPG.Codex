@@ -73,13 +73,32 @@ public static class CompiledSuppliers
     /// <see cref="SystemDefinition.Compiled"/>; a name that cannot be had is recorded with why.</summary>
     public static void Resolve(SystemDefinition system, string folder)
     {
+        folder = Path.GetFullPath(folder);
+        SystemLoadContext? context = null;
         foreach (var typeName in References(system).Select(r => r.TypeName).Distinct(StringComparer.Ordinal))
         {
-            system.AddCompiled(typeName, Find(typeName, Path.GetFullPath(folder)));
+            context ??= ContextFor(folder);
+            system.AddCompiled(typeName, Find(typeName, folder, context));
         }
     }
 
-    private static CompiledSupplier Find(string typeName, string folder)
+    /// <summary>
+    /// The folder's load context, for the DLLs it holds now. A reload (overhaul step 10) that finds the same DLLs gets the same
+    /// context, and so the same types; one that finds a DLL added, removed or changed gets a new context, and a table that started
+    /// under the old system keeps the old one's types until it ends. The old context is never unloaded: a type JIT-compiles its
+    /// references to the host's assemblies lazily, through the context, and an unloading context cannot resolve them, so a live
+    /// table's next call could fail. A replaced DLL's old copy therefore stays in memory until the server restarts. Assemblies are
+    /// read from their bytes, so the files are never locked and can be replaced while the server runs.
+    /// </summary>
+    private static SystemLoadContext ContextFor(string folder)
+    {
+        var stamp = string.Join(";", Directory.GetFiles(folder, "*.dll").Order(StringComparer.Ordinal)
+            .Select(f => Path.GetFileName(f) + "=" + SystemFingerprint.Hash(f)));
+        return Contexts.AddOrUpdate(folder, f => new SystemLoadContext(f, stamp),
+            (f, existing) => existing.Stamp == stamp ? existing : new SystemLoadContext(f, stamp));
+    }
+
+    private static CompiledSupplier Find(string typeName, string folder, SystemLoadContext context)
     {
         var comma = typeName.IndexOf(',');
         if (comma <= 0 || comma == typeName.Length - 1)
@@ -98,7 +117,6 @@ public static class CompiledSuppliers
         if (!File.Exists(file)) return CompiledSupplier.Failed($"there is no {assemblyName}.dll in the system's folder");
         try
         {
-            var context = Contexts.GetOrAdd(folder, f => new SystemLoadContext(f));
             var assembly = context.Main(assemblyName, file);
             if (assembly == null) return CompiledSupplier.Failed($"{assemblyName}.dll is the host's own assembly, which a system cannot name");
             var type = assembly.GetType(name, throwOnError: false);
@@ -122,9 +140,12 @@ public static class CompiledSuppliers
     }
 
     /// <summary>One system folder's assemblies. The host's come from the host, by name; the rest from the folder, by file name.</summary>
-    private sealed class SystemLoadContext(string folder) : AssemblyLoadContext("codex-system " + folder)
+    private sealed class SystemLoadContext(string folder, string stamp) : AssemblyLoadContext("codex-system " + folder)
     {
         private readonly object _gate = new();
+
+        /// <summary>The DLLs' names and hashes when this context was made.</summary>
+        public string Stamp { get; } = stamp;
 
         /// <summary>The system's own assembly, or null when the name is the host's (a system may not name a host type).</summary>
         public Assembly? Main(string name, string file)
@@ -132,15 +153,21 @@ public static class CompiledSuppliers
             if (Host(new AssemblyName(name)) != null) return null;
             lock (_gate)
             {
-                return Assemblies.FirstOrDefault(a => string.Equals(a.GetName().Name, name, StringComparison.OrdinalIgnoreCase)) ?? LoadFromAssemblyPath(file);
+                return Assemblies.FirstOrDefault(a => string.Equals(a.GetName().Name, name, StringComparison.OrdinalIgnoreCase)) ?? FromBytes(file);
             }
+        }
+
+        private Assembly FromBytes(string file)
+        {
+            using var bytes = new MemoryStream(File.ReadAllBytes(file));
+            return LoadFromStream(bytes);
         }
 
         protected override Assembly? Load(AssemblyName name)
         {
             if (Host(name) is { } shared) return shared;
             var file = Path.Combine(folder, name.Name + ".dll");
-            return File.Exists(file) ? LoadFromAssemblyPath(file) : null;
+            return File.Exists(file) ? FromBytes(file) : null;
         }
 
         private static Assembly? Host(AssemblyName name)
