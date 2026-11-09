@@ -161,6 +161,32 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task ASheetsNestedListsAndMaps_ComeBackAsPlainListsAndMaps()
+    {
+        // A sheet kind's picks (a list of maps), keyed list (a map of maps) and slots in levels (a map of lists), as the layout's
+        // widgets write them (SheetEdits): what comes back must read the same to SheetModel, and count as unchanged.
+        var campaignId = Guid.NewGuid().ToString();
+        var actor = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Nested" };
+        actor.Sheet["items"] = new List<object> { new Dictionary<string, object> { ["id"] = "rope", ["used"] = true }, "lantern" };
+        actor.Sheet["actions"] = new Dictionary<string, object> { ["hunt"] = new Dictionary<string, object> { ["rating"] = 2L } };
+        actor.Sheet["harm"] = new Dictionary<string, object> { ["1"] = new List<object> { "Bruised" } };
+        var written = new Dictionary<string, object>(actor.Sheet);
+
+        await _actorRepository.SaveAsync(actor);
+        var loaded = await _actorRepository.GetVisibleAsync(actor.Id, Access(campaignId, "dm-user", CampaignRole.DM));
+
+        Assert.NotNull(loaded);
+        var items = Assert.IsType<List<object>>(loaded.Sheet["items"]);
+        var rope = Assert.IsType<Dictionary<string, object>>(items[0]);
+        Assert.Equal(true, rope["used"]);
+        Assert.Equal("lantern", items[1]);
+        var hunt = Assert.IsType<Dictionary<string, object>>(Assert.IsType<Dictionary<string, object>>(loaded.Sheet["actions"])["hunt"]);
+        Assert.Equal(2, Codex.Core.YamlValues.ToNumber(hunt["rating"]));
+        Assert.Equal(new object[] { "Bruised" }, Assert.IsType<List<object>>(Assert.IsType<Dictionary<string, object>>(loaded.Sheet["harm"])["1"]));
+        Assert.Equal(0, Codex.Core.YamlValues.ChangedKeys(loaded.Sheet, written));
+    }
+
+    [Fact]
     public async Task SaveAndLoadActor_ShouldSucceed_Async()
     {
         var campaignId = Guid.NewGuid().ToString();

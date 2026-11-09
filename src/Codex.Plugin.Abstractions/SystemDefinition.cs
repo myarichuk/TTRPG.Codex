@@ -419,6 +419,10 @@ public class SystemDefinition
     /// system that only has <see cref="SheetRules"/>.</summary>
     public List<SheetKindDefinition> SheetKinds { get; set; } = new();
 
+    /// <summary>The sheet's layout for a system with no <see cref="SheetKinds"/> (each kind has its own). Empty: the host's
+    /// built-in widgets, in the order the sheet has always had them (Codex.Core.Rules.SheetLayout).</summary>
+    public List<LayoutSection> Layout { get; set; } = new();
+
     /// <summary>How bonuses of one type combine on one target.</summary>
     public ModifierTypesDefinition ModifierTypes { get; set; } = new();
 

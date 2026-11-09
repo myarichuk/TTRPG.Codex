@@ -46,6 +46,15 @@ public sealed class SheetEventException(string message, string? notYet = null) :
 public static partial class SheetEvents
 {
     /// <summary>The kinds of intent (overhaul section 3).</summary>
+    public const string AdjustKind = "adjust";
+    public const string SetKind = "set";
+    public const string MarkKind = "mark";
+    public const string ClearKind = "clear";
+    public const string ConditionKind = "condition";
+    public const string RollKind = "roll";
+    public const string AskKind = "ask";
+    public const string LogKind = "log";
+
     public static readonly IReadOnlyList<string> IntentKinds = new[] { "adjust", "set", "mark", "clear", "condition", "roll", "ask", "log" };
 
     /// <summary>The intents an event can be on its own: changes to the sheet.</summary>

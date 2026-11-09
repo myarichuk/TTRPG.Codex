@@ -132,6 +132,19 @@
                     </div>
                 }
             }
+            @if (Ctx.System is { SheetKinds.Count: > 1 } kinded)
+            {
+                <div class="mb-3">
+                    <label for="ca-sheet-kind" class="field-label">@L["Campaign.Cast.SheetKind"]</label>
+                    <select id="ca-sheet-kind" class="field-select" @bind="newSheetKind" data-testid="create-sheet-kind">
+                        <option value="">@L["Campaign.Cast.SheetKindByRole"]</option>
+                        @foreach (var sheetKind in kinded.SheetKinds)
+                        {
+                            <option value="@sheetKind.Kind">@kinded.DisplayValue(string.IsNullOrEmpty(sheetKind.Label) ? sheetKind.Kind : sheetKind.Label)</option>
+                        }
+                    </select>
+                </div>
+            }
             <p class="field-hint">@L["Campaign.Cast.SheetHint"]</p>
             @if (createError != null)
             {
@@ -191,6 +204,7 @@
     private ConfirmDialog confirm = null!;
     private string newName = string.Empty;
     private ActorKind newKind = ActorKind.NonPlayerCharacter;
+    private string newSheetKind = string.Empty;
     private string newOwnerId = string.Empty;
     // Usernames for the DM's "Played by" picker, loaded when the create dialog opens.
     private Dictionary<string, string> memberNames = new();
@@ -300,6 +314,7 @@
     {
         createError = null;
         newName = string.Empty;
+        newSheetKind = string.Empty;
         newKind = Ctx.IsDm ? ActorKind.NonPlayerCharacter : ActorKind.PlayerCharacter;
         newOwnerId = Ctx.IsDm ? string.Empty : Ctx.UserId;
         if (Ctx.IsDm) memberNames = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
@@ -350,7 +365,7 @@
 
         var actor = NewActor(newName, newKind, newOwnerId);
         // Rule-driven systems start the sheet on the default attribute method (point buy at the minimum, say).
-        Cast.NewSheet(actor, Ctx.Campaign.SystemId, Ctx.System);
+        Cast.NewSheet(actor, Ctx.Campaign.SystemId, Ctx.System, sheetKind: string.IsNullOrEmpty(newSheetKind) ? null : newSheetKind);
         ActorSheetSync.ApplySheetToState(actor, Ctx.System, Components);
 
         if (!await RuntimeManager.TryCreateActorAsync(actor, Ctx.Access))

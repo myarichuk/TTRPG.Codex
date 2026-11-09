@@ -20,6 +20,46 @@ public sealed class SheetKindDefinition
     public List<PickListDefinition> Lists { get; set; } = new();
     public List<KeyedListDefinition> KeyedLists { get; set; } = new();
     public List<TrackDefinition> Tracks { get; set; } = new();
+
+    /// <summary>How the sheet is laid out: sections of widgets bound to keys. Empty: the host's generic layout (every value,
+    /// track, list and keyed list in turn).</summary>
+    public List<LayoutSection> Layout { get; set; } = new();
+}
+
+/// <summary>A section of a sheet's layout: a tab of its own, or with <see cref="Aside"/> a column shown beside every tab.</summary>
+public sealed class LayoutSection
+{
+    /// <summary>The section's name, also its key (<c>Actions</c>, <c>attributes</c>).</summary>
+    public string Section { get; set; } = string.Empty;
+
+    /// <summary>What the tab says; none is the host's word for a section it knows, else <see cref="Section"/>.</summary>
+    public string? Label { get; set; }
+
+    /// <summary>A Lucide icon name for the tab.</summary>
+    public string? Icon { get; set; }
+
+    /// <summary>Shown beside every tab rather than as a tab.</summary>
+    public bool Aside { get; set; }
+
+    public List<LayoutWidget> Widgets { get; set; } = new();
+}
+
+/// <summary>
+/// One widget in a section. Generic widgets: <c>values</c> (<see cref="Keys"/>), <c>track</c> (<see cref="Key"/>, which may end
+/// in <c>*</c> for every generated track it starts), <c>list</c> and <c>table</c> (<see cref="Key"/>, <see cref="Columns"/>,
+/// <see cref="GroupBy"/>), <c>roll</c> (<see cref="Roll"/>), <c>text</c> (<see cref="Key"/>) and <c>modifiers</c>
+/// (<see cref="Target"/>). Any other name asks for a widget the host builds in (5e's <c>armor-class</c>, <c>hit-points</c>...).
+/// </summary>
+public sealed class LayoutWidget
+{
+    public string Widget { get; set; } = string.Empty;
+    public string? Key { get; set; }
+    public List<string> Keys { get; set; } = new();
+    public List<string> Columns { get; set; } = new();
+    public string? GroupBy { get; set; }
+    public string? Roll { get; set; }
+    public string? Target { get; set; }
+    public string? Label { get; set; }
 }
 
 /// <summary>A number (or a choice) on the sheet: worked out by <see cref="Formula"/>, or entered (<see cref="Input"/>).</summary>

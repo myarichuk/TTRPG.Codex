@@ -46,6 +46,7 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
                 Visibility = ActorVisibility.Hidden
             };
             ActorSheetSync.SeedFromBlueprint(actor, blueprint, system, components);
+            if (!actor.Sheet.ContainsKey(SheetModel.KindKey)) ApplySheetKind(actor, system);
             if (await runtimes.TryCreateActorAsync(actor, access))
             {
                 created.Add(actor);
@@ -71,9 +72,10 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
     /// <summary>Starts a brand-new sheet: the system's defaults, then the modes that let hit points and armor class follow the
     /// rules. A <paramref name="draft"/> from the model goes over that, its attribute scores as the base scores (typed in, so
     /// no point-buy budget argues with them).</summary>
-    public void NewSheet(ActorDocument actor, string systemId, SystemDefinition? system, CharacterDraft? draft = null)
+    public void NewSheet(ActorDocument actor, string systemId, SystemDefinition? system, CharacterDraft? draft = null, string? sheetKind = null)
     {
         SeedDefaults(actor, systemId);
+        ApplySheetKind(actor, system, sheetKind);
         if (system != null)
         {
             new SheetRuleEngine(system, NullEntryResolver.Instance).InitializeSheet(actor.Sheet);
@@ -111,6 +113,25 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
 
             actor.Sheet[SheetRuleEngine.MethodKey] = "manual";
         }
+    }
+
+    /// <summary>The host role a sheet kind's <c>role</c> names, for an actor kind.</summary>
+    public static string RoleOf(ActorKind kind) => kind switch
+    {
+        ActorKind.PlayerCharacter => "player",
+        ActorKind.Monster => "creature",
+        _ => "npc"
+    };
+
+    /// <summary>A system with sheet kinds records which one the sheet is (overhaul step 6): the one asked for, else the first for the
+    /// actor's role, else the system's first. The actor kind stays the host's role for access and visibility.</summary>
+    public static void ApplySheetKind(ActorDocument actor, SystemDefinition? system, string? requested = null)
+    {
+        if (system is not { SheetKinds.Count: > 0 }) return;
+        var kind = system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, requested, StringComparison.OrdinalIgnoreCase))
+                   ?? SheetLayout.KindsFor(system, RoleOf(actor.Kind)).FirstOrDefault()
+                   ?? system.SheetKinds[0];
+        actor.Sheet[SheetModel.KindKey] = kind.Kind;
     }
 
     /// <summary>Takes a character out of play and off the live table; their document stays, so mentions still name them. False when not the DM.</summary>
@@ -158,6 +179,7 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
         if (blueprint != null)
         {
             ActorSheetSync.SeedFromBlueprint(actor, blueprint, system, components);
+            if (!actor.Sheet.ContainsKey(SheetModel.KindKey)) ApplySheetKind(actor, system);
         }
         else
         {

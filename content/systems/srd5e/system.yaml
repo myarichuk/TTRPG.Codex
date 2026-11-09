@@ -289,6 +289,15 @@ sheetRules:
       includeCasterTypes: [pact]
       recoversOn: [Short Rest, Long Rest]
 
+# The sheet's layout: tabs of widgets, and an aside shown beside every tab. These are the host's built-in widgets, which read
+# sheetRules above; a system with sheet kinds lays out its own keys with the generic widgets (values, track, list, table,
+# roll, text, modifiers). Leaving it out gives the same layout.
+layout:
+  - { section: attributes, icon: zap, widgets: [{ widget: attributes }, { widget: skills }, { widget: fields }, { widget: classes }, { widget: library }] }
+  - { section: picks, icon: sparkles, widgets: [{ widget: picks }] }
+  - { section: inventory, icon: package, widgets: [{ widget: inventory }] }
+  - { section: vitals, icon: heart, aside: true, widgets: [{ widget: hit-points }, { widget: armor-class }, { widget: slots }, { widget: level-up }] }
+
 dice:
   initiative: 1d20
   check: 1d20

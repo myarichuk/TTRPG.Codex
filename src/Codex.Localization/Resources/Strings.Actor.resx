@@ -372,4 +372,30 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>What the party sees</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>A hooded figure who pays in old silver and never gives a name.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Revealed to you</value></data>
+  <data name="Actor.Sheet.RollDice" xml:space="preserve"><value>Kept {0}; total {1}</value></data>
+  <data name="Actor.Sheet.RollFailed" xml:space="preserve"><value>The roll could not be made: {0}</value></data>
+  <data name="Actor.Sheet.RollLeft" xml:space="preserve"><value>Some of what this roll asks is for the table: {0} left for it.</value></data>
+  <data name="Actor.Sheet.TableAsks" xml:space="preserve"><value>The table asks for a choice: {0}</value></data>
+  <data name="Actor.Widget.Add" xml:space="preserve"><value>Add</value></data>
+  <data name="Actor.Widget.AddTo" xml:space="preserve"><value>Add to {0}</value></data>
+  <data name="Actor.Widget.Box" xml:space="preserve"><value>Box {0} of {1}</value></data>
+  <data name="Actor.Widget.Choose" xml:space="preserve"><value>Choose…</value></data>
+  <data name="Actor.Widget.Clear" xml:space="preserve"><value>Clear {0}</value></data>
+  <data name="Actor.Widget.Empty" xml:space="preserve"><value>Nothing here yet.</value></data>
+  <data name="Actor.Widget.Free" xml:space="preserve"><value>Free</value></data>
+  <data name="Actor.Widget.Less" xml:space="preserve"><value>One less {0}</value></data>
+  <data name="Actor.Widget.Level" xml:space="preserve"><value>Level {0}</value></data>
+  <data name="Actor.Widget.Mark" xml:space="preserve"><value>Mark</value></data>
+  <data name="Actor.Widget.MarkLevel" xml:space="preserve"><value>Level to mark</value></data>
+  <data name="Actor.Widget.MarkPlaceholder" xml:space="preserve"><value>What it is</value></data>
+  <data name="Actor.Widget.MarkText" xml:space="preserve"><value>What to mark on {0}</value></data>
+  <data name="Actor.Widget.ModifiersOf" xml:space="preserve"><value>What makes up {0}</value></data>
+  <data name="Actor.Widget.More" xml:space="preserve"><value>One more {0}</value></data>
+  <data name="Actor.Widget.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>Nothing adds to it.</value></data>
+  <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>Does not count: a better one of its type does</value></data>
+  <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="Actor.Widget.Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>Remove {0}</value></data>
+  <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>{0} of {1} used</value></data>
 </root>

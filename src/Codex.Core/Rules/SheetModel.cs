@@ -15,6 +15,10 @@ public sealed record SheetTrack(string Key, string? Label, TrackDefinition Defin
 /// <summary>One level of a slot track in levels: how many slots, and the condition anything in it brings.</summary>
 public sealed record SheetSlotLevel(int Level, int Slots, string? Condition);
 
+/// <summary>A row of a list or keyed list as a layout shows it: the entry's id and label, its group, its place in the sheet's raw
+/// list (picks only), and a cell per column asked for. A cell that cannot be worked out is null.</summary>
+public sealed record SheetRow(string Id, string Label, string? Group, int? Index, IReadOnlyDictionary<string, object?> Cells);
+
 public sealed record AppliedModifier(string Type, double Amount, string? Source, bool Counted);
 
 /// <summary>What <see cref="SheetModel"/> works out for a sheet.</summary>
@@ -251,6 +255,40 @@ public sealed class SheetModel
         return Tracks().Select(t => t.Key).ToList();
     }
 
+    /// <summary>The rows of a list or keyed list, each with the <paramref name="columns"/> asked for (fields, entry properties or
+    /// derived values) and its group read from <paramref name="groupBy"/>. Empty when the kind has no such list.</summary>
+    public IReadOnlyList<SheetRow> Rows(string listKey, IEnumerable<string> columns, string? groupBy = null)
+    {
+        using var _ = Enter();
+        if (!_lists.TryGetValue(listKey, out var list)) return Array.Empty<SheetRow>();
+        var asked = columns.ToList();
+        var index = _rawIndex.GetValueOrDefault(listKey);
+        var rows = new List<SheetRow>();
+        var position = 0;
+        foreach (var item in list)
+        {
+            object? Cell(string name)
+            {
+                try
+                {
+                    return item.Get(name);
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
+
+            var id = Cell("id")?.ToString() ?? "";
+            var label = Cell("label")?.ToString() ?? Cell("name")?.ToString() ?? id;
+            var cells = asked.ToDictionary(c => c, c => Cell(c) is FormulaItem or FormulaList ? null : Cell(c), StringComparer.Ordinal);
+            rows.Add(new SheetRow(id, label, groupBy == null ? null : Cell(groupBy)?.ToString(), index != null && position < index.Count ? index[position] : null, cells));
+            position++;
+        }
+
+        return rows;
+    }
+
     /// <summary>A path into the sheet (<c>BAB</c>, <c>skills.knowledge.arcana.ranks</c>), or null.</summary>
     public object? Path(string path)
     {
@@ -279,7 +317,7 @@ public sealed class SheetModel
         {
             value = Guard(key, definition.Label ?? key, () =>
             {
-                if (definition.Input) return _sheet.TryGetValue(key, out var raw) ? Plain(raw) : Plain(definition.Default);
+                if (definition.Input) return _sheet.TryGetValue(key, out var raw) ? Plain(raw) : Plain(YamlValues.Normalize(definition.Default));
                 var result = definition.Formula == null ? 0d : Run(definition.Formula);
                 var targets = Strings(definition.Modifiers);
                 if (targets.Count == 0) return result;
@@ -478,11 +516,11 @@ public sealed class SheetModel
         return targets;
     }
 
+    // YAML hands an untyped default over as text ("0"), so a field's type says how to read it.
     private static object? FieldDefault(ItemFieldDefinition field) =>
-        field.Default != null ? Plain(field.Default)
-        : field.Type.Equals("Boolean", StringComparison.OrdinalIgnoreCase) ? false
-        : field.Type.Equals("Number", StringComparison.OrdinalIgnoreCase) ? 0d
-        : null;
+        field.Type.Equals("Number", StringComparison.OrdinalIgnoreCase) ? YamlValues.ToNumber(field.Default) ?? 0d
+        : field.Type.Equals("Boolean", StringComparison.OrdinalIgnoreCase) ? Plain(field.Default) is true
+        : Plain(field.Default);
 
     /// <summary>A sheet or YAML value as formulas see it: numbers as doubles, "true"/"false" as booleans, the rest as it is.</summary>
     internal static object? Plain(object? value) => value switch

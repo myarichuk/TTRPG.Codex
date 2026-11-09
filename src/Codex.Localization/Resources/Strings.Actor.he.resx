@@ -372,4 +372,30 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>מה החבורה רואה</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>דמות עטויה בברדס שמשלמת בכסף ישן ולעולם לא מוסרת שם.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>נחשף לכם</value></data>
+  <data name="Actor.Sheet.RollDice" xml:space="preserve"><value>נשמרו {0}; סה״כ {1}</value></data>
+  <data name="Actor.Sheet.RollFailed" xml:space="preserve"><value>לא ניתן היה להטיל: {0}</value></data>
+  <data name="Actor.Sheet.RollLeft" xml:space="preserve"><value>חלק ממה שההטלה מבקשת שייך לשולחן: נותרו {0}.</value></data>
+  <data name="Actor.Sheet.TableAsks" xml:space="preserve"><value>השולחן מבקש בחירה: {0}</value></data>
+  <data name="Actor.Widget.Add" xml:space="preserve"><value>הוספה</value></data>
+  <data name="Actor.Widget.AddTo" xml:space="preserve"><value>הוספה אל {0}</value></data>
+  <data name="Actor.Widget.Box" xml:space="preserve"><value>תיבה {0} מתוך {1}</value></data>
+  <data name="Actor.Widget.Choose" xml:space="preserve"><value>בחירה…</value></data>
+  <data name="Actor.Widget.Clear" xml:space="preserve"><value>ניקוי {0}</value></data>
+  <data name="Actor.Widget.Empty" xml:space="preserve"><value>אין כאן עדיין דבר.</value></data>
+  <data name="Actor.Widget.Free" xml:space="preserve"><value>פנוי</value></data>
+  <data name="Actor.Widget.Less" xml:space="preserve"><value>{0}: אחד פחות</value></data>
+  <data name="Actor.Widget.Level" xml:space="preserve"><value>רמה {0}</value></data>
+  <data name="Actor.Widget.Mark" xml:space="preserve"><value>סימון</value></data>
+  <data name="Actor.Widget.MarkLevel" xml:space="preserve"><value>רמה לסימון</value></data>
+  <data name="Actor.Widget.MarkPlaceholder" xml:space="preserve"><value>מה זה</value></data>
+  <data name="Actor.Widget.MarkText" xml:space="preserve"><value>מה לסמן ב{0}</value></data>
+  <data name="Actor.Widget.ModifiersOf" xml:space="preserve"><value>ממה מורכב {0}</value></data>
+  <data name="Actor.Widget.More" xml:space="preserve"><value>{0}: אחד יותר</value></data>
+  <data name="Actor.Widget.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>שום דבר לא מוסיף לו.</value></data>
+  <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>לא נספר: נספר הטוב יותר מאותו סוג</value></data>
+  <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} מתוך {1}</value></data>
+  <data name="Actor.Widget.Remove" xml:space="preserve"><value>הסרה</value></data>
+  <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>הסרת {0}</value></data>
+  <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>בשימוש {0} מתוך {1}</value></data>
 </root>

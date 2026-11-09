@@ -53,6 +53,9 @@ public interface IReferenceSystem
     /// <summary>Raises the spec's event on the sheet and applies what it asks of that sheet.</summary>
     CheckOr<EventCheck> Raise(Dictionary<string, object> sheet, string? sheetId, IReadOnlyDictionary<string, object> ev);
 
+    /// <summary>The sheet kind's declared layout, as its section names; empty when the generic one is used.</summary>
+    CheckOr<IReadOnlyList<string>> Layout(Dictionary<string, object> sheet);
+
     string? CannotRoll { get; }
     string? CannotRaiseEvents { get; }
     string? CannotLayOut { get; }
@@ -120,13 +123,18 @@ public static class ReferenceRunner
         if (expect.Layout != null && system.CannotLayOut is { } noLayout) return Result(CheckStatus.Unsupported, noLayout);
         if ((expectation.With?.Campaign != null || expect.After?.Campaign != null || (expectation.Sheet == null && expectation.Event != null))
             && system.HasNoCampaignObjects is { } noCampaign) return Result(CheckStatus.Unsupported, noCampaign);
-        if (expect.Layout != null)
-        {
-            return Result(CheckStatus.Unsupported, "this runner checks layout once a host can do it; extend ReferenceRunner.Check");
-        }
-
         var sheet = SpecSheets.Compose(spec, expectation);
         var problems = new List<string>();
+
+        if (expect.Layout is { } layout)
+        {
+            var laidOut = system.Layout(sheet);
+            if (laidOut.Unsupported is { } why) return Result(CheckStatus.Unsupported, why);
+            if (!laidOut.Value!.SequenceEqual(layout, StringComparer.Ordinal))
+            {
+                problems.Add($"layout: [{string.Join(", ", laidOut.Value!)}], expected [{string.Join(", ", layout)}]");
+            }
+        }
 
         if (expectation.Roll is { } roll)
         {
@@ -261,7 +269,7 @@ public static class ReferenceRunner
 
 /// <summary>
 /// The rules engine as it is: <see cref="SheetRuleEngine.Recompute"/> over the fixture's system and packs, a value being any
-/// number it leaves on the sheet or derives. It has no rolls with outcomes, events, layout or campaign objects, and says so.
+/// number it leaves on the sheet or derives. It has no campaign objects, and says so.
 /// </summary>
 public sealed class CurrentEngineHost : IReferenceHost
 {
@@ -287,7 +295,10 @@ public sealed class CurrentEngineHost : IReferenceHost
 
         public string? CannotRoll => null;
         public string? CannotRaiseEvents => null;
-        public string? CannotLayOut => "the sheet page composes fixed panels; there is no layout (step 6)";
+        public string? CannotLayOut => null;
+
+        public CheckOr<IReadOnlyList<string>> Layout(Dictionary<string, object> sheet) =>
+            CheckOr<IReadOnlyList<string>>.Of(SheetLayout.Declared(definition, sheet).Select(s => s.Section).ToList());
         public string? HasNoCampaignObjects => "there are no clocks or campaign tables (step 7)";
 
         public CheckOr<IReadOnlyDictionary<string, double>> Values(Dictionary<string, object> sheet)

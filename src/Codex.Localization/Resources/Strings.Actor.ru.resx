@@ -372,4 +372,30 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>Что видит отряд</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>Фигура в капюшоне, платит старым серебром и не называет имени.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Открыто вам</value></data>
+  <data name="Actor.Sheet.RollDice" xml:space="preserve"><value>Оставлено {0}; итог {1}</value></data>
+  <data name="Actor.Sheet.RollFailed" xml:space="preserve"><value>Бросок не удался: {0}</value></data>
+  <data name="Actor.Sheet.RollLeft" xml:space="preserve"><value>Часть того, что требует бросок, решает стол: осталось {0}.</value></data>
+  <data name="Actor.Sheet.TableAsks" xml:space="preserve"><value>Стол просит выбрать: {0}</value></data>
+  <data name="Actor.Widget.Add" xml:space="preserve"><value>Добавить</value></data>
+  <data name="Actor.Widget.AddTo" xml:space="preserve"><value>Добавить в «{0}»</value></data>
+  <data name="Actor.Widget.Box" xml:space="preserve"><value>Клетка {0} из {1}</value></data>
+  <data name="Actor.Widget.Choose" xml:space="preserve"><value>Выберите…</value></data>
+  <data name="Actor.Widget.Clear" xml:space="preserve"><value>Убрать «{0}»</value></data>
+  <data name="Actor.Widget.Empty" xml:space="preserve"><value>Здесь пока пусто.</value></data>
+  <data name="Actor.Widget.Free" xml:space="preserve"><value>Свободно</value></data>
+  <data name="Actor.Widget.Less" xml:space="preserve"><value>{0}: на один меньше</value></data>
+  <data name="Actor.Widget.Level" xml:space="preserve"><value>Уровень {0}</value></data>
+  <data name="Actor.Widget.Mark" xml:space="preserve"><value>Отметить</value></data>
+  <data name="Actor.Widget.MarkLevel" xml:space="preserve"><value>Уровень для отметки</value></data>
+  <data name="Actor.Widget.MarkPlaceholder" xml:space="preserve"><value>Что это</value></data>
+  <data name="Actor.Widget.MarkText" xml:space="preserve"><value>Что отметить: {0}</value></data>
+  <data name="Actor.Widget.ModifiersOf" xml:space="preserve"><value>Из чего складывается {0}</value></data>
+  <data name="Actor.Widget.More" xml:space="preserve"><value>{0}: на один больше</value></data>
+  <data name="Actor.Widget.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>Ничего не добавляется.</value></data>
+  <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>Не учитывается: учтён лучший того же типа</value></data>
+  <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} из {1}</value></data>
+  <data name="Actor.Widget.Remove" xml:space="preserve"><value>Убрать</value></data>
+  <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>Убрать «{0}»</value></data>
+  <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>занято {0} из {1}</value></data>
 </root>

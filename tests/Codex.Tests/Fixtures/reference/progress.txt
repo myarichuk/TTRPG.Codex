@@ -93,3 +93,7 @@ d35.damage-reduction-does-not-touch-energy
 d35.energy-resistance-subtracts-by-type
 d35.nonlethal-equal-to-hit-points-staggers
 d35.nonlethal-beyond-hit-points-knocks-out
+
+# Step 6 (layout and sheet kinds): each sheet kind's declared layout, and the generic one for a kind without.
+crew.each-sheet-kind-has-its-own-layout
+crew.a-kind-without-a-layout-gets-a-generic-one

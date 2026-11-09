@@ -816,4 +816,6 @@
   <data name="Campaign.SystemMissingFailed" xml:space="preserve"><value>המערכת קיימת אבל לא נטענה; הסיבות מופיעות בדף 'אודות ורישיונות'.</value></data>
   <data name="Campaign.SystemMissingPlayer" xml:space="preserve"><value>הקמפיין הזה משתמש במערכת המשחק '{0}', שאינה מותקנת בשרת הזה. אפשר לקרוא הכול, אבל אי אפשר לשנות דבר עד ששליט המבוך יסדר את זה.</value></data>
   <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (לא מותקנת)</value></data>
+  <data name="Campaign.Cast.SheetKind" xml:space="preserve"><value>גיליון</value></data>
+  <data name="Campaign.Cast.SheetKindByRole" xml:space="preserve"><value>לפי סוג הדמות</value></data>
 </root>

@@ -816,4 +816,6 @@
   <data name="Campaign.SystemMissingFailed" xml:space="preserve"><value>Система есть, но не загрузилась; причины указаны на странице «О проекте и лицензии».</value></data>
   <data name="Campaign.SystemMissingPlayer" xml:space="preserve"><value>Эта кампания использует игровую систему «{0}», которая не установлена на этом сервере. Всё можно читать, но ничего нельзя изменить, пока мастер это не исправит.</value></data>
   <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (не установлена)</value></data>
+  <data name="Campaign.Cast.SheetKind" xml:space="preserve"><value>Лист</value></data>
+  <data name="Campaign.Cast.SheetKindByRole" xml:space="preserve"><value>По виду персонажа</value></data>
 </root>
