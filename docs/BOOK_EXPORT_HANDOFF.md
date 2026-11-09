@@ -84,7 +84,8 @@ worker run from that directory, and one run against a real model (a small Anthro
 8. **The decoder is not in the server process.** Any worker failure returns "keep the picture"; the server never throws on it.
 9. **The party book places only pictures made for the party, in the party's own slots.** The tag is checked in three places (`BookSlots.Choose`,
    the tag check in `BookArtReader`, and `BookArt.Slot(key, audience)`), and an upload's key must be one of the slots that edition's source makes
-   (`BookArtService`). A stranger's slot is `mask:<id>`, never the actor's.
+   (`BookArtService`). A stranger's slot is `mask:<id>`, never the actor's. Earlier versions of a slot's picture (`BookArtDocument.Kept`,
+   section 43) are read by nothing that builds a book, and a kept version is put in use only under its own slot and edition (`UseAsync`).
 10. **A suggestion, and anything drawn from it, carries the tag of the edition whose source was read** (`BookArtDirection` passes only
    `p.Tag`), and each tray shows only its own edition's suggestions. The director is shown only `BookArtOutline` (cut after `BookWork.Prepare`
    of the whole chapter), under per-request numbers, never slot keys. Chapter builds and director runs share one per-GM `BookGate`.
@@ -177,8 +178,8 @@ Anything that survives is a missing test; add it.
 0b. **Picture style** (BOOK_EXPORT 41.23, 2026-11-08): each user's own words in AI settings, used as written in every picture prompt, in
    place of the built-in style. Left: per-campaign guides, a reference picture for models that take one.
 
-1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3-6 are done (sections 34-36, 38); 7 remains, and step 6's
-   Regenerate/Accept (keep 3).** The first real run is done (section 39). DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
+1. **AI-suggested art** (`docs/BOOK_EXPORT.md` 28.3, steps 3-7). **Steps 3-6 are done (sections 34-36, 38), and step 6's Regenerate/Accept
+   (keep 3) is done (section 43); step 7, spots and Chronicle scenes, is done (section 44).** The first real run is done (section 39). DM upload into a slot; style vocabulary and a code-assembled image prompt (the model never
    writes the prompt; deny proper nouns and "in the style of"); the art-director call per chapter (masked outline in, `{depicts, visual, mood}` out);
    per-slot generation with cost shown first and nothing drawn without a click; suggested spot and scene slots. Audience-tag every image
    (`BuiltFrom: party|dm`); the party book places only party-built images. The user asked for painterly/linework style choices.

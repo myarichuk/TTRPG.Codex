@@ -112,6 +112,42 @@ public class BookArtDirectorReplyTests
         Assert.Equal(0, none.Calls);
     }
 
+    // Step 7 (28.3): a spot is suggested with its entry, only where one was allowed, at most two a reply, under the same checks; a bad spot costs
+    // only itself, never its entry's suggestion.
+    [Fact]
+    public void ASpot_IsKeptOnlyWhereAllowed_AtMostTwo_AndABadOneCostsOnlyItself()
+    {
+        var call = new BookDirectorCall("Cast", "en",
+        [
+            new BookDirectorSlot(1, "portrait", "Vera", "Vera keeps the harbour ledgers.", Spot: true),
+            new BookDirectorSlot(2, "portrait", "Oskar", "Oskar mends nets.", Spot: true),
+            new BookDirectorSlot(3, "portrait", "Ilse", "Ilse rings the bell.", Spot: true),
+            new BookDirectorSlot(4, "header", "Cast", "")
+        ], ["Vera", "Oskar", "Ilse"]);
+        static string WithSpot(int slot, string visual = "an open ledger and a brass pen on a plain ground") =>
+            Item(slot, depicts: "A keeper of the harbour").TrimEnd('}') + ",\"spot\":{\"depicts\":\"The ledger\",\"visual\":\"" + visual + "\",\"mood\":\"serene\"}}";
+
+        var (kept, refused, problem) = BookArtDirector.Read(call, Reply(WithSpot(1), WithSpot(2, "Oskar's net"), WithSpot(3), WithSpot(4)));
+        Assert.Null(problem);
+        Assert.Equal([1, 2, 3, 4], kept.Select(k => k.Ref));
+        Assert.Equal("an open ledger and a brass pen on a plain ground", kept[0].Spot!.Visual);
+        Assert.Null(kept[1].Spot);
+        Assert.Contains(refused[2], p => p.StartsWith("spot visual", StringComparison.Ordinal));
+        Assert.NotNull(kept[2].Spot);
+        Assert.Null(kept[3].Spot);
+        Assert.Contains("spot not allowed for this slot", refused[4]);
+
+        var (many, tooMany, _) = BookArtDirector.Read(call, Reply(WithSpot(1), WithSpot(2), WithSpot(3)));
+        Assert.Equal(BookDirectorPrompts.MaxSpotsPerCall, many.Count(k => k.Spot != null));
+        Assert.Contains("more spots than allowed", tooMany[3]);
+
+        var (system, user) = BookDirectorPrompts.Build(call);
+        Assert.Contains("\"spot\"", system, StringComparison.Ordinal);
+        Assert.Contains("Slot 1 (a portrait of this character; a small closing picture may be suggested): Vera", user, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"spot\"", BookDirectorPrompts.Build(Call).System, StringComparison.Ordinal);
+        Assert.True(BookArtDirector.MaxOutputFor(call) > BookArtDirector.MaxOutputFor(call with { Slots = call.Slots.Select(x => x with { Spot = false }).ToList() }));
+    }
+
     // Found on a real model: a chapter header's "depicts" named the chapter's people and was refused, because only the header's own text
     // (its title) was read. The names of the call's other slots are the book's; a name in none of them is still refused (see the theory above).
     [Fact]

@@ -108,6 +108,37 @@ public class StorageQuotaTests : IClassFixture<RavenDbFixture>
         }
     }
 
+    // A book slot keeps three versions (docs/BOOK_EXPORT.md 43): a fourth that drops the oldest kept one is counted net of what it frees, and
+    // one that drops nothing is counted in full.
+    [Fact]
+    public async Task ABookPictureThatDropsAnOldVersion_IsCountedNetOfIt_Async()
+    {
+        var owner = User();
+        var campaign = await CampaignAsync(owner);
+        var gm = new CampaignAccess(campaign.Id, owner, CampaignRole.DM);
+        var slot = "s" + new string('b', 24);
+        BookImage Picture(int kb) => new(new byte[kb * Kb], "image/png", 10, 10);
+        await LimitAsync(1);
+        try
+        {
+            for (var i = 0; i < 3; i++) Assert.True(await _bookArt.PutAsync(gm, slot, BookArtDocument.Party, "Cover", Picture(300)));
+            Assert.Equal(900 * Kb, await _quota.UsedByAsync(owner));
+
+            // 900 KB used and 300 more would pass 1 MB, but the fourth drops a 300 KB version.
+            Assert.True(await _bookArt.PutAsync(gm, slot, BookArtDocument.Party, "Cover", Picture(300)));
+            Assert.Equal(900 * Kb, await _quota.UsedByAsync(owner));
+
+            // Another slot drops nothing, so it is counted whole and refused.
+            var other = "s" + new string('c', 24);
+            var full = await Assert.ThrowsAsync<LocalizedException>(() => _bookArt.PutAsync(gm, other, BookArtDocument.Party, "Map", Picture(200)));
+            Assert.Equal("Service.Storage.Full", full.Key);
+        }
+        finally
+        {
+            await LimitAsync(null);
+        }
+    }
+
     [Fact]
     public async Task WithNoLimit_NothingIsRefused_Async()
     {

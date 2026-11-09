@@ -6,7 +6,9 @@ using Codex.Persistence;
 namespace Codex.Web.Book;
 
 /// <summary>One slot as the art director would be shown it, and a hash of exactly that (<see cref="BookArtSuggestion.Inputs"/>).</summary>
-public sealed record BookOutlineSlot(BookSlot Slot, string Kind, string Text, string Inputs);
+/// <param name="SpotOf">For an entry's spot: the entry's own slot key. A spot is never asked about alone: the director may suggest one with its
+/// entry (docs/BOOK_EXPORT.md 28.3, step 7).</param>
+public sealed record BookOutlineSlot(BookSlot Slot, string Kind, string Text, string Inputs, string? SpotOf = null);
 
 public sealed record BookOutlineChapter(string Id, string Title, IReadOnlyList<BookOutlineSlot> Slots);
 
@@ -53,7 +55,10 @@ public static class BookArtOutline
 
             for (var i = 0; i < mine.Count; i++)
             {
-                if (slotByKey.TryGetValue(mine[i].SlotKey, out var slot)) outline.Add(Make(slot, mine[i].Kind, Excerpt(parts.GetValueOrDefault(i, string.Empty))));
+                if (!slotByKey.TryGetValue(mine[i].SlotKey, out var slot)) continue;
+                var excerpt = Excerpt(parts.GetValueOrDefault(i, string.Empty));
+                outline.Add(Make(slot, mine[i].Kind, excerpt));
+                if (slotByKey.TryGetValue(BookSlots.SpotKey(mine[i]), out var spot)) outline.Add(Make(spot, "spot", excerpt) with { SpotOf = slot.Key });
             }
 
             if (section.Id == "overview") overview = Excerpt(string.Join("\n\n", parts.Values));

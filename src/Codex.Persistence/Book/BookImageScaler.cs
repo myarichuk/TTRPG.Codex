@@ -57,6 +57,8 @@ public sealed class BookImageScaler(IBookImageDecoder? decoder = null)
         "portrait" or "homebrew" => new(42, 56, true),
         // A chapter header spans both columns (the text width) whatever the column count.
         "header" => new(172, 62, true),
+        // A spot is a small square at an entry's end (.spot).
+        "spot" => new(34, 34, true),
         // A place picture is as wide as its column: 88 mm in two columns, the text width (172 mm) in one.
         _ => new(columns == 2 ? 88 : 172, 48, true)
     };

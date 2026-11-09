@@ -779,6 +779,7 @@
             // Opening waits for the preview to draw; another opening may start meanwhile (a theme picked twice quickly). Only the last one's
             // editor is kept: the script closes an earlier one when the next starts, and an earlier one that ends last is not taken.
             var opening = ++openings;
+            var asked = current;
             var shell = await ShellAsync();
             if (shell.Html == null)
             {
@@ -794,7 +795,7 @@
                 css = view.Css,
                 shell = shell.Html,
                 artUrl = $"{BasePath}/book/{edition}/draft/{language}/art",
-                current,
+                current = asked,
                 rtl = BookThemes.IsRtl(language)
             }, self, new
             {
@@ -804,7 +805,7 @@
             });
             if (opening != openings) return;
             editorId = opened;
-            if (current == null) await module.InvokeVoidAsync("show", editorId, null);
+            if (current == null || current != asked) await module.InvokeVoidAsync("show", editorId, current);
             // An address the last fetch could not reach is tried again.
             _ = FetchWebAsync();
         }
@@ -835,7 +836,13 @@
 
     private async Task ShowAsync(string? section)
     {
-        if (module == null || editorId == null) return;
+        // Clicked before the editor has started: remembered, and shown once it has (a click was lost on a slow machine).
+        if (module == null || editorId == null)
+        {
+            current = section;
+            return;
+        }
+
         await FlushAsync();
         await module.InvokeVoidAsync("show", editorId, section);
         current = section;

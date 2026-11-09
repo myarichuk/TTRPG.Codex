@@ -15,7 +15,7 @@
      put portraits over the text. Here only the generator's chapter-art block is the banner; portraits, place pictures and the cover
      art each have their own rule, and a picture the GM writes is in the flow, as in Homebrewery;
    - a chapter with no art gets the sheet's "intro" heading by itself (no ribbon), so the GM does not have to add a class;
-   - the generator's blocks are styled: cover-art, chapter-art, portrait, place, secret (the GM's typewritten dossier box);
+   - the generator's blocks are styled: cover-art, chapter-art, portrait, place, spot, secret (the GM's typewritten dossier box);
    - the sheet's fixed Letter @page is gone (the book's paper size is set by the page CSS), and its Homebrewery credits and
      template-specific rules for pictures it hosted elsewhere.
    The sheet's class vocabulary stays (.note .descriptive .monster .quote .tome .credits .artist .frontcredit .reliquary .soot ...),
@@ -452,6 +452,26 @@
 	object-fit   : cover;
 	-webkit-mask : var(--gd-torn-sm) bottom / 100% 100% no-repeat;
 	mask         : var(--gd-torn-sm) bottom / 100% 100% no-repeat;
+}
+
+
+/* a spot: a small square vignette closing an entry, in the portrait's ragged frame */
+.page .spot {
+	clear        : both;
+	width        : 3cm;
+	margin       : .1cm auto .35cm;
+	padding      : 4px;
+	border       : 1px solid transparent;
+	border-image : var(--gd-frame) 24 / 12px / 2px stretch;
+}
+.page .spot p { margin : 0; text-indent : 0; }
+.page .spot img,
+.page .spot .art-missing {
+	display      : block;
+	width        : 100%;
+	aspect-ratio : 1;
+	height       : auto;
+	object-fit   : cover;
 }
 
 

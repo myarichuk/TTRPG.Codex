@@ -19,6 +19,7 @@ public sealed record BookSlot(string Key, BookAudience Audience, string Kind, st
     {
         BookSlots.Cover => "cover",
         BookSlots.Header => "header",
+        BookSlots.Spot => "spot",
         _ => Entry?.Kind ?? "place"
     };
 }
@@ -31,6 +32,10 @@ public static class BookSlots
     public const string Cover = "cover";
     public const string Header = "header";
     public const string Entry = "entry";
+
+    /// <summary>A small square picture at the end of an entry (docs/BOOK_EXPORT.md 28.3, step 7). Every entry has one, but it is only a place
+    /// the art director may suggest a picture for: the tray shows it once it has a suggestion or a picture, and the book prints it only then.</summary>
+    public const string Spot = "spot";
 
     /// <summary>The form of every key: "s" and 24 hex digits. Anything else posted as a key is refused before it is looked up.</summary>
     public static bool IsKey(string? key) =>
@@ -55,10 +60,17 @@ public static class BookSlots
 
     public static string ChapterSubject(string sectionId) => "chapter:" + sectionId;
 
+    /// <summary>A session of the Chronicle, whose picture is a scene from it.</summary>
+    public static string SessionSubject(string sessionId) => "session:" + sessionId;
+
+    /// <summary>The key of the small picture at the end of an entry: the entry's subject, as this audience sees it, so a stranger's spot is the
+    /// mask's.</summary>
+    public static string SpotKey(BookEntryPosition entry) => KeyFor("spot:" + entry.Subject);
+
     public const string CoverSubject = "cover";
 
-    /// <summary>Every slot of a compiled book: the cover, a header per chapter, and one per entry the compiler recorded. All of it comes from
-    /// the source's own compile, so the slots of the party edition are the party's.</summary>
+    /// <summary>Every slot of a compiled book: the cover, a header per chapter, one per entry the compiler recorded, and a spot at the end of each
+    /// entry. All of it comes from the source's own compile, so the slots of the party edition are the party's.</summary>
     public static IReadOnlyList<BookSlot> For(BookSource source, BookDocument compiled, IReadOnlyList<BookEntryPosition> entries)
     {
         var slots = new List<BookSlot> { new(KeyFor(CoverSubject), source.Audience, Cover, string.Empty, compiled.Title, null) };
@@ -70,6 +82,11 @@ public static class BookSlots
         foreach (var entry in entries)
         {
             slots.Add(new BookSlot(entry.SlotKey, source.Audience, Entry, entry.Section, entry.Alt, entry));
+        }
+
+        foreach (var entry in entries)
+        {
+            slots.Add(new BookSlot(SpotKey(entry), source.Audience, Spot, entry.Section, entry.Alt, entry));
         }
 
         return slots;

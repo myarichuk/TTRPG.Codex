@@ -739,13 +739,14 @@
   <data name="Campaign.Book.Art.HintParty" xml:space="preserve"><value>הוסיפו תמונה לכריכה, מעל פרק או ליד רשומה. מה שמוסיפים כאן מודפס גם במהדורת החבורה וגם במהדורת המנחה. לדמויות נסתרות אין כאן מקום, וזרים מוצגים כפי שהחבורה מכירה אותם.</value></data>
   <data name="Campaign.Book.Art.Cover" xml:space="preserve"><value>כריכה</value></data>
   <data name="Campaign.Book.Art.Header" xml:space="preserve"><value>מעל הפרק</value></data>
+  <data name="Campaign.Book.Art.Spot" xml:space="preserve"><value>תמונה קטנה אחרי {0}</value></data>
   <data name="Campaign.Book.Art.Upload" xml:space="preserve"><value>הוספת תמונה</value></data>
   <data name="Campaign.Book.Art.Replace" xml:space="preserve"><value>החלפה</value></data>
-  <data name="Campaign.Book.Art.Remove" xml:space="preserve"><value>הסרה</value></data>
+  <data name="Campaign.Book.Art.Remove" xml:space="preserve"><value>הוצאה מהספר</value></data>
   <data name="Campaign.Book.Art.Loading" xml:space="preserve"><value>טוענים את המקומות לתמונות…</value></data>
   <data name="Campaign.Book.Art.Uploading" xml:space="preserve"><value>מוסיפים את התמונה…</value></data>
   <data name="Campaign.Book.Art.Stored" xml:space="preserve"><value>התמונה נוספה.</value></data>
-  <data name="Campaign.Book.Art.Removed" xml:space="preserve"><value>התמונה הוסרה.</value></data>
+  <data name="Campaign.Book.Art.Removed" xml:space="preserve"><value>התמונה הוצאה מהספר. היא נשמרה בין הגרסאות, ואפשר להחזיר או למחוק אותה.</value></data>
   <data name="Campaign.Book.Art.BadImage" xml:space="preserve"><value>אי אפשר להשתמש בקובץ הזה. השתמשו בתמונת PNG, JPEG, WebP, GIF או AVIF עד 6 MB.</value></data>
   <data name="Campaign.Book.Art.NoSlot" xml:space="preserve"><value>המקום הזה כבר לא קיים במהדורה. ייתכן שהוסתר או ששמו שונה.</value></data>
   <data name="Campaign.Book.Art.Full" xml:space="preserve"><value>בספר של הקמפיין הזה כבר יש מספר התמונות המרבי. הסירו אחת קודם.</value></data>
@@ -808,7 +809,30 @@
   <data name="Campaign.Book.Art.Draw.Cost" xml:space="preserve"><value>בערך {0} ({1} לתמונה).</value></data>
   <data name="Campaign.Book.Art.Draw.Allowance" xml:space="preserve"><value>ינצל {0} מתוך {1} התמונות שנותרו להיום במפתח של השרת.</value></data>
   <data name="Campaign.Book.Art.Draw.NoPrice" xml:space="preserve"><value>לא הוגדר מחיר לתמונה במודל הזה, ולכן לא מוצגת עלות.</value></data>
-  <data name="Campaign.Book.Art.Draw.Replaces" xml:space="preserve"><value>יחליף את התמונה שכבר נמצאת ב: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Replaces" xml:space="preserve"><value>התמונה שבשימוש תישמר כגרסה קודמת: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Drops" xml:space="preserve"><value>במקומות האלה כבר שמורות 3 גרסאות, ולכן ציור חדש ימחק את הקודמת הוותיקה ביותר, שכבר שולם עליה: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.PickAgain" xml:space="preserve"><value>לצייר שוב</value></data>
+  <data name="Campaign.Book.Art.Versions.Show" xml:space="preserve"><value>גרסאות ({0})</value></data>
+  <data name="Campaign.Book.Art.Versions.Hide" xml:space="preserve"><value>הסתרת הגרסאות</value></data>
+  <data name="Campaign.Book.Art.Versions.Hint" xml:space="preserve"><value>לכל מקום נשמרות עד 3 גרסאות של התמונה במהדורה הזאת. רק הגרסה שבשימוש מודפסת.</value></data>
+  <data name="Campaign.Book.Art.Versions.Loading" xml:space="preserve"><value>טוענים את הגרסאות…</value></data>
+  <data name="Campaign.Book.Art.Versions.InUse" xml:space="preserve"><value>בשימוש</value></data>
+  <data name="Campaign.Book.Art.Versions.Use" xml:space="preserve"><value>להשתמש בזו</value></data>
+  <data name="Campaign.Book.Art.Versions.Delete" xml:space="preserve"><value>מחיקה</value></data>
+  <data name="Campaign.Book.Art.Versions.Confirm" xml:space="preserve"><value>למחוק את הגרסה הזאת לצמיתות? אי אפשר יהיה לשחזר אותה.</value></data>
+  <data name="Campaign.Book.Art.Versions.Yes" xml:space="preserve"><value>מחיקה לצמיתות</value></data>
+  <data name="Campaign.Book.Art.Versions.No" xml:space="preserve"><value>להשאיר</value></data>
+  <data name="Campaign.Book.Art.Versions.Drawn" xml:space="preserve"><value>צוירה</value></data>
+  <data name="Campaign.Book.Art.Versions.Uploaded" xml:space="preserve"><value>נוספה</value></data>
+  <data name="Campaign.Book.Art.Versions.Stale" xml:space="preserve"><value>צוירה לפי תיאור או סגנון קודמים</value></data>
+  <data name="Campaign.Book.Art.Versions.NoPicture" xml:space="preserve"><value>אי אפשר להציג את התמונה הזאת.</value></data>
+  <data name="Campaign.Book.Art.Versions.Alt" xml:space="preserve"><value>{0}, גרסה {1}</value></data>
+  <data name="Campaign.Book.Art.Versions.Used" xml:space="preserve"><value>התמונה שבשימוש הוחלפה.</value></data>
+  <data name="Campaign.Book.Art.Versions.Deleted" xml:space="preserve"><value>הגרסה נמחקה.</value></data>
+  <data name="Campaign.Book.Art.Gone.Hint" xml:space="preserve"><value>הן לא מודפסות בשום מקום, אבל נספרות במגבלת התמונות של הספר ובאחסון שלך. המקום עשוי לחזור אם תציגו או תשנו את שמו שוב.</value></data>
+  <data name="Campaign.Book.Art.Gone.Hide" xml:space="preserve"><value>הסתרת התמונות של מקומות שכבר אינם</value></data>
+  <data name="Campaign.Book.Art.Gone.Show" xml:space="preserve"><value>תמונות של מקומות שכבר אינם במהדורה הזאת ({0})</value></data>
+  <data name="Campaign.Book.Art.State.KeptOnly" xml:space="preserve"><value>אין תמונה בשימוש</value></data>
   <data name="Campaign.Book.Art.Draw.None" xml:space="preserve"><value>סמנו מקום שיש לו הצעה כדי לצייר אותו.</value></data>
   <data name="Campaign.Book.Art.Draw.Start" xml:space="preserve"><value>ציור המסומנים ({0})</value></data>
   <data name="Campaign.Book.Art.Draw.Running" xml:space="preserve"><value>מציירים… הושלמו {0} מתוך {1}.</value></data>

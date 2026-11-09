@@ -187,7 +187,7 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         await input.SetInputFilesAsync(new FilePayload { Name = "cover.png", MimeType = "image/png", Buffer = png });
         await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Picture added.");
         await Assertions.Expect(slots.Locator("li").First).ToContainTextAsync("your picture");
-        await Assertions.Expect(slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Remove" })).ToBeVisibleAsync();
+        await Assertions.Expect(slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Take out" })).ToBeVisibleAsync();
 
         // The campaign has no cover of its own, so a cover on the party book's title page is the one just added.
         var party = await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party");
@@ -197,13 +197,13 @@ public class BookPanelE2ETests : IClassFixture<AppFixture>
         // In the GM's tray the same cover is the party edition's (it prints in both books), and there is nothing of the GM's to remove.
         await dm.GetByTestId("book-edition").SelectOptionAsync("dm");
         await Assertions.Expect(slots.Locator("li").First).ToContainTextAsync("party edition's picture");
-        await Assertions.Expect(slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Remove" })).ToHaveCountAsync(0);
+        await Assertions.Expect(slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Take out" })).ToHaveCountAsync(0);
         Assert.Contains("class=\"cover-art\"", await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/dm")).TextAsync(), StringComparison.Ordinal);
 
         // Back in the party tray, removing it takes it out of the book.
         await dm.GetByTestId("book-edition").SelectOptionAsync("party");
-        await slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Remove" }).ClickAsync();
-        await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Picture removed.");
+        await slots.Locator("li").First.GetByRole(AriaRole.Button, new() { Name = "Take out" }).ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Picture taken out of the book.");
         await Assertions.Expect(slots.Locator("li").First).ToContainTextAsync("no picture");
         Assert.DoesNotContain("class=\"cover-art\"", await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party")).TextAsync(), StringComparison.Ordinal);
         Assert.Empty(pageErrors);
@@ -535,6 +535,53 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         Assert.Contains("Woodcut print", prompt);
         Assert.DoesNotContain("Vera", prompt);
         await Assertions.Expect(dm.GetByTestId("book-art-draw-totals")).ToContainTextAsync("Pictures drawn for this book so far: 1. Cost so far: 0.050 USD.");
+
+        // Draw again (28.3, item 3): the pre-flight says the picture in use is kept, and after the run the slot has two versions to choose from.
+        await vera.GetByRole(AriaRole.Checkbox, new() { Name = "Draw again Vera" }).CheckAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-draw-replaces")).ToContainTextAsync("kept as an earlier version: Vera");
+        await dm.GetByTestId("book-art-draw-start").ClickAsync();
+        // The progress line reads "Done" from the first run too: the versions button is what says the second picture is in.
+        await vera.GetByRole(AriaRole.Button, new() { Name = "Versions (2)" }).ClickAsync();
+        Assert.Equal(2, model.ImagePrompts.Count);
+        var versions = vera.GetByTestId("book-art-version");
+        await Assertions.Expect(versions).ToHaveCountAsync(2);
+        await Assertions.Expect(versions.Locator("img")).ToHaveCountAsync(2);
+        await Assertions.Expect(versions.First).ToHaveAttributeAsync("data-in-use", "true");
+
+        // The earlier one is put in use; the one drawn second is kept.
+        await versions.Nth(1).GetByTestId("book-art-version-use").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("The picture in use is changed.");
+        await Assertions.Expect(vera.Locator("[data-testid=book-art-version][data-in-use=true]")).ToHaveCountAsync(1);
+
+        // Deleting a version asks first; "Keep it" keeps it, and "Delete for good" leaves the slot one picture and no versions to show.
+        var kept = vera.Locator("[data-testid=book-art-version][data-in-use=false]");
+        await kept.GetByTestId("book-art-version-delete").ClickAsync();
+        await Assertions.Expect(kept).ToContainTextAsync("can't be brought back");
+        await kept.GetByTestId("book-art-version-delete-no").ClickAsync();
+        await Assertions.Expect(versions).ToHaveCountAsync(2);
+        // The keyboard keeps its place: focus is back on Delete.
+        await Assertions.Expect(kept.GetByTestId("book-art-version-delete")).ToBeFocusedAsync();
+        await kept.GetByTestId("book-art-version-delete").ClickAsync();
+        await kept.GetByTestId("book-art-version-delete-yes").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-status")).ToContainTextAsync("Version deleted.");
+        await Assertions.Expect(versions).ToHaveCountAsync(0);
+        await Assertions.Expect(vera).ToContainTextAsync("your picture · drawn");
+        Assert.Equal(2, model.ImagePrompts.Count);
+
+        // Two more draws make three versions; ticking a fourth says first, in the pre-flight, that it deletes a paid one.
+        foreach (var count in new[] { 2, 3 })
+        {
+            await vera.GetByRole(AriaRole.Checkbox, new() { Name = "Draw again Vera" }).CheckAsync();
+            await Assertions.Expect(dm.GetByTestId("book-art-draw-start")).ToContainTextAsync("Draw selected (1)");
+            await dm.GetByTestId("book-art-draw-start").ClickAsync();
+            await Assertions.Expect(vera.GetByRole(AriaRole.Button, new() { Name = $"Versions ({count})" })).ToBeVisibleAsync();
+        }
+
+        await vera.GetByRole(AriaRole.Checkbox, new() { Name = "Draw again Vera" }).CheckAsync();
+        await Assertions.Expect(dm.GetByTestId("book-art-draw-drops")).ToContainTextAsync("deletes the oldest earlier one, which was paid for: Vera");
+        await Assertions.Expect(dm.GetByTestId("book-art-draw-replaces")).ToHaveCountAsync(0);
+        await vera.GetByRole(AriaRole.Checkbox, new() { Name = "Draw again Vera" }).UncheckAsync();
+        Assert.Equal(4, model.ImagePrompts.Count);
 
         var party = await (await context.APIRequest.GetAsync($"/campaigns/{campaignId}/book/party")).TextAsync();
         Assert.Contains("class=\"art\"", party, StringComparison.Ordinal);

@@ -10,6 +10,7 @@
 @inject BookArtDirection Director
 @inject BookArtDrawing Drawing
 @inject ILogger<BookArtTray> Logger
+@inject IJSRuntime JS
 
 @* The book's own pictures (docs/BOOK_EXPORT.md 28.3, step 3): a slot per chapter header, per entry and the cover, as this edition's source makes
    them. A picture put here is for this edition only; one put in the party edition's tray also prints in the GM's book, never the other way. *@
@@ -152,9 +153,14 @@
                     {
                         <div>@L["Campaign.Book.Art.Draw.Allowance", drawPreview.Pictures, Math.Max(0, server.Limit - server.Used)]</div>
                     }
-                    @if (drawPreview.Items.Where(i => i.Problem == null && i.Replaces).Select(i => i.Label).ToList() is { Count: > 0 } replaced)
+                    @if (drawPreview.Items.Where(i => i.Problem == null && i.Replaces && !i.Drops).Select(i => i.Label).ToList() is { Count: > 0 } replaced)
                     {
                         <div data-testid="book-art-draw-replaces">@L["Campaign.Book.Art.Draw.Replaces", string.Join(", ", replaced)]</div>
+                    }
+                    @* A slot that keeps as many versions as it may loses its oldest earlier one, paid for: said before the click, never after. *@
+                    @if (drawPreview.Items.Where(i => i.Problem == null && i.Drops).Select(i => i.Label).ToList() is { Count: > 0 } dropped)
+                    {
+                        <div class="field-error" data-testid="book-art-draw-drops">@L["Campaign.Book.Art.Draw.Drops", string.Join(", ", dropped)]</div>
                     }
                 }
                 @if (drawPreview.Totals is { } totals)
@@ -216,10 +222,33 @@
                 <li class="mt-2 fw-semibold"><bdi dir="auto">@chapter.Title</bdi></li>
                 @foreach (var slot in chapter.Slots)
                 {
-                    @Row(slot, slot.Kind == BookSlots.Header ? L["Campaign.Book.Art.Header"] : slot.Label)
+                    @Row(slot, slot.Kind == BookSlots.Header ? L["Campaign.Book.Art.Header"] : slot.Kind == BookSlots.Spot ? L["Campaign.Book.Art.Spot", slot.Label] : slot.Label)
                 }
             }
         </ul>
+        @* Pictures stored for places this edition no longer has: they print nowhere, but count against the book's cap and the storage. *@
+        @if (tray.Gone > 0)
+        {
+            <div class="small mb-2" data-testid="book-art-gone">
+                <button type="button" class="btn btn-link btn-sm p-0" @onclick="ToggleGoneAsync" disabled="@(working != null)" aria-expanded="@(gone != null ? "true" : "false")"
+                        aria-controls="@(gone != null ? "book-art-gone-list" : null)" data-testid="book-art-gone-toggle">
+                    @(gone != null ? L["Campaign.Book.Art.Gone.Hide"] : L["Campaign.Book.Art.Gone.Show", tray.Gone])
+                </button>
+                @if (gone != null)
+                {
+                    <div id="book-art-gone-list">
+                        <p class="field-hint mb-1">@L["Campaign.Book.Art.Gone.Hint"]</p>
+                        <ul class="list-unstyled d-flex gap-3 flex-wrap mb-1">
+                            @for (var i = 0; i < gone.Count; i++)
+                            {
+                                var item = gone[i];
+                                @VersionItem(item.Slot, item.Label, "book-art-gone-" + i, item.Version, i + 1, canUse: false)
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        }
     }
     else
     {
@@ -252,7 +281,7 @@
     private RenderFragment Row(BookTraySlot slot, string name) => __builder =>
     {
         var id = "book-art-" + slot.Key;
-        <li class="d-flex gap-2 align-items-baseline flex-wrap @(slot.Kind == BookSlots.Header ? "ps-2" : slot.Kind == BookSlots.Entry ? "ps-3" : string.Empty)" data-testid="@id">
+        <li class="d-flex gap-2 align-items-baseline flex-wrap @(slot.Kind == BookSlots.Header ? "ps-2" : slot.Kind == BookSlots.Entry ? "ps-3" : slot.Kind == BookSlots.Spot ? "ps-4" : string.Empty)" data-testid="@id">
             <bdi dir="auto" id="@(id + "-name")">@name</bdi>
             <span class="small-muted" data-testid="@(id + "-state")">@State(slot)@if (slot.Drawn is { } made) { <text> · </text>@(made.Stale ? L["Campaign.Book.Art.Draw.DrawnStale"] : L["Campaign.Book.Art.Draw.Drawn"]) }</span>
             <label class="btn btn-link btn-sm p-0 book-art-file">
@@ -262,6 +291,17 @@
             @if (slot.Mine)
             {
                 <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => RemoveAsync(slot)" disabled="@(working != null)" aria-describedby="@(id + "-name")" data-testid="@(id + "-remove")">@L["Campaign.Book.Art.Remove"]</button>
+            }
+            @if (slot.Kept > 0)
+            {
+                <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => ToggleVersionsAsync(slot)" disabled="@(working != null)" aria-expanded="@(versions.ContainsKey(slot.Key) ? "true" : "false")"
+                        aria-controls="@(versions.ContainsKey(slot.Key) ? id + "-versions" : null)" aria-describedby="@(id + "-name")" data-testid="@(id + "-versions-toggle")">
+                    @(versions.ContainsKey(slot.Key) ? L["Campaign.Book.Art.Versions.Hide"] : L["Campaign.Book.Art.Versions.Show", slot.Kept + (slot.Mine ? 1 : 0)])
+                </button>
+            }
+            @if (versions.TryGetValue(slot.Key, out var shown))
+            {
+                @Versions(slot, name, id, shown)
             }
             @if (slot.Suggestion is { } idea)
             {
@@ -276,7 +316,7 @@
                     {
                         <div class="form-check mt-1">
                             <input id="@(id + "-draw")" type="checkbox" class="form-check-input" checked="@picks.ContainsKey(slot.Key)" @onchange="e => TickAsync(slot, idea, e)" disabled="@DrawRunning" data-testid="@(id + "-draw")" />
-                            <label for="@(id + "-draw")" class="form-check-label">@L["Campaign.Book.Art.Draw.Pick"]<span class="visually-hidden"> @name</span></label>
+                            <label for="@(id + "-draw")" class="form-check-label">@(slot.Drawn != null ? L["Campaign.Book.Art.Draw.PickAgain"] : L["Campaign.Book.Art.Draw.Pick"])<span class="visually-hidden"> @name</span></label>
                         </div>
                         @if (picks.TryGetValue(slot.Key, out var ticked))
                         {
@@ -295,7 +335,175 @@
         slot.Placed == BookSlots.Tag(Edition == "dm" ? BookAudience.Dm : BookAudience.Party) ? L["Campaign.Book.Art.State.Mine"]
         : slot.Placed == BookArtDocument.Party ? L["Campaign.Book.Art.State.Party"]
         : slot.Own ? L["Campaign.Book.Art.State.Own"]
+        : slot.Kept > 0 ? L["Campaign.Book.Art.State.KeptOnly"]
         : L["Campaign.Book.Art.State.None"];
+
+    // The versions of a slot's picture shown (docs/BOOK_EXPORT.md 28.3, item 3), by slot key; null while they load.
+    private readonly Dictionary<string, IReadOnlyList<BookTrayVersion>?> versions = new(StringComparer.Ordinal);
+
+    // The version whose deletion waits for a second click: a deleted version is gone for good, and it may have been paid for.
+    private string? confirming;
+
+    private RenderFragment Versions(BookTraySlot slot, string name, string id, IReadOnlyList<BookTrayVersion>? list) => __builder =>
+    {
+        <div id="@(id + "-versions")" class="w-100 ps-3" data-testid="@(id + "-versions")">
+            <p class="field-hint mb-1">@L["Campaign.Book.Art.Versions.Hint"]</p>
+            @if (list == null)
+            {
+                <div class="small-muted">@L["Campaign.Book.Art.Versions.Loading"]</div>
+            }
+            else
+            {
+                <ul class="list-unstyled d-flex gap-3 flex-wrap mb-1">
+                    @for (var i = 0; i < list.Count; i++)
+                    {
+                        @VersionItem(slot.Key, name, id + "-v" + i, list[i], i + 1, canUse: true)
+                    }
+                </ul>
+            }
+        </div>
+    };
+
+    // One version: its picture, when it was made, and what can be done with it. Delete stays where it is while it asks, so the keyboard keeps its
+    // place; "Keep it" puts focus back on it.
+    private RenderFragment VersionItem(string slotKey, string name, string id, BookTrayVersion version, int number, bool canUse) => __builder =>
+    {
+        var label = L["Campaign.Book.Art.Versions.Alt", name, number];
+        <li class="d-flex flex-column gap-1 align-items-start" data-testid="book-art-version" data-in-use="@(version.InUse ? "true" : "false")">
+            @if (version.Thumbnail is { } thumb)
+            {
+                <img src="@thumb" alt="@label" class="book-art-version-img" style="max-width: 8rem; max-height: 8rem; object-fit: contain;" />
+            }
+            else
+            {
+                <span class="small-muted">@label: @L["Campaign.Book.Art.Versions.NoPicture"]</span>
+            }
+            @if (!canUse)
+            {
+                <bdi dir="auto">@name</bdi>
+            }
+            <span class="small-muted">@(version.Origin == "drawn" ? L["Campaign.Book.Art.Versions.Drawn"] : L["Campaign.Book.Art.Versions.Uploaded"]) <LocalTime Value="version.AddedAt" Format="d MMM yyyy, HH:mm" /></span>
+            @if (version.Stale)
+            {
+                <span class="small-muted">@L["Campaign.Book.Art.Versions.Stale"]</span>
+            }
+            @if (version.InUse && canUse)
+            {
+                <span class="fw-semibold" data-testid="book-art-version-in-use">@L["Campaign.Book.Art.Versions.InUse"]</span>
+            }
+            else if (canUse)
+            {
+                <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => UseAsync(slotKey, version)" disabled="@(working != null)" data-testid="book-art-version-use">
+                    @L["Campaign.Book.Art.Versions.Use"]<span class="visually-hidden"> (@label)</span>
+                </button>
+            }
+            <button id="@(id + "-delete")" type="button" class="btn btn-link btn-sm p-0" @onclick="() => confirming = confirming == version.Id ? null : version.Id" disabled="@(working != null)"
+                    aria-expanded="@(confirming == version.Id ? "true" : "false")" aria-controls="@(confirming == version.Id ? id + "-confirm" : null)" data-testid="book-art-version-delete">
+                @L["Campaign.Book.Art.Versions.Delete"]<span class="visually-hidden"> (@label)</span>
+            </button>
+            @if (confirming == version.Id)
+            {
+                <div id="@(id + "-confirm")" class="d-flex flex-column gap-1">
+                    <span role="alert" class="small">@L["Campaign.Book.Art.Versions.Confirm"]</span>
+                    <span class="d-flex gap-2">
+                        <button type="button" class="btn btn-link btn-sm p-0 text-danger" @onclick="() => DeleteVersionAsync(slotKey, version)" disabled="@(working != null)" data-testid="book-art-version-delete-yes">@L["Campaign.Book.Art.Versions.Yes"]</button>
+                        <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => KeepAsync(id)" data-testid="book-art-version-delete-no">@L["Campaign.Book.Art.Versions.No"]</button>
+                    </span>
+                </div>
+            }
+        </li>
+    };
+
+    private async Task KeepAsync(string id)
+    {
+        confirming = null;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.focus", id + "-delete");
+    }
+
+    private IReadOnlyList<BookTrayGone>? gone;
+
+    private async Task ToggleGoneAsync()
+    {
+        if (working != null) return;
+        confirming = null;
+        if (gone != null) { gone = null; return; }
+        working = "gone";
+        try
+        {
+            gone = await Art.GoneAsync(Access, Edition, Language) ?? [];
+        }
+        finally
+        {
+            working = null;
+        }
+    }
+
+    private async Task ToggleVersionsAsync(BookTraySlot slot)
+    {
+        if (working != null) return;
+        confirming = null;
+        if (versions.Remove(slot.Key)) return;
+        working = slot.Key;
+        versions[slot.Key] = null;
+        try
+        {
+            versions[slot.Key] = await Art.VersionsAsync(Access, Edition, slot.Key, Language) ?? [];
+        }
+        finally
+        {
+            working = null;
+        }
+    }
+
+    private async Task UseAsync(string slotKey, BookTrayVersion version)
+    {
+        if (working != null) return;
+        working = slotKey;
+        confirming = null;
+        try
+        {
+            var used = await Art.UseAsync(Access, Edition, slotKey, version.Id);
+            (status, failed) = used ? (L["Campaign.Book.Art.Versions.Used"], false) : (L["Campaign.Book.Art.NotAllowed"], true);
+            await LoadAsync();
+            if (used) await Changed.InvokeAsync();
+        }
+        finally
+        {
+            working = null;
+        }
+    }
+
+    private async Task DeleteVersionAsync(string slotKey, BookTrayVersion version)
+    {
+        if (working != null) return;
+        working = slotKey;
+        confirming = null;
+        try
+        {
+            var removed = await Art.RemoveAsync(Access, Edition, slotKey, version.Id);
+            (status, failed) = removed ? (L["Campaign.Book.Art.Versions.Deleted"], false) : (L["Campaign.Book.Art.NotAllowed"], true);
+            await LoadAsync();
+            if (removed) await Changed.InvokeAsync();
+        }
+        finally
+        {
+            working = null;
+        }
+    }
+
+    // The versions shown are read again with the slots, so a picture drawn, used or deleted shows at once; a slot left with none closes.
+    private async Task ReloadVersionsAsync()
+    {
+        if (tray == null) return;
+        if (gone != null) gone = tray.Gone == 0 ? null : await Art.GoneAsync(Access, Edition, Language) ?? [];
+        var kept = tray.Chapters.SelectMany(c => c.Slots).Prepend(tray.Cover).ToDictionary(x => x.Key, x => x.Kept, StringComparer.Ordinal);
+        foreach (var key in versions.Keys.ToList())
+        {
+            if (kept.GetValueOrDefault(key) == 0) versions.Remove(key);
+            else versions[key] = await Art.VersionsAsync(Access, Edition, key, Language) ?? [];
+        }
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -318,9 +526,10 @@
 
     private async Task LoadAsync()
     {
-        if (shownFor != Edition + "|" + Language) picks.Clear();
+        if (shownFor != Edition + "|" + Language) { picks.Clear(); versions.Clear(); gone = null; confirming = null; }
         shownFor = Edition + "|" + Language;
         tray = await Art.TrayAsync(Access, Edition, Language);
+        await ReloadVersionsAsync();
         direction = await Director.PreviewAsync(Access, Edition, Language, askAll);
         AttachDirector(Director.Find(Access, Edition));
         await PreviewDrawingAsync();
@@ -442,6 +651,7 @@
         {
             foreach (var row in drawing!.Snapshot().Rows.Where(r => r.Status == BookRowStatus.Refined)) picks.Remove(row.Id);
             tray = await Art.TrayAsync(Access, Edition, Language);
+            await ReloadVersionsAsync();
             await PreviewDrawingAsync();
             await Changed.InvokeAsync();
         }

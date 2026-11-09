@@ -15,8 +15,9 @@ public sealed record BookDrawPick(string Slot, string? Visual = null);
 /// <summary>A ticked slot as the run would treat it. <paramref name="Problem"/> is why it would not be drawn: "slot" (not one of this edition's),
 /// "suggestion" (none made for this edition), "stale" (the text changed since it was made), "visual" (the description fails the checks),
 /// "repeat" (ticked twice), "many" (past the most one run draws); null when it would be drawn. <paramref name="Replaces"/>: the slot already
-/// holds this edition's picture, which drawing replaces.</summary>
-public sealed record BookDrawItem(string Slot, string Label, bool Replaces, string? Problem, IReadOnlyList<string> VisualProblems);
+/// holds this edition's picture, which drawing puts back among the kept versions. <paramref name="Drops"/>: the slot already keeps
+/// <see cref="BookArtDocument.MaxVersions"/> versions, so drawing drops the oldest kept one.</summary>
+public sealed record BookDrawItem(string Slot, string Label, bool Replaces, string? Problem, IReadOnlyList<string> VisualProblems, bool Drops = false);
 
 /// <summary>What drawing the ticked slots would do and cost now; nothing is drawn. <paramref name="Cost"/> is pictures × the price per picture,
 /// null when no price is set.</summary>
@@ -32,7 +33,7 @@ public sealed record BookDrawTotals(int Pictures, decimal Cost, int Unpriced, st
 /// makes, its suggestion must be this edition's and made from the slot's current text, and the visual must pass
 /// <see cref="BookImagePrompt.Check"/> against the edition's names. The prompt is assembled by code from the slot's kind, that visual, the
 /// suggestion's mood and the book's style. The picture is stored under the edition's tag, run through the sanitizer like an upload, and
-/// replaces what the slot held. Pictures are drawn one at a time, set aside up front on the server's key, never retried, and a run takes
+/// is put in use, the one it puts back kept as an earlier version (at most <see cref="BookArtDocument.MaxVersions"/>). Pictures are drawn one at a time, set aside up front on the server's key, never retried, and a run takes
 /// the same per-GM gate as chapter builds and the art director (<see cref="BookGate"/>).
 /// </summary>
 public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository store, IBookImages images, Func<string, string, Task<CampaignAccess?>> resolve, BookGate gate, TimeProvider? clock = null,
@@ -78,7 +79,8 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
             var key = pick.Slot ?? string.Empty;
             var label = outline.TryGetValue(key, out var known) ? known.Slot.Label : string.Empty;
             var replaces = stored?.Pictures.Any(p => p.Slot == key && p.BuiltFrom == tag) == true;
-            BookDrawItem Refuse(string why, IReadOnlyList<string>? visual = null) => new(key, label, replaces, why, visual ?? []);
+            var drops = stored?.DroppedByNew(key, tag) != null;
+            BookDrawItem Refuse(string why, IReadOnlyList<string>? visual = null) => new(key, label, replaces, why, visual ?? [], drops);
 
             if (!seen.Add(key)) { items.Add(Refuse("repeat")); continue; }
             if (known == null) { items.Add(Refuse("slot")); continue; }
@@ -91,7 +93,7 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
             if (prompt.Prompt == null) { items.Add(Refuse("visual", prompt.Problems)); continue; }
             if (ready.Count >= MaxPerRun) { items.Add(Refuse("many")); continue; }
 
-            items.Add(new BookDrawItem(key, label, replaces, null, []));
+            items.Add(new BookDrawItem(key, label, replaces, null, [], drops));
             ready.Add(new Ready(key, label, known.Kind, visual, suggestion.Mood, prompt.Prompt, ShapeFor(known.Kind), InputsOf(known.Kind, visual, suggestion.Mood, style, guide)));
         }
 

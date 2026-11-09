@@ -207,6 +207,174 @@ public partial class BookArtTests
         Assert.Equal(new[] { 143 }, (await _bookArt.GetAsync(dm))!.Pictures.Select(p => p.Width));
     }
 
+    // Keep three (28.3, item 3): a new picture puts the one in use among the kept, only the one in use prints, the GM can print a kept one
+    // instead, and a fourth drops the version that went out of use longest ago, its bytes with it.
+    [Fact]
+    public async Task ASlotKeepsThreeVersions_OnlyTheOneInUsePrints_AndAFourthDropsTheOldestKept()
+    {
+        var (dm, _) = await SeedAsync();
+        var cover = KeyOf((await SlotsAsync(dm, BookAudience.Party)).Slots, BookSlots.Cover);
+        foreach (var width in new[] { 271, 272, 273 }) Assert.True(await _bookArt.PutAsync(dm, cover, BookArtDocument.Party, "Ashfall", Image(width)));
+
+        var art = (await _bookArt.GetAsync(dm))!;
+        Assert.Equal(273, Assert.Single(art.Pictures).Width);
+        Assert.Equal(new[] { 271, 272 }, art.Kept.Select(p => p.Width).Order());
+        Assert.Equal(3, art.Pictures.Concat(art.Kept).Select(p => p.Attachment).Distinct().Count());
+        var (html, _) = await BookPageAsync(dm, BookAudience.Party);
+        Assert.Contains(Uri(273), html, StringComparison.Ordinal);
+        Assert.DoesNotContain(Uri(271), html, StringComparison.Ordinal);
+        Assert.DoesNotContain(Uri(272), html, StringComparison.Ordinal);
+
+        // The GM prints the first one again; the one in use goes among the kept.
+        var first = art.Kept.Single(p => p.Width == 271).Attachment;
+        Assert.True(await _bookArt.UseAsync(dm, cover, BookArtDocument.Party, first));
+        (html, _) = await BookPageAsync(dm, BookAudience.Party);
+        Assert.Contains(Uri(271), html, StringComparison.Ordinal);
+        Assert.DoesNotContain(Uri(273), html, StringComparison.Ordinal);
+        Assert.Contains(Uri(271), (await BookPageAsync(dm, BookAudience.Dm)).Html, StringComparison.Ordinal);
+
+        // The third back in use: the first, added longest ago, is now the kept one that went out of use last.
+        Assert.True(await _bookArt.UseAsync(dm, cover, BookArtDocument.Party, (await _bookArt.GetAsync(dm))!.Kept.Single(p => p.Width == 273).Attachment));
+
+        // A fourth: 272 went out of use longest ago, so it is dropped, bytes and all; the first, added before it but put back since, stays.
+        var second = (await _bookArt.GetAsync(dm))!.Kept.Single(p => p.Width == 272).Attachment;
+        Assert.True(await _bookArt.PutAsync(dm, cover, BookArtDocument.Party, "Ashfall", Image(274)));
+        art = (await _bookArt.GetAsync(dm))!;
+        Assert.Equal(274, Assert.Single(art.Pictures).Width);
+        Assert.Equal(new[] { 271, 273 }, art.Kept.Select(p => p.Width).Order());
+        Assert.Null(await _media.GetAsync(BookArtDocument.IdFor(dm.CampaignId), second));
+        Assert.NotNull(await _media.GetAsync(BookArtDocument.IdFor(dm.CampaignId), first));
+
+        // Taking it out of the book keeps it, a picture that may have been paid for; deleting a version takes it and its bytes.
+        Assert.True(await _bookArt.RemoveAsync(dm, cover, BookArtDocument.Party));
+        art = (await _bookArt.GetAsync(dm))!;
+        Assert.Empty(art.Pictures);
+        Assert.Equal(new[] { 271, 273, 274 }, art.Kept.Select(p => p.Width).Order());
+        Assert.DoesNotContain(Uri(274), (await BookPageAsync(dm, BookAudience.Party)).Html, StringComparison.Ordinal);
+        var service = new BookArtService(_reader, _bookArt, new CampaignAccessResolver(_campaigns));
+        Assert.Equal((false, 3), ((await service.TrayAsync(dm, "party", "en"))!.Cover.Mine, (await service.TrayAsync(dm, "party", "en"))!.Cover.Kept));
+        Assert.True(await _bookArt.RemoveAsync(dm, cover, BookArtDocument.Party, first));
+        Assert.Equal(new[] { 273, 274 }, (await _bookArt.GetAsync(dm))!.Kept.Select(p => p.Width).Order());
+        Assert.Null(await _media.GetAsync(BookArtDocument.IdFor(dm.CampaignId), first));
+
+        // Deleting the one in use by its name leaves none in use and the kept ones as they are.
+        var inUse = (await _bookArt.GetAsync(dm))!.Kept.Single(p => p.Width == 274).Attachment;
+        Assert.True(await _bookArt.UseAsync(dm, cover, BookArtDocument.Party, inUse));
+        Assert.True(await _bookArt.RemoveAsync(dm, cover, BookArtDocument.Party, inUse));
+        art = (await _bookArt.GetAsync(dm))!;
+        Assert.Empty(art.Pictures);
+        Assert.Equal(273, Assert.Single(art.Kept).Width);
+    }
+
+    // A picture stored before versions were kept has the slot's name alone: a new one puts it among the kept under that name, and it can be used
+    // and deleted by it. Any other form of name is refused before it is looked up.
+    [Fact]
+    public async Task APictureStoredUnderTheOldName_IsKept_UsedAndDeletedByIt()
+    {
+        var (dm, _) = await SeedAsync();
+        var cover = KeyOf((await SlotsAsync(dm, BookAudience.Party)).Slots, BookSlots.Cover);
+        var id = BookArtDocument.IdFor(dm.CampaignId);
+        var legacy = BookArtDocument.AttachmentFor(cover, BookArtDocument.Party);
+        var old = Image(281);
+        using (var session = _db.Store.OpenAsyncSession())
+        {
+            await session.StoreAsync(new BookArtDocument
+            {
+                Id = id, CampaignId = dm.CampaignId,
+                Pictures = { new BookArtPicture { Slot = cover, BuiltFrom = BookArtDocument.Party, Attachment = legacy, ContentType = old.ContentType, Width = old.Width, Height = old.Height, Bytes = old.Bytes.Length } }
+            }, id);
+            session.Advanced.Attachments.Store(id, legacy, new MemoryStream(old.Bytes), old.ContentType);
+            await session.SaveChangesAsync();
+        }
+
+        Assert.True(await _bookArt.PutAsync(dm, cover, BookArtDocument.Party, "Ashfall", Image(282)));
+        var art = (await _bookArt.GetAsync(dm))!;
+        Assert.Equal(legacy, Assert.Single(art.Kept).Attachment);
+        Assert.NotEqual(legacy, Assert.Single(art.Pictures).Attachment);
+        Assert.True(await _bookArt.UseAsync(dm, cover, BookArtDocument.Party, legacy));
+        Assert.Contains(Uri(281), (await BookPageAsync(dm, BookAudience.Party)).Html, StringComparison.Ordinal);
+        Assert.True(await _bookArt.RemoveAsync(dm, cover, BookArtDocument.Party, legacy));
+        Assert.Null(await _media.GetAsync(id, legacy));
+        Assert.Equal(282, Assert.Single((await _bookArt.GetAsync(dm))!.Kept).Width);
+
+        Assert.True(BookArtDocument.IsAttachment(legacy, cover, BookArtDocument.Party));
+        Assert.True(BookArtDocument.IsAttachment(legacy + "-0a1b2c3d", cover, BookArtDocument.Party));
+        foreach (var bad in new[] { legacy + "-0A1B2C3D", legacy + "-0a1b2c3", legacy + "-0a1b2c3d4", legacy + "0a1b2c3d", legacy + "-0a1b2c3g", legacy[..^1], null })
+        {
+            Assert.False(BookArtDocument.IsAttachment(bad, cover, BookArtDocument.Party));
+        }
+
+        Assert.False(BookArtDocument.IsAttachment(legacy, cover, BookArtDocument.Dm));
+    }
+
+    // A picture stored for a place this edition no longer has prints nowhere, but counts: the tray says how many, lists them with a picture each,
+    // and the GM can delete them; the other edition's are not in the list.
+    [Fact]
+    public async Task PicturesForAPlaceThatIsGone_AreListedForTheGmToDelete()
+    {
+        var (dm, _) = await SeedAsync();
+        var service = new BookArtService(_reader, _bookArt, new CampaignAccessResolver(_campaigns), media: _media);
+        var gone = BookSlots.KeyFor("actor:a-long-gone");
+        Assert.True(await _bookArt.PutAsync(dm, gone, BookArtDocument.Party, "Old friend", Image(291)));
+        Assert.True(await _bookArt.PutAsync(dm, gone, BookArtDocument.Party, "Old friend", Image(292)));
+        Assert.True(await _bookArt.PutAsync(dm, gone, BookArtDocument.Dm, "Old friend", Image(191)));
+
+        Assert.Equal(2, (await service.TrayAsync(dm, "party", "en"))!.Gone);
+        var list = (await service.GoneAsync(dm, "party"))!;
+        Assert.Equal(2, list.Count);
+        Assert.All(list, g => Assert.Equal((gone, "Old friend"), (g.Slot, g.Label)));
+        Assert.All(list, g => Assert.StartsWith("data:image/", g.Version.Thumbnail, StringComparison.Ordinal));
+        Assert.DoesNotContain(list, g => g.Version.Id.StartsWith("book-dm-", StringComparison.Ordinal));
+        Assert.Null(await service.GoneAsync(new CampaignAccess(dm.CampaignId, PlayerUser, CampaignRole.Player), "party"));
+
+        foreach (var g in list) Assert.True(await service.RemoveAsync(dm, "party", g.Slot, g.Version.Id));
+        Assert.Equal(0, (await service.TrayAsync(dm, "party", "en"))!.Gone);
+        Assert.Equal(1, (await service.TrayAsync(dm, "dm", "en"))!.Gone);
+    }
+
+    // The tag holds for versions as for pictures in use: a version kept for the GM's edition is never put in use in the party's, by the store or
+    // the service, whatever name is posted; the service's version list is the GM's and the edition's own, with a picture to choose by.
+    [Fact]
+    public async Task AVersionKeptForTheGmEdition_IsNeverUsedInTheParty_AndTheVersionListIsTheEditionsOwn()
+    {
+        var (dm, _) = await SeedAsync();
+        var service = new BookArtService(_reader, _bookArt, new CampaignAccessResolver(_campaigns), media: _media);
+        var cover = KeyOf((await SlotsAsync(dm, BookAudience.Party)).Slots, BookSlots.Cover);
+        Assert.True(await _bookArt.PutAsync(dm, cover, BookArtDocument.Dm, "Ashfall", Image(161)));
+        Assert.True(await _bookArt.PutAsync(dm, cover, BookArtDocument.Dm, "Ashfall", Image(162)));
+        Assert.True(await _bookArt.PutAsync(dm, cover, BookArtDocument.Party, "Ashfall", Image(261)));
+        Assert.True(await _bookArt.PutAsync(dm, cover, BookArtDocument.Party, "Ashfall", Image(262)));
+        var art = (await _bookArt.GetAsync(dm))!;
+        var gmKept = art.Kept.Single(p => p.Width == 161).Attachment;
+        var partyKept = art.Kept.Single(p => p.Width == 261).Attachment;
+
+        Assert.False(await _bookArt.UseAsync(dm, cover, BookArtDocument.Party, gmKept));
+        Assert.False(await service.UseAsync(dm, "party", cover, gmKept));
+        // A party-shaped name for the GM's version, and a made-up one, are not versions of the party's slot either.
+        Assert.False(await service.UseAsync(dm, "party", cover, gmKept.Replace("book-dm-", "book-party-", StringComparison.Ordinal)));
+        Assert.False(await service.UseAsync(dm, "party", cover, BookArtDocument.AttachmentFor(cover, BookArtDocument.Party) + "-00000000"));
+        Assert.False(await _bookArt.RemoveAsync(dm, cover, BookArtDocument.Party, gmKept));
+        Assert.False(await service.UseAsync(new CampaignAccess(dm.CampaignId, PlayerUser, CampaignRole.Player), "party", cover, partyKept));
+        Assert.Equal(262, (await _bookArt.GetAsync(dm))!.Pictures.Single(p => p.BuiltFrom == BookArtDocument.Party).Width);
+        var party = (await BookPageAsync(dm, BookAudience.Party)).Html;
+        Assert.DoesNotContain(Uri(161), party, StringComparison.Ordinal);
+        Assert.DoesNotContain(Uri(162), party, StringComparison.Ordinal);
+
+        Assert.True(await service.UseAsync(dm, "party", cover, partyKept));
+        Assert.Contains(Uri(261), (await BookPageAsync(dm, BookAudience.Party)).Html, StringComparison.Ordinal);
+
+        var versions = (await service.VersionsAsync(dm, "party", cover))!;
+        Assert.Equal(new[] { true, false }, versions.Select(v => v.InUse));
+        Assert.Equal(new[] { partyKept }, versions.Where(v => v.InUse).Select(v => v.Id));
+        Assert.All(versions, v => Assert.StartsWith("data:image/", v.Thumbnail, StringComparison.Ordinal));
+        Assert.DoesNotContain(versions, v => v.Id.StartsWith("book-dm-", StringComparison.Ordinal));
+        Assert.Equal(2, (await service.VersionsAsync(dm, "dm", cover))!.Count);
+        Assert.Null(await service.VersionsAsync(new CampaignAccess(dm.CampaignId, PlayerUser, CampaignRole.Player), "party", cover));
+        Assert.Null(await service.VersionsAsync(dm, "party", KeyOf((await SlotsAsync(dm, BookAudience.Dm)).Slots, BookSlots.Entry, "a-hidden")));
+        var tray = (await service.TrayAsync(dm, "party", "en"))!;
+        Assert.Equal(1, tray.Cover.Kept);
+    }
+
     [Fact]
     public async Task BookArt_IsTheGmsAlone_LeavesWithTheCampaign_IsInTheBackup_AndNotInTheExport()
     {
