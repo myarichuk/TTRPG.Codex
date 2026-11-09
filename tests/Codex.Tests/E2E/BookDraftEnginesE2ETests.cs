@@ -50,10 +50,11 @@ public class BookDraftEnginesE2ETests : IClassFixture<AppFixture>
             page.PageError += (_, e) => errors.Add(e);
             // WebKit says it blocked a script in the preview frame when the test reads the frame while it is still loading: that is the test
             // driver's own script (with a pause before the first read, six runs out of six were clean, and the app draws in that pause). The
-            // frame runs no script by design; nothing of the app's tries to.
+            // frame runs no script by design; nothing of the app's tries to. (WebKit on macOS names the frame about:srcdoc, on Linux about:blank.)
             page.Console += (_, m) =>
             {
-                if (m.Type == "error" && !(engine == "webkit" && m.Text.StartsWith("Blocked script execution in 'about:srcdoc'", StringComparison.Ordinal)))
+                if (m.Type == "error" && !(engine == "webkit" && (m.Text.StartsWith("Blocked script execution in 'about:srcdoc'", StringComparison.Ordinal)
+                    || m.Text.StartsWith("Blocked script execution in 'about:blank'", StringComparison.Ordinal))))
                     errors.Add(m.Text);
             };
             await E2EHelpers.LoginAsync(page, "dm_" + dmId, password);
