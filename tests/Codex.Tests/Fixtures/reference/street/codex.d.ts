@@ -77,6 +77,12 @@ export type Intent =
   | { roll: { definition: RollKey; actor?: string; [input: string]: unknown } }
   | { ask: { who: "gm" | "player"; choices: string[] } }
   | { log: { key: string; args?: Plain[] } }
+  /** The creature dies: its dead condition, and what it held and the effects counted on its turns end. */
+  | { kill: { actor?: string; condition?: ConditionName } }
+  /** Every effect the creature holds up by concentrating ends, on whichever creature carries it. */
+  | { endConcentration: { actor?: string } }
+  /** A tally the table keeps beside the sheet (death saves). */
+  | { counter: { key: string; to: number; actor?: string } | { key: string; by: number; actor?: string } | { key: string; clear: true; actor?: string } }
   ;
 
 /** A function's result: a number, or one with its working. */

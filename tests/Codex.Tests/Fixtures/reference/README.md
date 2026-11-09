@@ -223,8 +223,13 @@ Scripts, as step 8 built them (`Codex.Core.Rules.SystemScripts`, Jint):
   `conditions` (thresholds' included). `ctx.call(name, ...args)` calls a named function; `ctx.d(sides)` rolls a die through
   the host, and the table logs the faces. It returns a list of intents in system.yaml's shape, with plain values, not
   formulas.
-- One more intent, for scripts and lines alike: `set { list, key, field, to }` and `adjust { list, key, field, by }` change a
-  per-pick field of a keyed-list entry (by key) or a pick (by id), a number within its field's bounds.
+- More intents, for scripts and lines alike: `set { list, key, field, to }` and `adjust { list, key, field, by }` change a
+  per-pick field of a keyed-list entry (by key) or a pick (by id), a number within its field's bounds. Three the table does
+  to the creature rather than its sheet, which srd5e's built-in vitals handlers return too
+  (`Codex.Core.Rules.VitalsHandlers`): `kill { condition? }` (by the system's `vitals.down` when it has one; otherwise the
+  creature's held effects and the effects counted on its turns end, and `condition` is added), `endConcentration` (every
+  effect the creature holds up ends, on whichever creature carries it) and `counter { key, to | by | clear: true }` (a tally
+  kept beside the sheet, as 5e's death saves are). Each takes `actor`.
 - No .NET, no imports, no `Math.random`; at most 500 ms, 100000 statements, 16 MB, 64 calls deep and arrays of 10000 per
   call, and 10000 values returned. Each file is parsed once; calls run on a small pool of engines, so a module keeps no
   state between calls. A script that throws or breaks a limit fails with a message naming the system, the function or

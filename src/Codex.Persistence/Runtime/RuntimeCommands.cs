@@ -15,7 +15,7 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
 
     public string UndoKind => "Damage";
 
-    private TableRules.DamageOutcome _outcome = TableRules.DamageOutcome.Nothing;
+    private Codex.Core.Rules.DamageReport _outcome = Codex.Core.Rules.DamageReport.Nothing;
 
     /// <summary>Once applied: the save the creature owes to keep concentrating, or null when it was not concentrating (R4).</summary>
     public int? ConcentrationDc => _outcome.ConcentrationDc;
@@ -161,7 +161,7 @@ public sealed record RollDeathSaveCommand(string ActorId, string RollerUserId) :
 
     public string UndoKind => "DeathSave";
 
-    private TableRules.DeathSaveOutcome _outcome = TableRules.DeathSaveOutcome.None;
+    private Codex.Core.Rules.DeathSaveReport _outcome = Codex.Core.Rules.DeathSaveReport.None;
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -192,7 +192,7 @@ public sealed record RecordDeathSaveCommand(string ActorId, bool Success, int Co
 
     public string UndoKind => "DeathSave";
 
-    private TableRules.DeathSaveOutcome _outcome = TableRules.DeathSaveOutcome.None;
+    private Codex.Core.Rules.DeathSaveReport _outcome = Codex.Core.Rules.DeathSaveReport.None;
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -207,7 +207,7 @@ public sealed record RecordDeathSaveCommand(string ActorId, bool Success, int Co
 
 internal static class DeathSaveEvents
 {
-    public static SessionEvent Describe(CampaignRuntime runtime, string actorId, TableRules.DeathSaveOutcome outcome)
+    public static SessionEvent Describe(CampaignRuntime runtime, string actorId, Codex.Core.Rules.DeathSaveReport outcome)
     {
         var name = runtime.ActorTerm(actorId);
         var parts = new List<EventMessage>();

@@ -221,13 +221,20 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
                 label: Hero
                 tracks:
                   - { key: HP, max: 10, min: -5, start: max }
+                keyedLists:
+                  - key: skills
+                    label: Skills
+                    itemFields: [{ key: level, type: Number, min: 0, max: 5 }]
+                    keys: [{ key: climb, label: Climb }]
             events:
+              train: { script: rules.js#train }
               burn: { script: rules.js#burn }
               hang: { script: rules.js#hang }
             """);
         system.AddScript("rules.js", """
             export function burn(ev, sheet, ctx) { return [{ adjust: { track: "HP", by: -ctx.call("bonus", ctx.d(6)) } }]; }
             export function hang() { for (;;) {} }
+            export function train(ev, sheet) { return [{ set: { list: "skills", key: "climb", field: "level", to: sheet.lists.skills.climb.level + 2 } }]; }
             """);
         var campaignId = Guid.NewGuid().ToString();
         var hero = await HeroAsync(campaignId, "Vex");
@@ -243,12 +250,60 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
         await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
         Assert.Equal(10, Pool(runtime, hero.Id, "HP"));
 
+        await runtime.EnqueueAsync(new RaiseEventCommand(hero.Id, "train", new Dictionary<string, object?>()));
+        Assert.Contains("Vex: Skills changed.", await LogAsync(session));
+        var skills = (IDictionary<string, object>)(await StoredAsync(campaignId, hero.Id)).Sheet["skills"];
+        Assert.Equal(2L, Codex.Core.YamlValues.ToNumber(((IDictionary<string, object>)skills["climb"])["level"]) is { } level ? (long)level : -1);
+
         var hang = new RaiseEventCommand(hero.Id, "hang", new Dictionary<string, object?>());
         await runtime.EnqueueAsync(hang);
 
         Assert.Equal(10, Pool(runtime, hero.Id, "HP"));
         Assert.Contains("ran more than 100000 statements", hang.Failed);
         Assert.Contains(await LogAsync(session), l => l.StartsWith("Vex: the system rule for hang could not run", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AHandler_CountsBesideTheSheet_EndsWhatTheCreatureHeld_AndKillsIt()
+    {
+        var system = SystemDefinitionLoader.Parse("""
+            id: table-kills
+            name: Table kills
+            conditions: [Dead, Blessed]
+            sheetKinds:
+              - kind: hero
+                label: Hero
+                tracks:
+                  - { key: HP, max: 10, min: -5, start: max }
+            events:
+              fall:
+                - { intents: [{ counter: { key: falls, by: 1 } }, { endConcentration: {} }] }
+                - { when: "HP <= 0", intents: [{ kill: { condition: Dead } }] }
+            """);
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await HeroAsync(campaignId, "Vex");
+        var friend = await HeroAsync(campaignId, "Ora");
+        var session = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Status = SessionStatus.Live };
+        await _sessions.SaveAsync(session);
+        var runtime = new CampaignRuntime(campaignId, _actors, _registry, NullLogger.Instance, _sessions, session, system: system);
+        runtime.Hydrate(new[] { hero, friend });
+        await using var _ = runtime;
+        var ora = runtime.GetEntity(friend.Id)!.Value;
+        runtime.World.AddStatus(ora, "Blessed", "bless", Codex.Core.Components.ActiveEffect.Indefinite, Codex.Core.Components.EffectExpiry.EndOfTurn, hero.Id, heldBy: hero.Id);
+
+        await runtime.EnqueueAsync(new RaiseEventCommand(hero.Id, "fall", new Dictionary<string, object?>()));
+
+        Assert.Equal(1, Pool(runtime, hero.Id, "falls"));
+        Assert.False(Codex.Core.CodexWorld.HasStatus(ora, "Blessed"));
+        Assert.False(Codex.Core.CodexWorld.HasStatus(runtime.GetEntity(hero.Id)!.Value, "Dead"));
+        Assert.Contains("Vex: falls 0 → 1. Vex stops concentrating; 1 held effects end.", await LogAsync(session));
+
+        await runtime.EnqueueAsync(new ApplyDamageCommand(hero.Id, "HP", 12, "dm"));
+        await runtime.EnqueueAsync(new RaiseEventCommand(hero.Id, "fall", new Dictionary<string, object?>()));
+
+        Assert.Equal(2, Pool(runtime, hero.Id, "falls"));
+        Assert.True(Codex.Core.CodexWorld.HasStatus(runtime.GetEntity(hero.Id)!.Value, "Dead"));
+        Assert.Contains(await LogAsync(session), l => l.EndsWith("Vex dies.", StringComparison.Ordinal));
     }
 
     [Fact]

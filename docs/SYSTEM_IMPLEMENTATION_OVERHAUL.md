@@ -574,6 +574,69 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
    intent vocabulary grows by what they need and a script handler needs too: ending effects another creature holds
    (concentration), killing (which ends what the dead one held and its turn counters), and counters the table keeps beside
    the sheet (death saves both ways). Today's `TableRules` code and its 60 encounter and runtime tests are the oracle.
+   - *Done 2026-11-09.* **Scripts.** `Codex.Core.Rules.SystemScripts` runs a system's `.js` files with Jint 4.17:
+     - **Files.** Only the files system.yaml names are read. Each must be in the system's folder and at most 256 KB.
+     - **Engines.** Files are parsed once as ES modules (`Engine.PrepareModule`) and run on a pool of up to four engines
+       per system. An engine that failed is thrown away, so a module keeps no state between calls.
+     - **Sandbox.** `AllowClr` is off, there are no imports, and `Math.random` throws.
+     - **Limits per call.** 500 ms, 100000 statements, 16 MB, 64 calls deep, arrays of 10000, regular expressions within
+       100 ms, and 10000 values returned.
+     - **Data.** Plain data goes both ways, made afresh for each call.
+     - **Failures.** A failure names the system, the function or handler, the script and the line (rule 5). It never throws
+       through a table command: a function gets no value and the sheet gets a warning (`Actor.Rule.ScriptError`, the GM's),
+       and a handler's event is logged as failed and changes nothing.
+     - **Load problems.** The loader names a file that is missing or outside the folder, one that does not parse, an export
+       that is not a function, a reference that is not `file#export`, and a function of more than four parameters.
+
+     **Functions** are called from formulas like built-ins. They take numbers, text and flags, and return a number or
+     `{ value, parts }`. A script function is given nothing but its arguments, so results are cached by them (rule 6), and
+     `reads` is not needed.
+
+     **Handlers** are `export(ev, sheet, ctx)`:
+     - `sheet` is a plain view: attributes, values, tracks, lists (a keyed list by key) and conditions.
+     - `ctx.call` reaches a named function.
+     - `ctx.d` rolls through the host's dice (rule 3), and the table logs the faces.
+     - What a handler returns is read as intents in system.yaml's shape, and checked.
+
+     **New intents**, which scripts and handler lines can both use:
+     - `set`/`adjust { list, key, field }`, on a keyed-list entry or a pick, within the field's bounds.
+     - `kill`, `endConcentration` and `counter`, which the table applies to the creature.
+
+     **`Codex.SystemCheck`** (tools/) is what an author runs:
+     - It loads a folder as the server does and lists its problems.
+     - It runs the folder's `spec.yaml`. The spec runner moved there from the tests.
+     - With `--types`, it writes `codex.d.ts`, with the system's own names as literal types. Street's `rules.js` type-checks
+       against it under `tsc --strict --checkJs`, and a test keeps the committed file current.
+
+     **The street fixture** goes green: 95 of 95. One fixture fix: street's `check` added `modifiers('@checks')`, which every
+     skill's value already carries through its groups, so a wound counted twice.
+
+     **srd5e's vitals as handlers.**
+     - `Codex.Core.Rules.VitalsHandlers` holds the handlers: damage (with concentration), rolled and recorded death saves,
+       stabilizing, exhaustion and rests. Each reads a `VitalsView` (pools, conditions, player or not, sheet) and returns
+       intents and a report.
+     - Each replays `TableRules`' steps on a scratch copy of the view, so a later step reads what an earlier one did, as the
+       old code read the entity.
+     - `TableRules` now builds the view, calls the handler, and applies the intents to the entity:
+       - `set` on pools, `counter`, and conditions with their source;
+       - `kill` and `endConcentration` through its own `Kill` and `EndConcentration`, which reach the other creatures.
+     - Its entry points and the commands' log lines are unchanged.
+     - The 60 oracle tests pass unchanged, as do the 145 encounter, runtime, rest and vitals tests in all.
+   - *Not done, and why:*
+     - **Install rights and versioning** (rules 7 and 8) are step 10's: there is no server switch that turns scripts off, and
+       nothing records a script's hash.
+     - **Cancellation.** A call cannot be cancelled from outside. Jint takes one cancellation token per engine, not per
+       call, and the 500 ms limit is what stops a call.
+     - **A function's `parts`** are read and kept, but the sheet's breakdown does not show them yet.
+     - **Log text.** A script's log keys are shown through the system's translations, as YAML handlers' are. Their arguments
+       are not formatted into translated sentences.
+     - **Healing, temporary hit points and hit-dice spending** stay in `TableRules` as they were. They were not in the
+       moved list, and nothing a script needs depends on them.
+     - **srd5e's handlers are not named in system.yaml.** The table calls them for a system with `vitals:`, and a sheet-kind
+       system cannot name them as `{ builtin }` (its own `builtin: damage` is the primitives' one).
+     - **Arithmetic** is the same in formulas and scripts because both are doubles (`7 / 2` is 3.5 in each), so scripts are
+       given no `div` or `floor` of the host's. The contract tests across all three suppliers wait for the compiled one
+       (step 9).
 9. **Compiled supplier.** Functions and widget DLLs, with the same contract tests.
 10. **Install, reload, versioning, separate distribution.** The JSON schema and reference docs land alongside, from
     step 2 onwards.

@@ -166,6 +166,12 @@ internal static class TableEvents
     {
         foreach (var left in result.Left)
         {
+            if (SheetEvents.TableKinds.Contains(left.Kind, StringComparer.Ordinal))
+            {
+                OnCreature(runtime, system, left.Actor ?? actorId, left, messages, touched);
+                continue;
+            }
+
             if (left.Actor is { } other && other != actorId && SheetEvents.DirectKinds.Contains(left.Kind, StringComparer.Ordinal) && !CampaignObjects.IsFor(left))
             {
                 if (runtime.GetEntity(other) is { } otherEntity && runtime.GetActorDocument(other) is { } otherDoc)
@@ -193,6 +199,55 @@ internal static class TableEvents
             }
 
             messages.Add(Said(runtime, system, actorId, left));
+        }
+    }
+
+    /// <summary>
+    /// What the table does to a creature rather than to its sheet (the vitals handlers' intents, which a system's handler may
+    /// return too): <c>kill</c> (by the system's vitals when it has them, which add its dead condition; otherwise what the
+    /// creature held and the effects counted on its turns end, and the intent's <c>condition</c>, if any, is added),
+    /// <c>endConcentration</c> (every effect it held up ends) and <c>counter { key, to | by | clear }</c> (a tally kept in its
+    /// pools, beside the sheet).
+    /// </summary>
+    private static void OnCreature(CampaignRuntime runtime, SystemDefinition system, string? actorId, SheetIntent intent, List<EventMessage> messages, List<string> touched)
+    {
+        if (actorId == null || runtime.GetEntity(actorId) is not { } entity)
+        {
+            messages.Add(EventMessage.Of("Sheet.NotAtTable", Term(system, actorId ?? "?"), intent.Kind));
+            return;
+        }
+
+        touched.Add(actorId);
+        var name = runtime.ActorTerm(actorId);
+        switch (intent.Kind)
+        {
+            case VitalsHandlers.KillKind:
+                if (system.Vitals?.Down != null)
+                {
+                    if (TableRules.Kill(runtime, entity, actorId)) messages.Add(EventMessage.Of("Sheet.Killed", name));
+                    break;
+                }
+
+                TableRules.EndConcentration(runtime, actorId, entity);
+                TableRules.ExpireTurnsOf(runtime, actorId);
+                if (intent.Fields.GetValueOrDefault("condition")?.ToString() is { Length: > 0 } condition && !CodexWorld.HasStatus(entity, condition))
+                {
+                    runtime.World.AddStatus(entity, condition, "died", ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, actorId);
+                }
+
+                messages.Add(EventMessage.Of("Sheet.Killed", name));
+                break;
+            case VitalsHandlers.EndConcentrationKind:
+                messages.Add(EventMessage.Of("Sheet.ConcentrationEnded", name, TableRules.EndConcentration(runtime, actorId, entity)));
+                break;
+            case VitalsHandlers.CounterKind when intent.Fields.GetValueOrDefault("key")?.ToString() is { Length: > 0 } key:
+                var was = entity.Has<ResourcePoolComponent>() ? entity.Get<ResourcePoolComponent>().Get(key) : 0;
+                TableRules.Counter(entity, intent.Fields);
+                messages.Add(EventMessage.Of("Sheet.CounterChanged", name, Term(system, key), was, entity.Get<ResourcePoolComponent>().Get(key)));
+                break;
+            default:
+                messages.Add(EventMessage.Of("Sheet.NotDone", name, intent.Kind));
+                break;
         }
     }
 
@@ -259,7 +314,11 @@ internal static class TableEvents
             {
                 if (live.TryGetValue(key, out var value)) doc.Sheet[key] = value;
                 else doc.Sheet.Remove(key);
-                messages.Add(EventMessage.Of("Sheet.SlotsChanged", name, label, string.Join(", ", Texts(live.GetValueOrDefault(key)))));
+                // A list's entries changed (a skill's level): said by the list's name. A slot track says what it holds.
+                var list = model.Kind?.KeyedLists.FirstOrDefault(l => l.Key == key)?.Label ?? model.Kind?.Lists.FirstOrDefault(l => l.Key == key)?.Label;
+                messages.Add(list != null
+                    ? EventMessage.Of("Sheet.ListChanged", name, Term(system, list))
+                    : EventMessage.Of("Sheet.SlotsChanged", name, label, string.Join(", ", Texts(live.GetValueOrDefault(key)))));
             }
 
             runtime.SheetKeyWritten(actorId, key);

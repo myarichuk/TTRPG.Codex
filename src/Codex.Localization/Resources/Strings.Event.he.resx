@@ -158,11 +158,15 @@
   <data name="Event.Sheet.ConditionRemoved" xml:space="preserve"><value>{0}: כבר לא {1}.</value></data>
   <data name="Event.Sheet.TrackChanged" xml:space="preserve"><value>{0}: {1} {2} ← {3}.</value></data>
   <data name="Event.Sheet.SlotsChanged" xml:space="preserve"><value>{0}: {1} מכיל {2}.</value></data>
+  <data name="Event.Sheet.ListChanged" xml:space="preserve"><value>{0}: {1} השתנה.</value></data>
   <data name="Event.Sheet.RollAsked" xml:space="preserve"><value>{0} צריך להטיל {1}.</value></data>
   <data name="Event.Sheet.AskGm" xml:space="preserve"><value>המנחה בוחר עבור {0}: {1}.</value></data>
   <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>השחקן של {0} בוחר: {1}.</value></data>
   <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
   <data name="Event.Sheet.ScriptRolled" xml:space="preserve"><value>{0}: הכלל {1} הטיל {2}.</value></data>
+  <data name="Event.Sheet.Killed" xml:space="preserve"><value>{0} מת.</value></data>
+  <data name="Event.Sheet.ConcentrationEnded" xml:space="preserve"><value>{0} מפסיק להתרכז; {1} השפעות מוחזקות מסתיימות.</value></data>
+  <data name="Event.Sheet.CounterChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: השולחן עדיין לא מבצע {1}.</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0}: הטלת {1} — {2} ({3}).</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>מערכה</value></data>

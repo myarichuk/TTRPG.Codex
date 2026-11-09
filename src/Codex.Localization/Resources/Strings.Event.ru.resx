@@ -158,11 +158,15 @@
   <data name="Event.Sheet.ConditionRemoved" xml:space="preserve"><value>{0}: больше не {1}.</value></data>
   <data name="Event.Sheet.TrackChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
   <data name="Event.Sheet.SlotsChanged" xml:space="preserve"><value>{0}: {1} — {2}.</value></data>
+  <data name="Event.Sheet.ListChanged" xml:space="preserve"><value>{0}: изменён список «{1}».</value></data>
   <data name="Event.Sheet.RollAsked" xml:space="preserve"><value>{0} должен бросить «{1}».</value></data>
   <data name="Event.Sheet.AskGm" xml:space="preserve"><value>Мастер выбирает за {0}: {1}.</value></data>
   <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>Игрок, ведущий {0}, выбирает: {1}.</value></data>
   <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
   <data name="Event.Sheet.ScriptRolled" xml:space="preserve"><value>{0}: правило «{1}» бросило {2}.</value></data>
+  <data name="Event.Sheet.Killed" xml:space="preserve"><value>{0} погибает.</value></data>
+  <data name="Event.Sheet.ConcentrationEnded" xml:space="preserve"><value>{0} теряет концентрацию; удерживаемых эффектов закончилось: {1}.</value></data>
+  <data name="Event.Sheet.CounterChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: стол пока не умеет «{1}».</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} бросает «{1}»: {2} ({3}).</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>Кампания</value></data>

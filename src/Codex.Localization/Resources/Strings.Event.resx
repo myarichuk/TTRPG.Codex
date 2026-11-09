@@ -158,11 +158,15 @@
   <data name="Event.Sheet.ConditionRemoved" xml:space="preserve"><value>{0} is no longer {1}.</value></data>
   <data name="Event.Sheet.TrackChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
   <data name="Event.Sheet.SlotsChanged" xml:space="preserve"><value>{0}: {1} holds {2}.</value></data>
+  <data name="Event.Sheet.ListChanged" xml:space="preserve"><value>{0}: {1} changed.</value></data>
   <data name="Event.Sheet.RollAsked" xml:space="preserve"><value>{0} is to roll {1}.</value></data>
   <data name="Event.Sheet.AskGm" xml:space="preserve"><value>The GM chooses for {0}: {1}.</value></data>
   <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>The player of {0} chooses: {1}.</value></data>
   <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
   <data name="Event.Sheet.ScriptRolled" xml:space="preserve"><value>{0}: the {1} rule rolled {2}.</value></data>
+  <data name="Event.Sheet.Killed" xml:space="preserve"><value>{0} dies.</value></data>
+  <data name="Event.Sheet.ConcentrationEnded" xml:space="preserve"><value>{0} stops concentrating; {1} held effects end.</value></data>
+  <data name="Event.Sheet.CounterChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: the table does not do {1} yet.</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} rolled {1}: {2} ({3}).</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>Campaign</value></data>

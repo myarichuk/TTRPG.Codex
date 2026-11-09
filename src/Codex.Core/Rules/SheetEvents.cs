@@ -60,7 +60,15 @@ public static partial class SheetEvents
     public const string AskKind = "ask";
     public const string LogKind = "log";
 
-    public static readonly IReadOnlyList<string> IntentKinds = new[] { "adjust", "set", "mark", "clear", "condition", "roll", "ask", "log" };
+    public static readonly IReadOnlyList<string> IntentKinds = new[]
+    {
+        "adjust", "set", "mark", "clear", "condition", "roll", "ask", "log",
+        VitalsHandlers.KillKind, VitalsHandlers.EndConcentrationKind, VitalsHandlers.CounterKind
+    };
+
+    /// <summary>The intents the table does to a creature rather than to its sheet (<see cref="VitalsHandlers"/>): <c>kill</c>,
+    /// <c>endConcentration</c> and <c>counter</c>.</summary>
+    public static readonly IReadOnlyList<string> TableKinds = new[] { VitalsHandlers.KillKind, VitalsHandlers.EndConcentrationKind, VitalsHandlers.CounterKind };
 
     /// <summary>The intents an event can be on its own: changes to the sheet.</summary>
     public static readonly IReadOnlyList<string> DirectKinds = new[] { "adjust", "set", "mark", "clear", "condition" };

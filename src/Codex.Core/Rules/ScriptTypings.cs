@@ -106,6 +106,12 @@ public static class ScriptTypings
         w.AppendLine("  | { roll: { definition: RollKey; actor?: string; [input: string]: unknown } }");
         w.AppendLine("  | { ask: { who: \"gm\" | \"player\"; choices: string[] } }");
         w.AppendLine("  | { log: { key: string; args?: Plain[] } }");
+        w.AppendLine("  /** The creature dies: its dead condition, and what it held and the effects counted on its turns end. */");
+        w.AppendLine("  | { kill: { actor?: string; condition?: ConditionName } }");
+        w.AppendLine("  /** Every effect the creature holds up by concentrating ends, on whichever creature carries it. */");
+        w.AppendLine("  | { endConcentration: { actor?: string } }");
+        w.AppendLine("  /** A tally the table keeps beside the sheet (death saves). */");
+        w.AppendLine("  | { counter: { key: string; to: number; actor?: string } | { key: string; by: number; actor?: string } | { key: string; clear: true; actor?: string } }");
         if (system.Campaign?.Clocks != null)
         {
             w.AppendLine("  | { adjust: { clock: string; by: number } }");
