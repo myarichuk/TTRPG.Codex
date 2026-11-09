@@ -836,6 +836,68 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         Assert.Empty(pageErrors);
     }
 
+    /// <summary>The editor's suggestions and help (47): "{{" offers the blocks (no secret in the party draft), "art:" this edition's pictures by name,
+    /// hovering an entry's marker says whose it is; turned off from the menu, nothing is offered, and it stays off in this browser.</summary>
+    [Fact]
+    public async Task TheEditorSuggestsBlocksAndPictures_ExplainsAMarker_AndCanBeTurnedOff()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bas-dm-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await using var context = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await context.NewPageAsync();
+        var pageErrors = new List<string>();
+        dm.PageError += (_, e) => pageErrors.Add(e);
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        await _app.SeedActorsAsync([new Codex.Web.TestSeedActor
+        {
+            Id = "bas-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera Holloway", Visibility = Codex.Persistence.ActorVisibility.Known, Biography = "Keeps the lighthouse."
+        }]);
+        await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+        await dm.GetByTestId("book-edition").SelectOptionAsync("party");
+        await dm.GetByTestId("book-tab-draft").ClickAsync();
+        await dm.GetByTestId("book-draft-open").ClickAsync();
+        await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await Assertions.Expect(dm.Locator(".cm-content")).ToContainTextAsync("Vera Holloway", new() { Timeout = 30_000 });
+
+        await dm.Locator(".cm-content").ClickAsync();
+        await dm.Keyboard.PressAsync("ControlOrMeta+End");
+        await dm.Keyboard.TypeAsync("\n{{");
+        var list = dm.Locator(".cm-tooltip-autocomplete");
+        await Assertions.Expect(list).ToBeVisibleAsync();
+        await Assertions.Expect(list).ToContainTextAsync("note");
+        await Assertions.Expect(list).ToContainTextAsync("portrait");
+        await Assertions.Expect(list).Not.ToContainTextAsync("secret");
+        await dm.Keyboard.PressAsync("Escape");
+        await dm.Keyboard.TypeAsync("portrait\n![Vera](art:Ve");
+        await Assertions.Expect(list).ToContainTextAsync("Vera Holloway");
+        // The list takes no key for a moment after it changes (CodeMirror's interactionDelay); a person is never that quick.
+        await dm.WaitForTimeoutAsync(200);
+        await dm.Keyboard.PressAsync("Enter");
+        // The key, and one closing bracket (the editor had already closed it).
+        await Assertions.Expect(dm.Locator(".cm-content")).ToContainTextAsync(new System.Text.RegularExpressions.Regex(@"\]\(art:s[0-9a-f]{24}\)"));
+        Assert.DoesNotContain("))", await dm.Locator(".cm-content").InnerTextAsync());
+
+        // Hovering an entry's marker says whose it is.
+        await dm.Locator(".cm-line", new() { HasText = "{{entry,#e-" }).First.HoverAsync(new() { Position = new() { X = 30, Y = 5 } });
+        await Assertions.Expect(dm.Locator(".cm-book-help")).ToContainTextAsync("Vera Holloway");
+
+        // Off from the menu: nothing is offered, and it stays off after the page is loaded again.
+        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-assist")).ToHaveAttributeAsync("aria-checked", "true");
+        await dm.GetByTestId("book-draft-assist").ClickAsync();
+        await dm.Locator(".cm-content").ClickAsync();
+        await dm.Keyboard.PressAsync("ControlOrMeta+End");
+        await dm.Keyboard.TypeAsync("\n{{");
+        await dm.WaitForTimeoutAsync(400);
+        Assert.Equal(0, await list.CountAsync());
+        await dm.GetByTestId("book-draft-more").ClickAsync();
+        await Assertions.Expect(dm.GetByTestId("book-draft-assist")).ToHaveAttributeAsync("aria-checked", "false");
+        Assert.Equal("0", await dm.EvaluateAsync<string>("localStorage.getItem('codex.bookEditor.assist')"));
+        Assert.Empty(pageErrors);
+    }
+
     /// <summary>Fit pages from the editor (41.15): the preview says pages run on, Fit pages writes the breaks into the chapter (shown in the
     /// editor, saved, the chapter not marked edited), and a block too tall for any page is named with its chapter, before the PDF and after it.</summary>
     [Fact]

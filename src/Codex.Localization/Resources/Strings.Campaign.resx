@@ -925,6 +925,26 @@
   <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>That player's own copy of the party book: what only their characters were told is added in notes. Nothing is stored.</value></data>
   <data name="Campaign.Book.Draft.Edge" xml:space="preserve"><value>Torn page edges</value></data>
   <data name="Campaign.Book.Draft.EdgeHint" xml:space="preserve"><value>Every page's edge torn, with the paper's fibres showing. The text and the footer stay clear of it.</value></data>
+  <data name="Campaign.Book.Draft.Assist" xml:space="preserve"><value>Suggestions and help</value></data>
+  <data name="Campaign.Book.Draft.AssistHint" xml:space="preserve"><value>While you type: the blocks after {{{{, a picture's frames, \page and \column, and this edition's pictures after art:. Hover over a block, a picture or an entry's marker to see what it is.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.note" xml:space="preserve"><value>A boxed note or sidebar, with a heading of its own.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.descriptive" xml:space="preserve"><value>Read-aloud text: what the players hear.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.secret" xml:space="preserve"><value>A GM secret: printed in the GM edition only, in a box.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.monster" xml:space="preserve"><value>A stat block. Add ,frame for a framed one.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.portrait" xml:space="preserve"><value>A portrait beside the text. Put a picture inside: ![caption](art:…).</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.place" xml:space="preserve"><value>A picture as wide as the column.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.spot" xml:space="preserve"><value>A small picture that closes an entry.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.wide" xml:space="preserve"><value>Runs across both columns of the page.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.quote" xml:space="preserve"><value>A quotation, with {{{{attribution …}}}} for who said it.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.torn" xml:space="preserve"><value>The picture looks torn from a print.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.oval" xml:space="preserve"><value>The picture in an oval.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.round" xml:space="preserve"><value>The picture in a circle.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.frame" xml:space="preserve"><value>A frame around the stat block.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.page" xml:space="preserve"><value>Starts a new page.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.column" xml:space="preserve"><value>Starts the next column.</value></data>
+  <data name="Campaign.Book.Draft.Help.Slot" xml:space="preserve"><value>Picture: {0}</value></data>
+  <data name="Campaign.Book.Draft.Help.Entry" xml:space="preserve"><value>Where the entry {0} starts. The program keeps this line: leave it as it is.</value></data>
+  <data name="Campaign.Book.Draft.Help.GmOnly" xml:space="preserve"><value>A GM secret: the party edition never prints it, so it does not belong here.</value></data>
   <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>Download Markdown (.md)</value></data>
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>The chapters as one Markdown file, for Homebrewery or a text editor. The pictures and the stylesheet are not in it.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>This is the GM edition: it holds every secret. Keep the file away from the players.</value></data>

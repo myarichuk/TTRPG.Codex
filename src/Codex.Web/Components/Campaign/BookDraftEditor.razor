@@ -78,6 +78,10 @@
                                         @onclick="EdgeAsync" disabled="@(working || state == SaveState.Conflict)" title="@L["Campaign.Book.Draft.EdgeHint"]" data-testid="book-draft-edge">
                                     <LucideIcon IconName="@(view.Edge ? "check" : "square")" Size="14" /> @L["Campaign.Book.Draft.Edge"]
                                 </button>
+                                <button type="button" role="menuitemcheckbox" aria-checked="@(assistOn ? "true" : "false")" class="book-draft-menu-item" @onclick="AssistToggleAsync"
+                                        title="@L["Campaign.Book.Draft.AssistHint"]" data-testid="book-draft-assist">
+                                    <LucideIcon IconName="@(assistOn ? "check" : "square")" Size="14" /> @L["Campaign.Book.Draft.Assist"]
+                                </button>
                                 <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="MarkdownAsync" disabled="@printing"
                                         title="@L["Campaign.Book.Draft.MarkdownHint"]" data-testid="book-draft-markdown">
                                     <LucideIcon IconName="file-text" Size="14" /> @L["Campaign.Book.Draft.Markdown"]
@@ -832,7 +836,8 @@
                 shell = shell.Html,
                 artUrl = $"{BasePath}/book/{edition}/draft/{language}/art",
                 current = asked,
-                rtl = BookThemes.IsRtl(language)
+                rtl = BookThemes.IsRtl(language),
+                assist = await AssistAsync()
             }, self, new
             {
                 overflow = L["Campaign.Book.Draft.Overflow"].ToString(),
@@ -1311,6 +1316,48 @@
     private enum Pane { Chapters, Preview }
 
     private const string LayoutKey = "codex.bookEditor.layout";
+    private const string AssistKey = "codex.bookEditor.assist";
+
+    // Suggestions and hover help in the editor (docs/BOOK_EXPORT.md 47): on unless the GM turned them off in this browser.
+    private bool assistOn = true;
+
+    private async Task AssistToggleAsync()
+    {
+        moreOpen = false;
+        assistOn = !assistOn;
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", AssistKey, assistOn ? "1" : "0");
+        }
+        catch (JSException)
+        {
+        }
+
+        if (module != null && editorId != null) await module.InvokeVoidAsync("setAssist", editorId, assistOn);
+    }
+
+    /// <summary>What the editor's suggestions need: this edition's picture slots by their labels, and the help in the GM's language.</summary>
+    private async Task<object> AssistAsync()
+    {
+        string T(string key) => L[key];
+        var slots = await Drafts.SlotsAsync(Access, edition, language);
+        return new
+        {
+            on = assistOn,
+            dm = edition == "dm",
+            slots = slots.Select(s => new { key = s.Key, kind = s.Kind, label = s.Label }),
+            help = new
+            {
+                blocks = new[] { "note", "descriptive", "secret", "monster", "portrait", "place", "spot", "wide", "quote" }.ToDictionary(b => b, b => T("Campaign.Book.Draft.Help.Block." + b)),
+                frames = new[] { "torn", "oval", "round", "frame" }.ToDictionary(f => f, f => T("Campaign.Book.Draft.Help.Frame." + f)),
+                breaks = new[] { "page", "column" }.ToDictionary(b => b, b => T("Campaign.Book.Draft.Help.Break." + b)),
+                slot = T("Campaign.Book.Draft.Help.Slot"),
+                entry = T("Campaign.Book.Draft.Help.Entry"),
+                spot = T("Campaign.Book.Art.Spot"),
+                gmOnly = T("Campaign.Book.Draft.Help.GmOnly")
+            }
+        };
+    }
     private bool chaptersOpen = true;
     private bool previewOpen = true;
     private bool panelOpen = true;
@@ -1367,6 +1414,7 @@
         layoutRead = true;
         try
         {
+            assistOn = await JS.InvokeAsync<string?>("localStorage.getItem", AssistKey) != "0";
             var saved = await JS.InvokeAsync<string?>("localStorage.getItem", LayoutKey);
             if (saved?.Split('|') is [var chapters, var preview, var panel, var tab])
             {

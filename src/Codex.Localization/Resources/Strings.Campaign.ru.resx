@@ -925,6 +925,26 @@
   <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>Собственный экземпляр книги группы для этого игрока: то, что знали только его персонажи, добавлено в заметках. Ничего не сохраняется.</value></data>
   <data name="Campaign.Book.Draft.Edge" xml:space="preserve"><value>Рваные края страниц</value></data>
   <data name="Campaign.Book.Draft.EdgeHint" xml:space="preserve"><value>Края каждой страницы оборваны, видны волокна бумаги. Текст и колонтитул остаются в стороне.</value></data>
+  <data name="Campaign.Book.Draft.Assist" xml:space="preserve"><value>Подсказки и справка</value></data>
+  <data name="Campaign.Book.Draft.AssistHint" xml:space="preserve"><value>При наборе: блоки после {{{{, рамки картинок, \page и \column, картинки этого издания после art:. Наведите указатель на блок, картинку или метку записи, чтобы узнать, что это.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.note" xml:space="preserve"><value>Заметка или врезка в рамке, со своим заголовком.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.descriptive" xml:space="preserve"><value>Текст для зачитывания: то, что слышат игроки.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.secret" xml:space="preserve"><value>Секрет мастера: печатается только в издании мастера, в рамке.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.monster" xml:space="preserve"><value>Блок характеристик. Добавьте ,frame для рамки.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.portrait" xml:space="preserve"><value>Портрет рядом с текстом. Внутрь — картинка: ![подпись](art:…).</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.place" xml:space="preserve"><value>Картинка во всю ширину колонки.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.spot" xml:space="preserve"><value>Маленькая картинка в конце записи.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.wide" xml:space="preserve"><value>Во всю ширину страницы, через обе колонки.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.quote" xml:space="preserve"><value>Цитата; {{{{attribution …}}}} — кто её сказал.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.torn" xml:space="preserve"><value>Картинка словно вырвана из отпечатка.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.oval" xml:space="preserve"><value>Картинка в овале.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.round" xml:space="preserve"><value>Картинка в круге.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.frame" xml:space="preserve"><value>Рамка вокруг блока характеристик.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.page" xml:space="preserve"><value>Начинает новую страницу.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.column" xml:space="preserve"><value>Начинает следующую колонку.</value></data>
+  <data name="Campaign.Book.Draft.Help.Slot" xml:space="preserve"><value>Картинка: {0}</value></data>
+  <data name="Campaign.Book.Draft.Help.Entry" xml:space="preserve"><value>Здесь начинается запись «{0}». Эту строку ведёт программа: оставьте её как есть.</value></data>
+  <data name="Campaign.Book.Draft.Help.GmOnly" xml:space="preserve"><value>Секрет мастера: издание группы его никогда не печатает, здесь ему не место.</value></data>
   <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>Скачать Markdown (.md)</value></data>
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>Все главы одним файлом Markdown — для Homebrewery или текстового редактора. Иллюстраций и таблицы стилей в нём нет.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>Это издание мастера: в нём все секреты. Не показывайте файл игрокам.</value></data>

@@ -2500,3 +2500,25 @@ facing pages. Measured: a dash pattern made Chromium print one shape per dash, a
 values, the generator placing a block and an AI edit keeping it back), `BookMasksFrameTests`, the settings test in `BookDraftTests`, the two print tests.
 Mutants caught: the modifier rule hard-coded; no escaping; no id; no text path; the block not written; the edge reset by another setting; the edge
 always on; the party filter for hidden types.
+
+## 47. Suggestions and help in the editor (2026-11-09)
+
+While the GM writes a chapter (`tools/book-editor/src/assist.js`, CodeMirror's own completion and hover):
+- after `{{` at a line's start, the blocks a GM writes (note, descriptive, secret in the GM draft only, monster, portrait, place, spot, wide, quote),
+  each with a line of help; the program's own blocks (chapter, entry, properties, the art blocks it writes) are not offered;
+- after a picture block's comma, its frames (torn, oval, round, section 46), and `frame` for a stat block;
+- after `\` at a line's start, `page` and `column`;
+- after `](art:`, this edition's picture slots (`BookDrafts.SlotsAsync`: the slots as this edition gives them, so the party draft's labels are the
+  party's), found by their labels and typed as the key with one closing bracket (the editor may already have closed it);
+- hovering a block's name, an `art:` key or an entry's marker says what it is (a marker: "where the entry … starts; leave it as it is"; a secret
+  block in the party draft: that it never prints there).
+Nothing is typed unless picked. **More → Suggestions and help** turns all of it off at once (a CodeMirror compartment, so the open editor changes
+without reloading), remembered in this browser (`codex.bookEditor.assist`); on by default. The stylesheet never has it. The help is in the GM's
+language (`Campaign.Book.Draft.Help.*`, en/ru/he).
+
+**Tests:** `tools/book-editor/test-assist.mjs` (in `npm test`: blocks, no secret for the party, no program blocks, frames not repeated, breaks,
+pictures by label, a spot as the small picture after its entry, the pick with and without a closing bracket) and
+`BookRouteE2ETests.TheEditorSuggestsBlocksAndPictures_ExplainsAMarker_AndCanBeTurnedOff`. Playwright has to wait a moment before Enter: the list
+ignores keys for 75 ms after it changes (CodeMirror's `interactionDelay`).
+
+**Not done:** no suggestions inside a block (a stat block's lines) or for Homebrewery's own rarer blocks; no completion of the CSS editor.

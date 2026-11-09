@@ -13,6 +13,7 @@ import { tags } from '@lezer/highlight';
 import { unifiedMergeView, getOriginalDoc, getChunks, acceptChunk, rejectChunk, goToNextChunk, goToPreviousChunk } from '@codemirror/merge';
 import { reviewDiffConfig } from './review-diff.js';
 import { layout } from './render.js';
+import { assist } from './assist.js';
 
 // The Markdown's and the stylesheet's colours from the app's own palette (CSS variables), so the editor is dark or light as the app is.
 const bookHighlight = syntaxHighlighting(HighlightStyle.define([
@@ -39,7 +40,8 @@ function debounce(fn, ms) {
 }
 
 /**
- * Opens the editor in `host`, the preview in `frame`. `book` = { chapters: [{section, markdown}], css, shell, artUrl, current, rtl }.
+ * Opens the editor in `host`, the preview in `frame`. `book` = { chapters: [{section, markdown}], css, shell, artUrl, current, rtl, assist }.
+ * `book.assist` = { on, help, slots, dm }: the suggestions and hover help (assist.js), and whether they start on.
  * `dotnet` gets Changed(section) after typing stops, and CssChanged() for the stylesheet.
  */
 export async function open(host, frame, book, dotnet, labels) {
@@ -52,6 +54,10 @@ export async function open(host, frame, book, dotnet, labels) {
 
   const language = new Compartment();
   const locked = new Compartment();
+  const assisting = new Compartment();
+  const assistance = book.assist ? assist(book.assist.help || {}, book.assist.slots || [], !!book.assist.dm) : [];
+  state.assistance = assistance;
+  state.assistOn = !!book.assist?.on;
   // A Hebrew draft: each line takes its own direction from its first letters, so Hebrew prose reads from the right and a line of markup
   // ({{frontCover}}, \page, an entry's marker) reads as written instead of mirrored around its punctuation.
   // (plaintext bidi sets each line's direction; perLineTextDirection makes CodeMirror read it back for the cursor and selection.)
@@ -77,7 +83,7 @@ export async function open(host, frame, book, dotnet, labels) {
     parent: host,
     state: EditorState.create({
       doc: text(state),
-      extensions: [basicSetup, bookHighlight, keymap.of([indentWithTab]), EditorView.lineWrapping, direction, language.of(markdown()), locked.of([]),
+      extensions: [basicSetup, bookHighlight, keymap.of([indentWithTab]), EditorView.lineWrapping, direction, language.of(markdown()), locked.of([]), assisting.of(book.assist?.on ? assistance : []), helpTheme,
         EditorView.updateListener.of(u => {
           // A chapter put into the editor (shown, replaced by the server) is not typing: it must not be saved back.
           if (!u.docChanged || state.loading) return;
@@ -90,6 +96,7 @@ export async function open(host, frame, book, dotnet, labels) {
   });
   state.language = language;
   state.locked = locked;
+  state.assisting = assisting;
   state.direction = direction;
 
   // The frame is sandboxed with no script; allow-same-origin only so this page can draw into it and measure what it drew.
@@ -136,6 +143,18 @@ function load(state, value) {
   }
 }
 
+/** Suggestions and hover help on or off (docs/BOOK_EXPORT.md 47), at once, in the open editor. The stylesheet never has them: they are the book's
+ * blocks, not CSS. */
+export function setAssist(id, on) {
+  const state = editors.get(id);
+  if (!state) return;
+  state.assistOn = !!on;
+  state.view.dispatch({ effects: state.assisting.reconfigure(on && state.mode !== 'css' ? state.assistance : []) });
+}
+
+// The hover help's box: the editor's own colours, a readable width.
+const helpTheme = EditorView.theme({ '.cm-book-help': { padding: '4px 8px', maxWidth: '22rem', fontSize: '.85em', lineHeight: '1.35' } });
+
 /** What is waiting to be saved, taken out of the queue: the server saves it itself, and knows when it is done (before closing, printing,
  * or acting on a chapter). */
 export function flush(id) {
@@ -154,7 +173,8 @@ export function show(id, section) {
   if (!state) return;
   state.mode = section == null ? 'css' : 'md';
   if (section != null) state.current = section;
-  state.view.dispatch({ effects: state.language.reconfigure(state.mode === 'css' ? css() : markdown()) });
+  state.view.dispatch({ effects: [state.language.reconfigure(state.mode === 'css' ? css() : markdown()),
+    state.assisting.reconfigure(state.assistOn && state.mode !== 'css' ? state.assistance : [])] });
   load(state, text(state));
   state.view.focus();
   if (section != null) scrollTo(state, section);

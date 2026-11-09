@@ -925,6 +925,26 @@
   <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>עותק אישי של ספר החבורה לשחקן הזה: מה שנאמר רק לדמויות שלו נוסף בהערות. דבר אינו נשמר.</value></data>
   <data name="Campaign.Book.Draft.Edge" xml:space="preserve"><value>שולי דף קרועים</value></data>
   <data name="Campaign.Book.Draft.EdgeHint" xml:space="preserve"><value>שולי כל דף קרועים, וסיבי הנייר נראים. הטקסט והכותרת התחתונה אינם נפגעים.</value></data>
+  <data name="Campaign.Book.Draft.Assist" xml:space="preserve"><value>הצעות ועזרה</value></data>
+  <data name="Campaign.Book.Draft.AssistHint" xml:space="preserve"><value>בזמן ההקלדה: בלוקים אחרי {{{{, מסגרות לתמונות, ‏\page ו-\column, ותמונות המהדורה הזו אחרי art:. רחפו מעל בלוק, תמונה או סימן של רשומה כדי לראות מה הוא.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.note" xml:space="preserve"><value>הערה או מסגרת צד, עם כותרת משלה.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.descriptive" xml:space="preserve"><value>טקסט להקראה: מה שהשחקנים שומעים.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.secret" xml:space="preserve"><value>סוד של המנחה: מודפס רק במהדורת המנחה, במסגרת.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.monster" xml:space="preserve"><value>בלוק נתונים. הוסיפו ,frame למסגרת.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.portrait" xml:space="preserve"><value>דיוקן לצד הטקסט. בתוכו תמונה: ![כיתוב](art:…).</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.place" xml:space="preserve"><value>תמונה ברוחב הטור.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.spot" xml:space="preserve"><value>תמונה קטנה שסוגרת רשומה.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.wide" xml:space="preserve"><value>לרוחב שני הטורים של הדף.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.quote" xml:space="preserve"><value>ציטוט, עם {{{{attribution …}}}} למי שאמר אותו.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.torn" xml:space="preserve"><value>התמונה נראית קרועה מתדפיס.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.oval" xml:space="preserve"><value>התמונה באליפסה.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.round" xml:space="preserve"><value>התמונה בעיגול.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.frame" xml:space="preserve"><value>מסגרת סביב בלוק הנתונים.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.page" xml:space="preserve"><value>מתחיל דף חדש.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.column" xml:space="preserve"><value>מתחיל את הטור הבא.</value></data>
+  <data name="Campaign.Book.Draft.Help.Slot" xml:space="preserve"><value>תמונה: {0}</value></data>
+  <data name="Campaign.Book.Draft.Help.Entry" xml:space="preserve"><value>כאן מתחילה הרשומה {0}. התוכנה שומרת על השורה הזו: השאירו אותה כפי שהיא.</value></data>
+  <data name="Campaign.Book.Draft.Help.GmOnly" xml:space="preserve"><value>סוד של המנחה: מהדורת החבורה לעולם לא מדפיסה אותו, ואין לו מקום כאן.</value></data>
   <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>הורדת Markdown (.md)</value></data>
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>כל הפרקים בקובץ Markdown אחד, ל-Homebrewery או לעורך טקסט. התמונות וגיליון הסגנונות אינם בו.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>זו מהדורת המנחה: יש בה כל הסודות. שמרו את הקובץ הרחק מהשחקנים.</value></data>

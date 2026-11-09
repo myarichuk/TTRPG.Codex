@@ -282,6 +282,17 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
     }
 
     /// <summary>
+    /// The edition's picture slots, for the editor's suggestions (docs/BOOK_EXPORT.md 47): each slot's key, kind and label as this edition gives
+    /// it (the party's labels are the party's: a stranger by their mask). Empty when not allowed.
+    /// </summary>
+    public async Task<IReadOnlyList<BookSlot>> SlotsAsync(CampaignAccess asked, string edition, string language)
+    {
+        if (await GenerateAsync(asked, edition, language) is not { } made) return [];
+        var compiled = BookComposer.Compose(made.Source, language, out var entries);
+        return BookSlots.For(made.Source, compiled, entries);
+    }
+
+    /// <summary>
     /// The players who have a book of their own, for the party draft's "Download PDF for…" (docs/BOOK_EXPORT.md 45). Empty for anyone but the
     /// campaign's GM.
     /// </summary>
