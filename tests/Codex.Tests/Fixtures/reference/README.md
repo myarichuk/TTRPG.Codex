@@ -18,12 +18,14 @@ This version reads part of each `system.yaml`: attributes, entity types and cond
 `lists` and `keyedLists` (`Codex.Core.Rules.SheetModel`); since step 3 `tracks`; since step 4 `rolls`
 (`Codex.Core.Rules.SheetRolls`); since step 5 `events` and the parts of tracks that act when a track changes
 (`Codex.Core.Rules.SheetEvents`, `SheetIntents`); since step 6 each sheet kind's `layout` (`Codex.Core.Rules.SheetLayout`);
-since step 7 `campaign` (`Codex.Core.Rules.CampaignObjects`). Every key is read now, and `ReferenceFixtureTests` checks that
-the loader names none as unread.
+since step 7 `campaign` (`Codex.Core.Rules.CampaignObjects`); since step 8 `functions` and handlers that are scripts
+(`Codex.Core.Rules.SystemScripts`). Every key is read now, and `ReferenceFixtureTests` checks that the loader names none as
+unread.
 
 ## How progress is tracked
 
-- `tests/Codex.Tests/Reference/ReferenceRunner.cs` checks every expectation against a host. Today the host is
+- `ReferenceRunner` (in `tools/Codex.SystemCheck`, which a system's author runs on their own `spec.yaml`) checks every
+  expectation against a host. Today the host is
   `CurrentEngineHost`, which runs the rules engine as it stands (`SheetRuleEngine.Recompute`). Each result is **pass**,
   **fail** (tried and got something else) or **unsupported** (the host has nothing that can do it yet, naming the step).
 - `progress.txt` lists the ids that pass. `ReferenceFixtureTests` fails when a listed id stops passing (a regression) and
@@ -33,7 +35,7 @@ the loader names none as unread.
 - An expectation that only says what must *not* happen ("no problems", "no conditions") passes on a host that checks
   nothing. So it names, in `requires`, the expectations that show the check exists, and counts only alongside them.
 
-At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58. After step 5: 78. After step 6: 80.
+At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58. After step 5: 78. After step 6: 80. After step 7: 83. After step 8: 95.
 
 ## spec.yaml
 
@@ -123,8 +125,8 @@ Tracks, as step 3 built them:
 
 Events and intents, as step 5 built them:
 - An event is `{ type, ...fields }`. Its handler (`events.<type>`) is a list of `{ when, intents }` lines, each adding its
-  intents when its `when` holds (no `when`: always), or `{ builtin: name, ...options }`, or `{ script }` (step 8; the loader
-  warns, and the event does nothing until then). A handler reads the sheet and the event (`ev.amount`, `ev.inputs.position`)
+  intents when its `when` holds (no `when`: always), or `{ builtin: name, ...options }`, or `{ script: file#export }` (scripts,
+  below). A handler reads the sheet and the event (`ev.amount`, `ev.inputs.position`)
   and returns intents; it changes nothing. A line with `target` acts on campaign objects (below).
 - In an intent's fields, `by`, `to`, `level` and `slot` are formulas. `key` (a log line's translation key), `definition` and
   `who` are names. Any other text is itself when it is a bare word or words (`stress`, `cut hand`), otherwise a formula
@@ -149,7 +151,7 @@ Events and intents, as step 5 built them:
   otherwise comes off `track`.
 - Aggregates take a list reached through a member as well (`count(ev.answers, a => a)`); a list of flags counts its `true`s,
   and `contains` finds text in a list of text.
-- The loader warns about a handler of the wrong shape, an unknown builtin or intent kind, a script handler, a handler for an
+- The loader warns about a handler of the wrong shape, an unknown builtin or intent kind, a handler for an
   intent kind (it never runs), an overflow into a track that is not there, without a maximum, or with an unknown `then`, and
   `whenFull`/`beyond` on anything but slots in levels.
 - A list in an intent's fields (a log line's `args`) is text, element by element, except an element that is a dotted path
@@ -207,6 +209,29 @@ Campaign objects, as step 7 built them (`Codex.Core.Rules.CampaignObjects`):
   so the change is in the session log and written back key by key. A player sees only what is not kept for the GM, and a log
   line naming such a thing (`EventTerm.GmOnly`) is left out of a player's log.
 
+Scripts, as step 8 built them (`Codex.Core.Rules.SystemScripts`, Jint):
+- A script is a `.js` file in the system's folder (or below it), at most 256 KB, an ES module with named exports. system.yaml
+  names an export as `file#export`: a function (`functions.<name>: { script }`) or a handler (`events.<type>: { script }`).
+  The loader reads only the files named; one outside the folder, missing, too big, not parsing or without the export is a
+  load problem, and that function has no value (a warning on the sheet) or that event fails at the table, saying why.
+- A function is called from formulas like a built-in, with as many arguments as the export declares (up to 4): numbers,
+  text and flags. It returns a number or `{ value, parts: [[label, amount], ...] }`. It is given nothing but its arguments,
+  so its results are cached by them; `reads` is accepted and not needed.
+- A handler is `export(ev, sheet, ctx)`. `ev` is the event's fields. `sheet` is plain data: `kind`, `attributes`, `values`
+  (keyed-list entries as `skills.handgun`), `tracks` (each one's current number; a slot track's text), `lists` (a keyed list
+  as a map by key, each entry its fields and derived values; a list of picks as an array of entries with `id`) and
+  `conditions` (thresholds' included). `ctx.call(name, ...args)` calls a named function; `ctx.d(sides)` rolls a die through
+  the host, and the table logs the faces. It returns a list of intents in system.yaml's shape, with plain values, not
+  formulas.
+- One more intent, for scripts and lines alike: `set { list, key, field, to }` and `adjust { list, key, field, by }` change a
+  per-pick field of a keyed-list entry (by key) or a pick (by id), a number within its field's bounds.
+- No .NET, no imports, no `Math.random`; at most 500 ms, 100000 statements, 16 MB, 64 calls deep and arrays of 10000 per
+  call, and 10000 values returned. Each file is parsed once; calls run on a small pool of engines, so a module keeps no
+  state between calls. A script that throws or breaks a limit fails with a message naming the system, the function or
+  handler, the script and the line.
+- `Codex.SystemCheck --types` writes `codex.d.ts` with the system's own names, for `// @ts-check` in an editor. The street
+  fixture's `rules.js` reads it, and a test keeps the committed one current.
+
 Rolls, as step 4 built them:
 - Inputs: each declared input is what the request supplied, else for `from: parent` the parent roll's, for `from: weapon`
   the `property` of the item the `weapon` input names (a pick on the sheet, else the library's entry), else its `default`.
@@ -241,7 +266,7 @@ Rolls, as step 4 built them:
 
 | Section | Holds |
 |---|---|
-| `functions` | Named functions: `{ formula: "(a, b) => ..." }` (built in) or `{ script: file#export, reads: [...] }` (Jint). Callable from any expression |
+| `functions` | Named functions: `{ formula: "(a, b) => ..." }` (built in) or `{ script: file#export }` (Jint). Callable from any expression |
 | `progressions` | Named per-level formulas (`bab.good: "level"`) that entries point at by name |
 | `modifierTypes` | `default` stacking, `penalties` stacking, and `types: { dodge: sum }`. Stacking is `sum`, `highest`, `lowest` or `best` |
 | `conditionEffects` | By condition name: `modifiers` that apply while it holds. `conditions` stays the list of names |

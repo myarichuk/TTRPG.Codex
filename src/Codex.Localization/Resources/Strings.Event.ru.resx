@@ -162,6 +162,7 @@
   <data name="Event.Sheet.AskGm" xml:space="preserve"><value>Мастер выбирает за {0}: {1}.</value></data>
   <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>Игрок, ведущий {0}, выбирает: {1}.</value></data>
   <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
+  <data name="Event.Sheet.ScriptRolled" xml:space="preserve"><value>{0}: правило «{1}» бросило {2}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: стол пока не умеет «{1}».</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} бросает «{1}»: {2} ({3}).</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>Кампания</value></data>

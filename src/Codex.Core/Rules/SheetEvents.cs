@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Text.RegularExpressions;
 using Codex.Plugin.Abstractions;
+using Codex.Plugin.Abstractions.Dice;
 
 namespace Codex.Core.Rules;
 
@@ -27,19 +28,15 @@ public sealed class SheetEventResult
     public CampaignIntentResult? Campaign { get; init; }
 }
 
-/// <summary>A handler that cannot run: a formula that fails, a builtin that does not exist. <see cref="NotYet"/> is set when
-/// the handler is one this version does not run at all (a script), saying why.</summary>
-public sealed class SheetEventException(string message, string? notYet = null) : Exception(message)
-{
-    public string? NotYet { get; } = notYet;
-}
+/// <summary>A handler that cannot run: a formula that fails, a builtin that does not exist, a script that fails or returns what
+/// is not a list of intents.</summary>
+public sealed class SheetEventException(string message) : Exception(message);
 
 /// <summary>
 /// The system's event handlers (overhaul section 3, "Events → intents"). A handler reads the sheet and the event and returns
 /// intents; it never changes anything. <see cref="Raise"/> then applies the intents for this sheet
 /// (<see cref="SheetIntents"/>) and leaves the rest (another actor's, rolls, asks, log lines) for the table.
-/// <para>A handler is <c>{ builtin: name, ...options }</c>, <c>{ script: file#export }</c> (overhaul step 8; not run by this
-/// version), or a list of <c>{ when, intents }</c> lines, each line's intents added when its <c>when</c> holds (one without
+/// <para>A handler is <c>{ builtin: name, ...options }</c>, <c>{ script: file#export }</c> (<see cref="SystemScripts"/>), or a list of <c>{ when, intents }</c> lines, each line's intents added when its <c>when</c> holds (one without
 /// <c>when</c> always does). In an intent's fields, <c>by</c>, <c>to</c>, <c>level</c> and <c>slot</c> are formulas; <c>key</c>,
 /// <c>definition</c> and <c>who</c> are names; any other text is itself when it is a bare word or words (<c>stress</c>, <c>cut hand</c>), and otherwise a formula
 /// (<c>ev.helper</c>, <c>'xp_' + actions[ev.inputs.action].group</c>). Formulas read the sheet, and the event as
@@ -85,11 +82,12 @@ public static partial class SheetEvents
     /// sheet. <paramref name="self"/> is the sheet's actor id, so an intent naming it applies too.</summary>
     /// <exception cref="SheetEventException">A handler that cannot run.</exception>
     /// <param name="campaign">The campaign's objects, which the campaign's intents change; null leaves those for the table.</param>
+    /// <param name="dice">Where a script handler's <c>ctx.d(sides)</c> rolls; null rolls at random.</param>
     public static SheetEventResult Raise(SystemDefinition system, IEntryResolver resolver, Dictionary<string, object> sheet, SheetEvent ev, string? self = null,
-        Dictionary<string, object>? campaign = null)
+        Dictionary<string, object>? campaign = null, IDiceSource? dice = null)
     {
         var direct = DirectKinds.Contains(ev.Type, StringComparer.Ordinal);
-        var intents = direct ? new List<SheetIntent>() : Handle(system, resolver, sheet, ev).ToList();
+        var intents = direct ? new List<SheetIntent>() : Handle(system, resolver, sheet, ev, dice).ToList();
         var toApply = direct
             ? new List<SheetIntent> { new(ev.Type, ev.Fields.GetValueOrDefault("actor")?.ToString(), ev.Fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => YamlValues.Normalize(f.Value), StringComparer.Ordinal)) }
             : intents;
@@ -116,7 +114,9 @@ public static partial class SheetEvents
 
     /// <summary>What the handlers for <paramref name="ev"/> return, nothing applied. No handler: none.</summary>
     /// <exception cref="SheetEventException">A handler that cannot run.</exception>
-    public static IReadOnlyList<SheetIntent> Handle(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, SheetEvent ev)
+    /// <param name="dice">Where a script's <c>ctx.d(sides)</c> rolls; null rolls at random.</param>
+    public static IReadOnlyList<SheetIntent> Handle(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, SheetEvent ev,
+        IDiceSource? dice = null)
     {
         if (!system.Events.TryGetValue(ev.Type, out var raw)) return Array.Empty<SheetIntent>();
         var model = new SheetModel(system, resolver, sheet);
@@ -131,7 +131,7 @@ public static partial class SheetEvents
                     var name => throw new SheetEventException($"The {ev.Type} handler names \"{name}\", which is not a built-in handler ({string.Join(", ", Builtins)}).")
                 };
             case IDictionary<string, object> map when map.TryGetValue("script", out var script):
-                throw new SheetEventException($"The {ev.Type} handler is a script ({script}).", "scripted handlers run from overhaul step 8 (Jint)");
+                return Scripted(system, model, sheet, ev, script?.ToString() ?? "", dice);
             case IEnumerable lines and not string and not IDictionary<string, object>:
                 var intents = new List<SheetIntent>();
                 foreach (var line in lines.Cast<object?>())
@@ -151,6 +151,121 @@ public static partial class SheetEvents
             default:
                 throw new SheetEventException($"The {ev.Type} handler is neither {{ builtin }}, {{ script }} nor a list of {{ when, intents }}.");
         }
+    }
+
+    // ---- Script handlers ----
+
+    /// <summary>
+    /// <c>{ script: file#export }</c>: the export is called as <c>export(ev, sheet, ctx)</c> (<see cref="SystemScripts"/>) and
+    /// returns a list of intents, each <c>{ kind: { fields } }</c> as in system.yaml, but plain values rather than formulas: the
+    /// script did the working. <c>sheet</c> is <see cref="ScriptView"/>; <c>ctx.call(name, ...args)</c> calls a named function,
+    /// <c>ctx.d(sides)</c> rolls a die through the host.
+    /// </summary>
+    private static IReadOnlyList<SheetIntent> Scripted(SystemDefinition system, SheetModel model, IReadOnlyDictionary<string, object> sheet, SheetEvent ev, string reference,
+        IDiceSource? dice)
+    {
+        var context = new SystemScripts.HandlerContext(model.CallNamed, sides => (dice ?? RandomDiceSource.Shared).Roll(sides));
+        object? returned;
+        try
+        {
+            returned = SystemScripts.For(system).Handler(ev.Type, reference, ev.Fields, ScriptView(system, model, sheet), context);
+        }
+        catch (FormulaException ex)
+        {
+            throw new SheetEventException(ex.Message);
+        }
+
+        if (returned == null) return Array.Empty<SheetIntent>();
+        if (returned is not IList list) throw new SheetEventException($"The {ev.Type} handler ({reference}) returned something that is not a list of intents.");
+        var intents = new List<SheetIntent>();
+        foreach (var raw in list)
+        {
+            if (raw is not IDictionary<string, object?> { Count: 1 } one || one.First().Value is not IDictionary<string, object?> fields)
+            {
+                throw new SheetEventException($"The {ev.Type} handler ({reference}) returned an intent that is not one kind and its fields ({{ adjust: {{ track, by }} }}).");
+            }
+
+            var kind = one.First().Key;
+            if (!IntentKinds.Contains(kind, StringComparer.Ordinal))
+            {
+                throw new SheetEventException($"The {ev.Type} handler ({reference}) returned \"{kind}\", which is not an intent ({string.Join(", ", IntentKinds)}).");
+            }
+
+            intents.Add(new SheetIntent(kind, fields.TryGetValue("actor", out var actor) ? actor?.ToString() : null,
+                fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => f.Value, StringComparer.Ordinal)));
+        }
+
+        return intents;
+    }
+
+    /// <summary>
+    /// The sheet as a script handler reads it, plain data made afresh: <c>kind</c>; <c>attributes</c> (scores by key);
+    /// <c>values</c> (every value of the sheet kind, keyed-list entries as <c>skills.handgun</c>); <c>tracks</c> (each track's
+    /// current number, or for a slot track what its slots hold); <c>lists</c> (a keyed list as a map by key, each entry its fields
+    /// and derived values; a list of picks as an array of its entries, each with its <c>id</c> and fields); and
+    /// <c>conditions</c> (those that hold, thresholds' included).
+    /// </summary>
+    internal static Dictionary<string, object?> ScriptView(SystemDefinition system, SheetModel model, IReadOnlyDictionary<string, object> sheet)
+    {
+        var evaluated = model.Evaluate();
+        var attributes = system.Attributes.ToDictionary(a => a.Key, a => (object?)(YamlValues.ToNumber(sheet.GetValueOrDefault(a.Key)) ?? a.Default), StringComparer.Ordinal);
+        var tracks = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var key in model.TrackKeys())
+        {
+            if (model.TrackOf(key) is not { } track) continue;
+            var raw = sheet.GetValueOrDefault(key);
+            tracks[key] = track.IsSlots
+                ? Strings(YamlValues.Normalize(raw)).Cast<object?>().ToList()
+                : YamlValues.ToNumber(raw) ?? track.Start ?? Math.Clamp(0, track.Min ?? double.MinValue, track.Max ?? double.MaxValue);
+        }
+
+        var lists = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (model.Kind is { } kind)
+        {
+            foreach (var keyed in kind.KeyedLists)
+            {
+                var stored = YamlValues.Normalize(sheet.GetValueOrDefault(keyed.Key)) as IDictionary<string, object> ?? new Dictionary<string, object>();
+                var entries = new Dictionary<string, object?>(StringComparer.Ordinal);
+                var ids = keyed.Keys.Where(k => k.Parameter == null).Select(k => k.Key)
+                    .Concat(stored.Keys.Where(id => keyed.Keys.Any(k => k.Parameter != null && id.StartsWith(k.Key + ".", StringComparison.Ordinal))));
+                foreach (var id in ids.Distinct(StringComparer.Ordinal))
+                {
+                    var entry = new Dictionary<string, object?>(StringComparer.Ordinal);
+                    foreach (var field in keyed.ItemFields) entry[field.Key] = YamlValues.Normalize(field.Default);
+                    if (stored.TryGetValue(id, out var at) && at is IDictionary<string, object> fields)
+                    {
+                        foreach (var (name, value) in fields) entry[name] = value;
+                    }
+
+                    foreach (var derived in keyed.Derive.Keys)
+                    {
+                        if (evaluated.Values.TryGetValue(derived == "value" ? $"{keyed.Key}.{id}" : $"{keyed.Key}.{id}.{derived}", out var worked)) entry[derived] = worked;
+                    }
+
+                    entries[id] = entry;
+                }
+
+                lists[keyed.Key] = entries;
+            }
+
+            foreach (var picks in kind.Lists)
+            {
+                var raw = YamlValues.Normalize(sheet.GetValueOrDefault(picks.Key));
+                lists[picks.Key] = (raw as IEnumerable ?? Array.Empty<object>()).Cast<object?>()
+                    .Select(i => i is IDictionary<string, object> map ? map.ToDictionary(p => p.Key, p => (object?)p.Value, StringComparer.Ordinal) : new Dictionary<string, object?> { ["id"] = i?.ToString() })
+                    .Cast<object?>().ToList();
+            }
+        }
+
+        return new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["kind"] = model.Kind?.Kind,
+            ["attributes"] = attributes,
+            ["values"] = evaluated.Values.ToDictionary(v => v.Key, v => (object?)v.Value, StringComparer.Ordinal),
+            ["tracks"] = tracks,
+            ["lists"] = lists,
+            ["conditions"] = evaluated.Conditions.Cast<object?>().ToList()
+        };
     }
 
     // ---- Campaign targets ----
@@ -376,7 +491,7 @@ public static partial class SheetEvents
                     if (!Builtins.Contains(builtin?.ToString(), StringComparer.Ordinal)) problems.Add($"The {type} handler names \"{builtin}\", which is not a built-in handler ({string.Join(", ", Builtins)}).");
                     break;
                 case IDictionary<string, object> map when map.ContainsKey("script"):
-                    problems.Add($"The {type} handler is a script, which this version does not run: the event does nothing.");
+                    // Checked with the system's other scripts (SystemScripts.Problems).
                     break;
                 case IEnumerable lines and not string and not IDictionary<string, object>:
                     foreach (var line in lines.Cast<object?>())

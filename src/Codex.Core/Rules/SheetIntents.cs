@@ -35,6 +35,9 @@ public sealed class SheetIntentResult
 /// track, <c>text</c> into a free slot (of <c>level</c>, pushing up a level at a time when the track says <c>whenFull:
 /// pushUp</c>, and bringing <c>beyond</c>'s condition past the last), or out of it.</item>
 /// <item><c>condition { add | remove }</c>: the sheet's own conditions.</item>
+/// <item><c>set { list, key, field, to }</c> and <c>adjust { list, key, field, by }</c>: a per-pick field of one entry, by its
+/// key in a keyed list (<c>skills</c>, <c>handgun</c>) or its id in a list of picks; a number field is kept within its
+/// <c>min</c> and <c>max</c>, and only a number field adjusts.</item>
 /// </list>
 /// A track the sheet has no value for starts from its <c>start</c> (none declared: from nothing, 0 within its bounds). Thresholds and bands are not applied here: they are worked
 /// out from the values whenever the sheet is read (<see cref="SheetModel"/>). Everything else comes back in
@@ -77,6 +80,8 @@ public static class SheetIntents
             var fields = intent.Fields;
             switch (intent.Kind)
             {
+                case "adjust" or "set" when fields.GetValueOrDefault("list")?.ToString() is { Length: > 0 } list:
+                    return ListField(intent.Kind == "set", list, fields);
                 case "adjust" when Key(fields) is { } track && YamlValues.ToNumber(fields.GetValueOrDefault("by")) is { } by:
                     return Adjust(track, by, 0);
                 case "set" when Key(fields) is { } track && YamlValues.ToNumber(fields.GetValueOrDefault("to")) is { } to:
@@ -172,6 +177,73 @@ public static class SheetIntents
             sheet[key] = value == Math.Floor(value) && Math.Abs(value) < long.MaxValue ? (object)(long)value : value;
             result.Touch(key);
         }
+
+        // ---- Fields of list entries ----
+
+        private bool ListField(bool set, string listKey, IReadOnlyDictionary<string, object?> fields)
+        {
+            if (fields.GetValueOrDefault("key")?.ToString() is not { Length: > 0 } entryKey || fields.GetValueOrDefault("field")?.ToString() is not { Length: > 0 } fieldKey) return false;
+            var kind = new SheetModel(system, resolver, sheet).Kind;
+            if (kind?.KeyedLists.FirstOrDefault(l => l.Key == listKey) is { } keyed)
+            {
+                var declared = keyed.Keys.Any(k => k.Parameter == null ? k.Key == entryKey : entryKey.StartsWith(k.Key + ".", StringComparison.Ordinal) && entryKey.Length > k.Key.Length + 1);
+                if (!declared || keyed.ItemFields.FirstOrDefault(f => f.Key == fieldKey) is not { } field) return false;
+                var stored = Copy(sheet.GetValueOrDefault(listKey) as IDictionary<string, object>);
+                var entry = Copy(stored.GetValueOrDefault(entryKey) as IDictionary<string, object>);
+                if (FieldValue(set, field, entry.GetValueOrDefault(fieldKey), fields) is not { } value) return false;
+                entry[fieldKey] = value;
+                stored[entryKey] = entry;
+                sheet[listKey] = stored;
+                result.Touch(listKey);
+                return true;
+            }
+
+            if (kind?.Lists.FirstOrDefault(l => l.Key == listKey) is { } picks)
+            {
+                if (picks.ItemFields.FirstOrDefault(f => f.Key == fieldKey) is not { } field || sheet.GetValueOrDefault(listKey) is not IEnumerable raw || raw is string) return false;
+                var items = raw.Cast<object?>().ToList();
+                var at = items.FindIndex(i => (i is IDictionary<string, object> map ? (map.TryGetValue("id", out var id) ? id?.ToString() : null) : i?.ToString()) == entryKey);
+                if (at < 0) return false;
+                var entry = items[at] is IDictionary<string, object> found ? Copy(found) : new Dictionary<string, object> { ["id"] = entryKey };
+                if (FieldValue(set, field, entry.GetValueOrDefault(fieldKey), fields) is not { } value) return false;
+                entry[fieldKey] = value;
+                items[at] = entry;
+                sheet[listKey] = items.Where(i => i != null).Cast<object>().ToList();
+                result.Touch(listKey);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>The field's new value: a number within the field's bounds, or (set, a field that is not a number) the text
+        /// given. Null when the intent does not fit the field.</summary>
+        private static object? FieldValue(bool set, ItemFieldDefinition field, object? current, IReadOnlyDictionary<string, object?> fields)
+        {
+            if (!field.Type.Equals("Number", StringComparison.OrdinalIgnoreCase))
+            {
+                return set && fields.GetValueOrDefault("to") is { } text ? text.ToString() : null;
+            }
+
+            double next;
+            if (set)
+            {
+                if (YamlValues.ToNumber(fields.GetValueOrDefault("to")) is not { } to) return null;
+                next = to;
+            }
+            else
+            {
+                if (YamlValues.ToNumber(fields.GetValueOrDefault("by")) is not { } by) return null;
+                next = (YamlValues.ToNumber(current) ?? YamlValues.ToNumber(field.Default) ?? 0) + by;
+            }
+
+            if (field.Min is { } min) next = Math.Max(next, min);
+            if (field.Max is { } max) next = Math.Min(next, max);
+            return next == Math.Floor(next) && Math.Abs(next) < long.MaxValue ? (object)(long)next : next;
+        }
+
+        private static Dictionary<string, object> Copy(IDictionary<string, object>? map) =>
+            map == null ? new Dictionary<string, object>(StringComparer.Ordinal) : new Dictionary<string, object>(map, StringComparer.Ordinal);
 
         // ---- Boxes and slots ----
 

@@ -35,8 +35,7 @@ street.a-skill-is-its-stat-plus-its-level
 street.emp-follows-current-humanity
 
 # Step 3 (tracks): maxima, slot tracks per class and level, thresholds and bands. Street's thresholds compare against
-# HP_Max, which its rules.js works out (step 8), so street.half-hit-points-is-seriously-wounded, street.just-above-half-is-not
-# and street.below-zero-is-both wait for Jint.
+# HP_Max, which its rules.js works out, so they passed with step 8 and are listed there.
 d35.slots-come-from-the-class-table-plus-bonus-spells
 d35.a-slot-holds-only-a-spell-of-its-class-and-level
 d35.vancian-slots-take-duplicates-but-not-more-than-they-have
@@ -44,7 +43,7 @@ crew.reputation-shrinks-with-turf
 
 # Step 4 (rolls): definitions with inputs, pools, keep, zero dice, explode/implode once, roll-under, outcomes, follow-up
 # rolls, intents and group rolls. street.a-serious-wound-takes-two-from-every-check needs the Seriously wounded threshold,
-# which compares against HP_Max (rules.js, step 8).
+# which compares against HP_Max (rules.js), so it is listed under step 8.
 d35.a-threat-confirmed-is-a-critical
 d35.a-threat-not-confirmed-is-a-hit
 d35.no-threat-below-the-range
@@ -102,3 +101,18 @@ crew.a-kind-without-a-layout-gets-a-generic-one
 crew.a-clock-fills-and-says-so
 crew.clock-sizes-are-the-systems
 crew.faction-status-stays-in-range
+
+# Step 8 (scripts): functions and event handlers in rules.js, run by Jint. With them, street's thresholds over HP_Max and the
+# check they hinder.
+street.hit-points-come-from-a-script-function
+street.hit-points-round-the-average-up
+street.half-hit-points-is-seriously-wounded
+street.just-above-half-is-not
+street.below-zero-is-both
+street.a-serious-wound-takes-two-from-every-check
+street.damage-through-armor-wears-it-down
+street.a-head-hit-doubles-what-gets-through
+street.armor-stops-damage-up-to-its-stopping-power
+street.thresholds-follow-the-intents
+street.advancing-a-skill-spends-improvement-points
+street.advancing-without-the-points-changes-nothing

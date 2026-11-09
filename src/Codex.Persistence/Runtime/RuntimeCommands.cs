@@ -998,7 +998,8 @@ public sealed record LogWikiRevealCommand(string PageTitle) : IRuntimeCommand
 /// <c>advance</c>, a custom one (<c>assist</c>), or an intent the GM makes directly (<c>mark</c> harm, <c>adjust</c> stress).
 /// The handler's intents are applied as <see cref="TableEvents"/> says, and can be undone like damage.
 /// </summary>
-public sealed record RaiseEventCommand(string ActorId, string Type, IReadOnlyDictionary<string, object?> Fields) : IUndoableCommand
+/// <param name="Dice">Where a script handler rolls; null: at random.</param>
+public sealed record RaiseEventCommand(string ActorId, string Type, IReadOnlyDictionary<string, object?> Fields, IDiceSource? Dice = null) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
 
@@ -1012,7 +1013,7 @@ public sealed record RaiseEventCommand(string ActorId, string Type, IReadOnlyDic
     public void Apply(CampaignRuntime runtime)
     {
         if (runtime.System is not { SheetKinds.Count: > 0 } system || !Codex.Core.Rules.SheetEvents.Handles(system, Type)) return;
-        _outcome = TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent(Type, Fields));
+        _outcome = TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent(Type, Fields), Dice);
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => Describe(runtime, "SheetEvent", ActorId, _outcome);

@@ -95,12 +95,13 @@ sheetKinds:
 
 rolls:
   # A check: stat + skill + d10 against a difficulty. A natural 10 adds one more d10 (once); a natural 1 takes one away
-  # (once). The second die never explodes or implodes again.
+  # (once). The second die never explodes or implodes again. A wound's penalty is on '@checks', which every skill lists
+  # among its groups, so the skill's value already carries it: adding modifiers('@checks') here would count it twice.
   - key: check
     dice: 1d10
     explode: { on: 10, times: 1 }
     implode: { on: 1, times: 1 }
-    add: ["skills[input.skill].value", "modifiers('@checks')"]
+    add: ["skills[input.skill].value"]
     inputs:
       - { key: skill, from: roller }
       - { key: difficulty, from: gm, label: Difficulty }

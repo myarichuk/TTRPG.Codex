@@ -450,6 +450,17 @@ public class SystemDefinition
     /// <summary>Translations by language tag ("ru"), filled by the loader from <c>system.&lt;locale&gt;.yaml</c> files.</summary>
     public Dictionary<string, SystemTranslation> Translations { get; set; } = new();
 
+    private readonly Dictionary<string, string> _scripts = new(System.StringComparer.Ordinal);
+
+    /// <summary>The system's script files (overhaul step 8) by file name (<c>rules.js</c>), as the loader read them from the
+    /// system's folder: the sources of <c>{ script: rules.js#export }</c>. Not part of system.yaml; a localized copy shares
+    /// them.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyDictionary<string, string> Scripts => _scripts;
+
+    /// <summary>Adds a script file's source, under the name <c>{ script: file#export }</c> uses.</summary>
+    public void AddScript(string file, string source) => _scripts[file] = source;
+
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SystemDefinition> _localized = new();
     private SystemDefinition? _canonical;
 

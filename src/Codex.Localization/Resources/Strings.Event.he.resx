@@ -162,6 +162,7 @@
   <data name="Event.Sheet.AskGm" xml:space="preserve"><value>המנחה בוחר עבור {0}: {1}.</value></data>
   <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>השחקן של {0} בוחר: {1}.</value></data>
   <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
+  <data name="Event.Sheet.ScriptRolled" xml:space="preserve"><value>{0}: הכלל {1} הטיל {2}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: השולחן עדיין לא מבצע {1}.</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0}: הטלת {1} — {2} ({3}).</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>מערכה</value></data>

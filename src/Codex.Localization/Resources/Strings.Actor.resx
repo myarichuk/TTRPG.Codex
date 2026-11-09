@@ -333,6 +333,7 @@
   <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>Once you save, players can read this character’s history, except its GM blocks. Check the rest for secrets first.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" is not in the Library.</value></data>
   <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: the system's formula for this can't be worked out, so it is left out. The GM can check the system's rules.</value></data>
+  <data name="Actor.Rule.ScriptError" xml:space="preserve"><value>{0}: the system's script failed, so it is left out. {1}</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} - {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} can only be taken once.</value></data>

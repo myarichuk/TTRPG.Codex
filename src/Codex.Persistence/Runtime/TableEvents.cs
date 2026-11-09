@@ -36,25 +36,48 @@ internal static class TableEvents
         public static readonly Outcome None = new(Array.Empty<EventMessage>(), Array.Empty<string>());
     }
 
-    public static Outcome Raise(CampaignRuntime runtime, string actorId, SheetEvent ev) =>
-        Change(runtime, actorId, ev.Type, (system, live, messages) =>
+    /// <param name="dice">Where a script handler's <c>ctx.d</c> rolls (null: at random); the faces it rolled are logged.</param>
+    public static Outcome Raise(CampaignRuntime runtime, string actorId, SheetEvent ev, IDiceSource? dice = null)
+    {
+        var rolled = new RecordingDice(dice ?? RandomDiceSource.Shared);
+        return Change(runtime, actorId, ev.Type, (system, live, messages) =>
         {
-            var raised = SheetEvents.Raise(system, runtime.Resolver, live, ev, actorId, runtime.CampaignObjectState);
+            var raised = SheetEvents.Raise(system, runtime.Resolver, live, ev, actorId, runtime.CampaignObjectState, rolled);
+            if (rolled.Said is { } faces) messages.Add(EventMessage.Of("Sheet.ScriptRolled", runtime.ActorTerm(actorId), Term(system, ev.Type), faces));
             Campaign(runtime, system, raised.Campaign, messages);
             return raised.Applied;
         });
+    }
+
+    /// <summary>The faces a script handler rolled, in order, so the log replays the dice actually rolled (overhaul section 4,
+    /// rule 3).</summary>
+    private sealed class RecordingDice(IDiceSource inner) : IDiceSource
+    {
+        private readonly List<string> _faces = new();
+
+        public int Roll(int sides)
+        {
+            var face = inner.Roll(sides);
+            _faces.Add($"d{sides}: {face}");
+            return face;
+        }
+
+        public string? Said => _faces.Count == 0 ? null : string.Join(", ", _faces);
+    }
 
     /// <summary>Raises an event that is the campaign's, on no sheet: its handlers read only the event, and what they ask of
     /// actors is done to those actors.</summary>
-    public static Outcome RaiseOnCampaign(CampaignRuntime runtime, SheetEvent ev)
+    public static Outcome RaiseOnCampaign(CampaignRuntime runtime, SheetEvent ev, IDiceSource? dice = null)
     {
         if (runtime.System is not { } system) return Outcome.None;
         var messages = new List<EventMessage>();
         var touched = new List<string>();
+        var rolled = new RecordingDice(dice ?? RandomDiceSource.Shared);
         SheetEventResult raised;
         try
         {
-            raised = SheetEvents.Raise(system, runtime.Resolver, new Dictionary<string, object>(), ev, null, runtime.CampaignObjectState);
+            raised = SheetEvents.Raise(system, runtime.Resolver, new Dictionary<string, object>(), ev, null, runtime.CampaignObjectState, rolled);
+            if (rolled.Said is { } faces) messages.Add(EventMessage.Of("Sheet.ScriptRolled", system.Name, Term(system, ev.Type), faces));
         }
         catch (Exception ex) when (ex is SheetEventException or FormulaException)
         {

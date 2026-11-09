@@ -5,7 +5,7 @@ using Codex.Plugin.Abstractions;
 using Codex.Plugin.Abstractions.Dice;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Codex.Tests.Reference;
+namespace Codex.SystemCheck;
 
 public enum CheckStatus
 {
@@ -81,24 +81,19 @@ public readonly record struct CheckOr<T>(T? Value, string? Unsupported)
     public static CheckOr<T> No(string why) => new(default, why);
 }
 
+/// <summary>Runs a system's <c>spec.yaml</c> (tests/Codex.Tests/Fixtures/reference/README.md has the format) against a host:
+/// the reference fixtures in the tests, and any system's own spec through <c>Codex.SystemCheck</c>.</summary>
 public static class ReferenceRunner
 {
-    public static readonly string Root = Path.Combine(TestPaths.RepoRoot, "tests", "Codex.Tests", "Fixtures", "reference");
-    public static readonly string LedgerFile = Path.Combine(Root, "progress.txt");
+    public const string SpecFile = "spec.yaml";
 
-    public static IReadOnlyList<string> FixtureRoots() =>
-        Directory.GetDirectories(Root).Where(d => File.Exists(Path.Combine(d, "spec.yaml"))).Order(StringComparer.Ordinal).ToList();
+    public static ReferenceSpec SpecOf(string fixtureRoot) => ReferenceSpec.Load(Path.Combine(fixtureRoot, SpecFile));
 
-    public static ReferenceSpec SpecOf(string fixtureRoot) => ReferenceSpec.Load(Path.Combine(fixtureRoot, "spec.yaml"));
-
-    /// <summary>The ids that pass today, from progress.txt: one per line, <c>#</c> starts a comment.</summary>
-    public static IReadOnlySet<string> Ledger() =>
-        File.ReadAllLines(LedgerFile).Select(l => (l.IndexOf('#') is var hash and >= 0 ? l[..hash] : l).Trim()).Where(l => l.Length > 0).ToHashSet(StringComparer.Ordinal);
-
-    public static IReadOnlyList<CheckResult> RunAll(IReferenceHost host)
+    /// <summary>Every expectation of each folder's spec (a folder holding a system.yaml and a spec.yaml).</summary>
+    public static IReadOnlyList<CheckResult> RunAll(IReferenceHost host, IEnumerable<string> roots)
     {
         var results = new List<CheckResult>();
-        foreach (var root in FixtureRoots())
+        foreach (var root in roots)
         {
             var spec = SpecOf(root);
             var system = host.Load(root, out var problem);
@@ -395,10 +390,6 @@ public sealed class CurrentEngineHost : IReferenceHost
             {
                 var result = SheetEvents.Raise(definition, this, after, new SheetEvent(ev.GetValueOrDefault("type")?.ToString() ?? "", fields), sheetId, campaign);
                 return CheckOr<EventCheck>.Of(new EventCheck(result.Intents.Select(Shape).ToList(), after));
-            }
-            catch (SheetEventException ex) when (ex.NotYet is { } notYet)
-            {
-                return CheckOr<EventCheck>.No($"{ex.Message} {char.ToUpperInvariant(notYet[0])}{notYet[1..]}.");
             }
             catch (SheetEventException ex)
             {

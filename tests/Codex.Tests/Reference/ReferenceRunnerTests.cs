@@ -1,3 +1,5 @@
+using Codex.SystemCheck;
+
 namespace Codex.Tests.Reference;
 
 /// <summary>
@@ -75,7 +77,7 @@ public class ReferenceRunnerTests : IDisposable
     }
 
     [Fact]
-    public void WhatTheEngineCannotDo_IsUnsupported_NamingTheStep_AndAnUndefinedRollFails()
+    public void WhatTheEngineCannotDo_IsUnsupported_NamingTheStep_AndAnUndefinedRollOrScriptFails()
     {
         var roll = Run(new SpecExpectation { Id = "t.roll", Sheet = "hero", Roll = new SpecRoll { Definition = "check", Dice = { 6 } }, Expect = { Outcome = "full" } });
         var unhandled = Run(new SpecExpectation { Id = "t.event", Sheet = "hero", Event = new() { ["type"] = "turnStart" }, Expect = { Intents = new() } });
@@ -85,10 +87,10 @@ public class ReferenceRunnerTests : IDisposable
         // A roll the system does not define is the system's problem, and fails saying so.
         Assert.Equal(CheckStatus.Fail, roll.Status);
         Assert.Contains("no roll called \"check\"", roll.Detail);
-        // An event nothing handles does nothing; one a script handles waits for scripts.
+        // An event nothing handles does nothing; one whose script is not there fails, saying so.
         Assert.Equal(CheckStatus.Pass, unhandled.Status);
-        Assert.Equal(CheckStatus.Unsupported, scripted.Status);
-        Assert.Contains("step 8", scripted.Detail);
+        Assert.Equal(CheckStatus.Fail, scripted.Status);
+        Assert.Contains("there is no script", scripted.Detail);
         Assert.Equal(CheckStatus.Unsupported, conditions.Status);
         Assert.Contains("step 3", conditions.Detail);
     }

@@ -256,7 +256,7 @@ public class SheetEventsTests
     }
 
     [Fact]
-    public void AHandlerThatCannotRun_SaysWhy_AndScriptsWaitForTheirStep()
+    public void AHandlerThatCannotRun_SaysWhy()
     {
         var system = System("""
             {
@@ -271,11 +271,8 @@ public class SheetEventsTests
             Assert.Throws<SheetEventException>(() => SheetEvents.Raise(system, NullEntryResolver.Instance, sheet, SheetEvent.Of(type)));
 
         Assert.Contains("nothing called \"nothing\"", Raise("broken").Message);
-        Assert.Null(Raise("broken").NotYet);
-        Assert.Contains("step 8", Raise("scripted").NotYet);
-        // A clock line on a system with no clocks is a mistake, not a step to wait for (campaign objects are step 7's).
+        Assert.Contains("there is no script rules.js", Raise("scripted").Message);
         Assert.Contains("has no clocks", Raise("tick").Message);
-        Assert.Null(Raise("tick").NotYet);
         Assert.Contains("not a built-in handler", Raise("odd").Message);
         Assert.Empty(SheetEvents.Raise(system, NullEntryResolver.Instance, sheet, SheetEvent.Of("unhandled")).Intents);
         Assert.Empty(sheet);
@@ -343,7 +340,8 @@ public class SheetEventsTests
         Assert.Contains(problems, p => p.Contains("\"teleport\", which is not a built-in"));
         Assert.Contains(problems, p => p.Contains("\"explode\", which is not an intent"));
         Assert.Contains(problems, p => p.Contains("A b handler line is not { when, intents }"));
-        Assert.Contains(problems, p => p.Contains("The c handler is a script"));
+        Assert.DoesNotContain(problems, p => p.Contains("The c handler"));
+        Assert.Contains(SystemScripts.Problems(system), p => p.Contains("The c handler names the script x.js, which is not in the system's folder"));
         Assert.Contains(problems, p => p.Contains("The d handler is neither"));
         Assert.Contains(problems, p => p.Contains("into \"nowhere\", which is not a track"));
         Assert.Contains(problems, p => p.Contains("not \"vanish\""));

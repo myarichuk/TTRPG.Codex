@@ -35,7 +35,32 @@ public static class SystemDefinitionLoader
         var folder = Path.GetFileName(Path.GetDirectoryName(Path.GetFullPath(path)));
         var definition = Parse(yaml, string.IsNullOrEmpty(folder) ? FileName : $"{folder}/{FileName}", unknownKeys);
         LoadTranslations(definition, path);
+        LoadScripts(definition, path);
         return definition;
+    }
+
+    /// <summary>The largest script file a system may have.</summary>
+    public const int MaxScriptBytes = 256 * 1024;
+
+    /// <summary>
+    /// Reads each script file the system names (<c>{ script: rules.js#export }</c>, in <c>functions</c> and <c>events</c>) from
+    /// the folder of <paramref name="systemYamlPath"/> into <see cref="SystemDefinition.Scripts"/>. Only a <c>.js</c> file in that
+    /// folder or below it, at most <see cref="MaxScriptBytes"/>; one that is not is left out, and
+    /// <see cref="Rules.SystemScripts.Problems"/> says so, as for a file that is not there.
+    /// </summary>
+    private static void LoadScripts(SystemDefinition definition, string systemYamlPath)
+    {
+        var directory = Path.GetDirectoryName(Path.GetFullPath(systemYamlPath));
+        if (directory == null) return;
+        var root = directory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        foreach (var file in Rules.SystemScripts.FilesNamed(definition))
+        {
+            if (!file.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || Path.IsPathRooted(file)) continue;
+            var full = Path.GetFullPath(Path.Combine(directory, file));
+            if (!full.StartsWith(root, StringComparison.Ordinal) || !File.Exists(full)) continue;
+            if (new FileInfo(full).Length > MaxScriptBytes) continue;
+            definition.AddScript(file, File.ReadAllText(full));
+        }
     }
 
     /// <summary>

@@ -3,6 +3,7 @@ using Codex.Core.Systems;
 using Codex.Persistence;
 using Codex.Persistence.Runtime;
 using Codex.Plugin.Abstractions;
+using Codex.Plugin.Abstractions.Dice;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Codex.Tests;
@@ -205,6 +206,49 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
 
         Assert.Equal(10, Pool(runtime, hero.Id, "HP"));
         Assert.Contains(await LogAsync(session), l => l.StartsWith("Vex: the system rule for heal could not run", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AScriptedHandler_RollsThroughTheTable_WhichLogsTheFaces_AndAScriptThatFails_ChangesNothing()
+    {
+        var system = SystemDefinitionLoader.Parse("""
+            id: table-scripts
+            name: Table scripts
+            functions:
+              bonus: { formula: "(x) => x + 1" }
+            sheetKinds:
+              - kind: hero
+                label: Hero
+                tracks:
+                  - { key: HP, max: 10, min: -5, start: max }
+            events:
+              burn: { script: rules.js#burn }
+              hang: { script: rules.js#hang }
+            """);
+        system.AddScript("rules.js", """
+            export function burn(ev, sheet, ctx) { return [{ adjust: { track: "HP", by: -ctx.call("bonus", ctx.d(6)) } }]; }
+            export function hang() { for (;;) {} }
+            """);
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await HeroAsync(campaignId, "Vex");
+        var session = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Status = SessionStatus.Live };
+        await _sessions.SaveAsync(session);
+        var runtime = new CampaignRuntime(campaignId, _actors, _registry, NullLogger.Instance, _sessions, session, system: system);
+        runtime.Hydrate(new[] { hero });
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new RaiseEventCommand(hero.Id, "burn", new Dictionary<string, object?>(), new SequenceDiceSource(new[] { 4 })));
+        Assert.Equal(5, Pool(runtime, hero.Id, "HP"));
+        Assert.Contains("Vex: the burn rule rolled d6: 4. Vex: HP 10 → 5.", await LogAsync(session));
+        await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
+        Assert.Equal(10, Pool(runtime, hero.Id, "HP"));
+
+        var hang = new RaiseEventCommand(hero.Id, "hang", new Dictionary<string, object?>());
+        await runtime.EnqueueAsync(hang);
+
+        Assert.Equal(10, Pool(runtime, hero.Id, "HP"));
+        Assert.Contains("ran more than 100000 statements", hang.Failed);
+        Assert.Contains(await LogAsync(session), l => l.StartsWith("Vex: the system rule for hang could not run", StringComparison.Ordinal));
     }
 
     [Fact]

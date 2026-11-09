@@ -85,7 +85,7 @@ public sealed class FormulaList(IReadOnlyList<FormulaItem> items, Func<string, o
 }
 
 /// <summary>A formula that names something the sheet doesn't have, or comes out as no number.</summary>
-public sealed class FormulaException(string message) : Exception(message);
+public class FormulaException(string message) : Exception(message);
 
 /// <summary>
 /// Parses the primitives' formulas once per system and formula (R7: content packs are anyone's, and parsing on every render
@@ -114,20 +114,35 @@ public sealed partial class SheetFormulas
         Builtins(_interpreter);
         foreach (var (name, function) in system.Functions)
         {
+            if (function.Script != null)
+            {
+                // A script function takes the parameters its export declares (rules.js's hitPoints(body, will): two).
+                if ((SystemScripts.For(system).Arity(function.Script) ?? function.Reads?.Count) is { } arity) Register(name, arity);
+                continue;
+            }
+
             if (function.Formula == null || LambdaHead().Match(function.Formula) is not { Success: true } head) continue;
             var parameters = head.Groups["params"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
             // The parser takes a name it knows as a function before a parameter of that name (bonusSpells(score, level) and
             // score(key)), so the parameters are renamed in the body: __p0, __p1... A name followed by '(' stays the function.
             var renamed = parameters.Select((_, i) => "__p" + i).ToArray();
             _functions[name] = (RenameParameters(function.Formula[head.Length..], parameters, renamed), renamed);
-            var captured = name;
-            switch (parameters.Length)
-            {
-                case 1: _interpreter.SetFunction(name, (Func<object?, double>)(a => SheetModel.Need().CallFunction(captured, a))); break;
-                case 2: _interpreter.SetFunction(name, (Func<object?, object?, double>)((a, b) => SheetModel.Need().CallFunction(captured, a, b))); break;
-                case 3: _interpreter.SetFunction(name, (Func<object?, object?, object?, double>)((a, b, c) => SheetModel.Need().CallFunction(captured, a, b, c))); break;
-                case 4: _interpreter.SetFunction(name, (Func<object?, object?, object?, object?, double>)((a, b, c, d) => SheetModel.Need().CallFunction(captured, a, b, c, d))); break;
-            }
+            Register(name, parameters.Length);
+        }
+    }
+
+    /// <summary>The most arguments a named function takes.</summary>
+    public const int MaxFunctionArguments = 4;
+
+    private void Register(string name, int arity)
+    {
+        switch (arity)
+        {
+            case 0: _interpreter.SetFunction(name, (Func<double>)(() => SheetModel.Need().CallFunction(name))); break;
+            case 1: _interpreter.SetFunction(name, (Func<object?, double>)(a => SheetModel.Need().CallFunction(name, a))); break;
+            case 2: _interpreter.SetFunction(name, (Func<object?, object?, double>)((a, b) => SheetModel.Need().CallFunction(name, a, b))); break;
+            case 3: _interpreter.SetFunction(name, (Func<object?, object?, object?, double>)((a, b, c) => SheetModel.Need().CallFunction(name, a, b, c))); break;
+            case 4: _interpreter.SetFunction(name, (Func<object?, object?, object?, object?, double>)((a, b, c, d) => SheetModel.Need().CallFunction(name, a, b, c, d))); break;
         }
     }
 

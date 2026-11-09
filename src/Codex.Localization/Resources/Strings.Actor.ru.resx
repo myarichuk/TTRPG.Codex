@@ -333,6 +333,7 @@
   <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>После сохранения игроки смогут прочитать историю персонажа, кроме блоков мастера. Сначала проверьте остальное на секреты.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: «{1}» нет в Библиотеке.</value></data>
   <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: формулу системы для этого значения не удаётся вычислить, поэтому оно пропущено. Мастер может проверить правила системы.</value></data>
+  <data name="Actor.Rule.ScriptError" xml:space="preserve"><value>{0}: скрипт системы завершился с ошибкой, поэтому значение пропущено. {1}</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} — {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} можно взять только один раз.</value></data>

@@ -4,7 +4,7 @@ using Codex.Core.Systems;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace Codex.Tests.Reference;
+namespace Codex.SystemCheck;
 
 /// <summary>
 /// A reference fixture's <c>spec.yaml</c> (tests/Codex.Tests/Fixtures/reference/README.md): the sheets, the campaign state, and

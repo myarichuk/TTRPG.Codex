@@ -3,6 +3,7 @@ using Codex.Core;
 using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Codex.SystemCheck;
 using Xunit.Abstractions;
 
 namespace Codex.Tests.Reference;
@@ -17,18 +18,18 @@ public class ReferenceFixtureTests(ITestOutputHelper output)
 {
     private static readonly IReferenceHost Host = new CurrentEngineHost();
 
-    private static readonly Lazy<IReadOnlyList<CheckResult>> Results = new(() => ReferenceRunner.RunAll(Host));
+    private static readonly Lazy<IReadOnlyList<CheckResult>> Results = new(() => ReferenceRunner.RunAll(Host, ReferenceFixtures.Roots()));
 
     [Fact]
     public void ThereAreThreeReferenceFixtures_OneForEachConstraintSystem()
     {
-        Assert.Equal(new[] { "crew", "d35", "street" }, ReferenceRunner.FixtureRoots().Select(Path.GetFileName));
+        Assert.Equal(new[] { "crew", "d35", "street" }, ReferenceFixtures.Roots().Select(Path.GetFileName));
     }
 
     [Fact]
     public async Task EachFixtureLoadsToday_WithEveryKeyRead()
     {
-        foreach (var root in ReferenceRunner.FixtureRoots())
+        foreach (var root in ReferenceFixtures.Roots())
         {
             var registry = new ContentRegistry();
             var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(registry));
@@ -53,7 +54,7 @@ public class ReferenceFixtureTests(ITestOutputHelper output)
     public void EverySpecIsWellFormed()
     {
         var ids = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var root in ReferenceRunner.FixtureRoots())
+        foreach (var root in ReferenceFixtures.Roots())
         {
             var spec = ReferenceRunner.SpecOf(root); // refuses keys the format does not have
             var prefix = Path.GetFileName(root) + ".";
@@ -75,7 +76,7 @@ public class ReferenceFixtureTests(ITestOutputHelper output)
             }
         }
 
-        var all = ReferenceRunner.FixtureRoots().SelectMany(r => ReferenceRunner.SpecOf(r).Expectations).ToList();
+        var all = ReferenceFixtures.Roots().SelectMany(r => ReferenceRunner.SpecOf(r).Expectations).ToList();
         foreach (var e in all)
         {
             foreach (var required in e.Requires ?? new List<string>()) Assert.True(ids.Contains(required) && required != e.Id, $"{e.Id}: requires unknown '{required}'");
@@ -86,13 +87,13 @@ public class ReferenceFixtureTests(ITestOutputHelper output)
     public void TheLedgerNamesOnlyExpectationsThatExist()
     {
         var known = Results.Value.Select(r => r.Id).ToHashSet(StringComparer.Ordinal);
-        Assert.Empty(ReferenceRunner.Ledger().Where(id => !known.Contains(id)));
+        Assert.Empty(ReferenceFixtures.Ledger().Where(id => !known.Contains(id)));
     }
 
     [Fact]
     public void EveryExpectationInTheLedgerPasses()
     {
-        var ledger = ReferenceRunner.Ledger();
+        var ledger = ReferenceFixtures.Ledger();
         var regressions = Results.Value.Where(r => ledger.Contains(r.Id) && r.Status != CheckStatus.Pass).Select(r => $"{r.Id}: {r.Detail}").ToList();
         Assert.True(regressions.Count == 0, "Listed in progress.txt but no longer passing:\n" + string.Join("\n", regressions));
     }
@@ -100,7 +101,7 @@ public class ReferenceFixtureTests(ITestOutputHelper output)
     [Fact]
     public void NoExpectationPassesWithoutBeingInTheLedger()
     {
-        var ledger = ReferenceRunner.Ledger();
+        var ledger = ReferenceFixtures.Ledger();
         var unlisted = Results.Value.Where(r => r.Status == CheckStatus.Pass && !ledger.Contains(r.Id)).Select(r => r.Id).ToList();
         Assert.True(unlisted.Count == 0, "Passing now; add to tests/Codex.Tests/Fixtures/reference/progress.txt (and the overhaul doc's account):\n" + string.Join("\n", unlisted));
     }

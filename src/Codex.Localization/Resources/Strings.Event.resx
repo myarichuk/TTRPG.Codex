@@ -162,6 +162,7 @@
   <data name="Event.Sheet.AskGm" xml:space="preserve"><value>The GM chooses for {0}: {1}.</value></data>
   <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>The player of {0} chooses: {1}.</value></data>
   <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
+  <data name="Event.Sheet.ScriptRolled" xml:space="preserve"><value>{0}: the {1} rule rolled {2}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: the table does not do {1} yet.</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} rolled {1}: {2} ({3}).</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>Campaign</value></data>
