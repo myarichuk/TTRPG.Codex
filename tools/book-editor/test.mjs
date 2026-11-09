@@ -142,6 +142,16 @@ assert.equal(line.innerHTML, '<span class="toc-words">Lore</span><span class="to
 number(numbered);
 assert.equal(numbered.querySelector('.toc a').innerHTML, line.innerHTML, 'numbering again changes nothing');
 
+// A contents the brew wrote in Homebrewery's own shape (`{{ Title}}{{ 9}}`, the number its author guessed) keeps that shape: the number is
+// put right in its own span, and no second words span or number is added, or the page's number would print twice.
+const authored = drawn('{{toc,wide\n# Contents\n\n- ### [{{ Lore}}{{ 9}}](#ch-lore)\n}}\n\n\\page\n\n{{chapter,#ch-lore\n# Lore\n}}');
+number(authored);
+const own = authored.querySelector('.toc a');
+assert.deepEqual([...own.children].map(c => c.className + ':' + c.textContent.trim()), ['inline-block:Lore', 'inline-block:2'], own.innerHTML);
+assert.equal(own.querySelectorAll('.toc-words, .toc-page').length, 0);
+number(authored);
+assert.equal(authored.querySelector('.toc a').textContent.replace(/\s+/g, ''), 'Lore2', 'numbering again changes nothing');
+
 // The running footer: each page the name of the chapter it is in, from the drawn page's own h1; a chapter that starts mid-page names that
 // page; none on the cover or the contents, none where the text wrote its own footnote; beside the columns, and never markup.
 const footed = drawn('{{frontCover}}\n\n# Book\n\n\\page\n\n{{toc,wide\n# Contents\n}}\n\n\\page\n\n{{chapter,#ch-lore\n# Lore <i>&amp;</i> Legend\n}}\n\ntext\n\n\\page\n\nmore\n\n{{chapter,#ch-cast\n# Cast\n}}\n\n\\page\n\nstill cast\n\n\\page\n\n{{footnote MINE}}\n\nown');

@@ -479,6 +479,15 @@ export function number(root) {
   for (const a of root.querySelectorAll('.toc a[href^="#"]')) {
     const target = root.querySelector('#' + CSS.escape(a.getAttribute('href').slice(1)));
     const page = target && target.closest('.page');
+    // A contents the brew wrote itself, in Homebrewery's shape (`[{{ Title}}{{ 5}}](#p5)`: the words in one span and an authored number in a
+    // last one), already has its number's place, which its theme's leader rules (`span:first-child::after`) are written against. The number
+    // is then put into that span, true to the page the chapter landed on, rather than a second one added after it.
+    const own = [...a.children].filter(c => c.tagName === 'SPAN' && !c.matches('.toc-words, .toc-page'));
+    const authored = own.length > 1 && own.length === a.children.length && /^\s*\d+\s*$/.test(own[own.length - 1].textContent) ? own[own.length - 1] : null;
+    if (authored) {
+      if (page) authored.textContent = String(numbers[pages.indexOf(page)]);
+      continue;
+    }
     a.querySelectorAll('.toc-page').forEach(s => s.remove());
     if (!a.querySelector(':scope > span.toc-words')) {
       const words = a.ownerDocument.createElement('span');
