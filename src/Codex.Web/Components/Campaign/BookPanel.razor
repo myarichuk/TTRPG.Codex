@@ -8,6 +8,8 @@
 @inject BookBuilds Builds
 @inject NavigationManager Nav
 
+@if (Ctx.Access.IsDm)
+{
 <section class="panel book-panel" aria-labelledby="book-heading" data-testid="book-panel">
     <div class="panel-title"><h3 id="book-heading">@L["Campaign.Book.Title"]</h3></div>
     <p class="small-muted">@L["Campaign.Book.Hint"]</p>
@@ -23,10 +25,8 @@
         </div>
     </div>
 
-    @* The rest in tabs (an IDE's tool tabs): printing, the pictures, the editable book, AI polish. A player has only printing. Inactive tabs
+    @* The rest in tabs (an IDE's tool tabs): printing, the pictures, the editable book, AI polish. Inactive tabs
        are hidden, not removed, so what was typed or ticked in one is still there on coming back. *@
-    @if (Ctx.Access.IsDm)
-    {
         <div class="cx-tabs book-tabs" role="tablist" aria-label="@L["Campaign.Book.Title"]" @onkeydown="TabKey">
             @foreach (var (id, icon, label) in Tabs)
             {
@@ -34,9 +34,8 @@
                         tabindex="@(tab == id ? 0 : -1)" @onclick="() => tab = id" data-testid="@("book-tab-" + id)"><LucideIcon IconName="@icon" Size="14" /> @label</button>
             }
         </div>
-    }
 
-    <div id="book-tabpanel-print" role="@(Ctx.Access.IsDm ? "tabpanel" : null)" aria-labelledby="@(Ctx.Access.IsDm ? "book-tab-print" : null)" hidden="@(tab != "print")">
+    <div id="book-tabpanel-print" role="tabpanel" aria-labelledby="book-tab-print" hidden="@(tab != "print")">
     <div class="row g-2">
         <div class="col-12">
             <label for="book-theme" class="field-label">@L["Campaign.Book.Look"]</label>
@@ -105,8 +104,6 @@
     </div>
 
 
-    @if (Ctx.Access.IsDm)
-    {
         <div id="book-tabpanel-art" role="tabpanel" aria-labelledby="book-tab-art" hidden="@(tab != "art")">
             <BookArtTray Access="Ctx.Access" Edition="@edition" Language="@language" Changed="ArtChanged" Shown="@(tab == "art")" />
         </div>
@@ -270,14 +267,11 @@
                 <label for="book-ai-use" class="form-check-label small">@L["Campaign.Book.Ai.Use"]</label>
             </div>
         </div>
-    }
 
-    @if (Ctx.Access.IsDm)
-    {
         @* A dialog: outside the tabs, so a hidden tab never hides it. *@
         <BookDraftEditor @ref="draftEditor" Access="Ctx.Access" BasePath="@Ctx.BasePath" />
-    }
 </section>
+}
 
 @code {
     private string tab = "print";

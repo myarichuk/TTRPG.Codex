@@ -71,6 +71,66 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
 
         Assert.Equal(404, (await otherContext.APIRequest.GetAsync($"{_app.BaseUrl}/campaigns/no-such-campaign/book/dm")).Status);
     }
+
+    /// <summary>The book is the GM's alone (BOOK_EXPORT 48): a Player member of the campaign gets 404 on every book route, for either edition,
+    /// including their own copy of the party book, on routes the GM is served from the same drafts.</summary>
+    [Fact]
+    public async Task APlayerOfTheCampaign_GetsNoBook_OnAnyRoute_WhereTheGmGetsOne()
+    {
+        const string password = "Correct-Horse-1";
+        var dmId = "bk0-dm-" + Guid.NewGuid();
+        var playerId = "bk0-pl-" + Guid.NewGuid();
+        await _app.SeedUserAsync(dmId, "dm_" + dmId, password, "Player");
+        await _app.SeedUserAsync(playerId, "pl_" + playerId, password, "Player");
+
+        await using var dmContext = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var dm = await dmContext.NewPageAsync();
+        await E2EHelpers.LoginAsync(dm, "dm_" + dmId, password);
+        var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Saltmere Chronicle");
+        var invite = await E2EHelpers.ReadInviteLinkAsync(dm, campaignId);
+
+        await using var playerContext = await _app.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = _app.BaseUrl });
+        var player = await playerContext.NewPageAsync();
+        await E2EHelpers.LoginAsync(player, "pl_" + playerId, password);
+        await E2EHelpers.JoinAsync(player, invite);
+        await _app.SeedActorsAsync([
+            new Codex.Web.TestSeedActor { Id = "bk0-mira-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Mira", Kind = Codex.Persistence.ActorKind.PlayerCharacter, OwnerUserId = playerId }]);
+
+        // Both drafts exist, so the draft routes have something to serve: the refusal below is the player's, not "no draft yet".
+        foreach (var edition in new[] { "dm", "party" })
+        {
+            await E2EHelpers.GoToSectionAsync(dm, campaignId, "settings");
+            await dm.GetByTestId("book-edition").SelectOptionAsync(edition);
+            await dm.GetByTestId("book-tab-draft").ClickAsync();
+            await dm.GetByTestId("book-draft-open").ClickAsync();
+            await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=cast]")).ToBeVisibleAsync(new() { Timeout = 30_000 });
+        }
+
+        var routes = new List<string>();
+        foreach (var edition in new[] { "dm", "party" })
+        {
+            routes.AddRange([edition, edition + "/pdf", edition + "/draft/en/md", edition + "/draft/en/pdf", edition + "/draft/en/art"]);
+        }
+
+        // The player's own copy of the party book (45) is a GM tool too.
+        routes.Add("party/draft/en/md?player=" + Uri.EscapeDataString(playerId));
+        routes.Add("party/draft/en/pdf?player=" + Uri.EscapeDataString(playerId));
+
+        foreach (var route in routes)
+        {
+            var url = $"{_app.BaseUrl}/campaigns/{campaignId}/book/{route}";
+            var gm = await dmContext.APIRequest.GetAsync(url);
+            Assert.True(gm.Status == 200, $"GM on {route}: {gm.Status}");
+            var refused = await playerContext.APIRequest.GetAsync(url);
+            Assert.True(refused.Status == 404, $"player on {route}: {refused.Status}");
+            Assert.DoesNotContain("Saltmere", await refused.TextAsync());
+        }
+
+        // And no book UI: Settings has no book panel for them.
+        await E2EHelpers.GoToSectionAsync(player, campaignId, "settings");
+        await Assertions.Expect(player.GetByTestId("settings-name").Or(player.GetByTestId("campaign-title")).First).ToBeVisibleAsync();
+        Assert.Equal(0, await player.GetByTestId("book-panel").CountAsync());
+    }
 }
 
 /// <summary>The campaign book panel in Settings: preview in a locked frame, a real PDF download, the language gate shown before it

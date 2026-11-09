@@ -2522,3 +2522,37 @@ pictures by label, a spot as the small picture after its entry, the pick with an
 ignores keys for 75 ms after it changes (CodeMirror's `interactionDelay`).
 
 **Not done:** no suggestions inside a block (a stat block's lines) or for Homebrewery's own rarer blocks; no completion of the CSS editor.
+
+## 48. The book is the GM's alone (2026-11-09; step 0 of the source-book editor)
+
+The book is a GM tool for a source book shaped like a published adventure, not a player handout. Step 0 of that plan makes "players see no
+book" a tested rule rather than a side effect of where the panel sits.
+
+**What the code already did (read, then tested):**
+- Every route in `BookEndpoints.cs` already answered 404 to anyone but the campaign's GM: the old page and PDF through `BuildAsync`
+  (`access is not { IsDm: true }`), the draft's `art`, `md` and `pdf` through `GmAsync`. Behind them the services refuse a non-GM again:
+  `BookSourceReader.ReadAsync` returns null for a non-GM access, and `BookDrafts`, `BookArtService`, `BookArtDirection`, `BookBuilds`,
+  `BookDraftStore` and the theme store answer null or NotAllowed (their unit tests already said so).
+- `BookPanel` is placed in Settings inside the GM-only column (`SettingsSection.razor`, `@if (Ctx.IsDm)`), so the panel's own player branch
+  ("a player has only the Print tab") **was never reachable**. The plan for this step said non-GMs see the Print tab; they did not.
+- No existing test asserted that a player could read a book. Every test that builds a Player access (`BookBuildTests`, `BookArtDirectorTests`,
+  `BookArtTests.Slots`, `BookDraftTests`, `BookThemeWizardTests`, `BookPlayerBookTests`) already asserts refusal, so none needed rewriting.
+
+**Changed:**
+- `BookPanel.razor`: the scattered `Ctx.Access.IsDm` checks (tab strip, the Print tab's role and label, the Pictures, Edit and AI tabs, the
+  editor dialog) are gone; one guard wraps the whole panel. Every `data-testid` is kept.
+- New e2e test `BookRouteE2ETests.APlayerOfTheCampaign_GetsNoBook_OnAnyRoute_WhereTheGmGetsOne`: a player joins by invite and owns a
+  character; both drafts are opened by the GM. On every route, for both editions (page, PDF, draft Markdown, draft PDF, draft pictures, and the
+  player's own copy `?player=<their id>` as Markdown and PDF) the GM gets 200 and the player 404 with no campaign text; Settings shows the player
+  no book panel. The existing test for someone who is not a member is kept.
+- The site guide (en, ru, he) says the panel is the GM's only and that players are refused its pages and files.
+- Party edition and "PDF for a player" (45) stay, as GM tools.
+
+**Mutation checks (by hand, from a backup copy):** `GmAsync` taking any member: the new test fails (a player gets 200 on `draft/en/art`; the
+draft's Markdown and PDF are still refused by `BookDrafts`). `BuildAsync` taking any member: the test still passes, because
+`BookSourceReader.ReadAsync` refuses a non-GM on its own; the old route is deleted in step 2, so no test was added for that layer alone.
+
+**Not done / not verified:**
+- The old route keeps two guards and only their sum is tested over HTTP (above).
+- The app was not looked at as a player by hand; the e2e test drives the real app in Chromium as a joined player, in English only.
+- The ru and he guide sentences are written by the model, not read by a native speaker.

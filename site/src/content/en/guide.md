@@ -170,7 +170,7 @@ With an AI model set up, [[ui:Session.DraftAi]] writes a first draft of the reca
 
 ## Print your campaign as a book {#book}
 
-[[ui:Page.Campaign.Section.Settings]] holds the [[ui:Campaign.Book.Title]] panel, for the DM. It turns the campaign into a book you can edit, then print as a PDF: a title page with the campaign cover, a contents page, and a chapter each for the overview, the cast, the places, the sessions, the lore and the wiki pages. The book is built on the server's own machine from what the campaign holds. Nothing is sent anywhere unless you choose an AI step, and each of those shows its cost first.
+[[ui:Page.Campaign.Section.Settings]] holds the [[ui:Campaign.Book.Title]] panel, for the GM only: players do not see the book, and its pages and files are refused to them. It turns the campaign into a book you can edit, then print as a PDF: a title page with the campaign cover, a contents page, and a chapter each for the overview, the cast, the places, the sessions, the lore and the wiki pages. The book is built on the server's own machine from what the campaign holds. Nothing is sent anywhere unless you choose an AI step, and each of those shows its cost first.
 
 The panel has four tabs: **[[ui:Campaign.Book.Tab.Print]]**, **[[ui:Campaign.Book.Tab.Art]]**, **[[ui:Campaign.Book.Tab.Draft]]** and **[[ui:Campaign.Book.Tab.Ai]]**.
 
