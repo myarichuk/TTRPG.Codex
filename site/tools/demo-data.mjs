@@ -50,6 +50,7 @@ export const languages = {
     ],
     fact: 'The chapel bell was cast from the anchors of the ships lost in the Great Storm.',
     // the GM's own line typed into the book, and a second fact the campaign gains afterwards (for the stale-chapter shot)
+    forNote: 'Odessa tells Aria alone that the bell was cast from her father\'s anchor.',
     bookNote: 'Read this aloud: the bell rings once, and the whole harbour holds its breath.',
     fact2: 'No one has seen the bell-ringer eat, sleep or leave the chapel.',
     newPage: { title: 'The Bell Fund', kind: 'Faction', body: 'Villagers who pay a penny a week to keep the chapel bell in repair, and who now ask what they are paying for.' },
@@ -92,6 +93,7 @@ export const languages = {
       { name: 'Затопленная часовня', kind: 'Ruin' },
     ],
     fact: 'Колокол часовни отлит из якорей кораблей, погибших в Великий шторм.',
+    forNote: 'Одесса говорит одной Арии, что колокол отлит из якоря её отца.',
     bookNote: 'Прочитайте вслух: колокол звонит один раз, и вся гавань затаивает дыхание.',
     fact2: 'Никто не видел, чтобы звонарь ел, спал или выходил из часовни.',
     newPage: { title: 'Колокольный фонд', kind: 'Faction', body: 'Жители, которые платят по монетке в неделю на ремонт колокола и теперь спрашивают, за что платили.' },
@@ -134,6 +136,7 @@ export const languages = {
       { name: 'הקפלה הטבועה', kind: 'Ruin' },
     ],
     fact: 'פעמון הקפלה יוצק מעוגני האוניות שאבדו בסופה הגדולה.',
+    forNote: 'אודסה מספרת לאריה בלבד שהפעמון יוצק מעוגן של אביה.',
     bookNote: 'הקריאו בקול: הפעמון מצלצל פעם אחת, וכל הנמל עוצר את נשימתו.',
     fact2: 'איש לא ראה את המצלצל אוכל, ישן או יוצא מהקפלה.',
     newPage: { title: 'קרן הפעמון', kind: 'Faction', body: 'תושבים שמשלמים פרוטה בשבוע לתיקון פעמון הקפלה, ועכשיו שואלים על מה שילמו.' },

@@ -114,6 +114,8 @@ async function captureLanguage(browser, lang) {
   d.npcs.forEach((n, i) => actors.push({
     id: `npc${i}-${run}`, campaignId, name: n.name, kind: KIND.npc, visibility: VIS[n.visibility], hp: n.hp[0], hpMax: n.hp[1], sheet: { level: 3 },
     publicName: n.publicName, publicDescription: n.publicDescription,
+    // The first NPC carries a note meant for the first character only, so "PDF for a player" has something to add.
+    biography: i === 0 ? `${n.note}\n\n:::for [[actor:aria-${run}]]\n${d.forNote}\n:::` : undefined,
   }));
   d.monsters.forEach((m, i) => {
     for (let c = 0; c < m.count; c++) {
@@ -363,6 +365,16 @@ async function captureLanguage(browser, lang) {
     await dm.getByTestId('book-art-director').waitFor();
     await settle(dm, 1500);
     await panelTop();
+    // Several versions of one picture: two pictures put in the first place, so "Versions" has something to show.
+    const firstFile = dm.locator('[data-testid="book-art-slots"] input[type=file]').first();
+    await firstFile.setInputFiles(join(art, 'cover.png'));
+    await settle(dm, 1800);
+    await firstFile.setInputFiles(join(art, 'odessa.png'));
+    await settle(dm, 1800);
+    await dm.locator('[data-testid$="-versions-toggle"]').first().click();
+    await dm.getByTestId('book-art-version').first().waitFor();
+    await settle(dm, 1000);
+    await panelTop();
     await shoot(dm, lang, 'book-art');
 
     // The editor, party edition.
@@ -385,6 +397,14 @@ async function captureLanguage(browser, lang) {
     await chapter(sections.find((x) => /cast/i.test(x)) ?? sections[1]).click();
     await settle(dm, 2000);
     await shoot(dm, lang, 'book-editor');
+
+    // More: one copy of the party book for each player who owns a character (nothing is downloaded here).
+    await dm.getByTestId('book-draft-more').click();
+    await dm.getByTestId('book-draft-for-player').first().waitFor();
+    await settle(dm, 500);
+    await shoot(dm, lang, 'book-player');
+    await dm.getByTestId('book-draft-more').click();
+    await settle(dm, 300);
 
     // The leak check: a hidden character's name typed into the party's Cast, then Download. Nothing is printed while hits are listed.
     await type(`\n\n${d.npcs[2].name}`);

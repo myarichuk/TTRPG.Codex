@@ -197,7 +197,7 @@ To change the words, open the editor instead.
 4. Under the panes, a tray has three tabs: [[ui:Campaign.Book.Draft.Ai.Title]], [[ui:Campaign.Book.Draft.Problems]] (what needs your attention) and [[ui:Campaign.Book.Draft.BlocksTab]] (the boxes you can use, such as a note or read-aloud text).
 5. The theme list in the toolbar sets the look: [[ui:Campaign.Book.Draft.Theme.plain]] or [[ui:Campaign.Book.Draft.Theme.ashen-vellum]]. Under the three dots, **[[ui:Campaign.Book.Theme.Open]]** brings in a Homebrewery theme of your own.
 
-![The book editor: chapters, the Markdown of the Cast chapter, and the printed pages beside it.](shot:book-editor)
+![The book editor: chapters, the Markdown of the Cast chapter, the printed pages beside it, and the Ask AI bar below.](shot:book-editor)
 
 > [!TIP]
 > The three dots also hold **[[ui:Campaign.Book.Draft.StartOver]]**, which throws away your edits and makes the book again from the campaign. It asks first.
@@ -223,8 +223,10 @@ The [[ui:Campaign.Book.Tab.Art]] tab is the tray. Open **[[ui:Campaign.Book.Art.
 - **Your own pictures.** [[ui:Campaign.Book.Art.Upload]] puts one in a place (PNG, JPEG, WebP, GIF or AVIF, under 6 MB). [[ui:Campaign.Book.Art.Replace]] and [[ui:Campaign.Book.Art.Remove]] change it later. A picture added in the party edition prints in both books. One added in the GM edition prints in the GM book only.
 - **The art director.** With a text model set up, **[[ui:Campaign.Book.Art.Suggest.Start]]** reads a short outline of the edition, without secrets, and suggests what each picture could show. Before it sends anything, the tray says how many requests it needs, about how many tokens, and the cost if you entered prices. Suggestions are text only.
 - **Drawing.** With a picture model set up, tick the places you want drawn, choose a style for the whole book, and read the cost: the number of pictures and the price of each. Nothing is drawn until you press **[[ui:Campaign.Book.Art.Draw.Pick]]**. A tick on a place that already has a picture says that it will be replaced.
+- **Versions.** A place keeps up to three pictures, whether you added them or the model drew them, and only the one in use prints. Open the place's versions to see them, press **[[ui:Campaign.Book.Art.Versions.Use]]** to switch, or **[[ui:Campaign.Book.Art.Versions.Delete]]** to remove one for good (it asks first). **[[ui:Campaign.Book.Art.Remove]]** only takes the picture out of the book: it stays among the versions, so you can put it back.
+- **Small pictures and scenes.** Every entry can have one small picture that closes it, listed as "Small picture after" the entry. In the GM edition each session of the Chronicle also has a place for a scene picture. The art director may suggest both, and they work like any other place.
 
-![The Pictures tab: the places for pictures, the art director's suggestions and the drawing choices, before anything is run.](shot:book-art)
+![The Pictures tab: the places for pictures, the versions of one picture, the art director's suggestions and the drawing choices, before anything is run.](shot:book-art)
 
 > [!NOTE]
 > Both steps use the models from [[ui:Layout.User.AiSettings]], and bill your provider. Without a model the tray says so and everything else keeps working. Your own picture style from AI settings, if you set one, is used for every picture in place of the style choices.
@@ -250,6 +252,12 @@ Once you can type freely, nothing can stop you pasting a secret into the party b
 Fix the text, or press **[[ui:Campaign.Book.Draft.Leak.Anyway]]** if you know better. It is a warning, not a lock. The GM edition is not checked.
 
 ![The leak check: a hidden character's name typed into the party book's Cast, found before anything is downloaded.](shot:book-leak)
+
+### A copy for each player {#book-players}
+
+Some things only one player's character was told. Write them for that character in the campaign (a `:::for` block), and they stay out of the party book. In the editor of the party edition, open the three dots and look under **[[ui:Campaign.Book.Draft.ForPlayer]]**: every player who owns a character is listed by their characters' names. Choosing one makes that player's own copy: the party book, plus a note under each entry with what only their characters were told, headed "Only for" and their name. The file is named after the campaign and the characters. Nothing is stored, so make it again after you edit.
+
+![The editor's three dots menu in the party edition, listing a copy for the player of Aria Stonehelm.](shot:book-player)
 
 ### Download {#book-download}
 
