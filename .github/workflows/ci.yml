@@ -27,6 +27,9 @@ jobs:
     # A healthy run is ~15 minutes; without this a hung test holds the runner for GitHub's 6-hour default.
     timeout-minutes: 45
     strategy:
+      # One OS failing must not cancel the other: with the default, ubuntu was cancelled 10 minutes into its tests
+      # when windows failed, so its result was never seen.
+      fail-fast: false
       matrix:
         # ubuntu-latest is now 26.04, for which Playwright has no browser packages yet (install --with-deps fails); 24.04 until it does.
         os: [ubuntu-24.04, windows-latest]

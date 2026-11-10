@@ -185,7 +185,8 @@ public class BookDraftMergeTests
         var request = new BookMergeRequest("Cast", "en", null, conflict.Mine, conflict.Base, conflict.Theirs);
         string Mine(IList<ChatMessage> messages)
         {
-            var text = messages.Last().Text!;
+            // The prompt is built with AppendLine, which writes \r\n on Windows; without this the markers below are not found there.
+            var text = messages.Last().Text!.ReplaceLineEndings("\n");
             var from = text.IndexOf("\n<mine>\n", StringComparison.Ordinal) + 8;
             return text[from..text.IndexOf("\n</mine>", from, StringComparison.Ordinal)].Trim('\n');
         }

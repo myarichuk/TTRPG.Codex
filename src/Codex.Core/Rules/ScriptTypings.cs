@@ -143,7 +143,9 @@ public static class ScriptTypings
             foreach (var line in references) w.AppendLine(line);
         }
 
-        return w.ToString();
+        // AppendLine writes the platform's newline; the committed codex.d.ts is LF (.gitattributes), so on Windows
+        // the check would never match it and --types would write CRLF into an LF repository.
+        return w.ToString().ReplaceLineEndings("\n");
     }
 
     private static string FieldType(ItemFieldDefinition field) => field.Type switch

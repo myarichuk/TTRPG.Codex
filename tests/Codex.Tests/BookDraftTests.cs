@@ -761,7 +761,7 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
     // "Bring up to date" (docs/BOOK_EXPORT.md 41.18): the code merges entry by entry, a model sees only the entries both sides changed.
     private static string MineOf(IList<ChatMessage> messages)
     {
-        var text = messages.Last().Text!;
+        var text = messages.Last().Text!.ReplaceLineEndings("\n"); // the prompt is built with AppendLine: \r\n on Windows
         var from = text.IndexOf("\n<mine>\n", StringComparison.Ordinal) + 8;
         return text[from..text.IndexOf("\n</mine>", from, StringComparison.Ordinal)].Trim('\n');
     }
