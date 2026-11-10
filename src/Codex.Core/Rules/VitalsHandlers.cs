@@ -5,8 +5,10 @@ namespace Codex.Core.Rules;
 /// <summary>A creature as the vitals handlers read it: its pools (current values, maxima, temporary hit points, the death-save
 /// tallies, exhaustion, hit dice), the conditions it carries, whether it is a player character, and its sheet (whose lists name
 /// its immunities, resistances and vulnerabilities).</summary>
+/// <param name="HasPools">False for a creature with no pools at all, which only <see cref="VitalsHandlers.Revive"/> reads: it
+/// then changes conditions and leaves the pools alone.</param>
 public sealed record VitalsView(IReadOnlyDictionary<string, int> Pools, IReadOnlyCollection<string> Conditions, bool IsPlayer,
-    IReadOnlyDictionary<string, object>? Sheet);
+    IReadOnlyDictionary<string, object>? Sheet, bool HasPools = true);
 
 /// <summary>What a vitals handler returns: the intents for the table to apply, in order, and what they came to, for the log.</summary>
 public sealed record VitalsResult<T>(IReadOnlyList<SheetIntent> Intents, T Report);
@@ -24,13 +26,24 @@ public sealed record DeathSaveReport(int? Roll, bool? Success, int Successes, in
     public static readonly DeathSaveReport None = new(null, null, 0, 0, false, false, false, true);
 }
 
+/// <param name="WasDead">The creature is dead, so nothing was healed: the DM revives it first.</param>
+/// <param name="Revived">It was down and is back on its feet.</param>
+public sealed record HealReport(int Healed, bool WasDead, bool Revived)
+{
+    public static readonly HealReport Nothing = new(0, false, false);
+}
+
+/// <param name="Rolls">Each hit die rolled, in order; the modifier is added to each, and a die never heals below zero.</param>
+public sealed record HitDiceReport(int Spent, int Healed, IReadOnlyList<int> Rolls, int Modifier);
+
 /// <summary>One thing a rest did, in order: <see cref="Kind"/> is <c>slots</c>, <c>restored</c> or <c>cleared</c> (with
 /// <see cref="Key"/>, a pool), <c>hitDice</c> (with <see cref="Amount"/> regained), <c>exhaustionGone</c>, <c>exhaustionNow</c>
 /// (with the level) or <c>lifted</c> (with <see cref="Key"/>, a condition).</summary>
 public sealed record RestStep(string Kind, string? Key = null, int Amount = 0);
 
 /// <summary>
-/// The built-in vitals handlers (overhaul step 8): damage, death saves, stabilizing, concentration and rests, as
+/// The built-in vitals handlers (overhaul step 8): damage, healing, temporary hit points, death saves, stabilizing, reviving,
+/// concentration, exhaustion, hit dice and rests, as
 /// <c>system.yaml</c>'s <c>vitals:</c> section describes them (srd5e's). Each reads a <see cref="VitalsView"/> and returns
 /// intents; nothing here changes a creature. The table applies the intents to the creature it read
 /// (Codex.Persistence.Runtime.TableRules), in order.
@@ -330,6 +343,86 @@ public static class VitalsHandlers
         s.Set(s.MaxKeyOf(rules.Key), rules.MaxLevel);
         if (level >= rules.MaxLevel && s.Vitals?.Down != null && !s.IsDead) s.Kill();
         return level;
+    }
+
+    // ---- Healing, temporary hit points, hit dice, reviving ----
+
+    /// <summary>
+    /// Heals <paramref name="poolName"/> by <paramref name="amount"/>, up to its maximum when it has one and never below zero. A
+    /// dead creature is not healed: the DM revives it first. A creature brought above zero on the primary pool is back on its
+    /// feet: no longer down or stable, its death saves reset.
+    /// </summary>
+    public static VitalsResult<HealReport> Heal(SystemDefinition? system, VitalsView view, string poolName, int amount)
+    {
+        var s = new Scratch(system, view);
+        return s.Done(HealCore(s, poolName, amount));
+    }
+
+    private static HealReport HealCore(Scratch s, string poolName, int amount)
+    {
+        if (amount <= 0) return HealReport.Nothing;
+        if (s.IsDead) return new HealReport(0, true, false);
+
+        var before = s.Get(poolName);
+        var next = before + amount;
+        if (s.Pools.TryGetValue(s.MaxKeyOf(poolName), out var max)) next = Math.Min(next, max);
+        next = Math.Max(next, 0);
+        s.Set(poolName, next);
+
+        var revived = poolName == s.Primary && before <= 0 && next > 0 && s.GetUp();
+        return new HealReport(next - before, false, revived);
+    }
+
+    /// <summary>Temporary hit points do not stack: the creature keeps the higher of what it has and
+    /// <paramref name="amount"/>. Whether it took the new amount.</summary>
+    public static VitalsResult<bool> GrantTemporary(SystemDefinition? system, VitalsView view, int amount)
+    {
+        var s = new Scratch(system, view);
+        if (amount <= 0 || s.Get(s.Temporary) >= amount) return s.Done(false);
+        s.Set(s.Temporary, amount);
+        return s.Done(true);
+    }
+
+    /// <summary>
+    /// Spends up to <paramref name="count"/> hit dice of <paramref name="dieSides"/> sides, as many as the creature has: each
+    /// die (<paramref name="roll"/>, given the die, <c>1d8</c>) plus <paramref name="modifier"/>, never below zero a die, heals
+    /// the primary pool as <see cref="Heal"/> does. Null when the system has no hit dice or the request is not one.
+    /// </summary>
+    public static VitalsResult<HitDiceReport?> SpendHitDice(SystemDefinition? system, VitalsView view, int count, int dieSides, int modifier, Func<string, int> roll)
+    {
+        var s = new Scratch(system, view);
+        if (s.Vitals?.HitDice is not { } rules || count <= 0 || dieSides < 2) return s.Done<HitDiceReport?>(null);
+
+        var available = s.Get(rules.Key);
+        var spend = Math.Min(count, available);
+        if (spend <= 0) return s.Done<HitDiceReport?>(new HitDiceReport(0, 0, Array.Empty<int>(), 0));
+
+        var rolls = new List<int>();
+        var healed = 0;
+        for (var i = 0; i < spend; i++)
+        {
+            var rolled = roll($"1d{dieSides}");
+            rolls.Add(rolled);
+            healed += Math.Max(0, rolled + modifier);
+        }
+
+        s.Set(rules.Key, available - spend);
+        var outcome = HealCore(s, s.Primary, healed);
+        return s.Done<HitDiceReport?>(new HitDiceReport(spend, outcome.Healed, rolls, modifier));
+    }
+
+    /// <summary>Back from the dead (a revival spell, or a death marked by mistake): no longer dead, down or stable, the death
+    /// saves reset, and on at least one hit point, so the next hit does not finish a creature still carrying two failed saves.
+    /// False when it was not dead, or the system has no death.</summary>
+    public static VitalsResult<bool> Revive(SystemDefinition? system, VitalsView view)
+    {
+        var s = new Scratch(system, view);
+        if (s.Vitals?.Down is not { } down || !s.IsDead) return s.Done(false);
+
+        s.RemoveCondition(down.DeadCondition);
+        s.GetUp();
+        if (view.HasPools) s.Set(s.Primary, Math.Max(1, s.Get(s.Primary)));
+        return s.Done(true);
     }
 
     // ---- The scratch creature ----

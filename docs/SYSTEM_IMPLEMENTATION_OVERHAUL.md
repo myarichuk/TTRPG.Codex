@@ -483,6 +483,7 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
        dynamic argument to a parameter typed as a list.
      - Found on the way: `Derived` held whole numbers as `double`, not the `long` its comment promises. A conditional
        `x ? (long)n : n` is a double.
+   - *Superseded: moved to step 6, then step 8, and done there (`VitalsHandlers`).*
    - *Not done, and why (decided 2026-11-09): the live table still runs 5e's damage, death saves, concentration and rests as
      `TableRules`' own code, and does not raise declared events.*
      - Intents act on tracks, and srd5e's hit points are not a track until step 6 moves them, with skills and armor class.
@@ -630,8 +631,12 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      - **A function's `parts`** are read and kept, but the sheet's breakdown does not show them yet.
      - **Log text.** A script's log keys are shown through the system's translations, as YAML handlers' are. Their arguments
        are not formatted into translated sentences.
-     - **Healing, temporary hit points and hit-dice spending** stay in `TableRules` as they were. They were not in the
-       moved list, and nothing a script needs depends on them.
+     - ~~**Healing, temporary hit points and hit-dice spending** stay in `TableRules` as they were.~~ *Done 2026-11-10.*
+       They were not in the moved list, but healing had its own copy of getting back up (`TableRules.GetUp`) beside the
+       handlers' (a natural 20, a rest from zero). `VitalsHandlers` now has `Heal`, `GrantTemporary`, `SpendHitDice` (the
+       dice and the attribute modifier come from the table, as a death save's roll does) and `Revive` (the DM's), all on
+       the one `GetUp`; `TableRules` only reads the creature, applies the intents, and does `kill` and `endConcentration`.
+       The encounter, runtime, rest and vitals tests pass unchanged.
      - **srd5e's handlers are not named in system.yaml.** The table calls them for a system with `vitals:`, and a sheet-kind
        system cannot name them as `{ builtin }` (its own `builtin: damage` is the primitives' one).
      - **Arithmetic** is the same in formulas and scripts because both are doubles (`7 / 2` is 3.5 in each), so scripts are

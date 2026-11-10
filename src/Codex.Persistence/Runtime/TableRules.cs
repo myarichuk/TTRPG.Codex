@@ -9,8 +9,9 @@ namespace Codex.Persistence.Runtime;
 /// <summary>
 /// The table's vitals rules, as <c>system.yaml</c>'s <c>vitals:</c> section describes them: damage
 /// types against a creature's resistances, what reaching zero does, death saves, temporary hit
-/// points, exhaustion levels, hit dice and rests. Everything here runs on the runtime's command
-/// loop and mutates the entity it is handed; the commands call in and describe what came back.
+/// points, exhaustion levels, hit dice and rests. The rules are <see cref="VitalsHandlers"/>, which return intents; this
+/// reads the creature for them, applies what they return to the entity on the runtime's command loop, and carries out the
+/// intents only the table can (a kill, an end of concentration). The commands call in and describe what came back.
 /// A system without <see cref="VitalsRules"/> gets the plain behaviour: damage stops at zero.
 /// </summary>
 internal static class TableRules
@@ -25,12 +26,15 @@ internal static class TableRules
     // ---- The vitals handlers' view and intents ----
 
     /// <summary>The creature as <see cref="VitalsHandlers"/> read it; null when it has no pools, which the rules do not touch.</summary>
-    private static VitalsView? View(CampaignRuntime runtime, string actorId, Entity entity)
+    /// <param name="withoutPools">Reads a creature with no pools too (reviving changes only its conditions then).</param>
+    private static VitalsView? View(CampaignRuntime runtime, string actorId, Entity entity, bool withoutPools = false)
     {
-        if (!entity.Has<ResourcePoolComponent>()) return null;
+        var hasPools = entity.Has<ResourcePoolComponent>();
+        if (!hasPools && !withoutPools) return null;
         var doc = runtime.GetActorDocument(actorId);
         var conditions = entity.Has<ActiveEffectsComponent>() ? entity.Get<ActiveEffectsComponent>().Effects.Select(e => e.EffectId).ToList() : new List<string>();
-        return new VitalsView(new Dictionary<string, int>(entity.Get<ResourcePoolComponent>().Pools), conditions, doc?.Kind == ActorKind.PlayerCharacter, doc?.Sheet);
+        var pools = hasPools ? new Dictionary<string, int>(entity.Get<ResourcePoolComponent>().Pools) : new Dictionary<string, int>();
+        return new VitalsView(pools, conditions, doc?.Kind == ActorKind.PlayerCharacter, doc?.Sheet, hasPools);
     }
 
     /// <summary>Applies what a vitals handler returned to the creature it read, in order: pools, the table's tallies,
@@ -97,50 +101,15 @@ internal static class TableRules
 
     // ---- Healing and temporary hit points ----
 
-    public sealed record HealOutcome(int Healed, bool WasDead, bool Revived);
+    /// <summary>Healing by the vitals rules (<see cref="VitalsHandlers.Heal"/>), applied to the creature.</summary>
+    public static HealReport ApplyHealing(CampaignRuntime runtime, string actorId, Entity entity, string poolName, int amount) =>
+        View(runtime, actorId, entity) is { } view
+            ? Run(runtime, actorId, entity, VitalsHandlers.Heal(runtime.System, view, poolName, amount))
+            : HealReport.Nothing;
 
-    /// <summary>Heals, clamped to the maximum. A dead creature is not healed - the DM removes the dead
-    /// condition first (a revival spell) - and a creature brought above zero is back on its feet:
-    /// the down and stable conditions go and the death-save tally resets.</summary>
-    public static HealOutcome ApplyHealing(CampaignRuntime runtime, string actorId, Entity entity, string poolName, int amount)
-    {
-        if (amount <= 0 || !entity.Has<ResourcePoolComponent>())
-        {
-            return new HealOutcome(0, false, false);
-        }
-
-        if (IsDead(runtime, entity))
-        {
-            return new HealOutcome(0, true, false);
-        }
-
-        var pool = entity.Get<ResourcePoolComponent>();
-        var before = pool.Get(poolName);
-        runtime.World.ApplyHealing(entity, poolName, amount, key => MaxKeyOf(runtime, key));
-        var after = pool.Get(poolName);
-
-        var revived = poolName == PrimaryKey(runtime) && before <= 0 && after > 0 && GetUp(runtime, entity);
-        return new HealOutcome(after - before, false, revived);
-    }
-
-    /// <summary>Temporary hit points don't stack: the creature keeps the higher of what it has and what it is offered.</summary>
-    public static bool GrantTemporary(CampaignRuntime runtime, Entity entity, int amount)
-    {
-        if (amount <= 0 || !entity.Has<ResourcePoolComponent>())
-        {
-            return false;
-        }
-
-        var pool = entity.Get<ResourcePoolComponent>();
-        var key = TemporaryKey(runtime);
-        if (pool.Get(key) >= amount)
-        {
-            return false;
-        }
-
-        pool.Set(key, amount);
-        return true;
-    }
+    /// <summary>Temporary hit points by the vitals rules (<see cref="VitalsHandlers.GrantTemporary"/>): they do not stack.</summary>
+    public static bool GrantTemporary(CampaignRuntime runtime, string actorId, Entity entity, int amount) =>
+        View(runtime, actorId, entity) is { } view && Run(runtime, actorId, entity, VitalsHandlers.GrantTemporary(runtime.System, view, amount));
 
     // ---- Death saves ----
 
@@ -170,38 +139,14 @@ internal static class TableRules
 
     // ---- Hit dice ----
 
-    public sealed record HitDiceOutcome(int Spent, int Healed, IReadOnlyList<int> Rolls, int Modifier);
-
-    /// <summary>Spends up to <paramref name="count"/> hit dice of <paramref name="dieSides"/> sides: each die plus the
-    /// attribute modifier (never below zero per die) heals the primary resource.</summary>
-    public static HitDiceOutcome? SpendHitDice(CampaignRuntime runtime, string actorId, Entity entity, int count, int dieSides)
+    /// <summary>Spends hit dice by the vitals rules (<see cref="VitalsHandlers.SpendHitDice"/>), rolled with the table's dice and
+    /// the creature's attribute modifier.</summary>
+    public static HitDiceReport? SpendHitDice(CampaignRuntime runtime, string actorId, Entity entity, int count, int dieSides)
     {
-        if (runtime.System?.Vitals?.HitDice is not { } rules || count <= 0 || dieSides < 2 || !entity.Has<ResourcePoolComponent>())
-        {
-            return null;
-        }
-
-        var pool = entity.Get<ResourcePoolComponent>();
-        var available = pool.Get(rules.Key);
-        var spend = Math.Min(count, available);
-        if (spend <= 0)
-        {
-            return new HitDiceOutcome(0, 0, Array.Empty<int>(), 0);
-        }
-
+        if (runtime.System?.Vitals?.HitDice is not { } rules || View(runtime, actorId, entity) is not { } view) return null;
         var modifier = AttributeModifier(runtime, actorId, entity, rules.Attribute);
-        var rolls = new List<int>();
-        var healed = 0;
-        for (var i = 0; i < spend; i++)
-        {
-            var roll = runtime.DiceRoller.Roll($"1d{dieSides}").Total;
-            rolls.Add(roll);
-            healed += Math.Max(0, roll + modifier);
-        }
-
-        pool.Set(rules.Key, available - spend);
-        var outcome = ApplyHealing(runtime, actorId, entity, PrimaryKey(runtime), healed);
-        return new HitDiceOutcome(spend, outcome.Healed, rolls, modifier);
+        return Run(runtime, actorId, entity, VitalsHandlers.SpendHitDice(runtime.System, view, count, dieSides, modifier,
+            die => runtime.DiceRoller.Roll(die).Total));
     }
 
     // ---- Rests ----
@@ -270,26 +215,10 @@ internal static class TableRules
         return true;
     }
 
-    /// <summary>Back from the dead (a revival spell, or a death marked by mistake), R3: no longer dead, down or stable, the
-    /// death-save tally reset, and on at least one hit point, so the next hit does not finish a creature still carrying two
-    /// failed saves. Returns false when it was not dead.</summary>
-    public static bool Revive(CampaignRuntime runtime, Entity entity)
-    {
-        if (runtime.System?.Vitals?.Down is not { } down || !IsDead(runtime, entity))
-        {
-            return false;
-        }
-
-        runtime.World.RemoveStatus(entity, down.DeadCondition);
-        GetUp(runtime, entity);
-        if (entity.Has<ResourcePoolComponent>())
-        {
-            var pool = entity.Get<ResourcePoolComponent>();
-            pool.Set(PrimaryKey(runtime), Math.Max(1, pool.Get(PrimaryKey(runtime))));
-        }
-
-        return true;
-    }
+    /// <summary>Back from the dead (a revival spell, or a death marked by mistake), R3, by <see cref="VitalsHandlers.Revive"/>.
+    /// Returns false when it was not dead.</summary>
+    public static bool Revive(CampaignRuntime runtime, string actorId, Entity entity) =>
+        View(runtime, actorId, entity, withoutPools: true) is { } view && Run(runtime, actorId, entity, VitalsHandlers.Revive(runtime.System, view));
 
     /// <summary>Ends the timed effects counted on <paramref name="actorId"/>'s turns, on every creature: it died or left the
     /// order, so those turns will not come (R4). Returns how many ended.</summary>
@@ -331,18 +260,6 @@ internal static class TableRules
     }
 
     /// <summary>Back above zero: no longer down or stable, death saves reset. Returns whether anything changed.</summary>
-    private static bool GetUp(CampaignRuntime runtime, Entity entity)
-    {
-        if (runtime.System?.Vitals?.Down is not { } down)
-        {
-            return false;
-        }
-
-        var removed = runtime.World.RemoveStatus(entity, down.Condition) + runtime.World.RemoveStatus(entity, down.StableCondition);
-        ResetDeathSaves(runtime, entity);
-        return removed > 0;
-    }
-
     private static void ResetDeathSaves(CampaignRuntime runtime, Entity entity)
     {
         if (runtime.System?.Vitals?.DeathSaves is not { } rules || !entity.Has<ResourcePoolComponent>())

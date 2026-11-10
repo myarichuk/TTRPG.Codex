@@ -85,7 +85,7 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
 
     public string UndoKind => "Healing";
 
-    private TableRules.HealOutcome _outcome = new(0, false, false);
+    private Codex.Core.Rules.HealReport _outcome = Codex.Core.Rules.HealReport.Nothing;
 
     private TableEvents.Outcome? _raised;
 
@@ -138,7 +138,7 @@ public sealed record GrantTemporaryHitPointsCommand(string ActorId, int Amount, 
     {
         if (runtime.GetEntity(ActorId) is { } e)
         {
-            _applied = TableRules.GrantTemporary(runtime, e, Amount);
+            _applied = TableRules.GrantTemporary(runtime, ActorId, e, Amount);
         }
     }
 
@@ -291,7 +291,7 @@ public sealed record SpendHitDiceCommand(string ActorId, int Count, int DieSides
 
     public string UndoKind => "HitDice";
 
-    private TableRules.HitDiceOutcome? _outcome;
+    private Codex.Core.Rules.HitDiceReport? _outcome;
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -730,7 +730,7 @@ public sealed record ReviveCommand(string ActorId) : IUndoableCommand
     private bool _revived;
 
     public void Apply(CampaignRuntime runtime) =>
-        _revived = runtime.GetEntity(ActorId) is { } e && TableRules.Revive(runtime, e);
+        _revived = runtime.GetEntity(ActorId) is { } e && TableRules.Revive(runtime, ActorId, e);
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
