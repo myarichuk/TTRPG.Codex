@@ -306,6 +306,7 @@ public partial class BookPage : IAsyncDisposable
             });
             if (opening != openings) return;
             editorId = opened;
+            StateHasChanged();
             // The draft was read again while the editor was opening (Regenerate pressed before it was up, RefreshAsync then had no editor to push to):
             // the editor takes the text it missed.
             if (view != null && !ReferenceEquals(view, sent))
@@ -555,6 +556,10 @@ public partial class BookPage : IAsyncDisposable
             await module.InvokeVoidAsync("replace", editorId, chapter.Section, chapter.Markdown);
         }
     }
+
+    /// <summary>The editor is up. Until then the notice's Merge, Regenerate and Keep are off: a click in that window had no editor to flush from or push to
+    /// (Merge returned without a word, Regenerate's new text never reached the editor).</summary>
+    internal bool EditorUp => module != null && editorId != null;
 
     internal sealed record Pending(string[] Sections, bool Css);
 

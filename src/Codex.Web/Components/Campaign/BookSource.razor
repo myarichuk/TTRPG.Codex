@@ -82,13 +82,13 @@
                                 <div class="small-muted">@L["Campaign.Book.Draft.StaleHint"]</div>
                             </div>
                             <div class="d-flex gap-2 flex-wrap">
-                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => MergePrepareAsync(shown.Section)" Disabled="@(working || AiBusy)" data-testid="book-draft-merge">
+                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => MergePrepareAsync(shown.Section)" Disabled="@(working || AiBusy || !EditorUp)" data-testid="book-draft-merge">
                                     <LucideIcon IconName="git-merge" Size="14" /> @L["Campaign.Book.Draft.Merge.Button"]
                                 </CodexButton>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RegenerateAsync(shown.Section)" Disabled="@(working || AiBusy)" data-testid="book-draft-regenerate">
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RegenerateAsync(shown.Section)" Disabled="@(working || AiBusy || !EditorUp)" data-testid="book-draft-regenerate">
                                     <LucideIcon IconName="refresh-cw" Size="14" /> @L["Campaign.Book.Draft.Regenerate"]
                                 </CodexButton>
-                                <CodexButton Small="true" OnClick="() => KeepAsync(shown.Section)" Disabled="@(working || AiBusy)" data-testid="book-draft-keep">@L["Campaign.Book.Draft.Keep"]</CodexButton>
+                                <CodexButton Small="true" OnClick="() => KeepAsync(shown.Section)" Disabled="@(working || AiBusy || !EditorUp)" data-testid="book-draft-keep">@L["Campaign.Book.Draft.Keep"]</CodexButton>
                             </div>
                         </div>
                     }

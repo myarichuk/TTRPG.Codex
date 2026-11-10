@@ -54,6 +54,7 @@ public abstract class BookPart : ComponentBase, IHandleEvent
     internal string SaveText => P.SaveText;
     internal string EditionName => P.EditionName;
     internal bool AiBusy => P.AiBusy;
+    internal bool EditorUp => P.EditorUp;
     internal int ProblemCount => P.ProblemCount;
     internal int KeptCount => P.KeptCount;
     internal IReadOnlyList<BookThemeDocument> customThemes => P.customThemes;
