@@ -179,6 +179,10 @@ public interface IBookArtRepository
     /// <paramref name="present"/>, when given, is every slot the edition has now: that edition's suggestions for any other slot are dropped.
     Task<bool> SaveSuggestionsAsync(CampaignAccess dm, string builtFrom, IReadOnlyList<BookArtSuggestion> suggestions, IReadOnlySet<string>? present = null);
 
+    /// <summary>Drops one edition's suggestion for a slot (the GM dismissed it). Only ever takes away, and only that edition's. False when the
+    /// caller is not the GM now or there was none.</summary>
+    Task<bool> RemoveSuggestionAsync(CampaignAccess dm, string slot, string builtFrom);
+
     /// <summary>Adds one run's spend to the director totals. False when the caller is not the GM now.</summary>
     Task<bool> AddDirectorSpendAsync(CampaignAccess dm, BookArtSpend spend);
 
@@ -350,6 +354,12 @@ public class RavenBookArtRepository(RavenDbService dbService, StorageQuota? quot
             // Bounded like the pictures: a slot has at most one suggestion per edition.
             return art.Suggestions.Count <= BookArtDocument.MaxPictures * 2;
         });
+    }
+
+    public async Task<bool> RemoveSuggestionAsync(CampaignAccess dm, string slot, string builtFrom)
+    {
+        if (!BookArtDocument.IsEdition(builtFrom) || !BookSlots.IsKey(slot)) return false;
+        return await MutateAsync(dm, art => art.Suggestions.RemoveAll(x => x.Slot == slot && x.BuiltFrom == builtFrom) > 0);
     }
 
     public Task<bool> AddDirectorSpendAsync(CampaignAccess dm, BookArtSpend spend) => MutateAsync(dm, art =>

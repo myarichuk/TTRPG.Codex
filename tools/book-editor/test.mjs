@@ -215,3 +215,22 @@ assert.equal(fp.querySelectorAll('.page')[1].className, 'page reliquary');
 assert.equal(FIT_CLASS, 'fitted');
 
 console.log('book renderer: all checks passed');
+
+// ---- The outline (docs/BOOK_EXPORT.md 52): headings as the renderer reads them ----
+{
+  const { outlineOf, pageStarts } = globalThis.CodexBook;
+  const md = "# T\n\n{{secret\n## In secret\ntext\n}}\n\n```\n## fenced\n```\n\nSetext\n------\n\n<h2>raw</h2>\n\n\\page\n\n### After break\n\nمرحبا\n=====\n";
+  const heads = outlineOf(md);
+  assert.deepEqual(heads.map(h => [h.level, h.text, h.page]), [[1, 'T', 0], [2, 'In secret', 0], [2, 'Setext', 0], [2, 'raw', 0], [3, 'After break', 1], [1, 'مرحبا', 1]],
+    'a fence hides its heading; a setext heading, a heading in a secret and a raw one are seen');
+  for (const h of heads.filter(h => h.text !== 'raw' && h.text !== 'Setext')) assert.ok(md.slice(h.offset).startsWith('#') || md.slice(h.offset).startsWith('مرحبا'), 'offset of ' + h.text);
+  assert.ok(md.slice(heads[2].offset).startsWith('Setext'));
+  assert.ok(md.slice(heads[3].offset).startsWith('<h2>'));
+  assert.deepEqual(pageStarts(md), [0, md.indexOf('\\page')]);
+  assert.deepEqual(outlineOf(''), []);
+  // A title is words only, and cut short.
+  const long = outlineOf('# **Bold** [link](https://evil.example/x) <b>x</b> ' + 'a'.repeat(300));
+  assert.ok(!/[*<\]]|evil/.test(long[0].text) && long[0].text.length <= 120);
+  // A "\page" inside a fence still splits (as the renderer splits), and what the split leaves of the fence is code to the preview and to the outline.
+  assert.deepEqual(outlineOf('# A\n\n```\n\\page\n```\n\n## B').map(h => h.text), ['A']);
+}

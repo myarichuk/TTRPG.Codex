@@ -266,4 +266,5 @@
   <data name="Page.Home.FinishSetupLink" xml:space="preserve"><value>לסיום ההגדרה</value></data>
   <data name="Page.Home.JoinOnly" xml:space="preserve"><value>בשרת הזה קמפיינים יוצרים שליטי מבוך. הצטרפו לקמפיין דרך קישור הזמנה משליט המבוך שלו, או בקשו ממנהל השרת להפוך אתכם לשליטי מבוך.</value></data>
   <data name="Page.Login.AccountDeleted" xml:space="preserve"><value>החשבון שלך נמחק.</value></data>
+  <data name="Page.Campaign.Section.Book" xml:space="preserve"><value>ספר</value></data>
 </root>

@@ -54,6 +54,15 @@ public static class E2EHelpers
         await WaitForInteractiveAsync(player);
     }
 
+    /// <summary>Opens the campaign's Book page on an edition ("dm" or "party"; the address says "gm" for the first) and waits until the editor has its chapters.
+    /// <paramref name="chapter"/> is a section id or "style" to open on.</summary>
+    public static async Task OpenBookAsync(IPage page, string campaignId, string edition, string? chapter = null)
+    {
+        await page.GotoAsync($"/campaigns/{campaignId}/book/{(edition == "dm" ? "gm" : edition)}" + (chapter == null ? string.Empty : "/" + chapter));
+        await WaitForInteractiveAsync(page);
+        await Assertions.Expect(page.GetByTestId("book-draft-code")).ToBeVisibleAsync(new() { Timeout = 30_000 });
+    }
+
     public static async Task GoToSectionAsync(IPage page, string campaignId, string section)
     {
         await page.GotoAsync($"/campaigns/{campaignId}/{section}");

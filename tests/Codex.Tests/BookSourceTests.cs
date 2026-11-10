@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
+using Codex.Core.Book;
 using Codex.Persistence;
+using Codex.Web.Book;
 using Newtonsoft.Json;
 
 namespace Codex.Tests;
@@ -10,7 +12,7 @@ namespace Codex.Tests;
 /// strings are positive controls: without them an empty source would pass.
 /// </summary>
 [Collection("RavenDb")]
-public class BookSourceTests : IClassFixture<RavenDbFixture>
+public partial class BookSourceTests : IClassFixture<RavenDbFixture>
 {
     private const string DmUser = "CANARY_dm_user";
     private const string PlayerUser = "CANARY_player_user";
@@ -56,40 +58,37 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
     }
 
     [Fact]
-    public async Task PartyBook_AsHtml_CarriesNoDmOnlyData_AndStillHasThePublicText()
+    public async Task PartyDraft_CarriesNoDmOnlyData_AndStillHasThePublicText()
     {
         var (dm, _) = await SeedAsync();
         var source = await _reader.ReadAsync(dm, BookAudience.Party);
         Assert.NotNull(source);
 
-        var built = Codex.Core.Book.BookHtml.Build(BookCompiler.Compile(source, "en"), Codex.Core.Book.BookThemes.Plain,
-            new Codex.Core.Book.BookHtmlOptions { Mention = BookCompiler.Mentions(source) });
+        var (_, draft) = ThroughTheDraft(source);
 
-        Assert.NotNull(built.Html);
-        var leaked = Regex.Matches(built.Html, @"CANARY_\w+").Select(m => m.Value).Distinct().Order().ToList();
+        var leaked = Regex.Matches(draft, @"CANARY_\w+").Select(m => m.Value).Distinct().Order().ToList();
         Assert.True(leaked.Count == 0, "The party book carries DM-only data: " + string.Join(", ", leaked));
-        Assert.DoesNotContain(":::", built.Html);
+        Assert.DoesNotContain(":::", draft);
+        Assert.DoesNotContain("{{secret", draft);
         foreach (var text in new[] { "PUBLIC_DESCRIPTION", "PUBLIC_Vera", "PUBLIC_Saltmere", "PUBLIC_Session One", "PUBLIC_RECAP", "PUBLIC_FACT" })
         {
-            Assert.Contains(text, built.Html);
+            Assert.Contains(text, draft);
         }
     }
 
     [Fact]
-    public async Task DmBook_AsHtml_BoxesTheDmsSecrets_AndStillHasNoAccountId()
+    public async Task GmDraft_BoxesTheGmsSecrets_AndStillHasNoAccountId()
     {
         var (dm, _) = await SeedAsync();
         var source = await _reader.ReadAsync(dm, BookAudience.Dm);
         Assert.NotNull(source);
 
-        var built = Codex.Core.Book.BookHtml.Build(BookCompiler.Compile(source, "en"), Codex.Core.Book.BookThemes.Plain,
-            new Codex.Core.Book.BookHtmlOptions { BoxSecrets = true, Mention = BookCompiler.Mentions(source) });
+        var (_, draft) = ThroughTheDraft(source);
 
-        Assert.NotNull(built.Html);
-        Assert.Contains("class=\"secret secret-dm\"", built.Html);
-        Assert.DoesNotContain(":::", built.Html);
-        Assert.DoesNotContain(DmUser, built.Html);
-        Assert.DoesNotContain(PlayerUser, built.Html);
+        Assert.Contains("{{secret\n", draft);
+        Assert.DoesNotContain(":::", draft);
+        Assert.DoesNotContain(DmUser, draft);
+        Assert.DoesNotContain(PlayerUser, draft);
     }
 
     [Fact]
@@ -159,26 +158,17 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         Assert.Empty(typeof(BookSource).GetConstructors());
     }
 
-    // What the model is sent is a second place a secret can leak, and a stored build or a log would keep it (docs/BOOK_EXPORT.md 2.3).
-    private static async Task<(string Requests, string Html, int Refined)> ThroughAModelAsync(BookSource source)
+    // What a model is sent is a second place a secret can leak (docs/BOOK_EXPORT.md 2.3). On the draft path every AI edit and merge sends a
+    // passage the server cut from the chapter (BookDraftEdits.Cut, 41.16); here each whole chapter is cut. Markdown's escapes are read back
+    // ("PUBLIC\_Vera" is "PUBLIC_Vera"), so a name is found as it was typed.
+    private static (string Sent, string Draft) ThroughTheDraft(BookSource source)
     {
-        string Echo(IList<Microsoft.Extensions.AI.ChatMessage> messages, int _)
-        {
-            var user = messages.Last().Text;
-            var from = user.IndexOf("<source>", StringComparison.Ordinal) + "<source>".Length;
-            return user[from..user.IndexOf("</source>", StringComparison.Ordinal)].Trim();
-        }
-
-        var chat = new ScriptedChat(Echo);
-        var mention = BookCompiler.Mentions(source);
-        var render = new Codex.Core.Book.BookMarkdownOptions { BoxSecrets = source.Audience == BookAudience.Dm, Mention = mention };
-        var document = BookCompiler.Compile(source, "en");
-        var report = await new Codex.Core.Book.BookBuildRunner(chat, new Codex.Core.Book.BookBudget(10_000_000), 1)
-            .RunAsync(document, s => Codex.Core.Book.BookBuildRunner.Item(s, "en", "Warm and brief.", mention, render));
-        var html = Codex.Core.Book.BookHtml.Build(report.Document, Codex.Core.Book.BookThemes.Plain,
-            new Codex.Core.Book.BookHtmlOptions { BoxSecrets = source.Audience == BookAudience.Dm, Mention = mention }).Html!;
-        return (string.Join("\n=====\n", chat.Requests), html, report.Refined);
+        var chapters = BookDraftWriter.Generate(source, "en", null);
+        var sent = string.Join("\n=====\n", chapters.Select(c => BookDraftEdits.Cut(c.Markdown, 0, c.Markdown.Length)!.Text));
+        return (Plain(sent), Plain(string.Join("\n", chapters.Select(c => c.Markdown))));
     }
+
+    private static string Plain(string markdown) => Regex.Replace(markdown, @"\\(.)", "$1");
 
     [Fact]
     public async Task PartyEdition_SendsNoDmOnlyDataToTheModel_AndTheBookItMakesCarriesNone()
@@ -186,18 +176,13 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         var (dm, _) = await SeedAsync();
         var source = (await _reader.ReadAsync(dm, BookAudience.Party))!;
 
-        var (requests, html, refined) = await ThroughAModelAsync(source);
+        var (sent, draft) = ThroughTheDraft(source);
 
-        Assert.True(refined > 0, "the model path ran");
-        Assert.Contains("PUBLIC_", requests, StringComparison.Ordinal); // a positive control: the requests are not empty
-        var leaked = Regex.Matches(requests + html, @"CANARY_\w+").Select(m => m.Value).Distinct().Order().ToList();
+        Assert.Contains("PUBLIC_", sent, StringComparison.Ordinal); // a positive control: the passages are not empty
+        var leaked = Regex.Matches(sent + draft, @"CANARY_\w+").Select(m => m.Value).Distinct().Order().ToList();
         Assert.True(leaked.Count == 0, "A model request or the book carries DM-only data: " + string.Join(", ", leaked));
-        Assert.DoesNotContain(":::", SourcesIn(requests), StringComparison.Ordinal);
+        Assert.DoesNotContain(":::", sent, StringComparison.Ordinal);
     }
-
-    // The chapter text a request carries; the system prompt's own rules say ":::" and are not the campaign's.
-    private static string SourcesIn(string requests) =>
-        string.Concat(Regex.Matches(requests, @"<source>(.*?)</source>", RegexOptions.Singleline).Select(m => m.Groups[1].Value));
 
     [Fact]
     public async Task DmEdition_KeepsItsSecretsOutOfTheModel_AndStillPrintsThemInTheirBox()
@@ -205,18 +190,17 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
         var (dm, _) = await SeedAsync();
         var source = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
 
-        var (requests, html, refined) = await ThroughAModelAsync(source);
+        var (sent, draft) = ThroughTheDraft(source);
 
-        Assert.True(refined > 0);
-        // The DM's own secret blocks are placed by the program: their words never go to the model, and come out in the box.
+        // The GM's own secret blocks are cut out by the server: their words never go to the model, and stay in the draft's box.
         foreach (var secret in new[] { "CANARY_BIO_DM_VERA", "CANARY_RECAP_DM", "CANARY_DMSUMMARY", "CANARY_LOC_BLOCK", "CANARY_FACT_BLOCK", "CANARY_PUBDESC_DM" })
         {
-            Assert.DoesNotContain(secret, requests, StringComparison.Ordinal);
+            Assert.DoesNotContain(secret, sent, StringComparison.Ordinal);
+            Assert.Contains(secret, draft, StringComparison.Ordinal);
         }
 
-        Assert.DoesNotContain(":::", SourcesIn(requests), StringComparison.Ordinal);
-        Assert.Contains("CANARY_BIO_DM_VERA", html, StringComparison.Ordinal);
-        Assert.Contains("class=\"secret secret-dm\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("{{secret", sent, StringComparison.Ordinal);
+        Assert.Matches(@"\{\{secret\n[^}]*CANARY_BIO_DM_VERA", draft);
     }
 
     // A party page that links to a GM-only page: the party edition prints the link's own words and never the hidden page's title, in the
@@ -239,9 +223,7 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
 
         var party = (await _reader.ReadAsync(dm, BookAudience.Party))!;
         var compiled = Codex.Web.Book.BookComposer.Compose(party, "en", out var entries);
-        var html = Codex.Core.Book.BookHtml.Build(compiled, Codex.Core.Book.BookThemes.Plain,
-            new Codex.Core.Book.BookHtmlOptions { Mention = BookCompiler.Mentions(party) }).Html!;
-        var (requests, _, _) = await ThroughAModelAsync(party);
+        var (requests, html) = ThroughTheDraft(party);
         var outline = string.Join("\n", Codex.Web.Book.BookArtOutline.For(party, compiled, entries, BookSlots.For(party, compiled, entries))
             .SelectMany(c => c.Slots).Select(s => s.Text));
 
@@ -252,16 +234,25 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
             Assert.True(text.Contains("PUBLIC the old tower", StringComparison.Ordinal), where + " lost the link's own words");
         }
 
-        Assert.Contains("<span class=\"wikilink\"><bdi>PUBLIC_Docks</bdi></span>", html, StringComparison.Ordinal);
+        // A page the party may open, and a character and a stranger it has entries for, are cross-references to those entries (51): the
+        // stranger's is the mask's, never the actor's.
+        var docks = "[PUBLIC_Docks](#e-" + BookSlots.KeyFor(BookSlots.WikiSubject("w-party")) + ")";
+        var vera = "[PUBLIC_Vera](#e-" + BookSlots.KeyFor("actor:a-known") + ")";
+        var stranger = "[PUBLIC_hooded stranger](#e-" + BookSlots.KeyFor("mask:a-unknown") + ")";
+        Assert.Contains("The way to " + docks + " is open.", html, StringComparison.Ordinal);
+        Assert.DoesNotContain(BookSlots.KeyFor("actor:a-unknown"), html, StringComparison.Ordinal);
         // Mentions are the mention resolver's: named as the party knows them, and a hidden one's label is never printed (the check above).
-        Assert.Contains("Meet PUBLIC_Vera and PUBLIC_hooded stranger, not .", Regex.Replace(html, "<[^>]+>", string.Empty), StringComparison.Ordinal);
+        Assert.Contains("Meet " + vera + " and " + stranger + ", not .", html, StringComparison.Ordinal);
 
         // The GM edition is the GM's own: every link keeps its text.
         var gm = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
-        var gmHtml = Codex.Core.Book.BookHtml.Build(BookCompiler.Compile(gm, "en"), Codex.Core.Book.BookThemes.Plain,
-            new Codex.Core.Book.BookHtmlOptions { BoxSecrets = true, Mention = BookCompiler.Mentions(gm) }).Html!;
-        Assert.Contains("<span class=\"wikilink\"><bdi>LINKSECRET Tower</bdi></span>", gmHtml, StringComparison.Ordinal);
-        Assert.Contains("<span class=\"wikilink\"><bdi>Not Written Yet</bdi></span>", gmHtml, StringComparison.Ordinal);
+        var (_, gmHtml) = ThroughTheDraft(gm);
+        var tower = BookSlots.KeyFor(BookSlots.WikiSubject("w-tower"));
+        Assert.Contains("Seen from [LINKSECRET Tower](#e-" + tower + ")", gmHtml, StringComparison.Ordinal);
+        // A page nobody wrote has no entry: its words, and no link.
+        Assert.Contains(" Not Written Yet.", gmHtml, StringComparison.Ordinal);
+        // The key of the page the party may not open is the GM edition's alone.
+        Assert.DoesNotContain(tower, html, StringComparison.Ordinal);
         // The party source cannot tell a page that is not written from one it may not see, so both print nothing.
         Assert.DoesNotContain("Not Written Yet", html, StringComparison.Ordinal);
     }

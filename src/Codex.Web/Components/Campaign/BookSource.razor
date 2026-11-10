@@ -1,0 +1,257 @@
+@inherits BookPart
+@using Codex.Core.Book
+@using Codex.Persistence
+@using Codex.Web.Book
+@using static Codex.Web.Components.Campaign.BookPage
+
+        <section id="book-pane-source" class="book-draft-pane book-draft-edit" aria-labelledby="book-draft-edit-title">
+            <div class="book-draft-pane-head">
+                <span id="book-draft-edit-title"><LucideIcon IconName="file-text" Size="14" /> <bdi dir="auto">@(Current is { } open ? Title(open) : string.Empty)</bdi></span>
+                @if (Current is { } c && (c.Stale || c.Gone))
+                {
+                    <span class="badge book-draft-badge-stale">@L["Campaign.Book.Draft.Badge.Stale"]</span>
+                }
+                else if (Current is { Edited: true })
+                {
+                    <span class="badge book-draft-badge-edited">@L["Campaign.Book.Draft.Badge.Edited"]</span>
+                }
+                <span class="flex-grow-1"></span>
+                @if (Current is { CanUndo: true } undoable)
+                {
+                    <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => UndoAsync(undoable.Section)" disabled="@working" data-testid="book-draft-undo">@L["Campaign.Book.Draft.Undo"]</button>
+                }
+            </div>
+            @* Text, Style and Theme (docs/BOOK_EXPORT.md 52): the chapter, the GM's own CSS, and the theme's CSS to read and copy from. *@
+            <div class="cx-tabs book-source-tabs" role="tablist" aria-label="@L["Campaign.Book.Source.Tabs"]" @onkeydown="P.SourceKeyAsync">
+                @foreach (var tab in BookPage.SourceTabs)
+                {
+                    <button type="button" role="tab" id="@("book-source-tab-" + tab)" class="cx-tab" aria-selected="@(P.sourceTab == tab ? "true" : "false")" aria-controls="book-source-panel"
+                            tabindex="@(P.sourceTab == tab ? 0 : -1)" @onclick="() => P.SourceTabAsync(tab)" disabled="@AiBusy"
+                            data-testid="@(tab == "style" ? "book-draft-css" : "book-source-tab-" + tab)">@P.SourceTabName(tab)</button>
+                }
+            </div>
+            @if (P.sourceTab == "text")
+            {
+                @* The snippet bar: each button writes its block at the cursor, or around the selection, as one edit. *@
+                <div class="book-snippets" role="toolbar" aria-label="@L["Campaign.Book.Snippet.Bar"]" data-testid="book-snippets">
+                    @foreach (var (kind, icon, label) in P.Snippets)
+                    {
+                        <button type="button" class="book-snippet" @onclick="() => P.SnippetAsync(kind)" disabled="@(AiBusy || working || state == BookPage.SaveState.Conflict)"
+                                title="@L["Campaign.Book.Snippet.Hint." + kind]" data-testid="@("book-snippet-" + kind)">
+                            <LucideIcon IconName="@icon" Size="14" /> <span>@label</span>
+                        </button>
+                    }
+                </div>
+            }
+            <div id="book-source-panel" role="tabpanel" aria-labelledby="@("book-source-tab-" + P.sourceTab)" class="book-draft-pane-body book-draft-edit-body">
+                @if (P.sourceTab == "theme")
+                {
+                    <div class="d-flex gap-2 align-items-center flex-wrap px-1 pb-1">
+                        <span class="small-muted flex-grow-1">@L["Campaign.Book.Source.ThemeHint"]</span>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="P.CopyThemeAsync" Disabled="@(AiBusy || working || state == BookPage.SaveState.Conflict)" data-testid="book-theme-copy">
+                            <LucideIcon IconName="copy" Size="14" /> @L["Campaign.Book.Source.CopyToStyle"]
+                        </CodexButton>
+                    </div>
+                }
+                else if (P.sourceTab == "style")
+                {
+                    <div class="small-muted px-1 pb-1">@L["Campaign.Book.Draft.StylesheetHint"]</div>
+                    <div class="small px-1 pb-1" role="status" aria-live="polite" data-testid="book-draft-web">
+                        @if (fetching > 0)
+                        {
+                            <span class="small-muted">@L["Campaign.Book.Draft.Web.Fetching"]</span>
+                        }
+                        else if (webReport is { Kept: > 0 } kept)
+                        {
+                            <span class="small-muted">@L["Campaign.Book.Draft.Web.Kept", kept.Kept, Megabytes(kept.KeptBytes)]</span>
+                        }
+                    </div>
+                }
+                else if (Current is { } shown)
+                {
+                    @* While a merge is open its own bar says what is going on; the notice comes back if it is let go of. *@
+                    @if (shown.Stale && mergeSection == null)
+                    {
+                        <div class="book-draft-notice" role="status" data-testid="book-draft-stale">
+                            <div>
+                                <strong>@L["Campaign.Book.Draft.Stale"]</strong>
+                                @if (shown.Changed.Count > 0)
+                                {
+                                    <span class="small-muted"> @L["Campaign.Book.Draft.StaleEntries", string.Join(", ", shown.Changed)]</span>
+                                }
+                                <div class="small-muted">@L["Campaign.Book.Draft.StaleHint"]</div>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => MergePrepareAsync(shown.Section)" Disabled="@(working || AiBusy)" data-testid="book-draft-merge">
+                                    <LucideIcon IconName="git-merge" Size="14" /> @L["Campaign.Book.Draft.Merge.Button"]
+                                </CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => RegenerateAsync(shown.Section)" Disabled="@(working || AiBusy)" data-testid="book-draft-regenerate">
+                                    <LucideIcon IconName="refresh-cw" Size="14" /> @L["Campaign.Book.Draft.Regenerate"]
+                                </CodexButton>
+                                <CodexButton Small="true" OnClick="() => KeepAsync(shown.Section)" Disabled="@(working || AiBusy)" data-testid="book-draft-keep">@L["Campaign.Book.Draft.Keep"]</CodexButton>
+                            </div>
+                        </div>
+                    }
+                    else if (shown.Gone)
+                    {
+                        <div class="book-draft-notice" role="status" data-testid="book-draft-gone">@L["Campaign.Book.Draft.Gone"]</div>
+                    }
+                }
+                @* An AI request's pre-flight and its review sit on the Markdown they lock, not in a tab that could be folded away. *@
+                @if (AiBusy)
+                {
+                <div class="book-draft-ai-bar" data-testid="book-draft-ai-bar">
+                @if (reviewing)
+                {
+                    <div class="book-draft-ai-review" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-review">
+                        <strong id="book-draft-ai-title">@(mergeKey != null ? L["Campaign.Book.Draft.Merge.Review"] : L["Campaign.Book.Draft.Ai.Review"])</strong>
+                        <span class="small-muted" role="status" aria-live="polite" data-review-left data-testid="book-draft-review-left"></span>
+                        @if (shapeRun is { } running)
+                        {
+                            <span class="small-muted" data-testid="book-draft-shape-progress">@L["Campaign.Book.Draft.ShapeBook.Progress", running.Next, running.Sections.Count]</span>
+                            <CodexButton Small="true" OnClick="ShapeBookStop" data-testid="book-draft-shape-stop">@L["Campaign.Book.Draft.ShapeBook.Stop"]</CodexButton>
+                        }
+                        <span class="flex-grow-1"></span>
+                        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="@(() => AiFinishAsync("accepted"))" data-testid="book-draft-review-keep">@L["Campaign.Book.Draft.Ai.KeepAccepted"]</CodexButton>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="@(() => AiFinishAsync("all"))" data-testid="book-draft-review-all">@L["Campaign.Book.Draft.Ai.AcceptRest"]</CodexButton>
+                        <CodexButton Small="true" OnClick="@(() => AiFinishAsync("none"))" data-testid="book-draft-review-discard">@L["Campaign.Book.Draft.Ai.Discard"]</CodexButton>
+                        <div class="small-muted w-100">@L["Campaign.Book.Draft.Ai.ReviewHint"]</div>
+                    </div>
+                }
+                else if (shapePreview is { } book)
+                {
+                    @* The whole book (docs/BOOK_EXPORT.md 42, step 3): the cost of every chapter first; then each chapter is asked and reviewed in turn. *@
+                    <div class="book-draft-ai-confirm" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-shape-confirm">
+                        <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.ShapeBook.Confirm", book.Sections.Count, book.Model?.Label ?? string.Empty]</strong>
+                        <div class="small-muted" data-testid="book-draft-shape-calls">@L["Campaign.Book.Draft.ShapeBook.Calls", book.Calls]</div>
+                        @if (book.TooLong.Count > 0)
+                        {
+                            <div class="small-muted" data-testid="book-draft-shape-too-long">@L["Campaign.Book.Draft.ShapeBook.TooLong", string.Join(", ", book.TooLong.Select(TitleOf))]</div>
+                        }
+                        @if (book.Preflight is { } flight)
+                        {
+                            <div class="small-muted">@L["Campaign.Book.Draft.Ai.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh)]</div>
+                            @if (flight.CostLow is { } low && flight.CostHigh is { } high)
+                            {
+                                <div class="small-muted" data-testid="book-draft-shape-cost">@L["Campaign.Book.Draft.Ai.Cost", Money(low, book.Model?.Price), Money(high, book.Model?.Price)]</div>
+                            }
+                            else
+                            {
+                                <div class="small-muted">@L["Campaign.Book.Ai.Preflight.NoPrice"]</div>
+                            }
+                            @if (book.Model?.ServerUsedToday is { } server && server.Limit > 0)
+                            {
+                                <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts * book.Calls]</div>
+                            }
+                        }
+                        <div class="small-muted">@L["Campaign.Book.Draft.ShapeBook.Each"]</div>
+                        <div class="d-flex gap-2 mt-1">
+                            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="ShapeBookStartAsync" data-testid="book-draft-shape-start">@L["Campaign.Book.Draft.ShapeBook.Start"]</CodexButton>
+                            <CodexButton Small="true" OnClick="ShapeBookCancel" data-testid="book-draft-shape-cancel">@L["Common.Cancel"]</CodexButton>
+                        </div>
+                    </div>
+                }
+                else if (mergePreview is { } merge)
+                {
+                    <div class="book-draft-ai-confirm" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-merge-confirm">
+                        <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Merge.Confirm"]</strong>
+                        <div class="small-muted" data-testid="book-draft-merge-summary">@L["Campaign.Book.Draft.Merge.Summary", merge.Theirs, merge.Mine, merge.Added, merge.Removed, merge.Restored]</div>
+                        <div class="small" data-testid="book-draft-merge-conflicts">@L["Campaign.Book.Draft.Merge.Conflicts", merge.Conflicts]</div>
+                        @if (merge.Sendable > 0 && merge.Model is { } model && merge.Preflight is { } flight)
+                        {
+                            <div class="small-muted">@L["Campaign.Book.Draft.Merge.Send", merge.Sendable, model.Label]</div>
+                            <div class="small-muted">@L["Campaign.Book.Draft.Ai.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh)]</div>
+                            @if (flight.CostLow is { } low && flight.CostHigh is { } high)
+                            {
+                                <div class="small-muted" data-testid="book-draft-merge-cost">@L["Campaign.Book.Draft.Ai.Cost", Money(low, model.Price), Money(high, model.Price)]</div>
+                            }
+                            else
+                            {
+                                <div class="small-muted">@L["Campaign.Book.Ai.Preflight.NoPrice"]</div>
+                            }
+                            @if (model.ServerUsedToday is { } server && server.Limit > 0)
+                            {
+                                <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts * merge.Sendable]</div>
+                            }
+                        }
+                        else if (merge.Sendable > 0)
+                        {
+                            <div class="small-muted" data-testid="book-draft-merge-nomodel">@L["Campaign.Book.Draft.Merge.NoModel"]</div>
+                        }
+                        @if (merge.Conflicts > merge.Sendable)
+                        {
+                            <div class="small-muted">@L["Campaign.Book.Draft.Merge.NotSendable", merge.Conflicts - merge.Sendable]</div>
+                        }
+                        <div class="d-flex gap-2 mt-1 flex-wrap">
+                            @if (merge.Sendable > 0 && merge.Model != null)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => MergeRunAsync(true)" data-testid="book-draft-merge-ai">@L["Campaign.Book.Draft.Merge.WithAi"]</CodexButton>
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MergeRunAsync(false)" data-testid="book-draft-merge-plain">@L["Campaign.Book.Draft.Merge.WithoutAi"]</CodexButton>
+                            }
+                            else
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => MergeRunAsync(false)" data-testid="book-draft-merge-plain">@L["Campaign.Book.Draft.Merge.ShowChanges"]</CodexButton>
+                            }
+                            <CodexButton Small="true" OnClick="MergeCancelAsync" data-testid="book-draft-merge-cancel">@L["Common.Cancel"]</CodexButton>
+                        </div>
+                    </div>
+                }
+                else if (aiPreview is { } asking && aiPending is { } pending)
+                {
+                    <div class="book-draft-ai-confirm" role="group" aria-labelledby="book-draft-ai-title" data-testid="book-draft-ai-confirm">
+                        <strong id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Confirm", pending.Whole ? L["Campaign.Book.Draft.Ai.Chapter"] : L["Campaign.Book.Draft.Ai.Selection"], asking.Model?.Label ?? string.Empty]</strong>
+                        @if (!pending.Whole && (asking.From != pending.Selection.From || asking.To != pending.Selection.To))
+                        {
+                            <div class="small-muted" data-testid="book-draft-ai-widened">@L["Campaign.Book.Draft.Ai.Widened"]</div>
+                        }
+                        @if (asking.Calls > 1)
+                        {
+                            <div class="small-muted" data-testid="book-draft-ai-parts">@L["Campaign.Book.Draft.Ai.Parts", asking.Calls]</div>
+                        }
+                        @if (asking.Pieces > 0)
+                        {
+                            <div class="small-muted" data-testid="book-draft-ai-kept">@L["Campaign.Book.Draft.Ai.Kept", asking.Pieces]</div>
+                        }
+                        @if (asking.Preflight is { } flight)
+                        {
+                            <div class="small-muted">@L["Campaign.Book.Draft.Ai.Tokens", Number(flight.InputLow), Number(flight.InputHigh), Number(flight.OutputHigh)]</div>
+                            @if (flight.CostLow is { } low && flight.CostHigh is { } high)
+                            {
+                                <div class="small-muted" data-testid="book-draft-ai-cost">@L["Campaign.Book.Draft.Ai.Cost", Money(low, asking.Model?.Price), Money(high, asking.Model?.Price)]</div>
+                            }
+                            else
+                            {
+                                <div class="small-muted">@L["Campaign.Book.Ai.Preflight.NoPrice"]</div>
+                            }
+                            @if (asking.Model?.ServerUsedToday is { } server && server.Limit > 0)
+                            {
+                                <div class="small-muted">@L["Campaign.Book.Draft.Ai.Allowance", server.Used, server.Limit, BookEditWorker.MaxAttempts * asking.Calls]</div>
+                            }
+                        }
+                        <div class="d-flex gap-2 mt-1">
+                            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => AiSendAsync()" data-testid="book-draft-ai-send">@L["Campaign.Book.Draft.Ai.Send"]</CodexButton>
+                            <CodexButton Small="true" OnClick="AiCancelAsync" data-testid="book-draft-ai-cancel">@L["Common.Cancel"]</CodexButton>
+                        </div>
+                    </div>
+                }
+                else if (aiAsking)
+                {
+                    <div class="d-flex gap-2 align-items-center" role="status" aria-live="polite" data-testid="book-draft-ai-asking">
+                        <span id="book-draft-ai-title">@L["Campaign.Book.Draft.Ai.Asking"]</span>
+                        @if (shapeRun is { } asked)
+                        {
+                            <span class="small-muted" data-testid="book-draft-shape-progress">@L["Campaign.Book.Draft.ShapeBook.Progress", asked.Next, asked.Sections.Count]</span>
+                        }
+                        <CodexButton Small="true" OnClick="() => aiStop?.Cancel()" data-testid="book-draft-ai-stop">@L["Campaign.Book.Draft.Ai.Stop"]</CodexButton>
+                    </div>
+                }
+                </div>
+                }
+                @* Pictures in the text (docs/BOOK_EXPORT.md 53): what a chip under a heading did, and the one file field every chip's Upload opens. *@
+                <div class="small px-1 @(P.chipNoteError ? "field-error" : "small-muted")" role="status" aria-live="polite" data-testid="book-chip-status">@P.chipNote</div>
+                <InputFile id="book-chip-file" OnChange="P.ChipUploadedAsync" accept="@Codex.Web.Services.ArtService.Accept" class="visually-hidden" tabindex="-1"
+                           aria-label="@L["Campaign.Book.Chip.File"]" data-testid="book-chip-file" />
+                @* The editor's own box: the review view is put beside the code by the script, never among Blazor's elements. *@
+                <div class="book-draft-codebox"><div class="book-draft-code" @ref="host" data-testid="book-draft-code"></div></div>
+            </div>
+        </section>

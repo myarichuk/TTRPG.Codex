@@ -10,41 +10,43 @@ request should be opened unless the user asks.
 TTRPG.Codex is a self-hosted .NET 10 / Blazor / RavenDB TTRPG companion (EN, RU, HE with RTL; bring-your-own-key AI). The feature exports a
 campaign as a Homebrewery-styled PDF book:
 
-campaign -> audience-masked source (`BookSourceReader`) -> `BookCompiler` (Markdown chapters) -> optional AI polish (`Ai/*`, stored build)
--> `BookComposer.PlaceArt` (pictures) -> `BookHtml` (self-contained page, CSP, theme) -> sandboxed preview iframe and PuppeteerSharp PDF.
+campaign -> audience-masked source (`BookSourceReader`) -> `BookCompiler` (Markdown chapters) -> `BookDraftWriter` (the edition's editable draft,
+`art:` references for pictures) -> the GM's edits and reviewed AI edits -> the bundled renderer (`tools/book-editor`) in the Book page's preview
+and, in a closed page, for the PuppeteerSharp PDF. Since section 50 this is the only pipeline: the old HTML route (`BookHtml`, AI polish,
+`PlaceArt`) is deleted.
 
 Two editions: `dm` (GM; secrets boxed) and `party` (exactly what a player who owns no character may read; masked strangers, no hidden
-characters, no DM-only pages, secrets removed *before* compile). The GM-only panel is `Components/Campaign/BookPanel.razor`, shown in Settings.
-Routes: `BookEndpoints.cs` (`/campaigns/{id}/book/{edition}` and `/pdf`; query: `lang theme size cols pics ai`).
+characters, no DM-only pages, secrets removed *before* compile). The GM-only Book page is `/campaigns/{id}/book/{gm|party}/{chapter?}` (49).
+Routes: `BookEndpoints.cs` (`/campaigns/{id}/book-file/{edition}/draft/{lang}/{art|md|pdf}`, `?player=` for a player's own copy).
 
 ## 2. Where things are
 
 | Area | Files |
 |---|---|
 | Masked reads | `src/Codex.Persistence/Book/BookSource*.cs` (the only input of the compiler; its constructor is internal) |
-| Compiler | `Persistence/Book/BookCompiler.cs` (chapters; `BookEntryPosition` records each entry heading's line; `ArtAnchors`) |
-| Renderer | `Core/Book/BookMarkdown*.cs` (own Markdown subset; escaped by default; no URLs; `{{block:N}}`; `asset:`/`slot:` images) |
-| Page, themes, CSS | `Core/Book/BookHtml.cs`, `BookTheme.cs` (Plain, Parchment; English, Russian and Hebrew), `BookMasks.cs` (torn-edge SVG), `BookRtl.cs` (mirrors a theme's sheets for Hebrew), `BookFontCoverage.cs` (a font file's letters) |
+| Compiler | `Persistence/Book/BookCompiler.cs` (chapters in the adventure-book order of 51, groups; `BookEntryPosition` records each entry heading's line, `IsGroup`, `InContents`; `ArtAnchors`) |
+| Old renderer | `Core/Book/BookMarkdown*.cs` (own Markdown subset; now only `BookWork.Prepare`'s secret boxes and the compiler's grammar notes use it) |
+| Themes, CSS | `Core/Book/BookDraftHtml.cs` (themes, shell, CSP), `BookTheme.cs` (the theme type, `BookThemes` script ranges and helpers), `BookDocument.cs` (compiled-book records), `BookMasks.cs` (torn-edge SVG), `BookRtl.cs` (mirrors a theme's sheets for Hebrew), `BookFontCoverage.cs` (a font file's letters) |
 | PDF | `Web/Book/BookPdf.cs`, `BookBrowser.cs` (finds Chrome/Edge/Chromium; `CODEX_BOOK_BROWSER`; one job at a time) |
-| Composition | `Web/Book/BookComposer.cs` (labels, `Items`, `Overlay` of a stored rewrite, `PlaceArt`) |
-| AI layer | `Core/Book/Ai/*` (blocks, checks, section worker, runner, build key), `Core/Book/BookBudget.cs`, `BookTokens.cs`, `Web/Book/BookBuilds.cs` (stored build, background runs), `BookModels.cs`, `Persistence/Book/BookBuildModels.cs` |
+| Composition | `Web/Book/BookComposer.cs` (labels, `Compose`) |
+| AI layer | `Core/Book/Ai/*` (`BookWork.Prepare`, checks, facts, draft edits and merges, art director), `Core/Book/BookBudget.cs`, `BookTokens.cs`, `Web/Book/BookDraftAi.cs`, `BookDraftMerges.cs`, `BookRun.cs` (runs the director and drawing share), `BookSpend.cs` (spend totals, kept in `Persistence/Book/BookBuildModels.cs`), `BookModels.cs` |
 | Pictures | `Persistence/Book/BookArt.cs` (reader, caps), `Core/Book/BookImages.cs` (structural sanitizer, never decodes), `BookImageScaler.cs`, `BookImageWorker.cs` |
 | Book art slots | `Persistence/Book/BookSlots.cs` (slots and keys, `Choose`), `BookArtStore.cs` (`bookart/{campaign}`, tagged party/dm), `Web/Book/BookArtService.cs` (upload checked against the edition's slots), `Components/Campaign/BookArtTray.razor` |
 | Art director | `Core/Book/Ai/BookArtDirector.cs` (prompt, reply reading, per-field checks), `Web/Book/BookArtOutline.cs`, `BookArtDirection.cs` (plan, pre-flight, run), `BookGate.cs` |
 | Drawn-art prompt | `Core/Book/BookArtStyle.cs` (style vocabulary, `BookImagePrompt.Assemble` and its checks) |
 | Drawing | `Web/Book/BookArtDrawing.cs` (picks checked again, run), `BookImages.cs` (picture model per run, reserved allowance), image price in `AiSettings.razor` and `AiProviderService` |
 | Decoder process | `src/Codex.ImageWorker` (only caller of SkiaSharp; talks stdin/stdout via `BookImageWire`) |
-| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow), `Web/Book/BookDraftWriter.cs` (generator), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookDraftEditor.razor`, `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
+| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow and order, the GM's own chapters `own-...`), `Web/Book/BookDraftWriter.cs` (generator, `book-draft/v4`: heading nesting, two-level contents, cross-references `Links`), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookPage.razor(.cs)`, `BookPage.Source.cs` (tabs, snippets, outline state, own chapters; 52), `BookPage.Pictures.cs` (the chips under the headings; 53) and its parts `BookToolbar|Outline|Source|Preview|Dock` (49), `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
 | Strings | `Localization/Resources/Strings.Campaign{,.ru,.he}.resx`, keys `Campaign.Book.*` |
 | Website | `site/` (see `site/README.md`), guide section `#book`, tour row, screenshots `book-panel` and `book-pages`, tools `capture-screenshots.mjs`, `demo-art.py`, `book-pages.py` |
-| Tests | `tests/Codex.Tests/Book*Tests.cs`, `E2E/BookRouteE2ETests.cs` |
+| Tests | `tests/Codex.Tests/Book*Tests.cs`, `E2E/BookRouteE2ETests.cs`, `E2E/BookSourceE2ETests.cs`, `E2E/BookPicturesE2ETests.cs`, `tools/book-editor/test*.mjs` |
 
 ## 3. State: built, verified, and not
 
 Built: everything in `docs/BOOK_EXPORT.md` sections 10-39, and phases 1 and 2 of the editable book (41.9: draft store, generator, bundled
 `marked-hbfm` renderer with our cleaner and page fitting, print stage, editor dialog, stale notice with Regenerate; 41.10: every theme on
 Homebrewery's Blank layout, Homebrewery's own blocks, Ashen Vellum with bundled faces and baked paper, theme picker). Sections 34-39 (book art slots and the GM's own pictures, the style vocabulary
-and prompt, the art director, wiki links, drawing, the first real run's fixes) are on `book/next`, not pushed. The rest: masked reads, renderer, plain and parchment themes, PDF with TOC page numbers,
+and prompt, the art director, wiki links, drawing, the first real run's fixes) are on `book/next`, not pushed. The rest: masked reads, renderer, plain and parchment themes (the old route and Parchment were deleted in 50), PDF with TOC page numbers,
 panel, AI layer steps 1-5 (prices, budget, estimator, section workers, checks, stored build, pre-flight, live progress), two columns, existing pictures
 placed by recorded line, re-encoding/downscaling, out-of-process decoding, website.
 
@@ -76,11 +78,13 @@ worker run from that directory, and one run against a real model (a small Anthro
    them, fail closed (`BookBlocks.Mention`).
 3. **No URL in a page.** CSP is `default-src 'none'; img-src data:`; only a `data:image/` URI with no quote, bracket or space is ever written to an
    attribute (renderer and cover).
-4. **A stored rewrite prints only while its key matches** the key recomputed from the campaign as read now (`BookBuildKey`); the key covers recipe,
-   prompt and checks versions, the rules text as sent, edition, language, style, chapter and block bodies. Model and temperature are deliberately out.
-5. **A failure never replaces a paid rewrite; money is reserved at the worst case** (`BookBudget.WorstCase`) and settled on real usage.
-6. **One paid run per GM**: chapter builds and director runs take the same `BookGate` before any await.
-7. **A model never sees a picture and cannot move or drop one**; `PlaceArt` runs after `Overlay`.
+4. **Nothing a model writes reaches the book without the GM's review.** (Was: a stored rewrite prints only while its key matches; the stored
+   rewrite and `BookBuildKey` are deleted, section 50.) An AI edit or merge comes back as a proposal of changes; only what the GM accepts is saved,
+   at the chapter's version, and a reply that fails `BookChecks`/`BookFacts` is never offered.
+5. **A failure never replaces what the GM has; money is reserved at the worst case** (`BookBudget.WorstCase`) and settled on real usage.
+6. **One paid run per GM**: AI edits, merges, director runs and drawings take the same `BookGate` before any await.
+7. **A model never sees a picture and cannot move or drop one**: an AI edit is sent the passage with pictures, markers, breaks and secrets cut out
+   on the server (`BookDraftEdits.Cut`), and a reply must give back every piece once (`BookDraftEditTests`). (Was: `PlaceArt` after `Overlay`.)
 8. **The decoder is not in the server process.** Any worker failure returns "keep the picture"; the server never throws on it.
 9. **The party book places only pictures made for the party, in the party's own slots.** The tag is checked in three places (`BookSlots.Choose`,
    the tag check in `BookArtReader`, and `BookArt.Slot(key, audience)`), and an upload's key must be one of the slots that edition's source makes
@@ -88,7 +92,7 @@ worker run from that directory, and one run against a real model (a small Anthro
    section 43) are read by nothing that builds a book, and a kept version is put in use only under its own slot and edition (`UseAsync`).
 10. **A suggestion, and anything drawn from it, carries the tag of the edition whose source was read** (`BookArtDirection` passes only
    `p.Tag`), and each tray shows only its own edition's suggestions. The director is shown only `BookArtOutline` (cut after `BookWork.Prepare`
-   of the whole chapter), under per-request numbers, never slot keys. Chapter builds and director runs share one per-GM `BookGate`.
+   of the whole chapter), under per-request numbers, never slot keys. Every paid run shares one per-GM `BookGate` (invariant 6).
 11. **Nothing is drawn but what the GM ticked, and every pick is checked again on the server** (`BookArtDrawing.PrepareAsync`). The slot
    must be the edition's own, with the edition's own current suggestion, and the description must pass the checks. The picture is sanitised,
    stored under the edition's tag, and counted once against pictures set aside up front (`IBookImages`).
@@ -105,6 +109,17 @@ worker run from that directory, and one run against a real model (a small Anthro
 13. **A player's own book (section 45) holds only what that player may open.** It is read through that player's access and cleaned for their
    characters, only for a Player member now who owns one, only from the party draft, only for the GM, and it is never stored or sent to a model;
    its pictures are the party's. `BookPlayerBook.Overlay` adds only paragraphs of that player's compile.
+
+15. **A cross-reference names only what the edition's own book has (section 51).** A mention or page link becomes `[name](#e-KEY)` only when the
+   edition's resolver gives the name and the entries compiled from that edition's source have the target; the key is the entry's slot key as
+   that edition sees it (a stranger's is `mask:`). No text of the party draft holds a key that only the GM draft has
+   (`BookSourceTests.AName_PointsAtItsEntry_...`, `TheContents_...`). An AI reply may keep or drop such a link, never add one. The title of a
+   chapter of the GM's own is the GM's typing: the leak check generates the party draft without own chapters, so the contents' line for it is
+   checked like any typed text.
+
+14. **The book is the GM's alone (section 48).** Every book route answers 404 to anyone but the campaign's GM, Player members included, for
+   both editions and a player's own copy; no book UI is rendered for a player. Party edition and per-player PDFs are GM tools. Test:
+   `BookRouteE2ETests.APlayerOfTheCampaign_GetsNoBook_OnAnyRoute_WhereTheGmGetsOne`.
 
 ## 5. What to distrust
 
@@ -130,22 +145,26 @@ separately. Playwright and Chromium are preinstalled (`/opt/pw-browsers`); do no
 
 **B. Mutation checks (this is the most useful review; do it with backup copies, never `git checkout` an uncommitted file)**
 For each, copy the file, apply the change, run the named tests, expect a failure, restore from the copy.
-- `BookComposer.PlaceArt`: ignore `inFence`; place by first text match instead of the recorded `Line`; accept ambiguous headings in a rewritten chapter;
-  write trimmed lines back (hard breaks).
+- `BookDraftWriter.Chapter` (was `BookComposer.PlaceArt`, deleted in 50): find an entry's heading by its text instead of the recorded `Line`
+  (test: `ABodyLineThatReadsLikeAnotherEntrysHeading_...`); `BookDrafts.Map`: take an entry's picture without `ArtAnchors`.
 - `BookCompiler.ArtAnchors`: drop the `HasPortrait`/`HasArt` flag checks (test: `ArtReadForTheDm_NeverReachesAPartyDocument...`).
 - `BookImageScaler`: remove the "already small" shortcut or widen 1.15; stop caching "keep"; skip the sRGB conversion; always JPEG.
 - `BookImageWorkerPool`: do not kill on failure/timeout/cancel (tests report `Alive`); rethrow instead of returning null.
-- `BookBlocks.Mention` and `BookSectionWorker`: break the mention parity with the renderer; accept a length-cut reply; let a failed retry overwrite a refined chapter.
-- `BookBuildKey`: drop the rules text or checks version from the key.
-- `BookBuilds`: take the busy slot after an await (test: 6 parallel starts).
+- `BookWork.Prepare` (`BookBlocks.cs`): break the mention parity with the renderer (test: `BookWorkTests`). (`BookSectionWorker`, `BookBuildKey`
+  and `BookBuilds` are deleted, 50; a length-cut reply is `BookDraftEditTests.AReplyCutOffByTheLengthLimit_...`.)
+- `BookDraftEdits.Cut`: leave a `{{secret` block in the passage (test: `BookSourceTests.DmEdition_KeepsItsSecretsOutOfTheModel_...`).
 - Book art (`BookArtTests.Slots.cs`): let a GM picture through in `BookSlots.Choose`, in the reader's tag check, or in `BookArt.Slot`; key a
-  stranger as `actor:`; skip the slot check in `BookArtService.UploadAsync`; place a header without checking the title line. All six were caught in
+  stranger as `actor:`; skip the slot check in `BookArtService.UploadAsync`. All were caught in
   session 2.
 - Art director (`BookArtDirectorTests.cs`): outline without `Prepare`; a slot number that was not sent accepted; visual check skipped; mood as
   free text; tag not from the source; a gate of its own; tray showing the other edition's suggestions. All seven were caught in session 2.
 - Player books (`BookPlayerBookTests.cs`): no diff in `Overlay`; no edition check in `BookDrafts.PrintedAsync`; drop the own character's
   `RevealedToReader`; clean with no owned set; no backing over page breaks; ignore the player in `FileName`; list a player with no character; no
   entry anchor. All eight were caught.
+- Generator v4 and own chapters (`BookSourceTests.V4.cs`, `BookDraftTests`): the list and the results are in BOOK_EXPORT 51.
+- Pictures in the text (`BookArtDrawingTests.Chips.cs`, `BookDraftTests.APicturePutUnderItsHeading...`): chips reading any edition's suggestion;
+  a stale suggestion given a prompt; Dismiss removing both editions'; the director ignoring the chapter; `BookDrafts.View` ignoring a caught-up
+  chapter; `FollowAsync` never moving its base. All six are caught (the last needed a test, BOOK_EXPORT 53).
 - Stat blocks, frames, edges (`BookStatBlocksTests.cs`, `BookMasksFrameTests.cs`): modifier rule hard-coded; no escaping; no id on the block;
   values not through the text path; the block not written; the edge reset by another setting; the edge always on; no party filter for
   non-playerFacing homebrew. All eight were caught.
@@ -158,7 +177,7 @@ Anything that survives is a missing test; add it.
 2. Does `BookImageWire` bound every length it reads on both sides? Can a worker reply (or a worker that is not ours) make the server allocate
    unboundedly? `BookImageWorkerLaunch.Beside` runs a file found beside the server through `dotnet`: is that path trustworthy on every install layout
    (launcher bundle, `dotnet run`, tests)?
-3. `BookBuilds`: every exit path of a run (error, cancel, budget, process stop) must add totals once and release `_busy`. `ApplicationStopping` does not
+3. (`BookBuilds` is deleted, 50; the same question now stands for `BookArtDirection`, `BookArtDrawing`, `BookDraftAi` and `BookDraftMerges`.) Every exit path of a run (error, cancel, budget, process stop) must add totals once and release the gate. `ApplicationStopping` does not
    cancel runs or flush totals (known); decide whether that matters.
 4. The preview and the PDF must be the same page. `BookArtReader.MaxTotalBytes` counts scaled bytes, and preview files are ~6x smaller than print files,
    so near the cap the preview can show pictures the PDF drops (known, section 31.1 item 4). Reproduce it.
@@ -177,6 +196,12 @@ Anything that survives is a missing test; add it.
 - No model identifier appears in any committed artifact (code, docs, commit messages, PR text); this is an explicit rule.
 
 ## 7. Open work, in the order I would take it (the user decides)
+
+00. **The source-book editor** (2026-11-09; a GM-only Book page, one pipeline, generator v4, Homebrewery feel, pictures in the text: steps 0-5).
+   **All six steps are done (BOOK_EXPORT 48, 49, 50, 51, 52, 53).** Step 5 (53) put chips under the entries' headings (`tools/book-editor/src/chips.js`,
+   `BookPage.Pictures.cs`, `BookArtDrawing.ChipsAsync`): upload, suggest for the chapter, draw on a second click with the cost, the block written
+   under the heading as one edit, ghost frames in the preview, names after `art:` keys. What is left is 53's "Not done" list. Step 4 built the Text/Style/Theme tabs, the snippet bar, the outline tree with the GM's own chapters,
+   and a preview that follows the cursor and the clicks (`editor.js`: `outlineOf` in `render.js`, `goTo`, `snippet`, `treeKeys`, the page gutter).
 
 0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **All six phases are built (41.9, 41.10, 41.15, 41.16, 41.18, 41.19).**
    What is left is the "Not done" lists of 41.9, 41.10, 41.15, 41.16, 41.18 and 41.19: the preview in Safari's engine and Firefox is checked and two bugs fixed (41.20; real Safari not driven) (the GM-CSS cleaner's limits are fixed, 41.11; Homebrewery PHB CSS lays out as there on the compatibility layer, 41.12, which every

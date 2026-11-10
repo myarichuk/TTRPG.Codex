@@ -16,7 +16,7 @@ public sealed record BookDirectionPreview(int Slots, int Current, int Calls, Boo
 /// The art director's runs (docs/BOOK_EXPORT.md 28.3, step 5): for each chapter of an edition, a model is asked what each picture slot should show,
 /// and what passes the checks is stored as that edition's suggestion. Nothing is drawn. The model is shown only the outline of the edition
 /// (<see cref="BookArtOutline"/>) and replies under numbers local to each call; the suggestions are tagged with the edition whose source was read.
-/// A run takes the same per-GM gate as a chapter build (<see cref="BookGate"/>), reserves the server's requests up front, and is held to a cap
+/// A run takes the same per-GM gate as the draft's AI edits and drawing (<see cref="BookGate"/>), reserves the server's requests up front, and is held to a cap
 /// worked out from the estimate before anything is sent.
 /// </summary>
 public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository store, IBookModels models, Func<string, string, Task<CampaignAccess?>> resolve, BookGate gate, TimeProvider? clock = null, Microsoft.Extensions.Logging.ILogger? log = null)
@@ -34,7 +34,7 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
 
     private sealed record Prepared(CampaignAccess Dm, BookSource Source, string Tag, IReadOnlyList<BookOutlineChapter> Outline, BookArtDocument? Stored, IReadOnlyList<Planned> Calls, int Current);
 
-    private async Task<Prepared?> PrepareAsync(CampaignAccess asked, string edition, string language, bool all)
+    private async Task<Prepared?> PrepareAsync(CampaignAccess asked, string edition, string language, bool all, string? section = null)
     {
         BookAudience? audience = edition switch { "dm" => BookAudience.Dm, "party" => BookAudience.Party, _ => null };
         if (audience is not { } which) return null;
@@ -51,6 +51,8 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
         var upToDate = 0;
         foreach (var chapter in outline)
         {
+            // One chapter only (asked from a chip in the text, docs/BOOK_EXPORT.md 53): the others are neither asked about nor counted.
+            if (section != null && chapter.Id != section) continue;
             var spotOf = chapter.Slots.Where(s => s.SpotOf != null).ToDictionary(s => s.SpotOf!, StringComparer.Ordinal);
             var places = chapter.Slots.Where(s => s.SpotOf == null).ToList();
             var todo = places.Where(s => all || current.GetValueOrDefault(s.Slot.Key) != s.Inputs).ToList();
@@ -80,9 +82,10 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
     }
 
     /// <summary>What a run would do and cost now; sends nothing. <paramref name="all"/> asks again about slots whose suggestion is current.</summary>
-    public async Task<BookDirectionPreview?> PreviewAsync(CampaignAccess asked, string edition, string language, bool all = false)
+    /// <paramref name="section"/>, when given, keeps the run to that chapter.
+    public async Task<BookDirectionPreview?> PreviewAsync(CampaignAccess asked, string edition, string language, bool all = false, string? section = null)
     {
-        if (await PrepareAsync(asked, edition, language, all) is not { } p) return null;
+        if (await PrepareAsync(asked, edition, language, all, section) is not { } p) return null;
         var model = await models.InfoAsync(p.Dm.UserId);
         var (preflight, cap) = Estimate(p.Calls, model?.Price);
         return new BookDirectionPreview(p.Calls.Sum(c => c.Refs.Count), p.Current, p.Calls.Count, preflight, cap, model, Totals(p.Stored));
@@ -93,13 +96,13 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
 
     /// <summary>Starts a run in the background. Refused here, before anything is sent: another paid run of this GM's under way
     /// (<see cref="BookBuildBusyException"/>), no model, the server's allowance. Null when the book is not the caller's to read or there is nothing to ask.</summary>
-    public async Task<BookRun?> StartAsync(CampaignAccess asked, string edition, string language, bool all = false)
+    public async Task<BookRun?> StartAsync(CampaignAccess asked, string edition, string language, bool all = false, string? section = null)
     {
         if (!gate.TryEnter(asked.UserId)) throw new BookBuildBusyException();
         var launched = false;
         try
         {
-            var run = await StartCoreAsync(asked, edition, language, all);
+            var run = await StartCoreAsync(asked, edition, language, all, section);
             launched = run != null;
             return run;
         }
@@ -109,9 +112,9 @@ public sealed class BookArtDirection(BookSourceReader reader, IBookArtRepository
         }
     }
 
-    private async Task<BookRun?> StartCoreAsync(CampaignAccess asked, string edition, string language, bool all)
+    private async Task<BookRun?> StartCoreAsync(CampaignAccess asked, string edition, string language, bool all, string? section)
     {
-        if (await PrepareAsync(asked, edition, language, all) is not { } p || p.Calls.Count == 0) return null;
+        if (await PrepareAsync(asked, edition, language, all, section) is not { } p || p.Calls.Count == 0) return null;
         var model = await models.OpenAsync(p.Dm.UserId, p.Calls.Count * BookArtDirector.MaxAttempts);
         try
         {

@@ -111,20 +111,6 @@ public class BookPdfTests
     private static BookPdf Printer(int timeoutSeconds = 90, int maxWaiting = 2, string? profileRoot = null) =>
         new(Options.Create(new BookPdfOptions { TimeoutSeconds = timeoutSeconds, MaxWaiting = maxWaiting, ProfileRoot = profileRoot, NoSandbox = NoSandbox }), NullLogger<BookPdf>.Instance);
 
-    private static Task<BookPdfResult> Print(BookPdf printer, BookPrintJob job, CancellationToken cancel = default, string owner = "dm")
-    {
-        var slot = printer.TryReserve(owner) ?? throw new InvalidOperationException("no place in the line");
-        return Run(printer, slot, job, cancel);
-    }
-
-    private static async Task<BookPdfResult> Run(BookPdf printer, BookPdfSlot slot, BookPrintJob job, CancellationToken cancel)
-    {
-        using (slot)
-        {
-            return await printer.PrintAsync(slot, job, cancel);
-        }
-    }
-
     private static Task<BookPdfResult> Print(BookPdf printer, string html, CancellationToken cancel = default, string owner = "dm")
     {
         var slot = printer.TryReserve(owner) ?? throw new InvalidOperationException("no place in the line");
@@ -137,121 +123,6 @@ public class BookPdfTests
         {
             return await printer.PrintAsync(slot, html, cancel);
         }
-    }
-
-    private static byte[]? Font(string file)
-    {
-        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
-        {
-            var candidate = Path.Combine(dir.FullName, "src", "Codex.Web", "wwwroot", "fonts", file);
-            if (File.Exists(candidate))
-            {
-                return File.ReadAllBytes(candidate);
-            }
-        }
-
-        return null;
-    }
-
-    private static string Page(string markdown, string title = "Saltmere")
-    {
-        var built = BookHtml.Build(new BookDocument(title, "A coast", "en", [new BookSection("a", markdown)], new BookLabels()), BookThemes.Plain, new BookHtmlOptions { Font = Font });
-        Assert.NotNull(built.Html);
-        return built.Html!;
-    }
-
-    [ChromiumFact]
-    public async Task APlainBookPrintsToAPdfWithItsTextItsOutlineAndNoRequests()
-    {
-        var chapters = string.Join("\n\n", Enumerable.Range(1, 40).Select(i => $"## Place {i}\n\nThe gulls of place {i} are loud and the tide is late.\n"));
-        var result = await Print(Printer(), Page("# Coast\n\n" + chapters));
-
-        Assert.StartsWith("%PDF-", System.Text.Encoding.ASCII.GetString(result.Pdf, 0, 5));
-        Assert.Equal(0, result.BlockedRequests);
-        using var pdf = PdfDocument.Open(result.Pdf);
-        Assert.True(pdf.NumberOfPages >= 3, $"pages: {pdf.NumberOfPages}");
-
-        var text = string.Join("\n", pdf.GetPages().Select(p => p.Text));
-        Assert.Contains("Saltmere", text);
-        Assert.Contains("The gulls of place 40 are loud", text);
-
-        // Only the theme's own faces are embedded: nothing fell back to a system font. Cinzel is a variable font and Chromium
-        // embeds those as Type 3 (§15 of docs/BOOK_EXPORT.md), so "Type3" is Cinzel here; any other name would be a fallback.
-        var letters = pdf.GetPages().SelectMany(p => p.Letters).ToList();
-        var fonts = letters.Select(l => l.FontName ?? "").Where(n => n.Length > 0).Select(n => n[(n.IndexOf('+') + 1)..]).Distinct().ToList();
-        Assert.NotEmpty(fonts);
-        Assert.Contains(fonts, f => f.Replace(" ", "").StartsWith("AlegreyaSans", StringComparison.Ordinal));
-        Assert.All(fonts, f => Assert.Matches("^(AlegreyaSans|Cinzel|Type3)", f.Replace(" ", "")));
-        // Type 3 may only be the headings' face: its letters are all ones the headings spell, never a body paragraph's.
-        var headingLetters = "SaltmereAcoastContentsCoastPlace0123456789 ".ToHashSet();
-        Assert.All(letters.Where(l => l.FontName == "Type3" || (l.FontName ?? "").EndsWith("Type3", StringComparison.Ordinal)), l => Assert.Contains(l.Value[0], headingLetters));
-
-        // The page size is the one the theme asked for (A4), not the browser's default.
-        Assert.InRange(pdf.GetPage(1).Width, 594, 596);
-        Assert.InRange(pdf.GetPage(1).Height, 841, 843);
-    }
-
-    /// <summary>The way the route prints: a page with the numbers' column reserved, then the same page with the numbers the headings landed on.</summary>
-    private static BookPrintJob Job(string markdown, string language = "en")
-    {
-        var document = new BookDocument("Saltmere", "A coast", language, [new BookSection("a", markdown)], new BookLabels());
-        BookHtmlResult Build(IReadOnlyDictionary<string, int>? numbers) => BookHtml.Build(document, BookThemes.Plain, new BookHtmlOptions { Font = Font, PageNumbers = numbers });
-        var first = Build(new Dictionary<string, int>());
-        Assert.NotNull(first.Html);
-        return new BookPrintJob(first.Html!, first.Headings, n => Build(n).Html!);
-    }
-
-    [ChromiumFact]
-    public async Task TheContentsCarryThePagesTheHeadingsLandedOn()
-    {
-        var sections = string.Join("\n\n", Enumerable.Range(1, 30).Select(i => $"## Place {i}\n\n" + string.Join("\n\n", Enumerable.Repeat("The gulls are loud and the tide is late, as it always is on this coast.", 6))));
-        var result = await Print(Printer(), BookPrintJobOf("# Coast\n\n" + sections));
-
-        Assert.True(result.Passes >= 2, $"passes: {result.Passes}");
-        using var pdf = PdfDocument.Open(result.Pdf);
-        var contents = pdf.GetPage(2).Text;
-        Assert.Contains("Contents", contents);
-
-        // For every entry the number printed in the contents is the page its heading is really on.
-        Assert.True(pdf.TryGetBookmarks(out var outline));
-        var bookmarks = outline!.GetNodes().OfType<UglyToad.PdfPig.Outline.DocumentBookmarkNode>().ToList();
-        // Read by position, not by the order the browser happened to write the text in: an entry's number is the numeric word at the right end of
-        // the entry's own line. (A text search for "Place 1" followed by digits finds "Place 10" when the numbers are not written next to their titles.)
-        var words = pdf.GetPage(2).GetWords().ToList();
-        int? NumberOf(int entry)
-        {
-            for (var k = 0; k < words.Count - 1; k++)
-            {
-                if (words[k].Text != "Place" || words[k + 1].Text != entry.ToString(System.Globalization.CultureInfo.InvariantCulture)) continue;
-                var line = words[k].BoundingBox.Bottom;
-                var last = words.Where(w => Math.Abs(w.BoundingBox.Bottom - line) < 2).OrderBy(w => w.BoundingBox.Left).Last();
-                if (last.BoundingBox.Left > words[k + 1].BoundingBox.Right && int.TryParse(last.Text, out var n)) return n;
-            }
-
-            return null;
-        }
-
-        var checkedEntries = 0;
-        foreach (var i in new[] { 1, 7, 15, 30 })
-        {
-            var place = bookmarks.Last(b => b.Title == $"Place {i}");
-            var printed = NumberOf(i);
-            Assert.True(printed != null, $"no number printed beside Place {i} (passes {result.Passes}); words on the contents page: {string.Join(' ', words.Select(w => $"{w.Text}@{w.BoundingBox.Left:0}x{w.BoundingBox.Bottom:0}"))}");
-            Assert.Equal(place.PageNumber, printed!.Value);
-            Assert.True(place.PageNumber >= 3);
-            checkedEntries++;
-        }
-
-        Assert.Equal(4, checkedEntries);
-    }
-
-    private static BookPrintJob BookPrintJobOf(string markdown) => Job(markdown);
-
-    [ChromiumFact]
-    public async Task ABookWithNoHeadingsPrintsOnce()
-    {
-        var result = await Print(Printer(), BookPrintJob.Single("<!doctype html><p>plain</p>"));
-        Assert.Equal(1, result.Passes);
     }
 
     [ChromiumFact]
@@ -328,7 +199,7 @@ public class BookPdfTests
     public async Task TwoBooksInTheLinePrintOneAfterTheOther()
     {
         var printer = Printer(maxWaiting: 1);
-        var html = Page("# One\n\ntext");
+        var html = "<!doctype html><h1>One</h1><p>text</p>";
         await Task.WhenAll(Print(printer, html, owner: "a"), Print(printer, html, owner: "b"));
         Assert.Equal(1, printer.PeakRunning);
     }
@@ -394,22 +265,5 @@ public class BookPdfTests
         }
 
         return found;
-    }
-
-    [ChromiumFact]
-    public async Task TheParchmentEdge_IsVectorOnEveryPage_AndCostsAlmostNothing()
-    {
-        var chapters = string.Join("\n\n", Enumerable.Range(1, 30).Select(i => $"## Place {i}\n\nThe gulls of place {i} are loud and the tide is late.\n"));
-        BookHtmlResult Build(BookTheme theme) => BookHtml.Build(new BookDocument("Saltmere", "A coast", "en", [new BookSection("a", "# Coast\n\n" + chapters)], new BookLabels()), theme, new BookHtmlOptions { Font = Font });
-        var plain = await Print(Printer(), Build(BookThemes.Plain).Html!);
-        var parchment = await Print(Printer(), Build(BookThemes.Parchment).Html!);
-
-        using var document = PdfDocument.Open(parchment.Pdf);
-        Assert.True(document.NumberOfPages >= 3);
-        // The edge is a path, not a picture: no page holds an image, and the file is barely larger than the plain book's.
-        Assert.All(document.GetPages(), page => Assert.Empty(page.GetImages()));
-        Assert.True(parchment.Pdf.Length < plain.Pdf.Length + 60_000, $"{parchment.Pdf.Length} vs {plain.Pdf.Length}");
-        Assert.Equal(0, parchment.BlockedRequests);
-        if (Environment.GetEnvironmentVariable("CODEX_DUMP_PDF") is { Length: > 0 } dump) await File.WriteAllBytesAsync(dump, parchment.Pdf);
     }
 }

@@ -8,8 +8,9 @@ namespace Codex.Web.Book;
 /// <param name="Stale">Edited, and the campaign changed since: the notice, with Regenerate. Not shown again after "keep mine" until the campaign changes again.</param>
 /// <param name="Gone">Edited, and the campaign no longer has this chapter at all.</param>
 /// <param name="Changed">For a stale chapter: the entries whose generated text changed (their headings as the generator writes them now).</param>
+/// <param name="Own">A chapter the GM added (docs/BOOK_EXPORT.md 51): the campaign makes no text for it, so it is never edited, stale or gone.</param>
 public sealed record BookDraftChapterView(string Section, string Title, string Markdown, int Version, bool Edited, bool Stale, bool Gone, bool CanUndo,
-    IReadOnlyList<string> Changed);
+    IReadOnlyList<string> Changed, bool Own = false);
 
 public sealed record BookDraftView(string Edition, string Language, string Theme, bool Homebrewery, string PageSize, string Css, int Version, IReadOnlyList<BookDraftChapterView> Chapters,
     BookDraftFollowed? Followed = null, bool Edge = false);
@@ -45,12 +46,16 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
 {
     public static BookAudience? Audience(string edition) => edition switch { "dm" => BookAudience.Dm, "party" => BookAudience.Party, _ => null };
 
-    private async Task<(CampaignAccess Dm, BookSource Source, IReadOnlyList<BookDraftGenerated> Now)?> GenerateAsync(CampaignAccess asked, string edition, string language)
+    // withOwn: the contents list the GM's own chapters by their titles. The leak check asks without them: a title is the GM's typing, and what
+    // the generator says is what the check takes as safe.
+    private async Task<(CampaignAccess Dm, BookSource Source, IReadOnlyList<BookDraftGenerated> Now)?> GenerateAsync(CampaignAccess asked, string edition, string language,
+        bool withOwn = true)
     {
         if (Audience(edition) is not { } audience || !BookDraftDocument.IsLanguage(language)) return null;
         if (await resolver.ResolveAsync(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return null;
         if (await reader.ReadAsync(dm, audience) is not { } source) return null;
-        return (dm, source, BookDraftWriter.Generate(source, language, await art.GetAsync(dm), systems?.GetDefinition(source.Campaign.SystemId)));
+        var own = withOwn ? await store.OwnAsync(dm, edition, language) : [];
+        return (dm, source, BookDraftWriter.Generate(source, language, await art.GetAsync(dm), systems?.GetDefinition(source.Campaign.SystemId), own));
     }
 
     /// <summary>One chapter of the draft as stored, read as the asking GM may read the campaign now, with the campaign's game system. Null when
@@ -106,7 +111,7 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
     /// </summary>
     public async Task<BookLeakReport?> LeaksAsync(CampaignAccess asked, string language)
     {
-        if (await GenerateAsync(asked, "party", language) is not { } party) return null;
+        if (await GenerateAsync(asked, "party", language, withOwn: false) is not { } party) return null;
         if (await store.GetAsync(party.Dm, "party", language) is not { } draft) return null;
         if (await reader.ReadAsync(party.Dm, BookAudience.Dm) is not { } gm) return null;
         var gmNow = BookDraftWriter.Generate(gm, language, await art.GetAsync(party.Dm), systems?.GetDefinition(gm.Campaign.SystemId));
@@ -149,11 +154,15 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         var generated = now.ToDictionary(g => g.Section, StringComparer.Ordinal);
         var chapters = draft.Chapters.Select(c =>
         {
-            var edited = !RavenBookDraftRepository.Untouched(c);
+            var own = BookDraftDocument.IsOwn(c.Section);
             generated.TryGetValue(c.Section, out var g);
+            // A text that already is what the generator writes now is the generator's own (a picture put under its heading from the editor,
+            // docs/BOOK_EXPORT.md 53): not edited, nothing to bring up to date. The store moves its base the next time the draft is opened.
+            var caughtUp = g != null && g.Key != c.BaseKey && BookDraftText.Content(c.Markdown) == BookDraftText.Content(g.Markdown);
+            var edited = !own && !caughtUp && !RavenBookDraftRepository.Untouched(c);
             var moved = g != null && g.Key != c.BaseKey && c.KeptKey != g.Key;
             return new BookDraftChapterView(c.Section, c.Title, c.Markdown, c.Version, edited, edited && moved, edited && g == null,
-                c.PreviousMarkdown != null, edited && moved ? ChangedEntries(c.Base, g!.Markdown) : []);
+                c.PreviousMarkdown != null, edited && moved ? ChangedEntries(c.Base, g!.Markdown) : [], own);
         }).ToList();
         var d = draft.Document;
         return new BookDraftView(d.Edition, d.Language, d.Theme, d.Homebrewery, d.PageSize, d.Css, d.Version, chapters, followed, d.Edge);
@@ -247,6 +256,20 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         var now = made.Now.FirstOrDefault(g => g.Section == section);
         return now == null ? (BookDraftSave.NotAllowed, version) : await store.KeepAsync(made.Dm, edition, language, section, now.Key, version);
     }
+
+    /// <summary>A chapter of the GM's own (docs/BOOK_EXPORT.md 51), after <paramref name="after"/>; the contents take it in when the draft is next
+    /// opened. The store checks the caller, the title and the room left.</summary>
+    public Task<(BookDraftSave Result, string? Section)> AddChapterAsync(CampaignAccess asked, string edition, string language, string title, string? after) =>
+        store.AddChapterAsync(asked, edition, language, title, after);
+
+    public Task<(BookDraftSave Result, int Version)> RenameChapterAsync(CampaignAccess asked, string edition, string language, string section, string title, int version) =>
+        store.RenameChapterAsync(asked, edition, language, section, title, version);
+
+    public Task<BookDraftSave> MoveChapterAsync(CampaignAccess asked, string edition, string language, string section, int by) =>
+        store.MoveChapterAsync(asked, edition, language, section, by);
+
+    public Task<BookDraftSave> DeleteChapterAsync(CampaignAccess asked, string edition, string language, string section) =>
+        store.DeleteChapterAsync(asked, edition, language, section);
 
     public Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess asked, string edition, string language, string css, string pageSize, string theme,
         bool homebrewery, int version, bool? edge = null) =>
@@ -375,6 +398,16 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         var slots = BookSlots.For(source, compiled, entries);
         // Two columns: the scaler sizes each picture for the box it prints in.
         var pictures = await artReader.ReadAsync(source, quality, 2, cancel, BookSlots.Choose(slots, await art.GetAsync(dm)), dm.UserId);
+        return Map(source, pictures);
+    }
+
+    /// <summary>The edition's picture map from pictures read for it: an entry's picture by its anchor (the flag as this source has it,
+    /// <see cref="BookCompiler.ArtAnchors"/>), a header's and the cover's by this edition's own slots (<see cref="BookArt.Slot"/>). Even
+    /// handed pictures read for the other edition, it names nothing this source does not make. Public for its tests.</summary>
+    public static BookDraftArt Map(BookSource source, BookArt pictures)
+    {
+        var compiled = BookComposer.Compose(source, "en", out var entries);
+        var slots = BookSlots.For(source, compiled, entries);
         var map = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var anchor in BookCompiler.ArtAnchors(entries, pictures))
         {

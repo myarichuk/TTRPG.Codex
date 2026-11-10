@@ -78,7 +78,7 @@ public static class BookArtOutline
     /// places, regions, pages and entries, and the campaign. Never sent to a model.</summary>
     public static IReadOnlyList<string> Names(BookSource source, IReadOnlyList<BookEntryPosition> entries)
     {
-        var names = entries.Where(e => !e.Subject.StartsWith("mask:", StringComparison.Ordinal)).Select(e => e.Alt)
+        var names = entries.Where(e => !e.IsGroup && !e.Subject.StartsWith("mask:", StringComparison.Ordinal)).Select(e => e.Alt)
             .Concat(source.Regions.Select(r => r.Name))
             .Append(source.Campaign.Name);
         return names.Where(n => !string.IsNullOrWhiteSpace(n) && n.Trim().Length >= 3).Select(n => n.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();

@@ -1,0 +1,123 @@
+@inherits BookPart
+@using Codex.Core.Book
+@using Codex.Persistence
+@using Codex.Web.Book
+
+@* The bar over the page (docs/BOOK_EXPORT.md 49): back to the campaign, the edition, the save state, then the theme, Fit pages, Download PDF and the
+   "More" menu. What was typed is saved before the edition changes. *@
+<header class="book-draft-bar book-bar" data-testid="book-draft-bar">
+    <a href="@P.BasePath" class="book-bar-back" aria-label="@L["Page.Campaign.BackTo", P.Ctx.Campaign.Name]" data-testid="book-back"><LucideIcon IconName="chevron-left" Size="16" /><bdi>@P.Ctx.Campaign.Name</bdi></a>
+    <h1 id="book-draft-title" class="h5 mb-0 book-bar-title"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> @L["Campaign.Book.Page.Title"]</h1>
+    <div class="book-edition-switch" role="group" aria-label="@L["Campaign.Book.Edition"]">
+        @foreach (var (id, label) in new[] { ("dm", L["Campaign.Book.Edition.Dm"].ToString()), ("party", L["Campaign.Book.Edition.Party"].ToString()) })
+        {
+            <button type="button" class="book-edition-btn @(edition == id ? "active" : null)" aria-pressed="@(edition == id ? "true" : "false")" @onclick="() => SwitchEditionAsync(id)"
+                    disabled="@(working || AiBusy)" data-testid="@("book-edition-" + id)">@label</button>
+        }
+    </div>
+    <span class="small-muted" role="status" aria-live="polite" data-testid="book-draft-save-state">@SaveText</span>
+    <span class="flex-grow-1"></span>
+    <div class="book-draft-tools" role="toolbar" aria-label="@L["Campaign.Book.Draft.Tools"]">
+        <label class="book-draft-theme">
+            <span>@L["Campaign.Book.Draft.Theme"]</span>
+            <select class="form-select form-select-sm" value="@view!.Theme" @onchange="ThemeAsync" disabled="@(working || state == BookPage.SaveState.Conflict)" data-testid="book-draft-theme">
+                @foreach (var theme in BookDraftThemes.All)
+                {
+                    @* A theme whose faces lack this language's letters cannot be picked (the language gate); the GM sees why. *@
+                    var prints = theme.Supports(language);
+                    <option value="@theme.Id" disabled="@(!prints)">@L["Campaign.Book.Draft.Theme." + theme.Id]@(prints ? "" : " " + L["Campaign.Book.Draft.Theme.NotThisLanguage"])</option>
+                }
+                @if (customThemes.Count > 0)
+                {
+                    @* The themes the GM brought into this campaign with the theme wizard (docs/BOOK_EXPORT.md 41.22). *@
+                    <optgroup label="@L["Campaign.Book.Theme.Group"]">
+                        @foreach (var own in customThemes)
+                        {
+                            var prints = own.Languages.Contains(BookThemes.Primary(language));
+                            <option value="@(BookCustomTheme.Prefix + own.Key)" disabled="@(!prints)">@own.Name@(prints ? "" : " " + L["Campaign.Book.Draft.Theme.NotThisLanguage"])</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+        </label>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="FitAsync" Disabled="@(working || printing || state == BookPage.SaveState.Conflict)"
+                     title="@L["Campaign.Book.Draft.FitHint"]" data-testid="book-draft-fit">
+            <LucideIcon IconName="layers" Size="14" /> @(fitting ? L["Campaign.Book.Draft.Fitting"] : L["Campaign.Book.Draft.Fit"])
+        </CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="() => DownloadAsync(false)" Disabled="@printing" data-testid="book-draft-download">
+            <LucideIcon IconName="download" Size="14" /> @(printing ? L["Campaign.Book.Printing"] : L["Campaign.Book.Draft.Download"])
+        </CodexButton>
+        <div class="book-draft-more">
+            <button id="book-draft-more" type="button" class="cx-btn cx-etched cx-sm" @onclick="ToggleMoreAsync" aria-haspopup="menu" aria-expanded="@(moreOpen ? "true" : "false")"
+                    title="@L["Campaign.Book.Draft.More"]" aria-label="@L["Campaign.Book.Draft.More"]" data-testid="book-draft-more"><LucideIcon IconName="more-horizontal" Size="14" /></button>
+            @if (moreOpen)
+            {
+                <div class="book-draft-menu" role="menu" @onkeydown="@(e => { if (e.Key == "Escape") moreOpen = false; })">
+                    <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="() => { moreOpen = false; wizardOpen = true; }" disabled="@(AiBusy || working)"
+                            data-testid="book-draft-theme-wizard">
+                        <LucideIcon IconName="palette" Size="14" /> @L["Campaign.Book.Theme.Open"]
+                    </button>
+                    <button type="button" role="menuitemcheckbox" aria-checked="@(view.Homebrewery ? "true" : "false")" class="book-draft-menu-item"
+                            @onclick="() => { moreOpen = false; return HomebreweryAsync(new ChangeEventArgs { Value = !view.Homebrewery }); }" disabled="@(working || state == BookPage.SaveState.Conflict)"
+                            title="@L["Campaign.Book.Draft.Homebrewery.Hint"]" data-testid="book-draft-homebrewery">
+                        <LucideIcon IconName="@(view.Homebrewery ? "check" : "square")" Size="14" /> @L["Campaign.Book.Draft.Homebrewery"]
+                    </button>
+                    <button type="button" role="menuitemcheckbox" aria-checked="@(view.Edge ? "true" : "false")" class="book-draft-menu-item"
+                            @onclick="EdgeAsync" disabled="@(working || state == BookPage.SaveState.Conflict)" title="@L["Campaign.Book.Draft.EdgeHint"]" data-testid="book-draft-edge">
+                        <LucideIcon IconName="@(view.Edge ? "check" : "square")" Size="14" /> @L["Campaign.Book.Draft.Edge"]
+                    </button>
+                    <button type="button" role="menuitemcheckbox" aria-checked="@(assistOn ? "true" : "false")" class="book-draft-menu-item" @onclick="AssistToggleAsync"
+                            title="@L["Campaign.Book.Draft.AssistHint"]" data-testid="book-draft-assist">
+                        <LucideIcon IconName="@(assistOn ? "check" : "square")" Size="14" /> @L["Campaign.Book.Draft.Assist"]
+                    </button>
+                    <div class="book-draft-menu-label" role="presentation" id="book-draft-language-label">@L["Campaign.Book.Language"]</div>
+                    <div role="group" aria-labelledby="book-draft-language-label">
+                        @foreach (var (tag, native) in SupportedCultures.All)
+                        {
+                            var prints = BookDraftThemes.All.Any(t => t.Supports(tag));
+                            <button type="button" role="menuitemradio" aria-checked="@(language == tag ? "true" : "false")" class="book-draft-menu-item" lang="@tag"
+                                    @onclick="() => LanguageAsync(tag)" disabled="@(!prints || working || AiBusy)" data-testid="@("book-draft-language-" + tag)">
+                                <LucideIcon IconName="@(language == tag ? "check" : "square")" Size="14" /> @native
+                            </button>
+                        }
+                    </div>
+                    <div class="book-draft-menu-label" role="presentation" id="book-draft-paper-label">@L["Campaign.Book.Paper"]</div>
+                    <div role="group" aria-labelledby="book-draft-paper-label">
+                        @foreach (var size in new[] { "A4", "Letter" })
+                        {
+                            <button type="button" role="menuitemradio" aria-checked="@(view.PageSize == size ? "true" : "false")" class="book-draft-menu-item"
+                                    @onclick="() => PaperAsync(size)" disabled="@(working || state == BookPage.SaveState.Conflict)" data-testid="@("book-draft-paper-" + size)">
+                                <LucideIcon IconName="@(view.PageSize == size ? "check" : "square")" Size="14" /> @size
+                            </button>
+                        }
+                    </div>
+                    <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="MarkdownAsync" disabled="@printing"
+                            title="@L["Campaign.Book.Draft.MarkdownHint"]" data-testid="book-draft-markdown">
+                        <LucideIcon IconName="file-text" Size="14" /> @L["Campaign.Book.Draft.Markdown"]
+                    </button>
+                    @if (edition == "party" && players.Count > 0)
+                    {
+                        @* Each player's own copy (docs/BOOK_EXPORT.md 45): the party draft with what only their characters may read. *@
+                        <div class="book-draft-menu-label" role="presentation" id="book-draft-for-label">@L["Campaign.Book.Draft.ForPlayer"]</div>
+                        <div role="group" aria-labelledby="book-draft-for-label">
+                            @foreach (var player in players)
+                            {
+                                <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="() => PlayerDownloadAsync(player)" disabled="@printing"
+                                        title="@L["Campaign.Book.Draft.ForPlayerHint"]" data-testid="book-draft-for-player" data-player="@player.UserId">
+                                    <LucideIcon IconName="user" Size="14" /> <bdi>@string.Join(", ", player.Characters)</bdi>
+                                </button>
+                            }
+                        </div>
+                    }
+                    <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="ShapeBookPrepareAsync" disabled="@(AiBusy || working)"
+                            title="@L["Campaign.Book.Draft.ShapeBook.Hint"]" data-testid="book-draft-shape-book">
+                        <LucideIcon IconName="sparkles" Size="14" /> @L["Campaign.Book.Draft.ShapeBook"]
+                    </button>
+                    <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="StartOverAsync" disabled="@AiBusy" data-testid="book-draft-start-over">
+                        <LucideIcon IconName="rotate-ccw" Size="14" /> @L["Campaign.Book.Draft.StartOver"]
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</header>

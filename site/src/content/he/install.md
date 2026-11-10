@@ -148,6 +148,6 @@ ASPNETCORE_URLS=http://0.0.0.0:5183 dotnet run --project src/Codex.Web
 
 **אחרי עדכון משהו נראה מוזר.** מרעננים את העמוד ללא מטמון (Ctrl+F5, או Cmd+Shift+R ב-Mac).
 
-**הדפסת ספר אומרת שאין דפדפן.** הספר מודפס על ידי Chrome, Edge או Chromium במחשב שמריץ את השרת. התקינו אחד מהם, או הגדירו ב-`CODEX_BOOK_BROWSER` את הנתיב לתוכנה שלו, ולחצו שוב על "[[ui:Campaign.Book.Download]]".
+**הדפסת ספר אומרת שאין דפדפן.** הספר מודפס על ידי Chrome, Edge או Chromium במחשב שמריץ את השרת. התקינו אחד מהם, או הגדירו ב-`CODEX_BOOK_BROWSER` את הנתיב לתוכנה שלו, ולחצו שוב על "[[ui:Campaign.Book.Draft.Download]]".
 
 עדיין תקועים? [פותחים issue](https://github.com/myarichuk/TTRPG.Codex/issues) ומצרפים את היומן.

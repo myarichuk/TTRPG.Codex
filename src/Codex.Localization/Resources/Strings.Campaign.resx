@@ -720,20 +720,11 @@
   <data name="Campaign.Overview.RecentPages" xml:space="preserve"><value>Recently updated pages</value></data>
   <data name="Campaign.Overview.OpenWiki" xml:space="preserve"><value>Open the wiki</value></data>
   <data name="Campaign.Book.Title" xml:space="preserve"><value>Campaign book</value></data>
-  <data name="Campaign.Book.Hint" xml:space="preserve"><value>Lay the campaign out as a printable book. The book is built on this machine from what the campaign holds; nothing is sent anywhere.</value></data>
   <data name="Campaign.Book.Edition" xml:space="preserve"><value>Edition</value></data>
   <data name="Campaign.Book.Edition.Dm" xml:space="preserve"><value>GM edition</value></data>
   <data name="Campaign.Book.Edition.Party" xml:space="preserve"><value>Party edition</value></data>
-  <data name="Campaign.Book.Edition.DmHint" xml:space="preserve"><value>Everything you can see, with your secrets in boxes. Keep this one behind the screen.</value></data>
-  <data name="Campaign.Book.Edition.PartyHint" xml:space="preserve"><value>Only what a player may read: hidden characters and secrets are left out, not blacked out.</value></data>
   <data name="Campaign.Book.Language" xml:space="preserve"><value>Language</value></data>
-  <data name="Campaign.Book.LanguageUnsupported" xml:space="preserve"><value>{0} (not in this theme yet)</value></data>
   <data name="Campaign.Book.Paper" xml:space="preserve"><value>Paper</value></data>
-  <data name="Campaign.Book.Columns" xml:space="preserve"><value>Columns</value></data>
-  <data name="Campaign.Book.Columns.One" xml:space="preserve"><value>One column</value></data>
-  <data name="Campaign.Book.Columns.Two" xml:space="preserve"><value>Two columns</value></data>
-  <data name="Campaign.Book.Pictures" xml:space="preserve"><value>Include the pictures the campaign already has</value></data>
-  <data name="Campaign.Book.Pictures.Hint" xml:space="preserve"><value>Cover, portraits and the art of places and pages, as each edition may see them. Off makes the preview lighter.</value></data>
   <data name="Campaign.Book.Art.Title" xml:space="preserve"><value>Pictures for this book</value></data>
   <data name="Campaign.Book.Art.HintDm" xml:space="preserve"><value>Put a picture in the cover, above a chapter, or beside an entry. Pictures you add here print only in the GM edition. To use one in both books, add it in the party edition.</value></data>
   <data name="Campaign.Book.Art.HintParty" xml:space="preserve"><value>Put a picture in the cover, above a chapter, or beside an entry. Pictures you add here print in the party edition and in the GM edition. Hidden characters have no place here, and strangers appear as the party knows them.</value></data>
@@ -855,17 +846,8 @@
   <data name="Campaign.Book.Art.Draw.Reason.allowance" xml:space="preserve"><value>Today's picture allowance on the server's key is used up.</value></data>
   <data name="Campaign.Book.Art.Draw.Reason.cancelled" xml:space="preserve"><value>Stopped before it was drawn.</value></data>
   <data name="Campaign.Book.Art.Draw.Reason.save" xml:space="preserve"><value>The picture could not be saved.</value></data>
-  <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>Theme: {0}. The preview is the page the PDF is printed from.</value></data>
-  <data name="Campaign.Book.Preview" xml:space="preserve"><value>Preview</value></data>
-  <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>Hide preview</value></data>
   <data name="Campaign.Book.PreviewTitle" xml:space="preserve"><value>Book preview</value></data>
-  <data name="Campaign.Book.Download" xml:space="preserve"><value>Download PDF</value></data>
   <data name="Campaign.Book.Printing" xml:space="preserve"><value>Printing…</value></data>
-  <data name="Campaign.Book.Done" xml:space="preserve"><value>The book was downloaded.</value></data>
-  <data name="Campaign.Book.Draft.PanelTitle" xml:space="preserve"><value>Edit the book</value></data>
-  <data name="Campaign.Book.Draft.PanelHint" xml:space="preserve"><value>Make an editable copy of this edition: Markdown you change freely, beside a preview of the pages as they print. Each chapter tells you when the campaign has changed since you edited it.</value></data>
-  <data name="Campaign.Book.Draft.Open" xml:space="preserve"><value>Open the editor: {0}</value></data>
-  <data name="Campaign.Book.Draft.Title" xml:space="preserve"><value>Book editor: {0}</value></data>
   <data name="Campaign.Book.Draft.Theme" xml:space="preserve"><value>Theme</value></data>
   <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>Plain</value></data>
   <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>Ashen Vellum</value></data>
@@ -949,7 +931,7 @@
   <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>The chapters as one Markdown file, for Homebrewery or a text editor. The pictures and the stylesheet are not in it.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>This is the GM edition: it holds every secret. Keep the file away from the players.</value></data>
   <data name="Campaign.Book.Draft.MarkdownGmYes" xml:space="preserve"><value>Download it</value></data>
-  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Homebrewery compatibility</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>Lay out like Homebrewery</value></data>
   <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>Lay pages out as Homebrewery does, so CSS written for a Homebrewery brew works here. No Homebrewery pictures or colours are used.</value></data>
   <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>Download PDF</value></data>
   <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>Start over</value></data>
@@ -997,8 +979,6 @@
   <data name="Campaign.Book.Draft.Merge.Duplicate" xml:space="preserve"><value>An entry is in this chapter twice, so it cannot be merged. Remove the copy, or use Regenerate or Keep mine.</value></data>
   <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>Undo the last update</value></data>
   <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>The campaign no longer has this chapter. Delete its text if it should not be printed.</value></data>
-  <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>Blocks you can use</value></data>
-  <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (read aloud), {{{{secret}}}} (GM edition), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} and {{{{wide}}}}, each closed by }}}} on its own line. A line \page starts a page and \column a column. A picture is ![caption](art:…), one of this edition's own; its block takes a frame: {{{{portrait,torn}}}}, oval or round.</value></data>
   <data name="Campaign.Book.Draft.Saving" xml:space="preserve"><value>Saving…</value></data>
   <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>Saved</value></data>
   <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>Not saved yet</value></data>
@@ -1018,27 +998,22 @@
   <data name="Campaign.Book.Failed.TooOld" xml:space="preserve"><value>The browser on this machine is too old to print a book. Update Chrome, Edge or Chromium.</value></data>
   <data name="Campaign.Book.Failed.Launch" xml:space="preserve"><value>The browser would not start. The server log says why.</value></data>
   <data name="Campaign.Book.Label.Contents" xml:space="preserve"><value>Contents</value></data>
-  <data name="Campaign.Book.Label.Overview" xml:space="preserve"><value>Overview</value></data>
+  <data name="Campaign.Book.Label.Overview" xml:space="preserve"><value>Introduction</value></data>
   <data name="Campaign.Book.Label.Cast" xml:space="preserve"><value>Cast</value></data>
   <data name="Campaign.Book.Label.Gazetteer" xml:space="preserve"><value>Gazetteer</value></data>
-  <data name="Campaign.Book.Label.Chronicle" xml:space="preserve"><value>Chronicle</value></data>
+  <data name="Campaign.Book.Label.Chronicle" xml:space="preserve"><value>The story so far</value></data>
   <data name="Campaign.Book.Label.Lore" xml:space="preserve"><value>Lore</value></data>
   <data name="Campaign.Book.Label.Pages" xml:space="preserve"><value>Pages</value></data>
   <data name="Campaign.Book.Label.Homebrew" xml:space="preserve"><value>Homebrew</value></data>
-  <data name="Campaign.Book.Look" xml:space="preserve"><value>Look</value></data>
-  <data name="Campaign.Book.Ai.Title" xml:space="preserve"><value>Polish with AI</value></data>
-  <data name="Campaign.Book.Ai.Hint" xml:space="preserve"><value>Your model rewrites each chapter once. Secrets are never sent to it, and anything it adds that the campaign does not say is thrown out. Nothing is sent until you press Start.</value></data>
+  <data name="Campaign.Book.Label.Appendix" xml:space="preserve"><value>Appendix {0}: {1}</value></data>
+  <data name="Campaign.Book.Label.AppendixLetters" xml:space="preserve"><value>AB</value></data>
+  <data name="Campaign.Book.Label.Quests" xml:space="preserve"><value>Quests</value></data>
+  <data name="Campaign.Book.Label.Factions" xml:space="preserve"><value>Factions</value></data>
+  <data name="Campaign.Book.Label.People" xml:space="preserve"><value>People</value></data>
+  <data name="Campaign.Book.Label.Places" xml:space="preserve"><value>Places</value></data>
+  <data name="Campaign.Book.Label.OtherPages" xml:space="preserve"><value>Other pages</value></data>
   <data name="Campaign.Book.Ai.NoModel" xml:space="preserve"><value>No AI model is set up.</value></data>
   <data name="Campaign.Book.Ai.SetUp" xml:space="preserve"><value>Open AI settings</value></data>
-  <data name="Campaign.Book.Ai.Model" xml:space="preserve"><value>Model: {0}</value></data>
-  <data name="Campaign.Book.Ai.Style" xml:space="preserve"><value>Style notes (optional)</value></data>
-  <data name="Campaign.Book.Ai.StyleHint" xml:space="preserve"><value>Short, for example: warm, brief, in the voice of a tavern storyteller. Changing it makes every chapter stale.</value></data>
-  <data name="Campaign.Book.Ai.Chapters" xml:space="preserve"><value>Chapters</value></data>
-  <data name="Campaign.Book.Ai.State.Current" xml:space="preserve"><value>up to date</value></data>
-  <data name="Campaign.Book.Ai.State.Stale" xml:space="preserve"><value>changed since the last build</value></data>
-  <data name="Campaign.Book.Ai.State.New" xml:space="preserve"><value>not built yet</value></data>
-  <data name="Campaign.Book.Ai.State.TooShort" xml:space="preserve"><value>too short, printed as written</value></data>
-  <data name="Campaign.Book.Ai.LastReason" xml:space="preserve"><value>last try: {0}</value></data>
   <data name="Campaign.Book.Ai.Reason.budget" xml:space="preserve"><value>the cap was reached</value></data>
   <data name="Campaign.Book.Ai.Reason.checks" xml:space="preserve"><value>the rewrite failed the checks</value></data>
   <data name="Campaign.Book.Ai.Reason.error" xml:space="preserve"><value>the model failed</value></data>
@@ -1046,39 +1021,17 @@
   <data name="Campaign.Book.Ai.Reason.ratelimit" xml:space="preserve"><value>rate limit, or no credit left</value></data>
   <data name="Campaign.Book.Ai.Reason.allowance" xml:space="preserve"><value>the server's daily allowance is spent</value></data>
   <data name="Campaign.Book.Ai.Reason.cancelled" xml:space="preserve"><value>stopped</value></data>
-  <data name="Campaign.Book.Ai.Preflight.None" xml:space="preserve"><value>Nothing to build: every chapter is up to date or too short to be worth a request.</value></data>
-  <data name="Campaign.Book.Ai.Preflight.Summary" xml:space="preserve"><value>{0} chapters to build, in {1} to {2} requests.</value></data>
-  <data name="Campaign.Book.Ai.Preflight.Tokens" xml:space="preserve"><value>About {0} to {1} tokens in and at most {2} out. An estimate: your provider's own count will differ.</value></data>
   <data name="Campaign.Book.Ai.Preflight.Cost" xml:space="preserve"><value>Roughly {0} to {1} at your prices, the upper figure if every chapter needs a second try.</value></data>
   <data name="Campaign.Book.Ai.Preflight.NoPrice" xml:space="preserve"><value>Set this model's prices in AI settings to see a cost.</value></data>
-  <data name="Campaign.Book.Ai.Preflight.Allowance" xml:space="preserve"><value>On the server's key: {0} of {1} requests used today; this build sets aside up to {2}.</value></data>
-  <data name="Campaign.Book.Ai.Cap" xml:space="preserve"><value>Token cap</value></data>
-  <data name="Campaign.Book.Ai.CapHint" xml:space="preserve"><value>The build stops when the next request could pass this. The suggestion covers every chapter once at the high estimate; retries may need more.</value></data>
-  <data name="Campaign.Book.Ai.Start" xml:space="preserve"><value>Start the build</value></data>
   <data name="Campaign.Book.Ai.Stop" xml:space="preserve"><value>Stop</value></data>
-  <data name="Campaign.Book.Ai.Redo" xml:space="preserve"><value>Rebuild</value></data>
-  <data name="Campaign.Book.Ai.Discard" xml:space="preserve"><value>Discard the stored build</value></data>
-  <data name="Campaign.Book.Ai.Use" xml:space="preserve"><value>Use the polished text in the preview and the PDF (only for chapters that are up to date)</value></data>
-  <data name="Campaign.Book.Ai.Progress" xml:space="preserve"><value>{0} of {1} chapters</value></data>
   <data name="Campaign.Book.Ai.Meter" xml:space="preserve"><value>{0, plural, one{# request} other{# requests}}, {1} tokens in, {2} out</value></data>
   <data name="Campaign.Book.Ai.Estimated" xml:space="preserve"><value>Estimated: the provider reported no usage for some calls.</value></data>
-  <data name="Campaign.Book.Ai.Money" xml:space="preserve"><value>{0} so far</value></data>
-  <data name="Campaign.Book.Ai.Totals" xml:space="preserve"><value>All runs of this build: {0} requests, {1} tokens in, {2} out.</value></data>
+  <data name="Campaign.Book.Ai.Totals" xml:space="preserve"><value>AI work on this edition so far: {0} requests, {1} tokens in, {2} out.</value></data>
   <data name="Campaign.Book.Ai.TotalsCost" xml:space="preserve"><value>Cost over all runs: {0}.</value></data>
   <data name="Campaign.Book.Ai.TotalsCostPartial" xml:space="preserve"><value>Cost over the runs that had prices: {0}. It is more than this: some runs had no prices.</value></data>
-  <data name="Campaign.Book.Ai.Status.Running" xml:space="preserve"><value>Building…</value></data>
-  <data name="Campaign.Book.Ai.Status.Done" xml:space="preserve"><value>Build finished: {0} of {1} chapters rewritten.</value></data>
-  <data name="Campaign.Book.Ai.Status.Stopped" xml:space="preserve"><value>Build stopped: {0} of {1} chapters rewritten; the rest print as written.</value></data>
   <data name="Campaign.Book.Ai.Status.Failed" xml:space="preserve"><value>The build failed: {0}</value></data>
   <data name="Campaign.Book.Ai.SaveFailed" xml:space="preserve"><value>Some results could not be stored.</value></data>
   <data name="Campaign.Book.Ai.Busy" xml:space="preserve"><value>Another build of yours is already running.</value></data>
-  <data name="Campaign.Book.Ai.Row.Queued" xml:space="preserve"><value>waiting</value></data>
-  <data name="Campaign.Book.Ai.Row.Cached" xml:space="preserve"><value>kept, up to date</value></data>
-  <data name="Campaign.Book.Ai.Row.Refined" xml:space="preserve"><value>rewritten</value></data>
-  <data name="Campaign.Book.Ai.Row.Kept" xml:space="preserve"><value>kept as written</value></data>
-  <data name="Campaign.Book.Ai.Row.Skipped" xml:space="preserve"><value>too short</value></data>
-  <data name="Campaign.Book.Ai.CapTooLow" xml:space="preserve"><value>This cap is too low to send even one request: the biggest chapter needs at least {0} tokens set aside (its worst case, retries included).</value></data>
-  <data name="Campaign.Book.Ai.StyleRefused" xml:space="preserve"><value>The style notes carry facts the party's book does not hold ({0}). Keep them to voice and tone for this edition: no names, no numbers, no plot.</value></data>
   <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} is not on the server's list of sites; the server's admin can add it</value></data>
   <data name="Campaign.Settings.Role.CoGm" xml:space="preserve"><value>Co-GM</value></data>
   <data name="Campaign.Settings.CoGmHint" xml:space="preserve"><value>Only the owner can change who is a co-GM.</value></data>
@@ -1208,12 +1161,8 @@
   <data name="Campaign.Book.Draft.Leak.More" xml:space="preserve"><value>{0, plural, one{and one more} other{and # more}}</value></data>
   <data name="Campaign.Book.Draft.Leak.Hint" xml:space="preserve"><value>This is a warning: you can still download the book as it is.</value></data>
   <data name="Campaign.Book.Draft.Leak.Anyway" xml:space="preserve"><value>Download anyway</value></data>
-  <data name="Campaign.Book.Draft.BlocksTab" xml:space="preserve"><value>Blocks</value></data>
   <data name="Campaign.Book.Draft.Ai.PickChapter" xml:space="preserve"><value>Choose a chapter to ask the AI about it; the stylesheet is not sent.</value></data>
-  <data name="Campaign.Book.Tab.Print" xml:space="preserve"><value>Print</value></data>
   <data name="Campaign.Book.Tab.Art" xml:space="preserve"><value>Pictures</value></data>
-  <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>Edit</value></data>
-  <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>AI polish</value></data>
   <data name="Campaign.Book.Draft.Ai.InPane" xml:space="preserve"><value>The AI request is open on the chapter above: send or cancel it, or finish the review, there.</value></data>
   <data name="Campaign.Book.Draft.Ai.Parts" xml:space="preserve"><value>Entry by entry: {0} requests, one for the chapter's opening and one for each entry.</value></data>
   <data name="Campaign.Book.Draft.Ai.KeptParts" xml:space="preserve"><value>{0} part(s) of the last AI edit kept their text:</value></data>
@@ -1233,4 +1182,100 @@
   <data name="Campaign.Book.Draft.ShapeBook.Stop" xml:space="preserve"><value>Stop after this chapter</value></data>
   <data name="Campaign.Book.Draft.ShapeBook.Stopped" xml:space="preserve"><value>The whole-book rewrite stops after this chapter.</value></data>
   <data name="Campaign.Book.Draft.ShapeBook.Done" xml:space="preserve"><value>The whole book has been through.</value></data>
+  <data name="Campaign.Book.Page.Title" xml:space="preserve"><value>Book</value></data>
+  <data name="Campaign.Book.Page.SettingsLine" xml:space="preserve"><value>The campaign book has its own page.</value></data>
+  <data name="Campaign.Book.Page.SettingsLink" xml:space="preserve"><value>Open the book</value></data>
+  <data name="Campaign.Book.Page.LeaveAsk" xml:space="preserve"><value>Some of your last changes could not be saved, because the draft changed in another tab. Copy them now if you need them, or leave without them.</value></data>
+  <data name="Campaign.Book.Page.LeaveStay" xml:space="preserve"><value>Stay on the page</value></data>
+  <data name="Campaign.Book.Page.LeaveYes" xml:space="preserve"><value>Leave without them</value></data>
+  <data name="Campaign.Book.Page.Panes" xml:space="preserve"><value>Book panes</value></data>
+  <data name="Campaign.Book.Page.Source" xml:space="preserve"><value>Source</value></data>
+  <data name="Campaign.Book.Page.Splitter" xml:space="preserve"><value>Width of the source and the preview</value></data>
+  <data name="Campaign.Book.Source.Tabs" xml:space="preserve"><value>Source view</value></data>
+  <data name="Campaign.Book.Source.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Campaign.Book.Source.Style" xml:space="preserve"><value>Style</value></data>
+  <data name="Campaign.Book.Source.Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="Campaign.Book.Source.ThemeHint" xml:space="preserve"><value>The theme's CSS, to read. Copy it to Style to change it.</value></data>
+  <data name="Campaign.Book.Source.CopyToStyle" xml:space="preserve"><value>Copy to Style</value></data>
+  <data name="Campaign.Book.Source.Copied" xml:space="preserve"><value>Copied from the theme</value></data>
+  <data name="Campaign.Book.Source.PageNo" xml:space="preserve"><value>p. {0}</value></data>
+  <data name="Campaign.Book.Preview.PageOf" xml:space="preserve"><value>Page {0} of {1}</value></data>
+  <data name="Campaign.Book.Preview.Zoom" xml:space="preserve"><value>Zoom</value></data>
+  <data name="Campaign.Book.Preview.ZoomFit" xml:space="preserve"><value>Fit width</value></data>
+  <data name="Campaign.Book.Preview.Follow" xml:space="preserve"><value>Follow</value></data>
+  <data name="Campaign.Book.Preview.FollowHint" xml:space="preserve"><value>The pages follow the cursor, and a click in the pages moves the cursor.</value></data>
+  <data name="Campaign.Book.Snippet.Bar" xml:space="preserve"><value>Snippets</value></data>
+  <data name="Campaign.Book.Snippet.Note" xml:space="preserve"><value>Note</value></data>
+  <data name="Campaign.Book.Snippet.Aloud" xml:space="preserve"><value>Read aloud</value></data>
+  <data name="Campaign.Book.Snippet.Secret" xml:space="preserve"><value>Secret</value></data>
+  <data name="Campaign.Book.Snippet.Stat" xml:space="preserve"><value>Stat block</value></data>
+  <data name="Campaign.Book.Snippet.Table" xml:space="preserve"><value>Table</value></data>
+  <data name="Campaign.Book.Snippet.Picture" xml:space="preserve"><value>Picture</value></data>
+  <data name="Campaign.Book.Snippet.Wide" xml:space="preserve"><value>Wide</value></data>
+  <data name="Campaign.Book.Snippet.Column" xml:space="preserve"><value>Column break</value></data>
+  <data name="Campaign.Book.Snippet.Page" xml:space="preserve"><value>Page break</value></data>
+  <data name="Campaign.Book.Snippet.Hint.note" xml:space="preserve"><value>A boxed note with a heading, around the selection.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.aloud" xml:space="preserve"><value>Read-aloud text, around the selection.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.secret" xml:space="preserve"><value>A GM secret, printed in the GM edition only.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.stat" xml:space="preserve"><value>A framed stat block to fill in.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.table" xml:space="preserve"><value>A small table.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.picture" xml:space="preserve"><value>A portrait box; then pick one of this edition's pictures.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.wide" xml:space="preserve"><value>Runs across both columns.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.column" xml:space="preserve"><value>Starts the next column.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.page" xml:space="preserve"><value>Starts a new page.</value></data>
+  <data name="Campaign.Book.Snippet.W.Title" xml:space="preserve"><value>Title</value></data>
+  <data name="Campaign.Book.Snippet.W.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Campaign.Book.Snippet.W.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Campaign.Book.Snippet.W.Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Campaign.Book.Snippet.W.Label" xml:space="preserve"><value>Label</value></data>
+  <data name="Campaign.Book.Snippet.W.Value" xml:space="preserve"><value>value</value></data>
+  <data name="Campaign.Book.Snippet.W.Caption" xml:space="preserve"><value>Caption</value></data>
+  <data name="Campaign.Book.Snippet.W.Heading" xml:space="preserve"><value>Heading</value></data>
+  <data name="Campaign.Book.Snippet.W.Cell" xml:space="preserve"><value>Cell</value></data>
+  <data name="Campaign.Book.Own.Add" xml:space="preserve"><value>Add chapter</value></data>
+  <data name="Campaign.Book.Own.TitleLabel" xml:space="preserve"><value>Title of the new chapter</value></data>
+  <data name="Campaign.Book.Own.TitlePlaceholder" xml:space="preserve"><value>Chapter title</value></data>
+  <data name="Campaign.Book.Own.AddHint" xml:space="preserve"><value>Enter adds it after this chapter. Esc cancels.</value></data>
+  <data name="Campaign.Book.Own.Menu" xml:space="preserve"><value>Options for {0}</value></data>
+  <data name="Campaign.Book.Own.MenuTitle" xml:space="preserve"><value>Chapter options</value></data>
+  <data name="Campaign.Book.Own.Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Campaign.Book.Own.RenameLabel" xml:space="preserve"><value>Chapter title</value></data>
+  <data name="Campaign.Book.Own.Up" xml:space="preserve"><value>Move up</value></data>
+  <data name="Campaign.Book.Own.Down" xml:space="preserve"><value>Move down</value></data>
+  <data name="Campaign.Book.Own.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Campaign.Book.Own.DeleteAsk" xml:space="preserve"><value>Delete the chapter “{0}”? Its text goes with it.</value></data>
+  <data name="Campaign.Book.Own.DeleteYes" xml:space="preserve"><value>Delete chapter</value></data>
+  <data name="Campaign.Book.Own.Full" xml:space="preserve"><value>The book has no room for another chapter.</value></data>
+  <data name="Campaign.Book.Chip.Group" xml:space="preserve"><value>Picture for {0}</value></data>
+  <data name="Campaign.Book.Chip.Add" xml:space="preserve"><value>Add picture</value></data>
+  <data name="Campaign.Book.Chip.Upload" xml:space="preserve"><value>Upload</value></data>
+  <data name="Campaign.Book.Chip.Suggest" xml:space="preserve"><value>Suggest a picture</value></data>
+  <data name="Campaign.Book.Chip.SuggestAgain" xml:space="preserve"><value>Suggest again</value></data>
+  <data name="Campaign.Book.Chip.SuggestYes" xml:space="preserve"><value>Ask</value></data>
+  <data name="Campaign.Book.Chip.Asking" xml:space="preserve"><value>Working out the cost…</value></data>
+  <data name="Campaign.Book.Chip.Picture" xml:space="preserve"><value>Picture: {0}</value></data>
+  <data name="Campaign.Book.Chip.Draw" xml:space="preserve"><value>Draw</value></data>
+  <data name="Campaign.Book.Chip.DrawYes" xml:space="preserve"><value>Draw it</value></data>
+  <data name="Campaign.Book.Chip.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
+  <data name="Campaign.Book.Chip.NoModel" xml:space="preserve"><value>No picture model is set.</value></data>
+  <data name="Campaign.Book.Chip.Stale" xml:space="preserve"><value>The campaign changed; suggest again.</value></data>
+  <data name="Campaign.Book.Chip.Drawing" xml:space="preserve"><value>Drawing…</value></data>
+  <data name="Campaign.Book.Chip.Suggesting" xml:space="preserve"><value>Asking for suggestions…</value></data>
+  <data name="Campaign.Book.Chip.Prompt" xml:space="preserve"><value>What the picture model is sent:</value></data>
+  <data name="Campaign.Book.Chip.Problem" xml:space="preserve"><value>This description cannot be drawn: {0}</value></data>
+  <data name="Campaign.Book.Chip.Ready" xml:space="preserve"><value>This place has a picture that is not in the text.</value></data>
+  <data name="Campaign.Book.Chip.Place" xml:space="preserve"><value>Put it in the text</value></data>
+  <data name="Campaign.Book.Chip.Price" xml:space="preserve"><value>About {0} a picture, drawn by {1}.</value></data>
+  <data name="Campaign.Book.Chip.NoPrice" xml:space="preserve"><value>No price is set for this model ({0}).</value></data>
+  <data name="Campaign.Book.Chip.DrawAsk" xml:space="preserve"><value>Draw this picture, about {0}?</value></data>
+  <data name="Campaign.Book.Chip.DrawAskNoPrice" xml:space="preserve"><value>Draw this picture? No price is set for this model.</value></data>
+  <data name="Campaign.Book.Chip.Placed" xml:space="preserve"><value>The picture is in the text, under its heading.</value></data>
+  <data name="Campaign.Book.Chip.Kept" xml:space="preserve"><value>The picture is kept for its place. The chapter is locked or being reviewed, so its text was left alone; use “Put it in the text” afterwards.</value></data>
+  <data name="Campaign.Book.Chip.Dismissed" xml:space="preserve"><value>The suggestion is dismissed.</value></data>
+  <data name="Campaign.Book.Chip.SuggestNothing" xml:space="preserve"><value>Nothing to ask: every place in this chapter has a suggestion made from its text as it is now.</value></data>
+  <data name="Campaign.Book.Chip.SuggestCost" xml:space="preserve"><value>Roughly {0} to {1}.</value></data>
+  <data name="Campaign.Book.Chip.SuggestAsk" xml:space="preserve"><value>Ask about {0, plural, one{one place} other{# places}} in {1}, with {2}?</value></data>
+  <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>Picture file for the place chosen in the text</value></data>
+  <data name="Campaign.Book.Preview.ToText" xml:space="preserve"><value>Move the cursor to what the pages show</value></data>
+  <data name="Campaign.Book.Preview.ToPages" xml:space="preserve"><value>Move the pages to where the cursor is</value></data>
 </root>

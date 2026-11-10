@@ -209,7 +209,7 @@ public class BookDraftScriptsTests
         var shell = BookDraftHtml.Shell("Saltmere", language, BookDraftThemes.Find(themeId)!, "A4", null, true, Font);
         var printer = new BookPdf(Options.Create(new BookPdfOptions { TimeoutSeconds = 90, NoSandbox = BookPdfTests.NoSandbox }), NullLogger<BookPdf>.Instance);
         using var slot = printer.TryReserve("dm")!;
-        var printed = await printer.PrintAsync(slot, new BookPrintJob(shell.Html!, [], _ => shell.Html!)
+        var printed = await printer.PrintAsync(slot, new BookPrintJob(shell.Html!)
             { Layout = new BookPrintLayout(Script, Draft(language), new Dictionary<string, string>()) }, CancellationToken.None);
 
         Assert.Empty(printed.Overflow);
@@ -253,7 +253,7 @@ public class BookDraftScriptsTests
         Assert.Empty(fitted.Overflow);
         Assert.True(fitted.Chapters.Single(c => c.Section == "lore").Markdown.Split('\n').Count(l => l == @"\page {fitted}") >= 3, "too few breaks written");
         using var again = printer.TryReserve("dm")!;
-        var printed = await printer.PrintAsync(again, new BookPrintJob(shell.Html!, [], _ => shell.Html!)
+        var printed = await printer.PrintAsync(again, new BookPrintJob(shell.Html!)
             { Layout = new BookPrintLayout(Script, string.Empty, new Dictionary<string, string>()) { Chapters = fitted.Chapters } }, CancellationToken.None);
         Assert.Empty(printed.Overflow);
         Assert.Equal(fitted.Pages, printed.Pages);
