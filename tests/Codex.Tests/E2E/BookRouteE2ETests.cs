@@ -314,6 +314,8 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
                     }
 
                     var last = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("messages").EnumerateArray().Last().GetProperty("content").GetString() ?? string.Empty;
+                    // The app builds its prompts with AppendLine (\r\n on Windows); the markers below are looked up with \n.
+                    last = last.ReplaceLineEndings("\n");
                     string reply;
                     if (last.Contains("\n<mine>\n", StringComparison.Ordinal))
                     {

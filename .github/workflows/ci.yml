@@ -61,6 +61,18 @@ jobs:
       - name: Install Playwright browsers
         run: pwsh tests/Codex.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium webkit firefox
 
+      # Run 709 on windows-latest: RavenDB's DiskFullException on C: (its temp folder) late in the suite, and the runner could not
+      # write its own log. These two steps say how much room there is, and what the tests leave in %TEMP%.
+      - name: Disk space before the tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -gt 0 } |
+            Format-Table Name, @{n='UsedGB';e={[math]::Round($_.Used/1GB,1)}}, @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}}
+          Get-ChildItem $env:TEMP -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            [pscustomobject]@{ Folder = $_.Name; GB = [math]::Round(((Get-ChildItem $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum) / 1GB, 2) }
+          } | Sort-Object GB -Descending | Select-Object -First 8 | Format-Table
+
       - name: Test
         env:
           DOTNET_ROLL_FORWARD: "LatestMajor"
@@ -69,3 +81,13 @@ jobs:
         # --blame-hang-timeout: a single test running longer than 10 minutes (the slowest healthy one takes ~35 s) is
         # killed and named in the log, instead of the whole job sitting silent until the job timeout.
         run: dotnet test --configuration Release --no-build --verbosity normal --blame-hang-timeout 10m --blame-hang-dump-type none
+
+      - name: Disk space after the tests (Windows)
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -gt 0 } |
+            Format-Table Name, @{n='UsedGB';e={[math]::Round($_.Used/1GB,1)}}, @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}}
+          Get-ChildItem $env:TEMP -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            [pscustomobject]@{ Folder = $_.Name; GB = [math]::Round(((Get-ChildItem $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum) / 1GB, 2) }
+          } | Sort-Object GB -Descending | Select-Object -First 8 | Format-Table
