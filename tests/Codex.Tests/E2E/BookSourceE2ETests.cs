@@ -181,6 +181,18 @@ public class BookSourceE2ETests : IClassFixture<AppFixture>
         await dm.Locator(".cm-line", new() { HasText = "Third marker" }).ClickAsync();
         await dm.WaitForTimeoutAsync(800);
         Assert.Equal(kept, await TopAsync());
+
+        // The two arrows work with following off. The one pointing at the pages takes them to the cursor's heading.
+        await dm.GetByTestId("book-jump-pages").ClickAsync();
+        await Assertions.Expect(preview.Locator("h2", new() { HasText = "Third marker" })).ToBeInViewportAsync();
+        Assert.NotEqual(kept, await TopAsync());
+        // The one pointing at the text takes the cursor to what the pages show, and the pages stay.
+        await dm.Locator(".cm-line", new() { HasText = "First marker" }).ClickAsync();
+        await Assertions.Expect(dm.Locator(".cm-activeLine")).ToContainTextAsync("First marker");
+        var shown = await TopAsync();
+        await dm.GetByTestId("book-jump-text").ClickAsync();
+        await Assertions.Expect(dm.Locator(".cm-activeLine")).ToContainTextAsync("Third marker");
+        Assert.Equal(shown, await TopAsync());
         Assert.Empty(errors);
     }
 }

@@ -624,14 +624,53 @@ function breakLines(doc) {
   return lines;
 }
 
+// The nearest heading above the cursor in the chapter shown: its place in the chapter's list, or -1 before the first.
+function cursorHeading(state) {
+  const head = state.view.state.selection.main.head;
+  const list = outlineFor({ section: state.current, markdown: chapter(state).markdown });
+  let index = -1;
+  for (let i = 0; i < list.length && list[i].offset <= head; i++) index = i;
+  return index;
+}
+
+/**
+ * The two arrows between the text and the pages (as Homebrewery has them), for when following is off or the two have drifted apart.
+ * `toSource` false: the pages go to where the cursor is. True: the cursor goes to what the pages show (the first heading in view, or else the
+ * last one above it, opening its chapter if it is another). False when there is nothing to go to (a stylesheet, a review under way).
+ */
+export async function jump(id, toSource) {
+  const state = editors.get(id);
+  if (!state || state.mode !== 'md' || state.review || !state.dom) return false;
+  if (!toSource) {
+    const index = cursorHeading(state);
+    state.aimed = state.current + ':' + index + ':' + state.domVersion;
+    if (index < 0) scrollTo(state, state.current);
+    else scrollPreviewTo(state, headingElement(state, state.current, index));
+    return true;
+  }
+
+  const view = state.frame.contentWindow;
+  const height = view ? view.innerHeight : 0;
+  let found = -1;
+  for (let i = 0; i < state.dom.headings.length; i++) {
+    const top = state.dom.headings[i].getBoundingClientRect().top;
+    if (top < 0) { found = i; continue; }
+    // The first heading in view wins over the one that scrolled off above it.
+    if (top < height) found = i;
+    break;
+  }
+  if (found < 0) return false;
+  let section = null, index = 0;
+  for (const [s, base] of state.dom.bases) if (base <= found) { section = s; index = found - base; }
+  if (section == null) return false;
+  await pick(state, section, index);
+  return true;
+}
+
 // The preview follows the cursor: to the page holding the nearest heading above it, only when that heading changed.
 function followCursor(state) {
   if (!state.follow || state.mode !== 'md' || state.review || !state.dom) return;
-  const c = chapter(state);
-  const head = state.view.state.selection.main.head;
-  const list = outlineFor({ section: state.current, markdown: c.markdown });
-  let index = -1;
-  for (let i = 0; i < list.length && list[i].offset <= head; i++) index = i;
+  const index = cursorHeading(state);
   const key = state.current + ':' + index + ':' + state.domVersion;
   if (state.aimed === key) return;
   state.aimed = key;

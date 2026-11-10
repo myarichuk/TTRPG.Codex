@@ -2981,3 +2981,14 @@ page in Hebrew with a right-to-left book (chips and ghost frames mirror, the pro
   test of the printer, nothing of this step's), failed in both full runs and passed when run with a few others. In earlier, partial runs
   `BookDraftTests.TheGmsOwnWords_MayChangeAFact_...` and `BookCssWebTests.TheFetcher_StopsAtItsBounds_...` ("address already in use") each failed
   once and passed on the rerun. None was investigated. The suite outside Book and Localization was not run.
+
+### 53.1 The two arrows between the text and the pages (2026-11-10)
+
+Homebrewery has two arrows for bringing its editor and its preview to the same place; the preview's header now has them beside **Follow**
+(`book-jump-text`, `book-jump-pages`; `jump` in `editor.js`). The one pointing at the pages moves them to the heading above the cursor. The one
+pointing at the text moves the cursor to what the pages show: the first heading in view, or else the last one above it, opening its chapter
+if it is another. Both work with Follow off, which is what they are for; each points at the pane that moves, so they swap on a right-to-left
+page. Mapping is by heading order, as Follow's is (52). Disabled on the Style and Theme tabs and during an AI edit.
+Test: `BookSourceE2ETests.TheCursorMovesThePages_...` (both arrows, with Follow off).
+**Not done:** pages with no heading on or above them have nowhere to send the cursor (the arrow then does nothing); Hebrew not looked at by eye
+for these two buttons; the Russian and Hebrew labels are model-written.

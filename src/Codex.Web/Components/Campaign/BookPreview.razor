@@ -21,6 +21,15 @@
                     <button type="button" class="book-draft-pane-btn book-zoom-btn" aria-pressed="@(P.zoom == "fit" ? "true" : "false")" @onclick='() => P.ZoomAsync("fit")' data-testid="book-zoom-fit">@L["Campaign.Book.Preview.ZoomFit"]</button>
                     <button type="button" class="book-draft-pane-btn book-zoom-btn" aria-pressed="@(P.zoom == "100" ? "true" : "false")" @onclick='() => P.ZoomAsync("100")' data-testid="book-zoom-100">100%</button>
                 </div>
+                @* The two arrows Homebrewery has: each points at the pane that moves (the text is on the other side on a right-to-left page). *@
+                <button type="button" class="book-draft-pane-btn" @onclick="() => P.JumpAsync(true)" disabled="@(AiBusy || P.sourceTab != "text")"
+                        title="@L["Campaign.Book.Preview.ToText"]" aria-label="@L["Campaign.Book.Preview.ToText"]" data-testid="book-jump-text">
+                    <LucideIcon IconName="@(BookPage.PageRtl ? "arrow-right" : "arrow-left")" Size="14" />
+                </button>
+                <button type="button" class="book-draft-pane-btn" @onclick="() => P.JumpAsync(false)" disabled="@(AiBusy || P.sourceTab != "text")"
+                        title="@L["Campaign.Book.Preview.ToPages"]" aria-label="@L["Campaign.Book.Preview.ToPages"]" data-testid="book-jump-pages">
+                    <LucideIcon IconName="@(BookPage.PageRtl ? "arrow-left" : "arrow-right")" Size="14" />
+                </button>
                 <button type="button" class="book-draft-pane-btn" aria-pressed="@(P.followPreview ? "true" : "false")" @onclick="P.FollowAsync"
                         title="@L["Campaign.Book.Preview.FollowHint"]" data-testid="book-follow">
                     <LucideIcon IconName="@(P.followPreview ? "link" : "unlink")" Size="14" /> @L["Campaign.Book.Preview.Follow"]

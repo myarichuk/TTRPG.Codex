@@ -1276,4 +1276,6 @@
   <data name="Campaign.Book.Chip.SuggestCost" xml:space="preserve"><value>בערך {0} עד {1}.</value></data>
   <data name="Campaign.Book.Chip.SuggestAsk" xml:space="preserve"><value>לשאול על {0, plural, one{מקום אחד} other{# מקומות}} בפרק {1}, עם {2}?</value></data>
   <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>קובץ תמונה למקום שנבחר בטקסט</value></data>
+  <data name="Campaign.Book.Preview.ToText" xml:space="preserve"><value>להעביר את הסמן למה שהעמודים מציגים</value></data>
+  <data name="Campaign.Book.Preview.ToPages" xml:space="preserve"><value>להעביר את העמודים למקום הסמן</value></data>
 </root>

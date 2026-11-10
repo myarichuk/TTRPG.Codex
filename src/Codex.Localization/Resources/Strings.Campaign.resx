@@ -1276,4 +1276,6 @@
   <data name="Campaign.Book.Chip.SuggestCost" xml:space="preserve"><value>Roughly {0} to {1}.</value></data>
   <data name="Campaign.Book.Chip.SuggestAsk" xml:space="preserve"><value>Ask about {0, plural, one{one place} other{# places}} in {1}, with {2}?</value></data>
   <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>Picture file for the place chosen in the text</value></data>
+  <data name="Campaign.Book.Preview.ToText" xml:space="preserve"><value>Move the cursor to what the pages show</value></data>
+  <data name="Campaign.Book.Preview.ToPages" xml:space="preserve"><value>Move the pages to where the cursor is</value></data>
 </root>

@@ -1276,4 +1276,6 @@
   <data name="Campaign.Book.Chip.SuggestCost" xml:space="preserve"><value>Примерно от {0} до {1}.</value></data>
   <data name="Campaign.Book.Chip.SuggestAsk" xml:space="preserve"><value>Спросить о местах в главе «{1}» (мест: {0}), модель: {2}?</value></data>
   <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>Файл картинки для места, выбранного в тексте</value></data>
+  <data name="Campaign.Book.Preview.ToText" xml:space="preserve"><value>Перевести курсор к тому, что показывают страницы</value></data>
+  <data name="Campaign.Book.Preview.ToPages" xml:space="preserve"><value>Перевести страницы к месту курсора</value></data>
 </root>

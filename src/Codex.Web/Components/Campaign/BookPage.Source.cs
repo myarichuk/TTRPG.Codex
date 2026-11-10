@@ -147,6 +147,19 @@ public partial class BookPage
         await RememberAsync(FollowKey, followPreview ? "1" : "0");
     }
 
+    /// <summary>The arrows beside Follow: the cursor to what the pages show (<paramref name="toSource"/>), or the pages to the cursor.</summary>
+    internal async Task JumpAsync(bool toSource)
+    {
+        if (module == null || editorId == null || AiBusy || sourceTab != "text") return;
+        try
+        {
+            await module.InvokeAsync<bool>("jump", editorId, toSource);
+        }
+        catch (JSException)
+        {
+        }
+    }
+
     internal async Task ZoomAsync(string to)
     {
         zoom = to == "100" ? "100" : "fit";
