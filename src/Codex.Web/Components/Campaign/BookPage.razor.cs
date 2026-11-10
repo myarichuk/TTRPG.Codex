@@ -270,6 +270,7 @@ public partial class BookPage : IAsyncDisposable
             // editor is kept: the script closes an earlier one when the next starts, and an earlier one that ends last is not taken.
             var opening = ++openings;
             var asked = current;
+            var sent = view;
             var shell = await ShellAsync();
             if (shell.Html == null)
             {
@@ -305,6 +306,16 @@ public partial class BookPage : IAsyncDisposable
             });
             if (opening != openings) return;
             editorId = opened;
+            // The draft was read again while the editor was opening (Regenerate pressed before it was up, RefreshAsync then had no editor to push to):
+            // the editor takes the text it missed.
+            if (view != null && !ReferenceEquals(view, sent))
+            {
+                foreach (var chapter in view.Chapters.Where(c => sent.Chapters.FirstOrDefault(o => o.Section == c.Section)?.Markdown != c.Markdown))
+                {
+                    await module.InvokeVoidAsync("replace", editorId, chapter.Section, chapter.Markdown);
+                }
+            }
+
             if (sourceTab != "text" || current != asked) await module.InvokeVoidAsync("show", editorId, current, sourceTab);
             await SyncUrlAsync();
             // A drawing or art director run under way for this edition shows in the chips.
