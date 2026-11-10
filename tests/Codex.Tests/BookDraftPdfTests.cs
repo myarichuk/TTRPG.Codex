@@ -132,6 +132,37 @@ public class BookDraftPdfTests
         Assert.NotEmpty(printed.Overflow);
     }
 
+    /// <summary>A picture a brew names by its web address (docs/BOOK_EXPORT.md 41.25) prints from the copy the server keeps, where the brew
+    /// placed it (Homebrewery's <c>{position:absolute,…}</c>, which the cleaner used to drop with the rest of the style), and the page still
+    /// fetches nothing. With no copy it is a placeholder that prints nothing, in the same place, so the text does not move.</summary>
+    [ChromiumFact]
+    public async Task AWebPicture_PrintsFromTheServersCopy_WhereTheBrewPlacedIt_AndNothingIsFetched()
+    {
+        const string address = "https://i.imgur.example/Abc123.png?x=1&y=2";
+        const string png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+        var md = $"# Cast\n\nText before.\n\n![PUBLIC_ALT]({address}) {{position:absolute,top:200px,left:100px,width:200px,height:100px}}\n\nText after.\n";
+
+        var with = await PrintAsync(md, new Dictionary<string, string> { [address] = png });
+        var without = await PrintAsync(md);
+
+        Assert.Equal(0, with.BlockedRequests);
+        Assert.Equal(0, without.BlockedRequests);
+        using var doc = PdfDocument.Open(with.Pdf);
+        var image = Assert.Single(doc.GetPage(1).GetImages());
+        // 96 px to the inch on the page, 72 points to the inch in the PDF.
+        Assert.Equal(200 * 0.75, (double)image.BoundingBox.Width, 1.5);
+        Assert.Equal(100 * 0.75, (double)image.BoundingBox.Height, 1.5);
+        Assert.Equal(100 * 0.75, (double)image.BoundingBox.Left, 1.5);
+        Assert.Equal(200 * 0.75, doc.GetPage(1).Height - (double)image.BoundingBox.Top, 1.5);
+        using var bare = PdfDocument.Open(without.Pdf);
+        Assert.Empty(bare.GetPage(1).GetImages());
+        Assert.DoesNotContain("PUBLIC_ALT", Text(without.Pdf));
+        Assert.Contains("Text after", Text(without.Pdf));
+        // The text sits where it does with the picture: an absolute picture takes no room, with its copy or its placeholder.
+        double After(byte[] pdf) { using var d = PdfDocument.Open(pdf); return d.GetPage(1).GetWords().First(w => w.Text == "after.").BoundingBox.Top; }
+        Assert.Equal(After(with.Pdf), After(without.Pdf), 0.5);
+    }
+
     [ChromiumFact]
     public async Task AnEditionsPicture_PrintsInItsSlot_AndAnUnknownSlotPrintsNothing()
     {

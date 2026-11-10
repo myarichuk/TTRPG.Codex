@@ -925,6 +925,7 @@
     private async Task SaveAsync(string section)
     {
         if (view == null || state == SaveState.Conflict) return;
+        var fetch = false;
         await saving.WaitAsync();
         try
         {
@@ -940,6 +941,8 @@
                     dirty.Remove(section);
                     state = SaveState.Saved;
                     await RefreshAsync(push: false);
+                    // A picture the text now names by a web address that has no copy yet (41.25), fetched once the save is over.
+                    fetch = BookWebImages.Addresses(text).Any(a => !web.Has(a));
                     break;
                 case BookDraftSave.Conflict:
                     // Another tab saved this chapter: nothing is overwritten, and nothing more is saved from this copy.
@@ -964,6 +967,9 @@
             saving.Release();
             await InvokeAsync(StateHasChanged);
         }
+
+        // Outside the save: a fetch can take seconds, and chapters keep saving meanwhile.
+        if (fetch) _ = FetchWebAsync();
     }
 
     private async Task SaveCssAsync()
@@ -1013,7 +1019,7 @@
     {
         if (view == null) return;
         var css = savedCss;
-        if (!BookDraftWebs.NamesTheWeb(css, new BookCssWeb(web.Files)))
+        if (!BookDraftWebs.NamesTheWeb(css, new BookCssWeb(web.Files), view.Chapters.Select(c => c.Markdown)))
         {
             webReport = null;
             return;
@@ -1030,14 +1036,19 @@
             // Nothing fetched or let go: the preview already has these copies (the save restyled it with them).
             if (!report.Changed) return;
             web = await Drafts.WebAsync(Access, edition, language);
-            if (module != null && editorId != null) await module.InvokeVoidAsync("style", editorId, BookCss.Clean(savedCss, out _, web));
+            if (module != null && editorId != null)
+            {
+                await module.InvokeVoidAsync("style", editorId, BookCss.Clean(savedCss, out _, web));
+                // The pictures the chapters name by their web address (41.25) come with the art, which the preview reads again.
+                await module.InvokeVoidAsync("art", editorId);
+            }
         }
         catch (JSDisconnectedException)
         {
         }
         catch (Exception ex) when (ex is JSException or InvalidOperationException or IOException)
         {
-            Logger.LogWarning(ex, "Fetching the book stylesheet's web addresses failed");
+            Logger.LogWarning(ex, "Fetching the book's web addresses failed");
         }
         finally
         {

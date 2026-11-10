@@ -74,7 +74,7 @@ public static class BookEndpoints
             if (await GmAsync(campaignId, user, resolver) is not { } access || BookDrafts.Audience(audience) == null) return Results.NotFound();
             response.Headers.CacheControl = "no-store";
             response.Headers["X-Content-Type-Options"] = "nosniff";
-            return Results.Json(await drafts.ArtAsync(access, audience, BookArtQuality.Preview, cancel));
+            return Results.Json(await drafts.ArtAsync(access, audience, BookArtQuality.Preview, cancel, lang));
         });
 
         // The draft's Markdown as one file, for Homebrewery or a text editor (docs/BOOK_EXPORT.md 41.24). The party edition's leak check and

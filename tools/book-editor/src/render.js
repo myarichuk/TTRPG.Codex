@@ -16,8 +16,28 @@ const DROP = new Set(['script', 'style', 'link', 'meta', 'base', 'iframe', 'fram
   'portal', 'dialog', 'slot', 'title', 'head', 'xmp', 'plaintext', 'noembed', 'noframes']);
 const ATTRIBUTES = new Set(['class', 'id', 'alt', 'title', 'colspan', 'rowspan', 'start', 'reversed', 'dir', 'lang', 'style', 'href', 'align', 'width', 'height']);
 const SLOT = /^art:(s[0-9a-f]{24})$/;
+// What a picture is allowed to be once it is in the page: a data URL of a kind the server keeps copies of (BookCssWeb.Sniff).
+const PICTURE = /^data:image\/(png|jpeg|webp|gif|avif);base64,[A-Za-z0-9+/=]+$/;
+
+/**
+ * The address a markdown picture names, in the form the server keeps its copy under (BookCssWeb.Address, docs/BOOK_EXPORT.md 41.25): https
+ * only, no credentials, no fragment. Null for anything else (a relative address, another scheme).
+ */
+export function webAddress(src) {
+  if (typeof src !== 'string' || src.length > 2048) return null;
+  try {
+    const u = new URL(src.trim());
+    if (u.protocol !== 'https:' || u.username || u.password || !u.hostname) return null;
+    u.hash = '';
+    return u.href;
+  } catch {
+    return null;
+  }
+}
 // Nothing in a style may load or run: no url(), no image functions, no escapes that could spell one, no legacy script hooks.
 const UNSAFE_STYLE = /url\s*\(|image-set|image\s*\(|element\s*\(|cross-fade|expression|behavior|binding|@import|\\|javascript:|src\s*\(/i;
+// The one declaration marked-hbfm writes into a picture's style: its own address as a custom property (not a load; nothing here reads it).
+const HB_SRC = /--HB_src\s*:\s*url\(\s*[^)\s"'\\]*\s*\)\s*;?/gi;
 
 // The class Fit pages gives the breaks it writes ("\page {fitted}"), so a second run takes them out before fitting again and leaves the GM's own
 // breaks where they are. The page itself does not get the class.
@@ -170,7 +190,7 @@ export function clean(doc, html, nonce) {
           child.replaceWith(...child.childNodes);
         } else {
           attributes(child, nonce);
-          if (tag === 'img' && !child.hasAttribute('data-art')) child.remove();
+          if (tag === 'img' && !child.hasAttribute('data-art') && !child.hasAttribute('data-web')) child.remove();
           else walk(child);
         }
       } else if (child.nodeType !== 3) {
@@ -186,7 +206,11 @@ export function clean(doc, html, nonce) {
 function attributes(el, nonce) {
   const tag = el.localName;
   const src = tag === 'img' ? el.getAttribute('src') : null;
-  for (const { name, value } of [...el.attributes]) {
+  for (const { name, value: written } of [...el.attributes]) {
+    // marked-hbfm gives every picture a custom property holding its address (`--HB_src:url(…)`), which the strict rule below would take for a
+    // load and drop the whole style by, and with it everything the brew placed the picture by (`{position:absolute,top:295px}`). That one
+    // declaration goes; whatever else is left in the style is held to the same rule as ever.
+    const value = tag === 'img' && name === 'style' ? written.replace(HB_SRC, '').trim() : written;
     // A Fit pages tag, only as this drawing wrote it: one typed into the draft is dropped like any other attribute.
     if (name === 'data-fm' && nonce && value.startsWith(nonce + '-') && /^\d+$/.test(value.slice(nonce.length + 1))) continue;
     const keep = ATTRIBUTES.has(name)
@@ -195,26 +219,41 @@ function attributes(el, nonce) {
       && !((name === 'width' || name === 'height') && !/^\d{1,4}%?$/.test(value))
       && !(name === 'id' && !/^[\w-]{1,120}$/.test(value))
       && !(name === 'class' && !/^[\w -]{0,300}$/.test(value));
-    if (!keep) el.removeAttribute(name);
+    if (!keep || (name === 'style' && !value)) el.removeAttribute(name);
+    else if (value !== written) el.setAttribute(name, value);
   }
   if (tag === 'img') {
     const slot = src && SLOT.exec(src.trim());
-    if (slot) el.setAttribute('data-art', slot[1]);
+    if (slot) {
+      el.setAttribute('data-art', slot[1]);
+    } else if (webAddress(src)) {
+      // Asks for the server's copy by this address; the picture's own src is never set to it, so the page fetches nothing.
+      el.setAttribute('data-web', webAddress(src));
+    }
   }
   // A link only within the book, and one that goes nowhere stays as its words.
   if (tag === 'a' && !el.hasAttribute('href')) el.setAttribute('data-plain', '');
 }
 
-/** The edition's pictures in place: a slot it has a picture for shows it, one it has none for shows a marked empty box (not printed). */
+/** The edition's pictures in place: a slot it has a picture for shows it, one it has none for shows a marked empty box (not printed). A picture
+ * the brew names by its web address (41.25) is looked up by that address in the same map, where the server put the copy it keeps. */
 export function pictures(root, art) {
-  for (const img of root.querySelectorAll('img[data-art]')) {
-    const uri = art && Object.prototype.hasOwnProperty.call(art, img.dataset.art) ? art[img.dataset.art] : null;
-    if (typeof uri === 'string' && /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(uri)) {
+  for (const img of root.querySelectorAll('img[data-art], img[data-web]')) {
+    const key = img.dataset.art ?? img.dataset.web;
+    const uri = art && Object.prototype.hasOwnProperty.call(art, key) ? art[key] : null;
+    if (typeof uri === 'string' && PICTURE.test(uri)) {
       img.src = uri;
     } else {
       const box = img.ownerDocument.createElement('span');
       box.className = 'art-missing';
       box.textContent = img.alt || '';
+      // A web picture the brew placed (Homebrewery's `{position:absolute,…}`) keeps its place while it has no copy, so a picture that never
+      // comes does not push the text about; the style was cleaned with the rest.
+      if (img.dataset.web) {
+        if (img.className) box.className += ' ' + img.className;
+        if (img.hasAttribute('style')) box.setAttribute('style', img.getAttribute('style'));
+      }
+
       img.replaceWith(box);
     }
   }

@@ -1616,7 +1616,7 @@ Not done, or not verified:
 - **Parity is measured for one brew**, in Chrome, against Homebrewery's themes compiled here; not against Homebrewery's live site, and not
   for its Journal and Unearthed Arcana themes or its snippets' markup beyond what the brew uses. (DMG and a community theme: 41.13.)
 - **Pictures a brew's CSS loads from the web** (imgur, a CDN): the server fetches a copy since 41.14. Homebrewery's own `/assets/...`
-  addresses are relative to its site and still load nothing (there is no address to fetch); uploads are not built.
+  addresses are relative to its site and still load nothing (there is no address to fetch); uploads are not built. Pictures a *chapter* names by a web address: 41.25.
 - **Markdown parity** beyond variables (41.13): icon shortcodes, definition-list and spacing syntax are not audited.
 - Russian and Hebrew: the layer's faces are Latin; the layout-only theme is English only (Plain and Ashen Vellum print both since 41.21).
 - The layer's greys and the layout-only theme's contrast were looked at, not measured; Plain on the layer was looked at for one chapter.
@@ -2248,6 +2248,60 @@ owner, nothing kept after), `BookArtTests.NearTheSizeCap...` (preview and print 
 Not done, or not verified: the footer was looked at in Chromium only, and in Hebrew in one preview (mirrored, beside the page number); the estimate's 1 byte a pixel is a
 guess with room (painted art measured 0.3-0.8); a GM's own CSS that styles `.footnote` styles the running footer too; the Markdown file was
 not opened in Homebrewery itself; the Russian and Hebrew text of the new strings is machine-drafted.
+
+### 41.25 Pictures a chapter names by a web address (2026-11-10, asked for by the user)
+
+A brew written for Homebrewery keeps its art on imgur or a CDN: `![Cover](https://i.imgur.com/….png) {position:absolute,…}`. The cleaner
+used to remove every picture that was not an `art:` slot, because the page must fetch nothing (a hand-typed chapter could otherwise load a
+tracking pixel in the GM's preview, or from the print browser), so such a brew printed with empty boxes. The answer is the one 41.14 gave the
+stylesheet, not a looser page: **the server fetches each address once and keeps a copy, and the page is given the copy.**
+
+- **Which addresses**: `BookWebImages.Addresses` (`src/Codex.Core/Book/BookWebImages.cs`) reads the draft's chapters for `![alt](https://…)`
+  (with a title, in angle brackets, with Homebrewery's trailing `{style}`) and `<img src="https://…">`, and gives each in the canonical form of
+  `BookCssWeb.Address` (https only, no credentials, no fragment, host in lower case, entities decoded), once, at most 100. The server reads the
+  chapters itself, from what is stored (`BookDraftWebs.RefreshAsync`); nothing the browser says is fetched. An `art:` slot, `http:`, a
+  relative address (Homebrewery's own `/assets/…`) and `data:` are not addresses. A link (`[a](https://…)`) is not a picture and is not fetched.
+- **The same fetcher, bounds and storage as 41.14**: https, public addresses only, checked at connect and at each of at most 4 redirects, the
+  server's fetch list; a picture is a copy only if its **bytes** are PNG, JPEG, GIF, WebP or AVIF (imgur's "page" answers and a sign-in wall
+  fail, as `NotWhatWasNamed`; SVG is not taken); 6 MB a picture, 16 MB and 120 copies a draft, shared with the stylesheet's. A failure is listed
+  on the Problems tab with why and tried again at the next fetch. The copies are kept as attachments on the draft's web document, GM only.
+- **When**: the editor opens (an address with no copy is fetched), and when a chapter saves that names an address with no copy, outside the
+  save; a copy neither a chapter nor the stylesheet names any more is let go by the next fetch. When a fetch changes anything the preview reads
+  its pictures again (`art(id)` in `editor.js`). **Printing never fetches.**
+- **How the page gets it**: the renderer gives a picture with an https `src` a `data-web` attribute holding the canonical address and **no
+  `src`**; `pictures()` looks the address up in the same map as the slots (`art[address]`), where the server put the copy as a data URL
+  (`BookDrafts.WithWeb`, in the art the preview reads and the page the PDF is printed from). A copy is written only if it is a plain data
+  image; with none the picture is the marked empty box (not printed), in the picture's own place (its class and style), so a picture that
+  never comes does not push the text about. A `data-web` typed by hand is dropped with every other attribute the cleaner does not know.
+- **The style of a picture, which was lost for every picture** (found on the way): marked-hbfm writes `--HB_src:url(<address>)` into every
+  image's style, and the cleaner's rule (a style with `url(` in it is dropped whole) took the placement the brew gave it with it, so
+  `{position:absolute,top:295px}` and `{bottom:-7.4%,left:-416px}` never applied, to `art:` slots either. That one declaration is now taken
+  out (a hand-typed one too) and the rest is held to the same rule as before.
+- **The layer keeps `paint-order`** (`tools/book-editor/build.mjs`): the Homebrewery theme paints a cover title's outline behind its letters
+  (`paint-order: stroke`), and a brew that sets its own `-webkit-text-stroke` (Tasha's and the PHB 2024 template do) printed as a black blob
+  without it. It draws nothing on its own. Three layer rules gained it (cover title, subtitle, footnote).
+- **AI cannot add one**: the checks on model output reject any image (`BookChecks`), so only the GM types an address, and sees it.
+
+Measured on a real brew (the PHB 2024 template for Homebrewery, 11 pictures on imagekit): all 11 fetched, 1.1 MB, and printed in the right
+places, with 0 requests from the page, 11 pages as on Homebrewery; the cover title matched Homebrewery's once `paint-order` was kept. The
+PDF is 24 MB, because Chrome writes each picture decoded.
+
+Tests: `BookWebImagesTests` (every form, the canonical form, what is not an address, bounds and a hostile line), `BookDraftTests` (fetched
+once though named twice, failures listed, kept while named, in the preview's art and the print page, GM only, let go; the stylesheet's and the
+chapters' copies kept together), `test.mjs` (a copy shown by its canonical address, a placeholder that keeps its place, no `src` ever the
+address, SVG and non-data copies refused, the style rule), `BookDraftPdfTests.AWebPicture_Prints…` (the copy at the position the brew gave, 0
+blocked requests, the text where it is without it).
+
+Not done, or not verified:
+- A reference-style picture (`![alt][id]` with `[id]: https://…`) is not found, and prints as the empty box. The text is read by pattern, so
+  an address inside a code block is fetched and never shown.
+- Copies are kept at full size: a 6 MB picture is 6 MB in the preview's art and decoded in the PDF. Scaling a copy to the size it prints at
+  (as slot pictures are) is not done, and would cut the PDF's size a good deal.
+- Homebrewery's own `/assets/…` pictures (its logo on the inside cover) have no address to fetch and print nothing.
+- A picture whose address changes its answer (a "latest" link) keeps the first copy until the text stops naming it.
+- Which sites the server may fetch from is the admin's rule (`WebFetchRule`, docs/SERVER_ACCESS_AND_VAULT.md 5), as for the stylesheet.
+  Imgur's page links (`imgur.com/abc`) are pages, not pictures: the direct `i.imgur.com/abc.png` is what works. The server fetches, so a
+  site the GM's own country blocks is reached from the server's.
 
 ## 42. Book-shaped prose (2026-11-08; steps 1 to 3 built, step 4 waits for the user)
 

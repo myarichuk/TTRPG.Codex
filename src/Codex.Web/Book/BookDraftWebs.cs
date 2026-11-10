@@ -28,17 +28,29 @@ public sealed class BookDraftWebs(IBookDraftRepository store, BookWebFetcher fet
         return have.Used.Count > 0 || have.Files.Count > 0;
     }
 
-    public Task<BookWebReport?> RefreshAsync(CampaignAccess dm, string edition, string language, string css, CancellationToken cancel) =>
-        RefreshAsync($"{dm.CampaignId}/{edition}/{language}", () => store.WebAsync(dm, edition, language),
-            (added, keep) => store.SaveWebAsync(dm, edition, language, added, keep), css, cancel);
+    /// <summary>As above, for what a draft's chapters name as pictures too (docs/BOOK_EXPORT.md 41.25).</summary>
+    public static bool NamesTheWeb(string css, BookCssWeb have, IEnumerable<string?> chapters) =>
+        NamesTheWeb(css, have) || BookWebImages.Addresses(chapters).Count > 0;
+
+    /// <summary>
+    /// Fetches what the stylesheet and the chapters name and the draft has no copy of, and lets go of what neither names. The chapters are read
+    /// here, from what is stored, not taken from the caller: what the server fetches is what the draft says.
+    /// </summary>
+    public async Task<BookWebReport?> RefreshAsync(CampaignAccess dm, string edition, string language, string css, CancellationToken cancel)
+    {
+        var draft = await store.GetAsync(dm, edition, language);
+        var pictures = BookWebImages.Addresses(draft?.Chapters.Select(c => c.Markdown) ?? []);
+        return await RefreshAsync($"{dm.CampaignId}/{edition}/{language}", () => store.WebAsync(dm, edition, language),
+            (added, keep) => store.SaveWebAsync(dm, edition, language, added, keep), css, pictures, cancel);
+    }
 
     /// <summary>The same for a theme the GM brought in (docs/BOOK_EXPORT.md 41.22): its copies are kept with the theme, under the same bounds.</summary>
     public Task<BookWebReport?> RefreshThemeAsync(CampaignAccess dm, string themeKey, string css, CancellationToken cancel) =>
         RefreshAsync($"{dm.CampaignId}/theme/{themeKey}", () => store.ThemeWebAsync(dm, themeKey),
-            (added, keep) => store.SaveThemeWebAsync(dm, themeKey, added, keep), css, cancel);
+            (added, keep) => store.SaveThemeWebAsync(dm, themeKey, added, keep), css, [], cancel);
 
     private async Task<BookWebReport?> RefreshAsync(string key, Func<Task<BookCssWeb>> load,
-        Func<IReadOnlyList<BookCssWebFile>, IReadOnlySet<string>, Task<BookDraftSave>> save, string css, CancellationToken cancel)
+        Func<IReadOnlyList<BookCssWebFile>, IReadOnlySet<string>, Task<BookDraftSave>> save, string css, IReadOnlyList<string> pictures, CancellationToken cancel)
     {
         using var mine = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         running.AddOrUpdate(key, mine, (_, old) =>
@@ -65,7 +77,9 @@ public sealed class BookDraftWebs(IBookDraftRepository store, BookWebFetcher fet
             {
                 var web = new BookCssWeb(files.Values);
                 BookCss.Clean(css, out _, web);
-                var todo = web.Missing.Where(a => tried.Add(a.Url)).ToList();
+                // The chapters' pictures are asked for in the first round, beside what the sheet's clean asked for.
+                var todo = web.Missing.Concat(round == 0 ? pictures.Where(p => !files.ContainsKey(p)).Select(p => new BookCssWebAddress(p, BookCssWebKind.Picture)) : [])
+                    .Where(a => tried.Add(a.Url)).ToList();
                 if (todo.Count == 0) break;
                 foreach (var batch in todo.Chunk(AtOnce))
                 {
@@ -96,7 +110,7 @@ public sealed class BookDraftWebs(IBookDraftRepository store, BookWebFetcher fet
             mine.Token.ThrowIfCancellationRequested();
             var final = new BookCssWeb(files.Values);
             BookCss.Clean(css, out _, final);
-            var keep = final.Used.Select(a => a.Url).ToHashSet(StringComparer.Ordinal);
+            var keep = final.Used.Select(a => a.Url).Concat(pictures).ToHashSet(StringComparer.Ordinal);
             var kept = files.Values.Where(f => keep.Contains(f.Url)).ToList();
             var changed = added.Count > 0 || have.Files.Any(f => !keep.Contains(f.Url));
             if (changed)

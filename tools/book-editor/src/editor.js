@@ -49,7 +49,7 @@ export async function open(host, frame, book, dotnet, labels) {
   for (const [other, s] of editors) if (s.host === host) close(other);
   const id = 'e' + (++counter);
   const state = { host, frame, dotnet, chapters: book.chapters.map(c => ({ ...c })), css: book.css || '', current: book.current, mode: 'md',
-    art: {}, rendering: false, again: false, labels: labels || {} };
+    art: {}, artUrl: book.artUrl, rendering: false, again: false, labels: labels || {} };
   editors.set(id, state);
 
   const language = new Compartment();
@@ -228,6 +228,25 @@ export function fieldBytes(field) {
 /** A text field filled from the server (a theme opened for editing). */
 export function setField(field, value) {
   field.value = value;
+}
+
+/**
+ * The edition's pictures read again, and the preview drawn with them: the server has fetched copies of web pictures the chapters name
+ * (docs/BOOK_EXPORT.md 41.25), which the preview only has by asking for the pictures again. The ones the book leaves out are not reported
+ * a second time.
+ */
+export async function art(id) {
+  const state = editors.get(id);
+  if (!state || !state.artUrl) return;
+  try {
+    const answer = await fetch(state.artUrl, { credentials: 'same-origin', cache: 'no-store' });
+    if (!answer.ok) return;
+    state.art = (await answer.json()).art || {};
+  } catch {
+    return;
+  }
+
+  preview(id);
 }
 
 /** The GM's stylesheet, cleaned by the server, as the preview should apply it. */

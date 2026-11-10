@@ -7,7 +7,7 @@ import vm from 'node:vm';
 
 // The shipped bundle, not the source: it is what the editor and the print browser run (and the bundle has no expr-eval).
 vm.runInThisContext(readFileSync(new URL('../../src/Codex.Web/wwwroot/lib/book/book-render.js', import.meta.url), 'utf8'));
-const { pagesHtml, clean, pictures, brew, brewMap, numberPages, footPages, number, pageNumbers, draw, unfit, insertBreaks, isFitted, FIT_CLASS } = globalThis.CodexBook;
+const { webAddress, pagesHtml, clean, pictures, brew, brewMap, numberPages, footPages, number, pageNumbers, draw, unfit, insertBreaks, isFitted, FIT_CLASS } = globalThis.CodexBook;
 
 const dom = new JSDOM('<!doctype html><div id="brew"></div>');
 const doc = dom.window.document;
@@ -88,6 +88,48 @@ const odd = drawn(`![x](art:${key})`, { [key]: 'data:image/png;base64,AAA" onerr
 assert.ok(!odd.includes('<img'), odd);
 const remote = drawn(`![x](art:${key})`, { [key]: 'https://evil.example/a.png' }).innerHTML;
 assert.ok(!remote.includes('evil'), remote);
+
+// A picture the brew names by its https address (docs/BOOK_EXPORT.md 41.25) shows the copy the server keeps, looked up by its canonical address
+// in the same map as the slots. The page never fetches: the picture's src is the copy or nothing, never the address. With no copy it is the
+// marked box, in the picture's own place (Homebrewery positions its art), so a picture that never comes does not push the text about.
+const hosted = 'https://i.imgur.example/Abc123.png?x=1&y=2';
+const png = 'data:image/png;base64,iVBORw0KGgo=';
+assert.equal(webAddress(hosted + '#frag'), hosted, 'the fragment is not part of the address');
+assert.equal(webAddress('HTTPS://I.Imgur.Example'), 'https://i.imgur.example/', 'the host is lower case and the path is there');
+for (const no of ['http://i.imgur.example/a.png', 'https://u:p@i.imgur.example/a.png', '//i.imgur.example/a.png', 'data:image/png;base64,AAAA', 'art:' + key,
+  '/assets/a.png', 'javascript:alert(1)', '', 'https://', 'https://' + 'a'.repeat(2100)]) {
+  assert.equal(webAddress(no), null, no);
+}
+
+const copied = drawn(`![Hero](${hosted}){position:absolute,top:10px}`, { [webAddress(hosted)]: png });
+assert.equal(copied.querySelector('img').getAttribute('src'), png, copied.innerHTML);
+assert.ok(!copied.innerHTML.includes('imgur.example/Abc') || copied.querySelector('img').hasAttribute('data-web'), 'the address is only ever the lookup');
+const uncopied = drawn(`![Hero](${hosted}){position:absolute,top:10px}`);
+assert.ok(!uncopied.querySelector('img'), uncopied.innerHTML);
+const placeholder = uncopied.querySelector('.art-missing');
+assert.ok(placeholder && /position:\s*absolute/.test(placeholder.getAttribute('style') || ''), 'it keeps its place: ' + uncopied.innerHTML);
+assert.ok(!uncopied.innerHTML.includes('imgur'), 'and the address is nowhere in it: ' + uncopied.innerHTML);
+assert.equal(drawn(`<img src="${hosted}" alt="Hero">`, { [webAddress(hosted)]: png }).querySelector('img')?.getAttribute('src'), png, 'the HTML form is a picture too');
+
+// marked-hbfm writes `--HB_src:url(<address>)` into every picture's style, which the strict style rule would take for a load and drop the whole
+// style by, and with it the placement the brew gave (Homebrewery's `{position:absolute,top:295px}`). That one declaration goes and the rest
+// stays; anything else in a style that could load is still dropped whole, and a slot picture is placed the same way.
+const placed = drawn(`![Hero](${hosted}) {position:absolute,top:10px}`, { [webAddress(hosted)]: png }).querySelector('img').getAttribute('style');
+assert.ok(/position:\s*absolute/.test(placed) && /top:\s*10px/.test(placed) && !/HB_src|url\(|imgur/.test(placed), placed);
+assert.equal(drawn(`![Hero](${hosted}) {background-image:url(https://evil.example/CANARY_BG),top:1px}`, { [webAddress(hosted)]: png }).querySelector('img').getAttribute('style'), null);
+// One typed by hand goes with it: the declaration is never kept, whoever wrote it.
+const byHand = drawn(`![Hero](${hosted}) {top:1px,--HB_src:url(https://evil.example/CANARY_X)}`, { [webAddress(hosted)]: png }).querySelector('img').getAttribute('style');
+assert.ok(byHand === null || (/top:\s*1px/.test(byHand) && !/evil|CANARY|HB_src|url\(/.test(byHand)), byHand);
+assert.ok(/position:\s*absolute/.test(drawn(`![s](art:${key}) {position:absolute,top:5px}`, { [key]: png }).querySelector('img').getAttribute('style')), 'a slot picture is placed too');
+assert.equal(drawn(`![s](${hosted})`, { [webAddress(hosted)]: png }).querySelector('img').hasAttribute('style'), false, 'no style at all when it had none of its own');
+
+// A copy that is not a plain data image is never written, and an address the map does not hold shows nothing of another's.
+assert.ok(!drawn(`![x](${hosted})`, { [webAddress(hosted)]: 'https://evil.example/a.png' }).querySelector('img'));
+assert.ok(!drawn(`![x](${hosted})`, { [webAddress(hosted)]: 'data:image/svg+xml;base64,PHN2Zz4=' }).querySelector('img'), 'no SVG');
+assert.ok(!drawn(`![x](${hosted})`, { 'https://elsewhere.example/a.png': png }).querySelector('img'));
+assert.ok(drawn(`![x](${hosted})`, { [webAddress(hosted)]: 'data:image/avif;base64,AAAA' }).querySelector('img'), 'AVIF, which the server keeps, is shown');
+// An attribute typed by hand is not believed: the lookup address comes only from the picture's own src.
+assert.ok(!drawn(`<img data-web="${hosted}">`, { [webAddress(hosted)]: png }).querySelector('img'));
 
 // Pages: one per \page, chapters joined by one.
 const book = brew([{ markdown: '# A\n\ntext' }, { markdown: '# B\n\n\\page\n\nmore' }]);

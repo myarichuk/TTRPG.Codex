@@ -50,6 +50,8 @@ writeFileSync(join(themes, 'blank.css'), `/*\n${header}\n */\n${blank.css}`);
 //   - every colour, turned to the grey of the same lightness (so --HB_Color_* keep their names and contrast, and lose their hues);
 //   - what Chrome writes into a PDF as a picture or a second copy of the text: gradients, text-shadow, text stroke, drop-shadow filters,
 //     box-shadow; and the drop cap's gradient fill (its letter gets the heading colour instead of a transparent one);
+//   (`paint-order` stays: it draws nothing, and does nothing without a stroke; but a brew that sets its own stroke on a cover title, as
+//   the Homebrewery theme's does, was written against a base that paints the stroke behind the letters, and without it the letters vanish.)
 //   - its @font-face rules: the faces it names are bundled (wwwroot/fonts/homebrewery-5e) and added by the server.
 const phbLess = readFileSync(join(here, 'themes', 'homebrewery-5e.less'), 'utf8');
 // The assets file is not vendored: each picture variable it defines (Homebrewery's /assets URLs) is "none". Its names are found by compiling.
@@ -91,7 +93,7 @@ writeFileSync(join(here, '..', '..', 'tests', 'Codex.Tests', 'Fixtures', 'homebr
 
 function layoutOnly(css) {
   const ast = csstree.parse(css, { parseValue: true, parseCustomProperty: false });
-  const dropped = /^(background-image|border-image(-.*)?|-webkit-border-image|mask(-.*)?|-webkit-mask(-.*)?|text-shadow|-webkit-text-stroke(-.*)?|paint-order|box-shadow|filter|-webkit-filter|-webkit-background-clip|background-clip)$/i;
+  const dropped = /^(background-image|border-image(-.*)?|-webkit-border-image|mask(-.*)?|-webkit-mask(-.*)?|text-shadow|-webkit-text-stroke(-.*)?|box-shadow|filter|-webkit-filter|-webkit-background-clip|background-clip)$/i;
   csstree.walk(ast, {
     visit: 'Atrule',
     enter(node, item, list) {

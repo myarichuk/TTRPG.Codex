@@ -529,6 +529,98 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         Assert.Null(await session.LoadAsync<BookDraftWeb>(BookDraftWeb.IdFor(id, "party", "en")));
     }
 
+    /// <summary>A picture a chapter names by its web address (docs/BOOK_EXPORT.md 41.25) is fetched once through the same fetcher, kept with the
+    /// draft while the text names it, and comes with the art (the preview's and the print's) under its address. What is not a picture, a
+    /// failure, an insecure address and an <c>art:</c> slot are never kept; the GM's text is what is read, not the caller's.</summary>
+    [Fact]
+    public async Task APictureAChapterNamesByItsWebAddress_IsKeptWhileTheTextNamesIt_AndComesWithTheArt()
+    {
+        var (dm, id) = await SeedAsync();
+        var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        byte[] png = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3];
+        const string hero = "https://fixture.test/art/hero.png?v=2&w=3";
+        var site = new FixtureSite(new()
+        {
+            [hero] = (200, "image/png", png),
+            ["https://fixture.test/art/gone.png"] = (404, "text/html", "<p>Not found"u8.ToArray()),
+            ["https://fixture.test/art/wall.png"] = (200, "image/png", "<html>sign in</html>"u8.ToArray())
+        });
+        var webs = new BookDraftWebs(_store, BookWebFetcher.Over(new HttpClient(site), httpsOnly: true), Microsoft.Extensions.Logging.Abstractions.NullLogger<BookDraftWebs>.Instance);
+        var text = cast.Markdown + $"\n\n![Hero]({hero}) {{width:30px}}\n\n<img src=\"https://fixture.test/art/hero.png?v=2&amp;w=3\">\n\n![Gone](https://fixture.test/art/gone.png)\n\n"
+            + "![Wall](https://fixture.test/art/wall.png)\n\n![Slot](art:s0123456789abcdef01234567)\n\n![Insecure](http://fixture.test/art/insecure.png)\n";
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveChapterAsync(dm, "party", "en", "cast", text, cast.Version)).Result);
+
+        var first = (await webs.RefreshAsync(dm, "party", "en", string.Empty, CancellationToken.None))!;
+
+        // The hero, named twice, was asked for once; the two that failed were asked for; nothing else was.
+        Assert.Equal(3, site.Requests);
+        Assert.Equal((1, 1, true), (first.Fetched, first.Kept, first.Changed));
+        Assert.Equal([("https://fixture.test/art/gone.png", BookWebProblem.Refused), ("https://fixture.test/art/wall.png", BookWebProblem.NotWhatWasNamed)],
+            first.Failed.Select(f => (f.Url, f.Problem)).Order().ToList());
+        var kept = (await _store.WebAsync(dm, "party", "en")).Files.Single();
+        Assert.Equal((hero, BookCssWebKind.Picture, "image/png"), (kept.Url, kept.Kind, kept.ContentType));
+
+        // The preview's art and the print's both carry it under its address, beside the slots' pictures.
+        var art = await _drafts.ArtAsync(dm, "party", BookArtQuality.Preview, CancellationToken.None, "en");
+        Assert.StartsWith("data:image/png;base64,", art.Art[hero]);
+        Assert.DoesNotContain(art.Art.Keys, k => k.Contains("gone.png") || k.Contains("wall.png") || k.Contains("insecure"));
+        var (page, _) = await _drafts.PageAsync(dm, "party", "en", BookArtQuality.Preview, _ => null, CancellationToken.None);
+        Assert.Equal(art.Art[hero], page!.Art[hero]);
+        // Without the draft's language it is the slots' art alone, as before.
+        Assert.DoesNotContain(hero, (await _drafts.ArtAsync(dm, "party", BookArtQuality.Preview, CancellationToken.None)).Art.Keys);
+
+        // Kept copies are not fetched again; the failures are tried again.
+        var again = (await webs.RefreshAsync(dm, "party", "en", string.Empty, CancellationToken.None))!;
+        Assert.Equal(5, site.Requests);
+        Assert.Equal((0, 1, false), (again.Fetched, again.Kept, again.Changed));
+
+        // Nobody but the GM has the art, and the copies are the GM's alone.
+        var player = new CampaignAccess(id, PlayerUser, CampaignRole.Player);
+        Assert.Same(BookDraftArt.None, await _drafts.ArtAsync(player, "party", BookArtQuality.Preview, CancellationToken.None, "en"));
+        Assert.Empty((await _store.WebAsync(player, "party", "en")).Files);
+
+        // The text stops naming it: the copy is let go at the next fetch, and the art no longer has it.
+        var now = (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown, now.Version)).Result);
+        var gone = (await webs.RefreshAsync(dm, "party", "en", string.Empty, CancellationToken.None))!;
+        Assert.Equal((0, true), (gone.Kept, gone.Changed));
+        Assert.Empty((await _store.WebAsync(dm, "party", "en")).Files);
+        Assert.DoesNotContain(hero, (await _drafts.ArtAsync(dm, "party", BookArtQuality.Preview, CancellationToken.None, "en")).Art.Keys);
+    }
+
+    /// <summary>A copy the stylesheet names is not let go because a chapter does not, nor the other way about: what a draft keeps is what either names.</summary>
+    [Fact]
+    public async Task TheStylesheetsCopies_AndTheChaptersPictures_AreKeptTogether_EachWhileItsOwnerNamesIt()
+    {
+        var (dm, _) = await SeedAsync();
+        var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        byte[] png = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3];
+        var site = new FixtureSite(new()
+        {
+            ["https://fixture.test/tex.png"] = (200, "image/png", png),
+            ["https://fixture.test/hero.png"] = (200, "image/png", png)
+        });
+        var webs = new BookDraftWebs(_store, BookWebFetcher.Over(new HttpClient(site), httpsOnly: true), Microsoft.Extensions.Logging.Abstractions.NullLogger<BookDraftWebs>.Instance);
+        const string css = ".page{background:url(https://fixture.test/tex.png)}";
+        await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown + "\n\n![Hero](https://fixture.test/hero.png)\n", cast.Version);
+
+        Assert.Equal((2, 2), ((await webs.RefreshAsync(dm, "party", "en", css, CancellationToken.None))!.Fetched, (await _store.WebAsync(dm, "party", "en")).Files.Count));
+        // The sheet drops its texture: the hero stays.
+        Assert.Equal(["https://fixture.test/hero.png"], (await WithAsync(string.Empty)).Select(f => f.Url));
+        Assert.Equal(2, (await WithAsync(css)).Count);
+        // The chapter drops the hero: the texture stays.
+        var now = (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+        await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown, now.Version);
+        Assert.Equal(["https://fixture.test/tex.png"], (await WithAsync(css)).Select(f => f.Url));
+        Assert.Empty(await WithAsync(string.Empty));
+
+        async Task<IReadOnlyCollection<BookCssWebFile>> WithAsync(string sheet)
+        {
+            await webs.RefreshAsync(dm, "party", "en", sheet, CancellationToken.None);
+            return (await _store.WebAsync(dm, "party", "en")).Files;
+        }
+    }
+
     // AI edits (docs/BOOK_EXPORT.md 41.4, phase 4): a scripted model, and the game system's own definition, so its book shape is what is sent.
     private sealed class EditModels(IChatClient chat, Exception? refuse = null, bool none = false) : IBookModels
     {

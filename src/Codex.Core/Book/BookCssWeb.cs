@@ -134,10 +134,22 @@ public sealed class BookCssWeb
         return uri.GetComponents(UriComponents.HttpRequestUrl, UriFormat.UriEscaped);
     }
 
+    /// <summary>Whether there is a copy of this address, of any kind.</summary>
+    public bool Has(string address) => files.ContainsKey(address);
+
+    /// <summary>The copy of a picture an address names, as a data URL; null when there is none (or it is not a picture). Notes nothing: it is
+    /// for the pictures a draft's chapters name (<see cref="BookWebImages"/>), not for what a stylesheet's clean asked for.</summary>
+    public string? PictureUrl(string address) => files.TryGetValue(address, out var file) && file.Kind == BookCssWebKind.Picture ? DataUrl(address, file) : null;
+
     internal string? Data(string address, BookCssWebKind kind)
     {
         Note(address, kind);
         if (!files.TryGetValue(address, out var file) || file.Kind != kind) return Miss(address, kind);
+        return DataUrl(address, file);
+    }
+
+    private string DataUrl(string address, BookCssWebFile file)
+    {
         if (!dataUrls.TryGetValue(address, out var data))
         {
             data = "data:" + file.ContentType + ";base64," + Convert.ToBase64String(file.Bytes);

@@ -277,7 +277,8 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         if (shell.Html == null) return (null, shell.Refused);
         var markdown = string.Join("\n\n\\page\n\n", printed.Chapters.Select(c => c.Markdown.TrimEnd()));
         // The party's pictures, read for the party's source: a player's copy adds text, never a picture.
-        var pictures = withArt ? (await ArtAsync(made.Dm, made.Source, quality, cancel)).Art : new Dictionary<string, string>();
+        // Beside them, the copies of the web pictures the chapters name (41.25), by their address: the page itself fetches nothing.
+        var pictures = withArt ? WithWeb(await ArtAsync(made.Dm, made.Source, quality, cancel), web, printed.Chapters.Select(c => c.Markdown)).Art : new Dictionary<string, string>();
         return (new BookDraftPage(made.Source.Campaign.Name, shell.Html, markdown, pictures, printed.Chapters, printed.Player), null);
     }
 
@@ -360,12 +361,28 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
     /// <summary>The edition's pictures by slot key, as data images: the cover, each chapter's header, and each entry's (the GM's book picture for
     /// the slot, or the entry's own picture as this source flags it); and the pictures left out, each by its chapter and the label this edition
     /// gives its entry. The preview and the print leave out the same ones (<see cref="BookArtReader"/>).</summary>
-    public async Task<BookDraftArt> ArtAsync(CampaignAccess asked, string edition, BookArtQuality quality, CancellationToken cancel)
+    public async Task<BookDraftArt> ArtAsync(CampaignAccess asked, string edition, BookArtQuality quality, CancellationToken cancel, string? language = null)
     {
         if (Audience(edition) is not { } audience) return BookDraftArt.None;
         if (await resolver.ResolveAsync(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return BookDraftArt.None;
         if (await reader.ReadAsync(dm, audience) is not { } source) return BookDraftArt.None;
-        return await ArtAsync(dm, source, quality, cancel);
+        var art = await ArtAsync(dm, source, quality, cancel);
+        // With the draft's language: the copies of the web pictures its chapters name (41.25) come too, by their address.
+        if (language == null || await store.GetAsync(dm, edition, language) is not { } draft) return art;
+        return WithWeb(art, await store.WebAsync(dm, edition, language), draft.Chapters.Select(c => c.Markdown));
+    }
+
+    /// <summary>The art with the kept copy of each web picture the chapters name added under its canonical address (the key the renderer asks
+    /// for, <see cref="BookWebImages"/>); one with no copy yet is not there, and prints as an empty box until it is fetched.</summary>
+    private static BookDraftArt WithWeb(BookDraftArt art, BookCssWeb web, IEnumerable<string?> chapters)
+    {
+        var map = new Dictionary<string, string>(art.Art, StringComparer.Ordinal);
+        foreach (var address in BookWebImages.Addresses(chapters))
+        {
+            if (web.PictureUrl(address) is { } uri) map[address] = uri;
+        }
+
+        return map.Count == art.Art.Count ? art : art with { Art = map };
     }
 
     private async Task<BookDraftArt> ArtAsync(CampaignAccess dm, BookSource source, BookArtQuality quality, CancellationToken cancel)
