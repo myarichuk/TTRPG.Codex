@@ -15,6 +15,7 @@ import { unifiedMergeView, getOriginalDoc, getChunks, acceptChunk, rejectChunk, 
 import { reviewDiffConfig } from './review-diff.js';
 import { layout, brew, brewMap, outlineOf, pageStarts, pageNumbers } from './render.js';
 import { assist } from './assist.js';
+import { chips, setChips, placeEdit, referenced } from './chips.js';
 
 // The Markdown's and the stylesheet's colours from the app's own palette (CSS variables), so the editor is dark or light as the app is.
 const bookHighlight = syntaxHighlighting(HighlightStyle.define([
@@ -60,7 +61,28 @@ export async function open(host, frame, book, dotnet, labels) {
   const locked = new Compartment();
   const themeLock = new Compartment();
   const assisting = new Compartment();
-  const assistance = book.assist ? assist(book.assist.help || {}, book.assist.slots || [], !!book.assist.dm) : [];
+  // The chips under the entries' headings and the names after "art:" (docs/BOOK_EXPORT.md 53) come and go with the suggestions and help.
+  state.chipData = book.chips || null;
+  const spot = book.assist?.help?.spot;
+  const names = new Map((book.assist?.slots || []).map(s => [s.key, s.kind === 'spot' && spot ? spot.replace('{0}', s.label) : s.label]));
+  const chipping = chips({
+    // The editor's own lock (an AI edit asked for or under review) greys the chips' buttons too.
+    data: () => state.chipData ? { ...state.chipData, locked: !!state.lockedOn } : null,
+    labels: () => state.labels.chip || {},
+    names,
+    act: (kind, key) => dotnet.invokeMethodAsync('Chip', kind, key),
+    quote: key => dotnet.invokeMethodAsync('ChipQuote', key),
+    upload: key => {
+      // The page's own file field takes the picture (a stream, as the tray's does); the server is told first which place it is for.
+      const field = document.getElementById('book-chip-file');
+      if (!field) return;
+      field.value = '';
+      dotnet.invokeMethodAsync('ChipUploadFor', key);
+      field.click();
+    },
+    place: chip => placeArt(id, state.current, chip.key, chip.block)
+  });
+  const assistance = book.assist ? [...assist(book.assist.help || {}, book.assist.slots || [], !!book.assist.dm), ...chipping] : [];
   state.assistance = assistance;
   state.assistOn = !!book.assist?.on;
   // A Hebrew draft: each line takes its own direction from its first letters, so Hebrew prose reads from the right and a line of markup
@@ -188,7 +210,111 @@ export function setAssist(id, on) {
   const state = editors.get(id);
   if (!state) return;
   state.assistOn = !!on;
-  state.view.dispatch({ effects: state.assisting.reconfigure(on && state.mode !== 'css' ? state.assistance : []) });
+  state.view.dispatch({ effects: state.assisting.reconfigure(on && state.mode === 'md' ? state.assistance : []) });
+  ghosts(state);
+}
+
+/**
+ * The entries' picture places as the server reads them now (docs/BOOK_EXPORT.md 53): `data` = { chips: [{key, section, label, block, pictured,
+ * idea}], model, price, drawAsk, busy, locked }. The chips under the headings and the ghost frames in the preview are drawn from it.
+ */
+export function setChipData(id, data) {
+  const state = editors.get(id);
+  if (!state) return;
+  state.chipData = data;
+  state.view.dispatch({ effects: setChips.of(null) });
+  ghosts(state);
+}
+
+/**
+ * Puts a place's picture block under its entry's heading, as one edit that saves and undoes like typing. 'placed'; 'present' when the chapter
+ * already points at the picture or has no such entry; 'busy' when the chapter is locked or under review (the chip then offers to put it in).
+ */
+export function placeArt(id, section, key, block) {
+  const state = editors.get(id);
+  const c = state?.chapters.find(x => x.section === section);
+  if (!c) return 'present';
+  const edit = placeEdit(c.markdown, key, block);
+  if (!edit) return 'present';
+  if (state.mode === 'md' && state.current === section) {
+    if (state.review || state.lockedOn) return 'busy';
+    state.view.dispatch({ changes: { from: edit.at, insert: edit.insert }, userEvent: 'input.art' });
+    return 'placed';
+  }
+
+  // A chapter that is not the one shown: its text takes the block and is saved like typing (there is no editor history to undo it from).
+  if (state.review?.section === section) return 'busy';
+  c.markdown = c.markdown.slice(0, edit.at) + edit.insert + c.markdown.slice(edit.at);
+  state.pending.add(section);
+  state.changed();
+  reportOutline(state, section);
+  preview(id);
+  return 'placed';
+}
+
+// Where a suggested picture would sit, as a dashed frame over the page (docs/BOOK_EXPORT.md 53). It is laid over the page, outside its text, so
+// no line moves and the pages stay the ones the PDF prints; it is drawn here only, after the layout, and is in neither the text nor the PDF.
+function ghosts(state) {
+  const doc = state.frame.contentDocument;
+  const root = doc?.getElementById('brew');
+  if (!root) return;
+  for (const old of root.querySelectorAll('[data-ghost]')) old.remove();
+  const data = state.chipData;
+  if (!state.assistOn || !data?.chips?.length) return;
+  const text = new Map(shown(state).map(c => [c.section, c.markdown]));
+  for (const chip of data.chips) {
+    if (chip.pictured || !chip.idea) continue;
+    const markdown = text.get(chip.section);
+    if (markdown == null || referenced(markdown, chip.key)) continue;
+    const mark = doc.getElementById('e-' + chip.key);
+    const page = mark?.closest('.page');
+    if (!page || !page.offsetWidth) continue;
+    // The entry's heading follows its marker; the frame starts under it.
+    let block = mark;
+    while (block.parentElement && !block.parentElement.classList.contains('columnWrapper') && block.parentElement !== page) block = block.parentElement;
+    const heading = block.nextElementSibling && /^H[1-6]$/.test(block.nextElementSibling.tagName) ? block.nextElementSibling : block;
+    const scale = page.getBoundingClientRect().width / page.offsetWidth || 1;
+    const p = page.getBoundingClientRect();
+    const h = heading.getBoundingClientRect();
+    const column = h.width / scale;
+    // The size the built-in themes give the block: a portrait floats at the far side, 38% of the column and at most 32 mm, three by four; a
+    // place's picture is the column wide and at most 62 mm tall.
+    const mm = 96 / 25.4;
+    const portrait = chip.block.startsWith('{{portrait');
+    const width = portrait ? Math.min(column * 0.38, 32 * mm) : column;
+    let height = portrait ? width * 4 / 3 : Math.min(width * 0.5, 62 * mm);
+    const top = (h.bottom - p.top) / scale + 2;
+    // No line moves for a frame, so it keeps to its own entry: it ends where the next entry on the page starts below it.
+    for (const next of page.querySelectorAll('[id^="e-"]')) {
+      if (!(mark.compareDocumentPosition(next) & 4)) continue;
+      const nextTop = (next.getBoundingClientRect().top - p.top) / scale;
+      if (nextTop > top + 1) height = Math.max(6 * mm, Math.min(height, nextTop - top - 2));
+      break;
+    }
+    const rtl = doc.defaultView.getComputedStyle(page).direction === 'rtl';
+    const left = (h.left - p.left) / scale + (portrait && !rtl ? column - width : 0);
+    const ghost = doc.createElement('div');
+    ghost.dataset.ghost = chip.key;
+    ghost.textContent = chip.label;
+    const s = ghost.style;
+    s.position = 'absolute';
+    s.left = left + 'px';
+    s.top = top + 'px';
+    s.width = width + 'px';
+    s.height = height + 'px';
+    s.boxSizing = 'border-box';
+    s.border = '2px dashed rgba(90, 90, 90, .75)';
+    s.borderRadius = '2mm';
+    s.background = 'rgba(255, 255, 255, .35)';
+    s.color = 'rgba(60, 60, 60, .9)';
+    s.font = '7pt sans-serif';
+    s.padding = '1mm';
+    s.textAlign = 'center';
+    s.pointerEvents = 'none';
+    s.zIndex = '20';
+    s.overflow = 'hidden';
+    page.append(ghost);
+  }
 }
 
 // The hover help's box: the editor's own colours, a readable width.
@@ -324,6 +450,7 @@ async function preview(id) {
     fitWidth(state.frame, root, state.zoom);
     if (scroller) scroller.scrollTop = top;
     mapDom(state, root);
+    ghosts(state);
     const box = state.host.closest('[data-book-editor]');
     const status = box?.querySelector('[data-overflow]');
     if (status) {
@@ -704,7 +831,8 @@ export function selection(id) {
 export function lock(id, on) {
   const state = editors.get(id);
   if (!state) return;
-  state.view.dispatch({ effects: state.locked.reconfigure(on ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : []) });
+  state.lockedOn = !!on;
+  state.view.dispatch({ effects: [state.locked.reconfigure(on ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : []), setChips.of(null)] });
 }
 
 /**

@@ -187,7 +187,7 @@ public static class BookDraftWriter
                 sb.Append("{{entry,#e-").Append(entry.SlotKey).Append("}}\n").Append(lines[i]).Append("\n\n");
                 if (!entry.IsGroup && (entry.HasArt || pictured.Contains(entry.SlotKey)))
                 {
-                    Art(sb, entry.Placement == BookArtPlacement.Portrait ? "portrait" : "place", entry.Alt, entry.SlotKey);
+                    Art(sb, ArtBlockName(entry), entry.Alt, entry.SlotKey);
                 }
 
                 continue;
@@ -201,8 +201,14 @@ public static class BookDraftWriter
         return sb.ToString().TrimEnd('\n') + "\n";
     }
 
-    private static void Art(StringBuilder sb, string block, string alt, string key) =>
-        sb.Append("{{").Append(block).Append("\n![").Append(BookCompiler.Escape(alt)).Append("](art:").Append(key).Append(")\n}}\n\n");
+    private static void Art(StringBuilder sb, string block, string alt, string key) => sb.Append(ArtBlock(block, alt, key)).Append("\n\n");
+
+    /// <summary>A picture block as the generator writes it, without the blank line after it: the editor puts the same text under an entry's
+    /// heading when a picture is drawn or uploaded from a chip (docs/BOOK_EXPORT.md 53), so the chapter then reads as the generator's own.</summary>
+    public static string ArtBlock(string block, string alt, string key) => "{{" + block + "\n![" + BookCompiler.Escape(alt) + "](art:" + key + ")\n}}";
+
+    /// <summary>The block an entry's own picture goes in: a portrait beside a character or a homebrew entry, a wide picture for a place.</summary>
+    public static string ArtBlockName(BookEntryPosition entry) => entry.Placement == BookArtPlacement.Portrait ? "portrait" : "place";
 
     /// <summary>The campaign's own Markdown as draft Markdown (see the class). Public for its tests.</summary>
     /// <para><paramref name="level"/>: the level of the heading the text is written under (docs/BOOK_EXPORT.md 51). A heading in the text of

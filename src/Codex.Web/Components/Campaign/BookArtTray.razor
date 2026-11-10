@@ -269,7 +269,15 @@
     /// <summary>True while the tray's tab is the one shown: the tray opens (and reads its slots) the first time it is, not before.</summary>
     [Parameter] public bool Shown { get; set; }
 
+    /// <summary>Changes when a chip in the text put a picture in, started a run or dismissed a suggestion (docs/BOOK_EXPORT.md 53): the open tray
+    /// reads its slots and its runs again.</summary>
+    [Parameter] public int Reload { get; set; }
+
+    /// <summary>Raised when the tray starts a run, and when the art director's ends: the chips in the text show the run and the new suggestions.</summary>
+    [Parameter] public EventCallback RunChanged { get; set; }
+
     private bool openedOnce;
+    private int reloaded;
 
     private BookTray? tray;
     private bool open;
@@ -519,13 +527,26 @@
         }
 
         // The slots are the edition's and named in the book's language: a change of either reads them again, but only once the tray is open.
-        if (open && shownFor != Edition + "|" + Language) await LoadAsync();
+        if (open && shownFor != Edition + "|" + Language)
+        {
+            reloaded = Reload;
+            await LoadAsync();
+        }
+        else if (open && reloaded != Reload)
+        {
+            reloaded = Reload;
+            await LoadAsync();
+        }
     }
 
     private async Task ToggledAsync()
     {
         open = !open;
-        if (open && shownFor != Edition + "|" + Language) await LoadAsync();
+        if (open && (shownFor != Edition + "|" + Language || reloaded != Reload))
+        {
+            reloaded = Reload;
+            await LoadAsync();
+        }
     }
 
     private async Task LoadAsync()
@@ -625,6 +646,7 @@
             var started = await Drawing.StartAsync(Access, Edition, Picks(), Language);
             AttachDrawing(started);
             if (started == null) drawError = L["Campaign.Book.Art.Draw.None"];
+            else await RunChanged.InvokeAsync();
         }
         catch (BookBuildBusyException)
         {
@@ -691,6 +713,7 @@
             var started = await Director.StartAsync(Access, Edition, Language, askAll);
             AttachDirector(started);
             if (started == null) directorError = L["Campaign.Book.Failed.Other"];
+            else await RunChanged.InvokeAsync();
         }
         catch (BookBuildBusyException)
         {
@@ -722,6 +745,7 @@
             tray = await Art.TrayAsync(Access, Edition, Language);
             direction = await Director.PreviewAsync(Access, Edition, Language, askAll);
             await PreviewDrawingAsync();
+            await RunChanged.InvokeAsync();
         }
 
         StateHasChanged();

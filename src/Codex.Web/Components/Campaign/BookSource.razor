@@ -247,6 +247,10 @@
                 }
                 </div>
                 }
+                @* Pictures in the text (docs/BOOK_EXPORT.md 53): what a chip under a heading did, and the one file field every chip's Upload opens. *@
+                <div class="small px-1 @(P.chipNoteError ? "field-error" : "small-muted")" role="status" aria-live="polite" data-testid="book-chip-status">@P.chipNote</div>
+                <InputFile id="book-chip-file" OnChange="P.ChipUploadedAsync" accept="@Codex.Web.Services.ArtService.Accept" class="visually-hidden" tabindex="-1"
+                           aria-label="@L["Campaign.Book.Chip.File"]" data-testid="book-chip-file" />
                 @* The editor's own box: the review view is put beside the code by the script, never among Blazor's elements. *@
                 <div class="book-draft-codebox"><div class="book-draft-code" @ref="host" data-testid="book-draft-code"></div></div>
             </div>

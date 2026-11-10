@@ -1246,4 +1246,34 @@
   <data name="Campaign.Book.Own.DeleteAsk" xml:space="preserve"><value>Delete the chapter “{0}”? Its text goes with it.</value></data>
   <data name="Campaign.Book.Own.DeleteYes" xml:space="preserve"><value>Delete chapter</value></data>
   <data name="Campaign.Book.Own.Full" xml:space="preserve"><value>The book has no room for another chapter.</value></data>
+  <data name="Campaign.Book.Chip.Group" xml:space="preserve"><value>Picture for {0}</value></data>
+  <data name="Campaign.Book.Chip.Add" xml:space="preserve"><value>Add picture</value></data>
+  <data name="Campaign.Book.Chip.Upload" xml:space="preserve"><value>Upload</value></data>
+  <data name="Campaign.Book.Chip.Suggest" xml:space="preserve"><value>Suggest a picture</value></data>
+  <data name="Campaign.Book.Chip.SuggestAgain" xml:space="preserve"><value>Suggest again</value></data>
+  <data name="Campaign.Book.Chip.SuggestYes" xml:space="preserve"><value>Ask</value></data>
+  <data name="Campaign.Book.Chip.Asking" xml:space="preserve"><value>Working out the cost…</value></data>
+  <data name="Campaign.Book.Chip.Picture" xml:space="preserve"><value>Picture: {0}</value></data>
+  <data name="Campaign.Book.Chip.Draw" xml:space="preserve"><value>Draw</value></data>
+  <data name="Campaign.Book.Chip.DrawYes" xml:space="preserve"><value>Draw it</value></data>
+  <data name="Campaign.Book.Chip.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
+  <data name="Campaign.Book.Chip.NoModel" xml:space="preserve"><value>No picture model is set.</value></data>
+  <data name="Campaign.Book.Chip.Stale" xml:space="preserve"><value>The campaign changed; suggest again.</value></data>
+  <data name="Campaign.Book.Chip.Drawing" xml:space="preserve"><value>Drawing…</value></data>
+  <data name="Campaign.Book.Chip.Suggesting" xml:space="preserve"><value>Asking for suggestions…</value></data>
+  <data name="Campaign.Book.Chip.Prompt" xml:space="preserve"><value>What the picture model is sent:</value></data>
+  <data name="Campaign.Book.Chip.Problem" xml:space="preserve"><value>This description cannot be drawn: {0}</value></data>
+  <data name="Campaign.Book.Chip.Ready" xml:space="preserve"><value>This place has a picture that is not in the text.</value></data>
+  <data name="Campaign.Book.Chip.Place" xml:space="preserve"><value>Put it in the text</value></data>
+  <data name="Campaign.Book.Chip.Price" xml:space="preserve"><value>About {0} a picture, drawn by {1}.</value></data>
+  <data name="Campaign.Book.Chip.NoPrice" xml:space="preserve"><value>No price is set for this model ({0}).</value></data>
+  <data name="Campaign.Book.Chip.DrawAsk" xml:space="preserve"><value>Draw this picture, about {0}?</value></data>
+  <data name="Campaign.Book.Chip.DrawAskNoPrice" xml:space="preserve"><value>Draw this picture? No price is set for this model.</value></data>
+  <data name="Campaign.Book.Chip.Placed" xml:space="preserve"><value>The picture is in the text, under its heading.</value></data>
+  <data name="Campaign.Book.Chip.Kept" xml:space="preserve"><value>The picture is kept for its place. The chapter is locked or being reviewed, so its text was left alone; use “Put it in the text” afterwards.</value></data>
+  <data name="Campaign.Book.Chip.Dismissed" xml:space="preserve"><value>The suggestion is dismissed.</value></data>
+  <data name="Campaign.Book.Chip.SuggestNothing" xml:space="preserve"><value>Nothing to ask: every place in this chapter has a suggestion made from its text as it is now.</value></data>
+  <data name="Campaign.Book.Chip.SuggestCost" xml:space="preserve"><value>Roughly {0} to {1}.</value></data>
+  <data name="Campaign.Book.Chip.SuggestAsk" xml:space="preserve"><value>Ask about {0, plural, one{one place} other{# places}} in {1}, with {2}?</value></data>
+  <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>Picture file for the place chosen in the text</value></data>
 </root>

@@ -2879,3 +2879,105 @@ the cursor moving the pages to the heading above it and back, and staying put wi
 - Stat block snippet is a skeleton, not the system's block; no snippet for Homebrewery's rarer blocks; "Merge" and the Stale notice are unchanged.
 - An own chapter has no AI, no Stale, no art slots; its text is the GM's.
 - Moving an own chapter past a generated one is the store's rule (51); the menu only asks for one step.
+
+## 53. Pictures in the text: chips under the headings (2026-11-10; step 5 of the source-book editor)
+
+The tray (`BookArtTray`) was already the dock's Pictures tab (49). What is new is in the source: under the heading of an entry, a **chip**.
+
+**What a chip is.** A CodeMirror block widget (`tools/book-editor/src/chips.js`) placed after the heading line that follows an entry's marker
+(`{{entry,#e-KEY}}`; a marker inside a code fence is text and gets none). It is a decoration beside the text and never text: the chapter, what is
+saved and the Markdown file are the same with and without it. It is part of the suggestions and help (47): **More → Suggestions and help** off
+takes the chips, the names and the ghost frames away at once. What it shows comes from the server (`BookArtDrawing.ChipsAsync`, the edition's own
+source read the way a drawing reads it); what it asks for goes back as a slot key and the name of an action, and every one of those is checked
+again by the service that does it (invariants 9 to 11 are unchanged).
+
+| The place | The chip |
+|---|---|
+| no picture, no suggestion | **Add picture**, which opens a two-item menu: Upload, Suggest a picture |
+| a suggestion made from the text as it is | "Picture: {what it shows, cut at 60 characters}", **Draw**, Upload, Dismiss |
+| a suggestion made from older text | the same, Draw disabled, "The campaign changed; suggest again", **Suggest again** |
+| a suggestion whose description fails the checks | Draw disabled; the tooltip says why (the checks' own words) |
+| no picture model | the chip greyed, Draw `aria-disabled`, the tooltip "No picture model is set" with a link to `/settings/ai`; Upload works |
+| being drawn, or its chapter being asked about | a spinner, "Drawing…" or "Asking for suggestions…", **Stop** |
+| has a picture the text does not point at | "This place has a picture that is not in the text", **Put it in the text** |
+| has a picture and the text points at it | no chip |
+
+- **The tooltip** (`role="tooltip"`, the Draw button's `aria-describedby`; shown while the pointer or the focus is on the chip or on the tooltip)
+  holds the prompt exactly as it would be sent, from the same `BookImagePrompt.Assemble` call with the same names, style, mood and style guide a
+  drawing uses, and the price line ("About {price} a picture, drawn by {model}" or "No price is set for this model"). The test draws and compares
+  what the model received with what the chip showed, letter for letter.
+- **Draw asks first, in the chip:** "Draw this picture, about {price}?" (or "… No price is set for this model.") with **Draw it** and Cancel. Only
+  that second click calls `BookArtDrawing.StartAsync`, with the one key and no description of the page's own (the server takes the suggestion's).
+- **Suggest a picture** asks the art director about *that chapter* (`BookArtDirection` took a `section`), and shows the cost first, also in the
+  chip: how many places, the model, and the cost range or "set this model's prices". Nothing is sent until **Ask**.
+- **Upload** opens the page's one file field (`#book-chip-file`, a Blazor `InputFile`, so the picture is streamed as the tray's is); the chip tells
+  the server which place it is for just before, and `BookArtService.UploadAsync` checks the key against the edition's slots as always.
+- **Dismiss** drops this edition's suggestion for that place (`IBookArtRepository.RemoveSuggestionAsync`; it can only take away, and only the
+  asked edition's).
+- **When a picture is made** (drawn or uploaded) the block the generator would write (`BookDraftWriter.ArtBlock`: `{{portrait` or `{{place`, the
+  entry's own alt text, `art:KEY`) goes under the heading with a blank line on each side, as **one edit**: it saves like typing and Ctrl+Z takes it
+  out (the picture stays the place's, and the chip then offers to put it back). A chapter that is not the one shown takes the block in its stored
+  text (saved the same way, no editor history). A chapter that is locked for an AI edit or under review is left alone and the chip turns into
+  "Put it in the text". A chapter whose text already points at the picture is not touched.
+- **A run the tray started** shows in the chips too (the page watches the edition's running drawing or director run), and its pictures are put
+  into the text as each is made; a run a chip started shows in the tray (it reads its slots again).
+- **A chip is measured.** Its spacing is padding inside the widget, never a margin: CodeMirror measures a block widget's own box, and with a
+  margin outside it every click below a chip was taken for a line further down (an existing browser test, the merge, typed two lines too low;
+  that is how it was found, and it is a rule for any block widget added later). The editor is also given its chips when it opens rather than
+  a moment after, so the lines do not move under the pointer.
+- **Keys.** A chapter can hold dozens of chips, so their buttons are not tab stops. **Alt+Enter** in the text moves to the chip of the entry the
+  cursor is in (scrolling to it if needed); Left and Right move between its buttons (swapped on a right-to-left page); Escape closes a question,
+  then returns to the text. The chip is a `role="group"` named "Picture for {place}", with `aria-keyshortcuts`.
+- **`art:KEY` in the text** is followed (after its closing bracket) by the place's label as a small inline hint (the same labels the suggestions use), so a key reads as a name.
+- **The preview's ghost frame:** where a place has a suggestion and no picture, a dashed frame with the place's label, in the size the built-in
+  themes give the block (a portrait at the far side of the column, 38% wide and at most 32 mm, three by four; a place's picture the column wide,
+  at most 62 mm). It is laid *over* the page after the layout, absolutely placed and kept to its own entry, so no line moves and the pages are
+  still the ones the PDF prints; it exists only in the editor's frame, never in the text, the Markdown file or the PDF (the print browser has no
+  editor). A place with no suggestion gets no frame: a book with sixty unpictured entries would be sixty frames.
+
+**The chapter stays the generator's.** The generator writes the same block once the place has a picture, so a chapter that differs from its base
+only by that block is the generator's own text. `BookDrafts.View` reads such a chapter as not edited and not stale (otherwise "The campaign
+changed since you edited this chapter" appeared the moment a picture was drawn, found in the running app), and `FollowAsync` moves its base the
+next time the draft is opened, so later campaign changes are followed as for any chapter the GM never touched. Anything else the GM changed
+still makes it theirs.
+
+**Invariants.** 9: an upload's key is checked against the edition's slots; a chip only names a key. 10: a chip shows only suggestions tagged with
+its edition (`ChipsAsync` filters by the tag of the source it read), and the director run it starts passes only that tag. 11: nothing is drawn
+without the second click; the pick is checked again in `PrepareAsync`; a drawing and a director run take the GM's one `BookGate` (a chip pressed
+while another paid run is under way gets "Another build of yours is already running"). The prompt shown is the GM's own page showing the GM
+their own edition's prompt; it is text (`textContent`), never markup.
+
+**Tests.** `tools/book-editor/test-chips.mjs` (in `npm test`): where an entry stands, the fence, the edit that places a block and that it is never
+made twice, what a chip shows in each state, the cut at 60, the names after keys, and that the widgets leave the document alone.
+`BookArtDrawingTests.Chips.cs`: the prompt shown is the prompt sent; only the edition's own suggestion; nothing for a player or an unknown
+edition; a stale or name-bearing suggestion has no prompt; the block equals the generator's; Dismiss takes one edition's suggestion and only for
+the GM; the director asked about one chapter asks one chapter. `BookDraftTests.APicturePutUnderItsHeadingFromTheEditor_...`: not stale at once,
+after reopening, and following a later change; stale when the GM also edited. `BookPicturesE2ETests` (fake model server): a chip changes no
+text; Alt+Enter and Escape; the cost before Ask and before Draw it, with the requests counted; no picture model; Dismiss; Upload through the
+file chooser; the block under the heading; Ctrl+Z and "Put it in the text"; no stale notice; chips gone with suggestions off.
+**Mutation checks (by hand, from backup copies):** chips reading any edition's suggestion; a stale suggestion given a prompt; Dismiss removing
+both editions'; the director ignoring the chapter; the view ignoring a caught-up chapter; the store never moving its base. The first five were
+caught at once; the sixth survived, which was a missing test (a later campaign change must be followed), now added and failing under it.
+
+**Seen in the running app** (fresh local data, a stand-in OpenAI-compatible server on localhost, no real key): the states above in English, the
+page in Hebrew with a right-to-left book (chips and ghost frames mirror, the prompt stays left-to-right English), Alt+Enter, arrows and Escape.
+
+**Not done / not verified:**
+- No real model: every suggestion and picture here came from the stand-in server. Prices were a typed test price.
+- Chromium only (Playwright's and the app's pane). WebKit and Firefox not tried; no screen reader was run over the chips.
+- The ghost frame is an overlay, not a layout: it shows where and how large, and covers the text it would push aside. Its size is the built-in
+  themes'; a theme the GM brought in, or their own CSS, may size the block differently and the frame will not know.
+- A chip's buttons are reached by Alt+Enter, not by Tab; that key is in the guide and in `aria-keyshortcuts`, nowhere on screen.
+- Only entry places have chips. The cover, a chapter's header and the small picture after an entry are in the tray only.
+- A chip draws from the suggestion as it stands; changing the description before drawing is still the tray's (tick the place there).
+- A block placed in a chapter that is not shown is not in any undo history. Deleting the block by hand does not remove the picture.
+- A picture uploaded in the tray is not written into the text by itself; the chip then says so and offers to.
+- **Built, never exercised by a test or by hand:** a drawing started in the tray writing its pictures into the text and showing in the chips; a
+  chip's run showing in the tray; a block placed in a chapter that is not the one shown; a picture made while its chapter is locked or under
+  review (the "Put it in the text" fallback); Stop on a chip; a drawing or director run that fails (the status line's wording for each reason).
+- While a paid run is under way the chips' other buttons are not greyed; pressing one answers with the "already running" line.
+- The Russian and Hebrew strings (`Campaign.Book.Chip.*`) and guide sentences are model-written.
+- The book and localization run: 788 of 789. The one failure, `BookPdfTests.AJobThatCannotFinishInTimeIsStopped_...` (a five-second timing
+  test of the printer, nothing of this step's), failed in both full runs and passed when run with a few others. In earlier, partial runs
+  `BookDraftTests.TheGmsOwnWords_MayChangeAFact_...` and `BookCssWebTests.TheFetcher_StopsAtItsBounds_...` ("address already in use") each failed
+  once and passed on the rerun. None was investigated. The suite outside Book and Localization was not run.

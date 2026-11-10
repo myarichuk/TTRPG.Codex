@@ -1246,4 +1246,34 @@
   <data name="Campaign.Book.Own.DeleteAsk" xml:space="preserve"><value>למחוק את הפרק “{0}”? הטקסט שלו יימחק איתו.</value></data>
   <data name="Campaign.Book.Own.DeleteYes" xml:space="preserve"><value>מחיקת הפרק</value></data>
   <data name="Campaign.Book.Own.Full" xml:space="preserve"><value>אין בספר מקום לפרק נוסף.</value></data>
+  <data name="Campaign.Book.Chip.Group" xml:space="preserve"><value>תמונה עבור {0}</value></data>
+  <data name="Campaign.Book.Chip.Add" xml:space="preserve"><value>הוספת תמונה</value></data>
+  <data name="Campaign.Book.Chip.Upload" xml:space="preserve"><value>העלאה</value></data>
+  <data name="Campaign.Book.Chip.Suggest" xml:space="preserve"><value>הצעת תמונה</value></data>
+  <data name="Campaign.Book.Chip.SuggestAgain" xml:space="preserve"><value>הצעה מחדש</value></data>
+  <data name="Campaign.Book.Chip.SuggestYes" xml:space="preserve"><value>לשאול</value></data>
+  <data name="Campaign.Book.Chip.Asking" xml:space="preserve"><value>מחשבים את העלות…</value></data>
+  <data name="Campaign.Book.Chip.Picture" xml:space="preserve"><value>תמונה: {0}</value></data>
+  <data name="Campaign.Book.Chip.Draw" xml:space="preserve"><value>לצייר</value></data>
+  <data name="Campaign.Book.Chip.DrawYes" xml:space="preserve"><value>לצייר</value></data>
+  <data name="Campaign.Book.Chip.Dismiss" xml:space="preserve"><value>ביטול ההצעה</value></data>
+  <data name="Campaign.Book.Chip.NoModel" xml:space="preserve"><value>לא הוגדר מודל תמונות.</value></data>
+  <data name="Campaign.Book.Chip.Stale" xml:space="preserve"><value>הקמפיין השתנה; יש להציע מחדש.</value></data>
+  <data name="Campaign.Book.Chip.Drawing" xml:space="preserve"><value>מציירים…</value></data>
+  <data name="Campaign.Book.Chip.Suggesting" xml:space="preserve"><value>מבקשים הצעות…</value></data>
+  <data name="Campaign.Book.Chip.Prompt" xml:space="preserve"><value>מה שיישלח למודל התמונות:</value></data>
+  <data name="Campaign.Book.Chip.Problem" xml:space="preserve"><value>אי אפשר לצייר את התיאור הזה: {0}</value></data>
+  <data name="Campaign.Book.Chip.Ready" xml:space="preserve"><value>למקום הזה יש תמונה שאינה בטקסט.</value></data>
+  <data name="Campaign.Book.Chip.Place" xml:space="preserve"><value>להכניס לטקסט</value></data>
+  <data name="Campaign.Book.Chip.Price" xml:space="preserve"><value>בערך {0} לתמונה, מצויר על ידי {1}.</value></data>
+  <data name="Campaign.Book.Chip.NoPrice" xml:space="preserve"><value>לא הוגדר מחיר למודל הזה ({0}).</value></data>
+  <data name="Campaign.Book.Chip.DrawAsk" xml:space="preserve"><value>לצייר את התמונה הזאת, בערך {0}?</value></data>
+  <data name="Campaign.Book.Chip.DrawAskNoPrice" xml:space="preserve"><value>לצייר את התמונה הזאת? לא הוגדר מחיר למודל הזה.</value></data>
+  <data name="Campaign.Book.Chip.Placed" xml:space="preserve"><value>התמונה נמצאת בטקסט, מתחת לכותרת שלה.</value></data>
+  <data name="Campaign.Book.Chip.Kept" xml:space="preserve"><value>התמונה נשמרה למקום שלה. הפרק נעול או בבדיקה, ולכן הטקסט לא שונה; אחר כך אפשר ללחוץ על ״להכניס לטקסט״.</value></data>
+  <data name="Campaign.Book.Chip.Dismissed" xml:space="preserve"><value>ההצעה בוטלה.</value></data>
+  <data name="Campaign.Book.Chip.SuggestNothing" xml:space="preserve"><value>אין מה לשאול: לכל מקום בפרק הזה יש הצעה שנוצרה מהטקסט הנוכחי שלו.</value></data>
+  <data name="Campaign.Book.Chip.SuggestCost" xml:space="preserve"><value>בערך {0} עד {1}.</value></data>
+  <data name="Campaign.Book.Chip.SuggestAsk" xml:space="preserve"><value>לשאול על {0, plural, one{מקום אחד} other{# מקומות}} בפרק {1}, עם {2}?</value></data>
+  <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>קובץ תמונה למקום שנבחר בטקסט</value></data>
 </root>

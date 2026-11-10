@@ -40,7 +40,53 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         _db = db;
         _campaigns = new CampaignRepository(db, new NoOpSystemCatalog(), _actors, sessions, notes, regions, facts, homebrew, encounters, _wiki, bookDraftRepository: _store);
         _reader = new BookSourceReader(_campaigns, _actors, sessions, encounters, facts, notes, regions, homebrew, _wiki);
-        _drafts = new BookDrafts(_reader, _store, new RavenBookArtRepository(db), new BookArtReader(new RavenMediaStore(db)), new CampaignAccessResolver(_campaigns));
+        _art = new RavenBookArtRepository(db);
+        _drafts = new BookDrafts(_reader, _store, _art, new BookArtReader(new RavenMediaStore(db)), new CampaignAccessResolver(_campaigns));
+    }
+
+    private readonly RavenBookArtRepository _art;
+
+    // Pictures in the text (docs/BOOK_EXPORT.md 53): the editor puts a picture's block under its entry's heading. The generator now writes the same
+    // block there, so the chapter is the generator's own again: no notice, nothing to merge. Anything else the GM changed still makes it theirs.
+    [Fact]
+    public async Task APicturePutUnderItsHeadingFromTheEditor_LeavesTheChapterTheGenerators_ButTheGmsOtherEditsStillSaySo()
+    {
+        foreach (var alsoEdited in new[] { false, true })
+        {
+            var (dm, id) = await SeedAsync();
+            var cast = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+            var slot = (await _drafts.SlotsAsync(dm, "party", "en")).Single(x => x.Kind == BookSlots.Entry && x.Label == "PUBLIC_Vera");
+            Assert.DoesNotContain("art:" + slot.Key, cast.Markdown);
+
+            // The picture is stored first, then the editor saves the chapter with the block under the heading.
+            Assert.Equal(BookImageProblem.None, BookImageSanitizer.TrySanitize(BookArtTests.Png(300), out var image));
+            Assert.True(await _art.PutAsync(dm, slot.Key, BookArtDocument.Party, slot.Label, image!));
+            var heading = cast.Markdown.IndexOf("{{entry,#e-" + slot.Key + "}}\n", StringComparison.Ordinal);
+            var at = cast.Markdown.IndexOf('\n', cast.Markdown.IndexOf('\n', heading) + 1);
+            var block = BookDraftWriter.ArtBlock(BookDraftWriter.ArtBlockName(slot.Entry!), slot.Entry!.Alt, slot.Key);
+            var text = cast.Markdown[..at] + "\n\n" + block + cast.Markdown[at..];
+            if (alsoEdited) text = text.Replace("PUBLIC_BIO_VERA", "PUBLIC_GM_WORDS");
+            Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveChapterAsync(dm, "party", "en", "cast", text, cast.Version)).Result);
+
+            // At once, before the draft is opened again (the page reads it like this after every save).
+            var saved = (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+            Assert.Equal((alsoEdited, alsoEdited), (saved.Stale, saved.Edited));
+
+            var now = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+            Assert.Equal(text, now.Markdown);
+            Assert.Equal(alsoEdited, now.Stale);
+            Assert.Equal(alsoEdited, now.Edited);
+            if (alsoEdited) continue;
+
+            // Opening it moved what the chapter is compared with: when the campaign changes again, the chapter follows like any the GM never
+            // touched, picture and all, instead of asking for a merge.
+            await BioAsync(id, "PUBLIC_LATER_BIO");
+            var later = (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == "cast");
+            Assert.False(later.Stale);
+            Assert.False(later.Edited);
+            Assert.Contains("PUBLIC_LATER_BIO", later.Markdown);
+            Assert.Contains(block, later.Markdown);
+        }
     }
 
     private async Task<(CampaignAccess Dm, string Id)> SeedAsync()

@@ -155,8 +155,11 @@ public sealed class BookDrafts(BookSourceReader reader, IBookDraftRepository sto
         var chapters = draft.Chapters.Select(c =>
         {
             var own = BookDraftDocument.IsOwn(c.Section);
-            var edited = !own && !RavenBookDraftRepository.Untouched(c);
             generated.TryGetValue(c.Section, out var g);
+            // A text that already is what the generator writes now is the generator's own (a picture put under its heading from the editor,
+            // docs/BOOK_EXPORT.md 53): not edited, nothing to bring up to date. The store moves its base the next time the draft is opened.
+            var caughtUp = g != null && g.Key != c.BaseKey && BookDraftText.Content(c.Markdown) == BookDraftText.Content(g.Markdown);
+            var edited = !own && !caughtUp && !RavenBookDraftRepository.Untouched(c);
             var moved = g != null && g.Key != c.BaseKey && c.KeptKey != g.Key;
             return new BookDraftChapterView(c.Section, c.Title, c.Markdown, c.Version, edited, edited && moved, edited && g == null,
                 c.PreviousMarkdown != null, edited && moved ? ChangedEntries(c.Base, g!.Markdown) : [], own);

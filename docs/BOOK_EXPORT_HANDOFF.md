@@ -36,10 +36,10 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book-file/{edition}/draft/{lang}/{a
 | Drawn-art prompt | `Core/Book/BookArtStyle.cs` (style vocabulary, `BookImagePrompt.Assemble` and its checks) |
 | Drawing | `Web/Book/BookArtDrawing.cs` (picks checked again, run), `BookImages.cs` (picture model per run, reserved allowance), image price in `AiSettings.razor` and `AiProviderService` |
 | Decoder process | `src/Codex.ImageWorker` (only caller of SkiaSharp; talks stdin/stdout via `BookImageWire`) |
-| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow and order, the GM's own chapters `own-...`), `Web/Book/BookDraftWriter.cs` (generator, `book-draft/v4`: heading nesting, two-level contents, cross-references `Links`), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookPage.razor(.cs)`, `BookPage.Source.cs` (tabs, snippets, outline state, own chapters; 52) and its parts `BookToolbar|Outline|Source|Preview|Dock` (49), `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
+| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow and order, the GM's own chapters `own-...`), `Web/Book/BookDraftWriter.cs` (generator, `book-draft/v4`: heading nesting, two-level contents, cross-references `Links`), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookPage.razor(.cs)`, `BookPage.Source.cs` (tabs, snippets, outline state, own chapters; 52), `BookPage.Pictures.cs` (the chips under the headings; 53) and its parts `BookToolbar|Outline|Source|Preview|Dock` (49), `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
 | Strings | `Localization/Resources/Strings.Campaign{,.ru,.he}.resx`, keys `Campaign.Book.*` |
 | Website | `site/` (see `site/README.md`), guide section `#book`, tour row, screenshots `book-panel` and `book-pages`, tools `capture-screenshots.mjs`, `demo-art.py`, `book-pages.py` |
-| Tests | `tests/Codex.Tests/Book*Tests.cs`, `E2E/BookRouteE2ETests.cs` |
+| Tests | `tests/Codex.Tests/Book*Tests.cs`, `E2E/BookRouteE2ETests.cs`, `E2E/BookSourceE2ETests.cs`, `E2E/BookPicturesE2ETests.cs`, `tools/book-editor/test*.mjs` |
 
 ## 3. State: built, verified, and not
 
@@ -162,6 +162,9 @@ For each, copy the file, apply the change, run the named tests, expect a failure
   `RevealedToReader`; clean with no owned set; no backing over page breaks; ignore the player in `FileName`; list a player with no character; no
   entry anchor. All eight were caught.
 - Generator v4 and own chapters (`BookSourceTests.V4.cs`, `BookDraftTests`): the list and the results are in BOOK_EXPORT 51.
+- Pictures in the text (`BookArtDrawingTests.Chips.cs`, `BookDraftTests.APicturePutUnderItsHeading...`): chips reading any edition's suggestion;
+  a stale suggestion given a prompt; Dismiss removing both editions'; the director ignoring the chapter; `BookDrafts.View` ignoring a caught-up
+  chapter; `FollowAsync` never moving its base. All six are caught (the last needed a test, BOOK_EXPORT 53).
 - Stat blocks, frames, edges (`BookStatBlocksTests.cs`, `BookMasksFrameTests.cs`): modifier rule hard-coded; no escaping; no id on the block;
   values not through the text path; the block not written; the edge reset by another setting; the edge always on; no party filter for
   non-playerFacing homebrew. All eight were caught.
@@ -195,8 +198,9 @@ Anything that survives is a missing test; add it.
 ## 7. Open work, in the order I would take it (the user decides)
 
 00. **The source-book editor** (2026-11-09; a GM-only Book page, one pipeline, generator v4, Homebrewery feel, pictures in the text: steps 0-5).
-   **Steps 0 to 4 are done (BOOK_EXPORT 48, 49, 50, 51, 52).** Next is step 5 (pictures in the text: chips under an entry's heading, the Pictures
-   tab of the dock already holds `BookArtTray`). Step 4 built the Text/Style/Theme tabs, the snippet bar, the outline tree with the GM's own chapters,
+   **All six steps are done (BOOK_EXPORT 48, 49, 50, 51, 52, 53).** Step 5 (53) put chips under the entries' headings (`tools/book-editor/src/chips.js`,
+   `BookPage.Pictures.cs`, `BookArtDrawing.ChipsAsync`): upload, suggest for the chapter, draw on a second click with the cost, the block written
+   under the heading as one edit, ghost frames in the preview, names after `art:` keys. What is left is 53's "Not done" list. Step 4 built the Text/Style/Theme tabs, the snippet bar, the outline tree with the GM's own chapters,
    and a preview that follows the cursor and the clicks (`editor.js`: `outlineOf` in `render.js`, `goTo`, `snippet`, `treeKeys`, the page gutter).
 
 0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **All six phases are built (41.9, 41.10, 41.15, 41.16, 41.18, 41.19).**

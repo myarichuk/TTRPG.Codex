@@ -1246,4 +1246,34 @@
   <data name="Campaign.Book.Own.DeleteAsk" xml:space="preserve"><value>Удалить главу «{0}»? Её текст пропадёт вместе с ней.</value></data>
   <data name="Campaign.Book.Own.DeleteYes" xml:space="preserve"><value>Удалить главу</value></data>
   <data name="Campaign.Book.Own.Full" xml:space="preserve"><value>В книге нет места для ещё одной главы.</value></data>
+  <data name="Campaign.Book.Chip.Group" xml:space="preserve"><value>Картинка для: {0}</value></data>
+  <data name="Campaign.Book.Chip.Add" xml:space="preserve"><value>Добавить картинку</value></data>
+  <data name="Campaign.Book.Chip.Upload" xml:space="preserve"><value>Загрузить</value></data>
+  <data name="Campaign.Book.Chip.Suggest" xml:space="preserve"><value>Предложить картинку</value></data>
+  <data name="Campaign.Book.Chip.SuggestAgain" xml:space="preserve"><value>Предложить заново</value></data>
+  <data name="Campaign.Book.Chip.SuggestYes" xml:space="preserve"><value>Спросить</value></data>
+  <data name="Campaign.Book.Chip.Asking" xml:space="preserve"><value>Считаем стоимость…</value></data>
+  <data name="Campaign.Book.Chip.Picture" xml:space="preserve"><value>Картинка: {0}</value></data>
+  <data name="Campaign.Book.Chip.Draw" xml:space="preserve"><value>Нарисовать</value></data>
+  <data name="Campaign.Book.Chip.DrawYes" xml:space="preserve"><value>Нарисовать</value></data>
+  <data name="Campaign.Book.Chip.Dismiss" xml:space="preserve"><value>Убрать предложение</value></data>
+  <data name="Campaign.Book.Chip.NoModel" xml:space="preserve"><value>Модель для картинок не настроена.</value></data>
+  <data name="Campaign.Book.Chip.Stale" xml:space="preserve"><value>Кампания изменилась; предложите заново.</value></data>
+  <data name="Campaign.Book.Chip.Drawing" xml:space="preserve"><value>Рисуем…</value></data>
+  <data name="Campaign.Book.Chip.Suggesting" xml:space="preserve"><value>Запрашиваем предложения…</value></data>
+  <data name="Campaign.Book.Chip.Prompt" xml:space="preserve"><value>Что будет отправлено модели для картинок:</value></data>
+  <data name="Campaign.Book.Chip.Problem" xml:space="preserve"><value>Это описание нельзя нарисовать: {0}</value></data>
+  <data name="Campaign.Book.Chip.Ready" xml:space="preserve"><value>У этого места есть картинка, которой нет в тексте.</value></data>
+  <data name="Campaign.Book.Chip.Place" xml:space="preserve"><value>Вставить в текст</value></data>
+  <data name="Campaign.Book.Chip.Price" xml:space="preserve"><value>Примерно {0} за картинку, рисует {1}.</value></data>
+  <data name="Campaign.Book.Chip.NoPrice" xml:space="preserve"><value>Цена для этой модели не задана ({0}).</value></data>
+  <data name="Campaign.Book.Chip.DrawAsk" xml:space="preserve"><value>Нарисовать эту картинку, примерно за {0}?</value></data>
+  <data name="Campaign.Book.Chip.DrawAskNoPrice" xml:space="preserve"><value>Нарисовать эту картинку? Цена для этой модели не задана.</value></data>
+  <data name="Campaign.Book.Chip.Placed" xml:space="preserve"><value>Картинка вставлена в текст под заголовком.</value></data>
+  <data name="Campaign.Book.Chip.Kept" xml:space="preserve"><value>Картинка сохранена за своим местом. Глава заблокирована или на проверке, поэтому текст не изменён; после этого нажмите «Вставить в текст».</value></data>
+  <data name="Campaign.Book.Chip.Dismissed" xml:space="preserve"><value>Предложение убрано.</value></data>
+  <data name="Campaign.Book.Chip.SuggestNothing" xml:space="preserve"><value>Спрашивать не о чем: у каждого места в этой главе есть предложение по его нынешнему тексту.</value></data>
+  <data name="Campaign.Book.Chip.SuggestCost" xml:space="preserve"><value>Примерно от {0} до {1}.</value></data>
+  <data name="Campaign.Book.Chip.SuggestAsk" xml:space="preserve"><value>Спросить о местах в главе «{1}» (мест: {0}), модель: {2}?</value></data>
+  <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>Файл картинки для места, выбранного в тексте</value></data>
 </root>

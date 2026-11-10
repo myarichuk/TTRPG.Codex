@@ -289,7 +289,9 @@ public partial class BookPage : IAsyncDisposable
                 rtl = BookThemes.IsRtl(language),
                 follow = followPreview,
                 zoom,
-                assist = await AssistAsync()
+                assist = await AssistAsync(),
+                // The chips under the entries' headings (docs/BOOK_EXPORT.md 53): this edition's picture places, read as a drawing reads them.
+                chips = await ChipsForOpenAsync()
             }, self, new
             {
                 overflow = L["Campaign.Book.Draft.Overflow"].ToString(),
@@ -298,12 +300,16 @@ public partial class BookPage : IAsyncDisposable
                 pageNo = L["Campaign.Book.Source.PageNo"].ToString(),
                 pageOf = L["Campaign.Book.Preview.PageOf"].ToString(),
                 copied = L["Campaign.Book.Source.Copied"].ToString(),
-                snippet = SnippetWords()
+                snippet = SnippetWords(),
+                chip = ChipWords()
             });
             if (opening != openings) return;
             editorId = opened;
             if (sourceTab != "text" || current != asked) await module.InvokeVoidAsync("show", editorId, current, sourceTab);
             await SyncUrlAsync();
+            // A drawing or art director run under way for this edition shows in the chips.
+            ChipWatch();
+            await ChipPushAsync();
             // An address the last fetch could not reach is tried again.
             _ = FetchWebAsync();
         }
@@ -620,7 +626,8 @@ public partial class BookPage : IAsyncDisposable
     }
 
     /// <summary>A picture was put in or taken out (the dock's Pictures tab): the preview takes the edition's pictures again.</summary>
-    internal async Task ArtChangedAsync()
+    /// <paramref name="read"/>: the chips under the headings read their places again too (docs/BOOK_EXPORT.md 53).
+    internal async Task ArtChangedAsync(bool read)
     {
         if (module == null || editorId == null) return;
         try
@@ -630,7 +637,11 @@ public partial class BookPage : IAsyncDisposable
         catch (Exception ex) when (ex is JSException or JSDisconnectedException)
         {
         }
+
+        if (read) await ChipsAsync();
     }
+
+    internal Task ArtChangedAsync() => ArtChangedAsync(read: true);
 
     // A menu item that closes the menu would leave focus nowhere: it goes back to the button that opened it.
     internal async Task MoreFocusAsync()
@@ -1666,6 +1677,7 @@ public partial class BookPage : IAsyncDisposable
         {
         }
 
+        ChipDispose();
         self?.Dispose();
         closing.Cancel();
         closing.Dispose();

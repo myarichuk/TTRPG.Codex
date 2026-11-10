@@ -205,6 +205,7 @@
 
         <div id="book-draft-tabpanel-art" role="tabpanel" aria-labelledby="book-draft-tab-art" class="book-draft-panel-body" hidden="@(!panelOpen || panelTab != "art")" data-testid="book-draft-art">
             @* The edition's picture slots (docs/BOOK_EXPORT.md 34 to 44): upload, suggest, draw. A picture put in or taken out shows in the preview at once. *@
-            <BookArtTray Access="Access" Edition="@edition" Language="@language" Changed="ArtChangedAsync" Shown="@(panelOpen && panelTab == "art")" />
+            <BookArtTray Access="Access" Edition="@edition" Language="@language" Changed="ArtChangedAsync" Shown="@(panelOpen && panelTab == "art")"
+                         Reload="P.artStamp" RunChanged="P.ChipsAsync" />
         </div>
     </section>

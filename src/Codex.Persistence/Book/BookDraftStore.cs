@@ -435,6 +435,16 @@ public partial class RavenBookDraftRepository(RavenDbService dbService, StorageQ
                         chapter.UpdatedBy = now.UserId;
                         updated++;
                     }
+                    else if (chapter.BaseKey != g.Key && BookDraftText.Content(chapter.Markdown) == BookDraftText.Content(g.Markdown))
+                    {
+                        // The GM's text already is what the generator writes now (a picture put under its heading from the editor,
+                        // docs/BOOK_EXPORT.md 53): nothing to merge, so no notice. The text stays theirs, letter for letter; only what it
+                        // is compared with moves, and the chapter reads as not edited again.
+                        chapter.Base = chapter.Markdown;
+                        chapter.BaseKey = g.Key;
+                        chapter.UpdatedAt = at;
+                        updated++;
+                    }
                 }
                 else if (!BookDraftDocument.IsOwn(chapter.Section) && Untouched(chapter))
                 {
