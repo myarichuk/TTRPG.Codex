@@ -400,7 +400,7 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("book-ai-start")).ToBeDisabledAsync();
 
         // A model, with prices.
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
         await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
@@ -483,7 +483,7 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Lamplight");
         await _app.SeedActorsAsync([new Codex.Web.TestSeedActor { Id = "bd-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Biography = "Keeps the lighthouse." }]);
 
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
         await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
@@ -993,7 +993,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
             Biography = "Keeps the lighthouse on the point.\n\nHer lighthouse log is kept dry.\n\n:::dm\nCANARY_AI_SECRET\n:::"
         }]);
 
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
         await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
@@ -1112,7 +1112,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
                 Biography = "Rows out to the lighthouse at dusk. REWRITE_WHOLE " + Long("oren")
             }]);
 
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
         await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
@@ -1211,7 +1211,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
             new Codex.Web.TestSeedActor { Id = "bmg-tom-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Tomas", Visibility = Codex.Persistence.ActorVisibility.Known, Biography = "Tom mends nets." }
         ]);
 
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
         await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
