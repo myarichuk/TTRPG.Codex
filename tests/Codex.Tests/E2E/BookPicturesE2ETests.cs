@@ -16,9 +16,9 @@ public class BookPicturesE2ETests : IClassFixture<AppFixture>
 
     private static async Task AddModelAsync(IPage dm, string url, bool pictures)
     {
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId(pictures ? "ai-add-image-provider" : "ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", pictures ? "Custom (OpenAI images API)" : "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync(pictures ? "Fake pictures" : "Fake model");
         await dm.GetByTestId("ai-url").FillAsync(url);
         await dm.GetByTestId("ai-model").FillAsync(pictures ? "fake-pictures" : "fake-model");
