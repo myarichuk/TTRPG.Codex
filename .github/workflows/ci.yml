@@ -24,6 +24,8 @@ jobs:
 
   build-and-test:
     runs-on: ${{ matrix.os }}
+    # A healthy run is ~15 minutes; without this a hung test holds the runner for GitHub's 6-hour default.
+    timeout-minutes: 45
     strategy:
       matrix:
         # ubuntu-latest is now 26.04, for which Playwright has no browser packages yet (install --with-deps fails); 24.04 until it does.
@@ -61,4 +63,6 @@ jobs:
           DOTNET_ROLL_FORWARD: "LatestMajor"
           DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX: "2"
           DOTNET_ROLL_FORWARD_PRE_RELEASE: "1"
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        # --blame-hang-timeout: a single test running longer than 10 minutes (the slowest healthy one takes ~35 s) is
+        # killed and named in the log, instead of the whole job sitting silent until the job timeout.
+        run: dotnet test --configuration Release --no-build --verbosity normal --blame-hang-timeout 10m --blame-hang-dump-type none
