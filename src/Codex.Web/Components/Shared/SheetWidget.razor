@@ -1,0 +1,498 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+@using System.Globalization
+
+@* One generic widget of a sheet kind's layout (overhaul step 6): values, track, list, table, roll, text or modifiers, bound to the
+   system's own keys; or one the system's DLL supplies (step 9), which says what to show as plain data and is drawn here. What it shows comes from SheetView (Codex.Core); what it changes goes through SheetEdits and, for tracks,
+   SheetIntents, so overflow and pushing up follow the same rules as at the table. The page re-runs the rules on Changed. *@
+
+@switch (Widget.Widget.ToLowerInvariant())
+{
+    case "values":
+        <dl class="sheet-values" data-testid="widget-values">
+            @foreach (var value in View.Values(Widget))
+            {
+                var shown = value;
+                <div class="sheet-value" data-testid="@($"value-{value.Key}")">
+                    <dt><label for="@($"{id}-{value.Key}")">@value.Label</label></dt>
+                    <dd>
+                        @if (value.Input && CanEdit && value.Options is { Count: > 0 } options)
+                        {
+                            <select id="@($"{id}-{value.Key}")" class="field-select field-sm" value="@value.Value" @onchange="e => SetValueAsync(shown.Key, e.Value?.ToString(), true)">
+                                @foreach (var option in options)
+                                {
+                                    <option value="@option" selected="@(Equals(option, value.Value?.ToString()))">@Definition.DisplayValue(option)</option>
+                                }
+                            </select>
+                        }
+                        else if (value.Input && CanEdit)
+                        {
+                            <input id="@($"{id}-{value.Key}")" class="field-input field-sm sheet-number" value="@SheetView.Format(value.Value, CultureInfo.InvariantCulture)" @onchange="e => SetValueAsync(shown.Key, e.Value?.ToString(), false)" />
+                        }
+                        else
+                        {
+                            <span class="stat-numeral" id="@($"{id}-{value.Key}")"><bdi>@SheetView.Format(value.Value)</bdi></span>
+                        }
+                    </dd>
+                </div>
+            }
+        </dl>
+        break;
+
+    case "track":
+        @foreach (var track in View.Tracks(Widget))
+        {
+            var shown = track;
+            var label = track.Track.Label ?? track.Track.Key;
+            <div class="sheet-track mb-3" data-testid="@($"track-{track.Track.Key}")" role="group" aria-label="@label">
+                <div class="field-label">@label</div>
+                @if (track.Track.IsSlots && track.Track.Levels.Count > 0)
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var level in track.Track.Levels.OrderBy(l => l.Level))
+                        {
+                            var held = track.HeldByLevel.GetValueOrDefault(level.Level) ?? Array.Empty<string>();
+                            var atLevel = level.Level;
+                            <li class="slot-row" data-testid="@($"track-{track.Track.Key}-level-{level.Level}")">
+                                <span class="slot-level">@L["Actor.Widget.Level", level.Level]</span>
+                                <span class="d-flex flex-wrap gap-1">
+                                    @for (var i = 0; i < level.Slots; i++)
+                                    {
+                                        var text = i < held.Count ? held[i] : null;
+                                        @if (text != null)
+                                        {
+                                            <span class="pill">@text
+                                                @if (CanEdit)
+                                                {
+                                                    <button type="button" class="link-btn" aria-label="@L["Actor.Widget.Clear", text]" @onclick="() => ClearAsync(shown.Track.Key, atLevel, text)">×</button>
+                                                }
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="pill pill-empty" aria-label="@L["Actor.Widget.Free"]">·</span>
+                                        }
+                                    }
+                                </span>
+                                @if (level.Condition != null && held.Count >= level.Slots)
+                                {
+                                    <span class="small-muted">@Definition.DisplayValue(level.Condition)</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                    @if (CanEdit)
+                    {
+                        <div class="d-flex gap-2 mt-1">
+                            <select class="field-select field-sm" style="width:auto" aria-label="@L["Actor.Widget.MarkLevel"]" @bind="markLevel">
+                                @foreach (var level in track.Track.Levels.OrderBy(l => l.Level))
+                                {
+                                    <option value="@level.Level">@L["Actor.Widget.Level", level.Level]</option>
+                                }
+                            </select>
+                            <input class="field-input field-sm" placeholder="@L["Actor.Widget.MarkPlaceholder"]" aria-label="@L["Actor.Widget.MarkText", label]" @bind="markText" data-testid="@($"track-{track.Track.Key}-text")" />
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MarkAsync(shown, markLevel)" data-testid="@($"track-{track.Track.Key}-mark")">@L["Actor.Widget.Mark"]</CodexButton>
+                        </div>
+                    }
+                }
+                else if (track.Track.IsSlots)
+                {
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var text in track.Held)
+                        {
+                            var held = text;
+                            <span class="pill">@text
+                                @if (CanEdit)
+                                {
+                                    <button type="button" class="link-btn" aria-label="@L["Actor.Widget.Clear", text]" @onclick="() => ClearAsync(shown.Track.Key, null, held)">×</button>
+                                }
+                            </span>
+                        }
+                        @if (track.Track.Max is { } slots)
+                        {
+                            <span class="small-muted">@L["Actor.Widget.SlotsUsed", track.Held.Count, (int)slots]</span>
+                        }
+                    </div>
+                    @if (CanEdit && (track.Track.Max is not { } most || track.Held.Count < most))
+                    {
+                        <div class="d-flex gap-2 mt-1">
+                            <input class="field-input field-sm" placeholder="@L["Actor.Widget.MarkPlaceholder"]" aria-label="@L["Actor.Widget.MarkText", label]" @bind="markText" data-testid="@($"track-{track.Track.Key}-text")" />
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => MarkAsync(shown, null)" data-testid="@($"track-{track.Track.Key}-mark")">@L["Actor.Widget.Mark"]</CodexButton>
+                        </div>
+                    }
+                }
+                else if (track.IsBoxes && track.Track.Max is { } boxes && boxes <= 40)
+                {
+                    var filled = (int)track.Current;
+                    <div class="d-flex flex-wrap align-items-center gap-1">
+                        @for (var i = 1; i <= (int)boxes; i++)
+                        {
+                            var box = i;
+                            <button type="button" class="track-box @(box <= filled ? "track-box-full" : "")" disabled="@(!CanEdit)" aria-pressed="@(box <= filled ? "true" : "false")"
+                                    aria-label="@L["Actor.Widget.Box", box, (int)boxes]" data-testid="@($"track-{shown.Track.Key}-box-{box}")"
+                                    @onclick="() => SetToAsync(shown.Track.Key, box == filled ? box - 1 : box)"></button>
+                        }
+                    <span class="small-muted ms-2" data-testid="@($"track-{track.Track.Key}-count")">@L["Actor.Widget.Of", filled, (int)boxes]</span>
+                    @if (CanEdit)
+                    {
+                        @* Boxes set the track; − and + adjust it, so a full track overflows as the system says (stress into trauma). *@
+                        <span class="d-inline-flex gap-1 ms-2">
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" aria-label="@L["Actor.Widget.Less", label]" OnClick="() => AdjustAsync(shown.Track.Key, -1)" data-testid="@($"track-{track.Track.Key}-less")">−</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" aria-label="@L["Actor.Widget.More", label]" OnClick="() => AdjustAsync(shown.Track.Key, 1)" data-testid="@($"track-{track.Track.Key}-more")">+</CodexButton>
+                        </span>
+                    }
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex align-items-center gap-2">
+                        @if (CanEdit)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" aria-label="@L["Actor.Widget.Less", label]" OnClick="() => AdjustAsync(shown.Track.Key, -1)" data-testid="@($"track-{track.Track.Key}-less")">−</CodexButton>
+                        }
+                        <span class="stat-numeral" data-testid="@($"track-{track.Track.Key}-count")"><bdi>@SheetView.Format(track.Current)@(track.Track.Max is { } max ? " / " + SheetView.Format(max) : "")</bdi></span>
+                        @if (CanEdit)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" aria-label="@L["Actor.Widget.More", label]" OnClick="() => AdjustAsync(shown.Track.Key, 1)" data-testid="@($"track-{track.Track.Key}-more")">+</CodexButton>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        break;
+
+    case "list":
+    case "table":
+        var rows = View.Rows(Widget);
+        var keyed = View.IsKeyedList(Widget.Key!);
+        <div class="table-scroll" data-testid="@($"widget-{Widget.Key}")">
+            <table class="table table-sm small mb-1">
+                <thead><tr><th scope="col">@L["Actor.Widget.Name"]</th>@foreach (var column in Widget.Columns) { <th scope="col">@ColumnLabel(column)</th> }@if (!keyed && CanEdit) { <th scope="col"><span class="visually-hidden">@L["Actor.Widget.Remove"]</span></th> }</tr></thead>
+                <tbody>
+                    @foreach (var group in rows.GroupBy(r => r.Group))
+                    {
+                        @if (Widget.GroupBy != null && group.Key != null)
+                        {
+                            <tr class="table-group"><th colspan="@(Widget.Columns.Count + 2)" scope="rowgroup">@Definition.DisplayValue(group.Key)</th></tr>
+                        }
+                        @foreach (var row in group)
+                        {
+                            var shownRow = row;
+                            <tr data-testid="@($"row-{Widget.Key}-{row.Id}")">
+                                <th scope="row">@row.Label</th>
+                                @foreach (var cell in row.Cells)
+                                {
+                                    var shownCell = cell;
+                                    <td>
+                                        @if (cell.Field is { } field && CanEdit)
+                                        {
+                                            @if (field.Type.Equals("Boolean", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <input type="checkbox" checked="@(cell.Value is true)" aria-label="@($"{row.Label}: {ColumnLabel(cell.Column)}")"
+                                                       @onchange="e => SetFieldAsync(shownRow, field, e.Value is true)" data-testid="@($"cell-{Widget.Key}-{row.Id}-{cell.Column}")" />
+                                            }
+                                            else
+                                            {
+                                                <input class="field-input field-sm sheet-number" value="@SheetView.Format(cell.Value, CultureInfo.InvariantCulture)" aria-label="@($"{row.Label}: {ColumnLabel(cell.Column)}")"
+                                                       @onchange="e => SetFieldAsync(shownRow, field, e.Value?.ToString())" data-testid="@($"cell-{Widget.Key}-{row.Id}-{cell.Column}")" />
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <bdi data-testid="@($"cell-{Widget.Key}-{row.Id}-{cell.Column}")">@SheetView.Format(cell.Value)</bdi>
+                                        }
+                                    </td>
+                                }
+                                @if (!keyed && CanEdit && row.Index is { } index)
+                                {
+                                    <td><button type="button" class="link-btn" aria-label="@L["Actor.Widget.RemoveOne", row.Label]" @onclick="() => RemoveAsync(index)">×</button></td>
+                                }
+                            </tr>
+                        }
+                    }
+                    @if (rows.Count == 0)
+                    {
+                        <tr><td colspan="@(Widget.Columns.Count + 2)" class="small-muted">@L["Actor.Widget.Empty"]</td></tr>
+                    }
+                </tbody>
+            </table>
+            @if (!keyed && CanEdit && View.ListType(Widget.Key!) is { } type && Candidates(type).ToList() is { Count: > 0 } candidates)
+            {
+                <div class="d-flex gap-2">
+                    <select class="field-select field-sm" style="width:auto" aria-label="@L["Actor.Widget.AddTo", ListLabel]" @bind="adding" data-testid="@($"add-{Widget.Key}")">
+                        <option value="">@L["Actor.Widget.Choose"]</option>
+                        @foreach (var candidate in candidates)
+                        {
+                            <option value="@candidate.Id">@candidate.Name</option>
+                        }
+                    </select>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@string.IsNullOrEmpty(adding)" OnClick="AddAsync" data-testid="@($"add-{Widget.Key}-go")">@L["Actor.Widget.Add"]</CodexButton>
+                </div>
+            }
+        </div>
+        break;
+
+    case "roll":
+        var definition = Definition.Rolls.FirstOrDefault(r => r.Key == Widget.Roll);
+        @if (definition != null)
+        {
+            var asked = definition.Inputs.Where(i => i.From is "roller" or "gm" or "weapon").ToList();
+            <div class="sheet-roll d-flex flex-wrap align-items-end gap-2" data-testid="@($"roll-{definition.Key}")">
+                @foreach (var input in asked)
+                {
+                    var shownInput = input;
+                    var options = InputOptions(input);
+                    <label class="field-label mb-0">
+                        @(input.Label ?? input.Key)
+                        @if (options.Count > 0)
+                        {
+                            <select class="field-select field-sm" value="@InputValue(input)" @onchange="e => inputs[shownInput.Key] = e.Value?.ToString()" data-testid="@($"roll-{definition.Key}-{input.Key}")">
+                                <option value="">@L["Actor.Widget.Choose"]</option>
+                                @foreach (var (value, text) in options)
+                                {
+                                    <option value="@value" selected="@(InputValue(input) == value)">@text</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <input class="field-input field-sm sheet-number" value="@InputValue(input)" @onchange="e => inputs[shownInput.Key] = e.Value?.ToString()" data-testid="@($"roll-{definition.Key}-{input.Key}")" />
+                        }
+                    </label>
+                }
+                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="dices" Disabled="@(!CanRoll)" OnClick="() => RollAsync(definition)" data-testid="@($"roll-{definition.Key}-go")">@(Widget.Label ?? definition.Label ?? definition.Key)</CodexButton>
+            </div>
+        }
+        break;
+
+    case "text":
+        <div class="mb-2">
+            <label for="@($"{id}-{Widget.Key}")" class="field-label">@(Widget.Label ?? Widget.Key)</label>
+            <textarea id="@($"{id}-{Widget.Key}")" class="field-input" rows="3" disabled="@(!CanEdit)" value="@TextOf(Widget.Key)"
+                      @onchange="e => SetValueAsync(Widget.Key!, e.Value?.ToString(), true)" data-testid="@($"text-{Widget.Key}")"></textarea>
+        </div>
+        break;
+
+    case "modifiers":
+        var lines = View.Modifiers(Widget.Target!);
+        <div data-testid="@($"modifiers-{Widget.Target}")">
+            <div class="field-label">@L["Actor.Widget.ModifiersOf", View.Value(Widget.Target!).Label]</div>
+            @if (lines.Count == 0)
+            {
+                <p class="small-muted mb-0">@L["Actor.Widget.NoModifiers"]</p>
+            }
+            else
+            {
+                <ul class="list-unstyled small mb-0">
+                    @foreach (var line in lines)
+                    {
+                        <li class="@(line.Counted ? "" : "text-decoration-line-through small-muted")" title="@(line.Counted ? null : L["Actor.Widget.NotCounted"])">
+                            <bdi>@(line.Amount >= 0 ? "+" : "")@SheetView.Format(line.Amount)</bdi> @(line.Source ?? "") <span class="small-muted">(@Definition.DisplayValue(line.Type))</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+        break;
+
+    default:
+        @if (View.IsCompiled(Widget))
+        {
+            var (content, failure) = CompiledContent;
+            <div class="sheet-compiled" data-testid="@($"compiled-{Widget.Widget}")">
+                @if (content == null)
+                {
+                    <p class="small-muted mb-0" role="status">@L["Actor.Widget.CompiledFailed"] <span class="d-block small">@failure</span></p>
+                }
+                else
+                {
+                    @foreach (var block in content.Blocks)
+                    {
+                        @switch (block)
+                        {
+                            case WidgetHeading heading:
+                                <div class="field-label">@heading.Text</div>
+                                break;
+                            case WidgetText text:
+                                <p class="small mb-2">@text.Text</p>
+                                break;
+                            case WidgetRow row:
+                                <dl class="sheet-values mb-2">
+                                    <div class="sheet-value">
+                                        <dt>@row.Label</dt>
+                                        <dd><span class="stat-numeral"><bdi>@row.Value</bdi></span> @if (row.Note != null) { <span class="small-muted ms-1">@row.Note</span> }</dd>
+                                    </div>
+                                </dl>
+                                break;
+                            case WidgetPills pills:
+                                <div class="mb-2">
+                                    @if (pills.Label != null) { <div class="field-label">@pills.Label</div> }
+                                    <span class="d-flex flex-wrap gap-1">
+                                        @foreach (var item in pills.Items) { <span class="pill">@item</span> }
+                                    </span>
+                                </div>
+                                break;
+                            case WidgetAction action:
+                                var pressed = action;
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(!CanEdit)" OnClick="() => ActAsync(pressed)">@action.Label</CodexButton>
+                                break;
+                        }
+                    }
+                }
+            </div>
+        }
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public LayoutWidget Widget { get; set; } = null!;
+    [Parameter, EditorRequired] public SystemDefinition Definition { get; set; } = null!;
+    [Parameter, EditorRequired] public SheetView View { get; set; } = null!;
+    [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
+    [Parameter, EditorRequired] public IEntryResolver Resolver { get; set; } = null!;
+    [Parameter] public bool CanEdit { get; set; }
+
+    /// <summary>Whether the roll button may be pressed (a reader who cannot edit may still not roll for someone else's sheet).</summary>
+    [Parameter] public bool CanRoll { get; set; }
+
+    /// <summary>Raised after the sheet changed, so the page re-runs the rules.</summary>
+    [Parameter] public EventCallback Changed { get; set; }
+
+    /// <summary>What a track change leaves for the table (an overflow's question): the page says it.</summary>
+    [Parameter] public EventCallback<IReadOnlyList<SheetIntent>> Left { get; set; }
+
+    [Parameter] public EventCallback<SheetRollRequest> OnRoll { get; set; }
+
+    private readonly string id = "w-" + Guid.NewGuid().ToString("N")[..6];
+
+    // A compiled widget is asked once per worked-out sheet (the page makes a new SheetView on every edit), not on every render.
+    private SheetView? compiledFor;
+    private (WidgetContent? Content, string? Failure) compiled;
+
+    private (WidgetContent? Content, string? Failure) CompiledContent
+    {
+        get
+        {
+            if (!ReferenceEquals(compiledFor, View))
+            {
+                compiled = View.Compiled(Widget, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+                compiledFor = View;
+            }
+
+            return compiled;
+        }
+    }
+
+    /// <summary>A compiled widget's button: its intents apply to the sheet as a track widget's do; what the sheet cannot do itself
+    /// goes to the page.</summary>
+    private async Task ActAsync(WidgetAction action)
+    {
+        if (!CanEdit) return;
+        var intents = action.Intents.Select(i => new SheetIntent(i.Kind, i.Fields.TryGetValue("actor", out var actor) ? actor?.ToString() : null,
+            i.Fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => f.Value, StringComparer.Ordinal))).ToList();
+        var applied = SheetIntents.Apply(Definition, Resolver, Sheet, intents);
+        if (applied.Left.Count > 0) await Left.InvokeAsync(applied.Left);
+        await Changed.InvokeAsync();
+    }
+    private readonly Dictionary<string, string?> inputs = new(StringComparer.Ordinal);
+    private string markText = "";
+    private int markLevel = 1;
+    private string adding = "";
+
+    private string ListLabel => View.Kind?.Lists.FirstOrDefault(l => l.Key == Widget.Key)?.Label ?? Widget.Key ?? "";
+
+    private string ColumnLabel(string column) =>
+        (View.Kind?.Lists.FirstOrDefault(l => l.Key == Widget.Key)?.ItemFields ?? View.Kind?.KeyedLists.FirstOrDefault(l => l.Key == Widget.Key)?.ItemFields)
+            ?.FirstOrDefault(f => f.Key == column)?.Label ?? Definition.DisplayValue(column);
+
+    private IEnumerable<ContentEntry> Candidates(string type) => Resolver.Candidates(type).OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase);
+
+    private static SheetIntent Intent(string kind, params (string Key, object? Value)[] fields) =>
+        new(kind, null, fields.ToDictionary(f => f.Key, f => f.Value, StringComparer.Ordinal));
+
+    private async Task IntentAsync(SheetIntent intent)
+    {
+        var applied = SheetIntents.Apply(Definition, Resolver, Sheet, new[] { intent });
+        if (applied.Left.Count > 0) await Left.InvokeAsync(applied.Left);
+        await Changed.InvokeAsync();
+    }
+
+    private Task ClearAsync(string track, int? level, string text) => level is { } l
+        ? IntentAsync(Intent(SheetEvents.ClearKind, ("track", track), ("level", l), ("text", text)))
+        : IntentAsync(Intent(SheetEvents.ClearKind, ("track", track), ("text", text)));
+
+    private Task SetToAsync(string track, int to) => IntentAsync(Intent(SheetEvents.SetKind, ("track", track), ("to", to)));
+
+    private Task AdjustAsync(string track, int by) => IntentAsync(Intent(SheetEvents.AdjustKind, ("track", track), ("by", by)));
+
+    private string? TextOf(string? key) => key == null ? null : View.Sheet.GetValueOrDefault(key)?.ToString();
+
+    private async Task MarkAsync(SheetTrackView track, int? level)
+    {
+        if (string.IsNullOrWhiteSpace(markText)) return;
+        var fields = new List<(string, object?)> { ("track", track.Track.Key), ("text", markText.Trim()) };
+        if (level != null) fields.Add(("level", level));
+        markText = "";
+        await IntentAsync(Intent(SheetEvents.MarkKind, fields.ToArray()));
+    }
+
+    private async Task SetValueAsync(string key, string? text, bool isChoice)
+    {
+        SheetEdits.SetValue(Sheet, key, text, isChoice);
+        await Changed.InvokeAsync();
+    }
+
+    private async Task SetFieldAsync(SheetRowView row, ItemFieldDefinition field, object? value)
+    {
+        SheetEdits.SetField(Sheet, Widget.Key!, View.IsKeyedList(Widget.Key!), row.Id, row.Index, field, value);
+        await Changed.InvokeAsync();
+    }
+
+    private async Task AddAsync()
+    {
+        SheetEdits.AddPick(Sheet, Widget.Key!, adding);
+        adding = "";
+        await Changed.InvokeAsync();
+    }
+
+    private async Task RemoveAsync(int index)
+    {
+        SheetEdits.RemovePick(Sheet, Widget.Key!, index);
+        await Changed.InvokeAsync();
+    }
+
+    // ---- Rolls ----
+
+    /// <summary>The choices an input offers: its own options, a weapon's picks, or the keys of a keyed list it indexes
+    /// (<c>skills[input.skill]</c>).</summary>
+    private List<(string Value, string Text)> InputOptions(RollInputDefinition input)
+    {
+        if (input.Options is { Count: > 0 } options) return options.Select(o => (o, Definition.DisplayValue(o))).ToList();
+        if (input.From == "weapon")
+        {
+            return (View.Kind?.Lists ?? new List<PickListDefinition>())
+                .SelectMany(l => View.Rows(new LayoutWidget { Widget = "list", Key = l.Key })).Select(r => (r.Id, r.Label)).ToList();
+        }
+
+        var definition = Definition.Rolls.First(r => r.Key == Widget.Roll);
+        var indexed = View.Kind?.KeyedLists.FirstOrDefault(l => definition.Add.Any(a => a.Contains($"{l.Key}[input.{input.Key}]", StringComparison.Ordinal)));
+        return indexed == null ? new List<(string, string)>()
+            : View.Rows(new LayoutWidget { Widget = "table", Key = indexed.Key }).Select(r => (r.Id, r.Label)).ToList();
+    }
+
+    private string? InputValue(RollInputDefinition input) => inputs.TryGetValue(input.Key, out var value) ? value : input.Default?.ToString();
+
+    private async Task RollAsync(RollDefinition definition)
+    {
+        var supplied = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var input in definition.Inputs.Where(i => i.From is "roller" or "gm" or "weapon"))
+        {
+            var text = InputValue(input);
+            if (string.IsNullOrWhiteSpace(text)) continue;
+            supplied[input.Key] = double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) ? number : text;
+        }
+
+        await OnRoll.InvokeAsync(new SheetRollRequest { Definition = definition.Key, Inputs = supplied });
+    }
+}

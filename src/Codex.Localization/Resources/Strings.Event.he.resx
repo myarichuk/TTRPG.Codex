@@ -150,4 +150,37 @@
   <data name="Event.Type.Revived" xml:space="preserve"><value>החייאה</value></data>
   <data name="Event.Type.Undo" xml:space="preserve"><value>ביטול</value></data>
   <data name="Event.Type.ActorVisibility" xml:space="preserve"><value>נראות</value></data>
+  <data name="Event.Type.SheetEvent" xml:space="preserve"><value>גיליון</value></data>
+  <data name="Event.Sheet.Failed" xml:space="preserve"><value>{0}: כלל המערכת עבור {1} לא רץ ({2}).</value></data>
+  <data name="Event.Sheet.NotAtTable" xml:space="preserve"><value>{0} לא ליד השולחן, ולכן {1} לא בוצע.</value></data>
+  <data name="Event.Sheet.Nothing" xml:space="preserve"><value>{0}: {1}, שום דבר לא משתנה.</value></data>
+  <data name="Event.Sheet.ConditionAdded" xml:space="preserve"><value>{0}: כעת {1}.</value></data>
+  <data name="Event.Sheet.ConditionRemoved" xml:space="preserve"><value>{0}: כבר לא {1}.</value></data>
+  <data name="Event.Sheet.TrackChanged" xml:space="preserve"><value>{0}: {1} {2} ← {3}.</value></data>
+  <data name="Event.Sheet.SlotsChanged" xml:space="preserve"><value>{0}: {1} מכיל {2}.</value></data>
+  <data name="Event.Sheet.ListChanged" xml:space="preserve"><value>{0}: {1} השתנה.</value></data>
+  <data name="Event.Sheet.RollAsked" xml:space="preserve"><value>{0} צריך להטיל {1}.</value></data>
+  <data name="Event.Sheet.AskGm" xml:space="preserve"><value>המנחה בוחר עבור {0}: {1}.</value></data>
+  <data name="Event.Sheet.AskPlayer" xml:space="preserve"><value>השחקן של {0} בוחר: {1}.</value></data>
+  <data name="Event.Sheet.Log" xml:space="preserve"><value>{0}: {1} {2}</value></data>
+  <data name="Event.Sheet.ScriptRolled" xml:space="preserve"><value>{0}: הכלל {1} הטיל {2}.</value></data>
+  <data name="Event.Sheet.Killed" xml:space="preserve"><value>{0} מת.</value></data>
+  <data name="Event.Sheet.ConcentrationEnded" xml:space="preserve"><value>{0} מפסיק להתרכז; {1} השפעות מוחזקות מסתיימות.</value></data>
+  <data name="Event.Sheet.CounterChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
+  <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: השולחן עדיין לא מבצע {1}.</value></data>
+  <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0}: הטלת {1} — {2} ({3}).</value></data>
+  <data name="Event.Type.Campaign" xml:space="preserve"><value>מערכה</value></data>
+  <data name="Event.Campaign.ClockChanged" xml:space="preserve"><value>{0}: {1} ← {2} מתוך {3}.</value></data>
+  <data name="Event.Campaign.ClockFull" xml:space="preserve"><value>השעון {0} מלא.</value></data>
+  <data name="Event.Campaign.RowChanged" xml:space="preserve"><value>{0}, {1}: {2} {3} ← {4}.</value></data>
+  <data name="Event.Campaign.NotThere" xml:space="preserve"><value>במערכה אין דבר בשם {0}.</value></data>
+  <data name="Event.Campaign.Failed" xml:space="preserve"><value>כלל המערכת עבור {0} לא רץ ({1}).</value></data>
+  <data name="Event.Campaign.Nothing" xml:space="preserve"><value>{0}: שום דבר לא משתנה.</value></data>
+  <data name="Event.Campaign.Unchanged" xml:space="preserve"><value>השעונים והטבלאות של המערכה: שום דבר לא משתנה.</value></data>
+  <data name="Event.Campaign.ClockAdded" xml:space="preserve"><value>שעון חדש: {0}, {1} מקטעים.</value></data>
+  <data name="Event.Campaign.ClockEdited" xml:space="preserve"><value>השעון {0} שונה.</value></data>
+  <data name="Event.Campaign.ClockRemoved" xml:space="preserve"><value>השעון {0} הוסר.</value></data>
+  <data name="Event.Campaign.RowAdded" xml:space="preserve"><value>{0}: נוסף {1}.</value></data>
+  <data name="Event.Campaign.RowEdited" xml:space="preserve"><value>{0}: {1} שונה.</value></data>
+  <data name="Event.Campaign.RowRemoved" xml:space="preserve"><value>{0}: {1} הוסר.</value></data>
 </root>

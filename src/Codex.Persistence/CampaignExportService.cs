@@ -27,6 +27,9 @@ public class CampaignBundle
 
     /// <summary>The DM's templates and their versions of the built-in ones; null in bundles from before there were any.</summary>
     public CampaignTemplatesDocument? Templates { get; set; }
+
+    /// <summary>The campaign's clocks and tables; null in bundles from before there were any.</summary>
+    public CampaignObjectsDocument? Objects { get; set; }
 }
 
 /// <summary>
@@ -46,7 +49,8 @@ public class CampaignExportService(
     IRegionRepository regions,
     IHomebrewRepository homebrew,
     IWikiRepository? wiki = null,
-    ITemplateRepository? templates = null)
+    ITemplateRepository? templates = null,
+    ICampaignObjectsRepository? objects = null)
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -82,7 +86,8 @@ public class CampaignExportService(
             Regions = (await regions.GetVisibleForCampaignAsync(access)).ToList(),
             Homebrew = (await homebrew.GetAllForCampaignAsync(access.CampaignId)).ToList(),
             Wiki = wiki == null ? new List<WikiPageDocument>() : (await wiki.GetAllForCampaignAsync(access.CampaignId)).ToList(),
-            Templates = templates == null ? null : await templates.GetDocumentAsync(access.CampaignId)
+            Templates = templates == null ? null : await templates.GetDocumentAsync(access.CampaignId),
+            Objects = objects == null ? null : await objects.GetDocumentAsync(access.CampaignId)
         };
     }
 
@@ -241,6 +246,11 @@ public class CampaignExportService(
         if (templates != null && bundle.Templates is { } bundled && bundled.CampaignId == campaign.Id)
         {
             await templates.SaveDocumentAsync(bundled);
+        }
+
+        if (objects != null && bundle.Objects is { } kept && kept.CampaignId == campaign.Id)
+        {
+            await objects.SaveDocumentAsync(kept);
         }
 
         return true;

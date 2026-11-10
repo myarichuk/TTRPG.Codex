@@ -1,0 +1,5 @@
+- { id: blade, name: A blade or two, properties: { load: 1 } }
+- { id: heavy-weapon, name: A heavy weapon, properties: { load: 2 } }
+- { id: climbing-gear, name: Climbing gear, properties: { load: 2 } }
+- { id: lockpicks, name: Lockpicks, properties: { load: 1 } }
+- { id: spyglass, name: A spyglass, properties: { load: 1 } }

@@ -38,6 +38,7 @@ coverage/
 *.sln.iml
 .serena/
 .claude/launch.json
+.claude/worktrees/
 
 # Embedded RavenDB data (dev default under src/Codex.Web)
 RavenData/
@@ -48,6 +49,7 @@ dist/
 site/dist/
 site/.capture/
 site/.capture-art/
+tests/Codex.Tests/Golden/**/*.actual.txt
 
 # Embedded RavenDB logs written beside the web project
 src/Codex.Web/RavenServer/

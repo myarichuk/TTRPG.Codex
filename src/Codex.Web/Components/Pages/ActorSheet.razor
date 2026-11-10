@@ -281,118 +281,27 @@ else
                 }
             </nav>
 
-            @if (ActiveTab == "attributes")
+            @if (sheetRoll != null)
             {
-            @if (system != null && system.Attributes.Count > 0)
-            {
-                <AttributesPanel Definition="system" Evaluation="evaluation" Sheet="editSheet" CanEdit="CanEdit" IsDm="access?.IsDm == true" ShowTray="ShowTray" ShowSums="showSums"
-                                 Problems="@(Problems(v => !IsIncrease(v) && (system.Attributes.Any(a => a.Key == v.FieldKey) || v.FieldKey == SheetRuleEngine.MethodKey || v.FieldKey.StartsWith(SheetRuleEngine.BonusPrefix, StringComparison.Ordinal))))"
-                                 IncreaseProblems="@(Problems(IsIncrease))" Describe="Describe" Changed="OnRulesInputChanged" OnRoll="RollAsync" />
-            }
-
-            @if (Rules?.Skills is { } skillRules && evaluation is { Skills.Count: > 0 })
-            {
-                <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" OnRoll="RollAsync"
-                             ShowSums="showSums" ShowSumsChanged="value => showSums = value" />
-            }
-
-            <section class="panel" aria-labelledby="sheet-heading">
-                <div class="panel-title"><h2 id="sheet-heading" class="h5"><LucideIcon IconName="file-text" Size="18" Class="title-icon" /> @L["Actor.Sheet.SheetHeading"]</h2></div>
-                <div class="mb-3">
-                    <label for="actor-name-input" class="field-label">@L["Actor.Sheet.Name"]</label>
-                    <input id="actor-name-input" class="field-input" @bind="editName" disabled="@(!CanEdit)" data-testid="sheet-name" />
-                </div>
-                @if (schema != null)
-                {
-                    <SchemaForm Schema="schema" Values="editSheet" ReferenceOptions="referenceOptions" FieldOptions="fieldOptions" HiddenKeys="HiddenNow" ReadOnly="@(!CanEdit)" ValuesChanged="OnSheetChanged" Secrets="@access.IsDm" Preview="PreviewMentions"
-                                Problems="FieldProblems" />
-                }
-                else if (editSheet.Count > 0)
-                {
-                    <dl class="prop-list mb-0">
-                        @foreach (var entry in editSheet)
-                        {
-                            <dt>@entry.Key</dt>
-                            <dd>@entry.Value</dd>
-                        }
-                    </dl>
-                }
-                else
-                {
-                    <p class="small-muted mb-0">@L["Actor.Sheet.NoSheet", campaign.SystemId]</p>
-                }
-            </section>
-
-            @if (Rules?.Multiclass is { } multiclass && evaluation != null)
-            {
-                <ClassesPanel Multiclass="multiclass" Evaluation="evaluation" LibraryPath="@LibraryPath" CurrentLevel="CurrentLevel" CanEdit="CanEdit" EntryName="Nm" Describe="Describe"
-                              Problems="Problems(v => v.FieldKey == multiclass.Key)" SubclassOptions="SubclassOptions"
-                              OnSetLevel="change => SetClassLevel(multiclass, change.ClassId, change.Level)" OnRemove="classId => RemoveClass(multiclass, classId)"
-                              OnSetSubclass="change => SetClassSubclass(multiclass, change.ClassId, change.SubclassId)" OnAdd="classId => AddClass(multiclass, classId)" />
-            }
-
-
-            @if (linkedEntries.Count > 0)
-            {
-                <section class="panel" aria-labelledby="linked-heading">
-                    <div class="panel-title"><h2 id="linked-heading" class="h5"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> @L["Actor.Sheet.FromLibrary"]</h2></div>
-                    @foreach (var (label, item) in linkedEntries)
+                <section class="panel" aria-live="polite" data-testid="sheet-roll-result">
+                    <div class="panel-title"><h2 class="h5"><LucideIcon IconName="dices" Size="18" Class="title-icon" /> @(sheetRoll.Label ?? sheetRoll.Definition)</h2>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => sheetRoll = null">@L["Actor.Sheet.Dismiss"]</CodexButton></div>
+                    <p class="mb-1"><strong data-testid="sheet-roll-outcome">@(sheetRoll.Outcome is { } outcome ? system!.DisplayValue(outcome) : SheetView.Format(sheetRoll.Totals().FirstOrDefault()))</strong>
+                        <span class="small-muted ms-2" data-testid="sheet-roll-dice"><bdi>@L["Actor.Sheet.RollDice", string.Join(" ", sheetRoll.Kept), SheetView.Format(sheetRoll.Totals().FirstOrDefault())]</bdi></span></p>
+                    @if (sheetRollNote != null)
                     {
-                        <div class="mb-3">
-                            <div class="label-caps">@label</div>
-                            <a href="@LibraryPath/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@Nm(item.Entry)</a>
-                            <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
-                        </div>
-                    }
-                </section>
-            }
-            }
-
-            @if (ActiveTab == "picks")
-            {
-            @if (Rules != null && Rules.Lists.Count > 0 && evaluation != null)
-            {
-                <section class="panel" aria-labelledby="picks-heading">
-                    <div class="panel-title"><h2 id="picks-heading" class="h5"><LucideIcon IconName="sparkles" Size="18" Class="title-icon" /> @L["Actor.Sheet.Picks"]</h2></div>
-                    @foreach (var list in Rules.Lists)
-                    {
-                        <div class="mb-3" data-rule-key="@list.Key">
-                            <EntryListPicker Rule="list"
-                                             Picks="evaluation.ListPicks.GetValueOrDefault(list.Key) ?? Array.Empty<SheetPick>()"
-                                             Missing="evaluation.ListMissing.GetValueOrDefault(list.Key) ?? Array.Empty<MissingPick>()"
-                                             Options="evaluation.ListOptions.GetValueOrDefault(list.Key) ?? Array.Empty<ContentEntry>()"
-                                             Limit="evaluation.ListLimits.GetValueOrDefault(list.Key)"
-                                             ReadOnly="@(!CanEdit)"
-                                             LibraryPath="@LibraryPath"
-                                             Type="system?.FindType(list.TargetEntityType)"
-                                             Added="id => AddPick(list, id)"
-                                             Removed="index => RemovePick(list, index)"
-                                             Note="PickNote" />
-                            <RuleProblemList Problems="@(Problems(v => v.FieldKey == list.Key && !IsIncrease(v)))" Describe="Describe" TestId="@("list-problems-" + list.Key)" />
-                        </div>
+                        <p class="small-muted mb-0">@sheetRollNote</p>
                     }
                 </section>
             }
 
-            }
-
-            @if (ActiveTab == "inventory")
+            @foreach (var section in Layout.Where(s => !s.Aside && s.Section == ActiveTab))
             {
-            @if (Rules?.Inventory is { } inventoryRules && evaluation != null)
-            {
-                <div data-rule-key="@inventoryRules.Key">
-                    <RuleProblemList Problems="@(Problems(v => v.FieldKey == inventoryRules.Key))" Describe="Describe" TestId="inventory-problems" />
-                    @if (evaluation.Inventory.Count > 0)
-                    {
-                        <p class="small-muted mb-2" data-testid="inventory-weight">@(evaluation.CarryingCapacity is { } capacity
-                            ? L["Actor.Sheet.CarriedOf", Weight(evaluation.CarriedWeight, inventoryRules), Weight(capacity, inventoryRules)]
-                            : L["Actor.Sheet.Carried", Weight(evaluation.CarriedWeight, inventoryRules)])</p>
-                    }
-                    <InventoryPanel Rules="inventoryRules" Items="evaluation.Inventory" Options="inventoryOptions" FindType="type => system?.FindType(type)" Sheet="editSheet" CanEdit="CanEdit"
-                                    LibraryPath="@LibraryPath" Changed="OnRulesInputChanged" />
-                </div>
-            }
-
+                @if (!Layout.Any(s => s.Widgets.Any(w => Is(w, "fields"))) && section == Layout.First(s => !s.Aside))
+                {
+                    @FieldsPanel
+                }
+                @Section(section)
             }
 
             @if (ActiveTab == "history")
@@ -515,101 +424,16 @@ else
         </div>
 
         <div class="col-lg-4">
-            @if (system?.PrimaryResource is { } primary)
+            @foreach (var section in Layout.Where(s => s.Aside))
             {
-                var current = YamlValues.GetInt(editSheet, primary.Key) ?? 0;
-                var max = primary.MaxKey != null ? YamlValues.GetInt(editSheet, primary.MaxKey) ?? 0 : 0;
-                var pct = max > 0 ? Math.Clamp(100.0 * current / max, 0, 100) : 0;
-                var band = pct < 25 ? "hp-low" : pct < 50 ? "hp-mid" : "hp-high";
-                <section class="panel" aria-labelledby="vitals-heading">
-                    <div class="panel-title"><h2 id="vitals-heading" class="h5"><LucideIcon IconName="heart" Size="18" Class="title-icon" /> @primary.Label</h2></div>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="stat-numeral hp-text" data-testid="hp-current">@current</span>
-                        @if (max > 0)
-                        {
-                            <span class="small-muted">/ @max</span>
-                        }
-                    </div>
-                    @if (max > 0)
-                    {
-                        <div class="hp-bar @band" role="progressbar" aria-label="@primary.Label" aria-valuemin="0" aria-valuemax="@max" aria-valuenow="@current">
-                            <span style="width:@(pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
-                        </div>
-                    }
-                    <p class="small-muted mt-2 mb-0">@(Rules?.HitPoints == null ? L["Actor.Sheet.HpLiveNoteEdit"] : L["Actor.Sheet.HpLiveNote"])</p>
-                    @if (Rules?.HitPoints is { } hitPointRules)
-                    {
-                        <HitPointRulesPanel Rules="hitPointRules" Summary="evaluation?.HitPoints" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
-                    }
-                </section>
+                @Section(section)
             }
 
-            @if (Rules?.ArmorClass is { } armorClassRules)
-            {
-                <ArmorClassPanel Rules="armorClassRules" Definition="system" Summary="evaluation?.ArmorClass" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
-            }
-
-            @if (Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))))
-            {
-                <section class="panel" aria-labelledby="sheet-slots-heading" data-testid="sheet-slots">
-                    <div class="panel-title"><h2 id="sheet-slots-heading" class="h5"><LucideIcon IconName="flame" Size="18" Class="title-icon" /> @SlotTracker.Heading(system, Rules.SlotPools, editSheet.Keys)</h2></div>
-                    <SlotTracker Definition="system" Pools="Rules.SlotPools" Keys="editSheet.Keys.ToList()" Value="key => YamlValues.GetInt(editSheet, key)" ReadOnly="@(!CanEdit)"
-                                 OnAdjust="AdjustSlot" OnRest="RestSlots" />
-                    <p class="small-muted mt-2 mb-0">@L["Actor.Sheet.SlotsNote"]</p>
-                </section>
-            }
-
+            @* Not a layout widget: the AI's help with a change works on any system's sheet. *@
             @if (CanEdit && system != null && currentUserId != null)
             {
                 <CharacterAssistPanel Character="AssistCharacter" Sheet="editSheet" Campaign="campaign" Access="access" System="system" UserId="@currentUserId"
                                       Describe="Describe" OnTake="TakeAssist" OnGoThere="GoToHighlight" />
-            }
-
-            @if (CanEdit && HasLevel)
-            {
-                <section class="panel panel-ai" aria-labelledby="levelup-heading">
-                    <div class="panel-title"><h2 id="levelup-heading" class="h5"><LucideIcon IconName="trending-up" Size="18" Class="title-icon" /> @L["Actor.Sheet.LevelUp"]</h2></div>
-                    @if (AtMaxLevel)
-                    {
-                        <p class="small-muted mb-0" data-testid="levelup-max">@L["Actor.Sheet.LevelMax", CurrentLevel]</p>
-                    }
-                    else if (levelUpPlan is { } plan)
-                    {
-                        <LevelUpStepper Plan="plan" Evaluation="evaluation" Rules="Rules" ClassId="@levelUpClassId" Roll="levelUpRoll" EntryName="Nm" Describe="Describe"
-                                        OnClassChosen="ChooseLevelUpClass" OnRollTyped="SetLevelUpRoll" OnRollDie="RollLevelUpHitDie" OnApply="ApplyLevelUp" OnCancel="CloseLevelUp" />
-                    }
-                    else
-                    {
-                        <p class="small-muted">@L["Actor.Sheet.LevelUpIntro", CurrentLevel, CurrentLevel + 1]</p>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="trending-up" OnClick="OpenLevelUp" data-testid="levelup-start">@L["Actor.Sheet.LevelUpTo", CurrentLevel + 1]</CodexButton>
-                            @if (busy == "level")
-                            {
-                                <AiWorking Text="@L["Actor.Sheet.Thinking"]" OnStop="aiCall.Stop" TestId="levelup-working" />
-                            }
-                            else
-                            {
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="SuggestLevelUpAsync" Disabled="@(busy != null)" data-testid="sheet-levelup">
-                                    <LucideIcon IconName="sparkles" Size="14" /> @L["Actor.Sheet.SuggestLevel", CurrentLevel + 1]
-                                </CodexButton>
-                            }
-                        </div>
-                    }
-                    @if (levelUpDone is { } done && levelUpPlan == null)
-                    {
-                        <LevelUpToDo Done="done" Evaluation="evaluation" Rules="Rules" Sheet="editSheet" OnGoThere="ShowRule" OnDismiss="() => levelUpDone = null" />
-                    }
-                    @if (levelUpAdvice != null)
-                    {
-                        <div class="ai-output mt-3" data-testid="levelup-advice">
-                            <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(levelUpAdvice))</div>
-                            <div class="d-flex gap-2">
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => levelUpAdvice = null">@L["Actor.Sheet.Dismiss"]</CodexButton>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AppendAdviceToNotes">@L["Actor.Sheet.KeepInNotes"]</CodexButton>
-                            </div>
-                        </div>
-                    }
-                </section>
             }
 
             @if (!Vault && actor.VaultSourceId != null && actor.OwnerUserId == currentUserId)
@@ -724,7 +548,320 @@ else
         }
     }
 
-    private string activeTab = "attributes";
+
+    // ---- The layout (overhaul step 6): tabs and the aside from the system's sections, each widget built in or generic. ----
+
+    private IReadOnlyList<LayoutSection> layout = SheetLayout.Builtin;
+    private IReadOnlyList<LayoutSection> Layout => layout;
+    private SheetView? sheetView;
+    private IEntryResolver? resolver;
+    private SheetRollResult? sheetRoll;
+    private string? sheetRollNote;
+
+    private static bool Is(LayoutWidget widget, string name) => string.Equals(widget.Widget, name, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The host's own word for a section it knows (srd5e's tabs), the system's label, or the section's name.</summary>
+    private string SectionLabel(LayoutSection section) => section.Label ?? section.Section.ToLowerInvariant() switch
+    {
+        "attributes" => L["Actor.Sheet.Attributes"],
+        "picks" => L["Actor.Sheet.Picks"],
+        "inventory" => L["Actor.Sheet.Inventory"],
+        SheetLayout.GenericSection => L["Actor.Sheet.SheetHeading"],
+        _ => system?.DisplayValue(section.Section) ?? section.Section
+    };
+
+    /// <summary>Whether a widget has anything to show here; a tab whose widgets show nothing is not offered.</summary>
+    private bool Shows(LayoutWidget widget) => widget.Widget.ToLowerInvariant() switch
+    {
+        "attributes" => system != null && system.Attributes.Count > 0 && system.SheetKinds.Count == 0,
+        "skills" => Rules?.Skills != null && evaluation is { Skills.Count: > 0 },
+        "fields" => true,
+        "classes" => Rules?.Multiclass != null && evaluation != null,
+        "library" => linkedEntries.Count > 0,
+        "picks" => Rules != null && Rules.Lists.Count > 0,
+        "inventory" => Rules?.Inventory != null,
+        "hit-points" => system?.PrimaryResource != null,
+        "armor-class" => Rules?.ArmorClass != null,
+        "slots" => Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))),
+        "level-up" => CanEdit && HasLevel,
+        _ => sheetView?.Shows(widget) == true
+    };
+
+    // The first tab gets the name and fields when the layout does not place them.
+    private bool Shows(LayoutSection section) =>
+        section.Widgets.Any(Shows) || (!Layout.Any(s => s.Widgets.Any(w => Is(w, "fields"))) && section == Layout.FirstOrDefault(s => !s.Aside));
+
+    /// <summary>The tab that holds a widget: the first section with one that matches.</summary>
+    private string? SectionWith(Func<LayoutWidget, bool> match) => Layout.FirstOrDefault(s => !s.Aside && s.Widgets.Any(match))?.Section;
+
+    private string FirstTab => Layout.FirstOrDefault(s => !s.Aside && Shows(s))?.Section ?? "history";
+
+    private RenderFragment FieldsPanel => __builder =>
+    {
+                <section class="panel" aria-labelledby="sheet-heading">
+                    <div class="panel-title"><h2 id="sheet-heading" class="h5"><LucideIcon IconName="file-text" Size="18" Class="title-icon" /> @L["Actor.Sheet.SheetHeading"]</h2></div>
+                    <div class="mb-3">
+                        <label for="actor-name-input" class="field-label">@L["Actor.Sheet.Name"]</label>
+                        <input id="actor-name-input" class="field-input" @bind="editName" disabled="@(!CanEdit)" data-testid="sheet-name" />
+                    </div>
+                    @if (schema != null)
+                    {
+                        <SchemaForm Schema="schema" Values="editSheet" ReferenceOptions="referenceOptions" FieldOptions="fieldOptions" HiddenKeys="HiddenNow" ReadOnly="@(!CanEdit)" ValuesChanged="OnSheetChanged" Secrets="@access.IsDm" Preview="PreviewMentions"
+                                    Problems="FieldProblems" />
+                    }
+                    else if (editSheet.Count > 0)
+                    {
+                        <dl class="prop-list mb-0">
+                            @foreach (var entry in editSheet)
+                            {
+                                <dt>@entry.Key</dt>
+                                <dd>@entry.Value</dd>
+                            }
+                        </dl>
+                    }
+                    else
+                    {
+                        <p class="small-muted mb-0">@L["Actor.Sheet.NoSheet", campaign.SystemId]</p>
+                    }
+                </section>
+
+    };
+
+    /// <summary>A section's widgets: a built-in one is a panel of its own, as the sheet has always had them; a run of generic ones
+    /// shares one panel under the section's name.</summary>
+    private RenderFragment Section(LayoutSection section) => __builder =>
+    {
+        var runs = new List<(bool Builtin, List<LayoutWidget> Widgets)>();
+        foreach (var widget in section.Widgets.Where(Shows))
+        {
+            var builtin = SheetLayout.BuiltinWidgets.ContainsKey(widget.Widget);
+            if (runs.Count == 0 || runs[^1].Builtin != builtin || builtin) runs.Add((builtin, new List<LayoutWidget>()));
+            runs[^1].Widgets.Add(widget);
+        }
+
+        @foreach (var run in runs)
+        {
+            @if (run.Builtin)
+            {
+                @Widget(run.Widgets[0])
+            }
+            else
+            {
+                <section class="panel" data-testid="@($"section-{section.Section}")">
+                    <div class="panel-title"><h2 class="h5"><LucideIcon IconName="@(section.Icon ?? "file-text")" Size="18" Class="title-icon" /> @SectionLabel(section)</h2></div>
+                    @foreach (var widget in run.Widgets)
+                    {
+                        @Widget(widget)
+                    }
+                </section>
+            }
+        }
+    };
+
+    private RenderFragment Widget(LayoutWidget widget) => __builder =>
+    {
+        @switch (widget.Widget.ToLowerInvariant())
+        {
+            case "attributes":
+                    @if (system != null && system.Attributes.Count > 0)
+                    {
+                        <AttributesPanel Definition="system" Evaluation="evaluation" Sheet="editSheet" CanEdit="CanEdit" IsDm="access?.IsDm == true" ShowTray="ShowTray" ShowSums="showSums"
+                                         Problems="@(Problems(v => !IsIncrease(v) && (system.Attributes.Any(a => a.Key == v.FieldKey) || v.FieldKey == SheetRuleEngine.MethodKey || v.FieldKey.StartsWith(SheetRuleEngine.BonusPrefix, StringComparison.Ordinal))))"
+                                         IncreaseProblems="@(Problems(IsIncrease))" Describe="Describe" Changed="OnRulesInputChanged" OnRoll="RollAsync" />
+                    }
+
+                break;
+            case "skills":
+                    @if (Rules?.Skills is { } skillRules && evaluation is { Skills.Count: > 0 })
+                    {
+                        <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" OnRoll="RollAsync"
+                                     ShowSums="showSums" ShowSumsChanged="value => showSums = value" />
+                    }
+
+                break;
+            case "fields":
+                @FieldsPanel
+                break;
+            case "classes":
+                    @if (Rules?.Multiclass is { } multiclass && evaluation != null)
+                    {
+                        <ClassesPanel Multiclass="multiclass" Evaluation="evaluation" LibraryPath="@LibraryPath" CurrentLevel="CurrentLevel" CanEdit="CanEdit" EntryName="Nm" Describe="Describe"
+                                      Problems="Problems(v => v.FieldKey == multiclass.Key)" SubclassOptions="SubclassOptions"
+                                      OnSetLevel="change => SetClassLevel(multiclass, change.ClassId, change.Level)" OnRemove="classId => RemoveClass(multiclass, classId)"
+                                      OnSetSubclass="change => SetClassSubclass(multiclass, change.ClassId, change.SubclassId)" OnAdd="classId => AddClass(multiclass, classId)" />
+                    }
+
+
+                break;
+            case "library":
+                    @if (linkedEntries.Count > 0)
+                    {
+                        <section class="panel" aria-labelledby="linked-heading">
+                            <div class="panel-title"><h2 id="linked-heading" class="h5"><LucideIcon IconName="book-open" Size="18" Class="title-icon" /> @L["Actor.Sheet.FromLibrary"]</h2></div>
+                            @foreach (var (label, item) in linkedEntries)
+                            {
+                                <div class="mb-3">
+                                    <div class="label-caps">@label</div>
+                                    <a href="@LibraryPath/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@Nm(item.Entry)</a>
+                                    <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
+                                </div>
+                            }
+                        </section>
+                    }
+                break;
+            case "picks":
+                    @if (Rules != null && Rules.Lists.Count > 0 && evaluation != null)
+                    {
+                        <section class="panel" aria-labelledby="picks-heading">
+                            <div class="panel-title"><h2 id="picks-heading" class="h5"><LucideIcon IconName="sparkles" Size="18" Class="title-icon" /> @L["Actor.Sheet.Picks"]</h2></div>
+                            @foreach (var list in Rules.Lists)
+                            {
+                                <div class="mb-3" data-rule-key="@list.Key">
+                                    <EntryListPicker Rule="list"
+                                                     Picks="evaluation.ListPicks.GetValueOrDefault(list.Key) ?? Array.Empty<SheetPick>()"
+                                                     Missing="evaluation.ListMissing.GetValueOrDefault(list.Key) ?? Array.Empty<MissingPick>()"
+                                                     Options="evaluation.ListOptions.GetValueOrDefault(list.Key) ?? Array.Empty<ContentEntry>()"
+                                                     Limit="evaluation.ListLimits.GetValueOrDefault(list.Key)"
+                                                     ReadOnly="@(!CanEdit)"
+                                                     LibraryPath="@LibraryPath"
+                                                     Type="system?.FindType(list.TargetEntityType)"
+                                                     Added="id => AddPick(list, id)"
+                                                     Removed="index => RemovePick(list, index)"
+                                                     Note="PickNote" />
+                                    <RuleProblemList Problems="@(Problems(v => v.FieldKey == list.Key && !IsIncrease(v)))" Describe="Describe" TestId="@("list-problems-" + list.Key)" />
+                                </div>
+                            }
+                        </section>
+                    }
+                break;
+            case "inventory":
+                    @if (Rules?.Inventory is { } inventoryRules && evaluation != null)
+                    {
+                        <div data-rule-key="@inventoryRules.Key">
+                            <RuleProblemList Problems="@(Problems(v => v.FieldKey == inventoryRules.Key))" Describe="Describe" TestId="inventory-problems" />
+                            @if (evaluation.Inventory.Count > 0)
+                            {
+                                <p class="small-muted mb-2" data-testid="inventory-weight">@(evaluation.CarryingCapacity is { } capacity
+                                    ? L["Actor.Sheet.CarriedOf", Weight(evaluation.CarriedWeight, inventoryRules), Weight(capacity, inventoryRules)]
+                                    : L["Actor.Sheet.Carried", Weight(evaluation.CarriedWeight, inventoryRules)])</p>
+                            }
+                            <InventoryPanel Rules="inventoryRules" Items="evaluation.Inventory" Options="inventoryOptions" FindType="type => system?.FindType(type)" Sheet="editSheet" CanEdit="CanEdit"
+                                            LibraryPath="@LibraryPath" Changed="OnRulesInputChanged" />
+                        </div>
+                    }
+                break;
+            case "hit-points":
+                    @if (system?.PrimaryResource is { } primary)
+                    {
+                        var current = YamlValues.GetInt(editSheet, primary.Key) ?? 0;
+                        var max = primary.MaxKey != null ? YamlValues.GetInt(editSheet, primary.MaxKey) ?? 0 : 0;
+                        var pct = max > 0 ? Math.Clamp(100.0 * current / max, 0, 100) : 0;
+                        var band = pct < 25 ? "hp-low" : pct < 50 ? "hp-mid" : "hp-high";
+                        <section class="panel" aria-labelledby="vitals-heading">
+                            <div class="panel-title"><h2 id="vitals-heading" class="h5"><LucideIcon IconName="heart" Size="18" Class="title-icon" /> @primary.Label</h2></div>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="stat-numeral hp-text" data-testid="hp-current">@current</span>
+                                @if (max > 0)
+                                {
+                                    <span class="small-muted">/ @max</span>
+                                }
+                            </div>
+                            @if (max > 0)
+                            {
+                                <div class="hp-bar @band" role="progressbar" aria-label="@primary.Label" aria-valuemin="0" aria-valuemax="@max" aria-valuenow="@current">
+                                    <span style="width:@(pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                                </div>
+                            }
+                            <p class="small-muted mt-2 mb-0">@(Rules?.HitPoints == null ? L["Actor.Sheet.HpLiveNoteEdit"] : L["Actor.Sheet.HpLiveNote"])</p>
+                            @if (Rules?.HitPoints is { } hitPointRules)
+                            {
+                                <HitPointRulesPanel Rules="hitPointRules" Summary="evaluation?.HitPoints" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
+                            }
+                        </section>
+                    }
+
+                break;
+            case "armor-class":
+                    @if (Rules?.ArmorClass is { } armorClassRules)
+                    {
+                        <ArmorClassPanel Rules="armorClassRules" Definition="system" Summary="evaluation?.ArmorClass" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
+                    }
+
+                break;
+            case "slots":
+                    @if (Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))))
+                    {
+                        <section class="panel" aria-labelledby="sheet-slots-heading" data-testid="sheet-slots">
+                            <div class="panel-title"><h2 id="sheet-slots-heading" class="h5"><LucideIcon IconName="flame" Size="18" Class="title-icon" /> @SlotTracker.Heading(system, Rules.SlotPools, editSheet.Keys)</h2></div>
+                            <SlotTracker Definition="system" Pools="Rules.SlotPools" Keys="editSheet.Keys.ToList()" Value="key => YamlValues.GetInt(editSheet, key)" ReadOnly="@(!CanEdit)"
+                                         OnAdjust="AdjustSlot" OnRest="RestSlots" />
+                            <p class="small-muted mt-2 mb-0">@L["Actor.Sheet.SlotsNote"]</p>
+                        </section>
+                    }
+
+                break;
+            case "level-up":
+                    @if (CanEdit && HasLevel)
+                    {
+                        <section class="panel panel-ai" aria-labelledby="levelup-heading">
+                            <div class="panel-title"><h2 id="levelup-heading" class="h5"><LucideIcon IconName="trending-up" Size="18" Class="title-icon" /> @L["Actor.Sheet.LevelUp"]</h2></div>
+                            @if (AtMaxLevel)
+                            {
+                                <p class="small-muted mb-0" data-testid="levelup-max">@L["Actor.Sheet.LevelMax", CurrentLevel]</p>
+                            }
+                            else if (levelUpPlan is { } plan)
+                            {
+                                <LevelUpStepper Plan="plan" Evaluation="evaluation" Rules="Rules" ClassId="@levelUpClassId" Roll="levelUpRoll" EntryName="Nm" Describe="Describe"
+                                                OnClassChosen="ChooseLevelUpClass" OnRollTyped="SetLevelUpRoll" OnRollDie="RollLevelUpHitDie" OnApply="ApplyLevelUp" OnCancel="CloseLevelUp" />
+                            }
+                            else
+                            {
+                                <p class="small-muted">@L["Actor.Sheet.LevelUpIntro", CurrentLevel, CurrentLevel + 1]</p>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="trending-up" OnClick="OpenLevelUp" data-testid="levelup-start">@L["Actor.Sheet.LevelUpTo", CurrentLevel + 1]</CodexButton>
+                                    @if (busy == "level")
+                                    {
+                                        <AiWorking Text="@L["Actor.Sheet.Thinking"]" OnStop="aiCall.Stop" TestId="levelup-working" />
+                                    }
+                                    else
+                                    {
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-arcane" OnClick="SuggestLevelUpAsync" Disabled="@(busy != null)" data-testid="sheet-levelup">
+                                            <LucideIcon IconName="sparkles" Size="14" /> @L["Actor.Sheet.SuggestLevel", CurrentLevel + 1]
+                                        </CodexButton>
+                                    }
+                                </div>
+                            }
+                            @if (levelUpDone is { } done && levelUpPlan == null)
+                            {
+                                <LevelUpToDo Done="done" Evaluation="evaluation" Rules="Rules" Sheet="editSheet" OnGoThere="ShowRule" OnDismiss="() => levelUpDone = null" />
+                            }
+                            @if (levelUpAdvice != null)
+                            {
+                                <div class="ai-output mt-3" data-testid="levelup-advice">
+                                    <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(levelUpAdvice))</div>
+                                    <div class="d-flex gap-2">
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => levelUpAdvice = null">@L["Actor.Sheet.Dismiss"]</CodexButton>
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AppendAdviceToNotes">@L["Actor.Sheet.KeepInNotes"]</CodexButton>
+                                    </div>
+                                </div>
+                            }
+                        </section>
+                    }
+
+                break;
+            default:
+                @if (sheetView != null && resolver != null && system != null && Shows(widget))
+                {
+                    <div class="sheet-widget" data-testid="@($"widget-{widget.Widget}-{widget.Key ?? widget.Roll ?? widget.Target}")">
+                        <SheetWidget Widget="widget" Definition="system" View="sheetView" Sheet="editSheet" Resolver="resolver" CanEdit="CanEdit" CanRoll="CanEdit"
+                                     Changed="OnRulesInputChanged" Left="SayLeft" OnRoll="RollDefinitionAsync" />
+                    </div>
+                }
+                break;
+        }
+    };
+
+    private string activeTab = "";
 
     private string ActiveTab => Tabs.Any(t => t.Key == activeTab) ? activeTab : Tabs[0].Key;
 
@@ -733,9 +870,7 @@ else
     {
         get
         {
-            var tabs = new List<(string, string, string)> { ("attributes", L["Actor.Sheet.Attributes"], "zap") };
-            if (Rules != null && Rules.Lists.Count > 0) tabs.Add(("picks", L["Actor.Sheet.Picks"], "sparkles"));
-            if (Rules?.Inventory != null) tabs.Add(("inventory", L["Actor.Sheet.Inventory"], "package"));
+            var tabs = Layout.Where(s => !s.Aside && Shows(s)).Select(s => (s.Section, SectionLabel(s), s.Icon ?? "file-text")).ToList();
             tabs.Add(("history", L["Actor.Sheet.History"], "feather"));
             if (said.Count > 0) tabs.Add(("said", L["Actor.Sheet.Said"], "message-square-quote"));
             if (MentionCount > 0) tabs.Add(("mentioned", L["Actor.Sheet.InNotes"], "notebook-pen"));
@@ -769,6 +904,12 @@ else
     /// <summary>Class and level, and the species, as plaques on the plate.</summary>
     private IEnumerable<string> PlatePlaques()
     {
+        // A system with several sheet kinds says which this is (a scoundrel, a crew).
+        if (system is { SheetKinds.Count: > 1 } && SheetLayout.KindOf(system, editSheet) is { } sheetKind)
+        {
+            yield return system.DisplayValue(string.IsNullOrEmpty(sheetKind.Label) ? sheetKind.Kind : sheetKind.Label);
+        }
+
         if (evaluation is { Classes.Count: > 0 })
         {
             foreach (var cls in evaluation.Classes) yield return $"{Nm(cls.Entry) ?? cls.Id} {cls.Level}";
@@ -880,7 +1021,10 @@ else
             if (actor != null)
             {
                 // The sheet shows the system in the reader's language; the rules engine still matches the original words (see AttributeDefinition.CanonicalLabel).
-                system = SystemCatalog.GetLocalizedDefinition(campaign.SystemId);
+                // While the table runs, the sheet is the table's: the definition it started with, even if the system was reloaded
+                // since (overhaul step 10), so what the page shows and saves is what the table's rules do.
+                system = RuntimeManager.TryGet(CampaignId)?.System?.Localize(System.Globalization.CultureInfo.CurrentUICulture.Name)
+                    ?? SystemCatalog.GetLocalizedDefinition(campaign.SystemId);
                 schema = system != null
                     ? DataDrivenSystemPlugin.BuildActorSchema(system)
                     : SystemCatalog.GetUISchemas(campaign.SystemId).FirstOrDefault(s => s.EntityType == DataDrivenSystemPlugin.ActorSchemaType);
@@ -910,8 +1054,9 @@ else
                 loadedSheet = new Dictionary<string, object>(actor.Sheet);
 
                 await LoadReferenceOptionsAsync();
-                var resolver = system != null ? await CachedEntryResolver.LoadAsync(Library, campaign, access, system) : null;
+                resolver = system != null ? await CachedEntryResolver.LoadAsync(Library, campaign, access, system) : null;
                 engine = system != null && resolver != null ? new SheetRuleEngine(system, resolver) : null;
+                layout = system != null ? SheetLayout.For(system, editSheet) : SheetLayout.Builtin;
                 inventoryOptions = Rules?.Inventory?.Types.ToDictionary(
                     type => type,
                     type => (IReadOnlyList<ContentEntry>)(resolver?.Candidates(type).OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList() ?? new List<ContentEntry>()))
@@ -952,12 +1097,8 @@ else
             return;
         }
 
-        engine.ApplyInherited(editSheet);
-        engine.ApplyAttributeTotals(editSheet);
-        evaluation = engine.Evaluate(editSheet);
-        engine.ApplySlotPools(editSheet, evaluation);
-        engine.ApplyHitPoints(editSheet, evaluation);
-        engine.ApplyArmorClass(editSheet, evaluation);
+        evaluation = engine.Recompute(editSheet);
+        sheetView = system is { SheetKinds.Count: > 0 } && resolver != null ? new SheetView(system, resolver, editSheet) : null;
         fieldOptions = evaluation.AllowedOptions.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, Nm(e)!)).ToList());
@@ -973,10 +1114,16 @@ else
     private IReadOnlyList<RuleViolation> Problems(Func<RuleViolation, bool> where) =>
         CanEdit && evaluation != null ? evaluation.Violations.Where(where).ToList() : Array.Empty<RuleViolation>();
 
-    private string TabOf(RuleViolation violation) =>
-        !IsIncrease(violation) && Rules?.Lists.Any(l => l.Key == violation.FieldKey) == true ? "picks"
-        : violation.FieldKey == Rules?.Inventory?.Key ? "inventory"
-        : "attributes";
+    private string TabOf(RuleViolation violation) => TabFor(RuleTarget(violation));
+
+    // The tab that fixes a problem: the list's picker, the inventory, a widget bound to the key, else the attributes' (or first) tab.
+    private string TabFor(string target) =>
+        (Rules?.Lists.Any(l => l.Key == target) == true ? SectionWith(w => Is(w, "picks"))
+            : target == Rules?.Inventory?.Key ? SectionWith(w => Is(w, "inventory"))
+            : null)
+        ?? SectionWith(w => w.Key == target || w.Keys.Contains(target))
+        ?? SectionWith(w => Is(w, "attributes"))
+        ?? FirstTab;
 
     private int ProblemsOn(string tab) => Problems(v => TabOf(v) == tab).Count;
 
@@ -997,9 +1144,7 @@ else
     /// <summary>Opens the tab that fixes it and brings the place into view.</summary>
     private void ShowRule(string target)
     {
-        activeTab = Rules?.Lists.Any(l => l.Key == target) == true ? "picks"
-            : target == Rules?.Inventory?.Key ? "inventory"
-            : "attributes";
+        activeTab = TabFor(target);
         pendingRule = target;
     }
 
@@ -1010,6 +1155,55 @@ else
             pendingRule = null;
             await JS.InvokeVoidAsync("codex.showRule", target);
         }
+    }
+
+    /// <summary>What a track change on the sheet left for the table (an overflow's question), said rather than dropped.</summary>
+    private Task SayLeft(IReadOnlyList<SheetIntent> left)
+    {
+        var asks = left.Where(i => i.Kind == SheetEvents.AskKind).ToList();
+        if (asks.Count > 0)
+        {
+            flash = Flash.Info(L["Actor.Sheet.TableAsks", string.Join("; ", asks.Select(a => string.Join(", ", (a.Fields.GetValueOrDefault("choices") as System.Collections.IEnumerable)?.Cast<object?>().Select(c => system?.DisplayValue(c?.ToString() ?? "") ?? c?.ToString()) ?? Array.Empty<string?>())))]);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>A roll from the layout's roll widget, made on this sheet with the host's dice. What it asks of this sheet (a cost, a
+    /// mark) is applied to the sheet being edited, to be saved with it; what it asks of others is said.</summary>
+    private async Task RollDefinitionAsync(SheetRollRequest request)
+    {
+        if (system == null || resolver == null || actor == null || currentUserId == null) return;
+        sheetRollNote = null;
+
+        // With the table live, the roll is the table's: made on the live sheet, in the shared roll log, its costs applied there.
+        var live = RuntimeManager.TryGet(CampaignId);
+        if (live?.ActiveSession != null && live.HasActor(actor.Id))
+        {
+            var command = new MakeRollCommand(actor.Id, currentUserId, request);
+            await live.EnqueueAsync(command);
+            sheetRoll = command.Rolled;
+            if (command.Failed != null) flash = Flash.Error(L["Actor.Sheet.RollFailed", command.Failed]);
+            else sheetRollNote = L["Actor.Sheet.RollAtTable"];
+            return;
+        }
+
+        try
+        {
+            sheetRoll = SheetRolls.Roll(system, resolver, editSheet, request, new RandomDiceSource());
+        }
+        catch (Exception ex) when (ex is RollException or FormulaException or InvalidOperationException)
+        {
+            sheetRoll = null;
+            flash = Flash.Error(L["Actor.Sheet.RollFailed", ex.Message]);
+            return;
+        }
+
+        var applied = SheetIntents.Apply(system, resolver, editSheet, sheetRoll.AllIntents());
+        var left = applied.Left.Where(i => i.Kind != SheetEvents.AskKind).ToList();
+        if (left.Count > 0) sheetRollNote = L["Actor.Sheet.RollLeft", left.Count];
+        await SayLeft(applied.Left);
+        Reevaluate();
     }
 
     private Task OnRulesInputChanged()

@@ -53,6 +53,7 @@ public class SystemWordsTests
             });
             Add("equipment", "mail", "Mail", p => { p["armorType"] = "heavy"; p["armorBase"] = 16L; p["armorDexCap"] = 2L; });
             Add("equipment", "spear", "Spear", _ => { }, "weapons");
+            Add("equipment", "plate", "Plate", p => { p["armorType"] = "heavy"; p["armorBase"] = 18L; p["armorDexCap"] = 0L; p["strength"] = 15L; });
         }
 
         private void Add(string type, string id, string name, Action<Dictionary<string, object>> fill, params string[] tags)
@@ -114,6 +115,17 @@ public class SystemWordsTests
         Assert.True(Warned(Evaluate(System(), inventory: "mail|equipped:1")));
         var named = System(y => y.Replace("weaponTag: weapons", "weaponTag: weapons\n    allArmor: Every armor"));
         Assert.False(Warned(Evaluate(named, inventory: "mail|equipped:1")));
+    }
+
+    [Fact]
+    public void AnArmorsStrengthMinimum_IsCheckedOnlyAgainstTheAttributeTheSystemNames()
+    {
+        static bool Warned(SheetEvaluation e) => e.Warnings.Any(w => w.Key == "Actor.Rule.ArmorStrength");
+
+        // The demo system has no strength: it names none, so no armor asks for one (it used to read "str", which it lacks, as 10).
+        Assert.False(Warned(Evaluate(System(), inventory: "plate|equipped:1")));
+        var named = System(y => y.Replace("weaponTag: weapons", "weaponTag: weapons\n    strengthAttribute: con"));
+        Assert.True(Warned(Evaluate(named, inventory: "plate|equipped:1")));
     }
 
     [Fact]

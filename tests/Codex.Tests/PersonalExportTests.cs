@@ -32,7 +32,7 @@ public class PersonalExportTests : IClassFixture<RavenDbFixture>
         _media = new RavenMediaStore(_db);
         _drafts = new RavenBookDraftRepository(_db);
         _bookArt = new RavenBookArtRepository(_db);
-        var registry = new Codex.Core.ContentRegistry(new Codex.Core.Scripting.ScriptEvaluator(NullLogger<Codex.Core.Scripting.ScriptEvaluator>.Instance));
+        var registry = new Codex.Core.ContentRegistry();
         var mentions = new MentionSources(new RegionRepository(_db), new CampaignLibrary(registry, new RavenHomebrewRepository(_db), new NoOpSystemCatalog()),
             new RavenSessionRepository(_db), new RavenNoteRepository(_db), new RavenJournalRepository(_db), new RavenWikiRepository(_db), Codex.Localization.Localizer.For("en"));
         _export = new PersonalExport(_db, _campaigns, _vault, _campaignExport, new PlayedCharacters(_actors, mentions), _drafts, _bookArt);

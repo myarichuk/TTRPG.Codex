@@ -1,0 +1,212 @@
+# What a host that reads ./system.yaml must make of it. Format: ../README.md.
+system: ref-crew
+
+sheets:
+  cutter:
+    kind: scoundrel
+    values: { load: normal }
+    lists:
+      actions:
+        hunt: { rating: 1 }
+        survey: { rating: 2 }
+        finesse: { rating: 1 }
+        prowl: { rating: 2 }
+        skirmish: { rating: 2 }
+        command: { rating: 1 }
+        consort: { rating: 1 }
+      items: [{ id: blade, used: true }, { id: heavy-weapon, used: true }, { id: lockpicks }, { id: spyglass }]
+    tracks: { stress: 2, trauma: 0, harm: {}, xp_insight: 0, xp_prowess: 0, xp_resolve: 0, xp_playbook: 0 }
+
+  lurk:
+    kind: scoundrel
+    lists:
+      actions: { prowl: { rating: 3 }, finesse: { rating: 2 }, study: { rating: 1 } }
+    tracks: { stress: 0 }
+
+  the-crew:
+    kind: crew
+    values: { tier: 1, turf: 2, hold: strong }
+    tracks: { heat: 7, wanted: 0, rep: 3, coin: 2 }
+
+campaign:
+  clocks: [{ name: the vault's alarm, segments: 6, filled: 4, visibility: gm }]
+  factions: [{ name: the city watch, status: -1 }]
+
+expectations:
+  # ---- Values: counts over keyed lists, sums over ticked items (step 2) ----
+  - id: crew.an-attribute-counts-its-actions-with-dots
+    step: 2
+    sheet: cutter
+    expect: { values: { insight: 2, prowess: 3, resolve: 2 } }
+    why: "Insight: hunt and survey have dots (study and tinker none). Prowess: finesse, prowl, skirmish. Resolve: command, consort."
+  - id: crew.load-used-is-what-was-ticked
+    step: 2
+    sheet: cutter
+    expect: { values: { LoadUsed: 3, LoadMax: 5 }, violations: [] }
+    why: "Blade 1 + heavy weapon 2 ticked; lockpicks and spyglass carried in reserve, unticked."
+  - id: crew.a-light-load-holds-three
+    step: 2
+    sheet: cutter
+    with: { values: { load: light }, lists: { items: [{ id: blade, used: true }, { id: heavy-weapon, used: true }, { id: spyglass, used: true }] } }
+    expect: { values: { LoadUsed: 4, LoadMax: 3 }, violations: [{ field: items, key: Actor.Rule.Load }] }
+
+  # ---- Tracks: a formula maximum on a second sheet kind (step 3) ----
+  - id: crew.reputation-shrinks-with-turf
+    step: 3
+    sheet: the-crew
+    expect: { values: { rep_Max: 10 } }
+    why: "12 - turf 2."
+
+  # ---- Rolls: pools, keep highest, zero dice, criticals by pattern, inputs carried (step 4) ----
+  - id: crew.a-six-is-a-full-success
+    step: 4
+    sheet: cutter
+    roll: { definition: action, inputs: { action: prowl }, dice: [6, 3] }
+    expect: { outcome: full, kept: [6], diceUsed: 2 }
+  - id: crew.four-or-five-is-partial
+    step: 4
+    sheet: cutter
+    roll: { definition: action, inputs: { action: prowl }, dice: [4, 2] }
+    expect: { outcome: partial, kept: [4] }
+  - id: crew.one-to-three-is-bad
+    step: 4
+    sheet: cutter
+    roll: { definition: action, inputs: { action: prowl }, dice: [3, 1] }
+    expect: { outcome: bad, kept: [3] }
+  - id: crew.two-sixes-are-critical
+    step: 4
+    sheet: cutter
+    roll: { definition: action, inputs: { action: prowl }, dice: [6, 6] }
+    expect: { outcome: critical }
+  - id: crew.zero-dice-roll-two-and-keep-the-lowest
+    step: 4
+    sheet: cutter
+    roll: { definition: action, inputs: { action: wreck }, dice: [6, 2] }
+    expect: { outcome: bad, kept: [2], diceUsed: 2 }
+  - id: crew.zero-dice-never-crit
+    step: 4
+    sheet: cutter
+    roll: { definition: action, inputs: { action: wreck }, dice: [6, 6] }
+    expect: { outcome: full, kept: [6] }
+  - id: crew.bonus-dice-join-the-pool
+    step: 4
+    sheet: cutter
+    roll: { definition: action, inputs: { action: hunt, bonusDice: 1 }, dice: [2, 5] }
+    expect: { outcome: partial, kept: [5], diceUsed: 2 }
+  - id: crew.position-and-effect-are-carried-on-the-result
+    step: 4
+    sheet: cutter
+    roll: { definition: action, inputs: { action: prowl, position: desperate, effect: great }, dice: [5, 1] }
+    expect: { outcome: partial, carries: { position: desperate, effect: great } }
+  - id: crew.harm-takes-a-die-from-every-pool
+    step: 4
+    sheet: cutter
+    with: { tracks: { harm: { "2": [cracked ribs] } } }
+    roll: { definition: action, inputs: { action: prowl }, dice: [4] }
+    expect: { outcome: partial, diceUsed: 1 }
+    why: "Level 2 harm brings Reduced dice: prowl 2 - 1 = 1 die."
+  - id: crew.resistance-costs-six-minus-the-highest-die
+    step: 4
+    sheet: cutter
+    roll: { definition: resistance, inputs: { attribute: insight }, dice: [5, 2] }
+    expect: { outcome: resisted, after: { tracks: { stress: 3 } } }
+    why: "Insight 2: two dice, highest 5, costs 1. Stress 2 + 1."
+  - id: crew.a-six-resists-for-free
+    step: 4
+    sheet: cutter
+    roll: { definition: resistance, inputs: { attribute: insight }, dice: [6, 3] }
+    expect: { after: { tracks: { stress: 2 } } }
+  - id: crew.a-resistance-critical-clears-a-stress
+    step: 4
+    sheet: cutter
+    roll: { definition: resistance, inputs: { attribute: insight }, dice: [6, 6] }
+    expect: { outcome: critical, after: { tracks: { stress: 1 } } }
+  - id: crew.a-group-action-takes-the-best-and-costs-the-leader
+    step: 4
+    sheet: cutter
+    roll: { definition: group, inputs: { action: prowl, leader: cutter }, participants: { cutter: [5, 3], lurk: [2, 1, 1] } }
+    expect: { outcome: partial, after: { tracks: { stress: 3 } } }
+    why: "Cutter rolls 2 dice (5: partial), Lurk 3 dice (2: bad). Best is partial; the leader takes 1 stress for Lurk's bad result."
+
+  # ---- Events: overflow, slots that push up, experience, help (step 5) ----
+  - id: crew.stress-overflow-marks-trauma-and-clears-stress
+    step: 5
+    sheet: cutter
+    with: { tracks: { stress: 8 } }
+    event: { type: adjust, track: stress, by: 3 }
+    expect:
+      after: { tracks: { stress: 0, trauma: 1 } }
+      intents: [{ ask: { who: player, choices: [numb, haunted, reckless, bitter, jumpy, hollow] } }]
+  - id: crew.the-fourth-trauma-retires
+    step: 5
+    sheet: cutter
+    with: { tracks: { stress: 9, trauma: 3 } }
+    event: { type: adjust, track: stress, by: 1 }
+    expect: { after: { tracks: { trauma: 4 }, conditions: [Retired] } }
+  - id: crew.harm-goes-into-a-free-slot-of-its-level
+    step: 5
+    sheet: cutter
+    with: { tracks: { harm: { "1": [bruised] } } }
+    event: { type: harm, level: 1, text: winded }
+    expect: { after: { tracks: { harm: { "1": [bruised, winded] } }, conditions: [Less effect] } }
+  - id: crew.a-full-level-pushes-harm-up
+    step: 5
+    sheet: cutter
+    with: { tracks: { harm: { "1": [bruised, winded] } } }
+    event: { type: harm, level: 1, text: cut hand }
+    expect: { after: { tracks: { harm: { "1": [bruised, winded], "2": [cut hand] } }, conditions: [Less effect, Reduced dice] } }
+  - id: crew.harm-past-the-last-level-is-fatal
+    step: 5
+    sheet: cutter
+    with: { tracks: { harm: { "3": [shattered leg] } } }
+    event: { type: harm, level: 3, text: stabbed }
+    expect: { after: { conditions: [Needs help, Dead] } }
+  - id: crew.a-desperate-roll-marks-experience-in-its-attribute
+    step: 5
+    sheet: cutter
+    event: { type: roll, definition: action, inputs: { action: prowl, position: desperate }, outcome: partial }
+    expect: { after: { tracks: { xp_prowess: 1 } } }
+  - id: crew.session-end-answers-mark-playbook-experience
+    step: 5
+    sheet: cutter
+    event: { type: sessionEnd, answers: [true, false, true] }
+    expect: { after: { tracks: { xp_playbook: 2 } } }
+  - id: crew.helping-costs-the-helper-a-stress
+    step: 5
+    sheet: cutter
+    event: { type: assist, helper: lurk }
+    expect: { intents: [{ adjust: { actor: lurk, track: stress, by: 1 } }] }
+  - id: crew.heat-overflow-raises-wanted-level-and-keeps-the-rest
+    step: 5
+    sheet: the-crew
+    event: { type: adjust, track: heat, by: 4 }
+    expect: { after: { tracks: { heat: 2, wanted: 1 } } }
+    why: "7 + 4 = 11 on a track of 9: wanted level +1, the 2 beyond carry over."
+
+  # ---- Layout and sheet kinds (step 6) ----
+  - id: crew.each-sheet-kind-has-its-own-layout
+    step: 6
+    sheet: cutter
+    expect: { layout: [Actions, Condition, Load] }
+  - id: crew.a-kind-without-a-layout-gets-a-generic-one
+    step: 6
+    requires: [crew.each-sheet-kind-has-its-own-layout]
+    sheet: the-crew
+    expect: { layout: [] }
+
+  # ---- Campaign objects (step 7) ----
+  - id: crew.a-clock-fills-and-says-so
+    step: 7
+    event: { type: tick, clock: the vault's alarm, by: 3 }
+    expect:
+      after: { campaign: { clocks: [{ name: the vault's alarm, filled: 6 }] } }
+      intents: [{ adjust: { clock: the vault's alarm, by: 3 } }, { log: { key: clock.full, args: [the vault's alarm] } }]
+    why: "4 + 3 on six segments: full at 6, the extra segment is lost."
+  - id: crew.clock-sizes-are-the-systems
+    step: 7
+    with: { campaign: { clocks: [{ name: an odd clock, segments: 5, filled: 0 }] } }
+    expect: { violations: [{ field: campaign.clocks, key: Actor.Rule.ClockSegments }] }
+  - id: crew.faction-status-stays-in-range
+    step: 7
+    with: { campaign: { factions: [{ name: the city watch, status: 4 }] } }
+    expect: { violations: [{ field: campaign.factions, key: Actor.Rule.Range }] }

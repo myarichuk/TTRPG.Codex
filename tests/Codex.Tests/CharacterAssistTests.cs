@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 using Codex.Web.Services;
@@ -55,7 +54,7 @@ public class CharacterAssistTests
 
     private static CharacterAssist Service()
     {
-        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var registry = new ContentRegistry();
         void Add(string type, string id, string name, Dictionary<string, object>? properties = null) =>
             registry.RegisterEntry(new ContentEntry { SystemId = "test5e", Type = type, Id = id, Name = name, PackId = "core", Properties = properties ?? new() }, 0);
         Add("class", "fighter", "Fighter");

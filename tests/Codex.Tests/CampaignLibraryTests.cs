@@ -1,5 +1,4 @@
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 using Codex.Web.Services;
@@ -28,7 +27,7 @@ public class CampaignLibraryTests
 
     private static CampaignLibrary Build(params HomebrewEntryDocument[] brews)
     {
-        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var registry = new ContentRegistry();
         registry.RegisterEntry(new ContentEntry { Id = "bolt", Type = "spell", SystemId = "demo", PackId = "base", Name = "Bolt" }, 0);
         registry.RegisterEntry(new ContentEntry { Id = "dragon", Type = "monster", SystemId = "demo", PackId = "base", Name = "Dragon" }, 0);
 

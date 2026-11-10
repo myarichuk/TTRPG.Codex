@@ -48,8 +48,7 @@ public class SystemNeutralityTests
     [Fact]
     public async Task FoeBlueprint_FillsTheSystemsPrimaryResource_NotHp()
     {
-        var scripts = new Codex.Core.Scripting.ScriptEvaluator(NullLogger<Codex.Core.Scripting.ScriptEvaluator>.Instance);
-        var content = new ContentRegistry(scripts);
+        var content = new ContentRegistry();
         var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(content));
         await loader.LoadAndInitializeAsync(AshfallRoot);
 

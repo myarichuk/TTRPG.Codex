@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Codex.Plugin.Abstractions;
-using DynamicExpresso;
 
 namespace Codex.Core.Rules;
 
@@ -70,6 +69,10 @@ public sealed class SheetEvaluation
 {
     public Dictionary<string, object> Derived { get; } = new();
 
+    /// <summary>What the system's sheet kind worked out (<see cref="SheetModel"/>), with every modifier that reached each value;
+    /// null for a system without sheet kinds.</summary>
+    public SheetModelResult? Model { get; set; }
+
     /// <summary>For each derived value, the numbers its formula read (<c>level</c> 3, <c>dex</c> 14), so a page can show
     /// the working (<see cref="FormulaWorking"/>).</summary>
     public Dictionary<string, IReadOnlyDictionary<string, double>> DerivedInputs { get; } = new();
@@ -137,6 +140,19 @@ public sealed class SheetEvaluation
 public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResolver resolver)
 {
     public const string MethodKey = "attrMethod";
+
+    /// <summary>The scores are typed in; no point buy or array argues with them, but they stop at <c>sheetRules.attributes.max</c>.</summary>
+    public const string ManualMethod = "manual";
+
+    /// <summary>The scores are a stat block's, as printed (an imported or restatted creature): the totals are the base scores. No
+    /// creation check, no <c>sheetRules.attributes.max</c> (that cap is character creation's, and a pit fiend prints Strength 26),
+    /// and no background bonuses or increase picks added: a restatted character keeps their feats on the sheet, and the block's
+    /// scores already are what the creature has. Picking another method brings the bonuses and picks back.</summary>
+    public const string PrintedMethod = "printed";
+
+    /// <summary>The sheet's attribute method, lower case; the system's default when the sheet names none.</summary>
+    private static string Method(IReadOnlyDictionary<string, object> sheet, AttributeRules rules) =>
+        (YamlValues.GetString(sheet, MethodKey) ?? rules.Default).ToLowerInvariant();
     public const string BasePrefix = "base_";
     public const string BonusPrefix = "bonus_";
 
@@ -169,9 +185,27 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         }
     }
 
+    /// <summary>
+    /// What the sheet page runs after every edit, in its order: values copied from a newly chosen entry, attribute totals, the
+    /// evaluation, then the slot, hit point and armor class values written back onto <paramref name="sheet"/>. One place, so the
+    /// page, the tests and the golden corpus (tests/Codex.Tests/Golden) all run the same sequence.
+    /// </summary>
+    public SheetEvaluation Recompute(Dictionary<string, object> sheet)
+    {
+        ApplyInherited(sheet);
+        ApplyAttributeTotals(sheet);
+        var evaluation = Evaluate(sheet);
+        ApplyTracks(sheet);
+        ApplySlotPools(sheet, evaluation);
+        ApplyHitPoints(sheet, evaluation);
+        ApplyArmorClass(sheet, evaluation);
+        return evaluation;
+    }
+
     public SheetEvaluation Evaluate(IReadOnlyDictionary<string, object> sheet)
     {
         var result = new SheetEvaluation();
+        if (system.SheetKinds.Count > 0) EvaluateModel(sheet, result);
         if (Rules == null) return result;
 
         EvaluateAttributes(sheet, result);
@@ -311,13 +345,14 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         var rules = Rules!.Attributes;
         if (rules == null || system.Attributes.Count == 0) return;
 
-        var method = (YamlValues.GetString(sheet, MethodKey) ?? rules.Default).ToLowerInvariant();
+        var method = Method(sheet, rules);
+        var printed = method == PrintedMethod;
         var bases = new Dictionary<string, int>();
         var bonuses = new Dictionary<string, int>();
         foreach (var attribute in system.Attributes)
         {
             var baseScore = YamlValues.GetInt(sheet, BasePrefix + attribute.Key) ?? YamlValues.GetInt(sheet, attribute.Key) ?? attribute.Default;
-            var bonus = YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
+            var bonus = printed ? 0 : YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
             bases[attribute.Key] = baseScore;
             if (bonus != 0) bonuses[attribute.Key] = bonus;
         }
@@ -353,13 +388,13 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                 result.Violations.Add(new RuleViolation(MethodKey, $"Standard array: assign exactly {string.Join(", ", rules.StandardArray)}, one score per attribute.", "Actor.Rule.StandardArray", new object?[] { string.Join(", ", rules.StandardArray) }));
             }
         }
-        else if (!rules.Methods.Contains(method, StringComparer.OrdinalIgnoreCase) && method != "manual")
+        else if (!rules.Methods.Contains(method, StringComparer.OrdinalIgnoreCase) && method is not (ManualMethod or PrintedMethod))
         {
             result.Violations.Add(new RuleViolation(MethodKey, $"Unknown attribute method \"{method}\"."));
         }
 
         var eligible = new List<string>();
-        if (rules.Bonuses is { } bonusRules)
+        if (rules.Bonuses is { } bonusRules && !printed)
         {
             eligible = EligibleBonusAttributes(bonusRules, sheet);
             var allocation = bonuses.Values.Where(v => v > 0).OrderByDescending(v => v).ToList();
@@ -385,15 +420,16 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         // higher cap can't carry an earlier Ability Score Improvement past its own.
         var increases = new Dictionary<string, int>();
         var running = system.Attributes.ToDictionary(a => a.Key, a => bases[a.Key] + bonuses.GetValueOrDefault(a.Key));
+        var scoreMax = printed ? null : rules.Max;
         foreach (var attribute in system.Attributes)
         {
-            if (rules.Max.HasValue && running[attribute.Key] > rules.Max.Value)
+            if (scoreMax.HasValue && running[attribute.Key] > scoreMax.Value)
             {
-                result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {rules.Max.Value}.", "Actor.Rule.ScoreMax", new object?[] { attribute.Label, rules.Max.Value }));
+                result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {scoreMax.Value}.", "Actor.Rule.ScoreMax", new object?[] { attribute.Label, scoreMax.Value }));
             }
         }
 
-        if (rules.Increases is { } increaseRules)
+        if (rules.Increases is { } increaseRules && !printed)
         {
             var overCap = new HashSet<string>();
             foreach (var grant in EvaluateIncreases(increaseRules, sheet, result))
@@ -404,7 +440,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
                     if (attribute == null) continue;
                     increases[attribute.Key] = increases.GetValueOrDefault(attribute.Key) + amount;
                     running[attribute.Key] += amount;
-                    var cap = grant.Cap ?? rules.Max;
+                    var cap = grant.Cap ?? scoreMax;
                     if (cap.HasValue && running[attribute.Key] > cap.Value && overCap.Add(attribute.Key))
                     {
                         result.Violations.Add(new RuleViolation(attribute.Key, $"{attribute.Label}: scores can't exceed {cap.Value} with {grant.Pick.Entry.Name}.", "Actor.Rule.ScoreCap", new object?[] { attribute.Label, cap.Value, grant.Pick.Entry }));
@@ -496,8 +532,9 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     public void ApplyAttributeTotals(Dictionary<string, object> sheet)
     {
         if (Rules?.Attributes is not { } rules) return;
+        var printed = Method(sheet, rules) == PrintedMethod;
         var increases = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        if (rules.Increases is { } increaseRules)
+        if (rules.Increases is { } increaseRules && !printed)
         {
             foreach (var raw in RawList(sheet, increaseRules.FromList))
             {
@@ -520,7 +557,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             }
 
             var baseScore = YamlValues.GetInt(sheet, BasePrefix + attribute.Key) ?? attribute.Default;
-            var bonus = YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
+            var bonus = printed ? 0 : YamlValues.GetInt(sheet, BonusPrefix + attribute.Key) ?? 0;
             sheet[attribute.Key] = (long)(baseScore + bonus + increases.GetValueOrDefault(attribute.Key));
         }
     }
@@ -818,6 +855,42 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     public IReadOnlyList<string> RestNames() =>
         Rules?.SlotPools.SelectMany(p => p.RecoversOn).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? new List<string>();
 
+    // ---- The primitives (sheet kinds) ----
+
+    /// <summary>A system with sheet kinds: its values, keyed-list entries and rules (<see cref="SheetModel"/>). Numbers land in
+    /// <see cref="SheetEvaluation.Derived"/> beside the <c>derived</c> ones, whole numbers as <c>long</c>.</summary>
+    private void EvaluateModel(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
+    {
+        var model = new SheetModel(system, resolver, sheet).Evaluate();
+        result.Model = model;
+        foreach (var (key, value) in model.Values)
+        {
+            if (value is not double number) continue;
+            result.Derived[key] = number == Math.Floor(number) ? (object)(long)number : number;
+        }
+
+        result.Violations.AddRange(model.Violations);
+        result.Warnings.AddRange(model.Warnings);
+    }
+
+    /// <summary>A system with sheet kinds: each numeric track's maximum onto the sheet as <c>{key}_Max</c>, and its declared
+    /// <c>start</c> where the sheet has no value yet. The live table reads both from the sheet (its pool mirrors them, see
+    /// ActorSheetSync), since it has no library to work a formula out with. Slot tracks hold what the player writes, and tracks
+    /// an <c>each</c> makes are slots; neither is written.</summary>
+    private void ApplyTracks(Dictionary<string, object> sheet)
+    {
+        if (system.SheetKinds.Count == 0) return;
+        var model = new SheetModel(system, resolver, sheet);
+        foreach (var key in model.TrackKeys())
+        {
+            if (model.TrackOf(key) is not { IsSlots: false, Definition.Each: null } track) continue;
+            if (track.Max is { } max) sheet[key + SheetModel.MaxSuffix] = Whole(max);
+            if (!sheet.ContainsKey(key) && track.Start is { } start) sheet[key] = Whole(start);
+        }
+
+        static object Whole(double value) => value == Math.Floor(value) && Math.Abs(value) < long.MaxValue ? (object)(long)value : value;
+    }
+
     // ---- Derived ----
 
     private void EvaluateDerived(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
@@ -829,9 +902,9 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         {
             try
             {
-                var value = EvaluateFormula(values, derived.Formula);
+                var value = EvaluateFormula(sheet, values, derived.Formula);
                 result.Derived[derived.Key] = value;
-                result.DerivedInputs[derived.Key] = CompiledFormulas[derived.Formula].Names.ToDictionary(n => n, n => values[n]);
+                result.DerivedInputs[derived.Key] = SheetFormulas.For(system).Names(derived.Formula).Where(values.ContainsKey).ToDictionary(n => n, n => values[n]);
                 // A later formula may use an earlier one ("pb" in "passive_perception").
                 if (IsIdentifier(derived.Key)) values.TryAdd(derived.Key, value);
             }
@@ -847,31 +920,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         new(key, $"{label}: the system's formula for this can't be worked out, so it is left out. The GM can check the system's rules.",
             "Actor.Rule.FormulaError", new object?[] { label });
 
-    /// <summary>A formula that names something the sheet doesn't have, or comes out as no number.</summary>
-    private sealed class FormulaException(string message) : Exception(message);
-
-    // Formulas come from content packs, which anyone can import. Each is parsed once (not on every render of every viewer)
-    // on an interpreter that knows no types, so `new string('a', 1000000000)` does not parse, with the five functions below
-    // as its whole surface (R7).
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (Lambda Lambda, string[] Names)> CompiledFormulas = new();
-
-    private static (Lambda Lambda, string[] Names) Compile(string formula)
+    /// <summary>Works out a formula of <c>sheetRules</c> (a derived value, carrying capacity, unarmored armor class) on the same
+    /// interpreter as the sheet kinds' (<see cref="SheetFormulas"/>): its names read <paramref name="values"/> first (the
+    /// sheet's numbers with field defaults, and the derived values before it), then anything else the sheet has. Rounded down.</summary>
+    private long EvaluateFormula(IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, double> values, string formula)
     {
-        var interpreter = new Interpreter(InterpreterOptions.None)
-            .SetFunction("floor", (Func<double, double>)Math.Floor)
-            .SetFunction("ceil", (Func<double, double>)Math.Ceiling)
-            .SetFunction("max", (Func<double, double, double>)Math.Max)
-            .SetFunction("min", (Func<double, double, double>)Math.Min)
-            .SetFunction("mod", (Func<double, double>)(score => AttributeDefinition.HalfMinusFive((int)Math.Floor(score))));
-        var names = interpreter.DetectIdentifiers(formula).UnknownIdentifiers.ToArray();
-        return (interpreter.Parse(formula, names.Select(n => new Parameter(n, typeof(double))).ToArray()), names);
-    }
-
-    private static long EvaluateFormula(IReadOnlyDictionary<string, double> values, string formula)
-    {
-        var (lambda, names) = CompiledFormulas.GetOrAdd(formula, Compile);
-        var args = names.Select(name => values.TryGetValue(name, out var value) ? (object)value : throw new FormulaException($"no number called \"{name}\"")).ToArray();
-        var result = Convert.ToDouble(lambda.Invoke(args), CultureInfo.InvariantCulture);
+        var result = SheetFormulas.Number(new SheetModel(system, resolver, sheet).Formula(formula, values));
         // 10/(level-level) is infinity, and a cast would make it long.MinValue without a word.
         if (!double.IsFinite(result) || Math.Abs(result) > 1e15) throw new FormulaException("not a number a sheet can hold");
         return (long)Math.Floor(result);

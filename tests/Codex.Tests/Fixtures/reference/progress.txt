@@ -1,0 +1,118 @@
+# Reference expectations that pass today, one id per line (see README.md). ReferenceFixtureTests fails when a listed one
+# stops passing, and when one passes without being listed: add it here, and update the overhaul doc's account, in the
+# change that made it pass.
+
+# Step 2 (values, modifiers, lists with aggregates): SheetModel over the sheet kinds.
+crew.an-attribute-counts-its-actions-with-dots
+crew.load-used-is-what-was-ticked
+crew.a-light-load-holds-three
+d35.level-is-the-sum-of-class-levels
+d35.bab-sums-each-classes-own-progression
+d35.saves-sum-base-saves-then-add-ability-and-resistance
+d35.same-type-bonuses-do-not-stack-dodge-does
+d35.touch-ac-leaves-out-armor-shield-and-natural
+d35.flat-footed-ac-leaves-out-dex-and-dodge
+d35.armor-caps-dex-on-ac
+d35.dodge-bonuses-stack-and-conditions-bring-modifiers
+d35.hit-points-are-the-first-die-the-rolls-and-con-per-level
+d35.skill-points-are-four-times-over-at-first-level
+d35.skill-points-across-classes
+d35.armor-check-penalty-applies-to-strength-and-dex-skills
+d35.cross-class-points-buy-half-ranks
+d35.synergy-from-five-ranks
+d35.a-parametrised-skill-has-one-entry-per-subject
+d35.a-legal-sheet-breaks-no-rule
+d35.class-skill-ranks-are-capped-at-level-plus-three
+d35.cross-class-ranks-are-capped-at-half
+d35.skill-points-cannot-be-overspent
+d35.prestige-prerequisites-are-checked-without-the-prestige-levels
+d35.prestige-prerequisites-met
+d35.prestige-prerequisites-name-each-missing-part
+street.humanity-is-will-less-what-implants-take
+street.armor-is-per-location
+street.a-skill-is-its-stat-plus-its-level
+# Tagged step 3, passing early: a track's current value is still a number on the sheet, so a value can read it.
+street.emp-follows-current-humanity
+
+# Step 3 (tracks): maxima, slot tracks per class and level, thresholds and bands. Street's thresholds compare against
+# HP_Max, which its rules.js works out, so they passed with step 8 and are listed there.
+d35.slots-come-from-the-class-table-plus-bonus-spells
+d35.a-slot-holds-only-a-spell-of-its-class-and-level
+d35.vancian-slots-take-duplicates-but-not-more-than-they-have
+crew.reputation-shrinks-with-turf
+
+# Step 4 (rolls): definitions with inputs, pools, keep, zero dice, explode/implode once, roll-under, outcomes, follow-up
+# rolls, intents and group rolls. street.a-serious-wound-takes-two-from-every-check needs the Seriously wounded threshold,
+# which compares against HP_Max (rules.js), so it is listed under step 8.
+d35.a-threat-confirmed-is-a-critical
+d35.a-threat-not-confirmed-is-a-hit
+d35.no-threat-below-the-range
+d35.a-natural-one-misses
+d35.a-natural-twenty-hits-and-threatens
+d35.a-condition-modifies-the-roll
+street.a-check-adds-stat-skill-and-die
+street.a-ten-explodes-once
+street.the-second-ten-does-not-explode
+street.a-one-implodes-once
+street.a-death-save-is-rolled-under-body
+street.a-death-save-over-body-fails
+crew.a-six-is-a-full-success
+crew.four-or-five-is-partial
+crew.one-to-three-is-bad
+crew.two-sixes-are-critical
+crew.zero-dice-roll-two-and-keep-the-lowest
+crew.zero-dice-never-crit
+crew.bonus-dice-join-the-pool
+crew.position-and-effect-are-carried-on-the-result
+crew.harm-takes-a-die-from-every-pool
+crew.resistance-costs-six-minus-the-highest-die
+crew.a-six-resists-for-free
+crew.a-resistance-critical-clears-a-stress
+crew.a-group-action-takes-the-best-and-costs-the-leader
+
+# Step 5 (events -> intents): declared handlers ({ when, intents }), the built-in damage handler (damage reduction, energy
+# resistance, nonlethal), events that are intents, overflow (reset, carry, ask), boxes and slots that push up, beyond.
+crew.stress-overflow-marks-trauma-and-clears-stress
+crew.the-fourth-trauma-retires
+crew.harm-goes-into-a-free-slot-of-its-level
+crew.a-full-level-pushes-harm-up
+crew.harm-past-the-last-level-is-fatal
+crew.a-desperate-roll-marks-experience-in-its-attribute
+crew.session-end-answers-mark-playbook-experience
+crew.helping-costs-the-helper-a-stress
+crew.heat-overflow-raises-wanted-level-and-keeps-the-rest
+street.mortally-wounded-rolls-a-death-save-each-turn
+street.each-death-save-raises-the-penalty
+d35.below-zero-is-dying
+d35.exactly-zero-is-disabled
+d35.minus-ten-is-dead-and-the-track-stops-there
+d35.damage-reduction-subtracts-from-physical-damage
+d35.damage-reduction-is-bypassed-by-its-tag
+d35.damage-reduction-does-not-touch-energy
+d35.energy-resistance-subtracts-by-type
+d35.nonlethal-equal-to-hit-points-staggers
+d35.nonlethal-beyond-hit-points-knocks-out
+
+# Step 6 (layout and sheet kinds): each sheet kind's declared layout, and the generic one for a kind without.
+crew.each-sheet-kind-has-its-own-layout
+crew.a-kind-without-a-layout-gets-a-generic-one
+
+# Step 7 (campaign objects): clocks and tables owned by the campaign, their rules, and handler lines with a campaign target.
+crew.a-clock-fills-and-says-so
+crew.clock-sizes-are-the-systems
+crew.faction-status-stays-in-range
+
+# Step 8 (scripts): functions and event handlers in rules.js, run by Jint. With them, street's thresholds over HP_Max and the
+# check they hinder.
+street.hit-points-come-from-a-script-function
+street.hit-points-round-the-average-up
+street.half-hit-points-is-seriously-wounded
+street.just-above-half-is-not
+street.below-zero-is-both
+street.a-serious-wound-takes-two-from-every-check
+street.damage-through-armor-wears-it-down
+street.a-head-hit-doubles-what-gets-through
+street.armor-stops-damage-up-to-its-stopping-power
+street.thresholds-follow-the-intents
+street.advancing-a-skill-spends-improvement-points
+street.advancing-without-the-points-changes-nothing

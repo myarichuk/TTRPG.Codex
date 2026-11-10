@@ -62,9 +62,14 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             currentText,
             instruction,
             audience,
-            $"{campaign.Name} ({catalog.GetDisplayName(campaign.SystemId)}){(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
+            WithSetting(campaign, $"{campaign.Name} ({catalog.GetDisplayName(campaign.SystemId)}){(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}"),
             Language: Lang), ct);
     }
+
+    /// <summary>The campaign line with the system's setting after it (<see cref="AiPrompts.WithSetting"/>). The catalog's definition
+    /// is the original, so the setting reaches the model in the language system.yaml wrote it in, like the rest of a prompt.</summary>
+    private string WithSetting(CampaignDocument campaign, string line) =>
+        AiPrompts.WithSetting(line, catalog.GetDefinition(campaign.SystemId)?.Setting);
 
     /// <summary>Someone's own notes tidied (spelling, layout, structure), or a <c>Service.Ai.TidyLostMention</c> refusal when the
     /// reply lost or changed a mention: <paramref name="encode"/> reads the typed mentions ("@Mara") as the page would save them,
@@ -139,7 +144,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         string? outline = null)
     {
         var assistant = await providers.AssistantForAsync(userId);
-        var setting = $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(400) is { Length: > 0 } blurb ? ": " + blurb : "")}";
+        var setting = WithSetting(campaign, $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(400) is { Length: > 0 } blurb ? ": " + blurb : "")}");
         return await assistant.WriteWikiPageAsync(new WikiPageRequest(
             title,
             kind == WikiPageKind.General ? "lore" : kind.ToString().ToLowerInvariant(),
@@ -164,7 +169,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             shown,
             current,
             instruction,
-            $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
+            WithSetting(campaign, $"{catalog.GetDisplayName(campaign.SystemId)} campaign “{campaign.Name}”{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}"),
             Language: Lang), ct);
     }
 
@@ -182,7 +187,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             text,
             instruction,
             audience,
-            $"{campaign.Name}{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
+            WithSetting(campaign, $"{campaign.Name}{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}"),
             Language: Lang), ct));
     }
 
@@ -278,7 +283,7 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             fields,
             primary?.Key,
             primary?.MaxKey,
-            $"{campaign.Name}{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}",
+            WithSetting(campaign, $"{campaign.Name}{(campaign.Blurb(300) is { Length: > 0 } blurb ? ": " + blurb : "")}"),
             Language: Lang,
             HitPointsLabel: primary?.Label,
             HitPointsBasis: system?.Ai.PrimaryResourceBasis,

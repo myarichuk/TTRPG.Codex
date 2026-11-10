@@ -83,12 +83,21 @@ public sealed record EventTerm(string Kind, string Key, string Text)
     public const string SlotKind = "slot";
     public const string UserKind = "user";
 
+    /// <summary>A word of the campaign's system: a track's label, an event's or a log line's key (overhaul step 6).</summary>
+    public const string SystemKind = "system";
+
     /// <summary>An actor, by id: each reader sees the name they know it by (a stranger's public name), or "someone" for one
     /// they cannot see (F20). The stored text is the real name, the DM's.</summary>
     public const string ActorKind = "actor";
 
     /// <summary>An actor this reader cannot see, put in place of its name by <see cref="SessionEventRedactor"/>.</summary>
     public const string UnseenKind = "unseen";
+
+    /// <summary>Something only the GM may know of (a clock kept for the GM): a message naming one is not in a player's log
+    /// (<see cref="SessionEventRedactor"/>).</summary>
+    public const string GmOnlyKind = "gm";
+
+    public static EventTerm GmOnly(string text) => new(GmOnlyKind, text, text);
 
     public static EventTerm Condition(string name) => new(ConditionKind, name, name);
     public static EventTerm DamageType(string type) => new(DamageTypeKind, type, type);

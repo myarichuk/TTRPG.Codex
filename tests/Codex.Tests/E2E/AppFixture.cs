@@ -86,6 +86,12 @@ public sealed class AppFixture : IAsyncLifetime
         (await SeedUserAsync("e2e-admin", "e2e_admin", "E2e-Admin-" + Guid.NewGuid().ToString("N")[..8], "Player", "GameMaster", "ServerAdmin")).EnsureSuccessStatusCode();
 
         _playwright = await Playwright.CreateAsync();
+        Browser = await _playwright.Chromium.LaunchAsync(LaunchOptions());
+    }
+
+    /// <summary>Headless Chromium, for every test that launches a browser of its own too.</summary>
+    public static BrowserTypeLaunchOptions LaunchOptions()
+    {
         var options = new BrowserTypeLaunchOptions { Headless = true };
 
         // This sandbox has Chromium pre-cached outside Playwright's normal revision-managed
@@ -98,7 +104,7 @@ public sealed class AppFixture : IAsyncLifetime
             options.ExecutablePath = sandboxChromium;
         }
 
-        Browser = await _playwright.Chromium.LaunchAsync(options);
+        return options;
     }
 
     /// <summary>Seeds a user directly through the app's own repository - same password-hashing

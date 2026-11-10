@@ -1,0 +1,3 @@
+- { id: light-helmet, name: Light helmet, properties: { stoppingPower: 11 } }
+- { id: armored-jacket, name: Armored jacket, properties: { stoppingPower: 11 } }
+- { id: kevlar-vest, name: Kevlar vest, properties: { stoppingPower: 7 } }

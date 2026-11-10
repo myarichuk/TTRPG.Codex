@@ -60,13 +60,23 @@ The About page shows the server admin when the last backup ran. The database's o
 also requested, but RavenDB's free licence refuses it, and About says so.
 
 Content is loaded from the folders in `Codex:ContentDirectories` (`appsettings.json`), plus
-`content/` and `plugins/` next to a published executable. Problems with a pack (an entry that does not parse,
-a missing base it inherits from) are listed on the About page, and the campaign Library says when there are any.
+`content/` and `plugins/` next to a published executable, plus the folder systems installed from the app live in. Problems
+with a pack (an entry that does not parse, a missing base it inherits from) are listed on the About page, and the campaign
+Library says when there are any.
+
+**Installing a system.** The admin installs, replaces or removes a system from the About page: a zip of its folder, checked
+before anything changes, never with compiled code (see [docs/CONTENT_PACKS.md](docs/CONTENT_PACKS.md#installing-reloading-and-versions)).
+*Reload systems* there picks up a change made on disk without a restart; a table that is running keeps its system until it
+ends. A campaign records the system's version and file hashes, and its GM is told what changed. The keys of system.yaml are
+in the generated [reference](docs/SYSTEM_YAML_REFERENCE.md) and [JSON schema](docs/schema/system.schema.json). A release
+ships srd5e inside the app; any other system under `content/systems/` is its own download.
 
 **Plugins are programs.** Packs (YAML, and `.zip`/`.cdx` archives of it) are data. A `.dll` in any content
 folder, including the GM's "My content" folder the launcher opens, is loaded into the server and runs with
-everything the server can reach: every campaign, every account, the AI keys. Put a DLL there only if you
-would run it as a program on that computer.
+everything the server can reach: every campaign, every account, the AI keys. That holds for a DLL beside a
+`system.yaml` that names a type in it (a compiled function, event handler or sheet widget) as much as for a
+whole plugin; About marks such a system "contains compiled code". Put a DLL there only if you would run it as
+a program on that computer.
 
 **Settings.** Each goes in `appsettings.json`, or in an environment variable with `__` for `:`
 (`Codex__DataDirectory`). The tray launcher sets the ones marked *launcher* itself.
@@ -76,6 +86,10 @@ would run it as a program on that computer.
 | `Codex:DataDirectory` | Where the database, images and backups live. Default: `RavenData` in the per-user folder; a relative path is taken from the app's folder. |
 | `Codex:KeysDirectory` | Where the Data Protection key ring lives. Default: `Keys` beside the data folder. |
 | `Codex:ContentDirectories` | Folders of systems, packs and plugins to load (a list). `Codex:PluginsDirectory` is the older single folder. |
+| `Codex:Systems:InstallDirectory` | Where systems installed from the app live. Default: `Systems` beside the data folder. |
+| `Codex:Systems:GmInstall` | `true` lets anyone signed in install and remove systems, not only the server admin; never while the server is open to the internet. |
+| `Codex:Systems:Watch` | `true` reloads the systems by itself when a file under a content root changes. Default: on in Development, off otherwise. |
+| `Codex:Systems:Scripts` | `false` turns system scripts off: a system that names one does not load, and an upload with one is refused. |
 | `Codex:AdminUsername` | The account that is server admin, by name. Without it, the first account made on the server's own computer is. |
 | `Authentication:EnableLocalLogin` | `false` hides the name-and-password sign-in, leaving only the external providers configured under `Authentication:`. |
 | `Codex:DefaultCulture` | The language for a visitor who has not picked one (`en`, `he`, `ru`); without it the browser's language decides. *Launcher.* |

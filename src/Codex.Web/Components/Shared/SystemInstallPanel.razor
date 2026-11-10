@@ -1,0 +1,203 @@
+@using System.Security.Claims
+@using Codex.Core
+@using Codex.Core.Systems
+@using Codex.Plugin.Abstractions
+@inject SystemInstaller Installer
+@inject AuthenticationStateProvider AuthStateProvider
+
+@* Overhaul step 10: install, replace and reload systems from the app. Rights are the installer's (the server's admin, and
+   anyone signed in when Codex:Systems:GmInstall is on and the server is not open to the internet); this only shows what it allows. *@
+@if (user != null && (mayInstall || mayReload))
+{
+    <section class="panel" aria-labelledby="install-heading" data-testid="about-install">
+        <div class="panel-title"><h2 id="install-heading">@L["Page.About.Install"]</h2></div>
+        <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+        @if (mayInstall)
+        {
+            <p class="small-muted">@L["Page.About.InstallHint", SystemArchive.MaxBytes / (1024 * 1024)]</p>
+            @if (plan == null)
+            {
+                <label class="cx-btn cx-etched mb-0" data-testid="install-system">
+                    <LucideIcon IconName="upload" Size="18" /> @L["Page.About.InstallChoose"]
+                    <InputFile OnChange="CheckAsync" accept=".zip" class="visually-hidden" disabled="@busy" />
+                </label>
+            }
+            else
+            {
+                var check = plan.Check;
+                <article class="mt-2" data-testid="install-plan">
+                    @if (check.Id != null)
+                    {
+                        <h3 class="h6 mb-1">@check.Name <span class="small-muted">v@(check.Version) · @check.Id</span>
+                            @if (check.NamesScripts)
+                            {
+                                <span class="pill ms-1">@L["Page.About.InstallScripts"]</span>
+                            }
+                        </h3>
+                        @if (check.Packs > 0)
+                        {
+                            <div class="small-muted">@L["Page.About.InstallPacks", check.Packs]</div>
+                        }
+                        @if (plan.Replaces != null)
+                        {
+                            <p class="mb-1 mt-2" data-testid="install-replaces">@L["Page.About.InstallReplaces", plan.Replaces, plan.CampaignsUsing]</p>
+                            @if (plan.Changes.Count > 0)
+                            {
+                                <ul class="mb-2">
+                                    @foreach (var change in plan.Changes)
+                                    {
+                                        <li>@Describe(change)</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="small-muted mb-2">@L["Page.About.InstallSame"]</p>
+                            }
+                        }
+                    }
+                    @if (plan.Conflict != null || check.Errors.Count > 0)
+                    {
+                        <div class="text-danger mb-2" role="alert" data-testid="install-errors">
+                            <div>@L["Page.About.InstallCannot"]</div>
+                            <ul class="mb-0">
+                                @if (plan.Conflict != null)
+                                {
+                                    <li>@plan.Conflict</li>
+                                }
+                                @foreach (var error in check.Errors)
+                                {
+                                    <li>@error</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (check.Warnings.Count > 0)
+                    {
+                        <details class="mb-2" data-testid="install-warnings">
+                            <summary>@L["Page.About.InstallWarnings", check.Warnings.Count]</summary>
+                            <ul class="mb-0 mt-1">
+                                @foreach (var warning in check.Warnings)
+                                {
+                                    <li>@warning</li>
+                                }
+                            </ul>
+                        </details>
+                    }
+                    <div class="row-actions">
+                        @if (plan.CanInstall)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="InstallAsync" Busy="busy" data-testid="install-confirm">
+                                @(plan.Replaces != null ? L["Page.About.InstallReplace"] : L["Page.About.InstallConfirm"])
+                            </CodexButton>
+                        }
+                        <CodexButton Variant="CodexButtonVariant.Etched" OnClick="Cancel" Disabled="busy" data-testid="install-cancel">@L["Common.Cancel"]</CodexButton>
+                    </div>
+                </article>
+            }
+        }
+        @if (mayReload)
+        {
+            <div class="mt-3">
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="ReloadAsync" Busy="busy" data-testid="reload-systems"><LucideIcon IconName="refresh-cw" Size="14" /> @L["Page.About.Reload"]</CodexButton>
+                <div class="small-muted mt-1">@L["Page.About.ReloadHint"]</div>
+            </div>
+        }
+    </section>
+}
+
+@code {
+    /// <summary>Called after systems were installed, removed or reloaded, so the page shows the new set.</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private ClaimsPrincipal? user;
+    private bool mayInstall;
+    private bool mayReload;
+    private bool busy;
+    private SystemInstallPlan? plan;
+    private Flash? flash;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        mayInstall = Installer.MayInstall(user);
+        mayReload = Installer.MayReload(user);
+    }
+
+    private async Task CheckAsync(InputFileChangeEventArgs e)
+    {
+        if (user == null) return;
+        busy = true;
+        flash = null;
+        try
+        {
+            await using var upload = e.File.OpenReadStream(SystemArchive.MaxBytes);
+            using var buffer = new MemoryStream();
+            await upload.CopyToAsync(buffer);
+            buffer.Position = 0;
+            plan = await Installer.CheckAsync(buffer, user);
+            if (plan == null) flash = Flash.Error(L["Page.About.InstallNotAllowed"]);
+        }
+        catch (IOException ex)
+        {
+            flash = Flash.Error(L["Page.About.InstallTooBig", SystemArchive.MaxBytes / (1024 * 1024), ex.Message]);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task InstallAsync()
+    {
+        if (plan == null || user == null) return;
+        busy = true;
+        try
+        {
+            var name = plan.Check.Name ?? plan.Check.Id ?? "";
+            var result = await Installer.InstallAsync(plan.Token, user);
+            plan = null;
+            flash = result.Succeeded ? Flash.Success(L["Page.About.Installed", name]) : Flash.Error(result.Error ?? "");
+            await OnChanged.InvokeAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        if (plan != null) Installer.Discard(plan.Token);
+        plan = null;
+    }
+
+    private async Task ReloadAsync()
+    {
+        if (user == null) return;
+        busy = true;
+        try
+        {
+            var result = await Installer.ReloadAsync(user);
+            flash = !result.Succeeded ? Flash.Error(result.Error ?? "")
+                : result.Reload is { } r && r.Added.Count + r.Removed.Count + r.Changed.Count > 0
+                    ? Flash.Success(L["Page.About.Reloaded", List(r.Added), List(r.Removed), List(r.Changed)])
+                    : Flash.Success(L["Page.About.ReloadedNothing"]);
+            await OnChanged.InvokeAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+
+        string List(IReadOnlyList<string> ids) => ids.Count == 0 ? "—" : string.Join(", ", ids);
+    }
+
+    private string Describe(SystemChange change) => change.Kind switch
+    {
+        SystemChangeKind.Version => L["Campaign.SystemChanged.Version", change.Before ?? "", change.After ?? ""],
+        SystemChangeKind.Added => L["Campaign.SystemChanged.Added", change.File ?? ""],
+        SystemChangeKind.Removed => L["Campaign.SystemChanged.Removed", change.File ?? ""],
+        _ => L["Campaign.SystemChanged.Changed", change.File ?? ""]
+    };
+}

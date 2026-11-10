@@ -89,7 +89,7 @@ public class RavenBookBuildRepository(RavenDbService dbService) : IBookBuildRepo
 
     public async Task<BookBuildDocument?> GetAsync(CampaignAccess dm, string audience)
     {
-        if (!IsEdition(audience) || await CampaignAccessResolver.NowAsync(dbService.Store, dm) is not { IsDm: true } now) return null;
+        if (!IsEdition(audience) || await CampaignAccessResolver.NowAsync(dbService.Store, dm, write: false) is not { IsDm: true } now) return null;
         using var session = dbService.Store.OpenAsyncSession();
         var build = await session.LoadAsync<BookBuildDocument>(BookBuildDocument.IdFor(now.CampaignId, now.UserId, audience));
         // The id already names the owner; the fields are checked too, so a document written by hand under another's name is not served.

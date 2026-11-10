@@ -39,6 +39,7 @@
   <data name="Actor.Dice.Secret" xml:space="preserve"><value>סודי</value></data>
   <data name="Actor.Dice.Faces" xml:space="preserve"><value>קוביות</value></data>
   <data name="Actor.Dice.Nat20" xml:space="preserve"><value>20 טבעי</value></data>
+  <data name="Actor.Dice.Outcome" xml:space="preserve"><value>תוצאה: {0}</value></data>
   <data name="Actor.Dice.Nat1" xml:space="preserve"><value>1 טבעי</value></data>
   <data name="Actor.Dice.Dropped" xml:space="preserve"><value>הושמטה</value></data>
   <data name="Actor.Dice.Plus" xml:space="preserve"><value>פלוס {0}</value></data>
@@ -203,6 +204,8 @@
   <data name="Actor.Sheet.MethodPointBuy" xml:space="preserve"><value>קנייה בנקודות</value></data>
   <data name="Actor.Sheet.MethodStandardArray" xml:space="preserve"><value>סט סטנדרטי</value></data>
   <data name="Actor.Sheet.MethodManual" xml:space="preserve"><value>ידני</value></data>
+  <data name="Actor.Sheet.MethodPrinted" xml:space="preserve"><value>כמו בתיאור</value></data>
+  <data name="Actor.Sheet.PrintedNote" xml:space="preserve"><value>כמו בתיאור: אלה הערכים מתיאור היצור. בונוסי רקע והגדלות תכונה מבחירות אינם מתווספים; בחרו שיטה אחרת כדי להוסיף אותם.</value></data>
   <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>קנייה בנקודות: </value></data>
   <data name="Actor.Sheet.PointBuyTail" xml:space="preserve"><value> מתוך {0, plural, one{נקודה אחת} two{# נקודות} other{# נקודות}} נוצלו. הערכים נעים בין {1} ל-{2} לפני בונוסים.</value></data>
   <data name="Actor.Sheet.StdArrayLead" xml:space="preserve"><value>סט סטנדרטי: חלקו </value></data>
@@ -330,6 +333,8 @@
   <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>אחרי השמירה השחקנים יוכלו לקרוא את ההיסטוריה של הדמות, מלבד הבלוקים של שליט המבוך. כדאי לבדוק קודם שאין סודות בשאר.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" אינו בספרייה.</value></data>
   <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: אי אפשר לחשב את הנוסחה של השיטה לערך הזה, ולכן הוא מושמט. מנהל המשחק יכול לבדוק את חוקי השיטה.</value></data>
+  <data name="Actor.Rule.ScriptError" xml:space="preserve"><value>{0}: הסקריפט של השיטה נכשל, ולכן הערך מושמט. {1}</value></data>
+  <data name="Actor.Rule.CompiledError" xml:space="preserve"><value>{0}: הקוד המהודר של השיטה נכשל, ולכן הערך מושמט. {1}</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} – {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: אפשר לקחת את {1} פעם אחת בלבד.</value></data>
@@ -369,6 +374,40 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>מה החבורה רואה</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>דמות עטויה בברדס שמשלמת בכסף ישן ולעולם לא מוסרת שם.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>נחשף לכם</value></data>
+  <data name="Actor.Sheet.RollDice" xml:space="preserve"><value>נשמרו {0}; סה״כ {1}</value></data>
+  <data name="Actor.Sheet.RollFailed" xml:space="preserve"><value>לא ניתן היה להטיל: {0}</value></data>
+  <data name="Actor.Sheet.RollLeft" xml:space="preserve"><value>חלק ממה שההטלה מבקשת שייך לשולחן: נותרו {0}.</value></data>
+  <data name="Actor.Sheet.TableAsks" xml:space="preserve"><value>השולחן מבקש בחירה: {0}</value></data>
+  <data name="Actor.Widget.Add" xml:space="preserve"><value>הוספה</value></data>
+  <data name="Actor.Widget.AddTo" xml:space="preserve"><value>הוספה אל {0}</value></data>
+  <data name="Actor.Widget.Box" xml:space="preserve"><value>תיבה {0} מתוך {1}</value></data>
+  <data name="Actor.Widget.Choose" xml:space="preserve"><value>בחירה…</value></data>
+  <data name="Actor.Widget.CompiledFailed" xml:space="preserve"><value>לא ניתן להציג את הווידג'ט הזה.</value></data>
+  <data name="Actor.Widget.Clear" xml:space="preserve"><value>ניקוי {0}</value></data>
+  <data name="Actor.Widget.Empty" xml:space="preserve"><value>אין כאן עדיין דבר.</value></data>
+  <data name="Actor.Widget.Free" xml:space="preserve"><value>פנוי</value></data>
+  <data name="Actor.Widget.Less" xml:space="preserve"><value>{0}: אחד פחות</value></data>
+  <data name="Actor.Widget.Level" xml:space="preserve"><value>רמה {0}</value></data>
+  <data name="Actor.Widget.Mark" xml:space="preserve"><value>סימון</value></data>
+  <data name="Actor.Widget.MarkLevel" xml:space="preserve"><value>רמה לסימון</value></data>
+  <data name="Actor.Widget.MarkPlaceholder" xml:space="preserve"><value>מה זה</value></data>
+  <data name="Actor.Widget.MarkText" xml:space="preserve"><value>מה לסמן ב{0}</value></data>
+  <data name="Actor.Widget.ModifiersOf" xml:space="preserve"><value>ממה מורכב {0}</value></data>
+  <data name="Actor.Widget.More" xml:space="preserve"><value>{0}: אחד יותר</value></data>
+  <data name="Actor.Widget.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>שום דבר לא מוסיף לו.</value></data>
+  <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>לא נספר: נספר הטוב יותר מאותו סוג</value></data>
+  <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} מתוך {1}</value></data>
+  <data name="Actor.Widget.Remove" xml:space="preserve"><value>הסרה</value></data>
+  <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>הסרת {0}</value></data>
+  <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>בשימוש {0} מתוך {1}</value></data>
+  <data name="Actor.Sheet.RollAtTable" xml:space="preserve"><value>ההטלה נעשתה ליד השולחן: היא ביומן ההטלות המשותף, ומה שהיא עולה הוחל שם.</value></data>
+  <data name="Actor.Rule.ClockSegments" xml:space="preserve"><value>{0}: לשעון יש {2} מקטעים, לא {1}.</value></data>
+  <data name="Actor.Rule.ClockFilled" xml:space="preserve"><value>{0}: {1} מלאים מתוך {2}.</value></data>
+  <data name="Actor.Rule.ClockVisibility" xml:space="preserve"><value>{0}: "{1}" אינו אפשרות; שעון שמור למנחה או מוצג לשחקנים.</value></data>
+  <data name="Actor.Rule.Range" xml:space="preserve"><value>{0}: {1} {2} מחוץ לטווח {3}.</value></data>
+  <data name="Actor.Rule.CampaignDuplicate" xml:space="preserve"><value>לשניים יש את השם {0}.</value></data>
+  <data name="Actor.Rule.CampaignUnnamed" xml:space="preserve"><value>לאחד אין שם.</value></data>
   <data name="Actor.Vault.Title" xml:space="preserve"><value>מהדמויות שלך</value></data>
   <data name="Actor.Vault.Loading" xml:space="preserve"><value>טוען…</value></data>
   <data name="Actor.Vault.Gone" xml:space="preserve"><value>הדמות שממנה הגיע העותק הזה כבר לא נמצאת בדמויות שלך.</value></data>

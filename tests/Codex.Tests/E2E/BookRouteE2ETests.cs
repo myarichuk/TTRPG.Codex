@@ -402,6 +402,8 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
                     }
 
                     var last = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("messages").EnumerateArray().Last().GetProperty("content").GetString() ?? string.Empty;
+                    // The app builds its prompts with AppendLine (\r\n on Windows); the markers below are looked up with \n.
+                    last = last.ReplaceLineEndings("\n");
                     string reply;
                     if (last.Contains("\n<mine>\n", StringComparison.Ordinal))
                     {
@@ -477,16 +479,16 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         var campaignId = await E2EHelpers.CreateCampaignAsync(dm, "Lamplight");
         await _app.SeedActorsAsync([new Codex.Web.TestSeedActor { Id = "bd-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Biography = "Keeps the lighthouse." }]);
 
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-model");
         await dm.GetByTestId("ai-save").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model");
         await dm.GetByTestId("ai-add-image-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI images API)");
         await dm.GetByTestId("ai-name").FillAsync("Fake pictures");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-pictures");
@@ -617,6 +619,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         // The GM writes into the Cast chapter: it is saved, marked edited, and drawn.
         await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await Assertions.Expect(dm.Locator(".cm-content")).ToContainTextAsync("Keeps the lighthouse"); // the editor has the chapter before anything is typed
         await dm.Locator(".cm-content").ClickAsync();
         await dm.Keyboard.PressAsync("ControlOrMeta+End");
         await dm.Keyboard.TypeAsync("\nPUBLIC_GM_LINE\n");
@@ -701,6 +704,9 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         }]);
         await E2EHelpers.OpenBookAsync(dm, campaignId, "party");
         await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        // The editor takes the chapter's text a moment after the tab turns current; typing before that lands in the chapter that was
+        // showing (Cover and contents), and the leak is then named there instead of in Cast (seen on a loaded Windows runner).
+        await Assertions.Expect(dm.Locator(".cm-content")).ToContainTextAsync("Keeps the lighthouse");
         await dm.Locator(".cm-content").ClickAsync();
         await dm.Keyboard.PressAsync("ControlOrMeta+End");
         await dm.Keyboard.TypeAsync("\nShe knows the vault key lies under the chapel altar.\n");
@@ -967,9 +973,9 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
             Biography = "Keeps the lighthouse on the point.\n\nHer lighthouse log is kept dry.\n\n:::dm\nCANARY_AI_SECRET\n:::"
         }]);
 
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-model");
@@ -1085,9 +1091,9 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
                 Biography = "Rows out to the lighthouse at dusk. REWRITE_WHOLE " + Long("oren")
             }]);
 
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-model");
@@ -1181,9 +1187,9 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
             new Codex.Web.TestSeedActor { Id = "bmg-tom-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Tomas", Visibility = Codex.Persistence.ActorVisibility.Known, Biography = "Tom mends nets." }
         ]);
 
-        await dm.GotoAsync("/settings/ai");
+        await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-model");
@@ -1352,6 +1358,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         // Tab B edits Cast and saves it.
         await b.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await Assertions.Expect(b.Locator(".cm-content")).ToContainTextAsync("Keeps the lighthouse"); // the editor has the chapter before anything is typed
         await b.Locator(".cm-content").ClickAsync();
         await b.Keyboard.PressAsync("ControlOrMeta+End");
         await b.Keyboard.TypeAsync("\nPUBLIC_TAB_B\n");

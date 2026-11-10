@@ -60,7 +60,8 @@ public class BookSourceE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.GetByTestId("book-draft-save-state")).ToHaveTextAsync("Saved", new() { Timeout = 15_000 });
         // The chapter's text was not touched by the theme's tab.
         await dm.GetByTestId("book-source-tab-text").ClickAsync();
-        Assert.DoesNotContain("Copied from the theme", await dm.Locator(".cm-content").InnerTextAsync());
+        // Waits for the editor to leave the Style sheet: a snapshot taken at once still reads the tab that was showing (Chromium 153).
+        await Assertions.Expect(dm.Locator(".cm-content")).Not.ToContainTextAsync("Copied from the theme");
         Assert.DoesNotContain("ZZZNOTTYPED", await dm.Locator(".cm-content").InnerTextAsync());
         Assert.Empty(errors);
     }
@@ -78,6 +79,9 @@ public class BookSourceE2ETests : IClassFixture<AppFixture>
         // A heading in a fence is not one.
         await Assertions.Expect(dm.Locator("[data-testid=book-tree-heading]", new() { HasText = "inside a fence" })).ToHaveCountAsync(0);
         await dm.Locator("[data-testid=book-draft-chapter][data-section=front]").ClickAsync();
+        // The second click must come after the first has taken effect: two server round trips can finish in either order, and the
+        // chapter that finishes last is the one shown (the cursor then stays on an empty line of Cover and contents).
+        await Assertions.Expect(dm.Locator("[data-testid=book-draft-chapter][data-section=front]")).ToHaveAttributeAsync("aria-current", "true");
         await row.ClickAsync(); // opens Cast again (the open chapters stay open) and puts the cursor on the heading
         await Assertions.Expect(dm.Locator(".cm-activeLine")).ToContainTextAsync("A typed heading");
 

@@ -92,6 +92,16 @@ public static class E2EHelpers
     public static Task ExpectStatusAsync(IPage page, string text) =>
         Assertions.Expect(page.GetByTestId("status-message").Filter(new() { HasText = text }).First).ToContainTextAsync(text);
 
+    /// <summary>Picks a service in the AI settings form and waits until the page shows that service's defaults. The change is
+    /// handled on the server, which then replaces the name, base URL and model with the service's own (a new model's fields are
+    /// always replaced); typing before that lands is overwritten, so on a loaded machine a name and URL filled straight after the
+    /// pick were lost and the model never saved. <paramref name="defaultName"/> is the service's name in English.</summary>
+    public static async Task PickAiServiceAsync(IPage page, string kind, string defaultName)
+    {
+        await page.GetByTestId("ai-kind").SelectOptionAsync(kind);
+        await Assertions.Expect(page.GetByTestId("ai-name")).ToHaveValueAsync(defaultName);
+    }
+
     public static Task WaitForInteractiveAsync(IPage page) =>
         page.Locator("[data-interactive]").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
 

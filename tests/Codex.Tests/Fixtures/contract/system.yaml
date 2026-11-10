@@ -1,0 +1,70 @@
+# The supplier contract fixture (docs/SYSTEM_IMPLEMENTATION_OVERHAUL.md, section 4 and step 9): the same functions and handlers
+# written three times, as formulas and handler lines here, as scripts in rules.js, and compiled in Codex.ContractFixture.dll
+# (tests/Codex.ContractFixture, which the tests build and copy beside this file in a temporary copy of the folder). spec.yaml
+# expects the same numbers and intents from each: plain data in and out (rule 1), the host's dice (rule 3), the host's
+# rounding (rule 4), and the same failure handling (rule 5). Loaded without the DLL, the compiled third is a load problem.
+id: ref-contract
+name: Supplier contract (test fixture)
+version: 0.1.0
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.
+
+attributes:
+  - { key: BODY, label: Body, default: 5, min: 1, max: 10 }
+  - { key: WILL, label: Will, default: 5, min: 1, max: 10 }
+
+conditions: [Wounded]
+
+functions:
+  hitPointsF: { formula: "(body, will) => 10 + 5 * ceil((body + will) / 2)" }
+  hitPointsS: { script: rules.js#hitPoints }
+  hitPointsC: { type: "Codex.ContractFixture.HitPoints, Codex.ContractFixture" }
+  halfF: { formula: "(n) => div(n, 2)" }
+  halfS: { script: rules.js#half }
+  halfC: { type: "Codex.ContractFixture.Half, Codex.ContractFixture" }
+  # The handlers' ctx.call("half", ...) reaches this one, whoever supplies the handler.
+  half: { type: "Codex.ContractFixture.Half, Codex.ContractFixture" }
+  signedF: { formula: "(n, flag) => flag ? n : -n" }
+  signedS: { script: rules.js#signed }
+  signedC: { type: "Codex.ContractFixture.Signed, Codex.ContractFixture" }
+  boomS: { script: rules.js#boom }
+  boomC: { type: "Codex.ContractFixture.Boom, Codex.ContractFixture" }
+
+widgets:
+  summary: { type: "Codex.ContractFixture.Summary, Codex.ContractFixture", label: Summary }
+
+sheetKinds:
+  - kind: being
+    label: Being
+    role: player
+    values:
+      - { key: N, input: true, default: 0 }
+      - { key: hpF, formula: "hitPointsF(BODY, WILL)" }
+      - { key: hpS, formula: "hitPointsS(BODY, WILL)" }
+      - { key: hpC, formula: "hitPointsC(BODY, WILL)" }
+      - { key: halfF, formula: "halfF(N)" }
+      - { key: halfS, formula: "halfS(N)" }
+      - { key: halfC, formula: "halfC(N)" }
+      - { key: signedF, formula: "signedF(N, N > 0)" }
+      - { key: signedS, formula: "signedS(N, N > 0)" }
+      - { key: signedC, formula: "signedC(N, N > 0)" }
+      - { key: lengthS, formula: "signedS('three', false)" }
+      - { key: lengthC, formula: "signedC('three', false)" }
+      - { key: boomS, label: Boom (script), formula: "boomS()" }
+      - { key: boomC, label: Boom (compiled), formula: "boomC()" }
+    tracks:
+      - { key: HP, label: Hit points, max: hpF }
+      - { key: SP, label: Armor, min: 0, max: 10, start: max }
+    layout:
+      - { section: Sheet, widgets: [{ widget: values, keys: [hpF, hpS, hpC] }, { widget: track, key: HP }, { widget: summary }] }
+
+events:
+  hitF:
+    - { intents: [{ adjust: { track: HP, by: "-max(0, ev.amount - SP)" } }] }
+    - { when: "ev.amount > SP", intents: [{ adjust: { track: SP, by: -1 } }] }
+    - { when: "ev.amount - SP >= 5", intents: [{ condition: { add: Wounded } }] }
+  hitS: { script: rules.js#onHit }
+  hitC: { type: "Codex.ContractFixture.OnHit, Codex.ContractFixture" }
+  locateS: { script: rules.js#locate }
+  locateC: { type: "Codex.ContractFixture.Locate, Codex.ContractFixture" }

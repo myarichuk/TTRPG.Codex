@@ -36,6 +36,13 @@ public sealed class CampaignRuntime : IAsyncDisposable
     // Actors whose sheet was replaced by ReplaceActorCommand, so the next persist also writes the
     // editable fields (the value says whether the editor was the DM). Everything else is a State patch.
     private readonly Dictionary<string, bool> _pendingSheetWrites = new();
+    // Sheet keys the table itself changed (an event's intents: a slot track, the sheet's conditions), by actor: the next persist
+    // writes exactly these from the cached sheet, so a field nobody at the table touched is never written over.
+    private readonly Dictionary<string, HashSet<string>> _pendingSheetKeys = new();
+    // The campaign's clocks and tables (overhaul step 7), loop-owned like the actors, and the keys the table changed since the
+    // last persist: the persist writes exactly those, so a key nobody at the table touched is never written over.
+    private Dictionary<string, object> _campaignObjects = new();
+    private readonly HashSet<string> _pendingCampaignKeys = new(StringComparer.Ordinal);
     // Hydrated ids, readable from any thread: lets a caller decide between the runtime and the
     // repository without touching the loop-owned dictionaries.
     private readonly ConcurrentDictionary<string, byte> _hydratedIds = new();
@@ -72,6 +79,14 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// <summary>The campaign's system, for the table rules (<see cref="SystemDefinition.Vitals"/>,
     /// dice conventions). Null for a bare runtime, which then applies plain clamped damage.</summary>
     public SystemDefinition? System { get; }
+
+    /// <summary>The campaign's library for the rules the table runs (an event handler reading an item, a track's maximum from a
+    /// class): set by the host when the table starts. None knows no entries.</summary>
+    public Codex.Core.Rules.IEntryResolver Resolver { get; set; } = Codex.Core.Rules.NullEntryResolver.Instance;
+
+    /// <summary>Where the campaign's clocks and tables are written back; set by the host when the table starts. None: they
+    /// change at the table and are not stored.</summary>
+    public ICampaignObjectsRepository? CampaignObjectsStore { get; set; }
 
     /// <summary>The live session commands log to (3.2) and read back from - a combat console
     /// reads <see cref="SessionDocument.RollLog"/> and <see cref="SessionDocument.Notes"/>
@@ -140,6 +155,20 @@ public sealed class CampaignRuntime : IAsyncDisposable
         PublishSnapshot();
     }
 
+    /// <summary>Takes the campaign's clocks and tables as stored. Called once, with <see cref="Hydrate"/>.</summary>
+    public void HydrateCampaignObjects(IReadOnlyDictionary<string, object>? state)
+    {
+        _campaignObjects = Codex.Core.Rules.CampaignObjects.Copy(state);
+        PublishSnapshot();
+    }
+
+    /// <summary>The campaign's clocks and tables as the table has them now. Loop-owned: only a command may read or change it; a
+    /// page reads <see cref="RuntimeSnapshot.Campaign"/>.</summary>
+    internal Dictionary<string, object> CampaignObjectState => _campaignObjects;
+
+    /// <summary>A command changed this key of the campaign's objects: the next persist writes it.</summary>
+    internal void CampaignKeyWritten(string key) => _pendingCampaignKeys.Add(key);
+
     /// <summary>Hydrates one actor into the live ECS world - the common step behind both the
     /// startup <see cref="Hydrate"/> pass and <c>HydrateActorCommand</c> (3.7), which adds a
     /// quick-added monster to an encounter already in progress.</summary>
@@ -185,15 +214,23 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
     private sealed record UndoPoint(string Kind, ActorState Before, ActorState After);
 
-    private sealed record ActorState(Dictionary<string, int> Pools, List<ActiveEffect> Effects)
+    // An event's intents can change the sheet as well (a slot track, the sheet's conditions), so the state a change is undone to
+    // includes the sheet, compared and put back key by key for the keys the change touched.
+    private sealed record ActorState(Dictionary<string, int> Pools, List<ActiveEffect> Effects, Dictionary<string, object>? Sheet = null)
     {
-        public static ActorState Of(Entity entity) => new(
+        public static ActorState Of(Entity entity, ActorDocument? doc = null) => new(
             entity.Has<ResourcePoolComponent>() ? new Dictionary<string, int>(entity.Get<ResourcePoolComponent>().Pools) : new Dictionary<string, int>(),
-            entity.Has<ActiveEffectsComponent>() ? entity.Get<ActiveEffectsComponent>().Effects.ToList() : new List<ActiveEffect>());
+            entity.Has<ActiveEffectsComponent>() ? entity.Get<ActiveEffectsComponent>().Effects.ToList() : new List<ActiveEffect>(),
+            doc == null ? null : new Dictionary<string, object>(doc.Sheet));
 
         public bool SameAs(ActorState other) =>
             Pools.Count == other.Pools.Count && Pools.All(p => other.Pools.TryGetValue(p.Key, out var v) && v == p.Value)
             && Effects.SequenceEqual(other.Effects);
+
+        /// <summary>The sheet keys that differ between two states.</summary>
+        public IReadOnlyList<string> SheetKeysChangedFrom(ActorState before) =>
+            Sheet == null || before.Sheet == null ? Array.Empty<string>()
+                : Sheet.Keys.Union(before.Sheet.Keys).Where(k => !YamlValues.SameValue(Sheet.GetValueOrDefault(k), before.Sheet.GetValueOrDefault(k))).ToList();
 
         public void Restore(Entity entity)
         {
@@ -212,7 +249,16 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// <summary>What the creature's last change was (an event type: "Damage"), while it can still be taken back: nothing has
     /// changed the creature since. Null otherwise.</summary>
     private string? UndoableKind(string actorId, Entity entity) =>
-        _undo.TryGetValue(actorId, out var point) && point.After.SameAs(ActorState.Of(entity)) ? point.Kind : null;
+        _undo.TryGetValue(actorId, out var point) && point.After.SameAs(ActorState.Of(entity)) && SheetStillAfter(actorId, point) ? point.Kind : null;
+
+    // The keys the change wrote still hold what it wrote: nothing has changed them since.
+    private bool SheetStillAfter(string actorId, UndoPoint point)
+    {
+        var keys = point.After.SheetKeysChangedFrom(point.Before);
+        if (keys.Count == 0) return true;
+        var sheet = _actorDocs.GetValueOrDefault(actorId)?.Sheet;
+        return sheet != null && keys.All(k => YamlValues.SameValue(sheet.GetValueOrDefault(k), point.After.Sheet!.GetValueOrDefault(k)));
+    }
 
     /// <summary>Puts the creature's pools and conditions back as they were before its last change (R5). Returns the kind of
     /// change undone, or null when there is none or something has changed the creature since (a turn ticked its conditions,
@@ -225,7 +271,18 @@ public sealed class CampaignRuntime : IAsyncDisposable
             return null;
         }
 
-        _undo[actorId].Before.Restore(entity);
+        var point = _undo[actorId];
+        point.Before.Restore(entity);
+        if (_actorDocs.TryGetValue(actorId, out var doc))
+        {
+            foreach (var key in point.After.SheetKeysChangedFrom(point.Before))
+            {
+                if (point.Before.Sheet!.TryGetValue(key, out var was)) doc.Sheet[key] = was;
+                else doc.Sheet.Remove(key);
+                SheetKeyWritten(actorId, key);
+            }
+        }
+
         _undo.Remove(actorId);
         _dirtyActorIds.Add(actorId);
         return kind;
@@ -245,6 +302,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _hydratedIds.TryRemove(actorId, out _);
         _dirtyActorIds.Remove(actorId);
         _pendingSheetWrites.Remove(actorId);
+        _pendingSheetKeys.Remove(actorId);
         _undo.Remove(actorId);
         // What it held up by concentrating, and what was counted on its turns, end with it leaving the table (R4).
         if (World.EndHeldBy(actorId).Count > 0)
@@ -264,6 +322,14 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// <summary>The runtime's cached document for an actor (its sheet carries the stat block the
     /// table rules read: resistances, kind, hit dice); null for an actor it never hydrated.</summary>
     public ActorDocument? GetActorDocument(string actorId) => _actorDocs.GetValueOrDefault(actorId);
+
+    /// <summary>The table changed this sheet key on the cached document (an event's intents): the next persist writes it.</summary>
+    internal void SheetKeyWritten(string actorId, string key)
+    {
+        if (!_pendingSheetKeys.TryGetValue(actorId, out var keys)) _pendingSheetKeys[actorId] = keys = new HashSet<string>(StringComparer.Ordinal);
+        keys.Add(key);
+        _dirtyActorIds.Add(actorId);
+    }
 
     /// <summary>True once <paramref name="actorId"/> has been hydrated into this runtime; safe from any thread.</summary>
     public bool HasActor(string actorId) => _hydratedIds.ContainsKey(actorId);
@@ -478,9 +544,14 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
     /// <summary>Appends a roll to the live session's shared roll log (3.6); a no-op when no
     /// session is attached, matching <see cref="AppendSessionEventAsync"/>'s guard.</summary>
+    /// <summary>The index of the session's system stamp this table runs under (<see cref="SessionDocument.SystemStamps"/>), which
+    /// each roll it records carries; null when the system has no fingerprint.</summary>
+    public int? SystemStampIndex { get; internal set; }
+
     internal void RecordRoll(RollLogEntry entry)
     {
         if (_activeSession == null) return;
+        entry.SystemStamp ??= SystemStampIndex;
         _activeSession.RollLog.Add(entry);
         _pendingRolls.Add(entry);
     }
@@ -581,12 +652,12 @@ public sealed class CampaignRuntime : IAsyncDisposable
                     // An undoable change keeps the creature's state from just before and just after it (R5).
                     var undoable = queued.Command as IUndoableCommand;
                     var target = undoable != null ? GetEntity(undoable.ActorId) : null;
-                    var before = target is { } t ? ActorState.Of(t) : null;
+                    var before = target is { } t ? ActorState.Of(t, GetActorDocument(undoable!.ActorId)) : null;
                     queued.Command.Apply(this);
                     if (undoable != null && target is { IsAlive: true } changed && before != null)
                     {
-                        var after = ActorState.Of(changed);
-                        if (!after.SameAs(before))
+                        var after = ActorState.Of(changed, GetActorDocument(undoable.ActorId));
+                        if (!after.SameAs(before) || after.SheetKeysChangedFrom(before).Count > 0)
                         {
                             _undo[undoable.ActorId] = new UndoPoint(undoable.UndoKind, before, after);
                         }
@@ -603,6 +674,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
                     var affectedActorIds = _dirtyActorIds.ToArray();
 
                     await PersistDirtyAsync();
+                    await PersistCampaignObjectsAsync();
                     await AppendSessionEventAsync(queued.Command);
                     await PersistEncounterAsync();
                     PublishSnapshot();
@@ -661,6 +733,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
             var state = _componentRegistry.Snapshot(EntityComponentSync.SnapshotAll(entity, _componentRegistry.RegisteredComponents));
             var sheetEdit = _pendingSheetWrites.TryGetValue(actorId, out var editedByDm) ? (IsDm: editedByDm, Source: cached) : default;
+            var sheetKeys = _pendingSheetKeys.TryGetValue(actorId, out var keys) ? keys.ToList() : new List<string>();
+            var sheetNow = cached.Sheet;
             var now = DateTime.UtcNow;
 
             var stored = await _actorRepository.UpdateAsync(actorId, doc =>
@@ -669,6 +743,12 @@ public sealed class CampaignRuntime : IAsyncDisposable
                 {
                     // The table's copy already holds the player's history merged with the stored one (ReplaceActor).
                     ActorRepository.CopyEditableFields(doc, sheetEdit.Source, sheetEdit.IsDm, merged: true);
+                }
+
+                foreach (var key in sheetKeys)
+                {
+                    if (sheetNow.TryGetValue(key, out var value)) doc.Sheet[key] = value;
+                    else doc.Sheet.Remove(key);
                 }
 
                 doc.State = state;
@@ -684,6 +764,15 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
         _dirtyActorIds.Clear();
         _pendingSheetWrites.Clear();
+        _pendingSheetKeys.Clear();
+    }
+
+    private async Task PersistCampaignObjectsAsync()
+    {
+        if (_pendingCampaignKeys.Count == 0) return;
+        var keys = _pendingCampaignKeys.ToList();
+        _pendingCampaignKeys.Clear();
+        if (CampaignObjectsStore != null) await CampaignObjectsStore.WriteKeysAsync(CampaignId, Codex.Core.Rules.CampaignObjects.Copy(_campaignObjects), keys);
     }
 
     /// <summary>Applies a sheet save made while the table is live (see <c>ReplaceActorCommand</c>):
@@ -820,7 +909,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
             _activeSession?.RollLog.ToArray() ?? Array.Empty<RollLogEntry>(),
             _activeSession?.Notes.ToArray() ?? Array.Empty<SessionNote>(),
             actors,
-            _rosterVersion);
+            _rosterVersion,
+            Codex.Core.Rules.CampaignObjects.Copy(_campaignObjects));
     }
 
     /// <summary>Write-through for the initiative tracker (3.5), mirroring

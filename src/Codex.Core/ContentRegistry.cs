@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 
 namespace Codex.Core;
@@ -18,12 +17,36 @@ public class ContentRegistry : IContentRegistry
     private readonly Dictionary<(string System, string Key), Dictionary<string, (Dictionary<string, object> Fields, string PackId)>> _translations = new();
     private readonly Dictionary<string, PackManifest> _packs = new();
     private readonly HashSet<string> _loadedPacks = new();
-    private readonly ScriptEvaluator _scriptEvaluator;
     private readonly object _gate = new();
 
-    public ContentRegistry(ScriptEvaluator scriptEvaluator)
+    /// <summary>
+    /// Takes everything <paramref name="loaded"/> holds in place of what this registry holds, in one step under the lock: a
+    /// reload fills a fresh registry while readers keep using this one, so nobody sees a library half emptied (overhaul
+    /// step 10). <paramref name="loaded"/> must not be used afterwards.
+    /// </summary>
+    public void ReplaceWith(ContentRegistry loaded)
     {
-        _scriptEvaluator = scriptEvaluator;
+        if (ReferenceEquals(loaded, this)) return;
+        lock (loaded._gate)
+        lock (_gate)
+        {
+            Replace(_abilities, loaded._abilities);
+            Replace(_actors, loaded._actors);
+            Replace(_locations, loaded._locations);
+            Replace(_entries, loaded._entries);
+            Replace(_entryTypesBySystem, loaded._entryTypesBySystem);
+            Replace(_flavor, loaded._flavor);
+            Replace(_translations, loaded._translations);
+            Replace(_packs, loaded._packs);
+            _loadedPacks.Clear();
+            _loadedPacks.UnionWith(loaded._loadedPacks);
+        }
+
+        static void Replace<TKey, TValue>(Dictionary<TKey, TValue> into, Dictionary<TKey, TValue> from) where TKey : notnull
+        {
+            into.Clear();
+            foreach (var (key, value) in from) into[key] = value;
+        }
     }
 
     #region Abilities
@@ -374,25 +397,6 @@ public class ContentRegistry : IContentRegistry
         }
     }
     #endregion
-
-    public Task ExecuteAbilityAsync(string fullId, dynamic context)
-    {
-        var ability = GetAbility(fullId);
-        if (ability == null) return Task.CompletedTask;
-
-        if (ability.Effects != null)
-        {
-            foreach (var effect in ability.Effects)
-            {
-                if (effect.Params != null && effect.Params.TryGetValue("Script", out var scriptObj) && !string.IsNullOrEmpty(scriptObj?.ToString()) && context is AbilityContext abilityContext)
-                {
-                    _scriptEvaluator.Execute(scriptObj.ToString()!, abilityContext);
-                }
-            }
-        }
-
-        return Task.CompletedTask;
-    }
 
     #region Helpers
     // Ties are broken deterministically on PackId (ordinal, highest wins) so the outcome doesn't

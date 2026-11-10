@@ -1,5 +1,4 @@
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -12,7 +11,7 @@ namespace Codex.Tests;
 /// </summary>
 public class SrdPackSmokeTests : IAsyncLifetime
 {
-    private readonly ContentRegistry _registry = new(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+    private readonly ContentRegistry _registry = new();
     private readonly PluginLoader _loader;
 
     public SrdPackSmokeTests()
@@ -211,7 +210,7 @@ public class SrdPackSmokeTests : IAsyncLifetime
 
 public class SrdSheetScenarioTests : IAsyncLifetime
 {
-    private readonly ContentRegistry _registry = new(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+    private readonly ContentRegistry _registry = new();
     private readonly PluginLoader _loader;
 
     public SrdSheetScenarioTests()

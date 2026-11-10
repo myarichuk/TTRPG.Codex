@@ -63,6 +63,7 @@ public static class ActorSheetSync
             }
 
             SeedHitDice(actor.Sheet, pool, system);
+            MirrorTracks(actor.Sheet, pool, system);
 
             // Slot pools ("slots_3", "slots_3_Max") are resources whose keys depend on the character:
             // mirror exactly the ones the sheet has, so a lost slot level disappears from play too.
@@ -93,6 +94,24 @@ public static class ActorSheetSync
         rest.Add(pool);
         if (attributes.Values.Count > 0) rest.Add(attributes);
         actor.State = registry.Snapshot(rest);
+    }
+
+    /// <summary>
+    /// A system with sheet kinds: the numeric tracks of the sheet's kind (stress, heat, hit points below zero) are pools at the
+    /// table, current value and <c>{key}_Max</c> as the sheet has them (Recompute writes the maximum and the start). Slot tracks
+    /// hold text, which the <c>int</c>-only pool cannot, so they stay on the sheet; so do the tracks an <c>each</c> makes.
+    /// </summary>
+    private static void MirrorTracks(IReadOnlyDictionary<string, object> sheet, ResourcePoolComponent pool, SystemDefinition system)
+    {
+        if (system.SheetKinds.Count == 0) return;
+        var kindName = YamlValues.GetString(sheet, Core.Rules.SheetModel.KindKey);
+        var kind = system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, kindName, StringComparison.OrdinalIgnoreCase)) ?? system.SheetKinds[0];
+        foreach (var track in kind.Tracks)
+        {
+            if (track.Each != null || track.Holds != null || track.Display.Equals("slots", StringComparison.OrdinalIgnoreCase)) continue;
+            if (YamlValues.GetInt(sheet, track.Key) is { } value) pool.Set(track.Key, value);
+            if (YamlValues.GetInt(sheet, track.Key + Core.Rules.SheetModel.MaxSuffix) is { } max) pool.Set(track.Key + Core.Rules.SheetModel.MaxSuffix, max);
+        }
     }
 
     /// <summary>
@@ -159,8 +178,17 @@ public static class ActorSheetSync
             actor.Sheet[key] = (long)value;
         }
 
-        // A stat block's scores are as printed, not rolled or bought, so the character-creation checks (point buy 8-15) do not apply.
-        actor.Sheet.TryAdd(Codex.Core.Rules.SheetRuleEngine.MethodKey, "manual");
+        // A stat block's scores are as printed, not rolled or bought: no character-creation check (point buy 8-15, the cap of 20)
+        // applies, and the printed method totals the base scores alone. So they are the base scores. Restatting a character keeps
+        // the rest of the sheet, their background bonuses and Ability Score Improvements included; the printed method leaves those
+        // out, and they count again if the DM picks another method.
+        actor.Sheet[Codex.Core.Rules.SheetRuleEngine.MethodKey] = Codex.Core.Rules.SheetRuleEngine.PrintedMethod;
+        foreach (var attribute in system?.Attributes ?? new List<AttributeDefinition>())
+        {
+            if (YamlValues.GetInt(blueprint.Properties, attribute.Key) is not { } printed) continue;
+            actor.Sheet[Codex.Core.Rules.SheetRuleEngine.BasePrefix + attribute.Key] = (long)printed;
+        }
+
         ApplySheetToState(actor, system, registry);
     }
 

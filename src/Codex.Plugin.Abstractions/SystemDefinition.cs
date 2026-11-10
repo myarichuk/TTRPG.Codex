@@ -31,17 +31,29 @@ public class LicenseInfo
 /// <summary>A character attribute (ability score, characteristic, stat) the system tracks per actor.</summary>
 public class AttributeDefinition
 {
+    /// <summary>Required, unique: the key the sheet stores the score under and formulas name it by (<c>str</c>, as in
+    /// <c>mod(str)</c>).</summary>
     public string Key { get; set; } = string.Empty;
+    /// <summary>The attribute's name as the sheet shows it ("Strength").</summary>
     public string Label { get; set; } = string.Empty;
+    /// <summary>A short name ("STR") the sheet shows in place of the label. Text that names attributes (a background's eligible
+    /// scores, <c>"STR 13+"</c>) may use the key, this or the label.</summary>
     public string? Abbreviation { get; set; }
 
     /// <summary>The label and abbreviation as system.yaml wrote them. A localized copy shows translated text in
     /// <see cref="Label"/>, but sheet data and pack entries refer to the original words ("STR 13+", "Strength"),
     /// so rules match on these as well.</summary>
     public string? CanonicalLabel { get; set; }
+    /// <summary>The abbreviation as system.yaml wrote it (see <c>canonicalLabel</c>). Normally left out: a localized copy fills
+    /// it in from <c>abbreviation</c>.</summary>
     public string? CanonicalAbbreviation { get; set; }
+    /// <summary>The score a sheet has until one is entered. Default 10.</summary>
     public int Default { get; set; } = 10;
+    /// <summary>The lowest score that can be typed in on a sheet when the system has no <c>sheetRules.attributes</c>; also
+    /// given to the AI as the attribute's range. None: no floor.</summary>
     public int? Min { get; set; }
+    /// <summary>The highest score that can be typed in on a sheet when the system has no <c>sheetRules.attributes</c> (which
+    /// caps scores with its own <c>max</c>); also given to the AI as the attribute's range. None: no cap.</summary>
     public int? Max { get; set; }
 
     /// <summary>
@@ -63,12 +75,15 @@ public class AttributeDefinition
 /// <summary>A depletable pool (hit points, mana, strain, luck) on an actor.</summary>
 public class ResourceDefinition
 {
+    /// <summary>Required, unique: the key the current value is kept under on the sheet and in the table's pools ("HP").</summary>
     public string Key { get; set; } = string.Empty;
+    /// <summary>The pool's name as the sheet shows it ("Hit Points").</summary>
     public string Label { get; set; } = string.Empty;
 
     /// <summary>Pool key that holds the maximum, e.g. "HP_Max". Null for pools without a cap.</summary>
     public string? MaxKey { get; set; }
 
+    /// <summary>The value a new sheet starts with, for the pool and for its maximum. Default 0.</summary>
     public int Default { get; set; }
 
     /// <summary>True for the pool damage/healing target by default (usually hit points).</summary>
@@ -84,15 +99,20 @@ public class ContentTypeDefinition
     /// <summary>Stable key, singular, lower-case: "spell".</summary>
     public string Type { get; set; } = string.Empty;
 
+    /// <summary>The type's name, singular, as the Library and editors show it ("Spell").</summary>
     public string Label { get; set; } = string.Empty;
+    /// <summary>The plural name ("Spells"); <c>label</c> when unset.</summary>
     public string? PluralLabel { get; set; }
 
     /// <summary>Pack folder holding entries of this type; defaults to <see cref="Type"/>.</summary>
     public string? Folder { get; set; }
 
+    /// <summary>An icon name for the type. Reserved; not read by this version (the Library picks its own icon by the type key).</summary>
     public string? Icon { get; set; }
+    /// <summary>A line of help the homebrew editor shows when this type is chosen.</summary>
     public string? Description { get; set; }
 
+    /// <summary>The properties an entry of this type carries, in the order the editor and the entry's page show them.</summary>
     public List<FieldDefinition> Fields { get; set; } = new();
 
     /// <summary>
@@ -147,7 +167,9 @@ public class ContentTypeDefinition
 /// <summary>Dice conventions the runtime uses when it needs to roll something for a system.</summary>
 public class DiceConventions
 {
+    /// <summary>The dice the combat console rolls for initiative. Default <c>1d20</c>.</summary>
     public string Initiative { get; set; } = "1d20";
+    /// <summary>The dice for an ordinary check. Reserved; not read by this version (the sheet's check buttons roll a d20).</summary>
     public string Check { get; set; } = "1d20";
 
     /// <summary>The derived field (see <c>sheetRules.derived</c>) added to an initiative roll, e.g.
@@ -168,10 +190,19 @@ public class VitalsRules
     /// <summary>Resource that absorbs damage before the primary one ("TempHP"); granted as "take the higher".</summary>
     public string? TemporaryResource { get; set; }
 
+    /// <summary>What reaching zero on the primary resource does. Null: damage stops at zero and nothing else happens.</summary>
     public DownRules? Down { get; set; }
+
+    /// <summary>Death saves for a creature at zero. Null: none.</summary>
     public DeathSaveRules? DeathSaves { get; set; }
+
+    /// <summary>Damage types, and the sheet lists that resist, ignore or double them. Null: damage has no type.</summary>
     public DamageTypeRules? Damage { get; set; }
+
+    /// <summary>Exhaustion as a level counter. Null: none (an exhaustion condition, if listed, is an ordinary condition).</summary>
     public ExhaustionRules? Exhaustion { get; set; }
+
+    /// <summary>A pool of hit dice spent to heal during a rest. Null: none.</summary>
     public HitDiceRules? HitDice { get; set; }
 
     /// <summary>Concentration: a condition a creature keeps while it holds an effect up, a save when it is hurt, and the
@@ -210,21 +241,28 @@ public class ConcentrationRules
     /// <summary>The condition a concentrating creature carries.</summary>
     public string Condition { get; set; } = "Concentrating";
 
-    /// <summary>The attribute whose save keeps concentration when the creature takes damage.</summary>
-    public string SaveAttribute { get; set; } = "con";
+    /// <summary>Required: the attribute whose save keeps concentration when the creature takes damage (5e: "con").</summary>
+    public string SaveAttribute { get; set; } = string.Empty;
 
     /// <summary>The save's difficulty: half the damage taken, never below <see cref="MinimumDc"/> or above <see cref="MaximumDc"/>.</summary>
     public int MinimumDc { get; set; } = 10;
+    /// <summary>The highest the save's difficulty goes, however much damage was taken. Default 30.</summary>
     public int MaximumDc { get; set; } = 30;
 
     public int DcFor(int damage) => System.Math.Clamp(damage / 2, MinimumDc, MaximumDc);
 }
 
+/// <summary>Death saves for a creature at zero on the primary resource (<c>vitals.deathSaves</c>). They need <c>vitals.down</c>
+/// as well; without this block a creature at zero simply stays down.</summary>
 public class DeathSaveRules
 {
+    /// <summary>The dice a death save rolls. Default <c>1d20</c>.</summary>
     public string Die { get; set; } = "1d20";
+    /// <summary>The lowest roll that is a success. Default 10.</summary>
     public int SuccessOn { get; set; } = 10;
+    /// <summary>Successes that make the creature stable. Default 3.</summary>
     public int SuccessesToStabilize { get; set; } = 3;
+    /// <summary>Failures that kill it (a hit while down counts as one, a critical hit as two). Default 3.</summary>
     public int FailuresToDie { get; set; } = 3;
 
     /// <summary>A natural roll this high regains one hit point. Null: no critical success.</summary>
@@ -235,22 +273,32 @@ public class DeathSaveRules
 
     /// <summary>Pool keys the running tally is kept in.</summary>
     public string SuccessesKey { get; set; } = "DeathSaveSuccesses";
+    /// <summary>The pool key the failures are counted in. Default <c>DeathSaveFailures</c>.</summary>
     public string FailuresKey { get; set; } = "DeathSaveFailures";
 }
 
 /// <summary>Damage types and the sheet lists that halve, cancel or double them.</summary>
 public class DamageTypeRules
 {
+    /// <summary>The damage types the table offers when it deals damage ("fire", "slashing"). Empty: the table offers none.</summary>
     public List<string> Types { get; set; } = new();
+    /// <summary>The sheet field listing the types the creature resists: that damage is halved, rounded down. Default
+    /// <c>resistances</c>.</summary>
     public string ResistancesField { get; set; } = "resistances";
+    /// <summary>The sheet field listing the types the creature is immune to: that damage does nothing. Default
+    /// <c>immunities</c>.</summary>
     public string ImmunitiesField { get; set; } = "immunities";
+    /// <summary>The sheet field listing the types the creature is vulnerable to: that damage is doubled. Default
+    /// <c>vulnerabilities</c>.</summary>
     public string VulnerabilitiesField { get; set; } = "vulnerabilities";
 }
 
 /// <summary>Exhaustion as a level counter kept in a pool, not a timed condition.</summary>
 public class ExhaustionRules
 {
+    /// <summary>The pool key the level is kept in. Default <c>Exhaustion</c>.</summary>
     public string Key { get; set; } = "Exhaustion";
+    /// <summary>The highest level; reaching it kills the creature when the system has <c>vitals.down</c>. Default 6.</summary>
     public int MaxLevel { get; set; } = 6;
 
     /// <summary>The condition name in <see cref="SystemDefinition.Conditions"/> this replaces in the picker.</summary>
@@ -260,8 +308,12 @@ public class ExhaustionRules
 /// <summary>A pool of hit dice: one per level for characters, the stat block's count for creatures.</summary>
 public class HitDiceRules
 {
+    /// <summary>The pool key the remaining dice are kept in; the total is kept under the same key plus <c>_Max</c>. Default
+    /// <c>HitDice</c>.</summary>
     public string Key { get; set; } = "HitDice";
+    /// <summary>The sheet field whose number is a character's count of hit dice. Default <c>level</c>.</summary>
     public string LevelField { get; set; } = "level";
+    /// <summary>The sheet field naming the class whose die a character spends. Default <c>class</c>.</summary>
     public string ClassField { get; set; } = "class";
 
     /// <summary>Class entry property with the die ("d10").</summary>
@@ -270,14 +322,16 @@ public class HitDiceRules
     /// <summary>Creature property with the dice expression ("2d6") that gives count and die.</summary>
     public string? CreatureDiceProperty { get; set; } = "hitDice";
 
-    /// <summary>Attribute whose modifier is added to each die spent.</summary>
-    public string Attribute { get; set; } = "con";
+    /// <summary>Required: the attribute whose modifier is added to each die spent (5e: "con").</summary>
+    public string Attribute { get; set; } = string.Empty;
 
     public string MaxKey => Key + "_Max";
 }
 
+/// <summary>A rest the table offers (<c>vitals.rests</c>): what it refills, clears and lifts.</summary>
 public class RestRule
 {
+    /// <summary>The rest's name, as the table's button shows it and a slot pool's <c>recoversOn</c> names it ("Long Rest").</summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>Resources refilled to their maximum ("HP").</summary>
@@ -331,23 +385,80 @@ public class AiVocabulary
 }
 
 /// <summary>
+/// What kind of world a system's play assumes, in general terms (<c>setting:</c> in system.yaml): genre, tone, the kinds of
+/// factions and places it is built for. It is for systems that ship no setting content of their own, or whose rules
+/// presume one, so a GM (and the AI features) can homebrew in its spirit. Write genre words, never a published setting's
+/// names or text: "criminal crews in a haunted industrial city", not the city's name. Every part is optional.
+/// </summary>
+public class SystemSetting
+{
+    /// <summary>One short paragraph: the world the game is built to be played in.</summary>
+    public string? Summary { get; set; }
+
+    /// <summary>Genre words ("heist", "gothic horror", "industrial fantasy").</summary>
+    public List<string> Genres { get; set; } = new();
+
+    /// <summary>How play should feel ("grim", "desperate", "darkly funny").</summary>
+    public List<string> Tone { get; set; } = new();
+
+    /// <summary>What stories in it tend to be about ("ambition and its cost", "loyalty under pressure").</summary>
+    public List<string> Themes { get; set; } = new();
+
+    /// <summary>How advanced the world is ("early industrial: rail, gas light, black powder").</summary>
+    public string? Technology { get; set; }
+
+    /// <summary>Magic, psionics, ghosts, gods: what exists beyond the ordinary, and how common it is.</summary>
+    public string? Supernatural { get; set; }
+
+    /// <summary>Kinds of factions, never named ones ("criminal gangs", "a decadent nobility", "a magocracy").</summary>
+    public List<string> Factions { get; set; } = new();
+
+    /// <summary>Kinds of places ("a crowded port city", "slums along the canals").</summary>
+    public List<string> Places { get; set; } = new();
+
+    /// <summary>What play looks like ("a crew takes jobs, then deals with the fallout").</summary>
+    public List<string> Play { get; set; } = new();
+
+    /// <summary>What does not belong ("high-tech gadgets", "noble, untroubled heroes").</summary>
+    public List<string> Avoid { get; set; } = new();
+
+    /// <summary>Anything else a GM homebrewing for the system should know.</summary>
+    public string? Notes { get; set; }
+
+    public bool IsEmpty =>
+        string.IsNullOrWhiteSpace(Summary) && string.IsNullOrWhiteSpace(Technology) && string.IsNullOrWhiteSpace(Supernatural)
+        && string.IsNullOrWhiteSpace(Notes) && Genres.Count + Tone.Count + Themes.Count + Factions.Count + Places.Count + Play.Count + Avoid.Count == 0;
+}
+
+/// <summary>
 /// A whole game system described as data (<c>system.yaml</c>). This is what lets a homebrew system
 /// exist without compiling a plugin: attributes, resources, the actor sheet, the content types its
 /// packs may contain, conditions, and the licence the rules text is under.
 /// </summary>
 public class SystemDefinition
 {
+    /// <summary>Required: the system's key, lower-case letters, digits, <c>-</c> or <c>_</c>, starting with a letter or digit.
+    /// Campaigns and packs name the system by it, so it should not change.</summary>
     public string Id { get; set; } = string.Empty;
+    /// <summary>Required: the system's name as the app shows it.</summary>
     public string Name { get; set; } = string.Empty;
+    /// <summary>A paragraph about the system, shown on the About page.</summary>
     public string? Description { get; set; }
+    /// <summary>The system's version. A campaign records the version it plays under and says when it changes. Default
+    /// <c>1.0.0</c>.</summary>
     public string Version { get; set; } = "1.0.0";
 
     /// <summary>What the system may call itself in relation to a trademarked product, e.g. "5E compatible".</summary>
     public string? Compatibility { get; set; }
 
+    /// <summary>The licence the system's rules text is under, shown with its attribution on the About page. None: no licence is
+    /// shown.</summary>
     public LicenseInfo? License { get; set; }
 
+    /// <summary>The attributes every actor has (ability scores, characteristics), in the order the sheet shows them.</summary>
     public List<AttributeDefinition> Attributes { get; set; } = new();
+    /// <summary>The pools every actor has (hit points, mana). The one marked <c>isPrimary</c>, else the first, is the one
+    /// damage and healing reach.</summary>
     public List<ResourceDefinition> Resources { get; set; } = new();
 
     /// <summary>Extra sheet fields beyond attributes and resources (level, class, alignment, speed...).</summary>
@@ -356,15 +467,21 @@ public class SystemDefinition
     /// <summary>Which of the <see cref="ActorFields"/> the app reads for what, outside the rules engine.</summary>
     public FieldRoles FieldRoles { get; set; } = new();
 
+    /// <summary>The kinds of content the system's packs may carry (class, spell, monster), each with its own fields and pack
+    /// folder.</summary>
     public List<ContentTypeDefinition> EntityTypes { get; set; } = new();
 
     /// <summary>Condition names the combat console offers in its picker.</summary>
     public List<string> Conditions { get; set; } = new();
 
+    /// <summary>The dice the table rolls for initiative, and how initiative ties are broken.</summary>
     public DiceConventions Dice { get; set; } = new();
 
     /// <summary>How the system's own words are put to AI models, so prompts carry no assumptions about any one game.</summary>
     public AiVocabulary Ai { get; set; } = new();
+
+    /// <summary>The kind of world play assumes, in general terms. Null: none (the campaign's own description is the world).</summary>
+    public SystemSetting? Setting { get; set; }
 
     /// <summary>Table rules for hit points, death, damage types, exhaustion, hit dice and rests. Null: none.</summary>
     public VitalsRules? Vitals { get; set; }
@@ -373,8 +490,79 @@ public class SystemDefinition
     /// fields). Null means "no rules": any value goes, which is what a loose homebrew wants.</summary>
     public SheetRules? SheetRules { get; set; }
 
+    // ---- The primitives (docs/SYSTEM_IMPLEMENTATION_OVERHAUL.md, section 3); see SheetKinds.cs ----
+
+    /// <summary>The kinds of sheet the system has, each with its own values, modifiers, lists and keyed lists. Empty for a
+    /// system that only has <see cref="SheetRules"/>.</summary>
+    public List<SheetKindDefinition> SheetKinds { get; set; } = new();
+
+    /// <summary>The sheet's layout for a system with no <see cref="SheetKinds"/> (each kind has its own). Empty: the host's
+    /// built-in widgets, in the order the sheet has always had them (Codex.Core.Rules.SheetLayout).</summary>
+    public List<LayoutSection> Layout { get; set; } = new();
+
+    /// <summary>State the campaign owns rather than a sheet: clocks and tables (faction status, a party treasure). Null: none.
+    /// The state itself is the campaign's (Codex.Core.Rules.CampaignObjects).</summary>
+    public CampaignObjectsDefinition? Campaign { get; set; }
+
+    /// <summary>How bonuses of one type combine on one target.</summary>
+    public ModifierTypesDefinition ModifierTypes { get; set; } = new();
+
+    /// <summary>Named per-level formulas (<c>bab.good: "level"</c>), read by <c>progression(name, level)</c>.</summary>
+    public Dictionary<string, string> Progressions { get; set; } = new();
+
+    /// <summary>Named functions, callable from any formula by name.</summary>
+    public Dictionary<string, FunctionDefinition> Functions { get; set; } = new();
+
+    /// <summary>Widgets a DLL supplies (<c>{ type: "Acme.Street.Cyberware, Acme.Street" }</c>), placed by name in a layout like
+    /// the host's own (<c>{ widget: cyberware }</c>).</summary>
+    public Dictionary<string, WidgetDefinition> Widgets { get; set; } = new();
+
+    /// <summary>What a condition does while it holds, by condition name.</summary>
+    public Dictionary<string, ConditionEffectDefinition> ConditionEffects { get; set; } = new();
+
+    /// <summary>Named rolls with inputs and outcomes (see Rolls.cs).</summary>
+    public List<RollDefinition> Rolls { get; set; } = new();
+
+    /// <summary>Event handlers by event name (<c>damage</c>, <c>turnStart</c>, <c>roll</c>): <c>{ builtin: name, ...options }</c>,
+    /// <c>{ script: file#export }</c>, or a list of <c>{ when, intents }</c> lines. Read as YAML gives it, and parsed by
+    /// Codex.Core.Rules.SheetEvents, since a handler is written in either shape.</summary>
+    public Dictionary<string, object> Events { get; set; } = new();
+
     /// <summary>Translations by language tag ("ru"), filled by the loader from <c>system.&lt;locale&gt;.yaml</c> files.</summary>
+    [NotInYaml]
     public Dictionary<string, SystemTranslation> Translations { get; set; } = new();
+
+    private readonly Dictionary<string, string> _scripts = new(System.StringComparer.Ordinal);
+
+    /// <summary>The system's script files (overhaul step 8) by file name (<c>rules.js</c>), as the loader read them from the
+    /// system's folder: the sources of <c>{ script: rules.js#export }</c>. Not part of system.yaml; a localized copy shares
+    /// them.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyDictionary<string, string> Scripts => _scripts;
+
+    /// <summary>Adds a script file's source, under the name <c>{ script: file#export }</c> uses.</summary>
+    public void AddScript(string file, string source) => _scripts[file] = source;
+
+    private readonly Dictionary<string, CompiledSupplier> _compiled = new(System.StringComparer.Ordinal);
+
+    /// <summary>The compiled types the system names (overhaul step 9), by the name system.yaml gives (<c>"Acme.Street.HitPoints,
+    /// Acme.Street"</c>), as the loader found them in the DLLs beside system.yaml: each an instance, or why there is none. Not part
+    /// of system.yaml; a localized copy shares them.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyDictionary<string, CompiledSupplier> Compiled => _compiled;
+
+    /// <summary>Adds what a compiled type name came to.</summary>
+    public void AddCompiled(string typeName, CompiledSupplier supplier) => _compiled[typeName] = supplier;
+
+    /// <summary>The version and file hashes the loader found (overhaul step 10), or null for a definition that was only parsed.
+    /// Not part of system.yaml; a localized copy shares it.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public SystemFingerprint? Fingerprint => _fingerprint;
+
+    private SystemFingerprint? _fingerprint;
+
+    /// <summary>Sets what <see cref="Fingerprint"/> gives: the loader's, once it has read every file.</summary>
+    public void SetFingerprint(SystemFingerprint fingerprint) => _fingerprint = fingerprint;
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SystemDefinition> _localized = new();
     private SystemDefinition? _canonical;
@@ -487,6 +675,8 @@ public class SystemDefinition
         copy.Name = t.Name ?? Name;
         copy.Description = t.Description ?? Description;
         copy.Compatibility = t.Compatibility ?? Compatibility;
+        // A translated setting replaces the whole block: its parts read as one text, so they are not mixed across languages.
+        copy.Setting = t.Setting ?? Setting;
         copy.Attributes = Attributes.Select(a => new AttributeDefinition
         {
             Key = a.Key, Default = a.Default, Min = a.Min, Max = a.Max, Modifier = a.Modifier,
@@ -597,18 +787,23 @@ public class SystemDefinition
     }
 
     /// <summary>Set on a localized copy: condition name as the rules know it -> name to show.</summary>
+    [NotInYaml]
     public Dictionary<string, string>? ConditionLabels { get; set; }
 
     /// <summary>Set on a localized copy: shared word (a rest, a damage type, a school) as the rules know it -> text to show.</summary>
+    [NotInYaml]
     public Dictionary<string, string>? ValueLabels { get; set; }
 
     /// <summary>Set on a localized copy: group heading as the system names it ("Combat") -> heading to show.</summary>
+    [NotInYaml]
     public Dictionary<string, string>? CategoryLabels { get; set; }
 
     /// <summary>Set on a localized copy: rule-condition message as system.yaml words it -> text to show.</summary>
+    [NotInYaml]
     public Dictionary<string, string>? MessageLabels { get; set; }
 
     /// <summary>Set on a localized copy: the word after a resource's label in its maximum field ("(max)").</summary>
+    [NotInYaml]
     public string? MaxSuffix { get; set; }
 
     /// <summary>The heading to show for a group of fields; the name itself when this copy has no translation.</summary>
@@ -671,3 +866,8 @@ public class SystemDefinition
         }
     }
 }
+
+/// <summary>A property the app sets rather than the author (a translation read from its own file, a label set on a localized
+/// copy): system.yaml has no such key. The schema leaves it out, and the loader reports it as a key this version does not read.</summary>
+[System.AttributeUsage(System.AttributeTargets.Property)]
+public sealed class NotInYamlAttribute : System.Attribute;

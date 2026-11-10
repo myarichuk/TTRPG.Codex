@@ -21,6 +21,7 @@ public static class EventTerms
             EventTerm.DamageTypeKind or EventTerm.RestKind => system?.DisplayOption(culture, string.Empty, key),
             EventTerm.ResourceKind => shown?.Resources.FirstOrDefault(r => r.Key == key)?.Label,
             EventTerm.SlotKind => Slot(system, shown, l, key),
+            EventTerm.SystemKind => shown?.DisplayValue(key),
             _ => null
         };
     }

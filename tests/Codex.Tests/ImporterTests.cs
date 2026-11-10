@@ -1,6 +1,5 @@
 using Codex.ContentImport;
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Core.Systems;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -56,7 +55,7 @@ public class ImporterTests : IDisposable
         Assert.True(File.Exists(Path.Combine(output, "LEGAL.md")));
         Assert.True(File.Exists(Path.Combine(output, "spells", "fireball.yaml")));
 
-        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var registry = new ContentRegistry();
         var system = SystemDefinitionLoader.Load(Path.Combine(systemDir, "system.yaml"));
         await new YamlContentPackLoader(registry).LoadPackAsync(output, system);
 

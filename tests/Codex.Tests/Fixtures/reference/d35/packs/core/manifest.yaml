@@ -1,0 +1,10 @@
+id: ref-d35-core
+name: Reference d20 3.5-shaped content
+version: 0.1.0
+systemId: ref-d35
+kind: rules
+description: Just enough classes, gear, spells and feats for the reference sheets in ../../spec.yaml. Tables are abridged.
+authors: [TTRPG.Codex project]
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.

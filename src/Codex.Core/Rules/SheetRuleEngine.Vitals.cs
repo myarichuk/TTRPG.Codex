@@ -65,7 +65,7 @@ public sealed partial class SheetRuleEngine
         {
             try
             {
-                result.CarryingCapacity = EvaluateFormula(FormulaContext(sheet), rules.Capacity);
+                result.CarryingCapacity = EvaluateFormula(sheet, FormulaContext(sheet), rules.Capacity);
             }
             catch (Exception)
             {
@@ -213,30 +213,38 @@ public sealed partial class SheetRuleEngine
 
         var requested = (YamlValues.GetString(sheet, rules.ModeKey) ?? "manual").ToLowerInvariant();
         var mode = requested == "auto" ? "auto" : "manual";
-        var lines = new List<ArmorClassLine>();
         var values = FormulaContext(sheet);
 
+        // On the primitives (overhaul step 6): typed modifiers on armor class, stacked by ModifierStacking. The base is the best
+        // of its candidates (worn armor; else Unarmored Defense, each class's defense, or 10 + Dexterity); the rest are untyped and
+        // add up. A line per modifier that counts, in this order.
         var worn = result.Inventory.Where(i => i.Equipped).Select(i => i.Entry).ToList();
         var body = worn.Where(e => IsBodyArmor(e, rules)).OrderByDescending(e => ToDouble(Property(e, rules.BaseProperty))).FirstOrDefault();
         var shielded = worn.Any(e => IsShield(e, rules));
         var dex = ModifierOf(sheet, rules.DexAttribute);
-        long total;
+        var candidates = new List<(string Type, double Amount, ArmorClassLine Line)>();
 
         if (body != null)
         {
             var baseValue = (int)ToDouble(Property(body, rules.BaseProperty))!.Value;
             var cap = ToDouble(Property(body, rules.DexCapProperty));
             var dexPart = cap.HasValue ? (cap.Value <= 0 ? 0 : Math.Min(dex, (int)cap.Value)) : dex;
-            total = baseValue + dexPart;
-            lines.Add(new ArmorClassLine("body", body.Name, baseValue, body));
-            if (dexPart != 0 || !cap.HasValue) lines.Add(new ArmorClassLine("dex", system.Attributes.FirstOrDefault(a => a.Key.Equals(rules.DexAttribute, StringComparison.OrdinalIgnoreCase))?.Label ?? rules.DexAttribute, dexPart, null, cap is > 0 ? (int)cap.Value : null));
+            candidates.Add((BaseType, baseValue, new ArmorClassLine("body", body.Name, baseValue, body)));
+            // Shown at +0 while uncapped, so a reader sees Dexterity was counted; left out when the armor allows none.
+            if (dexPart != 0 || !cap.HasValue)
+            {
+                var label = system.Attributes.FirstOrDefault(a => a.Key.Equals(rules.DexAttribute, StringComparison.OrdinalIgnoreCase))?.Label ?? rules.DexAttribute;
+                candidates.Add((Untyped, dexPart, new ArmorClassLine("dex", label, dexPart, null, cap is > 0 ? (int)cap.Value : null)));
+            }
         }
         else
         {
-            var options = new List<(string Kind, string Label, long Value, ContentEntry? Entry)>();
+            var bases = 0;
             try
             {
-                options.Add(("unarmored", "Unarmored", EvaluateFormula(values, rules.Unarmored), null));
+                var unarmored = EvaluateFormula(sheet, values, rules.Unarmored);
+                candidates.Add((BaseType, unarmored, new ArmorClassLine("unarmored", "Unarmored", (int)unarmored)));
+                bases++;
             }
             catch (Exception)
             {
@@ -250,7 +258,9 @@ public sealed partial class SheetRuleEngine
                 if (shielded && !shieldAllowed) continue;
                 try
                 {
-                    options.Add(("defense", $"{cls.Entry.Name} defense", EvaluateFormula(values, formula!.ToString()!), cls.Entry));
+                    var defense = EvaluateFormula(sheet, values, formula!.ToString()!);
+                    candidates.Add((BaseType, defense, new ArmorClassLine("defense", $"{cls.Entry.Name} defense", (int)defense, cls.Entry)));
+                    bases++;
                 }
                 catch (Exception)
                 {
@@ -258,18 +268,14 @@ public sealed partial class SheetRuleEngine
                 }
             }
 
-            if (options.Count == 0) options.Add(("unarmored", "Unarmored", 10 + dex, null));
-            var best = options.OrderByDescending(o => o.Value).First();
-            total = best.Value;
-            lines.Add(new ArmorClassLine(best.Kind, best.Label, (int)best.Value, best.Entry));
+            if (bases == 0) candidates.Add((BaseType, 10 + dex, new ArmorClassLine("unarmored", "Unarmored", 10 + dex)));
         }
 
         foreach (var entry in worn)
         {
             var bonus = ToDouble(Property(entry, rules.BonusProperty));
             if (!bonus.HasValue || bonus.Value == 0) continue;
-            total += (long)bonus.Value;
-            lines.Add(new ArmorClassLine("bonus", entry.Name, (int)bonus.Value, entry));
+            candidates.Add((Untyped, (long)bonus.Value, new ArmorClassLine("bonus", entry.Name, (int)bonus.Value, entry)));
         }
 
         foreach (var listKey in rules.BonusLists)
@@ -279,17 +285,16 @@ public sealed partial class SheetRuleEngine
                 var bonus = ToDouble(Property(pick.Entry, rules.BonusProperty));
                 if (!bonus.HasValue || bonus.Value == 0) continue;
                 if ((Property(pick.Entry, rules.RequiresArmorProperty) is true or "true" or "True") && body == null) continue;
-                total += (long)bonus.Value;
-                lines.Add(new ArmorClassLine("bonus", pick.Entry.Name, (int)bonus.Value, pick.Entry));
+                candidates.Add((Untyped, (long)bonus.Value, new ArmorClassLine("bonus", pick.Entry.Name, (int)bonus.Value, pick.Entry)));
             }
         }
 
         var misc = YamlValues.GetInt(sheet, rules.MiscField) ?? 0;
-        if (misc != 0)
-        {
-            total += misc;
-            lines.Add(new ArmorClassLine("misc", "Other bonuses", misc));
-        }
+        if (misc != 0) candidates.Add((Untyped, misc, new ArmorClassLine("misc", "Other bonuses", misc)));
+
+        var stacked = ModifierStacking.Stack(candidates.Select(c => (c.Type, c.Amount, c.Line)), system.ModifierTypes, ArmorClassTypes);
+        var total = (long)stacked.Where(s => s.Counted).Sum(s => s.Amount);
+        var lines = stacked.Where(s => s.Counted).Select(s => s.Item).ToList();
 
         result.ArmorClass = new ArmorClassSummary(mode, mode == "auto", (int)total, lines);
     }
@@ -300,6 +305,13 @@ public sealed partial class SheetRuleEngine
         if (Rules?.ArmorClass is not { } rules || evaluation.ArmorClass is not { Active: true } summary) return;
         sheet[rules.Key] = (long)summary.Total;
     }
+
+    /// <summary>Armor class's modifier types: the base is the best of its candidates, whatever a system says of its other types.</summary>
+    public const string BaseType = "base";
+
+    private const string Untyped = "untyped";
+
+    private static readonly IReadOnlyDictionary<string, string> ArmorClassTypes = new Dictionary<string, string> { [BaseType] = ModifierStacking.Best };
 
     private static string Signed(int value) => value >= 0 ? "+" + value : value.ToString(CultureInfo.InvariantCulture);
 }

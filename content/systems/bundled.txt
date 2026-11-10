@@ -1,0 +1,6 @@
+# Systems shipped inside every release, under content/systems/ (overhaul section 6, "Systems distributed separately").
+# Every other folder under content/systems/ is left out of the app and released as its own archive
+# (system-<id>-<version>.zip, made by packaging/pack-systems.sh), which a GM installs from the About page.
+# Withdrawing such a system then means removing one download, not rebuilding every release.
+# One folder name per line; # starts a comment.
+srd5e

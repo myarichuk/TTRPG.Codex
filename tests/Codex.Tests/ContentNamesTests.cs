@@ -1,6 +1,5 @@
 using Codex.Core;
 using Codex.Core.Models;
-using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -10,7 +9,7 @@ public class ContentNamesTests
 {
     private static ContentRegistry Registry()
     {
-        var registry = new ContentRegistry(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+        var registry = new ContentRegistry();
         var captain = new ContentEntry { Id = "guard-captain", Type = "monster", SystemId = "srd5e", PackId = "srd", Name = "Guard Captain" };
         registry.RegisterEntry(captain, 0);
         registry.RegisterActor(YamlContentPackLoader.ToActorBlueprint(captain, new ContentTypeDefinition { Type = "monster", ActorBlueprint = true }), 0);

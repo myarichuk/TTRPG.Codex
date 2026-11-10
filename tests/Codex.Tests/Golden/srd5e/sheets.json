@@ -1,0 +1,3369 @@
+{
+  "barbarian-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "barbarian",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Animal Handling",
+      "Athletics"
+    ],
+    "species": "dragonborn",
+    "str": 8,
+    "wis": 8
+  },
+  "barbarian-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "barbarian",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 11,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Animal Handling",
+      "Athletics"
+    ],
+    "species": "dragonborn",
+    "str": 8,
+    "subclass": "path-of-the-berserker",
+    "wis": 8
+  },
+  "barbarian-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "barbarian",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:1,con:1",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 20,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Animal Handling",
+      "Athletics"
+    ],
+    "species": "dragonborn",
+    "str": 8,
+    "subclass": "path-of-the-berserker",
+    "wis": 8
+  },
+  "barbarian-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "barbarian",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|str:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Animal Handling",
+      "Athletics"
+    ],
+    "species": "dragonborn",
+    "str": 8,
+    "subclass": "path-of-the-berserker",
+    "wis": 8
+  },
+  "bard-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "dancing-lights",
+      "light"
+    ],
+    "cha": 8,
+    "class": "bard",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "alert",
+    "skillProficiencies": [],
+    "species": "dwarf",
+    "spells": [
+      "animal-friendship",
+      "bane",
+      "charm-person",
+      "color-spray"
+    ],
+    "str": 8,
+    "wis": 8
+  },
+  "bard-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "dancing-lights",
+      "light",
+      "mage-hand",
+      "mending"
+    ],
+    "cha": 8,
+    "class": "bard",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 11,
+    "originFeat": "alert",
+    "skillProficiencies": [],
+    "species": "dwarf",
+    "spells": [
+      "aid",
+      "animal-friendship",
+      "animal-messenger",
+      "animate-objects",
+      "awaken",
+      "bane",
+      "bestow-curse",
+      "blindness-deafness",
+      "calm-emotions",
+      "charm-monster",
+      "charm-person",
+      "clairvoyance",
+      "color-spray",
+      "command",
+      "comprehend-languages",
+      "compulsion"
+    ],
+    "str": 8,
+    "subclass": "college-of-lore",
+    "wis": 8
+  },
+  "bard-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "dancing-lights",
+      "light",
+      "mage-hand",
+      "mending"
+    ],
+    "cha": 8,
+    "class": "bard",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:1,con:1",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:1,dex:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 20,
+    "originFeat": "alert",
+    "skillProficiencies": [],
+    "species": "dwarf",
+    "spells": [
+      "aid",
+      "animal-friendship",
+      "animal-messenger",
+      "animate-objects",
+      "antipathy-sympathy",
+      "arcane-sword",
+      "awaken",
+      "bane",
+      "befuddlement",
+      "bestow-curse",
+      "blindness-deafness",
+      "calm-emotions",
+      "charm-monster",
+      "charm-person",
+      "clairvoyance",
+      "color-spray",
+      "command",
+      "comprehend-languages",
+      "compulsion",
+      "confusion",
+      "cure-wounds",
+      "detect-magic"
+    ],
+    "str": 8,
+    "subclass": "college-of-lore",
+    "wis": 8
+  },
+  "bard-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "dancing-lights",
+      "light",
+      "mage-hand"
+    ],
+    "cha": 8,
+    "class": "bard",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "alert",
+    "skillProficiencies": [],
+    "species": "dwarf",
+    "spells": [
+      "aid",
+      "animal-friendship",
+      "animal-messenger",
+      "bane",
+      "bestow-curse",
+      "blindness-deafness",
+      "calm-emotions",
+      "charm-person",
+      "clairvoyance"
+    ],
+    "str": 8,
+    "subclass": "college-of-lore",
+    "wis": 8
+  },
+  "broken-cleric1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 18,
+    "base_wis": 15,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cantrips": [
+      "fire-bolt",
+      "no-such-spell",
+      "guidance",
+      "light",
+      "sacred-flame",
+      "thaumaturgy",
+      "mending"
+    ],
+    "cha": 8,
+    "class": "cleric",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "plate-armor|equipped:1",
+      "shield|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "History",
+      "Insight"
+    ],
+    "species": "orc",
+    "spells": [
+      "fireball",
+      "cure-wounds"
+    ],
+    "str": 8,
+    "subclass": "evoker",
+    "wis": 8
+  },
+  "broken-no-class": {
+    "acMode": "auto",
+    "attrMethod": "point-buy",
+    "base_cha": 8,
+    "base_con": 8,
+    "base_dex": 8,
+    "base_int": 8,
+    "base_str": 8,
+    "base_wis": 8,
+    "cha": 8,
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "level": 3,
+    "str": 8,
+    "wis": 8
+  },
+  "cleric-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 15,
+    "bonus_con": 1,
+    "bonus_wis": 2,
+    "cantrips": [
+      "guidance",
+      "light",
+      "mending"
+    ],
+    "cha": 8,
+    "class": "cleric",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "History",
+      "Insight"
+    ],
+    "species": "elf",
+    "spells": [
+      "bane",
+      "bless",
+      "command",
+      "create-or-destroy-water"
+    ],
+    "str": 8,
+    "wis": 8
+  },
+  "cleric-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 15,
+    "bonus_con": 1,
+    "bonus_wis": 2,
+    "cantrips": [
+      "guidance",
+      "light",
+      "mending",
+      "resistance",
+      "sacred-flame"
+    ],
+    "cha": 8,
+    "class": "cleric",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|wis:2",
+      "ability-score-improvement|wis:1,con:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 11,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "History",
+      "Insight"
+    ],
+    "species": "elf",
+    "spells": [
+      "aid",
+      "animate-dead",
+      "augury",
+      "aura-of-life",
+      "bane",
+      "banishment",
+      "beacon-of-hope",
+      "bestow-curse",
+      "blade-barrier",
+      "bless",
+      "blindness-deafness",
+      "calm-emotions",
+      "clairvoyance",
+      "command",
+      "commune",
+      "contagion"
+    ],
+    "str": 8,
+    "subclass": "life-domain",
+    "wis": 8
+  },
+  "cleric-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 15,
+    "bonus_con": 1,
+    "bonus_wis": 2,
+    "cantrips": [
+      "guidance",
+      "light",
+      "mending",
+      "resistance",
+      "sacred-flame"
+    ],
+    "cha": 8,
+    "class": "cleric",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|wis:2",
+      "ability-score-improvement|wis:1,con:1",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|dex:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 20,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "History",
+      "Insight"
+    ],
+    "species": "elf",
+    "spells": [
+      "aid",
+      "animate-dead",
+      "antimagic-field",
+      "astral-projection",
+      "augury",
+      "aura-of-life",
+      "bane",
+      "banishment",
+      "beacon-of-hope",
+      "bestow-curse",
+      "blade-barrier",
+      "bless",
+      "blindness-deafness",
+      "calm-emotions",
+      "clairvoyance",
+      "command",
+      "commune",
+      "conjure-celestial",
+      "contagion",
+      "continual-flame",
+      "control-water",
+      "control-weather"
+    ],
+    "str": 8,
+    "subclass": "life-domain",
+    "wis": 8
+  },
+  "cleric-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 15,
+    "bonus_con": 1,
+    "bonus_wis": 2,
+    "cantrips": [
+      "guidance",
+      "light",
+      "mending",
+      "resistance"
+    ],
+    "cha": 8,
+    "class": "cleric",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|wis:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "History",
+      "Insight"
+    ],
+    "species": "elf",
+    "spells": [
+      "aid",
+      "animate-dead",
+      "augury",
+      "bane",
+      "beacon-of-hope",
+      "bestow-curse",
+      "bless",
+      "blindness-deafness",
+      "calm-emotions"
+    ],
+    "str": 8,
+    "subclass": "life-domain",
+    "wis": 8
+  },
+  "creature-aboleth": {
+    "HP": 150,
+    "HP_Max": 150,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The aboleth makes two Tentacle attacks and uses either Consume Memories or Dominate Mind if available."
+      },
+      {
+        "name": "Tentacle",
+        "description": "Melee Attack Roll: +9, reach 15 ft. Hit: 12 (2d6 + 5) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14) from one of four tentacles."
+      },
+      {
+        "name": "Consume Memories",
+        "description": "Intelligence Saving Throw: DC 16, one creature within 30 feet that is Charmed or Grappled by the aboleth. Failure: 10 (3d6) Psychic damage. Success: Half damage. Failure or Success: The aboleth gains the target’s memories if the target is a Humanoid and is reduced to 0 Hit Points by this action."
+      },
+      {
+        "name": "Dominate Mind (2/day)",
+        "description": "Wisdom Saving Throw: DC 16, one creature the aboleth can see within 30 feet. Failure: The target has the Charmed condition until the aboleth dies or is on a different plane of existence from the target. While Charmed, the target acts as an ally to the aboleth and is under its control while within 60 feet of it. In addition, the aboleth and the target can communicate telepathically with each other over any distance. The target repeats the save whenever it takes damage as well as after every 24 hours it spends at least 1 mile away from the aboleth, ending the effect on itself on a success."
+      }
+    ],
+    "alignment": "lawful evil",
+    "armorClass": 17,
+    "attrMethod": "printed",
+    "base_cha": 18,
+    "base_con": 15,
+    "base_dex": 9,
+    "base_int": 18,
+    "base_str": 21,
+    "base_wis": 15,
+    "cha": 18,
+    "challengeRating": 10,
+    "charisma": 18,
+    "con": 15,
+    "constitution": 15,
+    "creatureType": "aberration",
+    "dex": 9,
+    "dexterity": 9,
+    "hitDice": "20d10 + 40",
+    "hitPoints": 150,
+    "int": 18,
+    "intelligence": 18,
+    "languages": "Deep Speech; telepathy 120 ft.",
+    "legendaryActions": [
+      {
+        "name": "Lash",
+        "description": "The aboleth makes one Tentacle attack."
+      },
+      {
+        "name": "Psychic Drain",
+        "description": "If the aboleth has at least one creature Charmed or Grappled, it uses Consume Memories and regains 5 (1d10) Hit Points."
+      }
+    ],
+    "savingThrows": "DEX +3, CON +6, INT +8, WIS +6",
+    "senses": "darkvision 120 ft., passive perception 20",
+    "size": "Large",
+    "skills": "History +12, Perception +10",
+    "speed": "10 ft., swim 40 ft.",
+    "str": 21,
+    "strength": 21,
+    "traits": [
+      {
+        "name": "Amphibious",
+        "description": "The aboleth can breathe air and water."
+      },
+      {
+        "name": "Eldritch Restoration",
+        "description": "If destroyed, the aboleth gains a new body in 5d10 days, reviving with all its Hit Points in the Far Realm or another location chosen by the GM."
+      },
+      {
+        "name": "Legendary Resistance (3/day)",
+        "description": "If the aboleth fails a saving throw, it can choose to succeed instead."
+      },
+      {
+        "name": "Mucus Cloud",
+        "description": "While underwater, the aboleth is surrounded by mucus. Constitution Saving Throw: DC 14, each creature in a 5-foot Emanation originating from the aboleth at the end of the aboleth’s turn. Failure: The target is cursed. Until the curse ends, the target’s skin becomes slimy, the target can breathe air and water, and it can’t regain Hit Points unless it is underwater. While the cursed creature is outside a body of water, the creature takes 6 (1d12) Acid damage at the end of every 10 minutes unless moisture is applied to its skin before those minutes have passed."
+      },
+      {
+        "name": "Probing Telepathy",
+        "description": "If a creature the aboleth can see communicates telepathically with the aboleth, the aboleth learns the creature’s greatest desires."
+      }
+    ],
+    "wis": 15,
+    "wisdom": 15,
+    "xp": 5900
+  },
+  "creature-badger": {
+    "HP": 5,
+    "HP_Max": 5,
+    "actions": [
+      {
+        "name": "Bite",
+        "description": "Melee Attack Roll: +2, reach 5 ft. Hit: 1 Piercing damage."
+      }
+    ],
+    "alignment": "unaligned",
+    "armorClass": 11,
+    "attrMethod": "printed",
+    "base_cha": 5,
+    "base_con": 16,
+    "base_dex": 11,
+    "base_int": 2,
+    "base_str": 10,
+    "base_wis": 12,
+    "cha": 5,
+    "challengeRating": 0,
+    "charisma": 5,
+    "con": 16,
+    "constitution": 16,
+    "creatureType": "beast",
+    "dex": 11,
+    "dexterity": 11,
+    "hitDice": "1d4 + 3",
+    "hitPoints": 5,
+    "int": 2,
+    "intelligence": 2,
+    "languages": "None",
+    "resistances": [
+      "poison"
+    ],
+    "senses": "darkvision 30 ft., passive perception 13",
+    "size": "Tiny",
+    "skills": "Perception +3",
+    "speed": "20 ft., burrow 5 ft.",
+    "str": 10,
+    "strength": 10,
+    "wis": 12,
+    "wisdom": 12,
+    "xp": 10
+  },
+  "creature-couatl": {
+    "HP": 60,
+    "HP_Max": 60,
+    "actions": [
+      {
+        "name": "Bite",
+        "description": "Melee Attack Roll: +7, reach 5 ft. Hit: 11 (1d12 + 5) Piercing damage, and the target has the Poisoned condition until the end of the couatl’s next turn."
+      },
+      {
+        "name": "Constrict",
+        "description": "Strength Saving Throw: DC 15, one Medium or smaller creature the couatl can see within 5 feet. Failure: 8 (1d6 + 5) Bludgeoning damage. The target has the Grappled condition (escape DC 13), and it has the Restrained condition until the grapple ends."
+      },
+      {
+        "name": "Spellcasting",
+        "description": "The couatl casts one of the following spells, requiring no spell components and using Wisdom as the spellcasting ability (spell save DC 15):"
+      }
+    ],
+    "alignment": "lawful good",
+    "armorClass": 19,
+    "attrMethod": "printed",
+    "base_cha": 18,
+    "base_con": 17,
+    "base_dex": 20,
+    "base_int": 18,
+    "base_str": 16,
+    "base_wis": 20,
+    "bonusActions": [
+      {
+        "name": "Divine Aid (2/day)",
+        "description": "The couatl casts Bless, Lesser Restoration, or Sanctuary, requiring no spell components and using the same spellcasting ability as Spellcasting."
+      }
+    ],
+    "cha": 18,
+    "challengeRating": 4,
+    "charisma": 18,
+    "con": 17,
+    "constitution": 17,
+    "creatureType": "celestial",
+    "dex": 20,
+    "dexterity": 20,
+    "hitDice": "8d8 + 24",
+    "hitPoints": 60,
+    "immunities": [
+      "psychic",
+      "radiant"
+    ],
+    "int": 18,
+    "intelligence": 18,
+    "languages": "All; telepathy 120 ft.",
+    "resistances": [
+      "bludgeoning",
+      "piercing",
+      "slashing"
+    ],
+    "savingThrows": "CON +5, WIS +7",
+    "senses": "truesight 120 ft., passive perception 15",
+    "size": "Medium",
+    "speed": "30 ft., fly 90 ft.",
+    "str": 16,
+    "strength": 16,
+    "traits": [
+      {
+        "name": "Shielded Mind",
+        "description": "The couatl’s thoughts can’t be read by any means, and other creatures can communicate with it telepathically only if it allows them."
+      }
+    ],
+    "wis": 20,
+    "wisdom": 20,
+    "xp": 1100
+  },
+  "creature-ghoul": {
+    "HP": 22,
+    "HP_Max": 22,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The ghoul makes two Bite attacks."
+      },
+      {
+        "name": "Bite",
+        "description": "Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage plus 3 (1d6) Necrotic damage."
+      },
+      {
+        "name": "Claw",
+        "description": "Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Slashing damage. If the target is a creature that isn’t an Undead or elf, it is subjected to the following effect. Constitution Saving Throw: DC 10. Failure: The target has the Paralyzed condition until the end of its next turn."
+      }
+    ],
+    "alignment": "chaotic evil",
+    "armorClass": 12,
+    "attrMethod": "printed",
+    "base_cha": 6,
+    "base_con": 10,
+    "base_dex": 15,
+    "base_int": 7,
+    "base_str": 13,
+    "base_wis": 10,
+    "cha": 6,
+    "challengeRating": 1,
+    "charisma": 6,
+    "con": 10,
+    "constitution": 10,
+    "creatureType": "undead",
+    "dex": 15,
+    "dexterity": 15,
+    "hitDice": "5d8",
+    "hitPoints": 22,
+    "immunities": [
+      "poison",
+      "Charmed",
+      "Exhaustion",
+      "Poisoned"
+    ],
+    "int": 7,
+    "intelligence": 7,
+    "languages": "Common",
+    "senses": "darkvision 60 ft., passive perception 10",
+    "size": "Medium",
+    "speed": "30 ft.",
+    "str": 13,
+    "strength": 13,
+    "wis": 10,
+    "wisdom": 10,
+    "xp": 200
+  },
+  "creature-gold-dragon-wyrmling": {
+    "HP": 60,
+    "HP_Max": 60,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The dragon makes two Rend attacks."
+      },
+      {
+        "name": "Rend",
+        "description": "Melee Attack Roll: +6, reach 5 ft. Hit: 9 (1d10 + 4) Slashing damage."
+      },
+      {
+        "name": "Fire Breath",
+        "description": "Dexterity Saving Throw: DC 13, each creature in a 15-foot Cone. Failure: 22 (4d10) Fire damage. Success: Half damage."
+      },
+      {
+        "name": "Weakening Breath",
+        "description": "Strength Saving Throw: DC 13, each creature that isn’t currently affected by this breath in a 15-foot Cone. Failure: The target has Disadvantage on Strength-based D20 Tests and subtracts 2 (1d4) from its damage rolls. It repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
+      }
+    ],
+    "alignment": "lawful good",
+    "armorClass": 17,
+    "attrMethod": "printed",
+    "base_cha": 16,
+    "base_con": 17,
+    "base_dex": 14,
+    "base_int": 14,
+    "base_str": 19,
+    "base_wis": 11,
+    "cha": 16,
+    "challengeRating": 3,
+    "charisma": 16,
+    "con": 17,
+    "constitution": 17,
+    "creatureType": "dragon",
+    "dex": 14,
+    "dexterity": 14,
+    "hitDice": "8d8 + 24",
+    "hitPoints": 60,
+    "immunities": [
+      "fire"
+    ],
+    "int": 14,
+    "intelligence": 14,
+    "languages": "Draconic",
+    "savingThrows": "DEX +4, WIS +2",
+    "senses": "darkvision 60 ft., blindsight 10 ft., passive perception 14",
+    "size": "Medium",
+    "skills": "Perception +4, Stealth +4",
+    "speed": "30 ft., fly 60 ft., swim 30 ft.",
+    "str": 19,
+    "strength": 19,
+    "traits": [
+      {
+        "name": "Amphibious",
+        "description": "The dragon can breathe air and water."
+      }
+    ],
+    "wis": 11,
+    "wisdom": 11,
+    "xp": 700
+  },
+  "creature-lamia": {
+    "HP": 97,
+    "HP_Max": 97,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The lamia makes two Claw attacks. It can replace one attack with a use of Corrupting Touch."
+      },
+      {
+        "name": "Claw",
+        "description": "Melee Attack Roll: +5, reach 5 ft. Hit: 7 (1d8 + 3) Slashing damage plus 7 (2d6) Psychic damage."
+      },
+      {
+        "name": "Corrupting Touch",
+        "description": "Wisdom Saving Throw: DC 13, one creature the lamia can see within 5 feet. Failure: 13 (3d8) Psychic damage, and the target is cursed for 1 hour. Until the curse ends, the target has the Charmed and Poisoned conditions."
+      },
+      {
+        "name": "Spellcasting",
+        "description": "The lamia casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 13):"
+      }
+    ],
+    "alignment": "chaotic evil",
+    "armorClass": 13,
+    "attrMethod": "printed",
+    "base_cha": 16,
+    "base_con": 15,
+    "base_dex": 13,
+    "base_int": 14,
+    "base_str": 16,
+    "base_wis": 15,
+    "bonusActions": [
+      {
+        "name": "Leap",
+        "description": "The lamia jumps up to 30 feet by spending 10 feet of movement."
+      }
+    ],
+    "cha": 16,
+    "challengeRating": 4,
+    "charisma": 16,
+    "con": 15,
+    "constitution": 15,
+    "creatureType": "fiend",
+    "dex": 13,
+    "dexterity": 13,
+    "hitDice": "13d10 + 26",
+    "hitPoints": 97,
+    "int": 14,
+    "intelligence": 14,
+    "languages": "Abyssal, Common",
+    "senses": "darkvision 60 ft., passive perception 12",
+    "size": "Large",
+    "skills": "Deception +7, Insight +4, Stealth +5",
+    "speed": "40 ft.",
+    "str": 16,
+    "strength": 16,
+    "wis": 15,
+    "wisdom": 15,
+    "xp": 1100
+  },
+  "creature-pit-fiend": {
+    "HP": 337,
+    "HP_Max": 337,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The pit fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack."
+      },
+      {
+        "name": "Bite",
+        "description": "Melee Attack Roll: +14, reach 10 ft. Hit: 18 (3d6 + 8) Piercing damage. If the target is a creature, it must make the following saving throw. Constitution Saving Throw: DC 21. Failure: The target has the Poisoned condition. While Poisoned, the target can’t regain Hit Points and takes 21 (6d6) Poison damage at the start of each of its turns, and it repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
+      },
+      {
+        "name": "Devilish Claw",
+        "description": "Melee Attack Roll: +14, reach 10 ft. Hit: 26 (4d8 + 8) Necrotic damage."
+      },
+      {
+        "name": "Fiery Mace",
+        "description": "Melee Attack Roll: +14, reach 10 ft. Hit: 22 (4d6 + 8) Force damage plus 21 (6d6) Fire damage."
+      },
+      {
+        "name": "Hellfire Spellcasting",
+        "description": "The pit fiend casts Fireball (level 5 version) twice, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21). It can replace one Fireball with Hold Monster (level 7 version) or Wall of Fire."
+      }
+    ],
+    "alignment": "lawful evil",
+    "armorClass": 21,
+    "attrMethod": "printed",
+    "base_cha": 24,
+    "base_con": 24,
+    "base_dex": 14,
+    "base_int": 22,
+    "base_str": 26,
+    "base_wis": 18,
+    "cha": 24,
+    "challengeRating": 20,
+    "charisma": 24,
+    "con": 24,
+    "constitution": 24,
+    "creatureType": "fiend",
+    "dex": 14,
+    "dexterity": 14,
+    "hitDice": "27d10 + 189",
+    "hitPoints": 337,
+    "immunities": [
+      "fire",
+      "poison",
+      "Poisoned"
+    ],
+    "int": 22,
+    "intelligence": 22,
+    "languages": "Infernal; telepathy 120 ft.",
+    "resistances": [
+      "cold"
+    ],
+    "savingThrows": "DEX +8, WIS +10",
+    "senses": "truesight 120 ft., passive perception 20",
+    "size": "Large",
+    "skills": "Perception +10, Persuasion +19",
+    "speed": "30 ft., fly 60 ft.",
+    "str": 26,
+    "strength": 26,
+    "traits": [
+      {
+        "name": "Diabolical Restoration",
+        "description": "If the pit fiend dies outside the Nine Hells, its body disappears in sulfurous smoke, and it gains a new body instantly, reviving with all its Hit Points somewhere in the Nine Hells."
+      },
+      {
+        "name": "Fear Aura",
+        "description": "The pit fiend emanates an aura in a 20foot Emanation while it doesn’t have the Incapacitated condition. Wisdom Saving Throw: DC 21, any enemy that starts its turn in the aura. Failure: The target has the Frightened condition until the start of its next turn. Success: The target is immune to this pit fiend’s aura for 24 hours."
+      },
+      {
+        "name": "Legendary Resistance (4/day)",
+        "description": "If the pit fiend fails a saving throw, it can choose to succeed instead."
+      },
+      {
+        "name": "Magic Resistance",
+        "description": "The pit fiend has Advantage on saving throws against spells and other magical effects."
+      }
+    ],
+    "wis": 18,
+    "wisdom": 18,
+    "xp": 25000
+  },
+  "creature-specter": {
+    "HP": 22,
+    "HP_Max": 22,
+    "actions": [
+      {
+        "name": "Life Drain",
+        "description": "Melee Attack Roll: +4, reach 5 ft. Hit: 7 (2d6) Necrotic damage. If the target is a creature, its Hit Point maximum decreases by an amount equal to the damage taken."
+      }
+    ],
+    "alignment": "chaotic evil",
+    "armorClass": 12,
+    "attrMethod": "printed",
+    "base_cha": 11,
+    "base_con": 11,
+    "base_dex": 14,
+    "base_int": 10,
+    "base_str": 1,
+    "base_wis": 10,
+    "cha": 11,
+    "challengeRating": 1,
+    "charisma": 11,
+    "con": 11,
+    "constitution": 11,
+    "creatureType": "undead",
+    "dex": 14,
+    "dexterity": 14,
+    "hitDice": "5d8",
+    "hitPoints": 22,
+    "immunities": [
+      "necrotic",
+      "poison",
+      "Charmed",
+      "Exhaustion",
+      "Grappled",
+      "Paralyzed",
+      "Petrified",
+      "Poisoned",
+      "Prone",
+      "Restrained",
+      "Unconscious"
+    ],
+    "int": 10,
+    "intelligence": 10,
+    "languages": "Understands Common plus one other language but can’t speak",
+    "resistances": [
+      "acid",
+      "bludgeoning",
+      "cold",
+      "fire",
+      "lightning",
+      "piercing",
+      "slashing",
+      "thunder"
+    ],
+    "senses": "darkvision 60 ft., passive perception 10",
+    "size": "Medium",
+    "speed": "30 ft., fly 50 ft., hover True",
+    "str": 1,
+    "strength": 1,
+    "traits": [
+      {
+        "name": "Incorporeal Movement",
+        "description": "The specter can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "description": "While in sunlight, the specter has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "wis": 10,
+    "wisdom": 10,
+    "xp": 200
+  },
+  "creature-violet-fungus": {
+    "HP": 18,
+    "HP_Max": 18,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The fungus makes two Rotting Touch attacks."
+      },
+      {
+        "name": "Rotting Touch",
+        "description": "Melee Attack Roll: +2, reach 10 ft. Hit: 4 (1d8) Necrotic damage."
+      }
+    ],
+    "alignment": "unaligned",
+    "armorClass": 5,
+    "attrMethod": "printed",
+    "base_cha": 1,
+    "base_con": 10,
+    "base_dex": 1,
+    "base_int": 1,
+    "base_str": 3,
+    "base_wis": 3,
+    "cha": 1,
+    "challengeRating": "1/4",
+    "charisma": 1,
+    "con": 10,
+    "constitution": 10,
+    "creatureType": "plant",
+    "dex": 1,
+    "dexterity": 1,
+    "hitDice": "4d8",
+    "hitPoints": 18,
+    "immunities": [
+      "Blinded",
+      "Charmed",
+      "Deafened",
+      "Frightened"
+    ],
+    "int": 1,
+    "intelligence": 1,
+    "languages": "None",
+    "senses": "blindsight 30 ft., passive perception 6",
+    "size": "Medium",
+    "speed": "5 ft.",
+    "str": 3,
+    "strength": 3,
+    "wis": 3,
+    "wisdom": 3,
+    "xp": 50
+  },
+  "creature-young-copper-dragon": {
+    "HP": 119,
+    "HP_Max": 119,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The dragon makes three Rend attacks. It can replace one attack with a use of Slowing Breath."
+      },
+      {
+        "name": "Rend",
+        "description": "Melee Attack Roll: +7, reach 10 ft. Hit: 15 (2d10 + 4) Slashing damage."
+      },
+      {
+        "name": "Acid Breath",
+        "description": "Dexterity Saving Throw: DC 14, each creature in a 40-foot-long, 5-footwide Line. Failure: 40 (9d8) Acid damage. Success: Half damage."
+      },
+      {
+        "name": "Slowing Breath",
+        "description": "Constitution Saving Throw: DC 14, each creature in a 30-foot Cone. Failure: The target can’t take Reactions; its Speed is halved; and it can take either an action or a Bonus Action on its turn, not both. This effect lasts until the end of its next turn."
+      }
+    ],
+    "alignment": "chaotic good",
+    "armorClass": 17,
+    "attrMethod": "printed",
+    "base_cha": 15,
+    "base_con": 17,
+    "base_dex": 12,
+    "base_int": 16,
+    "base_str": 19,
+    "base_wis": 13,
+    "cha": 15,
+    "challengeRating": 7,
+    "charisma": 15,
+    "con": 17,
+    "constitution": 17,
+    "creatureType": "dragon",
+    "dex": 12,
+    "dexterity": 12,
+    "hitDice": "14d10 + 42",
+    "hitPoints": 119,
+    "immunities": [
+      "acid"
+    ],
+    "int": 16,
+    "intelligence": 16,
+    "languages": "Common, Draconic",
+    "savingThrows": "DEX +4, WIS +4",
+    "senses": "darkvision 120 ft., blindsight 30 ft., passive perception 17",
+    "size": "Large",
+    "skills": "Deception +5, Perception +7, Stealth +4",
+    "speed": "40 ft., climb 40 ft., fly 80 ft.",
+    "str": 19,
+    "strength": 19,
+    "wis": 13,
+    "wisdom": 13,
+    "xp": 2900
+  },
+  "druid-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 15,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "druidcraft",
+      "elementalism"
+    ],
+    "cha": 8,
+    "class": "druid",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Arcana",
+      "Animal Handling"
+    ],
+    "species": "gnome",
+    "spells": [
+      "animal-friendship",
+      "charm-person",
+      "create-or-destroy-water",
+      "cure-wounds"
+    ],
+    "str": 8,
+    "wis": 8
+  },
+  "druid-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 15,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "druidcraft",
+      "elementalism",
+      "guidance",
+      "mending"
+    ],
+    "cha": 8,
+    "class": "druid",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|wis:2",
+      "ability-score-improvement|wis:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 11,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Arcana",
+      "Animal Handling"
+    ],
+    "species": "gnome",
+    "spells": [
+      "aid",
+      "animal-friendship",
+      "animal-messenger",
+      "antilife-shell",
+      "augury",
+      "awaken",
+      "barkskin",
+      "blight",
+      "call-lightning",
+      "charm-monster",
+      "charm-person",
+      "commune-with-nature",
+      "cone-of-cold",
+      "confusion",
+      "conjure-animals",
+      "conjure-elemental"
+    ],
+    "str": 8,
+    "subclass": "circle-of-the-land",
+    "wis": 8
+  },
+  "druid-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 15,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "druidcraft",
+      "elementalism",
+      "guidance",
+      "mending"
+    ],
+    "cha": 8,
+    "class": "druid",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|wis:2",
+      "ability-score-improvement|wis:2",
+      "ability-score-improvement|wis:1,con:1",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:1,dex:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 20,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Arcana",
+      "Animal Handling"
+    ],
+    "species": "gnome",
+    "spells": [
+      "aid",
+      "animal-friendship",
+      "animal-messenger",
+      "animal-shapes",
+      "antilife-shell",
+      "antipathy-sympathy",
+      "augury",
+      "awaken",
+      "barkskin",
+      "befuddlement",
+      "blight",
+      "call-lightning",
+      "charm-monster",
+      "charm-person",
+      "commune-with-nature",
+      "cone-of-cold",
+      "confusion",
+      "conjure-animals",
+      "conjure-elemental",
+      "conjure-fey",
+      "conjure-minor-elementals",
+      "conjure-woodland-beings"
+    ],
+    "str": 8,
+    "subclass": "circle-of-the-land",
+    "wis": 8
+  },
+  "druid-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 15,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "druidcraft",
+      "elementalism",
+      "guidance"
+    ],
+    "cha": 8,
+    "class": "druid",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|wis:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Arcana",
+      "Animal Handling"
+    ],
+    "species": "gnome",
+    "spells": [
+      "aid",
+      "animal-friendship",
+      "animal-messenger",
+      "augury",
+      "barkskin",
+      "call-lightning",
+      "charm-person",
+      "conjure-animals",
+      "continual-flame"
+    ],
+    "str": 8,
+    "subclass": "circle-of-the-land",
+    "wis": 8
+  },
+  "fighter-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 14,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "fighter",
+    "con": 8,
+    "dex": 8,
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Animal Handling"
+    ],
+    "species": "goliath",
+    "str": 8,
+    "wis": 8
+  },
+  "fighter-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 14,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "fighter",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:1,dex:1"
+    ],
+    "fightingStyles": [
+      "archery",
+      "defense"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 11,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Animal Handling"
+    ],
+    "species": "goliath",
+    "str": 8,
+    "subclass": "champion",
+    "wis": 8
+  },
+  "fighter-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 14,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "fighter",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:1,dex:1",
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:1,con:1",
+      "ability-score-improvement|con:2"
+    ],
+    "fightingStyles": [
+      "archery",
+      "defense"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 20,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Animal Handling"
+    ],
+    "species": "goliath",
+    "str": 8,
+    "subclass": "champion",
+    "wis": 8
+  },
+  "fighter-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 14,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "fighter",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|str:2"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Animal Handling"
+    ],
+    "species": "goliath",
+    "str": 8,
+    "subclass": "champion",
+    "wis": 8
+  },
+  "manual-fighter5": {
+    "HP_Max": 61,
+    "acMode": "manual",
+    "armorClass": 19,
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 14,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_dex": 1,
+    "bonus_str": 2,
+    "cha": 8,
+    "class": "fighter",
+    "con": 8,
+    "dex": 8,
+    "extraOriginFeats": [
+      "alert"
+    ],
+    "feats": [
+      "ability-score-improvement|str:2"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "manual",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Animal Handling"
+    ],
+    "species": "human",
+    "str": 8,
+    "subclass": "champion",
+    "wis": 8
+  },
+  "manual-rogue4-rolled": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 13,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "rogue",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2"
+    ],
+    "hpMode": "rolled",
+    "hpRolls": [
+      "6",
+      "2",
+      "8"
+    ],
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 4,
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics",
+      "Deception",
+      "Insight"
+    ],
+    "species": "halfling",
+    "str": 8,
+    "subclass": "thief",
+    "wis": 8
+  },
+  "manual-wizard3-typed-scores": {
+    "acMode": "auto",
+    "attrMethod": "manual",
+    "background": "sage",
+    "base_cha": 11,
+    "base_con": 12,
+    "base_dex": 18,
+    "base_int": 20,
+    "base_str": 7,
+    "base_wis": 9,
+    "bonus_con": 1,
+    "bonus_int": 2,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights"
+    ],
+    "cha": 8,
+    "class": "wizard",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "level": 3,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Arcana",
+      "History"
+    ],
+    "species": "gnome",
+    "spells": [
+      "acid-arrow",
+      "alarm",
+      "alter-self",
+      "arcane-lock",
+      "arcanists-magic-aura",
+      "augury"
+    ],
+    "str": 8,
+    "subclass": "evoker",
+    "wis": 8
+  },
+  "monk-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 14,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "monk",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "level": 1,
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics"
+    ],
+    "species": "halfling",
+    "str": 8,
+    "wis": 8
+  },
+  "monk-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 14,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "monk",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:1,wis:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "level": 11,
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics"
+    ],
+    "species": "halfling",
+    "str": 8,
+    "subclass": "warrior-of-the-open-hand",
+    "wis": 8
+  },
+  "monk-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 14,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "monk",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:1,wis:1",
+      "ability-score-improvement|wis:2",
+      "ability-score-improvement|wis:2",
+      "ability-score-improvement|wis:1,con:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "level": 20,
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics"
+    ],
+    "species": "halfling",
+    "str": 8,
+    "subclass": "warrior-of-the-open-hand",
+    "wis": 8
+  },
+  "monk-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 14,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "monk",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "level": 5,
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics"
+    ],
+    "species": "halfling",
+    "str": 8,
+    "subclass": "warrior-of-the-open-hand",
+    "wis": 8
+  },
+  "multiclass-cleric3-wizard2-fighter1": {
+    "acMode": "auto",
+    "attrMethod": "manual",
+    "background": "acolyte",
+    "base_cha": 8,
+    "base_con": 14,
+    "base_dex": 10,
+    "base_int": 13,
+    "base_str": 13,
+    "base_wis": 15,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "elementalism",
+      "fire-bolt",
+      "guidance"
+    ],
+    "cha": 8,
+    "class": "cleric",
+    "con": 8,
+    "dex": 8,
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 6,
+    "multiclass": [
+      "wizard:2",
+      "fighter:1"
+    ],
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "History",
+      "Insight"
+    ],
+    "species": "dwarf",
+    "spells": [
+      "aid",
+      "alarm",
+      "augury",
+      "bane",
+      "bless",
+      "blindness-deafness",
+      "burning-hands",
+      "calm-emotions",
+      "charm-person",
+      "chromatic-orb",
+      "color-spray"
+    ],
+    "str": 8,
+    "subclass": "life-domain",
+    "wis": 8
+  },
+  "multiclass-paladin6-sorcerer2": {
+    "acMode": "auto",
+    "attrMethod": "manual",
+    "background": "soldier",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 10,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 12,
+    "bonus_con": 1,
+    "bonus_str": 2,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "elementalism"
+    ],
+    "cha": 8,
+    "class": "paladin",
+    "con": 8,
+    "dex": 8,
+    "extraOriginFeats": [
+      "alert"
+    ],
+    "feats": [
+      "ability-score-improvement|str:2"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 8,
+    "multiclass": [
+      "sorcerer:2"
+    ],
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Athletics",
+      "Insight"
+    ],
+    "species": "human",
+    "spells": [
+      "aid",
+      "bless",
+      "burning-hands",
+      "charm-person",
+      "chromatic-orb",
+      "color-spray",
+      "command",
+      "comprehend-languages",
+      "cure-wounds",
+      "detect-evil-and-good"
+    ],
+    "str": 8,
+    "subclass": "oath-of-devotion",
+    "wis": 8
+  },
+  "multiclass-rogue11-ranger9": {
+    "acMode": "auto",
+    "attrMethod": "manual",
+    "background": "criminal",
+    "base_cha": 8,
+    "base_con": 13,
+    "base_dex": 15,
+    "base_int": 12,
+    "base_str": 10,
+    "base_wis": 14,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "rogue",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:1,con:1",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:1,wis:1"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 20,
+    "multiclass": [
+      "ranger:9:hunter"
+    ],
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics",
+      "Deception",
+      "Insight"
+    ],
+    "species": "elf",
+    "spells": [
+      "aid",
+      "alarm",
+      "animal-friendship",
+      "animal-messenger",
+      "barkskin",
+      "conjure-animals",
+      "cure-wounds",
+      "darkvision",
+      "daylight"
+    ],
+    "str": 8,
+    "subclass": "thief",
+    "wis": 8
+  },
+  "multiclass-warlock5-sorcerer3": {
+    "acMode": "auto",
+    "attrMethod": "manual",
+    "background": "sage",
+    "base_cha": 15,
+    "base_con": 13,
+    "base_dex": 14,
+    "base_int": 10,
+    "base_str": 8,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_wis": 1,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "eldritch-blast",
+      "elementalism",
+      "fire-bolt",
+      "light"
+    ],
+    "cha": 8,
+    "class": "warlock",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 8,
+    "multiclass": [
+      "sorcerer:3:draconic-sorcery"
+    ],
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "from Arcana",
+      "Deception"
+    ],
+    "species": "tiefling",
+    "spells": [
+      "alter-self",
+      "bane",
+      "blindness-deafness",
+      "blur",
+      "burning-hands",
+      "charm-person",
+      "chromatic-orb",
+      "color-spray",
+      "comprehend-languages",
+      "counterspell",
+      "darkness",
+      "darkvision"
+    ],
+    "str": 8,
+    "subclass": "fiend-patron",
+    "wis": 8
+  },
+  "paladin-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 14,
+    "base_con": 13,
+    "base_dex": 12,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 10,
+    "bonus_con": 2,
+    "bonus_wis": 1,
+    "cha": 8,
+    "class": "paladin",
+    "con": 8,
+    "dex": 8,
+    "extraOriginFeats": [
+      "alert"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Athletics",
+      "Insight"
+    ],
+    "species": "human",
+    "spells": [
+      "bless",
+      "command"
+    ],
+    "str": 8,
+    "wis": 8
+  },
+  "paladin-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 14,
+    "base_con": 13,
+    "base_dex": 12,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 10,
+    "bonus_con": 2,
+    "bonus_wis": 1,
+    "cha": 8,
+    "class": "paladin",
+    "con": 8,
+    "dex": 8,
+    "extraOriginFeats": [
+      "alert"
+    ],
+    "feats": [
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:2"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 11,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Athletics",
+      "Insight"
+    ],
+    "species": "human",
+    "spells": [
+      "aid",
+      "bless",
+      "command",
+      "create-food-and-water",
+      "cure-wounds",
+      "daylight",
+      "detect-evil-and-good",
+      "detect-magic",
+      "detect-poison-and-disease",
+      "dispel-magic"
+    ],
+    "str": 8,
+    "subclass": "oath-of-devotion",
+    "wis": 8
+  },
+  "paladin-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 14,
+    "base_con": 13,
+    "base_dex": 12,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 10,
+    "bonus_con": 2,
+    "bonus_wis": 1,
+    "cha": 8,
+    "class": "paladin",
+    "con": 8,
+    "dex": 8,
+    "extraOriginFeats": [
+      "alert"
+    ],
+    "feats": [
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:2",
+      "ability-score-improvement|str:1,cha:1",
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:2"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 20,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Athletics",
+      "Insight"
+    ],
+    "species": "human",
+    "spells": [
+      "aid",
+      "aura-of-life",
+      "banishment",
+      "bless",
+      "command",
+      "create-food-and-water",
+      "cure-wounds",
+      "daylight",
+      "death-ward",
+      "detect-evil-and-good",
+      "detect-magic",
+      "detect-poison-and-disease",
+      "dispel-evil-and-good",
+      "dispel-magic",
+      "divine-favor"
+    ],
+    "str": 8,
+    "subclass": "oath-of-devotion",
+    "wis": 8
+  },
+  "paladin-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 14,
+    "base_con": 13,
+    "base_dex": 12,
+    "base_int": 8,
+    "base_str": 15,
+    "base_wis": 10,
+    "bonus_con": 2,
+    "bonus_wis": 1,
+    "cha": 8,
+    "class": "paladin",
+    "con": 8,
+    "dex": 8,
+    "extraOriginFeats": [
+      "alert"
+    ],
+    "feats": [
+      "ability-score-improvement|str:2"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "chain-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Athletics",
+      "Insight"
+    ],
+    "species": "human",
+    "spells": [
+      "aid",
+      "bless",
+      "command",
+      "cure-wounds",
+      "detect-evil-and-good",
+      "detect-magic"
+    ],
+    "str": 8,
+    "subclass": "oath-of-devotion",
+    "wis": 8
+  },
+  "ranger-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 14,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "ranger",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Animal Handling",
+      "Athletics",
+      "Insight"
+    ],
+    "species": "orc",
+    "spells": [
+      "alarm",
+      "animal-friendship"
+    ],
+    "str": 8,
+    "wis": 8
+  },
+  "ranger-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 14,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "ranger",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:1,wis:1"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 11,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Animal Handling",
+      "Athletics",
+      "Insight"
+    ],
+    "species": "orc",
+    "spells": [
+      "aid",
+      "alarm",
+      "animal-friendship",
+      "animal-messenger",
+      "barkskin",
+      "conjure-animals",
+      "cure-wounds",
+      "darkvision",
+      "daylight",
+      "detect-magic"
+    ],
+    "str": 8,
+    "subclass": "hunter",
+    "wis": 8
+  },
+  "ranger-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 14,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "ranger",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:1,wis:1",
+      "ability-score-improvement|wis:2",
+      "ability-score-improvement|wis:2",
+      "ability-score-improvement|wis:1,con:1"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 20,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Animal Handling",
+      "Athletics",
+      "Insight"
+    ],
+    "species": "orc",
+    "spells": [
+      "aid",
+      "alarm",
+      "animal-friendship",
+      "animal-messenger",
+      "barkskin",
+      "commune-with-nature",
+      "conjure-animals",
+      "conjure-woodland-beings",
+      "cure-wounds",
+      "darkvision",
+      "daylight",
+      "detect-magic",
+      "detect-poison-and-disease",
+      "dispel-magic",
+      "dominate-beast"
+    ],
+    "str": 8,
+    "subclass": "hunter",
+    "wis": 8
+  },
+  "ranger-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 10,
+    "base_con": 13,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 14,
+    "bonus_con": 1,
+    "bonus_dex": 2,
+    "cha": 8,
+    "class": "ranger",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2"
+    ],
+    "fightingStyles": [
+      "archery"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "scale-mail|equipped:1",
+      "shield|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Animal Handling",
+      "Athletics",
+      "Insight"
+    ],
+    "species": "orc",
+    "spells": [
+      "aid",
+      "alarm",
+      "animal-friendship",
+      "animal-messenger",
+      "barkskin",
+      "cure-wounds"
+    ],
+    "str": 8,
+    "subclass": "hunter",
+    "wis": 8
+  },
+  "rogue-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 13,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "rogue",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics",
+      "Deception",
+      "Insight"
+    ],
+    "species": "tiefling",
+    "str": 8,
+    "wis": 8
+  },
+  "rogue-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 13,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "rogue",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:1,con:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 11,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics",
+      "Deception",
+      "Insight"
+    ],
+    "species": "tiefling",
+    "str": 8,
+    "subclass": "thief",
+    "wis": 8
+  },
+  "rogue-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 13,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "rogue",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:2",
+      "ability-score-improvement|dex:1,con:1",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:1,wis:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 20,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics",
+      "Deception",
+      "Insight"
+    ],
+    "species": "tiefling",
+    "str": 8,
+    "subclass": "thief",
+    "wis": 8
+  },
+  "rogue-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "acolyte",
+    "base_cha": 10,
+    "base_con": 14,
+    "base_dex": 15,
+    "base_int": 8,
+    "base_str": 12,
+    "base_wis": 13,
+    "bonus_cha": 1,
+    "bonus_wis": 2,
+    "cha": 8,
+    "class": "rogue",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|dex:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "Acrobatics",
+      "Athletics",
+      "Deception",
+      "Insight"
+    ],
+    "species": "tiefling",
+    "str": 8,
+    "subclass": "thief",
+    "wis": 8
+  },
+  "sorcerer-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "elementalism"
+    ],
+    "cha": 8,
+    "class": "sorcerer",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "level": 1,
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Arcana",
+      "Deception"
+    ],
+    "species": "dragonborn",
+    "spells": [
+      "burning-hands",
+      "charm-person"
+    ],
+    "str": 8,
+    "wis": 8
+  },
+  "sorcerer-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "elementalism",
+      "fire-bolt",
+      "light"
+    ],
+    "cha": 8,
+    "class": "sorcerer",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "level": 11,
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Arcana",
+      "Deception"
+    ],
+    "species": "dragonborn",
+    "spells": [
+      "alter-self",
+      "animate-objects",
+      "arcane-hand",
+      "banishment",
+      "blight",
+      "blindness-deafness",
+      "blink",
+      "blur",
+      "burning-hands",
+      "chain-lightning",
+      "charm-monster",
+      "charm-person",
+      "chromatic-orb",
+      "circle-of-death",
+      "clairvoyance",
+      "cloudkill"
+    ],
+    "str": 8,
+    "subclass": "draconic-sorcery",
+    "wis": 8
+  },
+  "sorcerer-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "elementalism",
+      "fire-bolt",
+      "light"
+    ],
+    "cha": 8,
+    "class": "sorcerer",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:1,con:1",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:1,dex:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "level": 20,
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Arcana",
+      "Deception"
+    ],
+    "species": "dragonborn",
+    "spells": [
+      "alter-self",
+      "animate-objects",
+      "arcane-hand",
+      "banishment",
+      "blight",
+      "blindness-deafness",
+      "blink",
+      "blur",
+      "burning-hands",
+      "chain-lightning",
+      "charm-monster",
+      "charm-person",
+      "chromatic-orb",
+      "circle-of-death",
+      "clairvoyance",
+      "cloudkill",
+      "color-spray",
+      "comprehend-languages",
+      "cone-of-cold",
+      "confusion",
+      "counterspell",
+      "creation"
+    ],
+    "str": 8,
+    "subclass": "draconic-sorcery",
+    "wis": 8
+  },
+  "sorcerer-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "criminal",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "elementalism",
+      "fire-bolt"
+    ],
+    "cha": 8,
+    "class": "sorcerer",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "level": 5,
+    "originFeat": "alert",
+    "skillProficiencies": [
+      "Arcana",
+      "Deception"
+    ],
+    "species": "dragonborn",
+    "spells": [
+      "alter-self",
+      "blindness-deafness",
+      "blink",
+      "blur",
+      "burning-hands",
+      "charm-person",
+      "chromatic-orb",
+      "clairvoyance",
+      "color-spray"
+    ],
+    "str": 8,
+    "subclass": "draconic-sorcery",
+    "wis": 8
+  },
+  "warlock-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_wis": 1,
+    "cantrips": [
+      "chill-touch",
+      "eldritch-blast"
+    ],
+    "cha": 8,
+    "class": "warlock",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 1,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "from Arcana",
+      "Deception"
+    ],
+    "species": "dwarf",
+    "spells": [
+      "bane",
+      "charm-person"
+    ],
+    "str": 8,
+    "wis": 8
+  },
+  "warlock-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_wis": 1,
+    "cantrips": [
+      "chill-touch",
+      "eldritch-blast",
+      "mage-hand",
+      "minor-illusion"
+    ],
+    "cha": 8,
+    "class": "warlock",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 11,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "from Arcana",
+      "Deception"
+    ],
+    "species": "dwarf",
+    "spells": [
+      "bane",
+      "banishment",
+      "blight",
+      "charm-monster",
+      "charm-person",
+      "comprehend-languages",
+      "contact-other-plane",
+      "counterspell",
+      "darkness",
+      "detect-magic",
+      "dimension-door"
+    ],
+    "str": 8,
+    "subclass": "fiend-patron",
+    "wis": 8
+  },
+  "warlock-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_wis": 1,
+    "cantrips": [
+      "chill-touch",
+      "eldritch-blast",
+      "mage-hand",
+      "minor-illusion"
+    ],
+    "cha": 8,
+    "class": "warlock",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:2",
+      "ability-score-improvement|cha:1,con:1",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:1,dex:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 20,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "from Arcana",
+      "Deception"
+    ],
+    "species": "dwarf",
+    "spells": [
+      "bane",
+      "banishment",
+      "blight",
+      "charm-monster",
+      "charm-person",
+      "comprehend-languages",
+      "contact-other-plane",
+      "counterspell",
+      "darkness",
+      "detect-magic",
+      "dimension-door",
+      "dispel-magic",
+      "dream",
+      "enthrall",
+      "expeditious-retreat"
+    ],
+    "str": 8,
+    "subclass": "fiend-patron",
+    "wis": 8
+  },
+  "warlock-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "sage",
+    "base_cha": 15,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 8,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_wis": 1,
+    "cantrips": [
+      "chill-touch",
+      "eldritch-blast",
+      "mage-hand"
+    ],
+    "cha": 8,
+    "class": "warlock",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|cha:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "inventory": [
+      "leather-armor|equipped:1"
+    ],
+    "level": 5,
+    "originFeat": "magic-initiate",
+    "skillProficiencies": [
+      "from Arcana",
+      "Deception"
+    ],
+    "species": "dwarf",
+    "spells": [
+      "bane",
+      "charm-person",
+      "comprehend-languages",
+      "counterspell",
+      "darkness",
+      "detect-magic"
+    ],
+    "str": 8,
+    "subclass": "fiend-patron",
+    "wis": 8
+  },
+  "wizard-1": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 8,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 15,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights"
+    ],
+    "cha": 8,
+    "class": "wizard",
+    "con": 8,
+    "dex": 8,
+    "hpMode": "average",
+    "int": 8,
+    "level": 1,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Arcana",
+      "History"
+    ],
+    "species": "elf",
+    "spells": [
+      "alarm",
+      "burning-hands",
+      "charm-person",
+      "chromatic-orb"
+    ],
+    "str": 8,
+    "wis": 8
+  },
+  "wizard-11": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 8,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 15,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "elementalism",
+      "fire-bolt"
+    ],
+    "cha": 8,
+    "class": "wizard",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|int:2",
+      "ability-score-improvement|int:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "level": 11,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Arcana",
+      "History"
+    ],
+    "species": "elf",
+    "spells": [
+      "acid-arrow",
+      "alarm",
+      "alter-self",
+      "animate-dead",
+      "animate-objects",
+      "arcane-eye",
+      "arcane-hand",
+      "arcane-lock",
+      "arcanists-magic-aura",
+      "augury",
+      "banishment",
+      "bestow-curse",
+      "black-tentacles",
+      "blight",
+      "blindness-deafness",
+      "blink"
+    ],
+    "str": 8,
+    "subclass": "evoker",
+    "wis": 8
+  },
+  "wizard-20": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 8,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 15,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "elementalism",
+      "fire-bolt"
+    ],
+    "cha": 8,
+    "class": "wizard",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|int:2",
+      "ability-score-improvement|int:2",
+      "ability-score-improvement|int:1,con:1",
+      "ability-score-improvement|con:2",
+      "ability-score-improvement|con:1,dex:1"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "level": 20,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Arcana",
+      "History"
+    ],
+    "species": "elf",
+    "spells": [
+      "acid-arrow",
+      "alarm",
+      "alter-self",
+      "animate-dead",
+      "animate-objects",
+      "antimagic-field",
+      "antipathy-sympathy",
+      "arcane-eye",
+      "arcane-hand",
+      "arcane-lock",
+      "arcane-sword",
+      "arcanists-magic-aura",
+      "astral-projection",
+      "augury",
+      "banishment",
+      "befuddlement",
+      "bestow-curse",
+      "black-tentacles",
+      "blight",
+      "blindness-deafness",
+      "blink",
+      "blur",
+      "burning-hands",
+      "chain-lightning",
+      "charm-monster"
+    ],
+    "str": 8,
+    "subclass": "evoker",
+    "wis": 8
+  },
+  "wizard-5": {
+    "acMode": "auto",
+    "attrMethod": "standard-array",
+    "background": "soldier",
+    "base_cha": 8,
+    "base_con": 14,
+    "base_dex": 13,
+    "base_int": 15,
+    "base_str": 10,
+    "base_wis": 12,
+    "bonus_con": 2,
+    "bonus_dex": 1,
+    "cantrips": [
+      "acid-splash",
+      "chill-touch",
+      "dancing-lights",
+      "elementalism"
+    ],
+    "cha": 8,
+    "class": "wizard",
+    "con": 8,
+    "dex": 8,
+    "feats": [
+      "ability-score-improvement|int:2"
+    ],
+    "hpMode": "average",
+    "int": 8,
+    "level": 5,
+    "originFeat": "savage-attacker",
+    "skillProficiencies": [
+      "Arcana",
+      "History"
+    ],
+    "species": "elf",
+    "spells": [
+      "acid-arrow",
+      "alarm",
+      "alter-self",
+      "animate-dead",
+      "arcane-lock",
+      "arcanists-magic-aura",
+      "augury",
+      "bestow-curse",
+      "blindness-deafness"
+    ],
+    "str": 8,
+    "subclass": "evoker",
+    "wis": 8
+  }
+}

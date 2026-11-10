@@ -71,15 +71,19 @@ public static class TestSeedEndpoints
                     PortraitVersion = seed.HasPortrait ? 1 : 0
                 };
 
+                // A list (feats, inventory) arrives as a JSON array and is stored as the sheet keeps lists, not as its JSON text.
+                static object SheetValue(System.Text.Json.JsonElement element) => element.ValueKind switch
+                {
+                    System.Text.Json.JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
+                    System.Text.Json.JsonValueKind.True => true,
+                    System.Text.Json.JsonValueKind.False => false,
+                    System.Text.Json.JsonValueKind.Array => element.EnumerateArray().Select(SheetValue).ToList(),
+                    _ => element.ToString()
+                };
+
                 foreach (var (key, value) in seed.Sheet ?? new Dictionary<string, object>())
                 {
-                    actor.Sheet[key] = value is System.Text.Json.JsonElement element ? element.ValueKind switch
-                    {
-                        System.Text.Json.JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
-                        System.Text.Json.JsonValueKind.True => true,
-                        System.Text.Json.JsonValueKind.False => false,
-                        _ => element.ToString()
-                    } : value;
+                    actor.Sheet[key] = value is System.Text.Json.JsonElement element ? SheetValue(element) : value;
                 }
 
                 var primary = SystemDefinition.PrimaryKeyOf(system);

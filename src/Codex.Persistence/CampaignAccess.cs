@@ -13,11 +13,17 @@ public sealed class CampaignAccess
     public CampaignRole Role { get; }
     public bool IsDm => Role == CampaignRole.DM;
 
-    internal CampaignAccess(string campaignId, string userId, CampaignRole role)
+    /// <summary>The campaign's game system is not installed (removed, or it failed to load). Everything can still be read,
+    /// but nothing is written through this access: repository writes refuse it, as they refuse a party preview. The way
+    /// out is to install the system again, or for a GM to choose another one in Settings.</summary>
+    public bool SystemMissing { get; }
+
+    internal CampaignAccess(string campaignId, string userId, CampaignRole role, bool systemMissing = false)
     {
         CampaignId = campaignId;
         UserId = userId;
         Role = role;
+        SystemMissing = systemMissing;
     }
 
     /// <summary>
@@ -27,7 +33,7 @@ public sealed class CampaignAccess
     /// it is a player's access, and its user id matches no one: it is made up for each preview, never empty, since an owner id stored
     /// as "" would otherwise read as the preview's own character and come unmasked.
     /// </summary>
-    public CampaignAccess? PartyPreview() => IsDm ? Nobody(CampaignId) : null;
+    public CampaignAccess? PartyPreview() => IsDm ? Nobody(CampaignId, SystemMissing) : null;
 
     /// <summary>What a vault character is built against (docs/SERVER_ACCESS_AND_VAULT.md 8): no campaign, so the server's packs and
     /// nothing of any campaign. Every repository refuses it a campaign's documents, and it writes nothing.</summary>
@@ -35,11 +41,12 @@ public sealed class CampaignAccess
 
     /// <summary>The same person reading as a player: what of their own character is theirs to take to their vault, whatever
     /// their role (a co-GM's history holds the campaign's secrets).</summary>
-    public CampaignAccess AsPlayer() => IsDm ? new CampaignAccess(CampaignId, UserId, CampaignRole.Player) : this;
+    public CampaignAccess AsPlayer() => IsDm ? new CampaignAccess(CampaignId, UserId, CampaignRole.Player, SystemMissing) : this;
 
-    /// <summary>A player of the campaign who is nobody: no account has this id and no character names it as owner.</summary>
-    internal static CampaignAccess Nobody(string campaignId) =>
-        new(campaignId, "nobody:" + Guid.NewGuid().ToString("N"), CampaignRole.Player);
+    /// <summary>A player of the campaign who is nobody: no account has this id and no character names it as owner. Read-only like
+    /// the access it stands in for when that campaign's system is missing (<paramref name="systemMissing"/>).</summary>
+    internal static CampaignAccess Nobody(string campaignId, bool systemMissing = false) =>
+        new(campaignId, "nobody:" + Guid.NewGuid().ToString("N"), CampaignRole.Player, systemMissing);
 }
 
 public interface ICampaignAccessResolver

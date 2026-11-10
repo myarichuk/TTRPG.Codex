@@ -6,6 +6,10 @@
 @inject IContentRegistry Registry
 @inject PluginLoader Loader
 @inject Codex.Web.Services.BackupStatus Backups
+@inject SystemInstaller Installer
+@inject AuthenticationStateProvider AuthStateProvider
+
+<ConfirmDialog @ref="confirm" />
 
 <PageTitle>@L["Page.About.Title"] | TTRPG.Codex</PageTitle>
 
@@ -27,7 +31,26 @@
         {
             var packs = Registry.GetPacks(system.Id).ToList();
             <article class="mb-4" aria-labelledby="sys-@system.Id" data-testid="about-system">
-                <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-2">@(system.IsDataDriven ? L["Page.About.DataDriven"] : L["Page.About.Compiled"])</span></h3>
+                <h3 id="sys-@system.Id" class="h5 mb-1">@system.Name <span class="pill ms-2">@(system.IsDataDriven ? L["Page.About.DataDriven"] : L["Page.About.Compiled"])</span>
+                    @if (system.IsDataDriven && system.ContainsCompiledCode)
+                    {
+                        <span class="pill ms-1" title="@L["Page.About.ContainsCompiledCodeHint"]" data-testid="about-system-compiled">@L["Page.About.ContainsCompiledCode"]</span>
+                    }
+                </h3>
+                @if (Loader.LoadProblems.Any(p => string.Equals(p.SystemId, system.Id, StringComparison.OrdinalIgnoreCase)))
+                {
+                    <a class="small" href="/about#problems-@system.Id"><LucideIcon IconName="alert-triangle" Size="14" /> @L["Page.About.HasProblems"]</a>
+                }
+                @if (system.Version != null)
+                {
+                    <div class="small-muted" data-testid="about-system-version">@L["Page.About.Version", system.Version]</div>
+                }
+                @if (mayInstall && Installer.IsInstalled(system.Id))
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="mt-1" OnClick="() => RemoveAsync(system)" Busy="removing" data-testid="remove-system">
+                        <LucideIcon IconName="trash-2" Size="14" /> @L["Page.About.Remove"]
+                    </CodexButton>
+                }
                 @if (system.Compatibility != null)
                 {
                     <div class="small-muted">@system.Compatibility</div>
@@ -35,6 +58,29 @@
                 @if (system.Description != null)
                 {
                     <p class="mb-2">@system.Description</p>
+                }
+                @if (Catalog.GetLocalizedDefinition(system.Id)?.Setting is { IsEmpty: false } setting)
+                {
+                    @* The kind of world the game assumes, for a GM homebrewing in it (and what the AI features are told). *@
+                    <details class="mb-2" data-testid="about-system-setting">
+                        <summary>@L["Page.About.Setting"]</summary>
+                        @if (!string.IsNullOrWhiteSpace(setting.Summary))
+                        {
+                            <p class="mt-2 mb-2">@setting.Summary</p>
+                        }
+                        <dl class="wb-fields mb-0">
+                            @SettingRow(L["Page.About.Setting.Genres"], setting.Genres)
+                            @SettingRow(L["Page.About.Setting.Tone"], setting.Tone)
+                            @SettingRow(L["Page.About.Setting.Themes"], setting.Themes)
+                            @SettingRow(L["Page.About.Setting.Technology"], setting.Technology)
+                            @SettingRow(L["Page.About.Setting.Supernatural"], setting.Supernatural)
+                            @SettingRow(L["Page.About.Setting.Factions"], setting.Factions)
+                            @SettingRow(L["Page.About.Setting.Places"], setting.Places)
+                            @SettingRow(L["Page.About.Setting.Play"], setting.Play)
+                            @SettingRow(L["Page.About.Setting.Avoid"], setting.Avoid)
+                            @SettingRow(L["Page.About.Setting.Notes"], setting.Notes)
+                        </dl>
+                    </details>
                 }
                 @if (system.License != null)
                 {
@@ -87,17 +133,50 @@
         }
     </section>
 
-    @if (Loader.LoadWarnings.Count > 0)
+    <StatusMessage Message="flash" OnDismiss="() => flash = null" />
+    <SystemInstallPanel OnChanged="StateHasChanged" />
+
+    @if (Loader.LoadProblems.Count > 0 || Loader.FailedSystems.Count > 0)
     {
-        <section class="panel" aria-labelledby="warnings-heading">
+        <section class="panel" aria-labelledby="warnings-heading" data-testid="about-load-problems">
             <div class="panel-title"><h2 id="warnings-heading">@L["Page.About.Warnings"]</h2></div>
             <p class="small-muted">@L["Page.About.WarningsIntro"]</p>
-            <ul class="mb-0">
-                @foreach (var warning in Loader.LoadWarnings)
-                {
-                    <li>@warning</li>
-                }
-            </ul>
+
+            @foreach (var system in Catalog.Systems)
+            {
+                var problems = Loader.LoadProblems.Where(p => string.Equals(p.SystemId, system.Id, StringComparison.OrdinalIgnoreCase)).ToList();
+                if (problems.Count == 0) continue;
+                <h3 id="problems-@system.Id" class="h6 mt-3">@system.Name</h3>
+                @ProblemList(problems)
+            }
+
+            @if (Loader.FailedSystems.Count > 0)
+            {
+                <h3 class="h6 mt-3">@L["Page.About.FailedSystems"]</h3>
+                <p class="small-muted">@L["Page.About.FailedSystemsIntro"]</p>
+                <ul class="mb-0" data-testid="about-failed-systems">
+                    @foreach (var failed in Loader.FailedSystems)
+                    {
+                        <li>
+                            <strong>@failed.Name</strong>
+                            <ul>
+                                @foreach (var error in failed.Errors)
+                                {
+                                    <li>@error</li>
+                                }
+                            </ul>
+                            <AuthorizeView Roles="@ExposurePolicy.ServerAdminRole"><div class="small-muted">@L["Page.About.OnTheServer"] <code>@failed.Path</code></div></AuthorizeView>
+                        </li>
+                    }
+                </ul>
+            }
+
+            @{ var other = Loader.LoadProblems.Where(IsOther).ToList(); }
+            @if (other.Count > 0)
+            {
+                <h3 class="h6 mt-3">@L["Page.About.OtherProblems"]</h3>
+                @ProblemList(other)
+            }
         </section>
     }
 
@@ -138,6 +217,66 @@
 </div>
 
 @code {
+    private ConfirmDialog? confirm;
+    private System.Security.Claims.ClaimsPrincipal? user;
+    private bool mayInstall;
+    private bool removing;
+    private Flash? flash;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        mayInstall = Installer.MayInstall(user);
+    }
+
+    /// <summary>Removes an installed system once asked: its campaigns become read-only until it is installed again.</summary>
+    private async Task RemoveAsync(SystemSummary system)
+    {
+        if (confirm == null || user == null) return;
+        var using_ = await Installer.CampaignsUsingAsync(system.Id);
+        var body = using_ > 0 ? L["Page.About.RemoveUsed", system.Name, using_] : L["Page.About.RemoveUnused", system.Name];
+        if (!await confirm.ShowAsync(L["Page.About.RemoveTitle", system.Name], body, L["Page.About.Remove"], isDestructive: true)) return;
+        removing = true;
+        try
+        {
+            var result = await Installer.RemoveAsync(system.Id, user);
+            flash = result.Succeeded ? Flash.Success(L["Page.About.Removed", system.Name]) : Flash.Error(result.Error ?? "");
+        }
+        finally
+        {
+            removing = false;
+        }
+    }
+
+    // Problems shown under neither a loaded system nor a failed one: the loader's own, packs for a system that is not here.
+    private bool IsOther(LoadProblem problem) =>
+        !(problem.SystemId != null && Catalog.LoadedSystemIds.Contains(problem.SystemId))
+        && !(problem.Source == LoadProblemSource.System && Loader.FailedSystems.Any(f => f.Name == problem.Subject));
+
+    private static RenderFragment SettingRow(string label, IReadOnlyList<string> items) =>
+        SettingRow(label, items.Count == 0 ? null : string.Join(" · ", items));
+
+    private static RenderFragment SettingRow(string label, string? text) => @<text>
+        @if (!string.IsNullOrWhiteSpace(text))
+        {
+            <dt>@label</dt>
+            <dd>@text</dd>
+        }
+    </text>;
+
+    private RenderFragment ProblemList(IReadOnlyList<LoadProblem> problems) => @<ul class="mb-0">
+        @foreach (var problem in problems)
+        {
+            <li>
+                @problem.Text
+                @if (problem.Path != null)
+                {
+                    <AuthorizeView Roles="@ExposurePolicy.ServerAdminRole"><div class="small-muted">@L["Page.About.OnTheServer"] <code>@problem.Path</code></div></AuthorizeView>
+                }
+            </li>
+        }
+    </ul>;
+
     private RenderFragment License(LicenseInfo license) => builder =>
     {
         if (license.Url != null)

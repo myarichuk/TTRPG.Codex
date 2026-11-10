@@ -58,6 +58,9 @@ public interface ICampaignRepository
     /// <summary>Every campaign on the server. Administrative/export use only - never for a user-facing list.</summary>
     Task<IEnumerable<CampaignDocument>> GetAllAsync();
 
+    /// <summary>Records the campaign's system as it is loaded now, once the GM has seen what changed (overhaul step 10).</summary>
+    Task<CampaignDocument?> AcceptSystemAsync(CampaignAccess access);
+
     /// <summary>The campaigns <paramref name="userId"/> owns or is a member of - the only list a user should ever see.</summary>
     Task<IEnumerable<CampaignDocument>> GetForUserAsync(string userId);
 

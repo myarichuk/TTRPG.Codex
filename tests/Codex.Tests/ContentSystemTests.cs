@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Codex.Core;
 using Codex.Core.Models;
-using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -16,7 +15,6 @@ namespace Codex.Tests;
 public class ContentSystemTests : IDisposable
 {
     private readonly string _tempPath;
-    private readonly ScriptEvaluator _evaluator = new(NullLogger<ScriptEvaluator>.Instance);
 
     public ContentSystemTests()
     {
@@ -35,7 +33,7 @@ public class ContentSystemTests : IDisposable
     [Fact]
     public void ContentRegistry_Should_RegisterAndRetrieveAbilities()
     {
-        var registry = new ContentRegistry(_evaluator);
+        var registry = new ContentRegistry();
         var ability = new AbilityDefinition { Id = "fireball", SystemId = "dnd5e", PackId = "srd", Name = "Fireball" };
 
         registry.RegisterAbility(ability, 0);
@@ -48,7 +46,7 @@ public class ContentSystemTests : IDisposable
     [Fact]
     public void ContentRegistry_Should_RegisterAndRetrieveActors()
     {
-        var registry = new ContentRegistry(_evaluator);
+        var registry = new ContentRegistry();
         var actor = new ActorDefinition { Id = "bob", SystemId = "dnd5e", PackId = "test", Name = "Bob the Blacksmith" };
 
         registry.RegisterActor(actor, 0);
@@ -79,7 +77,7 @@ public class ContentSystemTests : IDisposable
         File.WriteAllText(Path.Combine(_tempPath, "locations", "inn.yaml"), "id: inn\nname: The Rusty Tankard");
 
         // 2. Load
-        var registry = new ContentRegistry(_evaluator);
+        var registry = new ContentRegistry();
         var loader = new YamlContentPackLoader(registry);
         await loader.LoadPackAsync(_tempPath);
 
@@ -87,6 +85,28 @@ public class ContentSystemTests : IDisposable
         Assert.NotNull(registry.GetAbility("dnd5e:fireball"));
         Assert.NotNull(registry.GetActor("dnd5e:bob"));
         Assert.NotNull(registry.GetLocation("dnd5e:inn"));
+    }
+
+    [Fact]
+    public async Task YamlLoader_Loads_An_Ability_With_A_Script_Effect_And_Says_The_Script_Is_Ignored()
+    {
+        File.WriteAllText(Path.Combine(_tempPath, "manifest.json"), @"{ ""id"": ""old-pack"", ""systemId"": ""dnd5e"" }");
+        Directory.CreateDirectory(Path.Combine(_tempPath, "abilities"));
+        File.WriteAllText(Path.Combine(_tempPath, "abilities", "burn.yaml"),
+            "id: burn\nname: Burn\neffects:\n  - type: Damage\n    params:\n      Script: \"world.Log(\\\"x\\\")\"\n");
+        File.WriteAllText(Path.Combine(_tempPath, "abilities", "plain.yaml"),
+            "id: plain\nname: Plain\neffects:\n  - type: Damage\n    params:\n      amount: 3\n");
+
+        var registry = new ContentRegistry();
+        var loader = new YamlContentPackLoader(registry);
+        await loader.LoadPackAsync(_tempPath);
+
+        Assert.NotNull(registry.GetAbility("dnd5e:burn"));
+        Assert.NotNull(registry.GetAbility("dnd5e:plain"));
+        var problem = Assert.Single(loader.TakeProblems());
+        Assert.Contains("burn", problem);
+        Assert.Contains("old-pack", problem);
+        Assert.Contains("ignored", problem);
     }
 
     [Fact]
@@ -101,7 +121,7 @@ public class ContentSystemTests : IDisposable
         Directory.CreateDirectory(Path.Combine(_tempPath, "actors"));
 
         // 2. Setup Base Actor in Registry
-        var registry = new ContentRegistry(_evaluator);
+        var registry = new ContentRegistry();
         var baseActor = new ActorDefinition
         {
             Id = "humanoid",
@@ -154,7 +174,7 @@ properties:
         var exporter = new ContentPackExporter();
         await exporter.ExportToZipAsync(manifest, new[] { ability }, Array.Empty<ActorDefinition>(), Array.Empty<LocationDefinition>(), zipPath, new[] { entry });
 
-        var registry = new ContentRegistry(_evaluator);
+        var registry = new ContentRegistry();
         var loader = new YamlContentPackLoader(registry);
         await loader.LoadPackAsync(zipPath);
 

@@ -44,7 +44,13 @@
                     </div>
                     <div class="mb-3">
                         <label for="cs-system" class="field-label">@L["Campaign.Settings.GameSystem"]</label>
-                        <select id="cs-system" class="field-select" @bind="systemId" aria-describedby="cs-system-help">
+                        <select id="cs-system" class="field-select" @bind="systemId" aria-describedby="cs-system-help" data-testid="settings-system">
+                            @if (Ctx.SystemMissing)
+                            {
+                                @* Without this the browser shows the first installed system as if it were chosen, and saving
+                                   the form for any other reason would switch the campaign to it. *@
+                                <option value="@Ctx.Campaign.SystemId" disabled>@L["Campaign.Settings.SystemNotInstalled", Ctx.Campaign.SystemId]</option>
+                            }
                             @foreach (var system in Catalog.Systems)
                             {
                                 <option value="@system.Id">@system.Name</option>
@@ -352,7 +358,7 @@
                 campaign.RulesEnforcement = newEnforcement;
             }, L["Common.Saved"]);
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex) when (ex is InvalidOperationException or LocalizedException { Key: "Campaign.SystemMissing" })
         {
             Ctx.Notify(Flash.Error(L.Describe(ex)));
         }

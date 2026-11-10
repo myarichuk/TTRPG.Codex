@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../docs/schema/system.schema.json
 # A deliberately tiny homebrew system, to show that a system is just data. Drop a folder like
 # this one anywhere under a content root and TTRPG.Codex will offer it when creating a campaign.
 id: simple-d6

@@ -1,0 +1,377 @@
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@using Codex.Core.Rules
+@using Codex.Persistence.Runtime
+@using System.Globalization
+@implements IDisposable
+@inject CampaignRuntimeManager RuntimeManager
+@inject ICampaignObjectsRepository ObjectsRepo
+
+@* The campaign's own clocks and tables (overhaul step 7): Blades' clocks and faction status, a party treasure. The GM changes
+   them, through the live table when it runs (so the change is in its log) or straight to the store; a player sees what is not
+   kept for the GM, and follows the table live. *@
+
+@if (System is { } system && CampaignObjects.Has(system))
+{
+    <section class="panel campaign-objects mb-4" aria-labelledby="campaign-objects-heading" data-testid="campaign-objects">
+        <div class="panel-title"><h3 id="campaign-objects-heading">@L["Combat.Objects.Title"]</h3></div>
+
+        @if (system.Campaign!.Clocks is { } rules)
+        {
+            var clocks = CampaignObjects.Clocks(state);
+            <h4 class="field-label">@L["Combat.Objects.Clocks"]</h4>
+            @if (clocks.Count == 0)
+            {
+                <p class="small-muted" data-testid="clocks-empty">@L["Combat.Objects.NoClocks"]</p>
+            }
+            <ul class="clock-list list-unstyled" data-testid="clocks">
+                @foreach (var clock in clocks)
+                {
+                    var shown = clock;
+                    <li class="clock-row @(clock.IsFull ? "clock-full" : "")" data-testid="@($"clock-{Slug(clock.Name)}")">
+                        <svg class="clock-face" viewBox="0 0 40 40" role="img" aria-label="@L["Combat.Objects.ClockLabel", clock.Name, clock.Filled, clock.Segments]">
+                            @for (var i = 0; i < Math.Max(clock.Segments, 1); i++)
+                            {
+                                <path d="@Wedge(i, Math.Max(clock.Segments, 1))" class="@(i < clock.Filled ? "clock-segment clock-segment-full" : "clock-segment")" />
+                            }
+                        </svg>
+                        <div class="clock-text">
+                            <span class="clock-name">@clock.Name</span>
+                            <span class="small-muted" data-testid="clock-count"><bdi>@clock.Filled / @clock.Segments</bdi></span>
+                            @if (IsGm)
+                            {
+                                <span class="pill">@(IsGmOnly(clock.Visibility) ? L["Combat.Objects.GmOnly"] : L["Combat.Objects.Shown"])</span>
+                            }
+                        </div>
+                        @if (CanEdit)
+                        {
+                            <div class="clock-controls">
+                                <button type="button" class="btn btn-sm btn-secondary" aria-label="@L["Combat.Objects.Untick", clock.Name]" disabled="@(busy || clock.Filled <= 0)"
+                                        data-testid="clock-untick" @onclick="() => TickAsync(shown.Name, -1)">−</button>
+                                <button type="button" class="btn btn-sm btn-primary" aria-label="@L["Combat.Objects.Tick", clock.Name]" disabled="@(busy || clock.IsFull)"
+                                        data-testid="clock-tick" @onclick="() => TickAsync(shown.Name, 1)">+</button>
+                                @if (rules.Segments.Count > 1)
+                                {
+                                    <select class="field-select field-sm" aria-label="@L["Combat.Objects.Segments"]" value="@clock.Segments" disabled="@busy"
+                                            @onchange="e => ResizeAsync(shown.Name, e.Value?.ToString())">
+                                        @foreach (var size in rules.Segments)
+                                        {
+                                            <option value="@size" selected="@(size == clock.Segments)">@size</option>
+                                        }
+                                    </select>
+                                }
+                                @if (rules.Visibility.Count > 1)
+                                {
+                                    <select class="field-select field-sm" aria-label="@L["Combat.Objects.Visibility"]" value="@clock.Visibility" disabled="@busy"
+                                            @onchange="e => ShowToAsync(shown.Name, e.Value?.ToString())">
+                                        @foreach (var who in rules.Visibility)
+                                        {
+                                            <option value="@who" selected="@(string.Equals(who, clock.Visibility, StringComparison.OrdinalIgnoreCase))">@(IsGmOnly(who) ? L["Combat.Objects.GmOnly"] : L["Combat.Objects.Shown"])</option>
+                                        }
+                                    </select>
+                                }
+                                <button type="button" class="link-btn" aria-label="@L["Combat.Objects.RemoveClock", clock.Name]" disabled="@busy"
+                                        @onclick="() => RemoveClockAsync(shown.Name)">×</button>
+                            </div>
+                        }
+                    </li>
+                }
+            </ul>
+
+            @if (CanEdit)
+            {
+                <form class="d-flex flex-wrap gap-2 align-items-end mb-3" @onsubmit="AddClockAsync" data-testid="clock-add">
+                    <div>
+                        <label class="field-label" for="new-clock-name">@L["Combat.Objects.NewClock"]</label>
+                        <input id="new-clock-name" class="field-input field-sm" @bind="newClockName" @bind:event="oninput" data-testid="clock-add-name" />
+                    </div>
+                    @if (rules.Segments.Count > 0)
+                    {
+                        <div>
+                            <label class="field-label" for="new-clock-size">@L["Combat.Objects.Segments"]</label>
+                            <select id="new-clock-size" class="field-select field-sm" @bind="newClockSize" data-testid="clock-add-size">
+                                @foreach (var size in rules.Segments)
+                                {
+                                    <option value="@size">@size</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                    else
+                    {
+                        <div>
+                            <label class="field-label" for="new-clock-size">@L["Combat.Objects.Segments"]</label>
+                            <input id="new-clock-size" type="number" min="2" class="field-input field-sm sheet-number" @bind="newClockSize" />
+                        </div>
+                    }
+                    <button type="submit" class="btn btn-sm btn-secondary" disabled="@(busy || string.IsNullOrWhiteSpace(newClockName))" data-testid="clock-add-submit">@L["Combat.Objects.AddClock"]</button>
+                </form>
+            }
+        }
+
+        @foreach (var table in system.Campaign!.Tables.Where(t => IsGm || !IsGmOnly(t.Visibility)))
+        {
+            var key = table.Key;
+            var label = system.DisplayValue(table.Label ?? table.Key);
+            var rows = CampaignObjects.Rows(system, state, table.Key);
+            <h4 class="field-label mt-3">@label</h4>
+            <table class="table table-sm" data-testid="@($"campaign-table-{table.Key}")">
+                <thead>
+                    <tr>
+                        <th scope="col">@L["Combat.Objects.Name"]</th>
+                        @foreach (var field in table.ItemFields)
+                        {
+                            <th scope="col">@system.DisplayValue(field.Label ?? field.Key)</th>
+                        }
+                        @if (CanEdit) { <th scope="col"><span class="visually-hidden">@L["Combat.Objects.Remove"]</span></th> }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in rows)
+                    {
+                        var rowName = row.Name;
+                        <tr data-testid="@($"row-{Slug(row.Name)}")">
+                            <th scope="row">@row.Name</th>
+                            @foreach (var field in table.ItemFields)
+                            {
+                                var fieldKey = field.Key;
+                                var value = row.Fields.GetValueOrDefault(field.Key);
+                                <td>
+                                    @if (CanEdit && IsNumber(field))
+                                    {
+                                        <span class="d-inline-flex align-items-center gap-1">
+                                            <button type="button" class="btn btn-sm btn-secondary" aria-label="@L["Combat.Objects.Lower", row.Name]" disabled="@busy"
+                                                    @onclick="() => AdjustRowAsync(key, rowName, fieldKey, -1)">−</button>
+                                            <bdi class="campaign-number" data-testid="@($"row-{Slug(row.Name)}-{field.Key}")">@SheetView.Format(value)</bdi>
+                                            <button type="button" class="btn btn-sm btn-secondary" aria-label="@L["Combat.Objects.Raise", row.Name]" disabled="@busy"
+                                                    @onclick="() => AdjustRowAsync(key, rowName, fieldKey, 1)">+</button>
+                                        </span>
+                                    }
+                                    else if (CanEdit)
+                                    {
+                                        <input class="field-input field-sm" value="@value" aria-label="@system.DisplayValue(field.Label ?? field.Key)" disabled="@busy"
+                                               @onchange="e => SetRowFieldAsync(key, rowName, fieldKey, e.Value?.ToString())" />
+                                    }
+                                    else
+                                    {
+                                        <bdi data-testid="@($"row-{Slug(row.Name)}-{field.Key}")">@SheetView.Format(value)</bdi>
+                                    }
+                                </td>
+                            }
+                            @if (CanEdit)
+                            {
+                                <td><button type="button" class="link-btn" aria-label="@L["Combat.Objects.RemoveRow", row.Name]" disabled="@busy" @onclick="() => RemoveRowAsync(key, rowName)">×</button></td>
+                            }
+                        </tr>
+                    }
+                    @if (rows.Count == 0)
+                    {
+                        <tr><td colspan="@(table.ItemFields.Count + 2)" class="small-muted">@L["Combat.Objects.NoRows"]</td></tr>
+                    }
+                </tbody>
+            </table>
+            @if (CanEdit)
+            {
+                <form class="d-flex flex-wrap gap-2 align-items-end mb-2" @onsubmit="() => AddRowAsync(key)" data-testid="@($"row-add-{table.Key}")">
+                    <div>
+                        <label class="field-label" for="@($"new-row-{table.Key}")">@L["Combat.Objects.NewRow", label]</label>
+                        <input id="@($"new-row-{table.Key}")" class="field-input field-sm" value="@newRowNames.GetValueOrDefault(key)" @oninput="e => newRowNames[key] = e.Value?.ToString() ?? string.Empty" />
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-secondary" disabled="@busy">@L["Combat.Objects.AddRow"]</button>
+                </form>
+            }
+        }
+
+        @if (IsGm)
+        {
+            <RuleProblemList Problems="CampaignObjects.Problems(system, state)" Describe="Describe" TestId="campaign-objects-problems" />
+        }
+    </section>
+}
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private Dictionary<string, object> state = new();
+    private CampaignRuntime? runtime;
+    private bool subscribed;
+    private bool busy;
+    private string newClockName = string.Empty;
+    private int newClockSize;
+    private readonly Dictionary<string, string> newRowNames = new(StringComparer.Ordinal);
+
+    private SystemDefinition? System => Ctx.System;
+    private bool IsGm => Ctx.IsDm;
+    private bool CanEdit => Ctx.IsDm && !Ctx.SystemMissing;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (System is not { } system || !CampaignObjects.Has(system)) return;
+        if (newClockSize == 0) newClockSize = system.Campaign!.Clocks?.Segments.FirstOrDefault(4) ?? 4;
+        if (!subscribed)
+        {
+            RuntimeManager.RuntimeChanged += OnRuntimeChanged;
+            subscribed = true;
+        }
+
+        Attach(RuntimeManager.TryGet(Ctx.Campaign.Id));
+        await LoadAsync();
+    }
+
+    private void Attach(CampaignRuntime? live)
+    {
+        if (ReferenceEquals(runtime, live)) return;
+        if (runtime != null) runtime.StateChanged -= OnStateChanged;
+        runtime = live;
+        if (runtime != null) runtime.StateChanged += OnStateChanged;
+    }
+
+    /// <summary>The objects as this viewer may see them: the table's, when it runs, else the stored ones.</summary>
+    private async Task LoadAsync()
+    {
+        if (System is not { } system) return;
+        state = runtime != null
+            ? CampaignObjects.Visible(system, runtime.Snapshot.Campaign, IsGm)
+            : await ObjectsRepo.GetVisibleAsync(Ctx.Access, system);
+    }
+
+    private void OnRuntimeChanged(string campaignId)
+    {
+        if (campaignId != Ctx.Campaign.Id) return;
+        InvokeAsync(async () =>
+        {
+            Attach(RuntimeManager.TryGet(Ctx.Campaign.Id));
+            await LoadAsync();
+            StateHasChanged();
+        });
+    }
+
+    private void OnStateChanged(IReadOnlyCollection<string> _) => InvokeAsync(async () =>
+    {
+        await LoadAsync();
+        StateHasChanged();
+    });
+
+    // ---- Changes ----
+
+    private Task TickAsync(string clock, int by) =>
+        RaiseAsync(SheetEvents.AdjustKind, new Dictionary<string, object?> { ["clock"] = clock, ["by"] = by });
+
+    private Task AdjustRowAsync(string table, string row, string field, int by) =>
+        RaiseAsync(SheetEvents.AdjustKind, new Dictionary<string, object?> { ["table"] = table, ["row"] = row, ["field"] = field, ["by"] = by });
+
+    private async Task RaiseAsync(string type, Dictionary<string, object?> fields)
+    {
+        if (System is not { } system) return;
+        await RunAsync(async () =>
+        {
+            if (await RuntimeManager.RaiseCampaignEventAsync(Ctx.Access, system, type, fields) is { } failed)
+            {
+                Ctx.Notify(Flash.Error(failed));
+            }
+        });
+    }
+
+    private Task AddClockAsync()
+    {
+        var name = newClockName.Trim();
+        var size = newClockSize;
+        var visibility = System!.Campaign!.Clocks!.Visibility.FirstOrDefault(CampaignObjects.GmOnly);
+        return EditAsync(s => CampaignObjects.AddClock(System!, s, name, size, visibility),
+            EventMessage.Of("Campaign.ClockAdded", Named(name, visibility), size), () => newClockName = string.Empty);
+    }
+
+    private Task ResizeAsync(string clock, string? size) =>
+        int.TryParse(size, NumberStyles.Integer, CultureInfo.InvariantCulture, out var segments)
+            ? EditAsync(s => CampaignObjects.EditClock(s, clock, segments: segments), EventMessage.Of("Campaign.ClockEdited", ClockNamed(clock)))
+            : Task.CompletedTask;
+
+    private Task ShowToAsync(string clock, string? visibility) =>
+        string.IsNullOrEmpty(visibility) ? Task.CompletedTask
+            // Said as kept for the GM either way: a player has no use for "the GM now shows you a clock" before it is in their view.
+            : EditAsync(s => CampaignObjects.EditClock(s, clock, visibility: visibility), EventMessage.Of("Campaign.ClockEdited", EventTerm.GmOnly(clock)));
+
+    private Task RemoveClockAsync(string clock) =>
+        EditAsync(s => CampaignObjects.RemoveClock(s, clock), EventMessage.Of("Campaign.ClockRemoved", ClockNamed(clock)));
+
+    private Task AddRowAsync(string table)
+    {
+        var name = newRowNames.GetValueOrDefault(table)?.Trim() ?? string.Empty;
+        if (name.Length == 0) return Task.CompletedTask;
+        return EditAsync(s => CampaignObjects.AddRow(System!, s, table, name),
+            EventMessage.Of("Campaign.RowAdded", TableTerm(table), RowNamed(table, name)), () => newRowNames[table] = string.Empty);
+    }
+
+    private Task SetRowFieldAsync(string table, string row, string field, string? text) =>
+        EditAsync(s => CampaignObjects.SetRowField(System!, s, table, row, field, text), EventMessage.Of("Campaign.RowEdited", TableTerm(table), RowNamed(table, row)));
+
+    private Task RemoveRowAsync(string table, string row) =>
+        EditAsync(s => CampaignObjects.RemoveRow(s, table, row), EventMessage.Of("Campaign.RowRemoved", TableTerm(table), RowNamed(table, row)));
+
+    private async Task EditAsync(Func<Dictionary<string, object>, bool> edit, EventMessage said, Action? done = null)
+    {
+        await RunAsync(async () =>
+        {
+            if (await RuntimeManager.TryChangeCampaignObjectsAsync(Ctx.Access, edit, said)) done?.Invoke();
+            else Ctx.Notify(Flash.Error(L["Combat.Objects.NotChanged"]));
+        });
+    }
+
+    private async Task RunAsync(Func<Task> change)
+    {
+        if (busy) return;
+        busy = true;
+        try
+        {
+            await change();
+            if (runtime == null) await LoadAsync();
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or Codex.Localization.LocalizedException)
+        {
+            Ctx.Notify(Flash.Error(L.Describe(ex)));
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    // ---- Words ----
+
+    private object ClockNamed(string clock) =>
+        Named(clock, CampaignObjects.Clocks(state).FirstOrDefault(c => string.Equals(c.Name, clock, StringComparison.OrdinalIgnoreCase))?.Visibility);
+
+    private static object Named(string name, string? visibility) => IsGmOnly(visibility) ? EventTerm.GmOnly(name) : name;
+
+    private object RowNamed(string table, string row) => Named(row, CampaignObjects.TableOf(System!, table)?.Visibility);
+
+    private EventTerm TableTerm(string table) =>
+        new(EventTerm.SystemKind, CampaignObjects.TableOf(System!, table)?.Label ?? table, System!.DisplayValue(CampaignObjects.TableOf(System!, table)?.Label ?? table));
+
+    private static bool IsGmOnly(string? visibility) => string.Equals(visibility, CampaignObjects.GmOnly, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsNumber(ItemFieldDefinition field) => field.Type.Equals("number", StringComparison.OrdinalIgnoreCase);
+
+    private static string Slug(string text) => string.Concat(text.Trim().ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-'));
+
+    private string Describe(RuleViolation violation) =>
+        violation.Key != null && violation.Args != null && L.Has(violation.Key)
+            ? L[violation.Key, violation.Args.Select(a => a is double d ? SheetView.Format(d) : a).ToArray()]
+            : violation.Message;
+
+    /// <summary>Segment <paramref name="index"/> of <paramref name="count"/>, clockwise from the top, as an SVG path.</summary>
+    private static string Wedge(int index, int count)
+    {
+        const double c = 20, r = 18;
+        if (count == 1) return FormattableString.Invariant($"M {c} {c - r} A {r} {r} 0 1 1 {c - 0.01} {c - r} Z");
+        double Angle(int i) => 2 * Math.PI * i / count - Math.PI / 2;
+        var (a0, a1) = (Angle(index), Angle(index + 1));
+        return FormattableString.Invariant($"M {c} {c} L {c + r * Math.Cos(a0):0.###} {c + r * Math.Sin(a0):0.###} A {r} {r} 0 0 1 {c + r * Math.Cos(a1):0.###} {c + r * Math.Sin(a1):0.###} Z");
+    }
+
+    public void Dispose()
+    {
+        if (subscribed) RuntimeManager.RuntimeChanged -= OnRuntimeChanged;
+        if (runtime != null) runtime.StateChanged -= OnStateChanged;
+    }
+}

@@ -92,6 +92,8 @@
   <data name="Page.About.NoSystemsAfter" xml:space="preserve"><value> באחת מתיקיות התוכן והפעילו מחדש.</value></data>
   <data name="Page.About.DataDriven" xml:space="preserve"><value>מבוסס נתונים</value></data>
   <data name="Page.About.Compiled" xml:space="preserve"><value>תוסף מקומפל</value></data>
+  <data name="Page.About.ContainsCompiledCode" xml:space="preserve"><value>מכיל קוד מהודר</value></data>
+  <data name="Page.About.ContainsCompiledCodeHint" xml:space="preserve"><value>קובצי ה-DLL שלו רצים בשרת עם ההרשאות של השרת; מתקינים אותם רק בהעתקה לשרת.</value></data>
   <data name="Page.About.Licence" xml:space="preserve"><value>רישיון:</value></data>
   <data name="Page.About.Modified" xml:space="preserve"><value>שונה מהמקור</value></data>
   <data name="Page.About.Source" xml:space="preserve"><value>מקור:</value></data>
@@ -255,6 +257,48 @@
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>העתיקו אותם ממחירון הספק. היישום אינו מגיע עם מחירים, ולכן בלעדיהם הוא מציג רק אסימונים ולא עלות מנוחשת.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>מחיר חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>
   <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>קלט {0} / פלט {1} לכל מיליון אסימונים</value></data>
+  <data name="Page.About.FailedSystems" xml:space="preserve"><value>מערכות שלא נטענו</value></data>
+  <data name="Page.About.FailedSystemsIntro" xml:space="preserve"><value>המערכות האלה נמצאו, אבל יש שגיאות בקבצים שלהן, ולכן אף קמפיין לא יכול להשתמש בהן עד שהקובץ יתוקן והאפליקציה תופעל מחדש.</value></data>
+  <data name="Page.About.OtherProblems" xml:space="preserve"><value>בעיות אחרות</value></data>
+  <data name="Page.About.OnTheServer" xml:space="preserve"><value>בשרת:</value></data>
+  <data name="Page.About.HasProblems" xml:space="preserve"><value>יש בעיות טעינה</value></data>
+  <data name="Page.Home.FailedSystems" xml:space="preserve"><value>לא מופיעות כי לא נטענו: {0}.</value></data>
+  <data name="Page.Home.FailedSystemsLink" xml:space="preserve"><value>למה?</value></data>
+  <data name="Page.About.Setting" xml:space="preserve"><value>העולם שהמשחק מניח</value></data>
+  <data name="Page.About.Setting.Genres" xml:space="preserve"><value>סוגה</value></data>
+  <data name="Page.About.Setting.Tone" xml:space="preserve"><value>אווירה</value></data>
+  <data name="Page.About.Setting.Themes" xml:space="preserve"><value>נושאים</value></data>
+  <data name="Page.About.Setting.Technology" xml:space="preserve"><value>טכנולוגיה</value></data>
+  <data name="Page.About.Setting.Supernatural" xml:space="preserve"><value>מעבר לטבעי</value></data>
+  <data name="Page.About.Setting.Factions" xml:space="preserve"><value>סוגי פלגים</value></data>
+  <data name="Page.About.Setting.Places" xml:space="preserve"><value>סוגי מקומות</value></data>
+  <data name="Page.About.Setting.Play" xml:space="preserve"><value>איך נראה המשחק</value></data>
+  <data name="Page.About.Setting.Avoid" xml:space="preserve"><value>לא שייך</value></data>
+  <data name="Page.About.Setting.Notes" xml:space="preserve"><value>עוד</value></data>
+  <data name="Page.About.Version" xml:space="preserve"><value>גרסה {0}</value></data>
+  <data name="Page.About.Install" xml:space="preserve"><value>התקנת מערכת</value></data>
+  <data name="Page.About.InstallHint" xml:space="preserve"><value>מערכת היא קובץ zip של התיקייה שלה: system.yaml, התרגומים, הסקריפטים וחבילות התוכן שלה, עד {0} MB. היא נבדקת לפני שמשהו מותקן. אי אפשר להעלות מערכת עם קוד מהודר (DLL): מי שמריץ את השרת מעתיק אליו את התיקייה שלה.</value></data>
+  <data name="Page.About.InstallChoose" xml:space="preserve"><value>בחירת קובץ zip של מערכת</value></data>
+  <data name="Page.About.InstallScripts" xml:space="preserve"><value>סקריפטים</value></data>
+  <data name="Page.About.InstallPacks" xml:space="preserve"><value>חבילות תוכן: {0}</value></data>
+  <data name="Page.About.InstallReplaces" xml:space="preserve"><value>מחליפה את הגרסה המותקנת {0}, שלפיה משחקים קמפיינים: {1}. מעכשיו הם משחקים לפי הגרסה החדשה, וכל שליט המבוך יראה מה השתנה. שולחן שרץ ממשיך בגרסה הישנה עד שהוא נגמר.</value></data>
+  <data name="Page.About.InstallSame" xml:space="preserve"><value>היא זהה לגרסה המותקנת.</value></data>
+  <data name="Page.About.InstallCannot" xml:space="preserve"><value>אי אפשר להתקין אותה:</value></data>
+  <data name="Page.About.InstallWarnings" xml:space="preserve"><value>היא תותקן עם בעיות ({0}), שדף 'אודות' יציג</value></data>
+  <data name="Page.About.InstallConfirm" xml:space="preserve"><value>התקנה</value></data>
+  <data name="Page.About.InstallReplace" xml:space="preserve"><value>החלפת הגרסה המותקנת</value></data>
+  <data name="Page.About.InstallNotAllowed" xml:space="preserve"><value>אין לך הרשאה להתקין מערכות בשרת הזה.</value></data>
+  <data name="Page.About.InstallTooBig" xml:space="preserve"><value>לא ניתן היה לקרוא את הקובץ (מערכת היא עד {0} MB): {1}</value></data>
+  <data name="Page.About.Installed" xml:space="preserve"><value>המערכת {0} הותקנה.</value></data>
+  <data name="Page.About.Reload" xml:space="preserve"><value>טעינה מחדש של המערכות</value></data>
+  <data name="Page.About.ReloadHint" xml:space="preserve"><value>קורא מחדש את כל תיקיות המערכות, אחרי שינוי בדיסק של השרת. שולחנות שרצים שומרים על המערכת שלהם עד שהם נגמרים; קוד מהודר שהשתנה נטען מחדש.</value></data>
+  <data name="Page.About.Reloaded" xml:space="preserve"><value>המערכות נטענו מחדש. נוספו: {0}. הוסרו: {1}. השתנו: {2}.</value></data>
+  <data name="Page.About.ReloadedNothing" xml:space="preserve"><value>המערכות נטענו מחדש; שום דבר לא השתנה.</value></data>
+  <data name="Page.About.Remove" xml:space="preserve"><value>הסרה</value></data>
+  <data name="Page.About.RemoveTitle" xml:space="preserve"><value>להסיר את {0}?</value></data>
+  <data name="Page.About.RemoveUsed" xml:space="preserve"><value>קמפיינים שמשחקים לפי {0}: {1}. אחרי ההסרה אפשר לקרוא ולייצא אותם אבל לא לשנות, עד שהמערכת תותקן שוב או ששליטי המבוך שלהם יבחרו מערכת אחרת. שולחן שרץ שומר עליה עד שהוא נגמר.</value></data>
+  <data name="Page.About.RemoveUnused" xml:space="preserve"><value>אף קמפיין לא משחק לפי {0}.</value></data>
+  <data name="Page.About.Removed" xml:space="preserve"><value>המערכת {0} הוסרה.</value></data>
   <data name="Page.AiSettings.PricePerImage" xml:space="preserve"><value>לכל תמונה</value></data>
   <data name="Page.AiSettings.PriceImageHint" xml:space="preserve"><value>העתיקו אותו ממחירון הספק. בלעדיו היישום סופר תמונות ואינו מנחש עלות.</value></data>
   <data name="Page.AiSettings.PriceImageBad" xml:space="preserve"><value>מחיר לתמונה חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>

@@ -24,7 +24,12 @@ jobs:
 
   build-and-test:
     runs-on: ${{ matrix.os }}
+    # A healthy run is ~15 minutes; without this a hung test holds the runner for GitHub's 6-hour default.
+    timeout-minutes: 45
     strategy:
+      # One OS failing must not cancel the other: with the default, ubuntu was cancelled 10 minutes into its tests
+      # when windows failed, so its result was never seen.
+      fail-fast: false
       matrix:
         # ubuntu-latest is now 26.04, for which Playwright has no browser packages yet (install --with-deps fails); 24.04 until it does.
         os: [ubuntu-24.04, windows-latest]
@@ -56,9 +61,37 @@ jobs:
       - name: Install Playwright browsers
         run: pwsh tests/Codex.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium webkit firefox
 
+      # Run 709 on windows-latest: RavenDB's DiskFullException on C: (its temp folder) late in the suite, and the runner could not
+      # write its own log. These two steps say how much room there is, and what the tests leave in the runner temp folder.
+      - name: Disk space before the tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -gt 0 } |
+            Format-Table Name, @{n='UsedGB';e={[math]::Round($_.Used/1GB,1)}}, @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}}
+          Get-ChildItem $env:RUNNER_TEMP -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            [pscustomobject]@{ Folder = $_.Name; GB = [math]::Round(((Get-ChildItem $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum) / 1GB, 2) }
+          } | Sort-Object GB -Descending | Select-Object -First 8 | Format-Table
+
       - name: Test
         env:
           DOTNET_ROLL_FORWARD: "LatestMajor"
           DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX: "2"
           DOTNET_ROLL_FORWARD_PRE_RELEASE: "1"
-        run: dotnet test --configuration Release --no-build --verbosity normal
+          # The suite's embedded RavenDB leaves ~25 GB in the temp folder by the end of a run (run 711: 24.95 GB in one TestRavenData_*
+          # folder). On windows-latest %TEMP% is on C:, which starts with ~25 GB free and ran out; the runner temp folder is on D: (~140 GB
+          # free). Empty on Linux, where the suite then uses the default temp directory as before (TestTempData.Root).
+          CODEX_TEST_TEMP: ${{ runner.os == 'Windows' && runner.temp || '' }}
+        # --blame-hang-timeout: a single test running longer than 10 minutes (the slowest healthy one takes ~35 s) is
+        # killed and named in the log, instead of the whole job sitting silent until the job timeout.
+        run: dotnet test --configuration Release --no-build --verbosity normal --blame-hang-timeout 10m --blame-hang-dump-type none
+
+      - name: Disk space after the tests (Windows)
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -gt 0 } |
+            Format-Table Name, @{n='UsedGB';e={[math]::Round($_.Used/1GB,1)}}, @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}}
+          Get-ChildItem $env:RUNNER_TEMP -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            [pscustomobject]@{ Folder = $_.Name; GB = [math]::Round(((Get-ChildItem $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum) / 1GB, 2) }
+          } | Sort-Object GB -Descending | Select-Object -First 8 | Format-Table

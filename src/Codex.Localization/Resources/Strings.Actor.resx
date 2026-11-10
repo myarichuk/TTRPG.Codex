@@ -39,6 +39,7 @@
   <data name="Actor.Dice.Secret" xml:space="preserve"><value>secret</value></data>
   <data name="Actor.Dice.Faces" xml:space="preserve"><value>Dice</value></data>
   <data name="Actor.Dice.Nat20" xml:space="preserve"><value>natural 20</value></data>
+  <data name="Actor.Dice.Outcome" xml:space="preserve"><value>Outcome: {0}</value></data>
   <data name="Actor.Dice.Nat1" xml:space="preserve"><value>natural 1</value></data>
   <data name="Actor.Dice.Dropped" xml:space="preserve"><value>dropped</value></data>
   <data name="Actor.Dice.Plus" xml:space="preserve"><value>plus {0}</value></data>
@@ -203,6 +204,8 @@
   <data name="Actor.Sheet.MethodPointBuy" xml:space="preserve"><value>Point buy</value></data>
   <data name="Actor.Sheet.MethodStandardArray" xml:space="preserve"><value>Standard array</value></data>
   <data name="Actor.Sheet.MethodManual" xml:space="preserve"><value>Manual</value></data>
+  <data name="Actor.Sheet.MethodPrinted" xml:space="preserve"><value>As printed</value></data>
+  <data name="Actor.Sheet.PrintedNote" xml:space="preserve"><value>As printed: these are the stat block's scores. Background bonuses and score increases from picks are not added; pick another method to add them.</value></data>
   <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>Point buy: </value></data>
   <data name="Actor.Sheet.PointBuyTail" xml:space="preserve"><value> of {0, plural, one{# point} other{# points}} spent. Scores run from {1} to {2} before bonuses.</value></data>
   <data name="Actor.Sheet.StdArrayLead" xml:space="preserve"><value>Standard array: assign </value></data>
@@ -330,6 +333,8 @@
   <data name="Actor.Sheet.RevealHistory" xml:space="preserve"><value>Once you save, players can read this character’s history, except its GM blocks. Check the rest for secrets first.</value></data>
   <data name="Actor.Rule.NotInLibrary" xml:space="preserve"><value>{0}: "{1}" is not in the Library.</value></data>
   <data name="Actor.Rule.FormulaError" xml:space="preserve"><value>{0}: the system's formula for this can't be worked out, so it is left out. The GM can check the system's rules.</value></data>
+  <data name="Actor.Rule.ScriptError" xml:space="preserve"><value>{0}: the system's script failed, so it is left out. {1}</value></data>
+  <data name="Actor.Rule.CompiledError" xml:space="preserve"><value>{0}: the system's compiled code failed, so it is left out. {1}</value></data>
   <data name="Actor.Rule.Choice" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Rule.Pick" xml:space="preserve"><value>{0}: {1} - {2}</value></data>
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} can only be taken once.</value></data>
@@ -369,6 +374,40 @@
   <data name="Actor.Sheet.PublicDescription" xml:space="preserve"><value>What the party sees</value></data>
   <data name="Actor.Sheet.PublicDescriptionPh" xml:space="preserve"><value>A hooded figure who pays in old silver and never gives a name.</value></data>
   <data name="Actor.Sheet.RevealedToYou" xml:space="preserve"><value>Revealed to you</value></data>
+  <data name="Actor.Sheet.RollDice" xml:space="preserve"><value>Kept {0}; total {1}</value></data>
+  <data name="Actor.Sheet.RollFailed" xml:space="preserve"><value>The roll could not be made: {0}</value></data>
+  <data name="Actor.Sheet.RollLeft" xml:space="preserve"><value>Some of what this roll asks is for the table: {0} left for it.</value></data>
+  <data name="Actor.Sheet.TableAsks" xml:space="preserve"><value>The table asks for a choice: {0}</value></data>
+  <data name="Actor.Widget.Add" xml:space="preserve"><value>Add</value></data>
+  <data name="Actor.Widget.AddTo" xml:space="preserve"><value>Add to {0}</value></data>
+  <data name="Actor.Widget.Box" xml:space="preserve"><value>Box {0} of {1}</value></data>
+  <data name="Actor.Widget.Choose" xml:space="preserve"><value>Choose…</value></data>
+  <data name="Actor.Widget.CompiledFailed" xml:space="preserve"><value>This widget cannot be shown.</value></data>
+  <data name="Actor.Widget.Clear" xml:space="preserve"><value>Clear {0}</value></data>
+  <data name="Actor.Widget.Empty" xml:space="preserve"><value>Nothing here yet.</value></data>
+  <data name="Actor.Widget.Free" xml:space="preserve"><value>Free</value></data>
+  <data name="Actor.Widget.Less" xml:space="preserve"><value>One less {0}</value></data>
+  <data name="Actor.Widget.Level" xml:space="preserve"><value>Level {0}</value></data>
+  <data name="Actor.Widget.Mark" xml:space="preserve"><value>Mark</value></data>
+  <data name="Actor.Widget.MarkLevel" xml:space="preserve"><value>Level to mark</value></data>
+  <data name="Actor.Widget.MarkPlaceholder" xml:space="preserve"><value>What it is</value></data>
+  <data name="Actor.Widget.MarkText" xml:space="preserve"><value>What to mark on {0}</value></data>
+  <data name="Actor.Widget.ModifiersOf" xml:space="preserve"><value>What makes up {0}</value></data>
+  <data name="Actor.Widget.More" xml:space="preserve"><value>One more {0}</value></data>
+  <data name="Actor.Widget.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>Nothing adds to it.</value></data>
+  <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>Does not count: a better one of its type does</value></data>
+  <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="Actor.Widget.Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Actor.Widget.RemoveOne" xml:space="preserve"><value>Remove {0}</value></data>
+  <data name="Actor.Widget.SlotsUsed" xml:space="preserve"><value>{0} of {1} used</value></data>
+  <data name="Actor.Sheet.RollAtTable" xml:space="preserve"><value>Rolled at the table: it is in the shared roll log, and what it costs was applied there.</value></data>
+  <data name="Actor.Rule.ClockSegments" xml:space="preserve"><value>{0}: a clock has {2} segments, not {1}.</value></data>
+  <data name="Actor.Rule.ClockFilled" xml:space="preserve"><value>{0}: {1} filled of {2} segments.</value></data>
+  <data name="Actor.Rule.ClockVisibility" xml:space="preserve"><value>{0}: no one is "{1}"; a clock is kept for the GM or shown to the players.</value></data>
+  <data name="Actor.Rule.Range" xml:space="preserve"><value>{0}: {1} {2} is outside {3}.</value></data>
+  <data name="Actor.Rule.CampaignDuplicate" xml:space="preserve"><value>Two are named {0}.</value></data>
+  <data name="Actor.Rule.CampaignUnnamed" xml:space="preserve"><value>One has no name.</value></data>
   <data name="Actor.Vault.Title" xml:space="preserve"><value>From your characters</value></data>
   <data name="Actor.Vault.Loading" xml:space="preserve"><value>Loading…</value></data>
   <data name="Actor.Vault.Gone" xml:space="preserve"><value>The character this copy came from is no longer in My characters.</value></data>

@@ -92,6 +92,8 @@
   <data name="Page.About.NoSystemsAfter" xml:space="preserve"><value> under one of the content folders and restart.</value></data>
   <data name="Page.About.DataDriven" xml:space="preserve"><value>data-driven</value></data>
   <data name="Page.About.Compiled" xml:space="preserve"><value>compiled plugin</value></data>
+  <data name="Page.About.ContainsCompiledCode" xml:space="preserve"><value>contains compiled code</value></data>
+  <data name="Page.About.ContainsCompiledCodeHint" xml:space="preserve"><value>Its DLLs run on the server with the server's rights; they are installed only by copying them onto the server.</value></data>
   <data name="Page.About.Licence" xml:space="preserve"><value>Licence:</value></data>
   <data name="Page.About.Modified" xml:space="preserve"><value>modified from the original</value></data>
   <data name="Page.About.Source" xml:space="preserve"><value>source:</value></data>
@@ -255,6 +257,48 @@
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>Copy these from your provider's price list. The app ships no prices, so without them it shows tokens only, never a guessed cost.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>A price must be a number from 0 to {0}, or empty.</value></data>
   <data name="Page.AiSettings.PriceNote" xml:space="preserve"><value>in {0} / out {1} per 1M tokens</value></data>
+  <data name="Page.About.FailedSystems" xml:space="preserve"><value>Systems that did not load</value></data>
+  <data name="Page.About.FailedSystemsIntro" xml:space="preserve"><value>These systems were found, but their files have errors, so no campaign can use them until the file is fixed and the app restarted.</value></data>
+  <data name="Page.About.OtherProblems" xml:space="preserve"><value>Other problems</value></data>
+  <data name="Page.About.OnTheServer" xml:space="preserve"><value>On the server:</value></data>
+  <data name="Page.About.HasProblems" xml:space="preserve"><value>Has loading problems</value></data>
+  <data name="Page.Home.FailedSystems" xml:space="preserve"><value>Not listed because they did not load: {0}.</value></data>
+  <data name="Page.Home.FailedSystemsLink" xml:space="preserve"><value>Why?</value></data>
+  <data name="Page.About.Setting" xml:space="preserve"><value>The world it assumes</value></data>
+  <data name="Page.About.Setting.Genres" xml:space="preserve"><value>Genre</value></data>
+  <data name="Page.About.Setting.Tone" xml:space="preserve"><value>Tone</value></data>
+  <data name="Page.About.Setting.Themes" xml:space="preserve"><value>Themes</value></data>
+  <data name="Page.About.Setting.Technology" xml:space="preserve"><value>Technology</value></data>
+  <data name="Page.About.Setting.Supernatural" xml:space="preserve"><value>Beyond the ordinary</value></data>
+  <data name="Page.About.Setting.Factions" xml:space="preserve"><value>Kinds of factions</value></data>
+  <data name="Page.About.Setting.Places" xml:space="preserve"><value>Kinds of places</value></data>
+  <data name="Page.About.Setting.Play" xml:space="preserve"><value>What play looks like</value></data>
+  <data name="Page.About.Setting.Avoid" xml:space="preserve"><value>Doesn't belong</value></data>
+  <data name="Page.About.Setting.Notes" xml:space="preserve"><value>Also</value></data>
+  <data name="Page.About.Version" xml:space="preserve"><value>Version {0}</value></data>
+  <data name="Page.About.Install" xml:space="preserve"><value>Install a system</value></data>
+  <data name="Page.About.InstallHint" xml:space="preserve"><value>A system is a zip of its folder: system.yaml, its translations, scripts and content packs, at most {0} MB. It is checked before anything is installed. A system with compiled code (DLLs) cannot be uploaded: whoever runs the server copies its folder there.</value></data>
+  <data name="Page.About.InstallChoose" xml:space="preserve"><value>Choose a system zip</value></data>
+  <data name="Page.About.InstallScripts" xml:space="preserve"><value>scripts</value></data>
+  <data name="Page.About.InstallPacks" xml:space="preserve"><value>{0} content pack(s)</value></data>
+  <data name="Page.About.InstallReplaces" xml:space="preserve"><value>Replaces the installed version {0}, which {1} campaign(s) play under. They play under the new version from now on, and each GM is told what changed. A table that is running keeps the old version until it ends.</value></data>
+  <data name="Page.About.InstallSame" xml:space="preserve"><value>It is the same as the installed version.</value></data>
+  <data name="Page.About.InstallCannot" xml:space="preserve"><value>It cannot be installed:</value></data>
+  <data name="Page.About.InstallWarnings" xml:space="preserve"><value>It installs with {0} problem(s), which the About page will list</value></data>
+  <data name="Page.About.InstallConfirm" xml:space="preserve"><value>Install</value></data>
+  <data name="Page.About.InstallReplace" xml:space="preserve"><value>Replace the installed version</value></data>
+  <data name="Page.About.InstallNotAllowed" xml:space="preserve"><value>You may not install systems on this server.</value></data>
+  <data name="Page.About.InstallTooBig" xml:space="preserve"><value>The file could not be read (a system may be at most {0} MB): {1}</value></data>
+  <data name="Page.About.Installed" xml:space="preserve"><value>{0} is installed.</value></data>
+  <data name="Page.About.Reload" xml:space="preserve"><value>Reload systems</value></data>
+  <data name="Page.About.ReloadHint" xml:space="preserve"><value>Reads every system folder again, for a change made on the server's disk. Tables that are running keep their system until they end; compiled code that changed is loaded again.</value></data>
+  <data name="Page.About.Reloaded" xml:space="preserve"><value>Systems reloaded. Added: {0}. Removed: {1}. Changed: {2}.</value></data>
+  <data name="Page.About.ReloadedNothing" xml:space="preserve"><value>Systems reloaded; nothing had changed.</value></data>
+  <data name="Page.About.Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Page.About.RemoveTitle" xml:space="preserve"><value>Remove {0}?</value></data>
+  <data name="Page.About.RemoveUsed" xml:space="preserve"><value>{1} campaign(s) play under {0}. Once it is removed they can be read and exported but not changed, until it is installed again or their GMs choose another system. A table that is running keeps it until it ends.</value></data>
+  <data name="Page.About.RemoveUnused" xml:space="preserve"><value>No campaign plays under {0}.</value></data>
+  <data name="Page.About.Removed" xml:space="preserve"><value>{0} was removed.</value></data>
   <data name="Page.AiSettings.PricePerImage" xml:space="preserve"><value>Per picture</value></data>
   <data name="Page.AiSettings.PriceImageHint" xml:space="preserve"><value>Copy this from your provider's price list. Without it the app counts pictures and never guesses a cost.</value></data>
   <data name="Page.AiSettings.PriceImageBad" xml:space="preserve"><value>A price per picture must be a number from 0 to {0}, or empty.</value></data>

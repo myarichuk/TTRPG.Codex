@@ -42,14 +42,35 @@ public class YamlContentPackLoader : IContentPackLoader
     private readonly IDeserializer _yamlDeserializer;
     private readonly ILogger _logger;
 
+    private readonly ILogger<YamlContentPackLoader>? _typedLogger;
+
+    /// <summary>On a staging loader: the registry its content replaces on <see cref="Commit"/>.</summary>
+    private readonly ContentRegistry? _stagedFor;
+
     public YamlContentPackLoader(IContentRegistry registry, ILogger<YamlContentPackLoader>? logger = null)
     {
         _registry = registry;
+        _typedLogger = logger;
         _logger = logger ?? (ILogger)NullLogger.Instance;
         _yamlDeserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
             .Build();
+    }
+
+    private YamlContentPackLoader(ContentRegistry fresh, ContentRegistry stagedFor, ILogger<YamlContentPackLoader>? logger) : this(fresh, logger)
+    {
+        _stagedFor = stagedFor;
+    }
+
+    /// <summary>A loader over a fresh registry whose content replaces this one's on <see cref="Commit"/>. Only a
+    /// <see cref="ContentRegistry"/> can be replaced in one step; over any other registry the packs load in place.</summary>
+    public IContentPackLoader Staging() =>
+        _registry is ContentRegistry live ? new YamlContentPackLoader(new ContentRegistry(), live, _typedLogger) : this;
+
+    public void Commit()
+    {
+        if (_stagedFor != null && _registry is ContentRegistry fresh) _stagedFor.ReplaceWith(fresh);
     }
 
     private readonly List<string> _problems = new();
@@ -339,6 +360,14 @@ public class YamlContentPackLoader : IContentPackLoader
                 Problem("Ability {AbilityId} in pack {PackId} inherits from {BaseId}, which was not found. It will be registered without the inherited fields.",
                     item.Id, item.PackId, item.Inherits);
             }
+        }
+
+        // Ability scripts were a DynamicExpresso path that never ran at the table and was not a sandbox; it was removed.
+        // A pack that still carries one loads, and its author is told the script is ignored.
+        if (item.Effects?.Any(e => e.Params != null && e.Params.ContainsKey("Script")) == true)
+        {
+            Problem("Ability {AbilityId} in pack {PackId} has a Script effect. Scripts in packs are not supported and it is ignored.",
+                item.Id, item.PackId);
         }
 
         _registry.RegisterAbility(item, prio);

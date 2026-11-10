@@ -3,15 +3,20 @@ using System.Text.RegularExpressions;
 
 namespace Codex.Plugin.Abstractions.Dice;
 
-/// <summary>One group of dice in an expression: <c>4d6kh3</c>, or <c>-1d4</c> (a penalty die, <see cref="Sign"/> -1).</summary>
+/// <summary>One group of dice in an expression: <c>4d6kh3</c>, or <c>-1d4</c> (a penalty die, <see cref="Sign"/> -1).
+/// <see cref="Explodes"/> (<c>3d6!</c>): a die showing its highest face adds another. <see cref="SuccessAt"/> (<c>5d10&gt;=8</c>):
+/// the term counts the dice at or over that face instead of adding them.</summary>
 public sealed record DiceTerm(int Sign, int Count, int Sides, char? KeepMode, int KeepCount)
 {
+    public bool Explodes { get; init; }
+    public int? SuccessAt { get; init; }
+
     /// <summary>How many of <see cref="Count"/> rolled dice are kept: all of them unless
     /// <see cref="KeepMode"/> narrows it (e.g. <c>4d6kh3</c> keeps 3 of 4).</summary>
     public int EffectiveKeepCount => KeepMode is null ? Count : Math.Min(KeepCount, Count);
 
     /// <summary>A single d20 that counts (<c>1d20</c>, <c>adv</c>, <c>dis</c>, <c>2d20kh1</c>): the die a natural 20 or 1 is read from.</summary>
-    public bool IsCheckDie => Sides == 20 && EffectiveKeepCount == 1 && Sign > 0;
+    public bool IsCheckDie => Sides == 20 && EffectiveKeepCount == 1 && Sign > 0 && !Explodes && SuccessAt == null;
 }
 
 /// <summary>The parsed, unrolled shape of a dice expression - separated from <see cref="StandardDiceRoller"/>
@@ -34,11 +39,14 @@ public sealed record ParsedDiceExpression(IReadOnlyList<DiceTerm> Dice, int Modi
 /// Parses the dice expression grammar the plan calls for (3.6): terms joined by <c>+</c> and <c>-</c>, each dice
 /// (<c>2d6</c>, <c>4d6kh3</c> keep-highest-3, <c>klN</c> keep-lowest-N, and <c>adv</c>/<c>dis</c> for "roll 2d20, keep the
 /// highest/lowest") or a number. <c>1d8+1d6</c> (sneak attack), <c>2d6+3+2</c> and <c>1d20+5-1d4</c> all parse (R8).
+/// A dice term may explode (<c>3d6!</c>: each die showing its highest face adds another, which may explode in turn) and may
+/// count successes (<c>5d10&gt;=8</c>: the term is the number of dice at 8 or over). A roll that counts successes counts
+/// them in every dice term; mixing counted and added dice says nothing a player can read.
 /// </summary>
 public static class DiceExpressionParser
 {
     private static readonly Regex Term = new(
-        @"\G\s*(?<sign>[+-])?\s*(?:(?<prefix>adv|dis)(?![a-z0-9])|(?<count>\d+)?d(?<sides>\d+)(?:k(?<keepMode>h|l)(?<keepCount>\d+))?|(?<number>\d+)(?![d\d]))",
+        @"\G\s*(?<sign>[+-])?\s*(?:(?<prefix>adv|dis)(?![a-z0-9])|(?<count>\d+)?d(?<sides>\d+)(?<explode>!)?(?:k(?<keepMode>h|l)(?<keepCount>\d+))?(?:\s*>=\s*(?<success>\d+))?|(?<number>\d+)(?![d\d]))",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private const int MaxDice = 100;
@@ -90,6 +98,11 @@ public static class DiceExpressionParser
             throw new FormatException($"Unrecognized dice expression '{expression}'.");
         }
 
+        if (dice.Any(t => t.SuccessAt != null) && dice.Any(t => t.SuccessAt == null))
+        {
+            throw new FormatException($"Either every dice term counts successes or none does in '{expression}'.");
+        }
+
         if (dice.Sum(t => t.Count) > MaxDice)
         {
             throw new FormatException($"Dice count must be between 1 and {MaxDice} in '{expression}'.");
@@ -130,6 +143,12 @@ public static class DiceExpressionParser
             throw new FormatException($"Keep count must be positive in '{expression}'.");
         }
 
-        return new DiceTerm(sign, count, sides, keepMode, keepCount);
+        int? successAt = match.Groups["success"].Success ? Number(match.Groups["success"].Value, expression) : null;
+        if (successAt is { } at && (at < 1 || at > sides))
+        {
+            throw new FormatException($"A success needs a face the die has in '{expression}'.");
+        }
+
+        return new DiceTerm(sign, count, sides, keepMode, keepCount) { Explodes = match.Groups["explode"].Success, SuccessAt = successAt };
     }
 }

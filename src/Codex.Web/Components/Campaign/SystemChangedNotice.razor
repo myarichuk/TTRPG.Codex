@@ -1,0 +1,62 @@
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@inject ICampaignRepository CampaignRepo
+@inject Codex.Core.PluginLoader Loader
+
+@* Overhaul section 4, rule 8: the campaign records the system it last played under, and the GM is told when the loaded one
+   differs, file by file. The rules already in use are the loaded ones; this only says so, and accepting records them. *@
+@if (Access.IsDm && !Access.SystemMissing && Changes.Count > 0)
+{
+    <section class="ws-readonly" role="status" aria-labelledby="system-changed-title" data-testid="campaign-system-changed">
+        <h2 id="system-changed-title" class="h6 mb-1"><LucideIcon IconName="refresh-cw" Size="16" /> @L["Campaign.SystemChanged.Title", Loader.GetDisplayName(Campaign.SystemId)]</h2>
+        <p class="mb-1">@L["Campaign.SystemChanged.Body", Campaign.SystemStamp!.RecordedAt.ToLocalTime().ToString("d")]</p>
+        <ul class="mb-2" data-testid="campaign-system-changes">
+            @foreach (var change in Changes)
+            {
+                <li>
+                    @Describe(change)
+                    @if (change.File != null && SystemFingerprint.IsCompiled(change.File))
+                    {
+                        <span class="small-muted"> (@L["Campaign.SystemChanged.Compiled"])</span>
+                    }
+                </li>
+            }
+        </ul>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AcceptAsync" Busy="accepting" data-testid="campaign-system-accept">@L["Campaign.SystemChanged.Accept"]</CodexButton>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public CampaignDocument Campaign { get; set; } = default!;
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = default!;
+
+    /// <summary>Called once the campaign records the system as it is now.</summary>
+    [Parameter] public EventCallback OnAccepted { get; set; }
+
+    private bool accepting;
+
+    private IReadOnlyList<SystemChange> Changes =>
+        Campaign.SystemStamp?.ChangesTo(Campaign.SystemId, Loader.GetFingerprint(Campaign.SystemId)) ?? Array.Empty<SystemChange>();
+
+    private string Describe(SystemChange change) => change.Kind switch
+    {
+        SystemChangeKind.Version => L["Campaign.SystemChanged.Version", change.Before ?? "", change.After ?? ""],
+        SystemChangeKind.Added => L["Campaign.SystemChanged.Added", change.File ?? ""],
+        SystemChangeKind.Removed => L["Campaign.SystemChanged.Removed", change.File ?? ""],
+        _ => L["Campaign.SystemChanged.Changed", change.File ?? ""]
+    };
+
+    private async Task AcceptAsync()
+    {
+        accepting = true;
+        try
+        {
+            await CampaignRepo.AcceptSystemAsync(Access);
+            await OnAccepted.InvokeAsync();
+        }
+        finally
+        {
+            accepting = false;
+        }
+    }
+}

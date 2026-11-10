@@ -20,6 +20,7 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     private readonly ComponentRegistry componentRegistry;
     private readonly PluginLoader pluginLoader;
     private readonly ILoggerFactory loggerFactory;
+    private readonly ICampaignObjectsRepository? campaignObjects;
     private readonly ConcurrentDictionary<string, CampaignRuntime> _runtimes = new();
 
     /// <param name="lifecycle">When given, a campaign's runtime is stopped just before the campaign is
@@ -32,8 +33,10 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         ComponentRegistry componentRegistry,
         PluginLoader pluginLoader,
         ILoggerFactory loggerFactory,
-        CampaignLifecycleHooks? lifecycle = null)
+        CampaignLifecycleHooks? lifecycle = null,
+        ICampaignObjectsRepository? campaignObjects = null)
     {
+        this.campaignObjects = campaignObjects;
         this.actorRepository = actorRepository;
         this.sessionRepository = sessionRepository;
         this.campaignRepository = campaignRepository;
@@ -49,6 +52,10 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     /// page can attach to the runtime without a reload (the gap the Phase 3 test worked around).
     /// </summary>
     public event Action<string>? RuntimeChanged;
+
+    /// <summary>Loads the campaign's library for the rules a table runs (packs and homebrew), set by the host. The table reads
+    /// it when it starts; an entry added while it runs is seen by the next table. None: the table knows no entries.</summary>
+    public Func<CampaignDocument, CampaignAccess, SystemDefinition, Task<Codex.Core.Rules.IEntryResolver>>? EntryResolvers { get; set; }
 
     public CampaignRuntime? TryGet(string campaignId) => _runtimes.GetValueOrDefault(campaignId);
 
@@ -70,6 +77,12 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             throw new InvalidOperationException("Only the campaign's GM can start its runtime.");
         }
 
+        // A table runs the system's rules; with the system gone there are none to run, and the campaign is read-only.
+        if (dmAccess.SystemMissing)
+        {
+            throw new Codex.Localization.LocalizedException("Campaign.SystemMissing", campaign.SystemId);
+        }
+
         // One start (or end) per campaign at a time (R6): two "Start table" clicks used to both open a session and both
         // patch the campaign before one of them lost the race to publish its runtime.
         var gate = GateFor(campaign.Id);
@@ -84,6 +97,7 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             var session = await OpenSessionAsync(campaign, sessionId);
             var encounter = await FindOpenEncounterAsync(session);
             var plugin = pluginLoader.GetPlugin(campaign.SystemId);
+            session = await StampSessionAsync(session, campaign.SystemId);
 
             var runtime = new CampaignRuntime(
                 campaign.Id,
@@ -96,6 +110,9 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
                 plugin?.GetDiceRoller(),
                 plugin?.Definition,
                 encounter);
+            // Every roll says which of the session's systems it was made under; a session reopened after the rules changed
+            // has two, and its rolls are told apart.
+            if (session.SystemStamps.Count > 0 && session.SystemStamps[^1].SystemId == campaign.SystemId) runtime.SystemStampIndex = session.SystemStamps.Count - 1;
 
             // Built whole before anyone can see it (R6): published first, a command could walk the actors while they were
             // still being added, and a failed hydrate left a half-built table cached that nothing announced.
@@ -106,7 +123,17 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
                     pluginLoader.InitializePlugins(new[] { plugin }, runtime.World);
                 }
 
+                if (EntryResolvers != null && plugin?.Definition is { SheetKinds.Count: > 0 } definition)
+                {
+                    runtime.Resolver = await EntryResolvers(campaign, dmAccess, definition);
+                }
+
                 runtime.Hydrate((await actorRepository.GetVisibleForCampaignAsync(dmAccess)).Where(a => !a.Retired));
+                if (campaignObjects != null)
+                {
+                    runtime.CampaignObjectsStore = campaignObjects;
+                    runtime.HydrateCampaignObjects((await campaignObjects.GetDocumentAsync(campaign.Id))?.State);
+                }
             }
             catch
             {
@@ -122,6 +149,58 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         {
             gate.Release();
         }
+    }
+
+    /// <summary>The GM changing the campaign's clocks and tables (overhaul step 7): through the table when it is live, so the
+    /// change is the table's and in its log, else straight to the stored objects. <paramref name="edit"/> returns false to change
+    /// nothing, and may run more than once on the stored path (once per write that lost a race). Returns whether it changed
+    /// anything; false for anyone but the GM.</summary>
+    public async Task<bool> TryChangeCampaignObjectsAsync(CampaignAccess access, Func<Dictionary<string, object>, bool> edit, EventMessage said)
+    {
+        if (!access.IsDm || access.SystemMissing) return false;
+        if (TryGet(access.CampaignId) is { } runtime)
+        {
+            var command = new EditCampaignObjectsCommand(edit, said);
+            await runtime.EnqueueAsync(command);
+            return command.Changed;
+        }
+
+        if (campaignObjects == null) return false;
+        var changed = false;
+        var saved = await campaignObjects.TryChangeAsync(access, state => changed = edit(state));
+        return saved != null && changed;
+    }
+
+    /// <summary>Raises an event that is the campaign's (a clock ticked, or a declared event with no actor): at the table when it
+    /// is live, else on the stored objects alone (what it asks of actors waits for a table). Returns why it could not, or null.
+    /// GM only.</summary>
+    public async Task<string?> RaiseCampaignEventAsync(CampaignAccess access, SystemDefinition system, string type, IReadOnlyDictionary<string, object?> fields)
+    {
+        if (!access.IsDm || access.SystemMissing) return "Only the GM changes the campaign's objects.";
+        if (TryGet(access.CampaignId) is { } runtime)
+        {
+            var command = new CampaignEventCommand(type, fields);
+            await runtime.EnqueueAsync(command);
+            return command.Failed;
+        }
+
+        if (campaignObjects == null) return "The campaign's objects are not stored here.";
+        string? failed = null;
+        await campaignObjects.TryChangeAsync(access, state =>
+        {
+            try
+            {
+                var raised = Codex.Core.Rules.SheetEvents.Raise(system, Codex.Core.Rules.NullEntryResolver.Instance, new Dictionary<string, object>(),
+                    new Codex.Core.Rules.SheetEvent(type, fields), null, state);
+                return raised.Campaign is { Changed.Count: > 0 };
+            }
+            catch (Exception ex) when (ex is Codex.Core.Rules.SheetEventException or Codex.Core.Rules.FormulaException)
+            {
+                failed = ex.Message;
+                return false;
+            }
+        });
+        return failed;
     }
 
     private CampaignRuntime? TryGetRunning(string campaignId, string? sessionId)
@@ -152,6 +231,9 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     /// <param name="baselineSheet">The sheet as the editor loaded it, so fields it did not change keep their live value.</param>
     public async Task<bool> TrySaveActorAsync(ActorDocument edited, IReadOnlyDictionary<string, object>? baselineSheet, CampaignAccess access, SystemDefinition? system)
     {
+        // The repository refuses this access too (NowAsync); the live-table path below reads the role itself, so it checks here.
+        if (access.SystemMissing) return false;
+
         var runtime = TryGet(access.CampaignId);
         if (runtime == null || !runtime.HasActor(edited.Id))
         {
@@ -166,7 +248,10 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
             return false;
         }
 
-        access = role == access.Role ? access : new CampaignAccess(access.CampaignId, access.UserId, role);
+        access = role == access.Role ? access : new CampaignAccess(access.CampaignId, access.UserId, role, access.SystemMissing);
+        // The table plays the definition it started with (overhaul step 10): a system reloaded since is not the one its rules
+        // run, so the save is merged under the table's, in the reader's language as the page sent it.
+        if (runtime.System != null) system = runtime.System.Localize(System.Globalization.CultureInfo.CurrentUICulture.Name);
         try
         {
             await runtime.EnqueueAsync(new ReplaceActorCommand(edited, baselineSheet, access, system));
@@ -379,6 +464,16 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         return session;
     }
 
+    /// <summary>Records on the session the system the table starts under, when it is not the one it last ran under (overhaul
+    /// section 6, "Determinism"). The table keeps this system until it ends, whatever is reloaded meanwhile.</summary>
+    private async Task<SessionDocument> StampSessionAsync(SessionDocument session, string systemId)
+    {
+        if (pluginLoader.GetFingerprint(systemId) is not { } fingerprint) return session;
+        if (session.SystemStamps.LastOrDefault() is { } last && last.ChangesTo(systemId, fingerprint).Count == 0 && last.SystemId == systemId) return session;
+        var stamp = SystemStamp.Of(systemId, fingerprint, DateTime.UtcNow);
+        return await sessionRepository.UpdateAsync(session.Id, stored => stored.SystemStamps.Add(stamp)) ?? session;
+    }
+
     /// <summary>How long a Live session may sit without anything logged before a plain start treats it as over.</summary>
     internal static readonly TimeSpan StaleLiveSession = TimeSpan.FromHours(12);
 
@@ -436,6 +531,8 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         }
 
         await runtime.DisposeAsync();
+        // A system DLL replaced while this table ran may now have nothing left using its old load context.
+        Codex.Core.Systems.FolderLoadContexts.Sweep();
 
         completeSession &= runtime.ActiveEncounter is not { EndedAt: null, Participants.Count: > 0 };
         var campaign = completeSession ? await campaignRepository.GetAsync(campaignId) : null;

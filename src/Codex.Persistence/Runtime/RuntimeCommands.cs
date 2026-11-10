@@ -15,13 +15,24 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
 
     public string UndoKind => "Damage";
 
-    private TableRules.DamageOutcome _outcome = TableRules.DamageOutcome.Nothing;
+    private Codex.Core.Rules.DamageReport _outcome = Codex.Core.Rules.DamageReport.Nothing;
 
     /// <summary>Once applied: the save the creature owes to keep concentrating, or null when it was not concentrating (R4).</summary>
     public int? ConcentrationDc => _outcome.ConcentrationDc;
 
+    // A system with sheet kinds that handles damage itself: what its handler did, instead of the vitals rules.
+    private TableEvents.Outcome? _raised;
+
     public void Apply(CampaignRuntime runtime)
     {
+        if (TableEvents.Handles(runtime, "damage"))
+        {
+            var fields = new Dictionary<string, object?>(StringComparer.Ordinal) { ["amount"] = (double)Amount, ["critical"] = IsCritical, ["source"] = SourceId };
+            if (!string.IsNullOrWhiteSpace(DamageType)) fields["damageType"] = DamageType;
+            _raised = TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent("damage", fields));
+            return;
+        }
+
         if (runtime.GetEntity(ActorId) is { } e)
         {
             _outcome = TableRules.ApplyDamage(runtime, ActorId, e, PoolName, Amount, DamageType, IsCritical);
@@ -30,6 +41,7 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
+        if (_raised is { } raised) return RaiseEventCommand.Describe(runtime, "Damage", ActorId, raised);
         var name = runtime.ActorTerm(ActorId);
         var type = string.IsNullOrWhiteSpace(DamageType) ? null : EventTerm.DamageType(DamageType.ToLowerInvariant());
         var source = LogTerms.Source(runtime, SourceId);
@@ -73,10 +85,19 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
 
     public string UndoKind => "Healing";
 
-    private TableRules.HealOutcome _outcome = new(0, false, false);
+    private Codex.Core.Rules.HealReport _outcome = Codex.Core.Rules.HealReport.Nothing;
+
+    private TableEvents.Outcome? _raised;
 
     public void Apply(CampaignRuntime runtime)
     {
+        if (TableEvents.Handles(runtime, "heal"))
+        {
+            _raised = TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent("heal",
+                new Dictionary<string, object?>(StringComparer.Ordinal) { ["amount"] = (double)Amount, ["source"] = SourceId }));
+            return;
+        }
+
         if (runtime.GetEntity(ActorId) is { } e)
         {
             _outcome = TableRules.ApplyHealing(runtime, ActorId, e, PoolName, Amount);
@@ -85,6 +106,7 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
+        if (_raised is { } raised) return RaiseEventCommand.Describe(runtime, "Healing", ActorId, raised);
         var name = runtime.ActorTerm(ActorId);
         var source = LogTerms.Source(runtime, SourceId);
         var parts = new List<EventMessage>();
@@ -116,7 +138,7 @@ public sealed record GrantTemporaryHitPointsCommand(string ActorId, int Amount, 
     {
         if (runtime.GetEntity(ActorId) is { } e)
         {
-            _applied = TableRules.GrantTemporary(runtime, e, Amount);
+            _applied = TableRules.GrantTemporary(runtime, ActorId, e, Amount);
         }
     }
 
@@ -139,7 +161,7 @@ public sealed record RollDeathSaveCommand(string ActorId, string RollerUserId) :
 
     public string UndoKind => "DeathSave";
 
-    private TableRules.DeathSaveOutcome _outcome = TableRules.DeathSaveOutcome.None;
+    private Codex.Core.Rules.DeathSaveReport _outcome = Codex.Core.Rules.DeathSaveReport.None;
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -170,7 +192,7 @@ public sealed record RecordDeathSaveCommand(string ActorId, bool Success, int Co
 
     public string UndoKind => "DeathSave";
 
-    private TableRules.DeathSaveOutcome _outcome = TableRules.DeathSaveOutcome.None;
+    private Codex.Core.Rules.DeathSaveReport _outcome = Codex.Core.Rules.DeathSaveReport.None;
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -185,7 +207,7 @@ public sealed record RecordDeathSaveCommand(string ActorId, bool Success, int Co
 
 internal static class DeathSaveEvents
 {
-    public static SessionEvent Describe(CampaignRuntime runtime, string actorId, TableRules.DeathSaveOutcome outcome)
+    public static SessionEvent Describe(CampaignRuntime runtime, string actorId, Codex.Core.Rules.DeathSaveReport outcome)
     {
         var name = runtime.ActorTerm(actorId);
         var parts = new List<EventMessage>();
@@ -269,7 +291,7 @@ public sealed record SpendHitDiceCommand(string ActorId, int Count, int DieSides
 
     public string UndoKind => "HitDice";
 
-    private TableRules.HitDiceOutcome? _outcome;
+    private Codex.Core.Rules.HitDiceReport? _outcome;
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -500,10 +522,21 @@ public sealed record NextTurnCommand : IRuntimeCommand
             runtime.MarkAllHydratedActorsDirty();
         }
 
+        // A system with sheet kinds hears the turn end and the next one start (a death save each turn while mortally wounded).
+        if (TableEvents.Handles(runtime, "turnEnd")) _raised.AddRange(TableEvents.Raise(runtime, current.ActorId, new Codex.Core.Rules.SheetEvent("turnEnd", new Dictionary<string, object?>())).Messages);
+
         current.HasActed = true;
         runtime.MoveTurnOn(encounter, fromPointer: false);
         runtime.MarkEncounterDirty();
+
+        if (encounter.Participants.Count > 0 && TableEvents.Handles(runtime, "turnStart"))
+        {
+            var next = encounter.Participants[encounter.TurnIndex].ActorId;
+            _raised.AddRange(TableEvents.Raise(runtime, next, new Codex.Core.Rules.SheetEvent("turnStart", new Dictionary<string, object?>())).Messages);
+        }
     }
+
+    private readonly List<EventMessage> _raised = new();
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
@@ -511,7 +544,7 @@ public sealed record NextTurnCommand : IRuntimeCommand
         var upNextId = encounter is { Participants.Count: > 0 } ? encounter.Participants[encounter.TurnIndex].ActorId : null;
         var round = encounter?.Round ?? 1;
         return SessionEvent.From("TurnAdvance",
-            new[] { upNextId != null ? EventMessage.Of("Turn.Passed", runtime.ActorTerm(upNextId), round) : EventMessage.Of("Turn.PassedNobody", round) },
+            new[] { upNextId != null ? EventMessage.Of("Turn.Passed", runtime.ActorTerm(upNextId), round) : EventMessage.Of("Turn.PassedNobody", round) }.Concat(_raised),
             upNextId != null ? new[] { upNextId } : null);
     }
 }
@@ -697,7 +730,7 @@ public sealed record ReviveCommand(string ActorId) : IUndoableCommand
     private bool _revived;
 
     public void Apply(CampaignRuntime runtime) =>
-        _revived = runtime.GetEntity(ActorId) is { } e && TableRules.Revive(runtime, e);
+        _revived = runtime.GetEntity(ActorId) is { } e && TableRules.Revive(runtime, ActorId, e);
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
@@ -802,6 +835,67 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
     }
 }
 
+/// <summary>
+/// A roll made from the system's roll definitions (overhaul steps 4 and 6) for an actor at the table: made on the actor's live
+/// sheet with the host's dice, recorded in the roll log with its outcome and mark, and what it asks of the actor applied as an
+/// event's intents are (<see cref="TableEvents.Roll"/>). Undoable like damage, for what it changed.
+/// </summary>
+public sealed record MakeRollCommand(string ActorId, string RollerUserId, Codex.Core.Rules.SheetRollRequest Request, bool IsSecret = false,
+    IDiceSource? Dice = null) : IUndoableCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "DiceRoll";
+
+    private TableEvents.Outcome _outcome = TableEvents.Outcome.None;
+    private Codex.Core.Rules.SheetRollResult? _rolled;
+
+    /// <summary>Once applied: the roll, or null when it could not be made (<see cref="Failed"/> says why).</summary>
+    public Codex.Core.Rules.SheetRollResult? Rolled => _rolled;
+
+    public string? Failed => _outcome.Failed;
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        _outcome = TableEvents.Roll(runtime, ActorId, Request, Dice ?? new RandomDiceSource(), out _rolled);
+        if (_rolled is not { } roll) return;
+        runtime.RecordRoll(new RollLogEntry
+        {
+            ActorId = ActorId,
+            RollerUserId = RollerUserId,
+            Expression = roll.Definition,
+            Result = string.Join(" ", roll.Kept) + " = " + roll.Total.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Total = (int)Math.Round(roll.Total),
+            IsSecret = IsSecret,
+            Label = roll.Label ?? roll.Definition,
+            Kept = roll.Kept.ToList(),
+            Dropped = roll.Dropped.ToList(),
+            Modifier = (int)Math.Round(roll.Modifier),
+            Outcome = roll.Outcome,
+            Mark = roll.Mark
+        });
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var roller = runtime.ActorTerm(ActorId);
+        var parts = new List<EventMessage>();
+        if (_rolled is { } roll)
+        {
+            var label = new EventTerm(EventTerm.SystemKind, roll.Label ?? roll.Definition, runtime.System?.DisplayValue(roll.Label ?? roll.Definition) ?? roll.Definition);
+            parts.Add(IsSecret ? EventMessage.Of("Roll.Secret", roller, roll.Definition)
+                : roll.Outcome is { } outcome
+                    ? EventMessage.Of("Roll.Outcome", roller, label, new EventTerm(EventTerm.SystemKind, outcome, runtime.System?.DisplayValue(outcome) ?? outcome), roll.Total)
+                    : EventMessage.Of("Roll.Labeled", roller, label, roll.Definition, roll.Total));
+        }
+
+        if (!IsSecret) parts.AddRange(_outcome.Messages);
+        else if (_outcome.Failed != null) parts.AddRange(_outcome.Messages);
+        return SessionEvent.From("DiceRoll", parts.Count > 0 ? parts : new[] { EventMessage.Of("Sheet.Nothing", roller, Request.Definition) },
+            _outcome.Touched.Count > 0 ? _outcome.Touched.Distinct().ToArray() : new[] { ActorId });
+    }
+}
+
 /// <summary>Appends a DM/player quick note to the live session (3.7) - reuses the same
 /// <see cref="SessionDocument.Notes"/> list the recap editor (4.1) will read from, rather than a
 /// separate combat-log-only notes concept. With a speaker it is a line of dialogue; the event then names
@@ -899,6 +993,36 @@ public sealed record LogWikiRevealCommand(string PageTitle) : IRuntimeCommand
         SessionEvent.From("WikiReveal", new[] { EventMessage.Of("Wiki.Revealed", PageTitle) });
 }
 
+/// <summary>
+/// Raises one of the system's declared events on an actor at the table (overhaul step 6): <c>sessionEnd</c> with the answers,
+/// <c>advance</c>, a custom one (<c>assist</c>), or an intent the GM makes directly (<c>mark</c> harm, <c>adjust</c> stress).
+/// The handler's intents are applied as <see cref="TableEvents"/> says, and can be undone like damage.
+/// </summary>
+/// <param name="Dice">Where a script handler rolls; null: at random.</param>
+public sealed record RaiseEventCommand(string ActorId, string Type, IReadOnlyDictionary<string, object?> Fields, IDiceSource? Dice = null) : IUndoableCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "SheetEvent";
+
+    private TableEvents.Outcome _outcome = TableEvents.Outcome.None;
+
+    /// <summary>Once applied: why the handler could not run, or null.</summary>
+    public string? Failed => _outcome.Failed;
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        if (runtime.System is not { SheetKinds.Count: > 0 } system || !Codex.Core.Rules.SheetEvents.Handles(system, Type)) return;
+        _outcome = TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent(Type, Fields), Dice);
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => Describe(runtime, "SheetEvent", ActorId, _outcome);
+
+    internal static SessionEvent Describe(CampaignRuntime runtime, string type, string actorId, TableEvents.Outcome outcome) =>
+        SessionEvent.From(type, outcome.Messages.Count > 0 ? outcome.Messages : new[] { EventMessage.Of("Sheet.Nothing", runtime.ActorTerm(actorId), type) },
+            outcome.Touched.Count > 0 ? outcome.Touched.Distinct().ToArray() : new[] { actorId });
+}
+
 /// <summary>Spends or regains one or more points of an expendable pool (a spell slot level, say),
 /// clamped between zero and the pool's maximum. <paramref name="Label"/> is what the log calls it
 /// ("level 3 spell slot").</summary>
@@ -937,6 +1061,11 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
         if (runtime.GetEntity(ActorId) is { } e)
         {
             _happened = TableRules.Rest(runtime, ActorId, e, RestName, PoolNames);
+            if (TableEvents.Handles(runtime, "rest"))
+            {
+                _happened.AddRange(TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent("rest",
+                    new Dictionary<string, object?>(StringComparer.Ordinal) { ["name"] = RestName })).Messages);
+            }
         }
     }
 
@@ -978,4 +1107,51 @@ internal static class LogTerms
     /// <summary>A resource pool by key, with the system's English label.</summary>
     public static EventTerm Resource(CampaignRuntime runtime, string key) =>
         EventTerm.Resource(key, runtime.System?.Resources.FirstOrDefault(r => r.Key == key)?.Label ?? key);
+}
+
+/// <summary>An event that is the campaign's (overhaul step 7): a clock ticked (<c>adjust { clock, by }</c>), a faction's status
+/// moved, or a declared event with no actor whose handlers act on the campaign's objects. GM only, which the caller checks.</summary>
+public sealed record CampaignEventCommand(string Type, IReadOnlyDictionary<string, object?> Fields) : IRuntimeCommand
+{
+    private TableEvents.Outcome _outcome = TableEvents.Outcome.None;
+
+    public IReadOnlyCollection<string> AffectedActorIds => _outcome.Touched;
+
+    /// <summary>Once applied: why the handler could not run, or null.</summary>
+    public string? Failed => _outcome.Failed;
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        if (runtime.System is not { } system || !Codex.Core.Rules.SheetEvents.Handles(system, Type)) return;
+        _outcome = TableEvents.RaiseOnCampaign(runtime, new Codex.Core.Rules.SheetEvent(Type, Fields));
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("Campaign", _outcome.Messages.Count > 0 ? _outcome.Messages : new[] { EventMessage.Of("Campaign.Nothing", Type) },
+            _outcome.Touched.Count > 0 ? _outcome.Touched.Distinct().ToArray() : null);
+}
+
+/// <summary>The GM changing the campaign's objects themselves (a clock added, renamed or resized; a faction added): the edit
+/// runs on the table's copy and returns false to change nothing. <see cref="Said"/> is what the log says; a message about
+/// something kept for the GM names it with <see cref="EventTerm.GmOnly"/>.</summary>
+public sealed record EditCampaignObjectsCommand(Func<Dictionary<string, object>, bool> Edit, EventMessage Said) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    /// <summary>Once applied: whether the edit changed anything.</summary>
+    public bool Changed { get; private set; }
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var state = runtime.CampaignObjectState;
+        var before = Codex.Core.Rules.CampaignObjects.Copy(state);
+        Changed = Edit(state);
+        if (!Changed) return;
+        foreach (var key in state.Keys.Union(before.Keys).Where(k => !Codex.Core.YamlValues.SameValue(state.GetValueOrDefault(k), before.GetValueOrDefault(k))).ToList())
+        {
+            runtime.CampaignKeyWritten(key);
+        }
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Campaign", new[] { Changed ? Said : EventMessage.Of("Campaign.Unchanged") });
 }

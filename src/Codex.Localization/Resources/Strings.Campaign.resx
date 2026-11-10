@@ -1032,6 +1032,23 @@
   <data name="Campaign.Book.Ai.Status.Failed" xml:space="preserve"><value>The build failed: {0}</value></data>
   <data name="Campaign.Book.Ai.SaveFailed" xml:space="preserve"><value>Some results could not be stored.</value></data>
   <data name="Campaign.Book.Ai.Busy" xml:space="preserve"><value>Another build of yours is already running.</value></data>
+  <data name="Campaign.SystemMissing" xml:space="preserve"><value>This campaign's game system, '{0}', is not installed, so the campaign can't be changed.</value></data>
+  <data name="Campaign.SystemMissingTitle" xml:space="preserve"><value>Read-only: the game system is missing</value></data>
+  <data name="Campaign.SystemMissingGm" xml:space="preserve"><value>This campaign uses the game system '{0}', which is not installed on this server. You can read and export everything, but nothing can be changed and the table can't start. Install the system again (on the About page), or choose another system in Settings.</value></data>
+  <data name="Campaign.SystemMissingFailed" xml:space="preserve"><value>The system is there but did not load; the reasons are on the About page.</value></data>
+  <data name="Campaign.SystemMissingPlayer" xml:space="preserve"><value>This campaign uses the game system '{0}', which is not installed on this server. You can read everything, but nothing can be changed until the GM sorts it out.</value></data>
+  <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (not installed)</value></data>
+  <data name="Campaign.Cast.SheetKind" xml:space="preserve"><value>Sheet</value></data>
+  <data name="Campaign.Cast.SheetKindByRole" xml:space="preserve"><value>As its kind suggests</value></data>
+  <data name="Campaign.SystemChanged.Title" xml:space="preserve"><value>{0} has changed since this campaign last played under it</value></data>
+  <data name="Campaign.SystemChanged.Body" xml:space="preserve"><value>Its rules are not the ones the campaign recorded on {0}. Sheets and the table already use the new rules; nothing stored was changed. A table that was running when the system changed keeps the old rules until it ends.</value></data>
+  <data name="Campaign.SystemChanged.Version" xml:space="preserve"><value>Version {0} is now {1}</value></data>
+  <data name="Campaign.SystemChanged.Added" xml:space="preserve"><value>{0} was added</value></data>
+  <data name="Campaign.SystemChanged.Removed" xml:space="preserve"><value>{0} was removed</value></data>
+  <data name="Campaign.SystemChanged.Changed" xml:space="preserve"><value>{0} changed</value></data>
+  <data name="Campaign.SystemChanged.Compiled" xml:space="preserve"><value>compiled code, which runs with the server's rights</value></data>
+  <data name="Campaign.SystemChanged.Accept" xml:space="preserve"><value>Got it</value></data>
+  <data name="Campaign.SystemChanged.Accepted" xml:space="preserve"><value>The campaign now records the system as it is.</value></data>
   <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} is not on the server's list of sites; the server's admin can add it</value></data>
   <data name="Campaign.Settings.Role.CoGm" xml:space="preserve"><value>Co-GM</value></data>
   <data name="Campaign.Settings.CoGmHint" xml:space="preserve"><value>Only the owner can change who is a co-GM.</value></data>

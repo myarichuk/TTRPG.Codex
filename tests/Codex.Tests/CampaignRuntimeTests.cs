@@ -117,6 +117,109 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         await manager.EvictAsync(campaignId);
     }
 
+    /// <summary>Overhaul step 10: a table keeps the system it started with through a reload, and the session records each
+    /// system it was played under.</summary>
+    [Fact]
+    public async Task ATable_KeepsItsSystemThroughAReload_AndTheSessionRecordsEachSystemItRanUnder_Async()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "codex-runtime-reload-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(Path.Combine(root, "street"));
+        var yaml = Path.Combine(root, "street", "system.yaml");
+        File.WriteAllText(yaml, "id: street\nname: Street\nversion: 1.0.0\n");
+        try
+        {
+            var hooks = new CampaignLifecycleHooks();
+            var campaigns = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository,
+                new RavenNoteRepository(_dbService), new RegionRepository(_dbService), new FactRepository(_dbService),
+                new RavenHomebrewRepository(_dbService), _encounterRepository, lifecycle: hooks);
+            var loader = new Codex.Core.PluginLoader(NullLogger<Codex.Core.PluginLoader>.Instance, _componentRegistry, Substitute.For<IContentPackLoader>());
+            await loader.LoadAndInitializeAsync(root);
+            var manager = new CampaignRuntimeManager(_actorRepository, _sessionRepository, campaigns, _encounterRepository, _componentRegistry, loader, NullLoggerFactory.Instance, hooks);
+            var campaignId = Guid.NewGuid().ToString();
+            var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Night City", SystemId = "street" };
+            await campaigns.SaveAsync(campaign);
+            var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+
+            var runtime = await manager.GetOrStartAsync(campaign, dm);
+            await runtime.EnqueueAsync(new RollDiceCommand("1d6", null, "owner", false));
+            File.WriteAllText(yaml, "id: street\nname: Street\nversion: 1.1.0\n");
+            Assert.Equal(new[] { "street" }, (await loader.ReloadAsync()).Changed);
+
+            Assert.Equal("1.0.0", runtime.System!.Version);
+            Assert.Same(runtime, await manager.GetOrStartAsync(campaign, dm));
+
+            // Ended and started again, the same session runs under the new system, and says so.
+            await manager.EvictIdleAsync(TimeSpan.Zero, DateTime.UtcNow.AddHours(1));
+            var restarted = await manager.GetOrStartAsync(campaign, dm);
+            Assert.Equal("1.1.0", restarted.System!.Version);
+            var session = (await _sessionRepository.GetAsync(restarted.ActiveSession!.Id))!;
+            Assert.Equal(new[] { "1.0.0", "1.1.0" }, session.SystemStamps.Select(s => s.Version));
+            // Each roll names the stamp it was made under.
+            await restarted.EnqueueAsync(new RollDiceCommand("1d6", null, "owner", false));
+            await manager.EvictIdleAsync(TimeSpan.Zero, DateTime.UtcNow.AddHours(1));
+            Assert.Equal(new int?[] { 0, 1 }, (await _sessionRepository.GetAsync(restarted.ActiveSession!.Id))!.RollLog.Select(r => r.SystemStamp));
+            restarted = await manager.GetOrStartAsync(campaign, dm);
+            await manager.EvictIdleAsync(TimeSpan.Zero, DateTime.UtcNow.AddHours(1));
+            Assert.Equal(2, (await manager.GetOrStartAsync(campaign, dm)).ActiveSession!.SystemStamps.Count);
+            await manager.EvictAsync(campaignId);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    /// <summary>Overhaul step 10: a sheet saved at a running table after its system was reloaded is merged under the definition
+    /// the table runs, not the reloaded one: here the reload drops the Grit resource the table still plays.</summary>
+    [Fact]
+    public async Task ASheetSavedAtATable_AfterAReload_IsMergedUnderTheTablesSystem_Async()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "codex-runtime-save-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(Path.Combine(root, "street"));
+        var yaml = Path.Combine(root, "street", "system.yaml");
+        File.WriteAllText(yaml, "id: street\nname: Street\nversion: 1.0.0\nresources:\n  - { key: Grit, label: Grit, maxKey: Grit_Max, default: 4 }\n");
+        try
+        {
+            var hooks = new CampaignLifecycleHooks();
+            var campaigns = new CampaignRepository(_dbService, new NoOpSystemCatalog(), _actorRepository, _sessionRepository,
+                new RavenNoteRepository(_dbService), new RegionRepository(_dbService), new FactRepository(_dbService),
+                new RavenHomebrewRepository(_dbService), _encounterRepository, lifecycle: hooks);
+            var loader = new Codex.Core.PluginLoader(NullLogger<Codex.Core.PluginLoader>.Instance, _componentRegistry, Substitute.For<IContentPackLoader>());
+            await loader.LoadAndInitializeAsync(root);
+            var manager = new CampaignRuntimeManager(_actorRepository, _sessionRepository, campaigns, _encounterRepository, _componentRegistry, loader, NullLoggerFactory.Instance, hooks);
+            var campaignId = Guid.NewGuid().ToString();
+            var campaign = new CampaignDocument { Id = campaignId, OwnerId = "owner", Name = "Night City", SystemId = "street" };
+            await campaigns.SaveAsync(campaign);
+            var dm = new CampaignAccess(campaignId, "owner", CampaignRole.DM);
+            var pool = new ResourcePoolComponent();
+            pool.Set("Grit", 4);
+            pool.Set("Grit_Max", 4);
+            var actor = new ActorDocument
+            {
+                Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Rook",
+                Sheet = new Dictionary<string, object> { ["Grit"] = 4, ["Grit_Max"] = 4 },
+                State = _componentRegistry.Snapshot(new object[] { pool })
+            };
+            await _actorRepository.SaveAsync(actor);
+
+            await manager.GetOrStartAsync(campaign, dm);
+            File.WriteAllText(yaml, "id: street\nname: Street\nversion: 1.1.0\n");
+            Assert.Equal(new[] { "street" }, (await loader.ReloadAsync()).Changed);
+
+            // The page loaded after the reload and sends the new definition; the table's own is the one the merge uses.
+            var edited = new ActorDocument { Id = actor.Id, CampaignId = campaignId, Name = "Rook", Sheet = new Dictionary<string, object> { ["Grit"] = 2, ["Grit_Max"] = 4 } };
+            Assert.True(await manager.TrySaveActorAsync(edited, new Dictionary<string, object> { ["Grit"] = 4, ["Grit_Max"] = 4 }, dm, loader.GetDefinition("street")));
+            await manager.EvictAsync(campaignId);
+
+            var stored = await _actorRepository.GetVisibleAsync(actor.Id, dm);
+            Assert.Equal(2, _componentRegistry.Hydrate(stored!.State).OfType<ResourcePoolComponent>().Single().Get("Grit"));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     /// <summary>R6: two "Start table" clicks at once used to open two sessions and patch the campaign twice before one runtime
     /// lost the race to publish.</summary>
     [Fact]

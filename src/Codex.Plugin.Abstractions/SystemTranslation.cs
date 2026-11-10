@@ -14,6 +14,9 @@ public class SystemTranslation
     public string? Description { get; set; }
     public string? Compatibility { get; set; }
 
+    /// <summary>The whole <c>setting:</c> block in this language, for the people reading it. AI prompts use the original.</summary>
+    public SystemSetting? Setting { get; set; }
+
     public Dictionary<string, LabelTranslation> Attributes { get; set; } = new();
     public Dictionary<string, LabelTranslation> Resources { get; set; } = new();
     public Dictionary<string, LabelTranslation> ActorFields { get; set; } = new();

@@ -1383,6 +1383,31 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
 .slot-pip { width: 0.8rem; height: 0.8rem; border-radius: 50%; border: 2px solid var(--arcane); background: transparent; }
 .slot-pip-full { background: var(--arcane); }
 
+/* The layout's generic widgets (SheetWidget.razor): a stat block, boxes, and text slots. */
+.sheet-values { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: var(--space-2) var(--space-3); margin: 0; }
+.sheet-value dt { font-weight: 600; font-size: 0.85rem; }
+.sheet-value dd { margin: 0; }
+.sheet-number { width: 5rem; }
+.track-box { width: 1.4rem; height: 1.4rem; border: 2px solid var(--accent); border-radius: 3px; background: transparent; padding: 0; }
+.track-box-full { background: var(--accent); }
+.track-box:disabled { opacity: 0.85; cursor: default; }
+.sheet-widget + .sheet-widget { margin-top: var(--space-3); }
+.track-box:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+.pill-empty { opacity: 0.6; min-width: 2.5rem; justify-content: center; }
+.table-group th { font-variant: small-caps; padding-top: var(--space-2); }
+
+/* The campaign's clocks (CampaignObjectsPanel.razor): a face of segments filled clockwise from the top. */
+.clock-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-3); margin: 0 0 var(--space-3); }
+.clock-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.clock-face { width: 3rem; height: 3rem; flex: none; }
+.clock-segment { fill: transparent; stroke: var(--border-strong); stroke-width: 1.5; }
+.clock-segment-full { fill: var(--accent); }
+.clock-full .clock-segment-full { fill: var(--danger); }
+.clock-text { display: flex; flex-direction: column; gap: var(--space-1); min-width: 6rem; }
+.clock-name { font-weight: 600; }
+.clock-controls { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.campaign-number { min-width: 2rem; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+
 /* ---------------------------------------------------------------------------
    Frames (audit 1.3 step 3). A frame is a two-tone brass border (already in
    --border-strong and --frame), small radii, a titled header band and brass
@@ -2462,6 +2487,9 @@ dialog.wb-raw-dialog { width: min(880px, 96vw); }
 .wb-reader-body { font-size: var(--fs-base); line-height: 1.62; overflow-wrap: anywhere; }
 .wb-callout { display: flex; align-items: baseline; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-radius: var(--radius-sm); background: var(--surface-2); font-size: var(--fs-md); color: var(--text-2); }
 .wb-callout-warning { background: var(--warning-soft); color: var(--warning); }
+/* A campaign whose game system is missing: read-only, said once at the top of the workspace. */
+.ws-readonly { margin: 0 0 var(--space-6); padding: var(--space-5) var(--space-6); background: var(--warning-soft); color: var(--text); border: 1px solid var(--warning); border-radius: var(--radius-md); }
+.ws-readonly h2 { color: var(--warning); display: flex; align-items: center; gap: var(--space-2); }
 .wb-fields { display: grid; grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr); gap: var(--space-2) var(--space-7); margin: 0 0 var(--space-6); font-size: var(--fs-md); }
 .wb-fields dt { font-weight: 500; color: var(--text-3); }
 .wb-fields dd { margin: 0; overflow-wrap: anywhere; }

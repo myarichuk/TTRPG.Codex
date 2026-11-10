@@ -592,11 +592,14 @@ window.codex = {
         } catch (e) {
             // fall through to the legacy path
         }
-        // The old route needs a selected field of its own. It must not leave the page's focus and selection behind in it (and then nowhere):
-        // whatever had them gets them back, so a field the caller just selected for the user to copy by hand stays selected.
+        // The legacy route copies from a hidden text area it has to focus and select. Whatever had focus and its selection
+        // (the invite field the checklist just selected) gets them back afterwards, copied or not: removing the area would
+        // otherwise leave focus on the page body. The async API is refused this way too once the click's user activation
+        // has lapsed (a slow round trip to the server), not only on plain HTTP.
         const previous = document.activeElement;
-        const range = previous && 'selectionStart' in previous && previous.selectionStart !== null
-            ? [previous.selectionStart, previous.selectionEnd, previous.selectionDirection] : null;
+        const range = previous && typeof previous.selectionStart === 'number'
+            ? [previous.selectionStart, previous.selectionEnd, previous.selectionDirection]
+            : null;
         const area = document.createElement('textarea');
         area.value = text;
         area.setAttribute('readonly', '');
@@ -610,9 +613,11 @@ window.codex = {
             return false;
         } finally {
             area.remove();
-            if (previous && previous !== document.body && typeof previous.focus === 'function') {
-                previous.focus();
-                if (range) previous.setSelectionRange(range[0], range[1], range[2] || 'none');
+            if (previous && previous !== document.body && previous.isConnected && typeof previous.focus === 'function') {
+                previous.focus({ preventScroll: true });
+                if (range) {
+                    try { previous.setSelectionRange(range[0], range[1], range[2]); } catch (e) { /* not a text control */ }
+                }
             }
         }
     },

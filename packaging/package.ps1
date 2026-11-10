@@ -45,6 +45,12 @@ Get-ChildItem (Join-Path $app 'RavenDBServer/runtimes') -Directory -ErrorAction 
 
 Write-Host '==> Adding content packs and the launcher'
 Copy-Item -Recurse (Join-Path $repo 'content') (Join-Path $app 'content')
+# Systems not in content/systems/bundled.txt ship as their own archives (packaging/pack-systems.sh), not inside the app.
+$bundled = Get-Content (Join-Path $repo 'content/systems/bundled.txt') | ForEach-Object { ($_ -replace '#.*', '').Trim() } | Where-Object { $_ }
+Get-ChildItem (Join-Path $app 'content/systems') -Directory | Where-Object { $_.Name -notin $bundled } | ForEach-Object {
+    Write-Host "    leaving out $($_.Name) (released on its own)"
+    Remove-Item -Recurse -Force $_.FullName
+}
 Copy-Item (Join-Path $repo 'packaging/launchers/TTRPG.Codex.cmd') $app
 Copy-Item (Join-Path $repo 'LICENSE'), (Join-Path $repo 'LEGAL.md') $app
 # The bundled RavenDB server is AGPLv3: its licence text travels with the binaries (see LEGAL.md).

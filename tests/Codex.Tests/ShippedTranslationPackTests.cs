@@ -1,5 +1,4 @@
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -8,7 +7,7 @@ namespace Codex.Tests;
 /// <summary>Loads the real <c>content/</c> folder and checks the shipped ru/he translation packs.</summary>
 public class ShippedTranslationPackTests : IAsyncLifetime
 {
-    private readonly ContentRegistry _registry = new(new ScriptEvaluator(NullLogger<ScriptEvaluator>.Instance));
+    private readonly ContentRegistry _registry = new();
     private readonly PluginLoader _loader;
 
     public ShippedTranslationPackTests()

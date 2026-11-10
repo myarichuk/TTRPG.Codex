@@ -1,0 +1,168 @@
+# What a host that reads ./system.yaml (and runs ./rules.js) must make of it. Format: ../README.md.
+system: ref-street
+
+sheets:
+  edge:
+    kind: operator
+    values: { BODY: 6, WILL: 6, REF: 7, DEX: 6, TECH: 4, INT: 5 }
+    lists:
+      skills: { handgun: { level: 4 }, brawling: { level: 3 }, perception: { level: 2 } }
+      cyberware: [{ id: neural-port }, { id: chrome-arm }]
+      armor: [{ id: light-helmet, location: head }, { id: armored-jacket, location: body }]
+    tracks: { HP: 40, Humanity: 39, SP_head: 11, SP_body: 11, DeathPenalty: 0, IP: 120 }
+
+  odd:
+    kind: operator
+    values: { BODY: 5, WILL: 4, REF: 5, DEX: 5, TECH: 5, INT: 5 }
+    tracks: { HP: 35 }
+
+expectations:
+  # ---- Values (step 2), values over tracks (step 3), a function from a script (step 8) ----
+  - id: street.humanity-is-will-less-what-implants-take
+    step: 2
+    sheet: edge
+    expect: { values: { Humanity_Max: 39 } }
+    why: "Will 6 x 10 = 60, less 7 (neural port) and 14 (chrome arm)."
+  - id: street.armor-is-per-location
+    step: 2
+    sheet: edge
+    expect: { values: { SP_head_Max: 11, SP_body_Max: 11 } }
+  - id: street.a-skill-is-its-stat-plus-its-level
+    step: 2
+    sheet: edge
+    expect: { values: { skills.handgun: 11, skills.athletics: 6 } }
+    why: "Reflexes 7 + 4; Athletics untrained: Dexterity 6 + 0."
+  - id: street.emp-follows-current-humanity
+    step: 3
+    sheet: edge
+    with: { tracks: { Humanity: 29 } }
+    expect: { values: { EMP: 2 } }
+    why: "floor(29 / 10). A derived value reads a track's current value, not only the sheet's numbers."
+  - id: street.hit-points-come-from-a-script-function
+    step: 8
+    sheet: edge
+    expect: { values: { HP_Max: 40 } }
+    why: "10 + 5 x ceil((6 + 6) / 2) = 40."
+  - id: street.hit-points-round-the-average-up
+    step: 8
+    sheet: odd
+    expect: { values: { HP_Max: 35 } }
+    why: "10 + 5 x ceil(4.5) = 35."
+
+  # ---- Thresholds that add effects (step 3) ----
+  - id: street.half-hit-points-is-seriously-wounded
+    step: 3
+    sheet: odd
+    with: { tracks: { HP: 17 } }
+    expect: { conditions: [Seriously wounded] }
+    why: "div(35, 2) = 17: at or below 17. The half rounds down in every supplier."
+  - id: street.just-above-half-is-not
+    step: 3
+    requires: [street.half-hit-points-is-seriously-wounded]
+    sheet: odd
+    with: { tracks: { HP: 18 } }
+    expect: { conditions: [] }
+  - id: street.below-zero-is-both
+    step: 3
+    sheet: edge
+    with: { tracks: { HP: -1 } }
+    expect: { conditions: [Seriously wounded, Mortally wounded] }
+    why: "Thresholds add up; unlike bands, more than one holds at once."
+
+  # ---- Rolls: explode once, implode once, a wound penalty, roll-under (step 4) ----
+  - id: street.a-check-adds-stat-skill-and-die
+    step: 4
+    sheet: edge
+    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [7] }
+    expect: { outcome: success, total: 18 }
+  - id: street.a-ten-explodes-once
+    step: 4
+    sheet: edge
+    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [10, 4] }
+    expect: { outcome: success, total: 25, diceUsed: 2 }
+    why: "11 + 10 + 4."
+  - id: street.the-second-ten-does-not-explode
+    step: 4
+    sheet: edge
+    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [10, 10, 10] }
+    expect: { outcome: success, total: 31, diceUsed: 2 }
+    why: "11 + 10 + 10; the third die is never rolled."
+  - id: street.a-one-implodes-once
+    step: 4
+    sheet: edge
+    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [1, 6] }
+    expect: { outcome: failure, total: 6, diceUsed: 2 }
+    why: "11 + 1 - 6."
+  - id: street.a-serious-wound-takes-two-from-every-check
+    step: 4
+    sheet: edge
+    with: { tracks: { HP: 20 } }
+    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [5] }
+    expect: { outcome: failure, total: 14 }
+    why: "HP 20 of 40 is at half: 11 + 5 - 2 = 14."
+  - id: street.a-death-save-is-rolled-under-body
+    step: 4
+    sheet: edge
+    with: { tracks: { DeathPenalty: 1 } }
+    roll: { definition: deathSave, dice: [5] }
+    expect: { outcome: success, total: 6 }
+    why: "5 + penalty 1 = 6, at or under Body 6."
+  - id: street.a-death-save-over-body-fails
+    step: 4
+    sheet: edge
+    with: { tracks: { DeathPenalty: 1 } }
+    roll: { definition: deathSave, dice: [6] }
+    expect: { outcome: failure, total: 7 }
+
+  # ---- Events: declared handlers (step 5) and scripted ones (step 8) ----
+  - id: street.mortally-wounded-rolls-a-death-save-each-turn
+    step: 5
+    sheet: edge
+    with: { tracks: { HP: -2 } }
+    event: { type: turnStart }
+    expect: { intents: [{ roll: { definition: deathSave } }] }
+  - id: street.each-death-save-raises-the-penalty
+    step: 5
+    sheet: edge
+    with: { tracks: { HP: -2, DeathPenalty: 1 } }
+    event: { type: roll, definition: deathSave, outcome: success }
+    expect: { after: { tracks: { DeathPenalty: 2 } } }
+  - id: street.damage-through-armor-wears-it-down
+    step: 8
+    sheet: edge
+    event: { type: damage, amount: 15, location: body }
+    expect:
+      intents: [{ adjust: { track: HP, by: -4 } }, { adjust: { track: SP_body, by: -1 } }]
+      after: { tracks: { HP: 36, SP_body: 10 } }
+  - id: street.a-head-hit-doubles-what-gets-through
+    step: 8
+    sheet: edge
+    event: { type: damage, amount: 15, location: head }
+    expect: { after: { tracks: { HP: 32, SP_head: 10 } } }
+    why: "(15 - 11) x 2 = 8."
+  - id: street.armor-stops-damage-up-to-its-stopping-power
+    step: 8
+    sheet: edge
+    event: { type: damage, amount: 9, location: body }
+    expect: { intents: [{ log: { key: damage.stopped, args: [9, 11] } }], after: { tracks: { HP: 40, SP_body: 11 } } }
+  - id: street.thresholds-follow-the-intents
+    step: 8
+    sheet: edge
+    with: { tracks: { HP: 24 } }
+    event: { type: damage, amount: 15, location: body }
+    expect: { after: { tracks: { HP: 20 }, conditions: [Seriously wounded] } }
+    why: "24 - 4 = 20, at half of 40. The script only adjusts HP; the host applies the threshold."
+  - id: street.advancing-a-skill-spends-improvement-points
+    step: 8
+    sheet: edge
+    event: { type: advance, skill: handgun }
+    expect: { after: { tracks: { IP: 20 }, values: { skills.handgun: 12 } } }
+    why: "Handgun 4 to 5 costs 20 x 5 = 100 of 120."
+  - id: street.advancing-without-the-points-changes-nothing
+    step: 8
+    sheet: edge
+    with: { tracks: { IP: 60 } }
+    event: { type: advance, skill: handgun }
+    expect:
+      intents: [{ log: { key: advance.notEnoughPoints, args: [handgun, 100, 60] } }]
+      after: { tracks: { IP: 60 }, values: { skills.handgun: 11 } }

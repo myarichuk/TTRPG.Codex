@@ -1032,6 +1032,23 @@
   <data name="Campaign.Book.Ai.Status.Failed" xml:space="preserve"><value>הבנייה נכשלה: {0}</value></data>
   <data name="Campaign.Book.Ai.SaveFailed" xml:space="preserve"><value>חלק מהתוצאות לא נשמרו.</value></data>
   <data name="Campaign.Book.Ai.Busy" xml:space="preserve"><value>בנייה אחרת שלכם כבר רצה.</value></data>
+  <data name="Campaign.SystemMissing" xml:space="preserve"><value>מערכת המשחק של הקמפיין הזה, '{0}', אינה מותקנת, ולכן אי אפשר לשנות את הקמפיין.</value></data>
+  <data name="Campaign.SystemMissingTitle" xml:space="preserve"><value>לקריאה בלבד: מערכת המשחק חסרה</value></data>
+  <data name="Campaign.SystemMissingGm" xml:space="preserve"><value>הקמפיין הזה משתמש במערכת המשחק '{0}', שאינה מותקנת בשרת הזה. אפשר לקרוא ולייצא הכול, אבל אי אפשר לשנות דבר, וגם אי אפשר להפעיל את השולחן. התקינו שוב את המערכת (בדף 'אודות ורישיונות'), או בחרו מערכת אחרת בהגדרות.</value></data>
+  <data name="Campaign.SystemMissingFailed" xml:space="preserve"><value>המערכת קיימת אבל לא נטענה; הסיבות מופיעות בדף 'אודות ורישיונות'.</value></data>
+  <data name="Campaign.SystemMissingPlayer" xml:space="preserve"><value>הקמפיין הזה משתמש במערכת המשחק '{0}', שאינה מותקנת בשרת הזה. אפשר לקרוא הכול, אבל אי אפשר לשנות דבר עד ששליט המבוך יסדר את זה.</value></data>
+  <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (לא מותקנת)</value></data>
+  <data name="Campaign.Cast.SheetKind" xml:space="preserve"><value>גיליון</value></data>
+  <data name="Campaign.Cast.SheetKindByRole" xml:space="preserve"><value>לפי סוג הדמות</value></data>
+  <data name="Campaign.SystemChanged.Title" xml:space="preserve"><value>מערכת המשחק {0} השתנתה מאז שהקמפיין שוחק לפיה בפעם האחרונה</value></data>
+  <data name="Campaign.SystemChanged.Body" xml:space="preserve"><value>הכללים שלה אינם אלה שהקמפיין רשם ב-{0}. הדפים והשולחן כבר משתמשים בכללים החדשים; שום דבר שמור לא השתנה. שולחן שרץ כשהמערכת השתנתה ממשיך בכללים הישנים עד שהוא נגמר.</value></data>
+  <data name="Campaign.SystemChanged.Version" xml:space="preserve"><value>גרסה {0} היא עכשיו {1}</value></data>
+  <data name="Campaign.SystemChanged.Added" xml:space="preserve"><value>הקובץ {0} נוסף</value></data>
+  <data name="Campaign.SystemChanged.Removed" xml:space="preserve"><value>הקובץ {0} הוסר</value></data>
+  <data name="Campaign.SystemChanged.Changed" xml:space="preserve"><value>הקובץ {0} השתנה</value></data>
+  <data name="Campaign.SystemChanged.Compiled" xml:space="preserve"><value>קוד מהודר, שרץ עם ההרשאות של השרת</value></data>
+  <data name="Campaign.SystemChanged.Accept" xml:space="preserve"><value>הבנתי</value></data>
+  <data name="Campaign.SystemChanged.Accepted" xml:space="preserve"><value>הקמפיין רושם עכשיו את המערכת כפי שהיא.</value></data>
   <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} לא ברשימת האתרים של השרת; מנהל השרת יכול להוסיף אותו</value></data>
   <data name="Campaign.Settings.Role.CoGm" xml:space="preserve"><value>שליט מבוך שותף</value></data>
   <data name="Campaign.Settings.CoGmHint" xml:space="preserve"><value>רק הבעלים יכולים לקבוע מי שליט מבוך שותף.</value></data>

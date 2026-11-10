@@ -58,6 +58,7 @@ done
 
 echo "==> Adding content packs and the launcher"
 cp -R "$repo/content" "$app/content"
+"$repo/packaging/content-for-release.sh" "$app/content"
 cp "$repo/packaging/launchers/ttrpg-codex" "$app/ttrpg-codex"
 chmod +x "$app/ttrpg-codex"
 cp "$repo/LICENSE" "$repo/LEGAL.md" "$app/"

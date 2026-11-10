@@ -3,9 +3,11 @@
 Everything a game needs - attributes, the character sheet, classes, spells, monsters, places, lore -
 is data. TTRPG.Codex loads it from **content roots** at startup:
 
-- `plugins/` and `content/` next to the published executable (what a release ships), and
+- `plugins/` and `content/` next to the published executable (what a release ships),
 - the folders listed under `Codex:ContentDirectories` in `appsettings.json` (the repo's `content/`
-  by default when running from source).
+  by default when running from source), and
+- the folder systems installed from the app live in (`Codex:Systems:InstallDirectory`; by default `Systems` beside the
+  database's folder). See [Installing, reloading and versions](#installing-reloading-and-versions).
 
 Inside a content root the layout is free-form; the loader looks for three kinds of thing anywhere
 below it (skipping `bin/`, `obj/` and dot-folders):
@@ -15,6 +17,7 @@ below it (skipping `bin/`, `obj/` and dot-folders):
 | **System** | `system.yaml` | A game system: attributes, resources, sheet fields, content types, conditions, dice. |
 | **Pack** | `manifest.yaml` (or legacy `manifest.json`), or a `.zip`/`.cdx` archive | Content for one system: rules, a setting, or homebrew. |
 | **Compiled plugin** | `*.dll` directly in the root | An `ICodexSystemPlugin` for behaviour data can't express (custom dice, ECS systems). |
+| **Compiled supplier** | `*.dll` beside a `system.yaml` that names a type in it (`{ type: "Namespace.Type, Assembly" }`) | A function, event handler or sheet widget of that system (`ICodexFunction`, `ICodexEventHandler`, `ICodexWidget`), loaded into the system's own load context. A folder with a `system.yaml` is never scanned for plugins. |
 
 The shipped tree:
 
@@ -31,6 +34,15 @@ content/
 ```
 
 ## system.yaml
+
+Every key, with its type and what it is, is in the generated [reference](SYSTEM_YAML_REFERENCE.md), and the same model is a
+JSON schema ([schema/system.schema.json](schema/system.schema.json)). Point an editor with a YAML language server (VS Code's
+YAML extension, JetBrains IDEs) at it with a first line, and it completes keys and flags a misspelt one as you type, as the
+loader would at start:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/myarichuk/TTRPG.Codex/main/docs/schema/system.schema.json
+```
 
 ```yaml
 id: simple-d6                 # lower-case, stable; campaigns reference it
@@ -115,6 +127,51 @@ ai:
 A creature's starting points go to the system's primary resource (`resources`, `isPrimary`), so a "Wounds" system
 shows `Wounds 5/5` on a cast member made from a creature, not a stray `HP`.
 
+### Setting (`setting`)
+
+Some systems ship rules and no content: no packs, no monsters, no lore. Their rules still assume a kind of world (crews
+in a haunted city, a hard-science starship, a pastoral fairy tale). `setting` says what that world is like, in general
+terms, so a GM homebrewing for the system knows what fits. The AI features get it too: every prompt that writes content
+(descriptions, wiki pages, characters, the world-building chat) has it after the campaign's own description, with
+instructions that the campaign wins where they differ and that names are invented, never taken from a published setting.
+The About page shows it under the system. Every part is optional; leave the whole block out for a system with no
+setting of its own (the SRD system has none: a campaign's world is whatever its description says).
+
+```yaml
+setting:
+  summary: >-                                # one short paragraph
+    Criminal crews scrape a living in a cramped, haunted industrial city, paying for every success with heat and debts.
+  genres: [heist, gothic horror, industrial fantasy]
+  tone: [grim, desperate, darkly funny]
+  themes: [ambition and its price, loyalty under pressure]
+  technology: "early industrial: rail, gas lamps, black powder"
+  supernatural: "real, rare and dangerous: restless dead, bargains with strange powers"
+  factions: [rival criminal gangs, a decadent nobility, a corrupt city watch]   # kinds, never names
+  places: [a crowded port city, slums along the canals]                        # kinds, never names
+  play: [the crew plans little and acts fast, every job leaves fallout]
+  avoid: [clean victories, high magic]       # what does not belong
+  notes: Invent the city and its factions for each campaign.
+```
+
+It is a brief, not a setting book: `summary`, `technology`, `supernatural` and `notes` take up to 1,200 characters each,
+the lists up to 20 items of 160 characters. A `system.<lang>.yaml` may carry its own `setting:` block, which replaces
+the whole block for readers of that language; prompts always use the original.
+
+**Write genre, not someone's world.** A setting block describes the kind of world a game is for, in words anyone may
+use: genres, moods, kinds of factions and places, a technology level. Ideas and genre conventions are free to use; what
+a publisher owns is its text, its names and, under some licences, its setting as a whole (the Forged in the Dark SRD
+licence, for one, excludes its setting outright). So:
+
+- Use common nouns: "a magocracy", "a thieves' guild", "a haunted port city". Never a published setting's proper nouns
+  (cities, districts, factions, gods, people) or the coined words it is known for.
+- Write it in your own words. Don't paraphrase a setting's text, and don't list its distinctive inventions one by one:
+  "a city whose lamps burn the blood of sea monsters" is that setting, not the genre.
+- Describe what the rules are built for, not one book's world: if the rules work in any haunted industrial city, say
+  that, and let each campaign invent its own.
+
+This is general guidance for authors, not legal advice; a system that ships under a licence should follow that
+licence's own terms.
+
 ### Field roles (`fieldRoles`)
 
 The actor fields the app reads by what they mean, so a system can call them what it likes. A role left out turns off
@@ -133,7 +190,10 @@ fieldRoles:
 ### Sheet rules (`sheetRules`)
 
 What a character sheet may contain is data too, so a homebrew can be as strict or as loose as it
-likes. Leave `sheetRules` out and anything goes. The SRD system uses every kind of rule:
+likes. Leave `sheetRules` out and anything goes. A key that names one of your attributes or derived values
+(`attribute`, `dexAttribute`, `bonusKey`, and in `vitals` `saveAttribute` and `hitDice.attribute`) has no default:
+a section you use must state it, so a system never picks up a fifth-edition name such as `con` by accident. The
+loader names any that are missing. The SRD system uses every kind of rule:
 
 ```yaml
 sheetRules:
@@ -141,9 +201,10 @@ sheetRules:
                                # warn: show problems but allow saving; off: don't check.
                                # A campaign can override this under Settings > House rules.
   attributes:
-    methods: [point-buy, standard-array]      # what players may pick; the GM also gets "manual"
+    methods: [point-buy, standard-array]      # what players may pick; the GM also gets "manual" and "printed"
     default: point-buy
-    max: 20                                   # cap on base + bonuses
+    max: 20                                   # cap on base + bonuses. "printed" (a creature's stat block) has no cap
+                                              # and adds no bonuses or increases: the totals are the scores as printed
     pointBuy: { budget: 27, min: 8, max: 15, costs: { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 } }
     standardArray: [15, 14, 13, 12, 10, 8]
     bonuses:                                  # bonuses granted by a referenced entry
@@ -229,7 +290,7 @@ sheetRules:
   hitPoints:                                  # maximum hit points from the classes' hit dice
     key: HP_Max                               # sheet key written (the primary resource's max key)
     currentKey: HP                            # follows the maximum: a larger one arrives as health
-    attribute: con                            # modifier added per level
+    attribute: con                            # required: modifier added per level
     dieProperty: hitDie                       # class property: "d10"
     firstLevel: full-die                      # the first level: full-die (the default) or average
     average: half-plus-one                    # a level's average: half-plus-one (6 for a d10, the default) or half (5)
@@ -241,21 +302,23 @@ sheetRules:
       appliedKey: speciesApplied              # sheet key remembering which entry was copied
       copy: { speed: speed, size: size, darkvision: darkvision }   # entry property: sheet key
   skills:                                     # saving throws, skills and passive scores
-    bonusKey: proficiencyBonus                # a derived field
+    bonusKey: proficiencyBonus                # required: a derived field
     list: [{ key: perception, label: Perception, attribute: wis }]
     passives: [{ key: passivePerception, label: Passive Perception, skill: perception }]
     classChoicesProperty: skillChoices        # the first class's count ("Choose 2: ..."); more chosen beyond the background is a warning
   spellcasting:                               # save DC and attack per class with a spellcastingAbility property
                                               # a class with a slot table and no ability, or the reverse, is a warning
-    bonusKey: proficiencyBonus
+    bonusKey: proficiencyBonus                # required: a derived field
     saveBase: 8
   proficiencies:                              # warnings for equipped armor and weapons the first class isn't trained in
+    strengthAttribute: str                    # checked against an armor's strength property (left out: not checked)
     armorTraining: { light: Light Armor, medium: Medium Armor, heavy: Heavy Armor, shield: Shields }
     allArmor: All armor                       # a training that covers every armor but shields (none if left out)
     pluralSuffix: s                           # dropped when matching a weapon to a training by name ("Longswords")
   armorClass:                                 # armor class from equipment, class features and bonuses
     key: armorClass
-    unarmored: "10 + mod(dex)"                # formula used with no body armor (best of this and class formulas)
+    unarmored: "10 + mod(dex)"                # required: formula used with no body armor (best of this and class formulas)
+    dexAttribute: dex                         # required: added to body armor's base, up to its cap
     bonusLists: [feats, fightingStyles]       # picks here may add armorClassBonus (a fighting style)
   inventory:                                  # what a character carries; stored as "item-id|qty:2,equipped:1"
     key: inventory
@@ -331,8 +394,51 @@ Slot pools become resources: `slots_3` is the remaining level-3 slots and `slots
 The sheet keeps the maximum in step with the classes (a new slot arrives available, a lost slot level
 disappears); the live table spends and regains them and refills them on the named rests.
 
-Validation runs at load. A broken `system.yaml` is reported on the About page under "Content
-warnings" and the system is skipped; nothing else stops loading.
+Validation runs at load. A broken `system.yaml` is skipped and listed on the About page among the systems that failed
+to load, each problem on its own line; nothing else stops loading. A key this version does not read (a misspelling such
+as `hitPoint:`, or a section a newer version understands) does not stop the system either: it is ignored, and the About
+page names it by its path (`sheetRules.hitPoint`) among the system's problems.
+
+## Installing, reloading and versions
+
+**Installing from the app.** About > *Install a system* takes a zip of one system's folder (system.yaml at its top or under
+one folder, with its translations, scripts and packs; `Codex.SystemCheck <folder> --pack system.zip` writes one). The upload
+is unpacked into a staging folder and checked as the server loads a system: an entry outside the folder, a link, more than
+2000 entries or 64 MB, compiled code of any kind, a second system.yaml, a pack for another system, or a load error refuses
+it; load problems are listed as warnings. Nothing is installed until you press *Install*, and the page says first what it
+replaces, what changed, and how many campaigns play under it. Installing moves the folder into place and reloads; if the new
+copy does not load, the old one is put back.
+
+- **Who.** The server's admin. With `Codex:Systems:GmInstall: true`, anyone signed in, except while the server is open to the
+  internet. Reloading is the admin's alone.
+- **Scripts.** `Codex:Systems:Scripts: false` turns scripts off: an upload naming one is refused, and an installed system
+  naming one does not load (About says why).
+- **Compiled code** is never uploaded. A system with a DLL is installed by copying its folder onto the server, by whoever
+  runs it; About > *Reload systems* then picks it up without a restart.
+- **What the app may change.** Only systems in its own install folder. One shipped with the app or copied into another
+  content folder by hand is the server's: an upload with its id is refused, and it has no *Remove*.
+- **Removing** asks first and says how many campaigns play under the system. They become read-only (readable, exportable)
+  until it is installed again or their GM picks another system.
+
+**Reloading.** An install, a removal and *Reload systems* read every content root again. The new systems and packs are built
+beside the old ones and put in place in one step, so nobody sees a half-loaded library, and a reload that fails leaves the
+old ones. A table that is running keeps the system it started with until it ends, and a sheet saved at it is merged under
+that system. DLLs are read from their bytes (never locked) into a load context per folder, keyed by every DLL's hash: a
+compiled plugin (`ICodexSystemPlugin`, a DLL directly in a content root) or a system's DLL that changed is loaded again into a
+new context, and the old context is unloaded once nothing it made is alive, that is, once the last table playing under it has
+ended. With `Codex:Systems:Watch: true` (the default in Development) a change on disk reloads by itself, two seconds after the
+content roots go quiet; hidden folders and `bin`/`obj` are ignored.
+
+**Versions** (section 4, rule 8 of the overhaul). A campaign records the system it plays under: the `version` system.yaml
+states and a SHA-256 of system.yaml, each translation, each script and each DLL beside it (line endings do not count). When
+the loaded system differs, the campaign's GM sees what changed (the version, and each file added, removed or changed, a DLL
+marked as compiled code) until they press *Got it*. A session records each system a table ran it under, and each roll
+which of those it was made under. Bump `version` when
+the rules change: it is what a GM reads first.
+
+**Distribution.** A release ships the systems listed in `content/systems/bundled.txt` (srd5e) inside the app. Every other
+system under `content/systems/` is released as its own `system-<id>-<version>.zip` (`packaging/pack-systems.sh`), installed
+from About, so withdrawing one means removing one download.
 
 ## manifest.yaml
 

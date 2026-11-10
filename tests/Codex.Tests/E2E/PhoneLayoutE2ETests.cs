@@ -53,10 +53,30 @@ public class PhoneLayoutE2ETests : IClassFixture<AppFixture>
     }
 
     /// <summary>Sheets slide in; measure them where they come to rest.</summary>
-    private static Task SettleAsync(ILocator locator) =>
-        locator.EvaluateAsync("el => Promise.all(document.getAnimations()" +
-            ".filter(a => a.effect && a.effect.getComputedTiming().endTime !== Infinity)" +
-            ".map(a => a.finished.catch(() => {})))");
+    /// <remarks>
+    /// Only the animations that can move the element count: its own, its descendants' and its ancestors' (a sheet slides in on the
+    /// element that holds the one measured). Waiting on every animation in the document hung the whole test run on CI for ten
+    /// minutes at a time: under Chromium 153 the colour transitions of the tab bar's closed "More" menu items read as finished
+    /// but their finished promise never resolves, and they have nothing to do with the element measured. Playwright's evaluate has
+    /// no timeout of its own, so the wait is also bounded, and an animation that is still going names itself instead of hanging.
+    /// </remarks>
+    private static async Task SettleAsync(ILocator locator)
+    {
+        var unfinished = await locator.EvaluateAsync<string?>("""
+            el => {
+              const related = document.getAnimations().filter(a => {
+                const t = a.effect && a.effect.target;
+                return t && a.effect.getComputedTiming().endTime !== Infinity && (el.contains(t) || t.contains(el));
+              });
+              const describe = () => JSON.stringify(related.map(a => ({
+                name: a.animationName ?? a.transitionProperty ?? a.id, state: a.playState, on: (a.effect.target.className ?? '') + '' })));
+              return Promise.race([
+                Promise.all(related.map(a => a.finished.catch(() => {}))).then(() => null),
+                new Promise(done => setTimeout(() => done(describe()), 5000))]);
+            }
+            """);
+        Assert.True(unfinished is null, "An animation on the element was still going 5 s after it appeared: " + unfinished);
+    }
 
     [Fact]
     public async Task MainPages_OnAPhone_DoNotScrollSideways_AndTheHeaderMenuHoldsTheRest()

@@ -1,0 +1,98 @@
+# What each supplier must make of ./system.yaml: the formula, the script (./rules.js) and the compiled type
+# (Codex.ContractFixture.dll) give the same. Format: ../reference/README.md. Runs only with the DLL beside system.yaml
+# (SupplierContractTests copies it there).
+system: ref-contract
+
+sheets:
+  odd:
+    kind: being
+    values: { BODY: 6, WILL: 7, N: -7 }
+    tracks: { HP: 30, SP: 3 }
+  even:
+    kind: being
+    values: { BODY: 6, WILL: 6, N: 7 }
+    tracks: { HP: 30, SP: 3 }
+
+expectations:
+  # ---- Functions: the same number from each supplier ----
+  - id: contract.a-function-is-the-same-from-each-supplier
+    step: 9
+    sheet: odd
+    expect: { values: { hpF: 45, hpS: 45, hpC: 45 } }
+    why: "10 + 5 x ceil((6 + 7) / 2) = 45: ceil(6.5) is 7 in each."
+  - id: contract.and-on-an-even-sum
+    step: 9
+    sheet: even
+    expect: { values: { hpF: 40, hpS: 40, hpC: 40 } }
+  - id: contract.whole-division-rounds-down-in-each
+    step: 9
+    sheet: odd
+    expect: { values: { halfF: -4, halfS: -4, halfC: -4 } }
+    why: "div(-7, 2) = floor(-3.5) = -4. C#'s -7 / 2 is -3 and JavaScript's is -3.5; the host's rounding is used in all three."
+  - id: contract.and-of-a-positive-number
+    step: 9
+    sheet: even
+    expect: { values: { halfF: 3, halfS: 3, halfC: 3 } }
+  - id: contract.flags-are-flags
+    step: 9
+    sheet: odd
+    expect: { values: { signedF: 7, signedS: 7, signedC: 7 } }
+    why: "N > 0 is false for -7, so each gives -N."
+  - id: contract.text-is-text
+    step: 9
+    sheet: even
+    expect: { values: { lengthS: -5, lengthC: -5 } }
+    why: "'three' reaches the script and the compiled type as text: its length, negated."
+
+  # ---- Failure: a warning naming the supplier, and no value ----
+  - id: contract.a-failure-is-a-warning-and-no-value
+    step: 9
+    sheet: even
+    expect:
+      warnings:
+        - { field: boomS, key: Actor.Rule.ScriptError }
+        - { field: boomC, key: Actor.Rule.CompiledError }
+
+  # ---- Handlers: the same intents from handler lines, a script and a compiled type ----
+  - id: contract.handler-lines-hit
+    step: 9
+    sheet: even
+    event: { type: hitF, amount: 9 }
+    expect:
+      intents: [{ adjust: { track: HP, by: -6 } }, { adjust: { track: SP, by: -1 } }, { condition: { add: Wounded } }]
+      after: { tracks: { HP: 24, SP: 2 }, conditions: [Wounded] }
+    why: "9 against armor 3: 6 through, which wears the armor down and wounds."
+  - id: contract.a-script-handler-hits-the-same
+    step: 9
+    sheet: even
+    event: { type: hitS, amount: 9 }
+    expect:
+      intents: [{ adjust: { track: HP, by: -6 } }, { adjust: { track: SP, by: -1 } }, { condition: { add: Wounded } }]
+      after: { tracks: { HP: 24, SP: 2 }, conditions: [Wounded] }
+  - id: contract.a-compiled-handler-hits-the-same
+    step: 9
+    sheet: even
+    event: { type: hitC, amount: 9 }
+    expect:
+      intents: [{ adjust: { track: HP, by: -6 } }, { adjust: { track: SP, by: -1 } }, { condition: { add: Wounded } }]
+      after: { tracks: { HP: 24, SP: 2 }, conditions: [Wounded] }
+  - id: contract.a-light-hit-in-each
+    step: 9
+    sheet: even
+    event: { type: hitC, amount: 4 }
+    expect:
+      intents: [{ adjust: { track: HP, by: -1 } }, { adjust: { track: SP, by: -1 } }]
+      after: { tracks: { HP: 29, SP: 2 }, conditions: [] }
+  - id: contract.a-script-rolls-through-the-host
+    step: 9
+    sheet: even
+    event: { type: locateS, amount: 9 }
+    dice: [4]
+    expect: { intents: [{ log: { key: Contract.Located, args: [4, 4] } }] }
+    why: "The d6 is the seeded 4; half of 9 is div(9, 2) = 4, through the compiled half the system names."
+  - id: contract.compiled-code-rolls-through-the-host-too
+    step: 9
+    sheet: even
+    event: { type: locateC, amount: 9 }
+    dice: [4]
+    expect: { intents: [{ log: { key: Contract.Located, args: [4, 4] } }] }

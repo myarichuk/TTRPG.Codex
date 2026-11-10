@@ -1,5 +1,4 @@
 using Codex.Core;
-using Codex.Core.Scripting;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 using Codex.Web.Services;
@@ -171,6 +170,7 @@ builder.Services.AddSingleton<IEncounterRepository, RavenEncounterRepository>();
 builder.Services.AddSingleton<IHomebrewRepository, RavenHomebrewRepository>();
 builder.Services.AddSingleton<IWikiRepository, RavenWikiRepository>();
 builder.Services.AddSingleton<ITemplateRepository, RavenTemplateRepository>();
+builder.Services.AddSingleton<ICampaignObjectsRepository, RavenCampaignObjectsRepository>();
 builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
 builder.Services.AddSingleton<IWorldChatRepository, RavenWorldChatRepository>();
 builder.Services.AddSingleton<StorageQuota>();
@@ -216,10 +216,12 @@ builder.Services.AddScoped<ViewerClock>();
 // Game systems and content
 builder.Services.AddSingleton<ComponentRegistry>();
 builder.Services.AddSingleton<ISystemCatalog>(sp => sp.GetRequiredService<PluginLoader>());
-builder.Services.AddSingleton<ScriptEvaluator>();
 builder.Services.AddSingleton<IContentRegistry, ContentRegistry>();
 builder.Services.AddSingleton<IContentPackLoader, YamlContentPackLoader>();
 builder.Services.AddSingleton<PluginLoader>();
+builder.Services.AddSingleton(sp => new SystemInstaller(sp.GetRequiredService<PluginLoader>(), sp.GetRequiredService<ICampaignRepository>(),
+    builder.Configuration, sp.GetRequiredService<ILogger<SystemInstaller>>(),
+    SystemInstaller.ResolveRoot(builder.Configuration, dataFolders, builder.Environment.ContentRootPath)));
 builder.Services.AddSingleton<ContentPackExporter>();
 builder.Services.AddSingleton<CampaignLibrary>();
 builder.Services.AddScoped<MentionSources>();
@@ -227,6 +229,7 @@ builder.Services.AddScoped<VaultService>();
 builder.Services.AddScoped<WorldChatSessions>();
 builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 builder.Services.AddHostedService<IdleRuntimeEvictionService>();
+builder.Services.AddHostedService<SystemsWatchService>();
 builder.Services.AddSingleton<JsonBackups>();
 builder.Services.AddSingleton(new BackupStatus
 {
@@ -265,6 +268,14 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
+// A table running a system with sheet kinds reads the campaign's library (an item a handler names, a class a track's maximum
+// reads), loaded once when the table starts.
+{
+    var library = app.Services.GetRequiredService<CampaignLibrary>();
+    app.Services.GetRequiredService<Codex.Persistence.Runtime.CampaignRuntimeManager>().EntryResolvers =
+        async (campaign, access, system) => await CachedEntryResolver.LoadAsync(library, campaign, access, system);
+}
+
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Data folder: {DataFolder}; key ring: {KeyFolder}.", dataFolders.Data, dataFolders.Keys);
 foreach (var line in migrated) logger.LogWarning("{Migration}", line);
@@ -300,11 +311,19 @@ using (var scope = app.Services.CreateScope())
 {
     var loader = scope.ServiceProvider.GetRequiredService<PluginLoader>();
     var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-    var roots = ContentRoots.Resolve(app.Configuration, env.ContentRootPath);
+    // Systems installed from the app live in their own folder, read after the shipped and configured ones (overhaul step 10).
+    var installer = scope.ServiceProvider.GetRequiredService<SystemInstaller>();
+    installer.Prepare();
+    var roots = ContentRoots.Resolve(app.Configuration, env.ContentRootPath).Append(installer.Root).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     logger.LogInformation("Loading systems and content packs from: {Roots}", string.Join(", ", roots));
+    loader.ScriptsAllowed = app.Configuration.GetValue("Codex:Systems:Scripts", true);
     await loader.LoadAndInitializeAsync(roots);
     logger.LogInformation("Loaded systems: {Systems}", string.Join(", ", loader.LoadedSystemIds));
+
+    // One-time upgrades of stored documents; some need the systems, so they run after loading them.
+    var store = scope.ServiceProvider.GetRequiredService<RavenDbService>().Store;
+    foreach (var line in Codex.Persistence.DatabaseUpgrades.Run(store, loader.GetDefinition)) logger.LogWarning("{Upgrade}", line);
 }
 
 if (Codex.Web.ExposurePolicy.IsExposed(app.Configuration))

@@ -1032,6 +1032,23 @@
   <data name="Campaign.Book.Ai.Status.Failed" xml:space="preserve"><value>Сборка не удалась: {0}</value></data>
   <data name="Campaign.Book.Ai.SaveFailed" xml:space="preserve"><value>Часть результатов не удалось сохранить.</value></data>
   <data name="Campaign.Book.Ai.Busy" xml:space="preserve"><value>Другая ваша сборка уже идёт.</value></data>
+  <data name="Campaign.SystemMissing" xml:space="preserve"><value>Игровая система этой кампании, «{0}», не установлена, поэтому кампанию нельзя изменить.</value></data>
+  <data name="Campaign.SystemMissingTitle" xml:space="preserve"><value>Только чтение: игровая система отсутствует</value></data>
+  <data name="Campaign.SystemMissingGm" xml:space="preserve"><value>Эта кампания использует игровую систему «{0}», которая не установлена на этом сервере. Всё можно читать и экспортировать, но ничего нельзя изменить, и стол не запустится. Установите систему снова (на странице «О проекте и лицензии») или выберите другую систему в настройках.</value></data>
+  <data name="Campaign.SystemMissingFailed" xml:space="preserve"><value>Система есть, но не загрузилась; причины указаны на странице «О проекте и лицензии».</value></data>
+  <data name="Campaign.SystemMissingPlayer" xml:space="preserve"><value>Эта кампания использует игровую систему «{0}», которая не установлена на этом сервере. Всё можно читать, но ничего нельзя изменить, пока мастер это не исправит.</value></data>
+  <data name="Campaign.Settings.SystemNotInstalled" xml:space="preserve"><value>{0} (не установлена)</value></data>
+  <data name="Campaign.Cast.SheetKind" xml:space="preserve"><value>Лист</value></data>
+  <data name="Campaign.Cast.SheetKindByRole" xml:space="preserve"><value>По виду персонажа</value></data>
+  <data name="Campaign.SystemChanged.Title" xml:space="preserve"><value>Система «{0}» изменилась с тех пор, как кампания играла по ней в последний раз</value></data>
+  <data name="Campaign.SystemChanged.Body" xml:space="preserve"><value>Её правила уже не те, что кампания записала {0}. Листы и стол уже работают по новым правилам; ничего сохранённого не изменилось. Стол, который шёл, когда система изменилась, работает по старым правилам до конца.</value></data>
+  <data name="Campaign.SystemChanged.Version" xml:space="preserve"><value>Версия {0} теперь {1}</value></data>
+  <data name="Campaign.SystemChanged.Added" xml:space="preserve"><value>Добавлен файл {0}</value></data>
+  <data name="Campaign.SystemChanged.Removed" xml:space="preserve"><value>Удалён файл {0}</value></data>
+  <data name="Campaign.SystemChanged.Changed" xml:space="preserve"><value>Изменён файл {0}</value></data>
+  <data name="Campaign.SystemChanged.Compiled" xml:space="preserve"><value>скомпилированный код, который работает с правами сервера</value></data>
+  <data name="Campaign.SystemChanged.Accept" xml:space="preserve"><value>Понятно</value></data>
+  <data name="Campaign.SystemChanged.Accepted" xml:space="preserve"><value>Теперь кампания записала систему такой, какая она есть.</value></data>
   <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} нет в списке сайтов сервера; администратор сервера может его добавить</value></data>
   <data name="Campaign.Settings.Role.CoGm" xml:space="preserve"><value>Со-мастер</value></data>
   <data name="Campaign.Settings.CoGmHint" xml:space="preserve"><value>Менять со-мастеров может только владелец.</value></data>

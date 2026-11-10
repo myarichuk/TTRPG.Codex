@@ -9,14 +9,16 @@ namespace Codex.Persistence.Runtime;
 /// enumerated those directly while rendering could collide with a write and throw inside render,
 /// killing that player's circuit. Render from a snapshot instead: nothing in it is ever mutated.
 /// <see cref="RosterVersion"/> changes whenever an actor joins or leaves the table or its document changes (a reveal), so a
-/// page knows to reload the list of who it may see.
+/// page knows to reload the list of who it may see. <see cref="Campaign"/> is the campaign's clocks and tables, whole: a page
+/// shows a player only what <c>CampaignObjects.Visible</c> leaves.
 /// </summary>
 public sealed record RuntimeSnapshot(
     EncounterSnapshot? Encounter,
     IReadOnlyList<RollLogEntry> RollLog,
     IReadOnlyList<SessionNote> Notes,
     IReadOnlyDictionary<string, ActorStateSnapshot> Actors,
-    int RosterVersion = 0)
+    int RosterVersion = 0,
+    IReadOnlyDictionary<string, object>? Campaign = null)
 {
     public static RuntimeSnapshot Empty { get; } = new(
         null,

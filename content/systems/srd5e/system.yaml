@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../docs/schema/system.schema.json
 # Fifth Edition SRD - a data-driven system definition for TTRPG.Codex.
 #
 # The rules text this system's packs carry comes from the System Reference Document 5.2.1 by
@@ -241,6 +242,7 @@ sheetRules:
 
   # Warnings, not rules: a feat or feature may grant training the class lacks.
   proficiencies:
+    strengthAttribute: str          # an armor's Strength minimum is checked against this
     armorTraining: { light: Light Armor, medium: Medium Armor, heavy: Heavy Armor, shield: Shields }
     allArmor: All armor             # a Fighter's "All armor" covers every armor but shields
     pluralSuffix: s                 # "Longswords" training covers a Longsword
@@ -250,6 +252,7 @@ sheetRules:
   armorClass:
     key: armorClass
     unarmored: "10 + mod(dex)"
+    dexAttribute: dex
     bonusLists: [feats, fightingStyles]
 
   inventory:
@@ -304,6 +307,20 @@ sheetRules:
       casterTypeProperty: casterType
       includeCasterTypes: [pact]
       recoversOn: [Short Rest, Long Rest]
+
+# How typed bonuses combine (overhaul section 3). Armor class's base is the best of its candidates: worn armor with its Dexterity,
+# else Unarmored Defense, a class's own defense or 10 + Dexterity. Everything else adds up.
+modifierTypes:
+  types: { base: best }
+
+# The sheet's layout: tabs of widgets, and an aside shown beside every tab. These are the host's built-in widgets, which read
+# sheetRules above; a system with sheet kinds lays out its own keys with the generic widgets (values, track, list, table,
+# roll, text, modifiers). Leaving it out gives the same layout.
+layout:
+  - { section: attributes, icon: zap, widgets: [{ widget: attributes }, { widget: skills }, { widget: fields }, { widget: classes }, { widget: library }] }
+  - { section: picks, icon: sparkles, widgets: [{ widget: picks }] }
+  - { section: inventory, icon: package, widgets: [{ widget: inventory }] }
+  - { section: vitals, icon: heart, aside: true, widgets: [{ widget: hit-points }, { widget: armor-class }, { widget: slots }, { widget: level-up }] }
 
 dice:
   initiative: 1d20

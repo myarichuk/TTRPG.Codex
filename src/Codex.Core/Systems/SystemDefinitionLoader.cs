@@ -21,12 +21,69 @@ public static class SystemDefinitionLoader
         .IgnoreUnmatchedProperties()
         .Build();
 
-    public static SystemDefinition Load(string path)
+    /// <summary>The key under which a thrown <see cref="InvalidDataException"/> carries its problems, one sentence each
+    /// (a <c>string[]</c> in <see cref="Exception.Data"/>), so a caller can list them without parsing the message.</summary>
+    public const string ErrorsKey = "errors";
+
+    public static SystemDefinition Load(string path) => Load(path, null);
+
+    /// <param name="unknownKeys">Receives the keys the file has and this version does not read (see <see cref="UnknownYamlKeys"/>).</param>
+    public static SystemDefinition Load(string path, ICollection<string>? unknownKeys)
     {
         var yaml = File.ReadAllText(path);
-        var definition = Parse(yaml, path);
+        // Messages name the system's folder, not the full path: they are shown to people who don't run the server.
+        var folder = Path.GetFileName(Path.GetDirectoryName(Path.GetFullPath(path)));
+        var definition = Parse(yaml, string.IsNullOrEmpty(folder) ? FileName : $"{folder}/{FileName}", unknownKeys);
         LoadTranslations(definition, path);
+        LoadScripts(definition, path);
+        // Compiled code is found only here, beside a system.yaml on the server's disk: Parse alone never loads a DLL.
+        if (Path.GetDirectoryName(Path.GetFullPath(path)) is { } directory) Rules.CompiledSuppliers.Resolve(definition, directory);
+        definition.SetFingerprint(FingerprintOf(definition, path));
         return definition;
+    }
+
+    /// <summary>
+    /// The version and the hash of each file the system's rules come from (overhaul section 4, rule 8): system.yaml, each
+    /// translation that loaded, each script that loaded and every DLL beside system.yaml, whether or not system.yaml names it
+    /// (a dependency changes what a named type does).
+    /// </summary>
+    public static SystemFingerprint FingerprintOf(SystemDefinition definition, string systemYamlPath)
+    {
+        var directory = Path.GetDirectoryName(Path.GetFullPath(systemYamlPath))!;
+        var files = new SortedDictionary<string, string>(StringComparer.Ordinal) { [FileName] = SystemFingerprint.Hash(systemYamlPath) };
+        foreach (var locale in definition.Translations.Keys)
+        {
+            var file = Path.Combine(directory, $"system.{locale}.yaml");
+            if (File.Exists(file)) files[$"system.{locale}.yaml"] = SystemFingerprint.Hash(file);
+        }
+
+        foreach (var (name, source) in definition.Scripts) files[name.Replace('\\', '/')] = SystemFingerprint.HashText(source);
+        foreach (var dll in Directory.GetFiles(directory, "*.dll")) files[Path.GetFileName(dll)] = SystemFingerprint.Hash(dll);
+        return new SystemFingerprint(definition.Version, files);
+    }
+
+    /// <summary>The largest script file a system may have.</summary>
+    public const int MaxScriptBytes = 256 * 1024;
+
+    /// <summary>
+    /// Reads each script file the system names (<c>{ script: rules.js#export }</c>, in <c>functions</c> and <c>events</c>) from
+    /// the folder of <paramref name="systemYamlPath"/> into <see cref="SystemDefinition.Scripts"/>. Only a <c>.js</c> file in that
+    /// folder or below it, at most <see cref="MaxScriptBytes"/>; one that is not is left out, and
+    /// <see cref="Rules.SystemScripts.Problems"/> says so, as for a file that is not there.
+    /// </summary>
+    private static void LoadScripts(SystemDefinition definition, string systemYamlPath)
+    {
+        var directory = Path.GetDirectoryName(Path.GetFullPath(systemYamlPath));
+        if (directory == null) return;
+        var root = directory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        foreach (var file in Rules.SystemScripts.FilesNamed(definition))
+        {
+            if (!file.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || Path.IsPathRooted(file)) continue;
+            var full = Path.GetFullPath(Path.Combine(directory, file));
+            if (!full.StartsWith(root, StringComparison.Ordinal) || !File.Exists(full)) continue;
+            if (new FileInfo(full).Length > MaxScriptBytes) continue;
+            definition.AddScript(file, File.ReadAllText(full));
+        }
     }
 
     /// <summary>
@@ -55,7 +112,11 @@ public static class SystemDefinitionLoader
         }
     }
 
-    public static SystemDefinition Parse(string yaml, string? sourceName = null)
+    public static SystemDefinition Parse(string yaml, string? sourceName = null) => Parse(yaml, sourceName, null);
+
+    /// <param name="unknownKeys">Receives the keys the file has and this version does not read, as dotted paths. They are
+    /// ignored either way (a file written for a newer version still loads); this lets the caller say so.</param>
+    public static SystemDefinition Parse(string yaml, string? sourceName, ICollection<string>? unknownKeys)
     {
         SystemDefinition? definition;
         try
@@ -64,22 +125,38 @@ public static class SystemDefinitionLoader
         }
         catch (Exception ex)
         {
-            throw new InvalidDataException($"{sourceName ?? "system.yaml"} is not a valid system definition: {Describe(ex)}", ex);
+            throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is not a valid system definition: {Describe(ex)}", ex),
+                $"not a valid system definition: {Describe(ex)}");
         }
 
         if (definition == null)
         {
-            throw new InvalidDataException($"{sourceName ?? "system.yaml"} is empty.");
+            throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is empty."), "the file is empty.");
         }
 
         var errors = Validate(definition).ToList();
         if (errors.Count > 0)
         {
-            throw new InvalidDataException($"{sourceName ?? "system.yaml"} is invalid:\n - " + string.Join("\n - ", errors));
+            throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is invalid:\n - " + string.Join("\n - ", errors)), errors.ToArray());
+        }
+
+        if (unknownKeys != null)
+        {
+            foreach (var key in UnknownYamlKeys.Find(yaml, typeof(SystemDefinition), CamelCaseNamingConvention.Instance)) unknownKeys.Add(key);
         }
 
         return definition;
     }
+
+    private static InvalidDataException WithErrors(InvalidDataException ex, params string[] errors)
+    {
+        ex.Data[ErrorsKey] = errors;
+        return ex;
+    }
+
+    /// <summary>The problems a failed <see cref="Parse"/> or <see cref="Load"/> found, one sentence each.</summary>
+    public static IReadOnlyList<string> ErrorsOf(Exception ex) =>
+        ex.Data[ErrorsKey] as string[] ?? new[] { ex.Message };
 
     /// <summary>Every problem that would make the definition unusable, as plain sentences.</summary>
     public static IEnumerable<string> Validate(SystemDefinition definition)
@@ -177,6 +254,26 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        if (definition.Vitals?.Concentration is { } concentration
+            && RequiredAttributeError(definition, "vitals.concentration.saveAttribute", concentration.SaveAttribute) is { } concentrationError)
+        {
+            yield return concentrationError;
+        }
+
+        if (definition.Setting is { } setting)
+        {
+            foreach (var error in ValidateSetting(setting))
+            {
+                yield return error;
+            }
+        }
+
+        if (definition.Vitals?.HitDice is { } hitDice
+            && RequiredAttributeError(definition, "vitals.hitDice.attribute", hitDice.Attribute) is { } hitDiceError)
+        {
+            yield return hitDiceError;
+        }
+
         var attributeKeys = definition.Attributes.Select(a => a.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var resourceKeys = definition.Resources.SelectMany(r => new[] { r.Key, r.MaxKey }).Where(k => k != null).ToHashSet(StringComparer.OrdinalIgnoreCase)!;
         foreach (var field in definition.ActorFields)
@@ -216,6 +313,14 @@ public static class SystemDefinitionLoader
     {
         var rules = definition.SheetRules;
         if (rules == null) yield break;
+
+        // Keys that name an attribute or a derived value have no default: a system states them, so it never
+        // binds silently to a 5e name ("con", "proficiencyBonus") it happens to share or lack.
+        string? AttributeError(string path, string key) => RequiredAttributeError(definition, path, key);
+        string? DerivedKeyError(string path, string key) =>
+            string.IsNullOrWhiteSpace(key) ? $"{path} is required (the sheetRules.derived key it adds)."
+            : rules.Derived.Any(d => d.Key == key) ? null
+            : $"{path} '{key}' is not a sheetRules.derived key.";
 
         if (rules.Enforcement.ToLowerInvariant() is not ("strict" or "warn" or "off"))
         {
@@ -345,15 +450,18 @@ public static class SystemDefinitionLoader
                 yield return $"sheetRules.skills passive '{passive.Key}' reads skill '{passive.Skill}', which is not declared.";
             }
 
-            if (!rules.Derived.Any(d => d.Key == skills.BonusKey))
-            {
-                yield return $"sheetRules.skills.bonusKey '{skills.BonusKey}' is not a sheetRules.derived key.";
-            }
+            if (DerivedKeyError("sheetRules.skills.bonusKey", skills.BonusKey) is { } error) yield return error;
         }
 
-        if (rules.Spellcasting is { } spellcasting && !rules.Derived.Any(d => d.Key == spellcasting.BonusKey))
+        if (rules.Spellcasting is { } spellcasting && DerivedKeyError("sheetRules.spellcasting.bonusKey", spellcasting.BonusKey) is { } spellError)
         {
-            yield return $"sheetRules.spellcasting.bonusKey '{spellcasting.BonusKey}' is not a sheetRules.derived key.";
+            yield return spellError;
+        }
+
+        if (rules.Proficiencies?.StrengthAttribute is { } strengthAttribute
+            && AttributeError("sheetRules.proficiencies.strengthAttribute", strengthAttribute) is { } strengthError)
+        {
+            yield return strengthError;
         }
 
         if (rules.HitPoints?.PerLevelBonus is { } perLevel && !referenceFields.Contains(perLevel.Field))
@@ -411,10 +519,7 @@ public static class SystemDefinitionLoader
                 yield return $"sheetRules.hitPoints.levelField '{hitPoints.LevelField}' is not an actor field.";
             }
 
-            if (!definition.Attributes.Any(a => a.Key.Equals(hitPoints.Attribute, StringComparison.OrdinalIgnoreCase)))
-            {
-                yield return $"sheetRules.hitPoints.attribute '{hitPoints.Attribute}' is not one of the system's attributes.";
-            }
+            if (AttributeError("sheetRules.hitPoints.attribute", hitPoints.Attribute) is { } error) yield return error;
 
             foreach (var mode in hitPoints.Modes.Where(m => m is not ("average" or "rolled" or "manual")))
             {
@@ -439,9 +544,11 @@ public static class SystemDefinitionLoader
                 yield return $"sheetRules.armorClass.bonusLists '{list}' is not a sheetRules.lists key.";
             }
 
-            if (!definition.Attributes.Any(a => a.Key.Equals(armorClass.DexAttribute, StringComparison.OrdinalIgnoreCase)))
+            if (AttributeError("sheetRules.armorClass.dexAttribute", armorClass.DexAttribute) is { } error) yield return error;
+
+            if (string.IsNullOrWhiteSpace(armorClass.Unarmored))
             {
-                yield return $"sheetRules.armorClass.dexAttribute '{armorClass.DexAttribute}' is not one of the system's attributes.";
+                yield return "sheetRules.armorClass.unarmored is required (a formula such as \"10 + mod(dex)\").";
             }
 
             if (fieldKeys.Contains(armorClass.ModeKey))
@@ -473,6 +580,31 @@ public static class SystemDefinitionLoader
             }
         }
     }
+
+    /// <summary>The setting goes into every prompt that writes content, so it is kept short: a brief, not a setting book.</summary>
+    public const int SettingTextMax = 1200, SettingItemMax = 160, SettingItemsMax = 20;
+
+    private static IEnumerable<string> ValidateSetting(SystemSetting setting)
+    {
+        foreach (var (name, text) in new[] { ("summary", setting.Summary), ("technology", setting.Technology), ("supernatural", setting.Supernatural), ("notes", setting.Notes) })
+        {
+            if (text is { Length: > SettingTextMax }) yield return $"setting.{name} is {text.Length} characters; keep it to {SettingTextMax}.";
+        }
+
+        foreach (var (name, items) in new[] { ("genres", setting.Genres), ("tone", setting.Tone), ("themes", setting.Themes), ("factions", setting.Factions), ("places", setting.Places), ("play", setting.Play), ("avoid", setting.Avoid) })
+        {
+            if (items.Count > SettingItemsMax) yield return $"setting.{name} has {items.Count} items; keep it to {SettingItemsMax}.";
+            foreach (var item in items.Where(i => i is { Length: > SettingItemMax }))
+            {
+                yield return $"setting.{name}: an item is {item.Length} characters; keep each to {SettingItemMax}.";
+            }
+        }
+    }
+
+    private static string? RequiredAttributeError(SystemDefinition definition, string path, string key) =>
+        string.IsNullOrWhiteSpace(key) ? $"{path} is required (one of the system's attribute keys)."
+        : definition.Attributes.Any(a => a.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) ? null
+        : $"{path} '{key}' is not one of the system's attributes.";
 
     private static IEnumerable<string> Duplicates(IEnumerable<string> keys) =>
         keys.Where(k => !string.IsNullOrWhiteSpace(k))
