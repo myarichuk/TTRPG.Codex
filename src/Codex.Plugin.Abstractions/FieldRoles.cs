@@ -12,6 +12,9 @@ public class FieldRoles
 
     /// <summary>The character's (first) class and its subclass, for the AI's level-up suggestion and the table's hit dice.</summary>
     public string? Class { get; set; }
+
+    /// <summary>The character's subclass, for the AI's level-up suggestion, which also lists the subclasses its class offers. None:
+    /// the suggestion knows of no subclass.</summary>
     public string? Subclass { get; set; }
 
     /// <summary>Shown on the sheet's plate beside the derived numbers.</summary>

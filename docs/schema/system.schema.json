@@ -10,28 +10,32 @@
         "string",
         "number",
         "boolean"
-      ]
+      ],
+      "description": "Required: the system's key, lower-case letters, digits, `-` or `_`, starting with a letter or digit. Campaigns and packs name the system by it, so it should not change."
     },
     "name": {
       "type": [
         "string",
         "number",
         "boolean"
-      ]
+      ],
+      "description": "Required: the system's name as the app shows it."
     },
     "description": {
       "type": [
         "string",
         "number",
         "boolean"
-      ]
+      ],
+      "description": "A paragraph about the system, shown on the About page."
     },
     "version": {
       "type": [
         "string",
         "number",
         "boolean"
-      ]
+      ],
+      "description": "The system's version. A campaign records the version it plays under and says when it changes. Default `1.0.0`."
     },
     "compatibility": {
       "type": [
@@ -42,19 +46,22 @@
       "description": "What the system may call itself in relation to a trademarked product, e.g. \"5E compatible\"."
     },
     "license": {
-      "$ref": "#/$defs/LicenseInfo"
+      "$ref": "#/$defs/LicenseInfo",
+      "description": "The licence the system's rules text is under, shown with its attribution on the About page. None: no licence is shown."
     },
     "attributes": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AttributeDefinition"
-      }
+      },
+      "description": "The attributes every actor has (ability scores, characteristics), in the order the sheet shows them."
     },
     "resources": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/ResourceDefinition"
-      }
+      },
+      "description": "The pools every actor has (hit points, mana). The one marked `isPrimary`, else the first, is the one damage and healing reach."
     },
     "actorFields": {
       "type": "array",
@@ -71,7 +78,8 @@
       "type": "array",
       "items": {
         "$ref": "#/$defs/ContentTypeDefinition"
-      }
+      },
+      "description": "The kinds of content the system's packs may carry (class, spell, monster), each with its own fields and pack folder."
     },
     "conditions": {
       "type": "array",
@@ -85,7 +93,8 @@
       "description": "Condition names the combat console offers in its picker."
     },
     "dice": {
-      "$ref": "#/$defs/DiceConventions"
+      "$ref": "#/$defs/DiceConventions",
+      "description": "The dice the table rolls for initiative, and how initiative ties are broken."
     },
     "ai": {
       "$ref": "#/$defs/AiVocabulary",
@@ -239,21 +248,24 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required, unique: the key the sheet stores the score under and formulas name it by (`str`, as in `mod(str)`)."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The attribute's name as the sheet shows it (\"Strength\")."
         },
         "abbreviation": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A short name (\"STR\") the sheet shows in place of the label. Text that names attributes (a background's eligible scores, `\"STR 13+\"`) may use the key, this or the label."
         },
         "canonicalLabel": {
           "type": [
@@ -268,16 +280,20 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The abbreviation as system.yaml wrote it (see `canonicalLabel`). Normally left out: a localized copy fills it in from `abbreviation`."
         },
         "default": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The score a sheet has until one is entered. Default 10."
         },
         "min": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The lowest score that can be typed in on a sheet when the system has no `sheetRules.attributes`; also given to the AI as the attribute's range. None: no floor."
         },
         "max": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The highest score that can be typed in on a sheet when the system has no `sheetRules.attributes` (which caps scores with its own `max`); also given to the AI as the attribute's range. None: no cap."
         },
         "modifier": {
           "type": [
@@ -299,14 +315,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required, unique: the key the current value is kept under on the sheet and in the table's pools (\"HP\")."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The pool's name as the sheet shows it (\"Hit Points\")."
         },
         "maxKey": {
           "type": [
@@ -317,7 +335,8 @@
           "description": "Pool key that holds the maximum, e.g. \"HP_Max\". Null for pools without a cap."
         },
         "default": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The value a new sheet starts with, for the pool and for its maximum. Default 0."
         },
         "isPrimary": {
           "type": "boolean",
@@ -335,14 +354,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required, unique within its list: the key the value is stored under on the sheet or entry."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The field's name as the form shows it."
         },
         "type": {
           "type": "string",
@@ -356,14 +377,16 @@
             "ImagePicker",
             "EntityReference",
             "Collection"
-          ]
+          ],
+          "description": "How the value is entered and kept. Default `Text`; an `EntityReference` needs `targetEntityType`."
         },
         "description": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A line of help the form shows under the field."
         },
         "options": {
           "type": "array",
@@ -373,11 +396,15 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "The choices of a `Dropdown`."
         },
-        "defaultValue": {},
+        "defaultValue": {
+          "description": "The value the form shows until one is set; for an actor field, also the value a new character starts with."
+        },
         "isRequired": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Marks the field as required in the form. Only a mark: nothing refuses an empty value."
         },
         "targetEntityType": {
           "type": [
@@ -447,7 +474,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The character's subclass, for the AI's level-up suggestion, which also lists the subclasses its class offers. None: the suggestion knows of no subclass."
         },
         "speed": {
           "type": [
@@ -488,14 +516,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The type's name, singular, as the Library and editors show it (\"Spell\")."
         },
         "pluralLabel": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The plural name (\"Spells\"); `label` when unset."
         },
         "folder": {
           "type": [
@@ -510,20 +540,23 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "An icon name for the type. Reserved; not read by this version (the Library picks its own icon by the type key)."
         },
         "description": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A line of help the homebrew editor shows when this type is chosen."
         },
         "fields": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/FieldDefinition"
-          }
+          },
+          "description": "The properties an entry of this type carries, in the order the editor and the entry's page show them."
         },
         "summaryFields": {
           "type": "array",
@@ -586,14 +619,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The dice the combat console rolls for initiative. Default `1d20`."
         },
         "check": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The dice for an ordinary check. Reserved; not read by this version (the sheet's check buttons roll a d20)."
         },
         "initiativeBonus": {
           "type": [
@@ -799,19 +834,24 @@
           "description": "Resource that absorbs damage before the primary one (\"TempHP\"); granted as \"take the higher\"."
         },
         "down": {
-          "$ref": "#/$defs/DownRules"
+          "$ref": "#/$defs/DownRules",
+          "description": "What reaching zero on the primary resource does. Null: damage stops at zero and nothing else happens."
         },
         "deathSaves": {
-          "$ref": "#/$defs/DeathSaveRules"
+          "$ref": "#/$defs/DeathSaveRules",
+          "description": "Death saves for a creature at zero. Null: none."
         },
         "damage": {
-          "$ref": "#/$defs/DamageTypeRules"
+          "$ref": "#/$defs/DamageTypeRules",
+          "description": "Damage types, and the sheet lists that resist, ignore or double them. Null: damage has no type."
         },
         "exhaustion": {
-          "$ref": "#/$defs/ExhaustionRules"
+          "$ref": "#/$defs/ExhaustionRules",
+          "description": "Exhaustion as a level counter. Null: none (an exhaustion condition, if listed, is an ordinary condition)."
         },
         "hitDice": {
-          "$ref": "#/$defs/HitDiceRules"
+          "$ref": "#/$defs/HitDiceRules",
+          "description": "A pool of hit dice spent to heal during a rest. Null: none."
         },
         "concentration": {
           "$ref": "#/$defs/ConcentrationRules",
@@ -867,6 +907,7 @@
       "additionalProperties": false
     },
     "DeathSaveRules": {
+      "description": "Death saves for a creature at zero on the primary resource (`vitals.deathSaves`). They need `vitals.down` as well; without this block a creature at zero simply stays down.",
       "type": "object",
       "properties": {
         "die": {
@@ -874,16 +915,20 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The dice a death save rolls. Default `1d20`."
         },
         "successOn": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The lowest roll that is a success. Default 10."
         },
         "successesToStabilize": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Successes that make the creature stable. Default 3."
         },
         "failuresToDie": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Failures that kill it (a hit while down counts as one, a critical hit as two). Default 3."
         },
         "criticalSuccess": {
           "type": "integer",
@@ -906,7 +951,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The pool key the failures are counted in. Default `DeathSaveFailures`."
         }
       },
       "additionalProperties": false
@@ -923,28 +969,32 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "The damage types the table offers when it deals damage (\"fire\", \"slashing\"). Empty: the table offers none."
         },
         "resistancesField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet field listing the types the creature resists: that damage is halved, rounded down. Default `resistances`."
         },
         "immunitiesField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet field listing the types the creature is immune to: that damage does nothing. Default `immunities`."
         },
         "vulnerabilitiesField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet field listing the types the creature is vulnerable to: that damage is doubled. Default `vulnerabilities`."
         }
       },
       "additionalProperties": false
@@ -958,10 +1008,12 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The pool key the level is kept in. Default `Exhaustion`."
         },
         "maxLevel": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The highest level; reaching it kills the creature when the system has `vitals.down`. Default 6."
         },
         "condition": {
           "type": [
@@ -983,21 +1035,24 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The pool key the remaining dice are kept in; the total is kept under the same key plus `_Max`. Default `HitDice`."
         },
         "levelField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet field whose number is a character's count of hit dice. Default `level`."
         },
         "classField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet field naming the class whose die a character spends. Default `class`."
         },
         "dieProperty": {
           "type": [
@@ -1051,12 +1106,14 @@
           "description": "The save's difficulty: half the damage taken, never below MinimumDc or above MaximumDc."
         },
         "maximumDc": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The highest the save's difficulty goes, however much damage was taken. Default 30."
         }
       },
       "additionalProperties": false
     },
     "RestRule": {
+      "description": "A rest the table offers (`vitals.rests`): what it refills, clears and lifts.",
       "type": "object",
       "properties": {
         "name": {
@@ -1064,7 +1121,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The rest's name, as the table's button shows it and a slot pool's `recoversOn` names it (\"Long Rest\")."
         },
         "restores": {
           "type": "array",
@@ -1131,7 +1189,8 @@
           "description": "\"strict\": players can't save a sheet that breaks a rule (the DM always can); \"warn\": violations are shown but saving is allowed; \"off\": rules are not evaluated. A campaign can override this (house rules)."
         },
         "attributes": {
-          "$ref": "#/$defs/AttributeRules"
+          "$ref": "#/$defs/AttributeRules",
+          "description": "How scores are generated (point buy, standard array, typed in), capped and raised. Null: scores are typed in, kept within each attribute's `min` and `max`."
         },
         "derived": {
           "type": "array",
@@ -1219,14 +1278,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The method a new sheet starts with, and the one a sheet that names none uses. Default `manual`."
         },
         "max": {
           "type": "integer",
           "description": "Upper bound on a final score (base plus bonuses), except on a \"printed\" sheet."
         },
         "pointBuy": {
-          "$ref": "#/$defs/PointBuyRules"
+          "$ref": "#/$defs/PointBuyRules",
+          "description": "The budget and costs for `point-buy`; required when `methods` offers it."
         },
         "standardArray": {
           "type": "array",
@@ -1247,16 +1308,20 @@
       "additionalProperties": false
     },
     "PointBuyRules": {
+      "description": "Point buy (`sheetRules.attributes.pointBuy`): scores bought from a budget at a cost each.",
       "type": "object",
       "properties": {
         "budget": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The points to spend; spending more is a violation. Default 27."
         },
         "min": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The lowest score that may be bought, and where each score of a new point-buy sheet starts. Default 8."
         },
         "max": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The highest score that may be bought, before bonuses. Default 15."
         },
         "costs": {
           "type": "object",
@@ -1269,6 +1334,7 @@
       "additionalProperties": false
     },
     "BonusRules": {
+      "description": "Bonuses a referenced entry lets the player spread over attributes (`sheetRules.attributes.bonuses`), such as a background's +2/+1.",
       "type": "object",
       "properties": {
         "label": {
@@ -1276,7 +1342,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "What the sheet calls these bonuses, and the word its messages about them start with. Default \"Bonuses\"."
         },
         "fromField": {
           "type": [
@@ -1316,7 +1383,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "What the sheet calls these increases, and the word its messages about them start with. Default \"Score increases\"."
         },
         "fromList": {
           "type": [
@@ -1354,6 +1422,7 @@
       "additionalProperties": false
     },
     "DerivedField": {
+      "description": "A read-only number worked out from the sheet (`sheetRules.derived`): proficiency bonus, initiative.",
       "type": "object",
       "properties": {
         "key": {
@@ -1361,14 +1430,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the name formulas and other rules read the value by (`proficiencyBonus`); must not be an actor field."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The value's name as the sheet shows it."
         },
         "formula": {
           "type": [
@@ -1383,12 +1454,14 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A group heading for the value. Translated with the system's other headings, but this version does not group derived values by it."
         }
       },
       "additionalProperties": false
     },
     "FieldConstraint": {
+      "description": "Conditions the entry chosen in a single-pick reference field must meet (`sheetRules.constraints`); the field's picker offers only entries that do.",
       "type": "object",
       "properties": {
         "field": {
@@ -1396,13 +1469,15 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the EntityReference actor field the rule is on (`subclass`)."
         },
         "where": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/RuleCondition"
-          }
+          },
+          "description": "The conditions; each one that fails is a violation with its `message`."
         }
       },
       "additionalProperties": false
@@ -1416,7 +1491,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the candidate's property the comparison reads."
         },
         "equals": {
           "description": "Candidate value equals this constant."
@@ -1437,7 +1513,8 @@
           "description": "Candidate numeric value >= / <= a constant."
         },
         "lte": {
-          "type": "number"
+          "type": "number",
+          "description": "Candidate numeric value <= this constant (with `gte`, both must hold)."
         },
         "equalsField": {
           "type": [
@@ -1472,7 +1549,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Candidate numeric value >= this numeric sheet field. A candidate without the property passes."
         },
         "lteLookup": {
           "$ref": "#/$defs/LookupRule",
@@ -1490,6 +1568,7 @@
       "additionalProperties": false
     },
     "FieldProperty": {
+      "description": "A property of the entry a sheet field references: `{ field: background, property: feat }`.",
       "type": "object",
       "properties": {
         "field": {
@@ -1497,14 +1576,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The EntityReference actor field naming the entry."
         },
         "property": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The property read from that entry."
         }
       },
       "additionalProperties": false
@@ -1518,40 +1599,46 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the EntityReference actor field naming the entry whose table is read."
         },
         "table": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the entry property holding the table, a list of rows."
         },
         "byField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet value the row is chosen by (with multiclass rules, their `classLevelKey`). Default `level`."
         },
         "rowKey": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The column each row is keyed by. Default `level`."
         },
         "column": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the column whose number is read."
         }
       },
       "additionalProperties": false
     },
     "ListRule": {
+      "description": "A list of entries picked on the sheet (`sheetRules.lists`): spells, feats, fighting styles. The sheet stores the picks under Key.",
       "type": "object",
       "properties": {
         "key": {
@@ -1559,44 +1646,51 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required, unique: the sheet key the picks are stored under, and the name other rules use for the list; must not be an actor field."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The list's name as the sheet shows it, and the word its messages start with."
         },
         "description": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A line of help the sheet shows with the list."
         },
         "targetEntityType": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the entity type the picks are of; one the system declares."
         },
         "where": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/RuleCondition"
-          }
+          },
+          "description": "Conditions every pick must meet. With several classes, a pick is allowed when it meets them for any one class."
         },
         "maxCount": {
-          "$ref": "#/$defs/CountRule"
+          "$ref": "#/$defs/CountRule",
+          "description": "How many may be picked. Null: any number."
         },
         "category": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A group heading for the list. Translated with the system's other headings, but this version does not group lists by it."
         },
         "repeatableProperty": {
           "type": [
@@ -1610,16 +1704,20 @@
       "additionalProperties": false
     },
     "CountRule": {
+      "description": "A limit on a list (`maxCount`): a constant, a table lookup per class, or both, plus a number from a referenced entry.",
       "type": "object",
       "properties": {
         "value": {
-          "type": "integer"
+          "type": "integer",
+          "description": "A fixed limit, counted once however many classes the sheet has."
         },
         "lookup": {
-          "$ref": "#/$defs/LookupRule"
+          "$ref": "#/$defs/LookupRule",
+          "description": "A limit read from each class's table and added up across classes. Unknown (no limit) until an entry is chosen."
         },
         "plus": {
-          "type": "integer"
+          "type": "integer",
+          "description": "A number added to the limit. Default 0."
         },
         "also": {
           "type": "array",
@@ -1644,35 +1742,40 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet key holding the classes after the first, each as `\"class-id:levels\"`; must not be an actor field. Default `multiclass`."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "What the sheet calls the other classes, and the word its messages about them start with. Default \"Additional classes\"."
         },
         "classField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Must be an EntityReference actor field: the first class. Default `class`."
         },
         "levelField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Must be an actor field: the total character level, which the other classes' levels come out of. Default `level`."
         },
         "classLevelKey": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The name each class's own level goes by in table lookups (`byField: classLevel`); must not be an actor field. Default `classLevel`."
         },
         "prerequisitesProperty": {
           "type": [
@@ -1718,14 +1821,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required, unique: the prefix of the pool's sheet keys (`slots_1`, `slots_1_Max`). Default `slots`."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The pool's name as the sheet and the table show it. Default \"Spell slots\"."
         },
         "unit": {
           "type": [
@@ -1748,35 +1853,40 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet value whose row of the table is read. Default `level`."
         },
         "table": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the class entry property holding the table, one row per level (each row's `level` is its key). Default `spellcasting`."
         },
         "column": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the row's column with the slots. Default `slots`."
         },
         "slotLevelColumn": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "When set, the row's column giving the level of every slot, and `column` is then a plain count (pact magic). None: `column` reads `\"4/3/2\"`."
         },
         "casterTypeProperty": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The class entry property with its caster type, which `includeCasterTypes`, `excludeCasterTypes` and `combine.weights` read. Default `casterType`."
         },
         "includeCasterTypes": {
           "type": "array",
@@ -1797,10 +1907,12 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "Classes with one of these caster types do not count."
         },
         "combine": {
-          "$ref": "#/$defs/SlotCombineRule"
+          "$ref": "#/$defs/SlotCombineRule",
+          "description": "How two or more contributing classes combine into one table. Null: each class's slots are added up level by level."
         },
         "recoversOn": {
           "type": "array",
@@ -1824,7 +1936,8 @@
           "type": "object",
           "additionalProperties": {
             "type": "number"
-          }
+          },
+          "description": "Caster type -> how much each of its class levels counts (`full: 1, half: 0.5`); a type not listed counts 0."
         },
         "rounding": {
           "type": [
@@ -1873,14 +1986,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Must be an EntityReference actor field: the first class, whose entry has the hit die. Default `class`."
         },
         "levelField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Must be an actor field: the character's total level. Default `level`."
         },
         "dieProperty": {
           "type": [
@@ -1899,7 +2014,8 @@
           "description": "Required: the attribute whose modifier is added per level (5e: \"con\")."
         },
         "minimumPerLevel": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The least a level gives once the modifier is added. Default 1."
         },
         "firstLevel": {
           "type": [
@@ -1933,14 +2049,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The mode a new sheet starts in, and the one used when a sheet names a mode not in `modes`; must be one of `modes`. Default `average`."
         },
         "modeKey": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet key holding the sheet's mode; must not be an actor field. Default `hpMode`."
         },
         "rollsKey": {
           "type": [
@@ -1966,14 +2084,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet key that receives the armor class. Default `armorClass`."
         },
         "modeKey": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet key holding `auto` or `manual`: new sheets start `auto`; must not be an actor field. Default `acMode`."
         },
         "unarmored": {
           "type": [
@@ -2004,7 +2124,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Default `unarmoredDefenseShield`: a class entry property that, when false, means the class's unarmored formula does not count while a shield is carried. Absent: it does."
         },
         "typeProperty": {
           "type": [
@@ -2019,21 +2140,24 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The item property with body armor's base armor class; an item that has it is body armor. Default `armorBase`."
         },
         "dexCapProperty": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The item property capping the Dexterity added to body armor (absent: no cap; 0: none added). Default `armorDexCap`."
         },
         "bonusProperty": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The property with a flat bonus, on any equipped item (a shield, a ring) or on a pick in `bonusLists`. Default `armorClassBonus`."
         },
         "shieldType": {
           "type": [
@@ -2059,7 +2183,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The pick property that, when true, gives its bonus only while body armor is worn. Default `armorClassRequiresArmor`."
         },
         "miscField": {
           "type": [
@@ -2081,14 +2206,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet key the items are stored under; must not be an actor field. Default `inventory`."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "What the sheet calls the inventory, and the word its messages start with. Default \"Equipment\"."
         },
         "types": {
           "type": "array",
@@ -2098,21 +2225,24 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "The entity types items may be of; each must be one the system declares. Default `[equipment]`."
         },
         "quantityChoice": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The name the item's quantity is stored under after its id (`qty:2`); none stored is 1. Default `qty`."
         },
         "equippedChoice": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The name that marks an item worn or wielded (`equipped:1`). Default `equipped`."
         },
         "weightProperty": {
           "type": [
@@ -2150,7 +2280,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "What the sheet calls the skills, and the word its messages about them start with. Default \"Skills\"."
         },
         "bonusKey": {
           "type": [
@@ -2165,42 +2296,48 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet list of skills the player marked proficient, by key or label. Default `skillProficiencies`."
         },
         "expertiseKey": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet list of skills with expertise (the bonus counted twice); expertise without proficiency is a warning. Default `skillExpertise`."
         },
         "classField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet field naming the first class, whose saving throws and skill choices count. Default `class`."
         },
         "savingThrowsProperty": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The class entry property listing the attributes (keys, abbreviations or labels) whose saving throws are proficient. Default `savingThrows`."
         },
         "backgroundField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet field naming the entry that grants skills on its own (a background). Default `background`."
         },
         "backgroundProperty": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The property on that entry listing the skills it grants. Default `skillProficiencies`."
         },
         "classChoicesProperty": {
           "type": [
@@ -2214,13 +2351,15 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/SkillDefinition"
-          }
+          },
+          "description": "The skills, in the order the sheet shows them."
         },
         "passives": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/PassiveRule"
-          }
+          },
+          "description": "Scores worked out from a skill's bonus (passive Perception)."
         }
       },
       "additionalProperties": false
@@ -2234,14 +2373,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required, unique: the skill's key (`athletics`). Sheets and entries may name a skill by its key or its label."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The skill's name as the sheet shows it (\"Athletics\")."
         },
         "canonicalLabel": {
           "type": [
@@ -2256,7 +2397,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the attribute key whose modifier the skill adds (`str`)."
         }
       },
       "additionalProperties": false
@@ -2270,24 +2412,28 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The passive score's key (`passivePerception`)."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Its name as the sheet shows it (\"Passive Perception\")."
         },
         "skill": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the key of the skill in `list` whose bonus is added."
         },
         "base": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The number the skill's bonus is added to. Default 10."
         }
       },
       "additionalProperties": false
@@ -2301,7 +2447,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The class entry property naming the attribute it casts with (key, abbreviation or label). A class without it does not cast. Default `spellcastingAbility`."
         },
         "bonusKey": {
           "type": [
@@ -2312,7 +2459,8 @@
           "description": "Required: the derived value save DCs and attack bonuses add (5e: \"proficiencyBonus\")."
         },
         "saveBase": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The number a spell save DC starts from. Default 8."
         }
       },
       "additionalProperties": false
@@ -2326,21 +2474,24 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The class entry property listing its armor training. Default `armorProficiencies`."
         },
         "weaponProperty": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The class entry property listing its weapon training, by weapon tag or name. Default `weaponProficiencies`."
         },
         "classField": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The sheet field naming the first class, whose training counts. Default `class`."
         },
         "armorTraining": {
           "type": "object",
@@ -2374,7 +2525,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The armor property that, when true, brings a warning of disadvantage on Stealth. Default `stealth`."
         },
         "weaponTag": {
           "type": [
@@ -2412,14 +2564,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the EntityReference actor field whose chosen entry the values are copied from (`species`)."
         },
         "appliedKey": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: a sheet key, not an actor field, where the id of the entry last copied from is kept (`speciesApplied`)."
         },
         "copy": {
           "type": "object",
@@ -2444,14 +2598,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the kind's key (`character`, `crew`), which each sheet of it records."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The kind's name as the app shows it (where a new sheet's kind is chosen); `kind` when empty."
         },
         "role": {
           "type": [
@@ -2465,31 +2621,36 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/ValueDefinition"
-          }
+          },
+          "description": "The sheet's numbers and choices, worked out or entered. Their order does not matter: each is worked out when first read."
         },
         "modifiers": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/ModifierDefinition"
-          }
+          },
+          "description": "Modifiers every sheet of the kind has, beside those from picks and conditions."
         },
         "lists": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/PickListDefinition"
-          }
+          },
+          "description": "Lists of picks (classes, feats, items), each with fields of its own per pick."
         },
         "keyedLists": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/KeyedListDefinition"
-          }
+          },
+          "description": "Fixed sets of keys (skills, actions), each key with its own fields and worked-out values."
         },
         "tracks": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/TrackDefinition"
-          }
+          },
+          "description": "Values that go up and down in play (hit points, stress, slots), with their bounds and what they bring."
         },
         "layout": {
           "type": "array",
@@ -2510,21 +2671,24 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the name the sheet and formulas know the value by."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The value's name as the sheet shows it; `key` when unset."
         },
         "formula": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "How the value is worked out, over the sheet's values, attributes, lists and functions. None: 0 (or, with `input`, what was entered)."
         },
         "modifiers": {
           "description": "A target or a list of targets (`AC`, `'@saves'`) whose modifiers are added on top of the formula."
@@ -2546,9 +2710,12 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "For an `input` value: the choices the sheet offers in a dropdown. Not checked: a value set another way is kept."
         },
-        "default": {}
+        "default": {
+          "description": "For an `input` value: its value until the player sets one."
+        }
       },
       "additionalProperties": false
     },
@@ -2585,7 +2752,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Where the modifier comes from, as the `modifiers` widget shows it. A condition's modifier without one is credited to the condition, a pick's to the entry."
         },
         "when": {
           "type": [
@@ -2607,14 +2775,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the sheet key the picks are stored under, and the name formulas and layouts use for the list."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The list's name as the sheet shows it."
         },
         "type": {
           "type": [
@@ -2629,13 +2799,15 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A line about the list. Reserved; not read by this version."
         },
         "itemFields": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/ItemFieldDefinition"
-          }
+          },
+          "description": "The fields each pick carries besides its entry (`classLevel`, `equipped`)."
         },
         "modifiersFrom": {
           "$ref": "#/$defs/ModifiersFromDefinition",
@@ -2653,7 +2825,8 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/SheetCheckDefinition"
-          }
+          },
+          "description": "Checks on the list; one with a lambda (`\"c => ...\"`) checks every pick."
         }
       },
       "additionalProperties": false
@@ -2667,28 +2840,35 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the field's name, as formulas read it on the pick or row (`item.classLevel`)."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The column heading; the key when unset."
         },
         "type": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "`Number` (the default), `Boolean` (a checkbox), or anything else for text."
         },
-        "default": {},
+        "default": {
+          "description": "The value a new pick, keyed entry or row has (none: 0 for a number, false for a flag)."
+        },
         "min": {
-          "type": "number"
+          "type": "number",
+          "description": "Lower bound for a number: an intent's change stops at it, and a campaign table reports a value below it."
         },
         "max": {
-          "type": "number"
+          "type": "number",
+          "description": "Upper bound for a number: an intent's change stops at it, and a campaign table reports a value above it."
         },
         "options": {
           "type": "array",
@@ -2698,19 +2878,22 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "The values a text field may take. Not checked; this version uses them only to type the field in the generated `codex.d.ts`."
         },
         "display": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "How the field is drawn (`dots`). Reserved; not read by this version."
         }
       },
       "additionalProperties": false
     },
     "ModifiersFromDefinition": {
+      "description": "Where a list's picks carry modifiers (`modifiersFrom`): each pick's entry property holding a list of `{ target, amount, type, source, when }`.",
       "type": "object",
       "properties": {
         "property": {
@@ -2718,14 +2901,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The entry property holding the modifiers. Default `modifiers`."
         },
         "when": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A lambda over the pick (`\"i => i.equipped\"`): only picks it holds for bring their modifiers. None: every pick does."
         }
       },
       "additionalProperties": false
@@ -2739,21 +2924,24 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: a formula that must be true; a lambda (`\"s => s.ranks <= s.maxRanks\"`) must be true for every item of the list."
         },
         "key": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the problem's translation key (`Actor.Rule.RankMax`); also its text when there is no `message`."
         },
         "message": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The problem as shown, with `{name}` filled in from the item or the sheet's values (`{label}`, `{maxRanks}`)."
         }
       },
       "additionalProperties": false
@@ -2767,26 +2955,30 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the sheet key the entries are stored under, and the list's name in formulas (`skills.balance`) and layouts."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The list's name as the sheet shows it."
         },
         "itemFields": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/ItemFieldDefinition"
-          }
+          },
+          "description": "The fields the player sets on each entry (`points`, `rating`)."
         },
         "keys": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/KeyedEntryDefinition"
-          }
+          },
+          "description": "The fixed entries the list has."
         },
         "derive": {
           "type": "object",
@@ -2803,12 +2995,14 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/SheetCheckDefinition"
-          }
+          },
+          "description": "Checks on the list; one with a lambda (`\"s => ...\"`) checks every entry."
         }
       },
       "additionalProperties": false
     },
     "KeyedEntryDefinition": {
+      "description": "One entry of a keyed list (a skill, an action): its key, label, attribute and groups.",
       "type": "object",
       "properties": {
         "key": {
@@ -2816,14 +3010,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the entry's key (`balance`), as formulas reach it (`skills.balance`)."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The entry's name as the sheet shows it."
         },
         "attribute": {
           "type": [
@@ -2838,7 +3034,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A group the entry belongs to: formulas read it as `group`, a modifier on `'@group'` reaches the entry, and a table can group rows by it."
         },
         "groups": {
           "type": "array",
@@ -2848,7 +3045,8 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "More groups, as `group` (formulas read all of them as `groups`)."
         },
         "parameter": {
           "type": [
@@ -2859,7 +3057,8 @@
           "description": "One entry per subject (`knowledge.arcana`) instead of one for the key."
         },
         "trainedOnly": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "A flag formulas read as `trainedOnly` (3.5's trained-only skills); nothing else acts on it."
         }
       },
       "additionalProperties": false
@@ -2881,7 +3080,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The track's name as the sheet shows it; the key when unset."
         },
         "max": {
           "type": [
@@ -2896,7 +3096,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The lowest the current value may be: a number or a formula. Default 0; it may be negative (3.5's -10)."
         },
         "start": {
           "type": [
@@ -2971,28 +3172,32 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Holds when the current value is at or below this number or formula."
         },
         "below": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Holds when the current value is below this number or formula."
         },
         "atOrAbove": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Holds when the current value is at or above this number or formula."
         },
         "above": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Holds when the current value is above this number or formula."
         },
         "equals": {
           "type": [
@@ -3007,7 +3212,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The condition the line brings while it holds, with its `conditionEffects`."
         }
       },
       "additionalProperties": false
@@ -3021,21 +3227,24 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The entity type a slot holds (`spell`), checked against the Library, or `text` (the default) for free text, which is not checked."
         },
         "where": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A lambda over the held entry that must be true (`\"s => levelFor(s, item.name) == level\"`). None: any entry of the type."
         },
         "message": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The problem shown for something the slots cannot hold, with `{item.<property>}` and `{level}` filled in."
         }
       },
       "additionalProperties": false
@@ -3049,7 +3258,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the track the overflow adds to (stress into `trauma`)."
         },
         "by": {
           "type": [
@@ -3075,6 +3285,7 @@
       "additionalProperties": false
     },
     "TrackAskDefinition": {
+      "description": "A choice the host asks for after an overflow (`{ who, choices }`): which trauma, say.",
       "type": "object",
       "properties": {
         "who": {
@@ -3093,12 +3304,14 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "The options offered."
         }
       },
       "additionalProperties": false
     },
     "TrackBeyondDefinition": {
+      "description": "What pushing a slot track past its last level brings (`beyond`).",
       "type": "object",
       "properties": {
         "condition": {
@@ -3106,7 +3319,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The condition put on the sheet (Blades' fatal harm: `Dead`)."
         }
       },
       "additionalProperties": false
@@ -3147,7 +3361,8 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/LayoutWidget"
-          }
+          },
+          "description": "The section's widgets, top to bottom; a section needs at least one."
         }
       },
       "additionalProperties": false
@@ -3161,14 +3376,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the widget's name: a generic widget (listed with this type), a widget the host builds in, or one of the system's own `widgets`."
         },
         "key": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The key a `track`, `list`, `table` or `text` widget shows; for a `track`, a prefix ending in `*` shows every generated track it starts."
         },
         "keys": {
           "type": "array",
@@ -3178,7 +3395,8 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "The keys a `values` widget shows: values, attributes, `{track}_Max` or a keyed-list entry (`list.id`)."
         },
         "columns": {
           "type": "array",
@@ -3188,35 +3406,40 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "For `list` and `table`: the columns after each row's name, as per-pick fields (editable in place), entry properties or derived values."
         },
         "groupBy": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "For `list` and `table`: the property rows are grouped under headings by (`group`). None: no headings."
         },
         "roll": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "For `roll`: the key of the roll in `rolls` its button makes."
         },
         "target": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "For `modifiers`: the target whose modifiers it lists, each with whether it counted."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The text a `roll` button or a `text` field shows, or the label handed to one of the system's own widgets, in place of its default."
         }
       },
       "additionalProperties": false
@@ -3233,7 +3456,8 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/CampaignTableDefinition"
-          }
+          },
+          "description": "Tables of named rows a campaign may keep (faction status)."
         }
       },
       "additionalProperties": false
@@ -3246,7 +3470,8 @@
           "type": "array",
           "items": {
             "type": "integer"
-          }
+          },
+          "description": "The clock sizes allowed (`[4, 6, 8]`), each at least 2. Empty: any size from 2."
         },
         "visibility": {
           "type": "array",
@@ -3271,27 +3496,31 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required, unique: the table's name, as intents (`table: factions`) and handler targets (`campaign.factions`) name it; not `clocks`."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The table's heading; the key when unset."
         },
         "itemFields": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/ItemFieldDefinition"
-          }
+          },
+          "description": "The fields each row has besides its name; a row's name is its own, so no field is called `name`."
         },
         "visibility": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Who sees the table: `players` (everyone at the table, the default) or `gm`."
         }
       },
       "additionalProperties": false
@@ -3305,14 +3534,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The rule for a type `types` does not name: `sum` (the default), `highest`, `lowest` or `best`."
         },
         "penalties": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The rule for the penalties (negative amounts) of one type, whatever the type's own rule, except a `best` type. Default `sum`."
         },
         "types": {
           "type": "object",
@@ -3322,7 +3553,8 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "Modifier type -> its rule (`dodge: sum`, `armor: highest`, `base: best`)."
         }
       },
       "additionalProperties": false
@@ -3336,21 +3568,24 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A one-line lambda (`\"(a, b) => a + b\"`), up to four parameters."
         },
         "script": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A script export, `file#export` (`rules.js#hitPoints`), read from the system's folder."
         },
         "type": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A compiled type, `\"Namespace.Type, Assembly\"`, from a DLL beside system.yaml."
         },
         "reads": {
           "type": "array",
@@ -3360,7 +3595,8 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "For a script function, the parameters it takes; only their count is used, and only when the script's own parameters cannot be read."
         }
       },
       "additionalProperties": false
@@ -3374,26 +3610,30 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The compiled type, `\"Namespace.Type, Assembly\"`, an `ICodexWidget` in a DLL beside system.yaml."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The label handed to the widget when its layout entry gives none."
         }
       },
       "additionalProperties": false
     },
     "ConditionEffectDefinition": {
+      "description": "What a condition does while it holds (`conditionEffects.<name>`).",
       "type": "object",
       "properties": {
         "modifiers": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/ModifierDefinition"
-          }
+          },
+          "description": "Modifiers that apply while the condition holds; one without a `source` is credited to the condition."
         }
       },
       "additionalProperties": false
@@ -3407,14 +3647,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required, unique: the roll's name, as a `roll` widget, a `then` line and `participants` name it."
         },
         "label": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The roll's name on its button; the key when unset."
         },
         "dice": {
           "type": [
@@ -3471,7 +3713,8 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/RollInputDefinition"
-          }
+          },
+          "description": "The parameters the roll takes, which its formulas read by key (`target`) and as `input.key`."
         },
         "outcomes": {
           "type": "array",
@@ -3518,7 +3761,8 @@
       "type": "object",
       "properties": {
         "roll": {
-          "type": "integer"
+          "type": "integer",
+          "description": "How many dice to roll instead. Default 2."
         },
         "keep": {
           "type": [
@@ -3536,10 +3780,12 @@
       "type": "object",
       "properties": {
         "highest": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Keep this many of the highest dice."
         },
         "lowest": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Keep this many of the lowest dice (when `highest` is not set)."
         }
       },
       "additionalProperties": false
@@ -3549,7 +3795,8 @@
       "type": "object",
       "properties": {
         "on": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The face that brings another die (`10` on a d10)."
         },
         "times": {
           "type": "integer",
@@ -3567,7 +3814,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the input's name, as formulas read it."
         },
         "from": {
           "type": [
@@ -3582,7 +3830,8 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "What the roll widget calls the input; the key when unset."
         },
         "property": {
           "type": [
@@ -3592,7 +3841,9 @@
           ],
           "description": "For `from: weapon`, the item property it reads."
         },
-        "default": {},
+        "default": {
+          "description": "The value when nobody supplies one. With neither a value nor a default the roll fails, naming the input."
+        },
         "options": {
           "type": "array",
           "items": {
@@ -3601,12 +3852,14 @@
               "number",
               "boolean"
             ]
-          }
+          },
+          "description": "The values allowed, offered as a dropdown; any other fails the roll."
         }
       },
       "additionalProperties": false
     },
     "RollOutcomeDefinition": {
+      "description": "A named result a roll can come to (`critical`, `success`, `partial`); a roll's outcomes are tried in order.",
       "type": "object",
       "properties": {
         "name": {
@@ -3614,14 +3867,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "Required: the outcome's name, as the result, `then` lines and a group roll's `result` read it."
         },
         "when": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A formula over the dice and total (`natural`, `total`, `kept`, `dice`, `zeroDice`) that must be true. None: always, so it belongs last."
         },
         "replacesParent": {
           "type": "boolean",
@@ -3647,14 +3902,16 @@
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "A formula over the result (`outcome`) that must be true for the line to act. None: always."
         },
         "roll": {
           "type": [
             "string",
             "number",
             "boolean"
-          ]
+          ],
+          "description": "The key of the roll to make next, which sees this roll's inputs (a confirmation roll)."
         },
         "intents": {
           "type": "array",
@@ -3668,6 +3925,7 @@
       "additionalProperties": false
     },
     "RollParticipantsDefinition": {
+      "description": "A group roll's participants (`{ from, roll }`): who chooses them, and the roll each makes.",
       "type": "object",
       "properties": {
         "from": {

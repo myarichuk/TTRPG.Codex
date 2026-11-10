@@ -12,7 +12,9 @@ namespace Codex.Plugin.Abstractions;
 /// </summary>
 public sealed class RollDefinition
 {
+    /// <summary>Required, unique: the roll's name, as a <c>roll</c> widget, a <c>then</c> line and <c>participants</c> name it.</summary>
     public string Key { get; set; } = string.Empty;
+    /// <summary>The roll's name on its button; the key when unset.</summary>
     public string? Label { get; set; }
 
     /// <summary>A fixed dice expression: <c>1d20</c>, <c>1d10</c>, <c>3d6</c>.</summary>
@@ -39,6 +41,7 @@ public sealed class RollDefinition
     /// <summary>Formulas added to the dice: values, <c>modifiers('attack')</c>.</summary>
     public List<string> Add { get; set; } = new();
 
+    /// <summary>The parameters the roll takes, which its formulas read by key (<c>target</c>) and as <c>input.key</c>.</summary>
     public List<RollInputDefinition> Inputs { get; set; } = new();
 
     /// <summary>The first whose <c>when</c> holds is the outcome; one without <c>when</c> always holds.</summary>
@@ -61,6 +64,7 @@ public sealed class RollDefinition
 /// <summary><c>{ roll: 2, keep: lowest }</c>: the dice a pool of none rolls, and which one counts.</summary>
 public sealed class ZeroDiceDefinition
 {
+    /// <summary>How many dice to roll instead. Default 2.</summary>
     public int Roll { get; set; } = 2;
 
     /// <summary><c>lowest</c> or <c>highest</c>.</summary>
@@ -70,13 +74,16 @@ public sealed class ZeroDiceDefinition
 /// <summary><c>{ highest: 1 }</c> or <c>{ lowest: 1 }</c>.</summary>
 public sealed class KeepDefinition
 {
+    /// <summary>Keep this many of the highest dice.</summary>
     public int? Highest { get; set; }
+    /// <summary>Keep this many of the lowest dice (when <c>highest</c> is not set).</summary>
     public int? Lowest { get; set; }
 }
 
 /// <summary><c>{ on: 10, times: 1 }</c>: the face that rolls another die, and how many times in a row it may.</summary>
 public sealed class RerollDefinition
 {
+    /// <summary>The face that brings another die (<c>10</c> on a d10).</summary>
     public int On { get; set; }
 
     /// <summary>How many more dice one die may bring; null: as many as come up (within the engine's limit).</summary>
@@ -86,24 +93,33 @@ public sealed class RerollDefinition
 /// <summary>A named parameter supplied when the roll is made.</summary>
 public sealed class RollInputDefinition
 {
+    /// <summary>Required: the input's name, as formulas read it.</summary>
     public string Key { get; set; } = string.Empty;
 
     /// <summary>Who supplies it: <c>roller</c> (the default), <c>gm</c>, <c>weapon</c> (a property of the item the
     /// <c>weapon</c> input names) or <c>parent</c> (the roll this one follows).</summary>
     public string From { get; set; } = "roller";
 
+    /// <summary>What the roll widget calls the input; the key when unset.</summary>
     public string? Label { get; set; }
 
     /// <summary>For <c>from: weapon</c>, the item property it reads.</summary>
     public string? Property { get; set; }
 
+    /// <summary>The value when nobody supplies one. With neither a value nor a default the roll fails, naming the input.</summary>
     public object? Default { get; set; }
+    /// <summary>The values allowed, offered as a dropdown; any other fails the roll.</summary>
     public List<string>? Options { get; set; }
 }
 
+/// <summary>A named result a roll can come to (<c>critical</c>, <c>success</c>, <c>partial</c>); a roll's outcomes are tried in
+/// order.</summary>
 public sealed class RollOutcomeDefinition
 {
+    /// <summary>Required: the outcome's name, as the result, <c>then</c> lines and a group roll's <c>result</c> read it.</summary>
     public string Name { get; set; } = string.Empty;
+    /// <summary>A formula over the dice and total (<c>natural</c>, <c>total</c>, <c>kept</c>, <c>dice</c>, <c>zeroDice</c>)
+    /// that must be true. None: always, so it belongs last.</summary>
     public string? When { get; set; }
 
     /// <summary>A follow-up roll's outcome that becomes the roll it follows (a confirmed threat is the attack's critical).</summary>
@@ -117,13 +133,16 @@ public sealed class RollOutcomeDefinition
 /// <summary><c>{ when, roll }</c> or <c>{ when, intents }</c>.</summary>
 public sealed class RollFollowUpDefinition
 {
+    /// <summary>A formula over the result (<c>outcome</c>) that must be true for the line to act. None: always.</summary>
     public string? When { get; set; }
+    /// <summary>The key of the roll to make next, which sees this roll's inputs (a confirmation roll).</summary>
     public string? Roll { get; set; }
 
     /// <summary>Intents as overhaul section 3 names them: <c>{ adjust: { track, by, actor } }</c>.</summary>
     public List<Dictionary<string, object>> Intents { get; set; } = new();
 }
 
+/// <summary>A group roll's participants (<c>{ from, roll }</c>): who chooses them, and the roll each makes.</summary>
 public sealed class RollParticipantsDefinition
 {
     /// <summary>Who chooses the participants: <c>gm</c> or <c>roller</c>.</summary>

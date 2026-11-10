@@ -56,12 +56,20 @@ public class FieldDefinition
         Category = category;
     }
 
+    /// <summary>Required, unique within its list: the key the value is stored under on the sheet or entry.</summary>
     public string Key { get; set; } = string.Empty;
+    /// <summary>The field's name as the form shows it.</summary>
     public string Label { get; set; } = string.Empty;
+    /// <summary>How the value is entered and kept. Default <c>Text</c>; an <c>EntityReference</c> needs
+    /// <c>targetEntityType</c>.</summary>
     public FieldType Type { get; set; } = FieldType.Text;
+    /// <summary>A line of help the form shows under the field.</summary>
     public string? Description { get; set; }
+    /// <summary>The choices of a <c>Dropdown</c>.</summary>
     public List<string>? Options { get; set; }
+    /// <summary>The value the form shows until one is set; for an actor field, also the value a new character starts with.</summary>
     public object? DefaultValue { get; set; }
+    /// <summary>Marks the field as required in the form. Only a mark: nothing refuses an empty value.</summary>
     public bool IsRequired { get; set; }
 
     /// <summary>For <see cref="FieldType.EntityReference"/>: the content type the field points at.</summary>

@@ -31,17 +31,29 @@ public class LicenseInfo
 /// <summary>A character attribute (ability score, characteristic, stat) the system tracks per actor.</summary>
 public class AttributeDefinition
 {
+    /// <summary>Required, unique: the key the sheet stores the score under and formulas name it by (<c>str</c>, as in
+    /// <c>mod(str)</c>).</summary>
     public string Key { get; set; } = string.Empty;
+    /// <summary>The attribute's name as the sheet shows it ("Strength").</summary>
     public string Label { get; set; } = string.Empty;
+    /// <summary>A short name ("STR") the sheet shows in place of the label. Text that names attributes (a background's eligible
+    /// scores, <c>"STR 13+"</c>) may use the key, this or the label.</summary>
     public string? Abbreviation { get; set; }
 
     /// <summary>The label and abbreviation as system.yaml wrote them. A localized copy shows translated text in
     /// <see cref="Label"/>, but sheet data and pack entries refer to the original words ("STR 13+", "Strength"),
     /// so rules match on these as well.</summary>
     public string? CanonicalLabel { get; set; }
+    /// <summary>The abbreviation as system.yaml wrote it (see <c>canonicalLabel</c>). Normally left out: a localized copy fills
+    /// it in from <c>abbreviation</c>.</summary>
     public string? CanonicalAbbreviation { get; set; }
+    /// <summary>The score a sheet has until one is entered. Default 10.</summary>
     public int Default { get; set; } = 10;
+    /// <summary>The lowest score that can be typed in on a sheet when the system has no <c>sheetRules.attributes</c>; also
+    /// given to the AI as the attribute's range. None: no floor.</summary>
     public int? Min { get; set; }
+    /// <summary>The highest score that can be typed in on a sheet when the system has no <c>sheetRules.attributes</c> (which
+    /// caps scores with its own <c>max</c>); also given to the AI as the attribute's range. None: no cap.</summary>
     public int? Max { get; set; }
 
     /// <summary>
@@ -63,12 +75,15 @@ public class AttributeDefinition
 /// <summary>A depletable pool (hit points, mana, strain, luck) on an actor.</summary>
 public class ResourceDefinition
 {
+    /// <summary>Required, unique: the key the current value is kept under on the sheet and in the table's pools ("HP").</summary>
     public string Key { get; set; } = string.Empty;
+    /// <summary>The pool's name as the sheet shows it ("Hit Points").</summary>
     public string Label { get; set; } = string.Empty;
 
     /// <summary>Pool key that holds the maximum, e.g. "HP_Max". Null for pools without a cap.</summary>
     public string? MaxKey { get; set; }
 
+    /// <summary>The value a new sheet starts with, for the pool and for its maximum. Default 0.</summary>
     public int Default { get; set; }
 
     /// <summary>True for the pool damage/healing target by default (usually hit points).</summary>
@@ -84,15 +99,20 @@ public class ContentTypeDefinition
     /// <summary>Stable key, singular, lower-case: "spell".</summary>
     public string Type { get; set; } = string.Empty;
 
+    /// <summary>The type's name, singular, as the Library and editors show it ("Spell").</summary>
     public string Label { get; set; } = string.Empty;
+    /// <summary>The plural name ("Spells"); <c>label</c> when unset.</summary>
     public string? PluralLabel { get; set; }
 
     /// <summary>Pack folder holding entries of this type; defaults to <see cref="Type"/>.</summary>
     public string? Folder { get; set; }
 
+    /// <summary>An icon name for the type. Reserved; not read by this version (the Library picks its own icon by the type key).</summary>
     public string? Icon { get; set; }
+    /// <summary>A line of help the homebrew editor shows when this type is chosen.</summary>
     public string? Description { get; set; }
 
+    /// <summary>The properties an entry of this type carries, in the order the editor and the entry's page show them.</summary>
     public List<FieldDefinition> Fields { get; set; } = new();
 
     /// <summary>
@@ -147,7 +167,9 @@ public class ContentTypeDefinition
 /// <summary>Dice conventions the runtime uses when it needs to roll something for a system.</summary>
 public class DiceConventions
 {
+    /// <summary>The dice the combat console rolls for initiative. Default <c>1d20</c>.</summary>
     public string Initiative { get; set; } = "1d20";
+    /// <summary>The dice for an ordinary check. Reserved; not read by this version (the sheet's check buttons roll a d20).</summary>
     public string Check { get; set; } = "1d20";
 
     /// <summary>The derived field (see <c>sheetRules.derived</c>) added to an initiative roll, e.g.
@@ -168,10 +190,19 @@ public class VitalsRules
     /// <summary>Resource that absorbs damage before the primary one ("TempHP"); granted as "take the higher".</summary>
     public string? TemporaryResource { get; set; }
 
+    /// <summary>What reaching zero on the primary resource does. Null: damage stops at zero and nothing else happens.</summary>
     public DownRules? Down { get; set; }
+
+    /// <summary>Death saves for a creature at zero. Null: none.</summary>
     public DeathSaveRules? DeathSaves { get; set; }
+
+    /// <summary>Damage types, and the sheet lists that resist, ignore or double them. Null: damage has no type.</summary>
     public DamageTypeRules? Damage { get; set; }
+
+    /// <summary>Exhaustion as a level counter. Null: none (an exhaustion condition, if listed, is an ordinary condition).</summary>
     public ExhaustionRules? Exhaustion { get; set; }
+
+    /// <summary>A pool of hit dice spent to heal during a rest. Null: none.</summary>
     public HitDiceRules? HitDice { get; set; }
 
     /// <summary>Concentration: a condition a creature keeps while it holds an effect up, a save when it is hurt, and the
@@ -215,16 +246,23 @@ public class ConcentrationRules
 
     /// <summary>The save's difficulty: half the damage taken, never below <see cref="MinimumDc"/> or above <see cref="MaximumDc"/>.</summary>
     public int MinimumDc { get; set; } = 10;
+    /// <summary>The highest the save's difficulty goes, however much damage was taken. Default 30.</summary>
     public int MaximumDc { get; set; } = 30;
 
     public int DcFor(int damage) => System.Math.Clamp(damage / 2, MinimumDc, MaximumDc);
 }
 
+/// <summary>Death saves for a creature at zero on the primary resource (<c>vitals.deathSaves</c>). They need <c>vitals.down</c>
+/// as well; without this block a creature at zero simply stays down.</summary>
 public class DeathSaveRules
 {
+    /// <summary>The dice a death save rolls. Default <c>1d20</c>.</summary>
     public string Die { get; set; } = "1d20";
+    /// <summary>The lowest roll that is a success. Default 10.</summary>
     public int SuccessOn { get; set; } = 10;
+    /// <summary>Successes that make the creature stable. Default 3.</summary>
     public int SuccessesToStabilize { get; set; } = 3;
+    /// <summary>Failures that kill it (a hit while down counts as one, a critical hit as two). Default 3.</summary>
     public int FailuresToDie { get; set; } = 3;
 
     /// <summary>A natural roll this high regains one hit point. Null: no critical success.</summary>
@@ -235,22 +273,32 @@ public class DeathSaveRules
 
     /// <summary>Pool keys the running tally is kept in.</summary>
     public string SuccessesKey { get; set; } = "DeathSaveSuccesses";
+    /// <summary>The pool key the failures are counted in. Default <c>DeathSaveFailures</c>.</summary>
     public string FailuresKey { get; set; } = "DeathSaveFailures";
 }
 
 /// <summary>Damage types and the sheet lists that halve, cancel or double them.</summary>
 public class DamageTypeRules
 {
+    /// <summary>The damage types the table offers when it deals damage ("fire", "slashing"). Empty: the table offers none.</summary>
     public List<string> Types { get; set; } = new();
+    /// <summary>The sheet field listing the types the creature resists: that damage is halved, rounded down. Default
+    /// <c>resistances</c>.</summary>
     public string ResistancesField { get; set; } = "resistances";
+    /// <summary>The sheet field listing the types the creature is immune to: that damage does nothing. Default
+    /// <c>immunities</c>.</summary>
     public string ImmunitiesField { get; set; } = "immunities";
+    /// <summary>The sheet field listing the types the creature is vulnerable to: that damage is doubled. Default
+    /// <c>vulnerabilities</c>.</summary>
     public string VulnerabilitiesField { get; set; } = "vulnerabilities";
 }
 
 /// <summary>Exhaustion as a level counter kept in a pool, not a timed condition.</summary>
 public class ExhaustionRules
 {
+    /// <summary>The pool key the level is kept in. Default <c>Exhaustion</c>.</summary>
     public string Key { get; set; } = "Exhaustion";
+    /// <summary>The highest level; reaching it kills the creature when the system has <c>vitals.down</c>. Default 6.</summary>
     public int MaxLevel { get; set; } = 6;
 
     /// <summary>The condition name in <see cref="SystemDefinition.Conditions"/> this replaces in the picker.</summary>
@@ -260,8 +308,12 @@ public class ExhaustionRules
 /// <summary>A pool of hit dice: one per level for characters, the stat block's count for creatures.</summary>
 public class HitDiceRules
 {
+    /// <summary>The pool key the remaining dice are kept in; the total is kept under the same key plus <c>_Max</c>. Default
+    /// <c>HitDice</c>.</summary>
     public string Key { get; set; } = "HitDice";
+    /// <summary>The sheet field whose number is a character's count of hit dice. Default <c>level</c>.</summary>
     public string LevelField { get; set; } = "level";
+    /// <summary>The sheet field naming the class whose die a character spends. Default <c>class</c>.</summary>
     public string ClassField { get; set; } = "class";
 
     /// <summary>Class entry property with the die ("d10").</summary>
@@ -276,8 +328,10 @@ public class HitDiceRules
     public string MaxKey => Key + "_Max";
 }
 
+/// <summary>A rest the table offers (<c>vitals.rests</c>): what it refills, clears and lifts.</summary>
 public class RestRule
 {
+    /// <summary>The rest's name, as the table's button shows it and a slot pool's <c>recoversOn</c> names it ("Long Rest").</summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>Resources refilled to their maximum ("HP").</summary>
@@ -374,17 +428,28 @@ public class SystemSetting
 /// </summary>
 public class SystemDefinition
 {
+    /// <summary>Required: the system's key, lower-case letters, digits, <c>-</c> or <c>_</c>, starting with a letter or digit.
+    /// Campaigns and packs name the system by it, so it should not change.</summary>
     public string Id { get; set; } = string.Empty;
+    /// <summary>Required: the system's name as the app shows it.</summary>
     public string Name { get; set; } = string.Empty;
+    /// <summary>A paragraph about the system, shown on the About page.</summary>
     public string? Description { get; set; }
+    /// <summary>The system's version. A campaign records the version it plays under and says when it changes. Default
+    /// <c>1.0.0</c>.</summary>
     public string Version { get; set; } = "1.0.0";
 
     /// <summary>What the system may call itself in relation to a trademarked product, e.g. "5E compatible".</summary>
     public string? Compatibility { get; set; }
 
+    /// <summary>The licence the system's rules text is under, shown with its attribution on the About page. None: no licence is
+    /// shown.</summary>
     public LicenseInfo? License { get; set; }
 
+    /// <summary>The attributes every actor has (ability scores, characteristics), in the order the sheet shows them.</summary>
     public List<AttributeDefinition> Attributes { get; set; } = new();
+    /// <summary>The pools every actor has (hit points, mana). The one marked <c>isPrimary</c>, else the first, is the one
+    /// damage and healing reach.</summary>
     public List<ResourceDefinition> Resources { get; set; } = new();
 
     /// <summary>Extra sheet fields beyond attributes and resources (level, class, alignment, speed...).</summary>
@@ -393,11 +458,14 @@ public class SystemDefinition
     /// <summary>Which of the <see cref="ActorFields"/> the app reads for what, outside the rules engine.</summary>
     public FieldRoles FieldRoles { get; set; } = new();
 
+    /// <summary>The kinds of content the system's packs may carry (class, spell, monster), each with its own fields and pack
+    /// folder.</summary>
     public List<ContentTypeDefinition> EntityTypes { get; set; } = new();
 
     /// <summary>Condition names the combat console offers in its picker.</summary>
     public List<string> Conditions { get; set; } = new();
 
+    /// <summary>The dice the table rolls for initiative, and how initiative ties are broken.</summary>
     public DiceConventions Dice { get; set; } = new();
 
     /// <summary>How the system's own words are put to AI models, so prompts carry no assumptions about any one game.</summary>
