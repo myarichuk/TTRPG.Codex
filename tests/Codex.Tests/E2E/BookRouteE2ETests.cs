@@ -404,7 +404,7 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
         // A model, with prices.
         await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-model");
@@ -487,14 +487,14 @@ public class BookAiPanelE2ETests : IClassFixture<AppFixture>
 
         await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-model");
         await dm.GetByTestId("ai-save").ClickAsync();
         await Assertions.Expect(dm.GetByTestId("ai-provider-list")).ToContainTextAsync("Fake model");
         await dm.GetByTestId("ai-add-image-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI images API)");
         await dm.GetByTestId("ai-name").FillAsync("Fake pictures");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-pictures");
@@ -997,7 +997,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-model");
@@ -1116,7 +1116,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-model");
@@ -1215,7 +1215,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         await E2EHelpers.GotoInteractiveAsync(dm, "/settings/ai");
         await dm.GetByTestId("ai-add-provider").ClickAsync();
-        await dm.GetByTestId("ai-kind").SelectOptionAsync("custom");
+        await E2EHelpers.PickAiServiceAsync(dm, "custom", "Custom (OpenAI-compatible)");
         await dm.GetByTestId("ai-name").FillAsync("Fake model");
         await dm.GetByTestId("ai-url").FillAsync(model.Url);
         await dm.GetByTestId("ai-model").FillAsync("fake-model");
