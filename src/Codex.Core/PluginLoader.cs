@@ -65,9 +65,10 @@ public class PluginLoader(
     /// <summary>The file a loaded system came from: its system.yaml, or a compiled plugin's DLL. Null when it is not loaded.</summary>
     public string? GetSource(string systemId) => _sources.GetValueOrDefault(systemId);
 
-    /// <summary>Each plugin DLL loaded, by full path, with what it held and its hash then. .NET cannot load a second copy of an
-    /// assembly from the same path into the default context, so a reload keeps these and says when the file has changed.</summary>
-    private readonly Dictionary<string, (List<ICodexSystemPlugin> Plugins, string Hash, string Version)> _loadedDlls = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Each plugin DLL loaded, by full path, with what it held, its hash then and the context it was loaded into. A reload
+    /// that finds the file unchanged in the same context keeps its plugins; otherwise it loads them again.</summary>
+    private Dictionary<string, (List<ICodexSystemPlugin> Plugins, string Hash, string Version, FolderLoadContext Context)> _loadedDlls = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, (List<ICodexSystemPlugin> Plugins, string Hash, string Version, FolderLoadContext Context)>? _buildingDlls;
 
     public IEnumerable<SystemSummary> Systems => _pluginsBySystemId.Values
         .Select(p => new SystemSummary(p.SystemId, p.DisplayName, p.Definition?.Description, p.Definition?.Compatibility, p.Definition?.License, p is DataDrivenSystemPlugin,
@@ -138,8 +139,8 @@ public class PluginLoader(
     /// Reads every system and content pack again from the same content roots (overhaul step 10), for a system installed,
     /// replaced or removed while the server runs. The new systems and packs are built beside the old ones and put in place in
     /// one step; until then, and if the reload fails, the app goes on with the old ones. A table already running keeps the
-    /// definition it started with until it ends. A compiled plugin (<c>ICodexSystemPlugin</c>) is kept as it was: a changed one
-    /// needs a restart, and its load problem says so.
+    /// definition it started with until it ends. A compiled plugin (<c>ICodexSystemPlugin</c>) whose DLL changed is loaded
+    /// again, into a new load context (<see cref="FolderLoadContexts"/>); a table already running keeps the old plugin.
     /// </summary>
     public async Task<SystemsReload> ReloadAsync()
     {
@@ -188,9 +189,11 @@ public class PluginLoader(
         Dictionary<string, ICodexSystemPlugin>? plugins = null;
         var staging = contentPackLoader.Staging();
         _buildingSources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        _buildingDlls = new(StringComparer.OrdinalIgnoreCase);
+        var roots = new List<string>();
         try
         {
-            var roots = _configuredRoots.Where(Directory.Exists).Select(Path.GetFullPath).Distinct().ToList();
+            roots = _configuredRoots.Where(Directory.Exists).Select(Path.GetFullPath).Distinct().ToList();
             _roots = roots.OrderByDescending(r => r.Length).ToList();
             foreach (var missing in _configuredRoots.Where(r => !Directory.Exists(r)))
             {
@@ -210,12 +213,6 @@ public class PluginLoader(
                 registry.Register<TagsComponent>();
                 registry.Register<ActiveEffectsComponent>();
 
-                foreach (var plugin in discovered)
-                {
-                    logger.LogInformation("Initializing system: {SystemId} ({Name})", plugin.SystemId, plugin.DisplayName);
-                    plugin.RegisterComponents(registry);
-                }
-
                 var found = discovered.ToDictionary(p => p.SystemId);
                 plugins = found;
                 await LoadContentPacksAsync(roots, found.Keys.ToHashSet(), staging, id => found.GetValueOrDefault(id)?.Definition);
@@ -232,11 +229,33 @@ public class PluginLoader(
             _building = null;
         }
 
+        var dlls = _buildingDlls;
+        _buildingDlls = null;
         if (reload && error != null) return error;
 
+        // Registered once the set is certain: a replaced plugin's component types take their names over from the old ones, which
+        // a reload that fails must not do. A table that is running keeps the instances it has.
+        _building = problems;
+        foreach (var plugin in plugins?.Values ?? Enumerable.Empty<ICodexSystemPlugin>())
+        {
+            try
+            {
+                logger.LogInformation("Initializing system: {SystemId} ({Name})", plugin.SystemId, plugin.DisplayName);
+                plugin.RegisterComponents(registry);
+            }
+            catch (Exception ex)
+            {
+                Warn(new LoadProblem(LoadProblemSource.Plugin, plugin.SystemId, $"could not register its components: {ex.Message}", plugin.SystemId));
+            }
+        }
+
+        _building = null;
         staging.Commit();
         _pluginsBySystemId = plugins ?? new Dictionary<string, ICodexSystemPlugin>();
         _sources = _buildingSources;
+        _loadedDlls = dlls;
+        // The load contexts of system folders and DLLs that are gone are unloaded once nothing they made is alive.
+        FolderLoadContexts.RetireUnder(roots, roots.Concat(_sources.Values.Select(s => Path.GetDirectoryName(s)!)));
         LoadedSystemIds = _pluginsBySystemId.Keys.ToHashSet();
         _problems = problems;
         _failedSystems = failed;
@@ -261,7 +280,7 @@ public class PluginLoader(
                 }
 
                 plugins.Add(plugin);
-                if (_loadedDlls.FirstOrDefault(d => d.Value.Plugins.Contains(plugin)).Key is { } dll) _buildingSources[plugin.SystemId] = dll;
+                if ((_buildingDlls ?? _loadedDlls).FirstOrDefault(d => d.Value.Plugins.Contains(plugin)).Key is { } dll) _buildingSources[plugin.SystemId] = dll;
             }
         }
 
@@ -455,7 +474,25 @@ public class PluginLoader(
         // load context loads (Rules.CompiledSuppliers), not plugins of the host's.
         if (File.Exists(Path.Combine(pluginsDirectory, SystemDefinitionLoader.FileName))) return plugins;
 
-        foreach (var file in Directory.GetFiles(pluginsDirectory, "*.dll"))
+        var dlls = Directory.GetFiles(pluginsDirectory, "*.dll");
+        if (dlls.Length == 0) return plugins;
+        FolderLoadContext context;
+        IDisposable hold;
+        try
+        {
+            // The root's context for the DLLs it holds now (FolderLoadContexts), read from their bytes: a DLL replaced on disk is
+            // loaded again by the next reload, into a new context, while a table that started before keeps the old plugin.
+            hold = FolderLoadContexts.Hold(pluginsDirectory, out context);
+        }
+        catch (IOException ex)
+        {
+            Warn(new LoadProblem(LoadProblemSource.Plugin, Path.GetFileName(pluginsDirectory), $"plugins could not be read: {ex.Message}", Path: pluginsDirectory));
+            return plugins;
+        }
+
+        using var held = hold;
+        var loaded = _buildingDlls ?? _loadedDlls;
+        foreach (var file in dlls)
         {
             var full = Path.GetFullPath(file);
             string hash;
@@ -469,20 +506,18 @@ public class PluginLoader(
                 continue;
             }
 
-            if (_loadedDlls.TryGetValue(full, out var known))
+            // The same file in the same context: the plugins it made before, so an unchanged plugin is the same object.
+            if (_loadedDlls.TryGetValue(full, out var known) && known.Hash == hash && known.Context == context)
             {
-                if (known.Hash != hash)
-                {
-                    Warn(new LoadProblem(LoadProblemSource.Plugin, Path.GetFileName(file), "has changed since the server started. The copy already loaded stays in use until the server is restarted.", known.Plugins.FirstOrDefault()?.SystemId, file));
-                }
-
+                loaded[full] = known;
                 plugins.AddRange(known.Plugins);
                 continue;
             }
 
             try
             {
-                var assembly = Assembly.LoadFrom(file);
+                var assembly = context.Main(Path.GetFileNameWithoutExtension(file), file);
+                if (assembly == null) continue; // the host's own assembly, copied into a root: not a plugin
                 var found = new List<ICodexSystemPlugin>();
                 var pluginTypes = assembly.GetTypes()
                     .Where(t => typeof(ICodexSystemPlugin).IsAssignableFrom(t) &&
@@ -491,20 +526,20 @@ public class PluginLoader(
 
                 foreach (var type in pluginTypes)
                 {
-                    if (Activator.CreateInstance(type) is ICodexSystemPlugin plugin)
+                    if (context.Create(type) is ICodexSystemPlugin plugin)
                     {
                         logger.LogInformation("Loaded plugin: {SystemId}", plugin.SystemId);
                         found.Add(plugin);
                     }
                 }
 
-                _loadedDlls[full] = (found, hash, assembly.GetName().Version?.ToString() ?? "1.0.0");
+                loaded[full] = (found, hash, assembly.GetName().Version?.ToString() ?? "1.0.0", context);
                 plugins.AddRange(found);
             }
             catch (Exception ex)
             {
                 // A compiled plugin that fails used to be only in the server log: the GM saw its system simply missing.
-                Warn(new LoadProblem(LoadProblemSource.Plugin, Path.GetFileName(file), $"did not load: {ex.Message}", Path: file));
+                Warn(new LoadProblem(LoadProblemSource.Plugin, Path.GetFileName(file), $"did not load: {ex.InnerException?.Message ?? ex.Message}", Path: file));
                 logger.LogError(ex, "Failed to load plugin from {File}", file);
             }
         }

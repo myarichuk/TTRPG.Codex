@@ -196,6 +196,7 @@ builder.Services.AddScoped<MentionSources>();
 builder.Services.AddScoped<WorldChatSessions>();
 builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 builder.Services.AddHostedService<IdleRuntimeEvictionService>();
+builder.Services.AddHostedService<SystemsWatchService>();
 builder.Services.AddSingleton<JsonBackups>();
 builder.Services.AddSingleton(new BackupStatus
 {

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
+using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 
 namespace Codex.Core.Rules;
@@ -40,7 +41,6 @@ public static class CompiledSuppliers
 
     // Keyed by the resolved types, which a system's localized copies share, so they share the cache too.
     private static readonly ConditionalWeakTable<IReadOnlyDictionary<string, CompiledSupplier>, ConcurrentDictionary<string, ScriptValue>> Caches = new();
-    private static readonly ConcurrentDictionary<string, SystemLoadContext> Contexts = new(StringComparer.Ordinal);
 
     /// <summary>Every <c>{ type }</c> the system names, with what names it and the interface its place needs.</summary>
     private static IEnumerable<(string What, string TypeName, Type Needs)> References(SystemDefinition system)
@@ -74,31 +74,15 @@ public static class CompiledSuppliers
     public static void Resolve(SystemDefinition system, string folder)
     {
         folder = Path.GetFullPath(folder);
-        SystemLoadContext? context = null;
-        foreach (var typeName in References(system).Select(r => r.TypeName).Distinct(StringComparer.Ordinal))
-        {
-            context ??= ContextFor(folder);
-            system.AddCompiled(typeName, Find(typeName, folder, context));
-        }
+        var names = References(system).Select(r => r.TypeName).Distinct(StringComparer.Ordinal).ToList();
+        if (names.Count == 0) return;
+        // The folder's context for the DLLs it holds now (FolderLoadContexts): a reload that finds them unchanged gets the same
+        // types, one that finds a DLL added, removed or changed a new context, unloaded once nothing it made is alive.
+        using var hold = FolderLoadContexts.Hold(folder, out var context);
+        foreach (var typeName in names) system.AddCompiled(typeName, Find(typeName, folder, context));
     }
 
-    /// <summary>
-    /// The folder's load context, for the DLLs it holds now. A reload (overhaul step 10) that finds the same DLLs gets the same
-    /// context, and so the same types; one that finds a DLL added, removed or changed gets a new context, and a table that started
-    /// under the old system keeps the old one's types until it ends. The old context is never unloaded: a type JIT-compiles its
-    /// references to the host's assemblies lazily, through the context, and an unloading context cannot resolve them, so a live
-    /// table's next call could fail. A replaced DLL's old copy therefore stays in memory until the server restarts. Assemblies are
-    /// read from their bytes, so the files are never locked and can be replaced while the server runs.
-    /// </summary>
-    private static SystemLoadContext ContextFor(string folder)
-    {
-        var stamp = string.Join(";", Directory.GetFiles(folder, "*.dll").Order(StringComparer.Ordinal)
-            .Select(f => Path.GetFileName(f) + "=" + SystemFingerprint.Hash(f)));
-        return Contexts.AddOrUpdate(folder, f => new SystemLoadContext(f, stamp),
-            (f, existing) => existing.Stamp == stamp ? existing : new SystemLoadContext(f, stamp));
-    }
-
-    private static CompiledSupplier Find(string typeName, string folder, SystemLoadContext context)
+    private static CompiledSupplier Find(string typeName, string folder, FolderLoadContext context)
     {
         var comma = typeName.IndexOf(',');
         if (comma <= 0 || comma == typeName.Length - 1)
@@ -127,7 +111,7 @@ public static class CompiledSuppliers
             }
 
             if (type.GetConstructor(Type.EmptyTypes) == null) return CompiledSupplier.Failed($"{name} has no public constructor without parameters");
-            return new CompiledSupplier(Activator.CreateInstance(type), null);
+            return new CompiledSupplier(context.Create(type), null);
         }
         catch (TargetInvocationException ex)
         {
@@ -136,50 +120,6 @@ public static class CompiledSuppliers
         catch (Exception ex) when (ex is BadImageFormatException or FileLoadException or FileNotFoundException or ReflectionTypeLoadException or TypeLoadException)
         {
             return CompiledSupplier.Failed($"{assemblyName}.dll does not load: {ex.Message}");
-        }
-    }
-
-    /// <summary>One system folder's assemblies. The host's come from the host, by name; the rest from the folder, by file name.</summary>
-    private sealed class SystemLoadContext(string folder, string stamp) : AssemblyLoadContext("codex-system " + folder)
-    {
-        private readonly object _gate = new();
-
-        /// <summary>The DLLs' names and hashes when this context was made.</summary>
-        public string Stamp { get; } = stamp;
-
-        /// <summary>The system's own assembly, or null when the name is the host's (a system may not name a host type).</summary>
-        public Assembly? Main(string name, string file)
-        {
-            if (Host(new AssemblyName(name)) != null) return null;
-            lock (_gate)
-            {
-                return Assemblies.FirstOrDefault(a => string.Equals(a.GetName().Name, name, StringComparison.OrdinalIgnoreCase)) ?? FromBytes(file);
-            }
-        }
-
-        private Assembly FromBytes(string file)
-        {
-            using var bytes = new MemoryStream(File.ReadAllBytes(file));
-            return LoadFromStream(bytes);
-        }
-
-        protected override Assembly? Load(AssemblyName name)
-        {
-            if (Host(name) is { } shared) return shared;
-            var file = Path.Combine(folder, name.Name + ".dll");
-            return File.Exists(file) ? FromBytes(file) : null;
-        }
-
-        private static Assembly? Host(AssemblyName name)
-        {
-            try
-            {
-                return Default.LoadFromAssemblyName(new AssemblyName(name.Name!));
-            }
-            catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException)
-            {
-                return null;
-            }
         }
     }
 

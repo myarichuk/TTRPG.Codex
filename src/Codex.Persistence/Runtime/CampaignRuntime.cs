@@ -544,9 +544,14 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
     /// <summary>Appends a roll to the live session's shared roll log (3.6); a no-op when no
     /// session is attached, matching <see cref="AppendSessionEventAsync"/>'s guard.</summary>
+    /// <summary>The index of the session's system stamp this table runs under (<see cref="SessionDocument.SystemStamps"/>), which
+    /// each roll it records carries; null when the system has no fingerprint.</summary>
+    public int? SystemStampIndex { get; internal set; }
+
     internal void RecordRoll(RollLogEntry entry)
     {
         if (_activeSession == null) return;
+        entry.SystemStamp ??= SystemStampIndex;
         _activeSession.RollLog.Add(entry);
         _pendingRolls.Add(entry);
     }

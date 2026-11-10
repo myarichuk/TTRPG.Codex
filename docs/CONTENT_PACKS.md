@@ -422,15 +422,18 @@ copy does not load, the old one is put back.
 
 **Reloading.** An install, a removal and *Reload systems* read every content root again. The new systems and packs are built
 beside the old ones and put in place in one step, so nobody sees a half-loaded library, and a reload that fails leaves the
-old ones. A table that is running keeps the system it started with until it ends. Two things need a restart: a compiled
-plugin (`ICodexSystemPlugin`, a DLL directly in a content root), which .NET cannot load twice from one path (About says when
-the file has changed), and memory: a system DLL that was replaced stays loaded until the server restarts, because a live
-table may still be calling it.
+old ones. A table that is running keeps the system it started with until it ends, and a sheet saved at it is merged under
+that system. DLLs are read from their bytes (never locked) into a load context per folder, keyed by every DLL's hash: a
+compiled plugin (`ICodexSystemPlugin`, a DLL directly in a content root) or a system's DLL that changed is loaded again into a
+new context, and the old context is unloaded once nothing it made is alive, that is, once the last table playing under it has
+ended. With `Codex:Systems:Watch: true` (the default in Development) a change on disk reloads by itself, two seconds after the
+content roots go quiet; hidden folders and `bin`/`obj` are ignored.
 
 **Versions** (section 4, rule 8 of the overhaul). A campaign records the system it plays under: the `version` system.yaml
 states and a SHA-256 of system.yaml, each translation, each script and each DLL beside it (line endings do not count). When
 the loaded system differs, the campaign's GM sees what changed (the version, and each file added, removed or changed, a DLL
-marked as compiled code) until they press *Got it*. A session records each system a table ran it under. Bump `version` when
+marked as compiled code) until they press *Got it*. A session records each system a table ran it under, and each roll
+which of those it was made under. Bump `version` when
 the rules change: it is what a GM reads first.
 
 **Distribution.** A release ships the systems listed in `content/systems/bundled.txt` (srd5e) inside the app. Every other

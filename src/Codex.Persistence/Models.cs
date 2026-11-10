@@ -461,6 +461,10 @@ public class RollLogEntry
     /// from the dice.</summary>
     public string? Mark { get; set; }
 
+    /// <summary>Which of the session's <see cref="SessionDocument.SystemStamps"/> the table ran under when this roll was made
+    /// (its index; they are only ever appended to). Null for a roll made off the table, or before rolls were stamped.</summary>
+    public int? SystemStamp { get; set; }
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
 

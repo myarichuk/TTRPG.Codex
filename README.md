@@ -88,6 +88,7 @@ a program on that computer.
 | `Codex:ContentDirectories` | Folders of systems, packs and plugins to load (a list). `Codex:PluginsDirectory` is the older single folder. |
 | `Codex:Systems:InstallDirectory` | Where systems installed from the app live. Default: `Systems` beside the data folder. |
 | `Codex:Systems:GmInstall` | `true` lets anyone signed in install and remove systems, not only the server admin; never while the server is open to the internet. |
+| `Codex:Systems:Watch` | `true` reloads the systems by itself when a file under a content root changes. Default: on in Development, off otherwise. |
 | `Codex:Systems:Scripts` | `false` turns system scripts off: a system that names one does not load, and an upload with one is refused. |
 | `Codex:AdminUsername` | The account that is server admin, by name. Without it, the first account made on the server's own computer is. |
 | `Authentication:EnableLocalLogin` | `false` hides the name-and-password sign-in, leaving only the external providers configured under `Authentication:`. |

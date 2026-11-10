@@ -110,6 +110,9 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
                 plugin?.GetDiceRoller(),
                 plugin?.Definition,
                 encounter);
+            // Every roll says which of the session's systems it was made under; a session reopened after the rules changed
+            // has two, and its rolls are told apart.
+            if (session.SystemStamps.Count > 0 && session.SystemStamps[^1].SystemId == campaign.SystemId) runtime.SystemStampIndex = session.SystemStamps.Count - 1;
 
             // Built whole before anyone can see it (R6): published first, a command could walk the actors while they were
             // still being added, and a failed hydrate left a half-built table cached that nothing announced.
@@ -246,6 +249,9 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         }
 
         access = role == access.Role ? access : new CampaignAccess(access.CampaignId, access.UserId, role, access.SystemMissing);
+        // The table plays the definition it started with (overhaul step 10): a system reloaded since is not the one its rules
+        // run, so the save is merged under the table's, in the reader's language as the page sent it.
+        if (runtime.System != null) system = runtime.System.Localize(System.Globalization.CultureInfo.CurrentUICulture.Name);
         try
         {
             await runtime.EnqueueAsync(new ReplaceActorCommand(edited, baselineSheet, access, system));
@@ -525,6 +531,8 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         }
 
         await runtime.DisposeAsync();
+        // A system DLL replaced while this table ran may now have nothing left using its old load context.
+        Codex.Core.Systems.FolderLoadContexts.Sweep();
 
         completeSession &= runtime.ActiveEncounter is not { EndedAt: null, Participants.Count: > 0 };
         var campaign = completeSession ? await campaignRepository.GetAsync(campaignId) : null;

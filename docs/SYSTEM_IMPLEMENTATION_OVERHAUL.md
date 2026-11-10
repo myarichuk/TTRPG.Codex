@@ -761,20 +761,28 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      reports as unknown as the only allowed flags. A text property accepts any scalar, as the loader does (`min: 0` is a
      formula). Runtime-only properties are `[NotInYaml]`: left out, and reported as unknown keys. srd5e and simple-d6 name the
      schema in their first line.
-   - *Not done, and why:*
-     - **Half the keys have no description.** 238 of 466 properties have no XML summary, so the reference leaves them blank.
-       Writing them is documentation work on the model, not step 10's.
-     - **The schema's URL** points at `main`, where it lands when this branch merges; the in-repo systems name it by relative path.
-     - **Compiled plugins are not reloaded.** .NET cannot load a second copy from one path into the default context; About
-       says when the file changed, and a restart loads it.
-     - **No unloading.** A replaced system DLL's old load context stays in memory until a restart. Unloading it while a live
-       table may still JIT a call through it could fail that call.
-     - **Mixed rules during a live table.** A sheet saved while a table runs after a reload is checked with the new definition
-       while the table applies the old one, until the table ends.
-     - **No file watcher.** A change copied onto disk waits for *Reload systems* or a restart.
-     - **Rolls are not stamped.** A session records its systems, not which version each roll used; one session rarely spans two.
-     - **No E2E test** for install: the shared E2E app's content roots would gain a system. The services are tested (17 tests),
-       and the page was driven once.
+   - *Follow-ups, done 2026-11-10* (the first "not done" list):
+     - **Every key is described.** All 466 schema properties and every `$defs` class have an XML summary, traced to the code
+       that reads them; keys this version does not read say so (`dice.check`, `entityTypes[].icon`, `itemFields[].display`...).
+     - **Compiled plugins reload.** `FolderLoadContexts` gives each folder of DLLs (a system's suppliers, a content root's
+       plugins) one collectible context keyed by every DLL's hash, read from bytes. A changed plugin DLL is loaded again by the
+       next reload; a table that started before keeps the old plugin. Component types are registered once the reload is certain.
+     - **Unloading.** A replaced context is retired; every instance it makes is tracked weakly, and `Sweep` (on each load and
+       when a table ends) unloads it once none is alive, so no live table can call into it. Contexts of folders gone from
+       under a loader's roots are retired too. A test sees the old context collected, and kept while an instance lives.
+     - **No mixed rules.** A sheet saved at a running table is merged under the table's definition, and the sheet page shows
+       that definition while the table runs.
+     - **File watcher.** `Codex:Systems:Watch` (default on in Development): `SystemsWatcher` reloads two seconds after the
+       content roots go quiet, ignoring hidden folders and `bin`/`obj`, taking its turn with installs.
+     - **Rolls are stamped.** `RollLogEntry.SystemStamp` is the index of the session's system stamp the table ran under.
+     - **E2E.** `SystemInstallE2ETests` installs, replaces (one campaign uses it), acknowledges and removes a system in Chromium;
+       each E2E class runs its own app, so the installed system is seen by no other test.
+   - *Still not done, and why:*
+     - **The schema's URL** points at `main`, where it lands when this branch merges; the in-repo systems name it by relative
+       path. Nothing to do until the merge.
+     - **A context unloads only after a GC** has collected what it made, and only if the plugin holds nothing elsewhere (a
+       thread it started, a static of the host's). Component types a replaced plugin registered stay in the registry, so a
+       table that started before can still snapshot them; such a context is unloaded but stays in memory.
 
 ## 8. Content and licences for the reference systems
 

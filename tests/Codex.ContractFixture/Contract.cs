@@ -111,3 +111,22 @@ public sealed class Leaky : ICodexEventHandler
     public IReadOnlyList<CodexIntent> Handle(IReadOnlyDictionary<string, object?> ev, IReadOnlyDictionary<string, object?> sheet, ICodexContext context) =>
         new[] { CodexIntent.Of("adjust", ("track", "HP"), ("by", new Uri("https://example.invalid"))) };
 }
+
+/// <summary>A compiled plugin (<see cref="ICodexSystemPlugin"/>), for the loader's tests: copied directly into a content root, it
+/// is a system of its own, and a reload loads it again when its DLL changes.</summary>
+public sealed class ContractPlugin : ICodexSystemPlugin
+{
+    public string SystemId => "contract-plugin";
+
+    public string DisplayName => "Contract plugin";
+
+    public void RegisterComponents(ComponentRegistry registry)
+    {
+    }
+
+    public void RegisterSystems(dynamic world)
+    {
+    }
+
+    public IEnumerable<UISchema> GetUISchemas() => Array.Empty<UISchema>();
+}

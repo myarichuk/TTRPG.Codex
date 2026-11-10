@@ -176,6 +176,45 @@ public sealed class SupplierContractTests : IDisposable
     }
 
     [Fact]
+    public void AReplacedLoadContext_IsUnloaded_OnceNothingItMadeIsAlive_AndNotBefore()
+    {
+        var folder = Installed();
+        var (kept, keptContext) = LoadThenReplace(folder);
+        var droppedContext = DroppedAfterReplacing(Installed());
+
+        for (var i = 0; i < 20 && droppedContext.IsAlive; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            FolderLoadContexts.Sweep();
+        }
+
+        // Nothing holds what the second folder's old context made: it was unloaded and collected.
+        Assert.False(droppedContext.IsAlive, "the replaced context was not unloaded");
+        // A table that started before still holds the first folder's instance: its context stays, and the instance works.
+        Assert.True(keptContext.IsAlive);
+        Assert.Equal(3, kept.Call(new object?[] { 7.0 }).Value);
+        GC.KeepAlive(kept);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private WeakReference DroppedAfterReplacing(string folder) => LoadThenReplace(folder).Context;
+
+    /// <summary>Loads the folder's system, keeps one instance from it, and replaces the folder's DLLs so the next load gets a new
+    /// context. Returns the instance and a weak reference to its context. Kept out of the test's frame, so nothing else of the
+    /// first load stays reachable from the test's locals.</summary>
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private (ICodexFunction Instance, WeakReference Context) LoadThenReplace(string folder)
+    {
+        var yaml = Path.Combine(folder, SystemDefinitionLoader.FileName);
+        var instance = (ICodexFunction)SystemDefinitionLoader.Load(yaml).Compiled[string.Format(Type, "Half")].Instance!;
+        var context = new WeakReference(System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(instance.GetType().Assembly));
+        File.Copy(Dll, Path.Combine(folder, "Extra.dll"));
+        SystemDefinitionLoader.Load(yaml);
+        return (instance, context);
+    }
+
+    [Fact]
     public void AHandlerThatReturnsWhatIsNotPlainData_FailsTheEvent_NamingTheType()
     {
         var folder = Installed();

@@ -280,7 +280,7 @@
   <data name="Page.About.InstallTooBig" xml:space="preserve"><value>לא ניתן היה לקרוא את הקובץ (מערכת היא עד {0} MB): {1}</value></data>
   <data name="Page.About.Installed" xml:space="preserve"><value>המערכת {0} הותקנה.</value></data>
   <data name="Page.About.Reload" xml:space="preserve"><value>טעינה מחדש של המערכות</value></data>
-  <data name="Page.About.ReloadHint" xml:space="preserve"><value>קורא מחדש את כל תיקיות המערכות, אחרי שינוי בדיסק של השרת. שולחנות שרצים שומרים על המערכת שלהם עד שהם נגמרים. תוסף מהודר צריך הפעלה מחדש.</value></data>
+  <data name="Page.About.ReloadHint" xml:space="preserve"><value>קורא מחדש את כל תיקיות המערכות, אחרי שינוי בדיסק של השרת. שולחנות שרצים שומרים על המערכת שלהם עד שהם נגמרים; קוד מהודר שהשתנה נטען מחדש.</value></data>
   <data name="Page.About.Reloaded" xml:space="preserve"><value>המערכות נטענו מחדש. נוספו: {0}. הוסרו: {1}. השתנו: {2}.</value></data>
   <data name="Page.About.ReloadedNothing" xml:space="preserve"><value>המערכות נטענו מחדש; שום דבר לא השתנה.</value></data>
   <data name="Page.About.Remove" xml:space="preserve"><value>הסרה</value></data>

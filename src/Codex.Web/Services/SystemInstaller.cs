@@ -240,6 +240,22 @@ public sealed class SystemInstaller
         }
     }
 
+    /// <summary>A reload the server starts itself, when files under the content roots changed (<see cref="SystemsWatcher"/>,
+    /// <c>Codex:Systems:Watch</c>): no one asked, so no rights apply. It waits its turn with installs and removals, so it never
+    /// reads a folder one of them is moving.</summary>
+    public async Task<SystemsReload> ReloadFromDiskAsync()
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            return await _loader.ReloadAsync();
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     /// <summary>Where a system goes: the folder it is installed in, or a new one named after its id (with a number after it when
     /// that name holds something else, such as a system that failed to load under another id).</summary>
     private string TargetFolder(string id)

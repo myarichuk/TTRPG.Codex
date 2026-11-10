@@ -280,7 +280,7 @@
   <data name="Page.About.InstallTooBig" xml:space="preserve"><value>Не удалось прочитать файл (система — не больше {0} МБ): {1}</value></data>
   <data name="Page.About.Installed" xml:space="preserve"><value>Система «{0}» установлена.</value></data>
   <data name="Page.About.Reload" xml:space="preserve"><value>Перезагрузить системы</value></data>
-  <data name="Page.About.ReloadHint" xml:space="preserve"><value>Заново читает все папки систем — после изменений на диске сервера. Идущие столы сохраняют свою систему до конца. Скомпилированному плагину нужен перезапуск.</value></data>
+  <data name="Page.About.ReloadHint" xml:space="preserve"><value>Заново читает все папки систем — после изменений на диске сервера. Идущие столы сохраняют свою систему до конца; изменившийся скомпилированный код загружается заново.</value></data>
   <data name="Page.About.Reloaded" xml:space="preserve"><value>Системы перезагружены. Добавлены: {0}. Удалены: {1}. Изменены: {2}.</value></data>
   <data name="Page.About.ReloadedNothing" xml:space="preserve"><value>Системы перезагружены; ничего не изменилось.</value></data>
   <data name="Page.About.Remove" xml:space="preserve"><value>Удалить</value></data>

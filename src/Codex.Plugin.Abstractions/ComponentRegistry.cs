@@ -17,6 +17,9 @@ public class ComponentRegistry
 
     private readonly Dictionary<string, Type> _typesByName = new();
 
+    /// <summary>Registers <typeparamref name="T"/> under its name. A plugin loaded again after its DLL was replaced registers
+    /// types of the same names: a snapshot rehydrates into the newer ones, and the older stay in
+    /// <see cref="RegisteredComponents"/>, so a table that started before still snapshots its entities' components.</summary>
     public void Register<T>()
     {
         var type = typeof(T);

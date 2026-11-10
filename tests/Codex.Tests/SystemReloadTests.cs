@@ -51,6 +51,42 @@ public sealed class SystemReloadTests : IDisposable
         Write($"{system}/packs/{pack}/callings/callings.yaml", string.Concat(entries.Select(e => $"- id: {e}\n  name: {e}\n")));
     }
 
+    private static readonly string PluginDll = Path.Combine(AppContext.BaseDirectory, "contract-fixture", "Codex.ContractFixture.dll");
+
+    [Fact]
+    public async Task ACompiledPlugin_ReplacedOnDisk_IsLoadedAgainByAReload_WhileTheOldOneKeepsWorking()
+    {
+        // A DLL directly in a content root is a compiled plugin. It is read from its bytes into the root's own load context, so a
+        // reload after the file changed loads it again instead of asking for a restart.
+        var dll = Path.Combine(_root, "Codex.ContractFixture.dll");
+        File.Copy(PluginDll, dll);
+        await _loader.LoadAndInitializeAsync(_root);
+        var before = _loader.GetPlugin("contract-plugin")!;
+        var fingerprint = _loader.GetFingerprint("contract-plugin")!;
+
+        var same = await _loader.ReloadAsync();
+        Assert.Empty(same.Changed);
+        Assert.Same(before, _loader.GetPlugin("contract-plugin"));
+
+        // The same assembly with different bytes: a rebuilt plugin. Bytes after the image are ignored by the loader.
+        File.AppendAllText(dll, "rebuilt");
+        var reload = await _loader.ReloadAsync();
+
+        Assert.Null(reload.Error);
+        Assert.Equal(new[] { "contract-plugin" }, reload.Changed);
+        var after = _loader.GetPlugin("contract-plugin")!;
+        Assert.NotSame(before.GetType(), after.GetType());
+        Assert.Equal("contract-plugin", before.SystemId);
+        Assert.NotEqual(fingerprint.Files["Codex.ContractFixture.dll"], _loader.GetFingerprint("contract-plugin")!.Files["Codex.ContractFixture.dll"]);
+        Assert.DoesNotContain(_loader.LoadWarnings, w => w.Contains("restart", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(dll, _loader.GetSource("contract-plugin"));
+
+        // Removed from disk, it is gone after the next reload.
+        File.Delete(dll);
+        Assert.Equal(new[] { "contract-plugin" }, (await _loader.ReloadAsync()).Removed);
+        Assert.Null(_loader.GetFingerprint("contract-plugin"));
+    }
+
     [Fact]
     public async Task Reload_FindsSystemsAddedRemovedAndChanged_AndSwapsTheirPacks()
     {
