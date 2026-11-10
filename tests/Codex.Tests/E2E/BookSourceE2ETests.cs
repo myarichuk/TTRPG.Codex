@@ -141,4 +141,46 @@ public class BookSourceE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.Locator(".cm-activeLine")).Not.ToContainTextAsync("Second marker");
         Assert.Empty(errors);
     }
+
+    [Fact]
+    public async Task TheCursorMovesThePages_ToTheHeadingAboveIt_UnlessFollowIsOff()
+    {
+        var (dm, _, errors) = await StartAsync("Cursor", "party");
+        var preview = dm.FrameLocator("[data-testid=book-draft-preview]");
+        await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await dm.Locator(".cm-content").ClickAsync();
+        await dm.Keyboard.PressAsync("ControlOrMeta+End");
+        await dm.Keyboard.TypeAsync("\n\n## First marker\n\nalpha\n\n\\page\n\n## Second marker\n\nbeta\n\n\\page\n\n## Third marker\n\ngamma\n");
+        await Assertions.Expect(preview.Locator("h2", new() { HasText = "Third marker" })).ToBeAttachedAsync(new() { Timeout = 15_000 });
+
+        // The preview's own scroll position, read in its frame.
+        async Task<double> TopAsync() => await dm.Frames.First(f => f != dm.MainFrame).EvaluateAsync<double>("document.scrollingElement.scrollTop");
+        async Task<bool> WaitAsync(Func<double, bool> ok)
+        {
+            for (var i = 0; i < 50; i++)
+            {
+                if (ok(await TopAsync())) return true;
+                await dm.WaitForTimeoutAsync(100);
+            }
+
+            return false;
+        }
+
+        // The cursor on the third heading brings the pages to it; on the first, back up.
+        await dm.Locator(".cm-line", new() { HasText = "Third marker" }).ClickAsync();
+        Assert.True(await WaitAsync(t => t > 0), "the pages did not move to the third heading");
+        await Assertions.Expect(preview.Locator("h2", new() { HasText = "Third marker" })).ToBeInViewportAsync();
+        var third = await TopAsync();
+        await dm.Locator(".cm-line", new() { HasText = "First marker" }).ClickAsync();
+        Assert.True(await WaitAsync(t => t < third), "the pages did not move back to the first heading");
+        await Assertions.Expect(preview.Locator("h2", new() { HasText = "First marker" })).ToBeInViewportAsync();
+
+        // With following off the cursor moves and the pages stay.
+        await dm.GetByTestId("book-follow").ClickAsync();
+        var kept = await TopAsync();
+        await dm.Locator(".cm-line", new() { HasText = "Third marker" }).ClickAsync();
+        await dm.WaitForTimeoutAsync(800);
+        Assert.Equal(kept, await TopAsync());
+        Assert.Empty(errors);
+    }
 }

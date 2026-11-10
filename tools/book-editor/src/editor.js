@@ -415,6 +415,8 @@ function mapDom(state, root) {
   let n = 0;
   for (const c of shown(state)) { bases.set(c.section, n); n += outlineFor(c).length; }
   state.dom = { root, pages, headings, numbers, bases };
+  // An aim taken at the old drawing (a heading just typed was not in it yet) does not count for this one.
+  state.domVersion = (state.domVersion || 0) + 1;
   refreshBreaks(state);
   pageStatus(state);
 }
@@ -503,7 +505,7 @@ function followCursor(state) {
   const list = outlineFor({ section: state.current, markdown: c.markdown });
   let index = -1;
   for (let i = 0; i < list.length && list[i].offset <= head; i++) index = i;
-  const key = state.current + ':' + index;
+  const key = state.current + ':' + index + ':' + state.domVersion;
   if (state.aimed === key) return;
   state.aimed = key;
   if (index < 0) scrollTo(state, state.current);
@@ -520,7 +522,7 @@ export function goTo(id, section, index) {
   const pos = Math.min(h.offset, state.view.state.doc.length);
   state.view.dispatch({ selection: { anchor: pos }, scrollIntoView: true });
   state.view.focus();
-  state.aimed = section + ':' + index;
+  state.aimed = section + ':' + index + ':' + state.domVersion;
   scrollPreviewTo(state, headingElement(state, section, index));
   return true;
 }
@@ -569,7 +571,7 @@ async function pick(state, section, index) {
   if (state.current !== section) return;
   const h = outlineFor({ section, markdown: chapter(state).markdown })[index];
   if (!h) return;
-  state.aimed = section + ':' + index;
+  state.aimed = section + ':' + index + ':' + state.domVersion;
   state.view.dispatch({ selection: { anchor: Math.min(h.offset, state.view.state.doc.length) }, scrollIntoView: true });
   state.view.focus();
 }

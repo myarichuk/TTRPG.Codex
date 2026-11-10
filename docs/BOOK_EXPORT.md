@@ -2868,12 +2868,11 @@ M" for the page at the top of the frame (plain text, not announced) and has **Fi
 **Tests:** `tools/book-editor/test.mjs` (the outline: fence, setext, secret, raw HTML, `\page` in a fence, Arabic, titles cut and stripped);
 `BookSourceE2ETests` (tabs, Theme read-only, Copy to Style leaves the chapter alone, no Secret snippet in the party edition, a snippet and its
 gutter number; the heading in the tree, none from a fence, the click, tree keys; add, rename, move, delete after asking; a click in the pages, the
-cursor moving the pages' target, Follow off). The existing e2e flows pass unchanged (11 draft, 2 route).
+the cursor moving the pages to the heading above it and back, and staying put with Follow off; that test found an aim taken against the old drawing (a heading just typed) that suppressed the next scroll, now keyed to the drawing). The existing e2e flows pass unchanged (11 draft, 2 route).
 
 **Not done / not verified:**
 - Seen only through Playwright's Chromium; the click and scroll sync in WebKit and Firefox is not tried, nor Hebrew (right-to-left) by eye, nor the
   tree by a screen reader.
-- The cursor-to-page scroll is tested only by the click direction in e2e; the other direction (cursor, then pages) is by hand.
 - Order mapping assumes the drawing makes exactly the headings the reader finds; a theme or block that adds a heading shifts the rest of that book
   by one until the next chapter's count (it clamps, never fails).
 - The Russian and Hebrew strings (`Campaign.Book.Source|Snippet|Own|Preview.*`) are model-written.
