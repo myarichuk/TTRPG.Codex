@@ -631,6 +631,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         // The GM writes into the Cast chapter: it is saved, marked edited, and drawn.
         await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await Assertions.Expect(dm.Locator(".cm-content")).ToContainTextAsync("Keeps the lighthouse"); // the editor has the chapter before anything is typed
         await dm.Locator(".cm-content").ClickAsync();
         await dm.Keyboard.PressAsync("ControlOrMeta+End");
         await dm.Keyboard.TypeAsync("\nPUBLIC_GM_LINE\n");
@@ -719,6 +720,9 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await dm.GetByTestId("book-tab-draft").ClickAsync();
         await dm.GetByTestId("book-draft-open").ClickAsync();
         await dm.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        // The editor takes the chapter's text a moment after the tab turns current; typing before that lands in the chapter that was
+        // showing (Cover and contents), and the leak is then named there instead of in Cast (seen on a loaded Windows runner).
+        await Assertions.Expect(dm.Locator(".cm-content")).ToContainTextAsync("Keeps the lighthouse");
         await dm.Locator(".cm-content").ClickAsync();
         await dm.Keyboard.PressAsync("ControlOrMeta+End");
         await dm.Keyboard.TypeAsync("\nShe knows the vault key lies under the chapel altar.\n");
@@ -1395,6 +1399,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
 
         // Tab B edits Cast and saves it.
         await b.Locator("[data-testid=book-draft-chapter][data-section=cast]").ClickAsync();
+        await Assertions.Expect(b.Locator(".cm-content")).ToContainTextAsync("Keeps the lighthouse"); // the editor has the chapter before anything is typed
         await b.Locator(".cm-content").ClickAsync();
         await b.Keyboard.PressAsync("ControlOrMeta+End");
         await b.Keyboard.TypeAsync("\nPUBLIC_TAB_B\n");
