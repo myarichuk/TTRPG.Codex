@@ -28,13 +28,66 @@ public sealed class BookPdfOptions
 
 /// <summary>What printing a book produced. <paramref name="BlockedRequests"/> counts what the page tried to fetch and was refused: a
 /// self-contained page asks for nothing, so anything above zero is worth a look.</summary>
-public sealed record BookPdfResult(byte[] Pdf, string Browser, int BlockedRequests, TimeSpan Elapsed, int Passes = 1);
+public sealed record BookPdfResult(byte[] Pdf, string Browser, int BlockedRequests, TimeSpan Elapsed, int Passes = 1)
+{
+    /// <summary>For a book laid out by script (<see cref="BookPrintLayout"/>): how many pages it made, and the pages whose content still did not
+    /// fit (a block taller than a page of its own), which the PDF shows clipped.</summary>
+    public int Pages { get; init; }
+
+    public IReadOnlyList<BookOverflow> Overflow { get; init; } = [];
+
+    /// <summary>For a Fit pages job (<see cref="BookPrintLayout.Fit"/>): the chapters with their breaks, and what is left. Nothing is printed.</summary>
+    public BookFitted? Fitted { get; init; }
+}
+
+/// <summary>A page of a laid-out book whose content does not fit (a block taller than a page of its own): its place among the pages (1 is the
+/// first, the cover included), the chapter it is in (null when the book was not given as chapters), and the first words of what does not fit.
+/// For a break Fit pages could not write, <paramref name="Page"/> is 0.</summary>
+public sealed record BookOverflow(int Page, string? Section, string? Words);
+
+/// <summary>A chapter's text as the renderer hands it in and back.</summary>
+public sealed record BookLayoutChapter(string Section, string Markdown);
+
+/// <summary>What Fit pages made of a draft (docs/BOOK_EXPORT.md 41.15), laid out in the print browser.</summary>
+public sealed class BookFitted
+{
+    public List<BookLayoutChapter> Chapters { get; set; } = [];
+
+    /// <summary>Blocks that would start a new page, but whose place in the Markdown could not be told, so no break was written before them.</summary>
+    public List<BookOverflow> Unplaced { get; set; } = [];
+
+    /// <summary>Pages that still do not fit with the breaks written: a block taller than a page.</summary>
+    public List<BookOverflow> Overflow { get; set; } = [];
+
+    /// <summary>Pages the drawing still continues by itself with the breaks written (0 when Fit pages placed every break).</summary>
+    public int RunOn { get; set; }
+
+    public int Pages { get; set; }
+}
+
+/// <summary>
+/// A book whose pages are laid out by a script before it is printed: the editable book (docs/BOOK_EXPORT.md 41.6). The print browser opens
+/// <see cref="BookPrintJob.Html"/> (the page shell) in a page of its own with script on and the network closed, runs <paramref name="Script"/>
+/// (the bundled renderer, never anything from the page), lays out <paramref name="Markdown"/> with <paramref name="Art"/> (slot key to data image),
+/// and the page as it then is, is printed in another page with script off, as every book is.
+/// </summary>
+public sealed record BookPrintLayout(string Script, string Markdown, IReadOnlyDictionary<string, string> Art)
+{
+    /// <summary>The draft as chapters, in place of <see cref="Markdown"/>: the renderer joins them as the editor does, and each page knows its
+    /// chapter, so a page that does not fit is reported with it.</summary>
+    public IReadOnlyList<BookLayoutChapter>? Chapters { get; init; }
+
+    /// <summary>Fit pages: lay the chapters out, write the breaks into their text and return it; nothing is printed.</summary>
+    public bool Fit { get; init; }
+}
 
 /// <summary>A book to print. When <paramref name="Headings"/> is not empty the page is printed, the pages the headings landed on are
 /// read back from the PDF, and <paramref name="WithPageNumbers"/> builds the page again with them in its table of contents; that
 /// repeats until the numbers stop moving (three prints at most).</summary>
 public sealed record BookPrintJob(string Html, IReadOnlyList<BookHeading> Headings, Func<IReadOnlyDictionary<string, int>, string> WithPageNumbers)
 {
+    public BookPrintLayout? Layout { get; init; }
+
     public static BookPrintJob Single(string html) => new(html, [], _ => html);
 }
 
@@ -128,6 +181,12 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
     }
 
     public Task<BookPdfResult> PrintAsync(BookPdfSlot slot, string html, CancellationToken cancel) => PrintAsync(slot, BookPrintJob.Single(html), cancel);
+
+    /// <summary>Fit pages (docs/BOOK_EXPORT.md 41.15): the draft's chapters laid out in the print browser, as the PDF is, with a break written
+    /// wherever a block would otherwise be moved onto a page of its own. Takes a place in the same line as printing.</summary>
+    public async Task<BookFitted> FitAsync(BookPdfSlot slot, string shell, BookPrintLayout layout, CancellationToken cancel) =>
+        (await PrintAsync(slot, new BookPrintJob(shell, [], _ => shell) { Layout = layout with { Fit = true } }, cancel)).Fitted
+        ?? throw new InvalidOperationException("Fit pages returned nothing.");
 
     public async Task<BookPdfResult> PrintAsync(BookPdfSlot slot, BookPrintJob job, CancellationToken cancel)
     {
@@ -227,31 +286,65 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
                 return (null, product);
             }
 
-            await using var page = await browser.NewPageAsync().WaitAsync(token);
             var blocked = 0;
-            await page.SetJavaScriptEnabledAsync(false);
-            await page.SetRequestInterceptionAsync(true);
-            page.Request += async (_, e) =>
+            // Every request but an inline data: one is refused, in every page of the job.
+            async Task Seal(IPage tab)
             {
-                try
+                await tab.SetRequestInterceptionAsync(true);
+                tab.Request += async (_, e) =>
                 {
-                    if (e.Request.Url.StartsWith("data:", StringComparison.OrdinalIgnoreCase) || e.Request.Url == "about:blank")
+                    try
                     {
-                        await e.Request.ContinueAsync();
+                        if (e.Request.Url.StartsWith("data:", StringComparison.OrdinalIgnoreCase) || e.Request.Url == "about:blank")
+                        {
+                            await e.Request.ContinueAsync();
+                        }
+                        else
+                        {
+                            // Counted once the browser has accepted the abort: without interception the abort throws, and a request
+                            // that was only seen is not a request that was stopped.
+                            await e.Request.AbortAsync();
+                            Interlocked.Increment(ref blocked);
+                        }
                     }
-                    else
+                    catch (Exception)
                     {
-                        // Counted once the browser has accepted the abort: without interception the abort throws, and a request
-                        // that was only seen is not a request that was stopped.
-                        await e.Request.AbortAsync();
-                        Interlocked.Increment(ref blocked);
+                        // An async void handler must never throw: the request was already settled, or the page is gone.
                     }
-                }
-                catch (Exception)
+                };
+            }
+
+            var toPrint = job.Html;
+            var laidOut = (Pages: 0, Overflow: (IReadOnlyList<BookOverflow>)[]);
+            if (job.Layout is { } layout)
+            {
+                // The one page of a job that runs script: ours only. The shell's policy forbids every script element; the renderer is put in
+                // through the browser's own evaluation, which the policy does not govern, and the page's text is data to it.
+                await using var scratch = await browser.NewPageAsync().WaitAsync(token);
+                await Seal(scratch);
+                await scratch.SetContentAsync(job.Html, new SetContentOptions { WaitUntil = [WaitUntilNavigation.Load], Timeout = (int)limit.TotalMilliseconds }).WaitAsync(token);
+                await scratch.EvaluateExpressionAsync(layout.Script).WaitAsync(token);
+                object input = layout.Chapters is { } chapters ? chapters.Select(c => new { section = c.Section, markdown = c.Markdown }).ToArray() : layout.Markdown;
+                if (layout.Fit)
                 {
-                    // An async void handler must never throw: the request was already settled, or the page is gone.
+                    var fitted = await scratch.EvaluateFunctionAsync<BookFitted>("(chapters, art) => CodexBook.fitPages(chapters, art)", input, layout.Art).WaitAsync(token)
+                        ?? throw new InvalidOperationException("The book's renderer returned no fitted chapters.");
+                    return (new BookPdfResult([], product, blocked, clock.Elapsed, 0) { Pages = fitted.Pages, Overflow = fitted.Overflow, Fitted = fitted }, null);
                 }
-            };
+
+                var result = await scratch.EvaluateFunctionAsync<BookLaidOut>("(input, art) => CodexBook.print(input, art)", input, layout.Art).WaitAsync(token);
+                if (result?.Html is not { Length: > 0 } drawn)
+                {
+                    throw new InvalidOperationException("The book's renderer returned no page.");
+                }
+
+                toPrint = drawn;
+                laidOut = (result.Pages, result.Overflow ?? []);
+            }
+
+            await using var page = await browser.NewPageAsync().WaitAsync(token);
+            await page.SetJavaScriptEnabledAsync(false);
+            await Seal(page);
 
             async Task<byte[]> Pass(string html)
             {
@@ -268,7 +361,7 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
                 }).WaitAsync(token);
             }
 
-            var pdf = await Pass(job.Html);
+            var pdf = await Pass(toPrint);
             var passes = 1;
             if (job.Headings.Count > 0)
             {
@@ -299,7 +392,7 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
                 log.LogWarning("The book page tried to fetch {Count} resources and was refused", blocked);
             }
 
-            return (new BookPdfResult(pdf, product, blocked, clock.Elapsed, passes), null);
+            return (new BookPdfResult(pdf, product, blocked, clock.Elapsed, passes) { Pages = laidOut.Pages, Overflow = laidOut.Overflow }, null);
         }
         catch (BookPdfUnavailableException)
         {
@@ -394,4 +487,12 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
 
         log.LogWarning("Could not remove the browser profile {Profile}", profile);
     }
+}
+
+/// <summary>What the renderer's <c>print</c> returns.</summary>
+internal sealed class BookLaidOut
+{
+    public string? Html { get; set; }
+    public int Pages { get; set; }
+    public BookOverflow[]? Overflow { get; set; }
 }

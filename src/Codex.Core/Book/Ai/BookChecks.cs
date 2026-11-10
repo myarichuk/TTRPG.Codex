@@ -101,7 +101,7 @@ public static class BookChecks
     }
 
     /// <summary>Heading texts, unescaped and trimmed, as the compiler writes them with a backslash before each markup character.</summary>
-    internal static IEnumerable<string> Headings(string markdown) =>
+    public static IEnumerable<string> Headings(string markdown) =>
         Heading.Matches(markdown).Select(m => Unescape(m.Groups["text"].Value).Trim()).Where(t => t.Length > 0);
 
     private static string Unescape(string text) => Regex.Replace(text, @"\\(.)", "$1", RegexOptions.CultureInvariant | RegexOptions.Singleline, Timeout);

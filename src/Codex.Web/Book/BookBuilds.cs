@@ -135,11 +135,12 @@ public sealed class BookRun
 /// cost is counted against the cap before it is made (<see cref="BookBudget"/>), and the run stops at the cap, at the first refusal that
 /// every later call would meet, or when the DM cancels, keeping what exists.
 /// </summary>
-public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository store, IBookModels models, Func<string, string, Task<CampaignAccess?>> resolve, TimeProvider? clock = null)
+public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository store, IBookModels models, Func<string, string, Task<CampaignAccess?>> resolve, TimeProvider? clock = null, BookGate? gate = null)
 {
     private readonly ConcurrentDictionary<string, BookRun> _runs = new();
-    // One build (or discard) per DM, taken before the first await: a check made after the awaits would let two clicks both pass it.
-    private readonly ConcurrentDictionary<string, bool> _busy = new();
+    // One paid run (or discard) per DM, taken before the first await: a check made after the awaits would let two clicks both pass it. The gate
+    // is shared with the art director (BookArtDirection), so the two kinds of run cannot overlap either.
+    private readonly BookGate _gate = gate ?? new BookGate();
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
 
     private static string KeyOf(string campaignId, string userId, string audience) => campaignId + "|" + userId + "|" + audience;
@@ -212,7 +213,7 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
     /// server allowance not covering the calls, another run under way. Null when the book is not the caller's to read.</summary>
     public async Task<BookRun?> StartAsync(CampaignAccess asked, BookBuildRequest request)
     {
-        if (!_busy.TryAdd(asked.UserId, true)) throw new BookBuildBusyException();
+        if (!_gate.TryEnter(asked.UserId)) throw new BookBuildBusyException();
         var launched = false;
         try
         {
@@ -222,7 +223,7 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
         }
         finally
         {
-            if (!launched) _busy.TryRemove(asked.UserId, out _);
+            if (!launched) _gate.Exit(asked.UserId);
         }
     }
 
@@ -255,12 +256,6 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
     private async Task ExecuteAsync(BookRun run, Prepared p, BookBuildRequest request, Dictionary<string, string> keys, HashSet<string> todo, BookBudget budget, BookModelHandle? model)
     {
         var build = p.Stored ?? new BookBuildDocument { Audience = p.Edition };
-        // A chapter the book no longer has (deleted, or hidden from this edition) is dropped from the store: nothing may print it again.
-        var present = p.Document.Sections.Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
-        build.Sections.RemoveAll(s => !present.Contains(s.Id));
-        build.Language = BookThemes.Primary(request.Language);
-        build.Style = p.Style;
-
         var chain = Task.CompletedTask;
         var chainGate = new object();
         var totalsDone = 0;
@@ -291,6 +286,13 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
 
         try
         {
+            // Inside the try: whatever breaks here still finishes the run, returns the model and frees the DM's build slot.
+            // A chapter the book no longer has (deleted, or hidden from this edition) is dropped from the store: nothing may print it again.
+            var present = p.Document.Sections.Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
+            build.Sections.RemoveAll(s => !present.Contains(s.Id));
+            build.Language = BookThemes.Primary(request.Language);
+            build.Style = p.Style;
+
             if (model == null)
             {
                 // Nothing to ask: every chapter is built or too short. The store is tidied (dropped chapters) and the run is over.
@@ -357,7 +359,7 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
         {
             // The server requests that were set aside and not used go back, and the DM may start another build.
             model?.Dispose();
-            _busy.TryRemove(run.UserId, out _);
+            _gate.Exit(run.UserId);
         }
 
         void PersistTotals()
@@ -391,14 +393,14 @@ public sealed class BookBuilds(BookSourceReader reader, IBookBuildRepository sto
     {
         if (await resolve(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return false;
         // Takes the DM's one slot, so a build cannot start between the check and the delete and bring the chapters back.
-        if (!_busy.TryAdd(dm.UserId, true)) return false;
+        if (!_gate.TryEnter(dm.UserId)) return false;
         try
         {
             return await store.DeleteAsync(dm, audience);
         }
         finally
         {
-            _busy.TryRemove(dm.UserId, out _);
+            _gate.Exit(dm.UserId);
         }
     }
 

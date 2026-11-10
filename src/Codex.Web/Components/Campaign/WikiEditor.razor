@@ -257,11 +257,11 @@
             WikiPageKind.Quest => ("scene from an adventure", ArtShape.Wide),
             _ => ("scene, object or idea from a fantasy world", ArtShape.Wide)
         };
-        return Art.GenerateAsync(Ctx.UserId, draft.Title, subjectKind, TextFormatting.Summary(Mentions.Plain(draft.Body), 300), shape, ct);
+        return Art.GenerateAsync(Ctx.UserId, Ctx.Campaign.Id, draft.Title, subjectKind, TextFormatting.Summary(Mentions.Plain(draft.Body), 300), shape, ct);
     }
 
     private Task<ArtImage> GenerateArtAsync(CancellationToken ct) =>
-        Art.GenerateAsync(Ctx.UserId, draft.Title, "place", TextFormatting.Summary(Mentions.Plain(draft.Body), 300), ArtShape.Wide, ct);
+        Art.GenerateAsync(Ctx.UserId, Ctx.Campaign.Id, draft.Title, "place", TextFormatting.Summary(Mentions.Plain(draft.Body), 300), ArtShape.Wide, ct);
 
     // At the caret the box last had (a textarea keeps its selection when the chip takes focus), as typing it would; the
     // box's input event brings the text back here.
@@ -352,6 +352,12 @@
                 return await Art.SetWikiPageAsync(draft, Ctx.Access, removeArt ? null : pendingArt);
             }
 
+            return true;
+        }
+        catch (LocalizedException ex) when (ex.Key == "Service.Storage.Full")
+        {
+            // The page and its place are stored; only the picture found no room, and the reason is said instead of a general failure.
+            Ctx.Notify(Flash.Error(L.Describe(ex)));
             return true;
         }
         catch (Exception ex)

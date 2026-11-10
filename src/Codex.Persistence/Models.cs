@@ -187,6 +187,17 @@ public class ActorDocument
     /// <summary>The wiki page this character was promoted from (<see cref="WikiPageDocument.Id"/>), or empty.</summary>
     public string? WikiPageId { get; set; }
 
+    /// <summary>On a vault character (no <see cref="CampaignId"/>): the game system it is built for. Empty on a campaign's
+    /// actors, whose system is the campaign's (docs/SERVER_ACCESS_AND_VAULT.md 8).</summary>
+    public string? SystemId { get; set; }
+
+    /// <summary>On a campaign's copy of a vault character: the vault character it was brought in from (7).</summary>
+    public string? VaultSourceId { get; set; }
+
+    /// <summary>A character in its owner's vault, outside every campaign.</summary>
+    [Newtonsoft.Json.JsonIgnore]
+    public bool IsVault => string.IsNullOrEmpty(CampaignId);
+
     /// <summary>True once a portrait is stored as the "portrait" attachment; <see cref="PortraitVersion"/> busts caches.</summary>
     public bool HasPortrait { get; set; }
     public int PortraitVersion { get; set; }
@@ -214,7 +225,24 @@ public class BestiaryEntry
 public static class UserRoles
 {
     public const string Player = "Player";
+
+    /// <summary>May create campaigns when the server allows only Game Masters to (docs/SERVER_ACCESS_AND_VAULT.md 3).</summary>
+    public const string GameMaster = "GameMaster";
+
     public const string ServerAdmin = "ServerAdmin";
+}
+
+/// <summary>Whether an account may use the server (docs/SERVER_ACCESS_AND_VAULT.md 3). An account stored before approval existed has
+/// no value and reads as <see cref="Approved"/>: only a sign-up or an admin ever writes the others.</summary>
+public enum AccountStatus
+{
+    Approved = 0,
+
+    /// <summary>Signed up on a server that needs approval: may sign in, sees only "waiting for approval".</summary>
+    Pending = 1,
+
+    /// <summary>Turned off by an admin: may not sign in.</summary>
+    Disabled = 2
 }
 
 public class UserDocument
@@ -224,6 +252,15 @@ public class UserDocument
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public List<string> Roles { get; set; } = new();
+    public AccountStatus Status { get; set; } = AccountStatus.Approved;
+
+    /// <summary>When the account was made; null for accounts made before this was kept.</summary>
+    public DateTime? CreatedAt { get; set; }
+
+    /// <summary>This account's own storage limit, in MB (docs/SERVER_ACCESS_AND_VAULT.md 16): null follows the server's
+    /// (<see cref="ServerSettingsDocument.StorageLimitMb"/>), 0 is no limit, more is that many MB.</summary>
+    public int? StorageLimitMb { get; set; }
+
     public List<ExternalLogin> ExternalLogins { get; set; } = new();
 
     /// <summary>The chat-model providers this user configured (their own keys). Keys are stored
@@ -238,6 +275,10 @@ public class UserDocument
     public List<AiProviderConfig> ImageProviders { get; set; } = new();
 
     public string? DefaultImageProviderId { get; set; }
+
+    /// <summary>The user's own words for how every picture they draw should look (docs/BOOK_EXPORT.md 41.23), used as written in place of the
+    /// built-in style phrases, so pictures drawn with the same model look alike. Null for the built-in style.</summary>
+    public string? ImageStyle { get; set; }
 
     /// <summary>The language this user picked for the interface (en, ru, he). Null follows the server default.</summary>
     public string? Culture { get; set; }
@@ -265,6 +306,9 @@ public class AiProviderConfig
 
     /// <summary>What the user pays per million output tokens. See <see cref="InputPricePerMTok"/>.</summary>
     public decimal? OutputPricePerMTok { get; set; }
+
+    /// <summary>What the user pays per picture, as they entered it; null when they did not say. Image models only.</summary>
+    public decimal? PricePerImage { get; set; }
 
     /// <summary>A short label for the currency the prices are in ("USD", "$", "credits"). Shown, never interpreted.</summary>
     public string PriceLabel { get; set; } = string.Empty;

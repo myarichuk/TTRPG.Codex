@@ -340,7 +340,7 @@
 
     private string SecretPreview(SecretBlock block)
     {
-        var text = WikiRender.Summary(block.Inner, mentions, 140, forDm: Ctx.IsDm);
+        var text = WikiRender.Summary(block.Inner, pages, mentions, 140, forDm: Ctx.IsDm);
         return string.IsNullOrWhiteSpace(text) ? L["Campaign.Wiki.Secrets.Empty"] : text;
     }
 

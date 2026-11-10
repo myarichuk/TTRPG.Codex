@@ -6,6 +6,7 @@
 @inject ISystemCatalog Catalog
 @inject IContentRegistry Registry
 @inject CampaignExportService ExportService
+@inject IServerSettingsStore ServerSettings
 @inject IMediaStore Media
 @inject NavigationManager Nav
 @inject IConfiguration Config
@@ -142,32 +143,48 @@
                 @foreach (var member in Ctx.Campaign.Members)
                 {
                     var isOwner = member.UserId == Ctx.Campaign.OwnerId;
-                    <li class="list-row">
+                    var who = usernames.GetValueOrDefault(member.UserId, member.UserId);
+                    <li class="list-row" data-testid="member-@member.UserId">
                         <div class="row-main">
-                            <div class="row-title">@usernames.GetValueOrDefault(member.UserId, member.UserId) @(isOwner ? L["Campaign.Settings.Owner"] : "")</div>
+                            <div class="row-title">@who @(isOwner ? L["Campaign.Settings.Owner"] : "")</div>
                         </div>
-                        @if (Ctx.IsDm && !isOwner)
+                        @* Only the owner changes who GMs the campaign (docs/SERVER_ACCESS_AND_VAULT.md 4): a co-GM manages the players. *@
+                        @if (Ctx.IsDm && !isOwner && (IsOwner || member.Role != CampaignRole.DM))
                         {
                             <div class="row-actions">
                                 <label for="role-@member.UserId" class="visually-hidden">@L["Campaign.Settings.RoleFor", usernames.GetValueOrDefault(member.UserId, member.UserId)]</label>
                                 @* Keyed on the times a change was called off, so a refused pick is redrawn as the role it still is. *@
                                 <select @key="(member.UserId, roleResets)" id="role-@member.UserId" class="field-select field-sm" value="@member.Role" @onchange="e => ChangeRoleAsync(member, e.Value?.ToString())">
                                     @* Observer is not offered: nothing reads it, so it is a player by another name. A member who has it keeps it. *@
-                                    @foreach (var role in Enum.GetValues<CampaignRole>().Where(r => r != CampaignRole.Observer || r == member.Role))
+                                    @foreach (var role in Enum.GetValues<CampaignRole>().Where(r => (r != CampaignRole.Observer || r == member.Role) && (r != CampaignRole.DM || IsOwner)))
                                     {
-                                        <option value="@role">@RoleLabel(role)</option>
+                                        <option value="@role">@RoleLabel(role, isOwner: false)</option>
                                     }
                                 </select>
-                                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="() => RemoveMemberAsync(member)" aria-label="@L["Campaign.Settings.RemoveFromCampaign", usernames.GetValueOrDefault(member.UserId, member.UserId)]">@L["Campaign.Settings.Remove"]</CodexButton>
+                                @if (IsOwner && member.Role == CampaignRole.DM)
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => PassOnAsync(member)" aria-label="@L["Campaign.Settings.PassOnLabel", who]" data-testid="@($"pass-on-{member.UserId}")">@L["Campaign.Settings.PassOn"]</CodexButton>
+                                }
+                                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="() => RemoveMemberAsync(member)" aria-label="@L["Campaign.Settings.RemoveFromCampaign", who]">@L["Campaign.Settings.Remove"]</CodexButton>
                             </div>
                         }
                         else
                         {
-                            <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(member.Role)</span>
+                            <div class="row-actions">
+                                <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(member.Role, isOwner)</span>
+                                @if (!isOwner && member.Role == CampaignRole.DM && member.UserId == Ctx.UserId)
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="StepDownAsync" data-testid="step-down">@L["Campaign.Settings.StepDown"]</CodexButton>
+                                }
+                            </div>
                         }
                     </li>
                 }
             </ul>
+            @if (Ctx.IsDm && !IsOwner)
+            {
+                <p class="field-hint mt-2 mb-0" data-testid="co-gm-hint">@L["Campaign.Settings.CoGmHint"]</p>
+            }
             @if (Ctx.IsDm)
             {
                 <hr />
@@ -201,6 +218,15 @@
                 <div class="field-hint">@L["Campaign.Settings.NewLinkHint"]</div>
             }
         </section>
+
+        @if (!IsOwner && Ctx.Campaign.Members.Any(m => m.UserId == Ctx.UserId))
+        {
+            <section class="panel" aria-labelledby="leave-heading">
+                <div class="panel-title"><h3 id="leave-heading">@L["Campaign.Settings.Leave.Title"]</h3></div>
+                <p class="small-muted">@L["Campaign.Settings.Leave.Hint"]</p>
+                <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="LeaveAsync" data-testid="settings-leave">@L["Campaign.Settings.Leave.Button"]</CodexButton>
+            </section>
+        }
     </div>
 
     @if (Ctx.IsDm)
@@ -231,6 +257,10 @@
                 @if (Ctx.Campaign.OwnerId != Ctx.UserId)
                 {
                     <div class="field-hint">@L["Campaign.Settings.Delete.OwnerOnlyHint"]</div>
+                }
+                else
+                {
+                    <div class="field-hint" data-testid="owner-leave-hint">@L["Campaign.Settings.Leave.OwnerHint"]</div>
                 }
             </section>
         </div>
@@ -270,9 +300,12 @@
         usernames = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
     }
 
-    private string RoleLabel(CampaignRole role) => role switch
+    private bool IsOwner => Ctx.Campaign.OwnerId == Ctx.UserId;
+
+    // The owner is the GM; anyone else holding the GM role is a co-GM.
+    private string RoleLabel(CampaignRole role, bool isOwner) => role switch
     {
-        CampaignRole.DM => L["Campaign.Settings.Role.DM"],
+        CampaignRole.DM => isOwner ? L["Campaign.Settings.Role.DM"] : L["Campaign.Settings.Role.CoGm"],
         CampaignRole.Player => L["Campaign.Settings.Role.Player"],
         _ => L["Campaign.Settings.Role.Observer"]
     };
@@ -332,9 +365,18 @@
     /// since the page loaded is refused by the store; <see cref="CampaignContext.WithCurrentRoleAsync"/> says so instead.</summary>
     private async Task ChangeAsync(Action<CampaignDocument> mutate, string done)
     {
-        if (await Ctx.WithCurrentRoleAsync(() => CampaignRepo.UpdateAsDmAsync(Ctx.Access, mutate)))
+        try
         {
-            Ctx.Notify(Flash.Success(done));
+            if (await Ctx.WithCurrentRoleAsync(() => CampaignRepo.UpdateAsDmAsync(Ctx.Access, mutate)))
+            {
+                Ctx.Notify(Flash.Success(done));
+                await Ctx.ReloadAsync();
+            }
+        }
+        catch (LocalizedException ex) when (ex.Key == "Campaign.OwnerOnly")
+        {
+            // The owner passed the campaign on, or this page was opened as the owner and no longer is.
+            Ctx.Notify(Flash.Error(L["Campaign.OwnerOnly"]));
             await Ctx.ReloadAsync();
         }
     }
@@ -355,7 +397,7 @@
     {
         if (!Enum.TryParse<CampaignRole>(role, out var parsed) || parsed == member.Role) return;
         var who = usernames.GetValueOrDefault(member.UserId, member.UserId);
-        if (!await confirm.ShowAsync(L["Campaign.Settings.RoleQ", who, RoleLabel(parsed)],
+        if (!await confirm.ShowAsync(L["Campaign.Settings.RoleQ", who, RoleLabel(parsed, isOwner: false)],
                 parsed == CampaignRole.DM ? L["Campaign.Settings.RoleBodyDm"] : L["Campaign.Settings.RoleBody"], L["Campaign.Settings.RoleConfirm"],
                 isDestructive: parsed == CampaignRole.DM))
         {
@@ -366,7 +408,56 @@
         await ChangeAsync(campaign =>
         {
             if (campaign.Members.FirstOrDefault(m => m.UserId == member.UserId) is { } stored) stored.Role = parsed;
-        }, L["Campaign.Settings.RoleChanged", who, RoleLabel(parsed)]);
+        }, L["Campaign.Settings.RoleChanged", who, RoleLabel(parsed, isOwner: false)]);
+    }
+
+    // The owner hands the campaign to a co-GM and stays one; from then on the new owner alone changes who GMs it.
+    private async Task PassOnAsync(CampaignMember member)
+    {
+        var who = usernames.GetValueOrDefault(member.UserId, member.UserId);
+        if (!await confirm.ShowAsync(L["Campaign.Settings.PassOnQ", who], L["Campaign.Settings.PassOnBody", who], L["Campaign.Settings.PassOn"], isDestructive: true)) return;
+        await ChangeAsync(campaign =>
+        {
+            if (campaign.Members.Any(m => m.UserId == member.UserId && m.Role == CampaignRole.DM)) campaign.OwnerId = member.UserId;
+        }, L["Campaign.Settings.PassedOn", who]);
+    }
+
+    // A co-GM gives up the GM role themselves; the store lets them take only their own away. Their GM view ends, so the page loads afresh.
+    private async Task StepDownAsync()
+    {
+        if (!await confirm.ShowAsync(L["Campaign.Settings.StepDownQ"], L["Campaign.Settings.StepDownBody"], L["Campaign.Settings.StepDown"], isDestructive: true)) return;
+        try
+        {
+            if (await Ctx.WithCurrentRoleAsync(() => CampaignRepo.UpdateAsDmAsync(Ctx.Access, campaign =>
+                {
+                    if (campaign.OwnerId != Ctx.UserId && campaign.Members.FirstOrDefault(m => m.UserId == Ctx.UserId) is { } me) me.Role = CampaignRole.Player;
+                })))
+            {
+                Nav.NavigateTo(Ctx.BasePath, forceLoad: true);
+            }
+        }
+        catch (LocalizedException ex) when (ex.Key == "Campaign.OwnerOnly")
+        {
+            Ctx.Notify(Flash.Error(L["Campaign.OwnerOnly"]));
+            await Ctx.ReloadAsync();
+        }
+    }
+
+    // Any member but the owner may leave; their characters stay in the cast, and a new invite brings them back.
+    private async Task LeaveAsync()
+    {
+        if (!await confirm.ShowAsync(L["Campaign.Settings.Leave.Q", Ctx.Campaign.Name], L["Campaign.Settings.Leave.Hint"], L["Campaign.Settings.Leave.Button"], isDestructive: true)) return;
+        switch (await CampaignRepo.LeaveAsync(Ctx.Campaign.Id, Ctx.UserId))
+        {
+            case CampaignLeaveResult.Left:
+            case CampaignLeaveResult.NotMember:
+                Nav.NavigateTo("/", forceLoad: true);
+                break;
+            default:
+                Ctx.Notify(Flash.Error(L["Campaign.Settings.Leave.OwnerHint"]));
+                await Ctx.ReloadAsync();
+                break;
+        }
     }
 
     private async Task RemoveMemberAsync(CampaignMember member)
@@ -509,6 +600,13 @@
 
             if (bundle.Campaign!.Id != Ctx.Campaign.Id)
             {
+                // A copy is a new campaign: only someone who may create campaigns (docs/SERVER_ACCESS_AND_VAULT.md 3).
+                if (!ServerAccess.MayCreateCampaigns(await UserRepo.GetUserByIdAsync(Ctx.UserId), await ServerSettings.GetAsync()))
+                {
+                    Ctx.Notify(Flash.Error(L["Page.Home.JoinOnly"]));
+                    return;
+                }
+
                 // Under new ids, so the file can never land on a campaign that exists (D13).
                 if (await ExportService.ImportAsNewAsync(bundle, Ctx.UserId) is { } restoredId)
                 {

@@ -1,0 +1,402 @@
+@using Codex.Core.Book
+@using Codex.Persistence
+@using Codex.Web.Book
+@inject IBookDraftRepository Store
+@inject BookDraftWebs Webs
+@inject IJSRuntime JS
+@inject ILogger<BookThemeWizard> Logger
+@implements IAsyncDisposable
+
+@* The theme wizard (docs/BOOK_EXPORT.md 41.22): a Homebrewery theme pasted in, its web fonts and pictures fetched once, its faces measured for
+   each language the book prints, a stand-in chosen for each script its faces lack, a preview on sample pages in each language, and the theme
+   kept in this campaign for its books. Over the editor, inside its dialog. *@
+<div class="book-theme-wizard" role="dialog" aria-modal="true" aria-labelledby="book-theme-wizard-title" data-testid="book-theme-wizard"
+     @onkeydown="@(e => { if (e.Key == "Escape" && !busy) _ = CloseAsync(); })">
+    <div class="book-theme-wizard-box">
+        <header class="book-theme-wizard-bar">
+            <h3 id="book-theme-wizard-title" class="h6 mb-0"><LucideIcon IconName="palette" Size="16" /> @L["Campaign.Book.Theme.Title"]</h3>
+            <ol class="book-theme-steps" aria-label="@L["Campaign.Book.Theme.Steps"]">
+                @for (var i = 1; i <= 3; i++)
+                {
+                    var n = i;
+                    <li class="@(step == n ? "current" : step > n ? "done" : "")" aria-current="@(step == n ? "step" : null)">@(n switch { 1 => L["Campaign.Book.Theme.Step1"], 2 => L["Campaign.Book.Theme.Step2"], _ => L["Campaign.Book.Theme.Step3"] })</li>
+                }
+            </ol>
+            <button type="button" class="book-draft-close" @onclick="CloseAsync" disabled="@busy" title="@L["Common.Close"]" aria-label="@L["Common.Close"]"
+                    data-testid="book-theme-close"><LucideIcon IconName="x" Size="16" /></button>
+        </header>
+
+        @if (message != null)
+        {
+            <div class="field-error mx-3 mt-2" role="alert" data-testid="book-theme-message">@message</div>
+        }
+
+        @if (step == 1)
+        {
+            <div class="book-theme-body">
+                @if (themes.Count > 0)
+                {
+                    <section class="mb-3" aria-labelledby="book-theme-list-title">
+                        <h4 id="book-theme-list-title" class="h6">@L["Campaign.Book.Theme.Yours"]</h4>
+                        <ul class="list-unstyled mb-0" data-testid="book-theme-list">
+                            @foreach (var t in themes)
+                            {
+                                <li class="d-flex align-items-center gap-2 mb-1" data-testid="book-theme-item">
+                                    <span class="flex-grow-1"><bdi>@t.Name</bdi> <span class="small-muted">@string.Join(", ", t.Languages.Select(l => L["Campaign.Book.Theme.Language." + l].ToString()))@(t.Ready ? "" : " · " + L["Campaign.Book.Theme.Unfinished"])</span></span>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => EditAsync(t)" Disabled="@busy" data-testid="book-theme-edit">@L["Campaign.Book.Theme.Edit"]</CodexButton>
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => DeleteAsync(t)" Disabled="@busy" data-testid="book-theme-delete">@L["Campaign.Book.Theme.Delete"]</CodexButton>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+                <label class="form-label" for="book-theme-name">@L["Campaign.Book.Theme.Name"]</label>
+                <input id="book-theme-name" class="form-control form-control-sm mb-2" maxlength="@BookThemeDocument.MaxNameChars" @bind="name" @bind:event="oninput"
+                       data-testid="book-theme-name" />
+                <label class="form-label" for="book-theme-css">@L["Campaign.Book.Theme.Css"]</label>
+                <div class="small-muted mb-1">@L["Campaign.Book.Theme.CssHint"]</div>
+                @* Not bound: read as a stream when the GM goes on (a pasted theme with its fonts written in is far over a message's 32 KB). *@
+                <textarea id="book-theme-css" class="form-control form-control-sm book-theme-css" rows="12" spellcheck="false" dir="ltr" @ref="cssField"
+                          maxlength="@BookDraftDocument.MaxCssChars" data-testid="book-theme-css"></textarea>
+                <label class="form-check mt-2">
+                    <input type="checkbox" class="form-check-input" @bind="homebrewery" data-testid="book-theme-homebrewery" />
+                    <span class="form-check-label">@L["Campaign.Book.Theme.OnLayer"]</span>
+                </label>
+            </div>
+            <footer class="book-theme-wizard-foot">
+                <HomebreweryCredit Class="me-auto" />
+                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="MeasureAsync" Disabled="@(busy || string.IsNullOrWhiteSpace(name))"
+                             data-testid="book-theme-next">@(busy ? L["Campaign.Book.Theme.Fetching"] : L["Campaign.Book.Theme.Next"])</CodexButton>
+            </footer>
+        }
+        else if (step == 2 && measure != null)
+        {
+            <div class="book-theme-body">
+                @if (report is { Failed.Count: > 0 } failed)
+                {
+                    <div class="field-error mb-2" data-testid="book-theme-fetch-failed">
+                        @L["Campaign.Book.Theme.NotFetched", failed.Failed.Count]
+                        <ul class="mb-0 ps-3">@foreach (var f in failed.Failed.Take(8)) { <li><bdi class="text-break">@f.Url</bdi></li> }</ul>
+                    </div>
+                }
+                @if (measure.Unbrought.Count > 0)
+                {
+                    <div class="small-muted mb-2" data-testid="book-theme-unbrought">@L["Campaign.Book.Theme.Unbrought", string.Join(", ", measure.Unbrought)]</div>
+                }
+                @if (BookCustomTheme.TextFamilies(measure.Faces).Count == 0)
+                {
+                    <div class="field-error mb-2" data-testid="book-theme-no-faces">@L["Campaign.Book.Theme.NoFaces"]</div>
+                }
+                <p class="small mb-2">@L["Campaign.Book.Theme.LanguagesHint"]</p>
+                <table class="table table-sm book-theme-languages" data-testid="book-theme-languages">
+                    <tbody>
+                        @foreach (var lang in measure.Languages)
+                        {
+                            var l = lang.Language;
+                            <tr data-testid="book-theme-language" data-language="@l">
+                                <th scope="row" class="text-nowrap">
+                                    <label class="form-check mb-0">
+                                        <input type="checkbox" class="form-check-input" checked="@chosen.Contains(l)" disabled="@(l == "en" || !Possible(lang))"
+                                               @onchange="e => Choose(l, e.Value is true)" data-testid="book-theme-language-on" />
+                                        <span class="form-check-label">@L["Campaign.Book.Theme.Language." + l]</span>
+                                    </label>
+                                </th>
+                                <td>
+                                    @if (lang.Lacking.Count == 0)
+                                    {
+                                        <span data-testid="book-theme-covered">@L["Campaign.Book.Theme.Covered"]</span>
+                                    }
+                                    else
+                                    {
+                                        <div class="small mb-1">@L["Campaign.Book.Theme.Lacking"]</div>
+                                        @foreach (var family in lang.Lacking)
+                                        {
+                                            var f = family;
+                                            <label class="d-flex align-items-center gap-2 mb-1">
+                                                <bdi class="text-nowrap" dir="ltr">@f</bdi> →
+                                                <select class="form-select form-select-sm w-auto" value="@StandIn(l, f)" @onchange="e => SetStandIn(l, f, e.Value as string)"
+                                                        data-testid="book-theme-standin" data-family="@f">
+                                                    <option value="">@L["Campaign.Book.Theme.NoStandIn"]</option>
+                                                    @foreach (var s in BookStandIns.For(l))
+                                                    {
+                                                        <option value="@s.Id">@s.Name (@L["Campaign.Book.Theme.Kind." + s.Kind])</option>
+                                                    }
+                                                </select>
+                                            </label>
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <footer class="book-theme-wizard-foot">
+                <HomebreweryCredit Class="me-auto" />
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="BackToStylesheetAsync" Disabled="@busy">@L["Campaign.Book.Theme.Back"]</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="PreviewAsync" Disabled="@(busy || BookCustomTheme.TextFamilies(measure.Faces).Count == 0)"
+                             data-testid="book-theme-preview-next">@L["Campaign.Book.Theme.ToPreview"]</CodexButton>
+            </footer>
+        }
+        else if (step == 3)
+        {
+            <div class="book-theme-body book-theme-preview-body">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span>@L["Campaign.Book.Theme.PreviewIn"]</span>
+                    @foreach (var l in BookScripts.Languages.Where(chosen.Contains))
+                    {
+                        var lang = l;
+                        <CodexButton Variant="@(previewLanguage == lang ? CodexButtonVariant.Plaque : CodexButtonVariant.Etched)" Small="true" OnClick="() => ShowAsync(lang)"
+                                     Disabled="@busy" data-testid="book-theme-preview-language" data-language="@lang">@L["Campaign.Book.Theme.Language." + lang]</CodexButton>
+                    }
+                </div>
+                @if (letters.Count > 0)
+                {
+                    <div class="field-error mb-2" data-testid="book-theme-letters">
+                        @L["Campaign.Book.Theme.Letters", string.Join(" ", letters.SelectMany(x => x.Characters.EnumerateRunes()).Distinct())]
+                    </div>
+                }
+                <iframe class="book-theme-preview" sandbox="allow-same-origin" title="@L["Campaign.Book.Theme.PreviewTitle"]" @ref="frame" data-testid="book-theme-preview"></iframe>
+            </div>
+            <footer class="book-theme-wizard-foot">
+                <HomebreweryCredit Class="me-auto" />
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => { step = 2; }" Disabled="@busy">@L["Campaign.Book.Theme.Back"]</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="SaveAsync" Disabled="@busy" data-testid="book-theme-save">@L["Campaign.Book.Theme.Save"]</CodexButton>
+            </footer>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CampaignAccess Access { get; set; } = null!;
+
+    /// <summary>The draft's language: preselected, and the one previewed first.</summary>
+    [Parameter, EditorRequired] public string Language { get; set; } = "en";
+
+    [Parameter, EditorRequired] public Func<string, byte[]?> Font { get; set; } = null!;
+
+    /// <summary>Called when the wizard closes: the theme to use (<c>custom:key</c>) and whether it sits on the layer, or null when nothing was saved.</summary>
+    [Parameter] public EventCallback<(string Id, bool Homebrewery)?> OnClose { get; set; }
+
+    private int step = 1;
+    private bool busy;
+    private string? message;
+    private IReadOnlyList<BookThemeDocument> themes = [];
+    private string name = string.Empty;
+    private string css = string.Empty;
+    private bool homebrewery = true;
+    private string? key;
+    private int version;
+    private BookThemeMeasure? measure;
+    private BookWebReport? report;
+    private BookCssWeb web = new();
+    private readonly HashSet<string> chosen = new(StringComparer.Ordinal) { "en" };
+    private readonly Dictionary<string, Dictionary<string, string>> standIns = new(StringComparer.Ordinal);
+    private string previewLanguage = "en";
+    private IReadOnlyList<(string Section, string Characters, int More)> letters = [];
+    private ElementReference frame;
+    private ElementReference cssField;
+    private IJSObjectReference? module;
+    private readonly CancellationTokenSource closing = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        themes = await Store.ThemesAsync(Access);
+        previewLanguage = BookThemes.Primary(Language);
+    }
+
+    private static bool Possible(BookThemeLanguage lang) => lang.Lacking.Count == 0 || BookStandIns.For(lang.Language).Any();
+
+    private string StandIn(string language, string family) =>
+        standIns.TryGetValue(language, out var map) && map.TryGetValue(family, out var id) ? id : string.Empty;
+
+    private void SetStandIn(string language, string family, string? id)
+    {
+        if (!standIns.TryGetValue(language, out var map)) standIns[language] = map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrEmpty(id)) map.Remove(family);
+        else map[family] = id;
+    }
+
+    private void Choose(string language, bool on)
+    {
+        if (on) chosen.Add(language);
+        else if (language != "en") chosen.Remove(language);
+    }
+
+    private async Task<IJSObjectReference> ModuleAsync() => module ??= await JS.InvokeAsync<IJSObjectReference>("import", "/" + Assets["lib/book/book-editor.js"]);
+
+    private async Task EditAsync(BookThemeDocument theme)
+    {
+        key = theme.Key;
+        version = theme.Version;
+        name = theme.Name;
+        css = theme.Css;
+        homebrewery = theme.Homebrewery;
+        chosen.Clear();
+        chosen.Add("en");
+        foreach (var l in theme.Languages) chosen.Add(l);
+        standIns.Clear();
+        foreach (var (l, map) in theme.StandIns) standIns[l] = new Dictionary<string, string>(map, StringComparer.OrdinalIgnoreCase);
+        message = null;
+        await (await ModuleAsync()).InvokeVoidAsync("setField", cssField, css);
+    }
+
+    private async Task DeleteAsync(BookThemeDocument theme)
+    {
+        busy = true;
+        try
+        {
+            await Store.DeleteThemeAsync(Access, theme.Key);
+            if (key == theme.Key)
+            {
+                key = null;
+                version = 0;
+            }
+
+            themes = await Store.ThemesAsync(Access);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    /// <summary>Step 1 to 2: the theme kept (unfinished), its web addresses fetched into its copies, its faces measured.</summary>
+    private async Task MeasureAsync()
+    {
+        busy = true;
+        message = null;
+        try
+        {
+            var bytes = await (await ModuleAsync()).InvokeAsync<IJSStreamReference>("fieldBytes", cssField);
+            await using (var read = await bytes.OpenReadStreamAsync(BookDraftDocument.MaxCssChars * 4L + 16))
+            {
+                using var reader = new StreamReader(read, System.Text.Encoding.UTF8);
+                css = await reader.ReadToEndAsync();
+            }
+
+            if (string.IsNullOrWhiteSpace(css))
+            {
+                message = L["Campaign.Book.Theme.Empty"];
+                return;
+            }
+
+            var (saved, theme) = await Store.SaveThemeAsync(Access, key, name, css, homebrewery, [.. chosen], standIns, ready: false, version);
+            if (saved != BookDraftSave.Saved || theme == null)
+            {
+                message = saved == BookDraftSave.TooLarge ? L["Campaign.Book.Theme.TooLarge"] : L["Campaign.Book.Draft.ActionFailed"];
+                return;
+            }
+
+            key = theme.Key;
+            version = theme.Version;
+            report = await Webs.RefreshThemeAsync(Access, theme.Key, css, closing.Token);
+            web = await Store.ThemeWebAsync(Access, theme.Key);
+            measure = BookThemeCatalog.Measure(css, homebrewery, web, Font);
+            // What each language needs: a language the faces print is offered ticked; for one they lack, a stand-in of the same kind is proposed
+            // for each family that lacks it (kept when the GM already chose one).
+            foreach (var lang in measure.Languages)
+            {
+                foreach (var family in lang.Lacking)
+                {
+                    if (StandIn(lang.Language, family).Length == 0 && BookStandIns.Propose(family, lang.Language) is { } proposed) SetStandIn(lang.Language, family, proposed.Id);
+                }
+
+                if (lang.Language == BookThemes.Primary(Language) && Possible(lang)) chosen.Add(lang.Language);
+            }
+
+            themes = await Store.ThemesAsync(Access);
+            step = 2;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Logger.LogWarning(ex, "Measuring a book theme failed");
+            message = L["Campaign.Book.Draft.ActionFailed"];
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task PreviewAsync()
+    {
+        if (!chosen.Contains(previewLanguage)) previewLanguage = "en";
+        step = 3;
+        StateHasChanged();
+        await Task.Yield();
+        await ShowAsync(previewLanguage);
+    }
+
+    /// <summary>The sample pages in <paramref name="language"/>, drawn under the theme as it would print, in the preview frame.</summary>
+    private async Task ShowAsync(string language)
+    {
+        previewLanguage = language;
+        busy = true;
+        try
+        {
+            var resolved = BookThemeCatalog.Build("custom:preview", name, css, homebrewery, chosen, standIns, web, language, Font);
+            var shell = BookDraftHtml.Shell(name, language, resolved.Theme, "A4", null, homebrewery, Font);
+            var sample = BookThemeSample.Markdown(language);
+            letters = resolved.Faces is { } faces ? BookFontCoverage.Uncovered([("sample", sample)], faces) : [];
+            StateHasChanged();
+            if (shell.Html != null) await (await ModuleAsync()).InvokeVoidAsync("sample", frame, shell.Html, sample);
+        }
+        catch (JSException ex)
+        {
+            Logger.LogWarning(ex, "Drawing a theme preview failed");
+            message = L["Campaign.Book.Draft.ActionFailed"];
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        busy = true;
+        message = null;
+        try
+        {
+            var (saved, theme) = await Store.SaveThemeAsync(Access, key, name, css, homebrewery, [.. chosen], standIns, ready: true, version);
+            if (saved != BookDraftSave.Saved || theme == null)
+            {
+                message = saved == BookDraftSave.Conflict ? L["Campaign.Book.Theme.Conflict"] : L["Campaign.Book.Draft.ActionFailed"];
+                return;
+            }
+
+            await OnClose.InvokeAsync((BookCustomTheme.Prefix + theme.Key, theme.Homebrewery));
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private Task CloseAsync() => OnClose.InvokeAsync(null);
+
+    private async Task BackToStylesheetAsync()
+    {
+        step = 1;
+        StateHasChanged();
+        await Task.Yield();
+        await (await ModuleAsync()).InvokeVoidAsync("setField", cssField, css);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        closing.Cancel();
+        closing.Dispose();
+        if (module != null)
+        {
+            try
+            {
+                await module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+    }
+}

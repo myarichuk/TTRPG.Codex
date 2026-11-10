@@ -11,6 +11,7 @@
 @inject ICampaignRepository CampaignRepository
 @inject NavigationManager NavManager
 @inject IConfiguration Configuration
+@inject IServerSettingsStore Settings
 
 <PageTitle>@L["Page.Register.Title"] | TTRPG.Codex</PageTitle>
 
@@ -18,14 +19,26 @@
     <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="28" /></div>
     <h1>@L["Page.Register.Heading"]</h1>
 
-    @if (!SignUpOpen)
+    @if (NotSetUp)
+    {
+        <div class="status" role="alert" data-testid="not-set-up">
+            <LucideIcon IconName="info" Size="18" /><span>@L[Exposed ? "Page.Register.NoAccountYet" : "Page.Setup.Elsewhere"]</span>
+        </div>
+    }
+    else if (!SignUpOpen)
     {
         <div class="status" role="alert" data-testid="invite-only">
-            <LucideIcon IconName="info" Size="18" /><span>@L[NoAccountYet ? "Page.Register.NoAccountYet" : "Page.Register.InviteOnly"]</span>
+            <LucideIcon IconName="info" Size="18" /><span>@L["Page.Register.InviteOnly"]</span>
         </div>
     }
     else
     {
+    @if (NeedsApproval)
+    {
+        <div class="status" role="note" data-testid="needs-approval">
+            <LucideIcon IconName="info" Size="18" /><span>@L["Page.Register.NeedsApproval"]</span>
+        </div>
+    }
     <EditForm Model="@Model" OnValidSubmit="HandleRegister" FormName="RegisterForm">
         <DataAnnotationsValidator />
 
@@ -74,16 +87,34 @@
     /// <summary>False on a server open to the internet unless the visitor came from a real campaign invite.</summary>
     private bool SignUpOpen { get; set; } = true;
 
-    /// <summary>True when sign-up is closed because nobody has an account yet: the DM must make theirs before opening the server up.</summary>
-    private bool NoAccountYet { get; set; }
+    /// <summary>Nobody has an account yet: the first one is the admin's, made in the setup on the server's own computer.</summary>
+    private bool NotSetUp { get; set; }
+
+    /// <summary>The new account will wait for an admin's approval.</summary>
+    private bool NeedsApproval { get; set; }
+
+    private string? ConfiguredAdmin => Configuration["Codex:AdminUsername"] is { Length: > 0 } name && !string.IsNullOrWhiteSpace(name) ? name : null;
 
     private string LoginHref => string.IsNullOrEmpty(ReturnUrl) ? "/login" : "/login?returnUrl=" + Uri.EscapeDataString(ReturnUrl);
 
     protected override async Task OnInitializedAsync()
     {
         Model ??= new();
-        SignUpOpen = await Codex.Web.ExposurePolicy.MaySignUpAsync(Exposed, ReturnUrl, CampaignRepository);
-        NoAccountYet = !SignUpOpen && !await UserRepository.AnyUsersExistAsync();
+        if (ConfiguredAdmin == null && !await UserRepository.AnyUsersExistAsync())
+        {
+            if (await ServerAccess.MaySetUpAsync(UserRepository, Exposed, HttpContext?.Connection.RemoteIpAddress))
+            {
+                NavManager.NavigateTo("/setup");
+                return;
+            }
+
+            NotSetUp = true;
+            return;
+        }
+
+        var status = await ServerAccess.NewAccountAsync(Settings, Exposed, ReturnUrl, CampaignRepository);
+        SignUpOpen = status != null;
+        NeedsApproval = status == AccountStatus.Pending;
     }
 
     public string? ErrorMessage { get; set; }
@@ -96,33 +127,21 @@
             return;
         }
 
-        if (!await Codex.Web.ExposurePolicy.MaySignUpAsync(Exposed, ReturnUrl, CampaignRepository))
+        if (NotSetUp)
+        {
+            return;
+        }
+
+        var status = await ServerAccess.NewAccountAsync(Settings, Exposed, ReturnUrl, CampaignRepository);
+        if (status == null)
         {
             SignUpOpen = false;
             return;
         }
 
-        if (Model.Password != Model.ConfirmPassword)
+        if (PasswordRules.Problem(Model.Username, Model.Password, Model.ConfirmPassword) is { } problem)
         {
-            ErrorMessage = L["Page.Register.Mismatch"];
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(Model.Username) || string.IsNullOrWhiteSpace(Model.Password))
-        {
-            ErrorMessage = L["Page.Register.Required"];
-            return;
-        }
-
-        if (Model.Password.Length < 8)
-        {
-            ErrorMessage = L["Page.Register.TooShort"];
-            return;
-        }
-
-        if (!Model.Password.Any(char.IsUpper) || !Model.Password.Any(char.IsLower) || !Model.Password.Any(char.IsDigit))
-        {
-            ErrorMessage = L["Page.Register.Weak"];
+            ErrorMessage = L[problem];
             return;
         }
 
@@ -138,6 +157,8 @@
             Id = Guid.NewGuid().ToString(),
             Username = Model.Username,
             Roles = new List<string> { UserRoles.Player },
+            Status = status.Value,
+            CreatedAt = DateTime.UtcNow,
             // Whatever language the person has been reading the sign-up page in becomes their saved choice.
             Culture = SupportedCultures.Normalize(System.Globalization.CultureInfo.CurrentUICulture.Name)
         };
@@ -161,14 +182,19 @@
 
         if (grantsServerAdmin)
         {
+            // Whoever runs the server is approved and runs campaigns.
             user.Roles.Add(UserRoles.ServerAdmin);
+            user.Roles.Add(UserRoles.GameMaster);
+            user.Status = AccountStatus.Approved;
         }
 
         await UserRepository.CreateUserAsync(user);
 
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, UserPrincipal.For(user));
 
-        var dest = Codex.Web.UrlHelper.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
+        var dest = user.Status == AccountStatus.Pending ? ServerAccess.WaitingPath
+            : grantsServerAdmin && !(await Settings.GetAsync()).SetupDone ? "/setup/server"
+            : Codex.Web.UrlHelper.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
         NavManager.NavigateTo(dest, forceLoad: true);
     }
 

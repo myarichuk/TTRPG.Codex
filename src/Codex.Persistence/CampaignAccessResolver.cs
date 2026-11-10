@@ -23,6 +23,7 @@ public class CampaignAccessResolver(ICampaignRepository campaignRepository, ISys
     /// <paramref name="write"/> false for the rare read that rechecks the role.</summary>
     public static async Task<CampaignAccess?> NowAsync(Raven.Client.Documents.IDocumentStore store, CampaignAccess access, bool write = true)
     {
+        if (string.IsNullOrEmpty(access.CampaignId)) return null;
         if (write && access.SystemMissing) return null;
 
         using var session = store.OpenAsyncSession();
@@ -46,5 +47,13 @@ public class CampaignAccessResolver(ICampaignRepository campaignRepository, ISys
         }
 
         return campaign.Members.FirstOrDefault(m => string.Equals(m.UserId, userId, StringComparison.Ordinal))?.Role;
+    }
+
+    /// <summary>Everyone who GMs the campaign: the owner and the members holding the GM role (co-GMs).</summary>
+    public static HashSet<string> GameMasters(CampaignDocument campaign)
+    {
+        var gms = campaign.Members.Where(m => m.Role == CampaignRole.DM).Select(m => m.UserId).ToHashSet(StringComparer.Ordinal);
+        if (!string.IsNullOrEmpty(campaign.OwnerId)) gms.Add(campaign.OwnerId);
+        return gms;
     }
 }

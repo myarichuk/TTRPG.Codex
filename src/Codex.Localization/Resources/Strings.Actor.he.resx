@@ -408,4 +408,45 @@
   <data name="Actor.Rule.Range" xml:space="preserve"><value>{0}: {1} {2} מחוץ לטווח {3}.</value></data>
   <data name="Actor.Rule.CampaignDuplicate" xml:space="preserve"><value>לשניים יש את השם {0}.</value></data>
   <data name="Actor.Rule.CampaignUnnamed" xml:space="preserve"><value>לאחד אין שם.</value></data>
+  <data name="Actor.Vault.Title" xml:space="preserve"><value>מהדמויות שלך</value></data>
+  <data name="Actor.Vault.Loading" xml:space="preserve"><value>טוען…</value></data>
+  <data name="Actor.Vault.Gone" xml:space="preserve"><value>הדמות שממנה הגיע העותק הזה כבר לא נמצאת בדמויות שלך.</value></data>
+  <data name="Actor.Vault.From" xml:space="preserve"><value>זה העותק של {0} במערכה. שינויים כאן נשארים במערכה עד שתשלחו אותם בחזרה.</value></data>
+  <data name="Actor.Vault.Push" xml:space="preserve"><value>לעדכן את הדמות שלי מהגיליון הזה</value></data>
+  <data name="Actor.Vault.PushHint" xml:space="preserve"><value>נלקחים הגיליון השמור, השם וההיסטוריה. ההערות והסודות של שליט המבוך נשארים כאן.</value></data>
+  <data name="Actor.Vault.Pushed" xml:space="preserve"><value>{0} עודכנה בדמויות שלך.</value></data>
+  <data name="Actor.Vault.SaveFirst" xml:space="preserve"><value>שמרו קודם את הגיליון, ואז עדכנו את הדמות.</value></data>
+  <data name="Actor.Vault.Pull" xml:space="preserve"><value>לבקש להביא לכאן את הגרסה החדשה שלי</value></data>
+  <data name="Actor.Vault.PullHint" xml:space="preserve"><value>שליט המבוך מאשר את זה קודם. ההערות והסודות שלו בהיסטוריה נשמרים.</value></data>
+  <data name="Actor.Vault.Asked" xml:space="preserve"><value>נשלח לשליט המבוך.</value></data>
+  <data name="Actor.Vault.Waiting" xml:space="preserve"><value>ממתין ששליט המבוך יביא לכאן את הגרסה החדשה.</value></data>
+  <data name="Actor.Vault.Withdraw" xml:space="preserve"><value>לבטל את הבקשה</value></data>
+  <data name="Actor.Vault.NotDone" xml:space="preserve"><value>זה לא הצליח. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Actor.Assist.Title" xml:space="preserve"><value>לשאול את ה־AI</value></data>
+  <data name="Actor.Assist.Intro" xml:space="preserve"><value>בקשו שינוי, או מה מתאים לדמות. ה־AI בוחר מהספרייה שהדמות הזו יכולה להשתמש בה. דבר לא משתנה עד שתקבלו, ודבר לא נשמר עד שתשמרו.</value></data>
+  <data name="Actor.Assist.Instruction" xml:space="preserve"><value>מה לשנות?</value></data>
+  <data name="Actor.Assist.Placeholder" xml:space="preserve"><value>למשל: שיטפס טוב יותר, או הוסף כוח אש.</value></data>
+  <data name="Actor.Assist.Hint" xml:space="preserve"><value>להדגשות, אפשר לכתוב כאן את הרעיון (“פיראט לשעבר”); אם ריק, ה־AI יקרא את ההיסטוריה.</value></data>
+  <data name="Actor.Assist.Propose" xml:space="preserve"><value>להציע שינויים</value></data>
+  <data name="Actor.Assist.Highlight" xml:space="preserve"><value>להדגיש מה מתאים</value></data>
+  <data name="Actor.Assist.Working" xml:space="preserve"><value>קורא את הגיליון והספרייה…</value></data>
+  <data name="Actor.Assist.NeedsText" xml:space="preserve"><value>קודם כתבו מה לשנות.</value></data>
+  <data name="Actor.Assist.Nothing" xml:space="preserve"><value>ה־AI לא הציע דבר. נסו לנסח אחרת.</value></data>
+  <data name="Actor.Assist.Failed" xml:space="preserve"><value>ה־AI לא הצליח לענות: {0}</value></data>
+  <data name="Actor.Assist.Changes" xml:space="preserve"><value>שינויים מוצעים ({0})</value></data>
+  <data name="Actor.Assist.Set" xml:space="preserve"><value>{0} ← {1}</value></data>
+  <data name="Actor.Assist.Empty" xml:space="preserve"><value>ריק</value></data>
+  <data name="Actor.Assist.Append" xml:space="preserve"><value>להוסיף “{0}”</value></data>
+  <data name="Actor.Assist.Add" xml:space="preserve"><value>+ {0}</value></data>
+  <data name="Actor.Assist.AddMany" xml:space="preserve"><value>+ {0} ×{1}</value></data>
+  <data name="Actor.Assist.Remove" xml:space="preserve"><value>− {0}</value></data>
+  <data name="Actor.Assist.RulesSay" xml:space="preserve"><value>עם השינויים המסומנים, הכללים אומרים:</value></data>
+  <data name="Actor.Assist.Take" xml:space="preserve"><value>לקבל את המסומנים ({0})</value></data>
+  <data name="Actor.Assist.Drop" xml:space="preserve"><value>לוותר על כולם</value></data>
+  <data name="Actor.Assist.Taken" xml:space="preserve"><value>{0} שינויים בגיליון. שמרו כדי לשמור אותם.</value></data>
+  <data name="Actor.Assist.TakenSome" xml:space="preserve"><value>{0} שינויים בגיליון. אלה כבר לא מתאימים למה שבגיליון עכשיו ולא נכללו: {1}. שמרו כדי לשמור את השאר.</value></data>
+  <data name="Actor.Assist.Highlights" xml:space="preserve"><value>מה מתאים ({0})</value></data>
+  <data name="Actor.Assist.GoThere" xml:space="preserve"><value>ללכת לשם</value></data>
+  <data name="Actor.Assist.HighlightsKept" xml:space="preserve"><value>הדגשות לא משנות דבר ולא נשמרות.</value></data>
+  <data name="Actor.Assist.Dismiss" xml:space="preserve"><value>להסתיר</value></data>
 </root>

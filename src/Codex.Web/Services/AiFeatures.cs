@@ -71,6 +71,29 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     private string WithSetting(CampaignDocument campaign, string line) =>
         AiPrompts.WithSetting(line, catalog.GetDefinition(campaign.SystemId)?.Setting);
 
+    /// <summary>Someone's own notes tidied (spelling, layout, structure), or a <c>Service.Ai.TidyLostMention</c> refusal when the
+    /// reply lost or changed a mention: <paramref name="encode"/> reads the typed mentions ("@Mara") as the page would save them,
+    /// and the tidied notes must name the same people, places and items. Only the notes are sent; nothing else of the campaign.</summary>
+    public async Task<string> TidyNotesAsync(string text, Func<string, string> encode, string userId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return text;
+        var assistant = await providers.AssistantForAsync(userId);
+        return Tidied(text, await assistant.TidyAsync(new TidyRequest(text), ct), encode);
+    }
+
+    /// <summary>The model's reply as the tidied notes, or the <c>Service.Ai.TidyLostMention</c> refusal (empty, or a mention lost or changed).</summary>
+    public static string Tidied(string text, string reply, Func<string, string> encode)
+    {
+        var tidied = reply.Trim();
+        if (tidied.Length == 0 || !SameMentions(encode(text), encode(tidied))) throw new LocalizedException("Service.Ai.TidyLostMention");
+        return tidied;
+    }
+
+    /// <summary>Whether two saved texts mention the same people, places and items.</summary>
+    public static bool SameMentions(string before, string after) =>
+        new[] { MentionKind.Actor, MentionKind.Place, MentionKind.Item }.All(kind =>
+            SessionMentions.MentionedIds(before, kind).ToHashSet(StringComparer.Ordinal).SetEquals(SessionMentions.MentionedIds(after, kind)));
+
     /// <summary>What the next level brings, with picks that fit the sheet, from the Library's class and subclass entries.</summary>
     public async Task<string> LevelUpAsync(ActorDocument actor, CampaignDocument campaign, SystemDefinition? system, string userId, CancellationToken ct = default)
     {

@@ -75,7 +75,7 @@ else
         try
         {
             var draft = Draft();
-            var image = await Art.GenerateAsync(CurrentUserId, draft.Name, AiFeatures.KindLabel(draft.Kind, Definition), Ai.PortraitVisual(draft, Campaign.SystemId, Definition), ArtShape.Square, ct);
+            var image = await Art.GenerateAsync(CurrentUserId, Campaign.Id, draft.Name, AiFeatures.KindLabel(draft.Kind, Definition), Ai.PortraitVisual(draft, Campaign.SystemId, Definition), ArtShape.Square, ct);
             // Stopped just as the picture arrived: nothing is stored. Once storing starts, it finishes.
             ct.ThrowIfCancellationRequested();
             drawing.End(ct);

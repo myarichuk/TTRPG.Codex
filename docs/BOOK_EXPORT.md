@@ -87,7 +87,9 @@ invisibly (transport retries, temperature fallback, `response_format` fallback, 
 ## 3. Rendering (revised after review)
 
 - **Dialect**: a Homebrewery-compatible subset (see 6 and 8 for the engine choice). The `.md` is *compatible markup*, we do not
-  claim pixel parity, and we do not use the Homebrewery name or the WotC-imitating PHB look. Ship our own theme.
+  claim pixel parity, and we do not use the Homebrewery name or the WotC-imitating PHB look. Ship our own theme. (Revised 2026-11-06,
+  41.12: the user chose Homebrewery parity for adoption. A "Homebrewery compatibility" layer, on by default, carries PHB's layout and the
+  Solbera faces but none of its pictures or colours; the name is used to say what it is compatible with, nothing more.)
 - **Closed network**: images are referenced only by slot or attachment id; no URL survives rendering. The renderer escapes by
   default (reuse the `WikiText` approach, there is no sanitiser package in the repo). The preview iframe is `sandbox`ed with
   no scripts and a CSP of `default-src 'none'; img-src data: 'self'`. The print browser uses `SetContent`, JavaScript off, and
@@ -398,7 +400,8 @@ inset escapes the margins. Never a filter-generated image as a full-page backgro
 - **`BookHtml`**: one self-contained document: theme CSS with page size and direction written in (no `var()` in `@page`), fonts as
   data URIs (no font request at all), a CSP meta and header of `default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src
   data:`, chapters rendered with one shared heading-id namespace, a table of contents. The user's CSS goes through `BookCss.Clean`:
-  no `@import`, `@font-face`, `url()` other than `data:image/`, `expression`, `behavior`, `image-set`, no `<`, 20 KB cap.
+  no `@import`, `@font-face`, `url()` other than `data:image/`, `expression`, `behavior`, `image-set`, no `<`, 20 KB cap. (Superseded by
+  the tokenizer of 41.11.)
 - **Route**: `GET /campaigns/{id}/book/{dm|party}?lang=&theme=&size=` (`BookEndpoints`, DM only, `no-store`, `nosniff`). The HTTP-level
   test arrived with section 16.
 - **Measured in Chromium 153 on a real book from this builder (23 A4 pages, three chapters, tables, lists, quotes)**: 0.14 s, 466 KB,
@@ -647,7 +650,7 @@ default provider (OpenAI-compatible or Anthropic) as decided; nothing calls it f
   - A secret is never rewritten by the model; a DM who wants the secrets polished will not get that.
   - A model that returns text a check accepts but that reads badly is not detected.
 
-## 26. First run against a real model (claude-haiku-5-5), and what it changed
+## 26. First run against a real model (a small Anthropic model), and what it changed
 
 A scratch harness outside the repo (the key came in through an environment variable for each run and is in no file) ran `BookSectionWorker` on
 hand-written chapters in English, Russian and Hebrew, then ablated the prompt to test the checks themselves. About 25 calls, a few cents.
@@ -752,8 +755,8 @@ were reproduced by a failing test first (or a mutant the tests now kill).
 
 What the reviewer tried that held: a DM build served to the party (audience is in the key, the id and the overlay guard); hiding an actor or editing
 a secret after a build; injection through `{{`, `:::`, HTML from a model; role re-read in the store; backups listing; guessing an `asset:` id;
-budget overflow. **Not checked by it, and still open**: a wiki link `[[Some Page]]` to a DM-only page is passed to the model (and printed by the
-deterministic book) as the link text.
+budget overflow. **Not checked by it**: a wiki link `[[Some Page]]` to a DM-only page was passed to the model (and printed by the
+deterministic book) as the link text. Fixed in section 37.
 
 ### 28.2 Structure (recommendations, not built)
 
@@ -848,7 +851,7 @@ in a hand-written chapter that is not one of the compiler's, and a look at RTL o
 
 `BookImageScaler` (Codex.Persistence, SkiaSharp 3.119.4, MIT; `SkiaSharp.NativeAssets.Linux.NoDependencies` so a Linux host needs no fontconfig; Windows and macOS
 natives come with SkiaSharp itself) sits between `BookImageSanitizer` and the book. A picture is scaled down, never up, to its box at 300 dpi for the PDF
-and 120 dpi for the preview (`BookArtQuality`; the route chooses by `forPrint`). Boxes: cover 140x165 mm (contained), portrait and homebrew 62x52 mm,
+and 120 dpi for the preview (`BookArtQuality`; the route chooses by `forPrint`). Boxes: cover 140x165 mm (contained), portrait and homebrew 62x52 mm (now 42x56, 3:4: see §39),
 place, wiki and location 88x48 mm (filled, so both sides must be covered). Opaque pictures are written as JPEG q85, pictures with any transparency as PNG;
 a result that is not smaller than the source is discarded. `BookArtReader.MaxTotalBytes` now counts what is placed, not what was uploaded.
 
@@ -890,9 +893,9 @@ Open, in the order I would take them:
 1. **(Fixed in section 32.)** ~~Anchoring is still by heading text.~~ A body line `## Vera` inside an earlier entry (a wiki page "History" with a `## Vera` subsection) still takes Vera's picture,
    and the real heading gets none. Always a picture the party may see, so a misplacement, not a leak. A proper fix needs a per-entry marker emitted by `Compile`.
 2. **(Fixed in section 33.)** ~~The decoder runs on player-uploaded portraits, in-process (see the correction above).~~ Options: decode out of process, scale only DM-uploaded media, or decode in the printing browser.
-3. **One global decoder queue of two**, shared by all users: one DM's first build of many large pictures delays everyone's preview and PDF, and the PDF slot is held meanwhile.
+3. **(Fixed in 41.24.)** ~~**One global decoder queue of two**, shared by all users:~~ one DM's first build of many large pictures delays everyone's preview and PDF, and the PDF slot is held meanwhile.
    Needs a per-user limit or a time budget that falls back to unscaled bytes.
-4. **Preview and print can differ**: the 64 MB cap counts scaled bytes and preview files are about six times smaller, so a book of roughly 11-64 MB of print-size art
+4. **(Fixed in 41.24.)** ~~**Preview and print can differ**~~: the 64 MB cap counts scaled bytes and preview files are about six times smaller, so a book of roughly 11-64 MB of print-size art
    shows every picture in the preview and drops some from the PDF ("limit"). The skips are not shown in the panel.
 5. Animated WebP/APNG that need scaling lose all but one frame (untested which); the cache's byte count can drift by one entry under a race; the column and drop-cap tests are
    string checks on the CSS, not on a render.
@@ -955,3 +958,1567 @@ The capture uploads a cover and three portraits through the app's own upload con
 browser both ran), and `site/tools/book-pages.py` lays cover, Cast and a content page side by side. The pictures are **stand-ins drawn by `site/tools/demo-art.py`** (flat shapes made
 with Pillow, not art); the screenshots show how pictures are placed, not what good art looks like. A render of that capture found the drop cap landing on the italic tagline paragraph;
 the theme now skips a paragraph that is all italic. Not shown on the site: the AI build (no model is configured in the capture), the one-column layout, Letter paper, the GM edition.
+
+## 34. Art step 3: slots, and the GM's own pictures in them (done)
+
+The slot model that section 30 put off. `BookSlots.For(source, compiled, entries)` (Persistence) lists an edition's slots: the cover, a header per chapter,
+and one per entry the compiler recorded. All of them come from that edition's own compile, so a hidden subject has no slot in the party book. A slot's
+key is `s` + 24 hex digits of SHA-256 over the subject *as this audience sees it*. The compiler now stamps every `BookEntryPosition` with its `Subject`
+and `Audience`. For an actor, the subject is `actor:<id>`, except in the party edition when the party knows the actor only as a stranger: then it is
+`mask:<id>`.
+
+**Deviation from 28.3, item 4:** the mask is keyed by the actor's id with a `mask:` prefix, not by the mask's content.
+- The prefix is enough to keep the GM's picture of the real character apart from the party's picture of the stranger.
+- Keying by id also keeps two strangers with the same public name apart.
+- When the GM reveals the character, the key changes, so the stranger's picture does not follow it onto the real character's entry. That is correct.
+
+**Storage.** `bookart/{campaign}` (`BookArtDocument`, `RavenBookArtRepository`) holds one document per campaign, not per GM, because pictures are part of
+the campaign. Each picture is an attachment named `book-<edition>-<key>` and tagged `BuiltFrom: party|dm` with the edition whose tray it was put in.
+- Reads and writes re-check the caller's GM role.
+- Writes use optimistic concurrency.
+- There are at most 600 pictures.
+- Deleting the campaign deletes the document.
+- The backup copies the pictures; the campaign export leaves them out.
+- No media route serves the document: the routes ask for fixed names (`cover`, `portrait`, `art`), and a test checks this.
+
+**The gate has three layers, and a mutation test showed each one is caught alone:**
+- `BookSlots.Choose` gives the party edition only party pictures. The GM edition gets its own picture, or the party's where it has none.
+- `BookArtReader` refuses a GM picture handed to it for a party source.
+- `BookArt.Slot(key, audience)` gives a party entry nothing made for the GM, even from a map read for the GM.
+
+On upload, `BookArtService` rebuilds the slots from the edition's source and refuses a key that is not among them. It does not trust a key posted from
+the page. A picture in a slot replaces the subject's own picture in the book only; that picture is then not read at all. A chapter header is placed
+after the title line, which a rewrite also has because code writes it. A chapter that does not start with its title gets no header. The scaler's
+header box is 172 x 62 mm. The Parchment drop cap also finds `h1 + .art-header + p`. A Chromium render showed the header spanning both columns and the
+drop cap in place.
+
+**The tray.** `BookArtTray.razor`, under "Pictures for this book" in the panel, lists the cover, each chapter's header and its entries. Each row shows
+its state: your picture, the party edition's, its own picture, or none. Each row has upload and remove buttons and a status line read out to screen
+readers. Entries with the same name, such as two strangers, are numbered "(1)", "(2)" in the tray only; the numbers come from that edition's labels.
+The e2e test `TheGmPutsAPictureInTheCoverSlot...` drives the real tray in the real app:
+- it uploads to the party cover and finds it on the party page;
+- the GM tray then shows it as the party edition's picture;
+- removing it takes it out of the page;
+- the file input takes keyboard focus, and its label draws a focus ring.
+
+Mutants caught: GM pictures accepted for a party slot in `Choose`, in the reader and in the lookup; the mask key replaced by the actor key; the
+service's slot check skipped; the header placed without the title check.
+
+**Not done:**
+- No thumbnails in the tray; it shows each slot's state only.
+- There is no picture for a slot that no longer exists (it stays stored and the tray does not show it).
+- The Russian and Hebrew strings are written by the model.
+- Restoring a backup does not bring book pictures back. No backup image comes back automatically; a backup only copies them.
+
+## 35. Art step 4: the style vocabulary and the code-built prompt (done)
+
+`Codex.Core/Book/BookArtStyle.cs`:
+- `BookArtStyles` holds the vocabulary: seven media, six palettes, three line weights and five lights, plus framing per slot kind and a fixed negative
+  suffix.
+  - The media are painterly (the existing house phrase), oil, watercolour, ink linework, woodcut, engraving and parchment sketch.
+  - The framing covers cover, header, portrait, homebrew, location, wiki, spot and scene.
+  - The negative suffix says: no text, letters or numbers, no signature, watermark, frame or border, not a photograph, no modern objects, no real
+    people.
+- `BookImagePrompt.Assemble(slotKind, visual, style, names)` builds the prompt from framing, visual, the four style phrases and the negative suffix.
+  - It takes no subject name, and a test pins its signature.
+  - The visual is the only free text. It is refused, not repaired, when it has any of: a capitalised word that does not start a sentence (an all-caps
+    word counts), one of the campaign's names in any case, a real artist from a deny-list, "in the style of" and similar phrases, a link, empty text,
+    or more than 400 characters.
+  - An unknown style id falls back to the default, so a style saved from an older vocabulary still draws.
+
+The style is not stored or chosen anywhere yet; it arrives with drawing (step 6). `AiPrompts.Image`, the entity art path, is unchanged.
+
+**Limits:**
+- The capital check works for Latin and Cyrillic scripts. Hebrew has no capitals, so a Hebrew visual is checked only against the names list.
+- A German visual is refused, because German capitalises nouns.
+- The art director (step 5) therefore has to write visuals in English, whatever the book's language.
+
+## 36. Art step 5: the art director (done; nothing is drawn yet)
+
+`BookArtDirector` (Core/Book/Ai) asks a model, one chapter at a time, what each picture slot should show. `BookArtDirection` (Web) plans, prices and
+runs the requests. The suggestions show in the tray under each slot.
+
+**What the model is shown.** `BookArtOutline` builds one outline per chapter: each slot's heading, plus an excerpt of at most 700 characters from its
+entry as that edition reads it. The cover is asked about with the overview.
+- The outline is cut from the chapter after `BookWork.Prepare` has run on the whole chapter, which removes secrets and spells names out.
+- Before that, a marker line replaces each recorded heading line, and the prepared text is then split on those markers.
+- A GM block that is never closed runs to the end of the chapter, so it swallows the next entry's marker. That entry is then sent with its heading
+  and no text. The test seeds a biography with an unclosed `:::dm` and checks that the next entry's text is not sent.
+
+Each request covers at most 16 slots (20 before section 39), numbered 1..N within that request. The model never sees a slot key. The names list used for checks is never sent.
+
+**What is kept from the reply.**
+- The reply must be JSON `{slots:[{slot, depicts, visual, mood}]}`. A code fence or a preface is tolerated: everything from the first `{` to the last
+  `}` is read. The reply is capped at 64 KB, with a JSON depth of 8.
+- A slot number that was not sent is ignored. A number given twice drops both entries. A reply with more entries than slots drops everything.
+- Each field is checked on its own, and a slot that fails is dropped alone:
+  - `visual` (English) goes through `BookImagePrompt.Check` against the edition's names. A stranger's mask is a description, not a name, so it is not
+    on the list.
+  - `mood` must be an id from `BookArtStyles.Moods` (ten of them); it maps to a fixed phrase.
+  - `depicts` is for the GM's eyes only, in the book's language. It is checked with `BookChecks.StyleProblems` against that slot's own text: no
+    invented names or numbers, no markup, at most 160 characters.
+- The request is asked again only when the reply cannot be read or nothing in it passed, and only once, with the reasons.
+
+`BookImagePrompt.Assemble` now takes the mood id, and the signature test was updated on purpose.
+
+**Tags, the new invariant 10.** A suggestion carries the tag of the edition whose source was read. The repository is given only that tag. Each
+tray shows only its own edition's suggestions. The GM's outline of Cast includes hidden characters, so a GM suggestion for Vera's slot (which has the
+same key in both editions) can describe what the party may not know. Anything drawn from a suggestion in step 6 must inherit the suggestion's tag,
+not the tag of the tray it was clicked in.
+
+**Money and runs.**
+- The pre-flight is `BookPreflight.Estimate` over the requests, and the panel shows it: about N tokens, never more than the cap, and a cost range or
+  "no price".
+- The cap is fixed: every request twice at the high estimate, plus room for two in flight. The budget enforces it, and the GM does not set it.
+- The server allowance is reserved up front for requests × 2.
+- A refused key, a rate limit or the allowance stops the requests not yet sent.
+- The spend is added once to `BookArtDocument`'s director totals.
+- A refused suggestion write (the user is no longer GM) cancels the run.
+- `BookGate` is now one per-GM gate shared by chapter builds, discards and director runs, so they cannot overlap; a test checks both directions.
+
+**Staleness.** Each suggestion stores a hash of what was sent for its slot. A slot is asked about again only when that hash changes, unless "Suggest
+again" is ticked. Editing one biography re-asks that slot and at most its chapter header, not the whole of Cast. The tray marks an old suggestion as
+"the text has changed".
+
+Mutants caught: sending the outline without `Prepare`; accepting a slot number that was not sent; skipping the visual check; accepting a free-text
+mood; tagging by something other than the source read; a gate of its own; a tray that shows the other edition's suggestions.
+
+**Not done:**
+- No real model has been run on this; only scripted replies.
+- The prompt has not been tuned.
+- The GM cannot edit a suggestion yet (step 6).
+- The tray shows the mood id in English.
+- There is no e2e test of the director button.
+- Russian and Hebrew strings are written by the model.
+- `depicts` in Hebrew gets only the number check, because the name check relies on capitals.
+
+Fixed after review:
+- A party wiki body with `[[Some GM page]]` sent that page's title in the party outline, and the `depicts` check let it through because the
+  text was in the slot's own text. Fixed in section 37.
+- The mood is matched in any case, and the vocabulary's id is stored.
+- A quoted slot number (`"1"`) is read.
+- A slot number that was not sent is listed in the reasons given for the retry.
+- A save drops the edition's suggestions for slots that are gone, so the list stays bounded.
+
+## 37. Wiki links in the party edition (done)
+
+A `[[Page]]` link printed its target's title in every edition. In the party edition that named GM-only pages: in the printed book, in the chapter
+text a model is sent, and in the art director's outline, where the `depicts` check could not catch it because the title was in the slot's own
+text.
+
+The compiler now rewrites page links in every free-text paragraph, per edition (`BookCompiler.PageLinks`):
+- The GM edition keeps every link as written.
+- The party edition keeps a link whose page is in the party source, found the way the wiki finds it (`WikiLinks.TargetOfTitle`: by slug or by
+  title, any case).
+- Any other link prints its `|shown` words as escaped plain text, or nothing when it has none (an empty label counts as none). The title is never
+  printed.
+- Anything either reader takes for a stored mention is left to the mention resolvers, which fail closed. `BookWork.Prepare` reads a mention in
+  any case and with spaces before the colon, so the check here does too. A first version matched only lowercase `actor:` and printed the
+  label of `[[Actor:x|The Lich King]]` for a hidden actor; `BookBuildsTests.EveryWayOfWritingAMention_IsClosedToTheModel_WhenItsActorIsHidden`
+  caught it.
+
+The rewrite is done once, in the compiler, because the book, `BookWork.Prepare` and `BookArtOutline` all read the compiled text. The pattern
+matches anything the renderer reads as `[[…]]`, and longer ones too.
+
+Side effects:
+- The party source cannot tell a page the party may not see from one that was never written, so a link to an unwritten page also prints
+  nothing in the party edition.
+- A party chapter whose text changed this way gets a new build key, so a stored rewrite that carried the title is no longer printed.
+
+Test: `BookSourceTests.PartyEdition_NeverPrintsTheTitleOfAPageThePartyMayNotOpen_ThroughALink` covers the title, the slug, another case, an empty
+label and a real label, in the book, the model requests and the outline, and checks that the GM edition keeps links, including one to an
+unwritten page. It also has mentions in the same paragraph: a known actor, a stranger shown by their mask, and a hidden actor written
+`[[Actor:…|label]]`. Mutants caught: no rewrite; an unlabelled link keeping its title; the label dropped; a visible link dropped; the GM edition
+rewritten; mentions not skipped; mentions matched in lowercase only.
+
+The app's own wiki had the same leak: `WikiRender` showed a link a player may not open as its text (`missingAsText`), and for an unlabelled
+link that text is the hidden page's title. Fixed with the same rule in `WikiText.ForReader`, used by `WikiRender.ToHtml` and
+`WikiRender.Summary` for every non-GM reader. That covers page bodies, the GM's "view as players", lore details, map descriptions, the wiki
+list's cards, link previews (`PreviewEndpoints`) and a stranger's line in the cast list. The cast list loads no pages, so there a page link
+always shows only its label. The app rule also drops labelled or other-case text in a mention's form (`[[actor:x|Name]]`), which no reader
+names. Tests: `WikiPlayerLinksTests`, mutation-checked (eight mutants).
+
+Still not covered: recaps and notes go through `MentionLinks`/`TextFormatting`, which do not read page links at all. A `[[Page]]` typed there
+prints literally, brackets included, to everyone. Those editors do not offer page links.
+
+## 38. Art step 6: drawing the suggested pictures (done)
+
+The GM draws pictures from the art director's suggestions, one ticked place at a time, in the book's one style. Nothing is drawn without a
+click, and the cost (or the server's allowance) is shown before the click.
+
+**Where it lives:**
+- `Web/Book/BookArtDrawing.cs`: preview and run.
+- `Web/Book/BookImages.cs`: `IBookImages`, the picture model for one run.
+- `AiProviderService`: `ImagePriceFor`, `ReserveImagesAsync`, and a `GenerateImageAsync` overload that draws from a reservation.
+- `BookArtStore.cs`: style, drawing totals, and what a drawn picture was drawn from.
+- The tray: style pickers, a Draw tick and an editable description per suggestion, the draw line, progress and Stop.
+- AI settings: a price per picture for image models, and `AIImage:PricePerImage` / `AIImage:PriceLabel` for the server's key.
+
+**The rules:**
+- **The server checks every pick again when the run starts.** The client sends only slot keys and descriptions. For each pick:
+  - the slot must be one this edition's source makes now;
+  - the suggestion must be this edition's (`BuiltFrom` equal to the edition's tag);
+  - the suggestion must have been made from the slot's current text, so one stored before section 37's fix is "stale" and cannot be drawn;
+  - the description, edited or not, must pass `BookImagePrompt.Check` against the edition's names.
+
+  A pick that fails is listed with its reason ("slot", "suggestion", "stale", "visual", "repeat", "many") and is not drawn.
+- **The prompt is the code's.** `BookImagePrompt.Assemble` combines:
+  - the framing for the slot's kind;
+  - the description;
+  - the suggestion's mood (from the vocabulary);
+  - the book's style;
+  - the fixed negatives.
+
+  The header's framing now keeps the subject in a band, since its 172×62 mm box crops a wide picture.
+- **The tag is the edition's**, the one the suggestion was checked against. The request carries no tag.
+- **Shapes:** cover, portrait and homebrew are Tall; spot is Square; everything else is Wide.
+- **Money and allowance:**
+  - On the server's key the run sets aside N pictures, all or nothing.
+  - Each picture drawn spends one, never counted again (`GenerateImageAsync` with the reservation never falls back to `Take`).
+  - The handle refuses a draw past N.
+  - What was not drawn goes back.
+  - The pre-flight shows N × the price per picture when one is set; on the server's key, the pictures left today; otherwise "no price set".
+- **Pictures:**
+  - Drawn one at a time.
+  - Never retried, since a lost reply may still have been paid for.
+  - A refused key or model, or a rate limit, stops the rest.
+  - The returned bytes go through `BookImageSanitizer` like an upload; a refused picture is counted as drawn but not stored.
+- **Storing:**
+  - A drawn picture replaces the slot's picture for that edition; the pre-flight names every place where it would replace one.
+  - It is stored with origin "drawn", its description, and a hash of kind, description, mood and style.
+  - The tray says "drawn from an older description or style" when the slot's text, the mood or the style changed since. The picture is kept.
+- **One paid run per GM:** a run takes the shared `BookGate`.
+- **At most 12 pictures a run.**
+- **A tick is dropped when its suggestion changes.** The tray keeps, beside each tick, the suggestion it was ticked from, and drops the tick
+  when that suggestion is gone, out of date or replaced. Otherwise an old description could be sent under a new suggestion; the server
+  would accept it as the GM's own edit.
+- **OpenRouter picture errors keep their HTTP status**, as an inner exception, so a refused key or spent credit stops the run. Before
+  this they were read as an unknown failure, and the next picture was tried.
+
+**Tests:**
+- `BookImagesTests`: a run counts each picture once, cannot draw past N, gives back the rest, and is refused whole when it does not fit.
+- `BookArtDrawingTests`: the code's prompt and the edition's tag; refusals for the other edition's slot or suggestion, a stale suggestion and a
+  named description; a refused picture and a refused key; the gate.
+- The e2e `TheGmTicksASuggestedPlace_SeesThePriceFirst_AndThePartyBookPrintsThePictureDrawn`: through the real settings page and tray, with a
+  fake text and picture server in the test process.
+
+Mutants caught: counted twice; no cap; wrong tag; stale drawn; other edition's suggestion drawn; edited description ignored; no gate; no stop
+on a refused key; foreign slot accepted.
+
+**Not done:**
+- **No real picture model has been run on this.** Only a fake server has.
+- ~~Regenerate and Accept from up to three versions (28.3 item 3)~~ built in section 43.
+- The tray's tick dropping is not covered by an automated test. The server's checks, which are covered, are the guard that counts.
+- `WikiSecretsE2ETests` failed once in a run of 759 tests during this step, cause not captured, and passed on two reruns (alone, and with the
+  28 e2e tests). It failed again in the full run of section 39, and that time the cause was read: see section 39.
+- A description check failure is shown in English.
+- The mood is shown as its English id.
+- The drawing totals are lost if the process dies mid-run, like the director's.
+- Russian and Hebrew strings are written by the model.
+- Style names are translated in the tray, but the prompt is always English, on purpose.
+
+
+## 39. First real run of the art director and drawing, and what it changed
+
+The first real run of steps 5 and 6 used a small Anthropic text model and a fast picture model through OpenRouter. It ran in the preview app with a
+throwaway database. The campaign had one chapter (Cast) and two characters with short biographies, in the party edition and the default style.
+The GM entered both keys. Pictures drawn: three (the cover, the Cast header, one portrait). Text: about 5,100 tokens in and 4,500 out over seven
+requests, counting the failed ones and the reruns after each fix.
+
+**What it found, and what changed:**
+- **The director's replies were cut off.** The output limit was 160 tokens per place. The model's JSON for three places stopped mid-string, twice,
+  and the tray only said "0 of 1 requests gave suggestions". The model then used about 370 tokens per place. Now:
+  - The limit is 480 per place (`BookArtDirector.OutputPerSlot`). A request now asks about at most 16 places (`MaxSlotsPerCall`, from the
+    largest output limit), not 20: twenty would have had about 400 tokens apiece.
+  - A reply that stops at the limit (the provider says so, or it used the whole limit) is asked again, told to be brief (`BookArtDirector.CutOff`).
+  - When it still fails, the reason is `cutoff`, not `unreadable`.
+- **A chapter header's "depicts" was refused for naming the chapter's people.** The header's own text is only its title, so "Vera Holloway" was
+  "a name the book does not hold". The names are now checked against the whole request (the chapter and every place in it). That text is the
+  edition's own, and "depicts" is only shown to the GM. A name in none of it is still refused.
+- **Every drawn picture showed "drawn from an older description or style" at once.** The stored description was cut at 200 characters (a label's
+  length), and the tray hashed the cut text. The model's descriptions run to 300-400 characters. It is now kept up to `BookImagePrompt.MaxVisualChars`.
+  The three pictures of this run keep the old, cut text, so they stay marked until they are drawn again.
+- **A portrait lost its head.** The portrait box was 62x52 mm (wider than tall), cropped from the middle, and portraits are tall. On screen
+  it was 335x197 px. Now:
+  - The box is 3:4, at most 42 mm wide (34% of a column), cropped from 20% down (`.art-portrait`, `BookImageScaler.BoxFor`).
+  - This applies to uploaded portraits too (same box; not looked at with a real upload).
+- **The tray said why a request gave nothing only as a count.** It now lists each request's reason (cut off, unreadable, the checks, budget, key,
+  rate limit, stopped). It also shows "Some results could not be stored" for both runs, which it never did before.
+- **The server log** now has one line per director request whose replies were refused: the checks' own words, never the reply.
+- **Plurals:** "1 requests" is gone. The director's summary, progress and the token meter use plural forms (en, ru, he).
+
+**What went right:**
+- No name reached a picture prompt.
+- The pre-flight's estimates were close.
+- The cover and the portrait were good.
+- Drawing stopped at three, and the tray said "drew 3 of 3".
+- The pictures were stored under the party tag and printed in the party book.
+
+**Not changed, worth knowing:**
+- In the header the model drew a figure whose head touches the top edge, despite the framing's "nothing important near the top or bottom
+  edge". The crop is from the middle.
+- The cover's "depicts" was vague ("a coastline scene named by the chapter title"). It is only for the GM, and the visual was good.
+- With no price set for either model, no cost was shown anywhere. That is by design, but a GM may not notice that no price was set.
+
+**Tests:**
+- `BookArtDirectorReplyTests.AReplyCutOffAtTheLimit_IsAskedAgainMoreBriefly_AndSaysSoWhenItGivesUp` and `AHeaderMayNameThePeopleOfItsChapter`.
+- `BookArtDrawingTests.APictureDrawnFromALongVisual_IsCurrentInTheTray_UntilTheStyleChanges`.
+- The scaler test was updated to the new box.
+- Mutants caught: cut-off not detected; the 200-character clip.
+
+**`WikiSecretsE2ETests`, the failure of section 38, explained (likely).** In the full run (1,647 tests) it failed again: both secrets were shown to the
+player, but only one of the two was marked new (count 1, not 0: a "seen" time between the two reveals, as below). A player's "last seen" time for a wiki page was stamped when the page's first interactive render ran its script,
+not when the page was read. A reveal made in that gap (the test reveals right after the player opens the page, and the full suite is slow) was counted
+as seen, though it was never shown. That is a real bug, if a small one. `WikiSection` now stamps the time the page was read (`loadedAt`). It has not
+been reproduced on demand; the wiki tests then passed three runs in a row. It has nothing to do with section 37.
+
+Full run after these changes: 1,646 of 1,647 passed, the one failure being the test above, before its fix.
+
+## 40. Spike: Homebrewery's engine with an editor and AI editing (nothing in the app; for the GM to decide)
+
+The question was whether to reuse Homebrewery's system: Markdown and CSS on the left, a live preview on the right, AI editing in a dialog, and an
+export that prints a PDF looking like the preview. The spike lives in a session scratchpad, not in the repo. It is a bundled `marked-hbfm` with a
+small renderer, an editor page and a print page, run on the test campaign of section 39 with its three drawn pictures.
+
+**What was found:**
+- **The renderer is a separate MIT package**, `marked-hbfm` 1.0.3 (Homebrewery Flavored Markdown on `marked` 15). It bundles for the browser
+  (about 350 KB, from its ES module entry) and runs in Node too. The preview is the same as Homebrewery's: each `\page` becomes a fixed-size
+  `.page` div with a `.columnWrapper`, styled by the theme CSS and the GM's CSS. Its PDF is the browser printing that page, so the PDF matches
+  the preview. This was shown with Chrome to Chrome, for normal and long text, in Letter and A4.
+- **Grimdark works on Blank's layout alone.** The PHB theme is not needed (its look copies the official 5e book, and its pictures and fonts
+  have no clear licence). Blank's `style.less` still imports the 5e fonts and `assets.less`; only its layout CSS is reusable, and each font and
+  picture needs its own licence check.
+- **A4 works.** The pages reflow; the ribbon and the torn chapter art held at A4.
+- **Size:** grimdark printed 17.8 MB for 4 pages (the full-page stains texture, as section 13 measured); the PHB theme was 1 MB.
+
+**Findings that shape a design:**
+1. **Markdown and theme are coupled.** The same Markdown under the PHB theme was a mess (full-size pictures over the text). Grimdark places every
+   `.page img` absolutely, so a portrait on an overflow page covered the text and one on a chapter page joined the banner. A theme system on this
+   engine needs a contract: the generator emits a fixed set of blocks (chapter art, portrait, place picture, note, read-aloud, stat block,
+   table), and every theme styles each one. A rule for every image breaks that.
+2. **Homebrewery never breaks a page by itself;** text past a page is clipped. The spike's fit pass moved spilled blocks onto new pages, and
+   worked. But a block taller than a page stays clipped, without a warning, and moving rendered blocks means the stored Markdown is not what
+   prints. Better: a "Fit pages" command that writes `\page` and `\column` into the Markdown, an overflow marker in the preview, and a warning or
+   refusal at print time.
+3. **The preview and the PDF come from different browsers in the app.** The preview runs in the GM's browser (maybe Safari or Firefox); the PDF in
+   the server's Chromium. Line breaks can differ, so a page that fits in the preview may overflow in the PDF. The overflow check must also run in
+   the print browser and report what spilled. Untested.
+4. **An edited brew stops following the campaign.** That is the product decision. These do not carry over to a hand-edited copy: the stored
+   build and its staleness, drawn pictures' inputs, "the party book prints only party-tagged pictures", and the no-secrets guarantee. Options:
+   (a) content stays generated live, and the GM edits the theme, CSS and per-block options; (b) a generated brew the GM edits freely, with a
+   per-chapter "changed since you edited" notice and a regenerate button.
+5. **AI editing**, either way: it must not send `:::dm` blocks unmasked; it should return a patch to a selected range, shown as a diff to accept;
+   and it should show the cost first, like the rest of the AI layer. Not tried against a real model.
+6. **Security:** the print path has JavaScript off today. This needs either JS on in the print browser, limited by CSP to our own bundled script,
+   with no inline scripts and the network closed; or HTML rendered and cleaned on the server before printing. The editor preview must stay in a
+   sandboxed iframe with `default-src 'none'`, which blocks grimdark's Google Fonts import: the fonts must be bundled for the preview too.
+
+## 41. The editable book: design (chosen by the GM 2026-11-05; phases 1 to 6 built, see 41.9, 41.10, 41.15, 41.16, 41.18 and 41.19; layout 41.17; Russian and Hebrew 41.21)
+
+The GM chose an editable copy: the book becomes Markdown, generated from the campaign, that the GM edits freely, with AI help. Each chapter says
+when the campaign has changed since it was edited, with Regenerate and "Bring up to date with AI". The engine is Homebrewery's (section 40).
+
+### 41.1 What is stored
+- **A draft** per campaign, edition (party or GM) and language: the theme, the GM's CSS, and an ordered list of chapters. Changing language
+  means a new draft, because chapter titles are translated. Size-capped like the art store; saved with RavenDB optimistic concurrency, so a second
+  tab cannot silently overwrite the first.
+- **A chapter** is its own record and is edited one at a time; the preview shows the whole book. It holds:
+  - the GM's Markdown;
+  - **the base**: the generated Markdown the GM's edits started from (the text, not only a hash: a three-way merge needs it);
+  - the base's inputs key (as `BookBuildKey` does for rewrites), to tell whether the campaign changed;
+  - the previous version, so a Regenerate or an accepted merge can be undone.
+- **Entries carry stable ids.** The generator puts the entry's id on each `##` entry (a Cast member, a place, a page), so the stale notice and
+  merges work per entry, not per chapter. Handoff §7 item 2 already found chapter units too coarse.
+
+### 41.2 The generator and the theme contract
+- The generator writes Homebrewery-flavoured Markdown from the same masked source the book reads today (`BookSourceReader`, `BookComposer`),
+  with polished text from "Polish with AI" as an optional input, and the picture tray's pictures.
+- It uses only a fixed set of blocks, and **every theme must style each one**: chapter opening (title, chapter art), entry, portrait, place
+  picture, note, read-aloud, secret (GM draft only), stat block, table, cover, contents. Section 40 showed why: the same Markdown under another
+  theme's rules was a mess, and grimdark's rule for every picture put a portrait over the text. A theme that styles only some blocks is not a theme.
+- **Pictures go in only as `art:` references** (`![](art:<slot>)`), resolved when the page is drawn, and only to pictures tagged for the draft's
+  edition. No outside links or `data:` pictures in a draft. The GM can still pick any of the edition's slots or upload into one.
+- Themes: Plain first (on Blank's layout CSS, without its 5e fonts and pictures), then Ashen Vellum (the grimdark sheet, fonts bundled, stains as
+  a small tile, positions as variables), then Parchment. No theme copies a published book's look.
+
+### 41.3 When the campaign changes
+For each chapter (and inside it, each entry), the base's key is compared with the key recomputed now.
+- **A chapter the GM never edited** (its Markdown equals its base) is simply regenerated: one click, or automatically, with no AI.
+- **An edited chapter** shows "The campaign changed since you edited this", with:
+  - **Regenerate**: replaces it with the new generated text; the old one is kept as the previous version.
+  - **Bring up to date**: a three-way merge of base, GM's text and new generated text, **block by block, by the code first**:
+    - a block the GM did not touch takes the new generated text;
+    - a block the GM edited, whose source did not change, keeps the GM's text;
+    - only a block where both changed goes to the model, with the base, the GM's text and the new text, and returns one merged block.
+    The pre-flight shows the cost before anything is sent; with no conflicts there is no AI call at all.
+  - **Keep mine**: dismisses the notice until the campaign changes again.
+- **Page breaks are layout, not edits.** `\page` and `\column` lines (from "Fit pages" or typed) are left out of edit detection and out of the
+  merge, and pages are fitted again after a merge. Otherwise every fitted chapter would look edited.
+
+### 41.4 The review overlay (for merges and for AI edits)
+- Shown on the Markdown, one change at a time: inside prose, word-level red strikethrough for what goes and green for what comes; for a table or
+  stat block, the whole block replaced (word diffs on table syntax are unreadable). Accept or reject each change, or accept all. The preview shows
+  the result as accepted so far.
+- **AI edits** use the same overlay: the GM selects a passage (or a block, or a chapter) and asks ("make this a read-aloud box", "shorter",
+  "in the voice of a ship's log"). The model returns a replacement for that range only; nothing changes until it is accepted.
+- **Secrets:** in the GM draft every `{{secret` block (drafts never use `:::dm`, invariant 12) is swapped for a placeholder before sending and put back after; the model never sees a secret
+  and cannot change one. In the party draft the model sees only the party draft and the party-masked source.
+
+### 41.5 What changes for the party guarantee
+Once the GM can type freely, "the party book never shows a secret" is no longer something the code can guarantee: the GM can paste one in. What
+the code still guarantees: the party draft is generated from the party source only; its pictures resolve only to party-tagged pictures; its AI calls
+see only party text. What it adds: **before export, the party draft is checked for GM-only text** (secret blocks' text, hidden characters' names,
+titles of GM-only pages) and the GM is warned, with each hit shown. A warning, not a refusal: it is the GM's book.
+
+### 41.6 Printing
+- The renderer (`marked-hbfm`, bundled) runs in the GM's browser for the preview, in a sandboxed iframe with `default-src 'none'` and only bundled
+  fonts; and in the print browser for the PDF, with only that script allowed by CSP and the network still closed. Its HTML is cleaned in both.
+- **The fit check runs at print time too**, because the preview and the PDF come from different browsers (the GM's may be Safari or Firefox). A
+  block that does not fit, even on its own page, is reported before the PDF is given out, never silently clipped. "Fit pages" in the editor
+  writes `\page`/`\column` into the Markdown, so what is stored is what prints.
+
+### 41.7 What happens to the current book
+The HTML route, "Polish with AI" and the picture tray become inputs to the generator. The current route stays only until the draft reaches parity,
+so that two book paths do not drift apart.
+
+### 41.8 Phases
+1. **The draft and the editor:** draft store, generator with the block contract, editor dialog (CodeMirror with Markdown and CSS, sandboxed live
+   preview), the Plain theme, export through the print browser, the per-chapter stale notice with Regenerate (and silent update of unedited chapters).
+2. **Ashen Vellum:** the grimdark port; fonts bundled after a licence check of each file; theme picker.
+3. **Fit pages** and the print-time overflow report. Built (41.15).
+4. **AI edits** on a selection, with the review overlay. Built (41.16).
+5. **Bring up to date:** the block merge, AI only for conflicts, the same overlay. Built (41.18).
+6. **The party leak check** before export. Built (41.19).
+
+### 41.9 Phase 1: built
+
+The GM asked for `marked-hbfm` as planned (not the app's own renderer, which was offered as the safer option). What exists:
+
+- **Store** (`Persistence/Book/BookDraftStore.cs`):
+  - One `BookDraftDocument` per campaign, edition and language: `bookdrafts/{campaign}/{edition}/{language}`, holding theme, paper, GM CSS and
+    chapter order. Each chapter is its own `BookDraftChapter` (`.../chapters/{section}`) with the GM's Markdown, the base, the base's key, the
+    previous version (Markdown, base and key, so an undo brings the notice back), "keep mine", and a version number.
+  - A save names the version it was made from; any other is refused (`Conflict`), and optimistic concurrency covers the gap between load and save.
+  - Edition, language (`en`, `ru`, `he`) and section are checked before they reach an id. Caps: 400,000 characters a chapter, 512,000 of CSS (20,000 before 41.11),
+    40 chapters.
+  - `FollowAsync`: a chapter whose text is still its base takes the new generated text silently; a new chapter is added in place; a chapter the
+    campaign no longer has is removed if never edited. `\page`/`\column` lines are not edits (`BookDraftText.Content`).
+  - Deleted with the campaign; written to the daily backup (`book-drafts.json`); left out of the export, like the book art.
+- **Generator** (`Web/Book/BookDraftWriter.cs`): from `BookComposer.Compose` of the edition's masked source.
+  - Blocks: `{{cover`, `{{toc`, `{{chapter,#ch-ID}}`, `{{chapter-art`, `{{entry,#e-SLOT}}`, `{{portrait`, `{{place`, `{{secret` (GM draft only).
+    (Phase 2: `{{frontCover}}` with `{{cover-art`, `{{toc,wide`, and `{{chapter,#ch-ID` around the title; 41.10.)
+  - **Entry ids are slot keys**: a stranger in the party draft is `mask:`-keyed, so not even the hidden actor's id is in the party's text.
+  - **Secrets are `{{secret` blocks, never `:::dm`**: `marked-hbfm` reads `:::` as a definition list and would print the secret as text.
+  - The campaign's free text: mentions become the edition's names (never the typed label); wiki links become their words; pictures in free text
+    become their captions (a loss against the current book, which resolves `asset:` pictures in wiki bodies); `<` and `&` are escaped.
+  - Key: a hash of the generator version and the generated text. Bumping `BookDraftWriter.Version` makes every chapter "moved on"; unedited
+    ones follow silently.
+- **Renderer** (`tools/book-editor/src/render.js`, built into `wwwroot/lib/book/book-render.js` and `book-editor.js`, output committed,
+  licences in `THIRD-PARTY-NOTICES.txt`):
+  - `marked-hbfm` 1.0.3 pages (`\page` splits, Homebrewery's filler column).
+  - The **cleaner**: parsed inert in a `<template>`, then a tag and attribute allowlist. Links only to `#ids`. No style with `url(`, image
+    functions or escapes. A picture only as `art:<slot key>`, resolved to a plain data image from the edition's map; any other picture is removed.
+  - **Fitting at draw time**: blocks that spill go onto a continuation page; each fragment of a split block is measured. A block too tall even
+    for a page of its own is reported (preview line, `X-Book-Overflow` header on the PDF, a log line), not silently lost.
+  - **Contents page numbers** read from the laid-out pages.
+  - **`$[...]` maths is Homebrewery's, without `expr-eval`.** `marked-hbfm`'s variables extension evaluates it with `expr-eval`, whose
+    every version has critical advisories (code execution, prototype pollution; `npm audit`: no fix). The build aliases it to
+    `src/safe-math.js` (41.13): numbers, `+ - * / ^`, brackets and a fixed list of functions, nothing that reads a member or a name that is
+    not a listed function; and the build fails if `expr-eval` gets into a bundle another way. `test.mjs` runs the shipped bundle with hostile
+    expressions.
+  - **A trust boundary:** the editor runs `marked-hbfm` in the app's own page, on a draft that holds text players wrote (a character's
+    biography reaches Cast). Only cleaned output enters the frame, but a parser bug in `marked` or its extensions would run in the GM's
+    signed-in session. The print path is contained (a separate browser, every request refused, printed with script off). The proper fix is to
+    render in a frame with script and an opaque origin (`sandbox="allow-scripts"`, no same-origin), passing strings in and out. Not done.
+  - This replaces phase 3's "Fit pages" command for now: what prints is a pure function of the stored Markdown, but it is not the stored
+    Markdown. Phase 3 can still write the breaks into the text.
+- **Printing** (`BookPdf`, `BookPrintLayout`):
+  - The print browser opens the shell in a page with script on and every request refused, evaluates the bundled renderer (the shell's CSP
+    forbids every script element; DevTools evaluation is not governed by it), and lays the book out.
+  - The resulting page is then printed in a page with script off, as every book is.
+  - Tests (`BookDraftPdfTests`, real Chrome): nothing fetched; hostile markup neither runs nor fetches; long text flows and the contents line
+    says where; a too-tall block is reported; a picture resolves only to its slot.
+- **Plain theme** (`Core/Book/BookDraftHtml.cs`, `BookDraftThemes.Plain`): our own CSS for Homebrewery's page structure and every block of the
+  contract, with the plain book's faces. It has the same language gate: **English only**. (Phase 2 put it on Homebrewery's Blank layout, 41.10.)
+- **Editor** (`Components/Campaign/BookDraftEditor.razor`, opened from the book panel):
+  - Chapter list, CodeMirror (Markdown and a stylesheet tab), and the whole book drawn in a frame. The frame is `sandbox="allow-same-origin"`
+    (no script; same-origin only so the editor can draw into it and measure), shell CSP `default-src 'none'`, and is scaled to fit by a transform.
+  - Autosave about a second after typing stops. Text the editor is given (showing a chapter, a Regenerate) is not typing and is never saved
+    back; `BookDraftE2ETests.ATabThatOnlyLooksAtAChapter...` holds it (without the guard, a tab that only looked turned another tab's edit
+    into a conflict). The text goes to the server as a stream (no message-size limit).
+  - A conflict stops saving from that tab and says so; Close then warns once before closing over text that could not be saved.
+  - The stale notice names the changed entries; it offers Regenerate, Keep mine, and Undo after a Regenerate.
+  - Start over (with a confirmation) and Download PDF.
+- **Routes**: `GET /campaigns/{id}/book/{edition}/draft/{lang}/art` (the edition's preview pictures by slot, GM only, no-store) and `/pdf`.
+
+**Tests:** `BookDraftTests` (10: party canaries including the masked id, GM secrets, the text conversion, version conflicts, follow and stale
+naming the entry, Regenerate and Undo, keep mine, breaks are not edits, access and posted values, two editions and deletion);
+`BookDraftPdfTests` (5); `tools/book-editor/test.mjs` (the shipped bundle against hostile drafts, under jsdom); `BookDraftE2ETests` (2: the
+dialog, with typing, autosave, preview, stale notice, Regenerate and PDF; and a tab that only looks never saving); the backup test. Mutants caught: entry id written raw; secrets kept in the party draft;
+version check removed; breaks counted as edits; the `expr-eval` stub left out (`test.mjs`); text the editor is given counted as typing (the
+two-tab e2e).
+
+**Not done, or not verified:**
+- ~~**Deviations from 41.2:** Plain is our own CSS for Homebrewery's page structure, not Blank's layout CSS, and `{{cover` is our block
+  name.~~ Done in phase 2 (41.10): every theme sits on Blank, and the generator writes Homebrewery's `{{frontCover}}`, `{{toc,wide` and
+  `{{chapter` where they exist.
+- The editor's renderer runs in the app's page (the trust boundary above).
+- ~~The overflow report reaches the GM only in the preview.~~ Done in phase 3 (41.15): Fit pages reports it from the print browser, and the
+  editor reads the PDF's header.
+- ~~**The preview was seen only in Chrome.** Safari and Firefox were not tried (section 40, finding 3).~~ Tried in WebKit and Firefox (41.20).
+- The editor was not looked at on a phone, in RTL, or with a screen reader.
+- ~~Russian and Hebrew drafts are made and edited but cannot be printed (the language gate).~~ Printed since 41.21 (Plain and Ashen Vellum).
+- There is no per-chapter preview: the whole book is drawn again on each pause in typing. Fine for the test campaign (3 pages); not measured
+  on a large one.
+- Pictures in free text (`asset:`) are dropped to their captions (see Generator above).
+- Chapter order cannot be changed, and the GM cannot add a chapter of their own; they can write anything inside one.
+- The old book route still exists beside the draft (41.7). "Polish with AI" output is not yet an input to the generator.
+
+### 41.10 Phase 2: built (Blank layout, Ashen Vellum, theme picker)
+
+The GM asked for option 1 of the phase-1 report: themes on Homebrewery's Blank layout, so CSS written for Homebrewery works here as there.
+
+- **Blank** (`tools/book-editor/themes/blank.less`): Homebrewery's `themes/V3/Blank/style.less` at commit `3e600a0` (MIT, notice in
+  `THIRD-PARTY-NOTICES.txt` and `LEGAL.md`), with only removals: its `@import`s (the 5e and Journal fonts, Homebrewery's picture assets, icon
+  fonts) and its watercolor, image-mask and credits blocks (they draw Homebrewery's pictures from `/assets` URLs). The build compiles it with
+  `less` into `src/Codex.Core/Book/Themes/blank.css`, embedded. Every theme's page is Blank, then the book's page (paper size over Blank's Letter,
+  every page laid out rather than only those on screen, the screen around the pages), then the theme (`BookDraftThemes.PageCss`).
+- **Homebrewery's blocks where it has them:** the generator writes `{{frontCover}}` (with our `{{cover-art` for its picture), `{{toc,wide`
+  and `{{chapter,#ch-ID` around the title. `{{chapter-art`, `{{entry`, `{{portrait`, `{{place` and `{{secret` are ours (Homebrewery has none).
+  `BookDraftWriter.Version` is `book-draft/v2`, so unedited chapters followed by themselves (seen in the preview); an edited front chapter
+  shows the stale notice.
+- **Page numbers and contents as Homebrewery's:** the renderer gives each page Homebrewery's `<div class="pageNumber auto">` (beside the
+  columns, so fitting never moves it; none on a cover or where the text placed one), counted as Blank counts (`skipCounting`, `resetCounting`),
+  and writes contents lines as two spans, which Blank's `.toc` rules join with dot leaders.
+- **A break in campaign text is escaped** (`BookDraftWriter`): a `\page` or `\column` line in a biography or wiki page prints as its words,
+  so player-written text cannot break, hide or restyle a page now that `\page {…}` styles one. Breaks are the GM's to write.
+  Homebrewery's inline `{…}` and `{{…}}` syntax in campaign text is still read (since phase 1): a player can style or box their own words, with
+  styles cleaned as everywhere; not escaped yet.
+- **`\page {classes,style}`** is read as Homebrewery reads it (marked-hbfm's own inject parser on the `\page` line): plain class names go on
+  the page, a style goes through the cleaner. A styled break is now an edit (`BookDraftText.IsBreak`), so a chapter with `\page {reliquary}`
+  is not replaced silently when the campaign changes; plain breaks are still layout.
+- **Ashen Vellum** (`src/Codex.Core/Book/Themes/ashen-vellum.css`; its header lists every change from the GM's sheet):
+  - Faces bundled from Fontsource 5.3.0 with their licences: IM Fell English, English SC, DW Pica, DW Pica SC, Pirata One (OFL), Special Elite
+    (Apache 2.0). UnifrakturMaguntia was named by the sheet but drew nothing, so it is not shipped. English only (Latin faces).
+  - **The paper is pictures**, made once by `tools/book-editor/themes/ashen-vellum/make-tiles.sh` from the sheet's own CSS and SVG: page-sized
+    JPEGs (odd, even, soot, reliquary, cover; burnt edges, stains, tint) and WebP tiles for grain and foxing. Measured: with the sheet's soft
+    transparent gradients Chrome wrote five page-sized pictures into **every** page (44 pages, 6.6 MB, 150 KB a page); with the baked paper,
+    1.9 MB (43 KB a page; Plain is 12 KB a page). The stains are softer and fewer than the sheet's generated ones.
+  - **No text-shadow and no text stroke:** Chrome writes each shadow and each stroke into the PDF as another copy of the words, so the
+    cover's title was read back as "SSSaaalllttt..." and every chapter title as "LLoorree". The cover's murk keeps the title legible instead.
+  - **Pictures:** only the generator's `{{chapter-art` is the torn banner (the sheet masked every picture on a chapter page, which put
+    portraits over the text, section 40 finding 1). Portraits float in a ragged frame, place pictures span the column torn along the foot, the
+    cover art fills the cover under the murk. A picture the GM writes is in the flow. A chapter with no art gets the plain heading by itself.
+  - What PHB used to supply is written in (the footer rule's box, the footnote's place, paragraph spacing, the column gap). The sheet's
+    vocabulary stays (`.note .descriptive .monster .quote .tome .credits .artist .frontcredit`, `\page {reliquary}`, `\page {soot}`); `{{secret`
+    is the GM's dossier box in Special Elite with the red frame.
+  - The sheet's `@media print` had no ink-saver left (only `print-color-adjust`), so preview and PDF are the same page.
+- **Theme picker** in the editor bar: what was typed is saved first, the theme is stored (`SaveSettingsAsync` refuses an id the book does not
+  have, and touches no chapter), and the preview is drawn again in the new theme's page. The PDF prints with the stored theme.
+
+**Tests:** `BookDraftPdfTests.EveryTheme_SitsOnBlank...` (Blank first, then the paper size, nothing loaded); `EveryBlock_UnderEveryTheme_KeepsPicturesOffTheText`
+(each theme in Letter and A4, real Chrome: a chapter with art, a portrait on the chapter page, text onto the next page, a place picture there,
+the boxed blocks and a table; no printed word may sit on a portrait or place picture; the chapter's title over its banner is the one
+exception). Putting the sheet's old "every picture on a chapter page" rule back fails it for Ashen Vellum. `ALongBook_UnderEveryTheme_StaysSmall_AndItsTextStaysText`
+(30+ pages; under 60 KB a page; the cover's title read back once; every 37th paragraph found as text). The gradient paper failed it (150 KB a
+page), and so did the shadows and strokes. `BookDraftTests.ATheme_IsStoredWithTheDraft...`, the styled-break line in `PageAndColumnBreaks...`, `test.mjs`
+(page numbers counted as Blank counts, the contents' two spans, `\page` classes and hostile page styles), and the editor e2e test now switches the theme
+straight after typing (the typed line is saved and drawn in the new theme).
+
+**Not done, or not verified:**
+- ~~CSS written for the PHB theme will not look the same.~~ Done (41.12): the Homebrewery compatibility layer, with a parity test.
+- ~~The GM's stylesheet cleaner strips every backslash, and its cap is 20,000 characters.~~ Done (41.11): `BookCss.Clean` reads the sheet
+  as CSS Syntax Level 3 tokens and writes back only what it checked; escapes survive; the cap is 512,000 characters.
+- No `url()` in the GM's CSS but `data:image/` (and `data:font/` inside `@font-face`); Homebrewery CSS that loads fonts or pictures from the
+  web will not load them (on purpose).
+- Contrast on Ashen Vellum's paper (WCAG AA for body text, notes and table rows, section 14 item 7) is not measured. The dark pages and the
+  cover were only looked at.
+- ~~RTL: not applicable yet (English only); the sheet's `float: left` drop caps and left-side ribbons would need logical properties first.~~
+  Mirrored for Hebrew books since 41.21 (`BookRtl`).
+- The preview redraw time was not measured on a large book in the GM's browser; the print browser laid out and printed 44 Ashen Vellum pages
+  in about 2.5 s (browser start included).
+- Read back from the PDF, Ashen Vellum's drop cap splits a chapter's first word ("P UBLIC") and its small-caps lead-in and bold (small caps,
+  the faces have no bold) come back in capitals ("T HE TIDE"). Search and copy see that; the long-book test steps around the first paragraph.
+- Plain looks different from phase 1: Blank's page padding (1.4/1.9/1.7 cm), Blank's page number in the corner (switching sides on even
+  pages), Homebrewery's cover and wide contents.
+- Small soft gradients (heading rules, the footer rule, the monster frame, the cover murk) are still written as small pictures each time they
+  are drawn (about 4 KB a page).
+- Still from 41.9: Safari and Firefox, ~~the overflow report in the panel~~ (41.15), phone, screen reader, `asset:` pictures in free text, the trust
+  boundary of rendering in the GM's page.
+
+### 41.11 The GM's stylesheet, read as CSS (built 2026-11-06)
+
+The regex cleaner removed every backslash to be safe, which broke Homebrewery CSS such as `content: '\2014'`, and its 20,000-character cap
+could not hold a theme. `BookCss.Clean` (`src/Codex.Core/Book/BookCss.cs`) now:
+
+- **Reads the sheet as the browser does**: CSS Syntax Level 3's tokenizer (section 4), escapes decoded before any name is looked at, so
+  `\75rl(`, `@\69mport` and `e\78pression(` are seen as what they are.
+- **Checks tokens, not text**: `@import`, `@namespace` and `@charset` rules are dropped (nested ones too; since 41.14 an `@import` the
+  server has a copy of is that sheet, cleaned the same way); `url()` keeps only `data:image/` and `#fragment` (and `data:font/` inside
+  `@font-face`) or the server's copy of a web address (41.14), anything else becomes `none`; a `@font-face` with any other source is dropped
+  whole; `image()`, `image-set()`, `src()`, `element()`, `paint()` and `expression()` calls become `none`; `behavior` and `-moz-binding`
+  declarations are dropped. Bad strings, bad URLs, `<!--`, `-->`, a stray `<` and a stray backslash are dropped.
+- **Writes back only the tokens**: a token with no escape as it was written, the rest re-escaped (CSSOM's serialize-an-identifier); every
+  string is re-escaped with `<`, `>` and `&` as hex escapes, so no `<` is ever written and nothing closes the style element. Where a
+  comment or a dropped token stood between two tokens, `/**/` keeps them apart (`ur<l(` must not become `url(`).
+- **Cap: 512,000 characters**, in the cleaner and the store (`BookDraftDocument.MaxCssChars`): a whole Homebrewery theme and a design on top.
+
+Tests: `BookCssTests` (escape, comment and join bypasses, the style element, broken sheets, what Homebrewery's sheets write kept token for
+token, cleaning twice changes nothing). Mutants each fail it: ignoring the join guard, a raw `<` in a re-escaped name, names read without
+decoding escapes, strings written raw, and a fetching `@font-face` kept.
+
+
+### 41.12 The Homebrewery compatibility layer (built 2026-11-06)
+
+Most shared Homebrewery CSS is written on top of its 5e PHB theme, not Blank, so on Blank alone it lands in the wrong places. The user
+chose parity with Homebrewery (people bring their CSS with them) but no PHB look: Homebrewery's PHB is a fan recreation of the official
+book's look, and its pictures have no traceable licence (its issue #723 left that open; its watercolour stains came from imgur links, its
+cover placeholders from an image generator).
+
+- **The layer** (`src/Codex.Core/Book/Themes/homebrewery-5e.css`): Homebrewery's `themes/V3/5ePHB/style.less` (MIT, commit 3e600a0,
+  vendored unchanged as `tools/book-editor/themes/homebrewery-5e.less`) compiled by `build.mjs` and stripped by rule: every picture (its
+  asset variables compile to `none`; `background-image`, `border-image`, masks dropped), every colour turned to the grey of its lightness
+  (so `--HB_Color_*` keep their names), gradients, shadows, text stroke and filters dropped (they cost a raster or a second copy of the
+  text in the PDF), `@font-face` dropped (the server adds the faces). A frame that was a picture keeps its width, transparent: width is
+  layout. The build fails if a `url(`, gradient, shadow, stroke or mask is left.
+- **Its faces** (`wwwroot/fonts/homebrewery-5e`, see its README): Homebrewery's own copies of Solbera's fonts (CC BY-SA 4.0), Overpass
+  (OFL) and Walter Turncoat (Apache 2.0). Homebrewery's copies, not Solbera's originals: Scaly Sans, Scaly Sans Caps and Nodesto differ
+  from the originals in widths and line metrics (measured with fontTools), and only Homebrewery's lay a page out as it does. The exception,
+  chosen by the user: the drop-cap face is Solbera Imitation 1.60 from Solbera's release (CC BY-SA in its own metadata), not Homebrewery's
+  tweaked 1.30, whose metadata reads "All Rights Reserved" with no licence. So drop caps differ in size from Homebrewery's, and text beside
+  one wraps differently; the parity test uses the same faces on both sides and cannot see it.
+  Davek, Iokharic and Rellanic (no known source) and Martel Sans (unused) are left out. About 350 KB, embedded in the shell only when the
+  layer is on; a PDF keeps only the glyphs it uses.
+- **Order**: Blank, the layer, the book's page rules, the theme, the GM's CSS. **A setting on the draft** (`Homebrewery`, on by default; a
+  draft saved before it existed reads as on), a checkbox in the editor's bar, read by the preview shell and the print route alike. The page's
+  body gets `homebrewery-layer` when it is on.
+- **A third theme, "Homebrewery (layout only)"** (`homebrewery`): the layer with black ink on white, thin lines for the frames (drawn as
+  outlines, which take no room), and the generator's own blocks. It sets no size, margin or face of the layer's: it is the theme a
+  Homebrewery brew's CSS matches; it sets colours through the `--HB_Color_*` variables, so a brew's CSS that sets them is obeyed. Plain and
+  Ashen Vellum sit on the layer too, keep their faces (Plain names its own wherever the layer names one; Ashen Vellum already did) and the
+  cover title's case, and take the layer's spacing where they set none. That changes their looks, measured by laying the same chapter out
+  with the layer and without: Plain moved 35 of 41 marker words (paragraph indents, PHB's line height and spacing, box padding, drop caps
+  in Cinzel); the user chose that over Plain off the layer. Ashen Vellum moved 16, by 1.5 to 13 pt, all in its notes, table and stat
+  block. On any theme the cover's tagline (the paragraph after its title) gets no drop cap.
+
+Tests (`BookDraftPdfTests`):
+- `UnderTheHomebreweryLayer_ABrewLaysOutAsUnderHomebrewerysOwnTheme`, Letter and A4: a brew of everything PHB styles (headings, drop cap,
+  lists, quote, note, descriptive, table, stat block, column break, wide block, contents; since 41.13 a quote with its attribution and a
+  footnote too) printed under the layer and under Homebrewery's whole theme compiled (test fixture `Fixtures/homebrewery-5e-reference.css`,
+  written by `build.mjs`, never shipped) pasted as the GM's CSS over no layer, with the same faces: all 80 marker words on the same page
+  within 1 pt. Mutants each fail it: paragraph spacing removed,
+  the h3 size changed, the note's padding changed, the descriptive frame's width changed.
+- The overlap and long-book tests run every theme with the layer at Letter and A4 and without it at Letter, and a theme with faces of its
+  own must print in them alone (Plain failed it, with notes in Scaly Sans, before its font rules).
+- `BookDraftTests`: the setting's default for an old draft, and turning it off. The editor's end-to-end test turns it off.
+
+Not done, or not verified:
+- **Parity is measured for one brew**, in Chrome, against Homebrewery's themes compiled here; not against Homebrewery's live site, and not
+  for its Journal and Unearthed Arcana themes or its snippets' markup beyond what the brew uses. (DMG and a community theme: 41.13.)
+- **Pictures a brew's CSS loads from the web** (imgur, a CDN): the server fetches a copy since 41.14. Homebrewery's own `/assets/...`
+  addresses are relative to its site and still load nothing (there is no address to fetch); uploads are not built.
+- **Markdown parity** beyond variables (41.13): icon shortcodes, definition-list and spacing syntax are not audited.
+- Russian and Hebrew: the layer's faces are Latin; the layout-only theme is English only (Plain and Ashen Vellum print both since 41.21).
+- The layer's greys and the layout-only theme's contrast were looked at, not measured; Plain on the layer was looked at for one chapter.
+
+### 41.13 Homebrewery's variables, its DMG theme and a community theme (checked 2026-11-06)
+
+- **Markdown variables** (`[name]: value`, `$[name]`, hoisting, cross-page, page numbers, links and pictures by variable): Homebrewery's
+  own tests (`tests/markdown/variables.test.js`, commit 3e600a0, MIT) are vendored unchanged in `tools/book-editor/homebrewery-tests` and
+  run on the shipped bundle by `test-homebrewery.mjs` (part of `npm test`). Before: the 32 tests without maths passed and the 24 with maths
+  failed (maths was switched off). Now all 56 pass:
+  - **Maths** is `src/safe-math.js`: what Homebrewery's parser allows (`+ - * / ^`, brackets, `round floor ceil abs`, `min max pow hypot
+    roundTo`, and the extension's own `sign signed toRomans toChar toWords` and their cases). A name is only ever looked up among those
+    functions (an object with no prototype); there is no member access, string or assignment; 500 characters and 40 levels at most. Anything
+    else throws, and the extension leaves the `$[...]` as written. `random` is left out (the preview and the PDF would differ).
+  - **A second render pass** when the brew has a `[`: `marked-hbfm` learns a variable set on a later page only by rendering that page, and
+    Homebrewery's editor, rendering on every keystroke, always has. The print browser renders once, so before this a variable used before
+    its page printed as `$[name]` in the PDF and worked in the preview.
+  - Like Homebrewery, a deleted definition is remembered until the preview is reloaded (`marked-variables` keeps its list for the page's
+    life); the PDF never has it. Not fixed: the package has no way to clear it.
+- **Colour variables** (`--HB_Color_*`), set in a brew's CSS as Homebrewery's users set them on `:root`: measured in the PDF (heading
+  letters' colour, the fills of table stripes, stat block and page). The layout-only theme obeys them. **Plain did not**: on the layer its
+  table stripes and stat block printed in the layer's greys instead of its own beige (a change 41.12 missed), and an override recoloured
+  those but not its headings. Plain now sets the variables on `:root` to its own colours and its rules read them, so it looks as it did and
+  obeys an override, on the layer or off it. Ashen Vellum keeps its own palette and ignores an override, by design. Test:
+  `HomebrewerysColourVariables_SetInABrewsCss_ColourTheBook` (an override under the layout-only theme and Plain, and Plain's own colours
+  with none, no greys); taking Plain's mapping out fails it.
+- **The 5e DMG theme** (`themes/V3/5eDMG/style.less`, vendored as `tools/book-editor/themes/homebrewery-5e-dmg.less`, compiled by
+  `build.mjs` to the fixture `Fixtures/homebrewery-5e-dmg.css`): it sits on PHB and changes only colours, pictures and three things of
+  layout (a quote's first line, the footer's height, the footnote's place). Pasted as the brew's CSS on the layer, the parity brew lays out
+  as under Homebrewery's PHB and DMG whole: 80 of 80 words. Against PHB alone DMG moves 2 of them, and the test fails if our side leaves the
+  DMG CSS out. In Homebrewery DMG is picked from a menu, not pasted; there is no such choice here.
+- **A community theme**: "Tasha's Style" (KaiburrKathHound, a theme brew in Homebrewery's Vault, about 10,500 views; share id
+  `5CxliV-7LFuV`). It has no stated licence, so it was measured once and is not in the repository. It moves 22 of 80 words against PHB
+  alone. With its fonts supplied, the layer matches Homebrewery word for word (77 of 77; its h5s are letter-spaced and read as letters on
+  both sides). **As a GM would paste it**, its fonts come by `@import` from a CDN, which the cleaner drops: the layout still matches (1 word
+  moved by 9 pt, the quote's attribution) but its Cormorant Garamond text prints in a fallback face (Times). Its two font files are data
+  fonts (allowed in `@font-face`), but they total 1.26 MB, over the 512 KB cap; the faces it uses come to 388 KB. Its page texture and note
+  frames are imgur pictures and do not load. **Since 41.14** the server fetches all of it, and Tasha as pasted matches Homebrewery word for
+  word (77 of 77), pictures and all.
+
+### 41.14 The web addresses a brew's CSS names: fetched once by the server (built 2026-11-06)
+
+A brew's CSS loads its fonts and pictures from the web (`@import` of a font sheet or Google Fonts, `url()` of an imgur texture); the page
+fetches nothing (its policy, and the cleaner), so before this Tasha's Style printed in Times with no texture. Now the **server** fetches each
+https address the GM's stylesheet names, once, keeps a copy with the draft, and the cleaner writes the copy in place of the address. The page
+still fetches nothing.
+
+- **What is fetched is what the cleaner asked for.** `BookCss.Clean(css, out warnings, web)` takes the copies (`BookCssWeb`,
+  `src/Codex.Core/Book/BookCssWeb.cs`): a font or a picture is written as a data URL, an `@import` as the imported sheet's own rules where
+  the rule was, cleaned by the same code (its relative addresses are relative to it; wrapped in `@media` when the rule had a media list;
+  dropped when it has a `layer` or `supports()` condition, comes after another rule, imports itself, or is more than 4 imports deep). While
+  it cleans it notes every address it was asked for and the ones it had no copy of, and that list is what the server fetches
+  (`BookDraftWebs.RefreshAsync`, `src/Codex.Web/Book/BookDraftWebs.cs`), round after round until the sheets fetched import nothing new. So
+  the server never fetches what the page would not have used, nor misses what it would. An imported sheet cannot reach past itself: what it
+  leaves open is closed at its end, a closer with no opener is not written, and its strings are escaped like every string.
+- **Only https, only the public internet** (`BookWebFetcher`): the server's own client (`UseProxy=false`, no cookies, no redirects of its
+  own) checks the address when it connects, so a name that answers differently a second time gains nothing; every address the name gives
+  must be public (not loopback, private, link-local such as a cloud's metadata service, Tailscale's 100.64/10, multicast, documentation, or
+  the IPv6 forms that carry an IPv4 address: IPv4-mapped, 6to4, Teredo, NAT64). Redirects are followed by hand, 4 at most, each checked
+  again. It sends a browser's User-Agent (Google Fonts answers a browser with woff2) and nothing about the server or the GM.
+- **Bounds**: a sheet 3 MB, a font 4 MB, a picture 6 MB, read to the bound whatever the site says its length is; 16 MB and 120 copies a
+  draft; 20 seconds an address. The 512 KB cap stays on the GM's own text.
+- **A copy is what its bytes say**, not what the site says (raw GitHub serves fonts as `text/plain`, imgur can answer a picture with a
+  page): woff2, woff, TrueType, OpenType, a collection or EOT for a face's source; PNG, JPEG, GIF, WebP or AVIF for a picture (not SVG, as
+  uploads do not take it); for a sheet, text with no control characters that is not an HTML page.
+- **Stored** as attachments on `bookdrafts/{campaign}/{edition}/{language}/web` (`BookDraftWeb`), under the draft's id: they go with
+  "start over" and with the campaign. Only the campaign's GM reads or writes them. A copy whose address the sheet no longer names is let go
+  at the next fetch.
+- **When**: after the stylesheet saves (outside the save, so chapters keep saving), and when the editor opens; only addresses with no copy
+  are fetched, a failure is not remembered (the next save tries again), and a newer fetch for the draft cancels an older one. The preview is
+  restyled with the copies when a fetch ends. Printing never fetches: the PDF is printed from the copies. The stylesheet pane says what is
+  kept and lists each address that could not be fetched, with why.
+- **The older one-shot export** (`BookHtml`, its custom CSS) does not fetch: it has no draft to keep copies with.
+- **Fixed on the way**: an empty stylesheet or chapter (the GM deleted it all) could not be saved: Blazor takes no stream of no bytes. The
+  editor now reads the length first.
+
+Measured: Tasha's Style as pasted (two `@import`ed font sheets of 0.35 and 0.91 MB, 2 more faces, 16 imgur pictures): 20 copies, 5.4 MB,
+about 7 to 10 seconds from here; the parity brew then matches Homebrewery word for word (77 of 77), with Tasha's fonts, texture and frames.
+In the editor the preview takes the copies when the fetch ends, and they are there at once when the editor is opened again. Google Fonts
+(checked once, live, with Pirata One): the sheet is kept as CSS, both subsets come back as woff2, and the heading prints at the width the
+face sets when written into the sheet by hand.
+
+Tests: `BookCssWebTests` (addresses; an imported sheet written in place with its relative addresses as copies; what has no copy noted and
+dropped; a copy of the wrong kind not used; media lists; conditions, late imports, cycles and depth; an imported sheet that tries to reach
+past itself; sniffing; the public-address list; the server's registered fetcher refusing this computer by name and number; redirects,
+errors, pages in place of pictures, and the bounds, against a site on this computer); `BookDraftTests` (copies kept, not fetched twice,
+printed from, let go, GM only, gone with "start over", through the real fetcher over a fixture site);
+`AnImportedThemesFaceAndPictures_Print_FromTheServersCopies` (an imported theme's face, set at the width it sets by hand, and its relative
+picture, in the PDF; neither without the copies). Mutants each fail them: the public check always true, no check at connect, any bytes
+taken as a picture, no balancing of an imported sheet, imports anywhere, and no depth or cycle guard (a stack overflow).
+
+Not done, or not verified:
+- A proxy set for the server is not used by this client, on purpose; a server that can reach the web only through a proxy fetches nothing.
+- No retry and no "fetch again" button: a copy is kept until the sheet stops naming it (a changed file at the same address keeps the old
+  copy until the address leaves the sheet and comes back).
+- Each fetch reads the copies from the database and the preview gets them whole over the circuit (8 MB of stylesheet for Tasha): fine here,
+  not measured on a slow link or a phone.
+- Fonts a GM's CSS names are under their own licences; they are the GM's to use.
+- Fetching is open to any campaign's GM, also while the server is open to the internet (decided 2026-11-07): unlike the server's AI key
+  (`ExposurePolicy.MayUseServerAi`) it costs no money, and the bounds above hold. A stranger who signs up could still make the server fetch
+  public addresses, up to 16 MB a save.
+- Typing in the stylesheet pane with a large set of copies (Tasha: 8 MB of stylesheet in the preview) was not timed. A fetch that changes
+  nothing does not restyle the preview a second time.
+
+### 41.15 Phase 3: Fit pages and the overflow report (built 2026-11-08)
+
+- **Fit pages** (the editor bar; `BookDrafts.FitAsync`, `BookPdf.FitAsync`, `render.js` `fitText`): what was typed is saved first, then the
+  draft is laid out **in the print browser**, with the PDF's pictures, stylesheet, web copies and paper, so the breaks come from the browser
+  that prints and not from the GM's (which may be Safari or Firefox and break lines differently). Wherever the drawing would move a block
+  onto a page of its own, a `\page {fitted}` line is written before it in that chapter's Markdown. Laid out again until nothing moves (six
+  rounds at most). Each chapter it changed is saved at the version it was read at; one saved meanwhile (another tab) is not overwritten: the
+  run stops there and the editor shows the conflict. The changed chapters are put back in the editor as text the editor is given, not as
+  typing. It takes a place in the printing line (one per GM), like a PDF.
+- **Decided: the breaks it writes say so.** `\page {fitted}` (after a page with classes, `\page {reliquary,fitted}`, as the drawing's own
+  continued page copies them; the page does not get the `fitted` class). A second run takes out its own breaks first and fits again, so
+  after an edit the breaks move instead of piling up, and a plain `\page` the GM typed stays where it is. `\page {fitted}` is layout, not an
+  edit (`BookDraftText.IsBreak`), so a fitted chapter is still "unedited" and still follows the campaign by itself; following it gives the
+  chapter the new generated text, without the breaks, and the drawing continues the pages by itself again until the next Fit pages.
+- **Decided: only `\page` is written, never `\column`.** The drawing moves blocks onto pages, not columns; a column break the GM writes is kept.
+- **Where a block's Markdown starts** (`marking`): for the run only, marked-hbfm's top-level tokens are rendered one at a time (as its parser
+  takes them anyway) and the first element of each gets a `data-fm` tag naming the line its token started on. Nothing is added to the
+  Markdown or between blocks, so rules such as `h1 + p` see the same page (a test draws hostile, table, list, block, column, variable and
+  styled-page brews with and without the tags: the same HTML). A tag is kept only with this run's random prefix; one typed into a draft is
+  dropped. A block whose line cannot be found (a line the variables changed) takes the nearest block above it on its page; when there is
+  none, no break is written and the report lists it.
+- **A heading never ends a page:** the drawing (preview, PDF and Fit pages) moves a run of headings just above a block that spills along with
+  it, unless that would move the page's first block.
+- **The overflow report:**
+  - Fit pages says how many fitted breaks the book has and how many chapters changed (or that nothing changed), lists each block too tall
+    even for a page of its own (page, chapter, first words), and each break it could not place. This is the report **before** the PDF, from
+    the browser that prints it.
+  - The preview names each cut-off page's chapter, and says how many pages run on past where the text breaks them (Fit pages would write
+    those breaks).
+  - The PDF route's `X-Book-Overflow` header is now `7:cast,9:lore` (page numbers and section ids, ASCII only); the editor reads it after the
+    download and says which pages printed cut off, with their chapters. The PDF is still given out: a warning, not a refusal.
+  - Page numbers in the reports count every page from the cover (as a PDF viewer shows them), not the numbers printed on the pages.
+- **The print browser takes the chapters** (`BookPrintLayout.Chapters`) rather than the joined brew, so it knows each page's chapter;
+  the renderer joins them as the editor does.
+
+Tests: `test.mjs` (marking leaves the HTML the same; tags point at their lines; a typed or foreign tag is dropped; the chapters' places in
+the brew and each page's chapter; `\page {fitted}` written and taken out exactly, fitting again writes the same text, the GM's breaks stay);
+`BookDraftPdfTests.FitPages_WritesTheBreaks...` (real Chrome: breaks written, no page continued after them, no page ending in a heading,
+every word printed on the same number of pages, a second run the same, an edit moves the breaks and keeps the GM's own) and
+`FitPages_KeepsAStyledPagesClasses...` (the styled page's classes, a too-tall note named with its chapter and words, by Fit pages and by the
+PDF's header); `FitPages_NeverLeavesAHeadingAtTheFootOfAPage` (40 chapters whose heading lands lower and lower: some break
+falls right before a heading, none right after one); `BookDraftTests` (`\page {fitted}` is layout and `{reliquary,fitted}` is not; Fit pages saves only the chapters it changed,
+at their versions, leaves them unedited, stops at a conflict, and lays nothing out for a player; the header read back);
+`BookDraftE2ETests.TheGmFitsPages...` (the run-on line, Fit pages, the breaks in the editor and saved, a second run changing nothing, the
+too-tall block named before and after the PDF). Mutants, each failing them: headings not kept with their text (survived the first
+long-chapter test, which had no heading at a page's foot; the 40-chapter test was written for it), earlier breaks not taken out, the
+styled page's classes dropped, no block found in the Markdown, a mark kept whatever its prefix (`test.mjs` was too weak for it at first),
+a continued page losing its chapter, fitted breaks counted as edits, a conflict ignored, unchanged chapters saved, the header without
+sections, the editor not reading the header, and the editor not taking the fitted text. One survived: the guard against a break before the
+first line of a page's text, which the drawing never reaches (it never moves a page's first block); kept as a guard.
+Seen in the app (preview, the real-run campaign's Ashen Vellum GM draft, 3 pages): Fit pages ran in the print browser and said every page
+already fits; no server errors.
+
+Not done, or not verified:
+- ~~Safari and Firefox: still not tried~~ (41.20). Fit pages makes them matter less: the breaks come from the print browser, and the
+  drawing still continues pages by itself where the GM's browser differs.
+- A theme or stylesheet change after Fit pages can make the breaks wrong (pages half empty or running on); run it again. Nothing says so yet
+  beyond the run-on line.
+- Keep-together for a short block after a heading in the next column (only page ends are handled).
+- Large books: one Fit pages run on the 44-page Ashen Vellum book was not timed; each round lays the whole book out again.
+- The Russian and Hebrew text of the new strings (`Campaign.Book.Draft.Fit*`, `RunOn`, `PrintedOverflow`) is machine-drafted.
+
+### 41.16 Phase 4: AI edits on a selection (built 2026-11-08)
+
+- **Asking** (the "Ask AI" bar above a chapter's Markdown; `BookDraftAi`, `BookDraftEdits`, `BookEditWorker`, `editor.js` `selection`/`review`/`finish`):
+  the GM selects a passage, or nothing for the whole chapter, and presses a preset (As the book, Shorter, Read-aloud box, Tidy;
+  `BookEditPrompts.Presets`) or types a request (600 characters at most). What was typed is saved first; the server reads the chapter **as
+  stored**, at the version the editor had, and refuses (Stale) unless the selected text is exactly what is stored there. The page's
+  offsets are trusted only that far.
+- **The pre-flight sends nothing:** it names the model, whether the selection or the whole chapter goes, whether the selection was widened, how many
+  pieces are kept back, the token range and the cost at the GM's prices (or that no prices are set), and the server allowance. The editor
+  is locked from here until the review ends, so the text stays what the server checked. Send, or Cancel.
+- **What the model never sees** (`BookDraftEdits.Cut`, found in the whole chapter before the selection is looked at, so a selection that starts or
+  ends inside a piece takes the whole piece): every `{{secret` block (nested, inline, with other classes, any case; one never closed runs to
+  the end of the chapter), every HTML element with a `secret` class (unclosed: to the end), pictures (`![…](…)`, `{{portrait`, `{{place`,
+  `{{chapter-art`, `{{cover-art`), the generator's markers (`{{chapter,#ch-…`, `{{entry,#e-…}}`, the cover, the contents, any block with an
+  `#id`), and page and column breaks. Inside the passage each is `{{block:N}}` with a label; in the text before (1,500 characters) and after
+  (600) it is left out. The model therefore cannot change a secret, move or drop a picture, lose an entry's id (which phase 5's merge reads),
+  or touch the fitted breaks.
+- **The reply** must keep every block exactly once, on a line of its own where it stood on one, and carry no secret, entry, chapter or picture
+  block, link, web address, picture, HTML (a `\<` the draft escaped is not HTML), `[[…]]`, `\page`/`\column` or `:::`. A reply cut off by the
+  length limit is refused even if it passes, because a whole-chapter edit cut short would drop the chapter's end. One retry with the problems,
+  then nothing changes. Pieces go back where their markers are, and the passage keeps its own blank lines at either end.
+- **The book's shape comes from the game system** (the user's decision, handoff §7 item 2): `ai.bookShape` in `system.yaml`
+  (`AiVocabulary.BookShape`) finishes "the book should read like this game's own published books, which are …". srd5e describes
+  fifth-edition adventures' structure and furniture (an overview, keyed places, read-aloud boxes in the second person, sidebars, stat blocks,
+  checks by ability and DC) with no title, trademark or sentence of theirs; a system that says nothing gets neutral words. The prompt also
+  names the draft's own blocks (`{{note`, `{{descriptive`, `{{monster`, `{{wide`), so "make this a read-aloud box" can be done.
+- **Money:** the per-GM `BookGate` before anything is awaited (Busy otherwise), the server's requests set aside up front (two: the try and
+  its retry), a `BookBudget` capped at both attempts' worst case, settled on real usage; what was used is shown after. Not stored anywhere
+  (the build's spend totals do not include edits).
+- **The review overlay:** the reply opens in a read-only CodeMirror view in the chapter editor's place (`@codemirror/merge`'s unified view,
+  pinned 6.12.3; the same author's package as the editor), each change with Accept and Reject, deleted text struck through and new text
+  marked word by word inside changed lines. Alt+Up and Alt+Down go from change to change; Ctrl+Enter accepts and Ctrl+Backspace rejects the one at the
+  cursor. The bar says how many changes are left and offers Keep what I accepted, Accept the rest, Discard. **The preview draws the chapter
+  with only the changes accepted so far.** What is kept goes into the chapter as one change, as if typed: it is saved by the ordinary save
+  (with its conflict check), and Ctrl+Z in the editor takes it back. While the review is open, typing, the chapter list, the theme, Fit pages,
+  Regenerate and Start over are off; closing the editor discards it.
+
+Tests: `BookDraftEditTests` (a selection starting or ending inside a secret takes all of it; a secret beside the passage is left out of the
+text around it; eight spellings of a secret, each cut at every 3rd/5th character pair, never reach the prompt and always restore to the same
+chapter; pictures, markers and breaks kept back; a reply missing, doubling, inlining or inventing a block, or carrying any forbidden thing, is
+refused; a cut-off reply is never offered; a retry carries the problem; srd5e's shape reaches the prompt with no trademark in it, simple-d6
+gets the neutral words); `BookDraftTests.AnAiEdit_*` (the GM draft's secret never sent and put back, the shape sent, nothing saved; stale
+version, moved text, no request, a too-long request, a player, a busy gate (left held), no model: refused before sending; the whole chapter
+when nothing is selected; the gate let go of after a run); `BookDraftE2ETests.TheGmAsksAiToEditASelection...` (real browser, a local fake
+model: select a line, the cost shown and nothing sent, the review with the editor hidden, the preview unchanged until Accept and changed
+after, kept text saved and marked edited, a whole-chapter ask in the GM's words discarded with nothing changed, the GM edition's secret never sent).
+Mutants, each failing them: no widening at the start, a block closed at its first "}}", HTML secrets not found, a missing block not flagged,
+the own-line rule dropped, cut-off ignored, secrets left in the text after, blank lines lost on restore, the stored-text check dropped, the
+gate never let go of, no gate, no shape sent, the preview drawing the unaccepted text, Discard keeping the reply. One survived at first: only
+the first class read as `secret` — harmless, because `secret` was also in the list of kept blocks; that second path was removed so the secret
+test is the one path, and the mutant now fails two tests.
+Seen in the app (preview, the real-run campaign's GM draft, Cast): a selection across Tomas's paragraph and Vera's entry marker; the pre-flight
+named the GM's model, one piece kept back, the token range and that no prices are set; the editor was locked, and after Cancel unlocked
+with nothing sent or changed. No request was sent (a real key is stored there).
+
+**A real model, 2026-11-08** (the GM's own key, the provider's smallest current model, "As the book" on the whole Cast chapter: two
+entries, chapter art, a portrait, five pieces kept back). What it found, each fixed and tested:
+- **The reply's room was too small.** Twice the passage (at least 800) cut both tries off: shaping notes into a book's prose makes them
+  several times longer. Now four times the passage plus 1,200, at least `MinOutputTokens` (2,000), at most the client's ceiling.
+- **It made things up.** The shape asks for each NPC's wants and manner and for GM sidebars; the notes had neither, and the model wrote
+  them ("nobody has taken him seriously since", a sidebar saying how she answers the characters), despite the rule against invented facts.
+  The preset now says to use only what the passage says and to leave out a part of the shape the notes do not fill (`book-edit-2`). On the
+  next run nothing was invented: an overview, a read-aloud box per character, then the notes' facts.
+- **A sidebar opened with its title on the `{{note` line** prints as text, braces and all (marked-hbfm reads a block only from its name
+  alone on the line). The prompt now says a title is a `#####` heading inside, and `Check` refuses a block opened with words after its
+  name unless it closes on that line (an inline span).
+- **After Keep or Accept the rest the kept text was selected with the focus in the editor**, so the next key replaced the whole passage
+  (the whole chapter, after a whole-chapter edit). The cursor now goes after it; the browser test types straight after Keep.
+Both runs kept all five pieces, in place, on the first try. Accept one change, then Accept the rest (with two still open) put all three in;
+the preview showed only the accepted one in between; Ctrl+Z took the whole edit back. A key the provider refuses is reported as such with
+nothing changed, though the "used about" line then counts the input as sent (the budget's rule for any failed call).
+
+The other asks, same model and chapter, each discarded after reading: **Shorter** (Vera's paragraph) kept every fact, barely shorter
+because the notes were already terse. **Tidy** (whole chapter) changed only a blank line after each entry marker, which renders the same.
+**A typed request** ("as an entry in a ship's log, written by a passing captain") kept every fact and invented only the framing it asked
+for. **Read-aloud box** (Tomas's paragraph) wrote a good box but then gave the GM a clue, a motive, a village-elders scene and a DC 12
+Insight check that the notes never had; the preset now limits the box to what the passage describes and the GM's part to the passage's
+facts, and the general rule names what may not be invented (what someone knows, wants or did, events, clues, checks and DCs;
+`book-edit-3`). Run again, it added nothing but a mild "more worried than he lets on".
+
+Not done, or not verified:
+- One model, one chapter, English only.
+- The AI bar takes room above the Markdown in a narrow window; the merge view's colours are its own defaults (not checked in dark mode).
+- A request is a single call the dialog waits on (Stop cancels it); edits are not in the build's spend totals.
+- The Russian and Hebrew text of `Campaign.Book.Draft.Ai.*` is machine-drafted.
+
+### 41.17 The book's layout, like an IDE (built 2026-11-08, asked for by the user)
+
+The user found the book's UI convoluted and asked for Visual Studio's collapsible tool windows as the model.
+- **The editor** (`BookDraftEditor.razor`):
+  - **The toolbar** is one row: theme, the Homebrewery layout, Fit pages, Download PDF (the primary button), and More (Start over, still
+    confirmed). Close is an X on the title's row; in a narrow window the tools wrap below the title.
+  - **Three panes**, Chapters | Markdown | Preview, each with a header. Chapters and Preview fold to a thin strip with their name and open
+    again on a click. The Markdown pane's header names the chapter, its Edited or Stale badge, and Undo.
+  - **A folded preview is still drawn**, off the screen, so the run-on and cut-off lines (now in the preview's header area) keep measuring it.
+  - **A panel below** has tabs: Ask AI (phase 4's bar, the pre-flight and the review), Problems (Fit pages' report, pages printed cut off,
+    stylesheet addresses not fetched, with a count on the tab) and Blocks (the block reference). Clicking the open tab folds the panel.
+    A report opens it on Problems, and asking the AI opens it on Ask AI.
+  - **An AI request's pre-flight (Send, Cancel) and its review (Keep, Accept the rest, Discard) sit on the Markdown pane**, above the code
+    they lock, not in the panel: switching or folding the panel, or a print report opening Problems, never hides the way out of a locked
+    chapter (found in review; the AI browser test switches and folds the panel with the review open).
+  - **What is open is kept** in this browser (`localStorage`, `codex.bookEditor.layout`). The tabs take the arrow keys, Home and End.
+  - **CodeMirror on the app's colours:** gutters, the active line, the cursor and the selection use the app's variables, and so does a
+    highlight style in the bundle (headings brass, links and `art:` references verdigris). The editor is dark or light as the app is;
+    before, it was a white box in a dark dialog.
+- **The book panel** in campaign settings: the edition picker stays on top, and the rest is in tabs: Print (look, language, paper,
+  columns, pictures, preview, download), Pictures (the picture tray, which opens and reads its slots the first time its tab is shown), Edit
+  (the editable book) and AI polish. A player sees only Print, with no tab strip. Hidden tabs are hidden, not removed, so what was typed in
+  one is still there. The editor dialog sits outside the tabs.
+- Icons the layout uses that the app's set lacked (`more-horizontal`, `panel-left-close`/`-open`, `chevron-up`, `printer`, `blocks`, and
+  `palette`, which the Stylesheet entry had always asked for and drawn as a circle) were added from Lucide.
+
+Tests: the book browser tests click the tab they need; `TheEditorsPanesFold...` (both panes fold and open; typing still draws the folded
+preview; the panel's tabs move with the arrow keys; the layout is the same after the page is loaded again; Start over behind More, still
+asking); the Fit test now also checks that the report opens the Problems tab with a count of 1. Mutants: the layout never saved (caught by the
+reload); the report not opening Problems (it survived at first, because the test read the report's text, which a hidden tab still has; the
+visibility check was added for it).
+Seen in the app (preview, the real-run campaign): the settings panel's tabs; the editor at 1400 px with both panes open, both folded, and
+the panel folded; Fit pages opening the folded panel on Problems; at 820 px (stacked, Close on the title row); and under the light theme.
+
+Not done: the panes cannot be resized by dragging (fixed proportions), and the panel's height is fixed; the folded preview's off-screen
+drawing has no test that it is measured rather than only drawn.
+
+### 41.18 Phase 5: Bring up to date (built 2026-11-08)
+
+The stale notice of an edited chapter now offers **Bring up to date** beside Regenerate and Keep mine (`BookDraftMerge`, `BookMergePrompts`,
+`BookDraftMerges`, `editor.js` `take`).
+
+- **The unit is the entry.** A chapter splits, losslessly, into its head (title, chapter picture, anything before the first entry) and one unit
+  per `{{entry,#e-…}}` marker. Base, mine and the campaign's version are matched **by entry id**, never by a line diff: this is what phase 4
+  kept the markers safe for. An id that is in a version twice (a copied entry) refuses the merge with a message; Regenerate and Keep mine still work.
+- **Units are compared without page or column breaks, blank lines or trailing spaces**, so Fit pages and a model's tidying (a blank line after an
+  entry marker, seen in the real Tidy run) never make a unit "edited", and never make a paid conflict. A unit the merge keeps is the GM's text
+  exactly, breaks included, so the review is not full of deleted `\page {fitted}` lines; after a merge that had fitted breaks the GM is told to
+  fit pages again.
+- **Per unit, by the code:** the campaign did not change it, the GM's; the GM did not, the campaign's; both made the same change, the GM's;
+  otherwise a **conflict**. An entry new in the campaign goes in after the entry the campaign puts before it (or after the head); one the
+  campaign no longer has (hidden or deleted) is offered for removal; one the GM deleted stays deleted unless the campaign changed it since,
+  when it is offered back. The GM's order is kept.
+- **Only a conflict goes to a model**, one call each, in turn, under the per-GM `BookGate` and one `BookBudget` capped at every call's worst
+  case, with the server's requests set aside up front. The model gets the base and the campaign's version with every piece left out
+  (`BookDraftEdits.Bare`) and the GM's version cut like an AI edit, pieces as markers. **The pieces are settled by the code**: matched by kind
+  and order, the campaign's piece where the GM left it as it was, the GM's otherwise. When the GM's and the campaign's pieces do not line up
+  (the campaign added a secret to an entry the GM rewrote), no model is asked. Page and column breaks are not lined up with anything (the
+  generated versions have none, and after Fit pages nearly every entry holds one): they stay markers the model must keep, and come back
+  where the GM had them. A review found that, before it was fixed, a fitted book's conflicts would almost all have skipped the model. The reply passes the AI edit's checks (`BookEditWorker`,
+  one retry); the prompt says to keep the GM's wording, order and additions, apply every change of fact, and invent nothing.
+- **A conflict with no answer is shown as the campaign's text** (no model, pieces that do not line up, a reply that failed its checks, or
+  the GM pressing "Without AI"), which the GM accepts or rejects in the review: rejecting keeps their own. So Bring up to date works with no
+  model at all, and one failed conflict does not sink the merge. With no conflicts nothing could be sent, and the review opens at once.
+- **The pre-flight** (only when there are conflicts) says how many entries come from the campaign, stay the GM's, are new, are offered for
+  removal or back, and conflict; how many of those go to which model, the token range and the cost. Merge with AI, Without AI, Cancel.
+- **The review** is phase 4's overlay over the whole chapter. **Keeping it is not typing**: `take` ends the review without writing into the
+  editor, the server saves the kept text **with the campaign's chapter as its new base** (`BookDraftStore.MergeAsync`; the previous text,
+  base and key are remembered), and the editor then takes the saved text. So the notice goes, the next merge starts from here, and **Undo**
+  (the existing button, now "Undo the last update") takes back text and base together, which brings the notice back; Ctrl+Z in the editor
+  cannot undo the text while leaving the new base. The campaign is read again on save, never taken from the page: if it moved on since the
+  merge was made, nothing is saved and the GM is told to bring it up to date again. Discard saves nothing. Partly accepted is still a merge:
+  what was rejected stays as the GM's edit against the new base. The stale notice is hidden while a merge is open.
+
+Tests: `BookDraftMergeTests` (lossless split, marker lines only, duplicates refused; the per-unit table; blank lines, trailing spaces and
+breaks not edits, a kept unit keeping its breaks; new entries placed, gone ones offered for removal, a GM deletion kept or offered back,
+the GM's order; a fitted conflict still sendable with its breaks back in place; eight spellings of a secret in all three versions never in the prompt, and the campaign's changed secret put back; a piece both
+changed stays the GM's; pieces that do not line up keep the model out; a reply retried once, then left to the campaign's text);
+`BookDraftTests.AMerge*` (no conflict: nothing sent, the campaign's and the GM's units, nothing saved until kept, an old version refused,
+keeping moves the base, Undo brings back text and notice; a conflict alone sent, no secret, the campaign moving again refuses the save;
+a player, an old version, nothing to bring in, another run, no model and a failing model each handled, the gate let go of);
+`BookDraftE2ETests.TheGmBringsAnEditedChapterUpToDate...` (real browser, a fake model: two GM edits, the campaign changes one entry and adds
+one; the pre-flight with the model and the cost and nothing sent; only the conflict sent, without its secret; Accept the rest; the notice
+gone, the GM's other edit kept, the new entry in the editor and the preview; typing works; Undo brings the notice back). Mutants, each
+failing them (15 of 15): breaks lined up as pieces (fails the fitted-conflict tests), the campaign's unit taken as the GM's, blank lines counted, the campaign's piece ignored, pieces not lined up,
+gone entries kept, new entries at the end, GM deletions undone, a moved campaign saved, the merge not undoable, the base not moved, the gate
+never let go of, the model's reply dropped, every entry sent; in the page, a kept review not saved. And phase 4's opener check now refuses
+only a `{{note Title` the reply brought, not one the GM typed (tested, and its mutant fails).
+Seen in the app (preview, a throwaway campaign as the real-run GM, deleted after): two GM edits, the campaign changing one and adding one;
+the pre-flight named the GM's model, one conflict and the token range; Without AI opened the review with the new entry and the campaign's
+line; Accept the rest kept the GM's other edit, added the entry, cleared the notice; Undo brought it back; Discard left the chapter as it was.
+No model was sent anything.
+
+**A real model, 2026-11-08** (the GM's own key, the provider's smallest current model, a throwaway campaign deleted after): the GM had
+rewritten Vera's entry in their own words with a bold "Habits." paragraph; the campaign then changed "thirty winters" to "forty" and added
+a limp. One conflict, one call, about 1,500 tokens, first try: the GM's wording and paragraph kept, "forty" and the limp put in where they
+fit, the secret back as it was, nothing invented. Accept, then Keep: saved, the notice gone, the preview updated.
+
+Not done, or not verified:
+- One real merge, one model, English only; a conflict whose entry holds a fitted break has met only the test model.
+- Entries are the unit: two edits of one entry by both sides are one conflict, however far apart in it; prose before the first entry is
+  the head, one unit.
+- An entry the GM moved into another chapter is, to the merge, deleted from one and unknown in the other.
+- The Russian and Hebrew text of `Campaign.Book.Draft.Merge.*` is machine-drafted.
+
+### 41.19 Phase 6: the party leak check (built 2026-11-08)
+
+Download in the party edition first looks in the party draft for what only the GM edition has (`BookLeakCheck`, `BookDrafts.LeaksAsync`).
+With a hit nothing is printed: the Problems tab opens on a list of each hit, with its chapter (a button that opens it), what it is, and its
+first words, and **Download anyway** prints the book as it is. A warning, not a refusal (41.5). The GM edition is not checked.
+
+- **What only the GM edition has is found by comparing the two editions' sources**, both read as the GM may read the campaign now, never by a
+  visibility rule of the check's own (it would drift from the repositories', as `BookSourceReader` warns of a second filter):
+  - a character the party source does not have (its name), or has under another name (a stranger: the real name, shown with the name they go
+    by); the history of either;
+  - a page, place, session or homebrew entry the party source does not have: its title and its text; a fact it does not have: its words;
+  - every session's GM summary;
+  - every secret block of the GM edition, as the generator prints it (mentions as the names the GM edition gives), and every `{{secret` block
+    of the GM's own GM draft in that language, so a secret the GM typed into the GM book, which the campaign never had, is found too.
+- **Anything the generated party draft says is allowed.** It is made from the party source alone, so a phrase in it is not a leak, even when a
+  secret repeats it or a hidden character's name is a word the party's text uses. This is what keeps the check quiet on a draft nobody pasted
+  into: the generated party draft has no hit (tested on the canary campaign).
+- **Compared as words**: letters and digits, lower case, accents and Hebrew points dropped, anything else a gap. The generator's escapes,
+  Markdown emphasis, line breaks and case do not hide a hit, and a name matches only whole words ("Ash" is not in "ashes"). A name or title
+  is looked for whole; a secret or other text by **any six words in a row**, so half of one pasted is still found; a text of fewer than three
+  words, or a name under three letters, is not looked for. The party draft's stylesheet is looked in too (a `content:` prints).
+- One hit per thing and chapter; the first 20 are listed, the rest counted.
+
+Tests: `BookLeakCheckTests` (a secret found escaped, re-cased, re-wrapped, with emphasis, or half of it; names whole words only; what the
+party draft says never a hit, window by window; short ones not looked for; Hebrew points and Russian case; the stylesheet; the cap; secret
+blocks read with their entry, nested blocks inside; the needles: a stranger by their real name and not their alias, a hidden character and
+their history with mentions as names, a GM-only page's title and body, nothing the party has; a GM session summary, of a session the
+party has too, and a planned session's title and recap; a secret in two drafts one needle);
+`BookDraftTests.TheLeakCheck_...` (the canary campaign: the party draft as generated has no hit, a player gets nothing, and every canary
+pasted in, escaped or not, is found with its kind, a GM-typed secret of the GM draft and the stylesheet included, and nothing public);
+`BookDraftE2ETests.ASecretPastedIntoThePartyDraft_...` (real browser: a secret typed into Cast, Download straight after; the warning with
+the chapter, "words of a secret in Vera" and the secret's words, on the Problems tab; nothing downloaded; the hit opens Cast; Download
+anyway gives the PDF). Mutants, each
+failing them (13 of 13): what the party draft says not subtracted, case kept, points kept, secrets matched only whole, a stranger's real name
+not looked for, the GM draft's secrets not read, no text of GM-only things, short ones looked for, the list not capped, nested blocks ending
+a secret, a stranger's history not looked for, a known character's history looked for (its public words reported), a GM session summary not looked for. One that survived
+showed that taking the generator's markup out before comparing changed nothing, so the check does not.
+Seen in the app (preview, a throwaway campaign deleted after): a known character with a GM secret, a hidden one and a stranger; a line typed
+into the party Cast with the secret's words in other case, the hidden name and the stranger's real name, then Download straight away. The
+Problems tab opened with three hits, each with Cast, what it is and its words (the secret named with Vera's entry); nothing about the
+public text; Download anyway printed the PDF.
+
+Not done, or not verified:
+- A secret paraphrased, a name declined (Вера, Веру) or with a Hebrew prefix letter (לוורה) is not found; nor a secret translated.
+- What the GM typed into the GM draft is looked for only inside its `{{secret` blocks: GM-only prose written outside one is the GM's to judge.
+- A GM-only page's or character's picture pasted as an `art:` reference is not checked here; pictures still resolve only to the party's (41.5).
+- Encounters are not looked for (their names are generic, and the whole of them is the GM's).
+- A generic name is noisy: a hidden actor called "Goblin" or a planned session called "Session 6" is reported wherever the party draft
+  says the word. It is a warning, with Download anyway; no filter is built.
+- The Russian and Hebrew text of `Campaign.Book.Draft.Leak.*` is machine-drafted.
+
+### 41.20 The preview in Safari's engine and Firefox (2026-11-08)
+
+The preview is drawn by the GM's own browser; only Chromium had ever drawn it. Playwright's WebKit (the engine of Safari) and Firefox are now
+installed for the tests (and in CI), and `BookDraftEnginesE2ETests` runs the editor in all three (`AppFixture.EngineAsync`; an engine a
+machine lacks is passed over).
+
+What was compared, on an eight-character Cast in both editions under Plain and Ashen Vellum: every computed size, line height, colour and
+face of the body, headings and secret boxes; every face's load state; the page box and the columns; the run-on and overflow notices; and
+each page's first and last words. Styles, faces (all loaded), page sizes and page counts are the same in the three. Where a page breaks
+differs by a block now and then: WebKit lays a paragraph 1 to 2 px shorter, and that adds up over a page. No preview can match that; it is
+why Fit pages takes its breaks from the print browser (41.15), and the PDF is always the server's Chromium.
+
+Found and fixed:
+- **WebKit measured the first drawing in fallback faces.** A face loads when text using it is drawn, and `document.fonts.ready` waits only
+  for loads already started; WebKit had started none when the new pages were measured, so the drawing broke pages early and the first
+  columns ended short of the foot (93 px in the test), until the next redraw. `settle` now loads every face the page declares (the theme's
+  own, bundled) before waiting. Undoing it fails the WebKit test.
+- **Two editors after themes picked quickly.** Picking a theme closes the editor and opens a new one, and opening waits for the preview to
+  draw; a second pick in that wait closed only the old editor, so two stayed on the page (seen in Firefox, then in Chromium too with four
+  quick picks). Opening now closes any editor already in its place, and the page keeps only the last opening's editor. Undoing the first
+  fails the test in Chromium and Firefox; the second (an earlier opening that ends last is not taken) has no test that reaches it.
+- A first idea, a fixed height for Homebrewery's column box because WebKit seemed to balance the columns, was dropped: the half-empty
+  pages were the fallback faces above, and with the faces loaded first the change made no difference anywhere.
+
+The test checks, in each engine: the preview draws, the run-on notice comes, every page that reached its second column has a full first
+one, the first drawing in a fresh browser is the one drawn again, four quick theme picks leave one editor, typing saves and shows, and no
+page error. WebKit logs that it blocked a script in the preview frame when the test reads the frame while it loads; that is the test
+driver's own script (with a pause first, six runs of six were clean, and the app draws in that pause), and the test lets that one message
+pass.
+
+Not done, or not verified:
+- **Real Safari** was not driven: Playwright's WebKit is Safari's engine, not Safari (its own font loading and print settings may differ).
+  Firefox was Playwright's build 132.
+- Phones and tablets; a screen reader; right-to-left text in WebKit and Firefox (Hebrew was laid out in Chromium only).
+- CI's WebKit and Firefox are Linux builds; their line breaking may differ again from macOS's, and the column checks allow 60 px.
+
+### 41.21 Russian and Hebrew books (2026-11-08)
+
+Plain and Ashen Vellum print Russian and Hebrew, in the editable book and (Plain and Parchment) on the older one-shot route; the
+Homebrewery layout theme stays English (its faces are the layer's, Latin only), and the editor's theme picker shows it greyed out, "(not in
+this language)", for a Russian or Hebrew draft.
+
+- **Stand-ins under the theme's own family names.** A face may carry a language (`BookFontFace.Language`): it is that script's letters,
+  declared under the family the theme's sheet already names, for that script's `unicode-range` only, and embedded only in a book of that
+  language (`BookTheme.FontsFor`). So every rule of the theme, and a GM's stylesheet that names the theme's faces, draws Cyrillic or Hebrew
+  in the stand-in with no rule of its own, the way a web font is split into files by script.
+  - Plain: Russian text is Alegreya Sans's own Cyrillic, headings Forum (Cinzel has no Cyrillic); Hebrew text is Assistant, headings Frank
+    Ruhl Libre (both bundled already, for the app itself).
+  - Ashen Vellum (chosen by the user, "old-print set"): Russian, Old Standard TT for every IM Fell face and Ruslan Display for Pirata One's
+    titles, Cousine for the typewriter; Hebrew, David Libre for the IM Fell faces, Frank Ruhl Libre Black for the titles, Assistant for the
+    typewriter (in the monospaced Cousine the narrow Hebrew letters stand in wide cells and read as gaps inside a word).
+  - A stand-in takes only a weight and style the family's Latin faces have (a test holds it): a weight only the stand-in had would win the
+    match for that weight and leave its Latin letters to a system font. The variable Hebrew faces are declared at each weight; their widths
+    at 400 and 700 match a face declared with the full range, so the weight axis is applied (Assistant's default instance is ExtraLight).
+- **Hebrew has no italics here.** No Hebrew face bundled has one, and a slanted Hebrew is the browser's fake, so the Hebrew stand-in in an
+  italic slot is upright: `*emphasis*` in Hebrew prints as plain text in both themes, and Ashen Vellum's bold (small caps) is invisible in
+  Hebrew, which has no capitals. Latin words in a Hebrew book keep their italics.
+- **Hebrew is never letter-spaced**: Ashen Vellum's tracked cover tagline and small-caps lines pulled the letters apart into what read as
+  broken words; a right-to-left page sets `letter-spacing: normal !important` on the page (the GM's own `!important` still wins).
+- **Right to left: the theme's sheets mirrored** (`BookRtl.Mirror`, as the rtlcss tool does). Blank, the PHB layer and Ashen Vellum use
+  physical sides: lists padded on the left, drop caps floated left, an odd page's number on the right. In a Hebrew book `left` and `right`
+  are exchanged in property names, in `float`, `clear`, `text-align` and the background positions, in four-value shorthands and corners;
+  strings, comments and `url()` are kept byte for byte, and transforms, shadows and percentages are drawing, left as drawn. So the first
+  column is the right one, bullets and the drop cap stand on the right, and an odd page's number is on the left (a right-bound book's outer
+  edge). The GM's stylesheet is never mirrored: what the GM writes for a Hebrew book is theirs as written. The renderer and Fit pages
+  already measured `direction: rtl` columns (render.js); Fit pages on Hebrew and Russian leaves nothing run on.
+- **The obelisk.** No IM Fell file has U+2020, and the Fontsource Latin subsets of every face here leave it out although their declared
+  range names it; Ashen Vellum's list markers and page numbers (in English too) drew it in a system font. It now comes from "Ashen
+  Obelisk", Old Standard TT's latin-ext file declared for that one character.
+- **Which letters a file has is read, not assumed** (`BookFontCoverage`): the `cmap` of a WOFF2 (its table directory, the Brotli stream,
+  untransformed cmap), WOFF or TrueType/OpenType file, format 4 or 12, bounded and never throwing on a broken file; tested against
+  fontTools' counts for five of the bundled files and against TTF and WOFF copies of one.
+  - `BookFontCoverageTests` holds every theme and language it declares to it: each letter of the language, its punctuation and digits must be
+    in a bundled face, inside that face's declared range, in every weight and style slot the theme declares.
+  - `BookDraftScriptsTests` asks Chromium itself (`CSS.getPlatformFontsForNode`) which face draws each element of a draft (cover, contents,
+    headings, body, bold, italic, note, descriptive, secret, table, list, page number) and fails on any system font; checks a Hebrew page's
+    geometry (right column first, bullets right, page numbers on the outer edges, no letter-spacing); prints Russian and Hebrew drafts and
+    finds their words in the PDF; and fits Hebrew and Russian chapters.
+- **The editor's check before printing**: the Problems tab lists, by chapter, the characters no face of the theme draws (in its range and
+  in its file): an emoji, a Greek letter, Cyrillic in a Hebrew book. They would print in whatever font the server has, or as boxes. Up to
+  24 a chapter, then "and N more", so a chapter's first foreign alphabet does not hide an emoji after it (seen in the app: a Russian
+  character in a Hebrew book filled the list).
+- **The Markdown pane of a Hebrew draft** gives each line its own direction (`unicode-bidi: plaintext`, and CodeMirror told to read it):
+  Hebrew prose reads from the right, and a line of markup (`{{frontCover}}`, `\page`, an entry's marker) reads as written. Before, every
+  line was right to left and markup came out mirrored around its punctuation (`page\`, `Language check \(delete me\) #`).
+- **Seen in the app** (a throwaway campaign, since deleted): a Hebrew party draft opens right to left, the picker greys out the layout-only
+  theme, Ashen Vellum's preview draws the Hebrew in David Libre and Frank Ruhl Libre Black, the Problems tab names the Russian letters, the
+  emoji and Ω, and the PDF route prints the book (3 pages; its faces David Libre, Frank Ruhl Libre Black, IM Fell, Old Standard TT for the
+  obelisk, and Times and Georgia for exactly the characters the Problems tab named).
+- **The older route** (Plain and Parchment, `BookHtml`) was printed in Hebrew and Russian and looked at: its own CSS already handled right
+  to left (drop cap and first column on the right, odd page number on the left).
+
+Not done, or not verified:
+- Russian and Hebrew were looked at in Chromium only (the preview in WebKit and Firefox was checked in English, 41.20).
+- No native speaker has read a printed page; the stand-in pairings are a type choice, not a measured match of size and colour.
+- Hebrew emphasis is lost (above); niqqud is in the faces' ranges but was not looked at; Yiddish ligatures and the presentation forms were
+  not tried.
+- The SC families' Cyrillic is Old Standard's own lower case, where Latin has small caps.
+- A stand-in file used for several slots is embedded once per slot (about 70 KB more for a Hebrew Ashen Vellum book).
+- The Homebrewery layer's faces have no Cyrillic or Hebrew: a GM's CSS that names them for text prints those letters in a system font
+  (the Problems tab names them only for the layout-only theme).
+
+### 41.22 The theme wizard: a Homebrewery theme brought into a campaign, for the languages it can print (2026-11-08)
+
+Asked for by the user: paste a Homebrewery theme (the PHB-style sheets, a community theme like Tasha's), see it work, and say which languages it
+is for. The editor's ⋯ menu has "Bring in a theme…"; the wizard sits over the editor, in its dialog.
+
+- **1. Stylesheet**: a name, the sheet as pasted, and whether it sits on Homebrewery's 5e layer (on by default, as a theme for the PHB does).
+  The sheet is read from the page as a stream (`fieldBytes`): a message to the server is capped at 32 KB, and a theme with its fonts written
+  in is far over it (seen: the first try never reached the server). "Fetch and measure" keeps the theme, unfinished, and fetches every web
+  address its sheet names into copies kept with the theme (`BookDraftWebs.RefreshThemeAsync`, the same fetcher, bounds and rules as a
+  draft's, 41.14), then measures it.
+- **2. Languages**: every `@font-face` the cleaned sheet declares is read (`BookCustomTheme.Faces`; its file's letters by `BookFontCoverage`),
+  the layer's too when it sits on it. A family with the Latin letters is a text family; one without (dice, icons) is not held to a language.
+  For each language the wizard shows which text families draw its letters and, for each that does not, proposes a bundled stand-in of the
+  same kind (`BookStandIns.Propose`: serif, sans, titles, typewriter, from the family's name; Hebrew has no typewriter stand-in, 41.21). The GM
+  can change or clear each. It also names the families the sheet uses but brings nothing for (Georgia, a font it forgot): they print in
+  whatever the server has. English is always on; a language is ticked when its letters are all drawn or stand-ins are chosen.
+- **3. Preview**: the sample pages (`BookThemeSample`: cover, contents, every block, a monster block, a table, in each language) drawn under
+  the theme exactly as a book would be, in a frame with no script (the editor's `sample`), with a button per chosen language and a line naming
+  any character no face draws. "Keep and use this theme" saves it finished and makes it the draft's theme, with its own choice of the layer.
+- **Stored with the campaign** (`BookThemeDocument`, under `bookdrafts/{campaign}/themes/`, so it goes with the campaign and its copies with
+  it): name, sheet, layer, the languages, the stand-ins by language and family (only ids the catalogue has, for that language). The GM only;
+  20 a campaign; a save from an older copy is refused. A draft names it `custom:{key}`; settings accept it only when it is this campaign's and
+  finished; a deleted theme prints in Plain.
+- **Resolved in one place** (`BookThemeCatalog`): the editor's preview, its check of characters, the PDF and Fit pages all build the theme the
+  same way: the cleaned sheet, then the stand-ins for the book's language, one `@font-face` per slot each lacking family declares (its weight
+  and style copied as written, so a range or keyword is kept; anything else is written as `normal`), for the script's range only, after the
+  theme's own faces. A pasted face usually has no range, so the stand-in must win for its script by order: it does in Chromium, WebKit and
+  Firefox (the Hebrew of a Latin-only family measured the width of David Libre, not of the fallback serif, in all three). For a Hebrew book
+  the sheet is mirrored like the built-in themes' (41.21); the GM's own per-draft stylesheet still is not.
+- **The party leak check** looks in a campaign theme's sheet too (it prints into the party book; invariant 12).
+- **The check of characters, sharpened.** It had counted a letter as drawn when any face had it; a campaign theme's text face then fell back
+  to Times for Cyrillic while the layer's faces, which that text never uses, had it, and the check said nothing (seen in the app: the PDF held
+  Times). Now a letter counts only when every text family has it; digits, punctuation and symbols when any face does (a display face may have
+  none, and the Markdown's own marks never print).
+- **Credit**: "Pages made with the awesome Homebrewery", linked, in the editor's panel strip and the wizard's footer, and a paragraph on the
+  About page (the user's wish; MIT asks only for the notice).
+
+Tests: `BookThemeWizardTests` (measuring, proposals, the stand-ins' slots, order and range, a descriptor that could close the rule, storage,
+GM only, other campaigns, unfinished, conflict, the cap, deletion with the campaign, resolving); `BookDraftScriptsTests` (a pasted
+Latin-only theme draws a Hebrew book in bundled faces only with its stand-ins, and in a system font without); the leak check with a campaign
+theme; an end-to-end run of the wizard on a Hebrew party draft (proposals, preview, kept, chosen, previewed with its stand-ins, printed,
+listed). Mutations: 7 of 8 killed; the survivor (the campaign field checked again after loading by an id that already names the campaign) is
+the same defence in depth as the drafts' and cannot be reached.
+
+Seen in the app (a throwaway campaign, since deleted): a 92 KB pasted theme with two Latin faces on the layer, on a Hebrew party draft: the
+proposals, the Russian and Hebrew sample pages, the theme kept and chosen, the PDF printed in its faces and the stand-ins.
+
+Not done, or not verified:
+- No real Homebrewery theme from the web was brought in through the wizard here (the fetching itself is 41.14's, tried on Tasha's then);
+  a theme whose faces come as `@import`ed sheets is measured from the copies, untried end to end.
+- On the layer, each of its ten families gets its own row and stand-in: right, but long; there is no "same for all".
+- A family named only in a `font` shorthand without quotes or a comma is not found by the "brings nothing for" note.
+- Stand-ins are by family, not by what the family is used for: a family used for titles and body alike gets one stand-in.
+- The Russian and Hebrew text of `Campaign.Book.Theme.*` and `Campaign.Book.Credit` is machine-drafted.
+
+### 41.23 The user's own picture style (2026-11-08)
+
+The user asked for one style prompt for every generated picture ("painterly concept art in the style of …"), and settled it: what matters is
+that pictures look alike, so the words are left to the user. What keeps pictures alike is the same image model given the same style words
+every time; a style guide is exactly that.
+
+- **Where**: AI settings, under the image models, "Picture style" (`UserDocument.ImageStyle`, at most 600 characters, one line,
+  `ImageStyleGuide.Clean`). Per user, like the image model it goes with; empty means the built-in style.
+- **What it does**: in every picture prompt the user's guide stands, as written, in place of the built-in style phrases. In the app's art
+  slots (`AiPrompts.Image`, portraits, places and the rest) and in the book's drawn pictures (`BookImagePrompt.Assemble`, where it takes the
+  place of the book's medium, palette, line and light; the art tray says so and greys those out). The framing, the picture's description,
+  the mood and the fixed negative ("no text, no watermark …") stay.
+- **Not filtered for names.** The checks that refuse capitalised words, artists and "in the style of" are for the picture's description,
+  which comes from the campaign (and so may carry a campaign's names or a party's secrets). The guide is the user's own text for their own
+  model and carries nothing of a campaign's; it is used as they wrote it. (A guide that names a franchise or a living artist is the user's
+  choice, sent to their own provider; some providers refuse such prompts.) The assembler's parameter list, which a test pins as the
+  guarantee that no subject name can reach a prompt, now has `guide`, read only from the GM's own settings (`IBookImages.StyleAsync`).
+- **Drawn-from-older**: a book picture's input hash covers the guide when there is one (and is what it always was when there is none, so no
+  picture drawn before turns "older"); a changed guide marks pictures drawn with the old one, and the book's own choices no longer do.
+
+Tests: `ImageStyleGuideTests` (cleaning, the app's prompt with and without, the hash), `BookArtDrawingTests` (the guide replaces the book's
+choices as written, names and all; the description is still checked; the tray shows it and its staleness follows the guide). Seen in the app:
+the setting saves and is there after a reload. No picture was drawn (that bills the user's key).
+
+Not done: one guide per user, not per campaign; no reference picture (some models take one, which holds a style better than words); the
+guide is not shown in the art panels outside the book's tray.
+
+### 41.24 Small things: fair decoding, one picture cap for preview and print, a running footer, the Markdown file (2026-11-08)
+
+Asked for by the user before the book-shaped prose (handoff item 2). Left for that work: stat-block and table blocks (they come with the
+system's book shape); not small: `:::for` per-player editions; not asked: a picture style per campaign.
+
+- **The decoder is shared fairly between users** (section 31.1, item 3). The scaler's two places are a `BookFairGate`: one user alone may
+  hold both (a self-hosted server usually has one GM), and when a place comes free it goes to the waiting user who holds the fewest, the
+  earliest of them. A GM's first build of many large pictures now delays another's preview by about one picture. The user is the one asking
+  for the book (`BookArtReader.ReadAsync(..., forUser)`), on both book routes. Nothing is kept for a user who holds and waits for nothing.
+  The printing line's place is still taken before the pictures are read, on purpose: it bounds how many books are read at once, and a
+  request that would be turned away costs nothing (only one place per user, so it holds back only that user).
+- **The preview and the PDF leave out the same pictures** (31.1, item 4). The 64 MB cap counted each edition's own bytes, and preview files
+  are about six times smaller, so a book of 11-64 MB of print-size pictures showed them all and printed without some. Now each picture is
+  counted at what it would print at, worked out from its pixels before anything is decoded (`BookImageScaler.PrintEstimate`: its own bytes
+  when the print leaves it as it is, else its printed pixels at 1 byte each, never more than its own bytes), in the same order for both. The
+  print still checks what it really holds, a backstop for a picture larger than its estimate (a PNG with transparency can be).
+- **The pictures left out are named** in the editor's Problems tab: the chapter (a button that opens it), the entry by the label this
+  edition gives it, and why (the book is full, or the file could not be read). Named only through the edition's own slots: a skipped
+  picture carries its slot's key (a hash), never an id, and one whose slot this edition has not is not named. The preview's picture request
+  now answers `{art, leftOut}`.
+- **A running footer**: each page names its chapter at its foot, beside the page number, as Homebrewery's footnote (`<div class="footnote
+  auto">`, `render.js` `footPages`, after Fit pages so it takes no room). Read from the drawn page's own `h1`, so an edition shows only its
+  own text; a page takes the first chapter title on it, else the last before it; none on covers or the contents, none where the text wrote its
+  own `{{footnote`. Plain gained the rule (the layer and Ashen Vellum had one); `EveryBlock_UnderEveryTheme...` now reads the name at every
+  page's foot with no text running into it.
+- **The Markdown file** (More, "Download Markdown (.md)", route `.../draft/{lang}/md`, GM only): the draft's chapters as stored, a page
+  apart, with Fit pages' marks taken out (`BookDraftText.Unfitted`: `\page {reliquary,fitted}` keeps `reliquary`). The party edition goes
+  through the same leak check as its PDF (Download anyway then gives the file); the GM edition asks first, saying it holds every secret. The
+  pictures stay `art:` references and the stylesheet is not in it (the menu item says so). No draft, no file (404): the editor makes the
+  draft when it opens.
+
+Tests: `BookFairGateTests` (one user holds both; the freed place goes to the user holding fewest; a cancelled wait; the scaler shares by
+owner, nothing kept after), `BookArtTests.NearTheSizeCap...` (preview and print leave out the same picture, with its slot), `BookDraftTests`
+(left-out pictures named by label, never an id or a hidden name in the party's; the Markdown file), the renderer's footer checks in
+`test.mjs`, the footer under every theme in print, and the route E2E tests (the `.md` through the leak check, a stranger gets 404).
+
+Not done, or not verified: the footer was looked at in Chromium only, and in Hebrew in one preview (mirrored, beside the page number); the estimate's 1 byte a pixel is a
+guess with room (painted art measured 0.3-0.8); a GM's own CSS that styles `.footnote` styles the running footer too; the Markdown file was
+not opened in Homebrewery itself; the Russian and Hebrew text of the new strings is machine-drafted.
+
+## 42. Book-shaped prose (2026-11-08; steps 1 to 3 built, step 4 waits for the user)
+
+The user's decision (handoff item 2): the campaign is the tidied notes, and the AI turns them into prose shaped like the system's own published
+books. What exists already: the system says how its books read (`system.yaml` `ai.bookShape`, for srd5e a description of fifth-edition
+adventures and setting books, shape and voice only), and "As the book" (`BookEditPrompts.Presets["shape"]`) asks for that shape on a
+selection or a whole chapter, reviewed in the merge view before anything is saved. What is missing is a way to do the whole book, and the
+safety that a book-length rewrite needs.
+
+**Where:** in the editable book's AI edits (41.16), not the older one-shot build (`BookSectionWorker`). Shaped text is the GM's text once
+accepted, so the per-entry merge of 41.18 already brings it up to date entry by entry: no stored prose layer, and an NPC edit later costs one
+entry's merge, not the chapter (the "re-bought whole" problem of the old build does not arise here).
+
+**Order of work, each step tested before the next:**
+1. **Facts kept, both ways** (`BookFacts`, in Core, no UI). The names and numbers a passage holds are taken from the edition's own source
+   (entry headings, mention labels as this edition resolves them, so the party's are the masks), not from capital letters, which Hebrew lacks.
+   Numbers: digits, dice, difficulty classes. A reply may add none (the existing checks, widened from capitals to the source's names) and may
+   drop none (new: the coverage check; for shaping it replaces the 0.12 length floor, since shaping lengthens text). Matching tolerates
+   Russian endings (Вера, Веру) and Hebrew prefix letters (לוורה), with golden tests in all three languages, mutation-checked.
+2. **"As the book" on a chapter, one call per entry**: the chapter's head and each `{{entry` unit (the merge's splitter), each through the
+   existing checks, the facts check and the restore. A unit that fails keeps its text and is named in the Problems tab; the rest are offered
+   for review. Calls go through `BookBudget`, so edits count in the spend totals (41.16 left them out).
+3. **The whole book**: the cost shown first, nothing without a click, progress per chapter, and review chapter by chapter in the existing
+   overlay (accept, reject, or accept part). Built and tested against the fake model only.
+4. **One real run**, on a throwaway campaign, only after the user agrees to it (it bills their key).
+
+**For the user to decide:** `ai.bookShape` describes a GM's adventure: read-aloud boxes, "what happens if the characters…", checks and
+difficulty classes. That is the wrong voice for the party edition, which the players read. Either the system gets a second description for
+player-facing books (a gazetteer or player's guide: what is known, in an in-world voice, no GM advice or checks), or the party edition uses
+the neutral shape. The recommendation is the second description (`ai.playerBookShape`), since it is one paragraph per system and keeps the
+party book from reading as a GM's book with the secrets cut out.
+
+**Decided:** the user said "do it now" without choosing, so the recommendation was taken: `ai.playerBookShape` (srd5e has one: player's guides
+and gazetteers, in the world's voice, no GM advice, no checks). A system without one gets `BookEditPrompts.NeutralPlayerShape`, never the GM's
+`bookShape` and never `NeutralShape` (which speaks of what only the GM needs). Party requests also say outright that the players read the book.
+
+**What was built:**
+- `BookFacts.Check` (Core), run on every preset's reply (shape, shorter, read-aloud, tidy) and never on the GM's own words or the merge, which
+  change facts on purpose. It reads `passage.Text` (pieces as markers), so a name inside a secret is never counted or quoted back on the retry.
+  Names come from `BookCompiler.Names(source)` of the edition being edited (actors, regions, places, pages, homebrew), so the party's are the
+  masks. Matching: Russian stem plus a known case ending (Вера, Веру, Верой; not Мир for мирный), up to three Hebrew prefix letters tried after
+  the whole word (לוורה; מירה whole), Hebrew points dropped, English possessives cut. A name of several words is in the passage when all its
+  words are, kept when any is, added when all are there and none was before (around the passage counts). Capitalised new words are refused as
+  before, except the game's own (ability, resource, condition and field labels). Figures: digits and dice (2d6, 2к6) none dropped and none
+  added; a figure written as a word (three, три, שלושה, ordinals) keeps it. Golden tests in `BookFactsTests`.
+- A preset on a whole chapter goes entry by entry (`BookDraftAi.Parts`: the merge's units, parts a piece crosses joined into one), one budget
+  for all of them, broken off on auth, rate limit, allowance, budget or a stop. A part whose reply fails keeps its text and is listed in the
+  Problems tab with its heading; the rest is offered in one review. A chapter with an entry too long for one request is refused, as before.
+- Edits and merges add what they spent to the edition's totals (`BookSpend`, the build document's counters the book panel already shows).
+- The whole book: More → "Whole book as the book". The cost of every chapter first (`BookPreviewAsync`, chapters too long are named and left
+  out); then one chapter at a time, each reviewed before the next is sent; a chapter the model left unchanged is not shown; "Stop after this
+  chapter". Tested with the fake model only (`BookDraftTests`, `TheGmRewritesTheWholeBookAsTheBook_…` in the browser).
+
+**Step 4, the real run (2026-11-08, with the user's yes):** a throwaway English campaign, party edition, three people (one masked), the whole
+book on the user's small text model. The first try stopped at its first request (the stored key was refused) and showed the cover and contents
+were in the run: fixed, the whole-book run now leaves them alone. The second try: one chapter, three requests, about 7,800 tokens, all three
+entries passed first time. Every figure (12 years, 3 debts, 2 pages, 2 copper, twice a day) and every name kept, the mask kept, the GM's
+secret never sent, and the voice was the players' book (in-world, no checks), with a titled sidebar where the notes had a detail. Seen:
+- The model adds texture the facts check cannot see: "drinks more freely than he rows", "never comes into the light", coins "older than any
+  currency now minted". No name or figure, so it passes; the review is where the GM catches it.
+- Every line of the chapter changed, so the review offered the whole chapter as one change: accept or reject it whole, not entry by entry.
+  Fixed the same day: the merge view's own diff gives up on precision past its scan limit and reports the chapter as one change; the review
+  now diffs entry by entry between the entry markers both texts share (`tools/book-editor/src/review-diff.js`, `test-review.mjs`), so
+  each entry is its own change to accept or reject. Texts whose markers do not line up (a merge that adds or drops entries) are diffed
+  whole, with a higher limit.
+Not tried for real: Russian and Hebrew, the GM edition, a chapter long enough for an entry to fail.
+
+**Still not seen:** how a real model's prose fares against the facts check in Russian and Hebrew (the coverage
+rule is lenient by design; a reply refused twice keeps its entry's text, so the cost of a strict check is a re-ask, never a wrong book).
+
+Not in this plan: stat blocks from the campaign's own creatures (`{{monster` built by code from the sheet, not by the model) are a separate
+step after it; `:::for` per-player editions.
+
+## 43. Art: keep three versions, draw again, choose which prints (2026-11-09)
+
+Step 6's leftover from 28.3 item 3 ("Regenerate (keep 3), Accept"). Step 7 of 28.3 item 6 is section 44.
+
+**What changed:** a new picture in a slot, drawn or uploaded, no longer throws away the one it replaces. Each slot keeps up to three
+versions per edition (`BookArtDocument.MaxVersions`), the one in use counted, and the GM chooses which one prints.
+
+**The store (`BookArtStore.cs`):**
+- `Pictures` still holds at most one picture per slot and edition: the one in use, the only one anything that builds a book reads.
+  Earlier versions are in a separate list, `Kept`, which `BookSlots.Choose`, `BookArtReader` and `BookArt.Slot` never see. The three
+  layers of the audience gate (section 34) are unchanged.
+- Every new picture has an attachment name of its own (`book-<edition>-<slot>-<8 hex>`; `NewAttachment`), so a kept version keeps its
+  bytes. Pictures stored before this keep the old name (`book-<edition>-<slot>`); readers use the stored `Attachment`, as they did.
+  `IsAttachment` accepts only those two forms, for that slot and edition.
+- `PutAsync` moves the one in use to `Kept` (stamping `KeptAt`) and puts the new one in use. When the slot already has three versions,
+  the kept one that went out of use longest ago (`DroppedByNew`: oldest `KeptAt`) is dropped, its attachment deleted in the same save.
+  The storage quota counts the new picture in full and credits the dropped one's size. `MaxPictures` (600) counts both lists.
+- `UseAsync(dm, slot, edition, attachment)` puts a kept version in use and the one in use among the kept. The version must be kept under
+  that very slot **and edition**: a GM-edition version cannot be put in use in the party edition, whatever name is posted.
+- `RemoveAsync(dm, slot, edition, attachment?)`: with no attachment ("Take out" in the tray) it moves the one in use among the kept
+  versions, so a paid picture is never lost by that button, and the slot has "no picture in use"; with one it deletes that version and
+  its bytes, after the tray's confirm.
+- A new picture's name is checked against every name listed before it is stored (a random 8-digit part could repeat).
+- The backup walks every attachment of the document, so kept versions are in it.
+
+**Drawing:** "Draw again" is the Draw tick on a slot that has a drawn picture: the same path as before (`BookArtDrawing.PrepareAsync`, the
+same checks, reservation and gate). The pre-flight says which places keep the picture in use as an earlier version, and, in the error
+colour, which places already keep three, so drawing deletes the oldest earlier one, which was paid for (`BookDrawItem.Drops`). That is
+said before the click.
+
+**The tray:** a slot with kept versions has "Versions (N)". It opens a list, the one in use first: a small picture of each (scaled for the
+live preview of its box, `BookArtService.VersionsAsync`), drawn or added and when, "drawn from an older description or style", "In use" or
+"Use this one", and Delete. Delete asks first ("can't be brought back"; Keep it / Delete for good); the Delete button stays where it is
+while it asks and "Keep it" puts focus back on it. Dates show in the GM's own time zone (`LocalTime`). The service checks the GM and the
+slot again for the list; use and delete go through the store's checks.
+- **Places that are gone:** a picture stored for a place the edition no longer has (an entry deleted, hidden, renamed or revealed) prints
+  nowhere but counts against the 600 and the owner's storage. The tray says how many ("Pictures for places no longer in this edition (N)")
+  and lists them, with a picture each, for the GM to delete (`BookArtService.GoneAsync`). The place may come back, so nothing deletes them
+  on its own.
+
+**Tests:**
+- `BookArtTests.ASlotKeepsThreeVersions_OnlyTheOneInUsePrints_AndAFourthDropsTheOldestKept`: the page prints only the one in use, a kept
+  one put in use prints in both books, a fourth drops the one out of use longest and its bytes, Remove leaves the kept, Delete takes one.
+- `BookArtTests.AVersionKeptForTheGmEdition_IsNeverUsedInTheParty_AndTheVersionListIsTheEditionsOwn`: store and service refuse a GM version
+  for the party, a renamed and a made-up name, and a player; the list is the edition's own, with pictures.
+- `BookArtDrawingTests.DrawingAgain_KeepsTheEarlierPicture_AndThePreflightSaysWhenANewOneDropsAPaidVersion`.
+- `BookArtTests.APictureStoredUnderTheOldName_IsKept_UsedAndDeletedByIt` (and every refused name form) and
+  `PicturesForAPlaceThatIsGone_AreListedForTheGmToDelete`; `StorageQuotaTests.ABookPictureThatDropsAnOldVersion_IsCountedNetOfIt_Async`;
+  the drawing test also checks a kept version is marked older when the style changes.
+- The e2e `TheGmTicksASuggestedPlace_…` now draws again, opens the versions, puts the first in use, deletes one through the confirm (focus
+  back on Delete after "Keep it"), and draws to three versions, where the pre-flight warns of the paid one a fourth would delete.
+- Mutants caught: the edition check and the name check in `UseAsync` together (each alone is covered by the other), the put-back,
+  dropping by date added, the dropped bytes kept, the version count, Remove deleting kept ones, one name for every version, no `Drops`,
+  the version list or the use naming another edition, the quota credit, "Take out" deleting, and the gone list counting the other edition.
+- A review by a second model found no path for a GM picture into the party book; its other findings (Take out deleted a paid picture
+  without asking, unseen pictures for gone places, focus lost in the confirm, small tray state slips, name uniqueness, ru/he wording,
+  missing tests) are fixed above.
+
+**Not done:**
+- No real picture model has been run on drawing again; only the fake server.
+
+## 44. Art step 7: spots and Chronicle scenes (2026-11-09)
+
+The last step of 28.3 item 6: the two kinds of place the art director may suggest rather than code laying them all out.
+
+**Chronicle scenes.** Each session of the Chronicle is now an entry (`BookCompiler`: `Head(... "scene", session.Id, Place, session:<id>)`), so it
+has a slot keyed `session:<id>`, an `{{entry` marker in the draft, and its own unit for AI edits (section 42). The compiled Markdown is the same
+text as before; the draft's Chronicle gains the markers, so an edited Chronicle chapter shows the stale notice once. A scene is drawn wide
+(`ShapeFor`), boxed like a place picture, and the director is told "a scene from this session".
+
+**Spots.** Every entry has a spot slot (`BookSlots.Spot`, key `spot:<the entry's subject>`, so a stranger's spot is the mask's), a small square
+that closes the entry. It is never asked about alone:
+- The outline carries it beside its entry (`BookOutlineSlot.SpotOf`), hashed with kind "spot".
+- The director's request marks the entry "a small closing picture may be suggested"; the reply may add `"spot": {depicts, visual, mood}` to that
+  entry's item, at most `MaxSpotsPerCall` (2) a reply, checked like any suggestion. A spot that fails, is not allowed, or is one too many is
+  dropped alone; the entry's own suggestion stays. The output limit allows for the two.
+- The planner asks only the entries; a spot suggestion is saved under the spot's key, from the spot's outline hash, with the edition's tag.
+- The tray shows a spot ("Small picture after …") only once it has a suggestion or a picture (in use or kept), right after its entry, numbered
+  with it when two entries read alike.
+- Drawing is the usual path: square, framing "spot", scaled to a 34 mm box.
+- The draft writes `{{spot` with `art:<key>` after the entry's text, before the next entry's marker, only when the spot holds a picture. AI
+  edits keep `{{spot` back like the other picture blocks.
+- Every theme styles `.spot` (Plain and the Homebrewery layer: a centred 30 mm square; Ashen Vellum: the portrait's ragged frame, no soft
+  gradient mask). `EveryBlock_UnderEveryTheme…` now prints a spot and requires it.
+- The old HTML route does not place spots (it places only headers, the cover and entries' own pictures); it is to be retired (41.7).
+
+**Tests:** `BookArtDirectorReplyTests.ASpot_IsKeptOnlyWhereAllowed_AtMostTwo_AndABadOneCostsOnlyItself`;
+`BookArtDrawingTests.ASpotSuggestedWithItsEntry_IsShownDrawnSquare_AndClosesTheEntryInTheDraft_AndASessionIsAnEntry` (only places are asked,
+one spot per entry exists, the suggestion is saved under the spot and tagged, the tray shows one spot after its entry, drawn square from the
+spot framing, the draft closes Vera's entry with it, and the session is an entry); the theme block test above.
+
+**Also fixed here:** a chapter clicked in the editor before its script had started was ignored (`BookDraftEditor.ShowAsync` returned while the
+module was loading); it is now remembered and shown once the editor opens. Found as a failing e2e on a loaded machine.
+
+**Not done:** no browser test drives a spot through the tray; no real model has suggested a spot; the spot's mood and size are not tuned.
+
+## 45. A party book per player (2026-11-09)
+
+The party draft is what a player who owns no character may read; a `:::for` block, which a GM writes for one or more characters, is never in
+it. A player's own book is the party draft with what their characters may read added: in the party draft's editor, **More → PDF for a player**
+lists each player of the campaign now who owns a character, by their characters' names, and gives that player's copy as a PDF named
+`<campaign> (<character names>).pdf`. The Markdown route takes the same `?player=<user id>`.
+
+**What is read.** `BookSourceReader.ReadForPlayerAsync(dm, player)` reads the party edition through that player's own access (not the stranger
+the party edition is read as), so every repository shows what that player may open: `:::for` blocks for their characters in others' texts,
+lore revealed to their characters, their own character (its own `:::for` blocks, which the repository keeps apart in `RevealedToReader`, go at
+the end of its history). Every text is then cleaned for the characters they own (`Clean(text, owned)`, which matters for the campaign's own
+text: no repository reads that). It refuses (null) for anyone who is not a Player member now (the GM, a co-GM, someone who left, a stranger) and
+for a player who owns no character. `PlayersAsync` lists the same people for the menu. Owner and author ids are cleared as for the party.
+
+**How the copy is made** (`BookPlayerBook.Overlay`). Both sources are compiled; each chapter is split into units (the text before its first entry,
+then each entry, by the line the compiler recorded), and each unit's paragraphs are compared, keyed by the entry's slot key, which is the same in
+both copies. The party's compile is a subsequence of the player's (the same compiler, the same records, more of each text kept), so what the
+player's copy has off their longest common subsequence is that player's. Those paragraphs are written as the draft writes campaign text
+(`BookDraftWriter.Text`, mentions as the player's edition names them: a hidden actor is nothing, a stranger its mask), in one
+`{{note` per unit headed "Only for <names>":
+- an entry's note goes after the entry in the stored draft, before the next entry's marker and before any page break leading to it, so the GM's
+  edits stay as they are and the note stays on the entry's page;
+- the text before a chapter's first entry gets its note before that entry (lore and the overview have none, so at the chapter's end);
+- a unit the draft has no marker for (the GM deleted it, or only this player has the entry) goes at the chapter's end; a chapter the party draft
+  has not got (only lore revealed to them, say) is added at the book's end, not in the contents.
+
+The copy is made when it is asked for and is never stored or sent to a model. Pictures are the party's, read for the party's source. The party
+leak check (41.19) runs before it as before the party's own PDF, since the copy is that draft. Fit pages' breaks are the party draft's: a note can
+push text past one, and Fit pages is not run on a player's copy.
+
+**Tests:** `BookPlayerBookTests` (a player's book has their blocks, the block shared with another player, lore revealed to them, their own
+character's block and the campaign text's, and none of another player's, the GM's, a `:::for` nested in `:::dm`, or a hidden actor's name or label;
+each note under its own entry, the GM's edits kept, a deleted entry's note at the chapter's end, a note before the GM's page break; who is refused;
+the PDF's page and file name; `Extra`), and `BookRouteE2ETests.TheGmDownloadsOnePlayersOwnBook_NamedByTheirCharacter_WithWhatOnlyTheyWereTold`.
+Mutants run by hand and caught: no diff; no edition check; the own character's blocks dropped; cleaning without the owned set; no backing over
+page breaks; the file name ignoring the player; a player with no character listed; no entry anchor.
+
+**Not done:** a player cannot download their own book themselves (the book is the GM's; a player may already open all of it in the app); the
+note's position inside a long entry is its end, not beside the paragraph it came from; the contents page does not list a chapter only the player has.
+
+## 46. Layout: stat blocks and tables, picture frames, torn page edges (2026-11-09)
+
+**First, a leak fixed in the party book.** Players cannot open homebrew of a type the system does not mark `playerFacing` (srd5e's creatures,
+simple-d6's foes) in the Library (`CampaignLibrary.CanRead`), but the party book printed every *published* homebrew entry. The reader now leaves
+those types out of the party edition (`BookSourceReader`, given the system catalog; a type the system does not describe is read as the Library
+reads it). Canary test in `BookSourceTests` (`CANARY_PUBLISHED_MONSTER`), mutation-checked.
+
+**Stat blocks and tables** (`BookStatBlocks`, written by the draft generator after a homebrew entry's text, before its spot). Built by code from the
+campaign's own homebrew and the system's description of the entry's type, never by a model, and with no game's words in the code:
+- a type the system marks `actorBlueprint` (a creature) is Homebrewery's `{{monster,frame`: the name; a type line of the type's `summaryFields`; its
+  plain fields grouped by the system's categories as `**Label** value` lines; the scores row from the system's `attributes` (abbreviation, and the
+  modifier rule the system gives, none for a system without one) for the fields `attributeProperties` maps; each `Collection` field as a heading
+  with its rows as `***Name.*** description`;
+- any other type is a `{{properties` block: a two-column table of its plain fields under the type's label, and its collections below;
+- labels and dropdown values in the book's language (`SystemDefinition.Localize`, `FieldDefinition.Display`); long text (the entry's prose),
+  references and pictures are not printed as values;
+- every value goes through the draft writer's text path (mentions as the edition names them, a hidden actor as nothing; secret blocks as the
+  edition may read them; HTML escaped), then onto one line with every brace and bar escaped, so a value cannot close the block, open another or
+  make a table cell;
+- each block carries an id (`#sb-KEY`, `#pt-KEY`, KEY the entry's slot key), and an AI edit keeps back any block with an id
+  (`BookDraftEdits.Cut`, labelled "a stat block" / "a table of numbers"), so no number of them reaches a model. A GM's own `{{monster` without an
+  id stays theirs to edit;
+- a type the system does not describe, or an entry with nothing to print, gets no block; without the catalog the generator writes none.
+The generator's version is now `book-draft/v3`, so every chapter nobody edited follows by itself and an edited homebrew chapter shows the stale
+notice once. Every theme styles `.properties` (`.monster` it already did); `EveryBlock_UnderEveryTheme…` prints one of each and requires their
+text. Not done: the old HTML route and the AI build (sections 25-36) print no stat blocks; NPC actors' sheets and encounters get none; the type line
+is the summary fields in the system's order (srd5e: "2, undead, Medium"), not a game's own phrasing.
+
+**Picture frames.** A class on a picture's block, in every theme (`BookDraftThemes.PageCss`): `torn` (a mask from `BookMasks.Frame`, the page
+edge's tear on a 100 by 100 box; two seeds, alternating among the torn pictures next to each other), `oval` and `round`. The Blocks tab's hint names them. A soft "vignette" frame was tried and
+left out: Chrome prints a gradient mask as a soft mask that macOS's PDF renderer (Preview) draws wrong, with the unmasked picture beside it.
+
+**Torn page edges.** A draft setting (More → Torn page edges; `BookDraftDocument.Edge`, off by default, kept when other settings are saved without
+it). `BookMasks.FibreEdge`: the §24 tear, shallow (within 4.5 mm of the page's edge, small corner bites, clear of the running footer), the outside
+white, the line, and two fainter broken fibre lines just inside it, drawn in each page's `::before` (no theme or the layer uses it), two seeds for
+facing pages. Measured: a dash pattern made Chromium print one shape per dash, about 30 KB a page; the fibres are broken by their points instead
+(sub-paths), about 2.6 KB a page. Test: `FramesAndTornEdges_Print_AsVector_AtAFewKilobytesAPage` (nothing fetched, no page-sized picture, under
+6 KB a page, the footer on every page).
+
+**Tests:** `BookStatBlocksTests` (srd5e creature, a simple-d6 foe with no modifier rule, a type not described, a table in English and Russian, hostile
+values, the generator placing a block and an AI edit keeping it back), `BookMasksFrameTests`, the settings test in `BookDraftTests`, the two print tests.
+Mutants caught: the modifier rule hard-coded; no escaping; no id; no text path; the block not written; the edge reset by another setting; the edge
+always on; the party filter for hidden types.
+
+## 47. Suggestions and help in the editor (2026-11-09)
+
+While the GM writes a chapter (`tools/book-editor/src/assist.js`, CodeMirror's own completion and hover):
+- after `{{` at a line's start, the blocks a GM writes (note, descriptive, secret in the GM draft only, monster, portrait, place, spot, wide, quote),
+  each with a line of help; the program's own blocks (chapter, entry, properties, the art blocks it writes) are not offered;
+- after a picture block's comma, its frames (torn, oval, round, section 46), and `frame` for a stat block;
+- after `\` at a line's start, `page` and `column`;
+- after `](art:`, this edition's picture slots (`BookDrafts.SlotsAsync`: the slots as this edition gives them, so the party draft's labels are the
+  party's), found by their labels and typed as the key with one closing bracket (the editor may already have closed it);
+- hovering a block's name, an `art:` key or an entry's marker says what it is (a marker: "where the entry … starts; leave it as it is"; a secret
+  block in the party draft: that it never prints there).
+Nothing is typed unless picked. **More → Suggestions and help** turns all of it off at once (a CodeMirror compartment, so the open editor changes
+without reloading), remembered in this browser (`codex.bookEditor.assist`); on by default. The stylesheet never has it. The help is in the GM's
+language (`Campaign.Book.Draft.Help.*`, en/ru/he).
+
+**Tests:** `tools/book-editor/test-assist.mjs` (in `npm test`: blocks, no secret for the party, no program blocks, frames not repeated, breaks,
+pictures by label, a spot as the small picture after its entry, the pick with and without a closing bracket) and
+`BookRouteE2ETests.TheEditorSuggestsBlocksAndPictures_ExplainsAMarker_AndCanBeTurnedOff`. Playwright has to wait a moment before Enter: the list
+ignores keys for 75 ms after it changes (CodeMirror's `interactionDelay`).
+
+**Not done:** no suggestions inside a block (a stat block's lines) or for Homebrewery's own rarer blocks; no completion of the CSS editor.

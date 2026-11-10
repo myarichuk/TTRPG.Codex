@@ -13,7 +13,8 @@ public sealed record ArtImage(byte[] Bytes, string ContentType);
 /// pack entry belongs to the campaign (the pack itself is read-only). Serving goes through
 /// <see cref="MediaEndpoints"/>, which applies the Library's own visibility rules.
 /// </summary>
-public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, ICampaignRepository campaigns, IRegionRepository regions, AiProviderService providers, IWikiRepository wiki)
+public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, ICampaignRepository campaigns, IRegionRepository regions, AiProviderService providers, IWikiRepository wiki,
+    StorageQuota? quota = null)
 {
     public const string Accept = "image/png,image/jpeg,image/webp,image/gif,image/avif";
 
@@ -216,11 +217,16 @@ public sealed class ArtService(IMediaStore media, IHomebrewRepository homebrew, 
         return file == null ? null : new ArtImage(file.Bytes, file.ContentType);
     }
 
-    /// <summary>Draws a picture with the user's image model. <paramref name="visual"/> is the entry's
-    /// art prompt when it has one, otherwise a short description.</summary>
-    public async Task<ArtImage> GenerateAsync(string userId, string subject, string subjectKind, string? visual, ArtShape shape, CancellationToken ct = default)
+    /// <summary>Draws a picture with the user's image model, for <paramref name="campaignId"/>. <paramref name="visual"/> is the entry's
+    /// art prompt when it has one, otherwise a short description. Refused with <c>Storage.Full</c> before anything is paid for when the
+    /// campaign's owner has no room left (docs/SERVER_ACCESS_AND_VAULT.md 15).</summary>
+    public async Task<ArtImage> GenerateAsync(string userId, string campaignId, string subject, string subjectKind, string? visual, ArtShape shape, CancellationToken ct = default)
     {
-        var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, shape), shape, ct);
+        if (quota != null) await quota.EnsureRoomBeforeDrawingAsync(campaignId);
+
+        // The user's own style guide, when they wrote one, in place of the house style (docs/BOOK_EXPORT.md 41.23).
+        var style = await providers.ImageStyleForAsync(userId);
+        var image = await providers.GenerateImageAsync(userId, AiPrompts.Image(subject, subjectKind, visual, shape, style), shape, ct);
         if (!RavenMediaStore.AllowedContentTypes.Contains(image.ContentType))
         {
             throw new LocalizedException("Service.Art.BadType", image.ContentType);

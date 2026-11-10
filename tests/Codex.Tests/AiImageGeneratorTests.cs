@@ -84,6 +84,8 @@ public class AiImageGeneratorTests
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() => AiImageGenerator.GenerateAsync(config, "a toad", ArtShape.Tall, new HttpClient(handler)));
 
         Assert.Equal("The image service answered 402: Insufficient credits", error.Message);
+        // A run of book pictures stops on this rather than trying the next one.
+        Assert.Equal(AiFailureKind.RateLimit, AiFailure.From(error).Kind);
     }
 
     private sealed class RecordingHandler(string reply, System.Net.HttpStatusCode status = System.Net.HttpStatusCode.OK) : HttpMessageHandler

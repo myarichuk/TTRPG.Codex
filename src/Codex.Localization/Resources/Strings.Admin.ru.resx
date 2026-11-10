@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Admin.Setup.Title" xml:space="preserve"><value>Настройка сервера</value></data>
+  <data name="Admin.Setup.StepOf" xml:space="preserve"><value>Шаг {0} из {1}</value></data>
+  <data name="Admin.Setup.Heading" xml:space="preserve"><value>Создайте учётную запись администратора</value></data>
+  <data name="Admin.Setup.Intro" xml:space="preserve"><value>Эта учётная запись управляет сервером: одобряет новые учётные записи, решает, кто может создавать кампании, и меняет настройки сервера. Затем несколько вопросов, у каждого уже выбран безопасный ответ.</value></data>
+  <data name="Admin.Setup.CreateAdmin" xml:space="preserve"><value>Создать учётную запись администратора</value></data>
+  <data name="Admin.Setup.ChangeLater" xml:space="preserve"><value>Это можно изменить позже на странице администрирования.</value></data>
+  <data name="Admin.Setup.SignUp" xml:space="preserve"><value>Кто может создать учётную запись?</value></data>
+  <data name="Admin.Setup.Campaigns" xml:space="preserve"><value>Кто может создавать кампании?</value></data>
+  <data name="Admin.Setup.Fetch" xml:space="preserve"><value>Откуда стили книги могут загружать шрифты и картинки?</value></data>
+  <data name="Admin.Setup.Done" xml:space="preserve"><value>Сервер готов</value></data>
+  <data name="Admin.Setup.Done.Intro" xml:space="preserve"><value>Что может понадобиться дальше:</value></data>
+  <data name="Admin.Setup.Done.Ai" xml:space="preserve"><value>Подключить модель ИИ для кнопок ИИ</value></data>
+  <data name="Admin.Setup.Done.Library" xml:space="preserve"><value>Посмотреть библиотеку игровых систем и материалов</value></data>
+  <data name="Admin.Setup.Done.Admin" xml:space="preserve"><value>Открыть страницу администрирования: учётные записи, настройки и журнал</value></data>
+  <data name="Admin.Setup.Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="Admin.Setup.Next" xml:space="preserve"><value>Далее</value></data>
+  <data name="Admin.Setup.Skip" xml:space="preserve"><value>Оставить остальное как есть</value></data>
+  <data name="Admin.Setup.Finish" xml:space="preserve"><value>Готово</value></data>
+  <data name="Admin.Settings" xml:space="preserve"><value>Настройки сервера</value></data>
+  <data name="Admin.Settings.Save" xml:space="preserve"><value>Сохранить настройки</value></data>
+  <data name="Admin.Settings.Saved" xml:space="preserve"><value>Настройки сохранены.</value></data>
+  <data name="Admin.Settings.NotSaved" xml:space="preserve"><value>Не удалось сохранить настройки. Попробуйте ещё раз.</value></data>
+  <data name="Admin.Settings.SignUp" xml:space="preserve"><value>Кто может создать учётную запись</value></data>
+  <data name="Admin.Settings.SignUp.Approval" xml:space="preserve"><value>Кто угодно, после одобрения администратором</value></data>
+  <data name="Admin.Settings.SignUp.ApprovalHint" xml:space="preserve"><value>Новые учётные записи ждут на странице администрирования. Кто пришёл по приглашению в кампанию, одобряется сразу, как игрок.</value></data>
+  <data name="Admin.Settings.SignUp.InviteOnly" xml:space="preserve"><value>Только по приглашению в кампанию</value></data>
+  <data name="Admin.Settings.SignUp.InviteOnlyHint" xml:space="preserve"><value>Без ссылки-приглашения от мастера создать учётную запись нельзя.</value></data>
+  <data name="Admin.Settings.SignUp.Open" xml:space="preserve"><value>Кто угодно, сразу</value></data>
+  <data name="Admin.Settings.SignUp.OpenHint" xml:space="preserve"><value>Любой, кто может открыть сервер, сразу получает учётную запись. Подходит для дома, где сервер доступен только из вашей сети.</value></data>
+  <data name="Admin.Settings.SignUp.Internet" xml:space="preserve"><value>Пока сервер открыт в интернет, для новой учётной записи всегда нужно приглашение в кампанию.</value></data>
+  <data name="Admin.Settings.Campaigns" xml:space="preserve"><value>Кто может создавать кампании</value></data>
+  <data name="Admin.Settings.Campaigns.GameMasters" xml:space="preserve"><value>Мастера</value></data>
+  <data name="Admin.Settings.Campaigns.GameMastersHint" xml:space="preserve"><value>Администратор делает учётную запись мастером на странице администрирования. Остальные присоединяются к кампаниям как игроки.</value></data>
+  <data name="Admin.Settings.Campaigns.Anyone" xml:space="preserve"><value>Все с одобренной учётной записью</value></data>
+  <data name="Admin.Settings.Campaigns.AnyoneHint" xml:space="preserve"><value>Любая учётная запись может вести свои кампании.</value></data>
+  <data name="Admin.Settings.Fetch" xml:space="preserve"><value>Откуда могут загружаться стили книги</value></data>
+  <data name="Admin.Settings.Fetch.Hint" xml:space="preserve"><value>Стиль книги может ссылаться на шрифты, картинки и другие стили в интернете. Сервер один раз загружает копию и хранит её вместе с книгой.</value></data>
+  <data name="Admin.Settings.Fetch.Listed" xml:space="preserve"><value>Только с сайтов из этого списка</value></data>
+  <data name="Admin.Settings.Fetch.ListedHint" xml:space="preserve"><value>Сервисы шрифтов и хостинги картинок, которыми пользуются авторы. Если мастеру нужен другой сайт, его добавляет администратор.</value></data>
+  <data name="Admin.Settings.Fetch.Any" xml:space="preserve"><value>С любого общедоступного сайта</value></data>
+  <data name="Admin.Settings.Fetch.AnyHint" xml:space="preserve"><value>Любой адрес https в интернете. Никогда не этот компьютер и не ваша домашняя сеть.</value></data>
+  <data name="Admin.Settings.Fetch.Sites" xml:space="preserve"><value>Сайты</value></data>
+  <data name="Admin.Settings.Fetch.SitesHint" xml:space="preserve"><value>По одному сайту в строке, например fonts.gstatic.com. Сайт включает и имена под ним.</value></data>
+  <data name="Admin.Settings.Fetch.Bad" xml:space="preserve"><value>Это не имя сайта, пропущено: {0}</value></data>
+  <data name="Admin.Settings.Fetch.Defaults" xml:space="preserve"><value>Вернуть исходный список</value></data>
+  <data name="Admin.Waiting.Title" xml:space="preserve"><value>Ожидание одобрения</value></data>
+  <data name="Admin.Waiting.Heading" xml:space="preserve"><value>Ваша учётная запись ждёт одобрения</value></data>
+  <data name="Admin.Waiting.Body" xml:space="preserve"><value>Новые учётные записи одобряет администратор сервера. Когда {0} одобрят, вы сможете присоединяться к кампаниям.</value></data>
+  <data name="Admin.Waiting.Later" xml:space="preserve"><value>Если у вас есть ссылка-приглашение от мастера, откройте её: приглашение одобряет вас как игрока.</value></data>
+  <data name="Admin.Waiting.Check" xml:space="preserve"><value>Проверить снова</value></data>
+  <data name="Admin.Title" xml:space="preserve"><value>Администрирование</value></data>
+  <data name="Admin.Subtitle" xml:space="preserve"><value>Учётные записи, настройки сервера и действия администраторов.</value></data>
+  <data name="Admin.Accounts" xml:space="preserve"><value>Учётные записи</value></data>
+  <data name="Admin.Accounts.Waiting" xml:space="preserve"><value>{0, plural, one{# учётная запись ждёт одобрения.} few{# учётные записи ждут одобрения.} many{# учётных записей ждут одобрения.} other{# учётной записи ждут одобрения.}}</value></data>
+  <data name="Admin.Accounts.Name" xml:space="preserve"><value>Имя</value></data>
+  <data name="Admin.Accounts.Status" xml:space="preserve"><value>Состояние</value></data>
+  <data name="Admin.Accounts.GameMaster" xml:space="preserve"><value>Мастер</value></data>
+  <data name="Admin.Accounts.Admin" xml:space="preserve"><value>Администратор</value></data>
+  <data name="Admin.Accounts.Since" xml:space="preserve"><value>С</value></data>
+  <data name="Admin.Accounts.Actions" xml:space="preserve"><value>Действия</value></data>
+  <data name="Admin.Accounts.You" xml:space="preserve"><value>(вы)</value></data>
+  <data name="Admin.Accounts.GameMasterFor" xml:space="preserve"><value>{0} — мастер</value></data>
+  <data name="Admin.Accounts.AdminFor" xml:space="preserve"><value>{0} — администратор</value></data>
+  <data name="Admin.Accounts.LastAdmin" xml:space="preserve"><value>У сервера должен быть хотя бы один администратор.</value></data>
+  <data name="Admin.Accounts.Pending" xml:space="preserve"><value>Ждёт</value></data>
+  <data name="Admin.Accounts.Approved" xml:space="preserve"><value>Одобрена</value></data>
+  <data name="Admin.Accounts.Disabled" xml:space="preserve"><value>Отключена</value></data>
+  <data name="Admin.Accounts.Approve" xml:space="preserve"><value>Одобрить</value></data>
+  <data name="Admin.Accounts.Reject" xml:space="preserve"><value>Отклонить</value></data>
+  <data name="Admin.Accounts.Disable" xml:space="preserve"><value>Отключить</value></data>
+  <data name="Admin.Accounts.Enable" xml:space="preserve"><value>Включить</value></data>
+  <data name="Admin.Accounts.Delete" xml:space="preserve"><value>Удалить учётную запись</value></data>
+  <data name="Admin.Accounts.DeleteLabel" xml:space="preserve"><value>Удалить учётную запись {0}</value></data>
+  <data name="Admin.Accounts.Gone" xml:space="preserve"><value>Эта учётная запись изменилась или удалена. Список обновлён.</value></data>
+  <data name="Admin.Accounts.Approved.Done" xml:space="preserve"><value>{0}: одобрено.</value></data>
+  <data name="Admin.Accounts.RejectTitle" xml:space="preserve"><value>Отклонить {0}?</value></data>
+  <data name="Admin.Accounts.RejectBody" xml:space="preserve"><value>Учётная запись будет удалена, а имя снова станет свободным. Позже можно будет зарегистрироваться снова.</value></data>
+  <data name="Admin.Accounts.Rejected.Done" xml:space="preserve"><value>{0}: отклонено.</value></data>
+  <data name="Admin.Accounts.DisableTitle" xml:space="preserve"><value>Отключить {0}?</value></data>
+  <data name="Admin.Accounts.DisableBody" xml:space="preserve"><value>Пользователь выйдет из системы и не сможет войти, пока вы снова не включите учётную запись. Кампании и персонажи останутся.</value></data>
+  <data name="Admin.Accounts.Disabled.Done" xml:space="preserve"><value>{0}: отключено.</value></data>
+  <data name="Admin.Accounts.Enabled.Done" xml:space="preserve"><value>{0}: снова включено.</value></data>
+  <data name="Admin.Accounts.DeleteTitle" xml:space="preserve"><value>Удалить {0}?</value></data>
+  <data name="Admin.Accounts.DeleteBody" xml:space="preserve"><value>Учётная запись будет удалена навсегда, а имя снова станет свободным. Это нельзя отменить.</value></data>
+  <data name="Admin.Accounts.Deleted.Done" xml:space="preserve"><value>{0}: удалено.</value></data>
+  <data name="Admin.Log" xml:space="preserve"><value>Журнал</value></data>
+  <data name="Admin.Log.Empty" xml:space="preserve"><value>Пока пусто.</value></data>
+  <data name="Admin.Log.SetUp" xml:space="preserve"><value>{0} настроил(а) сервер</value></data>
+  <data name="Admin.Log.Approved" xml:space="preserve"><value>{0} одобрил(а) {1}</value></data>
+  <data name="Admin.Log.Rejected" xml:space="preserve"><value>{0} отклонил(а) {1}</value></data>
+  <data name="Admin.Log.Disabled" xml:space="preserve"><value>{0} отключил(а) {1}</value></data>
+  <data name="Admin.Log.Enabled" xml:space="preserve"><value>{0} включил(а) {1}</value></data>
+  <data name="Admin.Log.RoleGiven" xml:space="preserve"><value>{0} выдал(а) роль пользователю {1}</value></data>
+  <data name="Admin.Log.RoleTaken" xml:space="preserve"><value>{0} забрал(а) роль у {1}</value></data>
+  <data name="Admin.Log.Deleted" xml:space="preserve"><value>{0} удалил(а) {1}</value></data>
+  <data name="Admin.Log.SettingsChanged" xml:space="preserve"><value>{0} изменил(а) настройки сервера</value></data>
+  <data name="Admin.Setup.ServerAi" xml:space="preserve"><value>Кто может пользоваться ключом ИИ сервера?</value></data>
+  <data name="Admin.Settings.ServerAi" xml:space="preserve"><value>Кто может пользоваться ключом ИИ сервера</value></data>
+  <data name="Admin.Settings.ServerAi.Hint" xml:space="preserve"><value>Тот, у кого нет своей модели ИИ, использует ключ из настроек сервера, если он есть, — с дневным лимитом на каждого. Свою модель может добавить каждый.</value></data>
+  <data name="Admin.Settings.ServerAi.GameMasters" xml:space="preserve"><value>Мастера</value></data>
+  <data name="Admin.Settings.ServerAi.GameMastersHint" xml:space="preserve"><value>Учётные записи, которые администратор сделал мастерами, и сам администратор. Игрок, который со-мастер в чужой кампании, мастером не считается.</value></data>
+  <data name="Admin.Settings.ServerAi.Everyone" xml:space="preserve"><value>Все с одобренной учётной записью</value></data>
+  <data name="Admin.Settings.ServerAi.EveryoneHint" xml:space="preserve"><value>И игроки тоже. Дневной лимит у каждого остаётся.</value></data>
+  <data name="Admin.Settings.ServerAi.Admins" xml:space="preserve"><value>Только администраторы</value></data>
+  <data name="Admin.Settings.ServerAi.AdminsHint" xml:space="preserve"><value>Только администраторы сервера. Все остальные используют свои модели.</value></data>
+  <data name="Admin.Accounts.Delete.Owned" xml:space="preserve"><value>Кампании {0} и кому они перейдут</value></data>
+  <data name="Admin.Accounts.Delete.ToCoGm" xml:space="preserve"><value>{0} (со-мастер)</value></data>
+  <data name="Admin.Accounts.Delete.ToYou" xml:space="preserve"><value>Вам</value></data>
+  <data name="Admin.Accounts.Delete.OwnedHint" xml:space="preserve"><value>Кампания без со-мастера переходит к вам. Потом её можно передать, выгрузить или удалить в её настройках.</value></data>
+  <data name="Admin.Accounts.Delete.Leaves" xml:space="preserve"><value>{0} покидает другие кампании, где участвует ({1}). Персонажи, которых он играет там, остаются в составе.</value></data>
+  <data name="Admin.Accounts.Delete.Goes" xml:space="preserve"><value>Вместе с учётной записью удаляются: персонажи в хранилище ({0}), личные журналы, беседы конструктора мира и сборки книг.</value></data>
+  <data name="Admin.Accounts.Storage" xml:space="preserve"><value>Место</value></data>
+  <data name="Admin.Accounts.StorageOf" xml:space="preserve"><value>{0} из {1}</value></data>
+  <data name="Admin.Settings.StorageLimit" xml:space="preserve"><value>Место на учётную запись, МБ</value></data>
+  <data name="Admin.Settings.StorageLimitHint" xml:space="preserve"><value>Изображения и файлы: обложки, портреты, иллюстрации, картинки книги и копии веб-файлов книги. Всё в кампании засчитывается её владельцу, кто бы это ни добавил. Оставьте пустым, чтобы не ограничивать. Собственный лимит учётной записи, заданный в её строке выше, заменяет этот.</value></data>
+  <data name="Admin.Accounts.StorageCounting" xml:space="preserve"><value>подсчёт…</value></data>
+  <data name="Admin.Accounts.Delete.StillOwns" xml:space="preserve"><value>{0} создал кампанию во время удаления. Учётная запись отключена; удалите её ещё раз, чтобы передать и эту кампанию.</value></data>
+  <data name="Admin.Log.DeletedOwn" xml:space="preserve"><value>{0} удалил(а) свою учётную запись</value></data>
+  <data name="Admin.Log.StorageLimitSet" xml:space="preserve"><value>{0} изменил(а) лимит хранилища для {1}</value></data>
+  <data name="Admin.Accounts.StorageOwn" xml:space="preserve"><value>{0} (свой лимит)</value></data>
+  <data name="Admin.Accounts.Limit.Change" xml:space="preserve"><value>Изменить лимит хранилища для {0}</value></data>
+  <data name="Admin.Accounts.Limit.Title" xml:space="preserve"><value>Лимит хранилища для {0}</value></data>
+  <data name="Admin.Accounts.Limit.Server" xml:space="preserve"><value>Как у сервера ({0})</value></data>
+  <data name="Admin.Accounts.Limit.NoneShort" xml:space="preserve"><value>без лимита</value></data>
+  <data name="Admin.Accounts.Limit.None" xml:space="preserve"><value>Без лимита для этой учётной записи</value></data>
+  <data name="Admin.Accounts.Limit.Own" xml:space="preserve"><value>Собственный лимит</value></data>
+  <data name="Admin.Accounts.Limit.Mb" xml:space="preserve"><value>Собственный лимит, в МБ</value></data>
+  <data name="Admin.Accounts.Limit.NeedsMb" xml:space="preserve"><value>Укажите, сколько МБ, или выберите другой вариант.</value></data>
+  <data name="Admin.Accounts.Limit.Saved" xml:space="preserve"><value>Лимит хранилища для {0} сохранён.</value></data>
+</root>

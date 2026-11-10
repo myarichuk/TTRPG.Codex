@@ -1,0 +1,41 @@
+// Homebrewery's "5e DMG" theme (themes/V3/5eDMG/style.less), unchanged, from https://github.com/naturalcrit/homebrewery at commit
+// 3e600a047716570f81ab44edfd3c303e53e671f3, MIT License, Copyright (c) 2016 Scott Tolksdorf (the notice is in wwwroot/lib/book/THIRD-PARTY-NOTICES.txt).
+// It sits on the 5e PHB theme. Never shipped: build.mjs compiles it, pictures aside, as a fixture for the parity test, as a brew's CSS would be.
+
+@import (less) './themes/assets/assets.less';
+
+:root {
+	//Colors
+	--HB_Color_Accent                : #EBCEC3; // Salmon
+	--HB_Color_Footnotes             : #5C5C5C; // Dark gray
+}
+
+.page {
+	background-image : url('/assets/DMG_background.png');
+	background-size  : cover;
+
+	/* TABLES WITHIN NOTES */
+	.note table tbody tr:nth-child(odd) { background : #FFFFFF; }
+
+	/* DROP CAP */
+	p.first-letter::first-letter,
+	p.drop-cap::first-letter,
+	h1 + p::first-letter {
+		color            : black;
+		background-image : unset;
+	}
+
+	.quote p:first-child::first-line { all : unset; }
+
+	&::after {
+		height           : 58px;
+		background-image : url('/assets/DMG_footerAccent.png');
+	}
+
+	.footnote { bottom : 40px; }
+}
+
+.page:has(.partCover) {
+
+	.partCover { background-image : @partCoverHeaderDMG; }
+}

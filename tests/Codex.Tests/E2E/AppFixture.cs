@@ -25,6 +25,19 @@ public sealed class AppFixture : IAsyncLifetime
 
     public string BaseUrl { get; private set; } = string.Empty;
     public IBrowser Browser { get; private set; } = null!;
+
+    private readonly Dictionary<string, IBrowser> _engines = new(StringComparer.Ordinal);
+
+    /// <summary>The browser of another engine ("webkit", Safari's; "firefox"), started on first use; null when this machine does not have it
+    /// (only Chromium is required: the others are installed with <c>playwright install webkit firefox</c>). "chromium" is <see cref="Browser"/>.</summary>
+    public async Task<IBrowser?> EngineAsync(string engine)
+    {
+        if (engine == "chromium") return Browser;
+        if (_engines.TryGetValue(engine, out var started)) return started;
+        var type = engine switch { "webkit" => _playwright!.Webkit, "firefox" => _playwright!.Firefox, _ => throw new ArgumentOutOfRangeException(nameof(engine)) };
+        if (!File.Exists(type.ExecutablePath)) return null;
+        return _engines[engine] = await type.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+    }
     public HttpClient Http { get; } = new();
 
     public async Task InitializeAsync()
@@ -68,6 +81,9 @@ public sealed class AppFixture : IAsyncLifetime
         _process.BeginErrorReadLine();
 
         await WaitUntilReadyAsync();
+        // A server with no accounts opens on the first-time setup; the suites test a server that has been set up (the seed also
+        // makes it permissive: anyone signs up and creates campaigns, as before approval and roles).
+        (await SeedUserAsync("e2e-admin", "e2e_admin", "E2e-Admin-" + Guid.NewGuid().ToString("N")[..8], "Player", "GameMaster", "ServerAdmin")).EnsureSuccessStatusCode();
 
         _playwright = await Playwright.CreateAsync();
         Browser = await _playwright.Chromium.LaunchAsync(LaunchOptions());
@@ -93,7 +109,7 @@ public sealed class AppFixture : IAsyncLifetime
 
     /// <summary>Seeds a user directly through the app's own repository - same password-hashing
     /// path <c>Register.razor</c> uses, so the real <c>/login</c> form works against it.</summary>
-    public Task SeedUserAsync(string id, string username, string password, params string[] roles) =>
+    public Task<HttpResponseMessage> SeedUserAsync(string id, string username, string password, params string[] roles) =>
         Http.PostAsJsonAsync("/test/seed/users", new[]
         {
             new Codex.Web.TestSeedUser { Id = id, Username = username, Password = password, Roles = roles.ToList() }
@@ -180,6 +196,8 @@ public sealed class AppFixture : IAsyncLifetime
         {
             await Browser.CloseAsync();
         }
+
+        foreach (var engine in _engines.Values) await engine.CloseAsync();
 
         _playwright?.Dispose();
         Http.Dispose();

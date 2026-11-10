@@ -19,7 +19,7 @@ public interface IMediaStore
     Task DeleteAsync(CampaignAccess access, string documentId, string name);
 }
 
-public class RavenMediaStore(RavenDbService dbService) : IMediaStore
+public class RavenMediaStore(RavenDbService dbService, StorageQuota? quota = null) : IMediaStore
 {
     public const string CampaignCover = "cover";
     public const string ActorPortrait = "portrait";
@@ -54,15 +54,21 @@ public class RavenMediaStore(RavenDbService dbService) : IMediaStore
 
         using var session = dbService.Store.OpenAsyncSession();
         await EnsureMayWriteAsync(session, access, documentId);
+        using var buffer = new MemoryStream();
+        await content.CopyToAsync(buffer);
+        buffer.Position = 0;
+        if (quota != null)
+        {
+            var replacing = StorageQuota.SizeOf(session, await session.LoadAsync<object>(documentId), name);
+            await quota.EnsureRoomAsync(access.CampaignId, buffer.Length, replacing);
+        }
+
         if (await session.Advanced.Attachments.ExistsAsync(documentId, name))
         {
             session.Advanced.Attachments.Delete(documentId, name);
             await session.SaveChangesAsync();
         }
 
-        using var buffer = new MemoryStream();
-        await content.CopyToAsync(buffer);
-        buffer.Position = 0;
         session.Advanced.Attachments.Store(documentId, name, buffer, contentType);
         await session.SaveChangesAsync();
     }

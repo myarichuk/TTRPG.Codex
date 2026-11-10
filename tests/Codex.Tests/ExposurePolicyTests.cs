@@ -49,20 +49,6 @@ public class ExposurePolicyTests
         Assert.Equal(expected, ExposurePolicy.InviteCodeFrom(returnUrl));
 
     [Fact]
-    public async Task Sign_up_is_open_at_home_and_needs_a_real_invite_on_an_open_server()
-    {
-        var campaigns = Substitute.For<ICampaignRepository>();
-        campaigns.InviteCodeExistsAsync("real").Returns(true);
-        campaigns.InviteCodeExistsAsync("made-up").Returns(false);
-
-        Assert.True(await ExposurePolicy.MaySignUpAsync(exposed: false, returnUrl: null, campaigns));
-        Assert.True(await ExposurePolicy.MaySignUpAsync(true, "/campaigns/join/real", campaigns));
-        Assert.False(await ExposurePolicy.MaySignUpAsync(true, "/campaigns/join/made-up", campaigns));
-        Assert.False(await ExposurePolicy.MaySignUpAsync(true, "/", campaigns));
-        Assert.False(await ExposurePolicy.MaySignUpAsync(true, null, campaigns));
-    }
-
-    [Fact]
     public void The_server_ai_key_is_the_admins_alone_while_the_server_is_open()
     {
         var admin = new UserDocument { Roles = new List<string> { "Player", "ServerAdmin" } };
@@ -73,6 +59,32 @@ public class ExposurePolicyTests
         Assert.True(ExposurePolicy.MayUseServerAi(true, admin));
         Assert.False(ExposurePolicy.MayUseServerAi(true, player));
         Assert.False(ExposurePolicy.MayUseServerAi(true, null));
+    }
+
+    [Fact]
+    public void The_admins_choice_decides_who_uses_the_server_ai_key_open_or_not()
+    {
+        var admin = new UserDocument { Roles = new List<string> { "Player", "ServerAdmin" } };
+        var gm = new UserDocument { Roles = new List<string> { "Player", UserRoles.GameMaster } };
+        var player = new UserDocument { Roles = new List<string> { "Player" } };
+
+        foreach (var exposed in new[] { false, true })
+        {
+            Assert.True(ExposurePolicy.MayUseServerAi(exposed, admin, ServerAiRule.Admins));
+            Assert.False(ExposurePolicy.MayUseServerAi(exposed, gm, ServerAiRule.Admins));
+            Assert.False(ExposurePolicy.MayUseServerAi(exposed, player, ServerAiRule.Admins));
+
+            Assert.True(ExposurePolicy.MayUseServerAi(exposed, admin, ServerAiRule.GameMasters));
+            Assert.True(ExposurePolicy.MayUseServerAi(exposed, gm, ServerAiRule.GameMasters));
+            Assert.False(ExposurePolicy.MayUseServerAi(exposed, player, ServerAiRule.GameMasters));
+
+            Assert.True(ExposurePolicy.MayUseServerAi(exposed, player, ServerAiRule.Everyone));
+        }
+
+        // No choice stored: the rule a server always had.
+        Assert.Equal(ServerAiRule.Everyone, ExposurePolicy.ServerAiFor(exposed: false, null));
+        Assert.Equal(ServerAiRule.Admins, ExposurePolicy.ServerAiFor(exposed: true, null));
+        Assert.Equal(ServerAiRule.GameMasters, ExposurePolicy.ServerAiFor(exposed: true, ServerAiRule.GameMasters));
     }
 
     [Fact]

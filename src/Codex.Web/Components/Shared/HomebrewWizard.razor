@@ -369,7 +369,7 @@
         var visual = draft!.Properties.TryGetValue("imagePrompt", out var prompt) && !string.IsNullOrWhiteSpace(prompt?.ToString())
             ? prompt.ToString()
             : TextFormatting.Summary(draft.Description, 300);
-        return Art.GenerateAsync(Ctx.UserId, draft.Name, KindLabel(TypeDef), visual, IsCreature ? ArtShape.Tall : ArtShape.Wide, ct);
+        return Art.GenerateAsync(Ctx.UserId, Ctx.Campaign.Id, draft.Name, KindLabel(TypeDef), visual, IsCreature ? ArtShape.Tall : ArtShape.Wide, ct);
     }
 
     /// <summary>"homebrew creature (Large dragon)": the type label plus the size and kind when the entry has them.</summary>
@@ -405,9 +405,9 @@
                 return;
             }
 
-            if (pendingArt != null && !await Art.PutHomebrewAsync(draft, Ctx.Access, pendingArt))
+            if (pendingArt != null && await PutArtAsync(draft, pendingArt) is { } artProblem)
             {
-                error = L["Wizard.Error.ArtFailed"];
+                error = artProblem;
             }
             else if (removeArt && draft.HasArt)
             {
@@ -425,6 +425,19 @@
         finally
         {
             saving = false;
+        }
+    }
+
+    // Null when the picture is stored; otherwise what to say. A storage limit reached says so (docs/SERVER_ACCESS_AND_VAULT.md 15).
+    private async Task<string?> PutArtAsync(HomebrewEntryDocument entry, ArtImage image)
+    {
+        try
+        {
+            return await Art.PutHomebrewAsync(entry, Ctx.Access, image) ? null : L["Wizard.Error.ArtFailed"];
+        }
+        catch (LocalizedException ex) when (ex.Key == "Service.Storage.Full")
+        {
+            return L.Describe(ex);
         }
     }
 

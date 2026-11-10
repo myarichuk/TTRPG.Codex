@@ -215,7 +215,9 @@ else
                 <p class="small-muted">@L["Session.JournalHint"]</p>
                 <label for="journal-body" class="visually-hidden">@L["Session.JournalEntry"]</label>
                 <MarkdownEditor Id="journal-body" Title="@L["Session.MyJournal"]" Rows="7" Placeholder="@L["Session.JournalPlaceholder"]" @bind-Value="journalBody" Mentions="@mentionsJson"
-                                Preview="PreviewMentions" TestId="session-journal" />
+                                Preview="PreviewMentions" TestId="session-journal">
+                    <TidyNotesButton @bind-Value="journalBody" Mentions="mentions" UserId="@(currentUserId ?? "")" TestId="session-journal-tidy" />
+                </MarkdownEditor>
                 @if (journalSavedAt != null)
                 {
                     <p class="small-muted mb-0" role="status">@L["Session.Saved"] <LocalTime Value="journalSavedAt.Value" Format="HH:mm" /></p>

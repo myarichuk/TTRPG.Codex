@@ -172,7 +172,7 @@
                 {
                     <li class="list-row">
                         <span>@usernames.GetValueOrDefault(member.UserId, member.UserId)</span>
-                        <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(member.Role)</span>
+                        <span class="pill @(member.Role == CampaignRole.DM ? "pill-accent" : "")">@RoleLabel(member.Role, member.UserId == Ctx.Campaign.OwnerId)</span>
                     </li>
                 }
             </ul>
@@ -278,9 +278,10 @@
         _ => L["Campaign.Overview.Status.Planned"]
     };
 
-    private string RoleLabel(CampaignRole role) => role switch
+    // The owner is the GM; anyone else holding the GM role is a co-GM.
+    private string RoleLabel(CampaignRole role, bool isOwner) => role switch
     {
-        CampaignRole.DM => L["Campaign.Overview.Role.DM"],
+        CampaignRole.DM => isOwner ? L["Campaign.Overview.Role.DM"] : L["Campaign.Settings.Role.CoGm"],
         CampaignRole.Player => L["Campaign.Overview.Role.Player"],
         _ => L["Campaign.Overview.Role.Observer"]
     };

@@ -7,6 +7,17 @@ public enum CampaignDeleteResult
     Forbidden
 }
 
+public enum CampaignLeaveResult
+{
+    Left,
+
+    /// <summary>The owner cannot leave: they pass the campaign on first, or delete it.</summary>
+    Owner,
+
+    /// <summary>Not a member (already left, removed, or no such campaign).</summary>
+    NotMember
+}
+
 public enum CampaignJoinResult
 {
     Joined,
@@ -37,6 +48,12 @@ public interface ICampaignRepository
     /// is refused with <c>Campaign.AccessChanged</c> (D15). Returns the stored document, or null when it does not exist.
     /// </summary>
     Task<CampaignDocument?> UpdateAsDmAsync(CampaignAccess access, Action<CampaignDocument> mutate);
+
+    /// <summary>
+    /// <paramref name="userId"/> leaves the campaign: their membership goes, whatever their role, and their characters stay in the
+    /// cast as a removal leaves them. Coming back takes a new invite. The owner cannot leave (docs/SERVER_ACCESS_AND_VAULT.md 4).
+    /// </summary>
+    Task<CampaignLeaveResult> LeaveAsync(string campaignId, string userId);
 
     /// <summary>Every campaign on the server. Administrative/export use only - never for a user-facing list.</summary>
     Task<IEnumerable<CampaignDocument>> GetAllAsync();

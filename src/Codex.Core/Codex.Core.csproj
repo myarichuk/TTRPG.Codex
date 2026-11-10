@@ -20,6 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The editable book's theme sheets (Book/Themes; blank.css is written by tools/book-editor's build). -->
+    <EmbeddedResource Include="Book\Themes\**\*.css;Book\Themes\**\*.webp;Book\Themes\**\*.jpg" LogicalName="Codex.Core.Book.Themes.%(Filename)%(Extension)" />
   </ItemGroup>
 
   <PropertyGroup>

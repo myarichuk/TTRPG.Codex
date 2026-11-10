@@ -13,12 +13,20 @@
 @inject NavigationManager NavManager
 @inject IAuthenticationSchemeProvider SchemeProvider
 @inject LoginAttempts Attempts
+@inject IServerSettingsStore Settings
 
 <PageTitle>@L["Page.Auth.SignIn"] | TTRPG.Codex</PageTitle>
 
 <div class="auth-card">
     <div class="brand-mark" aria-hidden="true"><LucideIcon IconName="scroll" Size="28" /></div>
     <h1>@L["Page.Login.Heading"]</h1>
+
+    @if (QueryDeleted == "1" && string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="status status-success" role="status" data-testid="login-account-deleted">
+            <LucideIcon IconName="check" Size="18" /><span>@L["Page.Login.AccountDeleted"]</span>
+        </div>
+    }
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
@@ -81,6 +89,10 @@
     [SupplyParameterFromQuery(Name = "error")]
     public string? QueryError { get; set; }
 
+    // Set by deleting your own account (docs/SERVER_ACCESS_AND_VAULT.md 16); only "1" says anything.
+    [SupplyParameterFromQuery(Name = "deleted")]
+    public string? QueryDeleted { get; set; }
+
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
@@ -97,11 +109,19 @@
     protected override async Task OnInitializedAsync()
     {
         Model ??= new();
+        // A server nobody has an account on yet starts with the setup, on its own computer.
+        var exposed = Codex.Web.ExposurePolicy.IsExposed(Configuration);
+        if (string.IsNullOrWhiteSpace(Configuration["Codex:AdminUsername"]) && await ServerAccess.MaySetUpAsync(UserRepository, exposed, HttpContext?.Connection.RemoteIpAddress))
+        {
+            NavManager.NavigateTo("/setup");
+            return;
+        }
+
         var allSchemes = await SchemeProvider.GetAllSchemesAsync();
         ExternalSchemes = allSchemes.Where(s => s.Name != "Cookies" && s.Name != "External").ToList();
 
         EnableLocalLogin = Configuration.GetValue<bool>("Authentication:EnableLocalLogin", true);
-        CanSignUp = await Codex.Web.ExposurePolicy.MaySignUpAsync(Codex.Web.ExposurePolicy.IsExposed(Configuration), ReturnUrl, CampaignRepository);
+        CanSignUp = await ServerAccess.NewAccountAsync(Settings, exposed, ReturnUrl, CampaignRepository) != null;
 
         if (!string.IsNullOrEmpty(QueryError))
         {
@@ -110,6 +130,7 @@
             ErrorMessage = QueryError switch
             {
                 "invite-only" => L["Page.Register.InviteOnly"],
+                "disabled" => L["Page.Login.Disabled"],
                 "unknown-provider" => L["Page.Login.Error.UnknownProvider"],
                 "external-invalid" => L["Page.Login.Error.ExternalInvalid"],
                 "no-username" => L["Page.Login.Error.NoUsername"],
@@ -152,6 +173,13 @@
         var hasher = new PasswordHasher<UserDocument>();
         var result = hasher.VerifyHashedPassword(user, user.PasswordHash, Model.Password);
 
+        if ((result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded) && user.Status == AccountStatus.Disabled)
+        {
+            // Said only to someone who knows the password: it tells a stranger nothing about the account.
+            ErrorMessage = L["Page.Login.Disabled"];
+            return;
+        }
+
         if (result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded)
         {
             if (result == PasswordVerificationResult.SuccessRehashNeeded)
@@ -164,7 +192,9 @@
             if (user.Culture is not null)
                 CultureCookie.Write(HttpContext, user.Culture);
 
-            var dest = Codex.Web.UrlHelper.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
+            // Waiting for approval: only an invite (which approves) or the waiting page.
+            var dest = user.Status == AccountStatus.Pending && ExposurePolicy.InviteCodeFrom(ReturnUrl) == null ? ServerAccess.WaitingPath
+                : Codex.Web.UrlHelper.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
             NavManager.NavigateTo(dest, forceLoad: true);
         }
         else

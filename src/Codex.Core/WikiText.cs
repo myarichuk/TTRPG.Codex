@@ -44,6 +44,28 @@ public static class WikiText
                 ? m.Value
                 : (m.Groups[2].Success ? m.Groups[2].Value : m.Groups[1].Value).Trim());
 
+    // Text in a mention's form however it is spelled: "[[Actor:x]]", "[[ place : y ]]", "[[actor:x|Name]]".
+    private static readonly Regex MentionLike = new(@"^\s*(actor|place|item)\s*:", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// The body as a reader who may open only some pages reads it. A link to a page <paramref name="canOpen"/> accepts (by the link's
+    /// title) stays a link. A link to any other page, one they may not open or one that does not exist (a player cannot tell them apart,
+    /// and should not), becomes its <c>|shown</c> words as plain text, or nothing when it has none: the page's title is never shown.
+    /// A stored mention (<c>[[actor:id]]</c>) is left for the mention reader. Anything else in a mention's form (another case, a label)
+    /// is dropped: no reader names it, and its label is typed text, which is where a hidden character's name would ride along.
+    /// </summary>
+    public static string ForReader(string? body, Func<string, bool> canOpen)
+    {
+        if (string.IsNullOrEmpty(body) || !body.Contains("[[", StringComparison.Ordinal)) return body ?? string.Empty;
+        return Link.Replace(body, m =>
+        {
+            var title = m.Groups[1].Value.Trim();
+            if (MentionLike.IsMatch(title)) return IsMention(title) && !m.Groups[2].Success ? m.Value : string.Empty;
+            if (canOpen(title)) return m.Value;
+            return m.Groups[2].Success ? m.Groups[2].Value.Trim() : string.Empty;
+        });
+    }
+
     public static string Slugify(string title)
     {
         var chars = title.Trim().ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-').ToArray();

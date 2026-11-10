@@ -29,6 +29,8 @@
 @inject IWikiRepository WikiRepo
 @inject ITemplateRepository TemplateRepo
 @inject IJSRuntime JS
+@inject IVaultRepository VaultRepo
+@inject Codex.Web.Services.VaultService VaultService
 @implements IDisposable
 
 <PageTitle>@(actor?.Name ?? L["Actor.Sheet.TitleFallback"]) | TTRPG.Codex</PageTitle>
@@ -83,13 +85,20 @@ else
             <div class="plate-id">
                 <div class="portrait-wrap">
                     <ActorAvatar Actor="actor" DisplayName="@DisplayName" Size="lg" Alt="@L["Actor.Avatar.Portrait", DisplayName]" />
-                    @if (CanEdit)
+                    @if (CanEdit && !Vault)
                     {
                         <PortraitUpload Actor="actor" Access="access" OnMessage="message => flash = message" />
                     }
                 </div>
                 <div class="min-w-0">
-                    <nav aria-label="@L["Actor.Sheet.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Actor.Sheet.Campaigns"]</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="@CastPath">@L["Actor.Sheet.Cast"]</a></nav>
+                    @if (Vault)
+                    {
+                        <nav aria-label="@L["Actor.Sheet.Breadcrumb"]" class="breadcrumb-nav"><a href="/vault">@L["Vault.Title"]</a></nav>
+                    }
+                    else
+                    {
+                        <nav aria-label="@L["Actor.Sheet.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Actor.Sheet.Campaigns"]</a><span class="crumb-sep" aria-hidden="true">/</span><a href="/campaigns/@CampaignId">@campaign.Name</a><span class="crumb-sep" aria-hidden="true">/</span><a href="@CastPath">@L["Actor.Sheet.Cast"]</a></nav>
+                    }
                     <h1 data-testid="actor-name">@DisplayName</h1>
                     <div class="plate-plaques">
                         <span class="pill">@KindLabel</span>
@@ -101,6 +110,10 @@ else
                         {
                             <a class="pill" href="/campaigns/@CampaignId/wiki/@wikiPage.Slug" data-testid="actor-wiki-page"><LucideIcon IconName="book-open" Size="14" /> @L["Actor.Sheet.WikiPage", wikiPage.Title]</a>
                         }
+                        @if (Vault)
+                        {
+                            <span class="pill" data-testid="vault-system">@SystemName</span>
+                        }
                         @if (!string.IsNullOrEmpty(actor.BlueprintId))
                         {
                             <span class="pill">@L["Actor.Sheet.From", ContentRegistry.ActorName(actor.BlueprintId, L.Culture.Name) ?? actor.BlueprintId.Split(':').Last()]</span>
@@ -109,7 +122,7 @@ else
                         {
                             <span class="pill pill-accent">@plaque</span>
                         }
-                        @if (CanEdit)
+                        @if (CanEdit && !Vault)
                         {
                             <PortraitActions Actor="actor" Campaign="campaign" Access="access" CurrentUserId="@(currentUserId ?? "")" Definition="system" Draft="PortraitDraft" Confirm="leaveConfirm"
                                              Busy="@(busy != null)" OnBusyChanged="SetDrawing" OnMessage="message => flash = message" />
@@ -296,7 +309,7 @@ else
             <section class="panel" aria-labelledby="bio-heading">
                 <div class="panel-title">
                     <h2 id="bio-heading" class="h5"><LucideIcon IconName="feather" Size="18" Class="title-icon" /> @L["Actor.Sheet.History"]</h2>
-                    @if (CanEdit)
+                    @if (CanEdit && !Vault)
                     {
                         <span class="pill"><LucideIcon IconName="users" Size="14" /> @L["Actor.Sheet.HistoryVisible"]</span>
                     }
@@ -308,6 +321,7 @@ else
                                     Mentions="@mentionsJson" DescribedBy="bio-mention-hint" Preview="PreviewMentions" TestId="sheet-biography" Secrets="@access.IsDm"
                                     Templates="templates" TemplatesHref="@($"/campaigns/{CampaignId}/templates")"
                                     Busy="@(busy == "bio")" BusyText="@L["Actor.Sheet.Writing"]" OnStop="aiCall.Stop">
+                        @* In the vault too (docs/SERVER_ACCESS_AND_VAULT.md 6): the history is the player's own, written for players. *@
                         <div class="ai-row">
                             <label for="bio-instruction" class="visually-hidden">@L["Actor.Sheet.AiInstruction"]</label>
                             <input id="bio-instruction" class="field-input field-sm" placeholder="@L["Actor.Sheet.BioInstructionPh"]" @bind="bioInstruction" />
@@ -335,8 +349,11 @@ else
                     </div>
                 }
             </section>
-            <LoreAbout Access="access" OwnedActorIds="OwnedActorIds" BasePath="@($"/campaigns/{CampaignId}")" TestId="actor-lore"
-                       Keys="@(new[] { FactLinks.Actor(actor.Id) })" AboutKey="@FactLinks.Actor(actor.Id)" />
+            @if (!Vault)
+            {
+                <LoreAbout Access="access" OwnedActorIds="OwnedActorIds" BasePath="@($"/campaigns/{CampaignId}")" TestId="actor-lore"
+                           Keys="@(new[] { FactLinks.Actor(actor.Id) })" AboutKey="@FactLinks.Actor(actor.Id)" />
+            }
 
             }
 
@@ -412,6 +429,18 @@ else
                 @Section(section)
             }
 
+            @* Not a layout widget: the AI's help with a change works on any system's sheet. *@
+            @if (CanEdit && system != null && currentUserId != null)
+            {
+                <CharacterAssistPanel Character="AssistCharacter" Sheet="editSheet" Campaign="campaign" Access="access" System="system" UserId="@currentUserId"
+                                      Describe="Describe" OnTake="TakeAssist" OnGoThere="GoToHighlight" />
+            }
+
+            @if (!Vault && actor.VaultSourceId != null && actor.OwnerUserId == currentUserId)
+            {
+                <VaultCopyPanel Actor="actor" Campaign="campaign" Access="access" Dirty="DirtyCount > 0" OnMessage="message => flash = message" />
+            }
+
             @if (access.IsDm)
             {
                 <ActorVisibilityPanel Edits="audience" Actor="actor" Members="campaign.Members" MemberNames="memberNames" MentionsJson="@mentionsJson" Preview="PreviewMentions" OnChanged="StateHasChanged" />
@@ -427,6 +456,13 @@ else
 @code {
     [Parameter] public string CampaignId { get; set; } = string.Empty;
     [Parameter] public string ActorId { get; set; } = string.Empty;
+
+    /// <summary>The sheet of one of the caller's vault characters (docs/SERVER_ACCESS_AND_VAULT.md 8): no campaign, so the
+    /// server's Library for its system, and nothing of a campaign's (lore, notes, the table, its AI and art).</summary>
+    [Parameter] public bool Vault { get; set; }
+
+    private string LibraryPath => Vault ? $"/library/{Uri.EscapeDataString(campaign?.SystemId ?? "")}" : $"/campaigns/{CampaignId}/library";
+    private string SystemName => SystemCatalog.GetLocalizedDefinition(campaign?.SystemId ?? "")?.Name ?? campaign?.SystemId ?? "";
 
     /// <summary>Back to what the sheet was opened from (the Table, Cast, a wiki page), and what the button says.</summary>
     [Parameter] public EventCallback OnBack { get; set; }
@@ -649,7 +685,7 @@ else
             case "classes":
                     @if (Rules?.Multiclass is { } multiclass && evaluation != null)
                     {
-                        <ClassesPanel Multiclass="multiclass" Evaluation="evaluation" CampaignId="@CampaignId" CurrentLevel="CurrentLevel" CanEdit="CanEdit" EntryName="Nm" Describe="Describe"
+                        <ClassesPanel Multiclass="multiclass" Evaluation="evaluation" LibraryPath="@LibraryPath" CurrentLevel="CurrentLevel" CanEdit="CanEdit" EntryName="Nm" Describe="Describe"
                                       Problems="Problems(v => v.FieldKey == multiclass.Key)" SubclassOptions="SubclassOptions"
                                       OnSetLevel="change => SetClassLevel(multiclass, change.ClassId, change.Level)" OnRemove="classId => RemoveClass(multiclass, classId)"
                                       OnSetSubclass="change => SetClassSubclass(multiclass, change.ClassId, change.SubclassId)" OnAdd="classId => AddClass(multiclass, classId)" />
@@ -666,7 +702,7 @@ else
                             {
                                 <div class="mb-3">
                                     <div class="label-caps">@label</div>
-                                    <a href="/campaigns/@CampaignId/library/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@Nm(item.Entry)</a>
+                                    <a href="@LibraryPath/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@Nm(item.Entry)</a>
                                     <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
                                 </div>
                             }
@@ -687,7 +723,7 @@ else
                                                      Options="evaluation.ListOptions.GetValueOrDefault(list.Key) ?? Array.Empty<ContentEntry>()"
                                                      Limit="evaluation.ListLimits.GetValueOrDefault(list.Key)"
                                                      ReadOnly="@(!CanEdit)"
-                                                     LibraryPath="@($"/campaigns/{CampaignId}/library")"
+                                                     LibraryPath="@LibraryPath"
                                                      Type="system?.FindType(list.TargetEntityType)"
                                                      Added="id => AddPick(list, id)"
                                                      Removed="index => RemovePick(list, index)"
@@ -710,7 +746,7 @@ else
                                     : L["Actor.Sheet.Carried", Weight(evaluation.CarriedWeight, inventoryRules)])</p>
                             }
                             <InventoryPanel Rules="inventoryRules" Items="evaluation.Inventory" Options="inventoryOptions" FindType="type => system?.FindType(type)" Sheet="editSheet" CanEdit="CanEdit"
-                                            LibraryPath="@($"/campaigns/{CampaignId}/library")" Changed="OnRulesInputChanged" />
+                                            LibraryPath="@LibraryPath" Changed="OnRulesInputChanged" />
                         </div>
                     }
                 break;
@@ -965,13 +1001,23 @@ else
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        campaign = await CampaignRepo.GetAsync(CampaignId);
-        access = campaign != null && currentUserId != null ? await AccessResolver.ResolveAsync(CampaignId, currentUserId) : null;
+        ActorDocument? own = null;
+        if (Vault)
+        {
+            own = currentUserId == null ? null : await VaultRepo.GetAsync(ActorId, currentUserId);
+            campaign = own == null ? null : Codex.Web.Services.VaultService.CampaignFor(own.SystemId!);
+            access = own == null ? null : CampaignAccess.Vault(currentUserId!);
+        }
+        else
+        {
+            campaign = await CampaignRepo.GetAsync(CampaignId);
+            access = campaign != null && currentUserId != null ? await AccessResolver.ResolveAsync(CampaignId, currentUserId) : null;
+        }
 
         if (campaign != null && access != null)
         {
             if (access.IsDm) memberNames = await MemberNames.LoadAsync(UserRepo, campaign);
-            actor = await ActorRepo.GetVisibleAsync(ActorId, access);
+            actor = Vault ? own : await ActorRepo.GetVisibleAsync(ActorId, access);
             if (actor != null)
             {
                 // The sheet shows the system in the reader's language; the rules engine still matches the original words (see AttributeDefinition.CanonicalLabel).
@@ -1021,8 +1067,10 @@ else
                 baselineSheet = new Dictionary<string, object>(editSheet);
                 levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
                 await LoadLinkedEntriesAsync();
-                var visibleActors = (await ActorRepo.GetVisibleForCampaignAsync(access)).ToList();
-                var (sessions, writings, mentions) = await MentionSources.NotesAsync(campaign, access, visibleActors, forWriting: CanEdit);
+                var visibleActors = Vault ? new List<ActorDocument>() : (await ActorRepo.GetVisibleForCampaignAsync(access)).ToList();
+                var (sessions, writings, mentions) = Vault
+                    ? ((IReadOnlyList<SessionDocument>)Array.Empty<SessionDocument>(), MentionWritings.Empty, MentionDirectory.Empty)
+                    : await MentionSources.NotesAsync(campaign, access, visibleActors, forWriting: CanEdit);
                 said = SessionQuotes.SaidBy(sessions, actor.Id, access.IsDm);
                 mentionedIn = SessionMentions.NotesMentioning(sessions, MentionKind.Actor, actor.Id, access.IsDm);
                 writtenIn = writings.Mentioning(MentionKind.Actor, actor.Id);
@@ -1326,7 +1374,7 @@ else
         editsKept = false;
         try
         {
-            return await RuntimeManager.TrySaveActorAsync(actor!, loadedSheet, access!, system);
+            return Vault ? await VaultRepo.SaveAsync(actor!, currentUserId!) : await RuntimeManager.TrySaveActorAsync(actor!, loadedSheet, access!, system);
         }
         catch (LocalizedException ex) when (ex.Key == "Actor.Sheet.HistoryChanged")
         {
@@ -1337,7 +1385,7 @@ else
         catch (LocalizedException ex) when (ex.Key == "Actor.Sheet.ChangedMeanwhile")
         {
             // The page now replaces the version stored since, so a second Save is made knowing it (D3).
-            if (await ActorRepo.GetVisibleAsync(actor!.Id, access!) is { } latest) DocumentVersions.Carry(actor, latest);
+            if ((Vault ? await VaultRepo.GetAsync(actor!.Id, currentUserId!) : await ActorRepo.GetVisibleAsync(actor!.Id, access!)) is { } latest) DocumentVersions.Carry(actor, latest);
             editsKept = true;
             flash = Flash.Error(L[ex.Key]);
             return false;
@@ -1597,6 +1645,21 @@ else
         levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
         flash = Flash.Info(L["Actor.Sheet.LevelSet", CurrentLevel]);
     }
+
+    /// <summary>The character as the AI reads it for a change: the sheet's edits so far, mentions as plain names.</summary>
+    private ActorDocument AssistCharacter() =>
+        ForAi(ApplyEdits(new ActorDocument { Id = actor!.Id, CampaignId = actor.CampaignId, Kind = actor.Kind, OwnerUserId = actor.OwnerUserId, Name = actor.Name, Biography = actor.Biography, DmNotes = actor.DmNotes }));
+
+    /// <summary>Changes taken from the AI go on the sheet unsaved, as typed edits do; Save stores them.</summary>
+    private void TakeAssist(Dictionary<string, object> sheet)
+    {
+        editSheet.Clear();
+        foreach (var (key, value) in sheet) editSheet[key] = value;
+        Reevaluate();
+    }
+
+    private void GoToHighlight(string field) =>
+        ShowRule(field.StartsWith(SheetRuleEngine.BasePrefix, StringComparison.Ordinal) ? "attributes" : field);
 
     private void AppendAdviceToNotes()
     {

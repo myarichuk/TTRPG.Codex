@@ -53,6 +53,10 @@ public sealed class BookSource
     /// <summary>The party edition holds completed sessions only: a planned or live one is prep, and its title alone can spoil.</summary>
     public IReadOnlyList<SessionDocument> Sessions { get; }
 
+    /// <summary>For a player's own book (<see cref="BookSourceReader.ReadForPlayerAsync"/>): the characters they own, whose blocks it holds.
+    /// Empty for the party and GM editions.</summary>
+    public IReadOnlyList<string> OwnedActorIds { get; init; } = [];
+
     public IReadOnlyList<FactDocument> Facts { get; }
     public IReadOnlyList<RegionDocument> Regions { get; }
     public IReadOnlyList<WikiPageDocument> Wiki { get; }
@@ -65,3 +69,7 @@ public sealed class BookSource
     /// <summary>Always empty in the party edition: encounters have no player-scoped read, and are the DM's.</summary>
     public IReadOnlyList<EncounterDocument> Encounters { get; }
 }
+
+/// <summary>A player who has a book of their own: their account and the names of the characters they own, which is how the GM picks them and
+/// what the book's file and notes are named by.</summary>
+public sealed record BookPlayer(string UserId, IReadOnlyList<string> Characters);

@@ -112,6 +112,13 @@
   <data name="Page.About.DatabaseBackupsNotLicensed" xml:space="preserve"><value>The database's own backups are off: its free licence does not allow them. The daily backup above is the one to rely on.</value></data>
   <data name="Page.About.DatabaseBackupsFailed" xml:space="preserve"><value>The database's own backups could not be set up (see the server log). The daily backup above still runs.</value></data>
   <data name="Page.About.DatabaseBackupsUnknown" xml:space="preserve"><value>The database's own backups have not been checked yet.</value></data>
+  <data name="Page.AiSettings.ImageStyle" xml:space="preserve"><value>Picture style</value></data>
+  <data name="Page.AiSettings.ImageStyleHint" xml:space="preserve"><value>Your own words for how every picture you draw should look: portraits, places, the book's art. They go into every picture's prompt as you write them, in place of the built-in style. Name any look you like.</value></data>
+  <data name="Page.AiSettings.ImageStylePlaceholder" xml:space="preserve"><value>e.g. painterly concept art, chunky stylized shapes, saturated colours, visible brush texture</value></data>
+  <data name="Page.AiSettings.ImageStyleTip" xml:space="preserve"><value>Pictures look alike when they are drawn with the same image model and the same words. Leave empty for the built-in style.</value></data>
+  <data name="Page.AiSettings.ImageStyleSave" xml:space="preserve"><value>Save style</value></data>
+  <data name="Page.AiSettings.ImageStyleSaved" xml:space="preserve"><value>Picture style saved.</value></data>
+  <data name="Page.AiSettings.ImageStyleCleared" xml:space="preserve"><value>Picture style cleared: the built-in style is used.</value></data>
   <data name="Page.About.Software" xml:space="preserve"><value>Software</value></data>
   <data name="Page.Campaign.Fallback" xml:space="preserve"><value>Campaign</value></data>
   <data name="Page.Campaign.NotFoundTitle" xml:space="preserve"><value>Campaign not found</value></data>
@@ -212,7 +219,11 @@
   <data name="Page.AiSettings.NowText" xml:space="preserve"><value>AI buttons now use {0}.</value></data>
   <data name="Page.AiSettings.Removed" xml:space="preserve"><value>Removed {0}.</value></data>
   <data name="Page.AiSettings.NotConfigured" xml:space="preserve"><value>not configured</value></data>
-  <data name="Page.AiSettings.ServerShared" xml:space="preserve"><value>Every account on this server uses these models when it has none of its own, on the server's key. Each account may make {0} requests and {1} pictures a day; the server's admin has no limit.</value></data>
+  <data name="Page.AiSettings.ServerWho.Everyone" xml:space="preserve"><value>Every account on this server uses these models when it has none of its own, on the server's key.</value></data>
+  <data name="Page.AiSettings.ServerWho.GameMasters" xml:space="preserve"><value>Game Masters and the admin use these models when they have none of their own, on the server's key. Players need a model of their own.</value></data>
+  <data name="Page.AiSettings.ServerWho.Admins" xml:space="preserve"><value>Only the server's admin uses these models. Everyone else needs a model of their own.</value></data>
+  <data name="Page.AiSettings.ServerAllowance" xml:space="preserve"><value>Each account may make {0} requests and {1} pictures a day on it; the server's admin has no limit.</value></data>
+  <data name="Page.AiSettings.ServerNotYours" xml:space="preserve"><value>Your account can't use the server's key, so AI buttons need a model of your own above. The admin chooses who can use it.</value></data>
   <data name="Page.AiSettings.ServerUsedByYou" xml:space="preserve"><value>You have used {0} requests and {1} pictures on them today.</value></data>
   <data name="Page.AiSettings.ServerUsedByNoOne" xml:space="preserve"><value>No one has used them today.</value></data>
   <data name="Page.AiSettings.ServerUsedHeading" xml:space="preserve"><value>Used today:</value></data>
@@ -288,4 +299,15 @@
   <data name="Page.About.RemoveUsed" xml:space="preserve"><value>{1} campaign(s) play under {0}. Once it is removed they can be read and exported but not changed, until it is installed again or their GMs choose another system. A table that is running keeps it until it ends.</value></data>
   <data name="Page.About.RemoveUnused" xml:space="preserve"><value>No campaign plays under {0}.</value></data>
   <data name="Page.About.Removed" xml:space="preserve"><value>{0} was removed.</value></data>
+  <data name="Page.AiSettings.PricePerImage" xml:space="preserve"><value>Per picture</value></data>
+  <data name="Page.AiSettings.PriceImageHint" xml:space="preserve"><value>Copy this from your provider's price list. Without it the app counts pictures and never guesses a cost.</value></data>
+  <data name="Page.AiSettings.PriceImageBad" xml:space="preserve"><value>A price per picture must be a number from 0 to {0}, or empty.</value></data>
+  <data name="Page.AiSettings.PriceNoteImage" xml:space="preserve"><value>{0} per picture</value></data>
+  <data name="Page.Setup.Elsewhere" xml:space="preserve"><value>This server is not set up yet. Open it on the computer it runs on to create the admin's account.</value></data>
+  <data name="Page.Register.NeedsApproval" xml:space="preserve"><value>The server's admin approves new accounts. You can sign in right away, and use the server once you are approved.</value></data>
+  <data name="Page.Login.Disabled" xml:space="preserve"><value>This account is turned off. Ask the server's admin.</value></data>
+  <data name="Page.Home.FinishSetup" xml:space="preserve"><value>The server is using its safe first settings.</value></data>
+  <data name="Page.Home.FinishSetupLink" xml:space="preserve"><value>Finish setting it up</value></data>
+  <data name="Page.Home.JoinOnly" xml:space="preserve"><value>On this server, campaigns are created by Game Masters. Join one with an invite link from its GM, or ask the server's admin to make you a Game Master.</value></data>
+  <data name="Page.Login.AccountDeleted" xml:space="preserve"><value>Your account is deleted.</value></data>
 </root>

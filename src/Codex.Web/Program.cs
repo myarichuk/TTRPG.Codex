@@ -31,6 +31,9 @@ var authBuilder = builder.Services.AddAuthentication(options =>
     {
         options.LoginPath = "/login";
         options.LogoutPath = "/logout";
+        // An account waiting for approval is signed in but may use nothing else (ServerAccess, the fallback policy below).
+        options.AccessDeniedPath = Codex.Web.ServerAccess.WaitingPath;
+        options.Events.OnValidatePrincipal = Codex.Web.AccountCheck.ValidateAsync;
     })
     .AddCookie("External", options =>
     {
@@ -87,10 +90,15 @@ builder.Services.AddAuthorization(options =>
 {
     // Everything requires a signed-in user unless a page opts out with [AllowAnonymous].
     // Authorisation inside a campaign is per-campaign membership (CampaignAccess), not a role.
+    // An account waiting for approval is signed in and may reach only the waiting page (docs/SERVER_ACCESS_AND_VAULT.md 3).
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
+        .RequireAssertion(context => !Codex.Web.ServerAccess.IsWaiting(context.User))
         .Build();
+    options.AddPolicy(Codex.Web.ServerAccess.SignedIn, policy => policy.RequireAuthenticatedUser());
 });
+builder.Services.AddSingleton<Codex.Web.AccountCheck>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, Codex.Web.AccountRevalidation>();
 builder.Services.AddHttpContextAccessor();
 // The pages that tell a visitor whether a password or an invite code is right get a ration per address. Always, not only
 // when open to the internet (R13): on a LAN server the sign-in form is plain HTTP, and anyone on the network can reach it.
@@ -146,7 +154,14 @@ builder.Services.AddSingleton(sp => new RavenDbService(dataDir, logger: sp.GetRe
 builder.Services.AddSingleton<CampaignLifecycleHooks>();
 builder.Services.AddSingleton<ICampaignRepository, CampaignRepository>();
 builder.Services.AddSingleton<IActorRepository, ActorRepository>();
+builder.Services.AddSingleton<IVaultRepository, RavenVaultRepository>();
 builder.Services.AddSingleton<IUserRepository, RavenUserRepository>();
+builder.Services.AddSingleton<AccountDeletion>();
+// Scoped: the characters played elsewhere are read with the mentions, which are.
+builder.Services.AddScoped<PersonalExport>();
+builder.Services.AddScoped<PlayedCharacters>();
+builder.Services.AddScoped<IPlayedCharacters>(sp => sp.GetRequiredService<PlayedCharacters>());
+builder.Services.AddSingleton<IServerSettingsStore, RavenServerSettingsStore>();
 builder.Services.AddSingleton<ISessionRepository, RavenSessionRepository>();
 builder.Services.AddSingleton<INoteRepository, RavenNoteRepository>();
 builder.Services.AddSingleton<IRegionRepository, RegionRepository>();
@@ -158,6 +173,7 @@ builder.Services.AddSingleton<ITemplateRepository, RavenTemplateRepository>();
 builder.Services.AddSingleton<ICampaignObjectsRepository, RavenCampaignObjectsRepository>();
 builder.Services.AddSingleton<IJournalRepository, RavenJournalRepository>();
 builder.Services.AddSingleton<IWorldChatRepository, RavenWorldChatRepository>();
+builder.Services.AddSingleton<StorageQuota>();
 builder.Services.AddSingleton<IMediaStore, RavenMediaStore>();
 builder.Services.AddSingleton<CampaignExportService>();
 builder.Services.AddSingleton<BookSourceReader>();
@@ -167,17 +183,36 @@ builder.Services.AddSingleton<IBookImageDecoder>(_ => new BookImageWorkerPool(Bo
 builder.Services.AddSingleton(sp => new BookImageScaler(sp.GetRequiredService<IBookImageDecoder>()));
 builder.Services.AddSingleton<BookArtReader>();
 builder.Services.AddSingleton<IBookBuildRepository, RavenBookBuildRepository>();
+builder.Services.AddSingleton<IBookArtRepository, RavenBookArtRepository>();
+builder.Services.AddSingleton<IBookDraftRepository, RavenBookDraftRepository>();
+builder.Services.AddScoped<Codex.Web.Book.BookArtService>();
+builder.Services.AddScoped<Codex.Web.Book.BookDrafts>();
+builder.Services.AddScoped<Codex.Web.Book.BookDraftAi>();
+builder.Services.AddScoped<Codex.Web.Book.BookDraftMerges>();
+// The server's copies of the web addresses a book's stylesheet names (docs/BOOK_EXPORT.md 41.14): its own client, public addresses only.
+Codex.Web.Book.BookWebFetcher.Register(builder.Services);
+builder.Services.AddSingleton<Codex.Web.Book.BookDraftWebs>();
+builder.Services.AddSingleton<Codex.Web.Book.BookThemeCatalog>();
 builder.Services.Configure<Codex.Web.Book.BookPdfOptions>(builder.Configuration.GetSection(Codex.Web.Book.BookPdfOptions.Section));
 builder.Services.AddSingleton<Codex.Web.Book.BookPdf>();
 builder.Services.AddSingleton<Codex.Web.Book.IBookModels, Codex.Web.Book.AiBookModels>();
+builder.Services.AddSingleton<Codex.Web.Book.IBookImages, Codex.Web.Book.AiBookImages>();
 // A singleton that must read a campaign's roles afresh for each request: it asks the (scoped) resolver through a scope of its own.
+builder.Services.AddSingleton<Codex.Web.Book.BookGate>();
+Func<string, string, Task<CampaignAccess?>> BookResolver(IServiceProvider sp) => async (campaignId, userId) =>
+{
+    using var scope = sp.CreateScope();
+    return await scope.ServiceProvider.GetRequiredService<ICampaignAccessResolver>().ResolveAsync(campaignId, userId);
+};
 builder.Services.AddSingleton(sp => new Codex.Web.Book.BookBuilds(
     sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookBuildRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookModels>(),
-    async (campaignId, userId) =>
-    {
-        using var scope = sp.CreateScope();
-        return await scope.ServiceProvider.GetRequiredService<ICampaignAccessResolver>().ResolveAsync(campaignId, userId);
-    }));
+    BookResolver(sp), gate: sp.GetRequiredService<Codex.Web.Book.BookGate>()));
+builder.Services.AddSingleton(sp => new Codex.Web.Book.BookArtDirection(
+    sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookArtRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookModels>(),
+    BookResolver(sp), sp.GetRequiredService<Codex.Web.Book.BookGate>(), log: sp.GetRequiredService<ILoggerFactory>().CreateLogger<Codex.Web.Book.BookArtDirection>()));
+builder.Services.AddSingleton(sp => new Codex.Web.Book.BookArtDrawing(
+    sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookArtRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookImages>(),
+    BookResolver(sp), sp.GetRequiredService<Codex.Web.Book.BookGate>(), quota: sp.GetRequiredService<StorageQuota>()));
 builder.Services.AddScoped<ICampaignAccessResolver, CampaignAccessResolver>();
 builder.Services.AddScoped<ViewerClock>();
 
@@ -193,6 +228,7 @@ builder.Services.AddSingleton(sp => new SystemInstaller(sp.GetRequiredService<Pl
 builder.Services.AddSingleton<ContentPackExporter>();
 builder.Services.AddSingleton<CampaignLibrary>();
 builder.Services.AddScoped<MentionSources>();
+builder.Services.AddScoped<VaultService>();
 builder.Services.AddScoped<WorldChatSessions>();
 builder.Services.AddSingleton<Codex.Persistence.Runtime.CampaignRuntimeManager>();
 builder.Services.AddHostedService<IdleRuntimeEvictionService>();
@@ -223,6 +259,7 @@ builder.Services.AddDataProtection()
 builder.Services.AddSingleton<ServerAiUsage>();
 builder.Services.AddSingleton<AiProviderService>();
 builder.Services.AddSingleton<AiFeatures>();
+builder.Services.AddSingleton<CharacterAssist>();
 builder.Services.AddSingleton<WorldBuilderService>();
 builder.Services.AddScoped<HomebrewImportService>();
 builder.Services.AddSingleton<ArtService>();
@@ -373,6 +410,13 @@ app.MapRazorComponents<Codex.Web.Components.App>().AddInteractiveServerRenderMod
         Console.Error.WriteLine("CODEX_STARTUP_ERROR: " + problem);
         Environment.Exit(1);
     }
+}
+
+// A server made before approval and roles keeps its accounts approved and its campaign owners as Game Masters
+// (docs/SERVER_ACCESS_AND_VAULT.md 3). Once; a new server has no accounts yet and starts with the setup.
+if (await app.Services.GetRequiredService<IServerSettingsStore>().MoveExistingServerAsync())
+{
+    app.Logger.LogInformation("Existing accounts kept approved; campaign owners are Game Masters; sign-up now needs approval.");
 }
 
 // Daily RavenDB backup into the data dir, beside the server's own JSON backups (BackupService). Best-effort: a backup that

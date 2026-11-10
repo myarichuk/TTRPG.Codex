@@ -32,6 +32,7 @@
         <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="OpenCreateAsync" data-testid="create-character">
             <LucideIcon IconName="user-plus" Size="18" /> @(Ctx.IsDm ? L["Campaign.Cast.NewDm"] : L["Campaign.Cast.NewPlayer"])
         </CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Etched" Icon="archive" OnClick="() => vaultRequests.OpenAsync()" data-testid="bring-from-vault">@L["Campaign.Vault.Bring"]</CodexButton>
         <CodexButton Variant="CodexButtonVariant.Etched" Class="cx-arcane" OnClick="OpenAiCreateAsync" data-testid="create-character-ai">
             <LucideIcon IconName="sparkles" Size="18" /> @L["Campaign.Cast.CreateWithAi"]
         </CodexButton>
@@ -41,6 +42,8 @@
         }
     </div>
 </div>
+
+<VaultRequests @ref="vaultRequests" />
 
 <div class="row g-3">
     <div class="col-lg-6">
@@ -202,6 +205,7 @@
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
     private ConfirmDialog confirm = null!;
+    private VaultRequests vaultRequests = null!;
     private string newName = string.Empty;
     private ActorKind newKind = ActorKind.NonPlayerCharacter;
     private string newSheetKind = string.Empty;
@@ -273,7 +277,8 @@
             // A stranger: what the party has seen of them is all there is.
             // Its mentions read as a player reads them (MentionDirectory), places and items included.
             return string.IsNullOrWhiteSpace(actor.PublicDescription) ? KindLabel(actor.Kind)
-                : TextFormatting.Summary(new MentionDirectory(Ctx.AllActors, Array.Empty<LocationDocument>(), Array.Empty<MentionItem>(), isDm: false) { Words = MentionSources.Words(L) }.Plain(actor.PublicDescription), 120);
+                : WikiRender.Summary(actor.PublicDescription, Array.Empty<WikiPageDocument>(),
+                    new MentionDirectory(Ctx.AllActors, Array.Empty<LocationDocument>(), Array.Empty<MentionItem>(), isDm: false) { Words = MentionSources.Words(L) }, 120);
         }
 
         var parts = new List<string>();

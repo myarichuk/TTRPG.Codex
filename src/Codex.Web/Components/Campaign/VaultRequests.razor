@@ -1,0 +1,209 @@
+@* Bringing vault characters into the campaign (docs/SERVER_ACCESS_AND_VAULT.md 7): a player picks one, sees what the campaign does not
+   have and chooses to leave each out or ask for it; a GM accepts or turns the request down. Nothing joins the cast before that. *@
+@using Codex.Persistence
+@using Codex.Web.Services
+@inject IVaultRepository VaultRepo
+@inject VaultService VaultService
+@inject IUserRepository UserRepo
+@inject IJSRuntime JS
+
+@if (requests.Count > 0)
+{
+    <section class="panel mb-3" aria-labelledby="vault-requests-heading" data-testid="vault-requests">
+        <div class="panel-title">
+            <h3 id="vault-requests-heading"><LucideIcon IconName="hourglass" Size="18" Class="title-icon" /> @L["Campaign.Vault.Waiting", requests.Count]</h3>
+        </div>
+        <ul class="list-unstyled mb-0">
+            @foreach (var request in requests)
+            {
+                var shown = request;
+                var replaces = request.ReplacesActorId == null ? null : Ctx.AllActors.FirstOrDefault(a => a.Id == request.ReplacesActorId);
+                <li class="list-row" data-testid="vault-request">
+                    <div class="row-main">
+                        <div class="row-title">
+                            @request.Name
+                            @if (Ctx.IsDm)
+                            {
+                                <span class="small-muted ms-2">@L["Campaign.Vault.PlayedBy", names.GetValueOrDefault(request.UserId, request.UserId)]</span>
+                            }
+                        </div>
+                        <div class="row-sub">
+                            @(replaces != null ? L["Campaign.Vault.Update", replaces.Name] : L["Campaign.Vault.New"])
+                        </div>
+                        @if (request.AskedFor.Count > 0)
+                        {
+                            <div class="small" data-testid="vault-request-asked">@L["Campaign.Vault.AskedFor", string.Join(", ", request.AskedFor)]</div>
+                        }
+                        @if (request.LeftOut.Count > 0)
+                        {
+                            <div class="small-muted small" data-testid="vault-request-left-out">@L["Campaign.Vault.LeftOut", string.Join(", ", request.LeftOut)]</div>
+                        }
+                    </div>
+                    <div class="row-actions">
+                        @if (Ctx.IsDm)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="check" OnClick="() => AcceptAsync(shown)" aria-label="@L["Campaign.Vault.AcceptLabel", request.Name]" data-testid="vault-request-accept">@L["Campaign.Vault.Accept"]</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => WithdrawAsync(shown)" aria-label="@L["Campaign.Vault.DeclineLabel", request.Name]" data-testid="vault-request-decline">@L["Campaign.Vault.Decline"]</CodexButton>
+                        }
+                        else
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => WithdrawAsync(shown)" aria-label="@L["Campaign.Vault.WithdrawLabel", request.Name]" data-testid="vault-request-withdraw">@L["Campaign.Vault.Withdraw"]</CodexButton>
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+        @if (!Ctx.IsDm)
+        {
+            <p class="field-hint mb-0 mt-2">@L["Campaign.Vault.WaitingHint"]</p>
+        }
+    </section>
+}
+
+<dialog id="vault-bring-dialog" class="codex-dialog" aria-labelledby="vault-bring-title">
+    <form @onsubmit="AskAsync" @onsubmit:preventDefault="true">
+        <div class="dialog-body">
+            <h2 id="vault-bring-title"><LucideIcon IconName="archive" Size="18" Class="title-icon" /> @L["Campaign.Vault.Bring"]</h2>
+            @if (mine.Count == 0)
+            {
+                <p class="mb-0" data-testid="vault-bring-none">@L["Campaign.Vault.NoneForSystem", Ctx.System?.Name ?? Ctx.Campaign.SystemId]</p>
+                <p class="mb-0 mt-2"><a href="/vault">@L["Campaign.Vault.OpenVault"]</a></p>
+            }
+            else
+            {
+                <div class="mb-3">
+                    <label for="vault-bring-pick" class="field-label">@L["Campaign.Vault.Character"]</label>
+                    <select id="vault-bring-pick" class="field-select" value="@chosenId" @onchange="ChooseAsync" data-testid="vault-bring-pick">
+                        @foreach (var character in mine)
+                        {
+                            <option value="@character.Id">@character.Name</option>
+                        }
+                    </select>
+                </div>
+                @if (missing.Count == 0)
+                {
+                    <p class="small-muted mb-0" data-testid="vault-bring-complete">@L["Campaign.Vault.NothingMissing"]</p>
+                }
+                else
+                {
+                    <fieldset data-testid="vault-bring-missing">
+                        <legend class="field-label">@L["Campaign.Vault.Missing", missing.Count]</legend>
+                        <p class="field-hint">@L["Campaign.Vault.MissingHint"]</p>
+                        @for (var i = 0; i < missing.Count; i++)
+                        {
+                            var entry = missing[i];
+                            var key = entry.Reference.Key;
+                            var id = "vault-leave-" + i;
+                            <div class="form-check">
+                                <input id="@id" type="checkbox" class="form-check-input" checked="@leaveOut.Contains(key)" @onchange="e => Toggle(key, e.Value is true)" data-testid="vault-bring-leave" />
+                                <label for="@id" class="form-check-label">@L["Campaign.Vault.LeaveOut", entry.Name]</label>
+                            </div>
+                        }
+                    </fieldset>
+                }
+                <p class="field-hint mt-3 mb-0">@L["Campaign.Vault.BringHint"]</p>
+            }
+            @if (error != null)
+            {
+                <p class="text-danger mb-0 mt-2" role="alert">@error</p>
+            }
+        </div>
+        <div class="dialog-actions">
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseAsync">@L["Common.Cancel"]</CodexButton>
+            @if (mine.Count > 0)
+            {
+                <CodexButton Type="submit" Variant="CodexButtonVariant.Plaque" Busy="@gate.IsBusy" data-testid="vault-bring-submit">@L["Campaign.Vault.Send"]</CodexButton>
+            }
+        </div>
+    </form>
+</dialog>
+
+@code {
+    [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
+
+    private List<CharacterRequestDocument> requests = new();
+    private Dictionary<string, string> names = new();
+    private List<ActorDocument> mine = new();
+    private string chosenId = "";
+    private IReadOnlyList<MissingEntry> missing = Array.Empty<MissingEntry>();
+    private readonly HashSet<string> leaveOut = new();
+    private string? error;
+    private readonly SaveGate gate = new();
+
+    protected override async Task OnParametersSetAsync() => await LoadRequestsAsync();
+
+    private async Task LoadRequestsAsync()
+    {
+        requests = (await VaultRepo.GetRequestsAsync(Ctx.Access)).ToList();
+        if (Ctx.IsDm && requests.Count > 0) names = await MemberNames.LoadAsync(UserRepo, Ctx.Campaign);
+    }
+
+    /// <summary>Opens the dialog with the caller's vault characters built for this campaign's system.</summary>
+    public async Task OpenAsync()
+    {
+        error = null;
+        mine = (await VaultRepo.GetAllAsync(Ctx.UserId)).Where(c => VaultService.SameSystem(c, Ctx.Campaign)).ToList();
+        chosenId = mine.FirstOrDefault()?.Id ?? "";
+        await LoadMissingAsync();
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", "vault-bring-dialog");
+    }
+
+    private Task CloseAsync() => JS.InvokeVoidAsync("codex.closeModal", "vault-bring-dialog").AsTask();
+
+    private async Task ChooseAsync(ChangeEventArgs e)
+    {
+        chosenId = e.Value?.ToString() ?? "";
+        await LoadMissingAsync();
+    }
+
+    private async Task LoadMissingAsync()
+    {
+        leaveOut.Clear();
+        var chosen = mine.FirstOrDefault(c => c.Id == chosenId);
+        missing = chosen == null ? Array.Empty<MissingEntry>() : await VaultService.MissingAsync(chosen, Ctx.Campaign, Ctx.Access);
+    }
+
+    private void Toggle(string key, bool leave)
+    {
+        if (leave) leaveOut.Add(key);
+        else leaveOut.Remove(key);
+    }
+
+    private Task AskAsync() => gate.RunAsync(async () =>
+    {
+        error = null;
+        var chosen = mine.FirstOrDefault(c => c.Id == chosenId);
+        if (chosen == null) return;
+        // Read again: the sheet may have changed in another tab since the dialog opened.
+        chosen = await VaultRepo.GetAsync(chosen.Id, Ctx.UserId);
+        if (chosen == null || await VaultService.AskAsync(chosen, Ctx.Campaign, Ctx.Access, leaveOut, null) == null)
+        {
+            error = L["Campaign.Vault.NotSent"];
+            return;
+        }
+
+        await CloseAsync();
+        Ctx.Notify(Flash.Success(L["Campaign.Vault.Sent", chosen.Name]));
+        await LoadRequestsAsync();
+    });
+
+    private async Task AcceptAsync(CharacterRequestDocument request)
+    {
+        // The store reads the caller's role as the campaign has it now: a GM demoted since the page loaded accepts nothing.
+        var done = await VaultService.AcceptAsync(request.Id, Ctx.Access, Ctx.System);
+        Ctx.Notify(done ? Flash.Success(L["Campaign.Vault.Accepted", request.Name]) : Flash.Error(L["Campaign.Vault.NotAccepted"]));
+        await Ctx.ReloadAsync();
+        await LoadRequestsAsync();
+    }
+
+    private async Task WithdrawAsync(CharacterRequestDocument request)
+    {
+        if (await VaultRepo.WithdrawAsync(request.Id, Ctx.Access))
+        {
+            Ctx.Notify(Flash.Info(Ctx.IsDm ? L["Campaign.Vault.Declined", request.Name] : L["Campaign.Vault.Withdrawn", request.Name]));
+        }
+
+        await LoadRequestsAsync();
+    }
+}

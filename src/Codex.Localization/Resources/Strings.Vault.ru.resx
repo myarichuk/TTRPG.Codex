@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Vault.Title" xml:space="preserve"><value>Мои персонажи</value></data>
+  <data name="Vault.Subtitle" xml:space="preserve"><value>Персонажи вне всех кампаний. Чтобы сыграть одним из них, откройте «Состав» кампании и нажмите «Привести персонажа».</value></data>
+  <data name="Vault.New" xml:space="preserve"><value>Новый персонаж</value></data>
+  <data name="Vault.Create" xml:space="preserve"><value>Создать</value></data>
+  <data name="Vault.Name" xml:space="preserve"><value>Имя</value></data>
+  <data name="Vault.Required" xml:space="preserve"><value>(обязательно)</value></data>
+  <data name="Vault.System" xml:space="preserve"><value>Игровая система</value></data>
+  <data name="Vault.SystemHint" xml:space="preserve"><value>Персонаж сможет войти только в кампании этой системы. Потом её не изменить.</value></data>
+  <data name="Vault.Empty" xml:space="preserve"><value>Персонажей пока нет</value></data>
+  <data name="Vault.EmptyBody" xml:space="preserve"><value>Создайте персонажа здесь, чтобы взять его в любую кампанию.</value></data>
+  <data name="Vault.Filter" xml:space="preserve"><value>Показать</value></data>
+  <data name="Vault.FilterAll" xml:space="preserve"><value>Все игровые системы</value></data>
+  <data name="Vault.Count" xml:space="preserve"><value>{0, plural, one{# персонаж} few{# персонажа} many{# персонажей} other{# персонажа}}</value></data>
+  <data name="Vault.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Vault.DeleteLabel" xml:space="preserve"><value>Удалить {0}</value></data>
+  <data name="Vault.DeleteQ" xml:space="preserve"><value>Удалить «{0}»?</value></data>
+  <data name="Vault.DeleteBody" xml:space="preserve"><value>Персонаж будет удалён навсегда. Копии, уже взятые в кампании, останутся там.</value></data>
+  <data name="Vault.Deleted" xml:space="preserve"><value>«{0}» удалён.</value></data>
+  <data name="Vault.Back" xml:space="preserve"><value>Мои персонажи</value></data>
+  <data name="Vault.StartFrom" xml:space="preserve"><value>Начать с</value></data>
+  <data name="Vault.StartBlank" xml:space="preserve"><value>Пустого листа</value></data>
+  <data name="Vault.StartConcept" xml:space="preserve"><value>Идеи: ИИ набросает лист и историю</value></data>
+  <data name="Vault.Concept" xml:space="preserve"><value>Идея</value></data>
+  <data name="Vault.ConceptPlaceholder" xml:space="preserve"><value>например: бывший пират, ставший храмовым стражем, 3-й уровень.</value></data>
+  <data name="Vault.ConceptHint" xml:space="preserve"><value>ИИ выбирает классы, народы, снаряжение и прочее только из библиотеки сервера для этой системы. Потом проверьте лист.</value></data>
+  <data name="Vault.Generate" xml:space="preserve"><value>Набросать персонажа</value></data>
+  <data name="Vault.Generating" xml:space="preserve"><value>Набрасываю…</value></data>
+  <data name="Vault.NoAi" xml:space="preserve"><value>Для вас не настроена модель ИИ. Добавьте её в настройках ИИ.</value></data>
+  <data name="Vault.AiFailed" xml:space="preserve"><value>ИИ не смог набросать персонажа: {0}</value></data>
+  <data name="Vault.Data.Title" xml:space="preserve"><value>Ваши данные</value></data>
+  <data name="Vault.Data.Intro" xml:space="preserve"><value>Скачайте всё своё одним zip-файлом: персонажей здесь, персонажей, которыми вы играете в чужих кампаниях (как их видите вы), ваши личные журналы и все кампании, которые вы ведёте, с их изображениями и книгой. Ключей и паролей в нём нет.</value></data>
+  <data name="Vault.Data.Export" xml:space="preserve"><value>Скачать мои данные</value></data>
+  <data name="Vault.Data.Import" xml:space="preserve"><value>Импортировать персонажей</value></data>
+  <data name="Vault.Data.ImportHint" xml:space="preserve"><value>Скачанный zip или vault.json либо played.json из него. Персонажи добавляются как новые; ваши текущие остаются. Целый zip возвращает только персонажей, которые были здесь.</value></data>
+  <data name="Vault.Data.TooBig" xml:space="preserve"><value>Этот файл слишком велик для импорта.</value></data>
+  <data name="Vault.Data.NotAVault" xml:space="preserve"><value>В этом файле нет персонажей для импорта.</value></data>
+  <data name="Vault.Data.Imported" xml:space="preserve"><value>Добавлено персонажей: {0}.</value></data>
+  <data name="Vault.Data.ImportedSome" xml:space="preserve"><value>Добавлено персонажей: {0}. Пропущено, так как их системы нет на этом сервере: {1}.</value></data>
+  <data name="Vault.Data.ImportFailed" xml:space="preserve"><value>Не удалось импортировать персонажей: {0}</value></data>
+  <data name="Vault.Delete.Open" xml:space="preserve"><value>Удалить мою учётную запись</value></data>
+  <data name="Vault.Delete.Title" xml:space="preserve"><value>Удалить вашу учётную запись?</value></data>
+  <data name="Vault.Delete.Body" xml:space="preserve"><value>Учётная запись будет удалена навсегда. Это нельзя отменить, поэтому сначала скачайте свои данные, если хотите сохранить копию.</value></data>
+  <data name="Vault.Delete.Owned" xml:space="preserve"><value>Ваши кампании и соведущий, который получит каждую</value></data>
+  <data name="Vault.Delete.NoCoGm" xml:space="preserve"><value>В кампании «{0}» нет другого ведущего. Сначала сделайте игрока соведущим в её настройках или удалите кампанию.</value></data>
+  <data name="Vault.Delete.Leaves" xml:space="preserve"><value>Вы покинете другие кампании, в которых участвуете ({0}). Ваши персонажи там останутся в составе.</value></data>
+  <data name="Vault.Delete.Goes" xml:space="preserve"><value>Вместе с учётной записью удаляются: персонажи здесь ({0}), ваши личные журналы, чаты построения мира и сборки книг.</value></data>
+  <data name="Vault.Delete.Password" xml:space="preserve"><value>Ваш пароль для подтверждения</value></data>
+  <data name="Vault.Delete.TypeName" xml:space="preserve"><value>Введите своё имя, {0}, для подтверждения</value></data>
+  <data name="Vault.Delete.Confirm" xml:space="preserve"><value>Удалить учётную запись</value></data>
+  <data name="Vault.Delete.Wrong" xml:space="preserve"><value>Это не ваш пароль (или имя). Ничего не удалено.</value></data>
+  <data name="Vault.Delete.NeedsOwner" xml:space="preserve"><value>Каждой вашей кампании нужен соведущий, который её получит. Ничего не удалено.</value></data>
+  <data name="Vault.Delete.LastAdmin" xml:space="preserve"><value>Вы единственный администратор сервера. Сначала назначьте администратором кого-то ещё. Ничего не удалено.</value></data>
+  <data name="Vault.Delete.LastAdminFirst" xml:space="preserve"><value>Вы единственный администратор сервера, поэтому учётная запись остаётся. Сначала назначьте администратором кого-то ещё на странице администратора.</value></data>
+  <data name="Vault.Delete.Meanwhile" xml:space="preserve"><value>Пока удалялась учётная запись, появилась ваша кампания, поэтому учётная запись остаётся. Передайте эту кампанию и удалите снова.</value></data>
+</root>

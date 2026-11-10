@@ -299,7 +299,7 @@
   <data name="Campaign.Settings.NewLinkBody" xml:space="preserve"><value>הקישור הנוכחי יפסיק לעבוד מיד. מי שקיבל אותו ועוד לא הצטרף יצטרך את החדש.</value></data>
   <data name="Campaign.Settings.NewLinkConfirm" xml:space="preserve"><value>יצירת קישור חדש</value></data>
   <data name="Campaign.Settings.RoleQ" xml:space="preserve"><value>לשנות את התפקיד של {0} ל{1}?</value></data>
-  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>שליט מבוך רואה כל סוד במערכה הזו ויכול לשנות או למחוק בה כל דבר.</value></data>
+  <data name="Campaign.Settings.RoleBodyDm" xml:space="preserve"><value>שליט מבוך שותף רואה כל סוד במערכה הזו: הערות שליט המבוך, דפים ודמויות נסתרים. הוא יכול לנהל את השולחן ולשנות את העולם ואת הספר. רק אתם יכולים למחוק את המערכה, להעביר אותה הלאה או לקבוע מי שליט מבוך שותף.</value></data>
   <data name="Campaign.Settings.RoleBody" xml:space="preserve"><value>מה שהם יכולים לראות ולעשות ישתנה ברגע שתאשרו.</value></data>
   <data name="Campaign.Settings.RoleConfirm" xml:space="preserve"><value>שינוי תפקיד</value></data>
   <data name="Campaign.Settings.NewLinkHint" xml:space="preserve"><value>יצירת קישור חדש מבטלת את הקישור הישן.</value></data>
@@ -734,6 +734,127 @@
   <data name="Campaign.Book.Columns.Two" xml:space="preserve"><value>שתי עמודות</value></data>
   <data name="Campaign.Book.Pictures" xml:space="preserve"><value>לכלול את התמונות של הקמפיין</value></data>
   <data name="Campaign.Book.Pictures.Hint" xml:space="preserve"><value>כריכה, דיוקנאות ואיורים של מקומות ודפים — רק מה שהמהדורה הנבחרת רשאית להציג. בלעדיהן התצוגה המקדימה קלה יותר.</value></data>
+  <data name="Campaign.Book.Art.Title" xml:space="preserve"><value>תמונות לספר הזה</value></data>
+  <data name="Campaign.Book.Art.HintDm" xml:space="preserve"><value>הוסיפו תמונה לכריכה, מעל פרק או ליד רשומה. מה שמוסיפים כאן מודפס רק במהדורת המנחה. כדי שתמונה תופיע בשני הספרים, הוסיפו אותה במהדורת החבורה.</value></data>
+  <data name="Campaign.Book.Art.HintParty" xml:space="preserve"><value>הוסיפו תמונה לכריכה, מעל פרק או ליד רשומה. מה שמוסיפים כאן מודפס גם במהדורת החבורה וגם במהדורת המנחה. לדמויות נסתרות אין כאן מקום, וזרים מוצגים כפי שהחבורה מכירה אותם.</value></data>
+  <data name="Campaign.Book.Art.Cover" xml:space="preserve"><value>כריכה</value></data>
+  <data name="Campaign.Book.Art.Header" xml:space="preserve"><value>מעל הפרק</value></data>
+  <data name="Campaign.Book.Art.Spot" xml:space="preserve"><value>תמונה קטנה אחרי {0}</value></data>
+  <data name="Campaign.Book.Art.Upload" xml:space="preserve"><value>הוספת תמונה</value></data>
+  <data name="Campaign.Book.Art.Replace" xml:space="preserve"><value>החלפה</value></data>
+  <data name="Campaign.Book.Art.Remove" xml:space="preserve"><value>הוצאה מהספר</value></data>
+  <data name="Campaign.Book.Art.Loading" xml:space="preserve"><value>טוענים את המקומות לתמונות…</value></data>
+  <data name="Campaign.Book.Art.Uploading" xml:space="preserve"><value>מוסיפים את התמונה…</value></data>
+  <data name="Campaign.Book.Art.Stored" xml:space="preserve"><value>התמונה נוספה.</value></data>
+  <data name="Campaign.Book.Art.Removed" xml:space="preserve"><value>התמונה הוצאה מהספר. היא נשמרה בין הגרסאות, ואפשר להחזיר או למחוק אותה.</value></data>
+  <data name="Campaign.Book.Art.BadImage" xml:space="preserve"><value>אי אפשר להשתמש בקובץ הזה. השתמשו בתמונת PNG, JPEG, WebP, GIF או AVIF עד 6 MB.</value></data>
+  <data name="Campaign.Book.Art.NoSlot" xml:space="preserve"><value>המקום הזה כבר לא קיים במהדורה. ייתכן שהוסתר או ששמו שונה.</value></data>
+  <data name="Campaign.Book.Art.Full" xml:space="preserve"><value>בספר של הקמפיין הזה כבר יש מספר התמונות המרבי. הסירו אחת קודם.</value></data>
+  <data name="Campaign.Book.Art.NotAllowed" xml:space="preserve"><value>רק המנחה של הקמפיין יכול לשנות את תמונות הספר.</value></data>
+  <data name="Campaign.Book.Art.Failed" xml:space="preserve"><value>התמונה לא נוספה: {0}</value></data>
+  <data name="Campaign.Book.Art.State.Mine" xml:space="preserve"><value>התמונה שלכם</value></data>
+  <data name="Campaign.Book.Art.State.Party" xml:space="preserve"><value>התמונה של מהדורת החבורה</value></data>
+  <data name="Campaign.Book.Art.State.Own" xml:space="preserve"><value>התמונה שלו עצמו</value></data>
+  <data name="Campaign.Book.Art.State.None" xml:space="preserve"><value>אין תמונה</value></data>
+  <data name="Campaign.Book.Art.Suggest.Title" xml:space="preserve"><value>הצעות לתמונות</value></data>
+  <data name="Campaign.Book.Art.Suggest.Hint" xml:space="preserve"><value>מודל ה-AI שלכם קורא תקציר קצר של המהדורה הזו ומציע מה כל תמונה תציג. סודות לא נשלחים. שום דבר לא מצויר.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Summary" xml:space="preserve"><value>{0, plural, one{מקום אחד} other{# מקומות}} להצעה, {1, plural, one{בקשה אחת} other{# בקשות}} אל {2}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Tokens" xml:space="preserve"><value>בערך {0} טוקנים; לעולם לא יותר מ-{1}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Current" xml:space="preserve"><value>לכל {0} המקומות יש הצעות לפי מה שכתוב בהם עכשיו.</value></data>
+  <data name="Campaign.Book.Art.Suggest.All" xml:space="preserve"><value>להציע שוב גם למקומות שכבר יש להם הצעה</value></data>
+  <data name="Campaign.Book.Art.Suggest.Start" xml:space="preserve"><value>הצעות לתמונות</value></data>
+  <data name="Campaign.Book.Art.Suggest.Running" xml:space="preserve"><value>מציעים… הושלמו {0} מתוך {1, plural, one{בקשה אחת} other{# בקשות}}.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Done" xml:space="preserve"><value>הסתיים: {0} מתוך {1, plural, one{בקשה אחת} other{# בקשות}} נתנו הצעות.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stopped" xml:space="preserve"><value>נעצר: {0} מתוך {1, plural, one{בקשה אחת} other{# בקשות}} נתנו הצעות.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Stale" xml:space="preserve"><value>הטקסט השתנה מאז שזה הוצע.</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.some" xml:space="preserve"><value>לחלק מהמקומות אין הצעה: ההצעות שלהם לא עברו את הבדיקות</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.checks" xml:space="preserve"><value>אף הצעה לא עברה את הבדיקות</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.unreadable" xml:space="preserve"><value>לא ניתן היה לקרוא את התשובה, פעמיים; דבר לא נשמר</value></data>
+  <data name="Campaign.Book.Art.Suggest.Reason.cutoff" xml:space="preserve"><value>התשובה נקטעה לפני סופה, פעמיים; דבר לא נשמר</value></data>
+  <data name="Campaign.Book.Art.Suggested" xml:space="preserve"><value>הוצע:</value></data>
+  <data name="Campaign.Book.Art.Draw.Title" xml:space="preserve"><value>ציור תמונות</value></data>
+  <data name="Campaign.Book.Art.Draw.Hint" xml:space="preserve"><value>סמנו את המקומות לציור. כל תמונה מצוירת לפי ההצעה שלה, בסגנון של הספר הזה, במודל התמונות שלכם. שום דבר לא מצויר עד שלוחצים על „ציור”.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoModel" xml:space="preserve"><value>לא הוגדר מודל תמונות.</value></data>
+  <data name="Campaign.Book.Art.Draw.Style" xml:space="preserve"><value>סגנון לכל התמונות בספר הזה</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Medium" xml:space="preserve"><value>טכניקה</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Palette" xml:space="preserve"><value>צבעים</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Line" xml:space="preserve"><value>קווים</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Light" xml:space="preserve"><value>תאורה</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Save" xml:space="preserve"><value>שמירת הסגנון</value></data>
+  <data name="Campaign.Book.Art.Draw.Style.Saved" xml:space="preserve"><value>הסגנון נשמר. תמונות שכבר צוירו נשארות כפי שהן.</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.painterly" xml:space="preserve"><value>פנטזיה ציורית</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.oil" xml:space="preserve"><value>ציור שמן</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.watercolour" xml:space="preserve"><value>צבעי מים</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.ink" xml:space="preserve"><value>דיו והצללה בקווים</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.woodcut" xml:space="preserve"><value>חיתוך עץ</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.engraving" xml:space="preserve"><value>תחריט נחושת</value></data>
+  <data name="Campaign.Book.Art.Draw.Medium.sketch" xml:space="preserve"><value>סקיצה על קלף</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.muted" xml:space="preserve"><value>מעומעמים</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.earth" xml:space="preserve"><value>גווני אדמה</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.sepia" xml:space="preserve"><value>ספיה</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.mono" xml:space="preserve"><value>שחור ולבן</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.jewel" xml:space="preserve"><value>גווני אבני חן</value></data>
+  <data name="Campaign.Book.Art.Draw.Palette.cold" xml:space="preserve"><value>אפורים וכחולים קרים</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.fine" xml:space="preserve"><value>דקים</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.medium" xml:space="preserve"><value>ברורים</value></data>
+  <data name="Campaign.Book.Art.Draw.Line.bold" xml:space="preserve"><value>עבים</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.natural" xml:space="preserve"><value>טבעית</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.candle" xml:space="preserve"><value>אור נרות</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.overcast" xml:space="preserve"><value>מעוננת</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.moon" xml:space="preserve"><value>אור ירח</value></data>
+  <data name="Campaign.Book.Art.Draw.Light.dusk" xml:space="preserve"><value>דמדומים</value></data>
+  <data name="Campaign.Book.Art.Draw.Pick" xml:space="preserve"><value>לצייר</value></data>
+  <data name="Campaign.Book.Art.Draw.Visual" xml:space="preserve"><value>תיאור למודל התמונות (באנגלית)</value></data>
+  <data name="Campaign.Book.Art.Draw.Summary" xml:space="preserve"><value>תמונות לציור: {0}, במודל {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Cost" xml:space="preserve"><value>בערך {0} ({1} לתמונה).</value></data>
+  <data name="Campaign.Book.Art.Draw.Allowance" xml:space="preserve"><value>ינצל {0} מתוך {1} התמונות שנותרו להיום במפתח של השרת.</value></data>
+  <data name="Campaign.Book.Art.Draw.NoPrice" xml:space="preserve"><value>לא הוגדר מחיר לתמונה במודל הזה, ולכן לא מוצגת עלות.</value></data>
+  <data name="Campaign.Book.Art.Draw.Replaces" xml:space="preserve"><value>התמונה שבשימוש תישמר כגרסה קודמת: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Drops" xml:space="preserve"><value>במקומות האלה כבר שמורות 3 גרסאות, ולכן ציור חדש ימחק את הקודמת הוותיקה ביותר, שכבר שולם עליה: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.PickAgain" xml:space="preserve"><value>לצייר שוב</value></data>
+  <data name="Campaign.Book.Art.Versions.Show" xml:space="preserve"><value>גרסאות ({0})</value></data>
+  <data name="Campaign.Book.Art.Versions.Hide" xml:space="preserve"><value>הסתרת הגרסאות</value></data>
+  <data name="Campaign.Book.Art.Versions.Hint" xml:space="preserve"><value>לכל מקום נשמרות עד 3 גרסאות של התמונה במהדורה הזאת. רק הגרסה שבשימוש מודפסת.</value></data>
+  <data name="Campaign.Book.Art.Versions.Loading" xml:space="preserve"><value>טוענים את הגרסאות…</value></data>
+  <data name="Campaign.Book.Art.Versions.InUse" xml:space="preserve"><value>בשימוש</value></data>
+  <data name="Campaign.Book.Art.Versions.Use" xml:space="preserve"><value>להשתמש בזו</value></data>
+  <data name="Campaign.Book.Art.Versions.Delete" xml:space="preserve"><value>מחיקה</value></data>
+  <data name="Campaign.Book.Art.Versions.Confirm" xml:space="preserve"><value>למחוק את הגרסה הזאת לצמיתות? אי אפשר יהיה לשחזר אותה.</value></data>
+  <data name="Campaign.Book.Art.Versions.Yes" xml:space="preserve"><value>מחיקה לצמיתות</value></data>
+  <data name="Campaign.Book.Art.Versions.No" xml:space="preserve"><value>להשאיר</value></data>
+  <data name="Campaign.Book.Art.Versions.Drawn" xml:space="preserve"><value>צוירה</value></data>
+  <data name="Campaign.Book.Art.Versions.Uploaded" xml:space="preserve"><value>נוספה</value></data>
+  <data name="Campaign.Book.Art.Versions.Stale" xml:space="preserve"><value>צוירה לפי תיאור או סגנון קודמים</value></data>
+  <data name="Campaign.Book.Art.Versions.NoPicture" xml:space="preserve"><value>אי אפשר להציג את התמונה הזאת.</value></data>
+  <data name="Campaign.Book.Art.Versions.Alt" xml:space="preserve"><value>{0}, גרסה {1}</value></data>
+  <data name="Campaign.Book.Art.Versions.Used" xml:space="preserve"><value>התמונה שבשימוש הוחלפה.</value></data>
+  <data name="Campaign.Book.Art.Versions.Deleted" xml:space="preserve"><value>הגרסה נמחקה.</value></data>
+  <data name="Campaign.Book.Art.Gone.Hint" xml:space="preserve"><value>הן לא מודפסות בשום מקום, אבל נספרות במגבלת התמונות של הספר ובאחסון שלך. המקום עשוי לחזור אם תציגו או תשנו את שמו שוב.</value></data>
+  <data name="Campaign.Book.Art.Gone.Hide" xml:space="preserve"><value>הסתרת התמונות של מקומות שכבר אינם</value></data>
+  <data name="Campaign.Book.Art.Gone.Show" xml:space="preserve"><value>תמונות של מקומות שכבר אינם במהדורה הזאת ({0})</value></data>
+  <data name="Campaign.Book.Art.State.KeptOnly" xml:space="preserve"><value>אין תמונה בשימוש</value></data>
+  <data name="Campaign.Book.Art.Draw.None" xml:space="preserve"><value>סמנו מקום שיש לו הצעה כדי לצייר אותו.</value></data>
+  <data name="Campaign.Book.Art.Draw.Start" xml:space="preserve"><value>ציור המסומנים ({0})</value></data>
+  <data name="Campaign.Book.Art.Draw.Running" xml:space="preserve"><value>מציירים… הושלמו {0} מתוך {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Done" xml:space="preserve"><value>הסתיים: צוירו {0} מתוך {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Stopped" xml:space="preserve"><value>נעצר: צוירו {0} מתוך {1}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Totals" xml:space="preserve"><value>תמונות שצוירו לספר הזה עד עכשיו: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.TotalsCost" xml:space="preserve"><value>עלות עד עכשיו: {0}.</value></data>
+  <data name="Campaign.Book.Art.Draw.Drawn" xml:space="preserve"><value>צוירה</value></data>
+  <data name="Campaign.Book.Art.Draw.DrawnStale" xml:space="preserve"><value>צוירה לפי תיאור או סגנון קודמים</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.slot" xml:space="preserve"><value>המקום הזה כבר לא קיים במהדורה.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.suggestion" xml:space="preserve"><value>אין הצעה למקום הזה במהדורה הזו.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.stale" xml:space="preserve"><value>הטקסט השתנה מאז ההצעה. הציעו שוב קודם.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.visual" xml:space="preserve"><value>אי אפשר להשתמש בתיאור הזה: {0}</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.repeat" xml:space="preserve"><value>סומן פעמיים.</value></data>
+  <data name="Campaign.Book.Art.Draw.Problem.many" xml:space="preserve"><value>בכל פעם מצוירות לכל היותר {0} תמונות.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.image" xml:space="preserve"><value>לא ניתן היה לקרוא את התמונה; שום דבר לא נשמר.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.failed" xml:space="preserve"><value>מודל התמונות נכשל. הוא לא מנסה שוב מעצמו.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.auth" xml:space="preserve"><value>מודל התמונות דחה את המפתח או את שם המודל.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.ratelimit" xml:space="preserve"><value>מודל התמונות עמוס או שנגמר האשראי.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.allowance" xml:space="preserve"><value>מכסת התמונות היומית במפתח של השרת נוצלה.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.cancelled" xml:space="preserve"><value>נעצר לפני הציור.</value></data>
+  <data name="Campaign.Book.Art.Draw.Reason.save" xml:space="preserve"><value>לא ניתן היה לשמור את התמונה.</value></data>
   <data name="Campaign.Book.ThemeNote" xml:space="preserve"><value>ערכת עיצוב: {0}. התצוגה המקדימה היא הדף שממנו מודפס ה-PDF.</value></data>
   <data name="Campaign.Book.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
   <data name="Campaign.Book.HidePreview" xml:space="preserve"><value>הסתרת התצוגה המקדימה</value></data>
@@ -741,6 +862,154 @@
   <data name="Campaign.Book.Download" xml:space="preserve"><value>הורדת PDF</value></data>
   <data name="Campaign.Book.Printing" xml:space="preserve"><value>בהדפסה…</value></data>
   <data name="Campaign.Book.Done" xml:space="preserve"><value>הספר הורד.</value></data>
+  <data name="Campaign.Book.Draft.PanelTitle" xml:space="preserve"><value>עריכת הספר</value></data>
+  <data name="Campaign.Book.Draft.PanelHint" xml:space="preserve"><value>עותק לעריכה של המהדורה הזו: Markdown שאפשר לשנות בחופשיות, ליד תצוגה של העמודים כפי שיודפסו. כל פרק יודיע אם המערכה השתנתה מאז שערכתם אותו.</value></data>
+  <data name="Campaign.Book.Draft.Open" xml:space="preserve"><value>פתיחת העורך: {0}</value></data>
+  <data name="Campaign.Book.Draft.Title" xml:space="preserve"><value>עורך הספר: {0}</value></data>
+  <data name="Campaign.Book.Draft.Theme" xml:space="preserve"><value>ערכת עיצוב</value></data>
+  <data name="Campaign.Book.Draft.Theme.plain" xml:space="preserve"><value>פשוטה</value></data>
+  <data name="Campaign.Book.Draft.Theme.ashen-vellum" xml:space="preserve"><value>קלף אפור</value></data>
+  <data name="Campaign.Book.Draft.Theme.homebrewery" xml:space="preserve"><value>Homebrewery (פריסה בלבד)</value></data>
+  <data name="Campaign.Book.Draft.Theme.NotThisLanguage" xml:space="preserve"><value>(לא בשפה הזאת)</value></data>
+  <data name="Campaign.Book.Art.Draw.Guide" xml:space="preserve"><value>לכל תמונה משמש סגנון התמונות שלכם מהגדרות הבינה המלאכותית, במקום האפשרויות שלמטה:</value></data>
+  <data name="Campaign.Book.Credit" xml:space="preserve"><value>העמודים נבנו בעזרת {0} המדהים</value></data>
+  <data name="Campaign.Book.Theme.Empty" xml:space="preserve"><value>קודם הדביקו את גיליון הסגנון של ערכת העיצוב.</value></data>
+  <data name="Campaign.Book.Theme.Title" xml:space="preserve"><value>הוספת ערכת עיצוב</value></data>
+  <data name="Campaign.Book.Theme.Open" xml:space="preserve"><value>הוספת ערכת עיצוב…</value></data>
+  <data name="Campaign.Book.Theme.Steps" xml:space="preserve"><value>שלבים</value></data>
+  <data name="Campaign.Book.Theme.Step1" xml:space="preserve"><value>גיליון סגנון</value></data>
+  <data name="Campaign.Book.Theme.Step2" xml:space="preserve"><value>שפות</value></data>
+  <data name="Campaign.Book.Theme.Step3" xml:space="preserve"><value>תצוגה מקדימה</value></data>
+  <data name="Campaign.Book.Theme.Yours" xml:space="preserve"><value>ערכות העיצוב של המערכה</value></data>
+  <data name="Campaign.Book.Theme.Unfinished" xml:space="preserve"><value>לא הושלמה</value></data>
+  <data name="Campaign.Book.Theme.Edit" xml:space="preserve"><value>עריכה</value></data>
+  <data name="Campaign.Book.Theme.Delete" xml:space="preserve"><value>מחיקה</value></data>
+  <data name="Campaign.Book.Theme.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Campaign.Book.Theme.Css" xml:space="preserve"><value>גיליון סגנון</value></data>
+  <data name="Campaign.Book.Theme.CssHint" xml:space="preserve"><value>הדביקו ערכת עיצוב של Homebrewery או את לשונית Style של מסמך, כמו שהיא. גופנים ותמונות שהיא טוענת מהרשת יורדו פעם אחת על ידי השרת וישמרו עם ערכת העיצוב.</value></data>
+  <data name="Campaign.Book.Theme.OnLayer" xml:space="preserve"><value>מעל הפריסה של Homebrewery 5e (כמו ערכות עיצוב ל-PHB)</value></data>
+  <data name="Campaign.Book.Theme.Next" xml:space="preserve"><value>הורדה ובדיקה</value></data>
+  <data name="Campaign.Book.Theme.Fetching" xml:space="preserve"><value>מוריד…</value></data>
+  <data name="Campaign.Book.Theme.NotFetched" xml:space="preserve"><value>{0, plural, one {כתובת אחת לא הורדה:} other {# כתובות לא הורדו:}}</value></data>
+  <data name="Campaign.Book.Theme.Unbrought" xml:space="preserve"><value>היא מציינת גופנים שאינה מביאה איתה, והם יודפסו במה שיש בשרת: {0}</value></data>
+  <data name="Campaign.Book.Theme.NoFaces" xml:space="preserve"><value>לא נמצא בה גופן עם אותיות לטיניות. הטקסט שלה יודפס בגופן מערכת.</value></data>
+  <data name="Campaign.Book.Theme.LanguagesHint" xml:space="preserve"><value>באילו שפות ערכת העיצוב מדפיסה. כשבגופנים שלה אין אותיות של שפה, גופן מובנה מאותו סוג יחליף אותן.</value></data>
+  <data name="Campaign.Book.Theme.Language.en" xml:space="preserve"><value>אנגלית</value></data>
+  <data name="Campaign.Book.Theme.Language.ru" xml:space="preserve"><value>רוסית</value></data>
+  <data name="Campaign.Book.Theme.Language.he" xml:space="preserve"><value>עברית</value></data>
+  <data name="Campaign.Book.Theme.Covered" xml:space="preserve"><value>האותיות האלה נמצאות בגופנים שלה.</value></data>
+  <data name="Campaign.Book.Theme.Lacking" xml:space="preserve"><value>בגופנים האלה אין את האותיות; במקומם:</value></data>
+  <data name="Campaign.Book.Theme.NoStandIn" xml:space="preserve"><value>(ללא: גופן מערכת)</value></data>
+  <data name="Campaign.Book.Theme.Kind.Serif" xml:space="preserve"><value>עם סריפים</value></data>
+  <data name="Campaign.Book.Theme.Kind.Sans" xml:space="preserve"><value>בלי סריפים</value></data>
+  <data name="Campaign.Book.Theme.Kind.Display" xml:space="preserve"><value>לכותרות</value></data>
+  <data name="Campaign.Book.Theme.Kind.Mono" xml:space="preserve"><value>מכונת כתיבה</value></data>
+  <data name="Campaign.Book.Theme.Back" xml:space="preserve"><value>חזרה</value></data>
+  <data name="Campaign.Book.Theme.ToPreview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
+  <data name="Campaign.Book.Theme.PreviewIn" xml:space="preserve"><value>עמודי דוגמה ב:</value></data>
+  <data name="Campaign.Book.Theme.PreviewTitle" xml:space="preserve"><value>עמודי דוגמה בערכת העיצוב הזאת</value></data>
+  <data name="Campaign.Book.Theme.Letters" xml:space="preserve"><value>אף גופן של ערכת העיצוב לא מצייר את התווים האלה: {0}</value></data>
+  <data name="Campaign.Book.Theme.Save" xml:space="preserve"><value>שמירה ובחירה</value></data>
+  <data name="Campaign.Book.Theme.TooLarge" xml:space="preserve"><value>גיליון הסגנון ארוך מדי, או שלמערכה כבר יש את המספר המרבי של ערכות עיצוב (20).</value></data>
+  <data name="Campaign.Book.Theme.Conflict" xml:space="preserve"><value>ערכת העיצוב שונתה בלשונית אחרת. סגרו את האשף ופתחו אותו שוב.</value></data>
+  <data name="Campaign.Book.Theme.Group" xml:space="preserve"><value>ערכות העיצוב של המערכה</value></data>
+  <data name="Campaign.Book.Draft.Letters.Found" xml:space="preserve"><value>התווים האלה לא נמצאים באף גופן של ערכת העיצוב. הם יודפסו בגופן כלשהו שיש בשרת, או כריבועים ריקים:</value></data>
+  <data name="Campaign.Book.Draft.Letters.Hint" xml:space="preserve"><value>בחרו ערכת עיצוב אחרת, או החליפו את התווים (למשל אימוג׳י או אות מאלפבית אחר).</value></data>
+  <data name="Campaign.Book.Draft.Letters.More" xml:space="preserve"><value>{0, plural, one {ועוד אחד} other {ועוד #}}</value></data>
+  <data name="Campaign.Book.Draft.Pictures.LeftOut" xml:space="preserve"><value>{0, plural, one {תמונה אחת לא נכנסה לספר:} other {# תמונות לא נכנסו לספר:}}</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Limit" xml:space="preserve"><value>הספר מלא (עד 120 תמונות ו-64MB בסך הכול, לפי גודל ההדפסה)</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Unreadable" xml:space="preserve"><value>לא ניתן היה לקרוא את הקובץ</value></data>
+  <data name="Campaign.Book.Draft.Pictures.Hint" xml:space="preserve"><value>התצוגה המקדימה וה-PDF משמיטים את אותן התמונות. השתמשו בתמונות קטנות יותר, או הוציאו חלק מהספר.</value></data>
+  <data name="Campaign.Book.Draft.OnlyFor" xml:space="preserve"><value>רק עבור {0}</value></data>
+  <data name="Campaign.Book.Draft.ForPlayer" xml:space="preserve"><value>PDF לשחקן</value></data>
+  <data name="Campaign.Book.Draft.ForPlayerHint" xml:space="preserve"><value>עותק אישי של ספר החבורה לשחקן הזה: מה שנאמר רק לדמויות שלו נוסף בהערות. דבר אינו נשמר.</value></data>
+  <data name="Campaign.Book.Draft.Edge" xml:space="preserve"><value>שולי דף קרועים</value></data>
+  <data name="Campaign.Book.Draft.EdgeHint" xml:space="preserve"><value>שולי כל דף קרועים, וסיבי הנייר נראים. הטקסט והכותרת התחתונה אינם נפגעים.</value></data>
+  <data name="Campaign.Book.Draft.Assist" xml:space="preserve"><value>הצעות ועזרה</value></data>
+  <data name="Campaign.Book.Draft.AssistHint" xml:space="preserve"><value>בזמן ההקלדה: בלוקים אחרי {{{{, מסגרות לתמונות, ‏\page ו-\column, ותמונות המהדורה הזו אחרי art:. רחפו מעל בלוק, תמונה או סימן של רשומה כדי לראות מה הוא.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.note" xml:space="preserve"><value>הערה או מסגרת צד, עם כותרת משלה.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.descriptive" xml:space="preserve"><value>טקסט להקראה: מה שהשחקנים שומעים.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.secret" xml:space="preserve"><value>סוד של המנחה: מודפס רק במהדורת המנחה, במסגרת.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.monster" xml:space="preserve"><value>בלוק נתונים. הוסיפו ,frame למסגרת.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.portrait" xml:space="preserve"><value>דיוקן לצד הטקסט. בתוכו תמונה: ![כיתוב](art:…).</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.place" xml:space="preserve"><value>תמונה ברוחב הטור.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.spot" xml:space="preserve"><value>תמונה קטנה שסוגרת רשומה.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.wide" xml:space="preserve"><value>לרוחב שני הטורים של הדף.</value></data>
+  <data name="Campaign.Book.Draft.Help.Block.quote" xml:space="preserve"><value>ציטוט, עם {{{{attribution …}}}} למי שאמר אותו.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.torn" xml:space="preserve"><value>התמונה נראית קרועה מתדפיס.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.oval" xml:space="preserve"><value>התמונה באליפסה.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.round" xml:space="preserve"><value>התמונה בעיגול.</value></data>
+  <data name="Campaign.Book.Draft.Help.Frame.frame" xml:space="preserve"><value>מסגרת סביב בלוק הנתונים.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.page" xml:space="preserve"><value>מתחיל דף חדש.</value></data>
+  <data name="Campaign.Book.Draft.Help.Break.column" xml:space="preserve"><value>מתחיל את הטור הבא.</value></data>
+  <data name="Campaign.Book.Draft.Help.Slot" xml:space="preserve"><value>תמונה: {0}</value></data>
+  <data name="Campaign.Book.Draft.Help.Entry" xml:space="preserve"><value>כאן מתחילה הרשומה {0}. התוכנה שומרת על השורה הזו: השאירו אותה כפי שהיא.</value></data>
+  <data name="Campaign.Book.Draft.Help.GmOnly" xml:space="preserve"><value>סוד של המנחה: מהדורת החבורה לעולם לא מדפיסה אותו, ואין לו מקום כאן.</value></data>
+  <data name="Campaign.Book.Draft.Markdown" xml:space="preserve"><value>הורדת Markdown (.md)</value></data>
+  <data name="Campaign.Book.Draft.MarkdownHint" xml:space="preserve"><value>כל הפרקים בקובץ Markdown אחד, ל-Homebrewery או לעורך טקסט. התמונות וגיליון הסגנונות אינם בו.</value></data>
+  <data name="Campaign.Book.Draft.MarkdownGm" xml:space="preserve"><value>זו מהדורת המנחה: יש בה כל הסודות. שמרו את הקובץ הרחק מהשחקנים.</value></data>
+  <data name="Campaign.Book.Draft.MarkdownGmYes" xml:space="preserve"><value>להוריד</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery" xml:space="preserve"><value>תאימות ל-Homebrewery</value></data>
+  <data name="Campaign.Book.Draft.Homebrewery.Hint" xml:space="preserve"><value>פריסת העמודים כמו ב-Homebrewery, כדי ש-CSS שנכתב ל-Homebrewery יעבוד כאן. התמונות והצבעים של Homebrewery אינם בשימוש.</value></data>
+  <data name="Campaign.Book.Draft.Download" xml:space="preserve"><value>הורדת PDF</value></data>
+  <data name="Campaign.Book.Draft.StartOver" xml:space="preserve"><value>להתחיל מחדש</value></data>
+  <data name="Campaign.Book.Draft.StartOverAsk" xml:space="preserve"><value>למחוק את כל העריכות בטיוטה הזו וליצור אותה מחדש מהמערכה?</value></data>
+  <data name="Campaign.Book.Draft.StartOverYes" xml:space="preserve"><value>למחוק את העריכות שלי</value></data>
+  <data name="Campaign.Book.Draft.Chapters" xml:space="preserve"><value>פרקים</value></data>
+  <data name="Campaign.Book.Draft.Front" xml:space="preserve"><value>כריכה ותוכן העניינים</value></data>
+  <data name="Campaign.Book.Draft.Stylesheet" xml:space="preserve"><value>גיליון סגנונות</value></data>
+  <data name="Campaign.Book.Draft.StylesheetHint" xml:space="preserve"><value>CSS משלכם, שחל אחרי ערכת העיצוב. גופנים, תמונות וגיליונות סגנון מיובאים בכתובות https השרת מוריד פעם אחת ושומר עם הספר; הדף עצמו לא טוען דבר.</value></data>
+  <data name="Campaign.Book.Draft.Web.Fetching" xml:space="preserve"><value>מורידים את הגופנים, התמונות וגיליונות הסגנון שה-CSS הזה מציין…</value></data>
+  <data name="Campaign.Book.Draft.Web.Kept" xml:space="preserve"><value>{0, plural, one{עותק אחד} two{שני עותקים} other{# עותקים}} של כתובות אינטרנט נשמרים עם הספר ({1} MB).</value></data>
+  <data name="Campaign.Book.Draft.Web.Failed" xml:space="preserve"><value>{0, plural, one{כתובת אחת לא הורדה} two{שתי כתובות לא הורדו} other{# כתובות לא הורדו}}, והספר יסתדר בלעדיהן:</value></data>
+  <data name="Campaign.Book.Draft.Web.NotPublic" xml:space="preserve"><value>זו לא כתובת באינטרנט הפתוח</value></data>
+  <data name="Campaign.Book.Draft.Web.Unreachable" xml:space="preserve"><value>אי אפשר להגיע לאתר</value></data>
+  <data name="Campaign.Book.Draft.Web.TimedOut" xml:space="preserve"><value>האתר ענה לאט מדי</value></data>
+  <data name="Campaign.Book.Draft.Web.Refused" xml:space="preserve"><value>האתר ענה בשגיאה {0}</value></data>
+  <data name="Campaign.Book.Draft.Web.TooLarge" xml:space="preserve"><value>גדול מכדי לשמור</value></data>
+  <data name="Campaign.Book.Draft.Web.NotWhatWasNamed" xml:space="preserve"><value>מה שהגיע אינו הגופן, התמונה או גיליון הסגנון שה-CSS מבקש</value></data>
+  <data name="Campaign.Book.Draft.Web.TooManyRedirects" xml:space="preserve"><value>יותר מדי הפניות</value></data>
+  <data name="Campaign.Book.Draft.Web.Full" xml:space="preserve"><value>הספר כבר שומר כמה שהוא יכול מהאינטרנט</value></data>
+  <data name="Campaign.Book.Draft.Badge.Stale" xml:space="preserve"><value>השתנה</value></data>
+  <data name="Campaign.Book.Draft.Badge.Edited" xml:space="preserve"><value>נערך</value></data>
+  <data name="Campaign.Book.Draft.Stale" xml:space="preserve"><value>המערכה השתנתה מאז שערכתם את הפרק הזה.</value></data>
+  <data name="Campaign.Book.Draft.StaleEntries" xml:space="preserve"><value>השתנה: {0}.</value></data>
+  <data name="Campaign.Book.Draft.StaleHint" xml:space="preserve"><value>"לעדכן" מכניס את השינויים של המערכה ושומר על העריכות שלכם, ואתם בודקים כל שינוי. "ליצור מחדש" מחליף את הטקסט שלכם בטקסט של המערכה. אפשר לבטל את שניהם. "להשאיר את שלי" מסתיר את ההודעה עד שהמערכה תשתנה שוב.</value></data>
+  <data name="Campaign.Book.Draft.Regenerate" xml:space="preserve"><value>ליצור מחדש</value></data>
+  <data name="Campaign.Book.Draft.Keep" xml:space="preserve"><value>להשאיר את שלי</value></data>
+  <data name="Campaign.Book.Draft.Merge.Button" xml:space="preserve"><value>לעדכן</value></data>
+  <data name="Campaign.Book.Draft.Merge.Confirm" xml:space="preserve"><value>לעדכן את הפרק הזה לפי המערכה?</value></data>
+  <data name="Campaign.Book.Draft.Merge.Summary" xml:space="preserve"><value>מהמערכה: {0}. שלכם נשמר: {1}. חדש: {2}. מוצע להסרה: {3}. מוצע להחזרה: {4}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Conflicts" xml:space="preserve"><value>שונה גם על ידיכם וגם במערכה: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Send" xml:space="preserve"><value>{0} מהם נשלחים אל {1} למיזוג; שום דבר אחר לא נשלח.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NoModel" xml:space="preserve"><value>לא הוגדר מודל בינה מלאכותית, ולכן מוצג עבורם הטקסט של המערכה. דחו אותו כדי להשאיר את שלכם.</value></data>
+  <data name="Campaign.Book.Draft.Merge.NotSendable" xml:space="preserve"><value>את {0} מהם אי אפשר לשלוח לבינה המלאכותית (השתנו בהם גם סודות או תמונות, או שהם ארוכים מדי), ולכן מוצג עבורם הטקסט של המערכה.</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithAi" xml:space="preserve"><value>למזג עם בינה מלאכותית</value></data>
+  <data name="Campaign.Book.Draft.Merge.WithoutAi" xml:space="preserve"><value>בלי בינה מלאכותית</value></data>
+  <data name="Campaign.Book.Draft.Merge.ShowChanges" xml:space="preserve"><value>להציג את השינויים</value></data>
+  <data name="Campaign.Book.Draft.Merge.Review" xml:space="preserve"><value>בדקו את השינויים מהמערכה</value></data>
+  <data name="Campaign.Book.Draft.Merge.Ready" xml:space="preserve"><value>מוזג על ידי הבינה המלאכותית: {0}. מוצג כטקסט המערכה: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Saved" xml:space="preserve"><value>הפרק עודכן.</value></data>
+  <data name="Campaign.Book.Draft.Merge.FitAgain" xml:space="preserve"><value>הריצו שוב "התאמת עמודים": הטקסט זז.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Same" xml:space="preserve"><value>מעודכן: השינויים של המערכה כבר היו בטקסט שלכם.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Moved" xml:space="preserve"><value>המערכה השתנתה שוב בזמן הבדיקה, ולכן שום דבר לא נשמר. עדכנו שוב.</value></data>
+  <data name="Campaign.Book.Draft.Merge.UpToDate" xml:space="preserve"><value>הפרק הזה כבר מעודכן.</value></data>
+  <data name="Campaign.Book.Draft.Merge.Duplicate" xml:space="preserve"><value>רשומה מופיעה בפרק הזה פעמיים, ולכן אי אפשר למזג. הסירו את העותק, או השתמשו ב"ליצור מחדש" או "להשאיר את שלי".</value></data>
+  <data name="Campaign.Book.Draft.Undo" xml:space="preserve"><value>ביטול העדכון האחרון</value></data>
+  <data name="Campaign.Book.Draft.Gone" xml:space="preserve"><value>למערכה כבר אין את הפרק הזה. מחקו את הטקסט שלו אם אין להדפיס אותו.</value></data>
+  <data name="Campaign.Book.Draft.Blocks" xml:space="preserve"><value>בלוקים לשימוש</value></data>
+  <data name="Campaign.Book.Draft.BlocksHint" xml:space="preserve"><value>{{{{note}}}}, {{{{descriptive}}}} (להקראה), {{{{secret}}}} (מהדורת המנחה), {{{{monster}}}}, {{{{portrait}}}}, {{{{place}}}} ו-{{{{wide}}}}; כל אחד נסגר בשורה }}}}. שורה \page פותחת עמוד ו-\column טור. תמונה: ![כיתוב](art:…), רק של המהדורה הזו; לבלוק שלה אפשר לתת מסגרת: {{{{portrait,torn}}}}, ‏oval או round.</value></data>
+  <data name="Campaign.Book.Draft.Saving" xml:space="preserve"><value>שומר…</value></data>
+  <data name="Campaign.Book.Draft.Saved" xml:space="preserve"><value>נשמר</value></data>
+  <data name="Campaign.Book.Draft.Unsaved" xml:space="preserve"><value>עוד לא נשמר</value></data>
+  <data name="Campaign.Book.Draft.Conflict" xml:space="preserve"><value>הטיוטה שונתה בלשונית אחרת, ולכן לא נשמר מכאן יותר דבר. סגרו ופתחו שוב את העורך.</value></data>
+  <data name="Campaign.Book.Draft.CloseUnsaved" xml:space="preserve"><value>חלק מהשינויים האחרונים לא נשמרו, כי הטיוטה שונתה בלשונית אחרת. העתיקו אותם אם הם נחוצים, או סגרו שוב כדי לסגור בלעדיהם.</value></data>
+  <data name="Campaign.Book.Draft.SaveFailed" xml:space="preserve"><value>השמירה נכשלה. הטקסט שלכם עדיין כאן.</value></data>
+  <data name="Campaign.Book.Draft.TooLarge" xml:space="preserve"><value>ארוך מכדי לשמור.</value></data>
+  <data name="Campaign.Book.Draft.NotAllowed" xml:space="preserve"><value>רק המנחה של המערכה יכול לערוך את הספר.</value></data>
+  <data name="Campaign.Book.Draft.EditorFailed" xml:space="preserve"><value>העורך לא נפתח. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Campaign.Book.Draft.ActionFailed" xml:space="preserve"><value>הפעולה לא הצליחה. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Campaign.Book.Draft.Overflow" xml:space="preserve"><value>גבוה מדי אפילו לעמוד משלו, ולכן יודפס חתוך: עמוד {0}.</value></data>
   <data name="Campaign.Book.Failed.Language" xml:space="preserve"><value>ערכת העיצוב הזאת עדיין לא יודעת להדפיס בשפה הזאת.</value></data>
   <data name="Campaign.Book.Failed.Busy" xml:space="preserve"><value>ספר אחר מודפס כרגע. נסו שוב בעוד רגע.</value></data>
   <data name="Campaign.Book.Failed.NoBrowser" xml:space="preserve"><value>אין במחשב הזה דפדפן להדפסה.</value></data>
@@ -791,7 +1060,7 @@
   <data name="Campaign.Book.Ai.Discard" xml:space="preserve"><value>מחיקת הבנייה השמורה</value></data>
   <data name="Campaign.Book.Ai.Use" xml:space="preserve"><value>להשתמש בטקסט המלוטש בתצוגה המקדימה וב-PDF (רק בפרקים מעודכנים)</value></data>
   <data name="Campaign.Book.Ai.Progress" xml:space="preserve"><value>{0} מתוך {1} פרקים</value></data>
-  <data name="Campaign.Book.Ai.Meter" xml:space="preserve"><value>{0} בקשות, {1} אסימוני קלט, {2} פלט</value></data>
+  <data name="Campaign.Book.Ai.Meter" xml:space="preserve"><value>{0, plural, one{בקשה אחת} other{# בקשות}}, {1} אסימוני קלט, {2} פלט</value></data>
   <data name="Campaign.Book.Ai.Estimated" xml:space="preserve"><value>הערכה: הספק לא דיווח על צריכה בחלק מהבקשות.</value></data>
   <data name="Campaign.Book.Ai.Money" xml:space="preserve"><value>{0} עד כה</value></data>
   <data name="Campaign.Book.Ai.Totals" xml:space="preserve"><value>כל הריצות של הבנייה: {0} בקשות, {1} אסימוני קלט, {2} פלט.</value></data>
@@ -827,4 +1096,158 @@
   <data name="Campaign.SystemChanged.Compiled" xml:space="preserve"><value>קוד מהודר, שרץ עם ההרשאות של השרת</value></data>
   <data name="Campaign.SystemChanged.Accept" xml:space="preserve"><value>הבנתי</value></data>
   <data name="Campaign.SystemChanged.Accepted" xml:space="preserve"><value>הקמפיין רושם עכשיו את המערכת כפי שהיא.</value></data>
+  <data name="Campaign.Book.Draft.Web.NotListed" xml:space="preserve"><value>{0} לא ברשימת האתרים של השרת; מנהל השרת יכול להוסיף אותו</value></data>
+  <data name="Campaign.Settings.Role.CoGm" xml:space="preserve"><value>שליט מבוך שותף</value></data>
+  <data name="Campaign.Settings.CoGmHint" xml:space="preserve"><value>רק הבעלים יכולים לקבוע מי שליט מבוך שותף.</value></data>
+  <data name="Campaign.Settings.PassOn" xml:space="preserve"><value>הפיכה לבעלים</value></data>
+  <data name="Campaign.Settings.PassOnLabel" xml:space="preserve"><value>להפוך את {0} לבעלים</value></data>
+  <data name="Campaign.Settings.PassOnQ" xml:space="preserve"><value>להפוך את {0} לבעלים של המערכה?</value></data>
+  <data name="Campaign.Settings.PassOnBody" xml:space="preserve"><value>אתם תישארו שליטי מבוך שותפים. מעתה רק ל{0} תהיה אפשרות למחוק את המערכה, להעביר אותה הלאה או לקבוע מי שליט מבוך שותף.</value></data>
+  <data name="Campaign.Settings.PassedOn" xml:space="preserve"><value>הבעלים של המערכה כעת: {0}.</value></data>
+  <data name="Campaign.OwnerOnly" xml:space="preserve"><value>רק הבעלים של המערכה יכולים לקבוע מי שליט מבוך שותף ומי הבעלים.</value></data>
+  <data name="Campaign.Settings.StepDown" xml:space="preserve"><value>חזרה לתפקיד שחקן</value></data>
+  <data name="Campaign.Settings.StepDownQ" xml:space="preserve"><value>לחזור לתפקיד שחקן?</value></data>
+  <data name="Campaign.Settings.StepDownBody" xml:space="preserve"><value>תפסיקו מיד לראות את הערות שליט המבוך, דפים נסתרים ודמויות נסתרות. רק הבעלים יכולים להחזיר אתכם לתפקיד שליט מבוך שותף.</value></data>
+  <data name="Campaign.Settings.Leave.Title" xml:space="preserve"><value>עזיבת המערכה</value></data>
+  <data name="Campaign.Settings.Leave.Button" xml:space="preserve"><value>עזיבת המערכה</value></data>
+  <data name="Campaign.Settings.Leave.Q" xml:space="preserve"><value>לעזוב את {0}?</value></data>
+  <data name="Campaign.Settings.Leave.Hint" xml:space="preserve"><value>הגישה שלכם למערכה תבוטל. הדמויות שלכם יישארו בצוות. כדי לחזור תצטרכו הזמנה חדשה.</value></data>
+  <data name="Campaign.Settings.Leave.OwnerHint" xml:space="preserve"><value>כדי לעזוב, הפכו קודם שליט מבוך שותף לבעלים.</value></data>
+  <data name="Campaign.Vault.Bring" xml:space="preserve"><value>להביא דמות</value></data>
+  <data name="Campaign.Vault.Character" xml:space="preserve"><value>דמות</value></data>
+  <data name="Campaign.Vault.NoneForSystem" xml:space="preserve"><value>אף אחת מהדמויות שלך לא נוצרה עבור {0}.</value></data>
+  <data name="Campaign.Vault.OpenVault" xml:space="preserve"><value>לפתוח את הדמויות שלי</value></data>
+  <data name="Campaign.Vault.NothingMissing" xml:space="preserve"><value>במערכה יש כל מה שהדמות משתמשת בו.</value></data>
+  <data name="Campaign.Vault.Missing" xml:space="preserve"><value>{0, plural, one{דבר אחד שאין במערכה} two{# דברים שאין במערכה} other{# דברים שאין במערכה}}</value></data>
+  <data name="Campaign.Vault.MissingHint" xml:space="preserve"><value>שליט המבוך יתבקש להוסיף את מה שתשאירו. סמנו את מה שעדיף להשאיר מחוץ לעותק.</value></data>
+  <data name="Campaign.Vault.LeaveOut" xml:space="preserve"><value>להשאיר בחוץ את {0}</value></data>
+  <data name="Campaign.Vault.BringHint" xml:space="preserve"><value>עותק יצטרף למערכה ברגע ששליט המבוך יאשר אותו. הדמות שלך נשארת בדמויות שלך.</value></data>
+  <data name="Campaign.Vault.Send" xml:space="preserve"><value>לבקש משליט המבוך</value></data>
+  <data name="Campaign.Vault.Sent" xml:space="preserve"><value>נשלח: {0} תצטרף כששליט המבוך יאשר.</value></data>
+  <data name="Campaign.Vault.NotSent" xml:space="preserve"><value>אי אפשר להביא את הדמות הזאת למערכה הזאת. טענו את הדף מחדש ונסו שוב.</value></data>
+  <data name="Campaign.Vault.Waiting" xml:space="preserve"><value>{0, plural, one{ממתינות לשליט המבוך (#)} two{ממתינות לשליט המבוך (#)} other{ממתינות לשליט המבוך (#)}}</value></data>
+  <data name="Campaign.Vault.WaitingHint" xml:space="preserve"><value>שליט המבוך מאשר דמות לפני שהיא מצטרפת לחבורה.</value></data>
+  <data name="Campaign.Vault.PlayedBy" xml:space="preserve"><value>בגילום {0}</value></data>
+  <data name="Campaign.Vault.New" xml:space="preserve"><value>חדשה במערכה</value></data>
+  <data name="Campaign.Vault.Update" xml:space="preserve"><value>גרסה חדשה של {0}</value></data>
+  <data name="Campaign.Vault.AskedFor" xml:space="preserve"><value>מבקש להוסיף: {0}</value></data>
+  <data name="Campaign.Vault.LeftOut" xml:space="preserve"><value>הושאר בחוץ: {0}</value></data>
+  <data name="Campaign.Vault.Accept" xml:space="preserve"><value>לאשר</value></data>
+  <data name="Campaign.Vault.AcceptLabel" xml:space="preserve"><value>לאשר את {0}</value></data>
+  <data name="Campaign.Vault.Accepted" xml:space="preserve"><value>{0} במערכה.</value></data>
+  <data name="Campaign.Vault.NotAccepted" xml:space="preserve"><value>הבקשה כבר לא קיימת או שהשחקן עזב. לא נוסף דבר.</value></data>
+  <data name="Campaign.Vault.Decline" xml:space="preserve"><value>לדחות</value></data>
+  <data name="Campaign.Vault.DeclineLabel" xml:space="preserve"><value>לדחות את {0}</value></data>
+  <data name="Campaign.Vault.Declined" xml:space="preserve"><value>{0} נדחתה.</value></data>
+  <data name="Campaign.Vault.Withdraw" xml:space="preserve"><value>לבטל</value></data>
+  <data name="Campaign.Vault.WithdrawLabel" xml:space="preserve"><value>לבטל את {0}</value></data>
+  <data name="Campaign.Vault.Withdrawn" xml:space="preserve"><value>הבקשה עבור {0} בוטלה.</value></data>
+  <data name="Campaign.Book.Ai.Reason.storage" xml:space="preserve"><value>לבעל הקמפיין לא נשאר אחסון</value></data>
+  <data name="Campaign.Book.Art.StorageFull" xml:space="preserve"><value>לבעל הקמפיין לא נשאר אחסון לתמונה הזו. הסירו חלק מהתמונות או הקבצים, או בקשו ממנהל השרת עוד מקום.</value></data>
+  <data name="Campaign.Book.Draft.Fit" xml:space="preserve"><value>התאמת עמודים</value></data>
+  <data name="Campaign.Book.Draft.FitHint" xml:space="preserve"><value>מוסיף מעבר עמוד לטקסט בכל מקום שעמוד גולש, לפי הפריסה של ה-PDF המודפס. אחרי עריכה הפעילו שוב: הוא מזיז רק את המעברים שהוא כתב, לעולם לא את שלכם.</value></data>
+  <data name="Campaign.Book.Draft.Fitting" xml:space="preserve"><value>מתאימים עמודים…</value></data>
+  <data name="Campaign.Book.Draft.Fit.Done" xml:space="preserve"><value>מעברי עמוד בספר: {0}. פרקים ששונו: {1}.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Nothing" xml:space="preserve"><value>כל העמודים כבר מתאימים. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Fit.Unplaced" xml:space="preserve"><value>לא ניתן היה לכתוב מעבר לפני אלה, ולכן הם עוברים לעמוד חדש רק כשהספר מצויר:</value></data>
+  <data name="Campaign.Book.Draft.Fit.TooTall" xml:space="preserve"><value>גבוהים מדי אפילו לעמוד משלהם, ולכן יודפסו חתוכים. קצרו או פצלו אותם:</value></data>
+  <data name="Campaign.Book.Draft.Fit.Item" xml:space="preserve"><value>עמוד {0}, {1}: „{2}”</value></data>
+  <data name="Campaign.Book.Draft.Fit.ItemNoPage" xml:space="preserve"><value>{0}: „{1}”</value></data>
+  <data name="Campaign.Book.Draft.Fit.Failed" xml:space="preserve"><value>לא ניתן היה לפרוס את הספר לעמודים. נסו שוב בעוד רגע.</value></data>
+  <data name="Campaign.Book.Draft.RunOn" xml:space="preserve"><value>עמודים שנמשכים מעבר למקום שבו הטקסט שובר אותם: {0}. „התאמת עמודים” יכתוב את המעברים האלה לטקסט.</value></data>
+  <data name="Campaign.Book.Draft.PrintedOverflow" xml:space="preserve"><value>קובץ ה-PDF הורד, אבל העמודים האלה מודפסים חתוכים: {0}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Title" xml:space="preserve"><value>לשאול את ה-AI</value></data>
+  <data name="Campaign.Book.Draft.Ai.Hint" xml:space="preserve"><value>בחרו קטע, או כלום בשביל הפרק כולו. סודות, תמונות ושבירות עמוד לא נשלחים, ושום דבר לא משתנה עד שתאשרו.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape" xml:space="preserve"><value>כמו בספר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shape.Hint" xml:space="preserve"><value>לכתוב מחדש כפי שהספרים שיצאו למשחק הזה מציגים זאת</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter" xml:space="preserve"><value>קצר יותר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.shorter.Hint" xml:space="preserve"><value>לשמור כל עובדה, להוריד חזרות</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud" xml:space="preserve"><value>קטע להקראה</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.readaloud.Hint" xml:space="preserve"><value>להפוך לטקסט שמנחה המשחק מקריא לשחקנים</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy" xml:space="preserve"><value>לסדר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Preset.tidy.Hint" xml:space="preserve"><value>איות, דקדוק ועימוד בלבד</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskLabel" xml:space="preserve"><value>או כתבו מה לשנות</value></data>
+  <data name="Campaign.Book.Draft.Ai.AskPlaceholder" xml:space="preserve"><value>או כתבו מה לשנות, למשל: בקול של יומן ספינה</value></data>
+  <data name="Campaign.Book.Draft.Ai.Ask" xml:space="preserve"><value>לשאול</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoAsk" xml:space="preserve"><value>כתבו קודם מה לשנות.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Confirm" xml:space="preserve"><value>לשלוח את {0} אל {1}?</value></data>
+  <data name="Campaign.Book.Draft.Ai.Selection" xml:space="preserve"><value>הבחירה</value></data>
+  <data name="Campaign.Book.Draft.Ai.Chapter" xml:space="preserve"><value>הפרק כולו</value></data>
+  <data name="Campaign.Book.Draft.Ai.Widened" xml:space="preserve"><value>הבחירה הורחבה כדי לא לחתוך סוד, תמונה או שבירת עמוד.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Kept" xml:space="preserve"><value>נשמרים בצד ולא נשלחים: {0} (סודות, תמונות, שבירות עמוד או סימונים).</value></data>
+  <data name="Campaign.Book.Draft.Ai.Tokens" xml:space="preserve"><value>בערך {0} עד {1} טוקנים פנימה ולכל היותר {2} החוצה, בכל ניסיון. הערכה: הספירה של הספק תהיה שונה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Cost" xml:space="preserve"><value>בערך {0} עד {1} לפי המחירים שלכם; הסכום העליון אם יידרש ניסיון שני.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Allowance" xml:space="preserve"><value>על המפתח של השרת: נוצלו היום {0} מתוך {1} בקשות; זה שומר עד {2}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Send" xml:space="preserve"><value>לשלוח</value></data>
+  <data name="Campaign.Book.Draft.Ai.Asking" xml:space="preserve"><value>שואלים את ה-AI…</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stop" xml:space="preserve"><value>לעצור</value></data>
+  <data name="Campaign.Book.Draft.Ai.Stale" xml:space="preserve"><value>הפרק השתנה מאז שנקרא. נסו שוב.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Empty" xml:space="preserve"><value>אין כאן שום דבר שה-AI רשאי לשנות.</value></data>
+  <data name="Campaign.Book.Draft.Ai.TooLong" xml:space="preserve"><value>זה ארוך מדי לעריכה אחת. בחרו קטע קצר יותר.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Busy" xml:space="preserve"><value>ריצת AI אחרת שלכם כבר פועלת. נסו שוב כשתסתיים.</value></data>
+  <data name="Campaign.Book.Draft.Ai.NoModel" xml:space="preserve"><value>הגדירו קודם מודל AI בהגדרות ה-AI.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.checks" xml:space="preserve"><value>התשובה של ה-AI הפרה פעמיים את כללי הספר. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cutoff" xml:space="preserve"><value>התשובה של ה-AI נקטעה לפני סופה. שום דבר לא השתנה; נסו קטע קצר יותר.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.budget" xml:space="preserve"><value>העריכה הגיעה לתקרת ההוצאה. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.auth" xml:space="preserve"><value>ספק ה-AI דחה את המפתח או את המודל. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.ratelimit" xml:space="preserve"><value>ספק ה-AI מגביל בקשות. נסו מאוחר יותר.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.allowance" xml:space="preserve"><value>מכסת ה-AI של השרת להיום נוצלה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.cancelled" xml:space="preserve"><value>נעצר. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Failed.error" xml:space="preserve"><value>לא ניתן היה להגיע ל-AI. שום דבר לא השתנה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Spent" xml:space="preserve"><value>נוצלו כ-{0} טוקנים.</value></data>
+  <data name="Campaign.Book.Draft.Ai.SpentCost" xml:space="preserve"><value>נוצלו כ-{0} טוקנים, בערך {1}.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Same" xml:space="preserve"><value>ה-AI לא שינה דבר.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Review" xml:space="preserve"><value>בדקו את השינוי של ה-AI</value></data>
+  <data name="Campaign.Book.Draft.Ai.Left" xml:space="preserve"><value>נותרו {0} שינויים</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeepAccepted" xml:space="preserve"><value>לשמור את מה שאישרתי</value></data>
+  <data name="Campaign.Book.Draft.Ai.AcceptRest" xml:space="preserve"><value>לאשר את השאר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Discard" xml:space="preserve"><value>לבטל</value></data>
+  <data name="Campaign.Book.Draft.Ai.Accept" xml:space="preserve"><value>לאשר</value></data>
+  <data name="Campaign.Book.Draft.Ai.Reject" xml:space="preserve"><value>לדחות</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewLabel" xml:space="preserve"><value>השינוי של ה-AI, לבדיקה</value></data>
+  <data name="Campaign.Book.Draft.Ai.ReviewHint" xml:space="preserve"><value>אשרו או דחו כל שינוי, או את כולם יחד. Alt+למטה ו-Alt+למעלה עוברים בין שינויים; Ctrl+Enter מאשר את השינוי שליד הסמן ו-Ctrl+Backspace דוחה אותו. התצוגה המקדימה מראה את מה שאישרתם עד כה.</value></data>
+  <data name="Campaign.Book.Draft.Tools" xml:space="preserve"><value>כלי הספר</value></data>
+  <data name="Campaign.Book.Draft.More" xml:space="preserve"><value>פעולות נוספות</value></data>
+  <data name="Campaign.Book.Draft.Collapse" xml:space="preserve"><value>לכווץ</value></data>
+  <data name="Campaign.Book.Draft.Expand" xml:space="preserve"><value>להרחיב</value></data>
+  <data name="Campaign.Book.Draft.CollapseNamed" xml:space="preserve"><value>לכווץ: {0}</value></data>
+  <data name="Campaign.Book.Draft.ExpandNamed" xml:space="preserve"><value>להציג: {0}</value></data>
+  <data name="Campaign.Book.Draft.Preview" xml:space="preserve"><value>תצוגה מקדימה</value></data>
+  <data name="Campaign.Book.Draft.Panel" xml:space="preserve"><value>חלונית הכלים</value></data>
+  <data name="Campaign.Book.Draft.Problems" xml:space="preserve"><value>בעיות</value></data>
+  <data name="Campaign.Book.Draft.NoProblems" xml:space="preserve"><value>לא נמצאו בעיות. כאן מדווחים התאמת העמודים, ההורדה וכתובות הרשת של גיליון הסגנונות.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Found" xml:space="preserve"><value>{0, plural, one{בספר של השחקנים יש דבר אחד} two{בספר של השחקנים יש שני דברים} other{בספר של השחקנים יש # דברים}} שצריכים להיות רק במהדורת מנהל המשחק. בדקו כל אחד לפני שמוסרים את הספר:</value></data>
+  <data name="Campaign.Book.Draft.Leak.Secret" xml:space="preserve"><value>מילים מסוד</value></data>
+  <data name="Campaign.Book.Draft.Leak.SecretIn" xml:space="preserve"><value>מילים מסוד ב„{0}”</value></data>
+  <data name="Campaign.Book.Draft.Leak.HiddenName" xml:space="preserve"><value>שם של דמות נסתרת</value></data>
+  <data name="Campaign.Book.Draft.Leak.RealName" xml:space="preserve"><value>השם האמיתי של „{0}”</value></data>
+  <data name="Campaign.Book.Draft.Leak.GmOnly" xml:space="preserve"><value>משהו שיש רק במהדורת מנהל המשחק</value></data>
+  <data name="Campaign.Book.Draft.Leak.More" xml:space="preserve"><value>{0, plural, one{ועוד אחד} two{ועוד שניים} other{ועוד #}}</value></data>
+  <data name="Campaign.Book.Draft.Leak.Hint" xml:space="preserve"><value>זו רק אזהרה: אפשר להוריד את הספר גם כך.</value></data>
+  <data name="Campaign.Book.Draft.Leak.Anyway" xml:space="preserve"><value>להוריד בכל זאת</value></data>
+  <data name="Campaign.Book.Draft.BlocksTab" xml:space="preserve"><value>בלוקים</value></data>
+  <data name="Campaign.Book.Draft.Ai.PickChapter" xml:space="preserve"><value>בחרו פרק כדי לשאול עליו את ה-AI; גיליון הסגנונות לא נשלח.</value></data>
+  <data name="Campaign.Book.Tab.Print" xml:space="preserve"><value>הדפסה</value></data>
+  <data name="Campaign.Book.Tab.Art" xml:space="preserve"><value>תמונות</value></data>
+  <data name="Campaign.Book.Tab.Draft" xml:space="preserve"><value>עריכה</value></data>
+  <data name="Campaign.Book.Tab.Ai" xml:space="preserve"><value>ליטוש AI</value></data>
+  <data name="Campaign.Book.Draft.Ai.InPane" xml:space="preserve"><value>הבקשה ל-AI פתוחה מעל הפרק: שלחו או בטלו אותה, או סיימו שם את הבדיקה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.Parts" xml:space="preserve"><value>רשומה אחר רשומה: {0} בקשות, אחת לפתיחת הפרק ואחת לכל רשומה.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptParts" xml:space="preserve"><value>{0} חלקים מעריכת ה-AI האחרונה נשארו כפי שהיו:</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsHint" xml:space="preserve"><value>שאר הפרק הוצע לבדיקה. כדי לנסות שוב אחד מהם, סמנו אותו ובקשו שוב.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptPartsNote" xml:space="preserve"><value>חלק מהרשומות נשארו כפי שהיו: ראו 'בעיות'.</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.checks" xml:space="preserve"><value>התשובה הפרה את כללי הספר או שינתה את העובדות שלו</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.cutoff" xml:space="preserve"><value>התשובה נקטעה</value></data>
+  <data name="Campaign.Book.Draft.Ai.KeptReason.other" xml:space="preserve"><value>הבקשה נכשלה, או שההרצה נעצרה לפניה</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook" xml:space="preserve"><value>כל הספר 'כמו בספר'</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Hint" xml:space="preserve"><value>לשכתב כל פרק כמו בספרים שיצאו למשחק הזה, רשומה אחר רשומה. העלות מוצגת קודם, וכל פרק נבדק לפני שהבא נשלח.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Confirm" xml:space="preserve"><value>לשכתב {0} פרקים 'כמו בספר' עם {1}?</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Calls" xml:space="preserve"><value>{0} בקשות בסך הכול: אחת לפתיחת כל פרק ואחת לכל רשומה.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.TooLong" xml:space="preserve"><value>הושמטו, כי יש בהם רשומה ארוכה מדי לבקשה אחת: {0}. סמנו חלקים מהם כדי לשכתב.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Each" xml:space="preserve"><value>הפרקים נשלחים אחד אחד. אתם בודקים כל אחד לפני שהבא נשלח, ושום דבר לא נשמר עד שתשמרו.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Start" xml:space="preserve"><value>התחלה</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Progress" xml:space="preserve"><value>פרק {0} מתוך {1}</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stop" xml:space="preserve"><value>לעצור אחרי הפרק הזה</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Stopped" xml:space="preserve"><value>שכתוב כל הספר ייעצר אחרי הפרק הזה.</value></data>
+  <data name="Campaign.Book.Draft.ShapeBook.Done" xml:space="preserve"><value>כל הספר עבר.</value></data>
 </root>

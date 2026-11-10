@@ -161,6 +161,8 @@ The words and hints the AI features take from a system instead of assuming one g
 | `advancementChoices` | list of text (a number is text too) | Decisions a character makes on advancing ("subclass", "feats", "spells"), listed for the level-up advice. |
 | `advancementChanges` | list of text (a number is text too) | Numbers that change on advancing ("hit points", "proficiency bonus"), listed for the level-up advice. |
 | `primaryResourceBasis` | text (a number is text too) | What a starting value of the primary resource should depend on ("the level, class and constitution"). Null: the sheet as a whole. |
+| `bookShape` | text (a number is text too) | How this game's own published books read, for the campaign book's AI edits to take after (docs/BOOK_EXPORT.md 41.4): their chapters, their furniture (read-aloud boxes, sidebars, stat blocks) and their voice, finishing the sentence "The book should read like this game's own published books, which are …". Shape and voice only: no book's title, words or trademarks. Null: neutral words. |
+| `playerBookShape` | text (a number is text too) | The same for the books the players read (the party edition, docs/BOOK_EXPORT.md 42): a player's guide or a gazetteer, in the world's voice, with nothing addressed to the GM. Null: neutral words for a players' book, never BookShape. |
 
 ## SystemSetting
 

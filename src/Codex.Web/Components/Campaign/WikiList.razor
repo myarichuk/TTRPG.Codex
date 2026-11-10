@@ -97,7 +97,7 @@ else
                 {
                     <img class="place-thumb" src="@thumb" alt="" loading="lazy" />
                 }
-                <p class="mb-0 small">@WikiRender.Summary(wp.Body, Mentions, 150, IsDm)</p>
+                <p class="mb-0 small">@WikiRender.Summary(wp.Body, Pages, Mentions, 150, IsDm)</p>
                 <div class="card-foot">
                     <span class="small-muted"><LucideIcon IconName="link" Size="14" /> @L["Campaign.Wiki.LinkCount", wp.Links.Count] · <LocalTime Value="wp.UpdatedAt" Format="d MMM" /></span>
                     <div class="chips">

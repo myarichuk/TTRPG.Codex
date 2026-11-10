@@ -37,10 +37,19 @@ public sealed class AiProviderService(
     IHttpClientFactory httpClients,
     ILogger<AiProviderService> logger,
     IConfiguration configuration,
-    ServerAiUsage usage)
+    ServerAiUsage usage,
+    IServerSettingsStore? settings = null)
 {
-    // While the server is open to the internet only its admin may use the key in the server's own configuration.
-    private bool ServerKeyAllowedFor(UserDocument? user) => ExposurePolicy.MayUseServerAi(ExposurePolicy.IsExposed(configuration), user);
+    // Who may use the key in the server's own configuration is the admin's choice (ServerSettingsDocument.ServerAi); every
+    // path to that key (the chat client, the picture model, reservations, the AI buttons showing at all) asks this one rule.
+    private bool ServerKeyAllowedFor(UserDocument? user) =>
+        ExposurePolicy.MayUseServerAi(ExposurePolicy.IsExposed(configuration), user, settings?.Get().ServerAi);
+
+    /// <summary>Whether <paramref name="user"/> may use the server's key at all, whether or not one is configured.</summary>
+    public bool MayUseServerKey(UserDocument? user) => ServerKeyAllowedFor(user);
+
+    /// <summary>Who may use the server's key now, for saying so.</summary>
+    public ServerAiRule ServerKeyRule => ExposurePolicy.ServerAiFor(ExposurePolicy.IsExposed(configuration), settings?.Get().ServerAi);
 
     // A stranger's own provider must not aim at this computer or its network while the server is on the internet.
     // The server's admin owns this computer and may use whatever runs on it.
@@ -309,7 +318,63 @@ public sealed class AiProviderService(
         return ServerImageConfigured && ServerKeyAllowedFor(user) ? serverImageConfig : null;
     }
 
+    /// <summary>The user's own style guide for every picture they draw, or null for the house style (docs/BOOK_EXPORT.md 41.23).</summary>
+    public async Task<string?> ImageStyleForAsync(string userId) => Codex.Core.AI.ImageStyleGuide.Clean((await users.GetUserByIdAsync(userId))?.ImageStyle);
+
     public async Task<bool> IsImageConfiguredForAsync(string userId) => ImageConfigFor(await users.GetUserByIdAsync(userId)) != null;
+
+    /// <summary>The picture model this user's art is drawn with, as "name · model", or null when they have none.</summary>
+    public string? DescribeImage(UserDocument? user)
+    {
+        var config = ImageConfigFor(user);
+        if (config == null) return null;
+        if (ReferenceEquals(config, serverImageConfig)) return "Server default · " + serverImageConfig.ModelId;
+        return DefaultImageProvider(user) is { } provider ? $"{provider.Name} · {provider.ModelId}" : config.ModelId;
+    }
+
+    /// <summary>True when this user's pictures are drawn on the server's own image key (and so count against their daily picture allowance).</summary>
+    public bool UsesServerImageKey(UserDocument? user) => ReferenceEquals(ImageConfigFor(user), serverImageConfig);
+
+    /// <summary>The price per picture of the model this user draws with: their own image provider's, or the optional
+    /// <c>AIImage:PricePerImage</c> and <c>AIImage:PriceLabel</c> of the server's key. Null when none is set.</summary>
+    public AiImagePrice? ImagePriceFor(UserDocument? user)
+    {
+        var config = ImageConfigFor(user);
+        if (config == null) return null;
+        if (ReferenceEquals(config, serverImageConfig))
+        {
+            return AiPrice.CleanImage(configuration.GetValue<decimal?>("AIImage:PricePerImage")) is { } server
+                ? new AiImagePrice(server, AiPrice.CleanLabel(configuration["AIImage:PriceLabel"]))
+                : null;
+        }
+
+        return DefaultImageProvider(user) is { } provider && AiPrice.CleanImage(provider.PricePerImage) is { } own ? new AiImagePrice(own, provider.PriceLabel) : null;
+    }
+
+    /// <summary>Sets aside <paramref name="pictures"/> on the server's image key, all or nothing, or returns null when the user draws on
+    /// their own provider. Throws <c>Service.Ai.ServerAllowanceSpent</c> when they do not fit in today's allowance, and
+    /// <see cref="AiImageNotConfiguredException"/> when there is no image model. Pass it to <see cref="GenerateImageAsync(string, string, ArtShape, ServerAiUsage.Reservation?, CancellationToken)"/>.</summary>
+    public async Task<ServerAiUsage.Reservation?> ReserveImagesAsync(string userId, int pictures)
+    {
+        var user = await users.GetUserByIdAsync(userId);
+        var config = ImageConfigFor(user) ?? throw new AiImageNotConfiguredException();
+        return ReferenceEquals(config, serverImageConfig) ? usage.Reserve(userId, ServerAiUsage.Kind.Image, pictures, IsAdmin(user)) : null;
+    }
+
+    /// <summary>Draws one picture for a job that set its pictures aside up front (<see cref="ReserveImagesAsync"/>). On the server's key it
+    /// spends one from <paramref name="reserved"/> and never counts it again; when none is left (or none was set aside, because the
+    /// user's own model was in use when the job started) it refuses instead of taking more of the allowance than the user agreed to.</summary>
+    public async Task<GeneratedImage> GenerateImageAsync(string userId, string prompt, ArtShape shape, ServerAiUsage.Reservation? reserved, CancellationToken ct = default)
+    {
+        var user = await users.GetUserByIdAsync(userId);
+        var config = ImageConfigFor(user) ?? throw new AiImageNotConfiguredException();
+        if (ReferenceEquals(config, serverImageConfig) && reserved?.TryUse() != true)
+        {
+            throw new LocalizedException("Service.Ai.ServerAllowanceSpent", usage.LimitOf(ServerAiUsage.Kind.Image));
+        }
+
+        return await DrawAsync(config, prompt, shape, ct);
+    }
 
     public async Task<GeneratedImage> GenerateImageAsync(string userId, string prompt, ArtShape shape, CancellationToken ct = default)
     {
@@ -320,6 +385,11 @@ public sealed class AiProviderService(
             usage.Take(userId, ServerAiUsage.Kind.Image, IsAdmin(user));
         }
 
+        return await DrawAsync(config, prompt, shape, ct);
+    }
+
+    private async Task<GeneratedImage> DrawAsync(AIConfiguration config, string prompt, ArtShape shape, CancellationToken ct)
+    {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromMinutes(2));
         var http = config.Http ?? httpClients.CreateClient("ai-images");
