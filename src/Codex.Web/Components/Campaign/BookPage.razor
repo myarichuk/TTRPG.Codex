@@ -61,6 +61,14 @@ else
                     <CodexButton Small="true" OnClick="() => confirmStartOver = false">@L["Common.Cancel"]</CodexButton>
                 </div>
             }
+            @if (deleteAsked != null)
+            {
+                <div class="book-draft-notice book-draft-infobar" role="alertdialog" aria-labelledby="book-own-delete-q" data-testid="book-own-delete-ask">
+                    <span id="book-own-delete-q">@L["Campaign.Book.Own.DeleteAsk", TitleOf(deleteAsked)]</span>
+                    <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" OnClick="DeleteOwnAsync" data-testid="book-own-delete-yes">@L["Campaign.Book.Own.DeleteYes"]</CodexButton>
+                    <CodexButton Small="true" OnClick="() => deleteAsked = null">@L["Common.Cancel"]</CodexButton>
+                </div>
+            }
             @if (leaveAsked != null)
             {
                 <div class="book-draft-notice book-draft-infobar" role="alertdialog" aria-labelledby="book-draft-leave-q" data-testid="book-draft-leave">

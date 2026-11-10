@@ -36,7 +36,7 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book-file/{edition}/draft/{lang}/{a
 | Drawn-art prompt | `Core/Book/BookArtStyle.cs` (style vocabulary, `BookImagePrompt.Assemble` and its checks) |
 | Drawing | `Web/Book/BookArtDrawing.cs` (picks checked again, run), `BookImages.cs` (picture model per run, reserved allowance), image price in `AiSettings.razor` and `AiProviderService` |
 | Decoder process | `src/Codex.ImageWorker` (only caller of SkiaSharp; talks stdin/stdout via `BookImageWire`) |
-| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow and order, the GM's own chapters `own-...`), `Web/Book/BookDraftWriter.cs` (generator, `book-draft/v4`: heading nesting, two-level contents, cross-references `Links`), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookPage.razor(.cs)` and its parts `BookToolbar|Outline|Source|Preview|Dock` (49), `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
+| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow and order, the GM's own chapters `own-...`), `Web/Book/BookDraftWriter.cs` (generator, `book-draft/v4`: heading nesting, two-level contents, cross-references `Links`), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookPage.razor(.cs)`, `BookPage.Source.cs` (tabs, snippets, outline state, own chapters; 52) and its parts `BookToolbar|Outline|Source|Preview|Dock` (49), `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
 | Strings | `Localization/Resources/Strings.Campaign{,.ru,.he}.resx`, keys `Campaign.Book.*` |
 | Website | `site/` (see `site/README.md`), guide section `#book`, tour row, screenshots `book-panel` and `book-pages`, tools `capture-screenshots.mjs`, `demo-art.py`, `book-pages.py` |
 | Tests | `tests/Codex.Tests/Book*Tests.cs`, `E2E/BookRouteE2ETests.cs` |
@@ -195,9 +195,9 @@ Anything that survives is a missing test; add it.
 ## 7. Open work, in the order I would take it (the user decides)
 
 00. **The source-book editor** (2026-11-09; a GM-only Book page, one pipeline, generator v4, Homebrewery feel, pictures in the text: steps 0-5).
-   **Steps 0 to 3 are done (BOOK_EXPORT 48, 49, 50, 51).** Next is step 4 (Homebrewery feel: source tabs, snippet bar, the outline tree with
-   "+ Add chapter" over the store's own-chapter calls of 51, cursor and preview in step); step 5 follows. Step 3 left no UI: a chapter of the
-   GM's own can be made only through `BookDrafts.AddChapterAsync` until step 4.
+   **Steps 0 to 4 are done (BOOK_EXPORT 48, 49, 50, 51, 52).** Next is step 5 (pictures in the text: chips under an entry's heading, the Pictures
+   tab of the dock already holds `BookArtTray`). Step 4 built the Text/Style/Theme tabs, the snippet bar, the outline tree with the GM's own chapters,
+   and a preview that follows the cursor and the clicks (`editor.js`: `outlineOf` in `render.js`, `goTo`, `snippet`, `treeKeys`, the page gutter).
 
 0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **All six phases are built (41.9, 41.10, 41.15, 41.16, 41.18, 41.19).**
    What is left is the "Not done" lists of 41.9, 41.10, 41.15, 41.16, 41.18 and 41.19: the preview in Safari's engine and Firefox is checked and two bugs fixed (41.20; real Safari not driven) (the GM-CSS cleaner's limits are fixed, 41.11; Homebrewery PHB CSS lays out as there on the compatibility layer, 41.12, which every

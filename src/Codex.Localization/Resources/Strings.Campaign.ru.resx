@@ -1191,4 +1191,59 @@
   <data name="Campaign.Book.Page.Panes" xml:space="preserve"><value>Области книги</value></data>
   <data name="Campaign.Book.Page.Source" xml:space="preserve"><value>Текст</value></data>
   <data name="Campaign.Book.Page.Splitter" xml:space="preserve"><value>Ширина текста и предпросмотра</value></data>
+  <data name="Campaign.Book.Source.Tabs" xml:space="preserve"><value>Вид источника</value></data>
+  <data name="Campaign.Book.Source.Text" xml:space="preserve"><value>Текст</value></data>
+  <data name="Campaign.Book.Source.Style" xml:space="preserve"><value>Стиль</value></data>
+  <data name="Campaign.Book.Source.Theme" xml:space="preserve"><value>Тема</value></data>
+  <data name="Campaign.Book.Source.ThemeHint" xml:space="preserve"><value>CSS темы, только для чтения. Скопируйте его в «Стиль», чтобы изменить.</value></data>
+  <data name="Campaign.Book.Source.CopyToStyle" xml:space="preserve"><value>Скопировать в «Стиль»</value></data>
+  <data name="Campaign.Book.Source.Copied" xml:space="preserve"><value>Скопировано из темы</value></data>
+  <data name="Campaign.Book.Source.PageNo" xml:space="preserve"><value>с. {0}</value></data>
+  <data name="Campaign.Book.Preview.PageOf" xml:space="preserve"><value>Страница {0} из {1}</value></data>
+  <data name="Campaign.Book.Preview.Zoom" xml:space="preserve"><value>Масштаб</value></data>
+  <data name="Campaign.Book.Preview.ZoomFit" xml:space="preserve"><value>По ширине</value></data>
+  <data name="Campaign.Book.Preview.Follow" xml:space="preserve"><value>Следовать</value></data>
+  <data name="Campaign.Book.Preview.FollowHint" xml:space="preserve"><value>Страницы следуют за курсором, а щелчок по странице переносит курсор.</value></data>
+  <data name="Campaign.Book.Snippet.Bar" xml:space="preserve"><value>Заготовки</value></data>
+  <data name="Campaign.Book.Snippet.Note" xml:space="preserve"><value>Заметка</value></data>
+  <data name="Campaign.Book.Snippet.Aloud" xml:space="preserve"><value>Зачитать вслух</value></data>
+  <data name="Campaign.Book.Snippet.Secret" xml:space="preserve"><value>Секрет</value></data>
+  <data name="Campaign.Book.Snippet.Stat" xml:space="preserve"><value>Блок характеристик</value></data>
+  <data name="Campaign.Book.Snippet.Table" xml:space="preserve"><value>Таблица</value></data>
+  <data name="Campaign.Book.Snippet.Picture" xml:space="preserve"><value>Картинка</value></data>
+  <data name="Campaign.Book.Snippet.Wide" xml:space="preserve"><value>Широкий блок</value></data>
+  <data name="Campaign.Book.Snippet.Column" xml:space="preserve"><value>Разрыв колонки</value></data>
+  <data name="Campaign.Book.Snippet.Page" xml:space="preserve"><value>Разрыв страницы</value></data>
+  <data name="Campaign.Book.Snippet.Hint.note" xml:space="preserve"><value>Заметка в рамке с заголовком вокруг выделенного.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.aloud" xml:space="preserve"><value>Текст для чтения вслух вокруг выделенного.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.secret" xml:space="preserve"><value>Секрет мастера: печатается только в издании мастера.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.stat" xml:space="preserve"><value>Блок характеристик в рамке для заполнения.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.table" xml:space="preserve"><value>Небольшая таблица.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.picture" xml:space="preserve"><value>Блок с портретом; затем выберите одну из картинок этого издания.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.wide" xml:space="preserve"><value>Идёт через обе колонки.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.column" xml:space="preserve"><value>Начинает следующую колонку.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.page" xml:space="preserve"><value>Начинает новую страницу.</value></data>
+  <data name="Campaign.Book.Snippet.W.Title" xml:space="preserve"><value>Заголовок</value></data>
+  <data name="Campaign.Book.Snippet.W.Text" xml:space="preserve"><value>Текст</value></data>
+  <data name="Campaign.Book.Snippet.W.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Campaign.Book.Snippet.W.Type" xml:space="preserve"><value>Тип</value></data>
+  <data name="Campaign.Book.Snippet.W.Label" xml:space="preserve"><value>Параметр</value></data>
+  <data name="Campaign.Book.Snippet.W.Value" xml:space="preserve"><value>значение</value></data>
+  <data name="Campaign.Book.Snippet.W.Caption" xml:space="preserve"><value>Подпись</value></data>
+  <data name="Campaign.Book.Snippet.W.Heading" xml:space="preserve"><value>Заголовок</value></data>
+  <data name="Campaign.Book.Snippet.W.Cell" xml:space="preserve"><value>Ячейка</value></data>
+  <data name="Campaign.Book.Own.Add" xml:space="preserve"><value>Добавить главу</value></data>
+  <data name="Campaign.Book.Own.TitleLabel" xml:space="preserve"><value>Название новой главы</value></data>
+  <data name="Campaign.Book.Own.TitlePlaceholder" xml:space="preserve"><value>Название главы</value></data>
+  <data name="Campaign.Book.Own.AddHint" xml:space="preserve"><value>Enter добавляет её после этой главы. Esc отменяет.</value></data>
+  <data name="Campaign.Book.Own.Menu" xml:space="preserve"><value>Действия для главы «{0}»</value></data>
+  <data name="Campaign.Book.Own.MenuTitle" xml:space="preserve"><value>Действия с главой</value></data>
+  <data name="Campaign.Book.Own.Rename" xml:space="preserve"><value>Переименовать</value></data>
+  <data name="Campaign.Book.Own.RenameLabel" xml:space="preserve"><value>Название главы</value></data>
+  <data name="Campaign.Book.Own.Up" xml:space="preserve"><value>Выше</value></data>
+  <data name="Campaign.Book.Own.Down" xml:space="preserve"><value>Ниже</value></data>
+  <data name="Campaign.Book.Own.Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="Campaign.Book.Own.DeleteAsk" xml:space="preserve"><value>Удалить главу «{0}»? Её текст пропадёт вместе с ней.</value></data>
+  <data name="Campaign.Book.Own.DeleteYes" xml:space="preserve"><value>Удалить главу</value></data>
+  <data name="Campaign.Book.Own.Full" xml:space="preserve"><value>В книге нет места для ещё одной главы.</value></data>
 </root>

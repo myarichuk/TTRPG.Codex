@@ -154,6 +154,68 @@ function pageTags(line) {
   return { classes, style };
 }
 
+// ---- The headings of a chapter, read the way the preview reads them (docs/BOOK_EXPORT.md 52) ----
+// Tokens that hold no block of their own: a heading is never inside one.
+const INLINE = new Set(['paragraph', 'heading', 'text', 'em', 'strong', 'del', 'link', 'codespan', 'br', 'escape', 'image', 'code', 'space', 'hr']);
+const MAX_TITLE = 120;
+
+function plain(text) {
+  return String(text ?? '').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/<[^>]*>/g, '').replace(/[*_`~\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, MAX_TITLE);
+}
+
+function walk(tokens, base, source, out, page) {
+  let cursor = 0;
+  for (const t of tokens) {
+    const raw = t.raw ?? '';
+    // A child's own text is somewhere in its parent's; searched from where the last one ended, never trusted to be at the start.
+    let at = source.indexOf(raw, base + cursor);
+    if (raw === '' || at < 0) at = base + cursor;
+    cursor = Math.max(cursor, at - base + raw.length);
+    if (t.type === 'heading') {
+      out.push({ level: t.depth, text: plain(t.text), offset: at, page });
+    } else if (t.type === 'html') {
+      // A heading written as HTML prints as one, so the preview has it and so does the outline.
+      for (const m of raw.matchAll(/<h([1-6])[\s>][\s\S]*?<\/h\1\s*>/gi)) out.push({ level: Number(m[1]), text: plain(m[0]), offset: at + m.index, page });
+    } else if (t.type === 'list') {
+      for (const item of t.items || []) walk(item.tokens || [], at, source, out, page);
+    } else if (t.tokens && !INLINE.has(t.type)) {
+      walk(t.tokens, at, source, out, page);
+    }
+  }
+}
+
+/**
+ * The headings of a chapter's text as the renderer reads them (its own Markdown reader, so a heading in a code fence is not one, a setext heading
+ * and a heading inside a block such as a secret are): [{level, text, offset, page}] in order; `page` counts "\page" lines (0 is before the first).
+ * The text is plain words, cut short; never markup.
+ */
+export function outlineOf(markdown) {
+  const out = [];
+  let at = 0;
+  markdown.split(PAGE_BREAK).forEach((text, i) => {
+    try {
+      const page = [];
+      walk(hbfm.marked.lexer(text), 0, text, page, i);
+      for (const h of page) out.push({ ...h, offset: h.offset + at });
+    } catch {
+      // A page the reader cannot read has no headings; the preview shows it as a failed page.
+    }
+    at += text.length;
+  });
+  return out;
+}
+
+/** Where each page of the text starts: offset 0, and every "\page" line. */
+export function pageStarts(markdown) {
+  const starts = [0];
+  let at = 0;
+  markdown.split(PAGE_BREAK).forEach((text, i) => {
+    if (i > 0) starts.push(at);
+    at += text.length;
+  });
+  return starts;
+}
+
 /** The pages, cleaned, as nodes of `doc`. Parsed inert (a template's content runs nothing and loads nothing), then walked. */
 export function clean(doc, html, nonce) {
   const template = doc.createElement('template');

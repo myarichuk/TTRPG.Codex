@@ -2824,3 +2824,59 @@ The contents' second level got a style of its own while looking (`BookDraftHtml`
 
 **Result (on the final commit):** book and localization tests, the e2e ones included: 777 passed, 1 failed (the PDF timing test named above); editor
 tests pass; the site builds. The site guide (en, ru, he) names the new order of chapters and says the players' characters are not in the book.
+
+## 52. Homebrewery feel: source tabs, snippets, the outline tree, a preview that follows (2026-11-10; step 4 of the source-book editor)
+
+**Source tabs** (`BookSource.razor`, `role="tablist"`, arrow keys swapped on a right-to-left page): Text (the chapter), Style (the GM's CSS, no
+longer a row in the chapter list; `data-testid=book-draft-css` is now this tab) and Theme. The page keeps *which tab* (`sourceTab`) apart from
+*which chapter* (`current`, always a chapter once the draft is open); the address says `.../style` for the Style tab and a section id otherwise (the
+Theme tab is not in the address). Theme is the theme's sheet as the preview's frame holds it (`<style id="theme">`: page layout, theme, torn edge),
+read-only through its own CodeMirror compartment (not the AI lock, which `lock(false)` clears), shown without `@font-face` rules and without any
+declaration that carries a `data:` address (those are the faces and paper pictures, thousands of characters each; the server adds a theme's faces
+itself). A one-line sheet is laid out over lines. **Copy to Style** appends that readable sheet to the GM's own, under a comment, as one edit that
+saves like typing; the GM's sheet is never replaced, and the usual size refusal applies. Typing in Theme is refused in the editor (the update listener
+writes only Text and Style).
+
+**Snippet bar** (Text tab only): Note, Read aloud, Secret (GM edition only: not drawn in the party edition, and the script refuses it there too), Stat
+block, Table, Picture, Wide, Column break, Page break. Each inserts at the cursor or wraps the selection as one `input.snippet` edit (saved and undone
+like typing); a break is a line of its own and never wraps. Picture writes `{{portrait,torn` with `![caption](art:` and opens the suggestions on the
+slot list (no address in the text). **The stat block is a layout skeleton** (name, type line, rule, one label and value), not the system's own block:
+the real blocks come from the generator (section 46) from the system's description, and a skeleton with no game's words is right for every system.
+The *Blocks* tab of the dock was already gone (the dock has Ask AI, Pictures, Problems since step 1); its help wording lives on in the suggestions
+(`Campaign.Book.Draft.Help.*`) and the snippets' hints.
+
+**Outline** (`BookOutline.razor`): `role="tree"`: chapter rows (`aria-level` 1) and, under the open ones, the chapter's `##` and `###` headings. Headings
+come from `outlineOf` in `render.js`, the renderer's own Markdown reader, so a heading in a code fence is not one, and a setext heading, a heading
+written as HTML and one inside a block such as a secret are. The script tells the server a chapter's headings only when they changed (debounced
+300 ms; at most 150 per chapter, 120 characters each, levels 2 and 3), never on every key, and the server draws them as text (never markup).
+Click moves the cursor to the heading and the preview to its page. Keys (`treeKeys`, one listener per tree): Up and Down, Home and End, Right opens
+a chapter or goes into it, Left closes it or goes to its chapter (swapped on a right-to-left page), roving tab stop. **+ Add chapter** (inline
+title, Enter adds it after the chapter shown, Esc cancels) goes through `BookDrafts.AddChapterAsync` (51); an own chapter's row has a menu: Rename,
+Move up, Move down (disabled at the ends), Delete (asks first, in the page's alert bar; the neighbour is shown after). Every one flushes what was
+typed first, then reads the draft again (`Drafts.OpenAsync`, so the contents take the chapter in) and gives the editor the new list and titles.
+
+**Preview follows the text.** Mapping is by heading *order*, not by words: the book's headings in chapter order (the outline's lists joined) against the
+drawn `h1`-`h6` in order (the contents' own heading included; leaving it out put every later heading one off, found by the e2e test). Cursor
+moves (200 ms) scroll the preview to the nearest heading above the cursor, only when that heading changed, so typing in one section does not jump
+the pages; a click in the pages (a listener on the frame's document; the frame stays `sandbox="allow-same-origin"` with no script, nothing new is
+allowed) moves the cursor to the heading above the click, opening its chapter first if needed. The **Follow** toggle in the preview header turns both
+off (remembered in this browser, with the zoom). Counts that disagree clamp to the nearest heading; nothing throws.
+**Page gutter**: a `\page` line shows "p. N", the number its page prints, read from the laid-out pages (source pages are the pages without
+`data-fitted`, so pages the drawing ran on by itself do not shift the numbers; if the counts differ, no marker). The preview header says "Page N of
+M" for the page at the top of the frame (plain text, not announced) and has **Fit width | 100%**.
+
+**Tests:** `tools/book-editor/test.mjs` (the outline: fence, setext, secret, raw HTML, `\page` in a fence, Arabic, titles cut and stripped);
+`BookSourceE2ETests` (tabs, Theme read-only, Copy to Style leaves the chapter alone, no Secret snippet in the party edition, a snippet and its
+gutter number; the heading in the tree, none from a fence, the click, tree keys; add, rename, move, delete after asking; a click in the pages, the
+cursor moving the pages' target, Follow off). The existing e2e flows pass unchanged (11 draft, 2 route).
+
+**Not done / not verified:**
+- Seen only through Playwright's Chromium; the click and scroll sync in WebKit and Firefox is not tried, nor Hebrew (right-to-left) by eye, nor the
+  tree by a screen reader.
+- The cursor-to-page scroll is tested only by the click direction in e2e; the other direction (cursor, then pages) is by hand.
+- Order mapping assumes the drawing makes exactly the headings the reader finds; a theme or block that adds a heading shifts the rest of that book
+  by one until the next chapter's count (it clamps, never fails).
+- The Russian and Hebrew strings (`Campaign.Book.Source|Snippet|Own|Preview.*`) are model-written.
+- Stat block snippet is a skeleton, not the system's block; no snippet for Homebrewery's rarer blocks; "Merge" and the Stale notice are unchanged.
+- An own chapter has no AI, no Stale, no art slots; its text is the GM's.
+- Moving an own chapter past a generated one is the store's rule (51); the menu only asks for one step.

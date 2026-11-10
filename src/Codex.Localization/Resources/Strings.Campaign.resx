@@ -1191,4 +1191,59 @@
   <data name="Campaign.Book.Page.Panes" xml:space="preserve"><value>Book panes</value></data>
   <data name="Campaign.Book.Page.Source" xml:space="preserve"><value>Source</value></data>
   <data name="Campaign.Book.Page.Splitter" xml:space="preserve"><value>Width of the source and the preview</value></data>
+  <data name="Campaign.Book.Source.Tabs" xml:space="preserve"><value>Source view</value></data>
+  <data name="Campaign.Book.Source.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Campaign.Book.Source.Style" xml:space="preserve"><value>Style</value></data>
+  <data name="Campaign.Book.Source.Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="Campaign.Book.Source.ThemeHint" xml:space="preserve"><value>The theme's CSS, to read. Copy it to Style to change it.</value></data>
+  <data name="Campaign.Book.Source.CopyToStyle" xml:space="preserve"><value>Copy to Style</value></data>
+  <data name="Campaign.Book.Source.Copied" xml:space="preserve"><value>Copied from the theme</value></data>
+  <data name="Campaign.Book.Source.PageNo" xml:space="preserve"><value>p. {0}</value></data>
+  <data name="Campaign.Book.Preview.PageOf" xml:space="preserve"><value>Page {0} of {1}</value></data>
+  <data name="Campaign.Book.Preview.Zoom" xml:space="preserve"><value>Zoom</value></data>
+  <data name="Campaign.Book.Preview.ZoomFit" xml:space="preserve"><value>Fit width</value></data>
+  <data name="Campaign.Book.Preview.Follow" xml:space="preserve"><value>Follow</value></data>
+  <data name="Campaign.Book.Preview.FollowHint" xml:space="preserve"><value>The pages follow the cursor, and a click in the pages moves the cursor.</value></data>
+  <data name="Campaign.Book.Snippet.Bar" xml:space="preserve"><value>Snippets</value></data>
+  <data name="Campaign.Book.Snippet.Note" xml:space="preserve"><value>Note</value></data>
+  <data name="Campaign.Book.Snippet.Aloud" xml:space="preserve"><value>Read aloud</value></data>
+  <data name="Campaign.Book.Snippet.Secret" xml:space="preserve"><value>Secret</value></data>
+  <data name="Campaign.Book.Snippet.Stat" xml:space="preserve"><value>Stat block</value></data>
+  <data name="Campaign.Book.Snippet.Table" xml:space="preserve"><value>Table</value></data>
+  <data name="Campaign.Book.Snippet.Picture" xml:space="preserve"><value>Picture</value></data>
+  <data name="Campaign.Book.Snippet.Wide" xml:space="preserve"><value>Wide</value></data>
+  <data name="Campaign.Book.Snippet.Column" xml:space="preserve"><value>Column break</value></data>
+  <data name="Campaign.Book.Snippet.Page" xml:space="preserve"><value>Page break</value></data>
+  <data name="Campaign.Book.Snippet.Hint.note" xml:space="preserve"><value>A boxed note with a heading, around the selection.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.aloud" xml:space="preserve"><value>Read-aloud text, around the selection.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.secret" xml:space="preserve"><value>A GM secret, printed in the GM edition only.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.stat" xml:space="preserve"><value>A framed stat block to fill in.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.table" xml:space="preserve"><value>A small table.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.picture" xml:space="preserve"><value>A portrait box; then pick one of this edition's pictures.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.wide" xml:space="preserve"><value>Runs across both columns.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.column" xml:space="preserve"><value>Starts the next column.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.page" xml:space="preserve"><value>Starts a new page.</value></data>
+  <data name="Campaign.Book.Snippet.W.Title" xml:space="preserve"><value>Title</value></data>
+  <data name="Campaign.Book.Snippet.W.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Campaign.Book.Snippet.W.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Campaign.Book.Snippet.W.Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Campaign.Book.Snippet.W.Label" xml:space="preserve"><value>Label</value></data>
+  <data name="Campaign.Book.Snippet.W.Value" xml:space="preserve"><value>value</value></data>
+  <data name="Campaign.Book.Snippet.W.Caption" xml:space="preserve"><value>Caption</value></data>
+  <data name="Campaign.Book.Snippet.W.Heading" xml:space="preserve"><value>Heading</value></data>
+  <data name="Campaign.Book.Snippet.W.Cell" xml:space="preserve"><value>Cell</value></data>
+  <data name="Campaign.Book.Own.Add" xml:space="preserve"><value>Add chapter</value></data>
+  <data name="Campaign.Book.Own.TitleLabel" xml:space="preserve"><value>Title of the new chapter</value></data>
+  <data name="Campaign.Book.Own.TitlePlaceholder" xml:space="preserve"><value>Chapter title</value></data>
+  <data name="Campaign.Book.Own.AddHint" xml:space="preserve"><value>Enter adds it after this chapter. Esc cancels.</value></data>
+  <data name="Campaign.Book.Own.Menu" xml:space="preserve"><value>Options for {0}</value></data>
+  <data name="Campaign.Book.Own.MenuTitle" xml:space="preserve"><value>Chapter options</value></data>
+  <data name="Campaign.Book.Own.Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Campaign.Book.Own.RenameLabel" xml:space="preserve"><value>Chapter title</value></data>
+  <data name="Campaign.Book.Own.Up" xml:space="preserve"><value>Move up</value></data>
+  <data name="Campaign.Book.Own.Down" xml:space="preserve"><value>Move down</value></data>
+  <data name="Campaign.Book.Own.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Campaign.Book.Own.DeleteAsk" xml:space="preserve"><value>Delete the chapter “{0}”? Its text goes with it.</value></data>
+  <data name="Campaign.Book.Own.DeleteYes" xml:space="preserve"><value>Delete chapter</value></data>
+  <data name="Campaign.Book.Own.Full" xml:space="preserve"><value>The book has no room for another chapter.</value></data>
 </root>

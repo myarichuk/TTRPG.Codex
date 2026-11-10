@@ -3,8 +3,9 @@
 // tells the server when a chapter changed (a small call), and hands the text over as a stream when the server asks for it, so a long
 // chapter never has to fit in one message.
 import { EditorView, basicSetup } from 'codemirror';
-import { EditorState, Compartment } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
+import { EditorState, Compartment, StateField, StateEffect } from '@codemirror/state';
+import { keymap, gutter, GutterMarker } from '@codemirror/view';
+import { startCompletion } from '@codemirror/autocomplete';
 import { indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { css } from '@codemirror/lang-css';
@@ -12,7 +13,7 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { unifiedMergeView, getOriginalDoc, getChunks, acceptChunk, rejectChunk, goToNextChunk, goToPreviousChunk } from '@codemirror/merge';
 import { reviewDiffConfig } from './review-diff.js';
-import { layout } from './render.js';
+import { layout, brew, brewMap, outlineOf, pageStarts, pageNumbers } from './render.js';
 import { assist } from './assist.js';
 
 // The Markdown's and the stylesheet's colours from the app's own palette (CSS variables), so the editor is dark or light as the app is.
@@ -49,11 +50,15 @@ export async function open(host, frame, book, dotnet, labels) {
   for (const [other, s] of editors) if (s.host === host) close(other);
   const id = 'e' + (++counter);
   const state = { host, frame, dotnet, chapters: book.chapters.map(c => ({ ...c })), css: book.css || '', current: book.current, mode: 'md',
-    art: {}, rendering: false, again: false, labels: labels || {} };
+    art: {}, rendering: false, again: false, labels: labels || {}, follow: book.follow !== false, zoom: book.zoom === '100' ? '100' : 'fit',
+    outlines: new Map(), sent: new Map(), dom: null, aimed: null, breakPages: [] };
   editors.set(id, state);
+  state.id = id;
+  state.dm = !!book.assist?.dm;
 
   const language = new Compartment();
   const locked = new Compartment();
+  const themeLock = new Compartment();
   const assisting = new Compartment();
   const assistance = book.assist ? assist(book.assist.help || {}, book.assist.slots || [], !!book.assist.dm) : [];
   state.assistance = assistance;
@@ -77,18 +82,24 @@ export async function open(host, frame, book, dotnet, labels) {
   }, 900);
   const repaint = debounce(() => preview(id), 350);
   // A wider or narrower frame (the window resized) scales the pages again; nothing is drawn again.
-  new ResizeObserver(() => { const r = frame.contentDocument?.getElementById('brew'); if (r) fitWidth(frame, r); }).observe(frame);
+  new ResizeObserver(() => { const r = frame.contentDocument?.getElementById('brew'); if (r) fitWidth(frame, r, state.zoom); }).observe(frame);
   state.changed = changed;
+  const outlineSoon = debounce(() => reportOutline(state, state.current), 300);
+  const cursorMoved = debounce(() => followCursor(state), 200);
+  state.outlineSoon = outlineSoon;
   state.view = new EditorView({
     parent: host,
     state: EditorState.create({
       doc: text(state),
-      extensions: [basicSetup, bookHighlight, keymap.of([indentWithTab]), EditorView.lineWrapping, direction, language.of(markdown()), locked.of([]), assisting.of(book.assist?.on ? assistance : []), helpTheme,
+      extensions: [basicSetup, bookHighlight, keymap.of([indentWithTab]), EditorView.lineWrapping, direction, language.of(markdown()), locked.of([]), themeLock.of([]), pageGutter(state), assisting.of(book.assist?.on ? assistance : []), helpTheme,
         EditorView.updateListener.of(u => {
           // A chapter put into the editor (shown, replaced by the server) is not typing: it must not be saved back.
+          if (u.selectionSet && !state.loading && !state.review) cursorMoved();
           if (!u.docChanged || state.loading) return;
           const value = u.state.doc.toString();
-          if (state.mode === 'css') { state.css = value; state.cssPending = true; } else { chapter(state).markdown = value; state.pending.add(state.current); }
+          // The theme's sheet is read-only; nothing typed there (there is no way to) is ever written to a chapter or the GM's sheet.
+          if (state.mode === 'theme') return;
+          if (state.mode === 'css') { state.css = value; state.cssPending = true; } else { chapter(state).markdown = value; state.pending.add(state.current); outlineSoon(); }
           changed();
           repaint();
         })]
@@ -96,6 +107,7 @@ export async function open(host, frame, book, dotnet, labels) {
   });
   state.language = language;
   state.locked = locked;
+  state.themeLock = themeLock;
   state.assisting = assisting;
   state.direction = direction;
 
@@ -113,6 +125,8 @@ export async function open(host, frame, book, dotnet, labels) {
   } catch {
     // No pictures in the preview; the book still draws, with empty boxes where they go.
   }
+  listen(state);
+  for (const c of state.chapters) reportOutline(state, c.section);
   await preview(id);
   scrollTo(state, state.current);
   return id;
@@ -131,7 +145,32 @@ function chapter(state) {
 }
 
 function text(state) {
-  return state.mode === 'css' ? state.css : chapter(state).markdown;
+  return state.mode === 'css' ? state.css : state.mode === 'theme' ? themeText(state) : chapter(state).markdown;
+}
+
+// The active theme's sheet, as the preview's frame holds it, without what cannot be copied: faces and pictures are data in the sheet, thousands
+// of characters each, and the server adds a theme's faces itself. Laid out over lines when the sheet came as one.
+function readable(css) {
+  let out = css.replace(/@font-face\s*{[^{}]*}/g, '').replace(/[^;{}]*url\(\s*["']?data:[^)]*\)[^;}]*;?/gi, '');
+  if (out.split('\n').length < 20) out = out.replace(/\s*{\s*/g, ' {\n  ').replace(/;\s*(?!})/g, ';\n  ').replace(/\s*}\s*/g, '\n}\n');
+  return out.replace(/\n{3,}/g, '\n\n').trim() + '\n';
+}
+
+function themeText(state) {
+  const el = state.frame.contentDocument?.getElementById('theme');
+  return readable(el?.textContent || '');
+}
+
+/** The theme's rules added at the end of the GM's own sheet, as one edit that saves like typing (the sheet is never replaced). */
+export function copyTheme(id) {
+  const state = editors.get(id);
+  if (!state) return false;
+  const note = state.labels.copied || 'Copied from the theme';
+  state.css = (state.css.replace(/\s+$/, '') + `\n\n/* ${note} */\n` + themeText(state)).replace(/^\s+/, '');
+  state.cssPending = true;
+  state.changed();
+  preview(id);
+  return true;
 }
 
 function load(state, value) {
@@ -183,17 +222,22 @@ export async function refreshArt(id, artUrl) {
   await preview(id);
 }
 
-/** Shows another chapter, or the stylesheet (`section` null). */
-export function show(id, section) {
+/** Shows a chapter's text (`tab` 'text'), the GM's stylesheet ('style', or `section` null) or the theme's sheet, read-only ('theme'). */
+export function show(id, section, tab) {
   const state = editors.get(id);
   if (!state) return;
-  state.mode = section == null ? 'css' : 'md';
+  const was = state.mode;
+  state.mode = tab === 'theme' ? 'theme' : tab === 'style' || (section == null && !tab) ? 'css' : 'md';
   if (section != null) state.current = section;
-  state.view.dispatch({ effects: [state.language.reconfigure(state.mode === 'css' ? css() : markdown()),
-    state.assisting.reconfigure(state.assistOn && state.mode !== 'css' ? state.assistance : [])] });
+  state.view.dispatch({ effects: [state.language.reconfigure(state.mode === 'md' ? markdown() : css()),
+    state.assisting.reconfigure(state.assistOn && state.mode === 'md' ? state.assistance : []),
+    state.themeLock.reconfigure(state.mode === 'theme' ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : [])] });
   load(state, text(state));
-  state.view.focus();
-  if (section != null) scrollTo(state, section);
+  if (state.mode !== 'theme') state.view.focus();
+  if (state.mode === 'md') {
+    refreshBreaks(state);
+    if (was !== 'md' || section != null) scrollTo(state, state.current);
+  }
 }
 
 /** The server replaced a chapter (Regenerate, undo, another tab): the editor and the preview take its text. */
@@ -207,6 +251,7 @@ export async function replace(id, section, markdown) {
   // What the server sent is now the text: nothing of this chapter is waiting to be saved.
   state.pending.delete(section);
   if (state.mode === 'md' && state.current === section) load(state, markdown);
+  reportOutline(state, section);
   await preview(id);
 }
 
@@ -215,7 +260,14 @@ export async function chapters(id, list) {
   const state = editors.get(id);
   if (!state) return;
   state.chapters = list.map(c => ({ ...c }));
+  for (const c of state.chapters) reportOutline(state, c.section);
   await preview(id);
+}
+
+/** The chapters' titles, as the overflow line names a page (a chapter added, renamed or removed). */
+export function titles(id, map) {
+  const state = editors.get(id);
+  if (state) state.labels.titles = map;
 }
 
 /** A chapter's text (or the stylesheet's, `section` null). */
@@ -269,8 +321,9 @@ async function preview(id) {
     const scroller = doc.scrollingElement;
     const top = scroller ? scroller.scrollTop : 0;
     const result = await layout(doc, root, shown(state), state.art);
-    fitWidth(state.frame, root);
+    fitWidth(state.frame, root, state.zoom);
     if (scroller) scroller.scrollTop = top;
+    mapDom(state, root);
     const box = state.host.closest('[data-book-editor]');
     const status = box?.querySelector('[data-overflow]');
     if (status) {
@@ -309,10 +362,10 @@ export async function sample(frame, shell, markdown) {
   return result.pages;
 }
 
-function fitWidth(frame, root) {
+function fitWidth(frame, root, zoom) {
   const page = root.querySelector('.page');
   if (!page) return;
-  const scale = Math.min(1, (frame.clientWidth - 24) / page.offsetWidth);
+  const scale = zoom === '100' ? 1 : Math.min(1, (frame.clientWidth - 24) / page.offsetWidth);
   root.style.transformOrigin = 'top center';
   root.style.transform = scale < 1 ? `scale(${scale})` : '';
   root.style.marginBottom = scale < 1 ? `${-(1 - scale) * root.offsetHeight}px` : '';
@@ -323,6 +376,317 @@ function scrollTo(state, section) {
   const target = doc && doc.getElementById('ch-' + section);
   if (target) target.closest('.page')?.scrollIntoView({ block: 'start' });
   else if (doc && doc.scrollingElement && section === 'front') doc.scrollingElement.scrollTop = 0;
+}
+
+// ---- Outline, sync between the text and the pages, snippets (docs/BOOK_EXPORT.md 52) ----
+
+// The headings of a chapter, read again only when its text changed.
+function outlineFor(chapter) {
+  const cached = state_outline.get(chapter.section);
+  if (cached && cached.text === chapter.markdown) return cached.list;
+  const list = outlineOf(chapter.markdown);
+  state_outline.set(chapter.section, { text: chapter.markdown, list });
+  return list;
+}
+const state_outline = new Map();
+
+const MAX_HEADINGS = 150;
+
+/** Tells the server a chapter's `##` and `###` headings (title and place in the list), when they changed since it was last told. */
+function reportOutline(state, section) {
+  const c = state.chapters.find(x => x.section === section);
+  if (!c) return;
+  const all = outlineFor(c);
+  const items = [];
+  all.forEach((h, index) => { if ((h.level === 2 || h.level === 3) && items.length < MAX_HEADINGS) items.push({ level: h.level, text: h.text, index }); });
+  const key = JSON.stringify(items);
+  if (state.sent.get(section) === key) return;
+  state.sent.set(section, key);
+  state.dotnet.invokeMethodAsync('Outline', section, items);
+}
+
+// The heading elements of the drawn book, and the pages with the number each prints; the chapters' headings counted in the same order.
+function mapDom(state, root) {
+  const pages = [...root.querySelectorAll('.page')];
+  // The contents' own heading counts too: the outline reads it as a heading, and so must this list, or every heading after it is one off.
+  const headings = [...root.querySelectorAll('h1,h2,h3,h4,h5,h6')];
+  const numbers = pageNumbers(root);
+  const bases = new Map();
+  let n = 0;
+  for (const c of shown(state)) { bases.set(c.section, n); n += outlineFor(c).length; }
+  state.dom = { root, pages, headings, numbers, bases };
+  refreshBreaks(state);
+  pageStatus(state);
+}
+
+function headingElement(state, section, index) {
+  const dom = state.dom;
+  if (!dom || !dom.headings.length) return null;
+  const base = dom.bases.get(section);
+  if (base === undefined) return null;
+  // The counts can disagree (a heading the drawing makes or drops); the nearest one is the answer, never an error.
+  return dom.headings[Math.min(dom.headings.length - 1, base + index)];
+}
+
+function scrollPreviewTo(state, el) {
+  if (!el) return;
+  el.scrollIntoView({ block: 'start' });
+}
+
+// The printed number of each "\page" line of the chapter shown, for the gutter.
+function refreshBreaks(state) {
+  const dom = state.dom;
+  const numbers = [];
+  if (dom && state.mode === 'md') {
+    const chapters = shown(state);
+    const map = brewMap(chapters);
+    const at = chapters.findIndex(c => c.section === state.current);
+    if (at >= 0) {
+      const starts = pageStarts(brew(chapters));
+      const source = dom.pages.filter(p => !p.hasAttribute('data-fitted'));
+      const text = chapters[at].markdown;
+      if (source.length === starts.length) {
+        for (const m of text.matchAll(/^\\page(?:break)?(?: *\{[^\n{}]*\})?$/gm)) {
+          const index = starts.indexOf(map[at].start + m.index);
+          numbers.push(index >= 0 ? dom.numbers[dom.pages.indexOf(source[index])] : null);
+        }
+      }
+    }
+  }
+  state.breakPages = numbers;
+  state.view.dispatch({ effects: setBreaks.of(numbers) });
+}
+
+const setBreaks = StateEffect.define();
+
+class PageMarker extends GutterMarker {
+  constructor(text) { super(); this.text = text; }
+  eq(other) { return other.text === this.text; }
+  toDOM() { const el = document.createElement('span'); el.className = 'cm-book-pageno'; el.textContent = this.text; return el; }
+}
+
+// The lines that are page breaks, and the number the page that starts there prints ("p. 4").
+function pageGutter(state) {
+  const breaks = StateField.define({
+    create: s => ({ lines: breakLines(s.doc), pages: [] }),
+    update(v, tr) {
+      let { lines, pages } = v;
+      if (tr.docChanged) lines = breakLines(tr.state.doc);
+      for (const e of tr.effects) if (e.is(setBreaks)) pages = e.value;
+      return lines === v.lines && pages === v.pages ? v : { lines, pages };
+    }
+  });
+  return [breaks, gutter({
+    class: 'cm-book-pages',
+    lineMarker(view, line) {
+      if (state.mode !== 'md') return null;
+      const v = view.state.field(breaks);
+      const i = v.lines.indexOf(view.state.doc.lineAt(line.from).number);
+      const n = i >= 0 ? v.pages[i] : null;
+      return n == null ? null : new PageMarker((state.labels.pageNo || 'p. {0}').replace('{0}', String(n)));
+    },
+    lineMarkerChange: u => u.docChanged || u.transactions.some(t => t.effects.some(e => e.is(setBreaks)))
+  })];
+}
+
+function breakLines(doc) {
+  const lines = [];
+  for (let i = 1; i <= doc.lines; i++) if (/^\\page(?:break)?(?: *\{[^\n{}]*\})?$/.test(doc.line(i).text)) lines.push(i);
+  return lines;
+}
+
+// The preview follows the cursor: to the page holding the nearest heading above it, only when that heading changed.
+function followCursor(state) {
+  if (!state.follow || state.mode !== 'md' || state.review || !state.dom) return;
+  const c = chapter(state);
+  const head = state.view.state.selection.main.head;
+  const list = outlineFor({ section: state.current, markdown: c.markdown });
+  let index = -1;
+  for (let i = 0; i < list.length && list[i].offset <= head; i++) index = i;
+  const key = state.current + ':' + index;
+  if (state.aimed === key) return;
+  state.aimed = key;
+  if (index < 0) scrollTo(state, state.current);
+  else scrollPreviewTo(state, headingElement(state, state.current, index));
+}
+
+/** The editor's cursor moved to a heading (an outline row, or a click in the preview). `force`: the preview goes there even with following off. */
+export function goTo(id, section, index) {
+  const state = editors.get(id);
+  if (!state || state.mode !== 'md' || state.current !== section) return false;
+  const c = chapter(state);
+  const h = outlineFor({ section, markdown: c.markdown })[index];
+  if (!h) return false;
+  const pos = Math.min(h.offset, state.view.state.doc.length);
+  state.view.dispatch({ selection: { anchor: pos }, scrollIntoView: true });
+  state.view.focus();
+  state.aimed = section + ':' + index;
+  scrollPreviewTo(state, headingElement(state, section, index));
+  return true;
+}
+
+/** Following on or off (the preview header's toggle). */
+export function setFollow(id, on) {
+  const state = editors.get(id);
+  if (!state) return;
+  state.follow = !!on;
+  state.aimed = null;
+}
+
+/** Fit width or 100%. */
+export function setZoom(id, zoom) {
+  const state = editors.get(id);
+  if (!state) return;
+  state.zoom = zoom === '100' ? '100' : 'fit';
+  const root = state.frame.contentDocument?.getElementById('brew');
+  if (root) fitWidth(state.frame, root, state.zoom);
+}
+
+// A click in the pages moves the cursor to the heading above the click; the page under the top of the preview is named in the header.
+function listen(state) {
+  const doc = state.frame.contentDocument;
+  if (!doc) return;
+  doc.addEventListener('click', ev => {
+    if (!state.follow || state.mode !== 'md' || state.review || !state.dom) return;
+    const target = ev.target;
+    if (!(target instanceof doc.defaultView.Node)) return;
+    let found = -1;
+    state.dom.headings.forEach((h, i) => { if (h === target || h.contains(target) || (h.compareDocumentPosition(target) & 4)) found = i; });
+    if (found < 0) return;
+    let section = null, index = 0;
+    for (const [s, base] of state.dom.bases) if (base <= found) { section = s; index = found - base; }
+    if (section == null) return;
+    pick(state, section, index);
+  });
+  const status = () => pageStatus(state);
+  doc.addEventListener('scroll', status, { passive: true });
+}
+
+async function pick(state, section, index) {
+  const listLength = outlineFor(state.chapters.find(c => c.section === section) || { section, markdown: '' }).length;
+  if (index >= listLength) return;
+  if (section !== state.current) await state.dotnet.invokeMethodAsync('PreviewPicked', section);
+  if (state.current !== section) return;
+  const h = outlineFor({ section, markdown: chapter(state).markdown })[index];
+  if (!h) return;
+  state.aimed = section + ':' + index;
+  state.view.dispatch({ selection: { anchor: Math.min(h.offset, state.view.state.doc.length) }, scrollIntoView: true });
+  state.view.focus();
+}
+
+// "Page 3 of 12" in the preview's header: the page at the top of the frame. Written as text, not announced.
+function pageStatus(state) {
+  const dom = state.dom;
+  const box = state.host.closest('[data-book-editor]');
+  const out = box?.querySelector('[data-page-status]');
+  if (!out || !dom || !dom.pages.length) return;
+  const top = state.frame.contentDocument.scrollingElement?.scrollTop ?? 0;
+  const view = state.frame.contentWindow;
+  let at = 0;
+  dom.pages.forEach((p, i) => { if (p.getBoundingClientRect().top <= (view ? view.innerHeight / 3 : 0) + 1 || top === 0 && i === 0) at = i; });
+  out.textContent = (state.labels.pageOf || 'Page {0} of {1}').replace('{0}', String(at + 1)).replace('{1}', String(dom.pages.length));
+}
+
+// What a snippet writes. A block wraps the selection (or a line of placeholder text); a break is a line of its own. Written as the draft's own
+// Markdown, with no address in it (the renderer's cleaner would drop one).
+const BLOCKS = { note: ['{{note', '##### {title}\n', '}}'], aloud: ['{{descriptive', '', '}}'], secret: ['{{secret', '', '}}'], wide: ['{{wide', '', '}}'],
+  stat: ['{{monster,frame', '## {name}\n*{type}*\n___\n**{label}** {value}\n', '}}'], picture: ['{{portrait,torn'] };
+
+/**
+ * Puts a snippet in at the cursor, or around the selection, as one edit (it saves and undoes like typing). `kind`: note, aloud, secret, stat, table,
+ * picture, wide, column, page. False when the editor does not take one (a stylesheet, a locked editor).
+ */
+export function snippet(id, kind) {
+  const state = editors.get(id);
+  if (!state || state.mode !== 'md' || state.review || state.view.state.readOnly) return false;
+  // The party edition has no secret block; the bar does not offer one, and the editor refuses one.
+  if (kind === 'secret' && !state.dm) return false;
+  const words = state.labels.snippet || {};
+  const fill = t => t.replace(/\{(\w+)\}/g, (_, k) => words[k] ?? k);
+  const view = state.view;
+  const range = view.state.selection.main;
+  const doc = view.state.doc;
+  const line = doc.lineAt(range.from);
+  const lead = range.from === line.from ? '' : '\n';
+  let insert, anchor;
+  if (kind === 'page' || kind === 'column') {
+    // A break is a line of its own, and never wraps what is selected.
+    const at = range.to;
+    const after = doc.lineAt(at);
+    const text = (at === after.from && after.from === range.from ? '' : '\n') + '\\' + kind + '\n';
+    view.dispatch({ changes: { from: at, insert: text }, selection: { anchor: at + text.length }, userEvent: 'input.snippet', scrollIntoView: true });
+    view.focus();
+    return true;
+  }
+  if (kind === 'table') {
+    insert = lead + fill('| {heading} | {heading} |\n|:--|:--|\n| {cell} | {cell} |\n');
+    view.dispatch({ changes: { from: range.from, to: range.to, insert }, selection: { anchor: range.from + insert.length }, userEvent: 'input.snippet', scrollIntoView: true });
+    view.focus();
+    return true;
+  }
+  const spec = BLOCKS[kind];
+  if (!spec) return false;
+  const [open, mid, close] = spec;
+  const picked = view.state.sliceDoc(range.from, range.to);
+  if (kind === 'picture') {
+    // The picture's key is the editor's to suggest (after "art:"), so the slot is chosen from this edition's own.
+    const text = lead + open + '\n![' + (picked || fill('{caption}')) + '](art:)\n}}\n';
+    const caret = range.from + lead.length + (open + '\n![' + (picked || fill('{caption}')) + '](art:').length;
+    view.dispatch({ changes: { from: range.from, to: range.to, insert: text }, selection: { anchor: caret }, userEvent: 'input.snippet', scrollIntoView: true });
+    view.focus();
+    if (state.assistOn) startCompletion(view);
+    return true;
+  }
+  const body = picked || (kind === 'stat' ? '' : fill('{text}'));
+  insert = lead + open + '\n' + fill(mid) + body + '\n' + close + '\n';
+  const start = range.from + lead.length + open.length + 1 + fill(mid).length;
+  view.dispatch({ changes: { from: range.from, to: range.to, insert }, selection: picked ? { anchor: range.from + insert.length } : { anchor: start, head: start + body.length },
+    userEvent: 'input.snippet', scrollIntoView: true });
+  view.focus();
+  return true;
+}
+
+/**
+ * The outline tree's keys (docs/BOOK_EXPORT.md 52): Up and Down move through the rows, Home and End to the first and last, Right opens a chapter
+ * (or goes into it) and Left closes it (or goes to its chapter); Left and Right swap on a right-to-left page. Enter and Space are the buttons' own.
+ * Bound once to each tree on the page, and safe to call after every draw.
+ */
+export function treeKeys(rtl) {
+  for (const tree of document.querySelectorAll('[data-book-tree]')) {
+    if (tree.dataset.bound) continue;
+    tree.dataset.bound = '1';
+    const rows = () => [...tree.querySelectorAll('[role=treeitem]')].filter(r => !r.disabled);
+    // Only the row the focus is on is a tab stop.
+    tree.addEventListener('focusin', ev => {
+      const row = ev.target.closest?.('[role=treeitem]');
+      if (row) for (const r of tree.querySelectorAll('[role=treeitem]')) r.tabIndex = r === row ? 0 : -1;
+    });
+    tree.addEventListener('keydown', ev => {
+      const row = ev.target.closest?.('[role=treeitem]');
+      if (!row || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+      const all = rows();
+      const at = all.indexOf(row);
+      const level = Number(row.getAttribute('aria-level'));
+      const chapterOf = r => r.closest('.book-tree-chapter');
+      const toggle = () => chapterOf(row)?.querySelector('.book-tree-toggle');
+      const forward = rtl ? 'ArrowLeft' : 'ArrowRight';
+      let target = null;
+      if (ev.key === 'ArrowDown') target = all[Math.min(all.length - 1, at + 1)];
+      else if (ev.key === 'ArrowUp') target = all[Math.max(0, at - 1)];
+      else if (ev.key === 'Home') target = all[0];
+      else if (ev.key === 'End') target = all[all.length - 1];
+      else if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
+        const opens = ev.key === forward;
+        if (level === 1 && row.getAttribute('aria-expanded') === 'false' && opens) { toggle()?.click(); }
+        else if (level === 1 && row.getAttribute('aria-expanded') === 'true' && !opens) { toggle()?.click(); }
+        else if (level === 1 && opens) target = all[at + 1] && Number(all[at + 1].getAttribute('aria-level')) > 1 ? all[at + 1] : null;
+        else if (level > 1 && !opens) target = chapterOf(row)?.querySelector('[role=treeitem][aria-level="1"]');
+        else return;
+      } else return;
+      ev.preventDefault();
+      target?.focus();
+    });
+  }
 }
 
 /** The editor's selection in the chapter shown: where it starts and ends, and its text (the server checks it is what it stores there). Null

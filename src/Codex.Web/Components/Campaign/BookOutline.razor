@@ -4,7 +4,9 @@
 @using Codex.Web.Book
 @using static Codex.Web.Components.Campaign.BookPage
 
-@* The chapters (docs/BOOK_EXPORT.md 49; the heading tree under each comes with step 4 of the source-book editor): a chapter opens in the Source. *@
+@* The outline (docs/BOOK_EXPORT.md 49 and 52): the chapters, and under the one that is open its ## and ### headings, read from the live text. A
+   click moves the cursor (and the preview) there. Arrow keys move through it (the book editor's script handles them); "+ Add chapter" makes a
+   chapter of the GM's own, whose row has a menu. The headings' words are text the draft holds: they are drawn as text and nothing else. *@
         @if (chaptersOpen)
         {
             <nav class="book-draft-pane book-draft-chapters" aria-label="@L["Campaign.Book.Draft.Chapters"]" data-testid="book-draft-chapters">
@@ -15,31 +17,93 @@
                         <LucideIcon IconName="panel-left-close" Size="14" />
                     </button>
                 </div>
-                <ul class="list-unstyled mb-0 book-draft-pane-body">
-                    @foreach (var chapter in view.Chapters)
-                    {
-                        <li>
-                            <button type="button" class="book-draft-chapter @(current == chapter.Section ? "active" : null)" aria-current="@(current == chapter.Section ? "true" : null)"
-                                    @onclick="() => ShowAsync(chapter.Section)" disabled="@AiBusy" data-testid="book-draft-chapter" data-section="@chapter.Section">
-                                <LucideIcon IconName="file-text" Size="14" />
-                                <bdi dir="auto">@Title(chapter)</bdi>
-                                @if (chapter.Stale || chapter.Gone)
+                <div class="book-draft-pane-body">
+                    <ul class="list-unstyled mb-0 book-tree" role="tree" aria-label="@L["Campaign.Book.Draft.Chapters"]" data-book-tree data-testid="book-tree">
+                        @foreach (var chapter in view!.Chapters)
+                        {
+                            var isCurrent = current == chapter.Section;
+                            var open = P.IsOpen(chapter.Section);
+                            var items = P.OutlineOf(chapter.Section);
+                            <li role="none" class="book-tree-chapter">
+                                <div class="book-tree-row">
+                                    <button type="button" class="book-tree-toggle" tabindex="-1" aria-hidden="true" @onclick="() => P.ToggleOpen(chapter.Section)"
+                                            data-testid="book-tree-toggle" data-section="@chapter.Section">
+                                        <LucideIcon IconName="@(open ? "chevron-down" : (BookPage.PageRtl ? "chevron-left" : "chevron-right"))" Size="14" />
+                                    </button>
+                                    @if (P.renaming == chapter.Section)
+                                    {
+                                        <input class="form-control form-control-sm book-tree-input" @bind="P.renameTitle" @bind:event="oninput" @onkeydown="P.RenameKeyAsync" maxlength="80"
+                                               aria-label="@L["Campaign.Book.Own.RenameLabel"]" data-testid="book-own-rename-input" />
+                                    }
+                                    else
+                                    {
+                                        <button type="button" role="treeitem" aria-level="1" aria-expanded="@(items.Count > 0 || open ? (open ? "true" : "false") : null)" aria-selected="@(isCurrent ? "true" : "false")"
+                                                tabindex="@(isCurrent ? 0 : -1)" class="book-draft-chapter @(isCurrent ? "active" : null)" aria-current="@(isCurrent ? "true" : null)"
+                                                @onclick="() => ShowAsync(chapter.Section)" disabled="@AiBusy" data-testid="book-draft-chapter" data-section="@chapter.Section">
+                                            <LucideIcon IconName="@(chapter.Own ? "pen-line" : "file-text")" Size="14" />
+                                            <bdi dir="auto">@Title(chapter)</bdi>
+                                            @if (chapter.Stale || chapter.Gone)
+                                            {
+                                                <span class="badge book-draft-badge-stale" title="@L["Campaign.Book.Draft.Stale"]">@L["Campaign.Book.Draft.Badge.Stale"]</span>
+                                            }
+                                            else if (chapter.Edited)
+                                            {
+                                                <span class="badge book-draft-badge-edited">@L["Campaign.Book.Draft.Badge.Edited"]</span>
+                                            }
+                                        </button>
+                                    }
+                                    @if (chapter.Own && P.renaming != chapter.Section)
+                                    {
+                                        <span class="book-tree-menu">
+                                            <button type="button" class="book-draft-pane-btn" aria-haspopup="menu" aria-expanded="@(P.menuFor == chapter.Section ? "true" : "false")"
+                                                    aria-label="@L["Campaign.Book.Own.Menu", Title(chapter)]" title="@L["Campaign.Book.Own.MenuTitle"]" disabled="@(AiBusy || working)"
+                                                    @onclick="() => P.menuFor = P.menuFor == chapter.Section ? null : chapter.Section" data-testid="book-own-menu" data-section="@chapter.Section">
+                                                <LucideIcon IconName="more-horizontal" Size="14" />
+                                            </button>
+                                            @if (P.menuFor == chapter.Section)
+                                            {
+                                                <div class="book-draft-menu book-tree-popup" role="menu" @onkeydown="@(e => { if (e.Key == "Escape") P.menuFor = null; })">
+                                                    <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="() => P.StartRenaming(chapter.Section)" data-testid="book-own-rename">@L["Campaign.Book.Own.Rename"]</button>
+                                                    <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="() => P.MoveOwnAsync(chapter.Section, -1)" disabled="@P.FirstOrLast(chapter.Section, -1)" data-testid="book-own-up">@L["Campaign.Book.Own.Up"]</button>
+                                                    <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="() => P.MoveOwnAsync(chapter.Section, 1)" disabled="@P.FirstOrLast(chapter.Section, 1)" data-testid="book-own-down">@L["Campaign.Book.Own.Down"]</button>
+                                                    <button type="button" role="menuitem" class="book-draft-menu-item" @onclick="() => P.AskDelete(chapter.Section)" data-testid="book-own-delete">@L["Campaign.Book.Own.Delete"]</button>
+                                                </div>
+                                            }
+                                        </span>
+                                    }
+                                </div>
+                                @if (open && items.Count > 0)
                                 {
-                                    <span class="badge book-draft-badge-stale" title="@L["Campaign.Book.Draft.Stale"]">@L["Campaign.Book.Draft.Badge.Stale"]</span>
+                                    <ul class="list-unstyled mb-0 book-tree-group" role="group">
+                                        @foreach (var item in items)
+                                        {
+                                            <li role="none">
+                                                <button type="button" role="treeitem" aria-level="@item.Level" aria-selected="false" tabindex="-1" class="book-tree-heading level-@item.Level"
+                                                        @onclick="() => P.GoToHeadingAsync(chapter.Section, item.Index)" disabled="@AiBusy" data-testid="book-tree-heading" data-section="@chapter.Section" data-level="@item.Level">
+                                                    <bdi dir="auto">@item.Text</bdi>
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
                                 }
-                                else if (chapter.Edited)
-                                {
-                                    <span class="badge book-draft-badge-edited">@L["Campaign.Book.Draft.Badge.Edited"]</span>
-                                }
+                            </li>
+                        }
+                    </ul>
+                    <div class="book-tree-add">
+                        @if (P.adding)
+                        {
+                            <input class="form-control form-control-sm" @bind="P.newTitle" @bind:event="oninput" @onkeydown="P.AddKeyAsync" maxlength="80" placeholder="@L["Campaign.Book.Own.TitlePlaceholder"]"
+                                   aria-label="@L["Campaign.Book.Own.TitleLabel"]" data-testid="book-add-input" />
+                            <div class="small-muted">@L["Campaign.Book.Own.AddHint"]</div>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-link btn-sm p-0" @onclick="P.StartAdding" disabled="@(AiBusy || working)" data-testid="book-add-chapter">
+                                <LucideIcon IconName="plus" Size="14" /> @L["Campaign.Book.Own.Add"]
                             </button>
-                        </li>
-                    }
-                    <li>
-                        <button type="button" class="book-draft-chapter @(current == null ? "active" : null)" aria-current="@(current == null ? "true" : null)" @onclick="() => ShowAsync(null)" disabled="@AiBusy" data-testid="book-draft-css">
-                            <LucideIcon IconName="palette" Size="14" /> <bdi>@L["Campaign.Book.Draft.Stylesheet"]</bdi>
-                        </button>
-                    </li>
-                </ul>
+                        }
+                    </div>
+                </div>
             </nav>
         }
         else
@@ -49,3 +113,11 @@
                 <LucideIcon IconName="panel-left-open" Size="14" /> <span>@L["Campaign.Book.Draft.Chapters"]</span>
             </button>
         }
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // The tree's keys (arrows, Home, End) are the editor script's; it binds once to each tree element it finds.
+        if (P.module != null && chaptersOpen) await P.module.InvokeVoidAsync("treeKeys", BookPage.PageRtl);
+    }
+}

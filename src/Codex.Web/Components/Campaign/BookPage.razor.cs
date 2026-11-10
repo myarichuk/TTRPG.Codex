@@ -182,9 +182,11 @@ public partial class BookPage : IAsyncDisposable
         }
 
         // The chapter the address names (a reload or a link restores the place); else the first that moved on, else the first.
-        current = ChapterRoute == StyleRoute ? null
-            : view.Chapters.FirstOrDefault(c => c.Section == ChapterRoute)?.Section
-              ?? view.Chapters.FirstOrDefault(c => c.Stale)?.Section ?? view.Chapters.FirstOrDefault()?.Section;
+        // "style" opens the GM's stylesheet in the Source pane, on the first chapter; the tab is kept apart from the chapter shown.
+        sourceTab = ChapterRoute == StyleRoute ? "style" : "text";
+        current = view.Chapters.FirstOrDefault(c => c.Section == ChapterRoute)?.Section
+                  ?? view.Chapters.FirstOrDefault(c => c.Stale)?.Section ?? view.Chapters.FirstOrDefault()?.Section;
+        outlines.Clear();
         web = await Drafts.WebAsync(Access, edition, language);
         await ReadSpendAsync();
         webReport = null;
@@ -285,16 +287,22 @@ public partial class BookPage : IAsyncDisposable
                 artUrl = $"{BasePath}/book-file/{edition}/draft/{language}/art",
                 current = asked,
                 rtl = BookThemes.IsRtl(language),
+                follow = followPreview,
+                zoom,
                 assist = await AssistAsync()
             }, self, new
             {
                 overflow = L["Campaign.Book.Draft.Overflow"].ToString(),
                 runOn = L["Campaign.Book.Draft.RunOn"].ToString(),
-                titles = view.Chapters.ToDictionary(c => c.Section, Title)
+                titles = view.Chapters.ToDictionary(c => c.Section, Title),
+                pageNo = L["Campaign.Book.Source.PageNo"].ToString(),
+                pageOf = L["Campaign.Book.Preview.PageOf"].ToString(),
+                copied = L["Campaign.Book.Source.Copied"].ToString(),
+                snippet = SnippetWords()
             });
             if (opening != openings) return;
             editorId = opened;
-            if (current == null || current != asked) await module.InvokeVoidAsync("show", editorId, current);
+            if (sourceTab != "text" || current != asked) await module.InvokeVoidAsync("show", editorId, current, sourceTab);
             await SyncUrlAsync();
             // An address the last fetch could not reach is tried again.
             _ = FetchWebAsync();
@@ -326,17 +334,31 @@ public partial class BookPage : IAsyncDisposable
 
     internal async Task ShowAsync(string? section)
     {
+        // A chapter opens its text; null is the GM's stylesheet (the Style tab), kept for the reports that point at it.
+        await ShowSourceAsync(section ?? current, section == null ? "style" : "text");
+    }
+
+    /// <summary>The Source pane's tab: the chapter's text, the GM's stylesheet, or the theme's (read-only).</summary>
+    internal async Task SourceTabAsync(string tab)
+    {
+        if (tab == sourceTab || AiBusy) return;
+        await ShowSourceAsync(current, tab);
+    }
+
+    private async Task ShowSourceAsync(string? section, string tab)
+    {
+        if (section != null) opened.Add(section);
         // Clicked before the editor has started: remembered, and shown once it has (a click was lost on a slow machine).
         if (module == null || editorId == null)
         {
-            current = section;
+            (current, sourceTab) = (section, tab);
             await SyncUrlAsync();
             return;
         }
 
         await FlushAsync();
-        await module.InvokeVoidAsync("show", editorId, section);
-        current = section;
+        await module.InvokeVoidAsync("show", editorId, section, tab);
+        (current, sourceTab) = (section, tab);
         await SyncUrlAsync();
     }
 
@@ -1003,6 +1025,7 @@ public partial class BookPage : IAsyncDisposable
         try
         {
             assistOn = await JS.InvokeAsync<string?>("localStorage.getItem", AssistKey) != "0";
+            await ReadPreviewSettingsAsync();
             savedLanguage = await JS.InvokeAsync<string?>("localStorage.getItem", LanguageKey);
             if (int.TryParse(await JS.InvokeAsync<string?>("localStorage.getItem", SplitKey), NumberStyles.None, CultureInfo.InvariantCulture, out var split) && split >= SplitMin)
             {
@@ -1142,7 +1165,7 @@ public partial class BookPage : IAsyncDisposable
     /// pieces) and cost. Nothing is sent; the editor is locked so the text stays what the server checked.</summary>
     internal async Task AiPrepareAsync(string? preset)
     {
-        if (working || AiBusy || view == null || module == null || editorId == null || current == null) return;
+        if (working || AiBusy || view == null || module == null || editorId == null || current == null || sourceTab != "text") return;
         aiNote = null;
         message = null;
         var ask = preset ?? aiText.Trim();
@@ -1618,7 +1641,7 @@ public partial class BookPage : IAsyncDisposable
     {
         try
         {
-            await JS.InvokeVoidAsync("codex.replaceUrl", $"{BasePath}/book/{(edition == "dm" ? "gm" : "party")}/{Uri.EscapeDataString(current ?? StyleRoute)}");
+            await JS.InvokeVoidAsync("codex.replaceUrl", $"{BasePath}/book/{(edition == "dm" ? "gm" : "party")}/{Uri.EscapeDataString(sourceTab == "style" || current == null ? StyleRoute : current)}");
         }
         catch (Exception ex) when (ex is JSException or JSDisconnectedException)
         {

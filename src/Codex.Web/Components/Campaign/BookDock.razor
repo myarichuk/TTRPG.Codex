@@ -29,7 +29,7 @@
         </div>
 
         <div id="book-draft-tabpanel-ai" role="tabpanel" aria-labelledby="book-draft-tab-ai" class="book-draft-panel-body" hidden="@(!panelOpen || panelTab != "ai")">
-            @if (Current is { } shownForAi)
+            @if (Current is { } shownForAi && P.sourceTab == "text")
             {
                 @* AI edits (docs/BOOK_EXPORT.md 41.4): the selection, or the chapter, sent with its secrets, pictures and breaks kept back; the
                    cost shown before anything is sent; the reply reviewed change by change, and nothing saved until it is accepted. *@

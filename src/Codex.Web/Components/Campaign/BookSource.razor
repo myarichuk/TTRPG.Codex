@@ -6,7 +6,7 @@
 
         <section id="book-pane-source" class="book-draft-pane book-draft-edit" aria-labelledby="book-draft-edit-title">
             <div class="book-draft-pane-head">
-                <span id="book-draft-edit-title"><LucideIcon IconName="@(Current == null ? "palette" : "file-text")" Size="14" /> <bdi dir="auto">@(Current is { } open ? Title(open) : L["Campaign.Book.Draft.Stylesheet"])</bdi></span>
+                <span id="book-draft-edit-title"><LucideIcon IconName="file-text" Size="14" /> <bdi dir="auto">@(Current is { } open ? Title(open) : string.Empty)</bdi></span>
                 @if (Current is { } c && (c.Stale || c.Gone))
                 {
                     <span class="badge book-draft-badge-stale">@L["Campaign.Book.Draft.Badge.Stale"]</span>
@@ -21,8 +21,53 @@
                     <button type="button" class="btn btn-link btn-sm p-0" @onclick="() => UndoAsync(undoable.Section)" disabled="@working" data-testid="book-draft-undo">@L["Campaign.Book.Draft.Undo"]</button>
                 }
             </div>
-            <div class="book-draft-pane-body book-draft-edit-body">
-                @if (Current is { } shown)
+            @* Text, Style and Theme (docs/BOOK_EXPORT.md 52): the chapter, the GM's own CSS, and the theme's CSS to read and copy from. *@
+            <div class="cx-tabs book-source-tabs" role="tablist" aria-label="@L["Campaign.Book.Source.Tabs"]" @onkeydown="P.SourceKeyAsync">
+                @foreach (var tab in BookPage.SourceTabs)
+                {
+                    <button type="button" role="tab" id="@("book-source-tab-" + tab)" class="cx-tab" aria-selected="@(P.sourceTab == tab ? "true" : "false")" aria-controls="book-source-panel"
+                            tabindex="@(P.sourceTab == tab ? 0 : -1)" @onclick="() => P.SourceTabAsync(tab)" disabled="@AiBusy"
+                            data-testid="@(tab == "style" ? "book-draft-css" : "book-source-tab-" + tab)">@P.SourceTabName(tab)</button>
+                }
+            </div>
+            @if (P.sourceTab == "text")
+            {
+                @* The snippet bar: each button writes its block at the cursor, or around the selection, as one edit. *@
+                <div class="book-snippets" role="toolbar" aria-label="@L["Campaign.Book.Snippet.Bar"]" data-testid="book-snippets">
+                    @foreach (var (kind, icon, label) in P.Snippets)
+                    {
+                        <button type="button" class="book-snippet" @onclick="() => P.SnippetAsync(kind)" disabled="@(AiBusy || working || state == BookPage.SaveState.Conflict)"
+                                title="@L["Campaign.Book.Snippet.Hint." + kind]" data-testid="@("book-snippet-" + kind)">
+                            <LucideIcon IconName="@icon" Size="14" /> <span>@label</span>
+                        </button>
+                    }
+                </div>
+            }
+            <div id="book-source-panel" role="tabpanel" aria-labelledby="@("book-source-tab-" + P.sourceTab)" class="book-draft-pane-body book-draft-edit-body">
+                @if (P.sourceTab == "theme")
+                {
+                    <div class="d-flex gap-2 align-items-center flex-wrap px-1 pb-1">
+                        <span class="small-muted flex-grow-1">@L["Campaign.Book.Source.ThemeHint"]</span>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="P.CopyThemeAsync" Disabled="@(AiBusy || working || state == BookPage.SaveState.Conflict)" data-testid="book-theme-copy">
+                            <LucideIcon IconName="copy" Size="14" /> @L["Campaign.Book.Source.CopyToStyle"]
+                        </CodexButton>
+                    </div>
+                }
+                else if (P.sourceTab == "style")
+                {
+                    <div class="small-muted px-1 pb-1">@L["Campaign.Book.Draft.StylesheetHint"]</div>
+                    <div class="small px-1 pb-1" role="status" aria-live="polite" data-testid="book-draft-web">
+                        @if (fetching > 0)
+                        {
+                            <span class="small-muted">@L["Campaign.Book.Draft.Web.Fetching"]</span>
+                        }
+                        else if (webReport is { Kept: > 0 } kept)
+                        {
+                            <span class="small-muted">@L["Campaign.Book.Draft.Web.Kept", kept.Kept, Megabytes(kept.KeptBytes)]</span>
+                        }
+                    </div>
+                }
+                else if (Current is { } shown)
                 {
                     @* While a merge is open its own bar says what is going on; the notice comes back if it is let go of. *@
                     @if (shown.Stale && mergeSection == null)
@@ -51,20 +96,6 @@
                     {
                         <div class="book-draft-notice" role="status" data-testid="book-draft-gone">@L["Campaign.Book.Draft.Gone"]</div>
                     }
-                }
-                else
-                {
-                    <div class="small-muted px-1 pb-1">@L["Campaign.Book.Draft.StylesheetHint"]</div>
-                    <div class="small px-1 pb-1" role="status" aria-live="polite" data-testid="book-draft-web">
-                        @if (fetching > 0)
-                        {
-                            <span class="small-muted">@L["Campaign.Book.Draft.Web.Fetching"]</span>
-                        }
-                        else if (webReport is { Kept: > 0 } kept)
-                        {
-                            <span class="small-muted">@L["Campaign.Book.Draft.Web.Kept", kept.Kept, Megabytes(kept.KeptBytes)]</span>
-                        }
-                    </div>
                 }
                 @* An AI request's pre-flight and its review sit on the Markdown they lock, not in a tab that could be folded away. *@
                 @if (AiBusy)

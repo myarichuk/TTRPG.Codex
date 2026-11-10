@@ -1191,4 +1191,59 @@
   <data name="Campaign.Book.Page.Panes" xml:space="preserve"><value>חלוניות הספר</value></data>
   <data name="Campaign.Book.Page.Source" xml:space="preserve"><value>טקסט</value></data>
   <data name="Campaign.Book.Page.Splitter" xml:space="preserve"><value>רוחב הטקסט והתצוגה המקדימה</value></data>
+  <data name="Campaign.Book.Source.Tabs" xml:space="preserve"><value>תצוגת המקור</value></data>
+  <data name="Campaign.Book.Source.Text" xml:space="preserve"><value>טקסט</value></data>
+  <data name="Campaign.Book.Source.Style" xml:space="preserve"><value>סגנון</value></data>
+  <data name="Campaign.Book.Source.Theme" xml:space="preserve"><value>ערכת נושא</value></data>
+  <data name="Campaign.Book.Source.ThemeHint" xml:space="preserve"><value>ה-CSS של ערכת הנושא, לקריאה בלבד. העתיקו אותו ל“סגנון” כדי לשנות.</value></data>
+  <data name="Campaign.Book.Source.CopyToStyle" xml:space="preserve"><value>העתקה ל“סגנון”</value></data>
+  <data name="Campaign.Book.Source.Copied" xml:space="preserve"><value>הועתק מערכת הנושא</value></data>
+  <data name="Campaign.Book.Source.PageNo" xml:space="preserve"><value>עמ׳ {0}</value></data>
+  <data name="Campaign.Book.Preview.PageOf" xml:space="preserve"><value>עמוד {0} מתוך {1}</value></data>
+  <data name="Campaign.Book.Preview.Zoom" xml:space="preserve"><value>זום</value></data>
+  <data name="Campaign.Book.Preview.ZoomFit" xml:space="preserve"><value>התאמה לרוחב</value></data>
+  <data name="Campaign.Book.Preview.Follow" xml:space="preserve"><value>מעקב</value></data>
+  <data name="Campaign.Book.Preview.FollowHint" xml:space="preserve"><value>העמודים עוקבים אחרי הסמן, ולחיצה על עמוד מעבירה אליו את הסמן.</value></data>
+  <data name="Campaign.Book.Snippet.Bar" xml:space="preserve"><value>קטעים מוכנים</value></data>
+  <data name="Campaign.Book.Snippet.Note" xml:space="preserve"><value>הערה</value></data>
+  <data name="Campaign.Book.Snippet.Aloud" xml:space="preserve"><value>הקראה</value></data>
+  <data name="Campaign.Book.Snippet.Secret" xml:space="preserve"><value>סוד</value></data>
+  <data name="Campaign.Book.Snippet.Stat" xml:space="preserve"><value>גיליון נתונים</value></data>
+  <data name="Campaign.Book.Snippet.Table" xml:space="preserve"><value>טבלה</value></data>
+  <data name="Campaign.Book.Snippet.Picture" xml:space="preserve"><value>תמונה</value></data>
+  <data name="Campaign.Book.Snippet.Wide" xml:space="preserve"><value>רחב</value></data>
+  <data name="Campaign.Book.Snippet.Column" xml:space="preserve"><value>מעבר עמודה</value></data>
+  <data name="Campaign.Book.Snippet.Page" xml:space="preserve"><value>מעבר עמוד</value></data>
+  <data name="Campaign.Book.Snippet.Hint.note" xml:space="preserve"><value>הערה בתיבה עם כותרת, סביב הטקסט המסומן.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.aloud" xml:space="preserve"><value>טקסט להקראה בקול, סביב הטקסט המסומן.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.secret" xml:space="preserve"><value>סוד של המנחה, מודפס במהדורת המנחה בלבד.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.stat" xml:space="preserve"><value>גיליון נתונים במסגרת, למילוי.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.table" xml:space="preserve"><value>טבלה קטנה.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.picture" xml:space="preserve"><value>תיבת דיוקן; לאחר מכן בחרו אחת מתמונות המהדורה.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.wide" xml:space="preserve"><value>נפרש על פני שתי העמודות.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.column" xml:space="preserve"><value>מתחיל את העמודה הבאה.</value></data>
+  <data name="Campaign.Book.Snippet.Hint.page" xml:space="preserve"><value>מתחיל עמוד חדש.</value></data>
+  <data name="Campaign.Book.Snippet.W.Title" xml:space="preserve"><value>כותרת</value></data>
+  <data name="Campaign.Book.Snippet.W.Text" xml:space="preserve"><value>טקסט</value></data>
+  <data name="Campaign.Book.Snippet.W.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Campaign.Book.Snippet.W.Type" xml:space="preserve"><value>סוג</value></data>
+  <data name="Campaign.Book.Snippet.W.Label" xml:space="preserve"><value>תכונה</value></data>
+  <data name="Campaign.Book.Snippet.W.Value" xml:space="preserve"><value>ערך</value></data>
+  <data name="Campaign.Book.Snippet.W.Caption" xml:space="preserve"><value>כיתוב</value></data>
+  <data name="Campaign.Book.Snippet.W.Heading" xml:space="preserve"><value>כותרת</value></data>
+  <data name="Campaign.Book.Snippet.W.Cell" xml:space="preserve"><value>תא</value></data>
+  <data name="Campaign.Book.Own.Add" xml:space="preserve"><value>הוספת פרק</value></data>
+  <data name="Campaign.Book.Own.TitleLabel" xml:space="preserve"><value>שם הפרק החדש</value></data>
+  <data name="Campaign.Book.Own.TitlePlaceholder" xml:space="preserve"><value>שם הפרק</value></data>
+  <data name="Campaign.Book.Own.AddHint" xml:space="preserve"><value>Enter מוסיף אותו אחרי הפרק הזה. Esc מבטל.</value></data>
+  <data name="Campaign.Book.Own.Menu" xml:space="preserve"><value>אפשרויות עבור {0}</value></data>
+  <data name="Campaign.Book.Own.MenuTitle" xml:space="preserve"><value>אפשרויות הפרק</value></data>
+  <data name="Campaign.Book.Own.Rename" xml:space="preserve"><value>שינוי שם</value></data>
+  <data name="Campaign.Book.Own.RenameLabel" xml:space="preserve"><value>שם הפרק</value></data>
+  <data name="Campaign.Book.Own.Up" xml:space="preserve"><value>הזזה למעלה</value></data>
+  <data name="Campaign.Book.Own.Down" xml:space="preserve"><value>הזזה למטה</value></data>
+  <data name="Campaign.Book.Own.Delete" xml:space="preserve"><value>מחיקה</value></data>
+  <data name="Campaign.Book.Own.DeleteAsk" xml:space="preserve"><value>למחוק את הפרק “{0}”? הטקסט שלו יימחק איתו.</value></data>
+  <data name="Campaign.Book.Own.DeleteYes" xml:space="preserve"><value>מחיקת הפרק</value></data>
+  <data name="Campaign.Book.Own.Full" xml:space="preserve"><value>אין בספר מקום לפרק נוסף.</value></data>
 </root>

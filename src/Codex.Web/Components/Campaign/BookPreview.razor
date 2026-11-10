@@ -14,7 +14,17 @@
         <section class="book-draft-pane book-draft-preview @(previewOpen ? null : "offstage")" aria-labelledby="book-draft-preview-title" aria-hidden="@(previewOpen ? null : "true")">
             <div class="book-draft-pane-head">
                 <span id="book-draft-preview-title"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.Book.Draft.Preview"]</span>
+                <span class="small-muted ms-2" data-page-status data-testid="book-page-status"></span>
                 <span class="flex-grow-1"></span>
+                @* Fit width or 100%; and whether the pages follow the cursor (and a click in them moves it). *@
+                <div class="book-zoom" role="group" aria-label="@L["Campaign.Book.Preview.Zoom"]">
+                    <button type="button" class="book-draft-pane-btn book-zoom-btn" aria-pressed="@(P.zoom == "fit" ? "true" : "false")" @onclick='() => P.ZoomAsync("fit")' data-testid="book-zoom-fit">@L["Campaign.Book.Preview.ZoomFit"]</button>
+                    <button type="button" class="book-draft-pane-btn book-zoom-btn" aria-pressed="@(P.zoom == "100" ? "true" : "false")" @onclick='() => P.ZoomAsync("100")' data-testid="book-zoom-100">100%</button>
+                </div>
+                <button type="button" class="book-draft-pane-btn" aria-pressed="@(P.followPreview ? "true" : "false")" @onclick="P.FollowAsync"
+                        title="@L["Campaign.Book.Preview.FollowHint"]" data-testid="book-follow">
+                    <LucideIcon IconName="@(P.followPreview ? "link" : "unlink")" Size="14" /> @L["Campaign.Book.Preview.Follow"]
+                </button>
                 <button type="button" class="book-draft-pane-btn" @onclick="() => TogglePaneAsync(Pane.Preview)" aria-expanded="true"
                         title="@L["Campaign.Book.Draft.Collapse"]" aria-label="@L["Campaign.Book.Draft.CollapseNamed", L["Campaign.Book.Draft.Preview"]]" data-testid="@(previewOpen ? "book-draft-pane-preview-toggle" : null)">
                     <LucideIcon IconName="panel-right-close" Size="14" />
