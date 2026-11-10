@@ -12,7 +12,7 @@ namespace Codex.Tests;
 /// strings are positive controls: without them an empty source would pass.
 /// </summary>
 [Collection("RavenDb")]
-public class BookSourceTests : IClassFixture<RavenDbFixture>
+public partial class BookSourceTests : IClassFixture<RavenDbFixture>
 {
     private const string DmUser = "CANARY_dm_user";
     private const string PlayerUser = "CANARY_player_user";
@@ -234,15 +234,25 @@ public class BookSourceTests : IClassFixture<RavenDbFixture>
             Assert.True(text.Contains("PUBLIC the old tower", StringComparison.Ordinal), where + " lost the link's own words");
         }
 
-        Assert.Contains("The way to PUBLIC_Docks is open.", html, StringComparison.Ordinal);
+        // A page the party may open, and a character and a stranger it has entries for, are cross-references to those entries (51): the
+        // stranger's is the mask's, never the actor's.
+        var docks = "[PUBLIC_Docks](#e-" + BookSlots.KeyFor(BookSlots.WikiSubject("w-party")) + ")";
+        var vera = "[PUBLIC_Vera](#e-" + BookSlots.KeyFor("actor:a-known") + ")";
+        var stranger = "[PUBLIC_hooded stranger](#e-" + BookSlots.KeyFor("mask:a-unknown") + ")";
+        Assert.Contains("The way to " + docks + " is open.", html, StringComparison.Ordinal);
+        Assert.DoesNotContain(BookSlots.KeyFor("actor:a-unknown"), html, StringComparison.Ordinal);
         // Mentions are the mention resolver's: named as the party knows them, and a hidden one's label is never printed (the check above).
-        Assert.Contains("Meet PUBLIC_Vera and PUBLIC_hooded stranger, not .", html, StringComparison.Ordinal);
+        Assert.Contains("Meet " + vera + " and " + stranger + ", not .", html, StringComparison.Ordinal);
 
         // The GM edition is the GM's own: every link keeps its text.
         var gm = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
         var (_, gmHtml) = ThroughTheDraft(gm);
-        Assert.Contains("Seen from LINKSECRET Tower", gmHtml, StringComparison.Ordinal);
-        Assert.Contains("Not Written Yet", gmHtml, StringComparison.Ordinal);
+        var tower = BookSlots.KeyFor(BookSlots.WikiSubject("w-tower"));
+        Assert.Contains("Seen from [LINKSECRET Tower](#e-" + tower + ")", gmHtml, StringComparison.Ordinal);
+        // A page nobody wrote has no entry: its words, and no link.
+        Assert.Contains(" Not Written Yet.", gmHtml, StringComparison.Ordinal);
+        // The key of the page the party may not open is the GM edition's alone.
+        Assert.DoesNotContain(tower, html, StringComparison.Ordinal);
         // The party source cannot tell a page that is not written from one it may not see, so both print nothing.
         Assert.DoesNotContain("Not Written Yet", html, StringComparison.Ordinal);
     }

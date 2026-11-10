@@ -85,19 +85,26 @@ public class BookDraftShellTests
     }
 
     [Theory]
-    [InlineData("Contents")]
-    [InlineData("Overview")]
-    [InlineData("Cast")]
-    [InlineData("Gazetteer")]
-    [InlineData("Chronicle")]
-    [InlineData("Lore")]
-    [InlineData("Pages")]
-    [InlineData("Homebrew")]
-    public void EveryChapterTitleIsTranslated(string label)
+    [InlineData("Contents", "Contents")]
+    [InlineData("Overview", "Introduction")]
+    [InlineData("Cast", "Cast")]
+    [InlineData("Gazetteer", "Gazetteer")]
+    [InlineData("Chronicle", "The story so far")]
+    [InlineData("Lore", "Lore")]
+    [InlineData("Pages", "Pages")]
+    [InlineData("Homebrew", "Homebrew")]
+    [InlineData("Appendix", "Appendix {0}: {1}")]
+    [InlineData("AppendixLetters", "AB")]
+    [InlineData("Quests", "Quests")]
+    [InlineData("Factions", "Factions")]
+    [InlineData("People", "People")]
+    [InlineData("Places", "Places")]
+    [InlineData("OtherPages", "Other pages")]
+    public void EveryChapterTitleIsTranslated(string label, string words)
     {
         var key = "Campaign.Book.Label." + label;
         var english = Codex.Localization.Localizer.For("en")[key];
-        Assert.Equal(label, english);
+        Assert.Equal(words, english);
         foreach (var language in new[] { "ru", "he" })
         {
             var text = Codex.Localization.Localizer.For(language)[key];

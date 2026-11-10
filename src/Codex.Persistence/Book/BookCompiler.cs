@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Codex.Core.Book;
@@ -37,47 +38,30 @@ public static class BookCompiler
             if (kind != null) positions.Add(new BookEntryPosition(current, heading, line, kind, owner, sub, name, placement, hasArt, subject, source.Audience));
         }
 
-        void Add(string id, string title, Action<StringBuilder> body)
+        bool Add(string id, Func<string> title, Action<StringBuilder> body)
         {
             var sb = new StringBuilder();
             current = id;
             body(sb);
-            if (sb.Length > 0)
-            {
-                chapters.Add(new BookSection(id, "# " + Escape(title) + "\n\n" + sb));
-            }
+            if (sb.Length == 0) return false;
+            chapters.Add(new BookSection(id, "# " + Escape(title()) + "\n\n" + sb));
+            return true;
         }
 
-        Add("overview", labels.Overview, sb =>
+        // A group of entries inside a chapter (a region, a kind of page, a type of homebrew): a heading with a marker and an anchor of its
+        // own, so a merge or an AI edit takes it as a unit and the contents can point at it, but no picture's place (BookSlots.For).
+        void Group(StringBuilder sb, string label, string kind, string owner, string subject) =>
+            Head(sb, "## ", label, kind, owner, subject: subject);
+
+        // The shape of a published adventure (docs/BOOK_EXPORT.md 51): what the book is, what has happened, the world, and the people and
+        // the homebrew as appendices at the back.
+        Add("overview", () => labels.Overview, sb =>
         {
             Paragraph(sb, links, source.Campaign.Tagline.Length > 0 ? "*" + Escape(source.Campaign.Tagline) + "*" : null);
             Paragraph(sb, links, source.Campaign.Description);
         });
 
-        Add("cast", labels.Cast, sb =>
-        {
-            foreach (var actor in source.Actors.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase))
-            {
-                Head(sb, "## ", actor.Name, "portrait", actor.Id, hasArt: actor.HasPortrait, placement: BookArtPlacement.Portrait, subject: BookSlots.ActorSubject(source.Audience, actor));
-                Paragraph(sb, links, actor.PublicDescription);
-                Paragraph(sb, links, actor.Biography);
-            }
-        });
-
-        Add("gazetteer", labels.Gazetteer, sb =>
-        {
-            foreach (var region in source.Regions.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
-            {
-                Head(sb, "## ", region.Name);
-                foreach (var place in region.Locations)
-                {
-                    Head(sb, "### ", place.Name, "location", region.Id, place.Id, place.HasArt, BookArtPlacement.Place, BookSlots.LocationSubject(region.Id, place.Id));
-                    Paragraph(sb, links, place.Description);
-                }
-            }
-        });
-
-        Add("chronicle", labels.Chronicle, sb =>
+        Add("chronicle", () => labels.Chronicle, sb =>
         {
             foreach (var session in source.Sessions)
             {
@@ -91,7 +75,20 @@ public static class BookCompiler
             }
         });
 
-        Add("lore", labels.Lore, sb =>
+        Add("gazetteer", () => labels.Gazetteer, sb =>
+        {
+            foreach (var region in source.Regions.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase))
+            {
+                Group(sb, region.Name, BookEntryPosition.Region, region.Id, BookSlots.RegionSubject(region.Id));
+                foreach (var place in region.Locations)
+                {
+                    Head(sb, "### ", place.Name, "location", region.Id, place.Id, place.HasArt, BookArtPlacement.Place, BookSlots.LocationSubject(region.Id, place.Id));
+                    Paragraph(sb, links, place.Description);
+                }
+            }
+        });
+
+        Add("lore", () => labels.Lore, sb =>
         {
             // Each fact is a paragraph and its details follow as they were written: a secret block inside them must keep its own
             // lines, or its marker stops being a marker and prints.
@@ -102,21 +99,61 @@ public static class BookCompiler
             }
         });
 
-        Add("pages", labels.Pages, sb =>
+        Add("pages", () => labels.Pages, sb =>
         {
-            foreach (var page in source.Wiki.OrderBy(p => p.Title, StringComparer.CurrentCultureIgnoreCase))
+            // By the wiki's kinds, what the party is to do first: quests, who is behind them, who and where, and the rest.
+            (WikiPageKind Kind, string Label)[] kinds =
+            [
+                (WikiPageKind.Quest, labels.Quests), (WikiPageKind.Faction, labels.Factions), (WikiPageKind.Person, labels.People),
+                (WikiPageKind.Place, labels.Places), (WikiPageKind.General, labels.OtherPages)
+            ];
+            foreach (var (kind, label) in kinds)
             {
-                Head(sb, "## ", page.Title, "wiki", page.Id, hasArt: page.HasArt, placement: BookArtPlacement.Place, subject: BookSlots.WikiSubject(page.Id));
-                Paragraph(sb, links, page.Body);
+                var pages = source.Wiki.Where(p => p.Kind == kind).OrderBy(p => p.Title, StringComparer.CurrentCultureIgnoreCase).ToList();
+                if (pages.Count == 0) continue;
+                Group(sb, label, BookEntryPosition.Group, "pages/" + kind, BookSlots.GroupSubject("pages", kind.ToString()));
+                foreach (var page in pages)
+                {
+                    Head(sb, "### ", page.Title, "wiki", page.Id, hasArt: page.HasArt, placement: BookArtPlacement.Place, subject: BookSlots.WikiSubject(page.Id));
+                    Paragraph(sb, links, page.Body);
+                }
             }
         });
 
-        Add("homebrew", labels.Homebrew, sb =>
-        {
-            foreach (var entry in source.Homebrew.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase))
+        // The appendices are lettered in the order they are in the book: a campaign with no cast to print has its homebrew as the first.
+        var appendix = 0;
+        string Lettered(string title) =>
+            appendix < labels.AppendixLetters.Length ? string.Format(CultureInfo.InvariantCulture, labels.Appendix, labels.AppendixLetters[appendix], title) : title;
+
+        // The people the party meets, not the party: the book is the adventure as a source book, for a table that brings its own characters.
+        // A player's own copy (BookSource.OwnedActorIds) still has that player's characters, which is where what only they were told is.
+        if (Add("cast", () => Lettered(labels.Cast), sb =>
             {
-                Head(sb, "## ", entry.Name, "homebrew", entry.Id, hasArt: entry.HasArt, placement: BookArtPlacement.Portrait, subject: BookSlots.HomebrewSubject(entry.Id));
-                Paragraph(sb, links, entry.Description);
+                foreach (var actor in source.Actors.Where(a => a.Kind != ActorKind.PlayerCharacter || source.OwnedActorIds.Contains(a.Id)).OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase))
+                {
+                    Head(sb, "## ", actor.Name, "portrait", actor.Id, hasArt: actor.HasPortrait, placement: BookArtPlacement.Portrait, subject: BookSlots.ActorSubject(source.Audience, actor));
+                    Paragraph(sb, links, actor.PublicDescription);
+                    Paragraph(sb, links, actor.Biography);
+                }
+            }))
+        {
+            appendix++;
+        }
+
+        Add("homebrew", () => Lettered(labels.Homebrew), sb =>
+        {
+            // By the system's types (its creatures, its items), each under the name the system gives it.
+            var types = source.Homebrew.GroupBy(e => e.Type.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(g => (Type: g.Key, Label: TypeLabel(labels, g.Key), Entries: g.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase).ToList()))
+                .OrderBy(g => g.Label, StringComparer.CurrentCultureIgnoreCase).ThenBy(g => g.Type, StringComparer.Ordinal);
+            foreach (var (type, label, list) in types)
+            {
+                Group(sb, label, BookEntryPosition.Group, "homebrew/" + type, BookSlots.GroupSubject("homebrew", type.ToLowerInvariant()));
+                foreach (var entry in list)
+                {
+                    Head(sb, "### ", entry.Name, "homebrew", entry.Id, hasArt: entry.HasArt, placement: BookArtPlacement.Portrait, subject: BookSlots.HomebrewSubject(entry.Id));
+                    Paragraph(sb, links, entry.Description);
+                }
             }
         });
 
@@ -189,6 +226,9 @@ public static class BookCompiler
             .Select(n => n.Trim())
             .Distinct(StringComparer.Ordinal)
             .ToList();
+
+    private static string TypeLabel(BookLabels labels, string type) =>
+        labels.HomebrewType?.Invoke(type) is { } label && !string.IsNullOrWhiteSpace(label) ? label.Trim() : type.Length > 0 ? type : labels.Homebrew;
 
     private static void Paragraph(StringBuilder sb, Func<string, string> links, string? markdown)
     {
@@ -265,7 +305,24 @@ public static class BookArtPlacement
 /// what its picture slot is about as <paramref name="Audience"/> sees it (<see cref="BookSlots"/>).</summary>
 public sealed record BookEntryPosition(string Section, string Heading, int Line, string Kind, string Owner, string Sub, string Alt, string Placement, bool HasArt, string Subject, BookAudience Audience)
 {
+    /// <summary>The kind of a region of the gazetteer: a group whose entries are its places.</summary>
+    public const string Region = "region";
+
+    /// <summary>The kind of any other group (a kind of page, a type of homebrew).</summary>
+    public const string Group = "group";
+
+    /// <summary>The entry's key: its picture slot's, and the anchor of its marker in the draft (<c>#e-KEY</c>).</summary>
     public string SlotKey => BookSlots.KeyFor(Subject);
+
+    /// <summary>A heading that groups entries (docs/BOOK_EXPORT.md 51): it has a marker and an anchor, and no picture's place.</summary>
+    public bool IsGroup => Kind is Region or Group;
+
+    /// <summary>The level of its heading: 2 for <c>##</c>.</summary>
+    public int Level => Heading.TakeWhile(c => c == '#').Count();
+
+    /// <summary>Listed under its chapter in the contents: every entry and every region, but not a place (it is under its region) and not a
+    /// group of pages or homebrew (its entries are listed).</summary>
+    public bool InContents => Kind == Region || (!IsGroup && Kind != "location");
 }
 
 /// <summary>One existing picture and the entry whose heading it follows.</summary>

@@ -58,6 +58,18 @@ public class BookDraftDocument
     public static bool IsSection(string? section) =>
         section is { Length: > 0 and <= 40 } && section.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-') && section[0] != '-' && section[^1] != '-';
 
+    /// <summary>A chapter of the GM's own (docs/BOOK_EXPORT.md 51): one the campaign does not make. Its id says so, <c>own-</c> and a GUID's 32
+    /// digits, a form no generated chapter has; it has no generated text, so it never follows the campaign and is never stale.</summary>
+    public const string OwnPrefix = "own-";
+
+    public static bool IsOwn(string? section) =>
+        section is { Length: 36 } && section.StartsWith(OwnPrefix, StringComparison.Ordinal) && section.AsSpan(4).IndexOfAnyExcept("0123456789abcdef") < 0;
+
+    public static string NewOwn() => OwnPrefix + Guid.NewGuid().ToString("N");
+
+    /// <summary>The longest title a chapter of the GM's own may have.</summary>
+    public const int MaxTitleChars = 200;
+
     public static string IdFor(string campaignId, string edition, string language) => $"bookdrafts/{campaignId}/{edition}/{language}";
 
     public static string ChapterIdFor(string campaignId, string edition, string language, string section) => IdFor(campaignId, edition, language) + "/chapters/" + section;
@@ -131,6 +143,10 @@ public sealed class BookDraftWebEntry
 /// <summary>A chapter as the generator made it now, for a new draft or to compare against a stored one.</summary>
 public sealed record BookDraftGenerated(string Section, string Title, string Markdown, string Key);
 
+/// <summary>A chapter of the GM's own (docs/BOOK_EXPORT.md 51) as the contents need it: its id, its title, and the chapter it follows in the
+/// draft (empty: it is the first after the front pages).</summary>
+public sealed record BookDraftOwn(string Section, string Title, string After);
+
 /// <summary>A draft and its chapters, in book order.</summary>
 public sealed record BookDraft(BookDraftDocument Document, IReadOnlyList<BookDraftChapter> Chapters);
 
@@ -182,6 +198,26 @@ public partial interface IBookDraftRepository
     /// </summary>
     Task<BookDraftFollowed?> FollowAsync(CampaignAccess dm, string edition, string language, IReadOnlyList<BookDraftGenerated> generated);
 
+    /// <summary>The GM's own chapters, in the draft's order, each with the chapter it follows: what the contents list of them. Empty when there
+    /// are none, there is no draft, or the caller is not the campaign's GM now.</summary>
+    Task<IReadOnlyList<BookDraftOwn>> OwnAsync(CampaignAccess dm, string edition, string language);
+
+    /// <summary>A new chapter of the GM's own (docs/BOOK_EXPORT.md 51), holding its title and nothing else, placed after
+    /// <paramref name="after"/> (a chapter of the draft; null or one it does not have: at the end). Refused without a title, and as too large
+    /// when the draft has all the chapters it may hold. Returns the new chapter's id.</summary>
+    Task<(BookDraftSave Result, string? Section)> AddChapterAsync(CampaignAccess dm, string edition, string language, string title, string? after);
+
+    /// <summary>A new title for a chapter of the GM's own, as the list of chapters and the contents show it. The chapter's text is the GM's and
+    /// is not touched: its heading is renamed by whoever edits the text.</summary>
+    Task<(BookDraftSave Result, int Version)> RenameChapterAsync(CampaignAccess dm, string edition, string language, string section, string title, int version);
+
+    /// <summary>Moves a chapter of the GM's own one place up (<paramref name="by"/> below zero) or down among the draft's chapters, never before
+    /// the front pages. At the end already: saved, and nothing changes.</summary>
+    Task<BookDraftSave> MoveChapterAsync(CampaignAccess dm, string edition, string language, string section, int by);
+
+    /// <summary>A chapter of the GM's own, gone with its text. A chapter the campaign makes is never deleted this way.</summary>
+    Task<BookDraftSave> DeleteChapterAsync(CampaignAccess dm, string edition, string language, string section);
+
     /// <summary>The draft's theme, paper and GM stylesheet. A theme the book does not have is refused; the chapters are never touched.</summary>
     /// <para><paramref name="edge"/>: torn page edges on or off; null leaves them as they are.</para>
     Task<(BookDraftSave Result, int Version)> SaveSettingsAsync(CampaignAccess dm, string edition, string language, string css, string pageSize, string theme, bool homebrewery,
@@ -230,7 +266,7 @@ public partial class RavenBookDraftRepository(RavenDbService dbService, StorageQ
     public async Task<BookDraft?> CreateAsync(CampaignAccess dm, string edition, string language, IReadOnlyList<BookDraftGenerated> generated, string pageSize = "Letter")
     {
         if (await GmAsync(dm, edition, language) is not { } now) return null;
-        if (generated.Count > BookDraftDocument.MaxChapters || generated.Any(g => !BookDraftDocument.IsSection(g.Section)) || generated.DistinctBy(g => g.Section).Count() != generated.Count)
+        if (generated.Count > BookDraftDocument.MaxChapters || generated.Any(g => !BookDraftDocument.IsSection(g.Section) || BookDraftDocument.IsOwn(g.Section)) || generated.DistinctBy(g => g.Section).Count() != generated.Count)
         {
             return null;
         }
@@ -372,7 +408,7 @@ public partial class RavenBookDraftRepository(RavenDbService dbService, StorageQ
     public async Task<BookDraftFollowed?> FollowAsync(CampaignAccess dm, string edition, string language, IReadOnlyList<BookDraftGenerated> generated)
     {
         if (await GmAsync(dm, edition, language) is not { } now) return null;
-        if (generated.Any(g => !BookDraftDocument.IsSection(g.Section)) || generated.DistinctBy(g => g.Section).Count() != generated.Count) return null;
+        if (generated.Any(g => !BookDraftDocument.IsSection(g.Section) || BookDraftDocument.IsOwn(g.Section)) || generated.DistinctBy(g => g.Section).Count() != generated.Count) return null;
         for (var attempt = 1; ; attempt++)
         {
             using var session = dbService.Store.OpenAsyncSession();
@@ -400,7 +436,7 @@ public partial class RavenBookDraftRepository(RavenDbService dbService, StorageQ
                         updated++;
                     }
                 }
-                else if (Untouched(chapter))
+                else if (!BookDraftDocument.IsOwn(chapter.Section) && Untouched(chapter))
                 {
                     // The campaign no longer has this chapter (every entry hidden or deleted) and the GM never wrote in it.
                     session.Delete(chapter);
@@ -421,8 +457,13 @@ public partial class RavenBookDraftRepository(RavenDbService dbService, StorageQ
                 added++;
             }
 
-            if (updated + added + removed == 0) return new BookDraftFollowed(0, 0, 0);
-            if (added + removed > 0)
+            // The campaign's chapters stand in the order the generator gives them now (a newer generator may order them differently). A chapter
+            // it does not make (the GM's own, or an edited one the campaign no longer has) stays behind the chapter it stood behind.
+            var ordered = Ordered(draft.Document.Chapters, generated);
+            var moved = !ordered.SequenceEqual(draft.Document.Chapters, StringComparer.Ordinal);
+            if (moved) draft.Document.Chapters = ordered;
+            if (updated + added + removed == 0 && !moved) return new BookDraftFollowed(0, 0, 0);
+            if (added + removed > 0 || moved)
             {
                 draft.Document.Version++;
                 draft.Document.UpdatedAt = at;
@@ -437,6 +478,136 @@ public partial class RavenBookDraftRepository(RavenDbService dbService, StorageQ
             {
                 // A tab saved a chapter in between: read again, and that chapter may now count as edited.
             }
+        }
+    }
+
+    /// <summary>The draft's chapters with the generated ones in the generator's order; each of the others follows the generated chapter it
+    /// followed before (or stays in front of them all). Public for its tests.</summary>
+    public static List<string> Ordered(IReadOnlyList<string> chapters, IReadOnlyList<BookDraftGenerated> generated)
+    {
+        var made = generated.Select(g => g.Section).Where(chapters.Contains).ToList();
+        var fixedSet = made.ToHashSet(StringComparer.Ordinal);
+        var behind = new Dictionary<string, List<string>>(StringComparer.Ordinal) { [string.Empty] = [] };
+        var last = string.Empty;
+        foreach (var section in chapters)
+        {
+            if (fixedSet.Contains(section)) last = section;
+            else (behind.TryGetValue(last, out var list) ? list : behind[last] = []).Add(section);
+        }
+
+        var result = new List<string>(chapters.Count);
+        result.AddRange(behind[string.Empty]);
+        foreach (var section in made)
+        {
+            result.Add(section);
+            if (behind.TryGetValue(section, out var list)) result.AddRange(list);
+        }
+
+        return result;
+    }
+
+    public async Task<IReadOnlyList<BookDraftOwn>> OwnAsync(CampaignAccess dm, string edition, string language)
+    {
+        if (await GmAsync(dm, edition, language) is not { } now) return [];
+        using var session = dbService.Store.OpenAsyncSession();
+        var draft = await session.LoadAsync<BookDraftDocument>(BookDraftDocument.IdFor(now.CampaignId, edition, language));
+        if (draft == null || draft.CampaignId != now.CampaignId || !draft.Chapters.Any(BookDraftDocument.IsOwn)) return [];
+        var ids = draft.Chapters.Where(BookDraftDocument.IsOwn).Select(s => BookDraftDocument.ChapterIdFor(now.CampaignId, edition, language, s)).ToList();
+        var loaded = await session.LoadAsync<BookDraftChapter>(ids);
+        var own = new List<BookDraftOwn>();
+        for (var i = 0; i < draft.Chapters.Count; i++)
+        {
+            var section = draft.Chapters[i];
+            if (!BookDraftDocument.IsOwn(section)) continue;
+            if (loaded.GetValueOrDefault(BookDraftDocument.ChapterIdFor(now.CampaignId, edition, language, section)) is not { } chapter || chapter.CampaignId != now.CampaignId) continue;
+            own.Add(new BookDraftOwn(section, chapter.Title, i == 0 ? string.Empty : draft.Chapters[i - 1]));
+        }
+
+        return own;
+    }
+
+    /// <summary>What a new chapter of the GM's own holds: the chapter block every chapter opens with, around its title.</summary>
+    public static string OwnText(string section, string title) => "{{chapter,#ch-" + section + "\n# " + BookCompiler.Escape(title) + "\n}}\n";
+
+    public async Task<(BookDraftSave Result, string? Section)> AddChapterAsync(CampaignAccess dm, string edition, string language, string title, string? after)
+    {
+        title = Clip(title, BookDraftDocument.MaxTitleChars);
+        if (title.Length == 0 || await GmAsync(dm, edition, language) is not { } now) return (BookDraftSave.NotAllowed, null);
+        using var session = dbService.Store.OpenAsyncSession();
+        session.Advanced.UseOptimisticConcurrency = true;
+        var draft = await session.LoadAsync<BookDraftDocument>(BookDraftDocument.IdFor(now.CampaignId, edition, language));
+        if (draft == null || draft.CampaignId != now.CampaignId) return (BookDraftSave.NotAllowed, null);
+        if (draft.Chapters.Count >= BookDraftDocument.MaxChapters) return (BookDraftSave.TooLarge, null);
+        var section = BookDraftDocument.NewOwn();
+        var chapter = new BookDraftChapter
+        {
+            Id = BookDraftDocument.ChapterIdFor(now.CampaignId, edition, language, section), CampaignId = now.CampaignId, Section = section,
+            Title = title, Markdown = OwnText(section, title), UpdatedBy = now.UserId
+        };
+        await session.StoreAsync(chapter, string.Empty, chapter.Id);
+        var at = after == null ? -1 : draft.Chapters.IndexOf(after);
+        draft.Chapters.Insert(at < 0 ? draft.Chapters.Count : at + 1, section);
+        draft.Version++;
+        draft.UpdatedAt = DateTime.UtcNow;
+        try
+        {
+            await session.SaveChangesAsync();
+            return (BookDraftSave.Saved, section);
+        }
+        catch (ConcurrencyException)
+        {
+            return (BookDraftSave.Conflict, null);
+        }
+    }
+
+    public Task<(BookDraftSave Result, int Version)> RenameChapterAsync(CampaignAccess dm, string edition, string language, string section, string title, int version) =>
+        !BookDraftDocument.IsOwn(section) || Clip(title, BookDraftDocument.MaxTitleChars).Length == 0
+            ? Task.FromResult((BookDraftSave.NotAllowed, version))
+            : ChangeChapterAsync(dm, edition, language, section, version, (chapter, _) =>
+            {
+                chapter.Title = Clip(title, BookDraftDocument.MaxTitleChars);
+                return true;
+            });
+
+    public Task<BookDraftSave> MoveChapterAsync(CampaignAccess dm, string edition, string language, string section, int by) =>
+        ChangeOwnAsync(dm, edition, language, section, (draft, _) =>
+        {
+            var at = draft.Chapters.IndexOf(section);
+            var to = at + Math.Sign(by);
+            // The front pages (the cover and the contents) are the book's first chapter whatever else moves.
+            if (to < 0 || to >= draft.Chapters.Count || draft.Chapters[to] == "front") return false;
+            (draft.Chapters[at], draft.Chapters[to]) = (draft.Chapters[to], draft.Chapters[at]);
+            return true;
+        });
+
+    public Task<BookDraftSave> DeleteChapterAsync(CampaignAccess dm, string edition, string language, string section) =>
+        ChangeOwnAsync(dm, edition, language, section, (draft, session) =>
+        {
+            session.Delete(BookDraftDocument.ChapterIdFor(draft.CampaignId, edition, language, section));
+            draft.Chapters.Remove(section);
+            return true;
+        });
+
+    // A change to where a chapter of the GM's own stands, or whether it is there: the draft's list of chapters, under the draft's own version.
+    private async Task<BookDraftSave> ChangeOwnAsync(CampaignAccess dm, string edition, string language, string section,
+        Func<BookDraftDocument, Raven.Client.Documents.Session.IAsyncDocumentSession, bool> change)
+    {
+        if (!BookDraftDocument.IsOwn(section) || await GmAsync(dm, edition, language) is not { } now) return BookDraftSave.NotAllowed;
+        using var session = dbService.Store.OpenAsyncSession();
+        session.Advanced.UseOptimisticConcurrency = true;
+        var draft = await session.LoadAsync<BookDraftDocument>(BookDraftDocument.IdFor(now.CampaignId, edition, language));
+        if (draft == null || draft.CampaignId != now.CampaignId || !draft.Chapters.Contains(section)) return BookDraftSave.NotAllowed;
+        if (!change(draft, session)) return BookDraftSave.Saved;
+        draft.Version++;
+        draft.UpdatedAt = DateTime.UtcNow;
+        try
+        {
+            await session.SaveChangesAsync();
+            return BookDraftSave.Saved;
+        }
+        catch (ConcurrencyException)
+        {
+            return BookDraftSave.Conflict;
         }
     }
 

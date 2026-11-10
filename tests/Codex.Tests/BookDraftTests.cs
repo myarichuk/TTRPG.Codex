@@ -945,4 +945,205 @@ public class BookDraftTests : IClassFixture<RavenDbFixture>
         var report = (await _drafts.LeaksAsync(dm, "en"))!;
         Assert.Contains(report.Hits, h => h is { Section: BookLeakCheck.Css, Kind: BookLeakKind.HiddenName });
     }
+
+    // A chapter of the GM's own (docs/BOOK_EXPORT.md 51): it stands where it was put, the campaign never makes it stale or takes it away, and it
+    // is in everything the book is: the contents, the Markdown file, Fit pages and the leak check.
+    [Fact]
+    public async Task AChapterOfTheGmsOwn_StaysAsTheCampaignMoves_IsNeverStale_AndIsInTheContentsTheFileFitPagesAndTheLeakCheck()
+    {
+        var (dm, id) = await SeedAsync();
+        await _drafts.OpenAsync(dm, "party", "en");
+
+        var (result, section) = await _drafts.AddChapterAsync(dm, "party", "en", "  GM_OWN [Notes]  ", "pages");
+        Assert.Equal(BookDraftSave.Saved, result);
+        Assert.True(BookDraftDocument.IsOwn(section));
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        Assert.Equal(["front", "overview", "pages", section!, "cast"], view.Chapters.Select(c => c.Section));
+        var own = view.Chapters.Single(c => c.Section == section);
+        Assert.True(own is { Own: true, Edited: false, Stale: false, Gone: false, CanUndo: false, Title: "GM_OWN [Notes]" });
+        Assert.Equal("{{chapter,#ch-" + section + "\n# GM\\_OWN \\[Notes\\]\n}}\n", own.Markdown);
+        // The contents, which nobody edited, took it in where it stands.
+        Assert.Contains("](#ch-pages)\n  - [PUBLIC\\_Docks](#e-", view.Chapters[0].Markdown);
+        Assert.Matches(@"\n- \[GM\\_OWN \\\[Notes\\\]\]\(#ch-" + section + @"\)\n- \[[^\n]*\]\(#ch-cast\)\n", view.Chapters[0].Markdown);
+
+        // The GM writes in it; the campaign changes; it is as it was, with no notice, and the generated chapters followed around it.
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveChapterAsync(dm, "party", "en", section!, own.Markdown + "\nGM_OWN_TEXT of CANARY_HIDDEN_NAME.\n", own.Version)).Result);
+        await BioAsync(id, "PUBLIC_BIO_CHANGED");
+        view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        own = view.Chapters.Single(c => c.Section == section);
+        Assert.True(own is { Own: true, Edited: false, Stale: false, Gone: false });
+        Assert.Contains("GM_OWN_TEXT", own.Markdown);
+        Assert.Contains("PUBLIC_BIO_CHANGED", view.Chapters.Single(c => c.Section == "cast").Markdown);
+        Assert.Equal(["front", "overview", "pages", section!, "cast"], view.Chapters.Select(c => c.Section));
+        // Nothing of the campaign's can be asked for it: there is no generated text to take or to merge.
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.RegenerateAsync(dm, "party", "en", section!, own.Version)).Result);
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.KeepAsync(dm, "party", "en", section!, own.Version)).Result);
+
+        // The Markdown file has it, between the chapters it stands between.
+        var file = (await _drafts.MarkdownAsync(dm, "party", "en"))!.Value.Markdown;
+        Assert.True(file.IndexOf("GM_OWN_TEXT", StringComparison.Ordinal) > file.IndexOf("{{chapter,#ch-pages", StringComparison.Ordinal));
+        Assert.True(file.IndexOf("GM_OWN_TEXT", StringComparison.Ordinal) < file.IndexOf("{{chapter,#ch-cast", StringComparison.Ordinal));
+
+        // Fit pages lays it out with the rest and saves the breaks it is given.
+        IReadOnlyList<string>? laidOut = null;
+        Task<BookFitted> Layout(BookDraftPage page)
+        {
+            laidOut = [.. page.Chapters.Select(c => c.Section)];
+            return Task.FromResult(new BookFitted
+            {
+                Chapters = [.. page.Chapters.Select(c => new BookLayoutChapter(c.Section, c.Section == section ? c.Markdown.Replace("\nGM_OWN_TEXT", "\n\\page {fitted}\n\nGM_OWN_TEXT") : c.Markdown))]
+            });
+        }
+
+        var report = (await _drafts.FitAsync(dm, "party", "en", _ => null, Layout, CancellationToken.None))!;
+        Assert.Equal((BookDraftSave.Saved, 1), (report.Result, report.Chapters));
+        Assert.Contains(section, laidOut!);
+        Assert.Contains("\\page {fitted}", (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == section).Markdown);
+
+        // The leak check reads it as it reads any chapter of the party draft.
+        var leaks = (await _drafts.LeaksAsync(dm, "en"))!;
+        Assert.Contains(leaks.Hits, h => h.Section == section && h.Kind == BookLeakKind.HiddenName);
+    }
+
+    // A title is the GM's typing, and the contents print it: the leak check must not take the contents' word for it.
+    [Fact]
+    public async Task TheTitleOfAnOwnChapter_IsCheckedForLeaks_WhereTheContentsPrintIt()
+    {
+        var (dm, _) = await SeedAsync();
+        await _drafts.OpenAsync(dm, "party", "en");
+        await _drafts.OpenAsync(dm, "dm", "en");
+        Assert.Equal(0, (await _drafts.LeaksAsync(dm, "en"))!.Total);
+
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.AddChapterAsync(dm, "party", "en", "CANARY_HIDDEN_NAME", null)).Result);
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        Assert.Contains("CANARY\\_HIDDEN\\_NAME", view.Chapters[0].Markdown);
+
+        var leaks = (await _drafts.LeaksAsync(dm, "en"))!;
+        Assert.Contains(leaks.Hits, h => h is { Section: "front", Kind: BookLeakKind.HiddenName });
+    }
+
+    [Fact]
+    public async Task OnlyAnOwnChapter_IsRenamedMovedOrDeleted_OnlyByTheGm_NeverBeforeTheFrontPages_AndTheDraftHoldsNoMoreThanItMay()
+    {
+        var (dm, _) = await SeedAsync();
+        var player = new CampaignAccess(dm.CampaignId, PlayerUser, CampaignRole.Player);
+        await _drafts.OpenAsync(dm, "party", "en");
+        async Task<List<string>> OrderAsync() => [.. (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Select(c => c.Section)];
+
+        // Refused: no title, a player, a draft that is not there.
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.AddChapterAsync(dm, "party", "en", "   ", null)).Result);
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.AddChapterAsync(player, "party", "en", "PLAYER_CHAPTER", null)).Result);
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.AddChapterAsync(dm, "party", "ru", "No draft", null)).Result);
+        var section = (await _drafts.AddChapterAsync(dm, "party", "en", "First title", null)).Section!;
+        Assert.Equal(["front", "overview", "pages", "cast", section], await OrderAsync());
+
+        // Rename: the title the list and the contents show; the text is the GM's and stays.
+        var own = (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == section);
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.RenameChapterAsync(player, "party", "en", section, "PLAYER_TITLE", own.Version)).Result);
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.RenameChapterAsync(dm, "party", "en", section, " ", own.Version)).Result);
+        Assert.Equal(BookDraftSave.Conflict, (await _drafts.RenameChapterAsync(dm, "party", "en", section, "Too late", own.Version + 1)).Result);
+        Assert.Equal(BookDraftSave.NotAllowed, (await _drafts.RenameChapterAsync(dm, "party", "en", "cast", "PUBLIC_RENAMED", 0)).Result);
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.RenameChapterAsync(dm, "party", "en", section, "Second title", own.Version)).Result);
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        Assert.Equal("Second title", view.Chapters.Single(c => c.Section == section).Title);
+        Assert.Contains("# First title", view.Chapters.Single(c => c.Section == section).Markdown);
+        Assert.Contains("- [Second title](#ch-" + section + ")", view.Chapters[0].Markdown);
+        Assert.NotEqual("PUBLIC_RENAMED", view.Chapters.Single(c => c.Section == "cast").Title);
+
+        // Move: one place at a time, never before the front pages, and only an own chapter.
+        Assert.Equal(BookDraftSave.NotAllowed, await _drafts.MoveChapterAsync(player, "party", "en", section, -1));
+        Assert.Equal(BookDraftSave.NotAllowed, await _drafts.MoveChapterAsync(dm, "party", "en", "cast", -1));
+        Assert.Equal(BookDraftSave.Saved, await _drafts.MoveChapterAsync(dm, "party", "en", section, 1));
+        Assert.Equal(["front", "overview", "pages", "cast", section], await OrderAsync());
+        for (var i = 0; i < 6; i++) Assert.Equal(BookDraftSave.Saved, await _drafts.MoveChapterAsync(dm, "party", "en", section, -1));
+        Assert.Equal(["front", section, "overview", "pages", "cast"], await OrderAsync());
+        // It keeps its place when the draft is next brought in step with the campaign.
+        await _drafts.OpenAsync(dm, "party", "en");
+        Assert.Equal(["front", section, "overview", "pages", "cast"], await OrderAsync());
+
+        // Emptied by the GM, it is still the GM's chapter: following the campaign never takes it away.
+        own = (await _drafts.GetAsync(dm, "party", "en"))!.Chapters.Single(c => c.Section == section);
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveChapterAsync(dm, "party", "en", section, string.Empty, own.Version)).Result);
+        await _drafts.OpenAsync(dm, "party", "en");
+        Assert.Equal(["front", section, "overview", "pages", "cast"], await OrderAsync());
+
+        // Delete: only an own chapter, and it leaves the contents too.
+        Assert.Equal(BookDraftSave.NotAllowed, await _drafts.DeleteChapterAsync(player, "party", "en", section));
+        Assert.Equal(BookDraftSave.NotAllowed, await _drafts.DeleteChapterAsync(dm, "party", "en", "cast"));
+        Assert.Equal(BookDraftSave.NotAllowed, await _drafts.DeleteChapterAsync(dm, "party", "en", "own-" + new string('0', 32)));
+        Assert.Equal(BookDraftSave.Saved, await _drafts.DeleteChapterAsync(dm, "party", "en", section));
+        view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        Assert.Equal(["front", "overview", "pages", "cast"], view.Chapters.Select(c => c.Section));
+        Assert.DoesNotContain(section, view.Chapters[0].Markdown);
+
+        // The draft holds no more chapters than it may, whoever adds them.
+        var added = 0;
+        while (added < BookDraftDocument.MaxChapters + 5 && (await _drafts.AddChapterAsync(dm, "party", "en", "Chapter " + added, null)).Result == BookDraftSave.Saved) added++;
+        Assert.Equal(BookDraftDocument.MaxChapters - 4, added);
+        Assert.Equal(BookDraftSave.TooLarge, (await _drafts.AddChapterAsync(dm, "party", "en", "One too many", null)).Result);
+        // Start over takes the GM's own chapters with the rest.
+        Assert.True(await _drafts.StartOverAsync(dm, "party", "en"));
+        Assert.Equal(["front", "overview", "pages", "cast"], (await _drafts.OpenAsync(dm, "party", "en"))!.Chapters.Select(c => c.Section));
+    }
+
+    // A draft the generator before this one made (51): its chapters in the old order, its text in the old shape. Opened now, it is in the new
+    // order, the chapters nobody edited are the new text, and the edited one says the campaign moved on and can be merged entry by entry.
+    [Fact]
+    public async Task ADraftOfTheOlderGenerator_TakesTheNewOrder_FollowsWhereNobodyEdited_AndOffersAMergeWhereTheGmDid()
+    {
+        var (dm, id) = await SeedAsync();
+        var vera = "{{entry,#e-" + BookSlots.KeyFor("actor:a-vera-" + id) + "}}";
+        var oldCast = "{{chapter,#ch-cast\n# Cast\n}}\n\n" + vera + "\n## PUBLIC\\_Vera\n\nOLD_BIO\n";
+        BookDraftGenerated Old(string section, string text) => new(section, section, text, "old-key-" + section);
+        var created = await _store.CreateAsync(dm, "party", "en",
+            [Old("front", "OLD_FRONT\n"), Old("overview", "OLD_OVERVIEW\n"), Old("cast", oldCast), Old("pages", "OLD_PAGES\n")]);
+        Assert.Equal(["front", "overview", "cast", "pages"], created!.Chapters.Select(c => c.Section));
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveChapterAsync(dm, "party", "en", "cast", oldCast + "\nGM_EDIT\n", 0)).Result);
+
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+
+        Assert.Equal(["front", "overview", "pages", "cast"], view.Chapters.Select(c => c.Section));
+        foreach (var followed in view.Chapters.Where(c => c.Section != "cast"))
+        {
+            Assert.DoesNotContain("OLD_", followed.Markdown);
+            Assert.True(followed is { Edited: false, Stale: false });
+        }
+
+        Assert.Contains("# Introduction", view.Chapters.Single(c => c.Section == "overview").Markdown);
+        var cast = view.Chapters.Single(c => c.Section == "cast");
+        Assert.True(cast is { Edited: true, Stale: true });
+        Assert.Contains("GM_EDIT", cast.Markdown);
+        // The merge finds the same entry in all three versions by its marker, and the entry the old text did not have as a new one.
+        var input = (await _drafts.MergeInputAsync(dm, "party", "en", "cast"))!;
+        var plan = BookDraftMerge.Plan(input.Base, input.Markdown, input.Now!.Markdown)!;
+        Assert.Equal(BookMergeKind.Conflict, plan.Units.Single(u => u.Id == "e-" + BookSlots.KeyFor("actor:a-vera-" + id)).Kind);
+        Assert.Contains(plan.Units, u => u.Kind == BookMergeKind.Added && u.Text.Contains("PUBLIC\\_hooded stranger"));
+    }
+
+    // A draft made by an older generator, which ordered the chapters differently, takes the order the generator gives now; a chapter the
+    // campaign does not make keeps the chapter it stood behind.
+    [Fact]
+    public void TheCampaignsChapters_TakeTheGeneratorsOrder_AndTheOthersFollowTheChapterTheyStoodBehind()
+    {
+        string[] stored = ["own-first", "front", "overview", "cast", "own-a", "own-b", "gazetteer", "chronicle", "gone", "lore"];
+        var generated = new[] { "front", "overview", "chronicle", "gazetteer", "lore", "pages", "cast" }.Select(s => new BookDraftGenerated(s, s, "", "")).ToList();
+
+        Assert.Equal(["own-first", "front", "overview", "chronicle", "gone", "gazetteer", "lore", "cast", "own-a", "own-b"], RavenBookDraftRepository.Ordered(stored, generated));
+        string[] inOrder = ["front", "overview", "own-a", "cast"];
+        Assert.Equal(inOrder, RavenBookDraftRepository.Ordered(inOrder, generated));
+    }
+
+    [Theory]
+    [InlineData("own-0123456789abcdef0123456789abcdef", true)]
+    [InlineData("own-0123456789ABCDEF0123456789abcdef", false)]
+    [InlineData("own-0123456789abcdef0123456789abcde", false)]
+    [InlineData("own-", false)]
+    [InlineData("cast", false)]
+    [InlineData("owned-123456789abcdef0123456789abcde", false)]
+    public void AnOwnChaptersId_HasOneForm(string section, bool own)
+    {
+        Assert.Equal(own, BookDraftDocument.IsOwn(section));
+        Assert.True(BookDraftDocument.IsOwn(BookDraftDocument.NewOwn()));
+        Assert.True(BookDraftDocument.IsSection(BookDraftDocument.NewOwn()));
+    }
 }

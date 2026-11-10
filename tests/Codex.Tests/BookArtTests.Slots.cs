@@ -166,7 +166,7 @@ public partial class BookArtTests
         Assert.True(await _bookArt.PutAsync(dm, KeyOf(party, BookSlots.Header, section: "cast"), BookArtDocument.Party, "Cast", Image(231)));
 
         var (html, _) = await BookPageAsync(dm, BookAudience.Party);
-        Assert.Matches(@"\{\{chapter,#ch-cast\n# Cast\n\}\}\n\n\{\{chapter-art\n!\[[^\]\n]*\]\(" + System.Text.RegularExpressions.Regex.Escape(Uri(231)), html);
+        Assert.Matches(@"\{\{chapter,#ch-cast\n# Appendix A\\: Cast\n\}\}\n\n\{\{chapter-art\n!\[[^\]\n]*\]\(" + System.Text.RegularExpressions.Regex.Escape(Uri(231)), html);
     }
 
     [Fact]

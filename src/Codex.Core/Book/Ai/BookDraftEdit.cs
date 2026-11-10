@@ -218,6 +218,10 @@ public static partial class BookDraftEdits
     [GeneratedRegex(@"\{\{block:(?<n>\d{1,4})\}\}", RegexOptions.CultureInvariant, 2000)]
     private static partial Regex Marker();
 
+    // A link inside the book: "](#anchor)".
+    [GeneratedRegex(@"\]\(\s*#[^)\n]{0,200}\)", RegexOptions.CultureInvariant, 2000)]
+    private static partial Regex Anchor();
+
     [GeneratedRegex(@"\{\{\s*[^\s}]*\b(?:secret|entry|chapter|portrait|place|spot|chapter-art|cover-art|frontCover|toc)\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 2000)]
     private static partial Regex KeptBlock();
 
@@ -252,6 +256,8 @@ public static partial class BookDraftEdits
         var bare = Marker().Replace(reply, string.Empty);
         if (KeptBlock().IsMatch(bare)) problems.Add("Do not write secret, entry, chapter, contents or picture blocks.");
         if (Url().IsMatch(bare) || Picture().IsMatch(bare)) problems.Add("Do not write links, web addresses or pictures.");
+        // A cross-reference ([name](#e-KEY), docs/BOOK_EXPORT.md 51) may stay or go; one the passage did not have is made up.
+        if (Anchor().Matches(bare).Any(m => !passage.Text.Contains(m.Value, StringComparison.Ordinal))) problems.Add("Do not write a link the passage did not have.");
         if (Tag().IsMatch(bare)) problems.Add("Do not write HTML.");
         if (bare.Contains("[[", StringComparison.Ordinal)) problems.Add("Do not write [[...]].");
         if (Break().IsMatch(bare)) problems.Add("Do not write \\page or \\column lines.");
@@ -277,7 +283,7 @@ public static partial class BookDraftEdits
 
 public static class BookEditPrompts
 {
-    public const string Version = "book-edit-3";
+    public const string Version = "book-edit-4";
 
     /// <summary>The asks the editor offers as buttons, in the words the model is sent.</summary>
     public static readonly IReadOnlyDictionary<string, string> Presets = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -314,7 +320,8 @@ public static class BookEditPrompts
         "Keep each exactly once, on a line of its own where it stood on one, where it fits. Never describe or alter what it stands for.";
 
     public const string ForbiddenRule =
-        "- No HTML, no links or web addresses, no pictures, no [[...]], no \\page or \\column lines, no lines starting with ':::', and no secret, entry, chapter or picture blocks.";
+        "- A link of the form [words](#e-...) points at another entry of the book: keep it exactly as it is, or drop it and keep its words. Write no other link.\n" +
+        "- No HTML, no web addresses, no pictures, no [[...]], no \\page or \\column lines, no lines starting with ':::', and no secret, entry, chapter or picture blocks.";
 
     public static string LanguageName(string language) =>
         BookThemes.Primary(language) switch { "ru" => "Russian", "he" => "Hebrew", "en" => "English", var other => other };

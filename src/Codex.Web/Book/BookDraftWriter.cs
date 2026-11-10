@@ -7,6 +7,12 @@ using Codex.Persistence;
 
 namespace Codex.Web.Book;
 
+/// <summary>Where a name in the campaign's text may point in the draft: the key of the entry a mention (<paramref name="Entry"/>: kind and
+/// id) or a page link (<paramref name="Page"/>: the title as written) is about, or null when this edition's book has no such entry.
+/// <paramref name="Self"/> is the entry the text is in, which it never links to.</summary>
+public sealed record BookDraftLinks(Func<string, string, string?> Entry, Func<string, string?> Page, string? Self = null);
+
+
 /// <summary>
 /// The generator of the editable book (docs/BOOK_EXPORT.md 41.2): a masked source, compiled as the book is compiled today, written out as
 /// Homebrewery-flavoured Markdown for <c>marked-hbfm</c>. It writes only a fixed set of blocks, and every theme styles each one. Where
@@ -29,7 +35,7 @@ namespace Codex.Web.Book;
 public static class BookDraftWriter
 {
     /// <summary>Changes whenever what the generator writes changes: every chapter then looks moved on, and the ones nobody edited simply follow.</summary>
-    public const string Version = "book-draft/v3";
+    public const string Version = "book-draft/v4";
 
     public const string Front = "front";
 
@@ -39,15 +45,19 @@ public static class BookDraftWriter
     private static readonly Regex Mention = new(@"\[\[\s*(?<kind>actor|place|item)\s*:(?<rest>.{0,400}?)\]\]", Flags | RegexOptions.IgnoreCase | RegexOptions.Singleline, Timeout);
     private static readonly Regex OpenMention = new(@"\[\[\s*(?:actor|place|item)\s*:[^\n]*", Flags | RegexOptions.IgnoreCase, Timeout);
     private static readonly Regex PageLink = new(@"\[\[(?<inner>[^\[\]\n]{0,300}?)\]\]", Flags, Timeout);
+    // An ATX heading as Markdown reads one: up to three spaces, one to six "#", then a space or the line's end.
+    private static readonly Regex Heading = new(@"^( {0,3})(#{1,6})(?=[ \t]|$)", Flags, Timeout);
     private static readonly Regex Picture = new(@"!\[(?<alt>[^\]\n]{0,300})\]\([^)\n]{0,500}\)", Flags, Timeout);
 
     /// <summary>Every chapter of the edition's draft as the campaign makes it now: the front pages first, then the book's chapters.</summary>
     /// <para><paramref name="system"/>: the campaign's game system, for the stat blocks and tables of its homebrew (<see cref="BookStatBlocks"/>);
     /// without it, an entry is its text only.</para>
+    /// <para><paramref name="own"/>: the chapters the GM added to this draft (docs/BOOK_EXPORT.md 51), in the draft's order, which the contents
+    /// list where they stand. They are the one thing here that is not the campaign's: a title the GM typed.</para>
     public static IReadOnlyList<BookDraftGenerated> Generate(BookSource source, string language, BookArtDocument? stored,
-        Codex.Plugin.Abstractions.SystemDefinition? system = null)
+        Codex.Plugin.Abstractions.SystemDefinition? system = null, IReadOnlyList<BookDraftOwn>? own = null)
     {
-        var compiled = BookComposer.Compose(source, language, out var entries);
+        var compiled = BookComposer.Compose(source, language, out var entries, system);
         var slots = BookSlots.For(source, compiled, entries);
         // The edition's own book pictures (the party takes only the party's), and the entries' own pictures as this source flags them.
         var pictured = BookSlots.Choose(slots, stored).Select(c => c.Slot.Key).ToHashSet(StringComparer.Ordinal);
@@ -58,13 +68,14 @@ public static class BookDraftWriter
             entry.Kind == "homebrew" && homebrew.TryGetValue(entry.Owner, out var h) ? BookStatBlocks.For(h, system, language, entry.SlotKey, mention, dm) : null;
 
         var chapters = new List<BookDraftGenerated>();
-        var front = FrontPages(compiled, slots, pictured, source.Campaign.HasCover);
+        var links = Links(source, entries);
+        var front = FrontPages(compiled, slots, pictured, source.Campaign.HasCover, entries, own ?? []);
         chapters.Add(Made(Front, compiled.Labels.Contents, front));
         foreach (var section in compiled.Sections)
         {
             var header = slots.First(s => s.Kind == BookSlots.Header && s.Section == section.Id);
             var mine = entries.Where(e => e.Section == section.Id).ToDictionary(e => e.Line);
-            chapters.Add(Made(section.Id, header.Label, Chapter(section, header, mine, pictured, mention, dm, Numbers)));
+            chapters.Add(Made(section.Id, header.Label, Chapter(section, header, mine, pictured, mention, dm, Numbers, links)));
         }
 
         return chapters;
@@ -77,7 +88,33 @@ public static class BookDraftWriter
     public static string KeyOf(string markdown) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Version + "\n" + markdown)), 0, 16).ToLowerInvariant();
 
-    private static string FrontPages(BookDocument compiled, IReadOnlyList<BookSlot> slots, IReadOnlySet<string> pictured, bool hasCover)
+    /// <summary>
+    /// Where a mention or a page link may point (docs/BOOK_EXPORT.md 51): the entries this edition's book has, by what they are about. Built from
+    /// the entries the compiler wrote for this source and from its own pages, so the party edition can name no entry, and no page, its source
+    /// lacks: a hidden character has no entry here, and a stranger's is the mask's.
+    /// </summary>
+    public static BookDraftLinks Links(BookSource source, IReadOnlyList<BookEntryPosition> entries)
+    {
+        var keys = new Dictionary<(string Kind, string Id), string>();
+        foreach (var e in entries)
+        {
+            switch (e.Kind)
+            {
+                case "portrait": keys.TryAdd(("actor", e.Owner), e.SlotKey); break;
+                case "location": keys.TryAdd(("place", e.Sub), e.SlotKey); break;
+                case BookEntryPosition.Region: keys.TryAdd(("place", e.Owner), e.SlotKey); break;
+                case "wiki": keys.TryAdd(("wiki", e.Owner), e.SlotKey); break;
+            }
+        }
+
+        var pages = source.Wiki;
+        return new BookDraftLinks(
+            (kind, id) => keys.GetValueOrDefault((kind, id)),
+            title => WikiLinks.TargetOfTitle(title, pages) is { } page ? keys.GetValueOrDefault(("wiki", page.Id)) : null);
+    }
+
+    private static string FrontPages(BookDocument compiled, IReadOnlyList<BookSlot> slots, IReadOnlySet<string> pictured, bool hasCover,
+        IReadOnlyList<BookEntryPosition> entries, IReadOnlyList<BookDraftOwn> own)
     {
         var sb = new StringBuilder();
         // Homebrewery's cover marker: an empty block that tells a theme this page is the front cover. A theme lays the page out from it, and
@@ -87,25 +124,43 @@ public static class BookDraftWriter
         var cover = slots.First(s => s.Kind == BookSlots.Cover);
         if (hasCover || pictured.Contains(cover.Key)) Art(sb, "cover-art", cover.Label, cover.Key);
         sb.Append("\\page\n\n{{toc,wide\n# ").Append(BookCompiler.Escape(compiled.Labels.Contents)).Append("\n\n");
-        foreach (var section in compiled.Sections)
+
+        // Two levels: each chapter, then what is in it (its entries; in the gazetteer its regions, whose places are not listed). A chapter of
+        // the GM's own stands where the draft has it: after the chapter it follows there.
+        var order = compiled.Sections.Select(s => (s.Id, Title: slots.First(h => h.Kind == BookSlots.Header && h.Section == s.Id).Label, Own: false)).ToList();
+        foreach (var chapter in own)
         {
-            var title = slots.First(s => s.Kind == BookSlots.Header && s.Section == section.Id).Label;
-            sb.Append("- [").Append(BookCompiler.Escape(title)).Append("](#ch-").Append(section.Id).Append(")\n");
+            if (order.Any(o => o.Id == chapter.Section)) continue;
+            var after = chapter.After is "" or Front ? -1 : order.FindIndex(o => o.Id == chapter.After);
+            order.Insert(after < 0 && chapter.After is not ("" or Front) ? order.Count : after + 1, (chapter.Section, chapter.Title, true));
+        }
+
+        foreach (var (id, title, mine) in order)
+        {
+            sb.Append("- [").Append(BookCompiler.Escape(title)).Append("](#ch-").Append(id).Append(")\n");
+            if (mine) continue;
+            foreach (var entry in entries.Where(e => e.Section == id && e.InContents))
+            {
+                sb.Append("  - [").Append(BookCompiler.Escape(entry.Alt)).Append("](#e-").Append(entry.SlotKey).Append(")\n");
+            }
         }
 
         return sb.Append("}}\n").ToString();
     }
 
     private static string Chapter(BookSection section, BookSlot header, IReadOnlyDictionary<int, BookEntryPosition> entries, IReadOnlySet<string> pictured,
-        Func<string, string, string?> mention, bool dm, Func<BookEntryPosition, string?> numbers)
+        Func<string, string, string?> mention, bool dm, Func<BookEntryPosition, string?> numbers, BookDraftLinks links)
     {
         var lines = section.Markdown.ReplaceLineEndings("\n").Split('\n');
         var sb = new StringBuilder();
         var text = new StringBuilder();
+        BookEntryPosition? open = null;
         void Flush()
         {
             if (text.Length == 0) return;
-            var converted = Text(text.ToString(), mention, dm).Trim('\n');
+            // A heading the campaign's text has of its own goes under the heading it is written under: the entry's, or the chapter's title
+            // before the first entry. Text never links to the entry it is in.
+            var converted = Text(text.ToString(), mention, dm, open?.Level ?? 1, links with { Self = open?.SlotKey }).Trim('\n');
             if (converted.Length > 0) sb.Append(converted).Append("\n\n");
             text.Clear();
         }
@@ -113,12 +168,11 @@ public static class BookDraftWriter
         // The compiler writes the title first; the chapter's id and its art come with it.
         sb.Append("{{chapter,#ch-").Append(section.Id).Append('\n').Append(lines[0]).Append("\n}}\n\n");
         if (pictured.Contains(header.Key)) Art(sb, "chapter-art", header.Label, header.Key);
-        BookEntryPosition? open = null;
         // An entry's numbers (its stat block or table, 46) follow its text; its spot (28.3, step 7) closes it, before the next entry's marker.
         void Close()
         {
             if (open != null && numbers(open) is { } block) sb.Append(block).Append("\n\n");
-            if (open != null && pictured.Contains(BookSlots.SpotKey(open))) Art(sb, "spot", open.Alt, BookSlots.SpotKey(open));
+            if (open is { IsGroup: false } && pictured.Contains(BookSlots.SpotKey(open))) Art(sb, "spot", open.Alt, BookSlots.SpotKey(open));
             open = null;
         }
 
@@ -131,7 +185,7 @@ public static class BookDraftWriter
                 Close();
                 open = entry;
                 sb.Append("{{entry,#e-").Append(entry.SlotKey).Append("}}\n").Append(lines[i]).Append("\n\n");
-                if (entry.HasArt || pictured.Contains(entry.SlotKey))
+                if (!entry.IsGroup && (entry.HasArt || pictured.Contains(entry.SlotKey)))
                 {
                     Art(sb, entry.Placement == BookArtPlacement.Portrait ? "portrait" : "place", entry.Alt, entry.SlotKey);
                 }
@@ -151,9 +205,15 @@ public static class BookDraftWriter
         sb.Append("{{").Append(block).Append("\n![").Append(BookCompiler.Escape(alt)).Append("](art:").Append(key).Append(")\n}}\n\n");
 
     /// <summary>The campaign's own Markdown as draft Markdown (see the class). Public for its tests.</summary>
-    public static string Text(string markdown, Func<string, string, string?> mention, bool dm)
+    /// <para><paramref name="level"/>: the level of the heading the text is written under (docs/BOOK_EXPORT.md 51). A heading in the text of
+    /// level n is written as level <c>min(6, level + n)</c>, so a "# Rumours" in a biography sits under the character and never reads as a
+    /// chapter; 0 leaves headings as they are. Only ATX headings ("# ..."), never inside a code fence, and no line is added or removed.</para>
+    /// <para><paramref name="links"/>: where a mention or a page link may point; without it every name is plain words.</para>
+    public static string Text(string markdown, Func<string, string, string?> mention, bool dm, int level = 0, BookDraftLinks? links = null)
     {
         var sb = new StringBuilder();
+        // A code fence may run from one part of the text into the next (around a secret block): what is inside it stays as written.
+        var fenced = false;
         // The secret grammar first: a ":::for" line names its characters with mentions, and those must be read as markers, not names.
         foreach (var segment in SecretText.Parse(markdown.ReplaceLineEndings("\n")))
         {
@@ -161,20 +221,23 @@ public static class BookDraftWriter
             {
                 // The party source has none; if one were there, it is the party's book that would show it, so it is dropped all the same.
                 if (!dm) continue;
-                var inner = Plain(segment.Text, mention).Trim('\n');
+                var inner = Plain(segment.Text, mention, level, links, ref fenced).Trim('\n');
                 if (inner.Length > 0) sb.Append("\n{{secret\n").Append(inner).Append("\n}}\n\n");
                 continue;
             }
 
-            sb.Append(Plain(segment.Text, mention));
+            sb.Append(Plain(segment.Text, mention, level, links, ref fenced));
             if (!segment.Text.EndsWith('\n')) sb.Append('\n');
         }
 
         return sb.ToString();
     }
 
-    private static string Plain(string text, Func<string, string, string?> mention)
+    private static string Plain(string text, Func<string, string, string?> mention, int level, BookDraftLinks? links, ref bool fenced)
     {
+        // A name that has an entry in this edition's book points at it; any other is plain words, as before.
+        string Linked(string words, string? key) =>
+            key == null || key == links?.Self ? BookCompiler.Escape(words) : "[" + BookCompiler.Escape(words) + "](#e-" + key + ")";
         try
         {
             text = Mention.Replace(text, m =>
@@ -183,8 +246,10 @@ public static class BookDraftWriter
                 var pipe = rest.IndexOf('|');
                 var id = (pipe < 0 ? rest : rest[..pipe]).Trim();
                 // The name this edition may be given, never the mention's own |label: that is where a hidden character's name would ride along.
-                var name = id.Length == 0 || id.Any(char.IsWhiteSpace) ? null : mention(m.Groups["kind"].Value.ToLowerInvariant(), id);
-                return string.IsNullOrWhiteSpace(name) ? string.Empty : BookCompiler.Escape(name);
+                var kind = m.Groups["kind"].Value.ToLowerInvariant();
+                var name = id.Length == 0 || id.Any(char.IsWhiteSpace) ? null : mention(kind, id);
+                // The key is looked up only for a name this edition gives: a mention it resolves to nothing has no link either.
+                return string.IsNullOrWhiteSpace(name) ? string.Empty : Linked(name, links?.Entry(kind, id));
             });
             text = OpenMention.Replace(text, string.Empty);
             text = PageLink.Replace(text, m =>
@@ -192,7 +257,8 @@ public static class BookDraftWriter
                 var inner = m.Groups["inner"].Value;
                 var pipe = inner.IndexOf('|');
                 var shown = (pipe < 0 ? inner : inner[(pipe + 1)..]).Trim();
-                return BookCompiler.Escape(shown.Length > 0 ? shown : inner.Trim());
+                var target = (pipe < 0 ? inner : inner[..pipe]).Trim();
+                return Linked(shown.Length > 0 ? shown : inner.Trim(), target.Length == 0 ? null : links?.Page(target));
             });
             text = Picture.Replace(text, m => BookCompiler.Escape(m.Groups["alt"].Value));
         }
@@ -203,7 +269,6 @@ public static class BookDraftWriter
         }
 
         var lines = text.Split('\n');
-        var fenced = false;
         for (var i = 0; i < lines.Length; i++)
         {
             var t = lines[i].TrimStart();
@@ -222,6 +287,11 @@ public static class BookDraftWriter
 
             if (fenced) continue;
             lines[i] = EscapeHtml(lines[i]);
+            if (level > 0 && Heading.Match(lines[i]) is { Success: true } h)
+            {
+                lines[i] = h.Groups[1].Value + new string('#', Math.Min(6, level + h.Groups[2].Length)) + lines[i][h.Length..];
+            }
+
             // A page or column break is the GM's to write, not the campaign's: "\page {display:none}" in a biography would break or restyle a
             // page. Escaped, it prints as the words.
             if (t.StartsWith(@"\page", StringComparison.Ordinal) || t.StartsWith(@"\column", StringComparison.Ordinal))

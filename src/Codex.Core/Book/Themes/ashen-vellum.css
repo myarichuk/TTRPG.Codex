@@ -485,6 +485,7 @@
 /* TABLE OF CONTENTS _______________________________________________ */
 .page .toc h1 { text-align : left; margin-bottom : .2cm; }
 .page .toc li { font-size : .42cm; line-height : 1.5em; }
+.page .toc ul ul li { font-size : .36cm; line-height : 1.35em; }
 .page .toc ul span:first-child::after { border-bottom : .04cm dotted var(--gd-ash); }
 .page .toc ul span:last-child         { font-family : 'IM Fell DW Pica', serif; font-size : .4cm; color : var(--gd-head); }
 .page .toc a:hover                    { text-decoration-color : var(--gd-hot); }

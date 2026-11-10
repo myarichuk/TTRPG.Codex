@@ -152,14 +152,18 @@ public class BookPlayerBookTests : IClassFixture<RavenDbFixture>
         var mira = await BookAsync(dm, PlayerA);
         var cast = ChapterOf(mira, "cast");
         var vera = cast.IndexOf("{{entry,#e-" + BookSlots.KeyFor("actor:a-vera-" + id) + "}}", StringComparison.Ordinal);
-        var miraEntry = cast.IndexOf("{{entry,#e-" + BookSlots.KeyFor("actor:a-mira-" + id) + "}}", StringComparison.Ordinal);
-        var torEntry = cast.IndexOf("{{entry,#e-" + BookSlots.KeyFor("actor:a-tor-" + id) + "}}", StringComparison.Ordinal);
-        Assert.True(vera > 0 && miraEntry > 0 && torEntry > miraEntry);
+        // The cast is the people the party meets (51): no player character has an entry in the party's draft, the reader's own included.
+        Assert.True(vera > 0);
+        Assert.DoesNotContain(BookSlots.KeyFor("actor:a-mira-" + id), mira);
+        Assert.DoesNotContain(BookSlots.KeyFor("actor:a-tor-" + id), mira);
+        Assert.DoesNotContain("PUBLIC_TOR_BIO", mira);
         // Vera's note after Vera's text; Mira's own after her history and before Tor's entry.
         Assert.True(cast.IndexOf("A_ONLY_VERA", StringComparison.Ordinal) > cast.IndexOf("PUBLIC_VERA_END", StringComparison.Ordinal));
         Assert.True(cast.IndexOf("A_ONLY_VERA", StringComparison.Ordinal) > vera);
         var self = cast.IndexOf("A_SELF_BLOCK", StringComparison.Ordinal);
-        Assert.True(self > cast.IndexOf("PUBLIC_MIRA_BIO", StringComparison.Ordinal) && self < torEntry, cast);
+        // Mira's own character is only in Mira's copy: a note at the cast's end, her history and then the block on it.
+        Assert.True(self > cast.IndexOf("PUBLIC_MIRA_BIO", StringComparison.Ordinal) && cast.IndexOf("PUBLIC_MIRA_BIO", StringComparison.Ordinal) > cast.LastIndexOf("{{entry,", StringComparison.Ordinal), cast);
+        Assert.Contains("###### PUBLIC\\_Mira", cast);
         // One note per entry, both shared and own blocks in it.
         var note = cast[cast.LastIndexOf("{{note", cast.IndexOf("A_ONLY_VERA", StringComparison.Ordinal), StringComparison.Ordinal)..];
         Assert.True(note.IndexOf("AB_SHARED_VERA", StringComparison.Ordinal) < note.IndexOf("}}", StringComparison.Ordinal));
@@ -171,16 +175,34 @@ public class BookPlayerBookTests : IClassFixture<RavenDbFixture>
     }
 
     [Fact]
+    public async Task ANote_StaysOnItsEntrysPage_BeforeTheGmsPageBreak()
+    {
+        var (dm, id) = await SeedAsync();
+        // An entry after Vera's, and the GM's page break before it.
+        await _actors.SaveAsync(new ActorDocument { Id = "a-zed-" + id, CampaignId = id, Name = "PUBLIC_Zed", Kind = ActorKind.NonPlayerCharacter, Visibility = ActorVisibility.Known, Biography = "PUBLIC_ZED_BIO" });
+        var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
+        var cast = view.Chapters.Single(c => c.Section == "cast");
+        var zed = "{{entry,#e-" + BookSlots.KeyFor("actor:a-zed-" + id) + "}}";
+        Assert.Contains(zed, cast.Markdown);
+        Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveChapterAsync(dm, "party", "en", "cast", cast.Markdown.Replace(zed, "\\page\n\n" + zed), cast.Version)).Result);
+
+        var mira = ChapterOf(await BookAsync(dm, PlayerA), "cast");
+        var note = mira.IndexOf("A_ONLY_VERA", StringComparison.Ordinal);
+        Assert.True(note > mira.IndexOf("PUBLIC_VERA_END", StringComparison.Ordinal) && note < mira.IndexOf("\\page", StringComparison.Ordinal), mira);
+    }
+
+    [Fact]
     public async Task TheGmsEdits_AreKept_AndANoteWhoseEntryTheGmDeleted_GoesAtTheChaptersEnd()
     {
         var (dm, id) = await SeedAsync();
         var view = (await _drafts.OpenAsync(dm, "party", "en"))!;
         var cast = view.Chapters.Single(c => c.Section == "cast");
         var marker = "{{entry,#e-" + BookSlots.KeyFor("actor:a-vera-" + id) + "}}";
-        // The GM rewrote Vera's text and took her marker out, and broke the page before Tor.
+        // The GM rewrote Vera's text and took her marker out, and broke the page before the stranger.
         var edited = cast.Markdown.Replace("PUBLIC_VERA_MIDDLE", "GM_REWROTE_THIS").Replace(marker + "\n", string.Empty);
-        var tor = "{{entry,#e-" + BookSlots.KeyFor("actor:a-tor-" + id) + "}}";
-        edited = edited.Replace(tor, "\\page\n\n" + tor);
+        var stranger = "{{entry,#e-" + BookSlots.KeyFor("mask:a-unknown-" + id) + "}}";
+        Assert.Contains(stranger, edited);
+        edited = edited.Replace(stranger, "\\page\n\n" + stranger);
         Assert.Equal(BookDraftSave.Saved, (await _drafts.SaveChapterAsync(dm, "party", "en", "cast", edited, cast.Version)).Result);
 
         var mira = ChapterOf(await BookAsync(dm, PlayerA), "cast");
@@ -188,8 +210,9 @@ public class BookPlayerBookTests : IClassFixture<RavenDbFixture>
         Assert.DoesNotContain("PUBLIC_VERA_MIDDLE", mira);
         // Vera's note has no entry to stand under: the chapter's end.
         Assert.True(mira.IndexOf("A_ONLY_VERA", StringComparison.Ordinal) > mira.LastIndexOf("{{entry,", StringComparison.Ordinal));
-        // Mira's own note stays on her page: before the GM's page break, not after it.
-        Assert.True(mira.IndexOf("A_SELF_BLOCK", StringComparison.Ordinal) < mira.IndexOf("\\page", StringComparison.Ordinal), mira);
+        // The GM's page break is kept where it was put.
+        Assert.Contains("\\page\n\n" + stranger, mira);
+        Assert.Contains("A_SELF_BLOCK", mira);
     }
 
     [Fact]

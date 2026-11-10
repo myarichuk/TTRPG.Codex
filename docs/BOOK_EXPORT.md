@@ -2699,3 +2699,128 @@ in Hebrew, and the old PDF address serves no book.
 - `BookMarkdownRenderer` stays only for `BookWork.Prepare`'s secret boxes, which the art director's outline throws away; it could shrink to the
   grammar that function needs. Old `BookBuildDocument.Sections` stay in the database.
 - The full test suite outside Book and Localization was not run.
+
+## 51. Generator v4: the shape of a published adventure (2026-11-10; step 3 of the source-book editor)
+
+`BookDraftWriter.Version` is `book-draft/v4`. **Every chapter of every existing draft looks moved on when it is next opened:** a chapter nobody
+edited simply follows (it becomes the v4 text), an edited one shows Stale with Merge ("Bring up to date"). The chapters are also put in the new
+order (below). Nothing is lost by this: an edited chapter keeps its text until the GM merges, regenerates or keeps it.
+
+**The shape (confirmed with the user 2026-11-10):**
+
+| Chapter id (unchanged) | Title | Inside |
+|---|---|---|
+| `overview` | Introduction | tagline, description |
+| `chronicle` | The story so far | each session `##` |
+| `gazetteer` | Gazetteer | each region `##`, its places `###` |
+| `lore` | Lore | facts, as before |
+| `pages` | Pages | groups `##` by wiki kind, in the order Quests, Factions, People, Places, Other pages (kind General); pages `###` |
+| `cast` | Appendix A: Cast | each character `##`, **no player characters** |
+| `homebrew` | Appendix B: Homebrew | groups `##` by the system's type (its plural label; the type as stored when the system does not describe it), entries `###` with their stat blocks |
+
+- The ids did not change, so an edited chapter merges with its v4 text instead of being orphaned. Only the titles and the order did.
+- **No player characters in the Cast** (the user: the book is for publishing the adventure as a source book). They are left out of both
+  editions; a mention of one is still its name, as plain words. One exception: **a player's own copy (45) keeps that player's own characters**,
+  because that is where what only they were told about their character is. The party draft has no entry for them, so the character's text comes
+  as one "Only for ..." note at the end of the Cast. Another player's character is not in it at all.
+- Appendices are lettered in the order they are in the book (`Campaign.Book.Label.Appendix`, `AppendixLetters`): with no cast to print, the
+  homebrew is Appendix A.
+- **A group** (a region, a kind of page, a type of homebrew) is a heading with an entry marker of its own, `{{entry,#e-KEY}}`, KEY the hash of
+  `region:ID` or `group:SECTION/NAME` (`BookSlots.RegionSubject`, `GroupSubject`). So a merge and an entry-by-entry AI edit take a group's
+  heading as its own unit (it is not the tail of the entry before it), and the contents can point at a region. A group has **no picture slot**
+  (`BookEntryPosition.IsGroup`; `BookSlots.For` skips it) and an entry-by-entry AI run sends nothing for a unit that is only a heading.
+- Regions have no text of their own in the app, so "region text, then its places" is the region's heading, then its places.
+
+**1. Heading nesting.** A heading in the campaign's own text is written under the heading it is written under: in an entry whose heading is
+level L, a body heading of level n becomes `min(6, L + n)`; before a chapter's first entry L is 1 (the chapter's title). So a "# Rumours" in a
+biography can no longer read as a chapter. `BookDraftWriter.Text(..., level)`: ATX headings only (up to three spaces, one to six `#`, then a space
+or the line's end), never inside a ``` or `~~~` fence (the fence state is carried across a secret block), the same in a `{{secret` block, and a
+line is rewritten in place, so no line is added or removed and the compiler's recorded entry lines still hold. A player's note (45) is written at
+level 5, under the note's own title.
+
+**2. Contents: two levels.** Each chapter (`#ch-ID`), then its entries (`#e-KEY`): every entry and every region; not a place (it is under its
+region) and not a group of pages or homebrew (its entries are listed). `BookEntryPosition.InContents`.
+
+**3. Cross-references.** A mention (`[[actor:ID]]`, `[[place:ID]]`) or a wiki link (`[[Title]]`, `[[Title|shown]]`) whose target has an entry in
+this edition's book becomes `[name](#e-KEY)`; otherwise plain words, as before. `BookDraftWriter.Links` is built from the entries the compiler
+wrote for this source and from this source's own pages, and a link is written only for a name the edition's resolver gives. So the party rule
+holds by construction: a hidden character has no name and no entry, a stranger's link is the mask's key (`mask:`), and a link to a GM-only page
+was already cut to its `|shown` words by `BookCompiler.PageLinks` (37) before the writer sees it. A place mention reaches a place's entry or a
+region's. Text never links to the entry it is in. A player character has no entry, so no link. Notes of a player's copy carry no links.
+- **AI edits:** the passage a model is sent keeps these links as they are. The prompt says to keep one exactly or drop it and keep its words
+  (`BookEditPrompts.ForbiddenRule`; the prompt version is `book-edit-4`), and `BookDraftEdits.Check` refuses a reply that writes a link inside the
+  book that the passage did not have. The keys are hashes; a model learns nothing from one.
+
+**4. Merges and AI edits split on entry markers, verified:** `BookDraftMerge.Split` and `BookDraftAi.Parts` cut a chapter at `{{entry,#...}}`
+lines and nowhere else, so the change of levels (`##` to `###`) does not move a unit's bounds. `BookDrafts.ChangedEntries` reads the first `#` line
+after a marker, at any level.
+
+**5. Chapters of the GM's own.** `BookDraftDocument.IsOwn`: an id `own-` and a GUID's 32 hex digits. The store: `AddChapterAsync(title, after)`,
+`RenameChapterAsync`, `MoveChapterAsync(by)` (one place, never before the front pages), `DeleteChapterAsync`, `OwnAsync`; the same on `BookDrafts`.
+A new one holds the chapter block around its title and nothing else. It has no generated text (`Base` and `BaseKey` empty), so it never follows,
+is never Stale, Edited or Gone (`BookDraftChapterView.Own`), and Regenerate and Keep are refused for it. It is a chapter of the draft like any
+other, so the Markdown file, the PDF, Fit pages, a player's copy and the leak check have it with no code of their own. Only the campaign's GM, as
+the store reads the campaign now; a generated chapter is never renamed, moved or deleted this way; the draft holds 40 chapters at most.
+- **The contents list it** where it stands: `BookDraftWriter.Generate(..., own)` takes the own chapters' ids, titles and the chapter each follows
+  (`BookDraftOwn`). This is the one input of the generator that is not the campaign's, so adding, renaming, moving or deleting one moves the front
+  pages' key: unedited front pages follow, edited ones show Stale. **The leak check generates without them** (`GenerateAsync(withOwn: false)`): a
+  title is the GM's typing, and what the generator says is what the check takes as safe.
+- **Order.** `FollowAsync` now keeps the campaign's chapters in the generator's order (`RavenBookDraftRepository.Ordered`); a chapter the campaign
+  does not make (the GM's own, or an edited one the campaign no longer has) stays behind the chapter it stood behind. That is also what puts a v3
+  draft in the v4 order.
+- **Start over deletes the GM's own chapters too** (it always deleted every chapter). The UI of step 4 must say so before it asks.
+- Rename changes the title the list and the contents show, not the chapter's text: the `# Title` line in it is the GM's to edit (step 4's UI can
+  do both).
+
+**Tests.** `BookSourceTests.V4.cs` (the shape, the appendix letters, the contents, hostile headings in both editions, cross-references in both
+editions with the "every link lands in this edition, no party text holds a GM-only key" check, a link for a name the edition does not give, an AI
+reply that adds a link), `BookDraftTests` (an own chapter through a campaign change, the contents, the Markdown file, Fit pages and the leak check;
+its title checked for leaks in the contents; rename, move and delete rules; the order). Rewritten for the new shape: the link test of 37 (links are
+cross-references now), the player-book tests (no player character has an entry), `ABodyLineThatReadsLikeAnotherEntrysHeading...`,
+`AChapterHeader_GoesUnderTheTitle`, `EveryChapterTitleIsTranslated`.
+
+**Mutation checks (by hand; the file changed, the tests run, the file restored):** a heading rewritten inside a fence; no cap at level six; the
+fence state not carried across a secret block; player characters left in the cast; text linking to its own entry; places listed in the contents;
+groups listed in the contents; a slot made for a group; a stranger linked by the actor's key instead of the mask's; an own chapter's title taken
+as safe by the leak check; an own chapter read as edited and gone; an own chapter removed by the follow pass; a move before the front pages; a
+generated chapter deleted through the own-chapter call; no limit on the number of chapters; no reorder on follow; an AI reply adding a link; own
+chapters left out of the contents. **15 of 18 were caught on the first run.** Three survived and each was a gap in the new tests, now closed:
+the chapter-limit test looped until refused and so never ended without the limit (it hung the run for an hour; the loop is bounded now), a
+fence across a secret block had no test (`TheTextPath_...`), and the order on follow had only a unit test of `Ordered`
+(`ADraftOfTheOlderGenerator_...` now makes a draft in the old shape and opens it). All 18 are caught.
+
+**Looked at in the app** (Chromium, a fresh campaign: an NPC whose history has headings, a fence, a secret, a mention of a stranger and a link to
+a page nobody wrote; a masked stranger; a player's character): the GM and party editions in English and the GM edition in Hebrew. The chapters
+are Introduction and Appendix A: Cast (נספח א: דמויות), the player's character is in neither edition, the history's headings sit under the
+character (h3, h4) and the fenced `#` line is code, the party edition names the stranger by the mask and links to the mask's entry, every link in
+the preview lands on an element of the same page set, and the contents show the entries under their chapter with page numbers, mirrored in Hebrew.
+The contents' second level got a style of its own while looking (`BookDraftHtml` for Plain, `ashen-vellum.css`): chapters heavier, entries smaller.
+
+**Not done / not verified:**
+- **No UI for the GM's own chapters** (step 4): they exist only through `BookDrafts.AddChapterAsync` and the tests. Not looked at in the app.
+- **A real v3 draft was not opened with this build.** The test makes a draft in the old shape through the store (old order, old text, a GM edit) and
+  checks the order, the follow and the merge plan; the preview's old data folder had no login left, so the Stale notice and the merge review of a
+  draft the old build really wrote were not seen by eye.
+- A merge of an edited v3 chapter will offer more than the GM might expect: every entry whose heading changed level (`##` to `###` in Pages and
+  Homebrew) or whose text gained a link reads as changed by the campaign, the new group headings come as added entries, and a player
+  character's entry as removed.
+- Looked at with Plain only. Ashen Vellum's second-level contents rule and a theme the GM brought in (which has no rule for a nested list beyond
+  Blank's indent) were not looked at; the theme tests (`EveryBlock_UnderEveryTheme...`, `ALongBook_...`) pass.
+- In Plain a cross-reference prints as plain words (`.page a` has no colour or underline): it is a link in the PDF and the preview, with nothing to
+  show the reader that it is one. No "see page N" is written.
+- Gazetteer with regions, Pages with several kinds and Homebrew with types were tested, not looked at in the app (the preview campaign had none).
+  The homebrew groups' names come from the system only in the draft's generator; the art director, slots and a player's copy compile with the type
+  as stored, which changes no key or line.
+- The Russian and Hebrew words of the new labels (Введение, События до сих пор, Приложение А, מבוא, הסיפור עד כה, נספח א, the page groups) are the
+  model's, not read by a native speaker.
+- A link to a page nobody wrote, or one the party may not open, still prints nothing in the party edition when it has no `|shown` words (37):
+  "and guards ." in the preview campaign. Unchanged, but more visible now that its neighbours are links.
+- The campaign's own text can still hold a line that reads `{{entry,#e-...}}`; nothing escapes `{{` there (as in v3). Not looked into.
+- Keyboard-only use: nothing on the page changed in this step, so it was not gone through again.
+- `BookPdfTests.AJobThatCannotFinishInTimeIsStopped_AndTheSamePrinterPrintsTheNext` fails about every other run on this machine, on the commit
+  before this step as well (run twice in a clean checkout: one pass, one failure): the small job after the stopped one takes longer than five
+  seconds. Not from this step, not fixed.
+- The full test suite outside Book and Localization was not run.
+
+**Result (on the final commit):** book and localization tests, the e2e ones included: 777 passed, 1 failed (the PDF timing test named above); editor
+tests pass; the site builds. The site guide (en, ru, he) names the new order of chapters and says the players' characters are not in the book.

@@ -54,6 +54,12 @@ public static class BookSlots
 
     public static string LocationSubject(string regionId, string locationId) => "location:" + regionId + "/" + locationId;
 
+    /// <summary>A region of the gazetteer: the key of its heading's marker, not of a picture (a region has no slot).</summary>
+    public static string RegionSubject(string regionId) => "region:" + regionId;
+
+    /// <summary>A group of entries in a chapter (a kind of page, a type of homebrew): the key of its heading's marker, as a region's.</summary>
+    public static string GroupSubject(string section, string group) => "group:" + section + "/" + group;
+
     public static string WikiSubject(string pageId) => "wiki:" + pageId;
 
     public static string HomebrewSubject(string entryId) => "homebrew:" + entryId;
@@ -79,6 +85,8 @@ public static class BookSlots
             slots.Add(new BookSlot(KeyFor(ChapterSubject(section.Id)), source.Audience, Header, section.Id, ChapterTitle(section), null));
         }
 
+        // A group's heading (a region, a kind of page) is no picture's place: only what it holds is.
+        entries = [.. entries.Where(e => !e.IsGroup)];
         foreach (var entry in entries)
         {
             slots.Add(new BookSlot(entry.SlotKey, source.Audience, Entry, entry.Section, entry.Alt, entry));

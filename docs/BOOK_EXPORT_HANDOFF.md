@@ -24,7 +24,7 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book-file/{edition}/draft/{lang}/{a
 | Area | Files |
 |---|---|
 | Masked reads | `src/Codex.Persistence/Book/BookSource*.cs` (the only input of the compiler; its constructor is internal) |
-| Compiler | `Persistence/Book/BookCompiler.cs` (chapters; `BookEntryPosition` records each entry heading's line; `ArtAnchors`) |
+| Compiler | `Persistence/Book/BookCompiler.cs` (chapters in the adventure-book order of 51, groups; `BookEntryPosition` records each entry heading's line, `IsGroup`, `InContents`; `ArtAnchors`) |
 | Old renderer | `Core/Book/BookMarkdown*.cs` (own Markdown subset; now only `BookWork.Prepare`'s secret boxes and the compiler's grammar notes use it) |
 | Themes, CSS | `Core/Book/BookDraftHtml.cs` (themes, shell, CSP), `BookTheme.cs` (the theme type, `BookThemes` script ranges and helpers), `BookDocument.cs` (compiled-book records), `BookMasks.cs` (torn-edge SVG), `BookRtl.cs` (mirrors a theme's sheets for Hebrew), `BookFontCoverage.cs` (a font file's letters) |
 | PDF | `Web/Book/BookPdf.cs`, `BookBrowser.cs` (finds Chrome/Edge/Chromium; `CODEX_BOOK_BROWSER`; one job at a time) |
@@ -36,7 +36,7 @@ Routes: `BookEndpoints.cs` (`/campaigns/{id}/book-file/{edition}/draft/{lang}/{a
 | Drawn-art prompt | `Core/Book/BookArtStyle.cs` (style vocabulary, `BookImagePrompt.Assemble` and its checks) |
 | Drawing | `Web/Book/BookArtDrawing.cs` (picks checked again, run), `BookImages.cs` (picture model per run, reserved allowance), image price in `AiSettings.razor` and `AiProviderService` |
 | Decoder process | `src/Codex.ImageWorker` (only caller of SkiaSharp; talks stdin/stdout via `BookImageWire`) |
-| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow), `Web/Book/BookDraftWriter.cs` (generator), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookPage.razor(.cs)` and its parts `BookToolbar|Outline|Source|Preview|Dock` (49), `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
+| Editable book (41) | `Persistence/Book/BookDraftStore.cs` (drafts, chapters, follow and order, the GM's own chapters `own-...`), `Web/Book/BookDraftWriter.cs` (generator, `book-draft/v4`: heading nesting, two-level contents, cross-references `Links`), `Web/Book/BookDrafts.cs` (service, picture map), `Core/Book/BookDraftHtml.cs` (themes on Blank: Plain, Ashen Vellum; shell), `Core/Book/Themes/` (Blank built from `tools/book-editor/themes/blank.less`; `ashen-vellum.css` and its paper pictures), `Components/Campaign/BookPage.razor(.cs)` and its parts `BookToolbar|Outline|Source|Preview|Dock` (49), `tools/book-editor/` (renderer, cleaner, editor; `npm ci && npm run build && npm test`), output in `wwwroot/lib/book/` |
 | Strings | `Localization/Resources/Strings.Campaign{,.ru,.he}.resx`, keys `Campaign.Book.*` |
 | Website | `site/` (see `site/README.md`), guide section `#book`, tour row, screenshots `book-panel` and `book-pages`, tools `capture-screenshots.mjs`, `demo-art.py`, `book-pages.py` |
 | Tests | `tests/Codex.Tests/Book*Tests.cs`, `E2E/BookRouteE2ETests.cs` |
@@ -110,6 +110,13 @@ worker run from that directory, and one run against a real model (a small Anthro
    characters, only for a Player member now who owns one, only from the party draft, only for the GM, and it is never stored or sent to a model;
    its pictures are the party's. `BookPlayerBook.Overlay` adds only paragraphs of that player's compile.
 
+15. **A cross-reference names only what the edition's own book has (section 51).** A mention or page link becomes `[name](#e-KEY)` only when the
+   edition's resolver gives the name and the entries compiled from that edition's source have the target; the key is the entry's slot key as
+   that edition sees it (a stranger's is `mask:`). No text of the party draft holds a key that only the GM draft has
+   (`BookSourceTests.AName_PointsAtItsEntry_...`, `TheContents_...`). An AI reply may keep or drop such a link, never add one. The title of a
+   chapter of the GM's own is the GM's typing: the leak check generates the party draft without own chapters, so the contents' line for it is
+   checked like any typed text.
+
 14. **The book is the GM's alone (section 48).** Every book route answers 404 to anyone but the campaign's GM, Player members included, for
    both editions and a player's own copy; no book UI is rendered for a player. Party edition and per-player PDFs are GM tools. Test:
    `BookRouteE2ETests.APlayerOfTheCampaign_GetsNoBook_OnAnyRoute_WhereTheGmGetsOne`.
@@ -154,6 +161,7 @@ For each, copy the file, apply the change, run the named tests, expect a failure
 - Player books (`BookPlayerBookTests.cs`): no diff in `Overlay`; no edition check in `BookDrafts.PrintedAsync`; drop the own character's
   `RevealedToReader`; clean with no owned set; no backing over page breaks; ignore the player in `FileName`; list a player with no character; no
   entry anchor. All eight were caught.
+- Generator v4 and own chapters (`BookSourceTests.V4.cs`, `BookDraftTests`): the list and the results are in BOOK_EXPORT 51.
 - Stat blocks, frames, edges (`BookStatBlocksTests.cs`, `BookMasksFrameTests.cs`): modifier rule hard-coded; no escaping; no id on the block;
   values not through the text path; the block not written; the edge reset by another setting; the edge always on; no party filter for
   non-playerFacing homebrew. All eight were caught.
@@ -187,7 +195,9 @@ Anything that survives is a missing test; add it.
 ## 7. Open work, in the order I would take it (the user decides)
 
 00. **The source-book editor** (2026-11-09; a GM-only Book page, one pipeline, generator v4, Homebrewery feel, pictures in the text: steps 0-5).
-   **Steps 0, 1 and 2 are done (BOOK_EXPORT 48, 49, 50).** Next is step 3 (generator v4); steps 4 and 5 follow in order.
+   **Steps 0 to 3 are done (BOOK_EXPORT 48, 49, 50, 51).** Next is step 4 (Homebrewery feel: source tabs, snippet bar, the outline tree with
+   "+ Add chapter" over the store's own-chapter calls of 51, cursor and preview in step); step 5 follows. Step 3 left no UI: a chapter of the
+   GM's own can be made only through `BookDrafts.AddChapterAsync` until step 4.
 
 0. **The editable book** (`docs/BOOK_EXPORT.md` 41, chosen by the user 2026-11-05). **All six phases are built (41.9, 41.10, 41.15, 41.16, 41.18, 41.19).**
    What is left is the "Not done" lists of 41.9, 41.10, 41.15, 41.16, 41.18 and 41.19: the preview in Safari's engine and Firefox is checked and two bugs fixed (41.20; real Safari not driven) (the GM-CSS cleaner's limits are fixed, 41.11; Homebrewery PHB CSS lays out as there on the compatibility layer, 41.12, which every

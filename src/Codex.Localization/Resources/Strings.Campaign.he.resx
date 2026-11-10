@@ -998,13 +998,20 @@
   <data name="Campaign.Book.Failed.TooOld" xml:space="preserve"><value>הדפדפן במחשב הזה ישן מדי להדפסת ספר. עדכנו את Chrome, Edge או Chromium.</value></data>
   <data name="Campaign.Book.Failed.Launch" xml:space="preserve"><value>הדפדפן לא עלה. הסיבה ביומן השרת.</value></data>
   <data name="Campaign.Book.Label.Contents" xml:space="preserve"><value>תוכן העניינים</value></data>
-  <data name="Campaign.Book.Label.Overview" xml:space="preserve"><value>סקירה</value></data>
+  <data name="Campaign.Book.Label.Overview" xml:space="preserve"><value>מבוא</value></data>
   <data name="Campaign.Book.Label.Cast" xml:space="preserve"><value>דמויות</value></data>
   <data name="Campaign.Book.Label.Gazetteer" xml:space="preserve"><value>אטלס</value></data>
-  <data name="Campaign.Book.Label.Chronicle" xml:space="preserve"><value>קורות הימים</value></data>
+  <data name="Campaign.Book.Label.Chronicle" xml:space="preserve"><value>הסיפור עד כה</value></data>
   <data name="Campaign.Book.Label.Lore" xml:space="preserve"><value>אגדות עולם</value></data>
   <data name="Campaign.Book.Label.Pages" xml:space="preserve"><value>דפים</value></data>
   <data name="Campaign.Book.Label.Homebrew" xml:space="preserve"><value>יצירות ביתיות</value></data>
+  <data name="Campaign.Book.Label.Appendix" xml:space="preserve"><value>נספח {0}: {1}</value></data>
+  <data name="Campaign.Book.Label.AppendixLetters" xml:space="preserve"><value>אב</value></data>
+  <data name="Campaign.Book.Label.Quests" xml:space="preserve"><value>משימות</value></data>
+  <data name="Campaign.Book.Label.Factions" xml:space="preserve"><value>סיעות</value></data>
+  <data name="Campaign.Book.Label.People" xml:space="preserve"><value>אנשים</value></data>
+  <data name="Campaign.Book.Label.Places" xml:space="preserve"><value>מקומות</value></data>
+  <data name="Campaign.Book.Label.OtherPages" xml:space="preserve"><value>דפים נוספים</value></data>
   <data name="Campaign.Book.Ai.NoModel" xml:space="preserve"><value>לא הוגדר מודל בינה מלאכותית.</value></data>
   <data name="Campaign.Book.Ai.SetUp" xml:space="preserve"><value>פתיחת הגדרות הבינה המלאכותית</value></data>
   <data name="Campaign.Book.Ai.Reason.budget" xml:space="preserve"><value>התקרה הושגה</value></data>

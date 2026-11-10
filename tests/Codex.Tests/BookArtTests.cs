@@ -341,11 +341,13 @@ public partial class BookArtTests : IClassFixture<RavenDbFixture>
         var uri = art.DataUri(art.Wiki("w-vera")!)!;
         var at = pages.IndexOf(uri, StringComparison.Ordinal);
         Assert.True(at > 0);
-        // After the page's own heading (the last "## Vera", the one with the entry marker), not after the subsection of History's body.
-        var own = pages.LastIndexOf("}}\n## Vera\n", StringComparison.Ordinal);
+        // After the page's own heading (the "### Vera" with the entry marker), not after the subsection of History's body.
+        var own = pages.LastIndexOf("}}\n### Vera\n", StringComparison.Ordinal);
         Assert.True(own > 0 && at > own);
         Assert.Equal(1, Count(pages, System.Text.RegularExpressions.Regex.Escape(uri)));
-        Assert.DoesNotContain("## Vera\n\n{{", pages.Substring(0, own), StringComparison.Ordinal);
+        Assert.DoesNotMatch(@"#+ Vera\n\n\{\{", pages.Substring(0, own));
+        // History's own "## Vera" is written under History's heading (51), on the line it was on.
+        Assert.Contains("Old days.\n\n##### Vera\n\nA queen, long dead.", pages, StringComparison.Ordinal);
         // Markdown hard breaks (two trailing spaces) survive the generator.
         Assert.Contains("Line one  \nLine two", pages, StringComparison.Ordinal);
     }

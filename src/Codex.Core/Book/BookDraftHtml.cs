@@ -227,6 +227,10 @@ public static class BookDraftThemes
             .block.cover-art img, .block.cover-art .art-missing { display: block; width: 100%; max-height: 150mm; object-fit: cover; }
             .block.toc ul { list-style: none; padding: 0; margin: 0; }
             .block.toc li { margin: 0 0 1.6mm; font-size: 11pt; }
+            /* The contents' second level (51): a chapter's entries, smaller and closer together under the chapter's own line. */
+            .block.toc > ul > li > a { font-weight: 600; }
+            .block.toc ul ul { margin-top: 0.8mm; }
+            .block.toc ul ul li { margin: 0 0 0.6mm; font-size: 9.5pt; }
 
             .block.chapter-art { column-span: all; margin: 0 0 4mm; }
             .block.chapter-art img, .block.chapter-art .art-missing { display: block; width: 100%; height: 58mm; object-fit: cover; }

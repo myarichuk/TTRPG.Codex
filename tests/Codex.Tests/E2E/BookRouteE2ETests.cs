@@ -104,7 +104,9 @@ public class BookRouteE2ETests : IClassFixture<AppFixture>
         await E2EHelpers.LoginAsync(player, "pl_" + playerId, password);
         await E2EHelpers.JoinAsync(player, invite);
         await _app.SeedActorsAsync([
-            new Codex.Web.TestSeedActor { Id = "bk0-mira-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Mira", Kind = Codex.Persistence.ActorKind.PlayerCharacter, OwnerUserId = playerId }]);
+            new Codex.Web.TestSeedActor { Id = "bk0-mira-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Mira", Kind = Codex.Persistence.ActorKind.PlayerCharacter, OwnerUserId = playerId },
+            // The cast is the people the party meets (BOOK_EXPORT 51): a player's character alone makes no Cast chapter.
+            new Codex.Web.TestSeedActor { Id = "bk0-vera-" + Guid.NewGuid(), CampaignId = campaignId, Name = "Vera", Kind = Codex.Persistence.ActorKind.NonPlayerCharacter }]);
 
         // Both drafts exist, so the draft routes have something to serve: the refusal below is the player's, not "no draft yet".
         foreach (var edition in new[] { "dm", "party" })
@@ -937,7 +939,7 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         // The PDF is given, and what printed cut off is said beside it, with its chapter.
         var download = await dm.RunAndWaitForDownloadAsync(() => dm.GetByTestId("book-draft-download").ClickAsync());
         Assert.EndsWith(".pdf", download.SuggestedFilename);
-        await Assertions.Expect(dm.GetByTestId("book-draft-print-overflow")).ToContainTextAsync("(Cast)");
+        await Assertions.Expect(dm.GetByTestId("book-draft-print-overflow")).ToContainTextAsync("(Appendix A: Cast)");
         Assert.Empty(pageErrors);
     }
 
