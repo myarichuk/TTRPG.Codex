@@ -41,7 +41,8 @@ public static class BookPlayerBook
             {
                 var extra = Extra(paragraphs, theirs.GetValueOrDefault(unit) ?? []);
                 if (extra.Count == 0) continue;
-                var text = BookDraftWriter.Text(string.Join("\n\n", extra) + "\n", mention, dm: false).Trim('\n');
+                // Under the note's own title (a fifth-level heading): a heading in the text is the smallest there is.
+                var text = BookDraftWriter.Text(string.Join("\n\n", extra) + "\n", mention, dm: false, level: 5).Trim('\n');
                 if (text.Length > 0) notes.Add((unit, text));
             }
 

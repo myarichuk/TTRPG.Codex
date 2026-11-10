@@ -93,7 +93,7 @@ public static class BookDirectorPrompts
 /// Asks a model what each picture slot of a chapter should show (docs/BOOK_EXPORT.md 28.3, item 2). It is shown only an outline: each slot's
 /// heading and a short excerpt, prepared like every chapter a model sees (secrets cut out, names as the edition gives them), under numbers local
 /// to the call. It writes no image prompt: <see cref="BookImagePrompt"/> builds that from the visual, which is checked here as there.
-/// Every attempt reserves its worst case first, like <see cref="BookSectionWorker"/>.
+/// Every attempt reserves its worst case first, like <see cref="BookEditWorker"/>.
 /// </summary>
 public sealed class BookArtDirector(IChatClient chat, BookBudget budget, float temperature = 0.7f, Func<Exception, bool>? refusedBeforeSending = null)
 {

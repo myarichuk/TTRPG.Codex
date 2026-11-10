@@ -362,23 +362,23 @@ public class BookArtDirectionTests : IClassFixture<RavenDbFixture>
     }
 
     [Fact]
-    public async Task OnePaidRunPerGm_ADirectorRunAndAChapterBuildCannotOverlap()
+    public async Task OnePaidRunPerGm_ADirectorRunAndAnotherPaidRunCannotOverlap()
     {
+        // The other paid runs (the draft's AI edits and merges, a drawing) take the same per-GM gate (BookDraftTests holds the draft's to it).
         var (dm, _) = await SeedAsync();
         var gate = new BookGate();
         var slow = new ScriptedChat(Direct, delay: TimeSpan.FromMilliseconds(400));
         var director = Director(new FakeModels(slow), gate);
-        var builds = new BookBuilds(_reader, _builds, new FakeModels(new ScriptedChat((m, _) => m.Last().Text)), _resolver.ResolveAsync, gate: gate);
 
         var run = (await director.StartAsync(dm, "party", "en"))!;
-        await Assert.ThrowsAsync<BookBuildBusyException>(() => builds.StartAsync(dm, new BookBuildRequest("dm", "en", string.Empty, 10_000_000)));
+        Assert.False(gate.TryEnter(dm.UserId));
         await Assert.ThrowsAsync<BookBuildBusyException>(() => director.StartAsync(dm, "dm", "en"));
         await Finish(run);
 
         // Free again once it is over, and the other way round.
-        var build = (await builds.StartAsync(dm, new BookBuildRequest("dm", "en", string.Empty, 10_000_000)))!;
+        Assert.True(gate.TryEnter(dm.UserId));
         await Assert.ThrowsAsync<BookBuildBusyException>(() => director.StartAsync(dm, "dm", "en"));
-        await build.Completion.WaitAsync(TimeSpan.FromSeconds(30));
+        gate.Exit(dm.UserId);
         Assert.NotNull(await director.StartAsync(dm, "dm", "en"));
     }
 

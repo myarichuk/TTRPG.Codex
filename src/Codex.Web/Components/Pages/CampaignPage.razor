@@ -50,7 +50,7 @@ else
 {
     var tableLive = RuntimeManager.TryGet(CampaignId) != null;
 
-    <div class="workspace @(notesOpen && tableLive ? "beside-notes" : "")">
+    <div class="workspace @(notesOpen && tableLive ? "beside-notes" : "") @(CurrentSection == "book" ? "book-mode" : "")">
         <header class="ws-head @(campaign.HasCover ? "has-cover" : "") @(CurrentSection == "overview" ? "" : "ws-head-inner")" style="@(campaign.HasCover ? $"--cover:url('{MediaEndpoints.CoverUrl(campaign)}')" : "")">
             <nav aria-label="@L["Page.Common.Breadcrumb"]" class="breadcrumb-nav"><a href="/">@L["Page.Home.Title"]</a></nav>
             <h1 data-testid="campaign-title" style="--title-fit:@TitleFit(campaign.Name)">@campaign.Name</h1>
@@ -69,7 +69,7 @@ else
             {
                 <div class="ws-nav-group" role="group" aria-label="@GroupLabel(group.Label)">
                     <div class="ws-nav-label" aria-hidden="true">@GroupLabel(group.Label)</div>
-                    @foreach (var section in group.Sections.Where(s => s.Key != "build" || access.IsDm))
+                    @foreach (var section in group.Sections.Where(s => (s.Key != "build" && s.Key != "book") || access.IsDm))
                     {
                         var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
                         var current = NavSection == section.Key ? "page" : null;
@@ -109,7 +109,7 @@ else
                     @foreach (var group in Groups)
                     {
                         <div class="tabbar-more-label eyebrow" aria-hidden="true">@GroupLabel(group.Label)</div>
-                        @foreach (var section in group.Sections.Where(s => s.Key != "build" || access.IsDm))
+                        @foreach (var section in group.Sections.Where(s => (s.Key != "build" && s.Key != "book") || access.IsDm))
                         {
                             var href = section.Key == "overview" ? BasePath : BasePath + "/" + section.Key;
                             var label = section.Key == "bestiary" && !access.IsDm ? L["Page.Campaign.Section.Creatures"] : SectionLabel(section.Key);
@@ -169,6 +169,21 @@ else
                                 break;
                             case "lore":
                                 <LoreSection />
+                                break;
+                            case "book":
+                                @* The book is the GM's alone: anyone else is told there is nothing here. *@
+                                @if (access.IsDm)
+                                {
+                                    <BookPage EditionRoute="@Arg1" ChapterRoute="@Arg2" />
+                                }
+                                else
+                                {
+                                    <div class="empty">
+                                        <div class="empty-icon"><LucideIcon IconName="compass" Size="28" /></div>
+                                        <h1 class="h4">@L["Page.Campaign.NotFoundTitle"]</h1>
+                                        <p>@L["Page.Campaign.NotFoundText"]</p>
+                                    </div>
+                                }
                                 break;
                             case "build":
                                 <WorldChatSection Starter="@Arg1" />
@@ -236,7 +251,8 @@ else
             ("world", "Places", "map"),
             ("wiki", "Wiki", "globe"),
             ("build", "World builder", "sparkles"),
-            ("lore", "Lore", "book-marked")
+            ("lore", "Lore", "book-marked"),
+            ("book", "Book", "book-open")
         }),
         ("Reference", new[]
         {
@@ -284,6 +300,7 @@ else
         "wiki" => L["Page.Campaign.Section.Wiki"],
         "build" => L["Page.Campaign.Section.Build"],
         "lore" => L["Page.Campaign.Section.Lore"],
+        "book" => L["Page.Campaign.Section.Book"],
         "library" => L["Page.Campaign.Section.Library"],
         "settings" => L["Page.Campaign.Section.Settings"],
         "templates" => L["Campaign.Templates.Title"],

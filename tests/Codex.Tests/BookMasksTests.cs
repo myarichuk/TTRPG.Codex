@@ -60,26 +60,4 @@ public class BookMasksTests
         Assert.Equal(1, value.Count(c => c == ')'));
         Assert.Equal(2, value.Count(c => c == '"'));
     }
-
-    [Fact]
-    public void TheEdgeIsPulledBackByTheMargins_ThePlainPageActuallyUses()
-    {
-        // Chromium paints an @page image from the corner of the content box. If the margins change and this does not, the whole
-        // edge slides off the page, and nothing else would notice, so the two numbers are tied together here.
-        var layout = new BookLayout("A4", false);
-        var plain = BookThemes.Plain.Css(layout);
-        var parchment = BookThemes.Parchment.Css(layout);
-        Assert.Contains("margin: 2cm 1.9cm 2.2cm", plain, StringComparison.Ordinal);
-        Assert.Contains("background-position: -19mm -20mm", parchment, StringComparison.Ordinal);
-        Assert.Contains("background-size: 210mm 297mm", parchment, StringComparison.Ordinal);
-        Assert.Contains("background-size: 215.9mm 279.4mm", BookThemes.Parchment.Css(new BookLayout("Letter", false)), StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Parchment_PrintsWhatPlainPrints_AndNothingMore()
-    {
-        Assert.Equal(BookThemes.Plain.Languages.Order(), BookThemes.Parchment.Languages.Order());
-        Assert.Equal(BookThemes.Plain.Fonts, BookThemes.Parchment.Fonts);
-        Assert.Same(BookThemes.Parchment, BookThemes.Find("PARCHMENT"));
-    }
 }

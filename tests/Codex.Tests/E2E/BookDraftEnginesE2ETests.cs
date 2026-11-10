@@ -63,13 +63,10 @@ public class BookDraftEnginesE2ETests : IClassFixture<AppFixture>
 
         async Task OpenAsync(IPage page, string campaign)
         {
-            await E2EHelpers.GoToSectionAsync(page, campaign, "settings");
+            await E2EHelpers.OpenBookAsync(page, campaign, "party");
             // From the book on: Firefox logs a connection the sign-in's own reload cut short, which is the helpers', not the book's.
             errors.Clear();
-            await page.GetByTestId("book-edition").SelectOptionAsync("party");
-            await page.GetByTestId("book-tab-draft").ClickAsync();
-            await page.GetByTestId("book-draft-open").ClickAsync();
-            await Assertions.Expect(page.GetByTestId("book-draft-dialog")).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByTestId("book-page")).ToBeVisibleAsync();
         }
 
         static string Story(int lines) => string.Join("\n\n", Enumerable.Range(0, lines).Select(i => $"Line {i} of the keeper's long story, which goes on past one page and then another."));

@@ -3,11 +3,10 @@ using Raven.Client.Documents;
 namespace Codex.Persistence;
 
 /// <summary>
-/// What an AI polish of a campaign book has produced so far, for one DM and one edition (docs/BOOK_EXPORT.md, step 5). The DM's own
-/// working copy, like a world chat: only its owner reads it, <b>it is not part of the campaign export or the backups</b> (it is the DM's
-/// working copy), and it is deleted with the campaign. The model's prompts are
-/// never stored here, only its replies. The DM's secret words are in neither: they were never sent to the model, and the boxes that print them
-/// are rendered from the campaign at print time.
+/// One GM's spend totals for one edition of a campaign book: what the editable book's AI edits and merges have cost (<c>BookSpend</c>,
+/// docs/BOOK_EXPORT.md 42 and 50). Only its owner reads it, <b>it is not part of the campaign export or the backups</b>, and it is deleted with
+/// the campaign. Documents stored before section 50 also hold the old route's AI polish (<see cref="Sections"/>, <see cref="Language"/>,
+/// <see cref="Style"/>): nothing reads those now, and they are left as they are.
 /// </summary>
 public class BookBuildDocument
 {
@@ -53,7 +52,7 @@ public class BookBuildSection
 {
     public string Id { get; set; } = string.Empty;
 
-    /// <summary>What the chapter was made from (<c>BookBuildKey</c>). Used only while it equals the key of the campaign as read now.</summary>
+    /// <summary>What the chapter was made from (the old route's build key, deleted in docs/BOOK_EXPORT.md 50). Nothing reads it now.</summary>
     public string Key { get; set; } = string.Empty;
 
     /// <summary>True when the model's rewrite passed the checks. Otherwise the chapter prints from the deterministic text, and

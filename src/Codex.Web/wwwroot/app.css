@@ -2597,8 +2597,14 @@ a.hover-card-title:hover { text-decoration: underline; }
 /* The editable book's editor: the whole window, chapters | Markdown | the book as it prints. */
 /* The book editor (docs/BOOK_EXPORT.md 41.17), laid out like an IDE: a toolbar; chapters | Markdown | preview, the outer two collapsible to a
    strip; a panel below with tabs, collapsible too. */
-dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: none; height: calc(100vh - 1.5rem); max-height: none; padding: 0; }
+/* The Book page (docs/BOOK_EXPORT.md 49): the campaign's rail and header step aside, and the page fills the window under the app header. */
+.page:has(.book-page) { max-width: none; padding: 0; }
+.workspace.book-mode { display: block; }
+.workspace.book-mode > .ws-head, .workspace.book-mode > .ws-nav, .workspace.book-mode > .ws-tabbar { display: none; }
+.workspace.book-mode .ws-main { padding-bottom: 0; }
 .book-draft { display: flex; flex-direction: column; height: 100%; }
+.ws-section > .book-page { animation: none; }
+.book-page { height: calc(100dvh - var(--header-h)); min-height: 28rem; background: var(--bg); }
 /* The theme wizard (docs/BOOK_EXPORT.md 41.22): over the editor, inside its dialog. */
 .book-draft { position: relative; }
 .book-theme-wizard { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(0, 0, 0, .55); }
@@ -2633,10 +2639,26 @@ dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: 
 .book-draft-close:hover, .book-draft-close:focus-visible { border-color: var(--border); color: var(--text); }
 .book-draft-infobar { margin: .4rem .6rem 0; }
 
-.book-draft-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr) minmax(0, 1.1fr); position: relative; }
-.book-draft-main.chapters-closed { grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 1.1fr); }
-.book-draft-main.preview-closed { grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr) 2rem; }
-.book-draft-main.chapters-closed.preview-closed { grid-template-columns: 2rem minmax(0, 1fr) 2rem; }
+/* Outline | Source | splitter | Preview. The Source is at least 360 px; once the GM drags the splitter its width is --book-src, and the Preview keeps 240 px at least. */
+.book-body { --o: 240px; flex: 1; min-height: 0; display: grid; position: relative; grid-template-columns: var(--o) minmax(360px, 1fr) 6px minmax(0, 1.1fr); }
+.book-body.outline-closed { --o: 32px; }
+.book-body.sized { grid-template-columns: var(--o) minmax(360px, min(var(--book-src), calc(100% - var(--o) - 6px - 240px))) 6px minmax(0, 1fr); }
+.book-body.preview-closed, .book-body.preview-closed.sized { grid-template-columns: var(--o) minmax(0, 1fr) 32px; }
+.book-splitter { cursor: col-resize; background: var(--border); border-inline: 1px solid var(--surface-2); touch-action: none; }
+.book-splitter:hover, .book-splitter:focus-visible { background: var(--accent); outline: none; }
+body.book-splitting { user-select: none; cursor: col-resize; }
+body.book-splitting .book-draft-frame { pointer-events: none; }
+.cx-tabs.book-mobile-toggle { display: none; }
+.book-bar-back { display: inline-flex; align-items: center; gap: .1rem; color: var(--text-2); text-decoration: none; font-size: .9rem; max-width: 14rem; }
+.book-bar-back bdi { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.book-bar-back:hover, .book-bar-back:focus-visible { color: var(--text); text-decoration: underline; }
+.book-bar-title { display: inline-flex; align-items: center; gap: .35rem; }
+.book-edition-switch { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 4px; overflow: hidden; }
+.book-edition-btn { padding: .25rem .7rem; background: none; border: 0; color: var(--text-2); font-size: .85rem; }
+.book-edition-btn + .book-edition-btn { border-inline-start: 1px solid var(--border-strong); }
+.book-edition-btn:hover:not(:disabled) { color: var(--text); background: var(--surface-2); }
+.book-edition-btn.active { background: var(--accent-soft); color: var(--text); font-weight: 600; }
+.book-edition-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .book-draft-pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .book-draft-pane + .book-draft-pane, .book-draft-strip + .book-draft-pane, .book-draft-pane + .book-draft-strip { border-inline-start: 1px solid var(--border); }
 .book-draft-pane-head { display: flex; align-items: center; gap: .4rem; min-height: 2rem; padding: .2rem .5rem; border-bottom: 1px solid var(--rule); background: var(--surface-2);
@@ -2655,6 +2677,28 @@ dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: 
 .book-draft-chapter { display: flex; gap: .4rem; align-items: center; width: 100%; text-align: start; background: none; border: 0; border-radius: 4px; padding: .3rem .45rem; color: inherit; font-size: .9rem; }
 .book-draft-chapter:hover { background: var(--surface-2, rgba(127,127,127,.08)); }
 .book-draft-chapter.active { background: var(--accent-soft, rgba(127,127,127,.16)); font-weight: 600; }
+/* The outline tree, the Source tabs and snippet bar, the preview header (docs/BOOK_EXPORT.md 52). */
+.book-tree-row { display: flex; align-items: center; gap: .1rem; position: relative; }
+.book-tree-row .book-draft-chapter { flex: 1; min-width: 0; }
+.book-tree-toggle { flex: none; display: inline-flex; align-items: center; background: none; border: 0; padding: .2rem; color: var(--text-3); border-radius: 4px; }
+.book-tree-toggle:hover { color: var(--text); }
+.book-tree-input { flex: 1; min-width: 0; }
+.book-tree-group { margin-inline-start: 1.1rem; border-inline-start: 1px solid var(--rule); }
+.book-tree-heading { display: block; width: 100%; text-align: start; background: none; border: 0; border-radius: 4px; color: var(--text-2); font-size: .82rem; padding: .15rem .45rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.book-tree-heading.level-3 { padding-inline-start: 1.2rem; font-size: .78rem; }
+.book-tree-heading:hover, .book-tree-heading:focus-visible { background: var(--surface-2, rgba(127,127,127,.08)); color: var(--text); }
+.book-tree-menu { position: relative; flex: none; }
+.book-tree-popup { position: absolute; inset-inline-end: 0; top: 100%; z-index: 20; min-width: 9rem; }
+.book-tree-add { padding: .4rem .45rem; }
+.book-source-tabs { padding-inline: .35rem; border-bottom: 1px solid var(--rule); }
+.book-snippets { display: flex; flex-wrap: wrap; gap: .25rem; padding: .3rem .4rem; border-bottom: 1px solid var(--rule); background: var(--surface-2); }
+.book-snippet { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .5rem; font-size: .8rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); }
+.book-snippet:hover:not(:disabled), .book-snippet:focus-visible { background: var(--surface-3); }
+.book-snippet:disabled { opacity: .5; }
+.book-zoom { display: inline-flex; gap: .1rem; }
+.book-zoom-btn[aria-pressed="true"], button[data-testid="book-follow"][aria-pressed="true"] { background: var(--accent-soft, rgba(127,127,127,.16)); }
+.cm-book-pages { min-width: 2.2rem; color: var(--text-3); font-size: .7rem; }
+.cm-book-pageno { display: block; padding-inline: .25rem; text-align: end; white-space: nowrap; }
 .book-draft-chapter bdi { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .book-draft-badge-stale { background: var(--danger-soft, #f6dede); color: var(--danger, #8a1c1c); font-weight: 500; }
 .book-draft-badge-edited { background: var(--surface-3, #eee); color: var(--text-2, #666); font-weight: 500; }
@@ -2684,7 +2728,8 @@ dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: 
 .book-draft-preview.offstage { position: absolute; top: 0; inset-inline-start: -200vw; width: 60vw; height: 100%; visibility: hidden; }
 
 /* The panel below: tabs, and the open tab's content. */
-.book-draft-panel { display: flex; flex-direction: column; max-height: 40%; border-top: 1px solid var(--border); background: var(--surface); }
+.book-draft-panel { display: flex; flex-direction: column; flex: none; height: 116px; border-top: 1px solid var(--border); background: var(--surface); }
+.book-draft-panel.closed { height: auto; }
 .book-draft-panel-tabs { display: flex; align-items: center; gap: .25rem; padding: 0 .5rem; background: var(--surface-2); }
 .book-draft-panel-body { overflow: auto; padding: .5rem .75rem; font-size: .875rem; }
 .book-draft-panel-body > * + * { margin-top: .35rem; }
@@ -2703,14 +2748,20 @@ dialog.codex-dialog.book-draft-dialog { width: calc(100vw - 1.5rem); max-width: 
 .book-tabs { margin: .75rem 0 .5rem; border-bottom: 1px solid var(--rule); }
 .cx-tab-badge { min-width: 1.2rem; padding: 0 .3rem; border-radius: 999px; background: var(--danger-soft); color: var(--danger); font-size: .72rem; font-weight: 700; text-align: center; }
 
-@media (max-width: 900px) {
-    .book-draft-main, .book-draft-main.chapters-closed, .book-draft-main.preview-closed, .book-draft-main.chapters-closed.preview-closed {
-        grid-template-columns: 1fr; grid-template-rows: auto minmax(16rem, 1fr) minmax(20rem, 1fr); overflow: auto; }
+@media (max-width: 899px) {
+    /* One pane at a time: the Source or the Preview (the outline stays above them). */
+    .cx-tabs.book-mobile-toggle { display: flex; padding: 0 .5rem; border-bottom: 1px solid var(--border); }
+    .book-body, .book-body.sized, .book-body.preview-closed, .book-body.preview-closed.sized, .book-body.outline-closed {
+        grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+    .book-splitter { display: none; }
+    .book-body[data-pane="preview"] .book-draft-edit { display: none; }
+    .book-body[data-pane="source"] .book-draft-preview { position: absolute; top: 0; inset-inline-start: -200vw; width: 60vw; height: 100%; visibility: hidden; }
     .book-draft-pane + .book-draft-pane, .book-draft-strip + .book-draft-pane, .book-draft-pane + .book-draft-strip { border-inline-start: 0; border-top: 1px solid var(--border); }
     .book-draft-chapters { max-height: 9rem; }
     .book-draft-strip { flex-direction: row; justify-content: center; padding: .35rem; }
     .book-draft-strip span { writing-mode: horizontal-tb; }
-    /* The toolbar under the title, the close button staying on the title's row. */
-    .book-draft-tools { order: 3; flex-basis: 100%; }
+    .book-body > .book-draft-strip:last-of-type { display: none; }
+    /* The toolbar wraps, the title and the edition switch first. */
+    .book-draft-tools { flex-basis: 100%; }
 }
 .book-preview { display: block; width: 100%; height: min(70vh, 640px); margin-top: .75rem; border: 1px solid var(--border-strong); border-radius: 4px; background: #fff; }

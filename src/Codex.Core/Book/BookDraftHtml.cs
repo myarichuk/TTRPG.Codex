@@ -16,8 +16,28 @@ namespace Codex.Core.Book;
 /// </summary>
 public static class BookDraftThemes
 {
-    /// <summary>White pages, Alegreya Sans and Cinzel (the plain book's faces and languages, Russian and Hebrew by stand-ins, <see cref="BookThemes.Plain"/>).</summary>
-    public static BookTheme Plain { get; } = new("plain", "Plain", BookThemes.Plain.Languages, BookThemes.Plain.Fonts, _ => PlainSheet);
+    /// <summary>
+    /// White pages, Alegreya Sans for text and Cinzel for headings, nothing to print that costs ink. Russian text is Alegreya Sans's own
+    /// Cyrillic, its headings Forum (Cinzel has no Cyrillic); Hebrew text is Assistant, its headings Frank Ruhl Libre, both stand-ins under the
+    /// theme's family names (see <see cref="BookFontFace"/>). <c>BookFontCoverageTests</c> reads each file's character map and holds every
+    /// declared language to it.
+    /// </summary>
+    public static BookTheme Plain { get; } = new("plain", "Plain", ["en", "ru", "he"],
+        [
+            new("Alegreya Sans", 400, "normal", "alegreya-sans/alegreya-sans-latin-400-normal.woff2", BookThemes.Latin),
+            new("Alegreya Sans", 400, "italic", "alegreya-sans/alegreya-sans-latin-400-italic.woff2", BookThemes.Latin),
+            new("Alegreya Sans", 700, "normal", "alegreya-sans/alegreya-sans-latin-700-normal.woff2", BookThemes.Latin),
+            new("Cinzel", 400, "normal", "cinzel/cinzel-latin-wght-normal.woff2", BookThemes.Latin),
+            new("Alegreya Sans", 400, "normal", "alegreya-sans/alegreya-sans-cyrillic-400-normal.woff2", BookThemes.Cyrillic, "ru"),
+            new("Alegreya Sans", 400, "italic", "alegreya-sans/alegreya-sans-cyrillic-400-italic.woff2", BookThemes.Cyrillic, "ru"),
+            new("Alegreya Sans", 700, "normal", "alegreya-sans/alegreya-sans-cyrillic-700-normal.woff2", BookThemes.Cyrillic, "ru"),
+            new("Cinzel", 400, "normal", "forum/forum-cyrillic-400-normal.woff2", BookThemes.Cyrillic, "ru"),
+            new("Alegreya Sans", 400, "normal", "assistant/assistant-hebrew-wght-normal.woff2", BookThemes.Hebrew, "he"),
+            new("Alegreya Sans", 400, "italic", "assistant/assistant-hebrew-wght-normal.woff2", BookThemes.Hebrew, "he"),
+            new("Alegreya Sans", 700, "normal", "assistant/assistant-hebrew-wght-normal.woff2", BookThemes.Hebrew, "he"),
+            new("Cinzel", 400, "normal", "frank-ruhl-libre/frank-ruhl-libre-hebrew-wght-normal.woff2", BookThemes.Hebrew, "he")
+        ],
+        _ => PlainSheet);
 
     /// <summary>
     /// Homebrewery's 5e layout and nothing over it but black ink on white and frames to see the boxes by (docs/BOOK_EXPORT.md 41.12): the
@@ -207,6 +227,10 @@ public static class BookDraftThemes
             .block.cover-art img, .block.cover-art .art-missing { display: block; width: 100%; max-height: 150mm; object-fit: cover; }
             .block.toc ul { list-style: none; padding: 0; margin: 0; }
             .block.toc li { margin: 0 0 1.6mm; font-size: 11pt; }
+            /* The contents' second level (51): a chapter's entries, smaller and closer together under the chapter's own line. */
+            .block.toc > ul > li > a { font-weight: 600; }
+            .block.toc ul ul { margin-top: 0.8mm; }
+            .block.toc ul ul li { margin: 0 0 0.6mm; font-size: 9.5pt; }
 
             .block.chapter-art { column-span: all; margin: 0 0 4mm; }
             .block.chapter-art img, .block.chapter-art .art-missing { display: block; width: 100%; height: 58mm; object-fit: cover; }
@@ -260,8 +284,8 @@ public static class BookDraftThemes
 /// </summary>
 public static class BookDraftHtml
 {
-    /// <summary>As the printed book's: no script, no network; inline style, data images and data fonts only.</summary>
-    public const string ContentSecurityPolicy = BookHtml.ContentSecurityPolicy;
+    /// <summary>The policy of every book page, also sent as a header by the routes: no script, no network; inline style, data images and data fonts only.</summary>
+    public const string ContentSecurityPolicy = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'";
 
     /// <summary>
     /// Torn page edges with paper fibre (docs/BOOK_EXPORT.md 46): <see cref="BookMasks.FibreEdge"/> laid over each page, two seeds for facing pages.
@@ -288,7 +312,7 @@ public static class BookDraftHtml
     {
         if (!theme.Supports(language))
         {
-            return new BookHtmlResult(null, $"The theme \"{theme.Name}\" does not support the language \"{BookThemes.Primary(language)}\".", [], [], []);
+            return new BookHtmlResult(null, $"The theme \"{theme.Name}\" does not support the language \"{BookThemes.Primary(language)}\".", [], []);
         }
 
         var layout = BookLayout.For(language, pageSize, 2);
@@ -331,7 +355,7 @@ public static class BookDraftHtml
             .Append("<meta http-equiv=\"Content-Security-Policy\" content=\"").Append(ContentSecurityPolicy).Append("\">\n")
             .Append("<title>").Append(Enc(title)).Append("</title>\n<style id=\"theme\">").Append(css).Append("</style>\n<style id=\"gm-css\">").Append(custom).Append("</style>\n")
             .Append("</head>\n<body class=\"book-draft theme-").Append(Enc(theme.Id)).Append(homebrewery ? " homebrewery-layer" : string.Empty).Append("\">\n<div id=\"brew\"></div>\n</body>\n</html>\n");
-        return new BookHtmlResult(html.ToString(), null, [], warnings, missing);
+        return new BookHtmlResult(html.ToString(), null, warnings, missing);
     }
 
     private static string Enc(string text) => WebUtility.HtmlEncode(text);

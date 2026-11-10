@@ -13,7 +13,7 @@ namespace Codex.Tests;
 /// code's; the picture is sanitised, tagged with the edition and counted once; a run shares the per-GM gate.
 /// </summary>
 [Collection("RavenDb")]
-public class BookArtDrawingTests : IClassFixture<RavenDbFixture>
+public partial class BookArtDrawingTests : IClassFixture<RavenDbFixture>
 {
     private const string DmUser = "draw_dm_user";
 

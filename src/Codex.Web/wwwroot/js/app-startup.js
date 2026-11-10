@@ -648,6 +648,42 @@ window.codex = {
         const el = document.getElementById(id);
         if (el) el.focus();
     },
+    // The address bar follows what the page shows without a navigation (the Book page's chapter): Blazor's own history state is kept.
+    replaceUrl: function (url) {
+        history.replaceState(history.state, '', url);
+    },
+    elementWidth: function (id) {
+        const el = document.getElementById(id);
+        return el ? Math.round(el.getBoundingClientRect().width) : 0;
+    },
+    // A drag on the Book page's splitter. The pane is resized as the pointer moves (a custom property on the container); the promise ends when the
+    // button is let go, with the pane's width. On a right-to-left page the pane grows to the left.
+    dragSplitter: function (containerId, paneId, min, rtl) {
+        const box = document.getElementById(containerId);
+        const pane = document.getElementById(paneId);
+        if (!box || !pane) return Promise.resolve(0);
+        const start = pane.getBoundingClientRect().width;
+        return new Promise(resolve => {
+            let first = null;
+            const move = e => {
+                if (first === null) first = e.clientX;
+                const delta = (e.clientX - first) * (rtl ? -1 : 1);
+                const max = box.getBoundingClientRect().width * 0.7;
+                const width = Math.round(Math.min(Math.max(start + delta, min), Math.max(min, max)));
+                box.style.setProperty('--book-src', width + 'px');
+                box.classList.add('sized');
+            };
+            const up = () => {
+                document.removeEventListener('mousemove', move);
+                document.removeEventListener('mouseup', up);
+                document.body.classList.remove('book-splitting');
+                resolve(Math.round(pane.getBoundingClientRect().width));
+            };
+            document.body.classList.add('book-splitting');
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', up);
+        });
+    },
     // Brings a field into view, focused and its text selected (a link to copy by hand).
     selectField: function (id) {
         const el = document.getElementById(id);

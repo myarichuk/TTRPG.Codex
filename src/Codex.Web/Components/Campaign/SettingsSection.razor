@@ -248,7 +248,10 @@
                 </div>
             </section>
 
-            <BookPanel />
+            <section class="panel book-panel" aria-labelledby="book-heading" data-testid="book-settings-line">
+                <div class="panel-title"><h3 id="book-heading">@L["Campaign.Book.Title"]</h3></div>
+                <p class="small-muted mb-0">@L["Campaign.Book.Page.SettingsLine"] <a href="@(Ctx.BasePath + "/book/gm")" data-testid="book-settings-link">@L["Campaign.Book.Page.SettingsLink"]</a></p>
+            </section>
 
             <section class="panel" aria-labelledby="danger-heading">
                 <div class="panel-title"><h3 id="danger-heading">@L["Campaign.Settings.Delete.Title"]</h3></div>

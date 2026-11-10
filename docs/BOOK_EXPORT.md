@@ -2522,3 +2522,473 @@ pictures by label, a spot as the small picture after its entry, the pick with an
 ignores keys for 75 ms after it changes (CodeMirror's `interactionDelay`).
 
 **Not done:** no suggestions inside a block (a stat block's lines) or for Homebrewery's own rarer blocks; no completion of the CSS editor.
+
+## 48. The book is the GM's alone (2026-11-09; step 0 of the source-book editor)
+
+The book is a GM tool for a source book shaped like a published adventure, not a player handout. Step 0 of that plan makes "players see no
+book" a tested rule rather than a side effect of where the panel sits.
+
+**What the code already did (read, then tested):**
+- Every route in `BookEndpoints.cs` already answered 404 to anyone but the campaign's GM: the old page and PDF through `BuildAsync`
+  (`access is not { IsDm: true }`), the draft's `art`, `md` and `pdf` through `GmAsync`. Behind them the services refuse a non-GM again:
+  `BookSourceReader.ReadAsync` returns null for a non-GM access, and `BookDrafts`, `BookArtService`, `BookArtDirection`, `BookBuilds`,
+  `BookDraftStore` and the theme store answer null or NotAllowed (their unit tests already said so).
+- `BookPanel` is placed in Settings inside the GM-only column (`SettingsSection.razor`, `@if (Ctx.IsDm)`), so the panel's own player branch
+  ("a player has only the Print tab") **was never reachable**. The plan for this step said non-GMs see the Print tab; they did not.
+- No existing test asserted that a player could read a book. Every test that builds a Player access (`BookBuildTests`, `BookArtDirectorTests`,
+  `BookArtTests.Slots`, `BookDraftTests`, `BookThemeWizardTests`, `BookPlayerBookTests`) already asserts refusal, so none needed rewriting.
+
+**Changed:**
+- `BookPanel.razor`: the scattered `Ctx.Access.IsDm` checks (tab strip, the Print tab's role and label, the Pictures, Edit and AI tabs, the
+  editor dialog) are gone; one guard wraps the whole panel. Every `data-testid` is kept.
+- New e2e test `BookRouteE2ETests.APlayerOfTheCampaign_GetsNoBook_OnAnyRoute_WhereTheGmGetsOne`: a player joins by invite and owns a
+  character; both drafts are opened by the GM. On every route, for both editions (page, PDF, draft Markdown, draft PDF, draft pictures, and the
+  player's own copy `?player=<their id>` as Markdown and PDF) the GM gets 200 and the player 404 with no campaign text; Settings shows the player
+  no book panel. The existing test for someone who is not a member is kept.
+- The site guide (en, ru, he) says the panel is the GM's only and that players are refused its pages and files.
+- Party edition and "PDF for a player" (45) stay, as GM tools.
+
+**Mutation checks (by hand, from a backup copy):** `GmAsync` taking any member: the new test fails (a player gets 200 on `draft/en/art`; the
+draft's Markdown and PDF are still refused by `BookDrafts`). `BuildAsync` taking any member: the test still passes, because
+`BookSourceReader.ReadAsync` refuses a non-GM on its own; the old route is deleted in step 2, so no test was added for that layer alone.
+
+**Not done / not verified:**
+- The old route keeps two guards and only their sum is tested over HTTP (above).
+- The app was not looked at as a player by hand; the e2e test drives the real app in Chromium as a joined player, in English only.
+- The ru and he guide sentences are written by the model, not read by a native speaker.
+
+## 49. The Book page (2026-11-10; step 1 of the source-book editor)
+
+The editable book left its dialog. It is a page of the campaign, `/campaigns/{id}/book/{edition}/{chapter?}`, GM only, and Settings keeps one line
+and a link to it.
+
+**Built:**
+- **Routes.** The page goes through `CampaignPage` (`Section = "book"`, `Arg1` = edition, `Arg2` = chapter). The minimal-API file routes it would have
+  collided with moved to `/campaigns/{id}/book-file/{edition}[/pdf]` and `.../book-file/{edition}/draft/{lang}/{art|md|pdf}`; every caller
+  (`codex.downloadFrom`, the editor's `artUrl`, the old panel, the tests) was updated. `edition` is `gm` or `party`; none, or anything else,
+  redirects (replace) to `gm`. `chapter` is a section id or `style` (the stylesheet); `codex.replaceUrl` keeps it in the address with
+  `history.replaceState` (Blazor's own history state is passed through), so a reload or a link comes back to it. A non-GM who opens the address
+  sees the campaign's "not found" text and no book (`BookRouteE2ETests`).
+- **Rail.** "Book" (`book-open`) is the last item of World, GM only, in the side rail, the phone tab bar's More menu and nowhere for others.
+  Settings shows `book-settings-line` and the link `book-settings-link`.
+- **Layout.** `.workspace.book-mode` hides the campaign header, rail and tab bar; `.book-page` fills the window under the app header. Top bar:
+  back link with the campaign's name, "Book", the edition control (two buttons, `aria-pressed`; switching saves what was typed first), the save
+  state (`role=status`), the theme select, Fit pages, Download PDF and "⋯". The "⋯" menu holds: bring in a theme, **Lay out like Homebrewery**
+  (moved from the bar), torn page edges, suggestions and help, language, paper, Download Markdown, PDF for a player (party only), Whole book as
+  the book, Start over. Language and paper are there because the old panel was the only place that chose them (see below).
+- **Panes.** Outline 240 px | Source (at least 360 px, 1fr) | splitter 6 px | Preview (1.1fr). The splitter is `role=separator`,
+  `aria-orientation=vertical`, draggable (`codex.dragSplitter`; the promise ends at mouse-up with the width), Left/Right move it 24 px (the other
+  way round on a right-to-left page), a double click resets it; the width is kept in `localStorage` (`codex.bookEditor.split`). The Outline and the
+  Preview fold to a 32 px strip (a folded Preview is still drawn off screen, as before). Under 900 px one pane shows at a time with a
+  Source/Preview toggle.
+- **Dock.** 116 px under the panes, collapsible, tabs **Ask AI | Pictures | Problems** (the Blocks tab is gone; its snippet bar is step 4).
+  Pictures holds `BookArtTray`, and a picture put in or taken out redraws the preview (`refreshArt` in `editor.js`).
+- **Leaving.** A `NavigationLock` saves what was typed first. Text the server does not have (typed and refused, a conflict) asks: stay, or leave
+  without it; closing the tab asks through the browser.
+- **Code.** `BookPage.razor` (+ `.razor.cs`: route, state, everything the old editor did) composes `BookToolbar`, `BookOutline`, `BookSource`,
+  `BookPreview` and `BookDock`, which derive from `BookPart`. **Deviation from the plan:** there is no separate `BookEditorState` class. The ~80
+  fields stay on `BookPage` (internal), and `BookPart` names the ones the parts' markup uses; a part has no state of its own, and an event in a
+  part draws the whole page (`IHandleEvent`), as the single editor did. `BookDownload` is its own type. `BookDraftEditor.razor` is deleted; no
+  `<dialog>` is left in the book. `BookPanel.razor` is no longer mounted anywhere (the Print, Pictures-tab and AI polish tabs went with Settings'
+  panel); the file waits for step 2.
+- **Kept `data-testid`s** (`book-draft-*`); renamed or new: `book-page` (was `book-draft-dialog`), `book-edition-dm|party` (buttons),
+  `book-splitter`, `book-draft-tab-art` (was `book-draft-tab-blocks`), `book-draft-art`, `book-draft-language-{tag}`,
+  `book-draft-paper-{A4|Letter}`, `book-draft-leave*`, `book-settings-line|link`, `book-back`. `book-draft-homebrewery` is a menu item now
+  (`aria-checked`).
+- **Strings** (`Campaign.Book.Page.*`, `Page.Campaign.Section.Book`) in en, ru, he; the Homebrewery label reads "Lay out like Homebrewery".
+
+**Tests.** Every e2e test that opened the editor through Settings opens it through `E2EHelpers.OpenBookAsync`. Rewritten: the panel test
+(now the page, the address, the edition control, a PDF, and a player who finds nothing), the cover-slot test (dock), the refused-print test (the
+draft's PDF route; the old panel's per-code messages, including the no-browser setup sentence, are now the page's), the panes/panel-tabs test
+(arrow keys over Ask AI, Pictures, Problems; layout kept across a reload), the Hebrew theme test (language from the "⋯" menu). Skipped, with the reason
+in the attribute: `BookAiPanelE2ETests.TheDmSeesTheCostFirst_...` (the AI polish tab is not reachable; step 2 maps its checks).
+
+**Not done / not verified:**
+- Paper size and book language had no place in the plan's bar; they are in "⋯" so they do not vanish with the old panel. The language starts as the
+  app's (when a theme can print it), else the one last chosen in this browser.
+- The site guide (en) was corrected where it named the old tabs; **ru and he guides and the screenshots** (`site/tools/capture-screenshots.mjs`
+  drives the old panel and dialog) were not touched.
+- The outline is still the chapter list with the stylesheet in it; the heading tree, snippet bar, Style and Theme tabs are steps 4 and 5.
+- Looked at by hand in Chromium (English, 1400 px wide): the layout, the splitter keys, the edition switch, the Pictures tab, the chapter in the
+  address. **Not looked at:** Hebrew (RTL) by eye, a phone width, keyboard-only use end to end, Safari and Firefox, the leave prompt by hand.
+- The leave prompt (`book-draft-leave`) has no e2e test. Typing is handed to the server 900 ms after it stops; a page reloaded inside that window loses it (the dialog's Close flushed first). Found by the stale-chapter test.
+- Result: book and localization tests 838 passed, 1 skipped (the AI polish tab test); editor tests pass.
+- A change of language or edition while an AI review or a merge is open is refused by `AiBusy`; leaving the page lets go of the review.
+
+## 50. One pipeline: the old print route is gone (2026-11-10; step 2 of the source-book editor)
+
+The Book page (49) is the only way to see or print the book. A draft nobody edited follows the campaign, so "print it right away" is: open
+Book, Download PDF. Parchment was dropped, not ported (the user's choice): Plain with **Torn page edges** (46) is most of it.
+
+**Deleted:**
+- `BookPanel.razor` (the Print, AI polish and old Pictures tabs) and the routes `/campaigns/{id}/book-file/{dm|party}` and `.../pdf`, with
+  `BookEndpoints.BuildAsync`. What is left in `BookEndpoints` is the draft's `art`, `md` and `pdf`.
+- The old renderer's page: `BookHtml` (its records `BookSection`, `BookLabels`, `BookDocument`, `BookHtmlResult` moved to `BookDocument.cs`;
+  `BookSection.Blocks` and `BookDocument.CoverAsset` went with it; the page policy is `BookDraftHtml.ContentSecurityPolicy`), `BookThemes.Plain`
+  (its faces moved into `BookDraftThemes.Plain`), `BookThemes.Parchment`, `All`, `Find` and their CSS.
+- The AI polish: `BookBuilds`, `BookBuildRunner`, `BookSectionWorker`, `BookBuildKey`, `BookPrompts`, `BookWorkItem`; `BookComposer.Overlay`,
+  `PlaceArt`, `Items`, `Stored`, `TooShort`, `Edition`; `BookSlots.PlacedByTheOldRoute`.
+- The PDF's two-pass page numbers (`BookPages`, `BookPrintJob.Headings`/`WithPageNumbers`, `BookPdfResult.Passes`): only the old page had them;
+  the draft's contents get their numbers from the renderer.
+- 58 strings only the panel used, in en, ru and he.
+
+**Kept, because the draft or art path uses it:** `BookComposer.Compose`/`Labels`, `BookCompiler`, `BookMarkdown`/`BookMarkdownRenderer` (`BookWork.Prepare`
+renders secret boxes with it, and the art director's outline is prepared by it), `BookWork.Prepare`, `BookChecks`, `BookFacts`, `BookSlots`, `BookArt*`,
+`BookMasks`, `BookCss`, `BookFontCoverage`, `BookRtl`, `BookThemes.Primary`/`IsRtl`/`PageMm` and the script ranges, `BookLayout`, `BookTheme`. Moved:
+the run types the art director and drawing share (`BookRun`, `BookRunRow`, `BookRunSnapshot`, `BookBuildBusyException`) to `BookRun.cs`;
+`BookSectionWorker.Clean` to `BookEditWorker.Clean`; `BookBuildRunner.ConcurrencyFor` to `BookModelConcurrency.For`. New: `BookDrafts.Map`, the
+edition's picture map from pictures already read (what `ArtAsync` returns), public so a test can hand it pictures read for the other edition.
+
+**Stored builds.** `BookBuildDocument` stays: it holds the edition's spend totals, which the draft's AI edits and merges add to (`BookSpend`).
+Its stored chapters (`Sections`, `Style`, `Language`) are no longer read; old documents are left as they are. The totals line the AI polish tab
+showed is now under the Ask AI tab (`book-ai-totals`, "AI work on this edition so far: ...", `BookSpend.ReadAsync`).
+
+**Test map.** Every masking or canary test of the old route was ported to the draft path before the code went, or is named here with what
+covers it now.
+
+| Old test | Now |
+|---|---|
+| `BookSourceTests.PartyBook_AsHtml_CarriesNoDmOnlyData_AndStillHasThePublicText` | `PartyDraft_CarriesNoDmOnlyData_AndStillHasThePublicText` (same seed, the generated draft, escapes read back) |
+| `BookSourceTests.DmBook_AsHtml_BoxesTheDmsSecrets_AndStillHasNoAccountId` | `GmDraft_BoxesTheGmsSecrets_AndStillHasNoAccountId` |
+| `BookSourceTests.PartyEdition_SendsNoDmOnlyDataToTheModel_...`, `DmEdition_KeepsItsSecretsOutOfTheModel_...` | Same names: every chapter of the draft as the server cuts it before an AI edit (`BookDraftEdits.Cut`) |
+| `BookSourceTests.PartyEdition_NeverPrintsTheTitleOfAPageThePartyMayNotOpen_ThroughALink` | Same name: the party draft, its cut passages and the director's outline; the GM draft keeps the titles |
+| `BookArtTests.ArtReadForTheDm_NeverReachesAPartyDocument_...`, `PartyBook_PlacesOnly...`, `DmBook_PlacesEveryPicture...`, `ABodyLineThatReadsLikeAnotherEntrysHeading...`, `TwoEntriesWithOneName...` | Same names: the draft with its `art:` references resolved through `BookDrafts.Map` (the DM's pictures handed to the party's map in the first) |
+| `BookArtTests.Slots` (GM picture never in the party book, party picture in both, keep three) | Same names; the page is the draft resolved through `BookDrafts.ArtAsync`, and "even handed the GM's map" goes through `BookDrafts.Map` |
+| `BookArtTests.APictureIsPlacedAfterARewriteOnlyWhenItsHeadingIsUnambiguous...`, `AChapterHeader_..._InARewriteToo...` (rewrite half) | Gone with the stored rewrite: nothing prints a model's chapter except through the GM's review. The draft writer places by recorded line: `ABodyLineThatReadsLikeAnotherEntrysHeading...`. The header half is `AChapterHeader_GoesUnderTheTitle` |
+| `BookArtTests.PicturesOff_PlacesNothing...` | Gone (`pics=0` was the old route's) |
+| `BookHtmlTests` language gate, `TheTitleIsEscaped`, `ACampaignNameThatLooksLikeMarkupIsJustAName`, `TheDmSummaryIsInTheDmBookOnlyAndIsBoxed`, `EveryChapterTitleIsTranslated` | `BookDraftShellTests` (the shell, the generator) |
+| `BookHtmlTests.ThePageFetchesNothing`, `CustomCss*` | `BookDraftPdfTests.EveryTheme_SitsOnBlank_..._AndLoadsNothing`, `HostileMarkupInADraft_NeitherRunsNorFetches`, `BookCssTests` |
+| `BookHtmlTests.EveryFontAThemeNamesIsShipped` | `BookFontCoverageTests` (draft themes only now) |
+| `BookHtmlTests` columns, drop cap, cover, contents numbers, heading ids, paper CSS | Gone with the old page's own layout |
+| `BookAiTests` worker and runner tests | Gone with them. `ASecretIsCutOut...` and `AMention_IsGivenAsAName...` are `BookWorkTests` on `BookWork.Prepare` (the director's input); `APromptInjectedIntoTheSource_...` is `BookDraftEditTests.APromptInjectedIntoTheCampaign_IsMaterial_NotAnInstruction` on the draft's edit prompt; `BookChecksTests` and the concurrency theory stay |
+| `BookBuildTests` (keys, builds, the stored DM build never in the party book, a character hidden or a chapter edited after the build) | No stored rewrite prints any more, so the store-overlay tests have nothing to hold. Secrets out of the model: the `BookSourceTests` above and `BookDraftEditTests.NoSecretReachesTheModel_...`; cost first: `BookDraftTests.TheWholeBook_IsPricedFirst_...`; one paid run per GM: `BookArtDirectorTests.OnePaidRunPerGm_...` and `BookDraftTests.AnAiEdit_IsRefusedBeforeSending_..._AnotherRunIsUnderWay_...`; a cut-off reply: `BookDraftEditTests.AReplyCutOffByTheLengthLimit_...` |
+| `BookBuildTests` store tests (only the GM, deleted with the campaign, not in export or backup) | `BookSpendTests` |
+| `BookPdfTests.APlainBookPrintsToAPdf...` | `BookDraftPdfTests.ThePlainTheme_PrintsInItsOwnFacesOnly_AtTheBooksPaperSize` |
+| `BookPdfTests.TheContentsCarryThePages...`, `ABookWithNoHeadingsPrintsOnce`, `TheParchmentEdge...`; `BookMasksTests` Parchment tests | Gone (two-pass numbers, Parchment). The draft's contents numbers: `BookDraftPdfTests.TextLongerThanAPage_..._TheContentsSayWhere`; its edges: `FramesAndTornEdges_Print_AsVector_...` |
+| `BookStatBlocksTests.TheOldRoute_ChoosesNoSpotPicture_...` | `BookSpotSlotsTests.TheEditableBook_ChoosesASpotPicture_BesideTheEntrysOwn` |
+| e2e `OnlyTheDmGetsABook_AsAPageOrAsAPdf_...` | `OnlyTheGmGetsABook_AsMarkdownOrAsAPdf_AndNothingButAnEditionIsOne` (draft routes; the old ones answer 404) |
+| e2e `APlayerOfTheCampaign_GetsNoBook_...` | Same, old-route rows taken out |
+| e2e cover slot, drawn picture ("the party book shows it") | The edition's picture map (`draft/en/art`) |
+| e2e `TheDmSeesTheCostFirst_RunsTheBuild_...` (skipped since 49) | Deleted. Cost first and review: `TheGmAsksAiToEditASelection_...` (which now also checks `book-ai-totals`) and `TheGmRewritesTheWholeBookAsTheBook_PricedFirst_...` |
+
+**Handoff invariants rewritten:** 4 (a stored rewrite) and 7 (`PlaceArt` after `Overlay`) described deleted code; see the handoff.
+
+**Mutation checks (by hand, from backup copies; handoff 6B items that still apply):** `BookSlots.Choose` taking a GM picture for the party, `BookArt.Slot`
+ignoring the audience, the draft writer finding a heading by its text, `BookCompiler.PageLinks` printing a GM-only page's title, `BookDraftEdits.Cut`
+leaving a `{{secret` block or a `<div class="secret">` in the passage, `BookWork.Prepare` printing a hidden mention's label, the reader's tag
+check letting a GM picture into a party source, a stranger keyed `actor:` instead of `mask:`, and the art director taking a gate of its own (against the
+rewritten `OnePaidRunPerGm_...`): all caught.
+`BookCompiler.ArtAnchors` without its picture-flag check **survived** the ported tests (the page never names an unflagged entry's picture, but the map
+sent to the browser did); `ArtReadForTheDm_...` now also checks the map, and catches it.
+
+**Found while looking at it in Hebrew, fixed:** the dock's tabs moved with Left and Right as on a left-to-right page, and the splitter took its
+direction from the book's language rather than the page's. Both now follow the page (`BookPage.PageRtl`, the app's language): on a Hebrew page Left
+goes to the tab drawn on the left, and an English book in the Hebrew app no longer turns the splitter round.
+
+**Result (on the final commit):** book and localization tests 751 passed (the count fell from 838 with the old route's tests); editor tests pass; the site builds.
+Looked at by hand in Chromium, English and Hebrew: Settings has only the link, the Book page and its dock, the dock tabs and splitter by keyboard
+in Hebrew, and the old PDF address serves no book.
+
+**Not done / not verified:**
+- `site/tools/capture-screenshots.mjs` still drives the old panel, the old route and Parchment, so the screenshots cannot be retaken until it is
+  rewritten for the Book page. The `book-panel` shot is still the old panel; its caption now describes the Book page.
+- The ru and he guide's book sections were rewritten from the English by the model, not read by a native speaker.
+- The old addresses `/campaigns/{id}/book-file/{dm|party}[/pdf]` fall through to the app's own pages (200, no book) rather than answering 404.
+- The totals line (`book-ai-totals`) is checked by one e2e test, not looked at by eye; no AI was run in the preview.
+- The right-to-left keys have no e2e test (checked by hand only).
+- `BookMarkdownRenderer` stays only for `BookWork.Prepare`'s secret boxes, which the art director's outline throws away; it could shrink to the
+  grammar that function needs. Old `BookBuildDocument.Sections` stay in the database.
+- The full test suite outside Book and Localization was not run.
+
+## 51. Generator v4: the shape of a published adventure (2026-11-10; step 3 of the source-book editor)
+
+`BookDraftWriter.Version` is `book-draft/v4`. **Every chapter of every existing draft looks moved on when it is next opened:** a chapter nobody
+edited simply follows (it becomes the v4 text), an edited one shows Stale with Merge ("Bring up to date"). The chapters are also put in the new
+order (below). Nothing is lost by this: an edited chapter keeps its text until the GM merges, regenerates or keeps it.
+
+**The shape (confirmed with the user 2026-11-10):**
+
+| Chapter id (unchanged) | Title | Inside |
+|---|---|---|
+| `overview` | Introduction | tagline, description |
+| `chronicle` | The story so far | each session `##` |
+| `gazetteer` | Gazetteer | each region `##`, its places `###` |
+| `lore` | Lore | facts, as before |
+| `pages` | Pages | groups `##` by wiki kind, in the order Quests, Factions, People, Places, Other pages (kind General); pages `###` |
+| `cast` | Appendix A: Cast | each character `##`, **no player characters** |
+| `homebrew` | Appendix B: Homebrew | groups `##` by the system's type (its plural label; the type as stored when the system does not describe it), entries `###` with their stat blocks |
+
+- The ids did not change, so an edited chapter merges with its v4 text instead of being orphaned. Only the titles and the order did.
+- **No player characters in the Cast** (the user: the book is for publishing the adventure as a source book). They are left out of both
+  editions; a mention of one is still its name, as plain words. One exception: **a player's own copy (45) keeps that player's own characters**,
+  because that is where what only they were told about their character is. The party draft has no entry for them, so the character's text comes
+  as one "Only for ..." note at the end of the Cast. Another player's character is not in it at all.
+- Appendices are lettered in the order they are in the book (`Campaign.Book.Label.Appendix`, `AppendixLetters`): with no cast to print, the
+  homebrew is Appendix A.
+- **A group** (a region, a kind of page, a type of homebrew) is a heading with an entry marker of its own, `{{entry,#e-KEY}}`, KEY the hash of
+  `region:ID` or `group:SECTION/NAME` (`BookSlots.RegionSubject`, `GroupSubject`). So a merge and an entry-by-entry AI edit take a group's
+  heading as its own unit (it is not the tail of the entry before it), and the contents can point at a region. A group has **no picture slot**
+  (`BookEntryPosition.IsGroup`; `BookSlots.For` skips it) and an entry-by-entry AI run sends nothing for a unit that is only a heading.
+- Regions have no text of their own in the app, so "region text, then its places" is the region's heading, then its places.
+
+**1. Heading nesting.** A heading in the campaign's own text is written under the heading it is written under: in an entry whose heading is
+level L, a body heading of level n becomes `min(6, L + n)`; before a chapter's first entry L is 1 (the chapter's title). So a "# Rumours" in a
+biography can no longer read as a chapter. `BookDraftWriter.Text(..., level)`: ATX headings only (up to three spaces, one to six `#`, then a space
+or the line's end), never inside a ``` or `~~~` fence (the fence state is carried across a secret block), the same in a `{{secret` block, and a
+line is rewritten in place, so no line is added or removed and the compiler's recorded entry lines still hold. A player's note (45) is written at
+level 5, under the note's own title.
+
+**2. Contents: two levels.** Each chapter (`#ch-ID`), then its entries (`#e-KEY`): every entry and every region; not a place (it is under its
+region) and not a group of pages or homebrew (its entries are listed). `BookEntryPosition.InContents`.
+
+**3. Cross-references.** A mention (`[[actor:ID]]`, `[[place:ID]]`) or a wiki link (`[[Title]]`, `[[Title|shown]]`) whose target has an entry in
+this edition's book becomes `[name](#e-KEY)`; otherwise plain words, as before. `BookDraftWriter.Links` is built from the entries the compiler
+wrote for this source and from this source's own pages, and a link is written only for a name the edition's resolver gives. So the party rule
+holds by construction: a hidden character has no name and no entry, a stranger's link is the mask's key (`mask:`), and a link to a GM-only page
+was already cut to its `|shown` words by `BookCompiler.PageLinks` (37) before the writer sees it. A place mention reaches a place's entry or a
+region's. Text never links to the entry it is in. A player character has no entry, so no link. Notes of a player's copy carry no links.
+- **AI edits:** the passage a model is sent keeps these links as they are. The prompt says to keep one exactly or drop it and keep its words
+  (`BookEditPrompts.ForbiddenRule`; the prompt version is `book-edit-4`), and `BookDraftEdits.Check` refuses a reply that writes a link inside the
+  book that the passage did not have. The keys are hashes; a model learns nothing from one.
+
+**4. Merges and AI edits split on entry markers, verified:** `BookDraftMerge.Split` and `BookDraftAi.Parts` cut a chapter at `{{entry,#...}}`
+lines and nowhere else, so the change of levels (`##` to `###`) does not move a unit's bounds. `BookDrafts.ChangedEntries` reads the first `#` line
+after a marker, at any level.
+
+**5. Chapters of the GM's own.** `BookDraftDocument.IsOwn`: an id `own-` and a GUID's 32 hex digits. The store: `AddChapterAsync(title, after)`,
+`RenameChapterAsync`, `MoveChapterAsync(by)` (one place, never before the front pages), `DeleteChapterAsync`, `OwnAsync`; the same on `BookDrafts`.
+A new one holds the chapter block around its title and nothing else. It has no generated text (`Base` and `BaseKey` empty), so it never follows,
+is never Stale, Edited or Gone (`BookDraftChapterView.Own`), and Regenerate and Keep are refused for it. It is a chapter of the draft like any
+other, so the Markdown file, the PDF, Fit pages, a player's copy and the leak check have it with no code of their own. Only the campaign's GM, as
+the store reads the campaign now; a generated chapter is never renamed, moved or deleted this way; the draft holds 40 chapters at most.
+- **The contents list it** where it stands: `BookDraftWriter.Generate(..., own)` takes the own chapters' ids, titles and the chapter each follows
+  (`BookDraftOwn`). This is the one input of the generator that is not the campaign's, so adding, renaming, moving or deleting one moves the front
+  pages' key: unedited front pages follow, edited ones show Stale. **The leak check generates without them** (`GenerateAsync(withOwn: false)`): a
+  title is the GM's typing, and what the generator says is what the check takes as safe.
+- **Order.** `FollowAsync` now keeps the campaign's chapters in the generator's order (`RavenBookDraftRepository.Ordered`); a chapter the campaign
+  does not make (the GM's own, or an edited one the campaign no longer has) stays behind the chapter it stood behind. That is also what puts a v3
+  draft in the v4 order.
+- **Start over deletes the GM's own chapters too** (it always deleted every chapter). The UI of step 4 must say so before it asks.
+- Rename changes the title the list and the contents show, not the chapter's text: the `# Title` line in it is the GM's to edit (step 4's UI can
+  do both).
+
+**Tests.** `BookSourceTests.V4.cs` (the shape, the appendix letters, the contents, hostile headings in both editions, cross-references in both
+editions with the "every link lands in this edition, no party text holds a GM-only key" check, a link for a name the edition does not give, an AI
+reply that adds a link), `BookDraftTests` (an own chapter through a campaign change, the contents, the Markdown file, Fit pages and the leak check;
+its title checked for leaks in the contents; rename, move and delete rules; the order). Rewritten for the new shape: the link test of 37 (links are
+cross-references now), the player-book tests (no player character has an entry), `ABodyLineThatReadsLikeAnotherEntrysHeading...`,
+`AChapterHeader_GoesUnderTheTitle`, `EveryChapterTitleIsTranslated`.
+
+**Mutation checks (by hand; the file changed, the tests run, the file restored):** a heading rewritten inside a fence; no cap at level six; the
+fence state not carried across a secret block; player characters left in the cast; text linking to its own entry; places listed in the contents;
+groups listed in the contents; a slot made for a group; a stranger linked by the actor's key instead of the mask's; an own chapter's title taken
+as safe by the leak check; an own chapter read as edited and gone; an own chapter removed by the follow pass; a move before the front pages; a
+generated chapter deleted through the own-chapter call; no limit on the number of chapters; no reorder on follow; an AI reply adding a link; own
+chapters left out of the contents. **15 of 18 were caught on the first run.** Three survived and each was a gap in the new tests, now closed:
+the chapter-limit test looped until refused and so never ended without the limit (it hung the run for an hour; the loop is bounded now), a
+fence across a secret block had no test (`TheTextPath_...`), and the order on follow had only a unit test of `Ordered`
+(`ADraftOfTheOlderGenerator_...` now makes a draft in the old shape and opens it). All 18 are caught.
+
+**Looked at in the app** (Chromium, a fresh campaign: an NPC whose history has headings, a fence, a secret, a mention of a stranger and a link to
+a page nobody wrote; a masked stranger; a player's character): the GM and party editions in English and the GM edition in Hebrew. The chapters
+are Introduction and Appendix A: Cast (נספח א: דמויות), the player's character is in neither edition, the history's headings sit under the
+character (h3, h4) and the fenced `#` line is code, the party edition names the stranger by the mask and links to the mask's entry, every link in
+the preview lands on an element of the same page set, and the contents show the entries under their chapter with page numbers, mirrored in Hebrew.
+The contents' second level got a style of its own while looking (`BookDraftHtml` for Plain, `ashen-vellum.css`): chapters heavier, entries smaller.
+
+**Not done / not verified:**
+- **No UI for the GM's own chapters** (step 4): they exist only through `BookDrafts.AddChapterAsync` and the tests. Not looked at in the app.
+- **A real v3 draft was not opened with this build.** The test makes a draft in the old shape through the store (old order, old text, a GM edit) and
+  checks the order, the follow and the merge plan; the preview's old data folder had no login left, so the Stale notice and the merge review of a
+  draft the old build really wrote were not seen by eye.
+- A merge of an edited v3 chapter will offer more than the GM might expect: every entry whose heading changed level (`##` to `###` in Pages and
+  Homebrew) or whose text gained a link reads as changed by the campaign, the new group headings come as added entries, and a player
+  character's entry as removed.
+- Looked at with Plain only. Ashen Vellum's second-level contents rule and a theme the GM brought in (which has no rule for a nested list beyond
+  Blank's indent) were not looked at; the theme tests (`EveryBlock_UnderEveryTheme...`, `ALongBook_...`) pass.
+- In Plain a cross-reference prints as plain words (`.page a` has no colour or underline): it is a link in the PDF and the preview, with nothing to
+  show the reader that it is one. No "see page N" is written.
+- Gazetteer with regions, Pages with several kinds and Homebrew with types were tested, not looked at in the app (the preview campaign had none).
+  The homebrew groups' names come from the system only in the draft's generator; the art director, slots and a player's copy compile with the type
+  as stored, which changes no key or line.
+- The Russian and Hebrew words of the new labels (Введение, События до сих пор, Приложение А, מבוא, הסיפור עד כה, נספח א, the page groups) are the
+  model's, not read by a native speaker.
+- A link to a page nobody wrote, or one the party may not open, still prints nothing in the party edition when it has no `|shown` words (37):
+  "and guards ." in the preview campaign. Unchanged, but more visible now that its neighbours are links.
+- The campaign's own text can still hold a line that reads `{{entry,#e-...}}`; nothing escapes `{{` there (as in v3). Not looked into.
+- Keyboard-only use: nothing on the page changed in this step, so it was not gone through again.
+- `BookPdfTests.AJobThatCannotFinishInTimeIsStopped_AndTheSamePrinterPrintsTheNext` fails about every other run on this machine, on the commit
+  before this step as well (run twice in a clean checkout: one pass, one failure): the small job after the stopped one takes longer than five
+  seconds. Not from this step, not fixed.
+- The full test suite outside Book and Localization was not run.
+
+**Result (on the final commit):** book and localization tests, the e2e ones included: 777 passed, 1 failed (the PDF timing test named above); editor
+tests pass; the site builds. The site guide (en, ru, he) names the new order of chapters and says the players' characters are not in the book.
+
+## 52. Homebrewery feel: source tabs, snippets, the outline tree, a preview that follows (2026-11-10; step 4 of the source-book editor)
+
+**Source tabs** (`BookSource.razor`, `role="tablist"`, arrow keys swapped on a right-to-left page): Text (the chapter), Style (the GM's CSS, no
+longer a row in the chapter list; `data-testid=book-draft-css` is now this tab) and Theme. The page keeps *which tab* (`sourceTab`) apart from
+*which chapter* (`current`, always a chapter once the draft is open); the address says `.../style` for the Style tab and a section id otherwise (the
+Theme tab is not in the address). Theme is the theme's sheet as the preview's frame holds it (`<style id="theme">`: page layout, theme, torn edge),
+read-only through its own CodeMirror compartment (not the AI lock, which `lock(false)` clears), shown without `@font-face` rules and without any
+declaration that carries a `data:` address (those are the faces and paper pictures, thousands of characters each; the server adds a theme's faces
+itself). A one-line sheet is laid out over lines. **Copy to Style** appends that readable sheet to the GM's own, under a comment, as one edit that
+saves like typing; the GM's sheet is never replaced, and the usual size refusal applies. Typing in Theme is refused in the editor (the update listener
+writes only Text and Style).
+
+**Snippet bar** (Text tab only): Note, Read aloud, Secret (GM edition only: not drawn in the party edition, and the script refuses it there too), Stat
+block, Table, Picture, Wide, Column break, Page break. Each inserts at the cursor or wraps the selection as one `input.snippet` edit (saved and undone
+like typing); a break is a line of its own and never wraps. Picture writes `{{portrait,torn` with `![caption](art:` and opens the suggestions on the
+slot list (no address in the text). **The stat block is a layout skeleton** (name, type line, rule, one label and value), not the system's own block:
+the real blocks come from the generator (section 46) from the system's description, and a skeleton with no game's words is right for every system.
+The *Blocks* tab of the dock was already gone (the dock has Ask AI, Pictures, Problems since step 1); its help wording lives on in the suggestions
+(`Campaign.Book.Draft.Help.*`) and the snippets' hints.
+
+**Outline** (`BookOutline.razor`): `role="tree"`: chapter rows (`aria-level` 1) and, under the open ones, the chapter's `##` and `###` headings. Headings
+come from `outlineOf` in `render.js`, the renderer's own Markdown reader, so a heading in a code fence is not one, and a setext heading, a heading
+written as HTML and one inside a block such as a secret are. The script tells the server a chapter's headings only when they changed (debounced
+300 ms; at most 150 per chapter, 120 characters each, levels 2 and 3), never on every key, and the server draws them as text (never markup).
+Click moves the cursor to the heading and the preview to its page. Keys (`treeKeys`, one listener per tree): Up and Down, Home and End, Right opens
+a chapter or goes into it, Left closes it or goes to its chapter (swapped on a right-to-left page), roving tab stop. **+ Add chapter** (inline
+title, Enter adds it after the chapter shown, Esc cancels) goes through `BookDrafts.AddChapterAsync` (51); an own chapter's row has a menu: Rename,
+Move up, Move down (disabled at the ends), Delete (asks first, in the page's alert bar; the neighbour is shown after). Every one flushes what was
+typed first, then reads the draft again (`Drafts.OpenAsync`, so the contents take the chapter in) and gives the editor the new list and titles.
+
+**Preview follows the text.** Mapping is by heading *order*, not by words: the book's headings in chapter order (the outline's lists joined) against the
+drawn `h1`-`h6` in order (the contents' own heading included; leaving it out put every later heading one off, found by the e2e test). Cursor
+moves (200 ms) scroll the preview to the nearest heading above the cursor, only when that heading changed, so typing in one section does not jump
+the pages; a click in the pages (a listener on the frame's document; the frame stays `sandbox="allow-same-origin"` with no script, nothing new is
+allowed) moves the cursor to the heading above the click, opening its chapter first if needed. The **Follow** toggle in the preview header turns both
+off (remembered in this browser, with the zoom). Counts that disagree clamp to the nearest heading; nothing throws.
+**Page gutter**: a `\page` line shows "p. N", the number its page prints, read from the laid-out pages (source pages are the pages without
+`data-fitted`, so pages the drawing ran on by itself do not shift the numbers; if the counts differ, no marker). The preview header says "Page N of
+M" for the page at the top of the frame (plain text, not announced) and has **Fit width | 100%**.
+
+**Tests:** `tools/book-editor/test.mjs` (the outline: fence, setext, secret, raw HTML, `\page` in a fence, Arabic, titles cut and stripped);
+`BookSourceE2ETests` (tabs, Theme read-only, Copy to Style leaves the chapter alone, no Secret snippet in the party edition, a snippet and its
+gutter number; the heading in the tree, none from a fence, the click, tree keys; add, rename, move, delete after asking; a click in the pages, the
+the cursor moving the pages to the heading above it and back, and staying put with Follow off; that test found an aim taken against the old drawing (a heading just typed) that suppressed the next scroll, now keyed to the drawing). The existing e2e flows pass unchanged (11 draft, 2 route).
+
+**Not done / not verified:**
+- Seen only through Playwright's Chromium; the click and scroll sync in WebKit and Firefox is not tried, nor Hebrew (right-to-left) by eye, nor the
+  tree by a screen reader.
+- Order mapping assumes the drawing makes exactly the headings the reader finds; a theme or block that adds a heading shifts the rest of that book
+  by one until the next chapter's count (it clamps, never fails).
+- The Russian and Hebrew strings (`Campaign.Book.Source|Snippet|Own|Preview.*`) are model-written.
+- Stat block snippet is a skeleton, not the system's block; no snippet for Homebrewery's rarer blocks; "Merge" and the Stale notice are unchanged.
+- An own chapter has no AI, no Stale, no art slots; its text is the GM's.
+- Moving an own chapter past a generated one is the store's rule (51); the menu only asks for one step.
+
+## 53. Pictures in the text: chips under the headings (2026-11-10; step 5 of the source-book editor)
+
+The tray (`BookArtTray`) was already the dock's Pictures tab (49). What is new is in the source: under the heading of an entry, a **chip**.
+
+**What a chip is.** A CodeMirror block widget (`tools/book-editor/src/chips.js`) placed after the heading line that follows an entry's marker
+(`{{entry,#e-KEY}}`; a marker inside a code fence is text and gets none). It is a decoration beside the text and never text: the chapter, what is
+saved and the Markdown file are the same with and without it. It is part of the suggestions and help (47): **More → Suggestions and help** off
+takes the chips, the names and the ghost frames away at once. What it shows comes from the server (`BookArtDrawing.ChipsAsync`, the edition's own
+source read the way a drawing reads it); what it asks for goes back as a slot key and the name of an action, and every one of those is checked
+again by the service that does it (invariants 9 to 11 are unchanged).
+
+| The place | The chip |
+|---|---|
+| no picture, no suggestion | **Add picture**, which opens a two-item menu: Upload, Suggest a picture |
+| a suggestion made from the text as it is | "Picture: {what it shows, cut at 60 characters}", **Draw**, Upload, Dismiss |
+| a suggestion made from older text | the same, Draw disabled, "The campaign changed; suggest again", **Suggest again** |
+| a suggestion whose description fails the checks | Draw disabled; the tooltip says why (the checks' own words) |
+| no picture model | the chip greyed, Draw `aria-disabled`, the tooltip "No picture model is set" with a link to `/settings/ai`; Upload works |
+| being drawn, or its chapter being asked about | a spinner, "Drawing…" or "Asking for suggestions…", **Stop** |
+| has a picture the text does not point at | "This place has a picture that is not in the text", **Put it in the text** |
+| has a picture and the text points at it | no chip |
+
+- **The tooltip** (`role="tooltip"`, the Draw button's `aria-describedby`; shown while the pointer or the focus is on the chip or on the tooltip)
+  holds the prompt exactly as it would be sent, from the same `BookImagePrompt.Assemble` call with the same names, style, mood and style guide a
+  drawing uses, and the price line ("About {price} a picture, drawn by {model}" or "No price is set for this model"). The test draws and compares
+  what the model received with what the chip showed, letter for letter.
+- **Draw asks first, in the chip:** "Draw this picture, about {price}?" (or "… No price is set for this model.") with **Draw it** and Cancel. Only
+  that second click calls `BookArtDrawing.StartAsync`, with the one key and no description of the page's own (the server takes the suggestion's).
+- **Suggest a picture** asks the art director about *that chapter* (`BookArtDirection` took a `section`), and shows the cost first, also in the
+  chip: how many places, the model, and the cost range or "set this model's prices". Nothing is sent until **Ask**.
+- **Upload** opens the page's one file field (`#book-chip-file`, a Blazor `InputFile`, so the picture is streamed as the tray's is); the chip tells
+  the server which place it is for just before, and `BookArtService.UploadAsync` checks the key against the edition's slots as always.
+- **Dismiss** drops this edition's suggestion for that place (`IBookArtRepository.RemoveSuggestionAsync`; it can only take away, and only the
+  asked edition's).
+- **When a picture is made** (drawn or uploaded) the block the generator would write (`BookDraftWriter.ArtBlock`: `{{portrait` or `{{place`, the
+  entry's own alt text, `art:KEY`) goes under the heading with a blank line on each side, as **one edit**: it saves like typing and Ctrl+Z takes it
+  out (the picture stays the place's, and the chip then offers to put it back). A chapter that is not the one shown takes the block in its stored
+  text (saved the same way, no editor history). A chapter that is locked for an AI edit or under review is left alone and the chip turns into
+  "Put it in the text". A chapter whose text already points at the picture is not touched.
+- **A run the tray started** shows in the chips too (the page watches the edition's running drawing or director run), and its pictures are put
+  into the text as each is made; a run a chip started shows in the tray (it reads its slots again).
+- **A chip is measured.** Its spacing is padding inside the widget, never a margin: CodeMirror measures a block widget's own box, and with a
+  margin outside it every click below a chip was taken for a line further down (an existing browser test, the merge, typed two lines too low;
+  that is how it was found, and it is a rule for any block widget added later). The editor is also given its chips when it opens rather than
+  a moment after, so the lines do not move under the pointer.
+- **Keys.** A chapter can hold dozens of chips, so their buttons are not tab stops. **Alt+Enter** in the text moves to the chip of the entry the
+  cursor is in (scrolling to it if needed); Left and Right move between its buttons (swapped on a right-to-left page); Escape closes a question,
+  then returns to the text. The chip is a `role="group"` named "Picture for {place}", with `aria-keyshortcuts`.
+- **`art:KEY` in the text** is followed (after its closing bracket) by the place's label as a small inline hint (the same labels the suggestions use), so a key reads as a name.
+- **The preview's ghost frame:** where a place has a suggestion and no picture, a dashed frame with the place's label, in the size the built-in
+  themes give the block (a portrait at the far side of the column, 38% wide and at most 32 mm, three by four; a place's picture the column wide,
+  at most 62 mm). It is laid *over* the page after the layout, absolutely placed and kept to its own entry, so no line moves and the pages are
+  still the ones the PDF prints; it exists only in the editor's frame, never in the text, the Markdown file or the PDF (the print browser has no
+  editor). A place with no suggestion gets no frame: a book with sixty unpictured entries would be sixty frames.
+
+**The chapter stays the generator's.** The generator writes the same block once the place has a picture, so a chapter that differs from its base
+only by that block is the generator's own text. `BookDrafts.View` reads such a chapter as not edited and not stale (otherwise "The campaign
+changed since you edited this chapter" appeared the moment a picture was drawn, found in the running app), and `FollowAsync` moves its base the
+next time the draft is opened, so later campaign changes are followed as for any chapter the GM never touched. Anything else the GM changed
+still makes it theirs.
+
+**Invariants.** 9: an upload's key is checked against the edition's slots; a chip only names a key. 10: a chip shows only suggestions tagged with
+its edition (`ChipsAsync` filters by the tag of the source it read), and the director run it starts passes only that tag. 11: nothing is drawn
+without the second click; the pick is checked again in `PrepareAsync`; a drawing and a director run take the GM's one `BookGate` (a chip pressed
+while another paid run is under way gets "Another build of yours is already running"). The prompt shown is the GM's own page showing the GM
+their own edition's prompt; it is text (`textContent`), never markup.
+
+**Tests.** `tools/book-editor/test-chips.mjs` (in `npm test`): where an entry stands, the fence, the edit that places a block and that it is never
+made twice, what a chip shows in each state, the cut at 60, the names after keys, and that the widgets leave the document alone.
+`BookArtDrawingTests.Chips.cs`: the prompt shown is the prompt sent; only the edition's own suggestion; nothing for a player or an unknown
+edition; a stale or name-bearing suggestion has no prompt; the block equals the generator's; Dismiss takes one edition's suggestion and only for
+the GM; the director asked about one chapter asks one chapter. `BookDraftTests.APicturePutUnderItsHeadingFromTheEditor_...`: not stale at once,
+after reopening, and following a later change; stale when the GM also edited. `BookPicturesE2ETests` (fake model server): a chip changes no
+text; Alt+Enter and Escape; the cost before Ask and before Draw it, with the requests counted; no picture model; Dismiss; Upload through the
+file chooser; the block under the heading; Ctrl+Z and "Put it in the text"; no stale notice; chips gone with suggestions off.
+**Mutation checks (by hand, from backup copies):** chips reading any edition's suggestion; a stale suggestion given a prompt; Dismiss removing
+both editions'; the director ignoring the chapter; the view ignoring a caught-up chapter; the store never moving its base. The first five were
+caught at once; the sixth survived, which was a missing test (a later campaign change must be followed), now added and failing under it.
+
+**Seen in the running app** (fresh local data, a stand-in OpenAI-compatible server on localhost, no real key): the states above in English, the
+page in Hebrew with a right-to-left book (chips and ghost frames mirror, the prompt stays left-to-right English), Alt+Enter, arrows and Escape.
+
+**Not done / not verified:**
+- No real model: every suggestion and picture here came from the stand-in server. Prices were a typed test price.
+- Chromium only (Playwright's and the app's pane). WebKit and Firefox not tried; no screen reader was run over the chips.
+- The ghost frame is an overlay, not a layout: it shows where and how large, and covers the text it would push aside. Its size is the built-in
+  themes'; a theme the GM brought in, or their own CSS, may size the block differently and the frame will not know.
+- A chip's buttons are reached by Alt+Enter, not by Tab; that key is in the guide and in `aria-keyshortcuts`, nowhere on screen.
+- Only entry places have chips. The cover, a chapter's header and the small picture after an entry are in the tray only.
+- A chip draws from the suggestion as it stands; changing the description before drawing is still the tray's (tick the place there).
+- A block placed in a chapter that is not shown is not in any undo history. Deleting the block by hand does not remove the picture.
+- A picture uploaded in the tray is not written into the text by itself; the chip then says so and offers to.
+- **Built, never exercised by a test or by hand:** a drawing started in the tray writing its pictures into the text and showing in the chips; a
+  chip's run showing in the tray; a block placed in a chapter that is not the one shown; a picture made while its chapter is locked or under
+  review (the "Put it in the text" fallback); Stop on a chip; a drawing or director run that fails (the status line's wording for each reason).
+- While a paid run is under way the chips' other buttons are not greyed; pressing one answers with the "already running" line.
+- The Russian and Hebrew strings (`Campaign.Book.Chip.*`) and guide sentences are model-written.
+- The book and localization run: 788 of 789. The one failure, `BookPdfTests.AJobThatCannotFinishInTimeIsStopped_...` (a five-second timing
+  test of the printer, nothing of this step's), failed in both full runs and passed when run with a few others. In earlier, partial runs
+  `BookDraftTests.TheGmsOwnWords_MayChangeAFact_...` and `BookCssWebTests.TheFetcher_StopsAtItsBounds_...` ("address already in use") each failed
+  once and passed on the rerun. None was investigated. The suite outside Book and Localization was not run.
+
+### 53.1 The two arrows between the text and the pages (2026-11-10)
+
+Homebrewery has two arrows for bringing its editor and its preview to the same place; the preview's header now has them beside **Follow**
+(`book-jump-text`, `book-jump-pages`; `jump` in `editor.js`). The one pointing at the pages moves them to the heading above the cursor. The one
+pointing at the text moves the cursor to what the pages show: the first heading in view, or else the last one above it, opening its chapter
+if it is another. Both work with Follow off, which is what they are for; each points at the pane that moves, so they swap on a right-to-left
+page. Mapping is by heading order, as Follow's is (52). Disabled on the Style and Theme tabs and during an AI edit.
+Test: `BookSourceE2ETests.TheCursorMovesThePages_...` (both arrows, with Follow off).
+**Not done:** pages with no heading on or above them have nowhere to send the cursor (the arrow then does nothing); Hebrew not looked at by eye
+for these two buttons; the Russian and Hebrew labels are model-written.

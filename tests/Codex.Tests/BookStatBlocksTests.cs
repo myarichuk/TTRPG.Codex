@@ -126,11 +126,11 @@ public class BookStatBlocksTests
     }
 }
 
-/// <summary>The old HTML route places no spot (docs/BOOK_EXPORT.md 44), so it never reads a spot's picture: no decode, no place under the limit.</summary>
-public class BookOldRouteSlotsTests
+/// <summary>A spot (docs/BOOK_EXPORT.md 44) is a slot of its own: its picture is chosen beside the entry's own, not instead of it.</summary>
+public class BookSpotSlotsTests
 {
     [Fact]
-    public void TheOldRoute_ChoosesNoSpotPicture_TheEditableBookDoes()
+    public void TheEditableBook_ChoosesASpotPicture_BesideTheEntrysOwn()
     {
         var actor = new ActorDocument { Id = "a-vera", CampaignId = "c", Name = "Vera", Visibility = ActorVisibility.Known };
         var source = new BookSource(BookAudience.Party, new BookCampaign("c", "C", "srd5e", "", "", []), [actor], [], [], [], [], [], [], []);
@@ -148,6 +148,5 @@ public class BookOldRouteSlotsTests
         };
 
         Assert.Equal([entry.Key, spot.Key], BookSlots.Choose(slots, stored).Select(c => c.Slot.Key));
-        Assert.Equal([entry.Key], BookSlots.Choose(BookSlots.PlacedByTheOldRoute(slots), stored).Select(c => c.Slot.Key));
     }
 }

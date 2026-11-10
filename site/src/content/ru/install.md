@@ -148,6 +148,6 @@ ASPNETCORE_URLS=http://0.0.0.0:5183 dotnet run --project src/Codex.Web
 
 **После обновления что-то выглядит странно.** Обновите страницу без кэша (Ctrl+F5 или Cmd+Shift+R на Mac).
 
-**Печать книги сообщает, что нет браузера.** Книгу печатает Chrome, Edge или Chromium на компьютере, где работает сервер. Установите один из них или задайте в `CODEX_BOOK_BROWSER` путь к его программе и нажмите «[[ui:Campaign.Book.Download]]» ещё раз.
+**Печать книги сообщает, что нет браузера.** Книгу печатает Chrome, Edge или Chromium на компьютере, где работает сервер. Установите один из них или задайте в `CODEX_BOOK_BROWSER` путь к его программе и нажмите «[[ui:Campaign.Book.Draft.Download]]» ещё раз.
 
 Не получилось? [Создайте задачу](https://github.com/myarichuk/TTRPG.Codex/issues) и приложите журнал.

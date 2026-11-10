@@ -204,9 +204,6 @@ Func<string, string, Task<CampaignAccess?>> BookResolver(IServiceProvider sp) =>
     using var scope = sp.CreateScope();
     return await scope.ServiceProvider.GetRequiredService<ICampaignAccessResolver>().ResolveAsync(campaignId, userId);
 };
-builder.Services.AddSingleton(sp => new Codex.Web.Book.BookBuilds(
-    sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookBuildRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookModels>(),
-    BookResolver(sp), gate: sp.GetRequiredService<Codex.Web.Book.BookGate>()));
 builder.Services.AddSingleton(sp => new Codex.Web.Book.BookArtDirection(
     sp.GetRequiredService<BookSourceReader>(), sp.GetRequiredService<IBookArtRepository>(), sp.GetRequiredService<Codex.Web.Book.IBookModels>(),
     BookResolver(sp), sp.GetRequiredService<Codex.Web.Book.BookGate>(), log: sp.GetRequiredService<ILoggerFactory>().CreateLogger<Codex.Web.Book.BookArtDirection>()));

@@ -1,0 +1,45 @@
+@inherits BookPart
+@using Codex.Core.Book
+@using Codex.Persistence
+@using Codex.Web.Book
+@using static Codex.Web.Components.Campaign.BookPage
+
+        @if (!previewOpen)
+        {
+            <button type="button" class="book-draft-strip" @onclick="() => TogglePaneAsync(Pane.Preview)" aria-expanded="false"
+                    aria-label="@L["Campaign.Book.Draft.ExpandNamed", L["Campaign.Book.Draft.Preview"]]" data-testid="book-draft-pane-preview-toggle">
+                <LucideIcon IconName="panel-right-open" Size="14" /> <span>@L["Campaign.Book.Draft.Preview"]</span>
+            </button>
+        }
+        <section class="book-draft-pane book-draft-preview @(previewOpen ? null : "offstage")" aria-labelledby="book-draft-preview-title" aria-hidden="@(previewOpen ? null : "true")">
+            <div class="book-draft-pane-head">
+                <span id="book-draft-preview-title"><LucideIcon IconName="eye" Size="14" /> @L["Campaign.Book.Draft.Preview"]</span>
+                <span class="small-muted ms-2" data-page-status data-testid="book-page-status"></span>
+                <span class="flex-grow-1"></span>
+                @* Fit width or 100%; and whether the pages follow the cursor (and a click in them moves it). *@
+                <div class="book-zoom" role="group" aria-label="@L["Campaign.Book.Preview.Zoom"]">
+                    <button type="button" class="book-draft-pane-btn book-zoom-btn" aria-pressed="@(P.zoom == "fit" ? "true" : "false")" @onclick='() => P.ZoomAsync("fit")' data-testid="book-zoom-fit">@L["Campaign.Book.Preview.ZoomFit"]</button>
+                    <button type="button" class="book-draft-pane-btn book-zoom-btn" aria-pressed="@(P.zoom == "100" ? "true" : "false")" @onclick='() => P.ZoomAsync("100")' data-testid="book-zoom-100">100%</button>
+                </div>
+                @* The two arrows Homebrewery has: each points at the pane that moves (the text is on the other side on a right-to-left page). *@
+                <button type="button" class="book-draft-pane-btn" @onclick="() => P.JumpAsync(true)" disabled="@(AiBusy || P.sourceTab != "text")"
+                        title="@L["Campaign.Book.Preview.ToText"]" aria-label="@L["Campaign.Book.Preview.ToText"]" data-testid="book-jump-text">
+                    <LucideIcon IconName="@(BookPage.PageRtl ? "arrow-right" : "arrow-left")" Size="14" />
+                </button>
+                <button type="button" class="book-draft-pane-btn" @onclick="() => P.JumpAsync(false)" disabled="@(AiBusy || P.sourceTab != "text")"
+                        title="@L["Campaign.Book.Preview.ToPages"]" aria-label="@L["Campaign.Book.Preview.ToPages"]" data-testid="book-jump-pages">
+                    <LucideIcon IconName="@(BookPage.PageRtl ? "arrow-left" : "arrow-right")" Size="14" />
+                </button>
+                <button type="button" class="book-draft-pane-btn" aria-pressed="@(P.followPreview ? "true" : "false")" @onclick="P.FollowAsync"
+                        title="@L["Campaign.Book.Preview.FollowHint"]" data-testid="book-follow">
+                    <LucideIcon IconName="@(P.followPreview ? "link" : "unlink")" Size="14" /> @L["Campaign.Book.Preview.Follow"]
+                </button>
+                <button type="button" class="book-draft-pane-btn" @onclick="() => TogglePaneAsync(Pane.Preview)" aria-expanded="true"
+                        title="@L["Campaign.Book.Draft.Collapse"]" aria-label="@L["Campaign.Book.Draft.CollapseNamed", L["Campaign.Book.Draft.Preview"]]" data-testid="@(previewOpen ? "book-draft-pane-preview-toggle" : null)">
+                    <LucideIcon IconName="panel-right-close" Size="14" />
+                </button>
+            </div>
+            <div class="field-error small px-2" data-overflow hidden data-testid="book-draft-overflow"></div>
+            <div class="small-muted small px-2" data-run-on hidden data-testid="book-draft-run-on"></div>
+            <iframe class="book-draft-frame" @ref="frame" sandbox="allow-same-origin" title="@L["Campaign.Book.PreviewTitle"]" data-testid="book-draft-preview"></iframe>
+        </section>

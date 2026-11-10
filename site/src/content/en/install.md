@@ -148,6 +148,6 @@ ASPNETCORE_URLS=http://0.0.0.0:5183 dotnet run --project src/Codex.Web
 
 **Something looks wrong after an update.** Hard-refresh the page (Ctrl+F5, or Cmd+Shift+R on a Mac).
 
-**Printing a book says there is no browser.** The book is printed by Chrome, Edge or Chromium on the machine that runs the server. Install one, or set `CODEX_BOOK_BROWSER` to the path of its program, and press [[ui:Campaign.Book.Download]] again.
+**Printing a book says there is no browser.** The book is printed by Chrome, Edge or Chromium on the machine that runs the server. Install one, or set `CODEX_BOOK_BROWSER` to the path of its program, and press [[ui:Campaign.Book.Draft.Download]] again.
 
 Still stuck? [Open an issue](https://github.com/myarichuk/TTRPG.Codex/issues) and attach the log.

@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 namespace Codex.Web.Book;
 
 /// <summary>
-/// One paid book run per GM at a time, whatever kind: a chapter build, an art director's run, a discard. Both services take this one gate
-/// before their first await, so two tabs cannot start a text build and a director run together and spend twice (the A2 class of bug).
+/// One paid book run per GM at a time, whatever kind: an AI edit or merge of the draft, an art director's run, a drawing. Every service takes
+/// this one gate before its first await, so two tabs cannot start two paid runs together and spend twice (the A2 class of bug).
 /// </summary>
 public sealed class BookGate
 {

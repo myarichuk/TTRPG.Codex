@@ -28,7 +28,7 @@ public sealed class BookPdfOptions
 
 /// <summary>What printing a book produced. <paramref name="BlockedRequests"/> counts what the page tried to fetch and was refused: a
 /// self-contained page asks for nothing, so anything above zero is worth a look.</summary>
-public sealed record BookPdfResult(byte[] Pdf, string Browser, int BlockedRequests, TimeSpan Elapsed, int Passes = 1)
+public sealed record BookPdfResult(byte[] Pdf, string Browser, int BlockedRequests, TimeSpan Elapsed)
 {
     /// <summary>For a book laid out by script (<see cref="BookPrintLayout"/>): how many pages it made, and the pages whose content still did not
     /// fit (a block taller than a page of its own), which the PDF shows clipped.</summary>
@@ -81,14 +81,11 @@ public sealed record BookPrintLayout(string Script, string Markdown, IReadOnlyDi
     public bool Fit { get; init; }
 }
 
-/// <summary>A book to print. When <paramref name="Headings"/> is not empty the page is printed, the pages the headings landed on are
-/// read back from the PDF, and <paramref name="WithPageNumbers"/> builds the page again with them in its table of contents; that
-/// repeats until the numbers stop moving (three prints at most).</summary>
-public sealed record BookPrintJob(string Html, IReadOnlyList<BookHeading> Headings, Func<IReadOnlyDictionary<string, int>, string> WithPageNumbers)
+/// <summary>A page to print, as it is, with script off. With <see cref="Layout"/> it is the editable book's page shell, which the bundled
+/// renderer lays out first.</summary>
+public sealed record BookPrintJob(string Html)
 {
     public BookPrintLayout? Layout { get; init; }
-
-    public static BookPrintJob Single(string html) => new(html, [], _ => html);
 }
 
 /// <summary>Why a book could not be printed, as a code the page can answer in the reader's language. Details (paths, browser output)
@@ -139,7 +136,7 @@ public sealed class BookPdfSlot : IDisposable
 }
 
 /// <summary>
-/// Prints a <see cref="Codex.Core.Book.BookHtml"/> page to PDF with the browser already on the machine. One job at a time with a short
+/// Prints a book page to PDF with the browser already on the machine. One job at a time with a short
 /// line behind it (and one place per person in it), a fresh browser and profile per job (nothing idle holds memory, nothing survives
 /// a stuck page), a hard timeout that ends the browser whatever state it is in, no script and no network: every request except an
 /// inline <c>data:</c> one is refused. The resolver is also switched off, which stops host names only; the refusal is what stops an
@@ -180,12 +177,12 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
         });
     }
 
-    public Task<BookPdfResult> PrintAsync(BookPdfSlot slot, string html, CancellationToken cancel) => PrintAsync(slot, BookPrintJob.Single(html), cancel);
+    public Task<BookPdfResult> PrintAsync(BookPdfSlot slot, string html, CancellationToken cancel) => PrintAsync(slot, new BookPrintJob(html), cancel);
 
     /// <summary>Fit pages (docs/BOOK_EXPORT.md 41.15): the draft's chapters laid out in the print browser, as the PDF is, with a break written
     /// wherever a block would otherwise be moved onto a page of its own. Takes a place in the same line as printing.</summary>
     public async Task<BookFitted> FitAsync(BookPdfSlot slot, string shell, BookPrintLayout layout, CancellationToken cancel) =>
-        (await PrintAsync(slot, new BookPrintJob(shell, [], _ => shell) { Layout = layout with { Fit = true } }, cancel)).Fitted
+        (await PrintAsync(slot, new BookPrintJob(shell) { Layout = layout with { Fit = true } }, cancel)).Fitted
         ?? throw new InvalidOperationException("Fit pages returned nothing.");
 
     public async Task<BookPdfResult> PrintAsync(BookPdfSlot slot, BookPrintJob job, CancellationToken cancel)
@@ -329,7 +326,7 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
                 {
                     var fitted = await scratch.EvaluateFunctionAsync<BookFitted>("(chapters, art) => CodexBook.fitPages(chapters, art)", input, layout.Art).WaitAsync(token)
                         ?? throw new InvalidOperationException("The book's renderer returned no fitted chapters.");
-                    return (new BookPdfResult([], product, blocked, clock.Elapsed, 0) { Pages = fitted.Pages, Overflow = fitted.Overflow, Fitted = fitted }, null);
+                    return (new BookPdfResult([], product, blocked, clock.Elapsed) { Pages = fitted.Pages, Overflow = fitted.Overflow, Fitted = fitted }, null);
                 }
 
                 var result = await scratch.EvaluateFunctionAsync<BookLaidOut>("(input, art) => CodexBook.print(input, art)", input, layout.Art).WaitAsync(token);
@@ -346,53 +343,24 @@ public sealed class BookPdf(IOptions<BookPdfOptions> options, ILogger<BookPdf> l
             await page.SetJavaScriptEnabledAsync(false);
             await Seal(page);
 
-            async Task<byte[]> Pass(string html)
+            await page.SetContentAsync(toPrint, new SetContentOptions { WaitUntil = [WaitUntilNavigation.Load], Timeout = (int)limit.TotalMilliseconds }).WaitAsync(token);
+            var pdf = await page.PdfDataAsync(new PdfOptions
             {
-                await page.SetContentAsync(html, new SetContentOptions { WaitUntil = [WaitUntilNavigation.Load], Timeout = (int)limit.TotalMilliseconds }).WaitAsync(token);
-                return await page.PdfDataAsync(new PdfOptions
-                {
-                    PreferCSSPageSize = true,
-                    PrintBackground = true,
-                    Tagged = true,
-                    Outline = true,
-                    WaitForFonts = true,
-                    DisplayHeaderFooter = false,
-                    Timeout = (int)limit.TotalMilliseconds
-                }).WaitAsync(token);
-            }
-
-            var pdf = await Pass(toPrint);
-            var passes = 1;
-            if (job.Headings.Count > 0)
-            {
-                // The first print reserved the numbers' column and left it empty. Read where the headings landed and print again with
-                // them in; the column has a fixed width, so the numbers rarely move the pages, and a second look proves it.
-                var numbers = BookPages.Map(pdf, job.Headings);
-                while (numbers.Count > 0 && passes < 3)
-                {
-                    pdf = await Pass(job.WithPageNumbers(numbers));
-                    passes++;
-                    var landed = BookPages.Map(pdf, job.Headings);
-                    var stable = landed.Count == numbers.Count && landed.All(kv => numbers.TryGetValue(kv.Key, out var n) && n == kv.Value);
-                    numbers = landed;
-                    if (stable)
-                    {
-                        break;
-                    }
-                }
-
-                if (numbers.Count == 0)
-                {
-                    log.LogWarning("The printed book's outline could not be read, so its contents carry no page numbers");
-                }
-            }
+                PreferCSSPageSize = true,
+                PrintBackground = true,
+                Tagged = true,
+                Outline = true,
+                WaitForFonts = true,
+                DisplayHeaderFooter = false,
+                Timeout = (int)limit.TotalMilliseconds
+            }).WaitAsync(token);
 
             if (blocked > 0)
             {
                 log.LogWarning("The book page tried to fetch {Count} resources and was refused", blocked);
             }
 
-            return (new BookPdfResult(pdf, product, blocked, clock.Elapsed, passes) { Pages = laidOut.Pages, Overflow = laidOut.Overflow }, null);
+            return (new BookPdfResult(pdf, product, blocked, clock.Elapsed) { Pages = laidOut.Pages, Overflow = laidOut.Overflow }, null);
         }
         catch (BookPdfUnavailableException)
         {

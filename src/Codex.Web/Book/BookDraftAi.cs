@@ -135,12 +135,16 @@ public sealed class BookDraftAi(BookDrafts drafts, IBookModels models, BookGate 
             // A part's text is its own: the pieces were found in the whole chapter, and Parts already joined any a piece crossed.
             var passage = BookDraftEdits.Cut(text, start, end)!;
             if (BookTokens.Estimate(passage.Text) > BookDraftEdits.MaxPassageTokens) return (BookEditOutcome.TooLong, null);
-            units.Add(new Unit(passage.From, passage.To, label.Length > 0 ? label : found.Chapter.Title, Blank(passage) ? null : Request(passage)));
+            units.Add(new Unit(passage.From, passage.To, label.Length > 0 ? label : found.Chapter.Title, Blank(passage) || HeadingOnly(passage) ? null : Request(passage)));
         }
 
         if (units.All(u => u.Request == null)) return (BookEditOutcome.Empty, null);
         return (BookEditOutcome.Ready, new Prepared(found.Dm, text, 0, text.Length, units));
     }
+
+    // A part that is a heading and nothing else (a group's: "Quests", a region with no text of its own) has nothing to rewrite: no request.
+    private static bool HeadingOnly(BookEditPassage passage) =>
+        System.Text.RegularExpressions.Regex.Replace(passage.Text, @"\{\{block:\d+\}\}", string.Empty).Split('\n').All(l => l.Trim().Length == 0 || l.TrimStart().StartsWith('#'));
 
     private static bool Blank(BookEditPassage passage) =>
         System.Text.RegularExpressions.Regex.Replace(passage.Text, @"\{\{block:\d+\}\}", string.Empty).Trim().Length == 0;

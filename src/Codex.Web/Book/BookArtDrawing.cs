@@ -26,6 +26,17 @@ public sealed record BookDrawPreview(IReadOnlyList<BookDrawItem> Items, int Pict
 /// <summary>What drawing has cost this book over all runs.</summary>
 public sealed record BookDrawTotals(int Pictures, decimal Cost, int Unpriced, string PriceLabel);
 
+/// <summary>An entry's picture place as the editor's chip shows it under the entry's heading (docs/BOOK_EXPORT.md 53).</summary>
+/// <param name="Block">The picture block the generator would write under the heading, for the editor to put there.</param>
+/// <param name="Pictured">The edition has a picture to print here: its own book picture, the party's (GM edition), or the subject's own.</param>
+public sealed record BookChip(string Slot, string Section, string Label, string Block, bool Pictured, BookChipIdea? Idea);
+
+/// <summary>This edition's suggestion for a chip. <paramref name="Prompt"/> is the text a picture model would be sent, assembled as a drawing
+/// assembles it; null when the suggestion is stale or its description fails the checks (<paramref name="Problems"/>), and then it cannot be drawn.</summary>
+public sealed record BookChipIdea(string Depicts, bool Stale, string? Prompt, IReadOnlyList<string> Problems);
+
+public sealed record BookChips(IReadOnlyList<BookChip> Chips, BookImageInfo? Model);
+
 /// <summary>
 /// Drawing a book's pictures (docs/BOOK_EXPORT.md 28.3, step 6). The GM ticks slots that have a suggestion; nothing is drawn without that
 /// click, and a run draws at most <see cref="MaxPerRun"/>. When a run starts every pick is checked again here, from the edition's source as
@@ -34,7 +45,7 @@ public sealed record BookDrawTotals(int Pictures, decimal Cost, int Unpriced, st
 /// <see cref="BookImagePrompt.Check"/> against the edition's names. The prompt is assembled by code from the slot's kind, that visual, the
 /// suggestion's mood and the book's style. The picture is stored under the edition's tag, run through the sanitizer like an upload, and
 /// is put in use, the one it puts back kept as an earlier version (at most <see cref="BookArtDocument.MaxVersions"/>). Pictures are drawn one at a time, set aside up front on the server's key, never retried, and a run takes
-/// the same per-GM gate as chapter builds and the art director (<see cref="BookGate"/>).
+/// the same per-GM gate as the draft's AI edits and the art director (<see cref="BookGate"/>).
 /// </summary>
 public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository store, IBookImages images, Func<string, string, Task<CampaignAccess?>> resolve, BookGate gate, TimeProvider? clock = null,
     StorageQuota? quota = null)
@@ -117,6 +128,58 @@ public sealed class BookArtDrawing(BookSourceReader reader, IBookArtRepository s
             ? string.Join('\n', InputsVersion, kind, visual.Trim(), mood, "guide", own)
             : string.Join('\n', InputsVersion, kind, visual.Trim(), mood, s.Medium, s.Palette, s.Line, s.Light);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)), 0, 12).ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// The entries' picture places for the editor's chips (docs/BOOK_EXPORT.md 53): for each, whether the edition has a picture there, and this
+    /// edition's suggestion with the prompt exactly as <see cref="PrepareAsync"/> would assemble it. Read from the edition's own source, as a
+    /// drawing is; it shows, and a drawing checks everything again. Null for anyone who is not the GM now.
+    /// </summary>
+    public async Task<BookChips?> ChipsAsync(CampaignAccess asked, string edition, string language = "en")
+    {
+        BookAudience? audience = edition switch { "dm" => BookAudience.Dm, "party" => BookAudience.Party, _ => null };
+        if (audience is not { } which) return null;
+        if (await resolve(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return null;
+        if (await reader.ReadAsync(dm, which) is not { } source) return null;
+        var compiled = BookComposer.Compose(source, language, out var entries);
+        var slots = BookSlots.For(source, compiled, entries);
+        var stored = await store.GetAsync(dm);
+        var tag = BookSlots.Tag(which);
+        var placed = BookSlots.Choose(slots, stored).Select(c => c.Slot.Key).ToHashSet(StringComparer.Ordinal);
+        // Only this edition's suggestions, as the tray shows and a drawing takes.
+        var ideas = stored?.Suggestions.Where(s => s.BuiltFrom == tag).ToDictionary(s => s.Slot, StringComparer.Ordinal) ?? [];
+        var outline = ideas.Count == 0 ? []
+            : BookArtOutline.For(source, compiled, entries, slots).SelectMany(c => c.Slots).ToDictionary(o => o.Slot.Key, StringComparer.Ordinal);
+        var names = ideas.Count == 0 ? [] : BookArtOutline.Names(source, entries);
+        var style = BookArtStyles.Normalize(stored?.Style);
+        var guide = ideas.Count == 0 ? null : await images.StyleAsync(dm.UserId);
+
+        var chips = new List<BookChip>();
+        foreach (var slot in slots.Where(s => s.Kind == BookSlots.Entry && s.Entry != null))
+        {
+            BookChipIdea? idea = null;
+            if (ideas.TryGetValue(slot.Key, out var suggestion))
+            {
+                var known = outline.GetValueOrDefault(slot.Key);
+                var stale = known == null || known.Inputs != suggestion.Inputs;
+                var prompt = stale ? null : BookImagePrompt.Assemble(known!.Kind, suggestion.Visual, style, suggestion.Mood, names, guide);
+                idea = new BookChipIdea(suggestion.Depicts, stale, prompt?.Prompt, prompt?.Problems ?? []);
+            }
+
+            chips.Add(new BookChip(slot.Key, slot.Section, slot.Label, BookDraftWriter.ArtBlock(BookDraftWriter.ArtBlockName(slot.Entry!), slot.Entry!.Alt, slot.Key),
+                placed.Contains(slot.Key) || slot.Entry.HasArt, idea));
+        }
+
+        return new BookChips(chips, await images.InfoAsync(dm.UserId));
+    }
+
+    /// <summary>Drops this edition's suggestion for a slot (Dismiss on a chip). It can only take away; the edition is the asked one's tag.</summary>
+    public async Task<bool> DismissAsync(CampaignAccess asked, string edition, string slot)
+    {
+        BookAudience? audience = edition switch { "dm" => BookAudience.Dm, "party" => BookAudience.Party, _ => null };
+        if (audience is not { } which || !BookSlots.IsKey(slot)) return false;
+        if (await resolve(asked.CampaignId, asked.UserId) is not { IsDm: true } dm) return false;
+        return await store.RemoveSuggestionAsync(dm, slot, BookSlots.Tag(which));
     }
 
     /// <summary>What drawing the ticked slots would do and cost now; draws nothing.</summary>
