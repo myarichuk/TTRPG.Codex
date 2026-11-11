@@ -79,6 +79,17 @@ public static class ActorSheetSync
                     if (YamlValues.GetInt(actor.Sheet, key) is { } value) pool.Set(key, value);
                 }
             }
+
+            // A feature's counter of uses ("uses_dusk_form", "uses_dusk_form_Max") comes and goes with the feature, the same way.
+            foreach (var stale in pool.Pools.Keys.Where(k => k.StartsWith(Codex.Core.Rules.SheetRuleEngine.UsesPrefix, StringComparison.Ordinal) && !actor.Sheet.ContainsKey(k)).ToList())
+            {
+                pool.Pools.Remove(stale);
+            }
+
+            foreach (var key in actor.Sheet.Keys.Where(k => k.StartsWith(Codex.Core.Rules.SheetRuleEngine.UsesPrefix, StringComparison.Ordinal)))
+            {
+                if (YamlValues.GetInt(actor.Sheet, key) is { } value) pool.Set(key, value);
+            }
         }
         else
         {

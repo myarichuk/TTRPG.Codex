@@ -56,3 +56,5 @@ properties:
   - Cleric
   - Wizard
   higherLevel: The damage of an explosive rune increases by 1d8 for each spell slot level above 3. If you create a spell glyph, you can store any spell of up to the same level as the spell slot you use for the Glyph of Warding.
+  use:
+    save: dex

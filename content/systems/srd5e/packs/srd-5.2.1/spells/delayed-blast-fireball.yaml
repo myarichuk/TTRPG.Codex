@@ -46,3 +46,5 @@ properties:
   - Sorcerer
   - Wizard
   higherLevel: The base damage increases by 1d6 for each spell slot level above 7.
+  use:
+    save: dex

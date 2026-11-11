@@ -34,3 +34,5 @@ properties:
   classes:
   - Bard
   - Cleric
+  use:
+    save: cha

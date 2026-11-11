@@ -33,3 +33,6 @@ properties:
   classes:
   - Paladin
   damageType: Radiant
+  use:
+    damage: 1d4
+    damageType: Radiant

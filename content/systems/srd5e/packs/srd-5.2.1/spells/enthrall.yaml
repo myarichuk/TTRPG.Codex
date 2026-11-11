@@ -34,3 +34,5 @@ properties:
   classes:
   - Bard
   - Warlock
+  use:
+    save: wis

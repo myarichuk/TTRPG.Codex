@@ -35,3 +35,7 @@ properties:
   classes:
   - Warlock
   damageType: Force
+  use:
+    attack: ranged
+    damage: 1d10
+    damageType: Force

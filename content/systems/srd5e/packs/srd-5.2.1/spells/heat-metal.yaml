@@ -43,3 +43,8 @@ properties:
   - Druid
   damageType: Fire
   higherLevel: The damage increases by 1d8 for each spell slot level above 2.
+  use:
+    save: con
+    damage: 2d8
+    damageType: Fire
+    perSlot: 1d8

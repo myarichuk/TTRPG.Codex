@@ -255,4 +255,10 @@
   <data name="Combat.Objects.AddRow" xml:space="preserve"><value>Add</value></data>
   <data name="Combat.Objects.RemoveRow" xml:space="preserve"><value>Remove {0}</value></data>
   <data name="Combat.Objects.NotChanged" xml:space="preserve"><value>Nothing changed: the name is taken, empty, or no longer there.</value></data>
+  <data name="Combat.StartEncounter" xml:space="preserve"><value>Start encounter</value></data>
+  <data name="Combat.NoEncounterHint" xml:space="preserve"><value>No encounter is running. Start one to roll initiative; the cards below work either way.</value></data>
+  <data name="Combat.Card.Heading" xml:space="preserve"><value>Characters and creatures</value></data>
+  <data name="Combat.Card.Show" xml:space="preserve"><value>Show more of {0}</value></data>
+  <data name="Combat.Card.Hide" xml:space="preserve"><value>Show less of {0}</value></data>
+  <data name="Combat.Card.Equipped" xml:space="preserve"><value>Equipped:</value></data>
 </root>

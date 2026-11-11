@@ -24,6 +24,12 @@ properties:
   cost: 10 gp
   weight: 10
   damage: 2d6 Bludgeoning
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 2d6
+    damageType: Bludgeoning
   properties:
   - Heavy
   - Two-Handed

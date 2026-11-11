@@ -1295,4 +1295,28 @@
   <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>קובץ תמונה למקום שנבחר בטקסט</value></data>
   <data name="Campaign.Book.Preview.ToText" xml:space="preserve"><value>להעביר את הסמן למה שהעמודים מציגים</value></data>
   <data name="Campaign.Book.Preview.ToPages" xml:space="preserve"><value>להעביר את העמודים למקום הסמן</value></data>
+  <data name="Campaign.Vault.Review" xml:space="preserve"><value>בדיקה</value></data>
+  <data name="Campaign.Vault.ReviewLabel" xml:space="preserve"><value>בדיקת {0}</value></data>
+  <data name="Campaign.Vault.ReviewTitle" xml:space="preserve"><value>בדיקת {0}</value></data>
+  <data name="Campaign.Vault.BringsLine" xml:space="preserve"><value>מביאה משלה: {0}</value></data>
+  <data name="Campaign.Vault.StepCharacter" xml:space="preserve"><value>הדמות</value></data>
+  <data name="Campaign.Vault.StepBrings" xml:space="preserve"><value>מה היא מביאה</value></data>
+  <data name="Campaign.Vault.StepConfirm" xml:space="preserve"><value>אישור</value></data>
+  <data name="Campaign.Vault.History" xml:space="preserve"><value>היסטוריה</value></data>
+  <data name="Campaign.Vault.NoHistory" xml:space="preserve"><value>לא נכתבה היסטוריה.</value></data>
+  <data name="Campaign.Vault.RulesOk" xml:space="preserve"><value>הדף אינו מפר אף אחד מחוקי הקמפיין.</value></data>
+  <data name="Campaign.Vault.RulesIssues" xml:space="preserve"><value>חוקי הקמפיין מסמנים בדף:</value></data>
+  <data name="Campaign.Vault.BringsHint" xml:space="preserve"><value>הערכים האלה שייכים לדמות עצמה: הם אינם בשום חבילה. יש להחליט לגבי כל אחד. כדי שערך ישונה, דחו את הבקשה ובקשו מהשחקן לשלוח אותה שוב.</value></data>
+  <data name="Campaign.Vault.BringAdd" xml:space="preserve"><value>הוספה לספרייה</value></data>
+  <data name="Campaign.Vault.BringUse" xml:space="preserve"><value>שימוש בערך שכבר יש בקמפיין</value></data>
+  <data name="Campaign.Vault.BringLeave" xml:space="preserve"><value>להשמיט</value></data>
+  <data name="Campaign.Vault.BringUsePick" xml:space="preserve"><value>הערך שיבוא במקום {0}</value></data>
+  <data name="Campaign.Vault.BringChoice" xml:space="preserve"><value>מה לעשות עם {0}</value></data>
+  <data name="Campaign.Vault.WillJoin" xml:space="preserve"><value>{0} מצטרפת לדמויות, בגילום {1}.</value></data>
+  <data name="Campaign.Vault.WillUpdate" xml:space="preserve"><value>{0} מתעדכנת מהכספת.</value></data>
+  <data name="Campaign.Vault.WillAdd" xml:space="preserve"><value>יתווסף לספרייה: {0}</value></data>
+  <data name="Campaign.Vault.WillUse" xml:space="preserve"><value>{0} יוחלף ב־{1}</value></data>
+  <data name="Campaign.Vault.WillLeave" xml:space="preserve"><value>יושמט: {0}</value></data>
+  <data name="Campaign.Vault.Next" xml:space="preserve"><value>הבא</value></data>
+  <data name="Campaign.Vault.Back" xml:space="preserve"><value>חזרה</value></data>
 </root>

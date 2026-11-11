@@ -35,3 +35,5 @@ properties:
   classes:
   - Bard
   - Druid
+  use:
+    save: dex

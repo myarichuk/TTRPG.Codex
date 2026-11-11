@@ -6,6 +6,10 @@
 @inject VaultService VaultService
 @inject IUserRepository UserRepo
 @inject IJSRuntime JS
+@inject CampaignLibrary Library
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
 
 @if (requests.Count > 0)
 {
@@ -34,6 +38,10 @@
                         {
                             <div class="small" data-testid="vault-request-asked">@L["Campaign.Vault.AskedFor", string.Join(", ", request.AskedFor)]</div>
                         }
+                        @if (request.Brings.Count > 0)
+                        {
+                            <div class="small" data-testid="vault-request-brings">@L["Campaign.Vault.BringsLine", string.Join(", ", request.Brings.Select(b => b.Name))]</div>
+                        }
                         @if (request.LeftOut.Count > 0)
                         {
                             <div class="small-muted small" data-testid="vault-request-left-out">@L["Campaign.Vault.LeftOut", string.Join(", ", request.LeftOut)]</div>
@@ -42,7 +50,7 @@
                     <div class="row-actions">
                         @if (Ctx.IsDm)
                         {
-                            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="check" OnClick="() => AcceptAsync(shown)" aria-label="@L["Campaign.Vault.AcceptLabel", request.Name]" data-testid="vault-request-accept">@L["Campaign.Vault.Accept"]</CodexButton>
+                            <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="clipboard-check" OnClick="() => ReviewAsync(shown)" aria-label="@L["Campaign.Vault.ReviewLabel", request.Name]" data-testid="vault-request-review">@L["Campaign.Vault.Review"]</CodexButton>
                             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => WithdrawAsync(shown)" aria-label="@L["Campaign.Vault.DeclineLabel", request.Name]" data-testid="vault-request-decline">@L["Campaign.Vault.Decline"]</CodexButton>
                         }
                         else
@@ -118,6 +126,142 @@
     </form>
 </dialog>
 
+@* The GM's review of a request, in steps: the character as it would arrive, each entry it brings (add it, use one the campaign
+   has, or leave it out), then what accepting will do. Nothing changes before the last step's Accept. *@
+<dialog id="vault-review-dialog" class="codex-dialog codex-dialog-wide" aria-labelledby="vault-review-title">
+    @if (reviewing is { } r)
+    {
+        <div class="dialog-body" data-testid="vault-review">
+            <h2 id="vault-review-title"><LucideIcon IconName="clipboard-check" Size="18" Class="title-icon" /> @L["Campaign.Vault.ReviewTitle", r.Name]</h2>
+            <ol class="wizard-steps list-unstyled d-flex flex-wrap gap-3 small-muted" aria-label="@L["Campaign.Vault.Review"]">
+                @foreach (var s in Steps)
+                {
+                    <li aria-current="@(s == step ? "step" : null)" class="@(s == step ? "fw-bold text-body" : null)">@(Steps.IndexOf(s) + 1). @StepName(s)</li>
+                }
+            </ol>
+
+            @if (step == ReviewStep.Character)
+            {
+                <section aria-labelledby="vault-review-character" data-testid="vault-review-character">
+                    <h3 id="vault-review-character" class="h6">@r.Name</h3>
+                    <p class="small-muted">@L["Campaign.Vault.PlayedBy", names.GetValueOrDefault(r.UserId, r.UserId)] · @SummaryOf(r)</p>
+                    @if (reviewViolations.Count == 0)
+                    {
+                        <p class="small" data-testid="vault-review-rules-ok"><LucideIcon IconName="check" Size="14" /> @L["Campaign.Vault.RulesOk"]</p>
+                    }
+                    else
+                    {
+                        <p class="small mb-1">@L["Campaign.Vault.RulesIssues"]</p>
+                        <ul class="small" data-testid="vault-review-rules">
+                            @foreach (var violation in reviewViolations)
+                            {
+                                <li>@violation</li>
+                            }
+                        </ul>
+                    }
+                    <h4 class="label-caps mt-3">@L["Campaign.Vault.History"]</h4>
+                    @if (string.IsNullOrWhiteSpace(r.Biography))
+                    {
+                        <p class="small-muted">@L["Campaign.Vault.NoHistory"]</p>
+                    }
+                    else
+                    {
+                        <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(SecretText.ForPlayers(r.Biography)))</div>
+                    }
+                </section>
+            }
+            else if (step == ReviewStep.Brings)
+            {
+                <section aria-labelledby="vault-review-brings" data-testid="vault-review-brings">
+                    <h3 id="vault-review-brings" class="visually-hidden">@L["Campaign.Vault.StepBrings"]</h3>
+                    <p class="field-hint">@L["Campaign.Vault.BringsHint"]</p>
+                    @for (var i = 0; i < r.Brings.Count; i++)
+                    {
+                        var carried = r.Brings[i];
+                        var choice = ChoiceFor(carried);
+                        var group = "vault-bring-" + i;
+                        var ours = OursFor(carried);
+                        <div class="panel mb-3" data-testid="vault-review-entry">
+                            <EntryDetail Item="@(new LibraryItem(carried.ToEntry(Ctx.Campaign.SystemId), null, null))" Type="@Ctx.System?.FindType(carried.Type)" ForDm="true" />
+                            <fieldset class="mt-3">
+                                <legend class="field-label">@L["Campaign.Vault.BringChoice", carried.Name]</legend>
+                                <div class="form-check">
+                                    <input id="@(group)-add" type="radio" class="form-check-input" name="@group" checked="@(choice.Kind == BringKind.Add)" @onchange="() => Choose(carried, BringKind.Add)" data-testid="vault-bring-add" />
+                                    <label for="@(group)-add" class="form-check-label">@L["Campaign.Vault.BringAdd"]</label>
+                                </div>
+                                @if (ours.Count > 0)
+                                {
+                                    <div class="form-check">
+                                        <input id="@(group)-use" type="radio" class="form-check-input" name="@group" checked="@(choice.Kind == BringKind.UseOther)" @onchange="() => Choose(carried, BringKind.UseOther, ours[0].Id)" data-testid="vault-bring-use" />
+                                        <label for="@(group)-use" class="form-check-label">@L["Campaign.Vault.BringUse"]</label>
+                                    </div>
+                                    @if (choice.Kind == BringKind.UseOther)
+                                    {
+                                        <select class="field-select mt-1 mb-2" aria-label="@L["Campaign.Vault.BringUsePick", carried.Name]" value="@choice.UseId" @onchange="e => Choose(carried, BringKind.UseOther, e.Value?.ToString())" data-testid="vault-bring-use-pick">
+                                            @foreach (var entry in ours)
+                                            {
+                                                <option value="@entry.Id">@entry.Name</option>
+                                            }
+                                        </select>
+                                    }
+                                }
+                                <div class="form-check">
+                                    <input id="@(group)-leave" type="radio" class="form-check-input" name="@group" checked="@(choice.Kind == BringKind.LeaveOut)" @onchange="() => Choose(carried, BringKind.LeaveOut)" data-testid="vault-bring-leave-out" />
+                                    <label for="@(group)-leave" class="form-check-label">@L["Campaign.Vault.BringLeave"]</label>
+                                </div>
+                            </fieldset>
+                        </div>
+                    }
+                </section>
+            }
+            else
+            {
+                <section aria-labelledby="vault-review-confirm" data-testid="vault-review-confirm">
+                    <h3 id="vault-review-confirm" class="visually-hidden">@L["Campaign.Vault.StepConfirm"]</h3>
+                    <ul>
+                        <li>
+                            @(r.ReplacesActorId != null
+                                ? L["Campaign.Vault.WillUpdate", r.Name]
+                                : L["Campaign.Vault.WillJoin", r.Name, names.GetValueOrDefault(r.UserId, r.UserId)])
+                        </li>
+                        @foreach (var carried in r.Brings)
+                        {
+                            var choice = ChoiceFor(carried);
+                            <li>
+                                @(choice.Kind switch
+                                {
+                                    BringKind.LeaveOut => L["Campaign.Vault.WillLeave", carried.Name],
+                                    BringKind.UseOther => L["Campaign.Vault.WillUse", carried.Name, OursFor(carried).FirstOrDefault(e => e.Id == choice.UseId)?.Name ?? choice.UseId ?? ""],
+                                    _ => L["Campaign.Vault.WillAdd", carried.Name]
+                                })
+                            </li>
+                        }
+                        @if (r.AskedFor.Count > 0)
+                        {
+                            <li>@L["Campaign.Vault.AskedFor", string.Join(", ", r.AskedFor)]</li>
+                        }
+                    </ul>
+                </section>
+            }
+        </div>
+        <div class="dialog-actions">
+            <CodexButton Variant="CodexButtonVariant.Etched" OnClick="CloseReviewAsync">@L["Common.Cancel"]</CodexButton>
+            @if (Steps.IndexOf(step) > 0)
+            {
+                <CodexButton Variant="CodexButtonVariant.Etched" OnClick="() => step = Steps[Steps.IndexOf(step) - 1]" data-testid="vault-review-back">@L["Campaign.Vault.Back"]</CodexButton>
+            }
+            @if (step != ReviewStep.Confirm)
+            {
+                <CodexButton Variant="CodexButtonVariant.Plaque" OnClick="() => step = Steps[Steps.IndexOf(step) + 1]" data-testid="vault-review-next">@L["Campaign.Vault.Next"]</CodexButton>
+            }
+            else
+            {
+                <CodexButton Variant="CodexButtonVariant.Plaque" Icon="check" Busy="@gate.IsBusy" OnClick="AcceptReviewedAsync" data-testid="vault-request-accept">@L["Campaign.Vault.Accept"]</CodexButton>
+            }
+        </div>
+    }
+</dialog>
+
 @code {
     [CascadingParameter] public CampaignContext Ctx { get; set; } = null!;
 
@@ -188,14 +332,88 @@
         await LoadRequestsAsync();
     });
 
-    private async Task AcceptAsync(CharacterRequestDocument request)
+    // ---- The GM's review ----
+
+    private enum ReviewStep { Character, Brings, Confirm }
+
+    private CharacterRequestDocument? reviewing;
+    private ReviewStep step;
+    private List<string> reviewViolations = new();
+    private readonly List<BringChoice> choices = new();
+    private IEntryResolver? campaignEntries;
+
+    private List<ReviewStep> Steps => reviewing is { Brings.Count: > 0 }
+        ? new List<ReviewStep> { ReviewStep.Character, ReviewStep.Brings, ReviewStep.Confirm }
+        : new List<ReviewStep> { ReviewStep.Character, ReviewStep.Confirm };
+
+    private string StepName(ReviewStep s) => s switch
     {
+        ReviewStep.Character => L["Campaign.Vault.StepCharacter"],
+        ReviewStep.Brings => L["Campaign.Vault.StepBrings"],
+        _ => L["Campaign.Vault.StepConfirm"]
+    };
+
+    private async Task ReviewAsync(CharacterRequestDocument request)
+    {
+        reviewing = request;
+        step = ReviewStep.Character;
+        choices.Clear();
+        reviewViolations = new List<string>();
+        campaignEntries = null;
+        if (Ctx.System is { } system)
+        {
+            // The sheet is read as it would stand with everything it brings added: what the rules still flag is the GM's to weigh.
+            campaignEntries = await CachedEntryResolver.LoadAsync(Library, Ctx.Campaign, Ctx.Access, system);
+            var withBrought = await CachedEntryResolver.LoadAsync(Library, Ctx.Campaign, Ctx.Access, system, request.Brings.Select(b => b.ToEntry(system.Id)));
+            var evaluation = new SheetRuleEngine(system, withBrought).Evaluate(request.Sheet);
+            reviewViolations = evaluation.Violations.Select(Describe).ToList();
+        }
+
+        StateHasChanged();
+        await JS.InvokeVoidAsync("codex.showModal", "vault-review-dialog");
+    }
+
+    private string Describe(RuleViolation violation) =>
+        violation.Key == null || violation.Args == null || !L.Has(violation.Key)
+            ? violation.Message
+            : L[violation.Key, violation.Args.Select(a => a is ContentEntry entry ? entry.Name : a).ToArray()];
+
+    private string SummaryOf(CharacterRequestDocument request) =>
+        string.Join(", ", (Ctx.System?.FieldRoles.Summary ?? new List<string>())
+            .Select(key => (Key: key, Value: YamlValues.GetString(request.Sheet, key)))
+            .Where(p => !string.IsNullOrEmpty(p.Value))
+            .Select(p => Ctx.System!.ActorFields.FirstOrDefault(f => f.Key == p.Key) is { } field
+                ? field.TargetEntityType != null
+                    ? campaignEntries?.Resolve(field.TargetEntityType, p.Value!)?.Name ?? request.Brings.FirstOrDefault(b => b.Is(field.TargetEntityType, p.Value!))?.Name ?? p.Value!
+                    : $"{field.Label} {p.Value}"
+                : p.Value!));
+
+    private BringChoice ChoiceFor(CarriedEntry carried) =>
+        choices.FirstOrDefault(c => carried.Is(c.Type, c.EntryId)) ?? new BringChoice(carried.Type, carried.EntryId, BringKind.Add);
+
+    private void Choose(CarriedEntry carried, BringKind kind, string? useId = null)
+    {
+        choices.RemoveAll(c => carried.Is(c.Type, c.EntryId));
+        choices.Add(new BringChoice(carried.Type, carried.EntryId, kind, useId));
+    }
+
+    // What the campaign has of the carried entry's type that the sheet's rules would take in its place (a subclass of the same class).
+    private List<ContentEntry> OursFor(CarriedEntry carried) =>
+        campaignEntries?.Candidates(carried.Type).OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList() ?? new List<ContentEntry>();
+
+    private Task CloseReviewAsync() => JS.InvokeVoidAsync("codex.closeModal", "vault-review-dialog").AsTask();
+
+    private Task AcceptReviewedAsync() => gate.RunAsync(async () =>
+    {
+        if (reviewing is not { } request) return;
         // The store reads the caller's role as the campaign has it now: a GM demoted since the page loaded accepts nothing.
-        var done = await VaultService.AcceptAsync(request.Id, Ctx.Access, Ctx.System);
+        var done = await VaultService.AcceptAsync(request.Id, Ctx.Access, Ctx.System, choices.ToList());
+        await CloseReviewAsync();
+        reviewing = null;
         Ctx.Notify(done ? Flash.Success(L["Campaign.Vault.Accepted", request.Name]) : Flash.Error(L["Campaign.Vault.NotAccepted"]));
         await Ctx.ReloadAsync();
         await LoadRequestsAsync();
-    }
+    });
 
     private async Task WithdrawAsync(CharacterRequestDocument request)
     {

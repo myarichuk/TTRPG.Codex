@@ -42,3 +42,5 @@ properties:
   - Druid
   - Sorcerer
   - Wizard
+  use:
+    save: con

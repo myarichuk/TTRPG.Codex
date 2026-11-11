@@ -255,4 +255,10 @@
   <data name="Combat.Objects.AddRow" xml:space="preserve"><value>Добавить</value></data>
   <data name="Combat.Objects.RemoveRow" xml:space="preserve"><value>Удалить «{0}»</value></data>
   <data name="Combat.Objects.NotChanged" xml:space="preserve"><value>Ничего не изменилось: имя занято, пустое или его уже нет.</value></data>
+  <data name="Combat.StartEncounter" xml:space="preserve"><value>Начать столкновение</value></data>
+  <data name="Combat.NoEncounterHint" xml:space="preserve"><value>Столкновение не идёт. Начните его, чтобы бросить инициативу; карточки ниже работают в любом случае.</value></data>
+  <data name="Combat.Card.Heading" xml:space="preserve"><value>Персонажи и существа</value></data>
+  <data name="Combat.Card.Show" xml:space="preserve"><value>Показать больше: {0}</value></data>
+  <data name="Combat.Card.Hide" xml:space="preserve"><value>Показать меньше: {0}</value></data>
+  <data name="Combat.Card.Equipped" xml:space="preserve"><value>Надето и в руках:</value></data>
 </root>

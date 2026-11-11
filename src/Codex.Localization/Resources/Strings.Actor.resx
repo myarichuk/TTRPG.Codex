@@ -449,4 +449,28 @@
   <data name="Actor.Assist.GoThere" xml:space="preserve"><value>Go there</value></data>
   <data name="Actor.Assist.HighlightsKept" xml:space="preserve"><value>Highlights change nothing and are not kept.</value></data>
   <data name="Actor.Assist.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
+  <data name="Actor.Features.Title" xml:space="preserve"><value>Features</value></data>
+  <data name="Actor.Features.UseOther" xml:space="preserve"><value>Use {0}</value></data>
+  <data name="Actor.Features.RegainOther" xml:space="preserve"><value>Regain a use of {0}</value></data>
+  <data name="Actor.Features.Adds" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Features.AtLeast" xml:space="preserve"><value>{0}: at least {1}</value></data>
+  <data name="Actor.Features.NotCounted" xml:space="preserve"><value>does not stack</value></data>
+  <data name="Actor.Features.Note" xml:space="preserve"><value>What your features grant is worked out from the Library entries. Uses refill on the rest each one names.</value></data>
+  <data name="Actor.Actions.Title" xml:space="preserve"><value>Actions</value></data>
+  <data name="Actor.Actions.ToHit" xml:space="preserve"><value>{0} to hit</value></data>
+  <data name="Actor.Actions.Save" xml:space="preserve"><value>{0} save DC {1}</value></data>
+  <data name="Actor.Actions.Heals" xml:space="preserve"><value>heals {0}</value></data>
+  <data name="Actor.Actions.Damage" xml:space="preserve"><value>Damage</value></data>
+  <data name="Actor.Actions.Healing" xml:space="preserve"><value>Healing</value></data>
+  <data name="Actor.Actions.RollAttack" xml:space="preserve"><value>{0}: attack</value></data>
+  <data name="Actor.Actions.RollDamage" xml:space="preserve"><value>{0}: {1} damage</value></data>
+  <data name="Actor.Actions.RollDamagePlain" xml:space="preserve"><value>{0}: damage</value></data>
+  <data name="Actor.Actions.RollHealing" xml:space="preserve"><value>{0}: healing</value></data>
+  <data name="Actor.Actions.SaveSuffix" xml:space="preserve"><value>{0} ({1} save DC {2})</value></data>
+  <data name="Actor.Actions.SlotFor" xml:space="preserve"><value>Slot for {0}</value></data>
+  <data name="Actor.Actions.SlotOption" xml:space="preserve"><value>Level {0} ({1} left)</value></data>
+  <data name="Actor.Actions.NoSlots" xml:space="preserve"><value>No slot for this</value></data>
+  <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: level {1} {2}</value></data>
+  <data name="Actor.Actions.Note" xml:space="preserve"><value>Cast and Attack roll here, or into the table's log during a session. A spent slot is marked for you; hits, saves and damage are applied by the GM.</value></data>
+  <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.</value></data>
 </root>

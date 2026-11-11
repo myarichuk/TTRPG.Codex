@@ -35,3 +35,8 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Poison
+  use:
+    attack: ranged
+    damage: 2d8
+    damageType: Poison
+    perSlot: 1d8

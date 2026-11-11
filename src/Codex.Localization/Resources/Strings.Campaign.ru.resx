@@ -1295,4 +1295,28 @@
   <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>Файл картинки для места, выбранного в тексте</value></data>
   <data name="Campaign.Book.Preview.ToText" xml:space="preserve"><value>Перевести курсор к тому, что показывают страницы</value></data>
   <data name="Campaign.Book.Preview.ToPages" xml:space="preserve"><value>Перевести страницы к месту курсора</value></data>
+  <data name="Campaign.Vault.Review" xml:space="preserve"><value>Рассмотреть</value></data>
+  <data name="Campaign.Vault.ReviewLabel" xml:space="preserve"><value>Рассмотреть: {0}</value></data>
+  <data name="Campaign.Vault.ReviewTitle" xml:space="preserve"><value>Заявка: {0}</value></data>
+  <data name="Campaign.Vault.BringsLine" xml:space="preserve"><value>Приносит своё: {0}</value></data>
+  <data name="Campaign.Vault.StepCharacter" xml:space="preserve"><value>Персонаж</value></data>
+  <data name="Campaign.Vault.StepBrings" xml:space="preserve"><value>Что он приносит</value></data>
+  <data name="Campaign.Vault.StepConfirm" xml:space="preserve"><value>Подтверждение</value></data>
+  <data name="Campaign.Vault.History" xml:space="preserve"><value>История</value></data>
+  <data name="Campaign.Vault.NoHistory" xml:space="preserve"><value>История не написана.</value></data>
+  <data name="Campaign.Vault.RulesOk" xml:space="preserve"><value>Лист не нарушает правил этой кампании.</value></data>
+  <data name="Campaign.Vault.RulesIssues" xml:space="preserve"><value>Правила этой кампании отмечают на листе:</value></data>
+  <data name="Campaign.Vault.BringsHint" xml:space="preserve"><value>Эти записи принадлежат самому персонажу: их нет ни в одном наборе. Решите по каждой. Чтобы запись изменили, отклоните заявку и попросите игрока отправить её снова.</value></data>
+  <data name="Campaign.Vault.BringAdd" xml:space="preserve"><value>Добавить в Библиотеку</value></data>
+  <data name="Campaign.Vault.BringUse" xml:space="preserve"><value>Взять то, что уже есть в кампании</value></data>
+  <data name="Campaign.Vault.BringLeave" xml:space="preserve"><value>Не включать</value></data>
+  <data name="Campaign.Vault.BringUsePick" xml:space="preserve"><value>Что взять вместо «{0}»</value></data>
+  <data name="Campaign.Vault.BringChoice" xml:space="preserve"><value>Что делать с «{0}»</value></data>
+  <data name="Campaign.Vault.WillJoin" xml:space="preserve"><value>{0} входит в состав; играет {1}.</value></data>
+  <data name="Campaign.Vault.WillUpdate" xml:space="preserve"><value>{0} обновляется из хранилища.</value></data>
+  <data name="Campaign.Vault.WillAdd" xml:space="preserve"><value>Будет добавлено в Библиотеку: {0}</value></data>
+  <data name="Campaign.Vault.WillUse" xml:space="preserve"><value>«{0}» заменяется на «{1}»</value></data>
+  <data name="Campaign.Vault.WillLeave" xml:space="preserve"><value>Не включается: {0}</value></data>
+  <data name="Campaign.Vault.Next" xml:space="preserve"><value>Далее</value></data>
+  <data name="Campaign.Vault.Back" xml:space="preserve"><value>Назад</value></data>
 </root>

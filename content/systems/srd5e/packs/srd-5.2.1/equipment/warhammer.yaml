@@ -24,6 +24,14 @@ properties:
   cost: 15 gp
   weight: 5
   damage: '1d8 Bludgeoning (two-handed: 1d10)'
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d8
+    damageType: Bludgeoning
+    alternatives:
+      two-handed: 1d10
   properties:
   - Versatile
   mastery: Push

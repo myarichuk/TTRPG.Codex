@@ -38,3 +38,5 @@ properties:
   classes:
   - Sorcerer
   - Wizard
+  use:
+    save: dex

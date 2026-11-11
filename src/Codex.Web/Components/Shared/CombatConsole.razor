@@ -60,9 +60,19 @@ else
 
     <div class="row g-3">
         <div class="col-lg-8">
-            <section class="panel" aria-labelledby="initiative-heading">
+            @{
+                // Outside an encounter the order is one line: the cards below are the table. The GM opens it to start one.
+                var inEncounter = encounter is { Participants.Count: > 0 };
+                var orderOpen = inEncounter || startingEncounter;
+            }
+            <section class="panel @(inEncounter ? null : "encounter-bar")" aria-labelledby="initiative-heading" data-testid="@(inEncounter ? "initiative-panel" : "encounter-bar")">
                 <div class="panel-title">
                     <h3 id="initiative-heading" class="mb-0" data-testid="initiative-header">@(encounter != null ? L["Combat.InitiativeRound", encounter.Round] : L["Combat.Initiative"])</h3>
+                    @if (Access.IsDm && !inEncounter)
+                    {
+                        <CodexButton Variant="@(startingEncounter ? CodexButtonVariant.Etched : CodexButtonVariant.Plaque)" Small="true" data-testid="start-encounter" aria-expanded="@(startingEncounter ? "true" : "false")"
+                                     OnClick="() => startingEncounter = !startingEncounter">@(startingEncounter ? L["Common.Cancel"] : L["Combat.StartEncounter"])</CodexButton>
+                    }
                     @if (Access.IsDm && encounter is { Participants.Count: > 0 })
                     {
                         <div class="d-flex flex-wrap gap-1">
@@ -86,7 +96,7 @@ else
 
                 @if (encounter == null || encounter.Participants.Count == 0)
                 {
-                    <p class="small-muted mb-0">@L["Combat.NobodyInOrder"]</p>
+                    <p class="small-muted mb-0">@(Access.IsDm && !startingEncounter ? L["Combat.NoEncounterHint"] : L["Combat.NobodyInOrder"])</p>
                 }
                 else
                 {
@@ -123,7 +133,7 @@ else
                     }
                 }
 
-                @if (Access.IsDm)
+                @if (Access.IsDm && orderOpen)
                 {
                     <datalist id="conditions-list">
                         @foreach (var condition in PickableConditions)
@@ -135,6 +145,33 @@ else
                                         BonusText="InitiativeBonusText" OnRoll="RollInitiativeAsync" OnSet="SetInitiativeAsync" OnMessage="OnMessage" />
                 }
             </section>
+
+            @{
+                var cards = CardActors(encounter);
+            }
+            @if (cards.Count > 0)
+            {
+                <section aria-labelledby="table-cards-heading" data-testid="table-cards">
+                    <h3 id="table-cards-heading" class="visually-hidden">@L["Combat.Card.Heading"]</h3>
+                    <div class="table-cards">
+                        @foreach (var actor in cards)
+                        {
+                            var actorId = actor.Id;
+                            var full = CanSeeExact(actorId);
+                            <TableCard @key="actorId" Campaign="Campaign" Actor="actor" State="snapshot.Actor(actorId)" Definition="Definition"
+                                       Evaluation="@(full ? EvaluationOf(actor) : null)" Blueprint="@(Access.IsDm ? BlueprintOf(actor) : null)"
+                                       Full="full" CanAct="CanTrackSlots(actorId)" Expanded="IsCardOpen(actor)" OnToggle="() => ToggleCard(actorId)"
+                                       CurrentUserId="@CurrentUserId" CheckDie="@(Definition?.Dice.Check ?? "1d20")" Send="SendAsync" />
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <TableDicePanel Rolls="VisibleRollLog()" RollerName="ResolveRollerName" IsDm="Access.IsDm" OnRoll="RollDiceAsync"
+                            ActorHref="@(actorId => ActorsById.ContainsKey(actorId) ? ActorHref(actorId) : null)" />
+
 
             @if (Access.IsDm)
             {
@@ -158,31 +195,6 @@ else
                     <CodexButton Variant="CodexButtonVariant.Blood" Small="true" OnClick="EndTableAsync" data-testid="end-table">@L["Combat.EndTable"]</CodexButton>
                 </div>
             }
-        </div>
-
-        <div class="col-lg-4">
-            @{
-                var slotActors = SlotPoolRules.Count == 0 ? new List<ActorDocument>() : Actors.Where(a => CanTrackSlots(a.Id) && SlotKeys(a.Id).Any()).ToList();
-            }
-            @if (slotActors.Count > 0)
-            {
-                <section class="panel" aria-labelledby="slots-heading" data-testid="table-slots">
-                    <div class="panel-title"><h3 id="slots-heading">@SlotTracker.Heading(Definition, SlotPoolRules, slotActors.SelectMany(a => SlotKeys(a.Id)))</h3></div>
-                    @foreach (var actor in slotActors)
-                    {
-                        var actorId = actor.Id;
-                        <div class="mb-3" data-testid="table-slots-actor" data-actor-id="@actorId">
-                            <div class="fw-semibold mb-1"><a class="table-name" href="@ActorHref(actorId)" data-preview>@actor.Name</a></div>
-                            <SlotTracker Definition="Definition" Pools="SlotPoolRules" Keys="SlotKeys(actorId)" Value="key => PoolValue(actorId, key)" Title="@(L["Combat.SlotsTitle", actor.Name])"
-                                         OnAdjust="change => SendAsync(new AdjustResourceCommand(actorId, change.Key, change.Delta, change.Label))"
-                                         OnRest="rest => SendAsync(new RestCommand(actorId, rest.Name, rest.Keys))" />
-                        </div>
-                    }
-                </section>
-            }
-
-            <TableDicePanel Rolls="VisibleRollLog()" RollerName="ResolveRollerName" IsDm="Access.IsDm" OnRoll="RollDiceAsync"
-                            ActorHref="@(actorId => ActorsById.ContainsKey(actorId) ? ActorHref(actorId) : null)" />
 
         </div>
     </div>
@@ -248,6 +260,7 @@ else
     protected override async Task OnParametersSetAsync()
     {
         ActorsById = Actors.ToDictionary(a => a.Id);
+        evaluations.Clear();
         VisibleActorIds = ActorsById.Keys.ToHashSet();
         if (!subscribedToManager)
         {
@@ -374,6 +387,7 @@ else
         {
             resolver = await CachedEntryResolver.LoadAsync(Library, Campaign, Access, Definition!);
             engine = new SheetRuleEngine(Definition!, resolver);
+            evaluations.Clear();
         }
         catch (Exception)
         {
@@ -408,6 +422,59 @@ else
 
         StateHasChanged();
     });
+
+    // ---- Cards ----
+
+    private bool startingEncounter;
+    // Cards the viewer opened or closed against their default: a character's card is open, a creature's closed.
+    private readonly HashSet<string> toggledCards = new(StringComparer.Ordinal);
+    // What the rules make of each sheet, worked out once per load of the actors: a card reads it on every render.
+    private readonly Dictionary<string, SheetEvaluation?> evaluations = new(StringComparer.Ordinal);
+
+    /// <summary>Who has a card: every character of the campaign, and whoever else is in the order, the viewer's own first.</summary>
+    private List<ActorDocument> CardActors(EncounterSnapshot? encounter)
+    {
+        var inOrder = encounter?.Participants.Select(p => p.ActorId).ToHashSet(StringComparer.Ordinal) ?? new HashSet<string>(StringComparer.Ordinal);
+        return Actors
+            .Where(a => !a.Retired && (a.Kind == ActorKind.PlayerCharacter || inOrder.Contains(a.Id)))
+            .OrderByDescending(a => a.Kind == ActorKind.PlayerCharacter && a.OwnerUserId == CurrentUserId)
+            .ThenBy(a => a.Kind != ActorKind.PlayerCharacter)
+            .ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    private bool IsCardOpen(ActorDocument actor) => (actor.Kind == ActorKind.PlayerCharacter) != toggledCards.Contains(actor.Id);
+
+    private void ToggleCard(string actorId)
+    {
+        if (!toggledCards.Remove(actorId)) toggledCards.Add(actorId);
+    }
+
+    private SheetEvaluation? EvaluationOf(ActorDocument actor)
+    {
+        if (engine == null) return null;
+        if (evaluations.TryGetValue(actor.Id, out var known)) return known;
+        SheetEvaluation? evaluation;
+        try
+        {
+            evaluation = engine.Evaluate(actor.Sheet);
+        }
+        catch (Exception)
+        {
+            // A sheet the rules choke on still has a card, with what the table itself knows.
+            evaluation = null;
+        }
+
+        return evaluations[actor.Id] = evaluation;
+    }
+
+    /// <summary>The Library entry a creature was made from ("system:id"), for its stat block.</summary>
+    private ContentEntry? BlueprintOf(ActorDocument actor)
+    {
+        if (resolver == null || actor.BlueprintId is not { } blueprint || Definition?.Ai?.Creature is not { } type) return null;
+        var at = blueprint.IndexOf(':');
+        return resolver.Resolve(type, at < 0 ? blueprint : blueprint[(at + 1)..]);
+    }
 
     private void ToggleSelected(string actorId) => selectedParticipantId = selectedParticipantId == actorId ? null : actorId;
 
@@ -544,7 +611,19 @@ else
     }
 
     private List<string> SlotKeysRestoredBy(string actorId, string rest) =>
-        SlotKeys(actorId).Where(key => SlotPoolRules.Any(r => r.Owns(key) && r.RecoversOn.Contains(rest, StringComparer.OrdinalIgnoreCase) && !key.EndsWith("_Max", StringComparison.Ordinal))).ToList();
+        SlotKeys(actorId).Where(key => SlotPoolRules.Any(r => r.Owns(key) && r.RecoversOn.Contains(rest, StringComparer.OrdinalIgnoreCase) && !key.EndsWith("_Max", StringComparison.Ordinal)))
+            .Concat(UsesRestoredBy(actorId, rest))
+            .ToList();
+
+    // A feature's counter of uses says on the sheet which rests refill it, so the table need not evaluate the sheet.
+    private IEnumerable<string> UsesRestoredBy(string actorId, string rest)
+    {
+        var sheet = Actors.FirstOrDefault(a => a.Id == actorId)?.Sheet;
+        if (sheet == null) return Enumerable.Empty<string>();
+        return (snapshot.Actor(actorId)?.Pools?.Keys ?? Enumerable.Empty<string>())
+            .Where(key => SheetRuleEngine.IsUsesKey(key) && SheetRuleEngine.UsesRests(sheet, key).Contains(rest, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+    }
 
     private (int Current, int Max, int? Sides)? HitDicePool(string actorId)
     {

@@ -43,3 +43,8 @@ properties:
   - Wizard
   damageType: Poison
   higherLevel: The damage increases by 1d8 for each spell slot level above 5.
+  use:
+    save: con
+    damage: 5d8
+    damageType: Poison
+    perSlot: 1d8

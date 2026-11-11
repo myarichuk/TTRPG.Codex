@@ -49,3 +49,7 @@ properties:
   - Druid
   - Wizard
   damageType: Bludgeoning
+  use:
+    save: str
+    damage: 2d8
+    damageType: Bludgeoning

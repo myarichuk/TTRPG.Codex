@@ -32,6 +32,47 @@ public class VaultTests : IClassFixture<RavenDbFixture>
     private static string User() => "user-" + Guid.NewGuid().ToString("N");
 
     [Fact]
+    public async Task WhatACharacterCarries_IsReviewedWithTheRequest_AndOnlyWhatTheGmTakesReachesTheLibrary_Async()
+    {
+        var (gm, player) = (User(), User());
+        var campaign = await CampaignAsync(gm, "srd5e", player);
+        var (asGm, asPlayer) = (new CampaignAccess(campaign.Id, gm, CampaignRole.DM), new CampaignAccess(campaign.Id, player, CampaignRole.Player));
+        var homebrew = new RavenHomebrewRepository(_db);
+        var character = await _vault.CreateAsync(player, "srd5e", "Ossic", actor =>
+        {
+            actor.Sheet["class"] = "warlock";
+            actor.Sheet["subclass"] = "the-drowned-page";
+            actor.Carried.Add(new CarriedEntry { Type = "subclass", EntryId = "the-drowned-page", Name = "The Drowned Page", Description = "A book that whispers.\n:::dm\nnot a player's to write\n:::", Properties = { ["class"] = "warlock" } });
+            actor.Carried.Add(new CarriedEntry { Type = "feat", EntryId = "frog-licker", Name = "Frog Licker" });
+        });
+
+        // The request brings what the character really carries, whatever the caller sends, and never a GM's block.
+        var request = (await _vault.AskAsync(asPlayer, new CharacterRequestDocument
+        {
+            VaultActorId = character.Id, Name = "Ossic", Sheet = character.Sheet,
+            Brings = { new CarriedEntry { Type = "subclass", EntryId = "the-drowned-page", Name = "Forged", Description = "Forged text" }, new CarriedEntry { Type = "spell", EntryId = "made-up" } }
+        }))!;
+        var brought = Assert.Single(request.Brings);
+        Assert.Equal(("The Drowned Page", "A book that whispers."), (brought.Name, brought.Description));
+        Assert.Empty(await homebrew.GetVisibleForCampaignAsync(asGm)); // nothing joins the Library while it waits
+
+        var accepted = await _vault.AcceptAsync(request.Id, asGm, add: request.Brings);
+
+        Assert.Equal("the-drowned-page", accepted!.Value.Added!.Sheet["subclass"]);
+        var entry = Assert.Single(await homebrew.GetVisibleForCampaignAsync(asPlayer)); // published: its player sees it
+        Assert.Equal(("subclass", "the-drowned-page", "The Drowned Page", player), (entry.Type, entry.EntryId, entry.Name, entry.AuthorUserId));
+        Assert.Equal("warlock", entry.Properties["class"]?.ToString());
+
+        // Left out by the GM: the sheet comes in as reviewed, and nothing is added.
+        var again = (await _vault.AskAsync(asPlayer, new CharacterRequestDocument { VaultActorId = character.Id, Name = "Ossic II", Sheet = character.Sheet, Brings = { new CarriedEntry { Type = "feat", EntryId = "frog-licker" } } }))!;
+        var without = new Dictionary<string, object>(again.Sheet);
+        without.Remove("subclass");
+        var second = await _vault.AcceptAsync(again.Id, asGm, without, new List<CarriedEntry>());
+        Assert.False(second!.Value.Added!.Sheet.ContainsKey("subclass"));
+        Assert.Single(await homebrew.GetVisibleForCampaignAsync(asGm));
+    }
+
+    [Fact]
     public async Task ANewVaultCharacter_StartsFromWhatItIsGiven_ButStaysInItsOwnersVault_Async()
     {
         var owner = User();

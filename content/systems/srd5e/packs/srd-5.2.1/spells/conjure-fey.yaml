@@ -38,3 +38,9 @@ properties:
   classes:
   - Druid
   higherLevel: The damage increases by 1d12 for each spell slot level above 6.
+  use:
+    attack: melee
+    damage: 3d12
+    damageType: Psychic
+    addAbility: true
+    perSlot: 1d12

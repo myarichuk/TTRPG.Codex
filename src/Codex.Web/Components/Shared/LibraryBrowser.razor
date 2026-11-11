@@ -89,7 +89,7 @@
         <div class="col-lg-7 library-detail-col phone-sheet">
             <SheetBar Title="@selected.Entry.Name" CloseHref="@CloseHref" CloseLabel="@L["Library.Browser.CloseDetail"]" />
             <div class="panel" id="@detailId" tabindex="-1" data-testid="library-detail">
-                <EntryDetail Item="selected" Type="@TypeDefinition(selected.Entry.Type)" Art="@(DetailArt?.Invoke(selected))">
+                <EntryDetail Item="selected" Type="@TypeDefinition(selected.Entry.Type)" ForDm="@(Access is { IsDm: true })" Art="@(DetailArt?.Invoke(selected))">
                     <Actions>
                         @if (DetailActions != null)
                         {

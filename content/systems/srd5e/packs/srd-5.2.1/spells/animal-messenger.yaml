@@ -44,3 +44,5 @@ properties:
   - Druid
   - Ranger
   higherLevel: The spell's duration increases by 48 hours for each spell slot level above 2.
+  use:
+    save: cha

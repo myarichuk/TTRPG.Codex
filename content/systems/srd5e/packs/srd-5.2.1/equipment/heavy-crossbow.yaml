@@ -26,6 +26,12 @@ properties:
   cost: 50 gp
   weight: 18
   damage: 1d10 Piercing
+  use:
+    attack: ranged
+    abilities:
+    - dex
+    damage: 1d10
+    damageType: Piercing
   properties:
   - Ammunition
   - Heavy

@@ -44,3 +44,5 @@ properties:
   - Bard
   - Warlock
   - Wizard
+  use:
+    save: cha

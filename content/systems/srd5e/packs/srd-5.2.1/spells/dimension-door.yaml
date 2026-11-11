@@ -42,3 +42,6 @@ properties:
   - Warlock
   - Wizard
   damageType: Force
+  use:
+    damage: 4d6
+    damageType: Force

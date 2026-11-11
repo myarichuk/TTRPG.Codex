@@ -22,4 +22,10 @@ properties:
   cost: 5 gp
   weight: 2
   damage: 1d6 Bludgeoning
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d6
+    damageType: Bludgeoning
   mastery: Sap

@@ -1,0 +1,273 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Persistence
+@using Codex.Persistence.Runtime
+@using Codex.Plugin.Abstractions
+@inject IContentRegistry ContentRegistry
+
+@* One creature at the table, as a card that is there whether or not an encounter runs: who it is, hit points and
+   conditions; and, for whoever may see it in full (the GM, and a player for their own character), armor class, speed,
+   slots, what it holds, what it can cast and attack with, and a creature's stat block. Everyone else sees the top only,
+   with hit points as a rough band. Every change goes out as a runtime command through Send. *@
+
+<article class="table-card @(Dead ? "dead" : Down ? "down" : "")" data-testid="table-card" data-actor-id="@Actor.Id" aria-labelledby="@(id)-name">
+    <header class="table-card-head">
+        <a class="participant-token" href="@Href" data-preview aria-label="@Actor.Name">
+            <ActorAvatar Actor="Actor" Size="lg" Class="@("token " + KindClass)" />
+        </a>
+        <div class="table-card-who">
+            <h4 id="@(id)-name" class="table-card-name"><a class="table-name" href="@Href" data-preview>@Actor.Name</a></h4>
+            @if (Full && Summary.Length > 0)
+            {
+                <span class="small-muted" data-testid="table-card-summary">@Summary</span>
+            }
+        </div>
+        <div class="table-card-badges">
+            @if (Dead)
+            {
+                <span class="pill pill-danger">@DownRules.DeadCondition</span>
+            }
+            else if (Down)
+            {
+                <span class="pill pill-danger">@L["Combat.Down"]</span>
+            }
+            @if (Pool is { } pool)
+            {
+                <span class="@((pool.Max > 0 && pool.Current * 2 < pool.Max ? "pill pill-danger" : "pill") + " hp-text")" data-testid="table-card-hp">@(Full ? $"{pool.Current}/{pool.Max} {PrimaryKey}" : HpBand(pool.Current, pool.Max))</span>
+            }
+            @if (Full && State?.Pool(SystemDefinition.TemporaryKeyOf(Definition)) is int temp && temp > 0)
+            {
+                <span class="pill pill-arcane hp-text" title="@L["Combat.TempHpTitle"]">@L["Combat.TempHpBadge", temp]</span>
+            }
+        </div>
+        @if (Full && HasBody)
+        {
+            <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="@(Expanded ? "chevron-up" : "chevron-down")" data-testid="table-card-toggle"
+                         aria-expanded="@(Expanded ? "true" : "false")" Label="@(Expanded ? L["Combat.Card.Hide", Actor.Name] : L["Combat.Card.Show", Actor.Name])" OnClick="() => OnToggle.InvokeAsync()" />
+        }
+    </header>
+
+    @if (Full && Pool is { Max: > 0 } bar)
+    {
+        var pct = Math.Clamp(100.0 * bar.Current / bar.Max, 0, 100);
+        <div class="hp-bar @(pct < 25 ? "hp-low" : pct < 50 ? "hp-mid" : "hp-high")" role="progressbar" aria-label="@(Definition?.PrimaryResource?.Label ?? PrimaryKey)"
+             aria-valuemin="0" aria-valuemax="@bar.Max" aria-valuenow="@bar.Current">
+            <span style="width:@(pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+        </div>
+    }
+
+    @if (Effects.Count > 0)
+    {
+        <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Actor.Name])">
+            @foreach (var effect in Effects)
+            {
+                <li class="cond-chip" data-testid="table-card-condition">
+                    <DomainIcon Domain="condition" Key="@effect.EffectId" Size="DomainIconSize.Small" />
+                    @(effect.IsIndefinite ? ConditionName(effect.EffectId) : $"{ConditionName(effect.EffectId)} ({effect.RoundsRemaining})")
+                </li>
+            }
+        </ul>
+    }
+
+    @if (Full)
+    {
+        var stats = Stats().ToList();
+        @if (stats.Count > 0)
+        {
+            <dl class="table-card-stats" data-testid="table-card-stats">
+                @foreach (var (label, value) in stats)
+                {
+                    <div><dt>@label</dt><dd>@value</dd></div>
+                }
+            </dl>
+        }
+
+        @if (Expanded && HasBody)
+        {
+            <div class="table-card-body" data-testid="table-card-body">
+                @if (Equipped.Count > 0)
+                {
+                    <p class="small mb-2" data-testid="table-card-gear"><span class="field-label d-inline">@L["Combat.Card.Equipped"]</span> @string.Join(", ", Equipped)</p>
+                }
+
+                @if (SlotKeys.Count > 0)
+                {
+                    <div data-testid="table-slots-actor" data-actor-id="@Actor.Id">
+                        <SlotTracker Definition="Definition" Pools="SlotPools" Keys="SlotKeys" Value="key => State?.Pool(key)" Title="@(L["Combat.SlotsTitle", Actor.Name])" ReadOnly="@(!CanAct)"
+                                     OnAdjust="change => Send(new AdjustResourceCommand(Actor.Id, change.Key, change.Delta, change.Label))"
+                                     OnRest="rest => Send(new RestCommand(Actor.Id, rest.Name, rest.Keys))" />
+                    </div>
+                }
+
+                @if (Counters.Count > 0)
+                {
+                    <ul class="list-unstyled mb-2" data-testid="table-card-counters">
+                        @foreach (var counter in Counters)
+                        {
+                            var max = State?.Pool(counter.MaxKey) ?? counter.Max;
+                            var current = Math.Clamp(State?.Pool(counter.Key) ?? max, 0, max);
+                            <li class="slot-row" data-testid="table-counter-@counter.Key">
+                                <span class="slot-level">@counter.Feature.Name</span>
+                                <span class="small">@L["Actor.Slots.Count", current, max]</span>
+                                @if (CanAct)
+                                {
+                                    <span class="ms-auto d-flex gap-1">
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current <= 0)" data-testid="@($"table-counter-use-{counter.Key}")"
+                                                     aria-label="@L["Actor.Features.UseOther", counter.Feature.Name]" OnClick="() => Send(new AdjustResourceCommand(Actor.Id, counter.Key, -1, counter.Feature.Name))">@L["Actor.Slots.Use"]</CodexButton>
+                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"table-counter-regain-{counter.Key}")"
+                                                     aria-label="@L["Actor.Features.RegainOther", counter.Feature.Name]" OnClick="() => Send(new AdjustResourceCommand(Actor.Id, counter.Key, 1, counter.Feature.Name))">@L["Actor.Slots.Regain"]</CodexButton>
+                                    </span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+
+                @if (Evaluation is { Actions.Count: > 0 })
+                {
+                    <ActionsPanel Evaluation="Evaluation" Definition="Definition" Value="key => State?.Pool(key)" ReadOnly="@(!CanAct)" Bare="true"
+                                  EntryName="entry => ContentRegistry.Name(entry, L.Culture.Name)"
+                                  OnSpend="change => Send(new AdjustResourceCommand(Actor.Id, change.Key, change.Delta, change.Label))"
+                                  OnRoll="RollAsync" />
+                }
+
+                @if (Blueprint != null && MonsterCard.CanShow(Blueprint))
+                {
+                    <MonsterCard Entry="Blueprint" />
+                }
+            </div>
+        }
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired] public CampaignDocument Campaign { get; set; } = null!;
+    [Parameter, EditorRequired] public ActorDocument Actor { get; set; } = null!;
+
+    /// <summary>The creature's live pools and conditions, or null before the runtime has them.</summary>
+    [Parameter] public ActorStateSnapshot? State { get; set; }
+    [Parameter] public SystemDefinition? Definition { get; set; }
+
+    /// <summary>What the sheet's rules make of the sheet; null when they are not loaded, and the card then shows less.</summary>
+    [Parameter] public SheetEvaluation? Evaluation { get; set; }
+
+    /// <summary>The Library entry a creature was made from, for its stat block.</summary>
+    [Parameter] public ContentEntry? Blueprint { get; set; }
+
+    /// <summary>The viewer may see everything: the GM, or the character's own player. Otherwise the top of the card only.</summary>
+    [Parameter] public bool Full { get; set; }
+
+    /// <summary>The viewer may spend its slots and roll for it.</summary>
+    [Parameter] public bool CanAct { get; set; }
+    [Parameter] public bool Expanded { get; set; }
+    [Parameter] public EventCallback OnToggle { get; set; }
+    [Parameter] public string CurrentUserId { get; set; } = string.Empty;
+
+    /// <summary>The die an attack rolls, before its bonus.</summary>
+    [Parameter] public string CheckDie { get; set; } = "1d20";
+    [Parameter, EditorRequired] public Func<IRuntimeCommand, Task> Send { get; set; } = _ => Task.CompletedTask;
+
+    private readonly string id = $"table-card-{Guid.NewGuid():N}";
+
+    private string Href => MentionLinks.Href(Campaign.Id, MentionKind.Actor, Actor.Id);
+    private VitalsRules? Vitals => Definition?.Vitals;
+    private SheetRules? Rules => Definition?.SheetRules;
+    private string PrimaryKey => SystemDefinition.PrimaryKeyOf(Definition);
+    private static readonly DownRules NoDownRules = new();
+    private DownRules DownRules => Vitals?.Down ?? NoDownRules;
+    private bool Dead => State?.IsDead == true;
+    private bool Down => !Dead && State?.IsDown == true;
+
+    private string KindClass => Actor.Kind switch
+    {
+        ActorKind.PlayerCharacter => "token-pc",
+        ActorKind.Monster => "token-monster",
+        _ => "token-npc",
+    };
+
+    private (int Current, int Max)? Pool =>
+        State?.Pools is { } pools
+            ? (pools.GetValueOrDefault(PrimaryKey), pools.GetValueOrDefault(SystemDefinition.PoolMaxKey(Definition, PrimaryKey)))
+            : null;
+
+    private IReadOnlyList<SlotPoolRule> SlotPools => Rules?.SlotPools ?? (IReadOnlyList<SlotPoolRule>)Array.Empty<SlotPoolRule>();
+    private List<string> SlotKeys => State?.Pools?.Keys.Where(k => SlotPools.Any(r => r.Owns(k))).ToList() ?? new List<string>();
+    private IReadOnlyList<FeatureCounter> Counters => Evaluation?.Counters ?? (IReadOnlyList<FeatureCounter>)Array.Empty<FeatureCounter>();
+    private List<string> Equipped => Evaluation?.Inventory.Where(i => i.Equipped).Select(i => ContentRegistry.Name(i.Entry, L.Culture.Name)).ToList() ?? new List<string>();
+
+    private bool HasBody => Equipped.Count > 0 || SlotKeys.Count > 0 || Counters.Count > 0 || Evaluation is { Actions.Count: > 0 } || (Blueprint != null && MonsterCard.CanShow(Blueprint));
+
+    /// <summary>Dead, stable and down are the card's state, not conditions in the list.</summary>
+    private List<EffectSnapshot> Effects => (State?.Effects ?? Array.Empty<EffectSnapshot>())
+        .Where(e => Vitals?.Down is not { } down || !(string.Equals(e.EffectId, down.DeadCondition, StringComparison.OrdinalIgnoreCase)
+                                                    || string.Equals(e.EffectId, down.StableCondition, StringComparison.OrdinalIgnoreCase)
+                                                    || string.Equals(e.EffectId, down.Condition, StringComparison.OrdinalIgnoreCase)))
+        .ToList();
+
+    private string ConditionName(string condition) => Definition?.DisplayCondition(condition) ?? condition;
+
+    /// <summary>The line under the name: the fields the system calls a summary (level, species, class).</summary>
+    private string Summary =>
+        Definition == null ? string.Empty : string.Join(", ", Definition.FieldRoles.Summary
+            .Select(key => (Key: key, Value: YamlValues.GetString(Actor.Sheet, key)))
+            .Where(p => !string.IsNullOrEmpty(p.Value))
+            .Select(p => Definition.ActorFields.FirstOrDefault(f => f.Key == p.Key) is { } summaryField
+                ? summaryField.TargetEntityType != null
+                    ? ContentRegistry.GetEntry(Campaign.SystemId, summaryField.TargetEntityType, p.Value!) is { } entry ? ContentRegistry.Name(entry, L.Culture.Name) : CampaignLibrary.Humanize(p.Value!)
+                    : $"{summaryField.Label} {p.Value}"
+                : p.Value!));
+
+    private static string Signed(object value) => YamlValues.ToNumber(value) is { } number ? (number >= 0 ? "+" : "") + number.ToString(System.Globalization.CultureInfo.InvariantCulture) : value.ToString() ?? string.Empty;
+
+    /// <summary>Armor class, speed, the system's derived values, and spell save DC and attack.</summary>
+    private IEnumerable<(string Label, string Value)> Stats()
+    {
+        if (Definition == null) yield break;
+        if (Rules?.ArmorClass is { } armor)
+        {
+            var field = Definition.ActorFields.FirstOrDefault(f => f.Key == armor.Key);
+            var value = Evaluation?.ArmorClass is { Active: true } worked ? worked.Total : YamlValues.GetInt(Actor.Sheet, armor.Key);
+            if (value.HasValue) yield return (field?.Abbreviation ?? field?.Label ?? armor.Key, value.Value.ToString());
+        }
+
+        if (Definition.ActorFields.FirstOrDefault(f => f.Key == Definition.FieldRoles.Speed) is { } speed && YamlValues.GetInt(Actor.Sheet, speed.Key) is { } distance)
+        {
+            var label = speed.Abbreviation ?? System.Text.RegularExpressions.Regex.Replace(speed.Label, @"\s*\([^)]*\)\s*$", "");
+            yield return (label, string.IsNullOrEmpty(speed.Unit) ? distance.ToString() : $"{distance} {speed.Unit}");
+        }
+
+        if (Rules != null && Evaluation != null)
+        {
+            foreach (var derived in Rules.Derived)
+            {
+                if (Evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, Signed(value));
+            }
+
+            foreach (var casting in Evaluation.Spellcasting)
+            {
+                yield return (Evaluation.Spellcasting.Count > 1 ? L["Actor.Skills.SpellSaveDcFor", casting.ClassName] : L["Actor.Skills.SpellSaveDc"], casting.SaveDc.ToString());
+            }
+        }
+    }
+
+    /// <summary>Other players never learn exact hit points, only a rough band.</summary>
+    private string HpBand(int current, int max)
+    {
+        if (max <= 0) return L["Combat.Hp.Unknown"];
+        var fraction = (double)current / max;
+        return fraction switch
+        {
+            <= 0 => L["Combat.Down"],
+            < 0.25 => L["Combat.Hp.Critical"],
+            < 0.5 => L["Combat.Hp.Bloodied"],
+            _ => L["Combat.Hp.Healthy"]
+        };
+    }
+
+    private Task RollAsync(ActionRoll roll)
+    {
+        var bonus = roll.CheckBonus ?? 0;
+        var expression = roll.Expression ?? CheckDie + (bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString());
+        return Send(new RollDiceCommand(expression, Actor.Id, CurrentUserId, false, roll.Label));
+    }
+}

@@ -24,6 +24,12 @@ properties:
   cost: 2 sp
   weight: 10
   damage: 1d8 Bludgeoning
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d8
+    damageType: Bludgeoning
   properties:
   - Two-Handed
   mastery: Push

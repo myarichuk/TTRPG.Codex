@@ -303,6 +303,8 @@ The rules a system applies to a character sheet, declared in `system.yaml` so a 
 | `spellcasting` | [SpellcastingRules](#spellcastingrules) | Spell save DC and spell attack bonus per spellcasting class. Null: not shown. |
 | `proficiencies` | [ProficiencyRules](#proficiencyrules) | Armor and weapon training, checked against what the sheet equips. Null: no warnings. |
 | `inherits` | list of [InheritRule](#inheritrule) | Values copied from a referenced entry onto the sheet when the reference changes (a species' speed and size). Null: nothing is copied. |
+| `features` | list of [FeatureSource](#featuresource) | Where a sheet's features come from (a class's and a subclass's feature rows, a species' traits, the feats picked), so what a feature says it grants reaches the sheet: numbers it changes, entries it adds to a list, and a counter of its uses. Empty: features are text only. |
+| `actions` | list of [ActionSource](#actionsource) | What a sheet can do with a roll: casting what it picked, attacking with what it holds. Each source names where the entries are and how their attack bonus, save DC and dice are worked out. Empty: the sheet has no actions. |
 
 ## AttributeRules
 
@@ -619,6 +621,38 @@ Copies properties of the entry Field names onto sheet keys the moment the player
 | `field` | text (a number is text too) | Required: the EntityReference actor field whose chosen entry the values are copied from (`species`). |
 | `appliedKey` | text (a number is text too) | Required: a sheet key, not an actor field, where the id of the entry last copied from is kept (`speciesApplied`). |
 | `copy` | map of text (a number is text too) | Entry property → sheet key. |
+
+## FeatureSource
+
+One place features come from. Either Field (the entry a reference field names) or List (every entry picked in a list). With Property the features are that property's rows (`name`, `description`, and LevelColumn); without it the entry itself is one feature. A feature, row or entry, may carry: `modifiers`: `[{ target, amount, type, when }]`, as everywhere else. `target` is the armor class or hit point key, a derived value, or a Number actor field; `amount` is a number or a formula; a `type` the system stacks as `best` sets a floor ("at least 120") instead of adding. `adds`: `[{ to, entries, level }]`: entries put on a pick list (by id or name) or values on a tag list, from `level` on. They leave again when the feature does. `uses`: `{ max, recoversOn, key }`: a counter of uses, `max` a number or a formula, refilled by the rests named.
+
+| Key | Type | What it is |
+|---|---|---|
+| `field` | text (a number is text too) | The EntityReference actor field whose entry carries the features (`class`, `subclass`, `species`). With multiclass rules, the class and subclass fields are read once per class. |
+| `list` | text (a number is text too) | Or: the key of a list in `lists` whose picked entries carry them (`feats`). |
+| `property` | text (a number is text too) | The entry property holding feature rows (`features`, `traits`). None: the entry is one feature and carries `modifiers`, `adds` and `uses` among its own properties. |
+| `levelColumn` | text (a number is text too) | A row's column saying from which level it applies. Default `level`; a row without it always applies. |
+| `byField` | text (a number is text too) | The sheet value a row's level is compared with (`classLevel`, `level`). None: rows are not gated. |
+
+## ActionSource
+
+One kind of action and the entries that give it: the entries picked in Lists, or the items carried (Inventory). What an entry rolls is the map under its Property: `attack`: `melee` or `ranged`: the action starts with an attack roll (AttackBonus). `abilities`: the attributes the attack may use; the best one is `abilityMod` in the formulas. `save`: the attribute of the saving throw it asks for, against SaveDc. `damage`: the dice (`8d6`, `1d4+1`), `damageType` their kind, `heals: true` when they heal. `addAbility: true`: the dice add AbilityBonus. `perSlot`: dice added for each slot level above the entry's own; `atLevels`: `{ 5: 2d10 }`, the dice from that value of ScaleBy on; `alternatives`: `{ two-handed: 1d10 }`, other dice it may roll. The formulas read the sheet's numbers and derived values, and names of their own: `abilityMod`, `trained` (1 when the first class is trained with the item, see ProficiencyRules), and `castAttack`, `castSave` and `castMod` (the best of the sheet's casting classes, see SpellcastingRules).
+
+| Key | Type | What it is |
+|---|---|---|
+| `key` | text (a number is text too) | Required, unique. |
+| `label` | text (a number is text too) | The verb on the button ("Cast", "Attack"). |
+| `lists` | list of text (a number is text too) | Keys of lists in `lists` whose picked entries are actions of this kind. |
+| `inventory` | text (a number is text too) | Or the inventory: `equipped` for what is worn or wielded, `carried` for everything. |
+| `tag` | text (a number is text too) | Only inventory items with this tag (`weapons`). None: every item that has Property. |
+| `property` | text (a number is text too) | The entry property holding what it rolls. Default `use`. A picked entry without it is still listed (casting it spends a slot and rolls nothing); an item without it is not. |
+| `levelProperty` | text (a number is text too) | The entry property with its level; an entry of level 1 or more spends a slot of Spends. |
+| `spends` | list of text (a number is text too) | Keys of the `slotPools` an action may spend from: one slot of the entry's level or higher. |
+| `attackBonus` | text (a number is text too) | Formula for the number added to the attack roll. |
+| `saveDc` | text (a number is text too) | Formula for the DC of the saving throw. |
+| `damageBonus` | text (a number is text too) | Formula for a number added to every entry's dice. |
+| `abilityBonus` | text (a number is text too) | Formula for the number added to the dice of an entry that says `addAbility`. |
+| `scaleBy` | text (a number is text too) | The sheet value an entry's `atLevels` is read by. Default: the system's level field. |
 
 ## SheetKindDefinition
 

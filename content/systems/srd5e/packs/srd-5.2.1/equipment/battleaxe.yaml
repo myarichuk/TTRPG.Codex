@@ -24,6 +24,14 @@ properties:
   cost: 10 gp
   weight: 4
   damage: '1d8 Slashing (two-handed: 1d10)'
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d8
+    damageType: Slashing
+    alternatives:
+      two-handed: 1d10
   properties:
   - Versatile
   mastery: Topple

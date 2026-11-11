@@ -37,3 +37,11 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Fire
+  use:
+    attack: ranged
+    damage: 1d10
+    damageType: Fire
+    atLevels:
+      5: 2d10
+      11: 3d10
+      17: 4d10

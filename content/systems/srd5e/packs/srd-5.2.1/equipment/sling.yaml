@@ -26,6 +26,12 @@ properties:
   cost: 1 sp
   weight: 0
   damage: 1d4 Piercing
+  use:
+    attack: ranged
+    abilities:
+    - dex
+    damage: 1d4
+    damageType: Piercing
   properties:
   - Ammunition
   mastery: Slow

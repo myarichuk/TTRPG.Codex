@@ -24,6 +24,13 @@ properties:
   cost: 2 gp
   weight: 3
   damage: 1d4 Slashing
+  use:
+    attack: melee
+    abilities:
+    - str
+    - dex
+    damage: 1d4
+    damageType: Slashing
   properties:
   - Finesse
   - Reach

@@ -37,3 +37,11 @@ properties:
   classes:
   - Druid
   damageType: Fire
+  use:
+    attack: ranged
+    damage: 1d8
+    damageType: Fire
+    atLevels:
+      5: 2d8
+      11: 3d8
+      17: 4d8

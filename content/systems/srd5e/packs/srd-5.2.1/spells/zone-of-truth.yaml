@@ -38,3 +38,5 @@ properties:
   - Bard
   - Cleric
   - Paladin
+  use:
+    save: cha

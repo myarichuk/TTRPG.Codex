@@ -26,6 +26,8 @@ public static class SheetLayout
         ["hit-points"] = "primaryResource",
         ["armor-class"] = "sheetRules.armorClass",
         ["slots"] = "sheetRules.slotPools",
+        ["actions"] = "sheetRules.actions",
+        ["features"] = "sheetRules.features",
         ["level-up"] = "fieldRoles.level"
     };
 
@@ -63,7 +65,7 @@ public static class SheetLayout
         Section("attributes", "zap", false, "attributes", "skills", "fields", "classes", "library"),
         Section("picks", "sparkles", false, "picks"),
         Section("inventory", "package", false, "inventory"),
-        Section("vitals", "heart", true, "hit-points", "armor-class", "slots", "level-up")
+        Section("vitals", "heart", true, "hit-points", "armor-class", "slots", "actions", "features", "level-up")
     };
 
     private static LayoutSection Section(string name, string icon, bool aside, params string[] widgets) => new()

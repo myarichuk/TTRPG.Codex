@@ -43,3 +43,7 @@ properties:
   - Wizard
   damageType: Lightning
   higherLevel: One additional bolt leaps from the first target to another target for each spell slot level above 6.
+  use:
+    save: dex
+    damage: 10d8
+    damageType: Lightning

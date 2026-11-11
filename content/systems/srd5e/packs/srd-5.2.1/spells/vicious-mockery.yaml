@@ -34,3 +34,11 @@ properties:
   classes:
   - Bard
   damageType: Psychic
+  use:
+    save: wis
+    damage: 1d6
+    damageType: Psychic
+    atLevels:
+      5: 2d6
+      11: 3d6
+      17: 4d6

@@ -26,6 +26,12 @@ properties:
   cost: 10 gp
   weight: 1
   damage: 1 Piercing
+  use:
+    attack: ranged
+    abilities:
+    - dex
+    damage: 1
+    damageType: Piercing
   properties:
   - Ammunition
   - Loading

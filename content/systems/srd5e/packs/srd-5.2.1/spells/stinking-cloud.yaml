@@ -40,3 +40,5 @@ properties:
   - Bard
   - Sorcerer
   - Wizard
+  use:
+    save: con

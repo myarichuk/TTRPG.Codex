@@ -432,6 +432,9 @@ values:
   Pact slots: Ячейки договора
   spell slot: ячейка заклинаний
   pact slot: ячейка договора
+  Cast: Сотворить
+  Attack: Атаковать
+  two-handed: двумя руками
   lb: фнт.
   Dead: Мёртв
   Stable: Стабилен

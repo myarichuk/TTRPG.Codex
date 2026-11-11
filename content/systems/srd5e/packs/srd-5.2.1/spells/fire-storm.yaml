@@ -39,3 +39,7 @@ properties:
   - Druid
   - Sorcerer
   damageType: Fire
+  use:
+    save: dex
+    damage: 7d10
+    damageType: Fire

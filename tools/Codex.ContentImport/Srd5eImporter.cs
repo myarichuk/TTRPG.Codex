@@ -618,6 +618,9 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Properties["classes"] = classes.Cast<object>().ToList();
             if (spell.Get("damage")?.Name("damage_type") is { } damageType) entry.Properties["damageType"] = damageType;
             if (spell.Text("higher_level") is { } higher) entry.Properties["higherLevel"] = higher;
+            var rulesText = (SpellTextFixes.Descriptions.TryGetValue(entry.Id, out var fixedRules) ? fixedRules : spell.Text("description")) + " " + spell.Text("higher_level");
+            var sourceDice = spell.Get("damage")?.Get("damage_at_slot_level")?.Str(level.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            if (UseData.ForSpell(rulesText, spell.Str("attack_type"), sourceDice, spell.Get("damage")?.Name("damage_type")) is { } spellUse) entry.Properties["use"] = spellUse;
 
             var header = level == 0 ? $"{school} Cantrip" : $"Level {level} {school}";
             var sb = new StringBuilder();
@@ -854,6 +857,9 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
                 if (item.Get("two_handed_damage") is { } two) text += $" (two-handed: {two.Str("damage_dice")})";
                 entry.Properties["damage"] = text;
                 lines.Add($"**Damage:** {text}");
+                var weaponUse = UseData.ForWeapon(damage.Str("damage_dice"), damage.Name("damage_type"), item.Get("two_handed_damage")?.Str("damage_dice"),
+                    item.Names("properties"), categories.Any(c => c.Contains("Ranged", StringComparison.OrdinalIgnoreCase)));
+                if (weaponUse != null) entry.Properties["use"] = weaponUse;
             }
 
             var properties = item.Names("properties");

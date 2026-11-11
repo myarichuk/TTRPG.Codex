@@ -38,3 +38,8 @@ properties:
   - Ranger
   damageType: Piercing
   higherLevel: The damage increases by 1d6 for each spell slot level above 1.
+  use:
+    save: str
+    damage: 1d6
+    damageType: Piercing
+    perSlot: 1d6

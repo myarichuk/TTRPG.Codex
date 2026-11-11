@@ -1379,6 +1379,11 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
 /* Slot pools (spell slots, pact slots): a row per slot level with pips */
 .slot-row { display: flex; align-items: center; gap: var(--space-5); flex-wrap: wrap; padding: var(--space-2) 0; }
 .slot-row .slot-level { min-width: 4.2rem; font-size: var(--fs-md); font-weight: 700; color: var(--text-3); }
+.action-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-2) 0; border-top: 1px solid var(--border); }
+.action-row:first-child { border-top: 0; }
+.action-what { display: flex; flex-direction: column; min-width: 8rem; flex: 1 1 8rem; }
+.action-name { font-weight: 700; }
+.action-slot { width: auto; }
 .slot-pips { display: inline-flex; gap: var(--space-2); flex-wrap: wrap; }
 .slot-pip { width: 0.8rem; height: 0.8rem; border-radius: 50%; border: 2px solid var(--arcane); background: transparent; }
 .slot-pip-full { background: var(--arcane); }
@@ -1657,6 +1662,21 @@ textarea.field-input { min-height: 6rem; resize: vertical; }
 .participant { display: grid; grid-template-columns: auto 1fr; column-gap: var(--space-7); align-items: start; }
 .participant > .participant-token { grid-row: 1 / span 4; }
 .participant > :not(.participant-token) { grid-column: 2; min-width: 0; }
+/* The table's cards: one per character, and per creature in the order. The top is always there; the rest opens. */
+.encounter-bar { padding-block: var(--space-5); }
+.table-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: var(--space-5); align-items: start; }
+.table-card { border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: var(--space-6) var(--space-7); background: var(--surface); box-shadow: var(--frame); min-width: 0; }
+.table-card.dead { opacity: 0.65; }
+.table-card.dead .table-card-name { text-decoration: line-through; }
+.table-card-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
+.table-card-who { display: flex; flex-direction: column; flex: 1 1 8rem; min-width: 0; }
+.table-card-name { margin: 0; font-size: var(--fs-lg, 1.1rem); }
+.table-card-badges { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.table-card-stats { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin: var(--space-4) 0 0; }
+.table-card-stats > div { display: flex; flex-direction: column; }
+.table-card-stats dt { font-size: var(--fs-sm, 0.8rem); font-weight: 700; color: var(--text-3); }
+.table-card-stats dd { margin: 0; font-weight: 700; }
+.table-card-body { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border); }
 /* Names on the table open the character (or a condition's rules) and show their card (U1): marked, not shouted. */
 a.participant-token { display: block; border-radius: 50%; }
 a.table-name { color: inherit; text-decoration: underline dotted; text-decoration-color: var(--text-3); text-underline-offset: 0.2em; }

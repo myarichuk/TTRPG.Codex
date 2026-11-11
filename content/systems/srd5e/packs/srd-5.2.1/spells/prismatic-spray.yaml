@@ -58,3 +58,7 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Acid
+  use:
+    save: dex
+    damage: 12d6
+    damageType: Acid

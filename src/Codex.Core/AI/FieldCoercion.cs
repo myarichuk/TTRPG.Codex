@@ -126,15 +126,9 @@ internal static class FieldCoercion
             var row = new Dictionary<string, object>();
             foreach (var prop in element.EnumerateObject())
             {
-                object? cell = prop.Value.ValueKind switch
-                {
-                    JsonValueKind.String => prop.Value.GetString()!.Trim(),
-                    JsonValueKind.Number => prop.Value.TryGetInt64(out var whole) ? (object)whole : prop.Value.GetDouble(),
-                    JsonValueKind.True => true,
-                    JsonValueKind.False => false,
-                    _ => null
-                };
-                if (cell is not (null or ""))
+                // A cell may be structured: what a feature grants (its modifiers, the entries it adds, its uses) is a small
+                // map or a list of them beside the row's name and description.
+                if (Plain(prop.Value, NestedDepth) is { } cell and not "")
                 {
                     row[prop.Name] = cell;
                 }
@@ -148,4 +142,20 @@ internal static class FieldCoercion
 
         return rows.Count == 0 ? null : rows;
     }
+
+    // How deep a row's cell may nest (a list of maps holding a list), and how many values one list or map may hold.
+    private const int NestedDepth = 3;
+    private const int NestedSize = 40;
+
+    private static object? Plain(JsonElement value, int depth) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString()!.Trim(),
+        JsonValueKind.Number => value.TryGetInt64(out var whole) ? (object)whole : value.GetDouble(),
+        JsonValueKind.True => true,
+        JsonValueKind.False => false,
+        JsonValueKind.Array when depth > 0 => value.EnumerateArray().Take(NestedSize).Select(e => Plain(e, depth - 1)).Where(e => e is not (null or "")).Select(e => e!).ToList() is { Count: > 0 } list ? list : null,
+        JsonValueKind.Object when depth > 0 => value.EnumerateObject().Take(NestedSize).Select(p => (p.Name, Value: Plain(p.Value, depth - 1))).Where(p => p.Value is not (null or ""))
+            .ToDictionary(p => p.Name, p => p.Value!) is { Count: > 0 } map ? map : null,
+        _ => null
+    };
 }

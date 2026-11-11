@@ -45,3 +45,8 @@ properties:
   - Sorcerer
   damageType: Piercing
   higherLevel: The damage increases by 1d10 for each spell slot level above 5.
+  use:
+    save: con
+    damage: 4d10
+    damageType: Piercing
+    perSlot: 1d10

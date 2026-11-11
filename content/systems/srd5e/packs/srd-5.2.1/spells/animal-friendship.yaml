@@ -42,3 +42,5 @@ properties:
   - Druid
   - Ranger
   higherLevel: You can target one additional Beast for each spell slot level above 1.
+  use:
+    save: wis

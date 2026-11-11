@@ -45,3 +45,7 @@ properties:
   - Warlock
   - Wizard
   damageType: Psychic
+  use:
+    save: int
+    damage: 10d12
+    damageType: Psychic

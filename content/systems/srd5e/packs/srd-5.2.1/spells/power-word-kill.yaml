@@ -38,3 +38,6 @@ properties:
   - Warlock
   - Wizard
   damageType: Psychic
+  use:
+    damage: 12d12
+    damageType: Psychic

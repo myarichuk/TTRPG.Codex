@@ -1295,4 +1295,28 @@
   <data name="Campaign.Book.Chip.File" xml:space="preserve"><value>Picture file for the place chosen in the text</value></data>
   <data name="Campaign.Book.Preview.ToText" xml:space="preserve"><value>Move the cursor to what the pages show</value></data>
   <data name="Campaign.Book.Preview.ToPages" xml:space="preserve"><value>Move the pages to where the cursor is</value></data>
+  <data name="Campaign.Vault.Review" xml:space="preserve"><value>Review</value></data>
+  <data name="Campaign.Vault.ReviewLabel" xml:space="preserve"><value>Review {0}</value></data>
+  <data name="Campaign.Vault.ReviewTitle" xml:space="preserve"><value>Review {0}</value></data>
+  <data name="Campaign.Vault.BringsLine" xml:space="preserve"><value>Brings its own: {0}</value></data>
+  <data name="Campaign.Vault.StepCharacter" xml:space="preserve"><value>The character</value></data>
+  <data name="Campaign.Vault.StepBrings" xml:space="preserve"><value>What it brings</value></data>
+  <data name="Campaign.Vault.StepConfirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="Campaign.Vault.History" xml:space="preserve"><value>History</value></data>
+  <data name="Campaign.Vault.NoHistory" xml:space="preserve"><value>No history written.</value></data>
+  <data name="Campaign.Vault.RulesOk" xml:space="preserve"><value>The sheet breaks none of this campaign's rules.</value></data>
+  <data name="Campaign.Vault.RulesIssues" xml:space="preserve"><value>This campaign's rules flag these on the sheet:</value></data>
+  <data name="Campaign.Vault.BringsHint" xml:space="preserve"><value>These entries are the character's own: no pack has them. Decide for each one. To have an entry changed, turn the request down and ask the player to send it again.</value></data>
+  <data name="Campaign.Vault.BringAdd" xml:space="preserve"><value>Add to the Library</value></data>
+  <data name="Campaign.Vault.BringUse" xml:space="preserve"><value>Use one the campaign has</value></data>
+  <data name="Campaign.Vault.BringLeave" xml:space="preserve"><value>Leave out</value></data>
+  <data name="Campaign.Vault.BringUsePick" xml:space="preserve"><value>Entry to use instead of {0}</value></data>
+  <data name="Campaign.Vault.BringChoice" xml:space="preserve"><value>What to do with {0}</value></data>
+  <data name="Campaign.Vault.WillJoin" xml:space="preserve"><value>{0} joins the cast, played by {1}.</value></data>
+  <data name="Campaign.Vault.WillUpdate" xml:space="preserve"><value>{0} is updated from the vault.</value></data>
+  <data name="Campaign.Vault.WillAdd" xml:space="preserve"><value>Added to the Library: {0}</value></data>
+  <data name="Campaign.Vault.WillUse" xml:space="preserve"><value>{0} becomes {1}</value></data>
+  <data name="Campaign.Vault.WillLeave" xml:space="preserve"><value>Left out: {0}</value></data>
+  <data name="Campaign.Vault.Next" xml:space="preserve"><value>Next</value></data>
+  <data name="Campaign.Vault.Back" xml:space="preserve"><value>Back</value></data>
 </root>

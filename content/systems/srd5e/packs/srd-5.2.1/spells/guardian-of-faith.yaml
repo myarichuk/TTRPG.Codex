@@ -33,3 +33,5 @@ properties:
   ritual: false
   classes:
   - Cleric
+  use:
+    save: dex

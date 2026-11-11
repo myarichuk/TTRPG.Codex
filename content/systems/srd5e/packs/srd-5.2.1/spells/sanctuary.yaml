@@ -34,3 +34,5 @@ properties:
   ritual: false
   classes:
   - Cleric
+  use:
+    save: wis

@@ -37,3 +37,8 @@ properties:
   - Cleric
   damageType: Necrotic
   higherLevel: The damage increases by 1d10 for each spell slot level above 1.
+  use:
+    save: con
+    damage: 2d10
+    damageType: Necrotic
+    perSlot: 1d10

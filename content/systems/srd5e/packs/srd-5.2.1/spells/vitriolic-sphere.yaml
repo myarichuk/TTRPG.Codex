@@ -41,3 +41,8 @@ properties:
   - Wizard
   damageType: Acid
   higherLevel: The initial damage increases by 2d4 for each spell slot level above 4.
+  use:
+    save: dex
+    damage: 10d4
+    damageType: Acid
+    perSlot: 2d4

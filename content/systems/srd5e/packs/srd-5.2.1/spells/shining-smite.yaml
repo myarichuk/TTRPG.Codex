@@ -36,3 +36,7 @@ properties:
   - Paladin
   damageType: Radiant
   higherLevel: The damage increases by 1d6 for each spell slot level above 2.
+  use:
+    damage: 2d6
+    damageType: Radiant
+    perSlot: 1d6

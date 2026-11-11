@@ -44,3 +44,8 @@ properties:
   - Sorcerer
   - Wizard
   higherLevel: The damage increases by 3d6 for each spell slot level above 6.
+  use:
+    save: dex
+    damage: 10d6+40
+    damageType: Force
+    perSlot: 3d6

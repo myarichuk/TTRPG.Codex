@@ -43,3 +43,8 @@ properties:
   - Wizard
   damageType: Necrotic
   higherLevel: The damage increases by 2d8 for each spell slot level above 6.
+  use:
+    save: con
+    damage: 8d8
+    damageType: Necrotic
+    perSlot: 2d8

@@ -42,3 +42,9 @@ properties:
   - Wizard
   damageType: Piercing
   higherLevel: The Cold damage increases by 1d6 for each spell slot level above 1.
+  use:
+    attack: ranged
+    save: dex
+    damage: 1d10
+    damageType: Piercing
+    perSlot: 1d6

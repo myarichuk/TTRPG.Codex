@@ -47,3 +47,7 @@ properties:
   - Druid
   - Sorcerer
   damageType: Bludgeoning
+  use:
+    save: dex
+    damage: 12d6
+    damageType: Bludgeoning

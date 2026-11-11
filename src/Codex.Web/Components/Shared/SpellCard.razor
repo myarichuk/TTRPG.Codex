@@ -28,10 +28,13 @@
     {
         <div class="ref-classes"><span class="label-caps">@L["Actor.Card.Classes"]</span> @string.Join(", ", classes)</div>
     }
-    <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(RefCard.Body(Entry.Description, "Casting Time", "Range", "Components", "Duration")))</div>
+    <div class="rules-text">@((MarkupString)SecretRender.Html(RefCard.Body(Entry.Description, "Casting Time", "Range", "Components", "Duration"), TextFormatting.ToHtml, Dm))</div>
 </div>
 
 @code {
+    /// <summary>Set by <see cref="EntryDetail"/> when the reader is the GM; null leaves GM blocks out.</summary>
+    [CascadingParameter(Name = "EntryDm")] public DmView? Dm { get; set; }
+
     [Parameter, EditorRequired] public ContentEntry Entry { get; set; } = null!;
 
     public static bool CanShow(ContentEntry entry) =>

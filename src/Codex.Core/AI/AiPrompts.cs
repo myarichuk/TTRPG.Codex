@@ -142,6 +142,27 @@ public sealed record EquipmentOption(string Id, string Name);
 /// <param name="Character">Who they are, in a line or a paragraph.</param>
 public sealed record EquipRequest(string Character, string SystemName, IReadOnlyList<EquipmentOption> Items, bool OneArmorAndShield);
 
+/// <summary>A choice the rules leave to the player and the sheet still has open: a list to fill (prepared spells, feats) or a
+/// field whose options depend on the rest of the sheet (a subclass of the chosen class).</summary>
+/// <param name="Max">How many entries it takes at most; 1 for a field.</param>
+/// <param name="Options">What the rules allow this character to pick, already filtered for its class and level.</param>
+public sealed record ChoiceSpec(string Key, string Label, string? Hint, int Max, IReadOnlyList<EquipmentOption> Options);
+
+/// <summary>The choices left open on a character the model has just drafted.</summary>
+/// <param name="Character">Who they are: name, concept, what the sheet says so far.</param>
+public sealed record ChoicesRequest(string Character, string SystemName, IReadOnlyList<ChoiceSpec> Choices);
+
+/// <summary>A Library entry to write for one character, where nothing the Library has fits them.</summary>
+/// <param name="TypeLabel">What the system calls the type ("subclass").</param>
+/// <param name="Fields">The type's fields the model fills; a field the rules already settle is left out of them.</param>
+/// <param name="Guide">How a feature states what it does on the sheet (<c>FeatureGrantGuide</c>), when the system reads features off this type.</param>
+/// <param name="Shape">An existing entry's outline (its rows by level), so the new one has the same build; never its text.</param>
+/// <param name="Settled">What the rules settle about the entry, as sentences ("class: warlock").</param>
+public sealed record EntryRequest(string Character, string SystemName, string TypeLabel, IReadOnlyList<FieldSpec> Fields, string? Guide, string? Shape, IReadOnlyList<string> Settled, string? Language = null);
+
+/// <summary>An entry a model wrote: its name, its text and its properties, keyed and coerced like the type's fields.</summary>
+public sealed record DraftEntry(string Name, string? Description, Dictionary<string, object> Properties);
+
 /// <summary>Pure prompt builders: no network, no state, unit-testable.</summary>
 public static class AiPrompts
 {
@@ -625,6 +646,55 @@ public static class AiPrompts
         var sb = new StringBuilder();
         sb.AppendLine("Character: " + r.Character.Trim());
         AppendItems(sb, r.Items);
+        return (system, sb.ToString());
+    }
+
+    /// <summary>The choices a drafted character still has open, each with the options the rules allow it.</summary>
+    public static (string System, string User) Choose(ChoicesRequest r)
+    {
+        var system = $"You finish characters for the {r.SystemName} tabletop game by making the choices its rules leave to the player. " +
+                     "Reply with ONE JSON object and nothing else, shaped exactly like {\"choices\": {choice key: [id, ...]}}. " +
+                     "For each choice use only the ids listed under it (the part before the colon), never more than its count, and never the same id twice. " +
+                     "Pick what this character would have and use, and what makes them work in play; fill the whole count unless fewer of the options fit. " +
+                     "A choice of one may stay empty when nothing listed suits the character.";
+        var sb = new StringBuilder();
+        sb.AppendLine("Character: " + r.Character.Trim());
+        foreach (var choice in r.Choices)
+        {
+            sb.AppendLine().Append($"{choice.Key}: {choice.Label}, pick up to {choice.Max}");
+            sb.AppendLine(string.IsNullOrWhiteSpace(choice.Hint) ? "" : $" ({choice.Hint.Trim()})");
+            foreach (var option in choice.Options)
+            {
+                sb.AppendLine(string.Equals(option.Id, option.Name, StringComparison.OrdinalIgnoreCase) ? $"- {option.Id}" : $"- {option.Id}: {option.Name}");
+            }
+        }
+
+        return (system, sb.ToString());
+    }
+
+    /// <summary>A new entry of a type for one character, on the type's own fields.</summary>
+    public static (string System, string User) WriteEntry(EntryRequest r)
+    {
+        var language = LanguageName(r.Language);
+        var system = $"You write a new {r.TypeLabel} for the {r.SystemName} tabletop game, made for one character because none of the published ones fits them. " +
+                     "Reply with ONE JSON object and nothing else, shaped exactly like {\"name\": string, \"description\": string, \"properties\": {field key: value}}. " +
+                     "It has to sit beside the published ones at a table: built the same way, no stronger than they are, and playable from its text alone. " +
+                     "Every property follows its field: numbers as numbers, a dropdown as one of its options, a collection as an array of row objects, each with a \"name\" and a \"description\" (and a \"level\" where its rows come by level). " +
+                     "Write original text; do not copy a published entry's wording or name." +
+                     (language == "English" ? "" : $" Write the name, the description and every row's name and description in {language}; keep every JSON key, field key and option exactly as listed.");
+        var sb = new StringBuilder();
+        sb.AppendLine("Character: " + r.Character.Trim());
+        if (r.Settled.Count > 0) sb.AppendLine().AppendLine("Already settled (do not set these): " + string.Join("; ", r.Settled));
+        sb.AppendLine().AppendLine("Fields (key: label, type, options):");
+        foreach (var f in r.Fields)
+        {
+            var options = f.Options is { Count: > 0 } ? ", options: " + string.Join(" | ", f.Options) : "";
+            var hint = string.IsNullOrWhiteSpace(f.Hint) ? "" : "; " + f.Hint.Trim();
+            sb.AppendLine($"- {f.Key}: {f.Label}, {f.Type}{options}{hint}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(r.Shape)) sb.AppendLine().AppendLine("How a published one is built (match the build, not the content): " + r.Shape.Trim());
+        if (!string.IsNullOrWhiteSpace(r.Guide)) sb.AppendLine().AppendLine(r.Guide.Trim());
         return (system, sb.ToString());
     }
 

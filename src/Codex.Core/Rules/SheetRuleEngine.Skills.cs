@@ -139,7 +139,6 @@ public sealed partial class SheetRuleEngine
         if (cls == null) return;
 
         var armorTraining = Names(cls.Properties.GetValueOrDefault(rules.ArmorProperty));
-        var weaponTraining = Names(cls.Properties.GetValueOrDefault(rules.WeaponProperty));
         var allArmor = rules.AllArmor is { Length: > 0 } every && armorTraining.Any(t => t.StartsWith(every, StringComparison.OrdinalIgnoreCase));
         var typeProperty = Rules.ArmorClass?.TypeProperty ?? "armorType";
         var strength = rules.StrengthAttribute;
@@ -172,9 +171,7 @@ public sealed partial class SheetRuleEngine
             }
 
             if (!entry.Tags.Contains(rules.WeaponTag, StringComparer.OrdinalIgnoreCase)) continue;
-            var name = StemWords(entry.Name, rules.PluralSuffix);
-            var covered = entry.Tags.Any(weaponTraining.Contains) || weaponTraining.Any(t => StemWords(t, rules.PluralSuffix) == name);
-            if (!covered)
+            if (!WeaponTrained(entry, cls, rules))
             {
                 result.Warnings.Add(new RuleViolation(Rules.Inventory!.Key, $"{entry.Name}: {cls.Name} isn't trained with it, so you don't add your proficiency bonus to its attacks.", "Actor.Rule.WeaponUntrained", new object?[] { entry, cls }));
             }

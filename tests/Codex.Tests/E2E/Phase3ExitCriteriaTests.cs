@@ -200,6 +200,8 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
 
     private static async Task SetInitiativeAsync(IPage dm, string actorName, string actorId, int roll)
     {
+        // Outside an encounter the order is a bar; the GM opens it to add the first creature.
+        if (!await dm.GetByTestId("add-to-initiative-select").IsVisibleAsync()) await dm.GetByTestId("start-encounter").ClickAsync();
         var select = dm.GetByTestId("add-to-initiative-select");
         var setBtn = dm.GetByTestId("set-initiative-btn");
         var row = dm.Locator($"[data-testid='participant-row'][data-actor-id='{actorId}']");

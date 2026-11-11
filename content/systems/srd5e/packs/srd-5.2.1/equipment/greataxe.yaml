@@ -24,6 +24,12 @@ properties:
   cost: 30 gp
   weight: 7
   damage: 1d12 Slashing
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d12
+    damageType: Slashing
   properties:
   - Heavy
   - Two-Handed

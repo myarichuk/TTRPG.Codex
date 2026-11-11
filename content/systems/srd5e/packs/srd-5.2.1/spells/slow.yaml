@@ -42,3 +42,5 @@ properties:
   - Bard
   - Sorcerer
   - Wizard
+  use:
+    save: wis

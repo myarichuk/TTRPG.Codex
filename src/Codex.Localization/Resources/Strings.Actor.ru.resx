@@ -449,4 +449,28 @@
   <data name="Actor.Assist.GoThere" xml:space="preserve"><value>Перейти</value></data>
   <data name="Actor.Assist.HighlightsKept" xml:space="preserve"><value>Подсказки ничего не меняют и не сохраняются.</value></data>
   <data name="Actor.Assist.Dismiss" xml:space="preserve"><value>Скрыть</value></data>
+  <data name="Actor.Features.Title" xml:space="preserve"><value>Умения</value></data>
+  <data name="Actor.Features.UseOther" xml:space="preserve"><value>Потратить: {0}</value></data>
+  <data name="Actor.Features.RegainOther" xml:space="preserve"><value>Вернуть использование: {0}</value></data>
+  <data name="Actor.Features.Adds" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Features.AtLeast" xml:space="preserve"><value>{0}: не меньше {1}</value></data>
+  <data name="Actor.Features.NotCounted" xml:space="preserve"><value>не складывается</value></data>
+  <data name="Actor.Features.Note" xml:space="preserve"><value>То, что дают умения, вычисляется по записям Библиотеки. Использования возвращаются после отдыха, указанного у каждого умения.</value></data>
+  <data name="Actor.Actions.Title" xml:space="preserve"><value>Действия</value></data>
+  <data name="Actor.Actions.ToHit" xml:space="preserve"><value>{0} к попаданию</value></data>
+  <data name="Actor.Actions.Save" xml:space="preserve"><value>спасбросок {0}, Сл {1}</value></data>
+  <data name="Actor.Actions.Heals" xml:space="preserve"><value>лечит {0}</value></data>
+  <data name="Actor.Actions.Damage" xml:space="preserve"><value>Урон</value></data>
+  <data name="Actor.Actions.Healing" xml:space="preserve"><value>Лечение</value></data>
+  <data name="Actor.Actions.RollAttack" xml:space="preserve"><value>{0}: атака</value></data>
+  <data name="Actor.Actions.RollDamage" xml:space="preserve"><value>{0}: урон ({1})</value></data>
+  <data name="Actor.Actions.RollDamagePlain" xml:space="preserve"><value>{0}: урон</value></data>
+  <data name="Actor.Actions.RollHealing" xml:space="preserve"><value>{0}: лечение</value></data>
+  <data name="Actor.Actions.SaveSuffix" xml:space="preserve"><value>{0} (спасбросок {1}, Сл {2})</value></data>
+  <data name="Actor.Actions.SlotFor" xml:space="preserve"><value>Ячейка для {0}</value></data>
+  <data name="Actor.Actions.SlotOption" xml:space="preserve"><value>Уровень {0} (осталось {1})</value></data>
+  <data name="Actor.Actions.NoSlots" xml:space="preserve"><value>Нет подходящей ячейки</value></data>
+  <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: {2}, уровень {1}</value></data>
+  <data name="Actor.Actions.Note" xml:space="preserve"><value>Броски действий делаются здесь, а во время сессии попадают в журнал стола. Потраченная ячейка отмечается сама; попадания, спасброски и урон применяет ведущий.</value></data>
+  <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: не удаётся вычислить, что даёт это умение, поэтому оно пропущено. Мастер может проверить запись.</value></data>
 </root>

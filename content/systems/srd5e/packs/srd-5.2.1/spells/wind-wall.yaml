@@ -41,3 +41,7 @@ properties:
   - Druid
   - Ranger
   damageType: Bludgeoning
+  use:
+    save: str
+    damage: 4d8
+    damageType: Bludgeoning

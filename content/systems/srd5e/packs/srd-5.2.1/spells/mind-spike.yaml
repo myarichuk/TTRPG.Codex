@@ -40,3 +40,8 @@ properties:
   - Wizard
   damageType: Psychic
   higherLevel: The damage increases by 1d8 for each spell slot level above 2.
+  use:
+    save: wis
+    damage: 3d8
+    damageType: Psychic
+    perSlot: 1d8

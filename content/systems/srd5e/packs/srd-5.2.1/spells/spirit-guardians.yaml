@@ -41,3 +41,8 @@ properties:
   - Cleric
   damageType: Radiant
   higherLevel: The damage increases by 1d8 for each spell slot level above 3.
+  use:
+    save: wis
+    damage: 3d8
+    damageType: Radiant
+    perSlot: 1d8
