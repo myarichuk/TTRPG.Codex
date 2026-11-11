@@ -166,7 +166,8 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         Assert.DoesNotContain(hiddenNpcId, player1Html);
         Assert.DoesNotContain(hiddenNpcId, player2Html);
         await Assertions.Expect(player1.Locator($"[data-actor-id='{hiddenNpcId}']")).ToHaveCountAsync(0);
-        await Assertions.Expect(dm.Locator($"[data-actor-id='{hiddenNpcId}']")).ToHaveCountAsync(1);
+        // The GM sees the hidden NPC in the order (the card below it carries the same id, so scope to the row).
+        await Assertions.Expect(dm.Locator($"[data-testid='participant-row'][data-actor-id='{hiddenNpcId}']")).ToHaveCountAsync(1);
 
         List<string> framesSnapshot;
         lock (player1Frames) framesSnapshot = new List<string>(player1Frames);
