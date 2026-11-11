@@ -1,0 +1,17 @@
+id: magnitude-area-scale
+type: rule
+name: AREA/SCALE
+description: >-
+  |       0       |         1          |              2              |         3         |        4         |          5          |           6           |
+
+  | :-----------: | :----------------: | :-------------------------: | :---------------: | :--------------: | :-----------------: | :-------------------: |
+
+  |   A closet    |    A small room    | A large room& Several rooms | A small building  | A large building |    A city block     |                       |
+
+  | 1 or 2 people | A small gang (3-6) |     A medium gang (12)      | A large gang (20) | A huge gang (40) | A massive gang (80) | A colossal gang (160) |
+source: Magnitude > AREA/SCALE
+tags:
+- magnitude
+properties:
+  category: Magnitude
+  order: 184

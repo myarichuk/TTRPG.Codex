@@ -1,0 +1,11 @@
+id: artificer
+type: special-ability
+name: Artificer
+description: >-
+  When you **invent** or **craft** a creation with *spark-craft* features, you get **+1 result level** to your roll (a **1-3** becomes a **4/5**, etc.). You begin with one special design already known.
+
+
+  > Follow the Inventing procedure with the GM to define your first spark-craft design.
+source: Character playbook > Special abilities > Artificer
+tags:
+- example

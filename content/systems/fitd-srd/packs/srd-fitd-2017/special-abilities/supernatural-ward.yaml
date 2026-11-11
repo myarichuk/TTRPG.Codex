@@ -1,0 +1,11 @@
+id: supernatural-ward
+type: special-ability
+name: Supernatural ward
+description: >-
+  When you **Wreck** an area with arcane substances, ruining it for any other use, it becomes anathema or enticing to the supernatural (your choice).
+
+
+  > If you make an area anathema to the supernatural, they will do everything they can to avoid it, and will suffer torment if forced inside the area. If you make an area enticing to spirits, they will seek it out and linger in the area, and will suffer torment if forced to leave. This effect lasts for several days over an area the size of a small room. Particularly powerful or prepared entities may roll their quality or arcane magnitude to see how well they're able to resist the effect.
+source: Character playbook > Special abilities > Supernatural ward
+tags:
+- example

@@ -1,0 +1,7 @@
+id: quality
+type: crew-upgrade
+name: Quality
+description: "**Each upgrade improves the quality rating** of all the PCs' items of that type, beyond the quality established by the crew's Tier and fine items. You can improve the quality of **Documents**, **Gear** (covers Burglary Gear and Climbing Gear), Arcane **Implements**, Subterfuge **Supplies**, **Tools** (covers Demolitions Tools and Tinkering Tools), and **Weapons**. *So, if you are Tier 0, with fine lock picks (+1) and the Quality upgrade for gear (+1), you could contend equally with a Tier II quality lock.*"
+source: Crew creation > Crew upgrade Examples
+tags:
+- example

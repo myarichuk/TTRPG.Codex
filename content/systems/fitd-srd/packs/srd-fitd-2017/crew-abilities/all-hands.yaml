@@ -1,0 +1,7 @@
+id: all-hands
+type: crew-ability
+name: All hands
+description: During **downtime**, one of your **cohorts** may perform a downtime activity for the crew to **acquire an asset**, **reduce** **heat**, or work on a **long-term project**.
+source: Crew playbook > Crew special abilities > All hands
+tags:
+- example

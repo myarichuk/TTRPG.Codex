@@ -1,0 +1,11 @@
+id: saboteur
+type: special-ability
+name: Saboteur
+description: >-
+  When you **Wreck**, your work is much quieter than it should be and the damage is very well-hidden from casual inspection.
+
+
+  > You can drill holes in things, melt stuff with acid, even use a muffled explosive, and it will all be very quiet and extremely hard to notice.
+source: Character playbook > Special abilities > Saboteur
+tags:
+- example

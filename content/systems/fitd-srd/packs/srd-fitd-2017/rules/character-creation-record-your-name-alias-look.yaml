@@ -1,0 +1,11 @@
+id: character-creation-record-your-name-alias-look
+type: rule
+name: Record your name, alias, & look
+description: Choose a name for your character from the sample list, or create your own. If your character uses an alias or nickname in the underworld, make a note of it. Record a few evocative words that describe your character's look (samples provided in the next sections).
+source: Character creation > Record your name, alias, & look
+tags:
+- character
+- creation
+properties:
+  category: Character creation
+  order: 93

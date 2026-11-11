@@ -1,0 +1,11 @@
+id: entanglements-reprisals
+type: rule
+name: Reprisals
+description: An enemy faction makes a move against you (or a friend, contact, or vice purveyor). Pay them (1 **rep** and 1 **coin**) per Tier of the enemy as an apology, allow them to mess with you or yours, or fight back and show them who's boss.
+source: Entanglements > Reprisals
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 163

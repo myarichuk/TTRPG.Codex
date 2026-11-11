@@ -1,0 +1,23 @@
+id: teamwork-teamwork-set-up
+type: rule
+name: Set up
+description: >-
+  When you perform a setup action, you have an indirect effect on an obstacle. If your action has its intended result, any member of the team who follows through on your maneuver gets **+1 effect level** or **improved position** for their roll. You choose the benefit, based on the nature of your setup action.
+
+
+  > This is how you do the "I'll create a distraction" scene. You roll **Sway** to distract a constable with your charms, then any teammate who follows through with a **Prowl** action to sneak past him can get improved position. It's less risky since you're drawing the guard's attention.
+
+
+  This is a good way to contribute to an operation when you don't have a good rating in the action at hand. A clever setup action lets you help the team indirectly. Multiple follow-up actions may take advantage of your setup (including someone **leading** a group action) as long as it makes sense in the fiction.
+
+
+  Since a setup action can increase the effect of follow-up actions, it's also useful when the team is facing tough opposition that has advantages in quality, scale, and/or potency. Even if the PCs are reduced to zero effect due to disadvantages in a situation, the setup action provides a bonus that allows for limited effect.
+
+
+  > The PCs are facing a heavily armored carriage that's immune to their weapons. Aldo uses **Wreck** as a setup action to pry some of the armor loose with his crowbar, giving follow up actions +1 effect—going from zero to limited effect.
+source: Teamwork > Teamwork > Set up
+tags:
+- teamwork
+properties:
+  category: Teamwork
+  order: 141

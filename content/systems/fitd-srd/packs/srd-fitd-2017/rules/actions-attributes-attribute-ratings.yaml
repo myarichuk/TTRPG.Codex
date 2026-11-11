@@ -1,0 +1,15 @@
+id: actions-attributes-attribute-ratings
+type: rule
+name: Attribute Ratings
+description: >-
+  There are three **attributes** in the game system that the player characters use to resist bad consequences: **Insight**, **Prowess**, and **Resolve**. Each attribute has a rating (from zero to 4) that tells you how many dice to roll when you use that attribute.
+
+
+  The rating for each attribute is equal to the number of dots in the **first column** under that attribute (see the examples, at right). The more well-rounded your character is with a particular set of actions, the better their attribute rating.
+source: Actions & Attributes > Attribute Ratings
+tags:
+- actions
+- attributes
+properties:
+  category: Actions & Attributes
+  order: 12

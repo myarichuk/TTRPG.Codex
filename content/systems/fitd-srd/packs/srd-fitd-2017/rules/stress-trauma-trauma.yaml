@@ -1,0 +1,18 @@
+id: stress-trauma-trauma
+type: rule
+name: Trauma
+description: >-
+  When a PC marks their last stress box, they suffer a level of **trauma**. When you take **trauma**, circle one of your **trauma conditions** like *Cold*, *Reckless*, *Unstable*, etc. They're all described in the next section.
+
+
+  When you suffer **trauma**, you're taken out of action. You're "left for dead" or otherwise dropped out of the current conflict, only to come back later, shaken and drained. When you return, **you have zero stress** and your vice has been satisfied for the next downtime.
+
+
+  **Trauma conditions are permanent**. Your character acquires the new personality quirk indicated by the condition, and can earn xp by using it to cause trouble. **When you mark your fourth trauma condition**, your character cannot continue as a daring scoundrel. You must retire them to a different life or send them to prison to take the fall for the crew's **wanted level**.
+source: Stress & Trauma > Trauma
+tags:
+- stress
+- trauma
+properties:
+  category: Stress & Trauma
+  order: 18

@@ -1,0 +1,10 @@
+id: crafting-inventing
+type: rule
+name: Inventing
+description: To invent a formula for a new alchemical concoction or the plan for a new item of your design, you need to **Study** it as a **long-term project**. Most new formulas or designs will require an 8-segment progress clock to invent and learn. The player and the GM answer questions about the invention to define what it will do in play and what is required to create it (see below). The player records these answers in their notes for future reference.
+source: Crafting > Inventing
+tags:
+- crafting
+properties:
+  category: Crafting
+  order: 196

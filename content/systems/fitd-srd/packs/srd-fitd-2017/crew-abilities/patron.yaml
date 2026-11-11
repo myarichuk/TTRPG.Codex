@@ -1,0 +1,11 @@
+id: patron
+type: crew-ability
+name: Patron
+description: >-
+  When you advance your **Tier**, it costs half the **coin** it normally would.
+
+
+  > Who is your patron? Why do they help you?
+source: Crew playbook > Crew special abilities > Patron
+tags:
+- example

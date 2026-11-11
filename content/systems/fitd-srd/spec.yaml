@@ -1,0 +1,200 @@
+# What the system must do, checked by `dotnet run --project tools/Codex.SystemCheck -- content/systems/fitd-srd`.
+# Adapted from the crew reference fixture (tests/Codex.Tests/Fixtures/reference/crew), with the SRD's own trauma list. Format: tests/Codex.Tests/Fixtures/reference/README.md.
+system: fitd-srd
+
+sheets:
+  veteran:
+    kind: scoundrel
+    values: { load: normal }
+    lists:
+      actions:
+        hunt: { rating: 1 }
+        survey: { rating: 2 }
+        finesse: { rating: 1 }
+        prowl: { rating: 2 }
+        skirmish: { rating: 2 }
+        command: { rating: 1 }
+        consort: { rating: 1 }
+    tracks: { stress: 2, trauma: 0, harm: {}, xp_insight: 0, xp_prowess: 0, xp_resolve: 0, xp_playbook: 0 }
+
+  prowler:
+    kind: scoundrel
+    lists:
+      actions: { prowl: { rating: 3 }, finesse: { rating: 2 }, study: { rating: 1 } }
+    tracks: { stress: 0 }
+
+  the-crew:
+    kind: crew
+    values: { tier: 1, turf: 2, hold: strong }
+    tracks: { heat: 7, wanted: 0, rep: 3, coin: 2 }
+
+campaign:
+  clocks: [{ name: the vault's alarm, segments: 6, filled: 4, visibility: gm }]
+  factions: [{ name: the city watch, status: -1 }]
+
+expectations:
+  # ---- Values: counts over keyed lists, sums over ticked items (step 2) ----
+  - id: fitd.an-attribute-counts-its-actions-with-dots
+    step: 2
+    sheet: veteran
+    expect: { values: { insight: 2, prowess: 3, resolve: 2 } }
+    why: "Insight: hunt and survey have dots (study and tinker none). Prowess: finesse, prowl, skirmish. Resolve: command, consort."
+  - id: fitd.reputation-shrinks-with-turf
+    step: 3
+    sheet: the-crew
+    expect: { values: { rep_Max: 10 } }
+    why: "12 - turf 2."
+
+  # ---- Rolls: pools, keep highest, zero dice, criticals by pattern, inputs carried (step 4) ----
+  - id: fitd.a-six-is-a-full-success
+    step: 4
+    sheet: veteran
+    roll: { definition: action, inputs: { action: prowl }, dice: [6, 3] }
+    expect: { outcome: full, kept: [6], diceUsed: 2 }
+  - id: fitd.four-or-five-is-partial
+    step: 4
+    sheet: veteran
+    roll: { definition: action, inputs: { action: prowl }, dice: [4, 2] }
+    expect: { outcome: partial, kept: [4] }
+  - id: fitd.one-to-three-is-bad
+    step: 4
+    sheet: veteran
+    roll: { definition: action, inputs: { action: prowl }, dice: [3, 1] }
+    expect: { outcome: bad, kept: [3] }
+  - id: fitd.two-sixes-are-critical
+    step: 4
+    sheet: veteran
+    roll: { definition: action, inputs: { action: prowl }, dice: [6, 6] }
+    expect: { outcome: critical }
+  - id: fitd.zero-dice-roll-two-and-keep-the-lowest
+    step: 4
+    sheet: veteran
+    roll: { definition: action, inputs: { action: wreck }, dice: [6, 2] }
+    expect: { outcome: bad, kept: [2], diceUsed: 2 }
+  - id: fitd.zero-dice-never-crit
+    step: 4
+    sheet: veteran
+    roll: { definition: action, inputs: { action: wreck }, dice: [6, 6] }
+    expect: { outcome: full, kept: [6] }
+  - id: fitd.bonus-dice-join-the-pool
+    step: 4
+    sheet: veteran
+    roll: { definition: action, inputs: { action: hunt, bonusDice: 1 }, dice: [2, 5] }
+    expect: { outcome: partial, kept: [5], diceUsed: 2 }
+  - id: fitd.position-and-effect-are-carried-on-the-result
+    step: 4
+    sheet: veteran
+    roll: { definition: action, inputs: { action: prowl, position: desperate, effect: great }, dice: [5, 1] }
+    expect: { outcome: partial, carries: { position: desperate, effect: great } }
+  - id: fitd.harm-takes-a-die-from-every-pool
+    step: 4
+    sheet: veteran
+    with: { tracks: { harm: { "2": [cracked ribs] } } }
+    roll: { definition: action, inputs: { action: prowl }, dice: [4] }
+    expect: { outcome: partial, diceUsed: 1 }
+    why: "Level 2 harm brings Reduced dice: prowl 2 - 1 = 1 die."
+  - id: fitd.resistance-costs-six-minus-the-highest-die
+    step: 4
+    sheet: veteran
+    roll: { definition: resistance, inputs: { attribute: insight }, dice: [5, 2] }
+    expect: { outcome: resisted, after: { tracks: { stress: 3 } } }
+    why: "Insight 2: two dice, highest 5, costs 1. Stress 2 + 1."
+  - id: fitd.a-six-resists-for-free
+    step: 4
+    sheet: veteran
+    roll: { definition: resistance, inputs: { attribute: insight }, dice: [6, 3] }
+    expect: { after: { tracks: { stress: 2 } } }
+  - id: fitd.a-resistance-critical-clears-a-stress
+    step: 4
+    sheet: veteran
+    roll: { definition: resistance, inputs: { attribute: insight }, dice: [6, 6] }
+    expect: { outcome: critical, after: { tracks: { stress: 1 } } }
+  - id: fitd.a-group-action-takes-the-best-and-costs-the-leader
+    step: 4
+    sheet: veteran
+    roll: { definition: group, inputs: { action: prowl, leader: veteran }, participants: { veteran: [5, 3], prowler: [2, 1, 1] } }
+    expect: { outcome: partial, after: { tracks: { stress: 3 } } }
+    why: "The veteran rolls 2 dice (5: partial), the prowler 3 dice (2: bad). Best is partial; the leader takes 1 stress for the prowler's bad result."
+
+  # ---- Events: overflow, slots that push up, experience, help (step 5) ----
+  - id: fitd.stress-overflow-marks-trauma-and-clears-stress
+    step: 5
+    sheet: veteran
+    with: { tracks: { stress: 8 } }
+    event: { type: adjust, track: stress, by: 3 }
+    expect:
+      after: { tracks: { stress: 0, trauma: 1 } }
+      intents: [{ ask: { who: player, choices: [Cold, Haunted, Obsessed, Paranoid, Reckless, Soft, Unstable, Vicious] } }]
+  - id: fitd.the-fourth-trauma-retires
+    step: 5
+    sheet: veteran
+    with: { tracks: { stress: 9, trauma: 3 } }
+    event: { type: adjust, track: stress, by: 1 }
+    expect: { after: { tracks: { trauma: 4 }, conditions: [Retired] } }
+  - id: fitd.harm-goes-into-a-free-slot-of-its-level
+    step: 5
+    sheet: veteran
+    with: { tracks: { harm: { "1": [bruised] } } }
+    event: { type: harm, level: 1, text: winded }
+    expect: { after: { tracks: { harm: { "1": [bruised, winded] } }, conditions: [Less effect] } }
+  - id: fitd.a-full-level-pushes-harm-up
+    step: 5
+    sheet: veteran
+    with: { tracks: { harm: { "1": [bruised, winded] } } }
+    event: { type: harm, level: 1, text: cut hand }
+    expect: { after: { tracks: { harm: { "1": [bruised, winded], "2": [cut hand] } }, conditions: [Less effect, Reduced dice] } }
+  - id: fitd.harm-past-the-last-level-is-fatal
+    step: 5
+    sheet: veteran
+    with: { tracks: { harm: { "3": [shattered leg] } } }
+    event: { type: harm, level: 3, text: stabbed }
+    expect: { after: { conditions: [Needs help, Dead] } }
+  - id: fitd.a-desperate-roll-marks-experience-in-its-attribute
+    step: 5
+    sheet: veteran
+    event: { type: roll, definition: action, inputs: { action: prowl, position: desperate }, outcome: partial }
+    expect: { after: { tracks: { xp_prowess: 1 } } }
+  - id: fitd.session-end-answers-mark-playbook-experience
+    step: 5
+    sheet: veteran
+    event: { type: sessionEnd, answers: [true, false, true] }
+    expect: { after: { tracks: { xp_playbook: 2 } } }
+  - id: fitd.helping-costs-the-helper-a-stress
+    step: 5
+    sheet: veteran
+    event: { type: assist, helper: prowler }
+    expect: { intents: [{ adjust: { actor: prowler, track: stress, by: 1 } }] }
+  - id: fitd.heat-overflow-raises-wanted-level-and-keeps-the-rest
+    step: 5
+    sheet: the-crew
+    event: { type: adjust, track: heat, by: 4 }
+    expect: { after: { tracks: { heat: 2, wanted: 1 } } }
+    why: "7 + 4 = 11 on a track of 9: wanted level +1, the 2 beyond carry over."
+
+  # ---- Layout and sheet kinds (step 6) ----
+  - id: fitd.each-sheet-kind-has-its-own-layout
+    step: 6
+    sheet: veteran
+    expect: { layout: [Actions, Condition, Abilities, Load, Advancement, Coin] }
+  - id: fitd.the-crew-has-its-own-layout
+    step: 6
+    requires: [fitd.each-sheet-kind-has-its-own-layout]
+    sheet: the-crew
+    expect: { layout: [Standing, Heat, Abilities] }
+
+  # ---- Campaign objects (step 7) ----
+  - id: fitd.a-clock-fills-and-says-so
+    step: 7
+    event: { type: tick, clock: the vault's alarm, by: 3 }
+    expect:
+      after: { campaign: { clocks: [{ name: the vault's alarm, filled: 6 }] } }
+      intents: [{ adjust: { clock: the vault's alarm, by: 3 } }, { log: { key: clock.full, args: [the vault's alarm] } }]
+    why: "4 + 3 on six segments: full at 6, the extra segment is lost."
+  - id: fitd.clock-sizes-are-the-systems
+    step: 7
+    with: { campaign: { clocks: [{ name: an odd clock, segments: 5, filled: 0 }] } }
+    expect: { violations: [{ field: campaign.clocks, key: Actor.Rule.ClockSegments }] }
+  - id: fitd.faction-status-stays-in-range
+    step: 7
+    with: { campaign: { factions: [{ name: the city watch, status: 4 }] } }
+    expect: { violations: [{ field: campaign.factions, key: Actor.Rule.Range }] }

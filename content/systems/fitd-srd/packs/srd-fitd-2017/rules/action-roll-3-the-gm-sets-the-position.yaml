@@ -1,0 +1,15 @@
+id: action-roll-3-the-gm-sets-the-position
+type: rule
+name: 3. The GM Sets the Position
+description: >-
+  Once the player chooses their action, the GM sets the **position** for the roll. The position represents how dangerous or troublesome the action might be. There are three positions: **controlled**, **risky**, and **desperate**. To choose a position, the GM looks at the profiles for the positions below and picks one that most closely matches the situation at hand.
+
+
+  **By default, an action roll is risky.** You wouldn't be rolling if there was no risk involved. If the situation seems more dangerous, make it desperate. If it seems less dangerous, make it controlled.
+source: Action Roll > 3. The GM Sets the Position
+tags:
+- action-roll
+- position
+properties:
+  category: Action Roll
+  order: 31

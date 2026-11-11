@@ -1,0 +1,13 @@
+id: survey
+type: action
+name: Survey
+description: >-
+  When you **Survey**, you observe the situation and anticipate outcomes.
+
+
+  *You might spot telltale signs of trouble before it happens. You might uncover opportunities or weaknesses. You might detect a person's motivations or intentions. You could try to spot a good ambush point (but Hunting might be better).*
+source: Actions & Attributes > Actions
+tags:
+- insight
+properties:
+  attribute: insight

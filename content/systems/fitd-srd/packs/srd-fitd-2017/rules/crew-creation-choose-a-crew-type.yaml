@@ -1,0 +1,21 @@
+id: crew-creation-choose-a-crew-type
+type: rule
+name: Choose a crew type
+description: >-
+  Each Blades-powered game should have crew types that suit its setting and premise. These might be organizations, gangs, ships, strongholds, etc. Three to six options are good.
+
+
+  Your crew type determines the scores that you'll focus on, as well as a selection of special abilities that support that kind of action. The crew type isn't meant to be restrictive—a crew of smugglers might sometimes engage in extortion  or sell contraband —but the core activity of the crew type is the most frequent way they earn **coin** and xp for advancement.
+
+
+  Like a character playbook, your crew type is also how you're known in the underworld. The criminal factions and institutions think of you as "assassins" or "a cult" etc., and will treat you accordingly.
+
+
+  Your crew begins with 2 **coin** in its coffers (the remains of the PCs' savings). You are **Tier 0**, with **strong hold** and **0** **rep**.
+source: Crew creation > Choose a crew type
+tags:
+- crew
+- creation
+properties:
+  category: Crew creation
+  order: 103

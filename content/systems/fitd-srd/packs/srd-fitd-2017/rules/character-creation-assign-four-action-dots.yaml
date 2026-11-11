@@ -1,0 +1,19 @@
+id: character-creation-assign-four-action-dots
+type: rule
+name: Assign four action dots
+description: >-
+  Your playbook begins with three action dots already placed. You get to add four more dots (so you'll have seven total). At the start of the game, no action rating may have more than two dots (unless a special ability tells you otherwise). Assign your four dots like this:
+
+
+  * Put one dot in any action that you feel reflects your character's **heritage**.
+
+  * Put one dot in any action that you feel reflects your character's **background**.
+
+  * Assign two more dots anywhere you please (max rating is 2, remember).
+source: Character creation > Assign four action dots
+tags:
+- character
+- creation
+properties:
+  category: Character creation
+  order: 88

@@ -1,0 +1,15 @@
+id: infiltrator
+type: special-ability
+name: Infiltrator
+description: >-
+  You are not affected by **quality** or **Tier** when you bypass security measures.
+
+
+  > This ability lets you contend with higher-Tier enemies on equal footing. When you're cracking a safe, picking a lock, or sneaking past elite guards, your effect level is never reduced due to superior Tier or quality level of your opposition.
+
+  >
+
+  > Are you a renowned safe cracker? Do people tell stories of how you slipped under the noses of two Chief Inspectors, or are your exceptional talents yet to be discovered?
+source: Character playbook > Special abilities > Infiltrator
+tags:
+- example

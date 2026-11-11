@@ -1,0 +1,22 @@
+id: the-core-system-judgment-calls
+type: rule
+name: Judgment calls
+description: >-
+  When you play, you'll make several key judgment calls. Everyone contributes, but either the players or the GM gets final say for each:
+
+
+  * Which actions are reasonable as a solution to a problem? *Can this person be swayed? Must we get out the tools and tinker with this old rusty lock, or could it also be quietly finessed?* The players have final say.
+
+  * How dangerous and how effective is a given action in this circumstance? *How risky is this? Can this person be swayed very little or a whole lot?* The GM has final say.
+
+  * Which consequences are inflicted to manifest the dangers in a given circumstance? *Does this fall from the roof break your leg? Do the constables merely become suspicious or do they already have you trapped?* The GM has final say.
+
+  * Does this situation call for a dice roll, and which one? *Is your character in position to make an action roll or must they first make a resistance roll to gain initiative?* The GM has final say.
+
+  * Which events in the story match the experience triggers for character and crew advancement? *Did you express your character's beliefs, drives, heritage, or background? You tell us.* The players have final say.
+source: The Core System > Judgment calls
+tags:
+- core
+properties:
+  category: The Core System
+  order: 7

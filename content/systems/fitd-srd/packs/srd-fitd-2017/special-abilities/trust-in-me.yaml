@@ -1,0 +1,11 @@
+id: trust-in-me
+type: special-ability
+name: Trust in me
+description: >-
+  You get **+1d** vs. a target with whom you have an intimate relationship.
+
+
+  > This ability isn't just for social interactions. Any action can get the bonus. "Intimate" is for you and the group to define, it need not exclusively mean romantic intimacy.
+source: Character playbook > Special abilities > Trust in me
+tags:
+- example

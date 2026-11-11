@@ -1,0 +1,10 @@
+id: progress-clocks-tug-of-war-clocks
+type: rule
+name: Tug-of-war Clocks
+description: You can make a clock that can be filled *and* emptied by events, to represent a back-and-forth situation. You might make a "Revolution!" clock that indicates when the refugees start to riot over poor treatment. Some events will tick the clock up and some will tick it down. Once it fills, the revolution begins. A tug-of-war clock is also perfect for an ongoing turf war between two crews or factions.
+source: Progress clocks > Tug-of-war Clocks
+tags:
+- clock
+properties:
+  category: Progress clocks
+  order: 25

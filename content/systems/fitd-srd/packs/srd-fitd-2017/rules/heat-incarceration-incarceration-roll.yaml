@@ -1,0 +1,19 @@
+id: heat-incarceration-incarceration-roll
+type: rule
+name: INCARCERATION ROLL
+description: >-
+  * **Critical**: You make a name for yourself inside. You gain **+3** **Rep** for your crew, **1 prison claim** and **+1 faction status** with a faction that you assisted while you served your time.
+
+  * **6**: You do your time well. Your crew gains **1 prison claim** and **+1 faction status** with a faction that you assisted while you served your time.
+
+  * **4/5**: You keep your head down and do your time without incident.
+
+  * **1-3**: It's horrific. You suffer a level of trauma from the experience.
+source: Heat > Incarceration > INCARCERATION ROLL
+tags:
+- heat
+- downtime
+- incarceration
+properties:
+  category: Heat
+  order: 147

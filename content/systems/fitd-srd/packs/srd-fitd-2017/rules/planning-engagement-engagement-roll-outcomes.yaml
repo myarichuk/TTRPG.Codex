@@ -1,0 +1,18 @@
+id: planning-engagement-engagement-roll-outcomes
+type: rule
+name: Outcomes
+description: >-
+  The outcome of the engagement roll determines the **position** for the PCs' initial actions when we cut to the score in progress. A **1-3** means a desperate position. A **4/5** is a risky position. A **6** yields a controlled position. And a **critical** carries the action beyond the initial obstacle, deeper into the action of the score.
+
+
+  No matter how low-Tier or outmatched you are, a desperate position is the worst thing that can result from the plan + detail + engagement process. It's designed this way so the planning process matters, but it doesn't call for lots of optimization or nitpicking. Even if you're reckless and just dive in and take your chances, you can't get too badly burned. Plus, you might even want those desperate rolls to generate more xp for the PCs, which helps to bootstrap starting characters into advancement.
+
+
+  When you describe the situation after the roll, use the details of the target to paint a picture of the PCs' position. How might the strange, occult gang present a desperate position for burglars? How might the violent and ruthless butchers present a risky threat to assaulting thugs? How might the vain and pompous Lord present a controlled opportunity for a manipulative scoundrel? Use this opportunity to show how the PCs' enemies are dangerous and capable—don't characterize a bad engagement roll as a failure by the PCs, or they won't trust the technique in the future. Sure, things are starting out desperate here against the creepy occultists, but you're just the type of characters who are daring enough to take them on. Let's get to it.
+source: Planning & engagement > Engagement Roll > Outcomes
+tags:
+- score
+- engagement
+properties:
+  category: Planning & engagement
+  order: 131

@@ -1,0 +1,14 @@
+id: the-faction-game-faction-status
+type: rule
+name: Faction Status
+description: >-
+  Your crew's **status** with each faction indicates how well you are liked or hated. Status is rated from -3 to +3, with zero (neutral) being the default starting status. You track your status with each faction on the faction sheet.
+
+
+  When you create your crew, you assign some positive and negative status ratings to reflect recent history. The ratings will then change over time based on your actions in play.
+source: The Faction Game > Faction Status
+tags:
+- faction
+properties:
+  category: The Faction Game
+  order: 75

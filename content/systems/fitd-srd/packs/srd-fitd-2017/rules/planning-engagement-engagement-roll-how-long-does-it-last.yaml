@@ -1,0 +1,11 @@
+id: planning-engagement-engagement-roll-how-long-does-it-last
+type: rule
+name: How long does it last?
+description: The engagement roll determines the starting position for the PCs' actions. How long does that hold? Does the situation stay desperate? No. Once the initial actions have been resolved, you follow the normal process for establishing position for the rest of the rolls during the score. The engagement roll is a quick short-hand to kick things off and get the action started—it doesn't have any impact after that.
+source: Planning & engagement > Engagement Roll > How long does it last?
+tags:
+- score
+- engagement
+properties:
+  category: Planning & engagement
+  order: 132

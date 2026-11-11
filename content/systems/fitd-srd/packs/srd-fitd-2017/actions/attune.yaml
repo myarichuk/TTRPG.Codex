@@ -1,0 +1,13 @@
+id: attune
+type: action
+name: Attune
+description: >-
+  When you **Attune**, you open your mind to arcane power.
+
+
+  *You might communicate with a ghost. You could try to perceive beyond sight in order to better understand your situation (but Surveying might be better).*
+source: Actions & Attributes > Actions
+tags:
+- resolve
+properties:
+  attribute: resolve

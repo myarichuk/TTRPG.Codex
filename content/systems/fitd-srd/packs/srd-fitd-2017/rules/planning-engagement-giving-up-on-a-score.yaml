@@ -1,0 +1,11 @@
+id: planning-engagement-giving-up-on-a-score
+type: rule
+name: Giving up on a score
+description: When you give up on a score, you go into **downtime**. Follow the phases for downtime presented in the next chapter. You'll usually have zero **payoff**, since you didn't accomplish anything. You'll still face **heat** and **entanglements** as usual.
+source: Planning & engagement > Giving up on a score
+tags:
+- score
+- engagement
+properties:
+  category: Planning & engagement
+  order: 136

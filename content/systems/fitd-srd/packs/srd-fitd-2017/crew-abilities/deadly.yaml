@@ -1,0 +1,11 @@
+id: deadly
+type: crew-ability
+name: Deadly
+description: >-
+  Each PC may add +1 action rating to **Hunt**, **Prowl**, or **Skirmish** (up to a max rating of 3).
+
+
+  > Each player may choose the action they prefer (you don't all have to choose the same one). If you take this ability during initial character and crew creation, it supersedes the normal starting limit for action ratings.
+source: Crew playbook > Crew special abilities > Deadly
+tags:
+- example

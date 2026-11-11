@@ -1,0 +1,10 @@
+id: crafting
+type: rule
+name: Crafting
+description: During downtime, a PC can **Tinker** with special materials and tools to produce strange **alchemicals**, **build** (or **modify**) **items**, **create spark-craft** gadgets, or enchant **arcane** implements or weapons. The system for each method is similar, with different details depending on the nature of the project.
+source: Crafting
+tags:
+- crafting
+properties:
+  category: Crafting
+  order: 195

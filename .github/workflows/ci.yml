@@ -57,6 +57,15 @@ jobs:
           dotnet run --project tools/Codex.ContentImport -c Release --no-build -- srd5e --download --source "$RUNNER_TEMP/srd-json" --out content/systems/srd5e/packs/srd-5.2.1
           git diff --exit-code --stat -- content/systems/srd5e/packs/srd-5.2.1 || { echo "::error::content/systems/srd5e/packs/srd-5.2.1 is out of date - rerun the importer and commit"; exit 1; }
 
+      # The same for the Forged in the Dark SRD pack, from its own pinned commit, and the system's own expectations.
+      - name: Verify the Forged in the Dark SRD pack is up to date with the importer
+        if: runner.os == 'Linux'
+        run: |
+          dotnet run --project tools/Codex.ContentImport -c Release --no-build -- fitd --download --source "$RUNNER_TEMP/fitd-srd" --out content/systems/fitd-srd/packs/srd-fitd-2017
+          # git status, not git diff: a file the importer newly writes is untracked, and git diff would not see it.
+          if [ -n "$(git status --porcelain -- content/systems/fitd-srd/packs/srd-fitd-2017)" ]; then git status --short -- content/systems/fitd-srd/packs/srd-fitd-2017; echo "::error::content/systems/fitd-srd/packs/srd-fitd-2017 is out of date - rerun the importer and commit"; exit 1; fi
+          dotnet run --project tools/Codex.SystemCheck -c Release --no-build -- content/systems/fitd-srd --quiet
+
       # WebKit (Safari's engine) and Firefox: the book editor's preview is drawn by the GM's own browser (BookDraftEnginesE2ETests).
       - name: Install Playwright browsers
         run: pwsh tests/Codex.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium webkit firefox

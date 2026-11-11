@@ -1,0 +1,11 @@
+id: mule
+type: special-ability
+name: Mule
+description: >-
+  Your load limits are higher. Light: 5. Normal: 7. Heavy: 8.
+
+
+  > This ability is great if you want to wear heavy armor and pack a heavy weapon without attracting lots of attention. Since your exact gear is determined on-the-fly during an operation, having more load also gives you more options to get creative with when dealing with problems during a score.
+source: Character playbook > Special abilities > Mule
+tags:
+- example

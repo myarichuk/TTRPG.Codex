@@ -1,0 +1,7 @@
+id: boat-house
+type: crew-upgrade
+name: Boat house
+description: You have a boat, a dock on a waterway, and a small shack to store boating supplies. A second upgrade improves the boat with armor and more cargo capacity.
+source: Crew creation > Crew upgrade Examples
+tags:
+- example

@@ -1,0 +1,9 @@
+id: composed
+type: crew-upgrade
+name: Composed
+description: Each PC gets **+1 stress box**. This costs three upgrades to unlock, not just one.
+source: Crew playbook > Crew upgrades
+tags:
+- example
+properties:
+  cost: 3

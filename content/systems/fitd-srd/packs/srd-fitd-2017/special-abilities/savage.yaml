@@ -1,0 +1,15 @@
+id: savage
+type: special-ability
+name: Savage
+description: >-
+  When you unleash physical violence, it's especially frightening. When you **Command** a frightened target, take **+1d**.
+
+
+  > You instill fear in those around you when you get violent. How they react depends on the person. Some people will flee from you, some will be impressed, some will get violent in return. The GM judges the response of a given NPC.
+
+  >
+
+  > In addition, when you **Command** someone who's affected by fear (from this ability or otherwise), take +1d to your roll.
+source: Character playbook > Special abilities > Savage
+tags:
+- example

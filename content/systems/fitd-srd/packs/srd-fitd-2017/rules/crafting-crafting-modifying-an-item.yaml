@@ -1,0 +1,21 @@
+id: crafting-crafting-modifying-an-item
+type: rule
+name: Modifying an item
+description: >-
+  Adding a feature or additional function to an item is simpler than creating something new. You don't need to invent a special formula or plan. Make a crafting roll to modify an item (the baseline quality of an item that you modify is equal to your crew's Tier, as usual).
+
+
+  * A simple, useful modification requires Tier +1 quality. *A rifle that breaks down into two sections to be more easily concealed.*
+
+  * A significant modification requires Tier +2 quality. *Strengthening the barrel and powder load of a gun to fire further.*
+
+  * An arcane, spark-craft, or alchemical modification requires Tier +3 quality. *A dagger that can harm a demon. An electrified hull on a boat to repel boarders or ghosts. An outfit coated with chemicals to mask you from deathlands predators.*
+
+
+  Modified items, like special creations, may have **drawbacks**.
+source: Crafting > Crafting > Modifying an item
+tags:
+- crafting
+properties:
+  category: Crafting
+  order: 200

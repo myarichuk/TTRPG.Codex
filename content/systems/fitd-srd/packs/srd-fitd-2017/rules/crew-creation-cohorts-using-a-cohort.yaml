@@ -1,0 +1,20 @@
+id: crew-creation-cohorts-using-a-cohort
+type: rule
+name: Using a cohort
+description: >-
+  When you send a cohort to achieve a goal, roll their **quality** to see how it goes. Or, a PC can oversee the maneuver by leading a **group action**. If you direct the cohort with orders, roll **Command**. If you participate in the action alongside the cohort, roll the appropriate action. The quality of any opposition relative to the cohort's quality affects the position and effect of the action.
+
+
+  > The PCs crew of Hawkers want to run a rival gang out of the alley where they're selling drugs. They send their gang of Thugs to go kick the interlopers out. The GM rolls 2d for the Thugs' quality, and gets a **3**. An hour later, the Thugs come back, beaten and bloody. One of them looks sheepish, "Those guys are tough, boss." (The GM inflicts harm on the cohort, and they failed their goal.)
+
+  >
+
+  > The next day, the crew boss goes back and leads a group action, rolling her 3d in **Skirmish** alongside the Thugs' 2d. The boss gets a **6** this time—they beat the tar out of the other gang and send them packing (at least for now).
+source: Crew creation > Cohorts > Using a cohort
+tags:
+- crew
+- creation
+- cohort
+properties:
+  category: Crew creation
+  order: 114

@@ -1,0 +1,31 @@
+id: character-creation-loadout
+type: rule
+name: Loadout
+description: >-
+  You have access to all of the **items** on your character sheet. For each operation, decide what your character's **load** will be. During the operation, you may say that your character has an item on hand by checking the box for the item you want to use—up to a number of items equal to your chosen load. Your load also determines your movement speed and conspicuousness:
+
+
+  * **1-3 load**: **Light.** *You're faster, less conspicuous; you blend in with citizens.*
+
+  * **4/5 load**: **Normal.** *You look like a scoundrel, ready for trouble.*
+
+  * **6 load**: **Heavy.** *You're slower. You look like an operative on a mission.*
+
+  * **7-9 load**: **Encumbered.** *You're overburdened and can't do anything except move very slowly.*
+
+
+  Some special abilities (like the Cutter's **Mule** ability or Assassin's Rigging) increase the load limits.
+
+
+  Some items count as two items for load (they have two connected boxes). *Items in italics don't count toward your load.*
+
+
+  You don't need to select specific items now.  Review your personal items and the standard item descriptions.
+source: Character creation > Loadout
+tags:
+- character
+- creation
+- loadout
+properties:
+  category: Character creation
+  order: 96

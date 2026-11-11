@@ -1,0 +1,15 @@
+id: entanglements-interrogation
+type: rule
+name: Interrogation
+description: >-
+  The officers round up one of the PCs to question them about the crew's crimes. *How did they manage to capture you?* Either pay them off with 3 **coin**, or they beat you up (**level 2 harm**) and you tell them what they want to know (**+3** **heat**). You can **resist** each of those consequences separately.
+
+
+  > Some players really hate it when their character gets captured! Just tell them that this is completely normal for a scoundrel of the underworld. You spend time in and out of jail, getting questioned and harassed by the law. It's not the end of the world. But now that you're here in the interrogation room, what kind of person are you? Do you talk? Do you stand up to them? Do you make a deal?
+source: Entanglements > Interrogation
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 161

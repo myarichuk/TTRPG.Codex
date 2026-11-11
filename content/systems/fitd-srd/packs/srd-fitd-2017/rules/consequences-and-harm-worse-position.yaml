@@ -1,0 +1,11 @@
+id: consequences-and-harm-worse-position
+type: rule
+name: Worse Position
+description: This consequence represents losing control of the situation—the action carries you into a more dangerous position. Perhaps you make the leap across to the next rooftop, only to end up dangling by your fingertips. You haven't failed, but you haven't succeeded yet, either. You can try again, re-rolling at the new, worse position. This is a good consequence to choose to show escalating action. A situation might go from controlled, to risky, to desperate as the action plays out and the PC gets deeper and deeper in trouble.
+source: Consequences and Harm > Worse Position
+tags:
+- consequence
+- position
+properties:
+  category: Consequences and Harm
+  order: 51

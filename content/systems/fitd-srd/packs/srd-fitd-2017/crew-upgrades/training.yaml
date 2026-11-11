@@ -1,0 +1,7 @@
+id: training
+type: crew-upgrade
+name: Training
+description: If you have a Training upgrade, you earn 2 xp (instead of 1) when you train a given xp track during downtime (**Insight**, **Prowess**, **Resolve**, or Playbook xp). This upgrade essentially helps you advance more quickly. See **Advancement**, for more information.  *If you have Insight Training, when you train Insight during downtime, you mark 2 xp on the **Insight** track (instead of just 1). If you have Playbook Training, you mark 2 xp on your playbook xp track when you train.*
+source: Crew creation > Crew upgrade Examples
+tags:
+- example

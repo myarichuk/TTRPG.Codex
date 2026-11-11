@@ -1,0 +1,14 @@
+id: progress-clocks-long-term-project
+type: rule
+name: Long-term Project
+description: >-
+  Some projects will take a long time. A basic long-term project (like tinkering up a new feature for a device) is eight segments. Truly long-term projects (like creating a new designer drug) can be two, three, or even four clocks, representing all the phases of development, testing, and final completion. Add or subtract clocks depending on the details of the situation and complexity of the project.
+
+
+  A long-term project is a good catch-all for dealing with any unusual player goal, including things that circumvent or change elements of the mechanics or the setting.
+source: Progress clocks > Long-term Project
+tags:
+- clock
+properties:
+  category: Progress clocks
+  order: 26

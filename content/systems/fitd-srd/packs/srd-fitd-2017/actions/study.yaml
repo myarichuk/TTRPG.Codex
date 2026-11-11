@@ -1,0 +1,13 @@
+id: study
+type: action
+name: Study
+description: >-
+  When you **Study**, you scrutinize details and interpret evidence.
+
+
+  *You might gather information from documents, newspapers, and books. You might do research on an esoteric topic. You might closely analyze a person to detect lies or true feelings. You could try to examine events to understand a pressing situation (but Surveying might be better).*
+source: Actions & Attributes > Actions
+tags:
+- insight
+properties:
+  attribute: insight

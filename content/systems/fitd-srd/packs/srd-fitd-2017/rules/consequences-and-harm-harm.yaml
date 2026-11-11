@@ -1,0 +1,38 @@
+id: consequences-and-harm-harm
+type: rule
+name: Harm
+description: >-
+  This consequence represents a long-lasting debility (or death). When you suffer harm, record the specific injury on your character sheet equal to the level of harm you suffer. If you suffer **lesser harm**, record it in the bottom row. If you suffer **moderate harm**, write it in the middle row. If you suffer **severe harm**, record it in the top row. See examples of harm and the harm tracker, below.
+
+
+  Your character suffers the penalty indicated at the end of the row if any or all harm recorded in that row applies to the situation at hand. So, if you have "Drained" and "Battered" harm in the bottom row, you'll suffer reduced effect when you try to run away from the constables. When you're impaired by harm in the top row (severe harm, level 3), your character is incapacitated and can't do anything unless you have help from someone else or **push yourself** to perform the action.
+
+
+  If you need to mark a harm level, but the row is already filled, the harm moves up to the next row above. So, if you suffered standard harm (level 2) but had no empty spaces in the second row, you'd have to record severe harm (level 3), instead. If you run out of spaces on the top row and need to mark harm there, your character suffers a **catastrophic, permanent consequence** (loss of a limb, sudden death, etc., depending on the circumstances).
+
+
+  ---
+
+
+  #### HARM
+
+
+  | Level | Harm | Effect |
+
+  | :--: | :-- | :--: |
+
+  | 3 | *Shattered Right Leg* | Need Help |
+
+  | 2 | | -1D |
+
+  | 1 | *Drained*, *Battered* | Reduced Effect |
+
+
+  *This character has three harm: a "Shattered Right Leg" (level 3) plus "Drained" and "Battered" (level 1). If they suffer another level 1 harm, it will move up to level 2. If they suffer another level 3 harm, it will move up to level 4: Fatal.*
+source: Consequences and Harm > Harm
+tags:
+- consequence
+- harm
+properties:
+  category: Consequences and Harm
+  order: 52

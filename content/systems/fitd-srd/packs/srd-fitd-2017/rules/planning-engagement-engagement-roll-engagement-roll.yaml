@@ -1,0 +1,44 @@
+id: planning-engagement-engagement-roll-engagement-roll
+type: rule
+name: ENGAGEMENT ROLL
+description: >-
+  ⏣ **1d** for sheer luck.
+
+
+  ⊕ **+1d** for each **Major Advantage**.
+
+
+  ⊖ **-1d** for each **Major Disadvantage**.
+
+
+  * **Critical**: Exceptional result. *You've already overcome the first obstacle and you're in a controlled position for what's next.*
+
+  * **6**: Good result. *You're in a controlled position when the action starts.*
+
+  * **4/5**: Mixed result. *You're in a risky position when the action starts.*
+
+  * **1-3**: Bad result. *You're in a desperate position when the action starts.*
+
+
+  ---
+
+
+  > The first obstacles at the witches' house are their cunning locks and magical traps. The engagement roll puts us on the roof outside a window, as the PCs attempt to silently and carefully break into the attic.
+
+  >
+
+  > The PCs have kicked down the door and swarmed into the front room of the gang's lair, weapons flashing, into the swirl of the melee with the first guards.
+
+  >
+
+  > The PCs have socialized politely at the party, maneuvering into position to have a private word with a powerful Lord. As a group of young nobles leave his side, the PCs step up and engage him in conversation.
+
+
+  If the players want to include a special preparation or clever setup, they can do so with **flashbacks** during the score. This takes some getting used to. Players may balk at first, worried that you're skipping over important things that they want to do. But jumping straight into the action of the score is much more effective once you get used to it. When they see the situation they're in, their "planning" in flashbacks will be focused and useful, rather than merely speculations on circumstances and events that might not even happen.
+source: Planning & engagement > Engagement Roll > ENGAGEMENT ROLL
+tags:
+- score
+- engagement
+properties:
+  category: Planning & engagement
+  order: 130

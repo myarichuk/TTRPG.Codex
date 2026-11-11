@@ -1,0 +1,11 @@
+id: synchronized
+type: crew-ability
+name: Synchronized
+description: >-
+  When you perform a **group action**, you may count multiple 6s from different rolls as a **critical** success.
+
+
+  > For example, Lyric leads a group action to **Attune** to the ghost field to overcome a magical ward on the Dimmer Sisters' door. Emily, Lyric's player, rolls and gets a **6**, and so does Matt! Because the crew has Synchronized, their two separate **6**s count as a **critical** success on the roll.
+source: Crew playbook > Crew special abilities > Synchronized
+tags:
+- example

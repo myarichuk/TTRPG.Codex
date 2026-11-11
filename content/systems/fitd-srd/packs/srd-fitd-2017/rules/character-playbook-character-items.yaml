@@ -1,0 +1,15 @@
+id: character-playbook-character-items
+type: rule
+name: Character items
+description: >-
+  Add a list of five distinctive items that are either Fine (+1 quality), light (reduced load), rare, or otherwise specific to this character.
+
+
+  Some examples include: Weapons, clothes, arcane implements, specialized tools, custom gear, capable pets, or supernatural objects.
+source: Character playbook > Character items
+tags:
+- character
+- playbook
+properties:
+  category: Character playbook
+  order: 102

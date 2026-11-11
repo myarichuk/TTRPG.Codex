@@ -1,0 +1,7 @@
+id: just-passing-through
+type: crew-ability
+name: Just passing through
+description: During **downtime**, take **-1 heat**. When your **heat** is 4 or less, you get **+1d** to deceive people when you pass yourselves off as ordinary citizens.
+source: Crew playbook > Crew special abilities > Just passing through
+tags:
+- example

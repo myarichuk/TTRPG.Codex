@@ -1,0 +1,13 @@
+id: heat-prison-claims-allied-claim
+type: rule
+name: Allied claim
+description: One of your allies on the inside arranges for their faction to grant you a boon. Take a claim for your crew from a different crew type. You can't take turf with this claim.
+source: Heat > Prison claims > Allied claim
+tags:
+- heat
+- downtime
+- claim
+- incarceration
+properties:
+  category: Heat
+  order: 149

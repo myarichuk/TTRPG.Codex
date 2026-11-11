@@ -1,0 +1,11 @@
+id: ritual
+type: special-ability
+name: Ritual
+description: >-
+  You know the arcane methods to perform ritual sorcery. You can **Study** an occult ritual (or create a new one) to summon a supernatural effect or being. You begin with one ritual already learned.
+
+
+  > Without this special ability, the study and practice of rituals leaves you utterly vulnerable to the powers you supplicate. Such endeavors are not recommended.
+source: Character playbook > Special abilities > Ritual
+tags:
+- example

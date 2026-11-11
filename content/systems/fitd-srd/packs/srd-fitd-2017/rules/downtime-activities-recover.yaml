@@ -1,0 +1,29 @@
+id: downtime-activities-recover
+type: rule
+name: Recover
+description: >-
+  When you recover, you seek treatment and heal your harm. You might visit a physicker who can stitch your wounds and soothe your mind with anatomical science or a witch who specializes in healing charms and restorative alchemy. If you don't have a contact or fellow PC who can provide treatment, you can use the **acquire asset** activity to gain access to a healer, who can provide service for the whole crew.
+
+
+  Recovery is like a long-term project. Your healer rolls (**Tinker** for a PC with the **Physicker** special ability or the **quality** level of an NPC) and then you mark a number of segments on your **healing clock**. **1-3**: one segment, **4/5**: two segments, **6**: three segments, **critical**: five segments.
+
+
+  When you fill your healing clock, reduce each instance of harm on your sheet by one level, then clear the clock. If you have more segments to mark, they "roll over."
+
+
+  > Cross has two injuries: a level 3 "Shattered Right Leg" and level 1 "Battered." During downtime, he gets treatment from Quellyn, a witch friend of the crew's Whisper. Quellyn is a competent healer, so the GM says quality 2 makes sense. The player rolls 2d to recover and gets a **6**: three segments on the healing clock. He decides to spend 1 **coin** to improve the result to a **critical** to get five segments instead. Four segments fill the clock—all of Cross's harm is reduced by one level, then he clears the clock and marks one more segment. His level 3 harm "Shattered Right Leg" is reduced to level 2 harm. His level 1 harm "Battered" is reduced to zero and goes away. Cross is left with one injury on his sheet: level 2 "Broken Leg."
+
+
+  You may heal yourself if you have the **Physicker** special ability, but you take 2 stress when you do so. You can also choose to simply tough it out and attempt to heal without any treatment—in this case, take 1 stress and roll 0d.
+
+
+  Note that it's the recovering character that takes the recovery action. Healing someone else does not cost a downtime activity for the healer.
+
+
+  Whenever you suffer new harm, clear any ticks on your healing clock.
+source: Downtime activities > Recover
+tags:
+- downtime
+properties:
+  category: Downtime activities
+  order: 171

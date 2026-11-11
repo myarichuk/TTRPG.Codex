@@ -1,0 +1,21 @@
+id: crew-playbook
+type: rule
+name: Crew playbook
+description: >-
+  **Short description of Crew**
+
+
+  You're professional murderers—death is your business.
+
+
+  **Add xp trigger. When you play this crew, you earn xp when you execute a successful operation of a few specific types.** Some examples include: murder, ransom, battle extortion, sabotage, product supply or sale, espionage, theft, acquiring new contraband or sources.
+
+
+  *Add questions to personalize the crew. How is the crew distinguished from other similar crews?*
+source: Crew playbook
+tags:
+- crew
+- playbook
+properties:
+  category: Crew playbook
+  order: 117

@@ -1,0 +1,13 @@
+id: heat-prison-claims-hardcase
+type: rule
+name: Hardcase
+description: Your reputation as a tough inmate bolsters your crew's image. When your crew advances Tier, it costs 2 fewer **coins** than it normally would.
+source: Heat > Prison claims > Hardcase
+tags:
+- heat
+- downtime
+- claim
+- incarceration
+properties:
+  category: Heat
+  order: 152

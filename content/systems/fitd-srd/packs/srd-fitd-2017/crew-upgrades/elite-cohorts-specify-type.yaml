@@ -1,0 +1,7 @@
+id: elite-cohorts-specify-type
+type: crew-upgrade
+name: Elite Cohorts (specify type)
+description: All of your cohorts with the specified type get **+1d** to quality rolls for related actions.
+source: Crew playbook > Crew upgrades
+tags:
+- example

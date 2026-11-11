@@ -1,0 +1,36 @@
+id: crew-creation-choose-an-initial-reputation-lair
+type: rule
+name: Choose an initial reputation & lair
+description: >-
+  Your crew has just formed and acquired a lair. Given this group of characters and their previous escapades, what initial **reputation** would you have among the factions of the underworld? Choose one from the list at right (or create your own).
+
+
+  * Ambitious
+
+  * Brutal
+
+  * Daring
+
+  * Honorable
+
+  * Professional
+
+  * Savvy
+
+  * Subtle
+
+  * Strange
+
+
+  You earn xp when you bolster your crew's reputation, so think of this as another cue to indicate what sorts of action you want in the game. Will you be recklessly ambitious, targeting higher-Tier targets? Will you take on daring scores that others deem too risky? Are you interested in the strange and the weird?
+
+
+  Also, talk about where the crew makes its **lair**. You begin at Tier 0, so it's probably a very modest or abandoned sort of place.
+source: Crew creation > Choose an initial reputation & lair
+tags:
+- crew
+- creation
+- reputation
+properties:
+  category: Crew creation
+  order: 104

@@ -1,0 +1,15 @@
+id: consequences-and-harm
+type: rule
+name: Consequences and Harm
+description: >-
+  Enemy actions, bad circumstances, or the outcome of a roll can inflict **consequences** on a PC. There are five types (at right).
+
+
+  A given circumstance might result in one or more consequences, depending on the situation. The GM determines the consequences, following from the fiction and the style and tone established by the game group.
+source: Consequences and Harm
+tags:
+- consequence
+- harm
+properties:
+  category: Consequences and Harm
+  order: 47

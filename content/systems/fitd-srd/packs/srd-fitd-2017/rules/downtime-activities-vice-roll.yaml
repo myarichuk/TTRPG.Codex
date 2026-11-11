@@ -1,0 +1,15 @@
+id: downtime-activities-vice-roll
+type: rule
+name: VICE ROLL
+description: >-
+  ⏣ Roll dice equal to your **Lowest Attribute** rating.
+
+
+  Clear stress equal to your highest die result. If you clear more stress levels than you had marked, you ***overindulge***. *If you do not or cannot indulge your vice during downtime, you take stress equal to your **trauma**.*
+source: Downtime activities > VICE ROLL
+tags:
+- downtime
+- vice
+properties:
+  category: Downtime activities
+  order: 175

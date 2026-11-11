@@ -1,0 +1,11 @@
+id: actions-attributes-actions
+type: rule
+name: Actions
+description: As you can see, many actions overlap with others. This is by design. As a player, you get to choose which action you roll, by saying what your character does. Can you try to **Wreck** someone during a fight? Sure! The GM tells you the position and effect level of your action in this circumstance. As it says, **Skirmish** *might* be better (less risky or more effective), depending on the situation at hand (sometimes it won't be better).
+source: Actions & Attributes > Actions
+tags:
+- actions
+- attributes
+properties:
+  category: Actions & Attributes
+  order: 15

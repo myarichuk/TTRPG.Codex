@@ -1,0 +1,7 @@
+id: war-dogs
+type: crew-ability
+name: War dogs
+description: When you're at war (-3 faction status), your crew does not suffer -1 hold and PCs still get two downtime activities, instead of just one.
+source: Crew playbook > Crew special abilities > War dogs
+tags:
+- example

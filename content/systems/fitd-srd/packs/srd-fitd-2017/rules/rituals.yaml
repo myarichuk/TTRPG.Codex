@@ -1,0 +1,10 @@
+id: rituals
+type: rule
+name: Rituals
+description: To enact a ritual is to come into contact with these abyssal forces and entreat them to do your will. It is a practice not without considerable risk.
+source: Rituals
+tags:
+- ritual
+properties:
+  category: Rituals
+  order: 189

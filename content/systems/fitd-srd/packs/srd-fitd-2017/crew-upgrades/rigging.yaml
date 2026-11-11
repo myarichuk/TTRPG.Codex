@@ -1,0 +1,7 @@
+id: rigging
+type: crew-upgrade
+name: Rigging
+description: You get 2 free load in two of the equipment categories (weapons, implements, supplies, gear, documents, and tools).
+source: Crew playbook > Crew upgrades
+tags:
+- example

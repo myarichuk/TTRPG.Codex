@@ -1,0 +1,11 @@
+id: connected
+type: special-ability
+name: Connected
+description: >-
+  During downtime, you get **+1 result level** when you **acquire an asset** or **reduce heat**.
+
+
+  > Your array of underworld connections can be leveraged to loan assets, pressure a vendor to give you a better deal, intimidate witnesses, etc.
+source: Character playbook > Special abilities > Connected
+tags:
+- example

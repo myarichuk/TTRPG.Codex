@@ -1,0 +1,36 @@
+id: action-roll-5-add-bonus-dice-the-devils-bargain
+type: rule
+name: The Devil's Bargain
+description: >-
+  PCs in *Blades* are reckless scoundrels addicted to destructive vices—they don't always act in their own best interests. To reflect this, the GM or any other player can offer you a bonus die if you accept a Devil's Bargain. Common Devil's Bargains include:
+
+
+  * Collateral damage, unintended harm.
+
+  * Sacrifice **coin** or an item.
+
+  * Betray a friend or loved one.
+
+  * Offend or anger a faction.
+
+  * Start and/or tick a troublesome clock.
+
+  * Add **heat** to the crew from evidence or witnesses.
+
+  * Suffer harm.
+
+
+  The Devil's Bargain occurs regardless of the outcome of the roll. You make the deal, pay the price, and get the bonus die.
+
+
+  The Devil's Bargain is always a free choice. If you don't like one, just reject it (or suggest how to alter it so you might consider taking it). You can always just push yourself for that bonus die instead.
+
+
+  If it's ever needed, the GM has final say over which Devil's Bargains are valid.
+source: Action Roll > 5. Add Bonus Dice > The Devil's Bargain
+tags:
+- action-roll
+- devils-bargain
+properties:
+  category: Action Roll
+  order: 34

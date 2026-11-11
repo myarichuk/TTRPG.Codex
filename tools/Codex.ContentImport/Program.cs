@@ -7,6 +7,10 @@ using Codex.ContentImport;
 //            the files are fetched there first, from the pinned upstream commit.
 // --out      the pack directory to (re)create, e.g. content/systems/srd5e/packs/srd-5.2.1
 //
+//   dotnet run --project tools/Codex.ContentImport -- fitd --source <srd.md or dir> --out <pack-dir> [--download]
+//
+// fitd converts the Forged in the Dark SRD (Markdown transcription, pinned commit) the same way.
+//
 // The tool only transforms. Licensing is handled by the manifest it writes: the verbatim SRD 5.2.1
 // attribution statement (CC-BY-4.0), a modification notice, and the 5e-bits MIT notice for the JSON
 // transcription the data was read from.
@@ -20,13 +24,26 @@ if (options == null)
 
 try
 {
-    if (options.Download)
+    ImportResult result;
+    if (options.Command == "fitd")
     {
-        await SrdDownloader.DownloadAsync(options.Source, options.Edition, Console.Out);
+        if (options.Download)
+        {
+            await FitdSrdSource.DownloadAsync(options.Source, Console.Out);
+        }
+
+        result = await new FitdSrdImporter(FitdSrdSource.FindFile(options.Source)).ImportAsync(options.Out, Console.Out);
+    }
+    else
+    {
+        if (options.Download)
+        {
+            await SrdDownloader.DownloadAsync(options.Source, options.Edition, Console.Out);
+        }
+
+        result = await new Srd5eImporter(options.Source, options.Edition).ImportAsync(options.Out, Console.Out);
     }
 
-    var importer = new Srd5eImporter(options.Source, options.Edition);
-    var result = await importer.ImportAsync(options.Out, Console.Out);
     Console.WriteLine($"Wrote {result.EntryCount} entries across {result.Types.Count} types to {options.Out}");
     foreach (var (type, count) in result.Types.OrderBy(t => t.Key))
     {

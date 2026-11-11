@@ -1,0 +1,11 @@
+id: mastermind
+type: special-ability
+name: Mastermind
+description: >-
+  You may expend your **special armor** to **protect** a teammate, or to **push yourself** when you gather information or work on a long-term project.
+
+
+  > When you use this ability, tick the special armor box on your playbook sheet. If you protect a teammate, this ability negates or reduces the severity of a consequence or harm that your teammate is facing. You don't have to be present to use this ability—say how you prepared for this situation in the past. If you use this ability to push yourself, you get one of the benefits (+1d, +1 effect, act despite severe harm) but you don't take 2 stress. Your special armor is restored at the beginning of downtime.
+source: Character playbook > Special abilities > Mastermind
+tags:
+- example

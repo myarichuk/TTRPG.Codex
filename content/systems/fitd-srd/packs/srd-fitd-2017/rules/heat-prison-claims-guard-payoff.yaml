@@ -1,0 +1,13 @@
+id: heat-prison-claims-guard-payoff
+type: rule
+name: Guard payoff
+description: You claim several prison guards on your payroll. Take +1d to your Tier roll when a member of your crew is incarcerated.
+source: Heat > Prison claims > Guard payoff
+tags:
+- heat
+- downtime
+- claim
+- incarceration
+properties:
+  category: Heat
+  order: 151

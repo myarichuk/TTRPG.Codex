@@ -1,0 +1,10 @@
+id: progress-clocks-mission-clocks
+type: rule
+name: Mission Clocks
+description: The GM can make a clock for a time-sensitive mission, to represent the window of opportunity you have to complete it. If the countdown runs out, the mission is scrubbed or changes—the target escapes, the household wakes up for the day, etc.
+source: Progress clocks > Mission Clocks
+tags:
+- clock
+properties:
+  category: Progress clocks
+  order: 24

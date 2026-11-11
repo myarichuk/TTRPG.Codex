@@ -1,0 +1,18 @@
+id: the-faction-game-turf-reducing-hold
+type: rule
+name: Reducing hold
+description: >-
+  You may perform an operation specifically to reduce the hold of another faction, if you know how they're vulnerable. If the operation succeeds, the target faction loses 1 level of hold. If their hold is weak and it drops, the faction loses 1 Tier and stays weak.
+
+
+  When a faction is at war, it temporarily loses 1 hold.
+
+
+  Your crew can lose hold, too, following the same rules above. If your crew is Tier 0, with weak hold, and you lose hold for any reason, your lair comes under threat by your enemies or by a faction seeking to profit from your misfortune.
+source: The Faction Game > Turf > Reducing hold
+tags:
+- faction
+- turf
+properties:
+  category: The Faction Game
+  order: 74

@@ -1,0 +1,23 @@
+id: effect-assessing-factors-scale
+type: rule
+name: Scale
+description: >-
+  Scale represents the number of opponents, size of an area covered, scope of influence, etc. Larger scale can be an advantage or disadvantage depending on the situation. In battle, more people are better. When infiltrating, more people are a hindrance.
+
+
+  When considering factors, effect level might be reduced below limited, resulting in **zero effect**—or increased beyond great, resulting in an **extreme effect**.
+
+
+  If a PC special ability gives "+1 effect," it comes into play *after* the GM has assessed the effect level. For example, if you ended up with zero effect, the +1 effect bonus from your Cutter's **Bodyguard** ability would bump them up to limited effect.
+
+
+  Also, remember that a PC can **push themselves** (take 2 stress) to get +1 effect on their action.
+
+
+  Every factor won't always apply to every situation. You don't have to do an exact accounting every time, either. Use the factors to help you make a stronger judgment call—don't feel beholden to them.
+source: Effect > Assessing Factors > Scale
+tags:
+- effect
+properties:
+  category: Effect
+  order: 43

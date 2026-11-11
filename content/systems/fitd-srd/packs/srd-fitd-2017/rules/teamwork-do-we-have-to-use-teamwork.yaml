@@ -1,0 +1,10 @@
+id: teamwork-do-we-have-to-use-teamwork
+type: rule
+name: Do We Have to Use Teamwork?
+description: Teamwork maneuvers are options, not requirements. Each character can still perform solo actions as normal during an operation. If your character can't communicate or somehow coordinate with the rest of the team, you can't use or benefit from any teamwork maneuvers.
+source: Teamwork > Do We Have to Use Teamwork?
+tags:
+- teamwork
+properties:
+  category: Teamwork
+  order: 142

@@ -1,0 +1,33 @@
+id: crew-creation-cohorts-creating-a-gang
+type: rule
+name: Creating a gang
+description: >-
+  Choose a **gang type** from the list below:
+
+
+  * **Adepts**: Scholars, tinkerers, occultists, and chemists.
+
+  * **Rooks**: Con artists, spies, and socialites.
+
+  * **Rovers**: Sailors, carriage drivers, and deathlands scavengers.
+
+  * **Skulks**: Scouts, infiltrators, and thieves.
+
+  * **Thugs**: Killers, brawlers, and roustabouts.
+
+
+  A gang has **scale** and **quality** equal to your current crew Tier. It increases in scale and quality when your crew moves up in Tier.
+
+
+  > If your crew is Tier 0, your gang is quality 0 and scale 0 (1 or 2 people). When your crew is Tier II, your gang is quality 2 and scale 2 (12 people).
+
+
+  Some crew upgrades will add the "Elite" feature to a gang, which gives them +1d when they roll for a given Type. *So, if you're Tier I and have a gang of Elite Thugs (+1d), they would roll 2d when they try to kill a target.*
+source: Crew creation > Cohorts > Creating a gang
+tags:
+- crew
+- creation
+- cohort
+properties:
+  category: Crew creation
+  order: 110

@@ -1,0 +1,11 @@
+id: entanglements-flipped
+type: rule
+name: Flipped
+description: One of the PCs' rivals arranges for one of your contacts, patrons, clients, or a group of your customers to switch allegiances due to the **heat** on you. They're loyal to another faction now.
+source: Entanglements > Flipped
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 159

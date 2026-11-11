@@ -1,0 +1,29 @@
+id: advancement-crew-advancement
+type: rule
+name: Crew Advancement
+description: >-
+  At the end of the session, review the crew xp triggers and mark 1 crew xp for each item that occurred during the session. If an item occurred multiple times or in a major way, mark 2 crew xp for it. The crew xp triggers are:
+
+
+  * **Your crew-specific xp trigger**. For example, the Smugglers' is *"Execute a smuggling operation or acquire new clients or contraband sources."* If the crew successfully completed an operation from this trigger, mark xp.
+
+  * **Contend with challenges above your current station.** If you tangled with higher Tiers or more dangerous opposition, mark xp for this.
+
+  * **Bolster your crew's reputation or develop a new one.** Review your crew's reputation. Did you do anything to promote it? Also mark xp if you developed a new reputation for the crew.
+
+  * **Express the goals, drives, inner conflict, or essential nature of the crew.** This one is very broad! Essentially, did anything happen that highlighted the specific elements that make your crew unique?
+
+
+  **When you fill your crew advancement tracker**, clear the marks and take a new **special ability** or mark **two crew upgrade boxes**.
+
+
+  > For example, when a crew of Assassins earns a crew advance, they could take a new special ability, like **Predators**. Or they could mark two upgrades, like **Ironhook Contacts** and **Resolve** **Training**.
+
+
+  Say how you've obtained this new ability or upgrades for the crew. *Where did it come from? How does it become a new part of the crew?*
+source: Advancement > Crew Advancement
+tags:
+- advancement
+properties:
+  category: Advancement
+  order: 82

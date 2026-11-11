@@ -1,0 +1,13 @@
+id: consort
+type: action
+name: Consort
+description: >-
+  When you **Consort**, you socialize with friends and contacts.
+
+
+  *You might gain access to resources, information, people, or places. You might make a good impression or win someone over with your charm and style. You might make new friends or connect with your heritage or background. You could try to manipulate your friends with social pressure (but Sway might be better).*
+source: Actions & Attributes > Actions
+tags:
+- resolve
+properties:
+  attribute: resolve

@@ -1,0 +1,96 @@
+id: downtime-activities-npc-faction-downtime-downtime-activities-summary
+type: rule
+name: DOWNTIME ACTIVITIES SUMMARY
+description: >-
+  *Add ***+1d*** to your roll if a ***friend*** or ***contact*** helps with your downtime activity.*
+
+
+  #### ACQUIRE ASSET
+
+
+  Roll the crew's **Tier**. The result indicates the *quality* of the asset:
+
+
+  * **Critical**: Tier +2.
+
+  * **6**: Tier +1.
+
+  * **4/5**: Tier.
+
+  * **1-3**: Tier -1.
+
+
+  *Some items require a minimum quality result to acquire. To raise the result beyond critical, you may spend **2 coin** per +1 Tier bonus.*
+
+
+  #### LONG-TERM PROJECT
+
+
+  Work on a **long-term project**, if you have the means.
+
+
+  Mark segments on the clock according to your result:
+
+
+  * **Critical**: Five ticks.
+
+  * **6**: Three ticks.
+
+  * **4/5**: Two ticks.
+
+  * **1-3**: One tick.
+
+
+  #### RECOVER
+
+
+  Get **treatment** to tick your **healing clock** (like a long-term project). *When you fill a clock, each harm is reduced by one level.*
+
+
+  #### REDUCE HEAT
+
+
+  Say how you reduce **heat** on the crew and roll your action. Reduce **heat** according to the result level:
+
+
+  * **Critical**: Clear five **heat**.
+
+  * **6**: Clear three **heat**.
+
+  * **4/5**: Clear two **heat**.
+
+  * **1-3**: Clear one **heat**.
+
+
+  #### TRAIN
+
+
+  **Mark 1 xp** (in an attribute or your playbook). Add **+1** xp if you have the appropriate crew upgrade. *You may train a given xp track once per downtime.*
+
+
+  #### VICE
+
+
+  Visit your **vice purveyor** to relieve **stress**. Roll dice equal to your **lowest attribute**. Clear stress equal to your highest die result. If you clear more stress levels than you had marked, you ***overindulge*** (see below). *If you do not or cannot indulge your vice during downtime, you take stress equal to your **trauma**.*
+
+
+  ---
+
+
+  **Overindulge**: You made a bad call because of your vice—in acquiring it or while under its influence. What did you do?
+
+
+  * **Attract Trouble**: *Maybe an enemy has tracked you to your vice purveyor and you let your guard down.* Select or roll an additional **entanglement**.
+
+  * **Brag**: Maybe you brag about your exploits. The crew takes **+2 heat**.
+
+  * **Lost**: Play a different character until this one returns from their bender.
+
+  * **Tapped**: Your current purveyor cuts you off. Find a new source for the indulgence of your vice.
+source: Downtime activities > NPC & faction downtime > DOWNTIME ACTIVITIES SUMMARY
+tags:
+- downtime
+- faction
+properties:
+  category: Downtime activities
+  order: 182

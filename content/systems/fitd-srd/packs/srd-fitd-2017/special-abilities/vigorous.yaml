@@ -1,0 +1,11 @@
+id: vigorous
+type: special-ability
+name: Vigorous
+description: >-
+  You recover from harm faster. Permanently fill in one of your healing clock segments. Take **+1d** to healing treatment rolls.
+
+
+  > Your healing clock becomes a 3-clock, and you get a bonus die when you recover.
+source: Character playbook > Special abilities > Vigorous
+tags:
+- example

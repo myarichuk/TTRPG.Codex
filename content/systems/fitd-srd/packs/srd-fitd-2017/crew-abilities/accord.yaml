@@ -1,0 +1,11 @@
+id: accord
+type: crew-ability
+name: Accord
+description: >-
+  Sometimes friends are as good as territory. You may treat up to three **+3 faction statuses** you hold as if they are **turf**.
+
+
+  > If your status changes, you lose the turf until it becomes +3 again. Regardless of how much turf you hold (from this ability or otherwise) the minimum **rep** cost to advance your Tier is always 6.
+source: Crew playbook > Crew special abilities > Accord
+tags:
+- example

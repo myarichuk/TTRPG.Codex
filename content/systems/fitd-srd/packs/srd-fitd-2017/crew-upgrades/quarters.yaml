@@ -1,0 +1,7 @@
+id: quarters
+type: crew-upgrade
+name: Quarters
+description: Your lair includes living quarters for the crew. Without this upgrade, each PC sleeps elsewhere, and is vulnerable when they do so.
+source: Crew creation > Crew upgrade Examples
+tags:
+- example

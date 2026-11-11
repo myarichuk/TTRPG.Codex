@@ -1,0 +1,10 @@
+id: action-roll-double-duty-rolls
+type: rule
+name: Double-duty Rolls
+description: "Since NPCs don't roll for their actions, an action roll does double-duty: **it resolves the action of the PC as well as any NPCs that are involved**. The single roll tells us how those actions interact and which consequences result. On a **6**, the PC wins and has their effect. On a **4/5**, it's a mix—both the PC and the NPC have their effect. On a **1-3**, the NPC wins and has their effect as a consequence on the PC."
+source: Action Roll > Double-duty Rolls
+tags:
+- action-roll
+properties:
+  category: Action Roll
+  order: 38

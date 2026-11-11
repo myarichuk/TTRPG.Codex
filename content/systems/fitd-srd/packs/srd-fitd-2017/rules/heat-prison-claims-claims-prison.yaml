@@ -1,0 +1,26 @@
+id: heat-prison-claims-claims-prison
+type: rule
+name: 'CLAIMS: PRISON'
+description: >-
+  |              |          |            |          |              |          |                    |
+
+  | :--------------: | :------: | :--------: | :------: | :----------: | :------: | :----------------: |
+
+  | Parole Influence | ― | Smuggling  | ― | Allied Claim |          | Cell Block Control |
+
+  |     ❘     |          |  ❘  |          |   ❘   |          |      ❘      |
+
+  |   Guard Payoff   | ― | **PRISON** | ― | Guard Payoff | ― |    Allied Claim    |
+
+  |     ❘     |          |  ❘  |          |   ❘   |          |      ❘      |
+
+  |     Hardcase     | ― | Smuggling  | ― | Allied Claim | ― |    Allied Claim    |
+source: 'Heat > Prison claims > CLAIMS: PRISON'
+tags:
+- heat
+- downtime
+- claim
+- incarceration
+properties:
+  category: Heat
+  order: 148

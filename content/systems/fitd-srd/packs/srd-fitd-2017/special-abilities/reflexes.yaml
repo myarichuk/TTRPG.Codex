@@ -1,0 +1,11 @@
+id: reflexes
+type: special-ability
+name: Reflexes
+description: >-
+  When there's a question about who acts first, the answer is you.
+
+
+  > This ability gives you the initiative in most situations. Some specially trained NPCs might also have reflexes, but otherwise, you're always the first to act, and can interrupt anyone else who tries to beat you to the punch. This ability usually doesn't negate the need to make an action roll that you would otherwise have to make, but it may improve your position or effect.
+source: Character playbook > Special abilities > Reflexes
+tags:
+- example

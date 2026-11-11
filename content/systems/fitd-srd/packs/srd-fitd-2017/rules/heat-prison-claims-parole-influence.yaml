@@ -1,0 +1,13 @@
+id: heat-prison-claims-parole-influence
+type: rule
+name: Parole influence
+description: Political pressures of various sorts can be applied to the magistrates and warden who oversee sentences for crimes. With this claim, you're always able to arrange for a shorter prison stay—as if your **wanted level** was 1 lower. So, if your **wanted level** was 3 when you went in, you'd spend only several months behind bars (equivalent to level 2) instead of a full year.
+source: Heat > Prison claims > Parole influence
+tags:
+- heat
+- downtime
+- claim
+- incarceration
+properties:
+  category: Heat
+  order: 153

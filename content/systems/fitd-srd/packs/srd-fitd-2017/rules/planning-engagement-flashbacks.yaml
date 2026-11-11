@@ -1,0 +1,32 @@
+id: planning-engagement-flashbacks
+type: rule
+name: Flashbacks
+description: >-
+  The rules don't distinguish between actions performed in the present moment and those performed in the past. When an operation is underway, you can invoke a **flashback** to roll for an action in the past that impacts your current situation. Maybe you convinced the district Watch sergeant to cancel the patrol tonight, so you make a **Sway** roll to see how that went.
+
+
+  The GM sets a **stress cost** when you activate a flashback action.
+
+
+  * **0** **Stress**: An ordinary action for which you had easy opportunity. *The Cutter ***Consorted*** with her friend to agree to arrive at the dice game ahead of time, to suddenly spring out as a surprise ally.*
+
+  * **1** **Stress**: A complex action or unlikely opportunity. *The Hound **Finessed** his pistols into a hiding spot near the card table so he could retrieve them after the pat-down at the front door.*
+
+  * **2** **(or more) Stress**: An elaborate action that involved special opportunities or contingencies. *The Whisper has already **Studied** the history of the property and learned of a ghost that is known to haunt its ancient canal dock—a ghost that can be compelled to reveal the location of the hidden vault.*
+
+
+  After the stress cost is paid, a flashback action is handled just like any other action. Sometimes it will entail an action roll, because there's some danger or trouble involved. Sometimes a flashback will entail a fortune roll, because we just need to find out how well (or how much, or how long, etc.). Sometimes a flashback won't call for a roll at all because you can just pay the stress and it's accomplished.
+
+
+  If a flashback involves a **downtime** activity, pay 1 **coin** or 1 **rep** for it, instead of stress.
+
+
+  One of the best uses for a flashback is when the **engagement roll** goes badly. After the GM describes the trouble you're in, you can call for a flashback to a special preparation you made, "just in case" something like this happened. This way, your "flashback planning" will be focused on the problems that *do *happen, not the problems that *might* happen.
+source: Planning & engagement > Flashbacks
+tags:
+- score
+- engagement
+- flashback
+properties:
+  category: Planning & engagement
+  order: 134

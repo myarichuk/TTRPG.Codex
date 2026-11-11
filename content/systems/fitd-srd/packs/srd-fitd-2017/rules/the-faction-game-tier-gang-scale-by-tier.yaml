@@ -1,0 +1,22 @@
+id: the-faction-game-tier-gang-scale-by-tier
+type: rule
+name: Gang scale by tier
+description: >-
+  * **tier v**. Massive gangs. (80 people)
+
+  * **tier iv**. Huge gangs. (40 people)
+
+  * **tier iii**. Large gangs. (20 people)
+
+  * **tier ii**. Medium gangs. (12 people)
+
+  * **tier i**. Small gangs. (3-6 people)
+
+  * **tier 0**. 1 or 2 people
+source: The Faction Game > Tier > Gang scale by tier
+tags:
+- faction
+- tier
+properties:
+  category: The Faction Game
+  order: 70

@@ -1,0 +1,13 @@
+id: heat-prison-claims-smuggling
+type: rule
+name: Smuggling
+description: You arrange smuggling channels inside. You have **+2 load** while incarcerated, (starting from zero as a prisoner). If you take this claim twice, you'll have 4 load while you're serving time in Ironhook. Also, you may choose to carry **coin** in place of load for purposes of bribes or acquiring assets while in prison. You may reset the items in your prison loadout whenever your crew has downtime.
+source: Heat > Prison claims > Smuggling
+tags:
+- heat
+- downtime
+- claim
+- incarceration
+properties:
+  category: Heat
+  order: 154

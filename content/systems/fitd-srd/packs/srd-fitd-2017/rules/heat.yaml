@@ -1,0 +1,49 @@
+id: heat
+type: rule
+name: Heat
+description: >-
+  The city is full of prying eyes and informants. Anything you do might be witnessed, and there's always evidence left behind. To reflect this, your crew acquires **heat** as they commit crimes. After a score or conflict with an opponent, your crew takes **heat** according to the nature of the operation:
+
+
+  * **0 heat**: Smooth & quiet; low exposure.
+
+  * **2 heat**: Contained; standard exposure.
+
+  * **4 heat** : Loud & chaotic; high exposure.
+
+  * **6 heat**: Wild; devastating exposure.
+
+
+  Add +1 **heat** for a high-profile or well-connected target. Add +1 **heat** if the situation happened on hostile turf. Add +1 **heat** if you're at war with another faction. Add +2 **heat** if killing was involved (whether the crew did the killing or not—bodies draw attention).
+
+
+  You mark **heat** levels on the **heat** tracker on the crew sheet.
+
+
+  ---
+
+
+  |                                                                 **Heat**                                                                 |                     **Wanted Level**                     |
+
+  | :--------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------: |
+
+  | ⊗ ⊗ ⊗ ○ ○ ○ ○ ○ ○ | □ □ □ □ |
+
+
+  ---
+
+
+  When your **heat** level reaches 9, you gain a **wanted level** and clear your **heat** (any excess **heat** "rolls over," so if your **heat** was 7 and you took 4 **heat**, you'd reset with 2 **heat** marked).
+
+
+  The higher your **wanted level**, the more serious the response when law enforcement takes action against you (they'll send a force of higher **quality** and **scale**).
+
+
+  Also, your **wanted level** contributes to the severity of the **entanglements** that your crew faces after a score.
+source: Heat
+tags:
+- heat
+- downtime
+properties:
+  category: Heat
+  order: 145

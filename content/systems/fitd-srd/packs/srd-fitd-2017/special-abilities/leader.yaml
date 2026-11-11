@@ -1,0 +1,11 @@
+id: leader
+type: special-ability
+name: Leader
+description: >-
+  When you **Command** a **cohort** in combat, they continue to fight when they would otherwise **break** (they're not taken out when they suffer level 3 harm). They gain **+1 effect** and **1 armor**.
+
+
+  > This ability makes your cohorts more effective in battle and also allows them to resist harm by using armor. While you lead your cohorts, they won't stop fighting until they take fatal harm (level 4) or you order them to cease. What do you do to inspire such bravery in battle?
+source: Character playbook > Special abilities > Leader
+tags:
+- example

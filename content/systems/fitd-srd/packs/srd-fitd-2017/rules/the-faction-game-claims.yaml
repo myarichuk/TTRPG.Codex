@@ -1,0 +1,15 @@
+id: the-faction-game-claims
+type: rule
+name: Claims
+description: >-
+  Each crew sheet has a map of claims available to be seized. The claim map displays a default roadmap for your crew type. Claims should usually be seized in an orderly sequence, by following the paths from the central square, the crew's lair.
+
+
+  *However, you may attempt to seize any claim on your map*, ignoring the paths (or even seek out a special claim not on your map) but these operations will always be especially difficult and require exceptional efforts to discover and achieve.
+source: The Faction Game > Claims
+tags:
+- faction
+- claim
+properties:
+  category: The Faction Game
+  order: 78

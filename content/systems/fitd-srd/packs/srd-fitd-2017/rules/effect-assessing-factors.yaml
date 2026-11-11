@@ -1,0 +1,10 @@
+id: effect-assessing-factors
+type: rule
+name: Assessing Factors
+description: 'To assess effect level, first start with your gut feeling, given this situation. Then, if needed, assess three factors that may modify the effect level: **potency**, **scale**, and **quality**. If the PC has an advantage in a given factor, consider a higher effect level. If they have a disadvantage, consider a reduced effect level.'
+source: Effect > Assessing Factors
+tags:
+- effect
+properties:
+  category: Effect
+  order: 40

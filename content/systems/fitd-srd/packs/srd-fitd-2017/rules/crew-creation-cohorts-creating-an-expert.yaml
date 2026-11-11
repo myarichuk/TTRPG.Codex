@@ -1,0 +1,16 @@
+id: crew-creation-cohorts-creating-an-expert
+type: rule
+name: Creating an expert
+description: >-
+  Record the expert's **type** (their specific area of expertise). They might be a *Doctor*, an *Investigator*, an *Occultist*, an *Assassin*, a *Spy*, etc.
+
+
+  An expert has **quality** equal to your current crew Tier +1. Their scale is always zero (1 person). Your experts increase in quality when your crew moves up in Tier.
+source: Crew creation > Cohorts > Creating an expert
+tags:
+- crew
+- creation
+- cohort
+properties:
+  category: Crew creation
+  order: 111

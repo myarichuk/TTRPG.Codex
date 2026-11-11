@@ -1,0 +1,12 @@
+id: crew-creation-cohorts-modifying-a-cohort
+type: rule
+name: Modifying a cohort
+description: You can add an **additional type** to a gang or expert by spending two crew upgrades. When a cohort performs actions for which its types apply, it uses its full quality rating. Otherwise, its quality is zero. A given cohort can have up to two types.
+source: Crew creation > Cohorts > Modifying a cohort
+tags:
+- crew
+- creation
+- cohort
+properties:
+  category: Crew creation
+  order: 113

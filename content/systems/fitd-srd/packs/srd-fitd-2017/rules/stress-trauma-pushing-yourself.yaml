@@ -1,0 +1,19 @@
+id: stress-trauma-pushing-yourself
+type: rule
+name: Pushing Yourself
+description: >-
+  You can use stress to push yourself for greater performance. For each bonus you choose below, take **2 stress** (each can be chosen once for a given action):
+
+
+  * Add **+1d** to your roll. (This may be used for an action roll or downtime roll or any other kind of roll where extra effort would help you)
+
+  * Add **+1 level** to your effect.
+
+  * Take action when you're incapacitated.
+source: Stress & Trauma > Pushing Yourself
+tags:
+- stress
+- trauma
+properties:
+  category: Stress & Trauma
+  order: 17

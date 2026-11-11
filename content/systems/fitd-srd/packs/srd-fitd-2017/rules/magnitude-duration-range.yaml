@@ -1,0 +1,17 @@
+id: magnitude-duration-range
+type: rule
+name: DURATION/RANGE
+description: >-
+  |       0       |       1       |        2        |       3       |          4          |          5          |        6        |
+
+  | :-----------: | :-----------: | :-------------: | :-----------: | :-----------------: | :-----------------: | :-------------: |
+
+  | A few moments | A few minutes |     An hour     |  A few hours  |        A day        |    Several days     |     A week      |
+
+  | Within reach  | A dozen paces | A stone's throw | Down the road | Several blocks away | Across the district | Across the city |
+source: Magnitude > DURATION/RANGE
+tags:
+- magnitude
+properties:
+  category: Magnitude
+  order: 185

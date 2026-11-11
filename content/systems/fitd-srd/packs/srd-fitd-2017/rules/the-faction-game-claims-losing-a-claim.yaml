@@ -1,0 +1,11 @@
+id: the-faction-game-claims-losing-a-claim
+type: rule
+name: Losing a claim
+description: An enemy faction may try to seize a claim that your crew holds. You can fight to defend it, or negotiate a deal with the faction, depending on the situation. If you lose a claim, you lose all the benefits of that claim. If your lair is lost, you lose the benefits of all of your claims until you can restore your lair or establish a new one. To restore or establish a new lair, accomplish a score to do so.
+source: The Faction Game > Claims > Losing a claim
+tags:
+- faction
+- claim
+properties:
+  category: The Faction Game
+  order: 80

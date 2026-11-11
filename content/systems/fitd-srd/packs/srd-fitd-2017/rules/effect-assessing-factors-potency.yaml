@@ -1,0 +1,10 @@
+id: effect-assessing-factors-potency
+type: rule
+name: Potency
+description: The potency factor considers particular weaknesses, taking extra time or a bigger risk, or the influence of arcane powers. An infiltrator is more potent if all the lights are extinguished and they move about in the dark.
+source: Effect > Assessing Factors > Potency
+tags:
+- effect
+properties:
+  category: Effect
+  order: 41

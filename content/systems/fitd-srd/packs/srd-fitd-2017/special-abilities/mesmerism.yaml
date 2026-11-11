@@ -1,0 +1,11 @@
+id: mesmerism
+type: special-ability
+name: Mesmerism
+description: >-
+  When you **Sway** someone, you may cause them to forget that it's happened until they next interact with you.
+
+
+  > The victim's memory "glosses over" the missing time, so it's not suspicious that they've forgotten something. When you next interact with the victim, they remember everything clearly, including the strange effect of this ability.
+source: Character playbook > Special abilities > Mesmerism
+tags:
+- example

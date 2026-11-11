@@ -1,0 +1,15 @@
+id: entanglements-unquiet-dead
+type: rule
+name: Unquiet dead
+description: >-
+  A rogue spirit is drawn to you—perhaps it's a past victim? Acquire the services of an occultist to attempt to destroy or banish it, or deal with it yourself.
+
+
+  > They can hire an NPC by using the **acquire asset** downtime activity. Roll the NPC's quality level as a fortune roll to see how well they deal with the spirit.
+source: Entanglements > Unquiet dead
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 166

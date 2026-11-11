@@ -1,0 +1,7 @@
+id: workshop
+type: crew-upgrade
+name: Workshop
+description: Your lair has a workshop appointed with tools for tinkering and alchemy, as well as a small library of books, documents, and maps. You may accomplish long-term projects with these assets without leaving your lair.
+source: Crew creation > Crew upgrade Examples
+tags:
+- example

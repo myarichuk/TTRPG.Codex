@@ -1,0 +1,15 @@
+id: the-faction-game-tier
+type: rule
+name: Tier
+description: >-
+  Each notable faction is ranked by **Tier**—a measure of wealth, influence, and scale. At the highest level are the Tier V and VI factions, the true powers of the city. Your crew begins at Tier 0.
+
+
+  You'll use your Tier rating to roll dice when you acquire an asset, as well as for any fortune roll for which your crew's overall power level and influence is the primary trait. Most importantly, your Tier determines the **quality level** of your items as well as the quality and **scale** of the gangs your crew employs—and thereby what size of enemy you can expect to handle.
+source: The Faction Game > Tier
+tags:
+- faction
+- tier
+properties:
+  category: The Faction Game
+  order: 69

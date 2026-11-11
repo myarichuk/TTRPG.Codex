@@ -1,0 +1,11 @@
+id: rooks-gambit
+type: special-ability
+name: Rook's gambit
+description: >-
+  Take **2 stress** to roll your best action rating while performing a different action. Say how you adapt your skill to this use.
+
+
+  > This is the "jack-of-all-trades" ability. If you want to attempt lots of different sorts of actions and still have a good dice pool to roll, this is the special ability for you.
+source: Character playbook > Special abilities > Rook's gambit
+tags:
+- example

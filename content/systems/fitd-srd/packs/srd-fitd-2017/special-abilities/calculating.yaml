@@ -1,0 +1,11 @@
+id: calculating
+type: special-ability
+name: Calculating
+description: >-
+  Due to your careful planning, during downtime, you may give yourself or another crew member **+1 downtime activity**.
+
+
+  > If you forget to use this ability during downtime, you can still activate it during the score and flashback to the previous downtime when the extra activity happened.
+source: Character playbook > Special abilities > Calculating
+tags:
+- example

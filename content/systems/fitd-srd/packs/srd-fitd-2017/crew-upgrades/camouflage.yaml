@@ -1,0 +1,7 @@
+id: camouflage
+type: crew-upgrade
+name: Camouflage
+description: Your vehicles are perfectly concealed when at rest. They blend in as part of the environment, or as an uninteresting civilian vehicle (your choice).
+source: Crew playbook > Crew upgrades
+tags:
+- example
