@@ -473,4 +473,42 @@
   <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: level {1} {2}</value></data>
   <data name="Actor.Actions.Note" xml:space="preserve"><value>Cast and Attack roll here, or into the table's log during a session. A spent slot is marked for you; hits, saves and damage are applied by the GM.</value></data>
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.</value></data>
+  <data name="Actor.Grants.Title" xml:space="preserve"><value>What it does on the sheet</value></data>
+  <data name="Actor.Grants.None" xml:space="preserve"><value>Nothing yet</value></data>
+  <data name="Actor.Grants.SumModifiers" xml:space="preserve"><value>Modifiers: {0}</value></data>
+  <data name="Actor.Grants.SumAdds" xml:space="preserve"><value>List additions: {0}</value></data>
+  <data name="Actor.Grants.SumCounter" xml:space="preserve"><value>Use counter</value></data>
+  <data name="Actor.Grants.Modifiers" xml:space="preserve"><value>Modifiers</value></data>
+  <data name="Actor.Grants.Target" xml:space="preserve"><value>Changes</value></data>
+  <data name="Actor.Grants.TargetOf" xml:space="preserve"><value>Modifier {0}: what it changes</value></data>
+  <data name="Actor.Grants.Choose" xml:space="preserve"><value>Choose...</value></data>
+  <data name="Actor.Grants.Amount" xml:space="preserve"><value>Amount</value></data>
+  <data name="Actor.Grants.AmountOf" xml:space="preserve"><value>Modifier {0}: amount</value></data>
+  <data name="Actor.Grants.AmountPlaceholder" xml:space="preserve"><value>A number or a formula</value></data>
+  <data name="Actor.Grants.Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Actor.Grants.TypeOf" xml:space="preserve"><value>Modifier {0}: type</value></data>
+  <data name="Actor.Grants.NoType" xml:space="preserve"><value>Added (no type)</value></data>
+  <data name="Actor.Grants.When" xml:space="preserve"><value>Only when</value></data>
+  <data name="Actor.Grants.WhenOf" xml:space="preserve"><value>Modifier {0}: only when</value></data>
+  <data name="Actor.Grants.WhenPlaceholder" xml:space="preserve"><value>Optional condition</value></data>
+  <data name="Actor.Grants.AddModifier" xml:space="preserve"><value>Add modifier</value></data>
+  <data name="Actor.Grants.RemoveModifier" xml:space="preserve"><value>Remove modifier {0}</value></data>
+  <data name="Actor.Grants.Adds" xml:space="preserve"><value>Adds to lists</value></data>
+  <data name="Actor.Grants.List" xml:space="preserve"><value>List</value></data>
+  <data name="Actor.Grants.ListOf" xml:space="preserve"><value>List addition {0}: which list</value></data>
+  <data name="Actor.Grants.Entries" xml:space="preserve"><value>Entries</value></data>
+  <data name="Actor.Grants.EntriesOf" xml:space="preserve"><value>List addition {0}: entries, separated by commas</value></data>
+  <data name="Actor.Grants.EntriesPlaceholder" xml:space="preserve"><value>One or more, separated by commas</value></data>
+  <data name="Actor.Grants.FromLevel" xml:space="preserve"><value>From level</value></data>
+  <data name="Actor.Grants.LevelOf" xml:space="preserve"><value>List addition {0}: from level</value></data>
+  <data name="Actor.Grants.AddAdd" xml:space="preserve"><value>Add to a list</value></data>
+  <data name="Actor.Grants.RemoveAdd" xml:space="preserve"><value>Remove list addition {0}</value></data>
+  <data name="Actor.Grants.Uses" xml:space="preserve"><value>Uses</value></data>
+  <data name="Actor.Grants.UsesMax" xml:space="preserve"><value>Maximum</value></data>
+  <data name="Actor.Grants.Recovers" xml:space="preserve"><value>Refilled by</value></data>
+  <data name="Actor.Grants.AddUses" xml:space="preserve"><value>Add a use counter</value></data>
+  <data name="Actor.Grants.RemoveUses" xml:space="preserve"><value>Remove use counter</value></data>
+  <data name="Actor.Grants.FormulaError" xml:space="preserve"><value>Can't read this: {0}</value></data>
+  <data name="Actor.Grants.FloorType" xml:space="preserve"><value>{0}: at least this, does not add</value></data>
+  <data name="Actor.Grants.Unknown" xml:space="preserve"><value>{0} (not in this system)</value></data>
 </root>

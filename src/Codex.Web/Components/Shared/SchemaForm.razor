@@ -1,4 +1,5 @@
 @using Codex.Core
+@using Codex.Core.Rules
 @using Codex.Plugin.Abstractions
 
 @* Schema-driven form renderer: the web side of UISchema. Every control is labelled by a unique id
@@ -43,6 +44,10 @@ else
                 }
             </div>
         </fieldset>
+    }
+    @if (FeatureGrants != null && FeatureWholeEntry)
+    {
+        <FeatureGrantEditor Vocabulary="FeatureGrants" Feature="Values" ReadOnly="ReadOnly" Changed="WholeEntryGrantsChangedAsync" />
     }
 }
 <ConfirmDialog @ref="confirm" />
@@ -91,6 +96,21 @@ else
     /// <summary>How a long text box previews its text; plain formatting when null.</summary>
     [Parameter]
     public Func<string, string>? Preview { get; set; }
+
+    /// <summary>The names a feature may use on this system. With it, the rows of the collections named in
+    /// <see cref="FeatureRowKeys"/> (and the whole entry, when <see cref="FeatureWholeEntry"/>) get a section for what they do
+    /// on the sheet (modifiers, entries added to lists, a counter of uses). Without it the form is as it was.</summary>
+    [Parameter]
+    public FeatureGrantVocabulary? FeatureGrants { get; set; }
+
+    /// <summary>The Collection field keys whose rows are features.</summary>
+    [Parameter]
+    public IReadOnlyCollection<string>? FeatureRowKeys { get; set; }
+
+    /// <summary>The entry itself is a feature (a feat): its <see cref="Values"/> carry the modifiers, adds and uses, shown once
+    /// after the fields. Set it on one form only when the entry's fields are spread over several.</summary>
+    [Parameter]
+    public bool FeatureWholeEntry { get; set; }
 
     private readonly string prefix = "f" + Guid.NewGuid().ToString("N")[..6];
 
@@ -213,6 +233,10 @@ else
                 <textarea class="field-input" rows="2" placeholder="@L["Actor.Form.RowDescribePlaceholder"]" aria-label="@L["Actor.Form.RowDescription", field.Label, index + 1]" disabled="@ReadOnly"
                           value="@(row.GetValueOrDefault("description")?.ToString())"
                           @onchange="@(e => UpdateRowAsync(field, index, "description", e.Value?.ToString()))"></textarea>
+                @if (FeatureGrants != null && FeatureRowKeys?.Contains(field.Key) == true)
+                {
+                    <FeatureGrantEditor Vocabulary="FeatureGrants" Feature="row" ReadOnly="ReadOnly" Changed="@(grants => UpdateRowGrantsAsync(field, index, grants))" />
+                }
             </div>
         }
         @if (!ReadOnly)
@@ -283,6 +307,22 @@ else
 
         rows[index] = row;
         await SetValueAsync(field, rows.Cast<object>().ToList());
+    }
+
+    private async Task UpdateRowGrantsAsync(FieldDefinition field, int index, FeatureGrantData grants)
+    {
+        var rows = GetRows(field);
+        if (index < 0 || index >= rows.Count) return;
+        var row = new Dictionary<string, object>(rows[index]);
+        grants.Apply(row);
+        rows[index] = row;
+        await SetValueAsync(field, rows.Cast<object>().ToList());
+    }
+
+    private async Task WholeEntryGrantsChangedAsync(FeatureGrantData grants)
+    {
+        grants.Apply(Values);
+        await ValuesChanged.InvokeAsync(Values);
     }
 
     // ---- Helpers ----

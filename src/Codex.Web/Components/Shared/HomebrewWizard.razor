@@ -1,6 +1,7 @@
 @using System.Text.Json
 @using Codex.Core
 @using Codex.Core.AI
+@using Codex.Core.Rules
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @using Codex.Web.Components.Campaign
@@ -96,7 +97,8 @@
                                      Hint="@(draft.IsPublished ? L["Wizard.HintPublished"] : L["Wizard.HintDraft"])" />
                         @if (StepSchema(CurrentStep) is { } lore)
                         {
-                            <div class="mt-3"><SchemaForm Schema="lore" Values="draft.Properties" ReferenceOptions="referenceOptions" ShowGroupHeadings="false" ValuesChanged="OnValuesChanged" /></div>
+                            <div class="mt-3"><SchemaForm Schema="lore" Values="draft.Properties" ReferenceOptions="referenceOptions" ShowGroupHeadings="false" ValuesChanged="OnValuesChanged"
+                                        FeatureGrants="grants" FeatureRowKeys="grantRows" FeatureWholeEntry="@(grantWhole && IsGrantStep(CurrentStep))" /></div>
                         }
                         break;
 
@@ -130,7 +132,8 @@
                     default:
                         @if (StepSchema(CurrentStep) is { } stepSchema)
                         {
-                            <SchemaForm Schema="stepSchema" Values="draft.Properties" ReferenceOptions="referenceOptions" ShowGroupHeadings="false" ValuesChanged="OnValuesChanged" />
+                            <SchemaForm Schema="stepSchema" Values="draft.Properties" ReferenceOptions="referenceOptions" ShowGroupHeadings="false" ValuesChanged="OnValuesChanged"
+                                        FeatureGrants="grants" FeatureRowKeys="grantRows" FeatureWholeEntry="@(grantWhole && IsGrantStep(CurrentStep))" />
                         }
                         break;
                 }
@@ -279,6 +282,31 @@
         "traits and actions" => "swords",
         _ => "sliders-horizontal"
     };
+
+    private SystemDefinition? grantSystem;
+    private FeatureGrantVocabulary? grantVocabulary;
+
+    /// <summary>What a feature of the type being edited may do on the sheet; null when the system reads no features from that type.</summary>
+    private FeatureGrantVocabulary? grants
+    {
+        get
+        {
+            var system = Ctx.System?.Canonical;
+            if (!ReferenceEquals(system, grantSystem))
+            {
+                grantSystem = system;
+                grantVocabulary = FeatureGrantVocabulary.For(system);
+            }
+
+            return TypeDef != null && grantVocabulary?.CarrierFor(TypeDef.Type) != null ? grantVocabulary : null;
+        }
+    }
+
+    private IReadOnlyCollection<string>? grantRows => grants?.CarrierFor(TypeDef!.Type)?.RowProperties;
+    private bool grantWhole => grants?.CarrierFor(TypeDef!.Type)?.WholeEntry == true;
+
+    /// <summary>The step that shows a whole entry's grants: the last one with fields, so they come after what the entry says.</summary>
+    private bool IsGrantStep(Step step) => Steps.LastOrDefault(s => StepSchema(s) != null)?.Key == step.Key;
 
     private UISchema? StepSchema(Step step)
     {

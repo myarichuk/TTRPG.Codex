@@ -473,4 +473,42 @@
   <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: {2}, уровень {1}</value></data>
   <data name="Actor.Actions.Note" xml:space="preserve"><value>Броски действий делаются здесь, а во время сессии попадают в журнал стола. Потраченная ячейка отмечается сама; попадания, спасброски и урон применяет ведущий.</value></data>
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: не удаётся вычислить, что даёт это умение, поэтому оно пропущено. Мастер может проверить запись.</value></data>
+  <data name="Actor.Grants.Title" xml:space="preserve"><value>Что это даёт в листе</value></data>
+  <data name="Actor.Grants.None" xml:space="preserve"><value>Пока ничего</value></data>
+  <data name="Actor.Grants.SumModifiers" xml:space="preserve"><value>Модификаторы: {0}</value></data>
+  <data name="Actor.Grants.SumAdds" xml:space="preserve"><value>Добавления в списки: {0}</value></data>
+  <data name="Actor.Grants.SumCounter" xml:space="preserve"><value>Счётчик применений</value></data>
+  <data name="Actor.Grants.Modifiers" xml:space="preserve"><value>Модификаторы</value></data>
+  <data name="Actor.Grants.Target" xml:space="preserve"><value>Меняет</value></data>
+  <data name="Actor.Grants.TargetOf" xml:space="preserve"><value>Модификатор {0}: что меняет</value></data>
+  <data name="Actor.Grants.Choose" xml:space="preserve"><value>Выберите...</value></data>
+  <data name="Actor.Grants.Amount" xml:space="preserve"><value>Величина</value></data>
+  <data name="Actor.Grants.AmountOf" xml:space="preserve"><value>Модификатор {0}: величина</value></data>
+  <data name="Actor.Grants.AmountPlaceholder" xml:space="preserve"><value>Число или формула</value></data>
+  <data name="Actor.Grants.Type" xml:space="preserve"><value>Тип</value></data>
+  <data name="Actor.Grants.TypeOf" xml:space="preserve"><value>Модификатор {0}: тип</value></data>
+  <data name="Actor.Grants.NoType" xml:space="preserve"><value>Прибавляется (без типа)</value></data>
+  <data name="Actor.Grants.When" xml:space="preserve"><value>Только если</value></data>
+  <data name="Actor.Grants.WhenOf" xml:space="preserve"><value>Модификатор {0}: только если</value></data>
+  <data name="Actor.Grants.WhenPlaceholder" xml:space="preserve"><value>Необязательное условие</value></data>
+  <data name="Actor.Grants.AddModifier" xml:space="preserve"><value>Добавить модификатор</value></data>
+  <data name="Actor.Grants.RemoveModifier" xml:space="preserve"><value>Убрать модификатор {0}</value></data>
+  <data name="Actor.Grants.Adds" xml:space="preserve"><value>Добавляет в списки</value></data>
+  <data name="Actor.Grants.List" xml:space="preserve"><value>Список</value></data>
+  <data name="Actor.Grants.ListOf" xml:space="preserve"><value>Добавление {0}: какой список</value></data>
+  <data name="Actor.Grants.Entries" xml:space="preserve"><value>Записи</value></data>
+  <data name="Actor.Grants.EntriesOf" xml:space="preserve"><value>Добавление {0}: записи через запятую</value></data>
+  <data name="Actor.Grants.EntriesPlaceholder" xml:space="preserve"><value>Одна или несколько через запятую</value></data>
+  <data name="Actor.Grants.FromLevel" xml:space="preserve"><value>С уровня</value></data>
+  <data name="Actor.Grants.LevelOf" xml:space="preserve"><value>Добавление {0}: с какого уровня</value></data>
+  <data name="Actor.Grants.AddAdd" xml:space="preserve"><value>Добавить в список</value></data>
+  <data name="Actor.Grants.RemoveAdd" xml:space="preserve"><value>Убрать добавление {0}</value></data>
+  <data name="Actor.Grants.Uses" xml:space="preserve"><value>Применения</value></data>
+  <data name="Actor.Grants.UsesMax" xml:space="preserve"><value>Максимум</value></data>
+  <data name="Actor.Grants.Recovers" xml:space="preserve"><value>Восстанавливается при</value></data>
+  <data name="Actor.Grants.AddUses" xml:space="preserve"><value>Добавить счётчик применений</value></data>
+  <data name="Actor.Grants.RemoveUses" xml:space="preserve"><value>Убрать счётчик применений</value></data>
+  <data name="Actor.Grants.FormulaError" xml:space="preserve"><value>Не удаётся прочитать: {0}</value></data>
+  <data name="Actor.Grants.FloorType" xml:space="preserve"><value>{0}: не меньше этого, не складывается</value></data>
+  <data name="Actor.Grants.Unknown" xml:space="preserve"><value>{0} (нет в этой системе)</value></data>
 </root>

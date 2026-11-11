@@ -1,0 +1,264 @@
+@using Codex.Core.Rules
+
+@* What one feature does on the sheet: its modifiers, the entries it adds to lists and its counter of uses. A closed section
+   with a one-line summary, so a row of plain text stays plain. Reads and writes the keys the sheet rules read (FeatureGrantData),
+   offers only what the system's vocabulary holds, and checks formulas with the engine's parser. Changes are reported as a
+   FeatureGrantData for the owner to put into the feature's dictionary. *@
+
+@if (!ReadOnly || data.Modifiers.Count > 0 || data.Adds.Count > 0 || data.Uses != null)
+{
+<details class="grants" data-testid="feature-grants">
+    <summary class="grants-summary">
+        <span class="grants-title">@L["Actor.Grants.Title"]</span>
+        <span class="small-muted grants-sum" data-testid="feature-grants-summary">@Summary()</span>
+    </summary>
+    <div class="grants-body">
+        @if (data.Modifiers.Count > 0 || !ReadOnly)
+        {
+            <fieldset class="grants-group" aria-labelledby="@(id)-mods">
+                <legend id="@(id)-mods" class="label-caps">@L["Actor.Grants.Modifiers"]</legend>
+                @for (var i = 0; i < data.Modifiers.Count; i++)
+                {
+                    var index = i;
+                    var n = index + 1;
+                    var modifier = data.Modifiers[index];
+                    var amountId = $"{id}-m{n}-amount";
+                    var whenId = $"{id}-m{n}-when";
+                    var amountError = Vocabulary.CheckFormula(modifier.Amount);
+                    var whenError = Vocabulary.CheckFormula(modifier.When);
+                    <div class="grants-row" data-testid="grant-modifier">
+                        <div class="grants-cell">
+                            <label for="@(id)-m@(n)-target" class="field-label">@L["Actor.Grants.Target"]</label>
+                            <select id="@(id)-m@(n)-target" class="field-select field-sm" disabled="@ReadOnly" aria-label="@L["Actor.Grants.TargetOf", n]"
+                                    @onchange="@(e => EditModifierAsync(index, m => m.Target = e.Value?.ToString() ?? string.Empty))">
+                                <option value="" selected="@(modifier.Target.Length == 0)">@L["Actor.Grants.Choose"]</option>
+                                @foreach (var option in Options(Vocabulary.Targets.Select(t => (t.Key, t.Label)), modifier.Target))
+                                {
+                                    <option value="@option.Key" selected="@(option.Key == modifier.Target)">@option.Label</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="grants-cell">
+                            <label for="@amountId" class="field-label">@L["Actor.Grants.Amount"]</label>
+                            <input id="@amountId" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@modifier.Amount" placeholder="@L["Actor.Grants.AmountPlaceholder"]"
+                                   aria-label="@L["Actor.Grants.AmountOf", n]" aria-invalid="@(amountError != null ? "true" : null)" aria-describedby="@(amountError != null ? amountId + "-error" : null)"
+                                   @onchange="@(e => EditModifierAsync(index, m => m.Amount = e.Value?.ToString()?.Trim() ?? string.Empty))" />
+                            <FieldError Id="@(amountId + "-error")" Message="@FormulaMessage(amountError)" TestId="grant-amount-error" />
+                        </div>
+                        @if (Vocabulary.ModifierTypes.Count > 0 || modifier.Type.Length > 0)
+                        {
+                            <div class="grants-cell">
+                                <label for="@(id)-m@(n)-type" class="field-label">@L["Actor.Grants.Type"]</label>
+                                <select id="@(id)-m@(n)-type" class="field-select field-sm" disabled="@ReadOnly" aria-label="@L["Actor.Grants.TypeOf", n]"
+                                        @onchange="@(e => EditModifierAsync(index, m => m.Type = e.Value?.ToString() ?? string.Empty))">
+                                    <option value="" selected="@(modifier.Type.Length == 0)">@L["Actor.Grants.NoType"]</option>
+                                    @foreach (var option in Options(Vocabulary.ModifierTypes.Select(t => (t, TypeLabel(t))), modifier.Type))
+                                    {
+                                        <option value="@option.Key" selected="@(option.Key == modifier.Type)">@option.Label</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        <div class="grants-cell grants-wide">
+                            <label for="@whenId" class="field-label">@L["Actor.Grants.When"]</label>
+                            <input id="@whenId" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@modifier.When" placeholder="@L["Actor.Grants.WhenPlaceholder"]"
+                                   aria-label="@L["Actor.Grants.WhenOf", n]" aria-invalid="@(whenError != null ? "true" : null)" aria-describedby="@(whenError != null ? whenId + "-error" : null)"
+                                   @onchange="@(e => EditModifierAsync(index, m => m.When = e.Value?.ToString()?.Trim() ?? string.Empty))" />
+                            <FieldError Id="@(whenId + "-error")" Message="@FormulaMessage(whenError)" TestId="grant-when-error" />
+                        </div>
+                        @if (!ReadOnly)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Grants.RemoveModifier", n]" OnClick="() => ChangeAsync(() => data.Modifiers.RemoveAt(index))" />
+                        }
+                    </div>
+                }
+                @if (!ReadOnly)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AddModifierAsync">
+                        <LucideIcon IconName="plus" Size="14" /> @L["Actor.Grants.AddModifier"]
+                    </CodexButton>
+                }
+            </fieldset>
+        }
+
+        @if (Vocabulary.Lists.Count > 0 && (data.Adds.Count > 0 || !ReadOnly))
+        {
+            <fieldset class="grants-group" aria-labelledby="@(id)-adds">
+                <legend id="@(id)-adds" class="label-caps">@L["Actor.Grants.Adds"]</legend>
+                @for (var i = 0; i < data.Adds.Count; i++)
+                {
+                    var index = i;
+                    var n = index + 1;
+                    var add = data.Adds[index];
+                    <div class="grants-row" data-testid="grant-add">
+                        <div class="grants-cell">
+                            <label for="@(id)-a@(n)-to" class="field-label">@L["Actor.Grants.List"]</label>
+                            <select id="@(id)-a@(n)-to" class="field-select field-sm" disabled="@ReadOnly" aria-label="@L["Actor.Grants.ListOf", n]"
+                                    @onchange="@(e => EditAddAsync(index, a => a.To = e.Value?.ToString() ?? string.Empty))">
+                                <option value="" selected="@(add.To.Length == 0)">@L["Actor.Grants.Choose"]</option>
+                                @foreach (var option in Options(Vocabulary.Lists.Select(l => (l.Key, l.Label)), add.To))
+                                {
+                                    <option value="@option.Key" selected="@(option.Key == add.To)">@option.Label</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="grants-cell grants-wide">
+                            <label for="@(id)-a@(n)-entries" class="field-label">@L["Actor.Grants.Entries"]</label>
+                            <input id="@(id)-a@(n)-entries" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@string.Join(", ", add.Entries)" placeholder="@L["Actor.Grants.EntriesPlaceholder"]"
+                                   aria-label="@L["Actor.Grants.EntriesOf", n]"
+                                   @onchange="@(e => EditAddAsync(index, a => a.Entries = FeatureGrantData.SplitEntries(e.Value?.ToString())))" />
+                        </div>
+                        <div class="grants-cell grants-narrow">
+                            <label for="@(id)-a@(n)-level" class="field-label">@L["Actor.Grants.FromLevel"]</label>
+                            <input id="@(id)-a@(n)-level" type="number" min="1" class="field-input field-sm" disabled="@ReadOnly" value="@add.Level" aria-label="@L["Actor.Grants.LevelOf", n]"
+                                   @onchange="@(e => EditAddAsync(index, a => a.Level = FeatureGrantData.ParseLevel(e.Value?.ToString())))" />
+                        </div>
+                        @if (!ReadOnly)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Grants.RemoveAdd", n]" OnClick="() => ChangeAsync(() => data.Adds.RemoveAt(index))" />
+                        }
+                    </div>
+                }
+                @if (!ReadOnly)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AddAddAsync">
+                        <LucideIcon IconName="plus" Size="14" /> @L["Actor.Grants.AddAdd"]
+                    </CodexButton>
+                }
+            </fieldset>
+        }
+
+        @if (data.Uses != null || !ReadOnly)
+        {
+            <fieldset class="grants-group" aria-labelledby="@(id)-uses">
+                <legend id="@(id)-uses" class="label-caps">@L["Actor.Grants.Uses"]</legend>
+                @if (data.Uses is { } uses)
+                {
+                    var maxId = id + "-uses-max";
+                    var maxError = Vocabulary.CheckFormula(uses.Max);
+                    <div class="grants-row" data-testid="grant-uses">
+                        <div class="grants-cell">
+                            <label for="@maxId" class="field-label">@L["Actor.Grants.UsesMax"]</label>
+                            <input id="@maxId" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@uses.Max" placeholder="@L["Actor.Grants.AmountPlaceholder"]"
+                                   aria-invalid="@(maxError != null ? "true" : null)" aria-describedby="@(maxError != null ? maxId + "-error" : null)"
+                                   @onchange="@(e => EditUsesAsync(u => u.Max = e.Value?.ToString()?.Trim() ?? string.Empty))" />
+                            <FieldError Id="@(maxId + "-error")" Message="@FormulaMessage(maxError)" TestId="grant-max-error" />
+                        </div>
+                        @if (Vocabulary.Rests.Count > 0 || uses.RecoversOn.Count > 0)
+                        {
+                            <fieldset class="grants-cell grants-wide grants-rests">
+                                <legend class="field-label">@L["Actor.Grants.Recovers"]</legend>
+                                @foreach (var rest in Options(Vocabulary.Rests.Select(r => (r, r)), uses.RecoversOn.ToArray()))
+                                {
+                                    var rid = $"{id}-rest-{Slug(rest.Key)}";
+                                    var key = rest.Key;
+                                    <span class="field-check">
+                                        <input id="@rid" type="checkbox" class="field-box" disabled="@ReadOnly" checked="@HasRest(uses, key)"
+                                               @onchange="@(e => EditUsesAsync(u => ToggleRest(u, key, (bool)(e.Value ?? false))))" />
+                                        <label for="@rid">@rest.Label</label>
+                                    </span>
+                                }
+                            </fieldset>
+                        }
+                        @if (!ReadOnly)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Grants.RemoveUses"]" OnClick="() => ChangeAsync(() => data.Uses = null)" />
+                        }
+                    </div>
+                }
+                else if (!ReadOnly)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AddUsesAsync">
+                        <LucideIcon IconName="plus" Size="14" /> @L["Actor.Grants.AddUses"]
+                    </CodexButton>
+                }
+            </fieldset>
+        }
+    </div>
+</details>
+}
+
+@code {
+    private readonly string id = "g" + Guid.NewGuid().ToString("N")[..6];
+    private FeatureGrantData data = new();
+
+    /// <summary>The names this system gives a feature to use.</summary>
+    [Parameter, EditorRequired]
+    public FeatureGrantVocabulary Vocabulary { get; set; } = null!;
+
+    /// <summary>The feature (a row, or a whole entry's properties) whose <c>modifiers</c>, <c>adds</c> and <c>uses</c> are shown.</summary>
+    [Parameter, EditorRequired]
+    public IReadOnlyDictionary<string, object> Feature { get; set; } = new Dictionary<string, object>();
+
+    /// <summary>The grants after an edit; the owner writes them into the feature with <see cref="FeatureGrantData.Apply"/>.</summary>
+    [Parameter]
+    public EventCallback<FeatureGrantData> Changed { get; set; }
+
+    [Parameter]
+    public bool ReadOnly { get; set; }
+
+    protected override void OnParametersSet() => data = FeatureGrantData.Read(Feature);
+
+    private async Task ChangeAsync(Action edit)
+    {
+        edit();
+        await Changed.InvokeAsync(data);
+    }
+
+    // Edits go to the row at its index in the current data, not to the object a handler captured when it was rendered: a
+    // change re-reads the feature from the owner and replaces every row object, so an event bound to the earlier render
+    // (tabbing out of one box straight into a select) would otherwise edit a row that is no longer kept.
+    private Task EditModifierAsync(int index, Action<GrantModifier> edit) =>
+        ChangeAsync(() => { if (index < data.Modifiers.Count) edit(data.Modifiers[index]); });
+
+    private Task EditAddAsync(int index, Action<GrantAdd> edit) =>
+        ChangeAsync(() => { if (index < data.Adds.Count) edit(data.Adds[index]); });
+
+    private Task EditUsesAsync(Action<GrantUses> edit) =>
+        ChangeAsync(() => { if (data.Uses is { } uses) edit(uses); });
+
+    private Task AddModifierAsync() => ChangeAsync(() => data.Modifiers.Add(new GrantModifier { Amount = "1" }));
+
+    private Task AddAddAsync() => ChangeAsync(() => data.Adds.Add(new GrantAdd()));
+
+    private Task AddUsesAsync() => ChangeAsync(() => data.Uses = new GrantUses());
+
+    private string Summary()
+    {
+        var (modifiers, adds, counters) = data.Counts();
+        var parts = new List<string>();
+        if (modifiers > 0) parts.Add(L["Actor.Grants.SumModifiers", modifiers]);
+        if (adds > 0) parts.Add(L["Actor.Grants.SumAdds", adds]);
+        if (counters > 0) parts.Add(L["Actor.Grants.SumCounter"]);
+        return parts.Count == 0 ? L["Actor.Grants.None"] : string.Join(", ", parts);
+    }
+
+    /// <summary>A type the system keeps only the best of ("base" in srd5e) says so, since its key alone does not.</summary>
+    private string TypeLabel(string type) =>
+        Vocabulary.FloorTypes.Contains(type, StringComparer.OrdinalIgnoreCase) ? L["Actor.Grants.FloorType", type].ToString() : type;
+
+    private string? FormulaMessage(string? error) => error == null ? null : L["Actor.Grants.FormulaError", error].ToString();
+
+    /// <summary>The vocabulary's names, and the value the feature holds when the system does not know it, so a select never
+    /// silently shows something else.</summary>
+    private IEnumerable<(string Key, string Label)> Options(IEnumerable<(string Key, string Label)> known, params string[] held)
+    {
+        var list = known.ToList();
+        foreach (var value in held.Where(v => v.Length > 0 && list.All(o => !string.Equals(o.Key, v, StringComparison.OrdinalIgnoreCase))))
+        {
+            list.Add((value, L["Actor.Grants.Unknown", value].ToString()));
+        }
+
+        return list;
+    }
+
+    private static string Slug(string text) => new(text.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-').ToArray());
+
+    private static bool HasRest(GrantUses uses, string rest) => uses.RecoversOn.Contains(rest, StringComparer.OrdinalIgnoreCase);
+
+    private static void ToggleRest(GrantUses uses, string rest, bool on)
+    {
+        uses.RecoversOn.RemoveAll(r => string.Equals(r, rest, StringComparison.OrdinalIgnoreCase));
+        if (on) uses.RecoversOn.Add(rest);
+    }
+}

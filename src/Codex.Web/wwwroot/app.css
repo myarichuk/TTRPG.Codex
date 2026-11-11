@@ -1879,6 +1879,24 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .collection-row-head { display: flex; gap: var(--space-4); align-items: center; margin-bottom: var(--space-3); }
 .collection-row-head .field-input:not(.collection-level) { flex: 1; font-weight: 600; }
 .collection-level { width: 4.5rem; flex: none; }
+/* What a feature does on the sheet: a closed section under a row, its fields in a wrapping row. */
+.grants { margin-top: var(--space-3); }
+.grants-summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: baseline; }
+.grants-summary { list-style: none; }
+.grants-summary::-webkit-details-marker { display: none; }
+.grants-title::after { content: " ▾"; color: var(--text-3); }
+.grants[open] .grants-title::after { content: " ▴"; }
+.grants-title { font-weight: 600; }
+.grants-row + .grants-row { border-top: 1px solid var(--border); padding-top: var(--space-3); }
+.grants-body { margin-top: var(--space-3); }
+.grants-group { border: 0; padding: 0; margin: 0 0 var(--space-4); min-width: 0; }
+.grants-group > legend { padding: 0; margin-bottom: var(--space-2); }
+.grants-row { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-end; margin-bottom: var(--space-3); }
+.grants-cell { display: flex; flex-direction: column; gap: var(--space-1); min-width: 8rem; border: 0; padding: 0; margin: 0; }
+.grants-cell .field-input, .grants-cell .field-select { width: 100%; }
+.grants-wide { flex: 1 1 12rem; }
+.grants-narrow { min-width: 5rem; max-width: 7rem; }
+.grants-rests { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
 
 /* An "Enhance with AI" description box. */
 .ai-field-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-2); }

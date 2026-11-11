@@ -130,8 +130,11 @@ Sheet and table:
 
 - The sheet's Features panel lists counters and granted lines; it does not list plain features with their text.
 - At the table, feature counters have Use and Regain on the character's card (step 3).
-- The homebrew wizard's collection editor shows a row's name, level and description. It keeps `modifiers`, `adds` and
-  `uses` on a row it edits, but offers no way to type or change them.
+- The homebrew wizard's collection editor shows a row's name, level and description, and under a collapsed "What it does
+  on the sheet" section the row's `modifiers` (target, amount, type, condition), `adds` (list, entries, from level) and
+  `uses` (maximum, rests that refill it), offered from the system's own vocabulary (`FeatureGrantVocabulary`) and with
+  formulas checked by the engine's parser. A feat-like entry, where the whole entry is the feature, gets the same section
+  once, after its fields. Not yet: the same editor on the actor sheet, and a `use` editor for spells and weapons.
 - A monster's trait and action rows render inline text, so a `:::dm` block inside one would show raw (GM only).
 
 Join review:
@@ -150,7 +153,8 @@ Found on the way, not fixed:
 
 ## Not verified
 
-- Nothing was checked in the running app: no page was opened on this build.
+- Only the homebrew wizard's feature editor was checked in the running app (a subclass's rows and a feat, saved and
+  reopened, keyboard and phone width). No other page was opened on this build.
 - No real model was called: every AI path is tested with canned replies only.
 - Browser end-to-end tests and the book print tests cannot run on this machine (Playwright's Chromium is missing). Two
   end-to-end tests were edited for the collapsed initiative bar (they click "Start encounter" first) and never run.
