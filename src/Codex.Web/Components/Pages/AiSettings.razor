@@ -150,11 +150,16 @@ else
                                     <input id="ai-price-out" type="number" min="0" step="any" class="field-input" @bind="editing.OutputPricePerMTok" data-testid="ai-price-out" aria-invalid="@Invalid("price")" />
                                 </div>
                                 <div>
+                                    <label for="ai-price-cached" class="field-hint">@L["Page.AiSettings.PriceCached"]</label>
+                                    <input id="ai-price-cached" type="number" min="0" step="any" class="field-input" @bind="editing.CachedInputPricePerMTok" data-testid="ai-price-cached" aria-invalid="@Invalid("price")" />
+                                </div>
+                                <div>
                                     <label for="ai-price-label" class="field-hint">@L["Page.AiSettings.PriceLabel"]</label>
                                     <input id="ai-price-label" class="field-input" maxlength="@AiPrice.MaxLabelLength" @bind="editing.PriceLabel" placeholder="USD" data-testid="ai-price-label" />
                                 </div>
                             </div>
                             <div class="field-hint">@L["Page.AiSettings.PriceHint"]</div>
+                            <div class="field-hint">@L["Page.AiSettings.PriceCachedHint"]</div>
                         </div>
                     }
                     else
@@ -371,6 +376,7 @@ else
             ProtectedApiKey = provider.ProtectedApiKey,
             InputPricePerMTok = provider.InputPricePerMTok,
             OutputPricePerMTok = provider.OutputPricePerMTok,
+            CachedInputPricePerMTok = provider.CachedInputPricePerMTok,
             PricePerImage = provider.PricePerImage,
             PriceLabel = provider.PriceLabel,
             CreatedAt = provider.CreatedAt
@@ -432,7 +438,8 @@ else
         if (purpose == Purpose.Text)
         {
             if ((editing.InputPricePerMTok != null && AiPrice.Clean(editing.InputPricePerMTok) == null)
-                || (editing.OutputPricePerMTok != null && AiPrice.Clean(editing.OutputPricePerMTok) == null))
+                || (editing.OutputPricePerMTok != null && AiPrice.Clean(editing.OutputPricePerMTok) == null)
+                || (editing.CachedInputPricePerMTok != null && AiPrice.Clean(editing.CachedInputPricePerMTok) == null))
             {
                 Refuse(L["Page.AiSettings.PriceBad", AiPrice.MaxPerMTok.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)], "price");
                 return;
@@ -449,7 +456,7 @@ else
                 return;
             }
 
-            editing.InputPricePerMTok = editing.OutputPricePerMTok = null;
+            editing.InputPricePerMTok = editing.OutputPricePerMTok = editing.CachedInputPricePerMTok = null;
             editing.PriceLabel = AiPrice.CleanLabel(editing.PriceLabel);
         }
 

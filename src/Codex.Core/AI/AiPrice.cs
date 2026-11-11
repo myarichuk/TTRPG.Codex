@@ -3,7 +3,9 @@ using System.Globalization;
 namespace Codex.Core.AI;
 
 /// <summary>The prices in force for a call, as the user entered them (either may be missing).</summary>
-public sealed record AiPriceQuote(decimal? InputPerMTok, decimal? OutputPerMTok, string Label);
+/// <param name="CachedInputPerMTok">What input read back from the provider's prompt cache costs per million tokens, when the user entered it;
+/// without it such tokens are counted at the input price.</param>
+public sealed record AiPriceQuote(decimal? InputPerMTok, decimal? OutputPerMTok, string Label, decimal? CachedInputPerMTok = null);
 
 /// <summary>What one picture costs, as the user entered it.</summary>
 public sealed record AiImagePrice(decimal PerImage, string Label);
@@ -33,14 +35,30 @@ public static class AiPrice
 
     /// <summary>The cost of the tokens, or null when it cannot be known: a price is missing, or a count is.
     /// A model that is free (both prices 0) costs 0, which is a fact the user stated.</summary>
-    public static decimal? Cost(decimal? inputPerMTok, decimal? outputPerMTok, long? inputTokens, long? outputTokens)
+    public static decimal? Cost(decimal? inputPerMTok, decimal? outputPerMTok, long? inputTokens, long? outputTokens) =>
+        Cost(inputPerMTok, outputPerMTok, null, inputTokens, outputTokens, null, null);
+
+    /// <summary>What writing a prompt into Anthropic's 5-minute cache costs, as a multiple of the input price. A fact of that
+    /// provider's price list rather than something a user would type, and it only comes into play when the provider reports cache
+    /// writes, which no other one does.</summary>
+    public const decimal CacheWriteMultiplier = 1.25m;
+
+    /// <summary>The cost when some of the input came from the provider's prompt cache. <paramref name="inputTokens"/> is the whole
+    /// input, as providers (and the client libraries) report it: the cache reads and writes are part of it, not extra. Reads are
+    /// counted at <paramref name="cachedInputPerMTok"/>, or at the input price when the user gave none (the same answer as before
+    /// caching, so never less than the truth); writes at <see cref="CacheWriteMultiplier"/> times the input price.</summary>
+    public static decimal? Cost(decimal? inputPerMTok, decimal? outputPerMTok, decimal? cachedInputPerMTok, long? inputTokens, long? outputTokens, long? cacheReadTokens, long? cacheWriteTokens)
     {
         if (Clean(inputPerMTok) is not { } input || Clean(outputPerMTok) is not { } output || inputTokens is not { } tin || outputTokens is not { } tout)
         {
             return null;
         }
 
-        return (Math.Max(0, tin) * input + Math.Max(0, tout) * output) / 1_000_000m;
+        var total = Math.Max(0, tin);
+        var read = Math.Clamp(cacheReadTokens ?? 0, 0, total);
+        var written = Math.Clamp(cacheWriteTokens ?? 0, 0, total - read);
+        var readPrice = Clean(cachedInputPerMTok) ?? input;
+        return ((total - read - written) * input + read * readPrice + written * input * CacheWriteMultiplier + Math.Max(0, tout) * output) / 1_000_000m;
     }
 
     /// <summary>The label with control and format characters removed, cut to <see cref="MaxLabelLength"/> text elements.</summary>

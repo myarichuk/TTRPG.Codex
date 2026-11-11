@@ -151,7 +151,8 @@ public static class AIClientFactory
         var client = config.Http == null
             ? new AnthropicClient { ApiKey = key, BaseUrl = baseUrl, Timeout = RequestTimeout, MaxRetries = 1 }
             : new AnthropicClient { ApiKey = key, BaseUrl = baseUrl, Timeout = RequestTimeout, MaxRetries = 1, HttpClient = config.Http };
-        return new TemperatureFallbackChatClient(client.AsIChatClient(config.ModelId!.Trim(), AnthropicMaxOutputTokens));
+        // The caching layer sits next to the SDK's client, so the tool loop above it and the temperature fallback both reach it.
+        return new TemperatureFallbackChatClient(new PromptCachingChatClient(client.AsIChatClient(config.ModelId!.Trim(), AnthropicMaxOutputTokens)));
     }
 
     /// <summary>The SDK's default retries a request that timed out as readily as one the server turned away, so a model that is

@@ -548,7 +548,7 @@ prices live on `AiProviderConfig` (and optionally in the server's `AI` section) 
   token count is missing; 0 only when the user typed 0), `CleanLabel` (strips control/format/bidi characters, cut to 12 text elements), `Format`.
 - A turn of the World builder chat keeps the prices it ran under (`WorldChatUsage.InputPricePerMTok/OutputPricePerMTok/PriceLabel`), so a
   later price change cannot rewrite history. Each reply shows "cost X"; the chat shows a total, and says "only k of n turns have a price"
-  rather than passing a partial sum off as the total. Server key: `AI:InputPricePerMTok`, `AI:OutputPricePerMTok`, `AI:PriceLabel`.
+  rather than passing a partial sum off as the total. Server key: `AI:InputPricePerMTok`, `AI:OutputPricePerMTok`, `AI:CachedInputPricePerMTok` (optional, input read from the provider's prompt cache), `AI:PriceLabel`.
 - `ServerAiUsage.Reserve(user, kind, n, unlimited)`: all-or-nothing against the daily allowance (compared in `long`, so a huge `n` cannot
   wrap), returns a `Reservation` whose `TryUse()` is lock-free and whose `Dispose()` refunds the unused part once.
   `AiProviderService.ReserveRequestsAsync` returns null when the user's calls go to their own provider; `ClientFor(user, prepaid)` draws

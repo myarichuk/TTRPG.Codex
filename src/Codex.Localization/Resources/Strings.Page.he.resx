@@ -253,6 +253,8 @@
   <data name="Page.AiSettings.Price" xml:space="preserve"><value>מחיר (אופציונלי)</value></data>
   <data name="Page.AiSettings.PriceIn" xml:space="preserve"><value>קלט, לכל מיליון אסימונים</value></data>
   <data name="Page.AiSettings.PriceOut" xml:space="preserve"><value>פלט, לכל מיליון אסימונים</value></data>
+  <data name="Page.AiSettings.PriceCached" xml:space="preserve"><value>קלט מהמטמון, לכל מיליון אסימונים</value></data>
+  <data name="Page.AiSettings.PriceCachedHint" xml:space="preserve"><value>אופציונלי: מה הספק גובה על קלט שסופק ממטמון הפרומפטים שלו. אם ריק, אסימונים כאלה נספרים במחיר הקלט. כשספק גובה על כתיבה למטמון (Anthropic), היא נספרת כ-1.25 ממחיר הקלט.</value></data>
   <data name="Page.AiSettings.PriceLabel" xml:space="preserve"><value>תווית מטבע</value></data>
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>העתיקו אותם ממחירון הספק. היישום אינו מגיע עם מחירים, ולכן בלעדיהם הוא מציג רק אסימונים ולא עלות מנוחשת.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>מחיר חייב להיות מספר בין 0 ל-{0}, או ריק.</value></data>

@@ -32,6 +32,13 @@ public sealed partial class WorldChat
     /// <summary>Tool results from before this many of the DM's messages back reach the model as a line saying what they were.</summary>
     private const int FreshMessages = 3;
 
+    /// <summary>The old results are cut this many of the DM's messages at a time, not one more with each message. A cut changes the
+    /// conversation from the first result it touches on, and the provider's prompt cache can only reuse what comes before that: cutting
+    /// one message's worth each time would send the whole history anew at every message, where cutting in steps leaves it alone for
+    /// all but one message in <see cref="CutStep"/>. The model sees between <see cref="FreshMessages"/> and
+    /// <see cref="FreshMessages"/> + <see cref="CutStep"/> - 1 of the DM's last messages whole.</summary>
+    private const int CutStep = 3;
+
     /// <summary>Tool results up to this long are sent again whole, however old: a stub would save next to nothing.</summary>
     private const int MaxOldResult = 1_200;
 
@@ -150,6 +157,7 @@ public sealed partial class WorldChat
         {
             usage.InputPricePerMTok = AiPrice.Clean(quote.InputPerMTok);
             usage.OutputPricePerMTok = AiPrice.Clean(quote.OutputPerMTok);
+            usage.CachedInputPricePerMTok = AiPrice.Clean(quote.CachedInputPerMTok);
             usage.PriceLabel = string.IsNullOrEmpty(quote.Label) ? null : quote.Label;
         }
         ct = stop.Token;
@@ -194,7 +202,9 @@ public sealed partial class WorldChat
 
         try
         {
-            var (reply, cutShort) = await RunTurnAsync(client, system, new ChatOptions { Tools = Tools(OnStep), Temperature = 0.8f, MaxOutputTokens = MaxReplyTokens },
+            // Each round of the tool loop sends the tools, the system prompt and the whole history again: worth a prompt cache.
+            var (reply, cutShort) = await RunTurnAsync(client, system,
+                PromptCachingChatClient.WithPromptCaching(new ChatOptions { Tools = Tools(OnStep), Temperature = 0.8f, MaxOutputTokens = MaxReplyTokens }),
                 () => !ReferenceEquals(Proposal, heldProposal), OnDelta, usage, ct);
             var l = Localizer.For(Lang);
             // A proposal made and then not a word about it: the proposal is the news.
@@ -339,6 +349,12 @@ public sealed partial class WorldChat
             {
                 usage.InputTokens = (usage.InputTokens ?? 0) + (used.InputTokenCount ?? 0);
                 usage.OutputTokens = (usage.OutputTokens ?? 0) + (used.OutputTokenCount ?? 0);
+                // Part of the input, not on top of it: what the provider served from its cache, and what it wrote into it.
+                if (used.CachedInputTokenCount is > 0 and var read) usage.CacheReadTokens = (usage.CacheReadTokens ?? 0) + read;
+                if (used.AdditionalCounts is { } extra && extra.TryGetValue("CacheCreationInputTokens", out var written) && written > 0)
+                {
+                    usage.CacheWriteTokens = (usage.CacheWriteTokens ?? 0) + written;
+                }
             }
 
             var cutShort = KeepAnswered(response.Messages);
@@ -378,16 +394,16 @@ public sealed partial class WorldChat
     /// has long since used them, and it can look them up again; the stored history keeps them whole for the DM.</summary>
     public static List<ChatMessage> ForModel(ChatMessage system, IReadOnlyList<ChatMessage> history)
     {
-        // Where the DM's last few messages begin; a chat with fewer than that has nothing old yet.
-        var fresh = 0;
-        for (int i = history.Count - 1, seen = 0; i >= 0; i--)
+        // Where the DM's last few messages begin; a chat with fewer than that has nothing old yet. It moves in steps of CutStep (see
+        // there), and depends on nothing but the history, so a chat opened again is cut where it was.
+        var asked = new List<int>();
+        for (var i = 0; i < history.Count; i++)
         {
-            if (history[i].Role == ChatRole.User && !history[i].Contents.OfType<FunctionResultContent>().Any() && ++seen == FreshMessages)
-            {
-                fresh = i;
-                break;
-            }
+            if (history[i].Role == ChatRole.User && !history[i].Contents.OfType<FunctionResultContent>().Any()) asked.Add(i);
         }
+
+        var old = asked.Count > FreshMessages ? (asked.Count - FreshMessages) / CutStep * CutStep : 0;
+        var fresh = old == 0 ? 0 : asked[old];
 
         var calls = history.SelectMany(m => m.Contents).OfType<FunctionCallContent>().GroupBy(c => c.CallId).ToDictionary(g => g.Key, g => g.First().Name);
         var sent = new List<ChatMessage>(history.Count + 1) { system };
