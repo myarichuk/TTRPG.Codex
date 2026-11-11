@@ -938,13 +938,16 @@ public class WorldBuilderTests
         /// <summary>Finish reasons by the number of the call (0 first) that ends with one; the others end normally.</summary>
         public Dictionary<int, ChatFinishReason> Finish { get; } = new();
 
+        /// <summary>What each reply reports it used, when set.</summary>
+        public UsageDetails? Usage { get; set; }
+
         public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var sent = messages.ToList();
             Calls.Add(sent);
             var call = next++;
-            return Task.FromResult(new ChatResponse(replies[call](sent)) { FinishReason = Finish.TryGetValue(call, out var reason) ? reason : null });
+            return Task.FromResult(new ChatResponse(replies[call](sent)) { FinishReason = Finish.TryGetValue(call, out var reason) ? reason : null, Usage = Usage });
         }
 
         // The chat streams its turns; the scripted reply comes as the updates a real model would send.
@@ -1197,6 +1200,31 @@ public class WorldBuilderTests
         Assert.True(snapshots[^1].Any(line => line.StartsWith("tool|[An earlier result of get_page", StringComparison.Ordinal)), "old results are still cut");
         // The last three messages are always whole.
         Assert.True(snapshots[^1].TakeLast(12).Count(line => line.StartsWith("tool|xxxx", StringComparison.Ordinal)) >= 3);
+    }
+
+    [Fact]
+    public async Task Chat_KeepsWhatTheCacheServedAndWrote_AndTheCachedPriceItRanUnder_ForTheTurnsCost()
+    {
+        var model = new ScriptedModel(_ => new ChatMessage(ChatRole.Assistant, "Varr, then."))
+        {
+            Usage = new UsageDetails
+            {
+                InputTokenCount = 1_000_000, OutputTokenCount = 0, CachedInputTokenCount = 900_000,
+                AdditionalCounts = new AdditionalPropertiesDictionary<long> { ["CacheCreationInputTokens"] = 50_000 }
+            }
+        };
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm,
+            price: () => Task.FromResult<AiPriceQuote?>(new AiPriceQuote(2m, 10m, "USD", 0.1m)));
+
+        await chat.SendAsync("A harbour, please.", null, CancellationToken.None);
+
+        var usage = chat.Lines[^1].Usage!;
+        Assert.Equal(1_000_000, usage.InputTokens);
+        Assert.Equal(900_000, usage.CacheReadTokens);
+        Assert.Equal(50_000, usage.CacheWriteTokens);
+        Assert.Equal(0.1m, usage.CachedInputPricePerMTok);
+        // 50k at $2, 900k at $0.10, 50k written at $2.50.
+        Assert.Equal(0.1m + 0.09m + 0.125m, Codex.Web.Components.Campaign.WorldChatView.Cost(usage));
     }
 
     [Fact]

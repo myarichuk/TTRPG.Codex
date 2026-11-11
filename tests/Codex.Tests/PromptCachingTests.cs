@@ -99,12 +99,69 @@ public class PromptCachingTests
         var inner = new Recording();
         var history = Conversation(out var toolResult).Take(4).ToList();
 
-        await new PromptCachingChatClient(inner).GetResponseAsync(history, PromptCachingChatClient.WithPromptCaching(new ChatOptions()));
+        await new PromptCachingChatClient(inner).GetResponseAsync(history, PromptCachingChatClient.WithPromptCaching(new ChatOptions { Tools = [Tool("lookup")] }));
 
         // The only plain user turn is the final-but-one: it is the anchor, and the tool result after it is the end.
         Assert.Equal(new[] { true, true, false, true }, inner.Messages.Select(Marked).ToArray());
         Assert.False(Marked(toolResult));
         Assert.IsType<FunctionResultContent>(inner.Messages[3].Contents.Single());
+    }
+
+    [Fact]
+    public async Task TheToolLoopsLastRound_WhichTakesTheToolsAway_GetsNoBreakpoints()
+    {
+        // At its round limit the loop sends the same conversation without the tools, to make the model answer. Tools come first in the
+        // cached prefix, so that request matches nothing written before it: a marker would only pay the write premium.
+        var inner = new Recording();
+        var history = Conversation(out _);
+
+        await new PromptCachingChatClient(inner).GetResponseAsync(history, PromptCachingChatClient.WithPromptCaching(new ChatOptions()));
+
+        Assert.All(inner.Messages, m => Assert.False(Marked(m)));
+        Assert.Null(inner.Options!.AdditionalProperties);
+    }
+
+    [Fact]
+    public async Task BreakpointsTheCallerPlacedItself_AreLeftToTheCaller()
+    {
+        var inner = new Recording();
+        var own = new TextContent("pinned");
+        own.AdditionalProperties = new AdditionalPropertiesDictionary { [BlockBreakpointKey] = new object() };
+        var history = new List<ChatMessage> { new(ChatRole.System, new List<AIContent> { own }), new(ChatRole.User, "hi") };
+
+        await new PromptCachingChatClient(inner).GetResponseAsync(history, PromptCachingChatClient.WithPromptCaching(new ChatOptions { Tools = [Tool("lookup")] }));
+
+        // Nothing added: two more on top of unknown ones could pass the four a request may carry.
+        Assert.False(Marked(inner.Messages[1]));
+        Assert.False(inner.Options!.Tools![0].AdditionalProperties.ContainsKey(ToolBreakpointKey));
+    }
+
+    [Fact]
+    public async Task BlankText_IsNeverGivenABreakpoint_BecauseTheClientDropsBlankText()
+    {
+        var inner = new Recording();
+        var history = new List<ChatMessage>
+        {
+            new(ChatRole.System, "SYSTEM"), new(ChatRole.User, "a real question"), new(ChatRole.Assistant, "answer"), new(ChatRole.User, "  \n")
+        };
+
+        await new PromptCachingChatClient(inner).GetResponseAsync(history, PromptCachingChatClient.WithPromptCaching(new ChatOptions { Tools = [Tool("lookup")] }));
+
+        // The blank final message cannot carry one; the real question before it is the anchor.
+        Assert.Equal(new[] { true, true, false, false }, inner.Messages.Select(Marked).ToArray());
+    }
+
+    [Fact]
+    public async Task ACopyDoesNotKeepTheRawBlockItCameFrom_WhichTheClientWouldSendInsteadOfTheMarker()
+    {
+        var inner = new Recording();
+        var question = new TextContent("hi") { RawRepresentation = new object() };
+        var history = new List<ChatMessage> { new(ChatRole.System, "SYSTEM"), new(ChatRole.User, new List<AIContent> { question }) };
+
+        await new PromptCachingChatClient(inner).GetResponseAsync(history, PromptCachingChatClient.WithPromptCaching(new ChatOptions { Tools = [Tool("lookup")] }));
+
+        Assert.Null(inner.Messages[1].Contents.Single().RawRepresentation);
+        Assert.NotNull(question.RawRepresentation);
     }
 
     [Fact]

@@ -62,9 +62,34 @@ public sealed class PromptCachingChatClient(IChatClient inner) : DelegatingChatC
             return (messages, chosen);
         }
 
+        var history = messages as IList<ChatMessage> ?? messages.ToList();
+        if (!WorthMarking(history, options.Tools))
+        {
+            return (history, chosen);
+        }
+
         chosen.Tools = MarkLastTool(options.Tools);
-        return (MarkMessages(messages as IList<ChatMessage> ?? messages.ToList()), chosen);
+        return (MarkMessages(history), chosen);
     }
+
+    // Not every asked-for request should get breakpoints.
+    //  - The tool loop's last round takes the tools away (to make the model answer). Tools come first in the cached prefix, so
+    //    a request without them matches nothing written before; marking it would only pay the write premium, on the largest
+    //    request of the turn.
+    //  - A caller that put breakpoints on something itself is managing them: adding ours could pass the four a request may carry.
+    private static bool WorthMarking(IList<ChatMessage> messages, IList<AITool>? tools)
+    {
+        if (tools is not { Count: > 0 } && messages.Any(m => m.Contents.Any(c => c is FunctionCallContent or FunctionResultContent)))
+        {
+            return false;
+        }
+
+        return !(tools?.Any(t => t.AdditionalProperties.ContainsKey(nameof(Tool.CacheControl))) ?? false)
+            && !messages.Any(m => m.Contents.Any(c => c.AdditionalProperties?.ContainsKey(BlockBreakpointKey) == true));
+    }
+
+    // Where the Anthropic client's AIContent extension keeps a block's breakpoint.
+    private const string BlockBreakpointKey = "anthropic:cache_control";
 
     // The last tool that is a function: a breakpoint there caches every tool definition, which stay the same while the system prompt
     // and the history change.
@@ -120,18 +145,19 @@ public sealed class PromptCachingChatClient(IChatClient inner) : DelegatingChatC
 
     // What the person typed, as opposed to the tool results that also travel as a user turn.
     private static bool IsPlainUser(ChatMessage message) =>
-        message.Role == ChatRole.User && message.Contents.Any(c => c is TextContent { Text.Length: > 0 }) && !message.Contents.Any(c => c is FunctionResultContent);
+        message.Role == ChatRole.User && message.Contents.Any(c => c is TextContent { Text: var t } && !string.IsNullOrWhiteSpace(t)) && !message.Contents.Any(c => c is FunctionResultContent);
 
     // A copy of the message whose last block that can take a breakpoint carries one; the message itself when none can (thinking blocks
-    // and empty text are not cacheable).
+    // and blank text are not cacheable: the client drops blank text altogether). The copy leaves out RawRepresentation: the client
+    // sends a block that carries its own SDK block as that block, which would ignore the marker.
     private static ChatMessage Marked(ChatMessage message)
     {
         for (var i = message.Contents.Count - 1; i >= 0; i--)
         {
             AIContent? copy = message.Contents[i] switch
             {
-                TextContent { Text.Length: > 0 } text => new TextContent(text.Text) { Annotations = text.Annotations, RawRepresentation = text.RawRepresentation, AdditionalProperties = text.AdditionalProperties?.Clone() },
-                FunctionResultContent result => new FunctionResultContent(result.CallId, result.Result) { Exception = result.Exception, Annotations = result.Annotations, RawRepresentation = result.RawRepresentation, AdditionalProperties = result.AdditionalProperties?.Clone() },
+                TextContent { Text: var words } text when !string.IsNullOrWhiteSpace(words) => new TextContent(words) { Annotations = text.Annotations, AdditionalProperties = text.AdditionalProperties?.Clone() },
+                FunctionResultContent result => new FunctionResultContent(result.CallId, result.Result) { Exception = result.Exception, Annotations = result.Annotations, AdditionalProperties = result.AdditionalProperties?.Clone() },
                 _ => null
             };
 
