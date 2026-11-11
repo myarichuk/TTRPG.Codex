@@ -1145,12 +1145,15 @@ public class WorldBuilderTests
         var page = new string('x', 5_000);
         ChatMessage Dm(string text) => new(ChatRole.User, text);
         ChatMessage Result(string id, string text) => new(ChatRole.Tool, new List<AIContent> { new FunctionResultContent(id, text) });
+        // Six messages from the DM: the old results go in steps of three, so now the first three messages' turns are cut and the last three are whole.
         var history = new List<ChatMessage>
         {
             Dm("one"), Calls("old", "get_page", """{"page": "harbour"}"""), Result("old", page), Result("small", "short"), new(ChatRole.Assistant, "read it"),
             Dm("two"), new(ChatRole.Assistant, "ok"),
-            Dm("three"), Calls("new", "get_page", """{"page": "pier"}"""), Result("new", page), new(ChatRole.Assistant, "read that too"),
-            Dm("four")
+            Dm("three"), new(ChatRole.Assistant, "fine"),
+            Dm("four"), Calls("new", "get_page", """{"page": "pier"}"""), Result("new", page), new(ChatRole.Assistant, "read that too"),
+            Dm("five"), new(ChatRole.Assistant, "yes"),
+            Dm("six")
         };
 
         var sent = WorldChat.ForModel(new ChatMessage(ChatRole.System, "system"), history);
@@ -1162,6 +1165,38 @@ public class WorldBuilderTests
         Assert.Equal("short", results["small"]);
         Assert.Equal(page, results["new"]);
         Assert.Equal(page, history[2].Contents.OfType<FunctionResultContent>().Single().Result);
+    }
+
+    [Fact]
+    public void Chat_CutsOldToolResultsInSteps_SoTheStartOfTheConversationStaysTheSameBetweenMessages()
+    {
+        // The provider's prompt cache reuses a conversation only as far as it is unchanged from the start. A cut that moved with every
+        // message would change it at the oldest result each time; in steps it holds still for most messages.
+        var page = new string('x', 5_000);
+        var history = new List<ChatMessage>();
+        var snapshots = new List<List<string>>();
+        for (var n = 1; n <= 12; n++)
+        {
+            history.Add(new ChatMessage(ChatRole.User, $"message {n}"));
+            history.Add(Calls($"call{n}", "get_page", """{"page": "p"}"""));
+            history.Add(new ChatMessage(ChatRole.Tool, new List<AIContent> { new FunctionResultContent($"call{n}", page) }));
+            history.Add(new ChatMessage(ChatRole.Assistant, $"answer {n}"));
+            snapshots.Add(WorldChat.ForModel(new ChatMessage(ChatRole.System, "system"), history)
+                .Select(m => m.Role + "|" + string.Join("|", m.Contents.Select(c => c is FunctionResultContent r ? r.Result as string : c is TextContent t ? t.Text : c.GetType().Name)))
+                .ToList());
+        }
+
+        // A message's turn is the same in the next request unless the cut moved: of eleven messages after the first, only some move it.
+        var rewrites = 0;
+        for (var i = 1; i < snapshots.Count; i++)
+        {
+            if (!snapshots[i].Take(snapshots[i - 1].Count).SequenceEqual(snapshots[i - 1])) rewrites++;
+        }
+
+        Assert.True(rewrites <= 3, $"the start of the conversation changed {rewrites} times in 11 messages");
+        Assert.True(snapshots[^1].Any(line => line.StartsWith("tool|[An earlier result of get_page", StringComparison.Ordinal)), "old results are still cut");
+        // The last three messages are always whole.
+        Assert.True(snapshots[^1].TakeLast(12).Count(line => line.StartsWith("tool|xxxx", StringComparison.Ordinal)) >= 3);
     }
 
     [Fact]

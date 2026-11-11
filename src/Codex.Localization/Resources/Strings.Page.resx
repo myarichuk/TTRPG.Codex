@@ -253,6 +253,8 @@
   <data name="Page.AiSettings.Price" xml:space="preserve"><value>Price (optional)</value></data>
   <data name="Page.AiSettings.PriceIn" xml:space="preserve"><value>Input, per 1M tokens</value></data>
   <data name="Page.AiSettings.PriceOut" xml:space="preserve"><value>Output, per 1M tokens</value></data>
+  <data name="Page.AiSettings.PriceCached" xml:space="preserve"><value>Cached input, per 1M tokens</value></data>
+  <data name="Page.AiSettings.PriceCachedHint" xml:space="preserve"><value>Optional: what your provider charges for input it served from its prompt cache. Left empty, those tokens are counted at the input price. Where a provider charges to write the cache (Anthropic), that is counted at 1.25 times the input price.</value></data>
   <data name="Page.AiSettings.PriceLabel" xml:space="preserve"><value>Currency label</value></data>
   <data name="Page.AiSettings.PriceHint" xml:space="preserve"><value>Copy these from your provider's price list. The app ships no prices, so without them it shows tokens only, never a guessed cost.</value></data>
   <data name="Page.AiSettings.PriceBad" xml:space="preserve"><value>A price must be a number from 0 to {0}, or empty.</value></data>

@@ -79,7 +79,7 @@ public static class WorldChatView
     /// <summary>What one turn cost by the prices it ran under, or null when it had none or the server reported no tokens
     /// (we do not guess a cost from a guessed count).</summary>
     public static decimal? Cost(WorldChatUsage usage) =>
-        AiPrice.Cost(usage.InputPricePerMTok, usage.OutputPricePerMTok, usage.InputTokens, usage.OutputTokens);
+        AiPrice.Cost(usage.InputPricePerMTok, usage.OutputPricePerMTok, usage.CachedInputPricePerMTok, usage.InputTokens, usage.OutputTokens, usage.CacheReadTokens, usage.CacheWriteTokens);
 
     /// <summary>The whole chat so far: tokens, and the cost of the turns that had a price. A chat with some unpriced turns says
     /// so instead of presenting a partial sum as the total. Null when no turn reported tokens.</summary>

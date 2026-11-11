@@ -52,6 +52,26 @@ campaign's own.
 
 Models that cannot call tools get a clear message (`WorldChat.Error.NoTools`).
 
+### Prompt caching
+
+Every round of the tool loop sends the tools, the system prompt and the whole history again, so the chat (and the character
+assistant's tool loop) ask the model client for a prompt cache with `PromptCachingChatClient.WithPromptCaching`. Only the
+Anthropic client acts on it: `AIClientFactory` puts a `PromptCachingChatClient` beside it, which marks up to four
+breakpoints (the last tool, the system prompt, the last plain user message before the final one, and the final message) on
+*copies* of the messages, never on the stored history. Other providers cache a repeated prompt start on their own (OpenAI,
+Groq, a local llama.cpp), so there the work is keeping the start of the prompt the same, which is also why:
+
+- `AiPrompts.WorldChat` puts everything that differs by campaign (the game system, the campaign's own words, the outlines,
+  the homebrew types) after the instructions, which are the same for every campaign;
+- `WorldChat.ForModel` cuts old tool results in steps of `CutStep` of the GM's messages, not one more at each message. A cut
+  changes the conversation from its first result on, and a cache reuses only what comes before the change.
+
+The input a client library reports counts what was read from and written to the cache as part of it. `WorldChatUsage` keeps
+`CacheReadTokens` and `CacheWriteTokens` beside `InputTokens`, and `AiPrice.Cost` prices them apart: reads at the optional
+*Cached input* price on the AI settings page (the input price when it is empty), writes at 1.25 times the input price
+(Anthropic's 5-minute rate). A one-shot call (rewrite, summary, the book's art director and editor) asks for no cache: it
+would pay the write premium for an entry nothing reads.
+
 ## 3. Tools
 
 | Tool | Returns |

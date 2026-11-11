@@ -307,6 +307,10 @@ public class AiProviderConfig
     /// <summary>What the user pays per million output tokens. See <see cref="InputPricePerMTok"/>.</summary>
     public decimal? OutputPricePerMTok { get; set; }
 
+    /// <summary>What the user pays per million input tokens the provider read back from its prompt cache; null when they did not say, and
+    /// those tokens are then counted at <see cref="InputPricePerMTok"/>. Text models only.</summary>
+    public decimal? CachedInputPricePerMTok { get; set; }
+
     /// <summary>What the user pays per picture, as they entered it; null when they did not say. Image models only.</summary>
     public decimal? PricePerImage { get; set; }
 
