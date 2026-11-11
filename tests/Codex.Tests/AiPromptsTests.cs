@@ -38,6 +38,28 @@ public class AiPromptsTests
     }
 
     [Fact]
+    public void WorldChat_KeepsWhatDiffersByCampaignAtTheEnd_SoTheStartIsTheSameForEveryCampaign()
+    {
+        // A provider's prompt cache reuses a prompt only as far as it is unchanged from the start; the instructions are long and the same
+        // for every campaign, so what is particular to one (the game, the campaign's words, the outlines, the homebrew types) must come after them.
+        var outline = Codex.Core.LiveTemplate.Sample("## Rumours\n- $rumour$");
+        var one = AiPrompts.WorldChat(new WorldChatRequest("Fifth Edition", "Salt and Ash: a port.", new[] { "spell (Spell)" }, Creature: "monster", Outlines: new Dictionary<string, string> { ["place"] = outline }));
+        var other = AiPrompts.WorldChat(new WorldChatRequest("Crews", "The Long Night.", Array.Empty<string>(), Creature: "foe"));
+
+        var shared = 0;
+        while (shared < Math.Min(one.Length, other.Length) && one[shared] == other[shared]) shared++;
+
+        // Everything up to the instructions' last sentence is common; what differs is after it.
+        var last = one.IndexOf("Invent original names", StringComparison.Ordinal);
+        Assert.True(last > 5_000, "the instructions are the bulk of the prompt");
+        Assert.True(shared > last, $"the prompts part at {shared}, inside the instructions that end at {last}");
+        foreach (var particular in new[] { "Fifth Edition", "Salt and Ash", "Outline of a place", "Homebrew types", "generic monster" })
+        {
+            Assert.True(one.IndexOf(particular, StringComparison.Ordinal) > last, $"{particular} comes before the end of the instructions");
+        }
+    }
+
+    [Fact]
     public void WikiPage_AndWorldChat_FollowTheDmsOutline_WhenThereIsOne()
     {
         var outline = Codex.Core.LiveTemplate.Sample("## Rumours\n- $rumour$\n\n## Stock\n$stock$");

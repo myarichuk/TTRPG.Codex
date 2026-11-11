@@ -555,9 +555,10 @@ public static class AiPrompts
     public static string WorldChat(WorldChatRequest r)
     {
         var examples = r.CreatureExamples is { Count: > 0 } ? r.CreatureExamples : DefaultCreatureExamples;
+        // What is the same for every campaign comes first and what differs comes last: a provider's prompt cache reuses a prompt only as
+        // far as it is unchanged from the start, so a campaign's own words early on would make every campaign's prompt a new one.
         var sb = new StringBuilder();
-        sb.Append($"You help the game master of a {r.SystemName} tabletop campaign build its world, in conversation. ");
-        if (!string.IsNullOrWhiteSpace(r.CampaignContext)) sb.Append($"The campaign: {r.CampaignContext.Trim()} ");
+        sb.Append("You help the game master of a tabletop campaign build its world, in conversation. ");
         sb.Append(
             "Talk with the game master: ask a short question when a choice is really theirs, otherwise decide and say what you chose. " +
             "Before you invent anything, look at what the campaign already has with the tools (search_world, get_page, list_places, search_library, get_entry, list_tags), " +
@@ -609,11 +610,15 @@ public static class AiPrompts
             "A page is usually 150 to 350 words; under each heading write at least two full sentences, or a list whose items are each a full sentence. " +
             "Give every entry a \"pitch\" too: one or two plain sentences saying what it is, for lists and the review card. " +
             PlaceOutline + PersonOutline + FactionOutline + QuestOutline +
-            OutlinesOf(r.Outlines) +
             "Add secrets only where a plot lives in them, never as a quota: write each in a GM block of the text it belongs to, and when the party can uncover it in play, also add it as a \"fact\" linked to the entries it is about. " +
-            $"A person who fights or is fought may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose statistics suit them " +
-            $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as search_library finds it; leave it out when none fits. " +
             "Invent original names; never use the names of published settings, products, or of characters, places, deities or creatures that belong to a company. ");
+
+        // From here on, what belongs to this campaign and its game system.
+        sb.Append($"The game system is {r.SystemName}. ");
+        if (!string.IsNullOrWhiteSpace(r.CampaignContext)) sb.Append($"The campaign: {r.CampaignContext.Trim()} ");
+        sb.Append(OutlinesOf(r.Outlines));
+        sb.Append($"A person who fights or is fought may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose statistics suit them " +
+                  $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as search_library finds it; leave it out when none fits. ");
         if (r.HomebrewTypes.Count > 0) sb.Append($"Homebrew types: {string.Join(", ", r.HomebrewTypes)}. ");
         var language = LanguageName(r.Language);
         sb.Append(language == "English"

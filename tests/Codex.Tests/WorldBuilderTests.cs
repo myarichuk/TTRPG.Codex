@@ -938,13 +938,16 @@ public class WorldBuilderTests
         /// <summary>Finish reasons by the number of the call (0 first) that ends with one; the others end normally.</summary>
         public Dictionary<int, ChatFinishReason> Finish { get; } = new();
 
+        /// <summary>What each reply reports it used, when set.</summary>
+        public UsageDetails? Usage { get; set; }
+
         public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var sent = messages.ToList();
             Calls.Add(sent);
             var call = next++;
-            return Task.FromResult(new ChatResponse(replies[call](sent)) { FinishReason = Finish.TryGetValue(call, out var reason) ? reason : null });
+            return Task.FromResult(new ChatResponse(replies[call](sent)) { FinishReason = Finish.TryGetValue(call, out var reason) ? reason : null, Usage = Usage });
         }
 
         // The chat streams its turns; the scripted reply comes as the updates a real model would send.
@@ -1145,12 +1148,15 @@ public class WorldBuilderTests
         var page = new string('x', 5_000);
         ChatMessage Dm(string text) => new(ChatRole.User, text);
         ChatMessage Result(string id, string text) => new(ChatRole.Tool, new List<AIContent> { new FunctionResultContent(id, text) });
+        // Six messages from the DM: the old results go in steps of three, so now the first three messages' turns are cut and the last three are whole.
         var history = new List<ChatMessage>
         {
             Dm("one"), Calls("old", "get_page", """{"page": "harbour"}"""), Result("old", page), Result("small", "short"), new(ChatRole.Assistant, "read it"),
             Dm("two"), new(ChatRole.Assistant, "ok"),
-            Dm("three"), Calls("new", "get_page", """{"page": "pier"}"""), Result("new", page), new(ChatRole.Assistant, "read that too"),
-            Dm("four")
+            Dm("three"), new(ChatRole.Assistant, "fine"),
+            Dm("four"), Calls("new", "get_page", """{"page": "pier"}"""), Result("new", page), new(ChatRole.Assistant, "read that too"),
+            Dm("five"), new(ChatRole.Assistant, "yes"),
+            Dm("six")
         };
 
         var sent = WorldChat.ForModel(new ChatMessage(ChatRole.System, "system"), history);
@@ -1162,6 +1168,63 @@ public class WorldBuilderTests
         Assert.Equal("short", results["small"]);
         Assert.Equal(page, results["new"]);
         Assert.Equal(page, history[2].Contents.OfType<FunctionResultContent>().Single().Result);
+    }
+
+    [Fact]
+    public void Chat_CutsOldToolResultsInSteps_SoTheStartOfTheConversationStaysTheSameBetweenMessages()
+    {
+        // The provider's prompt cache reuses a conversation only as far as it is unchanged from the start. A cut that moved with every
+        // message would change it at the oldest result each time; in steps it holds still for most messages.
+        var page = new string('x', 5_000);
+        var history = new List<ChatMessage>();
+        var snapshots = new List<List<string>>();
+        for (var n = 1; n <= 12; n++)
+        {
+            history.Add(new ChatMessage(ChatRole.User, $"message {n}"));
+            history.Add(Calls($"call{n}", "get_page", """{"page": "p"}"""));
+            history.Add(new ChatMessage(ChatRole.Tool, new List<AIContent> { new FunctionResultContent($"call{n}", page) }));
+            history.Add(new ChatMessage(ChatRole.Assistant, $"answer {n}"));
+            snapshots.Add(WorldChat.ForModel(new ChatMessage(ChatRole.System, "system"), history)
+                .Select(m => m.Role + "|" + string.Join("|", m.Contents.Select(c => c is FunctionResultContent r ? r.Result as string : c is TextContent t ? t.Text : c.GetType().Name)))
+                .ToList());
+        }
+
+        // A message's turn is the same in the next request unless the cut moved: of eleven messages after the first, only some move it.
+        var rewrites = 0;
+        for (var i = 1; i < snapshots.Count; i++)
+        {
+            if (!snapshots[i].Take(snapshots[i - 1].Count).SequenceEqual(snapshots[i - 1])) rewrites++;
+        }
+
+        Assert.True(rewrites <= 3, $"the start of the conversation changed {rewrites} times in 11 messages");
+        Assert.True(snapshots[^1].Any(line => line.StartsWith("tool|[An earlier result of get_page", StringComparison.Ordinal)), "old results are still cut");
+        // The last three messages are always whole.
+        Assert.True(snapshots[^1].TakeLast(12).Count(line => line.StartsWith("tool|xxxx", StringComparison.Ordinal)) >= 3);
+    }
+
+    [Fact]
+    public async Task Chat_KeepsWhatTheCacheServedAndWrote_AndTheCachedPriceItRanUnder_ForTheTurnsCost()
+    {
+        var model = new ScriptedModel(_ => new ChatMessage(ChatRole.Assistant, "Varr, then."))
+        {
+            Usage = new UsageDetails
+            {
+                InputTokenCount = 1_000_000, OutputTokenCount = 0, CachedInputTokenCount = 900_000,
+                AdditionalCounts = new AdditionalPropertiesDictionary<long> { ["CacheCreationInputTokens"] = 50_000 }
+            }
+        };
+        var chat = new WorldChat(Service().Service, () => Task.FromResult<IChatClient>(model), Campaign, Dm,
+            price: () => Task.FromResult<AiPriceQuote?>(new AiPriceQuote(2m, 10m, "USD", 0.1m)));
+
+        await chat.SendAsync("A harbour, please.", null, CancellationToken.None);
+
+        var usage = chat.Lines[^1].Usage!;
+        Assert.Equal(1_000_000, usage.InputTokens);
+        Assert.Equal(900_000, usage.CacheReadTokens);
+        Assert.Equal(50_000, usage.CacheWriteTokens);
+        Assert.Equal(0.1m, usage.CachedInputPricePerMTok);
+        // 50k at $2, 900k at $0.10, 50k written at $2.50.
+        Assert.Equal(0.1m + 0.09m + 0.125m, Codex.Web.Components.Campaign.WorldChatView.Cost(usage));
     }
 
     [Fact]

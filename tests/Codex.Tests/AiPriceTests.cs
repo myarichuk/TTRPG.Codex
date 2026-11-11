@@ -16,6 +16,38 @@ public class AiPriceTests
         Assert.Equal(0.00075m, AiPrice.Cost(0.15m, 0.6m, 1_000, 1_000));
     }
 
+    [Fact]
+    public void CachedInput_IsPartOfTheInput_ReadsAtTheCachedPrice_WritesAtAQuarterMoreThanInput()
+    {
+        // 1M input of which 600k came from the cache and 100k went into it; $2 in, $0.10 cached, $10 out.
+        var cost = AiPrice.Cost(2m, 10m, 0.10m, 1_000_000, 100_000, 600_000, 100_000);
+
+        // 300k at $2, 600k at $0.10, 100k at $2.50, 100k out at $10.
+        Assert.Equal(0.6m + 0.06m + 0.25m + 1m, cost);
+    }
+
+    [Fact]
+    public void CachedInput_WithNoCachedPrice_CostsWhatItCostBeforeCaching_AndNeverLess()
+    {
+        Assert.Equal(AiPrice.Cost(2m, 10m, 1_000_000, 0), AiPrice.Cost(2m, 10m, null, 1_000_000, 0, 600_000, 0));
+        // Counts that cannot be true (more cached than sent) are held to what was sent.
+        Assert.Equal(AiPrice.Cost(2m, 10m, 0.5m, 1_000, 0, 1_000, 0), AiPrice.Cost(2m, 10m, 0.5m, 1_000, 0, 9_999_999, 0));
+        Assert.Null(AiPrice.Cost(2m, 10m, 0.1m, null, 5, 1, 1));
+    }
+
+    [Fact]
+    public void ATurnsCost_UsesItsCacheNumbersAndTheCachedPriceItRanUnder()
+    {
+        var turn = new WorldChatUsage
+        {
+            InputTokens = 1_000_000, OutputTokens = 0, CacheReadTokens = 900_000, InputPricePerMTok = 2m, OutputPricePerMTok = 10m, CachedInputPricePerMTok = 0.1m
+        };
+
+        Assert.Equal(0.2m + 0.09m, WorldChatView.Cost(turn));
+        // The same turn from before there was a cache: all of it at the input price.
+        Assert.Equal(2m, WorldChatView.Cost(new WorldChatUsage { InputTokens = 1_000_000, OutputTokens = 0, InputPricePerMTok = 2m, OutputPricePerMTok = 10m }));
+    }
+
     [Theory]
     [InlineData(null, 1.0, 10L, 10L)]
     [InlineData(1.0, null, 10L, 10L)]

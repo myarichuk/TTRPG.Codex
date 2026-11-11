@@ -88,7 +88,8 @@ public sealed class CharacterAssist(CampaignLibrary library, ISystemCatalog cata
             instruction,
             language));
         var messages = new List<ChatMessage> { new(ChatRole.System, prompt.System), new(ChatRole.User, prompt.User) };
-        var response = await client.GetResponseAsync(messages, new ChatOptions { Tools = Tools(session), Temperature = 0.7f }, ct);
+        // A tool loop: every round sends the tools and the prompt again, which the provider's prompt cache can serve.
+        var response = await client.GetResponseAsync(messages, PromptCachingChatClient.WithPromptCaching(new ChatOptions { Tools = Tools(session), Temperature = 0.7f }), ct);
         return new CharacterAssistResult
         {
             Changes = session.Proposal ?? new List<SheetChange>(),

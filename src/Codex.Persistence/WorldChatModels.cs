@@ -164,14 +164,24 @@ public class WorldChatStep
 public class WorldChatUsage
 {
     public string? Model { get; set; }
+    /// <summary>All the input the turn sent, as the provider counts it: what was read from or written to its prompt cache is part of this.</summary>
     public long? InputTokens { get; set; }
     public long? OutputTokens { get; set; }
+
+    /// <summary>Of <see cref="InputTokens"/>, what the provider served from its prompt cache. Null when none was.</summary>
+    public long? CacheReadTokens { get; set; }
+
+    /// <summary>Of <see cref="InputTokens"/>, what the provider wrote into its prompt cache (Anthropic bills that above the input price). Null when none was.</summary>
+    public long? CacheWriteTokens { get; set; }
 
     /// <summary>The prices that applied when the turn ran, per million tokens, kept with it: a price changed later must not rewrite
     /// what an old turn cost. Null when the user had entered none.</summary>
     public decimal? InputPricePerMTok { get; set; }
 
     public decimal? OutputPricePerMTok { get; set; }
+
+    /// <summary>The price of input read from the cache, when the user had entered one.</summary>
+    public decimal? CachedInputPricePerMTok { get; set; }
 
     public string? PriceLabel { get; set; }
 

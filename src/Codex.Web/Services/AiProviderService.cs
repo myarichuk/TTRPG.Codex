@@ -262,12 +262,13 @@ public sealed class AiProviderService(
         if (provider != null && !Blocked(provider, user) && ToConfigurationSafe(provider, user))
         {
             return provider.InputPricePerMTok == null && provider.OutputPricePerMTok == null ? null
-                : new AiPriceQuote(provider.InputPricePerMTok, provider.OutputPricePerMTok, provider.PriceLabel);
+                : new AiPriceQuote(provider.InputPricePerMTok, provider.OutputPricePerMTok, provider.PriceLabel, provider.CachedInputPricePerMTok);
         }
 
         var input = configuration.GetValue<decimal?>("AI:InputPricePerMTok");
         var output = configuration.GetValue<decimal?>("AI:OutputPricePerMTok");
-        return input == null && output == null ? null : new AiPriceQuote(input, output, configuration["AI:PriceLabel"] ?? string.Empty);
+        return input == null && output == null ? null
+            : new AiPriceQuote(input, output, configuration["AI:PriceLabel"] ?? string.Empty, configuration.GetValue<decimal?>("AI:CachedInputPricePerMTok"));
     }
 
     // The same test ClientFor applies before it uses the user's own provider: a client can be made from it.
