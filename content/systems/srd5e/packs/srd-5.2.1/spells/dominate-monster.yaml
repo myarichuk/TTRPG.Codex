@@ -46,3 +46,5 @@ properties:
   - Warlock
   - Wizard
   higherLevel: Your Concentration can last longer with a level 9 spell slot (up to 8 hours).
+  use:
+    save: wis

@@ -1,0 +1,26 @@
+id: rituals-performing-a-ritual
+type: rule
+name: Performing a Ritual
+description: >-
+  To perform a ritual, you must have the **Ritual** special ability, then follow the method outlined by the answers to the ritual questions. Most rituals will take **one downtime activity** to complete, though the GM may call for two (or more) downtime activities for very powerful or far-reaching rituals. Some rituals may be partially performed during downtime and then fully manifested at-will later by completing the last incantation or ritual action. In this case, simply make a note that the ritual has been "primed" and may be unleashed at a later time.
+
+
+  When you perform a ritual, you take an amount of **stress** as established by the ritual questions, according to the **magnitude** of the forces brought to bear. The GM uses magnitude as a *guideline* for setting the stress cost—it may be higher or lower at their discretion to better describe the nature of the ritual. Some claims and special abilities also reduce the stress cost for ritual casting (like the Cult's **Ancient Obelisk** claim).
+
+
+  **Rituals take time to cast.** Use the duration examples on the magnitude table to reduce the stress cost based on the time needed, generally no less than an hour.
+
+
+  The GM may also **tick a progress clock** when you perform a ritual—to advance the agenda of an arcane power or entity, or to show the steady approach of a dark outcome that is a consequence of the ritual's use.
+
+
+  If a ritual is dangerous or troublesome to perform, make an **action roll** (usually **Attune**) to see if unpleasant consequences manifest. If a ritual has an uncertain effect then a **fortune roll** should be made to see how well it manifests. Because a ritual is a downtime activity, you may spend **coin** 1-for-1 to increase the result level of your fortune roll (this represents the expenditure of expensive or rare ritual materials). If a ritual is both dangerous and uncertain, then both rolls may be called for.
+
+
+  Each performance of a ritual is a unique event, and may not always work the same way each time. The GM or players may call for a round of questions to establish a ritual anew. Rituals are a way to bring in a wide variety of arcane effects into the game. Use with caution! If you ever go overboard, address the questions again to establish new weirdness and costs if things have gotten out of hand. The abyssal forces are not playthings and cannot be considered a reliable or safe source of power.
+source: Rituals > Performing a Ritual
+tags:
+- ritual
+properties:
+  category: Rituals
+  order: 194

@@ -1,0 +1,11 @@
+id: entanglements-demonic-notice
+type: rule
+name: Demonic notice
+description: A demon approaches the crew with a dark offer. Accept their bargain, hide until it loses interest (forfeit 3 **rep**), or deal with it another way.
+source: Entanglements > Demonic notice
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 158

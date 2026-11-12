@@ -56,6 +56,108 @@ public class SheetRules
     /// <summary>Values copied from a referenced entry onto the sheet when the reference changes
     /// (a species' speed and size). Null: nothing is copied.</summary>
     public List<InheritRule> Inherits { get; set; } = new();
+
+    /// <summary>Where a sheet's features come from (a class's and a subclass's feature rows, a species' traits, the feats
+    /// picked), so what a feature says it grants reaches the sheet: numbers it changes, entries it adds to a list, and a
+    /// counter of its uses. Empty: features are text only.</summary>
+    public List<FeatureSource> Features { get; set; } = new();
+
+    /// <summary>What a sheet can do with a roll: casting what it picked, attacking with what it holds. Each source names
+    /// where the entries are and how their attack bonus, save DC and dice are worked out. Empty: the sheet has no actions.</summary>
+    public List<ActionSource> Actions { get; set; } = new();
+}
+
+/// <summary>
+/// One kind of action and the entries that give it: the entries picked in <see cref="Lists"/>, or the items carried
+/// (<see cref="Inventory"/>). What an entry rolls is the map under its <see cref="Property"/>:
+/// <list type="bullet">
+/// <item><c>attack</c>: <c>melee</c> or <c>ranged</c>: the action starts with an attack roll (<see cref="AttackBonus"/>).</item>
+/// <item><c>abilities</c>: the attributes the attack may use; the best one is <c>abilityMod</c> in the formulas.</item>
+/// <item><c>save</c>: the attribute of the saving throw it asks for, against <see cref="SaveDc"/>.</item>
+/// <item><c>damage</c>: the dice (<c>8d6</c>, <c>1d4+1</c>), <c>damageType</c> their kind, <c>heals: true</c> when they heal.</item>
+/// <item><c>addAbility: true</c>: the dice add <see cref="AbilityBonus"/>.</item>
+/// <item><c>perSlot</c>: dice added for each slot level above the entry's own; <c>atLevels</c>: <c>{ 5: 2d10 }</c>, the dice
+/// from that value of <see cref="ScaleBy"/> on; <c>alternatives</c>: <c>{ two-handed: 1d10 }</c>, other dice it may roll.</item>
+/// </list>
+/// The formulas read the sheet's numbers and derived values, and names of their own: <c>abilityMod</c>, <c>trained</c>
+/// (1 when the first class is trained with the item, see <see cref="ProficiencyRules"/>), and <c>castAttack</c>,
+/// <c>castSave</c> and <c>castMod</c> (the best of the sheet's casting classes, see <see cref="SpellcastingRules"/>).
+/// </summary>
+public class ActionSource
+{
+    /// <summary>Required, unique.</summary>
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>The verb on the button ("Cast", "Attack").</summary>
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>Keys of lists in <c>lists</c> whose picked entries are actions of this kind.</summary>
+    public List<string> Lists { get; set; } = new();
+
+    /// <summary>Or the inventory: <c>equipped</c> for what is worn or wielded, <c>carried</c> for everything.</summary>
+    public string? Inventory { get; set; }
+
+    /// <summary>Only inventory items with this tag (<c>weapons</c>). None: every item that has <see cref="Property"/>.</summary>
+    public string? Tag { get; set; }
+
+    /// <summary>The entry property holding what it rolls. Default <c>use</c>. A picked entry without it is still listed
+    /// (casting it spends a slot and rolls nothing); an item without it is not.</summary>
+    public string Property { get; set; } = "use";
+
+    /// <summary>The entry property with its level; an entry of level 1 or more spends a slot of <see cref="Spends"/>.</summary>
+    public string? LevelProperty { get; set; }
+
+    /// <summary>Keys of the <c>slotPools</c> an action may spend from: one slot of the entry's level or higher.</summary>
+    public List<string> Spends { get; set; } = new();
+
+    /// <summary>Formula for the number added to the attack roll.</summary>
+    public string? AttackBonus { get; set; }
+
+    /// <summary>Formula for the DC of the saving throw.</summary>
+    public string? SaveDc { get; set; }
+
+    /// <summary>Formula for a number added to every entry's dice.</summary>
+    public string? DamageBonus { get; set; }
+
+    /// <summary>Formula for the number added to the dice of an entry that says <c>addAbility</c>.</summary>
+    public string? AbilityBonus { get; set; }
+
+    /// <summary>The sheet value an entry's <c>atLevels</c> is read by. Default: the system's level field.</summary>
+    public string? ScaleBy { get; set; }
+}
+
+/// <summary>
+/// One place features come from. Either <see cref="Field"/> (the entry a reference field names) or <see cref="List"/> (every
+/// entry picked in a list). With <see cref="Property"/> the features are that property's rows (<c>name</c>, <c>description</c>,
+/// and <see cref="LevelColumn"/>); without it the entry itself is one feature. A feature, row or entry, may carry:
+/// <list type="bullet">
+/// <item><c>modifiers</c>: <c>[{ target, amount, type, when }]</c>, as everywhere else. <c>target</c> is the armor class or
+/// hit point key, a derived value, or a Number actor field; <c>amount</c> is a number or a formula; a <c>type</c> the system
+/// stacks as <c>best</c> sets a floor ("at least 120") instead of adding.</item>
+/// <item><c>adds</c>: <c>[{ to, entries, level }]</c>: entries put on a pick list (by id or name) or values on a tag list,
+/// from <c>level</c> on. They leave again when the feature does.</item>
+/// <item><c>uses</c>: <c>{ max, recoversOn, key }</c>: a counter of uses, <c>max</c> a number or a formula, refilled by the
+/// rests named.</item>
+/// </list>
+/// </summary>
+public class FeatureSource
+{
+    /// <summary>The EntityReference actor field whose entry carries the features (<c>class</c>, <c>subclass</c>, <c>species</c>).
+    /// With multiclass rules, the class and subclass fields are read once per class.</summary>
+    public string? Field { get; set; }
+
+    /// <summary>Or: the key of a list in <c>lists</c> whose picked entries carry them (<c>feats</c>).</summary>
+    public string? List { get; set; }
+
+    /// <summary>The entry property holding feature rows (<c>features</c>, <c>traits</c>). None: the entry is one feature and
+    /// carries <c>modifiers</c>, <c>adds</c> and <c>uses</c> among its own properties.</summary>
+    public string? Property { get; set; }
+
+    /// <summary>A row's column saying from which level it applies. Default <c>level</c>; a row without it always applies.</summary>
+    public string LevelColumn { get; set; } = "level";
+
+    /// <summary>The sheet value a row's level is compared with (<c>classLevel</c>, <c>level</c>). None: rows are not gated.</summary>
+    public string? ByField { get; set; }
 }
 
 /// <summary>

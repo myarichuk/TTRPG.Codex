@@ -1,0 +1,35 @@
+id: crafting-crafting-crafting-roll
+type: rule
+name: CRAFTING ROLL
+description: >-
+  ⏣ **1d** for each **Tinker** action dot.
+
+
+  ⊕ **+1** quality per **Coin** spent.
+
+
+  ⊕ **+1** quality for **Workshop** crew upgrade.
+
+
+  * **Critical**: Quality level is Tier +2.
+
+  * **6**: Quality level is Tier +1.
+
+  * **4/5**: Quality level is equal to Tier.
+
+  * **1-3**: Quality level is Tier -1.
+
+
+  ---
+
+
+  The GM sets a **minimum quality** level that must be achieved to craft the item, based on the **magnitude** of the effect(s) it produces. The GM uses magnitude as a *guideline* for setting the quality level—it may be higher or lower at their discretion to better describe the nature of the project. An item may be crafted at *higher* quality if the player wishes to attempt it.
+
+
+  You may spend **coin** 1-for-1 to increase the final quality level result of your roll (this can raise quality level beyond Tier +2).
+source: Crafting > Crafting > CRAFTING ROLL
+tags:
+- crafting
+properties:
+  category: Crafting
+  order: 199

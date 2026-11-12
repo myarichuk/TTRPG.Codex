@@ -1,0 +1,11 @@
+id: character-creation-choose-a-special-ability
+type: rule
+name: Choose a special ability
+description: Take a look at the special abilities for your playbook and choose one. If you can't decide which one to pick, go with the first one on the list—it's placed there as a good default choice.
+source: Character creation > Choose a special ability
+tags:
+- character
+- creation
+properties:
+  category: Character creation
+  order: 89

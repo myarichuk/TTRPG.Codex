@@ -1,0 +1,19 @@
+id: rituals-learning-a-ritual-example-ritual-answers
+type: rule
+name: Example Ritual Answers
+description: >-
+  > Player: "The ritual wards a person so that the ghosts of their victims cannot find them. It's weird because... as long as the ward is in place, the person sometimes weeps tears of black blood."
+
+  >
+
+  > GM: "Spend a downtime action to prepare a mixture of tobacco, dream smoke, and crematory ash from a victim—which the target then smokes. You take at least 3 stress when you perform the ritual, which will be its quality for a fortune roll when it's challenged by a spirit—so you might want to take more stress to make it more potent."
+
+  >
+
+  > Player: "Gotcha. My new fear is what will happen if the spirits figure out where the ward came from and turn their vengeance on me, instead."
+source: Rituals > Learning a ritual > Example Ritual Answers
+tags:
+- ritual
+properties:
+  category: Rituals
+  order: 193

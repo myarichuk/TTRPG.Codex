@@ -1,0 +1,11 @@
+id: a-little-something-on-the-side
+type: special-ability
+name: A little something on the side
+description: >-
+  At the end of each downtime phase, you earn **+2 stash**.
+
+
+  > Since this money comes at the end of downtime, after all downtime actions are resolved, you can't remove it from your stash and spend it on extra activities until your next downtime phase.
+source: Character playbook > Special abilities > A little something on the side
+tags:
+- example

@@ -17,7 +17,8 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
             query = query.Where(h => h.IsPublished);
         }
 
-        return Normalized(await query.OrderBy(h => h.Name).ToListAsync());
+        var entries = Normalized(await query.OrderBy(h => h.Name).ToListAsync());
+        return access.IsDm ? entries : entries.Select(ForPlayers).ToList();
     }
 
     public async Task<HomebrewEntryDocument?> GetVisibleAsync(string id, CampaignAccess access)
@@ -29,7 +30,9 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
             return null;
         }
 
-        return access.IsDm || entry.IsPublished ? Normalized(new[] { entry })[0] : null;
+        if (!access.IsDm && !entry.IsPublished) return null;
+        var normalized = Normalized(new[] { entry })[0];
+        return access.IsDm ? normalized : ForPlayers(normalized);
     }
 
     public async Task<bool> TrySaveAsync(HomebrewEntryDocument entry, CampaignAccess access)
@@ -137,6 +140,35 @@ public class RavenHomebrewRepository(RavenDbService dbService) : IHomebrewReposi
             .Where(h => h.CampaignId == campaignId)
             .ToListAsync());
     }
+
+    /// <summary>A published entry as a player is handed it: the GM's blocks (<see cref="SecretText"/>) are gone from its
+    /// description and from every text in its properties (a feature's description), so they never reach a player's browser.
+    /// The entry was loaded for this read alone, so it is changed in place.</summary>
+    internal static HomebrewEntryDocument ForPlayers(HomebrewEntryDocument entry)
+    {
+        entry.Description = SecretText.ForPlayers(entry.Description);
+        entry.Properties = (Dictionary<string, object>)Redacted(entry.Properties)!;
+        return entry;
+    }
+
+    /// <summary>The same for an entry a character carries: what a player wrote or was given never holds a GM's block.</summary>
+    internal static CarriedEntry ForPlayers(CarriedEntry entry) => new()
+    {
+        Type = entry.Type,
+        EntryId = entry.EntryId,
+        Name = entry.Name,
+        Description = SecretText.ForPlayers(entry.Description),
+        Tags = new List<string>(entry.Tags),
+        Properties = (Dictionary<string, object>)Redacted(YamlValues.NormalizeMap(entry.Properties))!
+    };
+
+    private static object? Redacted(object? value) => value switch
+    {
+        string text => SecretText.ForPlayers(text),
+        IDictionary<string, object> map => map.ToDictionary(p => p.Key, p => Redacted(p.Value)!),
+        System.Collections.IEnumerable list => list.Cast<object?>().Select(Redacted).ToList<object>()!,
+        _ => value
+    };
 
     /// <summary>RavenDB reads numbers inside an <c>object</c> back as its own lazy type ("18.0");
     /// the editor, the stat block and the exporter all want plain longs and doubles.</summary>

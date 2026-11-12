@@ -31,10 +31,13 @@
     {
         <p class="ref-subtype">@Subtype</p>
     }
-    <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(BodyText))</div>
+    <div class="rules-text">@((MarkupString)SecretRender.Html(BodyText, TextFormatting.ToHtml, Dm))</div>
 </div>
 
 @code {
+    /// <summary>Set by <see cref="EntryDetail"/> when the reader is the GM; null leaves GM blocks out.</summary>
+    [CascadingParameter(Name = "EntryDm")] public DmView? Dm { get; set; }
+
     [Parameter, EditorRequired] public ContentEntry Entry { get; set; } = null!;
 
     public static bool CanShow(ContentEntry entry) =>

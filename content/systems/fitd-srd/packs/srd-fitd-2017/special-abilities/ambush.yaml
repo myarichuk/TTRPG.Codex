@@ -1,0 +1,11 @@
+id: ambush
+type: special-ability
+name: Ambush
+description: >-
+  When you attack from hiding or spring a trap, you get **+1d** to your roll.
+
+
+  > This ability benefits from preparation— so don't forget you can do that in a flashback.
+source: Character playbook > Special abilities > Ambush
+tags:
+- example

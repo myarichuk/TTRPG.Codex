@@ -39,3 +39,8 @@ properties:
   - Cleric
   damageType: Radiant
   higherLevel: The healing and damage increase by 1d12 for each spell slot level above 7.
+  use:
+    save: dex
+    damage: 6d12
+    damageType: Radiant
+    addAbility: true

@@ -1,0 +1,10 @@
+id: rituals-finding-a-ritual-source
+type: rule
+name: Finding a ritual source
+description: A PC with the **Ritual** special ability begins with one known ritual, already learned (answer the questions below to create it). To learn a new ritual, a PC must first find a **source**. A source may be secured as payoff from a score—perhaps you steal a ritual book when your crew robs the Museum of Antiquities. You might also secure a source as the goal of a long-term project—by consorting with cultist friends, studying ancient texts, or some other method you devise.
+source: Rituals > Finding a ritual source
+tags:
+- ritual
+properties:
+  category: Rituals
+  order: 190

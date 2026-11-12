@@ -1,0 +1,7 @@
+id: anointed
+type: crew-ability
+name: Anointed
+description: You gain **+1d** to **resistance** rolls against supernatural threats. You get **+1d** to healing rolls when you have supernatural harm.
+source: Crew playbook > Crew special abilities > Anointed
+tags:
+- example

@@ -1,0 +1,27 @@
+id: magnitude-force-examples
+type: rule
+name: FORCE EXAMPLES
+description: >-
+  |   |                                                                             |
+
+  | :---: | :-------------------------------------------------------------------------- |
+
+  | **6** | *Hurricane wind, molten lava, tidal wave, electrical maelstrom*             |
+
+  | **5** | *A ship's cannon, raging thunder-storm, massive fire, lightning strike*     |
+
+  | **4** | *A charging horse, burning forge, bomb, whirlwind, electrocution*           |
+
+  | **3** | *A crushing blow, staggering wind, grenade, searing fire, electrical surge* |
+
+  | **2** | *A powerful blow, howling wind, burning brand*                              |
+
+  | **1** | *A solid punch, steady wind, torch flame, electrical shock*                 |
+
+  | **0** | *A firm shove, a candle flame, breeze, tiny spark*                          |
+source: Magnitude > FORCE EXAMPLES
+tags:
+- magnitude
+properties:
+  category: Magnitude
+  order: 188

@@ -1,0 +1,11 @@
+id: predators
+type: crew-ability
+name: Predators
+description: >-
+  When you use a stealth or deception plan to commit murder, take **+1d** to the **engagement roll**.
+
+
+  > This ability applies when the goal is murder. It doesn't apply to other stealth or deception operations you attempt that happen to involve killing.
+source: Crew playbook > Crew special abilities > Predators
+tags:
+- example

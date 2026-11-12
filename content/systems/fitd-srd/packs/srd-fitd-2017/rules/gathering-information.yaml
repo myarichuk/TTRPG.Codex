@@ -1,0 +1,29 @@
+id: gathering-information
+type: rule
+name: Gathering Information
+description: >-
+  The flow of information from the GM to the players about the fictional world is very important in a roleplaying game. By default, the GM tells the players what their characters perceive, suspect, and intuit. But there's just too much going on to say *everything*—it would take forever and be boring, too. The players have a tool at their disposal to more fully investigate the fictional world.
+
+
+  When you want to know something specific about the fictional world, your character can **gather information**. The GM will ask you **how** your character gathers the info (or how they learned it in the past).
+
+
+  If it's common knowledge, the GM will simply answer your questions. If there's an obstacle to the discovery of the answer, an action roll is called for. If it's not common knowledge but there's no obstacle, a simple fortune roll determines the quality of the information you gather.
+
+
+  Each attempt to gather information takes time. If the situation allows, you can try again if you don't initially get all the info that you want. But often, the opportunity is fleeting, and you'll only get one chance to roll for that particular question.
+
+
+  Some example questions are on the bottom of the character sheet. The GM always answers honestly, but with a level of detail according to the level of effect.
+
+
+  The most common gather information actions are **Surveying** the situation to reveal or anticipate what's going on and **Studying** a person to understand what they intend to do or what they're really thinking.
+
+
+  Sometimes, you'll have to maneuver yourself into position before you can gather information. For example, you might have to **Prowl** to a good hiding place first and then **Study** the cultists when they perform their dark ritual.
+source: Gathering Information
+tags:
+- gather-information
+properties:
+  category: Gathering Information
+  order: 60

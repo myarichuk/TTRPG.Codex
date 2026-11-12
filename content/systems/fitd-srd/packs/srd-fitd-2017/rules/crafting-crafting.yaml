@@ -1,0 +1,14 @@
+id: crafting-crafting
+type: rule
+name: Crafting
+description: >-
+  To craft something, spend one **downtime activity** to make a **Tinker** roll to determine the **quality level** of the item you produce. The base quality level is equal to your crew's Tier, modified by the result of the roll (see the results in the next section).
+
+
+  The results are based on your crew's Tier because it indicates the overall quality of the workspace and materials you have access to. *If you do the work with the **Workshop** upgrade for your crew, your effective Tier level is one higher for this roll.*
+source: Crafting > Crafting
+tags:
+- crafting
+properties:
+  category: Crafting
+  order: 198

@@ -1,0 +1,11 @@
+id: entanglements-rivals
+type: rule
+name: Rivals
+description: A neutral faction throws their weight around. They threaten you, a friend, a contact, or one of your vice purveyors. Forfeit (1 **rep** or 1 **coin**) per Tier of the rival, or stand up to them and lose **1 status** with them.
+source: Entanglements > Rivals
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 164

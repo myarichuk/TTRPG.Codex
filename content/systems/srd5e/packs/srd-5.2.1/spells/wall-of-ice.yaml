@@ -45,3 +45,8 @@ properties:
   - Wizard
   damageType: Cold
   higherLevel: The damage the wall deals when it appears increases by 2d6 and the damage from passing through the sheet of frigid air increases by 1d6 for each spell slot level above 6.
+  use:
+    save: dex
+    damage: 10d6
+    damageType: Cold
+    perSlot: 1d6

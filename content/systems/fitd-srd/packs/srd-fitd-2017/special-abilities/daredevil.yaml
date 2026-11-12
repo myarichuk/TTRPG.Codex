@@ -1,0 +1,11 @@
+id: daredevil
+type: special-ability
+name: Daredevil
+description: >-
+  When you roll a **desperate** action, you get **+1d** to your roll if you also take **-1d** to any resistance rolls against consequences from your action.
+
+
+  > This special ability is a bit of a gamble. The bonus die helps you, but if you suffer consequences, they'll probably be more costly to resist. But hey, you're a daredevil, so no big deal, right?
+source: Character playbook > Special abilities > Daredevil
+tags:
+- example

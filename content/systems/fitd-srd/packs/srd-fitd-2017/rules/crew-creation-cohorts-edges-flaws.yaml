@@ -1,0 +1,37 @@
+id: crew-creation-cohorts-edges-flaws
+type: rule
+name: Edges & flaws
+description: >-
+  When you create a cohort, give them one or two **edges** and an equal number of **flaws**.
+
+
+  **Edges**
+
+
+  * **Fearsome:** The cohort is terrifying in aspect and reputation.
+
+  * **Independent:** The cohort can be trusted to make good decisions and act on their own initiative in the absence of direct orders.
+
+  * **Loyal:** The cohort can't be bribed or turned against you.
+
+  * **Tenacious:** The cohort won't be deterred from a task.
+
+
+  **Flaws**
+
+
+  * **Principled:** The cohort has an ethic or values that it won't betray.
+
+  * **Savage:** The cohort is excessively violent and cruel.
+
+  * **Unreliable:** The cohort isn't always available, due to other obligations, stupefaction from their vices, etc.
+
+  * **Wild:** The cohort is drunken, debauched, and loud-mouthed.
+source: Crew creation > Cohorts > Edges & flaws
+tags:
+- crew
+- creation
+- cohort
+properties:
+  category: Crew creation
+  order: 112

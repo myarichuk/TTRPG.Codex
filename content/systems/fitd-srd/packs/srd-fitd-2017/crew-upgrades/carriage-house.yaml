@@ -1,0 +1,7 @@
+id: carriage-house
+type: crew-upgrade
+name: Carriage House
+description: You have a carriage, and draft animals to pull it, and a stable. A second upgrade improves the carriage with armor and larger, swifter steeds.
+source: Crew creation > Crew upgrade Examples
+tags:
+- example

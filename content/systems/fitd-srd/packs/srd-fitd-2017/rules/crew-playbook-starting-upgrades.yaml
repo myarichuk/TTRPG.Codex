@@ -1,0 +1,14 @@
+id: crew-playbook-starting-upgrades
+type: rule
+name: Starting upgrades
+description: >-
+  * First upgrade
+
+  * Second upgrade
+source: Crew playbook > Starting upgrades
+tags:
+- crew
+- playbook
+properties:
+  category: Crew playbook
+  order: 118

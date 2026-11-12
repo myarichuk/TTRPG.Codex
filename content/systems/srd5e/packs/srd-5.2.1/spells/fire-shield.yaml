@@ -43,3 +43,6 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Fire
+  use:
+    damage: 2d8
+    damageType: Fire

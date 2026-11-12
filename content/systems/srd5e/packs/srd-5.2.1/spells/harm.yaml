@@ -33,3 +33,7 @@ properties:
   classes:
   - Cleric
   damageType: Necrotic
+  use:
+    save: con
+    damage: 14d6
+    damageType: Necrotic

@@ -1,0 +1,20 @@
+id: gathering-information-examples-questions-gather-information
+type: rule
+name: GATHER INFORMATION
+description: >-
+  *Ask a question and make an action roll or a fortune roll. The GM answers you honestly, with a level of detail depending on the effect level.*
+
+
+  **Great**: You get exceptional details. The information is complete and follow-up questions may expand into related areas or reveal more than you hoped for.
+
+
+  **Standard**: You get good details. Clarifying and follow-up questions are possible.
+
+
+  **Limited**: You get incomplete or partial information. More information gathering will be needed to get all the answers.
+source: Gathering Information > Examples & Questions > GATHER INFORMATION
+tags:
+- gather-information
+properties:
+  category: Gathering Information
+  order: 63

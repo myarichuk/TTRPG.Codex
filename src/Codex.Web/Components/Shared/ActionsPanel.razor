@@ -1,0 +1,190 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* What the sheet can cast and attack with (sheetRules.actions): a row per spell or weapon with its attack bonus, saving
+   throw and dice, and buttons that spend the slot and roll. The owner says where a spent slot and a roll go, so the same
+   panel serves the sheet (edits the sheet, rolls here or into the session's log) and the live table (runtime commands). *@
+
+@if (Actions.Count > 0)
+{
+    <section class="@(Bare ? null : "panel")" aria-labelledby="@(id)-heading" data-testid="actions-panel">
+        <div class="@(Bare ? "field-label" : "panel-title")">
+            @if (Bare)
+            {
+                <span id="@(id)-heading">@(Title ?? L["Actor.Actions.Title"])</span>
+            }
+            else
+            {
+                <h2 id="@(id)-heading" class="h5"><LucideIcon IconName="swords" Size="18" Class="title-icon" /> @(Title ?? L["Actor.Actions.Title"])</h2>
+            }
+        </div>
+
+        <ul class="list-unstyled mb-0 action-list">
+            @foreach (var action in Actions)
+            {
+                var entryKey = action.Entry.Type + "-" + action.Entry.Id;
+                var cost = SelectedCost(action);
+                var damage = cost?.Damage ?? action.Damage;
+                var verb = Definition?.DisplayValue(action.Source.Label) ?? action.Source.Label;
+                var name = Name(action);
+                <li class="action-row" data-testid="action-@entryKey">
+                    <div class="action-what">
+                        <span class="action-name">@name</span>
+                        <span class="small-muted" data-testid="action-meta-@entryKey">@Meta(action, damage)</span>
+                    </div>
+                    @if (!ReadOnly)
+                    {
+                        <div class="d-flex flex-wrap align-items-center gap-1 ms-auto">
+                            @if (action.Spends)
+                            {
+                                @if (action.Costs.Count > 1)
+                                {
+                                    <select class="form-select form-select-sm action-slot" aria-label="@L["Actor.Actions.SlotFor", name]" data-testid="action-slot-@entryKey"
+                                            value="@(cost?.Key)" @onchange="e => chosen[entryKey] = e.Value?.ToString() ?? string.Empty">
+                                        @foreach (var option in action.Costs)
+                                        {
+                                            <option value="@option.Key">@L["Actor.Actions.SlotOption", option.Level, Left(option)]</option>
+                                        }
+                                    </select>
+                                }
+                                else if (cost != null)
+                                {
+                                    <span class="small-muted" data-testid="action-left-@entryKey">@L["Actor.Actions.SlotOption", cost.Level, Left(cost)]</span>
+                                }
+                                else
+                                {
+                                    <span class="small-muted">@L["Actor.Actions.NoSlots"]</span>
+                                }
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(cost == null || Left(cost) <= 0)" data-testid="@($"action-use-{entryKey}")"
+                                             aria-label="@($"{verb}: {name}")" OnClick="() => UseAsync(action, cost)">@verb</CodexButton>
+                            }
+                            else if (action.Attack != null)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"action-use-{entryKey}")"
+                                             aria-label="@($"{verb}: {name}")" OnClick="() => UseAsync(action, null)">@verb</CodexButton>
+                            }
+
+                            @if (SheetAction.HasDice(damage) && (action.Attack != null || !action.Spends))
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"action-damage-{entryKey}")"
+                                             aria-label="@DamageLabel(action, name)" OnClick="() => RollDamageAsync(action, damage!, null)">@(action.Heals ? L["Actor.Actions.Healing"] : L["Actor.Actions.Damage"])</CodexButton>
+                            }
+
+                            @foreach (var (alternative, dice) in action.Alternatives)
+                            {
+                                var other = Definition?.DisplayValue(alternative) ?? alternative;
+                                @if (SheetAction.HasDice(dice))
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"action-damage-{entryKey}-{alternative}")"
+                                                 aria-label="@($"{DamageLabel(action, name)} ({other})")" OnClick="() => RollDamageAsync(action, dice, other)">@other</CodexButton>
+                                }
+                            }
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+
+        @if (!Bare)
+        {
+            <p class="small-muted mt-2 mb-0">@L["Actor.Actions.Note"]</p>
+        }
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public SheetEvaluation? Evaluation { get; set; }
+
+    /// <summary>Reads a slot key's value ("slots_3" or "slots_3_Max"), or null when absent.</summary>
+    [Parameter, EditorRequired] public Func<string, int?> Value { get; set; } = _ => null;
+
+    /// <summary>The system as the reader reads it, for the names of its attributes and slots.</summary>
+    [Parameter] public SystemDefinition? Definition { get; set; }
+
+    /// <summary>Names an entry in the reader's language; the entry's own name when it cannot.</summary>
+    [Parameter] public Func<ContentEntry, string?>? EntryName { get; set; }
+
+    [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>Inside another panel: no frame of its own and no note.</summary>
+    [Parameter] public bool Bare { get; set; }
+
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>(slot key, -1, what it was spent on).</summary>
+    [Parameter] public EventCallback<(string Key, int Delta, string Label)> OnSpend { get; set; }
+
+    [Parameter] public EventCallback<ActionRoll> OnRoll { get; set; }
+
+    private readonly string id = $"actions-{Guid.NewGuid():N}";
+    private readonly Dictionary<string, string> chosen = new(StringComparer.Ordinal);
+
+    private IReadOnlyList<SheetAction> Actions =>
+        Evaluation?.Actions.OrderBy(a => Evaluation.Actions.FindIndex(x => x.Source == a.Source)).ThenBy(a => a.Level).ThenBy(a => Name(a), StringComparer.CurrentCultureIgnoreCase).ToList()
+        ?? (IReadOnlyList<SheetAction>)Array.Empty<SheetAction>();
+
+    private string Name(SheetAction action) => EntryName?.Invoke(action.Entry) ?? action.Entry.Name;
+
+    private int Left(ActionCost cost)
+    {
+        var max = Value(cost.Pool.MaxKeyFor(cost.Level)) ?? 0;
+        return Math.Clamp(Value(cost.Key) ?? max, 0, max);
+    }
+
+    /// <summary>The slot the player picked, else the lowest that still has one, else the lowest.</summary>
+    private ActionCost? SelectedCost(SheetAction action)
+    {
+        if (action.Costs.Count == 0) return null;
+        if (chosen.TryGetValue(action.Entry.Type + "-" + action.Entry.Id, out var key) && action.Costs.FirstOrDefault(c => c.Key == key) is { } picked) return picked;
+        return action.Costs.FirstOrDefault(c => Left(c) > 0) ?? action.Costs[0];
+    }
+
+    private string AttributeName(string key) => Definition?.Attributes.FirstOrDefault(a => a.Key == key) is { } attribute ? attribute.Abbreviation ?? attribute.Label : key;
+
+    private static string Signed(int value) => value >= 0 ? $"+{value}" : value.ToString();
+
+    private string Meta(SheetAction action, string? damage)
+    {
+        var parts = new List<string>();
+        if (action.Level > 0) parts.Add(L["Actor.Slots.Level", action.Level]);
+        if (action.Attack != null && action.AttackBonus is { } bonus) parts.Add(L["Actor.Actions.ToHit", Signed(bonus)]);
+        if (action.SaveAttribute != null) parts.Add(action.SaveDc is { } dc ? L["Actor.Actions.Save", AttributeName(action.SaveAttribute), dc] : AttributeName(action.SaveAttribute));
+        if (damage != null) parts.Add(action.Heals ? L["Actor.Actions.Heals", damage] : action.DamageType is { } type ? $"{damage} {Definition?.DisplayValue(type) ?? type}" : damage);
+        return string.Join(" · ", parts);
+    }
+
+    private string DamageLabel(SheetAction action, string name)
+    {
+        var label = action.Heals ? L["Actor.Actions.RollHealing", name]
+            : action.DamageType is { } type ? L["Actor.Actions.RollDamage", name, Definition?.DisplayValue(type) ?? type]
+            : L["Actor.Actions.RollDamagePlain", name];
+        return action.SaveAttribute != null && action.SaveDc is { } dc ? L["Actor.Actions.SaveSuffix", label, AttributeName(action.SaveAttribute), dc] : label;
+    }
+
+    /// <summary>Cast or Attack: spends the slot, then rolls the attack; without an attack roll, the dice.</summary>
+    private async Task UseAsync(SheetAction action, ActionCost? cost)
+    {
+        var name = Name(action);
+        if (cost != null)
+        {
+            var unit = Definition?.DisplayValue(cost.Pool.UnitName) ?? cost.Pool.UnitName;
+            await OnSpend.InvokeAsync((cost.Key, -1, L["Actor.Actions.Spent", name, cost.Level, unit]));
+        }
+
+        if (action.Attack != null)
+        {
+            await OnRoll.InvokeAsync(new ActionRoll(L["Actor.Actions.RollAttack", name], action.AttackBonus ?? 0, null));
+        }
+        else if ((cost?.Damage ?? action.Damage) is { } dice && SheetAction.HasDice(dice))
+        {
+            await OnRoll.InvokeAsync(new ActionRoll(DamageLabel(action, name), null, dice));
+        }
+    }
+
+    private Task RollDamageAsync(SheetAction action, string dice, string? alternative)
+    {
+        var label = DamageLabel(action, Name(action));
+        return OnRoll.InvokeAsync(new ActionRoll(alternative == null ? label : $"{label} ({alternative})", null, dice));
+    }
+}

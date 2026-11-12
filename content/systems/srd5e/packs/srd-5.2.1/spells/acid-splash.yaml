@@ -37,3 +37,11 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Acid
+  use:
+    save: dex
+    damage: 1d6
+    damageType: Acid
+    atLevels:
+      5: 2d6
+      11: 3d6
+      17: 4d6

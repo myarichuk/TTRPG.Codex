@@ -39,3 +39,7 @@ properties:
   - Wizard
   damageType: Fire
   higherLevel: You create one additional ray for each spell slot level above 2.
+  use:
+    attack: ranged
+    damage: 2d6
+    damageType: Fire

@@ -1,0 +1,39 @@
+id: advancement-pc-advancement
+type: rule
+name: PC Advancement
+description: >-
+  Each player keeps track of the experience points (**xp**) that their character earns.
+
+
+  During the game session, mark xp:
+
+
+  * When you make a **desperate action roll**. Mark 1 xp in the attribute for the action you rolled. For example, if you roll a desperate **Skirmish** action, you mark xp in **Prowess**. When you roll in a **group action** that's desperate, you also mark xp.
+
+
+  At the end of the session, review the **xp triggers** on your character sheet. For each one, mark 1 xp if it happened at all, or mark 2 xp if it happened a lot during the session. The xp triggers are:
+
+
+  * **Your playbook-specific xp trigger**. For example, the Cutter's is *"Address a challenge with violence or coercion."* To "address a challenge," your character should attempt to overcome a tough obstacle or threat. It doesn't matter if the action is successful or not. You get xp either way.
+
+  * **You expressed your beliefs, drives, heritage, or background.** Your character's beliefs and drives are yours to define, session to session. Feel free to tell the group about them when you mark xp.
+
+  * **You struggled with issues from your vice or traumas**. Mark xp for this if your vice tempted you to some bad action or if a trauma condition caused you trouble. Simply indulging your vice doesn't count as struggling with it (unless you **overindulge**).
+
+
+  You may mark end-of-session xp on any xp tracks you want (any attribute or your playbook xp track).
+
+
+  When you fill an xp track, clear all the marks and take an **advance**. When you take an advance from your playbook track, you may choose an additional **special ability**. When you take an advance from an attribute, you may add an **additional action dot** to one of the actions under that attribute.
+
+
+  > Nadja is playing a Hound. At the end of the session, she reviews her xp triggers and tells the group how much xp she's getting. She rolled two desperate **Hunt** actions during the session, so she marked 2 xp on her **Insight** xp track. She addressed several challenges with tracking or violence, so she marks 2 xp for that. She expressed her Iruvian heritage many times when dealing with the Red Sashes, so she takes 2 xp for that. She also showcased her character's beliefs, but 2 xp is the maximum for that category, so she doesn't get any more. She didn't struggle with her vice or traumas, so no xp there. That's 4 xp at the end of the session. She decides to put it all in her **Insight** xp track. This fills the track, so she adds a new action dot in **Hunt**.
+
+
+  You can also earn xp by **training** during downtime. When you train, mark xp in one of your attributes or in your playbook. A given xp track can be trained only once per downtime phase.
+source: Advancement > PC Advancement
+tags:
+- advancement
+properties:
+  category: Advancement
+  order: 81

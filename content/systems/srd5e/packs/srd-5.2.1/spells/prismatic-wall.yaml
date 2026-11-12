@@ -63,3 +63,7 @@ properties:
   - Bard
   - Wizard
   damageType: Acid
+  use:
+    save: con
+    damage: 12d6
+    damageType: Acid

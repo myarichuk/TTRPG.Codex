@@ -1,0 +1,10 @@
+id: action-roll-2-the-player-chooses-the-action-rating
+type: rule
+name: 2. The Player Chooses the Action Rating
+description: The player chooses which **action rating** to roll, following from what their character is doing on-screen. If you want to roll your **Skirmish** action, then get in a fight. If you want to roll your **Command** action, then order someone around. You can't roll a given action rating unless your character is presently performing that action in the fiction.
+source: Action Roll > 2. The Player Chooses the Action Rating
+tags:
+- action-roll
+properties:
+  category: Action Roll
+  order: 30

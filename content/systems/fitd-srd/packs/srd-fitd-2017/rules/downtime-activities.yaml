@@ -1,0 +1,42 @@
+id: downtime-activities
+type: rule
+name: Downtime activities
+description: >-
+  Between scores, your crew spends time at their liberty, attending to personal needs and side projects. These are called **downtime activities** (see the list below). During a downtime phase, each PC has time for **two downtime activities**. *When you're at war, each PC has time for only one.*
+
+
+  * Acquire Asset
+
+  * Long-Term Project
+
+  * Recover
+
+  * Reduce Heat
+
+  * Train
+
+  * Indulge Vice
+
+
+  You may choose the same activity more than once. You can only attempt actions that you're in a position to accomplish. If an activity is contingent on another action, resolve that action first.
+
+
+  A PC can make time for more than two activities, at a cost. **Each additional activity from the list costs** **1** **coin** or **1** **rep**. This reflects the time and resulting resource drain while you're "off the clock" and not earning from a score. When you complete a new score, you reset and get two "free" activities again.
+
+
+  Activities on the downtime list are limited; normal actions are not. During downtime, you can still go places, do things, make action rolls, gather information, talk with other characters, etc. In other words, only activities that are *on the list* are limited.
+
+
+  For any downtime activity, take **+1d** to the roll if a **friend** or **contact** helps you. After the roll, you may spend **coin** after the roll to improve the result level. **Increase the result level by one for each **coin** spent.** So, a **1-3** result becomes a **4** or a **5**, a **4/5** result becomes a **6**, and a **6** becomes a **critical**.
+
+
+  **GM:** If a player can't decide which downtime activity to pick, offer them a long-term project idea. You know what the player is interested in and what they like. Suggest a project that will head in a fun direction for them.
+
+
+  > "Remember how you had that weird vision at the altar to the forgotten gods? Yeah, do you want to get to the bottom of that? Okay, start a long-term project—six segments—called... 'Weird God Vibes.' What do you do to work on that?"
+source: Downtime activities
+tags:
+- downtime
+properties:
+  category: Downtime activities
+  order: 168

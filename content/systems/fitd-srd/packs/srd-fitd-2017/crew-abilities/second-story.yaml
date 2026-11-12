@@ -1,0 +1,7 @@
+id: second-story
+type: crew-ability
+name: Second story
+description: When you execute a clandestine infiltration, you get **+1d** to the **engagement roll**.
+source: Crew playbook > Crew special abilities > Second story
+tags:
+- example

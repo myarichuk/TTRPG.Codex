@@ -1,0 +1,15 @@
+id: crew-creation-choose-a-special-ability
+type: rule
+name: Choose a special ability
+description: >-
+  Take a look at the special abilities for your crew and choose one. If you can't decide which one to pick, go with the first one on the list—it's placed there as a good default choice. It's important to pick a special ability that everyone is excited about. You can get more special abilities in the future by earning xp.
+
+
+  Just like picking the crew type, reputation, lair, and hunting grounds, choosing a special ability is another chance to focus the game down to a more specific range of possibilities. That's a lot to work with, and it helps get the game going in a strong direction from the very beginning.
+source: Crew creation > Choose a special ability
+tags:
+- crew
+- creation
+properties:
+  category: Crew creation
+  order: 106

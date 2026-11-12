@@ -1,0 +1,26 @@
+id: crew-creation-assign-crew-upgrades
+type: rule
+name: Assign crew upgrades
+description: >-
+  An upgrade is a valuable asset that helps the crew in some way, like a boat or a gang (see the complete descriptions in the following sections). Each crew type has two pre-selected **upgrades** that suit that crew (like **Prowess** **Training** and a **gang** of Thugs for the Bravos crew).
+
+
+  You get to add **two additional upgrades** to your new crew (so you'll have a total of four upgrades when you start). You can choose from the specific upgrades available to your crew type or the general upgrades on the crew sheet.
+
+
+  When you assign your two upgrades, the GM will tell you about two factions that are impacted by your choices:
+
+
+  * One faction helped you get an upgrade. They like you, and you get **+1 status** with them. At your option, spend 1 **coin** to repay their kindness, and take **+2 status** with them instead.
+
+  * One faction was screwed over when you got an upgrade. They don't like you, and you get **-2 status** with them. At your option, spend 1 **coin** to mollify them, and take **-1 status** with them instead.
+
+
+  You'll be able get more upgrades in the future by earning xp
+source: Crew creation > Assign crew upgrades
+tags:
+- crew
+- creation
+properties:
+  category: Crew creation
+  order: 107

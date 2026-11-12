@@ -1,0 +1,15 @@
+id: downtime-activities-stress-relief
+type: rule
+name: Stress Relief
+description: >-
+  Your characters are a special lot. They defy the powers-that-be and dare to prey on those who are considered to be their betters. They push themselves further than ordinary people are willing to go. But this comes at a cost. Their life is one of constant stress. Inevitably, each turns to the seduction of a **vice** in order to cope.
+
+
+  A character's vice is their obsession. But with this indulgence comes relief from stress and the ability to once again face the overwhelming challenge of their daring life.
+source: Downtime activities > Stress Relief
+tags:
+- downtime
+- stress
+properties:
+  category: Downtime activities
+  order: 176

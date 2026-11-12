@@ -41,3 +41,8 @@ properties:
   - Wizard
   damageType: Fire
   higherLevel: The damage increases by 1d6 for each spell slot level above 1.
+  use:
+    save: dex
+    damage: 3d6
+    damageType: Fire
+    perSlot: 1d6

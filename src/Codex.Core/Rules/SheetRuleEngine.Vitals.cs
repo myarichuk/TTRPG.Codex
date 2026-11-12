@@ -12,7 +12,9 @@ public sealed record HitPointLevel(int Level, string ClassName, int Die, int Bas
 
 /// <summary>Maximum hit points as the rules work them out. <see cref="Active"/> is false in manual mode
 /// or while no class with a hit die is chosen: the sheet's own number stands.</summary>
-public sealed record HitPointSummary(string Mode, bool Active, int Max, int Modifier, IReadOnlyList<HitPointLevel> Levels, int LevelExtra = 0, string? ExtraSource = null);
+/// <param name="Granted">What features add on top of the levels, each with its source (already in <paramref name="Max"/>).</param>
+public sealed record HitPointSummary(string Mode, bool Active, int Max, int Modifier, IReadOnlyList<HitPointLevel> Levels, int LevelExtra = 0, string? ExtraSource = null,
+    IReadOnlyList<GrantedModifier>? Granted = null);
 
 /// <summary>One contribution to armor class. <see cref="Kind"/> says what it is (body, dex, unarmored, defense, bonus, misc) so the UI words it in
 /// the reader's language; <see cref="Entry"/> is the item, class or feat behind it, whose name the UI shows translated.</summary>
@@ -179,7 +181,11 @@ public sealed partial class SheetRuleEngine
             }
         }
 
-        result.HitPoints = new HitPointSummary(mode, mode != "manual" && levels.Count > 0, levels.Sum(l => l.Gain), modifier, levels, extra, extra != 0 ? extraEntry!.Name : null);
+        var fromLevels = levels.Sum(l => l.Gain);
+        var granted = new List<GrantedModifier>();
+        var max = result.Pending.TryGetValue(rules.Key, out var pending) && levels.Count > 0 ? Math.Max(WithModifiers(fromLevels, pending, rules.Key, granted), 1) : fromLevels;
+        result.Granted.AddRange(granted);
+        result.HitPoints = new HitPointSummary(mode, mode != "manual" && levels.Count > 0, max, modifier, levels, extra, extra != 0 ? extraEntry!.Name : null, granted);
     }
 
     /// <summary>
@@ -287,6 +293,14 @@ public sealed partial class SheetRuleEngine
                 if ((Property(pick.Entry, rules.RequiresArmorProperty) is true or "true" or "True") && body == null) continue;
                 candidates.Add((Untyped, (long)bonus.Value, new ArmorClassLine("bonus", pick.Entry.Name, (int)bonus.Value, pick.Entry)));
             }
+        }
+
+        // What features grant: a type the system stacks as best is another base to choose from, the rest add up.
+        foreach (var (feature, type, amount) in result.Pending.GetValueOrDefault(rules.Key) ?? new())
+        {
+            var isBase = IsBestType(type);
+            if (isBase && body != null) continue; // a feature's own defense, like a class's, is for the unarmored
+            candidates.Add((isBase ? BaseType : type ?? Untyped, amount, new ArmorClassLine(isBase ? "defense" : "bonus", feature.Name, amount)));
         }
 
         var misc = YamlValues.GetInt(sheet, rules.MiscField) ?? 0;

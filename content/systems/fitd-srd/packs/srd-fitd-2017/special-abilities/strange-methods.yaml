@@ -1,0 +1,11 @@
+id: strange-methods
+type: special-ability
+name: Strange methods
+description: >-
+  When you **invent** or **craft** a creation with *arcane* features, get **+1 result level** to your roll (a **1-3** becomes a **4/5**, etc.). You begin with one arcane design already known.
+
+
+  > Follow the Inventing procedure with the GM  to define your first arcane design.
+source: Character playbook > Special abilities > Strange methods
+tags:
+- example

@@ -46,3 +46,6 @@ properties:
   - Druid
   - Sorcerer
   - Wizard
+  use:
+    save: con
+    damage: 1d4

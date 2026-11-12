@@ -1,0 +1,24 @@
+id: consequences-and-harm-harm-harm-examples
+type: rule
+name: Harm examples
+description: >-
+  **Fatal (4)**: *Electrocuted, Drowned, Stabbed in the Heart.*
+
+
+  **Severe (3)**: *Impaled, Broken Leg, Shot in Chest, Badly Burned, Terrified.*
+
+
+  **Moderate (2)**: *Exhausted, Deep Cut to Arm, Concussion, Panicked, Seduced.*
+
+
+  **Lesser (1)**: *Battered, Drained, Distracted, Scared, Confused.*
+
+
+  Harm like "Drained" or "Exhausted" can be a good fallback consequence if there's nothing else threatening a PC (like when they spend all night **Studying** those old books, looking for any clues to their enemy's weaknesses before he strikes).
+source: Consequences and Harm > Harm > Harm examples
+tags:
+- consequence
+- harm
+properties:
+  category: Consequences and Harm
+  order: 53

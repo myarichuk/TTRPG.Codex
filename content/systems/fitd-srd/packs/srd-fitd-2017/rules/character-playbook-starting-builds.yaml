@@ -1,0 +1,24 @@
+id: character-playbook-starting-builds
+type: rule
+name: Starting builds
+description: >-
+  *If you want some guidance when you assign your four starting action dots and special ability, use one of these templates.*
+
+
+  **Example 1.** 4 Action Dots assigned plus a special ability
+
+
+  **Example 2.** 4 Action Dots assigned plus a special ability
+
+
+  **Example 3.** 4 Action Dots assigned plus a special ability
+
+
+  **Example 4.** 4 Action Dots assigned plus a special ability
+source: Character playbook > Starting builds
+tags:
+- character
+- playbook
+properties:
+  category: Character playbook
+  order: 99

@@ -1,0 +1,24 @@
+id: planning-engagement-engagement-roll-major-advantages-disadvantages
+type: rule
+name: Major Advantages / Disadvantages
+description: >-
+  * Is this operation particularly bold or daring? Take **+1d**. Is this operation overly complex or contingent on many factors? Take **-1d**.
+
+  * Does the **plan's detail** expose a vulnerability of the target or hit them where they're weakest? Take **+1d**. Is the target strongest against this approach, or do they have particular defenses or special preparations? Take **-1d**.
+
+  * Can any of your **friends or contacts** provide aid or insight for this operation? Take **+1d**. Are any **enemies or rivals** interfering in the operation? Take **-1d**.
+
+  * Are there any **other elements** that you want to consider? Maybe a lower-Tier target will give you +1d.  Maybe a higher-Tier target will give you -1d. Maybe there's a situation in the district that makes the operation more or less tricky.
+
+
+  The engagement roll assumes that the PCs are approaching the target as intelligently as they can, given the plan and detail they provided, so we don't need to play out tentative probing maneuvers, special precautions, or other ponderous non-action. The engagement roll covers all of that. The PCs are already in action, facing the first obstacle—up on the rooftop, picking the lock on the window; kicking down the door of the rival gang's lair; maneuvering to speak with a Lord at the masquerade party; etc.
+
+
+  Don't make the engagement roll and then describe the PCs *approaching* the target. It's the approach that the engagement roll resolves. Cut to the action that results *because of* that initial approach—to the first serious obstacle in their path.
+source: Planning & engagement > Engagement Roll > Major Advantages / Disadvantages
+tags:
+- score
+- engagement
+properties:
+  category: Planning & engagement
+  order: 129

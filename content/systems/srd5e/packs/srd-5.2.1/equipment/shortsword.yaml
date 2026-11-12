@@ -24,6 +24,13 @@ properties:
   cost: 10 gp
   weight: 2
   damage: 1d6 Piercing
+  use:
+    attack: melee
+    abilities:
+    - str
+    - dex
+    damage: 1d6
+    damageType: Piercing
   properties:
   - Finesse
   - Light

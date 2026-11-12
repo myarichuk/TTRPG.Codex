@@ -1,0 +1,64 @@
+id: actions-attributes-resistance-roll-example-action-attribute-ratings
+type: rule
+name: EXAMPLE ACTION & ATTRIBUTE RATINGS
+description: >-
+  #### **Insight**
+
+
+  | Action | Rating |
+
+  | :-- | :-- |
+
+  | **Hunt** | ●○○○ |
+
+  | **Study** | ○○○○ |
+
+  | **Survey** | ○○○○ |
+
+  | **Tinker** | ○○○○ |
+
+
+  This character has a **Hunt** action rating of 1.  Their **Insight** attribute rating is 1 (the first column of dots).
+
+
+  #### **Prowess**
+
+
+  | Action | Rating |
+
+  | :-- | :-- |
+
+  | **Finesse** | ○○○○ |
+
+  | **Prowl** | ●○○○ |
+
+  | **Skirmish** | ●●○○ |
+
+  | **Wreck** | ○○○○ |
+
+
+  They also have **Prowl** 1 and **Skirmish** 2.  Their **Prowess** attribute rating is 2.
+
+
+  #### **Resolve**
+
+
+  | Action | Rating |
+
+  | :-- | :-- |
+
+  | **Attune** | ●●○○ |
+
+  | **Command** | ●○○○ |
+
+  | **Consort** | ○○○○ |
+
+  | **Sway** | ●○○○ |
+source: Actions & Attributes > Resistance Roll > EXAMPLE ACTION & ATTRIBUTE RATINGS
+tags:
+- actions
+- attributes
+- resistance
+properties:
+  category: Actions & Attributes
+  order: 14

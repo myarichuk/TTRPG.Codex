@@ -1,0 +1,31 @@
+id: planning-engagement
+type: rule
+name: Planning & engagement
+description: >-
+  Your crew spends time planning each score. They huddle around a flickering lantern in their lair, looking at scrawled maps, whispering plots and schemes, bickering about the best approach, lamenting the dangers ahead, and lusting after stacks of coin.
+
+
+  But you, the players, don't have to do the nitty-gritty planning. The characters take care of that, off-screen. All you have to do is choose what **type of plan** the characters *have already made*. There's no need to sweat all the little details and try to cover every eventuality ahead of time, because the **engagement roll** (detailed in the next section) ultimately determines how much trouble you're in when the plan is put in motion. *No plan is ever perfect.* You can't account for everything. This system assumes that there's always some unknown factors and trouble—major or minor—in every operation; you just have to make the best of it.
+
+
+  There are six different plans, each with a missing **detail** you need to provide (see the list below). To "plan an operation," simply choose the plan and supply the detail. Then the GM will **cut to the action** as the first moments of the operation unfold.
+
+
+  * Assault - Do violence to a target. *Detail: The point of attack.*
+
+  * Deception - Lure, trick, or manipulate. *Detail: The method of deception.*
+
+  * Stealth - Trespass unseen. *Detail: The point of infiltration.*
+
+  * Occult - Engage a supernatural power. *Detail: The arcane method.*
+
+  * Social - Negotiate, bargain, or persuade. *Detail: The social connection.*
+
+  * Transport - Carry cargo or people through danger. *Detail: The route and means.*
+source: Planning & engagement
+tags:
+- score
+- engagement
+properties:
+  category: Planning & engagement
+  order: 125

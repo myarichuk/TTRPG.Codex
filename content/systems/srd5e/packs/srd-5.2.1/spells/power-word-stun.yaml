@@ -39,3 +39,5 @@ properties:
   - Sorcerer
   - Warlock
   - Wizard
+  use:
+    save: con

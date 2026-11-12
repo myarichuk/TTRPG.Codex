@@ -24,6 +24,12 @@ properties:
   cost: 5 gp
   weight: 2
   damage: 1d6 Slashing
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d6
+    damageType: Slashing
   properties:
   - Light
   - Thrown

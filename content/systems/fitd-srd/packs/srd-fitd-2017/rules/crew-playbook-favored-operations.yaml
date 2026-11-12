@@ -1,0 +1,11 @@
+id: crew-playbook-favored-operations
+type: rule
+name: Favored Operations
+description: 'A list of operation types that the crew may perform. Some possibilities include: murder, ranson, extortion, sabotage, acquisition, consecration, sacrifice, sale, supply, show of force, socialize, burglary, espionage, robbery, smuggling arms, smuggling contraband, or smuggling passengers.'
+source: Crew playbook > Favored Operations
+tags:
+- crew
+- playbook
+properties:
+  category: Crew playbook
+  order: 119

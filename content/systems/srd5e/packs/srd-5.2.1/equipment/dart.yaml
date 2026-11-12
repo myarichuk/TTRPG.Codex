@@ -26,6 +26,12 @@ properties:
   cost: 5 gp
   weight: 0.25
   damage: 1d4 Piercing
+  use:
+    attack: ranged
+    abilities:
+    - dex
+    damage: 1d4
+    damageType: Piercing
   properties:
   - Finesse
   - Thrown

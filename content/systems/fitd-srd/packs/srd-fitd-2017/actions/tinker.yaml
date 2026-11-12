@@ -1,0 +1,13 @@
+id: tinker
+type: action
+name: Tinker
+description: >-
+  When you **Tinker**, you fiddle with devices and mechanisms.
+
+
+  *You might create a new gadget or alter an existing item. You might pick a lock or crack a safe. You might disable an alarm or trap. You might turn the clockwork and electroplasmic devices around the city to your advantage. You could try to use your technical expertise to control a vehicle (but Finessing might be better).*
+source: Actions & Attributes > Actions
+tags:
+- insight
+properties:
+  attribute: insight

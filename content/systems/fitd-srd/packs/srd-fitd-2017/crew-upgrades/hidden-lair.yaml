@@ -1,0 +1,7 @@
+id: hidden-lair
+type: crew-upgrade
+name: Hidden Lair
+description: Your lair has a secret location and is disguised to hide it from view. If your lair is discovered, use two downtime activities and pay **coin** equal to your Tier to relocate it and hide it once again.
+source: Crew creation > Crew upgrade Examples
+tags:
+- example

@@ -39,3 +39,7 @@ properties:
   - Cleric
   - Druid
   damageType: Necrotic
+  use:
+    save: con
+    damage: 11d8
+    damageType: Necrotic

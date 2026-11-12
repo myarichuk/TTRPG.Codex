@@ -1,0 +1,11 @@
+id: downtime-activities-indulging-your-vice-ignoring-your-vice
+type: rule
+name: Ignoring your vice
+description: If you do not or cannot indulge your vice during a downtime phase, you take stress equal to your **trauma**. If you don't have any **trauma**, you're free to ignore your vice. It doesn't have a hold over you (yet).
+source: Downtime activities > Indulging Your Vice > Ignoring your vice
+tags:
+- downtime
+- vice
+properties:
+  category: Downtime activities
+  order: 179

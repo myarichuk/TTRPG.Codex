@@ -1,0 +1,10 @@
+id: the-basics-the-crew
+type: rule
+name: The Crew
+description: In addition to creating characters, you'll also create the crew by choosing which type of criminal enterprise you're interested in exploring.
+source: The Basics > The Crew
+tags:
+- basics
+properties:
+  category: The Basics
+  order: 4

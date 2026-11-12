@@ -1,0 +1,9 @@
+id: hardened
+type: crew-upgrade
+name: Hardened
+description: Each PC gets **+1** **trauma** **box**. This costs three upgrades to unlock, not just one. *This may bring a PC with 4 **trauma** back into play if you wish.*
+source: Crew playbook > Crew upgrades
+tags:
+- example
+properties:
+  cost: 3

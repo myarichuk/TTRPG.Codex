@@ -40,3 +40,6 @@ properties:
   - Druid
   - Wizard
   higherLevel: The damage increases by 1d8 for each spell slot level above 4.
+  use:
+    damage: 2d8
+    perSlot: 1d8

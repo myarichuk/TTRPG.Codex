@@ -194,6 +194,9 @@ public class ActorDocument
     /// <summary>On a campaign's copy of a vault character: the vault character it was brought in from (7).</summary>
     public string? VaultSourceId { get; set; }
 
+    /// <summary>On a vault character: Library entries of its own, which no pack has (<see cref="CarriedEntry"/>).</summary>
+    public List<CarriedEntry> Carried { get; set; } = new();
+
     /// <summary>A character in its owner's vault, outside every campaign.</summary>
     [Newtonsoft.Json.JsonIgnore]
     public bool IsVault => string.IsNullOrEmpty(CampaignId);

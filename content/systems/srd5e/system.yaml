@@ -207,6 +207,20 @@ sheetRules:
       appliedKey: speciesApplied
       copy: { speed: speed, size: size, darkvision: darkvision }
 
+  # Where features come from, so that what a feature grants reaches the sheet. A feature row (or a feat) may carry
+  #   modifiers: [{ target: darkvision, amount: 120, type: base }, { target: HP_Max, amount: "2 + classLevel" }]
+  #   adds:      [{ to: grantedSpells, entries: [darkness], level: 3 }, { to: resistances, entries: [necrotic] }]
+  #   uses:      { max: "max(1, mod(cha))", recoversOn: [Long Rest] }
+  # beside its name and description. A modifier's type "base" sets a floor (at least 120) or, on armor class, another
+  # unarmored defense; without a type it adds. Entries without any of these stay text, as before.
+  features:
+    - { field: class,    property: features, byField: classLevel }
+    - { field: subclass, property: features, byField: classLevel }
+    - { field: species,  property: traits }
+    - { list: feats }
+    - { list: fightingStyles }
+    - { list: extraOriginFeats }
+
   # Saving throws follow the first class, skills your picks plus the background's. Expertise is a second
   # tick on a skill you are proficient in.
   skills:
@@ -265,6 +279,25 @@ sheetRules:
   # Multiclassing: "class" is the first class, the others are listed with their levels, and "level"
   # stays the character level (proficiency bonus, feat minimums). Lookups above read each class's
   # own row through classLevel; lists accept an entry any one class allows and add the limits up.
+  # What the sheet can do with a roll. A spell or a weapon says what it rolls in its "use" property; the formulas here add
+  # the character's numbers. castAttack, castSave and castMod come from "spellcasting" above; abilityMod is the best of the
+  # weapon's abilities; trained is 1 when the class is trained with the weapon ("proficiencies" above).
+  actions:
+    - key: cast
+      label: Cast
+      lists: [cantrips, spells, grantedSpells]
+      levelProperty: level
+      spends: [slots, pact]
+      attackBonus: castAttack
+      saveDc: castSave
+      abilityBonus: castMod
+    - key: attack
+      label: Attack
+      inventory: equipped
+      tag: weapons
+      attackBonus: abilityMod + trained * proficiencyBonus
+      damageBonus: abilityMod
+
   multiclass:
     key: multiclass
     label: Additional classes
@@ -320,7 +353,7 @@ layout:
   - { section: attributes, icon: zap, widgets: [{ widget: attributes }, { widget: skills }, { widget: fields }, { widget: classes }, { widget: library }] }
   - { section: picks, icon: sparkles, widgets: [{ widget: picks }] }
   - { section: inventory, icon: package, widgets: [{ widget: inventory }] }
-  - { section: vitals, icon: heart, aside: true, widgets: [{ widget: hit-points }, { widget: armor-class }, { widget: slots }, { widget: level-up }] }
+  - { section: vitals, icon: heart, aside: true, widgets: [{ widget: hit-points }, { widget: armor-class }, { widget: slots }, { widget: actions }, { widget: features }, { widget: level-up }] }
 
 dice:
   initiative: 1d20

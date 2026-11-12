@@ -42,3 +42,5 @@ properties:
   - Sorcerer
   - Warlock
   - Wizard
+  use:
+    save: wis

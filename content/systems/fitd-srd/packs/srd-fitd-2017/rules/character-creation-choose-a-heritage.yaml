@@ -1,0 +1,11 @@
+id: character-creation-choose-a-heritage
+type: rule
+name: Choose a heritage
+description: Your character's **heritage** describes where their family line is from. When you choose a heritage, write a detail about your family life on the line above.
+source: Character creation > Choose a heritage
+tags:
+- character
+- creation
+properties:
+  category: Character creation
+  order: 86

@@ -44,3 +44,5 @@ properties:
   - Sorcerer
   - Wizard
   higherLevel: Your Concentration can last longer with a spell slot of level 6 (up to 10 minutes), 7 (up to 1 hour), or 8+ (up to 8 hours).
+  use:
+    save: wis

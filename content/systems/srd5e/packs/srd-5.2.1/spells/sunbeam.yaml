@@ -45,3 +45,7 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Radiant
+  use:
+    save: con
+    damage: 6d8
+    damageType: Radiant

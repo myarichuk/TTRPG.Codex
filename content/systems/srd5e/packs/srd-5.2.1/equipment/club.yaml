@@ -24,6 +24,12 @@ properties:
   cost: 1 sp
   weight: 2
   damage: 1d4 Bludgeoning
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d4
+    damageType: Bludgeoning
   properties:
   - Light
   mastery: Slow

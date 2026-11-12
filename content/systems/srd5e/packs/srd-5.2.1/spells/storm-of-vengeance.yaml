@@ -43,3 +43,7 @@ properties:
   classes:
   - Druid
   damageType: Thunder
+  use:
+    save: con
+    damage: 2d6
+    damageType: Thunder

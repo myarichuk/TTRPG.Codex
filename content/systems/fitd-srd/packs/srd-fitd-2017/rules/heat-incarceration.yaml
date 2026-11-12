@@ -1,0 +1,33 @@
+id: heat-incarceration
+type: rule
+name: Incarceration
+description: >-
+  The only way to reduce your crew's **wanted level** is through incarceration. When one of your crew members, friends, contacts—or a framed enemy—is convicted and incarcerated for crimes associated with your crew, your **wanted level** is reduced by 1 and you clear your **heat**.
+
+
+  Incarceration may result from investigation and arrest by the officers, or because someone turns themselves in and takes the fall for the crew's crimes.
+
+
+  The severity of the prison sentence depends on your **wanted level**:
+
+
+  * **Wanted Level 4**: Life or execution.
+
+  * **Wanted Level 3**: A year or two.
+
+  * **Wanted Level 2**: Several months.
+
+  * **Wanted Level 1**: A month or two.
+
+  * **Wanted Level 0**: A few weeks. Or, the constables give you a beating to teach you a lesson (suffer level 3 harm, no resistance roll allowed—they keep going until you're injured).
+
+
+  Incarceration is dehumanizing and brutal. The renown of your crew is your only real defense inside. When you serve your time, make an **incarceration roll** using your crew's Tier as the dice pool.
+source: Heat > Incarceration
+tags:
+- heat
+- downtime
+- incarceration
+properties:
+  category: Heat
+  order: 146

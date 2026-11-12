@@ -1,0 +1,18 @@
+id: resistance-and-armor-armor
+type: rule
+name: Armor
+description: >-
+  If you have a type of **armor** that applies to the situation, you can mark an armor box to reduce or avoid a consequence, instead of rolling to resist.
+
+
+  > Silas is taking level 2 harm, "Cut to the Ribs," and the fight isn't even over yet, so Ian decides to use Silas's armor to reduce the harm. He marks the armor box and the harm becomes level 1, "Bruised." If Silas was wearing heavy armor, he could mark a second armor box and reduce the harm again, to zero.
+
+
+  When an armor box is marked, it can't be used again until it's restored. All of your armor is restored when you choose your **load** for the next score.
+source: Resistance and Armor > Armor
+tags:
+- resistance
+- armor
+properties:
+  category: Resistance and Armor
+  order: 56

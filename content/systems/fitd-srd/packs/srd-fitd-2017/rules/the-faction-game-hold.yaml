@@ -1,0 +1,10 @@
+id: the-faction-game-hold
+type: rule
+name: Hold
+description: On the faction ladder next to the Tier numbers is a letter indicating the strength of each faction's **hold**. Hold represents how well a faction can maintain their current position on the ladder. W indicates **weak** hold. S indicates **strong** hold. Your crew begins with **strong** hold at **Tier 0**.
+source: The Faction Game > Hold
+tags:
+- faction
+properties:
+  category: The Faction Game
+  order: 71

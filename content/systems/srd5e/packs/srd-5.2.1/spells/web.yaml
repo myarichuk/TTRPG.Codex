@@ -45,3 +45,7 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Fire
+  use:
+    save: dex
+    damage: 2d4
+    damageType: Fire

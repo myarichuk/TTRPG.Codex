@@ -1,0 +1,7 @@
+id: analyst
+type: special-ability
+name: Analyst
+description: During downtime, you get **two ticks** to distribute among any long term project clocks that involve investigation or learning a new formula or design plan.
+source: Character playbook > Special abilities > Analyst
+tags:
+- example

@@ -1,0 +1,12 @@
+id: character-creation-choose-a-special-ability-special-armor
+type: rule
+name: Special Armor
+description: Some special abilities refer to your **special armor**. Each character sheet has a set of three boxes to track usage of armor (standard, heavy, and special). If you have any abilities that use your special armor, tick its box when you activate one of them. If you don't have any special abilities that use special armor, then you can't use that armor box at all.
+source: Character creation > Choose a special ability > Special Armor
+tags:
+- character
+- creation
+- armor
+properties:
+  category: Character creation
+  order: 90

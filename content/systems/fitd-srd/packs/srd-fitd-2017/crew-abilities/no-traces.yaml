@@ -1,0 +1,11 @@
+id: no-traces
+type: crew-ability
+name: No traces
+description: >-
+  When you keep an operation quiet or make it look like an accident, you get half the **rep** value of the target (round up) instead of zero. When you end downtime with zero **heat**, take **+1** **rep**.
+
+
+  > There are many clients who value quiet operations. This ability rewards you for keeping a low-profile.
+source: Crew playbook > Crew special abilities > No traces
+tags:
+- example

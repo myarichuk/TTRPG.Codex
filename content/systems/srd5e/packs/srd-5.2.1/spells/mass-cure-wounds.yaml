@@ -40,3 +40,8 @@ properties:
   - Cleric
   - Druid
   higherLevel: The healing increases by 1d8 for each spell slot level above 5.
+  use:
+    damage: 5d8
+    heals: true
+    addAbility: true
+    perSlot: 1d8

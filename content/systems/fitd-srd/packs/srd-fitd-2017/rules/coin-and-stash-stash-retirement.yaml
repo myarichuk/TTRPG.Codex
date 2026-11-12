@@ -1,0 +1,27 @@
+id: coin-and-stash-stash-retirement
+type: rule
+name: Stash & Retirement
+description: >-
+  When you mark your character's final **trauma** and they retire, the amount of **coin** they've managed to stash away determines their fate. Your stash tracker is on your character sheet.
+
+
+  * **Stash 0-10:** **Poor soul.** You end up in the gutter, awash in vice and misery.
+
+  * **Stash 11-20: Meager.** A tiny hovel that you can call your own.
+
+  * **Stash 21-39: Modest.** A simple home or apartment, with some small comforts. You might operate a tavern or small business.
+
+  * **Stash 40: Fine.** A well-appointed home or apartment, claiming a few luxuries. You might operate a medium business.
+
+
+  In addition, each full row of stash (10 **coins**) indicates the **quality level of the character's lifestyle**, from zero (street life) to four (luxury).
+
+
+  > Cross wants some alone-time with a prospective new friend, but he can't take them back to the hidden lair where he lives, so what to do? Ryan, Cross's player, says he wants to rent a nice room for the evening, so the GM asks for a fortune roll using Cross's lifestyle rating to see what quality of room Cross can manage.
+source: Coin and Stash > Stash & Retirement
+tags:
+- coin
+- retirement
+properties:
+  category: Coin and Stash
+  order: 67

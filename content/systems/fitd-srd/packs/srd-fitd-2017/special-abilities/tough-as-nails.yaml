@@ -1,0 +1,11 @@
+id: tough-as-nails
+type: special-ability
+name: Tough as nails
+description: >-
+  Penalties from harm are one level less severe (though level 4 harm is still fatal).
+
+
+  > With this ability, level 3 harm doesn't incapacitate you; instead you take -1d to your rolls (as if it were level 2 harm). Level 2 harm affects you as if it were level 1 (less effect). Level 1 harm has no effect on you (but you still write it on your sheet, and must recover to heal it). Record the harm at its original level—for healing purposes, the original harm level applies.
+source: Character playbook > Special abilities > Tough as nails
+tags:
+- example

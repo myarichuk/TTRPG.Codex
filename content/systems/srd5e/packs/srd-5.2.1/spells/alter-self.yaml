@@ -40,3 +40,5 @@ properties:
   classes:
   - Sorcerer
   - Wizard
+  use:
+    damage: 1d6

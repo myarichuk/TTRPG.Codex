@@ -40,3 +40,5 @@ properties:
   ritual: false
   classes:
   - Wizard
+  use:
+    save: dex

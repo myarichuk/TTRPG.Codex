@@ -1,0 +1,11 @@
+id: entanglements-cooperation
+type: rule
+name: Cooperation
+description: A +3 status faction asks you for a favor. Agree to do it, or forfeit 1 **rep** per Tier of the friendly faction, or lose **1 status** with them. If you don't have a +3 faction status, you avoid entanglements right now.
+source: Entanglements > Cooperation
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 157

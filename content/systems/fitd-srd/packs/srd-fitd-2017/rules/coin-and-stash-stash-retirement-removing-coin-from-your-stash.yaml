@@ -1,0 +1,11 @@
+id: coin-and-stash-stash-retirement-removing-coin-from-your-stash
+type: rule
+name: Removing coin from your stash
+description: If you want to pull **coin** out of your stash, you may do so, at a cost. Your character sells off some of their assets and investments in order to get some quick cash. **For every 2 stash removed, you get 1 **coin** in cash.**
+source: Coin and Stash > Stash & Retirement > Removing coin from your stash
+tags:
+- coin
+- retirement
+properties:
+  category: Coin and Stash
+  order: 68

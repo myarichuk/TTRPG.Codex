@@ -101,6 +101,50 @@ public static class SheetReferences
         return copy;
     }
 
+    /// <summary>A copy of <paramref name="sheet"/> where every use of the entry <paramref name="fromId"/> of <paramref name="type"/>
+    /// names <paramref name="toId"/> instead: an entry field, a list's picks (their choices kept), an inventory item, another
+    /// class or its subclass. A list that already holds <paramref name="toId"/> just loses the old pick.</summary>
+    public static Dictionary<string, object> Repointed(SystemDefinition system, IReadOnlyDictionary<string, object> sheet, string type, string fromId, string toId)
+    {
+        var copy = new Dictionary<string, object>(sheet);
+        bool OfType(string? t) => string.Equals(t, type, StringComparison.OrdinalIgnoreCase);
+        bool Same(string id) => string.Equals(id, fromId, StringComparison.OrdinalIgnoreCase);
+
+        foreach (var field in system.ActorFields.Where(f => f.Type == FieldType.EntityReference && OfType(f.TargetEntityType)))
+        {
+            if (YamlValues.GetString(copy, field.Key) is { Length: > 0 } id && Same(id)) copy[field.Key] = toId;
+        }
+
+        var rules = system.SheetRules;
+        var listKeys = (rules?.Lists.Where(l => OfType(l.TargetEntityType)).Select(l => l.Key) ?? Enumerable.Empty<string>())
+            .Concat(rules?.Inventory is { } inventory && inventory.Types.Any(OfType) ? new[] { inventory.Key } : Array.Empty<string>());
+        foreach (var key in listKeys)
+        {
+            if (!copy.ContainsKey(key)) continue;
+            var raw = SheetRuleEngine.RawList(copy, key);
+            var has = raw.Any(r => string.Equals(SheetRuleEngine.ParsePick(r).Id, toId, StringComparison.OrdinalIgnoreCase));
+            copy[key] = raw
+                .Where(r => !(has && Same(SheetRuleEngine.ParsePick(r).Id)))
+                .Select(r => SheetRuleEngine.ParsePick(r) is var (id, choices) && Same(id) ? SheetRuleEngine.FormatPick(toId, choices) : r)
+                .Cast<object>()
+                .ToList();
+        }
+
+        if (rules?.Multiclass is { } multiclass && copy.ContainsKey(multiclass.Key))
+        {
+            var classType = OfType(TypeOf(system, multiclass.ClassField));
+            var subclassType = multiclass.SubclassField != null && OfType(TypeOf(system, multiclass.SubclassField));
+            copy[multiclass.Key] = SheetRuleEngine.ParseClassLevels(copy, multiclass.Key)
+                .Select(c => classType && Same(c.Id) ? c with { Id = toId } : c)
+                .Select(c => subclassType && !string.IsNullOrEmpty(c.Subclass) && Same(c.Subclass) ? c with { Subclass = toId } : c)
+                .Select(SheetRuleEngine.FormatClassLevel)
+                .Cast<object>()
+                .ToList();
+        }
+
+        return copy;
+    }
+
     private static string? TypeOf(SystemDefinition system, string fieldKey) =>
         system.ActorFields.FirstOrDefault(f => f.Key == fieldKey)?.TargetEntityType;
 }

@@ -45,3 +45,8 @@ properties:
   - Wizard
   damageType: Cold
   higherLevel: The damage increases by 1d6 for each spell slot level above 6.
+  use:
+    save: con
+    damage: 10d6
+    damageType: Cold
+    perSlot: 1d6

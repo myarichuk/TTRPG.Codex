@@ -54,3 +54,5 @@ properties:
   - Bard
   - Warlock
   - Wizard
+  use:
+    save: wis

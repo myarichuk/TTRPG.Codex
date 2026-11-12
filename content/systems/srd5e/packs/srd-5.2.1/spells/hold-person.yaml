@@ -48,3 +48,5 @@ properties:
   - Warlock
   - Wizard
   higherLevel: You can target one additional Humanoid for each spell slot level above 2.
+  use:
+    save: wis

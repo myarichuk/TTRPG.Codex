@@ -45,3 +45,8 @@ properties:
   - Wizard
   damageType: Bludgeoning
   higherLevel: The Bludgeoning damage increases by 1d10 for each spell slot level above 4.
+  use:
+    save: dex
+    damage: 2d10
+    damageType: Bludgeoning
+    perSlot: 1d10

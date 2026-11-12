@@ -1,0 +1,14 @@
+id: the-basics-the-game-master
+type: rule
+name: The Game Master
+description: >-
+  The GM establishes the dynamic world around the characters. The GM plays all the non-player characters in the world by giving each one a concrete desire and preferred method of action.
+
+
+  The GM helps organize the conversation of the game so it's pointed toward the interesting elements of play. The GM isn't in charge of the story and doesn't have to plan events ahead of time. They present interesting opportunities to the players, then follow the chain of action and consequences wherever they lead.
+source: The Basics > The Game Master
+tags:
+- basics
+properties:
+  category: The Basics
+  order: 5

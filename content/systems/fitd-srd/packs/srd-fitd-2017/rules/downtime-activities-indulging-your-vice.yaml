@@ -1,0 +1,18 @@
+id: downtime-activities-indulging-your-vice
+type: rule
+name: Indulging Your Vice
+description: >-
+  When you indulge your vice, you clear some stress from your character's stress track. Say how your character indulges their vice, including which **purveyor of vice** they use to satisfy their needs.  This indulgence takes time, so it can only be done when the crew has **downtime**. Alternately, you may choose to release your character to be "lost in their vice" during a game session, allowing them to indulge off-camera while you play a different PC. A gang member, friend, or contact of the crew might be created as an alternate character to play, thus fleshing out the landscape of PCs.
+
+
+  You roll to find out how much stress relief your character receives. A vice roll is like a resistance roll in reverse—rather than gaining stress levels, you clear stress levels. The effectiveness of your indulgence depends upon your character's worst attribute rating. It's their weakest quality (**Insight**, **Prowess**, or **Resolve**) that is most in thrall to vice.
+
+
+  Make an **attribute roll** using your character's lowest attribute rating (if there's a tie, that's fine—simply use that rating). **Clear stress equal to the highest die result.**
+source: Downtime activities > Indulging Your Vice
+tags:
+- downtime
+- vice
+properties:
+  category: Downtime activities
+  order: 177

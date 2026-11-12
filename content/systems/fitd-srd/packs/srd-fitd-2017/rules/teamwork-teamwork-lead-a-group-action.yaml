@@ -1,0 +1,23 @@
+id: teamwork-teamwork-lead-a-group-action
+type: rule
+name: Lead a group action
+description: >-
+  When you lead a group action, you coordinate multiple members of the team to tackle a problem together. Describe how your character leads the team in a coordinated effort. Do you bark orders, give subtle hand signals, or provide charismatic inspiration?
+
+
+  Each PC who's involved makes an **action roll** (using the same action) and **the team counts the single best result** as the overall effort for everyone who rolled. However, the character leading the group action takes **1 stress** for each PC that rolled** 1-3** as their best result.
+
+
+  > This is how you do the "we all sneak into the building" scene. Everyone who wants to sneak in rolls their Prowl action, and the best result counts for the whole team. The leader suffers stress for everyone who does poorly. It's tough covering for the stragglers.
+
+
+  **The group action result covers everyone who rolled.** If you don't roll, your character doesn't get the effects of the action.
+
+
+  Your character doesn't have to be especially skilled at the action at hand in order to lead a group action. This maneuver is about leadership, not necessarily about ability. You can also lead your crew's **cohorts** with a group action. Roll **Command** if you direct their efforts, or roll the appropriate action rating if you participate alongside them. The cohort rolls its **quality** level.
+source: Teamwork > Teamwork > Lead a group action
+tags:
+- teamwork
+properties:
+  category: Teamwork
+  order: 139

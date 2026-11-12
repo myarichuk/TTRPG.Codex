@@ -39,3 +39,11 @@ properties:
   - Warlock
   - Wizard
   damageType: Necrotic
+  use:
+    attack: melee
+    damage: 1d10
+    damageType: Necrotic
+    atLevels:
+      5: 2d10
+      11: 3d10
+      17: 4d10

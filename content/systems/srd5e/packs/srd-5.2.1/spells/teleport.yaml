@@ -78,3 +78,6 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Force
+  use:
+    damage: 3d10
+    damageType: Force

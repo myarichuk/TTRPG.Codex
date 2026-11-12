@@ -41,3 +41,8 @@ properties:
   - Wizard
   damageType: Lightning
   higherLevel: The damage increases by 1d6 for each spell slot level above 3.
+  use:
+    save: dex
+    damage: 8d6
+    damageType: Lightning
+    perSlot: 1d6

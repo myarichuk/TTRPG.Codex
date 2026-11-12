@@ -1,0 +1,11 @@
+id: fiends
+type: crew-ability
+name: Fiends
+description: >-
+  Fear is as good as respect. You may count each **wanted level** as if it were **turf**.
+
+
+  > The maximum **wanted level** is 4. Regardless of how much turf you hold (from this ability or otherwise) the minimum **rep** cost to advance your Tier is always 6.
+source: Crew playbook > Crew special abilities > Fiends
+tags:
+- example

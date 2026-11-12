@@ -1,0 +1,9 @@
+id: mastery
+type: crew-upgrade
+name: Mastery
+description: Your crew has access to master level training. You may advance your PCs' action ratings to 4 (until you unlock this upgrade, PC action ratings are capped at 3). This costs four upgrade boxes to unlock.
+source: Crew creation > Crew upgrade Examples
+tags:
+- example
+properties:
+  cost: 4

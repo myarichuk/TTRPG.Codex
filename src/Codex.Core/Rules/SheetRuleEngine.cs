@@ -105,6 +105,18 @@ public sealed class SheetEvaluation
 
     public List<SlotPool> SlotPools { get; } = new();
 
+    /// <summary>The features the sheet has now (empty when the system names no feature sources).</summary>
+    public List<ActiveFeature> Features { get; } = new();
+
+    /// <summary>What features contributed to each number they target, with whether it counted, for the working.</summary>
+    public List<GrantedModifier> Granted { get; } = new();
+
+    /// <summary>The features' counters of uses, with their maximums.</summary>
+    public List<FeatureCounter> Counters { get; } = new();
+
+    /// <summary>Feature amounts on armor class and hit points, waiting for those stages.</summary>
+    internal Dictionary<string, List<(ActiveFeature Feature, string? Type, int Amount)>> Pending { get; } = new(StringComparer.Ordinal);
+
     /// <summary>Maximum hit points as the rules work them out (null without hit point rules or a class).</summary>
     public HitPointSummary? HitPoints { get; set; }
 
@@ -127,6 +139,9 @@ public sealed class SheetEvaluation
     public List<SkillScore> Skills { get; } = new();
     public List<PassiveScore> Passives { get; } = new();
     public List<SpellcastingScore> Spellcasting { get; } = new();
+
+    /// <summary>What the sheet can cast and attack with (empty when the system names no action sources).</summary>
+    public List<SheetAction> Actions { get; } = new();
 
     public bool HasViolations => Violations.Count > 0;
 }
@@ -192,11 +207,14 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// </summary>
     public SheetEvaluation Recompute(Dictionary<string, object> sheet)
     {
+        StripGranted(sheet);
         ApplyInherited(sheet);
         ApplyAttributeTotals(sheet);
+        ApplyGranted(sheet);
         var evaluation = Evaluate(sheet);
         ApplyTracks(sheet);
         ApplySlotPools(sheet, evaluation);
+        ApplyCounters(sheet, evaluation);
         ApplyHitPoints(sheet, evaluation);
         ApplyArmorClass(sheet, evaluation);
         return evaluation;
@@ -212,6 +230,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         EvaluateDerived(sheet, result);
         var views = ClassViews(sheet, result.Classes);
         EvaluateMulticlass(sheet, result);
+        EvaluateFeatures(sheet, result);
 
         foreach (var constraint in Rules.Constraints)
         {
@@ -301,6 +320,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         EvaluateSkills(sheet, result);
         EvaluateSpellcasting(sheet, result);
         EvaluateProficiencies(sheet, result);
+        EvaluateActions(sheet, result);
         return result;
     }
 

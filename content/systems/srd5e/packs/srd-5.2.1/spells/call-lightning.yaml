@@ -43,3 +43,8 @@ properties:
   - Druid
   damageType: Lightning
   higherLevel: The damage increases by 1d10 for each spell slot level above 3.
+  use:
+    save: dex
+    damage: 3d10
+    damageType: Lightning
+    perSlot: 1d10

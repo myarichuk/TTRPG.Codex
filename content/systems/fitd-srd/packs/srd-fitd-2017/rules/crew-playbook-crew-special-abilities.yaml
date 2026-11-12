@@ -1,0 +1,11 @@
+id: crew-playbook-crew-special-abilities
+type: rule
+name: Crew special abilities
+description: Create seven special abilities for your crew. Here are several examples.
+source: Crew playbook > Crew special abilities
+tags:
+- crew
+- playbook
+properties:
+  category: Crew playbook
+  order: 123

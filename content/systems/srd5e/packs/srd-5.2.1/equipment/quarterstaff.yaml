@@ -26,6 +26,14 @@ properties:
   cost: 2 sp
   weight: 4
   damage: '1d6 Bludgeoning (two-handed: 1d8)'
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d6
+    damageType: Bludgeoning
+    alternatives:
+      two-handed: 1d8
   properties:
   - Versatile
   mastery: Topple

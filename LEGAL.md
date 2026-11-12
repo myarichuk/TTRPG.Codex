@@ -136,6 +136,34 @@ https://creativecommons.org/licenses/by/4.0/legalcode.
   wording the SRD's legal page permits. TTRPG.Codex is not affiliated with or endorsed by Wizards of
   the Coast, and no trademark is used as a product name.
 
+### Forged in the Dark SRD (`content/systems/fitd-srd`, pack `packs/srd-fitd-2017`)
+
+This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One
+Seven Design, developed and authored by John Harper, and licensed for our use under the Creative
+Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
+
+- That is the publisher's own attribution sentence (https://bladesinthedark.com/node/33, checked
+  2026-11-11), copied exactly. The SRD's licence is CC-BY 3.0 Unported and is not share-alike: the
+  app's own licence is unaffected.
+- Modified from the original: the SRD's text is split into one entry per section, its lists become
+  typed entries, and layout artefacts are cleaned. No rules were intentionally changed. The system
+  definition (`system.yaml`) restates the SRD's mechanics as data.
+- The text was read from the Markdown transcription at
+  https://github.com/amazingrando/blades-in-the-dark-srd-content (commit
+  `f141ed2c4ed8061b6833a57e37a314a03e4166ce`), which the publisher's site links as the SRD's text.
+  It carries no copyright notice of its own beyond the attribution sentence above, and neither does
+  the publisher's SRD page.
+- Only the SRD is covered. The Blades in the Dark book, its setting (Duskwall and the Shattered
+  Isles), NPCs, artwork, maps and logo are not included, and translations of the book are a matter
+  for the author. Where the SRD's own examples name something from that setting, it is SRD text and
+  is kept as written; nothing beyond it is added.
+- The system is named "Forged in the Dark SRD" and never uses "Blades in the Dark" in a title; the
+  name appears only inside the attribution. TTRPG.Codex is not affiliated with or endorsed by One
+  Seven Design. The Forged in the Dark logo is not used (it would need the trademark notice the
+  publisher gives).
+- Not shipped inside the app: like every system other than the 5E one it is released as its own
+  archive (`content/systems/bundled.txt`), so it can be withdrawn without a new release.
+
 ### Example content (`content/examples/`)
 
 The `simple-d6` example system and the `homebrew-world` example setting are released to the public

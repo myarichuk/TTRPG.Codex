@@ -1,0 +1,11 @@
+id: downtime-activities-indulge-vice
+type: rule
+name: Indulge vice
+description: Visit your **vice purveyor** to relieve **stress**. See the next section for details.
+source: Downtime activities > Indulge vice
+tags:
+- downtime
+- vice
+properties:
+  category: Downtime activities
+  order: 174

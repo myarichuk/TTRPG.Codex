@@ -1,0 +1,11 @@
+id: iron-will
+type: special-ability
+name: Iron will
+description: >-
+  You are immune to the terror that some supernatural entities inflict on sight. When you make a **resistance roll** with **Resolve**, take **+1d**.
+
+
+  > With this ability, you do not freeze up or flee when confronted by any kind of supernatural entity or strange occult event.
+source: Character playbook > Special abilities > Iron will
+tags:
+- example

@@ -1,0 +1,11 @@
+id: planning-engagement-the-detail
+type: rule
+name: The Detail
+description: When you choose a plan, you provide a missing **detail**, like the point of attack, social connection, etc. If you don't know the detail, you can **gather information** in some way to discover it.
+source: Planning & engagement > The Detail
+tags:
+- score
+- engagement
+properties:
+  category: Planning & engagement
+  order: 126

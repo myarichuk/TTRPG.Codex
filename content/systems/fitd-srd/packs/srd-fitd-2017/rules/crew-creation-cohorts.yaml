@@ -1,0 +1,12 @@
+id: crew-creation-cohorts
+type: rule
+name: Cohorts
+description: A **cohort** is a **gang** or an **expert** who works for your crew. To recruit a new cohort, spend **two upgrades** and create them using the process below.
+source: Crew creation > Cohorts
+tags:
+- crew
+- creation
+- cohort
+properties:
+  category: Crew creation
+  order: 109

@@ -1,0 +1,11 @@
+id: character-creation-choose-a-background
+type: rule
+name: Choose a background
+description: Your character's **background** describes what they did before they joined the crew. Choose a background and then write a detail about it that's specific to your character.
+source: Character creation > Choose a background
+tags:
+- character
+- creation
+properties:
+  category: Character creation
+  order: 87

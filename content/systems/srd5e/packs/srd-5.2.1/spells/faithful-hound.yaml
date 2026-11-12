@@ -41,3 +41,7 @@ properties:
   classes:
   - Wizard
   damageType: Force
+  use:
+    save: dex
+    damage: 4d8
+    damageType: Force

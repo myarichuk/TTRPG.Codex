@@ -7,6 +7,7 @@
 @* Renders one Library item: its summary fields, the formatted rules text, any structured rows
    (features, traits, actions) and - always - the licence attribution for where it came from. *@
 
+<CascadingValue Value="DmLabels" Name="EntryDm" IsFixed="true">
 <article class="entry-detail" aria-labelledby="@titleId">
     <header class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
         <div>
@@ -69,7 +70,7 @@
 
         @if (!string.IsNullOrWhiteSpace(Item.Entry.Description))
         {
-            <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(Item.Entry.Description))</div>
+            <div class="rules-text">@((MarkupString)SecretRender.Html(Item.Entry.Description, TextFormatting.ToHtml, DmLabels))</div>
         }
 
         @foreach (var group in CollectionProperties)
@@ -86,7 +87,7 @@
                         <strong>@RefCard.Cell(row, "name")</strong>
                         @if (RefCard.Cell(row, "description") is { } description)
                         {
-                            <div class="rules-text">@((MarkupString)TextFormatting.ToHtml(description))</div>
+                            <div class="rules-text">@((MarkupString)SecretRender.Html(description, TextFormatting.ToHtml, DmLabels))</div>
                         }
                     </li>
                 }
@@ -140,11 +141,18 @@
         }
     </footer>
 </article>
+</CascadingValue>
 
 @code {
     [Parameter, EditorRequired] public LibraryItem Item { get; set; } = null!;
     [Parameter] public ContentTypeDefinition? Type { get; set; }
     [Parameter] public RenderFragment? Actions { get; set; }
+
+    /// <summary>The reader is the GM: GM blocks in the text are drawn as what they are. For anyone else they are left out
+    /// (a player's entry has none by the time it gets here; this is the second lock).</summary>
+    [Parameter] public bool ForDm { get; set; }
+
+    private DmView? DmLabels => ForDm ? DmView.From(L) : null;
 
     /// <summary>The entry's art slot, rendered under the title (the Library passes an <see cref="ArtSlot"/>).</summary>
     [Parameter] public RenderFragment? Art { get; set; }

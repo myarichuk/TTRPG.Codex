@@ -1,0 +1,11 @@
+id: bodyguard
+type: special-ability
+name: Bodyguard
+description: >-
+  When you **protect** a teammate, take **+1d** to your resistance roll. When you gather info to anticipate possible threats in the current situation, you get **+1 effect**.
+
+
+  > The protect teamwork maneuver lets you face a consequence for a teammate. If you choose to resist that consequence, this ability gives you +1d to your resistance roll. Also, when you read a situation to gather information about hidden dangers or potential attackers, you get +1 effect—which means more detailed information.
+source: Character playbook > Special abilities > Bodyguard
+tags:
+- example

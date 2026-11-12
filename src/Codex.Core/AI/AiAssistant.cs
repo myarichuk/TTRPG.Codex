@@ -7,7 +7,12 @@ namespace Codex.Core.AI;
 public sealed record DraftItem(string Id, int Quantity, bool Equipped);
 
 /// <summary>A generated character: the sheet values keyed like the actor schema, plus prose and the gear they carry.</summary>
-public sealed record CharacterDraft(string Name, Dictionary<string, object> Sheet, string? Biography, IReadOnlyList<DraftItem>? Equipment = null);
+public sealed record CharacterDraft(string Name, Dictionary<string, object> Sheet, string? Biography, IReadOnlyList<DraftItem>? Equipment = null)
+{
+    /// <summary>Library entries written for this character because nothing listed fit the concept (a subclass of its own). The
+    /// sheet already names them; whoever keeps the draft keeps them with it, for a GM to review.</summary>
+    public List<Codex.Plugin.Abstractions.ContentEntry> Proposed { get; } = new();
+}
 
 /// <summary>
 /// The AI features, each one prompt in, one text out. Nothing here decides what the model may
@@ -133,6 +138,78 @@ public sealed class AiAssistant(IChatClient chat)
         var text = await JsonReplyAsync(Messages(AiPrompts.Equip(request)), 0.7f, ct);
         using var doc = FieldCoercion.ParseObject(text);
         return ParseEquipment(doc.RootElement, request.Items) ?? new List<DraftItem>();
+    }
+
+    /// <summary>Makes the choices a drafted character still has open. Each answer holds only ids that choice listed, in the
+    /// model's order, no more than the choice takes; a choice the model skipped is absent.</summary>
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<string>>> ChooseAsync(ChoicesRequest request, CancellationToken ct = default)
+    {
+        var text = await JsonReplyAsync(Messages(AiPrompts.Choose(request)), 0.7f, ct);
+        return ParseChoices(text, request);
+    }
+
+    public static IReadOnlyDictionary<string, IReadOnlyList<string>> ParseChoices(string text, ChoicesRequest request)
+    {
+        using var doc = FieldCoercion.ParseObject(text);
+        var picked = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+        // A model that drops the wrapper and answers with the keys at the top is still understood.
+        var root = doc.RootElement.TryGetProperty("choices", out var wrapped) && wrapped.ValueKind == JsonValueKind.Object ? wrapped : doc.RootElement;
+        foreach (var choice in request.Choices)
+        {
+            var answer = root.EnumerateObject().FirstOrDefault(p => p.Name.Equals(choice.Key, StringComparison.OrdinalIgnoreCase) || p.Name.Equals(choice.Label, StringComparison.OrdinalIgnoreCase)).Value;
+            var elements = answer.ValueKind switch
+            {
+                JsonValueKind.Array => answer.EnumerateArray().ToList(),
+                JsonValueKind.String or JsonValueKind.Object => new List<JsonElement> { answer },
+                _ => new List<JsonElement>()
+            };
+
+            var known = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var option in choice.Options) known.TryAdd(option.Id, option.Id);
+            foreach (var option in choice.Options) known.TryAdd(option.Name, option.Id);
+            var ids = new List<string>();
+            foreach (var element in elements)
+            {
+                var id = element.ValueKind == JsonValueKind.String ? element.GetString()
+                    : element.ValueKind == JsonValueKind.Object && element.TryGetProperty("id", out var idElement) && idElement.ValueKind == JsonValueKind.String ? idElement.GetString()
+                    : null;
+                if (id != null && known.TryGetValue(id.Trim(), out var listed) && !ids.Contains(listed, StringComparer.OrdinalIgnoreCase) && ids.Count < choice.Max)
+                {
+                    ids.Add(listed);
+                }
+            }
+
+            if (ids.Count > 0) picked[choice.Key] = ids;
+        }
+
+        return picked;
+    }
+
+    /// <summary>Writes a new Library entry for one character. Null when the reply names nothing.</summary>
+    public async Task<DraftEntry?> WriteEntryAsync(EntryRequest request, CancellationToken ct = default)
+    {
+        var text = await JsonReplyAsync(Messages(AiPrompts.WriteEntry(request)), 0.8f, ct);
+        return ParseEntry(text, request);
+    }
+
+    public static DraftEntry? ParseEntry(string text, EntryRequest request)
+    {
+        using var doc = FieldCoercion.ParseObject(text);
+        var root = doc.RootElement;
+        var name = root.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String ? n.GetString()!.Trim() : null;
+        if (string.IsNullOrWhiteSpace(name)) return null;
+        var description = root.TryGetProperty("description", out var d) && d.ValueKind == JsonValueKind.String ? d.GetString()!.Trim() : null;
+        var properties = new Dictionary<string, object>();
+        // A model that puts the fields beside the name instead of under "properties" is still read.
+        var holder = root.TryGetProperty("properties", out var p) && p.ValueKind == JsonValueKind.Object ? p : root;
+        foreach (var field in request.Fields)
+        {
+            var value = holder.EnumerateObject().FirstOrDefault(x => x.Name.Equals(field.Key, StringComparison.OrdinalIgnoreCase)).Value;
+            if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null) continue;
+            if (FieldCoercion.Coerce(value, field) is { } coerced) properties[field.Key] = coerced;
+        }
+
+        return new DraftEntry(name.Length > 80 ? name[..80] : name, description, properties);
     }
 
     private static List<DraftItem>? ParseEquipment(JsonElement root, CharacterConceptRequest request) =>

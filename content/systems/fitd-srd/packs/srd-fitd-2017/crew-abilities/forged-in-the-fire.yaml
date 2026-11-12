@@ -1,0 +1,11 @@
+id: forged-in-the-fire
+type: crew-ability
+name: Forged in the fire
+description: >-
+  Each PC has been toughened by cruel experience. You get **+1d** to **resistance** rolls.
+
+
+  > This ability applies to PCs in the crew. It doesn't confer any special toughness to your cohorts.
+source: Crew playbook > Crew special abilities > Forged in the fire
+tags:
+- example

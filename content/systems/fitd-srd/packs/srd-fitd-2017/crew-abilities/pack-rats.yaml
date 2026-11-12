@@ -1,0 +1,11 @@
+id: pack-rats
+type: crew-ability
+name: Pack rats
+description: >-
+  Your lair is a jumble of stolen items. When you roll to **acquire an asset**, take **+1d**.
+
+
+  > This ability might mean that you actually have the item you need in your pile of stuff, or it could mean you have extra odds and ends to barter with.
+source: Crew playbook > Crew special abilities > Pack rats
+tags:
+- example

@@ -41,3 +41,8 @@ properties:
   - Druid
   damageType: Radiant
   higherLevel: The damage increases by 1d10 for each spell slot level above 2.
+  use:
+    save: con
+    damage: 2d10
+    damageType: Radiant
+    perSlot: 1d10

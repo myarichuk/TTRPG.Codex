@@ -43,3 +43,8 @@ properties:
   - Ranger
   damageType: Slashing
   higherLevel: The damage increases by 1d10 for each spell slot level above 3.
+  use:
+    save: str
+    damage: 3d10
+    damageType: Slashing
+    perSlot: 1d10

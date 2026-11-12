@@ -60,3 +60,5 @@ properties:
   - Sorcerer
   - Wizard
   higherLevel: The Sphere's radius increases by 5 feet for each spell slot level above 4.
+  use:
+    save: wis

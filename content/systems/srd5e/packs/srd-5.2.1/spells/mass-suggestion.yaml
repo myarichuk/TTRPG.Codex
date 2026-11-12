@@ -43,3 +43,5 @@ properties:
   - Sorcerer
   - Wizard
   higherLevel: The duration is longer with a spell slot of level 7 (10 days), 8 (30 days), or 9 (366 days).
+  use:
+    save: wis

@@ -1,0 +1,10 @@
+id: the-faction-game-faction-status-faction-status-changes
+type: rule
+name: Faction status changes
+description: When you execute an operation, you gain -1 or -2 status with factions that are hurt by your actions. You may also gain +1 status with a faction that your operation helps. (If you keep your operation completely quiet then your status doesn't change.) Your status may also change if you do a favor for a faction or if you refuse one of their demands.
+source: The Faction Game > Faction Status > Faction status changes
+tags:
+- faction
+properties:
+  category: The Faction Game
+  order: 76

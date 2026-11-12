@@ -1,0 +1,12 @@
+id: planning-engagement-item-loadouts
+type: rule
+name: Item Loadouts
+description: After the plan and detail are in place, each player chooses their character's **load**. This indicates how much stuff they're carrying on the operation. They don't have to select individual items—just the maximum amount they'll have access to during the action.
+source: Planning & engagement > Item Loadouts
+tags:
+- score
+- engagement
+- loadout
+properties:
+  category: Planning & engagement
+  order: 127

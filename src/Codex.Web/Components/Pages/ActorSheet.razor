@@ -529,10 +529,18 @@ else
 
     /// <summary>Rolls a d20 check with the sheet's bonus. During a session the roll goes into the
     /// table's shared log under this character; otherwise it is rolled and shown here only.</summary>
-    private async Task RollAsync(RollRequest request)
+    private Task RollAsync(RollRequest request) =>
+        RollExpressionAsync(rollMode + (request.Bonus == 0 ? "" : request.Bonus > 0 ? $"+{request.Bonus}" : request.Bonus.ToString()), request.Label);
+
+    /// <summary>An action's roll: an attack is a check like any other (the sheet's roll mode counts); damage is its own dice.</summary>
+    private Task RollActionAsync(ActionRoll roll) =>
+        roll.Expression is { } dice ? RollExpressionAsync(dice, roll.Label) : RollAsync(new RollRequest(roll.Label, roll.CheckBonus ?? 0));
+
+    private async Task RollExpressionAsync(string expression, string label)
     {
         if (actor == null || currentUserId == null) return;
-        var expression = rollMode + (request.Bonus == 0 ? "" : request.Bonus > 0 ? $"+{request.Bonus}" : request.Bonus.ToString());
+        var request = new RollRequest(label, 0);
+        lastRoll = null;
         var live = RuntimeManager.TryGet(CampaignId);
         if (live?.ActiveSession != null)
         {
@@ -583,6 +591,8 @@ else
         "hit-points" => system?.PrimaryResource != null,
         "armor-class" => Rules?.ArmorClass != null,
         "slots" => Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))),
+        "actions" => evaluation is { Actions.Count: > 0 },
+        "features" => Rules is { Features.Count: > 0 } && evaluation is { } worked && (worked.Counters.Count > 0 || worked.Granted.Count > 0 || worked.Features.Any(f => f.Adds.Count > 0)),
         "level-up" => CanEdit && HasLevel,
         _ => sheetView?.Shows(widget) == true
     };
@@ -797,6 +807,23 @@ else
                                          OnAdjust="AdjustSlot" OnRest="RestSlots" />
                             <p class="small-muted mt-2 mb-0">@L["Actor.Sheet.SlotsNote"]</p>
                         </section>
+                    }
+
+                break;
+            case "actions":
+                    @if (evaluation is { Actions.Count: > 0 })
+                    {
+                        <ActionsPanel Evaluation="evaluation" Definition="system" Value="key => YamlValues.GetInt(editSheet, key)" ReadOnly="@(!CanEdit)"
+                                      EntryName="Nm" OnSpend="AdjustSlot" OnRoll="RollActionAsync" />
+                    }
+
+                break;
+            case "features":
+                    @if (Rules is { Features.Count: > 0 })
+                    {
+                        <FeaturesPanel Evaluation="evaluation" Sheet="editSheet" Rules="Rules" Definition="system" ReadOnly="@(!CanEdit)"
+                                       EntryName="@((type, id) => resolver?.Resolve(type, id)?.Name ?? id)"
+                                       OnAdjust="AdjustSlot" OnRest="RestFeatures" />
                     }
 
                 break;
@@ -1054,7 +1081,8 @@ else
                 loadedSheet = new Dictionary<string, object>(actor.Sheet);
 
                 await LoadReferenceOptionsAsync();
-                resolver = system != null ? await CachedEntryResolver.LoadAsync(Library, campaign, access, system) : null;
+                // A vault character reads its sheet against the packs and the entries it carries itself.
+                resolver = system != null ? await CachedEntryResolver.LoadAsync(Library, campaign, access, system, actor.Carried.Select(c => c.ToEntry(system.Id))) : null;
                 engine = system != null && resolver != null ? new SheetRuleEngine(system, resolver) : null;
                 layout = system != null ? SheetLayout.For(system, editSheet) : SheetLayout.Builtin;
                 inventoryOptions = Rules?.Inventory?.Types.ToDictionary(
@@ -1305,9 +1333,15 @@ else
         editSheet[change.Key] = (long)Math.Clamp(current + change.Delta, 0, max);
     }
 
+    // A rest is one rest wherever its button is: it refills the slot pools and the feature counters that name it.
+    private void RestFeatures(string rest) =>
+        RestSlots((rest, editSheet.Keys.Where(k => !k.EndsWith("_Max", StringComparison.Ordinal)
+            && Rules?.SlotPools.Any(p => p.Owns(k) && p.RecoversOn.Contains(rest, StringComparer.OrdinalIgnoreCase)) == true).ToList()));
+
     private void RestSlots((string Name, List<string> Keys) rest)
     {
-        foreach (var key in rest.Keys)
+        var counters = editSheet.Keys.Where(k => SheetRuleEngine.IsUsesKey(k) && SheetRuleEngine.UsesRests(editSheet, k).Contains(rest.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+        foreach (var key in rest.Keys.Concat(counters))
         {
             if (YamlValues.GetInt(editSheet, SystemDefinition.PoolMaxKey(system, key)) is { } max) editSheet[key] = (long)max;
         }
@@ -1321,7 +1355,10 @@ else
         if (campaign == null || access == null || schema == null) return;
         foreach (var target in schema.Fields.Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!).Distinct())
         {
-            referenceOptions[target] = (await Library.OptionsAsync(campaign, access, target, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList();
+            referenceOptions[target] = (await Library.OptionsAsync(campaign, access, target, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name))
+                .Concat(actor?.Carried.Where(c => string.Equals(c.Type, target, StringComparison.OrdinalIgnoreCase)).Select(c => (c.EntryId, c.Name)) ?? Enumerable.Empty<(string, string)>())
+                .DistinctBy(o => o.Item1)
+                .ToList();
         }
     }
 

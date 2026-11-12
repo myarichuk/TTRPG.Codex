@@ -1,0 +1,14 @@
+id: coin-and-stash-coin
+type: rule
+name: Coin
+description: >-
+  **Coin** is an abstract measure of cash and liquid assets.
+
+
+  The few bits PCs use in their daily lives are not tracked. If a character wants to spend to achieve a small goal (bribe a doorman), use the PC's **lifestyle quality** for a fortune roll.
+source: Coin and Stash > Coin
+tags:
+- coin
+properties:
+  category: Coin and Stash
+  order: 64

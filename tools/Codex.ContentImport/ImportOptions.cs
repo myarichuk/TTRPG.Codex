@@ -11,6 +11,12 @@ public sealed class ImportOptions
           --out       pack directory to write (replaced if it exists)
           --download  fetch the JSON from the pinned 5e-bits commit into --source first
           --edition   2024 (SRD 5.2.1, default) or 2014 (SRD 5.1)
+
+          fitd --source <srd.md or dir> --out <dir> [--download]
+
+          --source    the Forged in the Dark SRD Markdown file, or a directory holding it
+          --out       pack directory to write (replaced if it exists)
+          --download  fetch the Markdown from the pinned commit into --source first
         """;
 
     public string Command { get; private init; } = string.Empty;
@@ -21,13 +27,14 @@ public sealed class ImportOptions
 
     public static ImportOptions? Parse(string[] args)
     {
-        if (args.Length == 0 || args[0] != "srd5e")
+        if (args.Length == 0 || args[0] is not ("srd5e" or "fitd"))
         {
             return null;
         }
 
         string? source = null, output = null, edition = "2024";
         var download = false;
+        var editionGiven = false;
         for (var i = 1; i < args.Length; i++)
         {
             switch (args[i])
@@ -40,6 +47,7 @@ public sealed class ImportOptions
                     break;
                 case "--edition" when i + 1 < args.Length:
                     edition = args[++i];
+                    editionGiven = true;
                     break;
                 case "--download":
                     download = true;
@@ -49,7 +57,7 @@ public sealed class ImportOptions
             }
         }
 
-        if (source == null || output == null || edition is not ("2024" or "2014"))
+        if (source == null || output == null || edition is not ("2024" or "2014") || (args[0] == "fitd" && editionGiven))
         {
             return null;
         }

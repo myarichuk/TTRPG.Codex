@@ -214,6 +214,8 @@ public class PhoneLayoutE2ETests : IClassFixture<AppFixture>
 
     private static async Task SetInitiativeAsync(IPage dm, string actorName, int roll)
     {
+        // Outside an encounter the order is a bar; the GM opens it to add the first creature.
+        if (!await dm.GetByTestId("add-to-initiative-select").IsVisibleAsync()) await dm.GetByTestId("start-encounter").ClickAsync();
         var select = dm.GetByTestId("add-to-initiative-select");
         var setBtn = dm.GetByTestId("set-initiative-btn");
         await select.Locator("option", new() { HasText = actorName })

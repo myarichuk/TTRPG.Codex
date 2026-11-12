@@ -1,0 +1,43 @@
+id: actions-attributes-action-ratings
+type: rule
+name: Action Ratings
+description: >-
+  There are 12 **actions** in the game that the player characters use to overcome obstacles.
+
+
+  * Attune
+
+  * Command
+
+  * Consort
+
+  * Finesse
+
+  * Hunt
+
+  * Prowl
+
+  * Skirmish
+
+  * Study
+
+  * Survey
+
+  * Sway
+
+  * Tinker
+
+  * Wreck
+
+
+  Each action has a rating (from zero to 4) that tells you how many dice to roll when you perform that action. Action ratings don't just represent skill or training—you're free to describe *how* your character performs that action based on the type of person they are. Maybe your character is good at **Command** because they have a scary stillness to them, while another character barks orders and intimidates people with their military bearing.
+
+
+  You choose which action to perform to overcome an obstacle, by describing what your character does. Actions that are poorly suited to the situation may be less effective and may put the character in more danger, but they can still be attempted. Usually, when you perform an action, you'll make an **action roll** to see how it turns out.
+source: Actions & Attributes > Action Ratings
+tags:
+- actions
+- attributes
+properties:
+  category: Actions & Attributes
+  order: 10

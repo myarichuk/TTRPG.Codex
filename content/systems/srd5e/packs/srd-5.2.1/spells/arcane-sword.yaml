@@ -40,3 +40,8 @@ properties:
   classes:
   - Bard
   - Wizard
+  use:
+    attack: melee
+    damage: 4d12
+    damageType: Force
+    addAbility: true

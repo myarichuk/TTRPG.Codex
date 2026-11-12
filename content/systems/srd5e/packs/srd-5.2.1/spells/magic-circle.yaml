@@ -48,3 +48,5 @@ properties:
   - Warlock
   - Wizard
   higherLevel: The duration increases by 1 hour for each spell slot level above 3.
+  use:
+    save: cha

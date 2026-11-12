@@ -1,0 +1,13 @@
+id: heat-prison-claims-cell-block-control
+type: rule
+name: Cell block control
+description: Your crew has a cell block under their total control—guards and all. You never take **trauma** from incarceration.
+source: Heat > Prison claims > Cell block control
+tags:
+- heat
+- downtime
+- claim
+- incarceration
+properties:
+  category: Heat
+  order: 150

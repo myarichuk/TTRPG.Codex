@@ -1,0 +1,7 @@
+id: vengeful
+type: special-ability
+name: Vengeful
+description: 'You gain an additional **xp trigger**: *You got payback against someone who harmed you or someone you care about.* If your crew helped you get payback, also mark crew xp.'
+source: Character playbook > Special abilities > Vengeful
+tags:
+- example

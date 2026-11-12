@@ -1,0 +1,26 @@
+id: fortune-roll-fortune-roll
+type: rule
+name: FORTUNE ROLL
+description: >-
+  ⏣ *1d* for each **Trait** rating.
+
+
+  ⊕ *+1d* for each **Major Advantage**.
+
+
+  ⊖ *-1d* for each **Major Disadvantage**.
+
+
+  * **Critical**: Exceptional result / Great, extreme effect.
+
+  * **6**: Good result / Standard,  full effect.
+
+  * **4/5**: Mixed result / Limited, partial  effect.
+
+  * **1-3**: Bad result / Poor, little effect.
+source: Fortune Roll > FORTUNE ROLL
+tags:
+- fortune-roll
+properties:
+  category: Fortune Roll
+  order: 59

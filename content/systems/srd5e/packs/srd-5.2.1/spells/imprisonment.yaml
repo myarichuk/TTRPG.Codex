@@ -42,3 +42,5 @@ properties:
   classes:
   - Warlock
   - Wizard
+  use:
+    save: wis

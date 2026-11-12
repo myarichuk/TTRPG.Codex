@@ -1,0 +1,7 @@
+id: death-veil
+type: crew-ability
+name: Death veil
+description: Due to hard-won experience or occult ritual, you don't take extra **heat** when killing is involved on a score.
+source: Crew playbook > Crew special abilities > Death veil
+tags:
+- example

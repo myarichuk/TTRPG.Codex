@@ -1,0 +1,11 @@
+id: entanglements-show-of-force
+type: rule
+name: Show of force
+description: A faction with whom you have a negative status makes a play against your holdings. Give them 1 **claim** or go to war (drop to -3 status). If you have no claims, **lose 1 hold** instead.
+source: Entanglements > Show of force
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 165

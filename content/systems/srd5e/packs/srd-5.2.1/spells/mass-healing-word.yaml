@@ -37,3 +37,8 @@ properties:
   - Bard
   - Cleric
   higherLevel: The healing increases by 1d4 for each spell slot level above 3.
+  use:
+    damage: 2d4
+    heals: true
+    addAbility: true
+    perSlot: 1d4

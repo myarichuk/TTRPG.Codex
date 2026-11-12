@@ -1,0 +1,11 @@
+id: downtime-activities-indulging-your-vice-roleplaying-xp
+type: rule
+name: Roleplaying & XP
+description: Along with your character's heritage and background, their vice tells us what kind of person they are. This obsession impacts their motivations, goals, and behavior. When you ponder what your character might do or say next, you can always consider their vice to help you think of something. As an added benefit, by playing to the nature of your character's vice, you earn xp at the end of the session.
+source: Downtime activities > Indulging Your Vice > Roleplaying & XP
+tags:
+- downtime
+- vice
+properties:
+  category: Downtime activities
+  order: 180

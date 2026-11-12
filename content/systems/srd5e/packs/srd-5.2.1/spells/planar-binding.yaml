@@ -48,3 +48,5 @@ properties:
   - Warlock
   - Wizard
   higherLevel: The duration increases with a spell slot of level 6 (10 days), 7 (30 days), 8 (180 days), and 9 (366 days).
+  use:
+    save: cha

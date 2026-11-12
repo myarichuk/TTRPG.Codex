@@ -41,3 +41,5 @@ properties:
   - Sorcerer
   - Wizard
   higherLevel: You can target one additional creature for each spell slot level above 2.
+  use:
+    save: con

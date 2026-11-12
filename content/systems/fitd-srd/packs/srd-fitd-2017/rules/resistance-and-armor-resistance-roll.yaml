@@ -1,0 +1,20 @@
+id: resistance-and-armor-resistance-roll
+type: rule
+name: RESISTANCE ROLL
+description: >-
+  ⏣ **1d** for each **Attribute** rating.
+
+
+  You **reduce** or **avoid** the effects of the consequence (GM chooses).
+
+
+  **Suffer 6 **Stress** minus the highest die result.**
+
+
+  **Critical**: Clear 1 stress.
+source: Resistance and Armor > RESISTANCE ROLL
+tags:
+- resistance
+properties:
+  category: Resistance and Armor
+  order: 55

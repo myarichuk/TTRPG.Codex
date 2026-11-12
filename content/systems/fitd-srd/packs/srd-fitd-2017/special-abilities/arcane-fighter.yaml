@@ -1,0 +1,11 @@
+id: arcane-fighter
+type: special-ability
+name: Arcane fighter
+description: >-
+  You may imbue your hands, melee weapons, or tools with spirit energy. You gain **potency** in combat vs. the supernatural..
+
+
+  > When you imbue yourself with arcane energy, how do you do it? What does it look like when the energy manifests?
+source: Character playbook > Special abilities > Arcane fighter
+tags:
+- example

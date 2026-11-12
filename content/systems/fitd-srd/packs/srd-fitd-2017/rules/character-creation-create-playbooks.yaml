@@ -1,0 +1,21 @@
+id: character-creation-create-playbooks
+type: rule
+name: Create playbooks
+description: >-
+  A playbook is what we call the sheet with all the specific rules to play a certain character type in a Blades-powered game. For example, you might create a playbook called a **Soldier**, with special abilities related to battle, or a playbook called a **Medic**, with special abilities related to field medicine.
+
+
+  When you choose a playbook, you're choosing a set of **special abilities** (which give your character ways to break the rules in various ways) and a set of **xp triggers** (which determine how you earn experience for character advancement). But every playbook represents a scoundrel at heart. The Cutter has special abilities related to combat, but that doesn't mean they're "the fighter" of the game. Any character type can fight well. Think of your playbook as an area of focus and preference, but not a unique skill set.
+
+
+  This is why we call them "playbooks" rather than "character classes" or "archetypes." You're selecting the set of initial action ratings and special abilities that your character has access to—but you're not defining their immutable essence or true nature. Your character will grow and change over time; who they become is part of the fun of playing the game.
+
+
+  Once you've chosen your playbook, follow the steps below to complete your character.
+source: Character creation > Create playbooks
+tags:
+- character
+- creation
+properties:
+  category: Character creation
+  order: 85

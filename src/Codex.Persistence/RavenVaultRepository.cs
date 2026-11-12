@@ -133,6 +133,8 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
             Biography = string.IsNullOrWhiteSpace(request.Biography) ? null : SecretText.ForPlayers(request.Biography),
             LeftOut = request.LeftOut.Distinct().ToList(),
             AskedFor = request.AskedFor.Distinct().ToList(),
+            // Taken from the vault character itself, never from the caller: only what it really carries, as a player may write it.
+            Brings = vault.Carried.Where(c => request.Brings.Any(b => b.Is(c.Type, c.EntryId))).Select(c => RavenHomebrewRepository.ForPlayers(c)).ToList(),
             CreatedAt = DateTime.UtcNow
         };
         await session.StoreAsync(stored);
@@ -167,7 +169,8 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
         return true;
     }
 
-    public async Task<(CharacterRequestDocument Request, ActorDocument? Added)?> AcceptAsync(string requestId, CampaignAccess access)
+    public async Task<(CharacterRequestDocument Request, ActorDocument? Added)?> AcceptAsync(string requestId, CampaignAccess access,
+        Dictionary<string, object>? sheet = null, IReadOnlyList<CarriedEntry>? add = null)
     {
         if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { IsDm: true } current) return null;
         using var session = dbService.Store.OpenAsyncSession();
@@ -182,6 +185,34 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
             // The player left while it waited: nothing to bring in for them.
             await session.SaveChangesAsync();
             return null;
+        }
+
+        // The GM's review: the sheet with what they left out or swapped, and the carried entries they took into the Library.
+        if (sheet != null) request.Sheet = sheet;
+        var bringing = request.Brings.Where(b => add?.Any(a => a.Is(b.Type, b.EntryId)) == true).ToList();
+        var has = bringing.Count == 0
+            ? new List<HomebrewEntryDocument>()
+            : await session.Query<HomebrewEntryDocument, HomebrewByCampaignIndex>()
+                .Customize(x => x.WaitForNonStaleResults())
+                .Where(h => h.CampaignId == campaign.Id)
+                .ToListAsync();
+        foreach (var carried in bringing)
+        {
+            if (has.Any(h => carried.Is(h.Type, h.EntryId))) continue; // the campaign's own entry of that id stands
+            await session.StoreAsync(new HomebrewEntryDocument
+            {
+                Id = Guid.NewGuid().ToString(),
+                CampaignId = campaign.Id,
+                SystemId = campaign.SystemId,
+                Type = carried.Type,
+                EntryId = carried.EntryId,
+                Name = carried.Name,
+                Description = carried.Description,
+                Tags = new List<string>(carried.Tags),
+                Properties = new Dictionary<string, object>(carried.Properties),
+                IsPublished = true, // its player has to see it, or their sheet shows it as missing
+                AuthorUserId = request.UserId
+            });
         }
 
         ActorDocument? added = null;

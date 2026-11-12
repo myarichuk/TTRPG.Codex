@@ -1,0 +1,11 @@
+id: focused
+type: special-ability
+name: Focused
+description: >-
+  You may expend your **special armor** to resist a consequence of surprise or mental harm (fear, confusion, losing track of someone) or to **push yourself** for ranged combat or tracking.
+
+
+  > When you use this ability, tick the special armor box on your playbook sheet. If you "resist a consequence" of the appropriate type, you avoid it completely. If you use this ability to push yourself, you get one of the benefits (+1d, +1 effect, act despite severe harm) but you don't take 2 stress. Your special armor is restored at the beginning of downtime.
+source: Character playbook > Special abilities > Focused
+tags:
+- example

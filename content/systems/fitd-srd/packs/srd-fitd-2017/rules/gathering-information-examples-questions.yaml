@@ -1,0 +1,29 @@
+id: gathering-information-examples-questions
+type: rule
+name: Examples & Questions
+description: >-
+  * You might **Attune** to see echoes of recent spirit activity. *Have any new ghosts been here? How can I find the spirit well that's calling to them? What should I be worried about?*
+
+  * You might **Command** a local barkeep to tell you what he knows about the secret meetings held in his back room. *What's really going on here? What's he really feeling about this? Is he part of this secret group?*
+
+  * You might **Consort** with a well-connected friend to learn secrets about an enemy, rival, or potential ally. *What do they intend to do? What might I suspect about their motives? How can I discover leverage to manipulate them?*
+
+  * You might **Hunt** a courier across the city, to discover who's receiving satchels of coin from a master duelsit. *Where does the package end up? How can I find out who signed for the package at City Hall?*
+
+  * You might **Study** ancient and obscure books to discover an arcane secret. *How can I disable the runes of warding? Will anyone sense if they're disabled?*
+
+  * Or you might **Study** a person to read their intentions and feelings. *What are they really feeling? How could I get them to trust me?*
+
+  * You might **Survey** a manor house to case it for a heist. *What's a good point of infiltration? What's the danger here?*
+
+  * Or you might **Survey** a charged situation when you meet another gang. *What's really going on here? Are they about to attack us?*
+
+  * You might **Sway** a powerful lord at a party so he divulges his future plans. *What does he intend to do? How can I get him to think I might be a good partner in this venture?*
+
+  * Or you might **Sway** his bodyguard to confide in you about recent events. *Where has he been lately? Who's he been meeting with?*
+source: Gathering Information > Examples & Questions
+tags:
+- gather-information
+properties:
+  category: Gathering Information
+  order: 62

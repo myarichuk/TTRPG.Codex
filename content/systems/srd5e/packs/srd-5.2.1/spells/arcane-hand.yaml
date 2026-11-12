@@ -45,3 +45,10 @@ properties:
   - Wizard
   damageType: Force
   higherLevel: The damage of the Clenched Fist increases by 2d8 and the damage of the Grasping Hand increases by 2d6 for each spell slot level above 5.
+  use:
+    attack: melee
+    save: str
+    damage: 5d8
+    damageType: Force
+    addAbility: true
+    perSlot: 2d6

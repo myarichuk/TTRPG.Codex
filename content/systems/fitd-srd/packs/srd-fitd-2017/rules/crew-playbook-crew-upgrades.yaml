@@ -1,0 +1,11 @@
+id: crew-playbook-crew-upgrades
+type: rule
+name: Crew upgrades
+description: 'A list of five upgrades specific to the crew. Some examples:'
+source: Crew playbook > Crew upgrades
+tags:
+- crew
+- playbook
+properties:
+  category: Crew playbook
+  order: 121

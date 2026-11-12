@@ -1,0 +1,7 @@
+id: arcane-mind
+type: special-ability
+name: Arcane mind
+description: You're always aware of supernatural entities in your presence. Take **+1d** whenever you **gather information** about the supernatural by any means.
+source: Character playbook > Special abilities > Arcane mind
+tags:
+- example

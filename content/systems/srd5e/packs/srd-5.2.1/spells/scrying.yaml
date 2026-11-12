@@ -73,3 +73,5 @@ properties:
   - Druid
   - Warlock
   - Wizard
+  use:
+    save: wis

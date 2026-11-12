@@ -255,4 +255,10 @@
   <data name="Combat.Objects.AddRow" xml:space="preserve"><value>הוסף</value></data>
   <data name="Combat.Objects.RemoveRow" xml:space="preserve"><value>הסר את {0}</value></data>
   <data name="Combat.Objects.NotChanged" xml:space="preserve"><value>שום דבר לא השתנה: השם תפוס, ריק, או שכבר אינו קיים.</value></data>
+  <data name="Combat.StartEncounter" xml:space="preserve"><value>התחלת עימות</value></data>
+  <data name="Combat.NoEncounterHint" xml:space="preserve"><value>אין עימות פעיל. התחילו אחד כדי להטיל יוזמה; הכרטיסים למטה פועלים בכל מקרה.</value></data>
+  <data name="Combat.Card.Heading" xml:space="preserve"><value>דמויות ויצורים</value></data>
+  <data name="Combat.Card.Show" xml:space="preserve"><value>הצגת פרטים נוספים: {0}</value></data>
+  <data name="Combat.Card.Hide" xml:space="preserve"><value>הסתרת פרטים: {0}</value></data>
+  <data name="Combat.Card.Equipped" xml:space="preserve"><value>בשימוש:</value></data>
 </root>

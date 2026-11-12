@@ -38,3 +38,9 @@ properties:
   classes:
   - Cleric
   higherLevel: The damage increases by 1d8 for every slot level above 2.
+  use:
+    attack: melee
+    damage: 1d8
+    damageType: Force
+    addAbility: true
+    perSlot: 1d8

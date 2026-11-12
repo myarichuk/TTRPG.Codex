@@ -1,0 +1,29 @@
+id: crew-creation-cohort-harm-healing
+type: rule
+name: Cohort harm & Healing
+description: >-
+  Cohorts suffer harm similarly to PCs. A cohort can suffer four levels of harm:
+
+
+  * **Weakened.** The cohort has reduced effect.
+
+  * **Impaired.** The cohort operates with reduced quality (-1d).
+
+  * **Broken.** The cohort can't do anything until they recover.
+
+  * **Dead.** The cohort is destroyed.
+
+
+  All of your cohorts heal during downtime. If circumstances are amenable for recovery, each cohort removes one level of harm (or two levels of harm instead, if a PC spends a downtime activity helping them recuperate).
+
+
+  If a cohort is destroyed, it may be replaced. Spend **coin** equal to your Tier +2 to restore it, plus two downtime activities to recruit new gang members, or hire a new expert.
+source: Crew creation > Cohort harm & Healing
+tags:
+- crew
+- creation
+- harm
+- cohort
+properties:
+  category: Crew creation
+  order: 115

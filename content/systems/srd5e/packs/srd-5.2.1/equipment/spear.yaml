@@ -24,6 +24,14 @@ properties:
   cost: 5 gp
   weight: 2
   damage: '1d6 Piercing (two-handed: 1d8)'
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d6
+    damageType: Piercing
+    alternatives:
+      two-handed: 1d8
   properties:
   - Thrown
   - Versatile

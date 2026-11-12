@@ -34,3 +34,5 @@ properties:
   ritual: false
   classes:
   - Bard
+  use:
+    save: wis

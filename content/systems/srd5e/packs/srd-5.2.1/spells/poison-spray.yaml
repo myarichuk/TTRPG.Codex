@@ -41,3 +41,11 @@ properties:
   - Warlock
   - Wizard
   damageType: Poison
+  use:
+    attack: ranged
+    damage: 1d12
+    damageType: Poison
+    atLevels:
+      5: 2d12
+      11: 3d12
+      17: 4d12

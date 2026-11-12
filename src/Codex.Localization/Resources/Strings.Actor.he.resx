@@ -449,4 +449,28 @@
   <data name="Actor.Assist.GoThere" xml:space="preserve"><value>ללכת לשם</value></data>
   <data name="Actor.Assist.HighlightsKept" xml:space="preserve"><value>הדגשות לא משנות דבר ולא נשמרות.</value></data>
   <data name="Actor.Assist.Dismiss" xml:space="preserve"><value>להסתיר</value></data>
+  <data name="Actor.Features.Title" xml:space="preserve"><value>יכולות</value></data>
+  <data name="Actor.Features.UseOther" xml:space="preserve"><value>שימוש: {0}</value></data>
+  <data name="Actor.Features.RegainOther" xml:space="preserve"><value>החזרת שימוש: {0}</value></data>
+  <data name="Actor.Features.Adds" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Features.AtLeast" xml:space="preserve"><value>{0}: לפחות {1}</value></data>
+  <data name="Actor.Features.NotCounted" xml:space="preserve"><value>לא מצטבר</value></data>
+  <data name="Actor.Features.Note" xml:space="preserve"><value>מה שהיכולות מעניקות מחושב מהערכים בספרייה. השימושים מתמלאים מחדש במנוחה שכל יכולת מציינת.</value></data>
+  <data name="Actor.Actions.Title" xml:space="preserve"><value>פעולות</value></data>
+  <data name="Actor.Actions.ToHit" xml:space="preserve"><value>{0} לפגיעה</value></data>
+  <data name="Actor.Actions.Save" xml:space="preserve"><value>הצלת {0}, ד"ק {1}</value></data>
+  <data name="Actor.Actions.Heals" xml:space="preserve"><value>מרפא {0}</value></data>
+  <data name="Actor.Actions.Damage" xml:space="preserve"><value>נזק</value></data>
+  <data name="Actor.Actions.Healing" xml:space="preserve"><value>ריפוי</value></data>
+  <data name="Actor.Actions.RollAttack" xml:space="preserve"><value>{0}: התקפה</value></data>
+  <data name="Actor.Actions.RollDamage" xml:space="preserve"><value>{0}: נזק ({1})</value></data>
+  <data name="Actor.Actions.RollDamagePlain" xml:space="preserve"><value>{0}: נזק</value></data>
+  <data name="Actor.Actions.RollHealing" xml:space="preserve"><value>{0}: ריפוי</value></data>
+  <data name="Actor.Actions.SaveSuffix" xml:space="preserve"><value>{0} (הצלת {1}, ד"ק {2})</value></data>
+  <data name="Actor.Actions.SlotFor" xml:space="preserve"><value>משבצת עבור {0}</value></data>
+  <data name="Actor.Actions.SlotOption" xml:space="preserve"><value>דרגה {0} (נותרו {1})</value></data>
+  <data name="Actor.Actions.NoSlots" xml:space="preserve"><value>אין משבצת מתאימה</value></data>
+  <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: {2}, דרגה {1}</value></data>
+  <data name="Actor.Actions.Note" xml:space="preserve"><value>הטלות הפעולות נעשות כאן, ובזמן מפגש נכנסות ליומן השולחן. משבצת שנוצלה מסומנת אוטומטית; פגיעות, הצלות ונזק מוחלים על ידי המנחה.</value></data>
+  <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: אי אפשר לחשב מה היכולת הזאת מעניקה, ולכן היא מושמטת. מנהל המשחק יכול לבדוק את הערך.</value></data>
 </root>

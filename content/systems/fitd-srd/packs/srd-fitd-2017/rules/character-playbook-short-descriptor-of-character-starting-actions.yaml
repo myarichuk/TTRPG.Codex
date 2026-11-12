@@ -1,0 +1,18 @@
+id: character-playbook-short-descriptor-of-character-starting-actions
+type: rule
+name: STARTING ACTIONS
+description: >-
+  |      |     |          |          |          |                  |
+
+  | :------: | --- | :------: | :------: | :------: | :--------------- |
+
+  | ● |     | ● | ○ | ○ | PRIMARY ACTION   |
+
+  | ● |     | ○ | ○ | ○ | SECONDARY ACTION |
+source: Character playbook > Short Descriptor of Character > STARTING ACTIONS
+tags:
+- character
+- playbook
+properties:
+  category: Character playbook
+  order: 98

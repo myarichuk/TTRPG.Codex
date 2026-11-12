@@ -35,3 +35,7 @@ properties:
   classes:
   - Cleric
   damageType: Force
+  use:
+    save: dex
+    damage: 6d10
+    damageType: Force

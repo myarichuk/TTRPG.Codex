@@ -1,0 +1,22 @@
+id: effect
+type: rule
+name: Effect
+description: >-
+  In *Blades in the Dark*, you achieve goals by taking actions and facing consequences. But how many actions does it take to achieve a particular goal? That depends on the **effect level** of your actions. The GM judges the effect level using the profiles below. Which one best matches the action at hand -- **great**, **standard**, or **limited**? Each effect level indicates the questions that should be answered for that effect, as well as how many segments to tick if you're using a **progress clock**.
+
+
+  | Effect Levels |                                                                                                                  | Ticks |
+
+  | ------------: | :--------------------------------------------------------------------------------------------------------------- | :---: |
+
+  |     **GREAT** | *You achieve more than usual. How does the extra effort manifest? What additional benefit do you enjoy?*         |   3   |
+
+  |  **STANDARD** | *You achieve what we'd expect as "normal" with this action. Is that enough, or is there more left to do?*        |   2   |
+
+  |   **LIMITED** | *You achieve a partial or weak effect. How is your impact diminished? What effort remains to achieve your goal?* |   1   |
+source: Effect
+tags:
+- effect
+properties:
+  category: Effect
+  order: 39

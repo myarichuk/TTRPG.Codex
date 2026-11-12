@@ -41,3 +41,8 @@ properties:
   - Ranger
   damageType: Force
   higherLevel: The damage increases by 1d8 for each spell slot level above 4.
+  use:
+    save: wis
+    damage: 5d8
+    damageType: Force
+    perSlot: 1d8

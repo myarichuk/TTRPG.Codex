@@ -366,7 +366,8 @@ else
         Nav.NavigateTo($"/vault/{created.Id}");
     });
 
-    // The draft picks only what the server's packs offer for the system: no campaign, so no homebrew.
+    // The draft picks what the server's packs offer for the system (no campaign, so no homebrew). Where nothing fits the
+    // concept, it may write an entry of the character's own, which the character carries until a GM reviews it.
     private async Task CreateFromConceptAsync(string owner)
     {
         if (string.IsNullOrWhiteSpace(concept) || aiBusy) return;
@@ -379,9 +380,11 @@ else
             var systemId = newSystemId;
             var campaign = Codex.Web.Services.VaultService.CampaignFor(systemId);
             var access = CampaignAccess.Vault(owner);
-            var draft = await Ai.CreateCharacterAsync(concept, ActorKind.PlayerCharacter, campaign, Catalog.GetDefinition(systemId), owner,
+            var system = Catalog.GetDefinition(systemId);
+            var draft = await Ai.CreateCharacterAsync(concept, ActorKind.PlayerCharacter, campaign, system, owner,
                 async type => (await Library.OptionsAsync(campaign, access, type, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList(),
-                async type => (await Library.OptionsAsync(campaign, access, type, L.Culture.Name)).Select(i => i.Entry).ToList(), ct);
+                async type => (await Library.OptionsAsync(campaign, access, type, L.Culture.Name)).Select(i => i.Entry).ToList(), ct,
+                async () => await CachedEntryResolver.LoadAsync(Library, campaign, access, system!), propose: true);
             ct.ThrowIfCancellationRequested();
 
             var created = await VaultService.CreateAsync(owner, systemId, draft.Name, draft);

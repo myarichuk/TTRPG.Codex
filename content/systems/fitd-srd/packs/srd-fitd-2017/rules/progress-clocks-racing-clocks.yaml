@@ -1,0 +1,14 @@
+id: progress-clocks-racing-clocks
+type: rule
+name: Racing Clocks
+description: >-
+  Create two opposed clocks to represent a race. The PCs might have a progress clock called "Escape" while the constables have a clock called "Cornered." If the PCs finish their clock before the constables fill theirs, they get away. Otherwise, they're cornered and can't flee. If both complete at the same time, the PCs escape to their lair, but the hunting officers are outside!
+
+
+  You can also use racing clocks for an environmental hazard. Maybe the PCs are trying to complete the "Search" clock to find the lockbox on the sinking ship before the GM fills the "Sunk" clock and the vessel goes down.
+source: Progress clocks > Racing Clocks
+tags:
+- clock
+properties:
+  category: Progress clocks
+  order: 22

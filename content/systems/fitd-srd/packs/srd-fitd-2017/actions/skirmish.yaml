@@ -1,0 +1,13 @@
+id: skirmish
+type: action
+name: Skirmish
+description: >-
+  When you **Skirmish**, you entangle a target in close combat so they can't easily escape.
+
+
+  *You might brawl or wrestle with them. You might hack and slash. You might seize or hold a position in battle. You could try to fight in a formal duel (but Finessing might be better).*
+source: Actions & Attributes > Actions
+tags:
+- prowess
+properties:
+  attribute: prowess

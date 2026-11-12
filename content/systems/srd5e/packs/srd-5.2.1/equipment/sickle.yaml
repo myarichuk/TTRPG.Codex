@@ -24,6 +24,12 @@ properties:
   cost: 1 gp
   weight: 2
   damage: 1d4 Slashing
+  use:
+    attack: melee
+    abilities:
+    - str
+    damage: 1d4
+    damageType: Slashing
   properties:
   - Light
   mastery: Nick

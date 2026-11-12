@@ -1,0 +1,14 @@
+id: teamwork-teamwork-protect
+type: rule
+name: Protect
+description: >-
+  You step in to face a consequence that one of your teammates would otherwise face. **You suffer it instead of them. You may roll to resist it as normal.** Describe how you intervene.
+
+
+  > This is how you do the "I'll dive in front of the bullet" You cover for a teammate, suffering any harm or consequences that still linger after you've rolled to resist. It hurts, cost stress, and may leave you in a bad spot. But hey, you're a hero.
+source: Teamwork > Teamwork > Protect
+tags:
+- teamwork
+properties:
+  category: Teamwork
+  order: 140

@@ -1,0 +1,20 @@
+id: crew-creation-choose-a-favorite-contact
+type: rule
+name: Choose a favorite contact
+description: >-
+  Take a look at your list of potential contacts on the crew sheet. Choose one contact who is a close friend, long-time ally, or partner in crime. The GM will tell you about two factions that are impacted by your choice:
+
+
+  * One faction is also friendly with this contact, and you get **+1 status** with them.
+
+  * One faction is unfriendly with this contact, and you get **-1 status** with them.
+
+
+  At your option, these factions are even more concerned with this contact and so you take **+2** and **-2 status** instead.
+source: Crew creation > Choose a favorite contact
+tags:
+- crew
+- creation
+properties:
+  category: Crew creation
+  order: 108

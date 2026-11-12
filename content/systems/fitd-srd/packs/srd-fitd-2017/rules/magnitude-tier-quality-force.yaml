@@ -1,0 +1,18 @@
+id: magnitude-tier-quality-force
+type: rule
+name: TIER & QUALITY / FORCE
+description: >-
+  |  0   |    1     |   2    |     3     |    4     |      5       |      6      |
+
+  | :--: | :------: | :----: | :-------: | :------: | :----------: | :---------: |
+
+  | Poor | Adequate |  Good  | Excellent | Superior |  Impeccable  |  Legendary  |
+
+  | Weak | Moderate | Strong |  Serious  | Powerful | Overwhelming | Devastating |
+source: Magnitude > TIER & QUALITY / FORCE
+tags:
+- magnitude
+- tier
+properties:
+  category: Magnitude
+  order: 186

@@ -43,3 +43,7 @@ properties:
   - Druid
   damageType: Piercing
   higherLevel: Both types of damage increase by 1d8 for each spell slot level above 6.
+  use:
+    save: dex
+    damage: 7d8
+    damageType: Piercing

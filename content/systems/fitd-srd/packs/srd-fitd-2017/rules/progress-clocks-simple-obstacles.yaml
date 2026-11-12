@@ -1,0 +1,14 @@
+id: progress-clocks-simple-obstacles
+type: rule
+name: Simple Obstacles
+description: >-
+  Not every situation and obstacle requires a clock. Use clocks when a situation is complex or layered and you need to track something over time—otherwise, resolve the result of an action with a single roll.
+
+
+  Examples of progress clocks follow.
+source: Progress clocks > Simple Obstacles
+tags:
+- clock
+properties:
+  category: Progress clocks
+  order: 20

@@ -1,0 +1,11 @@
+id: scout
+type: special-ability
+name: Scout
+description: >-
+  When you gather information to discover the location of a target, you get **+1 effect**. When you hide in a prepared position or use camouflage you get **+1d** to rolls to avoid detection.
+
+
+  > A "target" can be a person, a destination, a good ambush spot, an item, etc.
+source: Character playbook > Special abilities > Scout
+tags:
+- example

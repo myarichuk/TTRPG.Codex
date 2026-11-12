@@ -81,14 +81,19 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
             new SheetRuleEngine(system, NullEntryResolver.Instance).InitializeSheet(actor.Sheet);
         }
 
-        if (draft == null)
+        if (draft != null)
         {
-            return;
+            ApplyDraft(actor.Sheet, system, draft);
         }
+    }
 
+    /// <summary>Lays a model's <paramref name="draft"/> over a new sheet. Also how the drafter itself sees the sheet the draft
+    /// will become, to ask the rules what that character may still pick.</summary>
+    public static void ApplyDraft(Dictionary<string, object> sheet, SystemDefinition? system, CharacterDraft draft)
+    {
         foreach (var (key, value) in draft.Sheet)
         {
-            actor.Sheet[key] = value;
+            sheet[key] = value;
         }
 
         // The draft's scores are typed in. A score the model left out is the attribute's own default, not the point-buy floor the blank
@@ -98,7 +103,7 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
         {
             if (draft.Sheet.TryGetValue(attribute.Key, out var score))
             {
-                actor.Sheet[SheetRuleEngine.BasePrefix + attribute.Key] = score;
+                sheet[SheetRuleEngine.BasePrefix + attribute.Key] = score;
                 scored = true;
             }
         }
@@ -107,11 +112,11 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
         {
             foreach (var attribute in (system?.Attributes ?? new List<AttributeDefinition>()).Where(a => !draft.Sheet.ContainsKey(a.Key)))
             {
-                actor.Sheet[SheetRuleEngine.BasePrefix + attribute.Key] = (long)attribute.Default;
-                actor.Sheet[attribute.Key] = (long)attribute.Default;
+                sheet[SheetRuleEngine.BasePrefix + attribute.Key] = (long)attribute.Default;
+                sheet[attribute.Key] = (long)attribute.Default;
             }
 
-            actor.Sheet[SheetRuleEngine.MethodKey] = "manual";
+            sheet[SheetRuleEngine.MethodKey] = "manual";
         }
     }
 

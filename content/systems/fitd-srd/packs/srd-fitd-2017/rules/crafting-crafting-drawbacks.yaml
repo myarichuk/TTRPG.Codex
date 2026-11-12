@@ -1,0 +1,24 @@
+id: crafting-crafting-drawbacks
+type: rule
+name: Drawbacks
+description: >-
+  A creation or modification may have one or more drawbacks, chosen by the GM.
+
+
+  * **Complex**. You'll have to create it in multiple stages; the GM will tell you how many. One downtime activity and crafting roll is needed per stage.
+
+  * **Conspicuous**. This creation doesn't go unnoticed. Take **+1** **heat** if it's used any number of times on an operation.
+
+  * **Consumable**. This creation has a limited number of uses (all alchemicals must have this drawback, usually one use).
+
+  * **Rare**. This creation requires a rare item or material when it is crafted.
+
+  * **Unreliable**. When you use the item, make a fortune roll (using its **quality**) to see how well it performs.
+
+  * **Volatile**. The item produces a dangerous or troublesome side-effect for the user, specified by the GM. A side-effect is a consequence, and may be **resisted**.
+source: Crafting > Crafting > Drawbacks
+tags:
+- crafting
+properties:
+  category: Crafting
+  order: 201

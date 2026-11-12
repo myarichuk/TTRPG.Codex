@@ -1,0 +1,15 @@
+id: character-playbook-friends-rivals
+type: rule
+name: Friends, rivals
+description: >-
+  A list of five possible friends or rivals go here, along with descriptions of each. Some possibilities include: A spy, a bounty hunter, a pugilist, a cold killer, an extortionist, a physicker, an assassin, a sentinel, an apothecary, a priestess, a noble, a city clerk, an officer, an inspector, a beggar, a locksmith, a gang leader, a drug dealer, a tavern owner, a prostitute, a jail-bird, an information broker, a servant, an archivist, or a supernatural entity.
+
+
+  Questions can include how you know the friend, what they've done for you,  what you do for them, and what kind of relationship you have.
+source: Character playbook > Friends, rivals
+tags:
+- character
+- playbook
+properties:
+  category: Character playbook
+  order: 100

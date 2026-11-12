@@ -1,0 +1,7 @@
+id: secure-lair
+type: crew-upgrade
+name: Secure Lair
+description: Your lair has locks, alarms, and traps to thwart intruders. A second upgrade improves the defenses to include arcane measures that work against spirits. *You might roll your crew's Tier if these measures are ever put to the test, to see how well they thwart an intruder.*
+source: Crew creation > Crew upgrade Examples
+tags:
+- example

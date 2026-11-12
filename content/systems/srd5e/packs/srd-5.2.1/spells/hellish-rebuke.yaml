@@ -37,3 +37,8 @@ properties:
   - Warlock
   damageType: Fire
   higherLevel: The damage increases by 1d10 for each spell slot level above 1.
+  use:
+    save: dex
+    damage: 2d10
+    damageType: Fire
+    perSlot: 1d10

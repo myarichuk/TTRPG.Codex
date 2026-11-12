@@ -1,0 +1,11 @@
+id: entanglements-gang-trouble
+type: rule
+name: Gang trouble
+description: One of your gangs (or other cohorts) causes trouble due to their flaw(s). You can lose face (forfeit** rep** equal to your Tier +1), make an example of one of the gang members, or face reprisals from the wronged party.
+source: Entanglements > Gang trouble
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 160

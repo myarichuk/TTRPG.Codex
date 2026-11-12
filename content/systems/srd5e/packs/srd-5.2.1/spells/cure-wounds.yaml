@@ -40,3 +40,8 @@ properties:
   - Druid
   - Paladin
   - Ranger
+  use:
+    damage: 2d8
+    heals: true
+    addAbility: true
+    perSlot: 2d8

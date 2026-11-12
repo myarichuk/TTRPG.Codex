@@ -1,0 +1,20 @@
+id: teamwork-teamwork
+type: rule
+name: Teamwork
+description: >-
+  When the team of PCs works together, the characters have access to four special **teamwork maneuvers**. They're listed at the bottom of the character playbook sheets to help remind the players of them. The four maneuvers are:
+
+
+  * **Assist** another PC who's rolling an action.
+
+  * Lead a **group action**.
+
+  * **Protect** a teammate.
+
+  * **Set up** a character who will follow through on your action.
+source: Teamwork > Teamwork
+tags:
+- teamwork
+properties:
+  category: Teamwork
+  order: 137

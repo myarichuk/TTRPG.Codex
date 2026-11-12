@@ -1,0 +1,17 @@
+id: action-roll-5-add-bonus-dice
+type: rule
+name: 5. Add Bonus Dice
+description: >-
+  You can normally get two bonus dice for your action roll (some special abilities might give you additional bonus dice).
+
+
+  For one bonus die, you can get **assistance** from a teammate. They take 1 stress, say how they help you, and give you +1d.
+
+
+  For another bonus die, you can either **push yourself** (take 2 stress) or you can accept a **Devil's Bargain** (you can't get dice for both, it's one or the other).
+source: Action Roll > 5. Add Bonus Dice
+tags:
+- action-roll
+properties:
+  category: Action Roll
+  order: 33

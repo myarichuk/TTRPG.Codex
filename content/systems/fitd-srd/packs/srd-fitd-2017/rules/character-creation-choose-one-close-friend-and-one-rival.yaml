@@ -1,0 +1,11 @@
+id: character-creation-choose-one-close-friend-and-one-rival
+type: rule
+name: Choose one close friend and one rival
+description: Each playbook has a list of NPCs that your character knows. Choose one from the list who is a close relationship (a good friend, a lover, a family relation, etc.). Mark the upward-pointing triangle next to their name. Then choose another NPC on the list who's your rival or enemy. Mark the downward-pointing triangle next to their name.
+source: Character creation > Choose one close friend and one rival
+tags:
+- character
+- creation
+properties:
+  category: Character creation
+  order: 91

@@ -1,0 +1,15 @@
+id: rituals-learning-a-ritual-ritual-questions
+type: rule
+name: Ritual Questions
+description: >-
+  1. GM asks: **"What does the ritual do and how is it weird?"** Player answers.
+
+  2. Player asks: **"What must I do to perform the ritual, and what is its price?"** GM answers. A ritual takes at least one downtime activity to perform and inflicts **stress** on the caster according to its **magnitude**.  If performance of the ritual is dangerous or troublesome in some way, it requires an action roll (usually **Attune**). A ritual may also have additional costs, such as a sacrifice, rare item, the start of a dire progress clock, etc.
+
+  3. GM asks: **"What new belief or fear does knowledge of this ritual and its attendant occult forces instill in you?"** Player answers.
+source: Rituals > Learning a ritual > Ritual Questions
+tags:
+- ritual
+properties:
+  category: Rituals
+  order: 192

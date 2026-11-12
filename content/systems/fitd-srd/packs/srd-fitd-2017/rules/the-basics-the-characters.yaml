@@ -1,0 +1,10 @@
+id: the-basics-the-characters
+type: rule
+name: The Characters
+description: The characters attempt to develop their crew by performing scores and contending with threats from their enemies.
+source: The Basics > The Characters
+tags:
+- basics
+properties:
+  category: The Basics
+  order: 3

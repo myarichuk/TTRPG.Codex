@@ -1,0 +1,7 @@
+id: high-society
+type: crew-ability
+name: High society
+description: It's all about who you know. Take **-1 heat** during downtime and **+1d** to **gather information** about the city's elite.
+source: Crew playbook > Crew special abilities > High society
+tags:
+- example

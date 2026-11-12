@@ -1,0 +1,10 @@
+id: progress-clocks-linked-clocks
+type: rule
+name: Linked Clocks
+description: You can make a clock that unlocks another clock once it's filled. For example, the GM might make a linked clock called "Trapped" after an "Alert" clock fills up. When you fight a veteran warrior, she might have a clock for her "Defense" and then a linked clock for "Vulnerable." Once you overcome the "Defense" clock, then you can attempt to overcome the "Vulnerable" clock and defeat her.  You might affect the "Defense" clock with violence in a knife-fight, or you lower her defense with deception if you have the opportunity. As always, the method of action is up to the players and the details of the fiction at hand.
+source: Progress clocks > Linked Clocks
+tags:
+- clock
+properties:
+  category: Progress clocks
+  order: 23

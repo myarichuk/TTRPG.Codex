@@ -1,0 +1,7 @@
+id: vault
+type: crew-upgrade
+name: Vault
+description: Your lair has a secure vault, increasing your storage capacity for **coin** to 8. A second upgrade increases your capacity to 16.  A separate part of your vault can be used as a holding cell.
+source: Crew creation > Crew upgrade Examples
+tags:
+- example

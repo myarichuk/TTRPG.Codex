@@ -39,3 +39,7 @@ properties:
   classes:
   - Druid
   damageType: Bludgeoning
+  use:
+    save: str
+    damage: 6d10
+    damageType: Bludgeoning

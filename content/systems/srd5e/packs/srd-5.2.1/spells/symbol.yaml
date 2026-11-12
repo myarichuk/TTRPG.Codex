@@ -63,3 +63,7 @@ properties:
   - Druid
   - Wizard
   damageType: Necrotic
+  use:
+    save: con
+    damage: 10d10
+    damageType: Necrotic

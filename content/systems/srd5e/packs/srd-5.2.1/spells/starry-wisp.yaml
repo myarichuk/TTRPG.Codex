@@ -37,3 +37,11 @@ properties:
   - Bard
   - Druid
   damageType: Radiant
+  use:
+    attack: ranged
+    damage: 1d8
+    damageType: Radiant
+    atLevels:
+      5: 2d8
+      11: 3d8
+      17: 4d8

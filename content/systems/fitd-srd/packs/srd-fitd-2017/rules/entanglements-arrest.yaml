@@ -1,0 +1,15 @@
+id: entanglements-arrest
+type: rule
+name: Arrest
+description: >-
+  An Inspector presents a case file of evidence to a magistrate, to begin prosecution of your crew. They send a detail to arrest you (a gang at least equal in **scale** to your **wanted level**). Pay them off with **coin** equal to your **wanted level** +3, hand someone over for arrest (this clears your **heat**), or try to evade capture.
+
+
+  > A truncheon bangs on the shutters of the window. "Alright then! Come on out and let's go quietly now!" It sounds like the bald Sergeant. When you peek out, you see a detail of about twenty constables, all geared up for a fight. The Sergeant mumbles under his breath, so only you inside can hear: "Or perhaps I have the wrong address?" He clears his throat and waits for some coin to appear.
+source: Entanglements > Arrest
+tags:
+- entanglement
+- downtime
+properties:
+  category: Entanglements
+  order: 156

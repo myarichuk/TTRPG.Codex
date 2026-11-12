@@ -1,0 +1,27 @@
+id: magnitude-quality-examples
+type: rule
+name: QUALITY EXAMPLES
+description: >-
+  |   |                                                                              |
+
+  | :---: | :--------------------------------------------------------------------------- |
+
+  | **6** | *A mansion, large ship, rare essences or arcane artifacts, powerful demon*   |
+
+  | **5** | *A large townhouse, small ship, custom-tailored clothing, lightning barrier* |
+
+  | **4** | *A luxury vehicle, townhouse, typical demon or powerful ghost*               |
+
+  | **3** | *A coach, boat, military rifle, fashionable clothing, small home*            |
+
+  | **2** | *A pistol, respectable clothing, private rented room, typical ghost*         |
+
+  | **1** | *A fighting blade, ordinary clothing, shared apartment, cheap food or drugs* |
+
+  | **0** | *A rusty knife, worn & tattered clothing, rickety shack on the street*       |
+source: Magnitude > QUALITY EXAMPLES
+tags:
+- magnitude
+properties:
+  category: Magnitude
+  order: 187

@@ -1,0 +1,11 @@
+id: character-playbook-special-abilities
+type: rule
+name: Special abilities
+description: Choose seven special abilities for you playbook. Here are several examples.
+source: Character playbook > Special abilities
+tags:
+- character
+- playbook
+properties:
+  category: Character playbook
+  order: 101

@@ -41,3 +41,8 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Thunder
+  use:
+    save: con
+    damage: 2d8
+    damageType: Thunder
+    perSlot: 1d8

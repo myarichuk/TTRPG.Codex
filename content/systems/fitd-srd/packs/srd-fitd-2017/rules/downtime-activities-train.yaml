@@ -1,0 +1,10 @@
+id: downtime-activities-train
+type: rule
+name: Train
+description: When you spend time in training, **mark 1 xp** on the xp track for an **attribute** or **playbook** advancement. If you have the appropriate crew Training upgrade unlocked, mark **+1 xp** (2 total). See **Crew Upgrades**, for more information. *You can train a given xp track only once per downtime.*
+source: Downtime activities > Train
+tags:
+- downtime
+properties:
+  category: Downtime activities
+  order: 173

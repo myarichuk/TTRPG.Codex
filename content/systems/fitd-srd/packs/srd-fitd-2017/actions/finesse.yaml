@@ -1,0 +1,13 @@
+id: finesse
+type: action
+name: Finesse
+description: >-
+  When you **Finesse**, you employ dextrous manipulation or subtle misdirection.
+
+
+  *You might pick someone's pocket. You might handle the controls of a vehicle or direct a mount. You might formally duel an opponent with graceful fighting arts. You could try to employ those arts in a chaotic melee (but Skirmishing might be better). You could try to pick a lock (but Tinkering might be better).*
+source: Actions & Attributes > Actions
+tags:
+- prowess
+properties:
+  attribute: prowess

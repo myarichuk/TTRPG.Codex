@@ -39,3 +39,6 @@ properties:
   - Druid
   - Ranger
   damageType: Piercing
+  use:
+    damage: 2d4
+    damageType: Piercing

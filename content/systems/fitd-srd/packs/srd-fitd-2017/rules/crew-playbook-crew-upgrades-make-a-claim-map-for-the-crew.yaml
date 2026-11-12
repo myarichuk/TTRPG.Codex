@@ -1,0 +1,100 @@
+id: crew-playbook-crew-upgrades-make-a-claim-map-for-the-crew
+type: rule
+name: Make a Claim Map for the Crew
+description: >-
+  Sample claims include:
+
+
+  **Turf**: You require one less Rep to advance in tier (max 6).
+
+
+  **City Records**: You get **+1d** to the **engagement roll** for **stealth** plans. *You can use blueprints and other documents to determine a good approach for infiltrations.*
+
+
+  **Cover Identities**:  You get **+1d** to the **engagement roll** for **deception** and **social plans**. *False identities help confuse the opposition.*
+
+
+  **Cover Operation**:  You get **-2** **heat** per score. *The cover of a legitimate operation helps deflect some of the **heat** from law enforcement.*
+
+
+  **Envoy**: You get **+2** **coin** in **payoff** for scores that involve high-class clients. *This well-connected liaison will help arrange for a better payoff from rich clients.*
+
+
+  **Fixer**: You get **+2** **coin** in **payoff** for scores that involve lower-class clients. *This well-respected agent will help arrange for a better payoff from poorer clients.*
+
+
+  **Infirmary**: You get **+1d** to healing treatment rolls. *The infirmary also has beds for long-term convalescence.*
+
+
+  **Informants**: You get **+1d** to gather information for a score. *Your eyes and ears on the streets are always on the lookout for new targets.*
+
+
+  **Protection Racket**: Any time during downtime, roll dice equal to your Tier. You earn **coin** equal to the highest result, minus your **heat**. *Some of the locals are terrified of you and will gladly pay for "protection."*
+
+
+  **Training Rooms**: Your cohorts of a specific type get **+1 scale**. *Extra training enables them to fight like a larger gang.*
+
+
+  **Vice Den**: Any time during downtime, roll dice equal to your Tier. You earn **coin** equal to the highest result, minus your **heat**.
+
+
+  **Victim Trophies**: You get **+1 rep** per score. *Word of your grisly "collection" gets around, and your boldness boosts your rep in the underworld.*
+
+
+  **Fighting Pits**  During downtime, roll dice equal to your Tier. You earn **coin** equal to the highest result, minus your **heat**. *The locals love to gamble away their hard-won coin on the blood-sports you host.*
+
+
+  **Street Fence**: You get **+2** **coin** in your payoff for scores that involve lower-class targets. *An expert can find the treasure amid the trash you loot from your poorer victims.*
+
+
+  **Terrorized Citizens**: You get **+2** **coin** in your payoff for scores that involve battle or extortion. *The frightened locals offer you tribute whenever you lash out. They don't want to be next.*
+
+
+  **Warehouses**: You get **+1d** to **acquire asset** rolls. *You have space to hold all the various spoils you end up with after your battles. It can be useful on its own or for barter when you need it.*
+
+
+  **Ancient Altar**:  You get **+1d** to the **engagement roll** for **occult** plans. *Its blessing is with you.*
+
+
+  **Ancient Tower**: You get **+1d** to **Consort** with arcane entities on-site.
+
+
+  **Offertory**: You get **+2** **coin** in your payoff for scores that involve occult operations. *The frightened locals offer you tribute when you perform your dark practices. They don't want to be next.*
+
+
+  **Local Graft**: You get **+2** **coin** in **payoff** for scores that involve a show of force or socializing. *A few city officials share bribe money with those who show that they're players on the scene.*
+
+
+  **Lookouts**:  You get **+1d** to **Hunt** or **Survey** on your turf.
+
+
+  **Luxury Venue**:  **+1d** to **Consort** and **Sway** rolls on-site. *Silks, paintings, and crystal impress the clientele.*
+
+
+  **Surplus Cache**: You get **+2** **coin** in **payoff** for scores that involve product sale or supply. *You have an abundance of product, which pads your pockets every now and then.*
+
+
+  **Covert Drop**: You get **+2** **coin** in **payoff** for scores that involve espionage or sabotage. *The perfect hidden exchange point is worth the extra coin to discerning clientele.*
+
+
+  **Interrogation Chamber**: You get **+1d** to **Command** and **Sway** on-site. *Grisly business, but effective.*
+
+
+  **Loyal Fence**: You get **+2** **coin** in **payoff** for scores that involve burglary or robbery. *It requires a skilled eye and good contacts to move stolen goods.*
+
+
+  **Secret Pathways**:  You get **+1d** to the **engagement roll** for **stealth** plans. *You might have access to long-forgotten underground canals, rooftop walkways, or some other route of your choosing.*
+
+
+  **Tavern**: You get **+1d** to **Consort** and **Sway** rolls on-site. *Some booze and friendly conversation can go a long way.*
+
+
+  **Side Business**: Any time during downtime, roll dice equal to your Tier. You earn **coin** equal to the highest result, minus your **heat**. *What kind of legitimate business is this? How do you get paid in secret?*
+source: Crew playbook > Crew upgrades > Make a Claim Map for the Crew
+tags:
+- crew
+- playbook
+- claim
+properties:
+  category: Crew playbook
+  order: 122

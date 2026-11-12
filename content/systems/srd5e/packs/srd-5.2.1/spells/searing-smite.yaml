@@ -36,3 +36,8 @@ properties:
   - Paladin
   damageType: Fire
   higherLevel: All the damage increases by 1d6 for each spell slot level above 1.
+  use:
+    save: con
+    damage: 1d6
+    damageType: Fire
+    perSlot: 1d6

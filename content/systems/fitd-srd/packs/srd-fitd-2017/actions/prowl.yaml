@@ -1,0 +1,13 @@
+id: prowl
+type: action
+name: Prowl
+description: >-
+  When you **Prowl**, you traverse skillfully and quietly.
+
+
+  *You might sneak past a guard or hide in the shadows. You might run and leap across the rooftops. You might attack someone from hiding with a back-stab or blackjack. You could try to waylay a victim in the midst of battle (but Skirmishing might be better).*
+source: Actions & Attributes > Actions
+tags:
+- prowess
+properties:
+  attribute: prowess

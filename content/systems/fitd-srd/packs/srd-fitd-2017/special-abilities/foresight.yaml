@@ -1,0 +1,11 @@
+id: foresight
+type: special-ability
+name: Foresight
+description: >-
+  Two times per score you can **assist** a teammate without paying stress. Describe how you prepared for this.
+
+
+  > You can narrate an event in the past that helps your teammate now, or you might explain how you expected this situation and planned a helpful contingency that you reveal now.
+source: Character playbook > Special abilities > Foresight
+tags:
+- example

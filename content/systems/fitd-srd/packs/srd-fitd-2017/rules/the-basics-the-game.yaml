@@ -1,0 +1,10 @@
+id: the-basics-the-game
+type: rule
+name: The Game
+description: '*Blades in the Dark* is a game about a group of daring characters building an enterprising crew. We play to find out if the fledgling crew can thrive amidst the teeming threats that surround it.'
+source: The Basics > The Game
+tags:
+- basics
+properties:
+  category: The Basics
+  order: 1

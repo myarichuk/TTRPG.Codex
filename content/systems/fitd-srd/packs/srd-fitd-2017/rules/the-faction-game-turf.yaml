@@ -1,0 +1,37 @@
+id: the-faction-game-turf
+type: rule
+name: Turf
+description: >-
+  Another way to contribute to the crew's development is by acquiring **turf**. When you seize and hold territory, you establish a more stable basis for your **rep**. Each piece of turf that you claim represents abstracted support for the crew (often a result of the fear you instill in the citizens on that turf).
+
+
+  Turf is marked on your **rep** tracker (see the example below). Each piece of turf you hold reduces the **rep** cost to develop by one. So, if you have 2 turf, you need 10 **rep** to develop. If you have 4 turf, you need 8 **rep** to develop. **You can hold a maximum of 6 turf.** When you develop and reset your **rep**, **you keep the marks from all the turf you hold.**
+
+
+  ---
+
+
+  *If you hold 3 pieces of turf, you need only 9 **Rep** to develop, instead of 12.*
+
+
+  | **Rep** |          |          |          |          |          |          |     |          |          |          |          |          |          | **Turf** |
+
+  | ------- | -------- | -------- | -------- | -------- | -------- | -------- | --- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+
+  |         | ○ | ○ | ○ | ○ | ○ | ○ |     | ○ | ○ | ○ | ⊗ | ⊗ | ⊗ |          |
+
+
+  *When you develop, you'll clear the 9 **Rep** marks, but keep the 3 turf marks. Mark turf on the right side, to show the "cap" on how much **Rep** is needed.*
+
+
+  ---
+
+
+  Also, when you acquire turf, you expand the scope of your crew's **hunting grounds**.
+source: The Faction Game > Turf
+tags:
+- faction
+- turf
+properties:
+  category: The Faction Game
+  order: 73

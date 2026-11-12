@@ -1,0 +1,19 @@
+id: coin-and-stash-monetary-values-coin-use
+type: rule
+name: Coin Use
+description: >-
+  * Spend 1 **coin** to get an additional **activity** during **downtime**.
+
+  * Spend 1 **coin** to increase the result level of a **downtime activity** roll.
+
+  * Spend **coin** to avoid certain crew **entanglements**.
+
+  * Put **coin** in your character's **stash** to improve their lifestyle and circumstances when they retire. See the next section.
+
+  * Spend **coin** when you advance your crew's **Tier**.
+source: Coin and Stash > Monetary values > Coin Use
+tags:
+- coin
+properties:
+  category: Coin and Stash
+  order: 66

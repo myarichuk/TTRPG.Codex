@@ -1,0 +1,15 @@
+id: character-playbook-short-descriptor-of-character
+type: rule
+name: Short Descriptor of Character
+description: >-
+  Medium length description of the character here. Include what kind of activities they normally partake in.
+
+
+  **Include the XP triggers for the characters here.** At the end of a session mark XP if you addressed a challenge with: insert a short list of methods or actions here. Examples could include: violence, coercion, knowledge, charm, audacity, calculation, deception, influence, stealth, evasion, technical skill, mayhem, tracking, or occult powers.
+source: Character playbook > Short Descriptor of Character
+tags:
+- character
+- playbook
+properties:
+  category: Character playbook
+  order: 97

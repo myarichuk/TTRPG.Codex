@@ -1,0 +1,7 @@
+id: prison-contacts
+type: crew-upgrade
+name: Prison Contacts
+description: Your Tier is effectively +1 higher in prison. *This counts for any Tier-related element in prison, including the incarceration roll.*
+source: Crew playbook > Crew upgrades
+tags:
+- example

@@ -14,7 +14,9 @@ public sealed class CachedEntryResolver : IEntryResolver
     private readonly Dictionary<string, List<ContentEntry>> _byType = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<(string Type, string Id), ContentEntry> _byId = new();
 
-    public static async Task<CachedEntryResolver> LoadAsync(CampaignLibrary library, CampaignDocument campaign, CampaignAccess access, SystemDefinition system)
+    /// <param name="extra">Entries beside the Library's: the ones a vault character carries. A Library entry of the same type
+    /// and id stands.</param>
+    public static async Task<CachedEntryResolver> LoadAsync(CampaignLibrary library, CampaignDocument campaign, CampaignAccess access, SystemDefinition system, IEnumerable<ContentEntry>? extra = null)
     {
         var resolver = new CachedEntryResolver();
         var types = system.ActorFields.Where(f => f.Type == FieldType.EntityReference && f.TargetEntityType != null).Select(f => f.TargetEntityType!)
@@ -37,6 +39,13 @@ public sealed class CachedEntryResolver : IEntryResolver
             }
 
             resolver._byType[type] = list;
+        }
+
+        foreach (var entry in extra ?? Enumerable.Empty<ContentEntry>())
+        {
+            if (!resolver._byId.TryAdd((entry.Type.ToLowerInvariant(), entry.Id), entry)) continue;
+            if (!resolver._byType.TryGetValue(entry.Type, out var ofType)) resolver._byType[entry.Type] = ofType = new List<ContentEntry>();
+            ofType.Add(entry);
         }
 
         return resolver;

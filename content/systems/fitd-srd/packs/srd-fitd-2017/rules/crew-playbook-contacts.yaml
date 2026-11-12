@@ -1,0 +1,15 @@
+id: crew-playbook-contacts
+type: rule
+name: Contacts
+description: >-
+  A list of five possible contacts for thew crew, along with descriptions of each. Some possibilities include: a gang boss, a deal broker, a noble, a bounty hunter, a merchant, a blacksmith, a physicker, a ward boss, a taver owner, an academic, an occultist, a magistrate, a dilettante, an explorer, a collector, an arms dealer, a drug dealer, an anarchist, or a dock worker.
+
+
+  Questions can include how you know the friend, what they've done for you,  what you do for them, and what kind of relationship you have.
+source: Crew playbook > Contacts
+tags:
+- crew
+- playbook
+properties:
+  category: Crew playbook
+  order: 120

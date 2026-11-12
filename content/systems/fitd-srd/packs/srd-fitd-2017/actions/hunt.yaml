@@ -1,0 +1,13 @@
+id: hunt
+type: action
+name: Hunt
+description: >-
+  When you **Hunt**, you carefully track a target.
+
+
+  *You might follow a target or discover their location. You might arrange an ambush. You might attack with precision shooting from a distance. You could try to bring your guns to bear in a melee (but Skirmishing might be better).*
+source: Actions & Attributes > Actions
+tags:
+- insight
+properties:
+  attribute: insight

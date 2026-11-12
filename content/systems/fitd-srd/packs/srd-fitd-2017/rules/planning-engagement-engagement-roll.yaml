@@ -1,0 +1,15 @@
+id: planning-engagement-engagement-roll
+type: rule
+name: Engagement Roll
+description: >-
+  Once the players choose a plan and provide its detail, the GM cuts to the action—describing the scene as the crew starts the operation and encounters their first obstacle. But how is this established? The way the GM describes the starting situation can have a huge impact on how simple or troublesome the operation turns out to be. Rather than expecting the GM to simply "get it right" each time, we use a dice roll instead. This is the **engagement roll**.
+
+
+  The engagement roll is a **fortune roll**, starting with **1d for sheer luck**. Modify the dice pool for any major advantages or disadvantages that apply.
+source: Planning & engagement > Engagement Roll
+tags:
+- score
+- engagement
+properties:
+  category: Planning & engagement
+  order: 128

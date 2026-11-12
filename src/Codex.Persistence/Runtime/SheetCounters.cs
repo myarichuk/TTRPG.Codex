@@ -39,6 +39,12 @@ internal static class SheetCounters
                 if (seen.Add(key)) yield return (key, key + "_Max");
             }
         }
+
+        // A feature's uses left, moved on the sheet and at the table alike.
+        foreach (var key in sheetKeys.Where(Codex.Core.Rules.SheetRuleEngine.IsUsesKey))
+        {
+            if (seen.Add(key)) yield return (key, key + Codex.Core.Rules.SheetRuleEngine.UsesMaxSuffix);
+        }
     }
 
     /// <summary>Sets each counter in <paramref name="merged"/> to its <paramref name="live"/> value moved by what the editor

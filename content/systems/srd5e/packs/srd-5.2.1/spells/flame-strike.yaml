@@ -39,3 +39,7 @@ properties:
   - Cleric
   damageType: Fire
   higherLevel: The Fire damage and the Radiant damage increase by 1d6 for each spell slot level above 5.
+  use:
+    save: dex
+    damage: 5d6
+    damageType: Fire

@@ -1,0 +1,11 @@
+id: fortitude
+type: special-ability
+name: Fortitude
+description: >-
+  You may expend your **special armor** to resist a consequence of fatigue, weakness, or chemical effects, or to **push yourself** when working with technical skill or handling alchemicals.
+
+
+  > When you use this ability, tick the special armor box on your playbook sheet. If you "resist a consequence" of the appropriate type, you avoid it completely. If you use this ability to push yourself, you get one of the benefits (+1d, +1 effect, act despite severe harm) but you don't take 2 stress. Your special armor is restored at the beginning of downtime.
+source: Character playbook > Special abilities > Fortitude
+tags:
+- example

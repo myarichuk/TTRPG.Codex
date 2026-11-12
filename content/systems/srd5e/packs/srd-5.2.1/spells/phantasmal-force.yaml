@@ -45,3 +45,7 @@ properties:
   - Sorcerer
   - Wizard
   damageType: Psychic
+  use:
+    save: int
+    damage: 2d8
+    damageType: Psychic
