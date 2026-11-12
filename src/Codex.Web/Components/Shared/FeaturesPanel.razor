@@ -148,7 +148,9 @@
     }
 
     private string TargetLabel(string key) =>
-        Definition?.ActorFields.FirstOrDefault(f => f.Key == key)?.Label
+        key == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"].ToString()
+        : key == SheetRuleEngine.SkillsTarget && !string.IsNullOrWhiteSpace(Rules.Skills?.Label) ? Rules.Skills.Label
+        : Definition?.ActorFields.FirstOrDefault(f => f.Key == key)?.Label
         ?? Rules.Derived.FirstOrDefault(d => d.Key == key)?.Label
         ?? Definition?.Resources.FirstOrDefault(r => r.Key == key || r.MaxKey == key)?.Label
         ?? key;

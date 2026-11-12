@@ -153,8 +153,6 @@ Join review:
 
 Found on the way, not fixed:
 
-- The Quick-add hint says creatures are "added hidden"; they are added as visible strangers.
-- Around 1000 px wide the header's actions overflow (to about 1140 px): the page scrolls sideways and sign-out is off screen.
 - The SRD Mage's Spellcasting action is missing its spell list (`monsters/mage.yaml`).
 - Monster attacks are prose only.
 

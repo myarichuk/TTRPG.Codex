@@ -96,7 +96,7 @@
                             <select id="@(id)-a@(n)-to" class="field-select field-sm" disabled="@ReadOnly" aria-label="@L["Actor.Grants.ListOf", n]"
                                     @onchange="@(e => EditAddAsync(index, a => a.To = e.Value?.ToString() ?? string.Empty))">
                                 <option value="" selected="@(add.To.Length == 0)">@L["Actor.Grants.Choose"]</option>
-                                @foreach (var option in Options(Vocabulary.Lists.Select(l => (l.Key, l.Label)), add.To))
+                                @foreach (var option in Options(Vocabulary.Lists.Select(l => (l.Key, ListLabel(l))), add.To))
                                 {
                                     <option value="@option.Key" selected="@(option.Key == add.To)">@option.Label</option>
                                 }
@@ -499,6 +499,10 @@
     }
 
     // ---- Ranked lists: skills and saving throws ----
+
+    /// <summary>A list's name to a person. The saving throws' name is English in the vocabulary (the writer's guide reads it too), so it is translated here.</summary>
+    private string ListLabel(GrantList list) =>
+        list.Key == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"].ToString() : list.Label;
 
     /// <summary>The ranked list a row adds to, or null when its list is not ranked.</summary>
     private GrantList? RankedOf(GrantAdd add) =>

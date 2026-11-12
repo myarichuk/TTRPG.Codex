@@ -2,7 +2,7 @@
 @inject IUserRepository Users
 
 @* The admin page in the header, with how many accounts wait for approval. *@
-<NavLink href="admin" data-testid="nav-admin">
+<NavLink href="admin" data-testid="nav-admin" title="@L["Layout.Nav.Admin"]">
     <LucideIcon IconName="shield-check" Size="18" /><span>@L["Layout.Nav.Admin"]</span>
     @if (waiting > 0)
     {
