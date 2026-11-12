@@ -787,6 +787,18 @@ public class SystemDefinition
             }
             copy.Skills = skills;
         }
+        // The label of a pick among an entry's rows (a feature source's choose), by the choice's id.
+        if (t.Choices.Count > 0)
+        {
+            copy.Features = rules.Features.Select(f =>
+            {
+                if (f.Choose is not { Id.Length: > 0 } choose || !t.Choices.TryGetValue(choose.Id, out var shown) || string.IsNullOrWhiteSpace(shown)) return f;
+                var source = Copy(f);
+                source.Choose = Copy(choose);
+                source.Choose.Label = shown;
+                return source;
+            }).ToList();
+        }
         return copy;
     }
 

@@ -497,6 +497,26 @@
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: не удаётся вычислить, что даёт это умение, поэтому оно пропущено. Мастер может проверить запись.</value></data>
   <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): выберите ещё {2} ({3}).</value></data>
   <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): ваши отметки ({2}) в списке «{3}» уже подходят под этот выбор. Подтвердите их.</value></data>
+  <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: выберите {1}</value></data>
+  <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>Обычно меняется: {0}</value></data>
+  <data name="Actor.Choice.Details" xml:space="preserve"><value>Подробности</value></data>
+  <data name="Actor.Choice.AfterRest" xml:space="preserve"><value>После «{0}» можно изменить:</value></data>
+  <data name="Actor.Choice.ChangeLink" xml:space="preserve"><value>Изменить: {0}</value></data>
+  <data name="Actor.Rule.ChoiceRowPending" xml:space="preserve"><value>{0} ({1}): выберите ещё {2}.</value></data>
+  <data name="Actor.Grants.Options" xml:space="preserve"><value>Выбор одного из</value></data>
+  <data name="Actor.Grants.ChooseId" xml:space="preserve"><value>Идентификатор выбора</value></data>
+  <data name="Actor.Grants.ChooseCount" xml:space="preserve"><value>Сколько выбрать</value></data>
+  <data name="Actor.Grants.OnChange" xml:space="preserve"><value>При смене выбора счётчики</value></data>
+  <data name="Actor.Grants.OnChange.keep" xml:space="preserve"><value>сохраняют потраченное</value></data>
+  <data name="Actor.Grants.OnChange.refill" xml:space="preserve"><value>начинают полными</value></data>
+  <data name="Actor.Grants.OnChange.empty" xml:space="preserve"><value>начинают с 0</value></data>
+  <data name="Actor.Grants.ChooseHelp" xml:space="preserve"><value>Идентификатор обязателен: под ним лист хранит выбор. Если у вариантов общий счётчик, дайте ему один и тот же ключ.</value></data>
+  <data name="Actor.Grants.ChangesOn" xml:space="preserve"><value>Обычно меняется</value></data>
+  <data name="Actor.Grants.OptionName" xml:space="preserve"><value>Вариант {0}: название</value></data>
+  <data name="Actor.Grants.OptionText" xml:space="preserve"><value>Вариант {0}: текст</value></data>
+  <data name="Actor.Grants.RemoveOption" xml:space="preserve"><value>Удалить вариант {0}</value></data>
+  <data name="Actor.Grants.AddOption" xml:space="preserve"><value>Добавить вариант</value></data>
+  <data name="Actor.Grants.SumOptions" xml:space="preserve"><value>вариантов: {0}</value></data>
   <data name="Actor.Rule.ChoiceStale" xml:space="preserve"><value>{0} ({1}): «{2}» больше не подходит под этот выбор. Выберите заново.</value></data>
   <data name="Actor.Rule.CounterKeyShared" xml:space="preserve"><value>{0}: несколько умений задают максимум одного и того же запаса. Используется наибольший: {1}. Мастер может проверить записи.</value></data>
   <data name="Actor.Rule.SpendNoPool" xml:space="preserve"><value>{0}: тратит из «{1}», но на листе нет такого запаса, поэтому кнопки нет. Мастер может проверить запись.</value></data>

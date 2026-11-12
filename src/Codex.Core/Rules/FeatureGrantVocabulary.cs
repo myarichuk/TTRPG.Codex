@@ -97,6 +97,10 @@ public sealed class FeatureGrantVocabulary
     /// <summary>The moments besides rests that may refill a counter: rolling initiative, a GM-called dawn, or by hand only.</summary>
     public IReadOnlyList<string> Moments => FeatureRecovery.Moments;
 
+    /// <summary>The moments a choice among a feature's options may name in <c>changesOn</c>: the rests, then initiative and dawn (not <c>manual</c>,
+    /// at which nothing happens).</summary>
+    public IReadOnlyList<string> ChangeMoments => Rests.Concat(Moments.Where(m => m != FeatureRecovery.Manual)).ToList();
+
     /// <summary>The modifier types the system names. A modifier without a type is added.</summary>
     public IReadOnlyList<string> ModifierTypes { get; }
 

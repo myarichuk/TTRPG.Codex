@@ -164,6 +164,10 @@ public class ActionSource
 /// <c>regain: gm</c> lets only the GM add a use back by hand.</item>
 /// <item><c>spends</c>: <c>{ key, amount }</c>: the feature gets a Use button that spends <c>amount</c> (a number, a formula, or
 /// <c>ask</c> for the player to choose) from the pool <c>key</c>, a feature counter's <c>key</c> or a pool's own sheet key.</item>
+/// <item><c>options</c> and <c>choose</c> ("choose one of the following"): <c>options: [{ name, description, and any key above }]</c> with
+/// <c>choose: { id, count, onChange, changesOn }</c> (see <see cref="RowChoose"/>; <c>id</c> is required). Only the options picked become
+/// features, named "{feature}: {option}". The pick is stored as <c>choice__{entryId}__{id}</c>; a choice inside a picked row is stored under
+/// the parent's id first, <c>choice__{entryId}__{parentId}__{id}</c>. The same shape, one level up, is <see cref="FeatureSource.Choose"/>.</item>
 /// </list>
 /// </summary>
 public class FeatureSource
@@ -184,6 +188,50 @@ public class FeatureSource
 
     /// <summary>The sheet value a row's level is compared with (<c>classLevel</c>, <c>level</c>). None: rows are not gated.</summary>
     public string? ByField { get; set; }
+
+    /// <summary>Only the entries with these ids carry features through this source. Empty: every entry the source reaches. Lets a
+    /// <see cref="Choose"/> apply to one species and not the others whose entries have the same property.</summary>
+    public List<string> Entries { get; set; } = new();
+
+    /// <summary>Makes the player pick one row (or <c>count</c> rows) of the entry's <see cref="Property"/>: only the rows picked become
+    /// features, the others give nothing, counters included. Needs a <see cref="Property"/> and a <see cref="Field"/>. Written
+    /// <c>choose: { id, label, count, onChange, changesOn }</c> or, for the id alone, <c>choose: lineage</c>. The pick is stored on the sheet as
+    /// <c>choice__{entryId}__{id}</c>, a list holding the rows' names as written in the entry's own language.</summary>
+    public RowChoose? Choose { get; set; }
+}
+
+/// <summary>
+/// How the player picks among rows: of a feature source's property (<see cref="FeatureSource.Choose"/>) or of a feature row's own
+/// <c>options</c> (<c>choose: { id, count, onChange, changesOn }</c> beside <c>options</c>). <see cref="Id"/> names the choice within its
+/// entry (required; unique there); a choice nested in a chosen row is stored under <c>{parentId}__{id}</c>.
+/// </summary>
+public class RowChoose
+{
+    /// <summary>The pick keeps the spent state of counters whose key is in both the old and the new row; counters only the new row has start full.</summary>
+    public const string Keep = "keep";
+
+    /// <summary>The new row's counters start full.</summary>
+    public const string Refill = "refill";
+
+    /// <summary>The new row's counters start at 0.</summary>
+    public const string Empty = "empty";
+
+    /// <summary>Required: the choice's name within its entry. The sheet stores the pick under <c>choice__{entryId}__{id}</c>.</summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>What the picker calls the choice ("Lineage"). Default: the feature's or the entry's name.</summary>
+    public string? Label { get; set; }
+
+    /// <summary>How many rows the player picks. Default 1.</summary>
+    public int Count { get; set; } = 1;
+
+    /// <summary>What happens to counters when the pick changes: <c>keep</c> (default), <c>refill</c> or <c>empty</c>. A change is never
+    /// blocked, and is logged at a live table.</summary>
+    public string OnChange { get; set; } = Keep;
+
+    /// <summary>Moments (a rest's name from <c>rests</c>, or <c>initiative</c>, <c>dawn</c>) at which the pick is usually changed. The picker
+    /// says so, and the rest flow offers the change after that rest. Never a limit.</summary>
+    public List<string> ChangesOn { get; set; } = new();
 }
 
 /// <summary>

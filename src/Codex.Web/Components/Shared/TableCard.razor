@@ -95,8 +95,13 @@
                     <div data-testid="table-slots-actor">
                         <SlotTracker Definition="Definition" Pools="SlotPools" Keys="SlotKeys" Value="key => State?.Pool(key)" Title="@(L["Combat.SlotsTitle", Actor.Name])" ReadOnly="@(!CanAct)"
                                      OnAdjust="change => Send(new AdjustResourceCommand(Actor.Id, change.Key, change.Delta, change.Label))"
-                                     OnRest="rest => Send(new RestCommand(Actor.Id, rest.Name, rest.Keys))" />
+                                     OnRest="RestAsync" />
                     </div>
+                }
+
+                @if (restChoices.Count > 0 && restMoment != null)
+                {
+                    <RestChoicesNotice Moment="@SlotTracker.RestName(Definition, restMoment)" Choices="restChoices" HrefFor="key => Href + '#' + ChoicePicker.AnchorFor(key)" OnDismiss="() => restChoices = new()" />
                 }
 
                 @if (Counters.Count > 0)
@@ -195,6 +200,17 @@
     }
 
     private string Href => MentionLinks.Href(Campaign.Id, MentionKind.Actor, Actor.Id);
+
+    // After a rest, the picks it is the usual time to change: a notice with a link to the sheet, nothing is asked.
+    private List<(string Key, string Label)> restChoices = new();
+    private string? restMoment;
+
+    private async Task RestAsync((string Name, List<string> Keys) rest)
+    {
+        await Send(new RestCommand(Actor.Id, rest.Name, rest.Keys));
+        restMoment = rest.Name;
+        restChoices = SheetRuleEngine.ChoicesToChangeAfter(Actor.Sheet, rest.Name).ToList();
+    }
     private VitalsRules? Vitals => Definition?.Vitals;
     private SheetRules? Rules => Definition?.SheetRules;
     private string PrimaryKey => SystemDefinition.PrimaryKeyOf(Definition);

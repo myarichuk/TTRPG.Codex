@@ -4,7 +4,7 @@
 // can't be reached. Anything private (/media, /_blazor, API calls) is never cached.
 // The page links its own styles and scripts by fingerprinted URL (app.<hash>.css, F28), so a new build asks for new URLs
 // and is never drawn with a cached old copy. The bare names below are for the offline page and older pages still open.
-const VERSION = 'codex-shell-v34';
+const VERSION = 'codex-shell-v35';
 const SHELL = [
     '/offline.html',
     '/app.css',

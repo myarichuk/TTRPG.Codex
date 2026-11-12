@@ -219,6 +219,10 @@ sheetRules:
     - { field: class,    property: features, byField: classLevel }
     - { field: subclass, property: features, byField: classLevel }
     - { field: species,  property: traits }
+    # A species' lineage (draconic ancestor, elven lineage, giant ancestry, fiendish legacy...): the player picks one row and
+    # only that row is a feature. Rows that share a counter (every Breath Weapon) should name one uses.key, so a change keeps
+    # what was spent.
+    - { field: species,  property: lineages, choose: { id: lineage, label: Lineage, onChange: keep } }
     - { list: feats }
     - { list: fightingStyles }
     - { list: extraOriginFeats }

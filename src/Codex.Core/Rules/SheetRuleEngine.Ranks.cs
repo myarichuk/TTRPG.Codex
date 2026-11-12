@@ -27,7 +27,11 @@ public static class RankSourceKinds
 }
 
 /// <summary>A key a choice offers, with the name to show.</summary>
-public sealed record ChoiceOption(string Key, string Label);
+public sealed record ChoiceOption(string Key, string Label, string? Description = null);
+
+/// <summary>What a row choice adds to a <see cref="PendingChoice"/>: what happens to counters when the pick changes (<see cref="RowChoose.Keep"/>,
+/// <see cref="RowChoose.Refill"/>, <see cref="RowChoose.Empty"/>) and the moments the pick is usually changed at (a rest's name, or initiative, dawn).</summary>
+public sealed record RowChoiceInfo(string OnChange, IReadOnlyList<string> ChangesOn);
 
 /// <summary>
 /// A choice a feature leaves to the player (<see cref="FeatureChoice"/>), as the sheet stands. <see cref="Key"/> is the sheet key the picks are
@@ -37,14 +41,20 @@ public sealed record ChoiceOption(string Key, string Label);
 /// them and confirming means writing them (<see cref="SheetRuleEngine.SetChoice"/>).
 /// </summary>
 public sealed record PendingChoice(string Key, string Label, string Source, int Count, IReadOnlyList<string> Made, IReadOnlyList<ChoiceOption> Options,
-    int? Rank, string Target, bool Raise, bool Adopted, ActiveFeature Feature, int? MinRank = null, int? MaxRank = null)
+    int? Rank, string Target, bool Raise, bool Adopted, ActiveFeature Feature, int? MinRank = null, int? MaxRank = null, RowChoiceInfo? Row = null)
 {
+    /// <summary>The choice picks among rows (an entry's rows, or a feature's options), not keys of a ranked list. <see cref="Target"/> is then
+    /// <see cref="SheetRuleEngine.RowsTarget"/>, and the picks are the rows' names as the entry writes them.</summary>
+    public bool IsRow => Row != null;
+
     /// <summary>How many more picks the choice asks for.</summary>
     public int Remaining => Math.Max(Count - Made.Count, 0);
 
     /// <summary>The picks as they would stand with <paramref name="key"/> ticked or unticked. A tick beyond <see cref="Count"/> is not taken.</summary>
     public IReadOnlyList<string> Toggled(string key, bool on)
     {
+        // Picking among rows when only one is wanted replaces the pick (a radio), so changing it needs no unpicking first.
+        if (on && IsRow && Count == 1) return Options.Any(o => o.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) ? new[] { key } : Made;
         var picks = Made.Where(m => !m.Equals(key, StringComparison.OrdinalIgnoreCase)).ToList();
         if (on && picks.Count < Count && Options.Any(o => o.Key.Equals(key, StringComparison.OrdinalIgnoreCase))) picks.Add(key);
         return picks;
@@ -78,7 +88,7 @@ public sealed partial class SheetRuleEngine
     public const string ChoiceStaleKey = "Actor.Rule.ChoiceStale";
 
     /// <summary>Whether a warning or violation says a choice is open (made in part, or unconfirmed): never a reason to refuse a save.</summary>
-    public static bool IsChoiceNotice(RuleViolation notice) => notice.Key is ChoicePendingKey or ChoiceConfirmKey;
+    public static bool IsChoiceNotice(RuleViolation notice) => notice.Key is ChoicePendingKey or ChoiceConfirmKey or ChoiceRowPendingKey;
 
     /// <summary>The sheet key holding the picks of choice <paramref name="choiceId"/> of entry <paramref name="entryId"/>. The second copy
     /// of a repeatable pick (a feat taken twice) has its own: <c>choice__{entryId}#2__{choiceId}</c>.</summary>
@@ -349,7 +359,8 @@ public sealed partial class SheetRuleEngine
         var fixedRanks = new List<(RankedList List, ActiveFeature Feature, FeatureAdd Add, int Rank)>();
         var fixedRaises = new List<(RankedList List, ActiveFeature Feature, FeatureAdd Add)>();
         var choices = new List<(RankedList List, ChoiceInstance Choice)>();
-        var keysSeen = new HashSet<string>(StringComparer.Ordinal);
+        // A row choice of the entry with the same id would share its picks: the keys of the row choices are taken already.
+        var keysSeen = result.PendingChoices.Concat(result.MadeChoices).Where(c => c.IsRow).Select(c => c.Key).ToHashSet(StringComparer.Ordinal);
         foreach (var feature in result.Features)
         {
             foreach (var add in feature.Adds)
@@ -370,7 +381,7 @@ public sealed partial class SheetRuleEngine
 
                 if (add.Choice is { } choice)
                 {
-                    var key = ChoiceKey(feature.Source.Id, feature.Copy, choice.Id);
+                    var key = ChoiceKey(feature.Source.Id, feature.Copy, feature.ScopedChoiceId(choice.Id));
                     if (!keysSeen.Add(key))
                     {
                         WarnFeature(result, warned, feature.Name); // two choices of one entry with one id would share their picks

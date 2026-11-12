@@ -18,6 +18,7 @@ public static class SystemDefinitionLoader
 
     private static readonly IDeserializer Deserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .WithTypeConverter(new RowChooseConverter())
         .IgnoreUnmatchedProperties()
         .Build();
 
@@ -433,6 +434,11 @@ public static class SystemDefinitionLoader
             }
         }
 
+        foreach (var error in ValidateFeatureSources(definition, rules))
+        {
+            yield return error;
+        }
+
         if (rules.Skills is { } skills)
         {
             foreach (var skill in skills.List.Where(s => !definition.Attributes.Any(a => a.Key.Equals(s.Attribute, StringComparison.OrdinalIgnoreCase))))
@@ -624,6 +630,60 @@ public static class SystemDefinitionLoader
             foreach (var field in referencedFields.Where(f => !fieldKeys.Contains(f!)))
             {
                 yield return $"a sheet rule on '{condition.Property}' refers to actor field '{field}', which does not exist.";
+            }
+        }
+    }
+
+    /// <summary>The moments a row choice's <c>changesOn</c> may name besides the system's rests: the ones the table triggers. <c>manual</c> is
+    /// not one, since nothing happens at it.</summary>
+    public static readonly IReadOnlyList<string> ChangeMoments = new[] { Codex.Core.Rules.FeatureRecovery.Initiative, Codex.Core.Rules.FeatureRecovery.Dawn };
+
+    /// <summary>Whether <paramref name="choose"/> is sound on its own: an id, a count of 1 or more, a known <c>onChange</c>, and
+    /// <c>changesOn</c> naming only the system's rests or a moment the table triggers. One sentence per problem, led by <paramref name="where"/>.</summary>
+    public static IEnumerable<string> CheckRowChoose(SystemDefinition definition, RowChoose choose, string where)
+    {
+        if (string.IsNullOrWhiteSpace(choose.Id)) yield return $"{where}: choose needs an id (it names the choice; the sheet stores the pick under it).";
+        if (choose.Count < 1) yield return $"{where}: choose count must be 1 or more.";
+        if (choose.OnChange.ToLowerInvariant() is not (RowChoose.Keep or RowChoose.Refill or RowChoose.Empty))
+        {
+            yield return $"{where}: onChange '{choose.OnChange}' must be keep, refill or empty.";
+        }
+
+        foreach (var moment in choose.ChangesOn.Where(m => definition.Vitals?.FindRest(m) == null && !ChangeMoments.Contains(m, StringComparer.OrdinalIgnoreCase)))
+        {
+            yield return $"{where}: changesOn '{moment}' is not one of the system's rests, nor initiative or dawn.";
+        }
+    }
+
+    private static IEnumerable<string> ValidateFeatureSources(SystemDefinition definition, SheetRules rules)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var source in rules.Features.Where(s => s.Choose != null))
+        {
+            var where = $"sheetRules.features ({source.Field ?? source.List})";
+            if (source.Property == null || source.Field == null)
+            {
+                yield return $"{where}: choose picks one of an entry's rows, so the source needs a field and a property that holds rows.";
+            }
+
+            else if (definition.ActorFields.FirstOrDefault(f => f.Key == source.Field)?.TargetEntityType is { } targetType
+                && definition.FindType(targetType) is { } entityType
+                && entityType.Fields.FirstOrDefault(f => f.Key == source.Property)?.Type != FieldType.Collection)
+            {
+                yield return $"{where}: choose needs a property that is a Collection of rows, and '{source.Property}' of '{targetType}' is not.";
+            }
+
+            foreach (var error in CheckRowChoose(definition, source.Choose!, where)) yield return error;
+
+            // Two picks of one entry that share an id would share their picks. A source with no entries list reaches every entry of the field.
+            var scope = source.Entries.Count == 0 ? new[] { "*" } : source.Entries.ToArray();
+            foreach (var entry in scope)
+            {
+                if (!seen.Add($"{source.Field}/{entry}/{source.Choose!.Id}"))
+                {
+                    yield return $"{where}: the choice id '{source.Choose.Id}' is used twice for the same entry.";
+                    break;
+                }
             }
         }
     }

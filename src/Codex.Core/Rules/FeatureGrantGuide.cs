@@ -61,6 +61,12 @@ public static class FeatureGrantGuide
                       "\"regain\": \"gm\" lets only the GM add a use back by hand.");
         sb.AppendLine("- \"spends\": {\"key\": pool key, \"amount\": number or formula or \"ask\"}: the feature gets a Use button that spends from a pool another feature owns (its \"uses\".\"key\"), disabled when too little is left; " +
                       "\"ask\" lets the player choose how much each time. The pool must exist on the same sheet. Example: {\"spends\": {\"key\": \"focus\", \"amount\": 1}}.");
+        sb.AppendLine("- \"options\" with \"choose\": for \"choose one of the following\" inside a feature. \"options\": [{\"name\": .., \"description\": .., and any of the keys above: \"modifiers\", \"adds\", \"uses\", \"spends\"}] are the things to choose between; " +
+                      "\"choose\": {\"id\": required, unique in the entry, \"count\": how many the player picks (default 1), \"onChange\": \"keep\" | \"refill\" | \"empty\", \"changesOn\": [" + (rests.Count > 0 ? $"\"{rests[0]}\"" : "rest names") + "]}. " +
+                      "Only the options picked become features, named \"<feature>: <option>\"; the others give nothing. \"onChange\" says what happens to counters when the pick changes: \"keep\" (default) keeps what was spent of a counter both options name with the same \"uses\".\"key\", " +
+                      "\"refill\" starts the new option's counters full, \"empty\" at 0. \"changesOn\" only says when the pick is usually changed; it is never a limit. " +
+                      "Always write the options as rows, never only in the description, and never without \"choose\" and its \"id\". " +
+                      "This \"choose\" belongs to the feature and is an object; the \"choose\" of an \"adds\" item is a number.");
         return sb.ToString().TrimEnd();
     }
 

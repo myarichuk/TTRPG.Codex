@@ -192,6 +192,11 @@ else
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="party-dawn" OnClick="DawnAsync">@L["Combat.DawnButton"]</CodexButton>
                             }
                         </div>
+                        @* The choices a rest is the usual time to change, per character, each a link to that character's sheet. *@
+                        @if (partyChoices.Count > 0 && partyChoicesMoment != null)
+                        {
+                            <RestChoicesNotice Moment="@RestLabel(partyChoicesMoment)" Choices="partyChoices" HrefFor="PartyChoiceHref" OnDismiss="() => partyChoices = new()" />
+                        }
                     </section>
                 }
 
@@ -612,6 +617,26 @@ else
         {
             await RestAsync(actor.Id, rest);
         }
+
+        OfferPartyChoices(rest);
+    }
+
+    // After a rest, the picks it is the usual time to change (a row choice's changesOn), per character: a notice, nothing is asked.
+    private List<(string Key, string Label)> partyChoices = new();
+    private string? partyChoicesMoment;
+
+    private void OfferPartyChoices(string moment)
+    {
+        partyChoicesMoment = moment;
+        partyChoices = Actors.Where(a => a.Kind == ActorKind.PlayerCharacter && snapshot.Actor(a.Id) != null)
+            .SelectMany(a => SheetRuleEngine.ChoicesToChangeAfter(a.Sheet, moment).Select(c => (a.Id + "|" + c.Key, $"{a.Name}: {c.Label}")))
+            .ToList();
+    }
+
+    private string PartyChoiceHref(string actorAndKey)
+    {
+        var split = actorAndKey.IndexOf('|');
+        return ActorHref(actorAndKey[..split]) + "#" + ChoicePicker.AnchorFor(actorAndKey[(split + 1)..]);
     }
 
     // Slot pools only: a feature's counter of uses says on the sheet how each rest refills it (all, a part, a roll), and the
@@ -630,6 +655,8 @@ else
         {
             await SendAsync(new DawnCommand(actor.Id));
         }
+
+        OfferPartyChoices(FeatureRecovery.Dawn);
     }
 
     private (int Current, int Max, int? Sides)? HitDicePool(string actorId)

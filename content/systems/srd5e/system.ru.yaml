@@ -475,6 +475,8 @@ values:
   "weapon-property": "Свойство оружия"
 
 sheetRules:
+  choices:
+    lineage: Родословная
   bonusesLabel: Бонусы предыстории
   increasesLabel: Повышения характеристик
   listDescriptions:

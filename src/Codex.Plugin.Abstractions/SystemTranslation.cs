@@ -78,6 +78,9 @@ public class SheetRulesTranslation
     /// <c>ranks</c> of its own has the two defaults, and this is how they are worded in another language.</summary>
     public Dictionary<string, string> Ranks { get; set; } = new();
 
+    /// <summary>Choice id (the <c>choose.id</c> of a feature source: <c>lineage</c>) -> the label the picker shows.</summary>
+    public Dictionary<string, string> Choices { get; set; } = new();
+
     /// <summary>Passive score key -> label.</summary>
     public Dictionary<string, string> Passives { get; set; } = new();
 

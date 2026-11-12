@@ -245,6 +245,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         ApplyTracks(sheet);
         ApplySlotPools(sheet, evaluation);
         ApplyCounters(sheet, evaluation);
+        ApplyChoiceMoments(sheet, evaluation);
         ApplyHitPoints(sheet, evaluation);
         ApplyArmorClass(sheet, evaluation);
         return evaluation;

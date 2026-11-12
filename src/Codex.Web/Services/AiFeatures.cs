@@ -350,7 +350,17 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     /// the choices stay open on the sheet, as a warning to make.</summary>
     private async Task ChooseGrantsAsync(AiAssistant assistant, CharacterDraft draft, string concept, CampaignDocument campaign, SystemDefinition system, IEntryResolver entries, CancellationToken ct)
     {
-        if (system.SheetRules?.Skills == null || system.SheetRules.Features.Count == 0) return;
+        // A row picked opens the choices nested in it, so the sheet is read again after each round (a row inside a row is rare: three rounds is plenty).
+        for (var round = 0; round < 3; round++)
+        {
+            if (!await ChooseGrantsRoundAsync(assistant, draft, concept, campaign, system, entries, ct)) return;
+        }
+    }
+
+    // True when a choice was written, so the choices it opened may be asked next.
+    private async Task<bool> ChooseGrantsRoundAsync(AiAssistant assistant, CharacterDraft draft, string concept, CampaignDocument campaign, SystemDefinition system, IEntryResolver entries, CancellationToken ct)
+    {
+        if (system.SheetRules is not { Features.Count: > 0 }) return false;
 
         var known = new WithProposed(entries, draft.Proposed.ToArray());
         var engine = new SheetRuleEngine(system, known);
@@ -358,12 +368,12 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         foreach (var adopted in evaluation.PendingChoices.Where(c => c.Adopted)) SheetRuleEngine.SetChoice(draft.Sheet, adopted.Key, adopted.Made);
 
         var open = evaluation.PendingChoices.Where(c => !c.Adopted && c.Remaining > 0 && c.Options.Any(o => !c.Made.Contains(o.Key, StringComparer.OrdinalIgnoreCase))).ToList();
-        if (open.Count == 0) return;
+        if (open.Count == 0) return false;
 
         var choices = open.Select(c =>
         {
             var from = c.Feature.Level is { } level ? $"{c.Source}, level {level}" : c.Source;
-            var hint = c.Raise ? "Each pick is raised one rank." : null;
+            var hint = c.Raise ? "Each pick is raised one rank." : c.IsRow ? "Pick the option that fits the character; answer with its name exactly as listed." : null;
             var options = c.Options.Where(o => !c.Made.Contains(o.Key, StringComparer.OrdinalIgnoreCase)).ToList();
             return new ChoiceSpec(c.Key, $"{c.Label} ({from})", hint, c.Remaining, ChoiceOptions(options));
         }).ToList();
@@ -377,13 +387,19 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {
-            return;
+            return false;
         }
 
+        var wrote = false;
         foreach (var choice in open)
         {
-            if (picked.TryGetValue(choice.Key, out var keys)) SheetRuleEngine.SetChoice(draft.Sheet, choice.Key, choice.Made.Concat(keys));
+            // Only the options the rules offered are taken (ParseChoices keeps the ids of the options listed): a name that is no row is dropped.
+            if (!picked.TryGetValue(choice.Key, out var keys) || keys.Count == 0) continue;
+            SheetRuleEngine.SetChoice(draft.Sheet, choice.Key, choice.Made.Concat(keys));
+            wrote = true;
         }
+
+        return wrote;
     }
 
     private async Task ChooseListsAsync(AiAssistant assistant, CharacterDraft draft, string concept, CampaignDocument campaign, SystemDefinition system, IEntryResolver entries, CancellationToken ct, WriteEntries write)

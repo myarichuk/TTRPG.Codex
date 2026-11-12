@@ -328,13 +328,64 @@ values, as skills do now. It makes one pass per list:
   evaluation instead. Today `VaultRequests` lists the violations and does not block Accept; add the `ChoicePending`
   warnings to that list, and show each feature's picks. The GM's Edit can change picks.
 
-### 6. Row choices (from D)
+### 6. Row choices (from D) — built
 
-Dragonborn ancestry and land type pick one of an entry's own rows: `features: [{field: species, property: lineages,
-choice: lineage}]`. Use the same storage: `choice__<entryId>__lineage` holds the row's name. The same `PendingChoice` has the
-rows as options, and the same picker, drafter loop and review check serve it. Only the picked row becomes an
-`ActiveFeature`. **Recommended:** build it straight after the skill choices. With the storage shared it is S–M, not M.
-The land type's change on a long rest is a later rest-dialog step.
+Built 2026-11-12 on the storage the skill choices use. Two levels, one engine path (`SheetRuleEngine.RowChoices.cs`,
+`CollectFeatures` in `SheetRuleEngine.Features.cs`), one picker (`ChoicePicker`), one review.
+
+**A. One row of an entry's collection.** A feature source declares it:
+
+```yaml
+- { field: species, property: lineages, choose: { id: lineage, label: Lineage, onChange: keep } }
+```
+
+`choose` is `RowChoose { id (required), label, count (1), onChange (keep), changesOn }`, or the id alone (`choose: lineage`). It
+needs a `field` and a `property` that is a Collection. `entries` limits the source to those entry ids (a source reaches every entry
+of its field otherwise). srd5e wires every species with `lineages`: Dragonborn, Elf, Gnome, Goliath and Tiefling. `sheetRules` translations name the label per language
+(`choices: { lineage: ... }` in `system.<locale>.yaml`).
+
+**B. "Choose one of the following" inside a feature row.** The row carries `options: [{ name, description, modifiers?, adds?, uses?,
+spends?, ... }]` and `choose: { id, count, onChange, changesOn }`. The row stays a feature; each option picked becomes a feature
+named `"<feature>: <option>"`. The Circle of the Land's land types are the srd5e case (`id: land`, `changesOn: [Long Rest]`).
+
+**Keys.** `choice__<entryId>__<id>` holds a list of the rows' names as the entry writes them (its own language; the UI translates the
+display, `EntryDisplay.Row`, so a language switch never breaks a pick). A choice nested in a picked row is stored under its parent's id
+first: `choice__<entryId>__<parentId>__<id>`, for a skill choice in an option (`adds: [{to: skills, choice: pick, ...}]`) and for
+options inside options alike (`ActiveFeature.Scope`, `ScopedChoiceId`). The second copy of a repeatable feat has `#2` after the entry id,
+as before. Ids must be unique within an entry across both levels and the skill choices; a duplicate is warned at evaluation, refused by
+the draft check.
+
+**Selection.** Only the picked rows are `ActiveFeature`s (`ChosenBy` holds the key of the choice that picked it). Unchosen rows give
+nothing, counters included, because nothing else reads them. An unmade row choice is a `PendingChoice` (`IsRow`, `Target = rows`,
+`Row = RowChoiceInfo(OnChange, ChangesOn)`) and a warning, `Actor.Rule.ChoiceRowPending`, a choice notice like the others
+(`IsChoiceNotice`): it never blocks a save. A stored name that is no row is `ChoiceStale` (choose again). Row choices are evaluated in
+`EvaluateFeatures`, so a system without skills has them too.
+
+**`onChange`.** The one way to change a pick is `SheetRuleEngine.ChangeChoice(sheet, key, picks)`, used by the sheet picker and the
+level-up. It writes the pick, recomputes (which runs `ApplyCounters`), and then, for a changed pick only (the first pick is not a change):
+`keep` leaves counters as `ApplyCounters` makes them (a counter whose key both rows name keeps what was spent; one only the new row has
+starts full; one only the old row had leaves the sheet); `refill` sets the new row's counters to their maximum; `empty` to 0. Content
+that wants `keep` gives the sibling rows the same `uses.key`. A change is never blocked, and is logged at a live table like a skill choice
+(the sheet save logs any `choice__` key that differs from the loaded sheet).
+
+**`changesOn`.** Moments from the system's `rests`, plus `initiative` and `dawn` (not `manual`). Two effects: the picker says "Usually
+changed on <moment>", and after that moment the sheet, the table card and the party rest show a notice (`RestChoicesNotice`) listing the
+choices that can now change, each a link to its picker. The table reads them from sheet keys written by `ApplyChoiceMoments`
+(`changes_on__<choiceKey>`), so it does not evaluate the sheet. Nothing is asked or forced.
+
+**Picker.** Row options show their name, with the text behind a `details`/`summary`; radio buttons for one pick (choosing another row
+replaces the pick, `PendingChoice.Toggled`), checkboxes for more. The "N of M chosen" live region, locked display, "Choose again" and
+"Confirm" are the existing ones. The join review lists row picks and the pending warnings through the same evaluation.
+
+**Drafter and authoring.** `ChooseAsync` asks row choices with the others (and again for the choices a pick opens, at most three rounds);
+`ParseChoices` keeps only the options offered. `FeatureGrantGuide` teaches `options` + `choose`; `FeatureGrantCheck` refuses `options`
+without `choose`, `choose` without an id, a bad `onChange`, an unknown `changesOn` moment, a duplicate id. The feature editor
+(`FeatureGrantEditor`) authors options, their grants and `choose` (not A, which is system.yaml). The loader refuses a source `choose`
+with a bad `onChange`, an unknown moment, no id, a list source, a property that is not a Collection, or a repeated id.
+
+**Not done.** The importer does not yet write the Dragonborn's shared `uses.key` for the Breath Weapon (the general importer pass), so
+a Dragonborn changing ancestry has no counter to keep; Elf, Gnome, Tiefling and Goliath lineages are clean candidates for the same
+declaration; no rest dialog beyond the notice.
 
 ### 7. Risks, migration, build order
 
@@ -356,7 +407,7 @@ The land type's change on a long rest is a later rest-dialog step.
 | 6 | Level-up stepper makes choices | M | Sonnet |
 | 7 | Vocabulary, editor fields, guide text, draft check; strings | M | Sonnet; strings Haiku |
 | 8 | Drafter loop and join review check | S–M | Sonnet |
-| 9 | Row choices on the same storage | S–M | Opus reviews |
+| 9 | Row choices on the same storage | S–M | Opus reviews. **Built** (section 6) |
 | 10 | Importer: the 5 expertise and 8 chosen proficiency grants, then the fixed ones | S | With the importer pass |
 | — | Armor and weapon training as ranks | M | Later, with B's gear piece |
 

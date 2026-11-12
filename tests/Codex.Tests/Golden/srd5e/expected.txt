@@ -67,6 +67,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## barbarian-11
@@ -147,6 +148,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## barbarian-20
@@ -239,6 +241,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 9
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## barbarian-5
@@ -312,6 +315,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## bard-1
@@ -863,6 +867,7 @@ passive passivePerception 13
 passive passiveInsight 15
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=13 attack=+5
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## cleric-11
@@ -957,6 +962,7 @@ passive passivePerception 15
 passive passiveInsight 19
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=17 attack=+9
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## cleric-20
@@ -1069,6 +1075,7 @@ passive passivePerception 15
 passive passiveInsight 21
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=19 attack=+11
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## cleric-5
@@ -1150,6 +1157,7 @@ passive passivePerception 14
 passive passiveInsight 17
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=15 attack=+7
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## creature-aboleth
@@ -1710,12 +1718,15 @@ passive passivePerception 12
 passive passiveInsight 12
 passive passiveInvestigation 9
 spellcasting Druid wis dc=12 attack=+4
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## druid-11
 sheet HP = 91
 sheet HP_Max = 91
 sheet armorClass = 15
 sheet cha = 10
+sheet changes_on__choice__circle-of-the-land__land = Long Rest
+sheet changes_on__choice__circle-of-the-land__land_Label = Circle of the Land Spells
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 14
@@ -1803,12 +1814,16 @@ passive passivePerception 14
 passive passiveInsight 14
 passive passiveInvestigation 9
 spellcasting Druid wis dc=16 attack=+8
+warning choice__circle-of-the-land__land Actor.Rule.ChoiceRowPending: Circle of the Land Spells (Circle of the Land): choose 1 more.
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## druid-20
 sheet HP = 203
 sheet HP_Max = 203
 sheet armorClass = 15
 sheet cha = 10
+sheet changes_on__choice__circle-of-the-land__land = Long Rest
+sheet changes_on__choice__circle-of-the-land__land_Label = Circle of the Land Spells
 sheet con = 20
 sheet darkvision = 60
 sheet dex = 15
@@ -1914,12 +1929,16 @@ passive passivePerception 15
 passive passiveInsight 15
 passive passiveInvestigation 9
 spellcasting Druid wis dc=19 attack=+11
+warning choice__circle-of-the-land__land Actor.Rule.ChoiceRowPending: Circle of the Land Spells (Circle of the Land): choose 1 more.
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## druid-5
 sheet HP = 43
 sheet HP_Max = 43
 sheet armorClass = 15
 sheet cha = 10
+sheet changes_on__choice__circle-of-the-land__land = Long Rest
+sheet changes_on__choice__circle-of-the-land__land_Label = Circle of the Land Spells
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 14
@@ -1994,6 +2013,8 @@ passive passivePerception 13
 passive passiveInsight 13
 passive passiveInvestigation 9
 spellcasting Druid wis dc=14 attack=+6
+warning choice__circle-of-the-land__land Actor.Rule.ChoiceRowPending: Circle of the Land Spells (Circle of the Land): choose 1 more.
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## fighter-1
 sheet HP = 11
@@ -2059,6 +2080,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
+warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## fighter-11
@@ -2139,6 +2161,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
+warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## fighter-20
@@ -2232,6 +2255,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 9
+warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## fighter-5
@@ -2303,6 +2327,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
+warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## manual-fighter5
@@ -2513,6 +2538,7 @@ passive passiveInsight 9
 passive passiveInvestigation 16
 spellcasting Wizard int dc=16 attack=+8
 violation int Actor.Rule.ScoreMax: Intelligence: scores can't exceed 20.
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## monk-1
 sheet HP = 10
@@ -3070,6 +3096,7 @@ passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 11
 spellcasting Ranger wis dc=16 attack=+8
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 
 ## multiclass-warlock5-sorcerer3
 sheet HP = 56
@@ -3156,6 +3183,7 @@ spellcasting Warlock cha dc=14 attack=+6
 spellcasting Sorcerer cha dc=14 attack=+6
 violation cantrips Actor.Rule.LimitForClass: Cantrips: 5 for Sorcerer, but Sorcerer allows only 4 at this level.
 violation spells Actor.Rule.LimitForClass: Prepared spells: 7 for Sorcerer, but Sorcerer allows only 6 at this level.
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
 
 ## paladin-1
@@ -3900,6 +3928,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 
 ## rogue-11
 sheet HP = 80
@@ -3978,6 +4007,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 
 ## rogue-20
 sheet HP = 203
@@ -4068,6 +4098,7 @@ skill survival +3
 passive passivePerception 13
 passive passiveInsight 19
 passive passiveInvestigation 9
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 
 ## rogue-5
 sheet HP = 38
@@ -4138,6 +4169,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 
 ## sorcerer-1
 sheet HP = 9
@@ -4205,6 +4237,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=12 attack=+4
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-11
 sheet HP = 79
@@ -4294,6 +4327,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=16 attack=+8
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-20
 sheet HP = 182
@@ -4401,6 +4435,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=19 attack=+11
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-5
 sheet HP = 37
@@ -4477,6 +4512,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=14 attack=+6
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## warlock-1
 sheet HP = 12
@@ -4865,6 +4901,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 12
 spellcasting Wizard int dc=12 attack=+4
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 
 ## wizard-11
 sheet HP = 79
@@ -4954,6 +4991,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 14
 spellcasting Wizard int dc=16 attack=+8
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 
 ## wizard-20
 sheet HP = 182
@@ -5061,6 +5099,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 15
 spellcasting Wizard int dc=19 attack=+11
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 
 ## wizard-5
 sheet HP = 37
@@ -5137,3 +5176,4 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 13
 spellcasting Wizard int dc=14 attack=+6
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.

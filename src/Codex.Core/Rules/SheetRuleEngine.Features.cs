@@ -48,9 +48,31 @@ public sealed record FeatureUses(string? Key, string Max, IReadOnlyList<string> 
 /// picked entry that is one. <see cref="View"/> is the sheet as that feature's class sees it (its own class level). <see cref="Copy"/>
 /// is which copy of a repeatable pick this is (1 for the first): a choice of the second copy of a feat is stored apart.</summary>
 public sealed record ActiveFeature(string Name, string? Description, ContentEntry Source, int? Level, IReadOnlyDictionary<string, object> View, string? LevelKey,
-    IReadOnlyList<FeatureModifier> Modifiers, IReadOnlyList<FeatureAdd> Adds, FeatureUses? Uses, FeatureSpend? Spends = null, int Copy = 1)
+    IReadOnlyList<FeatureModifier> Modifiers, IReadOnlyList<FeatureAdd> Adds, FeatureUses? Uses, FeatureSpend? Spends = null, int Copy = 1,
+    string? Scope = null, string? ChosenBy = null)
 {
     public bool Grants => Modifiers.Count > 0 || Adds.Count > 0 || Uses != null || Spends != null;
+
+    /// <summary>The id a choice of this feature's own has on the sheet, under the row choices it came through: a feature picked as the row
+    /// <c>lineage</c> that has a choice <c>skill</c> stores it as <c>lineage__skill</c>, so ids of different rows never clash.</summary>
+    public string ScopedChoiceId(string id) => Scope == null ? id : Scope + "__" + id;
+}
+
+/// <summary>One option of a row choice: a row's name as written in the entry's own language (what the sheet stores) and its text.</summary>
+public sealed record RowOption(string Name, string? Description);
+
+/// <summary>A row choice as the sheet stands (see <see cref="FeatureSource.Choose"/> and a feature row's <c>options</c>): <see cref="Owner"/> is the
+/// feature that offers it (a synthetic one named by the choice, for a pick among an entry's rows), <see cref="Valid"/> the options picked that
+/// still exist, <see cref="Stale"/> the stored names that are no option now.</summary>
+public sealed record RowChoiceInstance(string Key, RowChoose Choose, string Label, string Source, ActiveFeature Owner, IReadOnlyList<RowOption> Options,
+    IReadOnlyList<RowOption> Valid, IReadOnlyList<string> Stale);
+
+/// <summary>What a collection of the sheet's features found besides the features: the row choices, and the rows that offer options without a
+/// usable <c>choose</c>.</summary>
+public sealed class FeatureCollection
+{
+    public List<RowChoiceInstance> Choices { get; } = new();
+    public List<string> Broken { get; } = new();
 }
 
 /// <summary>One feature's contribution that reached a target, for the sheet's working.</summary>
@@ -188,7 +210,11 @@ public sealed partial class SheetRuleEngine
         FeatureRecovery.Decode(sheet, key).Select(r => r.On).Where(on => !FeatureRecovery.IsMoment(on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     /// <summary>The features the sheet has now, in the order the system lists their sources.</summary>
-    public IReadOnlyList<ActiveFeature> ActiveFeatures(IReadOnlyDictionary<string, object> sheet)
+    public IReadOnlyList<ActiveFeature> ActiveFeatures(IReadOnlyDictionary<string, object> sheet) => CollectFeatures(sheet, null);
+
+    /// <summary>The features the sheet has now, and in <paramref name="collected"/> the row choices behind them. Only the rows a choice picked
+    /// are features; the sheet's own stored picks decide, so this is the one place that selection is made.</summary>
+    internal IReadOnlyList<ActiveFeature> CollectFeatures(IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected)
     {
         if (Rules is not { Features.Count: > 0 } rules) return Array.Empty<ActiveFeature>();
 
@@ -213,14 +239,14 @@ public sealed partial class SheetRuleEngine
                     if (resolver.Resolve(list.TargetEntityType, ParsePick(raw).Id) is not { } entry) continue;
                     // The second Skilled is copy 2: what it asks the player to choose is stored apart from the first's.
                     var copy = copies[entry.Id] = copies.GetValueOrDefault(entry.Id) + 1;
-                    AddFeatures(found, source, entry, views[0], copy);
+                    AddFeatures(found, source, entry, views[0], sheet, collected, copy);
                 }
             }
             else if (source.Field != null)
             {
                 foreach (var view in perClass.Contains(source.Field) ? views : views.Take(1))
                 {
-                    if (ReferencedEntry(source.Field, view) is { } entry) AddFeatures(found, source, entry, view);
+                    if (ReferencedEntry(source.Field, view) is { } entry) AddFeatures(found, source, entry, view, sheet, collected);
                 }
             }
         }
@@ -228,27 +254,124 @@ public sealed partial class SheetRuleEngine
         return found;
     }
 
-    private static void AddFeatures(List<ActiveFeature> found, FeatureSource source, ContentEntry entry, IReadOnlyDictionary<string, object> view, int copy = 1)
+    private static void AddFeatures(List<ActiveFeature> found, FeatureSource source, ContentEntry entry, IReadOnlyDictionary<string, object> view,
+        IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, int copy = 1)
     {
+        if (source.Entries.Count > 0 && !source.Entries.Contains(entry.Id, StringComparer.OrdinalIgnoreCase)) return;
         if (source.Property == null)
         {
-            found.Add(Feature(entry.Name, entry.Description, entry, null, view, source.ByField, entry.Properties, copy));
+            AddRow(found, entry.Name, entry.Description, entry, null, view, source.ByField, entry.Properties, copy, sheet, collected, null, null);
             return;
         }
 
         if (!entry.Properties.TryGetValue(source.Property, out var raw) || raw is not IEnumerable<object> rows) return;
         var reached = source.ByField == null ? null : ToDouble(view.GetValueOrDefault(source.ByField));
+        var candidates = new List<(string Name, string? Description, int? Level, IDictionary<string, object> Row)>();
         foreach (var row in rows.OfType<IDictionary<string, object>>())
         {
             var name = Cell(row, "name")?.ToString();
             if (string.IsNullOrWhiteSpace(name)) continue;
             var level = ToDouble(Cell(row, source.LevelColumn));
             if (source.ByField != null && level.HasValue && !(reached >= level)) continue;
-            found.Add(Feature(name, Cell(row, "description")?.ToString(), entry, level.HasValue ? (int)level.Value : null, view, source.ByField, new Dictionary<string, object>(row), copy));
+            candidates.Add((name, Cell(row, "description")?.ToString(), level.HasValue ? (int)level.Value : null, row));
+        }
+
+        if (source.Choose is not { } choose)
+        {
+            foreach (var (name, description, level, row) in candidates)
+            {
+                AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, null, null);
+            }
+
+            return;
+        }
+
+        // A pick among the entry's rows: only the rows picked are features. A choice with no id has nowhere to store its pick.
+        if (string.IsNullOrWhiteSpace(choose.Id)) return;
+        var key = ChoiceKey(entry.Id, copy, choose.Id);
+        var options = candidates.Select(c => new RowOption(c.Name, c.Description)).DistinctBy(o => o.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        if (options.Count == 0) return;
+        var (valid, stale) = ReadPicks(sheet, key, choose.Count, options);
+        var label = string.IsNullOrWhiteSpace(choose.Label) ? entry.Name : choose.Label!;
+        var owner = new ActiveFeature(label, null, entry, null, view, source.ByField, Array.Empty<FeatureModifier>(), Array.Empty<FeatureAdd>(), null, null, copy);
+        collected?.Choices.Add(new RowChoiceInstance(key, choose, label, entry.Name, owner, options, valid, stale));
+        foreach (var picked in valid)
+        {
+            var (name, description, level, row) = candidates.First(c => c.Name.Equals(picked.Name, StringComparison.OrdinalIgnoreCase));
+            AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, choose.Id, key);
         }
     }
 
-    private static ActiveFeature Feature(string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view, string? levelKey, IReadOnlyDictionary<string, object> data, int copy = 1)
+    /// <summary>The picks stored under <paramref name="key"/> that are options (at most <paramref name="count"/>, each once), and the stored names that are not or are too many.</summary>
+    private static (List<RowOption> Valid, List<string> Stale) ReadPicks(IReadOnlyDictionary<string, object> sheet, string key, int count, IReadOnlyList<RowOption> options)
+    {
+        var valid = new List<RowOption>();
+        var stale = new List<string>();
+        foreach (var name in RawList(sheet, key))
+        {
+            var match = options.FirstOrDefault(o => o.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (match != null && !valid.Contains(match) && valid.Count < count) valid.Add(match);
+            else stale.Add(name);
+        }
+
+        return (valid, stale);
+    }
+
+    /// <summary>Adds one row as a feature and, when it offers <c>options</c>, the options picked as features named "{row}: {option}".
+    /// <paramref name="scope"/> is the id of the row choice this row was picked through, <paramref name="chosenBy"/> its sheet key.</summary>
+    private static void AddRow(List<ActiveFeature> found, string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view,
+        string? levelKey, IReadOnlyDictionary<string, object> data, int copy, IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, string? scope, string? chosenBy)
+    {
+        var feature = Feature(name, description, entry, level, view, levelKey, data, copy, scope, chosenBy);
+        found.Add(feature);
+        var optionRows = Maps(data.GetValueOrDefault("options")).ToList();
+        if (optionRows.Count == 0 && !data.ContainsKey("options")) return;
+
+        var choose = ParseRowChoose(data.GetValueOrDefault("choose"));
+        if (choose == null || string.IsNullOrWhiteSpace(choose.Id) || optionRows.Count == 0)
+        {
+            collected?.Broken.Add(name);
+            return;
+        }
+
+        var id = feature.ScopedChoiceId(choose.Id);
+        var key = ChoiceKey(entry.Id, copy, id);
+        var candidates = optionRows.Select(o => (Name: Cell(o, "name")?.ToString(), Row: o)).Where(o => !string.IsNullOrWhiteSpace(o.Name))
+            .DistinctBy(o => o.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        var options = candidates.Select(c => new RowOption(c.Name!, Cell(c.Row, "description")?.ToString())).ToList();
+        if (options.Count == 0) return;
+        var (valid, stale) = ReadPicks(sheet, key, choose.Count, options);
+        collected?.Choices.Add(new RowChoiceInstance(key, choose, string.IsNullOrWhiteSpace(choose.Label) ? name : choose.Label!, entry.Name, feature, options, valid, stale));
+        foreach (var picked in valid)
+        {
+            var option = candidates.First(c => c.Name!.Equals(picked.Name, StringComparison.OrdinalIgnoreCase)).Row;
+            AddRow(found, $"{name}: {picked.Name}", picked.Description, entry, level, view, levelKey, new Dictionary<string, object>(option), copy, sheet, collected, id, key);
+        }
+    }
+
+    /// <summary>The <c>choose</c> of a feature row: <c>{ id, label, count, onChange, changesOn }</c> or the id alone; null when there is none.</summary>
+    private static RowChoose? ParseRowChoose(object? raw)
+    {
+        switch (raw)
+        {
+            case null:
+                return null;
+            case IDictionary<string, object> map:
+                return new RowChoose
+                {
+                    Id = Text(map, "id") ?? string.Empty,
+                    Label = Text(map, "label"),
+                    Count = ToDouble(Cell(map, "count")) is { } count ? (int)count : 1,
+                    OnChange = Text(map, "onChange") ?? RowChoose.Keep,
+                    ChangesOn = Texts(Cell(map, "changesOn")).ToList()
+                };
+            default:
+                return new RowChoose { Id = Convert.ToString(raw, CultureInfo.InvariantCulture)?.Trim() ?? string.Empty };
+        }
+    }
+
+    private static ActiveFeature Feature(string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view, string? levelKey, IReadOnlyDictionary<string, object> data, int copy = 1,
+        string? scope = null, string? chosenBy = null)
     {
         var modifiers = Maps(data.GetValueOrDefault("modifiers"))
             .Select(m => new FeatureModifier(Text(m, "target") ?? string.Empty, Text(m, "amount") ?? "0", Text(m, "type"), Text(m, "when")))
@@ -274,7 +397,7 @@ public sealed partial class SheetRuleEngine
         var spends = data.GetValueOrDefault("spends") is IDictionary<string, object> spend && Text(spend, "key") is { } spendKey
             ? new FeatureSpend(spendKey, Text(spend, "amount") ?? "1")
             : null;
-        return new ActiveFeature(name, description, entry, level, view, levelKey, modifiers, adds, uses, spends, copy);
+        return new ActiveFeature(name, description, entry, level, view, levelKey, modifiers, adds, uses, spends, copy, scope, chosenBy);
     }
 
     /// <summary>The choice an <c>adds</c> item leaves to the player (<c>choice</c> and/or <c>choose</c> in it), or null for a fixed item.
@@ -414,7 +537,9 @@ public sealed partial class SheetRuleEngine
 
     private void EvaluateFeatures(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
     {
-        var features = ActiveFeatures(sheet);
+        var collected = new FeatureCollection();
+        var features = CollectFeatures(sheet, collected);
+        EvaluateRowChoices(collected, result);
         if (features.Count == 0) return;
         result.Features.AddRange(features);
 

@@ -32,8 +32,13 @@ public static class FeatureGrantCheck
         }
 
         var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (name, data) in features)
+        foreach (var (name, data) in features) Feature(name, data, ids);
+        return problems;
+
+        // One feature row: its adds, and its options (each an inner row with its own namespace of choice ids, as the sheet stores them).
+        void Feature(string name, IDictionary<string, object> data, HashSet<string> used)
         {
+            OptionsProblems(name, data, used);
             foreach (var add in AddsOf(data))
             {
                 var to = Text(add, "to");
@@ -48,7 +53,7 @@ public static class FeatureGrantCheck
                     var id = Text(add, "choice");
                     if (id.Length == 0 && !requireId) id = SheetRuleEngine.DefaultChoiceId(shown, Number(data, "level") >= 1 ? (int)Number(data, "level") : null);
                     if (id.Length == 0) problems.Add($"{shown}: a choice needs a \"choice\" id, unique in the entry.");
-                    else if (!ids.Add(id)) problems.Add($"{shown}: the choice id \"{id}\" is used more than once in this entry; each choice needs its own.");
+                    else if (!used.Add(id)) problems.Add($"{shown}: the choice id \"{id}\" is used more than once in this entry; each choice needs its own.");
                 }
 
                 if (list == null) continue;
@@ -61,8 +66,66 @@ public static class FeatureGrantCheck
             }
         }
 
-        return problems;
+        // "Choose one of the following" inside a feature: options need a choose with an id (unique in the entry), a count, a known onChange and
+        // changesOn naming only this system's rests or a moment the table triggers; and a choose without options asks the player for nothing.
+        void OptionsProblems(string name, IDictionary<string, object> data, HashSet<string> used)
+        {
+            var shown = string.IsNullOrWhiteSpace(name) ? entry.Name : name;
+            var options = RowsOf(data, "options").ToList();
+            var hasChoose = data.TryGetValue("choose", out var chooseRaw) && chooseRaw != null;
+            if (options.Count == 0)
+            {
+                if (hasChoose && data.ContainsKey("options")) problems.Add($"{shown}: \"options\" has no rows to choose between.");
+                else if (hasChoose && chooseRaw is IDictionary<string, object>) problems.Add($"{shown}: \"choose\" needs \"options\", the rows to choose between.");
+                return;
+            }
+
+            if (!hasChoose)
+            {
+                problems.Add($"{shown}: \"options\" needs \"choose\", with an \"id\" (and optionally \"count\", \"onChange\", \"changesOn\"), so the player is asked to pick.");
+            }
+            else
+            {
+                var map = chooseRaw as IDictionary<string, object>;
+                var id = map != null ? Text(map, "id") : Convert.ToString(chooseRaw, CultureInfo.InvariantCulture)?.Trim() ?? string.Empty;
+                if (id.Length == 0) problems.Add($"{shown}: \"choose\" needs an \"id\", unique in the entry (a short slug of the feature's name).");
+                else if (!used.Add(id)) problems.Add($"{shown}: the choice id \"{id}\" is used more than once in this entry; each choice needs its own.");
+                if (map != null)
+                {
+                    if (map.ContainsKey("count") && !(Number(map, "count") >= 1)) problems.Add($"{shown}: \"count\" must be 1 or more.");
+                    var onChange = Text(map, "onChange");
+                    if (onChange.Length > 0 && onChange.ToLowerInvariant() is not (RowChoose.Keep or RowChoose.Refill or RowChoose.Empty))
+                    {
+                        problems.Add($"{shown}: \"onChange\" must be keep, refill or empty, not \"{onChange}\".");
+                    }
+
+                    var moments = map.TryGetValue("changesOn", out var rawMoments) ? rawMoments : null;
+                    foreach (var moment in moments is IEnumerable<object> listed ? listed.Select(m => Convert.ToString(m, CultureInfo.InvariantCulture) ?? string.Empty) : Array.Empty<string>())
+                    {
+                        if (!vocabulary.Rests.Contains(moment, StringComparer.OrdinalIgnoreCase) && !SystemDefinitionMoments.Contains(moment))
+                        {
+                            problems.Add($"{shown}: \"changesOn\" names \"{moment}\", which is not one of this system's rests ({string.Join(", ", vocabulary.Rests)}), nor initiative or dawn.");
+                        }
+                    }
+                }
+            }
+
+            // Each option is a row of its own: its choices are stored under this one's id, so they may repeat an id used elsewhere in the entry.
+            foreach (var option in options)
+            {
+                Feature($"{shown}: {Text(option, "name")}", option, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+            }
+        }
     }
+
+    private static readonly string[] SystemDefinitionMoments = { FeatureRecovery.Initiative, FeatureRecovery.Dawn };
+
+    private static IEnumerable<IDictionary<string, object>> RowsOf(IDictionary<string, object> data, string key) =>
+        (data.TryGetValue(key, out var raw) ? raw : null) switch
+        {
+            IEnumerable<object> many => many.OfType<IDictionary<string, object>>(),
+            _ => Enumerable.Empty<IDictionary<string, object>>()
+        };
 
     private static bool IsRank(GrantList list, string rank) =>
         list.Ranks!.Any(r => r.Key.Equals(rank, StringComparison.OrdinalIgnoreCase))

@@ -1,11 +1,12 @@
 @using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
 
 @* What one feature does on the sheet: its modifiers, the entries it adds to lists and its counter of uses. A closed section
    with a one-line summary, so a row of plain text stays plain. Reads and writes the keys the sheet rules read (FeatureGrantData),
    offers only what the system's vocabulary holds, and checks formulas with the engine's parser. Changes are reported as a
    FeatureGrantData for the owner to put into the feature's dictionary. *@
 
-@if (!ReadOnly || data.Modifiers.Count > 0 || data.Adds.Count > 0 || data.Uses != null || data.Spends != null)
+@if (!ReadOnly || data.Modifiers.Count > 0 || data.Adds.Count > 0 || data.Uses != null || data.Spends != null || data.Options.Count > 0)
 {
 <details class="grants" data-testid="feature-grants">
     <summary class="grants-summary">
@@ -378,12 +379,121 @@
                 }
             </fieldset>
         }
+        @if (!Nested && (data.Options.Count > 0 || !ReadOnly))
+        {
+            <fieldset class="grants-group" aria-labelledby="@(id)-options">
+                <legend id="@(id)-options" class="label-caps">@L["Actor.Grants.Options"]</legend>
+                @if (data.Options.Count > 0)
+                {
+                    var choose = data.Choose ?? new GrantChoose();
+                    <div class="grants-row" data-testid="grant-choose">
+                        <div class="grants-cell">
+                            <label for="@(id)-choose-id" class="field-label">@L["Actor.Grants.ChooseId"]</label>
+                            <input id="@(id)-choose-id" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@choose.Id" aria-describedby="@(id)-choose-help"
+                                   aria-invalid="@(choose.Id.Trim().Length == 0 ? "true" : null)"
+                                   @onchange="@(e => EditChooseAsync(c => c.Id = e.Value?.ToString()?.Trim() ?? string.Empty))" />
+                        </div>
+                        <div class="grants-cell">
+                            <label for="@(id)-choose-count" class="field-label">@L["Actor.Grants.ChooseCount"]</label>
+                            <input id="@(id)-choose-count" type="number" min="1" class="field-input field-sm" disabled="@ReadOnly" value="@(choose.Count.Length == 0 ? "1" : choose.Count)"
+                                   @onchange="@(e => EditChooseAsync(c => c.Count = e.Value?.ToString()?.Trim() == "1" ? string.Empty : e.Value?.ToString()?.Trim() ?? string.Empty))" />
+                        </div>
+                        <div class="grants-cell">
+                            <label for="@(id)-choose-onchange" class="field-label">@L["Actor.Grants.OnChange"]</label>
+                            <select id="@(id)-choose-onchange" class="field-select field-sm" disabled="@ReadOnly"
+                                    @onchange="@(e => EditChooseAsync(c => c.OnChange = e.Value?.ToString() == RowChoose.Keep ? string.Empty : e.Value?.ToString() ?? string.Empty))">
+                                @foreach (var policy in new[] { RowChoose.Keep, RowChoose.Refill, RowChoose.Empty })
+                                {
+                                    <option value="@policy" selected="@(policy == (choose.OnChange.Length == 0 ? RowChoose.Keep : choose.OnChange.ToLowerInvariant()))">@L["Actor.Grants.OnChange." + policy]</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <p id="@(id)-choose-help" class="field-hint">@L["Actor.Grants.ChooseHelp"]</p>
+                    <fieldset class="grants-group" aria-labelledby="@(id)-changeson">
+                        <legend id="@(id)-changeson" class="label-caps">@L["Actor.Grants.ChangesOn"]</legend>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach (var moment in Options(Vocabulary.ChangeMoments.Select(m => (m, Vocabulary.Rests.Contains(m) ? m : L["Actor.Grants.Moment." + m].ToString())), choose.ChangesOn.ToArray()))
+                            {
+                                var momentKey = moment.Key;
+                                var momentId = $"{id}-changeson-{Slug(momentKey)}";
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    <input id="@momentId" type="checkbox" class="field-box mt-0" disabled="@ReadOnly" checked="@choose.ChangesOn.Any(c => Same(c, momentKey))"
+                                           @onchange="@(e => EditChooseAsync(c => { c.ChangesOn.RemoveAll(x => Same(x, momentKey)); if ((bool)e.Value!) c.ChangesOn.Add(momentKey); }))" />
+                                    <label for="@momentId" class="mb-0">@moment.Label</label>
+                                </span>
+                            }
+                        </div>
+                    </fieldset>
+                }
+                @for (var i = 0; i < data.Options.Count; i++)
+                {
+                    var index = i;
+                    var n = index + 1;
+                    var option = data.Options[index];
+                    <div class="grants-row flex-column align-items-stretch" data-testid="grant-option">
+                        <div class="d-flex flex-wrap gap-2 align-items-end">
+                            <div class="grants-cell">
+                                <label for="@(id)-o@(n)-name" class="field-label">@L["Actor.Grants.OptionName", n]</label>
+                                <input id="@(id)-o@(n)-name" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@option.Name"
+                                       @onchange="@(e => EditOptionAsync(index, o => o.Name = e.Value?.ToString()?.Trim() ?? string.Empty))" />
+                            </div>
+                            @if (!ReadOnly)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Grants.RemoveOption", n]" OnClick="() => ChangeAsync(() => { if (index < data.Options.Count) data.Options.RemoveAt(index); })" />
+                            }
+                        </div>
+                        <div class="grants-cell">
+                            <label for="@(id)-o@(n)-text" class="field-label">@L["Actor.Grants.OptionText", n]</label>
+                            <textarea id="@(id)-o@(n)-text" class="field-input field-sm" rows="2" disabled="@ReadOnly"
+                                      @onchange="@(e => EditOptionAsync(index, o => o.Description = e.Value?.ToString() ?? string.Empty))">@option.Description</textarea>
+                        </div>
+                        <FeatureGrantEditor Nested="true" Vocabulary="Vocabulary" Feature="option.ToFeature()" ReadOnly="ReadOnly"
+                                            Changed="grants => EditOptionAsync(index, o => o.Grants = grants)" />
+                    </div>
+                }
+                @if (!ReadOnly)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AddOptionAsync" data-testid="grant-add-option">
+                        <LucideIcon IconName="plus" Size="14" /> @L["Actor.Grants.AddOption"]
+                    </CodexButton>
+                }
+            </fieldset>
+        }
     </div>
 </details>
 }
 
 @code {
     private readonly string id = "g" + Guid.NewGuid().ToString("N")[..6];
+
+    /// <summary>The editor is the one inside an option: it edits that option's grants, and offers no options of its own.</summary>
+    [Parameter]
+    public bool Nested { get; set; }
+
+    private Task EditChooseAsync(Action<GrantChoose> edit) =>
+        ChangeAsync(() => { data.Choose ??= new GrantChoose { Id = UniqueRowChoiceId() }; edit(data.Choose); });
+
+    private Task EditOptionAsync(int index, Action<GrantOption> edit) =>
+        ChangeAsync(() => { if (index < data.Options.Count) edit(data.Options[index]); });
+
+    private Task AddOptionAsync() => ChangeAsync(() =>
+    {
+        data.Options.Add(new GrantOption());
+        data.Choose ??= new GrantChoose { Id = UniqueRowChoiceId() };
+    });
+
+    /// <summary>The id a new choice among options gets: the feature's name as a slug and its level, made different from the ids of its other choices.</summary>
+    private string UniqueRowChoiceId()
+    {
+        var name = Feature.TryGetValue("name", out var n) ? n?.ToString() ?? string.Empty : string.Empty;
+        int? level = Feature.TryGetValue("level", out var l) && int.TryParse(l?.ToString(), out var at) ? at : null;
+        var baseId = SheetRuleEngine.DefaultChoiceId(name, level);
+        var taken = data.Adds.Select(a => GrantAddEdit.Text(a, "choice")).Where(t => t.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var chosen = baseId;
+        for (var copy = 2; taken.Contains(chosen); copy++) chosen = $"{baseId}-{copy}";
+        return chosen;
+    }
     private FeatureGrantData data = new();
 
     /// <summary>The names this system gives a feature to use.</summary>
@@ -474,6 +584,7 @@
         if (adds > 0) parts.Add(L["Actor.Grants.SumAdds", adds]);
         if (counters > 0) parts.Add(L["Actor.Grants.SumCounter"]);
         if (data.HasSpend) parts.Add(L["Actor.Grants.SumSpends"]);
+        if (data.Options.Count > 0) parts.Add(L["Actor.Grants.SumOptions", data.Options.Count]);
         return parts.Count == 0 ? L["Actor.Grants.None"] : string.Join(", ", parts);
     }
 

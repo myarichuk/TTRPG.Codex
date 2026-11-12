@@ -106,7 +106,7 @@
         <div data-testid="levelup-picks">
             @foreach (var pick in picks)
             {
-                <ChoicePicker Choice="pick" TargetLabel="TargetLabel" OnPicks="chosen => OnPick.InvokeAsync(new ChoiceEdit(pick.Key, pick.Label, chosen, false))" />
+                <ChoicePicker Choice="pick" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" OnPicks="chosen => OnPick.InvokeAsync(new ChoiceEdit(pick.Key, pick.Label, chosen, false))" />
             }
         </div>
         @if (picks.Where(p => p.Remaining > 0 || p.Adopted).Select(p => p.Label).ToList() is { Count: > 0 } open)
@@ -150,6 +150,10 @@
     [Parameter] public EventCallback<int> OnRollDie { get; set; }
     /// <summary>The name of a ranked list (<c>skills</c>, <c>saves</c>) as the sheet shows it.</summary>
     [Parameter] public Func<string, string>? TargetLabel { get; set; }
+
+    /// <summary>A row option's name and text in the reader's language, and a moment's name (see <see cref="ChoicePicker"/>).</summary>
+    [Parameter] public Func<PendingChoice, ChoiceOption, (string Name, string? Description)>? OptionText { get; set; }
+    [Parameter] public Func<string, string>? MomentLabel { get; set; }
 
     /// <summary>A pick made for a choice the level opens; the host keeps it on the copy of the sheet the plan is worked out on.</summary>
     [Parameter] public EventCallback<ChoiceEdit> OnPick { get; set; }

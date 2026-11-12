@@ -497,6 +497,26 @@
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.</value></data>
   <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): choose {2} more ({3}).</value></data>
   <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): your {2} picks in {3} already match this choice. Confirm them.</value></data>
+  <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: choose {1}</value></data>
+  <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>Usually changed on {0}</value></data>
+  <data name="Actor.Choice.Details" xml:space="preserve"><value>Details</value></data>
+  <data name="Actor.Choice.AfterRest" xml:space="preserve"><value>After {0} you can change:</value></data>
+  <data name="Actor.Choice.ChangeLink" xml:space="preserve"><value>Change {0}</value></data>
+  <data name="Actor.Rule.ChoiceRowPending" xml:space="preserve"><value>{0} ({1}): choose {2} more.</value></data>
+  <data name="Actor.Grants.Options" xml:space="preserve"><value>Choose one of</value></data>
+  <data name="Actor.Grants.ChooseId" xml:space="preserve"><value>Choice id</value></data>
+  <data name="Actor.Grants.ChooseCount" xml:space="preserve"><value>How many to pick</value></data>
+  <data name="Actor.Grants.OnChange" xml:space="preserve"><value>When the pick changes, counters</value></data>
+  <data name="Actor.Grants.OnChange.keep" xml:space="preserve"><value>keep what was spent</value></data>
+  <data name="Actor.Grants.OnChange.refill" xml:space="preserve"><value>start full</value></data>
+  <data name="Actor.Grants.OnChange.empty" xml:space="preserve"><value>start at 0</value></data>
+  <data name="Actor.Grants.ChooseHelp" xml:space="preserve"><value>The id is required: the sheet stores the pick under it. Options that share a counter should give it the same key.</value></data>
+  <data name="Actor.Grants.ChangesOn" xml:space="preserve"><value>Usually changed on</value></data>
+  <data name="Actor.Grants.OptionName" xml:space="preserve"><value>Option {0}: name</value></data>
+  <data name="Actor.Grants.OptionText" xml:space="preserve"><value>Option {0}: text</value></data>
+  <data name="Actor.Grants.RemoveOption" xml:space="preserve"><value>Remove option {0}</value></data>
+  <data name="Actor.Grants.AddOption" xml:space="preserve"><value>Add an option</value></data>
+  <data name="Actor.Grants.SumOptions" xml:space="preserve"><value>{0} options</value></data>
   <data name="Actor.Rule.ChoiceStale" xml:space="preserve"><value>{0} ({1}): "{2}" no longer fits this choice. Choose again.</value></data>
   <data name="Actor.Rule.CounterKeyShared" xml:space="preserve"><value>{0}: more than one feature sets the maximum of the same pool. The highest, {1}, is used. The GM can check the entries.</value></data>
   <data name="Actor.Rule.SpendNoPool" xml:space="preserve"><value>{0}: spends from "{1}", and this sheet has no such pool, so it has no button. The GM can check the entry.</value></data>

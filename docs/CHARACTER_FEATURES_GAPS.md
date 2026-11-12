@@ -102,7 +102,7 @@ else stays text:
   unarmored base): a modifier's `when` reads the sheet's numbers, not the inventory.
 - Dice a feature owns (superiority dice, a bardic die): a counter can hold the count, nothing rolls them.
 - Reactive rules ("when you would drop to 0 hit points, instead..."). Deliberately left as text plus a counter.
-- Choices inside a feature ("choose one of the following"). There is no model for per-feature choices.
+- ~~Choices inside a feature ("choose one of the following").~~ Built: a feature row's `options` with `choose`, and a source's `choose` for a pick among an entry's rows (see FEATURE_GRANTS_DESIGN.md, section 6). Still open: the class-option lists (invocations, maneuvers) and the importer pass that writes the rows' grants.
 - Spell slots or pact slots granted or changed by a feature.
 - A modifier to an attribute score, to a skill bonus, or to spell save DC and spell attack.
 - A `base`-type modifier on armor class is ignored while body armor is worn, like a class's own defense.

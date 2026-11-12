@@ -1,0 +1,34 @@
+@* After a rest (or any moment a row choice names in changesOn), the choices the character may now change, each a link to where it is changed.
+   A notice, not a dialog: nothing is asked, and a change is never required. A polite live region, so it is read out when it appears. *@
+
+@if (Choices.Count > 0)
+{
+    <div class="field-hint d-flex flex-wrap align-items-center gap-2" role="status" data-testid="rest-choices">
+        <span>@L["Actor.Choice.AfterRest", Moment]</span>
+        @foreach (var choice in Choices)
+        {
+            var key = choice.Key;
+            <a href="@HrefFor(key)" data-testid="@("rest-choice-" + key)" @onclick="() => OnOpen.InvokeAsync(key)" @onclick:preventDefault="OnOpen.HasDelegate">@L["Actor.Choice.ChangeLink", choice.Label]</a>
+        }
+        @if (OnDismiss.HasDelegate)
+        {
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => OnDismiss.InvokeAsync()" data-testid="rest-choices-dismiss">@L["Common.Dismiss"]</CodexButton>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>The moment, in the reader's words ("Long Rest").</summary>
+    [Parameter, EditorRequired] public string Moment { get; set; } = string.Empty;
+
+    /// <summary>The choices that can change now: the sheet key they are stored under, and their name.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<(string Key, string Label)> Choices { get; set; } = Array.Empty<(string, string)>();
+
+    /// <summary>Where a choice is changed, from its key: a fragment on the sheet, or the sheet's own address.</summary>
+    [Parameter, EditorRequired] public Func<string, string> HrefFor { get; set; } = key => "#" + key;
+
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    /// <summary>Opens the choice where it is on this page (the sheet switches to its tab and focuses the picker); without it the link goes to <see cref="HrefFor"/>.</summary>
+    [Parameter] public EventCallback<string> OnOpen { get; set; }
+}

@@ -1,29 +1,64 @@
+@using Codex.Core
 @using Codex.Core.Rules
 
-@* One choice a feature leaves to the player (an expertise pick, a skill): a fieldset of checkboxes for the keys it offers, capped at its
-   count, with a live "1 of 2 chosen". Shared by the sheet's "Choices to make" block and the level-up stepper. Every change raises
-   OnPicks with the picks as they would stand; the host writes them (SheetRuleEngine.SetChoice) and re-runs the rules. *@
+@* One choice a feature leaves to the player (an expertise pick, a skill, a row of an entry): a fieldset of checkboxes for the keys it offers,
+   capped at its count, with a live "1 of 2 chosen". A choice among rows (PendingChoice.IsRow) shows each row by its name with its text behind
+   a disclosure, and is a group of radio buttons when one row is wanted. Shared by the sheet's "Choices to make" block and the level-up
+   stepper. Every change raises OnPicks with the picks as they would stand; the host writes them (SheetRuleEngine.ChangeChoice) and re-runs the rules. *@
 
-<fieldset class="field-group choice-picker" data-testid="@("choice-" + Choice.Key)" disabled="@Disabled">
+<fieldset id="@AnchorId" data-rule-key="@Choice.Key" class="field-group choice-picker" data-testid="@("choice-" + Choice.Key)" disabled="@Disabled">
     <legend>@Legend</legend>
     @if (Choice.Adopted)
     {
         <p class="field-hint" data-testid="choice-adopted">@L["Actor.Choice.ConfirmHelp"]</p>
     }
-    <p class="small-muted mb-1" aria-live="polite" data-testid="choice-count">@L["Actor.Choice.Count", Choice.Made.Count, Choice.Count]@if (Full) { <span> · @L["Actor.Choice.Full"]</span> }</p>
-    <div class="d-flex flex-wrap gap-3">
-        @foreach (var option in Choice.Options)
-        {
-            var key = option.Key;
-            var ticked = Choice.Made.Contains(key, StringComparer.OrdinalIgnoreCase);
-            var box = $"{id}-{key}";
-            <span class="d-inline-flex align-items-center gap-1">
-                <input id="@box" type="checkbox" class="field-box mt-0" checked="@ticked" disabled="@(Disabled || (Full && !ticked))"
-                       @onchange="e => OnPicks.InvokeAsync(Choice.Toggled(key, (bool)e.Value!))" data-testid="@("choice-pick-" + key)" />
-                <label for="@box" class="mb-0">@option.Label</label>
-            </span>
-        }
-    </div>
+    @if (MomentHint is { Length: > 0 } hint)
+    {
+        <p class="field-hint mb-1" data-testid="choice-changes-on">@hint</p>
+    }
+    <p class="small-muted mb-1" aria-live="polite" data-testid="choice-count">@L["Actor.Choice.Count", Choice.Made.Count, Choice.Count]@if (Full && !Radio) { <span> · @L["Actor.Choice.Full"]</span> }</p>
+    @if (Choice.IsRow)
+    {
+        <div class="d-flex flex-column gap-2">
+            @foreach (var option in Choice.Options)
+            {
+                var key = option.Key;
+                var ticked = Choice.Made.Contains(key, StringComparer.OrdinalIgnoreCase);
+                var box = $"{id}-{key}";
+                var (shown, text) = TextOf(option);
+                <div data-testid="@("choice-row-" + key)">
+                    <span class="d-inline-flex align-items-center gap-1">
+                        <input id="@box" type="@(Radio ? "radio" : "checkbox")" name="@(Radio ? id : null)" class="field-box mt-0" checked="@ticked" disabled="@(Disabled || (!Radio && Full && !ticked))"
+                               @onchange="e => OnPicks.InvokeAsync(Choice.Toggled(key, Radio || (bool)e.Value!))" data-testid="@("choice-pick-" + key)" />
+                        <label for="@box" class="mb-0">@shown</label>
+                    </span>
+                    @if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        <details class="small ms-4" data-testid="@("choice-details-" + key)">
+                            <summary>@L["Actor.Choice.Details"]<span class="visually-hidden">: @shown</span></summary>
+                            <div class="rules-text mb-1">@((MarkupString)TextFormatting.ToHtml(text))</div>
+                        </details>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-wrap gap-3">
+            @foreach (var option in Choice.Options)
+            {
+                var key = option.Key;
+                var ticked = Choice.Made.Contains(key, StringComparer.OrdinalIgnoreCase);
+                var box = $"{id}-{key}";
+                <span class="d-inline-flex align-items-center gap-1">
+                    <input id="@box" type="checkbox" class="field-box mt-0" checked="@ticked" disabled="@(Disabled || (Full && !ticked))"
+                           @onchange="e => OnPicks.InvokeAsync(Choice.Toggled(key, (bool)e.Value!))" data-testid="@("choice-pick-" + key)" />
+                    <label for="@box" class="mb-0">@option.Label</label>
+                </span>
+            }
+        </div>
+    }
     @if (Choice.Adopted && !Disabled)
     {
         <div class="mt-2">
@@ -41,20 +76,43 @@
     /// <summary>The name of a ranked list (<c>skills</c>, <c>saves</c>) as the sheet shows it; the key itself when not given.</summary>
     [Parameter] public Func<string, string>? TargetLabel { get; set; }
 
+    /// <summary>A row option's name and text in the reader's language; the option's own when not given (or when it has no translation).</summary>
+    [Parameter] public Func<PendingChoice, ChoiceOption, (string Name, string? Description)>? OptionText { get; set; }
+
+    /// <summary>A moment a row choice is usually changed at (a rest's name) as the reader's system words it.</summary>
+    [Parameter] public Func<string, string>? MomentLabel { get; set; }
+
     [Parameter] public bool Disabled { get; set; }
 
     private readonly string id = "choice-" + Guid.NewGuid().ToString("N")[..6];
 
+    /// <summary>The id of the fieldset, which a link (the notice after a rest) can point to.</summary>
+    public string AnchorId => AnchorFor(Choice.Key);
+
+    /// <summary>The fragment id of the fieldset of the choice stored under <paramref name="choiceKey"/>.</summary>
+    public static string AnchorFor(string choiceKey) =>
+        "choice-" + new string(choiceKey.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-').ToArray());
+
     private bool Full => Choice.Made.Count >= Choice.Count;
+
+    private bool Radio => Choice.IsRow && Choice.Count == 1;
+
+    private (string Name, string? Description) TextOf(ChoiceOption option) =>
+        OptionText?.Invoke(Choice, option) is { } shown ? (shown.Name, shown.Description ?? option.Description) : (option.Label, option.Description);
+
+    private string? MomentHint => Choice.Row is { ChangesOn.Count: > 0 } row
+        ? L["Actor.Choice.ChangesOn", string.Join(", ", row.ChangesOn.Select(m => MomentLabel?.Invoke(m) ?? m))].ToString()
+        : null;
 
     private string Legend
     {
         get
         {
             var source = Choice.Feature.Level is { } level ? L["Actor.Choice.SourceLevel", Choice.Source, level] : Choice.Source;
-            var target = TargetLabel?.Invoke(Choice.Target) ?? Choice.Target;
-            // A feat that is its own feature says its name once ("Skilled"), a class row says where it is from ("Expertise (Rogue, level 6)").
+            // A feat that is its own feature says its name once (“Skilled”), a class row says where it is from (“Expertise (Rogue, level 6)”).
             var who = string.Equals(Choice.Label, Choice.Source, StringComparison.Ordinal) ? source.ToString() : $"{Choice.Label} ({source})";
+            if (Choice.IsRow) return L["Actor.Choice.LegendRow", who, Choice.Count];
+            var target = TargetLabel?.Invoke(Choice.Target) ?? Choice.Target;
             return L[Choice.Raise ? "Actor.Choice.LegendRaise" : "Actor.Choice.Legend", who, Choice.Count, target];
         }
     }

@@ -57,6 +57,37 @@ public sealed class GrantSpend
     public Dictionary<string, object> Extra { get; } = new();
 }
 
+/// <summary>How the player chooses among a feature's <c>options</c>: <c>choose: { id, count, onChange, changesOn }</c>. <see cref="Id"/> is
+/// required and names the choice within the entry; <see cref="Count"/> is empty for the default of 1; <see cref="OnChange"/> is empty for
+/// <c>keep</c>.</summary>
+public sealed class GrantChoose
+{
+    public string Id { get; set; } = string.Empty;
+    public string Count { get; set; } = string.Empty;
+    public string OnChange { get; set; } = string.Empty;
+    public List<string> ChangesOn { get; set; } = new();
+    public Dictionary<string, object> Extra { get; } = new();
+}
+
+/// <summary>One of a feature's <c>options</c>: a name, its text, and the grants it carries when chosen (<see cref="Grants"/>, edited as any
+/// feature's). Keys the editor does not know, such as options nested in an option, stay in <see cref="Extra"/>.</summary>
+public sealed class GrantOption
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public FeatureGrantData Grants { get; set; } = new();
+    public Dictionary<string, object> Extra { get; } = new();
+
+    /// <summary>The option as the feature dictionary the nested editor reads: its name, text, unknown keys and grants.</summary>
+    public Dictionary<string, object> ToFeature()
+    {
+        var map = new Dictionary<string, object>(Extra) { ["name"] = Name };
+        if (Description.Trim().Length > 0) map["description"] = Description;
+        Grants.Apply(map);
+        return map;
+    }
+}
+
 /// <summary>
 /// The <c>modifiers</c>, <c>adds</c>, <c>uses</c> (with its <c>key</c>, <c>recovers</c> and <c>regain</c>) and <c>spends</c> of one feature (a row, or a whole entry) as the feature editor edits them.
 /// <see cref="Read"/> takes them out of the feature's dictionary the way the sheet rules read them (a lone map counts as a
@@ -71,6 +102,12 @@ public sealed class FeatureGrantData
 
     /// <summary>What the feature spends from a pool, or null: <c>spends: { key, amount }</c>.</summary>
     public GrantSpend? Spends { get; set; }
+
+    /// <summary>"Choose one of the following": the rows to choose between, and how (<see cref="Choose"/>). Each option may carry its own grants.</summary>
+    public List<GrantOption> Options { get; } = new();
+
+    /// <summary>How the options are chosen between; written only while there are options.</summary>
+    public GrantChoose? Choose { get; set; }
 
     /// <summary>The grants held in <paramref name="feature"/>; empty when it holds none.</summary>
     public static FeatureGrantData Read(IReadOnlyDictionary<string, object>? feature)
@@ -126,6 +163,30 @@ public sealed class FeatureGrantData
             data.Spends = spend;
         }
 
+        foreach (var map in Maps(feature.GetValueOrDefault("options")))
+        {
+            var option = new GrantOption { Name = Text(map, "name"), Description = Text(map, "description"), Grants = Read(new Dictionary<string, object>(map)) };
+            CopyExtra(map, option.Extra, "name", "description", "modifiers", "adds", "uses", "spends", "options", "choose");
+            data.Options.Add(option);
+        }
+
+        switch (feature.GetValueOrDefault("choose"))
+        {
+            case IDictionary<string, object> chooseMap:
+                var choose = new GrantChoose
+                {
+                    Id = Text(chooseMap, "id"), Count = Text(chooseMap, "count"), OnChange = Text(chooseMap, "onChange"), ChangesOn = Texts(Get(chooseMap, "changesOn"))
+                };
+                CopyExtra(chooseMap, choose.Extra, "id", "count", "onChange", "changesOn");
+                data.Choose = choose;
+                break;
+            case null or string { Length: 0 }:
+                break;
+            case var id when Convert.ToString(id, CultureInfo.InvariantCulture) is { Length: > 0 } text:
+                data.Choose = new GrantChoose { Id = text.Trim() };
+                break;
+        }
+
         return data;
     }
 
@@ -137,6 +198,17 @@ public sealed class FeatureGrantData
         Set(feature, "adds", Adds.Count == 0 ? null : Adds.Select(AddMap).Cast<object>().ToList());
         Set(feature, "uses", Uses == null ? null : UsesMap(Uses));
         Set(feature, "spends", Spends == null ? null : SpendsMap(Spends));
+        Set(feature, "options", Options.Count == 0 ? null : Options.Select(o => (object)o.ToFeature()).ToList());
+        Set(feature, "choose", Options.Count == 0 || Choose == null ? null : ChooseMap(Choose));
+    }
+
+    private static Dictionary<string, object> ChooseMap(GrantChoose c)
+    {
+        var map = new Dictionary<string, object>(c.Extra) { ["id"] = c.Id.Trim() };
+        if (c.Count.Trim().Length > 0) map["count"] = Value(c.Count);
+        if (c.OnChange.Trim().Length > 0) map["onChange"] = c.OnChange.Trim();
+        if (c.ChangesOn.Count > 0) map["changesOn"] = c.ChangesOn.Cast<object>().ToList();
+        return map;
     }
 
     /// <summary>Whether the feature spends from a pool the sheet can find (a key is set).</summary>

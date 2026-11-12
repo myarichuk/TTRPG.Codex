@@ -475,6 +475,8 @@ values:
   "weapon-property": "תכונת נשק"
 
 sheetRules:
+  choices:
+    lineage: שושלת
   bonusesLabel: בונוסים מהרקע
   increasesLabel: העלאות ציוני תכונות
   listDescriptions:

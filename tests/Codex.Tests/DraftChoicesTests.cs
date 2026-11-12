@@ -414,6 +414,49 @@ public class DraftChoicesTests : IAsyncLifetime
         Assert.DoesNotContain(evaluation.PendingChoices, c => c.Key == ExpertiseKey);
     }
 
+    private const string LineageKey = "choice__dragonborn__lineage";
+
+    private static CharacterDraft Dragonborn() => new("Ka Vrash", new Dictionary<string, object> { ["class"] = "fighter", ["level"] = 1L, ["species"] = "dragonborn" }, "A scarred duelist.", null);
+
+    [Fact]
+    public async Task ARowChoice_IsAskedWithTheRowsAsOptions_AndTheAnswerIsWrittenAsTheRowsName()
+    {
+        var chat = new ByPromptChat(prompt => prompt.Contains(LineageKey)
+            ? """{"choices": {"choice__dragonborn__lineage": "Draconic Ancestor: Red"}}"""
+            : """{"choices": {}}""");
+        var draft = Dragonborn();
+        var system = _loader.GetDefinition("srd5e")!;
+
+        await Features().ChooseAsync(new AiAssistant(chat), draft, "a fire duelist", new CampaignDocument { SystemId = "srd5e" }, system, new RegistryResolver(_registry), CancellationToken.None);
+
+        Assert.Equal(new object[] { "Draconic Ancestor: Red" }, (List<object>)draft.Sheet[LineageKey]);
+        var prompt = Assert.Single(chat.Prompts, p => p.Contains(LineageKey));
+        Assert.Contains("Lineage (Dragonborn)", prompt);
+        Assert.Contains("- Draconic Ancestor: Black", prompt);
+
+        var engine = new SheetRuleEngine(system, new RegistryResolver(_registry));
+        var sheet = new Dictionary<string, object>();
+        engine.InitializeSheet(sheet);
+        CastService.ApplyDraft(sheet, system, draft);
+        var evaluation = engine.Recompute(sheet);
+        Assert.DoesNotContain(evaluation.PendingChoices, c => c.Key == LineageKey);
+        Assert.Contains(evaluation.Features, f => f.Name == "Draconic Ancestor: Red");
+    }
+
+    [Fact]
+    public async Task ARowChoice_RefusesAPickThatIsNoRow_AndStaysOpen()
+    {
+        var chat = new ByPromptChat(prompt => prompt.Contains(LineageKey)
+            ? """{"choices": {"choice__dragonborn__lineage": ["Draconic Ancestor: Plaid", "Silver"]}}"""
+            : """{"choices": {}}""");
+        var draft = Dragonborn();
+        var system = _loader.GetDefinition("srd5e")!;
+
+        await Features().ChooseAsync(new AiAssistant(chat), draft, "a fire duelist", new CampaignDocument { SystemId = "srd5e" }, system, new RegistryResolver(_registry), CancellationToken.None);
+
+        Assert.DoesNotContain(LineageKey, draft.Sheet.Keys);
+    }
+
     [Fact]
     public async Task AChoiceTheCharactersOwnTicksCover_IsConfirmedWithoutACall_AndAFailedCallLeavesItOpen()
     {
