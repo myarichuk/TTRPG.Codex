@@ -66,6 +66,21 @@
   <data name="Actor.Skills.SumDc" xml:space="preserve"><value>{0}, שליטה {1}, {2} {3}</value></data>
   <data name="Actor.Skills.Roll" xml:space="preserve"><value>הטלה: {0}</value></data>
   <data name="Actor.Skills.Hint" xml:space="preserve"><value>מיומנויות הרקע שלכם מסומנות עבורכם. סמנו את אלה שהמקצוע והיכולות האחרות מעניקים.</value></data>
+  <data name="Actor.Skills.LockedFrom" xml:space="preserve"><value>{0}, מתוך {1}</value></data>
+  <data name="Actor.Skills.RankNone" xml:space="preserve"><value>ללא</value></data>
+  <data name="Actor.Choice.Heading" xml:space="preserve"><value>בחירות לבצע</value></data>
+  <data name="Actor.Choice.MadeHeading" xml:space="preserve"><value>בחירות שנעשו ({0})</value></data>
+  <data name="Actor.Choice.Legend" xml:space="preserve"><value>{0}: בחרו {1} ({2})</value></data>
+  <data name="Actor.Choice.LegendRaise" xml:space="preserve"><value>{0}: בחרו {1} לשדרוג ({2})</value></data>
+  <data name="Actor.Choice.SourceLevel" xml:space="preserve"><value>{0}, רמה {1}</value></data>
+  <data name="Actor.Choice.Count" xml:space="preserve"><value>נבחרו {0} מתוך {1}</value></data>
+  <data name="Actor.Choice.Confirm" xml:space="preserve"><value>אישור</value></data>
+  <data name="Actor.Choice.ConfirmHelp" xml:space="preserve"><value>כבר סימנתם אותם. אשרו כדי לשמור אותם כבחירה הזאת.</value></data>
+  <data name="Actor.Choice.ChooseAgain" xml:space="preserve"><value>בחרו מחדש</value></data>
+  <data name="Actor.Choice.MadeSummary" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Choice.Full" xml:space="preserve"><value>הכול נבחר. בטלו סימון אחד כדי לבחור אחר.</value></data>
+  <data name="Actor.Sheet.LevelPicks" xml:space="preserve"><value>בחירות שהרמה הזאת פותחת</value></data>
+  <data name="Actor.Sheet.LevelLeftOpen" xml:space="preserve"><value>עדיין פתוח: {0}. אפשר לקחת את הרמה עכשיו ולבחור מאוחר יותר מהגיליון.</value></data>
   <data name="Actor.Inv.Empty" xml:space="preserve"><value>עדיין לא נושאים דבר.</value></data>
   <data name="Actor.Inv.Carried" xml:space="preserve"><value>{0} שנישא</value></data>
   <data name="Actor.Inv.Quantity" xml:space="preserve"><value>כמות של {0}</value></data>
@@ -242,6 +257,8 @@
   <data name="Actor.Sheet.ClassLevelOption" xml:space="preserve"><value>{0} (דרגה {1})</value></data>
   <data name="Actor.Sheet.ClassNewOption" xml:space="preserve"><value>{0} (חדש, דרגה 1)</value></data>
   <data name="Actor.Sheet.FromLibrary" xml:space="preserve"><value>מהספרייה</value></data>
+  <data name="Actor.Sheet.Homebrew.Title" xml:space="preserve"><value>תוכן ביתי</value></data>
+  <data name="Actor.Sheet.Homebrew.Hint" xml:space="preserve"><value>נכתב עבור הדמות הזו ועדיין אינו בספרייה. מנהל המשחק יבדוק כל פריט כשהדמות תבקש להצטרף למערכה.</value></data>
   <data name="Actor.Sheet.HistoryVisible" xml:space="preserve"><value>גלוי לכל מי שרואה את הדמות</value></data>
   <data name="Actor.Sheet.HistoryPlaceholder" xml:space="preserve"><value>מאיפה הם באו, מה הם רוצים, למי הם חייבים…</value></data>
   <data name="Actor.Sheet.AiInstruction" xml:space="preserve"><value>הנחיה לבינה המלאכותית</value></data>
@@ -306,7 +323,7 @@
   <data name="Actor.Sheet.ConfirmDiscardBody" xml:space="preserve"><value>שיניתם את הדף בלי לשמור. אם תעזבו עכשיו, השינויים יאבדו.</value></data>
   <data name="Actor.Sheet.DiscardLeave" xml:space="preserve"><value>ביטול ויציאה</value></data>
   <data name="Actor.Sheet.KeepEditing" xml:space="preserve"><value>המשך עריכה</value></data>
-  <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0}: התאים מולאו מחדש. שמרו שינויים כדי לשמור זאת.</value></data>
+  <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0}: מה שהיא ממלאת חזר. שמרו שינויים כדי לשמור זאת.</value></data>
   <data name="Actor.Sheet.NotSavedStrict" xml:space="preserve"><value>לא נשמר: יש לתקן קודם {0, plural, one{בעיית כללים אחת} two{# בעיות כללים} other{# בעיות כללים}} (ראו "כללים" למעלה). שליט המבוך יכול להקל על כך בהגדרות.</value></data>
   <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>נשמר עם {0, plural, one{אזהרת כללים אחת} two{# אזהרות כללים} other{# אזהרות כללים}}.</value></data>
   <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>אין לכם הרשאה לערוך את הדף הזה.</value></data>
@@ -471,8 +488,38 @@
   <data name="Actor.Actions.SlotOption" xml:space="preserve"><value>דרגה {0} (נותרו {1})</value></data>
   <data name="Actor.Actions.NoSlots" xml:space="preserve"><value>אין משבצת מתאימה</value></data>
   <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: {2}, דרגה {1}</value></data>
+  <data name="Actor.Actions.CostFor" xml:space="preserve"><value>מחיר עבור {0}</value></data>
+  <data name="Actor.Actions.Free" xml:space="preserve"><value>חינם</value></data>
+  <data name="Actor.Actions.PoolOption" xml:space="preserve"><value>{0} ×{1} (נותרו {2})</value></data>
+  <data name="Actor.Actions.SpentFrom" xml:space="preserve"><value>{0}: {2} ×{1}</value></data>
+  <data name="Actor.Actions.CannotPay" xml:space="preserve"><value>לא נותר מספיק</value></data>
   <data name="Actor.Actions.Note" xml:space="preserve"><value>הטלות הפעולות נעשות כאן, ובזמן מפגש נכנסות ליומן השולחן. משבצת שנוצלה מסומנת אוטומטית; פגיעות, הצלות ונזק מוחלים על ידי המנחה.</value></data>
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: אי אפשר לחשב מה היכולת הזאת מעניקה, ולכן היא מושמטת. מנהל המשחק יכול לבדוק את הערך.</value></data>
+  <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): בחרו עוד {2} ({3}).</value></data>
+  <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): {2} הסימונים שלכם ב"{3}" כבר מתאימים לבחירה הזאת. אשרו אותם.</value></data>
+  <data name="Actor.Rule.ChoiceStale" xml:space="preserve"><value>{0} ({1}): "{2}" כבר לא מתאים לבחירה הזאת. בחרו מחדש.</value></data>
+  <data name="Actor.Rule.CounterKeyShared" xml:space="preserve"><value>{0}: יותר מיכולת אחת קובעת את המקסימום של אותו מאגר. נעשה שימוש בגבוה ביותר, {1}. מנהל המשחק יכול לבדוק את הערכים.</value></data>
+  <data name="Actor.Rule.SpendNoPool" xml:space="preserve"><value>{0}: מוציא מ-"{1}", ואין בדף הדמות מאגר כזה, ולכן אין כפתור. מנהל המשחק יכול לבדוק את הערך.</value></data>
+  <data name="Actor.Features.SpendLeft" xml:space="preserve"><value>{0}: נותרו {1}</value></data>
+  <data name="Actor.Features.SpendUse" xml:space="preserve"><value>שימוש ({0})</value></data>
+  <data name="Actor.Features.SpendUseOf" xml:space="preserve"><value>{0}: הוצאת {1} מתוך {2}</value></data>
+  <data name="Actor.Features.SpendCannot" xml:space="preserve"><value>לא נותר מספיק ב-{0}.</value></data>
+  <data name="Actor.Features.SpendAmountOf" xml:space="preserve"><value>כמה מוציא {0}</value></data>
+  <data name="Actor.Features.Spent" xml:space="preserve"><value>{0}: הוצאו {1} {2}</value></data>
+  <data name="Actor.Grants.UsesKey" xml:space="preserve"><value>שם מאגר משותף</value></data>
+  <data name="Actor.Grants.UsesKeyPlaceholder" xml:space="preserve"><value>לא חובה, למשל focus</value></data>
+  <data name="Actor.Grants.Regain" xml:space="preserve"><value>מי יכול להחזיר שימוש ידנית</value></data>
+  <data name="Actor.Grants.RegainOwner" xml:space="preserve"><value>הבעלים ומנהל המשחק</value></data>
+  <data name="Actor.Grants.RegainGm" xml:space="preserve"><value>מנהל המשחק בלבד</value></data>
+  <data name="Actor.Grants.Moment.initiative" xml:space="preserve"><value>הטלת יוזמה</value></data>
+  <data name="Actor.Grants.Moment.dawn" xml:space="preserve"><value>עלות השחר</value></data>
+  <data name="Actor.Grants.Moment.manual" xml:space="preserve"><value>ידנית בלבד</value></data>
+  <data name="Actor.Grants.Spends" xml:space="preserve"><value>מוציא ממאגר</value></data>
+  <data name="Actor.Grants.SpendKey" xml:space="preserve"><value>מפתח המאגר</value></data>
+  <data name="Actor.Grants.SpendAmount" xml:space="preserve"><value>כמות (מספר או ask)</value></data>
+  <data name="Actor.Grants.AddSpend" xml:space="preserve"><value>הוספת הוצאה ממאגר</value></data>
+  <data name="Actor.Grants.RemoveSpend" xml:space="preserve"><value>הסרת ההוצאה</value></data>
+  <data name="Actor.Grants.SumSpends" xml:space="preserve"><value>מוציא ממאגר</value></data>
   <data name="Actor.Grants.Title" xml:space="preserve"><value>מה זה עושה בדף הדמות</value></data>
   <data name="Actor.Grants.None" xml:space="preserve"><value>עדיין כלום</value></data>
   <data name="Actor.Grants.SumModifiers" xml:space="preserve"><value>מתאמים: {0}</value></data>
@@ -500,15 +547,55 @@
   <data name="Actor.Grants.EntriesOf" xml:space="preserve"><value>הוספה {0}: ערכים מופרדים בפסיקים</value></data>
   <data name="Actor.Grants.EntriesPlaceholder" xml:space="preserve"><value>אחד או יותר, מופרדים בפסיקים</value></data>
   <data name="Actor.Grants.FromLevel" xml:space="preserve"><value>מדרגה</value></data>
+  <data name="Actor.Grants.Mode" xml:space="preserve"><value>אופן ההוספה</value></data>
+  <data name="Actor.Grants.ModeFixed" xml:space="preserve"><value>קבוע: המפתחות האלה בדרגה</value></data>
+  <data name="Actor.Grants.ModeRaise" xml:space="preserve"><value>העלאה: המפתחות האלה דרגה אחת למעלה</value></data>
+  <data name="Actor.Grants.ModeChoice" xml:space="preserve"><value>בחירה: השחקן בוחר</value></data>
+  <data name="Actor.Grants.ModeHint" xml:space="preserve"><value>קבוע נותן את המפתחות שברשימה. העלאה מעלה אותם דרגה. בחירה נותנת לשחקן לבחור.</value></data>
+  <data name="Actor.Grants.KeysHint" xml:space="preserve"><value>מפתחות מופרדים בפסיקים, כמו {0}.</value></data>
+  <data name="Actor.Grants.Rank" xml:space="preserve"><value>דרגה</value></data>
+  <data name="Actor.Grants.RankFirst" xml:space="preserve"><value>הדרגה הראשונה</value></data>
+  <data name="Actor.Grants.RankAny" xml:space="preserve"><value>כלשהי</value></data>
+  <data name="Actor.Grants.RaiseBy" xml:space="preserve"><value>מספר דרגות</value></data>
+  <data name="Actor.Grants.PickCount" xml:space="preserve"><value>השחקן בוחר</value></data>
+  <data name="Actor.Grants.FromKind" xml:space="preserve"><value>לבחור מתוך</value></data>
+  <data name="Actor.Grants.FromAny" xml:space="preserve"><value>כל מפתח</value></data>
+  <data name="Actor.Grants.FromThese" xml:space="preserve"><value>המפתחות האלה</value></data>
+  <data name="Actor.Grants.FromAttribute" xml:space="preserve"><value>מפתחות של התכונות האלה</value></data>
+  <data name="Actor.Grants.FromKeys" xml:space="preserve"><value>מפתחות</value></data>
+  <data name="Actor.Grants.MinRank" xml:space="preserve"><value>חייב להיות לפחות ב</value></data>
+  <data name="Actor.Grants.MaxRank" xml:space="preserve"><value>לא גבוה מ</value></data>
+  <data name="Actor.Grants.Gives" xml:space="preserve"><value>הבחירות</value></data>
+  <data name="Actor.Grants.GivesRank" xml:space="preserve"><value>מוצבות בדרגה</value></data>
+  <data name="Actor.Grants.GivesRaise" xml:space="preserve"><value>מועלות דרגה</value></data>
+  <data name="Actor.Grants.ChoiceId" xml:space="preserve"><value>מזהה הבחירה</value></data>
+  <data name="Actor.Grants.ChoiceIdHint" xml:space="preserve"><value>נותן שם לבחירה הזאת כדי שהבחירות יישמרו כשהיכולת נערכת. לכל בחירה ביכולת מזהה משלה.</value></data>
+  <data name="Actor.Grants.ChoiceIdTaken" xml:space="preserve"><value>בחירה אחרת ביכולת הזאת כבר משתמשת במזהה הזה.</value></data>
   <data name="Actor.Grants.LevelOf" xml:space="preserve"><value>הוספה {0}: מאיזו דרגה</value></data>
   <data name="Actor.Grants.AddAdd" xml:space="preserve"><value>הוספה לרשימה</value></data>
   <data name="Actor.Grants.RemoveAdd" xml:space="preserve"><value>הסרת הוספה {0}</value></data>
   <data name="Actor.Grants.Uses" xml:space="preserve"><value>שימושים</value></data>
   <data name="Actor.Grants.UsesMax" xml:space="preserve"><value>מקסימום</value></data>
-  <data name="Actor.Grants.Recovers" xml:space="preserve"><value>מתמלא במנוחה</value></data>
   <data name="Actor.Grants.AddUses" xml:space="preserve"><value>הוספת מונה שימושים</value></data>
   <data name="Actor.Grants.RemoveUses" xml:space="preserve"><value>הסרת מונה שימושים</value></data>
   <data name="Actor.Grants.FormulaError" xml:space="preserve"><value>אי אפשר לקרוא את זה: {0}</value></data>
   <data name="Actor.Grants.FloorType" xml:space="preserve"><value>{0}: לפחות זה, לא מתווסף</value></data>
+  <data name="Actor.Grants.CeilingType" xml:space="preserve"><value>{0}: לכל היותר זה, לא מתווסף</value></data>
+  <data name="Actor.Features.AtMost" xml:space="preserve"><value>{0}: לכל היותר {1}</value></data>
+  <data name="Actor.Actions.Count" xml:space="preserve"><value>×{0}</value></data>
+  <data name="Actor.Actions.CountOf" xml:space="preserve"><value>בכל תור: {0}</value></data>
+  <data name="Actor.Actions.Crit" xml:space="preserve"><value>קריטי {0}–{1}</value></data>
+  <data name="Actor.Actions.CritOf" xml:space="preserve"><value>פגיעה קריטית בהטלה של {0} עד {1}</value></data>
   <data name="Actor.Grants.Unknown" xml:space="preserve"><value>{0} (לא קיים במערכת הזו)</value></data>
+  <data name="Actor.Grants.UsesKeyHint" xml:space="preserve"><value>יכולות עם אותו שם חולקות מאגר אחד: אחת קובעת את המקסימום, והאחרות מוציאות ממנו.</value></data>
+  <data name="Actor.Grants.Refills" xml:space="preserve"><value>מילוי מחדש</value></data>
+  <data name="Actor.Grants.RefillsHint" xml:space="preserve"><value>כמה שימושים חוזרים בכל מנוחה או רגע.</value></data>
+  <data name="Actor.Grants.RefillNone" xml:space="preserve"><value>כלום</value></data>
+  <data name="Actor.Grants.RefillAll" xml:space="preserve"><value>את כולם</value></data>
+  <data name="Actor.Grants.RefillSome" xml:space="preserve"><value>חלק</value></data>
+  <data name="Actor.Grants.RefillAmountOf" xml:space="preserve"><value>{0}: כמה חוזרים</value></data>
+  <data name="Actor.Grants.RefillAmountPlaceholder" xml:space="preserve"><value>1, 1d4 או נוסחה</value></data>
+  <data name="Actor.Grants.RefillOnlyEmpty" xml:space="preserve"><value>רק כשלא נשאר כלום</value></data>
+  <data name="Actor.Grants.RefillWhenNote" xml:space="preserve"><value>ובתנאי ש־{0}</value></data>
+  <data name="Actor.Grants.SpendKeyPlaceholder" xml:space="preserve"><value>שם המאגר, למשל focus</value></data>
 </root>

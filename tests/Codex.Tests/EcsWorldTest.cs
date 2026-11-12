@@ -35,13 +35,13 @@ public class EcsWorldTest
         pool.Set("slots_2_Max", 1);
         entity.Set(pool);
 
-        world.AdjustResource(entity, "slots_1", -1);
-        world.AdjustResource(entity, "slots_1", -5);
+        Assert.True(world.AdjustResource(entity, "slots_1", -1));
+        Assert.False(world.AdjustResource(entity, "slots_1", -5)); // more than is left: refused, nothing spent
         world.AdjustResource(entity, "slots_2", 3);
         world.AdjustResource(entity, "slots_9", -1); // a slot level the actor doesn't have
 
         var result = entity.Get<ResourcePoolComponent>();
-        Assert.Equal(0, result.Get("slots_1"));
+        Assert.Equal(1, result.Get("slots_1"));
         Assert.Equal(1, result.Get("slots_2"));
         Assert.False(result.Pools.ContainsKey("slots_9"));
 

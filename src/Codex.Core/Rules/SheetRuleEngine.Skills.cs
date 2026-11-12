@@ -39,50 +39,20 @@ public sealed partial class SheetRuleEngine
     {
         if (Rules?.Skills is not { } rules) return;
 
-        var bonus = BonusValue(result, rules.BonusKey);
-        var granted = Names(ReferencedEntry(rules.BackgroundField, sheet)?.Properties.GetValueOrDefault(rules.BackgroundProperty));
-        var picked = RawList(sheet, rules.ProficienciesKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var expertise = RawList(sheet, rules.ExpertiseKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // Skills and saving throws are ranked lists (SheetRuleEngine.Ranks.cs); what is left here is what reads their result.
+        var ranked = EvaluateRanks(sheet, result, rules);
 
-        bool Has(HashSet<string> names, SkillDefinition skill) => names.Contains(skill.Key) || names.Contains(skill.Label) || (skill.CanonicalLabel != null && names.Contains(skill.CanonicalLabel));
-
-        foreach (var skill in rules.List)
-        {
-            var proficient = Has(picked, skill) || Has(granted, skill);
-            var expert = proficient && Has(expertise, skill);
-            if (Has(expertise, skill) && !proficient)
-            {
-                result.Warnings.Add(new RuleViolation(rules.ExpertiseKey, $"{rules.Label}: {skill.Label} has expertise but no proficiency."));
-            }
-
-            var modifier = ModifierOf(sheet, result, skill.Attribute);
-            result.Skills.Add(new SkillScore(skill.Key, skill.Label, skill.Attribute, proficient, expert, modifier + (expert ? bonus * 2 : proficient ? bonus : 0)));
-        }
-
-        var known = rules.List.SelectMany(s => new[] { s.Key, s.Label, s.CanonicalLabel ?? s.Label }).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        foreach (var unknown in picked.Concat(expertise).Where(n => !known.Contains(n)).Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            result.Warnings.Add(new RuleViolation(rules.ProficienciesKey, $"{rules.Label}: \"{unknown}\" is not a skill this system has."));
-        }
-
-        // The first class's skill choices (F24): more chosen than it gives, beyond the background's, is worth a look, not a
-        // refusal, since a species or a feat may give more. With a second class it is left alone: a class taken later gives skills
-        // of its own (a rogue, one), which its entry does not say.
+        // The first class's skill choices (F24): more chosen than it gives, beyond what the background, a feature or a choice grants, is
+        // worth a look, not a refusal, since a species or a feat may give more. Only the player's own first-rank ticks count. With a second
+        // class it is left alone: a class taken later gives skills of its own (a rogue, one), which its entry does not say.
         if (result.Classes.Count <= 1 && FirstClass(sheet, result, rules.ClassField) is { } firstClass && ChoiceCount(firstClass.Properties.GetValueOrDefault(rules.ClassChoicesProperty)) is { } allowed)
         {
-            var chosen = rules.List.Count(s => Has(picked, s) && !Has(granted, s));
+            var chosen = rules.List.Count(s => ranked.FirstRankTicks.Contains(s.Key) && !ranked.Independent.Contains(s.Key));
             if (chosen > allowed)
             {
-                result.Warnings.Add(new RuleViolation(rules.ProficienciesKey, $"{rules.Label}: {chosen} chosen beyond your background, but {firstClass.Name} gives {allowed}. A species or feat may give more.",
+                result.Warnings.Add(new RuleViolation(rules.SkillRanks()[0].SheetKey, $"{rules.Label}: {chosen} chosen beyond your background, but {firstClass.Name} gives {allowed}. A species or feat may give more.",
                     "Actor.Rule.SkillChoices", new object?[] { rules.Label, chosen, firstClass, allowed }));
             }
-        }
-
-        var trained = AttributesNamedIn(FirstClass(sheet, result, rules.ClassField)?.Properties.GetValueOrDefault(rules.SavingThrowsProperty));
-        foreach (var attribute in system.Attributes)
-        {
-            var proficient = trained.Contains(attribute.Key);
-            result.SavingThrows.Add(new SkillScore(attribute.Key, attribute.Label, attribute.Key, proficient, false, ModifierOf(sheet, result, attribute.Key) + (proficient ? bonus : 0)));
         }
 
         foreach (var passive in rules.Passives)

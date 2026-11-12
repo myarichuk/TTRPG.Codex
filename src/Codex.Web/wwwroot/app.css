@@ -1379,6 +1379,10 @@ dialog.codex-dialog-wide { width: min(680px, 94vw); }
 /* Slot pools (spell slots, pact slots): a row per slot level with pips */
 .slot-row { display: flex; align-items: center; gap: var(--space-5); flex-wrap: wrap; padding: var(--space-2) 0; }
 .slot-row .slot-level { min-width: 4.2rem; font-size: var(--fs-md); font-weight: 700; color: var(--text-3); }
+/* A feature counter on a Table card: the feature's own text folds out under its row. */
+.table-counter > .counter-rules { flex-basis: 100%; margin-top: calc(-1 * var(--space-2)); }
+.table-counter > .counter-rules > summary { cursor: pointer; color: var(--text-3); width: fit-content; }
+.table-counter > .counter-rules > .rules-text { margin-top: var(--space-2); }
 .action-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-2) 0; border-top: 1px solid var(--border); }
 .action-row:first-child { border-top: 0; }
 .action-what { display: flex; flex-direction: column; min-width: 8rem; flex: 1 1 8rem; }
@@ -1890,12 +1894,27 @@ dialog.wizard-dialog { width: min(1200px, 96vw); max-height: 92vh; overflow: hid
 .grants-row + .grants-row { border-top: 1px solid var(--border); padding-top: var(--space-3); }
 .grants-body { margin-top: var(--space-3); }
 .grants-group { border: 0; padding: 0; margin: 0 0 var(--space-4); min-width: 0; }
+/* Entries written for a character (the sheet's Homebrew panel): one closed entry per line, opened to its full text. */
+.carried-entry + .carried-entry { border-top: 1px solid var(--border); }
+.carried-entry > summary { cursor: pointer; padding: var(--space-3) 0; list-style: none; }
+.carried-entry > summary::-webkit-details-marker { display: none; }
+.carried-entry > summary::after { content: " ▾"; color: var(--text-3); }
+.carried-entry[open] > summary::after { content: " ▴"; }
+.carried-entry > .entry-detail { padding-bottom: var(--space-4); }
 .grants-group > legend { padding: 0; margin-bottom: var(--space-2); }
 .grants-row { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-end; margin-bottom: var(--space-3); }
 .grants-cell { display: flex; flex-direction: column; gap: var(--space-1); min-width: 8rem; border: 0; padding: 0; margin: 0; }
 .grants-cell .field-input, .grants-cell .field-select { width: 100%; }
 .grants-wide { flex: 1 1 12rem; }
 .grants-narrow { min-width: 5rem; max-width: 7rem; }
+/* A counter's refills: one line per rest or moment (name, how much, only when empty), wrapping on a phone. */
+.grants-refills { border: 0; padding: 0; margin: 0 0 var(--space-3); min-width: 0; }
+.grants-refills > legend { padding: 0; margin-bottom: var(--space-1); }
+.grants-refill { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) 0; }
+.grants-refill + .grants-refill { border-top: 1px solid var(--border); }
+.grants-refill-name { min-width: 8rem; font-weight: 600; }
+.grants-refill > .field-select { width: auto; min-width: 9rem; }
+.grants-refill-amount { width: 10rem; }
 .grants-rests { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
 
 /* An "Enhance with AI" description box. */

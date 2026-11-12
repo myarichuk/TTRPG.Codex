@@ -49,6 +49,7 @@
   <data name="Layout.Picker.Nothing" xml:space="preserve"><value>Nothing picked yet.</value></data>
   <data name="Layout.Picker.Picked" xml:space="preserve"><value>{0} picked</value></data>
   <data name="Layout.Picker.Remove" xml:space="preserve"><value>Remove {0}</value></data>
+  <data name="Layout.Picker.Homebrew" xml:space="preserve"><value>homebrew</value></data>
   <data name="Layout.Picker.MissingTitle" xml:space="preserve"><value>Not in the Library any more. Remove it, or ask the GM to bring the entry back.</value></data>
   <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>Limit reached</value></data>
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Nothing is allowed right now. Check your class, level and the rules above.</value></data>

@@ -316,8 +316,8 @@ public sealed partial class WorldBuilderService
             sb.AppendLine($"- {f.Key}: {f.Label}, {f.Type}{detail}{hint}");
         }
 
-        // Where the system reads features off this type, say how a feature states what it does on the sheet.
-        if (system != null && Codex.Core.Rules.FeatureGrantGuide.For(system.Canonical, key) is { } grants) sb.AppendLine().AppendLine(grants);
+        // Where the system reads features or rolls off this type, say how an entry states what it does on the sheet.
+        if (system != null && Codex.Core.Rules.EntryGuide.For(system.Canonical, key) is { } grants) sb.AppendLine().AppendLine(grants);
 
         return sb.ToString().TrimEnd();
     }

@@ -146,7 +146,7 @@ Dice conventions the runtime uses when it needs to roll something for a system.
 | Key | Type | What it is |
 |---|---|---|
 | `initiative` | text (a number is text too) | The dice the combat console rolls for initiative. Default `1d20`. |
-| `check` | text (a number is text too) | The dice for an ordinary check. Reserved; not read by this version (the sheet's check buttons roll a d20). |
+| `check` | text (a number is text too) | The dice for an ordinary check. The sheet's check buttons roll a d20; the Actions panel reads this die's top face to decide whether an action's `critical` face is worth showing. |
 | `initiativeBonus` | text (a number is text too) | The derived field (see `sheetRules.derived`) added to an initiative roll, e.g. an `initiative` field with the formula `mod(dex)`. Null: the bare die. |
 | `initiativeTieBreak` | text (a number is text too) | Attribute whose score breaks initiative ties (higher first). Null: ties fall to actor id. |
 
@@ -364,6 +364,7 @@ A read-only number worked out from the sheet (`sheetRules.derived`): proficiency
 | `label` | text (a number is text too) | The value's name as the sheet shows it. |
 | `formula` | text (a number is text too) | A C#-style expression over the sheet's numeric fields and attribute scores, e.g. `2 + (level - 1) / 4`. Integer arithmetic; `floor`, `ceil`, `max`, `min` and `mod(key)` (an attribute's modifier) are available. |
 | `category` | text (a number is text too) | A group heading for the value. Translated with the system's other headings, but this version does not group derived values by it. |
+| `signed` | true or false | Whether the sheet shows the value with its sign, as a bonus (`+2`). Default true; false for a count or a threshold that is not added to anything (attacks per action `2`, critical hit from `19`). |
 
 ## FieldConstraint
 
@@ -547,12 +548,10 @@ The items a sheet carries, stored under Key as `"item-id|qty:2,equipped:1"`. Ite
 
 ## SkillRules
 
-Saving throws and skills. A skill is proficient when its key is in ProficienciesKey (a list on the sheet) or in the BackgroundProperty of the entry BackgroundField names; it is expert when it is also in ExpertiseKey. Saving throws are proficient for the first class's SavingThrowsProperty. Bonuses add the derived field BonusKey.
-
 | Key | Type | What it is |
 |---|---|---|
 | `label` | text (a number is text too) | What the sheet calls the skills, and the word its messages about them start with. Default "Skills". |
-| `bonusKey` | text (a number is text too) | Required: the derived value skill and save bonuses add (5e: "proficiencyBonus"). |
+| `bonusKey` | text (a number is text too) | The derived value skill and save bonuses add (5e: "proficiencyBonus"). Required unless Ranks and `saves.ranks` are both named, since it is what a default rank is worth. |
 | `proficienciesKey` | text (a number is text too) | The sheet list of skills the player marked proficient, by key or label. Default `skillProficiencies`. |
 | `expertiseKey` | text (a number is text too) | The sheet list of skills with expertise (the bonus counted twice); expertise without proficiency is a warning. Default `skillExpertise`. |
 | `classField` | text (a number is text too) | The sheet field naming the first class, whose saving throws and skill choices count. Default `class`. |
@@ -562,6 +561,8 @@ Saving throws and skills. A skill is proficient when its key is in Proficiencies
 | `classChoicesProperty` | text (a number is text too) | The first class's property saying how many skills it lets a character choose: a number, or text whose first number is it ("Choose 2: Acrobatics, …"). More chosen than that (beyond the background's) is a warning, since a species or feat may grant more. |
 | `list` | list of [SkillDefinition](#skilldefinition) | The skills, in the order the sheet shows them. |
 | `passives` | list of [PassiveRule](#passiverule) | Scores worked out from a skill's bonus (passive Perception). |
+| `ranks` | list of [RankDefinition](#rankdefinition) | The ranks a skill can hold, lowest first, each with the sheet list that holds the skills the player set at it and what it is worth. A skill's rank is the highest list that holds it, or that a feature, the background or a choice gives. Left out, the ranks are the two lists above: `proficient` (ProficienciesKey, worth BonusKey) and `expert` (ExpertiseKey, worth twice it). Naming ranks makes ProficienciesKey and ExpertiseKey unused. |
+| `saves` | [SaveRules](#saverules) | Saving throws as a ranked list over the attributes; see SaveRules. Left out: one rank, as described there. |
 
 ## SkillDefinition
 
@@ -584,6 +585,25 @@ A score of the form base + a skill's bonus (passive Perception is 10 + Perceptio
 | `label` | text (a number is text too) | Its name as the sheet shows it ("Passive Perception"). |
 | `skill` | text (a number is text too) | Required: the key of the skill in `list` whose bonus is added. |
 | `base` | whole number | The number the skill's bonus is added to. Default 10. |
+
+## RankDefinition
+
+Saving throws and skills, as ranked lists. A skill's rank is the highest of: the sheet list that holds it (Ranks; by default ProficienciesKey is rank 1 and ExpertiseKey rank 2), the BackgroundProperty of the entry BackgroundField names (rank 1), a feature's grant, and the player's choices. Saving throws are ranked the same way, over the attributes: the first class's SavingThrowsProperty puts each at rank 1. What a rank adds is its Value (by default the derived field BonusKey, twice it for rank 2).
+
+| Key | Type | What it is |
+|---|---|---|
+| `key` | text (a number is text too) | Required, unique within the list: the rank's key (`proficient`, `expert`). A grant names a rank by it, or by its number (1 is the first rank listed). |
+| `label` | text (a number is text too) | The rank's name as the sheet shows it ("Expert"). Default: the key. |
+| `sheetKey` | text (a number is text too) | Required, unique across every ranked list: the sheet list holding the keys the player set at this rank (`skillExpertise`). |
+| `value` | text (a number is text too) | What a key at this rank adds to its check: a formula over the sheet's numbers and derived values (`proficiencyBonus * 2`, `level + 4`). Empty: the rank is worth its number (1 for the first rank), which a roll formula can read. |
+
+## SaveRules
+
+Saving throws as a ranked list over the system's attributes (the first class's `savingThrows` put each of its attributes at the first rank). Without it a saving throw has one rank, `proficient`, kept in the sheet list `saveProficiencies` and worth the skills' `bonusKey`.
+
+| Key | Type | What it is |
+|---|---|---|
+| `ranks` | list of [RankDefinition](#rankdefinition) | The ranks a saving throw can hold, lowest first. |
 
 ## SpellcastingRules
 
@@ -624,7 +644,7 @@ Copies properties of the entry Field names onto sheet keys the moment the player
 
 ## FeatureSource
 
-One place features come from. Either Field (the entry a reference field names) or List (every entry picked in a list). With Property the features are that property's rows (`name`, `description`, and LevelColumn); without it the entry itself is one feature. A feature, row or entry, may carry: `modifiers`: `[{ target, amount, type, when }]`, as everywhere else. `target` is the armor class or hit point key, a derived value, or a Number actor field; `amount` is a number or a formula; a `type` the system stacks as `best` sets a floor ("at least 120") instead of adding. `adds`: `[{ to, entries, level }]`: entries put on a pick list (by id or name) or values on a tag list, from `level` on. They leave again when the feature does. `uses`: `{ max, recoversOn, key }`: a counter of uses, `max` a number or a formula, refilled by the rests named.
+One place features come from. Either Field (the entry a reference field names) or List (every entry picked in a list). With Property the features are that property's rows (`name`, `description`, and LevelColumn); without it the entry itself is one feature. A feature, row or entry, may carry: `modifiers`: `[{ target, amount, type, when }]`, as everywhere else. `target` is the armor class or hit point key, a derived value, or a Number actor field; `amount` is a number or a formula; a `type` the system stacks as `max` (or `best`) sets a floor ("at least 120"), as `min` a ceiling ("at most 18"), instead of adding; `highest` and `lowest` add only the largest or smallest bonus of the type. The rule is declared in the system's `modifierTypes`; a type it does not name, or none, adds. `adds`: `[{ to, entries, level }]`: entries put on a pick list (by id or name) or values on a tag list, from `level` on. They leave again when the feature does. On a ranked list (`to: skills` or `to: saves`, or a rank's own sheet list; see Ranks) an item takes more: `rank` (a rank key or number; none means the first rank) puts the entries at that rank, locked, with the feature as its source; `raise: 1` moves them that many ranks up, stopping at the top (`rank` and `raise` exclude each other). Such grants are worked out in the evaluation and never written to the sheet. Instead of `entries`, an item may leave the choice to the player: `{ to, choice, choose, from, minRank, maxRank, rank | raise }`. `choice` names the choice within its entry (required; it must be unique there, and the sheet stores the picks under `choice__{entryId}__{choice}`, `choice__{entryId}#2__{choice}` for the second copy of a repeatable feat); `choose` is how many keys; `from` is a list of keys, `any` (the default) or a filter on a key's own fields (`{ attribute: [str, dex] }`); `minRank` and `maxRank` are the ranks a key must already hold to be offered ("a skill you are proficient in"), checked against the ranks the sheet has so far without this choice's own picks. A choice not yet made is a warning, never a violation; a pick that no longer fits is a violation that says to choose again. `uses`: `{ max, key, recoversOn, recovers, regain }`: a counter of uses, `max` a number or a formula, refilled by the rests named in `recoversOn` (a full refill on each). `key` names the pool, so features that name one share it: the highest maximum wins and the sheet warns. `recovers` is `[{ on, amount, when }]`: `on` a rest, or `initiative`, `dawn` or `manual`; `amount` is `all`, a number, a formula or dice; `when` is `empty` or a formula. `regain: gm` lets only the GM add a use back by hand. `spends`: `{ key, amount }`: the feature gets a Use button that spends `amount` (a number, a formula, or `ask` for the player to choose) from the pool `key`, a feature counter's `key` or a pool's own sheet key.
 
 | Key | Type | What it is |
 |---|---|---|
@@ -653,6 +673,8 @@ One kind of action and the entries that give it: the entries picked in Lists, or
 | `damageBonus` | text (a number is text too) | Formula for a number added to every entry's dice. |
 | `abilityBonus` | text (a number is text too) | Formula for the number added to the dice of an entry that says `addAbility`. |
 | `scaleBy` | text (a number is text too) | The sheet value an entry's `atLevels` is read by. Default: the system's level field. |
+| `count` | text (a number is text too) | A derived value or formula for how many of this action a turn allows (`attacks`). The Actions panel shows "×N" when it works out to more than one. Null: not shown. The formulas read the same names as AttackBonus. |
+| `critical` | text (a number is text too) | A derived value or formula for the lowest die face of the system's check die (`dice.check`) that is a critical hit (`critFrom`). The panel shows "crit 19–20" only when it is below the die's top face. Null: not shown. A critical's extra dice are not rolled. |
 
 ## SheetKindDefinition
 
@@ -903,13 +925,13 @@ A table of named rows, each with the ItemFields (status from -3 to 3). Who may s
 
 ## ModifierTypesDefinition
 
-Stacking: `sum`, `highest` or `lowest`, by modifier type; penalties (negative amounts) apart.
+Stacking by modifier type: the modifiers of a type form a group that keeps one member or all. Bonus rules add what they keep to the value: `sum` (every one), `highest` / `lowest` (the largest or smallest bonus; penalties apart). Value rules compete with the value's starting amount and replace it when they win: `max` (the greatest, a floor; `best` is its older name) and `min` (the least, a ceiling). Extra Attack 2, 3, 4 on 1 attack under `max` is 4; critical 19 and 18 on a start of 20 under `min` is 18; +1 and +2 status under `highest` plus +1 untyped on 10 is 13.
 
 | Key | Type | What it is |
 |---|---|---|
-| `default` | text (a number is text too) | The rule for a type `types` does not name: `sum` (the default), `highest`, `lowest` or `best`. |
+| `default` | text (a number is text too) | The rule for a type `types` does not name: `sum` (the default), `highest`, `lowest`, `max`, `min` or `best`. |
 | `penalties` | text (a number is text too) | The rule for the penalties (negative amounts) of one type, whatever the type's own rule, except a `best` type. Default `sum`. |
-| `types` | map of text (a number is text too) | Modifier type -> its rule (`dodge: sum`, `armor: highest`, `base: best`). |
+| `types` | map of text (a number is text too) | Modifier type -> its rule (`dodge: sum`, `armor: highest`, `base: max`, `critFrom: min`). |
 
 ## FunctionDefinition
 

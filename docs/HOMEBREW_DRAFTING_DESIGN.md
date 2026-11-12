@@ -118,12 +118,20 @@ keeps `modifiers`, `adds` and `uses` but cannot show or change them.
 | "Use one the campaign has" lists every entry of the type | List only what the rules allow for the request's sheet (allowed options for a field, list options for a list) | Small |
 | The player is not told what was left out or swapped | Keep the outcome on the request (name; added, swapped for what, left out) and show it on the vault character | Small to medium |
 | The carried entry stays and a second campaign asks again | Mostly right: each campaign has its own Library. At most, show which campaigns took it | Small, low priority |
-| No UI for a vault character's carried entries | A panel to see, edit (feature editor) and drop them, warning when the sheet still uses one | Medium, needs part 5 |
+| No UI for a vault character's carried entries | Seeing them is built (the sheet's read-only Homebrew panel). Still to do: edit (feature editor) and drop them, warning when the sheet still uses one | Medium, needs part 5 |
 
 ## Order and who does it
 
 1. Feature editor (part 5): the join review's edit and the carried-entries panel reuse it. Sonnet. Built for items 1 to 4 (vocabulary, `FeatureGrantEditor`, wired into the wizard's rows and whole-entry features, en/ru/he strings, tests); item 5 (a `use` editor) is not.
-2. Drafting for lists (part 1), `use` guide first. Sonnet; the "always write one" switch and strings can go to Haiku.
+2. Drafting for lists (part 1), `use` guide first. Sonnet; the "always write one" switch and strings can go to Haiku. Built:
+   - the `use` guide is `ActionUseGuide`. `EntryGuide` joins it with the feature guide, and the writer and the world builder
+     both read it. A written `use`, or a whole-entry feature's grants, is kept instead of being dropped as an unknown key;
+   - steps 1 to 4 and 6: `EntryRequirements` (rules into properties and hints), `WithProposed` in production, at most 2
+     written entries per draft (`AiFeatures.MaxWrittenEntries`);
+   - step 7 is `WriteEntries` (Off, WhenNothingFits, Always), set in the vault draft dialog.
+     - Always holds back the subclass, and one list slot for each writer call left.
+     - Anything the writer then fails to fill comes from the Library.
+   - Not yet: a written weapon is never tagged, so it is not offered as an attack.
 3. Join review (part 6). Sonnet; the outcome notice and strings can go to Haiku.
 4. Invocations (part 3): check the source, then the type, list and column; the sheet changes for spell modifiers and at-will
    casting are their own piece. Sonnet, with the rules design reviewed first.

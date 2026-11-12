@@ -85,16 +85,22 @@
   <data name="Event.Roll.Labeled" xml:space="preserve"><value>{0} бросает {1} ({2}): {3}.</value></data>
   <data name="Event.Resource.Used" xml:space="preserve"><value>{0} тратит: {2} ×{1}.</value></data>
   <data name="Event.Resource.Regained" xml:space="preserve"><value>{0} восстанавливает: {2} ×{1}.</value></data>
+  <data name="Event.Resource.Refused" xml:space="preserve"><value>{0} не может потратить: {2} ×{1} — не хватает.</value></data>
   <data name="Event.Rest.Took" xml:space="preserve"><value>{0}: {1}.</value></data>
   <data name="Event.Rest.TookWith" xml:space="preserve"><value>{0}: {1} — {2}.</value></data>
   <data name="Event.Rest.Slots" xml:space="preserve"><value>ячейки восстановлены</value></data>
   <data name="Event.Rest.Restored" xml:space="preserve"><value>восстановлено: {0}</value></data>
   <data name="Event.Rest.Cleared" xml:space="preserve"><value>сброшено: {0}</value></data>
+  <data name="Event.Rest.Refilled" xml:space="preserve"><value>{0} +{1}</value></data>
+  <data name="Event.Rest.Dawn" xml:space="preserve"><value>Для {0} наступает рассвет.</value></data>
+  <data name="Event.Rest.DawnWith" xml:space="preserve"><value>Для {0} наступает рассвет: {1}.</value></data>
+  <data name="Event.Initiative.RolledWith" xml:space="preserve"><value>{0}: инициатива {1} — {2}.</value></data>
   <data name="Event.Rest.HitDice" xml:space="preserve"><value>костей хитов восстановлено: {0}</value></data>
   <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>истощение прошло</value></data>
   <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>истощение теперь {0}</value></data>
   <data name="Event.Rest.Lifted" xml:space="preserve"><value>снято: {0}</value></data>
   <data name="Event.Wiki.Revealed" xml:space="preserve"><value>В вики открыто новое о «{0}».</value></data>
+  <data name="Event.Actor.ChoiceChanged" xml:space="preserve"><value>{0} меняет выбор: «{1}» теперь {2}.</value></data>
   <data name="Event.Note.Added" xml:space="preserve"><value>Добавлено: {0}.</value></data>
   <data name="Event.Note.AddedSecret" xml:space="preserve"><value>Добавлено (секретно): {0}.</value></data>
   <data name="Event.Note.Corrected" xml:space="preserve"><value>Исправлено: {0}.</value></data>
@@ -136,6 +142,7 @@
   <data name="Event.Type.InitiativeRemoved" xml:space="preserve"><value>Вне инициативы</value></data>
   <data name="Event.Type.Note" xml:space="preserve"><value>Заметка</value></data>
   <data name="Event.Type.WikiReveal" xml:space="preserve"><value>Раскрытие</value></data>
+  <data name="Event.Type.ChoiceChanged" xml:space="preserve"><value>Выбор</value></data>
   <data name="Event.Type.ResourceSpent" xml:space="preserve"><value>Трата</value></data>
   <data name="Event.Type.ResourceRegained" xml:space="preserve"><value>Восстановление</value></data>
   <data name="Event.Type.Rest" xml:space="preserve"><value>Отдых</value></data>

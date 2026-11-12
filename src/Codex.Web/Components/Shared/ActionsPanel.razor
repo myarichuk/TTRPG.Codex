@@ -3,8 +3,9 @@
 @using Codex.Plugin.Abstractions
 
 @* What the sheet can cast and attack with (sheetRules.actions): a row per spell or weapon with its attack bonus, saving
-   throw and dice, and buttons that spend the slot and roll. The owner says where a spent slot and a roll go, so the same
-   panel serves the sheet (edits the sheet, rolls here or into the session's log) and the live table (runtime commands). *@
+   throw and dice, and buttons that pay its cost (a slot, another pool's points, or nothing) and roll. The owner says where
+   a spend and a roll go, so the same panel serves the sheet (edits the sheet, rolls here or into the session's log) and the
+   live table (runtime commands). *@
 
 @if (Actions.Count > 0)
 {
@@ -32,31 +33,47 @@
                     <div class="action-what">
                         <span class="action-name">@name</span>
                         <span class="small-muted" data-testid="action-meta-@entryKey">@Meta(action, damage)</span>
+                        @if (action.Count is > 1)
+                        {
+                            <span class="small-muted action-count" data-testid="action-count-@entryKey"><span aria-hidden="true">@L["Actor.Actions.Count", action.Count]</span><span class="visually-hidden">@L["Actor.Actions.CountOf", action.Count]</span></span>
+                        }
+                        @if (CritFrom(action) is { } critFrom)
+                        {
+                            var top = Definition!.Dice.CheckTopFace()!.Value;
+                            <span class="small-muted action-crit" data-testid="action-crit-@entryKey"><span aria-hidden="true">@L["Actor.Actions.Crit", critFrom, top]</span><span class="visually-hidden">@L["Actor.Actions.CritOf", critFrom, top]</span></span>
+                        }
                     </div>
                     @if (!ReadOnly)
                     {
                         <div class="d-flex flex-wrap align-items-center gap-1 ms-auto">
                             @if (action.Spends)
                             {
+                                var payable = cost != null && cost.CanPay(Value);
+                                var reasonId = $"{id}-cost-{entryKey}";
                                 @if (action.Costs.Count > 1)
                                 {
-                                    <select class="form-select form-select-sm action-slot" aria-label="@L["Actor.Actions.SlotFor", name]" data-testid="action-slot-@entryKey"
-                                            value="@(cost?.Key)" @onchange="e => chosen[entryKey] = e.Value?.ToString() ?? string.Empty">
+                                    <select class="form-select form-select-sm action-slot" aria-label="@(action.Costs.All(c => c.Slot != null) ? L["Actor.Actions.SlotFor", name] : L["Actor.Actions.CostFor", name])" data-testid="action-slot-@entryKey"
+                                            value="@(cost?.Id)" @onchange="e => chosen[entryKey] = e.Value?.ToString() ?? string.Empty">
                                         @foreach (var option in action.Costs)
                                         {
-                                            <option value="@option.Key">@L["Actor.Actions.SlotOption", option.Level, Left(option)]</option>
+                                            <option value="@option.Id">@CostText(option)</option>
                                         }
                                     </select>
                                 }
                                 else if (cost != null)
                                 {
-                                    <span class="small-muted" data-testid="action-left-@entryKey">@L["Actor.Actions.SlotOption", cost.Level, Left(cost)]</span>
+                                    <span class="small-muted" data-testid="action-left-@entryKey">@CostText(cost)</span>
                                 }
                                 else
                                 {
-                                    <span class="small-muted">@L["Actor.Actions.NoSlots"]</span>
+                                    <span class="small-muted" id="@reasonId">@L["Actor.Actions.NoSlots"]</span>
                                 }
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(cost == null || Left(cost) <= 0)" data-testid="@($"action-use-{entryKey}")"
+                                @if (cost != null && !payable)
+                                {
+                                    <span class="visually-hidden" id="@reasonId" data-testid="action-cannot-pay-@entryKey">@L["Actor.Actions.CannotPay"]</span>
+                                }
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(!payable)" data-testid="@($"action-use-{entryKey}")"
+                                             aria-describedby="@(payable ? null : reasonId)"
                                              aria-label="@($"{verb}: {name}")" OnClick="() => UseAsync(action, cost)">@verb</CodexButton>
                             }
                             else if (action.Attack != null)
@@ -112,8 +129,9 @@
 
     [Parameter] public string? Title { get; set; }
 
-    /// <summary>(slot key, -1, what it was spent on).</summary>
-    [Parameter] public EventCallback<(string Key, int Delta, string Label)> OnSpend { get; set; }
+    /// <summary>Spends from a pool: (its sheet key, minus the amount, what it was spent on). Returns whether it was spent; false
+    /// (not enough left, or the table is gone) stops the roll.</summary>
+    [Parameter, EditorRequired] public Func<(string Key, int Delta, string Label), Task<bool>> Spend { get; set; } = _ => Task.FromResult(false);
 
     [Parameter] public EventCallback<ActionRoll> OnRoll { get; set; }
 
@@ -126,19 +144,25 @@
 
     private string Name(SheetAction action) => EntryName?.Invoke(action.Entry) ?? action.Entry.Name;
 
-    private int Left(ActionCost cost)
-    {
-        var max = Value(cost.Pool.MaxKeyFor(cost.Level)) ?? 0;
-        return Math.Clamp(Value(cost.Key) ?? max, 0, max);
-    }
+    /// <summary>A cost as the picker shows it: a slot by its level, any other pool by its name and amount, or free.</summary>
+    private string CostText(ActionCost cost) =>
+        cost.Free ? L["Actor.Actions.Free"]
+        : cost.Slot != null ? L["Actor.Actions.SlotOption", cost.Level, cost.Left(Value) ?? 0]
+        : L["Actor.Actions.PoolOption", PoolName(cost), cost.Amount, cost.Left(Value) ?? 0];
 
-    /// <summary>The slot the player picked, else the lowest that still has one, else the lowest.</summary>
+    private string PoolName(ActionCost cost) => cost.Label is { } label ? Definition?.DisplayValue(label) ?? label : cost.Key ?? string.Empty;
+
+    /// <summary>The cost the player picked, else the first that can be paid now (the lowest slot with one left), else the first.</summary>
     private ActionCost? SelectedCost(SheetAction action)
     {
         if (action.Costs.Count == 0) return null;
-        if (chosen.TryGetValue(action.Entry.Type + "-" + action.Entry.Id, out var key) && action.Costs.FirstOrDefault(c => c.Key == key) is { } picked) return picked;
-        return action.Costs.FirstOrDefault(c => Left(c) > 0) ?? action.Costs[0];
+        if (chosen.TryGetValue(action.Entry.Type + "-" + action.Entry.Id, out var key) && action.Costs.FirstOrDefault(c => c.Id == key) is { } picked) return picked;
+        return action.Costs.FirstOrDefault(c => c.CanPay(Value)) ?? action.Costs[0];
     }
+
+    /// <summary>The lowest face that is a critical hit, when it is below the check die's top face (the system's, never assumed).</summary>
+    private int? CritFrom(SheetAction action) =>
+        action.Critical is { } from && Definition?.Dice.CheckTopFace() is { } top && from >= 1 && from < top ? from : null;
 
     private string AttributeName(string key) => Definition?.Attributes.FirstOrDefault(a => a.Key == key) is { } attribute ? attribute.Abbreviation ?? attribute.Label : key;
 
@@ -162,14 +186,17 @@
         return action.SaveAttribute != null && action.SaveDc is { } dc ? L["Actor.Actions.SaveSuffix", label, AttributeName(action.SaveAttribute), dc] : label;
     }
 
-    /// <summary>Cast or Attack: spends the slot, then rolls the attack; without an attack roll, the dice.</summary>
+    /// <summary>Cast or Attack: spends what the cost spends (nothing when free), then rolls the attack; without an attack roll,
+    /// the dice. A spend the owner refuses (not enough left by now) rolls nothing.</summary>
     private async Task UseAsync(SheetAction action, ActionCost? cost)
     {
         var name = Name(action);
-        if (cost != null)
+        if (cost is { Free: false, Key: { } key })
         {
-            var unit = Definition?.DisplayValue(cost.Pool.UnitName) ?? cost.Pool.UnitName;
-            await OnSpend.InvokeAsync((cost.Key, -1, L["Actor.Actions.Spent", name, cost.Level, unit]));
+            var label = cost.Slot is { } slot
+                ? L["Actor.Actions.Spent", name, cost.Level, Definition?.DisplayValue(slot.UnitName) ?? slot.UnitName]
+                : L["Actor.Actions.SpentFrom", name, cost.Amount, PoolName(cost)];
+            if (!await Spend((key, -cost.Amount, label))) return;
         }
 
         if (action.Attack != null)

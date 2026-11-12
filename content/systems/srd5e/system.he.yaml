@@ -500,6 +500,8 @@ sheetRules:
   derived:
     proficiencyBonus: תוסף שליטה
     initiative: יוזמה
+    attacks: התקפות
+    critFrom: פגיעה קריטית מ־
   lists:
     cantrips: לחשונים
     spells: לחשים מוכנים
@@ -533,6 +535,9 @@ sheetRules:
   slotPools:
     slots: תאי לחשים
     pact: תאי ברית
+  ranks:
+    proficient: מיומן
+    expert: מומחה
   skillsLabel: מיומנויות
   inventoryLabel: ציוד
   multiclassLabel: מקצועות נוספים

@@ -122,6 +122,8 @@ sheetRules:
   derived:
     - { key: proficiencyBonus, label: Proficiency Bonus, formula: "2 + (level - 1) / 4", category: Combat }
     - { key: initiative,       label: Initiative,        formula: "mod(dex)",             category: Combat }
+    - { key: attacks,          label: Attacks,           formula: "1",                    category: Combat, signed: false }
+    - { key: critFrom,         label: Critical hit from, formula: "20",                   category: Combat, signed: false }
   constraints:
     - field: subclass
       where:
@@ -297,6 +299,8 @@ sheetRules:
       tag: weapons
       attackBonus: abilityMod + trained * proficiencyBonus
       damageBonus: abilityMod
+      count: attacks
+      critical: critFrom
 
   multiclass:
     key: multiclass
@@ -344,7 +348,10 @@ sheetRules:
 # How typed bonuses combine (overhaul section 3). Armor class's base is the best of its candidates: worn armor with its Dexterity,
 # else Unarmored Defense, a class's own defense or 10 + Dexterity. Everything else adds up.
 modifierTypes:
-  types: { base: best }
+  # A modifier type keeps one value that competes with the number's starting value: max a floor (base, highest: Extra Attack
+  # 2, 3, 4 on 1 attack is 4), min a ceiling (lowest: Improved Critical 19 and Superior Critical 18 on 20 is 18). A type not
+  # named here adds.
+  types: { base: max, highest: max, lowest: min }
 
 # The sheet's layout: tabs of widgets, and an aside shown beside every tab. These are the host's built-in widgets, which read
 # sheetRules above; a system with sheet kinds lays out its own keys with the generic widgets (values, track, list, table,

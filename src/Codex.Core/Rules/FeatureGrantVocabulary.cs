@@ -10,8 +10,13 @@ public sealed record GrantName(string Key, string Label)
 }
 
 /// <summary>A list a feature may add entries to. <see cref="EntityType"/> is the type of the entries of a pick list; null for a
-/// tag list.</summary>
-public sealed record GrantList(string Key, string Label, string? EntityType);
+/// tag list. A ranked list (the skills, the saving throws) also has <see cref="Ranks"/>, in order, lowest first (a grant names one by its key or
+/// number), and <see cref="Keys"/>, the keys a grant may name (the skills, the attributes); both null for any other list.</summary>
+public sealed record GrantList(string Key, string Label, string? EntityType, IReadOnlyList<GrantName>? Ranks = null, IReadOnlyList<GrantName>? Keys = null)
+{
+    /// <summary>Whether the list holds its keys at ranks (<see cref="SheetRuleEngine.SkillsTarget"/>, <see cref="SheetRuleEngine.SavesTarget"/>).</summary>
+    public bool IsRanked => Ranks is { Count: > 0 };
+}
 
 /// <summary>Where on an entry of one type the system reads features: the properties holding feature rows, and whether the whole
 /// entry is itself a feature.</summary>
@@ -47,16 +52,23 @@ public sealed class FeatureGrantVocabulary
             }
         }
 
+        // The ranked lists: a feature adds skills or saving throws at a rank, raises them, or leaves them to a choice.
+        if (rules.Skills is { } skills)
+        {
+            GrantName Rank(RankDefinition r) => new(r.Key, string.IsNullOrWhiteSpace(r.Label) ? r.Key : r.Label);
+            if (skills.List.Count > 0) lists.Add(new GrantList(SheetRuleEngine.SkillsTarget, skills.Label, null, skills.SkillRanks().Select(Rank).ToList(), skills.List.Select(s => new GrantName(s.Key, s.Label)).ToList()));
+            if (system.Attributes.Count > 0) lists.Add(new GrantList(SheetRuleEngine.SavesTarget, "Saving throws", null, skills.SaveRanks().Select(Rank).ToList(), system.Attributes.Select(a => new GrantName(a.Key, a.Label)).ToList()));
+        }
+
         Lists = lists;
         Rests = (system.Vitals?.Rests.Select(r => r.Name) ?? Enumerable.Empty<string>())
             .Concat(rules.SlotPools.SelectMany(p => p.RecoversOn))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         ModifierTypes = system.ModifierTypes.Types.Keys.ToList();
-        FloorTypes = system.ModifierTypes.Types
-            .Where(t => string.Equals(t.Value, ModifierStacking.Best, StringComparison.OrdinalIgnoreCase))
-            .Select(t => t.Key)
-            .ToList();
+        FloorTypes = system.ModifierTypes.Types.Where(t => ModifierStacking.IsFloor(t.Value)).Select(t => t.Key).ToList();
+        CeilingTypes = system.ModifierTypes.Types.Where(t => ModifierStacking.IsCeiling(t.Value)).Select(t => t.Key).ToList();
+        StackingRules = system.ModifierTypes.Types.ToDictionary(t => t.Key, t => t.Value.ToLowerInvariant() == ModifierStacking.Best ? ModifierStacking.Max : t.Value.ToLowerInvariant());
     }
 
     /// <summary>The vocabulary of <paramref name="system"/>, or null when it reads no features from entries at all.</summary>
@@ -82,11 +94,21 @@ public sealed class FeatureGrantVocabulary
     /// <summary>The rests that may refill a counter.</summary>
     public IReadOnlyList<string> Rests { get; }
 
+    /// <summary>The moments besides rests that may refill a counter: rolling initiative, a GM-called dawn, or by hand only.</summary>
+    public IReadOnlyList<string> Moments => FeatureRecovery.Moments;
+
     /// <summary>The modifier types the system names. A modifier without a type is added.</summary>
     public IReadOnlyList<string> ModifierTypes { get; }
 
-    /// <summary>The modifier types that set a floor (the number becomes at least the amount) instead of adding.</summary>
+    /// <summary>The modifier types that set a floor (the number becomes at least the amount: <c>max</c>, <c>best</c>) instead of adding.</summary>
     public IReadOnlyList<string> FloorTypes { get; }
+
+    /// <summary>The modifier types that set a ceiling (the number becomes at most the amount: <c>min</c>) instead of adding.</summary>
+    public IReadOnlyList<string> CeilingTypes { get; }
+
+    /// <summary>Each modifier type the system names and its stacking rule (<c>sum</c>, <c>highest</c>, <c>lowest</c>, <c>max</c>,
+    /// <c>min</c>; <c>best</c> is shown as <c>max</c>). Types it does not name sum.</summary>
+    public IReadOnlyDictionary<string, string> StackingRules { get; }
 
     /// <summary>Where entries of <paramref name="entityType"/> carry features, or null when the system reads none from them.</summary>
     public FeatureCarrier? CarrierFor(string? entityType)

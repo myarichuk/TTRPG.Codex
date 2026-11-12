@@ -5,7 +5,7 @@
    offers only what the system's vocabulary holds, and checks formulas with the engine's parser. Changes are reported as a
    FeatureGrantData for the owner to put into the feature's dictionary. *@
 
-@if (!ReadOnly || data.Modifiers.Count > 0 || data.Adds.Count > 0 || data.Uses != null)
+@if (!ReadOnly || data.Modifiers.Count > 0 || data.Adds.Count > 0 || data.Uses != null || data.Spends != null)
 {
 <details class="grants" data-testid="feature-grants">
     <summary class="grants-summary">
@@ -102,12 +102,146 @@
                                 }
                             </select>
                         </div>
-                        <div class="grants-cell grants-wide">
-                            <label for="@(id)-a@(n)-entries" class="field-label">@L["Actor.Grants.Entries"]</label>
-                            <input id="@(id)-a@(n)-entries" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@string.Join(", ", add.Entries)" placeholder="@L["Actor.Grants.EntriesPlaceholder"]"
-                                   aria-label="@L["Actor.Grants.EntriesOf", n]"
-                                   @onchange="@(e => EditAddAsync(index, a => a.Entries = FeatureGrantData.SplitEntries(e.Value?.ToString())))" />
-                        </div>
+                        @{
+                            var ranked = RankedOf(add);
+                            var mode = GrantAddEdit.ModeOf(add);
+                        }
+                        @if (ranked != null)
+                        {
+                            @* A ranked list (skills, saving throws): fixed keys at a rank, a step up, or a choice left to the player. *@
+                            <div class="grants-cell">
+                                <label for="@(id)-a@(n)-mode" class="field-label">@L["Actor.Grants.Mode"]</label>
+                                <select id="@(id)-a@(n)-mode" class="field-select field-sm" disabled="@ReadOnly" aria-describedby="@(id)-a@(n)-mode-hint" data-testid="grant-mode"
+                                        @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetMode(a, e.Value?.ToString() ?? GrantAddEdit.FixedMode, UniqueChoiceId(a))))">
+                                    <option value="@GrantAddEdit.FixedMode" selected="@(mode == GrantAddEdit.FixedMode)">@L["Actor.Grants.ModeFixed"]</option>
+                                    <option value="@GrantAddEdit.RaiseMode" selected="@(mode == GrantAddEdit.RaiseMode)">@L["Actor.Grants.ModeRaise"]</option>
+                                    <option value="@GrantAddEdit.ChoiceMode" selected="@(mode == GrantAddEdit.ChoiceMode)">@L["Actor.Grants.ModeChoice"]</option>
+                                </select>
+                                <span id="@(id)-a@(n)-mode-hint" class="field-hint mt-0">@L["Actor.Grants.ModeHint"]</span>
+                            </div>
+                        }
+                        @if (mode != GrantAddEdit.ChoiceMode)
+                        {
+                            <div class="grants-cell grants-wide">
+                                <label for="@(id)-a@(n)-entries" class="field-label">@L["Actor.Grants.Entries"]</label>
+                                <input id="@(id)-a@(n)-entries" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@string.Join(", ", add.Entries)" placeholder="@L["Actor.Grants.EntriesPlaceholder"]"
+                                       aria-label="@L["Actor.Grants.EntriesOf", n]" aria-describedby="@(ranked != null ? id + "-a" + n + "-keys-hint" : null)"
+                                       @onchange="@(e => EditAddAsync(index, a => a.Entries = FeatureGrantData.SplitEntries(e.Value?.ToString())))" />
+                                @if (ranked != null)
+                                {
+                                    <span id="@(id)-a@(n)-keys-hint" class="field-hint mt-0">@L["Actor.Grants.KeysHint", KeyExamples(ranked)]</span>
+                                }
+                            </div>
+                        }
+                        @if (ranked != null && mode == GrantAddEdit.FixedMode)
+                        {
+                            <div class="grants-cell">
+                                <label for="@(id)-a@(n)-rank" class="field-label">@L["Actor.Grants.Rank"]</label>
+                                <select id="@(id)-a@(n)-rank" class="field-select field-sm" disabled="@ReadOnly" data-testid="grant-rank"
+                                        @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetText(a, "rank", e.Value?.ToString())))">
+                                    <option value="" selected="@(GrantAddEdit.Text(add, "rank").Length == 0)">@L["Actor.Grants.RankFirst"]</option>
+                                    @foreach (var option in Options(RankOptions(ranked), GrantAddEdit.Text(add, "rank")))
+                                    {
+                                        <option value="@option.Key" selected="@(option.Key == GrantAddEdit.Text(add, "rank"))">@option.Label</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        @if (ranked != null && mode == GrantAddEdit.RaiseMode)
+                        {
+                            <div class="grants-cell grants-narrow">
+                                <label for="@(id)-a@(n)-raise" class="field-label">@L["Actor.Grants.RaiseBy"]</label>
+                                <input id="@(id)-a@(n)-raise" type="number" min="1" class="field-input field-sm" disabled="@ReadOnly" value="@GrantAddEdit.Number(add, "raise", 1)" data-testid="grant-raise"
+                                       @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetNumber(a, "raise", Math.Max(1, int.TryParse(e.Value?.ToString(), out var steps) ? steps : 1))))" />
+                            </div>
+                        }
+                        @if (ranked != null && mode == GrantAddEdit.ChoiceMode)
+                        {
+                            var fromKind = GrantAddEdit.FromKind(add);
+                            var gives = add.Extra.ContainsKey("raise") ? "raise" : "rank";
+                            var choiceId = GrantAddEdit.Text(add, "choice");
+                            var idTaken = choiceId.Length > 0 && data.Adds.Where((other, at) => at != index && GrantAddEdit.ModeOf(other) == GrantAddEdit.ChoiceMode)
+                                .Any(other => string.Equals(GrantAddEdit.Text(other, "choice"), choiceId, StringComparison.OrdinalIgnoreCase));
+                            <div class="grants-cell grants-narrow">
+                                <label for="@(id)-a@(n)-choose" class="field-label">@L["Actor.Grants.PickCount"]</label>
+                                <input id="@(id)-a@(n)-choose" type="number" min="1" class="field-input field-sm" disabled="@ReadOnly" value="@GrantAddEdit.Number(add, "choose", 1)" data-testid="grant-choose"
+                                       @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetNumber(a, "choose", Math.Max(1, int.TryParse(e.Value?.ToString(), out var count) ? count : 1))))" />
+                            </div>
+                            <div class="grants-cell">
+                                <label for="@(id)-a@(n)-from" class="field-label">@L["Actor.Grants.FromKind"]</label>
+                                <select id="@(id)-a@(n)-from" class="field-select field-sm" disabled="@ReadOnly" data-testid="grant-from"
+                                        @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetFrom(a, e.Value?.ToString() ?? GrantAddEdit.FromAny, GrantAddEdit.FromKeys(a))))">
+                                    <option value="@GrantAddEdit.FromAny" selected="@(fromKind == GrantAddEdit.FromAny)">@L["Actor.Grants.FromAny"]</option>
+                                    <option value="@GrantAddEdit.FromThese" selected="@(fromKind == GrantAddEdit.FromThese)">@L["Actor.Grants.FromThese"]</option>
+                                    @if (ranked.Key == SheetRuleEngine.SavesTarget)
+                                    {
+                                        <option value="@GrantAddEdit.FromAttribute" selected="@(fromKind == GrantAddEdit.FromAttribute)">@L["Actor.Grants.FromAttribute"]</option>
+                                    }
+                                </select>
+                            </div>
+                            @if (fromKind != GrantAddEdit.FromAny)
+                            {
+                                <div class="grants-cell grants-wide">
+                                    <label for="@(id)-a@(n)-fromkeys" class="field-label">@L["Actor.Grants.FromKeys"]</label>
+                                    <input id="@(id)-a@(n)-fromkeys" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@string.Join(", ", GrantAddEdit.FromKeys(add))" aria-describedby="@(id)-a@(n)-keys-hint"
+                                           data-testid="grant-from-keys"
+                                           @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetFrom(a, fromKind, FeatureGrantData.SplitEntries(e.Value?.ToString()))))" />
+                                    <span id="@(id)-a@(n)-keys-hint" class="field-hint mt-0">@L["Actor.Grants.KeysHint", KeyExamples(ranked)]</span>
+                                </div>
+                            }
+                            <div class="grants-cell">
+                                <label for="@(id)-a@(n)-min" class="field-label">@L["Actor.Grants.MinRank"]</label>
+                                <select id="@(id)-a@(n)-min" class="field-select field-sm" disabled="@ReadOnly" data-testid="grant-min-rank"
+                                        @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetText(a, "minRank", e.Value?.ToString())))">
+                                    <option value="" selected="@(GrantAddEdit.Text(add, "minRank").Length == 0)">@L["Actor.Grants.RankAny"]</option>
+                                    @foreach (var option in Options(RankOptions(ranked), GrantAddEdit.Text(add, "minRank")))
+                                    {
+                                        <option value="@option.Key" selected="@(option.Key == GrantAddEdit.Text(add, "minRank"))">@option.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="grants-cell">
+                                <label for="@(id)-a@(n)-max" class="field-label">@L["Actor.Grants.MaxRank"]</label>
+                                <select id="@(id)-a@(n)-max" class="field-select field-sm" disabled="@ReadOnly" data-testid="grant-max-rank"
+                                        @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetText(a, "maxRank", e.Value?.ToString())))">
+                                    <option value="" selected="@(GrantAddEdit.Text(add, "maxRank").Length == 0)">@L["Actor.Grants.RankAny"]</option>
+                                    @foreach (var option in Options(RankOptions(ranked), GrantAddEdit.Text(add, "maxRank")))
+                                    {
+                                        <option value="@option.Key" selected="@(option.Key == GrantAddEdit.Text(add, "maxRank"))">@option.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="grants-cell">
+                                <label for="@(id)-a@(n)-gives" class="field-label">@L["Actor.Grants.Gives"]</label>
+                                <select id="@(id)-a@(n)-gives" class="field-select field-sm" disabled="@ReadOnly" data-testid="grant-gives"
+                                        @onchange="@(e => EditAddAsync(index, a => SetGives(a, e.Value?.ToString())))">
+                                    <option value="rank" selected="@(gives == "rank")">@L["Actor.Grants.GivesRank"]</option>
+                                    <option value="raise" selected="@(gives == "raise")">@L["Actor.Grants.GivesRaise"]</option>
+                                </select>
+                            </div>
+                            @if (gives == "rank")
+                            {
+                                <div class="grants-cell">
+                                    <label for="@(id)-a@(n)-rank" class="field-label">@L["Actor.Grants.Rank"]</label>
+                                    <select id="@(id)-a@(n)-rank" class="field-select field-sm" disabled="@ReadOnly" data-testid="grant-rank"
+                                            @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetText(a, "rank", e.Value?.ToString())))">
+                                        <option value="" selected="@(GrantAddEdit.Text(add, "rank").Length == 0)">@L["Actor.Grants.RankFirst"]</option>
+                                        @foreach (var option in Options(RankOptions(ranked), GrantAddEdit.Text(add, "rank")))
+                                        {
+                                            <option value="@option.Key" selected="@(option.Key == GrantAddEdit.Text(add, "rank"))">@option.Label</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                            <div class="grants-cell grants-wide">
+                                <label for="@(id)-a@(n)-choice" class="field-label">@L["Actor.Grants.ChoiceId"]</label>
+                                <input id="@(id)-a@(n)-choice" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@choiceId" placeholder="@UniqueChoiceId(add)"
+                                       aria-invalid="@(idTaken ? "true" : null)" aria-describedby="@(id)-a@(n)-choice-hint@(idTaken ? " " + id + "-a" + n + "-choice-error" : null)" data-testid="grant-choice-id"
+                                       @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetText(a, "choice", e.Value?.ToString())))" />
+                                <span id="@(id)-a@(n)-choice-hint" class="field-hint mt-0">@L["Actor.Grants.ChoiceIdHint"]</span>
+                                <FieldError Id="@(id + "-a" + n + "-choice-error")" Message="@(idTaken ? L["Actor.Grants.ChoiceIdTaken"].ToString() : null)" TestId="grant-choice-id-error" />
+                            </div>
+                        }
                         <div class="grants-cell grants-narrow">
                             <label for="@(id)-a@(n)-level" class="field-label">@L["Actor.Grants.FromLevel"]</label>
                             <input id="@(id)-a@(n)-level" type="number" min="1" class="field-input field-sm" disabled="@ReadOnly" value="@add.Level" aria-label="@L["Actor.Grants.LevelOf", n]"
@@ -144,32 +278,102 @@
                                    @onchange="@(e => EditUsesAsync(u => u.Max = e.Value?.ToString()?.Trim() ?? string.Empty))" />
                             <FieldError Id="@(maxId + "-error")" Message="@FormulaMessage(maxError)" TestId="grant-max-error" />
                         </div>
-                        @if (Vocabulary.Rests.Count > 0 || uses.RecoversOn.Count > 0)
+                        <div class="grants-cell grants-wide">
+                            <label for="@(id)-uses-key" class="field-label">@L["Actor.Grants.UsesKey"]</label>
+                            <input id="@(id)-uses-key" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@uses.Key" placeholder="@L["Actor.Grants.UsesKeyPlaceholder"]"
+                                   aria-describedby="@(id)-uses-key-hint"
+                                   @onchange="@(e => EditUsesAsync(u => u.Key = e.Value?.ToString()?.Trim() ?? string.Empty))" />
+                            <span id="@(id)-uses-key-hint" class="field-hint mt-0">@L["Actor.Grants.UsesKeyHint"]</span>
+                        </div>
+                        <div class="grants-cell">
+                            <label for="@(id)-uses-regain" class="field-label">@L["Actor.Grants.Regain"]</label>
+                            <select id="@(id)-uses-regain" class="field-select field-sm" disabled="@ReadOnly"
+                                    @onchange="@(e => EditUsesAsync(u => u.Regain = e.Value?.ToString() ?? string.Empty))">
+                                <option value="" selected="@(uses.Regain.Length == 0)">@L["Actor.Grants.RegainOwner"]</option>
+                                <option value="gm" selected="@(uses.Regain == "gm")">@L["Actor.Grants.RegainGm"]</option>
+                            </select>
+                        </div>
+                    </div>
+                    @* One row per rest or moment: nothing, all, or some back, and whether only when none are left. *@
+                    <fieldset class="grants-refills" aria-describedby="@(id)-refills-hint" data-testid="grant-refills">
+                        <legend class="field-label">@L["Actor.Grants.Refills"]</legend>
+                        <p id="@(id)-refills-hint" class="field-hint mt-0">@L["Actor.Grants.RefillsHint"]</p>
+                        @foreach (var moment in RefillMoments(uses))
                         {
-                            <fieldset class="grants-cell grants-wide grants-rests">
-                                <legend class="field-label">@L["Actor.Grants.Recovers"]</legend>
-                                @foreach (var rest in Options(Vocabulary.Rests.Select(r => (r, r)), uses.RecoversOn.ToArray()))
+                            var key = moment.Key;
+                            var state = Refill(uses, key);
+                            var rid = $"{id}-refill-{Slug(key)}";
+                            <div class="grants-refill" data-testid="grant-refill">
+                                <label id="@(rid)-name" for="@rid" class="grants-refill-name">@moment.Label</label>
+                                <select id="@rid" class="field-select field-sm" disabled="@ReadOnly"
+                                        @onchange="@(e => SetRefillAsync(key, x => x with { Kind = e.Value?.ToString() ?? "none" }))">
+                                    <option value="none" selected="@(state.Kind == "none")">@L["Actor.Grants.RefillNone"]</option>
+                                    <option value="all" selected="@(state.Kind == "all")">@L["Actor.Grants.RefillAll"]</option>
+                                    <option value="some" selected="@(state.Kind == "some")">@L["Actor.Grants.RefillSome"]</option>
+                                </select>
+                                @if (state.Kind == "some")
                                 {
-                                    var rid = $"{id}-rest-{Slug(rest.Key)}";
-                                    var key = rest.Key;
+                                    <input type="text" class="field-input field-sm grants-refill-amount" disabled="@ReadOnly" value="@state.Amount"
+                                           aria-label="@L["Actor.Grants.RefillAmountOf", moment.Label]" placeholder="@L["Actor.Grants.RefillAmountPlaceholder"]"
+                                           @onchange="@(e => SetRefillAsync(key, x => x with { Amount = e.Value?.ToString()?.Trim() ?? string.Empty }))" />
+                                }
+                                @if (state.Kind != "none")
+                                {
                                     <span class="field-check">
-                                        <input id="@rid" type="checkbox" class="field-box" disabled="@ReadOnly" checked="@HasRest(uses, key)"
-                                               @onchange="@(e => EditUsesAsync(u => ToggleRest(u, key, (bool)(e.Value ?? false))))" />
-                                        <label for="@rid">@rest.Label</label>
+                                        <input id="@(rid)-empty" type="checkbox" class="field-box" disabled="@ReadOnly" checked="@state.WhenEmpty" aria-labelledby="@(rid)-name @(rid)-empty-label"
+                                               @onchange="@(e => SetRefillAsync(key, x => x with { WhenEmpty = (bool)(e.Value ?? false) }))" />
+                                        <label id="@(rid)-empty-label" for="@(rid)-empty">@L["Actor.Grants.RefillOnlyEmpty"]</label>
                                     </span>
                                 }
-                            </fieldset>
+                                @if (state.OtherWhen.Length > 0)
+                                {
+                                    <span class="field-hint mt-0">@L["Actor.Grants.RefillWhenNote", state.OtherWhen]</span>
+                                }
+                            </div>
                         }
-                        @if (!ReadOnly)
-                        {
-                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Grants.RemoveUses"]" OnClick="() => ChangeAsync(() => data.Uses = null)" />
-                        }
-                    </div>
+                    </fieldset>
+                    @if (!ReadOnly)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Class="cx-blood" OnClick="() => ChangeAsync(() => data.Uses = null)">
+                            <LucideIcon IconName="x" Size="14" /> @L["Actor.Grants.RemoveUses"]
+                        </CodexButton>
+                    }
                 }
                 else if (!ReadOnly)
                 {
                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AddUsesAsync">
                         <LucideIcon IconName="plus" Size="14" /> @L["Actor.Grants.AddUses"]
+                    </CodexButton>
+                }
+            </fieldset>
+        }
+        @if (data.Spends != null || !ReadOnly)
+        {
+            <fieldset class="grants-group" aria-labelledby="@(id)-spends">
+                <legend id="@(id)-spends" class="label-caps">@L["Actor.Grants.Spends"]</legend>
+                @if (data.Spends is { } spends)
+                {
+                    <div class="grants-row" data-testid="grant-spends">
+                        <div class="grants-cell">
+                            <label for="@(id)-spend-key" class="field-label">@L["Actor.Grants.SpendKey"]</label>
+                            <input id="@(id)-spend-key" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@spends.Key" placeholder="@L["Actor.Grants.SpendKeyPlaceholder"]"
+                                   @onchange="@(e => EditSpendAsync(s => s.Key = e.Value?.ToString()?.Trim() ?? string.Empty))" />
+                        </div>
+                        <div class="grants-cell">
+                            <label for="@(id)-spend-amount" class="field-label">@L["Actor.Grants.SpendAmount"]</label>
+                            <input id="@(id)-spend-amount" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@spends.Amount"
+                                   @onchange="@(e => EditSpendAsync(s => s.Amount = e.Value?.ToString()?.Trim() ?? string.Empty))" />
+                        </div>
+                        @if (!ReadOnly)
+                        {
+                            <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Grants.RemoveSpend"]" OnClick="() => ChangeAsync(() => data.Spends = null)" />
+                        }
+                    </div>
+                }
+                else if (!ReadOnly)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => ChangeAsync(() => data.Spends = new GrantSpend())">
+                        <LucideIcon IconName="plus" Size="14" /> @L["Actor.Grants.AddSpend"]
                     </CodexButton>
                 }
             </fieldset>
@@ -199,6 +403,42 @@
 
     protected override void OnParametersSet() => data = FeatureGrantData.Read(Feature);
 
+    // ---- Refills: one state per rest or moment, written back as the shorthand (all on a rest) or a rule ----
+
+    private sealed record RefillState(string Kind, string Amount, bool WhenEmpty, string OtherWhen);
+
+    private static bool Same(string a, string b) => string.Equals(a.Trim(), b, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The system's rests, then the moments (initiative, dawn), then any moment the data names that neither knows.</summary>
+    private IEnumerable<(string Key, string Label)> RefillMoments(GrantUses uses) =>
+        Options(Vocabulary.Rests.Select(r => (r, r)).Concat(Vocabulary.Moments.Where(m => m != FeatureRecovery.Manual).Select(m => (m, L["Actor.Grants.Moment." + m].ToString()))),
+            uses.RecoversOn.Concat(uses.Recovers.Select(r => r.On)).Where(o => o.Trim().Length > 0 && !Same(o, FeatureRecovery.Manual)).ToArray());
+
+    private static RefillState Refill(GrantUses uses, string moment)
+    {
+        if (uses.Recovers.FirstOrDefault(r => Same(r.On, moment)) is { } rule)
+        {
+            var all = rule.Amount.Trim().Length == 0 || Same(rule.Amount, "all");
+            var empty = Same(rule.When, "empty");
+            return new(all ? "all" : "some", all ? string.Empty : rule.Amount, empty, empty ? string.Empty : rule.When);
+        }
+
+        return uses.RecoversOn.Any(r => Same(r, moment)) ? new("all", string.Empty, false, string.Empty) : new("none", string.Empty, false, string.Empty);
+    }
+
+    /// <summary>A full refill on a rest stays the plain <c>recoversOn</c> shorthand; anything else is one rule for that moment.</summary>
+    private Task SetRefillAsync(string moment, Func<RefillState, RefillState> change) =>
+        EditUsesAsync(u =>
+        {
+            var next = change(Refill(u, moment));
+            u.RecoversOn.RemoveAll(r => Same(r, moment));
+            u.Recovers.RemoveAll(r => Same(r.On, moment));
+            if (next.Kind == "none") return;
+            var when = next.WhenEmpty ? "empty" : next.OtherWhen;
+            if (next.Kind == "all" && when.Length == 0 && Vocabulary.Rests.Any(r => Same(r, moment))) u.RecoversOn.Add(moment);
+            else u.Recovers.Add(new GrantRecover { On = moment, Amount = next.Kind == "all" ? "all" : next.Amount.Length > 0 ? next.Amount : "1", When = when });
+        });
+
     private async Task ChangeAsync(Action edit)
     {
         edit();
@@ -217,6 +457,9 @@
     private Task EditUsesAsync(Action<GrantUses> edit) =>
         ChangeAsync(() => { if (data.Uses is { } uses) edit(uses); });
 
+    private Task EditSpendAsync(Action<GrantSpend> edit) =>
+        ChangeAsync(() => { if (data.Spends is { } spends) edit(spends); });
+
     private Task AddModifierAsync() => ChangeAsync(() => data.Modifiers.Add(new GrantModifier { Amount = "1" }));
 
     private Task AddAddAsync() => ChangeAsync(() => data.Adds.Add(new GrantAdd()));
@@ -230,12 +473,15 @@
         if (modifiers > 0) parts.Add(L["Actor.Grants.SumModifiers", modifiers]);
         if (adds > 0) parts.Add(L["Actor.Grants.SumAdds", adds]);
         if (counters > 0) parts.Add(L["Actor.Grants.SumCounter"]);
+        if (data.HasSpend) parts.Add(L["Actor.Grants.SumSpends"]);
         return parts.Count == 0 ? L["Actor.Grants.None"] : string.Join(", ", parts);
     }
 
     /// <summary>A type the system keeps only the best of ("base" in srd5e) says so, since its key alone does not.</summary>
     private string TypeLabel(string type) =>
-        Vocabulary.FloorTypes.Contains(type, StringComparer.OrdinalIgnoreCase) ? L["Actor.Grants.FloorType", type].ToString() : type;
+        Vocabulary.FloorTypes.Contains(type, StringComparer.OrdinalIgnoreCase) ? L["Actor.Grants.FloorType", type].ToString()
+        : Vocabulary.CeilingTypes.Contains(type, StringComparer.OrdinalIgnoreCase) ? L["Actor.Grants.CeilingType", type].ToString()
+        : type;
 
     private string? FormulaMessage(string? error) => error == null ? null : L["Actor.Grants.FormulaError", error].ToString();
 
@@ -252,13 +498,43 @@
         return list;
     }
 
+    // ---- Ranked lists: skills and saving throws ----
+
+    /// <summary>The ranked list a row adds to, or null when its list is not ranked.</summary>
+    private GrantList? RankedOf(GrantAdd add) =>
+        Vocabulary.Lists.FirstOrDefault(l => l.IsRanked && l.Key.Equals(add.To, StringComparison.OrdinalIgnoreCase));
+
+    private static IEnumerable<(string Key, string Label)> RankOptions(GrantList list) => list.Ranks!.Select(r => (r.Key, r.Label));
+
+    /// <summary>A few of the list's keys, to show what to type.</summary>
+    private static string KeyExamples(GrantList list) => string.Join(", ", (list.Keys ?? Array.Empty<GrantName>()).Take(3).Select(k => k.Key));
+
+    /// <summary>The id a new choice gets: the feature's name as a slug and its level, made different from the other choices of this feature.</summary>
+    private string UniqueChoiceId(GrantAdd add)
+    {
+        var name = Feature.TryGetValue("name", out var n) ? n?.ToString() ?? string.Empty : string.Empty;
+        int? level = Feature.TryGetValue("level", out var l) && int.TryParse(l?.ToString(), out var at) ? at : null;
+        var baseId = SheetRuleEngine.DefaultChoiceId(name, level);
+        var taken = data.Adds.Where(a => !ReferenceEquals(a, add)).Select(a => GrantAddEdit.Text(a, "choice")).Where(t => t.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var id = baseId;
+        for (var copy = 2; taken.Contains(id); copy++) id = $"{baseId}-{copy}";
+        return id;
+    }
+
+    /// <summary>A choice's picks are put at a rank (<c>rank</c>) or lifted a step (<c>raise</c>); never both.</summary>
+    private static void SetGives(GrantAdd add, string? gives)
+    {
+        if (gives == "raise")
+        {
+            add.Extra.Remove("rank");
+            add.Extra["raise"] = 1L;
+        }
+        else
+        {
+            add.Extra.Remove("raise");
+        }
+    }
+
     private static string Slug(string text) => new(text.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-').ToArray());
 
-    private static bool HasRest(GrantUses uses, string rest) => uses.RecoversOn.Contains(rest, StringComparer.OrdinalIgnoreCase);
-
-    private static void ToggleRest(GrantUses uses, string rest, bool on)
-    {
-        uses.RecoversOn.RemoveAll(r => string.Equals(r, rest, StringComparison.OrdinalIgnoreCase));
-        if (on) uses.RecoversOn.Add(rest);
-    }
 }

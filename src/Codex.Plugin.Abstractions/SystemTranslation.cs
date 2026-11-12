@@ -74,6 +74,10 @@ public class SheetRulesTranslation
     /// <summary>Skill key -> label.</summary>
     public Dictionary<string, string> Skills { get; set; } = new();
 
+    /// <summary>Rank key (<c>proficient</c>, <c>expert</c>) -> label, for the skills' and the saving throws' ranks. A system with no
+    /// <c>ranks</c> of its own has the two defaults, and this is how they are worded in another language.</summary>
+    public Dictionary<string, string> Ranks { get; set; } = new();
+
     /// <summary>Passive score key -> label.</summary>
     public Dictionary<string, string> Passives { get; set; } = new();
 

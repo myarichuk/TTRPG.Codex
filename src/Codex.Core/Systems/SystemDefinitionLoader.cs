@@ -450,7 +450,54 @@ public static class SystemDefinitionLoader
                 yield return $"sheetRules.skills passive '{passive.Key}' reads skill '{passive.Skill}', which is not declared.";
             }
 
-            if (DerivedKeyError("sheetRules.skills.bonusKey", skills.BonusKey) is { } error) yield return error;
+            // The bonus is what a rank without its own value is worth, so a system that names every rank's value needs none.
+            var defaultsUsed = skills.Ranks.Count == 0 || skills.Saves is not { Ranks.Count: > 0 };
+            if ((defaultsUsed || !string.IsNullOrWhiteSpace(skills.BonusKey)) && DerivedKeyError("sheetRules.skills.bonusKey", skills.BonusKey) is { } error) yield return error;
+
+            // Ranks: the skills' and the saving throws' lists are checked together, since a sheet key names one rank of one list.
+            var listKeys = rules.Lists.Select(l => l.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var rankKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (path, ranks, named) in new[]
+            {
+                ("sheetRules.skills.ranks", skills.SkillRanks(), skills.Ranks.Count > 0),
+                ("sheetRules.skills.saves.ranks", skills.SaveRanks(), skills.Saves is { Ranks.Count: > 0 })
+            })
+            {
+                foreach (var duplicate in Duplicates(ranks.Select(r => r.Key)))
+                {
+                    yield return $"{path} key '{duplicate}' is declared more than once.";
+                }
+
+                foreach (var rank in ranks)
+                {
+                    if (string.IsNullOrWhiteSpace(rank.Key) || string.IsNullOrWhiteSpace(rank.SheetKey))
+                    {
+                        yield return $"every {path} entry needs a key and a sheetKey.";
+                        continue;
+                    }
+
+                    if (int.TryParse(rank.Key, out _))
+                    {
+                        yield return $"{path} key '{rank.Key}' cannot be a number: a grant names a rank by key or by its number.";
+                    }
+
+                    if (!rankKeys.Add(rank.SheetKey))
+                    {
+                        yield return $"{path} sheetKey '{rank.SheetKey}' is used by more than one rank.";
+                    }
+                    else if (fieldKeys.Contains(rank.SheetKey) || listKeys.Contains(rank.SheetKey))
+                    {
+                        yield return $"{path} sheetKey '{rank.SheetKey}' collides with an actor field or a sheetRules.lists key.";
+                    }
+
+                    // A default rank reads the bonus; a missing bonusKey is said above, not once more per rank.
+                    if (!string.IsNullOrWhiteSpace(rank.Value) && (named || !string.IsNullOrWhiteSpace(skills.BonusKey))
+                        && Codex.Core.Rules.SheetFormulas.For(definition).Check(rank.Value) is { } formulaError)
+                    {
+                        yield return $"{path} '{rank.Key}' value '{rank.Value}' cannot be read: {formulaError}";
+                    }
+                }
+            }
         }
 
         if (rules.Spellcasting is { } spellcasting && DerivedKeyError("sheetRules.spellcasting.bonusKey", spellcasting.BonusKey) is { } spellError)

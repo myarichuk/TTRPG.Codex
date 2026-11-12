@@ -1,0 +1,78 @@
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* The choices features leave to the player, where they are made: the open ones as fieldsets under "Choices to make", the made ones
+   folded in "Choices made" and still editable, and a pick that no longer fits with a way to choose again. The host writes the picks. *@
+
+@if (Open.Count > 0 || Stale.Count > 0 || Evaluation.MadeChoices.Count > 0)
+{
+    <section class="panel" aria-label="@L["Actor.Choice.Heading"]" data-testid="choices-block">
+        @if (Open.Count > 0 || Stale.Count > 0)
+        {
+            <div class="panel-title">
+                <h2 class="h5"><LucideIcon IconName="circle-check" Size="18" Class="title-icon" /> @L["Actor.Choice.Heading"]</h2>
+            </div>
+        }
+        @foreach (var notice in Stale)
+        {
+            <p class="field-error d-flex align-items-center gap-2 flex-wrap" data-testid="choice-stale">
+                <span><LucideIcon IconName="alert-triangle" Size="14" /> @Describe(notice)</span>
+                @if (CanEdit)
+                {
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => ChooseAgain(notice.FieldKey)" data-testid="choice-again">@L["Actor.Choice.ChooseAgain"]</CodexButton>
+                }
+            </p>
+        }
+        @foreach (var choice in Open)
+        {
+            <ChoicePicker Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OnPicks="picks => EditAsync(choice, picks)" />
+        }
+        @if (Folded.Count > 0)
+        {
+            <details data-testid="choices-made">
+                <summary>@L["Actor.Choice.MadeHeading", Folded.Count]</summary>
+                @foreach (var choice in Folded)
+                {
+                    <div class="mt-2">
+                        <p class="small-muted mb-1">@L["Actor.Choice.MadeSummary", string.Equals(choice.Label, choice.Source, StringComparison.Ordinal) ? choice.Label : $"{choice.Label} ({choice.Source})", string.Join(", ", choice.MadeLabels)]</p>
+                        <ChoicePicker Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OnPicks="picks => EditAsync(choice, picks)" />
+                    </div>
+                }
+            </details>
+        }
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public SheetEvaluation Evaluation { get; set; } = null!;
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public Func<string, string>? TargetLabel { get; set; }
+    [Parameter, EditorRequired] public Func<RuleViolation, string> Describe { get; set; } = null!;
+
+    /// <summary>A pick was changed, or cleared to choose again. The host writes it, re-runs the rules and logs a changed choice.</summary>
+    [Parameter] public EventCallback<ChoiceEdit> OnEdit { get; set; }
+
+    // A choice the player has just changed stays where they changed it, so the box they are in does not move under the keyboard
+    // when the last pick fills it.
+    private readonly HashSet<string> touched = new(StringComparer.Ordinal);
+
+    private List<PendingChoice> Open => Evaluation.PendingChoices.Concat(Evaluation.MadeChoices.Where(c => touched.Contains(c.Key))).ToList();
+
+    private List<PendingChoice> Folded => Evaluation.MadeChoices.Where(c => !touched.Contains(c.Key)).ToList();
+
+    private List<RuleViolation> Stale => Evaluation.Violations.Where(v => v.Key == SheetRuleEngine.ChoiceStaleKey).ToList();
+
+    private Task EditAsync(PendingChoice choice, IReadOnlyList<string> picks)
+    {
+        touched.Add(choice.Key);
+        return OnEdit.InvokeAsync(new ChoiceEdit(choice.Key, choice.Label, picks, choice.Made.Count > 0 && !choice.Adopted));
+    }
+
+    private Task ChooseAgain(string key)
+    {
+        touched.Add(key);
+        // The picks that still fit are kept; only the ones that do not are dropped, so the choice is asked again for what is missing.
+        var choice = Evaluation.MadeChoices.Concat(Evaluation.PendingChoices).FirstOrDefault(c => c.Key == key);
+        return OnEdit.InvokeAsync(new ChoiceEdit(key, choice?.Label ?? key, choice?.Made ?? Array.Empty<string>(), true));
+    }
+}

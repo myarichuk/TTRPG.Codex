@@ -52,6 +52,7 @@
   <data name="Combat.PartyRest" xml:space="preserve"><value>Party rest</value></data>
   <data name="Combat.PartyRestHint" xml:space="preserve"><value>Rests every player character at once. Hit dice are spent per character from their row.</value></data>
   <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} for the party</value></data>
+  <data name="Combat.DawnButton" xml:space="preserve"><value>Dawn for the party</value></data>
   <data name="Combat.EndTable" xml:space="preserve"><value>End the table</value></data>
   <data name="Combat.TempHpTitle" xml:space="preserve"><value>Temporary hit points</value></data>
   <data name="Combat.TempHpBadge" xml:space="preserve"><value>+{0} temp</value></data>
@@ -261,4 +262,5 @@
   <data name="Combat.Card.Show" xml:space="preserve"><value>Show more of {0}</value></data>
   <data name="Combat.Card.Hide" xml:space="preserve"><value>Show less of {0}</value></data>
   <data name="Combat.Card.Equipped" xml:space="preserve"><value>Equipped:</value></data>
+  <data name="Combat.Card.Rules" xml:space="preserve"><value>What it does</value></data>
 </root>

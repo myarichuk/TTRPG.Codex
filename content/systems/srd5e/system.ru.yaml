@@ -500,6 +500,8 @@ sheetRules:
   derived:
     proficiencyBonus: Бонус мастерства
     initiative: Инициатива
+    attacks: Атаки
+    critFrom: Критическое попадание от
   lists:
     cantrips: Заговоры
     spells: Подготовленные заклинания
@@ -533,6 +535,9 @@ sheetRules:
   slotPools:
     slots: Ячейки заклинаний
     pact: Ячейки договора
+  ranks:
+    proficient: Владение
+    expert: Компетентность
   skillsLabel: Навыки
   inventoryLabel: Снаряжение
   multiclassLabel: Дополнительные классы

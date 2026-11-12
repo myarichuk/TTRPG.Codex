@@ -242,16 +242,16 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     /// <summary>Turns a one-line concept into a draft sheet. Reference fields get the ids the campaign's Library offers, so the model can only pick real content.</summary>
     /// <param name="itemsFor">The Library entries of an inventory type, for the gear the character carries; without it (or without inventory rules) the sheet gets no equipment.</param>
     public async Task<CharacterDraft> CreateCharacterAsync(string concept, ActorKind kind, CampaignDocument campaign, SystemDefinition? system, string userId, Func<string, Task<IReadOnlyList<(string Id, string Name)>>> optionsFor,
-        Func<string, Task<IReadOnlyList<ContentEntry>>>? itemsFor = null, CancellationToken ct = default, Func<Task<IEntryResolver>>? entriesFor = null, bool propose = false)
+        Func<string, Task<IReadOnlyList<ContentEntry>>>? itemsFor = null, CancellationToken ct = default, Func<Task<IEntryResolver>>? entriesFor = null, WriteEntries write = WriteEntries.Off)
     {
         system = system?.Canonical; // the prompt names fields in one language, whatever the reader sees
         var assistant = await providers.AssistantForAsync(userId);
         var draft = await DraftAsync(assistant, concept, kind, campaign, system, optionsFor, itemsFor, ct);
         if (system?.SheetRules != null && entriesFor != null)
         {
-            // With propose, an entry may be written for the character where none listed suits it (CharacterDraft.Proposed);
-            // the caller says so only when it has somewhere to keep such an entry for a GM to review.
-            await ChooseAsync(assistant, draft, concept, campaign, system, await entriesFor(), ct, propose);
+            // With write set, an entry may be written for the character (CharacterDraft.Proposed); the caller says so only
+            // when it has somewhere to keep such an entry for a GM to review.
+            await ChooseAsync(assistant, draft, concept, campaign, system, await entriesFor(), ct, write);
         }
 
         return draft;
@@ -325,6 +325,10 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         return draft;
     }
 
+    /// <summary>The most entries a draft has written for it: each is a model call, so a high-level caster with many open slots
+    /// must not turn into one call per slot. The subclass counts, and a list gets at most one.</summary>
+    internal const int MaxWrittenEntries = 2;
+
     /// <summary>The most options one choice is listed with. A high-level caster's whole spell list fits; a homebrew Library with
     /// thousands of entries of a type does not flood the prompt.</summary>
     private const int MaxChoiceOptions = 250;
@@ -333,45 +337,39 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     /// just picked, so it could not be listed in the first prompt. The lists a sheet fills up to a count (spells, feats), and the
     /// reference fields the rules narrow (a subclass of that class). A field the first pass filled against the rules is cleared
     /// and asked again with the options that are allowed. If the call fails the draft stands without these picks.</summary>
-    public async Task ChooseAsync(AiAssistant assistant, CharacterDraft draft, string concept, CampaignDocument campaign, SystemDefinition system, IEntryResolver entries, CancellationToken ct, bool propose = false)
+    public async Task ChooseAsync(AiAssistant assistant, CharacterDraft draft, string concept, CampaignDocument campaign, SystemDefinition system, IEntryResolver entries, CancellationToken ct, WriteEntries write = WriteEntries.Off)
     {
-        var rules = system.SheetRules!;
-        if (rules.Lists.Count == 0 && rules.Constraints.Count == 0) return;
+        await ChooseListsAsync(assistant, draft, concept, campaign, system, entries, ct, write);
+        await ChooseGrantsAsync(assistant, draft, concept, campaign, system, entries, ct);
+    }
 
-        var engine = new SheetRuleEngine(system, entries);
+    /// <summary>The third pass: the choices the features of the drafted character leave to the player (an expertise pick, a skill), which only
+    /// exist once the lists and the entries are settled. The sheet is read again, one <see cref="ChoiceSpec"/> goes to the model for each choice
+    /// still open (its options are the keys the rules allow, with their names), and the answers are written as the player's picks
+    /// (<see cref="SheetRuleEngine.SetChoice"/>). A choice the character's own ticks already cover is confirmed as they stand. If the call fails
+    /// the choices stay open on the sheet, as a warning to make.</summary>
+    private async Task ChooseGrantsAsync(AiAssistant assistant, CharacterDraft draft, string concept, CampaignDocument campaign, SystemDefinition system, IEntryResolver entries, CancellationToken ct)
+    {
+        if (system.SheetRules?.Skills == null || system.SheetRules.Features.Count == 0) return;
+
+        var known = new WithProposed(entries, draft.Proposed.ToArray());
+        var engine = new SheetRuleEngine(system, known);
         var evaluation = engine.Evaluate(SheetOf(draft, campaign, system, engine));
-        var choices = new List<ChoiceSpec>();
-        var fields = new Dictionary<string, (FieldDefinition Field, FieldConstraint Constraint, ContentEntry Example)>(StringComparer.OrdinalIgnoreCase);
-        foreach (var constraint in rules.Constraints)
+        foreach (var adopted in evaluation.PendingChoices.Where(c => c.Adopted)) SheetRuleEngine.SetChoice(draft.Sheet, adopted.Key, adopted.Made);
+
+        var open = evaluation.PendingChoices.Where(c => !c.Adopted && c.Remaining > 0 && c.Options.Any(o => !c.Made.Contains(o.Key, StringComparer.OrdinalIgnoreCase))).ToList();
+        if (open.Count == 0) return;
+
+        var choices = open.Select(c =>
         {
-            var field = system.ActorFields.FirstOrDefault(f => f.Key == constraint.Field);
-            if (field == null || !evaluation.AllowedOptions.TryGetValue(constraint.Field, out var allowed)) continue;
-            var chosen = draft.Sheet.TryGetValue(field.Key, out var value) ? value?.ToString() : null;
-            if (!string.IsNullOrEmpty(chosen) && allowed.Any(e => e.Id.Equals(chosen, StringComparison.OrdinalIgnoreCase))) continue;
+            var from = c.Feature.Level is { } level ? $"{c.Source}, level {level}" : c.Source;
+            var hint = c.Raise ? "Each pick is raised one rank." : null;
+            var options = c.Options.Where(o => !c.Made.Contains(o.Key, StringComparer.OrdinalIgnoreCase)).ToList();
+            return new ChoiceSpec(c.Key, $"{c.Label} ({from})", hint, c.Remaining, ChoiceOptions(options));
+        }).ToList();
 
-            draft.Sheet.Remove(field.Key);
-            if (allowed.Count == 0) continue;
-            fields[field.Key] = (field, constraint, allowed[0]);
-            // Said only where one can be written: a model told to leave it empty with nothing to follow would just leave gaps.
-            var writable = propose && CanPropose(system, field, constraint);
-            var hint = writable ? $"{field.Description} Leave it empty when none of these suits the character: one is then written for them.".Trim() : field.Description;
-            choices.Add(new ChoiceSpec(field.Key, field.Label, hint, 1, ChoiceOptions(allowed)));
-        }
-
-        // The lists are read off the sheet as it stands with the fields above cleared.
-        if (fields.Count > 0 || evaluation.HasViolations) evaluation = engine.Evaluate(SheetOf(draft, campaign, system, engine));
-        foreach (var list in rules.Lists)
-        {
-            // A list with no count (spells a feature grants) is not a choice the rules can check; one already filled is left alone.
-            if (evaluation.ListLimits.GetValueOrDefault(list.Key) is not { } limit || limit <= 0 || draft.Sheet.ContainsKey(list.Key)) continue;
-            if (!evaluation.ListOptions.TryGetValue(list.Key, out var options) || options.Count == 0) continue;
-            choices.Add(new ChoiceSpec(list.Key, list.Label, list.Description, limit, ChoiceOptions(options)));
-        }
-
-        if (choices.Count == 0) return;
-
-        var known = string.Join(", ", draft.Sheet.Where(p => p.Value is string or long or int or double).Select(p => $"{p.Key} {p.Value}"));
-        var character = $"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(known, 600)}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}";
+        var sheetKnown = string.Join(", ", draft.Sheet.Where(p => p.Value is string or long or int or double).Select(p => $"{p.Key} {p.Value}"));
+        var character = $"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(sheetKnown, 600)}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}";
         IReadOnlyDictionary<string, IReadOnlyList<string>> picked;
         try
         {
@@ -382,64 +380,209 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
             return;
         }
 
+        foreach (var choice in open)
+        {
+            if (picked.TryGetValue(choice.Key, out var keys)) SheetRuleEngine.SetChoice(draft.Sheet, choice.Key, choice.Made.Concat(keys));
+        }
+    }
+
+    private async Task ChooseListsAsync(AiAssistant assistant, CharacterDraft draft, string concept, CampaignDocument campaign, SystemDefinition system, IEntryResolver entries, CancellationToken ct, WriteEntries write)
+    {
+        var rules = system.SheetRules!;
+        if (rules.Lists.Count == 0 && rules.Constraints.Count == 0) return;
+
+        var engine = new SheetRuleEngine(system, entries);
+        var initial = SheetOf(draft, campaign, system, engine);
+        var evaluation = engine.Evaluate(initial);
+        var choices = new List<ChoiceSpec>();
+        var fields = new Dictionary<string, (FieldDefinition Field, FieldConstraint Constraint, ContentEntry? Example)>(StringComparer.OrdinalIgnoreCase);
+        var withheld = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var constraint in rules.Constraints)
+        {
+            var field = system.ActorFields.FirstOrDefault(f => f.Key == constraint.Field);
+            if (field == null || !evaluation.AllowedOptions.TryGetValue(constraint.Field, out var allowed)) continue;
+            var chosen = draft.Sheet.TryGetValue(field.Key, out var value) ? value?.ToString() : null;
+            if (!string.IsNullOrEmpty(chosen) && allowed.Any(e => e.Id.Equals(chosen, StringComparison.OrdinalIgnoreCase))) continue;
+
+            draft.Sheet.Remove(field.Key);
+            var writable = write != WriteEntries.Off && field.TargetEntityType != null && CanPropose(system, entries, field.TargetEntityType, constraint.Where, initial);
+            if (allowed.Count == 0)
+            {
+                // A class that publishes no subclass still gets one once it is due, written with no example to copy the build from.
+                if (writable && SubclassDue(rules.Multiclass, constraint.Field, evaluation))
+                {
+                    fields[field.Key] = (field, constraint, null);
+                    withheld.Add(field.Key);
+                }
+                continue;
+            }
+
+            fields[field.Key] = (field, constraint, allowed[0]);
+            // Always: the writer takes this field, so the model is not offered the Library's options for it.
+            if (writable && write == WriteEntries.Always)
+            {
+                withheld.Add(field.Key);
+                continue;
+            }
+            // Said only where one can be written: a model told to leave it empty with nothing to follow would just leave gaps.
+            var hint = writable ? $"{field.Description} Leave it empty when none of these suits the character: one is then written for them.".Trim() : field.Description;
+            choices.Add(new ChoiceSpec(field.Key, field.Label, hint, 1, ChoiceOptions(allowed)));
+        }
+
+        // The lists are read off the sheet as it stands with the fields above cleared.
+        var current = fields.Count > 0 || evaluation.HasViolations ? SheetOf(draft, campaign, system, engine) : initial;
+        if (!ReferenceEquals(current, initial)) evaluation = engine.Evaluate(current);
+        var lists = new List<(ListRule List, ContentEntry Example, int Limit)>();
+        // Always: a list slot is held open only while the writer has calls left for it after the fields it takes, so a caster
+        // with many lists is not left with empty slots nobody writes for.
+        var openSlots = MaxWrittenEntries - withheld.Count;
+        var held = new Dictionary<string, IReadOnlyList<ContentEntry>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var list in rules.Lists)
+        {
+            // A list with no count (spells a feature grants) is not a choice the rules can check; one already filled is left alone.
+            if (evaluation.ListLimits.GetValueOrDefault(list.Key) is not { } limit || limit <= 0 || draft.Sheet.ContainsKey(list.Key)) continue;
+            if (!evaluation.ListOptions.TryGetValue(list.Key, out var options) || options.Count == 0) continue;
+            var hint = list.Description;
+            var asked = limit;
+            if (write != WriteEntries.Off && CanPropose(system, entries, list.TargetEntityType, list.Where, current))
+            {
+                hint = $"{list.Description} Pick fewer when none of these suits the character: each slot left open may be written for them.".Trim();
+                lists.Add((list, options[0], limit));
+                // Always: one slot stays open for the writer, so the model is asked for one pick fewer.
+                if (write == WriteEntries.Always && openSlots > 0)
+                {
+                    asked = limit - 1;
+                    openSlots--;
+                    held[list.Key] = options;
+                }
+            }
+
+            if (asked > 0) choices.Add(new ChoiceSpec(list.Key, list.Label, hint, asked, ChoiceOptions(options)));
+        }
+
+        if (choices.Count == 0 && fields.Count == 0 && lists.Count == 0) return;
+
+        var known = string.Join(", ", draft.Sheet.Where(p => p.Value is string or long or int or double).Select(p => $"{p.Key} {p.Value}"));
+        var character = $"{draft.Name}: {concept.Trim()}\n{TextFormatting.Summary(known, 600)}\n{TextFormatting.Summary(draft.Biography ?? string.Empty, 600)}";
+        IReadOnlyDictionary<string, IReadOnlyList<string>> picked = new Dictionary<string, IReadOnlyList<string>>();
+        if (choices.Count > 0)
+        {
+            try
+            {
+                picked = await assistant.ChooseAsync(new ChoicesRequest(character, catalog.GetDisplayName(campaign.SystemId), choices), ct);
+            }
+            catch (Exception) when (!ct.IsCancellationRequested)
+            {
+                return;
+            }
+        }
+
         foreach (var (key, ids) in picked)
         {
             draft.Sheet[key] = fields.ContainsKey(key) ? ids[0] : ids.Cast<object>().ToList();
         }
 
-        if (!propose) return;
+        if (write == WriteEntries.Off) return;
+
+        // A call costs, so a draft gets only a few entries written: the subclass first, then one for each list left with a slot open.
+        var budget = MaxWrittenEntries;
         foreach (var (key, (field, constraint, example)) in fields.Where(f => !picked.ContainsKey(f.Key)))
         {
-            if (CanPropose(system, field, constraint)) await ProposeAsync(assistant, draft, character, campaign, system, entries, field, constraint, example, SheetOf(draft, campaign, system, engine), ct);
+            if (budget <= 0) break;
+            if (await ProposeAsync(assistant, draft, character, campaign, system, entries, key, field.TargetEntityType!, constraint.Where, false, example, ct)) budget--;
+        }
+
+        foreach (var (list, example, limit) in lists)
+        {
+            if (budget <= 0) break;
+            if (SheetRuleEngine.RawList(draft.Sheet, list.Key).Count >= limit) continue;
+            if (await ProposeAsync(assistant, draft, character, campaign, system, entries, list.Key, list.TargetEntityType, list.Where, true, example, ct)) budget--;
+        }
+
+        if (write != WriteEntries.Always) return;
+
+        // Always took choices away from the model; where the writer failed or its entry was refused, the Library fills them
+        // instead, so asking for homebrew never leaves the character with less than asking for none.
+        foreach (var key in withheld)
+        {
+            if (!draft.Sheet.ContainsKey(key) && fields[key].Example is { } fallback) draft.Sheet[key] = fallback.Id;
+        }
+
+        foreach (var (key, options) in held)
+        {
+            var have = SheetRuleEngine.RawList(draft.Sheet, key);
+            var limit = lists.First(l => l.List.Key == key).Limit;
+            if (have.Count >= limit) continue;
+            var extra = options.FirstOrDefault(o => !have.Contains(o.Id, StringComparer.OrdinalIgnoreCase));
+            if (extra != null) draft.Sheet[key] = have.Cast<object>().Append(extra.Id).ToList();
         }
     }
 
-    /// <summary>Whether an entry can be written for a field: its type is one the system describes, and every rule on it is one
-    /// the writer can be made to meet (a property that must equal a value, or another field of the sheet).</summary>
-    private static bool CanPropose(SystemDefinition system, FieldDefinition field, FieldConstraint constraint) =>
-        field.TargetEntityType != null && system.FindType(field.TargetEntityType) != null
-        && constraint.Where.All(w => w.EqualsField != null || w.Equals != null);
+    /// <summary>Whether an entry can be written for a field or a list: its type is one the system describes, and every rule on it is
+    /// one the writer can be made to meet (<see cref="EntryRequirements"/>).</summary>
+    private static bool CanPropose(SystemDefinition system, IEntryResolver entries, string entityType, IReadOnlyList<RuleCondition> where, IReadOnlyDictionary<string, object> sheet) =>
+        system.FindType(entityType) != null && EntryRequirements.For(where, system, entries, new SheetRuleEngine(system, entries), sheet) != null;
 
-    /// <summary>Writes an entry for a field no listed entry suited (a subclass for this character), sets what the rules settle
+    /// <summary>Whether the first class has reached the level a subclass is chosen at, for the field the rules call the subclass.</summary>
+    private static bool SubclassDue(MulticlassRules? multiclass, string field, SheetEvaluation evaluation) =>
+        multiclass?.SubclassField is { } subclassField && subclassField.Equals(field, StringComparison.OrdinalIgnoreCase)
+        && evaluation.Classes.FirstOrDefault(c => c.IsFirst) is { } first && first.Level >= multiclass.SubclassLevel;
+
+    private static string Describe(object value) => value is IEnumerable<object> items ? string.Join(", ", items) : value.ToString() ?? string.Empty;
+
+    /// <summary>Writes an entry for a field or a list slot no listed entry suited (a subclass, a spell), sets what the rules settle
     /// about it (the class it belongs to), and puts it on the sheet and among the draft's own entries. A call that fails leaves
     /// the field empty.</summary>
-    private async Task ProposeAsync(AiAssistant assistant, CharacterDraft draft, string character, CampaignDocument campaign, SystemDefinition system, IEntryResolver entries,
-        FieldDefinition field, FieldConstraint constraint, ContentEntry example, IReadOnlyDictionary<string, object> sheet, CancellationToken ct)
+    private async Task<bool> ProposeAsync(AiAssistant assistant, CharacterDraft draft, string character, CampaignDocument campaign, SystemDefinition system, IEntryResolver entries,
+        string key, string entityType, IReadOnlyList<RuleCondition> where, bool isList, ContentEntry? example, CancellationToken ct)
     {
-        var type = system.FindType(field.TargetEntityType!)!;
-        var settled = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-        foreach (var where in constraint.Where)
-        {
-            if (where.EqualsField != null && sheet.TryGetValue(where.EqualsField, out var value) && value != null) settled[where.Property] = value;
-            else if (where.Equals != null) settled[where.Property] = where.Equals;
-        }
+        // The rules see what was already written for this draft.
+        var known = new WithProposed(entries, draft.Proposed.ToArray());
+        var engine = new SheetRuleEngine(system, known);
+        var sheet = SheetOf(draft, campaign, system, engine);
+        var type = system.FindType(entityType);
+        if (type == null || EntryRequirements.For(where, system, known, engine, sheet) is not { } required) return false;
 
+        var settled = required.Properties;
         var specs = type.EditorFields()
             .Where(f => f.Type is not (FieldType.ImagePicker or FieldType.EntityReference) && f.Key != "imagePrompt" && !settled.ContainsKey(f.Key))
             .Select(f => new FieldSpec(f.Key, f.Label, f.Type.ToString(), f.Type == FieldType.Dropdown ? f.Options ?? new List<string>() : null, f.Min, f.Max, f.Description))
+            .Concat(EntryGuide.Extras(system, type.Type).Where(e => !settled.ContainsKey(e.Key)))
             .ToList();
 
         DraftEntry? written;
         try
         {
             written = await assistant.WriteEntryAsync(new EntryRequest(character, catalog.GetDisplayName(campaign.SystemId), type.Label.ToLowerInvariant(), specs,
-                FeatureGrantGuide.For(system, type.Type), BuildOf(example, type), settled.Select(s => $"{s.Key}: {s.Value}").ToList(), Lang), ct);
+                EntryGuide.For(system, type.Type), example == null ? null : BuildOf(example, type), settled.Select(s => $"{s.Key}: {Describe(s.Value)}").ToList(), Lang, required.Hints), ct);
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {
-            return;
+            return true;
         }
 
-        if (written == null) return;
+        if (written == null) return true;
         var slug = RavenHomebrewRepository.Slugify(written.Name);
         var id = slug;
-        for (var n = 2; entries.Resolve(type.Type, id) != null || draft.Proposed.Any(e => e.Type == type.Type && e.Id == id); n++) id = $"{slug}-{n}";
+        for (var n = 2; known.Resolve(type.Type, id) != null; n++) id = $"{slug}-{n}";
 
         var entry = new ContentEntry { Type = type.Type, Id = id, Name = written.Name, Description = written.Description, SystemId = system.Id, PackId = CarriedEntry.PackId, Source = "Homebrew" };
-        foreach (var (key, value) in written.Properties) entry.Properties[key] = value;
-        foreach (var (key, value) in settled) entry.Properties[key] = value;
+        foreach (var (property, value) in written.Properties) entry.Properties[property] = value;
+        foreach (var (property, value) in settled) entry.Properties[property] = value;
+
+        // What it grants to the ranked lists must be sound first: a choice needs an id and a count, ids are unique, ranks exist.
+        if (FeatureGrantCheck.Problems(system, entry).Count > 0) return true;
+
+        // The engine has the last word: the entry stays only if the sheet that picks it breaks no rule it did not break before.
+        var picks = isList ? SheetRuleEngine.RawList(sheet, key).Cast<object>().Append(id).ToList() : null;
+        var checker = new SheetRuleEngine(system, new WithProposed(known, entry));
+        var before = checker.Evaluate(sheet).Violations.Where(v => v.FieldKey == key).Select(v => v.Message).ToHashSet();
+        var withEntry = new Dictionary<string, object>(sheet) { [key] = picks ?? (object)id };
+        if (checker.Evaluate(withEntry).Violations.Any(v => v.FieldKey == key && !before.Contains(v.Message))) return true;
+
         draft.Proposed.Add(entry);
-        draft.Sheet[field.Key] = id;
+        draft.Sheet[key] = picks ?? (object)id;
+        return true;
     }
 
     // How an entry is built, without its words: for each of its tables, the levels its rows come at.
@@ -459,6 +602,10 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
 
     private static List<EquipmentOption> ChoiceOptions(IReadOnlyList<ContentEntry> entries) =>
         entries.Take(MaxChoiceOptions).Select(e => new EquipmentOption(e.Id, e.Name)).ToList();
+
+    // The keys of a ranked list (a skill, an attribute) are not entries: the key is the id the model answers with.
+    private static List<EquipmentOption> ChoiceOptions(IReadOnlyList<ChoiceOption> options) =>
+        options.Take(MaxChoiceOptions).Select(o => new EquipmentOption(o.Key, o.Label)).ToList();
 
     /// <summary>The sheet <paramref name="draft"/> becomes when it is saved, as far as the rules read it.</summary>
     private Dictionary<string, object> SheetOf(CharacterDraft draft, CampaignDocument campaign, SystemDefinition system, SheetRuleEngine engine)
@@ -744,3 +891,6 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         _ => "non-player character"
     };
 }
+
+/// <summary>When the character drafter writes a homebrew entry for the character.</summary>
+public enum WriteEntries { Off, WhenNothingFits, Always }

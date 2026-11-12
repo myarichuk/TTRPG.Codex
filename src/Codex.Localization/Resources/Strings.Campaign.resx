@@ -1306,6 +1306,8 @@
   <data name="Campaign.Vault.NoHistory" xml:space="preserve"><value>No history written.</value></data>
   <data name="Campaign.Vault.RulesOk" xml:space="preserve"><value>The sheet breaks none of this campaign's rules.</value></data>
   <data name="Campaign.Vault.RulesIssues" xml:space="preserve"><value>This campaign's rules flag these on the sheet:</value></data>
+  <data name="Campaign.Vault.ChoicesOpen" xml:space="preserve"><value>Choices the character has not finished. They do not stop you accepting:</value></data>
+  <data name="Campaign.Vault.ChoicesMade" xml:space="preserve"><value>Choices the character made:</value></data>
   <data name="Campaign.Vault.BringsHint" xml:space="preserve"><value>These entries are the character's own: no pack has them. Decide for each one. To have an entry changed, turn the request down and ask the player to send it again.</value></data>
   <data name="Campaign.Vault.BringAdd" xml:space="preserve"><value>Add to the Library</value></data>
   <data name="Campaign.Vault.BringUse" xml:space="preserve"><value>Use one the campaign has</value></data>

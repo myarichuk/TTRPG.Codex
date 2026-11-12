@@ -160,7 +160,7 @@ else
                             var full = CanSeeExact(actorId);
                             <TableCard @key="actorId" Campaign="Campaign" Actor="actor" State="snapshot.Actor(actorId)" Definition="Definition"
                                        Evaluation="@(full ? EvaluationOf(actor) : null)" Blueprint="@(Access.IsDm ? BlueprintOf(actor) : null)"
-                                       Full="full" CanAct="CanTrackSlots(actorId)" Expanded="IsCardOpen(actor)" OnToggle="() => ToggleCard(actorId)"
+                                       Full="full" CanAct="CanTrackSlots(actorId)" IsDm="Access.IsDm" Expanded="IsCardOpen(actor)" OnToggle="() => ToggleCard(actorId)"
                                        CurrentUserId="@CurrentUserId" CheckDie="@(Definition?.Dice.Check ?? "1d20")" Send="SendAsync" />
                         }
                     </div>
@@ -177,7 +177,7 @@ else
             {
                 <QuickAddPanel SystemId="@Campaign.SystemId" OnAdd="QuickAddMonsterAsync" />
 
-                @if (Rests.Count > 0)
+                @if (Rests.Count > 0 || DawnMatters)
                 {
                     <section class="panel" aria-labelledby="party-rest-heading">
                         <div class="panel-title"><h3 id="party-rest-heading">@L["Combat.PartyRest"]</h3></div>
@@ -186,6 +186,10 @@ else
                             @foreach (var rest in Rests)
                             {
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"party-rest-{Slug(rest)}")" OnClick="() => PartyRestAsync(rest)">@L["Combat.PartyRestButton", RestLabel(rest)]</CodexButton>
+                            }
+                            @if (DawnMatters)
+                            {
+                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="party-dawn" OnClick="DawnAsync">@L["Combat.DawnButton"]</CodexButton>
                             }
                         </div>
                     </section>
@@ -610,19 +614,22 @@ else
         }
     }
 
+    // Slot pools only: a feature's counter of uses says on the sheet how each rest refills it (all, a part, a roll), and the
+    // rest command applies those rules itself, so the table need not evaluate the sheet.
     private List<string> SlotKeysRestoredBy(string actorId, string rest) =>
         SlotKeys(actorId).Where(key => SlotPoolRules.Any(r => r.Owns(key) && r.RecoversOn.Contains(rest, StringComparer.OrdinalIgnoreCase) && !key.EndsWith("_Max", StringComparison.Ordinal)))
-            .Concat(UsesRestoredBy(actorId, rest))
             .ToList();
 
-    // A feature's counter of uses says on the sheet which rests refill it, so the table need not evaluate the sheet.
-    private IEnumerable<string> UsesRestoredBy(string actorId, string rest)
+    /// <summary>Whether any player character has a counter that refills at dawn, so the table offers the GM that moment.</summary>
+    private bool DawnMatters =>
+        Actors.Any(a => a.Kind == ActorKind.PlayerCharacter && a.Sheet.Keys.Any(k => SheetRuleEngine.IsUsesKey(k) && FeatureRecovery.For(a.Sheet, k, FeatureRecovery.Dawn).Count > 0));
+
+    private async Task DawnAsync()
     {
-        var sheet = Actors.FirstOrDefault(a => a.Id == actorId)?.Sheet;
-        if (sheet == null) return Enumerable.Empty<string>();
-        return (snapshot.Actor(actorId)?.Pools?.Keys ?? Enumerable.Empty<string>())
-            .Where(key => SheetRuleEngine.IsUsesKey(key) && SheetRuleEngine.UsesRests(sheet, key).Contains(rest, StringComparer.OrdinalIgnoreCase))
-            .ToList();
+        foreach (var actor in Actors.Where(a => a.Kind == ActorKind.PlayerCharacter && snapshot.Actor(a.Id) != null))
+        {
+            await SendAsync(new DawnCommand(actor.Id));
+        }
     }
 
     private (int Current, int Max, int? Sides)? HitDicePool(string actorId)

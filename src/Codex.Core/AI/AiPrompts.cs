@@ -155,10 +155,11 @@ public sealed record ChoicesRequest(string Character, string SystemName, IReadOn
 /// <summary>A Library entry to write for one character, where nothing the Library has fits them.</summary>
 /// <param name="TypeLabel">What the system calls the type ("subclass").</param>
 /// <param name="Fields">The type's fields the model fills; a field the rules already settle is left out of them.</param>
-/// <param name="Guide">How a feature states what it does on the sheet (<c>FeatureGrantGuide</c>), when the system reads features off this type.</param>
+/// <param name="Guide">How the entry states what it does on the sheet (<c>EntryGuide</c>: a feature's grants, what a spell or weapon rolls), when the system reads them off this type.</param>
 /// <param name="Shape">An existing entry's outline (its rows by level), so the new one has the same build; never its text.</param>
 /// <param name="Settled">What the rules settle about the entry, as sentences ("class: warlock").</param>
-public sealed record EntryRequest(string Character, string SystemName, string TypeLabel, IReadOnlyList<FieldSpec> Fields, string? Guide, string? Shape, IReadOnlyList<string> Settled, string? Language = null);
+/// <param name="Hints">Limits the rules put on the entry that the writer still chooses within ("level: at most 3").</param>
+public sealed record EntryRequest(string Character, string SystemName, string TypeLabel, IReadOnlyList<FieldSpec> Fields, string? Guide, string? Shape, IReadOnlyList<string> Settled, string? Language = null, IReadOnlyList<string>? Hints = null);
 
 /// <summary>An entry a model wrote: its name, its text and its properties, keyed and coerced like the type's fields.</summary>
 public sealed record DraftEntry(string Name, string? Description, Dictionary<string, object> Properties);
@@ -690,6 +691,7 @@ public static class AiPrompts
         var sb = new StringBuilder();
         sb.AppendLine("Character: " + r.Character.Trim());
         if (r.Settled.Count > 0) sb.AppendLine().AppendLine("Already settled (do not set these): " + string.Join("; ", r.Settled));
+        if (r.Hints is { Count: > 0 }) sb.AppendLine().AppendLine("Keep to these limits: " + string.Join("; ", r.Hints));
         sb.AppendLine().AppendLine("Fields (key: label, type, options):");
         foreach (var f in r.Fields)
         {

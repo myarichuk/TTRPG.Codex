@@ -420,6 +420,13 @@
             return;
         }
 
+        // What the features grant to the ranked lists must hold together: a choice id is used once in the entry, a rank is one the list has.
+        if (Ctx.System is { } checkedSystem && FeatureGrantCheck.Problems(checkedSystem, draft.ToEntry(), requireId: false) is { Count: > 0 } grantProblems)
+        {
+            error = string.Join(" ", grantProblems);
+            return;
+        }
+
         saving = true;
         error = null;
         try
