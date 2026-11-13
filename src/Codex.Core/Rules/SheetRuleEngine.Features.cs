@@ -46,10 +46,12 @@ public sealed record FeatureUses(string? Key, string Max, IReadOnlyList<string> 
 
 /// <summary>A feature the sheet has now: a row of a class, subclass or species entry at or below the sheet's level, or a
 /// picked entry that is one. <see cref="View"/> is the sheet as that feature's class sees it (its own class level). <see cref="Copy"/>
-/// is which copy of a repeatable pick this is (1 for the first): a choice of the second copy of a feat is stored apart.</summary>
+/// is which copy of a repeatable pick this is (1 for the first): a choice of the second copy of a feat is stored apart.
+/// <see cref="OnKind"/> is true for a feature that comes from a sheet kind's own sources (<c>sheetKinds[].features</c>): its modifiers go
+/// to the kind's <see cref="SheetModel"/>, never to <c>sheetRules</c>' targets.</summary>
 public sealed record ActiveFeature(string Name, string? Description, ContentEntry Source, int? Level, IReadOnlyDictionary<string, object> View, string? LevelKey,
     IReadOnlyList<FeatureModifier> Modifiers, IReadOnlyList<FeatureAdd> Adds, FeatureUses? Uses, FeatureSpend? Spends = null, int Copy = 1,
-    string? Scope = null, string? ChosenBy = null)
+    string? Scope = null, string? ChosenBy = null, bool OnKind = false)
 {
     public bool Grants => Modifiers.Count > 0 || Adds.Count > 0 || Uses != null || Spends != null;
 
@@ -211,8 +213,62 @@ public sealed partial class SheetRuleEngine
     /// are features; the sheet's own stored picks decide, so this is the one place that selection is made.</summary>
     internal IReadOnlyList<ActiveFeature> CollectFeatures(IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected)
     {
-        if (Rules is not { Features.Count: > 0 } rules) return Array.Empty<ActiveFeature>();
+        var found = new List<ActiveFeature>();
+        var copies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // across every list: a feat in two lists is copy 1 and copy 2
+        if (Rules is { Features.Count: > 0 } rules) CollectRuleFeatures(rules, sheet, collected, found, copies);
+        // A sheet kind's own sources come after sheetRules': the same selection, over the kind's lists.
+        found.AddRange(KindFeatures(system, resolver, sheet, collected, copies));
+        return found;
+    }
 
+    /// <summary>
+    /// The features a sheet kind's own sources (<c>sheetKinds[].features</c>) give the sheet: for each <c>list</c> source, one feature (or
+    /// the rows of a property) per pick of that kind's list. A pick is an id, or a map with an <c>id</c>, as <see cref="SheetModel"/> reads
+    /// picks. Each is an <see cref="ActiveFeature"/> with <see cref="ActiveFeature.OnKind"/> set.
+    /// <para>It reads the raw sheet only (pick ids and <c>choice__</c> keys), never a worked-out value, so <see cref="SheetModel"/> can call
+    /// it while it works values out without recursing.</para>
+    /// </summary>
+    /// <param name="collected">Receives the row choices behind the features; null: not wanted.</param>
+    /// <param name="copies">How many of each entry have been counted, to number the copies of a repeated pick; null: a fresh count.</param>
+    public static IReadOnlyList<ActiveFeature> KindFeatures(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet,
+        FeatureCollection? collected = null, Dictionary<string, int>? copies = null)
+    {
+        if (SheetLayout.KindOf(system, sheet) is not { Features.Count: > 0 } kind) return Array.Empty<ActiveFeature>();
+
+        copies ??= new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var found = new List<ActiveFeature>();
+        foreach (var source in kind.Features)
+        {
+            if (source.List == null || kind.Lists.FirstOrDefault(l => l.Key == source.List) is not { Type: { } type } list) continue;
+            foreach (var id in PickIds(sheet, list.Key))
+            {
+                if (resolver.Resolve(type, id) is not { } entry) continue;
+                var copy = copies[entry.Id] = copies.GetValueOrDefault(entry.Id) + 1;
+                AddFeatures(found, source, entry, sheet, sheet, collected, copy);
+            }
+        }
+
+        return found.Select(f => f with { OnKind = true }).ToList();
+    }
+
+    /// <summary>The ids of the picks stored under <paramref name="key"/> on a sheet kind: each element is an id, or a map with an <c>id</c>.</summary>
+    private static IEnumerable<string> PickIds(IReadOnlyDictionary<string, object> sheet, string key)
+    {
+        if (!sheet.TryGetValue(key, out var raw) || raw is not System.Collections.IEnumerable picks || raw is string) yield break;
+        foreach (var pick in picks)
+        {
+            var id = pick switch
+            {
+                string text => text,
+                IDictionary<string, object> map when map.TryGetValue("id", out var value) => value?.ToString(),
+                _ => null
+            };
+            if (!string.IsNullOrEmpty(id)) yield return id;
+        }
+    }
+
+    private void CollectRuleFeatures(SheetRules rules, IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, List<ActiveFeature> found, Dictionary<string, int> copies)
+    {
         var views = ClassViews(sheet, new List<ClassLevel>());
         var perClass = new HashSet<string>(StringComparer.Ordinal);
         if (rules.Multiclass is { } multiclass)
@@ -221,8 +277,6 @@ public sealed partial class SheetRuleEngine
             if (multiclass.SubclassField != null) perClass.Add(multiclass.SubclassField);
         }
 
-        var found = new List<ActiveFeature>();
-        var copies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // across every list: a feat in two lists is copy 1 and copy 2
         foreach (var source in rules.Features)
         {
             if (source.List != null)
@@ -245,8 +299,6 @@ public sealed partial class SheetRuleEngine
                 }
             }
         }
-
-        return found;
     }
 
     private static void AddFeatures(List<ActiveFeature> found, FeatureSource source, ContentEntry entry, IReadOnlyDictionary<string, object> view,
@@ -516,7 +568,7 @@ public sealed partial class SheetRuleEngine
     private SheetEvaluation WorkedOutDerived(IReadOnlyDictionary<string, object> sheet)
     {
         var scratch = new SheetEvaluation();
-        if (Rules!.Derived.Count > 0) EvaluateDerived(sheet, scratch);
+        if (Rules is { Derived.Count: > 0 }) EvaluateDerived(sheet, scratch);
         return scratch;
     }
 
@@ -546,7 +598,8 @@ public sealed partial class SheetRuleEngine
             if (warned.Add(name)) result.Warnings.Add(new RuleViolation("features", $"{name}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.", "Actor.Rule.FeatureError", new object?[] { name }));
         }
 
-        foreach (var group in features.SelectMany(f => f.Modifiers.Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
+        // A sheet kind's features put their modifiers in the kind's own model (SheetModel.Modifiers), not on sheetRules' targets.
+        foreach (var group in features.Where(f => !f.OnKind).SelectMany(f => f.Modifiers.Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
         {
             var kind = KindOf(group.Key);
             if (kind == TargetKind.Unknown)
@@ -614,7 +667,7 @@ public sealed partial class SheetRuleEngine
             var key = UsesPrefix + Slug(spend.Key);
             ActionCost? cost = null;
             if (result.Counters.FirstOrDefault(c => c.Key == key) is { } counter) cost = ActionCost.OfCounter(counter, amount.Value, null);
-            else if (sheet.ContainsKey(spend.Key) && (system.Resources.Any(r => r.Key == spend.Key) || Rules!.SlotPools.Any(p => p.Owns(spend.Key))))
+            else if (sheet.ContainsKey(spend.Key) && (system.Resources.Any(r => r.Key == spend.Key) || Rules?.SlotPools.Any(p => p.Owns(spend.Key)) == true))
             {
                 cost = ActionCost.FromPool(spend.Key, amount.Value, SystemDefinition.PoolMaxKey(system, spend.Key), system.Resources.FirstOrDefault(r => r.Key == spend.Key)?.Label ?? spend.Key, null);
             }

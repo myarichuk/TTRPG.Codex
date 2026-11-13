@@ -260,6 +260,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in ValidateKindFeatures(definition))
+        {
+            yield return error;
+        }
+
         if (definition.Vitals?.Concentration is { } concentration
             && RequiredAttributeError(definition, "vitals.concentration.saveAttribute", concentration.SaveAttribute) is { } concentrationError)
         {
@@ -681,6 +686,46 @@ public static class SystemDefinitionLoader
             if (!string.IsNullOrWhiteSpace(moment.OnSet) && !inputs.Contains(moment.OnSet))
             {
                 yield return $"moment '{moment.Key}': onSet '{moment.OnSet}' is not an input value of any sheet kind.";
+            }
+        }
+    }
+
+    /// <summary>The problems with the feature sources of the system's sheet kinds: only <c>list</c> sources, of a list the kind has and
+    /// that holds entries; no <c>field</c> or <c>byField</c>; a <c>choose</c> needs a <c>property</c> of rows; and a list that is a source
+    /// may not also have <c>modifiersFrom</c> (its modifiers would count twice).</summary>
+    private static IEnumerable<string> ValidateKindFeatures(SystemDefinition definition)
+    {
+        foreach (var kind in definition.SheetKinds.Where(k => k.Features.Count > 0))
+        {
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var source in kind.Features)
+            {
+                var where = $"sheetKinds.{kind.Kind}.features ({source.List ?? source.Field})";
+                if (source.Field != null) yield return $"{where}: a sheet kind has no reference fields, so a source names a list, not a field.";
+                if (source.ByField != null) yield return $"{where}: byField is not read on a sheet kind (a source may read only what the sheet stores, not a worked-out value).";
+                var list = source.List == null ? null : kind.Lists.FirstOrDefault(l => l.Key == source.List);
+                if (source.List == null)
+                {
+                    if (source.Field == null) yield return $"{where}: a source needs a list.";
+                    continue;
+                }
+
+                if (list == null)
+                {
+                    yield return $"{where}: '{source.List}' is not one of the kind's lists.";
+                    continue;
+                }
+
+                if (list.Type == null) yield return $"{where}: the list '{list.Key}' holds plain records, not entries, so it carries no features.";
+                if (list.ModifiersFrom != null) yield return $"{where}: the list '{list.Key}' also has modifiersFrom, so its modifiers would count twice. Use one or the other.";
+                if (source.Choose == null) continue;
+                if (source.Property == null) yield return $"{where}: choose picks one of an entry's rows, so the source needs a property that holds rows.";
+                foreach (var error in CheckRowChoose(definition, source.Choose, where)) yield return error;
+                var scope = source.Entries.Count == 0 ? new[] { "*" } : source.Entries.ToArray();
+                if (scope.Any(entry => !seen.Add($"{source.List}/{entry}/{source.Choose.Id}")))
+                {
+                    yield return $"{where}: the choice id '{source.Choose.Id}' is used twice for the same entry.";
+                }
             }
         }
     }

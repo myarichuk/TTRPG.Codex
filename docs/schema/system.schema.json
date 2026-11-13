@@ -2983,6 +2983,13 @@
           },
           "description": "Lists of picks (classes, feats, items), each with fields of its own per pick."
         },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FeatureSource"
+          },
+          "description": "Where the kind's sheets get features (special abilities, upgrades) from, as `sheetRules.features` does for a system with sheet rules; on a sheet kind a source names a `list` of the kind's `lists` and nothing else (no `field`, no `byField`). Each pick's own properties carry the grants: `modifiers` (targets are the kind's values, keyed entries or groups), `uses` and `spends` (counters), `options` with `choose`, and `adds` with a `choice` over a keyed list. A list that is a source may not also have `modifiersFrom`, or its modifiers would count twice."
+        },
         "keyedLists": {
           "type": "array",
           "items": {
