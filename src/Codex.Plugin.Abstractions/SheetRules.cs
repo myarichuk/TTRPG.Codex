@@ -189,6 +189,14 @@ public class FeatureSource
     /// <summary>A row's column saying from which level it applies. Default <c>level</c>; a row without it always applies.</summary>
     public string LevelColumn { get; set; } = "level";
 
+    /// <summary>With <see cref="Field"/> on a source read once per class (<c>class</c>, <c>subclass</c> under multiclass rules): read for the first
+    /// class only. A grant on the class entry itself (the skills its first level gives, which a second class does not repeat) is such a source.</summary>
+    public bool FirstOnly { get; set; }
+
+    /// <summary>The name of the feature an entry becomes when the source has no <see cref="Property"/> (the entry is one feature). Default: the entry's own name.
+    /// A class entry that carries a grant of its own is not best named "Rogue" in "Rogue (Rogue): choose 4 more skills".</summary>
+    public string? Label { get; set; }
+
     /// <summary>The sheet value a row's level is compared with (<c>classLevel</c>, <c>level</c>). None: rows are not gated.</summary>
     public string? ByField { get; set; }
 

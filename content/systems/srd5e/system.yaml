@@ -216,6 +216,9 @@ sheetRules:
   # beside its name and description. A modifier's type "base" sets a floor (at least 120) or, on armor class, another
   # unarmored defense; without a type it adds. Entries without any of these stay text, as before.
   features:
+    # The first class's own grants, the skills its first level lets you pick (a class entry's `adds`). First, so the class's pick takes
+    # the player's ticks before the picks of the species and of later rows do.
+    - { field: class,    firstOnly: true, label: Skill Proficiencies }
     - { field: class,    property: features, byField: classLevel }
     - { field: subclass, property: features, byField: classLevel }
     # Species rows are gated by the character level (a trait row's `level: 5`, and an add's `level:` on a lineage row).

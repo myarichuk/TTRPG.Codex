@@ -18,7 +18,11 @@ public class RankedListTests : IAsyncLifetime
         _loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(_registry));
     }
 
-    public async Task InitializeAsync() => await _loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
+    public async Task InitializeAsync()
+    {
+        await _loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
+        ClassSkillsSettled.LeaveOut(_loader.GetDefinition("srd5e")!);
+    }
 
     public Task DisposeAsync() => Task.CompletedTask;
 
@@ -115,7 +119,7 @@ public class RankedListTests : IAsyncLifetime
 
         // Nothing stored was rewritten, and nothing new was stored.
         Assert.Equal(before, sheet.Where(p => p.Key.StartsWith("skill")).ToDictionary(p => p.Key, p => string.Join(",", SheetRuleEngine.RawList(sheet, p.Key))));
-        Assert.DoesNotContain(sheet.Keys, k => k.StartsWith(SheetRuleEngine.ChoicePrefix) || k.StartsWith(SheetRuleEngine.GrantedPrefix + "skill") || k == SkillRules.DefaultSaveKey);
+        Assert.DoesNotContain(sheet.Keys, k => (k.StartsWith(SheetRuleEngine.ChoicePrefix) && !k.EndsWith("__" + SheetRuleEngine.ClassSkillsChoiceId)) || k.StartsWith(SheetRuleEngine.GrantedPrefix + "skill") || k == SkillRules.DefaultSaveKey);
         Assert.Empty(evaluation.PendingChoices);
     }
 

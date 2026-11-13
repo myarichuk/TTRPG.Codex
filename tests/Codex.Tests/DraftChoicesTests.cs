@@ -37,7 +37,7 @@ public class DraftChoicesTests : IAsyncLifetime
 
     private static CharacterDraft Warlock(int level, string? subclass = null)
     {
-        var sheet = new Dictionary<string, object> { ["class"] = "warlock", ["level"] = (long)level, ["cha"] = 15L };
+        var sheet = new Dictionary<string, object> { ["class"] = "warlock", ["level"] = (long)level, ["cha"] = 15L, ["choice__warlock__class-skills"] = new List<object> { "deception", "intimidation" } };
         if (subclass != null) sheet["subclass"] = subclass;
         return new CharacterDraft("Ossic Varn", sheet, "A pirate who licked a frog.", null);
     }
@@ -86,7 +86,7 @@ public class DraftChoicesTests : IAsyncLifetime
     public async Task ACharacterWithNothingToChoose_CostsNoCall_AndAFailedCallKeepsTheDraft()
     {
         var quiet = new QueueChat();
-        var fighter = new CharacterDraft("Brakka", new Dictionary<string, object> { ["class"] = "barbarian", ["level"] = 1L, ["background"] = "criminal", ["originFeat"] = "alert" }, null, null);
+        var fighter = new CharacterDraft("Brakka", new Dictionary<string, object> { ["class"] = "barbarian", ["level"] = 1L, ["background"] = "criminal", ["originFeat"] = "alert", ["choice__barbarian__class-skills"] = new List<object> { "athletics", "intimidation" } }, null, null);
         await Features().ChooseAsync(new AiAssistant(quiet), fighter, "a smith", new CampaignDocument { SystemId = "srd5e" }, _loader.GetDefinition("srd5e")!, new RegistryResolver(_registry), CancellationToken.None);
         Assert.Empty(quiet.Prompts);
 
@@ -270,7 +270,7 @@ public class DraftChoicesTests : IAsyncLifetime
     public async Task AHighLevelCasterWithManyOpenSlots_GetsNoMoreThanTwoEntriesWritten()
     {
         var chat = new QueueChat("""{"choices": {}}""", """{"name": "The Quiet Margin", "properties": {}}""", SpellReply, SpellReply);
-        var draft = new CharacterDraft("Isolde", new Dictionary<string, object> { ["class"] = "wizard", ["level"] = 9L, ["int"] = 16L }, null, null);
+        var draft = new CharacterDraft("Isolde", new Dictionary<string, object> { ["class"] = "wizard", ["level"] = 9L, ["int"] = 16L, ["choice__wizard__class-skills"] = new List<object> { "history", "religion" }, ["choice__wizard__scholar-2"] = new List<object> { "history" } }, null, null);
 
         await Features().ChooseAsync(new AiAssistant(chat), draft, "a scholar", new CampaignDocument { SystemId = "srd5e" }, _loader.GetDefinition("srd5e")!, new RegistryResolver(_registry), CancellationToken.None, write: WriteEntries.WhenNothingFits);
 
@@ -283,7 +283,7 @@ public class DraftChoicesTests : IAsyncLifetime
     public async Task ASlotWhoseRuleNamesAnotherEntrysProperty_IsNotWrittenFor()
     {
         var chat = new QueueChat("""{"choices": {}}""");
-        var draft = new CharacterDraft("Brakka", new Dictionary<string, object> { ["class"] = "barbarian", ["level"] = 1L, ["background"] = "criminal" }, null, null);
+        var draft = new CharacterDraft("Brakka", new Dictionary<string, object> { ["class"] = "barbarian", ["level"] = 1L, ["background"] = "criminal", ["choice__barbarian__class-skills"] = new List<object> { "athletics", "intimidation" } }, null, null);
 
         await Features().ChooseAsync(new AiAssistant(chat), draft, "a smith", new CampaignDocument { SystemId = "srd5e" }, _loader.GetDefinition("srd5e")!, new RegistryResolver(_registry), CancellationToken.None, write: WriteEntries.WhenNothingFits);
 
@@ -299,7 +299,7 @@ public class DraftChoicesTests : IAsyncLifetime
         var system = _loader.GetDefinition("srd5e")!;
         var sheet = () => new Dictionary<string, object> { ["class"] = "barbarian", ["level"] = 3L, ["background"] = "criminal", ["originFeat"] = "alert",
         // Primal Knowledge is already picked, so the only thing left to write is the subclass.
-        ["choice__barbarian__primal-knowledge-3"] = new List<object> { "athletics" } };
+        ["choice__barbarian__primal-knowledge-3"] = new List<object> { "nature" }, ["choice__barbarian__class-skills"] = new List<object> { "athletics", "intimidation" } };
         var chat = new QueueChat("""{"name": "Path of the Hollow Drum", "description": "Rage keeps time.", "properties": {"features": [{"name": "Beat", "level": 3, "description": "A pulse."}]}}""");
         var due = new CharacterDraft("Brakka", sheet(), null, null);
 
@@ -381,7 +381,7 @@ public class DraftChoicesTests : IAsyncLifetime
 
     private static CharacterDraft Sorcerer(params string[] proficient) => new("Mira Vael", new Dictionary<string, object>
     {
-        ["class"] = "sorcerer", ["level"] = 5L, ["subclass"] = "stacker", ["cha"] = 16L,
+        ["class"] = "sorcerer", ["level"] = 5L, ["subclass"] = "stacker", ["cha"] = 16L, ["choice__sorcerer__class-skills"] = new List<object> { "deception", "intimidation" },
         ["skillProficiencies"] = proficient.Cast<object>().ToList()
     }, "A scholar of storms.", null);
 
@@ -418,7 +418,7 @@ public class DraftChoicesTests : IAsyncLifetime
 
     private const string LineageKey = "choice__dragonborn__lineage";
 
-    private static CharacterDraft Dragonborn() => new("Ka Vrash", new Dictionary<string, object> { ["class"] = "fighter", ["level"] = 1L, ["species"] = "dragonborn" }, "A scarred duelist.", null);
+    private static CharacterDraft Dragonborn() => new("Ka Vrash", new Dictionary<string, object> { ["class"] = "fighter", ["level"] = 1L, ["species"] = "dragonborn", ["choice__fighter__class-skills"] = new List<object> { "athletics", "intimidation" } }, "A scarred duelist.", null);
 
     [Fact]
     public async Task ARowChoice_IsAskedWithTheRowsAsOptions_AndTheAnswerIsWrittenAsTheRowsName()

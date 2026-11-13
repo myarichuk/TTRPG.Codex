@@ -704,8 +704,12 @@ Built as designed, on the branch stacked on the sheet-kind feature sources. What
 
 - **E1, E1b, E2, E3 are in.** E2 adopts only when the first class's skill count is known (one class, a number in its entry): the ticks beyond
   that count are the picks. Otherwise the choice stays open.
-- **Class skill picks are not choices.** They stay the player's ticks, capped by `classChoicesProperty` (Q8, as the plan first said): the
-  class entry has no row to carry a grant, and row counts may not change.
+- **Class skill picks are choices** (Q8, as decided). The importer writes `adds: [{ to: skills, choice: class-skills, choose: n, from: [...] }]`
+  on each class entry from its `skillChoices` text (`ClassSkills.cs`), and the system reads it through a whole-entry source
+  `{ field: class, firstOnly: true, label: Skill Proficiencies }`, the first class only (a second class adds none; row counts do not change).
+  It is listed before every other source, so it adopts the player's ticks within its `from` list first: all of them is Confirm, fewer keeps
+  them and asks for the rest; later choices (Keen Senses and the rest) adopt what is spare. Its picks are not marked independent, so
+  `classChoicesProperty`'s cap still reads the ticks of a sheet that has not confirmed. `skillChoices` stays.
 - **`gate: N`** in the grants file gives a species row the level it applies from (Draconic Flight, Large Form).
 - **Q4 is answered at the table, not with a version stamp.** `CampaignRuntimeManager` now gives a runtime the campaign's library for any
   system with features, not only sheet kinds, and the table's counter pass writes counters the way the sheet page does

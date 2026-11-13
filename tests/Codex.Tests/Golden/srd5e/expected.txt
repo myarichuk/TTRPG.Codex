@@ -72,6 +72,7 @@ passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
+warning choice__barbarian__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Barbarian): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## barbarian-11
@@ -161,6 +162,7 @@ passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
+warning choice__barbarian__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Barbarian): your 2 skills already match this choice. Confirm them.
 warning choice__barbarian__primal-knowledge-3 Actor.Rule.ChoicePending: Primal Knowledge (Barbarian): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -271,6 +273,7 @@ passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 9
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
+warning choice__barbarian__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Barbarian): your 2 skills already match this choice. Confirm them.
 warning choice__barbarian__primal-knowledge-3 Actor.Rule.ChoicePending: Primal Knowledge (Barbarian): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -354,6 +357,7 @@ passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
+warning choice__barbarian__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Barbarian): your 2 skills already match this choice. Confirm them.
 warning choice__barbarian__primal-knowledge-3 Actor.Rule.ChoicePending: Primal Knowledge (Barbarian): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -435,6 +439,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Bard cha dc=12 attack=+4
+warning choice__bard__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Bard): choose 3 more skills.
 
 ## bard-11
 sheet HP = 102
@@ -536,6 +541,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Bard cha dc=16 attack=+8
+warning choice__bard__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Bard): choose 3 more skills.
 warning choice__college-of-lore__bonus-proficiencies-3 Actor.Rule.ChoicePending: Bonus Proficiencies (College of Lore): choose 3 more skills.
 warning choice__bard__expertise-2 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
 warning choice__bard__expertise-9 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
@@ -660,6 +666,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Bard cha dc=19 attack=+11
+warning choice__bard__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Bard): choose 3 more skills.
 warning choice__college-of-lore__bonus-proficiencies-3 Actor.Rule.ChoicePending: Bonus Proficiencies (College of Lore): choose 3 more skills.
 warning choice__bard__expertise-2 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
 warning choice__bard__expertise-9 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
@@ -751,6 +758,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Bard cha dc=14 attack=+6
+warning choice__bard__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Bard): choose 3 more skills.
 warning choice__college-of-lore__bonus-proficiencies-3 Actor.Rule.ChoicePending: Bonus Proficiencies (College of Lore): choose 3 more skills.
 warning choice__bard__expertise-2 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
 
@@ -842,6 +850,7 @@ violation cantrips Actor.Rule.Limit: Cantrips: 7 picked, but only 3 allowed at t
 violation spells Actor.Rule.Pick: Prepared spells: Fireball - not on your class's spell list.
 violation spells Actor.Rule.Pick: Prepared spells: Fireball - above the highest spell level you can cast.
 violation inventory Actor.Rule.OneShield: Equipment: only one shield can be carried in hand.
+warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning inventory Actor.Rule.ArmorUntrained: Plate Armor: Cleric isn't trained with heavy armor. Without training you have disadvantage on checks, attacks and saves that use Strength or Dexterity, and can't cast spells.
 warning inventory Actor.Rule.ArmorStealth: Plate Armor: gives disadvantage on Stealth checks.
 
@@ -965,6 +974,7 @@ passive passiveInsight 15
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=13 attack=+5
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -1071,6 +1081,7 @@ passive passiveInsight 19
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=17 attack=+9
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -1195,6 +1206,7 @@ passive passiveInsight 21
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=19 attack=+11
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -1284,6 +1296,7 @@ passive passiveInsight 17
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=15 attack=+7
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -1848,6 +1861,7 @@ passive passiveInsight 12
 passive passiveInvestigation 9
 spellcasting Druid wis dc=12 attack=+4
 warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
+warning choice__druid__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Druid): your 2 skills already match this choice. Confirm them.
 
 ## druid-11
 sheet HP = 91
@@ -1959,6 +1973,7 @@ passive passiveInvestigation 9
 spellcasting Druid wis dc=16 attack=+8
 warning choice__circle-of-the-land__land Actor.Rule.ChoiceRowPending: Circle of the Land Spells (Circle of the Land): choose 1 more.
 warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
+warning choice__druid__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Druid): your 2 skills already match this choice. Confirm them.
 
 ## druid-20
 sheet HP = 203
@@ -2088,6 +2103,7 @@ passive passiveInvestigation 9
 spellcasting Druid wis dc=19 attack=+11
 warning choice__circle-of-the-land__land Actor.Rule.ChoiceRowPending: Circle of the Land Spells (Circle of the Land): choose 1 more.
 warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
+warning choice__druid__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Druid): your 2 skills already match this choice. Confirm them.
 
 ## druid-5
 sheet HP = 43
@@ -2182,6 +2198,7 @@ passive passiveInvestigation 9
 spellcasting Druid wis dc=14 attack=+6
 warning choice__circle-of-the-land__land Actor.Rule.ChoiceRowPending: Circle of the Land Spells (Circle of the Land): choose 1 more.
 warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
+warning choice__druid__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Druid): your 2 skills already match this choice. Confirm them.
 
 ## fighter-1
 sheet HP = 11
@@ -2252,6 +2269,7 @@ passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
 warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
+warning choice__fighter__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Fighter): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## fighter-11
@@ -2349,6 +2367,7 @@ passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
 warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
+warning choice__fighter__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Fighter): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## fighter-20
@@ -2459,6 +2478,7 @@ passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 9
 warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
+warning choice__fighter__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Fighter): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## fighter-5
@@ -2543,6 +2563,7 @@ passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
 warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
+warning choice__fighter__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Fighter): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## manual-fighter5
@@ -2619,6 +2640,7 @@ skill survival +1
 passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
+warning choice__fighter__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Fighter): your 2 skills already match this choice. Confirm them.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -2689,6 +2711,7 @@ skill survival +1
 passive passivePerception 11
 passive passiveInsight 13
 passive passiveInvestigation 9
+warning choice__rogue__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Rogue): your 4 skills already match this choice. Confirm them.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
 ## manual-wizard3-typed-scores
@@ -2768,6 +2791,7 @@ passive passiveInvestigation 16
 spellcasting Wizard int dc=16 attack=+8
 violation int Actor.Rule.ScoreMax: Intelligence: scores can't exceed 20.
 warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
+warning choice__wizard__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Wizard): choose 2 more skills.
 warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 
 ## monk-1
@@ -2831,6 +2855,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 12
 passive passiveInvestigation 9
+warning choice__monk__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Monk): your 2 skills already match this choice. Confirm them.
 
 ## monk-11
 sheet HP = 80
@@ -2917,6 +2942,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 12
 passive passiveInvestigation 9
+warning choice__monk__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Monk): your 2 skills already match this choice. Confirm them.
 
 ## monk-20
 sheet HP = 143
@@ -3015,6 +3041,7 @@ skill survival +5
 passive passivePerception 15
 passive passiveInsight 15
 passive passiveInvestigation 9
+warning choice__monk__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Monk): your 2 skills already match this choice. Confirm them.
 
 ## monk-5
 sheet HP = 38
@@ -3090,6 +3117,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 12
 passive passiveInvestigation 9
+warning choice__monk__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Monk): your 2 skills already match this choice. Confirm them.
 
 ## multiclass-cleric3-wizard2-fighter1
 sheet HP = 50
@@ -3194,6 +3222,7 @@ passive passiveInvestigation 11
 spellcasting Cleric wis dc=14 attack=+6
 spellcasting Wizard int dc=12 attack=+4
 violation cantrips Actor.Rule.LimitForClass: Cantrips: 5 for Wizard, but Wizard allows only 3 at this level.
+warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -3306,6 +3335,7 @@ passive passiveInvestigation 9
 spellcasting Paladin cha dc=13 attack=+5
 spellcasting Sorcerer cha dc=13 attack=+5
 violation spells Actor.Rule.LimitForClass: Prepared spells: 5 for Sorcerer, but Sorcerer allows only 4 at this level.
+warning choice__paladin__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Paladin): choose 1 more skills.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -3413,6 +3443,7 @@ passive passiveInsight 18
 passive passiveInvestigation 11
 spellcasting Ranger wis dc=16 attack=+8
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__rogue__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Rogue): your 4 skills already match this choice. Confirm them.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 warning choice__rogue__expertise-6 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
@@ -3520,6 +3551,7 @@ violation cantrips Actor.Rule.LimitForClass: Cantrips: 5 for Sorcerer, but Sorce
 violation spells Actor.Rule.LimitForClass: Prepared spells: 7 for Sorcerer, but Sorcerer allows only 6 at this level.
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 
 ## paladin-1
 sheet HP = 12
@@ -3593,6 +3625,7 @@ passive passivePerception 10
 passive passiveInsight 12
 passive passiveInvestigation 9
 spellcasting Paladin cha dc=12 attack=+4
+warning choice__paladin__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Paladin): your 2 skills already match this choice. Confirm them.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -3698,6 +3731,7 @@ passive passivePerception 10
 passive passiveInsight 14
 passive passiveInvestigation 9
 spellcasting Paladin cha dc=14 attack=+6
+warning choice__paladin__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Paladin): your 2 skills already match this choice. Confirm them.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -3823,6 +3857,7 @@ passive passivePerception 10
 passive passiveInsight 16
 passive passiveInvestigation 9
 spellcasting Paladin cha dc=18 attack=+10
+warning choice__paladin__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Paladin): your 2 skills already match this choice. Confirm them.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -3919,6 +3954,7 @@ passive passivePerception 10
 passive passiveInsight 13
 passive passiveInvestigation 9
 spellcasting Paladin cha dc=13 attack=+5
+warning choice__paladin__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Paladin): your 2 skills already match this choice. Confirm them.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -4006,6 +4042,7 @@ passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
 spellcasting Ranger wis dc=12 attack=+4
+warning choice__ranger__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Ranger): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## ranger-11
@@ -4112,6 +4149,7 @@ passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
 spellcasting Ranger wis dc=14 attack=+6
+warning choice__ranger__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Ranger): choose 1 more skills.
 warning choice__ranger__deft-explorer-2 Actor.Rule.ChoicePending: Deft Explorer (Ranger): choose 1 more skills.
 warning choice__ranger__expertise-9 Actor.Rule.ChoicePending: Expertise (Ranger): choose 2 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -4240,6 +4278,7 @@ passive passivePerception 15
 passive passiveInsight 21
 passive passiveInvestigation 9
 spellcasting Ranger wis dc=19 attack=+11
+warning choice__ranger__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Ranger): choose 1 more skills.
 warning choice__ranger__deft-explorer-2 Actor.Rule.ChoicePending: Deft Explorer (Ranger): choose 1 more skills.
 warning choice__ranger__expertise-9 Actor.Rule.ChoicePending: Expertise (Ranger): choose 2 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -4335,6 +4374,7 @@ passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
 spellcasting Ranger wis dc=13 attack=+5
+warning choice__ranger__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Ranger): choose 1 more skills.
 warning choice__ranger__deft-explorer-2 Actor.Rule.ChoicePending: Deft Explorer (Ranger): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -4405,6 +4445,7 @@ passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
+warning choice__rogue__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Rogue): choose 1 more skills.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
 ## rogue-11
@@ -4487,6 +4528,7 @@ passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
+warning choice__rogue__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Rogue): choose 1 more skills.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 warning choice__rogue__expertise-6 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
@@ -4586,6 +4628,7 @@ passive passivePerception 13
 passive passiveInsight 19
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
+warning choice__rogue__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Rogue): choose 1 more skills.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 warning choice__rogue__expertise-6 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
@@ -4661,6 +4704,7 @@ passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
+warning choice__rogue__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Rogue): choose 1 more skills.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
 ## sorcerer-1
@@ -4734,6 +4778,7 @@ passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=12 attack=+4
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
+warning choice__sorcerer__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Sorcerer): your 2 skills already match this choice. Confirm them.
 
 ## sorcerer-11
 sheet HP = 90
@@ -4843,6 +4888,7 @@ passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=16 attack=+8
 warning choice__draconic-sorcery__elemental-affinity Actor.Rule.ChoiceRowPending: Elemental Affinity (Draconic Sorcery): choose 1 more.
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
+warning choice__sorcerer__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Sorcerer): your 2 skills already match this choice. Confirm them.
 
 ## sorcerer-20
 sheet HP = 202
@@ -4978,6 +5024,7 @@ passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=19 attack=+11
 warning choice__draconic-sorcery__elemental-affinity Actor.Rule.ChoiceRowPending: Elemental Affinity (Draconic Sorcery): choose 1 more.
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
+warning choice__sorcerer__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Sorcerer): your 2 skills already match this choice. Confirm them.
 
 ## sorcerer-5
 sheet HP = 42
@@ -5073,6 +5120,7 @@ passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=14 attack=+6
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
+warning choice__sorcerer__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Sorcerer): your 2 skills already match this choice. Confirm them.
 
 ## warlock-1
 sheet HP = 12
@@ -5149,6 +5197,7 @@ passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Warlock cha dc=12 attack=+4
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 
 ## warlock-11
 sheet HP = 102
@@ -5254,6 +5303,7 @@ passive passiveInvestigation 9
 spellcasting Warlock cha dc=16 attack=+8
 warning choice__fiend-patron__fiendish-resilience Actor.Rule.ChoiceRowPending: Fiendish Resilience (Fiend Patron): choose 1 more.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 
 ## warlock-20
 sheet HP = 223
@@ -5375,6 +5425,7 @@ passive passiveInvestigation 9
 spellcasting Warlock cha dc=19 attack=+11
 warning choice__fiend-patron__fiendish-resilience Actor.Rule.ChoiceRowPending: Fiendish Resilience (Fiend Patron): choose 1 more.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 
 ## warlock-5
 sheet HP = 48
@@ -5462,6 +5513,7 @@ passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Warlock cha dc=14 attack=+6
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
+warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 
 ## wizard-1
 sheet HP = 9
@@ -5534,6 +5586,7 @@ passive passiveInsight 11
 passive passiveInvestigation 12
 spellcasting Wizard int dc=12 attack=+4
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__wizard__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Wizard): your 2 skills already match this choice. Confirm them.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 
 ## wizard-11
@@ -5629,6 +5682,7 @@ passive passiveInsight 11
 passive passiveInvestigation 14
 spellcasting Wizard int dc=16 attack=+8
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__wizard__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Wizard): your 2 skills already match this choice. Confirm them.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 
@@ -5743,6 +5797,7 @@ passive passiveInsight 11
 passive passiveInvestigation 15
 spellcasting Wizard int dc=19 attack=+11
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__wizard__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Wizard): your 2 skills already match this choice. Confirm them.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 
@@ -5826,5 +5881,6 @@ passive passiveInsight 11
 passive passiveInvestigation 13
 spellcasting Wizard int dc=14 attack=+6
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__wizard__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Wizard): your 2 skills already match this choice. Confirm them.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.

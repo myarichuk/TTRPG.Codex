@@ -19,7 +19,11 @@ public class RowChoiceTests : IAsyncLifetime
         _loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(_registry));
     }
 
-    public async Task InitializeAsync() => await _loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
+    public async Task InitializeAsync()
+    {
+        await _loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
+        ClassSkillsSettled.LeaveOut(_loader.GetDefinition("srd5e")!);
+    }
 
     public Task DisposeAsync() => Task.CompletedTask;
 
@@ -408,7 +412,8 @@ public class RowChoiceTests : IAsyncLifetime
 
         engine.PruneChoices(sheet);
 
-        Assert.DoesNotContain(sheet.Keys, k => k.StartsWith(SheetRuleEngine.ChoicePrefix));
+        // The class's own skill pick stays (the class is still on the sheet); the species' lineage pick goes.
+        Assert.DoesNotContain(sheet.Keys, k => k.StartsWith(SheetRuleEngine.ChoicePrefix) && !k.EndsWith("__" + SheetRuleEngine.ClassSkillsChoiceId));
     }
 
     // ---- Loader checks ----

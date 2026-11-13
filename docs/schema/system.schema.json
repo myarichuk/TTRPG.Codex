@@ -2729,6 +2729,18 @@
           ],
           "description": "A row's column saying from which level it applies. Default `level`; a row without it always applies."
         },
+        "firstOnly": {
+          "type": "boolean",
+          "description": "With Field on a source read once per class (`class`, `subclass` under multiclass rules): read for the first class only. A grant on the class entry itself (the skills its first level gives, which a second class does not repeat) is such a source."
+        },
+        "label": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The name of the feature an entry becomes when the source has no Property (the entry is one feature). Default: the entry's own name. A class entry that carries a grant of its own is not best named \"Rogue\" in \"Rogue (Rogue): choose 4 more skills\"."
+        },
         "byField": {
           "type": [
             "string",

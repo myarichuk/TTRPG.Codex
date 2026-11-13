@@ -290,7 +290,7 @@ public class SrdMappedGrantsTests : IAsyncLifetime
         Assert.Contains(evaluation.Warnings, w => w.Key == SheetRuleEngine.ChoicePendingKey);
         var stealth = evaluation.Skills.Single(s => s.Key == "stealth");
         Assert.False(stealth.Expert);
-        Assert.Empty(stealth.Sources!.Where(s => s.Kind == RankSourceKinds.Choice));
+        Assert.DoesNotContain(stealth.Sources!, s => s.Name.Contains("Expertise"));
     }
 
     [Fact]
@@ -303,12 +303,11 @@ public class SrdMappedGrantsTests : IAsyncLifetime
 
         var evaluation = Run(sheet);
 
-        // Proficiency is the player's own tick: only the second rank comes from Expertise.
+        // The class's own pick holds the proficiency the player ticked (Rogue: Skill Proficiencies); only the second rank comes from Expertise.
         var perception = evaluation.Skills.Single(s => s.Key == "perception");
-        Assert.Empty(perception.Sources!.Where(s => s.Kind == RankSourceKinds.Choice));
+        Assert.DoesNotContain(perception.Sources!, s => s.Name.Contains("Expertise"));
         var stealth = evaluation.Skills.Single(s => s.Key == "stealth");
-        Assert.Equal(new[] { RankSourceKinds.Choice }, stealth.Sources!.Select(s => s.Kind).ToArray());
-        Assert.Equal("Rogue: Expertise", stealth.Sources!.Single().Name);
+        Assert.Equal(new[] { "Rogue: Skill Proficiencies", "Rogue: Expertise" }, stealth.Sources!.OrderBy(s => s.Rank).Select(s => s.Name).ToArray());
     }
 
     [Fact]
@@ -348,5 +347,83 @@ public class SrdMappedGrantsTests : IAsyncLifetime
         var confirmed = Run(spare);
         Assert.DoesNotContain(confirmed.PendingChoices, c => c.Key == keen.Key);
         Assert.DoesNotContain(confirmed.Warnings, w => w.Key == "Actor.Rule.SkillChoices");
+    }
+
+    [Fact]
+    public void AnExistingRogueWithLegalTicks_IsOfferedToConfirmTheClassSkills_AndKeepsEveryOne()
+    {
+        var sheet = Sheet("rogue", 5);
+        var ticks = new[] { "acrobatics", "stealth", "perception", "deception" };
+        sheet["skillProficiencies"] = ticks.Cast<object>().ToList();
+
+        var evaluation = Run(sheet);
+
+        var classSkills = evaluation.PendingChoices.Single(c => c.Key == "choice__rogue__class-skills");
+        Assert.True(classSkills.Adopted);
+        Assert.Equal(ticks.Order(), classSkills.Made.Order());
+        Assert.Equal("Skill Proficiencies", classSkills.Label);
+        Assert.All(ticks, t => Assert.True(evaluation.Skills.Single(s => s.Key == t).Proficient, t)); // none lost while unconfirmed
+        Assert.DoesNotContain(evaluation.Warnings, w => w.Key == "Actor.Rule.SkillChoices");
+
+        SheetRuleEngine.SetChoice(sheet, classSkills.Key, classSkills.Made);
+        var confirmed = Run(sheet);
+        Assert.DoesNotContain(confirmed.PendingChoices, c => c.Key == classSkills.Key);
+        Assert.All(ticks, t => Assert.True(confirmed.Skills.Single(s => s.Key == t).Proficient, t));
+    }
+
+    [Fact]
+    public void AFreshCharacter_IsAskedForTheClassSkills_AndAPickGivesThem()
+    {
+        var sheet = Sheet("fighter", 1);
+        var open = Run(sheet).PendingChoices.Single(c => c.Key == "choice__fighter__class-skills");
+        Assert.False(open.Adopted);
+        Assert.Empty(open.Made);
+        Assert.Equal(2, open.Count);
+        Assert.DoesNotContain(open.Options, o => o.Key == "arcana"); // the fighter's list only
+
+        SheetRuleEngine.SetChoice(sheet, open.Key, new[] { "athletics", "survival" });
+        var picked = Run(sheet);
+        Assert.True(picked.Skills.Single(s => s.Key == "athletics").Proficient);
+        Assert.True(picked.Skills.Single(s => s.Key == "survival").Proficient);
+        Assert.DoesNotContain(picked.PendingChoices, c => c.Key == open.Key);
+    }
+
+    [Fact]
+    public void AFighterAndRogueMulticlass_GetsOnlyTheFirstClassesSkillChoice()
+    {
+        var evaluation = Run(Sheet("fighter", 1, otherClasses: "rogue:1"));
+
+        Assert.Contains(evaluation.PendingChoices, c => c.Key == "choice__fighter__class-skills");
+        Assert.DoesNotContain(evaluation.PendingChoices, c => c.Key == "choice__rogue__class-skills");
+    }
+
+    [Fact]
+    public void AnElfRangerWithPerceptionTicked_AdoptsTheClassPickAndKeenSensesWithoutCountingATickTwice()
+    {
+        var sheet = Sheet("ranger", 1, species: "elf");
+        sheet["skillProficiencies"] = new List<object> { "perception", "stealth", "nature", "survival" }; // three the Ranger gives, one the elf does
+
+        var evaluation = Run(sheet);
+
+        var classSkills = evaluation.PendingChoices.Single(c => c.Key == "choice__ranger__class-skills");
+        var keen = evaluation.PendingChoices.Single(c => c.Key == "choice__elf__keen-senses");
+        Assert.True(classSkills.Adopted);
+        Assert.True(keen.Adopted);
+        Assert.Equal(3, classSkills.Made.Count);
+        Assert.Single(keen.Made);
+        Assert.Empty(classSkills.Made.Intersect(keen.Made)); // one tick, one pick
+        Assert.DoesNotContain(evaluation.Warnings, w => w.Key == "Actor.Rule.SkillChoices");
+    }
+
+    [Fact]
+    public void ARangerWhoTickedOnlyWhatTheClassGives_IsNotOfferedKeenSensesAsConfirmed()
+    {
+        var sheet = Sheet("ranger", 1, species: "elf");
+        sheet["skillProficiencies"] = new List<object> { "perception", "stealth", "nature" };
+
+        var keen = Run(sheet).PendingChoices.Single(c => c.Key == "choice__elf__keen-senses");
+
+        Assert.False(keen.Adopted); // nothing is spare: Keen Senses is a new pick
+        Assert.Empty(keen.Made);
     }
 }

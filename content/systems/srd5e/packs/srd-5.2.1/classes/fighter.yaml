@@ -242,3 +242,16 @@ properties:
   - level: 20
     slots: 7
     styles: 1
+  adds:
+  - to: skills
+    choice: class-skills
+    choose: 2
+    from:
+    - acrobatics
+    - animal-handling
+    - athletics
+    - history
+    - insight
+    - intimidation
+    - perception
+    - survival

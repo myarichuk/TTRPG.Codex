@@ -356,3 +356,14 @@ properties:
   - level: 20
     slots: 5
     styles: 1
+  adds:
+  - to: skills
+    choice: class-skills
+    choose: 2
+    from:
+    - athletics
+    - insight
+    - intimidation
+    - medicine
+    - persuasion
+    - religion

@@ -248,3 +248,19 @@ properties:
   - level: 20
     slots: 6
     styles: 0
+  adds:
+  - to: skills
+    choice: class-skills
+    choose: 4
+    from:
+    - acrobatics
+    - athletics
+    - deception
+    - insight
+    - intimidation
+    - investigation
+    - perception
+    - performance
+    - persuasion
+    - sleight-of-hand
+    - stealth

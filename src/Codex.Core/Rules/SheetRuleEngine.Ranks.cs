@@ -75,6 +75,10 @@ public sealed partial class SheetRuleEngine
     /// <summary>The target a grant names for the saving throws.</summary>
     public const string SavesTarget = "saves";
 
+    /// <summary>The id of the skills choice a class entry carries for its first class (<c>adds: [{ to: skills, choice: class-skills, ... }]</c>, read through
+    /// a source <c>{ field: class, firstOnly: true }</c>). Its picks stay what the class's skill count reads (see <c>ClassChoicesProperty</c>).</summary>
+    public const string ClassSkillsChoiceId = "class-skills";
+
     /// <summary>The prefix of the sheet keys that hold a choice's picks: <c>choice__{entryId}__{choiceId}</c>.</summary>
     public const string ChoicePrefix = "choice__";
 
@@ -212,7 +216,7 @@ public sealed partial class SheetRuleEngine
                 }
                 else if (source.Field != null && system.ActorFields.FirstOrDefault(f => f.Key == source.Field)?.TargetEntityType is { } type)
                 {
-                    foreach (var view in perClass.Contains(source.Field) ? views : views.Take(1))
+                    foreach (var view in perClass.Contains(source.Field) && !source.FirstOnly ? views : views.Take(1))
                     {
                         if (YamlValues.GetString(view, source.Field) is { Length: > 0 } id) Count(type, id);
                     }
@@ -518,6 +522,11 @@ public sealed partial class SheetRuleEngine
 
         var from = choice.From?.Select(n => list.Match(n)?.Key).OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+        // The first class's own pick of skills (a grant on the class entry): its picks are not "beyond the class's skills", they are those
+        // skills, so the class count still reads the ticks and a pick the player makes through the choice is not an over-pick.
+        var isClassChoice = list.Target == SkillsTarget && choice.Id == ClassSkillsChoiceId && Rules?.Skills is { } classRules && FirstClass(sheet, result, classRules.ClassField) is { } firstOwner
+            && firstOwner.Type == feature.Source.Type && firstOwner.Id.Equals(feature.Source.Id, StringComparison.OrdinalIgnoreCase);
+
         // Whether a key fits, by the ranks so far: this choice's own picks are not in them yet, so a pick never props up itself.
         bool Fits(RankedKey key) =>
             (from == null || from.Contains(key.Key)) && FilterAllows(key, choice)
@@ -553,14 +562,27 @@ public sealed partial class SheetRuleEngine
             // when the class's allowance is known (one class, a number in its entry). Otherwise it stays open: taking class-skill ticks as
             // the picks would hide a real over-pick.
             var ticks = list.Keys.Where(k => list.FirstRankTicks.Contains(k.Key) && !list.Independent.Contains(k.Key)).ToList();
-            var allowed = result.Classes.Count <= 1 && FirstClass(sheet, result, skillRules.ClassField) is { } firstClass
-                ? ChoiceCount(firstClass.Properties.GetValueOrDefault(skillRules.ClassChoicesProperty))
-                : null;
             var covered = ticks.Where(k => Fits(k) && list.Granted.GetValueOrDefault(k.Key) < rank.Value).ToList();
-            if (allowed.HasValue && ticks.Count - allowed.Value >= choice.Choose && covered.Count >= choice.Choose)
+            if (isClassChoice)
             {
-                valid = covered.Take(choice.Choose).ToList();
-                adopted = true;
+                // The first class's own skill pick, which runs first: the player's ticks within its list are the picks (all of them: Confirm;
+                // fewer: they hold and the rest is still to pick).
+                if (covered.Count > 0)
+                {
+                    valid = covered.Take(choice.Choose).ToList();
+                    adopted = covered.Count >= choice.Choose;
+                }
+            }
+            else
+            {
+                var allowed = result.Classes.Count <= 1 && FirstClass(sheet, result, skillRules.ClassField) is { } firstClass
+                    ? ChoiceCount(firstClass.Properties.GetValueOrDefault(skillRules.ClassChoicesProperty))
+                    : null;
+                if (allowed.HasValue && ticks.Count - allowed.Value >= choice.Choose && covered.Count >= choice.Choose)
+                {
+                    valid = covered.Take(choice.Choose).ToList();
+                    adopted = true;
+                }
             }
         }
 
@@ -573,7 +595,7 @@ public sealed partial class SheetRuleEngine
         foreach (var key in valid)
         {
             if (raise) list.Raise(key.Key, add.Raise, sourceName, feature);
-            else list.Give(key.Key, rank!.Value, RankSourceKinds.Choice, sourceName, feature, independent: min.Value == 0);
+            else list.Give(key.Key, rank!.Value, RankSourceKinds.Choice, sourceName, feature, independent: min.Value == 0 && !isClassChoice);
         }
 
         var open = offered.Count(k => valid.All(v => v.Key != k.Key));

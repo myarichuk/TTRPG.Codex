@@ -62,6 +62,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
         var system = systemPath != null ? SystemDefinitionLoader.Load(systemPath) : null;
 
         // The reviewed grants go into the rows now, before anything is written: a mapping that does not fit the source stops the import.
+        if (!_grants.IsEmpty) ClassSkills.Apply(entries, system);
         var coverage = _grants.Apply(entries, ClassColumns.Read(All("Levels")), system);
         if (!_grants.IsEmpty) await log.WriteLineAsync($"Grants: {coverage}");
 

@@ -298,7 +298,7 @@ public sealed partial class SheetRuleEngine
             }
             else if (source.Field != null)
             {
-                foreach (var view in perClass.Contains(source.Field) ? views : views.Take(1))
+                foreach (var view in perClass.Contains(source.Field) && !source.FirstOnly ? views : views.Take(1))
                 {
                     if (ReferencedEntry(source.Field, view) is { } entry) AddFeatures(found, source, entry, view, sheet, collected);
                 }
@@ -312,7 +312,7 @@ public sealed partial class SheetRuleEngine
         if (source.Entries.Count > 0 && !source.Entries.Contains(entry.Id, StringComparer.OrdinalIgnoreCase)) return;
         if (source.Property == null)
         {
-            AddRow(found, entry.Name, entry.Description, entry, null, view, source.ByField, entry.Properties, copy, sheet, collected, null, null, onKind);
+            AddRow(found, string.IsNullOrWhiteSpace(source.Label) ? entry.Name : source.Label!, entry.Description, entry, null, view, source.ByField, entry.Properties, copy, sheet, collected, null, null, onKind);
             return;
         }
 
