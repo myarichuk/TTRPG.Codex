@@ -106,7 +106,10 @@ reads a hard-coded property:
 | `reset` | a field | text |
 | `routine` | a field (`Collection` of `{ name, description }`) | Present only on systems with complex hazards |
 | `complex` | a field (`Boolean`) | When true on an entry, the entry is registered as a hazard actor (3.3) |
-| `level` | a field | What scaling and the world builder read |
+| `level` | a field | What scaling and the world builder read: a number, or a level range (`1-4`) where the system prints ranges |
+| `severity` | a field | A system's own words for how dangerous it is (srd5e: Nuisance, Deadly) |
+| `higherLevels` | a field (`Collection` of `{ levels, ...changed fields }`) | The entry's own scaled versions (srd5e's "At Higher Levels"). Placing a hazard picks the row for the party's level, and the table uses that row's numbers. Fields a row does not name keep the base value |
+| `methods` | a field (`Collection` of `{ name, check, dc, text }`) | Extra ways to deal with it beyond notice and disable, each a button at the table: srd5e's Avoid, Escape, Destroy, Slow, Set. A system may also list a second detect or disarm route here |
 
 The loader checks that every named field exists on the type, that `rank` is used only on a system with ranked skills, and that a
 type does not have both `actorBlueprint` and `hazard`.
@@ -123,10 +126,14 @@ hazards:
 ```
 
 - **The numbers are not designed yet.** Where they come from depends on the system:
-  - **srd5e:** from SRD 5.2.1 if it has a trap table (CC BY 4.0, with its attribution); otherwise this project designs its own,
-    checked against the SRD's own typical DCs and monster damage, and recorded as such.
-  - **Not from any book we do not license.** The well-known trap damage-by-level table and the trap DC bands in the 5e Dungeon
-    Master's Guide are not in the SRD and must not be copied or closely mirrored.
+  - **srd5e:** SRD 5.2.1 has no shared trap table, but each of its 8 traps scales itself by level band ("At Higher Levels": rows for
+    levels 5-10, 11-16 and 17-20 over the base 1-4), and several share one damage progression (2d10, 4d10, 10d10, 18d10). Save
+    DCs rise by band at different rates per trap; detect and disarm DCs are fixed per trap; there are no attack bonuses. So srd5e's
+    `hazards.scaling` is **derived from the SRD's own trap progressions** (CC BY 4.0, with the SRD attribution), with damage per
+    band and severity (Nuisance, Deadly) as columns, and no attack-bonus column. The derivation is written down beside the table.
+  - **Not from any book we do not license.** The 5e Dungeon Master's Guide's generic severity table (setback, dangerous, deadly)
+    and its generic save DC and attack bonus bands are not in the SRD and must not be copied. The damage progression above is
+    usable only because the SRD's own traps print it.
   - **Pathfinder Second Edition:** the DC-by-level table, once GM Core is held and its notice read.
 - The table is guidance: the world builder's check (`propose_changes`) warns when a hazard's number is more than one row away from its
   level, and the homebrew wizard fills a new hazard's numbers from it. Nothing is ever refused.
@@ -219,8 +226,9 @@ triggers" through the `critFail` field. Until that roll exists, a system without
 
 | System | Pack | What |
 |---|---|---|
-| srd5e | **SRD 5.2.1 traps, if the SRD has them.** Check the SRD 5.2.1 PDF (CC BY 4.0) for a traps section before writing any. If present, import them into `srd-5.2.1/hazards` with the SRD attribution | |
-| srd5e | `codex-flavor` (the project's own pack) or a new `codex-hazards` pack | 4-6 homebrew examples written by this project: a pit, a dart trap, a falling block, a flooding room (complex), a cursed doorway (save, condition), a gas vent (environmental). Numbers from 3.2 |
+| srd5e | `srd-5.2.1/hazards` | **The SRD's 8 traps** (Gameplay Toolbox, "Traps", pp. 199-201): Collapsing Roof, Falling Net, Fire-Casting Statue, Hidden Pit, Poisoned Darts, Poisoned Needle, Rolling Stone, Spiked Pit. Each has severity and level range, trigger, duration, the effect with its save and damage, Detect and Disarm (sometimes two routes), the extra methods it needs (Avoid, Escape, Destroy, Slow, Set) and "At Higher Levels" (all but Rolling Stone). Imported by `Srd5eImporter` from the SRD 5.2.1 PDF, with the SRD attribution. The importer's source today is the 5e-bits JSON, which has no traps, so this is a small PDF step of its own |
+| srd5e | `codex-flavor` (the project's own pack) or a new `codex-hazards` pack | Only what the SRD lacks: a complex hazard (a flooding room) and a magical one (a cursed doorway), written by this project with numbers from 3.2. The SRD's traps cover the simple mechanical ones |
+| srd5e | rules, not hazards | The SRD's environmental rules (Burning, Dehydration, Falling, Malnutrition, Suffocation; and Deep Water, Extreme Cold, Extreme Heat, Frigid Water, Heavy Precipitation, High Altitude, Slippery Ice, Strong Wind, Thin Ice) stay `rule` entries. They apply to a whole place, not a placed object. A later step may let a place name one as its environment |
 | fitd-srd | none | Dangers are clocks and consequences. No `hazard` type |
 | Pathfinder Second Edition pack | its own ORC pack | 2-3 homebrew hazards tagged homebrew until GM Core is held; then GM Core's hazards replace them. Homebrew built on ORC rules ships under the ORC with the rest of that pack |
 | BFRD | its own pack | Check the BFRD PDF's hazards when that importer is written; it is CC BY 4.0 |
@@ -273,7 +281,7 @@ No new resx prefix.
 | # | Step | Size |
 |---|---|---|
 | 1 | `HazardDefinition` on `ContentTypeDefinition`, `hazards.scaling` on `SystemDefinition`, loader checks, XML docs, schema docs regenerated | S |
-| 2 | srd5e: the `hazard` type and scaling; the SRD 5.2.1 check; 4-6 homebrew examples | S |
+| 2 | srd5e: the `hazard` type and scaling derived from the SRD's traps; import the 8 SRD traps from the SRD 5.2.1 PDF (a new PDF step in `Srd5eImporter`); 2 homebrew examples for what the SRD lacks | S-M |
 | 3 | `PlaceFeature.Hazard` with state; place page link and picker | S-M |
 | 4a | Server-side check service: an actor's skill, save, passive or AC from its evaluation, rolled with `dice.check`; GM-entered bonus for printed creatures | M |
 | 4b | `HazardCommand` (notice, disable, trigger) on 4a and the damage event; live state in `EncounterDocument.ActiveEffects`, written back at encounter end; the Hazards panel with its state picker; log | M |
@@ -287,7 +295,9 @@ Steps 1-4b give a working feature on srd5e. Step 4a is the largest single piece:
 
 ## 10. Open questions
 
-1. **Does SRD 5.2.1 have a traps section?** Believed yes; verify in the PDF before writing srd5e homebrew that could duplicate it.
+1. ~~Does SRD 5.2.1 have a traps section?~~ **Answered: yes**, 8 traps with per-trap level scaling (see 3.2 and 6). Checked on
+   2026-11-13 against the official PDF (`media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf`), text only; table
+   layout not inspected. SRD 5.1 is believed to have had none (not checked).
 2. **Who sees a noticed hazard?** Recommended: only the PCs who noticed it, until the GM reveals it to all.
 3. **Hazard state across sessions.** A disabled trap stays disabled; a reset rule ("re-arms after 1 minute") is text the GM applies.
    Automatic reset is later.
