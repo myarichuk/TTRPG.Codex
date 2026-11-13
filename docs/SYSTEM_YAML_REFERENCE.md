@@ -390,6 +390,9 @@ One condition on a candidate entry. Exactly one comparison is set; Property name
 | `equalsField` | text (a number is text too) | Candidate value equals the raw value of this sheet field (an entry id, say). |
 | `equalsPropertyOfField` | [FieldProperty](#fieldproperty) | Candidate value equals a property of the entry a sheet field references (e.g. the feat named by the chosen background). |
 | `containsNameOfField` | text (a number is text too) | Candidate list property contains the display name of the entry a sheet field references. |
+| `contains` | text (a number is text too) | Candidate list property contains this constant (`classes` contains `Warlock`), by name or id, ignoring case. ContainsNameOfField does the same with the name of the entry a sheet field references. |
+| `containsChoice` | text (a number is text too) | Candidate list property contains a value picked in another choice of the same feature (an entry choice's `where`: the spell list a Magic Initiate picked). Fails while that choice has no pick, so what depends on it offers nothing yet. |
+| `equalsChoice` | text (a number is text too) | Candidate value equals a value picked in another choice of the same feature. Fails while that choice has no pick. |
 | `lteField` | text (a number is text too) | Candidate numeric value <= / >= a numeric sheet field. |
 | `gteField` | text (a number is text too) | Candidate numeric value >= this numeric sheet field. A candidate without the property passes. |
 | `lteLookup` | [LookupRule](#lookuprule) | Candidate numeric value <= a value looked up in a referenced entry's table. |

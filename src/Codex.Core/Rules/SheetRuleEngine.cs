@@ -1025,9 +1025,24 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
     // ---- Conditions ----
 
-    public bool Holds(RuleCondition condition, ContentEntry candidate, IReadOnlyDictionary<string, object> sheet)
+    /// <summary>Whether a candidate meets a condition on this sheet. <paramref name="choices"/> are the picks of the other choices of the feature copy an
+    /// entry choice belongs to (choice id to picks), which <c>containsChoice</c> and <c>equalsChoice</c> read; without them those fail.</summary>
+    public bool Holds(RuleCondition condition, ContentEntry candidate, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, IReadOnlyList<string>>? choices = null)
     {
         var value = CandidateValue(candidate, condition.Property);
+
+        if (condition.Contains != null) return NamesIn(value).Any(n => n.Equals(condition.Contains, StringComparison.OrdinalIgnoreCase));
+        if (condition.ContainsChoice != null)
+        {
+            return choices != null && choices.TryGetValue(condition.ContainsChoice, out var picks) && picks.Count > 0
+                && NamesIn(value).Any(n => picks.Contains(n, StringComparer.OrdinalIgnoreCase));
+        }
+
+        if (condition.EqualsChoice != null)
+        {
+            return choices != null && choices.TryGetValue(condition.EqualsChoice, out var picks) && picks.Count > 0
+                && picks.Contains(value?.ToString() ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+        }
 
         if (condition.Equals != null)
         {
@@ -1097,6 +1112,10 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
         return true;
     }
+
+    /// <summary>The names a candidate's value holds: each element of a list, or the value itself.</summary>
+    private static IEnumerable<string> NamesIn(object? value) =>
+        value is not string && value is IEnumerable<object> list ? list.Select(o => o?.ToString() ?? string.Empty) : new[] { value?.ToString() ?? string.Empty };
 
     private static object? CandidateValue(ContentEntry candidate, string property) => property.ToLowerInvariant() switch
     {

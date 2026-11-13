@@ -16,6 +16,10 @@ public sealed record FeatureAdd(string To, IReadOnlyList<string> Entries, int? L
 {
     /// <summary>The spells added can be cast without a slot: <see cref="Free"/> uses of each (their own counter), or <see cref="AtWill"/>.</summary>
     public bool IsFreeCasting => Free != null || AtWill;
+
+    /// <summary>A choice with no list to put anything on: its picks are values (the spell list a Magic Initiate takes), stored like any choice,
+    /// and read by <see cref="RuleCondition.ContainsChoice"/> and <see cref="RuleCondition.EqualsChoice"/>.</summary>
+    public bool IsValueChoice => Choice != null && To.Length == 0;
 }
 
 /// <summary>A choice a feature leaves to the player: <c>{ to, choice, choose, from, minRank, maxRank, rank | raise }</c>.
@@ -24,7 +28,7 @@ public sealed record FeatureAdd(string To, IReadOnlyList<string> Entries, int? L
 /// field, such as its attribute, against the values listed); <see cref="MinRank"/> and <see cref="MaxRank"/> the ranks (key or number) a
 /// key must already hold to be offered. Where its picks are stored: see <see cref="SheetRuleEngine.ChoiceKey"/>.</summary>
 public sealed record FeatureChoice(string Id, bool IdGiven, int Choose, IReadOnlyList<string>? From, IReadOnlyDictionary<string, IReadOnlyList<string>>? Filter,
-    string? MinRank, string? MaxRank);
+    string? MinRank, string? MaxRank, IReadOnlyList<RuleCondition>? Where = null, string? FromList = null);
 
 /// <summary>One refill rule of a feature's counter as its data states it: <c>{ on, amount, when }</c>. <see cref="On"/> is a rest's
 /// name or a moment (<see cref="FeatureRecovery.Initiative"/>, <see cref="FeatureRecovery.Dawn"/>, <see cref="FeatureRecovery.Manual"/>);
@@ -459,7 +463,7 @@ public sealed partial class SheetRuleEngine
                 Text(a, "rank"), ToDouble(Cell(a, "raise")) is { } raise ? (int)raise : 0, ParseChoice(a, name, level),
                 string.Equals(Text(a, "free"), "atWill", StringComparison.OrdinalIgnoreCase) ? null : ParseUses(Cell(a, "free")),
                 string.Equals(Text(a, "free"), "atWill", StringComparison.OrdinalIgnoreCase)))
-            .Where(a => a.To.Length > 0 && (a.Entries.Count > 0 || a.Choice != null))
+            .Where(a => (a.To.Length > 0 || a.Choice != null) && (a.Entries.Count > 0 || a.Choice != null))
             .ToList();
         var uses = ParseUses(data.GetValueOrDefault("uses"));
         var spends = data.GetValueOrDefault("spends") is IDictionary<string, object> spend && Text(spend, "key") is { } spendKey
@@ -470,6 +474,39 @@ public sealed partial class SheetRuleEngine
 
     /// <summary>The choice an <c>adds</c> item leaves to the player (<c>choice</c> and/or <c>choose</c> in it), or null for a fixed item.
     /// A choice without an id gets <see cref="DefaultChoiceId"/>; one without a count chooses 1; a count below 1 is no choice.</summary>
+    /// <summary>A condition as an entry's <c>adds[].where</c> writes it, the keys of a list's own <c>where</c>: <c>{ property, equals | in | gte | lte | equalsField |
+    /// containsNameOfField | contains | containsChoice | equalsChoice | lteField | gteField | lteLookup, message }</c>. Null when the item is no map or has no property.</summary>
+    internal static RuleCondition? ParseCondition(IDictionary<string, object> map)
+    {
+        var property = Text(map, "property");
+        if (string.IsNullOrWhiteSpace(property)) return null;
+        var lookup = Cell(map, "lteLookup") as IDictionary<string, object>;
+        return new RuleCondition
+        {
+            Property = property,
+            Equals = Cell(map, "equals"),
+            In = map.ContainsKey("in") ? Texts(Cell(map, "in")).ToList() : null,
+            Gte = ToDouble(Cell(map, "gte")),
+            Lte = ToDouble(Cell(map, "lte")),
+            EqualsField = Text(map, "equalsField"),
+            ContainsNameOfField = Text(map, "containsNameOfField"),
+            Contains = Text(map, "contains"),
+            ContainsChoice = Text(map, "containsChoice"),
+            EqualsChoice = Text(map, "equalsChoice"),
+            LteField = Text(map, "lteField"),
+            GteField = Text(map, "gteField"),
+            LteLookup = lookup == null ? null : new LookupRule
+            {
+                Field = Text(lookup, "field") ?? string.Empty,
+                Table = Text(lookup, "table") ?? string.Empty,
+                ByField = Text(lookup, "byField") ?? "level",
+                RowKey = Text(lookup, "rowKey") ?? "level",
+                Column = Text(lookup, "column") ?? string.Empty
+            },
+            Message = Text(map, "message")
+        };
+    }
+
     private static FeatureChoice? ParseChoice(IDictionary<string, object> add, string featureName, int? level)
     {
         if (!add.ContainsKey("choice") && !add.ContainsKey("choose")) return null;
@@ -491,7 +528,9 @@ public sealed partial class SheetRuleEngine
                 break;
         }
 
-        return new FeatureChoice(given ?? DefaultChoiceId(featureName, level), given != null, choose, from, filter, Text(add, "minRank"), Text(add, "maxRank"));
+        var conditions = Maps(Cell(add, "where")).Select(ParseCondition).OfType<RuleCondition>().ToList();
+        return new FeatureChoice(given ?? DefaultChoiceId(featureName, level), given != null, choose, from, filter, Text(add, "minRank"), Text(add, "maxRank"),
+            conditions.Count == 0 ? null : conditions, Text(add, "fromList"));
     }
 
     /// <summary>The word for <c>from</c> that offers every key.</summary>
@@ -611,6 +650,7 @@ public sealed partial class SheetRuleEngine
         if (features.Count == 0) return;
         result.Features.AddRange(features);
         EvaluateKeyedChoices(features, sheet, result);
+        EvaluateEntryChoices(features, sheet, result);
 
         var derived = DerivedNumbers(result);
         var beforeFeatures = new Dictionary<string, double>(derived); // untouched by the derived modifiers below
@@ -811,8 +851,11 @@ public sealed partial class SheetRuleEngine
         var targets = features.SelectMany(f => f.Adds.Select(a => a.To))
             .Concat(sheet.Keys.Where(k => k.StartsWith(GrantedPrefix, StringComparison.Ordinal) && sheet[k] is not (long or int or double)).Select(k => k[GrantedPrefix.Length..]))
             .Distinct(StringComparer.Ordinal)
-            .Where(to => RankTargetOf(to) == null) // a ranked list's grants live in the evaluation only (EvaluateRanks), never on the sheet
+            .Where(to => to.Length > 0 && RankTargetOf(to) == null) // a ranked list's grants live in the evaluation only (EvaluateRanks), never on the sheet
             .ToList();
+
+        // What the player picked for the choices over a list's entries (adds[].choice on a list of Library entries): granted like fixed entries.
+        var picked = features.Any(f => f.Adds.Any(IsEntryChoice)) ? ResolveEntryChoices(features, sheet) : new List<EntryChoiceState>();
         foreach (var to in targets)
         {
             var list = Rules.Lists.FirstOrDefault(l => l.Key == to);
@@ -825,6 +868,8 @@ public sealed partial class SheetRuleEngine
                     granted.AddRange(add.Entries.Select(e => list == null ? e : EntryId(list.TargetEntityType, e)).OfType<string>());
                 }
             }
+
+            granted.AddRange(picked.Where(p => p.Add.To == to).SelectMany(p => p.Valid));
 
             granted = granted.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var before = RawList(sheet, GrantedPrefix + to);

@@ -39,6 +39,7 @@ public static class FeatureGrantCheck
         void Feature(string name, IDictionary<string, object> data, HashSet<string> used)
         {
             OptionsProblems(name, data, used);
+            var earlier = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // the choices of this feature written so far, which a later condition may read
             foreach (var add in AddsOf(data))
             {
                 var to = Text(add, "to");
@@ -58,14 +59,44 @@ public static class FeatureGrantCheck
                     }
                 }
 
+                // A choice over Library entries (the list is one of entries, with a "where" or a "fromList" to narrow them), or of a value (no "to").
+                var pickable = vocabulary.Lists.FirstOrDefault(l => !l.IsRanked && l.EntityType != null && l.Key.Equals(to, StringComparison.OrdinalIgnoreCase));
+                var isValue = isChoice && to.Length == 0;
                 if (isChoice)
                 {
-                    if (list == null) problems.Add($"{shown}: a choice can only go to {string.Join(" or ", vocabulary.Lists.Where(l => l.IsRanked).Select(l => l.Key))}, not \"{to}\".");
+                    if (list == null && pickable == null && !isValue)
+                    {
+                        problems.Add($"{shown}: a choice can only go to {string.Join(" or ", vocabulary.Lists.Where(l => l.IsRanked || l.EntityType != null).Select(l => l.Key))}, or pick a value (give no \"to\"), not \"{to}\".");
+                    }
+
                     if (!(Number(add, "choose") >= 1)) problems.Add($"{shown}: a choice needs \"choose\", how many the player picks (1 or more).");
                     var id = Text(add, "choice");
                     if (id.Length == 0 && !requireId) id = SheetRuleEngine.DefaultChoiceId(shown, Number(data, "level") >= 1 ? (int)Number(data, "level") : null);
                     if (id.Length == 0) problems.Add($"{shown}: a choice needs a \"choice\" id, unique in the entry.");
                     else if (!used.Add(id)) problems.Add($"{shown}: the choice id \"{id}\" is used more than once in this entry; each choice needs its own.");
+
+                    if (pickable != null)
+                    {
+                        // Entries are offered by the conditions: with none, the whole Library would be.
+                        var conditions = RowsOf(add, "where").ToList();
+                        if (add.ContainsKey("entries")) problems.Add($"{shown}: a choice over entries has no \"entries\"; the conditions in \"where\" say which may be picked.");
+                        if (conditions.Count == 0 && Text(add, "fromList").Length == 0) problems.Add($"{shown}: a choice over entries needs \"where\" conditions or a \"fromList\" (it would offer everything in the Library).");
+                        if (Text(add, "fromList") is { Length: > 0 } fromList && (system.SheetRules?.Lists ?? new List<ListRule>()).All(l => !l.Key.Equals(fromList, StringComparison.OrdinalIgnoreCase))) problems.Add($"{shown}: \"fromList\" names \"{fromList}\", which is not a list of this system.");
+                        foreach (var condition in conditions)
+                        {
+                            if (Text(condition, "property").Length == 0) problems.Add($"{shown}: a \"where\" condition needs a \"property\".");
+                            foreach (var read in new[] { "containsChoice", "equalsChoice" }.Select(k => Text(condition, k)).Where(r => r.Length > 0))
+                            {
+                                if (!earlier.Contains(read)) problems.Add($"{shown}: a condition reads the choice \"{read}\", which is not a choice written before it in this feature (a choice must come first).");
+                            }
+                        }
+                    }
+                    else if (isValue && add.TryGetValue("from", out var values) && values is IEnumerable<object> listed && values is not string ? !listed.Any() : isValue && !add.ContainsKey("from"))
+                    {
+                        problems.Add($"{shown}: a choice of a value needs \"from\", the values the player picks between.");
+                    }
+
+                    if (id.Length > 0) earlier.Add(id);
                 }
 
                 if (list == null) continue;

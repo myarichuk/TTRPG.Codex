@@ -221,10 +221,13 @@ public class RankedGrantEditingTests : IAsyncLifetime
     public void AChoiceIntoAnUnrankedList_IsRefused_AndAFeatureWithoutGrantsIsLeftAlone()
     {
         var entry = Subclass(
-            Row("Spells", 3, Map(("to", "grantedSpells"), ("choose", 1L), ("choice", "pick"))),
+            Row("Resist", 3, Map(("to", "resistances"), ("choose", 1L), ("choice", "pick"))),
+            Row("Spells", 3, Map(("to", "grantedSpells"), ("choose", 1L), ("choice", "pick-spell"))), // entries are fine, but with nothing narrowing them
             Map(("name", "Plain"), ("level", 5L), ("description", "Words only.")));
 
-        Assert.Contains(FeatureGrantCheck.Problems(Srd(), entry), p => p.Contains("a choice can only go to"));
+        var problems = FeatureGrantCheck.Problems(Srd(), entry);
+        Assert.Contains(problems, p => p.Contains("a choice can only go to"));
+        Assert.Contains(problems, p => p.Contains("needs \"where\" conditions or a \"fromList\""));
         var plain = new ContentEntry { Type = "spell", Id = "x", Name = "X", SystemId = "srd5e" };
         Assert.Empty(FeatureGrantCheck.Problems(Srd(), plain)); // the system reads no features from a spell
     }

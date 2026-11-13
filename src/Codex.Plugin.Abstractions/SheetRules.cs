@@ -890,6 +890,17 @@ public class RuleCondition
     /// <summary>Candidate list property contains the display name of the entry a sheet field references.</summary>
     public string? ContainsNameOfField { get; set; }
 
+    /// <summary>Candidate list property contains this constant (<c>classes</c> contains <c>Warlock</c>), by name or id, ignoring case.
+    /// <see cref="ContainsNameOfField"/> does the same with the name of the entry a sheet field references.</summary>
+    public string? Contains { get; set; }
+
+    /// <summary>Candidate list property contains a value picked in another choice of the same feature (an entry choice's <c>where</c>:
+    /// the spell list a Magic Initiate picked). Fails while that choice has no pick, so what depends on it offers nothing yet.</summary>
+    public string? ContainsChoice { get; set; }
+
+    /// <summary>Candidate value equals a value picked in another choice of the same feature. Fails while that choice has no pick.</summary>
+    public string? EqualsChoice { get; set; }
+
     /// <summary>Candidate numeric value &lt;= / &gt;= a numeric sheet field.</summary>
     public string? LteField { get; set; }
     /// <summary>Candidate numeric value &gt;= this numeric sheet field. A candidate without the property passes.</summary>
