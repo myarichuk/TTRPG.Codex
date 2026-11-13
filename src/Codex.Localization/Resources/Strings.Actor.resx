@@ -658,4 +658,10 @@
   <data name="Actor.Grants.FreeUses" xml:space="preserve"><value>Limited uses</value></data>
   <data name="Actor.Grants.FreeMax" xml:space="preserve"><value>Uses for each pick</value></data>
   <data name="Actor.Grants.FreeRecovers" xml:space="preserve"><value>Refilled by</value></data>
+  <data name="Actor.JoinNotes.Heading" xml:space="preserve"><value>The GM changed these before accepting:</value></data>
+  <data name="Actor.JoinNotes.LeftOut" xml:space="preserve"><value>Left out: {0}</value></data>
+  <data name="Actor.JoinNotes.Swapped" xml:space="preserve"><value>{0} was replaced by {1}</value></data>
+  <data name="Actor.JoinNotes.Edited" xml:space="preserve"><value>{0}: {1} became {2}</value></data>
+  <data name="Actor.JoinNotes.EditedNew" xml:space="preserve"><value>{0}: now {1}</value></data>
+  <data name="Actor.JoinNotes.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
 </root>

@@ -55,13 +55,15 @@ public static class TestSeedEndpoints
             foreach (var seed in actors)
             {
                 var campaign = await campaignRepository.GetAsync(seed.CampaignId);
-                var system = campaign != null ? catalog.GetDefinition(campaign.SystemId) : null;
+                var system = campaign != null ? catalog.GetDefinition(campaign.SystemId) : seed.SystemId != null ? catalog.GetDefinition(seed.SystemId) : null;
                 var actor = new ActorDocument
                 {
                     Id = seed.Id,
                     CampaignId = seed.CampaignId,
                     Kind = seed.Kind,
                     OwnerUserId = seed.OwnerUserId,
+                    SystemId = seed.SystemId,
+                    Carried = seed.Carried ?? new List<CarriedEntry>(),
                     Name = seed.Name,
                     Visibility = seed.Visibility,
                     PublicName = seed.PublicName,
@@ -84,6 +86,14 @@ public static class TestSeedEndpoints
                 foreach (var (key, value) in seed.Sheet ?? new Dictionary<string, object>())
                 {
                     actor.Sheet[key] = value is System.Text.Json.JsonElement element ? SheetValue(element) : value;
+                }
+
+                foreach (var carried in actor.Carried)
+                {
+                    foreach (var key in carried.Properties.Keys.ToList())
+                    {
+                        if (carried.Properties[key] is System.Text.Json.JsonElement element) carried.Properties[key] = SheetValue(element);
+                    }
                 }
 
                 var primary = SystemDefinition.PrimaryKeyOf(system);

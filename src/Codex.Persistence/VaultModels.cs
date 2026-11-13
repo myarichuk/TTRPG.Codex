@@ -9,6 +9,21 @@ namespace Codex.Persistence;
 /// on the character (<see cref="ActorDocument.Carried"/>), so the sheet works in the vault; when the character asks to join a
 /// campaign the GM reviews each one and adds it to the campaign's Library, swaps it for one the campaign has, or leaves it out.
 /// </summary>
+/// <summary>What the GM did to a character when they accepted it into a campaign, for its player to read.</summary>
+/// <param name="Kind">One of <see cref="JoinNote.LeftOut"/>, <see cref="JoinNote.Swapped"/> or <see cref="JoinNote.Edited"/>.</param>
+/// <param name="Name">The entry, or the choice or list, it is about.</param>
+/// <param name="To">What it became: the campaign's entry a swap used, or the picks an edit left. Empty for a left-out entry.</param>
+/// <param name="From">What an edit replaced: the picks as the player had them. Empty for a swap or a left-out entry.</param>
+/// <param name="Type">The content type of a swapped or left-out entry, so its name can be read in the viewer's language.</param>
+/// <param name="Id">The id of a swapped or left-out entry.</param>
+/// <param name="ToId">The id the swap used instead.</param>
+public sealed record JoinNote(string Kind, string Name, string To = "", string From = "", string Type = "", string Id = "", string ToId = "")
+{
+    public const string LeftOut = "left-out";
+    public const string Swapped = "swapped";
+    public const string Edited = "edited";
+}
+
 public class CarriedEntry
 {
     public string Type { get; set; } = string.Empty;

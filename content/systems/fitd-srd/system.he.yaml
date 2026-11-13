@@ -1,0 +1,160 @@
+# Hebrew display text for the Forged in the Dark SRD system. MACHINE-DRAFTED, not yet reviewed by a native speaker.
+# Terms: docs/i18n-glossary.md ("Forged in the Dark SRD"). Keys, ids and rules stay English; only display text is here.
+# The sheet's own labels (sheet kinds, tracks, keyed-list rows, layout sections) have no translation section on main, so every
+# word the sheet or the roller can show goes under `values`, which the UI looks up by the English word (case-insensitive).
+name: Forged in the Dark SRD
+compatibility: Forged in the Dark
+description: >-
+  מסמך עזר למשפחת משחקים מבוססי קוביות על נוכלים נועזים ועל הצוותים שהם מנהלים: דירוגי פעולה בנקודות, d6 לכל נקודה,
+  תוצאה הנקראת מהקובייה הגבוהה ביותר, לחץ שאפשר להוציא כדי לעמוד בפני תוצאות, פציעות וטראומות שמשחקות בדמויות,
+  וצוות עם דרג, מוניטין, חום ורמת מבוקש. חוקים בלבד; העולם, הפלייבוקים וסוגי הצוותים של כל משחק מפורסם אינם חלק ממנו.
+
+setting:
+  summary: >-
+    נוכלים מתלכדים לצוות, יוצאים למבצעים מסוכנים נגד פלגים עשירים וחזקים מהם, ומשלמים על כל הצלחה בלחץ, בפציעות,
+    בחום ובסבכים. המערכת אינה מניחה עולם מסוים: את העולם מביא הקמפיין.
+  genres: [שוד, פשע, מבצע נועז]
+  tone: [מתוח, נואש, נועז]
+  themes: [שאפתנות ומחירה, נאמנות תחת לחץ, תוצאות ההצלחה]
+  factions: [צוותי פשע יריבים, החוק, גילדות ובתי אצולה, כתות סודיות]
+  play: [הצוות מתכנן מבצע, המבצע משתבש, התוצאות מטופלות בזמן הפנוי]
+  notes: סוגי צוותים, פלייבוקים, מורשות ורקעים נקבעים בכל משחק או קמפיין.
+
+entityTypes:
+  rule:
+    label: חוק
+    pluralLabel: חוקים
+    fields:
+      category: { label: פרק }
+      order: { label: סדר }
+  action:
+    label: פעולה
+    pluralLabel: פעולות
+    fields:
+      attribute: { label: תכונה }
+  trauma:
+    label: מצב טראומה
+    pluralLabel: מצבי טראומה
+  special-ability:
+    label: יכולת מיוחדת
+    pluralLabel: יכולות מיוחדות
+  crew-ability:
+    label: יכולת מיוחדת של הצוות
+    pluralLabel: יכולות מיוחדות של הצוות
+  crew-upgrade:
+    label: שדרוג הצוות
+    pluralLabel: שדרוגי הצוות
+    fields:
+      cost: { label: משבצות שדרוג }
+  item:
+    label: פריט
+    pluralLabel: פריטים
+    fields:
+      load: { label: עומס }
+
+conditions:
+  Retired: פרש
+  Dead: מת
+  Less effect: השפעה מופחתת
+  Reduced dice: קוביות מופחתות
+  Needs help: זקוק לעזרה
+
+maxSuffix: מקס׳
+
+sheetRules:
+  messages:
+    "more load used than the chosen load allows ({LoadMax}).": נעשה שימוש בעומס גדול מזה שהעומס שנבחר מאפשר ({LoadMax}).
+
+values:
+  # Sheet kinds, lists and layout sections
+  Scoundrel: נוכל
+  Crew: צוות
+  Actions: פעולות
+  Condition: מצב
+  Abilities: יכולות מיוחדות
+  Load: עומס
+  Advancement: התקדמות
+  Coin: מטבעות
+  Standing: מעמד
+  Heat: חום
+  Special abilities: יכולות מיוחדות
+  Items: פריטים
+  Crew special abilities: יכולות מיוחדות של הצוות
+  Crew upgrades: שדרוגי הצוות
+  # Attributes (the groups of actions) and the twelve actions
+  insight: בינה
+  prowess: כושר
+  resolve: נחישות
+  Hunt: ציד
+  Study: עיון
+  Survey: סקירה
+  Tinker: טכנאות
+  Finesse: עדינות
+  Prowl: התגנבות
+  Skirmish: קטטה
+  Wreck: הרס
+  Attune: התאמה
+  Command: פיקוד
+  Consort: היכרויות
+  Sway: שכנוע
+  # Tracks
+  Stress: לחץ
+  Trauma: טראומה
+  Harm: פציעה
+  Armor: שריון
+  Heavy armor: שריון כבד
+  Special armor: שריון מיוחד
+  Stash: מטמון
+  Insight experience: ניסיון בינה
+  Prowess experience: ניסיון כושר
+  Resolve experience: ניסיון נחישות
+  Playbook experience: ניסיון פלייבוק
+  Wanted level: רמת מבוקש
+  Reputation: מוניטין
+  # Sheet values
+  tier: דרג
+  turf: שטח
+  hold: אחיזה
+  load: עומס
+  LoadMax: מגבלת עומס
+  LoadUsed: עומס בשימוש
+  light: קל
+  normal: רגיל
+  heavy: כבד
+  weak: חלשה
+  strong: חזקה
+  # The trauma conditions a player picks when stress overflows
+  Cold: קר
+  Haunted: רדוף
+  Obsessed: אובססיבי
+  Paranoid: פרנואיד
+  Reckless: פזיז
+  Soft: רך לב
+  Unstable: לא יציב
+  Vicious: אכזרי
+  # Rolls: position (feminine), effect (feminine) and results
+  Action roll: הטלת פעולה
+  Resistance roll: הטלת התנגדות
+  Group action: פעולה קבוצתית
+  Assist, push or bargain: סיוע, התאמצות או עסקה
+  controlled: מבוקרת
+  risky: מסוכנת
+  desperate: נואשת
+  limited: מוגבלת
+  standard: רגילה
+  great: גדולה
+  critical: הצלחה קריטית
+  full: הצלחה מלאה
+  partial: הצלחה חלקית
+  bad: כישלון
+  resisted: עמד בהתנגדות
+  # Campaign state
+  Faction status: מעמד הפלגים
+  status: מעמד
+  # Labels PR #299 (feat/sheetkinds-feature-sources) adds to system.yaml; harmless until it merges
+  Load limit: מגבלת עומס
+  Load used: עומס בשימוש
+  Special armor boxes: משבצות שריון מיוחד
+  Turf counted: שטח נספר
+  Downtime: זמן פנוי
+  Load chosen: העומס נבחר
