@@ -618,4 +618,11 @@
   <data name="Actor.Grants.RefillOnlyEmpty" xml:space="preserve"><value>רק כשלא נשאר כלום</value></data>
   <data name="Actor.Grants.RefillWhenNote" xml:space="preserve"><value>ובתנאי ש־{0}</value></data>
   <data name="Actor.Grants.SpendKeyPlaceholder" xml:space="preserve"><value>שם המאגר, למשל focus</value></data>
+  <data name="Actor.Moments.Title" xml:space="preserve"><value>רגעים</value></data>
+  <data name="Actor.Moments.Restores" xml:space="preserve"><value>משחזר: {0}</value></data>
+  <data name="Actor.Moments.Refills" xml:space="preserve"><value>ממלא: {0}</value></data>
+  <data name="Actor.Moments.Done" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: אין מה לשחזר.</value></data>
+  <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>אין יכולת שנותנת את התיבה הזו.</value></data>
+  <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
 </root>

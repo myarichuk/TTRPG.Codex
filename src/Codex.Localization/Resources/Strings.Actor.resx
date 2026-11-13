@@ -618,4 +618,11 @@
   <data name="Actor.Grants.RefillOnlyEmpty" xml:space="preserve"><value>Only when none are left</value></data>
   <data name="Actor.Grants.RefillWhenNote" xml:space="preserve"><value>Also only if {0}</value></data>
   <data name="Actor.Grants.SpendKeyPlaceholder" xml:space="preserve"><value>The pool’s name, e.g. focus</value></data>
+  <data name="Actor.Moments.Title" xml:space="preserve"><value>Moments</value></data>
+  <data name="Actor.Moments.Restores" xml:space="preserve"><value>Restores {0}</value></data>
+  <data name="Actor.Moments.Refills" xml:space="preserve"><value>Refills {0}</value></data>
+  <data name="Actor.Moments.Done" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: nothing to restore.</value></data>
+  <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>No ability gives this box.</value></data>
+  <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
 </root>

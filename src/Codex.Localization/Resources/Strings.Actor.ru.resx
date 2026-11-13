@@ -618,4 +618,11 @@
   <data name="Actor.Grants.RefillOnlyEmpty" xml:space="preserve"><value>Только если ничего не осталось</value></data>
   <data name="Actor.Grants.RefillWhenNote" xml:space="preserve"><value>И только если {0}</value></data>
   <data name="Actor.Grants.SpendKeyPlaceholder" xml:space="preserve"><value>Имя запаса, например focus</value></data>
+  <data name="Actor.Moments.Title" xml:space="preserve"><value>Особые моменты</value></data>
+  <data name="Actor.Moments.Restores" xml:space="preserve"><value>Восстанавливает: {0}</value></data>
+  <data name="Actor.Moments.Refills" xml:space="preserve"><value>Пополняет: {0}</value></data>
+  <data name="Actor.Moments.Done" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: восстанавливать нечего.</value></data>
+  <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>Ни одно умение не даёт эту клетку.</value></data>
+  <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
 </root>
