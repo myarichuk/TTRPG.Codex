@@ -218,11 +218,14 @@ sheetRules:
   features:
     - { field: class,    property: features, byField: classLevel }
     - { field: subclass, property: features, byField: classLevel }
-    - { field: species,  property: traits }
+    # Species rows are gated by the character level (a trait row's `level: 5`, and an add's `level:` on a lineage row).
+    - { field: species,  property: traits, byField: level }
     # A species' lineage (draconic ancestor, elven lineage, giant ancestry, fiendish legacy...): the player picks one row and
     # only that row is a feature. Rows that share a counter (every Breath Weapon) should name one uses.key, so a change keeps
     # what was spent.
-    - { field: species,  property: lineages, choose: { id: lineage, label: Lineage, onChange: keep } }
+    - { field: species,  property: lineages, byField: level, choose: { id: lineage, label: Lineage, onChange: keep } }
+    # The background's origin feat is one feature carrying its own grants (Alert's initiative bonus).
+    - { field: originFeat }
     - { list: feats }
     - { list: fightingStyles }
     - { list: extraOriginFeats }
