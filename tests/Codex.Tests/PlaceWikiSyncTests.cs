@@ -19,7 +19,7 @@ public class PlaceWikiSyncTests : IClassFixture<RavenDbFixture>, IDisposable
 
     public PlaceWikiSyncTests(RavenDbFixture fixture)
     {
-        _db = new RavenDbService(fixture.DbPath, "PlaceWiki_" + Guid.NewGuid(), runInMemory: true);
+        _db = fixture.Open("PlaceWiki_" + Guid.NewGuid());
         _regions = new RegionRepository(_db);
         _wiki = new RavenWikiRepository(_db);
         // Art is only touched when a picture comes with the page, which these tests don't do.

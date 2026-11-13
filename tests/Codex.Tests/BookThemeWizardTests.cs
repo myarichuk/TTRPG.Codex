@@ -20,7 +20,7 @@ public class BookThemeWizardTests : IClassFixture<RavenDbFixture>
 
     public BookThemeWizardTests(RavenDbFixture fixture)
     {
-        var db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        var db = fixture.Open(fixture.DbName);
         _store = new RavenBookDraftRepository(db);
         _db = db;
         _campaigns = new CampaignRepository(db, new NoOpSystemCatalog(), new ActorRepository(db), new RavenSessionRepository(db), new RavenNoteRepository(db),

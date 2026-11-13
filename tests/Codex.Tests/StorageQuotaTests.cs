@@ -16,7 +16,7 @@ public class StorageQuotaTests : IClassFixture<RavenDbFixture>
 
     public StorageQuotaTests(RavenDbFixture fixture)
     {
-        _db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        _db = fixture.Open(fixture.DbName);
         _settings = new RavenServerSettingsStore(_db);
         _quota = new StorageQuota(_db, _settings);
         _media = new RavenMediaStore(_db, _quota);

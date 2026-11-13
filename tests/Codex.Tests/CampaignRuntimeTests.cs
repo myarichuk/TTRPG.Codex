@@ -25,7 +25,7 @@ public class CampaignRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
 
     public CampaignRuntimeTests(RavenDbFixture fixture)
     {
-        _dbService = new RavenDbService(fixture.DbPath, "Runtime_" + Guid.NewGuid(), runInMemory: true);
+        _dbService = fixture.Open("Runtime_" + Guid.NewGuid());
         _actorRepository = new ActorRepository(_dbService);
         _sessionRepository = new RavenSessionRepository(_dbService);
         _encounterRepository = new RavenEncounterRepository(_dbService);

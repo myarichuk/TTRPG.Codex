@@ -26,7 +26,7 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
 
     public WritePathTests(RavenDbFixture fixture)
     {
-        _dbService = new RavenDbService(fixture.DbPath, "WritePath_" + Guid.NewGuid(), runInMemory: true);
+        _dbService = fixture.Open("WritePath_" + Guid.NewGuid());
         _actors = new ActorRepository(_dbService);
         _sessions = new RavenSessionRepository(_dbService);
         _encounters = new RavenEncounterRepository(_dbService);

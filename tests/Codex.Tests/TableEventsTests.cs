@@ -57,7 +57,7 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
 
     public TableEventsTests(RavenDbFixture fixture)
     {
-        _dbService = new RavenDbService(fixture.DbPath, "TableEvents_" + Guid.NewGuid(), runInMemory: true);
+        _dbService = fixture.Open("TableEvents_" + Guid.NewGuid());
         _actors = new ActorRepository(_dbService);
         _sessions = new RavenSessionRepository(_dbService);
         _registry = new ComponentRegistry();
