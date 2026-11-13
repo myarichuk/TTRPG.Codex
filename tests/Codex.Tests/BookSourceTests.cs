@@ -30,7 +30,7 @@ public partial class BookSourceTests : IClassFixture<RavenDbFixture>
 
     public BookSourceTests(RavenDbFixture fixture)
     {
-        var db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        var db = fixture.Open(fixture.DbName);
         _actors = new ActorRepository(db);
         _sessions = new RavenSessionRepository(db);
         _notes = new RavenNoteRepository(db);

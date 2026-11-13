@@ -23,7 +23,7 @@ public class BookSpendTests : IClassFixture<RavenDbFixture>
 
     public BookSpendTests(RavenDbFixture fixture)
     {
-        _db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        _db = fixture.Open(fixture.DbName);
         _actors = new ActorRepository(_db);
         _wiki = new RavenWikiRepository(_db);
         _store = new RavenBookBuildRepository(_db);

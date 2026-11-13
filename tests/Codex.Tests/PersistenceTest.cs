@@ -12,6 +12,20 @@ public class RavenDbFixture : IDisposable
     public string DbPath { get; }
     public string DbName { get; }
 
+    // Every database a class opens through Open, so Dispose drops exactly those and nothing a parallel class is using.
+    private readonly List<string> _databases = new();
+
+    /// <summary>Opens a database in this class's embedded server folder and remembers its name to drop when the class is done.</summary>
+    public RavenDbService Open(string databaseName)
+    {
+        lock (_databases)
+        {
+            if (!_databases.Contains(databaseName)) _databases.Add(databaseName);
+        }
+
+        return new RavenDbService(DbPath, databaseName, runInMemory: true);
+    }
+
     public RavenDbFixture()
     {
         Environment.SetEnvironmentVariable("DOTNET_ROLL_FORWARD", "LatestMajor");
@@ -43,15 +57,29 @@ public class RavenDbFixture : IDisposable
     // class is done keeps the footprint to one class's worth.
     private void DropDatabase()
     {
+        string[] names;
+        lock (_databases) names = _databases.Append(DbName).Distinct().ToArray();
+
         try
         {
-            using var store = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(DbName) { SkipCreatingDatabase = true });
-            store.Maintenance.Server.Send(new DeleteDatabasesOperation(DbName, hardDelete: true));
+            using var store = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(names[0]) { SkipCreatingDatabase = true });
+            foreach (var name in names)
+            {
+                try
+                {
+                    store.Maintenance.Server.Send(new DeleteDatabasesOperation(name, hardDelete: true));
+                }
+                catch (Exception ex)
+                {
+                    // Never created (the class did not need it) or already gone.
+                    Console.WriteLine($"Could not drop test database {name}: {ex.Message}");
+                }
+            }
         }
         catch (Exception ex)
         {
-            // Nothing to drop (the server never started, or the class never made a database), or it is already gone.
-            Console.WriteLine($"Could not drop test database {DbName}: {ex.Message}");
+            // The server never started, so there is nothing to drop.
+            Console.WriteLine($"Could not reach the test server to drop {names.Length} database(s): {ex.Message}");
         }
     }
 }
@@ -106,12 +134,12 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     private readonly RavenTemplateRepository _templateRepository;
     private readonly RavenMediaStore _mediaStore;
     private readonly CampaignExportService _exportService;
-    private readonly string _dataPath;
+    private readonly RavenDbFixture _fixture;
 
     public PersistenceTest(RavenDbFixture fixture)
     {
-        _dbService = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
-        _dataPath = fixture.DbPath;
+        _dbService = fixture.Open(fixture.DbName);
+        _fixture = fixture;
         _actorRepository = new ActorRepository(_dbService);
         _userRepository = new RavenUserRepository(_dbService);
         _sessionRepository = new RavenSessionRepository(_dbService);
@@ -672,7 +700,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     [Fact]
     public async Task TheFirstAdminSeat_GoesToOneSignUp_EvenWhenTwoArriveTogether_AndNotOnceAnAdminExists_Async()
     {
-        using var db = new RavenDbService(_dataPath, "first-admin-" + Guid.NewGuid().ToString("N")[..8], runInMemory: true);
+        using var db = _fixture.Open("first-admin-" + Guid.NewGuid().ToString("N")[..8]);
         var users = new RavenUserRepository(db);
 
         // A player who signed up over the network first (and so got no seat) does not use it up.
@@ -1020,7 +1048,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     [Fact]
     public async Task AnInviteCodeFromBeforeD14_IsReplacedOnce_AndTheOldLinkStopsWorking_Async()
     {
-        using var db = new RavenDbService(_dataPath, "short-codes-" + Guid.NewGuid().ToString("N")[..8], runInMemory: true);
+        using var db = _fixture.Open("short-codes-" + Guid.NewGuid().ToString("N")[..8]);
         var campaigns = new CampaignRepository(db, new NoOpSystemCatalog(), null!, null!, null!, null!, null!, null!, null!);
         var old = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner", Name = "Old", InviteCode = "a1b2c3d4", InviteSingleUse = true };
         var current = new CampaignDocument { Id = Guid.NewGuid().ToString(), OwnerId = "owner", Name = "New", InviteCode = InviteCodes.New() };
