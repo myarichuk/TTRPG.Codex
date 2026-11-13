@@ -848,10 +848,13 @@ public class BookDraftE2ETests : IClassFixture<AppFixture>
         await Assertions.Expect(dm.Locator(".cm-content")).ToContainTextAsync("Vera Holloway", new() { Timeout = 30_000 });
 
         await dm.Locator(".cm-content").ClickAsync();
+        // The editor must hold the focus before typing: on a slow runner the click lands before CodeMirror takes it, and "{{" typed
+        // too early never opens the list. The list itself can take longer than the default 5 s to appear there.
+        await Assertions.Expect(dm.Locator(".cm-editor.cm-focused")).ToBeVisibleAsync(new() { Timeout = 15_000 });
         await dm.Keyboard.PressAsync("ControlOrMeta+End");
         await dm.Keyboard.TypeAsync("\n{{");
         var list = dm.Locator(".cm-tooltip-autocomplete");
-        await Assertions.Expect(list).ToBeVisibleAsync();
+        await Assertions.Expect(list).ToBeVisibleAsync(new() { Timeout = 15_000 });
         await Assertions.Expect(list).ToContainTextAsync("note");
         await Assertions.Expect(list).ToContainTextAsync("portrait");
         await Assertions.Expect(list).Not.ToContainTextAsync("secret");
