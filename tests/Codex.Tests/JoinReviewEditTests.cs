@@ -164,8 +164,12 @@ public class JoinReviewEditTests : IAsyncLifetime, IClassFixture<RavenDbFixture>
             new BringChoice("feat", "frog-licker", BringKind.LeaveOut)
         }, Array.Empty<ReviewEdit>(), new WithCarried(_registry));
 
-        Assert.Equal(new[] { new JoinNote(JoinNote.Swapped, "The Drowned Page", "Fiend Patron"), new JoinNote(JoinNote.LeftOut, "Frog Licker") },
-            result.Notes.Select(n => n with { To = n.Kind == JoinNote.Swapped ? _registry.GetEntries("srd5e", "subclass").First(e => e.Id == "fiend-patron").Name : n.To }));
+        var fiend = _registry.GetEntries("srd5e", "subclass").First(e => e.Id == "fiend-patron");
+        Assert.Equal(new[]
+        {
+            new JoinNote(JoinNote.Swapped, "The Drowned Page", fiend.Name, Type: "subclass", Id: drowned.Id, ToId: "fiend-patron"),
+            new JoinNote(JoinNote.LeftOut, "Frog Licker", Type: "feat", Id: "frog-licker")
+        }, result.Notes);
         Assert.Empty(result.Add);
     }
 
@@ -192,5 +196,15 @@ public class JoinReviewEditTests : IAsyncLifetime, IClassFixture<RavenDbFixture>
         var stored = await new ActorRepository(_db).GetVisibleAsync(accepted.Value.Added.Id, asPlayer);
         Assert.Equal(notes, stored!.JoinNotes);
         Assert.Empty((await vault.GetAsync(character.Id, player))!.JoinNotes); // the vault character is as it was
+        Assert.Equal(character.Sheet.Keys.OrderBy(k => k), (await vault.GetAsync(character.Id, player))!.Sheet.Keys.OrderBy(k => k));
+
+        // Only the character's owner may dismiss the notes: the GM, another player and the vault's id do not.
+        var actors = new ActorRepository(_db);
+        Assert.False(await vault.DismissJoinNotesAsync(accepted.Value.Added.Id, gm));
+        Assert.False(await vault.DismissJoinNotesAsync(accepted.Value.Added.Id, "someone-else"));
+        Assert.False(await vault.DismissJoinNotesAsync(character.Id, player));
+        Assert.Equal(notes, (await actors.GetVisibleAsync(accepted.Value.Added.Id, asPlayer))!.JoinNotes);
+        Assert.True(await vault.DismissJoinNotesAsync(accepted.Value.Added.Id, player));
+        Assert.Empty((await actors.GetVisibleAsync(accepted.Value.Added.Id, asPlayer))!.JoinNotes); // and it stays dismissed on the next read
     }
 }

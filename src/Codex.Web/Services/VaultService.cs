@@ -27,7 +27,7 @@ public sealed record BringChoice(string Type, string EntryId, BringKind Kind, st
 /// <summary>A change the GM made to one of the character's picks in the review: <paramref name="Key"/> is a choice's sheet key or a
 /// pick list's key, <paramref name="Picks"/> what it holds now, <paramref name="Label"/> what to call it and
 /// <paramref name="Summary"/> the picks by name, for the note the player reads.</summary>
-public sealed record ReviewEdit(string Key, string Label, IReadOnlyList<string> Picks, string Summary);
+public sealed record ReviewEdit(string Key, string Label, IReadOnlyList<string> Picks, string Summary, string Was = "");
 
 /// <summary>A request's sheet after the GM's review, the carried entries to add to the Library, and what to tell the player.</summary>
 public sealed record ReviewResult(Dictionary<string, object> Sheet, List<CarriedEntry> Add, List<JoinNote> Notes);
@@ -181,7 +181,7 @@ public sealed class VaultService(
                 continue;
             }
 
-            notes.Add(new JoinNote(JoinNote.Edited, edit.Label, edit.Summary));
+            notes.Add(new JoinNote(JoinNote.Edited, edit.Label, edit.Summary, edit.Was));
         }
 
         var add = new List<CarriedEntry>();
@@ -192,11 +192,11 @@ public sealed class VaultService(
             {
                 case BringKind.LeaveOut:
                     sheet = SheetReferences.Without(system, sheet, SheetReferences.Of(system, sheet).Where(r => r.Types.Any(t => carried.Is(t, r.Id))));
-                    notes.Add(new JoinNote(JoinNote.LeftOut, carried.Name));
+                    notes.Add(new JoinNote(JoinNote.LeftOut, carried.Name, Type: carried.Type, Id: carried.EntryId));
                     break;
                 case BringKind.UseOther when !string.IsNullOrWhiteSpace(choice!.UseId):
                     sheet = SheetReferences.Repointed(system, sheet, carried.Type, carried.EntryId, choice.UseId);
-                    notes.Add(new JoinNote(JoinNote.Swapped, carried.Name, resolver?.Resolve(carried.Type, choice.UseId)?.Name ?? choice.UseId));
+                    notes.Add(new JoinNote(JoinNote.Swapped, carried.Name, resolver?.Resolve(carried.Type, choice.UseId)?.Name ?? choice.UseId, Type: carried.Type, Id: carried.EntryId, ToId: choice.UseId));
                     break;
                 default:
                     add.Add(carried);

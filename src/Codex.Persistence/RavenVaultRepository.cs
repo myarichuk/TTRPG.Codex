@@ -249,6 +249,17 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
         return (request, added);
     }
 
+    public async Task<bool> DismissJoinNotesAsync(string actorId, string userId)
+    {
+        var allowed = false;
+        await RavenUpdate.RunAsync<ActorDocument>(dbService, actorId, stored =>
+        {
+            allowed = stored.CampaignId.Length > 0 && string.Equals(stored.OwnerUserId, userId, StringComparison.Ordinal);
+            if (allowed) stored.JoinNotes = new List<JoinNote>();
+        });
+        return allowed;
+    }
+
     public async Task<bool> UpdateFromCopyAsync(string vaultActorId, string userId, string name, Dictionary<string, object> sheet, string? biography)
     {
         var allowed = false;

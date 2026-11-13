@@ -46,6 +46,9 @@ public interface IVaultRepository
     Task<(CharacterRequestDocument Request, ActorDocument? Added)?> AcceptAsync(string requestId, CampaignAccess access,
         Dictionary<string, object>? sheet = null, IReadOnlyList<CarriedEntry>? add = null, IReadOnlyList<JoinNote>? notes = null);
 
+    /// <summary>Clears the notes on a campaign's copy (<see cref="ActorDocument.JoinNotes"/>). Only the character's owner may: false for anyone else.</summary>
+    Task<bool> DismissJoinNotesAsync(string actorId, string userId);
+
     /// <summary>Updates the vault character a campaign's copy came from with the parts the player owns, as the caller
     /// prepared them. False unless the vault character is the caller's.</summary>
     Task<bool> UpdateFromCopyAsync(string vaultActorId, string userId, string name, Dictionary<string, object> sheet, string? biography);

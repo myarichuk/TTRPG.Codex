@@ -499,7 +499,15 @@
     {
         edits.RemoveAll(e => e.Key == key);
         var original = reviewing == null ? new List<string>() : SheetRuleEngine.RawList(reviewing.Sheet, key);
-        if (!picks.SequenceEqual(original, StringComparer.OrdinalIgnoreCase)) edits.Add(new ReviewEdit(key, label, picks.ToList(), summary));
+        if (picks.SequenceEqual(original, StringComparer.OrdinalIgnoreCase)) return;
+        var type = Ctx.System?.SheetRules?.Lists.FirstOrDefault(l => l.Key == key)?.TargetEntityType;
+        var was = original.Select(raw =>
+        {
+            if (type == null) return raw;
+            var id = SheetRuleEngine.ParsePick(raw).Id;
+            return campaignEntries?.Resolve(type, id) is { } entry ? EntryName(entry) : reviewing?.Brings.FirstOrDefault(b => b.Is(type, id))?.Name ?? id;
+        }).ToList();
+        edits.Add(new ReviewEdit(key, label, picks.ToList(), summary, was.Count == 0 ? L["Actor.Skills.RankNone"] : string.Join(", ", was)));
     }
 
     private string Describe(RuleViolation violation) =>

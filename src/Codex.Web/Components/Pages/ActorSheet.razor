@@ -193,9 +193,9 @@ else
         }
     </div>
 
-    @if (!Vault && actor.JoinNotes.Count > 0 && actor.OwnerUserId == currentUserId)
+    @if (!Vault && actor.JoinNotes.Count > 0 && (actor.OwnerUserId == currentUserId || access is { IsDm: true }))
     {
-        <JoinNotesBanner Notes="actor.JoinNotes" OnDismiss="DismissJoinNotesAsync" />
+        <JoinNotesBanner Notes="actor.JoinNotes" SystemId="@(campaign?.SystemId ?? string.Empty)" ReadOnly="@(actor.OwnerUserId != currentUserId)" OnDismiss="DismissJoinNotesAsync" />
     }
 
     @if (!string.IsNullOrEmpty(actor.BlueprintId) && ContentRegistry.GetActor(actor.BlueprintId) == null)
@@ -1273,9 +1273,9 @@ else
 
     private async Task DismissJoinNotesAsync()
     {
-        if (actor == null) return;
-        actor.JoinNotes = new List<JoinNote>();
-        await ActorRepo.UpdateAsync(actor.Id, stored => stored.JoinNotes = new List<JoinNote>());
+        if (actor == null || currentUserId == null) return;
+        // The store checks the owner again: the notes are the player's to read and dismiss.
+        if (await VaultRepo.DismissJoinNotesAsync(actor.Id, currentUserId)) actor.JoinNotes = new List<JoinNote>();
     }
 
     private Task OnRulesInputChanged()
