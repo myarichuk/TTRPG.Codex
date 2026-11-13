@@ -17,8 +17,11 @@ public sealed record ImportResult(int EntryCount, Dictionary<string, int> Types)
 /// declares and gets a readable Markdown description assembled from the source, so the Library
 /// renders it without any 5E-specific UI.
 /// </summary>
-public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024")
+public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024", GrantTable? grants = null)
 {
+    /// <summary>The reviewed grants the 2024 data gets; a 2014 import has no mapping.</summary>
+    private readonly GrantTable _grants = grants ?? (edition == "2024" ? GrantTable.Embedded() : GrantTable.None);
+
     private const string SystemId = "srd5e";
 
     private readonly Dictionary<string, JsonDocument> _documents = new();
@@ -57,6 +60,10 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
         var manifest = BuildManifest();
         var systemPath = FindSystemYaml(outputDirectory);
         var system = systemPath != null ? SystemDefinitionLoader.Load(systemPath) : null;
+
+        // The reviewed grants go into the rows now, before anything is written: a mapping that does not fit the source stops the import.
+        var coverage = _grants.Apply(entries, ClassColumns.Read(All("Levels")), system);
+        if (!_grants.IsEmpty) await log.WriteLineAsync($"Grants: {coverage}");
 
         if (Directory.Exists(outputDirectory))
         {

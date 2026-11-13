@@ -1,0 +1,397 @@
+# The reviewed mapping from SRD 5.2.1 rows to feature grants (docs/SRD_GRANTS_IMPORT_DESIGN.md).
+#
+# One line per row, beside the SRD text. A row is a grant (uses, spends, modifiers, adds, spells, resist, options, choose, gate) or
+# is classified without one:
+#   text: <reason>      nothing is written; the player applies it by hand
+#   already: <where>    a field or list the system already reads carries it
+#   covered: <row>      the effect sits on another row
+# Reasons for text: rider (extra damage on a hit), die (a die the feature owns), advantage (advantage, a reroll or a floor on a roll),
+# reactive (fires on an event), per-use (a menu chosen each use), gear (needs a gear condition), state (holds only while raging or similar),
+# attribute (changes an ability score), skill-bonus (adds to checks, not a rank), training (weapon, armor, tool or language training),
+# chosen-spell (the player picks the spell), not-in-source (options the source JSON lacks), moment-test (a refill the engine cannot test),
+# sense (blindsight, flight and the like: no sheet field), aura (reaches allies), condition (condition immunity), other (narrative).
+#
+# A row is matched by name, and by level where a name repeats. A grant must match exactly one row; text, already and covered may name a
+# repeated row once for every level. The importer stops, and writes nothing, when a row here matches nothing, a row of the source is not
+# here, or a grant does not pass the checks (see GrantTable.cs).
+#
+# Shorthands: uses.max { column: X } is the step formula over classLevel of the Levels file's class_specific X; uses.$ref copies a pool
+# from `pools`; spells is a list of spell ids, or levels each with a list (0: always); resist is a list of damage types; gate: N gives a
+# species row the level it applies from.
+
+pools: {}
+
+class:
+  barbarian:
+    - { row: Rage, text: state }
+    - { row: Unarmored Defense, already: the class's unarmoredDefense }
+    - { row: Weapon Mastery, text: training }
+    - { row: Danger Sense, text: advantage }
+    - { row: Reckless Attack, text: advantage }
+    - { row: Barbarian Subclass, already: the subclass field }
+    - { row: Primal Knowledge, text: skill-bonus }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Extra Attack, text: other }
+    - { row: Fast Movement, text: gear }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Feral Instinct, text: advantage }
+    - { row: Instinctive Pounce, text: other }
+    - { row: Brutal Strike, text: rider }
+    - { row: Relentless Rage, text: reactive }
+    - { row: Improved Brutal Strike, text: rider }
+    - { row: Persistent Rage, text: other }
+    - { row: Indomitable Might, text: advantage }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Primal Champion, text: attribute }
+  bard:
+    - { row: Bardic Inspiration, text: die }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Expertise, text: skill-bonus }
+    - { row: Jack of All Trades, text: skill-bonus }
+    - { row: Bard Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Font of Inspiration, text: other }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Countercharm, text: reactive }
+    - { row: Magical Secrets, text: chosen-spell }
+    - { row: Superior Inspiration, text: moment-test }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Words of Creation, text: chosen-spell }
+  cleric:
+    - { row: Divine Order, text: training }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Channel Divinity, text: per-use }
+    - { row: Cleric Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Sear Undead, text: rider }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Blessed Strikes, text: rider }
+    - { row: Divine Intervention, text: chosen-spell }
+    - { row: Improved Blessed Strikes, text: rider }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Greater Divine Intervention, text: other }
+  druid:
+    - { row: Druidic, text: training }
+    - { row: Primal Order, text: training }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Wild Shape, text: per-use }
+    - { row: Wild Companion, text: per-use }
+    - { row: Druid Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Wild Resurgence, text: other }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Elemental Fury, text: rider }
+    - { row: Improved Elemental Fury, text: rider }
+    - { row: Beast Spells, text: other }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Archdruid, text: moment-test }
+  fighter:
+    - { row: Fighting Style, already: the fightingStyles list }
+    - { row: Second Wind, text: die }
+    - { row: Weapon Mastery, text: training }
+    - { row: Action Surge, text: per-use }
+    - { row: Tactical Mind, text: advantage }
+    - { row: Fighter Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Extra Attack, text: other }
+    - { row: Tactical Shift, text: other }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Indomitable, text: advantage }
+    - { row: Tactical Master, text: per-use }
+    - { row: Two Extra Attacks, text: other }
+    - { row: Studied Attacks, text: advantage }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Three Extra Attacks, text: other }
+  monk:
+    - { row: Martial Arts, text: die }
+    - { row: Unarmored Defense, already: the class's unarmoredDefense }
+    - { row: "Monk's Focus", text: per-use }
+    - { row: Unarmored Movement, text: gear }
+    - { row: Uncanny Metabolism, text: other }
+    - { row: Monk Subclass, already: the subclass field }
+    - { row: Deflect Attacks, text: reactive }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Slow Fall, text: reactive }
+    - { row: Extra Attack, text: other }
+    - { row: Stunning Strike, text: per-use }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Empowered Strikes, text: other }
+    - { row: Evasion, text: reactive }
+    - { row: Acrobatic Movement, text: gear }
+    - { row: Heightened Focus, text: other }
+    - { row: Self-Restoration, text: other }
+    - { row: Deflect Energy, text: reactive }
+    - { row: Disciplined Survivor, text: other }
+    - { row: Perfect Focus, text: moment-test }
+    - { row: Superior Defense, text: state }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Body and Mind, text: attribute }
+  paladin:
+    - { row: Lay On Hands, text: per-use }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Weapon Mastery, text: training }
+    - { row: Fighting Style, already: the fightingStyles list }
+    - { row: "Paladin's Smite", text: other }
+    - { row: Channel Divinity, text: per-use }
+    - { row: Paladin Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Extra Attack, text: other }
+    - { row: Faithful Steed, text: other }
+    - { row: Aura of Protection, text: aura }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Abjure Foes, text: per-use }
+    - { row: Aura of Courage, text: aura }
+    - { row: Radiant Strikes, text: rider }
+    - { row: Restoring Touch, text: per-use }
+    - { row: Aura Expansion, text: aura }
+    - { row: Epic Boon, already: feat slots }
+  ranger:
+    - { row: Favored Enemy, text: other }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Weapon Mastery, text: training }
+    - { row: Deft Explorer, text: skill-bonus }
+    - { row: Fighting Style, already: the fightingStyles list }
+    - { row: Ranger Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Extra Attack, text: other }
+    - { row: Roving, text: gear }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Expertise, text: skill-bonus }
+    - { row: Tireless, text: other }
+    - { row: Relentless Hunter, text: other }
+    - { row: "Nature's Veil", text: other }
+    - { row: Precise Hunter, text: advantage }
+    - { row: Feral Senses, text: sense }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Foe Slayer, text: rider }
+  rogue:
+    - { row: Expertise, text: skill-bonus }
+    - { row: Sneak Attack, text: die }
+    - { row: "Thieves' Cant", text: training }
+    - { row: Weapon Mastery, text: training }
+    - { row: Cunning Action, text: per-use }
+    - { row: Rogue Subclass, already: the subclass field }
+    - { row: Steady Aim, text: advantage }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Cunning Strike, text: per-use }
+    - { row: Uncanny Dodge, text: reactive }
+    - { row: Evasion, text: reactive }
+    - { row: Reliable Talent, text: advantage }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Improved Cunning Strike, text: per-use }
+    - { row: Devious Strikes, text: per-use }
+    - { row: Slippery Mind, text: other }
+    - { row: Elusive, text: other }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Stroke of Luck, text: advantage }
+  sorcerer:
+    - { row: Innate Sorcery, text: state }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Font of Magic, text: other }
+    - { row: Metamagic, text: not-in-source }
+    - { row: Sorcerer Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Sorcerous Restoration, text: other }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Sorcery Incarnate, text: other }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Arcane Apotheosis, text: other }
+  warlock:
+    - { row: Eldritch Invocations, text: not-in-source }
+    - { row: Pact Magic, already: slot pools and lists }
+    - { row: Magical Cunning, text: other }
+    - { row: Warlock Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Contact Patron, text: other }
+    - { row: Mystic Arcanum, text: chosen-spell }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Eldritch Master, text: other }
+  wizard:
+    - { row: Arcane Recovery, text: other }
+    - { row: Ritual Adept, text: chosen-spell }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Scholar, text: skill-bonus }
+    - { row: Wizard Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Memorize Spell, text: chosen-spell }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Spell Mastery, text: chosen-spell }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Signature Spells, text: chosen-spell }
+
+subclass:
+  champion:
+    - { row: Improved Critical, text: other }
+    - { row: Remarkable Athlete, text: advantage }
+    - { row: Additional Fighting Style, already: the subclass's featSlots }
+    - { row: Heroic Warrior, text: other }
+    - { row: Superior Critical, text: other }
+    - { row: Survivor, text: other }
+  circle-of-the-land:
+    - { row: Circle of the Land Spells, text: chosen-spell }
+    - { row: "Land's Aid", text: per-use }
+    - { row: Natural Recovery, text: other }
+    - { row: "Nature's Ward", text: condition }
+    - { row: "Nature's Sanctuary", text: per-use }
+  college-of-lore:
+    - { row: Bonus Proficiencies, text: skill-bonus }
+    - { row: Cutting Words, text: reactive }
+    - { row: Magical Discoveries, text: chosen-spell }
+    - { row: Peerless Skill, text: other }
+  draconic-sorcery:
+    - { row: Draconic Resilience, text: other }
+    - { row: Draconic Spells, text: other }
+    - { row: Elemental Affinity, text: rider }
+    - { row: Dragon Wings, text: other }
+    - { row: Dragon Companion, text: other }
+  evoker:
+    - { row: Evocation Savant, text: other }
+    - { row: Potent Cantrip, text: rider }
+    - { row: Sculpt Spells, text: other }
+    - { row: Empowered Evocation, text: rider }
+    - { row: Overchannel, text: rider }
+  fiend-patron:
+    - { row: "Dark One's Blessing", text: reactive }
+    - { row: Fiend Spells, text: other }
+    - { row: "Dark One's Own Luck", text: other }
+    - { row: Fiendish Resilience, text: per-use }
+    - { row: Hurl Through Hell, text: other }
+  hunter:
+    - { row: "Hunter's Lore", text: per-use }
+    - { row: "Hunter's Prey", text: per-use }
+    - { row: Defensive Tactics, text: per-use }
+    - { row: "Superior Hunter's Prey", text: rider }
+    - { row: "Superior Hunter's Defense", text: reactive }
+  life-domain:
+    - { row: Disciple of Life, text: rider }
+    - { row: Life Domain Spells, text: other }
+    - { row: Preserve Life, text: per-use }
+    - { row: Blessed Healer, text: rider }
+    - { row: Supreme Healing, text: rider }
+  oath-of-devotion:
+    - { row: Oath of Devotion Spells, text: other }
+    - { row: Sacred Weapon, text: per-use }
+    - { row: Aura of Devotion, text: aura }
+    - { row: Smite of Protection, text: aura }
+    - { row: Holy Nimbus, text: other }
+  path-of-the-berserker:
+    - { row: Frenzy, text: rider }
+    - { row: Mindless Rage, text: state }
+    - { row: Retaliation, text: reactive }
+    - { row: Intimidating Presence, text: other }
+  thief:
+    - { row: Fast Hands, text: per-use }
+    - { row: Second-Story Work, text: sense }
+    - { row: Supreme Sneak, text: advantage }
+    - { row: Use Magic Device, text: other }
+    - { row: "Thief's Reflexes", text: other }
+  warrior-of-the-open-hand:
+    - { row: Open Hand Technique, text: per-use }
+    - { row: Wholeness of Body, text: other }
+    - { row: Fleet Step, text: other }
+    - { row: Quivering Palm, text: per-use }
+
+species:
+  dragonborn:
+    traits:
+      - { row: Darkvision (60 ft.), already: the darkvision field }
+      - { row: Draconic Flight, text: sense }
+    lineages:
+      - { row: "Draconic Ancestor: Black", text: die }
+      - { row: "Draconic Ancestor: Blue", text: die }
+      - { row: "Draconic Ancestor: Brass", text: die }
+      - { row: "Draconic Ancestor: Bronze", text: die }
+      - { row: "Draconic Ancestor: Copper", text: die }
+      - { row: "Draconic Ancestor: Gold", text: die }
+      - { row: "Draconic Ancestor: Green", text: die }
+      - { row: "Draconic Ancestor: Red", text: die }
+      - { row: "Draconic Ancestor: Silver", text: die }
+      - { row: "Draconic Ancestor: White", text: die }
+  dwarf:
+    traits:
+      - { row: Darkvision (120 ft.), already: the darkvision field }
+      - { row: Dwarven Resilience, text: advantage }
+      - { row: Dwarven Toughness, already: hitPointsPerLevel }
+      - { row: Stonecunning, text: sense }
+  elf:
+    traits:
+      - { row: Darkvision (60 ft.), already: the darkvision field }
+      - { row: Elven Lineage, text: other }
+      - { row: Fey Ancestry, text: advantage }
+      - { row: Keen Senses, text: skill-bonus }
+      - { row: Trance, text: other }
+    lineages:
+      - { row: "Elven Lineage: Drow", text: other }
+      - { row: "Elven Lineage: High Elf", text: other }
+      - { row: "Elven Lineage: Wood Elf", text: other }
+  gnome:
+    traits:
+      - { row: Darkvision (60 ft.), already: the darkvision field }
+      - { row: Gnomish Cunning, text: advantage }
+      - { row: Gnomish Lineage, text: other }
+    lineages:
+      - { row: "Gnomish Lineage: Forest Gnome", text: other }
+      - { row: "Gnomish Lineage: Rock Gnome", text: other }
+  goliath:
+    traits:
+      - { row: Giant Ancestry, text: other }
+      - { row: Large Form, text: other }
+      - { row: Powerful Build, text: advantage }
+    lineages:
+      - { row: "Giant Ancestry: Cloud's Jaunt", text: other }
+      - { row: "Giant Ancestry: Fire's Burn", text: other }
+      - { row: "Giant Ancestry: Frost's Chill", text: other }
+      - { row: "Giant Ancestry: Hill's Tumble", text: other }
+      - { row: "Giant Ancestry: Stone's Endurance", text: other }
+      - { row: "Giant Ancestry: Storm's Thunder", text: other }
+  halfling:
+    traits:
+      - { row: Brave, text: advantage }
+      - { row: Halfling Nimbleness, text: other }
+      - { row: Luck, text: advantage }
+      - { row: Naturally Stealthy, text: other }
+  human:
+    traits:
+      - { row: Resourceful, text: other }
+      - { row: Skillful, text: skill-bonus }
+      - { row: Versatile, already: extraOriginFeats }
+  orc:
+    traits:
+      - { row: Adrenaline Rush, text: other }
+      - { row: Darkvision (120 ft.), already: the darkvision field }
+      - { row: Relentless Endurance, text: reactive }
+  tiefling:
+    traits:
+      - { row: Darkvision (60 ft.), already: the darkvision field }
+      - { row: Fiendish Legacy, text: other }
+      - { row: Otherworldly Presence, text: other }
+    lineages:
+      - { row: "Fiendish Legacy: Abyssal", text: other }
+      - { row: "Fiendish Legacy: Chthonic", text: other }
+      - { row: "Fiendish Legacy: Infernal", text: other }
+
+feat:
+  ability-score-improvement: { already: the abilityIncrease path }
+  alert: { text: advantage }
+  archery: { text: rider }
+  boon-of-combat-prowess: { text: other }
+  boon-of-dimensional-travel: { text: other }
+  boon-of-fate: { text: other }
+  boon-of-irresistible-offense: { text: rider }
+  boon-of-spell-recall: { text: other }
+  boon-of-the-night-spirit: { text: state }
+  boon-of-truesight: { text: sense }
+  defense: { already: armorClassBonus }
+  grappler: { already: the abilityIncrease path }
+  great-weapon-fighting: { text: rider }
+  magic-initiate: { text: chosen-spell }
+  savage-attacker: { text: rider }
+  skilled: { text: training }
+  two-weapon-fighting: { text: rider }
+
+background:
+  acolyte: { already: "skill ranks, origin feat, scores" }
+  criminal: { already: "skill ranks, origin feat, scores" }
+  sage: { already: "skill ranks, origin feat, scores" }
+  soldier: { already: "skill ranks, origin feat, scores" }

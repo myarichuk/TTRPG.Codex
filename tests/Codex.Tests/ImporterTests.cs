@@ -1,6 +1,7 @@
 using Codex.ContentImport;
 using Codex.Core;
 using Codex.Core.Systems;
+using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Codex.Tests;
@@ -46,7 +47,7 @@ public class ImporterTests : IDisposable
         File.Copy(Path.Combine(TestPaths.ContentRoot, "systems", "srd5e", "system.yaml"), Path.Combine(systemDir, "system.yaml"));
         var output = Path.Combine(systemDir, "packs", "test");
 
-        var result = await new Srd5eImporter(source).ImportAsync(output, TextWriter.Null);
+        var result = await new Srd5eImporter(source, grants: GrantTable.None).ImportAsync(output, TextWriter.Null);
 
         Assert.Equal(1, result.Types["spell"]);
         Assert.Equal(2, result.Types["feat"]);
@@ -103,5 +104,98 @@ public class ImporterTests : IDisposable
         Assert.Equal("While Unconscious:\n**Inert.** You drop whatever you're holding. When this condition ends, you remain Prone.\n**Speed 0.** Your Speed is 0.",
             Srd5eImporter.MergeUnclosedBold(text));
         Assert.Equal("**Bold.** fine", Srd5eImporter.MergeUnclosedBold("**Bold.** fine"));
+    }
+
+    private static ClassColumns Columns(string json) => ClassColumns.Read(System.Text.Json.JsonDocument.Parse(json).RootElement.EnumerateArray().Select(e => e.Clone()).ToList());
+
+    /// <summary>Works out a step formula the importer wrote: <c>classLevel</c>, a number, or <c>classLevel &gt;= N ? V : rest</c>.</summary>
+    private static int Worked(string formula, int level)
+    {
+        formula = formula.Trim();
+        if (formula == "classLevel") return level;
+        var match = System.Text.RegularExpressions.Regex.Match(formula, @"^classLevel >= (\d+) \? (\d+) : (.+)$");
+        if (!match.Success) return int.Parse(formula);
+        return level >= int.Parse(match.Groups[1].Value) ? int.Parse(match.Groups[2].Value) : Worked(match.Groups[3].Value, level);
+    }
+
+    [Fact]
+    public void ClassColumns_BuildAStepFormulaThatGivesTheColumnAtEveryLevel()
+    {
+        var rage = new[] { 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6 };
+        var json = "[" + string.Join(",", Enumerable.Range(1, 20).Select(l =>
+            $"{{\"level\":{l},\"class\":{{\"index\":\"barbarian\"}},\"class_specific\":{{\"rage_count\":{rage[l - 1]},\"points\":{l},\"flat\":3}}}}")) +
+            ",{\"level\":3,\"class\":{\"index\":\"barbarian\"},\"subclass\":{\"index\":\"berserker\"},\"class_specific\":{\"rage_count\":99}}]";
+        var columns = Columns(json);
+
+        var formula = columns.Formula("barbarian", "rage_count");
+        Assert.Equal("classLevel >= 17 ? 6 : classLevel >= 12 ? 5 : classLevel >= 6 ? 4 : classLevel >= 3 ? 3 : 2", formula);
+        for (var level = 1; level <= 20; level++) Assert.Equal(rage[level - 1], Worked(formula, level));
+
+        Assert.Equal("classLevel", columns.Formula("barbarian", "points")); // equal to the class level
+        Assert.Equal("3", columns.Formula("barbarian", "flat"));
+        Assert.Throws<InvalidDataException>(() => columns.Formula("barbarian", "nothing"));
+    }
+
+    private static ContentEntry ClassWithRows(string id, params (string Name, int Level)[] rows)
+    {
+        var entry = new ContentEntry { Type = "class", Id = id, Name = id, SystemId = "srd5e" };
+        entry.Properties["features"] = rows.Select(r => (object)new Dictionary<string, object> { ["name"] = r.Name, ["level"] = (long)r.Level, ["description"] = r.Name + "." }).ToList();
+        return entry;
+    }
+
+    private static ContentEntry Spell(string id) => new() { Type = "spell", Id = id, Name = id, SystemId = "srd5e" };
+
+    private static ClassColumns NoColumns => ClassColumns.Read(Array.Empty<System.Text.Json.JsonElement>());
+
+    [Fact]
+    public void GrantTable_RefusesAFileThatDoesNotFitTheSource()
+    {
+        var entries = new List<ContentEntry> { ClassWithRows("barbarian", ("Rage", 1), ("Danger Sense", 2)), Spell("fireball") };
+
+        string Problem(string yaml) => Assert.Throws<GrantTableException>(() => GrantTable.Parse(yaml).Apply(entries, NoColumns, null)).Message;
+
+        Assert.Contains("matches no row", Problem("class:\n  barbarian:\n    - { row: Rage, text: state }\n    - { row: Danger Sense, text: advantage }\n    - { row: Nothing, text: other }"));
+        Assert.Contains("classified twice", Problem("class:\n  barbarian:\n    - { row: Rage, text: state }\n    - { row: Rage, text: other }\n    - { row: Danger Sense, text: advantage }"));
+        Assert.Contains("is not in the grants file", Problem("class:\n  barbarian:\n    - { row: Rage, text: state }"));
+        Assert.Contains("not a spell id", Problem("class:\n  barbarian:\n    - { row: Rage, spells: [no-such-spell] }\n    - { row: Danger Sense, text: advantage }"));
+        Assert.Contains("needs a key", Problem("class:\n  barbarian:\n    - { row: Rage, uses: { max: 2 } }\n    - { row: Danger Sense, text: advantage }"));
+        Assert.Contains("no counter", Problem("class:\n  barbarian:\n    - { row: Rage, spends: { key: nothing } }\n    - { row: Danger Sense, text: advantage }"));
+        Assert.Contains("in the grants file but not in the source", Problem("class:\n  barbarian:\n    - { row: Rage, text: state }\n    - { row: Danger Sense, text: advantage }\n  monk:\n    - { row: Martial Arts, text: die }"));
+    }
+
+    [Fact]
+    public void GrantTable_ExpandsColumnsPoolsAndSpellShorthands()
+    {
+        var barbarian = ClassWithRows("barbarian", ("Rage", 1), ("Danger Sense", 2));
+        var other = ClassWithRows("fighter", ("Second Wind", 1));
+        var json = "[" + string.Join(",", Enumerable.Range(1, 20).Select(l => $"{{\"level\":{l},\"class\":{{\"index\":\"barbarian\"}},\"class_specific\":{{\"rage_count\":{(l < 3 ? 2 : 4)}}}}}")) + "]";
+        var yaml = """
+            pools:
+              recharge: { key: recharge, max: 1, recoversOn: [Long Rest] }
+            class:
+              barbarian:
+                - { row: Rage, uses: { key: rage, max: { column: rage_count }, recoversOn: [Long Rest] } }
+                - { row: Danger Sense, uses: { $ref: recharge, label: Sense }, spells: { 0: [fireball], 3: [fireball] } }
+              fighter:
+                - { row: Second Wind, uses: { $ref: recharge } }
+            """;
+        var entries = new List<ContentEntry> { barbarian, other, Spell("fireball") };
+
+        // A shared pool may be named by two rows; its fields are copied and the row's own win.
+        GrantTable.Parse(yaml).Apply(entries, Columns(json), null);
+
+        var rows = ((List<object>)barbarian.Properties["features"]).Cast<Dictionary<string, object>>().ToList();
+        var rage = (Dictionary<string, object>)rows[0]["uses"];
+        Assert.Equal("classLevel >= 3 ? 4 : 2", rage["max"]);
+        var sense = (Dictionary<string, object>)rows[1]["uses"];
+        Assert.Equal("recharge", sense["key"]);
+        Assert.Equal("Sense", sense["label"]);
+        Assert.Equal(1L, sense["max"]);
+        var adds = ((List<object>)rows[1]["adds"]).Cast<Dictionary<string, object>>().ToList();
+        Assert.Equal(2, adds.Count);
+        Assert.False(adds[0].ContainsKey("level")); // level 0: always
+        Assert.Equal(3L, adds[1]["level"]);
+        Assert.Equal("grantedSpells", adds[1]["to"]);
+        Assert.Equal("Rage.", rows[0]["description"]); // the text is never touched
     }
 }

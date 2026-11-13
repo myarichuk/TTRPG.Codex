@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Data\srd521-class-tables.json" LogicalName="srd521-class-tables.json" />
+    <EmbeddedResource Include="Data\srd521-grants.yaml" LogicalName="srd521-grants.yaml" />
   </ItemGroup>
 
   <ItemGroup>
