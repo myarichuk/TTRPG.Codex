@@ -5,3 +5,9 @@ description: During downtime, you get **two ticks** to distribute among any long
 source: Character playbook > Special abilities > Analyst
 tags:
 - example
+properties:
+  uses:
+    key: analyst
+    max: 2
+    recovers:
+    - on: downtime

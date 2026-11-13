@@ -9,3 +9,8 @@ description: >-
 source: Character playbook > Special abilities > Focused
 tags:
 - example
+properties:
+  modifiers:
+  - target: specialArmorBoxes
+    amount: 1
+    type: boxes

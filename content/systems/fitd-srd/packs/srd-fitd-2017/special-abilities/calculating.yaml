@@ -9,3 +9,9 @@ description: >-
 source: Character playbook > Special abilities > Calculating
 tags:
 - example
+properties:
+  uses:
+    key: calculating
+    max: 1
+    recovers:
+    - on: downtime
