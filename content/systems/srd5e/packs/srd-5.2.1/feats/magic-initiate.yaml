@@ -14,3 +14,30 @@ tags:
 properties:
   category: origin
   minLevel: 1
+  adds:
+  - choice: spell-list
+    choose: 1
+    from:
+    - Cleric
+    - Druid
+    - Wizard
+  - to: grantedSpells
+    choice: cantrips
+    choose: 2
+    where:
+    - property: level
+      equals: 0
+    - property: classes
+      containsChoice: spell-list
+  - to: grantedSpells
+    choice: spell
+    choose: 1
+    where:
+    - property: level
+      equals: 1
+    - property: classes
+      containsChoice: spell-list
+    free:
+      max: 1
+      recoversOn:
+      - Long Rest
