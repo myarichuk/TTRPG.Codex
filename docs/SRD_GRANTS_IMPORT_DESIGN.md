@@ -717,6 +717,9 @@ Built as designed, on the branch stacked on the sheet-kind feature sources. What
   system with features, not only sheet kinds, and the table's counter pass writes counters the way the sheet page does
   (`ApplyCounters`) at every table start. A counter new to the pack joins full, one whose maximum, name or refill rules changed takes the
   new ones, spent uses stay. Granted spells and resistances still arrive when a sheet is opened.
+- **Eldritch Invocations** are 28 Library entries (type `invocation`) from `Data/srd521-invocations.yaml`, section "Eldritch Invocation Options" of the
+  SRD 5.2.1 document; the grants file classifies each (12 cast a spell without a slot, the rest are text). Metamagic still stays text (reason `not-in-source`): its
+  options are in the document too ("Metamagic Options") and are the next list to make entries of, the same way.
 - **Lineage details come from the SRD 5.2.1 document** (Q6): the Wood Elf's Druidcraft, the Rock Gnome's Mending, spell levels.
 - **Spellcasting actions of creatures** now carry their spell lists (the Mage and 47 more): a generator fix, not a feature grant.
 - **Tests:** `SrdEngineExtensionTests` (E1, E1b, E3), `SrdMappedGrantsTests` (a sample of mapped features, E2), `SrdGrantSweepTests`
