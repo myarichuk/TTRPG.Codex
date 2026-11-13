@@ -1,0 +1,23 @@
+id: srd-fitd-2017-ru
+name: 'Forged in the Dark SRD (December 2017), Русский'
+version: 2017.12
+systemId: fitd-srd
+minAppVersion: 0.0.0
+priority: 3
+kind: translation
+locale: ru
+translationOf: srd-fitd-2017
+dependencies:
+- srd-fitd-2017
+description: 'Машинный черновик русского перевода Forged in the Dark SRD: правила, действия, состояния-травмы, особые умения, особые умения и улучшения команды. Ещё не проверен носителем языка; английский текст остаётся основным.'
+authors:
+- TTRPG.Codex contributors (machine-drafted translation, checked by tools/Codex.TranslationCheck; not reviewed by a native speaker)
+license:
+  name: CC-BY-3.0
+  url: https://creativecommons.org/licenses/by/3.0/legalcode
+  attribution: This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
+  sourceUrl: https://bladesinthedark.com/
+  modified: true
+  notices:
+  - 'Modified from the original: translated into Russian by machine, for review by a native speaker. The terms are listed in docs/i18n-glossary.md. The English text remains the authoritative rules text.'
+  - This translation is not affiliated with or endorsed by One Seven Design.

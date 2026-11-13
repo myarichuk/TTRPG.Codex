@@ -1,0 +1,161 @@
+# Russian display text for the Forged in the Dark SRD system. MACHINE-DRAFTED, not yet reviewed by a native speaker.
+# Terms: docs/i18n-glossary.md ("Forged in the Dark SRD"). Keys, ids and rules stay English; only display text is here.
+# The sheet's own labels (sheet kinds, tracks, keyed-list rows, layout sections) have no translation section on main, so every
+# word the sheet or the roller can show goes under `values`, which the UI looks up by the English word (case-insensitive).
+name: Forged in the Dark SRD
+compatibility: Forged in the Dark
+description: >-
+  Справочный документ к семейству игр на кубах о дерзких проходимцах и командах, которыми они управляют: рейтинги действий
+  в точках, d6 за каждую точку, результат по наивысшему кубу, стресс, который можно потратить, чтобы сопротивляться
+  последствиям, вред и травмы, постепенно ломающие персонажей, и команда с рангом, репутацией, жаром и уровнем розыска.
+  Только правила; сеттинг, плейбуки и типы команд любой отдельной игры в него не входят.
+
+setting:
+  summary: >-
+    Проходимцы собираются в команду, берутся за опасные дела против более богатых и могущественных фракций и платят за каждый
+    успех стрессом, вредом, жаром и осложнениями. Система не предполагает конкретного мира: его приносит кампания.
+  genres: [ограбление, криминал, авантюра]
+  tone: [напряжённый, отчаянный, дерзкий]
+  themes: [амбиции и их цена, верность под давлением, последствия успеха]
+  factions: [соперничающие преступные команды, закон, гильдии и знатные дома, тайные культы]
+  play: [команда планирует дело, дело идёт не по плану, последствия разбираются в свободное время]
+  notes: Типы команд, плейбуки, происхождение и прошлое определяет каждая игра или кампания.
+
+entityTypes:
+  rule:
+    label: Правило
+    pluralLabel: Правила
+    fields:
+      category: { label: Глава }
+      order: { label: Порядок }
+  action:
+    label: Действие
+    pluralLabel: Действия
+    fields:
+      attribute: { label: Атрибут }
+  trauma:
+    label: Состояние-травма
+    pluralLabel: Состояния-травмы
+  special-ability:
+    label: Особое умение
+    pluralLabel: Особые умения
+  crew-ability:
+    label: Особое умение команды
+    pluralLabel: Особые умения команды
+  crew-upgrade:
+    label: Улучшение команды
+    pluralLabel: Улучшения команды
+    fields:
+      cost: { label: Клетки улучшения }
+  item:
+    label: Предмет
+    pluralLabel: Предметы
+    fields:
+      load: { label: Ноша }
+
+conditions:
+  Retired: Ушёл на покой
+  Dead: Мёртв
+  Less effect: Меньший эффект
+  Reduced dice: Меньше кубов
+  Needs help: Нужна помощь
+
+maxSuffix: макс.
+
+sheetRules:
+  messages:
+    "more load used than the chosen load allows ({LoadMax}).": использовано больше ноши, чем позволяет выбранная ноша ({LoadMax}).
+
+values:
+  # Sheet kinds, lists and layout sections
+  Scoundrel: Проходимец
+  Crew: Команда
+  Actions: Действия
+  Condition: Состояние
+  Abilities: Особые умения
+  Load: Ноша
+  Advancement: Развитие
+  Coin: Монеты
+  Standing: Положение
+  Heat: Жар
+  Special abilities: Особые умения
+  Items: Предметы
+  Crew special abilities: Особые умения команды
+  Crew upgrades: Улучшения команды
+  # Attributes (the groups of actions) and the twelve actions
+  insight: Рассудок
+  prowess: Сноровка
+  resolve: Воля
+  Hunt: Охота
+  Study: Изучение
+  Survey: Осмотр
+  Tinker: Механика
+  Finesse: Изящество
+  Prowl: Подкрадывание
+  Skirmish: Схватка
+  Wreck: Разрушение
+  Attune: Настройка
+  Command: Приказ
+  Consort: Знакомства
+  Sway: Влияние
+  # Tracks
+  Stress: Стресс
+  Trauma: Травма
+  Harm: Вред
+  Armor: Броня
+  Heavy armor: Тяжёлая броня
+  Special armor: Особая броня
+  Stash: Заначка
+  Insight experience: Опыт рассудка
+  Prowess experience: Опыт сноровки
+  Resolve experience: Опыт воли
+  Playbook experience: Опыт плейбука
+  Wanted level: Уровень розыска
+  Reputation: Репутация
+  # Sheet values
+  tier: Ранг
+  turf: Территория
+  hold: Контроль
+  load: Ноша
+  LoadMax: Предел ноши
+  LoadUsed: Занято ноши
+  light: лёгкая
+  normal: обычная
+  heavy: тяжёлая
+  weak: слабый
+  strong: сильный
+  # The trauma conditions a player picks when stress overflows
+  Cold: Холодный
+  Haunted: Преследуемый
+  Obsessed: Одержимый
+  Paranoid: Параноик
+  Reckless: Безрассудный
+  Soft: Мягкосердечный
+  Unstable: Неуравновешенный
+  Vicious: Жестокий
+  # Rolls: position (feminine), effect (masculine) and results
+  Action roll: Бросок действия
+  Resistance roll: Бросок сопротивления
+  Group action: Групповое действие
+  Assist, push or bargain: Помощь, нажим или сделка
+  controlled: контролируемая
+  risky: рискованная
+  desperate: отчаянная
+  limited: ограниченный
+  standard: стандартный
+  great: большой
+  critical: критический успех
+  full: полный успех
+  partial: частичный успех
+  bad: провал
+  resisted: выдержано
+  # Campaign state
+  Faction status: Статус фракций
+  status: Статус
+  # Labels PR #299 (feat/sheetkinds-feature-sources) adds to system.yaml; harmless until it merges
+  Load limit: Предел ноши
+  Load used: Занято ноши
+  Special armor boxes: Клетки особой брони
+  Turf counted: Учтённая территория
+  Downtime: Свободное время
+  Load chosen: Ноша выбрана
