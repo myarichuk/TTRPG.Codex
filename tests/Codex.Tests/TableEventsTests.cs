@@ -26,7 +26,7 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
         id: table-events
         name: Table events
         conditions: [Dead, Hurt, Down]
-        moments: [{ key: downtime, label: Downtime }]
+        moments: [{ key: downtime, label: Downtime }, { key: quiet, label: Quiet }]
         sheetKinds:
           - kind: hero
             label: Hero
@@ -152,6 +152,53 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
         await runtime.EnqueueAsync(new MomentCommand(hero.Id, "downtime"));
 
         Assert.Contains(await LogAsync(session), d => d.StartsWith("Downtime for Vex", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ADeclaredMomentWithNoHandlerAndNoCounter_IsLoggedAsJustTheMoment()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await HeroAsync(campaignId, "Vex");
+        var (runtime, session) = await TableAsync(campaignId, hero);
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new MomentCommand(hero.Id, "quiet"));
+
+        Assert.Contains("Quiet for Vex.", await LogAsync(session));
+    }
+
+    [Fact]
+    public async Task AFeatureCounterOnAKindSheet_IsSpentAndRegainedByTheCommandTheTableCardSends()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await HeroAsync(campaignId, "Vex", ("uses_scheme", 2L), ("uses_scheme_Max", 2L));
+        var (runtime, session) = await TableAsync(campaignId, hero);
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new AdjustResourceCommand(hero.Id, "uses_scheme", -1, "Scheme"));
+        Assert.Equal(1, Pool(runtime, hero.Id, "uses_scheme"));
+
+        await runtime.EnqueueAsync(new AdjustResourceCommand(hero.Id, "uses_scheme", 1, "Scheme"));
+        Assert.Equal(2, Pool(runtime, hero.Id, "uses_scheme"));
+    }
+
+    [Fact]
+    public async Task ASheetEditToAKindTrackAtALiveTable_IsAddedToTheTablesValue_NotPutOverIt()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await HeroAsync(campaignId, "Vex", ("stress_Max", 9L));
+        var (runtime, session) = await TableAsync(campaignId, hero);
+        await using var _ = runtime;
+        var baseline = new Dictionary<string, object>((await StoredAsync(campaignId, hero.Id)).Sheet);
+
+        // The sheet was opened at stress 0; the table marks 2; the editor marks 1 on the sheet and saves.
+        await runtime.EnqueueAsync(new RaiseEventCommand(hero.Id, "adjust", new Dictionary<string, object?> { ["track"] = "stress", ["by"] = 2 }));
+        Assert.Equal(2, Pool(runtime, hero.Id, "stress"));
+        var edited = await StoredAsync(campaignId, hero.Id);
+        edited.Sheet["stress"] = 1L;
+        await runtime.EnqueueAsync(new ReplaceActorCommand(edited, baseline, new CampaignAccess(campaignId, "dm", CampaignRole.DM), System));
+
+        Assert.Equal(3, Pool(runtime, hero.Id, "stress"));
     }
 
     [Fact]

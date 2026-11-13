@@ -244,11 +244,11 @@ public sealed partial class SheetRuleEngine
             {
                 if (resolver.Resolve(type, id) is not { } entry) continue;
                 var copy = copies[entry.Id] = copies.GetValueOrDefault(entry.Id) + 1;
-                AddFeatures(found, source, entry, sheet, sheet, collected, copy);
+                AddFeatures(found, source, entry, sheet, sheet, collected, copy, onKind: true);
             }
         }
 
-        return found.Select(f => f with { OnKind = true }).ToList();
+        return found;
     }
 
     /// <summary>The ids of the picks stored under <paramref name="key"/> on a sheet kind: each element is an id, or a map with an <c>id</c>.</summary>
@@ -302,12 +302,12 @@ public sealed partial class SheetRuleEngine
     }
 
     private static void AddFeatures(List<ActiveFeature> found, FeatureSource source, ContentEntry entry, IReadOnlyDictionary<string, object> view,
-        IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, int copy = 1)
+        IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, int copy = 1, bool onKind = false)
     {
         if (source.Entries.Count > 0 && !source.Entries.Contains(entry.Id, StringComparer.OrdinalIgnoreCase)) return;
         if (source.Property == null)
         {
-            AddRow(found, entry.Name, entry.Description, entry, null, view, source.ByField, entry.Properties, copy, sheet, collected, null, null);
+            AddRow(found, entry.Name, entry.Description, entry, null, view, source.ByField, entry.Properties, copy, sheet, collected, null, null, onKind);
             return;
         }
 
@@ -327,7 +327,7 @@ public sealed partial class SheetRuleEngine
         {
             foreach (var (name, description, level, row) in candidates)
             {
-                AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, null, null);
+                AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, null, null, onKind);
             }
 
             return;
@@ -340,12 +340,12 @@ public sealed partial class SheetRuleEngine
         if (options.Count == 0) return;
         var (valid, stale) = ReadPicks(sheet, key, choose.Count, options);
         var label = string.IsNullOrWhiteSpace(choose.Label) ? entry.Name : choose.Label!;
-        var owner = new ActiveFeature(label, null, entry, null, view, source.ByField, Array.Empty<FeatureModifier>(), Array.Empty<FeatureAdd>(), null, null, copy);
+        var owner = new ActiveFeature(label, null, entry, null, view, source.ByField, Array.Empty<FeatureModifier>(), Array.Empty<FeatureAdd>(), null, null, copy, OnKind: onKind);
         collected?.Choices.Add(new RowChoiceInstance(key, choose, label, entry.Name, owner, options, valid, stale));
         foreach (var picked in valid)
         {
             var (name, description, level, row) = candidates.First(c => c.Name.Equals(picked.Name, StringComparison.OrdinalIgnoreCase));
-            AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, choose.Id, key);
+            AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, choose.Id, key, onKind);
         }
     }
 
@@ -367,9 +367,10 @@ public sealed partial class SheetRuleEngine
     /// <summary>Adds one row as a feature and, when it offers <c>options</c>, the options picked as features named "{row}: {option}".
     /// <paramref name="scope"/> is the id of the row choice this row was picked through, <paramref name="chosenBy"/> its sheet key.</summary>
     private static void AddRow(List<ActiveFeature> found, string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view,
-        string? levelKey, IReadOnlyDictionary<string, object> data, int copy, IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, string? scope, string? chosenBy)
+        string? levelKey, IReadOnlyDictionary<string, object> data, int copy, IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, string? scope, string? chosenBy,
+        bool onKind = false)
     {
-        var feature = Feature(name, description, entry, level, view, levelKey, data, copy, scope, chosenBy);
+        var feature = Feature(name, description, entry, level, view, levelKey, data, copy, scope, chosenBy, onKind);
         found.Add(feature);
         var optionRows = Maps(data.GetValueOrDefault("options")).ToList();
         if (optionRows.Count == 0 && !data.ContainsKey("options")) return;
@@ -392,7 +393,7 @@ public sealed partial class SheetRuleEngine
         foreach (var picked in valid)
         {
             var option = candidates.First(c => c.Name!.Equals(picked.Name, StringComparison.OrdinalIgnoreCase)).Row;
-            AddRow(found, $"{name}: {picked.Name}", picked.Description, entry, level, view, levelKey, new Dictionary<string, object>(option), copy, sheet, collected, id, key);
+            AddRow(found, $"{name}: {picked.Name}", picked.Description, entry, level, view, levelKey, new Dictionary<string, object>(option), copy, sheet, collected, id, key, onKind);
         }
     }
 
@@ -418,7 +419,7 @@ public sealed partial class SheetRuleEngine
     }
 
     private static ActiveFeature Feature(string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view, string? levelKey, IReadOnlyDictionary<string, object> data, int copy = 1,
-        string? scope = null, string? chosenBy = null)
+        string? scope = null, string? chosenBy = null, bool onKind = false)
     {
         var modifiers = Maps(data.GetValueOrDefault("modifiers"))
             .Select(m => new FeatureModifier(Text(m, "target") ?? string.Empty, Text(m, "amount") ?? "0", Text(m, "type"), Text(m, "when")))
@@ -444,7 +445,7 @@ public sealed partial class SheetRuleEngine
         var spends = data.GetValueOrDefault("spends") is IDictionary<string, object> spend && Text(spend, "key") is { } spendKey
             ? new FeatureSpend(spendKey, Text(spend, "amount") ?? "1")
             : null;
-        return new ActiveFeature(name, description, entry, level, view, levelKey, modifiers, adds, uses, spends, copy, scope, chosenBy);
+        return new ActiveFeature(name, description, entry, level, view, levelKey, modifiers, adds, uses, spends, copy, scope, chosenBy, onKind);
     }
 
     /// <summary>The choice an <c>adds</c> item leaves to the player (<c>choice</c> and/or <c>choose</c> in it), or null for a fixed item.

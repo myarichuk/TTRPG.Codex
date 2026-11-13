@@ -183,6 +183,8 @@ public class SheetKindFeaturesTests
         var open = engine.Recompute(sheet);
         var pending = Assert.Single(open.PendingChoices);
         Assert.Equal("choice__looker__style", pending.Key);
+        Assert.True(pending.Feature.OnKind);
+        Assert.All(open.Features, f => Assert.True(f.OnKind));
         Assert.Equal(new[] { "Looker" }, open.Features.Where(f => f.Name == "Looker").Select(f => f.Name));
         Assert.DoesNotContain("uses_quiet", sheet.Keys);
 
