@@ -718,7 +718,7 @@ Built as designed, on the branch stacked on the sheet-kind feature sources. What
   (`ApplyCounters`) at every table start. A counter new to the pack joins full, one whose maximum, name or refill rules changed takes the
   new ones, spent uses stay. Granted spells and resistances still arrive when a sheet is opened.
 - **Eldritch Invocations** are 28 Library entries (type `invocation`) from `Data/srd521-invocations.yaml`, section "Eldritch Invocation Options" of the
-  SRD 5.2.1 document; the grants file classifies each (12 cast a spell without a slot, the rest are text). Metamagic still stays text (reason `not-in-source`): its
+  SRD 5.2.1 document; the grants file classifies each (12 cast a spell without a slot, Pact of the Tome picks spells; the rest are text). Metamagic still stays text (reason `not-in-source`): its
   options are in the document too ("Metamagic Options") and are the next list to make entries of, the same way.
 - **Entry choices are mapped** (ENTRY_CHOICES_DESIGN.md, step 8): Magic Initiate (list, 2 cantrips, a level-1 spell free once per Long Rest), Mystic Arcanum
   at 11, 13, 15 and 17, Signature Spells and Spell Mastery (mark-only over the sheet's `spells`; Spell Mastery's spells are Wizard spells with a casting time of
