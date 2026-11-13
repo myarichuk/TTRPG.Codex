@@ -395,7 +395,8 @@ else
         runtime.StateChanged += OnStateChanged;
         snapshot = runtime.Snapshot;
         rosterSeen = snapshot.RosterVersion;
-        if (Access.IsDm && Definition != null && rulesLoading == null)
+        // The GM's initiative bonuses and hit dice need the rules, and so does a player's own card: its counters, slots and actions.
+        if (Definition != null && rulesLoading == null)
         {
             rulesLoading = LoadRulesAsync();
         }
