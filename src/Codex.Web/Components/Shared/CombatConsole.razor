@@ -180,8 +180,11 @@ else
                 @if (Rests.Count > 0 || PartyMoments.Count > 0)
                 {
                     <section class="panel" aria-labelledby="party-rest-heading">
-                        <div class="panel-title"><h3 id="party-rest-heading">@(Definition?.Moments.Count > 0 ? L["Combat.PartyMoments"] : L["Combat.PartyRest"])</h3></div>
-                        <p class="small-muted">@L["Combat.PartyRestHint"]</p>
+                        <div class="panel-title"><h3 id="party-rest-heading">@(Rests.Count == 0 ? L["Combat.PartyMomentsOnly"] : PartyMoments.Count > 0 ? L["Combat.PartyMoments"] : L["Combat.PartyRest"])</h3></div>
+                        @if (Rests.Count > 0)
+                        {
+                            <p class="small-muted">@L["Combat.PartyRestHint"]</p>
+                        }
                         <div class="d-flex flex-wrap gap-2">
                             @foreach (var rest in Rests)
                             {

@@ -1090,7 +1090,9 @@ public sealed record AdjustResourceCommand(string ActorId, string PoolName, int 
 
 /// <summary>A rest: refills the named slot pools, then applies whatever the system's rest rule of that
 /// name says (hit points, temporary hit points, hit dice, exhaustion, conditions).</summary>
-public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<string> PoolNames) : IUndoableCommand
+/// <para><paramref name="PoolsOnly"/>: only the named slot pools and the feature counters that name the rest refill, as the sheet's own
+/// rest button does off the table; hit points, hit dice, conditions and the system's rest handler are left to a full rest.</para>
+public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<string> PoolNames, bool PoolsOnly = false) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
 
@@ -1100,19 +1102,42 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
 
     public void Apply(CampaignRuntime runtime)
     {
-        if (runtime.GetEntity(ActorId) is { } e)
+        if (runtime.GetEntity(ActorId) is not { } e) return;
+        if (PoolsOnly)
+        {
+            _happened = RefillPools(runtime, e);
+        }
+        else
         {
             _happened = TableRules.Rest(runtime, ActorId, e, RestName, PoolNames);
-            // The feature counters that name this rest refill by their own rules: all, a part, or a roll.
-            _happened.AddRange(TableRules.RefillCounters(runtime, ActorId, e, RestName));
-            if (TableEvents.Handles(runtime, "rest"))
-            {
-                _happened.AddRange(TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent("rest",
-                    new Dictionary<string, object?>(StringComparer.Ordinal) { ["name"] = RestName })).Messages);
-            }
+        }
+
+        // The feature counters that name this rest refill by their own rules: all, a part, or a roll.
+        _happened.AddRange(TableRules.RefillCounters(runtime, ActorId, e, RestName));
+        if (!PoolsOnly && TableEvents.Handles(runtime, "rest"))
+        {
+            _happened.AddRange(TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent("rest",
+                new Dictionary<string, object?>(StringComparer.Ordinal) { ["name"] = RestName })).Messages);
         }
     }
 
+    /// <summary>The named slot pools back to their maximum, and nothing else of a rest.</summary>
+    private List<EventMessage> RefillPools(CampaignRuntime runtime, DefaultEcs.Entity e)
+    {
+        var happened = new List<EventMessage>();
+        if (!e.Has<Codex.Core.Components.ResourcePoolComponent>()) return happened;
+        var pool = e.Get<Codex.Core.Components.ResourcePoolComponent>();
+        var refilled = false;
+        foreach (var key in PoolNames)
+        {
+            if (!pool.Pools.TryGetValue(key, out var now) || !pool.Pools.TryGetValue(TableRules.MaxKeyOf(runtime, key), out var max) || now >= max) continue;
+            runtime.World.AdjustResource(e, key, max - now, k => TableRules.MaxKeyOf(runtime, k));
+            refilled = true;
+        }
+
+        if (refilled) happened.Add(EventMessage.Of("Rest.Slots"));
+        return happened;
+    }
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Rest",
         new[] { EventMessage.Of(_happened.Count > 0 ? "Rest.TookWith" : "Rest.Took", runtime.ActorTerm(ActorId), EventTerm.Rest(RestName)).With(_happened) },
         new[] { ActorId });

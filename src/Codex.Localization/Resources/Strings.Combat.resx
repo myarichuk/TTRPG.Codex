@@ -54,6 +54,7 @@
   <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} for the party</value></data>
   <data name="Combat.DawnButton" xml:space="preserve"><value>Dawn for the party</value></data>
   <data name="Combat.PartyMoments" xml:space="preserve"><value>Rests and moments</value></data>
+  <data name="Combat.PartyMomentsOnly" xml:space="preserve"><value>Moments for everyone</value></data>
   <data name="Combat.MomentButton" xml:space="preserve"><value>{0} for everyone</value></data>
   <data name="Combat.EndTable" xml:space="preserve"><value>End the table</value></data>
   <data name="Combat.TempHpTitle" xml:space="preserve"><value>Temporary hit points</value></data>

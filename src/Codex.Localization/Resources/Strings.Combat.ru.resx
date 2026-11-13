@@ -54,6 +54,7 @@
   <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} для отряда</value></data>
   <data name="Combat.DawnButton" xml:space="preserve"><value>Рассвет для отряда</value></data>
   <data name="Combat.PartyMoments" xml:space="preserve"><value>Отдых и особые моменты</value></data>
+  <data name="Combat.PartyMomentsOnly" xml:space="preserve"><value>Особые моменты для всех</value></data>
   <data name="Combat.MomentButton" xml:space="preserve"><value>{0} для всех</value></data>
   <data name="Combat.EndTable" xml:space="preserve"><value>Завершить стол</value></data>
   <data name="Combat.TempHpTitle" xml:space="preserve"><value>Временные очки здоровья</value></data>
