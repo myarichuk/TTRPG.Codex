@@ -77,7 +77,7 @@ class:
     - { row: Primal Order, text: training }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Wild Shape, uses: { key: wild-shape, max: { column: wild_shape_uses }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
-    - { row: Wild Companion, text: per-use }
+    - { row: Wild Companion, spends: { key: wild-shape, amount: 1 } }
     - { row: Druid Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Wild Resurgence, uses: { key: wild-resurgence, max: 1, recoversOn: [Long Rest] } }
@@ -93,7 +93,7 @@ class:
     - { row: Weapon Mastery, text: training }
     - { row: Action Surge, level: 2, uses: { key: action-surge, max: "classLevel >= 17 ? 2 : 1", recoversOn: [Short Rest, Long Rest] } }
     - { row: Action Surge, level: 17, covered: the level 2 row }
-    - { row: Tactical Mind, text: advantage }
+    - { row: Tactical Mind, spends: { key: second-wind, amount: 1 } }
     - { row: Fighter Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Extra Attack, text: other }
@@ -113,11 +113,11 @@ class:
     - { row: Unarmored Movement, text: gear }
     - { row: Uncanny Metabolism, uses: { key: uncanny-metabolism, max: 1, recoversOn: [Long Rest] } }
     - { row: Monk Subclass, already: the subclass field }
-    - { row: Deflect Attacks, text: reactive }
+    - { row: Deflect Attacks, spends: { key: focus-points, amount: 1 } }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Slow Fall, text: reactive }
     - { row: Extra Attack, text: other }
-    - { row: Stunning Strike, text: per-use }
+    - { row: Stunning Strike, spends: { key: focus-points, amount: 1 } }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Empowered Strikes, text: other }
     - { row: Evasion, text: reactive }
@@ -125,13 +125,13 @@ class:
     - { row: Heightened Focus, text: other }
     - { row: Self-Restoration, text: other }
     - { row: Deflect Energy, text: reactive }
-    - { row: Disciplined Survivor, text: other }
+    - { row: Disciplined Survivor, spends: { key: focus-points, amount: 1 } }
     - { row: Perfect Focus, text: moment-test }
-    - { row: Superior Defense, text: state }
+    - { row: Superior Defense, spends: { key: focus-points, amount: 3 } }
     - { row: Epic Boon, already: feat slots }
     - { row: Body and Mind, text: attribute }
   paladin:
-    - { row: Lay On Hands, uses: { key: lay-on-hands, max: "5 * classLevel", recoversOn: [Long Rest] } }
+    - { row: Lay On Hands, uses: { key: lay-on-hands, max: "5 * classLevel", recoversOn: [Long Rest] }, spends: { key: lay-on-hands, amount: ask } }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Weapon Mastery, text: training }
     - { row: Fighting Style, already: the fightingStyles list }
@@ -143,10 +143,10 @@ class:
     - { row: Faithful Steed, uses: { key: free-find-steed, label: Free Find Steed, max: 1, recoversOn: [Long Rest] } }
     - { row: Aura of Protection, text: aura }
     - { row: Subclass Feature, already: the subclass field }
-    - { row: Abjure Foes, text: per-use }
+    - { row: Abjure Foes, spends: { key: paladin-channel-divinity, amount: 1 } }
     - { row: Aura of Courage, text: aura }
     - { row: Radiant Strikes, text: rider }
-    - { row: Restoring Touch, text: per-use }
+    - { row: Restoring Touch, spends: { key: lay-on-hands, amount: 5 } }
     - { row: Aura Expansion, text: aura }
     - { row: Epic Boon, already: feat slots }
   ranger:
@@ -197,7 +197,7 @@ class:
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Sorcerous Restoration, uses: { key: sorcerous-restoration, max: 1, recoversOn: [Long Rest] } }
     - { row: Subclass Feature, already: the subclass field }
-    - { row: Sorcery Incarnate, text: other }
+    - { row: Sorcery Incarnate, spends: { key: sorcery-points, amount: 2 } }
     - { row: Epic Boon, already: feat slots }
     - { row: Arcane Apotheosis, text: other }
   warlock:
@@ -234,15 +234,15 @@ subclass:
     - { row: Survivor, text: other }
   circle-of-the-land:
     - { row: Circle of the Land Spells, text: chosen-spell }
-    - { row: "Land's Aid", text: per-use }
+    - { row: "Land's Aid", spends: { key: wild-shape, amount: 1 } }
     - { row: Natural Recovery, uses: { key: natural-recovery, max: 1, recoversOn: [Long Rest] } }
     - { row: "Nature's Ward", text: condition }
-    - { row: "Nature's Sanctuary", text: per-use }
+    - { row: "Nature's Sanctuary", spends: { key: wild-shape, amount: 1 } }
   college-of-lore:
     - { row: Bonus Proficiencies, text: skill-bonus }
-    - { row: Cutting Words, text: reactive }
+    - { row: Cutting Words, spends: { key: bardic-inspiration, amount: 1 } }
     - { row: Magical Discoveries, text: chosen-spell }
-    - { row: Peerless Skill, text: other }
+    - { row: Peerless Skill, spends: { key: bardic-inspiration, amount: 1 } }
   draconic-sorcery:
     - { row: Draconic Resilience, text: other }
     - { row: Draconic Spells, text: other }
@@ -270,12 +270,12 @@ subclass:
   life-domain:
     - { row: Disciple of Life, text: rider }
     - { row: Life Domain Spells, text: other }
-    - { row: Preserve Life, text: per-use }
+    - { row: Preserve Life, spends: { key: cleric-channel-divinity, amount: 1 } }
     - { row: Blessed Healer, text: rider }
     - { row: Supreme Healing, text: rider }
   oath-of-devotion:
     - { row: Oath of Devotion Spells, text: other }
-    - { row: Sacred Weapon, text: per-use }
+    - { row: Sacred Weapon, spends: { key: paladin-channel-divinity, amount: 1 } }
     - { row: Aura of Devotion, text: aura }
     - { row: Smite of Protection, text: aura }
     - { row: Holy Nimbus, uses: { key: holy-nimbus, max: 1, recoversOn: [Long Rest] } }
@@ -294,7 +294,7 @@ subclass:
     - { row: Open Hand Technique, text: per-use }
     - { row: Wholeness of Body, uses: { key: wholeness-of-body, max: "max(1, mod(wis))", recoversOn: [Long Rest] } }
     - { row: Fleet Step, text: other }
-    - { row: Quivering Palm, text: per-use }
+    - { row: Quivering Palm, spends: { key: focus-points, amount: 4 } }
 
 species:
   dragonborn:
