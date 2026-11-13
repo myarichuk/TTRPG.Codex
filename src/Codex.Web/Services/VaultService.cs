@@ -24,6 +24,14 @@ public enum BringKind
 
 public sealed record BringChoice(string Type, string EntryId, BringKind Kind, string? UseId = null);
 
+/// <summary>A change the GM made to one of the character's picks in the review: <paramref name="Key"/> is a choice's sheet key or a
+/// pick list's key, <paramref name="Picks"/> what it holds now, <paramref name="Label"/> what to call it and
+/// <paramref name="Summary"/> the picks by name, for the note the player reads.</summary>
+public sealed record ReviewEdit(string Key, string Label, IReadOnlyList<string> Picks, string Summary, string Was = "");
+
+/// <summary>A request's sheet after the GM's review, the carried entries to add to the Library, and what to tell the player.</summary>
+public sealed record ReviewResult(Dictionary<string, object> Sheet, List<CarriedEntry> Add, List<JoinNote> Notes);
+
 /// <summary>
 /// The vault (docs/SERVER_ACCESS_AND_VAULT.md 8) and bringing its characters into campaigns (7): what is missing first, a
 /// request the GM accepts, and updating the vault from the campaign's copy with only what the player owns.
@@ -105,16 +113,22 @@ public sealed class VaultService(
     /// <summary>A GM accepts a request. A new character joins the cast; an update goes over the campaign's copy through the
     /// live table when there is one, keeping the history's secret blocks and the table's own state.</summary>
     /// <param name="choices">What the GM decided about each entry the character brings; one with no choice is added.</param>
-    public async Task<bool> AcceptAsync(string requestId, CampaignAccess access, SystemDefinition? system, IReadOnlyList<BringChoice>? choices = null)
+    public async Task<bool> AcceptAsync(string requestId, CampaignAccess access, SystemDefinition? system, IReadOnlyList<BringChoice>? choices = null,
+        IReadOnlyList<ReviewEdit>? edits = null, CampaignDocument? campaign = null)
     {
         Dictionary<string, object>? sheet = null;
         List<CarriedEntry>? add = null;
-        if (system != null && (await vault.GetRequestsAsync(access)).FirstOrDefault(r => r.Id == requestId) is { Brings.Count: > 0 } request)
+        var notes = new List<JoinNote>();
+        if (system != null && (await vault.GetRequestsAsync(access)).FirstOrDefault(r => r.Id == requestId) is { } request
+            && (request.Brings.Count > 0 || edits is { Count: > 0 }))
         {
-            (sheet, add) = Reviewed(system, request, choices ?? Array.Empty<BringChoice>());
+            // The sheet is read as it would stand with everything it brings added, as the GM saw it in the review.
+            var resolver = campaign == null ? null : await CachedEntryResolver.LoadAsync(library, campaign, access, system, request.Brings.Select(b => b.ToEntry(system.Id)));
+            var reviewed = Review(system, request, choices ?? Array.Empty<BringChoice>(), edits ?? Array.Empty<ReviewEdit>(), resolver);
+            (sheet, add, notes) = (reviewed.Sheet, reviewed.Add, reviewed.Notes);
         }
 
-        if (await vault.AcceptAsync(requestId, access, sheet, add) is not { } accepted) return false;
+        if (await vault.AcceptAsync(requestId, access, sheet, add, notes) is not { } accepted) return false;
         if (accepted.Added is { } added)
         {
             ActorSheetSync.ApplySheetToState(added, system, components);
@@ -127,6 +141,7 @@ public sealed class VaultService(
         copy.Name = accepted.Request.Name;
         copy.Sheet = new Dictionary<string, object>(accepted.Request.Sheet);
         copy.Biography = SecretText.KeepSecrets(copy.Biography, accepted.Request.Biography);
+        copy.JoinNotes = notes;
         ActorSheetSync.ApplySheetToState(copy, system, components);
         return await runtime.TrySaveActorAsync(copy, before, access, system);
     }
@@ -135,7 +150,40 @@ public sealed class VaultService(
     /// sheet, one swapped has the sheet name the campaign's own entry instead, the rest are added.</summary>
     public static (Dictionary<string, object> Sheet, List<CarriedEntry> Add) Reviewed(SystemDefinition system, CharacterRequestDocument request, IReadOnlyList<BringChoice> choices)
     {
+        var reviewed = Review(system, request, choices, Array.Empty<ReviewEdit>(), null);
+        return (reviewed.Sheet, reviewed.Add);
+    }
+
+    /// <summary>The whole of a review: the GM's edits to the character's picks applied first (choices through the engine, so a row pick
+    /// settles its counters, and list picks as given), then what each carried entry is to become (<see cref="Reviewed"/>), with a
+    /// note for each thing the player should be told. Only the request's own sheet changes: the vault character is left as it is.
+    /// <paramref name="resolver"/> is the campaign's Library with the carried entries added; without one, edits to choices are not applied
+    /// and a swap is named by its id.</summary>
+    public static ReviewResult Review(SystemDefinition system, CharacterRequestDocument request, IReadOnlyList<BringChoice> choices,
+        IReadOnlyList<ReviewEdit> edits, IEntryResolver? resolver)
+    {
         var sheet = new Dictionary<string, object>(request.Sheet);
+        var notes = new List<JoinNote>();
+        var engine = resolver == null ? null : new SheetRuleEngine(system, resolver);
+        foreach (var edit in edits)
+        {
+            if (edit.Key.StartsWith(SheetRuleEngine.ChoicePrefix, StringComparison.Ordinal))
+            {
+                if (engine == null) continue;
+                engine.ChangeChoice(sheet, edit.Key, edit.Picks);
+            }
+            else if (system.SheetRules?.Lists.Any(l => l.Key == edit.Key) == true)
+            {
+                sheet[edit.Key] = edit.Picks.Cast<object>().ToList();
+            }
+            else
+            {
+                continue;
+            }
+
+            notes.Add(new JoinNote(JoinNote.Edited, edit.Label, edit.Summary, edit.Was));
+        }
+
         var add = new List<CarriedEntry>();
         foreach (var carried in request.Brings)
         {
@@ -144,9 +192,11 @@ public sealed class VaultService(
             {
                 case BringKind.LeaveOut:
                     sheet = SheetReferences.Without(system, sheet, SheetReferences.Of(system, sheet).Where(r => r.Types.Any(t => carried.Is(t, r.Id))));
+                    notes.Add(new JoinNote(JoinNote.LeftOut, carried.Name, Type: carried.Type, Id: carried.EntryId));
                     break;
                 case BringKind.UseOther when !string.IsNullOrWhiteSpace(choice!.UseId):
                     sheet = SheetReferences.Repointed(system, sheet, carried.Type, carried.EntryId, choice.UseId);
+                    notes.Add(new JoinNote(JoinNote.Swapped, carried.Name, resolver?.Resolve(carried.Type, choice.UseId)?.Name ?? choice.UseId, Type: carried.Type, Id: carried.EntryId, ToId: choice.UseId));
                     break;
                 default:
                     add.Add(carried);
@@ -154,7 +204,7 @@ public sealed class VaultService(
             }
         }
 
-        return (sheet, add);
+        return new ReviewResult(sheet, add, notes);
     }
 
     /// <summary>Updates the vault character the caller's campaign copy came from, with what of it is theirs (<see cref="PlayedCharacters.AsTheirsAsync"/>).</summary>

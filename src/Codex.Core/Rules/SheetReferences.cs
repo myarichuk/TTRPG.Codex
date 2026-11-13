@@ -145,6 +145,38 @@ public static class SheetReferences
         return copy;
     }
 
+    /// <summary>The entries of <paramref name="campaign"/> (a campaign's Library) that the sheet's rules would take in the place of the
+    /// entry <paramref name="id"/> of <paramref name="type"/>, in every slot of the sheet that uses it: the options the rules
+    /// offer for a constrained field (a subclass of the class), a pick list or the other classes, and any entry of the type where the
+    /// rules offer no list (an inventory). <paramref name="evaluation"/> is the sheet read with the entry added.</summary>
+    public static IReadOnlyList<ContentEntry> Replacements(SystemDefinition system, IReadOnlyDictionary<string, object> sheet,
+        SheetEvaluation evaluation, IEntryResolver campaign, string type, string id)
+    {
+        var uses = Of(system, sheet)
+            .Where(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase) && r.Types.Any(t => string.Equals(t, type, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+        if (uses.Count == 0) return Array.Empty<ContentEntry>();
+        var multiclass = system.SheetRules?.Multiclass;
+        HashSet<string>? allowed = null;
+        foreach (var use in uses)
+        {
+            IReadOnlyList<ContentEntry>? options = null;
+            if (evaluation.AllowedOptions.TryGetValue(use.FieldKey, out var constrained)) options = constrained;
+            else if (evaluation.ListOptions.TryGetValue(use.FieldKey, out var listed)) options = listed;
+            else if (multiclass != null && use.FieldKey == multiclass.Key && string.Equals(TypeOf(system, multiclass.ClassField), type, StringComparison.OrdinalIgnoreCase)) options = evaluation.MulticlassOptions;
+            if (options == null) continue;
+
+            var ids = options.Where(o => string.Equals(o.Type, type, StringComparison.OrdinalIgnoreCase)).Select(o => o.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (allowed == null) allowed = ids;
+            else allowed.IntersectWith(ids);
+        }
+
+        return campaign.Candidates(type)
+            .Where(e => !string.Equals(e.Id, id, StringComparison.OrdinalIgnoreCase) && (allowed == null || allowed.Contains(e.Id)))
+            .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     private static string? TypeOf(SystemDefinition system, string fieldKey) =>
         system.ActorFields.FirstOrDefault(f => f.Key == fieldKey)?.TargetEntityType;
 }

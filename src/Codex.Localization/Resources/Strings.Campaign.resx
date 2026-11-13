@@ -1319,6 +1319,11 @@
   <data name="Campaign.Vault.WillAdd" xml:space="preserve"><value>Added to the Library: {0}</value></data>
   <data name="Campaign.Vault.WillUse" xml:space="preserve"><value>{0} becomes {1}</value></data>
   <data name="Campaign.Vault.WillLeave" xml:space="preserve"><value>Left out: {0}</value></data>
+  <data name="Campaign.Vault.PicksHeading" xml:space="preserve"><value>Picks</value></data>
+  <data name="Campaign.Vault.PicksHint" xml:space="preserve"><value>Change a pick to another option the rules allow. Only the campaign's copy changes. The vault character stays as it is.</value></data>
+  <data name="Campaign.Vault.ListPickChange" xml:space="preserve"><value>Change {0}</value></data>
+  <data name="Campaign.Vault.PickMissing" xml:space="preserve"><value>{0} (not in the Library)</value></data>
+  <data name="Campaign.Vault.WillEdit" xml:space="preserve"><value>Changed {0}: {1}</value></data>
   <data name="Campaign.Vault.Next" xml:space="preserve"><value>Next</value></data>
   <data name="Campaign.Vault.Back" xml:space="preserve"><value>Back</value></data>
 </root>

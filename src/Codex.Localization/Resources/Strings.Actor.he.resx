@@ -627,4 +627,10 @@
   <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: אין מה לשחזר.</value></data>
   <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>אין יכולת שנותנת את התיבה הזו.</value></data>
   <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Actor.JoinNotes.Heading" xml:space="preserve"><value>מנהל המשחק שינה לפני האישור:</value></data>
+  <data name="Actor.JoinNotes.EditedNew" xml:space="preserve"><value>{0}: עכשיו {1}</value></data>
+  <data name="Actor.JoinNotes.LeftOut" xml:space="preserve"><value>הושמט: {0}</value></data>
+  <data name="Actor.JoinNotes.Swapped" xml:space="preserve"><value>{0} הוחלף ב־{1}</value></data>
+  <data name="Actor.JoinNotes.Edited" xml:space="preserve"><value>{0}: {1} הפך ל־{2}</value></data>
+  <data name="Actor.JoinNotes.Dismiss" xml:space="preserve"><value>סגירה</value></data>
 </root>

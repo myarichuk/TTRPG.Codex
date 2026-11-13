@@ -627,4 +627,10 @@
   <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: восстанавливать нечего.</value></data>
   <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>Ни одно умение не даёт эту клетку.</value></data>
   <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Actor.JoinNotes.Heading" xml:space="preserve"><value>Ведущий изменил перед принятием:</value></data>
+  <data name="Actor.JoinNotes.EditedNew" xml:space="preserve"><value>{0}: теперь {1}</value></data>
+  <data name="Actor.JoinNotes.LeftOut" xml:space="preserve"><value>Не включено: {0}</value></data>
+  <data name="Actor.JoinNotes.Swapped" xml:space="preserve"><value>«{0}» заменено на «{1}»</value></data>
+  <data name="Actor.JoinNotes.Edited" xml:space="preserve"><value>{0}: «{1}» заменено на «{2}»</value></data>
+  <data name="Actor.JoinNotes.Dismiss" xml:space="preserve"><value>Скрыть</value></data>
 </root>

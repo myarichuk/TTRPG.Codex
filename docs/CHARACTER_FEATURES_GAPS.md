@@ -84,6 +84,14 @@ What it does not do:
 - **Carried entries**: a vault character holds its own Library entries (`ActorDocument.Carried`).
 - **Join review**: the GM's Accept is now a three-step review (character, what it brings, confirm) with add / use one the
   campaign has / leave out per entry.
+  - **Edit picks.** On the first step the GM changes the character's choices (the same pickers as the sheet's "Choices to make",
+    through `SheetRuleEngine.ChangeChoice`, so a row pick settles its counters) and swaps a list pick (feats, spells) for another
+    option the list allows. The rules are read again after each change. Accepting applies the edited picks to the campaign's copy
+    only (`VaultService.Review`); the vault character is not touched. The player does not approve the edits again.
+  - **Use one the campaign has** lists only what the sheet's rules would take in that slot, in every place the entry is used
+    (`SheetReferences.Replacements`: a subclass of the same class, an entry the pick list allows), not every entry of the type.
+  - **The player is told.** What the GM left out, swapped or edited is kept as notes on the campaign's copy
+    (`ActorDocument.JoinNotes`) and shown above the sheet until the player dismisses them (`JoinNotesBanner`).
 
 ## What a feature cannot express yet
 
@@ -149,9 +157,12 @@ Sheet and table:
 
 Join review:
 
-- The GM cannot edit an entry inside the review; changes happen outside the app and the player asks again.
-- "Use one the campaign has" lists every entry of the type, not only those the sheet's rules would allow.
-- The player is not told which entries were left out or swapped.
+- The GM cannot edit a carried entry's own text inside the review (its features, its description); that still happens outside
+  the app and the player asks again.
+- A pick the GM edits is not checked again against the rules beyond what the review shows: the options offered are the allowed
+  ones, and anything still wrong is listed on the first step, but Accept is never blocked.
+- The notes the player reads stay on the campaign's copy until they dismiss them; there is no other notification channel, so a
+  player who never opens the sheet is not told.
 - The carried entry stays on the vault character after it is accepted; a second campaign is asked about it again.
 - A vault character's sheet shows the entries it carries in a read-only "Homebrew" panel (with the Library panel), each
   opened to the same card the GM's review shows; a list pick that is one reads "(homebrew)" instead of linking to the
