@@ -25,6 +25,29 @@ public sealed partial class SheetRuleEngine
     /// <summary>Whether an <c>adds</c> item leaves entries of a list of Library entries to the player.</summary>
     private bool IsEntryChoice(FeatureAdd add) => add.Choice != null && add.Rank == null && add.Raise == 0 && EntryList(add.To) != null;
 
+    /// <summary>The entries the sheet's entry choices and mark-only choices hold, as stored (valid or not, and a choice waiting on another still
+    /// keeps its picks): the choice's key, the content type of what it picks, and the entry ids. A choice of a value is not here. This is what
+    /// a sheet uses through its choices, for <see cref="SheetReferences"/>.</summary>
+    public IReadOnlyList<(string Key, string Type, IReadOnlyList<string> Ids)> EntryPicks(IReadOnlyDictionary<string, object> sheet)
+    {
+        var found = new List<(string, string, IReadOnlyList<string>)>();
+        if (Rules == null || Rules.Features.Count == 0) return found;
+        foreach (var feature in ActiveFeatures(sheet).Where(f => !f.OnKind))
+        {
+            foreach (var add in feature.Adds)
+            {
+                if (add.Choice is not { } choice || add.Rank != null || add.Raise != 0 || add.IsValueChoice) continue;
+                var list = EntryList(add.To) ?? (add.IsMarkOnly ? EntryList(choice.FromList!) : null);
+                if (list?.TargetEntityType is not { } type) continue;
+                var key = ChoiceKey(feature.Source.Id, feature.Copy, feature.ScopedChoiceId(choice.Id));
+                var ids = RawList(sheet, key).Select(r => r?.ToString() ?? string.Empty).Where(id => id.Length > 0).ToList();
+                if (ids.Count > 0) found.Add((key, type, ids));
+            }
+        }
+
+        return found;
+    }
+
     /// <summary>One entry choice or value choice of a feature, worked out against the sheet: what it offers, what is picked and fits
     /// (<see cref="Valid"/>), what is stored and does not (<see cref="Stale"/>), and the choice it waits on, when it does.</summary>
     private sealed record EntryChoiceState(ActiveFeature Feature, FeatureAdd Add, FeatureChoice Choice, string Key, ListRule? List,

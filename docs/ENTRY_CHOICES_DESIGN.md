@@ -1,7 +1,7 @@
 # Choices over Library entries: design
 
-Status: designed 2026-11-13. Built on the branch `claude/entry-choices` except step 5 (`SheetReferences`: join review and swaps), which waits for PR #301
-to merge. It builds on Step 10 (`SRD_GRANTS_IMPORT_DESIGN.md`) and free castings
+Status: designed 2026-11-13. Built on the branch `claude/entry-choices`, all steps. Step 5: `SheetReferences.Of`, `Missing`, `Without` and
+`Repointed` take an optional resolver and read the entries held in `choice__` keys (`SheetRuleEngine.EntryPicks`); a value choice is not an entry. It builds on Step 10 (`SRD_GRANTS_IMPORT_DESIGN.md`) and free castings
 (`FREE_CASTINGS_DESIGN.md`), on a branch stacked on Step 10's.
 
 ## What it is

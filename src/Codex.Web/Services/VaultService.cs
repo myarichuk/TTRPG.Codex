@@ -72,10 +72,10 @@ public sealed class VaultService(
     {
         if (catalog.GetDefinition(campaign.SystemId) is not { } system || !SameSystem(character, campaign)) return Array.Empty<MissingEntry>();
         var inCampaign = await CachedEntryResolver.LoadAsync(library, campaign, access, system);
-        var missing = SheetReferences.Missing(system, character.Sheet, inCampaign);
+        var inVault = await ResolverAsync(character, system);
+        var missing = SheetReferences.Missing(system, character.Sheet, inCampaign, inVault);
         if (missing.Count == 0) return Array.Empty<MissingEntry>();
 
-        var inVault = await ResolverAsync(character, system);
         return missing.Select(r => new MissingEntry(r, r.Types.Select(t => inVault.Resolve(t, r.Id)?.Name).FirstOrDefault(n => n != null) ?? r.Id,
             character.Carried.FirstOrDefault(c => r.Types.Any(t => c.Is(t, r.Id))))).ToList();
     }
@@ -191,11 +191,11 @@ public sealed class VaultService(
             switch (choice?.Kind ?? BringKind.Add)
             {
                 case BringKind.LeaveOut:
-                    sheet = SheetReferences.Without(system, sheet, SheetReferences.Of(system, sheet).Where(r => r.Types.Any(t => carried.Is(t, r.Id))));
+                    sheet = SheetReferences.Without(system, sheet, SheetReferences.Of(system, sheet, resolver).Where(r => r.Types.Any(t => carried.Is(t, r.Id))));
                     notes.Add(new JoinNote(JoinNote.LeftOut, carried.Name, Type: carried.Type, Id: carried.EntryId));
                     break;
                 case BringKind.UseOther when !string.IsNullOrWhiteSpace(choice!.UseId):
-                    sheet = SheetReferences.Repointed(system, sheet, carried.Type, carried.EntryId, choice.UseId);
+                    sheet = SheetReferences.Repointed(system, sheet, carried.Type, carried.EntryId, choice.UseId, resolver);
                     notes.Add(new JoinNote(JoinNote.Swapped, carried.Name, resolver?.Resolve(carried.Type, choice.UseId)?.Name ?? choice.UseId, Type: carried.Type, Id: carried.EntryId, ToId: choice.UseId));
                     break;
                 default:

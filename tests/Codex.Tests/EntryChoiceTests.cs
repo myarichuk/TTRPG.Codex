@@ -432,6 +432,60 @@ public class EntryChoiceTests : IAsyncLifetime
         Assert.Equal("arcanum-6", add["choice"]);
     }
 
+    private static ContentEntry HomebrewSpell(string id, int level, string caster)
+    {
+        var spell = new ContentEntry { Type = "spell", Id = id, Name = id, SystemId = "srd5e", PackId = "homebrew" };
+        spell.Properties["level"] = (long)level;
+        spell.Properties["classes"] = Items(caster);
+        return spell;
+    }
+
+    [Fact]
+    public void ASpellPickedThroughAChoice_IsWhatTheSheetUses_AndReachesTheJoinReview()
+    {
+        var feat = Feat("arcanum", Arcanum());
+        var brew = HomebrewSpell("gloom-bolt", 6, "Warlock");
+        var (engine, sheet) = Character(11, feat, brew);
+        SheetRuleEngine.SetChoice(sheet, "choice__arcanum__arcanum-6", new[] { "gloom-bolt" });
+        var system = _loader.GetDefinition("srd5e")!;
+        var mine = new WithHomebrew(_registry, feat, brew);
+        var theirs = new WithHomebrew(_registry, feat); // the campaign has the feat, not the spell
+
+        var uses = SheetReferences.Of(system, sheet, mine);
+        Assert.Contains(uses, r => r.FieldKey == "choice__arcanum__arcanum-6" && r.Id == "gloom-bolt" && r.Types.Contains("spell"));
+
+        var missing = SheetReferences.Missing(system, sheet, theirs, mine);
+        Assert.Contains(missing, r => r.Id == "gloom-bolt");
+        Assert.DoesNotContain(missing, r => r.Id == "arcanum");
+
+        var left = SheetReferences.Without(system, sheet, missing);
+        Assert.Empty(SheetRuleEngine.RawList(left, "choice__arcanum__arcanum-6"));
+        Assert.Single(SheetRuleEngine.RawList(sheet, "choice__arcanum__arcanum-6")); // the original is left as it was
+    }
+
+    [Fact]
+    public void ASwap_RepointsThePickOfAChoice_AndAValueChoiceIsNotAnEntry()
+    {
+        var feat = Initiate();
+        var brew = HomebrewSpell("hedge-light", 0, "Wizard");
+        var (engine, sheet) = Character(1, feat, brew);
+        SheetRuleEngine.SetChoice(sheet, "choice__initiate__spell-list", new[] { "Wizard" });
+        SheetRuleEngine.SetChoice(sheet, "choice__initiate__cantrips", new[] { "hedge-light", "fire-bolt" });
+        var system = _loader.GetDefinition("srd5e")!;
+        var resolver = new WithHomebrew(_registry, feat, brew);
+
+        var uses = SheetReferences.Of(system, sheet, resolver);
+        Assert.DoesNotContain(uses, r => r.Id == "Wizard");
+        Assert.Contains(uses, r => r.FieldKey == "choice__initiate__cantrips" && r.Id == "hedge-light");
+
+        var swapped = SheetReferences.Repointed(system, sheet, "spell", "hedge-light", "light", resolver);
+        Assert.Equal(new[] { "light", "fire-bolt" }, SheetRuleEngine.RawList(swapped, "choice__initiate__cantrips"));
+        Assert.Equal(new[] { "Wizard" }, SheetRuleEngine.RawList(swapped, "choice__initiate__spell-list"));
+
+        var alreadyHeld = SheetReferences.Repointed(system, sheet, "spell", "hedge-light", "fire-bolt", resolver);
+        Assert.Equal(new[] { "fire-bolt" }, SheetRuleEngine.RawList(alreadyHeld, "choice__initiate__cantrips"));
+    }
+
     private sealed class WithHomebrew(ContentRegistry registry, params ContentEntry[] extra) : IEntryResolver
     {
         public ContentEntry? Resolve(string type, string id) => extra.FirstOrDefault(e => e.Type == type && e.Id == id) ?? registry.GetEntries("srd5e", type).FirstOrDefault(e => e.Id == id);
