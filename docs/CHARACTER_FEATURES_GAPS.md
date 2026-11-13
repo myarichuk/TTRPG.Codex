@@ -47,8 +47,8 @@ What it does not do:
 - Weapons: range and thrown, ammunition, mastery, two-weapon fighting, a magic weapon's bonus, fighting styles and
   feats are not counted. Training is the first class's only. Unarmed strikes are not an action.
 - A magic item is an action only if it has the weapon tag and a `use`; the SRD's magic items have neither.
-- Homebrew: the world builder and the homebrew wizard are not told about `use`, so a homebrew spell or weapon is listed
-  but rolls nothing unless `use` is written in its properties by hand.
+- Homebrew: the world builder and the drafter's writer are told about `use` (`ActionUseGuide`). The homebrew wizard has
+  no `use` editor, so a spell or weapon made there rolls nothing unless `use` is written in its properties by hand.
 - Spending a slot on the sheet page edits the sheet, like the slot tracker there; it is saved with the sheet.
 - Damage types on an action (Fire, Slashing) are shown in English in every language: the system's translations have no
   words for them.
@@ -87,22 +87,24 @@ What it does not do:
 
 ## What a feature cannot express yet
 
+How to close these, with the importer pass that goes with them: [FEATURE_GRANTS_DESIGN.md](FEATURE_GRANTS_DESIGN.md).
+
 A feature's `modifiers` reach only: armor class, maximum hit points, derived values (proficiency bonus, initiative) and
 Number actor fields (speed, darkvision). `adds` reach pick lists without a count (granted spells) and the damage
-resistance, immunity and vulnerability lists. `uses` make a counter. Everything else stays text:
+resistance, immunity and vulnerability lists. `uses` make a counter, which other features can share (`key`) and spend from
+(`spends`), refilled in full or in part on rests, on rolling initiative or at a dawn the GM calls (`recovers`). Everything
+else stays text:
 
 - Skill, saving throw, weapon, armor, tool and language proficiencies, and expertise.
 - Ability score increases from a feature (feats have their own path, features do not).
 - Attack and damage bonuses, extra attacks, critical ranges: weapon attacks exist now (step 2), a feature cannot change them.
 - Anything conditional on gear ("while wielding a longsword in two hands", "while wearing no armor" beyond the built-in
   unarmored base): a modifier's `when` reads the sheet's numbers, not the inventory.
-- A feature that spends another feature's counter (Dusk Form costing 3 Sorcery Points). Counters are independent.
 - Dice a feature owns (superiority dice, a bardic die): a counter can hold the count, nothing rolls them.
 - Reactive rules ("when you would drop to 0 hit points, instead..."). Deliberately left as text plus a counter.
-- Choices inside a feature ("choose one of the following"). There is no model for per-feature choices.
+- ~~Choices inside a feature ("choose one of the following").~~ Built: a feature row's `options` with `choose`, and a source's `choose` for a pick among an entry's rows (see FEATURE_GRANTS_DESIGN.md, section 6). Still open: the class-option lists (invocations, maneuvers) and the importer pass that writes the rows' grants.
 - Spell slots or pact slots granted or changed by a feature.
 - A modifier to an attribute score, to a skill bonus, or to spell save DC and spell attack.
-- Number-field formulas cannot read derived values (they are applied before the evaluation runs).
 - A `base`-type modifier on armor class is ignored while body armor is worn, like a class's own defense.
 
 Scripted features (Jint, which the engine already hosts for system authors) were considered and declined for entries a
@@ -112,11 +114,13 @@ model writes: not reviewable by a GM, not visible to the app, silent when wrong,
 
 Drafter:
 
-- Proposals are written only for a single reference field whose rules can be met by setting properties (in srd5e: the
-  subclass). Lists never get a written entry: no custom spell, feat, fighting style or invocation.
-- A subclass is written only if the model leaves the choice empty. There is no "always write one" switch in the dialog.
+- Entries are written for the subclass and for list slots the model leaves open (a custom spell, feat or fighting
+  style), at most 2 per draft. A slot whose rules name another entry's value (the origin feat a background names) is
+  not written for. The vault draft dialog sets when: only the Library, when nothing fits, or always.
 - Proposals are on for vault drafts only. Cast's "Create with AI" and "Promote to cast" pick from the Library only.
-- Nothing is written below the subclass level, or for a class with no published subclass to decline.
+- Nothing is written below the subclass level. A class with no published subclass gets one written once it is due.
+- A list with a count but no options at all (the warlock's invocations) is still skipped.
+- The writer is told how to write `use`, but it never tags an item, so a written weapon is not offered as an attack.
 - Eldritch Invocation options are not Library entries in the SRD pack, so nobody can pick them, by hand or by AI.
 - One extra model call per drafted character with something to choose, and a second when a subclass is written.
 
@@ -130,8 +134,11 @@ Sheet and table:
 
 - The sheet's Features panel lists counters and granted lines; it does not list plain features with their text.
 - At the table, feature counters have Use and Regain on the character's card (step 3).
-- The homebrew wizard's collection editor shows a row's name, level and description. It keeps `modifiers`, `adds` and
-  `uses` on a row it edits, but offers no way to type or change them.
+- The homebrew wizard's collection editor shows a row's name, level and description, and under a collapsed "What it does
+  on the sheet" section the row's `modifiers` (target, amount, type, condition), `adds` (list, entries, from level) and
+  `uses` (maximum, rests that refill it), offered from the system's own vocabulary (`FeatureGrantVocabulary`) and with
+  formulas checked by the engine's parser. A feat-like entry, where the whole entry is the feature, gets the same section
+  once, after its fields. Not yet: the same editor on the actor sheet, and a `use` editor for spells and weapons.
 - A monster's trait and action rows render inline text, so a `:::dm` block inside one would show raw (GM only).
 
 Join review:
@@ -140,17 +147,19 @@ Join review:
 - "Use one the campaign has" lists every entry of the type, not only those the sheet's rules would allow.
 - The player is not told which entries were left out or swapped.
 - The carried entry stays on the vault character after it is accepted; a second campaign is asked about it again.
-- No UI lets a player see, edit or drop the entries a vault character carries, apart from changing the sheet.
+- A vault character's sheet shows the entries it carries in a read-only "Homebrew" panel (with the Library panel), each
+  opened to the same card the GM's review shows; a list pick that is one reads "(homebrew)" instead of linking to the
+  Library. The player cannot edit or drop one there, apart from changing the sheet.
 
 Found on the way, not fixed:
 
-- The Quick-add hint says creatures are "added hidden"; they are added as visible strangers.
 - The SRD Mage's Spellcasting action is missing its spell list (`monsters/mage.yaml`).
 - Monster attacks are prose only.
 
 ## Not verified
 
-- Nothing was checked in the running app: no page was opened on this build.
+- Only the homebrew wizard's feature editor was checked in the running app (a subclass's rows and a feat, saved and
+  reopened, keyboard and phone width). No other page was opened on this build.
 - No real model was called: every AI path is tested with canned replies only.
 - Browser end-to-end tests and the book print tests cannot run on this machine (Playwright's Chromium is missing). Two
   end-to-end tests were edited for the collapsed initiative bar (they click "Start encounter" first) and never run.

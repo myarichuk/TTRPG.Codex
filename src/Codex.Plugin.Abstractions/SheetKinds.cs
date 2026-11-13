@@ -250,16 +250,20 @@ public sealed class SheetCheckDefinition
     public string? Message { get; set; }
 }
 
-/// <summary>Stacking: <c>sum</c>, <c>highest</c> or <c>lowest</c>, by modifier type; penalties (negative amounts) apart.</summary>
+/// <summary>Stacking by modifier type: the modifiers of a type form a group that keeps one member or all. Bonus rules add what they
+/// keep to the value: <c>sum</c> (every one), <c>highest</c> / <c>lowest</c> (the largest or smallest bonus; penalties apart).
+/// Value rules compete with the value's starting amount and replace it when they win: <c>max</c> (the greatest, a floor; <c>best</c>
+/// is its older name) and <c>min</c> (the least, a ceiling). Extra Attack 2, 3, 4 on 1 attack under <c>max</c> is 4; critical
+/// 19 and 18 on a start of 20 under <c>min</c> is 18; +1 and +2 status under <c>highest</c> plus +1 untyped on 10 is 13.</summary>
 public sealed class ModifierTypesDefinition
 {
-    /// <summary>The rule for a type <c>types</c> does not name: <c>sum</c> (the default), <c>highest</c>, <c>lowest</c> or
-    /// <c>best</c>.</summary>
+    /// <summary>The rule for a type <c>types</c> does not name: <c>sum</c> (the default), <c>highest</c>, <c>lowest</c>,
+    /// <c>max</c>, <c>min</c> or <c>best</c>.</summary>
     public string Default { get; set; } = "sum";
     /// <summary>The rule for the penalties (negative amounts) of one type, whatever the type's own rule, except a <c>best</c>
     /// type. Default <c>sum</c>.</summary>
     public string Penalties { get; set; } = "sum";
-    /// <summary>Modifier type -> its rule (<c>dodge: sum</c>, <c>armor: highest</c>, <c>base: best</c>).</summary>
+    /// <summary>Modifier type -> its rule (<c>dodge: sum</c>, <c>armor: highest</c>, <c>base: max</c>, <c>critFrom: min</c>).</summary>
     public Dictionary<string, string> Types { get; set; } = new();
 }
 

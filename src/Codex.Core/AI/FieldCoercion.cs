@@ -70,6 +70,9 @@ internal static class FieldCoercion
                 return MatchOption(chosen, spec.Options) ?? MatchOption(canonical(chosen), spec.Options);
             case "Collection":
                 return value.ValueKind == JsonValueKind.Array ? Rows(value) : null;
+            case "Structured":
+                // What the sheet rules read off an entry (use, modifiers, adds, uses): a map or a list of maps, kept as written.
+                return value.ValueKind is JsonValueKind.Object or JsonValueKind.Array ? Plain(value, NestedDepth) : null;
             case "Text":
                 return value.ValueKind switch
                 {

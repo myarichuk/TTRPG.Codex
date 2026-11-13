@@ -62,6 +62,15 @@ internal static class SheetCounters
 
             var next = atTable + (now - was);
             var max = maxKey == null ? null : YamlValues.GetInt(merged, maxKey);
+
+            // A feature's uses the editor moved to full or to none - a refill or an emptying by a changed pick, or the last use spent on
+            // the sheet - say where the counter ends, not by how much it moved: the table's value is put aside, not added to.
+            if (Codex.Core.Rules.SheetRuleEngine.IsUsesKey(key) && now != was && (now <= 0 || now == max))
+            {
+                merged[key] = (long)Math.Max(0, now);
+                continue;
+            }
+
             merged[key] = (long)Math.Clamp(next, 0, Math.Max(0, max ?? int.MaxValue));
         }
     }

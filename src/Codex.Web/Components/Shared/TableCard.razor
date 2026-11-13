@@ -95,8 +95,13 @@
                     <div data-testid="table-slots-actor">
                         <SlotTracker Definition="Definition" Pools="SlotPools" Keys="SlotKeys" Value="key => State?.Pool(key)" Title="@(L["Combat.SlotsTitle", Actor.Name])" ReadOnly="@(!CanAct)"
                                      OnAdjust="change => Send(new AdjustResourceCommand(Actor.Id, change.Key, change.Delta, change.Label))"
-                                     OnRest="rest => Send(new RestCommand(Actor.Id, rest.Name, rest.Keys))" />
+                                     OnRest="RestAsync" />
                     </div>
+                }
+
+                @if (restChoices.Count > 0 && restMoment != null)
+                {
+                    <RestChoicesNotice Moment="@SlotTracker.RestName(Definition, restMoment)" Choices="restChoices" HrefFor="key => Href + '#' + ChoicePicker.AnchorFor(key)" OnDismiss="() => restChoices = new()" />
                 }
 
                 @if (Counters.Count > 0)
@@ -106,7 +111,7 @@
                         {
                             var max = State?.Pool(counter.MaxKey) ?? counter.Max;
                             var current = Math.Clamp(State?.Pool(counter.Key) ?? max, 0, max);
-                            <li class="slot-row" data-testid="table-counter-@counter.Key">
+                            <li class="slot-row table-counter" data-testid="table-counter-@counter.Key">
                                 <span class="slot-level">@counter.Feature.Name</span>
                                 <span class="small">@L["Actor.Slots.Count", current, max]</span>
                                 @if (CanAct)
@@ -114,20 +119,33 @@
                                     <span class="ms-auto d-flex gap-1">
                                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current <= 0)" data-testid="@($"table-counter-use-{counter.Key}")"
                                                      aria-label="@L["Actor.Features.UseOther", counter.Feature.Name]" OnClick="() => Send(new AdjustResourceCommand(Actor.Id, counter.Key, -1, counter.Feature.Name))">@L["Actor.Slots.Use"]</CodexButton>
-                                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"table-counter-regain-{counter.Key}")"
-                                                     aria-label="@L["Actor.Features.RegainOther", counter.Feature.Name]" OnClick="() => Send(new AdjustResourceCommand(Actor.Id, counter.Key, 1, counter.Feature.Name))">@L["Actor.Slots.Regain"]</CodexButton>
+                                        @if (counter.CanRegain(IsDm))
+                                        {
+                                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"table-counter-regain-{counter.Key}")"
+                                                         aria-label="@L["Actor.Features.RegainOther", counter.Feature.Name]" OnClick="() => Send(new AdjustResourceCommand(Actor.Id, counter.Key, 1, counter.Feature.Name))">@L["Actor.Slots.Regain"]</CodexButton>
+                                        }
                                     </span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(counter.Feature.Description))
+                                {
+                                    @* Reactive rules stay text: the feature's own words beside its counter, so nobody has to look them up mid-fight. *@
+                                    <details class="counter-rules" data-testid="table-counter-rules-@counter.Key">
+                                        <summary class="small">@L["Combat.Card.Rules"]<span class="visually-hidden">: @counter.Feature.Name</span></summary>
+                                        <div class="rules-text small">@((MarkupString)SecretRender.Html(counter.Feature.Description, TextFormatting.ToHtml, IsDm ? DmView.From(L) : null))</div>
+                                    </details>
                                 }
                             </li>
                         }
                     </ul>
                 }
 
+                <FeatureSpenders Evaluation="Evaluation" Definition="Definition" Value="key => State?.Pool(key)" ReadOnly="@(!CanAct)" Spend="SpendAsync" TestPrefix="table-card" />
+
                 @if (Evaluation is { Actions.Count: > 0 })
                 {
                     <ActionsPanel Evaluation="Evaluation" Definition="Definition" Value="key => State?.Pool(key)" ReadOnly="@(!CanAct)" Bare="true"
                                   EntryName="entry => ContentRegistry.Name(entry, L.Culture.Name)"
-                                  OnSpend="change => Send(new AdjustResourceCommand(Actor.Id, change.Key, change.Delta, change.Label))"
+                                  Spend="SpendAsync"
                                   OnRoll="RollAsync" />
                 }
 
@@ -159,6 +177,9 @@
 
     /// <summary>The viewer may spend its slots and roll for it.</summary>
     [Parameter] public bool CanAct { get; set; }
+
+    /// <summary>The viewer is the GM, who alone may regain a counter marked <c>regain: gm</c>.</summary>
+    [Parameter] public bool IsDm { get; set; }
     [Parameter] public bool Expanded { get; set; }
     [Parameter] public EventCallback OnToggle { get; set; }
     [Parameter] public string CurrentUserId { get; set; } = string.Empty;
@@ -169,7 +190,27 @@
 
     private readonly string id = $"table-card-{Guid.NewGuid():N}";
 
+    /// <summary>An action's cost, spent at the table: true only when the runtime spent it (not refused for too little left, and
+    /// the table still open), so a refused spend rolls nothing.</summary>
+    private async Task<bool> SpendAsync((string Key, int Delta, string Label) change)
+    {
+        var command = new AdjustResourceCommand(Actor.Id, change.Key, change.Delta, change.Label);
+        await Send(command);
+        return command.Succeeded;
+    }
+
     private string Href => MentionLinks.Href(Campaign.Id, MentionKind.Actor, Actor.Id);
+
+    // After a rest, the picks it is the usual time to change: a notice with a link to the sheet, nothing is asked.
+    private List<(string Key, string Label)> restChoices = new();
+    private string? restMoment;
+
+    private async Task RestAsync((string Name, List<string> Keys) rest)
+    {
+        await Send(new RestCommand(Actor.Id, rest.Name, rest.Keys));
+        restMoment = rest.Name;
+        restChoices = SheetRuleEngine.ChoicesToChangeAfter(Actor.Sheet, rest.Name).ToList();
+    }
     private VitalsRules? Vitals => Definition?.Vitals;
     private SheetRules? Rules => Definition?.SheetRules;
     private string PrimaryKey => SystemDefinition.PrimaryKeyOf(Definition);
@@ -195,7 +236,7 @@
     private IReadOnlyList<FeatureCounter> Counters => Evaluation?.Counters ?? (IReadOnlyList<FeatureCounter>)Array.Empty<FeatureCounter>();
     private List<string> Equipped => Evaluation?.Inventory.Where(i => i.Equipped).Select(i => ContentRegistry.Name(i.Entry, L.Culture.Name)).ToList() ?? new List<string>();
 
-    private bool HasBody => Equipped.Count > 0 || SlotKeys.Count > 0 || Counters.Count > 0 || Evaluation is { Actions.Count: > 0 } || (Blueprint != null && MonsterCard.CanShow(Blueprint));
+    private bool HasBody => Equipped.Count > 0 || SlotKeys.Count > 0 || Counters.Count > 0 || Evaluation is { Spenders.Count: > 0 } || Evaluation is { Actions.Count: > 0 } || (Blueprint != null && MonsterCard.CanShow(Blueprint));
 
     /// <summary>Dead, stable and down are the card's state, not conditions in the list.</summary>
     private List<EffectSnapshot> Effects => (State?.Effects ?? Array.Empty<EffectSnapshot>())
@@ -240,7 +281,7 @@
         {
             foreach (var derived in Rules.Derived)
             {
-                if (Evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, Signed(value));
+                if (Evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, derived.Signed ? Signed(value) : value.ToString() ?? string.Empty);
             }
 
             foreach (var casting in Evaluation.Spellcasting)

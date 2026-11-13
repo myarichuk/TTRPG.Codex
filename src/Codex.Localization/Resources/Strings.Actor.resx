@@ -66,6 +66,21 @@
   <data name="Actor.Skills.SumDc" xml:space="preserve"><value>{0}, proficiency {1}, {2} {3}</value></data>
   <data name="Actor.Skills.Roll" xml:space="preserve"><value>Roll {0}</value></data>
   <data name="Actor.Skills.Hint" xml:space="preserve"><value>Your background's skills are ticked for you. Tick the ones your class and other features give.</value></data>
+  <data name="Actor.Skills.LockedFrom" xml:space="preserve"><value>{0}, from {1}</value></data>
+  <data name="Actor.Skills.RankNone" xml:space="preserve"><value>None</value></data>
+  <data name="Actor.Choice.Heading" xml:space="preserve"><value>Choices to make</value></data>
+  <data name="Actor.Choice.MadeHeading" xml:space="preserve"><value>Choices made ({0})</value></data>
+  <data name="Actor.Choice.Legend" xml:space="preserve"><value>{0}: choose {1} ({2})</value></data>
+  <data name="Actor.Choice.LegendRaise" xml:space="preserve"><value>{0}: pick {1} to raise ({2})</value></data>
+  <data name="Actor.Choice.SourceLevel" xml:space="preserve"><value>{0}, level {1}</value></data>
+  <data name="Actor.Choice.Count" xml:space="preserve"><value>{0} of {1} chosen</value></data>
+  <data name="Actor.Choice.Confirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="Actor.Choice.ConfirmHelp" xml:space="preserve"><value>You already ticked these. Confirm to keep them as this choice.</value></data>
+  <data name="Actor.Choice.ChooseAgain" xml:space="preserve"><value>Choose again</value></data>
+  <data name="Actor.Choice.MadeSummary" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Choice.Full" xml:space="preserve"><value>All chosen. Untick one to pick another.</value></data>
+  <data name="Actor.Sheet.LevelPicks" xml:space="preserve"><value>Choices this level opens</value></data>
+  <data name="Actor.Sheet.LevelLeftOpen" xml:space="preserve"><value>Still open: {0}. You can take the level now and make these later from the sheet.</value></data>
   <data name="Actor.Inv.Empty" xml:space="preserve"><value>Nothing carried yet.</value></data>
   <data name="Actor.Inv.Carried" xml:space="preserve"><value>{0} carried</value></data>
   <data name="Actor.Inv.Quantity" xml:space="preserve"><value>Quantity of {0}</value></data>
@@ -242,6 +257,8 @@
   <data name="Actor.Sheet.ClassLevelOption" xml:space="preserve"><value>{0} (level {1})</value></data>
   <data name="Actor.Sheet.ClassNewOption" xml:space="preserve"><value>{0} (new, level 1)</value></data>
   <data name="Actor.Sheet.FromLibrary" xml:space="preserve"><value>From the Library</value></data>
+  <data name="Actor.Sheet.Homebrew.Title" xml:space="preserve"><value>Homebrew</value></data>
+  <data name="Actor.Sheet.Homebrew.Hint" xml:space="preserve"><value>Written for this character and in no Library yet. A GM reviews each one when the character asks to join a campaign.</value></data>
   <data name="Actor.Sheet.HistoryVisible" xml:space="preserve"><value>Visible to whoever can see this character</value></data>
   <data name="Actor.Sheet.HistoryPlaceholder" xml:space="preserve"><value>Where they came from, what they want, who they owe…</value></data>
   <data name="Actor.Sheet.AiInstruction" xml:space="preserve"><value>Instruction for the AI</value></data>
@@ -306,7 +323,7 @@
   <data name="Actor.Sheet.ConfirmDiscardBody" xml:space="preserve"><value>You changed this sheet without saving. Leave now and those changes are lost.</value></data>
   <data name="Actor.Sheet.DiscardLeave" xml:space="preserve"><value>Discard and leave</value></data>
   <data name="Actor.Sheet.KeepEditing" xml:space="preserve"><value>Keep editing</value></data>
-  <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0}: slots refilled. Save changes to keep it.</value></data>
+  <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0} taken: what it refills is back. Save changes to keep it.</value></data>
   <data name="Actor.Sheet.NotSavedStrict" xml:space="preserve"><value>Not saved: {0, plural, one{# rule problem} other{# rule problems}} to fix first (see Rules above). The GM can relax this under Settings.</value></data>
   <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>Saved with {0, plural, one{# rule warning} other{# rule warnings}}.</value></data>
   <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>You don't have permission to edit this sheet.</value></data>
@@ -471,6 +488,134 @@
   <data name="Actor.Actions.SlotOption" xml:space="preserve"><value>Level {0} ({1} left)</value></data>
   <data name="Actor.Actions.NoSlots" xml:space="preserve"><value>No slot for this</value></data>
   <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: level {1} {2}</value></data>
+  <data name="Actor.Actions.CostFor" xml:space="preserve"><value>Cost of {0}</value></data>
+  <data name="Actor.Actions.Free" xml:space="preserve"><value>Free</value></data>
+  <data name="Actor.Actions.PoolOption" xml:space="preserve"><value>{0} ×{1} ({2} left)</value></data>
+  <data name="Actor.Actions.SpentFrom" xml:space="preserve"><value>{0}: {2} ×{1}</value></data>
+  <data name="Actor.Actions.CannotPay" xml:space="preserve"><value>Not enough left</value></data>
   <data name="Actor.Actions.Note" xml:space="preserve"><value>Cast and Attack roll here, or into the table's log during a session. A spent slot is marked for you; hits, saves and damage are applied by the GM.</value></data>
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.</value></data>
+  <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): choose {2} more ({3}).</value></data>
+  <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): your {2} picks in {3} already match this choice. Confirm them.</value></data>
+  <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: choose {1}</value></data>
+  <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>Usually changed on {0}</value></data>
+  <data name="Actor.Choice.Details" xml:space="preserve"><value>Details</value></data>
+  <data name="Actor.Choice.AfterRest" xml:space="preserve"><value>After {0} you can change:</value></data>
+  <data name="Actor.Choice.ChangeLink" xml:space="preserve"><value>Change {0}</value></data>
+  <data name="Actor.Rule.ChoiceRowPending" xml:space="preserve"><value>{0} ({1}): choose {2} more.</value></data>
+  <data name="Actor.Grants.Options" xml:space="preserve"><value>Choose one of</value></data>
+  <data name="Actor.Grants.ChooseId" xml:space="preserve"><value>Choice id</value></data>
+  <data name="Actor.Grants.ChooseCount" xml:space="preserve"><value>How many to pick</value></data>
+  <data name="Actor.Grants.OnChange" xml:space="preserve"><value>When the pick changes, counters</value></data>
+  <data name="Actor.Grants.OnChange.keep" xml:space="preserve"><value>keep what was spent</value></data>
+  <data name="Actor.Grants.OnChange.refill" xml:space="preserve"><value>start full</value></data>
+  <data name="Actor.Grants.OnChange.empty" xml:space="preserve"><value>start at 0</value></data>
+  <data name="Actor.Grants.ChooseHelp" xml:space="preserve"><value>The id is required: the sheet stores the pick under it. Options that share a counter should give it the same key.</value></data>
+  <data name="Actor.Grants.ChangesOn" xml:space="preserve"><value>Usually changed on</value></data>
+  <data name="Actor.Grants.OptionName" xml:space="preserve"><value>Option {0}: name</value></data>
+  <data name="Actor.Grants.OptionText" xml:space="preserve"><value>Option {0}: text</value></data>
+  <data name="Actor.Grants.RemoveOption" xml:space="preserve"><value>Remove option {0}</value></data>
+  <data name="Actor.Grants.AddOption" xml:space="preserve"><value>Add an option</value></data>
+  <data name="Actor.Grants.SumOptions" xml:space="preserve"><value>{0} options</value></data>
+  <data name="Actor.Rule.ChoiceStale" xml:space="preserve"><value>{0} ({1}): "{2}" no longer fits this choice. Choose again.</value></data>
+  <data name="Actor.Rule.CounterKeyShared" xml:space="preserve"><value>{0}: more than one feature sets the maximum of the same pool. The highest, {1}, is used. The GM can check the entries.</value></data>
+  <data name="Actor.Rule.SpendNoPool" xml:space="preserve"><value>{0}: spends from "{1}", and this sheet has no such pool, so it has no button. The GM can check the entry.</value></data>
+  <data name="Actor.Features.SpendLeft" xml:space="preserve"><value>{0}: {1} left</value></data>
+  <data name="Actor.Features.SpendUse" xml:space="preserve"><value>Use ({0})</value></data>
+  <data name="Actor.Features.SpendUseOf" xml:space="preserve"><value>Use {0}: spend {1} from {2}</value></data>
+  <data name="Actor.Features.SpendCannot" xml:space="preserve"><value>Not enough left in {0}.</value></data>
+  <data name="Actor.Features.SpendAmountOf" xml:space="preserve"><value>How much {0} spends</value></data>
+  <data name="Actor.Features.Spent" xml:space="preserve"><value>{0}: spent {1} {2}</value></data>
+  <data name="Actor.Grants.UsesKey" xml:space="preserve"><value>Shared pool name</value></data>
+  <data name="Actor.Grants.UsesKeyPlaceholder" xml:space="preserve"><value>Optional, e.g. focus</value></data>
+  <data name="Actor.Grants.Regain" xml:space="preserve"><value>Who can give a use back by hand</value></data>
+  <data name="Actor.Grants.RegainOwner" xml:space="preserve"><value>Owner and GM</value></data>
+  <data name="Actor.Grants.RegainGm" xml:space="preserve"><value>GM only</value></data>
+  <data name="Actor.Grants.Moment.initiative" xml:space="preserve"><value>Rolling initiative</value></data>
+  <data name="Actor.Grants.Moment.dawn" xml:space="preserve"><value>Dawn</value></data>
+  <data name="Actor.Grants.Moment.manual" xml:space="preserve"><value>By hand only</value></data>
+  <data name="Actor.Grants.Spends" xml:space="preserve"><value>Spends from a pool</value></data>
+  <data name="Actor.Grants.SpendKey" xml:space="preserve"><value>Pool key</value></data>
+  <data name="Actor.Grants.SpendAmount" xml:space="preserve"><value>Amount (a number, or ask)</value></data>
+  <data name="Actor.Grants.AddSpend" xml:space="preserve"><value>Add a pool this spends from</value></data>
+  <data name="Actor.Grants.RemoveSpend" xml:space="preserve"><value>Remove spending</value></data>
+  <data name="Actor.Grants.SumSpends" xml:space="preserve"><value>Spends a pool</value></data>
+  <data name="Actor.Grants.Title" xml:space="preserve"><value>What it does on the sheet</value></data>
+  <data name="Actor.Grants.None" xml:space="preserve"><value>Nothing yet</value></data>
+  <data name="Actor.Grants.SumModifiers" xml:space="preserve"><value>Modifiers: {0}</value></data>
+  <data name="Actor.Grants.SumAdds" xml:space="preserve"><value>List additions: {0}</value></data>
+  <data name="Actor.Grants.SumCounter" xml:space="preserve"><value>Use counter</value></data>
+  <data name="Actor.Grants.Modifiers" xml:space="preserve"><value>Modifiers</value></data>
+  <data name="Actor.Grants.Target" xml:space="preserve"><value>Changes</value></data>
+  <data name="Actor.Grants.TargetOf" xml:space="preserve"><value>Modifier {0}: what it changes</value></data>
+  <data name="Actor.Grants.Choose" xml:space="preserve"><value>Choose...</value></data>
+  <data name="Actor.Grants.Amount" xml:space="preserve"><value>Amount</value></data>
+  <data name="Actor.Grants.AmountOf" xml:space="preserve"><value>Modifier {0}: amount</value></data>
+  <data name="Actor.Grants.AmountPlaceholder" xml:space="preserve"><value>A number or a formula</value></data>
+  <data name="Actor.Grants.Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Actor.Grants.TypeOf" xml:space="preserve"><value>Modifier {0}: type</value></data>
+  <data name="Actor.Grants.NoType" xml:space="preserve"><value>Added (no type)</value></data>
+  <data name="Actor.Grants.When" xml:space="preserve"><value>Only when</value></data>
+  <data name="Actor.Grants.WhenOf" xml:space="preserve"><value>Modifier {0}: only when</value></data>
+  <data name="Actor.Grants.WhenPlaceholder" xml:space="preserve"><value>Optional condition</value></data>
+  <data name="Actor.Grants.AddModifier" xml:space="preserve"><value>Add modifier</value></data>
+  <data name="Actor.Grants.RemoveModifier" xml:space="preserve"><value>Remove modifier {0}</value></data>
+  <data name="Actor.Grants.Adds" xml:space="preserve"><value>Adds to lists</value></data>
+  <data name="Actor.Grants.List" xml:space="preserve"><value>List</value></data>
+  <data name="Actor.Grants.ListOf" xml:space="preserve"><value>List addition {0}: which list</value></data>
+  <data name="Actor.Grants.Entries" xml:space="preserve"><value>Entries</value></data>
+  <data name="Actor.Grants.EntriesOf" xml:space="preserve"><value>List addition {0}: entries, separated by commas</value></data>
+  <data name="Actor.Grants.EntriesPlaceholder" xml:space="preserve"><value>One or more, separated by commas</value></data>
+  <data name="Actor.Grants.FromLevel" xml:space="preserve"><value>From level</value></data>
+  <data name="Actor.Grants.Mode" xml:space="preserve"><value>How it is added</value></data>
+  <data name="Actor.Grants.ModeFixed" xml:space="preserve"><value>Fixed: these keys, at a rank</value></data>
+  <data name="Actor.Grants.ModeRaise" xml:space="preserve"><value>Raise: these keys, a rank up</value></data>
+  <data name="Actor.Grants.ModeChoice" xml:space="preserve"><value>Choice: the player picks</value></data>
+  <data name="Actor.Grants.ModeHint" xml:space="preserve"><value>Fixed gives the keys listed. Raise lifts them a rank. Choice lets the player pick.</value></data>
+  <data name="Actor.Grants.KeysHint" xml:space="preserve"><value>Keys, separated by commas, such as {0}.</value></data>
+  <data name="Actor.Grants.Rank" xml:space="preserve"><value>Rank</value></data>
+  <data name="Actor.Grants.RankFirst" xml:space="preserve"><value>First rank</value></data>
+  <data name="Actor.Grants.RankAny" xml:space="preserve"><value>Any</value></data>
+  <data name="Actor.Grants.RaiseBy" xml:space="preserve"><value>Ranks up</value></data>
+  <data name="Actor.Grants.PickCount" xml:space="preserve"><value>Player picks</value></data>
+  <data name="Actor.Grants.FromKind" xml:space="preserve"><value>Pick from</value></data>
+  <data name="Actor.Grants.FromAny" xml:space="preserve"><value>Any key</value></data>
+  <data name="Actor.Grants.FromThese" xml:space="preserve"><value>These keys</value></data>
+  <data name="Actor.Grants.FromAttribute" xml:space="preserve"><value>Keys of these attributes</value></data>
+  <data name="Actor.Grants.FromKeys" xml:space="preserve"><value>Keys</value></data>
+  <data name="Actor.Grants.MinRank" xml:space="preserve"><value>Must already be at</value></data>
+  <data name="Actor.Grants.MaxRank" xml:space="preserve"><value>No higher than</value></data>
+  <data name="Actor.Grants.Gives" xml:space="preserve"><value>The picks are</value></data>
+  <data name="Actor.Grants.GivesRank" xml:space="preserve"><value>put at a rank</value></data>
+  <data name="Actor.Grants.GivesRaise" xml:space="preserve"><value>raised a rank</value></data>
+  <data name="Actor.Grants.ChoiceId" xml:space="preserve"><value>Choice id</value></data>
+  <data name="Actor.Grants.ChoiceIdHint" xml:space="preserve"><value>Names this choice, so the picks are kept if the feature is edited. Each choice in a feature needs its own.</value></data>
+  <data name="Actor.Grants.ChoiceIdTaken" xml:space="preserve"><value>Another choice in this feature has this id.</value></data>
+  <data name="Actor.Grants.LevelOf" xml:space="preserve"><value>List addition {0}: from level</value></data>
+  <data name="Actor.Grants.AddAdd" xml:space="preserve"><value>Add to a list</value></data>
+  <data name="Actor.Grants.RemoveAdd" xml:space="preserve"><value>Remove list addition {0}</value></data>
+  <data name="Actor.Grants.Uses" xml:space="preserve"><value>Uses</value></data>
+  <data name="Actor.Grants.UsesMax" xml:space="preserve"><value>Maximum</value></data>
+  <data name="Actor.Grants.AddUses" xml:space="preserve"><value>Add a use counter</value></data>
+  <data name="Actor.Grants.RemoveUses" xml:space="preserve"><value>Remove use counter</value></data>
+  <data name="Actor.Grants.FormulaError" xml:space="preserve"><value>Can't read this: {0}</value></data>
+  <data name="Actor.Grants.FloorType" xml:space="preserve"><value>{0}: at least this, does not add</value></data>
+  <data name="Actor.Grants.CeilingType" xml:space="preserve"><value>{0}: at most this, does not add</value></data>
+  <data name="Actor.Features.AtMost" xml:space="preserve"><value>{0}: at most {1}</value></data>
+  <data name="Actor.Actions.Count" xml:space="preserve"><value>×{0}</value></data>
+  <data name="Actor.Actions.CountOf" xml:space="preserve"><value>{0} per turn</value></data>
+  <data name="Actor.Actions.Crit" xml:space="preserve"><value>crit {0}–{1}</value></data>
+  <data name="Actor.Actions.CritOf" xml:space="preserve"><value>Critical hit on a roll of {0} to {1}</value></data>
+  <data name="Actor.Grants.Unknown" xml:space="preserve"><value>{0} (not in this system)</value></data>
+  <data name="Actor.Grants.UsesKeyHint" xml:space="preserve"><value>Features with the same name share one pool: one sets the maximum, the others spend from it.</value></data>
+  <data name="Actor.Grants.Refills" xml:space="preserve"><value>Refills</value></data>
+  <data name="Actor.Grants.RefillsHint" xml:space="preserve"><value>How many uses come back at each rest or moment.</value></data>
+  <data name="Actor.Grants.RefillNone" xml:space="preserve"><value>Nothing</value></data>
+  <data name="Actor.Grants.RefillAll" xml:space="preserve"><value>All of them</value></data>
+  <data name="Actor.Grants.RefillSome" xml:space="preserve"><value>Some</value></data>
+  <data name="Actor.Grants.RefillAmountOf" xml:space="preserve"><value>{0}: how many come back</value></data>
+  <data name="Actor.Grants.RefillAmountPlaceholder" xml:space="preserve"><value>1, 1d4 or a formula</value></data>
+  <data name="Actor.Grants.RefillOnlyEmpty" xml:space="preserve"><value>Only when none are left</value></data>
+  <data name="Actor.Grants.RefillWhenNote" xml:space="preserve"><value>Also only if {0}</value></data>
+  <data name="Actor.Grants.SpendKeyPlaceholder" xml:space="preserve"><value>The pool’s name, e.g. focus</value></data>
 </root>

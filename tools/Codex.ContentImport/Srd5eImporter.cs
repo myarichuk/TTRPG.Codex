@@ -375,7 +375,9 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             entry.Properties["class"] = sub.Get("class")?.Str("index") ?? "";
             entry.Properties["summary"] = sub.Str("summary") ?? "";
             var rows = sub.Items("features").Select(f => (f.Int("level"), f.Str("name") ?? "Feature", Json.Clean(f.Str("description")))).ToList();
-            entry.Properties["features"] = FeatureRows(rows);
+            var featureRows = FeatureRows(rows);
+            SplitLandTypes(featureRows);
+            entry.Properties["features"] = featureRows;
             var extraStyles = rows.Where(r => r.Item2.Equals("Additional Fighting Style", StringComparison.OrdinalIgnoreCase) && r.Item1.HasValue).ToList();
             if (extraStyles.Count > 0)
             {
@@ -391,6 +393,63 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
 
             entry.Tags.Add(sub.Get("class")?.Str("index") ?? "subclass");
             yield return entry;
+        }
+    }
+
+    private const string LandSpellsName = "Circle of the Land Spells";
+    private static readonly Regex LandHeading = new(@"^(?<type>Arid|Polar|Temperate|Tropical) Land$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex LandSpellsLine = new(@"^(?<level>\d+) (?<spells>.+)$", RegexOptions.Compiled);
+
+    /// <summary>The SRD's Circle of the Land Spells row carries its whole table in the description and the first sentence of its text in
+    /// its name. Split it: the row keeps its name and the sentence as its text, each land type is an option with its spells as text, and
+    /// <c>choose</c> says the land is picked once and may be changed on a long rest. Any other row is left as it is.</summary>
+    private static void SplitLandTypes(List<object> features)
+    {
+        for (var i = 0; i < features.Count; i++)
+        {
+            if (features[i] is not Dictionary<string, object> row || row["name"] is not string name
+                || !name.StartsWith(LandSpellsName + " ", StringComparison.Ordinal) || row.GetValueOrDefault("description") is not string table) continue;
+
+            var options = new List<object>();
+            Dictionary<string, object>? option = null;
+            var lines = new List<string>();
+            void Close()
+            {
+                if (option == null) return;
+                option["description"] = string.Join("\n\n", lines);
+                options.Add(option);
+                option = null;
+                lines = new List<string>();
+            }
+
+            foreach (var line in table.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (LandHeading.Match(line) is { Success: true } heading)
+                {
+                    Close();
+                    var type = heading.Groups["type"].Value;
+                    option = new Dictionary<string, object> { ["name"] = char.ToUpperInvariant(type[0]) + type[1..].ToLowerInvariant() };
+                }
+                else if (option != null && LandSpellsLine.Match(line) is { Success: true } spells)
+                {
+                    lines.Add($"Druid level {spells.Groups["level"].Value}: {spells.Groups["spells"].Value}");
+                }
+            }
+
+            Close();
+            if (options.Count == 0) continue;
+
+            var updated = new Dictionary<string, object> { ["name"] = LandSpellsName };
+            if (row.TryGetValue("level", out var level)) updated["level"] = level;
+            updated["description"] = name[(LandSpellsName.Length + 1)..].Trim();
+            updated["options"] = options;
+            updated["choose"] = new Dictionary<string, object>
+            {
+                ["id"] = "land",
+                ["changesOn"] = new List<object> { "Long Rest" },
+                ["onChange"] = "keep"
+            };
+            features[i] = updated;
         }
     }
 

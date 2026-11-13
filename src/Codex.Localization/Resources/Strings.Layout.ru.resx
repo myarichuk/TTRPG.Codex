@@ -49,6 +49,7 @@
   <data name="Layout.Picker.Nothing" xml:space="preserve"><value>Пока ничего не выбрано.</value></data>
   <data name="Layout.Picker.Picked" xml:space="preserve"><value>Выбрано: {0}</value></data>
   <data name="Layout.Picker.Remove" xml:space="preserve"><value>Убрать: {0}</value></data>
+  <data name="Layout.Picker.Homebrew" xml:space="preserve"><value>самоделка</value></data>
   <data name="Layout.Picker.MissingTitle" xml:space="preserve"><value>Этого больше нет в Библиотеке. Уберите его или попросите мастера вернуть запись.</value></data>
   <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>Достигнут предел</value></data>
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>Сейчас ничего не доступно. Проверьте класс, уровень и правила выше.</value></data>

@@ -599,8 +599,14 @@ public sealed class CharacterAssist(CampaignLibrary library, ISystemCatalog cata
         if (rules?.Inventory is { } inventory) yield return new FieldSpec(inventory.Key, inventory.Label, FieldKind.Inventory, Inventory: inventory);
         if (rules?.Skills is { List.Count: > 0 } skills)
         {
-            yield return new FieldSpec(skills.ProficienciesKey, skills.Label, FieldKind.Skills, "Skills the character is proficient in.", Skills: skills);
-            yield return new FieldSpec(skills.ExpertiseKey, skills.Label + " expertise", FieldKind.Skills, "Expertise: a second tick on a skill already proficient.", Skills: skills);
+            var ranks = skills.SkillRanks();
+            yield return new FieldSpec(ranks[0].SheetKey, skills.Label, FieldKind.Skills, "Skills the character is proficient in.", Skills: skills);
+            for (var i = 1; i < ranks.Count; i++)
+            {
+                yield return skills.Ranks.Count == 0
+                    ? new FieldSpec(ranks[i].SheetKey, skills.Label + " expertise", FieldKind.Skills, "Expertise: a second tick on a skill already proficient.", Skills: skills)
+                    : new FieldSpec(ranks[i].SheetKey, $"{skills.Label} ({ranks[i].Label})", FieldKind.Skills, $"Skills the character holds at rank {ranks[i].Label}.", Skills: skills);
+            }
         }
     }
 

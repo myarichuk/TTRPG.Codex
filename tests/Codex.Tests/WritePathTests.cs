@@ -227,6 +227,140 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(1, live.Get("slots_1"));
     }
 
+    // ---- Feature counters (uses_*) on a sheet saved at a live table ----
+
+    private static readonly SystemDefinition UsesSystem = new() { Resources = { new ResourceDefinition { Key = "HP", MaxKey = "HP_Max" } } };
+
+    /// <summary>A character with a counter of uses (<c>uses_focus</c>, <paramref name="left"/> of 4) on both the sheet and the table.</summary>
+    private async Task<ActorDocument> SeedWithCounterAsync(int left, params (string Key, int Left, int Max)[] more)
+    {
+        var actor = await SeedActorAsync("camp", 10);
+        var pool = new ResourcePoolComponent();
+        pool.Set("HP", 10);
+        pool.Set("HP_Max", 10);
+        foreach (var (key, now, max) in new[] { ("uses_focus", left, 4) }.Concat(more))
+        {
+            actor.Sheet[key] = (long)now;
+            actor.Sheet[key + "_Max"] = (long)max;
+            pool.Set(key, now);
+            pool.Set(key + "_Max", max);
+        }
+
+        actor.State = _registry.Snapshot(new object[] { pool });
+        await _actors.SaveAsync(actor);
+        return actor;
+    }
+
+    private async Task<ResourcePoolComponent> SaveSheetAsync(CampaignRuntime runtime, ActorDocument actor, Action<ActorDocument> edit, Func<Task>? atTheTable = null)
+    {
+        var loaded = (await LoadAsync(actor))!;
+        var edited = (await LoadAsync(actor))!;
+        edit(edited);
+        if (atTheTable != null) await atTheTable();
+        await runtime.EnqueueAsync(new ReplaceActorCommand(edited, new Dictionary<string, object>(loaded.Sheet), Dm, UsesSystem));
+        return runtime.GetEntity(actor.Id)!.Value.Get<ResourcePoolComponent>();
+    }
+
+    [Fact]
+    public async Task SheetSaveAtALiveTable_ThatChangesNotesOnly_KeepsWhatTheTableSpentOfACounter_Async()
+    {
+        var actor = await SeedWithCounterAsync(4, ("uses_rage", 3, 3));
+        var session = await SeedSessionAsync("camp");
+        await using var runtime = StartRuntime("camp", session, actor);
+
+        var live = await SaveSheetAsync(runtime, actor, edited => edited.Sheet["Level"] = 4L, async () =>
+        {
+            await runtime.EnqueueAsync(new AdjustResourceCommand(actor.Id, "uses_focus", -2, "Focus"));
+            await runtime.EnqueueAsync(new AdjustResourceCommand(actor.Id, "uses_rage", -1, "Rage"));
+        });
+
+        Assert.Equal(2, live.Get("uses_focus"));
+        Assert.Equal(2, live.Get("uses_rage"));
+        var stored = (await LoadAsync(actor))!;
+        Assert.Equal(2, YamlValues.GetInt(stored.Sheet, "uses_focus"));
+        Assert.Equal(4, YamlValues.GetInt(stored.Sheet, "uses_focus_Max"));
+    }
+
+    [Fact]
+    public async Task SheetSaveAtALiveTable_AddsTheEditorsSpendOfACounterToTheTables_Async()
+    {
+        var actor = await SeedWithCounterAsync(4);
+        var session = await SeedSessionAsync("camp");
+        await using var runtime = StartRuntime("camp", session, actor);
+
+        // One use spent on the sheet, two at the table: one is left.
+        var live = await SaveSheetAsync(runtime, actor, edited => edited.Sheet["uses_focus"] = 3L,
+            () => runtime.EnqueueAsync(new AdjustResourceCommand(actor.Id, "uses_focus", -2, "Focus")));
+
+        Assert.Equal(1, live.Get("uses_focus"));
+    }
+
+    [Fact]
+    public async Task SheetSaveAtALiveTable_ARefillByAChangedPick_ReachesTheTable_NotJustTheDifference_Async()
+    {
+        var actor = await SeedWithCounterAsync(2);
+        var session = await SeedSessionAsync("camp");
+        await using var runtime = StartRuntime("camp", session, actor);
+
+        // The pick changed on the sheet (refill: back to 4 of 4) while the table spent one more.
+        var live = await SaveSheetAsync(runtime, actor, edited => edited.Sheet["uses_focus"] = 4L,
+            () => runtime.EnqueueAsync(new AdjustResourceCommand(actor.Id, "uses_focus", -1, "Focus")));
+
+        Assert.Equal(4, live.Get("uses_focus"));
+    }
+
+    [Fact]
+    public async Task SheetSaveAtALiveTable_AnEmptyingByAChangedPick_ReachesTheTable_Async()
+    {
+        var actor = await SeedWithCounterAsync(2);
+        var session = await SeedSessionAsync("camp");
+        await using var runtime = StartRuntime("camp", session, actor);
+
+        // The pick changed on the sheet (empty: none left) while the table regained a use through the other tab.
+        var live = await SaveSheetAsync(runtime, actor, edited => edited.Sheet["uses_focus"] = 0L,
+            () => runtime.EnqueueAsync(new AdjustResourceCommand(actor.Id, "uses_focus", 1, "Focus")));
+
+        Assert.Equal(0, live.Get("uses_focus"));
+    }
+
+    [Fact]
+    public async Task SheetSaveAtALiveTable_ADroppedCounter_LeavesTheTable_AndANewOneArrives_Async()
+    {
+        var actor = await SeedWithCounterAsync(3, ("uses_rage", 2, 2));
+        var session = await SeedSessionAsync("camp");
+        await using var runtime = StartRuntime("camp", session, actor);
+
+        var live = await SaveSheetAsync(runtime, actor, edited =>
+        {
+            edited.Sheet.Remove("uses_rage");
+            edited.Sheet.Remove("uses_rage_Max");
+            edited.Sheet["uses_surge"] = 1L;
+            edited.Sheet["uses_surge_Max"] = 1L;
+        });
+
+        Assert.False(live.Pools.ContainsKey("uses_rage"));
+        Assert.False(live.Pools.ContainsKey("uses_rage_Max"));
+        Assert.Equal(3, live.Get("uses_focus"));
+        Assert.Equal(1, live.Get("uses_surge"));
+    }
+
+    [Fact]
+    public async Task ADawnOnlyRefillsTheCountersThatNameDawn_AndALongRestLeavesThemBe_Async()
+    {
+        var actor = await SeedWithCounterAsync(0, ("uses_rage", 0, 3));
+        actor.Sheet["uses_focus_Rest"] = "dawn";
+        actor.Sheet["uses_rage_Rest"] = "Long Rest";
+        await _actors.SaveAsync(actor);
+        var session = await SeedSessionAsync("camp");
+        await using var runtime = StartRuntime("camp", session, actor);
+
+        await runtime.EnqueueAsync(new DawnCommand(actor.Id));
+
+        var live = runtime.GetEntity(actor.Id)!.Value.Get<ResourcePoolComponent>();
+        Assert.Equal(4, live.Get("uses_focus"));
+        Assert.Equal(0, live.Get("uses_rage"));
+    }
+
     [Fact]
     public async Task ASheetSavedWithoutATable_OverAVersionItDidNotSee_IsRefused_AndKeepsTheOtherEdit_Async()
     {

@@ -40,7 +40,7 @@
             @foreach (var save in Evaluation.SavingThrows)
             {
                 <li class="list-row py-1">
-                    <span>@save.Label @if (save.Proficient) { <span class="pill pill-success">@L["Actor.Skills.Proficient"]</span> }</span>
+                    <span class="d-flex align-items-center gap-2 flex-wrap">@SaveInput(save)</span>
                     <span class="roll-end">@Sum(ScoreSum(save), "sum-save-" + save.Key)<span data-testid="@("save-" + save.Key)">@Signed(save.Bonus)</span>@RollButton(L["Actor.Skills.Save", save.Label], save.Bonus, "roll-save-" + save.Key)</span>
                 </li>
             }
@@ -52,21 +52,42 @@
         @foreach (var skill in Evaluation.Skills)
         {
             var key = skill.Key;
-            var picked = Picked.Contains(key) || Picked.Contains(skill.Label);
-            var fromElsewhere = skill.Proficient && !picked;
-            var expertPicked = Expertise.Contains(key) || Expertise.Contains(skill.Label);
+            var ranks = Rules.SkillRanks();
+            // A rank a source gives is locked: shown ticked and disabled, with where it comes from in the label's text.
+            var lockedFirst = skill.LockedBy(1);
+            var lockedSecond = skill.LockedBy(2);
             <li class="list-row py-1">
                 <span class="d-flex align-items-center gap-2 flex-wrap">
-                    <input id="@(id)-prof-@key" type="checkbox" class="field-box mt-0" checked="@skill.Proficient" disabled="@(!CanEdit || fromElsewhere)"
-                           @onchange="e => SetAsync(Rules.ProficienciesKey, key, (bool)e.Value!)" data-testid="@("skill-prof-" + key)" />
-                    <label for="@(id)-prof-@key" class="mb-0">@skill.Label <span class="small-muted">(@Abbreviation(skill.Attribute))</span>
-                        @if (fromElsewhere) { <span class="small-muted">· @L["Actor.Skills.Background"]</span> }
-                    </label>
-                    @if (skill.Proficient)
+                    @if (ranks.Count > 2)
                     {
-                        <input id="@(id)-exp-@key" type="checkbox" class="field-box mt-0 ms-2" checked="@skill.Expert" disabled="@(!CanEdit)"
-                               @onchange="e => SetAsync(Rules.ExpertiseKey, key, (bool)e.Value!)" data-testid="@("skill-exp-" + key)" />
-                        <label for="@(id)-exp-@key" class="mb-0 small-muted">@L["Actor.Skills.Expertise"]</label>
+                        var granted = skill.GrantedRank;
+                        <label for="@(id)-rank-@key" class="mb-0">@skill.Label <span class="small-muted">(@Abbreviation(skill.Attribute))</span></label>
+                        <select id="@(id)-rank-@key" class="field-select field-sm" value="@skill.Rank" disabled="@(!CanEdit)"
+                                @onchange="e => SetRankAsync(skill, e.Value?.ToString())" data-testid="@("skill-rank-" + key)">
+                            <option value="0" disabled="@(granted > 0)">@L["Actor.Skills.RankNone"]</option>
+                            @for (var r = 1; r <= ranks.Count; r++)
+                            {
+                                <option value="@r" disabled="@(r < granted)">@RankName(ranks, r)</option>
+                            }
+                        </select>
+                        @if (granted > 0 && skill.LockedBy(granted) is { } source)
+                        {
+                            <span class="small-muted" data-testid="@("skill-source-" + key)">· @L["Actor.Skills.LockedFrom", RankName(ranks, granted), source.Name]</span>
+                        }
+                    }
+                    else
+                    {
+                        <input id="@(id)-prof-@key" type="checkbox" class="field-box mt-0" checked="@skill.Proficient" disabled="@(!CanEdit || lockedFirst != null)"
+                               @onchange="e => SetAsync(ProficiencyKey, key, (bool)e.Value!)" data-testid="@("skill-prof-" + key)" />
+                        <label for="@(id)-prof-@key" class="mb-0">@skill.Label <span class="small-muted">(@Abbreviation(skill.Attribute))</span>
+                            @if (lockedFirst != null) { <span class="small-muted">· @L["Actor.Skills.LockedFrom", RankName(ranks, 1), lockedFirst.Name]</span> }
+                        </label>
+                        @if (skill.Proficient && ExpertiseListKey != null)
+                        {
+                            <input id="@(id)-exp-@key" type="checkbox" class="field-box mt-0 ms-2" checked="@skill.Expert" disabled="@(!CanEdit || lockedSecond != null)"
+                                   @onchange="e => SetAsync(ExpertiseListKey, key, (bool)e.Value!)" data-testid="@("skill-exp-" + key)" />
+                            <label for="@(id)-exp-@key" class="mb-0 small-muted">@(lockedSecond != null ? L["Actor.Skills.LockedFrom", RankName(ranks, 2), lockedSecond.Name] : RankName(ranks, 2))</label>
+                        }
                     }
                 </span>
                 <span class="roll-end">@Sum(ScoreSum(skill), "sum-skill-" + key)<span data-testid="@("skill-" + key)">@Signed(skill.Bonus)</span>@RollButton(L["Actor.Skills.Check", skill.Label], skill.Bonus, "roll-skill-" + key)</span>
@@ -95,12 +116,56 @@
 
     private int Pb => Evaluation.Derived.TryGetValue(Rules.BonusKey, out var value) ? Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture) : 0;
 
-    // The engine's sum taken apart: proficiency (twice with expertise) and the rest, the attribute's modifier.
+    // The engine's sum taken apart: what the rank is worth (the rank's own formula, under its name) and the rest, the attribute's modifier.
     private string ScoreSum(SkillScore score)
     {
-        var proficiency = score.Expert ? Pb * 2 : score.Proficient ? Pb : 0;
-        var parts = $"{Abbreviation(score.Attribute)} {Signed(score.Bonus - proficiency)}";
-        return proficiency == 0 ? parts : parts + " " + L[score.Expert ? "Actor.Skills.SumExpertise" : "Actor.Skills.SumProficiency", Signed(proficiency)];
+        var parts = $"{Abbreviation(score.Attribute)} {Signed(score.Bonus - score.RankBonus)}";
+        return score.Rank == 0 || score.RankBonus == 0 ? parts : $"{parts} {score.RankLabel} {Signed(score.RankBonus)}";
+    }
+
+    private string RankName(IReadOnlyList<RankDefinition> ranks, int rank) =>
+        string.IsNullOrWhiteSpace(ranks[rank - 1].Label) ? ranks[rank - 1].Key : ranks[rank - 1].Label;
+
+    // A saving throw's rank: a box for one rank, a select for more. A rank the class or a feature gives is locked, with where from in the text.
+    private RenderFragment SaveInput(SkillScore save) => __builder =>
+    {
+        var ranks = Rules.SaveRanks();
+        var box = $"{id}-save-{save.Key}";
+        if (ranks.Count > 1)
+        {
+            var granted = save.GrantedRank;
+            <label for="@box" class="mb-0">@save.Label</label>
+            <select id="@box" class="field-select field-sm" value="@save.Rank" disabled="@(!CanEdit)" @onchange="e => SetSaveRankAsync(save, e.Value?.ToString())" data-testid="@("save-rank-" + save.Key)">
+                <option value="0" disabled="@(granted > 0)">@L["Actor.Skills.RankNone"]</option>
+                @for (var r = 1; r <= ranks.Count; r++)
+                {
+                    <option value="@r" disabled="@(r < granted)">@RankName(ranks, r)</option>
+                }
+            </select>
+            if (granted > 0 && save.LockedBy(granted) is { } source)
+            {
+                <span class="small-muted">· @L["Actor.Skills.LockedFrom", RankName(ranks, granted), source.Name]</span>
+            }
+        }
+        else
+        {
+            var locked = save.LockedBy(1);
+            <input id="@box" type="checkbox" class="field-box mt-0" checked="@save.Proficient" disabled="@(!CanEdit || locked != null)"
+                   @onchange="e => SetSaveTickAsync(save, (bool)e.Value!)" data-testid="@("save-prof-" + save.Key)" />
+            <label for="@box" class="mb-0">@save.Label
+                @if (locked != null) { <span class="small-muted">· @L["Actor.Skills.LockedFrom", RankName(ranks, 1), locked.Name]</span> }
+            </label>
+        }
+    };
+
+    private Task SetSaveTickAsync(SkillScore save, bool on) => SetSaveRankAsync(save, on ? "1" : "0");
+
+    private async Task SetSaveRankAsync(SkillScore save, string? raw)
+    {
+        var rank = int.TryParse(raw, out var chosen) ? chosen : 0;
+        if (rank <= save.GrantedRank) rank = 0;
+        SheetRuleEngine.SetOwnRank(Sheet, Rules.SaveRanks(), rank, save.Key);
+        await Changed.InvokeAsync();
     }
 
     private string PassiveSum(PassiveScore passive)
@@ -117,8 +182,19 @@
 
     private readonly string id = "skills-" + Guid.NewGuid().ToString("N")[..6];
 
-    private HashSet<string> Picked => SheetRuleEngine.RawList(Sheet, Rules.ProficienciesKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
-    private HashSet<string> Expertise => SheetRuleEngine.RawList(Sheet, Rules.ExpertiseKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    // The sheet lists of the first two ranks. A system with more ranks gets its picker later; these two ticks keep working meanwhile.
+    private string ProficiencyKey => Rules.SkillRanks()[0].SheetKey;
+    private string? ExpertiseListKey => Rules.SkillRanks().Count > 1 ? Rules.SkillRanks()[1].SheetKey : null;
+
+    // A system with more than two ranks sets one in a select; a rank a source gives is the least it can be.
+    private async Task SetRankAsync(SkillScore skill, string? raw)
+    {
+        var rank = int.TryParse(raw, out var chosen) ? chosen : 0;
+        // At or below what a source gives, the player's own tick would change nothing: it is cleared rather than kept.
+        if (rank <= skill.GrantedRank) rank = 0;
+        SheetRuleEngine.SetOwnRank(Sheet, Rules.SkillRanks(), rank, skill.Key, skill.Label);
+        await Changed.InvokeAsync();
+    }
 
     private string Abbreviation(string attribute) =>
         Attributes.FirstOrDefault(a => a.Key.Equals(attribute, StringComparison.OrdinalIgnoreCase))?.Abbreviation ?? attribute.ToUpperInvariant();
@@ -139,10 +215,10 @@
         list.RemoveAll(n => n.Equals(skill, StringComparison.OrdinalIgnoreCase));
         if (on) list.Add(skill);
         // Dropping proficiency drops expertise with it.
-        if (!on && listKey == Rules.ProficienciesKey)
+        if (!on && listKey == ProficiencyKey && ExpertiseListKey != null)
         {
-            var expertise = SheetRuleEngine.RawList(Sheet, Rules.ExpertiseKey);
-            if (expertise.RemoveAll(n => n.Equals(skill, StringComparison.OrdinalIgnoreCase)) > 0) Store(Rules.ExpertiseKey, expertise);
+            var expertise = SheetRuleEngine.RawList(Sheet, ExpertiseListKey);
+            if (expertise.RemoveAll(n => n.Equals(skill, StringComparison.OrdinalIgnoreCase)) > 0) Store(ExpertiseListKey, expertise);
         }
 
         Store(listKey, list);

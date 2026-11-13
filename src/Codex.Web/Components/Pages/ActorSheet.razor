@@ -186,6 +186,11 @@ else
         }
         @* Inside the sticky plate so a result is seen wherever the page is scrolled to. *@
         <StatusMessage Message="flash" OnDismiss="() => flash = null" Toast="true" />
+        @if (restChoices.Count > 0 && restMoment != null)
+        {
+            <RestChoicesNotice Moment="@SlotTracker.RestName(system, restMoment)" Choices="restChoices" HrefFor="key => '#' + ChoicePicker.AnchorFor(key)" OnOpen="OpenChoice"
+                               OnDismiss="() => { restChoices = new(); openChoices.Clear(); }" />
+        }
     </div>
 
     @if (!string.IsNullOrEmpty(actor.BlueprintId) && ContentRegistry.GetActor(actor.BlueprintId) == null)
@@ -585,14 +590,14 @@ else
         "skills" => Rules?.Skills != null && evaluation is { Skills.Count: > 0 },
         "fields" => true,
         "classes" => Rules?.Multiclass != null && evaluation != null,
-        "library" => linkedEntries.Count > 0,
+        "library" => linkedEntries.Count > 0 || actor is { Carried.Count: > 0 },
         "picks" => Rules != null && Rules.Lists.Count > 0,
         "inventory" => Rules?.Inventory != null,
         "hit-points" => system?.PrimaryResource != null,
         "armor-class" => Rules?.ArmorClass != null,
         "slots" => Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))),
         "actions" => evaluation is { Actions.Count: > 0 },
-        "features" => Rules is { Features.Count: > 0 } && evaluation is { } worked && (worked.Counters.Count > 0 || worked.Granted.Count > 0 || worked.Features.Any(f => f.Adds.Count > 0)),
+        "features" => Rules is { Features.Count: > 0 } && evaluation is { } worked && (worked.Counters.Count > 0 || worked.Spenders.Count > 0 || worked.Granted.Count > 0 || worked.Features.Any(f => f.Adds.Count > 0)),
         "level-up" => CanEdit && HasLevel,
         _ => sheetView?.Shows(widget) == true
     };
@@ -684,6 +689,8 @@ else
             case "skills":
                     @if (Rules?.Skills is { } skillRules && evaluation is { Skills.Count: > 0 })
                     {
+                        <ChoicesBlock Evaluation="evaluation" CanEdit="CanEdit" TargetLabel="ChoiceTargetLabel" Describe="Describe" OnEdit="EditChoiceAsync"
+                                      OptionText="ChoiceOptionText" MomentLabel="MomentName" OpenKeys="openChoices" />
                         <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" OnRoll="RollAsync"
                                      ShowSums="showSums" ShowSumsChanged="value => showSums = value" />
                     }
@@ -715,6 +722,21 @@ else
                                     <a href="@LibraryPath/@item.Entry.Type/@Uri.EscapeDataString(item.Entry.Id)" class="fw-semibold">@Nm(item.Entry)</a>
                                     <div class="small">@TextFormatting.Summary(item.Entry.Description, 200)</div>
                                 </div>
+                            }
+                        </section>
+                    }
+                    @if (actor is { Carried.Count: > 0 } && system != null)
+                    {
+                        @* Entries written for this character (the AI drafter's homebrew): not in any Library until a GM adds them. *@
+                        <section class="panel" aria-labelledby="carried-heading" data-testid="sheet-carried">
+                            <div class="panel-title"><h2 id="carried-heading" class="h5"><LucideIcon IconName="feather" Size="18" Class="title-icon" /> @L["Actor.Sheet.Homebrew.Title"]</h2></div>
+                            <p class="field-hint mt-0">@L["Actor.Sheet.Homebrew.Hint"]</p>
+                            @foreach (var carried in actor.Carried)
+                            {
+                                <details class="carried-entry" data-testid="sheet-carried-entry">
+                                    <summary><span class="label-caps me-2">@(system.FindType(carried.Type)?.Label ?? carried.Type)</span><span class="fw-semibold">@carried.Name</span></summary>
+                                    <EntryDetail Item="@(new LibraryItem(carried.ToEntry(system.Id), null, null))" Type="@system.FindType(carried.Type)" ForDm="@CanEdit" />
+                                </details>
                             }
                         </section>
                     }
@@ -814,15 +836,23 @@ else
                     @if (evaluation is { Actions.Count: > 0 })
                     {
                         <ActionsPanel Evaluation="evaluation" Definition="system" Value="key => YamlValues.GetInt(editSheet, key)" ReadOnly="@(!CanEdit)"
-                                      EntryName="Nm" OnSpend="AdjustSlot" OnRoll="RollActionAsync" />
+                                      EntryName="Nm" Spend="SpendOnSheet" OnRoll="RollActionAsync" />
                     }
 
                 break;
             case "features":
                     @if (Rules is { Features.Count: > 0 })
                     {
+                        @* A system with no skills has no skills panel to hold the choices a feature leaves open: they are here. *@
+                        @if (Rules.Skills == null && evaluation != null)
+                        {
+                            <ChoicesBlock Evaluation="evaluation" CanEdit="CanEdit" TargetLabel="ChoiceTargetLabel" Describe="Describe" OnEdit="EditChoiceAsync"
+                                          OptionText="ChoiceOptionText" MomentLabel="MomentName" OpenKeys="openChoices" />
+                        }
+
                         <FeaturesPanel Evaluation="evaluation" Sheet="editSheet" Rules="Rules" Definition="system" ReadOnly="@(!CanEdit)"
                                        EntryName="@((type, id) => resolver?.Resolve(type, id)?.Name ?? id)"
+                                       IsDm="@(access?.IsDm == true)" Spend="SpendOnSheet"
                                        OnAdjust="AdjustSlot" OnRest="RestFeatures" />
                     }
 
@@ -839,6 +869,7 @@ else
                             else if (levelUpPlan is { } plan)
                             {
                                 <LevelUpStepper Plan="plan" Evaluation="evaluation" Rules="Rules" ClassId="@levelUpClassId" Roll="levelUpRoll" EntryName="Nm" Describe="Describe"
+                                                TargetLabel="ChoiceTargetLabel" OptionText="ChoiceOptionText" MomentLabel="MomentName" OnPick="PickForLevelUp"
                                                 OnClassChosen="ChooseLevelUpClass" OnRollTyped="SetLevelUpRoll" OnRollDie="RollLevelUpHitDie" OnApply="ApplyLevelUp" OnCancel="CloseLevelUp" />
                             }
                             else
@@ -954,7 +985,7 @@ else
         {
             foreach (var derived in Rules.Derived)
             {
-                if (evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, FormatSigned(value));
+                if (evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, derived.Signed ? FormatSigned(value) : value.ToString() ?? string.Empty);
             }
         }
 
@@ -1065,7 +1096,7 @@ else
                     .Concat(system?.SheetRules?.HitPoints is { } hp ? new[] { hp.ModeKey, hp.RollsKey } : Array.Empty<string>())
                     .Concat(system?.SheetRules?.ArmorClass is { } ac ? new[] { ac.Key, ac.ModeKey, ac.MiscField } : Array.Empty<string>())
                     .Concat(system?.SheetRules?.Inventory is { } inv ? new[] { inv.Key } : Array.Empty<string>())
-                    .Concat(system?.SheetRules?.Skills is { } sk ? new[] { sk.ProficienciesKey, sk.ExpertiseKey } : Array.Empty<string>())
+                    .Concat(system?.SheetRules?.Skills is { } sk ? sk.SkillRanks().Concat(sk.SaveRanks()).Select(r => r.SheetKey) : Enumerable.Empty<string>())
                     .Concat(system?.SheetRules?.Inherits.Select(i => i.AppliedKey) ?? Enumerable.Empty<string>())
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -1178,6 +1209,7 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        OpenChoiceFromAddress();
         if (pendingRule is { } target)
         {
             pendingRule = null;
@@ -1238,6 +1270,106 @@ else
     {
         Reevaluate();
         return Task.CompletedTask;
+    }
+
+    /// <summary>A row option's name and text in the reader's language: the sheet stores the row's name as its entry writes it.</summary>
+    private (string Name, string? Description) ChoiceOptionText(PendingChoice choice, ChoiceOption option) =>
+        ContentRegistry.Row(choice.Feature.Source, option.Key, L.Culture.Name);
+
+    private string MomentName(string moment) => SlotTracker.RestName(system, moment);
+
+    // The choices the last rest says may be changed now, and those the sheet shows open for it.
+    private List<(string Key, string Label)> restChoices = new();
+    private string? restMoment;
+    private readonly HashSet<string> openChoices = new(StringComparer.Ordinal);
+
+    /// <summary>Shows the choice stored under <paramref name="key"/> open: its tab (where the choices are shown), the picker unfolded, its first control focused.</summary>
+    private void OpenChoice(string key)
+    {
+        openChoices.Add(key);
+        activeTab = SectionWith(w => Is(w, Rules?.Skills != null ? "skills" : "features")) ?? ActiveTab;
+        pendingRule = key;
+    }
+
+    // A link from the table (a card, the party rest) names a choice in the address: #choice-… opens it once the sheet is evaluated.
+    private bool fragmentHandled;
+
+    private void OpenChoiceFromAddress()
+    {
+        if (fragmentHandled || evaluation == null) return;
+        fragmentHandled = true;
+        var fragment = Nav.ToAbsoluteUri(Nav.Uri).Fragment.TrimStart('#');
+        if (!fragment.StartsWith("choice-", StringComparison.Ordinal)) return;
+        var choice = evaluation.PendingChoices.Concat(evaluation.MadeChoices).FirstOrDefault(c => ChoicePicker.AnchorFor(c.Key) == fragment);
+        if (choice != null)
+        {
+            OpenChoice(choice.Key);
+            StateHasChanged();
+        }
+    }
+
+    private void OfferChoicesAfter(string moment)
+    {
+        restMoment = moment;
+        restChoices = SheetRuleEngine.ChoicesToChangeAfter(editSheet, moment).ToList();
+        openChoices.Clear();
+        foreach (var (key, _) in restChoices) openChoices.Add(key);
+    }
+
+    /// <summary>The name of a ranked list a choice picks into, as the sheet shows it.</summary>
+    private string ChoiceTargetLabel(string target) =>
+        target == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"] : Rules?.Skills?.Label ?? target;
+
+    /// <summary>Writes the picks of a choice the player ticked, confirmed or cleared, and re-runs the rules. Nothing is logged yet: a change
+    /// is logged when the sheet is saved (<see cref="LogChoiceChangesAsync"/>), once, as it stands then.</summary>
+    private Task EditChoiceAsync(ChoiceEdit edit)
+    {
+        if (!CanEdit) return Task.CompletedTask;
+        // One route for every change: a row choice also settles the counters of the rows it swaps (onChange).
+        if (engine != null) engine.ChangeChoice(editSheet, edit.Key, edit.Picks);
+        else SheetRuleEngine.SetChoice(editSheet, edit.Key, edit.Picks);
+        Reevaluate();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>The choices whose picks the sheet being edited holds differently from the sheet as loaded, where the loaded one had picks
+    /// (making a choice, confirming ticks, is not a change). Read before the save, with the evaluation of the sheet as edited.</summary>
+    private List<LogChoiceChangedCommand> ChoiceChanges()
+    {
+        var changes = new List<LogChoiceChangedCommand>();
+        if (actor == null || evaluation == null) return changes;
+        var choices = evaluation.PendingChoices.Concat(evaluation.MadeChoices).ToList();
+        var keys = loadedSheet.Keys.Concat(editSheet.Keys).Where(k => k.StartsWith(SheetRuleEngine.ChoicePrefix, StringComparison.Ordinal)).Distinct();
+        foreach (var key in keys)
+        {
+            var was = SheetRuleEngine.RawList(loadedSheet, key);
+            var now = SheetRuleEngine.RawList(editSheet, key);
+            if (was.Count == 0 || was.SequenceEqual(now, StringComparer.OrdinalIgnoreCase)) continue;
+            var choice = choices.FirstOrDefault(c => c.Key == key);
+            if (choice == null) continue; // the entry left the sheet: pruned, not changed
+            var names = now.Select(p => choice.Options.FirstOrDefault(o => o.Key.Equals(p, StringComparison.OrdinalIgnoreCase))?.Label ?? p).ToList();
+            changes.Add(new LogChoiceChangedCommand(actor.Id, actor.Name, choice.Label, names.Count == 0 ? L["Actor.Skills.RankNone"] : string.Join(", ", names)));
+        }
+
+        return changes;
+    }
+
+    // The log is the live table's: with no session on there is none, and the sheet keeps no history of changes (its History is the
+    // character's story), so a change then is not recorded anywhere.
+    private async Task LogChoiceChangesAsync(List<LogChoiceChangedCommand> changes)
+    {
+        if (changes.Count == 0) return;
+        try
+        {
+            if (RuntimeManager.TryGet(CampaignId) is { ActiveSession: not null } table)
+            {
+                foreach (var change in changes) await table.EnqueueAsync(change);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Logging a choice change to the session failed");
+        }
     }
 
     private Task OnSheetChanged(Dictionary<string, object> _)
@@ -1333,6 +1465,20 @@ else
         editSheet[change.Key] = (long)Math.Clamp(current + change.Delta, 0, max);
     }
 
+    /// <summary>An action's cost spent on the sheet being edited: refused, changing nothing, when the pool has less left than it
+    /// costs (an unset pool is full), as the table refuses it.</summary>
+    private Task<bool> SpendOnSheet((string Key, int Delta, string Label) change)
+    {
+        // A feature's counter may have no maximum on the sheet yet; its own maximum counts then, as the panel reads it.
+        var max = YamlValues.GetInt(editSheet, SystemDefinition.PoolMaxKey(system, change.Key))
+                  ?? evaluation?.Counters.FirstOrDefault(c => c.Key == change.Key)?.Max ?? 0;
+        var current = Math.Clamp(YamlValues.GetInt(editSheet, change.Key) ?? max, 0, Math.Max(max, 0));
+        if (change.Delta < 0 && current + change.Delta < 0) return Task.FromResult(false);
+        AdjustSlot(change);
+        StateHasChanged(); // the panel's callback is not the sheet's, so the sheet re-renders itself to show the spend
+        return Task.FromResult(true);
+    }
+
     // A rest is one rest wherever its button is: it refills the slot pools and the feature counters that name it.
     private void RestFeatures(string rest) =>
         RestSlots((rest, editSheet.Keys.Where(k => !k.EndsWith("_Max", StringComparison.Ordinal)
@@ -1340,13 +1486,35 @@ else
 
     private void RestSlots((string Name, List<string> Keys) rest)
     {
-        var counters = editSheet.Keys.Where(k => SheetRuleEngine.IsUsesKey(k) && SheetRuleEngine.UsesRests(editSheet, k).Contains(rest.Name, StringComparer.OrdinalIgnoreCase)).ToList();
-        foreach (var key in rest.Keys.Concat(counters))
+        foreach (var key in rest.Keys)
         {
             if (YamlValues.GetInt(editSheet, SystemDefinition.PoolMaxKey(system, key)) is { } max) editSheet[key] = (long)max;
         }
 
+        RefillFeatureCounters(rest.Name);
+        OfferChoicesAfter(rest.Name);
+
         flash = Flash.Info(L["Actor.Sheet.SlotsRefilled", SlotTracker.RestName(system, rest.Name)]);
+    }
+
+    /// <summary>Refills the feature counters whose refill rules name <paramref name="moment"/> by those rules: all, a part, or
+    /// dice rolled here and shown as any roll is. (At a live table the rest command does this and logs it.)</summary>
+    private void RefillFeatureCounters(string moment)
+    {
+        foreach (var key in editSheet.Keys.Where(SheetRuleEngine.IsUsesKey).ToList())
+        {
+            var rules = FeatureRecovery.For(editSheet, key, moment);
+            if (rules.Count == 0 || YamlValues.GetInt(editSheet, key + SheetRuleEngine.UsesMaxSuffix) is not { } max) continue;
+            var label = SheetRuleEngine.UsesLabel(editSheet, key);
+            var outcome = FeatureRecovery.Apply(rules, YamlValues.GetInt(editSheet, key) ?? max, max, dice =>
+            {
+                var rolled = RuntimeManager.DiceRollerFor(campaign?.SystemId ?? string.Empty).Roll(dice);
+                lastRoll = new RollLogEntry { ActorId = actor?.Id ?? string.Empty, RollerUserId = currentUserId ?? string.Empty, Expression = dice, Result = rolled.ToString(), Total = rolled.Total, Label = label, Kept = rolled.Kept.ToList(), Dropped = rolled.Dropped.ToList(), Modifier = rolled.Modifier, CheckDieIndex = rolled.CheckDieIndex };
+                lastRollShared = false;
+                return rolled.Total;
+            });
+            editSheet[key] = (long)outcome.Value;
+        }
     }
 
     private async Task LoadReferenceOptionsAsync()
@@ -1438,6 +1606,7 @@ else
     {
         if (actor == null || access == null || campaign == null) return;
         flash = null; // a message from an earlier attempt must not outlive this one
+        engine?.PruneChoices(editSheet); // picks of an entry that left the sheet are dropped on save, not while it is being edited
         Reevaluate();
         if (evaluation is { HasViolations: true })
         {
@@ -1453,10 +1622,12 @@ else
             }
         }
 
+        var choiceChanges = ChoiceChanges();
         ApplyEdits(actor);
 
         if (await TrySaveActorAsync())
         {
+            await LogChoiceChangesAsync(choiceChanges);
             flash ??= Flash.Success(L["Common.Saved"]);
         }
         else if (editsKept)
@@ -1573,10 +1744,21 @@ else
     private LevelUpPlan? levelUpDone;
     private int? levelUpRoll;
 
+    // The picks made in the stepper for the choices the level opens, by choice key. The plan is worked out on a copy of the sheet, so they
+    // are laid on each copy and written to the sheet only when the level is taken.
+    private readonly Dictionary<string, IReadOnlyList<string>> levelUpPicks = new(StringComparer.Ordinal);
+
+    private void PickForLevelUp(ChoiceEdit edit)
+    {
+        levelUpPicks[edit.Key] = edit.Picks;
+        PlanLevelUp();
+    }
+
     private void OpenLevelUp()
     {
         levelUpDone = null;
         levelUpRoll = null;
+        levelUpPicks.Clear();
         levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
         PlanLevelUp();
     }
@@ -1585,11 +1767,13 @@ else
     {
         levelUpPlan = null;
         levelUpRoll = null;
+        levelUpPicks.Clear();
     }
 
     private void ChooseLevelUpClass(string? classId)
     {
         levelUpClassId = classId ?? "";
+        levelUpPicks.Clear(); // another class opens other choices
         PlanLevelUp();
     }
 
@@ -1604,6 +1788,7 @@ else
 
         var sheet = new Dictionary<string, object>(editSheet);
         RaiseLevel(sheet);
+        foreach (var (key, picks) in levelUpPicks) SheetRuleEngine.SetChoice(sheet, key, picks);
         engine.ApplyInherited(sheet);
         engine.ApplyAttributeTotals(sheet);
         var after = engine.Evaluate(sheet);
@@ -1675,6 +1860,14 @@ else
     {
         if (AtMaxLevel || levelUpPlan is not { } taken) return;
         RaiseLevel(editSheet);
+        // A choice left open is not written: it stays pending on the sheet, to make later.
+        foreach (var (key, picks) in levelUpPicks)
+        {
+            if (engine != null) engine.ChangeChoice(editSheet, key, picks);
+            else SheetRuleEngine.SetChoice(editSheet, key, picks);
+        }
+
+        levelUpPicks.Clear();
         levelUpPlan = null;
         Reevaluate();
         levelUpDone = taken;

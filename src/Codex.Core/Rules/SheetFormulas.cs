@@ -252,6 +252,30 @@ public sealed partial class SheetFormulas
     /// <summary>The longest formula, and the deepest nesting of brackets, a formula may have. The parser is recursive, and a
     /// stack overflow cannot be caught: a pathological formula must be refused before it reaches it.</summary>
     public const int MaxLength = 2000;
+    /// <summary>What is wrong with <paramref name="formula"/> (the parser's own words), or null when it can be read. Every name
+    /// in it counts as a number, so an unknown name is not an error here: the sheet decides what it reads.</summary>
+    public string? Check(string? formula)
+    {
+        if (string.IsNullOrWhiteSpace(formula)) return null;
+        try
+        {
+            var text = Prepare(formula);
+            var parameters = Names(formula).Select(n => new Parameter(n, typeof(double))).ToArray();
+            Lambda parsed;
+            lock (_interpreter)
+            {
+                parsed = _interpreter.Parse(text, parameters);
+            }
+
+            FormulaSandbox.Check(parsed.Expression);
+            return null;
+        }
+        catch (Exception e)
+        {
+            return e is FormulaException ? e.Message : e.Message.Split('\n')[0];
+        }
+    }
+
     public const int MaxDepth = 32;
 
     /// <summary>Single-quoted strings become double-quoted, integer literals doubles. A backslash escapes the next character

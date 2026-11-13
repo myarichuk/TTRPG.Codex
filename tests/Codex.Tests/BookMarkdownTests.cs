@@ -383,11 +383,14 @@ public class BookMarkdownTests
     [Fact]
     public void ManyBlankLinesInAListItemAreLinear()
     {
+        // Warm up first: on a slow CI runner the first render's start-up alone came near the limit. A quadratic parse of
+        // 60,000 lines would take minutes, so 3 seconds still catches it.
+        _ = BookMarkdown.Render("- a\n\n  b");
         var stopwatch = Stopwatch.StartNew();
 
         var html = BookMarkdown.Render("- a\n" + new string('\n', 60_000) + "  b").Html;
 
-        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(1), $"took {stopwatch.Elapsed}");
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(3), $"took {stopwatch.Elapsed}");
         Assert.Contains("b", html);
     }
 

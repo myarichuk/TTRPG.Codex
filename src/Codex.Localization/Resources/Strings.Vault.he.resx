@@ -28,7 +28,12 @@
   <data name="Vault.StartConcept" xml:space="preserve"><value>רעיון: ה־AI ינסח את הגיליון והיסטוריה</value></data>
   <data name="Vault.Concept" xml:space="preserve"><value>רעיון</value></data>
   <data name="Vault.ConceptPlaceholder" xml:space="preserve"><value>למשל: פיראט לשעבר שהפך לשומר מקדש, דרגה 3.</value></data>
-  <data name="Vault.ConceptHint" xml:space="preserve"><value>ה־AI בוחר מחלקות, גזעים, ציוד וכל השאר רק מהספרייה של השרת לשיטה הזו. בדקו את הגיליון אחר כך.</value></data>
+  <data name="Vault.ConceptHint" xml:space="preserve"><value>ה־AI בוחר מחלקות, גזעים, ציוד וכל השאר מהספרייה של השרת לשיטה הזו. בדקו את הגיליון אחר כך.</value></data>
+  <data name="Vault.Homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
+  <data name="Vault.Homebrew.Off" xml:space="preserve"><value>רק מה שיש בספרייה</value></data>
+  <data name="Vault.Homebrew.WhenNothingFits" xml:space="preserve"><value>לכתוב תוכן ביתי כשדבר אינו מתאים</value></data>
+  <data name="Vault.Homebrew.Always" xml:space="preserve"><value>לכתוב תוכן ביתי גם כשיש בספרייה משהו מתאים</value></data>
+  <data name="Vault.Homebrew.Hint" xml:space="preserve"><value>ה־AI כותב לכל היותר {0} פריטים, למשל תת־מחלקה או לחש. הם נשארים אצל הדמות עד שמנהל המשחק מקבל אותם למערכה.</value></data>
   <data name="Vault.Generate" xml:space="preserve"><value>לנסח את הדמות</value></data>
   <data name="Vault.Generating" xml:space="preserve"><value>מנסח…</value></data>
   <data name="Vault.NoAi" xml:space="preserve"><value>לא הוגדר עבורך מודל AI. הוסיפו אחד בהגדרות ה־AI.</value></data>

@@ -20,7 +20,7 @@
                 @Item.Entry.Name
             </h2>
             <div class="d-flex flex-wrap gap-1">
-                @if (Item.IsHomebrew)
+                @if (IsHomebrew)
                 {
                     <span class="pill pill-accent">@L["Library.Homebrew"]</span>
                 }
@@ -96,7 +96,7 @@
     }
 
     <footer class="attribution" data-testid="entry-attribution">
-        <div><strong>@L["Library.Detail.Source"]</strong> @(Item.IsHomebrew ? L["Library.Homebrew"] : Item.SourceName)@(Item.Entry.Source != null && !Item.IsHomebrew ? $" — {Item.Entry.Source}" : string.Empty)</div>
+        <div><strong>@L["Library.Detail.Source"]</strong> @(IsHomebrew ? L["Library.Homebrew"] : Item.SourceName)@(Item.Entry.Source != null && !IsHomebrew ? $" — {Item.Entry.Source}" : string.Empty)</div>
         @if (Item.License != null)
         {
             <div class="mt-1">
@@ -109,6 +109,10 @@
                     @if (Item.License.Modified) { <span> · @L["Library.Detail.Modified"]</span> }
                 </div>
             </div>
+        }
+        else if (IsCarried)
+        {
+            <div class="mt-1">@L["Library.Detail.CarriedNote"]</div>
         }
         else if (Item.IsHomebrew)
         {
@@ -240,8 +244,17 @@
     }
 
     /// <summary>A stored value as the reader should see it: dropdown and tag values are translated, never replaced.</summary>
-    private static string Shown(FieldDefinition? field, string? value) =>
-        value == null ? string.Empty : field?.Display(value) ?? value;
+    // A reference shows the entry's name ("Wizard"), not its id ("wizard"), when the system's content has it.
+    private string Shown(FieldDefinition? field, string? value) =>
+        value == null ? string.Empty
+        : field is { Type: FieldType.EntityReference, TargetEntityType: { } target } && Registry.GetEntry(Item.Entry.SystemId, target, value) is { } referenced
+            ? Registry.Name(referenced, L.Culture.Name)
+            : field?.Display(value) ?? value;
+
+    // Written for one character (a vault character's carried entry) and in no Library yet.
+    private bool IsCarried => Item.Homebrew == null && Item.Entry.PackId == Codex.Persistence.CarriedEntry.PackId;
+
+    private bool IsHomebrew => Item.IsHomebrew || IsCarried;
 
     private static bool IsRows(object value) =>
         value is IEnumerable<object> list && list.Any() && list.All(item => item is IDictionary<string, object>);

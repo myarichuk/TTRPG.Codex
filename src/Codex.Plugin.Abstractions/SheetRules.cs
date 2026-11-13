@@ -124,6 +124,15 @@ public class ActionSource
 
     /// <summary>The sheet value an entry's <c>atLevels</c> is read by. Default: the system's level field.</summary>
     public string? ScaleBy { get; set; }
+
+    /// <summary>A derived value or formula for how many of this action a turn allows (<c>attacks</c>). The Actions panel shows
+    /// "×N" when it works out to more than one. Null: not shown. The formulas read the same names as <see cref="AttackBonus"/>.</summary>
+    public string? Count { get; set; }
+
+    /// <summary>A derived value or formula for the lowest die face of the system's check die (<c>dice.check</c>) that is a
+    /// critical hit (<c>critFrom</c>). The panel shows "crit 19–20" only when it is below the die's top face. Null: not shown.
+    /// A critical's extra dice are not rolled.</summary>
+    public string? Critical { get; set; }
 }
 
 /// <summary>
@@ -133,11 +142,32 @@ public class ActionSource
 /// <list type="bullet">
 /// <item><c>modifiers</c>: <c>[{ target, amount, type, when }]</c>, as everywhere else. <c>target</c> is the armor class or
 /// hit point key, a derived value, or a Number actor field; <c>amount</c> is a number or a formula; a <c>type</c> the system
-/// stacks as <c>best</c> sets a floor ("at least 120") instead of adding.</item>
+/// stacks as <c>max</c> (or <c>best</c>) sets a floor ("at least 120"), as <c>min</c> a ceiling ("at most 18"), instead of adding;
+/// <c>highest</c> and <c>lowest</c> add only the largest or smallest bonus of the type. The rule is declared in the system's
+/// <c>modifierTypes</c>; a type it does not name, or none, adds.</item>
 /// <item><c>adds</c>: <c>[{ to, entries, level }]</c>: entries put on a pick list (by id or name) or values on a tag list,
-/// from <c>level</c> on. They leave again when the feature does.</item>
-/// <item><c>uses</c>: <c>{ max, recoversOn, key }</c>: a counter of uses, <c>max</c> a number or a formula, refilled by the
-/// rests named.</item>
+/// from <c>level</c> on. They leave again when the feature does. On a ranked list (<c>to: skills</c> or <c>to: saves</c>, or a rank's own
+/// sheet list; see <see cref="SkillRules.Ranks"/>) an item takes more: <c>rank</c> (a rank key or number; none means the first rank) puts
+/// the entries at that rank, locked, with the feature as its source; <c>raise: 1</c> moves them that many ranks up, stopping at the top
+/// (<c>rank</c> and <c>raise</c> exclude each other). Such grants are worked out in the evaluation and never written to the sheet. Instead of
+/// <c>entries</c>, an item may leave the choice to the player: <c>{ to, choice, choose, from, minRank, maxRank, rank | raise }</c>.
+/// <c>choice</c> names the choice within its entry (required; it must be unique there, and the sheet stores the picks under
+/// <c>choice__{entryId}__{choice}</c>, <c>choice__{entryId}#2__{choice}</c> for the second copy of a repeatable feat);
+/// <c>choose</c> is how many keys; <c>from</c> is a list of keys, <c>any</c> (the default) or a filter on a key's own fields
+/// (<c>{ attribute: [str, dex] }</c>); <c>minRank</c> and <c>maxRank</c> are the ranks a key must already hold to be offered ("a skill you are
+/// proficient in"), checked against the ranks the sheet has so far without this choice's own picks. A choice not yet made is a warning, never a
+/// violation; a pick that no longer fits is a violation that says to choose again.</item>
+/// <item><c>uses</c>: <c>{ max, key, recoversOn, recovers, regain }</c>: a counter of uses, <c>max</c> a number or a formula, refilled by
+/// the rests named in <c>recoversOn</c> (a full refill on each). <c>key</c> names the pool, so features that name one share it: the
+/// highest maximum wins and the sheet warns. <c>recovers</c> is <c>[{ on, amount, when }]</c>: <c>on</c> a rest, or <c>initiative</c>,
+/// <c>dawn</c> or <c>manual</c>; <c>amount</c> is <c>all</c>, a number, a formula or dice; <c>when</c> is <c>empty</c> or a formula.
+/// <c>regain: gm</c> lets only the GM add a use back by hand.</item>
+/// <item><c>spends</c>: <c>{ key, amount }</c>: the feature gets a Use button that spends <c>amount</c> (a number, a formula, or
+/// <c>ask</c> for the player to choose) from the pool <c>key</c>, a feature counter's <c>key</c> or a pool's own sheet key.</item>
+/// <item><c>options</c> and <c>choose</c> ("choose one of the following"): <c>options: [{ name, description, and any key above }]</c> with
+/// <c>choose: { id, count, onChange, changesOn }</c> (see <see cref="RowChoose"/>; <c>id</c> is required). Only the options picked become
+/// features, named "{feature}: {option}". The pick is stored as <c>choice__{entryId}__{id}</c>; a choice inside a picked row is stored under
+/// the parent's id first, <c>choice__{entryId}__{parentId}__{id}</c>. The same shape, one level up, is <see cref="FeatureSource.Choose"/>.</item>
 /// </list>
 /// </summary>
 public class FeatureSource
@@ -158,6 +188,50 @@ public class FeatureSource
 
     /// <summary>The sheet value a row's level is compared with (<c>classLevel</c>, <c>level</c>). None: rows are not gated.</summary>
     public string? ByField { get; set; }
+
+    /// <summary>Only the entries with these ids carry features through this source. Empty: every entry the source reaches. Lets a
+    /// <see cref="Choose"/> apply to one species and not the others whose entries have the same property.</summary>
+    public List<string> Entries { get; set; } = new();
+
+    /// <summary>Makes the player pick one row (or <c>count</c> rows) of the entry's <see cref="Property"/>: only the rows picked become
+    /// features, the others give nothing, counters included. Needs a <see cref="Property"/> and a <see cref="Field"/>. Written
+    /// <c>choose: { id, label, count, onChange, changesOn }</c> or, for the id alone, <c>choose: lineage</c>. The pick is stored on the sheet as
+    /// <c>choice__{entryId}__{id}</c>, a list holding the rows' names as written in the entry's own language.</summary>
+    public RowChoose? Choose { get; set; }
+}
+
+/// <summary>
+/// How the player picks among rows: of a feature source's property (<see cref="FeatureSource.Choose"/>) or of a feature row's own
+/// <c>options</c> (<c>choose: { id, count, onChange, changesOn }</c> beside <c>options</c>). <see cref="Id"/> names the choice within its
+/// entry (required; unique there); a choice nested in a chosen row is stored under <c>{parentId}__{id}</c>.
+/// </summary>
+public class RowChoose
+{
+    /// <summary>The pick keeps the spent state of counters whose key is in both the old and the new row; counters only the new row has start full.</summary>
+    public const string Keep = "keep";
+
+    /// <summary>The new row's counters start full.</summary>
+    public const string Refill = "refill";
+
+    /// <summary>The new row's counters start at 0.</summary>
+    public const string Empty = "empty";
+
+    /// <summary>Required: the choice's name within its entry. The sheet stores the pick under <c>choice__{entryId}__{id}</c>.</summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>What the picker calls the choice ("Lineage"). Default: the feature's or the entry's name.</summary>
+    public string? Label { get; set; }
+
+    /// <summary>How many rows the player picks. Default 1.</summary>
+    public int Count { get; set; } = 1;
+
+    /// <summary>What happens to counters when the pick changes: <c>keep</c> (default), <c>refill</c> or <c>empty</c>. A change is never
+    /// blocked, and is logged at a live table.</summary>
+    public string OnChange { get; set; } = Keep;
+
+    /// <summary>Moments (a rest's name from <c>rests</c>, or <c>initiative</c>, <c>dawn</c>) at which the pick is usually changed. The picker
+    /// says so, and the rest flow offers the change after that rest. Never a limit.</summary>
+    public List<string> ChangesOn { get; set; } = new();
 }
 
 /// <summary>
@@ -207,17 +281,50 @@ public class PassiveRule
 }
 
 /// <summary>
-/// Saving throws and skills. A skill is proficient when its key is in <see cref="ProficienciesKey"/>
-/// (a list on the sheet) or in the <see cref="BackgroundProperty"/> of the entry <see cref="BackgroundField"/>
-/// names; it is expert when it is also in <see cref="ExpertiseKey"/>. Saving throws are proficient for the
-/// first class's <see cref="SavingThrowsProperty"/>. Bonuses add the derived field <see cref="BonusKey"/>.
+/// Saving throws and skills, as ranked lists. A skill's rank is the highest of: the sheet list that holds it (<see cref="Ranks"/>; by default
+/// <see cref="ProficienciesKey"/> is rank 1 and <see cref="ExpertiseKey"/> rank 2), the <see cref="BackgroundProperty"/> of the entry
+/// <see cref="BackgroundField"/> names (rank 1), a feature's grant, and the player's choices. Saving throws are ranked the same way, over the
+/// attributes: the first class's <see cref="SavingThrowsProperty"/> puts each at rank 1. What a rank adds is its <see cref="RankDefinition.Value"/>
+/// (by default the derived field <see cref="BonusKey"/>, twice it for rank 2).
 /// </summary>
+/// <summary>
+/// One rank a ranked list can hold (skills trained, expert, master...). A system lists its ranks in order, lowest first; rank 0 is
+/// "none" and is not listed. A key's own rank is the highest list holding it, so a higher list need not hold the key in the lower ones.
+/// </summary>
+public class RankDefinition
+{
+    /// <summary>Required, unique within the list: the rank's key (<c>proficient</c>, <c>expert</c>). A grant names a rank by it, or by its
+    /// number (1 is the first rank listed).</summary>
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>The rank's name as the sheet shows it ("Expert"). Default: the key.</summary>
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>Required, unique across every ranked list: the sheet list holding the keys the player set at this rank
+    /// (<c>skillExpertise</c>).</summary>
+    public string SheetKey { get; set; } = string.Empty;
+
+    /// <summary>What a key at this rank adds to its check: a formula over the sheet's numbers and derived values (<c>proficiencyBonus * 2</c>,
+    /// <c>level + 4</c>). Empty: the rank is worth its number (1 for the first rank), which a roll formula can read.</summary>
+    public string? Value { get; set; }
+}
+
+/// <summary>Saving throws as a ranked list over the system's attributes (the first class's <c>savingThrows</c> put each of its attributes at the
+/// first rank). Without it a saving throw has one rank, <c>proficient</c>, kept in the sheet list <c>saveProficiencies</c> and worth the skills'
+/// <c>bonusKey</c>.</summary>
+public class SaveRules
+{
+    /// <summary>The ranks a saving throw can hold, lowest first.</summary>
+    public List<RankDefinition> Ranks { get; set; } = new();
+}
+
 public class SkillRules
 {
     /// <summary>What the sheet calls the skills, and the word its messages about them start with. Default "Skills".</summary>
     public string Label { get; set; } = "Skills";
 
-    /// <summary>Required: the derived value skill and save bonuses add (5e: "proficiencyBonus").</summary>
+    /// <summary>The derived value skill and save bonuses add (5e: "proficiencyBonus"). Required unless <see cref="Ranks"/> and
+    /// <c>saves.ranks</c> are both named, since it is what a default rank is worth.</summary>
     public string BonusKey { get; set; } = string.Empty;
     /// <summary>The sheet list of skills the player marked proficient, by key or label. Default <c>skillProficiencies</c>.</summary>
     public string ProficienciesKey { get; set; } = "skillProficiencies";
@@ -242,6 +349,33 @@ public class SkillRules
     public List<SkillDefinition> List { get; set; } = new();
     /// <summary>Scores worked out from a skill's bonus (passive Perception).</summary>
     public List<PassiveRule> Passives { get; set; } = new();
+
+    /// <summary>
+    /// The ranks a skill can hold, lowest first, each with the sheet list that holds the skills the player set at it and what it is worth.
+    /// A skill's rank is the highest list that holds it, or that a feature, the background or a choice gives. Left out, the ranks are the
+    /// two lists above: <c>proficient</c> (<see cref="ProficienciesKey"/>, worth <see cref="BonusKey"/>) and <c>expert</c>
+    /// (<see cref="ExpertiseKey"/>, worth twice it). Naming ranks makes <see cref="ProficienciesKey"/> and <see cref="ExpertiseKey"/> unused.
+    /// </summary>
+    public List<RankDefinition> Ranks { get; set; } = new();
+
+    /// <summary>Saving throws as a ranked list over the attributes; see <see cref="SaveRules"/>. Left out: one rank, as described there.</summary>
+    public SaveRules? Saves { get; set; }
+
+    /// <summary>The sheet list the first saving throw rank defaults to.</summary>
+    public const string DefaultSaveKey = "saveProficiencies";
+
+    /// <summary>The skills' ranks: <see cref="Ranks"/>, or the two the sheet keys and the bonus describe.</summary>
+    public IReadOnlyList<RankDefinition> SkillRanks() => Ranks.Count > 0 ? Ranks : new[]
+    {
+        new RankDefinition { Key = "proficient", Label = "Proficient", SheetKey = ProficienciesKey, Value = BonusKey },
+        new RankDefinition { Key = "expert", Label = "Expert", SheetKey = ExpertiseKey, Value = BonusKey + " * 2" }
+    };
+
+    /// <summary>The saving throws' ranks: <c>saves.ranks</c>, or one rank worth <see cref="BonusKey"/>.</summary>
+    public IReadOnlyList<RankDefinition> SaveRanks() => Saves is { Ranks.Count: > 0 } ? Saves.Ranks : new[]
+    {
+        new RankDefinition { Key = "proficient", Label = "Proficient", SheetKey = DefaultSaveKey, Value = BonusKey }
+    };
 }
 
 /// <summary>
@@ -671,6 +805,10 @@ public class DerivedField
     /// <summary>A group heading for the value. Translated with the system's other headings, but this version does not group
     /// derived values by it.</summary>
     public string? Category { get; set; }
+
+    /// <summary>Whether the sheet shows the value with its sign, as a bonus (<c>+2</c>). Default true; false for a count or a
+    /// threshold that is not added to anything (attacks per action <c>2</c>, critical hit from <c>19</c>).</summary>
+    public bool Signed { get; set; } = true;
 }
 
 /// <summary>Conditions the entry chosen in a single-pick reference field must meet (<c>sheetRules.constraints</c>); the field's

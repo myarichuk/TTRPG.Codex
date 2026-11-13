@@ -96,6 +96,54 @@ public class SheetActionsTests : IAsyncLifetime
         Assert.Null(cure.DamageType);
     }
 
+
+    [Fact]
+    public void ASlotCost_SpendsOneFromItsLevelsPool_AndIsAffordableWhileThatLevelHasOneLeft()
+    {
+        var (engine, sheet) = Character("wizard", 5, ("int", 16));
+        sheet["spells"] = new List<object> { "burning-hands" };
+        var hands = Action(engine.Recompute(sheet), "burning-hands");
+        int? Read(string key) => YamlValues.GetInt(sheet, key);
+
+        var first = hands.Costs[0];
+        Assert.Equal(("slots_1", 1, "slots_1_Max", 1), (first.Key, first.Amount, first.MaxKey, first.Level));
+        Assert.NotNull(first.Slot);
+        Assert.False(first.Free);
+        Assert.Equal(4, first.Left(Read)); // a level 5 wizard has four level 1 slots
+        Assert.True(first.CanPay(Read));
+
+        sheet["slots_1"] = 0L;
+        Assert.Equal(0, first.Left(Read));
+        Assert.False(first.CanPay(Read));
+        Assert.True(hands.Costs[1].CanPay(Read)); // a level 2 slot still pays for it
+
+        sheet.Remove("slots_2"); // a level never touched is full
+        Assert.Equal(3, hands.Costs[1].Left(Read));
+    }
+
+    [Fact]
+    public void AFreeCost_SpendsNothing_AndAPoolCostIsAffordableOnlyWithTheWholeAmountLeft()
+    {
+        var free = ActionCost.Nothing(null, "3d6");
+        Assert.True(free.Free);
+        Assert.Null(free.Key);
+        Assert.Equal(0, free.Amount);
+        Assert.Equal(ActionCost.FreeId, free.Id);
+        Assert.Null(free.Left(_ => 0));
+        Assert.True(free.CanPay(_ => 0));
+        Assert.Equal("3d6", free.Damage);
+
+        var points = new Dictionary<string, int> { ["points"] = 1, ["points_Max"] = 5 };
+        int? Read(string key) => points.TryGetValue(key, out var value) ? value : null;
+        var two = ActionCost.FromPool("points", 2, "points_Max", "Points", null);
+        Assert.Equal(1, two.Left(Read));
+        Assert.False(two.CanPay(Read)); // one left, two needed
+        points["points"] = 2;
+        Assert.True(two.CanPay(Read));
+        points["points"] = 9; // never more than the maximum
+        Assert.Equal(5, two.Left(Read));
+    }
+
     [Fact]
     public void AHeldWeapon_IsAnAttack_WithTheBestAbilityAndTrainingCounted()
     {

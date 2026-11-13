@@ -4,15 +4,75 @@ using Codex.Plugin.Abstractions;
 
 namespace Codex.Core.Rules;
 
-/// <summary>One way to pay for an action: a slot of <see cref="Level"/> in <see cref="Pool"/> (sheet key <see cref="Key"/>),
-/// and the dice the action rolls when paid that way (more for a higher slot).</summary>
-public sealed record ActionCost(SlotPoolRule Pool, int Level, string Key, string? Damage);
+/// <summary>
+/// One way to pay for an action: spend <see cref="Amount"/> from the resource pool whose sheet key is <see cref="Key"/>, or
+/// nothing at all (<see cref="Free"/>, no key). A pool is any spendable sheet counter with an optional maximum beside it
+/// (<see cref="MaxKey"/>): one level of a slot pool (<c>slots_3</c>), a feature's counter of uses (<c>uses_{key}</c>), and
+/// later a free casting's own counter. <see cref="Damage"/> is the dice the action rolls when paid this way (for a slot, more
+/// for a higher level). <see cref="Label"/> names the pool in the system's language (a slot's unit, a feature's name) for the
+/// owner to translate; a slot cost is also told apart by <see cref="Slot"/> and <see cref="Level"/>.
+/// <para>New ways to pay are new sources of costs (built with <see cref="OfSlot"/>, <see cref="OfCounter"/>,
+/// <see cref="FromPool"/>, <see cref="Nothing"/>), never a new kind the Actions panel has to learn.</para>
+/// </summary>
+/// <param name="Key">The pool's sheet key; null: the cost is free.</param>
+/// <param name="Amount">How much using it spends (0 when free).</param>
+/// <param name="MaxKey">The sheet key of the pool's maximum, or null when the pool has none.</param>
+/// <param name="Label">The pool's name in the system's language, or null.</param>
+/// <param name="Damage">The dice when paid this way, with every bonus in; null: none.</param>
+public sealed record ActionCost(string? Key, int Amount, string? MaxKey, string? Label, string? Damage)
+{
+    /// <summary>The slot pool, when this cost is a slot of it; null for any other pool or none.</summary>
+    public SlotPoolRule? Slot { get; init; }
+
+    /// <summary>The slot's level when <see cref="Slot"/> is set; 0 otherwise.</summary>
+    public int Level { get; init; }
+
+    /// <summary>The maximum to assume when the sheet holds none under <see cref="MaxKey"/> (a feature counter's evaluated
+    /// maximum); null: 0, so a pool with no maximum on the sheet has nothing left.</summary>
+    public int? FallbackMax { get; init; }
+
+    /// <summary>Nothing to spend: an at-will use or a ritual.</summary>
+    public bool Free => Key == null;
+
+    /// <summary>A stable name for picking this cost among an action's (the pool's key, or "free").</summary>
+    public string Id => Key ?? FreeId;
+
+    public const string FreeId = "free";
+
+    /// <summary>One slot of <paramref name="pool"/> at <paramref name="level"/>.</summary>
+    public static ActionCost OfSlot(SlotPoolRule pool, int level, string? damage) =>
+        new(pool.KeyFor(level), 1, pool.MaxKeyFor(level), pool.UnitName, damage) { Slot = pool, Level = level };
+
+    /// <summary><paramref name="amount"/> from a feature's counter of uses, read as the Table card's Use and Regain read it.</summary>
+    public static ActionCost OfCounter(FeatureCounter counter, int amount, string? damage) =>
+        new(counter.Key, amount, counter.MaxKey, counter.Feature.Name, damage) { FallbackMax = counter.Max };
+
+    /// <summary><paramref name="amount"/> from any pool by its key.</summary>
+    public static ActionCost FromPool(string key, int amount, string? maxKey, string? label, string? damage) => new(key, amount, maxKey, label, damage);
+
+    /// <summary>A cost of nothing.</summary>
+    public static ActionCost Nothing(string? label, string? damage) => new(null, 0, null, label, damage);
+
+    /// <summary>What is left in the pool, read through <paramref name="value"/> (a sheet key's value, or null when the sheet has
+    /// none): an unset pool is full, and it never reads below 0 or above its maximum. Null for a free cost.</summary>
+    public int? Left(Func<string, int?> value)
+    {
+        if (Key == null) return null;
+        if (MaxKey == null) return Math.Max(value(Key) ?? 0, 0);
+        var max = value(MaxKey) ?? FallbackMax ?? 0;
+        return Math.Clamp(value(Key) ?? max, 0, Math.Max(max, 0));
+    }
+
+    /// <summary>Whether the pool has <see cref="Amount"/> left now; a free cost always can.</summary>
+    public bool CanPay(Func<string, int?> value) => Left(value) is not { } left || left >= Amount;
+}
 
 /// <summary>
 /// Something the sheet can do with a roll (<see cref="SheetRules.Actions"/>): cast a picked spell, attack with a held weapon.
 /// <see cref="Attack"/> is the kind of attack roll it starts with (null: none), <see cref="SaveAttribute"/> the saving throw it
 /// asks for, <see cref="Damage"/> its dice with every bonus already in (<c>1d8+3</c>), or a plain number for an entry
-/// without dice. An entry of level 1 or more needs one of <see cref="Costs"/>; with none the sheet has no slot for it.
+/// without dice. An entry of level 1 or more needs one of <see cref="Costs"/>; with none the sheet has no slot for it. Each
+/// cost spends from a resource pool (a slot level today) or nothing; see <see cref="ActionCost"/>.
 /// </summary>
 public sealed record SheetAction(
     ActionSource Source,
@@ -28,8 +88,15 @@ public sealed record SheetAction(
     IReadOnlyList<ActionCost> Costs,
     IReadOnlyDictionary<string, string> Alternatives)
 {
-    /// <summary>Using it spends a slot.</summary>
-    public bool Spends => Level > 0 && Source.Spends.Count > 0;
+    /// <summary>Using it goes through one of <see cref="Costs"/>: an entry of a level its source pays with slots (even when the
+    /// sheet has no slot for it, so there is nothing to pick), or any action that has costs.</summary>
+    public bool Spends => (Level > 0 && Source.Spends.Count > 0) || Costs.Count > 0;
+
+    /// <summary>How many of this action a turn allows, from the source's <c>count</c>; null when it names none or fails.</summary>
+    public int? Count { get; init; }
+
+    /// <summary>The lowest die face that is a critical hit, from the source's <c>critical</c>; null when it names none or fails.</summary>
+    public int? Critical { get; init; }
 
     /// <summary>Whether an expression has dice to roll; a plain number is shown, not rolled.</summary>
     public static bool HasDice(string? expression) => expression != null && expression.Contains('d', StringComparison.OrdinalIgnoreCase);
@@ -104,7 +171,7 @@ public sealed partial class SheetRuleEngine
                         foreach (var (slotLevel, max) in pool.Max.OrderBy(m => m.Key))
                         {
                             if (slotLevel < level || max <= 0) continue;
-                            costs.Add(new ActionCost(pool.Rule, slotLevel, pool.Rule.KeyFor(slotLevel), dice == null ? null : WithBonus(MoreDice(dice, perSlot, slotLevel - level), bonus)));
+                            costs.Add(ActionCost.OfSlot(pool.Rule, slotLevel, dice == null ? null : WithBonus(MoreDice(dice, perSlot, slotLevel - level), bonus)));
                         }
                     }
                 }
@@ -119,7 +186,11 @@ public sealed partial class SheetRuleEngine
                     dice == null ? null : WithBonus(dice, bonus),
                     use.GetValueOrDefault("damageType")?.ToString(),
                     use.GetValueOrDefault("heals") is true,
-                    costs, alternatives));
+                    costs, alternatives)
+                {
+                    Count = Number(source.Count, names),
+                    Critical = Number(source.Critical, names)
+                });
             }
         }
     }

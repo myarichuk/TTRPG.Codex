@@ -49,6 +49,7 @@
   <data name="Layout.Picker.Nothing" xml:space="preserve"><value>עוד לא נבחר דבר.</value></data>
   <data name="Layout.Picker.Picked" xml:space="preserve"><value>נבחרו: {0}</value></data>
   <data name="Layout.Picker.Remove" xml:space="preserve"><value>הסרת {0}</value></data>
+  <data name="Layout.Picker.Homebrew" xml:space="preserve"><value>תוכן ביתי</value></data>
   <data name="Layout.Picker.MissingTitle" xml:space="preserve"><value>כבר לא בספרייה. הסירו אותו, או בקשו ממנהל המשחק להחזיר את הערך.</value></data>
   <data name="Layout.Picker.LimitReached" xml:space="preserve"><value>הגעתם למגבלה</value></data>
   <data name="Layout.Picker.EmptyOptions" xml:space="preserve"><value>כרגע אין אפשרויות זמינות. בדקו את המקצוע, הדרגה והכללים שמעל.</value></data>

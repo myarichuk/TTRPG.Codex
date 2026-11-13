@@ -180,7 +180,7 @@
             {
                 if (!Evaluation.Derived.TryGetValue(derived.Key, out var value)) continue;
                 <dt>@derived.Label</dt>
-                <dd><bdi dir="ltr" data-testid="derived-@derived.Key">@FormatSigned(value)</bdi>
+                <dd><bdi dir="ltr" data-testid="derived-@derived.Key">@(derived.Signed ? FormatSigned(value) : value.ToString())</bdi>
                     @if (ShowSums && !string.IsNullOrWhiteSpace(derived.Formula))
                     {
                         @* The system's formula with this sheet's numbers in it. *@

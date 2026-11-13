@@ -1306,6 +1306,8 @@
   <data name="Campaign.Vault.NoHistory" xml:space="preserve"><value>История не написана.</value></data>
   <data name="Campaign.Vault.RulesOk" xml:space="preserve"><value>Лист не нарушает правил этой кампании.</value></data>
   <data name="Campaign.Vault.RulesIssues" xml:space="preserve"><value>Правила этой кампании отмечают на листе:</value></data>
+  <data name="Campaign.Vault.ChoicesOpen" xml:space="preserve"><value>Выбор, который персонаж ещё не завершил. Он не мешает принять заявку:</value></data>
+  <data name="Campaign.Vault.ChoicesMade" xml:space="preserve"><value>Выбор, сделанный персонажем:</value></data>
   <data name="Campaign.Vault.BringsHint" xml:space="preserve"><value>Эти записи принадлежат самому персонажу: их нет ни в одном наборе. Решите по каждой. Чтобы запись изменили, отклоните заявку и попросите игрока отправить её снова.</value></data>
   <data name="Campaign.Vault.BringAdd" xml:space="preserve"><value>Добавить в Библиотеку</value></data>
   <data name="Campaign.Vault.BringUse" xml:space="preserve"><value>Взять то, что уже есть в кампании</value></data>
