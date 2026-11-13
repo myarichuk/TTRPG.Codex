@@ -533,6 +533,8 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Bard cha dc=16 attack=+8
+warning choice__bard__expertise-2 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
+warning choice__bard__expertise-9 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
 
 ## bard-20
 sheet HP = 223
@@ -654,6 +656,8 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Bard cha dc=19 attack=+11
+warning choice__bard__expertise-2 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
+warning choice__bard__expertise-9 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
 
 ## bard-5
 sheet HP = 48
@@ -742,6 +746,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Bard cha dc=14 attack=+6
+warning choice__bard__expertise-2 Actor.Rule.ChoicePending: Expertise (Bard): choose 2 more skills.
 
 ## broken-cleric1
 sheet HP = 10
@@ -2673,6 +2678,7 @@ skill survival +1
 passive passivePerception 11
 passive passiveInsight 13
 passive passiveInvestigation 9
+warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
 ## manual-wizard3-typed-scores
 sheet HP = 17
@@ -2751,6 +2757,7 @@ passive passiveInvestigation 16
 spellcasting Wizard int dc=16 attack=+8
 violation int Actor.Rule.ScoreMax: Intelligence: scores can't exceed 20.
 warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
+warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 
 ## monk-1
 sheet HP = 10
@@ -2972,10 +2979,10 @@ ac line Monk defense: 20
 carried 0 of 180
 save str +7 proficient
 save dex +11 proficient
-save con +2
-save int -1
-save wis +5
-save cha +0
+save con +8 proficient
+save int +5 proficient
+save wis +11 proficient
+save cha +6 proficient
 skill acrobatics +11 proficient
 skill animal-handling +5
 skill arcana -1
@@ -3176,6 +3183,7 @@ passive passiveInvestigation 11
 spellcasting Cleric wis dc=14 attack=+6
 spellcasting Wizard int dc=12 attack=+4
 violation cantrips Actor.Rule.LimitForClass: Cantrips: 5 for Wizard, but Wizard allows only 3 at this level.
+warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## multiclass-paladin6-sorcerer2
@@ -3393,6 +3401,10 @@ passive passiveInsight 18
 passive passiveInvestigation 11
 spellcasting Ranger wis dc=16 attack=+8
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
+warning choice__rogue__expertise-6 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
+warning choice__ranger__deft-explorer-2 Actor.Rule.ChoicePending: Deft Explorer (Ranger): choose 1 more skills.
+warning choice__ranger__expertise-9 Actor.Rule.ChoicePending: Expertise (Ranger): choose 2 more skills.
 
 ## multiclass-warlock5-sorcerer3
 sheet HP = 59
@@ -4083,6 +4095,8 @@ passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
 spellcasting Ranger wis dc=14 attack=+6
+warning choice__ranger__deft-explorer-2 Actor.Rule.ChoicePending: Deft Explorer (Ranger): choose 1 more skills.
+warning choice__ranger__expertise-9 Actor.Rule.ChoicePending: Expertise (Ranger): choose 2 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## ranger-20
@@ -4209,6 +4223,8 @@ passive passivePerception 15
 passive passiveInsight 21
 passive passiveInvestigation 9
 spellcasting Ranger wis dc=19 attack=+11
+warning choice__ranger__deft-explorer-2 Actor.Rule.ChoicePending: Deft Explorer (Ranger): choose 1 more skills.
+warning choice__ranger__expertise-9 Actor.Rule.ChoicePending: Expertise (Ranger): choose 2 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## ranger-5
@@ -4302,6 +4318,7 @@ passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
 spellcasting Ranger wis dc=13 attack=+5
+warning choice__ranger__deft-explorer-2 Actor.Rule.ChoicePending: Deft Explorer (Ranger): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## rogue-1
@@ -4371,6 +4388,7 @@ passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
+warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
 ## rogue-11
 sheet HP = 80
@@ -4452,6 +4470,8 @@ passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
+warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
+warning choice__rogue__expertise-6 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
 ## rogue-20
 sheet HP = 203
@@ -4525,8 +4545,8 @@ save str +1
 save dex +11 proficient
 save con +5
 save int +5 proficient
-save wis +3
-save cha +0
+save wis +9 proficient
+save cha +6 proficient
 skill acrobatics +11 proficient
 skill animal-handling +3
 skill arcana -1
@@ -4549,6 +4569,8 @@ passive passivePerception 13
 passive passiveInsight 19
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
+warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
+warning choice__rogue__expertise-6 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
 ## rogue-5
 sheet HP = 38
@@ -4622,6 +4644,7 @@ passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
+warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
 ## sorcerer-1
 sheet HP = 9
@@ -5588,6 +5611,7 @@ passive passiveInsight 11
 passive passiveInvestigation 14
 spellcasting Wizard int dc=16 attack=+8
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 
 ## wizard-20
 sheet HP = 182
@@ -5700,6 +5724,7 @@ passive passiveInsight 11
 passive passiveInvestigation 15
 spellcasting Wizard int dc=19 attack=+11
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 
 ## wizard-5
 sheet HP = 37
@@ -5781,3 +5806,4 @@ passive passiveInsight 11
 passive passiveInvestigation 13
 spellcasting Wizard int dc=14 attack=+6
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
+warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.

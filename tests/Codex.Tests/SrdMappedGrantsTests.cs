@@ -256,4 +256,71 @@ public class SrdMappedGrantsTests : IAsyncLifetime
         Assert.DoesNotContain(choice.Options, o => o.Key.Equals("Force", StringComparison.OrdinalIgnoreCase));
         Assert.Equal(new[] { "Short Rest", "Long Rest" }, choice.Row!.ChangesOn);
     }
+
+    [Fact]
+    public void ARogueWhoTickedExpertiseBeforeTheChoiceExisted_IsOfferedToConfirmIt()
+    {
+        var sheet = Sheet("rogue", 1);
+        sheet["skillProficiencies"] = new List<object> { "stealth", "perception", "acrobatics", "deception" };
+        sheet["skillExpertise"] = new List<object> { "stealth", "acrobatics" };
+
+        var evaluation = Run(sheet);
+
+        var expertise = evaluation.PendingChoices.Single(c => c.Key == "choice__rogue__expertise-1");
+        Assert.True(expertise.Adopted); // nothing stored yet; the ticks cover the choice
+        Assert.Equal(new[] { "stealth", "acrobatics" }.Order(), expertise.Made.Order());
+        Assert.Contains(evaluation.Warnings, w => w.Key == SheetRuleEngine.ChoiceConfirmKey);
+        Assert.DoesNotContain(evaluation.Warnings, w => w.Key == SheetRuleEngine.ChoicePendingKey);
+
+        // Confirming writes the picks; the expertise holds the same, and the notice goes.
+        SheetRuleEngine.SetChoice(sheet, expertise.Key, expertise.Made);
+        var confirmed = Run(sheet);
+        Assert.DoesNotContain(confirmed.PendingChoices, c => c.Key == expertise.Key);
+        Assert.True(confirmed.Skills.Single(s => s.Key == "stealth").Expert);
+    }
+
+    [Fact]
+    public void ARogueWithNoExpertiseTicks_IsAskedToChoose_AndTheSkillIsNotShownAsFromExpertiseUntilThen()
+    {
+        var sheet = Sheet("rogue", 1);
+        sheet["skillProficiencies"] = new List<object> { "stealth", "perception", "acrobatics", "deception" };
+
+        var evaluation = Run(sheet);
+
+        Assert.Contains(evaluation.Warnings, w => w.Key == SheetRuleEngine.ChoicePendingKey);
+        var stealth = evaluation.Skills.Single(s => s.Key == "stealth");
+        Assert.False(stealth.Expert);
+        Assert.Empty(stealth.Sources!.Where(s => s.Kind == RankSourceKinds.Choice));
+    }
+
+    [Fact]
+    public void ASkillThePlayerTickedThemselves_IsNotShownAsFromExpertiseAfterAnAdoptedChoice()
+    {
+        var sheet = Sheet("rogue", 1);
+        sheet["skillProficiencies"] = new List<object> { "stealth", "perception", "acrobatics", "deception" };
+        sheet["skillExpertise"] = new List<object> { "stealth", "acrobatics" };
+        SheetRuleEngine.SetChoice(sheet, "choice__rogue__expertise-1", new[] { "stealth", "acrobatics" });
+
+        var evaluation = Run(sheet);
+
+        // Proficiency is the player's own tick: only the second rank comes from Expertise.
+        var perception = evaluation.Skills.Single(s => s.Key == "perception");
+        Assert.Empty(perception.Sources!.Where(s => s.Kind == RankSourceKinds.Choice));
+        var stealth = evaluation.Skills.Single(s => s.Key == "stealth");
+        Assert.Equal(new[] { RankSourceKinds.Choice }, stealth.Sources!.Select(s => s.Kind).ToArray());
+        Assert.Equal("Rogue: Expertise", stealth.Sources!.Single().Name);
+    }
+
+    [Fact]
+    public void ADisciplinedSurvivorIsProficientInEverySave_AndASlipperyMindInWisdomAndCharisma()
+    {
+        var monk = Run(Sheet("monk", 14));
+        Assert.All(monk.SavingThrows, s => Assert.True(s.Proficient, s.Key));
+
+        var rogue = Run(Sheet("rogue", 15));
+        Assert.True(rogue.SavingThrows.Single(s => s.Key == "wis").Proficient);
+        Assert.True(rogue.SavingThrows.Single(s => s.Key == "cha").Proficient);
+        Assert.True(rogue.SavingThrows.Single(s => s.Key == "dex").Proficient); // the class's own
+        Assert.False(rogue.SavingThrows.Single(s => s.Key == "str").Proficient);
+    }
 }

@@ -178,6 +178,15 @@ properties:
     spends:
       key: focus-points
       amount: 1
+    adds:
+    - to: saves
+      entries:
+      - str
+      - dex
+      - con
+      - int
+      - wis
+      - cha
   - name: Perfect Focus
     level: 15
     description: When you roll Initiative and don't use Uncanny Metabolism, you regain expended Focus Points until you have 4 if you have 3 or fewer.

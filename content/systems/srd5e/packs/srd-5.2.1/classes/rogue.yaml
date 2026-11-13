@@ -48,6 +48,12 @@ properties:
       You gain Expertise in two of your skill proficiencies of your choice. Sleight of Hand and Stealth are recommended if you have proficiency in them.
 
       At Rogue level 6, you gain Expertise in two more of your skill proficiencies of your choice.
+    adds:
+    - to: skills
+      choice: expertise-1
+      choose: 2
+      minRank: proficient
+      rank: expert
   - name: Sneak Attack
     level: 1
     description: >-
@@ -102,6 +108,12 @@ properties:
       You gain Expertise in two of your skill proficiencies of your choice. Sleight of Hand and Stealth are recommended if you have proficiency in them.
 
       At Rogue level 6, you gain Expertise in two more of your skill proficiencies of your choice.
+    adds:
+    - to: skills
+      choice: expertise-6
+      choose: 2
+      minRank: proficient
+      rank: expert
   - name: Evasion
     level: 7
     description: >-
@@ -145,6 +157,11 @@ properties:
       Your cunning mind is exceptionally difficult to control.
 
       You gain proficiency in Wisdom and Charisma saving throws.
+    adds:
+    - to: saves
+      entries:
+      - wis
+      - cha
   - name: Ability Score Improvement
     level: 16
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Rogue levels 8, 10, 12, and 16.

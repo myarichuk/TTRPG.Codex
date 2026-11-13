@@ -48,7 +48,8 @@ class:
   bard:
     - { row: Bardic Inspiration, uses: { key: bardic-inspiration, max: "max(1, mod(cha))", recovers: [{ on: Long Rest }, { on: Short Rest, when: "classLevel >= 5" }] } }
     - { row: Spellcasting, already: slot pools and lists }
-    - { row: Expertise, text: skill-bonus }
+    - { row: Expertise, level: 2, adds: [{ to: skills, choice: expertise-2, choose: 2, minRank: proficient, rank: expert }] }
+    - { row: Expertise, level: 9, adds: [{ to: skills, choice: expertise-9, choose: 2, minRank: proficient, rank: expert }] }
     - { row: Jack of All Trades, text: skill-bonus }
     - { row: Bard Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
@@ -125,7 +126,7 @@ class:
     - { row: Heightened Focus, text: other }
     - { row: Self-Restoration, text: other }
     - { row: Deflect Energy, text: reactive }
-    - { row: Disciplined Survivor, spends: { key: focus-points, amount: 1 } }
+    - { row: Disciplined Survivor, adds: [{ to: saves, entries: [str, dex, con, int, wis, cha] }], spends: { key: focus-points, amount: 1 } }
     - { row: Perfect Focus, text: moment-test }
     - { row: Superior Defense, spends: { key: focus-points, amount: 3 } }
     - { row: Epic Boon, already: feat slots }
@@ -153,14 +154,14 @@ class:
     - { row: Favored Enemy, spells: [hunters-mark], uses: { key: free-hunters-mark, label: Free Hunter's Mark, max: { column: favored_enemies }, recoversOn: [Long Rest] } }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Weapon Mastery, text: training }
-    - { row: Deft Explorer, text: skill-bonus }
+    - { row: Deft Explorer, adds: [{ to: skills, choice: deft-explorer-2, choose: 1, minRank: proficient, rank: expert }] }
     - { row: Fighting Style, already: the fightingStyles list }
     - { row: Ranger Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
     - { row: Roving, text: gear }
     - { row: Subclass Feature, already: the subclass field }
-    - { row: Expertise, text: skill-bonus }
+    - { row: Expertise, adds: [{ to: skills, choice: expertise-9, choose: 2, minRank: proficient, rank: expert }] }
     - { row: Tireless, uses: { key: tireless, max: "max(1, mod(wis))", recoversOn: [Long Rest] } }
     - { row: Relentless Hunter, text: other }
     - { row: "Nature's Veil", uses: { key: natures-veil, max: "max(1, mod(wis))", recoversOn: [Long Rest] } }
@@ -169,7 +170,8 @@ class:
     - { row: Epic Boon, already: feat slots }
     - { row: Foe Slayer, text: rider }
   rogue:
-    - { row: Expertise, text: skill-bonus }
+    - { row: Expertise, level: 1, adds: [{ to: skills, choice: expertise-1, choose: 2, minRank: proficient, rank: expert }] }
+    - { row: Expertise, level: 6, adds: [{ to: skills, choice: expertise-6, choose: 2, minRank: proficient, rank: expert }] }
     - { row: Sneak Attack, text: die }
     - { row: "Thieves' Cant", text: training }
     - { row: Weapon Mastery, text: training }
@@ -184,7 +186,7 @@ class:
     - { row: Subclass Feature, already: the subclass field }
     - { row: Improved Cunning Strike, text: per-use }
     - { row: Devious Strikes, text: per-use }
-    - { row: Slippery Mind, text: other }
+    - { row: Slippery Mind, adds: [{ to: saves, entries: [wis, cha] }] }
     - { row: Elusive, text: other }
     - { row: Epic Boon, already: feat slots }
     - { row: Stroke of Luck, uses: { key: stroke-of-luck, max: 1, recoversOn: [Short Rest, Long Rest] } }
@@ -215,7 +217,7 @@ class:
     - { row: Arcane Recovery, uses: { key: arcane-recovery, max: 1, recoversOn: [Long Rest] } }
     - { row: Ritual Adept, text: chosen-spell }
     - { row: Spellcasting, already: slot pools and lists }
-    - { row: Scholar, text: skill-bonus }
+    - { row: Scholar, adds: [{ to: skills, choice: scholar-2, choose: 1, minRank: proficient, rank: expert, from: [arcana, history, investigation, medicine, nature, religion] }] }
     - { row: Wizard Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Memorize Spell, text: chosen-spell }

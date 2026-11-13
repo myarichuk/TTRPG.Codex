@@ -88,6 +88,12 @@ properties:
       Expertise. Choose one of your skill proficiencies with which you lack Expertise. You gain Expertise in that skill.
 
       Languages. You know two languages of your choice from the language tables in "Character Creation."
+    adds:
+    - to: skills
+      choice: deft-explorer-2
+      choose: 1
+      minRank: proficient
+      rank: expert
   - name: Fighting Style
     level: 2
     description: >-
@@ -119,6 +125,12 @@ properties:
   - name: Expertise
     level: 9
     description: Choose two of your skill proficiencies with which you lack Expertise. You gain Expertise in those skills.
+    adds:
+    - to: skills
+      choice: expertise-9
+      choose: 2
+      minRank: proficient
+      rank: expert
   - name: Tireless
     level: 10
     description: >-
