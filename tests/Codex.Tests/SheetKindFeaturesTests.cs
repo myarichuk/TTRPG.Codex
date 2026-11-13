@@ -343,4 +343,146 @@ public class SheetKindFeaturesTests
 
         Assert.Equal(6d + 3d + 2d, result.Values["LoadMax"]);
     }
+
+    // ---- Key choices: a feature leaves some keys of the kind's keyed list to the player ----
+
+    private const string KeyedYaml = """
+        id: kind-keyed
+        name: Kind keyed
+        entityTypes:
+          - { type: ability, label: Ability }
+        sheetKinds:
+          - kind: hero
+            features:
+              - { list: abilities }
+            lists:
+              - { key: abilities, label: Abilities, type: ability }
+            keyedLists:
+              - key: actions
+                label: Actions
+                itemFields: [{ key: rating, type: Number, default: 0 }]
+                keys: [{ key: hunt, label: Hunt }, { key: study, label: Study }, { key: prowl, label: Prowl }, { key: skirmish, label: Skirmish }]
+        """;
+
+    private static readonly SystemDefinition KeyedSystem = SystemDefinitionLoader.Parse(KeyedYaml);
+
+    private static ContentEntry Expert(string id = "expertise", long choose = 1, params string[] from) =>
+        Ability(id, ("adds", Items(from.Length == 0
+            ? Map(("to", "actions"), ("choice", "expertise"), ("choose", choose))
+            : Map(("to", "actions"), ("choice", "expertise"), ("choose", choose), ("from", from.Cast<object>().ToList())))));
+
+    private static SheetRuleEngine KeyedEngine(params ContentEntry[] entries) => new(KeyedSystem, new Entries(entries));
+
+    private const string ExpertiseKey = "choice__expertise__expertise";
+
+    [Fact]
+    public void AKeyChoice_IsPending_OffersTheListsKeys_WithNoRank_AndIsAWarningNotAViolation()
+    {
+        var evaluation = KeyedEngine(Expert()).Recompute(Sheet(("abilities", Items("expertise"))));
+
+        var pending = Assert.Single(evaluation.PendingChoices);
+        Assert.Equal(ExpertiseKey, pending.Key);
+        Assert.Equal("actions", pending.Target);
+        Assert.Null(pending.Rank);
+        Assert.False(pending.IsRow);
+        Assert.Equal(1, pending.Count);
+        Assert.Equal(new[] { "hunt", "study", "prowl", "skirmish" }, pending.Options.Select(o => o.Key));
+        Assert.Equal("Hunt", pending.Options[0].Label);
+        Assert.Contains(evaluation.Warnings, w => w.Key == SheetRuleEngine.ChoicePendingKey && w.Message.Contains("choose 1 more actions"));
+        Assert.Empty(evaluation.Violations);
+        Assert.DoesNotContain(evaluation.Warnings, w => w.Key == "Actor.Rule.FeatureError");
+    }
+
+    [Fact]
+    public void PickingAKey_WritesTheChoiceKey_ClearsThePending_AndTheFeatureListsIt()
+    {
+        var engine = KeyedEngine(Expert());
+        var sheet = Sheet(("abilities", Items("expertise")));
+
+        var after = engine.ChangeChoice(sheet, ExpertiseKey, new[] { "prowl" });
+
+        Assert.Equal(Items("prowl"), (List<object>)sheet[ExpertiseKey]);
+        Assert.Empty(after.PendingChoices);
+        var made = Assert.Single(after.MadeChoices);
+        Assert.Equal(new[] { "Prowl" }, made.MadeLabels);
+        Assert.DoesNotContain(after.Warnings, w => w.Key == SheetRuleEngine.ChoicePendingKey);
+        Assert.Empty(after.Violations);
+    }
+
+    [Fact]
+    public void AKeyThatTheListNoLongerHas_AndAnExtraPick_AreChoiceStale()
+    {
+        var evaluation = KeyedEngine(Expert()).Recompute(Sheet(("abilities", Items("expertise")), (ExpertiseKey, Items("gone", "hunt", "study"))));
+
+        Assert.Equal(new[] { "gone", "Study" }, evaluation.Violations.Where(v => v.FieldKey == ExpertiseKey).Select(v => v.Args![2]!.ToString()).Order(StringComparer.Ordinal).Reverse());
+        Assert.All(evaluation.Violations, v => Assert.Equal(SheetRuleEngine.ChoiceStaleKey, v.Key));
+        Assert.Equal(new[] { "hunt" }, Assert.Single(evaluation.MadeChoices).Made);
+    }
+
+    [Fact]
+    public void FromLimitsTheKeysOffered_AndTheCountIsCappedAtWhatIsOffered()
+    {
+        var evaluation = KeyedEngine(Expert(choose: 3, from: new[] { "hunt", "study" })).Recompute(Sheet(("abilities", Items("expertise"))));
+
+        var pending = Assert.Single(evaluation.PendingChoices);
+        Assert.Equal(new[] { "hunt", "study" }, pending.Options.Select(o => o.Key));
+        Assert.Equal(2, pending.Count);
+    }
+
+    [Fact]
+    public void TheSecondCopyOfARepeatedAbility_HasAChoiceOfItsOwn()
+    {
+        var evaluation = KeyedEngine(Expert()).Recompute(Sheet(("abilities", Items("expertise", "expertise"))));
+
+        Assert.Equal(new[] { ExpertiseKey, "choice__expertise#2__expertise" }, evaluation.PendingChoices.Select(c => c.Key));
+    }
+
+    [Fact]
+    public void AGrantTheKindDoesNotRead_IsWarnedNotSilentlyDropped()
+    {
+        var raise = Ability("raiser", ("adds", Items(Map(("to", "actions"), ("entries", Items("hunt")), ("raise", 1L)))));
+        var toList = Ability("lister", ("adds", Items(Map(("to", "abilities"), ("entries", Items("raiser"))))));
+        var nowhere = Ability("nowhere", ("adds", Items(Map(("to", "elsewhere"), ("choice", "x"), ("choose", 1L)))));
+
+        var evaluation = KeyedEngine(raise, toList, nowhere).Recompute(Sheet(("abilities", Items("raiser", "lister", "nowhere"))));
+
+        Assert.Equal(new[] { "Raiser", "Lister", "Nowhere" }, evaluation.Warnings.Where(w => w.Key == "Actor.Rule.FeatureError").Select(w => w.Args![0]!.ToString()));
+    }
+
+    [Fact]
+    public void PruneChoices_DropsThePicksOfAnAbilityTheSheetNoLongerHas_AndKeepsThoseOfOneItHas()
+    {
+        var engine = KeyedEngine(Expert(), Expert("other"));
+        var sheet = Sheet(("abilities", Items("expertise")), (ExpertiseKey, Items("hunt")), ("choice__other__expertise", Items("study")), ("choice__expertise#2__expertise", Items("prowl")));
+
+        engine.PruneChoices(sheet);
+
+        Assert.Equal(new[] { ExpertiseKey }, sheet.Keys.Where(k => k.StartsWith("choice__", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void PruneChoices_CountsAbilitiesHeldThroughAMapPick()
+    {
+        var sheet = Sheet(("abilities", Items(Map(("id", "expertise")), "expertise")), (ExpertiseKey, Items("hunt")), ("choice__expertise#2__expertise", Items("prowl")));
+
+        KeyedEngine(Expert()).PruneChoices(sheet);
+
+        Assert.Contains(ExpertiseKey, sheet.Keys);
+        Assert.Contains("choice__expertise#2__expertise", sheet.Keys);
+    }
+
+    [Fact]
+    public void ARowChoiceOnAKind_ChangedBackAndForth_KeepsTheRule_TheNewRowsCounterStartsFull()
+    {
+        var engine = Engine();
+        var sheet = Sheet(("abilities", Items("looker")));
+        engine.ChangeChoice(sheet, "choice__looker__style", new[] { "Quiet" });
+        sheet["uses_quiet"] = 0L;
+
+        engine.ChangeChoice(sheet, "choice__looker__style", new[] { "Sharp" });
+        engine.ChangeChoice(sheet, "choice__looker__style", new[] { "Quiet" });
+
+        // onChange is keep: the counter the old row had is gone when Sharp was picked, and the new one starts full.
+        Assert.Equal(1L, sheet["uses_quiet"]);
+    }
 }

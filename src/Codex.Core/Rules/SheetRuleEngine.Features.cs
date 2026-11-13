@@ -589,6 +589,7 @@ public sealed partial class SheetRuleEngine
         EvaluateRowChoices(collected, result);
         if (features.Count == 0) return;
         result.Features.AddRange(features);
+        EvaluateKeyedChoices(features, sheet, result);
 
         var derived = DerivedNumbers(result);
         var beforeFeatures = new Dictionary<string, double>(derived); // untouched by the derived modifiers below
