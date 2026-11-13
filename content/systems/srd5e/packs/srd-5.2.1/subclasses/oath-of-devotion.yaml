@@ -90,3 +90,8 @@ properties:
       Radiant Damage. Whenever an enemy starts its turn in the aura, that creature takes Radiant damage equal to your Charisma modifier plus your Proficiency Bonus.
 
       Sunlight. The aura is filled with Bright Light that is sunlight.
+    uses:
+      key: holy-nimbus
+      max: 1
+      recoversOn:
+      - Long Rest

@@ -22,6 +22,12 @@ properties:
     description: You have Darkvision with a range of 60 feet.
   - name: Draconic Flight
     description: When you reach character level 5, you can channel draconic magic to give yourself temporary flight. As a Bonus Action, you sprout spectral wings on your back that last for 10 minutes or until you retract the wings (no action required) or have the Incapacitated condition. During that time, you have a Fly Speed equal to your Speed. Your wings appear to be made of the same energy as your Breath Weapon. Once you use this trait, you can't use it again until you finish a Long Rest.
+    level: 5
+    uses:
+      key: draconic-flight
+      max: 1
+      recoversOn:
+      - Long Rest
   darkvision: 60
   lineages:
   - name: 'Draconic Ancestor: Black'
@@ -33,6 +39,12 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Acid.** You have Resistance to acid damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest
   - name: 'Draconic Ancestor: Blue'
     description: >-
       Damage type: Lightning
@@ -42,6 +54,12 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Lightning.** You have Resistance to lightning damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest
   - name: 'Draconic Ancestor: Brass'
     description: >-
       Damage type: Fire
@@ -51,6 +69,12 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Fire.** You have Resistance to fire damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest
   - name: 'Draconic Ancestor: Bronze'
     description: >-
       Damage type: Lightning
@@ -60,6 +84,12 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Lightning.** You have Resistance to lightning damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest
   - name: 'Draconic Ancestor: Copper'
     description: >-
       Damage type: Acid
@@ -69,6 +99,12 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Acid.** You have Resistance to acid damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest
   - name: 'Draconic Ancestor: Gold'
     description: >-
       Damage type: Fire
@@ -78,6 +114,12 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Fire.** You have Resistance to fire damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest
   - name: 'Draconic Ancestor: Green'
     description: >-
       Damage type: Poison
@@ -87,6 +129,12 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Poison.** You have Resistance to poison damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest
   - name: 'Draconic Ancestor: Red'
     description: >-
       Damage type: Fire
@@ -96,6 +144,12 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Fire.** You have Resistance to fire damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest
   - name: 'Draconic Ancestor: Silver'
     description: >-
       Damage type: Cold
@@ -105,6 +159,12 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Cold.** You have Resistance to cold damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest
   - name: 'Draconic Ancestor: White'
     description: >-
       Damage type: Cold
@@ -114,3 +174,9 @@ properties:
       You can use this Breath Weapon a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.
 
       **Damage Resistance: Cold.** You have Resistance to cold damage, as determined by your Draconic Ancestry trait.
+    uses:
+      key: breath-weapon
+      label: Breath Weapon
+      max: proficiencyBonus
+      recoversOn:
+      - Long Rest

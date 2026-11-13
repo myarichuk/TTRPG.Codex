@@ -48,11 +48,13 @@ public sealed class ClassColumns
     /// </summary>
     public string Formula(string classId, string column)
     {
-        if (!_values.TryGetValue((classId, column), out var byLevel) || byLevel.Count == 0)
+        // A 0 is "the class has none yet" (Focus Points at level 1): the feature's own level says where it starts, so it is left out.
+        if (!_values.TryGetValue((classId, column), out var all) || all.Values.All(v => v <= 0))
         {
             throw new InvalidDataException($"The Levels file has no \"{column}\" for {classId}.");
         }
 
+        var byLevel = new SortedDictionary<int, int>(all.Where(p => p.Value > 0).ToDictionary(p => p.Key, p => p.Value));
         if (byLevel.All(p => p.Key == p.Value)) return "classLevel";
 
         // Where the value changes: each step is a level from which a new value holds.

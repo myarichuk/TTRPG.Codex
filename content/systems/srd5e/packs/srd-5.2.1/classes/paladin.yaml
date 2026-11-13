@@ -45,6 +45,11 @@ properties:
       As a Bonus Action, you can touch a creature (which could be yourself) and draw power from the pool of healing to restore a number of Hit Points to that creature, up to the maximum amount remaining in the pool.
 
       You can also expend 5 Hit Points from the pool of healing power to remove the Poisoned condition from the creature; those points don't also restore Hit Points to the creature.
+    uses:
+      key: lay-on-hands
+      max: 5 * classLevel
+      recoversOn:
+      - Long Rest
   - name: Spellcasting
     level: 1
     description: >-
@@ -78,6 +83,12 @@ properties:
   - name: Paladin's Smite
     level: 2
     description: You always have the Divine Smite spell prepared. In addition, you can cast it without expending a spell slot, but you must finish a Long Rest before you can cast it in this way again.
+    uses:
+      key: free-divine-smite
+      label: Free Divine Smite
+      max: 1
+      recoversOn:
+      - Long Rest
   - name: Channel Divinity
     level: 3
     description: >-
@@ -88,6 +99,13 @@ properties:
       If a Channel Divinity effect requires a saving throw, the DC equals the spell save DC from this class's Spellcasting feature.
 
       Divine Sense. As a Bonus Action, you can open your awareness to detect Celestials, Fiends, and Undead. For the next 10 minutes or until you have the Incapacitated condition, you know the location of any creature of those types within 60 feet of yourself, and you know its creature type. Within the same radius, you also detect the presence of any place or object that has been consecrated or desecrated, as with the Hallow spell.
+    uses:
+      key: paladin-channel-divinity
+      max: 'classLevel >= 11 ? 3 : 2'
+      recovers:
+      - on: Short Rest
+        amount: 1
+      - on: Long Rest
   - name: Paladin Subclass
     level: 3
     description: You gain a Paladin subclass of your choice. A subclass is a specialization that grants you features at certain Paladin levels. For the rest of your career, you gain each of your subclass's features that are of your Paladin level or lower.
@@ -103,6 +121,12 @@ properties:
       You can call on the aid of an otherworldly steed. You always have the Find Steed spell prepared.
 
       You can also cast the spell once without expending a spell slot, and you regain the ability to do so when you finish a Long Rest.
+    uses:
+      key: free-find-steed
+      label: Free Find Steed
+      max: 1
+      recoversOn:
+      - Long Rest
   - name: Aura of Protection
     level: 6
     description: >-

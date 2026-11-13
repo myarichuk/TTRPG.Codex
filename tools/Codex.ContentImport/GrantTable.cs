@@ -422,7 +422,7 @@ public sealed class GrantTable
                 pool = reference;
                 if (pools.GetValueOrDefault(reference) is Dictionary<string, object> shared)
                 {
-                    foreach (var (k, v) in shared) merged[k] = v;
+                    foreach (var (k, v) in shared) merged[k] = Copy(v);
                 }
                 else
                 {
@@ -463,6 +463,14 @@ public sealed class GrantTable
             CheckUses(merged, where);
             return merged;
         }
+
+        /// <summary>A copy of a value from the file, so two rows never share one list (the exporter would write it as a YAML anchor).</summary>
+        private static object Copy(object value) => value switch
+        {
+            Dictionary<string, object> map => map.ToDictionary(p => p.Key, p => Copy(p.Value)),
+            List<object> list => list.Select(Copy).ToList(),
+            _ => value
+        };
 
         private void CheckUses(Dictionary<string, object> uses, string where)
         {

@@ -42,6 +42,11 @@ properties:
       For example, if you’re a level 4 Wizard, you can recover up to two levels’ worth of spell slots, regaining either one level 2 spell slot or two level 1 spell slots.
 
       Once you use this feature, you can’t do so again until you finish a Long Rest.
+    uses:
+      key: arcane-recovery
+      max: 1
+      recoversOn:
+      - Long Rest
   - name: Ritual Adept
     level: 1
     description: You can cast any spell as a Ritual if that spell has the Ritual tag and the spell is in your spellbook. You needn’t have the spell prepared, but you must read from the book to cast a spell in this way.

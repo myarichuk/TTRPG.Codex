@@ -19,11 +19,13 @@
 # from `pools`; spells is a list of spell ids, or levels each with a list (0: always); resist is a list of damage types; gate: N gives a
 # species row the level it applies from.
 
-pools: {}
+pools:
+  breath-weapon: { key: breath-weapon, label: Breath Weapon, max: proficiencyBonus, recoversOn: [Long Rest] }
+  giant-ancestry: { key: giant-ancestry, label: Giant Ancestry, max: proficiencyBonus, recoversOn: [Long Rest] }
 
 class:
   barbarian:
-    - { row: Rage, text: state }
+    - { row: Rage, uses: { key: rage, max: { column: rage_count }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
     - { row: Unarmored Defense, already: the class's unarmoredDefense }
     - { row: Weapon Mastery, text: training }
     - { row: Danger Sense, text: advantage }
@@ -39,12 +41,12 @@ class:
     - { row: Brutal Strike, text: rider }
     - { row: Relentless Rage, text: reactive }
     - { row: Improved Brutal Strike, text: rider }
-    - { row: Persistent Rage, text: other }
+    - { row: Persistent Rage, uses: { key: persistent-rage, max: 1, recoversOn: [Long Rest] } }
     - { row: Indomitable Might, text: advantage }
     - { row: Epic Boon, already: feat slots }
     - { row: Primal Champion, text: attribute }
   bard:
-    - { row: Bardic Inspiration, text: die }
+    - { row: Bardic Inspiration, uses: { key: bardic-inspiration, max: "max(1, mod(cha))", recovers: [{ on: Long Rest }, { on: Short Rest, when: "classLevel >= 5" }] } }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Expertise, text: skill-bonus }
     - { row: Jack of All Trades, text: skill-bonus }
@@ -60,13 +62,13 @@ class:
   cleric:
     - { row: Divine Order, text: training }
     - { row: Spellcasting, already: slot pools and lists }
-    - { row: Channel Divinity, text: per-use }
+    - { row: Channel Divinity, uses: { key: cleric-channel-divinity, max: { column: channel_divinity_charges }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
     - { row: Cleric Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Sear Undead, text: rider }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Blessed Strikes, text: rider }
-    - { row: Divine Intervention, text: chosen-spell }
+    - { row: Divine Intervention, uses: { key: divine-intervention, max: 1, recoversOn: [Long Rest] } }
     - { row: Improved Blessed Strikes, text: rider }
     - { row: Epic Boon, already: feat slots }
     - { row: Greater Divine Intervention, text: other }
@@ -74,11 +76,11 @@ class:
     - { row: Druidic, text: training }
     - { row: Primal Order, text: training }
     - { row: Spellcasting, already: slot pools and lists }
-    - { row: Wild Shape, text: per-use }
+    - { row: Wild Shape, uses: { key: wild-shape, max: { column: wild_shape_uses }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
     - { row: Wild Companion, text: per-use }
     - { row: Druid Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
-    - { row: Wild Resurgence, text: other }
+    - { row: Wild Resurgence, uses: { key: wild-resurgence, max: 1, recoversOn: [Long Rest] } }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Elemental Fury, text: rider }
     - { row: Improved Elemental Fury, text: rider }
@@ -87,16 +89,18 @@ class:
     - { row: Archdruid, text: moment-test }
   fighter:
     - { row: Fighting Style, already: the fightingStyles list }
-    - { row: Second Wind, text: die }
+    - { row: Second Wind, uses: { key: second-wind, max: { column: second_wind_uses }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
     - { row: Weapon Mastery, text: training }
-    - { row: Action Surge, text: per-use }
+    - { row: Action Surge, level: 2, uses: { key: action-surge, max: "classLevel >= 17 ? 2 : 1", recoversOn: [Short Rest, Long Rest] } }
+    - { row: Action Surge, level: 17, covered: the level 2 row }
     - { row: Tactical Mind, text: advantage }
     - { row: Fighter Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Extra Attack, text: other }
     - { row: Tactical Shift, text: other }
     - { row: Subclass Feature, already: the subclass field }
-    - { row: Indomitable, text: advantage }
+    - { row: Indomitable, level: 9, uses: { key: indomitable, max: "classLevel >= 17 ? 3 : classLevel >= 13 ? 2 : 1", recoversOn: [Long Rest] } }
+    - { row: Indomitable, level: [13, 17], covered: the level 9 row }
     - { row: Tactical Master, text: per-use }
     - { row: Two Extra Attacks, text: other }
     - { row: Studied Attacks, text: advantage }
@@ -105,9 +109,9 @@ class:
   monk:
     - { row: Martial Arts, text: die }
     - { row: Unarmored Defense, already: the class's unarmoredDefense }
-    - { row: "Monk's Focus", text: per-use }
+    - { row: "Monk's Focus", uses: { key: focus-points, label: Focus Points, max: classLevel, recoversOn: [Short Rest, Long Rest] } }
     - { row: Unarmored Movement, text: gear }
-    - { row: Uncanny Metabolism, text: other }
+    - { row: Uncanny Metabolism, uses: { key: uncanny-metabolism, max: 1, recoversOn: [Long Rest] } }
     - { row: Monk Subclass, already: the subclass field }
     - { row: Deflect Attacks, text: reactive }
     - { row: Ability Score Improvement, already: feat slots }
@@ -127,16 +131,16 @@ class:
     - { row: Epic Boon, already: feat slots }
     - { row: Body and Mind, text: attribute }
   paladin:
-    - { row: Lay On Hands, text: per-use }
+    - { row: Lay On Hands, uses: { key: lay-on-hands, max: "5 * classLevel", recoversOn: [Long Rest] } }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Weapon Mastery, text: training }
     - { row: Fighting Style, already: the fightingStyles list }
-    - { row: "Paladin's Smite", text: other }
-    - { row: Channel Divinity, text: per-use }
+    - { row: "Paladin's Smite", uses: { key: free-divine-smite, label: Free Divine Smite, max: 1, recoversOn: [Long Rest] } }
+    - { row: Channel Divinity, uses: { key: paladin-channel-divinity, max: { column: channel_divinity_charges }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
     - { row: Paladin Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Extra Attack, text: other }
-    - { row: Faithful Steed, text: other }
+    - { row: Faithful Steed, uses: { key: free-find-steed, label: Free Find Steed, max: 1, recoversOn: [Long Rest] } }
     - { row: Aura of Protection, text: aura }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Abjure Foes, text: per-use }
@@ -146,7 +150,7 @@ class:
     - { row: Aura Expansion, text: aura }
     - { row: Epic Boon, already: feat slots }
   ranger:
-    - { row: Favored Enemy, text: other }
+    - { row: Favored Enemy, uses: { key: free-hunters-mark, label: Free Hunter's Mark, max: { column: favored_enemies }, recoversOn: [Long Rest] } }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Weapon Mastery, text: training }
     - { row: Deft Explorer, text: skill-bonus }
@@ -157,9 +161,9 @@ class:
     - { row: Roving, text: gear }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Expertise, text: skill-bonus }
-    - { row: Tireless, text: other }
+    - { row: Tireless, uses: { key: tireless, max: "max(1, mod(wis))", recoversOn: [Long Rest] } }
     - { row: Relentless Hunter, text: other }
-    - { row: "Nature's Veil", text: other }
+    - { row: "Nature's Veil", uses: { key: natures-veil, max: "max(1, mod(wis))", recoversOn: [Long Rest] } }
     - { row: Precise Hunter, text: advantage }
     - { row: Feral Senses, text: sense }
     - { row: Epic Boon, already: feat slots }
@@ -183,15 +187,15 @@ class:
     - { row: Slippery Mind, text: other }
     - { row: Elusive, text: other }
     - { row: Epic Boon, already: feat slots }
-    - { row: Stroke of Luck, text: advantage }
+    - { row: Stroke of Luck, uses: { key: stroke-of-luck, max: 1, recoversOn: [Short Rest, Long Rest] } }
   sorcerer:
-    - { row: Innate Sorcery, text: state }
+    - { row: Innate Sorcery, uses: { key: innate-sorcery, max: 2, recoversOn: [Long Rest] } }
     - { row: Spellcasting, already: slot pools and lists }
-    - { row: Font of Magic, text: other }
+    - { row: Font of Magic, uses: { key: sorcery-points, label: Sorcery Points, max: classLevel, recoversOn: [Long Rest] } }
     - { row: Metamagic, text: not-in-source }
     - { row: Sorcerer Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
-    - { row: Sorcerous Restoration, text: other }
+    - { row: Sorcerous Restoration, uses: { key: sorcerous-restoration, max: 1, recoversOn: [Long Rest] } }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Sorcery Incarnate, text: other }
     - { row: Epic Boon, already: feat slots }
@@ -199,16 +203,16 @@ class:
   warlock:
     - { row: Eldritch Invocations, text: not-in-source }
     - { row: Pact Magic, already: slot pools and lists }
-    - { row: Magical Cunning, text: other }
+    - { row: Magical Cunning, uses: { key: magical-cunning, max: 1, recoversOn: [Long Rest] } }
     - { row: Warlock Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Subclass Feature, already: the subclass field }
-    - { row: Contact Patron, text: other }
+    - { row: Contact Patron, uses: { key: free-contact-other-plane, label: Free Contact Other Plane, max: 1, recoversOn: [Long Rest] } }
     - { row: Mystic Arcanum, text: chosen-spell }
     - { row: Epic Boon, already: feat slots }
     - { row: Eldritch Master, text: other }
   wizard:
-    - { row: Arcane Recovery, text: other }
+    - { row: Arcane Recovery, uses: { key: arcane-recovery, max: 1, recoversOn: [Long Rest] } }
     - { row: Ritual Adept, text: chosen-spell }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Scholar, text: skill-bonus }
@@ -231,7 +235,7 @@ subclass:
   circle-of-the-land:
     - { row: Circle of the Land Spells, text: chosen-spell }
     - { row: "Land's Aid", text: per-use }
-    - { row: Natural Recovery, text: other }
+    - { row: Natural Recovery, uses: { key: natural-recovery, max: 1, recoversOn: [Long Rest] } }
     - { row: "Nature's Ward", text: condition }
     - { row: "Nature's Sanctuary", text: per-use }
   college-of-lore:
@@ -243,8 +247,8 @@ subclass:
     - { row: Draconic Resilience, text: other }
     - { row: Draconic Spells, text: other }
     - { row: Elemental Affinity, text: rider }
-    - { row: Dragon Wings, text: other }
-    - { row: Dragon Companion, text: other }
+    - { row: Dragon Wings, uses: { key: dragon-wings, max: 1, recoversOn: [Long Rest] } }
+    - { row: Dragon Companion, uses: { key: free-summon-dragon, label: Free Summon Dragon, max: 1, recoversOn: [Long Rest] } }
   evoker:
     - { row: Evocation Savant, text: other }
     - { row: Potent Cantrip, text: rider }
@@ -254,9 +258,9 @@ subclass:
   fiend-patron:
     - { row: "Dark One's Blessing", text: reactive }
     - { row: Fiend Spells, text: other }
-    - { row: "Dark One's Own Luck", text: other }
+    - { row: "Dark One's Own Luck", uses: { key: dark-ones-own-luck, max: "max(1, mod(cha))", recoversOn: [Long Rest] } }
     - { row: Fiendish Resilience, text: per-use }
-    - { row: Hurl Through Hell, text: other }
+    - { row: Hurl Through Hell, uses: { key: hurl-through-hell, max: 1, recoversOn: [Long Rest] } }
   hunter:
     - { row: "Hunter's Lore", text: per-use }
     - { row: "Hunter's Prey", text: per-use }
@@ -274,12 +278,12 @@ subclass:
     - { row: Sacred Weapon, text: per-use }
     - { row: Aura of Devotion, text: aura }
     - { row: Smite of Protection, text: aura }
-    - { row: Holy Nimbus, text: other }
+    - { row: Holy Nimbus, uses: { key: holy-nimbus, max: 1, recoversOn: [Long Rest] } }
   path-of-the-berserker:
     - { row: Frenzy, text: rider }
     - { row: Mindless Rage, text: state }
     - { row: Retaliation, text: reactive }
-    - { row: Intimidating Presence, text: other }
+    - { row: Intimidating Presence, uses: { key: intimidating-presence, max: 1, recoversOn: [Long Rest] } }
   thief:
     - { row: Fast Hands, text: per-use }
     - { row: Second-Story Work, text: sense }
@@ -288,7 +292,7 @@ subclass:
     - { row: "Thief's Reflexes", text: other }
   warrior-of-the-open-hand:
     - { row: Open Hand Technique, text: per-use }
-    - { row: Wholeness of Body, text: other }
+    - { row: Wholeness of Body, uses: { key: wholeness-of-body, max: "max(1, mod(wis))", recoversOn: [Long Rest] } }
     - { row: Fleet Step, text: other }
     - { row: Quivering Palm, text: per-use }
 
@@ -296,24 +300,24 @@ species:
   dragonborn:
     traits:
       - { row: Darkvision (60 ft.), already: the darkvision field }
-      - { row: Draconic Flight, text: sense }
+      - { row: Draconic Flight, gate: 5, uses: { key: draconic-flight, max: 1, recoversOn: [Long Rest] } }
     lineages:
-      - { row: "Draconic Ancestor: Black", text: die }
-      - { row: "Draconic Ancestor: Blue", text: die }
-      - { row: "Draconic Ancestor: Brass", text: die }
-      - { row: "Draconic Ancestor: Bronze", text: die }
-      - { row: "Draconic Ancestor: Copper", text: die }
-      - { row: "Draconic Ancestor: Gold", text: die }
-      - { row: "Draconic Ancestor: Green", text: die }
-      - { row: "Draconic Ancestor: Red", text: die }
-      - { row: "Draconic Ancestor: Silver", text: die }
-      - { row: "Draconic Ancestor: White", text: die }
+      - { row: "Draconic Ancestor: Black", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Blue", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Brass", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Bronze", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Copper", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Gold", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Green", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Red", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Silver", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: White", uses: { $ref: breath-weapon } }
   dwarf:
     traits:
       - { row: Darkvision (120 ft.), already: the darkvision field }
       - { row: Dwarven Resilience, text: advantage }
       - { row: Dwarven Toughness, already: hitPointsPerLevel }
-      - { row: Stonecunning, text: sense }
+      - { row: Stonecunning, uses: { key: stonecunning, max: proficiencyBonus, recoversOn: [Long Rest] } }
   elf:
     traits:
       - { row: Darkvision (60 ft.), already: the darkvision field }
@@ -331,20 +335,20 @@ species:
       - { row: Gnomish Cunning, text: advantage }
       - { row: Gnomish Lineage, text: other }
     lineages:
-      - { row: "Gnomish Lineage: Forest Gnome", text: other }
+      - { row: "Gnomish Lineage: Forest Gnome", uses: { key: free-speak-with-animals, label: Free Speak with Animals, max: proficiencyBonus, recoversOn: [Long Rest] } }
       - { row: "Gnomish Lineage: Rock Gnome", text: other }
   goliath:
     traits:
       - { row: Giant Ancestry, text: other }
-      - { row: Large Form, text: other }
+      - { row: Large Form, gate: 5, uses: { key: large-form, max: 1, recoversOn: [Long Rest] } }
       - { row: Powerful Build, text: advantage }
     lineages:
-      - { row: "Giant Ancestry: Cloud's Jaunt", text: other }
-      - { row: "Giant Ancestry: Fire's Burn", text: other }
-      - { row: "Giant Ancestry: Frost's Chill", text: other }
-      - { row: "Giant Ancestry: Hill's Tumble", text: other }
-      - { row: "Giant Ancestry: Stone's Endurance", text: other }
-      - { row: "Giant Ancestry: Storm's Thunder", text: other }
+      - { row: "Giant Ancestry: Cloud's Jaunt", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Fire's Burn", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Frost's Chill", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Hill's Tumble", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Stone's Endurance", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Storm's Thunder", uses: { $ref: giant-ancestry } }
   halfling:
     traits:
       - { row: Brave, text: advantage }
@@ -358,9 +362,9 @@ species:
       - { row: Versatile, already: extraOriginFeats }
   orc:
     traits:
-      - { row: Adrenaline Rush, text: other }
+      - { row: Adrenaline Rush, uses: { key: adrenaline-rush, max: proficiencyBonus, recoversOn: [Short Rest, Long Rest] } }
       - { row: Darkvision (120 ft.), already: the darkvision field }
-      - { row: Relentless Endurance, text: reactive }
+      - { row: Relentless Endurance, uses: { key: relentless-endurance, max: 1, recoversOn: [Long Rest] } }
   tiefling:
     traits:
       - { row: Darkvision (60 ft.), already: the darkvision field }
@@ -377,9 +381,9 @@ feat:
   archery: { text: rider }
   boon-of-combat-prowess: { text: other }
   boon-of-dimensional-travel: { text: other }
-  boon-of-fate: { text: other }
+  boon-of-fate: { uses: { key: boon-of-fate, max: 1, recovers: [{ on: initiative }, { on: Short Rest }, { on: Long Rest }] } }
   boon-of-irresistible-offense: { text: rider }
-  boon-of-spell-recall: { text: other }
+  boon-of-spell-recall: { uses: { key: boon-of-spell-recall, max: 1, recoversOn: [Long Rest] } }
   boon-of-the-night-spirit: { text: state }
   boon-of-truesight: { text: sense }
   defense: { already: armorClassBonus }

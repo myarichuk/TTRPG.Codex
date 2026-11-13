@@ -111,6 +111,13 @@ properties:
       No Spellcasting. You can't cast spells, but shapeshifting doesn't break your Concentration or otherwise interfere with a spell you've already cast.
 
       Objects. Your ability to handle objects is determined by the form's limbs rather than your own. In addition, you choose whether your equipment falls in your space, merges into your new form, or is worn by it. Worn equipment functions as normal, but the GM decides whether it's practical for the new form to wear a piece of equipment based on the creature's size and shape. Your equipment doesn't change size or shape to match the new form, and any equipment that the new form can't wear must either fall to the ground or merge with the form. Equipment that merges with the form has no effect while you're in that form.
+    uses:
+      key: wild-shape
+      max: 'classLevel >= 17 ? 4 : classLevel >= 6 ? 3 : 2'
+      recovers:
+      - on: Short Rest
+        amount: 1
+      - on: Long Rest
   - name: Wild Companion
     level: 2
     description: >-
@@ -129,6 +136,11 @@ properties:
       Once on each of your turns, if you have no uses of Wild Shape left, you can give yourself one use by expending a spell slot (no action required).
 
       In addition, you can expend one use of Wild Shape (no action required) to give yourself a level 1 spell slot, but you can't do so again until you finish a Long Rest.
+    uses:
+      key: wild-resurgence
+      max: 1
+      recoversOn:
+      - Long Rest
   - name: Subclass Feature
     level: 6
     description: You gain a feature from your Druid subclass at this level. Its features are listed on the subclass.
