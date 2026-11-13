@@ -92,6 +92,10 @@ properties:
       max: 1
       recoversOn:
       - Long Rest
+    adds:
+    - to: grantedSpells
+      entries:
+      - divine-smite
   - name: Channel Divinity
     level: 3
     description: >-
@@ -134,6 +138,10 @@ properties:
       max: 1
       recoversOn:
       - Long Rest
+    adds:
+    - to: grantedSpells
+      entries:
+      - find-steed
   - name: Aura of Protection
     level: 6
     description: >-

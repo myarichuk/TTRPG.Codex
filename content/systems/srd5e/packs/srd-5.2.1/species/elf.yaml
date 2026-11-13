@@ -117,6 +117,18 @@ properties:
     - target: darkvision
       amount: 120
       type: base
+    adds:
+    - to: grantedSpells
+      entries:
+      - dancing-lights
+    - to: grantedSpells
+      entries:
+      - faerie-fire
+      level: 3
+    - to: grantedSpells
+      entries:
+      - darkness
+      level: 5
   - name: 'Elven Lineage: High Elf'
     description: >-
       **High Elf: Cantrip Versatility.** You know the Prestidigitation cantrip. Whenever you finish a Long Rest, you can replace that cantrip with a different cantrip from the Wizard spell list.
@@ -124,6 +136,18 @@ properties:
       **Detect Magic.** You know the spell Detect Magic.
 
       **Misty Step.** You know the spell Misty Step.
+    adds:
+    - to: grantedSpells
+      entries:
+      - prestidigitation
+    - to: grantedSpells
+      entries:
+      - detect-magic
+      level: 3
+    - to: grantedSpells
+      entries:
+      - misty-step
+      level: 5
   - name: 'Elven Lineage: Wood Elf'
     description: >-
       **Wood Elf: Movement Speed Increase.** Your Movement Speed increases to 35 feet.
@@ -135,3 +159,15 @@ properties:
     - target: speed
       amount: 35
       type: base
+    adds:
+    - to: grantedSpells
+      entries:
+      - druidcraft
+    - to: grantedSpells
+      entries:
+      - longstrider
+      level: 3
+    - to: grantedSpells
+      entries:
+      - pass-without-trace
+      level: 5

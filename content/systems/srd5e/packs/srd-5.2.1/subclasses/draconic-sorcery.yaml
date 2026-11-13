@@ -44,12 +44,63 @@ properties:
       7 Arcane Eye, Charm Monster
 
       9 Legend Lore, Summon Dragon
+    adds:
+    - to: grantedSpells
+      entries:
+      - alter-self
+      - chromatic-orb
+      - command
+      - dragons-breath
+      level: 3
+    - to: grantedSpells
+      entries:
+      - fear
+      - fly
+      level: 5
+    - to: grantedSpells
+      entries:
+      - arcane-eye
+      - charm-monster
+      level: 7
+    - to: grantedSpells
+      entries:
+      - legend-lore
+      - summon-dragon
+      level: 9
   - name: Elemental Affinity
     level: 6
     description: >-
       Your draconic magic has an affinity with a damage type associated with dragons. Choose one of those types: Acid, Cold, Fire, Lightning, or Poison.
 
       You have Resistance to that damage type, and when you cast a spell that deals damage of that type, you can add your Charisma modifier to one damage roll of that spell.
+    options:
+    - name: Acid
+      adds:
+      - to: resistances
+        entries:
+        - acid
+    - name: Cold
+      adds:
+      - to: resistances
+        entries:
+        - cold
+    - name: Fire
+      adds:
+      - to: resistances
+        entries:
+        - fire
+    - name: Lightning
+      adds:
+      - to: resistances
+        entries:
+        - lightning
+    - name: Poison
+      adds:
+      - to: resistances
+        entries:
+        - poison
+    choose:
+      id: elemental-affinity
   - name: Dragon Wings
     level: 14
     description: >-

@@ -28,6 +28,29 @@ properties:
 
 
         Druid level 9: Wall of Stone
+      adds:
+      - to: grantedSpells
+        entries:
+        - blur
+        - burning-hands
+        - fire-bolt
+        level: 3
+      - to: grantedSpells
+        entries:
+        - fireball
+        level: 5
+      - to: grantedSpells
+        entries:
+        - blight
+        level: 7
+      - to: grantedSpells
+        entries:
+        - wall-of-stone
+        level: 9
+      - to: resistances
+        entries:
+        - fire
+        level: 10
     - name: Polar
       description: >-
         Druid level 3: Fog Cloud, Hold Person, Ray of Frost
@@ -40,6 +63,29 @@ properties:
 
 
         Druid level 9: Cone of Cold
+      adds:
+      - to: grantedSpells
+        entries:
+        - fog-cloud
+        - hold-person
+        - ray-of-frost
+        level: 3
+      - to: grantedSpells
+        entries:
+        - sleet-storm
+        level: 5
+      - to: grantedSpells
+        entries:
+        - ice-storm
+        level: 7
+      - to: grantedSpells
+        entries:
+        - cone-of-cold
+        level: 9
+      - to: resistances
+        entries:
+        - cold
+        level: 10
     - name: Temperate
       description: >-
         Druid level 3: Misty Step, Shocking Grasp, Sleep
@@ -52,6 +98,29 @@ properties:
 
 
         Druid level 9: Tree Stride
+      adds:
+      - to: grantedSpells
+        entries:
+        - misty-step
+        - shocking-grasp
+        - sleep
+        level: 3
+      - to: grantedSpells
+        entries:
+        - lightning-bolt
+        level: 5
+      - to: grantedSpells
+        entries:
+        - freedom-of-movement
+        level: 7
+      - to: grantedSpells
+        entries:
+        - tree-stride
+        level: 9
+      - to: resistances
+        entries:
+        - lightning
+        level: 10
     - name: Tropical
       description: >-
         Druid level 3: Acid Splash, Ray of Sickness, Web
@@ -64,6 +133,29 @@ properties:
 
 
         Druid level 9: Insect Plague
+      adds:
+      - to: grantedSpells
+        entries:
+        - acid-splash
+        - ray-of-sickness
+        - web
+        level: 3
+      - to: grantedSpells
+        entries:
+        - stinking-cloud
+        level: 5
+      - to: grantedSpells
+        entries:
+        - polymorph
+        level: 7
+      - to: grantedSpells
+        entries:
+        - insect-plague
+        level: 9
+      - to: resistances
+        entries:
+        - poison
+        level: 10
     choose:
       id: land
       changesOn:

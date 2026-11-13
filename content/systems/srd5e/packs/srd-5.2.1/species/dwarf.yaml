@@ -30,6 +30,10 @@ properties:
     description: You have Darkvision with a range of 120 feet.
   - name: Dwarven Resilience
     description: You have Resistance to Poison damage. You also have Advantage on saving throws you make to avoid or end the Poisoned condition.
+    adds:
+    - to: resistances
+      entries:
+      - poison
   - name: Dwarven Toughness
     description: Your Hit Point maximum increases by 1, and it increases by 1 again whenever you gain a level.
   - name: Stonecunning

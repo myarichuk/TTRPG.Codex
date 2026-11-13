@@ -50,6 +50,10 @@ properties:
       max: 'classLevel >= 17 ? 6 : classLevel >= 13 ? 5 : classLevel >= 9 ? 4 : classLevel >= 5 ? 3 : 2'
       recoversOn:
       - Long Rest
+    adds:
+    - to: grantedSpells
+      entries:
+      - hunters-mark
   - name: Spellcasting
     level: 1
     description: >-

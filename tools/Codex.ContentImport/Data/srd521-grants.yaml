@@ -58,7 +58,7 @@ class:
     - { row: Magical Secrets, text: chosen-spell }
     - { row: Superior Inspiration, text: moment-test }
     - { row: Epic Boon, already: feat slots }
-    - { row: Words of Creation, text: chosen-spell }
+    - { row: Words of Creation, spells: [power-word-heal, power-word-kill] }
   cleric:
     - { row: Divine Order, text: training }
     - { row: Spellcasting, already: slot pools and lists }
@@ -73,7 +73,7 @@ class:
     - { row: Epic Boon, already: feat slots }
     - { row: Greater Divine Intervention, text: other }
   druid:
-    - { row: Druidic, text: training }
+    - { row: Druidic, spells: [speak-with-animals] }
     - { row: Primal Order, text: training }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Wild Shape, uses: { key: wild-shape, max: { column: wild_shape_uses }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
@@ -135,12 +135,12 @@ class:
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Weapon Mastery, text: training }
     - { row: Fighting Style, already: the fightingStyles list }
-    - { row: "Paladin's Smite", uses: { key: free-divine-smite, label: Free Divine Smite, max: 1, recoversOn: [Long Rest] } }
+    - { row: "Paladin's Smite", spells: [divine-smite], uses: { key: free-divine-smite, label: Free Divine Smite, max: 1, recoversOn: [Long Rest] } }
     - { row: Channel Divinity, uses: { key: paladin-channel-divinity, max: { column: channel_divinity_charges }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
     - { row: Paladin Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
-    - { row: Faithful Steed, uses: { key: free-find-steed, label: Free Find Steed, max: 1, recoversOn: [Long Rest] } }
+    - { row: Faithful Steed, spells: [find-steed], uses: { key: free-find-steed, label: Free Find Steed, max: 1, recoversOn: [Long Rest] } }
     - { row: Aura of Protection, text: aura }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Abjure Foes, spends: { key: paladin-channel-divinity, amount: 1 } }
@@ -150,7 +150,7 @@ class:
     - { row: Aura Expansion, text: aura }
     - { row: Epic Boon, already: feat slots }
   ranger:
-    - { row: Favored Enemy, uses: { key: free-hunters-mark, label: Free Hunter's Mark, max: { column: favored_enemies }, recoversOn: [Long Rest] } }
+    - { row: Favored Enemy, spells: [hunters-mark], uses: { key: free-hunters-mark, label: Free Hunter's Mark, max: { column: favored_enemies }, recoversOn: [Long Rest] } }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Weapon Mastery, text: training }
     - { row: Deft Explorer, text: skill-bonus }
@@ -207,7 +207,7 @@ class:
     - { row: Warlock Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Subclass Feature, already: the subclass field }
-    - { row: Contact Patron, uses: { key: free-contact-other-plane, label: Free Contact Other Plane, max: 1, recoversOn: [Long Rest] } }
+    - { row: Contact Patron, spells: [contact-other-plane], uses: { key: free-contact-other-plane, label: Free Contact Other Plane, max: 1, recoversOn: [Long Rest] } }
     - { row: Mystic Arcanum, text: chosen-spell }
     - { row: Epic Boon, already: feat slots }
     - { row: Eldritch Master, text: other }
@@ -233,10 +233,15 @@ subclass:
     - { row: Superior Critical, modifiers: [{ target: critFrom, amount: 18, type: lowest }] }
     - { row: Survivor, text: other }
   circle-of-the-land:
-    - { row: Circle of the Land Spells, text: chosen-spell }
+    - row: Circle of the Land Spells
+      options:
+        Arid: { spells: { 3: [blur, burning-hands, fire-bolt], 5: [fireball], 7: [blight], 9: [wall-of-stone] }, adds: [{ to: resistances, entries: [fire], level: 10 }] }
+        Polar: { spells: { 3: [fog-cloud, hold-person, ray-of-frost], 5: [sleet-storm], 7: [ice-storm], 9: [cone-of-cold] }, adds: [{ to: resistances, entries: [cold], level: 10 }] }
+        Temperate: { spells: { 3: [misty-step, shocking-grasp, sleep], 5: [lightning-bolt], 7: [freedom-of-movement], 9: [tree-stride] }, adds: [{ to: resistances, entries: [lightning], level: 10 }] }
+        Tropical: { spells: { 3: [acid-splash, ray-of-sickness, web], 5: [stinking-cloud], 7: [polymorph], 9: [insect-plague] }, adds: [{ to: resistances, entries: [poison], level: 10 }] }
     - { row: "Land's Aid", spends: { key: wild-shape, amount: 1 } }
     - { row: Natural Recovery, uses: { key: natural-recovery, max: 1, recoversOn: [Long Rest] } }
-    - { row: "Nature's Ward", text: condition }
+    - { row: "Nature's Ward", covered: the resistance on the land options }
     - { row: "Nature's Sanctuary", spends: { key: wild-shape, amount: 1 } }
   college-of-lore:
     - { row: Bonus Proficiencies, text: skill-bonus }
@@ -245,8 +250,15 @@ subclass:
     - { row: Peerless Skill, spends: { key: bardic-inspiration, amount: 1 } }
   draconic-sorcery:
     - { row: Draconic Resilience, modifiers: [{ target: HP_Max, amount: classLevel }, { target: armorClass, amount: "10 + mod(dex) + mod(cha)", type: base }] }
-    - { row: Draconic Spells, text: other }
-    - { row: Elemental Affinity, text: rider }
+    - { row: Draconic Spells, spells: { 3: [alter-self, chromatic-orb, command, dragons-breath], 5: [fear, fly], 7: [arcane-eye, charm-monster], 9: [legend-lore, summon-dragon] } }
+    - row: Elemental Affinity
+      options:
+        Acid: { resist: [acid] }
+        Cold: { resist: [cold] }
+        Fire: { resist: [fire] }
+        Lightning: { resist: [lightning] }
+        Poison: { resist: [poison] }
+      choose: { id: elemental-affinity }
     - { row: Dragon Wings, uses: { key: dragon-wings, max: 1, recoversOn: [Long Rest] } }
     - { row: Dragon Companion, uses: { key: free-summon-dragon, label: Free Summon Dragon, max: 1, recoversOn: [Long Rest] } }
   evoker:
@@ -257,9 +269,23 @@ subclass:
     - { row: Overchannel, text: rider }
   fiend-patron:
     - { row: "Dark One's Blessing", text: reactive }
-    - { row: Fiend Spells, text: other }
+    - { row: Fiend Spells, spells: { 3: [burning-hands, command, scorching-ray, suggestion], 5: [fireball, stinking-cloud], 7: [fire-shield, wall-of-fire], 9: [geas, insect-plague] } }
     - { row: "Dark One's Own Luck", uses: { key: dark-ones-own-luck, max: "max(1, mod(cha))", recoversOn: [Long Rest] } }
-    - { row: Fiendish Resilience, text: per-use }
+    - row: Fiendish Resilience
+      options:
+        Acid: { resist: [acid] }
+        Bludgeoning: { resist: [bludgeoning] }
+        Cold: { resist: [cold] }
+        Fire: { resist: [fire] }
+        Lightning: { resist: [lightning] }
+        Necrotic: { resist: [necrotic] }
+        Piercing: { resist: [piercing] }
+        Poison: { resist: [poison] }
+        Psychic: { resist: [psychic] }
+        Radiant: { resist: [radiant] }
+        Slashing: { resist: [slashing] }
+        Thunder: { resist: [thunder] }
+      choose: { id: fiendish-resilience, changesOn: [Short Rest, Long Rest] }
     - { row: Hurl Through Hell, uses: { key: hurl-through-hell, max: 1, recoversOn: [Long Rest] } }
   hunter:
     - { row: "Hunter's Lore", text: per-use }
@@ -269,12 +295,12 @@ subclass:
     - { row: "Superior Hunter's Defense", text: reactive }
   life-domain:
     - { row: Disciple of Life, text: rider }
-    - { row: Life Domain Spells, text: other }
+    - { row: Life Domain Spells, spells: { 3: [aid, bless, cure-wounds, lesser-restoration], 5: [mass-healing-word, revivify], 7: [aura-of-life, death-ward], 9: [greater-restoration, mass-cure-wounds] } }
     - { row: Preserve Life, spends: { key: cleric-channel-divinity, amount: 1 } }
     - { row: Blessed Healer, text: rider }
     - { row: Supreme Healing, text: rider }
   oath-of-devotion:
-    - { row: Oath of Devotion Spells, text: other }
+    - { row: Oath of Devotion Spells, spells: { 3: [protection-from-evil-and-good, shield-of-faith], 5: [aid, zone-of-truth], 9: [beacon-of-hope, dispel-magic], 13: [freedom-of-movement, guardian-of-faith], 17: [commune, flame-strike] } }
     - { row: Sacred Weapon, spends: { key: paladin-channel-divinity, amount: 1 } }
     - { row: Aura of Devotion, text: aura }
     - { row: Smite of Protection, text: aura }
@@ -302,20 +328,20 @@ species:
       - { row: Darkvision (60 ft.), already: the darkvision field }
       - { row: Draconic Flight, gate: 5, uses: { key: draconic-flight, max: 1, recoversOn: [Long Rest] } }
     lineages:
-      - { row: "Draconic Ancestor: Black", uses: { $ref: breath-weapon } }
-      - { row: "Draconic Ancestor: Blue", uses: { $ref: breath-weapon } }
-      - { row: "Draconic Ancestor: Brass", uses: { $ref: breath-weapon } }
-      - { row: "Draconic Ancestor: Bronze", uses: { $ref: breath-weapon } }
-      - { row: "Draconic Ancestor: Copper", uses: { $ref: breath-weapon } }
-      - { row: "Draconic Ancestor: Gold", uses: { $ref: breath-weapon } }
-      - { row: "Draconic Ancestor: Green", uses: { $ref: breath-weapon } }
-      - { row: "Draconic Ancestor: Red", uses: { $ref: breath-weapon } }
-      - { row: "Draconic Ancestor: Silver", uses: { $ref: breath-weapon } }
-      - { row: "Draconic Ancestor: White", uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Black", resist: [acid], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Blue", resist: [lightning], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Brass", resist: [fire], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Bronze", resist: [lightning], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Copper", resist: [acid], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Gold", resist: [fire], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Green", resist: [poison], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Red", resist: [fire], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Silver", resist: [cold], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: White", resist: [cold], uses: { $ref: breath-weapon } }
   dwarf:
     traits:
       - { row: Darkvision (120 ft.), already: the darkvision field }
-      - { row: Dwarven Resilience, text: advantage }
+      - { row: Dwarven Resilience, resist: [poison] }
       - { row: Dwarven Toughness, already: hitPointsPerLevel }
       - { row: Stonecunning, uses: { key: stonecunning, max: proficiencyBonus, recoversOn: [Long Rest] } }
   elf:
@@ -326,17 +352,17 @@ species:
       - { row: Keen Senses, text: skill-bonus }
       - { row: Trance, text: other }
     lineages:
-      - { row: "Elven Lineage: Drow", modifiers: [{ target: darkvision, amount: 120, type: base }] }
-      - { row: "Elven Lineage: High Elf", text: other }
-      - { row: "Elven Lineage: Wood Elf", modifiers: [{ target: speed, amount: 35, type: base }] }
+      - { row: "Elven Lineage: Drow", modifiers: [{ target: darkvision, amount: 120, type: base }], spells: { 0: [dancing-lights], 3: [faerie-fire], 5: [darkness] } }
+      - { row: "Elven Lineage: High Elf", spells: { 0: [prestidigitation], 3: [detect-magic], 5: [misty-step] } }
+      - { row: "Elven Lineage: Wood Elf", modifiers: [{ target: speed, amount: 35, type: base }], spells: { 0: [druidcraft], 3: [longstrider], 5: [pass-without-trace] } }
   gnome:
     traits:
       - { row: Darkvision (60 ft.), already: the darkvision field }
       - { row: Gnomish Cunning, text: advantage }
       - { row: Gnomish Lineage, text: other }
     lineages:
-      - { row: "Gnomish Lineage: Forest Gnome", uses: { key: free-speak-with-animals, label: Free Speak with Animals, max: proficiencyBonus, recoversOn: [Long Rest] } }
-      - { row: "Gnomish Lineage: Rock Gnome", text: other }
+      - { row: "Gnomish Lineage: Forest Gnome", spells: [minor-illusion, speak-with-animals], uses: { key: free-speak-with-animals, label: Free Speak with Animals, max: proficiencyBonus, recoversOn: [Long Rest] } }
+      - { row: "Gnomish Lineage: Rock Gnome", spells: [mending, prestidigitation] }
   goliath:
     traits:
       - { row: Giant Ancestry, text: other }
@@ -369,11 +395,11 @@ species:
     traits:
       - { row: Darkvision (60 ft.), already: the darkvision field }
       - { row: Fiendish Legacy, text: other }
-      - { row: Otherworldly Presence, text: other }
+      - { row: Otherworldly Presence, spells: [thaumaturgy] }
     lineages:
-      - { row: "Fiendish Legacy: Abyssal", text: other }
-      - { row: "Fiendish Legacy: Chthonic", text: other }
-      - { row: "Fiendish Legacy: Infernal", text: other }
+      - { row: "Fiendish Legacy: Abyssal", resist: [poison], spells: { 0: [poison-spray], 3: [ray-of-sickness], 5: [hold-person] } }
+      - { row: "Fiendish Legacy: Chthonic", resist: [necrotic], spells: { 0: [chill-touch], 3: [false-life], 5: [ray-of-enfeeblement] } }
+      - { row: "Fiendish Legacy: Infernal", resist: [fire], spells: { 0: [fire-bolt], 3: [hellish-rebuke], 5: [darkness] } }
 
 feat:
   ability-score-improvement: { already: the abilityIncrease path }

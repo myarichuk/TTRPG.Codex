@@ -109,6 +109,10 @@ properties:
       max: 1
       recoversOn:
       - Long Rest
+    adds:
+    - to: grantedSpells
+      entries:
+      - contact-other-plane
   - name: Subclass Feature
     level: 10
     description: You gain a feature from your Warlock subclass at this level. Its features are listed on the subclass.

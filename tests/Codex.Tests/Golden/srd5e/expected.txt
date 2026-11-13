@@ -362,6 +362,8 @@ sheet cha = 15
 sheet con = 16
 sheet darkvision = 120
 sheet dex = 14
+sheet granted__resistances = [poison]
+sheet resistances = [poison]
 sheet size = Medium
 sheet slots_1 = 2
 sheet slots_1_Max = 2
@@ -439,6 +441,8 @@ sheet cha = 19
 sheet con = 16
 sheet darkvision = 120
 sheet dex = 14
+sheet granted__resistances = [poison]
+sheet resistances = [poison]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -538,6 +542,10 @@ sheet cha = 20
 sheet con = 20
 sheet darkvision = 120
 sheet dex = 15
+sheet grantedSpells = [power-word-heal, power-word-kill]
+sheet granted__grantedSpells = [power-word-heal, power-word-kill]
+sheet granted__resistances = [poison]
+sheet resistances = [poison]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -584,7 +592,7 @@ list cantrips picks=4 limit=4 options=6 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=5 limit=5 options=9 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=2 limit=null options=337 missing=0
 list spells picks=22 limit=22 options=98 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -655,6 +663,8 @@ sheet cha = 17
 sheet con = 16
 sheet darkvision = 120
 sheet dex = 14
+sheet granted__resistances = [poison]
+sheet resistances = [poison]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -954,6 +964,8 @@ sheet cha = 10
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 13
+sheet grantedSpells = [aid, bless, cure-wounds, lesser-restoration, mass-healing-word, revivify, aura-of-life, death-ward, greater-restoration, mass-cure-wounds]
+sheet granted__grantedSpells = [aid, bless, cure-wounds, lesser-restoration, mass-healing-word, revivify, aura-of-life, death-ward, greater-restoration, mass-cure-wounds]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -994,7 +1006,7 @@ list cantrips picks=5 limit=5 options=2 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=2 limit=2 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=10 limit=null options=329 missing=0
 list spells picks=16 limit=16 options=68 missing=0
 increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|wis:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -1057,6 +1069,8 @@ sheet cha = 10
 sheet con = 20
 sheet darkvision = 60
 sheet dex = 15
+sheet grantedSpells = [aid, bless, cure-wounds, lesser-restoration, mass-healing-word, revivify, aura-of-life, death-ward, greater-restoration, mass-cure-wounds]
+sheet granted__grantedSpells = [aid, bless, cure-wounds, lesser-restoration, mass-healing-word, revivify, aura-of-life, death-ward, greater-restoration, mass-cure-wounds]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -1103,7 +1117,7 @@ list cantrips picks=5 limit=5 options=2 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=5 limit=5 options=9 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=10 limit=null options=329 missing=0
 list spells picks=22 limit=22 options=80 missing=0
 increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|wis:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -1178,6 +1192,8 @@ sheet cha = 10
 sheet con = 15
 sheet darkvision = 60
 sheet dex = 13
+sheet grantedSpells = [aid, bless, cure-wounds, lesser-restoration, mass-healing-word, revivify]
+sheet granted__grantedSpells = [aid, bless, cure-wounds, lesser-restoration, mass-healing-word, revivify]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -1208,7 +1224,7 @@ list cantrips picks=4 limit=4 options=3 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=1 limit=1 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=6 limit=null options=333 missing=0
 list spells picks=9 limit=9 options=42 missing=0
 increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 3, 3: 2}
@@ -1752,6 +1768,8 @@ sheet cha = 10
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 14
+sheet grantedSpells = [speak-with-animals]
+sheet granted__grantedSpells = [speak-with-animals]
 sheet size = Small
 sheet slots_1 = 2
 sheet slots_1_Max = 2
@@ -1774,7 +1792,7 @@ list cantrips picks=2 limit=2 options=9 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=0 limit=0 options=0 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=4 limit=4 options=14 missing=0
 slots slots = {1: 2}
 hp mode=average active=true max=11 modifier=3 extra=0
@@ -1826,6 +1844,8 @@ sheet changes_on__choice__circle-of-the-land__land_Label = Circle of the Land Sp
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 14
+sheet grantedSpells = [speak-with-animals]
+sheet granted__grantedSpells = [speak-with-animals]
 sheet size = Small
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -1870,7 +1890,7 @@ list cantrips picks=4 limit=4 options=7 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=2 limit=2 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=16 limit=16 options=79 missing=0
 increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -1935,6 +1955,8 @@ sheet changes_on__choice__circle-of-the-land__land_Label = Circle of the Land Sp
 sheet con = 20
 sheet darkvision = 60
 sheet dex = 15
+sheet grantedSpells = [speak-with-animals]
+sheet granted__grantedSpells = [speak-with-animals]
 sheet size = Small
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -1985,7 +2007,7 @@ list cantrips picks=4 limit=4 options=7 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=5 limit=5 options=9 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=22 limit=22 options=91 missing=0
 increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -2062,6 +2084,8 @@ sheet changes_on__choice__circle-of-the-land__land_Label = Circle of the Land Sp
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 14
+sheet grantedSpells = [speak-with-animals]
+sheet granted__grantedSpells = [speak-with-animals]
 sheet size = Small
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -2096,7 +2120,7 @@ list cantrips picks=3 limit=3 options=8 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=1 limit=1 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=9 limit=9 options=43 missing=0
 increase ability-score-improvement|wis:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 3, 3: 2}
@@ -3057,7 +3081,11 @@ sheet cha = 9
 sheet con = 14
 sheet darkvision = 120
 sheet dex = 10
+sheet grantedSpells = [aid, bless, cure-wounds, lesser-restoration]
+sheet granted__grantedSpells = [aid, bless, cure-wounds, lesser-restoration]
+sheet granted__resistances = [poison]
 sheet int = 13
+sheet resistances = [poison]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -3102,7 +3130,7 @@ list cantrips picks=6 limit=6 options=14 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=0 limit=0 options=2 missing=0
 list fightingStyles picks=1 limit=1 options=3 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=4 limit=null options=335 missing=0
 list spells picks=11 limit=11 options=49 missing=0
 slots slots = {1: 4, 2: 3, 3: 2}
 hp mode=average active=true max=50 modifier=2 extra=1 from Dwarf
@@ -3157,6 +3185,8 @@ sheet armorClass = 18
 sheet cha = 15
 sheet con = 15
 sheet dex = 10
+sheet grantedSpells = [divine-smite, find-steed, protection-from-evil-and-good, shield-of-faith, aid, zone-of-truth]
+sheet granted__grantedSpells = [divine-smite, find-steed, protection-from-evil-and-good, shield-of-faith, aid, zone-of-truth]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -3208,7 +3238,7 @@ list cantrips picks=4 limit=4 options=12 missing=0
 list extraOriginFeats picks=1 limit=1 options=3 missing=0
 list feats picks=1 limit=1 options=2 missing=0
 list fightingStyles picks=1 limit=1 options=3 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=6 limit=null options=333 missing=0
 list spells picks=10 limit=10 options=34 missing=0
 increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 3, 3: 2}
@@ -3266,6 +3296,8 @@ sheet armorClass = 16
 sheet con = 20
 sheet darkvision = 60
 sheet dex = 20
+sheet grantedSpells = [hunters-mark]
+sheet granted__grantedSpells = [hunters-mark]
 sheet int = 12
 sheet size = Medium
 sheet slots_1 = 4
@@ -3298,7 +3330,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=5 limit=5 options=9 missing=0
 list fightingStyles picks=1 limit=1 options=3 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=9 limit=9 options=31 missing=0
 increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|dex:1,con:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -3370,6 +3402,8 @@ sheet cha = 17
 sheet con = 15
 sheet darkvision = 60
 sheet dex = 14
+sheet grantedSpells = [burning-hands, command, scorching-ray, suggestion, fireball, stinking-cloud, alter-self, chromatic-orb, dragons-breath, thaumaturgy]
+sheet granted__grantedSpells = [burning-hands, command, scorching-ray, suggestion, fireball, stinking-cloud, alter-self, chromatic-orb, dragons-breath, thaumaturgy]
 sheet int = 10
 sheet pact_3 = 2
 sheet pact_3_Max = 2
@@ -3409,7 +3443,7 @@ list cantrips picks=7 limit=7 options=10 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=1 limit=1 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=10 limit=null options=329 missing=0
 list spells picks=12 limit=12 options=57 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 2}
@@ -3543,6 +3577,8 @@ sheet armorClass = 18
 sheet cha = 14
 sheet con = 15
 sheet dex = 12
+sheet grantedSpells = [divine-smite, find-steed, protection-from-evil-and-good, shield-of-faith, aid, zone-of-truth, beacon-of-hope, dispel-magic]
+sheet granted__grantedSpells = [divine-smite, find-steed, protection-from-evil-and-good, shield-of-faith, aid, zone-of-truth, beacon-of-hope, dispel-magic]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -3585,7 +3621,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=1 limit=1 options=3 missing=0
 list feats picks=2 limit=2 options=2 missing=0
 list fightingStyles picks=1 limit=1 options=3 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=8 limit=null options=331 missing=0
 list spells picks=10 limit=10 options=20 missing=0
 increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -3645,6 +3681,8 @@ sheet armorClass = 18
 sheet cha = 19
 sheet con = 15
 sheet dex = 12
+sheet grantedSpells = [divine-smite, find-steed, protection-from-evil-and-good, shield-of-faith, aid, zone-of-truth, beacon-of-hope, dispel-magic, freedom-of-movement, guardian-of-faith, commune, flame-strike]
+sheet granted__grantedSpells = [divine-smite, find-steed, protection-from-evil-and-good, shield-of-faith, aid, zone-of-truth, beacon-of-hope, dispel-magic, freedom-of-movement, guardian-of-faith, commune, flame-strike]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -3695,7 +3733,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=1 limit=1 options=3 missing=0
 list feats picks=5 limit=5 options=9 missing=0
 list fightingStyles picks=1 limit=1 options=3 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=12 limit=null options=327 missing=0
 list spells picks=15 limit=15 options=23 missing=0
 increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -3767,6 +3805,8 @@ sheet armorClass = 18
 sheet cha = 14
 sheet con = 15
 sheet dex = 12
+sheet grantedSpells = [divine-smite, find-steed, protection-from-evil-and-good, shield-of-faith, aid, zone-of-truth]
+sheet granted__grantedSpells = [divine-smite, find-steed, protection-from-evil-and-good, shield-of-faith, aid, zone-of-truth]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -3807,7 +3847,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=1 limit=1 options=3 missing=0
 list feats picks=1 limit=1 options=2 missing=0
 list fightingStyles picks=1 limit=1 options=3 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=6 limit=null options=333 missing=0
 list spells picks=6 limit=6 options=18 missing=0
 increase ability-score-improvement|str:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 2}
@@ -3861,6 +3901,8 @@ sheet cha = 10
 sheet con = 14
 sheet darkvision = 120
 sheet dex = 17
+sheet grantedSpells = [hunters-mark]
+sheet granted__grantedSpells = [hunters-mark]
 sheet size = Medium
 sheet slots_1 = 2
 sheet slots_1_Max = 2
@@ -3895,7 +3937,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=0 limit=0 options=0 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=2 limit=2 options=11 missing=0
 slots slots = {1: 2}
 hp mode=average active=true max=12 modifier=2 extra=0
@@ -3945,6 +3987,8 @@ sheet cha = 10
 sheet con = 14
 sheet darkvision = 120
 sheet dex = 20
+sheet grantedSpells = [hunters-mark]
+sheet granted__grantedSpells = [hunters-mark]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -3987,7 +4031,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=2 limit=2 options=2 missing=0
 list fightingStyles picks=1 limit=1 options=3 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=10 limit=10 options=30 missing=0
 increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|dex:1,wis:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -4049,6 +4093,8 @@ sheet cha = 10
 sheet con = 15
 sheet darkvision = 120
 sheet dex = 20
+sheet grantedSpells = [hunters-mark]
+sheet granted__grantedSpells = [hunters-mark]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -4099,7 +4145,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=5 limit=5 options=9 missing=0
 list fightingStyles picks=1 limit=1 options=3 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=15 limit=15 options=33 missing=0
 increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|dex:1,wis:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -4173,6 +4219,8 @@ sheet cha = 10
 sheet con = 14
 sheet darkvision = 120
 sheet dex = 19
+sheet grantedSpells = [hunters-mark]
+sheet granted__grantedSpells = [hunters-mark]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -4209,7 +4257,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=1 limit=1 options=2 missing=0
 list fightingStyles picks=1 limit=1 options=3 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=6 limit=6 options=22 missing=0
 increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 2}
@@ -4264,6 +4312,8 @@ sheet cha = 11
 sheet con = 14
 sheet darkvision = 60
 sheet dex = 15
+sheet grantedSpells = [thaumaturgy]
+sheet granted__grantedSpells = [thaumaturgy]
 sheet size = Medium
 sheet speciesApplied = tiefling
 sheet speed = 30
@@ -4284,7 +4334,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=0 limit=0 options=0 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=0 limit=0 options=0 missing=0
 hp mode=average active=true max=10 modifier=2 extra=0
 hp level 1 Rogue d8 base=8 mod=2 extra=0 gain=10
@@ -4330,6 +4380,8 @@ sheet cha = 11
 sheet con = 15
 sheet darkvision = 60
 sheet dex = 20
+sheet grantedSpells = [thaumaturgy]
+sheet granted__grantedSpells = [thaumaturgy]
 sheet size = Medium
 sheet speciesApplied = tiefling
 sheet speed = 30
@@ -4350,7 +4402,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=3 limit=3 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=0 limit=0 options=0 missing=0
 increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -4409,6 +4461,8 @@ sheet cha = 11
 sheet con = 20
 sheet darkvision = 60
 sheet dex = 20
+sheet grantedSpells = [thaumaturgy]
+sheet granted__grantedSpells = [thaumaturgy]
 sheet size = Medium
 sheet speciesApplied = tiefling
 sheet speed = 30
@@ -4433,7 +4487,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=6 limit=6 options=9 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=0 limit=0 options=0 missing=0
 increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -4504,6 +4558,8 @@ sheet cha = 11
 sheet con = 14
 sheet darkvision = 60
 sheet dex = 17
+sheet grantedSpells = [thaumaturgy]
+sheet granted__grantedSpells = [thaumaturgy]
 sheet size = Medium
 sheet speciesApplied = tiefling
 sheet speed = 30
@@ -4524,7 +4580,7 @@ list cantrips picks=0 limit=0 options=0 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=1 limit=1 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=1 limit=null options=338 missing=0
 list spells picks=0 limit=0 options=0 missing=0
 increase ability-score-improvement|dex:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 hp mode=average active=true max=38 modifier=2 extra=0
@@ -4647,6 +4703,8 @@ sheet cha = 19
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 14
+sheet grantedSpells = [alter-self, chromatic-orb, command, dragons-breath, fear, fly, arcane-eye, charm-monster, legend-lore, summon-dragon]
+sheet granted__grantedSpells = [alter-self, chromatic-orb, command, dragons-breath, fear, fly, arcane-eye, charm-monster, legend-lore, summon-dragon]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -4695,7 +4753,7 @@ list cantrips picks=6 limit=6 options=10 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=2 limit=2 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=10 limit=null options=329 missing=0
 list spells picks=16 limit=16 options=89 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -4743,6 +4801,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=16 attack=+8
+warning choice__draconic-sorcery__elemental-affinity Actor.Rule.ChoiceRowPending: Elemental Affinity (Draconic Sorcery): choose 1 more.
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-20
@@ -4753,6 +4812,8 @@ sheet cha = 20
 sheet con = 20
 sheet darkvision = 60
 sheet dex = 15
+sheet grantedSpells = [alter-self, chromatic-orb, command, dragons-breath, fear, fly, arcane-eye, charm-monster, legend-lore, summon-dragon]
+sheet granted__grantedSpells = [alter-self, chromatic-orb, command, dragons-breath, fear, fly, arcane-eye, charm-monster, legend-lore, summon-dragon]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -4815,7 +4876,7 @@ list cantrips picks=6 limit=6 options=10 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=5 limit=5 options=9 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=10 limit=null options=329 missing=0
 list spells picks=22 limit=22 options=102 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -4875,6 +4936,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=19 attack=+11
+warning choice__draconic-sorcery__elemental-affinity Actor.Rule.ChoiceRowPending: Elemental Affinity (Draconic Sorcery): choose 1 more.
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-5
@@ -4885,6 +4947,8 @@ sheet cha = 17
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 14
+sheet grantedSpells = [alter-self, chromatic-orb, command, dragons-breath, fear, fly]
+sheet granted__grantedSpells = [alter-self, chromatic-orb, command, dragons-breath, fear, fly]
 sheet size = Medium
 sheet slots_1 = 4
 sheet slots_1_Max = 4
@@ -4927,7 +4991,7 @@ list cantrips picks=5 limit=5 options=11 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=1 limit=1 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=6 limit=null options=333 missing=0
 list spells picks=9 limit=9 options=60 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 3, 3: 2}
@@ -4978,8 +5042,10 @@ sheet cha = 15
 sheet con = 16
 sheet darkvision = 120
 sheet dex = 13
+sheet granted__resistances = [poison]
 sheet pact_1 = 1
 sheet pact_1_Max = 1
+sheet resistances = [poison]
 sheet size = Medium
 sheet speciesApplied = dwarf
 sheet speed = 30
@@ -5049,11 +5115,17 @@ sheet HP = 102
 sheet HP_Max = 102
 sheet armorClass = 12
 sheet cha = 19
+sheet changes_on__choice__fiend-patron__fiendish-resilience = Short Rest|Long Rest
+sheet changes_on__choice__fiend-patron__fiendish-resilience_Label = Fiendish Resilience
 sheet con = 16
 sheet darkvision = 120
 sheet dex = 13
+sheet grantedSpells = [contact-other-plane, burning-hands, command, scorching-ray, suggestion, fireball, stinking-cloud, fire-shield, wall-of-fire, geas, insect-plague]
+sheet granted__grantedSpells = [contact-other-plane, burning-hands, command, scorching-ray, suggestion, fireball, stinking-cloud, fire-shield, wall-of-fire, geas, insect-plague]
+sheet granted__resistances = [poison]
 sheet pact_5 = 3
 sheet pact_5_Max = 3
+sheet resistances = [poison]
 sheet size = Medium
 sheet speciesApplied = dwarf
 sheet speed = 30
@@ -5090,7 +5162,7 @@ list cantrips picks=4 limit=4 options=3 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=2 limit=2 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=11 limit=null options=328 missing=0
 list spells picks=11 limit=11 options=34 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -5140,6 +5212,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Warlock cha dc=16 attack=+8
+warning choice__fiend-patron__fiendish-resilience Actor.Rule.ChoiceRowPending: Fiendish Resilience (Fiend Patron): choose 1 more.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
 
 ## warlock-20
@@ -5147,11 +5220,17 @@ sheet HP = 223
 sheet HP_Max = 223
 sheet armorClass = 13
 sheet cha = 20
+sheet changes_on__choice__fiend-patron__fiendish-resilience = Short Rest|Long Rest
+sheet changes_on__choice__fiend-patron__fiendish-resilience_Label = Fiendish Resilience
 sheet con = 20
 sheet darkvision = 120
 sheet dex = 14
+sheet grantedSpells = [contact-other-plane, burning-hands, command, scorching-ray, suggestion, fireball, stinking-cloud, fire-shield, wall-of-fire, geas, insect-plague]
+sheet granted__grantedSpells = [contact-other-plane, burning-hands, command, scorching-ray, suggestion, fireball, stinking-cloud, fire-shield, wall-of-fire, geas, insect-plague]
+sheet granted__resistances = [poison]
 sheet pact_5 = 4
 sheet pact_5_Max = 4
+sheet resistances = [poison]
 sheet size = Medium
 sheet speciesApplied = dwarf
 sheet speed = 30
@@ -5192,7 +5271,7 @@ list cantrips picks=4 limit=4 options=3 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=5 limit=5 options=9 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=11 limit=null options=328 missing=0
 list spells picks=15 limit=15 options=30 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
@@ -5254,6 +5333,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Warlock cha dc=19 attack=+11
+warning choice__fiend-patron__fiendish-resilience Actor.Rule.ChoiceRowPending: Fiendish Resilience (Fiend Patron): choose 1 more.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
 
 ## warlock-5
@@ -5264,8 +5344,12 @@ sheet cha = 17
 sheet con = 16
 sheet darkvision = 120
 sheet dex = 13
+sheet grantedSpells = [burning-hands, command, scorching-ray, suggestion, fireball, stinking-cloud]
+sheet granted__grantedSpells = [burning-hands, command, scorching-ray, suggestion, fireball, stinking-cloud]
+sheet granted__resistances = [poison]
 sheet pact_3 = 2
 sheet pact_3_Max = 2
+sheet resistances = [poison]
 sheet size = Medium
 sheet speciesApplied = dwarf
 sheet speed = 30
@@ -5294,7 +5378,7 @@ list cantrips picks=3 limit=3 options=4 missing=0
 list extraOriginFeats picks=0 limit=0 options=4 missing=0
 list feats picks=1 limit=1 options=2 missing=0
 list fightingStyles picks=0 limit=0 options=4 missing=0
-list grantedSpells picks=0 limit=null options=339 missing=0
+list grantedSpells picks=6 limit=null options=333 missing=0
 list spells picks=6 limit=6 options=27 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots pact = {3: 2}

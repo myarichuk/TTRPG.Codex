@@ -63,6 +63,32 @@ properties:
       Raise Dead Necromancy M
 
       13 Freedom of Movement, Guardian of Faith
+    adds:
+    - to: grantedSpells
+      entries:
+      - protection-from-evil-and-good
+      - shield-of-faith
+      level: 3
+    - to: grantedSpells
+      entries:
+      - aid
+      - zone-of-truth
+      level: 5
+    - to: grantedSpells
+      entries:
+      - beacon-of-hope
+      - dispel-magic
+      level: 9
+    - to: grantedSpells
+      entries:
+      - freedom-of-movement
+      - guardian-of-faith
+      level: 13
+    - to: grantedSpells
+      entries:
+      - commune
+      - flame-strike
+      level: 17
   - name: Sacred Weapon
     level: 3
     description: >-

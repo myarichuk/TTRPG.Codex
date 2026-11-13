@@ -54,7 +54,7 @@ public class SrdMappedGrantsTests : IAsyncLifetime
 
     private SheetEvaluation Run(Dictionary<string, object> sheet) => Engine.Recompute(sheet);
 
-    private static FeatureCounter Counter(SheetEvaluation evaluation, string key) => evaluation.Counters.Single(c => c.Key == "uses_" + key);
+    private static FeatureCounter Counter(SheetEvaluation evaluation, string key) => evaluation.Counters.Single(c => c.Key == "uses_" + key.Replace('-', '_'));
 
     [Theory]
     [InlineData(1, 2)]
@@ -172,5 +172,88 @@ public class SrdMappedGrantsTests : IAsyncLifetime
 
         var five = Run(Sheet("fighter", 5, species: "dragonborn", lineage: "Draconic Ancestor: Black"));
         Assert.Contains(five.Counters, c => c.Key == "uses_draconic_flight");
+    }
+
+    [Fact]
+    public void BreathWeapon_IsOneSharedPool_ChangingAncestryKeepsWhatWasSpentAndMovesTheResistance()
+    {
+        var sheet = Sheet("fighter", 5, species: "dragonborn", lineage: "Draconic Ancestor: Black");
+        var black = Run(sheet);
+        var breath = Counter(black, "breath-weapon");
+        Assert.Equal("Breath Weapon", breath.Label); // the pool's name, not the row's ("Draconic Ancestor: Black")
+        Assert.Equal(3, breath.Max); // the Proficiency Bonus at level 5
+        Assert.Equal(new[] { "acid" }, SheetRuleEngine.RawList(sheet, "resistances"));
+
+        sheet["uses_breath_weapon"] = 1L; // two spent
+        Engine.ChangeChoice(sheet, "choice__dragonborn__lineage", new[] { "Draconic Ancestor: Red" });
+
+        Assert.Equal(1L, sheet["uses_breath_weapon"]);
+        Assert.Equal(new[] { "fire" }, SheetRuleEngine.RawList(sheet, "resistances"));
+    }
+
+    [Fact]
+    public void ADrowGetsFaerieFireAtThree_AndDarknessAtFive_AndTheCantripAlways()
+    {
+        var two = Sheet("fighter", 2, species: "elf", lineage: "Elven Lineage: Drow");
+        Run(two);
+        Assert.Equal(new[] { "dancing-lights" }, SheetRuleEngine.RawList(two, "grantedSpells"));
+
+        var three = Sheet("fighter", 3, species: "elf", lineage: "Elven Lineage: Drow");
+        Run(three);
+        Assert.Equal(new[] { "dancing-lights", "faerie-fire" }, SheetRuleEngine.RawList(three, "grantedSpells"));
+
+        var five = Sheet("fighter", 5, species: "elf", lineage: "Elven Lineage: Drow");
+        Run(five);
+        Assert.Contains("darkness", SheetRuleEngine.RawList(five, "grantedSpells"));
+    }
+
+    [Fact]
+    public void ADruidOfTheLand_GetsTheLandsSpellsByLevel_AndItsResistanceFromTen()
+    {
+        var sheet = Sheet("druid", 5, "circle-of-the-land");
+        sheet["choice__circle-of-the-land__land"] = new List<object> { "Arid" };
+        Run(sheet);
+        Assert.Equal(new[] { "blur", "burning-hands", "fire-bolt", "fireball" }, SheetRuleEngine.RawList(sheet, "grantedSpells").Except(new[] { "speak-with-animals" }).ToArray());
+        Assert.Empty(SheetRuleEngine.RawList(sheet, "resistances"));
+
+        sheet["level"] = 10L;
+        Run(sheet);
+        Assert.Equal(new[] { "fire" }, SheetRuleEngine.RawList(sheet, "resistances"));
+    }
+
+    [Fact]
+    public void ADwarfIsResistantToPoison_AndATieflingKnowsItsLineagesCantrip()
+    {
+        var dwarf = Sheet("fighter", 1, species: "dwarf");
+        Run(dwarf);
+        Assert.Equal(new[] { "poison" }, SheetRuleEngine.RawList(dwarf, "resistances"));
+
+        var tiefling = Sheet("fighter", 1, species: "tiefling", lineage: "Fiendish Legacy: Infernal");
+        Run(tiefling);
+        Assert.Equal(new[] { "thaumaturgy", "fire-bolt" }, SheetRuleEngine.RawList(tiefling, "grantedSpells").OrderBy(s => s == "fire-bolt").ToArray());
+        Assert.Equal(new[] { "fire" }, SheetRuleEngine.RawList(tiefling, "resistances"));
+    }
+
+    [Fact]
+    public void ElementalAffinity_AsksForADamageType_AndGivesItsResistance()
+    {
+        var sheet = Sheet("sorcerer", 6, "draconic-sorcery");
+        var pending = Run(sheet);
+        Assert.Contains(pending.Warnings, w => w.Key == SheetRuleEngine.ChoiceRowPendingKey);
+
+        sheet["choice__draconic-sorcery__elemental-affinity"] = new List<object> { "Fire" };
+        Run(sheet);
+        Assert.Equal(new[] { "fire" }, SheetRuleEngine.RawList(sheet, "resistances"));
+    }
+
+    [Fact]
+    public void FiendishResilience_OffersEveryTypeButForce_AndMayChangeAtAnyRest()
+    {
+        var sheet = Sheet("warlock", 10, "fiend-patron");
+        var evaluation = Run(sheet);
+        var choice = evaluation.PendingChoices.Single(c => c.Key == "choice__fiend-patron__fiendish-resilience");
+        Assert.Equal(12, choice.Options.Count);
+        Assert.DoesNotContain(choice.Options, o => o.Key.Equals("Force", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(new[] { "Short Rest", "Long Rest" }, choice.Row!.ChangesOn);
     }
 }

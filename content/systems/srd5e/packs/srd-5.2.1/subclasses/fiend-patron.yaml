@@ -33,6 +33,29 @@ properties:
       7 Fire Shield, Wall of Fire
 
       9 Geas, Insect Plague
+    adds:
+    - to: grantedSpells
+      entries:
+      - burning-hands
+      - command
+      - scorching-ray
+      - suggestion
+      level: 3
+    - to: grantedSpells
+      entries:
+      - fireball
+      - stinking-cloud
+      level: 5
+    - to: grantedSpells
+      entries:
+      - fire-shield
+      - wall-of-fire
+      level: 7
+    - to: grantedSpells
+      entries:
+      - geas
+      - insect-plague
+      level: 9
   - name: Dark One's Own Luck
     level: 6
     description: >-
@@ -47,6 +70,72 @@ properties:
   - name: Fiendish Resilience
     level: 10
     description: Choose one damage type, other than Force, whenever you finish a Short or Long Rest. You have Resistance to that damage type until you choose a different one with this feature.
+    options:
+    - name: Acid
+      adds:
+      - to: resistances
+        entries:
+        - acid
+    - name: Bludgeoning
+      adds:
+      - to: resistances
+        entries:
+        - bludgeoning
+    - name: Cold
+      adds:
+      - to: resistances
+        entries:
+        - cold
+    - name: Fire
+      adds:
+      - to: resistances
+        entries:
+        - fire
+    - name: Lightning
+      adds:
+      - to: resistances
+        entries:
+        - lightning
+    - name: Necrotic
+      adds:
+      - to: resistances
+        entries:
+        - necrotic
+    - name: Piercing
+      adds:
+      - to: resistances
+        entries:
+        - piercing
+    - name: Poison
+      adds:
+      - to: resistances
+        entries:
+        - poison
+    - name: Psychic
+      adds:
+      - to: resistances
+        entries:
+        - psychic
+    - name: Radiant
+      adds:
+      - to: resistances
+        entries:
+        - radiant
+    - name: Slashing
+      adds:
+      - to: resistances
+        entries:
+        - slashing
+    - name: Thunder
+      adds:
+      - to: resistances
+        entries:
+        - thunder
+    choose:
+      id: fiendish-resilience
+      changesOn:
+      - Short Rest
+      - Long Rest
   - name: Hurl Through Hell
     level: 14
     description: >-

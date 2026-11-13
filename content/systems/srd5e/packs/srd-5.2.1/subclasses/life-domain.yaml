@@ -37,6 +37,29 @@ properties:
       7 Aura of Life, Death Ward
 
       9 Greater Restoration, Mass Cure Wounds
+    adds:
+    - to: grantedSpells
+      entries:
+      - aid
+      - bless
+      - cure-wounds
+      - lesser-restoration
+      level: 3
+    - to: grantedSpells
+      entries:
+      - mass-healing-word
+      - revivify
+      level: 5
+    - to: grantedSpells
+      entries:
+      - aura-of-life
+      - death-ward
+      level: 7
+    - to: grantedSpells
+      entries:
+      - greater-restoration
+      - mass-cure-wounds
+      level: 9
   - name: Preserve Life
     level: 3
     description: As a Magic action, you present your Holy Symbol and expend a use of your Channel Divinity to evoke healing energy that can restore a number of Hit Points equal to five times your Cleric level. Choose Bloodied creatures within 30 feet of yourself (which can include you), and divide those Hit Points among them. This feature can restore a creature to no more than half its Hit Point maximum.
