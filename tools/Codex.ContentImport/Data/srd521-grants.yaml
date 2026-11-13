@@ -31,7 +31,7 @@ class:
     - { row: Danger Sense, text: advantage }
     - { row: Reckless Attack, text: advantage }
     - { row: Barbarian Subclass, already: the subclass field }
-    - { row: Primal Knowledge, text: skill-bonus }
+    - { row: Primal Knowledge, adds: [{ to: skills, choice: primal-knowledge-3, choose: 1, from: [animal-handling, athletics, intimidation, nature, perception, survival] }] }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
     - { row: Fast Movement, text: gear }
@@ -246,7 +246,7 @@ subclass:
     - { row: "Nature's Ward", covered: the resistance on the land options }
     - { row: "Nature's Sanctuary", spends: { key: wild-shape, amount: 1 } }
   college-of-lore:
-    - { row: Bonus Proficiencies, text: skill-bonus }
+    - { row: Bonus Proficiencies, adds: [{ to: skills, choice: bonus-proficiencies-3, choose: 3 }] }
     - { row: Cutting Words, spends: { key: bardic-inspiration, amount: 1 } }
     - { row: Magical Discoveries, text: chosen-spell }
     - { row: Peerless Skill, spends: { key: bardic-inspiration, amount: 1 } }
@@ -351,7 +351,7 @@ species:
       - { row: Darkvision (60 ft.), already: the darkvision field }
       - { row: Elven Lineage, text: other }
       - { row: Fey Ancestry, text: advantage }
-      - { row: Keen Senses, text: skill-bonus }
+      - { row: Keen Senses, adds: [{ to: skills, choice: keen-senses, choose: 1, from: [insight, perception, survival] }] }
       - { row: Trance, text: other }
     lineages:
       - { row: "Elven Lineage: Drow", modifiers: [{ target: darkvision, amount: 120, type: base }], spells: { 0: [dancing-lights], 3: [faerie-fire], 5: [darkness] } }
@@ -386,7 +386,7 @@ species:
   human:
     traits:
       - { row: Resourceful, text: other }
-      - { row: Skillful, text: skill-bonus }
+      - { row: Skillful, adds: [{ to: skills, choice: skillful, choose: 1 }] }
       - { row: Versatile, already: extraOriginFeats }
   orc:
     traits:

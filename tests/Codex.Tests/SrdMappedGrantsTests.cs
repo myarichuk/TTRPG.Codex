@@ -323,4 +323,30 @@ public class SrdMappedGrantsTests : IAsyncLifetime
         Assert.True(rogue.SavingThrows.Single(s => s.Key == "dex").Proficient); // the class's own
         Assert.False(rogue.SavingThrows.Single(s => s.Key == "str").Proficient);
     }
+
+    [Fact]
+    public void AFirstRankChoice_AdoptsTheTicksBeyondTheClassAllowance_AndOtherwiseStaysOpen()
+    {
+        // A Fighter picks two skills; an elf's Keen Senses is one more, from Insight, Perception or Survival.
+        var spare = Sheet("fighter", 1, species: "elf");
+        spare["skillProficiencies"] = new List<object> { "athletics", "intimidation", "survival" };
+        var adopted = Run(spare);
+        var keen = adopted.PendingChoices.Single(c => c.Key == "choice__elf__keen-senses");
+        Assert.True(keen.Adopted);
+        Assert.Equal(new[] { "survival" }, keen.Made);
+        Assert.Contains(adopted.Warnings, w => w.Key == SheetRuleEngine.ChoiceConfirmKey);
+
+        // Only the two the class gives: nothing is spare, so the choice is a new one to make.
+        var none = Sheet("fighter", 1, species: "elf");
+        none["skillProficiencies"] = new List<object> { "athletics", "survival" };
+        var open = Run(none).PendingChoices.Single(c => c.Key == "choice__elf__keen-senses");
+        Assert.False(open.Adopted);
+        Assert.Empty(open.Made);
+
+        // Confirmed, the pick holds, and the class count no longer calls the third tick an over-pick.
+        SheetRuleEngine.SetChoice(spare, keen.Key, keen.Made);
+        var confirmed = Run(spare);
+        Assert.DoesNotContain(confirmed.PendingChoices, c => c.Key == keen.Key);
+        Assert.DoesNotContain(confirmed.Warnings, w => w.Key == "Actor.Rule.SkillChoices");
+    }
 }

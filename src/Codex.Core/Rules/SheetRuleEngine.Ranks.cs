@@ -535,13 +535,29 @@ public sealed partial class SheetRuleEngine
         }
 
         var adopted = false;
-        // Only a choice that builds on a rank the key already has (expertise on a proficiency) adopts. A plain "choose N" at the
-        // first rank would take the player's class-skill ticks as its picks and hide a real over-pick, so it stays open.
         if (stored.Count == 0 && !raise && choice.MinRank != null)
         {
-            // The player's own ticks, made before the choice existed, already put enough eligible keys at its rank: count them as the picks.
+            // A choice that builds on a rank the key already has (expertise on a proficiency): the player's own ticks, made before the
+            // choice existed, already put enough eligible keys at its rank. Count them as the picks.
             var covered = list.Keys.Where(k => Fits(k) && list.Own.GetValueOrDefault(k.Key) >= rank!.Value && list.Granted.GetValueOrDefault(k.Key) < rank.Value).ToList();
             if (covered.Count >= choice.Choose)
+            {
+                valid = covered.Take(choice.Choose).ToList();
+                adopted = true;
+            }
+        }
+        else if (stored.Count == 0 && !raise && choice.MinRank == null && list.Target == SkillsTarget && rank == 1 && Rules?.Skills is { } skillRules)
+        {
+            // A plain pick at the first rank (Keen Senses, Primal Knowledge): the player's own first-rank ticks include the background's
+            // (a source's, not counted here) and the first class's allowance. Only the ticks beyond that allowance can be this pick, and only
+            // when the class's allowance is known (one class, a number in its entry). Otherwise it stays open: taking class-skill ticks as
+            // the picks would hide a real over-pick.
+            var ticks = list.Keys.Where(k => list.FirstRankTicks.Contains(k.Key) && !list.Independent.Contains(k.Key)).ToList();
+            var allowed = result.Classes.Count <= 1 && FirstClass(sheet, result, skillRules.ClassField) is { } firstClass
+                ? ChoiceCount(firstClass.Properties.GetValueOrDefault(skillRules.ClassChoicesProperty))
+                : null;
+            var covered = ticks.Where(k => Fits(k) && list.Granted.GetValueOrDefault(k.Key) < rank.Value).ToList();
+            if (allowed.HasValue && ticks.Count - allowed.Value >= choice.Choose && covered.Count >= choice.Choose)
             {
                 valid = covered.Take(choice.Choose).ToList();
                 adopted = true;

@@ -100,6 +100,17 @@ properties:
       In addition, while your Rage is active, you can channel primal power when you attempt certain tasks; whenever you make an ability check using one of the following skills, you can make it as a Strength check even if it normally uses a different ability: Acrobatics, Intimidation, Perception,
 
       Stealth, or Survival. When you use this ability, your Strength represents primal power coursing through you, honing your agility, bearing, and senses.
+    adds:
+    - to: skills
+      choice: primal-knowledge-3
+      choose: 1
+      from:
+      - animal-handling
+      - athletics
+      - intimidation
+      - nature
+      - perception
+      - survival
   - name: Ability Score Improvement
     level: 4
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Barbarian levels 8, 12, and 16.

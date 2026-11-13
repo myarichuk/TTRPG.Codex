@@ -25,6 +25,10 @@ properties:
     description: You gain Heroic Inspiration whenever you finish a Long Rest.
   - name: Skillful
     description: You gain proficiency in one skill of your choice.
+    adds:
+    - to: skills
+      choice: skillful
+      choose: 1
   - name: Versatile
     description: You gain an Origin feat of your choice (see "Feats"). Skilled is recommended.
   extraOriginFeats: 1
