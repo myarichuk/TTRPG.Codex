@@ -49,6 +49,7 @@
   <data name="Library.Detail.Licence" xml:space="preserve"><value>Лицензия:</value></data>
   <data name="Library.Detail.Modified" xml:space="preserve"><value>изменено относительно оригинала</value></data>
   <data name="Library.Detail.HomebrewNote" xml:space="preserve"><value>Создано за этим столом. Мастер решает, кто может использовать это повторно.</value></data>
+  <data name="Library.Detail.CarriedNote" xml:space="preserve"><value>Написано для одного персонажа. В библиотеку кампании попадает, только когда мастер этой кампании его примет.</value></data>
   <data name="Library.Detail.LoreText" xml:space="preserve"><value>Текст преданий:</value></data>
   <data name="Library.Detail.Translation" xml:space="preserve"><value>Перевод:</value></data>
   <data name="Library.Detail.LicenceName" xml:space="preserve"><value>лицензия {0}</value></data>

@@ -169,8 +169,14 @@ public class DiceConventions
 {
     /// <summary>The dice the combat console rolls for initiative. Default <c>1d20</c>.</summary>
     public string Initiative { get; set; } = "1d20";
-    /// <summary>The dice for an ordinary check. Reserved; not read by this version (the sheet's check buttons roll a d20).</summary>
+    /// <summary>The dice for an ordinary check. The sheet's check buttons roll a d20; the Actions panel reads this die's top face
+    /// to decide whether an action's <c>critical</c> face is worth showing.</summary>
     public string Check { get; set; } = "1d20";
+
+    /// <summary>The top face of <see cref="Check"/> (20 for <c>1d20</c>), or null when it is not written as dice (<c>NdS</c>).</summary>
+    public int? CheckTopFace() =>
+        System.Text.RegularExpressions.Regex.Match(Check ?? string.Empty, @"^\s*\d*[dD](?<faces>\d+)").Groups["faces"] is { Success: true } faces
+        && int.TryParse(faces.Value, out var top) && top > 0 ? top : null;
 
     /// <summary>The derived field (see <c>sheetRules.derived</c>) added to an initiative roll, e.g.
     /// an <c>initiative</c> field with the formula <c>mod(dex)</c>. Null: the bare die.</summary>
@@ -772,7 +778,26 @@ public class SystemDefinition
             skills.Label = t.SkillsLabel ?? rules.Skills.Label;
             skills.List = rules.Skills.List.Select(s => { var c = Copy(s); c.CanonicalLabel = s.CanonicalLabel ?? s.Label; c.Label = Pick(t.Skills, s.Key, s.Label); return c; }).ToList();
             skills.Passives = rules.Skills.Passives.Select(p => { var c = Copy(p); c.Label = Pick(t.Passives, p.Key, p.Label); return c; }).ToList();
+            // Rank labels: the ranks written out (the two defaults too, so they can be worded in this language) with their labels translated.
+            if (t.Ranks.Count > 0)
+            {
+                RankDefinition Rank(RankDefinition r) { var c = Copy(r); c.Label = Pick(t.Ranks, r.Key, r.Label); return c; }
+                skills.Ranks = rules.Skills.SkillRanks().Select(Rank).ToList();
+                skills.Saves = new SaveRules { Ranks = rules.Skills.SaveRanks().Select(Rank).ToList() };
+            }
             copy.Skills = skills;
+        }
+        // The label of a pick among an entry's rows (a feature source's choose), by the choice's id.
+        if (t.Choices.Count > 0)
+        {
+            copy.Features = rules.Features.Select(f =>
+            {
+                if (f.Choose is not { Id.Length: > 0 } choose || !t.Choices.TryGetValue(choose.Id, out var shown) || string.IsNullOrWhiteSpace(shown)) return f;
+                var source = Copy(f);
+                source.Choose = Copy(choose);
+                source.Choose.Label = shown;
+                return source;
+            }).ToList();
         }
         return copy;
     }

@@ -12,56 +12,63 @@ properties:
   class: druid
   summary: Celebrate Connection to the Natural World
   features:
-  - name: 'Circle of the Land Spells Whenever you finish a Long Rest, choose one type of land: arid, polar, temperate, or tropical. Consult the table below that corresponds to the chosen type; you have the spells listed for your Druid level and lower prepared.'
+  - name: Circle of the Land Spells
     level: 3
-    description: >-
-      Arid Land
+    description: 'Whenever you finish a Long Rest, choose one type of land: arid, polar, temperate, or tropical. Consult the table below that corresponds to the chosen type; you have the spells listed for your Druid level and lower prepared.'
+    options:
+    - name: Arid
+      description: >-
+        Druid level 3: Blur, Burning Hands, Fire Bolt
 
-      Druid Level Circle Spells
 
-      3 Blur, Burning Hands, Fire Bolt
+        Druid level 5: Fireball
 
-      5 Fireball
 
-      7 Blight
+        Druid level 7: Blight
 
-      9 Wall of Stone
 
-      Polar Land
+        Druid level 9: Wall of Stone
+    - name: Polar
+      description: >-
+        Druid level 3: Fog Cloud, Hold Person, Ray of Frost
 
-      Druid Level Circle Spells
 
-      3 Fog Cloud, Hold Person, Ray of Frost
+        Druid level 5: Sleet Storm
 
-      5 Sleet Storm
 
-      7 Ice Storm
+        Druid level 7: Ice Storm
 
-      9 Cone of Cold
 
-      Temperate Land
+        Druid level 9: Cone of Cold
+    - name: Temperate
+      description: >-
+        Druid level 3: Misty Step, Shocking Grasp, Sleep
 
-      Druid Level Circle Spells
 
-      3 Misty Step, Shocking Grasp, Sleep
+        Druid level 5: Lightning Bolt
 
-      5 Lightning Bolt
 
-      7 Freedom of Movement
+        Druid level 7: Freedom of Movement
 
-      9 Tree Stride
 
-      Tropical Land
+        Druid level 9: Tree Stride
+    - name: Tropical
+      description: >-
+        Druid level 3: Acid Splash, Ray of Sickness, Web
 
-      Druid Level Circle Spells
 
-      3 Acid Splash, Ray of Sickness, Web
+        Druid level 5: Stinking Cloud
 
-      5 Stinking Cloud
 
-      7 Polymorph
+        Druid level 7: Polymorph
 
-      9 Insect Plague
+
+        Druid level 9: Insect Plague
+    choose:
+      id: land
+      changesOn:
+      - Long Rest
+      onChange: keep
   - name: Land's Aid
     level: 3
     description: >-

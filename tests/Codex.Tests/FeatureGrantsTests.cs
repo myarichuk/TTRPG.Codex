@@ -96,6 +96,34 @@ public class FeatureGrantsTests : IAsyncLifetime
         Assert.Empty(evaluation.Warnings.Where(w => w.Key == "Actor.Rule.FeatureError"));
     }
 
+
+    [Fact]
+    public void AFeaturesCounter_IsAPoolAnActionCostSpends_ReadAsTheTableCardsUseButtonReadsIt()
+    {
+        var (engine, sheet) = Sorcerer(5);
+        var counter = engine.Recompute(sheet).Counters.Single();
+
+        // The table's spend finds the counter's maximum under the key the counter names.
+        Assert.Equal(counter.MaxKey, SystemDefinition.PoolMaxKey(_loader.GetDefinition("srd5e"), counter.Key));
+
+        var cost = ActionCost.OfCounter(counter, 2, null);
+        Assert.Equal(counter.Feature.Name, cost.Label);
+        int? Read(string key) => YamlValues.GetInt(sheet, key);
+        Assert.Equal(3, cost.Left(Read));
+        Assert.True(cost.CanPay(Read));
+        sheet[counter.Key] = 1L;
+        Assert.Equal(1, cost.Left(Read));
+        Assert.False(cost.CanPay(Read)); // one use left, two needed
+
+        // The card reads max = pool(MaxKey) ?? counter.Max and current = pool(Key) ?? max: so does the cost.
+        foreach (var live in new[] { new Dictionary<string, int>(), new() { [counter.Key] = 2 }, new() { [counter.Key] = 7, [counter.MaxKey] = 4 } })
+        {
+            int? Pool(string key) => live.TryGetValue(key, out var value) ? value : null;
+            var max = Pool(counter.MaxKey) ?? counter.Max;
+            Assert.Equal(Math.Clamp(Pool(counter.Key) ?? max, 0, max), cost.Left(Pool));
+        }
+    }
+
     // The published subclass adds hit points too; whatever it adds is not this test's business.
     private static int DraconicBonus(SheetEvaluation evaluation) => evaluation.HitPoints!.Granted?.Where(g => g.Counted).Sum(g => g.Amount) ?? 0;
 
@@ -162,6 +190,60 @@ public class FeatureGrantsTests : IAsyncLifetime
     }
 
     [Fact]
+    public void ANumberFieldGrant_ThatNamesADerivedValue_IsApplied_AndListedWithTheSameAmount()
+    {
+        var entry = Shadowmarked();
+        entry.Properties["features"] = Items(Row("Fleet Mark", 3, ("modifiers", Items(Map(("target", "speed"), ("amount", "proficiencyBonus * 5"))))));
+        var engine = new SheetRuleEngine(_loader.GetDefinition("srd5e")!, new WithHomebrew(_registry, entry));
+        var (_, sheet) = Sorcerer(5);
+        sheet["speed"] = 30L;
+
+        var evaluation = engine.Recompute(sheet);
+
+        Assert.Equal(3L, evaluation.Derived["proficiencyBonus"]);
+        Assert.Equal(45L, sheet["speed"]); // 30 + 3 * 5
+        var granted = Assert.Single(evaluation.Granted, g => g.Target == "speed" && g.Feature.Name == "Fleet Mark");
+        Assert.Equal(15, granted.Amount);
+        Assert.True(granted.Counted);
+        Assert.Empty(evaluation.Warnings.Where(w => w.Key == "Actor.Rule.FeatureError"));
+
+        engine.Recompute(sheet);
+        Assert.Equal(45L, sheet["speed"]); // not added twice
+    }
+
+    [Fact]
+    public void ANumberFieldGrant_WithABrokenFormula_IsNotApplied_NotListed_AndIsAWarning()
+    {
+        var entry = Shadowmarked();
+        entry.Properties["features"] = Items(Row("Odd Mark", 3, ("modifiers", Items(Map(("target", "speed"), ("amount", "noSuchValue * 5"))))));
+        var engine = new SheetRuleEngine(_loader.GetDefinition("srd5e")!, new WithHomebrew(_registry, entry));
+        var (_, sheet) = Sorcerer(5);
+        sheet["speed"] = 30L;
+
+        var evaluation = engine.Recompute(sheet);
+
+        Assert.Equal(30L, sheet["speed"]);
+        Assert.DoesNotContain(evaluation.Granted, g => g.Target == "speed");
+        Assert.Single(evaluation.Warnings, w => w.Key == "Actor.Rule.FeatureError");
+        Assert.False(evaluation.HasViolations);
+    }
+
+    [Fact]
+    public void APlainNumberFieldGrant_StillAddsToTheField_AndIsListed()
+    {
+        var entry = Shadowmarked();
+        entry.Properties["features"] = Items(Row("Swift Mark", 3, ("modifiers", Items(Map(("target", "speed"), ("amount", 10L))))));
+        var engine = new SheetRuleEngine(_loader.GetDefinition("srd5e")!, new WithHomebrew(_registry, entry));
+        var (_, sheet) = Sorcerer(5);
+        sheet["speed"] = 30L;
+
+        var evaluation = engine.Recompute(sheet);
+
+        Assert.Equal(40L, sheet["speed"]);
+        Assert.Equal(10, Assert.Single(evaluation.Granted, g => g.Target == "speed").Amount);
+    }
+
+    [Fact]
     public void TheWritersGuide_NamesTheSystemsOwnTargetsListsAndRests_OnlyWhereFeaturesAreRead()
     {
         var system = _loader.GetDefinition("srd5e")!;
@@ -198,6 +280,217 @@ public class FeatureGrantsTests : IAsyncLifetime
         Assert.Equal(120L, modifier["amount"]);
         Assert.Equal(new object[] { "darkness" }, (List<object>)((Dictionary<string, object>)((List<object>)row["adds"]).Single())["entries"]);
         Assert.Equal("mod(cha)", ((Dictionary<string, object>)row["uses"])["max"]);
+    }
+
+    // ---- Shared pools, spends and refill rules ----
+
+    private static ContentEntry Subclass(params Dictionary<string, object>[] rows)
+    {
+        var entry = new ContentEntry { Type = "subclass", Id = "shadowmarked", Name = "Shadowmarked", SystemId = "srd5e", PackId = "homebrew" };
+        entry.Properties["class"] = "sorcerer";
+        entry.Properties["features"] = Items(rows.Cast<object>().ToArray());
+        return entry;
+    }
+
+    private (SheetRuleEngine Engine, Dictionary<string, object> Sheet) SorcererWith(ContentEntry entry, int level = 5, long charisma = 16)
+    {
+        var engine = new SheetRuleEngine(_loader.GetDefinition("srd5e")!, new WithHomebrew(_registry, entry));
+        var sheet = new Dictionary<string, object>();
+        engine.InitializeSheet(sheet);
+        sheet["class"] = "sorcerer";
+        sheet["subclass"] = "shadowmarked";
+        sheet["species"] = "human";
+        sheet["level"] = (long)level;
+        sheet[SheetRuleEngine.MethodKey] = SheetRuleEngine.ManualMethod;
+        sheet[SheetRuleEngine.BasePrefix + "cha"] = charisma;
+        sheet[SheetRuleEngine.BasePrefix + "dex"] = 12L;
+        return (engine, sheet);
+    }
+
+    private static Dictionary<string, object> Focus(long max, params (string Key, object Value)[] more)
+    {
+        var uses = Map(("max", max), ("key", "focus"));
+        foreach (var (key, value) in more) uses[key] = value;
+        return Row("Focus", 3, ("uses", uses));
+    }
+
+    [Fact]
+    public void TwoFeaturesNamingOnePool_ShareIt_TheHighestMaximumWins_AndTheSheetWarns()
+    {
+        foreach (var rows in new[]
+                 {
+                     new[] { Focus(3), Row("Deeper Focus", 3, ("uses", Map(("max", 5L), ("key", "focus")))) },
+                     new[] { Row("Deeper Focus", 3, ("uses", Map(("max", 5L), ("key", "focus")))), Focus(3) }
+                 })
+        {
+            var (engine, sheet) = SorcererWith(Subclass(rows));
+            var evaluation = engine.Recompute(sheet);
+
+            var counter = Assert.Single(evaluation.Counters);
+            Assert.Equal("uses_focus", counter.Key);
+            Assert.Equal(5, counter.Max); // the highest, whatever the order
+            Assert.Equal("Deeper Focus", counter.Feature.Name);
+            Assert.Equal(5L, sheet["uses_focus_Max"]);
+            Assert.Contains(evaluation.Warnings, w => w.Key == "Actor.Rule.CounterKeyShared");
+        }
+
+        var (alone, aloneSheet) = SorcererWith(Subclass(Focus(3)));
+        Assert.DoesNotContain(alone.Recompute(aloneSheet).Warnings, w => w.Key == "Actor.Rule.CounterKeyShared");
+    }
+
+    [Fact]
+    public void AFeatureThatSpends_GetsAButtonCostingThePoolsPoints_DisabledWhenTooFewAreLeft_AndWarnsWithoutThePool()
+    {
+        var entry = Subclass(Focus(4),
+            Row("Flurry", 3, ("spends", Map(("key", "focus"), ("amount", 2L)))),
+            Row("Mending", 3, ("spends", Map(("key", "focus"), ("amount", "ask")))),
+            Row("Ghost Step", 3, ("spends", Map(("key", "nowhere"), ("amount", 1L)))));
+        var (engine, sheet) = SorcererWith(entry);
+        var evaluation = engine.Recompute(sheet);
+        int? Read(string key) => YamlValues.GetInt(sheet, key);
+
+        Assert.Equal(new[] { "Flurry", "Mending" }, evaluation.Spenders.Select(s => s.Feature.Name)); // Ghost Step has no pool: no button
+        var warning = Assert.Single(evaluation.Warnings, w => w.Key == "Actor.Rule.SpendNoPool");
+        Assert.Contains("Ghost Step", warning.Message);
+
+        var flurry = evaluation.Spenders[0];
+        Assert.False(flurry.Ask);
+        Assert.Equal("uses_focus", flurry.Cost.Key);
+        Assert.Equal(2, flurry.Cost.Amount);
+        Assert.Equal("Focus", flurry.Cost.Label); // the pool is named by the feature that owns it
+        Assert.True(flurry.Cost.CanPay(Read));
+
+        sheet["uses_focus"] = 1L;
+        Assert.False(flurry.Cost.CanPay(Read)); // one point left, two needed
+        var mending = evaluation.Spenders[1];
+        Assert.True(mending.Ask);
+        Assert.Equal(1, mending.Cost.Amount); // the least; the player picks up to what is left
+        Assert.True(mending.Cost.CanPay(Read));
+        sheet["uses_focus"] = 0L;
+        Assert.False(mending.Cost.CanPay(Read));
+    }
+
+    [Fact]
+    public void GivingACounterAKey_CarriesWhatWasSpentAcrossOnce()
+    {
+        var (before, sheet) = SorcererWith(Subclass(Row("Focus", 3, ("uses", Map(("max", 4L))))));
+        var oldKey = before.Recompute(sheet).Counters.Single().Key;
+        Assert.NotEqual("uses_focus", oldKey);
+        sheet[oldKey] = 1L; // three spent
+
+        var (after, _) = SorcererWith(Subclass(Focus(4)));
+        var evaluation = after.Recompute(sheet);
+
+        Assert.Equal("uses_focus", Assert.Single(evaluation.Counters).Key);
+        Assert.Equal(1L, sheet["uses_focus"]); // still three spent
+        Assert.Equal(4L, sheet["uses_focus_Max"]);
+        Assert.DoesNotContain(sheet.Keys, k => k.StartsWith(oldKey, StringComparison.Ordinal)); // the old keys are gone
+        after.Recompute(sheet);
+        Assert.Equal(1L, sheet["uses_focus"]);
+    }
+
+    [Fact]
+    public void RefillRules_AreWorkedOutOnTheSheet_AndStoredForTheTableToRead()
+    {
+        var entry = Subclass(Focus(4, ("regain", "gm"), ("recovers", Items(
+            Map(("on", "Short Rest"), ("amount", 1L)),
+            Map(("on", "Long Rest"), ("amount", "proficiencyBonus")),
+            Map(("on", "dawn"), ("amount", "1d6+1")),
+            Map(("on", "initiative"), ("amount", 1L), ("when", "empty")),
+            Map(("on", "manual"))))));
+        var (engine, sheet) = SorcererWith(entry);
+        var counter = engine.Recompute(sheet).Counters.Single();
+
+        Assert.Equal("Short Rest=1|Long Rest=3|dawn=1d6+1|initiative=1!empty|manual", (string)sheet[counter.Key + SheetRuleEngine.UsesRestSuffix]); // level 5: proficiency +3
+        Assert.Equal(new[] { "Short Rest", "Long Rest" }, counter.RecoversOn); // moments are never rest buttons
+        Assert.Equal(new[] { "Short Rest", "Long Rest" }, SheetRuleEngine.UsesRests(sheet, counter.Key));
+        Assert.Equal("Focus", sheet[counter.Key + SheetRuleEngine.UsesLabelSuffix]);
+        Assert.True(SheetRuleEngine.IsUsesKey(counter.Key));
+        Assert.False(SheetRuleEngine.IsUsesKey(counter.Key + SheetRuleEngine.UsesLabelSuffix));
+
+        // regain: gm
+        Assert.False(counter.CanRegain(false));
+        Assert.True(counter.CanRegain(true));
+        var (plain, plainSheet) = SorcererWith(Subclass(Focus(4)));
+        var open = plain.Recompute(plainSheet).Counters.Single();
+        Assert.True(open.CanRegain(false));
+    }
+
+    [Fact]
+    public void ARecoversOnShorthand_StaysAFullRefill_AndOldSheetsKeepReading()
+    {
+        var (engine, sheet) = SorcererWith(Subclass(Focus(4, ("recoversOn", Items("Long Rest")))));
+        var counter = engine.Recompute(sheet).Counters.Single();
+        Assert.Equal("Long Rest", sheet[counter.Key + SheetRuleEngine.UsesRestSuffix]);
+        var rule = Assert.Single(FeatureRecovery.Decode(new Dictionary<string, object> { ["uses_x_Rest"] = "Long Rest" }, "uses_x"));
+        Assert.Equal(new RecoverRule("Long Rest", "all", false), rule);
+    }
+
+    [Fact]
+    public void Refills_AddWholeNumbersDiceAndEmptyOnly_NeverPastTheMaximum()
+    {
+        var sheet = new Dictionary<string, object> { ["uses_w_Rest"] = "Short Rest=1|Long Rest=3|Long Rest=1d6+1|initiative=1!empty|dawn" };
+        var rolls = new List<string>();
+        int Roll(string dice) { rolls.Add(dice); return 5; }
+
+        var partial = FeatureRecovery.Apply(FeatureRecovery.For(sheet, "uses_w", "Short Rest"), 1, 4, Roll);
+        Assert.Equal(2, partial.Value);
+        Assert.Equal(1, partial.Regained);
+        Assert.Empty(rolls);
+
+        var rolled = FeatureRecovery.Apply(FeatureRecovery.For(sheet, "uses_w", "Long Rest"), 0, 6, Roll); // 3, then 1d6+1 rolled as 5: capped at 6
+        Assert.Equal(6, rolled.Value);
+        Assert.Equal(("1d6+1", 5), Assert.Single(rolled.Rolls));
+
+        Assert.Equal(1, FeatureRecovery.Apply(FeatureRecovery.For(sheet, "uses_w", "initiative"), 0, 4, Roll).Value);
+        Assert.Equal(2, FeatureRecovery.Apply(FeatureRecovery.For(sheet, "uses_w", "initiative"), 2, 4, Roll).Value); // not empty: nothing
+        Assert.Equal(4, FeatureRecovery.Apply(FeatureRecovery.For(sheet, "uses_w", "dawn"), 0, 4, Roll).Value);
+    }
+
+    [Fact]
+    public void WhenTheMaximumDrops_WhatIsLeftIsCapped_AndNoChangeToTheBuildRefillsIt()
+    {
+        var (engine, sheet) = Sorcerer(5);
+        var counter = engine.Recompute(sheet).Counters.Single();
+        Assert.Equal(3, counter.Max);
+
+        sheet[counter.Key] = 2L;
+        sheet[SheetRuleEngine.BasePrefix + "cha"] = 10L; // the maximum falls to 1
+        Assert.Equal(1, engine.Recompute(sheet).Counters.Single().Max);
+        Assert.Equal(1L, sheet[counter.Key]); // capped, not refilled
+
+        var (other, spent) = Sorcerer(5);
+        other.Recompute(spent);
+        spent[counter.Key] = 0L; // all three spent
+        spent[SheetRuleEngine.BasePrefix + "cha"] = 10L;
+        other.Recompute(spent);
+        Assert.Equal(0L, spent[counter.Key]); // spent stays spent: the lower maximum does not refill it
+    }
+
+    [Fact]
+    public void TheGrantEditorsData_ReadsAndWritesKeyRecoversRegainAndSpends()
+    {
+        var row = Row("Focus", 3, ("uses", Map(("max", 4L), ("key", "focus"), ("regain", "gm"),
+            ("recovers", Items(Map(("on", "Short Rest"), ("amount", 1L)), Map(("on", "initiative"), ("when", "empty")))))),
+            ("spends", Map(("key", "focus"), ("amount", "ask"))));
+
+        var data = FeatureGrantData.Read(row);
+        Assert.Equal("focus", data.Uses!.Key);
+        Assert.Equal("gm", data.Uses.Regain);
+        Assert.Equal(2, data.Uses.Recovers.Count);
+        Assert.Equal("ask", data.Spends!.Amount);
+
+        var written = new Dictionary<string, object>();
+        data.Apply(written);
+        var uses = (Dictionary<string, object>)written["uses"];
+        Assert.Equal("focus", uses["key"]);
+        Assert.Equal("gm", uses["regain"]);
+        var recovers = ((List<object>)uses["recovers"]).Cast<Dictionary<string, object>>().ToList();
+        Assert.Equal(1L, recovers[0]["amount"]);
+        Assert.False(recovers[1].ContainsKey("amount")); // all
+        Assert.Equal("empty", recovers[1]["when"]);
+        Assert.Equal("ask", ((Dictionary<string, object>)written["spends"])["amount"]);
+        Assert.Equal(3, uses.Count(u => u.Key is "max" or "key" or "regain") ); // nothing written twice
     }
 
     private sealed class WithHomebrew(ContentRegistry registry, params ContentEntry[] extra) : IEntryResolver

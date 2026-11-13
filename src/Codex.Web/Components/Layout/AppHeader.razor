@@ -11,13 +11,13 @@
     <nav class="app-nav" aria-label="@L["Layout.Nav.Main"]">
         <AuthorizeView>
             <Authorized>
-                <NavLink href="" Match="NavLinkMatch.All">
+                <NavLink href="" Match="NavLinkMatch.All" title="@L["Layout.Nav.Campaigns"]">
                     <LucideIcon IconName="compass" Size="18" /><span>@L["Layout.Nav.Campaigns"]</span>
                 </NavLink>
-                <NavLink href="vault">
+                <NavLink href="vault" title="@L["Layout.Nav.Vault"]">
                     <LucideIcon IconName="archive" Size="18" /><span>@L["Layout.Nav.Vault"]</span>
                 </NavLink>
-                <NavLink href="library">
+                <NavLink href="library" title="@L["Layout.Nav.Library"]">
                     <LucideIcon IconName="book-open" Size="18" /><span>@L["Layout.Nav.Library"]</span>
                 </NavLink>
             </Authorized>
@@ -27,7 +27,7 @@
                 <AdminLink />
             </Authorized>
         </AuthorizeView>
-        <NavLink href="about">
+        <NavLink href="about" title="@L["Layout.Nav.About"]">
             <LucideIcon IconName="info" Size="18" /><span>@L["Layout.Nav.About"]</span>
         </NavLink>
     </nav>

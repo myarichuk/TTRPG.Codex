@@ -48,10 +48,11 @@
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>חיפוש יצורים בספרייה…</value></data>
   <data name="Combat.AddToEncounterFor" xml:space="preserve"><value>הוספת {0} למפגש הקרב</value></data>
   <data name="Combat.AddToEncounter" xml:space="preserve"><value>הוספה למפגש הקרב</value></data>
-  <data name="Combat.QuickAddHint" xml:space="preserve"><value>הקלידו לחיפוש. יצורים נוספים כמוסתרים ומופיעים מיד בשולחן החי.</value></data>
+  <data name="Combat.QuickAddHint" xml:space="preserve"><value>הקלידו לחיפוש. יצורים מופיעים מיד בשולחן החי. השחקנים רואים אותם, בלי שם ופרטים, עד שתתנו להם שם או תסתירו אותם.</value></data>
   <data name="Combat.PartyRest" xml:space="preserve"><value>מנוחת הצוות</value></data>
   <data name="Combat.PartyRestHint" xml:space="preserve"><value>כל דמויות השחקנים נחות בבת אחת. קוביות חיים מנוצלות לכל דמות בנפרד מהשורה שלה.</value></data>
   <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} לצוות</value></data>
+  <data name="Combat.DawnButton" xml:space="preserve"><value>עלות השחר לחבורה</value></data>
   <data name="Combat.EndTable" xml:space="preserve"><value>סיום השולחן</value></data>
   <data name="Combat.TempHpTitle" xml:space="preserve"><value>נקודות חיים זמניות</value></data>
   <data name="Combat.TempHpBadge" xml:space="preserve"><value>+{0} זמניות</value></data>
@@ -261,4 +262,5 @@
   <data name="Combat.Card.Show" xml:space="preserve"><value>הצגת פרטים נוספים: {0}</value></data>
   <data name="Combat.Card.Hide" xml:space="preserve"><value>הסתרת פרטים: {0}</value></data>
   <data name="Combat.Card.Equipped" xml:space="preserve"><value>בשימוש:</value></data>
+  <data name="Combat.Card.Rules" xml:space="preserve"><value>מה זה עושה</value></data>
 </root>

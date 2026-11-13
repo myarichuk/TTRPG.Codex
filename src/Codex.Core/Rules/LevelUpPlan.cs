@@ -6,6 +6,9 @@ namespace Codex.Core.Rules;
 /// <summary>A class or subclass feature gained at a level, as the class entry's <c>features</c> rows give it.</summary>
 public sealed record LevelFeature(string Name, string Description, string Source);
 
+/// <summary>What a rank of the skills' list is worth before and after the level.</summary>
+public sealed record RankChange(string Key, string Label, int Before, int After);
+
 /// <summary>A list that may hold more picks after the level (a feat, cantrips, spells): <see cref="Added"/> more than before.</summary>
 public sealed record LevelChoice(string Key, string Label, int Added);
 
@@ -26,7 +29,9 @@ public sealed record LevelUpPlan(
     int? ProficiencyAfter,
     IReadOnlyList<LevelChoice> Choices,
     bool NeedsSubclass,
-    IReadOnlyList<RuleViolation> NewViolations)
+    IReadOnlyList<RuleViolation> NewViolations,
+    IReadOnlyList<PendingChoice>? NewChoices = null,
+    IReadOnlyList<RankChange>? RankChanges = null)
 {
     /// <param name="cls">The class gaining the level, as the reader reads it (localized); null when the sheet has none.</param>
     /// <param name="classLevel">That class's level after the level up.</param>
@@ -49,7 +54,12 @@ public sealed record LevelUpPlan(
 
         // What the level itself breaks: a rule the sheet met before and does not after. A limit that grew is a choice, not one.
         var known = before.Violations.Select(Identity).ToHashSet();
-        var broken = after.Violations.Where(v => !known.Contains(Identity(v))).ToList();
+        // An open choice is never one of them (it is a warning, and is listed below as a choice the level opens), whatever list it sits in.
+        var broken = after.Violations.Where(v => !known.Contains(Identity(v)) && !SheetRuleEngine.IsChoiceNotice(v)).ToList();
+
+        // The choices the level opens: on the sheet after it (open, or made on the copy by the stepper), and not (the same choice, by its key) before.
+        var had = before.PendingChoices.Concat(before.MadeChoices).Select(c => c.Key).ToHashSet(StringComparer.Ordinal);
+        var opened = after.PendingChoices.Concat(after.MadeChoices).Where(c => !had.Contains(c.Key)).OrderBy(c => c.Key, StringComparer.Ordinal).ToList();
 
         // A rule broken before and after is the same one even when its numbers moved: "10 spells, only 8 allowed" at this
         // level is "10 spells, only 9 allowed" at the next, and the level did not break it. So the rule, and what it names
@@ -64,7 +74,15 @@ public sealed record LevelUpPlan(
             before.HitPoints is { Active: true } b ? b.Max : null,
             after.HitPoints is { Active: true } a ? a.Max : null,
             Number(before, proficiencyKey), Number(after, proficiencyKey),
-            choices, needsSubclass, broken);
+            choices, needsSubclass, broken, opened, RankChangesOf(before, after));
+    }
+
+    /// <summary>The skills' ranks that are worth a different number after the level (proficiency growing, a formula over the level).</summary>
+    private static IReadOnlyList<RankChange> RankChangesOf(SheetEvaluation before, SheetEvaluation after)
+    {
+        var was = before.RankValues.Where(r => r.Target == SheetRuleEngine.SkillsTarget).ToDictionary(r => r.Rank);
+        return after.RankValues.Where(r => r.Target == SheetRuleEngine.SkillsTarget && was.TryGetValue(r.Rank, out var b) && b.Value != r.Value)
+            .Select(r => new RankChange(r.Key, r.Label, was[r.Rank].Value, r.Value)).ToList();
     }
 
     /// <summary>The <c>features</c> rows of a class or subclass entry at exactly <paramref name="level"/>.</summary>

@@ -194,6 +194,13 @@ else
                         <textarea id="vn-concept-text" class="field-input" rows="3" required readonly="@aiBusy" @bind="concept" placeholder="@L["Vault.ConceptPlaceholder"]" aria-describedby="vn-concept-hint" data-testid="vault-new-concept"></textarea>
                         <div id="vn-concept-hint" class="field-hint">@L["Vault.ConceptHint"]</div>
                     </div>
+                    <fieldset class="mb-3">
+                        <legend class="field-label">@L["Vault.Homebrew"]</legend>
+                        <div class="field-check"><input id="vn-write-off" type="radio" class="field-box" name="vn-write" checked="@(writeEntries == WriteEntries.Off)" disabled="@aiBusy" @onchange="() => writeEntries = WriteEntries.Off" aria-describedby="vn-write-hint" data-testid="vault-new-write-off" /><label for="vn-write-off">@L["Vault.Homebrew.Off"]</label></div>
+                        <div class="field-check"><input id="vn-write-nothing" type="radio" class="field-box" name="vn-write" checked="@(writeEntries == WriteEntries.WhenNothingFits)" disabled="@aiBusy" @onchange="() => writeEntries = WriteEntries.WhenNothingFits" aria-describedby="vn-write-hint" data-testid="vault-new-write-when-nothing-fits" /><label for="vn-write-nothing">@L["Vault.Homebrew.WhenNothingFits"]</label></div>
+                        <div class="field-check"><input id="vn-write-always" type="radio" class="field-box" name="vn-write" checked="@(writeEntries == WriteEntries.Always)" disabled="@aiBusy" @onchange="() => writeEntries = WriteEntries.Always" aria-describedby="vn-write-hint" data-testid="vault-new-write-always" /><label for="vn-write-always">@L["Vault.Homebrew.Always"]</label></div>
+                        <div id="vn-write-hint" class="field-hint">@L["Vault.Homebrew.Hint", AiFeatures.MaxWrittenEntries]</div>
+                    </fieldset>
                 }
                 else
                 {
@@ -257,6 +264,7 @@ else
     private bool aiReady;
     private bool fromConcept;
     private string concept = "";
+    private WriteEntries writeEntries = WriteEntries.WhenNothingFits;
     private bool aiBusy;
     private string? aiError;
     private bool aiStopped;
@@ -384,7 +392,7 @@ else
             var draft = await Ai.CreateCharacterAsync(concept, ActorKind.PlayerCharacter, campaign, system, owner,
                 async type => (await Library.OptionsAsync(campaign, access, type, L.Culture.Name)).Select(i => (i.Entry.Id, i.Entry.Name)).ToList(),
                 async type => (await Library.OptionsAsync(campaign, access, type, L.Culture.Name)).Select(i => i.Entry).ToList(), ct,
-                async () => await CachedEntryResolver.LoadAsync(Library, campaign, access, system!), propose: true);
+                async () => await CachedEntryResolver.LoadAsync(Library, campaign, access, system!), write: writeEntries);
             ct.ThrowIfCancellationRequested();
 
             var created = await VaultService.CreateAsync(owner, systemId, draft.Name, draft);

@@ -14,6 +14,8 @@ sheet speciesApplied = dragonborn
 sheet speed = 30
 sheet str = 15
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -65,6 +67,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## barbarian-11
@@ -80,6 +83,8 @@ sheet speciesApplied = dragonborn
 sheet speed = 30
 sheet str = 19
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -143,6 +148,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## barbarian-20
@@ -158,6 +164,8 @@ sheet speciesApplied = dragonborn
 sheet speed = 30
 sheet str = 20
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -233,6 +241,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 9
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## barbarian-5
@@ -248,6 +257,8 @@ sheet speciesApplied = dragonborn
 sheet speed = 30
 sheet str = 17
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -304,6 +315,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## bard-1
@@ -321,6 +333,8 @@ sheet speciesApplied = dwarf
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -398,6 +412,8 @@ sheet speciesApplied = dwarf
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -493,6 +509,8 @@ sheet speciesApplied = dwarf
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -588,6 +606,8 @@ sheet speciesApplied = dwarf
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -660,6 +680,8 @@ sheet speciesApplied = orc
 sheet speed = 30
 sheet str = 18
 sheet wis = 17
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -728,6 +750,8 @@ warning inventory Actor.Rule.ArmorStealth: Plate Armor: gives disadvantage on St
 
 ## broken-no-class
 sheet armorClass = 9
+derived attacks = 1
+derived critFrom = 20
 derived initiative = -1
 derived proficiencyBonus = 2
 attributes method=point-buy spent=0 budget=27 eligible=[]
@@ -788,6 +812,8 @@ sheet speciesApplied = elf
 sheet speed = 30
 sheet str = 12
 sheet wis = 17
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -841,6 +867,7 @@ passive passivePerception 13
 passive passiveInsight 15
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=13 attack=+5
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## cleric-11
@@ -868,6 +895,8 @@ sheet speciesApplied = elf
 sheet speed = 30
 sheet str = 12
 sheet wis = 20
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -933,6 +962,7 @@ passive passivePerception 15
 passive passiveInsight 19
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=17 attack=+9
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## cleric-20
@@ -966,6 +996,8 @@ sheet speciesApplied = elf
 sheet speed = 30
 sheet str = 12
 sheet wis = 20
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -1043,6 +1075,7 @@ passive passivePerception 15
 passive passiveInsight 21
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=19 attack=+11
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## cleric-5
@@ -1064,6 +1097,8 @@ sheet speciesApplied = elf
 sheet speed = 30
 sheet str = 12
 sheet wis = 19
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -1122,9 +1157,12 @@ passive passivePerception 14
 passive passiveInsight 17
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=15 attack=+7
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
 ## creature-aboleth
+derived attacks = 1
+derived critFrom = 20
 derived initiative = -1
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1172,6 +1210,8 @@ passive passiveInsight 12
 passive passiveInvestigation 14
 
 ## creature-badger
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 0
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1218,6 +1258,8 @@ passive passiveInsight 11
 passive passiveInvestigation 6
 
 ## creature-couatl
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1265,6 +1307,8 @@ passive passiveInsight 15
 passive passiveInvestigation 14
 
 ## creature-ghoul
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1312,6 +1356,8 @@ passive passiveInsight 10
 passive passiveInvestigation 8
 
 ## creature-gold-dragon-wyrmling
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1359,6 +1405,8 @@ passive passiveInsight 10
 passive passiveInvestigation 12
 
 ## creature-lamia
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1406,6 +1454,8 @@ passive passiveInsight 12
 passive passiveInvestigation 12
 
 ## creature-pit-fiend
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1453,6 +1503,8 @@ passive passiveInsight 14
 passive passiveInvestigation 16
 
 ## creature-specter
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1500,6 +1552,8 @@ passive passiveInsight 10
 passive passiveInvestigation 10
 
 ## creature-violet-fungus
+derived attacks = 1
+derived critFrom = 20
 derived initiative = -5
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1546,6 +1600,8 @@ passive passiveInsight 6
 passive passiveInvestigation 5
 
 ## creature-young-copper-dragon
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 2
 attributes method=printed spent=0 budget=null eligible=[]
@@ -1607,6 +1663,8 @@ sheet speciesApplied = gnome
 sheet speed = 30
 sheet str = 12
 sheet wis = 15
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -1660,12 +1718,15 @@ passive passivePerception 12
 passive passiveInsight 12
 passive passiveInvestigation 9
 spellcasting Druid wis dc=12 attack=+4
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## druid-11
 sheet HP = 91
 sheet HP_Max = 91
 sheet armorClass = 15
 sheet cha = 10
+sheet changes_on__choice__circle-of-the-land__land = Long Rest
+sheet changes_on__choice__circle-of-the-land__land_Label = Circle of the Land Spells
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 14
@@ -1686,6 +1747,8 @@ sheet speciesApplied = gnome
 sheet speed = 30
 sheet str = 12
 sheet wis = 19
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -1751,12 +1814,16 @@ passive passivePerception 14
 passive passiveInsight 14
 passive passiveInvestigation 9
 spellcasting Druid wis dc=16 attack=+8
+warning choice__circle-of-the-land__land Actor.Rule.ChoiceRowPending: Circle of the Land Spells (Circle of the Land): choose 1 more.
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## druid-20
 sheet HP = 203
 sheet HP_Max = 203
 sheet armorClass = 15
 sheet cha = 10
+sheet changes_on__choice__circle-of-the-land__land = Long Rest
+sheet changes_on__choice__circle-of-the-land__land_Label = Circle of the Land Spells
 sheet con = 20
 sheet darkvision = 60
 sheet dex = 15
@@ -1783,6 +1850,8 @@ sheet speciesApplied = gnome
 sheet speed = 30
 sheet str = 12
 sheet wis = 20
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -1860,12 +1929,16 @@ passive passivePerception 15
 passive passiveInsight 15
 passive passiveInvestigation 9
 spellcasting Druid wis dc=19 attack=+11
+warning choice__circle-of-the-land__land Actor.Rule.ChoiceRowPending: Circle of the Land Spells (Circle of the Land): choose 1 more.
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## druid-5
 sheet HP = 43
 sheet HP_Max = 43
 sheet armorClass = 15
 sheet cha = 10
+sheet changes_on__choice__circle-of-the-land__land = Long Rest
+sheet changes_on__choice__circle-of-the-land__land_Label = Circle of the Land Spells
 sheet con = 16
 sheet darkvision = 60
 sheet dex = 14
@@ -1880,6 +1953,8 @@ sheet speciesApplied = gnome
 sheet speed = 30
 sheet str = 12
 sheet wis = 17
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -1938,6 +2013,8 @@ passive passivePerception 13
 passive passiveInsight 13
 passive passiveInvestigation 9
 spellcasting Druid wis dc=14 attack=+6
+warning choice__circle-of-the-land__land Actor.Rule.ChoiceRowPending: Circle of the Land Spells (Circle of the Land): choose 1 more.
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## fighter-1
 sheet HP = 11
@@ -1951,6 +2028,8 @@ sheet speciesApplied = goliath
 sheet speed = 35
 sheet str = 15
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -2001,6 +2080,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
+warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## fighter-11
@@ -2015,6 +2095,8 @@ sheet speciesApplied = goliath
 sheet speed = 35
 sheet str = 20
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -2079,6 +2161,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
+warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## fighter-20
@@ -2093,6 +2176,8 @@ sheet speciesApplied = goliath
 sheet speed = 35
 sheet str = 20
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -2170,6 +2255,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 9
+warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## fighter-5
@@ -2184,6 +2270,8 @@ sheet speciesApplied = goliath
 sheet speed = 35
 sheet str = 17
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -2239,6 +2327,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
+warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
 ## manual-fighter5
@@ -2250,6 +2339,8 @@ sheet speciesApplied = human
 sheet speed = 30
 sheet str = 19
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -2319,6 +2410,8 @@ sheet speciesApplied = halfling
 sheet speed = 30
 sheet str = 12
 sheet wis = 13
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 4
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -2391,6 +2484,8 @@ sheet speciesApplied = gnome
 sheet speed = 30
 sheet str = 7
 sheet wis = 9
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 4
 derived proficiencyBonus = 2
 attributes method=manual spent=0 budget=null eligible=[con, int, wis]
@@ -2443,6 +2538,7 @@ passive passiveInsight 9
 passive passiveInvestigation 16
 spellcasting Wizard int dc=16 attack=+8
 violation int Actor.Rule.ScoreMax: Intelligence: scores can't exceed 20.
+warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
 
 ## monk-1
 sheet HP = 10
@@ -2456,6 +2552,8 @@ sheet speciesApplied = halfling
 sheet speed = 30
 sheet str = 12
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 3
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -2516,6 +2614,8 @@ sheet speciesApplied = halfling
 sheet speed = 30
 sheet str = 12
 sheet wis = 15
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -2588,6 +2688,8 @@ sheet speciesApplied = halfling
 sheet speed = 30
 sheet str = 12
 sheet wis = 20
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -2672,6 +2774,8 @@ sheet speciesApplied = halfling
 sheet speed = 30
 sheet str = 12
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 4
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -2745,6 +2849,8 @@ sheet speciesApplied = dwarf
 sheet speed = 30
 sheet str = 13
 sheet wis = 17
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 0
 derived proficiencyBonus = 3
 attributes method=manual spent=0 budget=null eligible=[int, wis, cha]
@@ -2826,6 +2932,8 @@ sheet speciesApplied = human
 sheet speed = 30
 sheet str = 19
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 0
 derived proficiencyBonus = 3
 attributes method=manual spent=0 budget=null eligible=[str, dex, con]
@@ -2910,6 +3018,8 @@ sheet speciesApplied = elf
 sheet speed = 30
 sheet str = 10
 sheet wis = 15
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 6
 attributes method=manual spent=0 budget=null eligible=[dex, con, int]
@@ -2986,6 +3096,7 @@ passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 11
 spellcasting Ranger wis dc=16 attack=+8
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 
 ## multiclass-warlock5-sorcerer3
 sheet HP = 56
@@ -3006,6 +3117,8 @@ sheet slots_2_Max = 2
 sheet speciesApplied = tiefling
 sheet speed = 30
 sheet wis = 13
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 3
 attributes method=manual spent=0 budget=null eligible=[con, int, wis]
@@ -3070,6 +3183,7 @@ spellcasting Warlock cha dc=14 attack=+6
 spellcasting Sorcerer cha dc=14 attack=+6
 violation cantrips Actor.Rule.LimitForClass: Cantrips: 5 for Sorcerer, but Sorcerer allows only 4 at this level.
 violation spells Actor.Rule.LimitForClass: Prepared spells: 7 for Sorcerer, but Sorcerer allows only 6 at this level.
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
 
 ## paladin-1
@@ -3086,6 +3200,8 @@ sheet speciesApplied = human
 sheet speed = 30
 sheet str = 15
 sheet wis = 11
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -3158,6 +3274,8 @@ sheet speciesApplied = human
 sheet speed = 30
 sheet str = 19
 sheet wis = 11
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -3246,6 +3364,8 @@ sheet speciesApplied = human
 sheet speed = 30
 sheet str = 20
 sheet wis = 11
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -3340,6 +3460,8 @@ sheet speciesApplied = human
 sheet speed = 30
 sheet str = 17
 sheet wis = 11
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -3414,6 +3536,8 @@ sheet speciesApplied = orc
 sheet speed = 30
 sheet str = 12
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 3
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -3488,6 +3612,8 @@ sheet speciesApplied = orc
 sheet speed = 30
 sheet str = 12
 sheet wis = 15
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -3578,6 +3704,8 @@ sheet speciesApplied = orc
 sheet speed = 30
 sheet str = 12
 sheet wis = 20
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -3674,6 +3802,8 @@ sheet speciesApplied = orc
 sheet speed = 30
 sheet str = 12
 sheet wis = 14
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 4
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -3747,6 +3877,8 @@ sheet speciesApplied = tiefling
 sheet speed = 30
 sheet str = 12
 sheet wis = 15
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -3796,6 +3928,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 
 ## rogue-11
 sheet HP = 80
@@ -3810,6 +3943,8 @@ sheet speciesApplied = tiefling
 sheet speed = 30
 sheet str = 12
 sheet wis = 15
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -3872,6 +4007,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 
 ## rogue-20
 sheet HP = 203
@@ -3886,6 +4022,8 @@ sheet speciesApplied = tiefling
 sheet speed = 30
 sheet str = 12
 sheet wis = 16
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -3960,6 +4098,7 @@ skill survival +3
 passive passivePerception 13
 passive passiveInsight 19
 passive passiveInvestigation 9
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 
 ## rogue-5
 sheet HP = 38
@@ -3974,6 +4113,8 @@ sheet speciesApplied = tiefling
 sheet speed = 30
 sheet str = 12
 sheet wis = 15
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 3
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -4028,6 +4169,7 @@ skill survival +2
 passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
+warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
 
 ## sorcerer-1
 sheet HP = 9
@@ -4044,6 +4186,8 @@ sheet speciesApplied = dragonborn
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -4093,6 +4237,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=12 attack=+4
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-11
 sheet HP = 79
@@ -4119,6 +4264,8 @@ sheet speciesApplied = dragonborn
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -4180,6 +4327,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=16 attack=+8
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-20
 sheet HP = 182
@@ -4212,6 +4360,8 @@ sheet speciesApplied = dragonborn
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -4285,6 +4435,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=19 attack=+11
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-5
 sheet HP = 37
@@ -4305,6 +4456,8 @@ sheet speciesApplied = dragonborn
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
@@ -4359,6 +4512,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Sorcerer cha dc=14 attack=+6
+warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## warlock-1
 sheet HP = 12
@@ -4375,6 +4529,8 @@ sheet speciesApplied = dwarf
 sheet speed = 30
 sheet str = 10
 sheet wis = 13
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -4443,6 +4599,8 @@ sheet speciesApplied = dwarf
 sheet speed = 30
 sheet str = 10
 sheet wis = 13
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -4523,6 +4681,8 @@ sheet speciesApplied = dwarf
 sheet speed = 30
 sheet str = 10
 sheet wis = 13
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -4615,6 +4775,8 @@ sheet speciesApplied = dwarf
 sheet speed = 30
 sheet str = 10
 sheet wis = 13
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
@@ -4688,6 +4850,8 @@ sheet speciesApplied = elf
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -4737,6 +4901,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 12
 spellcasting Wizard int dc=12 attack=+4
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 
 ## wizard-11
 sheet HP = 79
@@ -4763,6 +4928,8 @@ sheet speciesApplied = elf
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -4824,6 +4991,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 14
 spellcasting Wizard int dc=16 attack=+8
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 
 ## wizard-20
 sheet HP = 182
@@ -4856,6 +5024,8 @@ sheet speciesApplied = elf
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -4929,6 +5099,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 15
 spellcasting Wizard int dc=19 attack=+11
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 
 ## wizard-5
 sheet HP = 37
@@ -4949,6 +5120,8 @@ sheet speciesApplied = elf
 sheet speed = 30
 sheet str = 10
 sheet wis = 12
+derived attacks = 1
+derived critFrom = 20
 derived initiative = 2
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
@@ -5003,3 +5176,4 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 13
 spellcasting Wizard int dc=14 attack=+6
+warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.

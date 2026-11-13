@@ -6,7 +6,7 @@
    rests that refill them, then a line per number or list a feature changed, each with the feature it came from. The owner
    says where a change goes, as with the slot tracker. *@
 
-@if (Evaluation is { } evaluation && (evaluation.Counters.Count > 0 || Lines.Count > 0))
+@if (Evaluation is { } evaluation && (evaluation.Counters.Count > 0 || evaluation.Spenders.Count > 0 || Lines.Count > 0))
 {
     <section class="panel" aria-labelledby="@(id)-heading" data-testid="features-panel">
         <div class="panel-title"><h2 id="@(id)-heading" class="h5"><LucideIcon IconName="sparkles" Size="18" Class="title-icon" /> @L["Actor.Features.Title"]</h2></div>
@@ -35,14 +35,23 @@
                             <span class="ms-auto d-flex gap-1">
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current <= 0)" data-testid="@($"feature-use-{counter.Key}")"
                                              aria-label="@L["Actor.Features.UseOther", counter.Feature.Name]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, -1, counter.Feature.Name))">@L["Actor.Slots.Use"]</CodexButton>
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"feature-regain-{counter.Key}")"
-                                             aria-label="@L["Actor.Features.RegainOther", counter.Feature.Name]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, 1, counter.Feature.Name))">@L["Actor.Slots.Regain"]</CodexButton>
+                                @if (counter.CanRegain(IsDm))
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"feature-regain-{counter.Key}")"
+                                                 aria-label="@L["Actor.Features.RegainOther", counter.Feature.Name]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, 1, counter.Feature.Name))">@L["Actor.Slots.Regain"]</CodexButton>
+                                }
                             </span>
                         }
                     </li>
                 }
             </ul>
 
+        }
+
+        <FeatureSpenders Evaluation="evaluation" Definition="Definition" Value="key => YamlValues.GetInt(Sheet, key)" ReadOnly="ReadOnly" Spend="SpendAsync" TestPrefix="feature" />
+
+        @if (evaluation.Counters.Count > 0)
+        {
             @if (!ReadOnly && Rests.Count > 0)
             {
                 <div class="d-flex flex-wrap gap-2 mt-2">
@@ -87,6 +96,14 @@
     /// <summary>(key, delta, the feature's name) for a Use or Regain.</summary>
     [Parameter] public EventCallback<(string Key, int Delta, string Label)> OnAdjust { get; set; }
 
+    /// <summary>The viewer is the GM, who alone may regain a counter marked <c>regain: gm</c>.</summary>
+    [Parameter] public bool IsDm { get; set; }
+
+    /// <summary>Spends from a pool for a feature that spends (key, minus the amount, the log label); false when refused.</summary>
+    [Parameter] public Func<(string Key, int Delta, string Label), Task<bool>>? Spend { get; set; }
+
+    private Task<bool> SpendAsync((string Key, int Delta, string Label) change) => Spend?.Invoke(change) ?? Task.FromResult(false);
+
     /// <summary>The rest taken.</summary>
     [Parameter] public EventCallback<string> OnRest { get; set; }
 
@@ -104,8 +121,10 @@
             if (Evaluation == null) return lines;
             foreach (var granted in Evaluation.Granted)
             {
-                var floor = string.Equals(ModifierStacking.RuleOf(Definition?.ModifierTypes ?? new ModifierTypesDefinition(), granted.Type), ModifierStacking.Best, StringComparison.OrdinalIgnoreCase);
-                var text = floor
+                var rule = ModifierStacking.RuleOf(Definition?.ModifierTypes ?? new ModifierTypesDefinition(), granted.Type);
+                var text = ModifierStacking.IsCeiling(rule)
+                    ? L["Actor.Features.AtMost", TargetLabel(granted.Target), granted.Amount]
+                    : ModifierStacking.IsFloor(rule)
                     ? L["Actor.Features.AtLeast", TargetLabel(granted.Target), granted.Amount]
                     : L["Actor.Features.Adds", TargetLabel(granted.Target), (granted.Amount >= 0 ? "+" : "") + granted.Amount];
                 lines.Add(new Line(text, granted.Feature.Name, granted.Counted));
@@ -117,6 +136,7 @@
                 {
                     var reached = feature.LevelKey == null ? null : YamlValues.ToNumber(feature.View.GetValueOrDefault(feature.LevelKey));
                     if (add.Level.HasValue && !(reached >= add.Level)) continue;
+                    if (add.Entries.Count == 0) continue; // a choice: listed by the sheet's choices, not here
                     var list = Rules.Lists.FirstOrDefault(l => l.Key == add.To);
                     var names = add.Entries.Select(e => list == null ? Definition?.DisplayValue(e) ?? e : EntryName?.Invoke(list.TargetEntityType, e) ?? e);
                     lines.Add(new Line(L["Actor.Features.Adds", list?.Label ?? TargetLabel(add.To), string.Join(", ", names)], feature.Name, true));
@@ -128,7 +148,9 @@
     }
 
     private string TargetLabel(string key) =>
-        Definition?.ActorFields.FirstOrDefault(f => f.Key == key)?.Label
+        key == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"].ToString()
+        : key == SheetRuleEngine.SkillsTarget && !string.IsNullOrWhiteSpace(Rules.Skills?.Label) ? Rules.Skills.Label
+        : Definition?.ActorFields.FirstOrDefault(f => f.Key == key)?.Label
         ?? Rules.Derived.FirstOrDefault(d => d.Key == key)?.Label
         ?? Definition?.Resources.FirstOrDefault(r => r.Key == key || r.MaxKey == key)?.Label
         ?? key;

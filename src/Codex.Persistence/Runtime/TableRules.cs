@@ -173,6 +173,41 @@ internal static class TableRules
         }).ToList();
     }
 
+    /// <summary>
+    /// Refills the creature's feature counters whose refill rules name <paramref name="moment"/> (a rest's name, or
+    /// <see cref="FeatureRecovery.Initiative"/> / <see cref="FeatureRecovery.Dawn"/>): all of it, a part, or dice rolled with the
+    /// table's dice and entered in the roll log. A rule marked "when empty" applies only if nothing is left. Returns one message per
+    /// counter that gained (<c>Rest.Refilled</c>), for the log. The rules are read from the sheet, so the table needs no evaluation.
+    /// </summary>
+    public static List<EventMessage> RefillCounters(CampaignRuntime runtime, string actorId, Entity entity, string moment, string rollerUserId = "")
+    {
+        var messages = new List<EventMessage>();
+        if (!entity.Has<ResourcePoolComponent>() || runtime.GetActorDocument(actorId)?.Sheet is not { } sheet) return messages;
+
+        var pool = entity.Get<ResourcePoolComponent>();
+        foreach (var key in sheet.Keys.Where(SheetRuleEngine.IsUsesKey).ToList())
+        {
+            var rules = FeatureRecovery.For(sheet, key, moment);
+            if (rules.Count == 0 || !pool.Pools.TryGetValue(key + SheetRuleEngine.UsesMaxSuffix, out var max)) continue;
+            var label = SheetRuleEngine.UsesLabel(sheet, key);
+            var outcome = FeatureRecovery.Apply(rules, pool.Pools.TryGetValue(key, out var current) ? current : max, max, dice =>
+            {
+                var rolled = runtime.DiceRoller.Roll(dice);
+                runtime.RecordRoll(new RollLogEntry
+                {
+                    ActorId = actorId, RollerUserId = rollerUserId, Expression = dice, Result = rolled.ToString(), Total = rolled.Total, Label = label,
+                    Kept = rolled.Kept.ToList(), Dropped = rolled.Dropped.ToList(), Modifier = rolled.Modifier, CheckDieIndex = rolled.CheckDieIndex
+                });
+                return rolled.Total;
+            });
+            if (outcome.Regained <= 0) continue;
+            pool.Set(key, outcome.Value);
+            messages.Add(EventMessage.Of("Rest.Refilled", EventTerm.Slot(key, label), outcome.Regained));
+        }
+
+        return messages;
+    }
+
     // ---- State queries ----
 
     public static bool IsDead(CampaignRuntime runtime, Entity entity) =>

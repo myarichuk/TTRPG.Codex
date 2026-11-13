@@ -1,0 +1,79 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* Features that spend from a pool (spends: { key, amount }): a "Use (N)" button each, paid through the generic cost, disabled with a
+   reason a screen reader reads when the pool has too little left. A feature whose amount is "ask" (Lay on Hands) gets a small
+   number box, one to what is left. The owner says where a spend goes, as ActionsPanel's owners do. *@
+
+@if (Spenders.Count > 0)
+{
+    <ul class="list-unstyled mb-2" data-testid="@(TestPrefix)-spenders">
+        @for (var i = 0; i < Spenders.Count; i++)
+        {
+            var spender = Spenders[i];
+            var n = i;
+            var name = spender.Feature.Name;
+            var pool = PoolName(spender.Cost);
+            var left = spender.Cost.Left(Value) ?? 0;
+            var amount = spender.Ask ? Math.Clamp(asked.GetValueOrDefault(n, 1), 1, Math.Max(left, 1)) : spender.Cost.Amount;
+            var cost = spender.Cost with { Amount = amount };
+            var payable = cost.CanPay(Value);
+            var reasonId = $"{id}-{n}-reason";
+            var amountId = $"{id}-{n}-amount";
+            <li class="slot-row" data-testid="@(TestPrefix)-spender-@n">
+                <span class="slot-level">@name</span>
+                <span class="small-muted" data-testid="@(TestPrefix)-spender-left-@n">@L["Actor.Features.SpendLeft", pool, left]</span>
+                @if (!ReadOnly)
+                {
+                    <span class="ms-auto d-flex align-items-center gap-1">
+                        @if (spender.Ask)
+                        {
+                            <label for="@amountId" class="visually-hidden">@L["Actor.Features.SpendAmountOf", name]</label>
+                            <input id="@amountId" type="number" min="1" max="@Math.Max(left, 1)" class="field-input field-sm" style="width:4.5rem" value="@amount"
+                                   data-testid="@(TestPrefix)-spender-amount-@n"
+                                   @onchange="e => asked[n] = int.TryParse(e.Value?.ToString(), out var typed) ? typed : 1" />
+                        }
+                        @if (!payable)
+                        {
+                            <span class="visually-hidden" id="@reasonId" data-testid="@(TestPrefix)-spender-cannot-@n">@L["Actor.Features.SpendCannot", pool]</span>
+                        }
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(!payable)" data-testid="@($"{TestPrefix}-spender-use-{n}")"
+                                     aria-describedby="@(payable ? null : reasonId)"
+                                     aria-label="@L["Actor.Features.SpendUseOf", name, amount, pool]" OnClick="() => UseAsync(spender, cost)">@L["Actor.Features.SpendUse", amount]</CodexButton>
+                    </span>
+                }
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter, EditorRequired] public SheetEvaluation? Evaluation { get; set; }
+
+    /// <summary>Reads a pool's key ("uses_focus" or its "_Max"), or null when absent.</summary>
+    [Parameter, EditorRequired] public Func<string, int?> Value { get; set; } = _ => null;
+
+    /// <summary>The system as the reader reads it, for the pool's name.</summary>
+    [Parameter] public SystemDefinition? Definition { get; set; }
+
+    [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>Spends from a pool: (its key, minus the amount, what it was spent on). False when the owner refused it.</summary>
+    [Parameter, EditorRequired] public Func<(string Key, int Delta, string Label), Task<bool>> Spend { get; set; } = _ => Task.FromResult(false);
+
+    /// <summary>Starts the test ids, so the sheet's and the table card's buttons differ.</summary>
+    [Parameter] public string TestPrefix { get; set; } = "feature";
+
+    private readonly string id = $"spenders-{Guid.NewGuid():N}";
+    private readonly Dictionary<int, int> asked = new();
+
+    private IReadOnlyList<FeatureSpender> Spenders => Evaluation?.Spenders ?? (IReadOnlyList<FeatureSpender>)Array.Empty<FeatureSpender>();
+
+    private string PoolName(ActionCost cost) => cost.Label is { } label ? Definition?.DisplayValue(label) ?? label : cost.Key ?? string.Empty;
+
+    private Task UseAsync(FeatureSpender spender, ActionCost cost) =>
+        cost.Key is { } key
+            ? Spend((key, -cost.Amount, L["Actor.Features.Spent", spender.Feature.Name, cost.Amount, PoolName(cost)]))
+            : Task.CompletedTask;
+}

@@ -28,7 +28,12 @@
   <data name="Vault.StartConcept" xml:space="preserve"><value>Идеи: ИИ набросает лист и историю</value></data>
   <data name="Vault.Concept" xml:space="preserve"><value>Идея</value></data>
   <data name="Vault.ConceptPlaceholder" xml:space="preserve"><value>например: бывший пират, ставший храмовым стражем, 3-й уровень.</value></data>
-  <data name="Vault.ConceptHint" xml:space="preserve"><value>ИИ выбирает классы, народы, снаряжение и прочее только из библиотеки сервера для этой системы. Потом проверьте лист.</value></data>
+  <data name="Vault.ConceptHint" xml:space="preserve"><value>ИИ выбирает классы, народы, снаряжение и прочее из библиотеки сервера для этой системы. Потом проверьте лист.</value></data>
+  <data name="Vault.Homebrew" xml:space="preserve"><value>Самоделки</value></data>
+  <data name="Vault.Homebrew.Off" xml:space="preserve"><value>Только то, что есть в библиотеке</value></data>
+  <data name="Vault.Homebrew.WhenNothingFits" xml:space="preserve"><value>Писать самоделку, если ничего не подходит</value></data>
+  <data name="Vault.Homebrew.Always" xml:space="preserve"><value>Писать самоделки, даже если в библиотеке есть подходящее</value></data>
+  <data name="Vault.Homebrew.Hint" xml:space="preserve"><value>ИИ пишет не больше {0} записей, например подкласс или заклинание. Они остаются у персонажа, пока мастер не примет их в кампанию.</value></data>
   <data name="Vault.Generate" xml:space="preserve"><value>Набросать персонажа</value></data>
   <data name="Vault.Generating" xml:space="preserve"><value>Набрасываю…</value></data>
   <data name="Vault.NoAi" xml:space="preserve"><value>Для вас не настроена модель ИИ. Добавьте её в настройках ИИ.</value></data>

@@ -436,11 +436,14 @@ public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) 
 /// deterministic order - two participants must never silently swap places between renders.
 /// Whoever is acting when the order changes keeps the turn.
 /// </summary>
-public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, int TieBreak = 0) : IRuntimeCommand
+public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, int TieBreak = 0, string RollerUserId = "") : IRuntimeCommand
 {
-    // Doesn't touch ActorDocument.State - initiative order lives on the EncounterDocument, which
-    // the runtime persists separately (see CampaignRuntime.PersistEncounterAsync).
-    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+    // Initiative order lives on the EncounterDocument, which the runtime persists separately (see
+    // CampaignRuntime.PersistEncounterAsync); only an actor whose counters refilled on entering it has changed state too.
+    public IReadOnlyCollection<string> AffectedActorIds => _refilled.Count > 0 ? new[] { ActorId } : Array.Empty<string>();
+
+    // Set by Apply and read by Describe on the same instance.
+    private List<EventMessage> _refilled = new();
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -450,6 +453,7 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
         var underWay = encounter.Round > 1 || encounter.Participants.Any(p => p.HasActed);
         var current = underWay && encounter.TurnIndex < encounter.Participants.Count ? encounter.Participants[encounter.TurnIndex] : null;
         var participant = encounter.Participants.FirstOrDefault(p => p.ActorId == ActorId);
+        var joined = participant == null;
         if (participant == null)
         {
             participant = new EncounterParticipant { ActorId = ActorId };
@@ -461,10 +465,18 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
         CampaignRuntime.SortParticipants(encounter);
         encounter.TurnIndex = current != null ? Math.Max(0, encounter.Participants.IndexOf(current)) : 0;
         runtime.MarkEncounterDirty();
+
+        // The counters that refill on initiative do so when the actor enters the order, not on a corrected roll.
+        if (joined && runtime.GetEntity(ActorId) is { } entity)
+        {
+            _refilled = TableRules.RefillCounters(runtime, ActorId, entity, Codex.Core.Rules.FeatureRecovery.Initiative, RollerUserId);
+        }
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
-        SessionEvent.From("Initiative", new[] { EventMessage.Of("Initiative.Rolled", runtime.ActorTerm(ActorId), InitiativeRoll) }, new[] { ActorId });
+        SessionEvent.From("Initiative", new[] { (_refilled.Count > 0
+            ? EventMessage.Of("Initiative.RolledWith", runtime.ActorTerm(ActorId), InitiativeRoll).With(_refilled)
+            : EventMessage.Of("Initiative.Rolled", runtime.ActorTerm(ActorId), InitiativeRoll)) }, new[] { ActorId });
 }
 
 /// <summary>Rolls <paramref name="Expression"/> (the initiative die with the actor's bonus) once, logs that roll and puts
@@ -472,10 +484,12 @@ public sealed record SetInitiativeCommand(string ActorId, int InitiativeRoll, in
 /// log and the order showed two different numbers (D7).</summary>
 public sealed record RollInitiativeCommand(string ActorId, string Expression, string RollerUserId, int TieBreak = 0) : IRuntimeCommand
 {
-    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+    // The actor's counters may refill on entering the order, which the set command reports.
+    public IReadOnlyCollection<string> AffectedActorIds => _set?.AffectedActorIds ?? Array.Empty<string>();
 
     // Set by Apply and read by Describe on the same instance, as RollDiceCommand does.
     private DiceRollResult? _result;
+    private SetInitiativeCommand? _set;
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -492,11 +506,12 @@ public sealed record RollInitiativeCommand(string ActorId, string Expression, st
             Modifier = _result.Modifier,
             CheckDieIndex = _result.CheckDieIndex
         });
-        new SetInitiativeCommand(ActorId, _result.Total, TieBreak).Apply(runtime);
+        _set = new SetInitiativeCommand(ActorId, _result.Total, TieBreak, RollerUserId);
+        _set.Apply(runtime);
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) =>
-        SessionEvent.From("Initiative", new[] { EventMessage.Of("Initiative.Rolled", runtime.ActorTerm(ActorId), _result?.Total ?? 0) }, new[] { ActorId });
+        _set?.Describe(runtime) ?? SessionEvent.From("Initiative", new[] { EventMessage.Of("Initiative.Rolled", runtime.ActorTerm(ActorId), 0) }, new[] { ActorId });
 }
 
 /// <summary>Moves the encounter to the next participant's turn (3.5): end-of-turn effects
@@ -993,6 +1008,22 @@ public sealed record LogWikiRevealCommand(string PageTitle) : IRuntimeCommand
         SessionEvent.From("WikiReveal", new[] { EventMessage.Of("Wiki.Revealed", PageTitle) });
 }
 
+/// <summary>Logs that a player changed a choice a feature left them (an expertise pick, a skill) on their sheet while a session is on,
+/// so the table sees it and the recap has it. Changes nothing in the world: the sheet is saved on its own. Only the feature's name and the
+/// names of the picks are logged. Players who can't see the character don't get the event.</summary>
+public sealed record LogChoiceChangedCommand(string ActorId, string ActorName, string Feature, string Picks) : IRuntimeCommand
+{
+    // The event names the character, but the command writes nothing to it: the sheet is saved on its own.
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    public void Apply(CampaignRuntime runtime)
+    {
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("ChoiceChanged", new[] { EventMessage.Of("Actor.ChoiceChanged", EventTerm.Actor(ActorId, ActorName), Feature, Picks) }, new[] { ActorId });
+}
+
 /// <summary>
 /// Raises one of the system's declared events on an actor at the table (overhaul step 6): <c>sessionEnd</c> with the answers,
 /// <c>advance</c>, a custom one (<c>assist</c>), or an intent the GM makes directly (<c>mark</c> harm, <c>adjust</c> stress).
@@ -1023,26 +1054,37 @@ public sealed record RaiseEventCommand(string ActorId, string Type, IReadOnlyDic
             outcome.Touched.Count > 0 ? outcome.Touched.Distinct().ToArray() : new[] { actorId });
 }
 
-/// <summary>Spends or regains one or more points of an expendable pool (a spell slot level, say),
-/// clamped between zero and the pool's maximum. <paramref name="Label"/> is what the log calls it
-/// ("level 3 spell slot").</summary>
+/// <summary>Spends or regains one or more points of an expendable pool (a spell slot level, a feature's uses). A spend larger
+/// than what is left is refused and changes nothing (<see cref="Failed"/> says so, and the log says it was refused), so two
+/// people spending the last point at once cannot both succeed; a regain stops at the pool's maximum. <paramref name="Label"/>
+/// is what the log calls it ("level 3 spell slot").</summary>
 public sealed record AdjustResourceCommand(string ActorId, string PoolName, int Delta, string Label) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
 
     public string UndoKind => Delta < 0 ? "ResourceSpent" : "ResourceRegained";
 
+    /// <summary>Whether the runtime ran it (false until then, and when the table closed first).</summary>
+    public bool Applied { get; private set; }
+
+    /// <summary>Once applied: why the spend was refused (not enough left), or null.</summary>
+    public string? Failed { get; private set; }
+
+    /// <summary>Applied and not refused: the points were spent or regained.</summary>
+    public bool Succeeded => Applied && Failed == null;
+
     public void Apply(CampaignRuntime runtime)
     {
-        if (runtime.GetEntity(ActorId) is { } e)
+        Applied = true;
+        if (runtime.GetEntity(ActorId) is { } e && !runtime.World.AdjustResource(e, PoolName, Delta, key => TableRules.MaxKeyOf(runtime, key)))
         {
-            runtime.World.AdjustResource(e, PoolName, Delta, key => TableRules.MaxKeyOf(runtime, key));
+            Failed = $"Not enough {PoolName} left to spend {-Delta}.";
         }
     }
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From(
         Delta < 0 ? "ResourceSpent" : "ResourceRegained",
-        new[] { EventMessage.Of(Delta < 0 ? "Resource.Used" : "Resource.Regained", runtime.ActorTerm(ActorId), Math.Abs(Delta), EventTerm.Slot(PoolName, Label)) },
+        new[] { EventMessage.Of(Failed != null ? "Resource.Refused" : Delta < 0 ? "Resource.Used" : "Resource.Regained", runtime.ActorTerm(ActorId), Math.Abs(Delta), EventTerm.Slot(PoolName, Label)) },
         new[] { ActorId });
 }
 
@@ -1061,6 +1103,8 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
         if (runtime.GetEntity(ActorId) is { } e)
         {
             _happened = TableRules.Rest(runtime, ActorId, e, RestName, PoolNames);
+            // The feature counters that name this rest refill by their own rules: all, a part, or a roll.
+            _happened.AddRange(TableRules.RefillCounters(runtime, ActorId, e, RestName));
             if (TableEvents.Handles(runtime, "rest"))
             {
                 _happened.AddRange(TableEvents.Raise(runtime, ActorId, new Codex.Core.Rules.SheetEvent("rest",
@@ -1071,6 +1115,26 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
 
     public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Rest",
         new[] { EventMessage.Of(_happened.Count > 0 ? "Rest.TookWith" : "Rest.Took", runtime.ActorTerm(ActorId), EventTerm.Rest(RestName)).With(_happened) },
+        new[] { ActorId });
+}
+
+/// <summary>The GM calls dawn for a creature: the feature counters that refill at dawn do so (all, a part, or a roll), and the
+/// log says what came back. Undoable like a rest. No rest rule runs: dawn is a moment, not a rest the system names.</summary>
+public sealed record DawnCommand(string ActorId) : IUndoableCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
+
+    public string UndoKind => "Rest";
+
+    private List<EventMessage> _happened = new();
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        if (runtime.GetEntity(ActorId) is { } e) _happened = TableRules.RefillCounters(runtime, ActorId, e, Codex.Core.Rules.FeatureRecovery.Dawn);
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Rest",
+        new[] { (_happened.Count > 0 ? EventMessage.Of("Rest.DawnWith", runtime.ActorTerm(ActorId)).With(_happened) : EventMessage.Of("Rest.Dawn", runtime.ActorTerm(ActorId))) },
         new[] { ActorId });
 }
 

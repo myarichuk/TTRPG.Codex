@@ -446,8 +446,10 @@ public class SrdSheetScenarioTests : IAsyncLifetime
         Assert.Equal(10 + 2 + 3, evaluation.Passives.Single(p => p.Key == "passivePerception").Value);
         Assert.Equal(10 + 2, evaluation.Passives.Single(p => p.Key == "passiveInsight").Value); // Wisdom +2, no proficiency
 
+        // Ranks are a plain max over the lists (ranked lists design): expertise alone is expertise, so it is no longer a warning.
         var noProficiency = Engine().Evaluate(NewSheet("wizard", 5, ("skillExpertise", Items("stealth"))));
-        Assert.Contains(noProficiency.Warnings, w => w.Message.Contains("expertise but no proficiency"));
+        Assert.True(noProficiency.Skills.Single(s => s.Key == "stealth").Expert);
+        Assert.DoesNotContain(noProficiency.Warnings, w => w.Message.Contains("expertise but no proficiency"));
     }
 
     [Fact]

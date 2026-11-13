@@ -1,0 +1,288 @@
+0|fits|second delayed roll of same type; count plus second roll covers
+1|breaks|DT: damage type chosen per cast
+2|fits|per-slot extra targets; count only, no roll
+3|breaks|SM: summons undead with stat block
+4|breaks|MM: several modes with different dice and effects
+5|false_positive|no damage or heal numbers; end-state conditions only
+6|breaks|RC: recurring 1 HP heal each turn in aura
+7|breaks|SM: transforms creature into stat-block form
+8|fits|per-slot extra targets; count only
+9|fits|per-slot extra targets; count only
+10|fits|per-slot extra targets; count only
+11|breaks|TG: bonus die also applies to saves; modifiers target attack and damage only
+12|fits|per-slot extra targets; count only
+13|breaks|TB: rolls 1d6 each turn to pick an effect
+14|fits|count covers bolts; one damage roll
+15|fits|count per slot level covers extra bolts
+16|fits|per-slot extra targets; count only
+17|fits|per-slot extra targets; count only
+18|breaks|DT: damage type chosen per cast; matching-dice bounce
+19|fits|per-slot extra targets; count only
+20|breaks|MM: per-creature choice of heal or damage light
+21|breaks|DT: damage type set by chosen element; second roll on save
+22|breaks|DT: damage type chosen per cast (element)
+23|breaks|TB: rolled duration of 1d4x10 minutes
+24|breaks|SM: creates undead stat blocks
+25|false_positive|1 HP survival state; no use numbers
+26|false_positive|single beam; no count of beams
+27|breaks|DT: damage type chosen per cast
+28|breaks|MM: fissure depth dice plus area effects; no geometry field
+29|fits|beam count by level plus one damage roll
+30|fits|beam count scales by character level
+31|fits|per-slot extra targets; count only
+32|breaks|HL: temporary HP grant; no temp HP field
+33|false_positive|familiar HP numbers, not a damage or heal use
+34|false_positive|utility route spell; no summon or stat block
+35|false_positive|utility detection spell; no summon or stat block
+36|fits|per-slot extra targets; count only
+37|breaks|DT: damage type chosen at cast; turn-end trigger
+38|breaks|RC: turn-end trigger damage with chosen type
+39|fits|per-slot extra targets; count only
+40|fits|per-slot extra targets; count only
+41|breaks|DT: damage type chosen at creation
+42|breaks|TG: adds 1d4 to ability checks; no check target
+43|breaks|TG: chosen resistance aura; no spell resistance field
+44|unsure|flat 70 HP heal; unclear if use accepts a bare number
+45|unsure|flat 70 HP heal; unclear if use accepts a bare number
+46|breaks|HL: raises max HP and grants temp HP; no max-HP field
+47|fits|per-slot extra targets; count only
+48|fits|per-slot extra targets; count only
+49|fits|per-slot extra targets; count only
+50|fits|per-slot extra targets; count only
+51|fits|second area roll covered by second roll
+52|fits|second roll covers the cold component
+53|fits|per-slot extra targets; count only
+54|fits|per-slot extra targets; count only
+55|fits|per-slot extra targets; count only
+56|fits|count covers three darts; one damage roll
+57|fits|one extra dart per slot level; count per slot
+58|breaks|HL: 700 HP divided among chosen targets
+59|breaks|HL: 700 HP divided among chosen targets
+60|false_positive|single beam; no count of beams
+61|breaks|SM: summons otherworldly entity
+62|fits|one heal roll applied to several creatures via count
+63|breaks|TB: 1d8 table roll picks ray effect
+64|breaks|MM: eight rays with different effects
+65|breaks|DT: resistance type chosen per cast
+66|false_positive|single beam to one creature; no count
+67|breaks|RC: recurring 1 HP per turn plus flat heal
+68|breaks|TB: rolled table picks species
+69|breaks|DT: damage type chosen; per-hit reduction by 1d4
+70|breaks|RC: per-hit 1d4 damage reduction, once per turn
+71|fits|count covers three rays
+72|fits|one extra ray per slot level
+73|fits|damage die scales by level via atLevels
+74|false_positive|copy HP numbers; not a use
+75|breaks|DT: damage type chosen per cast
+76|false_positive|stabilizes creature; no numeric use
+77|fits|per-slot extra targets; count only
+78|breaks|MM: several rolls over several turns, mixed types
+79|breaks|MM: six bolts plus cloud rolls on later turns
+80|breaks|DT: resistance type chosen per cast; summoned creature
+81|breaks|TB: table roll decides arrival; mishap damage dice
+82|breaks|TB: rolled 1d4+1 turn duration
+83|fits|damage die scales by level via atLevels
+84|fits|second damage roll covered by second roll
+85|false_positive|servant HP numbers; not a use
+86|fits|second delayed roll of same type; count plus second roll covers
+87|fits|second damage roll covered by second roll
+88|breaks|TG: flat AC and save bonus; no AC or save target
+89|fits|second damage roll covered by second roll
+90|breaks|MM: many dice-driven options; no shape fits
+91|breaks|DT: resistance type chosen per cast; permanent
+92|breaks|SG: resistance only while Rage is active
+93|false_positive|rule sentence about extending Rage, not a menu
+94|breaks|SG: bonus only while Rage is active
+95|fits|single heavy-armor tag test gates the rage entry
+96|fits|single armor tag test satisfies the when clause
+97|breaks|PC: player choice
+98|false_positive|rule sentence about skill checks, not a menu
+99|fits|fixed extra attack count
+100|fits|single heavy-armor tag test satisfies the when clause
+101|breaks|CX: extra dice on hit, optional per attack
+102|fits|reactive: counter and text suffice
+103|false_positive|rage-ending rule, not a gated benefit
+104|breaks|CX: conditional extra dice on hit
+105|fits|fixed +4 Str and Con, max 25
+106|breaks|CX: conditional extra damage while Rage is active
+107|breaks|CI: condition immunities not in shape; Rage-gated
+108|fits|reactive: counter and text suffice
+109|fits|spends a Rage use to restore Intimidating Presence
+110|breaks|TG: die added to others' rolls, not damage
+111|fits|die size scales via atLevels
+112|breaks|PC: player choice
+113|fits|reactive: counter and text suffice
+114|breaks|PC: player choice
+115|fits|spends a Bardic Inspiration use
+116|breaks|TG: die subtracts from creature's roll, not damage
+117|fits|reactive: counter and text suffice
+118|fits|spends a Bardic Inspiration use
+119|breaks|TG: die added to a d20 check, not damage
+120|fits|fixed Protector proficiencies gated by role option
+121|fits|build-time role choice stored once
+122|false_positive|role proficiency text, not an equipment condition
+123|breaks|CX: Divine Strike row is once-per-turn extra dice
+124|fits|reactive: counter and text suffice
+125|breaks|PC: player picks any Cleric spell up to level 5
+126|false_positive|'Reaction' is a spell rule, not a reaction feature
+127|breaks|CX: conditional extra dice on hit; scales
+128|fits|spends a Channel Divinity use
+129|fits|fixed Warden proficiencies gated by role option
+130|fits|build-time role choice stored once
+131|false_positive|role proficiency text, not an equipment condition
+132|fits|spends Wild Shape or a slot to restore a use
+133|breaks|CX: Primal Strike row is once-per-turn extra dice
+134|fits|reactive: counter and text suffice
+135|breaks|CX: conditional extra dice on hit
+136|breaks|PT: land re-chosen every Long Rest, not build-time
+137|fits|spends Wild Shape; heal dice per creature
+138|fits|heal dice scale via atLevels
+139|breaks|PC: player picks prepared Circle spell
+140|breaks|SG: resistance type follows land choice each rest
+141|fits|spends a Wild Shape use
+142|fits|spends a Second Wind use
+143|fits|fixed extra attack count
+144|breaks|SET: sets attacks to 3, supersedes Extra Attack
+145|breaks|SET: sets attacks to 4, supersedes earlier value
+146|fits|crit range 19 via critFaces
+147|fits|crit range 18 via additive -1 when stacked
+148|false_positive|death save crit range, not an attack crit range
+149|fits|damage die replaces normal damage; scales
+150|breaks|CC: compound condition with several benefits
+151|breaks|CC: compound condition, not armor and not shield
+152|fits|Focus Point pool spends
+153|breaks|CC: two-tag condition; speed target not planned
+154|breaks|HL: heal die; owned die shape holds damage only
+155|fits|spends a Focus Point
+156|fits|two damage die rolls via count
+157|fits|reactive: counter and text suffice
+158|fits|reactive: counter and text suffice
+159|fits|fixed extra attack count
+160|fits|spends a Focus Point
+161|fits|hit-trigger text; no extra dice
+162|breaks|CC: compound armor-and-shield condition; movement grant
+163|fits|spends Focus Points
+164|fits|martial arts die rolled twice; count
+165|breaks|PT: per-turn condition choice, not build-time
+166|fits|fixed all six saving throw proficiencies
+167|fits|spends a Focus Point to reroll
+168|breaks|SG: resistance only after spending 3 Focus Points
+169|fits|spends 3 Focus Points
+170|fits|fixed +4 Dex and Wis, max 25
+171|breaks|PT: effect chosen per hit, not build-time
+172|breaks|HL: heal die; owned die shape holds damage only
+173|fits|spends 4 Focus Points
+174|fits|spends 5 HP from pool
+175|fits|pool of healing power
+176|breaks|PC: player choice
+177|fits|fixed Divine Smite spell, free cast
+178|fits|fixed Divine Smite spell, once per rest
+179|fits|fixed extra attack count
+180|fits|fixed Find Steed spell, free cast
+181|false_positive|Frightened rule text, not a choice
+182|fits|spends a Channel Divinity use
+183|breaks|CI: condition immunity; immunities hold damage types only
+184|breaks|CX: extra dice of fixed type; modifier has no damage type
+185|false_positive|damage rider; no equipment condition
+186|fits|spends 5 HP from pool
+187|fits|pool of healing power
+188|fits|spends a Channel Divinity use
+189|breaks|SG: bonus only while Sacred Weapon is active
+190|breaks|CC: ends when weapon not carried; not a listed tag test
+191|breaks|CI: condition immunity not in shape
+192|fits|fixed Hunter's Mark, free cast count by level
+193|breaks|PC: player choice
+194|breaks|PC: player choice
+195|fits|fixed extra attack count
+196|fits|single heavy-armor tag test satisfies the when clause
+197|breaks|PC: player choice
+198|breaks|PT: option swapped every rest, not build-time
+199|breaks|CX: once-per-turn conditional extra dice
+200|breaks|PT: option swapped every rest, not build-time
+201|breaks|CX: conditional extra damage to another target
+202|breaks|DT: resistance type follows incoming damage
+203|fits|reactive: counter and text suffice
+204|breaks|PC: player choice
+205|breaks|CX: once-per-turn conditional extra dice
+206|breaks|PC: player choice
+207|breaks|PT: per-turn bonus action pick
+208|breaks|PT: per-attack effect choice with dice costs
+209|breaks|OT: dice spent from Sneak Attack, not an owned die
+210|fits|reactive: counter and text suffice
+211|breaks|OT: pays Sneak Attack dice costs per use
+212|false_positive|rule sentence on Daze effect, not a menu
+213|fits|fixed Wis and Cha saving throw proficiencies
+214|breaks|PT: per-turn bonus action pick
+215|fits|spends Sorcery Points
+216|unsure|Sorcery Point cost exemption; zero-cost spend may not fit
+217|breaks|PC: player chooses damage type
+218|false_positive|spell-damage rider, not a hit trigger
+219|fits|spends 3 Sorcery Points
+220|fits|fixed Summon Dragon, once per rest free cast
+221|false_positive|once-free-cast text, not at-will
+222|fits|fixed Contact Other Plane, free cast
+223|breaks|PC: player picks arcanum spell
+224|breaks|PC: player picks arcanum spell
+225|breaks|PC: player picks type; changes on rest
+226|fits|reactive: counter and text suffice
+227|breaks|OT: ritual casting rule, not a free spell
+228|breaks|PC: player choice
+229|breaks|PC: player choice
+230|breaks|PC: player chooses skill
+231|breaks|PC: player picks spells for free casting
+232|breaks|PC: player picks at-will spells
+233|breaks|PC: player picks spells
+234|breaks|SG: type follows land choice each rest
+235|fits|single armor tag test satisfies the when clause
+236|fits|spends 3 Sorcery Points
+237|fits|fixed Summon Dragon, once per rest free cast
+238|false_positive|once-free-cast text, not at-will
+239|fits|damage die scales via atLevels
+240|fits|damage die scales via atLevels
+241|fits|damage die scales via atLevels
+242|fits|damage die scales via atLevels
+243|fits|damage die scales via atLevels
+244|fits|fixed type; gated by ancestry option
+245|fits|fixed type; gated by ancestry option
+246|fits|fixed type; gated by ancestry option
+247|fits|fixed type; gated by ancestry option
+248|fits|fixed type; gated by ancestry option
+249|fits|build-time ancestry choice stored once
+250|fits|fixed poison resistance; the resistance part fits
+251|fits|fixed spell per lineage row, free cast
+252|fits|fixed poison resistance
+253|fits|fixed spell, free cast once per rest
+254|fits|build-time ancestry benefit choice stored once
+255|fits|reactive: counter and text suffice
+256|fits|reactive: counter and text suffice
+257|fits|reactive: counter and text suffice
+258|fits|fixed spell, free cast count by proficiency bonus
+259|fits|build-time lineage choice stored once
+260|fits|fixed spell, free cast count by proficiency bonus
+261|breaks|OT: device effect chosen per creation
+262|breaks|PC: player choice
+263|fits|fixed Fire resistance
+264|fits|fixed Necrotic resistance
+265|fits|fixed Poison resistance
+266|false_positive|carrying size rule, not equipment condition
+267|fits|once per rest counter
+268|breaks|PC: player choice
+269|breaks|PC: player picks spells from list
+270|fits|reactive: counter and text suffice
+271|breaks|PC: player choice
+272|breaks|PC: player chooses attributes
+273|breaks|PC: player picks Strength or Dexterity
+274|fits|+2 to ranged attack rolls
+275|fits|single armor tag test satisfies the when clause
+276|breaks|OT: damage die reroll-like rule; compound weapon condition
+277|fits|ability modifier formula on off-hand attacks
+278|breaks|PC: player chooses attributes
+279|breaks|PC: player chooses attributes
+280|breaks|PC: player chooses attributes
+281|breaks|PC: player chooses attributes
+282|breaks|TG: bonus equals player-chosen ability score
+283|breaks|PC: player chooses attributes
+284|breaks|SG: resistance only in darkness
+285|breaks|PC: player chooses attributes
+286|false_positive|rule sentence using Reaction, not a reaction feature
+287|breaks|PC: player chooses attributes

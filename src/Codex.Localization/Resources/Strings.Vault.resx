@@ -28,7 +28,12 @@
   <data name="Vault.StartConcept" xml:space="preserve"><value>A concept: the AI drafts the sheet and a history</value></data>
   <data name="Vault.Concept" xml:space="preserve"><value>Concept</value></data>
   <data name="Vault.ConceptPlaceholder" xml:space="preserve"><value>e.g. A former pirate turned temple guard, level 3.</value></data>
-  <data name="Vault.ConceptHint" xml:space="preserve"><value>The AI picks only classes, species, gear and the rest from the server's Library for this system. Check the sheet afterwards.</value></data>
+  <data name="Vault.ConceptHint" xml:space="preserve"><value>The AI picks classes, species, gear and the rest from the server's Library for this system. Check the sheet afterwards.</value></data>
+  <data name="Vault.Homebrew" xml:space="preserve"><value>Homebrew</value></data>
+  <data name="Vault.Homebrew.Off" xml:space="preserve"><value>Only use what the Library has</value></data>
+  <data name="Vault.Homebrew.WhenNothingFits" xml:space="preserve"><value>Write homebrew when nothing fits</value></data>
+  <data name="Vault.Homebrew.Always" xml:space="preserve"><value>Write homebrew even when the Library has a fit</value></data>
+  <data name="Vault.Homebrew.Hint" xml:space="preserve"><value>The AI writes at most {0} entries, such as a subclass or a spell. The character carries them until a GM accepts them into a campaign.</value></data>
   <data name="Vault.Generate" xml:space="preserve"><value>Draft the character</value></data>
   <data name="Vault.Generating" xml:space="preserve"><value>Drafting…</value></data>
   <data name="Vault.NoAi" xml:space="preserve"><value>No AI model is set up for you. Add one under AI settings.</value></data>

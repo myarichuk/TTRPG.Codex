@@ -48,10 +48,11 @@
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Поиск существ в библиотеке…</value></data>
   <data name="Combat.AddToEncounterFor" xml:space="preserve"><value>Добавить в столкновение: {0}</value></data>
   <data name="Combat.AddToEncounter" xml:space="preserve"><value>Добавить в столкновение</value></data>
-  <data name="Combat.QuickAddHint" xml:space="preserve"><value>Начните вводить для поиска. Существа добавляются скрытыми и сразу появляются на живом столе.</value></data>
+  <data name="Combat.QuickAddHint" xml:space="preserve"><value>Начните вводить для поиска. Существа сразу появляются на живом столе. Игроки их видят, но без имени и подробностей, пока вы не назовёте или не скроете их.</value></data>
   <data name="Combat.PartyRest" xml:space="preserve"><value>Отдых отряда</value></data>
   <data name="Combat.PartyRestHint" xml:space="preserve"><value>Все персонажи игроков отдыхают одновременно. Кости здоровья тратятся отдельно в строке каждого персонажа.</value></data>
   <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} для отряда</value></data>
+  <data name="Combat.DawnButton" xml:space="preserve"><value>Рассвет для отряда</value></data>
   <data name="Combat.EndTable" xml:space="preserve"><value>Завершить стол</value></data>
   <data name="Combat.TempHpTitle" xml:space="preserve"><value>Временные очки здоровья</value></data>
   <data name="Combat.TempHpBadge" xml:space="preserve"><value>+{0} врем.</value></data>
@@ -261,4 +262,5 @@
   <data name="Combat.Card.Show" xml:space="preserve"><value>Показать больше: {0}</value></data>
   <data name="Combat.Card.Hide" xml:space="preserve"><value>Показать меньше: {0}</value></data>
   <data name="Combat.Card.Equipped" xml:space="preserve"><value>Надето и в руках:</value></data>
+  <data name="Combat.Card.Rules" xml:space="preserve"><value>Что делает</value></data>
 </root>

@@ -103,6 +103,8 @@ public sealed partial class WorldBuilderService(ISystemCatalog catalog, Campaign
             specs.Add(new FieldSpec(field.Key, field.Label, field.Type.ToString(), options, field.Min, field.Max, hint));
         }
 
+        // What the sheet rules read off an entry (use, modifiers...) is not a field of the type, but is kept when written.
+        if (system != null) specs.AddRange(Codex.Core.Rules.EntryGuide.Extras(system.Canonical, type.Type));
         return specs;
     }
 

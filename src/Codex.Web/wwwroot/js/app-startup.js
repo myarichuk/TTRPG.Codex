@@ -919,7 +919,9 @@ window.codex = {
         const place = Array.from(document.querySelectorAll("[data-rule-key]")).find(function (el) { return el.getAttribute("data-rule-key") === key; });
         if (!place) return;
         place.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-        const control = place.querySelector("input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])");
+        // A radio group takes focus on its picked option, as the arrow keys expect; otherwise the first control.
+        const control = place.querySelector("input[type=radio]:checked:not([disabled])")
+            || place.querySelector("input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])");
         if (control) control.focus({ preventScroll: true });
         place.classList.remove("rule-target");
         void place.offsetWidth;

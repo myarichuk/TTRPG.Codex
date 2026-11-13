@@ -159,6 +159,26 @@
                             }
                         </ul>
                     }
+                    @if (reviewOpenChoices.Count > 0)
+                    {
+                        <p class="small mb-1">@L["Campaign.Vault.ChoicesOpen"]</p>
+                        <ul class="small" data-testid="vault-review-choices-open">
+                            @foreach (var open in reviewOpenChoices)
+                            {
+                                <li>@open</li>
+                            }
+                        </ul>
+                    }
+                    @if (reviewMadeChoices.Count > 0)
+                    {
+                        <p class="small mb-1">@L["Campaign.Vault.ChoicesMade"]</p>
+                        <ul class="small" data-testid="vault-review-choices-made">
+                            @foreach (var made in reviewMadeChoices)
+                            {
+                                <li>@made</li>
+                            }
+                        </ul>
+                    }
                     <h4 class="label-caps mt-3">@L["Campaign.Vault.History"]</h4>
                     @if (string.IsNullOrWhiteSpace(r.Biography))
                     {
@@ -339,6 +359,9 @@
     private CharacterRequestDocument? reviewing;
     private ReviewStep step;
     private List<string> reviewViolations = new();
+    // The choices features leave to the character: the ones not finished (warnings, never a reason to refuse) and what each made one picked.
+    private List<string> reviewOpenChoices = new();
+    private List<string> reviewMadeChoices = new();
     private readonly List<BringChoice> choices = new();
     private IEntryResolver? campaignEntries;
 
@@ -359,6 +382,8 @@
         step = ReviewStep.Character;
         choices.Clear();
         reviewViolations = new List<string>();
+        reviewOpenChoices = new List<string>();
+        reviewMadeChoices = new List<string>();
         campaignEntries = null;
         if (Ctx.System is { } system)
         {
@@ -367,6 +392,9 @@
             var withBrought = await CachedEntryResolver.LoadAsync(Library, Ctx.Campaign, Ctx.Access, system, request.Brings.Select(b => b.ToEntry(system.Id)));
             var evaluation = new SheetRuleEngine(system, withBrought).Evaluate(request.Sheet);
             reviewViolations = evaluation.Violations.Select(Describe).ToList();
+            reviewOpenChoices = evaluation.Warnings.Where(SheetRuleEngine.IsChoiceNotice).Select(Describe).ToList();
+            reviewMadeChoices = evaluation.MadeChoices
+                .Select(c => L["Actor.Choice.MadeSummary", string.Equals(c.Label, c.Source, StringComparison.Ordinal) ? c.Label : $"{c.Label} ({c.Source})", string.Join(", ", c.MadeLabels)].ToString()).ToList();
         }
 
         StateHasChanged();

@@ -1306,6 +1306,8 @@
   <data name="Campaign.Vault.NoHistory" xml:space="preserve"><value>לא נכתבה היסטוריה.</value></data>
   <data name="Campaign.Vault.RulesOk" xml:space="preserve"><value>הדף אינו מפר אף אחד מחוקי הקמפיין.</value></data>
   <data name="Campaign.Vault.RulesIssues" xml:space="preserve"><value>חוקי הקמפיין מסמנים בדף:</value></data>
+  <data name="Campaign.Vault.ChoicesOpen" xml:space="preserve"><value>בחירות שהדמות עוד לא סיימה. הן לא מונעות את אישור הבקשה:</value></data>
+  <data name="Campaign.Vault.ChoicesMade" xml:space="preserve"><value>בחירות שהדמות ביצעה:</value></data>
   <data name="Campaign.Vault.BringsHint" xml:space="preserve"><value>הערכים האלה שייכים לדמות עצמה: הם אינם בשום חבילה. יש להחליט לגבי כל אחד. כדי שערך ישונה, דחו את הבקשה ובקשו מהשחקן לשלוח אותה שוב.</value></data>
   <data name="Campaign.Vault.BringAdd" xml:space="preserve"><value>הוספה לספרייה</value></data>
   <data name="Campaign.Vault.BringUse" xml:space="preserve"><value>שימוש בערך שכבר יש בקמפיין</value></data>

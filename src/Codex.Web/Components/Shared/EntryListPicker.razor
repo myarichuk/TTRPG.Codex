@@ -34,7 +34,16 @@
                 var note = Note?.Invoke(pick);
                 <li class="list-inline-item mb-1">
                     <span class="pill pill-accent" data-testid="list-@Rule.Key-pick">
-                        <a href="@LibraryPath/@entry.Type/@Uri.EscapeDataString(entry.Id)" class="text-reset text-decoration-none">@shownName</a>
+                        @if (entry.PackId == Codex.Persistence.CarriedEntry.PackId)
+                        {
+                            @* Written for this character and in no Library yet: its text is in the sheet's Homebrew panel. *@
+                            <span>@shownName</span>
+                            <span class="small ms-1">(@L["Layout.Picker.Homebrew"])</span>
+                        }
+                        else
+                        {
+                            <a href="@LibraryPath/@entry.Type/@Uri.EscapeDataString(entry.Id)" class="text-reset text-decoration-none">@shownName</a>
+                        }
                         @if (!string.IsNullOrEmpty(note))
                         {
                             <span class="small ms-1">(@note)</span>

@@ -52,8 +52,23 @@ public sealed record ClassLevel(string Id, ContentEntry? Entry, int Level, bool 
 /// <summary>A class other than the first, as stored: <c>"class-id:levels:subclass-id"</c>.</summary>
 public sealed record OtherClass(string Id, int Level, string? Subclass = null);
 
-/// <summary>One skill or saving throw as the sheet shows it.</summary>
-public sealed record SkillScore(string Key, string Label, string Attribute, bool Proficient, bool Expert, int Bonus);
+/// <summary>One skill or saving throw as the sheet shows it. <see cref="Rank"/> is the rank it holds (0: none; 1 the first rank of the system's
+/// list, see <see cref="SkillRules.Ranks"/>) and <see cref="RankLabel"/> its name; <see cref="Proficient"/> and <see cref="Expert"/> are rank 1
+/// and up, rank 2 and up. <see cref="Sources"/> are the ranks the background, the class, features and choices gave, with where from;
+/// <see cref="OwnRank"/> the rank the player's own ticks give. A rank at or below one a source gives is locked on the sheet.</summary>
+public sealed record SkillScore(string Key, string Label, string Attribute, bool Proficient, bool Expert, int Bonus,
+    int Rank = 0, string? RankLabel = null, IReadOnlyList<RankSource>? Sources = null, int OwnRank = 0, int RankBonus = 0)
+{
+    /// <summary>The highest rank a source gives; the player's own ticks at or below it change nothing.</summary>
+    public int GrantedRank => Sources is { Count: > 0 } ? Sources.Max(s => s.Rank) : 0;
+
+    /// <summary>The source that locks <paramref name="rank"/> on (the lowest one that gives it or more), or null when the player's own ticks hold it.</summary>
+    public RankSource? LockedBy(int rank) => Sources?.Where(s => s.Rank >= rank).OrderBy(s => s.Rank).FirstOrDefault();
+}
+
+/// <summary>What one rank of a ranked list is worth on this sheet (<see cref="SkillRules.Ranks"/>): <see cref="Target"/> is <c>skills</c> or
+/// <c>saves</c>, <see cref="Rank"/> the rank's number (1 the first), <see cref="Value"/> its bonus now.</summary>
+public sealed record RankValue(string Target, int Rank, string Key, string Label, int Value);
 
 /// <summary>A passive score such as passive Perception.</summary>
 public sealed record PassiveScore(string Key, string Label, int Value);
@@ -114,6 +129,10 @@ public sealed class SheetEvaluation
     /// <summary>The features' counters of uses, with their maximums.</summary>
     public List<FeatureCounter> Counters { get; } = new();
 
+    /// <summary>The features that spend from a pool (<c>spends</c>), each with the cost of one press; a spender whose pool
+    /// the sheet lacks is not here, and is warned about.</summary>
+    public List<FeatureSpender> Spenders { get; } = new();
+
     /// <summary>Feature amounts on armor class and hit points, waiting for those stages.</summary>
     internal Dictionary<string, List<(ActiveFeature Feature, string? Type, int Amount)>> Pending { get; } = new(StringComparer.Ordinal);
 
@@ -132,8 +151,19 @@ public sealed class SheetEvaluation
     /// <summary>How much the character can carry, when the system says (<see cref="InventoryRules.Capacity"/>).</summary>
     public long? CarryingCapacity { get; set; }
 
-    /// <summary>Things worth a look that never stop a save (armor the class isn't trained in).</summary>
+    /// <summary>Things worth a look that never stop a save (armor the class isn't trained in). A choice the player has not made is one:
+    /// <see cref="SheetRuleEngine.ChoicePendingKey"/>.</summary>
     public List<RuleViolation> Warnings { get; } = new();
+
+    /// <summary>The choices features leave to the player that are open: not made, made in part, or covered by the player's own ticks and not
+    /// yet confirmed (<see cref="PendingChoice.Adopted"/>). Each is also a warning, never a violation, so a sheet with one can be saved.</summary>
+    public List<PendingChoice> PendingChoices { get; } = new();
+
+    /// <summary>The choices that are made, with their picks in <see cref="PendingChoice.Made"/>.</summary>
+    public List<PendingChoice> MadeChoices { get; } = new();
+
+    /// <summary>What each rank of the skills' and the saving throws' lists is worth now, whether a key holds it or not.</summary>
+    public List<RankValue> RankValues { get; } = new();
 
     public List<SkillScore> SavingThrows { get; } = new();
     public List<SkillScore> Skills { get; } = new();
@@ -215,6 +245,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         ApplyTracks(sheet);
         ApplySlotPools(sheet, evaluation);
         ApplyCounters(sheet, evaluation);
+        ApplyChoiceMoments(sheet, evaluation);
         ApplyHitPoints(sheet, evaluation);
         ApplyArmorClass(sheet, evaluation);
         return evaluation;
@@ -600,6 +631,11 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
     public static string FormatClassLevel(OtherClass other) =>
         $"{other.Id}:{other.Level.ToString(CultureInfo.InvariantCulture)}" + (string.IsNullOrEmpty(other.Subclass) ? "" : ":" + other.Subclass);
+
+    /// <summary>The sheet as the first class sees it (its own level under <c>classLevelKey</c>), which is what the conditions on a pick are
+    /// judged against; the sheet itself without multiclass rules.</summary>
+    public IReadOnlyDictionary<string, object> FirstClassView(IReadOnlyDictionary<string, object> sheet) =>
+        Rules?.Multiclass == null ? sheet : ClassViews(sheet, new List<ClassLevel>())[0];
 
     /// <summary>
     /// One view of the sheet per class: the same values, with the class field set to that class and

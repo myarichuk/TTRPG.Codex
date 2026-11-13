@@ -68,6 +68,16 @@
                 }
             </dd>
         }
+        @* What each rank of the skills' list is worth moves with the level (a proficiency bonus, a formula over the level), by the system's own rank names. *@
+        @* A rank worth just the proficiency bonus is not said twice: the bonus row below already says it. *@
+        @if (Plan.RankChanges is { Count: > 0 } rankChanges)
+        {
+            @foreach (var change in rankChanges.Where(c => !(Plan.ProficiencyBefore == c.Before && Plan.ProficiencyAfter == c.After)))
+            {
+                <dt>@change.Label</dt>
+                <dd data-testid="@("levelup-rank-" + change.Key)"><bdi dir="ltr">@Signed(change.Before) → @Signed(change.After)</bdi></dd>
+            }
+        }
         @if (Plan.ProficiencyAfter is { } pbAfter && Plan.ProficiencyBefore is { } pbBefore && pbAfter != pbBefore)
         {
             <dt>@(Rules?.Derived.FirstOrDefault(d => d.Key == (Rules.Skills?.BonusKey ?? Rules.Spellcasting?.BonusKey))?.Label ?? L["Actor.Sheet.LevelPb"])</dt>
@@ -88,6 +98,21 @@
                 <li>@L["Actor.Sheet.LevelMore", choice.Added, choice.Label]</li>
             }
         </ul>
+    }
+    @* The picks the level opens, made here on the copy of the sheet; one left open stays pending on the sheet and never stops the level. *@
+    @if (Plan.NewChoices is { Count: > 0 } picks)
+    {
+        <h3 class="label-caps mb-1">@L["Actor.Sheet.LevelPicks"]</h3>
+        <div data-testid="levelup-picks">
+            @foreach (var pick in picks)
+            {
+                <ChoicePicker Choice="pick" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" OnPicks="chosen => OnPick.InvokeAsync(new ChoiceEdit(pick.Key, pick.Label, chosen, false))" />
+            }
+        </div>
+        @if (picks.Where(p => p.Remaining > 0 || p.Adopted).Select(p => p.Label).ToList() is { Count: > 0 } open)
+        {
+            <p class="field-hint" data-testid="levelup-picks-open">@L["Actor.Sheet.LevelLeftOpen", string.Join(", ", open)]</p>
+        }
     }
     @if (Plan.NewViolations.Count > 0)
     {
@@ -123,6 +148,18 @@
 
     /// <summary>Roll the die (its sides).</summary>
     [Parameter] public EventCallback<int> OnRollDie { get; set; }
+    /// <summary>The name of a ranked list (<c>skills</c>, <c>saves</c>) as the sheet shows it.</summary>
+    [Parameter] public Func<string, string>? TargetLabel { get; set; }
+
+    /// <summary>A row option's name and text in the reader's language, and a moment's name (see <see cref="ChoicePicker"/>).</summary>
+    [Parameter] public Func<PendingChoice, ChoiceOption, (string Name, string? Description)>? OptionText { get; set; }
+    [Parameter] public Func<string, string>? MomentLabel { get; set; }
+
+    /// <summary>A pick made for a choice the level opens; the host keeps it on the copy of the sheet the plan is worked out on.</summary>
+    [Parameter] public EventCallback<ChoiceEdit> OnPick { get; set; }
+
+    private static string Signed(int value) => Bidi.Ltr(value >= 0 ? "+" + value : value.ToString());
+
     [Parameter] public EventCallback OnApply { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
 

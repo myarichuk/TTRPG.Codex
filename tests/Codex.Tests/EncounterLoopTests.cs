@@ -1,4 +1,5 @@
 using Codex.Core.Components;
+using Codex.Core.Rules;
 using Codex.Core.Systems;
 using Codex.Persistence;
 using Codex.Persistence.Runtime;
@@ -493,6 +494,99 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.False(Has(runtime, hero.Id, "Dead"));
         await runtime.EnqueueAsync(new AdjustExhaustionCommand(hero.Id, 1));
         Assert.True(Has(runtime, hero.Id, "Dead"));
+    }
+
+    // ---- Feature counters: refill rules and spends ----
+
+    private Task<ActorDocument> WithCounterAsync(string campaignId, string name, string key, int left, int max, string rules, string label) =>
+        SeedAsync(campaignId, name, 12, ActorKind.PlayerCharacter, s =>
+        {
+            s[key] = (long)left;
+            s[key + "_Max"] = (long)max;
+            s[key + "_Rest"] = rules;
+            s[key + "_Label"] = label;
+        });
+
+    [Fact]
+    public async Task ARestRefillsACounterByItsOwnRules_PartOnAShortRest_AllOnALongRest_AndLogsIt_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await WithCounterAsync(campaignId, "Aria", "uses_wild", 0, 4, "Short Rest=1|Long Rest", "Wild Shape");
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { hero });
+
+        await runtime.EnqueueAsync(new RestCommand(hero.Id, "Short Rest", Array.Empty<string>()));
+        Assert.Equal(1, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_wild"));
+        await runtime.EnqueueAsync(new RestCommand(hero.Id, "Short Rest", Array.Empty<string>()));
+        Assert.Equal(2, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_wild"));
+        Assert.Contains(session.Events, e => e.Type == "Rest" && e.Description.Contains("Wild Shape +1"));
+
+        await runtime.EnqueueAsync(new RestCommand(hero.Id, "Long Rest", Array.Empty<string>()));
+        Assert.Equal(4, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_wild"));
+        Assert.Contains(session.Events, e => e.Type == "Rest" && e.Description.Contains("Wild Shape +2"));
+    }
+
+    [Fact]
+    public async Task ARolledRefill_RollsThroughTheTableDice_IsLogged_AndStopsAtTheMaximum_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await WithCounterAsync(campaignId, "Aria", "uses_charge", 0, 4, "dawn=1d6+1", "Staff charges");
+        var session = await SeedSessionAsync(campaignId);
+        var dice = Substitute.For<IDiceRoller>();
+        dice.Roll("1d6+1").Returns(new DiceRollResult("1d6+1", new[] { 4 }, Array.Empty<int>(), 1, 5));
+        await using var runtime = Runtime(campaignId, session, dice);
+        runtime.Hydrate(new[] { hero });
+
+        await runtime.EnqueueAsync(new DawnCommand(hero.Id));
+
+        Assert.Equal(4, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_charge")); // rolled 5, capped at 4
+        Assert.Contains(session.RollLog, r => r.ActorId == hero.Id && r.Expression == "1d6+1" && r.Label == "Staff charges" && r.Total == 5);
+        Assert.Contains(session.Events, e => e.Type == "Rest" && e.Description.Contains("Dawn comes for Aria") && e.Description.Contains("Staff charges +4"));
+    }
+
+    [Fact]
+    public async Task ARefillOnInitiative_WhenEmpty_AppliesOnJoiningTheOrder_NotOnACorrectedRoll_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await WithCounterAsync(campaignId, "Aria", "uses_rage", 0, 3, "initiative=1!empty", "Rage");
+        var mate = await WithCounterAsync(campaignId, "Bram", "uses_rage", 2, 3, "initiative=1!empty", "Rage");
+        var session = await SeedSessionAsync(campaignId);
+        var dice = Substitute.For<IDiceRoller>();
+        dice.Roll("1d20+2").Returns(new DiceRollResult("1d20+2", new[] { 13 }, Array.Empty<int>(), 2, 15));
+        await using var runtime = Runtime(campaignId, session, dice);
+        runtime.Hydrate(new[] { hero, mate });
+
+        await runtime.EnqueueAsync(new RollInitiativeCommand(hero.Id, "1d20+2", "player-1"));
+        await runtime.EnqueueAsync(new RollInitiativeCommand(mate.Id, "1d20+2", "player-1"));
+        Assert.Equal(1, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_rage")); // none left: one back
+        Assert.Equal(2, runtime.Snapshot.Actor(mate.Id)!.Pool("uses_rage")); // not empty: nothing
+        Assert.Contains(session.Events, e => e.Type == "Initiative" && e.Description.Contains("Rage +1"));
+
+        await runtime.EnqueueAsync(new AdjustResourceCommand(hero.Id, "uses_rage", -1, "Rage"));
+        Assert.Equal(0, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_rage"));
+        await runtime.EnqueueAsync(new RollInitiativeCommand(hero.Id, "1d20+2", "player-1")); // already in the order
+        Assert.Equal(0, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_rage"));
+    }
+
+    [Fact]
+    public async Task ASpendLargerThanWhatIsLeft_IsRefused_AndChangesNothing_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await WithCounterAsync(campaignId, "Aria", "uses_focus", 1, 4, "Short Rest", "Focus");
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { hero });
+
+        var tooMuch = new AdjustResourceCommand(hero.Id, "uses_focus", -2, "Focus");
+        await runtime.EnqueueAsync(tooMuch);
+        Assert.False(tooMuch.Succeeded);
+        Assert.Equal(1, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_focus"));
+
+        var one = new AdjustResourceCommand(hero.Id, "uses_focus", -1, "Focus");
+        await runtime.EnqueueAsync(one);
+        Assert.True(one.Succeeded);
+        Assert.Equal(0, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_focus"));
     }
 
     // ---- Conditions (R6, F14, F23) ----
@@ -996,6 +1090,50 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         await runtime.EnqueueAsync(new ApplyDamageCommand(ferryman.Id, "Wounds", 4, ""));
         await runtime.EnqueueAsync(new AdjustResourceCommand(ferryman.Id, "Wounds", 10, "wounds"));
         Assert.Equal(5, runtime.Snapshot.Actor(ferryman.Id)!.Pool("Wounds"));
+    }
+
+
+    [Fact]
+    public async Task ASpendLargerThanWhatIsLeft_IsRefused_SoTwoSpendersAtTheLastPointCannotBothSpendIt_AndARegainStopsAtTheMaximum_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        // A feature's counter of uses on the sheet becomes a table pool like a slot level, under the same key.
+        var monk = await SeedAsync(campaignId, "Monk", 20, ActorKind.PlayerCharacter, sheet =>
+        {
+            sheet["slots_1"] = 1L;
+            sheet["slots_1_Max"] = 2L;
+            sheet[SheetRuleEngine.UsesPrefix + "focus"] = 2L;
+            sheet[SheetRuleEngine.UsesPrefix + "focus" + SheetRuleEngine.UsesMaxSuffix] = 3L;
+        });
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { monk });
+
+        // Two people press Cast on the last slot at once: the first spends it, the second is refused and changes nothing.
+        var first = new AdjustResourceCommand(monk.Id, "slots_1", -1, "spell slot");
+        var second = new AdjustResourceCommand(monk.Id, "slots_1", -1, "spell slot");
+        await Task.WhenAll(runtime.EnqueueAsync(first), runtime.EnqueueAsync(second));
+        Assert.True(first.Succeeded);
+        Assert.False(second.Succeeded);
+        Assert.NotNull(second.Failed);
+        Assert.Equal(0, runtime.Snapshot.Actor(monk.Id)!.Pool("slots_1"));
+        Assert.Contains(session.Events, e => e.Type == "ResourceSpent" && e.Description.Contains("could not use"));
+
+        // Spending 3 of a counter's 2 is refused, not clamped to 0; spending 2 of 2 is allowed.
+        var overspend = new AdjustResourceCommand(monk.Id, "uses_focus", -3, "Focus");
+        await runtime.EnqueueAsync(overspend);
+        Assert.NotNull(overspend.Failed);
+        Assert.Equal(2, runtime.Snapshot.Actor(monk.Id)!.Pool("uses_focus"));
+        var exact = new AdjustResourceCommand(monk.Id, "uses_focus", -2, "Focus");
+        await runtime.EnqueueAsync(exact);
+        Assert.True(exact.Succeeded);
+        Assert.Equal(0, runtime.Snapshot.Actor(monk.Id)!.Pool("uses_focus"));
+
+        // A regain stops at the maximum, as before.
+        var regain = new AdjustResourceCommand(monk.Id, "uses_focus", 5, "Focus");
+        await runtime.EnqueueAsync(regain);
+        Assert.True(regain.Succeeded);
+        Assert.Equal(3, runtime.Snapshot.Actor(monk.Id)!.Pool("uses_focus"));
     }
 
     [Fact]

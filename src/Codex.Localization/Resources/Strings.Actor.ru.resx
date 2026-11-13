@@ -66,6 +66,21 @@
   <data name="Actor.Skills.SumDc" xml:space="preserve"><value>{0}, бонус мастерства {1}, {2} {3}</value></data>
   <data name="Actor.Skills.Roll" xml:space="preserve"><value>Бросить: {0}</value></data>
   <data name="Actor.Skills.Hint" xml:space="preserve"><value>Навыки вашей предыстории отмечены за вас. Отметьте навыки, которые дают класс и другие особенности.</value></data>
+  <data name="Actor.Skills.LockedFrom" xml:space="preserve"><value>{0}, источник: {1}</value></data>
+  <data name="Actor.Skills.RankNone" xml:space="preserve"><value>Нет</value></data>
+  <data name="Actor.Choice.Heading" xml:space="preserve"><value>Нужно выбрать</value></data>
+  <data name="Actor.Choice.MadeHeading" xml:space="preserve"><value>Сделанный выбор ({0})</value></data>
+  <data name="Actor.Choice.Legend" xml:space="preserve"><value>{0}: выберите {1} ({2})</value></data>
+  <data name="Actor.Choice.LegendRaise" xml:space="preserve"><value>{0}: выберите {1} для повышения ({2})</value></data>
+  <data name="Actor.Choice.SourceLevel" xml:space="preserve"><value>{0}, {1}-й уровень</value></data>
+  <data name="Actor.Choice.Count" xml:space="preserve"><value>Выбрано {0} из {1}</value></data>
+  <data name="Actor.Choice.Confirm" xml:space="preserve"><value>Подтвердить</value></data>
+  <data name="Actor.Choice.ConfirmHelp" xml:space="preserve"><value>Вы уже отметили их. Подтвердите, чтобы закрепить их как этот выбор.</value></data>
+  <data name="Actor.Choice.ChooseAgain" xml:space="preserve"><value>Выбрать заново</value></data>
+  <data name="Actor.Choice.MadeSummary" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Choice.Full" xml:space="preserve"><value>Всё выбрано. Снимите одну отметку, чтобы выбрать другое.</value></data>
+  <data name="Actor.Sheet.LevelPicks" xml:space="preserve"><value>Выбор, который открывает этот уровень</value></data>
+  <data name="Actor.Sheet.LevelLeftOpen" xml:space="preserve"><value>Ещё не выбрано: {0}. Уровень можно взять сейчас, а выбрать позже на листе.</value></data>
   <data name="Actor.Inv.Empty" xml:space="preserve"><value>Пока ничего нет.</value></data>
   <data name="Actor.Inv.Carried" xml:space="preserve"><value>{0}: переносимые предметы</value></data>
   <data name="Actor.Inv.Quantity" xml:space="preserve"><value>Количество: {0}</value></data>
@@ -242,6 +257,8 @@
   <data name="Actor.Sheet.ClassLevelOption" xml:space="preserve"><value>{0} (уровень {1})</value></data>
   <data name="Actor.Sheet.ClassNewOption" xml:space="preserve"><value>{0} (новый, уровень 1)</value></data>
   <data name="Actor.Sheet.FromLibrary" xml:space="preserve"><value>Из Библиотеки</value></data>
+  <data name="Actor.Sheet.Homebrew.Title" xml:space="preserve"><value>Самоделки</value></data>
+  <data name="Actor.Sheet.Homebrew.Hint" xml:space="preserve"><value>Написаны для этого персонажа и пока не в библиотеке. Мастер просмотрит каждую, когда персонаж попросится в кампанию.</value></data>
   <data name="Actor.Sheet.HistoryVisible" xml:space="preserve"><value>Видно всем, кто видит этого персонажа</value></data>
   <data name="Actor.Sheet.HistoryPlaceholder" xml:space="preserve"><value>Откуда они родом, чего хотят, кому обязаны…</value></data>
   <data name="Actor.Sheet.AiInstruction" xml:space="preserve"><value>Указание для ИИ</value></data>
@@ -306,7 +323,7 @@
   <data name="Actor.Sheet.ConfirmDiscardBody" xml:space="preserve"><value>Вы изменили этот лист и не сохранили его. Если уйти сейчас, изменения будут потеряны.</value></data>
   <data name="Actor.Sheet.DiscardLeave" xml:space="preserve"><value>Отменить и уйти</value></data>
   <data name="Actor.Sheet.KeepEditing" xml:space="preserve"><value>Продолжить редактирование</value></data>
-  <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0}: ячейки восстановлены. Сохраните изменения, чтобы оставить так.</value></data>
+  <data name="Actor.Sheet.SlotsRefilled" xml:space="preserve"><value>{0}: всё, что он восполняет, вернулось. Сохраните изменения, чтобы оставить так.</value></data>
   <data name="Actor.Sheet.NotSavedStrict" xml:space="preserve"><value>Не сохранено: сначала нужно исправить {0, plural, one{# нарушение правил} few{# нарушения правил} many{# нарушений правил} other{# нарушения правил}} (см. «Правила» выше). Мастер может смягчить это в настройках.</value></data>
   <data name="Actor.Sheet.SavedWarnings" xml:space="preserve"><value>Сохранено с {0, plural, one{# предупреждением о правилах} few{# предупреждениями о правилах} many{# предупреждениями о правилах} other{# предупреждения о правилах}}.</value></data>
   <data name="Actor.Sheet.NoPermission" xml:space="preserve"><value>У вас нет прав редактировать этот лист.</value></data>
@@ -471,6 +488,134 @@
   <data name="Actor.Actions.SlotOption" xml:space="preserve"><value>Уровень {0} (осталось {1})</value></data>
   <data name="Actor.Actions.NoSlots" xml:space="preserve"><value>Нет подходящей ячейки</value></data>
   <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: {2}, уровень {1}</value></data>
+  <data name="Actor.Actions.CostFor" xml:space="preserve"><value>Цена: {0}</value></data>
+  <data name="Actor.Actions.Free" xml:space="preserve"><value>Бесплатно</value></data>
+  <data name="Actor.Actions.PoolOption" xml:space="preserve"><value>{0} ×{1} (осталось {2})</value></data>
+  <data name="Actor.Actions.SpentFrom" xml:space="preserve"><value>{0}: {2} ×{1}</value></data>
+  <data name="Actor.Actions.CannotPay" xml:space="preserve"><value>Не хватает</value></data>
   <data name="Actor.Actions.Note" xml:space="preserve"><value>Броски действий делаются здесь, а во время сессии попадают в журнал стола. Потраченная ячейка отмечается сама; попадания, спасброски и урон применяет ведущий.</value></data>
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: не удаётся вычислить, что даёт это умение, поэтому оно пропущено. Мастер может проверить запись.</value></data>
+  <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): выберите ещё {2} ({3}).</value></data>
+  <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): ваши отметки ({2}) в списке «{3}» уже подходят под этот выбор. Подтвердите их.</value></data>
+  <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: выберите {1}</value></data>
+  <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>Обычно меняется: {0}</value></data>
+  <data name="Actor.Choice.Details" xml:space="preserve"><value>Подробности</value></data>
+  <data name="Actor.Choice.AfterRest" xml:space="preserve"><value>После «{0}» можно изменить:</value></data>
+  <data name="Actor.Choice.ChangeLink" xml:space="preserve"><value>Изменить: {0}</value></data>
+  <data name="Actor.Rule.ChoiceRowPending" xml:space="preserve"><value>{0} ({1}): выберите ещё {2}.</value></data>
+  <data name="Actor.Grants.Options" xml:space="preserve"><value>Выбор одного из</value></data>
+  <data name="Actor.Grants.ChooseId" xml:space="preserve"><value>Идентификатор выбора</value></data>
+  <data name="Actor.Grants.ChooseCount" xml:space="preserve"><value>Сколько выбрать</value></data>
+  <data name="Actor.Grants.OnChange" xml:space="preserve"><value>При смене выбора счётчики</value></data>
+  <data name="Actor.Grants.OnChange.keep" xml:space="preserve"><value>сохраняют потраченное</value></data>
+  <data name="Actor.Grants.OnChange.refill" xml:space="preserve"><value>начинают полными</value></data>
+  <data name="Actor.Grants.OnChange.empty" xml:space="preserve"><value>начинают с 0</value></data>
+  <data name="Actor.Grants.ChooseHelp" xml:space="preserve"><value>Идентификатор обязателен: под ним лист хранит выбор. Если у вариантов общий счётчик, дайте ему один и тот же ключ.</value></data>
+  <data name="Actor.Grants.ChangesOn" xml:space="preserve"><value>Обычно меняется</value></data>
+  <data name="Actor.Grants.OptionName" xml:space="preserve"><value>Вариант {0}: название</value></data>
+  <data name="Actor.Grants.OptionText" xml:space="preserve"><value>Вариант {0}: текст</value></data>
+  <data name="Actor.Grants.RemoveOption" xml:space="preserve"><value>Удалить вариант {0}</value></data>
+  <data name="Actor.Grants.AddOption" xml:space="preserve"><value>Добавить вариант</value></data>
+  <data name="Actor.Grants.SumOptions" xml:space="preserve"><value>вариантов: {0}</value></data>
+  <data name="Actor.Rule.ChoiceStale" xml:space="preserve"><value>{0} ({1}): «{2}» больше не подходит под этот выбор. Выберите заново.</value></data>
+  <data name="Actor.Rule.CounterKeyShared" xml:space="preserve"><value>{0}: несколько умений задают максимум одного и того же запаса. Используется наибольший: {1}. Мастер может проверить записи.</value></data>
+  <data name="Actor.Rule.SpendNoPool" xml:space="preserve"><value>{0}: тратит из «{1}», но на листе нет такого запаса, поэтому кнопки нет. Мастер может проверить запись.</value></data>
+  <data name="Actor.Features.SpendLeft" xml:space="preserve"><value>{0}: осталось {1}</value></data>
+  <data name="Actor.Features.SpendUse" xml:space="preserve"><value>Потратить ({0})</value></data>
+  <data name="Actor.Features.SpendUseOf" xml:space="preserve"><value>{0}: потратить {1} из «{2}»</value></data>
+  <data name="Actor.Features.SpendCannot" xml:space="preserve"><value>В «{0}» осталось слишком мало.</value></data>
+  <data name="Actor.Features.SpendAmountOf" xml:space="preserve"><value>Сколько тратит «{0}»</value></data>
+  <data name="Actor.Features.Spent" xml:space="preserve"><value>{0}: потрачено {1} — {2}</value></data>
+  <data name="Actor.Grants.UsesKey" xml:space="preserve"><value>Имя общего запаса</value></data>
+  <data name="Actor.Grants.UsesKeyPlaceholder" xml:space="preserve"><value>Необязательно, например focus</value></data>
+  <data name="Actor.Grants.Regain" xml:space="preserve"><value>Кто может вернуть использование вручную</value></data>
+  <data name="Actor.Grants.RegainOwner" xml:space="preserve"><value>Владелец и мастер</value></data>
+  <data name="Actor.Grants.RegainGm" xml:space="preserve"><value>Только мастер</value></data>
+  <data name="Actor.Grants.Moment.initiative" xml:space="preserve"><value>Бросок инициативы</value></data>
+  <data name="Actor.Grants.Moment.dawn" xml:space="preserve"><value>Рассвет</value></data>
+  <data name="Actor.Grants.Moment.manual" xml:space="preserve"><value>Только вручную</value></data>
+  <data name="Actor.Grants.Spends" xml:space="preserve"><value>Тратит из запаса</value></data>
+  <data name="Actor.Grants.SpendKey" xml:space="preserve"><value>Ключ запаса</value></data>
+  <data name="Actor.Grants.SpendAmount" xml:space="preserve"><value>Количество (число или ask)</value></data>
+  <data name="Actor.Grants.AddSpend" xml:space="preserve"><value>Добавить трату из запаса</value></data>
+  <data name="Actor.Grants.RemoveSpend" xml:space="preserve"><value>Убрать трату</value></data>
+  <data name="Actor.Grants.SumSpends" xml:space="preserve"><value>Тратит запас</value></data>
+  <data name="Actor.Grants.Title" xml:space="preserve"><value>Что это даёт в листе</value></data>
+  <data name="Actor.Grants.None" xml:space="preserve"><value>Пока ничего</value></data>
+  <data name="Actor.Grants.SumModifiers" xml:space="preserve"><value>Модификаторы: {0}</value></data>
+  <data name="Actor.Grants.SumAdds" xml:space="preserve"><value>Добавления в списки: {0}</value></data>
+  <data name="Actor.Grants.SumCounter" xml:space="preserve"><value>Счётчик применений</value></data>
+  <data name="Actor.Grants.Modifiers" xml:space="preserve"><value>Модификаторы</value></data>
+  <data name="Actor.Grants.Target" xml:space="preserve"><value>Меняет</value></data>
+  <data name="Actor.Grants.TargetOf" xml:space="preserve"><value>Модификатор {0}: что меняет</value></data>
+  <data name="Actor.Grants.Choose" xml:space="preserve"><value>Выберите...</value></data>
+  <data name="Actor.Grants.Amount" xml:space="preserve"><value>Величина</value></data>
+  <data name="Actor.Grants.AmountOf" xml:space="preserve"><value>Модификатор {0}: величина</value></data>
+  <data name="Actor.Grants.AmountPlaceholder" xml:space="preserve"><value>Число или формула</value></data>
+  <data name="Actor.Grants.Type" xml:space="preserve"><value>Тип</value></data>
+  <data name="Actor.Grants.TypeOf" xml:space="preserve"><value>Модификатор {0}: тип</value></data>
+  <data name="Actor.Grants.NoType" xml:space="preserve"><value>Прибавляется (без типа)</value></data>
+  <data name="Actor.Grants.When" xml:space="preserve"><value>Только если</value></data>
+  <data name="Actor.Grants.WhenOf" xml:space="preserve"><value>Модификатор {0}: только если</value></data>
+  <data name="Actor.Grants.WhenPlaceholder" xml:space="preserve"><value>Необязательное условие</value></data>
+  <data name="Actor.Grants.AddModifier" xml:space="preserve"><value>Добавить модификатор</value></data>
+  <data name="Actor.Grants.RemoveModifier" xml:space="preserve"><value>Убрать модификатор {0}</value></data>
+  <data name="Actor.Grants.Adds" xml:space="preserve"><value>Добавляет в списки</value></data>
+  <data name="Actor.Grants.List" xml:space="preserve"><value>Список</value></data>
+  <data name="Actor.Grants.ListOf" xml:space="preserve"><value>Добавление {0}: какой список</value></data>
+  <data name="Actor.Grants.Entries" xml:space="preserve"><value>Записи</value></data>
+  <data name="Actor.Grants.EntriesOf" xml:space="preserve"><value>Добавление {0}: записи через запятую</value></data>
+  <data name="Actor.Grants.EntriesPlaceholder" xml:space="preserve"><value>Одна или несколько через запятую</value></data>
+  <data name="Actor.Grants.FromLevel" xml:space="preserve"><value>С уровня</value></data>
+  <data name="Actor.Grants.Mode" xml:space="preserve"><value>Как добавляется</value></data>
+  <data name="Actor.Grants.ModeFixed" xml:space="preserve"><value>Фиксированно: эти ключи на ранге</value></data>
+  <data name="Actor.Grants.ModeRaise" xml:space="preserve"><value>Повышение: эти ключи на ранг выше</value></data>
+  <data name="Actor.Grants.ModeChoice" xml:space="preserve"><value>Выбор: решает игрок</value></data>
+  <data name="Actor.Grants.ModeHint" xml:space="preserve"><value>Фиксированно даёт перечисленные ключи. Повышение поднимает их на ранг. Выбор позволяет игроку выбрать самому.</value></data>
+  <data name="Actor.Grants.KeysHint" xml:space="preserve"><value>Ключи через запятую, например: {0}.</value></data>
+  <data name="Actor.Grants.Rank" xml:space="preserve"><value>Ранг</value></data>
+  <data name="Actor.Grants.RankFirst" xml:space="preserve"><value>Первый ранг</value></data>
+  <data name="Actor.Grants.RankAny" xml:space="preserve"><value>Любой</value></data>
+  <data name="Actor.Grants.RaiseBy" xml:space="preserve"><value>На сколько рангов</value></data>
+  <data name="Actor.Grants.PickCount" xml:space="preserve"><value>Игрок выбирает</value></data>
+  <data name="Actor.Grants.FromKind" xml:space="preserve"><value>Выбирать из</value></data>
+  <data name="Actor.Grants.FromAny" xml:space="preserve"><value>Любых ключей</value></data>
+  <data name="Actor.Grants.FromThese" xml:space="preserve"><value>Только этих ключей</value></data>
+  <data name="Actor.Grants.FromAttribute" xml:space="preserve"><value>Ключей с этими характеристиками</value></data>
+  <data name="Actor.Grants.FromKeys" xml:space="preserve"><value>Ключи</value></data>
+  <data name="Actor.Grants.MinRank" xml:space="preserve"><value>Уже не ниже</value></data>
+  <data name="Actor.Grants.MaxRank" xml:space="preserve"><value>Не выше</value></data>
+  <data name="Actor.Grants.Gives" xml:space="preserve"><value>Выбранное</value></data>
+  <data name="Actor.Grants.GivesRank" xml:space="preserve"><value>ставится на ранг</value></data>
+  <data name="Actor.Grants.GivesRaise" xml:space="preserve"><value>повышается на ранг</value></data>
+  <data name="Actor.Grants.ChoiceId" xml:space="preserve"><value>Идентификатор выбора</value></data>
+  <data name="Actor.Grants.ChoiceIdHint" xml:space="preserve"><value>Называет этот выбор, чтобы сделанный выбор сохранялся при правке умения. У каждого выбора в умении свой идентификатор.</value></data>
+  <data name="Actor.Grants.ChoiceIdTaken" xml:space="preserve"><value>Другой выбор в этом умении уже использует этот идентификатор.</value></data>
+  <data name="Actor.Grants.LevelOf" xml:space="preserve"><value>Добавление {0}: с какого уровня</value></data>
+  <data name="Actor.Grants.AddAdd" xml:space="preserve"><value>Добавить в список</value></data>
+  <data name="Actor.Grants.RemoveAdd" xml:space="preserve"><value>Убрать добавление {0}</value></data>
+  <data name="Actor.Grants.Uses" xml:space="preserve"><value>Применения</value></data>
+  <data name="Actor.Grants.UsesMax" xml:space="preserve"><value>Максимум</value></data>
+  <data name="Actor.Grants.AddUses" xml:space="preserve"><value>Добавить счётчик применений</value></data>
+  <data name="Actor.Grants.RemoveUses" xml:space="preserve"><value>Убрать счётчик применений</value></data>
+  <data name="Actor.Grants.FormulaError" xml:space="preserve"><value>Не удаётся прочитать: {0}</value></data>
+  <data name="Actor.Grants.FloorType" xml:space="preserve"><value>{0}: не меньше этого, не складывается</value></data>
+  <data name="Actor.Grants.CeilingType" xml:space="preserve"><value>{0}: не больше этого, не складывается</value></data>
+  <data name="Actor.Features.AtMost" xml:space="preserve"><value>{0}: не больше {1}</value></data>
+  <data name="Actor.Actions.Count" xml:space="preserve"><value>×{0}</value></data>
+  <data name="Actor.Actions.CountOf" xml:space="preserve"><value>За ход: {0}</value></data>
+  <data name="Actor.Actions.Crit" xml:space="preserve"><value>крит. {0}–{1}</value></data>
+  <data name="Actor.Actions.CritOf" xml:space="preserve"><value>Критическое попадание при выпадении от {0} до {1}</value></data>
+  <data name="Actor.Grants.Unknown" xml:space="preserve"><value>{0} (нет в этой системе)</value></data>
+  <data name="Actor.Grants.UsesKeyHint" xml:space="preserve"><value>Особенности с одним именем делят один запас: одна задаёт максимум, остальные тратят из него.</value></data>
+  <data name="Actor.Grants.Refills" xml:space="preserve"><value>Восполнение</value></data>
+  <data name="Actor.Grants.RefillsHint" xml:space="preserve"><value>Сколько использований возвращается на каждом отдыхе или в каждый момент.</value></data>
+  <data name="Actor.Grants.RefillNone" xml:space="preserve"><value>Ничего</value></data>
+  <data name="Actor.Grants.RefillAll" xml:space="preserve"><value>Все</value></data>
+  <data name="Actor.Grants.RefillSome" xml:space="preserve"><value>Часть</value></data>
+  <data name="Actor.Grants.RefillAmountOf" xml:space="preserve"><value>{0}: сколько возвращается</value></data>
+  <data name="Actor.Grants.RefillAmountPlaceholder" xml:space="preserve"><value>1, 1d4 или формула</value></data>
+  <data name="Actor.Grants.RefillOnlyEmpty" xml:space="preserve"><value>Только если ничего не осталось</value></data>
+  <data name="Actor.Grants.RefillWhenNote" xml:space="preserve"><value>И только если {0}</value></data>
+  <data name="Actor.Grants.SpendKeyPlaceholder" xml:space="preserve"><value>Имя запаса, например focus</value></data>
 </root>
