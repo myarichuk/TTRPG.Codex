@@ -198,4 +198,26 @@ public class ImporterTests : IDisposable
         Assert.Equal("grantedSpells", adds[1]["to"]);
         Assert.Equal("Rage.", rows[0]["description"]); // the text is never touched
     }
+
+    [Fact]
+    public void ASpellcastingAction_GetsItsSpellsBack_GroupedByHowOftenTheyAreCast()
+    {
+        var spellcasting = System.Text.Json.JsonDocument.Parse("""
+            {"spells":[
+              {"name":"Detect Magic","usage":{"type":"at will"}},
+              {"name":"Mage Armor","notes":"Included in AC","usage":{"type":"at will"}},
+              {"name":"Fireball","usage":{"type":"per day","times":2}},
+              {"name":"Invisibility","usage":{"type":"per day","times":2}},
+              {"name":"Cone of Cold","usage":{"type":"per day","times":1}}]}
+            """).RootElement;
+
+        var text = Srd5eImporter.WithSpellList("The mage casts one of the following spells (spell save DC 14):", spellcasting);
+
+        Assert.Equal("The mage casts one of the following spells (spell save DC 14):\n\n" +
+            "At Will: *Detect Magic*, *Mage Armor* (included in AC)\n\n2/Day Each: *Fireball*, *Invisibility*\n\n1/Day: *Cone of Cold*", text);
+
+        // A text that already names its spell is left as it is, and so is one with no spellcasting object.
+        Assert.Equal("The mage casts Misty Step.", Srd5eImporter.WithSpellList("The mage casts Misty Step.", spellcasting));
+        Assert.Equal("Pick one:", Srd5eImporter.WithSpellList("Pick one:", null));
+    }
 }

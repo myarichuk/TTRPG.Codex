@@ -60,6 +60,12 @@ description: >-
   **Spellcasting.** The planetar casts one of the following spells, requiring no Material components and using Charisma as spellcasting ability (spell save DC 20):
 
 
+  At Will: *Detect Evil and Good*
+
+
+  1/Day Each: *Commune*, *Control Weather*, *Dispel Evil and Good*, *Raise Dead*
+
+
 
   ### Bonus Actions
 
@@ -109,7 +115,14 @@ properties:
   - name: Holy Burst
     description: 'Dexterity Saving Throw: DC 20, each enemy in a 20-foot-radius Sphere centered on a point the planetar can see within 120 feet. Failure: 24 (7d6) Radiant damage. Success: Half damage.'
   - name: Spellcasting
-    description: 'The planetar casts one of the following spells, requiring no Material components and using Charisma as spellcasting ability (spell save DC 20):'
+    description: >-
+      The planetar casts one of the following spells, requiring no Material components and using Charisma as spellcasting ability (spell save DC 20):
+
+
+      At Will: *Detect Evil and Good*
+
+
+      1/Day Each: *Commune*, *Control Weather*, *Dispel Evil and Good*, *Raise Dead*
   bonusActions:
   - name: Divine Aid (2/day)
     description: The planetar casts Cure Wounds, Invisibility, Lesser Restoration, or Remove Curse, using the same spellcasting ability as Spellcasting.

@@ -52,6 +52,12 @@ description: >-
   **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 23, +15 to hit with spell attacks):
 
 
+  At Will: *Command*, *Detect Magic*, *Scorching Ray*
+
+
+  1/Day Each: *Fireball*, *Scrying*
+
+
 
   ### Legendary Actions
 
@@ -99,7 +105,14 @@ properties:
   - name: Fire Breath
     description: 'Dexterity Saving Throw: DC 24, each creature in a 90-foot Cone. Failure: 91 (26d6) Fire damage. Success: Half damage.'
   - name: Spellcasting
-    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 23, +15 to hit with spell attacks):'
+    description: >-
+      The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 23, +15 to hit with spell attacks):
+
+
+      At Will: *Command*, *Detect Magic*, *Scorching Ray*
+
+
+      1/Day Each: *Fireball*, *Scrying*
   legendaryActions:
   - name: Commanding Presence
     description: The dragon uses Spellcasting to cast Command (level 2 version). The dragon can’t take this action again until the start of its next turn.

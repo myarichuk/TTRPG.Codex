@@ -55,6 +55,12 @@ description: >-
 
 
   **Spellcasting.** The glabrezu casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):
+
+
+  At Will: *Darkness*, *Detect Magic*, *Dispel Magic*
+
+
+  1/Day Each: *Confusion*, *Fly*, *Power Word Stun*
 tags:
 - fiend
 - large
@@ -99,4 +105,11 @@ properties:
   - name: Pummel
     description: 'Dexterity Saving Throw: DC 17, one creature Grappled by the glabrezu. Failure: 15 (3d6 + 5) Bludgeoning damage. Success: Half damage.'
   - name: Spellcasting
-    description: 'The glabrezu casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):'
+    description: >-
+      The glabrezu casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):
+
+
+      At Will: *Darkness*, *Detect Magic*, *Dispel Magic*
+
+
+      1/Day Each: *Confusion*, *Fly*, *Power Word Stun*

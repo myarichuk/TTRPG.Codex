@@ -51,6 +51,12 @@ description: >-
   **Spellcasting.** The dryad casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 14):
 
 
+  At Will: *Animal Friendship*, *Charm Monster* (lasts 24 hours; ends early if the dryad casts the spell again), *Druidcraft*
+
+
+  1/Day Each: *Entangle*, *Pass without Trace*
+
+
 
   ### Bonus Actions
 
@@ -91,7 +97,14 @@ properties:
   - name: Thorn Burst
     description: 'Ranged Attack Roll: +6, range 60 ft. Hit: 7 (1d6 + 4) Piercing damage.'
   - name: Spellcasting
-    description: 'The dryad casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 14):'
+    description: >-
+      The dryad casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 14):
+
+
+      At Will: *Animal Friendship*, *Charm Monster* (lasts 24 hours; ends early if the dryad casts the spell again), *Druidcraft*
+
+
+      1/Day Each: *Entangle*, *Pass without Trace*
   bonusActions:
   - name: Tree Stride
     description: If within 5 feet of a Large or bigger tree, the dryad teleports to an unoccupied space within 5 feet of a second Large or bigger tree that is within 60 feet of the previous tree.

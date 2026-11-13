@@ -55,6 +55,12 @@ description: >-
   **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21, +13 to hit with spell attacks):
 
 
+  At Will: *Acid Arrow*, *Detect Magic*, *Fear*
+
+
+  1/Day Each: *Create Undead*, *Speak with Dead*, *Vitriolic Sphere*
+
+
 
   ### Legendary Actions
 
@@ -104,7 +110,14 @@ properties:
   - name: Acid Breath
     description: 'Dexterity Saving Throw: DC 22, each creature in a 90-foot-long, 10-footwide Line. Failure: 67 (15d8) Acid damage. Success: Half damage.'
   - name: Spellcasting
-    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21, +13 to hit with spell attacks):'
+    description: >-
+      The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21, +13 to hit with spell attacks):
+
+
+      At Will: *Acid Arrow*, *Detect Magic*, *Fear*
+
+
+      1/Day Each: *Create Undead*, *Speak with Dead*, *Vitriolic Sphere*
   legendaryActions:
   - name: Cloud of Insects
     description: 'Dexterity Saving Throw: DC 21, one creature the dragon can see within 120 feet. Failure: 33 (6d10) Poison damage, and the target has Disadvantage on saving throws to maintain Concentration until the end of its next turn. Failure or Success: The dragon can’t take this action again until the start of its next turn.'

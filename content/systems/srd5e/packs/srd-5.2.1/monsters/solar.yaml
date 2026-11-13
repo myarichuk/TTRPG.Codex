@@ -59,6 +59,12 @@ description: >-
   **Spellcasting.** The solar casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 25):
 
 
+  At Will: *Detect Evil and Good*
+
+
+  1/Day Each: *Commune*, *Control Weather*, *Dispel Evil and Good*, *Resurrection*
+
+
 
   ### Bonus Actions
 
@@ -119,7 +125,14 @@ properties:
   - name: Slaying Bow
     description: 'Dexterity Saving Throw: DC 21, one creature the solar can see within 600 feet. Failure: If the creature has 100 Hit Points or fewer, it dies. It otherwise takes 24 (4d8 + 6) Piercing damage plus 36 (8d8) Radiant damage.'
   - name: Spellcasting
-    description: 'The solar casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 25):'
+    description: >-
+      The solar casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 25):
+
+
+      At Will: *Detect Evil and Good*
+
+
+      1/Day Each: *Commune*, *Control Weather*, *Dispel Evil and Good*, *Resurrection*
   bonusActions:
   - name: Divine Aid (3/day)
     description: The solar casts Cure Wounds (level 2 version), Lesser Restoration, or Remove Curse, using the same spellcasting ability as Spellcasting.

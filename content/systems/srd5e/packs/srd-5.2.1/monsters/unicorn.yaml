@@ -51,6 +51,12 @@ description: >-
   **Spellcasting.** The unicorn casts one of the following spells, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 14):
 
 
+  At Will: *Detect Evil and Good*, *Druidcraft*
+
+
+  1/Day Each: *Calm Emotions*, *Dispel Evil and Good*, *Entangle*, *Pass without Trace*, *Word of Recall*
+
+
 
   ### Legendary Actions
 
@@ -98,7 +104,14 @@ properties:
   - name: Radiant Horn
     description: 'Melee Attack Roll: +7, reach 5 ft. Hit: 9 (1d10 + 4) Radiant damage.'
   - name: Spellcasting
-    description: 'The unicorn casts one of the following spells, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 14):'
+    description: >-
+      The unicorn casts one of the following spells, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 14):
+
+
+      At Will: *Detect Evil and Good*, *Druidcraft*
+
+
+      1/Day Each: *Calm Emotions*, *Dispel Evil and Good*, *Entangle*, *Pass without Trace*, *Word of Recall*
   legendaryActions:
   - name: Charging Horn
     description: The unicorn moves up to half its Speed without provoking Opportunity Attacks, and it makes one Radiant Horn attack.
