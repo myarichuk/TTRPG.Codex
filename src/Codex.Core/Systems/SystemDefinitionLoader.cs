@@ -255,6 +255,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in ValidateMoments(definition))
+        {
+            yield return error;
+        }
+
         if (definition.Vitals?.Concentration is { } concentration
             && RequiredAttributeError(definition, "vitals.concentration.saveAttribute", concentration.SaveAttribute) is { } concentrationError)
         {
@@ -634,10 +639,6 @@ public static class SystemDefinitionLoader
         }
     }
 
-    /// <summary>The moments a row choice's <c>changesOn</c> may name besides the system's rests: the ones the table triggers. <c>manual</c> is
-    /// not one, since nothing happens at it.</summary>
-    public static readonly IReadOnlyList<string> ChangeMoments = new[] { Codex.Core.Rules.FeatureRecovery.Initiative, Codex.Core.Rules.FeatureRecovery.Dawn };
-
     /// <summary>Whether <paramref name="choose"/> is sound on its own: an id, a count of 1 or more, a known <c>onChange</c>, and
     /// <c>changesOn</c> naming only the system's rests or a moment the table triggers. One sentence per problem, led by <paramref name="where"/>.</summary>
     public static IEnumerable<string> CheckRowChoose(SystemDefinition definition, RowChoose choose, string where)
@@ -649,9 +650,38 @@ public static class SystemDefinitionLoader
             yield return $"{where}: onChange '{choose.OnChange}' must be keep, refill or empty.";
         }
 
-        foreach (var moment in choose.ChangesOn.Where(m => definition.Vitals?.FindRest(m) == null && !ChangeMoments.Contains(m, StringComparer.OrdinalIgnoreCase)))
+        foreach (var moment in choose.ChangesOn.Where(m => !Codex.Core.Rules.SystemMoments.ChangeMoments(definition).Contains(m, StringComparer.OrdinalIgnoreCase)))
         {
-            yield return $"{where}: changesOn '{moment}' is not one of the system's rests, nor initiative or dawn.";
+            yield return $"{where}: changesOn '{moment}' is not one of the system's moments (a rest, one it declares, initiative or dawn).";
+        }
+    }
+
+    private static readonly Regex MomentKeyPattern = new("^[A-Za-z][A-Za-z0-9_-]*$", RegexOptions.Compiled);
+
+    /// <summary>The problems with the system's declared <c>moments</c>: a key (letters, digits, '-', '_') that is unique and is not a rest's
+    /// name, initiative, dawn or manual; an <c>onSet</c> that names an input value of a sheet kind.</summary>
+    private static IEnumerable<string> ValidateMoments(SystemDefinition definition)
+    {
+        var taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            Codex.Core.Rules.FeatureRecovery.Initiative, Codex.Core.Rules.FeatureRecovery.Dawn, Codex.Core.Rules.FeatureRecovery.Manual
+        };
+        foreach (var rest in definition.Vitals?.Rests ?? new List<RestRule>()) taken.Add(rest.Name);
+        var inputs = definition.SheetKinds.SelectMany(k => k.Values).Where(v => v.Input).Select(v => v.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var moment in definition.Moments)
+        {
+            if (string.IsNullOrWhiteSpace(moment.Key))
+            {
+                yield return "every moment needs a key.";
+                continue;
+            }
+
+            if (!MomentKeyPattern.IsMatch(moment.Key)) yield return $"moment '{moment.Key}' must be letters, digits, '-' or '_', and start with a letter.";
+            if (!taken.Add(moment.Key)) yield return $"moment '{moment.Key}' repeats a rest, initiative, dawn, manual or another moment.";
+            if (!string.IsNullOrWhiteSpace(moment.OnSet) && !inputs.Contains(moment.OnSet))
+            {
+                yield return $"moment '{moment.Key}': onSet '{moment.OnSet}' is not an input value of any sheet kind.";
+            }
         }
     }
 

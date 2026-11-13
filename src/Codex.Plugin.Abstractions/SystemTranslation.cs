@@ -25,6 +25,9 @@ public class SystemTranslation
     /// <summary>Condition name as the rules know it -> name to show.</summary>
     public Dictionary<string, string> Conditions { get; set; } = new();
 
+    /// <summary>Moment key (<c>downtime</c>) -> name to show.</summary>
+    public Dictionary<string, string> Moments { get; set; } = new();
+
     /// <summary>Labels of the sheet rules (derived stats, pick lists, skills, slot pools...).</summary>
     public SheetRulesTranslation SheetRules { get; set; } = new();
 

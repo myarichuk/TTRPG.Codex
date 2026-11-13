@@ -115,12 +115,6 @@ public static class FeatureRecovery
     public const string Dawn = "dawn";
     public const string Manual = "manual";
 
-    /// <summary>The words a refill may name that are not rests: the moment of rolling initiative, a GM-called dawn, and a
-    /// refill only a person does by hand.</summary>
-    public static readonly IReadOnlyList<string> Moments = new[] { Initiative, Dawn, Manual };
-
-    public static bool IsMoment(string on) => Moments.Contains(on, StringComparer.OrdinalIgnoreCase);
-
     private static readonly System.Text.RegularExpressions.Regex DiceShape = new(@"^\s*\d*d\d+\s*([+-]\s*\d+)?\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
 
     /// <summary>Whether <paramref name="amount"/> is dice (<c>1d6+1</c>, <c>d4</c>) rather than a formula.</summary>
@@ -205,9 +199,10 @@ public sealed partial class SheetRuleEngine
     public static string UsesLabel(IReadOnlyDictionary<string, object> sheet, string key) =>
         YamlValues.GetString(sheet, key + UsesLabelSuffix) is { Length: > 0 } label ? label : key[UsesPrefix.Length..].Replace('_', ' ');
 
-    /// <summary>The rests that refill the feature counter <paramref name="key"/>, as the sheet records them.</summary>
-    public static IReadOnlyList<string> UsesRests(IReadOnlyDictionary<string, object> sheet, string key) =>
-        FeatureRecovery.Decode(sheet, key).Select(r => r.On).Where(on => !FeatureRecovery.IsMoment(on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    /// <summary>The rests that refill the feature counter <paramref name="key"/>, as the sheet records them (<paramref name="system"/> says
+    /// which of the names are moments rather than rests).</summary>
+    public static IReadOnlyList<string> UsesRests(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string key) =>
+        FeatureRecovery.Decode(sheet, key).Select(r => r.On).Where(on => SystemMoments.IsRest(system, on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     /// <summary>The features the sheet has now, in the order the system lists their sources.</summary>
     public IReadOnlyList<ActiveFeature> ActiveFeatures(IReadOnlyDictionary<string, object> sheet) => CollectFeatures(sheet, null);
@@ -607,7 +602,7 @@ public sealed partial class SheetRuleEngine
             var rules = ResolveRecovers(winner.Feature, derived, Warn);
             var legacy = group.Where(o => o.Feature.Uses!.Key != null).Select(o => UsesPrefix + Slug($"{o.Feature.Source.Id}_{o.Feature.Name}")).Where(k => k != winner.Key).Distinct(StringComparer.Ordinal).ToList();
             result.Counters.Add(new FeatureCounter(winner.Feature, winner.Key, winner.Key + UsesMaxSuffix, winner.Max,
-                rules.Select(r => r.On).Where(on => !FeatureRecovery.IsMoment(on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                rules.Select(r => r.On).Where(on => SystemMoments.IsRest(system, on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
                 rules, winner.Feature.Uses!.GmRegain, legacy));
         }
 

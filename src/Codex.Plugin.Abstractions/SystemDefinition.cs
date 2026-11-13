@@ -436,6 +436,21 @@ public class SystemSetting
         && string.IsNullOrWhiteSpace(Notes) && Genres.Count + Tone.Count + Themes.Count + Factions.Count + Places.Count + Play.Count + Avoid.Count == 0;
 }
 
+/// <summary>A moment the system declares: a named time at which feature counters refill (<c>recovers: [{ on: downtime }]</c>) and
+/// the system's <c>events:</c> handler of the same name runs.</summary>
+public sealed class MomentDefinition
+{
+    /// <summary>Required: the moment's name. It may not repeat a rest's name, <c>initiative</c>, <c>dawn</c> or <c>manual</c>, nor
+    /// another moment's.</summary>
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>The moment's name as the app shows it; <c>key</c> when empty.</summary>
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>The key of an <c>input</c> value of a sheet kind. Setting that value on the sheet fires the moment.</summary>
+    public string? OnSet { get; set; }
+}
+
 /// <summary>
 /// A whole game system described as data (<c>system.yaml</c>). This is what lets a homebrew system
 /// exist without compiling a plugin: attributes, resources, the actor sheet, the content types its
@@ -528,6 +543,11 @@ public class SystemDefinition
 
     /// <summary>Named rolls with inputs and outcomes (see Rolls.cs).</summary>
     public List<RollDefinition> Rolls { get; set; } = new();
+
+    /// <summary>The system's own moments (<c>downtime</c>, <c>loadChosen</c>): named times at which counters refill and an
+    /// <c>events:</c> handler of the same name runs. Rests (<c>vitals.rests</c>), <c>initiative</c> and <c>dawn</c> are moments
+    /// too and need no declaring.</summary>
+    public List<MomentDefinition> Moments { get; set; } = new();
 
     /// <summary>Event handlers by event name (<c>damage</c>, <c>turnStart</c>, <c>roll</c>): <c>{ builtin: name, ...options }</c>,
     /// <c>{ script: file#export }</c>, or a list of <c>{ when, intents }</c> lines. Read as YAML gives it, and parsed by
@@ -711,6 +731,7 @@ public class SystemDefinition
                 HitPointsProperty = e.HitPointsProperty, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing
             };
         }).ToList();
+        copy.Moments = Moments.Select(m => new MomentDefinition { Key = m.Key, OnSet = m.OnSet, Label = t.Moments.TryGetValue(m.Key, out var shown) ? shown : m.Label }).ToList();
         copy.SheetRules = SheetRules == null ? null : ApplyRuleLabels(SheetRules, t.SheetRules, t.Categories);
         copy.Translations = Translations;
         copy.ConditionLabels = new Dictionary<string, string>(t.Conditions);

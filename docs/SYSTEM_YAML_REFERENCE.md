@@ -44,6 +44,7 @@ A whole game system described as data (`system.yaml`). This is what lets a homeb
 | `widgets` | map of [WidgetDefinition](#widgetdefinition) | Widgets a DLL supplies (`{ type: "Acme.Street.Cyberware, Acme.Street" }`), placed by name in a layout like the host's own (`{ widget: cyberware }`). |
 | `conditionEffects` | map of [ConditionEffectDefinition](#conditioneffectdefinition) | What a condition does while it holds, by condition name. |
 | `rolls` | list of [RollDefinition](#rolldefinition) | Named rolls with inputs and outcomes (see Rolls.cs). |
+| `moments` | list of [MomentDefinition](#momentdefinition) | The system's own moments (`downtime`, `loadChosen`): named times at which counters refill and an `events:` handler of the same name runs. Rests (`vitals.rests`), `initiative` and `dawn` are moments too and need no declaring. |
 | `events` | map of any | Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape. |
 
 ## LicenseInfo
@@ -1067,3 +1068,13 @@ A group roll's participants (`{ from, roll }`): who chooses them, and the roll e
 |---|---|---|
 | `from` | text (a number is text too) | Who chooses the participants: `gm` or `roller`. |
 | `roll` | text (a number is text too) | The roll each participant makes. |
+
+## MomentDefinition
+
+A moment the system declares: a named time at which feature counters refill (`recovers: [{ on: downtime }]`) and the system's `events:` handler of the same name runs.
+
+| Key | Type | What it is |
+|---|---|---|
+| `key` | text (a number is text too) | Required: the moment's name. It may not repeat a rest's name, `initiative`, `dawn` or `manual`, nor another moment's. |
+| `label` | text (a number is text too) | The moment's name as the app shows it; `key` when empty. |
+| `onSet` | text (a number is text too) | The key of an `input` value of a sheet kind. Setting that value on the sheet fires the moment. |

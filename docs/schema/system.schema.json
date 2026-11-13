@@ -173,6 +173,13 @@
       },
       "description": "Named rolls with inputs and outcomes (see Rolls.cs)."
     },
+    "moments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/MomentDefinition"
+      },
+      "description": "The system's own moments (`downtime`, `loadChosen`): named times at which counters refill and an `events:` handler of the same name runs. Rests (`vitals.rests`), `initiative` and `dawn` are moments too and need no declaring."
+    },
     "events": {
       "type": "object",
       "additionalProperties": {},
@@ -4281,6 +4288,37 @@
             "boolean"
           ],
           "description": "The roll each participant makes."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MomentDefinition": {
+      "description": "A moment the system declares: a named time at which feature counters refill (`recovers: [{ on: downtime }]`) and the system's `events:` handler of the same name runs.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required: the moment's name. It may not repeat a rest's name, `initiative`, `dawn` or `manual`, nor another moment's."
+        },
+        "label": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The moment's name as the app shows it; `key` when empty."
+        },
+        "onSet": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The key of an `input` value of a sheet kind. Setting that value on the sheet fires the moment."
         }
       },
       "additionalProperties": false
