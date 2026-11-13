@@ -50,7 +50,11 @@ public static class FeatureGrantCheck
                 // A spell cast without a slot: free is "atWill" or a counter ({ max, recoversOn... }), on a list of Library entries (spells).
                 if (add.TryGetValue("free", out var free) && free != null)
                 {
-                    var entryList = vocabulary.Lists.FirstOrDefault(l => l.EntityType != null && l.Key.Equals(to, StringComparison.OrdinalIgnoreCase));
+                    // A mark-only choice (no "to", a "fromList") puts the spell on no list, but picks among the entries of one.
+                    var heldFrom = to.Length == 0 ? Text(add, "fromList") : string.Empty;
+                    var entryList = vocabulary.Lists.FirstOrDefault(l => l.EntityType != null && l.Key.Equals(to, StringComparison.OrdinalIgnoreCase))
+                        ?? (heldFrom.Length == 0 ? null : (system.SheetRules?.Lists ?? new List<ListRule>()).Where(l => l.TargetEntityType != null && l.Key.Equals(heldFrom, StringComparison.OrdinalIgnoreCase))
+                            .Select(l => new GrantList(l.Key, l.Label, l.TargetEntityType)).FirstOrDefault());
                     if (entryList == null) problems.Add($"{shown}: \"free\" goes on entries added to a list of Library entries (the granted spells), not \"{to}\".");
                     var atWill = free is string freeText && freeText.Trim().Equals("atWill", StringComparison.OrdinalIgnoreCase);
                     if (!atWill && !(free is IDictionary<string, object> freeMap && freeMap.ContainsKey("max")))

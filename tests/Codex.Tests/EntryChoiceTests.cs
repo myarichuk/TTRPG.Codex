@@ -290,6 +290,91 @@ public class EntryChoiceTests : IAsyncLifetime
         Assert.Contains(open.Options, o => o.Key == "frog-whisper");
     }
 
+    private static Dictionary<string, object> OncePerLongRest() => Map(("max", 1L), ("recoversOn", Items("Long Rest")));
+
+    [Fact]
+    public void APickWithFree_GetsACounterOfItsOwnSlot_AndTheSpellsActionOneMoreCost()
+    {
+        var arcanum = Arcanum();
+        arcanum["free"] = OncePerLongRest();
+        var (engine, sheet) = Character(11, Feat("arcanum", arcanum));
+        sheet["choice__arcanum__arcanum-6"] = Items("eyebite");
+
+        var evaluation = engine.Recompute(sheet);
+
+        var counter = evaluation.Counters.Single(c => c.Key.StartsWith("uses_free_arcanum"));
+        Assert.Equal("uses_free_arcanum_arcanum_6_1", counter.Key);
+        Assert.Equal("arcanum: Eyebite", counter.Label);
+        var cast = evaluation.Actions.Single(a => a.Entry.Id == "eyebite");
+        Assert.Contains(cast.Costs, c => c.Key == counter.Key);
+    }
+
+    [Fact]
+    public void ChangingThePick_KeepsWhatWasSpent_AndTheCounterFollowsTheNewSpell()
+    {
+        var arcanum = Arcanum();
+        arcanum["free"] = OncePerLongRest();
+        var (engine, sheet) = Character(11, Feat("arcanum", arcanum));
+        sheet["choice__arcanum__arcanum-6"] = Items("eyebite");
+        engine.Recompute(sheet);
+        sheet["uses_free_arcanum_arcanum_6_1"] = 0L; // spent
+
+        sheet["choice__arcanum__arcanum-6"] = Items("circle-of-death");
+        var evaluation = engine.Recompute(sheet);
+
+        Assert.Equal(0L, sheet["uses_free_arcanum_arcanum_6_1"]); // re-picking does not refill it
+        Assert.Equal("arcanum: Circle of Death", evaluation.Counters.Single(c => c.Key == "uses_free_arcanum_arcanum_6_1").Label);
+        Assert.Contains(evaluation.Actions.Single(a => a.Entry.Id == "circle-of-death").Costs, c => c.Key == "uses_free_arcanum_arcanum_6_1");
+        Assert.DoesNotContain(evaluation.Actions.Where(a => a.Entry.Id == "eyebite"), a => a.Costs.Any(c => c.Key == "uses_free_arcanum_arcanum_6_1"));
+    }
+
+    [Fact]
+    public void TwoPicks_GetTwoSlotCounters_AndAMarkOnlyPickCarriesFreeWithoutPuttingTheSpellAnywhere()
+    {
+        var signature = Map(("choice", "signature"), ("choose", 2L), ("fromList", "spells"), ("where", Items(Map(("property", "level"), ("equals", 3L)))),
+            ("free", Map(("max", 1L), ("recoversOn", Items("Short Rest", "Long Rest")))));
+        var (engine, sheet) = Character(20, Feat("signature", signature));
+        sheet["spells"] = Items("fireball", "fly", "shield");
+        sheet["choice__signature__signature"] = Items("fireball", "fly");
+
+        var evaluation = engine.Recompute(sheet);
+
+        Assert.Equal(new[] { "uses_free_signature_signature_1", "uses_free_signature_signature_2" }, evaluation.Counters.Select(c => c.Key).Where(k => k.StartsWith("uses_free_signature")).Order());
+        Assert.Contains(evaluation.Actions.Single(a => a.Entry.Id == "fly").Costs, c => c.Key == "uses_free_signature_signature_2");
+        Assert.Empty(SheetRuleEngine.RawList(sheet, "grantedSpells")); // nothing was put on any list
+    }
+
+    [Fact]
+    public void ASecondCopyOfTheFeat_HasItsOwnSlotCounters()
+    {
+        var spell = Map(("to", "grantedSpells"), ("choice", "spell"), ("choose", 1L), ("where", Items(Map(("property", "level"), ("equals", 1L)))),
+            ("free", OncePerLongRest()));
+        var (engine, sheet) = Character(1, Feat("initiate", spell));
+        sheet["feats"] = Items("initiate", "initiate");
+        sheet["choice__initiate__spell"] = Items("magic-missile");
+        sheet["choice__initiate#2__spell"] = Items("shield");
+
+        var evaluation = engine.Recompute(sheet);
+
+        Assert.Equal(2, evaluation.Counters.Count(c => c.Key.StartsWith("uses_free_initiate")));
+        Assert.Contains(evaluation.Counters, c => c.Key == "uses_free_initiate_spell_1");
+        Assert.Contains(evaluation.Counters, c => c.Key == "uses_free_initiate_2_spell_1");
+    }
+
+    [Fact]
+    public void AtWillOnAPick_IsAFreeCostWithNoCounter()
+    {
+        var mastery = Map(("choice", "mastery"), ("choose", 1L), ("fromList", "spells"), ("where", Items(Map(("property", "level"), ("equals", 1L)))), ("free", "atWill"));
+        var (engine, sheet) = Character(18, Feat("mastery", mastery));
+        sheet["spells"] = Items("shield", "magic-missile");
+        sheet["choice__mastery__mastery"] = Items("shield");
+
+        var evaluation = engine.Recompute(sheet);
+
+        Assert.Contains(evaluation.Actions.Single(a => a.Entry.Id == "shield").Costs, c => c.Free && c.Label == ActionCost.AtWillLabel);
+        Assert.DoesNotContain(evaluation.Counters, c => c.Key.StartsWith("uses_free_mastery"));
+    }
+
     [Fact]
     public void TheNewConditions_AlsoWorkInAListsOwnWhere()
     {

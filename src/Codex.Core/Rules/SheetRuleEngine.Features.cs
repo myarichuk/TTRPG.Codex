@@ -710,27 +710,48 @@ public sealed partial class SheetRuleEngine
 
         // A spell a feature lets the character cast without a slot (adds[].free): one counter per spell, "free-<spell id>", unless the add names a
         // key (then its spells share that counter). At will has no counter. Each is a counter of a feature made for it, named "<feature>: <spell>".
+        // The spells a choice picked (an entry choice's, or a mark-only one's) have a counter per SLOT, "free-{entry}[#copy]-{choice}-{n}", n the pick's
+        // position: changing the pick keeps what is left, and cannot refill it.
+        var picks = features.Any(f => f.Adds.Any(a => a.IsFreeCasting && a.Choice != null)) ? ResolveEntryChoices(features.Where(f => !f.OnKind), sheet) : new List<EntryChoiceState>();
         var casts = new List<(ActiveFeature Feature, string SpellId, string? CounterKey)>();
+        void AddCast(ActiveFeature feature, FeatureAdd add, ContentEntry spell, string defaultKey)
+        {
+            if (add.Free is not { } free)
+            {
+                casts.Add((feature, spell.Id, null));
+                return;
+            }
+
+            var own = feature with { Name = $"{feature.Name}: {spell.Name}", Modifiers = Array.Empty<FeatureModifier>(), Adds = Array.Empty<FeatureAdd>(), Uses = free, Spends = null };
+            if (Amount(own, free.Max, null, derived, Warn) is not { } freeMax || freeMax <= 0) return;
+            var key = UsesPrefix + Slug(free.Key ?? defaultKey);
+            owners.Add((own, key, freeMax));
+            casts.Add((feature, spell.Id, key));
+        }
+
         foreach (var feature in features)
         {
             foreach (var add in feature.Adds.Where(a => a.IsFreeCasting && AddApplies(feature, a)))
             {
+                if (add.Choice != null)
+                {
+                    if (picks.FirstOrDefault(p => ReferenceEquals(p.Add, add) && ReferenceEquals(p.Feature, feature)) is not { List: { } pickList } state) continue;
+                    for (var n = 0; n < state.Valid.Count; n++)
+                    {
+                        if (resolver.Resolve(pickList.TargetEntityType, state.Valid[n]) is { } picked)
+                        {
+                            AddCast(feature, add, picked, $"free-{feature.Source.Id}{(feature.Copy > 1 ? "#" + feature.Copy : string.Empty)}-{feature.ScopedChoiceId(state.Choice.Id)}-{n + 1}");
+                        }
+                    }
+
+                    continue;
+                }
+
                 var type = Rules?.Lists.FirstOrDefault(l => l.Key.Equals(add.To, StringComparison.OrdinalIgnoreCase))?.TargetEntityType;
                 if (type == null) continue;
                 foreach (var named in add.Entries)
                 {
-                    if (EntryId(type, named) is not { } id || resolver.Resolve(type, id) is not { } spell) continue;
-                    if (add.Free is not { } free)
-                    {
-                        casts.Add((feature, spell.Id, null));
-                        continue;
-                    }
-
-                    var own = feature with { Name = $"{feature.Name}: {spell.Name}", Modifiers = Array.Empty<FeatureModifier>(), Adds = Array.Empty<FeatureAdd>(), Uses = free, Spends = null };
-                    if (Amount(own, free.Max, null, derived, Warn) is not { } freeMax || freeMax <= 0) continue;
-                    var key = UsesPrefix + Slug(free.Key ?? "free-" + spell.Id);
-                    owners.Add((own, key, freeMax));
-                    casts.Add((feature, spell.Id, key));
+                    if (EntryId(type, named) is { } id && resolver.Resolve(type, id) is { } spell) AddCast(feature, add, spell, "free-" + spell.Id);
                 }
             }
         }
