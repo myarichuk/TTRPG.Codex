@@ -131,5 +131,45 @@ public static class SystemMoments
         return system is { SheetKinds.Count: > 0 } && HandlerTouches(system, SheetLayout.KindOf(system, sheet), moment);
     }
 
+    /// <summary>What a moment does to a sheet, in the sheet's words: the tracks its handler names (<see cref="HandlerTracks"/>) that the sheet's
+    /// kind has, and the feature counters that refill at it. A moment's button says this before it is pressed.</summary>
+    public static (IReadOnlyList<string> Tracks, IReadOnlyList<string> Counters) Effects(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string moment)
+    {
+        var kind = system is { SheetKinds.Count: > 0 } ? SheetLayout.KindOf(system, sheet) : null;
+        var tracks = (HandlerTracks(system, moment) ?? Array.Empty<string>())
+            .Select(t => kind?.Tracks.FirstOrDefault(k => Same(k.Key, t)))
+            .OfType<TrackDefinition>()
+            .Select(t => string.IsNullOrWhiteSpace(t.Label) ? t.Key : t.Label!)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        var counters = sheet.Keys.Where(k => SheetRuleEngine.IsUsesKey(k) && FeatureRecovery.For(sheet, k, moment).Count > 0)
+            .Select(k => SheetRuleEngine.UsesLabel(sheet, k))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        return (tracks, counters);
+    }
+
+    /// <summary>The names of what differs between two states of one sheet: a track of its kind, or a feature counter, whose number moved. In
+    /// the order of the kind's tracks, then the counters. What a moment fired on the sheet says came back.</summary>
+    public static IReadOnlyList<string> WhatChanged(SystemDefinition? system, IReadOnlyDictionary<string, object> before, IReadOnlyDictionary<string, object> after)
+    {
+        var kind = system is { SheetKinds.Count: > 0 } ? SheetLayout.KindOf(system, after) : null;
+        var names = new List<string>();
+        foreach (var track in kind?.Tracks ?? new List<TrackDefinition>())
+        {
+            if (Moved(before, after, track.Key)) names.Add(string.IsNullOrWhiteSpace(track.Label) ? track.Key : track.Label!);
+        }
+
+        foreach (var key in after.Keys.Where(SheetRuleEngine.IsUsesKey))
+        {
+            if (Moved(before, after, key)) names.Add(SheetRuleEngine.UsesLabel(after, key));
+        }
+
+        return names;
+    }
+
+    private static bool Moved(IReadOnlyDictionary<string, object> before, IReadOnlyDictionary<string, object> after, string key) =>
+        YamlValues.ToNumber(before.GetValueOrDefault(key)) != YamlValues.ToNumber(after.GetValueOrDefault(key));
+
     private static bool Same(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 }

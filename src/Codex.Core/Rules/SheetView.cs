@@ -114,6 +114,17 @@ public sealed class SheetView
     /// <summary>The breakdown of a value's modifiers: each that reached it, and whether it counted under its type's stacking.</summary>
     public IReadOnlyList<AppliedModifier> Modifiers(string target) => Result.Modifiers.GetValueOrDefault(target) ?? Array.Empty<AppliedModifier>();
 
+    /// <summary>The sources of what a track's size is made of, when its <c>max</c> is a bare value key that has <c>modifiers:</c> (an
+    /// ability gives the special armor box): the names of everything that gives it, each once (two abilities that stack by "highest" both give it). Empty when nothing did; null when the track's size is
+    /// not made that way (most tracks), so the widget says nothing about sources.</summary>
+    public IReadOnlyList<string>? TrackSources(string trackKey)
+    {
+        var track = Kind?.Tracks.FirstOrDefault(t => string.Equals(t.Key, trackKey, StringComparison.Ordinal));
+        if (track?.Max?.Trim() is not { Length: > 0 } max) return null;
+        if (Kind!.Values.FirstOrDefault(v => string.Equals(v.Key, max, StringComparison.Ordinal)) is not { Modifiers: not null }) return null;
+        return Modifiers(max).Where(m => m.Amount > 0 && !string.IsNullOrWhiteSpace(m.Source)).Select(m => m.Source!).Distinct(StringComparer.Ordinal).ToList();
+    }
+
     /// <summary>Whether a widget has anything to show, so a tab of empty widgets is not offered.</summary>
     public bool Shows(LayoutWidget widget) => widget.Widget.ToLowerInvariant() switch
     {
