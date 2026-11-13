@@ -24,7 +24,7 @@ public class SrdGrantCoverageTests : IAsyncLifetime
     public Task DisposeAsync() => Task.CompletedTask;
 
     private List<ContentEntry> SrdEntries() =>
-        new[] { "class", "subclass", "species", "feat", "background", "spell" }
+        new[] { "class", "subclass", "species", "feat", "invocation", "background", "spell" }
             .SelectMany(type => _registry.GetEntries("srd5e", type, new HashSet<string> { "srd-5.2.1" })).ToList();
 
     [Fact]
@@ -37,13 +37,15 @@ public class SrdGrantCoverageTests : IAsyncLifetime
         Assert.Equal(30, coverage.Rows("traits"));
         Assert.Equal(24, coverage.Rows("lineages"));
         Assert.Equal(17, coverage.Rows("feats"));
+        Assert.Equal(28, coverage.Rows("invocations"));
         Assert.Equal(4, coverage.Rows("backgrounds"));
     }
 
     /// <summary>Row counts by status, per group: grant, covered, already, text. Change them with the file, and say why in
     /// docs/SRD_GRANTS_IMPORT_DESIGN.md (section 7).</summary>
     [Theory]
-    [InlineData("classes", 53, 3, 123, 79)]
+    [InlineData("classes", 53, 3, 124, 78)]
+    [InlineData("invocations", 12, 0, 0, 16)]
     [InlineData("subclasses", 26, 1, 1, 30)]
     [InlineData("traits", 9, 0, 8, 13)]
     [InlineData("lineages", 24, 0, 0, 0)]

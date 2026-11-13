@@ -44,7 +44,7 @@ public class SrdGrantSweepTests : IAsyncLifetime
     [Fact]
     public void EveryEntrysGrants_PassTheGrantCheck()
     {
-        var problems = new[] { "class", "subclass", "species", "feat" }
+        var problems = new[] { "class", "subclass", "species", "feat", "invocation" }
             .SelectMany(type => Entries(type))
             .SelectMany(entry => FeatureGrantCheck.Problems(_system, entry, requireId: true).Select(p => $"{entry.Type}/{entry.Id}: {p}"))
             .ToList();

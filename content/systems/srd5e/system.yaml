@@ -170,6 +170,17 @@ sheetRules:
         - { property: minLevel, lteField: level, message: "you are not high enough level for it." }
       maxCount: { lookup: { field: class, table: featSlots, byField: classLevel, column: slots } }
       repeatableProperty: repeatable
+    # The Warlock's Eldritch Invocations (the class table's Invocations column). Each is an entry of its own: the options of the class feature.
+    - key: invocations
+      label: Eldritch Invocations
+      description: The Warlock's Eldritch Invocations, up to the number in your class table. A prerequisite that names another invocation or a cantrip is yours to check.
+      targetEntityType: invocation
+      category: Feats
+      where:
+        - { property: class, equalsField: class, message: "that invocation belongs to another class." }
+        - { property: minLevel, lteLookup: { field: class, table: invocationSlots, byField: classLevel, column: level }, message: "you are not high enough level for it." }
+      maxCount: { lookup: { field: class, table: invocationSlots, byField: classLevel, column: slots } }
+      repeatableProperty: repeatable
     - key: fightingStyles
       label: Fighting styles
       description: Fighting-style feats from class features such as the Fighter's Fighting Style, and a Champion's Additional Fighting Style.
@@ -230,6 +241,7 @@ sheetRules:
     # The background's origin feat is one feature carrying its own grants (Alert's initiative bonus).
     - { field: originFeat }
     - { list: feats }
+    - { list: invocations }
     - { list: fightingStyles }
     - { list: extraOriginFeats }
 
@@ -426,6 +438,7 @@ entityTypes:
       - { key: features,            label: Class Features,          type: Collection, description: "One row per feature: level, name, description." }
       - { key: spellcasting,        label: Spellcasting Table,      type: Collection, description: "One row per level: cantrips, preparedSpells, maxSpellLevel, slots." }
       - { key: featSlots,           label: Feat Slots,              type: Collection, description: "One row per level: slots (ability-score-improvement or boon feats) and styles (fighting styles) you have by then." }
+      - { key: invocationSlots,     label: Invocation Slots,        type: Collection, description: "One row per level: slots, how many Eldritch Invocations you know by then (the Warlock)." }
 
   - type: subclass
     label: Subclass
@@ -439,6 +452,18 @@ entityTypes:
       - { key: summary,  label: Summary,  type: Text }
       - { key: features, label: Features, type: Collection }
       - { key: featSlots, label: Feat Slots, type: Collection, description: "Extra class-granted feats this subclass adds, by level (a Champion's second fighting style)." }
+
+  - type: invocation
+    label: Eldritch Invocation
+    pluralLabel: Eldritch Invocations
+    folder: invocations
+    icon: sparkles
+    summaryFields: [prerequisites]
+    fields:
+      - { key: class,         label: Class,         type: EntityReference, targetEntityType: class }
+      - { key: prerequisites, label: Prerequisites, type: Text, description: "What else the invocation needs besides its level: another invocation, or a kind of cantrip. The sheet checks the level only." }
+      - { key: minLevel,      label: Minimum Level, type: Number, description: "The class level it needs." }
+      - { key: repeatable,    label: Repeatable,    type: Boolean }
 
   - type: species
     label: Species

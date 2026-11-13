@@ -426,4 +426,47 @@ public class SrdMappedGrantsTests : IAsyncLifetime
         Assert.False(keen.Adopted); // nothing is spare: Keen Senses is a new pick
         Assert.Empty(keen.Made);
     }
+
+    [Fact]
+    public void AWarlocksInvocations_AreLibraryEntriesPickedUpToTheClassTable_AndGatedByLevel()
+    {
+        var sheet = Sheet("warlock", 2);
+        sheet["invocations"] = new List<object> { "armor-of-shadows", "devils-sight", "eldritch-mind" };
+
+        var evaluation = Run(sheet);
+
+        Assert.Equal(3, evaluation.ListLimits["invocations"]); // the class table: three at level 2
+        Assert.Empty(evaluation.Violations.Where(v => v.FieldKey == "invocations"));
+        Assert.Equal(new[] { "armor-of-shadows", "devils-sight", "eldritch-mind" }.Order(), evaluation.ListPicks["invocations"].Select(p => p.Entry.Id).Order());
+
+        sheet["invocations"] = new List<object> { "armor-of-shadows", "ascendant-step" }; // Level 5+
+        Assert.Contains(Run(sheet).Violations, v => v.FieldKey == "invocations" && v.Message.Contains("high enough"));
+
+        sheet["invocations"] = new List<object> { "armor-of-shadows", "devils-sight", "eldritch-mind", "fiendish-vigor" };
+        Assert.Contains(Run(sheet).Violations, v => v.Key == "Actor.Rule.Limit");
+    }
+
+    [Fact]
+    public void AnInvocationThatCastsASpell_IsOneMoreWayToPayForIt_AtWill()
+    {
+        var sheet = Sheet("warlock", 2);
+        sheet["invocations"] = new List<object> { "armor-of-shadows" };
+
+        var evaluation = Run(sheet);
+
+        Assert.Contains("mage-armor", SheetRuleEngine.RawList(sheet, "grantedSpells"));
+        var cast = evaluation.Actions.Single(a => a.Entry.Id == "mage-armor");
+        Assert.Contains(cast.Costs, c => c.Free && c.Label == ActionCost.AtWillLabel);
+    }
+
+    [Fact]
+    public void ARepeatableInvocation_MayBeTakenTwice_AndAnotherOnlyOnce()
+    {
+        var sheet = Sheet("warlock", 5);
+        sheet["invocations"] = new List<object> { "agonizing-blast", "agonizing-blast", "devils-sight" };
+        Assert.DoesNotContain(Run(sheet).Violations, v => v.Key == "Actor.Rule.Once");
+
+        sheet["invocations"] = new List<object> { "devils-sight", "devils-sight" };
+        Assert.Contains(Run(sheet).Violations, v => v.Key == "Actor.Rule.Once");
+    }
 }

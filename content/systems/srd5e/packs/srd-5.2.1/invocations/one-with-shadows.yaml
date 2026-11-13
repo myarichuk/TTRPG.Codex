@@ -1,0 +1,19 @@
+id: one-with-shadows
+type: invocation
+name: One with Shadows
+description: >-
+  **Prerequisite:** Level 5+ Warlock
+
+
+  While you're in an area of Dim Light or Darkness, you can cast Invisibility on yourself without expending a spell slot.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 5
+  prerequisites: Level 5+ Warlock
+  adds:
+  - to: grantedSpells
+    entries:
+    - invisibility
+    free: atWill

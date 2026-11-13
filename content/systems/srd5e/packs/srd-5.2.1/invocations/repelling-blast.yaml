@@ -1,0 +1,18 @@
+id: repelling-blast
+type: invocation
+name: Repelling Blast
+description: >-
+  **Prerequisite:** Level 2+ Warlock, a Warlock Cantrip That Deals Damage via an Attack Roll
+
+
+  Choose one of your known Warlock cantrips that requires an attack roll. When you hit a Large or smaller creature with that cantrip, you can push the creature up to 10 feet straight away from you.
+
+
+  **Repeatable.** You can gain this invocation more than once. Each time you do so, choose a different eligible cantrip.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 2
+  prerequisites: Level 2+ Warlock, a Warlock Cantrip That Deals Damage via an Attack Roll
+  repeatable: true

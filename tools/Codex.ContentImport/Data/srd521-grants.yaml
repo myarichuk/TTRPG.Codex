@@ -203,7 +203,7 @@ class:
     - { row: Epic Boon, already: feat slots }
     - { row: Arcane Apotheosis, text: other }
   warlock:
-    - { row: Eldritch Invocations, text: not-in-source }
+    - { row: Eldritch Invocations, already: the invocations list and its entries }
     - { row: Pact Magic, already: slot pools and lists }
     - { row: Magical Cunning, uses: { key: magical-cunning, max: 1, recoversOn: [Long Rest] } }
     - { row: Warlock Subclass, already: the subclass field }
@@ -421,6 +421,37 @@ feat:
   savage-attacker: { text: rider }
   skilled: { text: training }
   two-weapon-fighting: { text: rider }
+
+# The options of the Warlock's Eldritch Invocations (srd521-invocations.yaml). Those that let you cast a spell without a slot say so.
+invocation:
+  agonizing-blast: { text: other }
+  armor-of-shadows: { adds: [{ to: grantedSpells, entries: [mage-armor], free: atWill }] }
+  ascendant-step: { adds: [{ to: grantedSpells, entries: [levitate], free: atWill }] }
+  devils-sight: { text: sense }
+  devouring-blade: { text: other }
+  eldritch-mind: { text: advantage }
+  eldritch-smite: { text: rider }
+  eldritch-spear: { text: other }
+  fiendish-vigor: { adds: [{ to: grantedSpells, entries: [false-life], free: atWill }] }
+  gaze-of-two-minds: { text: sense }
+  gift-of-the-depths: { adds: [{ to: grantedSpells, entries: [water-breathing], free: { max: 1, recoversOn: [Long Rest] } }] }
+  gift-of-the-protectors: { text: reactive }
+  investment-of-the-chain-master: { text: other }
+  lessons-of-the-first-ones: { text: chosen-spell }
+  lifedrinker: { text: rider }
+  mask-of-many-faces: { adds: [{ to: grantedSpells, entries: [disguise-self], free: atWill }] }
+  master-of-myriad-forms: { adds: [{ to: grantedSpells, entries: [alter-self], free: atWill }] }
+  misty-visions: { adds: [{ to: grantedSpells, entries: [silent-image], free: atWill }] }
+  one-with-shadows: { adds: [{ to: grantedSpells, entries: [invisibility], free: atWill }] }
+  otherworldly-leap: { adds: [{ to: grantedSpells, entries: [jump], free: atWill }] }
+  pact-of-the-blade: { text: gear }
+  pact-of-the-chain: { adds: [{ to: grantedSpells, entries: [find-familiar], free: atWill }] }
+  pact-of-the-tome: { text: chosen-spell }
+  repelling-blast: { text: other }
+  thirsting-blade: { text: other }
+  visions-of-distant-realms: { adds: [{ to: grantedSpells, entries: [arcane-eye], free: atWill }] }
+  whispers-of-the-grave: { adds: [{ to: grantedSpells, entries: [speak-with-dead], free: atWill }] }
+  witch-sight: { text: sense }
 
 background:
   acolyte: { already: "skill ranks, origin feat, scores" }

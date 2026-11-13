@@ -34,7 +34,7 @@ public sealed class GrantTableException(IReadOnlyList<string> problems)
 public sealed class GrantCoverage
 {
     /// <summary>The groups, in the order the importer reports them.</summary>
-    public static readonly string[] Groups = { "classes", "subclasses", "traits", "lineages", "feats", "backgrounds" };
+    public static readonly string[] Groups = { "classes", "subclasses", "traits", "lineages", "feats", "invocations", "backgrounds" };
 
     private readonly Dictionary<string, Dictionary<GrantStatus, int>> _counts = Groups.ToDictionary(g => g, _ => Enum.GetValues<GrantStatus>().ToDictionary(s => s, _ => 0));
 
@@ -232,10 +232,11 @@ public sealed class GrantTable
         }
 
         foreach (var entry in entries.Where(e => e.Type == "feat")) Whole(entry, "feats", "feat", coverage, context);
+        foreach (var entry in entries.Where(e => e.Type == "invocation")) Whole(entry, "invocations", "invocation", coverage, context);
         foreach (var entry in entries.Where(e => e.Type == "background")) Whole(entry, "backgrounds", "background", coverage, context);
 
         // A mapped entry the source does not have: only said for a type the source has entries of at all.
-        foreach (var (section, type) in new[] { ("class", "class"), ("subclass", "subclass"), ("species", "species"), ("feat", "feat"), ("background", "background") })
+        foreach (var (section, type) in new[] { ("class", "class"), ("subclass", "subclass"), ("species", "species"), ("feat", "feat"), ("invocation", "invocation"), ("background", "background") })
         {
             var present = entries.Where(e => e.Type == type).Select(e => e.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
             if (present.Count == 0 || _root.GetValueOrDefault(section) is not Dictionary<string, object> mapped) continue;
@@ -549,6 +550,14 @@ public sealed class GrantTable
             foreach (var add in adds.OfType<Dictionary<string, object>>())
             {
                 var to = add.GetValueOrDefault("to")?.ToString() ?? string.Empty;
+                if (spellIds.Count > 0 && vocabulary.Lists.FirstOrDefault(l => l.Key.Equals(to, StringComparison.OrdinalIgnoreCase))?.EntityType == "spell")
+                {
+                    foreach (var id in (add.GetValueOrDefault("entries") as List<object> ?? new List<object>()).Select(e => e.ToString() ?? string.Empty))
+                    {
+                        if (!spellIds.Contains(id)) Problems.Add($"{where}: \"{id}\" is not a spell id in the source.");
+                    }
+                }
+
                 if (vocabulary.DamageListKeys.Contains(to, StringComparer.OrdinalIgnoreCase))
                 {
                     foreach (var type in (add.GetValueOrDefault("entries") as List<object> ?? new List<object>()).Select(e => e.ToString() ?? string.Empty))
@@ -588,7 +597,7 @@ public sealed class GrantTable
 
             if (system != null && FeatureGrantVocabulary.For(system) != null)
             {
-                foreach (var entry in entries.Where(e => e.Type is "class" or "subclass" or "species" or "feat"))
+                foreach (var entry in entries.Where(e => e.Type is "class" or "subclass" or "species" or "feat" or "invocation"))
                 {
                     foreach (var problem in FeatureGrantCheck.Problems(system, entry, requireId: true)) Problems.Add($"{entry.Type}/{entry.Id}: {problem}");
                 }

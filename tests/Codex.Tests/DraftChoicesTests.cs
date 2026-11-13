@@ -71,6 +71,25 @@ public class DraftChoicesTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AWarlock_IsOfferedItsInvocations_UpToTheClassTable_AndOnlyThoseItsLevelAllows()
+    {
+        var chat = new QueueChat("""
+            {"choices": {
+              "invocations": ["agonizing-blast", "ascendant-step", "devils-sight", "eldritch-mind", "not-an-invocation"]
+            }}
+            """);
+        var draft = Warlock(2);
+
+        await Features().ChooseAsync(new AiAssistant(chat), draft, "a pirate turned warlock", new CampaignDocument { SystemId = "srd5e" }, _loader.GetDefinition("srd5e")!, new RegistryResolver(_registry), CancellationToken.None);
+
+        var prompt = chat.Prompts.Single();
+        Assert.Contains("invocations: Eldritch Invocations, pick up to 3", prompt);
+        Assert.Contains("- agonizing-blast: Agonizing Blast", prompt);
+        Assert.DoesNotContain("- ascendant-step", prompt); // Level 5+
+        Assert.Equal(new object[] { "agonizing-blast", "devils-sight", "eldritch-mind" }, (List<object>)draft.Sheet["invocations"]);
+    }
+
+    [Fact]
     public async Task BelowTheSubclassLevel_ASubclassIsTakenOff_AndNotAsked()
     {
         var chat = new QueueChat("""{"choices": {"cantrips": ["eldritch-blast"]}}""");
@@ -255,7 +274,7 @@ public class DraftChoicesTests : IAsyncLifetime
     public async Task AWrittenEntryTheRulesRefuse_IsDropped()
     {
         // Prepared spells: at most level 2 for this warlock, which the rule can only say in words, so the model's level 7 is refused.
-        var chat = new QueueChat("""{"choices": {"cantrips": ["eldritch-blast", "mage-hand"], "subclass": "fiend-patron", "spells": ["hex", "darkness", "bane"]}}""", SpellReply);
+        var chat = new QueueChat("""{"choices": {"cantrips": ["eldritch-blast", "mage-hand"], "subclass": "fiend-patron", "spells": ["hex", "darkness", "bane"], "invocations": ["agonizing-blast", "devils-sight", "eldritch-mind"]}}""", SpellReply);
         var draft = Warlock(3);
 
         await Features().ChooseAsync(new AiAssistant(chat), draft, "a pirate", new CampaignDocument { SystemId = "srd5e" }, _loader.GetDefinition("srd5e")!, new RegistryResolver(_registry), CancellationToken.None, write: WriteEntries.WhenNothingFits);
