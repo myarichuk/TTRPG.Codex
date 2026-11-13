@@ -184,7 +184,7 @@ public class EntryChoiceTests : IAsyncLifetime
     [Fact]
     public void FromList_OffersOnlyWhatTheSheetAlreadyHoldsThere()
     {
-        var signature = Feat("signature", Map(("to", "spells"), ("choice", "signature"), ("choose", 2L), ("fromList", "spells"),
+        var signature = Feat("signature", Map(("choice", "signature"), ("choose", 2L), ("fromList", "spells"),
             ("where", Items(Map(("property", "level"), ("equals", 3L))))));
         var (engine, sheet) = Character(20, signature);
         sheet["spells"] = Items("fireball", "fly", "magic-missile", "shield");
@@ -200,6 +200,81 @@ public class EntryChoiceTests : IAsyncLifetime
 
         Assert.Contains(after.Violations, v => v.Key == SheetRuleEngine.ChoiceStaleKey && v.FieldKey == "choice__signature__signature");
         Assert.Equal(new[] { "fireball" }, Choice(after, "choice__signature__signature").Made);
+        // A pick that only marks what is held never puts it back: the player may take the spell off the list.
+        Assert.DoesNotContain("fly", SheetRuleEngine.RawList(sheet, "spells"));
+        Assert.Empty(SheetRuleEngine.RawList(sheet, SheetRuleEngine.GrantedPrefix + "spells"));
+        Assert.Equal("spells", Choice(after, "choice__signature__signature").Target);
+    }
+
+    [Fact]
+    public void AChoiceFromTheListItPutsPicksOn_AddsNothing_AndTheCheckSaysSo()
+    {
+        var system = _loader.GetDefinition("srd5e")!;
+        var loop = Feat("loop", Map(("to", "spells"), ("choice", "signature"), ("choose", 2L), ("fromList", "spells"),
+            ("where", Items(Map(("property", "level"), ("equals", 3L))))));
+
+        Assert.Contains(FeatureGrantCheck.Problems(system, loop), p => p.Contains("adds nothing; give no \"to\""));
+    }
+
+    [Fact]
+    public void ClearingTheValueChoice_LeavesTheOldPicksAloneWithoutViolations_AndPickingItAgainBringsThemBack()
+    {
+        var (engine, sheet) = Character(1, Initiate());
+        sheet["choice__initiate__spell-list"] = Items("Wizard");
+        sheet["choice__initiate__cantrips"] = Items("fire-bolt", "mage-hand");
+        sheet["choice__initiate__spell"] = Items("magic-missile");
+        engine.Recompute(sheet);
+        Assert.Contains("fire-bolt", SheetRuleEngine.RawList(sheet, "grantedSpells"));
+
+        sheet.Remove("choice__initiate__spell-list");
+        var cleared = engine.Recompute(sheet);
+
+        Assert.DoesNotContain(cleared.Violations, v => v.Key == SheetRuleEngine.ChoiceStaleKey);
+        Assert.Equal("spell-list", Choice(cleared, "choice__initiate__cantrips").BlockedBy);
+        Assert.DoesNotContain("fire-bolt", SheetRuleEngine.RawList(sheet, "grantedSpells")); // not granted while blocked
+        Assert.Equal(new[] { "fire-bolt", "mage-hand" }, SheetRuleEngine.RawList(sheet, "choice__initiate__cantrips")); // still stored
+
+        sheet["choice__initiate__spell-list"] = Items("Wizard");
+        var back = engine.Recompute(sheet);
+
+        Assert.Equal(new[] { "fire-bolt", "mage-hand" }, Choice(back, "choice__initiate__cantrips").Made);
+        Assert.DoesNotContain(back.Violations, v => v.Key == SheetRuleEngine.ChoiceStaleKey);
+        Assert.Contains("fire-bolt", SheetRuleEngine.RawList(sheet, "grantedSpells"));
+    }
+
+    [Fact]
+    public void MorePicksThanTheChoiceAsksFor_AreDroppedWithoutAViolation()
+    {
+        var (engine, sheet) = Character(11, Feat("arcanum", Arcanum()));
+        sheet["choice__arcanum__arcanum-6"] = Items("eyebite", "circle-of-death");
+
+        var evaluation = engine.Recompute(sheet);
+
+        Assert.DoesNotContain(evaluation.Violations, v => v.Key == SheetRuleEngine.ChoiceStaleKey);
+        Assert.Equal(new[] { "eyebite" }, Choice(evaluation, "choice__arcanum__arcanum-6").Made);
+        Assert.DoesNotContain("circle-of-death", SheetRuleEngine.RawList(sheet, "grantedSpells"));
+    }
+
+    [Theory]
+    [InlineData("ru")]
+    [InlineData("he")]
+    public void AValueChoice_StoresTheCanonicalWord_WhateverTheLanguageOfTheSystemShown(string language)
+    {
+        var system = _loader.GetDefinition("srd5e")!.Localize(language);
+        var engine = new SheetRuleEngine(system, new WithHomebrew(_registry, Initiate()));
+        var sheet = new Dictionary<string, object>();
+        engine.InitializeSheet(sheet);
+        sheet["class"] = "fighter";
+        sheet["level"] = 1L;
+        sheet["feats"] = Items("initiate");
+        sheet["choice__initiate__spell-list"] = Items("Wizard"); // what the picker stores: the word the spells' classes use
+
+        var evaluation = engine.Recompute(sheet);
+
+        Assert.Equal(new[] { "Wizard" }, Choice(evaluation, "choice__initiate__spell-list").Made);
+        var cantrips = Choice(evaluation, "choice__initiate__cantrips");
+        Assert.Null(cantrips.BlockedBy);
+        Assert.Contains(cantrips.Options, o => o.Key == "fire-bolt");
     }
 
     [Fact]

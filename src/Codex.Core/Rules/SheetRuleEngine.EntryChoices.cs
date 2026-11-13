@@ -44,7 +44,8 @@ public sealed partial class SheetRuleEngine
             foreach (var add in feature.Adds)
             {
                 if (add.Choice is not { } choice || add.Rank != null || add.Raise != 0) continue;
-                var list = EntryList(add.To);
+                // A mark-only choice has no list of its own: it reads the entries of the one it picks from.
+                var list = EntryList(add.To) ?? (add.IsMarkOnly ? EntryList(choice.FromList!) : null);
                 if (list == null && !add.IsValueChoice) continue; // a ranked list's, or a kind's, choice: not this one's
                 if (!AddApplies(feature, add)) continue;
 
@@ -54,13 +55,14 @@ public sealed partial class SheetRuleEngine
                     ? (choice.From ?? Array.Empty<string>()).Select(v => new ChoiceOption(v, v)).ToList()
                     : blocked != null ? new List<ChoiceOption>() : EntryOptions(feature, choice, list, sheet, picked);
 
+                // While the choice it reads has no pick, what this one holds is kept as stored: not valid, not granted, and not stale (it comes back with the pick).
                 var valid = new List<string>();
                 var stale = new List<string>();
-                foreach (var raw in RawList(sheet, key))
+                foreach (var raw in blocked != null ? Array.Empty<string>() : RawList(sheet, key).ToArray())
                 {
                     var match = options.FirstOrDefault(o => o.Key.Equals(raw, StringComparison.OrdinalIgnoreCase));
-                    if (match != null && !valid.Contains(match.Key, StringComparer.OrdinalIgnoreCase) && valid.Count < choice.Choose) valid.Add(match.Key);
-                    else stale.Add(raw);
+                    if (match == null) stale.Add(raw); // no longer offered: choose again
+                    else if (!valid.Contains(match.Key, StringComparer.OrdinalIgnoreCase) && valid.Count < choice.Choose) valid.Add(match.Key); // more than asked for, or twice: dropped, not wrong
                 }
 
                 picked[choice.Id] = valid;
@@ -116,7 +118,7 @@ public sealed partial class SheetRuleEngine
     /// warning while a choice is open (never a reason to refuse a save), a violation for a pick that no longer fits.</summary>
     private void EvaluateEntryChoices(IReadOnlyList<ActiveFeature> features, IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
     {
-        if (!features.Any(f => f.Adds.Any(a => a.Choice != null && (a.IsValueChoice || IsEntryChoice(a))))) return;
+        if (!features.Any(f => f.Adds.Any(a => a.Choice != null && (a.IsValueChoice || a.IsMarkOnly || IsEntryChoice(a))))) return;
         var keysSeen = result.PendingChoices.Concat(result.MadeChoices).Select(c => c.Key).ToHashSet(StringComparer.Ordinal);
         var warned = new HashSet<string>(StringComparer.Ordinal);
         foreach (var state in ResolveEntryChoices(features.Where(f => !f.OnKind), sheet))
@@ -136,7 +138,7 @@ public sealed partial class SheetRuleEngine
 
             var remaining = choice.Choose - valid.Count;
             var open = options.Count(o => !valid.Contains(o.Key, StringComparer.OrdinalIgnoreCase));
-            var pending = new PendingChoice(key, feature.Name, feature.Source.Name, choice.Choose, valid, options, null, list?.Key ?? ValueTarget, false, false, feature, BlockedBy: blocked);
+            var pending = new PendingChoice(key, feature.Name, feature.Source.Name, choice.Choose, valid, options, null, choice.FromList is { } from && state.Add.To.Length == 0 ? from : list?.Key ?? ValueTarget, false, false, feature, BlockedBy: blocked);
             if (blocked != null)
             {
                 result.PendingChoices.Add(pending); // the picker says what to choose first; no warning of its own, the choice it waits on has one

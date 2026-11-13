@@ -17,9 +17,14 @@ public sealed record FeatureAdd(string To, IReadOnlyList<string> Entries, int? L
     /// <summary>The spells added can be cast without a slot: <see cref="Free"/> uses of each (their own counter), or <see cref="AtWill"/>.</summary>
     public bool IsFreeCasting => Free != null || AtWill;
 
-    /// <summary>A choice with no list to put anything on: its picks are values (the spell list a Magic Initiate takes), stored like any choice,
-    /// and read by <see cref="RuleCondition.ContainsChoice"/> and <see cref="RuleCondition.EqualsChoice"/>.</summary>
-    public bool IsValueChoice => Choice != null && To.Length == 0;
+    /// <summary>A choice with no list to put anything on and nothing to pick from but its own <c>from</c>: its picks are values (the spell list a Magic
+    /// Initiate takes), stored like any choice, canonical words (a class's name as the entries write it), and read by
+    /// <see cref="RuleCondition.ContainsChoice"/> and <see cref="RuleCondition.EqualsChoice"/>.</summary>
+    public bool IsValueChoice => Choice != null && To.Length == 0 && Choice.FromList == null;
+
+    /// <summary>A choice with no <c>to</c> and a <c>fromList</c>: it picks among the entries the sheet already holds on that list and puts none anywhere. The
+    /// picks only carry what the item says of them (<c>free</c>), so the player can still take the spell off the list, and the pick goes stale.</summary>
+    public bool IsMarkOnly => Choice != null && To.Length == 0 && Choice.FromList != null;
 }
 
 /// <summary>A choice a feature leaves to the player: <c>{ to, choice, choose, from, minRank, maxRank, rank | raise }</c>.
@@ -855,7 +860,7 @@ public sealed partial class SheetRuleEngine
             .ToList();
 
         // What the player picked for the choices over a list's entries (adds[].choice on a list of Library entries): granted like fixed entries.
-        var picked = features.Any(f => f.Adds.Any(IsEntryChoice)) ? ResolveEntryChoices(features, sheet) : new List<EntryChoiceState>();
+        var picked = features.Any(f => f.Adds.Any(IsEntryChoice)) ? ResolveEntryChoices(features.Where(f => !f.OnKind), sheet) : new List<EntryChoiceState>();
         foreach (var to in targets)
         {
             var list = Rules.Lists.FirstOrDefault(l => l.Key == to);

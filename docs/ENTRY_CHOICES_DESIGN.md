@@ -32,7 +32,7 @@ adds:
   - choice: spell-list                 # a value choice: no `to`, nothing goes on a list
     choose: 1
     from: [Cleric, Druid, Wizard]
-  - to: cantrips
+  - to: grantedSpells                  # not `cantrips`: these do not count against the class's cantrips known, and a list with a limit takes no grants
     choice: cantrips
     choose: 2
     where:
@@ -48,8 +48,7 @@ adds:
 
 # Signature Spells (Wizard 20): two level-3 spells you already have prepared, each free once per Short or Long Rest
 adds:
-  - to: spells
-    choice: signature
+  - choice: signature                  # mark-only: no `to`, the picks go on no list
     choose: 2
     fromList: spells                   # pick among the sheet's own picks of that list
     where:
@@ -61,8 +60,14 @@ adds:
 - An `adds` item is an **entry choice** when its `to` is a list of Library entries (one with a `targetEntityType`) and it has
   `choice`/`choose`. It has no `entries`. Its options are every candidate entry of that type that meets every `where`
   condition. Candidates are what `resolver.Candidates` returns, so a campaign's homebrew spells count too.
-- `fromList: <list>` narrows the options to the entries the sheet already holds on that list. When `fromList` equals `to`,
-  nothing new is added; the choice only marks the picks (for `free`).
+- `fromList: <list>` narrows the options to the entries the sheet already holds on that list. A choice with a `fromList` and **no
+  `to`** is **mark-only**: the picks go on no list; they only carry what the item says of them (`free`). So the player can still
+  take the spell off the list, and the pick goes stale. A `to` equal to `fromList` is refused by the check ("a choice from a
+  list you already hold adds nothing"): the granted entry would keep itself on the list.
+- While the value choice a choice reads has no pick, the choice is **blocked**: it offers nothing, grants nothing, and keeps
+  its stored picks untouched (no stale violations). They come back when the value is picked again; they go stale only when
+  the value is picked and the old picks do not fit it. Picks above `choose` are dropped without a violation.
+- Value choices store the **canonical** word (a class's name as the entries write it); the picker displays it translated.
 - A **value choice** has no `to` and a plain `from` of values. It is stored like any choice and adds nothing.
   `containsChoice` and `equalsChoice` read it.
 - **Two new conditions** on `RuleCondition`, which also work in a list's own `where`:
@@ -128,10 +133,10 @@ adds:
 
 | Feature | What it becomes |
 |---|---|
-| Magic Initiate (origin feat, repeatable) | value choice of list + 2 cantrips + one level-1 spell, `free` once per Long Rest |
+| Magic Initiate (origin feat, repeatable) | value choice of list + 2 cantrips + one level-1 spell (all `to: grantedSpells`), `free` once per Long Rest on the spell |
 | Mystic Arcanum 11/13/15/17 | one entry choice per level (6 to 9), Warlock list, `free` once per Long Rest |
-| Signature Spells | `fromList: spells`, level 3, choose 2, `free` once per Short or Long Rest |
-| Spell Mastery | `fromList: spells`, one level-1 and one level-2 wizard spell, `free: atWill` |
+| Signature Spells | mark-only (`fromList: spells`, no `to`), level 3, choose 2, `free` once per Short or Long Rest |
+| Spell Mastery | mark-only (`fromList: spells`, no `to`), one level-1 and one level-2 wizard spell, `free: atWill` |
 | Pact of the Tome (invocation) | 3 cantrips from any class list (`where: level 0`), and 2 level-1 ritual spells |
 | Eldritch Invocations | a list (`invocations`) with the importer's new entries; prerequisites as the list's `where` (`minLevel lteField level`, and so on); not a choice |
 

@@ -61,10 +61,12 @@ public static class FeatureGrantCheck
 
                 // A choice over Library entries (the list is one of entries, with a "where" or a "fromList" to narrow them), or of a value (no "to").
                 var pickable = vocabulary.Lists.FirstOrDefault(l => !l.IsRanked && l.EntityType != null && l.Key.Equals(to, StringComparison.OrdinalIgnoreCase));
-                var isValue = isChoice && to.Length == 0;
+                var fromListName = Text(add, "fromList");
+                var markOnly = isChoice && to.Length == 0 && fromListName.Length > 0; // picks among what the sheet holds, putting nothing anywhere
+                var isValue = isChoice && to.Length == 0 && !markOnly;
                 if (isChoice)
                 {
-                    if (list == null && pickable == null && !isValue)
+                    if (list == null && pickable == null && !isValue && !markOnly)
                     {
                         problems.Add($"{shown}: a choice can only go to {string.Join(" or ", vocabulary.Lists.Where(l => l.IsRanked || l.EntityType != null).Select(l => l.Key))}, or pick a value (give no \"to\"), not \"{to}\".");
                     }
@@ -75,7 +77,12 @@ public static class FeatureGrantCheck
                     if (id.Length == 0) problems.Add($"{shown}: a choice needs a \"choice\" id, unique in the entry.");
                     else if (!used.Add(id)) problems.Add($"{shown}: the choice id \"{id}\" is used more than once in this entry; each choice needs its own.");
 
-                    if (pickable != null)
+                    if (fromListName.Length > 0 && fromListName.Equals(to, StringComparison.OrdinalIgnoreCase))
+                    {
+                        problems.Add($"{shown}: a choice from a list you already hold adds nothing; give no \"to\" (the picks only mark what you hold).");
+                    }
+
+                    if (pickable != null || markOnly)
                     {
                         // Entries are offered by the conditions: with none, the whole Library would be.
                         var conditions = RowsOf(add, "where").ToList();
@@ -91,9 +98,11 @@ public static class FeatureGrantCheck
                             }
                         }
                     }
-                    else if (isValue && add.TryGetValue("from", out var values) && values is IEnumerable<object> listed && values is not string ? !listed.Any() : isValue && !add.ContainsKey("from"))
+                    else if (isValue)
                     {
-                        problems.Add($"{shown}: a choice of a value needs \"from\", the values the player picks between.");
+                        // The values are the player's menu: a non-empty list, written as the entries write them (a class's name as its spells name it).
+                        var values = add.TryGetValue("from", out var listedValues) && listedValues is not string ? listedValues as IEnumerable<object> : null;
+                        if (values == null || !values.Any()) problems.Add($"{shown}: a choice of a value needs \"from\", a list of the values the player picks between.");
                     }
 
                     if (id.Length > 0) earlier.Add(id);

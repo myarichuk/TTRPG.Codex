@@ -385,7 +385,7 @@ public sealed partial class SheetRuleEngine
                 if (RankTargetOf(add.To) is not { } target)
                 {
                     // A choice over a list's entries, or of a value, is the entry choices' (EvaluateEntryChoices); any other list is not supported.
-                    if (add.Choice != null && !IsEntryChoice(add) && !add.IsValueChoice) WarnFeature(result, warned, feature.Name);
+                    if (add.Choice != null && !IsEntryChoice(add) && !add.IsValueChoice && !add.IsMarkOnly) WarnFeature(result, warned, feature.Name);
                     continue;
                 }
 
