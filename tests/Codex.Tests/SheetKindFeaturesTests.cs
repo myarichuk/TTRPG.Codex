@@ -228,4 +228,119 @@ public class SheetKindFeaturesTests
         Assert.Contains(badMoment, e => e.Contains("changesOn 'nowhen'"));
         Assert.Empty(SystemDefinitionLoader.Validate(SystemDefinitionLoader.Parse(Yaml.Replace("- { list: relics, property: features }", "- { list: relics, property: features, choose: { id: pick, changesOn: [downtime] } }", StringComparison.Ordinal))));
     }
+
+    // ---- Modifiers: a kind feature's modifiers go into the kind's own model ----
+
+    private const string ModYaml = """
+        id: kind-mods
+        name: Kind mods
+        entityTypes:
+          - { type: ability, label: Ability }
+        modifierTypes: { types: { boxes: highest } }
+        sheetKinds:
+          - kind: hero
+            features:
+              - { list: abilities }
+            lists:
+              - { key: abilities, label: Abilities, type: ability }
+            values:
+              - { key: load, input: true, default: 1 }
+              - { key: LoadMax, formula: "load == 1 ? 3 : (load == 2 ? 5 : 6)", modifiers: LoadMax }
+              - { key: boxes, formula: "0", modifiers: boxes }
+            tracks:
+              - { key: armor, max: "boxes", display: boxes }
+        rolls:
+          - key: resist
+            dice: 1d6
+            add: ["modifiers('@resistance')"]
+            inputs:
+              - { key: attribute, default: prowess }
+        """;
+
+    private static readonly SystemDefinition ModSystem = SystemDefinitionLoader.Parse(ModYaml);
+
+    private static readonly ContentEntry Box1 = Ability("box-one", ("modifiers", Items(Map(("target", "boxes"), ("amount", 1L), ("type", "boxes")))));
+    private static readonly ContentEntry Box2 = Ability("box-two", ("modifiers", Items(Map(("target", "boxes"), ("amount", 1L), ("type", "boxes")))));
+    private static readonly ContentEntry Iron = Ability("iron", ("modifiers", Items(Map(("target", "@resistance"), ("amount", 1L), ("when", "input.attribute == 'resolve'")))));
+    private static readonly ContentEntry Stout = Ability("stout", ("modifiers", Items(Map(("target", "LoadMax"), ("amount", "load")))));
+    private static readonly ContentEntry[] ModEntries = { Mule, Box1, Box2, Iron, Stout };
+
+    private static SheetModelResult Model(params (string Key, object Value)[] more) =>
+        new SheetModel(ModSystem, new Entries(ModEntries), Sheet(more)).Evaluate();
+
+    [Theory]
+    [InlineData(1L, 5d)]
+    [InlineData(2L, 7d)]
+    [InlineData(3L, 8d)]
+    public void AKindFeatureModifier_RaisesTheValueItTargets_ByTheLoad(long load, double expected)
+    {
+        var result = Model(("abilities", Items("mule")), ("load", load));
+
+        Assert.Equal(expected, result.Values["LoadMax"]);
+    }
+
+    [Fact]
+    public void WithoutTheAbility_TheValueIsItsFormulasAlone_AndTheAmountMayBeAFormula()
+    {
+        Assert.Equal(3d, Model().Values["LoadMax"]);
+        Assert.Equal(7d, Model(("abilities", Items("stout")), ("load", 2L)).Values["LoadMax"]); // load 2's 5, plus the amount "load" (2)
+    }
+
+    [Fact]
+    public void TheModifiersWidgetListing_NamesTheFeatureAsTheSource()
+    {
+        var result = Model(("abilities", Items("mule")));
+
+        var applied = Assert.Single(result.Modifiers["LoadMax"]);
+        Assert.Equal("Mule", applied.Source);
+        Assert.True(applied.Counted);
+    }
+
+    [Fact]
+    public void Boxes_AreNone_WithoutAnAbility_One_WithOne_AndStillOne_WithTwo_BecauseBoxesStackHighest()
+    {
+        Assert.Equal(0d, Model().Values["boxes"]);
+        Assert.Equal(1d, Model(("abilities", Items("box-one"))).Values["boxes"]);
+        Assert.Equal(1d, Model(("abilities", Items("box-one", "box-two"))).Values["boxes"]);
+    }
+
+    [Fact]
+    public void ATrackWhoseMaxIsAGivenValue_FollowsTheAbility()
+    {
+        var sheet = Sheet(("abilities", Items("box-one")));
+        ModEngine().Recompute(sheet);
+        Assert.Equal(1L, sheet["armor_Max"]);
+
+        var without = Sheet();
+        ModEngine().Recompute(without);
+        Assert.Equal(0L, without["armor_Max"]);
+    }
+
+    private static SheetRuleEngine ModEngine() => new(ModSystem, new Entries(ModEntries));
+
+    [Fact]
+    public void AModifierWhoseWhenReadsARollInput_HoldsOnlyForThatRoll()
+    {
+        double Total(string attribute, params object[] picks)
+        {
+            var inputs = new Dictionary<string, object?> { ["attribute"] = attribute };
+            var result = SheetRolls.Roll(ModSystem, new Entries(ModEntries), Sheet(("abilities", picks.ToList())),
+                new SheetRollRequest { Definition = "resist", Inputs = inputs, SuppliedBy = new Dictionary<string, string>() },
+                new Codex.Plugin.Abstractions.Dice.SequenceDiceSource(new[] { 3 }));
+            return result.Total;
+        }
+
+        Assert.Equal(4d, Total("resolve", "iron"));
+        Assert.Equal(3d, Total("prowess", "iron"));
+        Assert.Equal(3d, Total("resolve"));
+    }
+
+    [Fact]
+    public void ACollectionThatReadsAModelValue_DoesNotRecurse()
+    {
+        // The modifier's amount reads a value ("load"), and the collector reads only the raw sheet: working the value out is finite.
+        var result = Model(("abilities", Items("stout", "mule", "iron")), ("load", 3L));
+
+        Assert.Equal(6d + 3d + 2d, result.Values["LoadMax"]);
+    }
 }
