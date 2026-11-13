@@ -73,7 +73,7 @@ passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__barbarian__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Barbarian): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
 
@@ -165,7 +165,7 @@ passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__barbarian__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Barbarian): your 2 skills already match this choice. Confirm them.
 warning choice__barbarian__primal-knowledge-3 Actor.Rule.ChoicePending: Primal Knowledge (Barbarian): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -278,7 +278,7 @@ passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 9
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__barbarian__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Barbarian): your 2 skills already match this choice. Confirm them.
 warning choice__barbarian__primal-knowledge-3 Actor.Rule.ChoicePending: Primal Knowledge (Barbarian): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -364,7 +364,7 @@ passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__barbarian__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Barbarian): your 2 skills already match this choice. Confirm them.
 warning choice__barbarian__primal-knowledge-3 Actor.Rule.ChoicePending: Primal Knowledge (Barbarian): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -863,7 +863,7 @@ violation cantrips Actor.Rule.Limit: Cantrips: 7 picked, but only 3 allowed at t
 violation spells Actor.Rule.Pick: Prepared spells: Fireball - not on your class's spell list.
 violation spells Actor.Rule.Pick: Prepared spells: Fireball - above the highest spell level you can cast.
 violation inventory Actor.Rule.OneShield: Equipment: only one shield can be carried in hand.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning inventory Actor.Rule.ArmorUntrained: Plate Armor: Cleric isn't trained with heavy armor. Without training you have disadvantage on checks, attacks and saves that use Strength or Dexterity, and can't cast spells.
 warning inventory Actor.Rule.ArmorStealth: Plate Armor: gives disadvantage on Stealth checks.
@@ -990,7 +990,7 @@ passive passiveInsight 15
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=13 attack=+5
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -1099,7 +1099,7 @@ passive passiveInsight 19
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=17 attack=+9
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -1226,7 +1226,7 @@ passive passiveInsight 21
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=19 attack=+11
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -1318,7 +1318,7 @@ passive passiveInsight 17
 passive passiveInvestigation 9
 spellcasting Cleric wis dc=15 attack=+7
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__elf__keen-senses Actor.Rule.ChoicePending: Keen Senses (Elf): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -2307,7 +2307,7 @@ passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
 warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__fighter__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Fighter): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -2407,7 +2407,7 @@ passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
 warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__fighter__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Fighter): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -2520,7 +2520,7 @@ passive passivePerception 12
 passive passiveInsight 18
 passive passiveInvestigation 9
 warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__fighter__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Fighter): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -2607,7 +2607,7 @@ passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
 warning choice__goliath__lineage Actor.Rule.ChoiceRowPending: Lineage (Goliath): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__fighter__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Fighter): your 2 skills already match this choice. Confirm them.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
 
@@ -2839,7 +2839,7 @@ passive passiveInvestigation 16
 spellcasting Wizard int dc=16 attack=+8
 violation int Actor.Rule.ScoreMax: Intelligence: scores can't exceed 20.
 warning choice__gnome__lineage Actor.Rule.ChoiceRowPending: Lineage (Gnome): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__wizard__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Wizard): choose 2 more skills.
 warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 
@@ -3276,7 +3276,7 @@ passive passiveInvestigation 11
 spellcasting Cleric wis dc=14 attack=+6
 spellcasting Wizard int dc=12 attack=+4
 violation cantrips Actor.Rule.LimitForClass: Cantrips: 5 for Wizard, but Wizard allows only 3 at this level.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__cleric__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Cleric): choose 1 more skills.
 warning choice__wizard__scholar-2 Actor.Rule.ChoicePending: Scholar (Wizard): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Scale Mail: gives disadvantage on Stealth checks.
@@ -3608,7 +3608,7 @@ spellcasting Sorcerer cha dc=14 attack=+6
 violation cantrips Actor.Rule.LimitForClass: Cantrips: 5 for Sorcerer, but Sorcerer allows only 4 at this level.
 violation spells Actor.Rule.LimitForClass: Prepared spells: 7 for Sorcerer, but Sorcerer allows only 6 at this level.
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
 warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 
@@ -3685,7 +3685,7 @@ passive passivePerception 10
 passive passiveInsight 12
 passive passiveInvestigation 9
 spellcasting Paladin cha dc=12 attack=+4
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__paladin__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Paladin): your 2 skills already match this choice. Confirm them.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
@@ -3793,7 +3793,7 @@ passive passivePerception 10
 passive passiveInsight 14
 passive passiveInvestigation 9
 spellcasting Paladin cha dc=14 attack=+6
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__paladin__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Paladin): your 2 skills already match this choice. Confirm them.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
@@ -3921,7 +3921,7 @@ passive passivePerception 10
 passive passiveInsight 16
 passive passiveInvestigation 9
 spellcasting Paladin cha dc=18 attack=+10
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__paladin__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Paladin): your 2 skills already match this choice. Confirm them.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
@@ -4020,7 +4020,7 @@ passive passivePerception 10
 passive passiveInsight 13
 passive passiveInvestigation 9
 spellcasting Paladin cha dc=13 attack=+5
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__paladin__class-skills Actor.Rule.ChoiceConfirm: Skill Proficiencies (Paladin): your 2 skills already match this choice. Confirm them.
 warning choice__human__skillful Actor.Rule.ChoicePending: Skillful (Human): choose 1 more skills.
 warning inventory Actor.Rule.ArmorStealth: Chain Mail: gives disadvantage on Stealth checks.
@@ -4517,7 +4517,7 @@ passive passivePerception 12
 passive passiveInsight 14
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__rogue__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Rogue): choose 1 more skills.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
@@ -4602,7 +4602,7 @@ passive passivePerception 12
 passive passiveInsight 16
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__rogue__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Rogue): choose 1 more skills.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 warning choice__rogue__expertise-6 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
@@ -4704,7 +4704,7 @@ passive passivePerception 13
 passive passiveInsight 19
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__rogue__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Rogue): choose 1 more skills.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 warning choice__rogue__expertise-6 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
@@ -4782,7 +4782,7 @@ passive passivePerception 12
 passive passiveInsight 15
 passive passiveInvestigation 9
 warning choice__tiefling__lineage Actor.Rule.ChoiceRowPending: Lineage (Tiefling): choose 1 more.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning choice__rogue__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Rogue): choose 1 more skills.
 warning choice__rogue__expertise-1 Actor.Rule.ChoicePending: Expertise (Rogue): choose 2 more skills.
 
@@ -5280,7 +5280,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Warlock cha dc=12 attack=+4
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
 warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 
@@ -5389,7 +5389,7 @@ passive passiveInvestigation 9
 spellcasting Warlock cha dc=16 attack=+8
 warning choice__fiend-patron__fiendish-resilience Actor.Rule.ChoiceRowPending: Fiendish Resilience (Fiend Patron): choose 1 more.
 warning choice__warlock__mystic-arcanum-6 Actor.Rule.ChoicePending: Mystic Arcanum (Warlock): choose 1 more granted spells.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
 warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 
@@ -5517,7 +5517,7 @@ warning choice__warlock__mystic-arcanum-6 Actor.Rule.ChoicePending: Mystic Arcan
 warning choice__warlock__mystic-arcanum-7 Actor.Rule.ChoicePending: Mystic Arcanum (Warlock): choose 1 more granted spells.
 warning choice__warlock__mystic-arcanum-8 Actor.Rule.ChoicePending: Mystic Arcanum (Warlock): choose 1 more granted spells.
 warning choice__warlock__mystic-arcanum-9 Actor.Rule.ChoicePending: Mystic Arcanum (Warlock): choose 1 more granted spells.
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
 warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 
@@ -5607,7 +5607,7 @@ passive passivePerception 11
 passive passiveInsight 11
 passive passiveInvestigation 9
 spellcasting Warlock cha dc=14 attack=+6
-warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell-list.
+warning choice__magic-initiate__spell-list Actor.Rule.ChoicePending: Magic Initiate (Magic Initiate): choose 1 more spell list.
 warning skillProficiencies -: Skills: "from Arcana" is not a skill this system has.
 warning choice__warlock__class-skills Actor.Rule.ChoicePending: Skill Proficiencies (Warlock): choose 1 more skills.
 

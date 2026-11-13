@@ -25,7 +25,7 @@
         @if (Choice.BlockedBy is { } waitsOn)
         {
             @* The choice reads another choice of its feature (the spell list); until that is made it offers nothing. *@
-            <p class="field-hint" role="status" data-testid="choice-blocked">@L["Actor.Choice.ChooseFirst", EntryChoiceWords.Humanize(waitsOn)]</p>
+            <p class="field-hint" role="status" data-testid="choice-blocked">@L["Actor.Choice.ChooseFirst", Entries?.DisplayValue(EntryChoiceWords.Humanize(waitsOn)) ?? EntryChoiceWords.Humanize(waitsOn)]</p>
         }
         else if (IsValue)
         {

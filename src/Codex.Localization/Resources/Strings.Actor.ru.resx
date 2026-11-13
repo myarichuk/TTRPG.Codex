@@ -498,6 +498,8 @@
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: не удаётся вычислить, что даёт это умение, поэтому оно пропущено. Мастер может проверить запись.</value></data>
   <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): выберите ещё {2} ({3}).</value></data>
   <data name="Actor.Rule.ChoicePendingOwn" xml:space="preserve"><value>{0}: выберите ещё {2} ({3}).</value></data>
+  <data name="Actor.Rule.ChoiceStaleOwn" xml:space="preserve"><value>{0}: «{2}» больше не подходит под этот выбор. Выберите заново.</value></data>
+  <data name="Actor.Rule.ChoiceConfirmOwn" xml:space="preserve"><value>{0}: ваши отметки ({2}) в списке «{3}» уже подходят под этот выбор. Подтвердите их.</value></data>
   <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): ваши отметки ({2}) в списке «{3}» уже подходят под этот выбор. Подтвердите их.</value></data>
   <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: выберите {1}</value></data>
   <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>Обычно меняется: {0}</value></data>
@@ -627,9 +629,9 @@
   <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: восстанавливать нечего.</value></data>
   <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>Ни одно умение не даёт эту клетку.</value></data>
   <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
-  <data name="Actor.Choice.TitleLevel" xml:space="preserve"><value>{0}: выбор ({1}) — {3}, уровень {2}</value></data>
-  <data name="Actor.Choice.TitleNoun" xml:space="preserve"><value>{0}: выбор ({1}) — {2}</value></data>
-  <data name="Actor.Choice.TitleValue" xml:space="preserve"><value>{0}: выбор ({1})</value></data>
+  <data name="Actor.Choice.TitleLevel" xml:space="preserve"><value>{0}: выберите {1}: {3} {2}-го уровня</value></data>
+  <data name="Actor.Choice.TitleNoun" xml:space="preserve"><value>{0}: выберите {1}: {2}</value></data>
+  <data name="Actor.Choice.TitleValue" xml:space="preserve"><value>{0}: выберите {1}</value></data>
   <data name="Actor.Choice.Search" xml:space="preserve"><value>Поиск по названию</value></data>
   <data name="Actor.Choice.NoMatch" xml:space="preserve"><value>По запросу «{0}» ничего не найдено.</value></data>
   <data name="Actor.Choice.ShownOf" xml:space="preserve"><value>Показано: {0} из {1}</value></data>

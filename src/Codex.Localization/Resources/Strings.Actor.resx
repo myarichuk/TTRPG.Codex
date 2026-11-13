@@ -498,6 +498,8 @@
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.</value></data>
   <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): choose {2} more ({3}).</value></data>
   <data name="Actor.Rule.ChoicePendingOwn" xml:space="preserve"><value>{0}: choose {2} more ({3}).</value></data>
+  <data name="Actor.Rule.ChoiceStaleOwn" xml:space="preserve"><value>{0}: "{2}" no longer fits this choice. Choose again.</value></data>
+  <data name="Actor.Rule.ChoiceConfirmOwn" xml:space="preserve"><value>{0}: your {2} picks in {3} already match this choice. Confirm them.</value></data>
   <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): your {2} picks in {3} already match this choice. Confirm them.</value></data>
   <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: choose {1}</value></data>
   <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>Usually changed on {0}</value></data>

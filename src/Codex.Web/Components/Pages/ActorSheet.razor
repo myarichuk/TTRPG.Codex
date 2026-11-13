@@ -1560,10 +1560,10 @@ else
             _ => a
         }).ToArray();
         // "Expertise (Expertise): choose 1 more": a feature that is the whole entry is not named twice.
-        if (violation.Key == SheetRuleEngine.ChoicePendingKey && violation.Args.Count > 1 && violation.Args[1] is ContentEntry owner
-            && string.Equals(violation.Args[0] as string, owner.Name, StringComparison.Ordinal) && L.Has(SheetRuleEngine.ChoicePendingKey + "Own"))
+        if (violation.Key is SheetRuleEngine.ChoicePendingKey or SheetRuleEngine.ChoiceStaleKey or SheetRuleEngine.ChoiceConfirmKey && violation.Args.Count > 1 && violation.Args[1] is ContentEntry owner
+            && string.Equals(violation.Args[0] as string, owner.Name, StringComparison.Ordinal) && L.Has(violation.Key + "Own"))
         {
-            return L[SheetRuleEngine.ChoicePendingKey + "Own", args];
+            return L[violation.Key + "Own", args];
         }
 
         return L[violation.Key, args];

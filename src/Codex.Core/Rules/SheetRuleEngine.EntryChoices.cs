@@ -130,10 +130,13 @@ public sealed partial class SheetRuleEngine
                 continue;
             }
 
+            // A stale entry is named by its entry (shown translated), not by its id; a stale value by the word.
+            var pickType = (list ?? (choice.FromList == null ? null : EntryList(choice.FromList)))?.TargetEntityType;
             foreach (var name in stale)
             {
-                result.Violations.Add(new RuleViolation(key, $"{feature.Name} ({feature.Source.Name}): \"{name}\" no longer fits this choice. Choose again.", ChoiceStaleKey,
-                    new object?[] { feature.Name, feature.Source, options.FirstOrDefault(o => o.Key.Equals(name, StringComparison.OrdinalIgnoreCase))?.Label ?? name }));
+                var entry = pickType == null ? null : resolver.Resolve(pickType, name);
+                result.Violations.Add(new RuleViolation(key, $"{feature.Name} ({feature.Source.Name}): \"{entry?.Name ?? name}\" no longer fits this choice. Choose again.", ChoiceStaleKey,
+                    new object?[] { feature.Name, feature.Source, entry ?? (object)name }));
             }
 
             var remaining = choice.Choose - valid.Count;
@@ -146,7 +149,7 @@ public sealed partial class SheetRuleEngine
             else if (remaining > 0 && open > 0)
             {
                 result.PendingChoices.Add(pending);
-                var label = list == null ? choice.Id : string.IsNullOrWhiteSpace(list.Label) ? list.Key : list.Label;
+                var label = list == null ? EntryChoiceWords.Humanize(choice.Id) : string.IsNullOrWhiteSpace(list.Label) ? list.Key : list.Label;
                 result.Warnings.Add(new RuleViolation(key, $"{feature.Name} ({feature.Source.Name}): choose {Math.Min(remaining, open)} more {label.ToLowerInvariant()}.", ChoicePendingKey,
                     new object?[] { feature.Name, feature.Source, Math.Min(remaining, open), label }));
             }
