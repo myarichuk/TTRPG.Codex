@@ -710,6 +710,8 @@ Built as designed, on the branch stacked on the sheet-kind feature sources. What
   It is listed before every other source, so it adopts the player's ticks within its `from` list first: all of them is Confirm, fewer keeps
   them and asks for the rest; later choices (Keen Senses and the rest) adopt what is spare. Its picks are not marked independent, so
   `classChoicesProperty`'s cap still reads the ticks of a sheet that has not confirmed. `skillChoices` stays.
+- **Free castings are built** (FREE_CASTINGS_DESIGN.md): the `free-<spell>` counters of section 5 are the spells' `free` castings now, and
+  the lineage spells from level 3 each carry one. Section 6's note that a row holds one `uses` no longer applies.
 - **`gate: N`** in the grants file gives a species row the level it applies from (Draconic Flight, Large Form).
 - **Q4 is answered at the table, not with a version stamp.** `CampaignRuntimeManager` now gives a runtime the campaign's library for any
   system with features, not only sheet kinds, and the table's counter pass writes counters the way the sheet page does

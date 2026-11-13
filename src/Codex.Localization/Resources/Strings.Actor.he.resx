@@ -490,6 +490,7 @@
   <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: {2}, דרגה {1}</value></data>
   <data name="Actor.Actions.CostFor" xml:space="preserve"><value>מחיר עבור {0}</value></data>
   <data name="Actor.Actions.Free" xml:space="preserve"><value>חינם</value></data>
+  <data name="Actor.Actions.AtWill" xml:space="preserve"><value>ללא הגבלה</value></data>
   <data name="Actor.Actions.PoolOption" xml:space="preserve"><value>{0} ×{1} (נותרו {2})</value></data>
   <data name="Actor.Actions.SpentFrom" xml:space="preserve"><value>{0}: {2} ×{1}</value></data>
   <data name="Actor.Actions.CannotPay" xml:space="preserve"><value>לא נותר מספיק</value></data>

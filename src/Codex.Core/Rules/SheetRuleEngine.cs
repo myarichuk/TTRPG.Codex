@@ -133,6 +133,9 @@ public sealed class SheetEvaluation
     /// the sheet lacks is not here, and is warned about.</summary>
     public List<FeatureSpender> Spenders { get; } = new();
 
+    /// <summary>The spells features let the character cast without a slot, and the counters of those that are limited (<c>adds[].free</c>).</summary>
+    public List<FreeCasting> FreeCastings { get; } = new();
+
     /// <summary>Feature amounts on armor class and hit points, waiting for those stages.</summary>
     internal Dictionary<string, List<(ActiveFeature Feature, string? Type, int Amount)>> Pending { get; } = new(StringComparer.Ordinal);
 

@@ -146,18 +146,19 @@
 
     /// <summary>A cost as the picker shows it: a slot by its level, any other pool by its name and amount, or free.</summary>
     private string CostText(ActionCost cost) =>
-        cost.Free ? L["Actor.Actions.Free"]
+        cost.Free ? (cost.Label == ActionCost.AtWillLabel ? L["Actor.Actions.AtWill"] : L["Actor.Actions.Free"])
         : cost.Slot != null ? L["Actor.Actions.SlotOption", cost.Level, cost.Left(Value) ?? 0]
         : L["Actor.Actions.PoolOption", PoolName(cost), cost.Amount, cost.Left(Value) ?? 0];
 
     private string PoolName(ActionCost cost) => cost.Label is { } label ? Definition?.DisplayValue(label) ?? label : cost.Key ?? string.Empty;
 
-    /// <summary>The cost the player picked, else the first that can be paid now (the lowest slot with one left), else the first.</summary>
+    /// <summary>The cost the player picked, else a free casting that can be paid now (what a player almost always wants), else the first slot or
+    /// pool that can (the lowest slot with one left), else the first.</summary>
     private ActionCost? SelectedCost(SheetAction action)
     {
         if (action.Costs.Count == 0) return null;
         if (chosen.TryGetValue(action.Entry.Type + "-" + action.Entry.Id, out var key) && action.Costs.FirstOrDefault(c => c.Id == key) is { } picked) return picked;
-        return action.Costs.FirstOrDefault(c => c.CanPay(Value)) ?? action.Costs[0];
+        return action.Costs.FirstOrDefault(c => c.Slot == null && c.CanPay(Value)) ?? action.Costs.FirstOrDefault(c => c.CanPay(Value)) ?? action.Costs[0];
     }
 
     /// <summary>The lowest face that is a critical hit, when it is below the check die's top face (the system's, never assumed).</summary>

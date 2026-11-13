@@ -156,7 +156,10 @@ public class ActionSource
 /// <c>choose</c> is how many keys; <c>from</c> is a list of keys, <c>any</c> (the default) or a filter on a key's own fields
 /// (<c>{ attribute: [str, dex] }</c>); <c>minRank</c> and <c>maxRank</c> are the ranks a key must already hold to be offered ("a skill you are
 /// proficient in"), checked against the ranks the sheet has so far without this choice's own picks. A choice not yet made is a warning, never a
-/// violation; a pick that no longer fits is a violation that says to choose again.</item>
+/// violation; a pick that no longer fits is a violation that says to choose again. On an item to a list of Library entries (the granted spells),
+/// <c>free</c> lets the character cast each spell without a slot: <c>free: atWill</c>, or a counter of uses written as <c>uses</c> is
+/// (<c>{ max, recoversOn, recovers, regain, key, label }</c>). Each spell gets its own counter, <c>free-{spell id}</c> (the <c>key</c> makes
+/// one shared counter instead), and the spell's action gets one more way to pay, after its slots, at the spell's own level.</item>
 /// <item><c>uses</c>: <c>{ max, key, recoversOn, recovers, regain }</c>: a counter of uses, <c>max</c> a number or a formula, refilled by
 /// the rests named in <c>recoversOn</c> (a full refill on each). <c>key</c> names the pool, so features that name one share it: the
 /// highest maximum wins and the sheet warns. <c>recovers</c> is <c>[{ on, amount, when }]</c>: <c>on</c> a moment (a rest, a moment the system declares in

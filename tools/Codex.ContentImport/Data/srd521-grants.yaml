@@ -136,12 +136,12 @@ class:
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Weapon Mastery, text: training }
     - { row: Fighting Style, already: the fightingStyles list }
-    - { row: "Paladin's Smite", spells: [divine-smite], uses: { key: free-divine-smite, label: Free Divine Smite, max: 1, recoversOn: [Long Rest] } }
+    - { row: "Paladin's Smite", freeSpells: [divine-smite] }
     - { row: Channel Divinity, uses: { key: paladin-channel-divinity, max: { column: channel_divinity_charges }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
     - { row: Paladin Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
-    - { row: Faithful Steed, spells: [find-steed], uses: { key: free-find-steed, label: Free Find Steed, max: 1, recoversOn: [Long Rest] } }
+    - { row: Faithful Steed, freeSpells: [find-steed] }
     - { row: Aura of Protection, text: aura }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Abjure Foes, spends: { key: paladin-channel-divinity, amount: 1 } }
@@ -151,7 +151,7 @@ class:
     - { row: Aura Expansion, text: aura }
     - { row: Epic Boon, already: feat slots }
   ranger:
-    - { row: Favored Enemy, spells: [hunters-mark], uses: { key: free-hunters-mark, label: Free Hunter's Mark, max: { column: favored_enemies }, recoversOn: [Long Rest] } }
+    - { row: Favored Enemy, freeSpells: [hunters-mark], free: { max: { column: favored_enemies }, recoversOn: [Long Rest] } }
     - { row: Spellcasting, already: slot pools and lists }
     - { row: Weapon Mastery, text: training }
     - { row: Deft Explorer, adds: [{ to: skills, choice: deft-explorer-2, choose: 1, minRank: proficient, rank: expert }] }
@@ -209,7 +209,7 @@ class:
     - { row: Warlock Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Subclass Feature, already: the subclass field }
-    - { row: Contact Patron, spells: [contact-other-plane], uses: { key: free-contact-other-plane, label: Free Contact Other Plane, max: 1, recoversOn: [Long Rest] } }
+    - { row: Contact Patron, freeSpells: [contact-other-plane] }
     - { row: Mystic Arcanum, text: chosen-spell }
     - { row: Epic Boon, already: feat slots }
     - { row: Eldritch Master, text: other }
@@ -262,7 +262,7 @@ subclass:
         Poison: { resist: [poison] }
       choose: { id: elemental-affinity }
     - { row: Dragon Wings, uses: { key: dragon-wings, max: 1, recoversOn: [Long Rest] } }
-    - { row: Dragon Companion, uses: { key: free-summon-dragon, label: Free Summon Dragon, max: 1, recoversOn: [Long Rest] } }
+    - { row: Dragon Companion, freeSpells: [summon-dragon] }
   evoker:
     - { row: Evocation Savant, text: other }
     - { row: Potent Cantrip, text: rider }
@@ -354,16 +354,16 @@ species:
       - { row: Keen Senses, adds: [{ to: skills, choice: keen-senses, choose: 1, from: [insight, perception, survival] }] }
       - { row: Trance, text: other }
     lineages:
-      - { row: "Elven Lineage: Drow", modifiers: [{ target: darkvision, amount: 120, type: base }], spells: { 0: [dancing-lights], 3: [faerie-fire], 5: [darkness] } }
-      - { row: "Elven Lineage: High Elf", spells: { 0: [prestidigitation], 3: [detect-magic], 5: [misty-step] } }
-      - { row: "Elven Lineage: Wood Elf", modifiers: [{ target: speed, amount: 35, type: base }], spells: { 0: [druidcraft], 3: [longstrider], 5: [pass-without-trace] } }
+      - { row: "Elven Lineage: Drow", modifiers: [{ target: darkvision, amount: 120, type: base }], spells: [dancing-lights], freeSpells: { 3: [faerie-fire], 5: [darkness] } }
+      - { row: "Elven Lineage: High Elf", spells: [prestidigitation], freeSpells: { 3: [detect-magic], 5: [misty-step] } }
+      - { row: "Elven Lineage: Wood Elf", modifiers: [{ target: speed, amount: 35, type: base }], spells: [druidcraft], freeSpells: { 3: [longstrider], 5: [pass-without-trace] } }
   gnome:
     traits:
       - { row: Darkvision (60 ft.), already: the darkvision field }
       - { row: Gnomish Cunning, text: advantage }
       - { row: Gnomish Lineage, text: other }
     lineages:
-      - { row: "Gnomish Lineage: Forest Gnome", spells: [minor-illusion, speak-with-animals], uses: { key: free-speak-with-animals, label: Free Speak with Animals, max: proficiencyBonus, recoversOn: [Long Rest] } }
+      - { row: "Gnomish Lineage: Forest Gnome", spells: [minor-illusion], freeSpells: [speak-with-animals], free: { max: proficiencyBonus, recoversOn: [Long Rest] } }
       - { row: "Gnomish Lineage: Rock Gnome", spells: [mending, prestidigitation] }
   goliath:
     traits:
@@ -399,9 +399,9 @@ species:
       - { row: Fiendish Legacy, text: other }
       - { row: Otherworldly Presence, spells: [thaumaturgy] }
     lineages:
-      - { row: "Fiendish Legacy: Abyssal", resist: [poison], spells: { 0: [poison-spray], 3: [ray-of-sickness], 5: [hold-person] } }
-      - { row: "Fiendish Legacy: Chthonic", resist: [necrotic], spells: { 0: [chill-touch], 3: [false-life], 5: [ray-of-enfeeblement] } }
-      - { row: "Fiendish Legacy: Infernal", resist: [fire], spells: { 0: [fire-bolt], 3: [hellish-rebuke], 5: [darkness] } }
+      - { row: "Fiendish Legacy: Abyssal", resist: [poison], spells: [poison-spray], freeSpells: { 3: [ray-of-sickness], 5: [hold-person] } }
+      - { row: "Fiendish Legacy: Chthonic", resist: [necrotic], spells: [chill-touch], freeSpells: { 3: [false-life], 5: [ray-of-enfeeblement] } }
+      - { row: "Fiendish Legacy: Infernal", resist: [fire], spells: [fire-bolt], freeSpells: { 3: [hellish-rebuke], 5: [darkness] } }
 
 feat:
   ability-score-improvement: { already: the abilityIncrease path }

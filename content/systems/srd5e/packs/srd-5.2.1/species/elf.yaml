@@ -133,10 +133,18 @@ properties:
       entries:
       - faerie-fire
       level: 3
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
     - to: grantedSpells
       entries:
       - darkness
       level: 5
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: 'Elven Lineage: High Elf'
     description: >-
       **High Elf: Cantrip Versatility.** You know the Prestidigitation cantrip. Whenever you finish a Long Rest, you can replace that cantrip with a different cantrip from the Wizard spell list.
@@ -152,10 +160,18 @@ properties:
       entries:
       - detect-magic
       level: 3
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
     - to: grantedSpells
       entries:
       - misty-step
       level: 5
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: 'Elven Lineage: Wood Elf'
     description: >-
       **Wood Elf: Movement Speed Increase.** Your Movement Speed increases to 35 feet.
@@ -175,7 +191,15 @@ properties:
       entries:
       - longstrider
       level: 3
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
     - to: grantedSpells
       entries:
       - pass-without-trace
       level: 5
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest

@@ -1,6 +1,6 @@
 # Free castings: design
 
-Status: designed 2026-11-13, not built. It is built at the end of the Step 10 branch (`SRD_GRANTS_IMPORT_DESIGN.md`), which
+Status: designed and **built** 2026-11-13 (see "Built" at the end). It is built at the end of the Step 10 branch (`SRD_GRANTS_IMPORT_DESIGN.md`), which
 freezes the `free-<spell>` counter keys this design adopts. Piece B of `FEATURE_GRANTS_DESIGN.md`.
 
 ## What it is
@@ -120,3 +120,19 @@ Checked in the code (2026-11-13):
 - **Default cost:** when a free casting has a use left, the cost picker selects it; when it is spent, the lowest slot.
 - **Lineage free spells become grants:** each lineage spell from level 3 (Elven Lineage, Fiendish Legacy, Gnomish Lineage)
   gets `free: { max: 1, recoversOn: [Long Rest] }`. Step 10's coverage numbers are updated to match.
+
+## Built (2026-11-13)
+
+- **Engine:** `FeatureAdd.Free` and `AtWill`; `EvaluateFeatures` makes a counter per spell from a feature made for it (named
+  "<feature>: <spell>", or the `free.label`), and `SheetEvaluation.FreeCastings`; `EvaluateActions` adds the cost after the slots. The
+  counter's sheet keys are slugged like every counter's, with hyphens as underscores: `uses_free_hunters_mark`, `_Max`, `_Rest`, `_Label`.
+- **Cost picker:** `ActionsPanel` selects a free casting that can be paid now, else the lowest slot. At will is a free cost with the
+  label `ActionCost.AtWillLabel`, shown as "At will" (`Actor.Actions.AtWill`, en/ru/he; ru and he need native review).
+- **Check:** `FeatureGrantCheck` refuses `free` on a list that holds no Library entries and a `free` that is neither `atWill` nor a counter with
+  a `max`. It does not refuse a cantrip (the check does not know a spell's level); a cantrip's `free` is only a counter nobody needs.
+- **Importer:** a `freeSpells` shorthand in the grants file, the shape of `spells`, with a sibling `free` map (default once per Long Rest; `max`
+  may be `{ column: X }`). The step 10 counters moved from rows' `uses` to it (Paladin's Smite, Faithful Steed, Favored Enemy, Contact Patron,
+  Dragon Companion, the Forest Gnome's Speak with Animals) and the lineage spells from level 3 are free (Drow, High Elf, Wood Elf, the three
+  Fiendish Legacies). Keys and values are unchanged; only the label is now the default "<feature>: <spell>".
+- **Not built:** the log line "Cast Misty Step (Fey Step, free)": a counted free casting logs through the existing "spent from" line with the
+  counter's name.

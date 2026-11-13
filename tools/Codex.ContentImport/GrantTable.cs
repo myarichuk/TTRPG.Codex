@@ -57,7 +57,7 @@ public sealed class GrantCoverage
 /// </summary>
 public sealed class GrantTable
 {
-    private static readonly string[] GrantKeys = { "uses", "spends", "modifiers", "adds", "spells", "resist", "options", "choose", "gate" };
+    private static readonly string[] GrantKeys = { "uses", "spends", "modifiers", "adds", "spells", "freeSpells", "resist", "options", "choose", "gate" };
     private static readonly string[] StatusKeys = { "text", "already", "covered" };
 
     private readonly Dictionary<string, object> _root;
@@ -340,6 +340,18 @@ public sealed class GrantTable
                     case "spells":
                         adds.AddRange(ExpandSpells(value, where));
                         break;
+                    case "freeSpells":
+                        // The same shape as spells, each cast without a slot: once per Long Rest unless the row's "free" says otherwise.
+                        var freeSpec = data.GetValueOrDefault("free") ?? new Dictionary<string, object> { ["max"] = 1L, ["recoversOn"] = new List<object> { "Long Rest" } };
+                        foreach (var add in ExpandSpells(value, where).OfType<Dictionary<string, object>>())
+                        {
+                            add["free"] = ExpandFree(entry, freeSpec, add, where);
+                            adds.Add(add);
+                        }
+
+                        break;
+                    case "free":
+                        break;
                     case "options":
                         ExpandOptions(entry, value, into, where, scope);
                         break;
@@ -432,23 +444,7 @@ public sealed class GrantTable
 
             foreach (var (k, v) in uses.Where(p => p.Key != "$ref")) merged[k] = v;
 
-            if (merged.GetValueOrDefault("max") is Dictionary<string, object> column && column.GetValueOrDefault("column") is string columnName)
-            {
-                var classId = entry.Type == "class" ? entry.Id : entry.Properties.GetValueOrDefault("class")?.ToString();
-                if (columns == null || classId == null) merged["max"] = 1L; // classifying only: the number is not needed
-                else
-                {
-                    try
-                    {
-                        var formula = columns.Formula(classId, columnName);
-                        merged["max"] = long.TryParse(formula, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) ? number : formula;
-                    }
-                    catch (InvalidDataException ex)
-                    {
-                        Problems.Add($"{where}: {ex.Message}");
-                    }
-                }
-            }
+            ResolveMaxColumn(entry, merged, where);
 
             if (merged.GetValueOrDefault("key") is not string key || key.Length == 0)
             {
@@ -462,6 +458,47 @@ public sealed class GrantTable
 
             CheckUses(merged, where);
             return merged;
+        }
+
+        /// <summary><c>max: { column: X }</c> becomes the step formula of the Levels file's class_specific X (see <see cref="ClassColumns"/>).</summary>
+        private void ResolveMaxColumn(ContentEntry entry, Dictionary<string, object> uses, string where)
+        {
+            if (uses.GetValueOrDefault("max") is not Dictionary<string, object> column || column.GetValueOrDefault("column") is not string columnName) return;
+            var classId = entry.Type == "class" ? entry.Id : entry.Properties.GetValueOrDefault("class")?.ToString();
+            if (columns == null || classId == null)
+            {
+                uses["max"] = 1L; // classifying only: the number is not needed
+                return;
+            }
+
+            try
+            {
+                var formula = columns.Formula(classId, columnName);
+                uses["max"] = long.TryParse(formula, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) ? number : formula;
+            }
+            catch (InvalidDataException ex)
+            {
+                Problems.Add($"{where}: {ex.Message}");
+            }
+        }
+
+        /// <summary>The <c>free</c> of a spell added to the granted spells: <c>atWill</c> or a counter map (the same keys as <c>uses</c>), with its
+        /// column worked out and its counter keys (<c>free-&lt;spell id&gt;</c>, or the map's own) registered as owned.</summary>
+        private object ExpandFree(ContentEntry entry, object spec, Dictionary<string, object> add, string where)
+        {
+            if (spec is not Dictionary<string, object> map) return spec;
+            var free = (Dictionary<string, object>)Copy(map);
+            ResolveMaxColumn(entry, free, where);
+            CheckUses(free, where);
+            var spells = (add["entries"] as List<object> ?? new List<object>()).Select(s => s.ToString() ?? string.Empty).ToList();
+            foreach (var key in free.GetValueOrDefault("key") is string own ? new[] { own } : spells.Select(s => "free-" + s))
+            {
+                if (!_owners.TryGetValue(key, out var owners)) _owners[key] = owners = new List<(string, string?)>();
+                // One counter per spell: the same spell from two features that can never be on a sheet together (two lineages) is one pool.
+                owners.Add((where, "free:" + key));
+            }
+
+            return free;
         }
 
         /// <summary>A copy of a value from the file, so two rows never share one list (the exporter would write it as a YAML anchor).</summary>

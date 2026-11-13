@@ -118,10 +118,18 @@ properties:
       entries:
       - ray-of-sickness
       level: 3
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
     - to: grantedSpells
       entries:
       - hold-person
       level: 5
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: 'Fiendish Legacy: Chthonic'
     description: >-
       **Damage Resistance: Necrotic.** You have Resistance to Necrotic damage.
@@ -142,10 +150,18 @@ properties:
       entries:
       - false-life
       level: 3
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
     - to: grantedSpells
       entries:
       - ray-of-enfeeblement
       level: 5
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: 'Fiendish Legacy: Infernal'
     description: >-
       **Damage Resistance: Fire.** You have Resistance to Fire damage.
@@ -166,7 +182,15 @@ properties:
       entries:
       - hellish-rebuke
       level: 3
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
     - to: grantedSpells
       entries:
       - darkness
       level: 5
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest

@@ -11,7 +11,12 @@ public sealed record FeatureModifier(string Target, string Amount, string? Type,
 /// <see cref="SkillRules.Ranks"/>) it puts the entries at <see cref="Rank"/> (a rank key or number; none means the first rank), or raises
 /// them <see cref="Raise"/> ranks (<c>raise: 1</c>; <see cref="Rank"/> and <see cref="Raise"/> exclude each other), or, with a
 /// <see cref="Choice"/>, leaves the entries to the player.</summary>
-public sealed record FeatureAdd(string To, IReadOnlyList<string> Entries, int? Level, string? Rank = null, int Raise = 0, FeatureChoice? Choice = null);
+public sealed record FeatureAdd(string To, IReadOnlyList<string> Entries, int? Level, string? Rank = null, int Raise = 0, FeatureChoice? Choice = null,
+    FeatureUses? Free = null, bool AtWill = false)
+{
+    /// <summary>The spells added can be cast without a slot: <see cref="Free"/> uses of each (their own counter), or <see cref="AtWill"/>.</summary>
+    public bool IsFreeCasting => Free != null || AtWill;
+}
 
 /// <summary>A choice a feature leaves to the player: <c>{ to, choice, choose, from, minRank, maxRank, rank | raise }</c>.
 /// <see cref="Id"/> names it within its entry (<see cref="IdGiven"/>: the data said so; else it is the row's slug and level);
@@ -95,6 +100,10 @@ public sealed record FeatureCounter(ActiveFeature Feature, string Key, string Ma
     /// <summary>Whether this viewer may press Regain: everyone who may use the counter, unless <c>regain: gm</c>.</summary>
     public bool CanRegain(bool isDm) => isDm || !GmRegain;
 }
+
+/// <summary>A spell a feature lets the character cast without a slot (<c>adds[].free</c>): <see cref="Counter"/> holds its uses, null for a spell cast at will.
+/// It is one more way to pay for the spell's action (<see cref="SheetAction.Costs"/>).</summary>
+public sealed record FreeCasting(ActiveFeature Feature, string SpellId, FeatureCounter? Counter);
 
 /// <summary>A feature that spends from a pool: the <see cref="Cost"/> of one press, and whether the player chooses
 /// the amount (<see cref="Ask"/>: <c>Cost.Amount</c> is then the least, 1).</summary>
@@ -423,6 +432,21 @@ public sealed partial class SheetRuleEngine
         }
     }
 
+    /// <summary>A counter of uses as a feature's <c>uses</c> (and a spell's <c>free</c>) writes it: <c>{ max, key, label, recoversOn, recovers, regain }</c>, or a
+    /// plain number (a counter of that many with nothing that refills it but the GM). Null when it is neither.</summary>
+    private static FeatureUses? ParseUses(object? raw) => raw switch
+    {
+        IDictionary<string, object> map when Text(map, "max") is { } max => new FeatureUses(Text(map, "key"), max, Texts(Cell(map, "recoversOn")),
+            Maps(Cell(map, "recovers"))
+                .Select(r => new FeatureRecover(Text(r, "on") ?? string.Empty, Text(r, "amount") ?? FeatureRecovery.AllAmount, Text(r, "when")))
+                .Where(r => r.On.Length > 0)
+                .ToList(),
+            string.Equals(Text(map, "regain"), "gm", StringComparison.OrdinalIgnoreCase), Text(map, "label")),
+        // "uses: 2" is a counter of two with nothing that refills it but the GM.
+        { } plain when ToDouble(plain) is > 0 => new FeatureUses(null, Convert.ToString(plain, CultureInfo.InvariantCulture)!, Array.Empty<string>()),
+        _ => null
+    };
+
     private static ActiveFeature Feature(string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view, string? levelKey, IReadOnlyDictionary<string, object> data, int copy = 1,
         string? scope = null, string? chosenBy = null, bool onKind = false)
     {
@@ -432,21 +456,12 @@ public sealed partial class SheetRuleEngine
             .ToList();
         var adds = Maps(data.GetValueOrDefault("adds"))
             .Select(a => new FeatureAdd(Text(a, "to") ?? string.Empty, Texts(Cell(a, "entries")), ToDouble(Cell(a, "level")) is { } at ? (int)at : null,
-                Text(a, "rank"), ToDouble(Cell(a, "raise")) is { } raise ? (int)raise : 0, ParseChoice(a, name, level)))
+                Text(a, "rank"), ToDouble(Cell(a, "raise")) is { } raise ? (int)raise : 0, ParseChoice(a, name, level),
+                string.Equals(Text(a, "free"), "atWill", StringComparison.OrdinalIgnoreCase) ? null : ParseUses(Cell(a, "free")),
+                string.Equals(Text(a, "free"), "atWill", StringComparison.OrdinalIgnoreCase)))
             .Where(a => a.To.Length > 0 && (a.Entries.Count > 0 || a.Choice != null))
             .ToList();
-        var uses = data.GetValueOrDefault("uses") switch
-        {
-            IDictionary<string, object> map when Text(map, "max") is { } max => new FeatureUses(Text(map, "key"), max, Texts(Cell(map, "recoversOn")),
-                Maps(Cell(map, "recovers"))
-                    .Select(r => new FeatureRecover(Text(r, "on") ?? string.Empty, Text(r, "amount") ?? FeatureRecovery.AllAmount, Text(r, "when")))
-                    .Where(r => r.On.Length > 0)
-                    .ToList(),
-                string.Equals(Text(map, "regain"), "gm", StringComparison.OrdinalIgnoreCase), Text(map, "label")),
-            // "uses: 2" is a counter of two with nothing that refills it but the GM.
-            { } plain when ToDouble(plain) is > 0 => new FeatureUses(null, Convert.ToString(plain, CultureInfo.InvariantCulture)!, Array.Empty<string>()),
-            _ => null
-        };
+        var uses = ParseUses(data.GetValueOrDefault("uses"));
         var spends = data.GetValueOrDefault("spends") is IDictionary<string, object> spend && Text(spend, "key") is { } spendKey
             ? new FeatureSpend(spendKey, Text(spend, "amount") ?? "1")
             : null;
@@ -648,6 +663,33 @@ public sealed partial class SheetRuleEngine
             owners.Add((feature, UsesPrefix + Slug(feature.Uses.Key ?? $"{feature.Source.Id}_{feature.Name}"), max));
         }
 
+        // A spell a feature lets the character cast without a slot (adds[].free): one counter per spell, "free-<spell id>", unless the add names a
+        // key (then its spells share that counter). At will has no counter. Each is a counter of a feature made for it, named "<feature>: <spell>".
+        var casts = new List<(ActiveFeature Feature, string SpellId, string? CounterKey)>();
+        foreach (var feature in features)
+        {
+            foreach (var add in feature.Adds.Where(a => a.IsFreeCasting && AddApplies(feature, a)))
+            {
+                var type = Rules?.Lists.FirstOrDefault(l => l.Key.Equals(add.To, StringComparison.OrdinalIgnoreCase))?.TargetEntityType;
+                if (type == null) continue;
+                foreach (var named in add.Entries)
+                {
+                    if (EntryId(type, named) is not { } id || resolver.Resolve(type, id) is not { } spell) continue;
+                    if (add.Free is not { } free)
+                    {
+                        casts.Add((feature, spell.Id, null));
+                        continue;
+                    }
+
+                    var own = feature with { Name = $"{feature.Name}: {spell.Name}", Modifiers = Array.Empty<FeatureModifier>(), Adds = Array.Empty<FeatureAdd>(), Uses = free, Spends = null };
+                    if (Amount(own, free.Max, null, derived, Warn) is not { } freeMax || freeMax <= 0) continue;
+                    var key = UsesPrefix + Slug(free.Key ?? "free-" + spell.Id);
+                    owners.Add((own, key, freeMax));
+                    casts.Add((feature, spell.Id, key));
+                }
+            }
+        }
+
         // Features naming one key share one counter. The highest maximum is the counter's, whatever the order; naming it
         // from more than one place is said, since the entry's author probably meant one owner.
         foreach (var group in owners.GroupBy(o => o.Key, StringComparer.Ordinal))
@@ -664,6 +706,12 @@ public sealed partial class SheetRuleEngine
             result.Counters.Add(new FeatureCounter(winner.Feature, winner.Key, winner.Key + UsesMaxSuffix, winner.Max,
                 rules.Select(r => r.On).Where(on => SystemMoments.IsRest(system, on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
                 rules, winner.Feature.Uses!.GmRegain, legacy));
+        }
+
+        foreach (var (feature, spellId, key) in casts)
+        {
+            if (key == null) result.FreeCastings.Add(new FreeCasting(feature, spellId, null));
+            else if (result.Counters.FirstOrDefault(c => c.Key == key) is { } counter) result.FreeCastings.Add(new FreeCasting(feature, spellId, counter));
         }
 
         foreach (var feature in features.Where(f => f.Spends != null))

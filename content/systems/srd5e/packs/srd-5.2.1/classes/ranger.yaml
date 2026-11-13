@@ -44,16 +44,14 @@ properties:
       You always have the Hunter's Mark spell prepared. You can cast it twice without expending a spell slot, and you regain all expended uses of this ability when you finish a Long Rest.
 
       The number of times you can cast the spell without a spell slot increases when you reach certain Ranger levels, as shown in the Favored Enemy column of the Ranger Features table.
-    uses:
-      key: free-hunters-mark
-      label: Free Hunter's Mark
-      max: 'classLevel >= 17 ? 6 : classLevel >= 13 ? 5 : classLevel >= 9 ? 4 : classLevel >= 5 ? 3 : 2'
-      recoversOn:
-      - Long Rest
     adds:
     - to: grantedSpells
       entries:
       - hunters-mark
+      free:
+        max: 'classLevel >= 17 ? 6 : classLevel >= 13 ? 5 : classLevel >= 9 ? 4 : classLevel >= 5 ? 3 : 2'
+        recoversOn:
+        - Long Rest
   - name: Spellcasting
     level: 1
     description: >-

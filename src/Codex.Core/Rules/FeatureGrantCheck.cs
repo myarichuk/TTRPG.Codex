@@ -46,6 +46,18 @@ public static class FeatureGrantCheck
                 var isChoice = add.ContainsKey("choice") || add.ContainsKey("choose");
                 var shown = string.IsNullOrWhiteSpace(name) ? entry.Name : name;
 
+                // A spell cast without a slot: free is "atWill" or a counter ({ max, recoversOn... }), on a list of Library entries (spells).
+                if (add.TryGetValue("free", out var free) && free != null)
+                {
+                    var entryList = vocabulary.Lists.FirstOrDefault(l => l.EntityType != null && l.Key.Equals(to, StringComparison.OrdinalIgnoreCase));
+                    if (entryList == null) problems.Add($"{shown}: \"free\" goes on entries added to a list of Library entries (the granted spells), not \"{to}\".");
+                    var atWill = free is string freeText && freeText.Trim().Equals("atWill", StringComparison.OrdinalIgnoreCase);
+                    if (!atWill && !(free is IDictionary<string, object> freeMap && freeMap.ContainsKey("max")))
+                    {
+                        problems.Add($"{shown}: \"free\" is atWill, or a counter with a \"max\" (and \"recoversOn\" or \"recovers\").");
+                    }
+                }
+
                 if (isChoice)
                 {
                     if (list == null) problems.Add($"{shown}: a choice can only go to {string.Join(" or ", vocabulary.Lists.Where(l => l.IsRanked).Select(l => l.Key))}, not \"{to}\".");

@@ -86,16 +86,14 @@ properties:
   - name: Paladin's Smite
     level: 2
     description: You always have the Divine Smite spell prepared. In addition, you can cast it without expending a spell slot, but you must finish a Long Rest before you can cast it in this way again.
-    uses:
-      key: free-divine-smite
-      label: Free Divine Smite
-      max: 1
-      recoversOn:
-      - Long Rest
     adds:
     - to: grantedSpells
       entries:
       - divine-smite
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: Channel Divinity
     level: 3
     description: >-
@@ -132,16 +130,14 @@ properties:
       You can call on the aid of an otherworldly steed. You always have the Find Steed spell prepared.
 
       You can also cast the spell once without expending a spell slot, and you regain the ability to do so when you finish a Long Rest.
-    uses:
-      key: free-find-steed
-      label: Free Find Steed
-      max: 1
-      recoversOn:
-      - Long Rest
     adds:
     - to: grantedSpells
       entries:
       - find-steed
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: Aura of Protection
     level: 6
     description: >-

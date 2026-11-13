@@ -490,6 +490,7 @@
   <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: level {1} {2}</value></data>
   <data name="Actor.Actions.CostFor" xml:space="preserve"><value>Cost of {0}</value></data>
   <data name="Actor.Actions.Free" xml:space="preserve"><value>Free</value></data>
+  <data name="Actor.Actions.AtWill" xml:space="preserve"><value>At will</value></data>
   <data name="Actor.Actions.PoolOption" xml:space="preserve"><value>{0} ×{1} ({2} left)</value></data>
   <data name="Actor.Actions.SpentFrom" xml:space="preserve"><value>{0}: {2} ×{1}</value></data>
   <data name="Actor.Actions.CannotPay" xml:space="preserve"><value>Not enough left</value></data>
