@@ -472,7 +472,7 @@
   <data name="Actor.Features.Adds" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Features.AtLeast" xml:space="preserve"><value>{0}: at least {1}</value></data>
   <data name="Actor.Features.NotCounted" xml:space="preserve"><value>does not stack</value></data>
-  <data name="Actor.Features.Note" xml:space="preserve"><value>What your features grant is worked out from the Library entries. Uses refill on the rest each one names.</value></data>
+  <data name="Actor.Features.Note" xml:space="preserve"><value>What your features grant is worked out from the Library entries. Each use comes back at the time its feature names.</value></data>
   <data name="Actor.Actions.Title" xml:space="preserve"><value>Actions</value></data>
   <data name="Actor.Actions.ToHit" xml:space="preserve"><value>{0} to hit</value></data>
   <data name="Actor.Actions.Save" xml:space="preserve"><value>{0} save DC {1}</value></data>
@@ -496,6 +496,7 @@
   <data name="Actor.Actions.Note" xml:space="preserve"><value>Cast and Attack roll here, or into the table's log during a session. A spent slot is marked for you; hits, saves and damage are applied by the GM.</value></data>
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.</value></data>
   <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): choose {2} more ({3}).</value></data>
+  <data name="Actor.Rule.ChoicePendingOwn" xml:space="preserve"><value>{0}: choose {2} more ({3}).</value></data>
   <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): your {2} picks in {3} already match this choice. Confirm them.</value></data>
   <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: choose {1}</value></data>
   <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>Usually changed on {0}</value></data>

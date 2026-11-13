@@ -169,7 +169,8 @@ public static class SystemMoments
     }
 
     private static bool Moved(IReadOnlyDictionary<string, object> before, IReadOnlyDictionary<string, object> after, string key) =>
-        YamlValues.ToNumber(before.GetValueOrDefault(key)) != YamlValues.ToNumber(after.GetValueOrDefault(key));
+        // A track not yet written holds 0 (unmarked), so setting it to 0 brought nothing back.
+        (YamlValues.ToNumber(before.GetValueOrDefault(key)) ?? 0) != (YamlValues.ToNumber(after.GetValueOrDefault(key)) ?? 0);
 
     private static bool Same(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 }

@@ -124,11 +124,11 @@ sheetKinds:
       - { key: prowess, formula: "count(where(actions, a => a.group == 'prowess'), a => a.rating >= 1)" }
       - { key: resolve, formula: "count(where(actions, a => a.group == 'resolve'), a => a.rating >= 1)" }
       # Light 1-3, normal 4-5, heavy 6 (7-9 is encumbered, which is not a load anyone chooses).
-      - { key: load,     input: true, options: [light, normal, heavy], default: normal }
-      - { key: LoadMax,  formula: "load == 'light' ? 3 : load == 'heavy' ? 6 : 5", modifiers: LoadMax }
+      - { key: load,     label: Load, input: true, options: [light, normal, heavy], default: normal }
+      - { key: LoadMax,  label: Load limit, formula: "load == 'light' ? 3 : load == 'heavy' ? 6 : 5", modifiers: LoadMax }
       # The special-armor box exists only while an ability gives it ("you can't use that armor box at all" otherwise).
       - { key: specialArmorBoxes, label: Special armor boxes, formula: "0", modifiers: specialArmorBoxes }
-      - { key: LoadUsed, formula: "sum(where(items, i => i.used), i => i.load)" }
+      - { key: LoadUsed, label: Load used, formula: "sum(where(items, i => i.used), i => i.load)" }
 
     tracks:
       # The SRD speaks of "your last stress box" without counting them; nine is the usual sheet's track.

@@ -1357,6 +1357,11 @@ else
     {
         flash = null;
         var before = new Dictionary<string, object>(editSheet);
+        // What the table held before the command: only the counters the command itself moves are taken, so an unsaved mark made here on
+        // another counter (stress ticked a moment ago) is kept for the save to merge.
+        var keys = editSheet.Keys.ToList();
+        var atTable = actor == null ? null : live.Snapshot.Actor(actor.Id);
+        var was = keys.ToDictionary(k => k, k => atTable?.Pool(k), StringComparer.Ordinal);
         try
         {
             await live.EnqueueAsync(command);
@@ -1369,9 +1374,9 @@ else
 
         if (actor != null && live.Snapshot.Actor(actor.Id) is { } state)
         {
-            foreach (var key in editSheet.Keys.ToList())
+            foreach (var key in keys)
             {
-                if (state.Pool(key) is not { } value || YamlValues.GetInt(editSheet, key) == value) continue;
+                if (state.Pool(key) is not { } value || was[key] == value) continue;
                 editSheet[key] = (long)value;
                 loadedSheet[key] = (long)value;
                 baselineSheet[key] = (long)value;
@@ -1536,6 +1541,12 @@ else
             string text when system != null => system.DisplayRuleMessage(text) is var message && message != text ? message : system.DisplayValue(text),
             _ => a
         }).ToArray();
+        // "Expertise (Expertise): choose 1 more": a feature that is the whole entry is not named twice.
+        if (violation.Key == SheetRuleEngine.ChoicePendingKey && args.Length > 1 && Equals(args[0], args[1]) && L.Has(SheetRuleEngine.ChoicePendingKey + "Own"))
+        {
+            return L[SheetRuleEngine.ChoicePendingKey + "Own", args];
+        }
+
         return L[violation.Key, args];
     }
 
