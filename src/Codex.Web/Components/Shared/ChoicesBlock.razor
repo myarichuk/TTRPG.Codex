@@ -25,7 +25,7 @@
         }
         @foreach (var choice in Open)
         {
-            <ChoicePicker @key="choice.Key" Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" OnPicks="picks => EditAsync(choice, picks)" />
+            <ChoicePicker @key="choice.Key" Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" Entries="Entries" OnPicks="picks => EditAsync(choice, picks)" />
         }
         @if (Folded.Count > 0)
         {
@@ -35,7 +35,7 @@
                 {
                     <div class="mt-2">
                         <p class="small-muted mb-1">@L["Actor.Choice.MadeSummary", string.Equals(choice.Label, choice.Source, StringComparison.Ordinal) ? choice.Label : $"{choice.Label} ({choice.Source})", string.Join(", ", MadeNames(choice))]</p>
-                        <ChoicePicker Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" OnPicks="picks => EditAsync(choice, picks)" />
+                        <ChoicePicker Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" Entries="Entries" OnPicks="picks => EditAsync(choice, picks)" />
                     </div>
                 }
             </details>
@@ -58,6 +58,9 @@
 
     /// <summary>A row option's name and text in the reader's language (see <see cref="ChoicePicker.OptionText"/>).</summary>
     [Parameter] public Func<PendingChoice, ChoiceOption, (string Name, string? Description)>? OptionText { get; set; }
+
+    /// <summary>What the pickers need to show choices over Library entries and values (see <see cref="ChoicePicker.Entries"/>).</summary>
+    [Parameter] public EntryChoiceContext? Entries { get; set; }
 
     /// <summary>A rest's or moment's name as the reader's system words it.</summary>
     [Parameter] public Func<string, string>? MomentLabel { get; set; }
