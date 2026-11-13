@@ -1,0 +1,436 @@
+# Golden fitd corpus: what SheetRuleEngine.Recompute makes of the sheets built in FitdGoldenCorpusTests.
+# Generated (CODEX_GOLDEN_FITD=update). Review changes here like code.
+
+## crew-fiends
+sheet heat_Max = 9
+sheet rep_Max = 8
+sheet wanted_Max = 4
+value heat_Max = 9
+value hold = strong
+value rep_Max = 8
+value tier = 0
+value turf = 2
+value turfCount = 4
+value wanted_Max = 4
+modifier turfCount 2 untyped from Fiends
+feature Fiends on-kind
+
+## crew-lots-of-turf
+sheet heat_Max = 9
+sheet rep_Max = 6
+sheet wanted_Max = 4
+value heat_Max = 9
+value hold = strong
+value rep_Max = 6
+value tier = 0
+value turf = 8
+value turfCount = 8
+value wanted_Max = 4
+
+## crew-plain
+sheet heat_Max = 9
+sheet rep_Max = 10
+sheet wanted_Max = 4
+value heat_Max = 9
+value hold = strong
+value rep_Max = 10
+value tier = 0
+value turf = 2
+value turfCount = 2
+value wanted_Max = 4
+
+## scoundrel-battleborn-box-marked
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 1
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = normal
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 1
+value special_armor_Max = 1
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+modifier specialArmorBoxes 1 boxes from Battleborn
+feature Battleborn on-kind
+track special_armor given by [Battleborn]
+
+## scoundrel-box-marked-without-an-ability
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 0
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = normal
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+track special_armor given by []
+violation special_armor Actor.Rule.TrackRange: Special armor: 1 is outside 0 to 0.
+
+## scoundrel-expertise-picked
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = normal
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+feature Expertise on-kind
+made choice__expertise__expertise target=actions picks=[skirmish]
+track special_armor given by []
+
+## scoundrel-expertise-stale
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = normal
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+feature Expertise on-kind
+pending choice__expertise__expertise target=actions options=12
+track special_armor given by []
+violation choice__expertise__expertise Actor.Rule.ChoiceStale: Expertise (Expertise): "no-such-action" no longer fits this choice. Choose again.
+warning choice__expertise__expertise Actor.Rule.ChoicePending: Expertise (Expertise): choose 1 more actions.
+
+## scoundrel-expertise-unpicked
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 0
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = normal
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+feature Expertise on-kind
+pending choice__expertise__expertise target=actions options=12
+track special_armor given by []
+warning choice__expertise__expertise Actor.Rule.ChoicePending: Expertise (Expertise): choose 1 more actions.
+
+## scoundrel-foresight-half-spent
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 0
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet uses_analyst = 2
+sheet uses_analyst_Label = Analyst
+sheet uses_analyst_Max = 2
+sheet uses_analyst_Rest = downtime
+sheet uses_foresight_Label = Foresight
+sheet uses_foresight_Max = 2
+sheet uses_foresight_Rest = loadChosen
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = normal
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+feature Foresight on-kind
+feature Analyst on-kind
+counter uses_foresight max=2 rests=[] on=[loadChosen]
+counter uses_analyst max=2 rests=[] on=[downtime]
+track special_armor given by []
+
+## scoundrel-iron-will
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 0
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 1
+value load = normal
+value prowess = 0
+value resolve = 1
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+feature Iron will on-kind
+track special_armor given by []
+
+## scoundrel-mule-heavy
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 0
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 8
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = heavy
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+modifier LoadMax 2 untyped from Mule
+feature Mule on-kind
+track special_armor given by []
+
+## scoundrel-mule-light
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 0
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = light
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+modifier LoadMax 2 untyped from Mule
+feature Mule on-kind
+track special_armor given by []
+
+## scoundrel-mule-normal
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 0
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 7
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = normal
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+modifier LoadMax 2 untyped from Mule
+feature Mule on-kind
+track special_armor given by []
+
+## scoundrel-plain
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 0
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 1
+value load = normal
+value prowess = 0
+value resolve = 1
+value specialArmorBoxes = 0
+value special_armor_Max = 0
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+track special_armor given by []
+
+## scoundrel-two-armor-abilities
+sheet armor_Max = 1
+sheet coin_Max = 4
+sheet heavy_armor_Max = 1
+sheet special_armor_Max = 1
+sheet stash_Max = 40
+sheet stress_Max = 9
+sheet trauma_Max = 4
+sheet xp_insight_Max = 6
+sheet xp_playbook_Max = 8
+sheet xp_prowess_Max = 6
+sheet xp_resolve_Max = 6
+value LoadMax = 5
+value LoadUsed = 0
+value armor_Max = 1
+value coin_Max = 4
+value heavy_armor_Max = 1
+value insight = 0
+value load = normal
+value prowess = 0
+value resolve = 0
+value specialArmorBoxes = 1
+value special_armor_Max = 1
+value stash_Max = 40
+value stress_Max = 9
+value trauma_Max = 4
+value xp_insight_Max = 6
+value xp_playbook_Max = 8
+value xp_prowess_Max = 6
+value xp_resolve_Max = 6
+modifier specialArmorBoxes 1 boxes from Battleborn
+modifier specialArmorBoxes 1 boxes from Shadow (not counted)
+feature Battleborn on-kind
+feature Shadow on-kind
+track special_armor given by [Battleborn, Shadow]
