@@ -112,17 +112,17 @@
                             var max = State?.Pool(counter.MaxKey) ?? counter.Max;
                             var current = Math.Clamp(State?.Pool(counter.Key) ?? max, 0, max);
                             <li class="slot-row table-counter" data-testid="table-counter-@counter.Key">
-                                <span class="slot-level">@counter.Feature.Name</span>
+                                <span class="slot-level">@counter.Label</span>
                                 <span class="small">@L["Actor.Slots.Count", current, max]</span>
                                 @if (CanAct)
                                 {
                                     <span class="ms-auto d-flex gap-1">
                                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current <= 0)" data-testid="@($"table-counter-use-{counter.Key}")"
-                                                     aria-label="@L["Actor.Features.UseOther", counter.Feature.Name]" OnClick="() => Send(new AdjustResourceCommand(Actor.Id, counter.Key, -1, counter.Feature.Name))">@L["Actor.Slots.Use"]</CodexButton>
+                                                     aria-label="@L["Actor.Features.UseOther", counter.Label]" OnClick="() => Send(new AdjustResourceCommand(Actor.Id, counter.Key, -1, counter.Label))">@L["Actor.Slots.Use"]</CodexButton>
                                         @if (counter.CanRegain(IsDm))
                                         {
                                             <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"table-counter-regain-{counter.Key}")"
-                                                         aria-label="@L["Actor.Features.RegainOther", counter.Feature.Name]" OnClick="() => Send(new AdjustResourceCommand(Actor.Id, counter.Key, 1, counter.Feature.Name))">@L["Actor.Slots.Regain"]</CodexButton>
+                                                         aria-label="@L["Actor.Features.RegainOther", counter.Label]" OnClick="() => Send(new AdjustResourceCommand(Actor.Id, counter.Key, 1, counter.Label))">@L["Actor.Slots.Regain"]</CodexButton>
                                         }
                                     </span>
                                 }
@@ -130,7 +130,7 @@
                                 {
                                     @* Reactive rules stay text: the feature's own words beside its counter, so nobody has to look them up mid-fight. *@
                                     <details class="counter-rules" data-testid="table-counter-rules-@counter.Key">
-                                        <summary class="small">@L["Combat.Card.Rules"]<span class="visually-hidden">: @counter.Feature.Name</span></summary>
+                                        <summary class="small">@L["Combat.Card.Rules"]<span class="visually-hidden">: @counter.Label</span></summary>
                                         <div class="rules-text small">@((MarkupString)SecretRender.Html(counter.Feature.Description, TextFormatting.ToHtml, IsDm ? DmView.From(L) : null))</div>
                                     </details>
                                 }

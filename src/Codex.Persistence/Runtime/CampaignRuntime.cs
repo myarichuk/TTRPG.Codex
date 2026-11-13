@@ -178,7 +178,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         {
             actor.Sheet[counter.Key] = (long)counter.Max;
             actor.Sheet[counter.MaxKey] = (long)counter.Max;
-            actor.Sheet[counter.Key + Codex.Core.Rules.SheetRuleEngine.UsesLabelSuffix] = counter.Feature.Name;
+            actor.Sheet[counter.Key + Codex.Core.Rules.SheetRuleEngine.UsesLabelSuffix] = counter.Label;
             added = true;
         }
 

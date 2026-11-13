@@ -37,7 +37,8 @@ public sealed record FeatureSpend(string Key, string Amount)
 
 /// <summary>A feature's counter of uses as its data states it. <see cref="Recovers"/> are the <c>recovers</c> rules;
 /// <see cref="RecoversOn"/> is the shorthand for a full refill on each rest named. <see cref="GmRegain"/>: <c>regain: gm</c>.</summary>
-public sealed record FeatureUses(string? Key, string Max, IReadOnlyList<string> RecoversOn, IReadOnlyList<FeatureRecover>? Recovers = null, bool GmRegain = false)
+public sealed record FeatureUses(string? Key, string Max, IReadOnlyList<string> RecoversOn, IReadOnlyList<FeatureRecover>? Recovers = null, bool GmRegain = false,
+    string? Label = null)
 {
     /// <summary>Every refill rule: <see cref="RecoversOn"/> as full refills, then <see cref="Recovers"/>.</summary>
     public IReadOnlyList<FeatureRecover> AllRecovers =>
@@ -87,6 +88,10 @@ public sealed record GrantedModifier(string Target, ActiveFeature Feature, strin
 public sealed record FeatureCounter(ActiveFeature Feature, string Key, string MaxKey, int Max, IReadOnlyList<string> RecoversOn,
     IReadOnlyList<RecoverRule>? Recovers = null, bool GmRegain = false, IReadOnlyList<string>? LegacyKeys = null)
 {
+    /// <summary>The counter's name on the sheet, the Table and the log: the feature's <c>uses.label</c> (a shared pool is named by what it is, not
+    /// by the row that carries it), else the feature's name.</summary>
+    public string Label => string.IsNullOrWhiteSpace(Feature.Uses?.Label) ? Feature.Name : Feature.Uses!.Label!;
+
     /// <summary>Whether this viewer may press Regain: everyone who may use the counter, unless <c>regain: gm</c>.</summary>
     public bool CanRegain(bool isDm) => isDm || !GmRegain;
 }
@@ -437,7 +442,7 @@ public sealed partial class SheetRuleEngine
                     .Select(r => new FeatureRecover(Text(r, "on") ?? string.Empty, Text(r, "amount") ?? FeatureRecovery.AllAmount, Text(r, "when")))
                     .Where(r => r.On.Length > 0)
                     .ToList(),
-                string.Equals(Text(map, "regain"), "gm", StringComparison.OrdinalIgnoreCase)),
+                string.Equals(Text(map, "regain"), "gm", StringComparison.OrdinalIgnoreCase), Text(map, "label")),
             // "uses: 2" is a counter of two with nothing that refills it but the GM.
             { } plain when ToDouble(plain) is > 0 => new FeatureUses(null, Convert.ToString(plain, CultureInfo.InvariantCulture)!, Array.Empty<string>()),
             _ => null
@@ -826,7 +831,7 @@ public sealed partial class SheetRuleEngine
             else if (previousMax.HasValue && counter.Max > previousMax.Value) current += counter.Max - previousMax.Value;
             // A lower maximum caps what is left; no change to the build ever refills a counter.
             sheet[counter.Key] = (long)Math.Clamp(current.Value, 0, counter.Max);
-            sheet[counter.Key + UsesLabelSuffix] = counter.Feature.Name;
+            sheet[counter.Key + UsesLabelSuffix] = counter.Label;
             keep.Add(counter.Key + UsesLabelSuffix);
             if (counter.Recovers is { Count: > 0 } recovers)
             {

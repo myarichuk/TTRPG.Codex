@@ -89,6 +89,26 @@ public class SrdEngineExtensionTests : IAsyncLifetime
         Assert.Equal(Convert.ToInt64(without.Derived["initiative"]) + 3, Convert.ToInt64(with.Derived["initiative"]));
     }
 
+    [Fact]
+    public void ACountersLabel_NamesItOnTheSheetAndInTheAction_NotTheRowThatCarriesIt()
+    {
+        var species = new ContentEntry { Type = "species", Id = "testfolk", Name = "Testfolk", SystemId = "srd5e", PackId = "homebrew" };
+        species.Properties["lineages"] = Items(
+            Map(("name", "Ancestor: Red"), ("description", "."), ("uses", Map(("max", 2L), ("key", "breath"), ("label", "Breath Weapon"), ("recoversOn", Items("Long Rest"))))),
+            Map(("name", "Ancestor: Blue"), ("description", "."), ("uses", Map(("max", 2L), ("key", "breath"), ("label", "Breath Weapon"), ("recoversOn", Items("Long Rest"))))));
+
+        var (engine, sheet) = Character(1, species);
+        sheet["species"] = "testfolk";
+        sheet["choice__testfolk__lineage"] = Items("Ancestor: Red");
+        var evaluation = engine.Recompute(sheet);
+
+        var counter = Assert.Single(evaluation.Counters);
+        Assert.Equal("Breath Weapon", counter.Label);
+        Assert.Equal("Ancestor: Red", counter.Feature.Name);
+        Assert.Equal("Breath Weapon", sheet["uses_breath_Label"]);
+        Assert.Equal("Breath Weapon", ActionCost.OfCounter(counter, 1, null).Label);
+    }
+
     private sealed class WithHomebrew(ContentRegistry registry, params ContentEntry[] extra) : IEntryResolver
     {
         public ContentEntry? Resolve(string type, string id) => extra.FirstOrDefault(e => e.Type == type && e.Id == id) ?? registry.GetEntries("srd5e", type).FirstOrDefault(e => e.Id == id);

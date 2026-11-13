@@ -161,7 +161,8 @@ public class ActionSource
 /// the rests named in <c>recoversOn</c> (a full refill on each). <c>key</c> names the pool, so features that name one share it: the
 /// highest maximum wins and the sheet warns. <c>recovers</c> is <c>[{ on, amount, when }]</c>: <c>on</c> a moment (a rest, a moment the system declares in
 /// <c>moments</c>, <c>initiative</c> or <c>dawn</c>) or <c>manual</c>; <c>amount</c> is <c>all</c>, a number, a formula or dice; <c>when</c> is <c>empty</c> or a formula.
-/// <c>regain: gm</c> lets only the GM add a use back by hand.</item>
+/// <c>regain: gm</c> lets only the GM add a use back by hand. <c>label</c> names the counter on the sheet, the Table and the log when
+/// that is not the feature's own name (a Breath Weapon shared by ten lineage rows).</item>
 /// <item><c>spends</c>: <c>{ key, amount }</c>: the feature gets a Use button that spends <c>amount</c> (a number, a formula, or
 /// <c>ask</c> for the player to choose) from the pool <c>key</c>, a feature counter's <c>key</c> or a pool's own sheet key.</item>
 /// <item><c>options</c> and <c>choose</c> ("choose one of the following"): <c>options: [{ name, description, and any key above }]</c> with

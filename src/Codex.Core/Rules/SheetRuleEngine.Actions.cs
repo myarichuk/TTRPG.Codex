@@ -45,7 +45,7 @@ public sealed record ActionCost(string? Key, int Amount, string? MaxKey, string?
 
     /// <summary><paramref name="amount"/> from a feature's counter of uses, read as the Table card's Use and Regain read it.</summary>
     public static ActionCost OfCounter(FeatureCounter counter, int amount, string? damage) =>
-        new(counter.Key, amount, counter.MaxKey, counter.Feature.Name, damage) { FallbackMax = counter.Max };
+        new(counter.Key, amount, counter.MaxKey, counter.Label, damage) { FallbackMax = counter.Max };
 
     /// <summary><paramref name="amount"/> from any pool by its key.</summary>
     public static ActionCost FromPool(string key, int amount, string? maxKey, string? label, string? damage) => new(key, amount, maxKey, label, damage);
