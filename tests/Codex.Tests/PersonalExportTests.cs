@@ -22,7 +22,7 @@ public class PersonalExportTests : IClassFixture<RavenDbFixture>
 
     public PersonalExportTests(RavenDbFixture fixture)
     {
-        _db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        _db = fixture.Open(fixture.DbName);
         _actors = new ActorRepository(_db);
         _vault = new RavenVaultRepository(_db);
         _campaigns = new CampaignRepository(_db, new NoOpSystemCatalog(), _actors, new RavenSessionRepository(_db), new RavenNoteRepository(_db),

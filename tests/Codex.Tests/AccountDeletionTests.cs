@@ -14,7 +14,7 @@ public class AccountDeletionTests : IClassFixture<RavenDbFixture>
 
     public AccountDeletionTests(RavenDbFixture fixture)
     {
-        _db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        _db = fixture.Open(fixture.DbName);
         _actors = new ActorRepository(_db);
         _vault = new RavenVaultRepository(_db);
         _users = new RavenUserRepository(_db);
