@@ -618,4 +618,9 @@
   <data name="Actor.Grants.RefillOnlyEmpty" xml:space="preserve"><value>Only when none are left</value></data>
   <data name="Actor.Grants.RefillWhenNote" xml:space="preserve"><value>Also only if {0}</value></data>
   <data name="Actor.Grants.SpendKeyPlaceholder" xml:space="preserve"><value>The pool’s name, e.g. focus</value></data>
+  <data name="Actor.JoinNotes.Heading" xml:space="preserve"><value>What the GM changed when they accepted this character</value></data>
+  <data name="Actor.JoinNotes.LeftOut" xml:space="preserve"><value>Left out: {0}</value></data>
+  <data name="Actor.JoinNotes.Swapped" xml:space="preserve"><value>{0} was replaced by {1}</value></data>
+  <data name="Actor.JoinNotes.Edited" xml:space="preserve"><value>{0} was changed to: {1}</value></data>
+  <data name="Actor.JoinNotes.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
 </root>

@@ -1,0 +1,34 @@
+@using Codex.Persistence
+
+@* What the GM left out, swapped or changed when they accepted a vault character into the campaign, for its player to read once. *@
+
+@if (Notes.Count > 0)
+{
+    <section class="status" aria-labelledby="join-notes-heading" data-testid="join-notes">
+        <LucideIcon IconName="clipboard-check" Size="18" />
+        <div class="flex-grow-1">
+            <h2 id="join-notes-heading" class="h6 mb-1">@L["Actor.JoinNotes.Heading"]</h2>
+            <ul class="mb-0">
+                @foreach (var note in Notes)
+                {
+                    <li data-testid="@("join-note-" + note.Kind)">@Text(note)</li>
+                }
+            </ul>
+        </div>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="OnDismiss" data-testid="join-notes-dismiss">@L["Actor.JoinNotes.Dismiss"]</CodexButton>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<JoinNote> Notes { get; set; } = Array.Empty<JoinNote>();
+
+    /// <summary>The player has read it: the host clears the notes.</summary>
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    private string Text(JoinNote note) => note.Kind switch
+    {
+        JoinNote.Swapped => L["Actor.JoinNotes.Swapped", note.Name, note.To],
+        JoinNote.Edited => L["Actor.JoinNotes.Edited", note.Name, note.To],
+        _ => L["Actor.JoinNotes.LeftOut", note.Name]
+    };
+}

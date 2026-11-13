@@ -7,6 +7,7 @@
 @inject IUserRepository UserRepo
 @inject IJSRuntime JS
 @inject CampaignLibrary Library
+@inject IContentRegistry ContentRegistry
 @using Codex.Core
 @using Codex.Core.Rules
 @using Codex.Plugin.Abstractions
@@ -159,25 +160,51 @@
                             }
                         </ul>
                     }
-                    @if (reviewOpenChoices.Count > 0)
+                    @if (reviewEval != null)
                     {
-                        <p class="small mb-1">@L["Campaign.Vault.ChoicesOpen"]</p>
-                        <ul class="small" data-testid="vault-review-choices-open">
-                            @foreach (var open in reviewOpenChoices)
+                        <div class="mt-3" data-testid="vault-review-picks">
+                            <h4 class="label-caps">@L["Campaign.Vault.PicksHeading"]</h4>
+                            <p class="field-hint">@L["Campaign.Vault.PicksHint"]</p>
+                            <ChoicesBlock Evaluation="reviewEval" CanEdit="true" TargetLabel="ChoiceTargetLabel" Describe="Describe" OnEdit="EditChoice"
+                                          OptionText="ChoiceOptionText" MomentLabel="MomentName" />
+                            @foreach (var list in PickLists)
                             {
-                                <li>@open</li>
+                                <fieldset class="field-group mt-2" data-testid="@("vault-review-list-" + list.Key)">
+                                    <legend>@list.Label</legend>
+                                    @foreach (var pick in reviewEval.ListPicks.GetValueOrDefault(list.Key) ?? new List<SheetPick>())
+                                    {
+                                        var id = "vault-pick-" + list.Key + "-" + pick.Index;
+                                        var index = pick.Index;
+                                        var listKey = list.Key;
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                            <label for="@id" class="mb-0">@L["Campaign.Vault.ListPickChange", EntryName(pick.Entry)]</label>
+                                            <select id="@id" class="field-select w-auto" value="@pick.Entry.Id" @onchange="e => SwapPick(listKey, index, e.Value?.ToString())" data-testid="vault-review-list-pick">
+                                                @foreach (var option in PickOptions(list, pick))
+                                                {
+                                                    <option value="@option.Id">@EntryName(option)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    }
+                                    @foreach (var gone in reviewEval.ListMissing.GetValueOrDefault(list.Key) ?? new List<MissingPick>())
+                                    {
+                                        var id = "vault-pick-" + list.Key + "-" + gone.Index;
+                                        var index = gone.Index;
+                                        var listKey = list.Key;
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                            <label for="@id" class="mb-0">@L["Campaign.Vault.ListPickChange", L["Campaign.Vault.PickMissing", gone.Id]]</label>
+                                            <select id="@id" class="field-select w-auto" @onchange="e => SwapPick(listKey, index, e.Value?.ToString())" data-testid="vault-review-list-missing">
+                                                <option value="" selected disabled>@L["Campaign.Vault.PickMissing", gone.Id]</option>
+                                                @foreach (var option in reviewEval.ListOptions.GetValueOrDefault(list.Key) ?? Array.Empty<ContentEntry>())
+                                                {
+                                                    <option value="@option.Id">@EntryName(option)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    }
+                                </fieldset>
                             }
-                        </ul>
-                    }
-                    @if (reviewMadeChoices.Count > 0)
-                    {
-                        <p class="small mb-1">@L["Campaign.Vault.ChoicesMade"]</p>
-                        <ul class="small" data-testid="vault-review-choices-made">
-                            @foreach (var made in reviewMadeChoices)
-                            {
-                                <li>@made</li>
-                            }
-                        </ul>
+                        </div>
                     }
                     <h4 class="label-caps mt-3">@L["Campaign.Vault.History"]</h4>
                     @if (string.IsNullOrWhiteSpace(r.Biography))
@@ -255,6 +282,10 @@
                                     _ => L["Campaign.Vault.WillAdd", carried.Name]
                                 })
                             </li>
+                        }
+                        @foreach (var edit in edits)
+                        {
+                            <li data-testid="vault-review-will-edit">@L["Campaign.Vault.WillEdit", edit.Label, edit.Summary]</li>
                         }
                         @if (r.AskedFor.Count > 0)
                         {
@@ -359,9 +390,13 @@
     private CharacterRequestDocument? reviewing;
     private ReviewStep step;
     private List<string> reviewViolations = new();
-    // The choices features leave to the character: the ones not finished (warnings, never a reason to refuse) and what each made one picked.
-    private List<string> reviewOpenChoices = new();
-    private List<string> reviewMadeChoices = new();
+    // The sheet as the review has it: the request's, with the GM's edits to its picks. Read by the rules for the choices still open
+    // (warnings, never a reason to refuse), the picks that can change and what the campaign has that fits where a carried entry sits.
+    private Dictionary<string, object> reviewSheet = new();
+    private SheetEvaluation? reviewEval;
+    private SheetRuleEngine? reviewEngine;
+    private readonly List<ReviewEdit> edits = new();
+    private readonly Dictionary<(string Type, string Id), List<ContentEntry>> allowedInstead = new();
     private readonly List<BringChoice> choices = new();
     private IEntryResolver? campaignEntries;
 
@@ -382,23 +417,89 @@
         step = ReviewStep.Character;
         choices.Clear();
         reviewViolations = new List<string>();
-        reviewOpenChoices = new List<string>();
-        reviewMadeChoices = new List<string>();
+        reviewSheet = new Dictionary<string, object>(request.Sheet);
+        reviewEval = null;
+        reviewEngine = null;
+        edits.Clear();
+        allowedInstead.Clear();
         campaignEntries = null;
         if (Ctx.System is { } system)
         {
             // The sheet is read as it would stand with everything it brings added: what the rules still flag is the GM's to weigh.
             campaignEntries = await CachedEntryResolver.LoadAsync(Library, Ctx.Campaign, Ctx.Access, system);
             var withBrought = await CachedEntryResolver.LoadAsync(Library, Ctx.Campaign, Ctx.Access, system, request.Brings.Select(b => b.ToEntry(system.Id)));
-            var evaluation = new SheetRuleEngine(system, withBrought).Evaluate(request.Sheet);
-            reviewViolations = evaluation.Violations.Select(Describe).ToList();
-            reviewOpenChoices = evaluation.Warnings.Where(SheetRuleEngine.IsChoiceNotice).Select(Describe).ToList();
-            reviewMadeChoices = evaluation.MadeChoices
-                .Select(c => L["Actor.Choice.MadeSummary", string.Equals(c.Label, c.Source, StringComparison.Ordinal) ? c.Label : $"{c.Label} ({c.Source})", string.Join(", ", c.MadeLabels)].ToString()).ToList();
+            reviewEngine = new SheetRuleEngine(system, withBrought);
+            Reevaluate();
         }
 
         StateHasChanged();
         await JS.InvokeVoidAsync("codex.showModal", "vault-review-dialog");
+    }
+
+    /// <summary>Reads the review's sheet again after an edit: what the rules flag, and what the campaign has that fits each carried entry's place.</summary>
+    private void Reevaluate()
+    {
+        if (reviewEngine == null || reviewing == null || Ctx.System is not { } system) return;
+        reviewEval = reviewEngine.Evaluate(reviewSheet);
+        reviewViolations = reviewEval.Violations.Where(v => v.Key != SheetRuleEngine.ChoiceStaleKey).Select(Describe).ToList();
+        allowedInstead.Clear();
+        foreach (var carried in reviewing.Brings)
+        {
+            allowedInstead[(carried.Type, carried.EntryId)] = campaignEntries == null
+                ? new List<ContentEntry>()
+                : SheetReferences.Replacements(system, reviewSheet, reviewEval, campaignEntries, carried.Type, carried.EntryId).ToList();
+        }
+    }
+
+    private string EntryName(ContentEntry entry) => ContentRegistry.Name(entry, L.Culture.Name);
+
+    private string ChoiceTargetLabel(string target) =>
+        target == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"] : Ctx.System?.SheetRules?.Skills?.Label ?? target;
+
+    private (string Name, string? Description) ChoiceOptionText(PendingChoice choice, ChoiceOption option) =>
+        ContentRegistry.Row(choice.Feature.Source, option.Key, L.Culture.Name);
+
+    private string MomentName(string moment) => Ctx.System == null ? moment : SlotTracker.RestName(Ctx.System, moment);
+
+    /// <summary>The GM changed a choice's picks. It goes through the engine, as on the sheet, so a row pick settles the counters it swaps.</summary>
+    private void EditChoice(ChoiceEdit edit)
+    {
+        if (reviewEngine == null) return;
+        reviewEngine.ChangeChoice(reviewSheet, edit.Key, edit.Picks);
+        Reevaluate();
+        var choice = reviewEval?.PendingChoices.Concat(reviewEval.MadeChoices).FirstOrDefault(c => c.Key == edit.Key);
+        var picks = SheetRuleEngine.RawList(reviewSheet, edit.Key);
+        var names = picks.Select(p => choice?.Options.FirstOrDefault(o => o.Key.Equals(p, StringComparison.OrdinalIgnoreCase)) is { } option
+            ? (choice.IsRow ? ChoiceOptionText(choice, option).Name : option.Label)
+            : p).ToList();
+        Record(edit.Key, choice?.Label ?? edit.Name, picks, names.Count == 0 ? L["Actor.Skills.RankNone"] : string.Join(", ", names));
+    }
+
+    private IEnumerable<ListRule> PickLists =>
+        (Ctx.System?.SheetRules?.Lists ?? new List<ListRule>()).Where(l => reviewEval?.ListPicks.GetValueOrDefault(l.Key) is { Count: > 0 } || reviewEval?.ListMissing.GetValueOrDefault(l.Key) is { Count: > 0 });
+
+    /// <summary>The entries a pick may become: itself first, then what the rules allow in that list.</summary>
+    private IEnumerable<ContentEntry> PickOptions(ListRule list, SheetPick pick) =>
+        new[] { pick.Entry }.Concat((reviewEval?.ListOptions.GetValueOrDefault(list.Key) ?? Array.Empty<ContentEntry>()).Where(o => o.Id != pick.Entry.Id));
+
+    private void SwapPick(string listKey, int index, string? newId)
+    {
+        if (string.IsNullOrEmpty(newId) || reviewEval == null || Ctx.System?.SheetRules?.Lists.FirstOrDefault(l => l.Key == listKey) is not { } list) return;
+        var raw = SheetRuleEngine.RawList(reviewSheet, listKey).ToList();
+        if (index < 0 || index >= raw.Count) return;
+        raw[index] = SheetRuleEngine.FormatPick(newId, SheetRuleEngine.ParsePick(raw[index]).Choices);
+        reviewSheet[listKey] = raw.Cast<object>().ToList();
+        Reevaluate();
+        var names = (reviewEval!.ListPicks.GetValueOrDefault(listKey) ?? new List<SheetPick>()).Select(p => EntryName(p.Entry)).ToList();
+        Record(listKey, list.Label, raw, string.Join(", ", names));
+    }
+
+    // One edit per key, kept in the order the GM made them last; one back to what the request had is no edit.
+    private void Record(string key, string label, IReadOnlyList<string> picks, string summary)
+    {
+        edits.RemoveAll(e => e.Key == key);
+        var original = reviewing == null ? new List<string>() : SheetRuleEngine.RawList(reviewing.Sheet, key);
+        if (!picks.SequenceEqual(original, StringComparer.OrdinalIgnoreCase)) edits.Add(new ReviewEdit(key, label, picks.ToList(), summary));
     }
 
     private string Describe(RuleViolation violation) =>
@@ -425,9 +526,9 @@
         choices.Add(new BringChoice(carried.Type, carried.EntryId, kind, useId));
     }
 
-    // What the campaign has of the carried entry's type that the sheet's rules would take in its place (a subclass of the same class).
+    // What the campaign has that the sheet's rules would take in the carried entry's place, in every slot that uses it (SheetReferences.Replacements).
     private List<ContentEntry> OursFor(CarriedEntry carried) =>
-        campaignEntries?.Candidates(carried.Type).OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList() ?? new List<ContentEntry>();
+        allowedInstead.GetValueOrDefault((carried.Type, carried.EntryId)) ?? new List<ContentEntry>();
 
     private Task CloseReviewAsync() => JS.InvokeVoidAsync("codex.closeModal", "vault-review-dialog").AsTask();
 
@@ -435,7 +536,7 @@
     {
         if (reviewing is not { } request) return;
         // The store reads the caller's role as the campaign has it now: a GM demoted since the page loaded accepts nothing.
-        var done = await VaultService.AcceptAsync(request.Id, Ctx.Access, Ctx.System, choices.ToList());
+        var done = await VaultService.AcceptAsync(request.Id, Ctx.Access, Ctx.System, choices.ToList(), edits.ToList(), Ctx.Campaign);
         await CloseReviewAsync();
         reviewing = null;
         Ctx.Notify(done ? Flash.Success(L["Campaign.Vault.Accepted", request.Name]) : Flash.Error(L["Campaign.Vault.NotAccepted"]));

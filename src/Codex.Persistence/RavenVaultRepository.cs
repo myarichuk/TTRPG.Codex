@@ -170,7 +170,7 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
     }
 
     public async Task<(CharacterRequestDocument Request, ActorDocument? Added)?> AcceptAsync(string requestId, CampaignAccess access,
-        Dictionary<string, object>? sheet = null, IReadOnlyList<CarriedEntry>? add = null)
+        Dictionary<string, object>? sheet = null, IReadOnlyList<CarriedEntry>? add = null, IReadOnlyList<JoinNote>? notes = null)
     {
         if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { IsDm: true } current) return null;
         using var session = dbService.Store.OpenAsyncSession();
@@ -228,6 +228,7 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
                 Name = request.Name,
                 Sheet = new Dictionary<string, object>(request.Sheet),
                 Biography = request.Biography,
+                JoinNotes = notes?.ToList() ?? new List<JoinNote>(),
                 Visibility = ActorVisibility.Known,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
