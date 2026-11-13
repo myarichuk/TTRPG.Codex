@@ -194,6 +194,10 @@ public class ActorDocument
     /// <summary>On a campaign's copy of a vault character: the vault character it was brought in from (7).</summary>
     public string? VaultSourceId { get; set; }
 
+    /// <summary>On a campaign's copy of a vault character: what the GM left out, swapped or edited when they accepted it, for
+    /// its player to read until they dismiss it.</summary>
+    public List<JoinNote> JoinNotes { get; set; } = new();
+
     /// <summary>On a vault character: Library entries of its own, which no pack has (<see cref="CarriedEntry"/>).</summary>
     public List<CarriedEntry> Carried { get; set; } = new();
 

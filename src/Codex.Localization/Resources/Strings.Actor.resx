@@ -626,4 +626,10 @@
   <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: nothing to restore.</value></data>
   <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>No ability gives this box.</value></data>
   <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Actor.JoinNotes.Heading" xml:space="preserve"><value>The GM changed these before accepting:</value></data>
+  <data name="Actor.JoinNotes.LeftOut" xml:space="preserve"><value>Left out: {0}</value></data>
+  <data name="Actor.JoinNotes.Swapped" xml:space="preserve"><value>{0} was replaced by {1}</value></data>
+  <data name="Actor.JoinNotes.Edited" xml:space="preserve"><value>{0}: {1} became {2}</value></data>
+  <data name="Actor.JoinNotes.EditedNew" xml:space="preserve"><value>{0}: now {1}</value></data>
+  <data name="Actor.JoinNotes.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
 </root>

@@ -76,6 +76,8 @@ What is translated today (all machine-drafted; the English text stays authoritat
 | Rules text and names: spells | yes | yes |
 | Rules text and names: creatures, magic items, equipment | yes | yes (own draft) |
 
+The srd5e species `lineages` rows (elf, gnome, goliath, tiefling, dragonborn) and the Circle of the Land's land `options` are translated in both packs: the overlay replaces the whole property and `EntryDisplay.Row` matches rows by index, so a translation must list every row, in the English order, with `name` and `description` only (never `choose`). The Forged in the Dark SRD (`fitd-srd`) has `system.ru.yaml` / `system.he.yaml` and the packs `srd-fitd-2017-ru` / `-he` (machine drafts, terms in [i18n-glossary.md](i18n-glossary.md)); sheet-kind labels (tracks, action rows, layout sections) have no translation section yet, so their words sit under `values`.
+
 Hebrew terminology follows the community Hebrew SRD (5esrd.co.il) as a vocabulary reference only: see
 [i18n-he-terms.md](i18n-he-terms.md) for every term decision and [i18n-he-native-review.md](i18n-he-native-review.md) for the names a Hebrew speaker should confirm (languages, weapon masteries and properties, class and subclass feature names; all creature, item and equipment names are in [i18n-he-names.md](i18n-he-names.md)). The Hebrew drafts keep numbers, dice (`8d6`) and units (feet)
 exactly as in the English so the checker can verify them; `tools/Codex.TranslationCheck/translator-prompt-he*.md` (spells, character options, creatures, items and equipment),

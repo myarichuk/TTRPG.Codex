@@ -1319,6 +1319,11 @@
   <data name="Campaign.Vault.WillAdd" xml:space="preserve"><value>Будет добавлено в Библиотеку: {0}</value></data>
   <data name="Campaign.Vault.WillUse" xml:space="preserve"><value>«{0}» заменяется на «{1}»</value></data>
   <data name="Campaign.Vault.WillLeave" xml:space="preserve"><value>Не включается: {0}</value></data>
+  <data name="Campaign.Vault.PicksHeading" xml:space="preserve"><value>Выбор</value></data>
+  <data name="Campaign.Vault.PicksHint" xml:space="preserve"><value>Замените выбор на другой вариант, который разрешают правила. Меняется только копия в кампании. Персонаж в хранилище остаётся прежним.</value></data>
+  <data name="Campaign.Vault.ListPickChange" xml:space="preserve"><value>Заменить «{0}»</value></data>
+  <data name="Campaign.Vault.PickMissing" xml:space="preserve"><value>{0} (нет в Библиотеке)</value></data>
+  <data name="Campaign.Vault.WillEdit" xml:space="preserve"><value>Изменено — {0}: {1}</value></data>
   <data name="Campaign.Vault.Next" xml:space="preserve"><value>Далее</value></data>
   <data name="Campaign.Vault.Back" xml:space="preserve"><value>Назад</value></data>
 </root>

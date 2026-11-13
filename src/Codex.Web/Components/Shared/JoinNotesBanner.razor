@@ -1,0 +1,54 @@
+@using Codex.Persistence
+@using Codex.Plugin.Abstractions
+@inject IContentRegistry ContentRegistry
+
+@* What the GM left out, swapped or changed when they accepted a vault character into the campaign. The player reads it and dismisses it;
+   the GM sees the same notes without the button. The facts are stored; the sentences are made here, in the reader's language. *@
+
+@if (Notes.Count > 0)
+{
+    <section class="status" role="status" aria-labelledby="join-notes-heading" data-testid="join-notes">
+        <LucideIcon IconName="clipboard-check" Size="18" />
+        <div class="flex-grow-1">
+            <h2 id="join-notes-heading" class="h6 mb-1">@L["Actor.JoinNotes.Heading"]</h2>
+            <ul class="mb-0">
+                @foreach (var note in Notes)
+                {
+                    <li data-testid="@("join-note-" + note.Kind)">@Text(note)</li>
+                }
+            </ul>
+        </div>
+        @if (!ReadOnly)
+        {
+            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="OnDismiss" data-testid="join-notes-dismiss">@L["Actor.JoinNotes.Dismiss"]</CodexButton>
+        }
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<JoinNote> Notes { get; set; } = Array.Empty<JoinNote>();
+
+    /// <summary>The campaign's game system, to name entries from its packs.</summary>
+    [Parameter] public string SystemId { get; set; } = string.Empty;
+
+    /// <summary>The GM's view: the notes, with nothing to dismiss.</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>The player has read it: the host clears the notes.</summary>
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    // An entry is named as the reader's language names it; one the pack does not have (a carried one) keeps the name it was stored with.
+    private string EntryName(string type, string id, string stored)
+    {
+        var entry = string.IsNullOrEmpty(id) || string.IsNullOrEmpty(type) ? null : ContentRegistry.GetEntries(SystemId, type).FirstOrDefault(e => e.Id == id);
+        return entry == null ? stored : ContentRegistry.Name(entry, L.Culture.Name);
+    }
+
+    private string Text(JoinNote note) => note.Kind switch
+    {
+        JoinNote.Swapped => L["Actor.JoinNotes.Swapped", EntryName(note.Type, note.Id, note.Name), EntryName(note.Type, note.ToId, note.To)],
+        JoinNote.Edited when !string.IsNullOrEmpty(note.From) => L["Actor.JoinNotes.Edited", note.Name, note.From, note.To],
+        JoinNote.Edited => L["Actor.JoinNotes.EditedNew", note.Name, note.To],
+        _ => L["Actor.JoinNotes.LeftOut", EntryName(note.Type, note.Id, note.Name)]
+    };
+}

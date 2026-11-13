@@ -27,7 +27,7 @@ public class BookPlayerBookTests : IClassFixture<RavenDbFixture>
 
     public BookPlayerBookTests(RavenDbFixture fixture)
     {
-        var db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        var db = fixture.Open(fixture.DbName);
         _actors = new ActorRepository(db);
         _sessions = new RavenSessionRepository(db);
         var notes = new RavenNoteRepository(db);

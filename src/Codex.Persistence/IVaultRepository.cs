@@ -42,8 +42,12 @@ public interface IVaultRepository
     /// <param name="sheet">The request's sheet as the GM's review left it; null takes it as asked.</param>
     /// <param name="add">The carried entries (<see cref="CharacterRequestDocument.Brings"/>) to add to the campaign's Library,
     /// published. One whose type and id the campaign's homebrew already has is not added.</param>
+    /// <param name="notes">What the review changed, kept on the new character for its player.</param>
     Task<(CharacterRequestDocument Request, ActorDocument? Added)?> AcceptAsync(string requestId, CampaignAccess access,
-        Dictionary<string, object>? sheet = null, IReadOnlyList<CarriedEntry>? add = null);
+        Dictionary<string, object>? sheet = null, IReadOnlyList<CarriedEntry>? add = null, IReadOnlyList<JoinNote>? notes = null);
+
+    /// <summary>Clears the notes on a campaign's copy (<see cref="ActorDocument.JoinNotes"/>). Only the character's owner may: false for anyone else.</summary>
+    Task<bool> DismissJoinNotesAsync(string actorId, string userId);
 
     /// <summary>Updates the vault character a campaign's copy came from with the parts the player owns, as the caller
     /// prepared them. False unless the vault character is the caller's.</summary>

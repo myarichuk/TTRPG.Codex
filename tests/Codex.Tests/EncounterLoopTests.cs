@@ -30,7 +30,7 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
 
     public EncounterLoopTests(RavenDbFixture fixture)
     {
-        _dbService = new RavenDbService(fixture.DbPath, "Encounter_" + Guid.NewGuid(), runInMemory: true);
+        _dbService = fixture.Open("Encounter_" + Guid.NewGuid());
         _actors = new ActorRepository(_dbService);
         _sessions = new RavenSessionRepository(_dbService);
         _encounters = new RavenEncounterRepository(_dbService);
