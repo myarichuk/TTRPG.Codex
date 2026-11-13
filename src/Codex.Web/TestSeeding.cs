@@ -23,6 +23,12 @@ public sealed class TestSeedActor
     public string Name { get; set; } = string.Empty;
     public ActorKind Kind { get; set; } = ActorKind.NonPlayerCharacter;
     public string? OwnerUserId { get; set; }
+
+    /// <summary>A vault character (no <see cref="CampaignId"/>): the game system it is built for.</summary>
+    public string? SystemId { get; set; }
+
+    /// <summary>A vault character's homebrew entries it carries.</summary>
+    public List<Codex.Persistence.CarriedEntry>? Carried { get; set; }
     public ActorVisibility Visibility { get; set; } = ActorVisibility.Known;
     public int Hp { get; set; }
     public int HpMax { get; set; }

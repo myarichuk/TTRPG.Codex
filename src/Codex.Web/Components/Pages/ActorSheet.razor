@@ -193,6 +193,11 @@ else
         }
     </div>
 
+    @if (!Vault && actor.JoinNotes.Count > 0 && (actor.OwnerUserId == currentUserId || access is { IsDm: true }))
+    {
+        <JoinNotesBanner Notes="actor.JoinNotes" SystemId="@(campaign?.SystemId ?? string.Empty)" ReadOnly="@(actor.OwnerUserId != currentUserId)" OnDismiss="DismissJoinNotesAsync" />
+    }
+
     @if (!string.IsNullOrEmpty(actor.BlueprintId) && ContentRegistry.GetActor(actor.BlueprintId) == null)
     {
         <div class="status" role="note">
@@ -1264,6 +1269,13 @@ else
         if (left.Count > 0) sheetRollNote = L["Actor.Sheet.RollLeft", left.Count];
         await SayLeft(applied.Left);
         Reevaluate();
+    }
+
+    private async Task DismissJoinNotesAsync()
+    {
+        if (actor == null || currentUserId == null) return;
+        // The store checks the owner again: the notes are the player's to read and dismiss.
+        if (await VaultRepo.DismissJoinNotesAsync(actor.Id, currentUserId)) actor.JoinNotes = new List<JoinNote>();
     }
 
     private Task OnRulesInputChanged()
