@@ -893,6 +893,11 @@ public class SystemDefinition
     /// <summary>The primary pool's key, "HP" when the system has no resources.</summary>
     public static string PrimaryKeyOf(SystemDefinition? system) => system?.PrimaryResource?.Key ?? "HP";
 
+    /// <summary>Whether the system has a life track at all: a primary resource, or no sheet kinds to say otherwise (a system
+    /// with no resources keeps the default "HP"). A kind-based system that declares no resource, like Blades in the Dark, has
+    /// no hit points, so the table shows none and nobody is ever "down" at zero of them.</summary>
+    public static bool HasLifeTrack(SystemDefinition? system) => system is null || system.PrimaryResource != null || system.SheetKinds.Count == 0;
+
     /// <summary>The pool that soaks damage first, "TempHP" when the system does not name one.</summary>
     public static string TemporaryKeyOf(SystemDefinition? system) => system?.Vitals?.TemporaryResource ?? "TempHP";
 
