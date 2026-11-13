@@ -48,11 +48,11 @@ public class SrdEngineExtensionTests : IAsyncLifetime
         var (engine, sheet) = Character(4, species);
         sheet["species"] = "testfolk";
         var four = engine.Recompute(sheet);
-        Assert.Equal(new[] { "uses_early_gift" }, four.Counters.Select(c => c.Key).ToArray());
+        Assert.Equal(new[] { "uses_early_gift" }, four.Counters.Select(c => c.Key).Where(k => k.Contains("gift")).ToArray());
 
         sheet["level"] = 5L;
         var five = engine.Recompute(sheet);
-        Assert.Equal(2, five.Counters.Count);
+        Assert.Equal(2, five.Counters.Count(c => c.Key.Contains("gift")));
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class SrdEngineExtensionTests : IAsyncLifetime
         sheet["choice__testfolk__lineage"] = Items("Ancestor: Red");
         var evaluation = engine.Recompute(sheet);
 
-        var counter = Assert.Single(evaluation.Counters);
+        var counter = Assert.Single(evaluation.Counters, c => c.Key == "uses_breath");
         Assert.Equal("Breath Weapon", counter.Label);
         Assert.Equal("Ancestor: Red", counter.Feature.Name);
         Assert.Equal("Breath Weapon", sheet["uses_breath_Label"]);

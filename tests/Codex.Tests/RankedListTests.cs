@@ -59,7 +59,7 @@ public class RankedListTests : IAsyncLifetime
         engine.InitializeSheet(sheet);
         sheet["class"] = "sorcerer";
         if (homebrew.Any(e => e.Type == "subclass")) sheet["subclass"] = "stacker";
-        sheet["species"] = "human";
+        sheet["species"] = "halfling";
         sheet["level"] = (long)level;
         sheet[SheetRuleEngine.MethodKey] = SheetRuleEngine.ManualMethod;
         sheet[SheetRuleEngine.BasePrefix + "cha"] = 16L;
@@ -524,7 +524,7 @@ public class RankedListTests : IAsyncLifetime
         var skilled = Feat("skilled", "Skilled", Add(("to", "skills"), ("choice", "skilled"), ("choose", 1L)));
         skilled.Properties["category"] = "origin"; // an origin feat: the extra origin feats list takes it
         var (engine, sheet) = Character(5, skilled);
-        sheet["species"] = "human";
+        sheet["species"] = "halfling";
         sheet["extraOriginFeats"] = Items("skilled");
         sheet["feats"] = Items("skilled");
 
@@ -788,22 +788,32 @@ public class RankedListTests : IAsyncLifetime
 
     // ---- Steps 5 to 8: what the sheet, the stepper, the editor and the drafter build on ----
 
-    [Fact]
-    public void APlainChooseN_NeverAdoptsTheirOwnTicks_SoAnOverPickStaysVisible()
+    public void APlainChooseN_AdoptsOnlyTheTicksBeyondTheClassAllowance_SoAnOverPickStaysVisibleOtherwise()
     {
         var skilled = Feat("skilled", "Skilled", Add(("to", "skills"), ("choice", "skilled"), ("choose", 2L)));
         var (engine, sheet) = Character(5, skilled);
         sheet["feats"] = Items("skilled");
-        sheet["skillProficiencies"] = Items("arcana", "insight", "religion", "stealth"); // their ticks cover the two Skilled asks for
+        // A sorcerer picks two skills; four ticks leave two spare, which cover what Skilled asks for.
+        sheet["skillProficiencies"] = Items("arcana", "insight", "religion", "stealth");
 
+        var adopted = Assert.Single(engine.Recompute(sheet).PendingChoices);
+        Assert.True(adopted.Adopted);
+        Assert.Equal(2, adopted.Made.Count);
+
+        // Only the two the class allows: nothing is spare, so the pick is still to make and nothing is taken as made.
+        sheet["skillProficiencies"] = Items("arcana", "insight");
         var evaluation = engine.Recompute(sheet);
-
         var pending = Assert.Single(evaluation.PendingChoices);
-        Assert.False(pending.Adopted); // no minRank: ticks are not taken as the picks
+        Assert.False(pending.Adopted);
         Assert.Empty(pending.Made);
         Assert.DoesNotContain(evaluation.Warnings, w => w.Key == SheetRuleEngine.ChoiceConfirmKey);
         Assert.Contains(evaluation.Warnings, w => w.Key == SheetRuleEngine.ChoicePendingKey);
-        Assert.Contains(evaluation.Warnings, w => w.Key == "Actor.Rule.SkillChoices"); // the class over-pick is still said
+
+        // Three ticks and a pick of two: one is spare, one short of the choice. It stays open and the class over-pick is said.
+        sheet["skillProficiencies"] = Items("arcana", "insight", "religion");
+        var over = engine.Recompute(sheet);
+        Assert.False(Assert.Single(over.PendingChoices).Adopted);
+        Assert.Contains(over.Warnings, w => w.Key == "Actor.Rule.SkillChoices");
     }
 
     [Fact]

@@ -140,7 +140,7 @@ public class DraftChoicesTests : IAsyncLifetime
         CastService.ApplyDraft(sheet, system, draft);
         var evaluation = engine.Recompute(sheet);
         Assert.Contains("detect-thoughts", SheetRuleEngine.RawList(sheet, "grantedSpells"));
-        Assert.Equal("Whispering Tome", Assert.Single(evaluation.Counters).Feature.Name);
+        Assert.Equal("Whispering Tome", Assert.Single(evaluation.Counters, c => c.Feature.Name == "Whispering Tome").Feature.Name);
         Assert.DoesNotContain(evaluation.Violations, v => v.FieldKey == "subclass");
     }
 
@@ -297,7 +297,9 @@ public class DraftChoicesTests : IAsyncLifetime
     public async Task AClassWithNoSubclassToChoose_GetsOneWrittenOnceItIsDue_AndNotBefore()
     {
         var system = _loader.GetDefinition("srd5e")!;
-        var sheet = () => new Dictionary<string, object> { ["class"] = "barbarian", ["level"] = 3L, ["background"] = "criminal", ["originFeat"] = "alert" };
+        var sheet = () => new Dictionary<string, object> { ["class"] = "barbarian", ["level"] = 3L, ["background"] = "criminal", ["originFeat"] = "alert",
+        // Primal Knowledge is already picked, so the only thing left to write is the subclass.
+        ["choice__barbarian__primal-knowledge-3"] = new List<object> { "athletics" } };
         var chat = new QueueChat("""{"name": "Path of the Hollow Drum", "description": "Rage keeps time.", "properties": {"features": [{"name": "Beat", "level": 3, "description": "A pulse."}]}}""");
         var due = new CharacterDraft("Brakka", sheet(), null, null);
 
