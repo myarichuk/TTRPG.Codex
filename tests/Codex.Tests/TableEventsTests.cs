@@ -26,10 +26,12 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
         id: table-events
         name: Table events
         conditions: [Dead, Hurt, Down]
+        moments: [{ key: downtime, label: Downtime }]
         sheetKinds:
           - kind: hero
             label: Hero
             tracks:
+              - { key: armor, max: 3, display: boxes }
               - { key: HP, max: 10, min: -5, start: max, thresholds: [{ below: 0, condition: Down }] }
               - { key: stress, max: 3, overflow: { into: trauma, then: reset, ask: { who: gm, choices: [cold, haunted] } } }
               - { key: trauma, max: 4 }
@@ -40,6 +42,8 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
                 whenFull: pushUp
                 beyond: { condition: Dead }
         events:
+          downtime:
+            - { intents: [{ set: { track: armor, to: 0 } }] }
           damage: { builtin: damage }
           heal:
             - { intents: [{ adjust: { track: HP, by: "ev.amount" } }] }
@@ -115,6 +119,53 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
 
         await runtime.EnqueueAsync(new ApplyHealingCommand(hero.Id, "HP", 5, "dm"));
         Assert.Equal(3, Pool(runtime, hero.Id, "HP"));
+    }
+
+    [Fact]
+    public async Task ADeclaredMoment_RefillsTheCountersThatNameIt_RunsItsHandler_IsLogged_AndUndoPutsItAllBack()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await HeroAsync(campaignId, "Vex", ("armor", 2L), ("uses_scheme", 0L), ("uses_scheme_Max", 2L), ("uses_scheme_Rest", "downtime"), ("uses_other", 0L), ("uses_other_Max", 2L), ("uses_other_Rest", "dawn"));
+        var (runtime, session) = await TableAsync(campaignId, hero);
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new MomentCommand(hero.Id, "downtime"));
+
+        Assert.Equal(2, Pool(runtime, hero.Id, "uses_scheme"));
+        Assert.Equal(0, Pool(runtime, hero.Id, "uses_other")); // it names dawn, not downtime
+        Assert.Equal(0, Pool(runtime, hero.Id, "armor")); // the downtime handler reset it
+        Assert.Contains(await LogAsync(session), d => d.StartsWith("Downtime for Vex:", StringComparison.Ordinal));
+
+        await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
+        Assert.Equal(0, Pool(runtime, hero.Id, "uses_scheme"));
+        Assert.Equal(2, Pool(runtime, hero.Id, "armor"));
+    }
+
+    [Fact]
+    public async Task ADeclaredMomentThatChangesNothing_IsStillLogged()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await HeroAsync(campaignId, "Vex");
+        var (runtime, session) = await TableAsync(campaignId, hero);
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new MomentCommand(hero.Id, "downtime"));
+
+        Assert.Contains(await LogAsync(session), d => d.StartsWith("Downtime for Vex", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Dawn_LogsAsItAlwaysDid_AndRaisesNoEventTheSystemDoesNotHandle()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await HeroAsync(campaignId, "Vex", ("armor", 2L));
+        var (runtime, session) = await TableAsync(campaignId, hero);
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new MomentCommand(hero.Id, "dawn"));
+
+        Assert.Equal(2, Pool(runtime, hero.Id, "armor"));
+        Assert.Contains("Dawn comes for Vex.", await LogAsync(session));
     }
 
     [Fact]

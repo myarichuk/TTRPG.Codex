@@ -177,19 +177,27 @@ else
             {
                 <QuickAddPanel SystemId="@Campaign.SystemId" OnAdd="QuickAddMonsterAsync" />
 
-                @if (Rests.Count > 0 || DawnMatters)
+                @if (Rests.Count > 0 || PartyMoments.Count > 0)
                 {
                     <section class="panel" aria-labelledby="party-rest-heading">
-                        <div class="panel-title"><h3 id="party-rest-heading">@L["Combat.PartyRest"]</h3></div>
+                        <div class="panel-title"><h3 id="party-rest-heading">@(Definition?.Moments.Count > 0 ? L["Combat.PartyMoments"] : L["Combat.PartyRest"])</h3></div>
                         <p class="small-muted">@L["Combat.PartyRestHint"]</p>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach (var rest in Rests)
                             {
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"party-rest-{Slug(rest)}")" OnClick="() => PartyRestAsync(rest)">@L["Combat.PartyRestButton", RestLabel(rest)]</CodexButton>
                             }
-                            @if (DawnMatters)
+                            @foreach (var moment in PartyMoments)
                             {
-                                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="party-dawn" OnClick="DawnAsync">@L["Combat.DawnButton"]</CodexButton>
+                                var key = moment.Key;
+                                if (moment.Kind == MomentKind.Dawn)
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="party-dawn" OnClick="() => MomentAsync(key)">@L["Combat.DawnButton"]</CodexButton>
+                                }
+                                else
+                                {
+                                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"party-moment-{Slug(key)}")" OnClick="() => MomentAsync(key)">@L["Combat.MomentButton", moment.Label]</CodexButton>
+                                }
                             }
                         </div>
                         @* The choices a rest is the usual time to change, per character, each a link to that character's sheet. *@
@@ -645,18 +653,26 @@ else
         SlotKeys(actorId).Where(key => SlotPoolRules.Any(r => r.Owns(key) && r.RecoversOn.Contains(rest, StringComparer.OrdinalIgnoreCase) && !key.EndsWith("_Max", StringComparison.Ordinal)))
             .ToList();
 
-    /// <summary>Whether any player character has a counter that refills at dawn, so the table offers the GM that moment.</summary>
-    private bool DawnMatters =>
-        Actors.Any(a => a.Kind == ActorKind.PlayerCharacter && a.Sheet.Keys.Any(k => SheetRuleEngine.IsUsesKey(k) && FeatureRecovery.For(a.Sheet, k, FeatureRecovery.Dawn).Count > 0));
+    /// <summary>Whether <paramref name="moment"/> does anything to some player character at the table: a counter refills at it, a choice is
+    /// usually changed then, or the system's handler for it touches the character's sheet kind. The table then offers the GM the moment.</summary>
+    private bool Matters(string moment) =>
+        Actors.Any(a => a.Kind == ActorKind.PlayerCharacter && SystemMoments.Matters(Definition, a.Sheet, moment));
 
-    private async Task DawnAsync()
+    /// <summary>The moments that are not rests which the GM calls with a button, and that matter here: declared moments, then dawn.
+    /// (Initiative is fired by the roll.)</summary>
+    private List<SystemMoment> PartyMoments =>
+        SystemMoments.Of(Definition).Where(m => m.Kind is MomentKind.Declared or MomentKind.Dawn && Matters(m.Key)).ToList();
+
+    private async Task MomentAsync(string moment)
     {
-        foreach (var actor in Actors.Where(a => a.Kind == ActorKind.PlayerCharacter && snapshot.Actor(a.Id) != null))
+        var dawn = string.Equals(moment, FeatureRecovery.Dawn, StringComparison.OrdinalIgnoreCase);
+        // Dawn goes to every character, as it always has; a declared moment only to those whose sheet it touches.
+        foreach (var actor in Actors.Where(a => a.Kind == ActorKind.PlayerCharacter && snapshot.Actor(a.Id) != null && (dawn || SystemMoments.Matters(Definition, a.Sheet, moment))))
         {
-            await SendAsync(new DawnCommand(actor.Id));
+            await SendAsync(new MomentCommand(actor.Id, moment));
         }
 
-        OfferPartyChoices(FeatureRecovery.Dawn);
+        OfferPartyChoices(moment);
     }
 
     private (int Current, int Max, int? Sides)? HitDicePool(string actorId)

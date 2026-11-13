@@ -128,4 +128,67 @@ public class SystemMomentsTests
         Assert.Equal(new[] { "initiative", "dawn", "manual" }, FeatureGrantVocabulary.For(system)!.Moments);
         Assert.Equal(new[] { "Short Rest", "Long Rest" }, SystemMoments.Of(system).Where(m => m.IsRest).Select(m => m.Key));
     }
+
+    private static SystemDefinition Kinds(string events) => SystemDefinitionLoader.Parse($$"""
+        id: matters-test
+        name: Matters test
+        moments: [{ key: downtime }, { key: loadChosen }, { key: scripted }]
+        sheetKinds:
+          - kind: scoundrel
+            tracks: [{ key: armor, max: 3 }, { key: stress, max: 9 }]
+          - kind: crew
+            tracks: [{ key: rep, max: 12 }]
+        events: {{events}}
+        """);
+
+    private static Dictionary<string, object> Sheet(string kind, params (string Key, object Value)[] more)
+    {
+        var sheet = new Dictionary<string, object> { ["kind"] = kind };
+        foreach (var (key, value) in more) sheet[key] = value;
+        return sheet;
+    }
+
+    [Fact]
+    public void AHandler_TouchesTheKindsWhoseTracksItNamesByLiteral_AndNoOther()
+    {
+        var system = Kinds("""
+            { loadChosen: [{ intents: [{ set: { track: armor, to: 0 } }] }], downtime: [{ intents: [{ adjust: { track: rep, by: 1 } }, { log: { key: x } }] }] }
+            """);
+
+        Assert.True(SystemMoments.Matters(system, Sheet("scoundrel"), "loadChosen"));
+        Assert.False(SystemMoments.Matters(system, Sheet("crew"), "loadChosen"));
+        Assert.True(SystemMoments.Matters(system, Sheet("crew"), "downtime"));
+        Assert.False(SystemMoments.Matters(system, Sheet("scoundrel"), "downtime"));
+        Assert.Equal(new[] { "armor" }, SystemMoments.HandlerTracks(system, "loadChosen"));
+    }
+
+    [Fact]
+    public void ACampaignLine_AndAMoment_WithNoHandler_TouchNoSheet()
+    {
+        var system = Kinds("{ downtime: [{ target: campaign.clocks, intents: [{ adjust: { track: armor, by: 1 } }] }] }");
+
+        Assert.False(SystemMoments.Matters(system, Sheet("scoundrel"), "downtime"));
+        Assert.False(SystemMoments.Matters(system, Sheet("scoundrel"), "loadChosen"));
+        Assert.Empty(SystemMoments.HandlerTracks(system, "loadChosen")!);
+    }
+
+    [Fact]
+    public void AScriptHandler_CannotBeRead_SoItTouchesEveryKind()
+    {
+        var system = Kinds("{ scripted: { script: 'rules.js#go' } }");
+
+        Assert.Null(SystemMoments.HandlerTracks(system, "scripted"));
+        Assert.True(SystemMoments.Matters(system, Sheet("crew"), "scripted"));
+    }
+
+    [Fact]
+    public void ACounterThatNamesTheMoment_OrAChoiceChangedAtIt_MakesItMatter()
+    {
+        var system = Kinds("{}");
+
+        Assert.False(SystemMoments.Matters(system, Sheet("crew"), "downtime"));
+        Assert.True(SystemMoments.Matters(system, Sheet("crew", ("uses_a", 1L), ("uses_a_Max", 2L), ("uses_a_Rest", "Long Rest|downtime=1")), "downtime"));
+        Assert.True(SystemMoments.Matters(system, Sheet("crew", ("changes_on__choice__x__y", "downtime")), "downtime"));
+        Assert.False(SystemMoments.Matters(system, Sheet("crew", ("uses_a", 1L), ("uses_a_Max", 2L), ("uses_a_Rest", "Long Rest")), "downtime"));
+    }
 }

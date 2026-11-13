@@ -81,5 +81,55 @@ public static class SystemMoments
     public static SystemMoment? FiredBySetting(SystemDefinition? system, string valueKey) =>
         Of(system).FirstOrDefault(m => m.OnSet != null && Same(m.OnSet, valueKey));
 
+    private static readonly string[] TrackIntents = { SheetEvents.AdjustKind, SheetEvents.SetKind, SheetEvents.MarkKind, SheetEvents.ClearKind };
+
+    /// <summary>The literal <c>track:</c> keys that the system's handler for <paramref name="moment"/> names in its <c>adjust</c>, <c>set</c>,
+    /// <c>mark</c> and <c>clear</c> intents, in order; null when the handler is a script, a built-in or a compiled type, which cannot be
+    /// read without running it. A line that acts on the campaign's objects names none. Empty: no handler, or none that names a track.</summary>
+    public static IReadOnlyList<string>? HandlerTracks(SystemDefinition? system, string moment)
+    {
+        if (system == null || !system.Events.TryGetValue(moment, out var raw)) return Array.Empty<string>();
+        var handler = YamlValues.Normalize(raw);
+        if (handler is IDictionary<string, object> || handler is not IEnumerable<object?> lines) return null;
+        var tracks = new List<string>();
+        foreach (var line in lines)
+        {
+            if (line is not IDictionary<string, object> entry) continue;
+            if (entry.TryGetValue("target", out var target) && target != null) continue;
+            if (entry.TryGetValue("intents", out var intents) && intents is IEnumerable<object?> listed)
+            {
+                foreach (var intent in listed)
+                {
+                    if (intent is IDictionary<string, object> { Count: 1 } one && TrackIntents.Contains(one.First().Key, StringComparer.Ordinal)
+                        && one.First().Value is IDictionary<string, object> fields && fields.TryGetValue("track", out var track) && track is string name && name.Length > 0)
+                    {
+                        tracks.Add(name);
+                    }
+                }
+            }
+        }
+
+        return tracks;
+    }
+
+    /// <summary>Whether the system's handler for <paramref name="moment"/> touches a sheet of <paramref name="kind"/>: it names, as a literal
+    /// <c>track:</c>, a track that kind declares. A handler that cannot be read (a script) is taken to touch every kind.</summary>
+    public static bool HandlerTouches(SystemDefinition? system, SheetKindDefinition? kind, string moment)
+    {
+        if (kind == null) return false;
+        var named = HandlerTracks(system, moment);
+        return named == null || named.Any(t => kind.Tracks.Any(k => Same(k.Key, t)));
+    }
+
+    /// <summary>Whether <paramref name="moment"/> does anything to this sheet: a counter of it refills at the moment (<c>uses_*_Rest</c>), a
+    /// row choice on it is usually changed then (<c>changes_on__*</c>), or the system's handler for it touches the sheet's kind
+    /// (<see cref="HandlerTouches"/>). The table and the sheet offer a moment's button only where this holds.</summary>
+    public static bool Matters(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string moment)
+    {
+        if (sheet.Keys.Any(k => SheetRuleEngine.IsUsesKey(k) && FeatureRecovery.For(sheet, k, moment).Count > 0)) return true;
+        if (SheetRuleEngine.ChoicesToChangeAfter(sheet, moment).Count > 0) return true;
+        return system is { SheetKinds.Count: > 0 } && HandlerTouches(system, SheetLayout.KindOf(system, sheet), moment);
+    }
+
     private static bool Same(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 }

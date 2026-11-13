@@ -538,7 +538,7 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         await using var runtime = Runtime(campaignId, session, dice);
         runtime.Hydrate(new[] { hero });
 
-        await runtime.EnqueueAsync(new DawnCommand(hero.Id));
+        await runtime.EnqueueAsync(new MomentCommand(hero.Id, "dawn"));
 
         Assert.Equal(4, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_charge")); // rolled 5, capped at 4
         Assert.Contains(session.RollLog, r => r.ActorId == hero.Id && r.Expression == "1d6+1" && r.Label == "Staff charges" && r.Total == 5);
