@@ -33,7 +33,7 @@ class:
     - { row: Barbarian Subclass, already: the subclass field }
     - { row: Primal Knowledge, text: skill-bonus }
     - { row: Ability Score Improvement, already: feat slots }
-    - { row: Extra Attack, text: other }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
     - { row: Fast Movement, text: gear }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Feral Instinct, text: advantage }
@@ -96,16 +96,16 @@ class:
     - { row: Tactical Mind, spends: { key: second-wind, amount: 1 } }
     - { row: Fighter Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
-    - { row: Extra Attack, text: other }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
     - { row: Tactical Shift, text: other }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Indomitable, level: 9, uses: { key: indomitable, max: "classLevel >= 17 ? 3 : classLevel >= 13 ? 2 : 1", recoversOn: [Long Rest] } }
     - { row: Indomitable, level: [13, 17], covered: the level 9 row }
     - { row: Tactical Master, text: per-use }
-    - { row: Two Extra Attacks, text: other }
+    - { row: Two Extra Attacks, modifiers: [{ target: attacks, amount: 3, type: highest }] }
     - { row: Studied Attacks, text: advantage }
     - { row: Epic Boon, already: feat slots }
-    - { row: Three Extra Attacks, text: other }
+    - { row: Three Extra Attacks, modifiers: [{ target: attacks, amount: 4, type: highest }] }
   monk:
     - { row: Martial Arts, text: die }
     - { row: Unarmored Defense, already: the class's unarmoredDefense }
@@ -116,7 +116,7 @@ class:
     - { row: Deflect Attacks, spends: { key: focus-points, amount: 1 } }
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Slow Fall, text: reactive }
-    - { row: Extra Attack, text: other }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
     - { row: Stunning Strike, spends: { key: focus-points, amount: 1 } }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Empowered Strikes, text: other }
@@ -139,7 +139,7 @@ class:
     - { row: Channel Divinity, uses: { key: paladin-channel-divinity, max: { column: channel_divinity_charges }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
     - { row: Paladin Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
-    - { row: Extra Attack, text: other }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
     - { row: Faithful Steed, uses: { key: free-find-steed, label: Free Find Steed, max: 1, recoversOn: [Long Rest] } }
     - { row: Aura of Protection, text: aura }
     - { row: Subclass Feature, already: the subclass field }
@@ -157,7 +157,7 @@ class:
     - { row: Fighting Style, already: the fightingStyles list }
     - { row: Ranger Subclass, already: the subclass field }
     - { row: Ability Score Improvement, already: feat slots }
-    - { row: Extra Attack, text: other }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
     - { row: Roving, text: gear }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Expertise, text: skill-bonus }
@@ -226,11 +226,11 @@ class:
 
 subclass:
   champion:
-    - { row: Improved Critical, text: other }
+    - { row: Improved Critical, modifiers: [{ target: critFrom, amount: 19, type: lowest }] }
     - { row: Remarkable Athlete, text: advantage }
     - { row: Additional Fighting Style, already: the subclass's featSlots }
     - { row: Heroic Warrior, text: other }
-    - { row: Superior Critical, text: other }
+    - { row: Superior Critical, modifiers: [{ target: critFrom, amount: 18, type: lowest }] }
     - { row: Survivor, text: other }
   circle-of-the-land:
     - { row: Circle of the Land Spells, text: chosen-spell }
@@ -244,7 +244,7 @@ subclass:
     - { row: Magical Discoveries, text: chosen-spell }
     - { row: Peerless Skill, spends: { key: bardic-inspiration, amount: 1 } }
   draconic-sorcery:
-    - { row: Draconic Resilience, text: other }
+    - { row: Draconic Resilience, modifiers: [{ target: HP_Max, amount: classLevel }, { target: armorClass, amount: "10 + mod(dex) + mod(cha)", type: base }] }
     - { row: Draconic Spells, text: other }
     - { row: Elemental Affinity, text: rider }
     - { row: Dragon Wings, uses: { key: dragon-wings, max: 1, recoversOn: [Long Rest] } }
@@ -326,9 +326,9 @@ species:
       - { row: Keen Senses, text: skill-bonus }
       - { row: Trance, text: other }
     lineages:
-      - { row: "Elven Lineage: Drow", text: other }
+      - { row: "Elven Lineage: Drow", modifiers: [{ target: darkvision, amount: 120, type: base }] }
       - { row: "Elven Lineage: High Elf", text: other }
-      - { row: "Elven Lineage: Wood Elf", text: other }
+      - { row: "Elven Lineage: Wood Elf", modifiers: [{ target: speed, amount: 35, type: base }] }
   gnome:
     traits:
       - { row: Darkvision (60 ft.), already: the darkvision field }
@@ -377,7 +377,7 @@ species:
 
 feat:
   ability-score-improvement: { already: the abilityIncrease path }
-  alert: { text: advantage }
+  alert: { modifiers: [{ target: initiative, amount: proficiencyBonus }] }
   archery: { text: rider }
   boon-of-combat-prowess: { text: other }
   boon-of-dimensional-travel: { text: other }

@@ -94,6 +94,10 @@ properties:
   - name: Extra Attack
     level: 5
     description: You can attack twice instead of once whenever you take the Attack action on your turn.
+    modifiers:
+    - target: attacks
+      amount: 2
+      type: highest
   - name: Tactical Shift
     level: 5
     description: Whenever you activate your Second Wind with a Bonus Action, you can move up to half your Speed without provoking Opportunity Attacks.
@@ -126,6 +130,10 @@ properties:
   - name: Two Extra Attacks
     level: 11
     description: You can attack three times instead of once whenever you take the Attack action on your turn.
+    modifiers:
+    - target: attacks
+      amount: 3
+      type: highest
   - name: Ability Score Improvement
     level: 12
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Fighter levels 6, 8, 12, 14, and 16.
@@ -168,6 +176,10 @@ properties:
   - name: Three Extra Attacks
     level: 20
     description: You can attack four times instead of once whenever you take the Attack action on your turn.
+    modifiers:
+    - target: attacks
+      amount: 4
+      type: highest
   casterType: none
   featSlots:
   - level: 1

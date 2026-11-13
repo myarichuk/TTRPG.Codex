@@ -106,6 +106,10 @@ properties:
   - name: Extra Attack
     level: 5
     description: You can attack twice instead of once whenever you take the Attack action on your turn.
+    modifiers:
+    - target: attacks
+      amount: 2
+      type: highest
   - name: Fast Movement
     level: 5
     description: Your speed increases by 10 feet while you aren't wearing Heavy armor.

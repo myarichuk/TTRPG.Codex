@@ -113,6 +113,10 @@ properties:
       **Faerie Fire.** You know the spell Faerie Fire.
 
       **Darkness.** You know the spell Darkness.
+    modifiers:
+    - target: darkvision
+      amount: 120
+      type: base
   - name: 'Elven Lineage: High Elf'
     description: >-
       **High Elf: Cantrip Versatility.** You know the Prestidigitation cantrip. Whenever you finish a Long Rest, you can replace that cantrip with a different cantrip from the Wizard spell list.
@@ -127,3 +131,7 @@ properties:
       **Longstrider.** You learn the spell Longstrider.
 
       **Pass without Trace.** You learn the spell Pass without Trace.
+    modifiers:
+    - target: speed
+      amount: 35
+      type: base

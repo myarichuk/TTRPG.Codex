@@ -99,6 +99,10 @@ properties:
   - name: Extra Attack
     level: 5
     description: You can attack twice instead of once whenever you take the Attack action on your turn.
+    modifiers:
+    - target: attacks
+      amount: 2
+      type: highest
   - name: Roving
     level: 6
     description: Your Speed increases by 10 feet while you aren't wearing Heavy armor. You also have a Climb Speed and a Swim Speed equal to your Speed.

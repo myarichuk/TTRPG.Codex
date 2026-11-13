@@ -12,3 +12,6 @@ tags:
 properties:
   category: origin
   minLevel: 1
+  modifiers:
+  - target: initiative
+    amount: proficiencyBonus

@@ -95,7 +95,7 @@ sheet uses_rage_Label = Rage
 sheet uses_rage_Max = 4
 sheet uses_rage_Rest = Short Rest=1|Long Rest
 sheet wis = 14
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 4
@@ -192,7 +192,7 @@ sheet uses_rage_Label = Rage
 sheet uses_rage_Max = 6
 sheet uses_rage_Rest = Short Rest=1|Long Rest
 sheet wis = 14
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 6
@@ -293,7 +293,7 @@ sheet uses_rage_Label = Rage
 sheet uses_rage_Max = 3
 sheet uses_rage_Rest = Short Rest=1|Long Rest
 sheet wis = 14
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
 derived initiative = 1
 derived proficiencyBonus = 3
@@ -379,7 +379,7 @@ sheet uses_stonecunning_Rest = Long Rest
 sheet wis = 12
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 2
+derived initiative = 4
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 2, dex: 1} increases={}
@@ -466,7 +466,7 @@ sheet uses_stonecunning_Rest = Long Rest
 sheet wis = 12
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 2
+derived initiative = 6
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 2, dex: 1} increases={cha: 4}
@@ -571,7 +571,7 @@ sheet uses_stonecunning_Rest = Long Rest
 sheet wis = 12
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 2
+derived initiative = 8
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 2, dex: 1} increases={cha: 5, con: 4, dex: 1}
@@ -676,7 +676,7 @@ sheet uses_stonecunning_Rest = Long Rest
 sheet wis = 12
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 2
+derived initiative = 5
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 2, dex: 1} increases={cha: 2}
@@ -2243,8 +2243,8 @@ sheet uses_second_wind_Label = Second Wind
 sheet uses_second_wind_Max = 4
 sheet uses_second_wind_Rest = Short Rest=1|Long Rest
 sheet wis = 14
-derived attacks = 1
-derived critFrom = 20
+derived attacks = 3
+derived critFrom = 19
 derived initiative = 2
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -2340,8 +2340,8 @@ sheet uses_second_wind_Label = Second Wind
 sheet uses_second_wind_Max = 4
 sheet uses_second_wind_Rest = Short Rest=1|Long Rest
 sheet wis = 14
-derived attacks = 1
-derived critFrom = 20
+derived attacks = 4
+derived critFrom = 18
 derived initiative = 5
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -2446,8 +2446,8 @@ sheet uses_second_wind_Label = Second Wind
 sheet uses_second_wind_Max = 3
 sheet uses_second_wind_Rest = Short Rest=1|Long Rest
 sheet wis = 14
-derived attacks = 1
-derived critFrom = 20
+derived attacks = 2
+derived critFrom = 19
 derived initiative = 2
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[int, wis, cha]
@@ -2523,9 +2523,9 @@ sheet uses_second_wind_Label = Second Wind
 sheet uses_second_wind_Max = 3
 sheet uses_second_wind_Rest = Short Rest=1|Long Rest
 sheet wis = 12
-derived attacks = 1
-derived critFrom = 20
-derived initiative = 2
+derived attacks = 2
+derived critFrom = 19
+derived initiative = 5
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[str, dex, con]
 attributes bonuses={dex: 1, str: 2} increases={str: 2}
@@ -2596,7 +2596,7 @@ sheet str = 12
 sheet wis = 13
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 4
+derived initiative = 6
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 1, dex: 2} increases={dex: 2}
@@ -2742,7 +2742,7 @@ sheet str = 12
 sheet wis = 14
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 3
+derived initiative = 5
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 1, dex: 2} increases={}
@@ -2814,9 +2814,9 @@ sheet uses_wholeness_of_body_Label = Wholeness of Body
 sheet uses_wholeness_of_body_Max = 2
 sheet uses_wholeness_of_body_Rest = Long Rest
 sheet wis = 15
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
-derived initiative = 5
+derived initiative = 9
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 1, dex: 2} increases={dex: 3, wis: 1}
@@ -2900,9 +2900,9 @@ sheet uses_wholeness_of_body_Label = Wholeness of Body
 sheet uses_wholeness_of_body_Max = 5
 sheet uses_wholeness_of_body_Rest = Long Rest
 sheet wis = 20
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
-derived initiative = 5
+derived initiative = 11
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 1, dex: 2} increases={con: 1, dex: 3, wis: 6}
@@ -2994,9 +2994,9 @@ sheet uses_uncanny_metabolism_Label = Uncanny Metabolism
 sheet uses_uncanny_metabolism_Max = 1
 sheet uses_uncanny_metabolism_Rest = Long Rest
 sheet wis = 14
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
-derived initiative = 4
+derived initiative = 7
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 1, dex: 2} increases={dex: 2}
@@ -3192,9 +3192,9 @@ sheet uses_sorcery_points_Label = Sorcery Points
 sheet uses_sorcery_points_Max = 2
 sheet uses_sorcery_points_Rest = Long Rest
 sheet wis = 12
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
-derived initiative = 0
+derived initiative = 3
 derived proficiencyBonus = 3
 attributes method=manual spent=0 budget=null eligible=[str, dex, con]
 attributes bonuses={con: 1, str: 2} increases={str: 2}
@@ -3282,9 +3282,9 @@ sheet uses_free_hunters_mark_Label = Free Hunter's Mark
 sheet uses_free_hunters_mark_Max = 4
 sheet uses_free_hunters_mark_Rest = Long Rest
 sheet wis = 15
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
-derived initiative = 5
+derived initiative = 11
 derived proficiencyBonus = 6
 attributes method=manual spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 1, dex: 2} increases={con: 6, dex: 3, wis: 1}
@@ -3363,8 +3363,8 @@ spellcasting Ranger wis dc=16 attack=+8
 warning choice__elf__lineage Actor.Rule.ChoiceRowPending: Lineage (Elf): choose 1 more.
 
 ## multiclass-warlock5-sorcerer3
-sheet HP = 56
-sheet HP_Max = 56
+sheet HP = 59
+sheet HP_Max = 59
 sheet armorClass = 13
 sheet cha = 17
 sheet con = 15
@@ -3414,7 +3414,7 @@ list spells picks=12 limit=12 options=57 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 2}
 slots pact = {3: 2}
-hp mode=average active=true max=56 modifier=2 extra=0
+hp mode=average active=true max=59 modifier=2 extra=0
 hp level 1 Warlock d8 base=8 mod=2 extra=0 gain=10
 hp level 2 Warlock d8 base=5 mod=2 extra=0 gain=7
 hp level 3 Warlock d8 base=5 mod=2 extra=0 gain=7
@@ -3482,7 +3482,7 @@ sheet uses_lay_on_hands_Rest = Long Rest
 sheet wis = 11
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 1
+derived initiative = 3
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
 attributes bonuses={con: 2, wis: 1} increases={}
@@ -3570,9 +3570,9 @@ sheet uses_paladin_channel_divinity_Label = Channel Divinity
 sheet uses_paladin_channel_divinity_Max = 3
 sheet uses_paladin_channel_divinity_Rest = Short Rest=1|Long Rest
 sheet wis = 11
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
-derived initiative = 1
+derived initiative = 5
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
 attributes bonuses={con: 2, wis: 1} increases={str: 4}
@@ -3680,9 +3680,9 @@ sheet uses_paladin_channel_divinity_Label = Channel Divinity
 sheet uses_paladin_channel_divinity_Max = 3
 sheet uses_paladin_channel_divinity_Rest = Short Rest=1|Long Rest
 sheet wis = 11
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
-derived initiative = 1
+derived initiative = 7
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
 attributes bonuses={con: 2, wis: 1} increases={cha: 5, str: 5}
@@ -3792,9 +3792,9 @@ sheet uses_paladin_channel_divinity_Label = Channel Divinity
 sheet uses_paladin_channel_divinity_Max = 2
 sheet uses_paladin_channel_divinity_Rest = Short Rest=1|Long Rest
 sheet wis = 11
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
-derived initiative = 1
+derived initiative = 4
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[con, int, wis]
 attributes bonuses={con: 2, wis: 1} increases={str: 2}
@@ -3972,7 +3972,7 @@ sheet uses_tireless_Label = Tireless
 sheet uses_tireless_Max = 2
 sheet uses_tireless_Rest = Long Rest
 sheet wis = 15
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 4
@@ -4084,7 +4084,7 @@ sheet uses_tireless_Label = Tireless
 sheet uses_tireless_Max = 5
 sheet uses_tireless_Rest = Long Rest
 sheet wis = 20
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
 derived initiative = 5
 derived proficiencyBonus = 6
@@ -4194,7 +4194,7 @@ sheet uses_relentless_endurance_Label = Relentless Endurance
 sheet uses_relentless_endurance_Max = 1
 sheet uses_relentless_endurance_Rest = Long Rest
 sheet wis = 14
-derived attacks = 1
+derived attacks = 2
 derived critFrom = 20
 derived initiative = 4
 derived proficiencyBonus = 3
@@ -4588,7 +4588,7 @@ sheet uses_innate_sorcery_Rest = Long Rest
 sheet wis = 12
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 2
+derived initiative = 4
 derived proficiencyBonus = 2
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 2, dex: 1} increases={}
@@ -4640,9 +4640,9 @@ spellcasting Sorcerer cha dc=12 attack=+4
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-11
-sheet HP = 79
-sheet HP_Max = 79
-sheet armorClass = 12
+sheet HP = 90
+sheet HP_Max = 90
+sheet armorClass = 16
 sheet cha = 19
 sheet con = 16
 sheet darkvision = 60
@@ -4682,7 +4682,7 @@ sheet uses_sorcery_points_Rest = Long Rest
 sheet wis = 12
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 2
+derived initiative = 6
 derived proficiencyBonus = 4
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 2, dex: 1} increases={cha: 4}
@@ -4700,7 +4700,7 @@ list spells picks=16 limit=16 options=89 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1}
-hp mode=average active=true max=79 modifier=3 extra=0
+hp mode=average active=true max=90 modifier=3 extra=0
 hp level 1 Sorcerer d6 base=6 mod=3 extra=0 gain=9
 hp level 2 Sorcerer d6 base=4 mod=3 extra=0 gain=7
 hp level 3 Sorcerer d6 base=4 mod=3 extra=0 gain=7
@@ -4712,8 +4712,8 @@ hp level 8 Sorcerer d6 base=4 mod=3 extra=0 gain=7
 hp level 9 Sorcerer d6 base=4 mod=3 extra=0 gain=7
 hp level 10 Sorcerer d6 base=4 mod=3 extra=0 gain=7
 hp level 11 Sorcerer d6 base=4 mod=3 extra=0 gain=7
-ac mode=auto active=true total=12
-ac line Unarmored: 12
+ac mode=auto active=true total=16
+ac line Draconic Resilience: 16
 carried 0 of 150
 save str +0
 save dex +2
@@ -4746,9 +4746,9 @@ spellcasting Sorcerer cha dc=16 attack=+8
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-20
-sheet HP = 182
-sheet HP_Max = 182
-sheet armorClass = 12
+sheet HP = 202
+sheet HP_Max = 202
+sheet armorClass = 17
 sheet cha = 20
 sheet con = 20
 sheet darkvision = 60
@@ -4802,7 +4802,7 @@ sheet uses_sorcery_points_Rest = Long Rest
 sheet wis = 12
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 2
+derived initiative = 8
 derived proficiencyBonus = 6
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 2, dex: 1} increases={cha: 5, con: 4, dex: 1}
@@ -4823,7 +4823,7 @@ increase ability-score-improvement|cha:1,con:1 points=2 options=[str, dex, con, 
 increase ability-score-improvement|con:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 increase ability-score-improvement|con:1,dex:1 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1}
-hp mode=average active=true max=182 modifier=5 extra=0
+hp mode=average active=true max=202 modifier=5 extra=0
 hp level 1 Sorcerer d6 base=6 mod=5 extra=0 gain=11
 hp level 2 Sorcerer d6 base=4 mod=5 extra=0 gain=9
 hp level 3 Sorcerer d6 base=4 mod=5 extra=0 gain=9
@@ -4844,8 +4844,8 @@ hp level 17 Sorcerer d6 base=4 mod=5 extra=0 gain=9
 hp level 18 Sorcerer d6 base=4 mod=5 extra=0 gain=9
 hp level 19 Sorcerer d6 base=4 mod=5 extra=0 gain=9
 hp level 20 Sorcerer d6 base=4 mod=5 extra=0 gain=9
-ac mode=auto active=true total=12
-ac line Unarmored: 12
+ac mode=auto active=true total=17
+ac line Draconic Resilience: 17
 carried 0 of 150
 save str +0
 save dex +2
@@ -4878,9 +4878,9 @@ spellcasting Sorcerer cha dc=19 attack=+11
 warning choice__dragonborn__lineage Actor.Rule.ChoiceRowPending: Lineage (Dragonborn): choose 1 more.
 
 ## sorcerer-5
-sheet HP = 37
-sheet HP_Max = 37
-sheet armorClass = 12
+sheet HP = 42
+sheet HP_Max = 42
+sheet armorClass = 15
 sheet cha = 17
 sheet con = 16
 sheet darkvision = 60
@@ -4914,7 +4914,7 @@ sheet uses_sorcery_points_Rest = Long Rest
 sheet wis = 12
 derived attacks = 1
 derived critFrom = 20
-derived initiative = 2
+derived initiative = 5
 derived proficiencyBonus = 3
 attributes method=standard-array spent=0 budget=null eligible=[dex, con, int]
 attributes bonuses={con: 2, dex: 1} increases={cha: 2}
@@ -4931,14 +4931,14 @@ list grantedSpells picks=0 limit=null options=339 missing=0
 list spells picks=9 limit=9 options=60 missing=0
 increase ability-score-improvement|cha:2 points=2 options=[str, dex, con, int, wis, cha] cap=20
 slots slots = {1: 4, 2: 3, 3: 2}
-hp mode=average active=true max=37 modifier=3 extra=0
+hp mode=average active=true max=42 modifier=3 extra=0
 hp level 1 Sorcerer d6 base=6 mod=3 extra=0 gain=9
 hp level 2 Sorcerer d6 base=4 mod=3 extra=0 gain=7
 hp level 3 Sorcerer d6 base=4 mod=3 extra=0 gain=7
 hp level 4 Sorcerer d6 base=4 mod=3 extra=0 gain=7
 hp level 5 Sorcerer d6 base=4 mod=3 extra=0 gain=7
-ac mode=auto active=true total=12
-ac line Unarmored: 12
+ac mode=auto active=true total=15
+ac line Draconic Resilience: 15
 carried 0 of 150
 save str +0
 save dex +2
