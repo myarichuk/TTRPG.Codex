@@ -243,6 +243,55 @@
                                 <FieldError Id="@(id + "-a" + n + "-choice-error")" Message="@(idTaken ? L["Actor.Grants.ChoiceIdTaken"].ToString() : null)" TestId="grant-choice-id-error" />
                             </div>
                         }
+                        @if (ranked == null && GrantAddEdit.IsEntryOrValueChoice(add, false))
+                        {
+                            @* A choice over Library entries or values: the count and the free part can be changed here; the conditions are read-only. *@
+                            var freeKind = GrantAddEdit.FreeKind(add);
+                            <div class="grants-cell grants-narrow">
+                                <label for="@(id)-a@(n)-choose" class="field-label">@L["Actor.Grants.PickCount"]</label>
+                                <input id="@(id)-a@(n)-choose" type="number" min="1" class="field-input field-sm" disabled="@ReadOnly" value="@GrantAddEdit.Number(add, "choose", 1)" data-testid="grant-choose"
+                                       @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetNumber(a, "choose", Math.Max(1, int.TryParse(e.Value?.ToString(), out var count) ? count : 1))))" />
+                            </div>
+                            <div class="grants-cell grants-wide" data-testid="grant-where">
+                                <span id="@(id)-a@(n)-where" class="field-label">@L["Actor.Grants.Where"]</span>
+                                <p class="mb-0 small" aria-labelledby="@(id)-a@(n)-where" data-testid="grant-where-text">@WhereSentence(add)</p>
+                                <span class="field-hint mt-0">@L["Actor.Grants.WhereHint"]</span>
+                            </div>
+                            @if (add.To.Length > 0 || GrantAddEdit.Text(add, "fromList").Length > 0)
+                            {
+                                <div class="grants-cell">
+                                    <label for="@(id)-a@(n)-free" class="field-label">@L["Actor.Grants.Free"]</label>
+                                    <select id="@(id)-a@(n)-free" class="field-select field-sm" disabled="@ReadOnly" data-testid="grant-free"
+                                            @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetFreeKind(a, e.Value?.ToString() ?? GrantAddEdit.FreeNone)))">
+                                        <option value="@GrantAddEdit.FreeNone" selected="@(freeKind == GrantAddEdit.FreeNone)">@L["Actor.Grants.FreeNone"]</option>
+                                        <option value="@GrantAddEdit.FreeAtWill" selected="@(freeKind == GrantAddEdit.FreeAtWill)">@L["Actor.Grants.FreeAtWill"]</option>
+                                        <option value="@GrantAddEdit.FreeUses" selected="@(freeKind == GrantAddEdit.FreeUses)">@L["Actor.Grants.FreeUses"]</option>
+                                    </select>
+                                </div>
+                                @if (freeKind == GrantAddEdit.FreeUses)
+                                {
+                                    var held = GrantAddEdit.FreeRecoversOn(add);
+                                    <div class="grants-cell grants-narrow">
+                                        <label for="@(id)-a@(n)-freemax" class="field-label">@L["Actor.Grants.FreeMax"]</label>
+                                        <input id="@(id)-a@(n)-freemax" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@GrantAddEdit.FreeMax(add)" data-testid="grant-free-max"
+                                               @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetFreeMax(a, e.Value?.ToString())))" />
+                                    </div>
+                                    <fieldset class="grants-cell" data-testid="grant-free-recovers">
+                                        <legend class="field-label">@L["Actor.Grants.FreeRecovers"]</legend>
+                                        @foreach (var rest in Vocabulary.Rests.Concat(held.Where(h => !Vocabulary.Rests.Contains(h, StringComparer.OrdinalIgnoreCase))))
+                                        {
+                                            var restName = rest;
+                                            var box = $"{id}-a{n}-rest-{Slug(rest)}";
+                                            <span class="d-inline-flex align-items-center gap-1 me-2">
+                                                <input id="@box" type="checkbox" class="field-box mt-0" disabled="@ReadOnly" checked="@held.Contains(rest, StringComparer.OrdinalIgnoreCase)"
+                                                       @onchange="@(e => EditAddAsync(index, a => GrantAddEdit.SetFreeRecovers(a, restName, (bool)e.Value!)))" />
+                                                <label for="@box" class="mb-0">@rest</label>
+                                            </span>
+                                        }
+                                    </fieldset>
+                                }
+                            }
+                        }
                         <div class="grants-cell grants-narrow">
                             <label for="@(id)-a@(n)-level" class="field-label">@L["Actor.Grants.FromLevel"]</label>
                             <input id="@(id)-a@(n)-level" type="number" min="1" class="field-input field-sm" disabled="@ReadOnly" value="@add.Level" aria-label="@L["Actor.Grants.LevelOf", n]"
@@ -649,6 +698,32 @@
             add.Extra.Remove("raise");
         }
     }
+
+    /// <summary>The conditions of an entry choice as one sentence ("level 6, classes includes Warlock"); for a value choice the values it offers, for a
+    /// mark-only choice the list it picks among.</summary>
+    private string WhereSentence(GrantAdd add)
+    {
+        if (add.To.Length == 0 && GrantAddEdit.Text(add, "fromList").Length == 0 && GrantAddEdit.FromKeys(add) is { Count: > 0 } values)
+        {
+            return L["Actor.Grants.ValueFrom", string.Join(", ", values)].ToString();
+        }
+
+        var parts = GrantAddEdit.Conditions(add).Select(ConditionText).ToList();
+        if (GrantAddEdit.Text(add, "fromList") is { Length: > 0 } fromList) parts.Insert(0, L["Actor.Grants.FromList", fromList].ToString());
+        return parts.Count == 0 ? L["Actor.Grants.WhereNone"].ToString() : string.Join(", ", parts);
+    }
+
+    private string ConditionText(GrantAddEdit.GrantCondition condition) => condition.Kind switch
+    {
+        GrantAddEdit.CondEquals => L["Actor.Grants.Cond.Equals", condition.Property, condition.Value].ToString(),
+        GrantAddEdit.CondIn => L["Actor.Grants.Cond.In", condition.Property, condition.Value].ToString(),
+        GrantAddEdit.CondAtLeast => L["Actor.Grants.Cond.Gte", condition.Property, condition.Value].ToString(),
+        GrantAddEdit.CondAtMost => L["Actor.Grants.Cond.Lte", condition.Property, condition.Value].ToString(),
+        GrantAddEdit.CondContains => L["Actor.Grants.Cond.Contains", condition.Property, condition.Value].ToString(),
+        GrantAddEdit.CondContainsChoice => L["Actor.Grants.Cond.ContainsChoice", condition.Property, EntryChoiceWords.Humanize(condition.Value)].ToString(),
+        GrantAddEdit.CondEqualsChoice => L["Actor.Grants.Cond.EqualsChoice", condition.Property, EntryChoiceWords.Humanize(condition.Value)].ToString(),
+        _ => L["Actor.Grants.Cond.Other", condition.Property].ToString()
+    };
 
     private static string Slug(string text) => new(text.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-').ToArray());
 
