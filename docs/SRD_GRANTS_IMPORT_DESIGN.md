@@ -720,6 +720,10 @@ Built as designed, on the branch stacked on the sheet-kind feature sources. What
 - **Eldritch Invocations** are 28 Library entries (type `invocation`) from `Data/srd521-invocations.yaml`, section "Eldritch Invocation Options" of the
   SRD 5.2.1 document; the grants file classifies each (12 cast a spell without a slot, the rest are text). Metamagic still stays text (reason `not-in-source`): its
   options are in the document too ("Metamagic Options") and are the next list to make entries of, the same way.
+- **Entry choices are mapped** (ENTRY_CHOICES_DESIGN.md, step 8): Magic Initiate (list, 2 cantrips, a level-1 spell free once per Long Rest), Mystic Arcanum
+  at 11, 13, 15 and 17, Signature Spells and Spell Mastery (mark-only over the sheet's `spells`; Spell Mastery's spells are Wizard spells with a casting time of
+  Action, at will) and Pact of the Tome (3 cantrips, 2 level-1 spells with `ritual: true`, from any list). Magic Initiate's other rules (the spellcasting
+  ability, Spell Change on level up) and the Tome's "not already prepared" stay text.
 - **Lineage details come from the SRD 5.2.1 document** (Q6): the Wood Elf's Druidcraft, the Rock Gnome's Mending, spell levels.
 - **Spellcasting actions of creatures** now carry their spell lists (the Mage and 47 more): a generator fix, not a feature grant.
 - **Tests:** `SrdEngineExtensionTests` (E1, E1b, E3), `SrdMappedGrantsTests` (a sample of mapped features, E2), `SrdGrantSweepTests`

@@ -44,12 +44,12 @@ public class SrdGrantCoverageTests : IAsyncLifetime
     /// <summary>Row counts by status, per group: grant, covered, already, text. Change them with the file, and say why in
     /// docs/SRD_GRANTS_IMPORT_DESIGN.md (section 7).</summary>
     [Theory]
-    [InlineData("classes", 53, 3, 124, 78)]
-    [InlineData("invocations", 12, 0, 0, 16)]
+    [InlineData("classes", 59, 3, 124, 72)]
+    [InlineData("invocations", 13, 0, 0, 15)]
     [InlineData("subclasses", 26, 1, 1, 30)]
     [InlineData("traits", 9, 0, 8, 13)]
     [InlineData("lineages", 24, 0, 0, 0)]
-    [InlineData("feats", 3, 0, 3, 11)]
+    [InlineData("feats", 4, 0, 3, 10)]
     [InlineData("backgrounds", 0, 0, 4, 0)]
     public void TheStatusCountsAreTheDocumentedOnes(string group, int grant, int covered, int already, int text)
     {

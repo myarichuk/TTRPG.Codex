@@ -210,7 +210,10 @@ class:
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Subclass Feature, already: the subclass field }
     - { row: Contact Patron, freeSpells: [contact-other-plane] }
-    - { row: Mystic Arcanum, text: chosen-spell }
+    - { row: Mystic Arcanum, level: 11, adds: [{ to: grantedSpells, choice: mystic-arcanum-6, choose: 1, where: [{ property: classes, contains: Warlock }, { property: level, equals: 6 }], free: { max: 1, recoversOn: [Long Rest] } }] }
+    - { row: Mystic Arcanum, level: 13, adds: [{ to: grantedSpells, choice: mystic-arcanum-7, choose: 1, where: [{ property: classes, contains: Warlock }, { property: level, equals: 7 }], free: { max: 1, recoversOn: [Long Rest] } }] }
+    - { row: Mystic Arcanum, level: 15, adds: [{ to: grantedSpells, choice: mystic-arcanum-8, choose: 1, where: [{ property: classes, contains: Warlock }, { property: level, equals: 8 }], free: { max: 1, recoversOn: [Long Rest] } }] }
+    - { row: Mystic Arcanum, level: 17, adds: [{ to: grantedSpells, choice: mystic-arcanum-9, choose: 1, where: [{ property: classes, contains: Warlock }, { property: level, equals: 9 }], free: { max: 1, recoversOn: [Long Rest] } }] }
     - { row: Epic Boon, already: feat slots }
     - { row: Eldritch Master, text: other }
   wizard:
@@ -222,9 +225,9 @@ class:
     - { row: Ability Score Improvement, already: feat slots }
     - { row: Memorize Spell, text: chosen-spell }
     - { row: Subclass Feature, already: the subclass field }
-    - { row: Spell Mastery, text: chosen-spell }
+    - { row: Spell Mastery, adds: [{ choice: mastery-1, choose: 1, fromList: spells, where: [{ property: classes, contains: Wizard }, { property: level, equals: 1 }, { property: castingTime, equals: Action }], free: atWill }, { choice: mastery-2, choose: 1, fromList: spells, where: [{ property: classes, contains: Wizard }, { property: level, equals: 2 }, { property: castingTime, equals: Action }], free: atWill }] }
     - { row: Epic Boon, already: feat slots }
-    - { row: Signature Spells, text: chosen-spell }
+    - { row: Signature Spells, adds: [{ choice: signature, choose: 2, fromList: spells, where: [{ property: classes, contains: Wizard }, { property: level, equals: 3 }], free: { max: 1, recoversOn: [Short Rest, Long Rest] } }] }
 
 subclass:
   champion:
@@ -417,7 +420,7 @@ feat:
   defense: { already: armorClassBonus }
   grappler: { already: the abilityIncrease path }
   great-weapon-fighting: { text: rider }
-  magic-initiate: { text: chosen-spell }
+  magic-initiate: { adds: [{ choice: spell-list, choose: 1, from: [Cleric, Druid, Wizard] }, { to: grantedSpells, choice: cantrips, choose: 2, where: [{ property: level, equals: 0 }, { property: classes, containsChoice: spell-list }] }, { to: grantedSpells, choice: spell, choose: 1, where: [{ property: level, equals: 1 }, { property: classes, containsChoice: spell-list }], free: { max: 1, recoversOn: [Long Rest] } }] }
   savage-attacker: { text: rider }
   skilled: { text: training }
   two-weapon-fighting: { text: rider }
@@ -446,7 +449,7 @@ invocation:
   otherworldly-leap: { adds: [{ to: grantedSpells, entries: [jump], free: atWill }] }
   pact-of-the-blade: { text: gear }
   pact-of-the-chain: { adds: [{ to: grantedSpells, entries: [find-familiar], free: atWill }] }
-  pact-of-the-tome: { text: chosen-spell }
+  pact-of-the-tome: { adds: [{ to: grantedSpells, choice: tome-cantrips, choose: 3, where: [{ property: level, equals: 0 }] }, { to: grantedSpells, choice: tome-rituals, choose: 2, where: [{ property: level, equals: 1 }, { property: ritual, equals: true }] }] }
   repelling-blast: { text: other }
   thirsting-blade: { text: other }
   visions-of-distant-realms: { adds: [{ to: grantedSpells, entries: [arcane-eye], free: atWill }] }
