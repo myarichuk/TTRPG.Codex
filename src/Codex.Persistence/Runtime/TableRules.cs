@@ -215,7 +215,7 @@ internal static class TableRules
 
     /// <summary>At zero on the primary resource and not dead.</summary>
     public static bool IsDown(CampaignRuntime runtime, Entity entity) =>
-        entity.Has<ResourcePoolComponent>() && entity.Get<ResourcePoolComponent>().Get(PrimaryKey(runtime)) <= 0 && !IsDead(runtime, entity);
+        SystemDefinition.HasLifeTrack(runtime.System) && entity.Has<ResourcePoolComponent>() && entity.Get<ResourcePoolComponent>().Get(PrimaryKey(runtime)) <= 0 && !IsDead(runtime, entity);
 
     /// <summary>The attribute's modifier for a creature: from its live attributes, else its sheet, else the default.</summary>
     public static int AttributeModifier(CampaignRuntime runtime, string actorId, Entity entity, string attributeKey)

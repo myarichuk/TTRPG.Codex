@@ -109,6 +109,10 @@ public sealed class FeatureGrantData
     /// <summary>How the options are chosen between; written only while there are options.</summary>
     public GrantChoose? Choose { get; set; }
 
+    /// <summary>The property keys of an entry (or a feature row) that carry grants. They are data the engine reads, not fields an entity type
+    /// declares: the editor would show them as text boxes.</summary>
+    public static readonly IReadOnlyList<string> GrantKeys = new[] { "modifiers", "adds", "uses", "spends", "options", "choose" };
+
     /// <summary>The grants held in <paramref name="feature"/>; empty when it holds none.</summary>
     public static FeatureGrantData Read(IReadOnlyDictionary<string, object>? feature)
     {
@@ -166,7 +170,7 @@ public sealed class FeatureGrantData
         foreach (var map in Maps(feature.GetValueOrDefault("options")))
         {
             var option = new GrantOption { Name = Text(map, "name"), Description = Text(map, "description"), Grants = Read(new Dictionary<string, object>(map)) };
-            CopyExtra(map, option.Extra, "name", "description", "modifiers", "adds", "uses", "spends", "options", "choose");
+            CopyExtra(map, option.Extra, new[] { "name", "description" }.Concat(GrantKeys).ToArray());
             data.Options.Add(option);
         }
 

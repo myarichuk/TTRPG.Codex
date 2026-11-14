@@ -149,10 +149,40 @@ public sealed class CampaignRuntime : IAsyncDisposable
     {
         foreach (var actor in actors)
         {
+            SeedNewCounters(actor);
             HydrateOne(actor);
         }
 
         PublishSnapshot();
+    }
+
+    /// <summary>A feature counter the sheet has never written (an ability the pack only now grants uses to, or a sheet seeded
+    /// without opening it) joins the table full, so its Use button works before anyone opens and saves the sheet. Only missing
+    /// counters are added: what was spent, and every other key, is left as stored.</summary>
+    private void SeedNewCounters(ActorDocument actor)
+    {
+        if (System == null || Resolver is Codex.Core.Rules.NullEntryResolver) return;
+        IReadOnlyList<Codex.Core.Rules.FeatureCounter> counters;
+        try
+        {
+            counters = new Codex.Core.Rules.SheetRuleEngine(System, Resolver).Evaluate(actor.Sheet).Counters;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not work out the feature counters of {ActorId} for the table", actor.Id);
+            return;
+        }
+
+        var added = false;
+        foreach (var counter in counters.Where(c => !actor.Sheet.ContainsKey(c.Key)))
+        {
+            actor.Sheet[counter.Key] = (long)counter.Max;
+            actor.Sheet[counter.MaxKey] = (long)counter.Max;
+            actor.Sheet[counter.Key + Codex.Core.Rules.SheetRuleEngine.UsesLabelSuffix] = counter.Feature.Name;
+            added = true;
+        }
+
+        if (added) ActorSheetSync.ApplySheetToState(actor, System, _componentRegistry);
     }
 
     /// <summary>Takes the campaign's clocks and tables as stored. Called once, with <see cref="Hydrate"/>.</summary>

@@ -1,4 +1,5 @@
 using Codex.Core;
+using Codex.Core.Rules;
 using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -67,7 +68,8 @@ public class FitdSrdPackSmokeTests : IAsyncLifetime
         {
             foreach (var entry in _registry.GetEntries("fitd-srd", type, new HashSet<string> { PackId }))
             {
-                Assert.All(entry.Properties.Keys, key => Assert.Contains(key, fields[type]));
+                // Grant keys (modifiers, uses...) are data the feature engine reads off the entry, not fields the editor shows.
+                Assert.All(entry.Properties.Keys.Where(k => !FeatureGrantData.GrantKeys.Contains(k)), key => Assert.Contains(key, fields[type]));
             }
         }
     }
@@ -98,6 +100,48 @@ public class FitdSrdPackSmokeTests : IAsyncLifetime
     {
         var names = _registry.GetEntries("fitd-srd", "trauma", new HashSet<string> { PackId }).Select(e => e.Name).Order().ToArray();
         Assert.Equal(new[] { "Cold", "Haunted", "Obsessed", "Paranoid", "Reckless", "Soft", "Unstable", "Vicious" }, names);
+    }
+
+    [Fact]
+    public void SpecialAbilities_CarryTheReviewedGrants()
+    {
+        // Each row of the importer's table is on its entry in the pack, and no other entry carries a grant.
+        string Json(object? value) => System.Text.Json.JsonSerializer.Serialize(YamlValues.Normalize(value));
+        var granted = new HashSet<string>();
+        foreach (var (type, id, properties) in Codex.ContentImport.FitdSrdImporter.Grants)
+        {
+            var entry = _registry.GetEntry("fitd-srd", type, id);
+            Assert.NotNull(entry);
+            granted.Add($"{type}:{id}");
+            foreach (var (key, value) in properties) Assert.Equal(Json(value), Json(entry!.Properties.GetValueOrDefault(key)));
+        }
+
+        Assert.Equal(14, granted.Count);
+        foreach (var type in new[] { "special-ability", "crew-ability", "crew-upgrade" })
+        {
+            foreach (var entry in _registry.GetEntries("fitd-srd", type, new HashSet<string> { PackId }).Where(e => !granted.Contains($"{type}:{e.Id}")))
+            {
+                Assert.DoesNotContain(entry.Properties.Keys, k => FeatureGrantData.GrantKeys.Contains(k));
+            }
+        }
+    }
+
+    [Fact]
+    public void TheImporter_RefusesAGrantForAnEntryTheSrdTextDidNotProduce_OrOfAnotherType()
+    {
+        ContentEntry Entry(string type, string id) => new() { Type = type, Id = id, Name = id, Description = id };
+        var all = Codex.ContentImport.FitdSrdImporter.Grants.Select(g => Entry(g.Type, g.Id)).ToList();
+        Codex.ContentImport.FitdSrdImporter.Validate(all);
+
+        var missing = all.Where(e => e.Id != "mule").ToList();
+        Assert.Contains("'mule'", Assert.Throws<InvalidDataException>(() => Codex.ContentImport.FitdSrdImporter.Validate(missing)).Message);
+
+        var wrongType = all.Select(e => e.Id == "mule" ? Entry("crew-ability", "mule") : e).ToList();
+        Assert.Contains("crew-ability", Assert.Throws<InvalidDataException>(() => Codex.ContentImport.FitdSrdImporter.Validate(wrongType)).Message);
+
+        Codex.ContentImport.FitdSrdImporter.ApplyGrants(all);
+        Assert.Contains("modifiers", all.Single(e => e.Id == "mule").Properties.Keys);
+        Assert.Equal("Mule".ToLowerInvariant(), all.Single(e => e.Id == "mule").Description); // the text is not touched
     }
 
     [Fact]

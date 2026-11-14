@@ -255,7 +255,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     {
         var result = new SheetEvaluation();
         if (system.SheetKinds.Count > 0) EvaluateModel(sheet, result);
-        if (Rules == null) return result;
+        if (Rules == null)
+        {
+            // A sheet kind's own feature sources: counters, spenders and row choices, as for sheetRules (the model has the modifiers).
+            if (SheetLayout.KindOf(system, sheet) is { Features.Count: > 0 }) EvaluateFeatures(sheet, result);
+            return result;
+        }
 
         EvaluateAttributes(sheet, result);
         EvaluateDerived(sheet, result);

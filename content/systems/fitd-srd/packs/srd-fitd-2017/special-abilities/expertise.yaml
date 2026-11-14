@@ -9,3 +9,8 @@ description: >-
 source: Character playbook > Special abilities > Expertise
 tags:
 - example
+properties:
+  adds:
+  - to: actions
+    choice: expertise
+    choose: 1

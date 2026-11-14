@@ -9,3 +9,8 @@ description: >-
 source: Character playbook > Special abilities > Fortitude
 tags:
 - example
+properties:
+  modifiers:
+  - target: specialArmorBoxes
+    amount: 1
+    type: boxes

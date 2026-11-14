@@ -65,6 +65,7 @@ public sealed class FeatureGrantVocabulary
             .Concat(rules.SlotPools.SelectMany(p => p.RecoversOn))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+        Moments = SystemMoments.RefillWords(system);
         ModifierTypes = system.ModifierTypes.Types.Keys.ToList();
         FloorTypes = system.ModifierTypes.Types.Where(t => ModifierStacking.IsFloor(t.Value)).Select(t => t.Key).ToList();
         CeilingTypes = system.ModifierTypes.Types.Where(t => ModifierStacking.IsCeiling(t.Value)).Select(t => t.Key).ToList();
@@ -94,10 +95,10 @@ public sealed class FeatureGrantVocabulary
     /// <summary>The rests that may refill a counter.</summary>
     public IReadOnlyList<string> Rests { get; }
 
-    /// <summary>The moments besides rests that may refill a counter: rolling initiative, a GM-called dawn, or by hand only.</summary>
-    public IReadOnlyList<string> Moments => FeatureRecovery.Moments;
+    /// <summary>The moments besides rests that may refill a counter: the system's declared moments, rolling initiative, a GM-called dawn, or by hand only.</summary>
+    public IReadOnlyList<string> Moments { get; }
 
-    /// <summary>The moments a choice among a feature's options may name in <c>changesOn</c>: the rests, then initiative and dawn (not <c>manual</c>,
+    /// <summary>The moments a choice among a feature's options may name in <c>changesOn</c>: the rests, then the other moments (not <c>manual</c>,
     /// at which nothing happens).</summary>
     public IReadOnlyList<string> ChangeMoments => Rests.Concat(Moments.Where(m => m != FeatureRecovery.Manual)).ToList();
 

@@ -180,7 +180,8 @@ public sealed partial class SheetRuleEngine
     /// Run on save, not on every edit (<see cref="Recompute"/> leaves them alone), so taking a feat off and putting it back while editing loses nothing.</summary>
     public void PruneChoices(Dictionary<string, object> sheet)
     {
-        if (Rules is not { Features.Count: > 0 } rules) return;
+        var kind = SheetLayout.KindOf(system, sheet) is { Features.Count: > 0 } withFeatures ? withFeatures : null;
+        if (Rules is not { Features.Count: > 0 } && kind == null) return;
         var stored = sheet.Keys.Where(k => k.StartsWith(ChoicePrefix, StringComparison.Ordinal)).ToList();
         if (stored.Count == 0) return;
 
@@ -192,28 +193,38 @@ public sealed partial class SheetRuleEngine
             if (resolver.Resolve(type, raw) is { } entry && !entry.Id.Equals(raw, StringComparison.OrdinalIgnoreCase)) held[entry.Id] = held.GetValueOrDefault(entry.Id) + 1;
         }
 
-        var views = ClassViews(sheet, new List<ClassLevel>());
-        var perClass = new HashSet<string>(StringComparer.Ordinal);
-        if (rules.Multiclass is { } multiclass)
+        if (Rules is { Features.Count: > 0 } rules)
         {
-            perClass.Add(multiclass.ClassField);
-            if (multiclass.SubclassField != null) perClass.Add(multiclass.SubclassField);
-        }
-
-        foreach (var source in rules.Features)
-        {
-            if (source.List != null)
+            var views = ClassViews(sheet, new List<ClassLevel>());
+            var perClass = new HashSet<string>(StringComparer.Ordinal);
+            if (rules.Multiclass is { } multiclass)
             {
-                if (rules.Lists.FirstOrDefault(l => l.Key == source.List) is not { } list) continue;
-                foreach (var raw in RawList(sheet, list.Key)) Count(list.TargetEntityType, ParsePick(raw).Id);
+                perClass.Add(multiclass.ClassField);
+                if (multiclass.SubclassField != null) perClass.Add(multiclass.SubclassField);
             }
-            else if (source.Field != null && system.ActorFields.FirstOrDefault(f => f.Key == source.Field)?.TargetEntityType is { } type)
+
+            foreach (var source in rules.Features)
             {
-                foreach (var view in perClass.Contains(source.Field) ? views : views.Take(1))
+                if (source.List != null)
                 {
-                    if (YamlValues.GetString(view, source.Field) is { Length: > 0 } id) Count(type, id);
+                    if (rules.Lists.FirstOrDefault(l => l.Key == source.List) is not { } list) continue;
+                    foreach (var raw in RawList(sheet, list.Key)) Count(list.TargetEntityType, ParsePick(raw).Id);
+                }
+                else if (source.Field != null && system.ActorFields.FirstOrDefault(f => f.Key == source.Field)?.TargetEntityType is { } type)
+                {
+                    foreach (var view in perClass.Contains(source.Field) ? views : views.Take(1))
+                    {
+                        if (YamlValues.GetString(view, source.Field) is { Length: > 0 } id) Count(type, id);
+                    }
                 }
             }
+        }
+
+        // A sheet kind's own sources: the picks of the kind's lists.
+        foreach (var source in kind?.Features ?? new List<FeatureSource>())
+        {
+            if (source.List == null || kind!.Lists.FirstOrDefault(l => l.Key == source.List) is not { Type: { } listType } list) continue;
+            foreach (var id in PickIds(sheet, list.Key)) Count(listType, id);
         }
 
         foreach (var key in stored)
@@ -361,7 +372,7 @@ public sealed partial class SheetRuleEngine
         var choices = new List<(RankedList List, ChoiceInstance Choice)>();
         // A row choice of the entry with the same id would share its picks: the keys of the row choices are taken already.
         var keysSeen = result.PendingChoices.Concat(result.MadeChoices).Where(c => c.IsRow).Select(c => c.Key).ToHashSet(StringComparer.Ordinal);
-        foreach (var feature in result.Features)
+        foreach (var feature in result.Features.Where(f => !f.OnKind)) // a sheet kind's features are read by EvaluateKeyedChoices
         {
             foreach (var add in feature.Adds)
             {

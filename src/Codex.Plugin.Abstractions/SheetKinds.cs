@@ -24,6 +24,13 @@ public sealed class SheetKindDefinition
     public List<ModifierDefinition> Modifiers { get; set; } = new();
     /// <summary>Lists of picks (classes, feats, items), each with fields of its own per pick.</summary>
     public List<PickListDefinition> Lists { get; set; } = new();
+    /// <summary>Where the kind's sheets get features (special abilities, upgrades) from, as <c>sheetRules.features</c> does for a system
+    /// with sheet rules; on a sheet kind a source names a <c>list</c> of the kind's <c>lists</c> and nothing else (no <c>field</c>, no
+    /// <c>byField</c>). Each pick's own properties carry the grants: <c>modifiers</c> (targets are the kind's values, keyed entries or
+    /// groups), <c>uses</c> and <c>spends</c> (counters), <c>options</c> with <c>choose</c>, and <c>adds</c> with a <c>choice</c> over a
+    /// keyed list. A list that is a source may not also have <c>modifiersFrom</c>, or its modifiers would count twice.</summary>
+    public List<FeatureSource> Features { get; set; } = new();
+
     /// <summary>Fixed sets of keys (skills, actions), each key with its own fields and worked-out values.</summary>
     public List<KeyedListDefinition> KeyedLists { get; set; } = new();
     /// <summary>Values that go up and down in play (hit points, stress, slots), with their bounds and what they bring.</summary>

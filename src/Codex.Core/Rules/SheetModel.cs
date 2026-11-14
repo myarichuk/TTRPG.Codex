@@ -560,6 +560,12 @@ public sealed class SheetModel
 
     // ---- Modifiers ----
 
+    private IReadOnlyList<ActiveFeature>? _kindFeatures;
+
+    /// <summary>The features the kind's own sources give this sheet, collected once per model.</summary>
+    private IReadOnlyList<ActiveFeature> KindFeatures() =>
+        _kindFeatures ??= Kind is { Features.Count: > 0 } ? SheetRuleEngine.KindFeatures(_system, _resolver, _sheet) : Array.Empty<ActiveFeature>();
+
     private List<Modifier> Modifiers()
     {
         if (_modifiers != null) return _modifiers;
@@ -584,6 +590,13 @@ public sealed class SheetModel
                         At(m, "when")?.ToString(), item));
                 }
             }
+        }
+
+        // The kind's own feature sources (sheetKinds[].features): each active feature's modifiers, credited to the feature. Collected once per
+        // model from the raw sheet (SheetRuleEngine.KindFeatures), so this cannot recurse into a value.
+        foreach (var feature in KindFeatures())
+        {
+            foreach (var m in feature.Modifiers) modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", feature.Name, m.When, null));
         }
 
         foreach (var condition in Conditions())

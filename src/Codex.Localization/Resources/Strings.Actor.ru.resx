@@ -472,7 +472,7 @@
   <data name="Actor.Features.Adds" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Features.AtLeast" xml:space="preserve"><value>{0}: не меньше {1}</value></data>
   <data name="Actor.Features.NotCounted" xml:space="preserve"><value>не складывается</value></data>
-  <data name="Actor.Features.Note" xml:space="preserve"><value>То, что дают умения, вычисляется по записям Библиотеки. Использования возвращаются после отдыха, указанного у каждого умения.</value></data>
+  <data name="Actor.Features.Note" xml:space="preserve"><value>То, что дают умения, вычисляется по записям Библиотеки. Использования возвращаются в момент, указанный у каждого умения.</value></data>
   <data name="Actor.Actions.Title" xml:space="preserve"><value>Действия</value></data>
   <data name="Actor.Actions.ToHit" xml:space="preserve"><value>{0} к попаданию</value></data>
   <data name="Actor.Actions.Save" xml:space="preserve"><value>спасбросок {0}, Сл {1}</value></data>
@@ -496,6 +496,7 @@
   <data name="Actor.Actions.Note" xml:space="preserve"><value>Броски действий делаются здесь, а во время сессии попадают в журнал стола. Потраченная ячейка отмечается сама; попадания, спасброски и урон применяет ведущий.</value></data>
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: не удаётся вычислить, что даёт это умение, поэтому оно пропущено. Мастер может проверить запись.</value></data>
   <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): выберите ещё {2} ({3}).</value></data>
+  <data name="Actor.Rule.ChoicePendingOwn" xml:space="preserve"><value>{0}: выберите ещё {2} ({3}).</value></data>
   <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): ваши отметки ({2}) в списке «{3}» уже подходят под этот выбор. Подтвердите их.</value></data>
   <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: выберите {1}</value></data>
   <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>Обычно меняется: {0}</value></data>
@@ -618,6 +619,13 @@
   <data name="Actor.Grants.RefillOnlyEmpty" xml:space="preserve"><value>Только если ничего не осталось</value></data>
   <data name="Actor.Grants.RefillWhenNote" xml:space="preserve"><value>И только если {0}</value></data>
   <data name="Actor.Grants.SpendKeyPlaceholder" xml:space="preserve"><value>Имя запаса, например focus</value></data>
+  <data name="Actor.Moments.Title" xml:space="preserve"><value>Особые моменты</value></data>
+  <data name="Actor.Moments.Restores" xml:space="preserve"><value>Восстанавливает: {0}</value></data>
+  <data name="Actor.Moments.Refills" xml:space="preserve"><value>Пополняет: {0}</value></data>
+  <data name="Actor.Moments.Done" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: восстанавливать нечего.</value></data>
+  <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>Ни одно умение не даёт эту клетку.</value></data>
+  <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
   <data name="Actor.JoinNotes.Heading" xml:space="preserve"><value>Ведущий изменил перед принятием:</value></data>
   <data name="Actor.JoinNotes.EditedNew" xml:space="preserve"><value>{0}: теперь {1}</value></data>
   <data name="Actor.JoinNotes.LeftOut" xml:space="preserve"><value>Не включено: {0}</value></data>

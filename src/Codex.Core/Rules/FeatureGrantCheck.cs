@@ -102,9 +102,9 @@ public static class FeatureGrantCheck
                     var moments = map.TryGetValue("changesOn", out var rawMoments) ? rawMoments : null;
                     foreach (var moment in moments is IEnumerable<object> listed ? listed.Select(m => Convert.ToString(m, CultureInfo.InvariantCulture) ?? string.Empty) : Array.Empty<string>())
                     {
-                        if (!vocabulary.Rests.Contains(moment, StringComparer.OrdinalIgnoreCase) && !SystemDefinitionMoments.Contains(moment))
+                        if (!vocabulary.ChangeMoments.Contains(moment, StringComparer.OrdinalIgnoreCase))
                         {
-                            problems.Add($"{shown}: \"changesOn\" names \"{moment}\", which is not one of this system's rests ({string.Join(", ", vocabulary.Rests)}), nor initiative or dawn.");
+                            problems.Add($"{shown}: \"changesOn\" names \"{moment}\", which is not one of this system's rests ({string.Join(", ", vocabulary.Rests)}), nor one of its other moments ({string.Join(", ", vocabulary.ChangeMoments.Except(vocabulary.Rests, StringComparer.OrdinalIgnoreCase))}).");
                         }
                     }
                 }
@@ -117,8 +117,6 @@ public static class FeatureGrantCheck
             }
         }
     }
-
-    private static readonly string[] SystemDefinitionMoments = { FeatureRecovery.Initiative, FeatureRecovery.Dawn };
 
     private static IEnumerable<IDictionary<string, object>> RowsOf(IDictionary<string, object> data, string key) =>
         (data.TryGetValue(key, out var raw) ? raw : null) switch

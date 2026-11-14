@@ -92,7 +92,7 @@ public class FeatureGrantsTests : IAsyncLifetime
         Assert.Equal("Dusk Form", counter.Feature.Name);
         Assert.Equal(3, counter.Max); // Charisma 16
         Assert.Equal(3L, sheet[counter.Key]);
-        Assert.Equal(new[] { "Long Rest" }, SheetRuleEngine.UsesRests(sheet, counter.Key));
+        Assert.Equal(new[] { "Long Rest" }, SheetRuleEngine.UsesRests(null, sheet, counter.Key));
         Assert.Empty(evaluation.Warnings.Where(w => w.Key == "Actor.Rule.FeatureError"));
     }
 
@@ -403,7 +403,7 @@ public class FeatureGrantsTests : IAsyncLifetime
 
         Assert.Equal("Short Rest=1|Long Rest=3|dawn=1d6+1|initiative=1!empty|manual", (string)sheet[counter.Key + SheetRuleEngine.UsesRestSuffix]); // level 5: proficiency +3
         Assert.Equal(new[] { "Short Rest", "Long Rest" }, counter.RecoversOn); // moments are never rest buttons
-        Assert.Equal(new[] { "Short Rest", "Long Rest" }, SheetRuleEngine.UsesRests(sheet, counter.Key));
+        Assert.Equal(new[] { "Short Rest", "Long Rest" }, SheetRuleEngine.UsesRests(null, sheet, counter.Key));
         Assert.Equal("Focus", sheet[counter.Key + SheetRuleEngine.UsesLabelSuffix]);
         Assert.True(SheetRuleEngine.IsUsesKey(counter.Key));
         Assert.False(SheetRuleEngine.IsUsesKey(counter.Key + SheetRuleEngine.UsesLabelSuffix));

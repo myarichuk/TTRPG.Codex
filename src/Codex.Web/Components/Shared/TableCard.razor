@@ -227,7 +227,7 @@
     };
 
     private (int Current, int Max)? Pool =>
-        State?.Pools is { } pools
+        SystemDefinition.HasLifeTrack(Definition) && State?.Pools is { } pools
             ? (pools.GetValueOrDefault(PrimaryKey), pools.GetValueOrDefault(SystemDefinition.PoolMaxKey(Definition, PrimaryKey)))
             : null;
 

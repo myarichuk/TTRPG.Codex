@@ -55,7 +55,7 @@ public static class FeatureGrantGuide
         sb.AppendLine("  - \"key\" in \"uses\" names the pool so features can share it: the feature that owns the pool sets \"max\", features that only spend from it use \"spends\" and set no \"uses\". " +
                       "If two features set a maximum for one key, the highest is used and the sheet warns. Example: {\"uses\": {\"max\": \"level\", \"key\": \"focus\", \"recoversOn\": [\"" + rest + "\"]}}.");
         sb.AppendLine($"  - \"recovers\" in \"uses\" is for refills that are not a full refill on a rest: [{{\"on\": rest name, \"amount\": \"all\" | number | formula | dice, \"when\": optional}}]. " +
-                      $"\"on\" may also be {string.Join(", ", FeatureRecovery.Moments.Select(m => $"\"{m}\""))} (initiative: when the creature joins the initiative order; dawn: when the GM calls it). " +
+                      $"\"on\" may also be {string.Join(", ", vocabulary.Moments.Select(m => $"\"{m}\""))} (initiative: when the creature joins the initiative order; dawn: when the GM calls it). " +
                       "\"when\": \"empty\" refills only when none is left. \"recoversOn\": [X] is the same as {\"on\": X, \"amount\": \"all\"}. " +
                       $"Example: {{\"uses\": {{\"max\": 4, \"recovers\": [{{\"on\": \"{other}\", \"amount\": 1}}, {{\"on\": \"{rest}\", \"amount\": \"all\"}}, {{\"on\": \"initiative\", \"amount\": 1, \"when\": \"empty\"}}]}}}}. " +
                       "\"regain\": \"gm\" lets only the GM add a use back by hand.");

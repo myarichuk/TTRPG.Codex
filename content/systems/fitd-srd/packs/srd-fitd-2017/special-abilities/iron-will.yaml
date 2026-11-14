@@ -9,3 +9,8 @@ description: >-
 source: Character playbook > Special abilities > Iron will
 tags:
 - example
+properties:
+  modifiers:
+  - target: '@resistance'
+    amount: 1
+    when: input.attribute == 'resolve'

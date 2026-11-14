@@ -83,7 +83,9 @@
 @code {
     [Parameter, EditorRequired] public SheetEvaluation? Evaluation { get; set; }
     [Parameter, EditorRequired] public IReadOnlyDictionary<string, object> Sheet { get; set; } = new Dictionary<string, object>();
-    [Parameter, EditorRequired] public SheetRules Rules { get; set; } = null!;
+    /// <summary>The system's sheet rules, for the names of its lists and skills; none for a system whose sheets are of a kind (its features
+    /// come from the kind's own sources, and its names from the kind's values).</summary>
+    [Parameter] public SheetRules? Rules { get; set; }
 
     /// <summary>The system as the reader reads it, for the names of its fields, lists and rests.</summary>
     [Parameter] public SystemDefinition? Definition { get; set; }
@@ -137,9 +139,28 @@
                     var reached = feature.LevelKey == null ? null : YamlValues.ToNumber(feature.View.GetValueOrDefault(feature.LevelKey));
                     if (add.Level.HasValue && !(reached >= add.Level)) continue;
                     if (add.Entries.Count == 0) continue; // a choice: listed by the sheet's choices, not here
-                    var list = Rules.Lists.FirstOrDefault(l => l.Key == add.To);
+                    var list = Rules?.Lists.FirstOrDefault(l => l.Key == add.To);
                     var names = add.Entries.Select(e => list == null ? Definition?.DisplayValue(e) ?? e : EntryName?.Invoke(list.TargetEntityType, e) ?? e);
                     lines.Add(new Line(L["Actor.Features.Adds", list?.Label ?? TargetLabel(add.To), string.Join(", ", names)], feature.Name, true));
+                }
+            }
+
+            // A sheet kind's features change its values through the sheet model's own modifiers: each one that reached a value and
+            // names an active feature of the kind as its source.
+            if (Kind != null && Evaluation.Model != null)
+            {
+                var names = Evaluation.Features.Where(f => f.OnKind).Select(f => f.Name).ToHashSet(StringComparer.Ordinal);
+                foreach (var (target, applied) in Evaluation.Model.Modifiers)
+                {
+                    foreach (var modifier in applied.Where(m => m.Source != null && names.Contains(m.Source)))
+                    {
+                        var rule = ModifierStacking.RuleOf(Definition?.ModifierTypes ?? new ModifierTypesDefinition(), modifier.Type);
+                        var amount = SheetView.Format(modifier.Amount);
+                        var text = ModifierStacking.IsCeiling(rule) ? L["Actor.Features.AtMost", TargetLabel(target), amount]
+                            : ModifierStacking.IsFloor(rule) ? L["Actor.Features.AtLeast", TargetLabel(target), amount]
+                            : L["Actor.Features.Adds", TargetLabel(target), (modifier.Amount >= 0 ? "+" : "") + amount];
+                        lines.Add(new Line(text, modifier.Source!, modifier.Counted));
+                    }
                 }
             }
 
@@ -147,11 +168,29 @@
         }
     }
 
+    private SheetKindDefinition? Kind => Definition is { SheetKinds.Count: > 0 } ? SheetLayout.KindOf(Definition, Sheet) : null;
+
     private string TargetLabel(string key) =>
         key == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"].ToString()
-        : key == SheetRuleEngine.SkillsTarget && !string.IsNullOrWhiteSpace(Rules.Skills?.Label) ? Rules.Skills.Label
+        : key == SheetRuleEngine.SkillsTarget && !string.IsNullOrWhiteSpace(Rules?.Skills?.Label) ? Rules.Skills.Label
         : Definition?.ActorFields.FirstOrDefault(f => f.Key == key)?.Label
-        ?? Rules.Derived.FirstOrDefault(d => d.Key == key)?.Label
+        ?? Rules?.Derived.FirstOrDefault(d => d.Key == key)?.Label
         ?? Definition?.Resources.FirstOrDefault(r => r.Key == key || r.MaxKey == key)?.Label
+        ?? KindLabel(key)
         ?? key;
+
+    // A sheet kind's own words: a value's label, a track's, a keyed entry's (list.entry), a group's (@pools, shown as the bare name).
+    private string? KindLabel(string key)
+    {
+        if (Kind is not { } kind) return null;
+        if (kind.Values.FirstOrDefault(v => v.Key == key) is { } value) return value.Label ?? value.Key;
+        if (kind.Tracks.FirstOrDefault(t => t.Key == key) is { } track) return track.Label ?? track.Key;
+        var dot = key.IndexOf('.');
+        if (dot > 0 && kind.KeyedLists.FirstOrDefault(l => l.Key == key[..dot]) is { } keyed)
+        {
+            return keyed.Keys.FirstOrDefault(e => e.Key == key[(dot + 1)..])?.Label;
+        }
+
+        return key.StartsWith('@') ? key[1..] : null;
+    }
 }

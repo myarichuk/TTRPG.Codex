@@ -354,7 +354,7 @@ public class WritePathTests : IClassFixture<RavenDbFixture>, IDisposable
         var session = await SeedSessionAsync("camp");
         await using var runtime = StartRuntime("camp", session, actor);
 
-        await runtime.EnqueueAsync(new DawnCommand(actor.Id));
+        await runtime.EnqueueAsync(new MomentCommand(actor.Id, "dawn"));
 
         var live = runtime.GetEntity(actor.Id)!.Value.Get<ResourcePoolComponent>();
         Assert.Equal(4, live.Get("uses_focus"));

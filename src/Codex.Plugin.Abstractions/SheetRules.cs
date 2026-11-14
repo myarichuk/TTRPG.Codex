@@ -159,8 +159,8 @@ public class ActionSource
 /// violation; a pick that no longer fits is a violation that says to choose again.</item>
 /// <item><c>uses</c>: <c>{ max, key, recoversOn, recovers, regain }</c>: a counter of uses, <c>max</c> a number or a formula, refilled by
 /// the rests named in <c>recoversOn</c> (a full refill on each). <c>key</c> names the pool, so features that name one share it: the
-/// highest maximum wins and the sheet warns. <c>recovers</c> is <c>[{ on, amount, when }]</c>: <c>on</c> a rest, or <c>initiative</c>,
-/// <c>dawn</c> or <c>manual</c>; <c>amount</c> is <c>all</c>, a number, a formula or dice; <c>when</c> is <c>empty</c> or a formula.
+/// highest maximum wins and the sheet warns. <c>recovers</c> is <c>[{ on, amount, when }]</c>: <c>on</c> a moment (a rest, a moment the system declares in
+/// <c>moments</c>, <c>initiative</c> or <c>dawn</c>) or <c>manual</c>; <c>amount</c> is <c>all</c>, a number, a formula or dice; <c>when</c> is <c>empty</c> or a formula.
 /// <c>regain: gm</c> lets only the GM add a use back by hand.</item>
 /// <item><c>spends</c>: <c>{ key, amount }</c>: the feature gets a Use button that spends <c>amount</c> (a number, a formula, or
 /// <c>ask</c> for the player to choose) from the pool <c>key</c>, a feature counter's <c>key</c> or a pool's own sheet key.</item>
@@ -176,7 +176,9 @@ public class FeatureSource
     /// With multiclass rules, the class and subclass fields are read once per class.</summary>
     public string? Field { get; set; }
 
-    /// <summary>Or: the key of a list in <c>lists</c> whose picked entries carry them (<c>feats</c>).</summary>
+    /// <summary>Or: the key of a list in <c>lists</c> whose picked entries carry them (<c>feats</c>). On a sheet kind (<c>sheetKinds[].features</c>) a
+    /// source is this alone, with <c>property</c>, <c>entries</c>, <c>choose</c> and <c>levelColumn</c>: <c>list</c> names a list of the kind's own
+    /// <c>lists</c>; <c>field</c> and <c>byField</c> are refused.</summary>
     public string? List { get; set; }
 
     /// <summary>The entry property holding feature rows (<c>features</c>, <c>traits</c>). None: the entry is one feature and
@@ -229,7 +231,7 @@ public class RowChoose
     /// blocked, and is logged at a live table.</summary>
     public string OnChange { get; set; } = Keep;
 
-    /// <summary>Moments (a rest's name from <c>rests</c>, or <c>initiative</c>, <c>dawn</c>) at which the pick is usually changed. The picker
+    /// <summary>Moments (a rest, a moment the system declares in <c>moments</c>, <c>initiative</c> or <c>dawn</c>) at which the pick is usually changed. The picker
     /// says so, and the rest flow offers the change after that rest. Never a limit.</summary>
     public List<string> ChangesOn { get; set; } = new();
 }

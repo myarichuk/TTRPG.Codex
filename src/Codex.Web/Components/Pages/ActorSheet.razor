@@ -602,10 +602,16 @@ else
         "armor-class" => Rules?.ArmorClass != null,
         "slots" => Rules is { SlotPools.Count: > 0 } && editSheet.Keys.Any(k => Rules.SlotPools.Any(p => p.Owns(k))),
         "actions" => evaluation is { Actions.Count: > 0 },
-        "features" => Rules is { Features.Count: > 0 } && evaluation is { } worked && (worked.Counters.Count > 0 || worked.Spenders.Count > 0 || worked.Granted.Count > 0 || worked.Features.Any(f => f.Adds.Count > 0)),
+        "features" => HasFeatureSources && evaluation is { } worked
+            && (worked.Counters.Count > 0 || worked.Spenders.Count > 0 || worked.Granted.Count > 0 || worked.Features.Any(f => f.Adds.Count > 0 || (f.OnKind && f.Modifiers.Count > 0))),
+        "moments" => system != null && sheetView != null && SystemMoments.Of(system).Any(m => m.Kind == MomentKind.Declared && SystemMoments.Matters(system, editSheet, m.Key)),
         "level-up" => CanEdit && HasLevel,
         _ => sheetView?.Shows(widget) == true
     };
+
+    /// <summary>Whether the sheet has somewhere its features come from: <c>sheetRules.features</c>, or its sheet kind's own <c>features</c>.</summary>
+    private bool HasFeatureSources =>
+        Rules is { Features.Count: > 0 } || (system is { SheetKinds.Count: > 0 } && SheetLayout.KindOf(system, editSheet) is { Features.Count: > 0 });
 
     // The first tab gets the name and fields when the layout does not place them.
     private bool Shows(LayoutSection section) =>
@@ -846,10 +852,10 @@ else
 
                 break;
             case "features":
-                    @if (Rules is { Features.Count: > 0 })
+                    @if (HasFeatureSources)
                     {
                         @* A system with no skills has no skills panel to hold the choices a feature leaves open: they are here. *@
-                        @if (Rules.Skills == null && evaluation != null)
+                        @if (Rules?.Skills == null && evaluation != null)
                         {
                             <ChoicesBlock Evaluation="evaluation" CanEdit="CanEdit" TargetLabel="ChoiceTargetLabel" Describe="Describe" OnEdit="EditChoiceAsync"
                                           OptionText="ChoiceOptionText" MomentLabel="MomentName" OpenKeys="openChoices" />
@@ -859,6 +865,13 @@ else
                                        EntryName="@((type, id) => resolver?.Resolve(type, id)?.Name ?? id)"
                                        IsDm="@(access?.IsDm == true)" Spend="SpendOnSheet"
                                        OnAdjust="AdjustSlot" OnRest="RestFeatures" />
+                    }
+
+                break;
+            case "moments":
+                    @if (system != null)
+                    {
+                        <MomentsPanel Definition="system" Sheet="editSheet" ReadOnly="@(!CanEdit)" OnFire="FireMomentAsync" />
                     }
 
                 break;
@@ -1129,6 +1142,7 @@ else
                 subclassCandidates = subclassType == null || resolver == null ? new List<ContentEntry>() : resolver.Candidates(subclassType).ToList();
                 Reevaluate();
                 baselineSheet = new Dictionary<string, object>(editSheet);
+                SeeOnSetValues();
                 levelUpClassId = evaluation?.Classes.FirstOrDefault(c => c.IsFirst)?.Id ?? "";
                 await LoadLinkedEntriesAsync();
                 var visibleActors = Vault ? new List<ActorDocument>() : (await ActorRepo.GetVisibleForCampaignAsync(access)).ToList();
@@ -1278,10 +1292,120 @@ else
         if (await VaultRepo.DismissJoinNotesAsync(actor.Id, currentUserId)) actor.JoinNotes = new List<JoinNote>();
     }
 
-    private Task OnRulesInputChanged()
+    private async Task OnRulesInputChanged()
     {
+        // A value being set can be the moment a system declares ("load chosen": the load input): fired once, after the value is written.
+        foreach (var moment in MomentsSetByEdit()) await FireMomentAsync(moment);
         Reevaluate();
-        return Task.CompletedTask;
+    }
+
+    // What each declared moment's onSet value held when last looked at, so a change of it is seen as the value being set.
+    private readonly Dictionary<string, string?> onSetSeen = new(StringComparer.Ordinal);
+
+    private string? OnSetValue(string key) => editSheet.TryGetValue(key, out var raw) ? Convert.ToString(raw, System.Globalization.CultureInfo.InvariantCulture) : null;
+
+    /// <summary>Remembers the values the declared moments watch (when the sheet loads), so only a later change of one fires its moment.</summary>
+    private void SeeOnSetValues()
+    {
+        onSetSeen.Clear();
+        foreach (var moment in SystemMoments.Of(system).Where(m => m.OnSet != null)) onSetSeen[moment.OnSet!] = OnSetValue(moment.OnSet!);
+    }
+
+    /// <summary>The declared moments whose <c>onSet</c> value changed since it was last seen.</summary>
+    private List<string> MomentsSetByEdit()
+    {
+        var fired = new List<string>();
+        if (!CanEdit) return fired;
+        foreach (var moment in SystemMoments.Of(system).Where(m => m.Kind == MomentKind.Declared && m.OnSet != null))
+        {
+            var now = OnSetValue(moment.OnSet!);
+            if (onSetSeen.TryGetValue(moment.OnSet!, out var was) && was == now) continue;
+            onSetSeen[moment.OnSet!] = now;
+            fired.Add(moment.Key);
+        }
+
+        return fired;
+    }
+
+    /// <summary>The live table, when this actor is at it: a session is on and the actor is in play.</summary>
+    private CampaignRuntime? TableOfActor() =>
+        actor != null && RuntimeManager.TryGet(CampaignId) is { ActiveSession: not null } live && live.HasActor(actor.Id) ? live : null;
+
+    /// <summary>A moment (or rest) fired on the sheet: where the table runs it, the table's own command does (so the refill is logged, undoable
+    /// and not lost to the merge on save); otherwise it is applied to the sheet being edited, to be saved with it.</summary>
+    private async Task FireMomentAsync(string moment)
+    {
+        if (system == null || actor == null || !CanEdit) return;
+        if (TableOfActor() is { } live)
+        {
+            await RunAtTableAsync(live, new MomentCommand(actor.Id, moment), moment);
+            return;
+        }
+
+        flash = null;
+        var before = new Dictionary<string, object>(editSheet);
+        RefillFeatureCounters(moment);
+        if (resolver != null && SheetEvents.Handles(system, moment))
+        {
+            try
+            {
+                var raised = SheetEvents.Raise(system, resolver, editSheet, new SheetEvent(moment, new Dictionary<string, object?>(StringComparer.Ordinal)), actor.Id);
+                await SayLeft(raised.Applied.Left);
+            }
+            catch (SheetEventException ex)
+            {
+                flash = Flash.Error(L["Actor.Sheet.RollFailed", ex.Message]);
+            }
+        }
+
+        OfferChoicesAfter(moment);
+        if (flash == null) SayMoment(moment, before);
+        Reevaluate();
+    }
+
+    /// <summary>Sends a rest or moment to the live table, then takes the table's numbers for the sheet's counters as the sheet's own (and as what
+    /// it was loaded with, so saving does not merge them as an edit made here).</summary>
+    private async Task RunAtTableAsync(CampaignRuntime live, IRuntimeCommand command, string moment)
+    {
+        flash = null;
+        var before = new Dictionary<string, object>(editSheet);
+        // What the table held before the command: only the counters the command itself moves are taken, so an unsaved mark made here on
+        // another counter (stress ticked a moment ago) is kept for the save to merge.
+        var keys = editSheet.Keys.ToList();
+        var atTable = actor == null ? null : live.Snapshot.Actor(actor.Id);
+        var was = keys.ToDictionary(k => k, k => atTable?.Pool(k), StringComparer.Ordinal);
+        try
+        {
+            await live.EnqueueAsync(command);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or KeyNotFoundException)
+        {
+            flash = Flash.Error(L["Combat.CommandFailed"]);
+            return;
+        }
+
+        if (actor != null && live.Snapshot.Actor(actor.Id) is { } state)
+        {
+            foreach (var key in keys)
+            {
+                if (state.Pool(key) is not { } value || was[key] == value) continue;
+                editSheet[key] = (long)value;
+                loadedSheet[key] = (long)value;
+                baselineSheet[key] = (long)value;
+            }
+        }
+
+        OfferChoicesAfter(moment);
+        SayMoment(moment, before);
+        Reevaluate();
+    }
+
+    /// <summary>Says, in the status message, what the moment brought back (or that it had nothing to bring).</summary>
+    private void SayMoment(string moment, IReadOnlyDictionary<string, object> before)
+    {
+        var name = SystemMoments.Find(system, moment)?.Label ?? MomentName(moment);
+        var changed = SystemMoments.WhatChanged(system, before, editSheet);
+        flash = Flash.Info(changed.Count > 0 ? L["Actor.Moments.Done", name, string.Join(", ", changed)] : L["Actor.Moments.Nothing", name]);
     }
 
     /// <summary>A row option's name and text in the reader's language: the sheet stores the row's name as its entry writes it.</summary>
@@ -1330,7 +1454,8 @@ else
 
     /// <summary>The name of a ranked list a choice picks into, as the sheet shows it.</summary>
     private string ChoiceTargetLabel(string target) =>
-        target == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"] : Rules?.Skills?.Label ?? target;
+        target == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"]
+        : Rules?.Skills?.Label ?? (system is { SheetKinds.Count: > 0 } ? SheetLayout.KindOf(system, editSheet)?.KeyedLists.FirstOrDefault(l => l.Key == target)?.Label : null) ?? target;
 
     /// <summary>Writes the picks of a choice the player ticked, confirmed or cleared, and re-runs the rules. Nothing is logged yet: a change
     /// is logged when the sheet is saved (<see cref="LogChoiceChangesAsync"/>), once, as it stands then.</summary>
@@ -1428,6 +1553,13 @@ else
             string text when system != null => system.DisplayRuleMessage(text) is var message && message != text ? message : system.DisplayValue(text),
             _ => a
         }).ToArray();
+        // "Expertise (Expertise): choose 1 more": a feature that is the whole entry is not named twice.
+        if (violation.Key == SheetRuleEngine.ChoicePendingKey && violation.Args.Count > 1 && violation.Args[1] is ContentEntry owner
+            && string.Equals(violation.Args[0] as string, owner.Name, StringComparison.Ordinal) && L.Has(SheetRuleEngine.ChoicePendingKey + "Own"))
+        {
+            return L[SheetRuleEngine.ChoicePendingKey + "Own", args];
+        }
+
         return L[violation.Key, args];
     }
 
@@ -1492,12 +1624,19 @@ else
     }
 
     // A rest is one rest wherever its button is: it refills the slot pools and the feature counters that name it.
-    private void RestFeatures(string rest) =>
+    private Task RestFeatures(string rest) =>
         RestSlots((rest, editSheet.Keys.Where(k => !k.EndsWith("_Max", StringComparison.Ordinal)
             && Rules?.SlotPools.Any(p => p.Owns(k) && p.RecoversOn.Contains(rest, StringComparer.OrdinalIgnoreCase)) == true).ToList()));
 
-    private void RestSlots((string Name, List<string> Keys) rest)
+    private async Task RestSlots((string Name, List<string> Keys) rest)
     {
+        // At the live table the rest is the table's command (it refills, logs and can be undone); the sheet then takes the table's numbers.
+        if (actor != null && TableOfActor() is { } live)
+        {
+            await RunAtTableAsync(live, new RestCommand(actor.Id, rest.Name, rest.Keys, PoolsOnly: true), rest.Name);
+            return;
+        }
+
         foreach (var key in rest.Keys)
         {
             if (YamlValues.GetInt(editSheet, SystemDefinition.PoolMaxKey(system, key)) is { } max) editSheet[key] = (long)max;
