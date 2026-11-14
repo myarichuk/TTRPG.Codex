@@ -495,6 +495,10 @@ public class SystemDefinition
     /// <summary>Condition names the combat console offers in its picker.</summary>
     public List<string> Conditions { get; set; } = new();
 
+    /// <summary>Spell effects (Bless, Bane, Guided): names the table can put on a creature beside the <see cref="Conditions"/>, with
+    /// what they do in <see cref="ConditionEffects"/>. Translated like a condition (<c>conditions</c> of a translation file).</summary>
+    public List<string> Effects { get; set; } = new();
+
     /// <summary>The dice the table rolls for initiative, and how initiative ties are broken.</summary>
     public DiceConventions Dice { get; set; } = new();
 
@@ -538,7 +542,7 @@ public class SystemDefinition
     /// the host's own (<c>{ widget: cyberware }</c>).</summary>
     public Dictionary<string, WidgetDefinition> Widgets { get; set; } = new();
 
-    /// <summary>What a condition does while it holds, by condition name.</summary>
+    /// <summary>What a condition or a spell effect does while it holds, by its name in <see cref="Conditions"/> or <see cref="Effects"/>.</summary>
     public Dictionary<string, ConditionEffectDefinition> ConditionEffects { get; set; } = new();
 
     /// <summary>Named rolls with inputs and outcomes (see Rolls.cs).</summary>

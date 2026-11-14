@@ -135,6 +135,7 @@ Exhaustion keeps its pool key `Exhaustion`, so live levels do not move; the firs
    - Death at the maximum stays on `vitals.exhaustion`.
    - The rest step `ExhaustionDelta` becomes a `decrease: { on: Long Rest, by: 1 }` on the effect. It stays readable from
      `vitals.rests` until the srd5e yaml moves.
+   - It is written as `value: { decrease: { on: Long Rest, by: 1 } }` on the Exhaustion effect; `key` and `max` still come from `vitals.exhaustion`, and writing either is a load error.
 
 ## Hosts that must pass the live view
 

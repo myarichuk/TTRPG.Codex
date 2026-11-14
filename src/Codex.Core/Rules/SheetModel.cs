@@ -161,7 +161,7 @@ public sealed class SheetModel
         _checkPrerequisites = checkPrerequisites;
         var kind = YamlValues.GetString(sheet, KindKey);
         Kind = system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, kind, StringComparison.OrdinalIgnoreCase)) ?? system.SheetKinds.FirstOrDefault();
-        _conditions = SheetRuleEngine.RawList(sheet, ConditionsKey);
+        _conditions = SheetConditions.Of(system, sheet);
         if (Kind == null) return;
 
         foreach (var value in Kind.Values) _valueDefinitions.TryAdd(value.Key, value);

@@ -34,7 +34,7 @@ public class ShippedTranslationTests
             Check("resource", t.Resources.Keys, system.Resources.Select(r => r.Key));
             Check("actor field", t.ActorFields.Keys, system.ActorFields.Select(f => f.Key));
             Check("entity type", t.EntityTypes.Keys, system.EntityTypes.Select(e => e.Type));
-            Check("condition", t.Conditions.Keys, system.Conditions);
+            Check("condition", t.Conditions.Keys, system.Conditions.Concat(system.Effects));
             foreach (var (type, translated) in t.EntityTypes)
             {
                 var defined = system.EntityTypes.First(e => e.Type == type);
@@ -72,7 +72,7 @@ public class ShippedTranslationTests
 
             // Every attribute and condition is shown in the language, so a table is never half translated.
             Assert.All(system.Attributes, a => Assert.True(t.Attributes.ContainsKey(a.Key), $"{language}: attribute {a.Key} untranslated"));
-            Assert.All(system.Conditions, c => Assert.True(t.Conditions.ContainsKey(c), $"{language}: condition {c} untranslated"));
+            Assert.All(system.Conditions.Concat(system.Effects), c => Assert.True(t.Conditions.ContainsKey(c), $"{language}: condition {c} untranslated"));
             Assert.All(system.EntityTypes, e => Assert.True(t.EntityTypes.ContainsKey(e.Type), $"{language}: type {e.Type} untranslated"));
         }
     }
