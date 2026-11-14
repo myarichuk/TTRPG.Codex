@@ -27,7 +27,7 @@ public static class PseudoTranslation
             foreach (var f in e.Fields) type.Fields[f.Key] = Field(f);
             t.EntityTypes[e.Type] = type;
         }
-        foreach (var c in system.Conditions)
+        foreach (var c in system.Conditions.Concat(system.Effects))
             t.Conditions[c] = P(c);
         foreach (var option in system.EntityTypes.SelectMany(e => e.Fields).Concat(system.ActorFields).SelectMany(f => f.Options ?? new List<string>()).Distinct())
             t.Values[option] = P(option);

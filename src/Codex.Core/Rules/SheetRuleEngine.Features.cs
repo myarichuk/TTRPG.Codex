@@ -639,15 +639,20 @@ public sealed partial class SheetRuleEngine
 
     // ---- Where a modifier lands ----
 
-    private enum TargetKind { Unknown, ArmorClass, HitPoints, Derived, Field, Roll }
+    internal enum TargetKind { Unknown, ArmorClass, HitPoints, Derived, Field, Roll }
 
     /// <summary>Where a modifier's target lands. A value the sheet has wins over a roll word of the same name; a roll target (<see cref="RollSiteTargets"/>)
     /// is read by the roll it names, where the bonus is worked out, so it is neither unknown nor a value of the sheet.</summary>
-    private TargetKind KindOf(string target)
+    private TargetKind KindOf(string target) => KindOf(system, target);
+
+    /// <summary><see cref="KindOf(string)"/> for any system: <see cref="TargetKind.Unknown"/> without <c>sheetRules</c>. The loader asks it which of a
+    /// condition's targets the sheet-rules side claims (docs/SHEET_CONDITIONS_DESIGN.md, "The hybrid rule").</summary>
+    internal static TargetKind KindOf(SystemDefinition system, string target)
     {
-        if (Rules?.ArmorClass is { } armor && armor.Key == target) return TargetKind.ArmorClass;
-        if (Rules?.HitPoints is { } hitPoints && hitPoints.Key == target) return TargetKind.HitPoints;
-        if (Rules?.Derived.Any(d => d.Key == target) == true) return TargetKind.Derived;
+        if (system.SheetRules is not { } rules) return TargetKind.Unknown;
+        if (rules.ArmorClass is { } armor && armor.Key == target) return TargetKind.ArmorClass;
+        if (rules.HitPoints is { } hitPoints && hitPoints.Key == target) return TargetKind.HitPoints;
+        if (rules.Derived.Any(d => d.Key == target)) return TargetKind.Derived;
         if (system.ActorFields.Any(f => f.Key == target && f.Type == FieldType.Number)) return TargetKind.Field;
         return RollSiteTargets.IsRollTarget(system, target) ? TargetKind.Roll : TargetKind.Unknown;
     }
@@ -723,10 +728,15 @@ public sealed partial class SheetRuleEngine
         var collected = new FeatureCollection();
         var features = CollectFeatures(sheet, collected, linked);
         EvaluateRowChoices(collected, result);
-        if (features.Count == 0) return;
+        // The conditions that hold give modifiers too, with or without features: a sheet that has only conditions is the common case.
+        result.Conditions.AddRange(ConditionModifiers(sheet));
+        if (features.Count == 0 && result.Conditions.Count == 0) return;
         result.Features.AddRange(features);
-        EvaluateKeyedChoices(features, sheet, result);
-        EvaluateEntryChoices(features, sheet, result);
+        if (features.Count > 0)
+        {
+            EvaluateKeyedChoices(features, sheet, result);
+            EvaluateEntryChoices(features, sheet, result);
+        }
 
         var derived = DerivedNumbers(result);
         var beforeFeatures = new Dictionary<string, double>(derived); // untouched by the derived modifiers below
@@ -737,7 +747,10 @@ public sealed partial class SheetRuleEngine
         }
 
         // A sheet kind's features put their modifiers in the kind's own model (SheetModel.Modifiers), not on sheetRules' targets.
-        foreach (var group in features.Where(f => !f.OnKind).SelectMany(f => f.Modifiers.Where(m => m.OptIn == null).Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
+        // The conditions' modifiers join them (docs/SHEET_CONDITIONS_DESIGN.md), so a feature and a condition of one type on one target stack as one.
+        foreach (var group in features.Where(f => !f.OnKind).SelectMany(f => f.Modifiers.Where(m => m.OptIn == null).Select(m => (Feature: f, Modifier: m)))
+                     .Concat(result.Conditions.Where(c => c.Modifier.OptIn == null).Select(c => (Feature: c.Feature, Modifier: c.Modifier)))
+                     .GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
         {
             var kind = KindOf(group.Key);
             if (kind == TargetKind.Unknown)
@@ -934,7 +947,9 @@ public sealed partial class SheetRuleEngine
         // Derived values (proficiency bonus...) come from the sheet as it is before any field is granted: one pass, no loop. A derived
         // value that itself reads a granted field is therefore worked out without the grant here, and with it in the evaluation.
         Dictionary<string, double>? derived = null;
-        foreach (var group in features.SelectMany(f => f.Modifiers.Where(m => m.OptIn == null).Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
+        foreach (var group in features.SelectMany(f => f.Modifiers.Where(m => m.OptIn == null).Select(m => (Feature: f, Modifier: m)))
+                     .Concat(ConditionModifiers(sheet).Where(c => c.Modifier.OptIn == null).Select(c => (Feature: c.Feature, Modifier: c.Modifier)))
+                     .GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
         {
             if (KindOf(group.Key) != TargetKind.Field) continue;
             var field = system.ActorFields.First(f => f.Key == group.Key);

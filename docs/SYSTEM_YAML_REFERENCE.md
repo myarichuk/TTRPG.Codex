@@ -30,6 +30,7 @@ A whole game system described as data (`system.yaml`). This is what lets a homeb
 | `fieldRoles` | [FieldRoles](#fieldroles) | Which of the ActorFields the app reads for what, outside the rules engine. |
 | `entityTypes` | list of [ContentTypeDefinition](#contenttypedefinition) | The kinds of content the system's packs may carry (class, spell, monster), each with its own fields and pack folder. |
 | `conditions` | list of text (a number is text too) | Condition names the combat console offers in its picker. |
+| `effects` | list of text (a number is text too) | Spell effects (Bless, Bane, Guided): names the table can put on a creature beside the Conditions, with what they do in ConditionEffects. Translated like a condition (`conditions` of a translation file). |
 | `dice` | [DiceConventions](#diceconventions) | The dice the table rolls for initiative, and how initiative ties are broken. |
 | `ai` | [AiVocabulary](#aivocabulary) | How the system's own words are put to AI models, so prompts carry no assumptions about any one game. |
 | `setting` | [SystemSetting](#systemsetting) | The kind of world play assumes, in general terms. Null: none (the campaign's own description is the world). |
@@ -42,7 +43,7 @@ A whole game system described as data (`system.yaml`). This is what lets a homeb
 | `progressions` | map of text (a number is text too) | Named per-level formulas (`bab.good: "level"`), read by `progression(name, level)`. |
 | `functions` | map of [FunctionDefinition](#functiondefinition) | Named functions, callable from any formula by name. |
 | `widgets` | map of [WidgetDefinition](#widgetdefinition) | Widgets a DLL supplies (`{ type: "Acme.Street.Cyberware, Acme.Street" }`), placed by name in a layout like the host's own (`{ widget: cyberware }`). |
-| `conditionEffects` | map of [ConditionEffectDefinition](#conditioneffectdefinition) | What a condition does while it holds, by condition name. |
+| `conditionEffects` | map of [ConditionEffectDefinition](#conditioneffectdefinition) | What a condition or a spell effect does while it holds, by its name in Conditions or Effects. |
 | `rolls` | list of [RollDefinition](#rolldefinition) | Named rolls with inputs and outcomes (see Rolls.cs). |
 | `moments` | list of [MomentDefinition](#momentdefinition) | The system's own moments (`downtime`, `loadChosen`): named times at which counters refill and an `events:` handler of the same name runs. Rests (`vitals.rests`), `initiative` and `dawn` are moments too and need no declaring. |
 | `events` | map of any | Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape. |
@@ -1023,6 +1024,26 @@ What a condition does while it holds (`conditionEffects.<name>`).
 | Key | Type | What it is |
 |---|---|---|
 | `modifiers` | list of [ModifierDefinition](#modifierdefinition) | Modifiers that apply while the condition holds; one without a `source` is credited to the condition. |
+| `value` | [ConditionValueDefinition](#conditionvaluedefinition) | Makes the condition a valued one (Exhaustion 3, frightened 2): it holds while its value is above 0, and its modifiers read the value as `value`. Null: the condition has no value (`value` is 1 in its modifiers). For the condition `vitals.exhaustion` names, the loader fills in `key` and `max` from `vitals.exhaustion`; the file may write only `decrease` there. |
+
+## ConditionValueDefinition
+
+The value a valued condition carries (`conditionEffects.<name>.value`); see docs/SHEET_CONDITIONS_DESIGN.md.
+
+| Key | Type | What it is |
+|---|---|---|
+| `key` | text (a number is text too) | The pool and sheet key that holds the value. Default `condition_<slug>` (`condition_frightened`); it may not be a resource's or a track's key, nor another condition's. |
+| `max` | text (a number is text too) | The highest the value goes: a number or a formula. A raise stops there. Null: no maximum. |
+| `decrease` | [ConditionDecreaseDefinition](#conditiondecreasedefinition) | The value dropping by itself at a moment. Null: it drops only when someone lowers it. |
+
+## ConditionDecreaseDefinition
+
+`{ on, by }`: the value drops by By at the moment On.
+
+| Key | Type | What it is |
+|---|---|---|
+| `on` | text (a number is text too) | Required: `turnEnd`, `turnStart`, a rest of `vitals.rests` or a moment the system declares. |
+| `by` | whole number | How much it drops by. Default 1. |
 
 ## RollDefinition
 

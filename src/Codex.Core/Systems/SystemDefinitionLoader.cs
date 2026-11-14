@@ -141,6 +141,8 @@ public static class SystemDefinitionLoader
             throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is invalid:\n - " + string.Join("\n - ", errors)), errors.ToArray());
         }
 
+        FoldExhaustionValue(definition);
+
         if (unknownKeys != null)
         {
             foreach (var key in UnknownYamlKeys.Find(yaml, typeof(SystemDefinition), CamelCaseNamingConvention.Instance)) unknownKeys.Add(key);
@@ -281,6 +283,16 @@ public static class SystemDefinitionLoader
         }
 
         foreach (var error in ValidateModifiers(definition))
+        {
+            yield return error;
+        }
+
+        foreach (var error in ValidateConditionValues(definition))
+        {
+            yield return error;
+        }
+
+        foreach (var error in ValidateConditionRouting(definition))
         {
             yield return error;
         }
@@ -729,6 +741,144 @@ public static class SystemDefinitionLoader
             {
                 var m = effect.Modifiers[i];
                 foreach (var error in Rules.OptInChecks.Problems(definition, $"conditionEffects.{name}.modifiers[{i}]", m.Target, m.Amount, m.OptIn, inCondition: true)) yield return error;
+            }
+        }
+    }
+
+    /// <summary>The <c>conditionEffects</c> entry <c>vitals.exhaustion.condition</c> names, with its name, when there is one.</summary>
+    private static (string Name, ConditionEffectDefinition Effect)? ExhaustionEffect(SystemDefinition definition)
+    {
+        if (definition.Vitals?.Exhaustion?.Condition is not { Length: > 0 } condition) return null;
+        foreach (var (name, effect) in definition.ConditionEffects)
+        {
+            if (string.Equals(name, condition, StringComparison.OrdinalIgnoreCase)) return (name, effect);
+        }
+
+        return null;
+    }
+
+    /// <summary>With <c>vitals.exhaustion</c>, the effect of the exhaustion condition gets its <c>value</c> from it (its key, <c>maxLevel</c> as
+    /// the maximum), so the level is declared once; a <c>decrease</c> the file wrote there is kept. An entry that is not there gets nothing.</summary>
+    private static void FoldExhaustionValue(SystemDefinition definition)
+    {
+        if (ExhaustionEffect(definition) is not { } found || definition.Vitals?.Exhaustion is not { } exhaustion) return;
+        found.Effect.Value = new ConditionValueDefinition
+        {
+            Key = exhaustion.Key,
+            Max = exhaustion.MaxLevel.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Decrease = found.Effect.Value?.Decrease,
+            FromVitals = true
+        };
+    }
+
+    /// <summary>The problems with valued conditions (<c>conditionEffects.&lt;name&gt;.value</c>) and spell effects: keys that are unique and
+    /// are not a resource's, a track's or a sheet key; a <c>max</c> that reads; a <c>decrease.on</c> that is a moment the system knows;
+    /// nothing named <c>value</c> (a modifier's <c>value</c> is the condition's); and no <c>value</c> written for the condition
+    /// <c>vitals.exhaustion</c> already gives one.</summary>
+    private static IEnumerable<string> ValidateConditionValues(SystemDefinition definition)
+    {
+        foreach (var duplicate in Duplicates(definition.Effects)) yield return $"effect '{duplicate}' is declared more than once.";
+        foreach (var effect in definition.Effects.Where(e => definition.Conditions.Contains(e, StringComparer.OrdinalIgnoreCase)))
+        {
+            yield return $"'{effect}' is both a condition and an effect; a name belongs to one list.";
+        }
+
+        // What a value's key may not be: a pool or a key the sheet already uses.
+        var taken = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        void Take(string? key, string what)
+        {
+            if (!string.IsNullOrWhiteSpace(key)) taken.TryAdd(key, what);
+        }
+
+        foreach (var resource in definition.Resources)
+        {
+            Take(resource.Key, $"the resource '{resource.Key}'");
+            Take(resource.MaxKey, $"the resource '{resource.Key}' (its maximum)");
+        }
+
+        foreach (var track in definition.SheetKinds.SelectMany(k => k.Tracks)) Take(track.Key, $"the track '{track.Key}'");
+        Take(definition.Vitals?.HitDice?.Key, "the hit dice pool");
+        foreach (var field in definition.ActorFields) Take(field.Key, $"the actor field '{field.Key}'");
+        foreach (var value in definition.SheetKinds.SelectMany(k => k.Values)) Take(value.Key, $"the sheet value '{value.Key}'");
+
+        const string Reserved = "value";
+        foreach (var derived in definition.SheetRules?.Derived ?? new List<DerivedField>())
+        {
+            if (string.Equals(derived.Key, Reserved, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return "sheetRules.derived 'value' is a name a condition's modifiers read as the condition's own value; call it something else.";
+            }
+        }
+
+        foreach (var field in definition.ActorFields.Where(f => string.Equals(f.Key, Reserved, StringComparison.OrdinalIgnoreCase)))
+        {
+            yield return $"actor field '{field.Key}' is a name a condition's modifiers read as the condition's own value; call it something else.";
+        }
+
+        foreach (var value in definition.SheetKinds.SelectMany(k => k.Values.Where(v => string.Equals(v.Key, Reserved, StringComparison.OrdinalIgnoreCase)).Select(v => (Kind: k.Kind, v.Key))))
+        {
+            yield return $"sheetKinds.{value.Kind}.values '{value.Key}' is a name a condition's modifiers read as the condition's own value; call it something else.";
+        }
+
+        var exhaustion = ExhaustionEffect(definition);
+        var exhaustionKey = definition.Vitals?.Exhaustion?.Key;
+        var keys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (exhaustion is { } given && !string.IsNullOrWhiteSpace(exhaustionKey)) keys[exhaustionKey] = given.Name;
+        foreach (var (name, effect) in definition.ConditionEffects)
+        {
+            if (effect.Value is not { } value) continue;
+            var where = $"conditionEffects.{name}.value";
+            if (exhaustion is { } own && string.Equals(own.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                // The key and the maximum are vitals.exhaustion's; the file may write only the decrease.
+                if (!value.FromVitals && (!string.IsNullOrWhiteSpace(value.Key) || !string.IsNullOrWhiteSpace(value.Max)))
+                {
+                    yield return $"{where}: the key and max of '{name}' come from vitals.exhaustion (key '{exhaustionKey}', maximum {definition.Vitals!.Exhaustion!.MaxLevel}); write only decrease.";
+                }
+            }
+            else
+            {
+                var key = Codex.Core.Rules.SheetConditions.KeyOf(name, value);
+                if (taken.TryGetValue(key, out var clash)) yield return $"{where}: the key '{key}' clashes with {clash}; a condition's value needs a key of its own.";
+                else if (keys.TryGetValue(key, out var other)) yield return $"{where}: the key '{key}' is also the value of '{other}'; each valued condition needs its own key.";
+                else if (string.Equals(key, exhaustionKey, StringComparison.OrdinalIgnoreCase)) yield return $"{where}: the key '{key}' is the exhaustion level's (vitals.exhaustion); a condition's value needs a key of its own.";
+                else keys[key] = name;
+
+                if (!string.IsNullOrWhiteSpace(value.Max)
+                    && !double.TryParse(value.Max, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _)
+                    && Codex.Core.Rules.SheetFormulas.For(definition).Check(value.Max) is { } formulaError)
+                {
+                    yield return $"{where}.max '{value.Max}' cannot be read: {formulaError}";
+                }
+            }
+
+            if (value.Decrease is not { } decrease) continue;
+            if (!decrease.On.Equals("turnEnd", StringComparison.OrdinalIgnoreCase)
+                && !decrease.On.Equals("turnStart", StringComparison.OrdinalIgnoreCase)
+                && !Codex.Core.Rules.SystemMoments.IsMoment(definition, decrease.On))
+            {
+                yield return $"{where}.decrease.on '{decrease.On}' is not turnEnd, turnStart, a rest or a moment this system declares.";
+            }
+
+            if (decrease.By < 1) yield return $"{where}.decrease.by must be 1 or more.";
+        }
+    }
+
+    /// <summary>The hybrid rule (docs/SHEET_CONDITIONS_DESIGN.md): on a system with both <c>sheetRules</c> and <c>sheetKinds</c>, a condition's modifier goes to the
+    /// sheet-rules side when its target is one that side knows (armor class, hit points, a derived value, a Number field, a roll target) and to the sheet
+    /// kind when it is the kind's value, track, keyed entry, group or a name a roll reads. A target both sides claim would count the condition twice, so it is refused.</summary>
+    private static IEnumerable<string> ValidateConditionRouting(SystemDefinition definition)
+    {
+        if (definition.SheetRules == null || definition.SheetKinds.Count == 0) yield break;
+        var kindTargets = Codex.Core.Rules.SheetConditions.KindTargets(definition);
+        foreach (var (name, effect) in definition.ConditionEffects)
+        {
+            for (var i = 0; i < effect.Modifiers.Count; i++)
+            {
+                var target = effect.Modifiers[i].Target;
+                if (target.Length == 0 || !kindTargets.Contains(target)) continue;
+                if (Codex.Core.Rules.SheetRuleEngine.KindOf(definition, target) == Codex.Core.Rules.SheetRuleEngine.TargetKind.Unknown) continue;
+                yield return $"conditionEffects.{name}.modifiers[{i}]: the target '{target}' is claimed by both sheetRules and a sheet kind, so the condition would count twice. Give the sheet kind's value or the sheet-rules number another name.";
             }
         }
     }

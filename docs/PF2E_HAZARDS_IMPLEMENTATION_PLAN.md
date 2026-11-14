@@ -19,7 +19,11 @@ Checked in code on 2026-11-14.
 | General ranked lists (Perception, weapon and armor categories, class DC, spell per tradition) | **Still a gap.** Ranks exist for `skills` and `saves` only (`SkillRules.Ranks`, `SaveRules.Ranks`) |
 | Per-type penalties (untyped penalties stack, typed take the worst) | **Still a gap.** `ModifierTypesDefinition.Penalties` is one rule for all types, and `ModifierStacking.Stack` groups untyped modifiers as one type, so `penalties: highest` would wrongly keep only the worst untyped penalty |
 | Valued conditions (frightened 2) | **Still a gap.** Only `ExhaustionRules` has a level |
-| Boosts, MAP, cooldowns, server-side check rolls, item rune slots, linked companion sheets | **Still gaps** |
+| Scoped and opt-in roll bonuses ("+1 circumstance to Athletics when grappling") | **Built (#306, #313-#315).** Targets `attack.weapon.melee`, `save.<attr>`, `check.skill.<key>`; dice amounts; tick boxes with `spends`. Feature modifiers stack by `modifierTypes`, so circumstance, status and item keep the highest. Checked 2026-11-14 |
+| Linked sheets (companions, familiars) | **Mostly built (#313, #316)** as crew links: a kind declares `links`, a `link:` feature source reads grants across, `link()` reads the other sheet's numbers. One step deep, read-only, kind to kind. A companion kind linked to its owner reading `link('owner', 'level')` should fit; not tried on a hybrid sheet |
+| Conditions on a `sheetRules` sheet, with effects | **Gap, now shared with srd5e; designed in [SHEET_CONDITIONS_DESIGN.md](SHEET_CONDITIONS_DESIGN.md).** Roll bonuses' `ends` is wired but unreachable on srd5e (#315), and Bless, Bane and 5.2.1 Exhaustion (−2 per level to d20 tests) wait for it. PF2e's valued conditions are the same work |
+| Degrees of success on sheet-rules rolls (Strike, skill check against a DC) | **Gap.** Only named `rolls:` have outcomes. Belongs with the server-side check service (H4a) |
+| Boosts, MAP, cooldowns, server-side check rolls, item rune slots | **Still gaps** |
 
 **Engine path: the hybrid still stands, for a new reason.** Going kinds-only is possible now, but a kind has no ranks, no entry choices, no
 free castings, no actions and no slot pools, which is what a PF2e character is built from. So `sheetRules` builds the character and one
@@ -67,7 +71,7 @@ The engine steps use our own numbers and invented entries only. The PDFs are not
 | P1 | **Reference fixture** `tests/Codex.Tests/Fixtures/reference/pf2/`: `system.yaml` (hybrid: `sheetRules` plus one kind), a tiny pack, and `spec.yaml` in the harness's shape (pass, fail, unsupported, `requires`). Expectations: ranks worth level + 2/4/6/8; four degrees with the natural 20/1 shift; typed bonuses; untyped penalties stacking while typed take the worst; frightened 2 lowering checks and DCs; HP from ancestry + class × level; AC with an armor rank; MAP as a roll input; a kind feature's modifier counted once on the hybrid. Unsupported ones name the P step meant to make them pass | fixture folder, `progress.txt` | **Opus writes the spec** (it is the design); Sonnet fills the pack |
 | P2 | Per-type penalty rule (`penalties` per type, untyped exempt) | `SheetKinds.cs` (`ModifierTypesDefinition`), `ModifierStacking.cs` | Sonnet; Opus reviews |
 | P3 | General ranked lists (a rank set per key list, reachable by grants and choices like `skills`) | `SheetRules.cs`, `SheetRuleEngine.Ranks.cs`, `FeatureGrantCheck.cs` | **Opus designs the diff**, Sonnet builds; the srd5e golden must stay byte-identical |
-| P4 | Valued conditions (first-class level, read by `conditionEffects` amounts) | `SystemDefinition.cs`, `SheetModel.cs`, condition picker, `TableRules.cs` | Opus designs; Sonnet builds. **After H1** (both edit `SystemDefinition.cs`) |
+| P4 | Valued conditions and condition effects on sheet-rules sheets: built as C1-C7 of [SHEET_CONDITIONS_DESIGN.md](SHEET_CONDITIONS_DESIGN.md), shared with srd5e | `SheetKinds.cs` (`ConditionEffectDefinition`), `SystemDefinitionLoader.cs`, the sheet-rules engine, table hosts | Designed; Sonnet builds, Opus reviews C2 and C3. **Not beside H1** (both edit `SystemDefinitionLoader.cs`) |
 | P5 | Boost rules (free boosts, flaws, four different, partial boost above +4) | `SheetRules.cs` (`AttributeRules`), `SheetRuleEngine.cs` | Sonnet; Opus reviews. After P3 (same files) |
 | P6 | Degree function and MAP as a roll input on the hybrid; the Actions panel passes attack number | `SheetRolls.cs`, `ActionsPanel.razor` | Sonnet |
 | P7 | The system skeleton under `content/systems/` with homebrew-only content: ORC licence block in its manifest, no "Pathfinder" in the name, `moments:` (daily preparations, refocus, session start), the faith shape with no names | new system folder | Sonnet; Opus reviews the licence block |
@@ -86,7 +90,7 @@ start after P1. P8 and P9 go together, after P7. P10 any time after P7.
 |---|---|---|
 | H1 to H4b, and P1 | Yes | Disjoint files: P1 is a fixture folder and `progress.txt` |
 | H1, and P2 or P3 | Yes | `SystemDefinition.cs` against `SheetKinds.cs`/`ModifierStacking.cs` or `SheetRules.cs`/`Ranks.cs` |
-| H1, and P4 | **No** | Both edit `SystemDefinition.cs` and its loader |
+| H1, and P4 (conditions C1) | **No** | Both edit `SystemDefinitionLoader.cs` |
 | P3, and P5 | **No** | Both edit `SheetRules.cs` and the engine's main file |
 | H4b, and P6 | Check first | Both may touch the Actions panel; list the files at the start of the later one |
 

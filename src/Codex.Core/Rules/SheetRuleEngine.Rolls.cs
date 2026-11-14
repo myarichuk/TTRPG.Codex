@@ -81,7 +81,7 @@ public sealed partial class SheetRuleEngine
     /// <summary>The always-on part of what features add to <paramref name="site"/>: modifiers with no <c>optIn</c> whose target the site reads and whose
     /// <c>when</c> holds. Numbers are stacked once over all the site's targets together, as the system's modifier types say. Dice amounts (<c>1d4</c>,
     /// <c>-1d4</c>) are never folded into a number: they are listed, with their source, for the host to append to the roll's expression.</summary>
-    private RollSiteBonus SiteBonus(IReadOnlyList<ActiveFeature> features, RollSite site, IReadOnlyDictionary<string, double> derived, Action<string>? warn)
+    private RollSiteBonus SiteBonus(IEnumerable<ActiveFeature> features, RollSite site, IReadOnlyDictionary<string, double> derived, Action<string>? warn)
     {
         var numbers = new List<(ActiveFeature Feature, FeatureModifier Modifier)>();
         var dice = new List<RollDice>();
@@ -101,18 +101,18 @@ public sealed partial class SheetRuleEngine
         return new RollSiteBonus(total, bonuses, dice);
     }
 
-    /// <summary><see cref="SiteBonus(IReadOnlyList{ActiveFeature}, RollSite, IReadOnlyDictionary{string, double}, Action{string}?)"/> for the evaluation in
-    /// progress: its features and its derived values, a bonus that cannot be worked out said once as the feature's warning.</summary>
+    /// <summary><see cref="SiteBonus(IEnumerable{ActiveFeature}, RollSite, IReadOnlyDictionary{string, double}, Action{string}?)"/> for the evaluation in
+    /// progress: its features, the conditions that hold and its derived values, a bonus that cannot be worked out said once as the feature's warning.</summary>
     private RollSiteBonus SiteBonus(SheetEvaluation result, RollSite site)
     {
         result.SiteNumbers ??= DerivedNumbers(result);
-        return SiteBonus(result.Features, site, result.SiteNumbers, name => WarnFeature(result, result.SiteWarned, name));
+        return SiteBonus(result.Features.Concat(result.Conditions.Select(c => c.Feature)), site, result.SiteNumbers, name => WarnFeature(result, result.SiteWarned, name));
     }
 
-    /// <summary>What the sheet's features add to <paramref name="site"/> that always counts: the number, who gave it, and the dice that wait for the
-    /// roll. Opt-ins are never in it (<see cref="OptIns"/>).</summary>
+    /// <summary>What the sheet's features and the conditions that hold add to <paramref name="site"/> that always counts: the number, who gave it, and
+    /// the dice that wait for the roll. Opt-ins are never in it (<see cref="OptIns"/>).</summary>
     public RollSiteBonus Bonuses(IReadOnlyDictionary<string, object> sheet, RollSite site, ILinkedSheets? linked = null) =>
-        SiteBonus(ActiveFeatures(sheet, linked), site, DerivedNumbers(WorkedOutDerived(sheet)), null);
+        SiteBonus(ActiveFeatures(sheet, linked).Concat(ConditionModifiers(sheet).Select(c => c.Feature)), site, DerivedNumbers(WorkedOutDerived(sheet)), null);
 
     /// <summary>The tick boxes <paramref name="site"/> offers on <paramref name="sheet"/>: each opt-in modifier of the sheet's features whose target the
     /// site reads and whose <c>when</c> holds, with the id <see cref="OptInIds"/> gives it (the index counts every modifier of the source entry, across
@@ -131,9 +131,17 @@ public sealed partial class SheetRuleEngine
     {
         var offered = new List<RollOptIn>();
         var features = ActiveFeatures(sheet, linked).Where(f => !f.OnKind).ToList();
-        if (!features.Any(f => f.Modifiers.Any(m => m.OptIn != null && reaches(m)))) return offered;
+        var conditions = ConditionModifiers(sheet).Where(c => c.Modifier.OptIn != null && reaches(c.Modifier)).ToList();
+        if (conditions.Count == 0 && !features.Any(f => f.Modifiers.Any(m => m.OptIn != null && reaches(m)))) return offered;
 
         var derived = DerivedNumbers(WorkedOutDerived(sheet));
+        // The amount a tick box shows, or null when it is off (its when does not hold) or its formula cannot be worked out.
+        string? TextOf(ActiveFeature feature, FeatureModifier modifier)
+        {
+            if (SheetModel.DiceAmount(modifier.Amount)) return Amount(feature, "1", modifier.When, derived, null) == null ? null : RollSiteTargets.SignedDice(modifier.Amount);
+            return Amount(feature, modifier.Amount, modifier.When, derived, null) is { } amount ? (amount >= 0 ? "+" : string.Empty) + amount.ToString(CultureInfo.InvariantCulture) : null;
+        }
+
         var perSource = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var feature in features)
         {
@@ -142,21 +150,19 @@ public sealed partial class SheetRuleEngine
                 var index = perSource[feature.Source.Id] = perSource.GetValueOrDefault(feature.Source.Id) + 1;
                 if (modifier.OptIn is not { } optIn || !reaches(modifier)) continue;
 
-                string text;
-                if (SheetModel.DiceAmount(modifier.Amount))
-                {
-                    if (Amount(feature, "1", modifier.When, derived, null) == null) continue;
-                    text = RollSiteTargets.SignedDice(modifier.Amount);
-                }
-                else
-                {
-                    if (Amount(feature, modifier.Amount, modifier.When, derived, null) is not { } amount) continue; // off, or an amount that cannot be worked out
-                    text = (amount >= 0 ? "+" : string.Empty) + amount.ToString(CultureInfo.InvariantCulture);
-                }
-
+                if (TextOf(feature, modifier) is not { } text) continue; // off, or an amount that cannot be worked out
                 var label = string.IsNullOrWhiteSpace(optIn.Label) ? feature.Name : optIn.Label!;
                 offered.Add(SheetRolls.Offer(sheet, new OptInModifier(OptInIds.Feature(feature.Source.Id, index - 1), label, text, feature.Name, optIn, null, modifier.Target)));
             }
+        }
+
+        // A condition's tick box: the id SheetModel gives it, and the condition it ends when the definition says ends (what rolling with it ticked removes).
+        foreach (var condition in conditions)
+        {
+            if (TextOf(condition.Feature, condition.Modifier) is not { } text) continue;
+            var optIn = condition.Modifier.OptIn!;
+            var label = string.IsNullOrWhiteSpace(optIn.Label) ? condition.Feature.Name : optIn.Label!;
+            offered.Add(SheetRolls.Offer(sheet, new OptInModifier(OptInIds.Condition(condition.Condition, condition.Index), label, text, condition.Feature.Name, optIn, condition.Condition, condition.Modifier.Target)));
         }
 
         return offered;
@@ -166,7 +172,7 @@ public sealed partial class SheetRuleEngine
     /// attribute's modifier and this. Skill checks and saves have theirs in <see cref="SkillScore.Bonus"/>.</summary>
     private void EvaluateChecks(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
     {
-        if (Rules?.Skills == null || result.Features.Count == 0) return;
+        if (Rules?.Skills == null || (result.Features.Count == 0 && result.Conditions.Count == 0)) return;
         foreach (var attribute in system.Attributes)
         {
             var site = SiteBonus(result, CheckSite(attribute.Key));

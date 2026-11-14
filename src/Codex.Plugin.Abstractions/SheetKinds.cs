@@ -338,6 +338,40 @@ public sealed class ConditionEffectDefinition
 {
     /// <summary>Modifiers that apply while the condition holds; one without a <c>source</c> is credited to the condition.</summary>
     public List<ModifierDefinition> Modifiers { get; set; } = new();
+
+    /// <summary>Makes the condition a valued one (Exhaustion 3, frightened 2): it holds while its value is above 0, and its modifiers
+    /// read the value as <c>value</c>. Null: the condition has no value (<c>value</c> is 1 in its modifiers). For the condition
+    /// <c>vitals.exhaustion</c> names, the loader fills in <c>key</c> and <c>max</c> from <c>vitals.exhaustion</c>; the file may write only <c>decrease</c> there.</summary>
+    public ConditionValueDefinition? Value { get; set; }
+}
+
+/// <summary>The value a valued condition carries (<c>conditionEffects.&lt;name&gt;.value</c>); see docs/SHEET_CONDITIONS_DESIGN.md.</summary>
+public sealed class ConditionValueDefinition
+{
+    /// <summary>The pool and sheet key that holds the value. Default <c>condition_&lt;slug&gt;</c> (<c>condition_frightened</c>); it may
+    /// not be a resource's or a track's key, nor another condition's.</summary>
+    public string? Key { get; set; }
+
+    /// <summary>The highest the value goes: a number or a formula. A raise stops there. Null: no maximum.</summary>
+    public string? Max { get; set; }
+
+    /// <summary>The value dropping by itself at a moment. Null: it drops only when someone lowers it.</summary>
+    public ConditionDecreaseDefinition? Decrease { get; set; }
+
+    /// <summary>Set by the loader when the value came from <c>vitals.exhaustion</c> rather than from the file, so checking a parsed
+    /// definition again does not take it for a value the file wrote.</summary>
+    [NotInYaml]
+    public bool FromVitals { get; set; }
+}
+
+/// <summary><c>{ on, by }</c>: the value drops by <see cref="By"/> at the moment <see cref="On"/>.</summary>
+public sealed class ConditionDecreaseDefinition
+{
+    /// <summary>Required: <c>turnEnd</c>, <c>turnStart</c>, a rest of <c>vitals.rests</c> or a moment the system declares.</summary>
+    public string On { get; set; } = string.Empty;
+
+    /// <summary>How much it drops by. Default 1.</summary>
+    public int By { get; set; } = 1;
 }
 
 /// <summary>

@@ -87,7 +87,11 @@ public sealed class SheetModel
     /// <summary><see cref="Id"/> is the modifier's stable id (see <see cref="OptInIds"/>); <see cref="OptIn"/> makes it a tick box, and
     /// <see cref="Condition"/> names the condition whose effect it is.</summary>
     private sealed record Modifier(string Target, string Amount, string Type, string? Source, string? When, FormulaItem? Item, string Id = "",
-        OptInDefinition? OptIn = null, string? Condition = null);
+        OptInDefinition? OptIn = null, string? Condition = null, double? Value = null);
+
+    /// <summary>What a condition's modifier reads as <c>value</c>: the condition's value (docs/SHEET_CONDITIONS_DESIGN.md). Null for every other modifier.</summary>
+    private static IReadOnlyDictionary<string, object>? ValueOf(Modifier modifier) =>
+        modifier.Value is { } value ? new Dictionary<string, object> { [SheetConditions.ValueName] = value } : null;
 
     /// <summary>The opt-ins the player ticked for the roll this model is for (by id); none on the sheet.</summary>
     private readonly IReadOnlySet<string> _ticked;
@@ -161,7 +165,7 @@ public sealed class SheetModel
         _checkPrerequisites = checkPrerequisites;
         var kind = YamlValues.GetString(sheet, KindKey);
         Kind = system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, kind, StringComparison.OrdinalIgnoreCase)) ?? system.SheetKinds.FirstOrDefault();
-        _conditions = SheetRuleEngine.RawList(sheet, ConditionsKey);
+        _conditions = SheetConditions.Of(system, sheet);
         if (Kind == null) return;
 
         foreach (var value in Kind.Values) _valueDefinitions.TryAdd(value.Key, value);
@@ -635,7 +639,7 @@ public sealed class SheetModel
             var at = 0;
             foreach (var m in effect.Modifiers)
             {
-                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source ?? condition, m.When, null, OptInIds.Condition(found.Key, at++), m.OptIn, found.Key));
+                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source ?? condition, m.When, null, OptInIds.Condition(found.Key, at++), m.OptIn, found.Key, SheetConditions.ValueOf(found.Key, effect, _sheet)));
             }
         }
 
@@ -738,8 +742,8 @@ public sealed class SheetModel
         foreach (var modifier in Modifiers().Where(m => targets.Contains(m.Target, StringComparer.Ordinal)))
         {
             if (modifier.OptIn != null && !_ticked.Contains(modifier.Id)) continue;
-            if (modifier.When is { } when && !Holds(when, modifier.Item)) continue;
-            var amount = SheetFormulas.Number(modifier.Item != null ? RunOn(modifier.Amount, modifier.Item) : Run(modifier.Amount));
+            if (modifier.When is { } when && !Holds(when, modifier.Item, ValueOf(modifier))) continue;
+            var amount = SheetFormulas.Number(modifier.Item != null ? RunOn(modifier.Amount, modifier.Item) : Run(modifier.Amount, extra: ValueOf(modifier)));
             if (amount == 0) continue;
             if (left.Any(l => l.Type == modifier.Type && (!l.PositiveOnly || amount > 0))) continue;
             reached.Add((modifier, amount));
@@ -771,13 +775,13 @@ public sealed class SheetModel
         var offered = new List<OptInModifier>();
         foreach (var modifier in Modifiers().Where(m => m.OptIn != null && targets.Contains(m.Target, StringComparer.Ordinal)))
         {
-            if (modifier.When is { } when && !Holds(when, modifier.Item)) continue;
+            if (modifier.When is { } when && !Holds(when, modifier.Item, ValueOf(modifier))) continue;
             var text = modifier.Amount;
             try
             {
                 if (!DiceAmount(modifier.Amount))
                 {
-                    var amount = SheetFormulas.Number(modifier.Item != null ? RunOn(modifier.Amount, modifier.Item) : Run(modifier.Amount));
+                    var amount = SheetFormulas.Number(modifier.Item != null ? RunOn(modifier.Amount, modifier.Item) : Run(modifier.Amount, extra: ValueOf(modifier)));
                     text = (amount >= 0 ? "+" : "") + amount.ToString(CultureInfo.InvariantCulture);
                 }
             }
@@ -798,11 +802,11 @@ public sealed class SheetModel
 
     /// <summary>A modifier's or rule's condition. One that reads what only a roll has (<c>input.defensive</c>) does not hold on
     /// the sheet; one that fails otherwise is a formula problem, and does not hold either.</summary>
-    private bool Holds(string when, FormulaItem? item)
+    private bool Holds(string when, FormulaItem? item, IReadOnlyDictionary<string, object>? extra = null)
     {
         try
         {
-            return SheetFormulasTruthy(item != null ? RunOn(when, item) : Run(when));
+            return SheetFormulasTruthy(item != null ? RunOn(when, item) : Run(when, extra: extra));
         }
         catch (Exception) when (when.Contains("input.", StringComparison.Ordinal))
         {

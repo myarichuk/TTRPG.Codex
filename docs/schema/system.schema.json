@@ -92,6 +92,17 @@
       },
       "description": "Condition names the combat console offers in its picker."
     },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "number",
+          "boolean"
+        ]
+      },
+      "description": "Spell effects (Bless, Bane, Guided): names the table can put on a creature beside the Conditions, with what they do in ConditionEffects. Translated like a condition (`conditions` of a translation file)."
+    },
     "dice": {
       "$ref": "#/$defs/DiceConventions",
       "description": "The dice the table rolls for initiative, and how initiative ties are broken."
@@ -164,7 +175,7 @@
       "additionalProperties": {
         "$ref": "#/$defs/ConditionEffectDefinition"
       },
-      "description": "What a condition does while it holds, by condition name."
+      "description": "What a condition or a spell effect does while it holds, by its name in Conditions or Effects."
     },
     "rolls": {
       "type": "array",
@@ -4146,6 +4157,56 @@
             "$ref": "#/$defs/ModifierDefinition"
           },
           "description": "Modifiers that apply while the condition holds; one without a `source` is credited to the condition."
+        },
+        "value": {
+          "$ref": "#/$defs/ConditionValueDefinition",
+          "description": "Makes the condition a valued one (Exhaustion 3, frightened 2): it holds while its value is above 0, and its modifiers read the value as `value`. Null: the condition has no value (`value` is 1 in its modifiers). For the condition `vitals.exhaustion` names, the loader fills in `key` and `max` from `vitals.exhaustion`; the file may write only `decrease` there."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ConditionValueDefinition": {
+      "description": "The value a valued condition carries (`conditionEffects.<name>.value`); see docs/SHEET_CONDITIONS_DESIGN.md.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The pool and sheet key that holds the value. Default `condition_<slug>` (`condition_frightened`); it may not be a resource's or a track's key, nor another condition's."
+        },
+        "max": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The highest the value goes: a number or a formula. A raise stops there. Null: no maximum."
+        },
+        "decrease": {
+          "$ref": "#/$defs/ConditionDecreaseDefinition",
+          "description": "The value dropping by itself at a moment. Null: it drops only when someone lowers it."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ConditionDecreaseDefinition": {
+      "description": "`{ on, by }`: the value drops by By at the moment On.",
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required: `turnEnd`, `turnStart`, a rest of `vitals.rests` or a moment the system declares."
+        },
+        "by": {
+          "type": "integer",
+          "description": "How much it drops by. Default 1."
         }
       },
       "additionalProperties": false
