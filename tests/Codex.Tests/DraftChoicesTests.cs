@@ -497,6 +497,103 @@ public class DraftChoicesTests : IAsyncLifetime
         Assert.False(open.Sheet.ContainsKey(ExpertiseKey)); // still a warning to make on the sheet
     }
 
+    // ---- Choices over Library entries and values (docs/ENTRY_CHOICES_DESIGN.md) ----
+
+    private static Dictionary<string, object> Add(params (string Key, object Value)[] pairs) => pairs.ToDictionary(p => p.Key, p => p.Value);
+
+    private static List<object> Items(params object[] items) => items.ToList();
+
+    private static ContentEntry HomebrewFeat(string id, params Dictionary<string, object>[] adds)
+    {
+        var feat = new ContentEntry { Type = "feat", Id = id, Name = id, SystemId = "srd5e", PackId = "homebrew" };
+        feat.Properties["category"] = "general";
+        feat.Properties["adds"] = adds.Cast<object>().ToList();
+        return feat;
+    }
+
+    /// <summary>Magic Initiate's shape: the spell list (a value) first, then two cantrips and a spell that read it.</summary>
+    private static ContentEntry Initiate() => HomebrewFeat("initiate",
+        Add(("choice", "spell-list"), ("choose", 1L), ("from", Items("Cleric", "Druid", "Wizard"))),
+        Add(("to", "grantedSpells"), ("choice", "cantrips"), ("choose", 2L), ("where", Items(
+            Add(("property", "level"), ("equals", 0L)),
+            Add(("property", "classes"), ("containsChoice", "spell-list"))))),
+        Add(("to", "grantedSpells"), ("choice", "spell"), ("choose", 1L), ("where", Items(
+            Add(("property", "level"), ("equals", 1L)),
+            Add(("property", "classes"), ("containsChoice", "spell-list"))))));
+
+    private static CharacterDraft WithFeat(string feat) => new("Ka Vrash", new Dictionary<string, object>
+    {
+        ["class"] = "fighter", ["level"] = 1L, ["feats"] = Items(feat), ["choice__fighter__class-skills"] = Items("athletics", "intimidation")
+    }, "A scarred duelist.", null);
+
+    private IEntryResolver With(params ContentEntry[] extra) => new WithProposed(new RegistryResolver(_registry), extra);
+
+    [Fact]
+    public void ParseChoices_MapsNamesAndIdsToEntryIds_IgnoringCase_AndDropsUnknownOnes()
+    {
+        var request = new ChoicesRequest("A duelist", "SRD", new[]
+        {
+            new ChoiceSpec("pick", "Pick", null, 3, new[] { new EquipmentOption("fire-bolt", "Fire Bolt"), new EquipmentOption("mage-hand", "Mage Hand"), new EquipmentOption("light", "Light") }, ByName: true)
+        });
+
+        var picked = AiAssistant.ParseChoices("""{"choices": {"pick": ["fire BOLT", "Made Up Spell", "mage-hand", "... and 12 more", "Light", "Fire Bolt"]}}""", request);
+
+        Assert.Equal(new[] { "fire-bolt", "mage-hand", "light" }, picked["pick"]);
+    }
+
+    [Fact]
+    public async Task AValueChoice_IsAskedFirst_AndWhatReadsItIsAskedAfterwardsWithOptionsNarrowedByThePick()
+    {
+        var chat = new ByPromptChat(prompt =>
+            prompt.Contains("choice__initiate__cantrips") ? """{"choices": {"choice__initiate__cantrips": ["Not A Spell", "Sacred Flame", "fire bolt", "Mage Hand"]}}"""
+            : prompt.Contains("choice__initiate__spell-list") ? """{"choices": {"choice__initiate__spell-list": "wizard"}}"""
+            : """{"choices": {}}""");
+        var draft = WithFeat("initiate");
+
+        await Features().ChooseAsync(new AiAssistant(chat), draft, "a duelist", new CampaignDocument { SystemId = "srd5e" }, _loader.GetDefinition("srd5e")!, With(Initiate()), CancellationToken.None);
+
+        var first = Assert.Single(chat.Prompts, p => p.Contains("choice__initiate__spell-list"));
+        Assert.DoesNotContain("choice__initiate__cantrips", first); // blocked until the list is picked: not asked yet
+        Assert.Contains("- Wizard", first);
+        Assert.Equal(new object[] { "Wizard" }, (List<object>)draft.Sheet["choice__initiate__spell-list"]); // the canonical value
+
+        var second = Assert.Single(chat.Prompts, p => p.Contains("choice__initiate__cantrips"));
+        Assert.True(chat.Prompts.IndexOf(second) > chat.Prompts.IndexOf(first));
+        Assert.Contains("- Fire Bolt" + Environment.NewLine, second); // a Wizard's cantrip, listed by name
+        Assert.DoesNotContain("- Sacred Flame", second); // a Cleric's
+        Assert.Equal(new object[] { "fire-bolt", "mage-hand" }, (List<object>)draft.Sheet["choice__initiate__cantrips"]); // names mapped to ids; unknown and unlisted dropped
+    }
+
+    [Fact]
+    public async Task AChoiceOverManyEntries_ListsTheFirst40ByName_AndCountsTheRest()
+    {
+        var spells = Enumerable.Range(0, 60).Select(i =>
+        {
+            var spell = new ContentEntry { Type = "spell", Id = $"aaa-boon-{i:00}", Name = $"Aaa Boon {i:00}", SystemId = "srd5e", PackId = "homebrew" };
+            spell.Properties["level"] = 9L;
+            spell.Properties["classes"] = Items("Warlock");
+            return spell;
+        });
+        var boons = HomebrewFeat("boons", Add(("to", "grantedSpells"), ("choice", "boon"), ("choose", 2L), ("where", Items(
+            Add(("property", "classes"), ("contains", "Warlock")),
+            Add(("property", "level"), ("equals", 9L))))));
+        var chat = new ByPromptChat(prompt => prompt.Contains("choice__boons__boon")
+            ? """{"choices": {"choice__boons__boon": ["Aaa Boon 05", "Aaa Boon 50", "Aaa Boon 39"]}}"""
+            : """{"choices": {}}""");
+        var draft = WithFeat("boons");
+
+        await Features().ChooseAsync(new AiAssistant(chat), draft, "a duelist", new CampaignDocument { SystemId = "srd5e" }, _loader.GetDefinition("srd5e")!, With(spells.Append(boons).ToArray()), CancellationToken.None);
+
+        var prompt = Assert.Single(chat.Prompts, p => p.Contains("choice__boons__boon"));
+        Assert.Contains("- Aaa Boon 00", prompt);
+        Assert.Contains("- Aaa Boon 39", prompt);
+        Assert.DoesNotContain("- Aaa Boon 40", prompt);
+        var more = System.Text.RegularExpressions.Regex.Match(prompt, @"- \.\.\. and (\d+) more");
+        Assert.True(more.Success);
+        Assert.True(int.Parse(more.Groups[1].Value) >= 20); // the 20 homebrew ones past the cap, and whatever else the Library offers
+        Assert.Equal(new object[] { "aaa-boon-05", "aaa-boon-39" }, (List<object>)draft.Sheet["choice__boons__boon"]); // the one past the cap was never listed: dropped
+    }
+
     private sealed class ByPromptChat(Func<string, string> reply) : IChatClient
     {
         public List<string> Prompts { get; } = new();

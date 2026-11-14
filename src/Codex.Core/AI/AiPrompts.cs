@@ -146,7 +146,9 @@ public sealed record EquipRequest(string Character, string SystemName, IReadOnly
 /// field whose options depend on the rest of the sheet (a subclass of the chosen class).</summary>
 /// <param name="Max">How many entries it takes at most; 1 for a field.</param>
 /// <param name="Options">What the rules allow this character to pick, already filtered for its class and level.</param>
-public sealed record ChoiceSpec(string Key, string Label, string? Hint, int Max, IReadOnlyList<EquipmentOption> Options);
+/// <param name="More">How many more options the rules allow than <paramref name="Options"/> lists (a long spell list is cut short); 0 when it lists all.</param>
+/// <param name="ByName">The options are Library entries: the model is shown their names only and answers with a name, which is mapped back to the entry id.</param>
+public sealed record ChoiceSpec(string Key, string Label, string? Hint, int Max, IReadOnlyList<EquipmentOption> Options, int More = 0, bool ByName = false);
 
 /// <summary>The choices left open on a character the model has just drafted.</summary>
 /// <param name="Character">Who they are: name, concept, what the sheet says so far.</param>
@@ -660,7 +662,7 @@ public static class AiPrompts
     {
         var system = $"You finish characters for the {r.SystemName} tabletop game by making the choices its rules leave to the player. " +
                      "Reply with ONE JSON object and nothing else, shaped exactly like {\"choices\": {choice key: [id, ...]}}. " +
-                     "For each choice use only the ids listed under it (the part before the colon), never more than its count, and never the same id twice. " +
+                     "For each choice use only the ids listed under it (the part before the colon), never more than its count, and never the same id twice. Where an option is listed by name only, answer with that name. " +
                      "Pick what this character would have and use, and what makes them work in play; fill the whole count unless fewer of the options fit. " +
                      "A choice of one may stay empty when nothing listed suits the character.";
         var sb = new StringBuilder();
@@ -671,8 +673,11 @@ public static class AiPrompts
             sb.AppendLine(string.IsNullOrWhiteSpace(choice.Hint) ? "" : $" ({choice.Hint.Trim()})");
             foreach (var option in choice.Options)
             {
-                sb.AppendLine(string.Equals(option.Id, option.Name, StringComparison.OrdinalIgnoreCase) ? $"- {option.Id}" : $"- {option.Id}: {option.Name}");
+                sb.AppendLine(choice.ByName ? $"- {option.Name}"
+                    : string.Equals(option.Id, option.Name, StringComparison.OrdinalIgnoreCase) ? $"- {option.Id}" : $"- {option.Id}: {option.Name}");
             }
+
+            if (choice.More > 0) sb.AppendLine($"- ... and {choice.More} more");
         }
 
         return (system, sb.ToString());

@@ -701,7 +701,7 @@ else
                     @if (Rules?.Skills is { } skillRules && evaluation is { Skills.Count: > 0 })
                     {
                         <ChoicesBlock Evaluation="evaluation" CanEdit="CanEdit" TargetLabel="ChoiceTargetLabel" Describe="Describe" OnEdit="EditChoiceAsync"
-                                      OptionText="ChoiceOptionText" MomentLabel="MomentName" OpenKeys="openChoices" />
+                                      OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" OpenKeys="openChoices" />
                         <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" OnRoll="RollAsync"
                                      ShowSums="showSums" ShowSumsChanged="value => showSums = value" />
                     }
@@ -858,7 +858,7 @@ else
                         @if (Rules?.Skills == null && evaluation != null)
                         {
                             <ChoicesBlock Evaluation="evaluation" CanEdit="CanEdit" TargetLabel="ChoiceTargetLabel" Describe="Describe" OnEdit="EditChoiceAsync"
-                                          OptionText="ChoiceOptionText" MomentLabel="MomentName" OpenKeys="openChoices" />
+                                          OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" OpenKeys="openChoices" />
                         }
 
                         <FeaturesPanel Evaluation="evaluation" Sheet="editSheet" Rules="Rules" Definition="system" ReadOnly="@(!CanEdit)"
@@ -887,7 +887,7 @@ else
                             else if (levelUpPlan is { } plan)
                             {
                                 <LevelUpStepper Plan="plan" Evaluation="evaluation" Rules="Rules" ClassId="@levelUpClassId" Roll="levelUpRoll" EntryName="Nm" Describe="Describe"
-                                                TargetLabel="ChoiceTargetLabel" OptionText="ChoiceOptionText" MomentLabel="MomentName" OnPick="PickForLevelUp"
+                                                TargetLabel="ChoiceTargetLabel" OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" OnPick="PickForLevelUp"
                                                 OnClassChosen="ChooseLevelUpClass" OnRollTyped="SetLevelUpRoll" OnRollDie="RollLevelUpHitDie" OnApply="ApplyLevelUp" OnCancel="CloseLevelUp" />
                             }
                             else
@@ -1457,6 +1457,24 @@ else
         target == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"]
         : Rules?.Skills?.Label ?? (system is { SheetKinds.Count: > 0 } ? SheetLayout.KindOf(system, editSheet)?.KeyedLists.FirstOrDefault(l => l.Key == target)?.Label : null) ?? target;
 
+    /// <summary>What the pickers need to show choices over Library entries (spells) and values (a spell list's class): which lists hold entries,
+    /// the type's names, the system's words, and each entry's name, level and Library card.</summary>
+    private EntryChoiceContext EntryChoices => new()
+    {
+        EntityTypeOf = list => Rules?.Lists.FirstOrDefault(l => l.Key.Equals(list, StringComparison.Ordinal))?.TargetEntityType,
+        TypeNames = type => system?.FindType(type) is { } found ? (found.Label, found.PluralOrLabel) : null,
+        DisplayValue = value => system?.DisplayValue(value) ?? value,
+        Describe = (type, option) =>
+        {
+            var entry = resolver?.Resolve(type, option.Key);
+            if (entry == null) return null;
+            string? level = entry.Properties.TryGetValue("level", out var raw)
+                ? EntryChoiceWords.LevelText(raw, n => L["Actor.Slots.Level", n].ToString())
+                : null;
+            return new EntryOptionInfo(Nm(entry) ?? option.Label, level, $"{LibraryPath}/{entry.Type}/{Uri.EscapeDataString(entry.Id)}");
+        }
+    };
+
     /// <summary>Writes the picks of a choice the player ticked, confirmed or cleared, and re-runs the rules. Nothing is logged yet: a change
     /// is logged when the sheet is saved (<see cref="LogChoiceChangesAsync"/>), once, as it stands then.</summary>
     private Task EditChoiceAsync(ChoiceEdit edit)
@@ -1554,10 +1572,10 @@ else
             _ => a
         }).ToArray();
         // "Expertise (Expertise): choose 1 more": a feature that is the whole entry is not named twice.
-        if (violation.Key == SheetRuleEngine.ChoicePendingKey && violation.Args.Count > 1 && violation.Args[1] is ContentEntry owner
-            && string.Equals(violation.Args[0] as string, owner.Name, StringComparison.Ordinal) && L.Has(SheetRuleEngine.ChoicePendingKey + "Own"))
+        if (violation.Key is SheetRuleEngine.ChoicePendingKey or SheetRuleEngine.ChoiceStaleKey or SheetRuleEngine.ChoiceConfirmKey && violation.Args.Count > 1 && violation.Args[1] is ContentEntry owner
+            && string.Equals(violation.Args[0] as string, owner.Name, StringComparison.Ordinal) && L.Has(violation.Key + "Own"))
         {
-            return L[SheetRuleEngine.ChoicePendingKey + "Own", args];
+            return L[violation.Key + "Own", args];
         }
 
         return L[violation.Key, args];

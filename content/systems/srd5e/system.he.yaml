@@ -489,6 +489,7 @@ values:
   "very rare": "נדיר מאוד"
   "weapon-mastery": "אומנות נשק"
   "weapon-property": "תכונת נשק"
+  "spell list": "רשימת לחשים"
 
 sheetRules:
   choices:

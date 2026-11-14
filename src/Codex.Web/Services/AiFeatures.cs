@@ -333,6 +333,9 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
     /// thousands of entries of a type does not flood the prompt.</summary>
     private const int MaxChoiceOptions = 250;
 
+    /// <summary>The most Library entries a choice over entries lists by name; the rest is only counted ("... and 133 more").</summary>
+    internal const int MaxEntryOptions = 40;
+
     /// <summary>The second pass of a draft: what the rules leave to the player and depends on the class and level the model has
     /// just picked, so it could not be listed in the first prompt. The lists a sheet fills up to a count (spells, feats), and the
     /// reference fields the rules narrow (a subclass of that class). A field the first pass filled against the rules is cleared
@@ -367,15 +370,25 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         var evaluation = engine.Evaluate(SheetOf(draft, campaign, system, engine));
         foreach (var adopted in evaluation.PendingChoices.Where(c => c.Adopted)) SheetRuleEngine.SetChoice(draft.Sheet, adopted.Key, adopted.Made);
 
-        var open = evaluation.PendingChoices.Where(c => !c.Adopted && c.Remaining > 0 && c.Options.Any(o => !c.Made.Contains(o.Key, StringComparer.OrdinalIgnoreCase))).ToList();
+        // A choice that waits on a value choice offers nothing until that one has a pick, so it is asked in a later round, once the value is on the sheet.
+        var open = evaluation.PendingChoices.Where(c => !c.Adopted && c.BlockedBy == null && c.Remaining > 0 && c.Options.Any(o => !c.Made.Contains(o.Key, StringComparer.OrdinalIgnoreCase))).ToList();
         if (open.Count == 0) return false;
 
+        var entryLists = system.SheetRules.Lists.Where(l => l.TargetEntityType != null).Select(l => l.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var choices = open.Select(c =>
         {
             var from = c.Feature.Level is { } level ? $"{c.Source}, level {level}" : c.Source;
-            var hint = c.Raise ? "Each pick is raised one rank." : c.IsRow ? "Pick the option that fits the character; answer with its name exactly as listed." : null;
+            var isValue = c.Target == SheetRuleEngine.ValueTarget;
+            var isEntry = !isValue && !c.IsRow && !c.Raise && c.Rank == null && entryLists.Contains(c.Target);
+            var hint = c.Raise ? "Each pick is raised one rank."
+                : c.IsRow ? "Pick the option that fits the character; answer with its name exactly as listed."
+                : isValue ? "Pick one of the listed values. The choices after this one depend on it."
+                : isEntry ? "Pick entries from the list; answer with their names exactly as listed."
+                : null;
             var options = c.Options.Where(o => !c.Made.Contains(o.Key, StringComparer.OrdinalIgnoreCase)).ToList();
-            return new ChoiceSpec(c.Key, $"{c.Label} ({from})", hint, c.Remaining, ChoiceOptions(options));
+            return isEntry
+                ? new ChoiceSpec(c.Key, $"{c.Label} ({from})", hint, c.Remaining, ChoiceOptions(options, MaxEntryOptions), Math.Max(0, options.Count - MaxEntryOptions), ByName: true)
+                : new ChoiceSpec(c.Key, $"{c.Label} ({from})", hint, c.Remaining, ChoiceOptions(options));
         }).ToList();
 
         var sheetKnown = string.Join(", ", draft.Sheet.Where(p => p.Value is string or long or int or double).Select(p => $"{p.Key} {p.Value}"));
@@ -620,8 +633,8 @@ public sealed class AiFeatures(AiProviderService providers, IContentRegistry reg
         entries.Take(MaxChoiceOptions).Select(e => new EquipmentOption(e.Id, e.Name)).ToList();
 
     // The keys of a ranked list (a skill, an attribute) are not entries: the key is the id the model answers with.
-    private static List<EquipmentOption> ChoiceOptions(IReadOnlyList<ChoiceOption> options) =>
-        options.Take(MaxChoiceOptions).Select(o => new EquipmentOption(o.Key, o.Label)).ToList();
+    private static List<EquipmentOption> ChoiceOptions(IReadOnlyList<ChoiceOption> options, int max = MaxChoiceOptions) =>
+        options.Take(max).Select(o => new EquipmentOption(o.Key, o.Label)).ToList();
 
     /// <summary>The sheet <paramref name="draft"/> becomes when it is saved, as far as the rules read it.</summary>
     private Dictionary<string, object> SheetOf(CharacterDraft draft, CampaignDocument campaign, SystemDefinition system, SheetRuleEngine engine)

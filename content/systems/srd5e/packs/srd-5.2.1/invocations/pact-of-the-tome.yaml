@@ -14,3 +14,18 @@ tags:
 properties:
   class: warlock
   minLevel: 1
+  adds:
+  - to: grantedSpells
+    choice: tome-cantrips
+    choose: 3
+    where:
+    - property: level
+      equals: 0
+  - to: grantedSpells
+    choice: tome-rituals
+    choose: 2
+    where:
+    - property: level
+      equals: 1
+    - property: ritual
+      equals: true

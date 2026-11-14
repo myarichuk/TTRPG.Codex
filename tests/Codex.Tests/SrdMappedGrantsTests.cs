@@ -469,4 +469,74 @@ public class SrdMappedGrantsTests : IAsyncLifetime
         sheet["invocations"] = new List<object> { "devils-sight", "devils-sight" };
         Assert.Contains(Run(sheet).Violations, v => v.Key == "Actor.Rule.Once");
     }
+
+    private ContentEntry PackSpell(string id) => _registry.GetEntries("srd5e", "spell", Packs).Single(s => s.Id == id);
+
+    private static PendingChoice Pick(SheetEvaluation evaluation, string key) =>
+        evaluation.PendingChoices.Concat(evaluation.MadeChoices).Single(c => c.Key == key);
+
+    [Fact]
+    public void AWarlockAtLevel11_IsOfferedOnlyLevel6WarlockSpells_AndThePickLandsOnGrantedSpellsWithAFreeCounter()
+    {
+        var sheet = Sheet("warlock", 11);
+
+        var open = Pick(Run(sheet), "choice__warlock__mystic-arcanum-6");
+
+        Assert.Equal("grantedSpells", open.Target);
+        Assert.NotEmpty(open.Options);
+        Assert.All(open.Options, o =>
+        {
+            var spell = PackSpell(o.Key);
+            Assert.Equal(6, Convert.ToInt32(spell.Properties["level"]));
+            Assert.Contains("Warlock", ((IEnumerable<object>)spell.Properties["classes"]).Select(c => c.ToString()));
+        });
+        Assert.DoesNotContain(Run(sheet).PendingChoices, c => c.Key == "choice__warlock__mystic-arcanum-7"); // the next row comes at 13
+
+        SheetRuleEngine.SetChoice(sheet, open.Key, new[] { "eyebite" });
+        var made = Run(sheet);
+
+        Assert.Contains("eyebite", SheetRuleEngine.RawList(sheet, "grantedSpells"));
+        Assert.Equal(1, made.Counters.Single(c => c.Key.StartsWith("uses_free_warlock_mystic_arcanum_6")).Max);
+    }
+
+    [Fact]
+    public void MagicInitiate_OffersNothingForItsSpellsUntilTheListIsPicked_ThenOnlyThatListsSpells()
+    {
+        var sheet = Sheet("fighter", 1);
+        sheet["feats"] = new List<object> { "magic-initiate" };
+
+        var evaluation = Run(sheet);
+
+        Assert.Equal(new[] { "Cleric", "Druid", "Wizard" }, Pick(evaluation, "choice__magic-initiate__spell-list").Options.Select(o => o.Key));
+        Assert.Empty(Pick(evaluation, "choice__magic-initiate__cantrips").Options);
+        Assert.Empty(Pick(evaluation, "choice__magic-initiate__spell").Options);
+
+        SheetRuleEngine.SetChoice(sheet, "choice__magic-initiate__spell-list", new[] { "Wizard" });
+        evaluation = Run(sheet);
+
+        var cantrips = Pick(evaluation, "choice__magic-initiate__cantrips");
+        Assert.Equal(2, cantrips.Count);
+        Assert.NotEmpty(cantrips.Options);
+        Assert.All(cantrips.Options, o => Assert.Equal(0, Convert.ToInt32(PackSpell(o.Key).Properties["level"])));
+        Assert.Contains(Pick(evaluation, "choice__magic-initiate__spell").Options, o => o.Key == "shield");
+        Assert.DoesNotContain(Pick(evaluation, "choice__magic-initiate__spell").Options, o => o.Key == "cure-wounds"); // a Cleric's
+    }
+
+    [Fact]
+    public void AWizardAtLevel20_PicksTwoPreparedLevel3Spells_AndUnpreparingOneMakesItsPickStale()
+    {
+        var sheet = Sheet("wizard", 20);
+        sheet["spells"] = new List<object> { "fireball", "fly", "shield" };
+
+        var open = Pick(Run(sheet), "choice__wizard__signature");
+
+        Assert.Equal(2, open.Count);
+        Assert.Equal(new[] { "fireball", "fly" }, open.Options.Select(o => o.Key).Order());
+
+        SheetRuleEngine.SetChoice(sheet, open.Key, new[] { "fireball", "fly" });
+        Assert.DoesNotContain(Run(sheet).Violations, v => v.Key == SheetRuleEngine.ChoiceStaleKey);
+
+        sheet["spells"] = new List<object> { "fly", "shield" };
+        Assert.Contains(Run(sheet).Violations, v => v.Key == SheetRuleEngine.ChoiceStaleKey && v.FieldKey == open.Key);
+    }
 }

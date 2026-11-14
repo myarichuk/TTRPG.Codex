@@ -489,6 +489,7 @@ values:
   "very rare": "Очень редкий"
   "weapon-mastery": "Мастерство оружия"
   "weapon-property": "Свойство оружия"
+  "spell list": "список заклинаний"
 
 sheetRules:
   choices:

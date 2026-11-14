@@ -38,10 +38,12 @@ public sealed record RowChoiceInfo(string OnChange, IReadOnlyList<string> Change
 /// stored under (<see cref="SheetRuleEngine.ChoiceKey"/>), a list of keys of <see cref="Target"/>; <see cref="Made"/> the picks that count now;
 /// <see cref="Options"/> the keys the player may pick (the picks made are among them); <see cref="Rank"/> the rank the picks are put at, null for a
 /// <see cref="Raise"/>. <see cref="Adopted"/>: nothing is stored yet, but the player's own ticks already cover the choice, so <see cref="Made"/> holds
-/// them and confirming means writing them (<see cref="SheetRuleEngine.SetChoice"/>).
+/// them and confirming means writing them (<see cref="SheetRuleEngine.SetChoice"/>). <see cref="BlockedBy"/>: an entry choice that waits on another choice
+/// of its feature (<c>containsChoice</c>, <c>equalsChoice</c>) names that choice's id and offers nothing until it is made. An entry choice's
+/// <see cref="Target"/> is its list's key, a value choice's is <see cref="SheetRuleEngine.ValueTarget"/>; their picks are entry ids and values.
 /// </summary>
 public sealed record PendingChoice(string Key, string Label, string Source, int Count, IReadOnlyList<string> Made, IReadOnlyList<ChoiceOption> Options,
-    int? Rank, string Target, bool Raise, bool Adopted, ActiveFeature Feature, int? MinRank = null, int? MaxRank = null, RowChoiceInfo? Row = null)
+    int? Rank, string Target, bool Raise, bool Adopted, ActiveFeature Feature, int? MinRank = null, int? MaxRank = null, RowChoiceInfo? Row = null, string? BlockedBy = null)
 {
     /// <summary>The choice picks among rows (an entry's rows, or a feature's options), not keys of a ranked list. <see cref="Target"/> is then
     /// <see cref="SheetRuleEngine.RowsTarget"/>, and the picks are the rows' names as the entry writes them.</summary>
@@ -382,7 +384,8 @@ public sealed partial class SheetRuleEngine
             {
                 if (RankTargetOf(add.To) is not { } target)
                 {
-                    if (add.Choice != null) WarnFeature(result, warned, feature.Name); // a choice into a list that is not ranked is not supported
+                    // A choice over a list's entries, or of a value, is the entry choices' (EvaluateEntryChoices); any other list is not supported.
+                    if (add.Choice != null && !IsEntryChoice(add) && !add.IsValueChoice && !add.IsMarkOnly) WarnFeature(result, warned, feature.Name);
                     continue;
                 }
 

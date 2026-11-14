@@ -1577,6 +1577,30 @@
           ],
           "description": "Candidate list property contains the display name of the entry a sheet field references."
         },
+        "contains": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Candidate list property contains this constant (`classes` contains `Warlock`), by name or id, ignoring case. ContainsNameOfField does the same with the name of the entry a sheet field references."
+        },
+        "containsChoice": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Candidate list property contains a value picked in another choice of the same feature (an entry choice's `where`: the spell list a Magic Initiate picked). Fails while that choice has no pick, so what depends on it offers nothing yet."
+        },
+        "equalsChoice": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Candidate value equals a value picked in another choice of the same feature. Fails while that choice has no pick."
+        },
         "lteField": {
           "type": [
             "string",

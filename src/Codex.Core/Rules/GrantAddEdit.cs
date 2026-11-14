@@ -105,4 +105,136 @@ public static class GrantAddEdit
         IEnumerable<object> many => many.Select(v => Convert.ToString(v, CultureInfo.InvariantCulture)?.Trim() ?? string.Empty).Where(v => v.Length > 0),
         _ => new[] { Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty }
     };
+
+    // ---- Choices over Library entries and values (docs/ENTRY_CHOICES_DESIGN.md) ----
+    //
+    // `{ to: grantedSpells, choice, choose, where: [...], free }`, `{ choice, choose, from: [values] }` (a value choice, no `to`) and
+    // `{ choice, choose, fromList, where, free }` (mark-only, no `to`) all live in Extra, so they round-trip untouched. The editor reads the
+    // `where` conditions as a sentence and lets the author change the count (Number/SetNumber "choose") and the `free` part.
+
+    /// <summary>No free casting on the picks.</summary>
+    public const string FreeNone = "none";
+
+    /// <summary>The picks cast at will (<c>free: atWill</c>).</summary>
+    public const string FreeAtWill = "atWill";
+
+    /// <summary>Each pick casts a limited number of times, a counter map like <c>uses</c> (<c>free: { max: 1, recoversOn: [Long Rest] }</c>).</summary>
+    public const string FreeUses = "uses";
+
+    /// <summary>One condition of a choice's <c>where</c>, as the editor shows it: the property, the comparison (<see cref="CondEquals"/> and the like)
+    /// and the value as text (a list joined with commas).</summary>
+    public sealed record GrantCondition(string Property, string Kind, string Value);
+
+    public const string CondEquals = "equals";
+    public const string CondIn = "in";
+    public const string CondAtLeast = "gte";
+    public const string CondAtMost = "lte";
+    public const string CondContains = "contains";
+    public const string CondContainsChoice = "containsChoice";
+    public const string CondEqualsChoice = "equalsChoice";
+
+    /// <summary>Any other comparison (a field, a lookup): shown by its property alone.</summary>
+    public const string CondOther = "other";
+
+    private static readonly string[] ComparisonKeys = { CondEquals, CondIn, CondAtLeast, CondAtMost, CondContains, CondContainsChoice, CondEqualsChoice };
+
+    /// <summary>The <c>where</c> conditions of a row, for display. A condition with no property is left out; one with a comparison the editor has
+    /// no words for is <see cref="CondOther"/>.</summary>
+    public static List<GrantCondition> Conditions(GrantAdd add)
+    {
+        var list = new List<GrantCondition>();
+        var raw = add.Extra.GetValueOrDefault("where");
+        var maps = raw switch
+        {
+            System.Collections.IDictionary one => new object?[] { one },
+            string => Array.Empty<object?>(),
+            System.Collections.IEnumerable many => many.Cast<object?>(),
+            _ => Array.Empty<object?>()
+        };
+        foreach (var item in maps)
+        {
+            if (item is not System.Collections.IDictionary map) continue;
+            string? Get(string key) => map.Contains(key) && map[key] is { } v ? ConditionText(v) : null;
+            var property = Get("property");
+            if (string.IsNullOrWhiteSpace(property)) continue;
+            var kind = ComparisonKeys.FirstOrDefault(k => !string.IsNullOrWhiteSpace(Get(k)));
+            list.Add(kind == null ? new GrantCondition(property, CondOther, string.Empty) : new GrantCondition(property, kind, Get(kind)!));
+        }
+
+        return list;
+    }
+
+    private static string ConditionText(object value) => value switch
+    {
+        string text => text.Trim(),
+        System.Collections.IEnumerable many => string.Join(", ", many.Cast<object?>().Select(v => Convert.ToString(v, CultureInfo.InvariantCulture)?.Trim() ?? string.Empty).Where(v => v.Length > 0)),
+        _ => Convert.ToString(value, CultureInfo.InvariantCulture)?.Trim() ?? string.Empty
+    };
+
+    /// <summary>Whether a row is a choice that leaves entries or values to the player rather than keys of a ranked list: it has a choice and
+    /// its list is not ranked (<paramref name="isRanked"/>).</summary>
+    public static bool IsEntryOrValueChoice(GrantAdd add, bool isRanked) => ModeOf(add) == ChoiceMode && !isRanked;
+
+    /// <summary>How the picks of a choice may be cast: <see cref="FreeNone"/>, <see cref="FreeAtWill"/> or <see cref="FreeUses"/>.</summary>
+    public static string FreeKind(GrantAdd add) => add.Extra.GetValueOrDefault("free") switch
+    {
+        null => FreeNone,
+        string text when text.Trim().Length == 0 => FreeNone,
+        string text when text.Trim().Equals(FreeAtWill, StringComparison.OrdinalIgnoreCase) => FreeAtWill,
+        _ => FreeUses
+    };
+
+    /// <summary>Sets how the picks are cast. Moving to <see cref="FreeUses"/> keeps a counter the row already has; a new one is one use.</summary>
+    public static void SetFreeKind(GrantAdd add, string kind)
+    {
+        switch (kind)
+        {
+            case FreeAtWill:
+                add.Extra["free"] = FreeAtWill;
+                break;
+            case FreeUses:
+                add.Extra["free"] = FreeKind(add) != FreeUses ? new Dictionary<string, object> { ["max"] = 1L } : FreeMap(add);
+                break;
+            default:
+                add.Extra.Remove("free");
+                break;
+        }
+    }
+
+    /// <summary>The uses of a free counter as text (a number or a formula); "1" when there is none yet.</summary>
+    public static string FreeMax(GrantAdd add)
+    {
+        var map = FreeMap(add);
+        return map.TryGetValue("max", out var max) && Convert.ToString(max, CultureInfo.InvariantCulture)?.Trim() is { Length: > 0 } text ? text : "1";
+    }
+
+    public static void SetFreeMax(GrantAdd add, string? text)
+    {
+        var map = FreeMap(add);
+        map["max"] = FeatureGrantData.Value(string.IsNullOrWhiteSpace(text) ? "1" : text);
+        add.Extra["free"] = map;
+    }
+
+    /// <summary>The rests that refill a free counter (<c>recoversOn</c>).</summary>
+    public static List<string> FreeRecoversOn(GrantAdd add) =>
+        FreeMap(add).TryGetValue("recoversOn", out var on) ? ListOf(on).ToList() : new List<string>();
+
+    /// <summary>Makes a rest refill the free counter, or not. Other keys of the counter (<c>recovers</c>, <c>key</c>) stay as they are.</summary>
+    public static void SetFreeRecovers(GrantAdd add, string rest, bool on)
+    {
+        var map = FreeMap(add);
+        var rests = FreeRecoversOn(add).Where(r => !r.Equals(rest, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (on) rests.Add(rest);
+        if (rests.Count == 0) map.Remove("recoversOn");
+        else map["recoversOn"] = rests.Cast<object>().ToList();
+        add.Extra["free"] = map;
+    }
+
+    /// <summary>The free counter as an editable copy: its keys, or a new map (<c>free: 2</c> is a counter of two).</summary>
+    private static Dictionary<string, object> FreeMap(GrantAdd add) => add.Extra.GetValueOrDefault("free") switch
+    {
+        System.Collections.IDictionary map => map.Keys.Cast<object>().ToDictionary(k => Convert.ToString(k, CultureInfo.InvariantCulture) ?? string.Empty, k => map[k]!),
+        null or string => new Dictionary<string, object>(),
+        var number => new Dictionary<string, object> { ["max"] = number }
+    };
 }
