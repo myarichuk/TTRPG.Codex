@@ -142,6 +142,9 @@ values:
   position: Позиция
   effect: Эффект
   attribute: Атрибут
+  rating: Рейтинг
+  value: Значение
+  used: Используется
   Assist, push or bargain: Помощь, нажим или сделка
   controlled: контролируемая
   risky: рискованная

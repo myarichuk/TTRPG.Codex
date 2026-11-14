@@ -141,6 +141,9 @@ values:
   position: עמדה
   effect: השפעה
   attribute: תכונה
+  rating: דירוג
+  value: ערך
+  used: בשימוש
   Assist, push or bargain: סיוע, התאמצות או עסקה
   controlled: מבוקרת
   risky: מסוכנת
