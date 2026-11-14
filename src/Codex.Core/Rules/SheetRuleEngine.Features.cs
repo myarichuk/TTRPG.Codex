@@ -1005,6 +1005,16 @@ public sealed partial class SheetRuleEngine
         }
     }
 
+    /// <summary>Evaluates a live view (<see cref="SheetConditions.LiveView"/>) the way the sheet page does its own: what the conditions that hold now grant the
+    /// Number fields (speed -10) is put on first, in place of what the stored sheet had of them, so a table status or a value at the table reaches those
+    /// fields too. Works on <paramref name="live"/>, which must be a copy made for evaluating; the stored sheet is never passed here.</summary>
+    public SheetEvaluation EvaluateLive(Dictionary<string, object> live, ILinkedSheets? linked = null)
+    {
+        StripGranted(live);
+        ApplyGranted(live);
+        return Evaluate(live, linked);
+    }
+
     /// <summary>Whether an <c>adds</c> item has reached its level: the sheet value the feature's levels are compared with is at or above it.</summary>
     private static bool AddApplies(ActiveFeature feature, FeatureAdd add) =>
         !add.Level.HasValue || (feature.LevelKey == null ? null : ToDouble(feature.View.GetValueOrDefault(feature.LevelKey))) >= add.Level;

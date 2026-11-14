@@ -90,6 +90,13 @@ public static class ActorSheetSync
             {
                 if (YamlValues.GetInt(actor.Sheet, key) is { } value) pool.Set(key, value);
             }
+
+            // A valued condition's value (Exhaustion 3) is mirrored the same way: the table's pool is the live number, and the sheet's is written back
+            // when it changes (ApplyStateToSheet). A sheet that does not hold it leaves the pool alone, since the table may hold a level the sheet has not met yet.
+            foreach (var (_, key, _) in Codex.Core.Rules.SheetConditions.Valued(system))
+            {
+                if (YamlValues.GetInt(actor.Sheet, key) is { } value) pool.Set(key, value);
+            }
         }
         else
         {

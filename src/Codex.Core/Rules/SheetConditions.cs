@@ -87,6 +87,42 @@ public static class SheetConditions
         return targets;
     }
 
+    /// <summary>
+    /// The sheet as the table has it now (docs/SHEET_CONDITIONS_DESIGN.md, "Storage"): the one view every host that works out numbers reads, so a
+    /// condition that holds at the table changes them. A new dictionary, for evaluating and for a handler to run on, <b>never for saving</b>: its
+    /// <c>conditions</c> carry the table's statuses and its numbers the table's pools, and neither belongs in the stored sheet (a valued condition's
+    /// own key excepted, which the table mirrors to the sheet on purpose: <c>ActorSheetSync</c>). It is:
+    /// <list type="bullet">
+    /// <item>the stored <paramref name="sheet"/>;</item>
+    /// <item>the <paramref name="pools"/> over the numbers the table keeps: a key the sheet holds as a number (hit points, resources, slots, a feature's
+    /// <c>uses_*</c>), a track of <paramref name="trackKeys"/> (a sheet kind's numeric tracks, which the sheet may not hold yet), and each valued
+    /// condition's key;</item>
+    /// <item><c>conditions</c>: the sheet's own, the table's <paramref name="statuses"/> (an actor's active effects, by name), and every valued
+    /// condition whose key is above 0 (<see cref="Of"/>). A valued condition at 0 does not hold, listed or not.</item>
+    /// </list>
+    /// Plain data in and out, because the Web hosts hold no runtime: a table card has its state snapshot's pools and effects. Nothing passed in is changed.
+    /// </summary>
+    public static Dictionary<string, object> LiveView(SystemDefinition system, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, int>? pools,
+        IEnumerable<string>? statuses, IEnumerable<string>? trackKeys = null)
+    {
+        var live = new Dictionary<string, object>(sheet, StringComparer.Ordinal);
+        if (pools != null)
+        {
+            var owned = new HashSet<string>(trackKeys ?? Array.Empty<string>(), StringComparer.Ordinal);
+            foreach (var (_, key, _) in Valued(system)) owned.Add(key);
+            foreach (var (key, value) in pools)
+            {
+                if (owned.Contains(key) || YamlValues.ToNumber(sheet.GetValueOrDefault(key)) != null) live[key] = (long)value;
+            }
+        }
+
+        var listed = SheetRuleEngine.RawList(sheet, SheetModel.ConditionsKey).Concat(statuses ?? Array.Empty<string>())
+            .Distinct(StringComparer.OrdinalIgnoreCase).Cast<object>().ToList();
+        live[SheetModel.ConditionsKey] = listed;
+        live[SheetModel.ConditionsKey] = Of(system, live).Cast<object>().ToList();
+        return live;
+    }
+
     /// <summary>The conditions that hold on <paramref name="sheet"/>: the ones it lists, and each valued condition whose key on the sheet is above 0.
     /// A valued condition holds only then, listed or not: one the sheet lists with its value at 0 or unset is left out.</summary>
     public static List<string> Of(SystemDefinition system, IReadOnlyDictionary<string, object> sheet)

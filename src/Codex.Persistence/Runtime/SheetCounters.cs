@@ -56,6 +56,13 @@ internal static class SheetCounters
         {
             if (seen.Add(key)) yield return (key, key + Codex.Core.Rules.SheetRuleEngine.UsesMaxSuffix);
         }
+
+        // A valued condition's value (Exhaustion 3, frightened 2) is a counter too: the table raises it, the sheet page may move it, and the two merge
+        // by delta. It has no maximum key: its `max` is the table's to enforce (docs/SHEET_CONDITIONS_DESIGN.md, "Storage").
+        foreach (var (_, key, _) in Codex.Core.Rules.SheetConditions.Valued(system))
+        {
+            if (seen.Add(key)) yield return (key, null);
+        }
     }
 
     private static bool IsCounterTrack(TrackDefinition track) =>

@@ -481,6 +481,16 @@ else
     /// running, otherwise the campaign's actors this page was given.</summary>
     private ILinkedSheets Linked() => runtime != null ? runtime.Linked : campaignLinked ??= new ActorLinkedSheets(Actors);
 
+    /// <summary>The actor's sheet as the table has it (<see cref="SheetConditions.LiveView"/>: the snapshot's pools over its numbers, its statuses and
+    /// valued conditions in <c>conditions</c>), for working numbers out. A copy, never saved.</summary>
+    private Dictionary<string, object> LiveSheetOf(ActorDocument actor)
+    {
+        var state = snapshot.Actor(actor.Id);
+        return Definition == null
+            ? new Dictionary<string, object>(actor.Sheet)
+            : SheetConditions.LiveView(Definition, actor.Sheet, state?.Pools, state?.Effects.Select(e => e.EffectId));
+    }
+
     private SheetEvaluation? EvaluationOf(ActorDocument actor)
     {
         if (engine == null) return null;
@@ -488,7 +498,7 @@ else
         SheetEvaluation? evaluation;
         try
         {
-            evaluation = engine.Evaluate(actor.Sheet, Linked());
+            evaluation = engine.EvaluateLive(LiveSheetOf(actor), Linked());
         }
         catch (Exception)
         {
@@ -518,7 +528,7 @@ else
         if (engine == null || Definition?.Dice.InitiativeBonus is not { } key || ActorsById.GetValueOrDefault(actorId) is not { } actor) return 0;
         try
         {
-            var evaluation = engine.Evaluate(actor.Sheet, Linked());
+            var evaluation = engine.EvaluateLive(LiveSheetOf(actor), Linked());
             return evaluation.Derived.TryGetValue(key, out var value) ? Convert.ToInt32(value) : 0;
         }
         catch (Exception)

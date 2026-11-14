@@ -271,7 +271,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
         {
             // A link to an actor the table does not hold (retired, say) is left unknown rather than taken as a deleted one, so its counters stay.
             linked = LinkedFor(actor.Sheet);
-            evaluation = engine.Evaluate(actor.Sheet, linked);
+            // Worked out on the live view (the table's statuses and values over the sheet); only the counters it names are written to actor.Sheet.
+            evaluation = engine.EvaluateLive(LiveSheetOf(actor), linked);
         }
         catch (Exception ex)
         {
@@ -286,6 +287,39 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
         engine.ApplyCounters(actor.Sheet, evaluation);
         if (Counters() != before) ActorSheetSync.ApplySheetToState(actor, System, _componentRegistry);
+    }
+
+    /// <summary>The actor's sheet as the table has it now (<see cref="Codex.Core.Rules.SheetConditions.LiveView"/>): the stored sheet with the live pools over its
+    /// numbers and the table's statuses and valued conditions in <c>conditions</c>. For working numbers out, never for saving; a copy.
+    /// An actor the table holds no entity for, or a table with no system, gets a copy of the stored sheet.</summary>
+    internal Dictionary<string, object> LiveSheetOf(ActorDocument actor)
+    {
+        if (System == null || !_actorEntities.TryGetValue(actor.Id, out var entity)) return new Dictionary<string, object>(actor.Sheet);
+        var pools = entity.Has<ResourcePoolComponent>() ? entity.Get<ResourcePoolComponent>().Pools : null;
+        var statuses = entity.Has<ActiveEffectsComponent>() ? entity.Get<ActiveEffectsComponent>().Effects.Select(e => e.EffectId).ToList() : null;
+        return Codex.Core.Rules.SheetConditions.LiveView(System, actor.Sheet, pools, statuses);
+    }
+
+    /// <summary>The values of the system's valued conditions on a sheet, as one string to compare before and after the table's pools are written onto it.</summary>
+    private string ValuedConditionValues(IReadOnlyDictionary<string, object> sheet) =>
+        System == null ? "" : string.Join("|", Codex.Core.Rules.SheetConditions.Valued(System).Select(v => YamlValues.GetInt(sheet, v.Key)?.ToString() ?? ""));
+
+    /// <summary>Takes off what the sheet's conditions granted its Number fields last time and puts on what they grant now
+    /// (<see cref="Codex.Core.Rules.SheetRuleEngine.StripGranted"/> and <c>ApplyGranted</c>, as the sheet page's recompute does), so a sheet stored while the
+    /// table moved a condition's value agrees with it. A sheet the rules cannot work out is left as it is.</summary>
+    private void SettleGranted(Dictionary<string, object> sheet)
+    {
+        if (System == null || Resolver is Codex.Core.Rules.NullEntryResolver) return;
+        try
+        {
+            var engine = new Codex.Core.Rules.SheetRuleEngine(System, Resolver);
+            engine.StripGranted(sheet);
+            engine.ApplyGranted(sheet);
+        }
+        catch (Exception ex) when (ex is Codex.Core.Rules.FormulaException or InvalidOperationException)
+        {
+            _logger.LogWarning(ex, "Could not settle what the conditions grant a stored sheet");
+        }
     }
 
     /// <summary>Takes the campaign's clocks and tables as stored. Called once, with <see cref="Hydrate"/>.</summary>
@@ -892,7 +926,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
                 doc.State = state;
                 doc.UpdatedAt = now;
+                var valuedBefore = ValuedConditionValues(doc.Sheet);
                 ActorSheetSync.ApplyStateToSheet(doc, null, _componentRegistry);
+                // A valued condition's value moved at the table (Exhaustion ended): what it granted the sheet's Number fields (speed -10, remembered
+                // in granted__speed) is taken off or put on now, not left until the sheet page is next saved.
+                if (ValuedConditionValues(doc.Sheet) != valuedBefore) SettleGranted(doc.Sheet);
             });
 
             if (stored != null)

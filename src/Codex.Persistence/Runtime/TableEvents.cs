@@ -273,18 +273,19 @@ internal static class TableEvents
         // value and the sheet's together, as the Use button does.
         foreach (var key in doc.Sheet.Keys.Where(SheetRuleEngine.IsUsesKey)) numeric.Add(key);
 
-        // The sheet as the table has it: the pools win over the cached sheet for numeric tracks, and the table's conditions join
-        // the sheet's own.
-        var live = new Dictionary<string, object>(doc.Sheet);
-        foreach (var key in numeric)
-        {
-            if (pool.Pools.TryGetValue(key, out var value)) live[key] = (long)value;
-        }
-
+        // The sheet as the table has it (SheetConditions.LiveView): the pools win over the cached sheet for numeric tracks, and the table's
+        // conditions join the sheet's own. It is what the handler runs on; only what the handler changes is written back to doc.Sheet below.
         var statuses = Statuses(entity);
         var own = SheetRuleEngine.RawList(doc.Sheet, SheetModel.ConditionsKey);
-        var before = own.Concat(statuses).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        live[SheetModel.ConditionsKey] = before.Cast<object>().ToList();
+        // Only the pools this method writes back (the numeric tracks and uses_*) are laid over, so a key the handler changes is one the write-back below moves in the pool too.
+        var numericPools = pool.Pools.Where(p => numeric.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
+        foreach (var (_, valuedKey, _) in SheetConditions.Valued(system))
+        {
+            if (pool.Pools.TryGetValue(valuedKey, out var level)) numericPools[valuedKey] = level;
+        }
+
+        var live = SheetConditions.LiveView(system, doc.Sheet, numericPools, statuses, numeric);
+        var before = SheetRuleEngine.RawList(live, SheetModel.ConditionsKey);
 
         var result = act(live);
         var name = runtime.ActorTerm(actorId);

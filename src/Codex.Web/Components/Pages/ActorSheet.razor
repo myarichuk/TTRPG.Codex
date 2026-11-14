@@ -558,7 +558,7 @@ else
     // and a roll that cannot pay is not made. The ticks it took are cleared; one that did not fit stays.
     private async Task RollWithBonusesAsync(string expression, string label, RollSite? site, bool addNumber)
     {
-        var built = rollBonuses.Build(engine, editSheet, site, expression, label, addNumber, linkedSheets, BonusNames);
+        var built = rollBonuses.Build(engine, RulesSheet(), site, expression, label, addNumber, linkedSheets, BonusNames);
         if (!await RollBonusTray.PayAsync(built.Applied, SpendOnSheet, BonusNames))
         {
             flash = Flash.Error(L["Actor.Bonus.CannotPay"]);
@@ -579,7 +579,7 @@ else
         if (engine == null || Rules == null || (Rules.Actions.Count == 0 && Rules.Skills == null)) return Array.Empty<RollOptIn>();
         try
         {
-            return engine.AllOptIns(editSheet, linkedSheets);
+            return engine.AllOptIns(RulesSheet(), linkedSheets);
         }
         catch (Exception ex) when (ex is FormulaException or InvalidOperationException)
         {
@@ -972,7 +972,7 @@ else
                 @if (sheetView != null && resolver != null && system != null && Shows(widget))
                 {
                     <div class="sheet-widget" data-testid="@($"widget-{widget.Widget}-{widget.Key ?? widget.Roll ?? widget.Target}")">
-                        <SheetWidget Widget="widget" Definition="system" View="sheetView" Sheet="editSheet" Resolver="resolver" CanEdit="CanEdit" CanRoll="CanEdit"
+                        <SheetWidget Widget="widget" Definition="system" View="sheetView" Sheet="editSheet" LiveSheet="LiveView()" Resolver="resolver" CanEdit="CanEdit" CanRoll="CanEdit"
                                      Changed="OnRulesInputChanged" Left="SayLeft" OnRoll="RollDefinitionAsync"
                                      Linked="linkedSheets" Actors="noteActors.Values" ActorId="@actor?.Id" CampaignId="@CampaignId" ViewerIsDm="@(access?.IsDm == true)"
                                      Vault="Vault" LinkChanged="OnLinkChangedAsync" />
@@ -1242,7 +1242,10 @@ else
             return;
         }
 
+        // The stored sheet is recomputed in place, as it is saved: what its own conditions and values change is written to it. At a live table what
+        // the table's statuses and values change is worked out on a copy (the live view) and kept in the evaluation alone, so none of it is saved.
         evaluation = engine.Recompute(editSheet, linkedSheets);
+        if (LiveView() is { } live) evaluation = engine.Recompute(live, linkedSheets);
         // The tray's bonuses for the next roll follow the sheet: one whose feature went, or whose pool ran dry, is no longer ticked.
         bonusOffers = OptInsOfSheet();
         rollBonuses.Keep(bonusOffers);
@@ -1400,6 +1403,19 @@ else
     /// <summary>The live table, when this actor is at it: a session is on and the actor is in play.</summary>
     private CampaignRuntime? TableOfActor() =>
         actor != null && RuntimeManager.TryGet(CampaignId) is { ActiveSession: not null } live && live.HasActor(actor.Id) ? live : null;
+
+    // The stored sheet and the live view (docs/SHEET_CONDITIONS_DESIGN.md, "Storage"): editSheet is the stored sheet, the only thing the page edits and
+    // saves. The live view is a copy for working numbers out while the actor is at a live table: the table's statuses and values over editSheet
+    // (SheetConditions.LiveView). It is never assigned to editSheet, never edited and never saved, so a status the table holds is not written into the sheet.
+
+    /// <summary>A copy of the sheet as the table has it, for evaluating; null off the table (the sheet alone counts then). Read from the runtime's snapshot, not its loop-owned state.</summary>
+    private Dictionary<string, object>? LiveView() =>
+        system != null && actor != null && TableOfActor() is { } live && live.Snapshot.Actor(actor.Id) is { } state
+            ? SheetConditions.LiveView(system, editSheet, state.Pools, state.Effects.Select(e => e.EffectId))
+            : null;
+
+    /// <summary>What rolls and bonuses are worked out on: the live view at a live table, else the sheet being edited. Read only.</summary>
+    private Dictionary<string, object> RulesSheet() => LiveView() ?? editSheet;
 
     /// <summary>A moment (or rest) fired on the sheet: where the table runs it, the table's own command does (so the refill is logged, undoable
     /// and not lost to the merge on save); otherwise it is applied to the sheet being edited, to be saved with it.</summary>
@@ -2064,7 +2080,8 @@ else
             return;
         }
 
-        var sheet = new Dictionary<string, object>(editSheet);
+        // A copy to work the next level out on, never saved; from the live view at a table so it is compared with `evaluation` on equal terms.
+        var sheet = new Dictionary<string, object>(RulesSheet());
         RaiseLevel(sheet);
         foreach (var (key, picks) in levelUpPicks) SheetRuleEngine.SetChoice(sheet, key, picks);
         engine.ApplyInherited(sheet);
