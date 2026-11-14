@@ -43,8 +43,9 @@ public sealed class RollBonusTray
     /// <summary>Takes a roll's base expression and label and adds what the sheet's features give the roll at <paramref name="site"/>: the always-on dice,
     /// and the ticked opt-ins that fit (dice or numbers, as each says). <paramref name="addNumber"/> adds the always-on numbers too, for a roll whose
     /// own bonus does not hold them already (the sheet's spell attack). Nothing changes without an engine, a sheet or a site.</summary>
-    public BuiltRoll Build(SheetRuleEngine? engine, IReadOnlyDictionary<string, object>? sheet, RollSite? site, string expression, string label, bool addNumber = false, ILinkedSheets? linked = null)
+    public BuiltRoll Build(SheetRuleEngine? engine, IReadOnlyDictionary<string, object>? sheet, RollSite? site, string expression, string label, bool addNumber = false, ILinkedSheets? linked = null, RollBonusNames? names = null)
     {
+        names ??= RollBonusNames.English;
         if (engine == null || sheet == null || site == null) return new BuiltRoll(expression, label, Array.Empty<RollOptIn>());
 
         var always = engine.Bonuses(sheet, site, linked);
@@ -53,13 +54,13 @@ public sealed class RollBonusTray
         if (addNumber && always.Number != 0)
         {
             text.Append(Signed(always.Number));
-            parts.AddRange(always.Bonuses.Select(b => $"{Signed(b.Amount)} {b.Source}"));
+            parts.AddRange(always.Bonuses.Select(b => $"{Signed(b.Amount)} {names.Source(b.Source)}"));
         }
 
         foreach (var dice in always.Dice)
         {
             text.Append(dice.Dice);
-            parts.Add($"{dice.Dice} {dice.Source}");
+            parts.Add($"{dice.Dice} {names.Source(dice.Source)}");
         }
 
         var applied = _ticked.Count == 0
@@ -68,7 +69,7 @@ public sealed class RollBonusTray
         foreach (var optIn in applied)
         {
             text.Append(optIn.Amount);
-            parts.Add($"{optIn.Amount} {optIn.Label}");
+            parts.Add($"{optIn.Amount} {names.Label(optIn.Label, optIn.Source)}");
         }
 
         return new BuiltRoll(text.ToString(), parts.Count == 0 ? label : $"{label} ({string.Join(", ", parts)})", applied);
@@ -76,12 +77,13 @@ public sealed class RollBonusTray
 
     /// <summary>Pays what the applied opt-ins spend, one after the other, through the host's own spend (the sheet's, or the live table's command).
     /// Returns false at the first refusal: the roll is not made and nothing more is spent. After a roll that was made, call <see cref="Used"/>.</summary>
-    public static async Task<bool> PayAsync(IEnumerable<RollOptIn> applied, Func<(string Key, int Delta, string Label), Task<bool>> spend)
+    public static async Task<bool> PayAsync(IEnumerable<RollOptIn> applied, Func<(string Key, int Delta, string Label), Task<bool>> spend, RollBonusNames? names = null)
     {
+        names ??= RollBonusNames.English;
         foreach (var optIn in applied)
         {
             if (optIn.Spends is not { } cost) continue;
-            if (!await spend((cost.Key, -(int)Math.Round(cost.Amount), optIn.Label))) return false;
+            if (!await spend((cost.Key, -(int)Math.Round(cost.Amount), names.Label(optIn.Label, optIn.Source)))) return false;
         }
 
         return true;

@@ -22,7 +22,7 @@
                     <input id="@boxId" type="checkbox" class="field-box mt-0" checked="@Tray.IsTicked(offer.Id)" disabled="@(!offer.CanPay)"
                            aria-describedby="@(offer.CanPay ? null : reasonId)" data-testid="@("roll-bonus-" + Slug(offer.Id))"
                            @onchange="e => TickAsync(shown, (bool)e.Value!)" />
-                    <label for="@boxId" class="mb-0">@offer.Label: <bdi>@offer.Amount</bdi>@if (offer.Target != null)
+                    <label for="@boxId" class="mb-0">@Shown.Label(offer.Label, offer.Source): <bdi>@offer.Amount</bdi>@if (offer.Target != null)
                         {
                             <span class="small-muted">&nbsp;@AppliesText(offer.Target)</span>
                         }
@@ -52,6 +52,11 @@
 
     /// <summary>Names a Library entry (the id of <c>attack.entry.{id}</c>); the id itself when it cannot.</summary>
     [Parameter] public Func<string, string?>? EntryName { get; set; }
+
+    /// <summary>Says a tick box's label in the reader's language; none: as written.</summary>
+    [Parameter] public RollBonusNames? Names { get; set; }
+
+    private RollBonusNames Shown => Names ?? RollBonusNames.English;
 
     /// <summary>Beside a card's rolls: no hint, and the fieldset sits tight.</summary>
     [Parameter] public bool Compact { get; set; }
