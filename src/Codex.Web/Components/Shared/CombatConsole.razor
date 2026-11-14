@@ -170,7 +170,7 @@ else
         </div>
 
         <div class="col-lg-4">
-            <TableDicePanel Rolls="VisibleRollLog()" RollerName="ResolveRollerName" RollLabel="RollLabel" IsDm="Access.IsDm" OnRoll="RollDiceAsync"
+            <TableDicePanel Rolls="VisibleRollLog()" RollerName="ResolveRollerName" RollLabel="RollLabel" Word="RollWord" IsDm="Access.IsDm" OnRoll="RollDiceAsync"
                             ActorHref="@(actorId => ActorsById.ContainsKey(actorId) ? ActorHref(actorId) : null)" />
 
 
@@ -795,6 +795,9 @@ else
 
         return RollLogText.Label(entry, rollTerms);
     }
+
+    // A word of the system a roll's line shows on its own (its outcome, a sheet roll's key), in the reader's language.
+    private string RollWord(string word) => Definition?.DisplayOption(L.Culture.Name, string.Empty, word) ?? word;
 
     private IEnumerable<RollLogEntry> VisibleRollLog() =>
         TableVisibility.Rolls(snapshot.RollLog, Access.IsDm, VisibleActorIds);

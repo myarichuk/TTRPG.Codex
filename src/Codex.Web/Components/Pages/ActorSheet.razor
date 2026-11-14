@@ -296,7 +296,7 @@ else
             @if (sheetRoll != null)
             {
                 <section class="panel" aria-live="polite" data-testid="sheet-roll-result">
-                    <div class="panel-title"><h2 class="h5"><LucideIcon IconName="dices" Size="18" Class="title-icon" /> @(sheetRoll.Label ?? sheetRoll.Definition)</h2>
+                    <div class="panel-title"><h2 class="h5"><LucideIcon IconName="dices" Size="18" Class="title-icon" /> @(system?.DisplayValue(sheetRoll.Label ?? sheetRoll.Definition) ?? sheetRoll.Label ?? sheetRoll.Definition)</h2>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => sheetRoll = null">@L["Actor.Sheet.Dismiss"]</CodexButton></div>
                     <p class="mb-1"><strong data-testid="sheet-roll-outcome">@(sheetRoll.Outcome is { } outcome ? system!.DisplayValue(outcome) : SheetView.Format(sheetRoll.Totals().FirstOrDefault()))</strong>
                         <span class="small-muted ms-2" data-testid="sheet-roll-dice"><bdi>@L["Actor.Sheet.RollDice", string.Join(" ", sheetRoll.Kept), SheetView.Format(sheetRoll.Totals().FirstOrDefault())]</bdi></span></p>

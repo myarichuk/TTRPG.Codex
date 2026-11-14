@@ -92,6 +92,9 @@ public sealed record EventTerm(string Kind, string Key, string Text)
 
     public static EventTerm Bonus(string label, string source) => new(BonusKind, label + BonusSeparator + source, label);
 
+    /// <summary>An amount of dice a pool roll's bonus adds (the key is the signed number, <c>+1</c>), said as the reader says it (<c>+1d</c>).</summary>
+    public const string DiceKind = "dice";
+
     /// <summary>A word of the campaign's system: a track's label, an event's or a log line's key (overhaul step 6).</summary>
     public const string SystemKind = "system";
 

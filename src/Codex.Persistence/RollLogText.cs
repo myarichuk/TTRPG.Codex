@@ -19,6 +19,6 @@ public static class RollLogText
             var key = EventTerm.Bonus(b.Label, b.Source).Key;
             return new RollBonus(null, b.Source, terms(EventTerm.BonusKind, key) ?? b.Label, b.Amount, true);
         });
-        return RollBonusLabel.Of(name, bonuses, entry.Pool);
+        return RollBonusLabel.Of(name, bonuses, entry.Pool, amount => terms(EventTerm.DiceKind, amount) ?? amount + "d");
     }
 }

@@ -36,14 +36,14 @@ public class RollLogTextTests : IAsyncLifetime
         EventTerms.For(_loader.GetDefinition("fitd-srd"), Localizer.For(culture), new Dictionary<string, string>(), _registry);
 
     [Theory]
-    [InlineData("ru", "Бросок сопротивления (+1d Из укрытия или из ловушки)")]
-    [InlineData("he", "הטלת התנגדות (+1d ממסתור או ממלכודת)")]
+    [InlineData("ru", "Бросок сопротивления (+1 куб. Из укрытия или из ловушки)")]
+    [InlineData("he", "הטלת התנגדות (+1 קוביות ממסתור או ממלכודת)")]
     public void ARollLine_IsInTheReadersLanguage_NameAndBonus(string culture, string expected) =>
         Assert.Equal(expected, RollLogText.Label(Resistance(), Terms(culture)));
 
     [Theory]
-    [InlineData("ru", "Бросок сопротивления (+1d Из укрытия или из ловушки)")]
-    [InlineData("he", "הטלת התנגדות (+1d ממסתור או ממלכודת)")]
+    [InlineData("ru", "Бросок сопротивления (+1 куб. Из укрытия или из ловушки)")]
+    [InlineData("he", "הטלת התנגדות (+1 קוביות ממסתור או ממלכודת)")]
     public void ARollLine_IsTheSame_WhenTheHostHoldsTheLocalizedCopyOfTheSystem(string culture, string expected)
     {
         var localized = _loader.GetDefinition("fitd-srd")!.Localize(culture);
