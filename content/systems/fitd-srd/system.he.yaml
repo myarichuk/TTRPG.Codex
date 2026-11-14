@@ -137,6 +137,13 @@ values:
   Action roll: הטלת פעולה
   Resistance roll: הטלת התנגדות
   Group action: פעולה קבוצתית
+  action: פעולה
+  position: עמדה
+  effect: השפעה
+  attribute: תכונה
+  rating: דירוג
+  value: ערך
+  used: בשימוש
   Assist, push or bargain: סיוע, התאמצות או עסקה
   controlled: מבוקרת
   risky: מסוכנת

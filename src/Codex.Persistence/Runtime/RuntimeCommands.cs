@@ -874,6 +874,7 @@ public sealed record MakeRollCommand(string ActorId, string RollerUserId, Codex.
     {
         _outcome = TableEvents.Roll(runtime, ActorId, Request, Dice ?? new RandomDiceSource(), out _rolled);
         if (_rolled is not { } roll) return;
+        var pool = runtime.System?.Rolls.FirstOrDefault(r => r.Key == roll.Definition)?.Pool != null;
         runtime.RecordRoll(new RollLogEntry
         {
             ActorId = ActorId,
@@ -883,8 +884,11 @@ public sealed record MakeRollCommand(string ActorId, string RollerUserId, Codex.
             Total = (int)Math.Round(roll.Total),
             IsSecret = IsSecret,
             // The bonuses the roller ticked are said in the label, so the table's log shows what counted.
-            Label = Codex.Core.Rules.RollBonusLabel.Of(roll.Label ?? roll.Definition, roll.Bonuses,
-                runtime.System?.Rolls.FirstOrDefault(r => r.Key == roll.Definition)?.Pool != null),
+            Label = Codex.Core.Rules.RollBonusLabel.Of(roll.Label ?? roll.Definition, roll.Bonuses, pool),
+            // The same words as parts, so each reader's log line can say them in their language; Label stays the English fallback.
+            Name = roll.Label ?? roll.Definition,
+            Pool = pool,
+            Bonuses = roll.Bonuses.Where(b => b.Ticked).Select(b => new RollLogBonus { Source = b.Source, Label = b.Label, Amount = b.Amount }).ToList(),
             Kept = roll.Kept.ToList(),
             Dropped = roll.Dropped.ToList(),
             Modifier = (int)Math.Round(roll.Modifier),

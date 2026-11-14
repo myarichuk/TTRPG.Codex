@@ -16,14 +16,14 @@
             {
                 var shown = value;
                 <div class="sheet-value" data-testid="@($"value-{value.Key}")">
-                    <dt><label for="@($"{id}-{value.Key}")">@value.Label</label></dt>
+                    <dt><label for="@($"{id}-{value.Key}")">@Say(value.Label)</label></dt>
                     <dd>
                         @if (value.Input && CanEdit && value.Options is { Count: > 0 } options)
                         {
                             <select id="@($"{id}-{value.Key}")" class="field-select field-sm" value="@value.Value" @onchange="e => SetValueAsync(shown.Key, e.Value?.ToString(), true)">
                                 @foreach (var option in options)
                                 {
-                                    <option value="@option" selected="@(Equals(option, value.Value?.ToString()))">@Definition.DisplayValue(option)</option>
+                                    <option value="@option" selected="@(Equals(option, value.Value?.ToString()))">@Say(option)</option>
                                 }
                             </select>
                         }
@@ -45,10 +45,10 @@
         @foreach (var track in View.Tracks(Widget))
         {
             var shown = track;
-            var label = track.Track.Label ?? track.Track.Key;
+            var label = Say(track.Track.Label ?? track.Track.Key);
             // A track whose size an ability gives (the special armor box) says what gives it, in words; with none, there is no box to show.
             var sources = View.TrackSources(track.Track.Key);
-            var shownLabel = sources is { Count: > 0 } ? L["Actor.Tracks.GivenBy", label, string.Join(", ", sources)].ToString() : label;
+            var shownLabel = sources is { Count: > 0 } ? L["Actor.Tracks.GivenBy", label, string.Join(", ", sources.Select(BonusNames.Source))].ToString() : label;
             <div class="sheet-track mb-3" data-testid="@($"track-{track.Track.Key}")" role="group" aria-label="@shownLabel">
                 <div class="field-label">@shownLabel</div>
                 @if (sources is { Count: 0 })
@@ -182,13 +182,14 @@
                     {
                         @if (Widget.GroupBy != null && group.Key != null)
                         {
-                            <tr class="table-group"><th colspan="@(Widget.Columns.Count + 2)" scope="rowgroup">@Definition.DisplayValue(group.Key)</th></tr>
+                            <tr class="table-group"><th colspan="@(Widget.Columns.Count + 2)" scope="rowgroup">@Say(group.Key)</th></tr>
                         }
                         @foreach (var row in group)
                         {
                             var shownRow = row;
+                            var rowName = Say(row.Label);
                             <tr data-testid="@($"row-{Widget.Key}-{row.Id}")">
-                                <th scope="row">@row.Label</th>
+                                <th scope="row">@rowName</th>
                                 @foreach (var cell in row.Cells)
                                 {
                                     var shownCell = cell;
@@ -197,12 +198,12 @@
                                         {
                                             @if (field.Type.Equals("Boolean", StringComparison.OrdinalIgnoreCase))
                                             {
-                                                <input type="checkbox" checked="@(cell.Value is true)" aria-label="@($"{row.Label}: {ColumnLabel(cell.Column)}")"
+                                                <input type="checkbox" checked="@(cell.Value is true)" aria-label="@($"{rowName}: {ColumnLabel(cell.Column)}")"
                                                        @onchange="e => SetFieldAsync(shownRow, field, e.Value is true)" data-testid="@($"cell-{Widget.Key}-{row.Id}-{cell.Column}")" />
                                             }
                                             else
                                             {
-                                                <input class="field-input field-sm sheet-number" value="@SheetView.Format(cell.Value, CultureInfo.InvariantCulture)" aria-label="@($"{row.Label}: {ColumnLabel(cell.Column)}")"
+                                                <input class="field-input field-sm sheet-number" value="@SheetView.Format(cell.Value, CultureInfo.InvariantCulture)" aria-label="@($"{rowName}: {ColumnLabel(cell.Column)}")"
                                                        @onchange="e => SetFieldAsync(shownRow, field, e.Value?.ToString())" data-testid="@($"cell-{Widget.Key}-{row.Id}-{cell.Column}")" />
                                             }
                                         }
@@ -214,7 +215,7 @@
                                 }
                                 @if (!keyed && CanEdit && row.Index is { } index)
                                 {
-                                    <td><button type="button" class="link-btn" aria-label="@L["Actor.Widget.RemoveOne", row.Label]" @onclick="() => RemoveAsync(index)">×</button></td>
+                                    <td><button type="button" class="link-btn" aria-label="@L["Actor.Widget.RemoveOne", rowName]" @onclick="() => RemoveAsync(index)">×</button></td>
                                 }
                             </tr>
                         }
@@ -257,7 +258,7 @@
                     var shownInput = input;
                     var options = InputOptions(input);
                     <label class="field-label mb-0">
-                        @(input.Label ?? input.Key)
+                        @Say(input.Label ?? input.Key)
                         @if (options.Count > 0)
                         {
                             <select class="field-select field-sm" value="@InputValue(input)" @onchange="e => inputs[shownInput.Key] = e.Value?.ToString()" data-testid="@($"roll-{definition.Key}-{input.Key}")">
@@ -274,7 +275,7 @@
                         }
                     </label>
                 }
-                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="dices" Disabled="@(!CanRoll)" OnClick="() => RollAsync(definition)" data-testid="@($"roll-{definition.Key}-go")">@(Widget.Label ?? definition.Label ?? definition.Key)</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="dices" Disabled="@(!CanRoll)" OnClick="() => RollAsync(definition)" data-testid="@($"roll-{definition.Key}-go")">@Say(Widget.Label ?? definition.Label ?? definition.Key)</CodexButton>
             </div>
             <RollBonusList Bonuses="always" Pool="isPool" Caption="@L["Actor.Bonus.Always"]" TestId="@($"roll-{definition.Key}-always")" Names="BonusNames" />
             @if (offered.Count > 0)
@@ -394,7 +395,7 @@
     case "modifiers":
         var lines = View.Modifiers(Widget.Target!);
         <div data-testid="@($"modifiers-{Widget.Target}")">
-            <div class="field-label">@L["Actor.Widget.ModifiersOf", View.Value(Widget.Target!).Label]</div>
+            <div class="field-label">@L["Actor.Widget.ModifiersOf", Say(View.Value(Widget.Target!).Label)]</div>
             @if (lines.Count == 0)
             {
                 <p class="small-muted mb-0">@L["Actor.Widget.NoModifiers"]</p>
@@ -405,7 +406,7 @@
                     @foreach (var line in lines)
                     {
                         <li class="@(line.Counted ? "" : "text-decoration-line-through small-muted")" title="@(line.Counted ? null : L["Actor.Widget.NotCounted"])">
-                            <bdi>@(line.Amount >= 0 ? "+" : "")@SheetView.Format(line.Amount)</bdi> @(line.Source ?? "") <span class="small-muted">(@Definition.DisplayValue(line.Type))</span>
+                            <bdi>@(line.Amount >= 0 ? "+" : "")@SheetView.Format(line.Amount)</bdi> @(line.Source is { } from ? BonusNames.Source(from) : "") <span class="small-muted">(@Say(line.Type))</span>
                         </li>
                     }
                 </ul>
@@ -553,9 +554,13 @@
 
     private string ListLabel => View.Kind?.Lists.FirstOrDefault(l => l.Key == Widget.Key)?.Label ?? Widget.Key ?? "";
 
+    /// <summary>A word of the system as the reader reads it (<c>values</c> of the system's translation, whichever copy of the definition this is);
+    /// the word itself when it has none. Only what is shown: keys and submitted values are never passed through.</summary>
+    private string Say(string text) => Definition.DisplayOption(L.Culture.Name, string.Empty, text);
+
     private string ColumnLabel(string column) =>
-        (View.Kind?.Lists.FirstOrDefault(l => l.Key == Widget.Key)?.ItemFields ?? View.Kind?.KeyedLists.FirstOrDefault(l => l.Key == Widget.Key)?.ItemFields)
-            ?.FirstOrDefault(f => f.Key == column)?.Label ?? Definition.DisplayValue(column);
+        Say((View.Kind?.Lists.FirstOrDefault(l => l.Key == Widget.Key)?.ItemFields ?? View.Kind?.KeyedLists.FirstOrDefault(l => l.Key == Widget.Key)?.ItemFields)
+            ?.FirstOrDefault(f => f.Key == column)?.Label ?? column);
 
     private IEnumerable<ContentEntry> Candidates(string type) => Resolver.Candidates(type).OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase);
 
@@ -619,17 +624,17 @@
     /// (<c>skills[input.skill]</c>).</summary>
     private List<(string Value, string Text)> InputOptions(RollInputDefinition input)
     {
-        if (input.Options is { Count: > 0 } options) return options.Select(o => (o, Definition.DisplayValue(o))).ToList();
+        if (input.Options is { Count: > 0 } options) return options.Select(o => (o, Say(o))).ToList();
         if (input.From == "weapon")
         {
             return (View.Kind?.Lists ?? new List<PickListDefinition>())
-                .SelectMany(l => View.Rows(new LayoutWidget { Widget = "list", Key = l.Key })).Select(r => (r.Id, r.Label)).ToList();
+                .SelectMany(l => View.Rows(new LayoutWidget { Widget = "list", Key = l.Key })).Select(r => (r.Id, Say(r.Label))).ToList();
         }
 
         var definition = Definition.Rolls.First(r => r.Key == Widget.Roll);
         var indexed = View.Kind?.KeyedLists.FirstOrDefault(l => definition.Add.Any(a => a.Contains($"{l.Key}[input.{input.Key}]", StringComparison.Ordinal)));
         return indexed == null ? new List<(string, string)>()
-            : View.Rows(new LayoutWidget { Widget = "table", Key = indexed.Key }).Select(r => (r.Id, r.Label)).ToList();
+            : View.Rows(new LayoutWidget { Widget = "table", Key = indexed.Key }).Select(r => (r.Id, Say(r.Label))).ToList();
     }
 
     private string? InputValue(RollInputDefinition input) => inputs.TryGetValue(input.Key, out var value) ? value : input.Default?.ToString();

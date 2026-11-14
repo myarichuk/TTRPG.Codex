@@ -520,7 +520,27 @@ public class RollLogEntry
     /// (its index; they are only ever appended to). Null for a roll made off the table, or before rolls were stamped.</summary>
     public int? SystemStamp { get; set; }
 
+    /// <summary>For a roll made from the system's roll definition: the roll's own name as the rules know it (what <see cref="Label"/> starts with), so
+    /// each reader can see it in their language (<see cref="RollLogText"/>). Null for any other roll, and for entries from before this existed.</summary>
+    public string? Name { get; set; }
+
+    /// <summary>Whether the roll is a pool roll, where a bonus's amount is a number of dice.</summary>
+    public bool Pool { get; set; }
+
+    /// <summary>The bonuses the roller ticked, which <see cref="Label"/> says after <see cref="Name"/>. Empty when none, and for older entries.</summary>
+    public List<RollLogBonus> Bonuses { get; set; } = new();
+
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>A bonus a roll counted, as its log line says it: the English words as the rules wrote them, which a reader's language may replace.</summary>
+public class RollLogBonus
+{
+    /// <summary>The feature it comes from (<c>Deadly (Crew): Prowl</c>).</summary>
+    public string Source { get; set; } = string.Empty;
+
+    public string Label { get; set; } = string.Empty;
+    public double Amount { get; set; }
 }
 
 /// <summary>Whether a participant is acting normally, holding their action to interrupt

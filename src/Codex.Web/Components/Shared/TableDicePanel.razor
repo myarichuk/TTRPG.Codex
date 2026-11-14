@@ -28,9 +28,9 @@
                 {
                     <strong>@RollerName(entry)</strong>
                 }
-                <DiceResult Compact="true" Label="@entry.Label" Expression="@entry.Expression" Kept="entry.Kept" Dropped="entry.Dropped"
+                <DiceResult Compact="true" Label="@(RollLabel?.Invoke(entry) ?? entry.Label)" Expression="@Say(entry.Expression)" Kept="entry.Kept" Dropped="entry.Dropped"
                             Modifier="entry.Modifier" CheckDieIndex="entry.CheckDieIndex" Total="entry.Total" Text="@entry.Result" Secret="entry.IsSecret"
-                            Outcome="@entry.Outcome" Mark="@entry.Mark" />
+                            Outcome="@(entry.Outcome is { } outcome ? Say(outcome) : null)" Mark="@entry.Mark" />
             </div>
         }
     </div>
@@ -42,6 +42,14 @@
 
     /// <summary>Who rolled, as this viewer may know them.</summary>
     [Parameter, EditorRequired] public Func<RollLogEntry, string> RollerName { get; set; } = null!;
+
+    /// <summary>What a roll was for, in this viewer's language; the stored text when not given.</summary>
+    [Parameter] public Func<RollLogEntry, string?>? RollLabel { get; set; }
+
+    /// <summary>A word of the system in this viewer's language (a roll's outcome, a sheet roll's key); the word itself when not given.</summary>
+    [Parameter] public Func<string, string>? Word { get; set; }
+
+    private string Say(string word) => Word?.Invoke(word) ?? word;
 
     /// <summary>The link to a roller this viewer can see; null for one they can't.</summary>
     [Parameter, EditorRequired] public Func<string, string?> ActorHref { get; set; } = null!;

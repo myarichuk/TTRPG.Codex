@@ -13,7 +13,7 @@
         {
             var spender = Spenders[i];
             var n = i;
-            var name = spender.Feature.Name;
+            var name = Shown.Source(spender.Feature.Name);
             var pool = PoolName(spender.Cost);
             var left = spender.Cost.Left(Value) ?? 0;
             var amount = spender.Ask ? Math.Clamp(asked.GetValueOrDefault(n, 1), 1, Math.Max(left, 1)) : spender.Cost.Amount;
@@ -56,6 +56,11 @@
 
     /// <summary>The system as the reader reads it, for the pool's name.</summary>
     [Parameter] public SystemDefinition? Definition { get; set; }
+
+    /// <summary>Says the names of features in the reader's language; as written when not given.</summary>
+    [Parameter] public RollBonusNames? Names { get; set; }
+
+    private RollBonusNames Shown => Names ?? RollBonusNames.English;
 
     [Parameter] public bool ReadOnly { get; set; }
 

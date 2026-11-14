@@ -296,7 +296,7 @@ else
             @if (sheetRoll != null)
             {
                 <section class="panel" aria-live="polite" data-testid="sheet-roll-result">
-                    <div class="panel-title"><h2 class="h5"><LucideIcon IconName="dices" Size="18" Class="title-icon" /> @(sheetRoll.Label ?? sheetRoll.Definition)</h2>
+                    <div class="panel-title"><h2 class="h5"><LucideIcon IconName="dices" Size="18" Class="title-icon" /> @(system?.DisplayValue(sheetRoll.Label ?? sheetRoll.Definition) ?? sheetRoll.Label ?? sheetRoll.Definition)</h2>
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => sheetRoll = null">@L["Actor.Sheet.Dismiss"]</CodexButton></div>
                     <p class="mb-1"><strong data-testid="sheet-roll-outcome">@(sheetRoll.Outcome is { } outcome ? system!.DisplayValue(outcome) : SheetView.Format(sheetRoll.Totals().FirstOrDefault()))</strong>
                         <span class="small-muted ms-2" data-testid="sheet-roll-dice"><bdi>@L["Actor.Sheet.RollDice", string.Join(" ", sheetRoll.Kept), SheetView.Format(sheetRoll.Totals().FirstOrDefault())]</bdi></span></p>
@@ -861,7 +861,7 @@ else
                             <p class="small-muted mt-2 mb-0">@(Rules?.HitPoints == null ? L["Actor.Sheet.HpLiveNoteEdit"] : L["Actor.Sheet.HpLiveNote"])</p>
                             @if (Rules?.HitPoints is { } hitPointRules)
                             {
-                                <HitPointRulesPanel Rules="hitPointRules" Summary="evaluation?.HitPoints" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
+                                <HitPointRulesPanel Names="BonusNames" Rules="hitPointRules" Summary="evaluation?.HitPoints" Sheet="editSheet" CanEdit="CanEdit" Changed="OnRulesInputChanged" />
                             }
                         </section>
                     }
@@ -904,7 +904,7 @@ else
                                           OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" OpenKeys="openChoices" />
                         }
 
-                        <FeaturesPanel Evaluation="evaluation" Sheet="editSheet" Rules="Rules" Definition="system" ReadOnly="@(!CanEdit)"
+                        <FeaturesPanel Evaluation="evaluation" Sheet="editSheet" Rules="Rules" Definition="system" Names="BonusNames" ReadOnly="@(!CanEdit)"
                                        EntryName="@((type, id) => resolver?.Resolve(type, id)?.Name ?? id)"
                                        IsDm="@(access?.IsDm == true)" Spend="SpendOnSheet"
                                        OnAdjust="AdjustSlot" OnRest="RestFeatures" />

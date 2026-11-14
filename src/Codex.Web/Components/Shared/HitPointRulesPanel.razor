@@ -17,7 +17,7 @@
     @if (Summary is { Active: true } summary)
     {
         <p class="small mt-2 mb-1" data-testid="hp-max-note">
-            <strong>@summary.Max</strong>@L["Actor.Hp.NoteLead", summary.Levels.Count]<bdi>@Signed(summary.Modifier)@(summary.LevelExtra != 0 ? L["Actor.Hp.NoteExtra", summary.LevelExtra, summary.ExtraSource] : "")</bdi>@L["Actor.Hp.NoteTail"]
+            <strong>@summary.Max</strong>@L["Actor.Hp.NoteLead", summary.Levels.Count]<bdi>@Signed(summary.Modifier)@(summary.LevelExtra != 0 ? L["Actor.Hp.NoteExtra", summary.LevelExtra, summary.ExtraSource is { } extra ? Names.Source(extra) : summary.ExtraSource] : "")</bdi>@L["Actor.Hp.NoteTail"]
         </p>
         <details>
             <summary class="small">@L["Actor.Hp.HowSummary"]</summary>
@@ -67,6 +67,9 @@
     [Parameter] public HitPointSummary? Summary { get; set; }
     [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
     [Parameter] public bool CanEdit { get; set; }
+
+    /// <summary>Says the feature that gives extra hit points in the reader's language; as written when not given.</summary>
+    [Parameter] public RollBonusNames Names { get; set; } = RollBonusNames.English;
 
     /// <summary>Raised after the sheet changed, so the page re-runs the rules.</summary>
     [Parameter] public EventCallback Changed { get; set; }
