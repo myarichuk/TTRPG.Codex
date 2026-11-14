@@ -34,9 +34,12 @@ public sealed class FitdContent : IAsyncLifetime
     public SystemDefinition System { get; private set; } = null!;
     public IEntryResolver Resolver { get; private set; } = null!;
 
+    /// <summary>The loaded content, for components that look up entries' translated names.</summary>
+    public ContentRegistry Registry { get; private set; } = null!;
+
     public async Task InitializeAsync()
     {
-        var registry = new ContentRegistry();
+        var registry = Registry = new ContentRegistry();
         var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(registry));
         await loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
         System = loader.GetDefinition("fitd-srd")!;

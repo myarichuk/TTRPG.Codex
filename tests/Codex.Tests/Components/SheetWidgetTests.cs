@@ -3,14 +3,23 @@ using Codex.Core.Rules;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
 using Codex.Web.Components.Shared;
+using Microsoft.Extensions.DependencyInjection;
 using static Codex.Tests.Components.FitdContent;
 
 namespace Codex.Tests.Components;
 
 /// <summary>The roll, link and members widgets of the real Forged in the Dark sheets (docs/ROLL_BONUSES_DESIGN.md, docs/CREW_LINKS_DESIGN.md),
 /// drawn by <see cref="SheetWidget"/> with the real system and pack. The component needs no services beyond the localizer.</summary>
-public class SheetWidgetTests(FitdContent content) : ComponentTestBase, IClassFixture<FitdContent>
+public class SheetWidgetTests : ComponentTestBase, IClassFixture<FitdContent>
 {
+    private readonly FitdContent content;
+
+    public SheetWidgetTests(FitdContent content)
+    {
+        this.content = content;
+        Services.AddSingleton<IContentRegistry>(content.Registry); // the widget names roll bonuses in the reader's language from it
+    }
+
     private static readonly ActorDocument NightCrew = Actor("crew-1", "Night Crew", Crew("forged-in-the-fire"));
     private static readonly ActorDocument OtherCrew = Actor("crew-2", "Day Crew", Crew());
 
