@@ -31,7 +31,14 @@ public sealed class CampaignRuntime : IAsyncDisposable
     private readonly IEncounterRepository? _encounterRepository;
     private readonly ILogger _logger;
     private readonly Dictionary<string, Entity> _actorEntities = new();
-    private readonly Dictionary<string, ActorDocument> _actorDocs = new();
+    // Concurrent so a page rendering a card can read a linked actor's sheet (see Linked) while the loop adds and removes actors.
+    private readonly ConcurrentDictionary<string, ActorDocument> _actorDocs = new();
+    // The reverse index of the sheets' links (docs/CREW_LINKS_DESIGN.md), loop-owned: each actor's link targets (link__* ids on its
+    // sheet), and for each target the actors that link to it. A change to the target names these actors too, so their cards re-evaluate.
+    private readonly Dictionary<string, HashSet<string>> _linkTargets = new();
+    private readonly Dictionary<string, HashSet<string>> _linkedBy = new();
+    // Actors a command made stale without dirtying them (those that linked to an actor just removed), named in the next StateChanged.
+    private readonly HashSet<string> _alsoAffected = new();
     private readonly HashSet<string> _dirtyActorIds = new();
     // Actors whose sheet was replaced by ReplaceActorCommand, so the next persist also writes the
     // editable fields (the value says whether the editor was the DM). Everything else is a State patch.
@@ -147,13 +154,102 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// after construction, before any command is enqueued.</summary>
     public void Hydrate(IEnumerable<ActorDocument> actors)
     {
-        foreach (var actor in actors)
+        var all = actors.ToList();
+        // Every document is known before the first is worked out, so an actor's link finds an actor hydrated after it.
+        foreach (var actor in all) _actorDocs[actor.Id] = actor;
+        foreach (var actor in all)
         {
             SeedNewCounters(actor);
             HydrateOne(actor);
         }
 
         PublishSnapshot();
+    }
+
+    // Copies of the sheets other actors link to, republished with the snapshot (loop thread): what a page's render reads, since the loop
+    // changes the cached documents' sheets in place.
+    private volatile IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>> _linkedCopies = new Dictionary<string, IReadOnlyDictionary<string, object>>();
+
+    /// <summary>Resolves a linked actor's sheet as the table had it after the last command (docs/CREW_LINKS_DESIGN.md): the live crew sheet is the
+    /// source of what a member's link brings. Null for an actor nothing links to, or the table does not hold. A page's render reads this, never
+    /// the loop's own documents, like <see cref="Snapshot"/>.</summary>
+    public Codex.Core.Rules.ILinkedSheets Linked => new CopiedLinkedSheets(_linkedCopies);
+
+    private sealed class CopiedLinkedSheets(IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>> copies) : Codex.Core.Rules.ILinkedSheets
+    {
+        public IReadOnlyDictionary<string, object>? Sheet(string actorId) => copies.GetValueOrDefault(actorId);
+    }
+
+    private sealed class LiveLinkedSheets(CampaignRuntime runtime) : Codex.Core.Rules.ILinkedSheets
+    {
+        public IReadOnlyDictionary<string, object>? Sheet(string actorId) => runtime._actorDocs.GetValueOrDefault(actorId)?.Sheet;
+    }
+
+    /// <summary>For the loop's own work (a command, hydrate): the sheets the cached documents hold now. Null when the sheet links to an actor
+    /// the table does not hold (retired, say): that link is left unknown, not taken as a deleted crew, so what the link made is kept.</summary>
+    internal Codex.Core.Rules.ILinkedSheets? LinkedFor(IReadOnlyDictionary<string, object>? sheet)
+    {
+        if (sheet == null) return null;
+        var held = Codex.Persistence.Runtime.ActorLinkedSheets.LinkedIds(sheet).All(id => _actorDocs.ContainsKey(id));
+        return held ? new LiveLinkedSheets(this) : null;
+    }
+
+    private void PublishLinkedCopies()
+    {
+        var copies = new Dictionary<string, IReadOnlyDictionary<string, object>>(StringComparer.Ordinal);
+        foreach (var target in _linkedBy.Keys)
+        {
+            if (!_actorDocs.TryGetValue(target, out var doc)) continue;
+            copies[target] = doc.Sheet.ToDictionary(p => p.Key, p => p.Value is List<object> list ? new List<object>(list) : p.Value, StringComparer.Ordinal);
+        }
+
+        _linkedCopies = copies;
+    }
+
+    /// <summary>The ids of the actors whose sheets link to <paramref name="actorId"/> (any <c>link__*</c> key), as the runtime's reverse index
+    /// has them. Loop-owned: read it from a command, or from a test after the commands are done.</summary>
+    public IReadOnlyCollection<string> ActorsLinkingTo(string actorId) =>
+        _linkedBy.TryGetValue(actorId, out var members) ? members.ToArray() : Array.Empty<string>();
+
+    /// <summary>Records (or, with a null sheet, forgets) the actor ids the actor's sheet links to.</summary>
+    private void IndexLinks(string actorId, IReadOnlyDictionary<string, object>? sheet)
+    {
+        if (_linkTargets.Remove(actorId, out var was))
+        {
+            foreach (var target in was)
+            {
+                if (_linkedBy.TryGetValue(target, out var set) && set.Remove(actorId) && set.Count == 0) _linkedBy.Remove(target);
+            }
+        }
+
+        if (sheet == null) return;
+        var targets = sheet
+            .Where(p => p.Key.StartsWith(Codex.Core.Rules.SheetLinks.KeyPrefix, StringComparison.Ordinal))
+            .Select(p => YamlValues.GetString(sheet, p.Key))
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Select(id => id!)
+            .ToHashSet(StringComparer.Ordinal);
+        if (targets.Count == 0) return;
+        _linkTargets[actorId] = targets;
+        foreach (var target in targets)
+        {
+            if (!_linkedBy.TryGetValue(target, out var set)) _linkedBy[target] = set = new HashSet<string>(StringComparer.Ordinal);
+            set.Add(actorId);
+        }
+    }
+
+    /// <summary>The actors a command changed, and each actor whose sheet links to one of them.</summary>
+    private string[] WithLinkers(IEnumerable<string> changed)
+    {
+        var ids = new HashSet<string>(changed, StringComparer.Ordinal);
+        foreach (var id in ids.ToList())
+        {
+            if (_linkedBy.TryGetValue(id, out var members)) ids.UnionWith(members);
+        }
+
+        ids.UnionWith(_alsoAffected);
+        _alsoAffected.Clear();
+        return ids.ToArray();
     }
 
     /// <summary>A feature counter the sheet has never written (an ability the pack only now grants uses to, or a sheet seeded
@@ -170,9 +266,12 @@ public sealed class CampaignRuntime : IAsyncDisposable
         if (System == null || Resolver is Codex.Core.Rules.NullEntryResolver) return;
         var engine = new Codex.Core.Rules.SheetRuleEngine(System, Resolver);
         Codex.Core.Rules.SheetEvaluation evaluation;
+        Codex.Core.Rules.ILinkedSheets? linked;
         try
         {
-            evaluation = engine.Evaluate(actor.Sheet);
+            // A link to an actor the table does not hold (retired, say) is left unknown rather than taken as a deleted one, so its counters stay.
+            linked = LinkedFor(actor.Sheet);
+            evaluation = engine.Evaluate(actor.Sheet, linked);
         }
         catch (Exception ex)
         {
@@ -223,6 +322,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _actorEntities[actor.Id] = entity;
         _actorDocs[actor.Id] = actor;
         _hydratedIds[actor.Id] = 0;
+        IndexLinks(actor.Id, actor.Sheet);
         RosterChanged();
     }
 
@@ -237,6 +337,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         if (_actorDocs.ContainsKey(actor.Id))
         {
             _actorDocs[actor.Id] = actor;
+            IndexLinks(actor.Id, actor.Sheet);
             RosterChanged();
         }
     }
@@ -332,8 +433,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
         }
 
         entity.Dispose();
-        _actorDocs.Remove(actorId);
+        _actorDocs.TryRemove(actorId, out _);
         _hydratedIds.TryRemove(actorId, out _);
+        // Whoever linked to it now links to nobody: they are named by the next StateChanged. Its own links leave the index.
+        if (_linkedBy.TryGetValue(actorId, out var linkers)) _alsoAffected.UnionWith(linkers);
+        IndexLinks(actorId, null);
         _dirtyActorIds.Remove(actorId);
         _pendingSheetWrites.Remove(actorId);
         _pendingSheetKeys.Remove(actorId);
@@ -705,7 +809,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
                     // Snapshot before PersistDirtyAsync clears it - this is exactly what this one
                     // command touched, which for AdvanceTurnCommand (MarkAllHydratedActorsDirty) is
                     // broader than its own AffectedActorIds.
-                    var affectedActorIds = _dirtyActorIds.ToArray();
+                    // The actors whose sheets link to a changed actor are named too, so their cards re-evaluate.
+                    var affectedActorIds = WithLinkers(_dirtyActorIds);
 
                     await PersistDirtyAsync();
                     await PersistCampaignObjectsAsync();
@@ -854,6 +959,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
         ActorRepository.CopyEditableFields(cached, edited, access.IsDm);
         cached.Sheet = merged;
+        IndexLinks(edited.Id, merged);
         cached.State = liveState;
         ActorSheetSync.ApplySheetToState(cached, system, _componentRegistry);
 
@@ -916,6 +1022,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
     private void PublishSnapshot()
     {
+        PublishLinkedCopies();
         EncounterSnapshot? encounter = null;
         if (_activeEncounter is { } live)
         {

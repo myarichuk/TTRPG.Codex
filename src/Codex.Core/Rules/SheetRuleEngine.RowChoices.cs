@@ -62,16 +62,16 @@ public sealed partial class SheetRuleEngine
     /// the one way a pick is changed, so the sheet, the level-up and the table all settle counters the same way, through
     /// <see cref="ApplyCounters"/>. Making a pick for the first time is not a change. Returns the sheet as it stands afterwards.
     /// </summary>
-    public SheetEvaluation ChangeChoice(Dictionary<string, object> sheet, string choiceKey, IEnumerable<string> picks)
+    public SheetEvaluation ChangeChoice(Dictionary<string, object> sheet, string choiceKey, IEnumerable<string> picks, ILinkedSheets? linked = null)
     {
         var picked = picks.Where(p => p.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        var before = Evaluate(sheet);
+        var before = Evaluate(sheet, linked);
         var choice = before.PendingChoices.Concat(before.MadeChoices).FirstOrDefault(c => c.Key == choiceKey);
         var changed = choice is { IsRow: true } && choice.Made.Count > 0
             && !choice.Made.Order(StringComparer.OrdinalIgnoreCase).SequenceEqual(picked.Order(StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
 
         SetChoice(sheet, choiceKey, picked);
-        var after = Recompute(sheet);
+        var after = Recompute(sheet, linked);
         if (!changed || choice!.Row!.OnChange is not (RowChoose.Refill or RowChoose.Empty)) return after;
 
         foreach (var counter in after.Counters.Where(c => IsChosenThrough(c.Feature, choiceKey)))
@@ -103,6 +103,8 @@ public sealed partial class SheetRuleEngine
             keep.Add(key + UsesLabelSuffix);
         }
 
+        // A choice a link feature owns is not in the evaluation while its link is unknown, so its moments stay as stored (see ApplyCounters).
+        if (evaluation.LinksUnknown) return;
         foreach (var stale in sheet.Keys.Where(k => k.StartsWith(ChangesOnPrefix, StringComparison.Ordinal) && !keep.Contains(k)).ToList()) sheet.Remove(stale);
     }
 

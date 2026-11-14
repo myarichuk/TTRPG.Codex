@@ -9,3 +9,8 @@ description: >-
 source: Crew playbook > Crew special abilities > Forged in the fire
 tags:
 - example
+properties:
+  members:
+    modifiers:
+    - target: '@resistance'
+      amount: 1

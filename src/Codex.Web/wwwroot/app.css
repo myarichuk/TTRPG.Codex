@@ -1785,6 +1785,16 @@ a.table-name:hover { text-decoration-color: currentColor; }
 .dice-compact .dice-total { font-size: var(--fs-xl); }
 .dice-tray .tray-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6); margin-bottom: var(--space-4); }
 .dice-tray .tray-empty { margin: 0; }
+/* Bonuses the player chooses at the roll (ROLL_BONUSES_DESIGN.md): a fieldset of tick boxes, tight in a table card. */
+.roll-bonuses { border: 0; padding: 0; margin: var(--space-4) 0; min-inline-size: 0; }
+.roll-bonuses legend { float: none; width: auto; padding: 0; margin-bottom: var(--space-2); }
+.roll-bonus-list { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); }
+.roll-bonus { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+.roll-bonuses-compact { margin: var(--space-2) 0; }
+.roll-bonuses-compact .roll-bonus-list { flex-direction: column; gap: var(--space-1); }
+.roll-bonus-lines { margin-bottom: var(--space-2); }
+.sheet-roll-block { display: flex; flex-direction: column; gap: var(--space-2); }
+.attr-feature { font-size: var(--fs-xs); text-align: center; }
 .roll-btn { margin-inline-start: var(--space-4); vertical-align: middle; }
 .list-row .roll-end { display: inline-flex; align-items: center; gap: var(--space-2); }
 @media (prefers-reduced-motion: no-preference) { .dice-tray .dice-result { animation: rise var(--dur-slow) var(--ease-out) backwards; } }

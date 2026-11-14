@@ -92,15 +92,15 @@ public static partial class SheetEvents
     /// <param name="campaign">The campaign's objects, which the campaign's intents change; null leaves those for the table.</param>
     /// <param name="dice">Where a script handler's <c>ctx.d(sides)</c> rolls; null rolls at random.</param>
     public static SheetEventResult Raise(SystemDefinition system, IEntryResolver resolver, Dictionary<string, object> sheet, SheetEvent ev, string? self = null,
-        Dictionary<string, object>? campaign = null, IDiceSource? dice = null)
+        Dictionary<string, object>? campaign = null, IDiceSource? dice = null, ILinkedSheets? linked = null)
     {
         var direct = DirectKinds.Contains(ev.Type, StringComparer.Ordinal);
-        var intents = direct ? new List<SheetIntent>() : Handle(system, resolver, sheet, ev, dice).ToList();
+        var intents = direct ? new List<SheetIntent>() : Handle(system, resolver, sheet, ev, dice, linked).ToList();
         var toApply = direct
             ? new List<SheetIntent> { new(ev.Type, ev.Fields.GetValueOrDefault("actor")?.ToString(), ev.Fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => YamlValues.Normalize(f.Value), StringComparer.Ordinal)) }
             : intents;
         var forCampaign = toApply.Where(CampaignObjects.IsFor).ToList();
-        var applied = SheetIntents.Apply(system, resolver, sheet, toApply.Where(i => !CampaignObjects.IsFor(i)), self);
+        var applied = SheetIntents.Apply(system, resolver, sheet, toApply.Where(i => !CampaignObjects.IsFor(i)), self, linked);
         CampaignIntentResult? onCampaign = null;
         if (campaign != null)
         {
@@ -124,10 +124,10 @@ public static partial class SheetEvents
     /// <exception cref="SheetEventException">A handler that cannot run.</exception>
     /// <param name="dice">Where a script's <c>ctx.d(sides)</c> rolls; null rolls at random.</param>
     public static IReadOnlyList<SheetIntent> Handle(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, SheetEvent ev,
-        IDiceSource? dice = null)
+        IDiceSource? dice = null, ILinkedSheets? linked = null)
     {
         if (!system.Events.TryGetValue(ev.Type, out var raw)) return Array.Empty<SheetIntent>();
-        var model = new SheetModel(system, resolver, sheet);
+        var model = new SheetModel(system, resolver, sheet, linked);
         var names = new Dictionary<string, object>(StringComparer.Ordinal) { ["ev"] = Bind(ev.Fields) };
         var handler = YamlValues.Normalize(raw);
         switch (handler)
@@ -241,8 +241,8 @@ public static partial class SheetEvents
 
     /// <summary>The sheet as a script or compiled handler reads it, or a compiled widget: plain data made afresh (see
     /// <see cref="ScriptView(SystemDefinition, SheetModel, IReadOnlyDictionary{string, object})"/>).</summary>
-    public static Dictionary<string, object?> PlainView(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet) =>
-        ScriptView(system, new SheetModel(system, resolver, sheet), sheet);
+    public static Dictionary<string, object?> PlainView(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked = null) =>
+        ScriptView(system, new SheetModel(system, resolver, sheet, linked), sheet);
 
     /// <summary>
     /// The sheet as a script handler reads it, plain data made afresh: <c>kind</c>; <c>attributes</c> (scores by key);

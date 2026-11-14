@@ -161,7 +161,7 @@ else
                             <TableCard @key="actorId" Campaign="Campaign" Actor="actor" State="snapshot.Actor(actorId)" Definition="Definition"
                                        Evaluation="@(full ? EvaluationOf(actor) : null)" Blueprint="@(Access.IsDm ? BlueprintOf(actor) : null)"
                                        Full="full" CanAct="CanTrackSlots(actorId)" IsDm="Access.IsDm" Expanded="IsCardOpen(actor)" OnToggle="() => ToggleCard(actorId)"
-                                       CurrentUserId="@CurrentUserId" CheckDie="@(Definition?.Dice.Check ?? "1d20")" Send="SendAsync" />
+                                       CurrentUserId="@CurrentUserId" CheckDie="@(Definition?.Dice.Check ?? "1d20")" Send="SendAsync" Engine="@(full ? engine : null)" Linked="@(full ? Linked() : null)" />
                         }
                     </div>
                 </section>
@@ -281,6 +281,7 @@ else
     {
         ActorsById = Actors.ToDictionary(a => a.Id);
         evaluations.Clear();
+        campaignLinked = null;
         VisibleActorIds = ActorsById.Keys.ToHashSet();
         if (!subscribedToManager)
         {
@@ -431,9 +432,11 @@ else
         selectedParticipantId = null;
     }
 
-    private void OnStateChanged(IReadOnlyCollection<string> _) => InvokeAsync(async () =>
+    private void OnStateChanged(IReadOnlyCollection<string> changed) => InvokeAsync(async () =>
     {
         if (runtime != null) snapshot = runtime.Snapshot;
+        // The runtime names the actors whose sheets link to a changed actor too: their cards are worked out again.
+        foreach (var id in changed) evaluations.Remove(id);
         if (snapshot.RosterVersion != rosterSeen && OnActorAdded.HasDelegate)
         {
             // Someone joined or left the table, or the DM revealed or hid them: this viewer's list of who they may see is stale.
@@ -471,6 +474,12 @@ else
         if (!toggledCards.Remove(actorId)) toggledCards.Add(actorId);
     }
 
+    private ActorLinkedSheets? campaignLinked;
+
+    /// <summary>Where a card finds the sheet its actor links to (docs/CREW_LINKS_DESIGN.md): the live table's own documents when one is
+    /// running, otherwise the campaign's actors this page was given.</summary>
+    private ILinkedSheets Linked() => runtime != null ? runtime.Linked : campaignLinked ??= new ActorLinkedSheets(Actors);
+
     private SheetEvaluation? EvaluationOf(ActorDocument actor)
     {
         if (engine == null) return null;
@@ -478,7 +487,7 @@ else
         SheetEvaluation? evaluation;
         try
         {
-            evaluation = engine.Evaluate(actor.Sheet);
+            evaluation = engine.Evaluate(actor.Sheet, Linked());
         }
         catch (Exception)
         {
@@ -508,7 +517,7 @@ else
         if (engine == null || Definition?.Dice.InitiativeBonus is not { } key || ActorsById.GetValueOrDefault(actorId) is not { } actor) return 0;
         try
         {
-            var evaluation = engine.Evaluate(actor.Sheet);
+            var evaluation = engine.Evaluate(actor.Sheet, Linked());
             return evaluation.Derived.TryGetValue(key, out var value) ? Convert.ToInt32(value) : 0;
         }
         catch (Exception)

@@ -42,6 +42,8 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
         if (string.IsNullOrEmpty(userId) || string.IsNullOrWhiteSpace(systemId)) throw new ArgumentException("A vault character needs an owner and a system.");
         var actor = new ActorDocument { Name = name };
         fill?.Invoke(actor);
+        // A link names an actor of one campaign; a vault character has no campaign.
+        actor.Sheet = Codex.Core.Rules.SheetLinks.WithoutLinks(actor.Sheet);
         actor.Id = Guid.NewGuid().ToString();
         actor.CampaignId = string.Empty;
         actor.SystemId = systemId;
@@ -64,7 +66,7 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
         if (stored == null || !IsOwnVault(stored, userId)) return false;
 
         stored.Name = CleanName(actor.Name, stored.Name);
-        stored.Sheet = new Dictionary<string, object>(actor.Sheet);
+        stored.Sheet = Codex.Core.Rules.SheetLinks.WithoutLinks(actor.Sheet);
         stored.Biography = string.IsNullOrWhiteSpace(actor.Biography) ? null : actor.Biography;
         stored.UpdatedAt = DateTime.UtcNow;
         if (await DocumentVersions.SaveIfUnchangedAsync(session, stored, actor) == SaveOutcome.Changed)
@@ -128,7 +130,7 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
             VaultActorId = vault.Id,
             ReplacesActorId = request.ReplacesActorId,
             Name = CleanName(request.Name, vault.Name),
-            Sheet = new Dictionary<string, object>(request.Sheet),
+            Sheet = Codex.Core.Rules.SheetLinks.WithoutLinks(request.Sheet),
             // A player cannot write secret blocks; any typed in the vault come in as the text a player reads.
             Biography = string.IsNullOrWhiteSpace(request.Biography) ? null : SecretText.ForPlayers(request.Biography),
             LeftOut = request.LeftOut.Distinct().ToList(),
@@ -189,6 +191,8 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
 
         // The GM's review: the sheet with what they left out or swapped, and the carried entries they took into the Library.
         if (sheet != null) request.Sheet = sheet;
+        // The campaign copy's links are its own to set: an actor id from another campaign (or none) would name the wrong actor here.
+        request.Sheet = Codex.Core.Rules.SheetLinks.WithoutLinks(request.Sheet);
         var bringing = request.Brings.Where(b => add?.Any(a => a.Is(b.Type, b.EntryId)) == true).ToList();
         var has = bringing.Count == 0
             ? new List<HomebrewEntryDocument>()
@@ -268,7 +272,7 @@ public class RavenVaultRepository(RavenDbService dbService) : IVaultRepository
             allowed = IsOwnVault(stored, userId);
             if (!allowed) return;
             stored.Name = CleanName(name, stored.Name);
-            stored.Sheet = new Dictionary<string, object>(sheet);
+            stored.Sheet = Codex.Core.Rules.SheetLinks.WithoutLinks(sheet);
             stored.Biography = string.IsNullOrWhiteSpace(biography) ? null : SecretText.ForPlayers(biography);
             stored.UpdatedAt = DateTime.UtcNow;
         });

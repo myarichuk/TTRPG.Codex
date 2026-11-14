@@ -7,3 +7,7 @@ tags:
 - example
 properties:
   cost: 4
+  members:
+    modifiers:
+    - target: actionCap
+      amount: 1

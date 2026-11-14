@@ -87,7 +87,7 @@ author's reference and JSON schema (overhaul section 6), not a promise of every 
 `count(where(actions, a => a.group == 'insight'), a => a.rating >= 1)`, `min(list, i => i.maxDex, default)`, `any`,
 `first`, `where`. Arithmetic is the host's: `floor`, `ceil`, `div` (integer division), `mod(score)` (the attribute
 modifier), `score(key)`, `table(rows, row, column)`, `levelFor(spell, className)`, `progression(name, level)`,
-`modifiers(target)`, `has(condition)`. A list item's properties and fields read as `item.property`.
+`modifiers(target)`, `has(condition)`, `link(key, value)` (the linked sheet's worked-out value; 0 with no link, an unknown link or a missing actor). A list item's properties and fields read as `item.property`.
 
 How they behave, as step 2 built them:
 - `'text'` is a string, as is `"text"`; there are no characters. Every number is a double, so `7 / 2` is 3.5; rounding
@@ -314,7 +314,8 @@ Inside a sheet kind:
 | `modifiers` | `{ target, amount, type, source, when }`. A target may be a group: `'@armorPenalty'` reaches every key listing that group |
 | `lists` | Picks of a type: `itemFields` (per-pick fields such as `classLevel`, `equipped`, `used`), `modifiersFrom: { property, when }`, `prerequisites: property` (checked on the character without the pick's own levels), `rules` |
 | `keyedLists` | A fixed set of `keys` (with `attribute`, `group`/`groups`, `parameter` for one entry per subject), `itemFields`, `derive` (per-key values as lambdas: `ranks`, `maxRanks`, `value`) and `rules` |
-| `tracks` | `{ key, max, min, start, display: number, boxes or slots }`, plus `thresholds` (each adds its condition while it holds: `atOrBelow`, `below`, `atOrAbove`, `equals`), `bands` (one at a time, the first that matches), `overflow: { into, by, then: reset, carry or keep, ask }`, and for slots `holds`, `levels`, `whenFull: pushUp`, `beyond`. `each` + `levels` generates tracks per list item and level (spell slots per class) |
+| `tracks` | `{ key, max, min, start, display: number, boxes or slots }`, plus `thresholds` (each adds its condition while it holds: `atOrBelow`, `below`, `atOrAbove`, `equals`: each a number or a formula, `modifiers('x')` included, which then reads the modifiers except those of conditions), `bands` (one at a time, the first that matches), `overflow: { into, by, then: reset, carry or keep, ask }`, and for slots `holds`, `levels`, `whenFull: pushUp`, `beyond`. `each` + `levels` generates tracks per list item and level (spell slots per class) |
+| `links` | `{ key, kind, label }`: this kind's sheets link to the sheet of another actor of that kind, stored as `link__{key}`. A feature source `{ link, list, property }` gives the sheet, for each pick of that list on the linked sheet, the entry's `property` grant map as one feature named "{entry} ({label})"; `link('key', 'value')` reads the linked sheet's values. One step deep, read only; without a resolver for the linked sheet the link is unknown and nothing it owns is swept or clamped (docs/CREW_LINKS_DESIGN.md) |
 | `layout` | Sections of widgets: `values`, `track`, `list`, `table`, `roll`, `text`, `modifiers` (above, "Layout"), and the system's own `widgets` by name |
 | `rules` | `{ check, key, message }`: a problem with that translation key when the check is false |
 

@@ -275,6 +275,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in ValidateKindLinks(definition))
+        {
+            yield return error;
+        }
+
         foreach (var error in ValidateModifiers(definition))
         {
             yield return error;
@@ -738,9 +743,15 @@ public static class SystemDefinitionLoader
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var source in kind.Features)
             {
-                var where = $"sheetKinds.{kind.Kind}.features ({source.List ?? source.Field})";
+                var where = $"sheetKinds.{kind.Kind}.features ({(source.Link != null ? $"link {source.Link}/" : string.Empty)}{source.List ?? source.Field})";
                 if (source.Field != null) yield return $"{where}: a sheet kind has no reference fields, so a source names a list, not a field.";
                 if (source.ByField != null) yield return $"{where}: byField is not read on a sheet kind (a source may read only what the sheet stores, not a worked-out value).";
+                if (source.Link != null)
+                {
+                    foreach (var error in ValidateLinkSource(definition, kind, source, where)) yield return error;
+                    continue;
+                }
+
                 var list = source.List == null ? null : kind.Lists.FirstOrDefault(l => l.Key == source.List);
                 if (source.List == null)
                 {
@@ -768,8 +779,121 @@ public static class SystemDefinitionLoader
         }
     }
 
+    /// <summary>The problems with a feature source that reads a link (<c>link: crew</c>): the link must be one of the kind's, the source needs a
+    /// <c>property</c> (the entry property holding the one grant map the linking sheet gets), and its <c>list</c> must be a list of entries on the
+    /// <b>linked</b> kind. A <c>choose</c> is not read here: a grant map's own <c>options</c> and <c>choose</c> do that.</summary>
+    private static IEnumerable<string> ValidateLinkSource(SystemDefinition definition, SheetKindDefinition kind, FeatureSource source, string where)
+    {
+        var link = kind.Links.FirstOrDefault(l => l.Key == source.Link);
+        if (link == null)
+        {
+            yield return $"{where}: '{source.Link}' is not one of the kind's links.";
+            yield break;
+        }
+
+        if (string.IsNullOrWhiteSpace(source.Property)) yield return $"{where}: a link source needs a property, the entry property that holds the grants the linked entry gives.";
+        if (source.Choose != null) yield return $"{where}: choose is not read on a link source; give the grant map its own options and choose.";
+        if (source.List == null)
+        {
+            yield return $"{where}: a link source needs the list of the linked kind it reads.";
+            yield break;
+        }
+
+        // An unknown linked kind is reported with the link itself.
+        if (definition.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, link.Kind, StringComparison.OrdinalIgnoreCase)) is not { } linkedKind) yield break;
+        var list = linkedKind.Lists.FirstOrDefault(l => l.Key == source.List);
+        if (list == null) yield return $"{where}: '{source.List}' is not one of the lists of '{linkedKind.Kind}', the kind the link '{link.Key}' points to.";
+        else if (list.Type == null) yield return $"{where}: the list '{list.Key}' of '{linkedKind.Kind}' holds plain records, not entries, so it carries no features.";
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex LinkCall =
+        new(@"\blink\s*\(\s*(?:'(?<key>[^']*)'|""(?<key>[^""]*)"")", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>The problems with the links a system's sheet kinds declare: each needs a key (unique in its kind) and the kind of a sheet the system
+    /// has; and a <c>link('key', ...)</c> in a formula of the kind must name one of the kind's links (a roll's, one of any kind's).</summary>
+    private static IEnumerable<string> ValidateKindLinks(SystemDefinition definition)
+    {
+        var all = definition.SheetKinds.SelectMany(k => k.Links.Select(l => l.Key)).ToHashSet(StringComparer.Ordinal);
+        foreach (var kind in definition.SheetKinds)
+        {
+            var keys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var link in kind.Links)
+            {
+                var where = $"sheetKinds.{kind.Kind}.links ({link.Key})";
+                if (string.IsNullOrWhiteSpace(link.Key)) yield return $"sheetKinds.{kind.Kind}.links: a link needs a key.";
+                else if (!keys.Add(link.Key)) yield return $"{where}: the key is used twice.";
+                if (string.IsNullOrWhiteSpace(link.Kind)) yield return $"{where}: a link needs the kind of sheet it points to.";
+                else if (!definition.SheetKinds.Any(k => string.Equals(k.Kind, link.Kind, StringComparison.OrdinalIgnoreCase))) yield return $"{where}: '{link.Kind}' is not one of the system's sheet kinds.";
+            }
+
+            foreach (var (at, formula) in KindFormulas(kind))
+            {
+                foreach (System.Text.RegularExpressions.Match call in LinkCall.Matches(formula))
+                {
+                    var key = call.Groups["key"].Value;
+                    if (!keys.Contains(key)) yield return $"sheetKinds.{kind.Kind}.{at}: link('{key}', ...) names a link the kind does not have.";
+                }
+            }
+        }
+
+        foreach (var roll in definition.Rolls)
+        {
+            foreach (var formula in (roll.Pool == null ? Enumerable.Empty<string>() : new[] { roll.Pool }).Concat(roll.Add))
+            {
+                foreach (System.Text.RegularExpressions.Match call in LinkCall.Matches(formula))
+                {
+                    if (!all.Contains(call.Groups["key"].Value)) yield return $"The roll \"{roll.Key}\": link('{call.Groups["key"].Value}', ...) names a link no sheet kind has.";
+                }
+            }
+        }
+    }
+
+    /// <summary>Every formula a sheet kind writes, with where it is.</summary>
+    private static IEnumerable<(string At, string Formula)> KindFormulas(SheetKindDefinition kind)
+    {
+        foreach (var value in kind.Values.Where(v => v.Formula != null)) yield return ($"values.{value.Key}", value.Formula!);
+        foreach (var modifier in kind.Modifiers)
+        {
+            yield return ($"modifiers ({modifier.Target})", modifier.Amount);
+            if (modifier.When != null) yield return ($"modifiers ({modifier.Target})", modifier.When);
+        }
+
+        foreach (var track in kind.Tracks)
+        {
+            foreach (var (name, formula) in new[] { ("max", track.Max), ("min", track.Min), ("start", track.Start), ("each", track.Each), ("overflow.by", track.Overflow?.By) })
+            {
+                if (formula != null) yield return ($"tracks.{track.Key}.{name}", formula);
+            }
+
+            foreach (var line in track.Thresholds.Concat(track.Bands))
+            {
+                foreach (var formula in new[] { line.AtOrBelow, line.Below, line.AtOrAbove, line.Above, line.Equals })
+                {
+                    if (formula != null) yield return ($"tracks.{track.Key}.thresholds", formula);
+                }
+            }
+        }
+
+        foreach (var list in kind.KeyedLists)
+        {
+            foreach (var (name, formula) in list.Derive) yield return ($"keyedLists.{list.Key}.derive.{name}", formula);
+            foreach (var rule in list.Rules) yield return ($"keyedLists.{list.Key}.rules", rule.Check);
+        }
+
+        foreach (var list in kind.Lists)
+        {
+            foreach (var rule in list.Rules) yield return ($"lists.{list.Key}.rules", rule.Check);
+            if (list.ModifiersFrom?.When != null) yield return ($"lists.{list.Key}.modifiersFrom", list.ModifiersFrom.When);
+        }
+    }
+
     private static IEnumerable<string> ValidateFeatureSources(SystemDefinition definition, SheetRules rules)
     {
+        foreach (var source in rules.Features.Where(s => s.Link != null))
+        {
+            yield return $"sheetRules.features ({source.Link}/{source.List}): link is read on a sheet kind's features only.";
+        }
+
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var source in rules.Features.Where(s => s.Choose != null))
         {

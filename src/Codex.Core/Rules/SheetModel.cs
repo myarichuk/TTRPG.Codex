@@ -92,8 +92,50 @@ public sealed class SheetModel
     /// <summary>The opt-ins the player ticked for the roll this model is for (by id); none on the sheet.</summary>
     private readonly IReadOnlySet<string> _ticked;
 
-    public SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet)
-        : this(system, resolver, sheet, checkPrerequisites: true)
+    private readonly ILinkedSheets? _linked;
+    private readonly Dictionary<string, SheetModel?> _linkModels = new(StringComparer.Ordinal);
+
+    /// <summary>Whether a link of the sheet is unknown: it names a linked actor, and no <see cref="ILinkedSheets"/> was supplied. The maximum of a
+    /// track whose formula reads modifiers or a link is then unknown too (null), and a rule that reads one is not judged, because the link
+    /// may have brought what they depend on.</summary>
+    public bool LinksUnknown => SheetLinks.AnyUnknown(Kind, _sheet, _linked);
+
+    private static readonly System.Text.RegularExpressions.Regex ReadsLinkedValue = new(@"\b(modifiers|link)\s*\(", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>Whether a formula reads what a link could bring: <c>modifiers(...)</c>, <c>link(...)</c>, or a value of the kind that does (through
+    /// its <c>modifiers</c> targets or its own formula), however many steps away.</summary>
+    private bool ReadsLink(string? formula, HashSet<string>? seen = null)
+    {
+        if (formula == null) return false;
+        if (ReadsLinkedValue.IsMatch(formula)) return true;
+        seen ??= new HashSet<string>(StringComparer.Ordinal);
+        IReadOnlyList<string> names;
+        try
+        {
+            names = _formulas.Names(formula);
+        }
+        catch (Exception ex) when (ex is not StackOverflowException)
+        {
+            return false;
+        }
+
+        foreach (var name in names)
+        {
+            if (!_valueDefinitions.TryGetValue(name, out var value) || !seen.Add(name)) continue;
+            if (Strings(value.Modifiers).Count > 0 || ReadsLink(value.Formula, seen)) return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>A track's maximum when it is known: null (not worked out) while a link is unknown and the maximum reads what the link could bring.</summary>
+    private double? KnownMax(Track track) =>
+        track.Definition.Max == null || (LinksUnknown && ReadsLink(track.Definition.Max)) ? null : Guard(track.Key + MaxSuffix, track.Label, () => TrackMax(track)) as double?;
+
+    /// <param name="linked">Resolves the sheets the kind's links point to; none: a link the sheet has is unknown (<see cref="LinksUnknown"/>) and
+    /// brings nothing, and what it could have owned is left as it is (docs/CREW_LINKS_DESIGN.md).</param>
+    public SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked = null)
+        : this(system, resolver, sheet, checkPrerequisites: true, linked: linked)
     {
     }
 
@@ -101,14 +143,15 @@ public sealed class SheetModel
     /// an input hold or not by the roll's inputs. An opt-in modifier counts only if its id is in <paramref name="optIns"/>, the ids the
     /// player ticked for this roll (docs/ROLL_BONUSES_DESIGN.md).</summary>
     public SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, object?> input,
-        IReadOnlySet<string>? optIns = null)
-        : this(system, resolver, sheet, checkPrerequisites: true, input, optIns)
+        IReadOnlySet<string>? optIns = null, ILinkedSheets? linked = null)
+        : this(system, resolver, sheet, checkPrerequisites: true, input, optIns, linked)
     {
     }
 
     private SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, bool checkPrerequisites,
-        IReadOnlyDictionary<string, object?>? input = null, IReadOnlySet<string>? optIns = null)
+        IReadOnlyDictionary<string, object?>? input = null, IReadOnlySet<string>? optIns = null, ILinkedSheets? linked = null)
     {
+        _linked = linked;
         _ticked = optIns ?? new HashSet<string>(StringComparer.Ordinal);
         _input = input == null ? FormulaItem.Empty : new FormulaItem(name => input.TryGetValue(name, out var value) ? Plain(value) : null);
         _system = system;
@@ -147,7 +190,7 @@ public sealed class SheetModel
 
         foreach (var track in Tracks())
         {
-            if (track.Definition.Max != null && Guard(track.Key + MaxSuffix, track.Label, () => TrackMax(track)) is { } max) _result.Values[track.Key + MaxSuffix] = max;
+            if (KnownMax(track) is { } max) _result.Values[track.Key + MaxSuffix] = max;
             if (track.Definition.Holds is { } holds && !holds.Type.Equals("text", StringComparison.OrdinalIgnoreCase)) CheckSlots(track, holds);
             CheckRange(track);
         }
@@ -236,7 +279,7 @@ public sealed class SheetModel
         using var _ = Enter();
         if (Tracks().FirstOrDefault(t => t.Key == key) is not { } track) return null;
         var min = track.Definition.Min is { } low ? Guard(track.Key + ":min", track.Label, () => Run(low, extra: track.Bindings)) is { } m ? SheetFormulas.Number(m) : (double?)null : 0d;
-        var max = track.Definition.Max != null ? Guard(track.Key + MaxSuffix, track.Label, () => TrackMax(track)) as double? : null;
+        var max = KnownMax(track);
         double? start = track.Definition.Start switch
         {
             null => null,
@@ -573,11 +616,37 @@ public sealed class SheetModel
 
     /// <summary>The features the kind's own sources give this sheet, collected once per model.</summary>
     private IReadOnlyList<ActiveFeature> KindFeatures() =>
-        _kindFeatures ??= Kind is { Features.Count: > 0 } ? SheetRuleEngine.KindFeatures(_system, _resolver, _sheet) : Array.Empty<ActiveFeature>();
+        _kindFeatures ??= Kind is { Features.Count: > 0 } ? SheetRuleEngine.KindFeatures(_system, _resolver, _sheet, linked: _linked) : Array.Empty<ActiveFeature>();
 
+    private List<Modifier>? _baseModifiers;
+
+    /// <summary>Every modifier that counts: the kind's, those of picks and features, and those of the conditions that hold. While the conditions
+    /// themselves are being worked out (a track threshold that reads <c>modifiers(...)</c>: Hardened's trauma size), the conditions' own effects are
+    /// not yet known, so such a formula reads the rest and the list is not kept.</summary>
     private List<Modifier> Modifiers()
     {
         if (_modifiers != null) return _modifiers;
+        var modifiers = new List<Modifier>(BaseModifiers());
+        if (_workingConditions) return modifiers;
+
+        foreach (var condition in Conditions())
+        {
+            if (_system.ConditionEffects.FirstOrDefault(e => string.Equals(e.Key, condition, StringComparison.OrdinalIgnoreCase)) is not { Value: { } effect } found) continue;
+            var at = 0;
+            foreach (var m in effect.Modifiers)
+            {
+                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source ?? condition, m.When, null, OptInIds.Condition(found.Key, at++), m.OptIn, found.Key));
+            }
+        }
+
+        return _modifiers = modifiers;
+    }
+
+    /// <summary>The modifiers that do not depend on which conditions hold: the kind's own, those of the picks' <c>modifiersFrom</c>, and the features'
+    /// (the kind's own sources, and what a link brings).</summary>
+    private List<Modifier> BaseModifiers()
+    {
+        if (_baseModifiers != null) return _baseModifiers;
         var modifiers = new List<Modifier>();
         var kindOwn = 0;
         foreach (var m in Kind?.Modifiers ?? new List<ModifierDefinition>())
@@ -607,27 +676,20 @@ public sealed class SheetModel
         // The kind's own feature sources (sheetKinds[].features): each active feature's modifiers, credited to the feature. Collected once per
         // model from the raw sheet (SheetRuleEngine.KindFeatures), so this cannot recurse into a value.
         // The index of an opt-in's id counts every modifier of the same source entry, across its rows, so two rows never share an id.
+        // A feature that came through a link has the link's own id (OptInIds.Link), so a crew's entry and the member's own entry of one id never collide.
         var perSource = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var feature in KindFeatures())
         {
+            var scope = feature.Link == null ? feature.Source.Id : feature.Link + ":" + feature.Source.Id;
             foreach (var m in feature.Modifiers)
             {
-                var index = perSource[feature.Source.Id] = perSource.GetValueOrDefault(feature.Source.Id) + 1;
-                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", feature.Name, m.When, null, OptInIds.Feature(feature.Source.Id, index - 1), m.OptIn));
+                var index = perSource[scope] = perSource.GetValueOrDefault(scope) + 1;
+                var id = feature.Link == null ? OptInIds.Feature(feature.Source.Id, index - 1) : OptInIds.Link(feature.Link, feature.Source.Id, index - 1);
+                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", feature.Name, m.When, null, id, m.OptIn));
             }
         }
 
-        foreach (var condition in Conditions())
-        {
-            if (_system.ConditionEffects.FirstOrDefault(e => string.Equals(e.Key, condition, StringComparison.OrdinalIgnoreCase)) is not { Value: { } effect } found) continue;
-            var at = 0;
-            foreach (var m in effect.Modifiers)
-            {
-                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source ?? condition, m.When, null, OptInIds.Condition(found.Key, at++), m.OptIn, found.Key));
-            }
-        }
-
-        return _modifiers = modifiers;
+        return _baseModifiers = modifiers;
     }
 
     private static object? At<TKey>(IDictionary<TKey, object> map, TKey key) where TKey : notnull =>
@@ -639,15 +701,7 @@ public sealed class SheetModel
     /// <paramref name="without"/>; every one that reached is recorded under <paramref name="key"/>.</summary>
     private double Stack(string key, IReadOnlyCollection<string> targets, List<object>? without)
     {
-        var left = new List<(string Type, bool PositiveOnly)>();
-        foreach (var w in without ?? new List<object>())
-        {
-            if (w is IDictionary<object, object> map) left.Add((At(map, "type")?.ToString() ?? "", At(map, "positiveOnly") is true or "true"));
-            else if (w is IDictionary<string, object> named) left.Add((At(named, "type")?.ToString() ?? "", At(named, "positiveOnly") is true or "true"));
-            else left.Add((w.ToString() ?? "", false));
-        }
-
-        var reached = Reached(targets, left);
+        var reached = Reached(targets, Left(without));
 
         var applied = new List<AppliedModifier>();
         var total = 0d;
@@ -659,6 +713,21 @@ public sealed class SheetModel
 
         _result.Modifiers[key] = applied;
         return total;
+    }
+
+    /// <summary>The types a value leaves out (<c>without</c>: a type's name, or <c>{ type, positiveOnly }</c>), as <see cref="Reached"/> reads them.
+    /// One reading for the value's total (<see cref="Stack"/>) and for the list of what counted (<see cref="Bonuses"/>), so the two cannot disagree.</summary>
+    private static List<(string Type, bool PositiveOnly)> Left(List<object>? without)
+    {
+        var left = new List<(string Type, bool PositiveOnly)>();
+        foreach (var w in without ?? new List<object>())
+        {
+            if (w is IDictionary<object, object> map) left.Add((At(map, "type")?.ToString() ?? "", At(map, "positiveOnly") is true or "true"));
+            else if (w is IDictionary<string, object> named) left.Add((At(named, "type")?.ToString() ?? "", At(named, "positiveOnly") is true or "true"));
+            else left.Add((w.ToString() ?? "", false));
+        }
+
+        return left;
     }
 
     /// <summary>The modifiers that count for <paramref name="targets"/>: the target is read, the <c>when</c> holds, an opt-in was ticked,
@@ -681,10 +750,10 @@ public sealed class SheetModel
 
     /// <summary>What counted for a roll that reads <paramref name="targets"/>: every modifier that reached, each with its source, and
     /// whether the player ticked it (an opt-in) or it is always on. Stacking rules apply as they do to the pool.</summary>
-    internal IReadOnlyList<RollBonus> Bonuses(IReadOnlyCollection<string> targets)
+    internal IReadOnlyList<RollBonus> Bonuses(IReadOnlyCollection<string> targets, List<object>? without = null)
     {
         var bonuses = new List<RollBonus>();
-        var reached = Reached(targets, new List<(string Type, bool PositiveOnly)>());
+        var reached = Reached(targets, Left(without));
         foreach (var (modifier, _, amount, counts) in ModifierStacking.Stack(reached.Select(r => (r.Modifier.Type, r.Amount, r.Modifier)), _system.ModifierTypes))
         {
             if (!counts) continue;
@@ -718,7 +787,7 @@ public sealed class SheetModel
             }
 
             var source = modifier.Source ?? string.Empty;
-            offered.Add(new OptInModifier(modifier.Id, modifier.OptIn!.Label is { Length: > 0 } label ? label : source, text, source, modifier.OptIn, modifier.Condition));
+            offered.Add(new OptInModifier(modifier.Id, modifier.OptIn!.Label is { Length: > 0 } label ? label : source, text, source, modifier.OptIn, modifier.Condition, modifier.Target));
         }
 
         return offered;
@@ -926,7 +995,7 @@ public sealed class SheetModel
         if (YamlValues.ToNumber(_sheet.GetValueOrDefault(track.Key)) is not { } current) return;
         var label = track.Label ?? track.Key;
         var min = track.Definition.Min is { } low ? Guard(track.Key + ":min", label, () => Run(low, extra: track.Bindings)) is { } m ? SheetFormulas.Number(m) : (double?)null : 0d;
-        var max = track.Definition.Max != null ? Guard(track.Key + MaxSuffix, label, () => TrackMax(track)) as double? : null;
+        var max = KnownMax(track); // not judged against a maximum a link could have raised
         if ((min is { } floor && current < floor) || (max is { } ceiling && current > ceiling))
         {
             var range = max is { } top ? $"{min ?? 0:0} to {top:0}" : $"at least {min ?? 0:0}";
@@ -954,6 +1023,8 @@ public sealed class SheetModel
     {
         foreach (var rule in rules)
         {
+            // A rule over what a link could have brought (an action cap raised by the crew) is not judged while the link is unknown.
+            if (LinksUnknown && ReadsLink(rule.Check)) continue;
             var (parameter, _) = SheetFormulas.SplitLambda(rule.Check);
             if (parameter == null)
             {
@@ -1003,7 +1074,7 @@ public sealed class SheetModel
             if (items[index].Get(list.Prerequisites!) is not IEnumerable prerequisites || prerequisites is string) continue;
             var position = _rawIndex[list.Key][index];
             var without = new Dictionary<string, object>(_sheet) { [list.Key] = picks.Where((_, i) => i != position).ToList() };
-            var before = new SheetModel(_system, _resolver, without, checkPrerequisites: false);
+            var before = new SheetModel(_system, _resolver, without, checkPrerequisites: false, linked: _linked);
             var name = items[index].Get("name")?.ToString() ?? items[index].Get("id")?.ToString();
             foreach (var prerequisite in prerequisites.OfType<IDictionary<string, object>>())
             {
@@ -1099,6 +1170,25 @@ public sealed class SheetModel
     }
 
     internal double ModifierTotal(string target) => Stack("modifiers:" + target, new[] { target }, null);
+
+    /// <summary><c>link('crew', 'tier')</c>: the worked-out value (or keyed entry, track maximum, attribute) of the linked sheet. 0 when the sheet has no such
+    /// link set, the link is unknown (no <see cref="ILinkedSheets"/>), the linked actor is gone or of another kind, or it has no such value. The linked
+    /// sheet is worked out by a model with no resolver of its own, so its links are not followed: one step only.</summary>
+    /// <exception cref="FormulaException">The kind declares no link with that key.</exception>
+    internal double LinkValue(object? linkKey, object? value)
+    {
+        var key = linkKey?.ToString() ?? string.Empty;
+        if (Kind == null || Kind.Links.All(l => l.Key != key)) throw new FormulaException($"no link called \"{key}\"");
+        if (LinkModel(key) is not { } model || model.Path(value?.ToString() ?? string.Empty) is not { } found) return 0;
+        return SheetFormulas.Number(found);
+    }
+
+    private SheetModel? LinkModel(string linkKey)
+    {
+        if (_linkModels.TryGetValue(linkKey, out var known)) return known;
+        var sheet = SheetLinks.Linked(Kind, _sheet, linkKey, _linked);
+        return _linkModels[linkKey] = sheet == null ? null : new SheetModel(_system, _resolver, sheet);
+    }
 
     internal bool Has(string? condition) => Conditions().Any(c => string.Equals(c, condition, StringComparison.OrdinalIgnoreCase));
 }

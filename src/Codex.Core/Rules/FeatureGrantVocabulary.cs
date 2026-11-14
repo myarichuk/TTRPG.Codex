@@ -158,6 +158,9 @@ public sealed class FeatureGrantVocabulary
         if (rules.HitPoints is { } hitPoints) Add(hitPoints.Key, system.Resources.FirstOrDefault(r => r.MaxKey == hitPoints.Key)?.Label);
         foreach (var derived in rules.Derived) Add(derived.Key, derived.Label);
         foreach (var field in system.ActorFields.Where(f => f.Type == FieldType.Number && f.Key != system.FieldRoles.Level && f.Key != rules.ArmorClass?.MiscField)) Add(field.Key, field.Label);
+
+        // The rolls the system makes: a modifier on one of these counts where that roll is made (docs/ROLL_BONUSES_DESIGN.md).
+        foreach (var roll in RollSiteTargets.Listed(system, rules)) Add(roll.Key, roll.Label);
         return targets;
     }
 

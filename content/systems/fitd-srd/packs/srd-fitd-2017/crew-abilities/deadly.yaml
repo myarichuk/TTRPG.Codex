@@ -9,3 +9,22 @@ description: >-
 source: Crew playbook > Crew special abilities > Deadly
 tags:
 - example
+properties:
+  members:
+    options:
+    - name: Hunt
+      modifiers:
+      - target: actions.hunt
+        amount: 1
+    - name: Prowl
+      modifiers:
+      - target: actions.prowl
+        amount: 1
+    - name: Skirmish
+      modifiers:
+      - target: actions.skirmish
+        amount: 1
+    choose:
+      id: deadly
+      label: Deadly
+      count: 1

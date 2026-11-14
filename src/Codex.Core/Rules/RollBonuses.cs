@@ -32,13 +32,27 @@ public sealed record RollBonus(string? Id, string Source, string Label, double A
 /// <summary>What a ticked opt-in spends: the pool's sheet key (a <c>uses_*</c> counter's, or a track's or resource's own) and how much.</summary>
 public sealed record RollOptInSpend(string Key, double Amount);
 
+/// <summary>How a roll's label says which bonuses the roller chose: <c>Resist (+1d Ambush)</c>. Always-on bonuses are not listed (the roll's own
+/// numbers hold them); the sheet and the table's log both use this, so they say the same.</summary>
+public static class RollBonusLabel
+{
+    /// <summary>The label with the ticked bonuses of <paramref name="bonuses"/> after it; unchanged when none was ticked. In a <paramref name="pool"/> roll an
+    /// amount is a number of dice (<c>+1d</c>).</summary>
+    public static string Of(string label, IEnumerable<RollBonus> bonuses, bool pool)
+    {
+        var chosen = bonuses.Where(b => b.Ticked).Select(b => $"{(b.Amount >= 0 ? "+" : string.Empty)}{b.Amount.ToString(CultureInfo.InvariantCulture)}{(pool ? "d" : string.Empty)} {b.Label}").ToList();
+        return chosen.Count == 0 ? label : $"{label} ({string.Join(", ", chosen)})";
+    }
+}
+
 /// <summary>A tick box a roll offers. <see cref="Amount"/> is text as the box shows it (<c>+1</c>, <c>+1d4</c>, or the formula when it cannot be
 /// worked out yet). <see cref="Spends"/> is what ticking it costs, and <see cref="CanPay"/> whether the pool holds that much (true when it
-/// costs nothing). <see cref="Ends"/> is the condition rolling with it ticked removes (the name), or null.</summary>
-public sealed record RollOptIn(string Id, string Label, string Amount, string Source, RollOptInSpend? Spends, bool CanPay, string? Ends);
+/// costs nothing). <see cref="Ends"/> is the condition rolling with it ticked removes (the name), or null. <see cref="Target"/> is the roll
+/// target the modifier reaches (<c>check</c>, <c>attack.weapon</c>), so a page can say which rolls a tick box fits.</summary>
+public sealed record RollOptIn(string Id, string Label, string Amount, string Source, RollOptInSpend? Spends, bool CanPay, string? Ends, string? Target = null);
 
 /// <summary>An opt-in modifier as the model offers it, before the sheet's pools are looked at.</summary>
-internal sealed record OptInModifier(string Id, string Label, string Amount, string Source, OptInDefinition Definition, string? Condition);
+internal sealed record OptInModifier(string Id, string Label, string Amount, string Source, OptInDefinition Definition, string? Condition, string? Target = null);
 
 /// <summary>The load checks of opt-ins and of dice amounts.</summary>
 public static partial class OptInChecks

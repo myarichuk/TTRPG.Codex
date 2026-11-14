@@ -64,6 +64,7 @@ maxSuffix: מקס׳
 sheetRules:
   messages:
     "more load used than the chosen load allows ({LoadMax}).": נעשה שימוש בעומס גדול מזה שהעומס שנבחר מאפשר ({LoadMax}).
+    "an action rating is above {actionCap}.": דירוג פעולה גבוה מ-{actionCap}.
 
 values:
   # Sheet kinds, lists and layout sections
@@ -158,3 +159,13 @@ values:
   Turf counted: שטח נספר
   Downtime: זמן פנוי
   Load chosen: העומס נבחר
+  # Crew links and roll bonuses
+  Action rating limit: מגבלת דירוג הפעולות
+  Deadly: קטלניים
+  From hiding or a trap: ממסתור או ממלכודת
+  Frightened target: מטרה מבוהלת
+  Intimate target: מטרה קרובה
+  Gathering on a target: איסוף מידע על מטרה
+  Avoiding detection: הימנעות מגילוי
+  Protecting a teammate: הגנה על חבר צוות
+  Against a supernatural threat: נגד איום על-טבעי

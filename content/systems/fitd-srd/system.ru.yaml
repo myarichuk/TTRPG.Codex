@@ -65,6 +65,7 @@ maxSuffix: макс.
 sheetRules:
   messages:
     "more load used than the chosen load allows ({LoadMax}).": использовано больше ноши, чем позволяет выбранная ноша ({LoadMax}).
+    "an action rating is above {actionCap}.": рейтинг действия выше {actionCap}.
 
 values:
   # Sheet kinds, lists and layout sections
@@ -159,3 +160,13 @@ values:
   Turf counted: Учтённая территория
   Downtime: Свободное время
   Load chosen: Ноша выбрана
+  # Crew links and roll bonuses
+  Action rating limit: Предел рейтинга действий
+  Deadly: Смертоносные
+  From hiding or a trap: Из укрытия или из ловушки
+  Frightened target: Напуганная цель
+  Intimate target: Близкая цель
+  Gathering on a target: Сбор сведений о цели
+  Avoiding detection: Избегание обнаружения
+  Protecting a teammate: Защита товарища
+  Against a supernatural threat: Против сверхъестественной угрозы

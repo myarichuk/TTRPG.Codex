@@ -64,10 +64,11 @@ public sealed record FeatureUses(string? Key, string Max, IReadOnlyList<string> 
 /// picked entry that is one. <see cref="View"/> is the sheet as that feature's class sees it (its own class level). <see cref="Copy"/>
 /// is which copy of a repeatable pick this is (1 for the first): a choice of the second copy of a feat is stored apart.
 /// <see cref="OnKind"/> is true for a feature that comes from a sheet kind's own sources (<c>sheetKinds[].features</c>): its modifiers go
-/// to the kind's <see cref="SheetModel"/>, never to <c>sheetRules</c>' targets.</summary>
+/// to the kind's <see cref="SheetModel"/>, never to <c>sheetRules</c>' targets. <see cref="Link"/> is the key of the link a feature reached the sheet through
+/// (a crew's upgrade, for each member): <see cref="Source"/> is then an entry of the linked sheet's list.</summary>
 public sealed record ActiveFeature(string Name, string? Description, ContentEntry Source, int? Level, IReadOnlyDictionary<string, object> View, string? LevelKey,
     IReadOnlyList<FeatureModifier> Modifiers, IReadOnlyList<FeatureAdd> Adds, FeatureUses? Uses, FeatureSpend? Spends = null, int Copy = 1,
-    string? Scope = null, string? ChosenBy = null, bool OnKind = false)
+    string? Scope = null, string? ChosenBy = null, bool OnKind = false, string? Link = null)
 {
     public bool Grants => Modifiers.Count > 0 || Adds.Count > 0 || Uses != null || Spends != null;
 
@@ -231,17 +232,17 @@ public sealed partial class SheetRuleEngine
         FeatureRecovery.Decode(sheet, key).Select(r => r.On).Where(on => SystemMoments.IsRest(system, on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     /// <summary>The features the sheet has now, in the order the system lists their sources.</summary>
-    public IReadOnlyList<ActiveFeature> ActiveFeatures(IReadOnlyDictionary<string, object> sheet) => CollectFeatures(sheet, null);
+    public IReadOnlyList<ActiveFeature> ActiveFeatures(IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked = null) => CollectFeatures(sheet, null, linked);
 
     /// <summary>The features the sheet has now, and in <paramref name="collected"/> the row choices behind them. Only the rows a choice picked
     /// are features; the sheet's own stored picks decide, so this is the one place that selection is made.</summary>
-    internal IReadOnlyList<ActiveFeature> CollectFeatures(IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected)
+    internal IReadOnlyList<ActiveFeature> CollectFeatures(IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, ILinkedSheets? linked = null)
     {
         var found = new List<ActiveFeature>();
         var copies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // across every list: a feat in two lists is copy 1 and copy 2
         if (Rules is { Features.Count: > 0 } rules) CollectRuleFeatures(rules, sheet, collected, found, copies);
         // A sheet kind's own sources come after sheetRules': the same selection, over the kind's lists.
-        found.AddRange(KindFeatures(system, resolver, sheet, collected, copies));
+        found.AddRange(KindFeatures(system, resolver, sheet, collected, copies, linked));
         return found;
     }
 
@@ -254,15 +255,25 @@ public sealed partial class SheetRuleEngine
     /// </summary>
     /// <param name="collected">Receives the row choices behind the features; null: not wanted.</param>
     /// <param name="copies">How many of each entry have been counted, to number the copies of a repeated pick; null: a fresh count.</param>
+    /// <param name="linked">Resolves the sheets the kind's links point to. A <c>link</c> source reads the picks of its list on the linked sheet, one
+    /// step only (that sheet's own links are never followed), as one feature per pick named "{entry} ({link label})" from the entry's
+    /// <c>property</c> grant map. Null, or a link the sheet does not have: those sources give nothing.</param>
     public static IReadOnlyList<ActiveFeature> KindFeatures(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet,
-        FeatureCollection? collected = null, Dictionary<string, int>? copies = null)
+        FeatureCollection? collected = null, Dictionary<string, int>? copies = null, ILinkedSheets? linked = null)
     {
         if (SheetLayout.KindOf(system, sheet) is not { Features.Count: > 0 } kind) return Array.Empty<ActiveFeature>();
 
         copies ??= new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var linkCopies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var found = new List<ActiveFeature>();
         foreach (var source in kind.Features)
         {
+            if (source.Link != null)
+            {
+                AddLinkFeatures(found, system, kind, source, resolver, sheet, collected, linked, linkCopies);
+                continue;
+            }
+
             if (source.List == null || kind.Lists.FirstOrDefault(l => l.Key == source.List) is not { Type: { } type } list) continue;
             foreach (var id in PickIds(sheet, list.Key))
             {
@@ -276,6 +287,43 @@ public sealed partial class SheetRuleEngine
     }
 
     /// <summary>The ids of the picks stored under <paramref name="key"/> on a sheet kind: each element is an id, or a map with an <c>id</c>.</summary>
+    /// <summary>The entries a <c>link</c> source reaches: the picks of its list on the linked sheet, as entries of the list's type, with the link
+    /// they came through. The linked sheet is read as stored (its picks and nothing it works out), and only if its own <c>kind</c> is the one the link
+    /// declares. Empty when the sheet has no such link, the link is unknown (no resolver), the actor is gone, or the list is not the linked kind's.</summary>
+    internal static IReadOnlyList<(SheetLinkDefinition Link, ContentEntry Entry)> LinkedEntries(SystemDefinition system, SheetKindDefinition kind, FeatureSource source,
+        IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked)
+    {
+        var entries = new List<(SheetLinkDefinition, ContentEntry)>();
+        if (source.Link == null || source.List == null || kind.Links.FirstOrDefault(l => l.Key == source.Link) is not { } link) return entries;
+        if (SheetLinks.Linked(kind, sheet, link.Key, linked) is not { } other) return entries;
+        var otherKind = system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, link.Kind, StringComparison.OrdinalIgnoreCase));
+        if (otherKind?.Lists.FirstOrDefault(l => l.Key == source.List) is not { Type: { } type }) return entries;
+        foreach (var id in PickIds(other, source.List))
+        {
+            if (resolver.Resolve(type, id) is not { } entry) continue;
+            if (source.Entries.Count > 0 && !source.Entries.Contains(entry.Id, StringComparer.OrdinalIgnoreCase)) continue;
+            entries.Add((link, entry));
+        }
+
+        return entries;
+    }
+
+    /// <summary>Adds the features a <c>link</c> source gives: one per pick of the linked sheet, from the entry's <c>property</c>, a single grant map.
+    /// What it asks the player to choose is stored on this sheet, under the entry's id as every choice is.</summary>
+    private static void AddLinkFeatures(List<ActiveFeature> found, SystemDefinition system, SheetKindDefinition kind, FeatureSource source, IEntryResolver resolver,
+        IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, ILinkedSheets? linked, Dictionary<string, int> copies)
+    {
+        if (source.Property == null) return;
+        foreach (var (link, entry) in LinkedEntries(system, kind, source, resolver, sheet, linked))
+        {
+            if (!entry.Properties.TryGetValue(source.Property, out var raw) || YamlValues.Normalize(raw) is not IDictionary<string, object> grant) continue;
+            var copy = copies[link.Key + ":" + entry.Id] = copies.GetValueOrDefault(link.Key + ":" + entry.Id) + 1;
+            var label = string.IsNullOrWhiteSpace(link.Label) ? link.Key : link.Label;
+            AddRow(found, $"{entry.Name} ({label})", entry.Description, entry, null, sheet, null, new Dictionary<string, object>(grant), copy, sheet, collected, null, null,
+                onKind: true, link: link.Key);
+        }
+    }
+
     private static IEnumerable<string> PickIds(IReadOnlyDictionary<string, object> sheet, string key)
     {
         if (!sheet.TryGetValue(key, out var raw) || raw is not System.Collections.IEnumerable picks || raw is string) yield break;
@@ -392,9 +440,9 @@ public sealed partial class SheetRuleEngine
     /// <paramref name="scope"/> is the id of the row choice this row was picked through, <paramref name="chosenBy"/> its sheet key.</summary>
     private static void AddRow(List<ActiveFeature> found, string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view,
         string? levelKey, IReadOnlyDictionary<string, object> data, int copy, IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, string? scope, string? chosenBy,
-        bool onKind = false)
+        bool onKind = false, string? link = null)
     {
-        var feature = Feature(name, description, entry, level, view, levelKey, data, copy, scope, chosenBy, onKind);
+        var feature = Feature(name, description, entry, level, view, levelKey, data, copy, scope, chosenBy, onKind, link);
         found.Add(feature);
         var optionRows = Maps(data.GetValueOrDefault("options")).ToList();
         if (optionRows.Count == 0 && !data.ContainsKey("options")) return;
@@ -417,7 +465,7 @@ public sealed partial class SheetRuleEngine
         foreach (var picked in valid)
         {
             var option = candidates.First(c => c.Name!.Equals(picked.Name, StringComparison.OrdinalIgnoreCase)).Row;
-            AddRow(found, $"{name}: {picked.Name}", picked.Description, entry, level, view, levelKey, new Dictionary<string, object>(option), copy, sheet, collected, id, key, onKind);
+            AddRow(found, $"{name}: {picked.Name}", picked.Description, entry, level, view, levelKey, new Dictionary<string, object>(option), copy, sheet, collected, id, key, onKind, link);
         }
     }
 
@@ -477,7 +525,7 @@ public sealed partial class SheetRuleEngine
     };
 
     private static ActiveFeature Feature(string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view, string? levelKey, IReadOnlyDictionary<string, object> data, int copy = 1,
-        string? scope = null, string? chosenBy = null, bool onKind = false)
+        string? scope = null, string? chosenBy = null, bool onKind = false, string? link = null)
     {
         var modifiers = Maps(data.GetValueOrDefault("modifiers"))
             .Select(m => new FeatureModifier(Text(m, "target") ?? string.Empty, Text(m, "amount") ?? "0", Text(m, "type"), Text(m, "when"), ParseOptIn(Cell(m, "optIn"))))
@@ -494,7 +542,7 @@ public sealed partial class SheetRuleEngine
         var spends = data.GetValueOrDefault("spends") is IDictionary<string, object> spend && Text(spend, "key") is { } spendKey
             ? new FeatureSpend(spendKey, Text(spend, "amount") ?? "1")
             : null;
-        return new ActiveFeature(name, description, entry, level, view, levelKey, modifiers, adds, uses, spends, copy, scope, chosenBy, onKind);
+        return new ActiveFeature(name, description, entry, level, view, levelKey, modifiers, adds, uses, spends, copy, scope, chosenBy, onKind, link);
     }
 
     /// <summary>The choice an <c>adds</c> item leaves to the player (<c>choice</c> and/or <c>choose</c> in it), or null for a fixed item.
@@ -591,14 +639,17 @@ public sealed partial class SheetRuleEngine
 
     // ---- Where a modifier lands ----
 
-    private enum TargetKind { Unknown, ArmorClass, HitPoints, Derived, Field }
+    private enum TargetKind { Unknown, ArmorClass, HitPoints, Derived, Field, Roll }
 
+    /// <summary>Where a modifier's target lands. A value the sheet has wins over a roll word of the same name; a roll target (<see cref="RollSiteTargets"/>)
+    /// is read by the roll it names, where the bonus is worked out, so it is neither unknown nor a value of the sheet.</summary>
     private TargetKind KindOf(string target)
     {
         if (Rules?.ArmorClass is { } armor && armor.Key == target) return TargetKind.ArmorClass;
         if (Rules?.HitPoints is { } hitPoints && hitPoints.Key == target) return TargetKind.HitPoints;
         if (Rules?.Derived.Any(d => d.Key == target) == true) return TargetKind.Derived;
-        return system.ActorFields.Any(f => f.Key == target && f.Type == FieldType.Number) ? TargetKind.Field : TargetKind.Unknown;
+        if (system.ActorFields.Any(f => f.Key == target && f.Type == FieldType.Number)) return TargetKind.Field;
+        return RollSiteTargets.IsRollTarget(system, target) ? TargetKind.Roll : TargetKind.Unknown;
     }
 
     /// <summary>A feature's amount (or its counter's maximum) worked out on the sheet as the feature's class sees it; null when
@@ -667,10 +718,10 @@ public sealed partial class SheetRuleEngine
             .Select(x => (x.Feature, x.Type, x.Amount!.Value))
             .ToList();
 
-    private void EvaluateFeatures(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
+    private void EvaluateFeatures(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result, ILinkedSheets? linked = null)
     {
         var collected = new FeatureCollection();
-        var features = CollectFeatures(sheet, collected);
+        var features = CollectFeatures(sheet, collected, linked);
         EvaluateRowChoices(collected, result);
         if (features.Count == 0) return;
         result.Features.AddRange(features);
@@ -694,6 +745,9 @@ public sealed partial class SheetRuleEngine
                 foreach (var name in group.Select(x => x.Feature.Name).Distinct()) Warn(name);
                 continue;
             }
+
+            // A roll target is worked out where its roll is made (EvaluateActions, EvaluateSkills, EvaluateChecks): its amounts may be dice.
+            if (kind == TargetKind.Roll) continue;
 
             // A field's amounts are worked out from the same derived values ApplyGranted used, so what is listed is what was applied.
             var amounts = ModifierAmounts(group, kind == TargetKind.Field ? beforeFeatures : derived, Warn);
@@ -979,6 +1033,9 @@ public sealed partial class SheetRuleEngine
             }
         }
 
+        // While a link is unknown the counters its features own cannot be told from stale ones, so every key no own feature claims stays as stored.
+        // A known link whose linked sheet no longer holds the entry (or whose actor is gone) is an ordinary absence: its counters are stale.
+        if (evaluation.LinksUnknown) return;
         foreach (var stale in sheet.Keys.Where(k => k.StartsWith(UsesPrefix, StringComparison.Ordinal) && !keep.Contains(k)).ToList()) sheet.Remove(stale);
     }
 }

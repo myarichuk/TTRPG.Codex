@@ -25,11 +25,16 @@ public sealed class SheetKindDefinition
     /// <summary>Lists of picks (classes, feats, items), each with fields of its own per pick.</summary>
     public List<PickListDefinition> Lists { get; set; } = new();
     /// <summary>Where the kind's sheets get features (special abilities, upgrades) from, as <c>sheetRules.features</c> does for a system
-    /// with sheet rules; on a sheet kind a source names a <c>list</c> of the kind's <c>lists</c> and nothing else (no <c>field</c>, no
-    /// <c>byField</c>). Each pick's own properties carry the grants: <c>modifiers</c> (targets are the kind's values, keyed entries or
+    /// with sheet rules; on a sheet kind a source names a <c>list</c> of the kind's <c>lists</c> (no <c>field</c>, no
+    /// <c>byField</c>), or with <c>link</c> a list of the linked kind, whose picks on the linked sheet it reads (see <see cref="FeatureSource.Link"/>). Each pick's own properties carry the grants: <c>modifiers</c> (targets are the kind's values, keyed entries or
     /// groups), <c>uses</c> and <c>spends</c> (counters), <c>options</c> with <c>choose</c>, and <c>adds</c> with a <c>choice</c> over a
     /// keyed list. A list that is a source may not also have <c>modifiersFrom</c>, or its modifiers would count twice.</summary>
     public List<FeatureSource> Features { get; set; } = new();
+
+    /// <summary>Links to the sheet of another actor of the campaign: <c>{ key, kind, label }</c> (a scoundrel's crew). The sheet stores the linked
+    /// actor's id under <c>link__{key}</c>. A feature source with <c>link</c> reads the linked sheet's picks, and a formula reads its values with
+    /// <c>link('key', 'value')</c>. Links are one step deep and read only (docs/CREW_LINKS_DESIGN.md).</summary>
+    public List<SheetLinkDefinition> Links { get; set; } = new();
 
     /// <summary>Fixed sets of keys (skills, actions), each key with its own fields and worked-out values.</summary>
     public List<KeyedListDefinition> KeyedLists { get; set; } = new();
@@ -39,6 +44,20 @@ public sealed class SheetKindDefinition
     /// <summary>How the sheet is laid out: sections of widgets bound to keys. Empty: the host's generic layout (every value,
     /// track, list and keyed list in turn).</summary>
     public List<LayoutSection> Layout { get; set; } = new();
+}
+
+/// <summary>A link from one kind of sheet to the sheet of another actor (<c>links: [{ key: crew, kind: crew, label: Crew }]</c>): the sheet stores
+/// the linked actor's id under <c>link__{key}</c>, and the linked sheet must be of <see cref="Kind"/>.</summary>
+public sealed class SheetLinkDefinition
+{
+    /// <summary>Required: the link's name, as feature sources (<c>link: crew</c>) and <c>link('crew', ...)</c> name it. Unique in the kind.</summary>
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>Required: the <c>kind</c> of the sheet the link points to; one of the system's sheet kinds.</summary>
+    public string Kind { get; set; } = string.Empty;
+
+    /// <summary>The link's name as the sheet shows it, also the name given to what it brings ("Composed (Crew)"); the key when empty.</summary>
+    public string Label { get; set; } = string.Empty;
 }
 
 /// <summary>A section of a sheet's layout: a tab of its own, or with <see cref="Aside"/> a column shown beside every tab.</summary>

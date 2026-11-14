@@ -2748,7 +2748,7 @@
       "additionalProperties": false
     },
     "FeatureSource": {
-      "description": "One place features come from. Either Field (the entry a reference field names) or List (every entry picked in a list). With Property the features are that property's rows (`name`, `description`, and LevelColumn); without it the entry itself is one feature. A feature, row or entry, may carry: `modifiers`: `[{ target, amount, type, when }]`, as everywhere else. `target` is the armor class or hit point key, a derived value, or a Number actor field; `amount` is a number or a formula; a `type` the system stacks as `max` (or `best`) sets a floor (\"at least 120\"), as `min` a ceiling (\"at most 18\"), instead of adding; `highest` and `lowest` add only the largest or smallest bonus of the type. The rule is declared in the system's `modifierTypes`; a type it does not name, or none, adds. `adds`: `[{ to, entries, level }]`: entries put on a pick list (by id or name) or values on a tag list, from `level` on. They leave again when the feature does. On a ranked list (`to: skills` or `to: saves`, or a rank's own sheet list; see Ranks) an item takes more: `rank` (a rank key or number; none means the first rank) puts the entries at that rank, locked, with the feature as its source; `raise: 1` moves them that many ranks up, stopping at the top (`rank` and `raise` exclude each other). Such grants are worked out in the evaluation and never written to the sheet. Instead of `entries`, an item may leave the choice to the player: `{ to, choice, choose, from, minRank, maxRank, rank | raise }`. `choice` names the choice within its entry (required; it must be unique there, and the sheet stores the picks under `choice__{entryId}__{choice}`, `choice__{entryId}#2__{choice}` for the second copy of a repeatable feat); `choose` is how many keys; `from` is a list of keys, `any` (the default) or a filter on a key's own fields (`{ attribute: [str, dex] }`); `minRank` and `maxRank` are the ranks a key must already hold to be offered (\"a skill you are proficient in\"), checked against the ranks the sheet has so far without this choice's own picks. A choice not yet made is a warning, never a violation; a pick that no longer fits is a violation that says to choose again. On an item to a list of Library entries (the granted spells), `free` lets the character cast each spell without a slot: `free: atWill`, or a counter of uses written as `uses` is (`{ max, recoversOn, recovers, regain, key, label }`). Each spell gets its own counter, `free-{spell id}` (the `key` makes one shared counter instead), and the spell's action gets one more way to pay, after its slots, at the spell's own level. `uses`: `{ max, key, recoversOn, recovers, regain }`: a counter of uses, `max` a number or a formula, refilled by the rests named in `recoversOn` (a full refill on each). `key` names the pool, so features that name one share it: the highest maximum wins and the sheet warns. `recovers` is `[{ on, amount, when }]`: `on` a moment (a rest, a moment the system declares in `moments`, `initiative` or `dawn`) or `manual`; `amount` is `all`, a number, a formula or dice; `when` is `empty` or a formula. `regain: gm` lets only the GM add a use back by hand. `label` names the counter on the sheet, the Table and the log when that is not the feature's own name (a Breath Weapon shared by ten lineage rows). `spends`: `{ key, amount }`: the feature gets a Use button that spends `amount` (a number, a formula, or `ask` for the player to choose) from the pool `key`, a feature counter's `key` or a pool's own sheet key. `options` and `choose` (\"choose one of the following\"): `options: [{ name, description, and any key above }]` with `choose: { id, count, onChange, changesOn }` (see RowChoose; `id` is required). Only the options picked become features, named \"{feature}: {option}\". The pick is stored as `choice__{entryId}__{id}`; a choice inside a picked row is stored under the parent's id first, `choice__{entryId}__{parentId}__{id}`. The same shape, one level up, is Choose.",
+      "description": "One place features come from. Either Field (the entry a reference field names) or List (every entry picked in a list). With Property the features are that property's rows (`name`, `description`, and LevelColumn); without it the entry itself is one feature. A feature, row or entry, may carry: `modifiers`: `[{ target, amount, type, when }]`, as everywhere else. `target` is the armor class or hit point key, a derived value, or a Number actor field; `amount` is a number or a formula; a `type` the system stacks as `max` (or `best`) sets a floor (\"at least 120\"), as `min` a ceiling (\"at most 18\"), instead of adding; `highest` and `lowest` add only the largest or smallest bonus of the type. The rule is declared in the system's `modifierTypes`; a type it does not name, or none, adds. `modifiers` on a roll: a `target` may also name a roll the sheet makes, and the bonus counts where that roll is made. Each roll reads the targets listed, from general to narrow. A weapon attack (an action that reads the inventory) reads `attack`, `attack.weapon`, `attack.melee` or `attack.ranged` (the action's `use.attack`), `attack.weapon.melee` or `attack.weapon.ranged`, and `attack.entry.{entry id}`. A spell attack (an action that reads lists) reads the same with `spell` for `weapon`. Damage reads `damage`, `damage.weapon` or `damage.spell`, `damage.melee` or `damage.ranged`, and `damage.entry.{entry id}`; the dice of healing are not damage. A saving throw reads `save` and `save.{attribute}`. An ability check reads `check` and `check.{attribute}`; a skill check reads `check`, `check.{the skill's attribute}` and `check.skill.{skill key}`. A number on such a target is added where the number is worked out: the action's attack bonus and damage (each slot's too), the skill's, the saving throw's and the attribute check's bonus. An `amount` written as dice (`1d4`, `-1d4`) is never folded into a number: it waits for the roll, which appends it to its expression. A modifier with `optIn` never counts on the sheet: it is a tick box the roll offers (see OptIn), with the id `{entry id}#{index}`, the index counting every modifier of the entry. A target that names none of these and no sheet value is a warning. `adds`: `[{ to, entries, level }]`: entries put on a pick list (by id or name) or values on a tag list, from `level` on. They leave again when the feature does. On a ranked list (`to: skills` or `to: saves`, or a rank's own sheet list; see Ranks) an item takes more: `rank` (a rank key or number; none means the first rank) puts the entries at that rank, locked, with the feature as its source; `raise: 1` moves them that many ranks up, stopping at the top (`rank` and `raise` exclude each other). Such grants are worked out in the evaluation and never written to the sheet. Instead of `entries`, an item may leave the choice to the player: `{ to, choice, choose, from, minRank, maxRank, rank | raise }`. `choice` names the choice within its entry (required; it must be unique there, and the sheet stores the picks under `choice__{entryId}__{choice}`, `choice__{entryId}#2__{choice}` for the second copy of a repeatable feat); `choose` is how many keys; `from` is a list of keys, `any` (the default) or a filter on a key's own fields (`{ attribute: [str, dex] }`); `minRank` and `maxRank` are the ranks a key must already hold to be offered (\"a skill you are proficient in\"), checked against the ranks the sheet has so far without this choice's own picks. A choice not yet made is a warning, never a violation; a pick that no longer fits is a violation that says to choose again. On an item to a list of Library entries (the granted spells), `free` lets the character cast each spell without a slot: `free: atWill`, or a counter of uses written as `uses` is (`{ max, recoversOn, recovers, regain, key, label }`). Each spell gets its own counter, `free-{spell id}` (the `key` makes one shared counter instead), and the spell's action gets one more way to pay, after its slots, at the spell's own level. `uses`: `{ max, key, recoversOn, recovers, regain }`: a counter of uses, `max` a number or a formula, refilled by the rests named in `recoversOn` (a full refill on each). `key` names the pool, so features that name one share it: the highest maximum wins and the sheet warns. `recovers` is `[{ on, amount, when }]`: `on` a moment (a rest, a moment the system declares in `moments`, `initiative` or `dawn`) or `manual`; `amount` is `all`, a number, a formula or dice; `when` is `empty` or a formula. `regain: gm` lets only the GM add a use back by hand. `label` names the counter on the sheet, the Table and the log when that is not the feature's own name (a Breath Weapon shared by ten lineage rows). `spends`: `{ key, amount }`: the feature gets a Use button that spends `amount` (a number, a formula, or `ask` for the player to choose) from the pool `key`, a feature counter's `key` or a pool's own sheet key. `options` and `choose` (\"choose one of the following\"): `options: [{ name, description, and any key above }]` with `choose: { id, count, onChange, changesOn }` (see RowChoose; `id` is required). Only the options picked become features, named \"{feature}: {option}\". The pick is stored as `choice__{entryId}__{id}`; a choice inside a picked row is stored under the parent's id first, `choice__{entryId}__{parentId}__{id}`. The same shape, one level up, is Choose.",
       "type": "object",
       "properties": {
         "field": {
@@ -2767,13 +2767,21 @@
           ],
           "description": "Or: the key of a list in `lists` whose picked entries carry them (`feats`). On a sheet kind (`sheetKinds[].features`) a source is this alone, with `property`, `entries`, `choose` and `levelColumn`: `list` names a list of the kind's own `lists`; `field` and `byField` are refused."
         },
+        "link": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "On a sheet kind only: the key of one of the kind's `links`. The source then reads the picks of List on the linked sheet (a list of the linked kind), and each pick's entry Property, which is required, is one grant map (`modifiers`, `adds`, `uses`, `options`) that becomes one feature of the linking sheet, named \"{entry} ({link label})\". Choices it asks for are stored on the linking sheet, scoped by the entry's id. The linked sheet is read as stored, one step deep: its own links are not followed. No link, or a linked actor that is gone, gives no features."
+        },
         "property": {
           "type": [
             "string",
             "number",
             "boolean"
           ],
-          "description": "The entry property holding feature rows (`features`, `traits`). None: the entry is one feature and carries `modifiers`, `adds` and `uses` among its own properties."
+          "description": "The entry property holding feature rows (`features`, `traits`). None: the entry is one feature and carries `modifiers`, `adds` and `uses` among its own properties. With Link: the entry property that holds the one grant map given to the linking sheet."
         },
         "levelColumn": {
           "type": [
@@ -3054,7 +3062,14 @@
           "items": {
             "$ref": "#/$defs/FeatureSource"
           },
-          "description": "Where the kind's sheets get features (special abilities, upgrades) from, as `sheetRules.features` does for a system with sheet rules; on a sheet kind a source names a `list` of the kind's `lists` and nothing else (no `field`, no `byField`). Each pick's own properties carry the grants: `modifiers` (targets are the kind's values, keyed entries or groups), `uses` and `spends` (counters), `options` with `choose`, and `adds` with a `choice` over a keyed list. A list that is a source may not also have `modifiersFrom`, or its modifiers would count twice."
+          "description": "Where the kind's sheets get features (special abilities, upgrades) from, as `sheetRules.features` does for a system with sheet rules; on a sheet kind a source names a `list` of the kind's `lists` (no `field`, no `byField`), or with `link` a list of the linked kind, whose picks on the linked sheet it reads (see Link). Each pick's own properties carry the grants: `modifiers` (targets are the kind's values, keyed entries or groups), `uses` and `spends` (counters), `options` with `choose`, and `adds` with a `choice` over a keyed list. A list that is a source may not also have `modifiersFrom`, or its modifiers would count twice."
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SheetLinkDefinition"
+          },
+          "description": "Links to the sheet of another actor of the campaign: `{ key, kind, label }` (a scoundrel's crew). The sheet stores the linked actor's id under `link__{key}`. A feature source with `link` reads the linked sheet's picks, and a formula reads its values with `link('key', 'value')`. Links are one step deep and read only (docs/CREW_LINKS_DESIGN.md)."
         },
         "keyedLists": {
           "type": "array",
@@ -3408,6 +3423,37 @@
             "boolean"
           ],
           "description": "The problem as shown, with `{name}` filled in from the item or the sheet's values (`{label}`, `{maxRanks}`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SheetLinkDefinition": {
+      "description": "A link from one kind of sheet to the sheet of another actor (`links: [{ key: crew, kind: crew, label: Crew }]`): the sheet stores the linked actor's id under `link__{key}`, and the linked sheet must be of Kind.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required: the link's name, as feature sources (`link: crew`) and `link('crew', ...)` name it. Unique in the kind."
+        },
+        "kind": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required: the `kind` of the sheet the link points to; one of the system's sheet kinds."
+        },
+        "label": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The link's name as the sheet shows it, also the name given to what it brings (\"Composed (Crew)\"); the key when empty."
         }
       },
       "additionalProperties": false

@@ -62,6 +62,13 @@ public sealed record SkillScore(string Key, string Label, string Attribute, bool
     /// <summary>The highest rank a source gives; the player's own ticks at or below it change nothing.</summary>
     public int GrantedRank => Sources is { Count: > 0 } ? Sources.Max(s => s.Rank) : 0;
 
+    /// <summary>What features add to the check or the save through the roll targets (<c>check</c>, <c>check.{attribute}</c>, <c>check.skill.{key}</c>,
+    /// <c>save</c>, <c>save.{attribute}</c>): already in <see cref="Bonus"/>, so the attribute's part of a sum is <c>Bonus - RankBonus - Extra</c>.</summary>
+    public int Extra { get; init; }
+
+    /// <summary>Who gave <see cref="Extra"/>, and how much each.</summary>
+    public IReadOnlyList<RollBonus> Bonuses { get; init; } = Array.Empty<RollBonus>();
+
     /// <summary>The source that locks <paramref name="rank"/> on (the lowest one that gives it or more), or null when the player's own ticks hold it.</summary>
     public RankSource? LockedBy(int rank) => Sources?.Where(s => s.Rank >= rank).OrderBy(s => s.Rank).FirstOrDefault();
 }
@@ -168,6 +175,21 @@ public sealed class SheetEvaluation
     /// <summary>What each rank of the skills' and the saving throws' lists is worth now, whether a key holds it or not.</summary>
     public List<RankValue> RankValues { get; } = new();
 
+    /// <summary>What features add to a check of each attribute on its own, by attribute key: the always-on numbers on <c>check</c> and
+    /// <c>check.{attribute}</c> (<see cref="SheetRuleEngine.CheckSite"/>). An attribute with nothing added is not here. The attribute's own modifier
+    /// is not in it: a check rolls the modifier and this.</summary>
+    public Dictionary<string, int> CheckBonuses { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>What the roll targets' numbers came to for each attribute's check, and who gave them; see <see cref="CheckBonuses"/>.</summary>
+    public Dictionary<string, IReadOnlyList<RollBonus>> CheckSources { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The numbers the always-on roll bonuses are worked out with (the derived values as they stand after the features), kept for the rolls
+    /// worked out later in one evaluation.</summary>
+    internal Dictionary<string, double>? SiteNumbers { get; set; }
+
+    /// <summary>The features whose roll bonus could not be worked out, said once each.</summary>
+    internal HashSet<string> SiteWarned { get; } = new(StringComparer.Ordinal);
+
     public List<SkillScore> SavingThrows { get; } = new();
     public List<SkillScore> Skills { get; } = new();
     public List<PassiveScore> Passives { get; } = new();
@@ -175,6 +197,11 @@ public sealed class SheetEvaluation
 
     /// <summary>What the sheet can cast and attack with (empty when the system names no action sources).</summary>
     public List<SheetAction> Actions { get; } = new();
+
+    /// <summary>The sheet names a linked actor (<c>link__{key}</c>) but no <see cref="ILinkedSheets"/> was supplied, so what the link brings is not
+    /// in this evaluation. Whatever a link feature would own (<c>uses_*</c> counters, <c>choice__</c> and <c>changes_on__</c> keys, the maximum of a track that
+    /// reads modifiers) must then be left as stored, not swept, pruned or clamped (<see cref="SheetRuleEngine.ApplyCounters"/>).</summary>
+    public bool LinksUnknown { get; set; }
 
     public bool HasViolations => Violations.Count > 0;
 }
@@ -238,14 +265,14 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// evaluation, then the slot, hit point and armor class values written back onto <paramref name="sheet"/>. One place, so the
     /// page, the tests and the golden corpus (tests/Codex.Tests/Golden) all run the same sequence.
     /// </summary>
-    public SheetEvaluation Recompute(Dictionary<string, object> sheet)
+    public SheetEvaluation Recompute(Dictionary<string, object> sheet, ILinkedSheets? linked = null)
     {
         StripGranted(sheet);
         ApplyInherited(sheet);
         ApplyAttributeTotals(sheet);
         ApplyGranted(sheet);
-        var evaluation = Evaluate(sheet);
-        ApplyTracks(sheet);
+        var evaluation = Evaluate(sheet, linked);
+        ApplyTracks(sheet, linked);
         ApplySlotPools(sheet, evaluation);
         ApplyCounters(sheet, evaluation);
         ApplyChoiceMoments(sheet, evaluation);
@@ -254,14 +281,21 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         return evaluation;
     }
 
-    public SheetEvaluation Evaluate(IReadOnlyDictionary<string, object> sheet)
+    /// <param name="linked">Resolves the sheets this sheet's links point to (docs/CREW_LINKS_DESIGN.md). None: a link the sheet has is
+    /// unknown, which <see cref="SheetEvaluation.LinksUnknown"/> records, and what the sweeps and clamps do about it is in <see cref="ApplyCounters"/>.</param>
+    public SheetEvaluation Evaluate(IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked = null)
     {
         var result = new SheetEvaluation();
-        if (system.SheetKinds.Count > 0) EvaluateModel(sheet, result);
+        if (system.SheetKinds.Count > 0)
+        {
+            result.LinksUnknown = SheetLinks.AnyUnknown(SheetLayout.KindOf(system, sheet), sheet, linked);
+            EvaluateModel(sheet, result, linked);
+        }
+
         if (Rules == null)
         {
             // A sheet kind's own feature sources: counters, spenders and row choices, as for sheetRules (the model has the modifiers).
-            if (SheetLayout.KindOf(system, sheet) is { Features.Count: > 0 }) EvaluateFeatures(sheet, result);
+            if (SheetLayout.KindOf(system, sheet) is { Features.Count: > 0 }) EvaluateFeatures(sheet, result, linked);
             return result;
         }
 
@@ -269,7 +303,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         EvaluateDerived(sheet, result);
         var views = ClassViews(sheet, result.Classes);
         EvaluateMulticlass(sheet, result);
-        EvaluateFeatures(sheet, result);
+        EvaluateFeatures(sheet, result, linked);
 
         foreach (var constraint in Rules.Constraints)
         {
@@ -357,6 +391,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         EvaluateHitPoints(sheet, result);
         EvaluateArmorClass(sheet, result);
         EvaluateSkills(sheet, result);
+        EvaluateChecks(sheet, result);
         EvaluateSpellcasting(sheet, result);
         EvaluateProficiencies(sheet, result);
         EvaluateActions(sheet, result);
@@ -923,9 +958,9 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
     /// <summary>A system with sheet kinds: its values, keyed-list entries and rules (<see cref="SheetModel"/>). Numbers land in
     /// <see cref="SheetEvaluation.Derived"/> beside the <c>derived</c> ones, whole numbers as <c>long</c>.</summary>
-    private void EvaluateModel(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
+    private void EvaluateModel(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result, ILinkedSheets? linked = null)
     {
-        var model = new SheetModel(system, resolver, sheet).Evaluate();
+        var model = new SheetModel(system, resolver, sheet, linked).Evaluate();
         result.Model = model;
         foreach (var (key, value) in model.Values)
         {
@@ -941,10 +976,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     /// <c>start</c> where the sheet has no value yet. The live table reads both from the sheet (its pool mirrors them, see
     /// ActorSheetSync), since it has no library to work a formula out with. Slot tracks hold what the player writes, and tracks
     /// an <c>each</c> makes are slots; neither is written.</summary>
-    private void ApplyTracks(Dictionary<string, object> sheet)
+    /// <remarks>While a link is unknown (<paramref name="linked"/> is none and the sheet names a linked actor), the maximum of a track whose
+    /// formula reads modifiers or a link is unknown too (<see cref="SheetTrack.Max"/> is null), so its <c>{key}_Max</c> is left as stored.</remarks>
+    private void ApplyTracks(Dictionary<string, object> sheet, ILinkedSheets? linked = null)
     {
         if (system.SheetKinds.Count == 0) return;
-        var model = new SheetModel(system, resolver, sheet);
+        var model = new SheetModel(system, resolver, sheet, linked);
         foreach (var key in model.TrackKeys())
         {
             if (model.TrackOf(key) is not { IsSlots: false, Definition.Each: null } track) continue;

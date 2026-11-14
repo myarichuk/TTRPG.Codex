@@ -139,7 +139,9 @@ public sealed class VaultService(
         if (accepted.Request.ReplacesActorId is not { } copyId || await actors.GetVisibleAsync(copyId, access) is not { } copy) return false;
         var before = new Dictionary<string, object>(copy.Sheet);
         copy.Name = accepted.Request.Name;
-        copy.Sheet = new Dictionary<string, object>(accepted.Request.Sheet);
+        // The vault's sheet brings no links; the campaign copy keeps the ones it has.
+        copy.Sheet = SheetLinks.WithoutLinks(accepted.Request.Sheet);
+        foreach (var (key, value) in before.Where(p => SheetLinks.IsLinkKey(p.Key))) copy.Sheet[key] = value;
         copy.Biography = SecretText.KeepSecrets(copy.Biography, accepted.Request.Biography);
         copy.JoinNotes = notes;
         ActorSheetSync.ApplySheetToState(copy, system, components);

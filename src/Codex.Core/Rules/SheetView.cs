@@ -34,11 +34,11 @@ public sealed class SheetView
     public SheetKindDefinition? Kind => _model.Kind;
     public SheetModelResult Result { get; }
 
-    public SheetView(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet)
+    public SheetView(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked = null)
     {
         _system = system;
         Sheet = sheet;
-        _model = new SheetModel(system, resolver, sheet);
+        _model = new SheetModel(system, resolver, sheet, linked);
         Result = _model.Evaluate();
     }
 
@@ -134,6 +134,8 @@ public sealed class SheetView
         "roll" => _system.Rolls.Any(r => r.Key == widget.Roll),
         "text" => widget.Key != null,
         "modifiers" => widget.Target != null,
+        "link" => widget.Key != null && Kind?.Links.Any(l => l.Key == widget.Key) == true,
+        "members" => Kind != null,
         _ => IsCompiled(widget)
     };
 

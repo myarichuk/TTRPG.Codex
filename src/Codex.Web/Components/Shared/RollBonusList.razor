@@ -1,0 +1,46 @@
+@using Codex.Core.Rules
+
+@* The bonuses that counted in a roll, or always count in one about to be made, each with where it came from (docs/ROLL_BONUSES_DESIGN.md).
+   In a pool roll an amount is a number of dice. *@
+
+@if (Bonuses.Count > 0)
+{
+    <div class="roll-bonus-lines" data-testid="@TestId">
+        <span class="small-muted" id="@(id)-caption">@Caption</span>
+        <ul class="list-unstyled small mb-1" aria-labelledby="@(id)-caption">
+            @foreach (var bonus in Bonuses)
+            {
+                <li><bdi>@Amount(bonus)</bdi> @bonus.Label
+                    @if (!string.IsNullOrEmpty(bonus.Source) && bonus.Source != bonus.Label)
+                    {
+                        <span class="small-muted">&nbsp;(@bonus.Source)</span>
+                    }
+                    @if (bonus.Ticked)
+                    {
+                        <span class="small-muted">· @L["Actor.Bonus.Chosen"]</span>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<RollBonus> Bonuses { get; set; } = Array.Empty<RollBonus>();
+
+    /// <summary>What the list is: "Counted in this roll", "Always counted".</summary>
+    [Parameter, EditorRequired] public string Caption { get; set; } = string.Empty;
+
+    /// <summary>The roll is a pool roll: an amount is a number of dice.</summary>
+    [Parameter] public bool Pool { get; set; }
+
+    [Parameter] public string? TestId { get; set; }
+
+    private readonly string id = "bonuses-" + Guid.NewGuid().ToString("N")[..6];
+
+    private string Amount(RollBonus bonus)
+    {
+        var text = (bonus.Amount >= 0 ? "+" : "") + SheetView.Format(bonus.Amount);
+        return Pool ? L["Actor.Bonus.PoolAmount", text] : text;
+    }
+}

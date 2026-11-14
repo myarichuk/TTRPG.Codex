@@ -205,6 +205,23 @@ Through the fitd importer, never by hand in the pack:
 | CL2 | Hosts and UI: the runtime's reverse index and live refresh, the sheet page and cards supplying linked sheets, the link and members widgets, the join review drop, strings | Sonnet session | After CL1 |
 | CL3 | Data: fitd importer and system.yaml, the `members` grants, translations | Sonnet session | After CL1. Can run with CL2 (different files) |
 
+## CL1 as built (engine)
+
+- `SheetKindDefinition.Links` (`key`, `kind`, `label`), `FeatureSource.Link`, `ILinkedSheets.Sheet(actorId)`, `LinkState` (`None`, `Known`, `Unknown`), `SheetLinks`
+  (`LinkedSheets.cs`). A link source needs `list` (of the linked kind) and `property`; `choose` is refused on it (a grant map's own `options` and `choose` do that).
+- The linked sheet is checked by its own `kind` string, not by the system's default kind. A linked actor that is missing, or of another kind, is a known, empty link.
+- A link to a **missing actor counts as known and empty**: a deleted crew drops its members' link-made counters and choice picks on the next save that supplies the resolver.
+- The unknown-link rule lives in `SheetEvaluation.LinksUnknown` (set by `Evaluate`) and `SheetModel.LinksUnknown`. Sweeps that stand down while a link is unknown:
+  `ApplyCounters` (`uses_*`), `ApplyChoiceMoments` (`changes_on__*`), `PruneChoices` (`choice__*`). Track maxima that read `modifiers(...)`, `link(...)`, or a value
+  that does are unknown (null): `TrackOf`, so intents do not clamp and `ApplyTracks` does not write `{key}_Max`; the model's `{key}_Max` value; and the range check.
+  A kind rule that reads such a value (the action cap) is not judged either.
+- Shapes: `max(list, x => ..., default)` already exists, so the rule is written `max(actions, a => a.rating, 0) <= actionCap` (a two-argument lambda `max` would clash with
+  `max(a, b)`). `rules:` on a keyed list was already read. A threshold is a formula already; but it could not read `modifiers(...)` (the conditions it brings were still being
+  worked out), so such a formula now reads the modifiers of everything except conditions.
+- Deadly: a keyed `adds` choice still only marks a key (`SheetRuleEngine.KeyedChoices.cs`) and changes no rating. CL3 must write it as a modifier on the picked
+  key, or add the hook.
+- Left for CL2: the hosts that supply `ILinkedSheets`, live refresh, the widgets, the join review, strings.
+
 ## Decisions (2026-11-14)
 
 1. A link is a sheet key holding an actor id, declared per kind. There is no new actor relation in the database.

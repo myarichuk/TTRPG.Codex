@@ -306,7 +306,7 @@ subclass:
     - { row: Supreme Healing, text: rider }
   oath-of-devotion:
     - { row: Oath of Devotion Spells, spells: { 3: [protection-from-evil-and-good, shield-of-faith], 5: [aid, zone-of-truth], 9: [beacon-of-hope, dispel-magic], 13: [freedom-of-movement, guardian-of-faith], 17: [commune, flame-strike] } }
-    - { row: Sacred Weapon, spends: { key: paladin-channel-divinity, amount: 1 } }
+    - { row: Sacred Weapon, spends: { key: paladin-channel-divinity, amount: 1 }, modifiers: [{ target: attack.weapon, amount: "max(1, mod(cha))", optIn: { label: Sacred Weapon } }] }
     - { row: Aura of Devotion, text: aura }
     - { row: Smite of Protection, text: aura }
     - { row: Holy Nimbus, uses: { key: holy-nimbus, max: 1, recoversOn: [Long Rest] } }
@@ -409,7 +409,7 @@ species:
 feat:
   ability-score-improvement: { already: the abilityIncrease path }
   alert: { modifiers: [{ target: initiative, amount: proficiencyBonus }] }
-  archery: { text: rider }
+  archery: { modifiers: [{ target: attack.weapon.ranged, amount: 2 }] }
   boon-of-combat-prowess: { text: other }
   boon-of-dimensional-travel: { text: other }
   boon-of-fate: { uses: { key: boon-of-fate, max: 1, recovers: [{ on: initiative }, { on: Short Rest }, { on: Long Rest }] } }
