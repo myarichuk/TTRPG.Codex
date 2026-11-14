@@ -21,13 +21,13 @@ After this:
 ```yaml
 # srd5e system.yaml
 conditionEffects:
-  Exhaustion:
-    value: { key: Exhaustion, max: 6 }          # the pool it already lives in; reaching max kills (vitals.exhaustion, unchanged)
+  Exhaustion:                                    # no `value:` here: it comes from vitals.exhaustion (key Exhaustion, maxLevel 6)
     modifiers:
-      - { target: attack, amount: "-2 * value" }
-      - { target: save,   amount: "-2 * value" }
-      - { target: check,  amount: "-2 * value" }
-      - { target: speed,  amount: "-5 * value" }
+      - { target: attack,     amount: "-2 * value" }
+      - { target: save,       amount: "-2 * value" }
+      - { target: check,      amount: "-2 * value" }
+      - { target: initiative, amount: "-2 * value" }   # a D20 Test, but in srd5e a derived value, not a roll site
+      - { target: speed,      amount: "-5 * value" }   # the Number actor field
 
 # A Pathfinder-style valued condition (the PF2e pack, and the pf2 reference fixture)
 conditionEffects:
@@ -51,8 +51,7 @@ conditionEffects:
   - `key`: the pool and sheet key that holds the value. Default `condition_<slug>` (`condition_frightened`).
   - `max`: a number or a formula. A raise stops there.
   - `decrease: { on, by }`: the value drops by `by` at a moment. `on` is `turnEnd`, `turnStart`, a rest, or a declared moment.
-- **The condition holds while its value is above 0.** Raising it from 0 adds the status; the value reaching 0 removes it. Removing the
-  status by hand sets the value to 0. There is no "Frightened" status without a value, and no value without the status.
+- **The condition holds while its value is above 0**, and only then. It is never stored as a status (see "Storage").
 - **In an effect's `amount` and `when`, `value` is the condition's value.** It is 1 for a condition with no `value`. The loader refuses a
   system that has a derived value, a sheet value or an actor field named `value`.
 - **Targets** are the ones features already use on sheet-rules sheets:
@@ -70,16 +69,26 @@ conditionEffects:
 **Statuses stay where they are.** A condition at the table is an `ActiveEffect` with rounds, expiry and held-by. Off the table, a sheet
 may hold conditions in the `conditions` key, as sheet-kind sheets do (`SheetModel.ConditionsKey`).
 
-**The live view is the one thing every host reads.** One helper, `TableSheets.Live(runtime, actorId)`, makes it from `TableEvents.Apply`'s
-code, which today is private to that method. The live view is:
+**The live view is the one thing every host reads.** It is a pure function in Codex.Core,
+`SheetConditions.LiveView(system, sheet, pools, statuses)`, made from the merge `TableEvents.Apply` does today inside that method. It takes
+plain data because the Web hosts hold no `CampaignRuntime`: `TableCard` and `CombatConsole` already get an `ActorStateSnapshot` with
+`Pools` and `Effects` (checked 2026-11-14), which is all it needs. The live view is:
 - the stored sheet;
-- the table's pools over its numeric keys;
-- the `uses_*` counters;
-- condition values;
-- `conditions` = the sheet's own conditions plus the table's statuses.
+- the table's pools over its numeric keys, the `uses_*` counters and the condition value keys;
+- `conditions`, which is:
+  - the sheet's own conditions;
+  - plus the table's statuses;
+  - plus every valued condition whose key is above 0.
 
-`TableEvents.Apply`, `CampaignRuntime`'s counter evaluation, `TableCard.LiveSheet` and `CombatConsole` all call it instead of their own
-copies.
+`TableEvents.Apply`, `CampaignRuntime`'s counter evaluation, `TableCard.LiveSheet`, `CombatConsole` and the sheet page all call it instead
+of keeping their own copies.
+
+**A valued condition is never a status.** Its value is its only record:
+- It holds while its key is above 0, and the live view names it in `conditions`.
+- The picker sends `AdjustConditionCommand(+1)` instead of adding a status.
+- There is no status to keep in step, so no pairing rules and no paired undo.
+
+This is how Exhaustion already works (a pool, no status), so live levels need no migration.
 
 **Values live in the pool and on the sheet.** Checked 2026-11-14: Exhaustion's level is a pool in the table's state only.
 `ActorSheetSync.ApplySheetToState` mirrors resources, tracks, slot pools and `uses_*` counters, not the exhaustion pool. So the sheet page
@@ -99,8 +108,8 @@ Exhaustion keeps its pool key `Exhaustion`, so live levels do not move; the firs
      - `max` parses;
      - `decrease.on` is a moment the system knows;
      - nothing else is named `value`.
-   - With `vitals.exhaustion`, the `Exhaustion` effect's `value.key` must equal `exhaustion.key`. When the effect has no `value`, it gets
-     one from `vitals.exhaustion`, so srd5e needs no second declaration of the level.
+   - With `vitals.exhaustion`, the effect named by `exhaustion.condition` gets its `value` from it (`key`, `max` = `maxLevel`), so srd5e
+     declares the level once. Writing a `value` on that effect as well is a load error.
 2. **Which conditions hold on a sheet-rules sheet.** `SheetRuleEngine` reads `conditions` from the sheet it is given, as `SheetModel`
    does, plus every valued condition whose key is above 0. One static `SheetConditions.Of(system, sheet)` serves both engines.
 3. **Effects join the sheet-rules modifier path.**
@@ -112,6 +121,8 @@ Exhaustion keeps its pool key `Exhaustion`, so live levels do not move; the firs
    - Each condition modifier is an `ActiveFeature`-like source named after the condition, so `GrantedModifier`, `RollBonus` and the
      log name it ("Exhaustion −4").
    - `value` reaches `Amount(...)` through a copy of the derived numbers with `value` added, per condition.
+   - The early returns that assume features (`EvaluateChecks` when `result.Features.Count == 0`, and `SiteBonus` looping features only)
+     must also run when conditions hold. A sheet with conditions and no feature modifiers is the common case.
 4. **The hybrid rule (PF2e).** On a system with both `sheetRules` and `sheetKinds`, a condition modifier goes to the sheet-rules side
    when its target is one `KindOf` knows (armor class, hit points, a derived value, a Number field, a roll target), and to `SheetModel`
    when it is a kind value, a keyed entry or a group. A target both sides claim is a load error. So frightened is never counted twice.
@@ -132,9 +143,9 @@ the stored sheet today, so without this list the feature passes its tests and do
 
 | Host | Today | After |
 |---|---|---|
-| `CampaignRuntime.cs:274` (the table's counters) | `actor.Sheet` | `TableSheets.Live` |
-| `CombatConsole.razor:490, 520` (cards' evaluation) | `actor.Sheet` | live view |
-| `TableCard.razor` `LiveSheet()` (opt-ins, rolls) | sheet + pools, no statuses | `TableSheets.Live` (statuses and values too) |
+| `CampaignRuntime.cs:274` (the table's counters) | `actor.Sheet` | `SheetConditions.LiveView` |
+| `CombatConsole.razor:490, 520` (cards' evaluation) | `actor.Sheet` | `LiveView` with the actor's snapshot |
+| `TableCard.razor` `LiveSheet()` (opt-ins, rolls) | sheet + pools, no statuses | `LiveView` with `State.Pools` and `State.Effects` |
 | `RollBonusTray.cs:51, 68` (always-on and ticked) | the sheet it is given | given the live view by its callers |
 | `ActorSheet.razor:1245, 2072, 582` (sheet page) | `editSheet` | `editSheet` plus the table's statuses and values **while the actor is at a live table**; off the table, the sheet alone |
 | `SheetWidget.razor:671, 687` (named rolls) | `Sheet` | the same live view on the sheet page |
@@ -178,19 +189,20 @@ sheet being built, where table conditions do not apply.
   - a clashing key;
   - a system with something named `value`;
   - Exhaustion's key against `vitals.exhaustion`.
-- **5.2.1 Exhaustion:** level 2 lowers attack, save, ability and skill checks by 4, and speed by 10. Level 6 kills, as now. A Long Rest
+- **5.2.1 Exhaustion:** level 2 lowers attack, save, ability and skill checks and initiative by 4, and speed by 10. Level 6 kills, as now. A Long Rest
   lowers it by 1.
 - **A valued condition at the table:**
-  - raising from 0 adds the status;
-  - lowering to 0 removes it;
-  - removing the status zeroes the value;
-  - undo restores both.
+  - raising from 0 makes it hold (the live view names it);
+  - lowering to 0 ends it;
+  - no status is ever written for it;
+  - undo restores the value.
 - **Turn-end decrease** on srd5e, which has no `events:`: frightened 2 is 1 after its turn, and gone after the next.
 - **Sheet and table agree:** a value raised at the table shows on the sheet page after the save, and two edits merge by delta.
 - **The `ends` path from #315 is reachable:** Guided offers +1d4 on a check, and rolling with it ticked removes Guided.
 - **Hybrid:** in the pf2 fixture, frightened 2 lowers a skill check and the class DC by 2, counted once
   (`PF2E_HAZARDS_IMPLEMENTATION_PLAN.md`, P1). A target claimed by both sides is a load error.
-- **Hosts:** a table card's attack bonus drops while the creature is exhausted (a runtime test, since there is no bUnit).
+- **Hosts:** a character's table card attack bonus drops while the character is exhausted (a runtime test over `LiveView`, since there
+  is no bUnit).
 - **Goldens:** srd5e changes only for the Exhaustion effects. fitd is byte-identical.
 
 ## Build order and who builds it
@@ -199,8 +211,8 @@ sheet being built, where table conditions do not apply.
 |---|---|---|---|
 | C1 | Parse, load checks, `SheetConditions.Of`, Exhaustion's `value` from `vitals.exhaustion` | Sonnet | Small |
 | C2 | Effects on the sheet-rules path: `SiteBonus`, the modifiers loop, opt-ins with condition ids, `value` in formulas, the hybrid routing rule | Sonnet builds; **Opus reviews the diff before C3** | The heart; srd5e golden identical until C5 |
-| C3 | `TableSheets.Live` and every host in the table above; condition value keys mirrored and merged by delta | Sonnet; Opus reviews | Touches `TableEvents.cs`, `CampaignRuntime.cs`, `ActorSheetSync.cs`, `SheetCounters.cs`, `TableCard.razor`, `CombatConsole.razor`, `ActorSheet.razor` |
-| C4 | `AdjustConditionCommand` replaces `AdjustExhaustionCommand`; turn-start and turn-end decrease; rests through `decrease` | Sonnet | `RuntimeCommands.cs`, `TableRules.cs`, `VitalsHandlers.cs` |
+| C3 | `SheetConditions.LiveView` and every host in the table above; condition value keys mirrored and merged by delta | Sonnet; Opus reviews | Touches `TableEvents.cs`, `CampaignRuntime.cs`, `ActorSheetSync.cs`, `SheetCounters.cs`, `TableCard.razor`, `CombatConsole.razor`, `ActorSheet.razor`, `SheetWidget.razor` |
+| C4 | `AdjustConditionCommand` replaces `AdjustExhaustionCommand`; turn-start and turn-end decrease; rests through `decrease` | Sonnet | `RuntimeCommands.cs`, `TableRules.cs`, `VitalsHandlers.cs`, `SessionEventRedactor.cs` (it lists the `Exhaustion` event kind) |
 | C5 | srd5e data (Exhaustion; and open question 1's answer); golden | Sonnet | Rules judgment, so not Haiku |
 | C6 | Stepper, picker, sheet page display; accessibility | Sonnet | `TableCommandPanel.razor` and the picker |
 | C7 | Strings en/ru/he; `SYSTEM_YAML_REFERENCE.md` and schema regenerated; `CHARACTER_FEATURES_GAPS.md` | Haiku for strings; Sonnet for docs | |
@@ -213,6 +225,8 @@ Every brief starts with the Serena line in `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md`
 ## Not in this design
 
 - Advantage and disadvantage, auto-fail, and "can't take actions".
+- **Printed creatures.** A monster's stat block is not evaluated and its attacks are prose, so no condition effect reaches a monster's
+  numbers. The GM applies them, as today.
 - `implies` (Unconscious brings Incapacitated and Prone; PF2e's unconscious brings blinded and off-guard). It is a small later step in
   `SheetConditions.Of`, worth doing next.
 - Effects from another creature's sheet (who cast Bless), and concentration ending an effect on several creatures beyond what `HeldBy`

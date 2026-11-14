@@ -71,7 +71,7 @@ The engine steps use our own numbers and invented entries only. The PDFs are not
 | P1 | **Reference fixture** `tests/Codex.Tests/Fixtures/reference/pf2/`: `system.yaml` (hybrid: `sheetRules` plus one kind), a tiny pack, and `spec.yaml` in the harness's shape (pass, fail, unsupported, `requires`). Expectations: ranks worth level + 2/4/6/8; four degrees with the natural 20/1 shift; typed bonuses; untyped penalties stacking while typed take the worst; frightened 2 lowering checks and DCs; HP from ancestry + class × level; AC with an armor rank; MAP as a roll input; a kind feature's modifier counted once on the hybrid. Unsupported ones name the P step meant to make them pass | fixture folder, `progress.txt` | **Opus writes the spec** (it is the design); Sonnet fills the pack |
 | P2 | Per-type penalty rule (`penalties` per type, untyped exempt) | `SheetKinds.cs` (`ModifierTypesDefinition`), `ModifierStacking.cs` | Sonnet; Opus reviews |
 | P3 | General ranked lists (a rank set per key list, reachable by grants and choices like `skills`) | `SheetRules.cs`, `SheetRuleEngine.Ranks.cs`, `FeatureGrantCheck.cs` | **Opus designs the diff**, Sonnet builds; the srd5e golden must stay byte-identical |
-| P4 | Valued conditions (first-class level, read by `conditionEffects` amounts) | `SystemDefinition.cs`, `SheetModel.cs`, condition picker, `TableRules.cs` | Opus designs; Sonnet builds. **After H1** (both edit `SystemDefinition.cs`) |
+| P4 | Valued conditions and condition effects on sheet-rules sheets: built as C1-C7 of [SHEET_CONDITIONS_DESIGN.md](SHEET_CONDITIONS_DESIGN.md), shared with srd5e | `SheetKinds.cs` (`ConditionEffectDefinition`), `SystemDefinitionLoader.cs`, the sheet-rules engine, table hosts | Designed; Sonnet builds, Opus reviews C2 and C3. **Not beside H1** (both edit `SystemDefinitionLoader.cs`) |
 | P5 | Boost rules (free boosts, flaws, four different, partial boost above +4) | `SheetRules.cs` (`AttributeRules`), `SheetRuleEngine.cs` | Sonnet; Opus reviews. After P3 (same files) |
 | P6 | Degree function and MAP as a roll input on the hybrid; the Actions panel passes attack number | `SheetRolls.cs`, `ActionsPanel.razor` | Sonnet |
 | P7 | The system skeleton under `content/systems/` with homebrew-only content: ORC licence block in its manifest, no "Pathfinder" in the name, `moments:` (daily preparations, refocus, session start), the faith shape with no names | new system folder | Sonnet; Opus reviews the licence block |
@@ -90,7 +90,7 @@ start after P1. P8 and P9 go together, after P7. P10 any time after P7.
 |---|---|---|
 | H1 to H4b, and P1 | Yes | Disjoint files: P1 is a fixture folder and `progress.txt` |
 | H1, and P2 or P3 | Yes | `SystemDefinition.cs` against `SheetKinds.cs`/`ModifierStacking.cs` or `SheetRules.cs`/`Ranks.cs` |
-| H1, and P4 | **No** | Both edit `SystemDefinition.cs` and its loader |
+| H1, and P4 (conditions C1) | **No** | Both edit `SystemDefinitionLoader.cs` |
 | P3, and P5 | **No** | Both edit `SheetRules.cs` and the engine's main file |
 | H4b, and P6 | Check first | Both may touch the Actions panel; list the files at the start of the later one |
 
