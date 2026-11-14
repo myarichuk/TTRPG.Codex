@@ -1,4 +1,5 @@
 using Codex.Core.Rules;
+using Codex.Plugin.Abstractions;
 
 namespace Codex.Web.Components.Shared;
 
@@ -18,6 +19,9 @@ public sealed class EntryChoiceContext
 
     /// <summary>The names of an entity type, singular and plural ("Spell", "Spells"), or null when it has none.</summary>
     public Func<string, (string Singular, string Plural)?> TypeNames { get; init; } = _ => null;
+
+    /// <summary>The name the system gives a level of an entity type ("Cantrip" for a spell of level 0), in the reader's language; null when it has none.</summary>
+    public Func<string, int, ValueLabel?> LevelName { get; init; } = (_, _) => null;
 
     /// <summary>A value as the system words it (a class's name in the reader's language); the value itself when it has no translation. What is
     /// stored stays the canonical value.</summary>

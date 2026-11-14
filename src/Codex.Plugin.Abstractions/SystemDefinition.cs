@@ -690,7 +690,8 @@ public class SystemDefinition
             // A translated label with no short form or unit of its own is shown whole and bare, not with the English "AC" or "ft".
             Abbreviation = x?.Abbreviation ?? (x?.Label == null ? f.Abbreviation : null),
             Unit = x?.Unit ?? (x?.Label == null ? f.Unit : null),
-            OptionLabels = OptionLabelsFor(t, x)
+            OptionLabels = OptionLabelsFor(t, x),
+            ValueLabels = ValueLabelsFor(f, x)
         };
 
         static LabelTranslation? Find(Dictionary<string, LabelTranslation> map, string key) =>
@@ -821,6 +822,22 @@ public class SystemDefinition
             }).ToList();
         }
         return copy;
+    }
+
+    /// <summary>The field's named values, each replaced whole by the translation's when it words that value.</summary>
+    private static Dictionary<string, ValueLabel>? ValueLabelsFor(FieldDefinition field, LabelTranslation? translated)
+    {
+        if (field.ValueLabels == null) return null;
+        var labels = new Dictionary<string, ValueLabel>(field.ValueLabels);
+        if (translated != null)
+        {
+            foreach (var (value, shown) in translated.ValueLabels)
+            {
+                if (labels.ContainsKey(value) && !string.IsNullOrWhiteSpace(shown.Label)) labels[value] = shown;
+            }
+        }
+
+        return labels;
     }
 
     /// <summary>Shared values first, then this field's own options, so a field can word a value differently.</summary>

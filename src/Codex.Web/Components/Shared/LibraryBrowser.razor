@@ -313,8 +313,9 @@
                 var text = value is IEnumerable<object> list ? string.Join(", ", list.Select(Shown)) : Shown(value);
                 if (!string.IsNullOrWhiteSpace(text))
                 {
+                    // A value the system names on its own ("Cantrip") needs no "Level" in front of it.
                     var label = field?.Label ?? CampaignLibrary.Humanize(key);
-                    parts.Add($"{label} {text}");
+                    parts.Add(value is not IEnumerable<object> && field?.ValueLabelFor(value) != null ? text! : $"{label} {text}");
                 }
             }
         }

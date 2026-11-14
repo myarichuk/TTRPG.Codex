@@ -1526,19 +1526,24 @@ else
         target == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"]
         : Rules?.Skills?.Label ?? (system is { SheetKinds.Count: > 0 } ? SheetLayout.KindOf(system, editSheet)?.KeyedLists.FirstOrDefault(l => l.Key == target)?.Label : null) ?? target;
 
+    /// <summary>The <c>level</c> field of an entity type, whose values the system may name ("Cantrip" for 0).</summary>
+    private FieldDefinition? EntryLevelField(string type) =>
+        system?.FindType(type)?.Fields.FirstOrDefault(f => f.Key.Equals("level", StringComparison.OrdinalIgnoreCase));
+
     /// <summary>What the pickers need to show choices over Library entries (spells) and values (a spell list's class): which lists hold entries,
     /// the type's names, the system's words, and each entry's name, level and Library card.</summary>
     private EntryChoiceContext EntryChoices => new()
     {
         EntityTypeOf = list => Rules?.Lists.FirstOrDefault(l => l.Key.Equals(list, StringComparison.Ordinal))?.TargetEntityType,
         TypeNames = type => system?.FindType(type) is { } found ? (found.Label, found.PluralOrLabel) : null,
+        LevelName = (type, level) => EntryLevelField(type)?.ValueLabelFor(level),
         DisplayValue = value => system?.DisplayValue(value) ?? value,
         Describe = (type, option) =>
         {
             var entry = resolver?.Resolve(type, option.Key);
             if (entry == null) return null;
             string? level = entry.Properties.TryGetValue("level", out var raw)
-                ? EntryChoiceWords.LevelText(raw, n => L["Actor.Slots.Level", n].ToString())
+                ? EntryLevelField(type)?.ValueLabelFor(raw)?.Label ?? EntryChoiceWords.LevelText(raw, n => L["Actor.Slots.Level", n].ToString())
                 : null;
             return new EntryOptionInfo(Nm(entry) ?? option.Label, level, $"{LibraryPath}/{entry.Type}/{Uri.EscapeDataString(entry.Id)}");
         }

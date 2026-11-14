@@ -213,7 +213,7 @@ entityTypes:
     label: Заклинание
     pluralLabel: Заклинания
     fields:
-      level: { label: Уровень }
+      level: { label: Уровень, valueLabels: { "0": { label: Заговор, pluralLabel: Заговоры } } }
       school:
         label: Школа
         options:
