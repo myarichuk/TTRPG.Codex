@@ -570,6 +570,7 @@ else
         bonusOffers = OptInsOfSheet();
         rollBonuses.Keep(bonusOffers);
         await RollExpressionAsync(built.Expression, built.Label);
+        await EndBonusConditionsAsync(built.Applied);
     }
 
     // Every opt-in the sheet holds for a sheet-rules roll, for the tray.
@@ -1708,6 +1709,9 @@ else
     /// costs (an unset pool is full), as the table refuses it.</summary>
     private Task<bool> SpendOnSheet((string Key, int Delta, string Label) change)
     {
+        // At the live table the spend is the table's command, as on a table card; the sheet takes the table's number (and the merge's baseline too).
+        if (actor != null && TableOfActor() is { } live) return SpendAtTableAsync(live, change);
+
         // A feature's counter may have no maximum on the sheet yet; its own maximum counts then, as the panel reads it.
         var max = YamlValues.GetInt(editSheet, SystemDefinition.PoolMaxKey(system, change.Key))
                   ?? evaluation?.Counters.FirstOrDefault(c => c.Key == change.Key)?.Max ?? 0;
@@ -1716,6 +1720,34 @@ else
         AdjustSlot(change);
         StateHasChanged(); // the panel's callback is not the sheet's, so the sheet re-renders itself to show the spend
         return Task.FromResult(true);
+    }
+
+    private async Task<bool> SpendAtTableAsync(CampaignRuntime live, (string Key, int Delta, string Label) change)
+    {
+        var spent = await RollBonusLive.SpendAsync(live, actor!.Id, change, editSheet, loadedSheet, baselineSheet);
+        if (spent) StateHasChanged();
+        return spent;
+    }
+
+    // What a ticked bonus ends (a condition it names, when the actor has it): the table's command at a live table, the sheet's own conditions otherwise.
+    private async Task EndBonusConditionsAsync(IReadOnlyList<RollOptIn> applied)
+    {
+        if (actor == null || applied.All(o => o.Ends == null)) return;
+        if (TableOfActor() is { } live)
+        {
+            try
+            {
+                await RollBonusLive.EndAtTableAsync(live, actor.Id, applied);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or KeyNotFoundException)
+            {
+                flash = Flash.Error(L["Combat.CommandFailed"]);
+            }
+
+            return;
+        }
+
+        if (system != null && resolver != null && RollBonusLive.EndOnSheet(system, resolver, editSheet, applied, actor.Id, linkedSheets)) Reevaluate();
     }
 
     // A rest is one rest wherever its button is: it refills the slot pools and the feature counters that name it.

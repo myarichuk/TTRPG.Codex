@@ -364,5 +364,7 @@
         if (!await RollBonusTray.PayAsync(built.Applied, SpendAsync, BonusNames)) return;
         tray.Used(built.Applied);
         await Send(new RollDiceCommand(built.Expression, Actor.Id, CurrentUserId, false, built.Label));
+        // A bonus that ends a condition takes it off the creature, when it has it.
+        foreach (var condition in RollBonusLive.ToEnd(built.Applied, State)) await Send(new RemoveStatusEffectCommand(Actor.Id, condition));
     }
 }
