@@ -105,7 +105,12 @@ else stays text:
 
 - Skill, saving throw, weapon, armor, tool and language proficiencies, and expertise.
 - Ability score increases from a feature (feats have their own path, features do not).
-- Attack and damage bonuses, extra attacks, critical ranges: weapon attacks exist now (step 2), a feature cannot change them.
+- ~~Attack and damage bonuses, extra attacks, critical ranges: weapon attacks exist now (step 2), a feature cannot change them.~~
+  Built: a feature's `modifiers` reach rolls through scoped targets (`attack.weapon.ranged`, `check.<attribute>`, `save`...), always on or as a
+  tick box on the roll (`optIn`); see ROLL_BONUSES_DESIGN.md. Extra attacks and critical ranges were built earlier. In the SRD importer's reviewed
+  table (`srd521-grants.yaml`) the **Archery** fighting style is the one always-on grant (+2 to ranged weapon attacks), and **Sacred Weapon**
+  (Oath of Devotion) is a tick box on weapon attacks (Charisma modifier, minimum +1). The table is written; the srd5e pack must be regenerated
+  from the pinned 5e-bits source before the entries carry them. Everything else that adds to a roll stays text (see "What stays text" below).
 - Anything conditional on gear ("while wielding a longsword in two hands", "while wearing no armor" beyond the built-in
   unarmored base): a modifier's `when` reads the sheet's numbers, not the inventory.
 - Dice a feature owns (superiority dice, a bardic die): a counter can hold the count, nothing rolls them.
@@ -143,6 +148,13 @@ SRD content:
   subclass, species and feat is either a grant or text with a reason. What stays text is listed there (riders and owned dice, advantage
   rules, gear and state conditions, senses, auras, chosen spells). Class skill picks are still the player's own ticks.
   (`hitPoints.perLevelBonus` and `armorClass.bonusLists` still do their older, narrower jobs.)
+
+What stays text among roll bonuses (RB3, considered against the SRD 5.2.1 text):
+
+- Bless, Bane, Guidance, Resistance: another creature's spell. They wait for conditions on a sheet-rules sheet (ROLL_BONUSES_DESIGN.md, decisions).
+- Rage Damage: holds only while raging (`state`). Aura of Protection (Paladin): reaches allies and ends when the paladin is Incapacitated (`aura`);
+  a grant on the paladin's own saves would hide the part that matters. Two-Weapon Fighting and Great Weapon Fighting: riders on one attack (`rider`).
+- Defense is the Armor Class path already. Magic items' +N to attack, damage, saves or AC are item rules, not features of a character.
 
 Sheet and table:
 

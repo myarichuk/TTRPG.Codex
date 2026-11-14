@@ -545,6 +545,27 @@ These touch `sheetRules` systems too, so they need to be reconciled with the srd
 3. **Opt-in roll bonuses** for story-decided "+1d" (Ambush, Savage, Trust in me, Weaving the web, Scout, Bodyguard, Anointed):
    recommended later, in one design with srd5e's `on` bonuses (S6). Until then the player uses the roll's bonus dice.
 
+## Answered later (2026-11-14): both are built, with the data written (RB3 and CL3)
+
+- **Question 2, crew-to-PC effects: built** ([CREW_LINKS_DESIGN.md](CREW_LINKS_DESIGN.md)). The scoundrel kind links to a crew, reads the crew's
+  `members` grants, and the crew sheet lists who links to it. The importer writes `members` on:
+  - Composed (+1 stress box: the stress track is `9 + modifiers('stressBoxes')`);
+  - Hardened (+1 trauma box and the Retired threshold: `4 + modifiers('traumaBoxes')`);
+  - Mastery (`actionCap` +1: ratings stop at 3, a rule on the actions list);
+  - Forged in the fire (+1d `@resistance`, always on);
+  - Anointed (a tick box on `@resistance`: "Against a supernatural threat");
+  - Deadly (see below).
+- **Question 3, opt-in roll bonuses: built** ([ROLL_BONUSES_DESIGN.md](ROLL_BONUSES_DESIGN.md)). The importer writes a tick box on `@pools` for
+  Ambush, Savage (when the action is Command), Trust in me, Weaving the web (when the action is Consort) and Scout, and one on `@resistance`
+  for Bodyguard. Each is a short label. Abilities that are no longer text: those six, plus Forged in the fire, Anointed, Deadly, Composed,
+  Hardened and Mastery on the crew. Still text: the effect halves (Scout's and Bodyguard's +1 effect, Weaving the web's engagement die,
+  Anointed's healing die), because no roll reads them.
+- **Deadly** is a row choice on the crew entry's `members`: `options` Hunt, Prowl, Skirmish, `choose: { id: deadly }`, each option carrying
+  `modifiers: [{ target: actions.<key>, amount: 1 }]`. A keyed `adds` choice only marks a key (3.2), so it could not raise a rating. For the
+  modifier to count, the actions list declares `derive: { value: "a => a.rating" }`, the action roll's pool reads `actions[input.action].value`, and the
+  cap rule reads `a.value`. No engine change was needed. The pick is the member's own, stored as `choice__deadly__deadly`.
+- **Not done:** "Deadly supersedes the normal starting limit" stays text (the sheet has no starting-limit rule).
+
 ## Decisions (2026-11-13)
 
 - Special armor box: hidden on sheets where no ability grants it (open question 1: yes).
