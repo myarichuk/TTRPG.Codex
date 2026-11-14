@@ -13,7 +13,9 @@ namespace Codex.Web.Components.Shared;
 /// </summary>
 public sealed class RollBonusNames
 {
-    private static readonly ConditionalWeakTable<IContentRegistry, ConcurrentDictionary<(string System, string Culture), IReadOnlyDictionary<string, string>>> Indexes = new();
+    /// <summary>Kept per loaded definition: a reload of the systems makes new definitions (and their localized copies) along with the packs, so an index is
+    /// never read past the content it was built from, though the registry object itself is refilled in place.</summary>
+    private static readonly ConditionalWeakTable<SystemDefinition, ConcurrentDictionary<string, IReadOnlyDictionary<string, string>>> Indexes = new();
 
     /// <summary>Names as written: nothing is translated.</summary>
     public static RollBonusNames English { get; } = new(null, null);
@@ -38,8 +40,8 @@ public sealed class RollBonusNames
     {
         if (definition == null) return English;
         if (registry == null || string.IsNullOrWhiteSpace(culture) || !registry.IsLocalized(culture)) return new RollBonusNames(definition, null);
-        var byCulture = Indexes.GetOrCreateValue(registry);
-        var index = byCulture.GetOrAdd((definition.Id, culture), key => Index(registry, key.System, key.Culture));
+        var byCulture = Indexes.GetOrCreateValue(definition);
+        var index = byCulture.GetOrAdd(culture, c => Index(registry, definition.Id, c));
         return new RollBonusNames(definition, index, culture);
     }
 
