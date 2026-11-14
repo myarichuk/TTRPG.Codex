@@ -107,6 +107,16 @@ One field of a schema-driven form. A plain class (not a positional record) so it
 | `max` | number | Upper bound for Number. |
 | `abbreviation` | text (a number is text too) | A short name where space is tight (the sheet's plate): "AC" for Armor Class. The label when unset. |
 | `unit` | text (a number is text too) | The unit a number is measured in ("ft"), written after it where it stands alone. |
+| `valueLabels` | map of [ValueLabel](#valuelabel) | Names for particular stored values of a `Number` or `Dropdown` field, keyed by the value as text ("0"): a spell level of 0 is a "Cantrip", and a choice of two of them reads "choose 2 cantrips". A value with no entry is shown as it is. A Number's keys must be numbers and a Dropdown's must be among its options. The system's translation files can word each value (`fields: level: valueLabels: "0": { label, pluralLabel }`). |
+
+## ValueLabel
+
+A name for one stored value of a field: `Label` alone ("Cantrip"), and `PluralLabel` where a count goes with it ("Cantrips").
+
+| Key | Type | What it is |
+|---|---|---|
+| `label` | text (a number is text too) | Required: the name of the value ("Cantrip"). |
+| `pluralLabel` | text (a number is text too) | The name where a count other than one goes with it ("Cantrips"); the label when unset. |
 
 ## FieldRoles
 

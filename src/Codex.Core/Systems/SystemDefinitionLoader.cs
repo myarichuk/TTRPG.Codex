@@ -242,6 +242,16 @@ public static class SystemDefinitionLoader
             {
                 yield return $"field '{field.Key}' on '{type.Type}' is an EntityReference without a targetEntityType.";
             }
+
+            foreach (var field in type.Fields)
+            {
+                foreach (var error in ValidateValueLabels(field, $"'{type.Type}'")) yield return error;
+            }
+        }
+
+        foreach (var field in definition.ActorFields)
+        {
+            foreach (var error in ValidateValueLabels(field, "the actor")) yield return error;
         }
 
         var actorFieldKeys = definition.ActorFields.Select(f => f.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -793,4 +803,36 @@ public static class SystemDefinitionLoader
             .GroupBy(k => k, StringComparer.OrdinalIgnoreCase)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key);
+
+    /// <summary>The problems with a field's <c>valueLabels</c>: only a Number or Dropdown names values, each key must read as the field's own kind of
+    /// value, and each needs a label.</summary>
+    private static IEnumerable<string> ValidateValueLabels(FieldDefinition field, string owner)
+    {
+        if (field.ValueLabels is not { Count: > 0 } labels) yield break;
+        if (field.Type is not (FieldType.Number or FieldType.Dropdown))
+        {
+            yield return $"field '{field.Key}' on {owner} has valueLabels, which only a Number or Dropdown field can have.";
+            yield break;
+        }
+
+        foreach (var (key, label) in labels)
+        {
+            if (field.Type == FieldType.Number
+                && !double.TryParse(key, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
+            {
+                yield return $"field '{field.Key}' on {owner} names the value '{key}' in valueLabels, which is not a number.";
+            }
+
+            if (field.Type == FieldType.Dropdown && field.Options is { Count: > 0 } options
+                && !options.Contains(key, StringComparer.OrdinalIgnoreCase))
+            {
+                yield return $"field '{field.Key}' on {owner} names the value '{key}' in valueLabels, which is not one of its options.";
+            }
+
+            if (label == null || string.IsNullOrWhiteSpace(label.Label))
+            {
+                yield return $"field '{field.Key}' on {owner} names the value '{key}' in valueLabels without a label.";
+            }
+        }
+    }
 }
