@@ -49,7 +49,7 @@ public class SrdGrantCoverageTests : IAsyncLifetime
     [InlineData("subclasses", 26, 1, 1, 30)]
     [InlineData("traits", 9, 0, 8, 13)]
     [InlineData("lineages", 24, 0, 0, 0)]
-    [InlineData("feats", 4, 0, 3, 10)]
+    [InlineData("feats", 5, 0, 3, 9)]
     [InlineData("backgrounds", 0, 0, 4, 0)]
     public void TheStatusCountsAreTheDocumentedOnes(string group, int grant, int covered, int already, int text)
     {
