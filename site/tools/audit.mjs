@@ -6,7 +6,7 @@
 import { chromium } from 'playwright';
 
 const base = (process.argv[2] ?? 'http://localhost:4173').replace(/\/$/, '');
-const pages = ['', 'install', 'guide'];
+const pages = ['', 'install', 'guide', 'systems'];
 const langs = ['', 'ru', 'he'];
 const widths = [[390, 844], [768, 1024], [1440, 900]];
 const problems = [];

@@ -317,6 +317,17 @@ html[lang="he"] .hero h1 { font-size: clamp(2.2rem, 4.8vw, 3.6rem); }
 .codeblock { position: relative; direction: ltr; text-align: left; margin-block: 0 1.2rem; }
 .codeblock pre { margin: 0; padding: 1rem 3.5rem 1rem 1.1rem; background: var(--surface); border: 1px solid var(--border); box-shadow: inset 0 0 0 1px var(--frame-inner); border-radius: 4px; overflow-x: auto; font: 0.94rem/1.55 var(--font-mono); color: var(--text); }
 .codeblock pre code { background: none; border: 0; padding: 0; font: inherit; }
+.prose :not(pre) > code { overflow-wrap: anywhere; } /* a long path in a sentence wraps instead of widening the page on a phone */
+/* Syntax colours, painted at build time by highlight.js. Every pair is at least 4.5:1 on the code background
+   (dark: 6.8 to 10.7, light: 5.9 to 8.9), so none is a decoration the text needs to be read without. */
+:root { --hl-comment: #a99c83; --hl-key: #e6c070; --hl-string: #9ccf86; --hl-number: #f2a27c; --hl-literal: #7fcbd9; --hl-meta: #c8a9ec; }
+:root[data-theme="light"] { --hl-comment: #65563f; --hl-key: #563a0c; --hl-string: #285f23; --hl-number: #9e2a1d; --hl-literal: #1a6552; --hl-meta: #5b3f8c; }
+.hljs-comment { color: var(--hl-comment); font-style: italic; }
+.hljs-attr, .hljs-section, .hljs-bullet { color: var(--hl-key); }
+.hljs-string { color: var(--hl-string); }
+.hljs-number, .hljs-keyword { color: var(--hl-number); }
+.hljs-literal, .hljs-built_in, .hljs-type { color: var(--hl-literal); }
+.hljs-meta, .hljs-variable, .hljs-template-variable { color: var(--hl-meta); }
 .codeblock .copy { position: absolute; inset-block-start: 0.45rem; inset-inline-end: 0.45rem; }
 .codeblock .copy[data-done] { color: var(--success); border-color: var(--success); }
 .prose table { width: 100%; border-collapse: collapse; font-size: 1.02rem; display: block; overflow-x: auto; }
