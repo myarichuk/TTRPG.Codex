@@ -12,6 +12,7 @@
     "node": ">=20"
   },
   "dependencies": {
+    "highlight.js": "11.11.1",
     "marked": "18.1.2"
   },
   "devDependencies": {

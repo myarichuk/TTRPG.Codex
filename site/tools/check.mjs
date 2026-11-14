@@ -44,7 +44,7 @@ for (const file of pages) {
     if (hash && real.endsWith('.html') && !(await idsOf(real)).has(decodeURIComponent(hash))) bad(file, `missing anchor "${ref}"`);
   }
 }
-for (const required of ['index.html', 'ru/index.html', 'he/index.html', 'install/index.html', 'guide/index.html', 'ru/install/index.html', 'he/guide/index.html', 'sitemap.xml', 'robots.txt', '404.html', 'assets/og.png']) {
+for (const required of ['index.html', 'ru/index.html', 'he/index.html', 'install/index.html', 'guide/index.html', 'ru/install/index.html', 'he/guide/index.html', 'systems/index.html', 'ru/systems/index.html', 'he/systems/index.html', 'sitemap.xml', 'robots.txt', '404.html', 'assets/og.png']) {
   if (!(await exists(join(dist, required)))) problems.push(`missing ${required}`);
 }
 

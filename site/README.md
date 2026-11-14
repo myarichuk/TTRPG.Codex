@@ -18,7 +18,7 @@ node tools/audit.mjs # browser audit of the preview: overflow, images, theme, li
 | Path | What |
 |---|---|
 | `src/content/<lang>/site.json` | Navigation, footer and every section of the home page. All languages share one shape; the build fails if a key is missing. |
-| `src/content/<lang>/install.md`, `guide.md` | The long pages, in Markdown with a small front matter. |
+| `src/content/<lang>/install.md`, `guide.md`, `systems.md` | The long pages, in Markdown with a small front matter. `systems.md` is the "Make your own system" guide. |
 | `src/assets/` | CSS, JS, the app's own fonts and icon, and the screenshots. |
 | `tools/` | Screenshot capture, optimiser, preview server, checks. |
 | `build.mjs` | The generator. |
@@ -33,13 +33,16 @@ node tools/audit.mjs # browser audit of the preview: overflow, images, theme, li
 - `> [!NOTE]`, `> [!TIP]` and `> [!WARNING]` make callouts.
 - Every `##` and `###` heading ends in `{#id}`. The ids must be identical in every language, so switching language
   keeps the reader's place; the build checks this.
+- Code blocks are coloured at build time by highlight.js (pinned in `package.json`; `yaml` and `bash`, with `sh`, `shell`
+  and `zsh` as aliases). Tag a fence with its language; the page ships no script for it. The colours are in `site.css`
+  (`--hl-*`) and are at least 4.5:1 on the code background in both themes. Keep code blocks identical in every language.
 - Icons come from the app's own Lucide set (`LucideIcon.razor`).
 - Use the terms in `docs/i18n-glossary.md`. Prefer plural or neutral Hebrew, as the app does.
 
 ## Adding a language
 
 Add the code to `LANGS` in `build.mjs`, the names in `langNames`/`langShort`, a `src/content/<code>/` folder with
-the three files above, and the language to the screenshot script. Add the culture to the app first
+the four files above, and the language to the screenshot script. Add the culture to the app first
 (`docs/LOCALIZATION.md`); the labels come from its resources.
 
 ## Screenshots

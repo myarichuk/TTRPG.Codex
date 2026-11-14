@@ -13,6 +13,9 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Marked } from 'marked';
+import hljs from 'highlight.js/lib/core';
+import hljsYaml from 'highlight.js/lib/languages/yaml';
+import hljsBash from 'highlight.js/lib/languages/bash';
 import { loadStrings } from './tools/resx.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -21,7 +24,11 @@ const DIST = join(here, 'dist');
 const REPO = 'https://github.com/myarichuk/TTRPG.Codex';
 const SITE_URL = (process.env.SITE_URL || 'https://myarichuk.github.io/TTRPG.Codex/').replace(/\/?$/, '/');
 const LANGS = ['en', 'ru', 'he'];
-const DOCS = ['install', 'guide'];
+const DOCS = ['install', 'guide', 'systems'];
+// Code is coloured here, at build time (highlight.js, pinned in package.json); the page ships no script for it.
+hljs.registerLanguage('yaml', hljsYaml);
+hljs.registerLanguage('bash', hljsBash);
+hljs.registerAliases(['sh', 'shell', 'zsh'], { languageName: 'bash' });
 const problems = [];
 const fail = (msg) => problems.push(msg);
 
@@ -134,7 +141,11 @@ function markdownFor(lang, pageDir) {
         return `<h${level}${m ? ` id="${m[1]}"` : ''}>${html}</h${level}>\n`;
       },
       code({ text, lang: info }) {
-        return `<div class="codeblock"><pre><code${info ? ` class="language-${esc(info)}"` : ''}>${esc(text)}</code></pre>` +
+        const name = (info || '').trim().split(/\s+/)[0];
+        const colored = name && hljs.getLanguage(name) ? hljs.highlight(text, { language: name, ignoreIllegals: true }).value : esc(text);
+        // A block with a long line scrolls sideways; make it reachable from the keyboard.
+        const scrolls = text.split('\n').some((l) => l.length > 64);
+        return `<div class="codeblock"><pre${scrolls ? ' tabindex="0"' : ''}><code${name ? ` class="language-${esc(name)}"` : ''}>${colored}</code></pre>` +
           `<button class="btn btn-small copy" type="button" data-copy data-copied="${esc(t.ui.copied)}">${icon('copy')}<span data-label>${esc(t.ui.copy)}</span></button></div>\n`;
       },
       blockquote({ tokens }) {
@@ -184,6 +195,7 @@ function shell({ lang, slug, title, description, body, jsonLd }) {
     ['', 'home', t.nav.home],
     ['install', 'install', t.nav.install],
     ['guide', 'guide', t.nav.guide],
+    ['systems', 'systems', t.nav.systems],
   ];
   const page = slug || 'home';
   const banners = LANGS.filter((l) => l !== lang).map((l) => {
@@ -262,6 +274,7 @@ function footer(lang, dir, slug) {
 <div><h2>${esc(t.footer.site)}</h2><ul>
 <li><a href="${link(dir, dirOf(lang, 'install'))}">${esc(t.nav.install)}</a></li>
 <li><a href="${link(dir, dirOf(lang, 'guide'))}">${esc(t.nav.guide)}</a></li>
+<li><a href="${link(dir, dirOf(lang, 'systems'))}">${esc(t.nav.systems)}</a></li>
 ${LANGS.filter((l) => l !== lang).map((l) => `<li><a href="${link(dir, dirOf(l, slug))}" lang="${l}" hreflang="${l}">${langNames[l]}</a></li>`).join('\n')}
 </ul></div>
 </div>

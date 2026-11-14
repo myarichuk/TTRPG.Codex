@@ -5,7 +5,7 @@
     "description": "One GM, any number of players, one browser tab each: a live table with initiative and hit points, campaign prep, a rules Library with homebrew, and optional AI on your own key. Free for personal and noncommercial use. English, Russian and Hebrew."
   },
   "nav": {
-    "home": "Home", "install": "Install", "guide": "Guide", "github": "GitHub",
+    "home": "Home", "install": "Install", "guide": "Guide", "systems": "Make a system", "github": "GitHub",
     "skip": "Skip to main content", "label": "Main", "language": "Language",
     "theme": "Switch between dark and parchment theme", "menu": "Menu"
   },
