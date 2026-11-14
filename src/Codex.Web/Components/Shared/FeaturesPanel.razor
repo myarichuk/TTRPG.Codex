@@ -19,7 +19,7 @@
                     var max = counter.Max;
                     var current = Math.Clamp(YamlValues.GetInt(Sheet, counter.Key) ?? max, 0, max);
                     <li class="slot-row" data-testid="feature-counter-@counter.Key">
-                        <span class="slot-level">@counter.Feature.Name</span>
+                        <span class="slot-level">@counter.Label</span>
                         @if (max <= 10)
                         {
                             <span class="slot-pips" aria-hidden="true">
@@ -34,11 +34,11 @@
                         {
                             <span class="ms-auto d-flex gap-1">
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current <= 0)" data-testid="@($"feature-use-{counter.Key}")"
-                                             aria-label="@L["Actor.Features.UseOther", counter.Feature.Name]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, -1, counter.Feature.Name))">@L["Actor.Slots.Use"]</CodexButton>
+                                             aria-label="@L["Actor.Features.UseOther", counter.Label]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, -1, counter.Label))">@L["Actor.Slots.Use"]</CodexButton>
                                 @if (counter.CanRegain(IsDm))
                                 {
                                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"feature-regain-{counter.Key}")"
-                                                 aria-label="@L["Actor.Features.RegainOther", counter.Feature.Name]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, 1, counter.Feature.Name))">@L["Actor.Slots.Regain"]</CodexButton>
+                                                 aria-label="@L["Actor.Features.RegainOther", counter.Label]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, 1, counter.Label))">@L["Actor.Slots.Regain"]</CodexButton>
                                 }
                             </span>
                         }

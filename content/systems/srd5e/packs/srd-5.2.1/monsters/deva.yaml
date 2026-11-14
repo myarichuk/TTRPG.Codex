@@ -54,6 +54,12 @@ description: >-
   **Spellcasting.** The deva casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):
 
 
+  At Will: *Detect Evil and Good*, *Shapechange* (beast or Humanoid form only, no Temporary Hit Points gained from the spell, and no Concentration or Temporary Hit Points required to maintain the spell)
+
+
+  1/Day Each: *Commune*, *Raise Dead*
+
+
 
   ### Bonus Actions
 
@@ -99,7 +105,14 @@ properties:
   - name: Holy Mace
     description: 'Melee Attack Roll: +8, reach 5 ft. Hit: 7 (1d6 + 4) Bludgeoning damage plus 18 (4d8) Radiant damage.'
   - name: Spellcasting
-    description: 'The deva casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):'
+    description: >-
+      The deva casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):
+
+
+      At Will: *Detect Evil and Good*, *Shapechange* (beast or Humanoid form only, no Temporary Hit Points gained from the spell, and no Concentration or Temporary Hit Points required to maintain the spell)
+
+
+      1/Day Each: *Commune*, *Raise Dead*
   bonusActions:
   - name: Divine Aid (2/day)
     description: The deva casts Cure Wounds, Lesser Restoration, or Remove Curse, using the same spellcasting ability as Spellcasting.

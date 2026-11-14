@@ -1,0 +1,14 @@
+id: devils-sight
+type: invocation
+name: Devil's Sight
+description: >-
+  **Prerequisite:** Level 2+ Warlock
+
+
+  You can see normally in Dim Light and Darkness, both magical and nonmagical, within 120 feet of yourself.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 2
+  prerequisites: Level 2+ Warlock

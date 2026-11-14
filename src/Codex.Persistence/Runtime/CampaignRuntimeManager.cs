@@ -123,7 +123,9 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
                     pluginLoader.InitializePlugins(new[] { plugin }, runtime.World);
                 }
 
-                if (EntryResolvers != null && plugin?.Definition is { SheetKinds.Count: > 0 } definition)
+                // A table reads the campaign's library when its system has features to work out: a sheet kind's, or sheetRules'
+                // (counters of uses). Without it a system's counters would wait for each sheet to be opened and saved.
+                if (EntryResolvers != null && plugin?.Definition is { } definition && (definition.SheetKinds.Count > 0 || definition.SheetRules is { Features.Count: > 0 }))
                 {
                     runtime.Resolver = await EntryResolvers(campaign, dmAccess, definition);
                 }

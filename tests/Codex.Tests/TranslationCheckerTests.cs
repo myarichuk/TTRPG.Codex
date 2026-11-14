@@ -121,6 +121,34 @@ public class TranslationCheckerTests
     }
 
     [Fact]
+    public void A_translated_row_may_not_copy_the_grants_the_sheet_reads()
+    {
+        var rows = new List<object>
+        {
+            new Dictionary<string, object> { ["name"] = "Ярость", ["uses"] = new Dictionary<string, object> { ["max"] = 2L } },
+            new Dictionary<string, object>
+            {
+                ["name"] = "Земля",
+                ["options"] = new List<object> { new Dictionary<string, object> { ["name"] = "Засушливая", ["adds"] = new List<object>() } }
+            }
+        };
+        var fields = new HashSet<string> { "features" };
+        var item = Item(Russian, properties: new Dictionary<string, object> { ["features"] = rows });
+
+        var findings = new TranslationChecker("ru").Check(Source(), "spell", item, fields);
+
+        Assert.Equal(2, findings.Count(f => f.Code == "forbidden-row-key"));
+
+        // Names and text alone are fine, options included.
+        var clean = new List<object>
+        {
+            new Dictionary<string, object> { ["name"] = "Земля", ["level"] = 3L, ["options"] = new List<object> { new Dictionary<string, object> { ["name"] = "Засушливая" } } }
+        };
+        var ok = new TranslationChecker("ru").Check(Source(), "spell", Item(Russian, properties: new Dictionary<string, object> { ["features"] = clean }), fields);
+        Assert.DoesNotContain(ok, f => f.Code == "forbidden-row-key");
+    }
+
+    [Fact]
     public void Flavor_text_is_allowed_and_needs_no_description()
     {
         var item = new Dictionary<string, object> { ["id"] = "bolt", ["name"] = "Огненная молния", ["flavor"] = "Яркая вспышка." };

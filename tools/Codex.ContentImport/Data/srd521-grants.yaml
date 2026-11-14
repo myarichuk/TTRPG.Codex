@@ -1,0 +1,463 @@
+# The reviewed mapping from SRD 5.2.1 rows to feature grants (docs/SRD_GRANTS_IMPORT_DESIGN.md).
+#
+# One line per row, beside the SRD text. A row is a grant (uses, spends, modifiers, adds, spells, resist, options, choose, gate) or
+# is classified without one:
+#   text: <reason>      nothing is written; the player applies it by hand
+#   already: <where>    a field or list the system already reads carries it
+#   covered: <row>      the effect sits on another row
+# Reasons for text: rider (extra damage on a hit), die (a die the feature owns), advantage (advantage, a reroll or a floor on a roll),
+# reactive (fires on an event), per-use (a menu chosen each use), gear (needs a gear condition), state (holds only while raging or similar),
+# attribute (changes an ability score), skill-bonus (adds to checks, not a rank), training (weapon, armor, tool or language training),
+# chosen-spell (the player picks the spell), not-in-source (options the source JSON lacks), moment-test (a refill the engine cannot test),
+# sense (blindsight, flight and the like: no sheet field), aura (reaches allies), condition (condition immunity), other (narrative).
+#
+# A row is matched by name, and by level where a name repeats. A grant must match exactly one row; text, already and covered may name a
+# repeated row once for every level. The importer stops, and writes nothing, when a row here matches nothing, a row of the source is not
+# here, or a grant does not pass the checks (see GrantTable.cs).
+#
+# Shorthands: uses.max { column: X } is the step formula over classLevel of the Levels file's class_specific X; uses.$ref copies a pool
+# from `pools`; spells is a list of spell ids, or levels each with a list (0: always); resist is a list of damage types; gate: N gives a
+# species row the level it applies from.
+
+pools:
+  breath-weapon: { key: breath-weapon, label: Breath Weapon, max: proficiencyBonus, recoversOn: [Long Rest] }
+  giant-ancestry: { key: giant-ancestry, label: Giant Ancestry, max: proficiencyBonus, recoversOn: [Long Rest] }
+
+class:
+  barbarian:
+    - { row: Rage, uses: { key: rage, max: { column: rage_count }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
+    - { row: Unarmored Defense, already: the class's unarmoredDefense }
+    - { row: Weapon Mastery, text: training }
+    - { row: Danger Sense, text: advantage }
+    - { row: Reckless Attack, text: advantage }
+    - { row: Barbarian Subclass, already: the subclass field }
+    - { row: Primal Knowledge, adds: [{ to: skills, choice: primal-knowledge-3, choose: 1, from: [animal-handling, athletics, intimidation, nature, perception, survival] }] }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
+    - { row: Fast Movement, text: gear }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Feral Instinct, text: advantage }
+    - { row: Instinctive Pounce, text: other }
+    - { row: Brutal Strike, text: rider }
+    - { row: Relentless Rage, text: reactive }
+    - { row: Improved Brutal Strike, text: rider }
+    - { row: Persistent Rage, uses: { key: persistent-rage, max: 1, recoversOn: [Long Rest] } }
+    - { row: Indomitable Might, text: advantage }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Primal Champion, text: attribute }
+  bard:
+    - { row: Bardic Inspiration, uses: { key: bardic-inspiration, max: "max(1, mod(cha))", recovers: [{ on: Long Rest }, { on: Short Rest, when: "classLevel >= 5" }] } }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Expertise, level: 2, adds: [{ to: skills, choice: expertise-2, choose: 2, minRank: proficient, rank: expert }] }
+    - { row: Expertise, level: 9, adds: [{ to: skills, choice: expertise-9, choose: 2, minRank: proficient, rank: expert }] }
+    - { row: Jack of All Trades, text: skill-bonus }
+    - { row: Bard Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Font of Inspiration, text: other }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Countercharm, text: reactive }
+    - { row: Magical Secrets, text: chosen-spell }
+    - { row: Superior Inspiration, text: moment-test }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Words of Creation, spells: [power-word-heal, power-word-kill] }
+  cleric:
+    - { row: Divine Order, text: training }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Channel Divinity, uses: { key: cleric-channel-divinity, max: { column: channel_divinity_charges }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
+    - { row: Cleric Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Sear Undead, text: rider }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Blessed Strikes, text: rider }
+    - { row: Divine Intervention, uses: { key: divine-intervention, max: 1, recoversOn: [Long Rest] } }
+    - { row: Improved Blessed Strikes, text: rider }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Greater Divine Intervention, text: other }
+  druid:
+    - { row: Druidic, spells: [speak-with-animals] }
+    - { row: Primal Order, text: training }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Wild Shape, uses: { key: wild-shape, max: { column: wild_shape_uses }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
+    - { row: Wild Companion, spends: { key: wild-shape, amount: 1 } }
+    - { row: Druid Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Wild Resurgence, uses: { key: wild-resurgence, max: 1, recoversOn: [Long Rest] } }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Elemental Fury, text: rider }
+    - { row: Improved Elemental Fury, text: rider }
+    - { row: Beast Spells, text: other }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Archdruid, text: moment-test }
+  fighter:
+    - { row: Fighting Style, already: the fightingStyles list }
+    - { row: Second Wind, uses: { key: second-wind, max: { column: second_wind_uses }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
+    - { row: Weapon Mastery, text: training }
+    - { row: Action Surge, level: 2, uses: { key: action-surge, max: "classLevel >= 17 ? 2 : 1", recoversOn: [Short Rest, Long Rest] } }
+    - { row: Action Surge, level: 17, covered: the level 2 row }
+    - { row: Tactical Mind, spends: { key: second-wind, amount: 1 } }
+    - { row: Fighter Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
+    - { row: Tactical Shift, text: other }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Indomitable, level: 9, uses: { key: indomitable, max: "classLevel >= 17 ? 3 : classLevel >= 13 ? 2 : 1", recoversOn: [Long Rest] } }
+    - { row: Indomitable, level: [13, 17], covered: the level 9 row }
+    - { row: Tactical Master, text: per-use }
+    - { row: Two Extra Attacks, modifiers: [{ target: attacks, amount: 3, type: highest }] }
+    - { row: Studied Attacks, text: advantage }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Three Extra Attacks, modifiers: [{ target: attacks, amount: 4, type: highest }] }
+  monk:
+    - { row: Martial Arts, text: die }
+    - { row: Unarmored Defense, already: the class's unarmoredDefense }
+    - { row: "Monk's Focus", uses: { key: focus-points, label: Focus Points, max: classLevel, recoversOn: [Short Rest, Long Rest] } }
+    - { row: Unarmored Movement, text: gear }
+    - { row: Uncanny Metabolism, uses: { key: uncanny-metabolism, max: 1, recoversOn: [Long Rest] } }
+    - { row: Monk Subclass, already: the subclass field }
+    - { row: Deflect Attacks, spends: { key: focus-points, amount: 1 } }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Slow Fall, text: reactive }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
+    - { row: Stunning Strike, spends: { key: focus-points, amount: 1 } }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Empowered Strikes, text: other }
+    - { row: Evasion, text: reactive }
+    - { row: Acrobatic Movement, text: gear }
+    - { row: Heightened Focus, text: other }
+    - { row: Self-Restoration, text: other }
+    - { row: Deflect Energy, text: reactive }
+    - { row: Disciplined Survivor, adds: [{ to: saves, entries: [str, dex, con, int, wis, cha] }], spends: { key: focus-points, amount: 1 } }
+    - { row: Perfect Focus, text: moment-test }
+    - { row: Superior Defense, spends: { key: focus-points, amount: 3 } }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Body and Mind, text: attribute }
+  paladin:
+    - { row: Lay On Hands, uses: { key: lay-on-hands, max: "5 * classLevel", recoversOn: [Long Rest] }, spends: { key: lay-on-hands, amount: ask } }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Weapon Mastery, text: training }
+    - { row: Fighting Style, already: the fightingStyles list }
+    - { row: "Paladin's Smite", freeSpells: [divine-smite] }
+    - { row: Channel Divinity, uses: { key: paladin-channel-divinity, max: { column: channel_divinity_charges }, recovers: [{ on: Short Rest, amount: 1 }, { on: Long Rest }] } }
+    - { row: Paladin Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
+    - { row: Faithful Steed, freeSpells: [find-steed] }
+    - { row: Aura of Protection, text: aura }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Abjure Foes, spends: { key: paladin-channel-divinity, amount: 1 } }
+    - { row: Aura of Courage, text: aura }
+    - { row: Radiant Strikes, text: rider }
+    - { row: Restoring Touch, spends: { key: lay-on-hands, amount: 5 } }
+    - { row: Aura Expansion, text: aura }
+    - { row: Epic Boon, already: feat slots }
+  ranger:
+    - { row: Favored Enemy, freeSpells: [hunters-mark], free: { max: { column: favored_enemies }, recoversOn: [Long Rest] } }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Weapon Mastery, text: training }
+    - { row: Deft Explorer, adds: [{ to: skills, choice: deft-explorer-2, choose: 1, minRank: proficient, rank: expert }] }
+    - { row: Fighting Style, already: the fightingStyles list }
+    - { row: Ranger Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Extra Attack, modifiers: [{ target: attacks, amount: 2, type: highest }] }
+    - { row: Roving, text: gear }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Expertise, adds: [{ to: skills, choice: expertise-9, choose: 2, minRank: proficient, rank: expert }] }
+    - { row: Tireless, uses: { key: tireless, max: "max(1, mod(wis))", recoversOn: [Long Rest] } }
+    - { row: Relentless Hunter, text: other }
+    - { row: "Nature's Veil", uses: { key: natures-veil, max: "max(1, mod(wis))", recoversOn: [Long Rest] } }
+    - { row: Precise Hunter, text: advantage }
+    - { row: Feral Senses, text: sense }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Foe Slayer, text: rider }
+  rogue:
+    - { row: Expertise, level: 1, adds: [{ to: skills, choice: expertise-1, choose: 2, minRank: proficient, rank: expert }] }
+    - { row: Expertise, level: 6, adds: [{ to: skills, choice: expertise-6, choose: 2, minRank: proficient, rank: expert }] }
+    - { row: Sneak Attack, text: die }
+    - { row: "Thieves' Cant", text: training }
+    - { row: Weapon Mastery, text: training }
+    - { row: Cunning Action, text: per-use }
+    - { row: Rogue Subclass, already: the subclass field }
+    - { row: Steady Aim, text: advantage }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Cunning Strike, text: per-use }
+    - { row: Uncanny Dodge, text: reactive }
+    - { row: Evasion, text: reactive }
+    - { row: Reliable Talent, text: advantage }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Improved Cunning Strike, text: per-use }
+    - { row: Devious Strikes, text: per-use }
+    - { row: Slippery Mind, adds: [{ to: saves, entries: [wis, cha] }] }
+    - { row: Elusive, text: other }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Stroke of Luck, uses: { key: stroke-of-luck, max: 1, recoversOn: [Short Rest, Long Rest] } }
+  sorcerer:
+    - { row: Innate Sorcery, uses: { key: innate-sorcery, max: 2, recoversOn: [Long Rest] } }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Font of Magic, uses: { key: sorcery-points, label: Sorcery Points, max: classLevel, recoversOn: [Long Rest] } }
+    - { row: Metamagic, text: not-in-source }
+    - { row: Sorcerer Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Sorcerous Restoration, uses: { key: sorcerous-restoration, max: 1, recoversOn: [Long Rest] } }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Sorcery Incarnate, spends: { key: sorcery-points, amount: 2 } }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Arcane Apotheosis, text: other }
+  warlock:
+    - { row: Eldritch Invocations, already: the invocations list and its entries }
+    - { row: Pact Magic, already: slot pools and lists }
+    - { row: Magical Cunning, uses: { key: magical-cunning, max: 1, recoversOn: [Long Rest] } }
+    - { row: Warlock Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Contact Patron, freeSpells: [contact-other-plane] }
+    - { row: Mystic Arcanum, level: 11, adds: [{ to: grantedSpells, choice: mystic-arcanum-6, choose: 1, where: [{ property: classes, contains: Warlock }, { property: level, equals: 6 }], free: { max: 1, recoversOn: [Long Rest] } }] }
+    - { row: Mystic Arcanum, level: 13, adds: [{ to: grantedSpells, choice: mystic-arcanum-7, choose: 1, where: [{ property: classes, contains: Warlock }, { property: level, equals: 7 }], free: { max: 1, recoversOn: [Long Rest] } }] }
+    - { row: Mystic Arcanum, level: 15, adds: [{ to: grantedSpells, choice: mystic-arcanum-8, choose: 1, where: [{ property: classes, contains: Warlock }, { property: level, equals: 8 }], free: { max: 1, recoversOn: [Long Rest] } }] }
+    - { row: Mystic Arcanum, level: 17, adds: [{ to: grantedSpells, choice: mystic-arcanum-9, choose: 1, where: [{ property: classes, contains: Warlock }, { property: level, equals: 9 }], free: { max: 1, recoversOn: [Long Rest] } }] }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Eldritch Master, text: other }
+  wizard:
+    - { row: Arcane Recovery, uses: { key: arcane-recovery, max: 1, recoversOn: [Long Rest] } }
+    - { row: Ritual Adept, text: chosen-spell }
+    - { row: Spellcasting, already: slot pools and lists }
+    - { row: Scholar, adds: [{ to: skills, choice: scholar-2, choose: 1, minRank: proficient, rank: expert, from: [arcana, history, investigation, medicine, nature, religion] }] }
+    - { row: Wizard Subclass, already: the subclass field }
+    - { row: Ability Score Improvement, already: feat slots }
+    - { row: Memorize Spell, text: chosen-spell }
+    - { row: Subclass Feature, already: the subclass field }
+    - { row: Spell Mastery, adds: [{ choice: mastery-1, choose: 1, fromList: spells, where: [{ property: classes, contains: Wizard }, { property: level, equals: 1 }, { property: castingTime, equals: Action }], free: atWill }, { choice: mastery-2, choose: 1, fromList: spells, where: [{ property: classes, contains: Wizard }, { property: level, equals: 2 }, { property: castingTime, equals: Action }], free: atWill }] }
+    - { row: Epic Boon, already: feat slots }
+    - { row: Signature Spells, adds: [{ choice: signature, choose: 2, fromList: spells, where: [{ property: classes, contains: Wizard }, { property: level, equals: 3 }], free: { max: 1, recoversOn: [Short Rest, Long Rest] } }] }
+
+subclass:
+  champion:
+    - { row: Improved Critical, modifiers: [{ target: critFrom, amount: 19, type: lowest }] }
+    - { row: Remarkable Athlete, text: advantage }
+    - { row: Additional Fighting Style, already: the subclass's featSlots }
+    - { row: Heroic Warrior, text: other }
+    - { row: Superior Critical, modifiers: [{ target: critFrom, amount: 18, type: lowest }] }
+    - { row: Survivor, text: other }
+  circle-of-the-land:
+    - row: Circle of the Land Spells
+      options:
+        Arid: { spells: { 3: [blur, burning-hands, fire-bolt], 5: [fireball], 7: [blight], 9: [wall-of-stone] }, adds: [{ to: resistances, entries: [fire], level: 10 }] }
+        Polar: { spells: { 3: [fog-cloud, hold-person, ray-of-frost], 5: [sleet-storm], 7: [ice-storm], 9: [cone-of-cold] }, adds: [{ to: resistances, entries: [cold], level: 10 }] }
+        Temperate: { spells: { 3: [misty-step, shocking-grasp, sleep], 5: [lightning-bolt], 7: [freedom-of-movement], 9: [tree-stride] }, adds: [{ to: resistances, entries: [lightning], level: 10 }] }
+        Tropical: { spells: { 3: [acid-splash, ray-of-sickness, web], 5: [stinking-cloud], 7: [polymorph], 9: [insect-plague] }, adds: [{ to: resistances, entries: [poison], level: 10 }] }
+    - { row: "Land's Aid", spends: { key: wild-shape, amount: 1 } }
+    - { row: Natural Recovery, uses: { key: natural-recovery, max: 1, recoversOn: [Long Rest] } }
+    - { row: "Nature's Ward", covered: the resistance on the land options }
+    - { row: "Nature's Sanctuary", spends: { key: wild-shape, amount: 1 } }
+  college-of-lore:
+    - { row: Bonus Proficiencies, adds: [{ to: skills, choice: bonus-proficiencies-3, choose: 3 }] }
+    - { row: Cutting Words, spends: { key: bardic-inspiration, amount: 1 } }
+    - { row: Magical Discoveries, text: chosen-spell }
+    - { row: Peerless Skill, spends: { key: bardic-inspiration, amount: 1 } }
+  draconic-sorcery:
+    - { row: Draconic Resilience, modifiers: [{ target: HP_Max, amount: classLevel }, { target: armorClass, amount: "10 + mod(dex) + mod(cha)", type: base }] }
+    - { row: Draconic Spells, spells: { 3: [alter-self, chromatic-orb, command, dragons-breath], 5: [fear, fly], 7: [arcane-eye, charm-monster], 9: [legend-lore, summon-dragon] } }
+    - row: Elemental Affinity
+      options:
+        Acid: { resist: [acid] }
+        Cold: { resist: [cold] }
+        Fire: { resist: [fire] }
+        Lightning: { resist: [lightning] }
+        Poison: { resist: [poison] }
+      choose: { id: elemental-affinity }
+    - { row: Dragon Wings, uses: { key: dragon-wings, max: 1, recoversOn: [Long Rest] } }
+    - { row: Dragon Companion, freeSpells: [summon-dragon] }
+  evoker:
+    - { row: Evocation Savant, text: other }
+    - { row: Potent Cantrip, text: rider }
+    - { row: Sculpt Spells, text: other }
+    - { row: Empowered Evocation, text: rider }
+    - { row: Overchannel, text: rider }
+  fiend-patron:
+    - { row: "Dark One's Blessing", text: reactive }
+    - { row: Fiend Spells, spells: { 3: [burning-hands, command, scorching-ray, suggestion], 5: [fireball, stinking-cloud], 7: [fire-shield, wall-of-fire], 9: [geas, insect-plague] } }
+    - { row: "Dark One's Own Luck", uses: { key: dark-ones-own-luck, max: "max(1, mod(cha))", recoversOn: [Long Rest] } }
+    - row: Fiendish Resilience
+      options:
+        Acid: { resist: [acid] }
+        Bludgeoning: { resist: [bludgeoning] }
+        Cold: { resist: [cold] }
+        Fire: { resist: [fire] }
+        Lightning: { resist: [lightning] }
+        Necrotic: { resist: [necrotic] }
+        Piercing: { resist: [piercing] }
+        Poison: { resist: [poison] }
+        Psychic: { resist: [psychic] }
+        Radiant: { resist: [radiant] }
+        Slashing: { resist: [slashing] }
+        Thunder: { resist: [thunder] }
+      choose: { id: fiendish-resilience, changesOn: [Short Rest, Long Rest] }
+    - { row: Hurl Through Hell, uses: { key: hurl-through-hell, max: 1, recoversOn: [Long Rest] } }
+  hunter:
+    - { row: "Hunter's Lore", text: per-use }
+    - { row: "Hunter's Prey", text: per-use }
+    - { row: Defensive Tactics, text: per-use }
+    - { row: "Superior Hunter's Prey", text: rider }
+    - { row: "Superior Hunter's Defense", text: reactive }
+  life-domain:
+    - { row: Disciple of Life, text: rider }
+    - { row: Life Domain Spells, spells: { 3: [aid, bless, cure-wounds, lesser-restoration], 5: [mass-healing-word, revivify], 7: [aura-of-life, death-ward], 9: [greater-restoration, mass-cure-wounds] } }
+    - { row: Preserve Life, spends: { key: cleric-channel-divinity, amount: 1 } }
+    - { row: Blessed Healer, text: rider }
+    - { row: Supreme Healing, text: rider }
+  oath-of-devotion:
+    - { row: Oath of Devotion Spells, spells: { 3: [protection-from-evil-and-good, shield-of-faith], 5: [aid, zone-of-truth], 9: [beacon-of-hope, dispel-magic], 13: [freedom-of-movement, guardian-of-faith], 17: [commune, flame-strike] } }
+    - { row: Sacred Weapon, spends: { key: paladin-channel-divinity, amount: 1 } }
+    - { row: Aura of Devotion, text: aura }
+    - { row: Smite of Protection, text: aura }
+    - { row: Holy Nimbus, uses: { key: holy-nimbus, max: 1, recoversOn: [Long Rest] } }
+  path-of-the-berserker:
+    - { row: Frenzy, text: rider }
+    - { row: Mindless Rage, text: state }
+    - { row: Retaliation, text: reactive }
+    - { row: Intimidating Presence, uses: { key: intimidating-presence, max: 1, recoversOn: [Long Rest] } }
+  thief:
+    - { row: Fast Hands, text: per-use }
+    - { row: Second-Story Work, text: sense }
+    - { row: Supreme Sneak, text: advantage }
+    - { row: Use Magic Device, text: other }
+    - { row: "Thief's Reflexes", text: other }
+  warrior-of-the-open-hand:
+    - { row: Open Hand Technique, text: per-use }
+    - { row: Wholeness of Body, uses: { key: wholeness-of-body, max: "max(1, mod(wis))", recoversOn: [Long Rest] } }
+    - { row: Fleet Step, text: other }
+    - { row: Quivering Palm, spends: { key: focus-points, amount: 4 } }
+
+species:
+  dragonborn:
+    traits:
+      - { row: Darkvision (60 ft.), already: the darkvision field }
+      - { row: Draconic Flight, gate: 5, uses: { key: draconic-flight, max: 1, recoversOn: [Long Rest] } }
+    lineages:
+      - { row: "Draconic Ancestor: Black", resist: [acid], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Blue", resist: [lightning], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Brass", resist: [fire], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Bronze", resist: [lightning], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Copper", resist: [acid], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Gold", resist: [fire], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Green", resist: [poison], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Red", resist: [fire], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: Silver", resist: [cold], uses: { $ref: breath-weapon } }
+      - { row: "Draconic Ancestor: White", resist: [cold], uses: { $ref: breath-weapon } }
+  dwarf:
+    traits:
+      - { row: Darkvision (120 ft.), already: the darkvision field }
+      - { row: Dwarven Resilience, resist: [poison] }
+      - { row: Dwarven Toughness, already: hitPointsPerLevel }
+      - { row: Stonecunning, uses: { key: stonecunning, max: proficiencyBonus, recoversOn: [Long Rest] } }
+  elf:
+    traits:
+      - { row: Darkvision (60 ft.), already: the darkvision field }
+      - { row: Elven Lineage, text: other }
+      - { row: Fey Ancestry, text: advantage }
+      - { row: Keen Senses, adds: [{ to: skills, choice: keen-senses, choose: 1, from: [insight, perception, survival] }] }
+      - { row: Trance, text: other }
+    lineages:
+      - { row: "Elven Lineage: Drow", modifiers: [{ target: darkvision, amount: 120, type: base }], spells: [dancing-lights], freeSpells: { 3: [faerie-fire], 5: [darkness] } }
+      - { row: "Elven Lineage: High Elf", spells: [prestidigitation], freeSpells: { 3: [detect-magic], 5: [misty-step] } }
+      - { row: "Elven Lineage: Wood Elf", modifiers: [{ target: speed, amount: 35, type: base }], spells: [druidcraft], freeSpells: { 3: [longstrider], 5: [pass-without-trace] } }
+  gnome:
+    traits:
+      - { row: Darkvision (60 ft.), already: the darkvision field }
+      - { row: Gnomish Cunning, text: advantage }
+      - { row: Gnomish Lineage, text: other }
+    lineages:
+      - { row: "Gnomish Lineage: Forest Gnome", spells: [minor-illusion], freeSpells: [speak-with-animals], free: { max: proficiencyBonus, recoversOn: [Long Rest] } }
+      - { row: "Gnomish Lineage: Rock Gnome", spells: [mending, prestidigitation] }
+  goliath:
+    traits:
+      - { row: Giant Ancestry, text: other }
+      - { row: Large Form, gate: 5, uses: { key: large-form, max: 1, recoversOn: [Long Rest] } }
+      - { row: Powerful Build, text: advantage }
+    lineages:
+      - { row: "Giant Ancestry: Cloud's Jaunt", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Fire's Burn", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Frost's Chill", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Hill's Tumble", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Stone's Endurance", uses: { $ref: giant-ancestry } }
+      - { row: "Giant Ancestry: Storm's Thunder", uses: { $ref: giant-ancestry } }
+  halfling:
+    traits:
+      - { row: Brave, text: advantage }
+      - { row: Halfling Nimbleness, text: other }
+      - { row: Luck, text: advantage }
+      - { row: Naturally Stealthy, text: other }
+  human:
+    traits:
+      - { row: Resourceful, text: other }
+      - { row: Skillful, adds: [{ to: skills, choice: skillful, choose: 1 }] }
+      - { row: Versatile, already: extraOriginFeats }
+  orc:
+    traits:
+      - { row: Adrenaline Rush, uses: { key: adrenaline-rush, max: proficiencyBonus, recoversOn: [Short Rest, Long Rest] } }
+      - { row: Darkvision (120 ft.), already: the darkvision field }
+      - { row: Relentless Endurance, uses: { key: relentless-endurance, max: 1, recoversOn: [Long Rest] } }
+  tiefling:
+    traits:
+      - { row: Darkvision (60 ft.), already: the darkvision field }
+      - { row: Fiendish Legacy, text: other }
+      - { row: Otherworldly Presence, spells: [thaumaturgy] }
+    lineages:
+      - { row: "Fiendish Legacy: Abyssal", resist: [poison], spells: [poison-spray], freeSpells: { 3: [ray-of-sickness], 5: [hold-person] } }
+      - { row: "Fiendish Legacy: Chthonic", resist: [necrotic], spells: [chill-touch], freeSpells: { 3: [false-life], 5: [ray-of-enfeeblement] } }
+      - { row: "Fiendish Legacy: Infernal", resist: [fire], spells: [fire-bolt], freeSpells: { 3: [hellish-rebuke], 5: [darkness] } }
+
+feat:
+  ability-score-improvement: { already: the abilityIncrease path }
+  alert: { modifiers: [{ target: initiative, amount: proficiencyBonus }] }
+  archery: { text: rider }
+  boon-of-combat-prowess: { text: other }
+  boon-of-dimensional-travel: { text: other }
+  boon-of-fate: { uses: { key: boon-of-fate, max: 1, recovers: [{ on: initiative }, { on: Short Rest }, { on: Long Rest }] } }
+  boon-of-irresistible-offense: { text: rider }
+  boon-of-spell-recall: { uses: { key: boon-of-spell-recall, max: 1, recoversOn: [Long Rest] } }
+  boon-of-the-night-spirit: { text: state }
+  boon-of-truesight: { text: sense }
+  defense: { already: armorClassBonus }
+  grappler: { already: the abilityIncrease path }
+  great-weapon-fighting: { text: rider }
+  magic-initiate: { adds: [{ choice: spell-list, choose: 1, from: [Cleric, Druid, Wizard] }, { to: grantedSpells, choice: cantrips, choose: 2, where: [{ property: level, equals: 0 }, { property: classes, containsChoice: spell-list }] }, { to: grantedSpells, choice: spell, choose: 1, where: [{ property: level, equals: 1 }, { property: classes, containsChoice: spell-list }], free: { max: 1, recoversOn: [Long Rest] } }] }
+  savage-attacker: { text: rider }
+  skilled: { text: training }
+  two-weapon-fighting: { text: rider }
+
+# The options of the Warlock's Eldritch Invocations (srd521-invocations.yaml). Those that let you cast a spell without a slot say so.
+invocation:
+  agonizing-blast: { text: other }
+  armor-of-shadows: { adds: [{ to: grantedSpells, entries: [mage-armor], free: atWill }] }
+  ascendant-step: { adds: [{ to: grantedSpells, entries: [levitate], free: atWill }] }
+  devils-sight: { text: sense }
+  devouring-blade: { text: other }
+  eldritch-mind: { text: advantage }
+  eldritch-smite: { text: rider }
+  eldritch-spear: { text: other }
+  fiendish-vigor: { adds: [{ to: grantedSpells, entries: [false-life], free: atWill }] }
+  gaze-of-two-minds: { text: sense }
+  gift-of-the-depths: { adds: [{ to: grantedSpells, entries: [water-breathing], free: { max: 1, recoversOn: [Long Rest] } }] }
+  gift-of-the-protectors: { text: reactive }
+  investment-of-the-chain-master: { text: other }
+  lessons-of-the-first-ones: { text: chosen-spell }
+  lifedrinker: { text: rider }
+  mask-of-many-faces: { adds: [{ to: grantedSpells, entries: [disguise-self], free: atWill }] }
+  master-of-myriad-forms: { adds: [{ to: grantedSpells, entries: [alter-self], free: atWill }] }
+  misty-visions: { adds: [{ to: grantedSpells, entries: [silent-image], free: atWill }] }
+  one-with-shadows: { adds: [{ to: grantedSpells, entries: [invisibility], free: atWill }] }
+  otherworldly-leap: { adds: [{ to: grantedSpells, entries: [jump], free: atWill }] }
+  pact-of-the-blade: { text: gear }
+  pact-of-the-chain: { adds: [{ to: grantedSpells, entries: [find-familiar], free: atWill }] }
+  pact-of-the-tome: { adds: [{ to: grantedSpells, choice: tome-cantrips, choose: 3, where: [{ property: level, equals: 0 }] }, { to: grantedSpells, choice: tome-rituals, choose: 2, where: [{ property: level, equals: 1 }, { property: ritual, equals: true }] }] }
+  repelling-blast: { text: other }
+  thirsting-blade: { text: other }
+  visions-of-distant-realms: { adds: [{ to: grantedSpells, entries: [arcane-eye], free: atWill }] }
+  whispers-of-the-grave: { adds: [{ to: grantedSpells, entries: [speak-with-dead], free: atWill }] }
+  witch-sight: { text: sense }
+
+background:
+  acolyte: { already: "skill ranks, origin feat, scores" }
+  criminal: { already: "skill ranks, origin feat, scores" }
+  sage: { already: "skill ranks, origin feat, scores" }
+  soldier: { already: "skill ranks, origin feat, scores" }

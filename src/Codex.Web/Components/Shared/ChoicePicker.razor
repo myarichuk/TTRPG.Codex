@@ -16,8 +16,77 @@
     {
         <p class="field-hint mb-1" data-testid="choice-changes-on">@hint</p>
     }
-    <p class="small-muted mb-1" aria-live="polite" data-testid="choice-count">@L["Actor.Choice.Count", Choice.Made.Count, Choice.Count]@if (Full && !Radio) { <span> · @L["Actor.Choice.Full"]</span> }</p>
-    @if (Choice.IsRow)
+    @if (Choice.BlockedBy == null)
+    {
+        <p class="small-muted mb-1" aria-live="polite" data-testid="choice-count">@L["Actor.Choice.Count", Choice.Made.Count, Choice.Count]@if (Full && !Radio && !EntryRadio) { <span> · @L["Actor.Choice.Full"]</span> }</p>
+    }
+    @if (IsEntry)
+    {
+        @if (Choice.BlockedBy is { } waitsOn)
+        {
+            @* The choice reads another choice of its feature (the spell list); until that is made it offers nothing. *@
+            <p class="field-hint" role="status" data-testid="choice-blocked">@L["Actor.Choice.ChooseFirst", Entries?.DisplayValue(EntryChoiceWords.Humanize(waitsOn)) ?? EntryChoiceWords.Humanize(waitsOn)]</p>
+        }
+        else if (IsValue)
+        {
+            @* A value choice stores the canonical value and shows it as the system words it. *@
+            <div class="d-flex flex-wrap gap-3" data-testid="choice-values">
+                @for (var i = 0; i < Choice.Options.Count; i++)
+                {
+                    var option = Choice.Options[i];
+                    var key = option.Key;
+                    var ticked = Choice.Made.Contains(key, StringComparer.OrdinalIgnoreCase);
+                    var box = $"{id}-v{i}";
+                    <span class="d-inline-flex align-items-center gap-1">
+                        <input id="@box" type="@(EntryRadio ? "radio" : "checkbox")" name="@(EntryRadio ? id : null)" class="field-box mt-0" checked="@ticked"
+                               disabled="@(Disabled || (!EntryRadio && Full && !ticked))" data-testid="@("choice-pick-" + key)"
+                               @onchange="e => OnPicks.InvokeAsync(EntryChoiceWords.Toggled(Choice, key, EntryRadio || (bool)e.Value!))" />
+                        <label for="@box" class="mb-0">@(Entries?.DisplayValue(option.Label) ?? option.Label)</label>
+                    </span>
+                }
+            </div>
+        }
+        else if (Choice.Options.Count == 0)
+        {
+            <p class="field-hint" data-testid="choice-empty">@L["Actor.Choice.NoOptions"]</p>
+        }
+        else
+        {
+            @if (Choice.Made.Count > 0)
+            {
+                <p class="small mb-1" data-testid="choice-chosen"><strong>@L["Actor.Choice.Chosen"]</strong> @string.Join(", ", Choice.Made.Select(EntryNameOf))</p>
+            }
+            <label for="@(id)-search" class="field-label">@L["Actor.Choice.Search"]</label>
+            <input id="@(id)-search" type="search" class="field-input field-sm mb-1" autocomplete="off" value="@search" @oninput="e => search = e.Value?.ToString() ?? string.Empty"
+                   aria-controls="@(id)-list" data-testid="choice-search" />
+            var matches = Shown;
+            <p class="small-muted mb-1" role="status" aria-live="polite" data-testid="choice-shown">@(matches.Count == 0 ? L["Actor.Choice.NoMatch", search.Trim()] : L["Actor.Choice.ShownOf", matches.Count, Choice.Options.Count])</p>
+            <ul id="@(id)-list" class="choice-entry-list list-unstyled mb-0" data-testid="choice-entries">
+                @foreach (var option in matches)
+                {
+                    var key = option.Key;
+                    var ticked = Choice.Made.Contains(key, StringComparer.OrdinalIgnoreCase);
+                    var box = $"{id}-e{Choice.Options.ToList().IndexOf(option)}";
+                    var info = InfoOf(option);
+                    <li class="choice-entry" data-testid="@("choice-row-" + key)">
+                        <input id="@box" type="@(EntryRadio ? "radio" : "checkbox")" name="@(EntryRadio ? id : null)" class="field-box mt-1" checked="@ticked"
+                               disabled="@(Disabled || (!EntryRadio && Full && !ticked))" aria-describedby="@(string.IsNullOrWhiteSpace(option.Description) ? null : box + "-text")"
+                               data-testid="@("choice-pick-" + key)" @onchange="e => OnPicks.InvokeAsync(EntryChoiceWords.Toggled(Choice, key, EntryRadio || (bool)e.Value!))" />
+                        <span class="choice-entry-body">
+                            <label for="@box" class="mb-0 fw-semibold">@info.Name</label>
+                            @if (!string.IsNullOrWhiteSpace(info.Meta)) { <span class="small-muted"> · @info.Meta</span> }
+                            @if (!string.IsNullOrWhiteSpace(info.Href))
+                            {
+                                <a href="@info.Href" class="small ms-2" target="_blank" rel="noopener" data-testid="@("choice-card-" + key)">@L["Actor.Choice.Card"]<span class="visually-hidden">: @info.Name</span></a>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(option.Description)) { <span id="@(box)-text" class="d-block small">@option.Description</span> }
+                        </span>
+                    </li>
+                }
+            </ul>
+        }
+    }
+    else if (Choice.IsRow)
     {
         <div class="d-flex flex-column gap-2">
             @foreach (var option in Choice.Options)
@@ -82,7 +151,46 @@
     /// <summary>A moment a row choice is usually changed at (a rest's name) as the reader's system words it.</summary>
     [Parameter] public Func<string, string>? MomentLabel { get; set; }
 
+    /// <summary>What a choice over Library entries or values needs from the host: the entry lists and their types, the system's words and each entry's
+    /// level and card. Without it such a choice is shown as a plain list of what it offers.</summary>
+    [Parameter] public EntryChoiceContext? Entries { get; set; }
+
     [Parameter] public bool Disabled { get; set; }
+
+    private string search = string.Empty;
+
+    /// <summary>The choice picks Library entries (a list of entries is its target) or a value (<see cref="SheetRuleEngine.ValueTarget"/>).</summary>
+    private bool IsEntry => !Choice.IsRow && Choice.Rank == null && !Choice.Raise
+        && (IsValue || Entries?.EntityTypeOf(Choice.Target) != null);
+
+    private bool IsValue => Choice.Target == SheetRuleEngine.ValueTarget;
+
+    /// <summary>One wanted: a group of radio buttons that replaces the pick. Several: checkboxes, capped at the count. Only for entry and value choices.</summary>
+    private bool EntryRadio => IsEntry && Choice.Count == 1;
+
+    private string? EntityType => IsValue ? null : Entries?.EntityTypeOf(Choice.Target);
+
+    private EntryOptionInfo InfoOf(ChoiceOption option) =>
+        EntityType is { } type && Entries?.Describe(type, option) is { } info ? info : new EntryOptionInfo(option.Label, null, null);
+
+    private string EntryNameOf(string key) =>
+        Choice.Options.FirstOrDefault(o => o.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) is { } option ? InfoOf(option).Name : key;
+
+    /// <summary>The options the search leaves, by the names the reader sees.</summary>
+    private IReadOnlyList<ChoiceOption> Shown => EntryChoiceWords.Filter(Choice.Options, search, o => InfoOf(o).Name);
+
+    /// <summary>The title says what the choice wants, built from its count and conditions: "Magic Initiate: choose 1 level-1 spell".</summary>
+    private string EntryLegend(string who)
+    {
+        var names = EntityType is { } type ? Entries?.TypeNames(type) : null;
+        var want = EntryChoiceWords.Wants(Choice, names?.Singular, names?.Plural);
+        return (want.Noun, want.Level) switch
+        {
+            ({ } noun, { } level) => L["Actor.Choice.TitleLevel", who, want.Count, level, noun].ToString(),
+            ({ } noun, null) => L["Actor.Choice.TitleNoun", who, want.Count, noun].ToString(),
+            _ => L["Actor.Choice.TitleValue", who, want.Count].ToString()
+        };
+    }
 
     private readonly string id = "choice-" + Guid.NewGuid().ToString("N")[..6];
 
@@ -112,6 +220,7 @@
             // A feat that is its own feature says its name once (“Skilled”), a class row says where it is from (“Expertise (Rogue, level 6)”).
             var who = string.Equals(Choice.Label, Choice.Source, StringComparison.Ordinal) ? source.ToString() : $"{Choice.Label} ({source})";
             if (Choice.IsRow) return L["Actor.Choice.LegendRow", who, Choice.Count];
+            if (IsEntry) return EntryLegend(who);
             var target = TargetLabel?.Invoke(Choice.Target) ?? Choice.Target;
             return L[Choice.Raise ? "Actor.Choice.LegendRaise" : "Actor.Choice.Legend", who, Choice.Count, target];
         }

@@ -17,8 +17,11 @@ public sealed record ImportResult(int EntryCount, Dictionary<string, int> Types)
 /// declares and gets a readable Markdown description assembled from the source, so the Library
 /// renders it without any 5E-specific UI.
 /// </summary>
-public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024")
+public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024", GrantTable? grants = null)
 {
+    /// <summary>The reviewed grants the 2024 data gets; a 2014 import has no mapping.</summary>
+    private readonly GrantTable _grants = grants ?? (edition == "2024" ? GrantTable.Embedded() : GrantTable.None);
+
     private const string SystemId = "srd5e";
 
     private readonly Dictionary<string, JsonDocument> _documents = new();
@@ -57,6 +60,18 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
         var manifest = BuildManifest();
         var systemPath = FindSystemYaml(outputDirectory);
         var system = systemPath != null ? SystemDefinitionLoader.Load(systemPath) : null;
+
+        // The reviewed grants go into the rows now, before anything is written: a mapping that does not fit the source stops the import.
+        var columns = ClassColumns.Read(All("Levels"));
+        if (!_grants.IsEmpty)
+        {
+            ClassSkills.Apply(entries, system);
+            entries.AddRange(Invocations.Entries().Select(e => { e.SystemId = SystemId; return e; }));
+            Invocations.AddSlots(entries, columns);
+        }
+
+        var coverage = _grants.Apply(entries, columns, system);
+        if (!_grants.IsEmpty) await log.WriteLineAsync($"Grants: {coverage}");
 
         if (Directory.Exists(outputDirectory))
         {
@@ -814,9 +829,40 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
                     if (times.HasValue && kind != null) name += $" ({times}/{kind.Replace("per ", "")})";
                 }
 
-                return ((int?)null, name, Json.Clean(a.Str("desc")));
+                return ((int?)null, name, WithSpellList(Json.Clean(a.Str("desc")), a.Get("spellcasting")));
             })
             .ToList();
+
+    /// <summary>
+    /// A Spellcasting action's text ends "…the following spells, using Intelligence as the spellcasting ability (spell save DC 14):", and the
+    /// spells themselves are not in it: the transcription keeps them in the action's <c>spellcasting.spells</c>. Writes them back as the
+    /// stat block does, one line for the spells cast at will and one for each number of daily casts ("2/Day Each: Fireball, Invisibility").
+    /// A note on a spell goes after it in brackets. An action whose text does not end in a colon already names its spell.
+    /// </summary>
+    public static string? WithSpellList(string? description, JsonElement? spellcasting)
+    {
+        if (description == null || !description.TrimEnd().EndsWith(':') || spellcasting?.Items("spells").ToList() is not { Count: > 0 } spells) return description;
+
+        string Shown(JsonElement spell)
+        {
+            var spellName = spell.Str("name") ?? spell.Str("index") ?? "";
+            var note = spell.Str("notes");
+            if (string.IsNullOrWhiteSpace(note)) return $"*{spellName}*";
+            // A note starts a bracket, so its first word is not a sentence start; an acronym or a name keeps its capital.
+            var bracket = note.Length > 1 && char.IsUpper(note[0]) && char.IsLower(note[1]) ? char.ToLowerInvariant(note[0]) + note[1..] : note;
+            return $"*{spellName}* ({bracket.TrimEnd('.')})";
+        }
+
+        var lines = new List<string>();
+        var atWill = spells.Where(s => s.Get("usage")?.Str("type") is null or "at will").ToList();
+        if (atWill.Count > 0) lines.Add("At Will: " + string.Join(", ", atWill.Select(Shown)));
+        foreach (var group in spells.Where(s => s.Get("usage")?.Str("type") == "per day").GroupBy(s => s.Get("usage")!.Value.Int("times") ?? 1).OrderByDescending(g => g.Key))
+        {
+            lines.Add($"{group.Key}/Day{(group.Count() > 1 ? " Each" : "")}: " + string.Join(", ", group.Select(Shown)));
+        }
+
+        return description.TrimEnd() + "\n\n" + string.Join("\n\n", lines);
+    }
 
     private static void AppendSection(StringBuilder sb, string title, List<(int? Level, string Name, string? Description)> rows)
     {

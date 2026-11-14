@@ -121,6 +121,20 @@ public class TableCounterSeedTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task ACounterWhoseMaximumChangedWithThePack_TakesTheNewMaximum_AndKeepsWhatWasSpent()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        // The sheet was written when the pack gave one use: all spent. The pack now gives two.
+        var hero = await HeroAsync(campaignId, ("uses_foresight", 0L), ("uses_foresight_Max", 1L));
+
+        var runtime = await TableAsync(campaignId, new Entries(Foresight), hero);
+        await using var _ = runtime;
+
+        Assert.Equal(1, Pool(runtime, hero.Id, "uses_foresight")); // the added use is there; the spent one is still spent
+        Assert.Equal(2, Pool(runtime, hero.Id, "uses_foresight_Max"));
+    }
+
+    [Fact]
     public async Task WithoutEntries_TheTableAddsNothing()
     {
         var campaignId = Guid.NewGuid().ToString();

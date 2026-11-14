@@ -55,6 +55,12 @@ description: >-
   **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 16):
 
 
+  At Will: *Detect Magic*, *Minor Illusion*, *Scorching Ray*, *Shapechange* (beast or Humanoid form only, no Temporary Hit Points gained from the spell, and no Concentration or Temporary Hit Points required to maintain the spell), *Speak with Animals*
+
+
+  1/Day Each: *Detect Thoughts*, *Control Weather*
+
+
 
   ### Legendary Actions
 
@@ -104,7 +110,14 @@ properties:
   - name: Sleep Breath
     description: 'Constitution Saving Throw: DC 18, each creature in a 60-foot Cone. Failure: The target has the Incapacitated condition until the end of its next turn, at which point it repeats the save. Second Failure: The target has the Unconscious condition for 10 minutes. This effect ends for the target if it takes damage or a creature within 5 feet of it takes an action to wake it.'
   - name: Spellcasting
-    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 16):'
+    description: >-
+      The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 16):
+
+
+      At Will: *Detect Magic*, *Minor Illusion*, *Scorching Ray*, *Shapechange* (beast or Humanoid form only, no Temporary Hit Points gained from the spell, and no Concentration or Temporary Hit Points required to maintain the spell), *Speak with Animals*
+
+
+      1/Day Each: *Detect Thoughts*, *Control Weather*
   legendaryActions:
   - name: Blazing Light
     description: The dragon uses Spellcasting to cast Scorching Ray.

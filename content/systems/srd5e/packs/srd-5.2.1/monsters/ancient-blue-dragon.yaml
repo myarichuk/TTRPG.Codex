@@ -52,6 +52,12 @@ description: >-
   **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 22):
 
 
+  At Will: *Detect Magic*, *Invisibility*, *Mage Hand*, *Shatter*
+
+
+  1/Day Each: *Scrying*, *Sending*
+
+
 
   ### Legendary Actions
 
@@ -99,7 +105,14 @@ properties:
   - name: Lightning Breath
     description: 'Dexterity Saving Throw: DC 23, each creature in a 120-foot-long, 10-foot-wide Line. Failure: 88 (16d10) Lightning damage. Success: Half damage.'
   - name: Spellcasting
-    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 22):'
+    description: >-
+      The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 22):
+
+
+      At Will: *Detect Magic*, *Invisibility*, *Mage Hand*, *Shatter*
+
+
+      1/Day Each: *Scrying*, *Sending*
   legendaryActions:
   - name: Cloaked Flight
     description: The dragon uses Spellcasting to cast Invisibility on itself, and it can fly up to half its Fly Speed. The dragon can’t take this action again until the start of its next turn.

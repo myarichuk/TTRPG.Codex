@@ -49,6 +49,9 @@ description: >-
 
 
   **Spellcasting.** The hag casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 12, +4 to hit with spell attacks):
+
+
+  At Will: *Dancing Lights*, *Disguise Self* (24-hour duration), *Invisibility* (self only, and the hag leaves no tracks while Invisible), *Minor Illusion*, *Ray of Sickness*
 tags:
 - fey
 - medium
@@ -85,4 +88,8 @@ properties:
   - name: Claw
     description: 'Melee Attack Roll: +6, reach 5 ft. Hit: 8 (1d8 + 4) Slashing damage plus 3 (1d6) Poison damage.'
   - name: Spellcasting
-    description: 'The hag casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 12, +4 to hit with spell attacks):'
+    description: >-
+      The hag casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 12, +4 to hit with spell attacks):
+
+
+      At Will: *Dancing Lights*, *Disguise Self* (24-hour duration), *Invisibility* (self only, and the hag leaves no tracks while Invisible), *Minor Illusion*, *Ray of Sickness*

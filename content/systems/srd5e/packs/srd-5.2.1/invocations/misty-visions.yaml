@@ -1,0 +1,19 @@
+id: misty-visions
+type: invocation
+name: Misty Visions
+description: >-
+  **Prerequisite:** Level 2+ Warlock
+
+
+  You can cast Silent Image without expending a spell slot.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 2
+  prerequisites: Level 2+ Warlock
+  adds:
+  - to: grantedSpells
+    entries:
+    - silent-image
+    free: atWill

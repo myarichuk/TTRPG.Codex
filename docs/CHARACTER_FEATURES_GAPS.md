@@ -127,15 +127,21 @@ Drafter:
   not written for. The vault draft dialog sets when: only the Library, when nothing fits, or always.
 - Proposals are on for vault drafts only. Cast's "Create with AI" and "Promote to cast" pick from the Library only.
 - Nothing is written below the subclass level. A class with no published subclass gets one written once it is due.
-- A list with a count but no options at all (the warlock's invocations) is still skipped.
+- ~~A list with a count but no options at all (the warlock's invocations) is still skipped.~~ It has options now.
 - The writer is told how to write `use`, but it never tags an item, so a written weapon is not offered as an attack.
-- Eldritch Invocation options are not Library entries in the SRD pack, so nobody can pick them, by hand or by AI.
+- ~~Eldritch Invocation options are not Library entries in the SRD pack.~~ They are now: 28 entries of type `invocation`, read from `Data/srd521-invocations.yaml`
+  (written from the SRD 5.2.1 document), a sheet list `invocations` counted by the class table and gated by the Warlock level, and a feature source, so
+  they can be picked by hand and by the drafter. A prerequisite that names another invocation or a cantrip is text the player checks. Their ru and he
+  entries are not translated yet.
 - One extra model call per drafted character with something to choose, and a second when a subclass is written.
 
 SRD content:
 
-- No published entry carries `modifiers`, `adds` or `uses`. The SRD pack is generated; the generator writes `use` on
-  spells and weapons (step 2) and nothing for features. So the Fiend Patron's spells, a Dwarf's resistance and every other published feature are still text only.
+- The SRD pack carries grants on the features that SRD_GRANTS_IMPORT_DESIGN.md maps: counters of uses with their refills (Rage,
+  Channel Divinity, Focus, Breath Weapon...), Extra Attack and the critical range, Expertise and the other skill choices,
+  resistances and granted spells. The reviewed mapping is `tools/Codex.ContentImport/Data/srd521-grants.yaml`; every row of every class,
+  subclass, species and feat is either a grant or text with a reason. What stays text is listed there (riders and owned dice, advantage
+  rules, gear and state conditions, senses, auras, chosen spells). Class skill picks are still the player's own ticks.
   (`hitPoints.perLevelBonus` and `armorClass.bonusLists` still do their older, narrower jobs.)
 
 Sheet and table:

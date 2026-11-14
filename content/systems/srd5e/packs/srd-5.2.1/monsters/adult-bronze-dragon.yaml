@@ -58,6 +58,12 @@ description: >-
   **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17, +10 to hit with spell attacks):
 
 
+  At Will: *Detect Magic*, *Guiding Bolt*, *Shapechange* (beast or Humanoid form only, no Temporary Hit Points gained from the spell, and no Concentration or Temporary Hit Points required to maintain the spell), *Speak with Animals*, *Thaumaturgy*
+
+
+  1/Day Each: *Detect Thoughts*, *Water Breathing*
+
+
 
   ### Legendary Actions
 
@@ -109,7 +115,14 @@ properties:
   - name: Repulsion Breath
     description: 'Strength Saving Throw: DC 19, each creature in a 30-foot Cone. Failure: The target is pushed up to 60 feet straight away from the dragon and has the Prone condition.'
   - name: Spellcasting
-    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17, +10 to hit with spell attacks):'
+    description: >-
+      The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17, +10 to hit with spell attacks):
+
+
+      At Will: *Detect Magic*, *Guiding Bolt*, *Shapechange* (beast or Humanoid form only, no Temporary Hit Points gained from the spell, and no Concentration or Temporary Hit Points required to maintain the spell), *Speak with Animals*, *Thaumaturgy*
+
+
+      1/Day Each: *Detect Thoughts*, *Water Breathing*
   legendaryActions:
   - name: Guiding Light
     description: The dragon uses Spellcasting to cast Guiding Bolt (level 2 version).

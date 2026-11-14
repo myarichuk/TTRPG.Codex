@@ -42,6 +42,11 @@ properties:
       For example, if you’re a level 4 Wizard, you can recover up to two levels’ worth of spell slots, regaining either one level 2 spell slot or two level 1 spell slots.
 
       Once you use this feature, you can’t do so again until you finish a Long Rest.
+    uses:
+      key: arcane-recovery
+      max: 1
+      recoversOn:
+      - Long Rest
   - name: Ritual Adept
     level: 1
     description: You can cast any spell as a Ritual if that spell has the Ritual tag and the spell is in your spellbook. You needn’t have the spell prepared, but you must read from the book to cast a spell in this way.
@@ -87,6 +92,19 @@ properties:
       While studying magic, you also specialized in another field of study. Choose one of the following skills in which you have proficiency: Arcana, History, Investigation, Medicine, Nature, or Religion.
 
       You have Expertise in the chosen skill.
+    adds:
+    - to: skills
+      choice: scholar-2
+      choose: 1
+      minRank: proficient
+      rank: expert
+      from:
+      - arcana
+      - history
+      - investigation
+      - medicine
+      - nature
+      - religion
   - name: Wizard Subclass
     level: 3
     description: >-
@@ -123,12 +141,49 @@ properties:
       You have achieved such mastery over certain spells that you can cast them at will. Choose a level 1 and a level 2 spell in your spellbook that have a casting time of an action. You always have those spells prepared, and you can cast them at their lowest level without expending a spell slot. To cast either spell at a higher level, you must expend a spell slot.
 
       Whenever you finish a Long Rest, you can study your spellbook and replace one of those spells with an eligible spell of the same level from the book.
+    adds:
+    - choice: mastery-1
+      choose: 1
+      fromList: spells
+      where:
+      - property: classes
+        contains: Wizard
+      - property: level
+        equals: 1
+      - property: castingTime
+        equals: Action
+      free: atWill
+    - choice: mastery-2
+      choose: 1
+      fromList: spells
+      where:
+      - property: classes
+        contains: Wizard
+      - property: level
+        equals: 2
+      - property: castingTime
+        equals: Action
+      free: atWill
   - name: Epic Boon
     level: 19
     description: You gain an Epic Boon feat (see "Feats") or another feat of your choice for which you qualify. Boon of Spell Recall is recommended.
   - name: Signature Spells
     level: 20
     description: Choose two level 3 spells in your spellbook as your signature spells. You always have these spells prepared, and you can cast each of them once at level 3 without expending a spell slot. When you do so, you can’t cast them in this way again until you finish a Short or Long Rest. To cast either spell at a higher level, you must expend a spell slot.
+    adds:
+    - choice: signature
+      choose: 2
+      fromList: spells
+      where:
+      - property: classes
+        contains: Wizard
+      - property: level
+        equals: 3
+      free:
+        max: 1
+        recoversOn:
+        - Short Rest
+        - Long Rest
   spellcastingAbility: int
   casterType: full
   spellcasting:
@@ -293,3 +348,14 @@ properties:
   - level: 20
     slots: 5
     styles: 0
+  adds:
+  - to: skills
+    choice: class-skills
+    choose: 2
+    from:
+    - arcana
+    - history
+    - insight
+    - investigation
+    - medicine
+    - religion

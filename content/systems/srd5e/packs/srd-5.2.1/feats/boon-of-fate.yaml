@@ -15,3 +15,10 @@ properties:
   minLevel: 19
   abilityIncrease: 1
   abilityIncreaseCap: 30
+  uses:
+    key: boon-of-fate
+    max: 1
+    recovers:
+    - on: initiative
+    - on: Short Rest
+    - on: Long Rest

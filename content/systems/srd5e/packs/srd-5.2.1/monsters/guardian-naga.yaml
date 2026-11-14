@@ -50,6 +50,12 @@ description: >-
 
 
   **Spellcasting.** The naga casts one of the following spells, requiring no Somatic or Material components and using Wisdom as the spellcasting ability (spell save DC 16):
+
+
+  At Will: *Thaumaturgy*
+
+
+  1/Day Each: *Clairvoyance*, *Cure Wounds*, *Flame Strike*, *Geas*, *True Seeing*
 tags:
 - celestial
 - large
@@ -91,4 +97,11 @@ properties:
   - name: Poisonous Spittle
     description: 'Constitution Saving Throw: DC 16, one creature the naga can see within 60 feet. Failure: 31 (7d8) Poison damage, and the target has the Blinded condition until the start of the naga’s next turn. Success: Half damage only.'
   - name: Spellcasting
-    description: 'The naga casts one of the following spells, requiring no Somatic or Material components and using Wisdom as the spellcasting ability (spell save DC 16):'
+    description: >-
+      The naga casts one of the following spells, requiring no Somatic or Material components and using Wisdom as the spellcasting ability (spell save DC 16):
+
+
+      At Will: *Thaumaturgy*
+
+
+      1/Day Each: *Clairvoyance*, *Cure Wounds*, *Flame Strike*, *Geas*, *True Seeing*

@@ -94,12 +94,30 @@ public sealed class TranslationChecker
                     continue;
                 }
 
+                foreach (var grant in GrantKeysIn(entry.Value).Distinct())
+                    Add(Severity.Error, "forbidden-row-key", $"property {propKey}: a row carries '{grant}', which the sheet rules read; a translated row holds a name and text only");
+
                 if (entry.Value is string translated && source.Properties.TryGetValue(propKey, out var original) && original is string originalText)
                     CheckProse(originalText, translated, (s, c, m) => Add(s, c, $"property {propKey}: {m}"), light: true);
             }
         }
 
         return findings;
+    }
+
+    /// <summary>What a feature row's grants are written as: the keys the sheet rules read, which no translation may copy.</summary>
+    private static readonly string[] GrantKeys = { "uses", "adds", "modifiers", "spends", "choose" };
+
+    /// <summary>The grant keys found in a translated table: on its rows, and on the options inside them.</summary>
+    private static IEnumerable<string> GrantKeysIn(object? table)
+    {
+        if (table is not System.Collections.IEnumerable rows || table is string) yield break;
+        foreach (var row in rows.OfType<System.Collections.IDictionary>())
+        {
+            foreach (var key in row.Keys.Cast<object>().Select(k => k.ToString() ?? string.Empty).Where(k => GrantKeys.Contains(k))) yield return key;
+            if (!row.Contains("options")) continue;
+            foreach (var key in GrantKeysIn(row["options"])) yield return key;
+        }
     }
 
     /// <summary>Thousands separators differ by language ("1,000", "1 000", "1.000"); read them all as the plain number.</summary>

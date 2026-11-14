@@ -55,6 +55,12 @@ description: >-
   **Spellcasting.** The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21):
 
 
+  At Will: *Detect Magic*, *Mind Spike*
+
+
+  1/Day Each: *Geas*, *Modify Memory*
+
+
 
   ### Legendary Actions
 
@@ -105,7 +111,14 @@ properties:
   - name: Poison Breath
     description: 'Constitution Saving Throw: DC 22, each creature in a 90-foot Cone. Failure: 77 (22d6) Poison damage. Success: Half damage.'
   - name: Spellcasting
-    description: 'The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21):'
+    description: >-
+      The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21):
+
+
+      At Will: *Detect Magic*, *Mind Spike*
+
+
+      1/Day Each: *Geas*, *Modify Memory*
   legendaryActions:
   - name: Mind Invasion
     description: The dragon uses Spellcasting to cast Mind Spike (level 5 version).

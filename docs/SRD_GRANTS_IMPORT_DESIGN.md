@@ -684,3 +684,59 @@ Steps 2 to 10 suit Sonnet. Step 11 needs Opus or a person. Step 12's E2 wants an
 - Q6: take lineage details from the SRD 5.2.1 document into the data file.
 - Q7: build E3 (`uses.label`) now.
 - Moments: use the shared resolver from docs/SHEETKINDS_FEATURES_DESIGN.md (S1); `initiative` and `dawn` stay built in.
+
+## Built (2026-11-13)
+
+Built as designed, on the branch stacked on the sheet-kind feature sources. What differs from the plan above:
+
+- **No "held" status.** Q1 and Q2 were answered, so Primal Knowledge, Bonus Proficiencies, Keen Senses, Skillful, Elemental Affinity and
+  Fiendish Resilience are grants. Final counts, from `SrdGrantCoverageTests`:
+
+  | Group | Rows | Grant | Covered | Already | Text |
+  |---|---|---|---|---|---|
+  | Classes | 258 | 53 | 3 | 123 | 79 |
+  | Subclasses | 58 | 26 | 1 | 1 | 30 |
+  | Species traits | 30 | 9 | 0 | 8 | 13 |
+  | Lineage rows | 24 | 24 | 0 | 0 | 0 |
+  | Feats | 17 | 3 | 0 | 3 | 11 |
+  | Backgrounds | 4 | 0 | 0 | 4 | 0 |
+  | **All** | **391** | **115** | **4** | **139** | **133** |
+
+- **E1, E1b, E2, E3 are in.** E2 adopts only when the first class's skill count is known (one class, a number in its entry): the ticks beyond
+  that count are the picks. Otherwise the choice stays open.
+- **Class skill picks are choices** (Q8, as decided). The importer writes `adds: [{ to: skills, choice: class-skills, choose: n, from: [...] }]`
+  on each class entry from its `skillChoices` text (`ClassSkills.cs`), and the system reads it through a whole-entry source
+  `{ field: class, firstOnly: true, label: Skill Proficiencies }`, the first class only (a second class adds none; row counts do not change).
+  It is listed before every other source, so it adopts the player's ticks within its `from` list first: all of them is Confirm, fewer keeps
+  them and asks for the rest; later choices (Keen Senses and the rest) adopt what is spare. Its picks are not marked independent, so
+  `classChoicesProperty`'s cap still reads the ticks of a sheet that has not confirmed. `skillChoices` stays.
+- **Free castings are built** (FREE_CASTINGS_DESIGN.md): the `free-<spell>` counters of section 5 are the spells' `free` castings now, and
+  the lineage spells from level 3 each carry one. Section 6's note that a row holds one `uses` no longer applies.
+- **`gate: N`** in the grants file gives a species row the level it applies from (Draconic Flight, Large Form).
+- **Q4 is answered at the table, not with a version stamp.** `CampaignRuntimeManager` now gives a runtime the campaign's library for any
+  system with features, not only sheet kinds, and the table's counter pass writes counters the way the sheet page does
+  (`ApplyCounters`) at every table start. A counter new to the pack joins full, one whose maximum, name or refill rules changed takes the
+  new ones, spent uses stay. Granted spells and resistances still arrive when a sheet is opened.
+- **Eldritch Invocations** are 28 Library entries (type `invocation`) from `Data/srd521-invocations.yaml`, section "Eldritch Invocation Options" of the
+  SRD 5.2.1 document; the grants file classifies each (12 cast a spell without a slot, Pact of the Tome picks spells; the rest are text). Metamagic still stays text (reason `not-in-source`): its
+  options are in the document too ("Metamagic Options") and are the next list to make entries of, the same way.
+- **Entry choices are mapped** (ENTRY_CHOICES_DESIGN.md, step 8): Magic Initiate (list, 2 cantrips, a level-1 spell free once per Long Rest), Mystic Arcanum
+  at 11, 13, 15 and 17, Signature Spells and Spell Mastery (mark-only over the sheet's `spells`; Spell Mastery's spells are Wizard spells with a casting time of
+  Action, at will) and Pact of the Tome (3 cantrips, 2 level-1 spells with `ritual: true`, from any list). Magic Initiate's other rules (the spellcasting
+  ability, Spell Change on level up) and the Tome's "not already prepared" stay text.
+- **Lineage details come from the SRD 5.2.1 document** (Q6): the Wood Elf's Druidcraft, the Rock Gnome's Mending, spell levels.
+- **Spellcasting actions of creatures** now carry their spell lists (the Mage and 47 more): a generator fix, not a feature grant.
+- **Tests:** `SrdEngineExtensionTests` (E1, E1b, E3), `SrdMappedGrantsTests` (a sample of mapped features, E2), `SrdGrantSweepTests`
+  (the grant check, every class and species), `SrdGrantCoverageTests`, and the importer's own checks in `ImporterTests`.
+
+### Release note: numbers that move on live sheets
+
+- **Attacks and critical range** (Extra Attack, Improved Critical) and **initiative** (Alert as the origin feat) now show the feature's
+  value. **Draconic Sorcerers** gain hit points per level and an unarmored armor class; a player who added these by hand (typed hit
+  points, `armorClassMisc`) counts them twice until they take theirs off.
+- **Expertise, Deft Explorer, Scholar:** a sheet whose player already ticked the skills shows **Confirm**; one without them shows
+  "Choices to make". Neither stops a save.
+- **Keen Senses, Skillful, Primal Knowledge, Bonus Proficiencies:** Confirm when the sheet has spare skill ticks beyond the class's count,
+  else a choice to make.
+- **Draconic Sorcerers from level 6 and Fiend warlocks from level 10** are asked for a damage type (Elemental Affinity, Fiendish Resilience).
+- **Counters** (Rage, Focus Points, Breath Weapon...) appear full at the table the next time it starts, and on a sheet when it is opened.

@@ -44,6 +44,12 @@ description: >-
   **Spellcasting.** The giant casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):
 
 
+  At Will: *Detect Magic*, *Fog Cloud*, *Light*
+
+
+  1/Day Each: *Control Weather*, *Gaseous Form*, *Telekinesis*
+
+
 
   ### Bonus Actions
 
@@ -80,7 +86,14 @@ properties:
   - name: Thundercloud
     description: 'Ranged Attack Roll: +12, range 240 ft. Hit: 18 (3d6 + 8) Thunder damage, and the target has the Incapacitated condition until the end of its next turn.'
   - name: Spellcasting
-    description: 'The giant casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):'
+    description: >-
+      The giant casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):
+
+
+      At Will: *Detect Magic*, *Fog Cloud*, *Light*
+
+
+      1/Day Each: *Control Weather*, *Gaseous Form*, *Telekinesis*
   bonusActions:
   - name: Misty Step
     description: The giant casts the Misty Step spell, using the same spellcasting ability as Spellcasting.

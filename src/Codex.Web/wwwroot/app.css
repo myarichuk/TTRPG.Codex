@@ -2857,3 +2857,9 @@ body.book-splitting .book-draft-frame { pointer-events: none; }
     .book-draft-tools { flex-basis: 100%; }
 }
 .book-preview { display: block; width: 100%; height: min(70vh, 640px); margin-top: .75rem; border: 1px solid var(--border-strong); border-radius: 4px; background: #fff; }
+
+/* A choice over Library entries: a scrolling list, each option a box and its name, level and short text. Logical properties only, so it reads right to left. */
+.choice-entry-list { max-block-size: 20rem; overflow-y: auto; border: 1px solid var(--border-strong); border-radius: 4px; padding-block: .25rem; padding-inline: .5rem; }
+.choice-entry { display: flex; align-items: flex-start; gap: .5rem; padding-block: .35rem; border-block-end: 1px solid var(--border-strong); }
+.choice-entry:last-child { border-block-end: 0; }
+.choice-entry-body { min-inline-size: 0; flex: 1; }

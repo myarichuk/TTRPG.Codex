@@ -19,7 +19,11 @@ public class RowChoiceTests : IAsyncLifetime
         _loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(_registry));
     }
 
-    public async Task InitializeAsync() => await _loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
+    public async Task InitializeAsync()
+    {
+        await _loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
+        ClassSkillsSettled.LeaveOut(_loader.GetDefinition("srd5e")!);
+    }
 
     public Task DisposeAsync() => Task.CompletedTask;
 
@@ -67,7 +71,7 @@ public class RowChoiceTests : IAsyncLifetime
         return (engine, sheet);
     }
 
-    private (SheetRuleEngine Engine, Dictionary<string, object> Sheet) Sorcerer(ContentEntry stacker) => Character("sorcerer", 5, "human", stacker);
+    private (SheetRuleEngine Engine, Dictionary<string, object> Sheet) Sorcerer(ContentEntry stacker) => Character("sorcerer", 5, "halfling", stacker);
 
     // ---- A: one row of an entry's collection (the Dragonborn's ancestry, from the real pack) ----
 
@@ -130,12 +134,13 @@ public class RowChoiceTests : IAsyncLifetime
     {
         var (engine, sheet) = Character("fighter", 1, species);
 
-        var pending = Assert.Single(engine.Recompute(sheet).PendingChoices);
+        // An elf's Keen Senses is a second, skill choice; the lineage is the row choice.
+        var pending = Assert.Single(engine.Recompute(sheet).PendingChoices, c => c.IsRow);
         Assert.Equal($"choice__{species}__lineage", pending.Key);
 
         var evaluation = engine.ChangeChoice(sheet, pending.Key, new[] { pick });
 
-        Assert.Empty(evaluation.PendingChoices);
+        Assert.DoesNotContain(evaluation.PendingChoices, c => c.IsRow);
         var lineageRows = evaluation.Features.Where(f => f.ChosenBy == pending.Key).Select(f => f.Name).ToList();
         Assert.Equal(new[] { pick }, lineageRows);
     }
@@ -143,7 +148,7 @@ public class RowChoiceTests : IAsyncLifetime
     [Fact]
     public void ASpeciesWithoutLineages_AsksNothing()
     {
-        var (engine, sheet) = Character("fighter", 1, "human");
+        var (engine, sheet) = Character("fighter", 1, "halfling");
 
         var evaluation = engine.Recompute(sheet);
 
@@ -156,7 +161,7 @@ public class RowChoiceTests : IAsyncLifetime
     [Fact]
     public void CircleOfTheLand_OffersFourLandTypes_ChangedOnALongRest()
     {
-        var (engine, sheet) = Character("druid", 3, "human");
+        var (engine, sheet) = Character("druid", 3, "halfling");
         sheet["subclass"] = "circle-of-the-land";
 
         var evaluation = engine.Recompute(sheet);
@@ -179,7 +184,7 @@ public class RowChoiceTests : IAsyncLifetime
     [Fact]
     public void CircleOfTheLand_AskesNothingBeforeLevelThree()
     {
-        var (engine, sheet) = Character("druid", 2, "human");
+        var (engine, sheet) = Character("druid", 2, "halfling");
         sheet["subclass"] = "circle-of-the-land";
 
         Assert.Empty(engine.Recompute(sheet).PendingChoices);
@@ -188,7 +193,7 @@ public class RowChoiceTests : IAsyncLifetime
     [Fact]
     public void ChoicesChangingOn_ListsTheChoicesAMomentUsuallyChanges()
     {
-        var (engine, sheet) = Character("druid", 3, "human");
+        var (engine, sheet) = Character("druid", 3, "halfling");
         sheet["subclass"] = "circle-of-the-land";
         var evaluation = engine.ChangeChoice(sheet, "choice__circle-of-the-land__land", new[] { "Polar" });
 
@@ -403,11 +408,12 @@ public class RowChoiceTests : IAsyncLifetime
     {
         var (engine, sheet) = Character("fighter", 1, "dragonborn");
         engine.ChangeChoice(sheet, "choice__dragonborn__lineage", new[] { "Draconic Ancestor: Red" });
-        sheet["species"] = "human";
+        sheet["species"] = "halfling";
 
         engine.PruneChoices(sheet);
 
-        Assert.DoesNotContain(sheet.Keys, k => k.StartsWith(SheetRuleEngine.ChoicePrefix));
+        // The class's own skill pick stays (the class is still on the sheet); the species' lineage pick goes.
+        Assert.DoesNotContain(sheet.Keys, k => k.StartsWith(SheetRuleEngine.ChoicePrefix) && !k.EndsWith("__" + SheetRuleEngine.ClassSkillsChoiceId));
     }
 
     // ---- Loader checks ----

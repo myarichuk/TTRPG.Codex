@@ -38,10 +38,12 @@ public sealed record RowChoiceInfo(string OnChange, IReadOnlyList<string> Change
 /// stored under (<see cref="SheetRuleEngine.ChoiceKey"/>), a list of keys of <see cref="Target"/>; <see cref="Made"/> the picks that count now;
 /// <see cref="Options"/> the keys the player may pick (the picks made are among them); <see cref="Rank"/> the rank the picks are put at, null for a
 /// <see cref="Raise"/>. <see cref="Adopted"/>: nothing is stored yet, but the player's own ticks already cover the choice, so <see cref="Made"/> holds
-/// them and confirming means writing them (<see cref="SheetRuleEngine.SetChoice"/>).
+/// them and confirming means writing them (<see cref="SheetRuleEngine.SetChoice"/>). <see cref="BlockedBy"/>: an entry choice that waits on another choice
+/// of its feature (<c>containsChoice</c>, <c>equalsChoice</c>) names that choice's id and offers nothing until it is made. An entry choice's
+/// <see cref="Target"/> is its list's key, a value choice's is <see cref="SheetRuleEngine.ValueTarget"/>; their picks are entry ids and values.
 /// </summary>
 public sealed record PendingChoice(string Key, string Label, string Source, int Count, IReadOnlyList<string> Made, IReadOnlyList<ChoiceOption> Options,
-    int? Rank, string Target, bool Raise, bool Adopted, ActiveFeature Feature, int? MinRank = null, int? MaxRank = null, RowChoiceInfo? Row = null)
+    int? Rank, string Target, bool Raise, bool Adopted, ActiveFeature Feature, int? MinRank = null, int? MaxRank = null, RowChoiceInfo? Row = null, string? BlockedBy = null)
 {
     /// <summary>The choice picks among rows (an entry's rows, or a feature's options), not keys of a ranked list. <see cref="Target"/> is then
     /// <see cref="SheetRuleEngine.RowsTarget"/>, and the picks are the rows' names as the entry writes them.</summary>
@@ -74,6 +76,10 @@ public sealed partial class SheetRuleEngine
 
     /// <summary>The target a grant names for the saving throws.</summary>
     public const string SavesTarget = "saves";
+
+    /// <summary>The id of the skills choice a class entry carries for its first class (<c>adds: [{ to: skills, choice: class-skills, ... }]</c>, read through
+    /// a source <c>{ field: class, firstOnly: true }</c>). Its picks stay what the class's skill count reads (see <c>ClassChoicesProperty</c>).</summary>
+    public const string ClassSkillsChoiceId = "class-skills";
 
     /// <summary>The prefix of the sheet keys that hold a choice's picks: <c>choice__{entryId}__{choiceId}</c>.</summary>
     public const string ChoicePrefix = "choice__";
@@ -212,7 +218,7 @@ public sealed partial class SheetRuleEngine
                 }
                 else if (source.Field != null && system.ActorFields.FirstOrDefault(f => f.Key == source.Field)?.TargetEntityType is { } type)
                 {
-                    foreach (var view in perClass.Contains(source.Field) ? views : views.Take(1))
+                    foreach (var view in perClass.Contains(source.Field) && !source.FirstOnly ? views : views.Take(1))
                     {
                         if (YamlValues.GetString(view, source.Field) is { Length: > 0 } id) Count(type, id);
                     }
@@ -378,7 +384,8 @@ public sealed partial class SheetRuleEngine
             {
                 if (RankTargetOf(add.To) is not { } target)
                 {
-                    if (add.Choice != null) WarnFeature(result, warned, feature.Name); // a choice into a list that is not ranked is not supported
+                    // A choice over a list's entries, or of a value, is the entry choices' (EvaluateEntryChoices); any other list is not supported.
+                    if (add.Choice != null && !IsEntryChoice(add) && !add.IsValueChoice && !add.IsMarkOnly) WarnFeature(result, warned, feature.Name);
                     continue;
                 }
 
@@ -518,6 +525,11 @@ public sealed partial class SheetRuleEngine
 
         var from = choice.From?.Select(n => list.Match(n)?.Key).OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+        // The first class's own pick of skills (a grant on the class entry): its picks are not "beyond the class's skills", they are those
+        // skills, so the class count still reads the ticks and a pick the player makes through the choice is not an over-pick.
+        var isClassChoice = list.Target == SkillsTarget && choice.Id == ClassSkillsChoiceId && Rules?.Skills is { } classRules && FirstClass(sheet, result, classRules.ClassField) is { } firstOwner
+            && firstOwner.Type == feature.Source.Type && firstOwner.Id.Equals(feature.Source.Id, StringComparison.OrdinalIgnoreCase);
+
         // Whether a key fits, by the ranks so far: this choice's own picks are not in them yet, so a pick never props up itself.
         bool Fits(RankedKey key) =>
             (from == null || from.Contains(key.Key)) && FilterAllows(key, choice)
@@ -535,16 +547,45 @@ public sealed partial class SheetRuleEngine
         }
 
         var adopted = false;
-        // Only a choice that builds on a rank the key already has (expertise on a proficiency) adopts. A plain "choose N" at the
-        // first rank would take the player's class-skill ticks as its picks and hide a real over-pick, so it stays open.
         if (stored.Count == 0 && !raise && choice.MinRank != null)
         {
-            // The player's own ticks, made before the choice existed, already put enough eligible keys at its rank: count them as the picks.
+            // A choice that builds on a rank the key already has (expertise on a proficiency): the player's own ticks, made before the
+            // choice existed, already put enough eligible keys at its rank. Count them as the picks.
             var covered = list.Keys.Where(k => Fits(k) && list.Own.GetValueOrDefault(k.Key) >= rank!.Value && list.Granted.GetValueOrDefault(k.Key) < rank.Value).ToList();
             if (covered.Count >= choice.Choose)
             {
                 valid = covered.Take(choice.Choose).ToList();
                 adopted = true;
+            }
+        }
+        else if (stored.Count == 0 && !raise && choice.MinRank == null && list.Target == SkillsTarget && rank == 1 && Rules?.Skills is { } skillRules)
+        {
+            // A plain pick at the first rank (Keen Senses, Primal Knowledge): the player's own first-rank ticks include the background's
+            // (a source's, not counted here) and the first class's allowance. Only the ticks beyond that allowance can be this pick, and only
+            // when the class's allowance is known (one class, a number in its entry). Otherwise it stays open: taking class-skill ticks as
+            // the picks would hide a real over-pick.
+            var ticks = list.Keys.Where(k => list.FirstRankTicks.Contains(k.Key) && !list.Independent.Contains(k.Key)).ToList();
+            var covered = ticks.Where(k => Fits(k) && list.Granted.GetValueOrDefault(k.Key) < rank.Value).ToList();
+            if (isClassChoice)
+            {
+                // The first class's own skill pick, which runs first: the player's ticks within its list are the picks (all of them: Confirm;
+                // fewer: they hold and the rest is still to pick).
+                if (covered.Count > 0)
+                {
+                    valid = covered.Take(choice.Choose).ToList();
+                    adopted = covered.Count >= choice.Choose;
+                }
+            }
+            else
+            {
+                var allowed = result.Classes.Count <= 1 && FirstClass(sheet, result, skillRules.ClassField) is { } firstClass
+                    ? ChoiceCount(firstClass.Properties.GetValueOrDefault(skillRules.ClassChoicesProperty))
+                    : null;
+                if (allowed.HasValue && ticks.Count - allowed.Value >= choice.Choose && covered.Count >= choice.Choose)
+                {
+                    valid = covered.Take(choice.Choose).ToList();
+                    adopted = true;
+                }
             }
         }
 
@@ -557,7 +598,7 @@ public sealed partial class SheetRuleEngine
         foreach (var key in valid)
         {
             if (raise) list.Raise(key.Key, add.Raise, sourceName, feature);
-            else list.Give(key.Key, rank!.Value, RankSourceKinds.Choice, sourceName, feature, independent: min.Value == 0);
+            else list.Give(key.Key, rank!.Value, RankSourceKinds.Choice, sourceName, feature, independent: min.Value == 0 && !isClassChoice);
         }
 
         var open = offered.Count(k => valid.All(v => v.Key != k.Key));

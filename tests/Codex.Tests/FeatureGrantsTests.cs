@@ -36,7 +36,7 @@ public class FeatureGrantsTests : IAsyncLifetime
     private static ContentEntry Shadowmarked()
     {
         var entry = new ContentEntry { Type = "subclass", Id = "shadowmarked", Name = "Shadowmarked", SystemId = "srd5e", PackId = "homebrew" };
-        entry.Properties["class"] = "sorcerer";
+        entry.Properties["class"] = "rogue";
         entry.Properties["features"] = Items(
             Row("Shadowed Blood", 3,
                 ("modifiers", Items(
@@ -60,7 +60,7 @@ public class FeatureGrantsTests : IAsyncLifetime
         var engine = new SheetRuleEngine(_loader.GetDefinition("srd5e")!, new WithHomebrew(_registry, Shadowmarked()));
         var sheet = new Dictionary<string, object>();
         engine.InitializeSheet(sheet);
-        sheet["class"] = "sorcerer";
+        sheet["class"] = "rogue";
         sheet["subclass"] = "shadowmarked";
         sheet["species"] = "human";
         sheet["level"] = (long)level;
@@ -287,7 +287,7 @@ public class FeatureGrantsTests : IAsyncLifetime
     private static ContentEntry Subclass(params Dictionary<string, object>[] rows)
     {
         var entry = new ContentEntry { Type = "subclass", Id = "shadowmarked", Name = "Shadowmarked", SystemId = "srd5e", PackId = "homebrew" };
-        entry.Properties["class"] = "sorcerer";
+        entry.Properties["class"] = "rogue";
         entry.Properties["features"] = Items(rows.Cast<object>().ToArray());
         return entry;
     }
@@ -297,7 +297,7 @@ public class FeatureGrantsTests : IAsyncLifetime
         var engine = new SheetRuleEngine(_loader.GetDefinition("srd5e")!, new WithHomebrew(_registry, entry));
         var sheet = new Dictionary<string, object>();
         engine.InitializeSheet(sheet);
-        sheet["class"] = "sorcerer";
+        sheet["class"] = "rogue";
         sheet["subclass"] = "shadowmarked";
         sheet["species"] = "human";
         sheet["level"] = (long)level;

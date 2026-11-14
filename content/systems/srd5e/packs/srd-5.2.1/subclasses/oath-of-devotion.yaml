@@ -63,6 +63,32 @@ properties:
       Raise Dead Necromancy M
 
       13 Freedom of Movement, Guardian of Faith
+    adds:
+    - to: grantedSpells
+      entries:
+      - protection-from-evil-and-good
+      - shield-of-faith
+      level: 3
+    - to: grantedSpells
+      entries:
+      - aid
+      - zone-of-truth
+      level: 5
+    - to: grantedSpells
+      entries:
+      - beacon-of-hope
+      - dispel-magic
+      level: 9
+    - to: grantedSpells
+      entries:
+      - freedom-of-movement
+      - guardian-of-faith
+      level: 13
+    - to: grantedSpells
+      entries:
+      - commune
+      - flame-strike
+      level: 17
   - name: Sacred Weapon
     level: 3
     description: >-
@@ -71,6 +97,9 @@ properties:
       The weapon also emits Bright Light in a 20-foot radius and Dim Light 20 feet beyond that.
 
       You can end this effect early (no action required). This effect also ends if you aren't carrying the weapon.
+    spends:
+      key: paladin-channel-divinity
+      amount: 1
   - name: Aura of Devotion
     level: 7
     description: You and your allies have Immunity to the Charmed condition while in your Aura of Protection. If a Charmed ally enters the aura, that condition has no effect on that ally while there.
@@ -90,3 +119,8 @@ properties:
       Radiant Damage. Whenever an enemy starts its turn in the aura, that creature takes Radiant damage equal to your Charisma modifier plus your Proficiency Bonus.
 
       Sunlight. The aura is filled with Bright Light that is sunlight.
+    uses:
+      key: holy-nimbus
+      max: 1
+      recoversOn:
+      - Long Rest

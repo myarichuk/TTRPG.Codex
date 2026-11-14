@@ -64,6 +64,13 @@ properties:
       - Take a Bonus Action to extend your Rage.
 
       Each time the Rage is extended, it lasts until the end of your next turn. You can maintain a Rage for up to 10 minutes.
+    uses:
+      key: rage
+      max: 'classLevel >= 17 ? 6 : classLevel >= 12 ? 5 : classLevel >= 6 ? 4 : classLevel >= 3 ? 3 : 2'
+      recovers:
+      - on: Short Rest
+        amount: 1
+      - on: Long Rest
   - name: Unarmored Defense
     level: 1
     description: While you aren't wearing any armor, your base Armor Class equals 10 plus your Dexterity and Constitution modifiers. You can use a Shield and still gain this benefit.
@@ -93,12 +100,27 @@ properties:
       In addition, while your Rage is active, you can channel primal power when you attempt certain tasks; whenever you make an ability check using one of the following skills, you can make it as a Strength check even if it normally uses a different ability: Acrobatics, Intimidation, Perception,
 
       Stealth, or Survival. When you use this ability, your Strength represents primal power coursing through you, honing your agility, bearing, and senses.
+    adds:
+    - to: skills
+      choice: primal-knowledge-3
+      choose: 1
+      from:
+      - animal-handling
+      - athletics
+      - intimidation
+      - nature
+      - perception
+      - survival
   - name: Ability Score Improvement
     level: 4
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Barbarian levels 8, 12, and 16.
   - name: Extra Attack
     level: 5
     description: You can attack twice instead of once whenever you take the Attack action on your turn.
+    modifiers:
+    - target: attacks
+      amount: 2
+      type: highest
   - name: Fast Movement
     level: 5
     description: Your speed increases by 10 feet while you aren't wearing Heavy armor.
@@ -151,6 +173,11 @@ properties:
       When you roll Initiative, you can regain all expended uses of Rage. After you regain uses of Rage in this way, you can't do so again until you finish a Long Rest.
 
       In addition, your Rage is so fierce that it now lasts for 10 minutes without you needing to do anything to extend it from round to round. Your Rage ends early if you have the Unconscious condition (not just the Incapacitated condition) or don Heavy armor.
+    uses:
+      key: persistent-rage
+      max: 1
+      recoversOn:
+      - Long Rest
   - name: Ability Score Improvement
     level: 16
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Barbarian levels 8, 12, and 16.
@@ -230,3 +257,14 @@ properties:
   - level: 20
     slots: 5
     styles: 0
+  adds:
+  - to: skills
+    choice: class-skills
+    choose: 2
+    from:
+    - animal-handling
+    - athletics
+    - intimidation
+    - nature
+    - perception
+    - survival

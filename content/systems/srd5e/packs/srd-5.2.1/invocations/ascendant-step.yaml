@@ -1,0 +1,19 @@
+id: ascendant-step
+type: invocation
+name: Ascendant Step
+description: >-
+  **Prerequisite:** Level 5+ Warlock
+
+
+  You can cast Levitate on yourself without expending a spell slot.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 5
+  prerequisites: Level 5+ Warlock
+  adds:
+  - to: grantedSpells
+    entries:
+    - levitate
+    free: atWill

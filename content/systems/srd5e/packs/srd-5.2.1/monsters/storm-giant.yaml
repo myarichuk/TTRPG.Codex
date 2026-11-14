@@ -55,6 +55,12 @@ description: >-
 
 
   **Spellcasting.** The giant casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 18):
+
+
+  At Will: *Detect Magic*, *Light*
+
+
+  1/Day: *Control Weather*
 tags:
 - giant
 - huge
@@ -97,4 +103,11 @@ properties:
   - name: Lightning Storm
     description: 'Dexterity Saving Throw: DC 18, each creature in a 10-foot-radius, 40-foot-high Cylinder originating from a point the giant can see within 500 feet. Failure: 55 (10d10) Lightning damage. Success: Half damage.'
   - name: Spellcasting
-    description: 'The giant casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 18):'
+    description: >-
+      The giant casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 18):
+
+
+      At Will: *Detect Magic*, *Light*
+
+
+      1/Day: *Control Weather*

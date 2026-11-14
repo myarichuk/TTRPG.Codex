@@ -490,6 +490,7 @@
   <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: {2}, דרגה {1}</value></data>
   <data name="Actor.Actions.CostFor" xml:space="preserve"><value>מחיר עבור {0}</value></data>
   <data name="Actor.Actions.Free" xml:space="preserve"><value>חינם</value></data>
+  <data name="Actor.Actions.AtWill" xml:space="preserve"><value>ללא הגבלה</value></data>
   <data name="Actor.Actions.PoolOption" xml:space="preserve"><value>{0} ×{1} (נותרו {2})</value></data>
   <data name="Actor.Actions.SpentFrom" xml:space="preserve"><value>{0}: {2} ×{1}</value></data>
   <data name="Actor.Actions.CannotPay" xml:space="preserve"><value>לא נותר מספיק</value></data>
@@ -497,6 +498,8 @@
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: אי אפשר לחשב מה היכולת הזאת מעניקה, ולכן היא מושמטת. מנהל המשחק יכול לבדוק את הערך.</value></data>
   <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): בחרו עוד {2} ({3}).</value></data>
   <data name="Actor.Rule.ChoicePendingOwn" xml:space="preserve"><value>{0}: בחרו עוד {2} ({3}).</value></data>
+  <data name="Actor.Rule.ChoiceStaleOwn" xml:space="preserve"><value>{0}: "{2}" כבר לא מתאים לבחירה הזאת. בחרו מחדש.</value></data>
+  <data name="Actor.Rule.ChoiceConfirmOwn" xml:space="preserve"><value>{0}: {2} הסימונים שלכם ב"{3}" כבר מתאימים לבחירה הזאת. אשרו אותם.</value></data>
   <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): {2} הסימונים שלכם ב"{3}" כבר מתאימים לבחירה הזאת. אשרו אותם.</value></data>
   <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: בחרו {1}</value></data>
   <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>בדרך כלל משתנה: {0}</value></data>
@@ -626,6 +629,35 @@
   <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: אין מה לשחזר.</value></data>
   <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>אין יכולת שנותנת את התיבה הזו.</value></data>
   <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Actor.Choice.TitleLevel" xml:space="preserve"><value>{0}: בחרו {1}: {3} ברמה {2}</value></data>
+  <data name="Actor.Choice.TitleNoun" xml:space="preserve"><value>{0}: בחרו {1}: {2}</value></data>
+  <data name="Actor.Choice.TitleValue" xml:space="preserve"><value>{0}: בחרו {1}</value></data>
+  <data name="Actor.Choice.Search" xml:space="preserve"><value>חיפוש לפי שם</value></data>
+  <data name="Actor.Choice.NoMatch" xml:space="preserve"><value>לא נמצא דבר עבור "{0}".</value></data>
+  <data name="Actor.Choice.ShownOf" xml:space="preserve"><value>מוצגים {0} מתוך {1}</value></data>
+  <data name="Actor.Choice.ChooseFirst" xml:space="preserve"><value>קודם בחרו: {0}</value></data>
+  <data name="Actor.Choice.NoOptions" xml:space="preserve"><value>אין עדיין מה לבחור.</value></data>
+  <data name="Actor.Choice.Chosen" xml:space="preserve"><value>נבחרו:</value></data>
+  <data name="Actor.Choice.Card" xml:space="preserve"><value>כרטיס</value></data>
+  <data name="Actor.Grants.Where" xml:space="preserve"><value>אילו רשומות</value></data>
+  <data name="Actor.Grants.WhereNone" xml:space="preserve"><value>אין תנאים.</value></data>
+  <data name="Actor.Grants.WhereHint" xml:space="preserve"><value>התנאים מוגדרים בנתונים ומוצגים כאן לקריאה בלבד.</value></data>
+  <data name="Actor.Grants.Cond.Equals" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="Actor.Grants.Cond.In" xml:space="preserve"><value>{0} הוא אחד מ-{1}</value></data>
+  <data name="Actor.Grants.Cond.Gte" xml:space="preserve"><value>{0} לפחות {1}</value></data>
+  <data name="Actor.Grants.Cond.Lte" xml:space="preserve"><value>{0} לכל היותר {1}</value></data>
+  <data name="Actor.Grants.Cond.Contains" xml:space="preserve"><value>{0} כולל {1}</value></data>
+  <data name="Actor.Grants.Cond.ContainsChoice" xml:space="preserve"><value>{0} כולל את הבחירה {1}</value></data>
+  <data name="Actor.Grants.Cond.EqualsChoice" xml:space="preserve"><value>{0} זהה לבחירה {1}</value></data>
+  <data name="Actor.Grants.Cond.Other" xml:space="preserve"><value>{0} (תנאי אחר)</value></data>
+  <data name="Actor.Grants.ValueFrom" xml:space="preserve"><value>מציע: {0}</value></data>
+  <data name="Actor.Grants.FromList" xml:space="preserve"><value>בחירה מתוך מה שכבר ברשימה {0}</value></data>
+  <data name="Actor.Grants.Free" xml:space="preserve"><value>הטלה חינם</value></data>
+  <data name="Actor.Grants.FreeNone" xml:space="preserve"><value>אין</value></data>
+  <data name="Actor.Grants.FreeAtWill" xml:space="preserve"><value>ללא הגבלה</value></data>
+  <data name="Actor.Grants.FreeUses" xml:space="preserve"><value>מספר פעמים מוגבל</value></data>
+  <data name="Actor.Grants.FreeMax" xml:space="preserve"><value>פעמים לכל בחירה</value></data>
+  <data name="Actor.Grants.FreeRecovers" xml:space="preserve"><value>מתחדש אחרי</value></data>
   <data name="Actor.JoinNotes.Heading" xml:space="preserve"><value>מנהל המשחק שינה לפני האישור:</value></data>
   <data name="Actor.JoinNotes.EditedNew" xml:space="preserve"><value>{0}: עכשיו {1}</value></data>
   <data name="Actor.JoinNotes.LeftOut" xml:space="preserve"><value>הושמט: {0}</value></data>
