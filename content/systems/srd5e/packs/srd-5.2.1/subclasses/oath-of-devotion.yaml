@@ -100,6 +100,11 @@ properties:
     spends:
       key: paladin-channel-divinity
       amount: 1
+    modifiers:
+    - target: attack.weapon
+      amount: max(1, mod(cha))
+      optIn:
+        label: Sacred Weapon
   - name: Aura of Devotion
     level: 7
     description: You and your allies have Immunity to the Charmed condition while in your Aura of Protection. If a Charmed ally enters the aura, that condition has no effect on that ally while there.
