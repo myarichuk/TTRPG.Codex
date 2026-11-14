@@ -111,6 +111,17 @@ builder confirms whether those raise the rating by one or mark the key. If they 
   - `SheetView`.
   - `SheetIntents` and `SheetEvents`, where they build a model.
   - `TableEvents`.
+- **An unknown link is not an empty link.** Many write paths evaluate a sheet without supplying linked sheets: a save, the
+  runtime's `ReplaceActorCommand`, intents and events applied off the page, and the AI. If such a pass treated a missing
+  crew as "no crew", it would sweep the member's link-made `uses_*` counters, prune their `choice__` picks (Deadly), and
+  clamp tracks whose size reads link modifiers (stress 10 back to 9). So:
+  - The engine tells three states apart: no `link__<key>` on the sheet (no link), a link whose sheet was supplied (known),
+    and a link whose sheet was not supplied (unknown).
+  - When a link is unknown, the pass keeps every counter and choice key scoped to link features as it is. It does not clamp
+    a track whose maximum reads a modifier that a link feature could give. Those keys and values are left exactly as stored.
+  - Only a known link whose crew no longer holds the entry makes those keys stale.
+  - A test saves a member through a path with no linked sheets, and checks that the Deadly pick, a link-made counter and
+    stress 10 are all still there.
 - **Where the linked sheet comes from:**
   - The live table: `CampaignRuntime`'s cached actor documents. The live crew sheet is the source.
   - The sheet page: `ActorSheet` loads the linked actor through the actor repository, once on load and again when the link changes.
@@ -156,11 +167,15 @@ Through the fitd importer, never by hand in the pack:
   - the link widget;
   - the crew's members widget.
 - The `members` grants: Composed, Hardened, Mastery (`actionCap` +1), Deadly, Forged in the fire, Anointed (opt-in, after
-  RB1).
+  RB1a).
 - Translations: the new labels in the ru and he system translations (machine drafts).
 
-Check before writing the threshold formula: `thresholds.atOrAbove` may be a number only today. If so, the builder makes it a
-formula (as `max` is) in this step, or leaves Hardened's threshold as text and says so.
+**Shapes CL1 confirms or adapts** (none is verified against the formula engine yet):
+- `max(actions, a => a.rating)`: formulas use `count` and `sum` with a lambda, but `max` is only known with two numbers. If
+  there is no lambda form, CL1 adds one, or writes the rule another way (for example `count(actions, a => a.rating > actionCap) == 0`).
+- `rules:` on a keyed list: so far only pick lists have `rules`. CL1 puts the rule where rules are read, or adds them to keyed lists.
+- `thresholds.atOrAbove` as a formula: it may be a number only today. CL1 makes it a formula (as `max` is), or leaves
+  Hardened's threshold as text and says so.
 
 ## Tests
 
@@ -175,7 +190,7 @@ formula (as `max` is) in this step, or leaves Hardened's threshold as text and s
   - each member's pick raises their own rating;
   - a pick that would pass 3 breaks the cap rule.
 - Forged in the fire: the resistance pool is one die larger.
-- Anointed is offered as a tick box on resistance only (after RB1).
+- Anointed is offered as a tick box on resistance only (after RB1a).
 - One step: a crew sheet linked from two members is worked out once each, with no recursion, and a link to a missing actor
   gives no features and no error.
 - Live: changing the crew's upgrades on the live table refreshes both members' cards. The `StateChanged` ids include them.
@@ -186,7 +201,7 @@ formula (as `max` is) in this step, or leaves Hardened's threshold as text and s
 
 | # | Step | Who | Notes |
 |---|---|---|---|
-| CL1 | Engine: `links`, `link:` sources, `link()`, `ILinkedSheets` threaded through, load checks | Sonnet session | After RB1 is reviewed, since both touch `SheetModel`'s modifiers. In parallel with RB2 and RB3 |
+| CL1 | Engine: `links`, `link:` sources, `link()`, `ILinkedSheets` threaded through, the unknown-link rule, load checks | Sonnet session | After RB1a is reviewed, since both touch `SheetModel`'s modifiers. In parallel with RB1b (RB1b works in the sheet-rules engine, CL1 in `SheetModel` and the kind path) |
 | CL2 | Hosts and UI: the runtime's reverse index and live refresh, the sheet page and cards supplying linked sheets, the link and members widgets, the join review drop, strings | Sonnet session | After CL1 |
 | CL3 | Data: fitd importer and system.yaml, the `members` grants, translations | Sonnet session | After CL1. Can run with CL2 (different files) |
 

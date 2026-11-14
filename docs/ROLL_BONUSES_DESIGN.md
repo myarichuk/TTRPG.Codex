@@ -24,18 +24,14 @@ scoped targets.
 modifiers:
   - { target: attack.weapon.ranged, amount: 2 }
 
-# Bless, as a condition effect the GM or player sets: always on while the condition is set. Dice, not a number.
+# A sheet-kind condition effect (Forged in the Dark style): always on while the condition is set. A pool, so a number of dice.
 conditionEffects:
-  Blessed:
-    modifiers:
-      - { target: attack, amount: 1d4, source: Bless }
-      - { target: save,   amount: 1d4, source: Bless }
+  Reduced dice:
+    modifiers: [{ target: '@pools', amount: -1, source: Harm }]
 
-# Guidance: a tick box on ability checks; using it ends the condition.
-conditionEffects:
-  Guided:
-    modifiers:
-      - { target: check, amount: 1d4, source: Guidance, optIn: { label: Guidance, ends: true } }
+# A homebrew feature in a sheet-rules system: dice, not a number, on every attack roll.
+modifiers:
+  - { target: attack, amount: 1d4, source: Blessed blade }
 
 # Ambush (Forged in the Dark): a tick box on action rolls.
 modifiers:
@@ -56,7 +52,8 @@ modifiers:
   - `label`: what the tick box says. Default: the modifier's source (the feature's or condition's name).
   - `spends: { key, amount }`: ticking it and rolling spends from that pool, the same pool `uses`/`spends` name (a
     `uses_*` counter or a resource). A tick box whose pool is short is disabled and says so.
-  - `ends: true`: only on a condition's effects. Rolling with it ticked removes the condition.
+  - `ends: true`: only on a condition's effects of a sheet-kind system (where conditions are on the sheet). Rolling with it
+    ticked removes the condition.
 - **Dice amounts.** `amount` may be dice (`1d4`, `-1d4`, `2d6`) where the roll is an expression roll (sheet-rules attacks,
   checks and saves). The dice are added to the roll's expression, never folded into a number on the sheet, so the sheet's
   attack bonus stays a number. In a pool roll (`pool:`), `amount` is a number of dice, as today; a dice amount there is a
@@ -64,7 +61,7 @@ modifiers:
 - `when` keeps its meaning: it is about the character (`level >= 5`, `input.attribute == 'resolve'`). The target scopes
   the roll. `optIn` is the player's say.
 - The **source** of every bonus that counts is kept, and the roll's label lists the ones that came from dice or a tick:
-  "Stealth check (+1d4 Guidance)". Plain always-on numbers stay folded in, as today.
+  "Stealth check (+1d6 Lucky charm)". Plain always-on numbers stay folded in, as today.
 
 ## Roll targets
 
@@ -99,7 +96,9 @@ from general to narrow:
    `FeatureGrantCheck` round-trip and check it. `SystemDefinitionLoader` checks it on conditions' effects and a kind's own
    modifiers. `ends` is refused outside a condition's effects.
 2. **Opt-ins never count by default.** `SheetModel.Stack` and the sheet-rules modifier loops skip an opt-in modifier
-   unless its id is in the roll's ticked set. An opt-in's id is stable: `{source id}#{index}` for a feature, `condition:{name}#{index}` for a condition effect.
+   unless its id is in the roll's ticked set. An opt-in's id is stable: `{source id}#{index}` for a feature,
+   `condition:{name}#{index}` for a condition effect, and `link:{link key}:{source id}#{index}` for a feature that reaches
+   the sheet through a link (CREW_LINKS_DESIGN.md), so a crew entry and the member's own entry never collide.
 3. **What a roll offers**:
    - `SheetRolls.OptIns(system, resolver, sheet, rollKey, inputs)` lists the opt-ins a named roll offers.
    - `SheetRuleEngine.OptIns(sheet, RollSite)` lists those a sheet-rules roll offers. `RollSite` is the roll kind plus its targets (the table above).
@@ -117,7 +116,7 @@ from general to narrow:
   says why ("No uses left"). Always-on bonuses are listed as plain text above them, so the player sees why the pool is what
   it is.
 - **Sheet-rules rolls:** the sheet's dice tray (where the roll mode select is) gains "Bonuses for the next roll": the
-  sheet's opt-ins, each with the rolls it applies to ("Guidance: +1d4 on ability and skill checks"). A ticked one applies to
+  sheet's opt-ins, each with the rolls it applies to ("Lucky charm: +1d6 on ability and skill checks"). A ticked one applies to
   the next roll it fits, and is then unticked. An opt-in that does not fit the next roll stays ticked. This keeps one
   click per roll, the way advantage already works.
 - **Table cards:** the same tray, compact, in the card's roll area (`TableCard.razor`). The GM sees a creature's own.
@@ -136,11 +135,12 @@ srd5e (`tools/Codex.ContentImport`, `srd521-grants.yaml`, from the SRD 5.2.1 PDF
 |---|---|
 | Archery (fighting style) | `{ target: attack.weapon.ranged, amount: 2 }` (not `attack.ranged`, which would also catch ranged spell attacks) |
 | Sacred Weapon (Channel Divinity) | opt-in on `attack.weapon`, amount `chaMod` (or the system's name for it), label Sacred Weapon |
-| Bless, Bane | conditions `Blessed` and `Baned` with always-on `1d4` / `-1d4` on `attack` and `save` |
-| Guidance, Resistance | conditions `Guided` (opt-in `1d4` on `check`, `ends`) and `Resisting` (opt-in `1d4` on `save`, `ends`) |
 
-The four new conditions go in srd5e's `conditions` list, after the SRD's own, with a comment that they stand for spell
-effects. Their ru and he names follow the existing pack's spell names.
+**Deferred: Bless, Bane, Guidance, Resistance.** They come from another creature's spell, so the natural shape is a condition
+on the receiving sheet. But srd5e's rules engine does not read `conditionEffects` today, and a srd5e character's
+conditions live only as table statuses (`TableEvents` merges them for sheet-kind intents only); off the table the sheet has
+none. Giving sheet-rules systems sheet conditions is its own piece of work. Until then the player adds these with the roll
+mode and a typed bonus, as today.
 
 Forged in the Dark (`content/systems/fitd-srd`, through its importer):
 - Opt-ins on `@pools` with a short label: Ambush, Savage, Trust in me, Weaving the web (Consort), Scout.
@@ -156,8 +156,9 @@ Anointed (crew) and Forged in the fire (crew) need crew links (CREW_LINKS_DESIGN
 - Iron will (`when: input.attribute`) still counts with no tick.
 - srd5e:
   - Archery adds 2 to a longbow's attack bonus, and nothing to a longsword's or to a ranged spell's.
-  - Blessed adds `1d4` to the attack expression and the save expression, and nothing to checks.
-  - Guided offers a tick on a skill check, and none on a save. Rolling with it removes the condition.
+  - A dice-amount feature on `attack` adds `1d4` to the attack expression, and nothing to checks.
+  - An opt-in on `check` is offered on a skill check, and not on a save. Sacred Weapon is offered on weapon attacks only.
+- fitd: an `ends` opt-in on a condition effect removes the condition when rolled with it ticked.
 - Spends: a tick with an empty pool is not offered as payable. A ticked roll spends one use.
 - Golden: srd5e and fitd goldens change only for the entries written.
 
@@ -165,13 +166,14 @@ Anointed (crew) and Forged in the fire (crew) need crew links (CREW_LINKS_DESIGN
 
 | # | Step | Who | Notes |
 |---|---|---|---|
-| RB1 | Engine: `optIn` model, parse, checks, roll targets, `OptIns`, ticked rolls, dice amounts, spends, ends | Sonnet session | The heart. Opus reviews the diff before RB2 and CL1 start |
-| RB2 | Sheet and table UI: roll widget bonuses, the dice tray, cards, log, strings, homebrew editor | Sonnet session | After RB1. In parallel with RB3 and CL1 (different files) |
-| RB3 | Data: srd5e importer and conditions, fitd abilities | Sonnet session | After RB1. Rules judgment, so not Haiku |
+| RB1a | Engine on named rolls only: the `optIn` model and ids, parse and checks, `SheetRolls.OptIns`, ticked pools, `spends`, `ends` | Sonnet session | Small diff that proves the model on fitd. Opus reviews it before RB1b and CL1 start |
+| RB1b | Engine on sheet-rules rolls: roll sites and their targets, `KindOf` accepting the target namespace (including `attack.entry.<id>`, `save.<attr>`, `check.skill.<key>`), the new skill, save and check plumbing in `EvaluateSkills` and the attribute and save paths, `SheetAction.Bonuses`, dice amounts, `SheetRuleEngine.OptIns` | Sonnet session | After RB1a. Larger than it looks: skill, save and check modifiers do not exist today |
+| RB2 | Sheet and table UI: roll widget bonuses, the dice tray, cards, log, strings, homebrew editor | Sonnet session | After RB1b. In parallel with RB3 and CL2 (different files) |
+| RB3 | Data: srd5e importer (Archery, Sacred Weapon), fitd abilities | Sonnet session | After RB1b. Rules judgment, so not Haiku. Expect a `content/systems/srd5e/system.yaml` conflict with the cantrips label PR if it is not merged yet |
 
 ## Decisions (2026-11-14)
 
 1. One model, scoped targets. `on:` is dropped.
 2. Story-decided bonuses are tick boxes per roll, unticked each time. In the sheet-rules tray, a tick lasts until the next roll it fits.
-3. Spell effects from another creature (Bless, Guidance) are conditions on the receiving sheet. Nothing reaches across sheets in this design.
+3. Spell effects from another creature (Bless, Guidance) are deferred until sheet-rules systems have conditions on the sheet. Nothing reaches across sheets in this design.
 4. Group rolls get no tick boxes yet.
