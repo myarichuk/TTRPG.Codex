@@ -7,3 +7,7 @@ tags:
 - example
 properties:
   cost: 3
+  members:
+    modifiers:
+    - target: stressBoxes
+      amount: 1

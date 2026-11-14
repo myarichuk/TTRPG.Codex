@@ -9,3 +9,9 @@ description: >-
 source: Character playbook > Special abilities > Ambush
 tags:
 - example
+properties:
+  modifiers:
+  - target: '@pools'
+    amount: 1
+    optIn:
+      label: From hiding or a trap

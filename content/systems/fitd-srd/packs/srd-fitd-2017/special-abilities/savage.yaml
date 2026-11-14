@@ -13,3 +13,10 @@ description: >-
 source: Character playbook > Special abilities > Savage
 tags:
 - example
+properties:
+  modifiers:
+  - target: '@pools'
+    amount: 1
+    when: input.action == 'command'
+    optIn:
+      label: Frightened target

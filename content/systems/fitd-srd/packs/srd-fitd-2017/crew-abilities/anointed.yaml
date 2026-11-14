@@ -5,3 +5,10 @@ description: You gain **+1d** to **resistance** rolls against supernatural threa
 source: Crew playbook > Crew special abilities > Anointed
 tags:
 - example
+properties:
+  members:
+    modifiers:
+    - target: '@resistance'
+      amount: 1
+      optIn:
+        label: Against a supernatural threat

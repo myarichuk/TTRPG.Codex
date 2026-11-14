@@ -69,7 +69,8 @@ public class FitdSrdPackSmokeTests : IAsyncLifetime
             foreach (var entry in _registry.GetEntries("fitd-srd", type, new HashSet<string> { PackId }))
             {
                 // Grant keys (modifiers, uses...) are data the feature engine reads off the entry, not fields the editor shows.
-                Assert.All(entry.Properties.Keys.Where(k => !FeatureGrantData.GrantKeys.Contains(k)), key => Assert.Contains(key, fields[type]));
+                // `members` is a crew entry's grant map for each linked scoundrel (docs/CREW_LINKS_DESIGN.md), read through a `link:` source.
+                Assert.All(entry.Properties.Keys.Where(k => !FeatureGrantData.GrantKeys.Contains(k) && k != "members"), key => Assert.Contains(key, fields[type]));
             }
         }
     }
@@ -116,12 +117,12 @@ public class FitdSrdPackSmokeTests : IAsyncLifetime
             foreach (var (key, value) in properties) Assert.Equal(Json(value), Json(entry!.Properties.GetValueOrDefault(key)));
         }
 
-        Assert.Equal(14, granted.Count);
+        Assert.Equal(26, granted.Count);
         foreach (var type in new[] { "special-ability", "crew-ability", "crew-upgrade" })
         {
             foreach (var entry in _registry.GetEntries("fitd-srd", type, new HashSet<string> { PackId }).Where(e => !granted.Contains($"{type}:{e.Id}")))
             {
-                Assert.DoesNotContain(entry.Properties.Keys, k => FeatureGrantData.GrantKeys.Contains(k));
+                Assert.DoesNotContain(entry.Properties.Keys, k => FeatureGrantData.GrantKeys.Contains(k) || k == "members");
             }
         }
     }
