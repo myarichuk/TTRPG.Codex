@@ -27,6 +27,14 @@ public interface IActorRepository
     /// </summary>
     Task<ActorDocument?> GetVisibleAsync(string actorId, CampaignAccess access);
 
+    /// <summary>
+    /// The actors of <paramref name="access"/>'s campaign with these ids, whole and whoever is asking: for the rules to work out
+    /// what a link brings (docs/CREW_LINKS_DESIGN.md), which never depends on the viewer. Only their sheets may be read from the
+    /// result for that, never shown; what a viewer sees of an actor comes from <see cref="GetVisibleAsync"/>. An id that is not an actor
+    /// of the campaign (deleted, another campaign's, a vault character) is left out.
+    /// </summary>
+    Task<IReadOnlyList<ActorDocument>> GetForRulesAsync(CampaignAccess access, IEnumerable<string> actorIds);
+
     Task SaveAsync(ActorDocument actor);
 
     /// <summary>

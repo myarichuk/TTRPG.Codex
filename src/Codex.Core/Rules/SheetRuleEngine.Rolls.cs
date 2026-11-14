@@ -111,26 +111,26 @@ public sealed partial class SheetRuleEngine
 
     /// <summary>What the sheet's features add to <paramref name="site"/> that always counts: the number, who gave it, and the dice that wait for the
     /// roll. Opt-ins are never in it (<see cref="OptIns"/>).</summary>
-    public RollSiteBonus Bonuses(IReadOnlyDictionary<string, object> sheet, RollSite site) =>
-        SiteBonus(ActiveFeatures(sheet), site, DerivedNumbers(WorkedOutDerived(sheet)), null);
+    public RollSiteBonus Bonuses(IReadOnlyDictionary<string, object> sheet, RollSite site, ILinkedSheets? linked = null) =>
+        SiteBonus(ActiveFeatures(sheet, linked), site, DerivedNumbers(WorkedOutDerived(sheet)), null);
 
     /// <summary>The tick boxes <paramref name="site"/> offers on <paramref name="sheet"/>: each opt-in modifier of the sheet's features whose target the
     /// site reads and whose <c>when</c> holds, with the id <see cref="OptInIds"/> gives it (the index counts every modifier of the source entry, across
     /// its rows and copies, so ids never clash and survive edits to anything else). The same records a named roll offers
     /// (<see cref="SheetRolls.OptIns"/>), a <c>spends</c> already checked against the sheet's pool.</summary>
-    public IReadOnlyList<RollOptIn> OptIns(IReadOnlyDictionary<string, object> sheet, RollSite site) =>
-        OptInsReaching(sheet, modifier => site.Reads(modifier.Target));
+    public IReadOnlyList<RollOptIn> OptIns(IReadOnlyDictionary<string, object> sheet, RollSite site, ILinkedSheets? linked = null) =>
+        OptInsReaching(sheet, modifier => site.Reads(modifier.Target), linked);
 
     /// <summary>Every tick box the sheet's features hold for any sheet-rules roll (the dice tray's "bonuses for the next roll"): the same records as
-    /// <see cref="OptIns(IReadOnlyDictionary{string, object}, RollSite)"/>, each with its <see cref="RollOptIn.Target"/>, for modifiers whose
+    /// <see cref="OptIns(IReadOnlyDictionary{string, object}, RollSite, ILinkedSheets)"/>, each with its <see cref="RollOptIn.Target"/>, for modifiers whose
     /// target is a name some roll reads.</summary>
-    public IReadOnlyList<RollOptIn> AllOptIns(IReadOnlyDictionary<string, object> sheet) =>
-        OptInsReaching(sheet, modifier => RollSiteTargets.IsRollTarget(system, modifier.Target));
+    public IReadOnlyList<RollOptIn> AllOptIns(IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked = null) =>
+        OptInsReaching(sheet, modifier => RollSiteTargets.IsRollTarget(system, modifier.Target), linked);
 
-    private IReadOnlyList<RollOptIn> OptInsReaching(IReadOnlyDictionary<string, object> sheet, Func<FeatureModifier, bool> reaches)
+    private IReadOnlyList<RollOptIn> OptInsReaching(IReadOnlyDictionary<string, object> sheet, Func<FeatureModifier, bool> reaches, ILinkedSheets? linked = null)
     {
         var offered = new List<RollOptIn>();
-        var features = ActiveFeatures(sheet).Where(f => !f.OnKind).ToList();
+        var features = ActiveFeatures(sheet, linked).Where(f => !f.OnKind).ToList();
         if (!features.Any(f => f.Modifiers.Any(m => m.OptIn != null && reaches(m)))) return offered;
 
         var derived = DerivedNumbers(WorkedOutDerived(sheet));
