@@ -29,6 +29,14 @@ public static class FeatureGrantGuide
             sb.AppendLine($"- \"modifiers\": [{{\"target\": key, \"amount\": number or formula, \"type\": optional}}]. Targets: {string.Join(", ", targets)}. " +
                           $"A formula reads the sheet's numbers ({string.Join(", ", vocabulary.FormulaNames)}) and mod(attribute). Without a type the amount is added." +
                           Stacking(vocabulary));
+            if (targets.Any(t => t.StartsWith(RollSiteTargets.Attack, StringComparison.Ordinal) || t.StartsWith(RollSiteTargets.Check, StringComparison.Ordinal)))
+            {
+                sb.AppendLine("  - Some targets name one kind of roll (an attack, damage, a saving throw, a check, and the narrower ones listed, such as a ranged weapon attack or one skill's check). " +
+                              "A modifier on one of those applies only to that roll, and an amount of dice (\"1d4\", \"-1d4\") is added to the roll's dice, not to the sheet's number.");
+            }
+
+            sb.AppendLine("  - \"optIn\": {\"label\": short text, \"spends\": {\"key\": pool key, \"amount\": number}} on a modifier makes it a box the player ticks at the roll, for a bonus that applies only when the story says so " +
+                          "(\"when you attack from hiding\", \"once per turn\"). It counts only in a roll where it is ticked. \"label\" and \"spends\" are optional; leave \"optIn\" off anything that always applies.");
         }
 
         var lists = vocabulary.Lists.Where(l => !l.IsRanked && !vocabulary.DamageListKeys.Contains(l.Key)).Select(l => $"{l.Key} ({l.Label}: {l.EntityType} ids or names)").ToList();

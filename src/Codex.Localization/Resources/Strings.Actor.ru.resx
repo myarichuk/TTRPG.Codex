@@ -205,6 +205,46 @@
   <data name="Actor.Sheet.RollShared" xml:space="preserve"><value>Виден всему столу.</value></data>
   <data name="Actor.Sheet.RollPrivate" xml:space="preserve"><value>Это видите только вы: стол не запущен.</value></data>
   <data name="Actor.Sheet.NoRolls" xml:space="preserve"><value>Бросков пока нет.</value></data>
+  <data name="Actor.Sheet.FromFeatures" xml:space="preserve"><value>{0} от особенностей</value></data>
+  <data name="Actor.Skills.SumFeatures" xml:space="preserve"><value>особенности</value></data>
+  <data name="Actor.Bonus.Next" xml:space="preserve"><value>Бонусы к следующему броску</value></data>
+  <data name="Actor.Bonus.NextHint" xml:space="preserve"><value>Отметьте подходящие. Отмеченный бонус войдёт в следующий бросок, к которому он подходит, и снимется.</value></data>
+  <data name="Actor.Bonus.Legend" xml:space="preserve"><value>Бонусы</value></data>
+  <data name="Actor.Bonus.Always" xml:space="preserve"><value>Всегда учитываются</value></data>
+  <data name="Actor.Bonus.Counted" xml:space="preserve"><value>Учтено в этом броске</value></data>
+  <data name="Actor.Bonus.Chosen" xml:space="preserve"><value>выбран</value></data>
+  <data name="Actor.Bonus.PoolAmount" xml:space="preserve"><value>{0} куб.</value></data>
+  <data name="Actor.Bonus.Costs" xml:space="preserve"><value>тратит {0}</value></data>
+  <data name="Actor.Bonus.Ends" xml:space="preserve"><value>снимает: {0}</value></data>
+  <data name="Actor.Bonus.NoUses" xml:space="preserve"><value>Использований не осталось</value></data>
+  <data name="Actor.Bonus.CannotPay" xml:space="preserve"><value>Отмеченный бонус нечем оплатить, поэтому бросок не сделан.</value></data>
+  <data name="Actor.Bonus.On.Attack" xml:space="preserve"><value>к броскам атаки</value></data>
+  <data name="Actor.Bonus.On.AttackWeapon" xml:space="preserve"><value>к броскам атаки оружием</value></data>
+  <data name="Actor.Bonus.On.AttackSpell" xml:space="preserve"><value>к броскам атаки заклинанием</value></data>
+  <data name="Actor.Bonus.On.AttackMelee" xml:space="preserve"><value>к броскам ближней атаки</value></data>
+  <data name="Actor.Bonus.On.AttackRanged" xml:space="preserve"><value>к броскам дальней атаки</value></data>
+  <data name="Actor.Bonus.On.AttackWeaponMelee" xml:space="preserve"><value>к броскам ближней атаки оружием</value></data>
+  <data name="Actor.Bonus.On.AttackWeaponRanged" xml:space="preserve"><value>к броскам дальней атаки оружием</value></data>
+  <data name="Actor.Bonus.On.AttackSpellMelee" xml:space="preserve"><value>к броскам ближней атаки заклинанием</value></data>
+  <data name="Actor.Bonus.On.AttackSpellRanged" xml:space="preserve"><value>к броскам дальней атаки заклинанием</value></data>
+  <data name="Actor.Bonus.On.Damage" xml:space="preserve"><value>к броскам урона</value></data>
+  <data name="Actor.Bonus.On.DamageWeapon" xml:space="preserve"><value>к урону оружия</value></data>
+  <data name="Actor.Bonus.On.DamageSpell" xml:space="preserve"><value>к урону заклинаний</value></data>
+  <data name="Actor.Bonus.On.DamageMelee" xml:space="preserve"><value>к урону в ближнем бою</value></data>
+  <data name="Actor.Bonus.On.DamageRanged" xml:space="preserve"><value>к урону на расстоянии</value></data>
+  <data name="Actor.Bonus.On.Save" xml:space="preserve"><value>к спасброскам</value></data>
+  <data name="Actor.Bonus.On.Check" xml:space="preserve"><value>к проверкам характеристик и навыков</value></data>
+  <data name="Actor.Bonus.On.AttackEntry" xml:space="preserve"><value>к атакам: {0}</value></data>
+  <data name="Actor.Bonus.On.DamageEntry" xml:space="preserve"><value>к урону: {0}</value></data>
+  <data name="Actor.Bonus.On.SaveOf" xml:space="preserve"><value>к спасброскам ({0})</value></data>
+  <data name="Actor.Bonus.On.CheckOf" xml:space="preserve"><value>к проверкам ({0})</value></data>
+  <data name="Actor.Bonus.On.CheckSkill" xml:space="preserve"><value>к проверкам: {0}</value></data>
+  <data name="Actor.Grants.OptIn" xml:space="preserve"><value>Игрок выбирает при броске</value></data>
+  <data name="Actor.Grants.OptInOf" xml:space="preserve"><value>Выбор при броске для модификатора {0}</value></data>
+  <data name="Actor.Grants.OptInLabel" xml:space="preserve"><value>Подпись флажка</value></data>
+  <data name="Actor.Grants.OptInSpends" xml:space="preserve"><value>Что тратить</value></data>
+  <data name="Actor.Grants.OptInSpendsPlaceholder" xml:space="preserve"><value>Необязательно: ключ счётчика</value></data>
+  <data name="Actor.Grants.OptInCost" xml:space="preserve"><value>Сколько тратить</value></data>
   <data name="Actor.Sheet.Sections" xml:space="preserve"><value>Разделы листа</value></data>
   <data name="Actor.Sheet.Attributes" xml:space="preserve"><value>Характеристики</value></data>
   <data name="Actor.Sheet.Picks" xml:space="preserve"><value>Выборы</value></data>

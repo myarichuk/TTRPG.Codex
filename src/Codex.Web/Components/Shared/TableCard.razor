@@ -143,6 +143,12 @@
 
                 @if (Evaluation is { Actions.Count: > 0 })
                 {
+                    @if (CanAct && bonusOffers.Count > 0)
+                    {
+                        <RollBonusPanel Compact="true" Offers="bonusOffers" Tray="tray" Definition="Definition"
+                                        EntryName="@(entryId => Evaluation.Actions.FirstOrDefault(a => a.Entry.Id == entryId) is { } found ? ContentRegistry.Name(found.Entry, L.Culture.Name) : null)" />
+                    }
+
                     <ActionsPanel Evaluation="Evaluation" Definition="Definition" Value="key => State?.Pool(key)" ReadOnly="@(!CanAct)" Bare="true"
                                   EntryName="entry => ContentRegistry.Name(entry, L.Culture.Name)"
                                   Spend="SpendAsync"
@@ -305,10 +311,52 @@
         };
     }
 
-    private Task RollAsync(ActionRoll roll)
+    /// <summary>The engine that reads the sheet's roll bonuses; the card has none until the table loads one.</summary>
+    [Parameter] public SheetRuleEngine? Engine { get; set; }
+
+    // The bonuses ticked for this creature's next roll, and what it offers: kept in step with its sheet and live pools.
+    private readonly RollBonusTray tray = new();
+    private IReadOnlyList<RollOptIn> bonusOffers = Array.Empty<RollOptIn>();
+
+    protected override void OnParametersSet()
+    {
+        bonusOffers = Array.Empty<RollOptIn>();
+        if (Engine != null && Full && CanAct && Evaluation is { Actions.Count: > 0 })
+        {
+            try
+            {
+                // The card rolls attacks and damage; a box for checks would stay ticked with nothing to take it.
+                bonusOffers = Engine.AllOptIns(LiveSheet()).Where(RollBonusTray.FitsCard).ToList();
+            }
+            catch (Exception ex) when (ex is FormulaException or InvalidOperationException)
+            {
+                bonusOffers = Array.Empty<RollOptIn>();
+            }
+        }
+
+        tray.Keep(bonusOffers);
+    }
+
+    /// <summary>The creature's sheet with its live pools over it (a counter a ticked bonus spends is the table's number, not the sheet's).</summary>
+    private Dictionary<string, object> LiveSheet()
+    {
+        var sheet = new Dictionary<string, object>(Actor.Sheet);
+        if (State?.Pools is { } pools)
+        {
+            foreach (var (key, value) in pools) sheet[key] = (long)value;
+        }
+
+        return sheet;
+    }
+
+    private async Task RollAsync(ActionRoll roll)
     {
         var bonus = roll.CheckBonus ?? 0;
         var expression = roll.Expression ?? CheckDie + (bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString());
-        return Send(new RollDiceCommand(expression, Actor.Id, CurrentUserId, false, roll.Label));
+        var built = tray.Build(Engine, LiveSheet(), RollBonusTray.SiteOf(Engine, roll.Kind, null, roll.Action), expression, roll.Label);
+        // What a ticked bonus spends is the table's to take; a refused spend rolls nothing.
+        if (!await RollBonusTray.PayAsync(built.Applied, SpendAsync)) return;
+        tray.Used(built.Applied);
+        await Send(new RollDiceCommand(built.Expression, Actor.Id, CurrentUserId, false, built.Label));
     }
 }

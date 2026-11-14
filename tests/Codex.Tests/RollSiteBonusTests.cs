@@ -198,7 +198,7 @@ public class RollSiteBonusTests : IAsyncLifetime
         var evaluation = Evaluate(built);
 
         var stealth = Assert.Single(built.Engine.OptIns(built.Sheet, built.Engine.SkillSite("stealth")));
-        Assert.Equal(new RollOptIn("tester#0", "Lucky", "+1d6", "Lucky charm", null, true, null), stealth);
+        Assert.Equal(new RollOptIn("tester#0", "Lucky", "+1d6", "Lucky charm", null, true, null, "check"), stealth);
         Assert.Single(built.Engine.OptIns(built.Sheet, built.Engine.CheckSite("dex")));
         Assert.Empty(built.Engine.OptIns(built.Sheet, built.Engine.SaveSite("dex")));
 

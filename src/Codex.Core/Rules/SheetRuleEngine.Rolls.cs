@@ -118,11 +118,20 @@ public sealed partial class SheetRuleEngine
     /// site reads and whose <c>when</c> holds, with the id <see cref="OptInIds"/> gives it (the index counts every modifier of the source entry, across
     /// its rows and copies, so ids never clash and survive edits to anything else). The same records a named roll offers
     /// (<see cref="SheetRolls.OptIns"/>), a <c>spends</c> already checked against the sheet's pool.</summary>
-    public IReadOnlyList<RollOptIn> OptIns(IReadOnlyDictionary<string, object> sheet, RollSite site)
+    public IReadOnlyList<RollOptIn> OptIns(IReadOnlyDictionary<string, object> sheet, RollSite site) =>
+        OptInsReaching(sheet, modifier => site.Reads(modifier.Target));
+
+    /// <summary>Every tick box the sheet's features hold for any sheet-rules roll (the dice tray's "bonuses for the next roll"): the same records as
+    /// <see cref="OptIns(IReadOnlyDictionary{string, object}, RollSite)"/>, each with its <see cref="RollOptIn.Target"/>, for modifiers whose
+    /// target is a name some roll reads.</summary>
+    public IReadOnlyList<RollOptIn> AllOptIns(IReadOnlyDictionary<string, object> sheet) =>
+        OptInsReaching(sheet, modifier => RollSiteTargets.IsRollTarget(system, modifier.Target));
+
+    private IReadOnlyList<RollOptIn> OptInsReaching(IReadOnlyDictionary<string, object> sheet, Func<FeatureModifier, bool> reaches)
     {
         var offered = new List<RollOptIn>();
         var features = ActiveFeatures(sheet).Where(f => !f.OnKind).ToList();
-        if (!features.Any(f => f.Modifiers.Any(m => m.OptIn != null && site.Reads(m.Target)))) return offered;
+        if (!features.Any(f => f.Modifiers.Any(m => m.OptIn != null && reaches(m)))) return offered;
 
         var derived = DerivedNumbers(WorkedOutDerived(sheet));
         var perSource = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -131,7 +140,7 @@ public sealed partial class SheetRuleEngine
             foreach (var modifier in feature.Modifiers)
             {
                 var index = perSource[feature.Source.Id] = perSource.GetValueOrDefault(feature.Source.Id) + 1;
-                if (modifier.OptIn is not { } optIn || !site.Reads(modifier.Target)) continue;
+                if (modifier.OptIn is not { } optIn || !reaches(modifier)) continue;
 
                 string text;
                 if (SheetModel.DiceAmount(modifier.Amount))
@@ -146,7 +155,7 @@ public sealed partial class SheetRuleEngine
                 }
 
                 var label = string.IsNullOrWhiteSpace(optIn.Label) ? feature.Name : optIn.Label!;
-                offered.Add(SheetRolls.Offer(sheet, new OptInModifier(OptInIds.Feature(feature.Source.Id, index - 1), label, text, feature.Name, optIn, null)));
+                offered.Add(SheetRolls.Offer(sheet, new OptInModifier(OptInIds.Feature(feature.Source.Id, index - 1), label, text, feature.Name, optIn, null, modifier.Target)));
             }
         }
 

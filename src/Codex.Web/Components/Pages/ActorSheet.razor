@@ -263,6 +263,8 @@ else
                         </select>
                         <span class="small-muted">@L["Actor.Sheet.TrayHint"]</span>
                     </div>
+                    <RollBonusPanel Offers="bonusOffers" Tray="rollBonuses" Definition="system"
+                                    EntryName="@(entryId => evaluation?.Actions.FirstOrDefault(a => a.Entry.Id == entryId) is { } found ? Nm(found.Entry) : null)" />
                     <div aria-live="polite">
                         @if (lastRoll != null)
                         {
@@ -298,6 +300,7 @@ else
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => sheetRoll = null">@L["Actor.Sheet.Dismiss"]</CodexButton></div>
                     <p class="mb-1"><strong data-testid="sheet-roll-outcome">@(sheetRoll.Outcome is { } outcome ? system!.DisplayValue(outcome) : SheetView.Format(sheetRoll.Totals().FirstOrDefault()))</strong>
                         <span class="small-muted ms-2" data-testid="sheet-roll-dice"><bdi>@L["Actor.Sheet.RollDice", string.Join(" ", sheetRoll.Kept), SheetView.Format(sheetRoll.Totals().FirstOrDefault())]</bdi></span></p>
+                    <RollBonusList Bonuses="sheetRoll.Bonuses" Caption="@L["Actor.Bonus.Counted"]" Pool="@(system?.Rolls.FirstOrDefault(r => r.Key == sheetRoll.Definition)?.Pool != null)" TestId="sheet-roll-bonuses" />
                     @if (sheetRollNote != null)
                     {
                         <p class="small-muted mb-0">@sheetRollNote</p>
@@ -521,6 +524,9 @@ else
     private bool showSums;
     private RollLogEntry? lastRoll;
     private bool lastRollShared;
+    // The bonuses ticked for the next sheet-rules roll, and what the sheet offers (kept in step by Reevaluate).
+    private readonly RollBonusTray rollBonuses = new();
+    private IReadOnlyList<RollOptIn> bonusOffers = Array.Empty<RollOptIn>();
 
     /// <summary>Lines this actor spoke at the table, across the campaign's sessions, that this viewer may read.</summary>
     private IReadOnlyList<(SessionDocument Session, SessionNote Line)> said = Array.Empty<(SessionDocument, SessionNote)>();
@@ -540,11 +546,45 @@ else
     /// <summary>Rolls a d20 check with the sheet's bonus. During a session the roll goes into the
     /// table's shared log under this character; otherwise it is rolled and shown here only.</summary>
     private Task RollAsync(RollRequest request) =>
-        RollExpressionAsync(rollMode + (request.Bonus == 0 ? "" : request.Bonus > 0 ? $"+{request.Bonus}" : request.Bonus.ToString()), request.Label);
+        RollWithBonusesAsync(rollMode + Plus(request.Bonus), request.Label, RollBonusTray.SiteOf(engine, request.Kind, request.Key, null), request.AddSiteNumber);
 
     /// <summary>An action's roll: an attack is a check like any other (the sheet's roll mode counts); damage is its own dice.</summary>
     private Task RollActionAsync(ActionRoll roll) =>
-        roll.Expression is { } dice ? RollExpressionAsync(dice, roll.Label) : RollAsync(new RollRequest(roll.Label, roll.CheckBonus ?? 0));
+        RollWithBonusesAsync(roll.Expression ?? rollMode + Plus(roll.CheckBonus ?? 0), roll.Label, RollBonusTray.SiteOf(engine, roll.Kind, null, roll.Action), false);
+
+    private static string Plus(int bonus) => bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString();
+
+    // The sheet's bonuses for the next roll (the tray's ticks) and the always-on dice join the roll; what a ticked one spends is paid first,
+    // and a roll that cannot pay is not made. The ticks it took are cleared; one that did not fit stays.
+    private async Task RollWithBonusesAsync(string expression, string label, RollSite? site, bool addNumber)
+    {
+        var built = rollBonuses.Build(engine, editSheet, site, expression, label, addNumber);
+        if (!await RollBonusTray.PayAsync(built.Applied, SpendOnSheet))
+        {
+            flash = Flash.Error(L["Actor.Bonus.CannotPay"]);
+            return;
+        }
+
+        rollBonuses.Used(built.Applied);
+        // What a ticked bonus spent may have emptied its pool: the boxes say so now, not at the next edit.
+        bonusOffers = OptInsOfSheet();
+        rollBonuses.Keep(bonusOffers);
+        await RollExpressionAsync(built.Expression, built.Label);
+    }
+
+    // Every opt-in the sheet holds for a sheet-rules roll, for the tray.
+    private IReadOnlyList<RollOptIn> OptInsOfSheet()
+    {
+        if (engine == null || Rules == null || (Rules.Actions.Count == 0 && Rules.Skills == null)) return Array.Empty<RollOptIn>();
+        try
+        {
+            return engine.AllOptIns(editSheet);
+        }
+        catch (Exception ex) when (ex is FormulaException or InvalidOperationException)
+        {
+            return Array.Empty<RollOptIn>();
+        }
+    }
 
     private async Task RollExpressionAsync(string expression, string label)
     {
@@ -1176,6 +1216,9 @@ else
         }
 
         evaluation = engine.Recompute(editSheet);
+        // The tray's bonuses for the next roll follow the sheet: one whose feature went, or whose pool ran dry, is no longer ticked.
+        bonusOffers = OptInsOfSheet();
+        rollBonuses.Keep(bonusOffers);
         sheetView = system is { SheetKinds.Count: > 0 } && resolver != null ? new SheetView(system, resolver, editSheet) : null;
         fieldOptions = evaluation.AllowedOptions.ToDictionary(
             kv => kv.Key,
