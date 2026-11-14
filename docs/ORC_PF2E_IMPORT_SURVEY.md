@@ -196,8 +196,9 @@ The engine has two hosts:
   AC (`ArmorClassRules`: armor base + capped Dex) and attributes (scores) are 5e-shaped.
 - **`sheetKinds`** (fitd, and the `d35`/`street`/`crew` reference fixtures): generic values, formulas, tracks, typed modifiers,
   `conditionEffects`, `rolls` with named outcomes, events and intents. The `d35` fixture already proves per-class progressions, typed
-  bonuses, threat and confirmation on this path. But it has no level-gated feature rows and no ranked lists, and the features lift is
-  still only a design (`SHEETKINDS_FEATURES_DESIGN.md`, uncommitted, in the sheetkinds worktree).
+  bonuses, threat and confirmation on this path. But it has no level-gated feature rows and no ranked lists. Since #299 a kind has `list` feature sources (counters, keyed
+  choices, modifiers into the model; `SHEETKINDS_FEATURES_DESIGN.md`), but entry choices, free castings, actions and slot pools are
+  still `sheetRules`-only (checked 2026-11-14; see `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md`).
 
 `SheetRuleEngine.Evaluate` runs the kind model **and then** `sheetRules` on the same sheet, so a system may declare both. No system does
 today, so this is untested. `conditionEffects` and `rolls` are only read by the kind model (`SheetModel`, `SheetRolls`).
@@ -231,7 +232,7 @@ fixture with our own numbers (5.4), before any Paizo text is involved.
 | Heightening (fixed and +N), cantrips heightened to half level | **Partial** | `perSlot` / `atLevels` cover dice; non-dice heightening (more targets, longer duration) stays text |
 | Focus points (pool max 3, refocus) | **Fit** | A resource or `uses` counter; refocus is a moment (below) |
 | Hero points | **Fit** | A resource with a session-start refill (moment) |
-| Moments: daily preparations, refocus, session start, encounter start | **Depends on S1** | PF2e is a **second consumer** of the sheetkinds design's `moments:` resolver (S1/S2). Build that first; then PF2e declares `dailyPreparations`, `refocus`, `sessionStart` |
+| Moments: daily preparations, refocus, session start, encounter start | **Fit (built in #299)** | `moments:` in `system.yaml` and `MomentCommand`; PF2e declares `dailyPreparations`, `refocus`, `sessionStart` |
 | Frequencies: "once per 10 minutes", "once per hour", "once per day" | **Gap** | Cooldowns are not moments. Start as counters refilled by a manual button; a timed cooldown is a later design |
 | Valued conditions (frightened 2, clumsy 1, drained, enfeebled, stupefied, sickened, slowed, stunned, dying, wounded, doomed) | **Gap** | `conditions` is a list of names; `conditionEffects` modifiers do not read a value. Workable now as a track per valued condition plus modifiers with `amount: "-frightened"`; a first-class valued condition is cleaner. Exhaustion is the only valued case today |
 | Dying/wounded/doomed (dying 4 − doomed kills; recovery check DC 10 + dying) | **Gap** | `DeathSaveRules` is 5e's three/three. Express as tracks and an event handler on the kind side |
@@ -281,6 +282,8 @@ fixture with our own numbers (5.4), before any Paizo text is involved.
 1. **GM Core.** Magic items, runes, the DC-by-level table, encounter budgets and treasure are there. Buy it (and read its notice) before
    the pack is called complete, or ship a Player Core + Monster Core pack with mundane equipment only?
 2. **Faith (4.2):** option A (player-built faith, recommended) or B (anonymous bundles, needs the lawyer)?
-3. **Engine path (5.1):** the hybrid, or wait for the sheetkinds features lift and go kinds-only?
+3. ~~**Engine path (5.1):** the hybrid, or wait for the sheetkinds features lift and go kinds-only?~~ The lift is merged (#299), and
+   kinds-only still lacks ranks, entry choices, actions and slots, so the hybrid stands. The pf2 reference fixture proves it
+   (`PF2E_HAZARDS_IMPLEMENTATION_PLAN.md`, P1).
 4. **Companions and familiars:** text first, or a second sheet kind from the start?
 5. The lawyer's list: handoff §7, plus 4.5 here.
