@@ -138,6 +138,10 @@ values:
   Action roll: Бросок действия
   Resistance roll: Бросок сопротивления
   Group action: Групповое действие
+  action: Действие
+  position: Позиция
+  effect: Эффект
+  attribute: Атрибут
   Assist, push or bargain: Помощь, нажим или сделка
   controlled: контролируемая
   risky: рискованная

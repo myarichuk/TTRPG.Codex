@@ -28,7 +28,7 @@
                 {
                     <strong>@RollerName(entry)</strong>
                 }
-                <DiceResult Compact="true" Label="@entry.Label" Expression="@entry.Expression" Kept="entry.Kept" Dropped="entry.Dropped"
+                <DiceResult Compact="true" Label="@(RollLabel?.Invoke(entry) ?? entry.Label)" Expression="@entry.Expression" Kept="entry.Kept" Dropped="entry.Dropped"
                             Modifier="entry.Modifier" CheckDieIndex="entry.CheckDieIndex" Total="entry.Total" Text="@entry.Result" Secret="entry.IsSecret"
                             Outcome="@entry.Outcome" Mark="@entry.Mark" />
             </div>
@@ -42,6 +42,9 @@
 
     /// <summary>Who rolled, as this viewer may know them.</summary>
     [Parameter, EditorRequired] public Func<RollLogEntry, string> RollerName { get; set; } = null!;
+
+    /// <summary>What a roll was for, in this viewer's language; the stored text when not given.</summary>
+    [Parameter] public Func<RollLogEntry, string?>? RollLabel { get; set; }
 
     /// <summary>The link to a roller this viewer can see; null for one they can't.</summary>
     [Parameter, EditorRequired] public Func<string, string?> ActorHref { get; set; } = null!;
