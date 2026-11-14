@@ -38,9 +38,16 @@ public static class RollBonusLabel
 {
     /// <summary>The label with the ticked bonuses of <paramref name="bonuses"/> after it; unchanged when none was ticked. In a <paramref name="pool"/> roll an
     /// amount is a number of dice (<c>+1d</c>).</summary>
-    public static string Of(string label, IEnumerable<RollBonus> bonuses, bool pool)
+    /// <param name="dice">How a pool's amount of dice is said (<c>+1</c> -> <c>+1d</c>) in the reader's language; null for the English <c>d</c>.</param>
+    public static string Of(string label, IEnumerable<RollBonus> bonuses, bool pool, Func<string, string>? dice = null)
     {
-        var chosen = bonuses.Where(b => b.Ticked).Select(b => $"{(b.Amount >= 0 ? "+" : string.Empty)}{b.Amount.ToString(CultureInfo.InvariantCulture)}{(pool ? "d" : string.Empty)} {b.Label}").ToList();
+        string Amount(double amount)
+        {
+            var text = (amount >= 0 ? "+" : string.Empty) + amount.ToString(CultureInfo.InvariantCulture);
+            return !pool ? text : dice?.Invoke(text) ?? text + "d";
+        }
+
+        var chosen = bonuses.Where(b => b.Ticked).Select(b => $"{Amount(b.Amount)} {b.Label}").ToList();
         return chosen.Count == 0 ? label : $"{label} ({string.Join(", ", chosen)})";
     }
 }

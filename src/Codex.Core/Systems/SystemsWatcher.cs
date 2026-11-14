@@ -7,6 +7,12 @@ namespace Codex.Core.Systems;
 /// is many events), then one reload runs; changes made during it start the next wait. Hidden folders (the installer's
 /// <c>.staging</c> and <c>.trash</c>, a <c>.git</c>) and build output (<c>bin</c>, <c>obj</c>) are ignored, as the loader
 /// ignores them. A watcher that loses events (its buffer overflowed) reloads too: it cannot tell what it missed.
+/// <para>
+/// Events are only a hint that something may have changed. Windows raises several <c>Changed</c> events for one write (data, then
+/// size or attributes) and an indexer or antivirus scan can touch a file seconds later, so before a reload the watcher compares
+/// the roots (path, size, last write of every file the loader could read) with what the last reload saw, and skips the reload
+/// when nothing differs. One edit is one reload on every platform.
+/// </para>
 /// </summary>
 public sealed class SystemsWatcher : IDisposable
 {
@@ -18,6 +24,9 @@ public sealed class SystemsWatcher : IDisposable
     private Timer? _timer;
     private bool _running;
     private bool _pending;
+    private bool _forced;
+    private string _applied = string.Empty;
+    private readonly List<string> _roots = new();
 
     /// <summary>How long the roots must be quiet before a reload.</summary>
     public TimeSpan Quiet { get; }
@@ -46,10 +55,17 @@ public sealed class SystemsWatcher : IDisposable
                 Seen(root, e.OldFullPath);
                 Seen(root, e.FullPath);
             };
-            watcher.Error += (_, _) => Schedule();
+            watcher.Error += (_, _) =>
+            {
+                lock (_gate) _forced = true;
+                Schedule();
+            };
             watcher.EnableRaisingEvents = true;
             _watchers.Add(watcher);
+            _roots.Add(root);
         }
+
+        _applied = Snapshot();
     }
 
     /// <summary>Whether a change at <paramref name="path"/> under <paramref name="root"/> can change what the loader reads.</summary>
@@ -82,17 +98,58 @@ public sealed class SystemsWatcher : IDisposable
         }
     }
 
+    /// <summary>What the loader could read now: every matching file's path, size and last write, as one comparable string.</summary>
+    private string Snapshot()
+    {
+        var entries = new List<string>();
+        foreach (var root in _roots)
+        {
+            try
+            {
+                foreach (var file in new DirectoryInfo(root).EnumerateFiles("*", SearchOption.AllDirectories))
+                {
+                    if (!Matters(root, file.FullName)) continue;
+                    try
+                    {
+                        entries.Add($"{file.FullName}|{file.Length}|{file.LastWriteTimeUtc.Ticks}");
+                    }
+                    catch (IOException)
+                    {
+                        // gone since it was listed: the next event settles it
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                entries.Add($"{root}|unreadable");
+            }
+        }
+
+        entries.Sort(StringComparer.Ordinal);
+        return string.Join('\n', entries);
+    }
+
     private async Task FireAsync()
     {
+        bool force;
         lock (_gate)
         {
             if (_running || _stop.IsCancellationRequested) return;
             _running = true;
+            force = _forced;
+            _forced = false;
         }
 
+        var reloaded = false;
         try
         {
-            await _reload();
+            var now = Snapshot();
+            if (force || now != _applied)
+            {
+                _applied = now;
+                reloaded = true;
+                await _reload();
+            }
         }
         catch (Exception ex)
         {
@@ -103,7 +160,7 @@ public sealed class SystemsWatcher : IDisposable
             bool again;
             lock (_gate)
             {
-                Reloads++;
+                if (reloaded) Reloads++;
                 _running = false;
                 again = _pending;
                 _pending = false;

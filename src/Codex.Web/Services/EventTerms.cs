@@ -1,6 +1,7 @@
 using Codex.Localization;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
+using Codex.Web.Components.Shared;
 
 namespace Codex.Web.Services;
 
@@ -9,10 +10,13 @@ namespace Codex.Web.Services;
 public static class EventTerms
 {
     /// <param name="system">The campaign's system as the rules know it (not a localized copy).</param>
-    public static EventTermText For(SystemDefinition? system, Localizer l, IReadOnlyDictionary<string, string> userNames)
+    /// <param name="registry">The packs, whose entries' translations name the features a roll's bonuses come from; without it a bonus is only
+    /// translated as far as the system's own words go.</param>
+    public static EventTermText For(SystemDefinition? system, Localizer l, IReadOnlyDictionary<string, string> userNames, IContentRegistry? registry = null)
     {
         var culture = l.Culture.Name;
         var shown = system?.Localize(culture);
+        var bonuses = RollBonusNames.For(registry, system, culture);
         return (kind, key) => kind switch
         {
             EventTerm.UserKind => userNames.TryGetValue(key, out var name) ? name : null,
@@ -22,8 +26,17 @@ public static class EventTerms
             EventTerm.ResourceKind => shown?.Resources.FirstOrDefault(r => r.Key == key)?.Label,
             EventTerm.SlotKind => Slot(system, shown, l, key),
             EventTerm.SystemKind => shown?.DisplayValue(key),
+            EventTerm.BonusKind => Bonus(bonuses, key),
+            EventTerm.DiceKind => l["Actor.Bonus.PoolAmount", key],
             _ => null
         };
+    }
+
+    // A roll bonus's key is its label and the feature it came from (EventTerm.Bonus).
+    private static string? Bonus(RollBonusNames names, string key)
+    {
+        var at = key.IndexOf(EventTerm.BonusSeparator);
+        return at < 0 ? null : names.Label(key[..at], key[(at + 1)..]);
     }
 
     // "slots_3" -> "level 3 spell slot", with the pool's slot named as the system's translation names it. English keeps the
