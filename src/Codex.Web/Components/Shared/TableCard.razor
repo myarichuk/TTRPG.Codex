@@ -145,7 +145,7 @@
                 {
                     @if (CanAct && bonusOffers.Count > 0)
                     {
-                        <RollBonusPanel Compact="true" Offers="bonusOffers" Tray="tray" Definition="Definition"
+                        <RollBonusPanel Compact="true" Offers="bonusOffers" Tray="tray" Definition="Definition" Names="BonusNames"
                                         EntryName="@(entryId => Evaluation.Actions.FirstOrDefault(a => a.Entry.Id == entryId) is { } found ? ContentRegistry.Name(found.Entry, L.Culture.Name) : null)" />
                     }
 
@@ -319,6 +319,9 @@
 
     // The bonuses ticked for this creature's next roll, and what it offers: kept in step with its sheet and live pools.
     private readonly RollBonusTray tray = new();
+
+    /// <summary>What a roll bonus is called in the viewer's language (a tick box's label, the feature that gives a bonus).</summary>
+    private RollBonusNames BonusNames => RollBonusNames.For(ContentRegistry, Definition, L.Culture.Name);
     private IReadOnlyList<RollOptIn> bonusOffers = Array.Empty<RollOptIn>();
 
     protected override void OnParametersSet()
@@ -356,10 +359,12 @@
     {
         var bonus = roll.CheckBonus ?? 0;
         var expression = roll.Expression ?? CheckDie + (bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString());
-        var built = tray.Build(Engine, LiveSheet(), RollBonusTray.SiteOf(Engine, roll.Kind, null, roll.Action), expression, roll.Label, linked: Linked);
+        var built = tray.Build(Engine, LiveSheet(), RollBonusTray.SiteOf(Engine, roll.Kind, null, roll.Action), expression, roll.Label, linked: Linked, names: BonusNames);
         // What a ticked bonus spends is the table's to take; a refused spend rolls nothing.
-        if (!await RollBonusTray.PayAsync(built.Applied, SpendAsync)) return;
+        if (!await RollBonusTray.PayAsync(built.Applied, SpendAsync, BonusNames)) return;
         tray.Used(built.Applied);
         await Send(new RollDiceCommand(built.Expression, Actor.Id, CurrentUserId, false, built.Label));
+        // A bonus that ends a condition takes it off the creature, when it has it.
+        foreach (var condition in RollBonusLive.ToEnd(built.Applied, State)) await Send(new RemoveStatusEffectCommand(Actor.Id, condition));
     }
 }

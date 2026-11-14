@@ -144,7 +144,7 @@ public static partial class SheetRolls
         foreach (var declared in definition.Inputs.Where(i => i.Default != null)) values[declared.Key] = SheetModel.Plain(YamlValues.Normalize(declared.Default));
         foreach (var (key, value) in inputs) values[key] = SheetModel.Plain(YamlValues.Normalize(value));
         var model = new SheetModel(system, resolver, sheet, values, linked: linked);
-        return model.Bonuses(RollTargets.Of(system, definition)).Where(b => !b.Ticked).ToList();
+        return model.Bonuses(RollTargets.Of(system, definition, values)).Where(b => !b.Ticked).ToList();
     }
 
     internal static RollOptIn Offer(IReadOnlyDictionary<string, object> sheet, OptInModifier optIn)
@@ -268,7 +268,7 @@ public static partial class SheetRolls
             var targets = RollTargets.Of(system, definition);
             var result = new SheetRollResult
             {
-                Bonuses = model.Bonuses(targets),
+                Bonuses = model.Bonuses(RollTargets.Of(system, definition, inputs.ToDictionary(i => i.Key, i => i.Value.Value, StringComparer.Ordinal))),
                 Definition = definition.Key,
                 Label = definition.Label,
                 Outcome = outcome?.Name,

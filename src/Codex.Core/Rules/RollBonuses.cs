@@ -95,13 +95,19 @@ public static partial class RollTargets
     /// reach through a keyed list that works its own <c>value</c> out: each of its entries and their <c>@group</c>s (the targets
     /// <see cref="SheetModel"/> stacks onto such an entry). Read from the formula text once per definition.</summary>
     public static IReadOnlySet<string> Of(SystemDefinition system, RollDefinition roll) =>
-        Cache.GetValue(roll, r => Read(system, r));
+        Cache.GetValue(roll, r => Read(system, r, null));
+
+    /// <summary>What the roll reads for the <paramref name="inputs"/> given so far: as <see cref="Of(SystemDefinition, RollDefinition)"/>, but a keyed list the
+    /// roll indexes by an input (<c>actions[input.action]</c>) reaches only the entry that input names, and none until it is chosen. Use it to say which
+    /// bonuses count in the roll as it stands; a per-entry bonus (a crew ability's +1 to one action) is then not listed before its action is chosen.</summary>
+    public static IReadOnlySet<string> Of(SystemDefinition system, RollDefinition roll, IReadOnlyDictionary<string, object?> inputs) =>
+        Read(system, roll, inputs);
 
     /// <summary>The targets read by any pool roll of the system.</summary>
     public static IReadOnlySet<string> PoolTargets(SystemDefinition system) =>
         system.Rolls.Where(r => r.Pool != null).SelectMany(r => Of(system, r)).ToHashSet(StringComparer.Ordinal);
 
-    private static HashSet<string> Read(SystemDefinition system, RollDefinition roll)
+    private static HashSet<string> Read(SystemDefinition system, RollDefinition roll, IReadOnlyDictionary<string, object?>? inputs)
     {
         var formulas = (roll.Pool == null ? Enumerable.Empty<string>() : new[] { roll.Pool }).Concat(roll.Add).ToList();
         var targets = new HashSet<string>(StringComparer.Ordinal);
@@ -113,9 +119,32 @@ public static partial class RollTargets
         foreach (var list in system.SheetKinds.SelectMany(k => k.KeyedLists).Where(l => l.Derive.ContainsKey("value")))
         {
             if (!formulas.Any(f => Regex.IsMatch(f, $@"\b{Regex.Escape(list.Key)}\b"))) continue;
-            foreach (var key in list.Keys.Where(k => k.Parameter == null)) targets.UnionWith(SheetModel.Targets(list, key, key.Key));
+            var chosen = inputs == null ? null : ChosenKeys(list.Key, formulas, inputs);
+            foreach (var key in list.Keys.Where(k => k.Parameter == null))
+            {
+                if (chosen != null && !chosen.Contains(key.Key)) continue;
+                targets.UnionWith(SheetModel.Targets(list, key, key.Key));
+            }
         }
 
         return targets;
+    }
+
+    /// <summary>The entries of a keyed list a roll reads once its inputs are known: the formulas reach the list only as <c>list[input.name]</c>, so only the
+    /// entry that input names counts (none while it is empty). Null when some formula reads the list whole, so every entry counts.</summary>
+    private static HashSet<string>? ChosenKeys(string list, IReadOnlyList<string> formulas, IReadOnlyDictionary<string, object?> inputs)
+    {
+        var escaped = Regex.Escape(list);
+        if (formulas.Any(f => Regex.IsMatch(f, $@"\b{escaped}\b(?!\s*\[\s*input\.\w+\s*\])"))) return null;
+        var chosen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var formula in formulas)
+        {
+            foreach (Match match in Regex.Matches(formula, $@"\b{escaped}\s*\[\s*input\.(?<name>\w+)\s*\]"))
+            {
+                if (inputs.TryGetValue(match.Groups["name"].Value, out var value) && value?.ToString() is { Length: > 0 } key) chosen.Add(key);
+            }
+        }
+
+        return chosen;
     }
 }

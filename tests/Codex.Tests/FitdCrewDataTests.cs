@@ -2,6 +2,7 @@ using Codex.Core;
 using Codex.Core.Rules;
 using Codex.Plugin.Abstractions;
 using Codex.Plugin.Abstractions.Dice;
+using Codex.Web.Components.Shared;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Codex.Tests;
@@ -74,7 +75,9 @@ public class FitdCrewDataTests : IAsyncLifetime
     {
         var linked = WithCrew(Crew(new[] { "composed" }));
         Assert.Equal(10, Value(Evaluate(Scoundrel(), linked), "stress_Max"));
-        Assert.Equal(9, Value(Evaluate(Scoundrel(), new Actors()), "stress_Max"));
+        Assert.Equal(9, Value(Evaluate(Scoundrel(), WithCrew(Crew(Array.Empty<string>()))), "stress_Max"));
+        // A crew that is gone is unknown, not empty: the size is not worked out (nothing is clamped), until the link changes.
+        Assert.True(Evaluate(Scoundrel(), new Actors()).LinksUnknown);
         Assert.Equal(9, Value(Evaluate(new Dictionary<string, object> { ["kind"] = "scoundrel" }, null), "stress_Max"));
     }
 
@@ -127,6 +130,47 @@ public class FitdCrewDataTests : IAsyncLifetime
         var three = new Dictionary<string, object> { ["prowl"] = new Dictionary<string, object> { ["rating"] = 3L } };
         var sheet = Scoundrel(("actions", three), ("choice__deadly__deadly", Picks("Prowl")));
         Assert.Contains(Evaluate(sheet, WithCrew(Crew(Array.Empty<string>(), "deadly"))).Violations, v => v.Key == "Actor.Rule.ActionCap");
+    }
+
+    [Fact]
+    public void Deadly_IsNotListedAsAlwaysCounted_UntilItsActionIsChosen_AndOnlyForThatAction()
+    {
+        var linked = WithCrew(Crew(Array.Empty<string>(), "deadly"));
+        var prowl = Scoundrel(("choice__deadly__deadly", Picks("Prowl")));
+        IReadOnlyList<RollBonus> Always(params (string Key, object? Value)[] inputs) =>
+            SheetRolls.Bonuses(_system, _resolver, prowl, "action", inputs.ToDictionary(i => i.Key, i => i.Value), linked);
+
+        Assert.Empty(Always()); // no action chosen: a per-action bonus is not listed
+        Assert.Empty(Always(("action", "")));
+        Assert.Empty(Always(("action", "hunt"))); // another action: it does not count there
+        var counted = Assert.Single(Always(("action", "prowl")));
+        Assert.Equal(1, counted.Amount);
+        Assert.Equal("Deadly (Crew): Prowl", counted.Source); // the ability, the link it came through and the option picked
+
+        // The roll's own list says the same.
+        Assert.Empty(Action(prowl, linked, "hunt").Bonuses);
+        Assert.Single(Action(prowl, linked, "prowl").Bonuses);
+
+        // What the engine really names them is what the translator is given: a Russian reader sees the ability's own Russian name.
+        var russian = RollBonusNames.For(_registry, _system.Localize("ru"), "ru");
+        Assert.Equal("Смертоносные (Команда): Подкрадывание", russian.Source(counted.Source));
+        Assert.Equal("Смертоносные (Команда): Подкрадывание", russian.Label(counted.Label, counted.Source));
+    }
+
+    [Theory]
+    [InlineData("ru", "Засада", "Из укрытия или из ловушки")]
+    [InlineData("he", "מארב", "ממסתור או ממלכודת")]
+    public void AnOfferedTickBox_FromARealAbility_IsShownTranslated_AndItsIdStaysTheEngines(string culture, string source, string label)
+    {
+        var sheet = Scoundrel(("abilities", Picks("ambush")));
+        var offer = Assert.Single(SheetRolls.OptIns(_system, _resolver, sheet, "action", new Dictionary<string, object?> { ["action"] = "prowl" }));
+        Assert.Equal("ambush#0", offer.Id);
+        Assert.Equal("Ambush", offer.Source);
+        Assert.Equal("From hiding or a trap", offer.Label);
+
+        var names = RollBonusNames.For(_registry, _system.Localize(culture), culture);
+        Assert.Equal(source, names.Source(offer.Source));
+        Assert.Equal(label, names.Label(offer.Label, offer.Source));
     }
 
     [Fact]

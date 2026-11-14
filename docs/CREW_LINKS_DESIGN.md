@@ -209,8 +209,11 @@ Through the fitd importer, never by hand in the pack:
 
 - `SheetKindDefinition.Links` (`key`, `kind`, `label`), `FeatureSource.Link`, `ILinkedSheets.Sheet(actorId)`, `LinkState` (`None`, `Known`, `Unknown`), `SheetLinks`
   (`LinkedSheets.cs`). A link source needs `list` (of the linked kind) and `property`; `choose` is refused on it (a grant map's own `options` and `choose` do that).
-- The linked sheet is checked by its own `kind` string, not by the system's default kind. A linked actor that is missing, or of another kind, is a known, empty link.
-- A link to a **missing actor counts as known and empty**: a deleted crew drops its members' link-made counters and choice picks on the next save that supplies the resolver.
+- The linked sheet is checked by its own `kind` string, not by the system's default kind. A linked actor of another kind is a known, empty link.
+- A link to an actor the host cannot give a sheet for (deleted, in the trash, or not found in the campaign) is **unknown**, not empty: nothing the link made is swept,
+  clamped or judged, and the deleted actor's sheet is never handed out. Restoring the crew brings everything back as it was. Data goes only when the player changes
+  or clears the link; then the new link (or none) is evaluated as known. `ILinkedSheets.Status` says deleted or not found, and the link widget tells the member
+  that their crew bonuses are on hold (`LinkWidgets.Hold`).
 - The unknown-link rule lives in `SheetEvaluation.LinksUnknown` (set by `Evaluate`) and `SheetModel.LinksUnknown`. Sweeps that stand down while a link is unknown:
   `ApplyCounters` (`uses_*`), `ApplyChoiceMoments` (`changes_on__*`), `PruneChoices` (`choice__*`). Track maxima that read `modifiers(...)`, `link(...)`, or a value
   that does are unknown (null): `TrackOf`, so intents do not clamp and `ApplyTracks` does not write `{key}_Max`; the model's `{key}_Max` value; and the range check.
