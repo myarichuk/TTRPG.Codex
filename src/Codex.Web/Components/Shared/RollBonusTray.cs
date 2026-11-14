@@ -28,8 +28,17 @@ public sealed class RollBonusTray
         else _ticked.Remove(id);
     }
 
-    /// <summary>Leaves ticked only what is still on offer (a feature that went away, a pool that ran dry, a <c>when</c> that stopped holding).</summary>
-    public void Keep(IEnumerable<RollOptIn> offered) => _ticked.IntersectWith(offered.Select(o => o.Id));
+    /// <summary>Leaves ticked only what is still on offer and can be paid (a feature that went away, a pool that ran dry, a <c>when</c> that stopped holding).</summary>
+    public void Keep(IEnumerable<RollOptIn> offered) => _ticked.IntersectWith(offered.Where(o => o.CanPay).Select(o => o.Id));
+
+    /// <summary>The kind of roll an action's dice are: damage, but not for healing, which the engine's damage targets do not reach either.
+    /// Null means the roll reads no site.</summary>
+    public static RollKind? DamageKind(SheetAction action) => action.Heals ? null : RollKind.Damage;
+
+    /// <summary>Whether a tick box fits a roll a table card makes: the card rolls attacks and damage only.</summary>
+    public static bool FitsCard(RollOptIn optIn) =>
+        optIn.Target is { } target && (target == RollSiteTargets.Attack || target == RollSiteTargets.Damage
+            || target.StartsWith(RollSiteTargets.Attack + ".", StringComparison.Ordinal) || target.StartsWith(RollSiteTargets.Damage + ".", StringComparison.Ordinal));
 
     /// <summary>Takes a roll's base expression and label and adds what the sheet's features give the roll at <paramref name="site"/>: the always-on dice,
     /// and the ticked opt-ins that fit (dice or numbers, as each says). <paramref name="addNumber"/> adds the always-on numbers too, for a roll whose

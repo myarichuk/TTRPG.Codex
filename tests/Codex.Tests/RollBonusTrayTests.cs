@@ -205,6 +205,30 @@ public class RollBonusTrayTests : IAsyncLifetime
     }
 
     [Fact]
+    public void ATickThatCannotBePaid_IsNotKept_AndHealingReadsNoDamageSite()
+    {
+        var (engine, sheet) = Build("Lucky charm", OptIn("check", "1d6", "Lucky", Map(("key", "lucky"), ("amount", 1L))));
+        var tray = new RollBonusTray();
+        var id = Assert.Single(engine.AllOptIns(sheet)).Id;
+        tray.Set(id, true);
+        tray.Keep(engine.AllOptIns(sheet)); // no pool: the box is disabled, so a tick on it is dropped
+        Assert.False(tray.IsTicked(id));
+
+        sheet["spells"] = new List<object> { "cure-wounds" };
+        var healing = Action(engine.Recompute(sheet), "cure-wounds");
+        Assert.True(healing.Heals);
+        Assert.Null(RollBonusTray.DamageKind(healing));
+        Assert.Equal(RollKind.Damage, RollBonusTray.DamageKind(Action(engine.Recompute(Build("Nothing").Sheet), "longbow")));
+    }
+
+    [Fact]
+    public void ATableCard_OffersOnlyTheBoxesItsAttackAndDamageRollsCanTake()
+    {
+        var (engine, sheet) = Build("Tricks", OptIn("check", "1d6", "Lucky"), OptIn("attack.weapon.ranged", 1L, "Steady"), OptIn("damage", 1L, "Brutal"), OptIn("save.dex", 1L, "Nimble"));
+        Assert.Equal(new[] { "attack.weapon.ranged", "damage" }, engine.AllOptIns(sheet).Where(RollBonusTray.FitsCard).Select(o => o.Target));
+    }
+
+    [Fact]
     public void TheRollOfARequest_ComesFromItsKindAndKey()
     {
         var (engine, sheet) = Build("Nothing");

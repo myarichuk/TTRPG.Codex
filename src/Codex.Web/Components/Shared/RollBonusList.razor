@@ -13,7 +13,7 @@
                 <li><bdi>@Amount(bonus)</bdi> @bonus.Label
                     @if (!string.IsNullOrEmpty(bonus.Source) && bonus.Source != bonus.Label)
                     {
-                        <span class="small-muted">(@bonus.Source)</span>
+                        <span class="small-muted">&nbsp;(@bonus.Source)</span>
                     }
                     @if (bonus.Ticked)
                     {

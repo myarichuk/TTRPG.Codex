@@ -206,13 +206,13 @@
         }
         else if ((cost?.Damage ?? action.Damage) is { } dice && SheetAction.HasDice(dice))
         {
-            await OnRoll.InvokeAsync(new ActionRoll(DamageLabel(action, name), null, dice, RollKind.Damage, action));
+            await OnRoll.InvokeAsync(new ActionRoll(DamageLabel(action, name), null, dice, RollBonusTray.DamageKind(action), action));
         }
     }
 
     private Task RollDamageAsync(SheetAction action, string dice, string? alternative)
     {
         var label = DamageLabel(action, Name(action));
-        return OnRoll.InvokeAsync(new ActionRoll(alternative == null ? label : $"{label} ({alternative})", null, dice, RollKind.Damage, action));
+        return OnRoll.InvokeAsync(new ActionRoll(alternative == null ? label : $"{label} ({alternative})", null, dice, RollBonusTray.DamageKind(action), action));
     }
 }

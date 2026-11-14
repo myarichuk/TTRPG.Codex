@@ -325,7 +325,8 @@
         {
             try
             {
-                bonusOffers = Engine.AllOptIns(LiveSheet());
+                // The card rolls attacks and damage; a box for checks would stay ticked with nothing to take it.
+                bonusOffers = Engine.AllOptIns(LiveSheet()).Where(RollBonusTray.FitsCard).ToList();
             }
             catch (Exception ex) when (ex is FormulaException or InvalidOperationException)
             {

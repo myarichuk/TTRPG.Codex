@@ -80,6 +80,7 @@ public static class TestSeedEndpoints
                     System.Text.Json.JsonValueKind.True => true,
                     System.Text.Json.JsonValueKind.False => false,
                     System.Text.Json.JsonValueKind.Array => element.EnumerateArray().Select(SheetValue).ToList(),
+                    System.Text.Json.JsonValueKind.Object => element.EnumerateObject().ToDictionary(p => p.Name, p => SheetValue(p.Value)),
                     _ => element.ToString()
                 };
 
