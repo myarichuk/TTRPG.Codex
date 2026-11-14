@@ -57,10 +57,15 @@
                 @if (modifierText != null)
                 {
                     <div class="attr-mod" aria-label="@L["Actor.Sheet.Modifier", attr.Label]">@modifierText</div>
+                    @* The modifier stays the attribute's own; what features add to its check is said beside it, so the roll button and the number agree. *@
+                    @if (Evaluation?.CheckBonuses.GetValueOrDefault(attr.Key) is { } extra and not 0)
+                    {
+                        <div class="attr-feature small-muted" data-testid="@("attr-feature-" + attr.Key)">@L["Actor.Sheet.FromFeatures", Bidi.Ltr((extra > 0 ? "+" : "") + extra)]</div>
+                    }
                     @if (ShowTray)
                     {
                         <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="dices" Label="@L["Actor.Skills.Roll", checkLabel]" data-testid="@("roll-" + attr.Key)"
-                                     OnClick="() => OnRoll.InvokeAsync(new RollRequest(checkLabel, (modifier ?? 0) + (Evaluation?.CheckBonuses.GetValueOrDefault(attr.Key) ?? 0)))" />
+                                     OnClick="() => OnRoll.InvokeAsync(new RollRequest(checkLabel, (modifier ?? 0) + (Evaluation?.CheckBonuses.GetValueOrDefault(attr.Key) ?? 0), RollKind.Check, attr.Key))" />
                     }
                 }
                 @if (CanEdit && attributeRules != null && AttrMethod == "standard-array")

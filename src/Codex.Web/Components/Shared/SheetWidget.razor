@@ -245,6 +245,11 @@
         @if (definition != null)
         {
             var asked = definition.Inputs.Where(i => i.From is "roller" or "gm" or "weapon").ToList();
+            // What the roll offers is worked out again whenever it renders, so an input a bonus's `when` reads (the action rolled) changes the boxes.
+            var offered = OptInsOf(definition);
+            var always = AlwaysOn(definition);
+            var isPool = definition.Pool != null;
+            <div class="sheet-roll-block">
             <div class="sheet-roll d-flex flex-wrap align-items-end gap-2" data-testid="@($"roll-{definition.Key}")">
                 @foreach (var input in asked)
                 {
@@ -269,6 +274,41 @@
                     </label>
                 }
                 <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="dices" Disabled="@(!CanRoll)" OnClick="() => RollAsync(definition)" data-testid="@($"roll-{definition.Key}-go")">@(Widget.Label ?? definition.Label ?? definition.Key)</CodexButton>
+            </div>
+            <RollBonusList Bonuses="always" Pool="isPool" Caption="@L["Actor.Bonus.Always"]" TestId="@($"roll-{definition.Key}-always")" />
+            @if (offered.Count > 0)
+            {
+                var group = $"{id}-{definition.Key}-bonuses";
+                <fieldset class="roll-bonuses" data-testid="@($"roll-{definition.Key}-bonuses")">
+                    <legend class="field-label">@L["Actor.Bonus.Legend"]</legend>
+                    <ul class="list-unstyled mb-0 roll-bonus-list">
+                        @foreach (var offer in offered)
+                        {
+                            var shown = offer;
+                            var boxId = $"{group}-{OptInSlug(offer.Id)}";
+                            var reasonId = boxId + "-why";
+                            <li class="roll-bonus">
+                                <input id="@boxId" type="checkbox" class="field-box mt-0" checked="@IsTicked(definition.Key, offer.Id)" disabled="@(!offer.CanPay || !CanRoll)"
+                                       aria-describedby="@(offer.CanPay ? null : reasonId)" data-testid="@($"roll-{definition.Key}-bonus-{OptInSlug(offer.Id)}")"
+                                       @onchange="e => TickAsync(definition.Key, shown.Id, (bool)e.Value!)" />
+                                <label for="@boxId" class="mb-0">@offer.Label: <bdi>@(isPool ? L["Actor.Bonus.PoolAmount", offer.Amount] : offer.Amount)</bdi></label>
+                                @if (offer.Spends is { } cost)
+                                {
+                                    <span class="small-muted">@L["Actor.Bonus.Costs", cost.Amount]</span>
+                                }
+                                @if (offer.Ends is { } ends)
+                                {
+                                    <span class="small-muted">@L["Actor.Bonus.Ends", Definition.DisplayCondition(ends)]</span>
+                                }
+                                @if (!offer.CanPay)
+                                {
+                                    <span class="small-muted" id="@reasonId" data-testid="@($"roll-{definition.Key}-bonus-why-{OptInSlug(offer.Id)}")">@L["Actor.Bonus.NoUses"]</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </fieldset>
+            }
             </div>
         }
         break;
@@ -490,7 +530,8 @@
 
     private string? InputValue(RollInputDefinition input) => inputs.TryGetValue(input.Key, out var value) ? value : input.Default?.ToString();
 
-    private async Task RollAsync(RollDefinition definition)
+    /// <summary>The inputs the roller has given so far, as the roll takes them.</summary>
+    private Dictionary<string, object?> Supplied(RollDefinition definition)
     {
         var supplied = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (var input in definition.Inputs.Where(i => i.From is "roller" or "gm" or "weapon"))
@@ -500,6 +541,58 @@
             supplied[input.Key] = double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) ? number : text;
         }
 
-        await OnRoll.InvokeAsync(new SheetRollRequest { Definition = definition.Key, Inputs = supplied });
+        return supplied;
+    }
+
+    // The bonuses ticked for each named roll. They start unticked, and a roll clears its own.
+    private readonly Dictionary<string, HashSet<string>> ticked = new(StringComparer.Ordinal);
+
+    private bool IsTicked(string roll, string optIn) => ticked.TryGetValue(roll, out var ids) && ids.Contains(optIn);
+
+    private Task TickAsync(string roll, string optIn, bool on)
+    {
+        if (!ticked.TryGetValue(roll, out var ids)) ticked[roll] = ids = new HashSet<string>(StringComparer.Ordinal);
+        if (on) ids.Add(optIn);
+        else ids.Remove(optIn);
+        return Task.CompletedTask;
+    }
+
+    private static string OptInSlug(string id) => new(id.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-').ToArray());
+
+    /// <summary>The tick boxes the roll offers for what has been typed so far (a <c>when</c> may read an input). A roll the system cannot work out offers none.</summary>
+    private IReadOnlyList<RollOptIn> OptInsOf(RollDefinition definition)
+    {
+        try
+        {
+            var offered = SheetRolls.OptIns(Definition, Resolver, Sheet, definition.Key, Supplied(definition));
+            // A tick whose box went away (the input changed) is not carried to the roll.
+            if (ticked.TryGetValue(definition.Key, out var ids)) ids.IntersectWith(offered.Select(o => o.Id));
+            return offered;
+        }
+        catch (Exception ex) when (ex is RollException or FormulaException or InvalidOperationException)
+        {
+            return Array.Empty<RollOptIn>();
+        }
+    }
+
+    /// <summary>What always counts in the roll, so the player sees why the pool is what it is.</summary>
+    private IReadOnlyList<RollBonus> AlwaysOn(RollDefinition definition)
+    {
+        try
+        {
+            return SheetRolls.Bonuses(Definition, Resolver, Sheet, definition.Key, Supplied(definition));
+        }
+        catch (Exception ex) when (ex is RollException or FormulaException or InvalidOperationException)
+        {
+            return Array.Empty<RollBonus>();
+        }
+    }
+
+    private async Task RollAsync(RollDefinition definition)
+    {
+        var offered = OptInsOf(definition);
+        var chosen = offered.Where(o => o.CanPay && IsTicked(definition.Key, o.Id)).Select(o => o.Id).ToList();
+        ticked.Remove(definition.Key);
+        await OnRoll.InvokeAsync(new SheetRollRequest { Definition = definition.Key, Inputs = Supplied(definition), OptIns = chosen });
     }
 }

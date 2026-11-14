@@ -28,7 +28,7 @@
                 <dt>@(multi ? L["Actor.Skills.SpellSaveDcFor", casting.ClassName] : L["Actor.Skills.SpellSaveDc"])</dt>
                 <dd><span data-testid="spell-save-dc">@casting.SaveDc</span>@Sum(L["Actor.Skills.SumDc", casting.SaveDc - casting.AttackBonus, Signed(Pb), Abbreviation(casting.Attribute), Signed(casting.AttackBonus - Pb)], "sum-spell-dc")</dd>
                 <dt>@(multi ? L["Actor.Skills.SpellAttackBonusFor", casting.ClassName] : L["Actor.Skills.SpellAttackBonus"])</dt>
-                <dd><span data-testid="spell-attack">@Signed(casting.AttackBonus)</span>@RollButton(multi ? L["Actor.Skills.SpellAttackFor", casting.ClassName] : L["Actor.Skills.SpellAttack"], casting.AttackBonus, "roll-spell-attack")</dd>
+                <dd><span data-testid="spell-attack">@Signed(casting.AttackBonus)</span>@RollButton(multi ? L["Actor.Skills.SpellAttackFor", casting.ClassName] : L["Actor.Skills.SpellAttack"], casting.AttackBonus, "roll-spell-attack", RollKind.SpellAttack, null, true)</dd>
             }
         </dl>
     }
@@ -41,7 +41,7 @@
             {
                 <li class="list-row py-1">
                     <span class="d-flex align-items-center gap-2 flex-wrap">@SaveInput(save)</span>
-                    <span class="roll-end">@Sum(ScoreSum(save), "sum-save-" + save.Key)<span data-testid="@("save-" + save.Key)">@Signed(save.Bonus)</span>@RollButton(L["Actor.Skills.Save", save.Label], save.Bonus, "roll-save-" + save.Key)</span>
+                    <span class="roll-end">@Sum(ScoreSum(save), "sum-save-" + save.Key)<span data-testid="@("save-" + save.Key)">@Signed(save.Bonus)</span>@RollButton(L["Actor.Skills.Save", save.Label], save.Bonus, "roll-save-" + save.Key, RollKind.Save, save.Key)</span>
                 </li>
             }
         </ul>
@@ -90,7 +90,7 @@
                         }
                     }
                 </span>
-                <span class="roll-end">@Sum(ScoreSum(skill), "sum-skill-" + key)<span data-testid="@("skill-" + key)">@Signed(skill.Bonus)</span>@RollButton(L["Actor.Skills.Check", skill.Label], skill.Bonus, "roll-skill-" + key)</span>
+                <span class="roll-end">@Sum(ScoreSum(skill), "sum-skill-" + key)<span data-testid="@("skill-" + key)">@Signed(skill.Bonus)</span>@RollButton(L["Actor.Skills.Check", skill.Label], skill.Bonus, "roll-skill-" + key, RollKind.SkillCheck, skill.Key)</span>
             </li>
         }
     </ul>
@@ -119,8 +119,10 @@
     // The engine's sum taken apart: what the rank is worth (the rank's own formula, under its name) and the rest, the attribute's modifier.
     private string ScoreSum(SkillScore score)
     {
-        var parts = $"{Abbreviation(score.Attribute)} {Signed(score.Bonus - score.RankBonus)}";
-        return score.Rank == 0 || score.RankBonus == 0 ? parts : $"{parts} {score.RankLabel} {Signed(score.RankBonus)}";
+        var parts = $"{Abbreviation(score.Attribute)} {Signed(score.Bonus - score.RankBonus - score.Extra)}";
+        if (score.Rank != 0 && score.RankBonus != 0) parts = $"{parts} {score.RankLabel} {Signed(score.RankBonus)}";
+        // What features add through the roll targets is its own part, so the sum still adds up to the number beside it.
+        return score.Extra == 0 ? parts : $"{parts} {L["Actor.Skills.SumFeatures"]} {Signed(score.Extra)}";
     }
 
     private string RankName(IReadOnlyList<RankDefinition> ranks, int rank) =>
@@ -200,11 +202,11 @@
         Attributes.FirstOrDefault(a => a.Key.Equals(attribute, StringComparison.OrdinalIgnoreCase))?.Abbreviation ?? attribute.ToUpperInvariant();
 
     /// <summary>A roll is offered only where the sheet is hosted with a tray to show it.</summary>
-    private RenderFragment RollButton(string label, int bonus, string testId) => __builder =>
+    private RenderFragment RollButton(string label, int bonus, string testId, RollKind kind, string? key = null, bool addNumber = false) => __builder =>
     {
         if (!OnRoll.HasDelegate) return;
         <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Class="roll-btn" Icon="dices" Label="@L["Actor.Skills.Roll", label]" data-testid="@testId"
-                     OnClick="() => OnRoll.InvokeAsync(new RollRequest(label, bonus))" />
+                     OnClick="() => OnRoll.InvokeAsync(new RollRequest(label, bonus, kind, key, addNumber))" />
     };
 
     private static string Signed(int value) => Bidi.Ltr(value >= 0 ? "+" + value : value.ToString());

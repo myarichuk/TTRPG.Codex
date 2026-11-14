@@ -67,6 +67,38 @@
                                    @onchange="@(e => EditModifierAsync(index, m => m.When = e.Value?.ToString()?.Trim() ?? string.Empty))" />
                             <FieldError Id="@(whenId + "-error")" Message="@FormulaMessage(whenError)" TestId="grant-when-error" />
                         </div>
+                        @* A bonus the player ticks at the roll (docs/ROLL_BONUSES_DESIGN.md): never counted on the sheet, only in a roll it was ticked for. *@
+                        <div class="grants-cell grants-wide">
+                            <div class="d-flex align-items-center gap-2">
+                                <input id="@(id)-m@(n)-optin" type="checkbox" class="field-box mt-0" checked="@(modifier.OptIn != null)" disabled="@ReadOnly" data-testid="grant-optin"
+                                       @onchange="@(e => EditModifierAsync(index, m => m.OptIn = (bool)e.Value! ? new GrantOptIn() : null))" />
+                                <label for="@(id)-m@(n)-optin" class="mb-0">@L["Actor.Grants.OptIn"]</label>
+                            </div>
+                            @if (modifier.OptIn is { } optIn)
+                            {
+                                <div class="grants-row mt-1" role="group" aria-label="@L["Actor.Grants.OptInOf", n]">
+                                    <div class="grants-cell">
+                                        <label for="@(id)-m@(n)-optin-label" class="field-label">@L["Actor.Grants.OptInLabel"]</label>
+                                        <input id="@(id)-m@(n)-optin-label" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@optIn.Label" data-testid="grant-optin-label"
+                                               @onchange="@(e => EditModifierAsync(index, m => { if (m.OptIn != null) m.OptIn.Label = e.Value?.ToString()?.Trim() ?? string.Empty; }))" />
+                                    </div>
+                                    <div class="grants-cell">
+                                        <label for="@(id)-m@(n)-optin-pool" class="field-label">@L["Actor.Grants.OptInSpends"]</label>
+                                        <input id="@(id)-m@(n)-optin-pool" type="text" class="field-input field-sm" disabled="@ReadOnly" value="@optIn.SpendKey" data-testid="grant-optin-pool"
+                                               placeholder="@L["Actor.Grants.OptInSpendsPlaceholder"]"
+                                               @onchange="@(e => EditModifierAsync(index, m => { if (m.OptIn != null) m.OptIn.SpendKey = e.Value?.ToString()?.Trim() ?? string.Empty; }))" />
+                                    </div>
+                                    @if (optIn.SpendKey.Length > 0)
+                                    {
+                                        <div class="grants-cell">
+                                            <label for="@(id)-m@(n)-optin-cost" class="field-label">@L["Actor.Grants.OptInCost"]</label>
+                                            <input id="@(id)-m@(n)-optin-cost" type="number" min="1" step="1" class="field-input field-sm" disabled="@ReadOnly" value="@(optIn.SpendAmount.Length > 0 ? optIn.SpendAmount : "1")" data-testid="grant-optin-cost"
+                                                   @onchange="@(e => EditModifierAsync(index, m => { if (m.OptIn != null) m.OptIn.SpendAmount = e.Value?.ToString()?.Trim() ?? string.Empty; }))" />
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
                         @if (!ReadOnly)
                         {
                             <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Grants.RemoveModifier", n]" OnClick="() => ChangeAsync(() => data.Modifiers.RemoveAt(index))" />

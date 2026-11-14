@@ -1,0 +1,91 @@
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* "Bonuses for the next roll" (docs/ROLL_BONUSES_DESIGN.md): the sheet's opt-in bonuses across every roll it makes, each saying which rolls it fits.
+   A ticked one is taken by the next roll it fits and then unticks (the owner's RollBonusTray does that); one that does not fit stays ticked. *@
+
+@if (Offers.Count > 0)
+{
+    <fieldset class="@("roll-bonuses" + (Compact ? " roll-bonuses-compact" : ""))" data-testid="@(Compact ? "card-roll-bonuses" : "roll-bonuses")">
+        <legend class="field-label">@L["Actor.Bonus.Next"]</legend>
+        @if (!Compact)
+        {
+            <p class="field-hint" id="@(id)-hint">@L["Actor.Bonus.NextHint"]</p>
+        }
+        <ul class="list-unstyled mb-0 roll-bonus-list">
+            @foreach (var offer in Offers)
+            {
+                var shown = offer;
+                var boxId = $"{id}-{Slug(offer.Id)}";
+                var reasonId = boxId + "-why";
+                <li class="roll-bonus">
+                    <input id="@boxId" type="checkbox" class="field-box mt-0" checked="@Tray.IsTicked(offer.Id)" disabled="@(!offer.CanPay)"
+                           aria-describedby="@(offer.CanPay ? null : reasonId)" data-testid="@("roll-bonus-" + Slug(offer.Id))"
+                           @onchange="e => TickAsync(shown, (bool)e.Value!)" />
+                    <label for="@boxId" class="mb-0">@offer.Label: <bdi>@offer.Amount</bdi>@if (offer.Target != null)
+                        {
+                            <span class="small-muted">&nbsp;@AppliesText(offer.Target)</span>
+                        }
+                    </label>
+                    @if (offer.Spends is { } cost)
+                    {
+                        <span class="small-muted">@L["Actor.Bonus.Costs", cost.Amount]</span>
+                    }
+                    @if (!offer.CanPay)
+                    {
+                        <span class="small-muted" id="@reasonId" data-testid="@("roll-bonus-why-" + Slug(offer.Id))">@L["Actor.Bonus.NoUses"]</span>
+                    }
+                </li>
+            }
+        </ul>
+    </fieldset>
+}
+
+@code {
+    /// <summary>Every opt-in the sheet holds for a sheet-rules roll (<see cref="SheetRuleEngine.AllOptIns"/>).</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<RollOptIn> Offers { get; set; } = Array.Empty<RollOptIn>();
+
+    [Parameter, EditorRequired] public RollBonusTray Tray { get; set; } = null!;
+
+    /// <summary>The system as the reader reads it, for the names of attributes and skills.</summary>
+    [Parameter] public SystemDefinition? Definition { get; set; }
+
+    /// <summary>Names a Library entry (the id of <c>attack.entry.{id}</c>); the id itself when it cannot.</summary>
+    [Parameter] public Func<string, string?>? EntryName { get; set; }
+
+    /// <summary>Beside a card's rolls: no hint, and the fieldset sits tight.</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    /// <summary>Raised after a box changed, so the host shows it.</summary>
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private readonly string id = "bonus-" + Guid.NewGuid().ToString("N")[..6];
+
+    private static string Slug(string value) => new(value.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-').ToArray());
+
+    private async Task TickAsync(RollOptIn offer, bool on)
+    {
+        Tray.Set(offer.Id, on);
+        await Changed.InvokeAsync();
+    }
+
+    /// <summary>Which rolls a tick box fits, in words: "on ranged weapon attack rolls", "on Dexterity saving throws".</summary>
+    private string AppliesText(string target)
+    {
+        var (key, argument) = RollBonusTray.AppliesTo(target);
+        if (argument == null) return L[key];
+        var name = key switch
+        {
+            "Actor.Bonus.On.SaveOf" or "Actor.Bonus.On.CheckOf" => AttributeName(argument),
+            "Actor.Bonus.On.CheckSkill" => SkillName(argument),
+            _ => EntryName?.Invoke(argument) ?? argument
+        };
+        return L[key, name];
+    }
+
+    private string AttributeName(string key) => Definition?.Attributes.FirstOrDefault(a => a.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) is { } attribute ? attribute.Label : key;
+
+    private string SkillName(string key) => Definition?.SheetRules?.Skills?.List.FirstOrDefault(s => s.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) is { } skill
+        ? (string.IsNullOrWhiteSpace(skill.Label) ? key : skill.Label)
+        : key;
+}

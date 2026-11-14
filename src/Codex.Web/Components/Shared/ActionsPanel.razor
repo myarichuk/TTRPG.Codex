@@ -202,17 +202,17 @@
 
         if (action.Attack != null)
         {
-            await OnRoll.InvokeAsync(new ActionRoll(L["Actor.Actions.RollAttack", name], action.AttackBonus ?? 0, null));
+            await OnRoll.InvokeAsync(new ActionRoll(L["Actor.Actions.RollAttack", name], action.AttackBonus ?? 0, null, RollKind.WeaponAttack, action));
         }
         else if ((cost?.Damage ?? action.Damage) is { } dice && SheetAction.HasDice(dice))
         {
-            await OnRoll.InvokeAsync(new ActionRoll(DamageLabel(action, name), null, dice));
+            await OnRoll.InvokeAsync(new ActionRoll(DamageLabel(action, name), null, dice, RollKind.Damage, action));
         }
     }
 
     private Task RollDamageAsync(SheetAction action, string dice, string? alternative)
     {
         var label = DamageLabel(action, Name(action));
-        return OnRoll.InvokeAsync(new ActionRoll(alternative == null ? label : $"{label} ({alternative})", null, dice));
+        return OnRoll.InvokeAsync(new ActionRoll(alternative == null ? label : $"{label} ({alternative})", null, dice, RollKind.Damage, action));
     }
 }
