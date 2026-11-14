@@ -455,6 +455,8 @@
   <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>Ничего не добавляется.</value></data>
   <data name="Actor.Link.NoneNamed" xml:space="preserve"><value>Нет: {0}</value></data>
   <data name="Actor.Link.NotVisible" xml:space="preserve"><value>Не виден</value></data>
+  <data name="Actor.Link.Deleted" xml:space="preserve"><value>Связанная банда удалена. Её бонусы приостановлены, пока её не восстановят или вы не выберете другую банду.</value></data>
+  <data name="Actor.Link.Missing" xml:space="preserve"><value>Связанная банда не найдена. Её бонусы приостановлены, пока она не вернётся или вы не выберете другую банду.</value></data>
   <data name="Actor.Members.Heading" xml:space="preserve"><value>Участники</value></data>
   <data name="Actor.Members.Empty" xml:space="preserve"><value>Участников пока нет</value></data>
   <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>Не учитывается: учтён лучший того же типа</value></data>

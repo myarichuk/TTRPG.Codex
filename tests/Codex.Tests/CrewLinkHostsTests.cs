@@ -252,6 +252,35 @@ public class CrewLinkWidgetsTests
     }
 
     [Fact]
+    public void ARetiredOrMissingLinkedActor_IsHeld_NotLeaked_AndTheWidgetSaysWhy()
+    {
+        var group = LinkFixture.Group("c", "Old Crew", upgrades: new[] { "composed" });
+        var member = new Dictionary<string, object> { [Codex.Core.Rules.SheetModel.KindKey] = "member", ["link__group"] = group.Id };
+        var engine = new SheetRuleEngine(System, LinkFixture.All);
+
+        // In the trash: its sheet is not handed out, the link is unknown, the widget says deleted.
+        group.Retired = true;
+        var trashed = new ActorLinkedSheets(new[] { group });
+        Assert.Null(trashed.Sheet(group.Id));
+        Assert.Equal(LinkState.Unknown, SheetLinks.State(member, "group", trashed));
+        Assert.Empty(engine.ActiveFeatures(member, trashed));
+        Assert.True(engine.Evaluate(member, trashed).LinksUnknown);
+        Assert.Equal(LinkedActorStatus.Deleted, LinkWidgets.Hold(member, "group", trashed));
+
+        // Restored: it counts again, and the widget has nothing to say.
+        group.Retired = false;
+        var restored = new ActorLinkedSheets(new[] { group });
+        Assert.Equal(LinkState.Known, SheetLinks.State(member, "group", restored));
+        Assert.Equal("Composed (Group)", Assert.Single(engine.ActiveFeatures(member, restored)).Name);
+        Assert.Null(LinkWidgets.Hold(member, "group", restored));
+
+        // Not in the campaign at all: not found. No linked sheets supplied, or no link: nothing to say.
+        Assert.Equal(LinkedActorStatus.NotFound, LinkWidgets.Hold(member, "group", new ActorLinkedSheets(Array.Empty<ActorDocument>())));
+        Assert.Null(LinkWidgets.Hold(member, "group", null));
+        Assert.Null(LinkWidgets.Hold(new Dictionary<string, object>(), "group", trashed));
+    }
+
+    [Fact]
     public void SheetReferences_IgnoresLinkKeys()
     {
         var sheet = new Dictionary<string, object> { ["kind"] = "member", ["link__group"] = "an-actor-id" };
@@ -290,6 +319,28 @@ public class CrewLinkRuntimeTests : IClassFixture<RavenDbFixture>, IDisposable
         doc.State = _registry.Snapshot(new object[] { pool });
         await _actors.SaveAsync(doc);
         return doc;
+    }
+
+    [Fact]
+    public async Task ARetiredCrew_LoadedForTheSheetPage_IsDeletedAndUnknown_ThenKnownAgainOnceRestored()
+    {
+        var campaign = Guid.NewGuid().ToString();
+        var group = await StoreAsync(LinkFixture.Group(campaign, abilities: new[] { "resolve" }));
+        var member = await StoreAsync(LinkFixture.Member(campaign, "Quinn", group.Id));
+        var ids = ActorLinkedSheets.LinkedIds(member.Sheet);
+
+        group.Retired = true;
+        await _actors.SaveAsync(group);
+        var trashed = new ActorLinkedSheets(await _actors.GetForRulesAsync(Gm(campaign), ids));
+        Assert.Null(trashed.Sheet(group.Id));
+        Assert.Equal(LinkedActorStatus.Deleted, trashed.Status(group.Id));
+        Assert.Equal(LinkState.Unknown, SheetLinks.State(member.Sheet, "group", trashed));
+
+        group.Retired = false;
+        await _actors.SaveAsync(group);
+        var restored = new ActorLinkedSheets(await _actors.GetForRulesAsync(Gm(campaign), ids));
+        Assert.NotNull(restored.Sheet(group.Id));
+        Assert.Equal(LinkState.Known, SheetLinks.State(member.Sheet, "group", restored));
     }
 
     private async Task<CampaignRuntime> TableAsync(string campaignId, params ActorDocument[] actors)

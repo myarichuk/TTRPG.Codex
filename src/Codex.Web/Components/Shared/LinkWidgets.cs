@@ -29,6 +29,10 @@ public static class LinkWidgets
     /// <summary>The id the sheet stores for the link, or null when it stores none. A save keeps it whether or not the viewer can see that actor.</summary>
     public static string? Stored(IReadOnlyDictionary<string, object> sheet, string linkKey) => SheetLinks.ActorId(sheet, linkKey);
 
+    /// <summary>Why the host has no sheet for the link's actor: <see cref="LinkedActorStatus.Deleted"/> (in the trash) or <see cref="LinkedActorStatus.NotFound"/>; null when
+    /// the link names none, its sheet is supplied, or the page supplies no linked sheets. While it is set, the member's link bonuses are on hold (nothing is swept).</summary>
+    public static LinkedActorStatus? Hold(IReadOnlyDictionary<string, object> sheet, string linkKey, ILinkedSheets? linked) => SheetLinks.Gone(sheet, linkKey, linked);
+
     /// <summary>The actors whose sheets link to <paramref name="selfId"/> (a link of their kind whose kind is <paramref name="selfKind"/>), among those the viewer can see.</summary>
     public static IReadOnlyList<Choice> Members(IEnumerable<ActorDocument> visible, SystemDefinition system, string selfKind, string selfId, bool viewerIsDm) =>
         visible

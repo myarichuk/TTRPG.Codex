@@ -455,6 +455,8 @@
   <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>Nothing adds to it.</value></data>
   <data name="Actor.Link.NoneNamed" xml:space="preserve"><value>No {0}</value></data>
   <data name="Actor.Link.NotVisible" xml:space="preserve"><value>Not visible</value></data>
+  <data name="Actor.Link.Deleted" xml:space="preserve"><value>The linked crew was deleted. Its bonuses are on hold until it is restored or you pick another crew.</value></data>
+  <data name="Actor.Link.Missing" xml:space="preserve"><value>The linked crew can't be found. Its bonuses are on hold until it is back or you pick another crew.</value></data>
   <data name="Actor.Members.Heading" xml:space="preserve"><value>Members</value></data>
   <data name="Actor.Members.Empty" xml:space="preserve"><value>No members yet</value></data>
   <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>Does not count: a better one of its type does</value></data>

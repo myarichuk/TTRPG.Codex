@@ -350,6 +350,11 @@
                 {
                     <div class="small-muted" data-testid="@($"link-{link.Key}-value")">@L["Actor.Link.NotVisible"]</div>
                 }
+
+                @if (LinkWidgets.Hold(Sheet, link.Key, Linked) is { } hold)
+                {
+                    <div class="small mt-1" role="status" data-testid="@($"link-{link.Key}-hold")" data-hold="@hold.ToString().ToLowerInvariant()">@L[hold == LinkedActorStatus.Deleted ? "Actor.Link.Deleted" : "Actor.Link.Missing"]</div>
+                }
             </div>
         }
         break;

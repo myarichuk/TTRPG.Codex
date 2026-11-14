@@ -455,6 +455,8 @@
   <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>שום דבר לא מוסיף לו.</value></data>
   <data name="Actor.Link.NoneNamed" xml:space="preserve"><value>ללא {0}</value></data>
   <data name="Actor.Link.NotVisible" xml:space="preserve"><value>לא גלוי</value></data>
+  <data name="Actor.Link.Deleted" xml:space="preserve"><value>הצוות המקושר נמחק. הבונוסים שלו מושהים עד שישוחזר או עד שתבחרו צוות אחר.</value></data>
+  <data name="Actor.Link.Missing" xml:space="preserve"><value>הצוות המקושר לא נמצא. הבונוסים שלו מושהים עד שיחזור או עד שתבחרו צוות אחר.</value></data>
   <data name="Actor.Members.Heading" xml:space="preserve"><value>חברים</value></data>
   <data name="Actor.Members.Empty" xml:space="preserve"><value>אין חברים עדיין</value></data>
   <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>לא נספר: נספר הטוב יותר מאותו סוג</value></data>
