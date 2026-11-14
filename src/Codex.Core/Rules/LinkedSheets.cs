@@ -36,6 +36,14 @@ public static class SheetLinks
     public static string? ActorId(IReadOnlyDictionary<string, object> sheet, string linkKey) =>
         YamlValues.GetString(sheet, KeyOf(linkKey)) is { Length: > 0 } id ? id : null;
 
+    /// <summary>Whether a sheet key holds a link's actor id.</summary>
+    public static bool IsLinkKey(string key) => key.StartsWith(KeyPrefix, StringComparison.Ordinal);
+
+    /// <summary>A copy of the sheet without its <c>link__*</c> keys: an actor id belongs to one campaign, so a sheet that leaves it (a vault
+    /// character joining a campaign) keeps none.</summary>
+    public static Dictionary<string, object> WithoutLinks(IReadOnlyDictionary<string, object> sheet) =>
+        sheet.Where(p => !IsLinkKey(p.Key)).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
+
     public static LinkState State(IReadOnlyDictionary<string, object> sheet, string linkKey, ILinkedSheets? linked) =>
         ActorId(sheet, linkKey) == null ? LinkState.None : linked == null ? LinkState.Unknown : LinkState.Known;
 
