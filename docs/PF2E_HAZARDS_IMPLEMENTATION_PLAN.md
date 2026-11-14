@@ -19,7 +19,11 @@ Checked in code on 2026-11-14.
 | General ranked lists (Perception, weapon and armor categories, class DC, spell per tradition) | **Still a gap.** Ranks exist for `skills` and `saves` only (`SkillRules.Ranks`, `SaveRules.Ranks`) |
 | Per-type penalties (untyped penalties stack, typed take the worst) | **Still a gap.** `ModifierTypesDefinition.Penalties` is one rule for all types, and `ModifierStacking.Stack` groups untyped modifiers as one type, so `penalties: highest` would wrongly keep only the worst untyped penalty |
 | Valued conditions (frightened 2) | **Still a gap.** Only `ExhaustionRules` has a level |
-| Boosts, MAP, cooldowns, server-side check rolls, item rune slots, linked companion sheets | **Still gaps** |
+| Scoped and opt-in roll bonuses ("+1 circumstance to Athletics when grappling") | **Built (#306, #313-#315).** Targets `attack.weapon.melee`, `save.<attr>`, `check.skill.<key>`; dice amounts; tick boxes with `spends`. Feature modifiers stack by `modifierTypes`, so circumstance, status and item keep the highest. Checked 2026-11-14 |
+| Linked sheets (companions, familiars) | **Mostly built (#313, #316)** as crew links: a kind declares `links`, a `link:` feature source reads grants across, `link()` reads the other sheet's numbers. One step deep, read-only, kind to kind. A companion kind linked to its owner reading `link('owner', 'level')` should fit; not tried on a hybrid sheet |
+| Conditions on a `sheetRules` sheet, with effects | **Gap, now shared with srd5e.** Roll bonuses' `ends` is wired but unreachable on srd5e (#315), and Bless, Bane and 5.2.1 Exhaustion (−2 per level to d20 tests) wait for it. PF2e's valued conditions are the same work |
+| Degrees of success on sheet-rules rolls (Strike, skill check against a DC) | **Gap.** Only named `rolls:` have outcomes. Belongs with the server-side check service (H4a) |
+| Boosts, MAP, cooldowns, server-side check rolls, item rune slots | **Still gaps** |
 
 **Engine path: the hybrid still stands, for a new reason.** Going kinds-only is possible now, but a kind has no ranks, no entry choices, no
 free castings, no actions and no slot pools, which is what a PF2e character is built from. So `sheetRules` builds the character and one
