@@ -34,11 +34,11 @@ public sealed class SheetView
     public SheetKindDefinition? Kind => _model.Kind;
     public SheetModelResult Result { get; }
 
-    public SheetView(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet)
+    public SheetView(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked = null)
     {
         _system = system;
         Sheet = sheet;
-        _model = new SheetModel(system, resolver, sheet);
+        _model = new SheetModel(system, resolver, sheet, linked);
         Result = _model.Evaluate();
     }
 
