@@ -213,7 +213,7 @@ sheet being built, where table conditions do not apply.
 | C2 | Effects on the sheet-rules path: `SiteBonus`, the modifiers loop, opt-ins with condition ids, `value` in formulas, the hybrid routing rule | Sonnet builds; **Opus reviews the diff before C3** | The heart; srd5e golden identical until C5 |
 | C3 | `SheetConditions.LiveView` and every host in the table above; condition value keys mirrored and merged by delta | Sonnet; Opus reviews | Touches `TableEvents.cs`, `CampaignRuntime.cs`, `ActorSheetSync.cs`, `SheetCounters.cs`, `TableCard.razor`, `CombatConsole.razor`, `ActorSheet.razor`, `SheetWidget.razor` |
 | C4 | `AdjustConditionCommand` replaces `AdjustExhaustionCommand`; turn-start and turn-end decrease; rests through `decrease` | Sonnet | `RuntimeCommands.cs`, `TableRules.cs`, `VitalsHandlers.cs`, `SessionEventRedactor.cs` (it lists the `Exhaustion` event kind) |
-| C5 | srd5e data (Exhaustion; and open question 1's answer); golden | Sonnet | Rules judgment, so not Haiku |
+| C5 | srd5e data (Exhaustion; Bless, Bane and Guided in `effects:`); golden | Sonnet | Rules judgment, so not Haiku |
 | C6 | Stepper, picker, sheet page display; accessibility | Sonnet | `TableCommandPanel.razor` and the picker |
 | C7 | Strings en/ru/he; `SYSTEM_YAML_REFERENCE.md` and schema regenerated; `CHARACTER_FEATURES_GAPS.md` | Haiku for strings; Sonnet for docs | |
 
