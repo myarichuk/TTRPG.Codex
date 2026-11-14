@@ -7,3 +7,6 @@ tags:
 properties:
   category: fighting-style
   minLevel: 1
+  modifiers:
+  - target: attack.weapon.ranged
+    amount: 2

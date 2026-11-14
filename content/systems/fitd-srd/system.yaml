@@ -83,15 +83,27 @@ sheetKinds:
     label: Scoundrel
     role: player
 
+    # A scoundrel belongs to (at most) one crew of the campaign.
+    links:
+      - { key: crew, kind: crew, label: Crew }
+
     # Each special ability's own properties carry its grants (the pack's entries; see tools/Codex.ContentImport).
     features:
       - { list: abilities }
+      # The crew's abilities and upgrades as they reach each member: each entry's `members` property is the grant.
+      - { link: crew, list: abilities, property: members }
+      - { link: crew, list: upgrades, property: members }
 
     keyedLists:
       # Action ratings: twelve actions in three attributes, each a number of dots (at most two at the start of play).
       - key: actions
         label: Actions
         itemFields: [{ key: rating, type: Number, min: 0, max: 4, display: dots }]
+        # An action's value is its rating plus what raises it (the crew's Deadly ability): the roll counts a die per dot of it.
+        derive: { value: "a => a.rating" }
+        rules:
+          # Ratings stop at 3 until the crew has the Mastery upgrade.
+          - { check: "max(actions, a => a.value, 0) <= actionCap", key: Actor.Rule.ActionCap, message: "an action rating is above {actionCap}." }
         keys:
           - { key: hunt,     label: Hunt,     group: insight }
           - { key: study,    label: Study,    group: insight }
@@ -120,30 +132,32 @@ sheetKinds:
 
     values:
       # An attribute's rating is the number of its actions with at least one dot.
-      - { key: insight, formula: "count(where(actions, a => a.group == 'insight'), a => a.rating >= 1)" }
-      - { key: prowess, formula: "count(where(actions, a => a.group == 'prowess'), a => a.rating >= 1)" }
-      - { key: resolve, formula: "count(where(actions, a => a.group == 'resolve'), a => a.rating >= 1)" }
+      - { key: insight, formula: "count(where(actions, a => a.group == 'insight'), a => a.value >= 1)" }
+      - { key: prowess, formula: "count(where(actions, a => a.group == 'prowess'), a => a.value >= 1)" }
+      - { key: resolve, formula: "count(where(actions, a => a.group == 'resolve'), a => a.value >= 1)" }
       # Light 1-3, normal 4-5, heavy 6 (7-9 is encumbered, which is not a load anyone chooses).
       - { key: load,     label: Load, input: true, options: [light, normal, heavy], default: normal }
       - { key: LoadMax,  label: Load limit, formula: "load == 'light' ? 3 : load == 'heavy' ? 6 : 5", modifiers: LoadMax }
       # The special-armor box exists only while an ability gives it ("you can't use that armor box at all" otherwise).
       - { key: specialArmorBoxes, label: Special armor boxes, formula: "0", modifiers: specialArmorBoxes }
       - { key: LoadUsed, label: Load used, formula: "sum(where(items, i => i.used), i => i.load)" }
+      # Action ratings stop at 3 until the crew has Mastery.
+      - { key: actionCap, label: Action rating limit, formula: "3", modifiers: actionCap }
 
     tracks:
       # The SRD speaks of "your last stress box" without counting them; nine is the usual sheet's track.
       - key: stress
         label: Stress
-        max: 9
+        max: "9 + modifiers('stressBoxes')"   # the crew's Composed upgrade adds a box
         display: boxes
         # The last box marked: a trauma, stress clears, and the player circles one of the SRD's trauma conditions.
         overflow: { into: trauma, by: 1, then: reset, ask: { who: player, choices: [Cold, Haunted, Obsessed, Paranoid, Reckless, Soft, Unstable, Vicious] } }
       - key: trauma
         label: Trauma
-        max: 4
+        max: "4 + modifiers('traumaBoxes')"   # the crew's Hardened upgrade adds a box
         display: boxes
-        # The fourth trauma condition: the character retires or goes to prison.
-        thresholds: [{ atOrAbove: 4, condition: Retired }]
+        # The last trauma condition: the character retires or goes to prison.
+        thresholds: [{ atOrAbove: "4 + modifiers('traumaBoxes')", condition: Retired }]
       # Harm: text in slots, by level. A full level pushes new harm up a level; past level 3 is fatal.
       - key: harm
         label: Harm
@@ -171,9 +185,10 @@ sheetKinds:
       - { key: xp_playbook, label: Playbook experience, max: 8, display: boxes }
 
     layout:
-      - { section: Actions, widgets: [{ widget: table, key: actions, groupBy: group, columns: [rating] }, { widget: values, keys: [insight, prowess, resolve] }, { widget: roll, roll: action }, { widget: roll, roll: resistance }] }
+      - { section: Actions, widgets: [{ widget: table, key: actions, groupBy: group, columns: [rating, value] }, { widget: values, keys: [insight, prowess, resolve] }, { widget: roll, roll: action }, { widget: roll, roll: resistance }] }
       - { section: Condition, widgets: [{ widget: track, key: stress }, { widget: track, key: trauma }, { widget: track, key: harm }, { widget: track, key: armor }, { widget: track, key: heavy_armor }, { widget: track, key: special_armor }, { widget: moments }] }
       - { section: Abilities, widgets: [{ widget: list, key: abilities }, { widget: features }] }
+      - { section: Standing, widgets: [{ widget: link, key: crew }] }
       - { section: Load, widgets: [{ widget: values, keys: [load, LoadUsed, LoadMax] }, { widget: list, key: items, columns: [used] }] }
       - { section: Advancement, widgets: [{ widget: track, key: xp_insight }, { widget: track, key: xp_prowess }, { widget: track, key: xp_resolve }, { widget: track, key: xp_playbook }] }
       - { section: Coin, widgets: [{ widget: track, key: coin }, { widget: track, key: stash }] }
@@ -206,7 +221,7 @@ sheetKinds:
       - { key: rep, label: Reputation, max: "max(12 - turfCount, 6)", display: boxes }   # the minimum rep cost is always 6
       - { key: coin, label: Coin, min: 0 }
     layout:
-      - { section: Standing, widgets: [{ widget: values, keys: [tier, turf, hold] }, { widget: track, key: rep }, { widget: track, key: coin }] }
+      - { section: Standing, widgets: [{ widget: values, keys: [tier, turf, hold] }, { widget: track, key: rep }, { widget: track, key: coin }, { widget: members }] }
       - { section: Heat, widgets: [{ widget: track, key: heat }, { widget: track, key: wanted }] }
       - { section: Abilities, widgets: [{ widget: list, key: abilities }, { widget: list, key: upgrades }, { widget: features }] }
 
@@ -227,7 +242,7 @@ rolls:
   # carried on the result for the consequences.
   - key: action
     label: Action roll
-    pool: "actions[input.action].rating + input.bonusDice + modifiers('@pools')"
+    pool: "actions[input.action].value + input.bonusDice + modifiers('@pools')"
     die: d6
     zeroDice: { roll: 2, keep: lowest }
     keep: { highest: 1 }

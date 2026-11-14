@@ -9,3 +9,9 @@ description: >-
 source: Character playbook > Special abilities > Bodyguard
 tags:
 - example
+properties:
+  modifiers:
+  - target: '@resistance'
+    amount: 1
+    optIn:
+      label: Protecting a teammate

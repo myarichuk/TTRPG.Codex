@@ -349,6 +349,33 @@ public class SrdSheetScenarioTests : IAsyncLifetime
     }
 
     [Fact]
+    public void Archery_AddsTwoToALongbowsAttack_AndNothingToALongsword()
+    {
+        var engine = Engine();
+        var weapons = ("inventory", (object)Items("longbow|equipped:1", "longsword|equipped:1"));
+        var plain = engine.Evaluate(NewSheet("fighter", 1, weapons));
+        var archer = engine.Evaluate(NewSheet("fighter", 1, weapons, ("fightingStyles", Items("archery"))));
+
+        int Attack(Codex.Core.Rules.SheetEvaluation evaluation, string id) => evaluation.Actions.Single(a => a.Entry.Id == id).AttackBonus!.Value;
+        Assert.Equal(Attack(plain, "longbow") + 2, Attack(archer, "longbow"));
+        Assert.Equal(Attack(plain, "longsword"), Attack(archer, "longsword"));
+    }
+
+    [Fact]
+    public void SacredWeapon_IsATickBoxOnAWeaponAttack_WorthTheCharismaModifier()
+    {
+        var engine = Engine();
+        var sheet = NewSheet("paladin", 3, ("subclass", "oath-of-devotion"), ("base_cha", 16L), ("inventory", Items("longsword|equipped:1")));
+        engine.ApplyAttributeTotals(sheet); // Charisma 16: +3
+        var evaluation = engine.Evaluate(sheet);
+        var longsword = evaluation.Actions.Single(a => a.Entry.Id == "longsword");
+
+        var offered = Assert.Single(engine.OptIns(sheet, engine.AttackSite(longsword)), o => o.Label == "Sacred Weapon");
+        Assert.Equal("+3", offered.Amount);
+        Assert.DoesNotContain(longsword.Bonuses, b => b.Source.Contains("Sacred")); // ticked at the roll, never on the sheet
+    }
+
+    [Fact]
     public void ABoonCannotCarryAnEarlierAsiPastItsOwnCap()
     {
         // Base 18 + Boon +1 (cap 30) + ASI +2 (cap 20) used to pass at 21 because the higher cap won.

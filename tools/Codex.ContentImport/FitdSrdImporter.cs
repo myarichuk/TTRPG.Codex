@@ -657,6 +657,36 @@ public sealed class FitdSrdImporter(string sourceFile)
     private static (string, object) Uses(string key, long max, string moment) =>
         ("uses", Map(("key", key), ("max", max), ("recovers", Items(Map(("on", moment))))));
 
+    /// <summary>A bonus die the player ticks before the roll, because the story decides when it holds (docs/ROLL_BONUSES_DESIGN.md). It is a pool
+    /// modifier on <paramref name="target"/> that never counts on the sheet; <paramref name="action"/> scopes it to one action when the SRD's text names it.</summary>
+    private static Dictionary<string, object> OptIn(string target, string label, string? action = null)
+    {
+        var modifier = Map(("target", target), ("amount", 1L));
+        if (action != null) modifier["when"] = $"input.action == '{action}'";
+        modifier["optIn"] = Map(("label", label));
+        return modifier;
+    }
+
+    /// <summary>One ability's story-decided bonus die: <c>modifiers: [OptIn(...)]</c>.</summary>
+    private static (string, object) OptInDie(string target, string label, string? action = null) => ("modifiers", Items(OptIn(target, label, action)));
+
+    /// <summary>What a crew's entry does to each scoundrel linked to the crew (docs/CREW_LINKS_DESIGN.md): the grant map the sheet kind's
+    /// <c>link:</c> sources read from the entry's <c>members</c> property.</summary>
+    private static (string, object) Members(params (string Key, object Value)[] grants) => ("members", Map(grants));
+
+    /// <summary>A modifier that always counts, on a value the scoundrel kind declares for it (<c>stressBoxes</c>, <c>traumaBoxes</c>, <c>actionCap</c>).</summary>
+    private static (string, object) MemberValue(string target) => Members(("modifiers", Items(Map(("target", target), ("amount", 1L)))));
+
+    /// <summary>Deadly: each member raises one of three actions by one. A keyed <c>adds</c> choice only marks a key, so this is a row choice
+    /// (<c>options</c> + <c>choose</c>) whose rows each carry a modifier on that action's rating. The pick is the member's own, stored
+    /// as <c>choice__deadly__deadly</c> on the member's sheet.</summary>
+    private static (string, object) DeadlyChoice() => Members(
+        ("options", Items(DeadlyRow("Hunt", "hunt"), DeadlyRow("Prowl", "prowl"), DeadlyRow("Skirmish", "skirmish"))),
+        ("choose", Map(("id", "deadly"), ("label", "Deadly"), ("count", 1L))));
+
+    private static Dictionary<string, object> DeadlyRow(string name, string key) =>
+        Map(("name", name), ("modifiers", Items(Map(("target", "actions." + key), ("amount", 1L)))));
+
     /// <summary>The abilities whose rules change a number, add a limited use or leave a choice open, written by hand from the SRD's text and
     /// reviewed: entry type, entry id (the slug of its heading), the properties to set. A rule the engine cannot read stays text: nothing is
     /// derived from the words. The system's own <c>system.yaml</c> names the targets (<c>LoadMax</c>, <c>specialArmorBoxes</c>, <c>turfCount</c>,
@@ -676,7 +706,24 @@ public sealed class FitdSrdImporter(string sourceFile)
         ("special-ability", "shadow", new[] { SpecialArmorBox() }),
         ("special-ability", "subterfuge", new[] { SpecialArmorBox() }),
         ("special-ability", "warded", new[] { SpecialArmorBox() }),
-        ("crew-ability", "fiends", new (string, object)[] { ("modifiers", Items(Map(("target", "turfCount"), ("amount", "wanted")))) })
+        ("crew-ability", "fiends", new (string, object)[] { ("modifiers", Items(Map(("target", "turfCount"), ("amount", "wanted")))) }),
+
+        // Story-decided bonus dice: tick boxes on the roll. Each is scoped to its action only where the SRD's text names one.
+        // Ambush ("attack from hiding or spring a trap"), Trust in me ("any action can get the bonus") and Scout ("rolls to avoid detection") name none.
+        ("special-ability", "ambush", new[] { OptInDie("@pools", "From hiding or a trap") }),
+        ("special-ability", "savage", new[] { OptInDie("@pools", "Frightened target", "command") }),
+        ("special-ability", "trust-in-me", new[] { OptInDie("@pools", "Intimate target") }),
+        ("special-ability", "weaving-the-web", new[] { OptInDie("@pools", "Gathering on a target", "consort") }),
+        ("special-ability", "scout", new[] { OptInDie("@pools", "Avoiding detection") }),
+        ("special-ability", "bodyguard", new[] { OptInDie("@resistance", "Protecting a teammate") }),
+
+        // What a crew's upgrades and abilities do to each scoundrel linked to the crew (the `members` property; the kind's `link:` sources read it).
+        ("crew-upgrade", "composed", new[] { MemberValue("stressBoxes") }),
+        ("crew-upgrade", "hardened", new[] { MemberValue("traumaBoxes") }),
+        ("crew-upgrade", "mastery", new[] { MemberValue("actionCap") }),
+        ("crew-ability", "forged-in-the-fire", new[] { Members(("modifiers", Items(Map(("target", "@resistance"), ("amount", 1L))))) }),
+        ("crew-ability", "anointed", new[] { Members(("modifiers", Items(OptIn("@resistance", "Against a supernatural threat")))) }),
+        ("crew-ability", "deadly", new[] { DeadlyChoice() })
     }.Select(g => (g.Item1, g.Item2, (IReadOnlyDictionary<string, object>)g.Item3.ToDictionary(p => p.Key, p => p.Value))).ToList();
 
     /// <summary>Sets each reviewed row's properties on its entry; the description and tags stay as the SRD's text made them. A row that

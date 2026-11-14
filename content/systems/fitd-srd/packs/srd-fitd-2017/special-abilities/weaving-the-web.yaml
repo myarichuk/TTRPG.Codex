@@ -9,3 +9,10 @@ description: >-
 source: Character playbook > Special abilities > Weaving the web
 tags:
 - example
+properties:
+  modifiers:
+  - target: '@pools'
+    amount: 1
+    when: input.action == 'consort'
+    optIn:
+      label: Gathering on a target
