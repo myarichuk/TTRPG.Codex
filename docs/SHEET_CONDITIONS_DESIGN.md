@@ -1,6 +1,6 @@
 # Conditions on sheet-rules sheets, with values: design
 
-Status: designed 2026-11-14, not built. It closes the gap that `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md` (section 1) names as shared by srd5e
+Status: designed 2026-11-14, open questions decided (see the end), not built. It closes the gap that `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md` (section 1) names as shared by srd5e
 and the PF2e pack (P4): a condition that changes numbers on a `sheetRules` sheet, and a condition with a value (Exhaustion 3, frightened 2).
 
 ## What it is
@@ -159,8 +159,8 @@ sheet being built, where table conditions do not apply.
   disabled at 0 and at `max`. A condition with no value keeps its toggle.
 - **The condition picker** shows a valued condition with its value. Adding it starts at 1.
 - **Rolls and cards** name the condition in their bonus list ("Exhaustion −4"), as features are named now.
-- **The sheet page** shows the conditions that hold, read-only, while the actor is at a live table. Off the table, the GM can set them
-  there (the `conditions` key and values).
+- **The sheet page** shows the conditions that hold, read-only, while the actor is at a live table. Off the table, only the GM can set
+  them there (the `conditions` key and values); players see them read-only.
 - **Accessibility:**
   - the stepper's buttons are labelled "Raise Frightened for Ash" and "Lower...";
   - the value is in a `role="status"` span;
@@ -178,7 +178,7 @@ sheet being built, where table conditions do not apply.
 ## srd5e data
 
 - Exhaustion's effects as in "Data" (attack, save, check −2 × level, speed −5 × level). Both are SRD 5.2.1 rules text.
-- Bless and Bane, and Guidance as the `ends` example: see open question 1.
+- Bless, Bane and Guided in the new `effects:` list (decision 1).
 - **Stays text.** Most SRD conditions work through advantage, disadvantage, auto-fail or "can't act", which the engine has no word for:
   Blinded, Frightened (5e), Poisoned, Prone, Restrained and the rest. This design does not make them work, and the release note says so.
 
@@ -233,14 +233,16 @@ Every brief starts with the Serena line in `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md`
   does today.
 - PF2e's dying, wounded and doomed, which interact. They are valued conditions plus the pack's own event handlers (P4 in the plan).
 
-## Open questions
+## Decisions (2026-11-14)
 
-1. **Bless, Bane and Guidance on srd5e.** They are spell effects, not SRD conditions. Adding them to `conditions` puts three non-SRD names
-   in the picker beside the 15 conditions. Recommended: a separate top-level `effects:` list that the picker shows as its own group
-   ("Spell effects"), with `conditionEffects` allowed on both lists. Bless: +1d4 attack and save. Bane: −1d4 attack and save. Guided:
-   +1d4 on one check, opt-in, `ends`. The alternative is to leave them out, and test `ends` with a homebrew effect only.
-2. **An umbrella roll target.** "Every check and DC" in PF2e is four or five modifiers per condition, and nine conditions need it.
-   Recommended: write them out first, in the pf2 fixture. Add a generic umbrella word (`test`: attack, save and check) only if the
-   fixture is unreadable.
-3. **The sheet page off the table.** Should a player be able to set a condition on their own sheet when no table is live, or only the GM?
-   Recommended: the GM only, as with damage today.
+1. **Spell effects get their own list.**
+   - A new top-level `effects:` list (Bless, Bane, Guided) sits beside `conditions`, and `conditionEffects` may name entries of either.
+   - The picker shows them as their own group, "Spell effects", so the 15 SRD conditions stay as the SRD has them.
+   - srd5e data (C5):
+     - Bless: +1d4 to attack and save;
+     - Bane: −1d4 to attack and save;
+     - Guided: +1d4 to one check, as a tick box with `ends`.
+   - C1 parses and checks the list, and C6 adds the picker group. Each entry is translated like a condition (`SystemTranslation.Conditions`).
+2. **No umbrella roll target for now.** Data writes `attack`, `save` and `check` as separate modifiers. An umbrella word is
+   considered again only if the pf2 fixture reads badly without one.
+3. **Off the table, only the GM sets conditions and values on the sheet page.** Players see them read-only, as with damage today.
