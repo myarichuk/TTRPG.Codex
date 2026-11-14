@@ -23,9 +23,9 @@ public class SheetWidgetTests : ComponentTestBase, IClassFixture<FitdContent>
     private static readonly ActorDocument NightCrew = Actor("crew-1", "Night Crew", Crew("forged-in-the-fire"));
     private static readonly ActorDocument OtherCrew = Actor("crew-2", "Day Crew", Crew());
 
-    private IRenderedComponent<SheetWidget> Draw(LayoutWidget widget, Dictionary<string, object> sheet, Action<ComponentParameterCollectionBuilder<SheetWidget>>? more = null, bool canEdit = true, bool canRoll = true)
+    private IRenderedComponent<SheetWidget> Draw(LayoutWidget widget, Dictionary<string, object> sheet, Action<ComponentParameterCollectionBuilder<SheetWidget>>? more = null, bool canEdit = true, bool canRoll = true, ILinkedSheets? withLinked = null)
     {
-        var linked = new Linked(NightCrew, OtherCrew);
+        var linked = withLinked ?? new Linked(NightCrew, OtherCrew);
         return Render<SheetWidget>(p =>
         {
             p.Add(x => x.Widget, widget)
@@ -122,6 +122,71 @@ public class SheetWidgetTests : ComponentTestBase, IClassFixture<FitdContent>
         Assert.Empty(cut.FindAll(Id("roll-resistance-always")));
     }
 
+    // ---- The roll widget, in the reader's language ----
+
+    private static readonly ActorDocument DeadlyCrew = Actor("crew-1", "Night Crew", Crew("deadly"));
+
+    /// <summary>A scoundrel who chose Prowl for the crew's Deadly ability.</summary>
+    private static Dictionary<string, object> DeadlyProwler()
+    {
+        var sheet = Scoundrel();
+        sheet["choice__deadly__deadly"] = new List<object> { "prowl" };
+        return sheet;
+    }
+
+    [Theory]
+    [InlineData("ru", "Из укрытия или из ловушки")]
+    [InlineData("he", "ממסתור או ממלכודת")]
+    public void TheAmbushTickBox_SaysItsLabelInTheReadersLanguage_AndKeepsItsIdAndValue(string culture, string label)
+    {
+        Services.AddSingleton(Codex.Localization.Localizer.For(culture));
+        var cut = Draw(Roll("action"), Scoundrel("ambush"));
+        cut.Find(Id("roll-action-action")).Change("skirmish");
+
+        var box = cut.Find(Id("roll-action-bonuses")).QuerySelector("input[type=checkbox]")!;
+        Assert.Contains(label, cut.Find($"label[for='{box.Id}']").TextContent);
+        Assert.DoesNotContain("From hiding or a trap", cut.Find(Id("roll-action-bonuses")).TextContent);
+
+        // The language is for the eye only: the test id and the opt-in id the box is made from are the same as in English.
+        Assert.Equal("roll-action-bonus-ambush-0", box.GetAttribute("data-testid"));
+        Assert.EndsWith("-ambush-0", box.Id);
+    }
+
+    [Fact]
+    public void TheAmbushTickBox_InEnglish_HasTheSameTestIdAndIdSuffix()
+    {
+        var cut = Draw(Roll("action"), Scoundrel("ambush"));
+        cut.Find(Id("roll-action-action")).Change("skirmish");
+
+        var box = cut.Find(Id("roll-action-bonuses")).QuerySelector("input[type=checkbox]")!;
+        Assert.Equal("roll-action-bonus-ambush-0", box.GetAttribute("data-testid"));
+        Assert.EndsWith("-ambush-0", box.Id);
+    }
+
+    [Theory]
+    [InlineData("ru", "Смертоносные (Команда): Подкрадывание")]
+    [InlineData("he", "קטלניים (צוות): התגנבות")]
+    public void ADeadlyCrewBonus_IsListedUnderAlwaysCounted_WithItsSourceTranslated(string culture, string source)
+    {
+        Services.AddSingleton(Codex.Localization.Localizer.For(culture));
+        var cut = Draw(Roll("action"), DeadlyProwler(), withLinked: new Linked(DeadlyCrew));
+        cut.Find(Id("roll-action-action")).Change("prowl");
+
+        var line = Assert.Single(cut.Find(Id("roll-action-always")).QuerySelectorAll("li"));
+        Assert.Contains(source, line.TextContent);
+        Assert.DoesNotContain("Deadly", line.TextContent);
+    }
+
+    [Fact]
+    public void ADeadlyCrewBonus_InEnglish_NamesTheCrewAbilityAndTheAction()
+    {
+        var cut = Draw(Roll("action"), DeadlyProwler(), withLinked: new Linked(DeadlyCrew));
+        cut.Find(Id("roll-action-action")).Change("prowl");
+
+        var line = Assert.Single(cut.Find(Id("roll-action-always")).QuerySelectorAll("li"));
+        Assert.Contains("Deadly (Crew): Prowl", line.TextContent);
+    }
+
     // ---- The link widget ----
 
     private static readonly LayoutWidget CrewLink = new() { Widget = "link", Key = "crew" };
@@ -185,6 +250,55 @@ public class SheetWidgetTests : ComponentTestBase, IClassFixture<FitdContent>
         var cut = Draw(CrewLink, Scoundrel(), p => p.Add(x => x.Vault, true));
 
         Assert.Empty(cut.FindAll(Id("link-crew")));
+    }
+
+    // ---- The link widget, when the crew cannot be had ----
+
+    [Fact]
+    public void ADeletedCrew_IsOnHold_AndTheMemberIsToldSo()
+    {
+        var linked = new Linked(NightCrew);
+        linked.Gone.Add("crew-1");
+        var cut = Draw(CrewLink, Scoundrel(), withLinked: linked);
+
+        var hold = cut.Find(Id("link-crew-hold"));
+        Assert.Equal("status", hold.GetAttribute("role"));
+        Assert.Equal("deleted", hold.GetAttribute("data-hold"));
+        Assert.Contains("was deleted", hold.TextContent);
+        Assert.DoesNotContain("can't be found", hold.TextContent);
+        Assert.Empty(cut.FindAll(Id("link-crew-open"))); // nothing is named: its sheet is not handed out
+    }
+
+    [Fact]
+    public void AMissingCrew_IsOnHold_AndTheMemberIsToldItCannotBeFound()
+    {
+        var cut = Draw(CrewLink, Scoundrel(), withLinked: new Linked());
+
+        var hold = cut.Find(Id("link-crew-hold"));
+        Assert.Equal("status", hold.GetAttribute("role"));
+        Assert.Equal("notfound", hold.GetAttribute("data-hold"));
+        Assert.Contains("can't be found", hold.TextContent);
+        Assert.DoesNotContain("was deleted", hold.TextContent);
+    }
+
+    [Fact]
+    public void ACrewThatIsThere_HasNoHold_AndNeitherDoesASheetWithNoLink()
+    {
+        Assert.Empty(Draw(CrewLink, Scoundrel()).FindAll(Id("link-crew-hold")));
+
+        var unlinked = Scoundrel();
+        unlinked.Remove("link__crew");
+        Assert.Empty(Draw(CrewLink, unlinked, withLinked: new Linked()).FindAll(Id("link-crew-hold")));
+    }
+
+    [Fact]
+    public void TheHold_IsShownToAReaderWhoCannotEdit_Too()
+    {
+        var linked = new Linked(NightCrew);
+        linked.Gone.Add("crew-1");
+        var cut = Draw(CrewLink, Scoundrel(), withLinked: linked, canEdit: false);
+
+        Assert.Single(cut.FindAll(Id("link-crew-hold")));
     }
 
     // ---- The members widget, on the crew's own sheet ----

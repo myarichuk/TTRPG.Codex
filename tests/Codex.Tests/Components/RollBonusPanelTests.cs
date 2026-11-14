@@ -5,8 +5,12 @@ using Codex.Web.Components.Shared;
 namespace Codex.Tests.Components;
 
 /// <summary>"Bonuses for the next roll": one tick box per opt-in, kept in the owner's tray.</summary>
-public class RollBonusPanelTests : ComponentTestBase
+public class RollBonusPanelTests : ComponentTestBase, IClassFixture<FitdContent>
 {
+    private readonly FitdContent content;
+
+    public RollBonusPanelTests(FitdContent content) => this.content = content;
+
     private static readonly RollOptIn Ambush = new("ambush#0", "Ambush", "+1d", "Ambush", null, true, null, "check");
     private static readonly RollOptIn Spent = new("charm#0", "Lucky charm", "+1", "Charm", new RollOptInSpend("uses_charm", 1), false, null, "attack.weapon.ranged");
 
@@ -95,6 +99,24 @@ public class RollBonusPanelTests : ComponentTestBase
         Assert.Equal(why.Id, box.GetAttribute("aria-describedby"));
         Assert.Null(cut.Find(Id("roll-bonus-ambush-0")).GetAttribute("aria-describedby"));
         Assert.Contains("costs 1", cut.Find("li:nth-child(2)").TextContent);
+    }
+
+    [Theory]
+    [InlineData("ru", "Из укрытия или из ловушки")]
+    [InlineData("he", "ממסתור או ממלכודת")]
+    public void WithNames_TheLabelIsInTheReadersLanguage_ButTheBoxKeepsItsIds(string culture, string label)
+    {
+        var offer = Ambush with { Label = "From hiding or a trap" };
+        var names = RollBonusNames.For(content.Registry, content.System, culture);
+        var tray = new RollBonusTray();
+        var cut = Render<RollBonusPanel>(p => p.Add(x => x.Offers, new[] { offer }).Add(x => x.Tray, tray).Add(x => x.Names, names));
+
+        var box = cut.Find(Id("roll-bonus-ambush-0"));
+        Assert.Contains(label, cut.Find($"label[for='{box.Id}']").TextContent);
+        Assert.DoesNotContain("From hiding or a trap", cut.Markup);
+
+        box.Change(true);
+        Assert.True(tray.IsTicked("ambush#0"));
     }
 
     [Fact]

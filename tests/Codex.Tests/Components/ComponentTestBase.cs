@@ -31,7 +31,12 @@ public sealed class FitdContent : IAsyncLifetime
 {
     private static readonly IReadOnlySet<string> Packs = new HashSet<string> { "srd-fitd-2017" };
 
+    private PluginLoader loader = null!;
+
     public SystemDefinition System { get; private set; } = null!;
+
+    /// <summary>Any other loaded system, by id (the card tests use the fifth-edition one).</summary>
+    public SystemDefinition SystemById(string id) => loader.GetDefinition(id)!;
     public IEntryResolver Resolver { get; private set; } = null!;
 
     /// <summary>The loaded content, for components that look up entries' translated names.</summary>
@@ -40,7 +45,7 @@ public sealed class FitdContent : IAsyncLifetime
     public async Task InitializeAsync()
     {
         var registry = Registry = new ContentRegistry();
-        var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(registry));
+        var loader = this.loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(registry));
         await loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
         System = loader.GetDefinition("fitd-srd")!;
         Resolver = new PackResolver(registry);
@@ -70,10 +75,15 @@ public sealed class FitdContent : IAsyncLifetime
 
     public static ActorDocument Actor(string id, string name, Dictionary<string, object> sheet) => new() { Id = id, CampaignId = "camp-1", Name = name, Sheet = sheet };
 
-    /// <summary>Hands out the sheets of the actors a sheet links to.</summary>
+    /// <summary>Hands out the sheets of the actors a sheet links to. An actor it has no sheet for is not found, unless <see cref="Gone"/> says it was deleted.</summary>
     public sealed class Linked(params ActorDocument[] actors) : ILinkedSheets
     {
-        public IReadOnlyDictionary<string, object>? Sheet(string actorId) => actors.FirstOrDefault(a => a.Id == actorId)?.Sheet;
+        /// <summary>The ids of actors that are in the trash: no sheet is handed out for them, and the status says why.</summary>
+        public HashSet<string> Gone { get; } = new();
+
+        public IReadOnlyDictionary<string, object>? Sheet(string actorId) => Gone.Contains(actorId) ? null : actors.FirstOrDefault(a => a.Id == actorId)?.Sheet;
+
+        public LinkedActorStatus Status(string actorId) => Gone.Contains(actorId) ? LinkedActorStatus.Deleted : Sheet(actorId) == null ? LinkedActorStatus.NotFound : LinkedActorStatus.Available;
     }
 
     private sealed class PackResolver(ContentRegistry registry) : IEntryResolver

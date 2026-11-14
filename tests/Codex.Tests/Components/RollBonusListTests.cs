@@ -5,8 +5,12 @@ using Codex.Web.Components.Shared;
 namespace Codex.Tests.Components;
 
 /// <summary>The list of bonuses a roll counted, or always counts (docs/ROLL_BONUSES_DESIGN.md).</summary>
-public class RollBonusListTests : ComponentTestBase
+public class RollBonusListTests : ComponentTestBase, IClassFixture<FitdContent>
 {
+    private readonly FitdContent content;
+
+    public RollBonusListTests(FitdContent content) => this.content = content;
+
     private IRenderedComponent<RollBonusList> Render(IReadOnlyList<RollBonus> bonuses, bool pool = false, string? testId = "bonuses")
         => Render<RollBonusList>(p => p.Add(x => x.Bonuses, bonuses).Add(x => x.Caption, "Always counted").Add(x => x.Pool, pool).Add(x => x.TestId, testId));
 
@@ -71,6 +75,30 @@ public class RollBonusListTests : ComponentTestBase
 
         Assert.Empty(cut.FindAll(Id("bonuses")));
         Assert.Empty(cut.FindAll("ul"));
+    }
+
+    [Theory]
+    [InlineData("ru", "Смертоносные", "Смертоносные (Команда): Подкрадывание")]
+    [InlineData("he", "קטלניים", "קטלניים (צוות): התגנבות")]
+    public void WithNames_ABonusAndItsSource_AreShownInTheReadersLanguage(string culture, string label, string source)
+    {
+        var names = RollBonusNames.For(content.Registry, content.System, culture);
+        var cut = Render<RollBonusList>(p => p
+            .Add(x => x.Bonuses, new[] { new RollBonus(null, "Deadly (Crew): Prowl", "Deadly", 1, false) })
+            .Add(x => x.Caption, "Always counted").Add(x => x.TestId, "bonuses").Add(x => x.Names, names));
+
+        var line = Assert.Single(cut.Find(Id("bonuses")).QuerySelectorAll("li"));
+        Assert.Contains(label, line.TextContent);
+        Assert.Contains($"({source})", line.TextContent);
+        Assert.DoesNotContain("Deadly", line.TextContent);
+    }
+
+    [Fact]
+    public void WithoutNames_ABonusIsShownAsWritten()
+    {
+        var cut = Render(new[] { new RollBonus(null, "Deadly (Crew): Prowl", "Deadly", 1, false) });
+
+        Assert.Contains("Deadly (Crew): Prowl", cut.Find("li").TextContent);
     }
 
     [Fact]
