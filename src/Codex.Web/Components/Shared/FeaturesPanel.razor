@@ -19,7 +19,7 @@
                     var max = counter.Max;
                     var current = Math.Clamp(YamlValues.GetInt(Sheet, counter.Key) ?? max, 0, max);
                     <li class="slot-row" data-testid="feature-counter-@counter.Key">
-                        <span class="slot-level">@counter.Label</span>
+                        <span class="slot-level">@Shown.Source(counter.Label)</span>
                         @if (max <= 10)
                         {
                             <span class="slot-pips" aria-hidden="true">
@@ -34,11 +34,11 @@
                         {
                             <span class="ms-auto d-flex gap-1">
                                 <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current <= 0)" data-testid="@($"feature-use-{counter.Key}")"
-                                             aria-label="@L["Actor.Features.UseOther", counter.Label]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, -1, counter.Label))">@L["Actor.Slots.Use"]</CodexButton>
+                                             aria-label="@L["Actor.Features.UseOther", Shown.Source(counter.Label)]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, -1, counter.Label))">@L["Actor.Slots.Use"]</CodexButton>
                                 @if (counter.CanRegain(IsDm))
                                 {
                                     <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="@(current >= max)" data-testid="@($"feature-regain-{counter.Key}")"
-                                                 aria-label="@L["Actor.Features.RegainOther", counter.Label]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, 1, counter.Label))">@L["Actor.Slots.Regain"]</CodexButton>
+                                                 aria-label="@L["Actor.Features.RegainOther", Shown.Source(counter.Label)]" OnClick="() => OnAdjust.InvokeAsync((counter.Key, 1, counter.Label))">@L["Actor.Slots.Regain"]</CodexButton>
                                 }
                             </span>
                         }
@@ -48,7 +48,7 @@
 
         }
 
-        <FeatureSpenders Evaluation="evaluation" Definition="Definition" Value="key => YamlValues.GetInt(Sheet, key)" ReadOnly="ReadOnly" Spend="SpendAsync" TestPrefix="feature" />
+        <FeatureSpenders Evaluation="evaluation" Definition="Definition" Names="Names" Value="key => YamlValues.GetInt(Sheet, key)" ReadOnly="ReadOnly" Spend="SpendAsync" TestPrefix="feature" />
 
         @if (evaluation.Counters.Count > 0)
         {
@@ -70,7 +70,7 @@
                 @foreach (var line in Lines)
                 {
                     <li class="@(line.Counted ? null : "text-muted")">
-                        @line.Text <span class="small-muted">· @line.Feature@(line.Counted ? string.Empty : " · " + L["Actor.Features.NotCounted"])</span>
+                        @line.Text <span class="small-muted">· @Shown.Source(line.Feature)@(line.Counted ? string.Empty : " · " + L["Actor.Features.NotCounted"])</span>
                     </li>
                 }
             </ul>
@@ -92,6 +92,11 @@
 
     /// <summary>Names an entry a feature added to a list, in the reader's language; the id when it cannot.</summary>
     [Parameter] public Func<string, string, string>? EntryName { get; set; }
+
+    /// <summary>Says the names of features in the reader's language (the packs' own translations); as written when not given.</summary>
+    [Parameter] public RollBonusNames? Names { get; set; }
+
+    private RollBonusNames Shown => Names ?? RollBonusNames.English;
 
     [Parameter] public bool ReadOnly { get; set; }
 

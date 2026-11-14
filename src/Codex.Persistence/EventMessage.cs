@@ -83,6 +83,18 @@ public sealed record EventTerm(string Kind, string Key, string Text)
     public const string SlotKind = "slot";
     public const string UserKind = "user";
 
+    /// <summary>What a roll bonus says in a roll's log line (a tick box's label): the key is the label and the feature it came from, joined by
+    /// <see cref="BonusSeparator"/> (<see cref="Bonus"/>), as the roll's label is built from.</summary>
+    public const string BonusKind = "bonus";
+
+    /// <summary>Between a bonus's label and its source in the key of a <see cref="BonusKind"/> term (a control character, so no name holds it).</summary>
+    public const char BonusSeparator = '\u001f';
+
+    public static EventTerm Bonus(string label, string source) => new(BonusKind, label + BonusSeparator + source, label);
+
+    /// <summary>An amount of dice a pool roll's bonus adds (the key is the signed number, <c>+1</c>), said as the reader says it (<c>+1d</c>).</summary>
+    public const string DiceKind = "dice";
+
     /// <summary>A word of the campaign's system: a track's label, an event's or a log line's key (overhaul step 6).</summary>
     public const string SystemKind = "system";
 

@@ -6,6 +6,7 @@
 @using Codex.Plugin.Abstractions
 @implements IAsyncDisposable
 @inject CampaignRuntimeManager RuntimeManager
+@inject IContentRegistry ContentRegistry
 @inject Codex.Web.Services.ViewerClock ViewerTime
 @inject IActorRepository ActorRepo
 @inject ISessionRepository SessionRepo
@@ -169,7 +170,7 @@ else
         </div>
 
         <div class="col-lg-4">
-            <TableDicePanel Rolls="VisibleRollLog()" RollerName="ResolveRollerName" IsDm="Access.IsDm" OnRoll="RollDiceAsync"
+            <TableDicePanel Rolls="VisibleRollLog()" RollerName="ResolveRollerName" RollLabel="RollLabel" Word="RollWord" IsDm="Access.IsDm" OnRoll="RollDiceAsync"
                             ActorHref="@(actorId => ActorsById.ContainsKey(actorId) ? ActorHref(actorId) : null)" />
 
 
@@ -777,6 +778,26 @@ else
             await OnMessage.InvokeAsync(Flash.Error(L["Combat.CommandFailed"]));
         }
     }
+
+    // What a roll's line says in this viewer's language: the roll's name and the bonuses it counted (the stored English where there is no translation).
+    private EventTermText? rollTerms;
+    private string? rollTermsCulture;
+    private SystemDefinition? rollTermsDefinition;
+
+    private string? RollLabel(RollLogEntry entry)
+    {
+        if (rollTerms == null || rollTermsCulture != L.Culture.Name || !ReferenceEquals(rollTermsDefinition, Definition))
+        {
+            rollTermsCulture = L.Culture.Name;
+            rollTermsDefinition = Definition;
+            rollTerms = Codex.Web.Services.EventTerms.For(Definition, L, new Dictionary<string, string>(), ContentRegistry);
+        }
+
+        return RollLogText.Label(entry, rollTerms);
+    }
+
+    // A word of the system a roll's line shows on its own (its outcome, a sheet roll's key), in the reader's language.
+    private string RollWord(string word) => Definition?.DisplayOption(L.Culture.Name, string.Empty, word) ?? word;
 
     private IEnumerable<RollLogEntry> VisibleRollLog() =>
         TableVisibility.Rolls(snapshot.RollLog, Access.IsDm, VisibleActorIds);

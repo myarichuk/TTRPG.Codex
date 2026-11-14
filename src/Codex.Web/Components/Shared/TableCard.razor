@@ -139,7 +139,7 @@
                     </ul>
                 }
 
-                <FeatureSpenders Evaluation="Evaluation" Definition="Definition" Value="key => State?.Pool(key)" ReadOnly="@(!CanAct)" Spend="SpendAsync" TestPrefix="table-card" />
+                <FeatureSpenders Evaluation="Evaluation" Definition="Definition" Names="BonusNames" Value="key => State?.Pool(key)" ReadOnly="@(!CanAct)" Spend="SpendAsync" TestPrefix="table-card" />
 
                 @if (Evaluation is { Actions.Count: > 0 })
                 {
