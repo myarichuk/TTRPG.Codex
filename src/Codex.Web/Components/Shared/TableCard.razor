@@ -314,6 +314,9 @@
     /// <summary>The engine that reads the sheet's roll bonuses; the card has none until the table loads one.</summary>
     [Parameter] public SheetRuleEngine? Engine { get; set; }
 
+    /// <summary>Where the creature's linked sheets come from, so a bonus a link brings (a crew's) is offered and counted (docs/CREW_LINKS_DESIGN.md).</summary>
+    [Parameter] public ILinkedSheets? Linked { get; set; }
+
     // The bonuses ticked for this creature's next roll, and what it offers: kept in step with its sheet and live pools.
     private readonly RollBonusTray tray = new();
     private IReadOnlyList<RollOptIn> bonusOffers = Array.Empty<RollOptIn>();
@@ -326,7 +329,7 @@
             try
             {
                 // The card rolls attacks and damage; a box for checks would stay ticked with nothing to take it.
-                bonusOffers = Engine.AllOptIns(LiveSheet()).Where(RollBonusTray.FitsCard).ToList();
+                bonusOffers = Engine.AllOptIns(LiveSheet(), Linked).Where(RollBonusTray.FitsCard).ToList();
             }
             catch (Exception ex) when (ex is FormulaException or InvalidOperationException)
             {
@@ -353,7 +356,7 @@
     {
         var bonus = roll.CheckBonus ?? 0;
         var expression = roll.Expression ?? CheckDie + (bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString());
-        var built = tray.Build(Engine, LiveSheet(), RollBonusTray.SiteOf(Engine, roll.Kind, null, roll.Action), expression, roll.Label);
+        var built = tray.Build(Engine, LiveSheet(), RollBonusTray.SiteOf(Engine, roll.Kind, null, roll.Action), expression, roll.Label, linked: Linked);
         // What a ticked bonus spends is the table's to take; a refused spend rolls nothing.
         if (!await RollBonusTray.PayAsync(built.Applied, SpendAsync)) return;
         tray.Used(built.Applied);

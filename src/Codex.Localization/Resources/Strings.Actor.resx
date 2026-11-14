@@ -453,6 +453,10 @@
   <data name="Actor.Widget.More" xml:space="preserve"><value>One more {0}</value></data>
   <data name="Actor.Widget.Name" xml:space="preserve"><value>Name</value></data>
   <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>Nothing adds to it.</value></data>
+  <data name="Actor.Link.NoneNamed" xml:space="preserve"><value>No {0}</value></data>
+  <data name="Actor.Link.NotVisible" xml:space="preserve"><value>Not visible</value></data>
+  <data name="Actor.Members.Heading" xml:space="preserve"><value>Members</value></data>
+  <data name="Actor.Members.Empty" xml:space="preserve"><value>No members yet</value></data>
   <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>Does not count: a better one of its type does</value></data>
   <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} of {1}</value></data>
   <data name="Actor.Widget.Remove" xml:space="preserve"><value>Remove</value></data>

@@ -11,7 +11,7 @@ public static class SheetLayout
 {
     /// <summary>Widgets any system may use, bound to its own keys.</summary>
     public static readonly IReadOnlySet<string> GenericWidgets =
-        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "values", "track", "list", "table", "roll", "text", "modifiers", "moments" };
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "values", "track", "list", "table", "roll", "text", "modifiers", "moments", "link", "members" };
 
     /// <summary>The widgets the host builds in, and what each reads: 5e's panels, which read <see cref="SheetRules"/>.</summary>
     public static readonly IReadOnlyDictionary<string, string> BuiltinWidgets = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -224,6 +224,16 @@ public static class SheetLayout
             case "moments":
                 // The buttons of the moments that touch the sheet; with none declared there is nothing to press.
                 if (system.Moments.Count == 0 && system.Vitals?.Rests.Count is null or 0) yield return "moments: the system declares no moments, so it shows nothing.";
+                break;
+            case "link":
+                // The actor this kind's sheet links to (docs/CREW_LINKS_DESIGN.md): a select of the campaign's actors of the link's kind.
+                if (widget.Key is not { Length: > 0 } linkKey) yield return "link needs a key.";
+                else if (!kind.Links.Any(l => l.Key == linkKey)) yield return $"link: {linkKey} is not a link of {kind.Kind}.";
+                break;
+            case "members":
+                // Who links to this kind's sheets, read only: it needs a kind that links to this one.
+                if (!system.SheetKinds.Any(k => k.Links.Any(l => string.Equals(l.Kind, kind.Kind, StringComparison.OrdinalIgnoreCase))))
+                    yield return $"members: no sheet kind links to {kind.Kind}, so it shows nothing.";
                 break;
         }
     }

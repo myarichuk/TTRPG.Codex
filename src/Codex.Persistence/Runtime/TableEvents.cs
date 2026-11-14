@@ -37,9 +37,10 @@ internal static class TableEvents
     }
 
     /// <param name="dice">Where a script handler's <c>ctx.d</c> rolls (null: at random); the faces it rolled are logged.</param>
-    /// <param name="linked">Resolves the sheets linked actors' links point to; none: a link is unknown and the sheet's link features are not counted (and not dropped).</param>
+    /// <param name="linked">Resolves the sheets linked actors' links point to; none: the runtime's own cached documents (<see cref="CampaignRuntime.LinkedFor"/>: unknown when it links to an actor the table does not hold).</param>
     public static Outcome Raise(CampaignRuntime runtime, string actorId, SheetEvent ev, IDiceSource? dice = null, ILinkedSheets? linked = null)
     {
+        linked ??= runtime.LinkedFor(runtime.GetActorDocument(actorId)?.Sheet);
         var rolled = new RecordingDice(dice ?? RandomDiceSource.Shared);
         return Change(runtime, actorId, ev.Type, (system, live, messages) =>
         {
@@ -120,6 +121,7 @@ internal static class TableEvents
     /// <paramref name="made"/> receives the roll, for the roll log; null when the actor or the system is not there.</summary>
     public static Outcome Roll(CampaignRuntime runtime, string actorId, SheetRollRequest request, IDiceSource dice, out SheetRollResult? made, ILinkedSheets? linked = null)
     {
+        linked ??= runtime.LinkedFor(runtime.GetActorDocument(actorId)?.Sheet);
         SheetRollResult? rolled = null;
         var outcome = Change(runtime, actorId, request.Definition, (system, live, messages) =>
         {
@@ -146,6 +148,7 @@ internal static class TableEvents
             return Outcome.None;
         }
 
+        linked ??= runtime.LinkedFor(doc.Sheet);
         var messages = new List<EventMessage>();
         var touched = new List<string> { actorId };
         SheetIntentResult result;
@@ -167,6 +170,7 @@ internal static class TableEvents
     private static void Follow(CampaignRuntime runtime, SystemDefinition system, string? actorId, SheetIntentResult result, List<EventMessage> messages, List<string> touched,
         ILinkedSheets? linked = null)
     {
+        // `linked` is this actor's own; another actor's direct intent is worked out with that actor's links.
         foreach (var left in result.Left)
         {
             if (SheetEvents.TableKinds.Contains(left.Kind, StringComparer.Ordinal))
@@ -180,10 +184,11 @@ internal static class TableEvents
                 if (runtime.GetEntity(other) is { } otherEntity && runtime.GetActorDocument(other) is { } otherDoc)
                 {
                     var fields = left.Fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => f.Value, StringComparer.Ordinal);
+                    var theirLinked = runtime.LinkedFor(otherDoc.Sheet);
                     try
                     {
                         var theirs = Apply(runtime, system, other, otherEntity, otherDoc,
-                            live => SheetEvents.Raise(system, runtime.Resolver, live, new SheetEvent(left.Kind, fields), other, runtime.CampaignObjectState, null, linked).Applied, messages, linked);
+                            live => SheetEvents.Raise(system, runtime.Resolver, live, new SheetEvent(left.Kind, fields), other, runtime.CampaignObjectState, null, theirLinked).Applied, messages, theirLinked);
                         foreach (var further in theirs.Left) messages.Add(Said(runtime, system, other, further));
                     }
                     catch (SheetEventException ex)

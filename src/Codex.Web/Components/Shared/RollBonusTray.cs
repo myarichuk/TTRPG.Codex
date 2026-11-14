@@ -43,11 +43,11 @@ public sealed class RollBonusTray
     /// <summary>Takes a roll's base expression and label and adds what the sheet's features give the roll at <paramref name="site"/>: the always-on dice,
     /// and the ticked opt-ins that fit (dice or numbers, as each says). <paramref name="addNumber"/> adds the always-on numbers too, for a roll whose
     /// own bonus does not hold them already (the sheet's spell attack). Nothing changes without an engine, a sheet or a site.</summary>
-    public BuiltRoll Build(SheetRuleEngine? engine, IReadOnlyDictionary<string, object>? sheet, RollSite? site, string expression, string label, bool addNumber = false)
+    public BuiltRoll Build(SheetRuleEngine? engine, IReadOnlyDictionary<string, object>? sheet, RollSite? site, string expression, string label, bool addNumber = false, ILinkedSheets? linked = null)
     {
         if (engine == null || sheet == null || site == null) return new BuiltRoll(expression, label, Array.Empty<RollOptIn>());
 
-        var always = engine.Bonuses(sheet, site);
+        var always = engine.Bonuses(sheet, site, linked);
         var text = new StringBuilder(expression);
         var parts = new List<string>();
         if (addNumber && always.Number != 0)
@@ -64,7 +64,7 @@ public sealed class RollBonusTray
 
         var applied = _ticked.Count == 0
             ? new List<RollOptIn>()
-            : engine.OptIns(sheet, site).Where(o => _ticked.Contains(o.Id) && o.CanPay).ToList();
+            : engine.OptIns(sheet, site, linked).Where(o => _ticked.Contains(o.Id) && o.CanPay).ToList();
         foreach (var optIn in applied)
         {
             text.Append(optIn.Amount);

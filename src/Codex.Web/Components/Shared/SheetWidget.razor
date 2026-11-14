@@ -1,6 +1,7 @@
 @using Codex.Core
 @using Codex.Core.Rules
 @using Codex.Plugin.Abstractions
+@using Codex.Persistence
 @using System.Globalization
 
 @* One generic widget of a sheet kind's layout (overhaul step 6): values, track, list, table, roll, text or modifiers, bound to the
@@ -313,6 +314,70 @@
         }
         break;
 
+    case "link":
+        // The actor this sheet links to (a scoundrel's crew). A vault character has no campaign, so nothing to link to.
+        @if (!Vault && View.Kind?.Links.FirstOrDefault(l => l.Key == Widget.Key) is { } link)
+        {
+            var stored = LinkWidgets.Stored(Sheet, link.Key);
+            var chosen = LinkWidgets.Chosen(Actors, stored, ViewerIsDm);
+            var linkId = $"{id}-link-{link.Key}";
+            <div class="sheet-link mb-2" data-testid="@($"link-{link.Key}")">
+                <label for="@linkId" class="field-label">@link.Label</label>
+                @if (CanEdit)
+                {
+                    <select id="@linkId" class="field-select field-sm" @onchange="e => SetLinkAsync(link.Key, e.Value?.ToString())" data-testid="@($"link-{link.Key}-select")">
+                        <option value="" selected="@(stored == null)">@L["Actor.Link.NoneNamed", link.Label]</option>
+                        @foreach (var option in LinkWidgets.Options(Actors, link, ActorId, stored, ViewerIsDm))
+                        {
+                            <option value="@option.Id" selected="@(option.Id == stored)">@option.Name</option>
+                        }
+                        @if (stored != null && chosen == null)
+                        {
+                            <option value="@stored" selected="selected">@L["Actor.Link.NotVisible"]</option>
+                        }
+                    </select>
+                }
+                else if (stored == null)
+                {
+                    <div data-testid="@($"link-{link.Key}-value")">@L["Actor.Link.NoneNamed", link.Label]</div>
+                }
+
+                @if (chosen != null)
+                {
+                    <div class="small mt-1" data-testid="@($"link-{link.Key}-open")"><a href="@ActorHref(chosen.Id)"><bdi>@chosen.Name</bdi></a></div>
+                }
+                else if (stored != null && !CanEdit)
+                {
+                    <div class="small-muted" data-testid="@($"link-{link.Key}-value")">@L["Actor.Link.NotVisible"]</div>
+                }
+            </div>
+        }
+        break;
+
+    case "members":
+        // The actors that link here, read only, named as this viewer may see them.
+        @if (!Vault && View.Kind != null && ActorId != null)
+        {
+            var members = LinkWidgets.Members(Actors, Definition, View.Kind.Kind, ActorId, ViewerIsDm);
+            <div class="sheet-members mb-2" data-testid="widget-members">
+                <div class="field-label" id="@($"{id}-members")">@(Widget.Label ?? L["Actor.Members.Heading"])</div>
+                @if (members.Count == 0)
+                {
+                    <p class="small-muted mb-0" data-testid="members-empty">@L["Actor.Members.Empty"]</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0" aria-labelledby="@($"{id}-members")">
+                        @foreach (var member in members)
+                        {
+                            <li data-testid="@($"member-{member.Id}")"><a href="@ActorHref(member.Id)"><bdi>@member.Name</bdi></a></li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+        break;
+
     case "text":
         <div class="mb-2">
             <label for="@($"{id}-{Widget.Key}")" class="field-label">@(Widget.Label ?? Widget.Key)</label>
@@ -411,6 +476,35 @@
 
     [Parameter] public EventCallback<SheetRollRequest> OnRoll { get; set; }
 
+    /// <summary>Where the sheet's linked actors' sheets come from, so a roll counts what a link brings (docs/CREW_LINKS_DESIGN.md); none: it does not.</summary>
+    [Parameter] public ILinkedSheets? Linked { get; set; }
+
+    /// <summary>The campaign's actors this viewer may see: what the link and members widgets name and offer.</summary>
+    [Parameter] public IEnumerable<ActorDocument> Actors { get; set; } = Array.Empty<ActorDocument>();
+
+    /// <summary>The actor whose sheet this is, and its campaign (for the links to other sheets).</summary>
+    [Parameter] public string? ActorId { get; set; }
+    [Parameter] public string? CampaignId { get; set; }
+    [Parameter] public bool ViewerIsDm { get; set; }
+
+    /// <summary>A vault character belongs to no campaign: the link and members widgets show nothing.</summary>
+    [Parameter] public bool Vault { get; set; }
+
+    /// <summary>Raised after the link changed (its actor id is written on the sheet), so the page loads the new linked sheet before it re-runs the rules.</summary>
+    [Parameter] public EventCallback LinkChanged { get; set; }
+
+    private string ActorHref(string actorId) => MentionLinks.Href(CampaignId ?? string.Empty, MentionKind.Actor, actorId);
+
+    private async Task SetLinkAsync(string linkKey, string? actorId)
+    {
+        if (!CanEdit) return;
+        // The stored id of an actor this viewer cannot see stays unless they pick another or "None" themself.
+        if (string.IsNullOrEmpty(actorId)) Sheet.Remove(SheetLinks.KeyOf(linkKey));
+        else Sheet[SheetLinks.KeyOf(linkKey)] = actorId;
+        if (LinkChanged.HasDelegate) await LinkChanged.InvokeAsync();
+        else await Changed.InvokeAsync();
+    }
+
     private readonly string id = "w-" + Guid.NewGuid().ToString("N")[..6];
 
     // A compiled widget is asked once per worked-out sheet (the page makes a new SheetView on every edit), not on every render.
@@ -438,7 +532,7 @@
         if (!CanEdit) return;
         var intents = action.Intents.Select(i => new SheetIntent(i.Kind, i.Fields.TryGetValue("actor", out var actor) ? actor?.ToString() : null,
             i.Fields.Where(f => f.Key != "actor").ToDictionary(f => f.Key, f => f.Value, StringComparer.Ordinal))).ToList();
-        var applied = SheetIntents.Apply(Definition, Resolver, Sheet, intents);
+        var applied = SheetIntents.Apply(Definition, Resolver, Sheet, intents, linked: Linked);
         if (applied.Left.Count > 0) await Left.InvokeAsync(applied.Left);
         await Changed.InvokeAsync();
     }
@@ -460,7 +554,7 @@
 
     private async Task IntentAsync(SheetIntent intent)
     {
-        var applied = SheetIntents.Apply(Definition, Resolver, Sheet, new[] { intent });
+        var applied = SheetIntents.Apply(Definition, Resolver, Sheet, new[] { intent }, linked: Linked);
         if (applied.Left.Count > 0) await Left.InvokeAsync(applied.Left);
         await Changed.InvokeAsync();
     }
@@ -564,7 +658,7 @@
     {
         try
         {
-            var offered = SheetRolls.OptIns(Definition, Resolver, Sheet, definition.Key, Supplied(definition));
+            var offered = SheetRolls.OptIns(Definition, Resolver, Sheet, definition.Key, Supplied(definition), Linked);
             // A tick whose box went away (the input changed) is not carried to the roll.
             if (ticked.TryGetValue(definition.Key, out var ids)) ids.IntersectWith(offered.Select(o => o.Id));
             return offered;
@@ -580,7 +674,7 @@
     {
         try
         {
-            return SheetRolls.Bonuses(Definition, Resolver, Sheet, definition.Key, Supplied(definition));
+            return SheetRolls.Bonuses(Definition, Resolver, Sheet, definition.Key, Supplied(definition), Linked);
         }
         catch (Exception ex) when (ex is RollException or FormulaException or InvalidOperationException)
         {

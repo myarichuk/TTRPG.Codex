@@ -24,6 +24,15 @@ public class ActorRepository(RavenDbService dbService) : IActorRepository
         return CanSee(actor, access) ? Redact(actor, access, access.IsDm ? null : await OwnedActors.OfAsync(session, access)) : null;
     }
 
+    public async Task<IReadOnlyList<ActorDocument>> GetForRulesAsync(CampaignAccess access, IEnumerable<string> actorIds)
+    {
+        var ids = actorIds.Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+        if (ids.Count == 0 || string.IsNullOrEmpty(access.CampaignId)) return Array.Empty<ActorDocument>();
+        using var session = dbService.Store.OpenAsyncSession();
+        var loaded = await session.LoadAsync<ActorDocument>(ids);
+        return loaded.Values.Where(a => a != null && !a.IsVault && a.CampaignId == access.CampaignId).ToList();
+    }
+
     // The history each copy of a player's own character was handed out with (and, after a save, the history as it then stood), so
     // their save can tell whether they changed it, and whether the DM changed it since they were given it.
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ActorDocument, string> GivenHistory = new();
