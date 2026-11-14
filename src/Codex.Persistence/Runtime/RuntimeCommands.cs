@@ -257,30 +257,35 @@ public sealed record StabilizeCommand(string ActorId, string SourceId) : IUndoab
         new[] { ActorId });
 }
 
-/// <summary>Raises or lowers the exhaustion level; the top level kills.</summary>
-public sealed record AdjustExhaustionCommand(string ActorId, int Delta) : IUndoableCommand
+/// <summary>Raises or lowers a valued condition's value (Exhaustion 3, frightened 2) within 0 and its maximum. It holds while the value is above 0 and
+/// is never stored as a status. The exhaustion condition keeps its own level and its death at the top (<c>vitals.exhaustion</c>), and its log lines.</summary>
+public sealed record AdjustConditionCommand(string ActorId, string Condition, int Delta) : IUndoableCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { ActorId };
 
-    public string UndoKind => "Exhaustion";
+    // The event type the change is logged as: "Exhaustion" for the exhaustion level (so old entries still read), "StatusEffect" for any other condition.
+    public string UndoKind => _exhaustion ? "Exhaustion" : "StatusEffect";
 
-    private (int Level, bool Died)? _outcome;
+    private (string Name, int Level, bool Died)? _outcome;
+    private bool _exhaustion;
 
     public void Apply(CampaignRuntime runtime)
     {
+        _exhaustion = Codex.Core.Rules.VitalsHandlers.IsExhaustion(runtime.System, Condition);
         if (runtime.GetEntity(ActorId) is { } e)
         {
-            _outcome = TableRules.AdjustExhaustion(runtime, ActorId, e, Delta);
+            _outcome = TableRules.AdjustCondition(runtime, ActorId, e, Condition, Delta);
         }
     }
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         var name = runtime.ActorTerm(ActorId);
-        var message = _outcome is { } o
-            ? o.Died ? EventMessage.Of("Exhaustion.Died", name) : o.Level == 0 ? EventMessage.Of("Exhaustion.None", name) : EventMessage.Of("Exhaustion.Level", name, o.Level)
-            : EventMessage.Of("Exhaustion.Failed", name);
-        return SessionEvent.From("Exhaustion", new[] { message }, new[] { ActorId });
+        EventMessage message;
+        if (_outcome is not { } o) message = _exhaustion ? EventMessage.Of("Exhaustion.Failed", name) : EventMessage.Of("Condition.Failed", name, EventTerm.Condition(Condition));
+        else if (_exhaustion) message = o.Died ? EventMessage.Of("Exhaustion.Died", name) : o.Level == 0 ? EventMessage.Of("Exhaustion.None", name) : EventMessage.Of("Exhaustion.Level", name, o.Level);
+        else message = o.Level == 0 ? EventMessage.Of("Condition.None", name, EventTerm.Condition(o.Name)) : EventMessage.Of("Condition.Level", name, EventTerm.Condition(o.Name), o.Level);
+        return SessionEvent.From(UndoKind, new[] { message }, new[] { ActorId });
     }
 }
 
@@ -390,11 +395,14 @@ public sealed record AdvanceTurnCommand(string ActorId) : IRuntimeCommand
         {
             runtime.World.AdvanceTurn(ActorId, EffectExpiry.EndOfTurn);
             runtime.MarkAllHydratedActorsDirty();
+            _dropped.AddRange(runtime.DecreaseConditionsUndoably(ActorId, "turnEnd"));
         }
     }
 
+    private readonly List<EventMessage> _dropped = new();
+
     public SessionEvent Describe(CampaignRuntime runtime) =>
-        SessionEvent.From("TurnAdvance", new[] { EventMessage.Of("Turn.Ended", runtime.ActorTerm(ActorId)) }, new[] { ActorId });
+        SessionEvent.From("TurnAdvance", new[] { EventMessage.Of("Turn.Ended", runtime.ActorTerm(ActorId)) }.Concat(_dropped), new[] { ActorId });
 }
 
 /// <summary>Removes every instance of a status effect from an actor (3.7 "remove conditions") -
@@ -540,6 +548,9 @@ public sealed record NextTurnCommand : IRuntimeCommand
         // A system with sheet kinds hears the turn end and the next one start (a death save each turn while mortally wounded).
         if (TableEvents.Handles(runtime, "turnEnd")) _raised.AddRange(TableEvents.Raise(runtime, current.ActorId, new Codex.Core.Rules.SheetEvent("turnEnd", new Dictionary<string, object?>())).Messages);
 
+        // Valued conditions that fall at the end of a turn (frightened 2 -> 1): on every system, with or without an events: handler.
+        _raised.AddRange(runtime.DecreaseConditionsUndoably(current.ActorId, "turnEnd"));
+
         current.HasActed = true;
         runtime.MoveTurnOn(encounter, fromPointer: false);
         runtime.MarkEncounterDirty();
@@ -548,6 +559,11 @@ public sealed record NextTurnCommand : IRuntimeCommand
         {
             var next = encounter.Participants[encounter.TurnIndex].ActorId;
             _raised.AddRange(TableEvents.Raise(runtime, next, new Codex.Core.Rules.SheetEvent("turnStart", new Dictionary<string, object?>())).Messages);
+        }
+
+        if (encounter.Participants.Count > 0)
+        {
+            _raised.AddRange(runtime.DecreaseConditionsUndoably(encounter.Participants[encounter.TurnIndex].ActorId, "turnStart"));
         }
     }
 
@@ -1116,6 +1132,8 @@ public sealed record RestCommand(string ActorId, string RestName, IReadOnlyList<
         else
         {
             _happened = TableRules.Rest(runtime, ActorId, e, RestName, PoolNames);
+            // Valued conditions that fall at this rest (value.decrease); the rest's own exhaustionDelta is left out when Exhaustion has one.
+            _happened.AddRange(TableRules.DecreaseConditions(runtime, ActorId, e, RestName, nested: true));
         }
 
         // The feature counters that name this rest refill by their own rules: all, a part, or a roll.
@@ -1165,6 +1183,8 @@ public sealed record MomentCommand(string ActorId, string Moment) : IUndoableCom
         if (runtime.GetEntity(ActorId) is not { } e) return;
         // The feature counters that name this moment refill by their own rules: all, a part, or a roll.
         _happened = TableRules.RefillCounters(runtime, ActorId, e, Moment);
+        // Valued conditions that fall at this moment (value.decrease).
+        _happened.AddRange(TableRules.DecreaseConditions(runtime, ActorId, e, Moment, nested: true));
         // Then the system's own handler for it, when it has one (a sheet kind's system: armor boxes reset at "loadChosen").
         if (TableEvents.Handles(runtime, Moment))
         {

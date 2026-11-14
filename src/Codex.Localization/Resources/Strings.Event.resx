@@ -40,6 +40,11 @@
   <data name="Event.Exhaustion.None" xml:space="preserve"><value>{0} is no longer exhausted.</value></data>
   <data name="Event.Exhaustion.Level" xml:space="preserve"><value>{0} is at exhaustion level {1}.</value></data>
   <data name="Event.Exhaustion.Failed" xml:space="preserve"><value>{0}'s exhaustion could not be changed.</value></data>
+  <data name="Event.Condition.Level" xml:space="preserve"><value>{0}: {1} is now {2}.</value></data>
+  <data name="Event.Condition.None" xml:space="preserve"><value>{0}: {1} has ended.</value></data>
+  <data name="Event.Condition.Failed" xml:space="preserve"><value>{0}'s {1} could not be changed.</value></data>
+  <data name="Event.Condition.Drops" xml:space="preserve"><value>{0}: {1} drops to {2}.</value></data>
+  <data name="Event.Condition.Ends" xml:space="preserve"><value>{0}: {1} ends.</value></data>
   <data name="Event.HitDice.Spent" xml:space="preserve"><value>{0} spent {1, plural, one{# hit die} other{# hit dice}} (d{2}: {3}) and recovered {4} hit points.</value></data>
   <data name="Event.HitDice.None" xml:space="preserve"><value>{0} has no hit dice to spend.</value></data>
   <data name="Event.HitDice.Player" xml:space="preserve"><value>{0} spent hit dice and recovered hit points.</value></data>
@@ -101,6 +106,8 @@
   <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>exhaustion gone</value></data>
   <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>exhaustion now {0}</value></data>
   <data name="Event.Rest.Lifted" xml:space="preserve"><value>{0} lifted</value></data>
+  <data name="Event.Rest.ConditionDrops" xml:space="preserve"><value>{0} drops to {1}</value></data>
+  <data name="Event.Rest.ConditionEnds" xml:space="preserve"><value>{0} ends</value></data>
   <data name="Event.Wiki.Revealed" xml:space="preserve"><value>Something new about {0} was revealed in the wiki.</value></data>
   <data name="Event.Actor.ChoiceChanged" xml:space="preserve"><value>{0} changed a choice: {1} is now {2}.</value></data>
   <data name="Event.Note.Added" xml:space="preserve"><value>A {0} was added.</value></data>

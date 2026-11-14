@@ -457,6 +457,22 @@ public sealed class CampaignRuntime : IAsyncDisposable
         return kind;
     }
 
+    /// <summary>Lowers the valued conditions of one creature that fall at <paramref name="moment"/> (<c>turnEnd</c>, <c>turnStart</c>;
+    /// <see cref="TableRules.DecreaseConditions"/>), and keeps what it changed as the creature's last change, so the undo button takes the drop back.
+    /// A turn is not an undoable command itself, so the drop makes its own undo point (kind <c>TurnAdvance</c>). What it logged, or nothing.</summary>
+    internal List<EventMessage> DecreaseConditionsUndoably(string actorId, string moment)
+    {
+        if (!_actorEntities.TryGetValue(actorId, out var entity)) return new List<EventMessage>();
+        var doc = GetActorDocument(actorId);
+        var before = ActorState.Of(entity, doc);
+        var messages = TableRules.DecreaseConditions(this, actorId, entity, moment, nested: false);
+        if (messages.Count == 0) return messages;
+        var after = ActorState.Of(entity, doc);
+        if (!after.SameAs(before) || after.SheetKeysChangedFrom(before).Count > 0) _undo[actorId] = new UndoPoint("TurnAdvance", before, after);
+        _dirtyActorIds.Add(actorId);
+        return messages;
+    }
+
     /// <summary>Takes an actor out of the table: its entity goes, and so does its place in the
     /// initiative order. Used when the actor is deleted while the table is live.</summary>
     internal bool RemoveActor(string actorId)

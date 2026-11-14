@@ -40,6 +40,11 @@
   <data name="Event.Exhaustion.None" xml:space="preserve"><value>{0} больше не истощён.</value></data>
   <data name="Event.Exhaustion.Level" xml:space="preserve"><value>У {0} истощение {1}-го уровня.</value></data>
   <data name="Event.Exhaustion.Failed" xml:space="preserve"><value>Истощение {0} изменить не удалось.</value></data>
+  <data name="Event.Condition.Level" xml:space="preserve"><value>{0}: «{1}» теперь {2}.</value></data>
+  <data name="Event.Condition.None" xml:space="preserve"><value>{0}: «{1}» закончилось.</value></data>
+  <data name="Event.Condition.Failed" xml:space="preserve"><value>Изменить «{1}» у {0} не удалось.</value></data>
+  <data name="Event.Condition.Drops" xml:space="preserve"><value>{0}: «{1}» снижается до {2}.</value></data>
+  <data name="Event.Condition.Ends" xml:space="preserve"><value>{0}: «{1}» заканчивается.</value></data>
   <data name="Event.HitDice.Spent" xml:space="preserve"><value>{0} тратит кости хитов: {1} (d{2}: {3}) и восстанавливает {4} хитов.</value></data>
   <data name="Event.HitDice.None" xml:space="preserve"><value>У {0} не осталось костей хитов.</value></data>
   <data name="Event.HitDice.Player" xml:space="preserve"><value>{0} тратит кости хитов и восстанавливает хиты.</value></data>
@@ -101,6 +106,8 @@
   <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>истощение прошло</value></data>
   <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>истощение теперь {0}</value></data>
   <data name="Event.Rest.Lifted" xml:space="preserve"><value>снято: {0}</value></data>
+  <data name="Event.Rest.ConditionDrops" xml:space="preserve"><value>«{0}» снижается до {1}</value></data>
+  <data name="Event.Rest.ConditionEnds" xml:space="preserve"><value>«{0}» заканчивается</value></data>
   <data name="Event.Wiki.Revealed" xml:space="preserve"><value>В вики открыто новое о «{0}».</value></data>
   <data name="Event.Actor.ChoiceChanged" xml:space="preserve"><value>{0} меняет выбор: «{1}» теперь {2}.</value></data>
   <data name="Event.Note.Added" xml:space="preserve"><value>Добавлено: {0}.</value></data>

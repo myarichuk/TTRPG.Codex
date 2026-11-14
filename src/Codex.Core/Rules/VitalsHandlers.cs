@@ -310,7 +310,8 @@ public static class VitalsHandlers
             }
         }
 
-        if (rule.ExhaustionDelta != 0 && s.Vitals.Exhaustion is { } exhaustion && s.Get(exhaustion.Key) > 0)
+        // The Exhaustion effect's own value.decrease (docs/SHEET_CONDITIONS_DESIGN.md) wins: the table lowers it by that, so the rest's step is not applied twice.
+        if (rule.ExhaustionDelta != 0 && s.Vitals.Exhaustion is { } exhaustion && s.Get(exhaustion.Key) > 0 && !ExhaustionDecreases(system))
         {
             var level = AdjustExhaustionCore(s, exhaustion, rule.ExhaustionDelta);
             steps.Add(level == 0 ? new RestStep("exhaustionGone") : new RestStep("exhaustionNow", Amount: level));
@@ -323,6 +324,15 @@ public static class VitalsHandlers
 
         return s.Done<IReadOnlyList<RestStep>>(steps);
     }
+
+    /// <summary>Whether the exhaustion condition's effect declares a <c>value.decrease</c>, which then does what a rest's <c>exhaustionDelta</c> would.</summary>
+    public static bool ExhaustionDecreases(SystemDefinition? system) =>
+        system?.Vitals?.Exhaustion is { } rules
+        && SheetConditions.EffectOf(system, rules.Condition ?? "Exhaustion")?.Effect.Value?.Decrease != null;
+
+    /// <summary>Whether <paramref name="condition"/> is the condition <c>vitals.exhaustion</c> stands for (its level, its kill at the top).</summary>
+    public static bool IsExhaustion(SystemDefinition? system, string condition) =>
+        system?.Vitals?.Exhaustion is { } rules && string.Equals(rules.Condition ?? "Exhaustion", condition, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The exhaustion level moved by <paramref name="delta"/> within 0 and the maximum; reaching the maximum kills.
     /// Null when the system has no exhaustion.</summary>

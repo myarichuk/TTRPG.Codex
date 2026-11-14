@@ -143,10 +143,11 @@
         @if (Vitals?.Exhaustion is { } exhaustion)
         {
             var level = Snapshot.Actor(ActorId)?.Pool(exhaustion.Key) ?? 0;
+            var exhaustionName = exhaustion.Condition ?? "Exhaustion";
             <div class="d-flex align-items-end gap-1">
                 <span class="small pb-1">@(exhaustion.Condition ?? L["Combat.Exhaustion"]) @level</span>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-up" Disabled="@(level >= exhaustion.MaxLevel)" OnClick="() => Send(new AdjustExhaustionCommand(ActorId, 1))" aria-label="@(L["Combat.RaiseExhaustion", Name])">+</CodexButton>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-down" Disabled="@(level <= 0)" OnClick="() => Send(new AdjustExhaustionCommand(ActorId, -1))" aria-label="@(L["Combat.LowerExhaustion", Name])">−</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-up" Disabled="@(level >= exhaustion.MaxLevel)" OnClick="() => Send(new AdjustConditionCommand(ActorId, exhaustionName, 1))" aria-label="@(L["Combat.RaiseExhaustion", Name])">+</CodexButton>
+                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-down" Disabled="@(level <= 0)" OnClick="() => Send(new AdjustConditionCommand(ActorId, exhaustionName, -1))" aria-label="@(L["Combat.LowerExhaustion", Name])">−</CodexButton>
             </div>
         }
     </div>
