@@ -146,6 +146,9 @@ public sealed class SheetEvaluation
     /// <summary>Feature amounts on armor class and hit points, waiting for those stages.</summary>
     internal Dictionary<string, List<(ActiveFeature Feature, string? Type, int Amount)>> Pending { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>The modifiers of the conditions that hold, which the sheet-rules side owns (<see cref="SheetRuleEngine.ConditionModifiers"/>).</summary>
+    internal List<ConditionModifier> Conditions { get; } = new();
+
     /// <summary>Maximum hit points as the rules work them out (null without hit point rules or a class).</summary>
     public HitPointSummary? HitPoints { get; set; }
 

@@ -39,18 +39,65 @@ public static class SheetConditions
         }
     }
 
-    /// <summary>The conditions that hold on <paramref name="sheet"/>: its own, then each valued condition whose key on the sheet is above 0
-    /// (unless the sheet lists it too).</summary>
+    /// <summary>The <c>conditionEffects</c> entry of <paramref name="condition"/> (names compare without regard to case), with its name as the system writes it.</summary>
+    public static (string Name, ConditionEffectDefinition Effect)? EffectOf(SystemDefinition system, string condition)
+    {
+        foreach (var (name, effect) in system.ConditionEffects)
+        {
+            if (string.Equals(name, condition, StringComparison.OrdinalIgnoreCase)) return (name, effect);
+        }
+
+        return null;
+    }
+
+    /// <summary>What <c>value</c> is in the effects of a condition that holds: the number under its key on the sheet, or 1 for a condition with no
+    /// <c>value</c>. A valued condition holds only while its number is above 0 (<see cref="Of"/>), so for one that holds it is that number.</summary>
+    public static double ValueOf(string condition, ConditionEffectDefinition effect, IReadOnlyDictionary<string, object> sheet) =>
+        effect.Value is { } value && YamlValues.ToNumber(sheet.GetValueOrDefault(KeyOf(condition, value))) is { } number && number > 0 ? number : 1;
+
+    /// <summary>A copy of <paramref name="sheet"/> with <c>value</c> added: what the formulas of the condition's effects are worked out on.</summary>
+    public static IReadOnlyDictionary<string, object> WithValue(string condition, ConditionEffectDefinition effect, IReadOnlyDictionary<string, object> sheet)
+    {
+        var copy = new Dictionary<string, object>(sheet.Count + 1, StringComparer.Ordinal);
+        foreach (var (key, value) in sheet) copy[key] = value;
+        copy[ValueName] = ValueOf(condition, effect, sheet);
+        return copy;
+    }
+
+    /// <summary>The name a condition's formulas read its value by.</summary>
+    public const string ValueName = "value";
+
+    /// <summary>The targets <see cref="SheetModel"/> reads on a system with sheet kinds, so the ones a condition's modifier would reach through it: a
+    /// kind's value, track or keyed entry (<c>skills.balance</c>, its <c>@group</c>s), and each name a named roll's <c>modifiers('...')</c> reads.
+    /// The loader sets them against what <c>sheetRules</c> claims (<see cref="SheetRuleEngine"/>): a target in both would count a condition twice.</summary>
+    public static IReadOnlySet<string> KindTargets(SystemDefinition system)
+    {
+        var targets = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var kind in system.SheetKinds)
+        {
+            foreach (var value in kind.Values) targets.Add(value.Key);
+            foreach (var track in kind.Tracks) targets.Add(track.Key);
+            foreach (var list in kind.KeyedLists)
+            {
+                foreach (var key in list.Keys) targets.UnionWith(SheetModel.Targets(list, key, key.Key));
+            }
+        }
+
+        foreach (var roll in system.Rolls) targets.UnionWith(RollTargets.Of(system, roll));
+        return targets;
+    }
+
+    /// <summary>The conditions that hold on <paramref name="sheet"/>: the ones it lists, and each valued condition whose key on the sheet is above 0.
+    /// A valued condition holds only then, listed or not: one the sheet lists with its value at 0 or unset is left out.</summary>
     public static List<string> Of(SystemDefinition system, IReadOnlyDictionary<string, object> sheet)
     {
         var conditions = SheetRuleEngine.RawList(sheet, SheetModel.ConditionsKey);
         foreach (var (name, key, _) in Valued(system))
         {
-            if (YamlValues.ToNumber(sheet.GetValueOrDefault(key)) is > 0
-                && !conditions.Contains(name, StringComparer.OrdinalIgnoreCase))
-            {
-                conditions.Add(name);
-            }
+            var holds = YamlValues.ToNumber(sheet.GetValueOrDefault(key)) is > 0;
+            var listed = conditions.FindIndex(c => string.Equals(c, name, StringComparison.OrdinalIgnoreCase));
+            if (!holds && listed >= 0) conditions.RemoveAll(c => string.Equals(c, name, StringComparison.OrdinalIgnoreCase));
+            else if (holds && listed < 0) conditions.Add(name);
         }
 
         return conditions;

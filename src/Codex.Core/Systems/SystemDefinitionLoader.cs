@@ -292,6 +292,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in ValidateConditionRouting(definition))
+        {
+            yield return error;
+        }
+
         if (definition.Vitals?.Concentration is { } concentration
             && RequiredAttributeError(definition, "vitals.concentration.saveAttribute", concentration.SaveAttribute) is { } concentrationError)
         {
@@ -856,6 +861,25 @@ public static class SystemDefinitionLoader
             }
 
             if (decrease.By < 1) yield return $"{where}.decrease.by must be 1 or more.";
+        }
+    }
+
+    /// <summary>The hybrid rule (docs/SHEET_CONDITIONS_DESIGN.md): on a system with both <c>sheetRules</c> and <c>sheetKinds</c>, a condition's modifier goes to the
+    /// sheet-rules side when its target is one that side knows (armor class, hit points, a derived value, a Number field, a roll target) and to the sheet
+    /// kind when it is the kind's value, track, keyed entry, group or a name a roll reads. A target both sides claim would count the condition twice, so it is refused.</summary>
+    private static IEnumerable<string> ValidateConditionRouting(SystemDefinition definition)
+    {
+        if (definition.SheetRules == null || definition.SheetKinds.Count == 0) yield break;
+        var kindTargets = Codex.Core.Rules.SheetConditions.KindTargets(definition);
+        foreach (var (name, effect) in definition.ConditionEffects)
+        {
+            for (var i = 0; i < effect.Modifiers.Count; i++)
+            {
+                var target = effect.Modifiers[i].Target;
+                if (target.Length == 0 || !kindTargets.Contains(target)) continue;
+                if (Codex.Core.Rules.SheetRuleEngine.KindOf(definition, target) == Codex.Core.Rules.SheetRuleEngine.TargetKind.Unknown) continue;
+                yield return $"conditionEffects.{name}.modifiers[{i}]: the target '{target}' is claimed by both sheetRules and a sheet kind, so the condition would count twice. Give the sheet kind's value or the sheet-rules number another name.";
+            }
         }
     }
 
