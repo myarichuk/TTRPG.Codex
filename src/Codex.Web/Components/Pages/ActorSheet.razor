@@ -744,7 +744,7 @@ else
                     @if (Rules?.Skills is { } skillRules && evaluation is { Skills.Count: > 0 })
                     {
                         <ChoicesBlock Evaluation="evaluation" CanEdit="CanEdit" TargetLabel="ChoiceTargetLabel" Describe="Describe" OnEdit="EditChoiceAsync"
-                                      OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" OpenKeys="openChoices" />
+                                      OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" Names="BonusNames" OpenKeys="openChoices" />
                         <SkillsPanel Rules="skillRules" Evaluation="evaluation" Sheet="editSheet" Attributes="system!.Attributes" CanEdit="CanEdit" Changed="OnRulesInputChanged" OnRoll="RollAsync"
                                      ShowSums="showSums" ShowSumsChanged="value => showSums = value" />
                     }
@@ -901,7 +901,7 @@ else
                         @if (Rules?.Skills == null && evaluation != null)
                         {
                             <ChoicesBlock Evaluation="evaluation" CanEdit="CanEdit" TargetLabel="ChoiceTargetLabel" Describe="Describe" OnEdit="EditChoiceAsync"
-                                          OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" OpenKeys="openChoices" />
+                                          OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" Names="BonusNames" OpenKeys="openChoices" />
                         }
 
                         <FeaturesPanel Evaluation="evaluation" Sheet="editSheet" Rules="Rules" Definition="system" Names="BonusNames" ReadOnly="@(!CanEdit)"
@@ -930,7 +930,7 @@ else
                             else if (levelUpPlan is { } plan)
                             {
                                 <LevelUpStepper Plan="plan" Evaluation="evaluation" Rules="Rules" ClassId="@levelUpClassId" Roll="levelUpRoll" EntryName="Nm" Describe="Describe"
-                                                TargetLabel="ChoiceTargetLabel" OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" OnPick="PickForLevelUp"
+                                                TargetLabel="ChoiceTargetLabel" OptionText="ChoiceOptionText" MomentLabel="MomentName" Entries="EntryChoices" Names="BonusNames" OnPick="PickForLevelUp"
                                                 OnClassChosen="ChooseLevelUpClass" OnRollTyped="SetLevelUpRoll" OnRollDie="RollLevelUpHitDie" OnApply="ApplyLevelUp" OnCancel="CloseLevelUp" />
                             }
                             else

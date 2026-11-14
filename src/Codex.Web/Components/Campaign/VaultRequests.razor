@@ -166,7 +166,7 @@
                             <h4 class="label-caps">@L["Campaign.Vault.PicksHeading"]</h4>
                             <p class="field-hint">@L["Campaign.Vault.PicksHint"]</p>
                             <ChoicesBlock Evaluation="reviewEval" CanEdit="true" TargetLabel="ChoiceTargetLabel" Describe="Describe" OnEdit="EditChoice"
-                                          OptionText="ChoiceOptionText" MomentLabel="MomentName" />
+                                          OptionText="ChoiceOptionText" MomentLabel="MomentName" Names="BonusNames" />
                             @foreach (var list in PickLists)
                             {
                                 <fieldset class="field-group mt-2" data-testid="@("vault-review-list-" + list.Key)">
@@ -458,6 +458,9 @@
 
     private (string Name, string? Description) ChoiceOptionText(PendingChoice choice, ChoiceOption option) =>
         ContentRegistry.Row(choice.Feature.Source, option.Key, L.Culture.Name);
+
+    /// <summary>What the content names on a choice are called in the GM's language.</summary>
+    private RollBonusNames BonusNames => RollBonusNames.For(ContentRegistry, Ctx.System?.Localize(L.Culture.Name), L.Culture.Name);
 
     private string MomentName(string moment) => Ctx.System == null ? moment : SlotTracker.RestName(Ctx.System, moment);
 

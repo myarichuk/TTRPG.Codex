@@ -123,7 +123,7 @@
                 <span class="d-inline-flex align-items-center gap-1">
                     <input id="@box" type="checkbox" class="field-box mt-0" checked="@ticked" disabled="@(Disabled || (Full && !ticked))"
                            @onchange="e => OnPicks.InvokeAsync(Choice.Toggled(key, (bool)e.Value!))" data-testid="@("choice-pick-" + key)" />
-                    <label for="@box" class="mb-0">@option.Label</label>
+                    <label for="@box" class="mb-0">@Said.Source(option.Label)</label>
                 </span>
             }
         </div>
@@ -154,6 +154,11 @@
     /// <summary>What a choice over Library entries or values needs from the host: the entry lists and their types, the system's words and each entry's
     /// level and card. Without it such a choice is shown as a plain list of what it offers.</summary>
     [Parameter] public EntryChoiceContext? Entries { get; set; }
+
+    /// <summary>What the content names on a choice (its feature and where it is from, an option's name) are called in the reader's language; as written when not given.</summary>
+    [Parameter] public RollBonusNames? Names { get; set; }
+
+    private RollBonusNames Said => Names ?? RollBonusNames.English;
 
     [Parameter] public bool Disabled { get; set; }
 
@@ -216,9 +221,10 @@
     {
         get
         {
-            var source = Choice.Feature.Level is { } level ? L["Actor.Choice.SourceLevel", Choice.Source, level] : Choice.Source;
+            var sourceName = Said.Source(Choice.Source);
+            var source = Choice.Feature.Level is { } level ? L["Actor.Choice.SourceLevel", sourceName, level] : sourceName;
             // A feat that is its own feature says its name once (“Skilled”), a class row says where it is from (“Expertise (Rogue, level 6)”).
-            var who = string.Equals(Choice.Label, Choice.Source, StringComparison.Ordinal) ? source.ToString() : $"{Choice.Label} ({source})";
+            var who = string.Equals(Choice.Label, Choice.Source, StringComparison.Ordinal) ? source.ToString() : $"{Said.Source(Choice.Label)} ({source})";
             if (Choice.IsRow) return L["Actor.Choice.LegendRow", who, Choice.Count];
             if (IsEntry) return EntryLegend(who);
             var target = TargetLabel?.Invoke(Choice.Target) ?? Choice.Target;
