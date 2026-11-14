@@ -2737,13 +2737,21 @@
           ],
           "description": "Or: the key of a list in `lists` whose picked entries carry them (`feats`). On a sheet kind (`sheetKinds[].features`) a source is this alone, with `property`, `entries`, `choose` and `levelColumn`: `list` names a list of the kind's own `lists`; `field` and `byField` are refused."
         },
+        "link": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "On a sheet kind only: the key of one of the kind's `links`. The source then reads the picks of List on the linked sheet (a list of the linked kind), and each pick's entry Property, which is required, is one grant map (`modifiers`, `adds`, `uses`, `options`) that becomes one feature of the linking sheet, named \"{entry} ({link label})\". Choices it asks for are stored on the linking sheet, scoped by the entry's id. The linked sheet is read as stored, one step deep: its own links are not followed. No link, or a linked actor that is gone, gives no features."
+        },
         "property": {
           "type": [
             "string",
             "number",
             "boolean"
           ],
-          "description": "The entry property holding feature rows (`features`, `traits`). None: the entry is one feature and carries `modifiers`, `adds` and `uses` among its own properties."
+          "description": "The entry property holding feature rows (`features`, `traits`). None: the entry is one feature and carries `modifiers`, `adds` and `uses` among its own properties. With Link: the entry property that holds the one grant map given to the linking sheet."
         },
         "levelColumn": {
           "type": [
@@ -3024,7 +3032,14 @@
           "items": {
             "$ref": "#/$defs/FeatureSource"
           },
-          "description": "Where the kind's sheets get features (special abilities, upgrades) from, as `sheetRules.features` does for a system with sheet rules; on a sheet kind a source names a `list` of the kind's `lists` and nothing else (no `field`, no `byField`). Each pick's own properties carry the grants: `modifiers` (targets are the kind's values, keyed entries or groups), `uses` and `spends` (counters), `options` with `choose`, and `adds` with a `choice` over a keyed list. A list that is a source may not also have `modifiersFrom`, or its modifiers would count twice."
+          "description": "Where the kind's sheets get features (special abilities, upgrades) from, as `sheetRules.features` does for a system with sheet rules; on a sheet kind a source names a `list` of the kind's `lists` (no `field`, no `byField`), or with `link` a list of the linked kind, whose picks on the linked sheet it reads (see Link). Each pick's own properties carry the grants: `modifiers` (targets are the kind's values, keyed entries or groups), `uses` and `spends` (counters), `options` with `choose`, and `adds` with a `choice` over a keyed list. A list that is a source may not also have `modifiersFrom`, or its modifiers would count twice."
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SheetLinkDefinition"
+          },
+          "description": "Links to the sheet of another actor of the campaign: `{ key, kind, label }` (a scoundrel's crew). The sheet stores the linked actor's id under `link__{key}`. A feature source with `link` reads the linked sheet's picks, and a formula reads its values with `link('key', 'value')`. Links are one step deep and read only (docs/CREW_LINKS_DESIGN.md)."
         },
         "keyedLists": {
           "type": "array",
@@ -3378,6 +3393,37 @@
             "boolean"
           ],
           "description": "The problem as shown, with `{name}` filled in from the item or the sheet's values (`{label}`, `{maxRanks}`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SheetLinkDefinition": {
+      "description": "A link from one kind of sheet to the sheet of another actor (`links: [{ key: crew, kind: crew, label: Crew }]`): the sheet stores the linked actor's id under `link__{key}`, and the linked sheet must be of Kind.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required: the link's name, as feature sources (`link: crew`) and `link('crew', ...)` name it. Unique in the kind."
+        },
+        "kind": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required: the `kind` of the sheet the link points to; one of the system's sheet kinds."
+        },
+        "label": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The link's name as the sheet shows it, also the name given to what it brings (\"Composed (Crew)\"); the key when empty."
         }
       },
       "additionalProperties": false

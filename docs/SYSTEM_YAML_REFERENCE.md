@@ -654,7 +654,8 @@ One place features come from. Either Field (the entry a reference field names) o
 |---|---|---|
 | `field` | text (a number is text too) | The EntityReference actor field whose entry carries the features (`class`, `subclass`, `species`). With multiclass rules, the class and subclass fields are read once per class. |
 | `list` | text (a number is text too) | Or: the key of a list in `lists` whose picked entries carry them (`feats`). On a sheet kind (`sheetKinds[].features`) a source is this alone, with `property`, `entries`, `choose` and `levelColumn`: `list` names a list of the kind's own `lists`; `field` and `byField` are refused. |
-| `property` | text (a number is text too) | The entry property holding feature rows (`features`, `traits`). None: the entry is one feature and carries `modifiers`, `adds` and `uses` among its own properties. |
+| `link` | text (a number is text too) | On a sheet kind only: the key of one of the kind's `links`. The source then reads the picks of List on the linked sheet (a list of the linked kind), and each pick's entry Property, which is required, is one grant map (`modifiers`, `adds`, `uses`, `options`) that becomes one feature of the linking sheet, named "{entry} ({link label})". Choices it asks for are stored on the linking sheet, scoped by the entry's id. The linked sheet is read as stored, one step deep: its own links are not followed. No link, or a linked actor that is gone, gives no features. |
+| `property` | text (a number is text too) | The entry property holding feature rows (`features`, `traits`). None: the entry is one feature and carries `modifiers`, `adds` and `uses` among its own properties. With Link: the entry property that holds the one grant map given to the linking sheet. |
 | `levelColumn` | text (a number is text too) | A row's column saying from which level it applies. Default `level`; a row without it always applies. |
 | `firstOnly` | true or false | With Field on a source read once per class (`class`, `subclass` under multiclass rules): read for the first class only. A grant on the class entry itself (the skills its first level gives, which a second class does not repeat) is such a source. |
 | `label` | text (a number is text too) | The name of the feature an entry becomes when the source has no Property (the entry is one feature). Default: the entry's own name. A class entry that carries a grant of its own is not best named "Rogue" in "Rogue (Rogue): choose 4 more skills". |
@@ -708,7 +709,8 @@ A kind of sheet (`character`, `crew`): its values, modifiers, lists and keyed li
 | `values` | list of [ValueDefinition](#valuedefinition) | The sheet's numbers and choices, worked out or entered. Their order does not matter: each is worked out when first read. |
 | `modifiers` | list of [ModifierDefinition](#modifierdefinition) | Modifiers every sheet of the kind has, beside those from picks and conditions. |
 | `lists` | list of [PickListDefinition](#picklistdefinition) | Lists of picks (classes, feats, items), each with fields of its own per pick. |
-| `features` | list of [FeatureSource](#featuresource) | Where the kind's sheets get features (special abilities, upgrades) from, as `sheetRules.features` does for a system with sheet rules; on a sheet kind a source names a `list` of the kind's `lists` and nothing else (no `field`, no `byField`). Each pick's own properties carry the grants: `modifiers` (targets are the kind's values, keyed entries or groups), `uses` and `spends` (counters), `options` with `choose`, and `adds` with a `choice` over a keyed list. A list that is a source may not also have `modifiersFrom`, or its modifiers would count twice. |
+| `features` | list of [FeatureSource](#featuresource) | Where the kind's sheets get features (special abilities, upgrades) from, as `sheetRules.features` does for a system with sheet rules; on a sheet kind a source names a `list` of the kind's `lists` (no `field`, no `byField`), or with `link` a list of the linked kind, whose picks on the linked sheet it reads (see Link). Each pick's own properties carry the grants: `modifiers` (targets are the kind's values, keyed entries or groups), `uses` and `spends` (counters), `options` with `choose`, and `adds` with a `choice` over a keyed list. A list that is a source may not also have `modifiersFrom`, or its modifiers would count twice. |
+| `links` | list of [SheetLinkDefinition](#sheetlinkdefinition) | Links to the sheet of another actor of the campaign: `{ key, kind, label }` (a scoundrel's crew). The sheet stores the linked actor's id under `link__{key}`. A feature source with `link` reads the linked sheet's picks, and a formula reads its values with `link('key', 'value')`. Links are one step deep and read only (docs/CREW_LINKS_DESIGN.md). |
 | `keyedLists` | list of [KeyedListDefinition](#keyedlistdefinition) | Fixed sets of keys (skills, actions), each key with its own fields and worked-out values. |
 | `tracks` | list of [TrackDefinition](#trackdefinition) | Values that go up and down in play (hit points, stress, slots), with their bounds and what they bring. |
 | `layout` | list of [LayoutSection](#layoutsection) | How the sheet is laid out: sections of widgets bound to keys. Empty: the host's generic layout (every value, track, list and keyed list in turn). |
@@ -808,6 +810,16 @@ A problem with key Key when Check is false; a lambda checks every item.
 | `check` | text (a number is text too) | Required: a formula that must be true; a lambda (`"s => s.ranks <= s.maxRanks"`) must be true for every item of the list. |
 | `key` | text (a number is text too) | Required: the problem's translation key (`Actor.Rule.RankMax`); also its text when there is no `message`. |
 | `message` | text (a number is text too) | The problem as shown, with `{name}` filled in from the item or the sheet's values (`{label}`, `{maxRanks}`). |
+
+## SheetLinkDefinition
+
+A link from one kind of sheet to the sheet of another actor (`links: [{ key: crew, kind: crew, label: Crew }]`): the sheet stores the linked actor's id under `link__{key}`, and the linked sheet must be of Kind.
+
+| Key | Type | What it is |
+|---|---|---|
+| `key` | text (a number is text too) | Required: the link's name, as feature sources (`link: crew`) and `link('crew', ...)` name it. Unique in the kind. |
+| `kind` | text (a number is text too) | Required: the `kind` of the sheet the link points to; one of the system's sheet kinds. |
+| `label` | text (a number is text too) | The link's name as the sheet shows it, also the name given to what it brings ("Composed (Crew)"); the key when empty. |
 
 ## KeyedListDefinition
 
