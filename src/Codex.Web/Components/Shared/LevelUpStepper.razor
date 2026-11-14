@@ -106,7 +106,7 @@
         <div data-testid="levelup-picks">
             @foreach (var pick in picks)
             {
-                <ChoicePicker Choice="pick" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" Entries="Entries" OnPicks="chosen => OnPick.InvokeAsync(new ChoiceEdit(pick.Key, pick.Label, chosen, false))" />
+                <ChoicePicker Choice="pick" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" Entries="Entries" Names="Names" OnPicks="chosen => OnPick.InvokeAsync(new ChoiceEdit(pick.Key, pick.Label, chosen, false))" />
             }
         </div>
         @if (picks.Where(p => p.Remaining > 0 || p.Adopted).Select(p => p.Label).ToList() is { Count: > 0 } open)
@@ -157,6 +157,9 @@
 
     /// <summary>What the pickers need to show choices over Library entries and values (see <see cref="ChoicePicker.Entries"/>).</summary>
     [Parameter] public EntryChoiceContext? Entries { get; set; }
+
+    /// <summary>What the content names on a pick are called in the reader's language (see <see cref="ChoicePicker.Names"/>).</summary>
+    [Parameter] public RollBonusNames? Names { get; set; }
 
     /// <summary>A pick made for a choice the level opens; the host keeps it on the copy of the sheet the plan is worked out on.</summary>
     [Parameter] public EventCallback<ChoiceEdit> OnPick { get; set; }

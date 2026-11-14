@@ -25,7 +25,7 @@
         }
         @foreach (var choice in Open)
         {
-            <ChoicePicker @key="choice.Key" Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" Entries="Entries" OnPicks="picks => EditAsync(choice, picks)" />
+            <ChoicePicker @key="choice.Key" Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" Entries="Entries" Names="Names" OnPicks="picks => EditAsync(choice, picks)" />
         }
         @if (Folded.Count > 0)
         {
@@ -34,8 +34,8 @@
                 @foreach (var choice in Folded)
                 {
                     <div class="mt-2">
-                        <p class="small-muted mb-1">@L["Actor.Choice.MadeSummary", string.Equals(choice.Label, choice.Source, StringComparison.Ordinal) ? choice.Label : $"{choice.Label} ({choice.Source})", string.Join(", ", MadeNames(choice))]</p>
-                        <ChoicePicker Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" Entries="Entries" OnPicks="picks => EditAsync(choice, picks)" />
+                        <p class="small-muted mb-1">@L["Actor.Choice.MadeSummary", string.Equals(choice.Label, choice.Source, StringComparison.Ordinal) ? Said.Source(choice.Label) : $"{Said.Source(choice.Label)} ({Said.Source(choice.Source)})", string.Join(", ", MadeNames(choice))]</p>
+                        <ChoicePicker Choice="choice" Disabled="@(!CanEdit)" TargetLabel="TargetLabel" OptionText="OptionText" MomentLabel="MomentLabel" Entries="Entries" Names="Names" OnPicks="picks => EditAsync(choice, picks)" />
                     </div>
                 }
             </details>
@@ -62,6 +62,11 @@
     /// <summary>What the pickers need to show choices over Library entries and values (see <see cref="ChoicePicker.Entries"/>).</summary>
     [Parameter] public EntryChoiceContext? Entries { get; set; }
 
+    /// <summary>What the content names on a choice are called in the reader's language (see <see cref="ChoicePicker.Names"/>).</summary>
+    [Parameter] public RollBonusNames? Names { get; set; }
+
+    private RollBonusNames Said => Names ?? RollBonusNames.English;
+
     /// <summary>A rest's or moment's name as the reader's system words it.</summary>
     [Parameter] public Func<string, string>? MomentLabel { get; set; }
 
@@ -73,7 +78,7 @@
     private IEnumerable<string> MadeNames(PendingChoice choice) =>
         choice.IsRow && OptionText != null
             ? choice.Made.Select(m => choice.Options.FirstOrDefault(o => o.Key.Equals(m, StringComparison.OrdinalIgnoreCase)) is { } o ? OptionText(choice, o).Name : m)
-            : choice.MadeLabels;
+            : choice.MadeLabels.Select(Said.Source);
 
     // Pickers stay in the order they were first shown, so a choice that a pick completes does not jump behind the others under the keyboard.
     private readonly List<string> shownOrder = new();
