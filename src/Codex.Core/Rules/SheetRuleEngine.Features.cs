@@ -4,8 +4,9 @@ using Codex.Plugin.Abstractions;
 
 namespace Codex.Core.Rules;
 
-/// <summary>A feature's typed contribution to a number: <c>{ target, amount, type, when }</c>.</summary>
-public sealed record FeatureModifier(string Target, string Amount, string? Type, string? When);
+/// <summary>A feature's typed contribution to a number: <c>{ target, amount, type, when, optIn }</c>. With <see cref="OptIn"/> it is a tick box:
+/// it counts only in a roll whose player ticked it, never on the sheet.</summary>
+public sealed record FeatureModifier(string Target, string Amount, string? Type, string? When, OptInDefinition? OptIn = null);
 
 /// <summary>Entries a feature puts on a list from <see cref="Level"/> on (always, when null). On a ranked list (skills, saving throws; see
 /// <see cref="SkillRules.Ranks"/>) it puts the entries at <see cref="Rank"/> (a rank key or number; none means the first rank), or raises
@@ -441,6 +442,25 @@ public sealed partial class SheetRuleEngine
         }
     }
 
+    /// <summary>A modifier's <c>optIn</c>: <c>{ label, spends: { key, amount }, ends }</c>, or <c>true</c> for a tick box with the defaults. Null when it is neither.</summary>
+    internal static OptInDefinition? ParseOptIn(object? raw)
+    {
+        switch (raw)
+        {
+            case true:
+                return new OptInDefinition();
+            case string text when bool.TryParse(text, out var flag):
+                return flag ? new OptInDefinition() : null;
+            case IDictionary<string, object> map:
+                var spends = Cell(map, "spends") is IDictionary<string, object> spend && Text(spend, "key") is { } key
+                    ? new OptInSpendDefinition { Key = key, Amount = Text(spend, "amount") ?? "1" }
+                    : null;
+                return new OptInDefinition { Label = Text(map, "label"), Spends = spends, Ends = string.Equals(Text(map, "ends"), "true", StringComparison.OrdinalIgnoreCase) };
+            default:
+                return null;
+        }
+    }
+
     /// <summary>A counter of uses as a feature's <c>uses</c> (and a spell's <c>free</c>) writes it: <c>{ max, key, label, recoversOn, recovers, regain }</c>, or a
     /// plain number (a counter of that many with nothing that refills it but the GM). Null when it is neither.</summary>
     private static FeatureUses? ParseUses(object? raw) => raw switch
@@ -460,7 +480,7 @@ public sealed partial class SheetRuleEngine
         string? scope = null, string? chosenBy = null, bool onKind = false)
     {
         var modifiers = Maps(data.GetValueOrDefault("modifiers"))
-            .Select(m => new FeatureModifier(Text(m, "target") ?? string.Empty, Text(m, "amount") ?? "0", Text(m, "type"), Text(m, "when")))
+            .Select(m => new FeatureModifier(Text(m, "target") ?? string.Empty, Text(m, "amount") ?? "0", Text(m, "type"), Text(m, "when"), ParseOptIn(Cell(m, "optIn"))))
             .Where(m => m.Target.Length > 0)
             .ToList();
         var adds = Maps(data.GetValueOrDefault("adds"))
@@ -666,7 +686,7 @@ public sealed partial class SheetRuleEngine
         }
 
         // A sheet kind's features put their modifiers in the kind's own model (SheetModel.Modifiers), not on sheetRules' targets.
-        foreach (var group in features.Where(f => !f.OnKind).SelectMany(f => f.Modifiers.Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
+        foreach (var group in features.Where(f => !f.OnKind).SelectMany(f => f.Modifiers.Where(m => m.OptIn == null).Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
         {
             var kind = KindOf(group.Key);
             if (kind == TargetKind.Unknown)
@@ -822,7 +842,7 @@ public sealed partial class SheetRuleEngine
         return rules;
     }
 
-    private static string Slug(string text)
+    internal static string Slug(string text)
     {
         var slug = new StringBuilder();
         foreach (var c in text.ToLowerInvariant())
@@ -860,7 +880,7 @@ public sealed partial class SheetRuleEngine
         // Derived values (proficiency bonus...) come from the sheet as it is before any field is granted: one pass, no loop. A derived
         // value that itself reads a granted field is therefore worked out without the grant here, and with it in the evaluation.
         Dictionary<string, double>? derived = null;
-        foreach (var group in features.SelectMany(f => f.Modifiers.Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
+        foreach (var group in features.SelectMany(f => f.Modifiers.Where(m => m.OptIn == null).Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
         {
             if (KindOf(group.Key) != TargetKind.Field) continue;
             var field = system.ActorFields.First(f => f.Key == group.Key);

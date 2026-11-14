@@ -84,7 +84,13 @@ public sealed class SheetModel
     /// <summary>The sheet kind in force: the sheet's <c>kind</c>, or the system's first.</summary>
     public SheetKindDefinition? Kind { get; }
 
-    private sealed record Modifier(string Target, string Amount, string Type, string? Source, string? When, FormulaItem? Item);
+    /// <summary><see cref="Id"/> is the modifier's stable id (see <see cref="OptInIds"/>); <see cref="OptIn"/> makes it a tick box, and
+    /// <see cref="Condition"/> names the condition whose effect it is.</summary>
+    private sealed record Modifier(string Target, string Amount, string Type, string? Source, string? When, FormulaItem? Item, string Id = "",
+        OptInDefinition? OptIn = null, string? Condition = null);
+
+    /// <summary>The opt-ins the player ticked for the roll this model is for (by id); none on the sheet.</summary>
+    private readonly IReadOnlySet<string> _ticked;
 
     public SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet)
         : this(system, resolver, sheet, checkPrerequisites: true)
@@ -92,15 +98,18 @@ public sealed class SheetModel
     }
 
     /// <summary>The sheet as a roll sees it: <c>input.</c> reads <paramref name="input"/>, so modifiers whose <c>when</c> reads
-    /// an input hold or not by the roll's inputs.</summary>
-    public SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, object?> input)
-        : this(system, resolver, sheet, checkPrerequisites: true, input)
+    /// an input hold or not by the roll's inputs. An opt-in modifier counts only if its id is in <paramref name="optIns"/>, the ids the
+    /// player ticked for this roll (docs/ROLL_BONUSES_DESIGN.md).</summary>
+    public SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, object?> input,
+        IReadOnlySet<string>? optIns = null)
+        : this(system, resolver, sheet, checkPrerequisites: true, input, optIns)
     {
     }
 
     private SheetModel(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, bool checkPrerequisites,
-        IReadOnlyDictionary<string, object?>? input = null)
+        IReadOnlyDictionary<string, object?>? input = null, IReadOnlySet<string>? optIns = null)
     {
+        _ticked = optIns ?? new HashSet<string>(StringComparer.Ordinal);
         _input = input == null ? FormulaItem.Empty : new FormulaItem(name => input.TryGetValue(name, out var value) ? Plain(value) : null);
         _system = system;
         _resolver = resolver;
@@ -526,7 +535,7 @@ public sealed class SheetModel
 
     /// <summary>What reaches a keyed entry: modifiers on <c>skills.knowledge.arcana</c>, on <c>skills.knowledge</c>, and on each of
     /// its groups (<c>'@armorPenalty'</c>).</summary>
-    private static List<string> Targets(KeyedListDefinition list, KeyedEntryDefinition key, string id)
+    internal static List<string> Targets(KeyedListDefinition list, KeyedEntryDefinition key, string id)
     {
         var targets = new List<string> { $"{list.Key}.{id}" };
         if (id != key.Key) targets.Add($"{list.Key}.{key.Key}");
@@ -570,9 +579,10 @@ public sealed class SheetModel
     {
         if (_modifiers != null) return _modifiers;
         var modifiers = new List<Modifier>();
+        var kindOwn = 0;
         foreach (var m in Kind?.Modifiers ?? new List<ModifierDefinition>())
         {
-            modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source, m.When, null));
+            modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source, m.When, null, OptInIds.Kind(Kind!.Kind, kindOwn++), m.OptIn));
         }
 
         foreach (var list in Kind?.Lists.Where(l => l.ModifiersFrom != null) ?? Enumerable.Empty<PickListDefinition>())
@@ -581,28 +591,40 @@ public sealed class SheetModel
             {
                 if (list.ModifiersFrom!.When is { } when && Guard(list.Key, list.Label, () => RunOn(when, item)) is not true) continue;
                 if (item.Get(list.ModifiersFrom.Property) is not IEnumerable granted || granted is string) continue;
+                var picked = 0;
                 foreach (var raw in granted)
                 {
                     if (raw is not IDictionary<string, object> m) continue;
                     var source = item.Get("name")?.ToString() ?? item.Get("id")?.ToString();
                     modifiers.Add(new Modifier(At(m, "target")?.ToString() ?? "", At(m, "amount")?.ToString() ?? "0",
                         At(m, "type")?.ToString() ?? "untyped", At(m, "source")?.ToString() ?? source,
-                        At(m, "when")?.ToString(), item));
+                        At(m, "when")?.ToString(), item, OptInIds.Feature(item.Get("id")?.ToString() ?? source ?? "", picked++),
+                        SheetRuleEngine.ParseOptIn(At(m, "optIn"))));
                 }
             }
         }
 
         // The kind's own feature sources (sheetKinds[].features): each active feature's modifiers, credited to the feature. Collected once per
         // model from the raw sheet (SheetRuleEngine.KindFeatures), so this cannot recurse into a value.
+        // The index of an opt-in's id counts every modifier of the same source entry, across its rows, so two rows never share an id.
+        var perSource = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var feature in KindFeatures())
         {
-            foreach (var m in feature.Modifiers) modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", feature.Name, m.When, null));
+            foreach (var m in feature.Modifiers)
+            {
+                var index = perSource[feature.Source.Id] = perSource.GetValueOrDefault(feature.Source.Id) + 1;
+                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", feature.Name, m.When, null, OptInIds.Feature(feature.Source.Id, index - 1), m.OptIn));
+            }
         }
 
         foreach (var condition in Conditions())
         {
-            if (_system.ConditionEffects.FirstOrDefault(e => string.Equals(e.Key, condition, StringComparison.OrdinalIgnoreCase)).Value is not { } effect) continue;
-            foreach (var m in effect.Modifiers) modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source ?? condition, m.When, null));
+            if (_system.ConditionEffects.FirstOrDefault(e => string.Equals(e.Key, condition, StringComparison.OrdinalIgnoreCase)) is not { Value: { } effect } found) continue;
+            var at = 0;
+            foreach (var m in effect.Modifiers)
+            {
+                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source ?? condition, m.When, null, OptInIds.Condition(found.Key, at++), m.OptIn, found.Key));
+            }
         }
 
         return _modifiers = modifiers;
@@ -625,15 +647,7 @@ public sealed class SheetModel
             else left.Add((w.ToString() ?? "", false));
         }
 
-        var reached = new List<(Modifier Modifier, double Amount)>();
-        foreach (var modifier in Modifiers().Where(m => targets.Contains(m.Target, StringComparer.Ordinal)))
-        {
-            if (modifier.When is { } when && !Holds(when, modifier.Item)) continue;
-            var amount = SheetFormulas.Number(modifier.Item != null ? RunOn(modifier.Amount, modifier.Item) : Run(modifier.Amount));
-            if (amount == 0) continue;
-            if (left.Any(l => l.Type == modifier.Type && (!l.PositiveOnly || amount > 0))) continue;
-            reached.Add((modifier, amount));
-        }
+        var reached = Reached(targets, left);
 
         var applied = new List<AppliedModifier>();
         var total = 0d;
@@ -646,6 +660,72 @@ public sealed class SheetModel
         _result.Modifiers[key] = applied;
         return total;
     }
+
+    /// <summary>The modifiers that count for <paramref name="targets"/>: the target is read, the <c>when</c> holds, an opt-in was ticked,
+    /// the amount is not nothing, and the type is not left out.</summary>
+    private List<(Modifier Modifier, double Amount)> Reached(IReadOnlyCollection<string> targets, List<(string Type, bool PositiveOnly)> left)
+    {
+        var reached = new List<(Modifier Modifier, double Amount)>();
+        foreach (var modifier in Modifiers().Where(m => targets.Contains(m.Target, StringComparer.Ordinal)))
+        {
+            if (modifier.OptIn != null && !_ticked.Contains(modifier.Id)) continue;
+            if (modifier.When is { } when && !Holds(when, modifier.Item)) continue;
+            var amount = SheetFormulas.Number(modifier.Item != null ? RunOn(modifier.Amount, modifier.Item) : Run(modifier.Amount));
+            if (amount == 0) continue;
+            if (left.Any(l => l.Type == modifier.Type && (!l.PositiveOnly || amount > 0))) continue;
+            reached.Add((modifier, amount));
+        }
+
+        return reached;
+    }
+
+    /// <summary>What counted for a roll that reads <paramref name="targets"/>: every modifier that reached, each with its source, and
+    /// whether the player ticked it (an opt-in) or it is always on. Stacking rules apply as they do to the pool.</summary>
+    internal IReadOnlyList<RollBonus> Bonuses(IReadOnlyCollection<string> targets)
+    {
+        var bonuses = new List<RollBonus>();
+        var reached = Reached(targets, new List<(string Type, bool PositiveOnly)>());
+        foreach (var (modifier, _, amount, counts) in ModifierStacking.Stack(reached.Select(r => (r.Modifier.Type, r.Amount, r.Modifier)), _system.ModifierTypes))
+        {
+            if (!counts) continue;
+            var source = modifier.Source ?? string.Empty;
+            bonuses.Add(new RollBonus(modifier.OptIn != null ? modifier.Id : null, source, modifier.OptIn?.Label is { Length: > 0 } label ? label : source, amount, modifier.OptIn != null));
+        }
+
+        return bonuses;
+    }
+
+    /// <summary>The opt-ins a roll that reads <paramref name="targets"/> offers: each opt-in modifier whose target is read and whose
+    /// <c>when</c> holds for the roll's inputs, ticked or not.</summary>
+    internal IReadOnlyList<OptInModifier> OptIns(IReadOnlyCollection<string> targets)
+    {
+        var offered = new List<OptInModifier>();
+        foreach (var modifier in Modifiers().Where(m => m.OptIn != null && targets.Contains(m.Target, StringComparer.Ordinal)))
+        {
+            if (modifier.When is { } when && !Holds(when, modifier.Item)) continue;
+            var text = modifier.Amount;
+            try
+            {
+                if (!DiceAmount(modifier.Amount))
+                {
+                    var amount = SheetFormulas.Number(modifier.Item != null ? RunOn(modifier.Amount, modifier.Item) : Run(modifier.Amount));
+                    text = (amount >= 0 ? "+" : "") + amount.ToString(CultureInfo.InvariantCulture);
+                }
+            }
+            catch (Exception ex) when (ex is not StackOverflowException)
+            {
+                continue; // an amount that cannot be worked out is not offered
+            }
+
+            var source = modifier.Source ?? string.Empty;
+            offered.Add(new OptInModifier(modifier.Id, modifier.OptIn!.Label is { Length: > 0 } label ? label : source, text, source, modifier.OptIn, modifier.Condition));
+        }
+
+        return offered;
+    }
+
+    /// <summary>Whether an amount is dice (<c>1d4</c>, <c>-2d6</c>) rather than a number or a formula.</summary>
+    internal static bool DiceAmount(string? amount) => amount != null && OptInChecks.DiceAmount().IsMatch(amount);
 
     /// <summary>A modifier's or rule's condition. One that reads what only a roll has (<c>input.defensive</c>) does not hold on
     /// the sheet; one that fails otherwise is a formula problem, and does not hold either.</summary>

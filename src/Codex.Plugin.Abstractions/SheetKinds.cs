@@ -137,6 +137,30 @@ public sealed class ModifierDefinition
 
     /// <summary>A formula; the modifier counts only while it holds.</summary>
     public string? When { get; set; }
+
+    /// <summary>Makes the modifier a tick box: it never counts on the sheet, and counts in a roll that reads its target only when the
+    /// player ticked it for that roll (docs/ROLL_BONUSES_DESIGN.md).</summary>
+    public OptInDefinition? OptIn { get; set; }
+}
+
+/// <summary>What makes a modifier a tick box: <c>optIn: { label, spends: { key, amount }, ends }</c>.</summary>
+public sealed class OptInDefinition
+{
+    /// <summary>What the tick box says. None: the modifier's source.</summary>
+    public string? Label { get; set; }
+
+    /// <summary>A pool the roll spends from when this is ticked (a <c>uses_*</c> counter's key or a resource).</summary>
+    public OptInSpendDefinition? Spends { get; set; }
+
+    /// <summary>Only on a condition's effects: rolling with it ticked removes the condition.</summary>
+    public bool Ends { get; set; }
+}
+
+/// <summary>What a ticked opt-in spends: <c>{ key, amount }</c>. The amount is a whole number (default 1).</summary>
+public sealed class OptInSpendDefinition
+{
+    public string Key { get; set; } = string.Empty;
+    public string Amount { get; set; } = "1";
 }
 
 /// <summary>Picks of an entry type, each with its own fields.</summary>

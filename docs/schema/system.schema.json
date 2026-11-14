@@ -3150,6 +3150,54 @@
             "boolean"
           ],
           "description": "A formula; the modifier counts only while it holds."
+        },
+        "optIn": {
+          "$ref": "#/$defs/OptInDefinition",
+          "description": "Makes the modifier a tick box: it never counts on the sheet, and counts in a roll that reads its target only when the player ticked it for that roll (docs/ROLL_BONUSES_DESIGN.md)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "OptInDefinition": {
+      "description": "What makes a modifier a tick box: `optIn: { label, spends: { key, amount }, ends }`.",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "What the tick box says. None: the modifier's source."
+        },
+        "spends": {
+          "$ref": "#/$defs/OptInSpendDefinition",
+          "description": "A pool the roll spends from when this is ticked (a `uses_*` counter's key or a resource)."
+        },
+        "ends": {
+          "type": "boolean",
+          "description": "Only on a condition's effects: rolling with it ticked removes the condition."
+        }
+      },
+      "additionalProperties": false
+    },
+    "OptInSpendDefinition": {
+      "description": "What a ticked opt-in spends: `{ key, amount }`. The amount is a whole number (default 1).",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "amount": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
         }
       },
       "additionalProperties": false

@@ -739,6 +739,26 @@ A typed contribution to a target: `{ target: AC, amount: 2, type: dodge, source:
 | `type` | text (a number is text too) | The modifier type; none is `untyped`. |
 | `source` | text (a number is text too) | Where the modifier comes from, as the `modifiers` widget shows it. A condition's modifier without one is credited to the condition, a pick's to the entry. |
 | `when` | text (a number is text too) | A formula; the modifier counts only while it holds. |
+| `optIn` | [OptInDefinition](#optindefinition) | Makes the modifier a tick box: it never counts on the sheet, and counts in a roll that reads its target only when the player ticked it for that roll (docs/ROLL_BONUSES_DESIGN.md). |
+
+## OptInDefinition
+
+What makes a modifier a tick box: `optIn: { label, spends: { key, amount }, ends }`.
+
+| Key | Type | What it is |
+|---|---|---|
+| `label` | text (a number is text too) | What the tick box says. None: the modifier's source. |
+| `spends` | [OptInSpendDefinition](#optinspenddefinition) | A pool the roll spends from when this is ticked (a `uses_*` counter's key or a resource). |
+| `ends` | true or false | Only on a condition's effects: rolling with it ticked removes the condition. |
+
+## OptInSpendDefinition
+
+What a ticked opt-in spends: `{ key, amount }`. The amount is a whole number (default 1).
+
+| Key | Type | What it is |
+|---|---|---|
+| `key` | text (a number is text too) |  |
+| `amount` | text (a number is text too) |  |
 
 ## PickListDefinition
 

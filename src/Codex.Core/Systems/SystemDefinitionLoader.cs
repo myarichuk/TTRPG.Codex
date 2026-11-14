@@ -265,6 +265,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in ValidateModifiers(definition))
+        {
+            yield return error;
+        }
+
         if (definition.Vitals?.Concentration is { } concentration
             && RequiredAttributeError(definition, "vitals.concentration.saveAttribute", concentration.SaveAttribute) is { } concentrationError)
         {
@@ -686,6 +691,29 @@ public static class SystemDefinitionLoader
             if (!string.IsNullOrWhiteSpace(moment.OnSet) && !inputs.Contains(moment.OnSet))
             {
                 yield return $"moment '{moment.Key}': onSet '{moment.OnSet}' is not an input value of any sheet kind.";
+            }
+        }
+    }
+
+    /// <summary>The problems with the modifiers a system writes itself (a sheet kind's own, and a condition's effects): opt-ins (<c>ends</c> only on a
+    /// condition's effect, a whole number to spend) and a dice amount on a target a pool roll reads.</summary>
+    private static IEnumerable<string> ValidateModifiers(SystemDefinition definition)
+    {
+        foreach (var kind in definition.SheetKinds)
+        {
+            for (var i = 0; i < kind.Modifiers.Count; i++)
+            {
+                var m = kind.Modifiers[i];
+                foreach (var error in Rules.OptInChecks.Problems(definition, $"sheetKinds.{kind.Kind}.modifiers[{i}]", m.Target, m.Amount, m.OptIn, inCondition: false)) yield return error;
+            }
+        }
+
+        foreach (var (name, effect) in definition.ConditionEffects)
+        {
+            for (var i = 0; i < effect.Modifiers.Count; i++)
+            {
+                var m = effect.Modifiers[i];
+                foreach (var error in Rules.OptInChecks.Problems(definition, $"conditionEffects.{name}.modifiers[{i}]", m.Target, m.Amount, m.OptIn, inCondition: true)) yield return error;
             }
         }
     }
