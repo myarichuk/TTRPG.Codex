@@ -226,7 +226,7 @@ triggers" through the `critFail` field. Until that roll exists, a system without
 
 | System | Pack | What |
 |---|---|---|
-| srd5e | `srd-5.2.1/hazards` | **The SRD's 8 traps** (Gameplay Toolbox, "Traps", pp. 199-201): Collapsing Roof, Falling Net, Fire-Casting Statue, Hidden Pit, Poisoned Darts, Poisoned Needle, Rolling Stone, Spiked Pit. Each has severity and level range, trigger, duration, the effect with its save and damage, Detect and Disarm (sometimes two routes), the extra methods it needs (Avoid, Escape, Destroy, Slow, Set) and "At Higher Levels" (all but Rolling Stone). Imported by `Srd5eImporter` from the SRD 5.2.1 PDF, with the SRD attribution. The importer's source today is the 5e-bits JSON, which has no traps, so this is a small PDF step of its own |
+| srd5e | `srd-5.2.1/hazards` | **The SRD's 8 traps** (Gameplay Toolbox, "Traps", pp. 199-201): Collapsing Roof, Falling Net, Fire-Casting Statue, Hidden Pit, Poisoned Darts, Poisoned Needle, Rolling Stone, Spiked Pit. Each has severity and level range, trigger, duration, the effect with its save and damage, Detect and Disarm (sometimes two routes), the extra methods it needs (Avoid, Escape, Destroy, Slow, Set) and "At Higher Levels" (all but Rolling Stone). Imported by `Srd5eImporter` with the SRD attribution. The importer's source is the 5e-bits JSON, which has no traps, so they come from a reviewed data file, `Data/srd521-traps.yaml`, written from the SRD 5.2.1 document, with a small loader, the way #302 added the invocations (`Data/srd521-invocations.yaml`, `Invocations.cs`). No PDF reading in the importer |
 | srd5e | `codex-flavor` (the project's own pack) or a new `codex-hazards` pack | Only what the SRD lacks: a complex hazard (a flooding room) and a magical one (a cursed doorway), written by this project with numbers from 3.2. The SRD's traps cover the simple mechanical ones |
 | srd5e | rules, not hazards | The SRD's environmental rules (Burning, Dehydration, Falling, Malnutrition, Suffocation; and Deep Water, Extreme Cold, Extreme Heat, Frigid Water, Heavy Precipitation, High Altitude, Slippery Ice, Strong Wind, Thin Ice) stay `rule` entries. They apply to a whole place, not a placed object. A later step may let a place name one as its environment |
 | fitd-srd | none | Dangers are clocks and consequences. No `hazard` type |
@@ -281,7 +281,7 @@ No new resx prefix.
 | # | Step | Size |
 |---|---|---|
 | 1 | `HazardDefinition` on `ContentTypeDefinition`, `hazards.scaling` on `SystemDefinition`, loader checks, XML docs, schema docs regenerated | S |
-| 2 | srd5e: the `hazard` type and scaling derived from the SRD's traps; import the 8 SRD traps from the SRD 5.2.1 PDF (a new PDF step in `Srd5eImporter`); 2 homebrew examples for what the SRD lacks | S-M |
+| 2 | srd5e: the `hazard` type and scaling derived from the SRD's traps; the 8 SRD traps from a reviewed `Data/srd521-traps.yaml` and a loader, as the invocations are; 2 homebrew examples for what the SRD lacks | S-M |
 | 3 | `PlaceFeature.Hazard` with state; place page link and picker | S-M |
 | 4a | Server-side check service: an actor's skill, save, passive or AC from its evaluation, rolled with `dice.check`; GM-entered bonus for printed creatures | M |
 | 4b | `HazardCommand` (notice, disable, trigger) on 4a and the damage event; live state in `EncounterDocument.ActiveEffects`, written back at encounter end; the Hazards panel with its state picker; log | M |

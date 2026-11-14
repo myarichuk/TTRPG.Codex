@@ -17,7 +17,7 @@ Checked in code on 2026-11-14.
 | Free castings (innate spells) | **Built on `sheetRules` only** (`FeatureAdd.Free`, cost in `EvaluateActions`) |
 | Actions panel (`count`, `critical`) | **Built on `sheetRules` only** |
 | General ranked lists (Perception, weapon and armor categories, class DC, spell per tradition) | **Still a gap.** Ranks exist for `skills` and `saves` only (`SkillRules.Ranks`, `SaveRules.Ranks`) |
-| Per-type penalties (untyped penalties stack, typed take the worst) | **Still a gap.** `ModifierTypesDefinition.Penalties` is one rule for all types |
+| Per-type penalties (untyped penalties stack, typed take the worst) | **Still a gap.** `ModifierTypesDefinition.Penalties` is one rule for all types, and `ModifierStacking.Stack` groups untyped modifiers as one type, so `penalties: highest` would wrongly keep only the worst untyped penalty |
 | Valued conditions (frightened 2) | **Still a gap.** Only `ExhaustionRules` has a level |
 | Boosts, MAP, cooldowns, server-side check rolls, item rune slots, linked companion sheets | **Still gaps** |
 
@@ -46,7 +46,7 @@ From [HAZARDS_DESIGN.md](HAZARDS_DESIGN.md) section 9. It works on srd5e alone a
 | # | Step | Files (main ones) | Who |
 |---|---|---|---|
 | H1 | `HazardDefinition` on `ContentTypeDefinition`, `hazards.scaling` on `SystemDefinition`, loader checks, schema docs | `SystemDefinition.cs`, `SystemDefinitionLoader.cs`, `docs/schema/system.schema.json`, `SYSTEM_YAML_REFERENCE.md` | Sonnet; Opus reviews the type shape |
-| H2 | srd5e `hazard` type and scaling from the SRD traps; a PDF step in `Srd5eImporter` for the 8 traps; 2 homebrew hazards; golden updated | `content/systems/srd5e/system.yaml`, `tools/Codex.ContentImport/*`, golden | Sonnet (rules judgment, not Haiku) |
+| H2 | srd5e `hazard` type and scaling from the SRD traps; the 8 traps in a reviewed `Data/srd521-traps.yaml` with a loader, as `Invocations.cs` does (no PDF reading); 2 homebrew hazards; golden updated | `content/systems/srd5e/system.yaml`, new `Traps.cs`, `Srd5eImporter.cs`, golden | Sonnet (rules judgment, not Haiku) |
 | H3 | `PlaceFeature.Hazard` with state; place page link and picker | `Codex.Persistence/Models.cs`, place pages | Sonnet |
 | H4a | Server-side check service: skill, save, passive or AC from an actor's evaluation, rolled with `dice.check`; a typed bonus for printed creatures | new `Codex.Persistence/Runtime/CheckService.cs`, `CampaignRuntime.cs` | **Opus designs the interface, Sonnet builds, Opus reviews** |
 | H4b | `HazardCommand` (notice, disable, trigger) on H4a; live state in `EncounterDocument.ActiveEffects`; Hazards panel; log | `RuntimeCommands.cs`, `CombatConsole.razor`, new `HazardsPanel.razor` | Sonnet; Opus reviews |
@@ -73,7 +73,7 @@ The engine steps use our own numbers and invented entries only. The PDFs are not
 | P7 | The system skeleton under `content/systems/` with homebrew-only content: ORC licence block in its manifest, no "Pathfinder" in the name, `moments:` (daily preparations, refocus, session start), the faith shape with no names | new system folder | Sonnet; Opus reviews the licence block |
 | P8 | `pf2` importer command, local only: bookmarks as the spine, font histogram, tables by word boxes, sidebars split out. The PDFs are gitignored and never read by CI | `tools/Codex.ContentImport/Pf2/*`, `.gitignore` | Sonnet, one book chapter per run; **Opus reviews every generated diff** |
 | P9 | Redaction table (phrase-level, fails on mismatch) and the denylist test from the glossary allowlist | `tools/Codex.ContentImport/Pf2/Redactions.cs`, a test | Sonnet builds; **Opus reviews the table itself** |
-| P10 | Homebrew until GM Core: about 12 magic items, fundamental runes, generic property runes (flaming, icy). Each marked homebrew in the library | pack folder | Sonnet; Opus checks none is copied from GM Core |
+| P10 | Homebrew until GM Core: about 12 magic items, fundamental runes, generic property runes (flaming, icy). Each tagged homebrew in the library. The brief says: invent every number and every line; never rebuild a published item or rune from memory; generic words (flaming, icy) only, with our own mechanics | pack folder | Sonnet; Opus reviews for numbers or wording that look recalled rather than invented |
 | P11 | Companions and familiars as their own sheet kind | system yaml, sheet kind | Opus designs (linked sheets are new); later |
 | P12 | Hazards on the pack: `notice.rank`, `disable.successes`, `critFail`, degrees; the pack's homebrew hazards | pack, hazard UI | Sonnet. After H4b and P6 |
 
@@ -133,6 +133,8 @@ The brief then names:
 - No deity names, or any other Reserved Material. Provenance is by chapter and section only, never a page quote.
 - The PDFs stay outside the repo and are gitignored.
 - Nothing personal about the purchase goes in any file or report.
+- Nothing from memory either: a model recalling a published statblock, item or rune is the same leak as copying the PDF. GM Core content
+  is not held, so anything that would come from it is invented and tagged homebrew.
 
 ## 7. Not decided yet
 
