@@ -385,6 +385,7 @@ public sealed partial class SheetFormulas
         it.SetFunction("progression", (Func<object?, object?, double>)((name, level) => SheetModel.Need().Progression(name, level)));
         it.SetFunction("modifiers", (Func<object?, double>)(target => SheetModel.Need().ModifierTotal(target?.ToString() ?? "")));
         it.SetFunction("has", (Func<object?, bool>)(condition => SheetModel.Need().Has(condition?.ToString())));
+        it.SetFunction("link", (Func<object?, object?, double>)((link, value) => SheetModel.Need().LinkValue(link, value)));
     }
 
     private static bool Contains(object? collection, object? value)

@@ -51,10 +51,13 @@ public static class SheetIntents
 
     /// <param name="self">The sheet's actor id: an intent naming another actor is left for the table. Null: only intents that
     /// name no actor apply.</param>
-    public static SheetIntentResult Apply(SystemDefinition system, IEntryResolver resolver, Dictionary<string, object> sheet, IEnumerable<SheetIntent> intents, string? self = null)
+    /// <param name="linked">Resolves the sheets this sheet's links point to, so a track's bounds count what a link brings (a crew's stress box). None: a
+    /// track whose maximum reads what a link could bring has no known maximum while the link is unknown, so it is not clamped there.</param>
+    public static SheetIntentResult Apply(SystemDefinition system, IEntryResolver resolver, Dictionary<string, object> sheet, IEnumerable<SheetIntent> intents, string? self = null,
+        ILinkedSheets? linked = null)
     {
         var result = new SheetIntentResult();
-        var applier = new Applier(system, resolver, sheet, result);
+        var applier = new Applier(system, resolver, sheet, result, linked);
         foreach (var intent in intents)
         {
             if (intent.Actor != null && !string.Equals(intent.Actor, self, StringComparison.Ordinal))
@@ -69,11 +72,11 @@ public static class SheetIntents
         return result;
     }
 
-    private sealed class Applier(SystemDefinition system, IEntryResolver resolver, Dictionary<string, object> sheet, SheetIntentResult result)
+    private sealed class Applier(SystemDefinition system, IEntryResolver resolver, Dictionary<string, object> sheet, SheetIntentResult result, ILinkedSheets? linked)
     {
         // A fresh model for each read: the values a track's bounds and start depend on (HP for nonlethal damage, turf for
         // reputation) change as intents apply.
-        private SheetTrack? Track(string key) => new SheetModel(system, resolver, sheet).TrackOf(key);
+        private SheetTrack? Track(string key) => new SheetModel(system, resolver, sheet, linked).TrackOf(key);
 
         public bool Apply(SheetIntent intent)
         {
@@ -160,7 +163,7 @@ public static class SheetIntents
             if (double.TryParse(formula, NumberStyles.Float, CultureInfo.InvariantCulture, out var number)) return number;
             try
             {
-                return SheetFormulas.Number(new SheetModel(system, resolver, sheet).Run(formula, new Dictionary<string, object> { ["excess"] = excess }));
+                return SheetFormulas.Number(new SheetModel(system, resolver, sheet, linked).Run(formula, new Dictionary<string, object> { ["excess"] = excess }));
             }
             catch (FormulaException)
             {
@@ -187,7 +190,7 @@ public static class SheetIntents
         private bool ListField(bool set, string listKey, IReadOnlyDictionary<string, object?> fields)
         {
             if (fields.GetValueOrDefault("key")?.ToString() is not { Length: > 0 } entryKey || fields.GetValueOrDefault("field")?.ToString() is not { Length: > 0 } fieldKey) return false;
-            var kind = new SheetModel(system, resolver, sheet).Kind;
+            var kind = new SheetModel(system, resolver, sheet, linked).Kind;
             if (kind?.KeyedLists.FirstOrDefault(l => l.Key == listKey) is { } keyed)
             {
                 var declared = keyed.Keys.Any(k => k.Parameter == null ? k.Key == entryKey : entryKey.StartsWith(k.Key + ".", StringComparison.Ordinal) && entryKey.Length > k.Key.Length + 1);

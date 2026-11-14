@@ -108,10 +108,12 @@ public static partial class SheetRolls
     /// <summary>How many dice a pool may have.</summary>
     public const int MaxPool = 100;
 
-    public static SheetRollResult Roll(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, SheetRollRequest request, IDiceSource dice)
+    /// <param name="linked">Resolves the sheet this sheet's links point to, so what a link brings (a crew's bonus dice) counts in the roll; none: it does not.</param>
+    public static SheetRollResult Roll(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, SheetRollRequest request, IDiceSource dice,
+        ILinkedSheets? linked = null)
     {
         var supplied = request.Inputs.ToDictionary(i => i.Key, i => new RollInput(i.Value, request.SuppliedBy.GetValueOrDefault(i.Key) ?? ""), StringComparer.Ordinal);
-        return new Roller(system, resolver, request.Participants, request.OptIns.ToHashSet(StringComparer.Ordinal)).Make(Definition(system, request.Definition), sheet, supplied, parent: null, dice, depth: 0);
+        return new Roller(system, resolver, request.Participants, request.OptIns.ToHashSet(StringComparer.Ordinal), linked).Make(Definition(system, request.Definition), sheet, supplied, parent: null, dice, depth: 0);
     }
 
     /// <summary>The tick boxes the named roll <paramref name="rollKey"/> offers on <paramref name="sheet"/> for the <paramref name="inputs"/> given so far:
@@ -119,14 +121,14 @@ public static partial class SheetRolls
     /// the definition's default, and a <c>when</c> that reads one nobody gave does not hold. A group roll offers none.</summary>
     /// <exception cref="RollException">The system has no such roll.</exception>
     public static IReadOnlyList<RollOptIn> OptIns(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, string rollKey,
-        IReadOnlyDictionary<string, object?> inputs)
+        IReadOnlyDictionary<string, object?> inputs, ILinkedSheets? linked = null)
     {
         var definition = Definition(system, rollKey);
         if (definition.Participants != null) return Array.Empty<RollOptIn>();
         var values = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (var declared in definition.Inputs.Where(i => i.Default != null)) values[declared.Key] = SheetModel.Plain(YamlValues.Normalize(declared.Default));
         foreach (var (key, value) in inputs) values[key] = SheetModel.Plain(YamlValues.Normalize(value));
-        var model = new SheetModel(system, resolver, sheet, values);
+        var model = new SheetModel(system, resolver, sheet, values, linked: linked);
         return model.OptIns(RollTargets.Of(system, definition)).Select(o => Offer(sheet, o)).ToList();
     }
 
@@ -208,7 +210,7 @@ public static partial class SheetRolls
     [GeneratedRegex(@"^\s*d(\d+)\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex DieSides();
 
-    private sealed class Roller(SystemDefinition system, IEntryResolver resolver, IReadOnlyList<RollParticipant> participants, IReadOnlySet<string> ticked)
+    private sealed class Roller(SystemDefinition system, IEntryResolver resolver, IReadOnlyList<RollParticipant> participants, IReadOnlySet<string> ticked, ILinkedSheets? linked)
     {
         public SheetRollResult Make(RollDefinition definition, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, RollInput> supplied,
             IReadOnlyDictionary<string, RollInput>? parent, IDiceSource dice, int depth)
@@ -219,7 +221,7 @@ public static partial class SheetRolls
             // range) is in place before any formula runs.
             var values = new Dictionary<string, object?>(StringComparer.Ordinal);
             // Only the roll the request names counts the ticks: a follow-up or a group's participant is a roll of its own.
-            var model = new SheetModel(system, resolver, sheet, values, depth == 0 ? ticked : null);
+            var model = new SheetModel(system, resolver, sheet, values, depth == 0 ? ticked : null, linked);
             var inputs = Inputs(definition, model, supplied, parent);
             foreach (var (key, input) in inputs) values[key] = input.Value;
 

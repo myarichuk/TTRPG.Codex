@@ -37,16 +37,17 @@ internal static class TableEvents
     }
 
     /// <param name="dice">Where a script handler's <c>ctx.d</c> rolls (null: at random); the faces it rolled are logged.</param>
-    public static Outcome Raise(CampaignRuntime runtime, string actorId, SheetEvent ev, IDiceSource? dice = null)
+    /// <param name="linked">Resolves the sheets linked actors' links point to; none: a link is unknown and the sheet's link features are not counted (and not dropped).</param>
+    public static Outcome Raise(CampaignRuntime runtime, string actorId, SheetEvent ev, IDiceSource? dice = null, ILinkedSheets? linked = null)
     {
         var rolled = new RecordingDice(dice ?? RandomDiceSource.Shared);
         return Change(runtime, actorId, ev.Type, (system, live, messages) =>
         {
-            var raised = SheetEvents.Raise(system, runtime.Resolver, live, ev, actorId, runtime.CampaignObjectState, rolled);
+            var raised = SheetEvents.Raise(system, runtime.Resolver, live, ev, actorId, runtime.CampaignObjectState, rolled, linked);
             if (rolled.Said is { } faces) messages.Add(EventMessage.Of("Sheet.ScriptRolled", runtime.ActorTerm(actorId), Term(system, ev.Type), faces));
             Campaign(runtime, system, raised.Campaign, messages);
             return raised.Applied;
-        });
+        }, linked);
     }
 
     /// <summary>The faces a script handler rolled, in order, so the log replays the dice actually rolled (overhaul section 4,
@@ -117,27 +118,28 @@ internal static class TableEvents
 
     /// <summary>Makes a roll from the system's definitions on the actor's live sheet and applies what it asks (a cost, a mark).
     /// <paramref name="made"/> receives the roll, for the roll log; null when the actor or the system is not there.</summary>
-    public static Outcome Roll(CampaignRuntime runtime, string actorId, SheetRollRequest request, IDiceSource dice, out SheetRollResult? made)
+    public static Outcome Roll(CampaignRuntime runtime, string actorId, SheetRollRequest request, IDiceSource dice, out SheetRollResult? made, ILinkedSheets? linked = null)
     {
         SheetRollResult? rolled = null;
         var outcome = Change(runtime, actorId, request.Definition, (system, live, messages) =>
         {
-            rolled = SheetRolls.Roll(system, runtime.Resolver, live, request, dice);
+            rolled = SheetRolls.Roll(system, runtime.Resolver, live, request, dice, linked);
             var all = rolled.AllIntents().ToList();
-            var applied = SheetIntents.Apply(system, runtime.Resolver, live, all.Where(i => !CampaignObjects.IsFor(i)), actorId);
+            var applied = SheetIntents.Apply(system, runtime.Resolver, live, all.Where(i => !CampaignObjects.IsFor(i)), actorId, linked);
             var onCampaign = CampaignObjects.Apply(system, runtime.CampaignObjectState, all.Where(CampaignObjects.IsFor));
             Campaign(runtime, system, onCampaign, messages);
             applied.Left.AddRange(onCampaign.Left);
             applied.Left.AddRange(onCampaign.Raised);
             return applied;
-        });
+        }, linked);
         made = rolled;
         return outcome;
     }
 
     /// <summary>Runs <paramref name="act"/> on the actor's live sheet, writes back what changed, and does what is left for the
     /// table. A handler or roll that cannot run is said in the log and changes nothing.</summary>
-    private static Outcome Change(CampaignRuntime runtime, string actorId, string what, Func<SystemDefinition, Dictionary<string, object>, List<EventMessage>, SheetIntentResult> act)
+    private static Outcome Change(CampaignRuntime runtime, string actorId, string what, Func<SystemDefinition, Dictionary<string, object>, List<EventMessage>, SheetIntentResult> act,
+        ILinkedSheets? linked = null)
     {
         if (runtime.System is not { } system || runtime.GetEntity(actorId) is not { } entity || runtime.GetActorDocument(actorId) is not { } doc)
         {
@@ -149,20 +151,21 @@ internal static class TableEvents
         SheetIntentResult result;
         try
         {
-            result = Apply(runtime, system, actorId, entity, doc, live => act(system, live, messages), messages);
+            result = Apply(runtime, system, actorId, entity, doc, live => act(system, live, messages), messages, linked);
         }
         catch (Exception ex) when (ex is SheetEventException or RollException or FormulaException)
         {
             return new Outcome(new[] { EventMessage.Of("Sheet.Failed", runtime.ActorTerm(actorId), what, ex.Message) }, touched, ex.Message);
         }
 
-        Follow(runtime, system, actorId, result, messages, touched);
+        Follow(runtime, system, actorId, result, messages, touched, linked);
         return new Outcome(messages, touched);
     }
 
     /// <summary>What a sheet (or the campaign, with no <paramref name="actorId"/>) left for the table: another actor's direct
     /// intents applied to them, the rest said.</summary>
-    private static void Follow(CampaignRuntime runtime, SystemDefinition system, string? actorId, SheetIntentResult result, List<EventMessage> messages, List<string> touched)
+    private static void Follow(CampaignRuntime runtime, SystemDefinition system, string? actorId, SheetIntentResult result, List<EventMessage> messages, List<string> touched,
+        ILinkedSheets? linked = null)
     {
         foreach (var left in result.Left)
         {
@@ -180,7 +183,7 @@ internal static class TableEvents
                     try
                     {
                         var theirs = Apply(runtime, system, other, otherEntity, otherDoc,
-                            live => SheetEvents.Raise(system, runtime.Resolver, live, new SheetEvent(left.Kind, fields), other, runtime.CampaignObjectState).Applied, messages);
+                            live => SheetEvents.Raise(system, runtime.Resolver, live, new SheetEvent(left.Kind, fields), other, runtime.CampaignObjectState, null, linked).Applied, messages, linked);
                         foreach (var further in theirs.Left) messages.Add(Said(runtime, system, other, further));
                     }
                     catch (SheetEventException ex)
@@ -254,11 +257,11 @@ internal static class TableEvents
     /// <summary>Runs <paramref name="act"/> on one actor's live sheet and writes back what changed; the changes are described
     /// into <paramref name="messages"/>.</summary>
     private static SheetIntentResult Apply(CampaignRuntime runtime, SystemDefinition system, string actorId, Entity entity, ActorDocument doc,
-        Func<Dictionary<string, object>, SheetIntentResult> act, List<EventMessage> messages)
+        Func<Dictionary<string, object>, SheetIntentResult> act, List<EventMessage> messages, ILinkedSheets? linked = null)
     {
         if (!entity.Has<ResourcePoolComponent>()) entity.Set(new ResourcePoolComponent());
         var pool = entity.Get<ResourcePoolComponent>();
-        var model = new SheetModel(system, runtime.Resolver, doc.Sheet);
+        var model = new SheetModel(system, runtime.Resolver, doc.Sheet, linked);
         var numeric = model.TrackKeys().Select(model.TrackOf).OfType<SheetTrack>().Where(t => !t.IsSlots).Select(t => t.Key).ToHashSet(StringComparer.Ordinal);
 
         // A feature's counter of uses (uses_*) is a number the table keeps in the pool too, so a roll that spends one (a ticked opt-in) lowers the table's

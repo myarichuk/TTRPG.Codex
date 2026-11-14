@@ -197,8 +197,16 @@ public class FeatureSource
     /// <c>lists</c>; <c>field</c> and <c>byField</c> are refused.</summary>
     public string? List { get; set; }
 
+    /// <summary>On a sheet kind only: the key of one of the kind's <c>links</c>. The source then reads the picks of <see cref="List"/> on the
+    /// <b>linked</b> sheet (a list of the linked kind), and each pick's entry <see cref="Property"/>, which is required, is one grant map
+    /// (<c>modifiers</c>, <c>adds</c>, <c>uses</c>, <c>options</c>) that becomes one feature of the linking sheet, named "{entry} ({link label})".
+    /// Choices it asks for are stored on the linking sheet, scoped by the entry's id. The linked sheet is read as stored, one step deep: its own links
+    /// are not followed. No link, or a linked actor that is gone, gives no features.</summary>
+    public string? Link { get; set; }
+
     /// <summary>The entry property holding feature rows (<c>features</c>, <c>traits</c>). None: the entry is one feature and
-    /// carries <c>modifiers</c>, <c>adds</c> and <c>uses</c> among its own properties.</summary>
+    /// carries <c>modifiers</c>, <c>adds</c> and <c>uses</c> among its own properties. With <see cref="Link"/>: the entry property that holds the
+    /// one grant map given to the linking sheet.</summary>
     public string? Property { get; set; }
 
     /// <summary>A row's column saying from which level it applies. Default <c>level</c>; a row without it always applies.</summary>

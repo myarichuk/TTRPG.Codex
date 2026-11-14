@@ -184,8 +184,12 @@ public sealed partial class SheetRuleEngine
     /// <summary>Takes off the sheet the picks of choices whose entry is no longer on it (a class, a feat taken off), and those of a copy of
     /// a repeatable pick that is gone. A choice of a feature that merely does not apply now (a level lost) is kept, for if it comes back.
     /// Run on save, not on every edit (<see cref="Recompute"/> leaves them alone), so taking a feat off and putting it back while editing loses nothing.</summary>
-    public void PruneChoices(Dictionary<string, object> sheet)
+    /// <param name="linked">Resolves the sheets this sheet's links point to. While a link is unknown (the sheet names a linked actor and none is supplied)
+    /// nothing is pruned: the picks of the features that link brings cannot be told from stale ones. A known link whose sheet no longer holds the
+    /// entry (or whose actor is gone) is an ordinary absence, and its picks are taken off.</param>
+    public void PruneChoices(Dictionary<string, object> sheet, ILinkedSheets? linked = null)
     {
+        if (system.SheetKinds.Count > 0 && SheetLinks.AnyUnknown(SheetLayout.KindOf(system, sheet), sheet, linked)) return;
         var kind = SheetLayout.KindOf(system, sheet) is { Features.Count: > 0 } withFeatures ? withFeatures : null;
         if (Rules is not { Features.Count: > 0 } && kind == null) return;
         var stored = sheet.Keys.Where(k => k.StartsWith(ChoicePrefix, StringComparison.Ordinal)).ToList();
@@ -229,6 +233,13 @@ public sealed partial class SheetRuleEngine
         // A sheet kind's own sources: the picks of the kind's lists.
         foreach (var source in kind?.Features ?? new List<FeatureSource>())
         {
+            // A link source reads the linked sheet's picks: its entries are held through the link (the choices stay on this sheet, under the entry's id).
+            if (source.Link != null)
+            {
+                foreach (var (_, entry) in LinkedEntries(system, kind!, source, resolver, sheet, linked)) held[entry.Id] = held.GetValueOrDefault(entry.Id) + 1;
+                continue;
+            }
+
             if (source.List == null || kind!.Lists.FirstOrDefault(l => l.Key == source.List) is not { Type: { } listType } list) continue;
             foreach (var id in PickIds(sheet, list.Key)) Count(listType, id);
         }
