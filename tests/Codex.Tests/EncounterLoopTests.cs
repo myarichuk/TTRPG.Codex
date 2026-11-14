@@ -30,7 +30,7 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
 
     public EncounterLoopTests(RavenDbFixture fixture)
     {
-        _dbService = new RavenDbService(fixture.DbPath, "Encounter_" + Guid.NewGuid(), runInMemory: true);
+        _dbService = fixture.Open("Encounter_" + Guid.NewGuid());
         _actors = new ActorRepository(_dbService);
         _sessions = new RavenSessionRepository(_dbService);
         _encounters = new RavenEncounterRepository(_dbService);
@@ -528,6 +528,33 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task ARestFromTheSheet_RefillsItsSlotsAndCounters_ButHealsNothing_Async()
+    {
+        // The sheet's own rest button, pressed while the table runs: what it does off the table (slots and feature uses), through the
+        // table, and nothing of a full rest (hit points stay as they are).
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await SeedAsync(campaignId, "Aria", 12, ActorKind.PlayerCharacter, s =>
+        {
+            s["uses_wild"] = 0L;
+            s["uses_wild_Max"] = 2L;
+            s["uses_wild_Rest"] = "Long Rest";
+            s["uses_wild_Label"] = "Wild Shape";
+            s["slots_1"] = 0L;
+            s["slots_1_Max"] = 3L;
+        });
+        var session = await SeedSessionAsync(campaignId);
+        await using var runtime = Runtime(campaignId, session);
+        runtime.Hydrate(new[] { hero });
+        await runtime.EnqueueAsync(new ApplyDamageCommand(hero.Id, "HP", 5, "ogre"));
+
+        await runtime.EnqueueAsync(new RestCommand(hero.Id, "Long Rest", new[] { "slots_1" }, PoolsOnly: true));
+
+        Assert.Equal(7, Hp(runtime, hero.Id));
+        Assert.Equal(2, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_wild"));
+        Assert.Equal(3, runtime.Snapshot.Actor(hero.Id)!.Pool("slots_1"));
+    }
+
+    [Fact]
     public async Task ARolledRefill_RollsThroughTheTableDice_IsLogged_AndStopsAtTheMaximum_Async()
     {
         var campaignId = Guid.NewGuid().ToString();
@@ -538,7 +565,7 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         await using var runtime = Runtime(campaignId, session, dice);
         runtime.Hydrate(new[] { hero });
 
-        await runtime.EnqueueAsync(new DawnCommand(hero.Id));
+        await runtime.EnqueueAsync(new MomentCommand(hero.Id, "dawn"));
 
         Assert.Equal(4, runtime.Snapshot.Actor(hero.Id)!.Pool("uses_charge")); // rolled 5, capped at 4
         Assert.Contains(session.RollLog, r => r.ActorId == hero.Id && r.Expression == "1d6+1" && r.Label == "Staff charges" && r.Total == 5);

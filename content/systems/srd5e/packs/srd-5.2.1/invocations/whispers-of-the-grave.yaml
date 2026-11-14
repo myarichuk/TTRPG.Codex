@@ -1,0 +1,19 @@
+id: whispers-of-the-grave
+type: invocation
+name: Whispers of the Grave
+description: >-
+  **Prerequisite:** Level 7+ Warlock
+
+
+  You can cast Speak with Dead without expending a spell slot.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 7
+  prerequisites: Level 7+ Warlock
+  adds:
+  - to: grantedSpells
+    entries:
+    - speak-with-dead
+    free: atWill

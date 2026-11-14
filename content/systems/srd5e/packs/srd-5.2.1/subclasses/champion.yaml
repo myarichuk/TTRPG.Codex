@@ -15,6 +15,10 @@ properties:
   - name: Improved Critical
     level: 3
     description: Your attack rolls with weapons and Unarmed Strikes can score a Critical Hit on a roll of 19 or 20 on the d20.
+    modifiers:
+    - target: critFrom
+      amount: 19
+      type: lowest
   - name: Remarkable Athlete
     level: 3
     description: >-
@@ -30,6 +34,10 @@ properties:
   - name: Superior Critical
     level: 15
     description: Your attack rolls with weapons and Unarmed Strikes can now score a Critical Hit on a roll of 18-20 on the d20.
+    modifiers:
+    - target: critFrom
+      amount: 18
+      type: lowest
   - name: Survivor
     level: 18
     description: >-

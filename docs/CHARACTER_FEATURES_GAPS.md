@@ -84,6 +84,14 @@ What it does not do:
 - **Carried entries**: a vault character holds its own Library entries (`ActorDocument.Carried`).
 - **Join review**: the GM's Accept is now a three-step review (character, what it brings, confirm) with add / use one the
   campaign has / leave out per entry.
+  - **Edit picks.** On the first step the GM changes the character's choices (the same pickers as the sheet's "Choices to make",
+    through `SheetRuleEngine.ChangeChoice`, so a row pick settles its counters) and swaps a list pick (feats, spells) for another
+    option the list allows. The rules are read again after each change. Accepting applies the edited picks to the campaign's copy
+    only (`VaultService.Review`); the vault character is not touched. The player does not approve the edits again.
+  - **Use one the campaign has** lists only what the sheet's rules would take in that slot, in every place the entry is used
+    (`SheetReferences.Replacements`: a subclass of the same class, an entry the pick list allows), not every entry of the type.
+  - **The player is told.** What the GM left out, swapped or edited is kept as notes on the campaign's copy
+    (`ActorDocument.JoinNotes`) and shown above the sheet until the player dismisses them (`JoinNotesBanner`).
 
 ## What a feature cannot express yet
 
@@ -119,15 +127,21 @@ Drafter:
   not written for. The vault draft dialog sets when: only the Library, when nothing fits, or always.
 - Proposals are on for vault drafts only. Cast's "Create with AI" and "Promote to cast" pick from the Library only.
 - Nothing is written below the subclass level. A class with no published subclass gets one written once it is due.
-- A list with a count but no options at all (the warlock's invocations) is still skipped.
+- ~~A list with a count but no options at all (the warlock's invocations) is still skipped.~~ It has options now.
 - The writer is told how to write `use`, but it never tags an item, so a written weapon is not offered as an attack.
-- Eldritch Invocation options are not Library entries in the SRD pack, so nobody can pick them, by hand or by AI.
+- ~~Eldritch Invocation options are not Library entries in the SRD pack.~~ They are now: 28 entries of type `invocation`, read from `Data/srd521-invocations.yaml`
+  (written from the SRD 5.2.1 document), a sheet list `invocations` counted by the class table and gated by the Warlock level, and a feature source, so
+  they can be picked by hand and by the drafter. A prerequisite that names another invocation or a cantrip is text the player checks. Their ru and he
+  entries are not translated yet.
 - One extra model call per drafted character with something to choose, and a second when a subclass is written.
 
 SRD content:
 
-- No published entry carries `modifiers`, `adds` or `uses`. The SRD pack is generated; the generator writes `use` on
-  spells and weapons (step 2) and nothing for features. So the Fiend Patron's spells, a Dwarf's resistance and every other published feature are still text only.
+- The SRD pack carries grants on the features that SRD_GRANTS_IMPORT_DESIGN.md maps: counters of uses with their refills (Rage,
+  Channel Divinity, Focus, Breath Weapon...), Extra Attack and the critical range, Expertise and the other skill choices,
+  resistances and granted spells. The reviewed mapping is `tools/Codex.ContentImport/Data/srd521-grants.yaml`; every row of every class,
+  subclass, species and feat is either a grant or text with a reason. What stays text is listed there (riders and owned dice, advantage
+  rules, gear and state conditions, senses, auras, chosen spells). Class skill picks are still the player's own ticks.
   (`hitPoints.perLevelBonus` and `armorClass.bonusLists` still do their older, narrower jobs.)
 
 Sheet and table:
@@ -143,9 +157,12 @@ Sheet and table:
 
 Join review:
 
-- The GM cannot edit an entry inside the review; changes happen outside the app and the player asks again.
-- "Use one the campaign has" lists every entry of the type, not only those the sheet's rules would allow.
-- The player is not told which entries were left out or swapped.
+- The GM cannot edit a carried entry's own text inside the review (its features, its description); that still happens outside
+  the app and the player asks again.
+- A pick the GM edits is not checked again against the rules beyond what the review shows: the options offered are the allowed
+  ones, and anything still wrong is listed on the first step, but Accept is never blocked.
+- The notes the player reads stay on the campaign's copy until they dismiss them; there is no other notification channel, so a
+  player who never opens the sheet is not told.
 - The carried entry stays on the vault character after it is accepted; a second campaign is asked about it again.
 - A vault character's sheet shows the entries it carries in a read-only "Homebrew" panel (with the Library panel), each
   opened to the same card the GM's review shows; a list pick that is one reads "(homebrew)" instead of linking to the

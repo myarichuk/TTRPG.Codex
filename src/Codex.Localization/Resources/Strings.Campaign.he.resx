@@ -1319,6 +1319,11 @@
   <data name="Campaign.Vault.WillAdd" xml:space="preserve"><value>יתווסף לספרייה: {0}</value></data>
   <data name="Campaign.Vault.WillUse" xml:space="preserve"><value>{0} יוחלף ב־{1}</value></data>
   <data name="Campaign.Vault.WillLeave" xml:space="preserve"><value>יושמט: {0}</value></data>
+  <data name="Campaign.Vault.PicksHeading" xml:space="preserve"><value>בחירות</value></data>
+  <data name="Campaign.Vault.PicksHint" xml:space="preserve"><value>אפשר להחליף בחירה באפשרות אחרת שהכללים מתירים. רק העותק בקמפיין משתנה. הדמות בכספת נשארת כפי שהיא.</value></data>
+  <data name="Campaign.Vault.ListPickChange" xml:space="preserve"><value>החלפת {0}</value></data>
+  <data name="Campaign.Vault.PickMissing" xml:space="preserve"><value>{0} (לא בספרייה)</value></data>
+  <data name="Campaign.Vault.WillEdit" xml:space="preserve"><value>שונה {0}: {1}</value></data>
   <data name="Campaign.Vault.Next" xml:space="preserve"><value>הבא</value></data>
   <data name="Campaign.Vault.Back" xml:space="preserve"><value>חזרה</value></data>
 </root>

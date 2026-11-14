@@ -41,6 +41,9 @@ description: >-
   **Spellcasting.** The priest casts one of the following spells, using Wisdom as the spellcasting ability:
 
 
+  At Will: *Light*, *Thaumaturgy*
+
+
 
   ### Bonus Actions
 
@@ -75,7 +78,11 @@ properties:
   - name: Radiant Flame
     description: 'Ranged Attack Roll: +4, range 60 ft. Hit: 7 (2d6) Radiant damage.'
   - name: Spellcasting
-    description: 'The priest casts one of the following spells, using Wisdom as the spellcasting ability:'
+    description: >-
+      The priest casts one of the following spells, using Wisdom as the spellcasting ability:
+
+
+      At Will: *Light*, *Thaumaturgy*
   bonusActions:
   - name: Divine Aid (1/day)
     description: The priest casts Bless, Healing Word, or Sanctuary, using the same spellcasting ability as Spellcasting.

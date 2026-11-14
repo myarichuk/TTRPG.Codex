@@ -48,6 +48,12 @@ description: >-
 
 
   **Spellcasting.** The naga casts one of the following spells, requiring no Somatic or Material components and using Intelligence as the spellcasting ability (spell save DC 14):
+
+
+  At Will: *Detect Magic*, *Mage Hand*, *Minor Illusion*, *Water Breathing*
+
+
+  2/Day Each: *Detect Thoughts*, *Dimension Door*, *Hold Person*, *Lightning Bolt*
 tags:
 - fiend
 - large
@@ -86,4 +92,11 @@ properties:
   - name: Necrotic Ray
     description: 'Ranged Attack Roll: +6, range 60 ft. Hit: 21 (6d6) Necrotic damage.'
   - name: Spellcasting
-    description: 'The naga casts one of the following spells, requiring no Somatic or Material components and using Intelligence as the spellcasting ability (spell save DC 14):'
+    description: >-
+      The naga casts one of the following spells, requiring no Somatic or Material components and using Intelligence as the spellcasting ability (spell save DC 14):
+
+
+      At Will: *Detect Magic*, *Mage Hand*, *Minor Illusion*, *Water Breathing*
+
+
+      2/Day Each: *Detect Thoughts*, *Dimension Door*, *Hold Person*, *Lightning Bolt*

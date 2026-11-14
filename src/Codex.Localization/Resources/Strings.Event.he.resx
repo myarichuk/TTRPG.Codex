@@ -94,6 +94,8 @@
   <data name="Event.Rest.Refilled" xml:space="preserve"><value>{0} +{1}</value></data>
   <data name="Event.Rest.Dawn" xml:space="preserve"><value>עלות השחר עבור {0}.</value></data>
   <data name="Event.Rest.DawnWith" xml:space="preserve"><value>עלות השחר עבור {0}: {1}.</value></data>
+  <data name="Event.Rest.Moment" xml:space="preserve"><value>{1} עבור {0}.</value></data>
+  <data name="Event.Rest.MomentWith" xml:space="preserve"><value>{1} עבור {0}: {2}.</value></data>
   <data name="Event.Initiative.RolledWith" xml:space="preserve"><value>{0}: יוזמה {1} — {2}.</value></data>
   <data name="Event.Rest.HitDice" xml:space="preserve"><value>קוביות חיים שהוחזרו: {0}</value></data>
   <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>התשישות חלפה</value></data>

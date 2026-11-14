@@ -1,0 +1,18 @@
+id: lessons-of-the-first-ones
+type: invocation
+name: Lessons of the First Ones
+description: >-
+  **Prerequisite:** Level 2+ Warlock
+
+
+  You have received knowledge from an elder entity of the multiverse, allowing you to gain one Origin feat of your choice (see "Feats").
+
+
+  **Repeatable.** You can gain this invocation more than once. Each time you do so, choose a different Origin feat.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 2
+  prerequisites: Level 2+ Warlock
+  repeatable: true

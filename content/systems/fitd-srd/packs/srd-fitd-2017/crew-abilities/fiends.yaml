@@ -9,3 +9,7 @@ description: >-
 source: Crew playbook > Crew special abilities > Fiends
 tags:
 - example
+properties:
+  modifiers:
+  - target: turfCount
+    amount: wanted

@@ -40,6 +40,15 @@ description: >-
   **Spellcasting.** The cultist casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 12, +4 to hit with spell attacks):
 
 
+  At Will: *Light*, *Thaumaturgy*
+
+
+  2/Day: *Command*
+
+
+  1/Day: *Hold Person*
+
+
 
   ### Bonus Actions
 
@@ -73,7 +82,17 @@ properties:
   - name: Pact Blade
     description: 'Melee Attack Roll: +4, reach 5 ft. Hit: 6 (1d8 + 2) Slashing damage plus 7 (2d6) Necrotic damage.'
   - name: Spellcasting
-    description: 'The cultist casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 12, +4 to hit with spell attacks):'
+    description: >-
+      The cultist casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 12, +4 to hit with spell attacks):
+
+
+      At Will: *Light*, *Thaumaturgy*
+
+
+      2/Day: *Command*
+
+
+      1/Day: *Hold Person*
   bonusActions:
   - name: Spiritual Weapon (2/day)
     description: The cultist casts the Spiritual Weapon spell, using the same spellcasting ability as Spellcasting.

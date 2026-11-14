@@ -55,6 +55,9 @@ description: >-
   **Spellcasting.** The oni casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 13):
 
 
+  1/Day Each: *Charm Person*, *Darkness*, *Gaseous Form*, *Sleep*
+
+
 
   ### Bonus Actions
 
@@ -98,7 +101,11 @@ properties:
   - name: Shape-Shift
     description: The oni shape-shifts into a Small or Medium Humanoid or a Large Giant, or it returns to its true form. Other than its size, its game statistics are the same in each form. Any equipment it is wearing or carrying isn’t transformed.
   - name: Spellcasting
-    description: 'The oni casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 13):'
+    description: >-
+      The oni casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 13):
+
+
+      1/Day Each: *Charm Person*, *Darkness*, *Gaseous Form*, *Sleep*
   bonusActions:
   - name: Invisibility
     description: The oni casts Invisibility on itself, requiring no spell components and using the same spellcasting ability as Spellcasting.

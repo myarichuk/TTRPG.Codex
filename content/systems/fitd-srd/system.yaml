@@ -68,10 +68,24 @@ conditionEffects:
   Reduced dice:
     modifiers: [{ target: '@pools', amount: -1, source: Harm }]
 
+# Times at which things come back. Blades has no rests: armor and some abilities return when a score's load is chosen or
+# when downtime starts. Setting the load fires loadChosen.
+moments:
+  - { key: downtime, label: Downtime }
+  - { key: loadChosen, label: Load chosen, onSet: load }
+
+# Several special-armor abilities still give one box.
+modifierTypes:
+  types: { boxes: highest }
+
 sheetKinds:
   - kind: scoundrel
     label: Scoundrel
     role: player
+
+    # Each special ability's own properties carry its grants (the pack's entries; see tools/Codex.ContentImport).
+    features:
+      - { list: abilities }
 
     keyedLists:
       # Action ratings: twelve actions in three attributes, each a number of dots (at most two at the start of play).
@@ -110,9 +124,11 @@ sheetKinds:
       - { key: prowess, formula: "count(where(actions, a => a.group == 'prowess'), a => a.rating >= 1)" }
       - { key: resolve, formula: "count(where(actions, a => a.group == 'resolve'), a => a.rating >= 1)" }
       # Light 1-3, normal 4-5, heavy 6 (7-9 is encumbered, which is not a load anyone chooses).
-      - { key: load,     input: true, options: [light, normal, heavy], default: normal }
-      - { key: LoadMax,  formula: "load == 'light' ? 3 : load == 'heavy' ? 6 : 5" }
-      - { key: LoadUsed, formula: "sum(where(items, i => i.used), i => i.load)" }
+      - { key: load,     label: Load, input: true, options: [light, normal, heavy], default: normal }
+      - { key: LoadMax,  label: Load limit, formula: "load == 'light' ? 3 : load == 'heavy' ? 6 : 5", modifiers: LoadMax }
+      # The special-armor box exists only while an ability gives it ("you can't use that armor box at all" otherwise).
+      - { key: specialArmorBoxes, label: Special armor boxes, formula: "0", modifiers: specialArmorBoxes }
+      - { key: LoadUsed, label: Load used, formula: "sum(where(items, i => i.used), i => i.load)" }
 
     tracks:
       # The SRD speaks of "your last stress box" without counting them; nine is the usual sheet's track.
@@ -139,10 +155,11 @@ sheetKinds:
           - { level: 3, slots: 1, condition: Needs help }
         whenFull: pushUp
         beyond: { condition: Dead }
-      # Armor: standard, heavy and special, one box each; all are restored when the next load is chosen.
+      # Armor: standard, heavy and special, one box each; all are restored when the next load is chosen (see events), and
+      # the special box also when downtime starts. The special box is given by an ability (specialArmorBoxes).
       - { key: armor,         label: Armor,         max: 1, display: boxes }
       - { key: heavy_armor,   label: Heavy armor,   max: 1, display: boxes }
-      - { key: special_armor, label: Special armor, max: 1, display: boxes }
+      - { key: special_armor, label: Special armor, max: "specialArmorBoxes", display: boxes }
       # Coin on hand is worth carrying up to four; more is spent or goes to the stash. The stash decides how a retired
       # character ends up (0-10 poor, 11-20 meager, 21-39 modest, 40 fine).
       - { key: coin,  label: Coin,  min: 0, max: 4, display: boxes }
@@ -155,8 +172,8 @@ sheetKinds:
 
     layout:
       - { section: Actions, widgets: [{ widget: table, key: actions, groupBy: group, columns: [rating] }, { widget: values, keys: [insight, prowess, resolve] }, { widget: roll, roll: action }, { widget: roll, roll: resistance }] }
-      - { section: Condition, widgets: [{ widget: track, key: stress }, { widget: track, key: trauma }, { widget: track, key: harm }, { widget: track, key: armor }, { widget: track, key: heavy_armor }, { widget: track, key: special_armor }] }
-      - { section: Abilities, widgets: [{ widget: list, key: abilities }] }
+      - { section: Condition, widgets: [{ widget: track, key: stress }, { widget: track, key: trauma }, { widget: track, key: harm }, { widget: track, key: armor }, { widget: track, key: heavy_armor }, { widget: track, key: special_armor }, { widget: moments }] }
+      - { section: Abilities, widgets: [{ widget: list, key: abilities }, { widget: features }] }
       - { section: Load, widgets: [{ widget: values, keys: [load, LoadUsed, LoadMax] }, { widget: list, key: items, columns: [used] }] }
       - { section: Advancement, widgets: [{ widget: track, key: xp_insight }, { widget: track, key: xp_prowess }, { widget: track, key: xp_resolve }, { widget: track, key: xp_playbook }] }
       - { section: Coin, widgets: [{ widget: track, key: coin }, { widget: track, key: stash }] }
@@ -165,6 +182,9 @@ sheetKinds:
   - kind: crew
     label: Crew
     role: shared
+    features:
+      - { list: abilities }
+      - { list: upgrades }
     lists:
       - key: abilities
         label: Crew special abilities
@@ -176,17 +196,19 @@ sheetKinds:
       - { key: tier, input: true, default: 0 }
       # Turf is held up to six pieces; each lowers the reputation needed to advance by one.
       - { key: turf, input: true, default: 0 }
+      # Turf as the reputation track counts it; an ability can add to it (Fiends counts wanted level).
+      - { key: turfCount, label: Turf counted, formula: "turf", modifiers: turfCount }
       - { key: hold, input: true, options: [weak, strong], default: strong }
     tracks:
       # Heat 9 is a wanted level and the heat clears; what went past nine stays.
       - { key: heat, label: Heat, max: 9, display: boxes, overflow: { into: wanted, by: 1, then: carry } }
       - { key: wanted, label: Wanted level, max: 4, display: boxes }
-      - { key: rep, label: Reputation, max: "12 - turf", display: boxes }
+      - { key: rep, label: Reputation, max: "max(12 - turfCount, 6)", display: boxes }   # the minimum rep cost is always 6
       - { key: coin, label: Coin, min: 0 }
     layout:
       - { section: Standing, widgets: [{ widget: values, keys: [tier, turf, hold] }, { widget: track, key: rep }, { widget: track, key: coin }] }
       - { section: Heat, widgets: [{ widget: track, key: heat }, { widget: track, key: wanted }] }
-      - { section: Abilities, widgets: [{ widget: list, key: abilities }, { widget: list, key: upgrades }] }
+      - { section: Abilities, widgets: [{ widget: list, key: abilities }, { widget: list, key: upgrades }, { widget: features }] }
 
 # State that belongs to the campaign, not to any sheet.
 campaign:
@@ -224,7 +246,7 @@ rolls:
   # clears one instead.
   - key: resistance
     label: Resistance roll
-    pool: "score(input.attribute)"
+    pool: "score(input.attribute) + modifiers('@resistance')"
     die: d6
     zeroDice: { roll: 2, keep: lowest }
     keep: { highest: 1 }
@@ -254,6 +276,12 @@ events:
   roll:
     # A desperate action roll marks experience in the action's attribute.
     - { when: "ev.definition == 'action' && ev.inputs.position == 'desperate'", intents: [{ mark: { track: "'xp_' + actions[ev.inputs.action].group" } }] }
+  # "All of your armor is restored when you choose your load for the next score."
+  loadChosen:
+    - { intents: [{ set: { track: armor, to: 0 } }, { set: { track: heavy_armor, to: 0 } }, { set: { track: special_armor, to: 0 } }] }
+  # "Your special armor is restored at the beginning of downtime."
+  downtime:
+    - { intents: [{ set: { track: special_armor, to: 0 } }] }
   sessionEnd:
     # Each experience trigger the table answers yes to marks one playbook experience.
     - { intents: [{ adjust: { track: xp_playbook, by: "count(ev.answers, a => a)" } }] }

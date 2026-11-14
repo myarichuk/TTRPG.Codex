@@ -11,7 +11,7 @@ public static class SheetLayout
 {
     /// <summary>Widgets any system may use, bound to its own keys.</summary>
     public static readonly IReadOnlySet<string> GenericWidgets =
-        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "values", "track", "list", "table", "roll", "text", "modifiers" };
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "values", "track", "list", "table", "roll", "text", "modifiers", "moments" };
 
     /// <summary>The widgets the host builds in, and what each reads: 5e's panels, which read <see cref="SheetRules"/>.</summary>
     public static readonly IReadOnlyDictionary<string, string> BuiltinWidgets = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -27,7 +27,7 @@ public static class SheetLayout
         ["armor-class"] = "sheetRules.armorClass",
         ["slots"] = "sheetRules.slotPools",
         ["actions"] = "sheetRules.actions",
-        ["features"] = "sheetRules.features",
+        ["features"] = "features",
         ["level-up"] = "fieldRoles.level"
     };
 
@@ -147,7 +147,12 @@ public static class SheetLayout
         var name = widget.Widget;
         if (BuiltinWidgets.TryGetValue(name, out var reads))
         {
-            if (kind != null) yield return $"{name} is a built-in widget over {reads}, which a sheet kind does not have; it shows nothing.";
+            // "features" reads sheetRules.features, or a sheet kind's own features: it needs one of them.
+            if (kind != null && string.Equals(name, "features", StringComparison.OrdinalIgnoreCase))
+            {
+                if (kind.Features.Count == 0) yield return "features shows a sheet kind's feature sources, and this kind has none; it shows nothing.";
+            }
+            else if (kind != null) yield return $"{name} is a built-in widget over {reads}, which a sheet kind does not have; it shows nothing.";
             yield break;
         }
 
@@ -215,6 +220,10 @@ public static class SheetLayout
                 break;
             case "modifiers":
                 if (widget.Target is not { Length: > 0 }) yield return "modifiers needs a target.";
+                break;
+            case "moments":
+                // The buttons of the moments that touch the sheet; with none declared there is nothing to press.
+                if (system.Moments.Count == 0 && system.Vitals?.Rests.Count is null or 0) yield return "moments: the system declares no moments, so it shows nothing.";
                 break;
         }
     }

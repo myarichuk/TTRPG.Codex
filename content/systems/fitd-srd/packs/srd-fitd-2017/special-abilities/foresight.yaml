@@ -9,3 +9,9 @@ description: >-
 source: Character playbook > Special abilities > Foresight
 tags:
 - example
+properties:
+  uses:
+    key: foresight
+    max: 2
+    recovers:
+    - on: loadChosen

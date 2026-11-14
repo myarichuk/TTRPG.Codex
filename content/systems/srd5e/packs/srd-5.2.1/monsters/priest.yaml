@@ -44,6 +44,12 @@ description: >-
   **Spellcasting.** The priest casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):
 
 
+  At Will: *Light*, *Thaumaturgy*
+
+
+  1/Day: *Spirit Guardians*
+
+
 
   ### Bonus Actions
 
@@ -80,7 +86,14 @@ properties:
   - name: Radiant Flame
     description: 'Ranged Attack Roll: +5, range 60 ft. Hit: 11 (2d10) Radiant damage.'
   - name: Spellcasting
-    description: 'The priest casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):'
+    description: >-
+      The priest casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):
+
+
+      At Will: *Light*, *Thaumaturgy*
+
+
+      1/Day: *Spirit Guardians*
   bonusActions:
   - name: Divine Aid (3/day)
     description: The priest casts Bless, Dispel Magic, Healing Word, or Lesser Restoration, using the same spellcasting ability as Spellcasting.

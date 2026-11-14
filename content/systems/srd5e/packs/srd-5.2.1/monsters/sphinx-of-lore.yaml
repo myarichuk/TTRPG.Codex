@@ -55,6 +55,12 @@ description: >-
   **Spellcasting.** The sphinx casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):
 
 
+  At Will: *Detect Magic*, *Identify*, *Mage Hand*, *Minor Illusion*, *Prestidigitation*
+
+
+  1/Day Each: *Dispel Magic*, *Legend Lore*, *Locate Object*, *Plane Shift*, *Remove Curse*, *Tongues*
+
+
 
   ### Legendary Actions
 
@@ -105,7 +111,14 @@ properties:
   - name: Mind-Rending Roar
     description: 'Wisdom Saving Throw: DC 16, each enemy in a 300-foot Emanation originating from the sphinx. Failure: 35 (10d6) Psychic damage, and the target has the Incapacitated condition until the start of the sphinx’s next turn.'
   - name: Spellcasting
-    description: 'The sphinx casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):'
+    description: >-
+      The sphinx casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):
+
+
+      At Will: *Detect Magic*, *Identify*, *Mage Hand*, *Minor Illusion*, *Prestidigitation*
+
+
+      1/Day Each: *Dispel Magic*, *Legend Lore*, *Locate Object*, *Plane Shift*, *Remove Curse*, *Tongues*
   legendaryActions:
   - name: Arcane Prowl
     description: The sphinx can teleport up to 30 feet to an unoccupied space it can see, and it makes one Claw attack.

@@ -40,6 +40,11 @@ properties:
       - You have Advantage on the attack rolls of Sorcerer spells you cast.
 
       You can use this feature twice, and you regain all expended uses of it when you finish a Long Rest.
+    uses:
+      key: innate-sorcery
+      max: 2
+      recoversOn:
+      - Long Rest
   - name: Spellcasting
     level: 1
     description: >-
@@ -88,6 +93,12 @@ properties:
       4 | 6 | 7
 
       5 | 7 | 9
+    uses:
+      key: sorcery-points
+      label: Sorcery Points
+      max: classLevel
+      recoversOn:
+      - Long Rest
   - name: Metamagic
     level: 2
     description: >-
@@ -108,6 +119,11 @@ properties:
   - name: Sorcerous Restoration
     level: 5
     description: When you finish a Short Rest, you can regain expended Sorcery Points, but no more than a number equal to half your Sorcerer level (round down). Once you use this feature, you can’t do so again until you finish a Long Rest.
+    uses:
+      key: sorcerous-restoration
+      max: 1
+      recoversOn:
+      - Long Rest
   - name: Subclass Feature
     level: 6
     description: You gain a feature from your Sorcerer subclass at this level. Its features are listed on the subclass.
@@ -117,6 +133,9 @@ properties:
       If you have no uses of Innate Sorcery left, you can use it if you spend 2 Sorcery Points when you take the Bonus Action to activate it.
 
       In addition, while your Innate Sorcery feature is active, you can use up to two of your Metamagic options on each spell you cast.
+    spends:
+      key: sorcery-points
+      amount: 2
   - name: Ability Score Improvement
     level: 8
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Sorcerer levels 8, 12, and 16.
@@ -318,3 +337,14 @@ properties:
   - level: 20
     slots: 5
     styles: 0
+  adds:
+  - to: skills
+    choice: class-skills
+    choose: 2
+    from:
+    - arcana
+    - deception
+    - insight
+    - intimidation
+    - persuasion
+    - religion

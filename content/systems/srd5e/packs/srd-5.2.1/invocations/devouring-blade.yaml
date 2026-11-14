@@ -1,0 +1,14 @@
+id: devouring-blade
+type: invocation
+name: Devouring Blade
+description: >-
+  **Prerequisite:** Level 12+ Warlock, Thirsting Blade Invocation
+
+
+  The Extra Attack of your Thirsting Blade invocation confers two extra attacks rather than one.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 12
+  prerequisites: Level 12+ Warlock, Thirsting Blade Invocation

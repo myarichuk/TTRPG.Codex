@@ -100,6 +100,14 @@ properties:
     description: You have Advantage on saving throws you make to avoid or end the Charmed condition.
   - name: Keen Senses
     description: You have proficiency in the Insight, Perception, or Survival skill.
+    adds:
+    - to: skills
+      choice: keen-senses
+      choose: 1
+      from:
+      - insight
+      - perception
+      - survival
   - name: Trance
     description: You don't need to sleep, and magic can't put you to sleep. You can finish a Long Rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness.
   darkvision: 60
@@ -113,6 +121,30 @@ properties:
       **Faerie Fire.** You know the spell Faerie Fire.
 
       **Darkness.** You know the spell Darkness.
+    modifiers:
+    - target: darkvision
+      amount: 120
+      type: base
+    adds:
+    - to: grantedSpells
+      entries:
+      - dancing-lights
+    - to: grantedSpells
+      entries:
+      - faerie-fire
+      level: 3
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
+    - to: grantedSpells
+      entries:
+      - darkness
+      level: 5
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: 'Elven Lineage: High Elf'
     description: >-
       **High Elf: Cantrip Versatility.** You know the Prestidigitation cantrip. Whenever you finish a Long Rest, you can replace that cantrip with a different cantrip from the Wizard spell list.
@@ -120,6 +152,26 @@ properties:
       **Detect Magic.** You know the spell Detect Magic.
 
       **Misty Step.** You know the spell Misty Step.
+    adds:
+    - to: grantedSpells
+      entries:
+      - prestidigitation
+    - to: grantedSpells
+      entries:
+      - detect-magic
+      level: 3
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
+    - to: grantedSpells
+      entries:
+      - misty-step
+      level: 5
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: 'Elven Lineage: Wood Elf'
     description: >-
       **Wood Elf: Movement Speed Increase.** Your Movement Speed increases to 35 feet.
@@ -127,3 +179,27 @@ properties:
       **Longstrider.** You learn the spell Longstrider.
 
       **Pass without Trace.** You learn the spell Pass without Trace.
+    modifiers:
+    - target: speed
+      amount: 35
+      type: base
+    adds:
+    - to: grantedSpells
+      entries:
+      - druidcraft
+    - to: grantedSpells
+      entries:
+      - longstrider
+      level: 3
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
+    - to: grantedSpells
+      entries:
+      - pass-without-trace
+      level: 5
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest

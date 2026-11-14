@@ -171,7 +171,7 @@ value is mostly homebrew. The free castings, Extra Attack, critical range and th
 7. The `use` editor; feature dice (C).
 8. Gear conditions and the stage reorder (B); saves, armor and weapon training (A).
 9. Row choices (D); then the class-option lists (D, with invocations).
-10. The importer pass and reimport, then its review.
+10. The importer pass and reimport, then its review. **Built** (SRD_GRANTS_IMPORT_DESIGN.md, "Built").
 11. Later or never: magic weapon `plus` and items as a feature source, slot modifiers, `reminds`.
 
 Who: the generic cost, the stage reorder and choices change the engine's shape; design them with Opus and review the
@@ -408,7 +408,7 @@ declaration; no rest dialog beyond the notice.
 | 7 | Vocabulary, editor fields, guide text, draft check; strings | M | Sonnet; strings Haiku |
 | 8 | Drafter loop and join review check | S–M | Sonnet |
 | 9 | Row choices on the same storage | S–M | Opus reviews. **Built** (section 6) |
-| 10 | Importer: the 5 expertise and 8 chosen proficiency grants, then the fixed ones | S | With the importer pass |
+| 10 | Importer: the 5 expertise and 8 chosen proficiency grants, then the fixed ones | S | **Built**, with the importer pass (SRD_GRANTS_IMPORT_DESIGN.md) |
 | — | Armor and weapon training as ranks | M | Later, with B's gear piece |
 
 ### 8. Open questions

@@ -136,7 +136,7 @@ public class SrdPackSmokeTests : IAsyncLifetime
         Assert.NotNull(definition.SheetRules);
         Assert.Equal("strict", definition.SheetRules!.Enforcement);
         Assert.Equal(27, definition.SheetRules.Attributes!.PointBuy!.Budget);
-        Assert.Equal(new[] { "cantrips", "spells", "grantedSpells", "feats", "fightingStyles", "extraOriginFeats" }, definition.SheetRules.Lists.Select(l => l.Key));
+        Assert.Equal(new[] { "cantrips", "spells", "grantedSpells", "feats", "invocations", "fightingStyles", "extraOriginFeats" }, definition.SheetRules.Lists.Select(l => l.Key));
         Assert.Empty(Codex.Core.Systems.SystemDefinitionLoader.Validate(definition));
     }
 

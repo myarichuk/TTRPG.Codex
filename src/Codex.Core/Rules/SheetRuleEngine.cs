@@ -133,6 +133,9 @@ public sealed class SheetEvaluation
     /// the sheet lacks is not here, and is warned about.</summary>
     public List<FeatureSpender> Spenders { get; } = new();
 
+    /// <summary>The spells features let the character cast without a slot, and the counters of those that are limited (<c>adds[].free</c>).</summary>
+    public List<FreeCasting> FreeCastings { get; } = new();
+
     /// <summary>Feature amounts on armor class and hit points, waiting for those stages.</summary>
     internal Dictionary<string, List<(ActiveFeature Feature, string? Type, int Amount)>> Pending { get; } = new(StringComparer.Ordinal);
 
@@ -255,7 +258,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     {
         var result = new SheetEvaluation();
         if (system.SheetKinds.Count > 0) EvaluateModel(sheet, result);
-        if (Rules == null) return result;
+        if (Rules == null)
+        {
+            // A sheet kind's own feature sources: counters, spenders and row choices, as for sheetRules (the model has the modifiers).
+            if (SheetLayout.KindOf(system, sheet) is { Features.Count: > 0 }) EvaluateFeatures(sheet, result);
+            return result;
+        }
 
         EvaluateAttributes(sheet, result);
         EvaluateDerived(sheet, result);
@@ -1017,9 +1025,24 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
     // ---- Conditions ----
 
-    public bool Holds(RuleCondition condition, ContentEntry candidate, IReadOnlyDictionary<string, object> sheet)
+    /// <summary>Whether a candidate meets a condition on this sheet. <paramref name="choices"/> are the picks of the other choices of the feature copy an
+    /// entry choice belongs to (choice id to picks), which <c>containsChoice</c> and <c>equalsChoice</c> read; without them those fail.</summary>
+    public bool Holds(RuleCondition condition, ContentEntry candidate, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, IReadOnlyList<string>>? choices = null)
     {
         var value = CandidateValue(candidate, condition.Property);
+
+        if (condition.Contains != null) return NamesIn(value).Any(n => n.Equals(condition.Contains, StringComparison.OrdinalIgnoreCase));
+        if (condition.ContainsChoice != null)
+        {
+            return choices != null && choices.TryGetValue(condition.ContainsChoice, out var picks) && picks.Count > 0
+                && NamesIn(value).Any(n => picks.Contains(n, StringComparer.OrdinalIgnoreCase));
+        }
+
+        if (condition.EqualsChoice != null)
+        {
+            return choices != null && choices.TryGetValue(condition.EqualsChoice, out var picks) && picks.Count > 0
+                && picks.Contains(value?.ToString() ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+        }
 
         if (condition.Equals != null)
         {
@@ -1089,6 +1112,10 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
 
         return true;
     }
+
+    /// <summary>The names a candidate's value holds: each element of a list, or the value itself.</summary>
+    private static IEnumerable<string> NamesIn(object? value) =>
+        value is not string && value is IEnumerable<object> list ? list.Select(o => o?.ToString() ?? string.Empty) : new[] { value?.ToString() ?? string.Empty };
 
     private static object? CandidateValue(ContentEntry candidate, string property) => property.ToLowerInvariant() switch
     {

@@ -45,7 +45,7 @@ public class CampaignObjectsTableTests : IClassFixture<RavenDbFixture>, IDisposa
 
     public CampaignObjectsTableTests(RavenDbFixture fixture)
     {
-        _db = new RavenDbService(fixture.DbPath, "CampaignObjects_" + Guid.NewGuid(), runInMemory: true);
+        _db = fixture.Open("CampaignObjects_" + Guid.NewGuid());
         _actors = new ActorRepository(_db);
         _sessions = new RavenSessionRepository(_db);
         _objects = new RavenCampaignObjectsRepository(_db);

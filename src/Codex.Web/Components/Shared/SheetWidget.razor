@@ -45,9 +45,16 @@
         {
             var shown = track;
             var label = track.Track.Label ?? track.Track.Key;
-            <div class="sheet-track mb-3" data-testid="@($"track-{track.Track.Key}")" role="group" aria-label="@label">
-                <div class="field-label">@label</div>
-                @if (track.Track.IsSlots && track.Track.Levels.Count > 0)
+            // A track whose size an ability gives (the special armor box) says what gives it, in words; with none, there is no box to show.
+            var sources = View.TrackSources(track.Track.Key);
+            var shownLabel = sources is { Count: > 0 } ? L["Actor.Tracks.GivenBy", label, string.Join(", ", sources)].ToString() : label;
+            <div class="sheet-track mb-3" data-testid="@($"track-{track.Track.Key}")" role="group" aria-label="@shownLabel">
+                <div class="field-label">@shownLabel</div>
+                @if (sources is { Count: 0 })
+                {
+                    <p class="small-muted mb-0" data-testid="@($"track-{track.Track.Key}-nosource")">@L["Actor.Tracks.NoSource"]</p>
+                }
+                else if (track.Track.IsSlots && track.Track.Levels.Count > 0)
                 {
                     <ul class="list-unstyled mb-0">
                         @foreach (var level in track.Track.Levels.OrderBy(l => l.Level))

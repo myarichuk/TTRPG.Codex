@@ -472,7 +472,7 @@
   <data name="Actor.Features.Adds" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="Actor.Features.AtLeast" xml:space="preserve"><value>{0}: at least {1}</value></data>
   <data name="Actor.Features.NotCounted" xml:space="preserve"><value>does not stack</value></data>
-  <data name="Actor.Features.Note" xml:space="preserve"><value>What your features grant is worked out from the Library entries. Uses refill on the rest each one names.</value></data>
+  <data name="Actor.Features.Note" xml:space="preserve"><value>What your features grant is worked out from the Library entries. Each use comes back at the time its feature names.</value></data>
   <data name="Actor.Actions.Title" xml:space="preserve"><value>Actions</value></data>
   <data name="Actor.Actions.ToHit" xml:space="preserve"><value>{0} to hit</value></data>
   <data name="Actor.Actions.Save" xml:space="preserve"><value>{0} save DC {1}</value></data>
@@ -490,12 +490,16 @@
   <data name="Actor.Actions.Spent" xml:space="preserve"><value>{0}: level {1} {2}</value></data>
   <data name="Actor.Actions.CostFor" xml:space="preserve"><value>Cost of {0}</value></data>
   <data name="Actor.Actions.Free" xml:space="preserve"><value>Free</value></data>
+  <data name="Actor.Actions.AtWill" xml:space="preserve"><value>At will</value></data>
   <data name="Actor.Actions.PoolOption" xml:space="preserve"><value>{0} ×{1} ({2} left)</value></data>
   <data name="Actor.Actions.SpentFrom" xml:space="preserve"><value>{0}: {2} ×{1}</value></data>
   <data name="Actor.Actions.CannotPay" xml:space="preserve"><value>Not enough left</value></data>
   <data name="Actor.Actions.Note" xml:space="preserve"><value>Cast and Attack roll here, or into the table's log during a session. A spent slot is marked for you; hits, saves and damage are applied by the GM.</value></data>
   <data name="Actor.Rule.FeatureError" xml:space="preserve"><value>{0}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.</value></data>
   <data name="Actor.Rule.ChoicePending" xml:space="preserve"><value>{0} ({1}): choose {2} more ({3}).</value></data>
+  <data name="Actor.Rule.ChoicePendingOwn" xml:space="preserve"><value>{0}: choose {2} more ({3}).</value></data>
+  <data name="Actor.Rule.ChoiceStaleOwn" xml:space="preserve"><value>{0}: "{2}" no longer fits this choice. Choose again.</value></data>
+  <data name="Actor.Rule.ChoiceConfirmOwn" xml:space="preserve"><value>{0}: your {2} picks in {3} already match this choice. Confirm them.</value></data>
   <data name="Actor.Rule.ChoiceConfirm" xml:space="preserve"><value>{0} ({1}): your {2} picks in {3} already match this choice. Confirm them.</value></data>
   <data name="Actor.Choice.LegendRow" xml:space="preserve"><value>{0}: choose {1}</value></data>
   <data name="Actor.Choice.ChangesOn" xml:space="preserve"><value>Usually changed on {0}</value></data>
@@ -618,4 +622,46 @@
   <data name="Actor.Grants.RefillOnlyEmpty" xml:space="preserve"><value>Only when none are left</value></data>
   <data name="Actor.Grants.RefillWhenNote" xml:space="preserve"><value>Also only if {0}</value></data>
   <data name="Actor.Grants.SpendKeyPlaceholder" xml:space="preserve"><value>The pool’s name, e.g. focus</value></data>
+  <data name="Actor.Moments.Title" xml:space="preserve"><value>Moments</value></data>
+  <data name="Actor.Moments.Restores" xml:space="preserve"><value>Restores {0}</value></data>
+  <data name="Actor.Moments.Refills" xml:space="preserve"><value>Refills {0}</value></data>
+  <data name="Actor.Moments.Done" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Actor.Moments.Nothing" xml:space="preserve"><value>{0}: nothing to restore.</value></data>
+  <data name="Actor.Tracks.NoSource" xml:space="preserve"><value>No ability gives this box.</value></data>
+  <data name="Actor.Tracks.GivenBy" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Actor.Choice.TitleLevel" xml:space="preserve"><value>{0}: choose {1} level-{2} {3}</value></data>
+  <data name="Actor.Choice.TitleNoun" xml:space="preserve"><value>{0}: choose {1} {2}</value></data>
+  <data name="Actor.Choice.TitleValue" xml:space="preserve"><value>{0}: choose {1}</value></data>
+  <data name="Actor.Choice.Search" xml:space="preserve"><value>Search by name</value></data>
+  <data name="Actor.Choice.NoMatch" xml:space="preserve"><value>Nothing matches "{0}".</value></data>
+  <data name="Actor.Choice.ShownOf" xml:space="preserve"><value>{0} of {1} shown</value></data>
+  <data name="Actor.Choice.ChooseFirst" xml:space="preserve"><value>Choose {0} first</value></data>
+  <data name="Actor.Choice.NoOptions" xml:space="preserve"><value>Nothing to choose from yet.</value></data>
+  <data name="Actor.Choice.Chosen" xml:space="preserve"><value>Chosen:</value></data>
+  <data name="Actor.Choice.Card" xml:space="preserve"><value>Card</value></data>
+  <data name="Actor.Grants.Where" xml:space="preserve"><value>Which entries</value></data>
+  <data name="Actor.Grants.WhereNone" xml:space="preserve"><value>No conditions.</value></data>
+  <data name="Actor.Grants.WhereHint" xml:space="preserve"><value>Conditions are set in the data and are only shown here.</value></data>
+  <data name="Actor.Grants.Cond.Equals" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="Actor.Grants.Cond.In" xml:space="preserve"><value>{0} is one of {1}</value></data>
+  <data name="Actor.Grants.Cond.Gte" xml:space="preserve"><value>{0} at least {1}</value></data>
+  <data name="Actor.Grants.Cond.Lte" xml:space="preserve"><value>{0} at most {1}</value></data>
+  <data name="Actor.Grants.Cond.Contains" xml:space="preserve"><value>{0} includes {1}</value></data>
+  <data name="Actor.Grants.Cond.ContainsChoice" xml:space="preserve"><value>{0} includes the pick of {1}</value></data>
+  <data name="Actor.Grants.Cond.EqualsChoice" xml:space="preserve"><value>{0} is the pick of {1}</value></data>
+  <data name="Actor.Grants.Cond.Other" xml:space="preserve"><value>{0} (another condition)</value></data>
+  <data name="Actor.Grants.ValueFrom" xml:space="preserve"><value>Offers: {0}</value></data>
+  <data name="Actor.Grants.FromList" xml:space="preserve"><value>Picks among what the sheet already has on {0}</value></data>
+  <data name="Actor.Grants.Free" xml:space="preserve"><value>Free casting</value></data>
+  <data name="Actor.Grants.FreeNone" xml:space="preserve"><value>None</value></data>
+  <data name="Actor.Grants.FreeAtWill" xml:space="preserve"><value>At will</value></data>
+  <data name="Actor.Grants.FreeUses" xml:space="preserve"><value>Limited uses</value></data>
+  <data name="Actor.Grants.FreeMax" xml:space="preserve"><value>Uses for each pick</value></data>
+  <data name="Actor.Grants.FreeRecovers" xml:space="preserve"><value>Refilled by</value></data>
+  <data name="Actor.JoinNotes.Heading" xml:space="preserve"><value>The GM changed these before accepting:</value></data>
+  <data name="Actor.JoinNotes.LeftOut" xml:space="preserve"><value>Left out: {0}</value></data>
+  <data name="Actor.JoinNotes.Swapped" xml:space="preserve"><value>{0} was replaced by {1}</value></data>
+  <data name="Actor.JoinNotes.Edited" xml:space="preserve"><value>{0}: {1} became {2}</value></data>
+  <data name="Actor.JoinNotes.EditedNew" xml:space="preserve"><value>{0}: now {1}</value></data>
+  <data name="Actor.JoinNotes.Dismiss" xml:space="preserve"><value>Dismiss</value></data>
 </root>

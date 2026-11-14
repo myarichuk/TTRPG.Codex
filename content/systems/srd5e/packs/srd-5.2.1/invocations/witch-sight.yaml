@@ -1,0 +1,14 @@
+id: witch-sight
+type: invocation
+name: Witch Sight
+description: >-
+  **Prerequisite:** Level 15+ Warlock
+
+
+  You have Truesight with a range of 30 feet.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 15
+  prerequisites: Level 15+ Warlock

@@ -39,13 +39,16 @@ public sealed record ActionCost(string? Key, int Amount, string? MaxKey, string?
 
     public const string FreeId = "free";
 
+    /// <summary>The label of a free cost that is an at-will casting (a granted spell with no limit), told apart so the picker can say "At will".</summary>
+    public const string AtWillLabel = "at will";
+
     /// <summary>One slot of <paramref name="pool"/> at <paramref name="level"/>.</summary>
     public static ActionCost OfSlot(SlotPoolRule pool, int level, string? damage) =>
         new(pool.KeyFor(level), 1, pool.MaxKeyFor(level), pool.UnitName, damage) { Slot = pool, Level = level };
 
     /// <summary><paramref name="amount"/> from a feature's counter of uses, read as the Table card's Use and Regain read it.</summary>
     public static ActionCost OfCounter(FeatureCounter counter, int amount, string? damage) =>
-        new(counter.Key, amount, counter.MaxKey, counter.Feature.Name, damage) { FallbackMax = counter.Max };
+        new(counter.Key, amount, counter.MaxKey, counter.Label, damage) { FallbackMax = counter.Max };
 
     /// <summary><paramref name="amount"/> from any pool by its key.</summary>
     public static ActionCost FromPool(string key, int amount, string? maxKey, string? label, string? damage) => new(key, amount, maxKey, label, damage);
@@ -174,6 +177,14 @@ public sealed partial class SheetRuleEngine
                             costs.Add(ActionCost.OfSlot(pool.Rule, slotLevel, dice == null ? null : WithBonus(MoreDice(dice, perSlot, slotLevel - level), bonus)));
                         }
                     }
+                }
+
+                // A free casting (a feature's adds[].free) is one more way to pay, after the slots: the spell at its own level, no upcasting.
+                foreach (var cast in result.FreeCastings.Where(f => f.SpellId.Equals(entry.Id, StringComparison.OrdinalIgnoreCase)))
+                {
+                    var own = dice == null ? null : WithBonus(dice, bonus);
+                    var cost = cast.Counter is { } counter ? ActionCost.OfCounter(counter, 1, own) : ActionCost.Nothing(ActionCost.AtWillLabel, own);
+                    if (costs.All(c => c.Id != cost.Id)) costs.Add(cost);
                 }
 
                 var alternatives = use.GetValueOrDefault("alternatives") is Dictionary<string, object> others

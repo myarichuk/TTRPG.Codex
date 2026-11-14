@@ -39,6 +39,7 @@ public static class FeatureGrantCheck
         void Feature(string name, IDictionary<string, object> data, HashSet<string> used)
         {
             OptionsProblems(name, data, used);
+            var earlier = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // the choices of this feature written so far, which a later condition may read
             foreach (var add in AddsOf(data))
             {
                 var to = Text(add, "to");
@@ -46,14 +47,69 @@ public static class FeatureGrantCheck
                 var isChoice = add.ContainsKey("choice") || add.ContainsKey("choose");
                 var shown = string.IsNullOrWhiteSpace(name) ? entry.Name : name;
 
+                // A spell cast without a slot: free is "atWill" or a counter ({ max, recoversOn... }), on a list of Library entries (spells).
+                if (add.TryGetValue("free", out var free) && free != null)
+                {
+                    // A mark-only choice (no "to", a "fromList") puts the spell on no list, but picks among the entries of one.
+                    var heldFrom = to.Length == 0 ? Text(add, "fromList") : string.Empty;
+                    var entryList = vocabulary.Lists.FirstOrDefault(l => l.EntityType != null && l.Key.Equals(to, StringComparison.OrdinalIgnoreCase))
+                        ?? (heldFrom.Length == 0 ? null : (system.SheetRules?.Lists ?? new List<ListRule>()).Where(l => l.TargetEntityType != null && l.Key.Equals(heldFrom, StringComparison.OrdinalIgnoreCase))
+                            .Select(l => new GrantList(l.Key, l.Label, l.TargetEntityType)).FirstOrDefault());
+                    if (entryList == null) problems.Add($"{shown}: \"free\" goes on entries added to a list of Library entries (the granted spells), not \"{to}\".");
+                    var atWill = free is string freeText && freeText.Trim().Equals("atWill", StringComparison.OrdinalIgnoreCase);
+                    if (!atWill && !(free is IDictionary<string, object> freeMap && freeMap.ContainsKey("max")))
+                    {
+                        problems.Add($"{shown}: \"free\" is atWill, or a counter with a \"max\" (and \"recoversOn\" or \"recovers\").");
+                    }
+                }
+
+                // A choice over Library entries (the list is one of entries, with a "where" or a "fromList" to narrow them), or of a value (no "to").
+                var pickable = vocabulary.Lists.FirstOrDefault(l => !l.IsRanked && l.EntityType != null && l.Key.Equals(to, StringComparison.OrdinalIgnoreCase));
+                var fromListName = Text(add, "fromList");
+                var markOnly = isChoice && to.Length == 0 && fromListName.Length > 0; // picks among what the sheet holds, putting nothing anywhere
+                var isValue = isChoice && to.Length == 0 && !markOnly;
                 if (isChoice)
                 {
-                    if (list == null) problems.Add($"{shown}: a choice can only go to {string.Join(" or ", vocabulary.Lists.Where(l => l.IsRanked).Select(l => l.Key))}, not \"{to}\".");
+                    if (list == null && pickable == null && !isValue && !markOnly)
+                    {
+                        problems.Add($"{shown}: a choice can only go to {string.Join(" or ", vocabulary.Lists.Where(l => l.IsRanked || l.EntityType != null).Select(l => l.Key))}, or pick a value (give no \"to\"), not \"{to}\".");
+                    }
+
                     if (!(Number(add, "choose") >= 1)) problems.Add($"{shown}: a choice needs \"choose\", how many the player picks (1 or more).");
                     var id = Text(add, "choice");
                     if (id.Length == 0 && !requireId) id = SheetRuleEngine.DefaultChoiceId(shown, Number(data, "level") >= 1 ? (int)Number(data, "level") : null);
                     if (id.Length == 0) problems.Add($"{shown}: a choice needs a \"choice\" id, unique in the entry.");
                     else if (!used.Add(id)) problems.Add($"{shown}: the choice id \"{id}\" is used more than once in this entry; each choice needs its own.");
+
+                    if (fromListName.Length > 0 && fromListName.Equals(to, StringComparison.OrdinalIgnoreCase))
+                    {
+                        problems.Add($"{shown}: a choice from a list you already hold adds nothing; give no \"to\" (the picks only mark what you hold).");
+                    }
+
+                    if (pickable != null || markOnly)
+                    {
+                        // Entries are offered by the conditions: with none, the whole Library would be.
+                        var conditions = RowsOf(add, "where").ToList();
+                        if (add.ContainsKey("entries")) problems.Add($"{shown}: a choice over entries has no \"entries\"; the conditions in \"where\" say which may be picked.");
+                        if (conditions.Count == 0 && Text(add, "fromList").Length == 0) problems.Add($"{shown}: a choice over entries needs \"where\" conditions or a \"fromList\" (it would offer everything in the Library).");
+                        if (Text(add, "fromList") is { Length: > 0 } fromList && (system.SheetRules?.Lists ?? new List<ListRule>()).All(l => !l.Key.Equals(fromList, StringComparison.OrdinalIgnoreCase))) problems.Add($"{shown}: \"fromList\" names \"{fromList}\", which is not a list of this system.");
+                        foreach (var condition in conditions)
+                        {
+                            if (Text(condition, "property").Length == 0) problems.Add($"{shown}: a \"where\" condition needs a \"property\".");
+                            foreach (var read in new[] { "containsChoice", "equalsChoice" }.Select(k => Text(condition, k)).Where(r => r.Length > 0))
+                            {
+                                if (!earlier.Contains(read)) problems.Add($"{shown}: a condition reads the choice \"{read}\", which is not a choice written before it in this feature (a choice must come first).");
+                            }
+                        }
+                    }
+                    else if (isValue)
+                    {
+                        // The values are the player's menu: a non-empty list, written as the entries write them (a class's name as its spells name it).
+                        var values = add.TryGetValue("from", out var listedValues) && listedValues is not string ? listedValues as IEnumerable<object> : null;
+                        if (values == null || !values.Any()) problems.Add($"{shown}: a choice of a value needs \"from\", a list of the values the player picks between.");
+                    }
+
+                    if (id.Length > 0) earlier.Add(id);
                 }
 
                 if (list == null) continue;
@@ -102,9 +158,9 @@ public static class FeatureGrantCheck
                     var moments = map.TryGetValue("changesOn", out var rawMoments) ? rawMoments : null;
                     foreach (var moment in moments is IEnumerable<object> listed ? listed.Select(m => Convert.ToString(m, CultureInfo.InvariantCulture) ?? string.Empty) : Array.Empty<string>())
                     {
-                        if (!vocabulary.Rests.Contains(moment, StringComparer.OrdinalIgnoreCase) && !SystemDefinitionMoments.Contains(moment))
+                        if (!vocabulary.ChangeMoments.Contains(moment, StringComparer.OrdinalIgnoreCase))
                         {
-                            problems.Add($"{shown}: \"changesOn\" names \"{moment}\", which is not one of this system's rests ({string.Join(", ", vocabulary.Rests)}), nor initiative or dawn.");
+                            problems.Add($"{shown}: \"changesOn\" names \"{moment}\", which is not one of this system's rests ({string.Join(", ", vocabulary.Rests)}), nor one of its other moments ({string.Join(", ", vocabulary.ChangeMoments.Except(vocabulary.Rests, StringComparer.OrdinalIgnoreCase))}).");
                         }
                     }
                 }
@@ -117,8 +173,6 @@ public static class FeatureGrantCheck
             }
         }
     }
-
-    private static readonly string[] SystemDefinitionMoments = { FeatureRecovery.Initiative, FeatureRecovery.Dawn };
 
     private static IEnumerable<IDictionary<string, object>> RowsOf(IDictionary<string, object> data, string key) =>
         (data.TryGetValue(key, out var raw) ? raw : null) switch

@@ -1,0 +1,54 @@
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* The moments the system declares (downtime, "load chosen"), as one button each, for the moments that do something to this sheet: a counter
+   refills at it, a choice is usually changed then, or the system's handler for it resets a track the sheet's kind has. Each button's
+   visible text is the moment's name; a line under it says what it brings back, and the button points at that line. What came back is
+   said afterwards in the sheet's status message. *@
+
+@if (Shown.Count > 0)
+{
+    <div class="sheet-moments" role="group" aria-labelledby="@(id)-title" data-testid="sheet-moments">
+        <div class="field-label" id="@(id)-title">@L["Actor.Moments.Title"]</div>
+        <ul class="list-unstyled mb-0">
+            @foreach (var moment in Shown)
+            {
+                var key = moment.Key;
+                var line = Describe(key);
+                <li class="d-flex flex-wrap align-items-baseline gap-2 mb-1" data-testid="@($"moment-{key}")">
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" Disabled="ReadOnly" aria-describedby="@($"{id}-{key}-what")" data-testid="@($"moment-fire-{key}")"
+                                 OnClick="() => OnFire.InvokeAsync(key)">@moment.Label</CodexButton>
+                    @if (line.Length > 0)
+                    {
+                        <span class="small-muted" id="@($"{id}-{key}-what")">@line</span>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public SystemDefinition? Definition { get; set; }
+    [Parameter, EditorRequired] public IReadOnlyDictionary<string, object> Sheet { get; set; } = new Dictionary<string, object>();
+    [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>The key of the moment whose button was pressed.</summary>
+    [Parameter] public EventCallback<string> OnFire { get; set; }
+
+    private readonly string id = $"moments-{Guid.NewGuid():N}";
+
+    /// <summary>The declared moments that matter on this sheet. Rests have their own buttons; initiative is fired by the roll and dawn by the GM.</summary>
+    private List<SystemMoment> Shown =>
+        SystemMoments.Of(Definition).Where(m => m.Kind == MomentKind.Declared && SystemMoments.Matters(Definition, Sheet, m.Key)).ToList();
+
+    private string Describe(string moment)
+    {
+        var (tracks, counters) = SystemMoments.Effects(Definition, Sheet, moment);
+        var parts = new List<string>();
+        if (tracks.Count > 0) parts.Add(L["Actor.Moments.Restores", string.Join(", ", tracks)]);
+        if (counters.Count > 0) parts.Add(L["Actor.Moments.Refills", string.Join(", ", counters)]);
+        return string.Join("; ", parts);
+    }
+}

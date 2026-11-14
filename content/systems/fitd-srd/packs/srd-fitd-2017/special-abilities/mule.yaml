@@ -9,3 +9,7 @@ description: >-
 source: Character playbook > Special abilities > Mule
 tags:
 - example
+properties:
+  modifiers:
+  - target: LoadMax
+    amount: 2

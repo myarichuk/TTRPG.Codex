@@ -66,6 +66,12 @@ description: >-
   **Spellcasting.** The sphinx casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 20):
 
 
+  At Will: *Detect Evil and Good*, *Thaumaturgy*
+
+
+  1/Day Each: *Detect Magic*, *Dispel Magic*, *Greater Restoration*, *Heroes' Feast*, *Zone of Truth*
+
+
 
   ### Legendary Actions
 
@@ -123,7 +129,14 @@ properties:
   - name: Third Roar
     description: 'Constitution Saving Throw: DC 20, each enemy in a 500-foot Emanation originating from the sphinx. Failure: 44 (8d10) Thunder damage, and the target has the Prone condition. Success: Half damage only.'
   - name: Spellcasting
-    description: 'The sphinx casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 20):'
+    description: >-
+      The sphinx casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 20):
+
+
+      At Will: *Detect Evil and Good*, *Thaumaturgy*
+
+
+      1/Day Each: *Detect Magic*, *Dispel Magic*, *Greater Restoration*, *Heroes' Feast*, *Zone of Truth*
   legendaryActions:
   - name: Arcane Prowl
     description: The sphinx can teleport up to 30 feet to an unoccupied space it can see, and it makes one Claw attack.

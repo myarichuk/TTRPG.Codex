@@ -42,6 +42,15 @@ description: >-
 
 
   **Spellcasting.** The druid casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):
+
+
+  At Will: *Druidcraft*, *Speak with Animals*
+
+
+  2/Day Each: *Entangle*, *Thunderwave*
+
+
+  1/Day Each: *Animal Messenger*, *Longstrider*, *Moonbeam*
 tags:
 - humanoid
 - medium or small
@@ -74,4 +83,14 @@ properties:
   - name: Verdant Wisp
     description: 'Ranged Attack Roll: +5, range 90 ft. Hit: 10 (3d6) Radiant damage.'
   - name: Spellcasting
-    description: 'The druid casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):'
+    description: >-
+      The druid casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):
+
+
+      At Will: *Druidcraft*, *Speak with Animals*
+
+
+      2/Day Each: *Entangle*, *Thunderwave*
+
+
+      1/Day Each: *Animal Messenger*, *Longstrider*, *Moonbeam*

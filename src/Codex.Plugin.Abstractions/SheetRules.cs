@@ -156,12 +156,16 @@ public class ActionSource
 /// <c>choose</c> is how many keys; <c>from</c> is a list of keys, <c>any</c> (the default) or a filter on a key's own fields
 /// (<c>{ attribute: [str, dex] }</c>); <c>minRank</c> and <c>maxRank</c> are the ranks a key must already hold to be offered ("a skill you are
 /// proficient in"), checked against the ranks the sheet has so far without this choice's own picks. A choice not yet made is a warning, never a
-/// violation; a pick that no longer fits is a violation that says to choose again.</item>
+/// violation; a pick that no longer fits is a violation that says to choose again. On an item to a list of Library entries (the granted spells),
+/// <c>free</c> lets the character cast each spell without a slot: <c>free: atWill</c>, or a counter of uses written as <c>uses</c> is
+/// (<c>{ max, recoversOn, recovers, regain, key, label }</c>). Each spell gets its own counter, <c>free-{spell id}</c> (the <c>key</c> makes
+/// one shared counter instead), and the spell's action gets one more way to pay, after its slots, at the spell's own level.</item>
 /// <item><c>uses</c>: <c>{ max, key, recoversOn, recovers, regain }</c>: a counter of uses, <c>max</c> a number or a formula, refilled by
 /// the rests named in <c>recoversOn</c> (a full refill on each). <c>key</c> names the pool, so features that name one share it: the
-/// highest maximum wins and the sheet warns. <c>recovers</c> is <c>[{ on, amount, when }]</c>: <c>on</c> a rest, or <c>initiative</c>,
-/// <c>dawn</c> or <c>manual</c>; <c>amount</c> is <c>all</c>, a number, a formula or dice; <c>when</c> is <c>empty</c> or a formula.
-/// <c>regain: gm</c> lets only the GM add a use back by hand.</item>
+/// highest maximum wins and the sheet warns. <c>recovers</c> is <c>[{ on, amount, when }]</c>: <c>on</c> a moment (a rest, a moment the system declares in
+/// <c>moments</c>, <c>initiative</c> or <c>dawn</c>) or <c>manual</c>; <c>amount</c> is <c>all</c>, a number, a formula or dice; <c>when</c> is <c>empty</c> or a formula.
+/// <c>regain: gm</c> lets only the GM add a use back by hand. <c>label</c> names the counter on the sheet, the Table and the log when
+/// that is not the feature's own name (a Breath Weapon shared by ten lineage rows).</item>
 /// <item><c>spends</c>: <c>{ key, amount }</c>: the feature gets a Use button that spends <c>amount</c> (a number, a formula, or
 /// <c>ask</c> for the player to choose) from the pool <c>key</c>, a feature counter's <c>key</c> or a pool's own sheet key.</item>
 /// <item><c>options</c> and <c>choose</c> ("choose one of the following"): <c>options: [{ name, description, and any key above }]</c> with
@@ -176,7 +180,9 @@ public class FeatureSource
     /// With multiclass rules, the class and subclass fields are read once per class.</summary>
     public string? Field { get; set; }
 
-    /// <summary>Or: the key of a list in <c>lists</c> whose picked entries carry them (<c>feats</c>).</summary>
+    /// <summary>Or: the key of a list in <c>lists</c> whose picked entries carry them (<c>feats</c>). On a sheet kind (<c>sheetKinds[].features</c>) a
+    /// source is this alone, with <c>property</c>, <c>entries</c>, <c>choose</c> and <c>levelColumn</c>: <c>list</c> names a list of the kind's own
+    /// <c>lists</c>; <c>field</c> and <c>byField</c> are refused.</summary>
     public string? List { get; set; }
 
     /// <summary>The entry property holding feature rows (<c>features</c>, <c>traits</c>). None: the entry is one feature and
@@ -185,6 +191,14 @@ public class FeatureSource
 
     /// <summary>A row's column saying from which level it applies. Default <c>level</c>; a row without it always applies.</summary>
     public string LevelColumn { get; set; } = "level";
+
+    /// <summary>With <see cref="Field"/> on a source read once per class (<c>class</c>, <c>subclass</c> under multiclass rules): read for the first
+    /// class only. A grant on the class entry itself (the skills its first level gives, which a second class does not repeat) is such a source.</summary>
+    public bool FirstOnly { get; set; }
+
+    /// <summary>The name of the feature an entry becomes when the source has no <see cref="Property"/> (the entry is one feature). Default: the entry's own name.
+    /// A class entry that carries a grant of its own is not best named "Rogue" in "Rogue (Rogue): choose 4 more skills".</summary>
+    public string? Label { get; set; }
 
     /// <summary>The sheet value a row's level is compared with (<c>classLevel</c>, <c>level</c>). None: rows are not gated.</summary>
     public string? ByField { get; set; }
@@ -229,7 +243,7 @@ public class RowChoose
     /// blocked, and is logged at a live table.</summary>
     public string OnChange { get; set; } = Keep;
 
-    /// <summary>Moments (a rest's name from <c>rests</c>, or <c>initiative</c>, <c>dawn</c>) at which the pick is usually changed. The picker
+    /// <summary>Moments (a rest, a moment the system declares in <c>moments</c>, <c>initiative</c> or <c>dawn</c>) at which the pick is usually changed. The picker
     /// says so, and the rest flow offers the change after that rest. Never a limit.</summary>
     public List<string> ChangesOn { get; set; } = new();
 }
@@ -875,6 +889,17 @@ public class RuleCondition
 
     /// <summary>Candidate list property contains the display name of the entry a sheet field references.</summary>
     public string? ContainsNameOfField { get; set; }
+
+    /// <summary>Candidate list property contains this constant (<c>classes</c> contains <c>Warlock</c>), by name or id, ignoring case.
+    /// <see cref="ContainsNameOfField"/> does the same with the name of the entry a sheet field references.</summary>
+    public string? Contains { get; set; }
+
+    /// <summary>Candidate list property contains a value picked in another choice of the same feature (an entry choice's <c>where</c>:
+    /// the spell list a Magic Initiate picked). Fails while that choice has no pick, so what depends on it offers nothing yet.</summary>
+    public string? ContainsChoice { get; set; }
+
+    /// <summary>Candidate value equals a value picked in another choice of the same feature. Fails while that choice has no pick.</summary>
+    public string? EqualsChoice { get; set; }
 
     /// <summary>Candidate numeric value &lt;= / &gt;= a numeric sheet field.</summary>
     public string? LteField { get; set; }

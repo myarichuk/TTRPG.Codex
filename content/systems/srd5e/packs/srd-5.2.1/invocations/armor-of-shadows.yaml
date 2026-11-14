@@ -1,0 +1,14 @@
+id: armor-of-shadows
+type: invocation
+name: Armor of Shadows
+description: You can cast Mage Armor on yourself without expending a spell slot.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 1
+  adds:
+  - to: grantedSpells
+    entries:
+    - mage-armor
+    free: atWill

@@ -53,6 +53,9 @@
   <data name="Combat.PartyRestHint" xml:space="preserve"><value>כל דמויות השחקנים נחות בבת אחת. קוביות חיים מנוצלות לכל דמות בנפרד מהשורה שלה.</value></data>
   <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} לצוות</value></data>
   <data name="Combat.DawnButton" xml:space="preserve"><value>עלות השחר לחבורה</value></data>
+  <data name="Combat.PartyMoments" xml:space="preserve"><value>מנוחות ורגעים</value></data>
+  <data name="Combat.PartyMomentsOnly" xml:space="preserve"><value>רגעים לכולם</value></data>
+  <data name="Combat.MomentButton" xml:space="preserve"><value>{0} לכולם</value></data>
   <data name="Combat.EndTable" xml:space="preserve"><value>סיום השולחן</value></data>
   <data name="Combat.TempHpTitle" xml:space="preserve"><value>נקודות חיים זמניות</value></data>
   <data name="Combat.TempHpBadge" xml:space="preserve"><value>+{0} זמניות</value></data>

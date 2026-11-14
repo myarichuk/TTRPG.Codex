@@ -59,6 +59,15 @@ description: >-
   **Spellcasting.** The lich casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 20):
 
 
+  At Will: *Detect Magic*, *Detect Thoughts*, *Dispel Magic*, *Fireball*, *Invisibility*, *Lightning Bolt*, *Mage Hand*, *Prestidigitation*
+
+
+  2/Day Each: *Animate Dead*, *Dimension Door*, *Plane Shift*
+
+
+  1/Day Each: *Chain Lightning*, *Finger of Death*, *Power Word Kill*, *Scrying*
+
+
 
   ### Reactions
 
@@ -124,7 +133,17 @@ properties:
   - name: Paralyzing Touch
     description: 'Melee Attack Roll: +12, reach 5 ft. Hit: 15 (3d6 + 5) Cold damage, and the target has the Paralyzed condition until the start of the lich’s next turn.'
   - name: Spellcasting
-    description: 'The lich casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 20):'
+    description: >-
+      The lich casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 20):
+
+
+      At Will: *Detect Magic*, *Detect Thoughts*, *Dispel Magic*, *Fireball*, *Invisibility*, *Lightning Bolt*, *Mage Hand*, *Prestidigitation*
+
+
+      2/Day Each: *Animate Dead*, *Dimension Door*, *Plane Shift*
+
+
+      1/Day Each: *Chain Lightning*, *Finger of Death*, *Power Word Kill*, *Scrying*
   reactions:
   - name: Protective Magic
     description: The lich casts Counterspell or Shield in response to the spell’s trigger, using the same spellcasting ability as Spellcasting.

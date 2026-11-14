@@ -116,6 +116,7 @@ public sealed class FitdSrdImporter(string sourceFile)
     {
         var sections = ParseSections(await File.ReadAllLinesAsync(sourceFile));
         var entries = BuildEntries(sections);
+        ApplyGrants(entries);
         foreach (var entry in entries)
         {
             entry.SystemId = SystemId;
@@ -642,7 +643,54 @@ public sealed class FitdSrdImporter(string sourceFile)
         return sb.ToString().TrimEnd('-');
     }
 
-    private static void Validate(List<ContentEntry> entries)
+    // ---- Grants: what the engine reads from an entry's own properties (docs/SHEETKINDS_FEATURES_DESIGN.md, section 4) ----
+
+    private static Dictionary<string, object> Map(params (string Key, object Value)[] pairs) => pairs.ToDictionary(p => p.Key, p => p.Value);
+
+    private static List<object> Items(params object[] items) => items.ToList();
+
+    /// <summary>"Special armor": one box, and several abilities still give one (the system stacks the type <c>boxes</c> by highest).</summary>
+    private static (string, object) SpecialArmorBox() =>
+        ("modifiers", Items(Map(("target", "specialArmorBoxes"), ("amount", 1L), ("type", "boxes"))));
+
+    /// <summary>A counter of limited uses that comes back at a moment the system declares.</summary>
+    private static (string, object) Uses(string key, long max, string moment) =>
+        ("uses", Map(("key", key), ("max", max), ("recovers", Items(Map(("on", moment))))));
+
+    /// <summary>The abilities whose rules change a number, add a limited use or leave a choice open, written by hand from the SRD's text and
+    /// reviewed: entry type, entry id (the slug of its heading), the properties to set. A rule the engine cannot read stays text: nothing is
+    /// derived from the words. The system's own <c>system.yaml</c> names the targets (<c>LoadMax</c>, <c>specialArmorBoxes</c>, <c>turfCount</c>,
+    /// <c>@resistance</c>) and the moments (<c>downtime</c>, <c>loadChosen</c>).</summary>
+    public static readonly IReadOnlyList<(string Type, string Id, IReadOnlyDictionary<string, object> Properties)> Grants = new (string, string, (string Key, object Value)[])[]
+    {
+        ("special-ability", "analyst", new[] { Uses("analyst", 2, "downtime") }),
+        ("special-ability", "battleborn", new[] { SpecialArmorBox() }),
+        ("special-ability", "calculating", new[] { Uses("calculating", 1, "downtime") }),
+        ("special-ability", "expertise", new (string, object)[] { ("adds", Items(Map(("to", "actions"), ("choice", "expertise"), ("choose", 1L)))) }),
+        ("special-ability", "focused", new[] { SpecialArmorBox() }),
+        ("special-ability", "foresight", new[] { Uses("foresight", 2, "loadChosen") }),
+        ("special-ability", "fortitude", new[] { SpecialArmorBox() }),
+        ("special-ability", "iron-will", new (string, object)[] { ("modifiers", Items(Map(("target", "@resistance"), ("amount", 1L), ("when", "input.attribute == 'resolve'")))) }),
+        ("special-ability", "mastermind", new[] { SpecialArmorBox() }),
+        ("special-ability", "mule", new (string, object)[] { ("modifiers", Items(Map(("target", "LoadMax"), ("amount", 2L)))) }),
+        ("special-ability", "shadow", new[] { SpecialArmorBox() }),
+        ("special-ability", "subterfuge", new[] { SpecialArmorBox() }),
+        ("special-ability", "warded", new[] { SpecialArmorBox() }),
+        ("crew-ability", "fiends", new (string, object)[] { ("modifiers", Items(Map(("target", "turfCount"), ("amount", "wanted")))) })
+    }.Select(g => (g.Item1, g.Item2, (IReadOnlyDictionary<string, object>)g.Item3.ToDictionary(p => p.Key, p => p.Value))).ToList();
+
+    /// <summary>Sets each reviewed row's properties on its entry; the description and tags stay as the SRD's text made them. A row that
+    /// matches no entry is left for <see cref="Validate"/> to refuse.</summary>
+    public static void ApplyGrants(List<ContentEntry> entries)
+    {
+        foreach (var (type, id, properties) in Grants)
+        {
+            if (entries.FirstOrDefault(e => e.Type == type && e.Id == id) is not { } entry) continue;
+            foreach (var (key, value) in properties) entry.Properties[key] = value;
+        }
+    }
+
+    public static void Validate(List<ContentEntry> entries)
     {
         var seen = new HashSet<string>();
         foreach (var entry in entries)
@@ -661,6 +709,16 @@ public sealed class FitdSrdImporter(string sourceFile)
             {
                 throw new InvalidDataException($"Duplicate entry id {entry.FullId}.");
             }
+        }
+
+        // A renamed SRD heading must fail loudly: a grant whose id matches no entry, or an entry of another type, would be dropped silently.
+        foreach (var (type, id, _) in Grants)
+        {
+            if (entries.Any(e => e.Type == type && e.Id == id)) continue;
+            var other = entries.FirstOrDefault(e => e.Id == id);
+            throw new InvalidDataException(other == null
+                ? $"The reviewed grants name the {type} '{id}', which the SRD text did not produce."
+                : $"The reviewed grants name '{id}' as a {type}, but the SRD text produced a {other.Type} of that id.");
         }
     }
 }

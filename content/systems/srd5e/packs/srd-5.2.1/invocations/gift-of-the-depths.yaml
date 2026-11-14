@@ -1,0 +1,25 @@
+id: gift-of-the-depths
+type: invocation
+name: Gift of the Depths
+description: >-
+  **Prerequisite:** Level 5+ Warlock
+
+
+  You can breathe underwater, and you gain a Swim Speed equal to your Speed.
+
+
+  You can also cast Water Breathing once without expending a spell slot. You regain the ability to cast it in this way again when you finish a Long Rest.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 5
+  prerequisites: Level 5+ Warlock
+  adds:
+  - to: grantedSpells
+    entries:
+    - water-breathing
+    free:
+      max: 1
+      recoversOn:
+      - Long Rest

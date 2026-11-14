@@ -1,0 +1,19 @@
+id: otherworldly-leap
+type: invocation
+name: Otherworldly Leap
+description: >-
+  **Prerequisite:** Level 2+ Warlock
+
+
+  You can cast Jump on yourself without expending a spell slot.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 2
+  prerequisites: Level 2+ Warlock
+  adds:
+  - to: grantedSpells
+    entries:
+    - jump
+    free: atWill

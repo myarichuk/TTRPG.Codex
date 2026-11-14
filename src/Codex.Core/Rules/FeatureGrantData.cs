@@ -109,6 +109,10 @@ public sealed class FeatureGrantData
     /// <summary>How the options are chosen between; written only while there are options.</summary>
     public GrantChoose? Choose { get; set; }
 
+    /// <summary>The property keys of an entry (or a feature row) that carry grants. They are data the engine reads, not fields an entity type
+    /// declares: the editor would show them as text boxes.</summary>
+    public static readonly IReadOnlyList<string> GrantKeys = new[] { "modifiers", "adds", "uses", "spends", "options", "choose" };
+
     /// <summary>The grants held in <paramref name="feature"/>; empty when it holds none.</summary>
     public static FeatureGrantData Read(IReadOnlyDictionary<string, object>? feature)
     {
@@ -166,7 +170,7 @@ public sealed class FeatureGrantData
         foreach (var map in Maps(feature.GetValueOrDefault("options")))
         {
             var option = new GrantOption { Name = Text(map, "name"), Description = Text(map, "description"), Grants = Read(new Dictionary<string, object>(map)) };
-            CopyExtra(map, option.Extra, "name", "description", "modifiers", "adds", "uses", "spends", "options", "choose");
+            CopyExtra(map, option.Extra, new[] { "name", "description" }.Concat(GrantKeys).ToArray());
             data.Options.Add(option);
         }
 
@@ -217,7 +221,8 @@ public sealed class FeatureGrantData
     /// <summary>How many modifiers, adds and counters the feature has that the sheet will apply (a target or a list chosen,
     /// entries given, a maximum set).</summary>
     public (int Modifiers, int Adds, int Counters) Counts() =>
-        (Modifiers.Count(m => m.Target.Length > 0), Adds.Count(a => a.To.Length > 0 && (a.Entries.Count > 0 || a.Extra.ContainsKey("choice") || a.Extra.ContainsKey("choose"))), Uses is { Max.Length: > 0 } ? 1 : 0);
+        (Modifiers.Count(m => m.Target.Length > 0), Adds.Count(a => (a.To.Length > 0 && (a.Entries.Count > 0 || a.Extra.ContainsKey("choice") || a.Extra.ContainsKey("choose")))
+            || (a.To.Length == 0 && a.Extra.ContainsKey("choice"))), Uses is { Max.Length: > 0 } ? 1 : 0);
 
     /// <summary>A number typed into an amount, a maximum or a level stays a number; anything else is a formula, and stays text.</summary>
     public static object Value(string text)

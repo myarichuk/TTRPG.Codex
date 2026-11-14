@@ -43,6 +43,15 @@ description: >-
   **Spellcasting.** The mage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 14):
 
 
+  At Will: *Detect Magic*, *Light*, *Mage Armor* (included in AC), *Mage Hand*, *Prestidigitation*
+
+
+  2/Day Each: *Fireball*, *Invisibility*
+
+
+  1/Day Each: *Cone of Cold*, *Fly*
+
+
 
   ### Bonus Actions
 
@@ -84,7 +93,17 @@ properties:
   - name: Arcane Burst
     description: 'Melee or Ranged Attack Roll: +6, reach 5 ft. or range 120 ft. Hit: 16 (3d8 + 3) Force damage.'
   - name: Spellcasting
-    description: 'The mage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 14):'
+    description: >-
+      The mage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 14):
+
+
+      At Will: *Detect Magic*, *Light*, *Mage Armor* (included in AC), *Mage Hand*, *Prestidigitation*
+
+
+      2/Day Each: *Fireball*, *Invisibility*
+
+
+      1/Day Each: *Cone of Cold*, *Fly*
   bonusActions:
   - name: Misty Step (3/day)
     description: The mage casts Misty Step, using the same spellcasting ability as Spellcasting.

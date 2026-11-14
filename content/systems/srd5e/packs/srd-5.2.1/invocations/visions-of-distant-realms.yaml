@@ -1,0 +1,19 @@
+id: visions-of-distant-realms
+type: invocation
+name: Visions of Distant Realms
+description: >-
+  **Prerequisite:** Level 9+ Warlock
+
+
+  You can cast Arcane Eye without expending a spell slot.
+tags:
+- warlock
+properties:
+  class: warlock
+  minLevel: 9
+  prerequisites: Level 9+ Warlock
+  adds:
+  - to: grantedSpells
+    entries:
+    - arcane-eye
+    free: atWill

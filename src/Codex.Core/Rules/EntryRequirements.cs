@@ -52,6 +52,14 @@ public sealed record EntryRequirements(IReadOnlyDictionary<string, object> Prope
                 if (entry == null) return null;
                 properties[condition.Property] = new List<object> { entry.Name };
             }
+            else if (condition.Contains != null)
+            {
+                properties[condition.Property] = new List<object> { condition.Contains };
+            }
+            else if (condition.ContainsChoice != null || condition.EqualsChoice != null)
+            {
+                return null; // what another choice picked: nothing to write ahead
+            }
             else if (condition.LteField != null || condition.GteField != null)
             {
                 if (condition.LteField != null)
@@ -96,7 +104,7 @@ public sealed record EntryRequirements(IReadOnlyDictionary<string, object> Prope
         return new EntryRequirements(properties, hints);
     }
 
-    private static bool Compares(RuleCondition c) => c.Equals != null || c.In != null || c.Gte.HasValue || c.Lte.HasValue || c.EqualsField != null || c.ContainsNameOfField != null || c.LteField != null || c.GteField != null || c.LteLookup != null;
+    private static bool Compares(RuleCondition c) => c.Equals != null || c.In != null || c.Gte.HasValue || c.Lte.HasValue || c.EqualsField != null || c.ContainsNameOfField != null || c.Contains != null || c.ContainsChoice != null || c.EqualsChoice != null || c.LteField != null || c.GteField != null || c.LteLookup != null;
 
     private static void Raise(Dictionary<string, double> bounds, string property, double value) =>
         bounds[property] = bounds.TryGetValue(property, out var current) ? Math.Max(current, value) : value;

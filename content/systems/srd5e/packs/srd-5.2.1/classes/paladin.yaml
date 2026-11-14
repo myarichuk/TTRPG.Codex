@@ -45,6 +45,14 @@ properties:
       As a Bonus Action, you can touch a creature (which could be yourself) and draw power from the pool of healing to restore a number of Hit Points to that creature, up to the maximum amount remaining in the pool.
 
       You can also expend 5 Hit Points from the pool of healing power to remove the Poisoned condition from the creature; those points don't also restore Hit Points to the creature.
+    uses:
+      key: lay-on-hands
+      max: 5 * classLevel
+      recoversOn:
+      - Long Rest
+    spends:
+      key: lay-on-hands
+      amount: ask
   - name: Spellcasting
     level: 1
     description: >-
@@ -78,6 +86,14 @@ properties:
   - name: Paladin's Smite
     level: 2
     description: You always have the Divine Smite spell prepared. In addition, you can cast it without expending a spell slot, but you must finish a Long Rest before you can cast it in this way again.
+    adds:
+    - to: grantedSpells
+      entries:
+      - divine-smite
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: Channel Divinity
     level: 3
     description: >-
@@ -88,6 +104,13 @@ properties:
       If a Channel Divinity effect requires a saving throw, the DC equals the spell save DC from this class's Spellcasting feature.
 
       Divine Sense. As a Bonus Action, you can open your awareness to detect Celestials, Fiends, and Undead. For the next 10 minutes or until you have the Incapacitated condition, you know the location of any creature of those types within 60 feet of yourself, and you know its creature type. Within the same radius, you also detect the presence of any place or object that has been consecrated or desecrated, as with the Hallow spell.
+    uses:
+      key: paladin-channel-divinity
+      max: 'classLevel >= 11 ? 3 : 2'
+      recovers:
+      - on: Short Rest
+        amount: 1
+      - on: Long Rest
   - name: Paladin Subclass
     level: 3
     description: You gain a Paladin subclass of your choice. A subclass is a specialization that grants you features at certain Paladin levels. For the rest of your career, you gain each of your subclass's features that are of your Paladin level or lower.
@@ -97,12 +120,24 @@ properties:
   - name: Extra Attack
     level: 5
     description: You can attack twice instead of once whenever you take the Attack action on your turn.
+    modifiers:
+    - target: attacks
+      amount: 2
+      type: highest
   - name: Faithful Steed
     level: 5
     description: >-
       You can call on the aid of an otherworldly steed. You always have the Find Steed spell prepared.
 
       You can also cast the spell once without expending a spell slot, and you regain the ability to do so when you finish a Long Rest.
+    adds:
+    - to: grantedSpells
+      entries:
+      - find-steed
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: Aura of Protection
     level: 6
     description: >-
@@ -120,6 +155,9 @@ properties:
   - name: Abjure Foes
     level: 9
     description: "As a Magic action, you can expend one use of this class's Channel Divinity to overwhelm foes with awe. As you present your Holy Symbol or weapon, you can target a number of creatures equal to your Charisma modifier (minimum of one creature) that you can see within 60 feet of yourself. Each target must succeed on a Wisdom saving throw or have the Frightened condition for 1 minute or until it takes any damage. While Frightened in this way, a target can do only one of the following on its turns: move, take an action, or take a Bonus Action."
+    spends:
+      key: paladin-channel-divinity
+      amount: 1
   - name: Aura of Courage
     level: 10
     description: You and your allies have Immunity to the Frightened condition while in your Aura of Protection. If a Frightened ally enters the aura, that condition has no effect on that ally while there.
@@ -132,6 +170,9 @@ properties:
   - name: Restoring Touch
     level: 14
     description: "When you use Lay On Hands on a creature, you can also remove one or more of the following conditions from the creature: Blinded, Charmed, Deafened, Frightened, Paralyzed, or Stunned. You must expend 5 Hit Points from the healing pool of Lay On Hands for each of these conditions you remove; those points don't also restore Hit Points to the creature."
+    spends:
+      key: lay-on-hands
+      amount: 5
   - name: Subclass Feature
     level: 15
     description: You gain a feature from your Paladin subclass at this level. Its features are listed on the subclass.
@@ -311,3 +352,14 @@ properties:
   - level: 20
     slots: 5
     styles: 1
+  adds:
+  - to: skills
+    choice: class-skills
+    choose: 2
+    from:
+    - athletics
+    - insight
+    - intimidation
+    - medicine
+    - persuasion
+    - religion

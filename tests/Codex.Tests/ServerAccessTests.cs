@@ -209,7 +209,7 @@ public class ServerSettingsStoreTests(RavenDbFixture fixture) : IClassFixture<Ra
     [Fact]
     public async Task AnExistingServer_KeepsItsAccounts_AndItsCampaignOwnersBecomeGameMasters()
     {
-        var db = new RavenDbService(fixture.DbPath, fixture.DbName, runInMemory: true);
+        var db = fixture.Open(fixture.DbName);
         var users = new RavenUserRepository(db);
         var settings = new RavenServerSettingsStore(db);
 

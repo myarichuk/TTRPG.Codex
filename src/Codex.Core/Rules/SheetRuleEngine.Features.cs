@@ -11,7 +11,21 @@ public sealed record FeatureModifier(string Target, string Amount, string? Type,
 /// <see cref="SkillRules.Ranks"/>) it puts the entries at <see cref="Rank"/> (a rank key or number; none means the first rank), or raises
 /// them <see cref="Raise"/> ranks (<c>raise: 1</c>; <see cref="Rank"/> and <see cref="Raise"/> exclude each other), or, with a
 /// <see cref="Choice"/>, leaves the entries to the player.</summary>
-public sealed record FeatureAdd(string To, IReadOnlyList<string> Entries, int? Level, string? Rank = null, int Raise = 0, FeatureChoice? Choice = null);
+public sealed record FeatureAdd(string To, IReadOnlyList<string> Entries, int? Level, string? Rank = null, int Raise = 0, FeatureChoice? Choice = null,
+    FeatureUses? Free = null, bool AtWill = false)
+{
+    /// <summary>The spells added can be cast without a slot: <see cref="Free"/> uses of each (their own counter), or <see cref="AtWill"/>.</summary>
+    public bool IsFreeCasting => Free != null || AtWill;
+
+    /// <summary>A choice with no list to put anything on and nothing to pick from but its own <c>from</c>: its picks are values (the spell list a Magic
+    /// Initiate takes), stored like any choice, canonical words (a class's name as the entries write it), and read by
+    /// <see cref="RuleCondition.ContainsChoice"/> and <see cref="RuleCondition.EqualsChoice"/>.</summary>
+    public bool IsValueChoice => Choice != null && To.Length == 0 && Choice.FromList == null;
+
+    /// <summary>A choice with no <c>to</c> and a <c>fromList</c>: it picks among the entries the sheet already holds on that list and puts none anywhere. The
+    /// picks only carry what the item says of them (<c>free</c>), so the player can still take the spell off the list, and the pick goes stale.</summary>
+    public bool IsMarkOnly => Choice != null && To.Length == 0 && Choice.FromList != null;
+}
 
 /// <summary>A choice a feature leaves to the player: <c>{ to, choice, choose, from, minRank, maxRank, rank | raise }</c>.
 /// <see cref="Id"/> names it within its entry (<see cref="IdGiven"/>: the data said so; else it is the row's slug and level);
@@ -19,7 +33,7 @@ public sealed record FeatureAdd(string To, IReadOnlyList<string> Entries, int? L
 /// field, such as its attribute, against the values listed); <see cref="MinRank"/> and <see cref="MaxRank"/> the ranks (key or number) a
 /// key must already hold to be offered. Where its picks are stored: see <see cref="SheetRuleEngine.ChoiceKey"/>.</summary>
 public sealed record FeatureChoice(string Id, bool IdGiven, int Choose, IReadOnlyList<string>? From, IReadOnlyDictionary<string, IReadOnlyList<string>>? Filter,
-    string? MinRank, string? MaxRank);
+    string? MinRank, string? MaxRank, IReadOnlyList<RuleCondition>? Where = null, string? FromList = null);
 
 /// <summary>One refill rule of a feature's counter as its data states it: <c>{ on, amount, when }</c>. <see cref="On"/> is a rest's
 /// name or a moment (<see cref="FeatureRecovery.Initiative"/>, <see cref="FeatureRecovery.Dawn"/>, <see cref="FeatureRecovery.Manual"/>);
@@ -37,7 +51,8 @@ public sealed record FeatureSpend(string Key, string Amount)
 
 /// <summary>A feature's counter of uses as its data states it. <see cref="Recovers"/> are the <c>recovers</c> rules;
 /// <see cref="RecoversOn"/> is the shorthand for a full refill on each rest named. <see cref="GmRegain"/>: <c>regain: gm</c>.</summary>
-public sealed record FeatureUses(string? Key, string Max, IReadOnlyList<string> RecoversOn, IReadOnlyList<FeatureRecover>? Recovers = null, bool GmRegain = false)
+public sealed record FeatureUses(string? Key, string Max, IReadOnlyList<string> RecoversOn, IReadOnlyList<FeatureRecover>? Recovers = null, bool GmRegain = false,
+    string? Label = null)
 {
     /// <summary>Every refill rule: <see cref="RecoversOn"/> as full refills, then <see cref="Recovers"/>.</summary>
     public IReadOnlyList<FeatureRecover> AllRecovers =>
@@ -46,10 +61,12 @@ public sealed record FeatureUses(string? Key, string Max, IReadOnlyList<string> 
 
 /// <summary>A feature the sheet has now: a row of a class, subclass or species entry at or below the sheet's level, or a
 /// picked entry that is one. <see cref="View"/> is the sheet as that feature's class sees it (its own class level). <see cref="Copy"/>
-/// is which copy of a repeatable pick this is (1 for the first): a choice of the second copy of a feat is stored apart.</summary>
+/// is which copy of a repeatable pick this is (1 for the first): a choice of the second copy of a feat is stored apart.
+/// <see cref="OnKind"/> is true for a feature that comes from a sheet kind's own sources (<c>sheetKinds[].features</c>): its modifiers go
+/// to the kind's <see cref="SheetModel"/>, never to <c>sheetRules</c>' targets.</summary>
 public sealed record ActiveFeature(string Name, string? Description, ContentEntry Source, int? Level, IReadOnlyDictionary<string, object> View, string? LevelKey,
     IReadOnlyList<FeatureModifier> Modifiers, IReadOnlyList<FeatureAdd> Adds, FeatureUses? Uses, FeatureSpend? Spends = null, int Copy = 1,
-    string? Scope = null, string? ChosenBy = null)
+    string? Scope = null, string? ChosenBy = null, bool OnKind = false)
 {
     public bool Grants => Modifiers.Count > 0 || Adds.Count > 0 || Uses != null || Spends != null;
 
@@ -85,9 +102,17 @@ public sealed record GrantedModifier(string Target, ActiveFeature Feature, strin
 public sealed record FeatureCounter(ActiveFeature Feature, string Key, string MaxKey, int Max, IReadOnlyList<string> RecoversOn,
     IReadOnlyList<RecoverRule>? Recovers = null, bool GmRegain = false, IReadOnlyList<string>? LegacyKeys = null)
 {
+    /// <summary>The counter's name on the sheet, the Table and the log: the feature's <c>uses.label</c> (a shared pool is named by what it is, not
+    /// by the row that carries it), else the feature's name.</summary>
+    public string Label => string.IsNullOrWhiteSpace(Feature.Uses?.Label) ? Feature.Name : Feature.Uses!.Label!;
+
     /// <summary>Whether this viewer may press Regain: everyone who may use the counter, unless <c>regain: gm</c>.</summary>
     public bool CanRegain(bool isDm) => isDm || !GmRegain;
 }
+
+/// <summary>A spell a feature lets the character cast without a slot (<c>adds[].free</c>): <see cref="Counter"/> holds its uses, null for a spell cast at will.
+/// It is one more way to pay for the spell's action (<see cref="SheetAction.Costs"/>).</summary>
+public sealed record FreeCasting(ActiveFeature Feature, string SpellId, FeatureCounter? Counter);
 
 /// <summary>A feature that spends from a pool: the <see cref="Cost"/> of one press, and whether the player chooses
 /// the amount (<see cref="Ask"/>: <c>Cost.Amount</c> is then the least, 1).</summary>
@@ -114,12 +139,6 @@ public static class FeatureRecovery
     public const string Initiative = "initiative";
     public const string Dawn = "dawn";
     public const string Manual = "manual";
-
-    /// <summary>The words a refill may name that are not rests: the moment of rolling initiative, a GM-called dawn, and a
-    /// refill only a person does by hand.</summary>
-    public static readonly IReadOnlyList<string> Moments = new[] { Initiative, Dawn, Manual };
-
-    public static bool IsMoment(string on) => Moments.Contains(on, StringComparer.OrdinalIgnoreCase);
 
     private static readonly System.Text.RegularExpressions.Regex DiceShape = new(@"^\s*\d*d\d+\s*([+-]\s*\d+)?\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
 
@@ -205,9 +224,10 @@ public sealed partial class SheetRuleEngine
     public static string UsesLabel(IReadOnlyDictionary<string, object> sheet, string key) =>
         YamlValues.GetString(sheet, key + UsesLabelSuffix) is { Length: > 0 } label ? label : key[UsesPrefix.Length..].Replace('_', ' ');
 
-    /// <summary>The rests that refill the feature counter <paramref name="key"/>, as the sheet records them.</summary>
-    public static IReadOnlyList<string> UsesRests(IReadOnlyDictionary<string, object> sheet, string key) =>
-        FeatureRecovery.Decode(sheet, key).Select(r => r.On).Where(on => !FeatureRecovery.IsMoment(on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    /// <summary>The rests that refill the feature counter <paramref name="key"/>, as the sheet records them (<paramref name="system"/> says
+    /// which of the names are moments rather than rests).</summary>
+    public static IReadOnlyList<string> UsesRests(SystemDefinition? system, IReadOnlyDictionary<string, object> sheet, string key) =>
+        FeatureRecovery.Decode(sheet, key).Select(r => r.On).Where(on => SystemMoments.IsRest(system, on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     /// <summary>The features the sheet has now, in the order the system lists their sources.</summary>
     public IReadOnlyList<ActiveFeature> ActiveFeatures(IReadOnlyDictionary<string, object> sheet) => CollectFeatures(sheet, null);
@@ -216,8 +236,62 @@ public sealed partial class SheetRuleEngine
     /// are features; the sheet's own stored picks decide, so this is the one place that selection is made.</summary>
     internal IReadOnlyList<ActiveFeature> CollectFeatures(IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected)
     {
-        if (Rules is not { Features.Count: > 0 } rules) return Array.Empty<ActiveFeature>();
+        var found = new List<ActiveFeature>();
+        var copies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // across every list: a feat in two lists is copy 1 and copy 2
+        if (Rules is { Features.Count: > 0 } rules) CollectRuleFeatures(rules, sheet, collected, found, copies);
+        // A sheet kind's own sources come after sheetRules': the same selection, over the kind's lists.
+        found.AddRange(KindFeatures(system, resolver, sheet, collected, copies));
+        return found;
+    }
 
+    /// <summary>
+    /// The features a sheet kind's own sources (<c>sheetKinds[].features</c>) give the sheet: for each <c>list</c> source, one feature (or
+    /// the rows of a property) per pick of that kind's list. A pick is an id, or a map with an <c>id</c>, as <see cref="SheetModel"/> reads
+    /// picks. Each is an <see cref="ActiveFeature"/> with <see cref="ActiveFeature.OnKind"/> set.
+    /// <para>It reads the raw sheet only (pick ids and <c>choice__</c> keys), never a worked-out value, so <see cref="SheetModel"/> can call
+    /// it while it works values out without recursing.</para>
+    /// </summary>
+    /// <param name="collected">Receives the row choices behind the features; null: not wanted.</param>
+    /// <param name="copies">How many of each entry have been counted, to number the copies of a repeated pick; null: a fresh count.</param>
+    public static IReadOnlyList<ActiveFeature> KindFeatures(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet,
+        FeatureCollection? collected = null, Dictionary<string, int>? copies = null)
+    {
+        if (SheetLayout.KindOf(system, sheet) is not { Features.Count: > 0 } kind) return Array.Empty<ActiveFeature>();
+
+        copies ??= new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var found = new List<ActiveFeature>();
+        foreach (var source in kind.Features)
+        {
+            if (source.List == null || kind.Lists.FirstOrDefault(l => l.Key == source.List) is not { Type: { } type } list) continue;
+            foreach (var id in PickIds(sheet, list.Key))
+            {
+                if (resolver.Resolve(type, id) is not { } entry) continue;
+                var copy = copies[entry.Id] = copies.GetValueOrDefault(entry.Id) + 1;
+                AddFeatures(found, source, entry, sheet, sheet, collected, copy, onKind: true);
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>The ids of the picks stored under <paramref name="key"/> on a sheet kind: each element is an id, or a map with an <c>id</c>.</summary>
+    private static IEnumerable<string> PickIds(IReadOnlyDictionary<string, object> sheet, string key)
+    {
+        if (!sheet.TryGetValue(key, out var raw) || raw is not System.Collections.IEnumerable picks || raw is string) yield break;
+        foreach (var pick in picks)
+        {
+            var id = pick switch
+            {
+                string text => text,
+                IDictionary<string, object> map when map.TryGetValue("id", out var value) => value?.ToString(),
+                _ => null
+            };
+            if (!string.IsNullOrEmpty(id)) yield return id;
+        }
+    }
+
+    private void CollectRuleFeatures(SheetRules rules, IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, List<ActiveFeature> found, Dictionary<string, int> copies)
+    {
         var views = ClassViews(sheet, new List<ClassLevel>());
         var perClass = new HashSet<string>(StringComparer.Ordinal);
         if (rules.Multiclass is { } multiclass)
@@ -226,8 +300,6 @@ public sealed partial class SheetRuleEngine
             if (multiclass.SubclassField != null) perClass.Add(multiclass.SubclassField);
         }
 
-        var found = new List<ActiveFeature>();
-        var copies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // across every list: a feat in two lists is copy 1 and copy 2
         foreach (var source in rules.Features)
         {
             if (source.List != null)
@@ -244,23 +316,21 @@ public sealed partial class SheetRuleEngine
             }
             else if (source.Field != null)
             {
-                foreach (var view in perClass.Contains(source.Field) ? views : views.Take(1))
+                foreach (var view in perClass.Contains(source.Field) && !source.FirstOnly ? views : views.Take(1))
                 {
                     if (ReferencedEntry(source.Field, view) is { } entry) AddFeatures(found, source, entry, view, sheet, collected);
                 }
             }
         }
-
-        return found;
     }
 
     private static void AddFeatures(List<ActiveFeature> found, FeatureSource source, ContentEntry entry, IReadOnlyDictionary<string, object> view,
-        IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, int copy = 1)
+        IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, int copy = 1, bool onKind = false)
     {
         if (source.Entries.Count > 0 && !source.Entries.Contains(entry.Id, StringComparer.OrdinalIgnoreCase)) return;
         if (source.Property == null)
         {
-            AddRow(found, entry.Name, entry.Description, entry, null, view, source.ByField, entry.Properties, copy, sheet, collected, null, null);
+            AddRow(found, string.IsNullOrWhiteSpace(source.Label) ? entry.Name : source.Label!, entry.Description, entry, null, view, source.ByField, entry.Properties, copy, sheet, collected, null, null, onKind);
             return;
         }
 
@@ -280,7 +350,7 @@ public sealed partial class SheetRuleEngine
         {
             foreach (var (name, description, level, row) in candidates)
             {
-                AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, null, null);
+                AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, null, null, onKind);
             }
 
             return;
@@ -293,12 +363,12 @@ public sealed partial class SheetRuleEngine
         if (options.Count == 0) return;
         var (valid, stale) = ReadPicks(sheet, key, choose.Count, options);
         var label = string.IsNullOrWhiteSpace(choose.Label) ? entry.Name : choose.Label!;
-        var owner = new ActiveFeature(label, null, entry, null, view, source.ByField, Array.Empty<FeatureModifier>(), Array.Empty<FeatureAdd>(), null, null, copy);
+        var owner = new ActiveFeature(label, null, entry, null, view, source.ByField, Array.Empty<FeatureModifier>(), Array.Empty<FeatureAdd>(), null, null, copy, OnKind: onKind);
         collected?.Choices.Add(new RowChoiceInstance(key, choose, label, entry.Name, owner, options, valid, stale));
         foreach (var picked in valid)
         {
             var (name, description, level, row) = candidates.First(c => c.Name.Equals(picked.Name, StringComparison.OrdinalIgnoreCase));
-            AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, choose.Id, key);
+            AddRow(found, name, description, entry, level, view, source.ByField, new Dictionary<string, object>(row), copy, sheet, collected, choose.Id, key, onKind);
         }
     }
 
@@ -320,9 +390,10 @@ public sealed partial class SheetRuleEngine
     /// <summary>Adds one row as a feature and, when it offers <c>options</c>, the options picked as features named "{row}: {option}".
     /// <paramref name="scope"/> is the id of the row choice this row was picked through, <paramref name="chosenBy"/> its sheet key.</summary>
     private static void AddRow(List<ActiveFeature> found, string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view,
-        string? levelKey, IReadOnlyDictionary<string, object> data, int copy, IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, string? scope, string? chosenBy)
+        string? levelKey, IReadOnlyDictionary<string, object> data, int copy, IReadOnlyDictionary<string, object> sheet, FeatureCollection? collected, string? scope, string? chosenBy,
+        bool onKind = false)
     {
-        var feature = Feature(name, description, entry, level, view, levelKey, data, copy, scope, chosenBy);
+        var feature = Feature(name, description, entry, level, view, levelKey, data, copy, scope, chosenBy, onKind);
         found.Add(feature);
         var optionRows = Maps(data.GetValueOrDefault("options")).ToList();
         if (optionRows.Count == 0 && !data.ContainsKey("options")) return;
@@ -345,7 +416,7 @@ public sealed partial class SheetRuleEngine
         foreach (var picked in valid)
         {
             var option = candidates.First(c => c.Name!.Equals(picked.Name, StringComparison.OrdinalIgnoreCase)).Row;
-            AddRow(found, $"{name}: {picked.Name}", picked.Description, entry, level, view, levelKey, new Dictionary<string, object>(option), copy, sheet, collected, id, key);
+            AddRow(found, $"{name}: {picked.Name}", picked.Description, entry, level, view, levelKey, new Dictionary<string, object>(option), copy, sheet, collected, id, key, onKind);
         }
     }
 
@@ -370,8 +441,23 @@ public sealed partial class SheetRuleEngine
         }
     }
 
+    /// <summary>A counter of uses as a feature's <c>uses</c> (and a spell's <c>free</c>) writes it: <c>{ max, key, label, recoversOn, recovers, regain }</c>, or a
+    /// plain number (a counter of that many with nothing that refills it but the GM). Null when it is neither.</summary>
+    private static FeatureUses? ParseUses(object? raw) => raw switch
+    {
+        IDictionary<string, object> map when Text(map, "max") is { } max => new FeatureUses(Text(map, "key"), max, Texts(Cell(map, "recoversOn")),
+            Maps(Cell(map, "recovers"))
+                .Select(r => new FeatureRecover(Text(r, "on") ?? string.Empty, Text(r, "amount") ?? FeatureRecovery.AllAmount, Text(r, "when")))
+                .Where(r => r.On.Length > 0)
+                .ToList(),
+            string.Equals(Text(map, "regain"), "gm", StringComparison.OrdinalIgnoreCase), Text(map, "label")),
+        // "uses: 2" is a counter of two with nothing that refills it but the GM.
+        { } plain when ToDouble(plain) is > 0 => new FeatureUses(null, Convert.ToString(plain, CultureInfo.InvariantCulture)!, Array.Empty<string>()),
+        _ => null
+    };
+
     private static ActiveFeature Feature(string name, string? description, ContentEntry entry, int? level, IReadOnlyDictionary<string, object> view, string? levelKey, IReadOnlyDictionary<string, object> data, int copy = 1,
-        string? scope = null, string? chosenBy = null)
+        string? scope = null, string? chosenBy = null, bool onKind = false)
     {
         var modifiers = Maps(data.GetValueOrDefault("modifiers"))
             .Select(m => new FeatureModifier(Text(m, "target") ?? string.Empty, Text(m, "amount") ?? "0", Text(m, "type"), Text(m, "when")))
@@ -379,29 +465,53 @@ public sealed partial class SheetRuleEngine
             .ToList();
         var adds = Maps(data.GetValueOrDefault("adds"))
             .Select(a => new FeatureAdd(Text(a, "to") ?? string.Empty, Texts(Cell(a, "entries")), ToDouble(Cell(a, "level")) is { } at ? (int)at : null,
-                Text(a, "rank"), ToDouble(Cell(a, "raise")) is { } raise ? (int)raise : 0, ParseChoice(a, name, level)))
-            .Where(a => a.To.Length > 0 && (a.Entries.Count > 0 || a.Choice != null))
+                Text(a, "rank"), ToDouble(Cell(a, "raise")) is { } raise ? (int)raise : 0, ParseChoice(a, name, level),
+                string.Equals(Text(a, "free"), "atWill", StringComparison.OrdinalIgnoreCase) ? null : ParseUses(Cell(a, "free")),
+                string.Equals(Text(a, "free"), "atWill", StringComparison.OrdinalIgnoreCase)))
+            .Where(a => (a.To.Length > 0 || a.Choice != null) && (a.Entries.Count > 0 || a.Choice != null))
             .ToList();
-        var uses = data.GetValueOrDefault("uses") switch
-        {
-            IDictionary<string, object> map when Text(map, "max") is { } max => new FeatureUses(Text(map, "key"), max, Texts(Cell(map, "recoversOn")),
-                Maps(Cell(map, "recovers"))
-                    .Select(r => new FeatureRecover(Text(r, "on") ?? string.Empty, Text(r, "amount") ?? FeatureRecovery.AllAmount, Text(r, "when")))
-                    .Where(r => r.On.Length > 0)
-                    .ToList(),
-                string.Equals(Text(map, "regain"), "gm", StringComparison.OrdinalIgnoreCase)),
-            // "uses: 2" is a counter of two with nothing that refills it but the GM.
-            { } plain when ToDouble(plain) is > 0 => new FeatureUses(null, Convert.ToString(plain, CultureInfo.InvariantCulture)!, Array.Empty<string>()),
-            _ => null
-        };
+        var uses = ParseUses(data.GetValueOrDefault("uses"));
         var spends = data.GetValueOrDefault("spends") is IDictionary<string, object> spend && Text(spend, "key") is { } spendKey
             ? new FeatureSpend(spendKey, Text(spend, "amount") ?? "1")
             : null;
-        return new ActiveFeature(name, description, entry, level, view, levelKey, modifiers, adds, uses, spends, copy, scope, chosenBy);
+        return new ActiveFeature(name, description, entry, level, view, levelKey, modifiers, adds, uses, spends, copy, scope, chosenBy, onKind);
     }
 
     /// <summary>The choice an <c>adds</c> item leaves to the player (<c>choice</c> and/or <c>choose</c> in it), or null for a fixed item.
     /// A choice without an id gets <see cref="DefaultChoiceId"/>; one without a count chooses 1; a count below 1 is no choice.</summary>
+    /// <summary>A condition as an entry's <c>adds[].where</c> writes it, the keys of a list's own <c>where</c>: <c>{ property, equals | in | gte | lte | equalsField |
+    /// containsNameOfField | contains | containsChoice | equalsChoice | lteField | gteField | lteLookup, message }</c>. Null when the item is no map or has no property.</summary>
+    internal static RuleCondition? ParseCondition(IDictionary<string, object> map)
+    {
+        var property = Text(map, "property");
+        if (string.IsNullOrWhiteSpace(property)) return null;
+        var lookup = Cell(map, "lteLookup") as IDictionary<string, object>;
+        return new RuleCondition
+        {
+            Property = property,
+            Equals = Cell(map, "equals"),
+            In = map.ContainsKey("in") ? Texts(Cell(map, "in")).ToList() : null,
+            Gte = ToDouble(Cell(map, "gte")),
+            Lte = ToDouble(Cell(map, "lte")),
+            EqualsField = Text(map, "equalsField"),
+            ContainsNameOfField = Text(map, "containsNameOfField"),
+            Contains = Text(map, "contains"),
+            ContainsChoice = Text(map, "containsChoice"),
+            EqualsChoice = Text(map, "equalsChoice"),
+            LteField = Text(map, "lteField"),
+            GteField = Text(map, "gteField"),
+            LteLookup = lookup == null ? null : new LookupRule
+            {
+                Field = Text(lookup, "field") ?? string.Empty,
+                Table = Text(lookup, "table") ?? string.Empty,
+                ByField = Text(lookup, "byField") ?? "level",
+                RowKey = Text(lookup, "rowKey") ?? "level",
+                Column = Text(lookup, "column") ?? string.Empty
+            },
+            Message = Text(map, "message")
+        };
+    }
+
     private static FeatureChoice? ParseChoice(IDictionary<string, object> add, string featureName, int? level)
     {
         if (!add.ContainsKey("choice") && !add.ContainsKey("choose")) return null;
@@ -423,7 +533,9 @@ public sealed partial class SheetRuleEngine
                 break;
         }
 
-        return new FeatureChoice(given ?? DefaultChoiceId(featureName, level), given != null, choose, from, filter, Text(add, "minRank"), Text(add, "maxRank"));
+        var conditions = Maps(Cell(add, "where")).Select(ParseCondition).OfType<RuleCondition>().ToList();
+        return new FeatureChoice(given ?? DefaultChoiceId(featureName, level), given != null, choose, from, filter, Text(add, "minRank"), Text(add, "maxRank"),
+            conditions.Count == 0 ? null : conditions, Text(add, "fromList"));
     }
 
     /// <summary>The word for <c>from</c> that offers every key.</summary>
@@ -521,7 +633,7 @@ public sealed partial class SheetRuleEngine
     private SheetEvaluation WorkedOutDerived(IReadOnlyDictionary<string, object> sheet)
     {
         var scratch = new SheetEvaluation();
-        if (Rules!.Derived.Count > 0) EvaluateDerived(sheet, scratch);
+        if (Rules is { Derived.Count: > 0 }) EvaluateDerived(sheet, scratch);
         return scratch;
     }
 
@@ -542,6 +654,8 @@ public sealed partial class SheetRuleEngine
         EvaluateRowChoices(collected, result);
         if (features.Count == 0) return;
         result.Features.AddRange(features);
+        EvaluateKeyedChoices(features, sheet, result);
+        EvaluateEntryChoices(features, sheet, result);
 
         var derived = DerivedNumbers(result);
         var beforeFeatures = new Dictionary<string, double>(derived); // untouched by the derived modifiers below
@@ -551,7 +665,8 @@ public sealed partial class SheetRuleEngine
             if (warned.Add(name)) result.Warnings.Add(new RuleViolation("features", $"{name}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.", "Actor.Rule.FeatureError", new object?[] { name }));
         }
 
-        foreach (var group in features.SelectMany(f => f.Modifiers.Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
+        // A sheet kind's features put their modifiers in the kind's own model (SheetModel.Modifiers), not on sheetRules' targets.
+        foreach (var group in features.Where(f => !f.OnKind).SelectMany(f => f.Modifiers.Select(m => (Feature: f, Modifier: m))).GroupBy(x => x.Modifier.Target, StringComparer.Ordinal))
         {
             var kind = KindOf(group.Key);
             if (kind == TargetKind.Unknown)
@@ -593,6 +708,54 @@ public sealed partial class SheetRuleEngine
             owners.Add((feature, UsesPrefix + Slug(feature.Uses.Key ?? $"{feature.Source.Id}_{feature.Name}"), max));
         }
 
+        // A spell a feature lets the character cast without a slot (adds[].free): one counter per spell, "free-<spell id>", unless the add names a
+        // key (then its spells share that counter). At will has no counter. Each is a counter of a feature made for it, named "<feature>: <spell>".
+        // The spells a choice picked (an entry choice's, or a mark-only one's) have a counter per SLOT, "free-{entry}[#copy]-{choice}-{n}", n the pick's
+        // position: changing the pick keeps what is left, and cannot refill it.
+        var picks = features.Any(f => f.Adds.Any(a => a.IsFreeCasting && a.Choice != null)) ? ResolveEntryChoices(features.Where(f => !f.OnKind), sheet) : new List<EntryChoiceState>();
+        var casts = new List<(ActiveFeature Feature, string SpellId, string? CounterKey)>();
+        void AddCast(ActiveFeature feature, FeatureAdd add, ContentEntry spell, string defaultKey)
+        {
+            if (add.Free is not { } free)
+            {
+                casts.Add((feature, spell.Id, null));
+                return;
+            }
+
+            var own = feature with { Name = $"{feature.Name}: {spell.Name}", Modifiers = Array.Empty<FeatureModifier>(), Adds = Array.Empty<FeatureAdd>(), Uses = free, Spends = null };
+            if (Amount(own, free.Max, null, derived, Warn) is not { } freeMax || freeMax <= 0) return;
+            var key = UsesPrefix + Slug(free.Key ?? defaultKey);
+            owners.Add((own, key, freeMax));
+            casts.Add((feature, spell.Id, key));
+        }
+
+        foreach (var feature in features)
+        {
+            foreach (var add in feature.Adds.Where(a => a.IsFreeCasting && AddApplies(feature, a)))
+            {
+                if (add.Choice != null)
+                {
+                    if (picks.FirstOrDefault(p => ReferenceEquals(p.Add, add) && ReferenceEquals(p.Feature, feature)) is not { List: { } pickList } state) continue;
+                    for (var n = 0; n < state.Valid.Count; n++)
+                    {
+                        if (resolver.Resolve(pickList.TargetEntityType, state.Valid[n]) is { } picked)
+                        {
+                            AddCast(feature, add, picked, $"free-{feature.Source.Id}{(feature.Copy > 1 ? "#" + feature.Copy : string.Empty)}-{feature.ScopedChoiceId(state.Choice.Id)}-{n + 1}");
+                        }
+                    }
+
+                    continue;
+                }
+
+                var type = Rules?.Lists.FirstOrDefault(l => l.Key.Equals(add.To, StringComparison.OrdinalIgnoreCase))?.TargetEntityType;
+                if (type == null) continue;
+                foreach (var named in add.Entries)
+                {
+                    if (EntryId(type, named) is { } id && resolver.Resolve(type, id) is { } spell) AddCast(feature, add, spell, "free-" + spell.Id);
+                }
+            }
+        }
+
         // Features naming one key share one counter. The highest maximum is the counter's, whatever the order; naming it
         // from more than one place is said, since the entry's author probably meant one owner.
         foreach (var group in owners.GroupBy(o => o.Key, StringComparer.Ordinal))
@@ -607,8 +770,14 @@ public sealed partial class SheetRuleEngine
             var rules = ResolveRecovers(winner.Feature, derived, Warn);
             var legacy = group.Where(o => o.Feature.Uses!.Key != null).Select(o => UsesPrefix + Slug($"{o.Feature.Source.Id}_{o.Feature.Name}")).Where(k => k != winner.Key).Distinct(StringComparer.Ordinal).ToList();
             result.Counters.Add(new FeatureCounter(winner.Feature, winner.Key, winner.Key + UsesMaxSuffix, winner.Max,
-                rules.Select(r => r.On).Where(on => !FeatureRecovery.IsMoment(on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                rules.Select(r => r.On).Where(on => SystemMoments.IsRest(system, on)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
                 rules, winner.Feature.Uses!.GmRegain, legacy));
+        }
+
+        foreach (var (feature, spellId, key) in casts)
+        {
+            if (key == null) result.FreeCastings.Add(new FreeCasting(feature, spellId, null));
+            else if (result.Counters.FirstOrDefault(c => c.Key == key) is { } counter) result.FreeCastings.Add(new FreeCasting(feature, spellId, counter));
         }
 
         foreach (var feature in features.Where(f => f.Spends != null))
@@ -619,7 +788,7 @@ public sealed partial class SheetRuleEngine
             var key = UsesPrefix + Slug(spend.Key);
             ActionCost? cost = null;
             if (result.Counters.FirstOrDefault(c => c.Key == key) is { } counter) cost = ActionCost.OfCounter(counter, amount.Value, null);
-            else if (sheet.ContainsKey(spend.Key) && (system.Resources.Any(r => r.Key == spend.Key) || Rules!.SlotPools.Any(p => p.Owns(spend.Key))))
+            else if (sheet.ContainsKey(spend.Key) && (system.Resources.Any(r => r.Key == spend.Key) || Rules?.SlotPools.Any(p => p.Owns(spend.Key)) == true))
             {
                 cost = ActionCost.FromPool(spend.Key, amount.Value, SystemDefinition.PoolMaxKey(system, spend.Key), system.Resources.FirstOrDefault(r => r.Key == spend.Key)?.Label ?? spend.Key, null);
             }
@@ -708,8 +877,11 @@ public sealed partial class SheetRuleEngine
         var targets = features.SelectMany(f => f.Adds.Select(a => a.To))
             .Concat(sheet.Keys.Where(k => k.StartsWith(GrantedPrefix, StringComparison.Ordinal) && sheet[k] is not (long or int or double)).Select(k => k[GrantedPrefix.Length..]))
             .Distinct(StringComparer.Ordinal)
-            .Where(to => RankTargetOf(to) == null) // a ranked list's grants live in the evaluation only (EvaluateRanks), never on the sheet
+            .Where(to => to.Length > 0 && RankTargetOf(to) == null) // a ranked list's grants live in the evaluation only (EvaluateRanks), never on the sheet
             .ToList();
+
+        // What the player picked for the choices over a list's entries (adds[].choice on a list of Library entries): granted like fixed entries.
+        var picked = features.Any(f => f.Adds.Any(IsEntryChoice)) ? ResolveEntryChoices(features.Where(f => !f.OnKind), sheet) : new List<EntryChoiceState>();
         foreach (var to in targets)
         {
             var list = Rules.Lists.FirstOrDefault(l => l.Key == to);
@@ -722,6 +894,8 @@ public sealed partial class SheetRuleEngine
                     granted.AddRange(add.Entries.Select(e => list == null ? e : EntryId(list.TargetEntityType, e)).OfType<string>());
                 }
             }
+
+            granted.AddRange(picked.Where(p => p.Add.To == to).SelectMany(p => p.Valid));
 
             granted = granted.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var before = RawList(sheet, GrantedPrefix + to);
@@ -776,7 +950,7 @@ public sealed partial class SheetRuleEngine
             else if (previousMax.HasValue && counter.Max > previousMax.Value) current += counter.Max - previousMax.Value;
             // A lower maximum caps what is left; no change to the build ever refills a counter.
             sheet[counter.Key] = (long)Math.Clamp(current.Value, 0, counter.Max);
-            sheet[counter.Key + UsesLabelSuffix] = counter.Feature.Name;
+            sheet[counter.Key + UsesLabelSuffix] = counter.Label;
             keep.Add(counter.Key + UsesLabelSuffix);
             if (counter.Recovers is { Count: > 0 } recovers)
             {

@@ -80,6 +80,11 @@ properties:
   - name: Magical Cunning
     level: 2
     description: You can perform an esoteric rite for 1 minute. At the end of it, you regain expended Pact Magic spell slots but no more than a number equal to half your maximum (round up). Once you use this feature, you can't do so again until you finish a Long Rest.
+    uses:
+      key: magical-cunning
+      max: 1
+      recoversOn:
+      - Long Rest
   - name: Warlock Subclass
     level: 3
     description: You gain a Warlock subclass of your choice. The Fiend Patron subclass is detailed after this class's description. A subclass is a specialization that grants you features at certain Warlock levels. For the rest of your career, you gain each of your subclass's features that are of your Warlock level or lower.
@@ -98,6 +103,14 @@ properties:
       In the past, you usually contacted your patron through intermediaries. Now you can communicate directly; you always have the Contact Other Plane spell prepared. With this feature, you can cast the spell without expending a spell slot to contact your patron, and you automatically succeed on the spell's saving throw.
 
       Once you cast the spell with this feature, you can't do so in this way again until you finish a Long Rest.
+    adds:
+    - to: grantedSpells
+      entries:
+      - contact-other-plane
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: Subclass Feature
     level: 10
     description: You gain a feature from your Warlock subclass at this level. Its features are listed on the subclass.
@@ -111,6 +124,19 @@ properties:
       As shown in the Warlock Features table, you gain another Warlock spell of your choice that can be cast in this way when you reach Warlock levels 13 (level 7 spell), 15 (level 8 spell), and 17 (level 9 spell). You regain all uses of your Mystic Arcanum when you finish a Long Rest.
 
       Whenever you gain a Warlock level, you can replace one of your arcanum spells with another Warlock spell of the same level.
+    adds:
+    - to: grantedSpells
+      choice: mystic-arcanum-6
+      choose: 1
+      where:
+      - property: classes
+        contains: Warlock
+      - property: level
+        equals: 6
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: Ability Score Improvement
     level: 12
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Warlock levels 8, 12, and 16.
@@ -124,6 +150,19 @@ properties:
       As shown in the Warlock Features table, you gain another Warlock spell of your choice that can be cast in this way when you reach Warlock levels 13 (level 7 spell), 15 (level 8 spell), and 17 (level 9 spell). You regain all uses of your Mystic Arcanum when you finish a Long Rest.
 
       Whenever you gain a Warlock level, you can replace one of your arcanum spells with another Warlock spell of the same level.
+    adds:
+    - to: grantedSpells
+      choice: mystic-arcanum-7
+      choose: 1
+      where:
+      - property: classes
+        contains: Warlock
+      - property: level
+        equals: 7
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: Subclass Feature
     level: 14
     description: You gain a feature from your Warlock subclass at this level. Its features are listed on the subclass.
@@ -137,6 +176,19 @@ properties:
       As shown in the Warlock Features table, you gain another Warlock spell of your choice that can be cast in this way when you reach Warlock levels 13 (level 7 spell), 15 (level 8 spell), and 17 (level 9 spell). You regain all uses of your Mystic Arcanum when you finish a Long Rest.
 
       Whenever you gain a Warlock level, you can replace one of your arcanum spells with another Warlock spell of the same level.
+    adds:
+    - to: grantedSpells
+      choice: mystic-arcanum-8
+      choose: 1
+      where:
+      - property: classes
+        contains: Warlock
+      - property: level
+        equals: 8
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: Ability Score Improvement
     level: 16
     description: You gain the Ability Score Improvement feat (see "Feats") or another feat of your choice for which you qualify. You gain this feature again at Warlock levels 8, 12, and 16.
@@ -150,6 +202,19 @@ properties:
       As shown in the Warlock Features table, you gain another Warlock spell of your choice that can be cast in this way when you reach Warlock levels 13 (level 7 spell), 15 (level 8 spell), and 17 (level 9 spell). You regain all uses of your Mystic Arcanum when you finish a Long Rest.
 
       Whenever you gain a Warlock level, you can replace one of your arcanum spells with another Warlock spell of the same level.
+    adds:
+    - to: grantedSpells
+      choice: mystic-arcanum-9
+      choose: 1
+      where:
+      - property: classes
+        contains: Warlock
+      - property: level
+        equals: 9
+      free:
+        max: 1
+        recoversOn:
+        - Long Rest
   - name: Epic Boon
     level: 19
     description: You gain an Epic Boon feat (see "Feats") or another feat of your choice for which you qualify. Boon of Fate is recommended.
@@ -320,3 +385,56 @@ properties:
   - level: 20
     slots: 5
     styles: 0
+  adds:
+  - to: skills
+    choice: class-skills
+    choose: 2
+    from:
+    - arcana
+    - deception
+    - history
+    - intimidation
+    - investigation
+    - nature
+    - religion
+  invocationSlots:
+  - level: 1
+    slots: 1
+  - level: 2
+    slots: 3
+  - level: 3
+    slots: 3
+  - level: 4
+    slots: 3
+  - level: 5
+    slots: 5
+  - level: 6
+    slots: 5
+  - level: 7
+    slots: 6
+  - level: 8
+    slots: 6
+  - level: 9
+    slots: 7
+  - level: 10
+    slots: 7
+  - level: 11
+    slots: 7
+  - level: 12
+    slots: 8
+  - level: 13
+    slots: 8
+  - level: 14
+    slots: 8
+  - level: 15
+    slots: 9
+  - level: 16
+    slots: 9
+  - level: 17
+    slots: 9
+  - level: 18
+    slots: 10
+  - level: 19
+    slots: 10
+  - level: 20
+    slots: 10
