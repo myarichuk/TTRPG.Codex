@@ -10,10 +10,12 @@
         <ul class="list-unstyled small mb-1" aria-labelledby="@(id)-caption">
             @foreach (var bonus in Bonuses)
             {
-                <li><bdi>@Amount(bonus)</bdi> @bonus.Label
-                    @if (!string.IsNullOrEmpty(bonus.Source) && bonus.Source != bonus.Label)
+                var label = Shown.Label(bonus.Label, bonus.Source);
+                var source = Shown.Source(bonus.Source);
+                <li><bdi>@Amount(bonus)</bdi> @label
+                    @if (!string.IsNullOrEmpty(source) && source != label)
                     {
-                        <span class="small-muted">&nbsp;(@bonus.Source)</span>
+                        <span class="small-muted">&nbsp;(@source)</span>
                     }
                     @if (bonus.Ticked)
                     {
@@ -35,6 +37,11 @@
     [Parameter] public bool Pool { get; set; }
 
     [Parameter] public string? TestId { get; set; }
+
+    /// <summary>Says a bonus's label and source in the reader's language; none: as written.</summary>
+    [Parameter] public RollBonusNames? Names { get; set; }
+
+    private RollBonusNames Shown => Names ?? RollBonusNames.English;
 
     private readonly string id = "bonuses-" + Guid.NewGuid().ToString("N")[..6];
 

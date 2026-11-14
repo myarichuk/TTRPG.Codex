@@ -276,7 +276,7 @@
                 }
                 <CodexButton Variant="CodexButtonVariant.Plaque" Small="true" Icon="dices" Disabled="@(!CanRoll)" OnClick="() => RollAsync(definition)" data-testid="@($"roll-{definition.Key}-go")">@(Widget.Label ?? definition.Label ?? definition.Key)</CodexButton>
             </div>
-            <RollBonusList Bonuses="always" Pool="isPool" Caption="@L["Actor.Bonus.Always"]" TestId="@($"roll-{definition.Key}-always")" />
+            <RollBonusList Bonuses="always" Pool="isPool" Caption="@L["Actor.Bonus.Always"]" TestId="@($"roll-{definition.Key}-always")" Names="BonusNames" />
             @if (offered.Count > 0)
             {
                 var group = $"{id}-{definition.Key}-bonuses";
@@ -292,7 +292,7 @@
                                 <input id="@boxId" type="checkbox" class="field-box mt-0" checked="@IsTicked(definition.Key, offer.Id)" disabled="@(!offer.CanPay || !CanRoll)"
                                        aria-describedby="@(offer.CanPay ? null : reasonId)" data-testid="@($"roll-{definition.Key}-bonus-{OptInSlug(offer.Id)}")"
                                        @onchange="e => TickAsync(definition.Key, shown.Id, (bool)e.Value!)" />
-                                <label for="@boxId" class="mb-0">@offer.Label: <bdi>@(isPool ? L["Actor.Bonus.PoolAmount", offer.Amount] : offer.Amount)</bdi></label>
+                                <label for="@boxId" class="mb-0">@BonusNames.Label(offer.Label, offer.Source): <bdi>@(isPool ? L["Actor.Bonus.PoolAmount", offer.Amount] : offer.Amount)</bdi></label>
                                 @if (offer.Spends is { } cost)
                                 {
                                     <span class="small-muted">@L["Actor.Bonus.Costs", cost.Amount]</span>
@@ -460,6 +460,11 @@
 @code {
     [Parameter, EditorRequired] public LayoutWidget Widget { get; set; } = null!;
     [Parameter, EditorRequired] public SystemDefinition Definition { get; set; } = null!;
+
+    [Inject] private IContentRegistry ContentRegistry { get; set; } = null!;
+
+    /// <summary>What a roll bonus is called in the viewer's language (a tick box's label, the feature that gives a bonus).</summary>
+    private RollBonusNames BonusNames => RollBonusNames.For(ContentRegistry, Definition, L.Culture.Name);
     [Parameter, EditorRequired] public SheetView View { get; set; } = null!;
     [Parameter, EditorRequired] public Dictionary<string, object> Sheet { get; set; } = new();
     [Parameter, EditorRequired] public IEntryResolver Resolver { get; set; } = null!;

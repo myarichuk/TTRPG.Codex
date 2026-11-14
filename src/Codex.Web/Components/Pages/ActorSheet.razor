@@ -263,7 +263,7 @@ else
                         </select>
                         <span class="small-muted">@L["Actor.Sheet.TrayHint"]</span>
                     </div>
-                    <RollBonusPanel Offers="bonusOffers" Tray="rollBonuses" Definition="system"
+                    <RollBonusPanel Offers="bonusOffers" Tray="rollBonuses" Definition="system" Names="BonusNames"
                                     EntryName="@(entryId => evaluation?.Actions.FirstOrDefault(a => a.Entry.Id == entryId) is { } found ? Nm(found.Entry) : null)" />
                     <div aria-live="polite">
                         @if (lastRoll != null)
@@ -300,7 +300,7 @@ else
                         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => sheetRoll = null">@L["Actor.Sheet.Dismiss"]</CodexButton></div>
                     <p class="mb-1"><strong data-testid="sheet-roll-outcome">@(sheetRoll.Outcome is { } outcome ? system!.DisplayValue(outcome) : SheetView.Format(sheetRoll.Totals().FirstOrDefault()))</strong>
                         <span class="small-muted ms-2" data-testid="sheet-roll-dice"><bdi>@L["Actor.Sheet.RollDice", string.Join(" ", sheetRoll.Kept), SheetView.Format(sheetRoll.Totals().FirstOrDefault())]</bdi></span></p>
-                    <RollBonusList Bonuses="sheetRoll.Bonuses" Caption="@L["Actor.Bonus.Counted"]" Pool="@(system?.Rolls.FirstOrDefault(r => r.Key == sheetRoll.Definition)?.Pool != null)" TestId="sheet-roll-bonuses" />
+                    <RollBonusList Bonuses="sheetRoll.Bonuses" Caption="@L["Actor.Bonus.Counted"]" Pool="@(system?.Rolls.FirstOrDefault(r => r.Key == sheetRoll.Definition)?.Pool != null)" TestId="sheet-roll-bonuses" Names="BonusNames" />
                     @if (sheetRollNote != null)
                     {
                         <p class="small-muted mb-0">@sheetRollNote</p>
@@ -558,8 +558,8 @@ else
     // and a roll that cannot pay is not made. The ticks it took are cleared; one that did not fit stays.
     private async Task RollWithBonusesAsync(string expression, string label, RollSite? site, bool addNumber)
     {
-        var built = rollBonuses.Build(engine, editSheet, site, expression, label, addNumber, linkedSheets);
-        if (!await RollBonusTray.PayAsync(built.Applied, SpendOnSheet))
+        var built = rollBonuses.Build(engine, editSheet, site, expression, label, addNumber, linkedSheets, BonusNames);
+        if (!await RollBonusTray.PayAsync(built.Applied, SpendOnSheet, BonusNames))
         {
             flash = Flash.Error(L["Actor.Bonus.CannotPay"]);
             return;
@@ -1626,6 +1626,9 @@ else
 
     /// <summary>"+1 STR, +1 DEX" after a pick that raised scores.</summary>
     private string? Nm(ContentEntry? entry) => entry == null ? null : ContentRegistry.Name(entry, L.Culture.Name);
+
+    /// <summary>What a roll bonus is called in the viewer's language (a tick box's label, the feature that gives a bonus).</summary>
+    private RollBonusNames BonusNames => RollBonusNames.For(ContentRegistry, system, L.Culture.Name);
 
     /// <summary>A rule message in the reader's language: the localized sentence when the engine named one, built from its arguments (entries by their
     /// translated names, rule texts and system words through the system's translation); else the engine's English.</summary>
