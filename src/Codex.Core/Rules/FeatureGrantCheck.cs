@@ -39,6 +39,7 @@ public static class FeatureGrantCheck
         void Feature(string name, IDictionary<string, object> data, HashSet<string> used)
         {
             OptionsProblems(name, data, used);
+            ModifierProblems(name, data);
             var earlier = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // the choices of this feature written so far, which a later condition may read
             foreach (var add in AddsOf(data))
             {
@@ -119,6 +120,24 @@ public static class FeatureGrantCheck
                     var rank = Text(add, key);
                     if (rank.Length > 0 && !IsRank(list, rank)) problems.Add($"{shown}: \"{rank}\" is not a rank of {list.Key} ({string.Join(", ", list.Ranks!.Select(r => r.Key))}).");
                 }
+            }
+        }
+
+        // A modifier's optIn (an "ends" has no condition to end here) and a dice amount on a target a pool roll reads.
+        void ModifierProblems(string name, IDictionary<string, object> data)
+        {
+            var shown = string.IsNullOrWhiteSpace(name) ? entry.Name : name;
+            foreach (var modifier in RowsOf(data, "modifiers"))
+            {
+                var optIn = SheetRuleEngine.ParseOptIn(modifier.TryGetValue("optIn", out var raw) ? raw : null);
+                if (modifier.TryGetValue("optIn", out var rawOptIn) && rawOptIn is IDictionary<string, object> { } map && map.TryGetValue("spends", out var rawSpend)
+                    && rawSpend is IDictionary<string, object> spendMap && !spendMap.ContainsKey("key"))
+                {
+                    problems.Add($"{shown}: an opt-in that spends needs the \"key\" of the pool.");
+                }
+
+                var amount = modifier.TryGetValue("amount", out var rawAmount) ? Convert.ToString(rawAmount, CultureInfo.InvariantCulture) : null;
+                problems.AddRange(OptInChecks.Problems(system, shown, Text(modifier, "target"), amount, optIn, inCondition: false));
             }
         }
 

@@ -1,0 +1,107 @@
+using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
+using Codex.Plugin.Abstractions;
+
+namespace Codex.Core.Rules;
+
+/// <summary>
+/// The stable ids of opt-in modifiers (docs/ROLL_BONUSES_DESIGN.md): what a roll's <c>optIns</c> names to tick them. The index is the
+/// modifier's place in its source's list, so an id survives edits to anything else.
+/// </summary>
+public static class OptInIds
+{
+    /// <summary>A feature's modifier: <c>{source id}#{index}</c>.</summary>
+    public static string Feature(string sourceId, int index) => $"{sourceId}#{index}";
+
+    /// <summary>A condition effect's modifier: <c>condition:{name}#{index}</c>.</summary>
+    public static string Condition(string name, int index) => $"condition:{name}#{index}";
+
+    /// <summary>A modifier a sheet kind lists itself: <c>kind:{kind}#{index}</c>.</summary>
+    public static string Kind(string kind, int index) => $"kind:{kind}#{index}";
+
+    /// <summary>A feature that reaches the sheet through a link (docs/CREW_LINKS_DESIGN.md): <c>link:{link key}:{source id}#{index}</c>, so a
+    /// crew's entry and the member's own entry of the same id never collide. Links are not built yet; nothing calls this.</summary>
+    public static string Link(string linkKey, string sourceId, int index) => $"link:{linkKey}:{Feature(sourceId, index)}";
+}
+
+/// <summary>A modifier that counted in a roll: where it came from, what the roll showed for it, how much, and whether the player ticked it
+/// (<see cref="Ticked"/>) or it is always on. <see cref="Id"/> is the opt-in's id; null for an always-on one.</summary>
+public sealed record RollBonus(string? Id, string Source, string Label, double Amount, bool Ticked);
+
+/// <summary>What a ticked opt-in spends: the pool's sheet key (a <c>uses_*</c> counter's, or a track's or resource's own) and how much.</summary>
+public sealed record RollOptInSpend(string Key, double Amount);
+
+/// <summary>A tick box a roll offers. <see cref="Amount"/> is text as the box shows it (<c>+1</c>, <c>+1d4</c>, or the formula when it cannot be
+/// worked out yet). <see cref="Spends"/> is what ticking it costs, and <see cref="CanPay"/> whether the pool holds that much (true when it
+/// costs nothing). <see cref="Ends"/> is the condition rolling with it ticked removes (the name), or null.</summary>
+public sealed record RollOptIn(string Id, string Label, string Amount, string Source, RollOptInSpend? Spends, bool CanPay, string? Ends);
+
+/// <summary>An opt-in modifier as the model offers it, before the sheet's pools are looked at.</summary>
+internal sealed record OptInModifier(string Id, string Label, string Amount, string Source, OptInDefinition Definition, string? Condition);
+
+/// <summary>The load checks of opt-ins and of dice amounts.</summary>
+public static partial class OptInChecks
+{
+    /// <summary>An amount written as dice (<c>1d4</c>, <c>-2d6</c>, <c>d8</c>), not a formula that happens to start with a d.</summary>
+    [GeneratedRegex(@"^\s*[+-]?\s*\d*[dD]\d+(?![\w.])")]
+    internal static partial Regex DiceAmount();
+
+    /// <summary>What is wrong with one modifier: <paramref name="inCondition"/> is whether it is a condition's effect (the only place
+    /// <c>ends</c> means something).</summary>
+    public static IEnumerable<string> Problems(SystemDefinition system, string where, string target, string? amount, OptInDefinition? optIn, bool inCondition)
+    {
+        if (amount != null && DiceAmount().IsMatch(amount) && RollTargets.PoolTargets(system).Contains(target))
+        {
+            yield return $"{where}: \"{amount}\" is dice, but \"{target}\" is read by a pool roll, where an amount is a number of dice.";
+        }
+
+        if (optIn == null) yield break;
+        if (optIn.Ends && !inCondition) yield return $"{where}: \"ends\" only works on a condition's effect: rolling with it ticked removes the condition.";
+        if (optIn.Spends is { } spends)
+        {
+            if (spends.Key.Trim().Length == 0) yield return $"{where}: an opt-in that spends needs the \"key\" of the pool.";
+            if (!double.TryParse(spends.Amount, NumberStyles.Float, CultureInfo.InvariantCulture, out var cost) || cost < 1 || cost != Math.Floor(cost))
+            {
+                yield return $"{where}: an opt-in spends a whole number of uses (1 or more), not \"{spends.Amount}\".";
+            }
+        }
+    }
+}
+
+/// <summary>The targets a named roll reads (docs/ROLL_BONUSES_DESIGN.md, "Roll targets").</summary>
+public static partial class RollTargets
+{
+    [GeneratedRegex(@"\bmodifiers\s*\(\s*(?:'(?<t>[^']*)'|""(?<t>[^""]*)"")\s*\)")]
+    private static partial Regex Literal();
+
+    private static readonly ConditionalWeakTable<RollDefinition, HashSet<string>> Cache = new();
+
+    /// <summary>The literal <c>modifiers('...')</c> names in the roll's <c>pool</c> and <c>add</c> formulas, plus what those formulas
+    /// reach through a keyed list that works its own <c>value</c> out: each of its entries and their <c>@group</c>s (the targets
+    /// <see cref="SheetModel"/> stacks onto such an entry). Read from the formula text once per definition.</summary>
+    public static IReadOnlySet<string> Of(SystemDefinition system, RollDefinition roll) =>
+        Cache.GetValue(roll, r => Read(system, r));
+
+    /// <summary>The targets read by any pool roll of the system.</summary>
+    public static IReadOnlySet<string> PoolTargets(SystemDefinition system) =>
+        system.Rolls.Where(r => r.Pool != null).SelectMany(r => Of(system, r)).ToHashSet(StringComparer.Ordinal);
+
+    private static HashSet<string> Read(SystemDefinition system, RollDefinition roll)
+    {
+        var formulas = (roll.Pool == null ? Enumerable.Empty<string>() : new[] { roll.Pool }).Concat(roll.Add).ToList();
+        var targets = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var formula in formulas)
+        {
+            foreach (Match match in Literal().Matches(formula)) targets.Add(match.Groups["t"].Value);
+        }
+
+        foreach (var list in system.SheetKinds.SelectMany(k => k.KeyedLists).Where(l => l.Derive.ContainsKey("value")))
+        {
+            if (!formulas.Any(f => Regex.IsMatch(f, $@"\b{Regex.Escape(list.Key)}\b"))) continue;
+            foreach (var key in list.Keys.Where(k => k.Parameter == null)) targets.UnionWith(SheetModel.Targets(list, key, key.Key));
+        }
+
+        return targets;
+    }
+}

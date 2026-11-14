@@ -23,6 +23,10 @@ public sealed class SheetRollRequest
     public IReadOnlyDictionary<string, string> SuppliedBy { get; init; } = new Dictionary<string, string>();
 
     public IReadOnlyList<RollParticipant> Participants { get; init; } = Array.Empty<RollParticipant>();
+
+    /// <summary>The ids of the opt-in bonuses the roller ticked for this roll (<see cref="SheetRolls.OptIns"/> lists what is offered). An id the
+    /// roll does not offer is ignored. Only the roll named here counts them: not its follow-ups, and not a group's participants.</summary>
+    public IReadOnlyCollection<string> OptIns { get; init; } = Array.Empty<string>();
 }
 
 /// <summary>Something a roll asks the table to do (overhaul section 3, "Events → intents"): <c>adjust</c> a track and so on.
@@ -66,6 +70,9 @@ public sealed class SheetRollResult
     public IReadOnlyDictionary<string, RollInput> Inputs { get; init; } = new Dictionary<string, RollInput>();
     public IReadOnlyDictionary<string, object?> Carries { get; init; } = new Dictionary<string, object?>();
 
+    /// <summary>The modifiers that counted in this roll, each with its source, and whether the roller ticked it or it is always on.</summary>
+    public IReadOnlyList<RollBonus> Bonuses { get; init; } = Array.Empty<RollBonus>();
+
     /// <summary>Rolls this one led to (a confirmation), in order.</summary>
     public List<SheetRollResult> FollowUps { get; } = new();
 
@@ -104,7 +111,46 @@ public static partial class SheetRolls
     public static SheetRollResult Roll(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, SheetRollRequest request, IDiceSource dice)
     {
         var supplied = request.Inputs.ToDictionary(i => i.Key, i => new RollInput(i.Value, request.SuppliedBy.GetValueOrDefault(i.Key) ?? ""), StringComparer.Ordinal);
-        return new Roller(system, resolver, request.Participants).Make(Definition(system, request.Definition), sheet, supplied, parent: null, dice, depth: 0);
+        return new Roller(system, resolver, request.Participants, request.OptIns.ToHashSet(StringComparer.Ordinal)).Make(Definition(system, request.Definition), sheet, supplied, parent: null, dice, depth: 0);
+    }
+
+    /// <summary>The tick boxes the named roll <paramref name="rollKey"/> offers on <paramref name="sheet"/> for the <paramref name="inputs"/> given so far:
+    /// every opt-in modifier whose target the roll reads (<see cref="RollTargets.Of"/>) and whose <c>when</c> holds. Inputs not given take
+    /// the definition's default, and a <c>when</c> that reads one nobody gave does not hold. A group roll offers none.</summary>
+    /// <exception cref="RollException">The system has no such roll.</exception>
+    public static IReadOnlyList<RollOptIn> OptIns(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, string rollKey,
+        IReadOnlyDictionary<string, object?> inputs)
+    {
+        var definition = Definition(system, rollKey);
+        if (definition.Participants != null) return Array.Empty<RollOptIn>();
+        var values = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var declared in definition.Inputs.Where(i => i.Default != null)) values[declared.Key] = SheetModel.Plain(YamlValues.Normalize(declared.Default));
+        foreach (var (key, value) in inputs) values[key] = SheetModel.Plain(YamlValues.Normalize(value));
+        var model = new SheetModel(system, resolver, sheet, values);
+        return model.OptIns(RollTargets.Of(system, definition)).Select(o => Offer(sheet, o)).ToList();
+    }
+
+    private static RollOptIn Offer(IReadOnlyDictionary<string, object> sheet, OptInModifier optIn)
+    {
+        RollOptInSpend? spends = null;
+        var canPay = true;
+        if (optIn.Definition.Spends is { } spend)
+        {
+            var amount = double.TryParse(spend.Amount, NumberStyles.Float, CultureInfo.InvariantCulture, out var cost) ? cost : 1;
+            var key = PoolKey(sheet, spend.Key);
+            spends = new RollOptInSpend(key ?? spend.Key, amount);
+            canPay = key != null && (YamlValues.ToNumber(sheet.GetValueOrDefault(key)) ?? 0) >= amount;
+        }
+
+        return new RollOptIn(optIn.Id, optIn.Label, optIn.Amount, optIn.Source, spends, canPay, optIn.Definition.Ends ? optIn.Condition : null);
+    }
+
+    /// <summary>The sheet key of the pool a spend names: a feature counter's <c>uses_*</c> key, else a track or resource keyed as named; null
+    /// when the sheet holds neither.</summary>
+    private static string? PoolKey(IReadOnlyDictionary<string, object> sheet, string key)
+    {
+        var counter = SheetRuleEngine.UsesPrefix + SheetRuleEngine.Slug(key);
+        return sheet.ContainsKey(counter) ? counter : sheet.ContainsKey(key) ? key : null;
     }
 
     private static readonly string[] InputSources = { "roller", "gm", "weapon", "parent" };
@@ -162,7 +208,7 @@ public static partial class SheetRolls
     [GeneratedRegex(@"^\s*d(\d+)\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex DieSides();
 
-    private sealed class Roller(SystemDefinition system, IEntryResolver resolver, IReadOnlyList<RollParticipant> participants)
+    private sealed class Roller(SystemDefinition system, IEntryResolver resolver, IReadOnlyList<RollParticipant> participants, IReadOnlySet<string> ticked)
     {
         public SheetRollResult Make(RollDefinition definition, IReadOnlyDictionary<string, object> sheet, IReadOnlyDictionary<string, RollInput> supplied,
             IReadOnlyDictionary<string, RollInput>? parent, IDiceSource dice, int depth)
@@ -172,7 +218,8 @@ public static partial class SheetRolls
             // The model reads its inputs through this dictionary, so an input worked out from the sheet (the weapon's threat
             // range) is in place before any formula runs.
             var values = new Dictionary<string, object?>(StringComparer.Ordinal);
-            var model = new SheetModel(system, resolver, sheet, values);
+            // Only the roll the request names counts the ticks: a follow-up or a group's participant is a roll of its own.
+            var model = new SheetModel(system, resolver, sheet, values, depth == 0 ? ticked : null);
             var inputs = Inputs(definition, model, supplied, parent);
             foreach (var (key, input) in inputs) values[key] = input.Value;
 
@@ -201,8 +248,10 @@ public static partial class SheetRolls
             names["total"] = total;
 
             var outcome = Outcome(definition, model, names);
+            var targets = RollTargets.Of(system, definition);
             var result = new SheetRollResult
             {
+                Bonuses = model.Bonuses(targets),
                 Definition = definition.Key,
                 Label = definition.Label,
                 Outcome = outcome?.Name,
@@ -219,7 +268,29 @@ public static partial class SheetRolls
             };
 
             FollowUps(definition, sheet, model, inputs, names, result, dice, depth);
+            if (depth == 0) result.Intents.InsertRange(0, TickedIntents(definition, sheet, model, targets));
             return result;
+        }
+
+        /// <summary>What the opt-ins ticked for this roll cost: an <c>adjust</c> of the pool for a <c>spends</c> (the roll is refused when the pool is
+        /// short), and a <c>condition</c> <c>remove</c> for an <c>ends</c>. The same intents any handler gives, so the table and the sheet page
+        /// apply them as they do the rest.</summary>
+        private IEnumerable<SheetIntent> TickedIntents(RollDefinition definition, IReadOnlyDictionary<string, object> sheet, SheetModel model, IReadOnlySet<string> targets)
+        {
+            if (ticked.Count == 0) yield break;
+            foreach (var optIn in model.OptIns(targets).Where(o => ticked.Contains(o.Id)))
+            {
+                if (Offer(sheet, optIn) is { Spends: { } spend } offer)
+                {
+                    if (!offer.CanPay) throw new RollException($"{Name(definition)}: {optIn.Label} spends {spend.Amount} from \"{spend.Key}\", which has not enough left.");
+                    yield return new SheetIntent("adjust", null, new Dictionary<string, object?> { ["track"] = spend.Key, ["by"] = -spend.Amount });
+                }
+
+                if (optIn.Definition.Ends && optIn.Condition != null)
+                {
+                    yield return new SheetIntent("condition", null, new Dictionary<string, object?> { ["remove"] = optIn.Condition });
+                }
+            }
         }
 
         private SheetRollResult Group(RollDefinition definition, SheetModel model, Dictionary<string, RollInput> inputs, Dictionary<string, object> names, int depth)

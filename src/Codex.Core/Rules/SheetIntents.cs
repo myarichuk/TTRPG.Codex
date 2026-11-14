@@ -104,12 +104,12 @@ public static class SheetIntents
 
         /// <summary>Whether the sheet lacks the track: on a system with sheet kinds, a track its kind does not declare (a crew track named by a
         /// handler that also reaches a scoundrel). The intent is left unapplied, so nothing stray is written.</summary>
-        private bool Lacks(SheetTrack? track) => track == null && system.SheetKinds.Count > 0;
+        private bool Lacks(SheetTrack? track, string key) => track == null && system.SheetKinds.Count > 0 && !SheetRuleEngine.IsUsesKey(key);
 
         private bool Set(string key, double to)
         {
             var track = Track(key);
-            if (track?.IsSlots == true || Lacks(track)) return false;
+            if (track?.IsSlots == true || Lacks(track, key)) return false;
             Write(key, Clamp(to, track));
             return true;
         }
@@ -117,7 +117,7 @@ public static class SheetIntents
         private bool Adjust(string key, double by, int depth)
         {
             var track = Track(key);
-            if (track?.IsSlots == true || Lacks(track)) return false;
+            if (track?.IsSlots == true || Lacks(track, key)) return false;
             var next = Current(key, track) + by;
             if (track is { Max: { } max, Definition.Overflow: { } overflow } && next > max && depth < MaxOverflow)
             {

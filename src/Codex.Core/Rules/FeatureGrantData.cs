@@ -9,6 +9,19 @@ public sealed class GrantModifier
     public string Amount { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string When { get; set; } = string.Empty;
+
+    /// <summary>Set when the modifier is a tick box the player chooses at the roll; null for an always-on one.</summary>
+    public GrantOptIn? OptIn { get; set; }
+    public Dictionary<string, object> Extra { get; } = new();
+}
+
+/// <summary>A modifier's <c>optIn: { label, spends: { key, amount }, ends }</c>. <see cref="SpendKey"/> empty means it spends nothing.</summary>
+public sealed class GrantOptIn
+{
+    public string Label { get; set; } = string.Empty;
+    public string SpendKey { get; set; } = string.Empty;
+    public string SpendAmount { get; set; } = string.Empty;
+    public bool Ends { get; set; }
     public Dictionary<string, object> Extra { get; } = new();
 }
 
@@ -125,7 +138,8 @@ public sealed class FeatureGrantData
             {
                 Target = Text(map, "target"), Amount = Text(map, "amount"), Type = Text(map, "type"), When = Text(map, "when")
             };
-            CopyExtra(map, modifier.Extra, "target", "amount", "type", "when");
+            CopyExtra(map, modifier.Extra, "target", "amount", "type", "when", "optIn");
+            modifier.OptIn = ReadOptIn(Get(map, "optIn"));
             data.Modifiers.Add(modifier);
         }
 
@@ -241,9 +255,44 @@ public sealed class FeatureGrantData
     public static int? ParseLevel(string? raw) =>
         int.TryParse(raw?.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var level) && level >= 1 ? level : null;
 
+    private static GrantOptIn? ReadOptIn(object? raw)
+    {
+        switch (raw)
+        {
+            case true:
+                return new GrantOptIn();
+            case IDictionary<string, object> map:
+                var optIn = new GrantOptIn { Label = Text(map, "label"), Ends = Text(map, "ends").Equals("true", StringComparison.OrdinalIgnoreCase) };
+                if (Get(map, "spends") is IDictionary<string, object> spend)
+                {
+                    optIn.SpendKey = Text(spend, "key");
+                    optIn.SpendAmount = Text(spend, "amount");
+                }
+
+                CopyExtra(map, optIn.Extra, "label", "spends", "ends");
+                return optIn;
+            default:
+                return null;
+        }
+    }
+
+    private static Dictionary<string, object> OptInMap(GrantOptIn o)
+    {
+        var map = new Dictionary<string, object>(o.Extra);
+        if (o.Label.Trim().Length > 0) map["label"] = o.Label.Trim();
+        if (o.SpendKey.Trim().Length > 0)
+        {
+            map["spends"] = new Dictionary<string, object> { ["key"] = o.SpendKey.Trim(), ["amount"] = o.SpendAmount.Trim().Length > 0 ? Value(o.SpendAmount) : 1L };
+        }
+
+        if (o.Ends) map["ends"] = true;
+        return map;
+    }
+
     private static Dictionary<string, object> ModifierMap(GrantModifier m)
     {
         var map = new Dictionary<string, object>(m.Extra) { ["target"] = m.Target };
+        if (m.OptIn is { } optIn) map["optIn"] = OptInMap(optIn);
         if (m.Amount.Trim().Length > 0) map["amount"] = Value(m.Amount);
         if (m.Type.Trim().Length > 0) map["type"] = m.Type.Trim();
         if (m.When.Trim().Length > 0) map["when"] = m.When.Trim();
