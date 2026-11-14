@@ -1,0 +1,232 @@
+# Conditions on sheet-rules sheets, with values: design
+
+Status: designed 2026-11-14, not built. It closes the gap that `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md` (section 1) names as shared by srd5e
+and the PF2e pack (P4): a condition that changes numbers on a `sheetRules` sheet, and a condition with a value (Exhaustion 3, frightened 2).
+
+## What it is
+
+Today a condition changes numbers only on a sheet-kind sheet (Forged in the Dark): `conditionEffects` is read by `SheetModel` alone. On
+srd5e a condition is a table status and changes nothing. The roll bonuses work (#306, #313-#315) left two things waiting on this:
+- `ends` on a tick box is wired on srd5e but no srd5e bonus can say it, because `ends` belongs to condition effects.
+- Bless, Bane and 5.2.1 Exhaustion ("a D20 Test is reduced by 2 times your Exhaustion level"; Speed reduced by 5 times it) have no way to
+  reach the rolls.
+
+After this:
+- A condition's effects reach a sheet-rules sheet's rolls, armor class, derived values and Number fields, at the table and on the sheet page.
+- A condition can carry a **value**. Its effects read the value, and the table raises and lowers it.
+- **Exhaustion becomes the first valued condition.** The bespoke exhaustion counter folds into the general one.
+
+## Data
+
+```yaml
+# srd5e system.yaml
+conditionEffects:
+  Exhaustion:
+    value: { key: Exhaustion, max: 6 }          # the pool it already lives in; reaching max kills (vitals.exhaustion, unchanged)
+    modifiers:
+      - { target: attack, amount: "-2 * value" }
+      - { target: save,   amount: "-2 * value" }
+      - { target: check,  amount: "-2 * value" }
+      - { target: speed,  amount: "-5 * value" }
+
+# A Pathfinder-style valued condition (the PF2e pack, and the pf2 reference fixture)
+conditionEffects:
+  Frightened:
+    value: { max: 4, decrease: { on: turnEnd, by: 1 } }
+    modifiers:
+      - { target: attack, amount: "-value", type: status }
+      - { target: save,   amount: "-value", type: status }
+      - { target: check,  amount: "-value", type: status }
+      - { target: classDc, amount: "-value", type: status }   # a derived value
+
+# A tick box that ends its condition (the #315 path): +1d4 to one ability check, then the effect is gone.
+conditionEffects:
+  Guided:
+    modifiers:
+      - { target: check, amount: 1d4, optIn: { label: Guidance, ends: true } }
+```
+
+**The rules:**
+- **`value`** on a condition's effects makes it a valued condition:
+  - `key`: the pool and sheet key that holds the value. Default `condition_<slug>` (`condition_frightened`).
+  - `max`: a number or a formula. A raise stops there.
+  - `decrease: { on, by }`: the value drops by `by` at a moment. `on` is `turnEnd`, `turnStart`, a rest, or a declared moment.
+- **The condition holds while its value is above 0.** Raising it from 0 adds the status; the value reaching 0 removes it. Removing the
+  status by hand sets the value to 0. There is no "Frightened" status without a value, and no value without the status.
+- **In an effect's `amount` and `when`, `value` is the condition's value.** It is 1 for a condition with no `value`. The loader refuses a
+  system that has a derived value, a sheet value or an actor field named `value`.
+- **Targets** are the ones features already use on sheet-rules sheets:
+  - the armor class and hit points keys;
+  - a derived value or a Number actor field;
+  - a roll target from `ROLL_BONUSES_DESIGN.md` ("Roll targets": `attack`, `attack.weapon.melee`, `save.<attr>`, `check.skill.<key>`,
+    `damage`...).
+
+  Dice amounts and `optIn` work as they do on features. `ends: true` is allowed only here, as today.
+- **No umbrella roll word.** "Every D20 Test" is written as three modifiers (`attack`, `save`, `check`). Open question 2 asks whether PF2e's
+  "all checks and DCs" makes that too long.
+
+## Storage
+
+**Statuses stay where they are.** A condition at the table is an `ActiveEffect` with rounds, expiry and held-by. Off the table, a sheet
+may hold conditions in the `conditions` key, as sheet-kind sheets do (`SheetModel.ConditionsKey`).
+
+**The live view is the one thing every host reads.** One helper, `TableSheets.Live(runtime, actorId)`, makes it from `TableEvents.Apply`'s
+code, which today is private to that method. The live view is:
+- the stored sheet;
+- the table's pools over its numeric keys;
+- the `uses_*` counters;
+- condition values;
+- `conditions` = the sheet's own conditions plus the table's statuses.
+
+`TableEvents.Apply`, `CampaignRuntime`'s counter evaluation, `TableCard.LiveSheet` and `CombatConsole` all call it instead of their own
+copies.
+
+**Values live in the pool and on the sheet.** Checked 2026-11-14: Exhaustion's level is a pool in the table's state only.
+`ActorSheetSync.ApplySheetToState` mirrors resources, tracks, slot pools and `uses_*` counters, not the exhaustion pool. So the sheet page
+cannot see the level today. After this, every valued condition's key is mirrored like a `uses_*` counter:
+- The table's pool is the live number.
+- The sheet key is written back when it changes.
+- Edits from the sheet page and the table merge by delta (`SheetCounters.Of` / `MergeByDelta` list condition value keys).
+
+Exhaustion keeps its pool key `Exhaustion`, so live levels do not move; the first save after this writes them to the sheet.
+
+## Engine
+
+1. **Parse and checks.**
+   - `ConditionEffectDefinition` gains `Value: ConditionValueDefinition?` (`key`, `max`, `decrease`).
+   - `SystemDefinitionLoader` checks:
+     - keys are unique, and none clashes with a resource or a track;
+     - `max` parses;
+     - `decrease.on` is a moment the system knows;
+     - nothing else is named `value`.
+   - With `vitals.exhaustion`, the `Exhaustion` effect's `value.key` must equal `exhaustion.key`. When the effect has no `value`, it gets
+     one from `vitals.exhaustion`, so srd5e needs no second declaration of the level.
+2. **Which conditions hold on a sheet-rules sheet.** `SheetRuleEngine` reads `conditions` from the sheet it is given, as `SheetModel`
+   does, plus every valued condition whose key is above 0. One static `SheetConditions.Of(system, sheet)` serves both engines.
+3. **Effects join the sheet-rules modifier path.**
+   - `SiteBonus` takes condition modifiers beside feature modifiers. That covers attack, damage, save, check and skill sites, and so
+     `EvaluateChecks`, `SkillScore.Bonus` and `SheetAction.AttackBonus`.
+   - The modifiers loop of `EvaluateFeatures` takes them for the armor class, hit points, derived and Number-field targets
+     (`KindOf`, `WithModifiers`).
+   - `OptInsReaching` offers a condition's tick boxes with `OptInIds.Condition(name, index)`, the id `SheetModel` already uses.
+   - Each condition modifier is an `ActiveFeature`-like source named after the condition, so `GrantedModifier`, `RollBonus` and the
+     log name it ("Exhaustion −4").
+   - `value` reaches `Amount(...)` through a copy of the derived numbers with `value` added, per condition.
+4. **The hybrid rule (PF2e).** On a system with both `sheetRules` and `sheetKinds`, a condition modifier goes to the sheet-rules side
+   when its target is one `KindOf` knows (armor class, hit points, a derived value, a Number field, a roll target), and to `SheetModel`
+   when it is a kind value, a keyed entry or a group. A target both sides claim is a load error. So frightened is never counted twice.
+5. **Turn-end decrease.** `turnEnd` is raised to the system's `events:` only when a handler exists (`TableEvents.Handles`), which srd5e
+   has none of. The turn advance in `RuntimeCommands` gets its own step: after `turnEnd`, lower each valued condition with
+   `decrease.on: turnEnd` on the creature whose turn ended. `turnStart` likewise. Rests and moments lower it through `MomentCommand` and
+   `RestCommand`. Each drop is logged and undoable with the turn.
+6. **Exhaustion folds in.**
+   - `AdjustExhaustionCommand` becomes `AdjustConditionCommand(actor, condition, delta)`.
+   - Death at the maximum stays on `vitals.exhaustion`.
+   - The rest step `ExhaustionDelta` becomes a `decrease: { on: Long Rest, by: 1 }` on the effect. It stays readable from
+     `vitals.rests` until the srd5e yaml moves.
+
+## Hosts that must pass the live view
+
+Found by searching `src/Codex.Web` and `src/Codex.Persistence` for `Evaluate(`, `Recompute(`, `Bonuses(` and `OptIns(`. Each one evaluates
+the stored sheet today, so without this list the feature passes its tests and does nothing at the table:
+
+| Host | Today | After |
+|---|---|---|
+| `CampaignRuntime.cs:274` (the table's counters) | `actor.Sheet` | `TableSheets.Live` |
+| `CombatConsole.razor:490, 520` (cards' evaluation) | `actor.Sheet` | live view |
+| `TableCard.razor` `LiveSheet()` (opt-ins, rolls) | sheet + pools, no statuses | `TableSheets.Live` (statuses and values too) |
+| `RollBonusTray.cs:51, 68` (always-on and ticked) | the sheet it is given | given the live view by its callers |
+| `ActorSheet.razor:1245, 2072, 582` (sheet page) | `editSheet` | `editSheet` plus the table's statuses and values **while the actor is at a live table**; off the table, the sheet alone |
+| `SheetWidget.razor:671, 687` (named rolls) | `Sheet` | the same live view on the sheet page |
+
+Not changed: the AI drafter, the character assist and the join review (`AiFeatures`, `CharacterAssist`, `VaultRequests`). They evaluate a
+sheet being built, where table conditions do not apply.
+
+## Sheet and table
+
+- **One stepper for every valued condition** replaces the bespoke exhaustion one in `TableCommandPanel`: "Frightened 2" with − and +,
+  disabled at 0 and at `max`. A condition with no value keeps its toggle.
+- **The condition picker** shows a valued condition with its value. Adding it starts at 1.
+- **Rolls and cards** name the condition in their bonus list ("Exhaustion −4"), as features are named now.
+- **The sheet page** shows the conditions that hold, read-only, while the actor is at a live table. Off the table, the GM can set them
+  there (the `conditions` key and values).
+- **Accessibility:**
+  - the stepper's buttons are labelled "Raise Frightened for Ash" and "Lower...";
+  - the value is in a `role="status"` span;
+  - changes are logged as today;
+  - right-to-left works.
+- **Strings (en, ru, he):**
+  - stepper labels;
+  - "Frightened {0}";
+  - "{condition} drops to {0}";
+  - "{condition} ends";
+  - load-check messages.
+
+  ru and he need native review.
+
+## srd5e data
+
+- Exhaustion's effects as in "Data" (attack, save, check −2 × level, speed −5 × level). Both are SRD 5.2.1 rules text.
+- Bless and Bane, and Guidance as the `ends` example: see open question 1.
+- **Stays text.** Most SRD conditions work through advantage, disadvantage, auto-fail or "can't act", which the engine has no word for:
+  Blinded, Frightened (5e), Poisoned, Prone, Restrained and the rest. This design does not make them work, and the release note says so.
+
+## Tests
+
+- **Parse and load checks:**
+  - a `value` with `key`, `max` and `decrease`;
+  - a clashing key;
+  - a system with something named `value`;
+  - Exhaustion's key against `vitals.exhaustion`.
+- **5.2.1 Exhaustion:** level 2 lowers attack, save, ability and skill checks by 4, and speed by 10. Level 6 kills, as now. A Long Rest
+  lowers it by 1.
+- **A valued condition at the table:**
+  - raising from 0 adds the status;
+  - lowering to 0 removes it;
+  - removing the status zeroes the value;
+  - undo restores both.
+- **Turn-end decrease** on srd5e, which has no `events:`: frightened 2 is 1 after its turn, and gone after the next.
+- **Sheet and table agree:** a value raised at the table shows on the sheet page after the save, and two edits merge by delta.
+- **The `ends` path from #315 is reachable:** Guided offers +1d4 on a check, and rolling with it ticked removes Guided.
+- **Hybrid:** in the pf2 fixture, frightened 2 lowers a skill check and the class DC by 2, counted once
+  (`PF2E_HAZARDS_IMPLEMENTATION_PLAN.md`, P1). A target claimed by both sides is a load error.
+- **Hosts:** a table card's attack bonus drops while the creature is exhausted (a runtime test, since there is no bUnit).
+- **Goldens:** srd5e changes only for the Exhaustion effects. fitd is byte-identical.
+
+## Build order and who builds it
+
+| # | Step | Who | Notes |
+|---|---|---|---|
+| C1 | Parse, load checks, `SheetConditions.Of`, Exhaustion's `value` from `vitals.exhaustion` | Sonnet | Small |
+| C2 | Effects on the sheet-rules path: `SiteBonus`, the modifiers loop, opt-ins with condition ids, `value` in formulas, the hybrid routing rule | Sonnet builds; **Opus reviews the diff before C3** | The heart; srd5e golden identical until C5 |
+| C3 | `TableSheets.Live` and every host in the table above; condition value keys mirrored and merged by delta | Sonnet; Opus reviews | Touches `TableEvents.cs`, `CampaignRuntime.cs`, `ActorSheetSync.cs`, `SheetCounters.cs`, `TableCard.razor`, `CombatConsole.razor`, `ActorSheet.razor` |
+| C4 | `AdjustConditionCommand` replaces `AdjustExhaustionCommand`; turn-start and turn-end decrease; rests through `decrease` | Sonnet | `RuntimeCommands.cs`, `TableRules.cs`, `VitalsHandlers.cs` |
+| C5 | srd5e data (Exhaustion; and open question 1's answer); golden | Sonnet | Rules judgment, so not Haiku |
+| C6 | Stepper, picker, sheet page display; accessibility | Sonnet | `TableCommandPanel.razor` and the picker |
+| C7 | Strings en/ru/he; `SYSTEM_YAML_REFERENCE.md` and schema regenerated; `CHARACTER_FEATURES_GAPS.md` | Haiku for strings; Sonnet for docs | |
+
+C1 and C2 come first and in order. C3 and C4 touch different files and can follow in either order, one writer at a time unless the Serena
+canary (plan step 0b) has passed. C5 to C7 follow C4.
+
+Every brief starts with the Serena line in `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md` section 6.
+
+## Not in this design
+
+- Advantage and disadvantage, auto-fail, and "can't take actions".
+- `implies` (Unconscious brings Incapacitated and Prone; PF2e's unconscious brings blinded and off-guard). It is a small later step in
+  `SheetConditions.Of`, worth doing next.
+- Effects from another creature's sheet (who cast Bless), and concentration ending an effect on several creatures beyond what `HeldBy`
+  does today.
+- PF2e's dying, wounded and doomed, which interact. They are valued conditions plus the pack's own event handlers (P4 in the plan).
+
+## Open questions
+
+1. **Bless, Bane and Guidance on srd5e.** They are spell effects, not SRD conditions. Adding them to `conditions` puts three non-SRD names
+   in the picker beside the 15 conditions. Recommended: a separate top-level `effects:` list that the picker shows as its own group
+   ("Spell effects"), with `conditionEffects` allowed on both lists. Bless: +1d4 attack and save. Bane: −1d4 attack and save. Guided:
+   +1d4 on one check, opt-in, `ends`. The alternative is to leave them out, and test `ends` with a homebrew effect only.
+2. **An umbrella roll target.** "Every check and DC" in PF2e is four or five modifiers per condition, and nine conditions need it.
+   Recommended: write them out first, in the pf2 fixture. Add a generic umbrella word (`test`: attack, save and check) only if the
+   fixture is unreadable.
+3. **The sheet page off the table.** Should a player be able to set a condition on their own sheet when no table is live, or only the GM?
+   Recommended: the GM only, as with damage today.
