@@ -261,6 +261,10 @@ internal static class TableEvents
         var model = new SheetModel(system, runtime.Resolver, doc.Sheet);
         var numeric = model.TrackKeys().Select(model.TrackOf).OfType<SheetTrack>().Where(t => !t.IsSlots).Select(t => t.Key).ToHashSet(StringComparer.Ordinal);
 
+        // A feature's counter of uses (uses_*) is a number the table keeps in the pool too, so a roll that spends one (a ticked opt-in) lowers the table's
+        // value and the sheet's together, as the Use button does.
+        foreach (var key in doc.Sheet.Keys.Where(SheetRuleEngine.IsUsesKey)) numeric.Add(key);
+
         // The sheet as the table has it: the pools win over the cached sheet for numeric tracks, and the table's conditions join
         // the sheet's own.
         var live = new Dictionary<string, object>(doc.Sheet);
@@ -301,7 +305,7 @@ internal static class TableEvents
                 continue;
             }
 
-            var label = Term(system, model.TrackOf(key)?.Label ?? key);
+            var label = Term(system, model.TrackOf(key)?.Label ?? (SheetRuleEngine.IsUsesKey(key) ? SheetRuleEngine.UsesLabel(doc.Sheet, key) : key));
             if (numeric.Contains(key))
             {
                 var was = pool.Pools.TryGetValue(key, out var p) ? p : YamlValues.GetInt(doc.Sheet, key) ?? 0;

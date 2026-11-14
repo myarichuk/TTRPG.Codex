@@ -639,15 +639,7 @@ public sealed class SheetModel
     /// <paramref name="without"/>; every one that reached is recorded under <paramref name="key"/>.</summary>
     private double Stack(string key, IReadOnlyCollection<string> targets, List<object>? without)
     {
-        var left = new List<(string Type, bool PositiveOnly)>();
-        foreach (var w in without ?? new List<object>())
-        {
-            if (w is IDictionary<object, object> map) left.Add((At(map, "type")?.ToString() ?? "", At(map, "positiveOnly") is true or "true"));
-            else if (w is IDictionary<string, object> named) left.Add((At(named, "type")?.ToString() ?? "", At(named, "positiveOnly") is true or "true"));
-            else left.Add((w.ToString() ?? "", false));
-        }
-
-        var reached = Reached(targets, left);
+        var reached = Reached(targets, Left(without));
 
         var applied = new List<AppliedModifier>();
         var total = 0d;
@@ -659,6 +651,21 @@ public sealed class SheetModel
 
         _result.Modifiers[key] = applied;
         return total;
+    }
+
+    /// <summary>The types a value leaves out (<c>without</c>: a type's name, or <c>{ type, positiveOnly }</c>), as <see cref="Reached"/> reads them.
+    /// One reading for the value's total (<see cref="Stack"/>) and for the list of what counted (<see cref="Bonuses"/>), so the two cannot disagree.</summary>
+    private static List<(string Type, bool PositiveOnly)> Left(List<object>? without)
+    {
+        var left = new List<(string Type, bool PositiveOnly)>();
+        foreach (var w in without ?? new List<object>())
+        {
+            if (w is IDictionary<object, object> map) left.Add((At(map, "type")?.ToString() ?? "", At(map, "positiveOnly") is true or "true"));
+            else if (w is IDictionary<string, object> named) left.Add((At(named, "type")?.ToString() ?? "", At(named, "positiveOnly") is true or "true"));
+            else left.Add((w.ToString() ?? "", false));
+        }
+
+        return left;
     }
 
     /// <summary>The modifiers that count for <paramref name="targets"/>: the target is read, the <c>when</c> holds, an opt-in was ticked,
@@ -681,10 +688,10 @@ public sealed class SheetModel
 
     /// <summary>What counted for a roll that reads <paramref name="targets"/>: every modifier that reached, each with its source, and
     /// whether the player ticked it (an opt-in) or it is always on. Stacking rules apply as they do to the pool.</summary>
-    internal IReadOnlyList<RollBonus> Bonuses(IReadOnlyCollection<string> targets)
+    internal IReadOnlyList<RollBonus> Bonuses(IReadOnlyCollection<string> targets, List<object>? without = null)
     {
         var bonuses = new List<RollBonus>();
-        var reached = Reached(targets, new List<(string Type, bool PositiveOnly)>());
+        var reached = Reached(targets, Left(without));
         foreach (var (modifier, _, amount, counts) in ModifierStacking.Stack(reached.Select(r => (r.Modifier.Type, r.Amount, r.Modifier)), _system.ModifierTypes))
         {
             if (!counts) continue;

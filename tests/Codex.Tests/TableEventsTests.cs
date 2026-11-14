@@ -30,6 +30,8 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
         sheetKinds:
           - kind: hero
             label: Hero
+            modifiers:
+              - { target: '@lucky', amount: 1, optIn: { label: Lucky charm, spends: { key: charm, amount: 1 } } }
             tracks:
               - { key: armor, max: 3, display: boxes }
               - { key: HP, max: 10, min: -5, start: max, thresholds: [{ below: 0, condition: Down }] }
@@ -53,6 +55,7 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
             - { when: "HP < 0", intents: [{ roll: { definition: deathSave } }] }
         rolls:
           - { key: deathSave, dice: 1d10 }
+          - { key: lucky, dice: 1d6, add: ["modifiers('@lucky')"] }
           - key: push
             dice: 1d6
             outcomes: [{ name: high, when: "total >= 4" }, { name: low }]
@@ -424,5 +427,34 @@ public class TableEventsTests : IClassFixture<RavenDbFixture>, IDisposable
 
         await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
         Assert.Equal(0, Pool(runtime, hero.Id, "stress"));
+    }
+
+    [Fact]
+    public async Task ATickedOptInThatSpends_RolledAtTheTable_LowersTheCounterInTheRuntimeAndOnTheSheet()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var hero = await HeroAsync(campaignId, "Vex", ("uses_charm", 2L), ("uses_charm_Max", 2L));
+        var (runtime, session) = await TableAsync(campaignId, hero);
+        await using var _ = runtime;
+
+        // Unticked: the charm adds nothing and costs nothing.
+        var plain = new MakeRollCommand(hero.Id, "player", new Codex.Core.Rules.SheetRollRequest { Definition = "lucky" }, Dice: new SequenceDiceSource(new[] { 4 }));
+        await runtime.EnqueueAsync(plain);
+        Assert.Equal(4, plain.Rolled!.Total);
+        Assert.Equal(2, Pool(runtime, hero.Id, "uses_charm"));
+
+        // Ticked: +1, and one use of the counter goes, in the table's state and on the stored sheet.
+        var ticked = new MakeRollCommand(hero.Id, "player", new Codex.Core.Rules.SheetRollRequest { Definition = "lucky", OptIns = new[] { "kind:hero#0" } }, Dice: new SequenceDiceSource(new[] { 4 }));
+        await runtime.EnqueueAsync(ticked);
+        Assert.Equal(5, ticked.Rolled!.Total);
+        Assert.Equal(1, Pool(runtime, hero.Id, "uses_charm"));
+        Assert.Equal(1, Codex.Core.YamlValues.GetInt((await StoredAsync(campaignId, hero.Id)).Sheet, "uses_charm"));
+
+        // A pool that is empty refuses the tick instead of rolling for free.
+        await runtime.EnqueueAsync(new AdjustResourceCommand(hero.Id, "uses_charm", -1, "Lucky charm"));
+        var empty = new MakeRollCommand(hero.Id, "player", new Codex.Core.Rules.SheetRollRequest { Definition = "lucky", OptIns = new[] { "kind:hero#0" } }, Dice: new SequenceDiceSource(new[] { 4 }));
+        await runtime.EnqueueAsync(empty);
+        Assert.Equal(0, Pool(runtime, hero.Id, "uses_charm"));
+        Assert.Null(empty.Rolled);
     }
 }
