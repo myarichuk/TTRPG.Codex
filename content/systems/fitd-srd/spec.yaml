@@ -175,7 +175,7 @@ expectations:
   - id: fitd.each-sheet-kind-has-its-own-layout
     step: 6
     sheet: veteran
-    expect: { layout: [Actions, Condition, Abilities, Load, Advancement, Coin] }
+    expect: { layout: [Actions, Condition, Abilities, Standing, Load, Advancement, Coin] }
   - id: fitd.the-crew-has-its-own-layout
     step: 6
     requires: [fitd.each-sheet-kind-has-its-own-layout]
