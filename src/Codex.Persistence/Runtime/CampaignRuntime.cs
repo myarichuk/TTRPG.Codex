@@ -182,7 +182,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
     private sealed class LiveLinkedSheets(CampaignRuntime runtime) : Codex.Core.Rules.ILinkedSheets
     {
-        public IReadOnlyDictionary<string, object>? Sheet(string actorId) => runtime._actorDocs.GetValueOrDefault(actorId)?.Sheet;
+        public IReadOnlyDictionary<string, object>? Sheet(string actorId) => runtime._actorDocs.GetValueOrDefault(actorId) is { Retired: false } doc ? doc.Sheet : null;
     }
 
     /// <summary>For the loop's own work (a command, hydrate): the sheets the cached documents hold now. Null when the sheet links to an actor
@@ -190,7 +190,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
     internal Codex.Core.Rules.ILinkedSheets? LinkedFor(IReadOnlyDictionary<string, object>? sheet)
     {
         if (sheet == null) return null;
-        var held = Codex.Persistence.Runtime.ActorLinkedSheets.LinkedIds(sheet).All(id => _actorDocs.ContainsKey(id));
+        var held = Codex.Persistence.Runtime.ActorLinkedSheets.LinkedIds(sheet).All(id => _actorDocs.TryGetValue(id, out var doc) && !doc.Retired);
         return held ? new LiveLinkedSheets(this) : null;
     }
 
@@ -199,7 +199,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         var copies = new Dictionary<string, IReadOnlyDictionary<string, object>>(StringComparer.Ordinal);
         foreach (var target in _linkedBy.Keys)
         {
-            if (!_actorDocs.TryGetValue(target, out var doc)) continue;
+            if (!_actorDocs.TryGetValue(target, out var doc) || doc.Retired) continue;
             copies[target] = doc.Sheet.ToDictionary(p => p.Key, p => p.Value is List<object> list ? new List<object>(list) : p.Value, StringComparer.Ordinal);
         }
 

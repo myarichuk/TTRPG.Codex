@@ -75,7 +75,9 @@ public class FitdCrewDataTests : IAsyncLifetime
     {
         var linked = WithCrew(Crew(new[] { "composed" }));
         Assert.Equal(10, Value(Evaluate(Scoundrel(), linked), "stress_Max"));
-        Assert.Equal(9, Value(Evaluate(Scoundrel(), new Actors()), "stress_Max"));
+        Assert.Equal(9, Value(Evaluate(Scoundrel(), WithCrew(Crew(Array.Empty<string>()))), "stress_Max"));
+        // A crew that is gone is unknown, not empty: the size is not worked out (nothing is clamped), until the link changes.
+        Assert.True(Evaluate(Scoundrel(), new Actors()).LinksUnknown);
         Assert.Equal(9, Value(Evaluate(new Dictionary<string, object> { ["kind"] = "scoundrel" }, null), "stress_Max"));
     }
 

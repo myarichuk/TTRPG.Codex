@@ -296,19 +296,97 @@ public class CrewLinksTests
         ("actions", Map(("hunt", Map(("rating", 4L))))));
 
     [Fact]
-    public void ALinkToAMissingActor_IsKnownAndEmpty_SoItsFeaturesAreNotThere_AndItsKeysAreStale()
+    public void ALinkToAMissingActor_IsUnknown_SoNothingTheLinkMadeIsSwept()
     {
         var sheet = StoredMember();
         var gone = new Actors();
 
+        Assert.Equal(LinkState.Unknown, SheetLinks.State(sheet, "group", gone));
         Assert.Empty(Engine().ActiveFeatures(sheet, gone));
         var evaluation = Engine().Recompute(sheet, gone);
         Engine().PruneChoices(sheet, gone);
 
-        Assert.False(evaluation.LinksUnknown);
+        Assert.True(evaluation.LinksUnknown);
+        AssertKept(sheet);
+    }
+
+    /// <summary>What the link made on <see cref="StoredMember"/>: the counter, the Deadly pick and stress past 9.</summary>
+    private static void AssertKept(Dictionary<string, object> sheet)
+    {
+        Assert.Equal(1L, sheet["uses_resolve"]);
+        Assert.True(sheet.ContainsKey("choice__deadly__deadly"));
+        Assert.Equal(10L, sheet["stress"]);
+        Assert.Equal(10L, sheet["stress_Max"]);
+    }
+
+    /// <summary>A crew in the trash: it has no sheet to give, and says it was deleted.</summary>
+    private sealed class Trash : ILinkedSheets
+    {
+        public IReadOnlyDictionary<string, object>? Sheet(string actorId) => null;
+        public LinkedActorStatus Status(string actorId) => LinkedActorStatus.Deleted;
+    }
+
+    [Fact]
+    public void ACrewInTheTrash_KeepsTheMembersData_RestoringItCountsItAgain_ClearingTheLinkSweeps()
+    {
+        var engine = Engine();
+        var sheet = StoredMember();
+        var trash = new Trash();
+
+        // Saved while the crew is deleted, twice: nothing is lost, and the sheet says why.
+        for (var i = 0; i < 2; i++)
+        {
+            var evaluation = engine.Recompute(sheet, trash);
+            engine.PruneChoices(sheet, trash);
+            Assert.True(evaluation.LinksUnknown);
+            AssertKept(sheet);
+        }
+
+        Assert.Equal(LinkedActorStatus.Deleted, SheetLinks.Gone(sheet, "group", trash));
+
+        // Restored: the crew is supplied again and counts as before (stress 10 boxes, the pick and the counter stay).
+        var crew = Crew(new[] { "composed" }, "deadly", "resolve");
+        var restored = engine.Recompute(sheet, crew);
+        engine.PruneChoices(sheet, crew);
+        Assert.False(restored.LinksUnknown);
+        Assert.Null(SheetLinks.Gone(sheet, "group", crew));
+        AssertKept(sheet);
+
+        // The player clears the link: the sheet is evaluated as having no crew, and what the crew made goes.
+        sheet.Remove("link__group");
+        var cleared = engine.Recompute(sheet, trash);
+        engine.PruneChoices(sheet, trash);
+        Assert.False(cleared.LinksUnknown);
         Assert.DoesNotContain(sheet.Keys, k => k.StartsWith("uses_", StringComparison.Ordinal));
         Assert.False(sheet.ContainsKey("choice__deadly__deadly"));
         Assert.Equal(9L, sheet["stress_Max"]);
+    }
+
+    [Fact]
+    public void ChangingTheLinkOfADeletedCrew_EvaluatesTheNewOneAsKnown()
+    {
+        var engine = Engine();
+        var sheet = StoredMember();
+        sheet["link__group"] = "g2";
+        var other = new Actors(("g2", Group(None)));
+
+        var evaluation = engine.Recompute(sheet, other);
+        engine.PruneChoices(sheet, other);
+
+        Assert.False(evaluation.LinksUnknown);
+        Assert.False(sheet.ContainsKey("choice__deadly__deadly"));
+        Assert.Equal(9L, sheet["stress_Max"]);
+    }
+
+    [Fact]
+    public void ALinkedActorOfTheWrongKind_StaysKnownAndEmpty()
+    {
+        var sheet = StoredMember();
+        var wrong = new Actors(("g1", Map(("kind", "member"))));
+
+        Assert.Equal(LinkState.Known, SheetLinks.State(sheet, "group", wrong));
+        Assert.Empty(Engine().ActiveFeatures(sheet, wrong));
+        Assert.False(Engine().Recompute(sheet, wrong).LinksUnknown);
     }
 
     [Fact]

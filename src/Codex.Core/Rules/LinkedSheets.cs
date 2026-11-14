@@ -6,8 +6,25 @@ namespace Codex.Core.Rules;
 /// actors supply one; every other caller of the engine passes none, and then a link is <see cref="LinkState.Unknown"/>.</summary>
 public interface ILinkedSheets
 {
-    /// <summary>The sheet of the actor with this id, or null when there is no such actor (it was deleted, or is not in the campaign).</summary>
+    /// <summary>The sheet of the actor with this id, or null when it has none to give: the actor is deleted (in the trash), gone, or not in the
+    /// campaign. A deleted actor's sheet is never handed out, so what it held cannot reach a member; the link is <see cref="LinkState.Unknown"/>.</summary>
     IReadOnlyDictionary<string, object>? Sheet(string actorId);
+
+    /// <summary>Why <see cref="Sheet"/> has none, for the member's sheet to say. The default cannot tell a deleted actor from a missing one.</summary>
+    LinkedActorStatus Status(string actorId) => Sheet(actorId) == null ? LinkedActorStatus.NotFound : LinkedActorStatus.Available;
+}
+
+/// <summary>What a host knows about the actor a link names.</summary>
+public enum LinkedActorStatus
+{
+    /// <summary>The actor's sheet is supplied.</summary>
+    Available,
+
+    /// <summary>The actor is in the trash. Restoring it brings back what the link made.</summary>
+    Deleted,
+
+    /// <summary>No such actor in the campaign.</summary>
+    NotFound
 }
 
 /// <summary>What the engine knows about one link of a sheet. <see cref="Unknown"/> is not <see cref="None"/>: the sheet names a linked actor, but
@@ -17,10 +34,10 @@ public enum LinkState
     /// <summary>The sheet has no <c>link__{key}</c>: nothing is linked.</summary>
     None,
 
-    /// <summary>The sheet names an actor and a resolver was supplied. The actor may still be missing (the resolver gives null): that is a known, empty link.</summary>
+    /// <summary>The sheet names an actor and the resolver supplied its sheet. The sheet may be of another kind than the link declares: that is a known, empty link.</summary>
     Known,
 
-    /// <summary>The sheet names an actor, and no resolver was supplied.</summary>
+    /// <summary>The sheet names an actor, and no resolver was supplied, or the resolver has no sheet for it (the actor is deleted or gone).</summary>
     Unknown
 }
 
@@ -44,12 +61,19 @@ public static class SheetLinks
     public static Dictionary<string, object> WithoutLinks(IReadOnlyDictionary<string, object> sheet) =>
         sheet.Where(p => !IsLinkKey(p.Key)).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
 
+    /// <summary>Known only when the sheet names an actor and the host supplied that actor's sheet. A link to an actor the host cannot give (deleted,
+    /// gone) is unknown, like one with no host: what it made is kept, and restoring the actor brings it back.</summary>
     public static LinkState State(IReadOnlyDictionary<string, object> sheet, string linkKey, ILinkedSheets? linked) =>
-        ActorId(sheet, linkKey) == null ? LinkState.None : linked == null ? LinkState.Unknown : LinkState.Known;
+        ActorId(sheet, linkKey) is not { } id ? LinkState.None : linked?.Sheet(id) == null ? LinkState.Unknown : LinkState.Known;
 
     /// <summary>Whether any link of the kind is <see cref="LinkState.Unknown"/> on this sheet.</summary>
     public static bool AnyUnknown(SheetKindDefinition? kind, IReadOnlyDictionary<string, object> sheet, ILinkedSheets? linked) =>
-        linked == null && kind != null && kind.Links.Any(l => ActorId(sheet, l.Key) != null);
+        kind != null && kind.Links.Any(l => State(sheet, l.Key, linked) == LinkState.Unknown);
+
+    /// <summary>Why a host has no sheet for a link: null when the link names none, the sheet is supplied, or no host was supplied (nothing is known
+    /// then); else the actor is deleted or not found.</summary>
+    public static LinkedActorStatus? Gone(IReadOnlyDictionary<string, object> sheet, string linkKey, ILinkedSheets? linked) =>
+        linked != null && ActorId(sheet, linkKey) is { } id && linked.Sheet(id) == null ? linked.Status(id) : null;
 
     /// <summary>The sheet a known link points to: null when there is no link, it is unknown, the actor is missing, or the actor's sheet is not of the
     /// kind the link declares (judged by the sheet's own <c>kind</c>, so a sheet with none is not taken for the system's first kind).</summary>
