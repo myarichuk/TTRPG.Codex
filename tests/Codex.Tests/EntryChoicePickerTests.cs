@@ -86,6 +86,26 @@ public class EntryChoicePickerTests : IAsyncLifetime
     }
 
     [Fact]
+    public void TheTitle_NamesLevelZeroSpellsCantrips_FromTheSystemsOwnWord_InTheReadersLanguage()
+    {
+        var (engine, sheet) = Character(Initiate());
+        SheetRuleEngine.SetChoice(sheet, "choice__initiate__spell-list", new[] { "Wizard" });
+        var evaluation = engine.Recompute(sheet);
+        var system = _loader.GetDefinition("srd5e")!;
+        ValueLabel? Name(SystemDefinition s, int level) => s.FindType("spell")!.Fields.Single(f => f.Key == "level").ValueLabelFor(level);
+
+        var cantrips = EntryChoiceWords.Wants(Choice(evaluation, "choice__initiate__cantrips"), "Spell", "Spells", n => Name(system, n));
+        Assert.Equal(new ChoiceWant(2, null, "cantrips", false), cantrips); // "Magic Initiate: choose 2 cantrips"
+
+        var spell = EntryChoiceWords.Wants(Choice(evaluation, "choice__initiate__spell"), "Spell", "Spells", n => Name(system, n));
+        Assert.Equal(new ChoiceWant(1, 1, "spell", false), spell); // level 1 has no name: "choose 1 level-1 spell"
+
+        var ru = system.Localize("ru");
+        var russian = EntryChoiceWords.Wants(Choice(evaluation, "choice__initiate__cantrips"), "Заклинание", "Заклинания", n => Name(ru, n));
+        Assert.Equal(new ChoiceWant(2, null, "заговоры", false), russian);
+    }
+
+    [Fact]
     public void TheTitle_UsesTheSingularWhenThereIsNoPlural_AndNoLevelWhenTheConditionsAskForNone()
     {
         var arcanum = Feat("noconditions", Map(("to", "grantedSpells"), ("choice", "any-spell"), ("choose", 3L), ("where", Items(

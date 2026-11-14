@@ -52,6 +52,10 @@ public class LabelTranslation
 
     /// <summary>Dropdown value -> text to show, for this field only (wins over <see cref="SystemTranslation.Values"/>).</summary>
     public Dictionary<string, string> Options { get; set; } = new();
+
+    /// <summary>Stored value (as text, "0") -> its name and plural name, for a field that names values (<see cref="FieldDefinition.ValueLabels"/>).
+    /// A value given here replaces the system's name for it whole, so the singular and plural are never mixed across languages.</summary>
+    public Dictionary<string, ValueLabel> ValueLabels { get; set; } = new();
 }
 
 public class TypeTranslation

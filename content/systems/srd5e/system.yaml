@@ -520,7 +520,7 @@ entityTypes:
     summaryFields: [level, school]
     filterFields: [level, school, classes]
     fields:
-      - { key: level,         label: Level,         type: Number }
+      - { key: level,         label: Level,         type: Number, valueLabels: { "0": { label: Cantrip, pluralLabel: Cantrips } } }
       - key: school
         label: School
         type: Dropdown

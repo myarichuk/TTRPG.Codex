@@ -15,13 +15,18 @@ public sealed record ChoiceWant(int Count, int? Level, string? Noun, bool IsValu
 public static class EntryChoiceWords
 {
     /// <summary>What <paramref name="choice"/> wants. <paramref name="singular"/> and <paramref name="plural"/> name the list's entity type ("spell",
-    /// "spells"); the noun is the one that fits the count, and a plural that is missing falls back to the singular.</summary>
-    public static ChoiceWant Wants(PendingChoice choice, string? singular, string? plural)
+    /// "spells"); the noun is the one that fits the count, and a plural that is missing falls back to the singular. When the system names the level the
+    /// choice asks for (<paramref name="levelName"/>: "Cantrip" for level 0), that name is the noun and no level is left to say.</summary>
+    public static ChoiceWant Wants(PendingChoice choice, string? singular, string? plural, Func<int, ValueLabel?>? levelName = null)
     {
         if (choice.Target == SheetRuleEngine.ValueTarget) return new ChoiceWant(choice.Count, null, null, true);
 
+        var level = LevelOf(ConditionsOf(choice));
+        if (level is { } asked && levelName?.Invoke(asked) is { } named && !string.IsNullOrWhiteSpace(named.Label))
+            return new ChoiceWant(choice.Count, null, named.For(choice.Count).Trim().ToLowerInvariant(), false);
+
         var noun = choice.Count == 1 ? singular : string.IsNullOrWhiteSpace(plural) ? singular : plural;
-        return new ChoiceWant(choice.Count, LevelOf(ConditionsOf(choice)), string.IsNullOrWhiteSpace(noun) ? null : noun.Trim().ToLowerInvariant(), false);
+        return new ChoiceWant(choice.Count, level, string.IsNullOrWhiteSpace(noun) ? null : noun.Trim().ToLowerInvariant(), false);
     }
 
     /// <summary>The <c>where</c> conditions of the choice stored under <paramref name="choice"/>'s key, or none.</summary>

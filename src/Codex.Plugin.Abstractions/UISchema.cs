@@ -95,9 +95,39 @@ public class FieldDefinition
     [NotInYaml]
     public Dictionary<string, string>? OptionLabels { get; set; }
 
+    /// <summary>Names for particular stored values of a <c>Number</c> or <c>Dropdown</c> field, keyed by the value as text ("0"): a spell level of 0
+    /// is a "Cantrip", and a choice of two of them reads "choose 2 cantrips". A value with no entry is shown as it is. A Number's keys must be numbers and a
+    /// Dropdown's must be among its options. The system's translation files can word each value (<c>fields: level: valueLabels: "0": { label, pluralLabel }</c>).</summary>
+    public Dictionary<string, ValueLabel>? ValueLabels { get; set; }
+
+    /// <summary>The name <see cref="ValueLabels"/> gives <paramref name="value"/> (3, "3" and "3.0" are the same number), or null.</summary>
+    public ValueLabel? ValueLabelFor(object? value)
+    {
+        if (ValueLabels is not { Count: > 0 } || value is null) return null;
+        var text = System.Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)?.Trim();
+        if (string.IsNullOrEmpty(text)) return null;
+        if (Type == FieldType.Number && double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var number))
+        {
+            foreach (var (key, label) in ValueLabels)
+            {
+                if (double.TryParse(key, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var k) && k == number) return label;
+            }
+
+            return null;
+        }
+
+        foreach (var (key, label) in ValueLabels)
+        {
+            if (string.Equals(key, text, System.StringComparison.OrdinalIgnoreCase)) return label;
+        }
+
+        return null;
+    }
+
     /// <summary>The text to show for a stored dropdown/tag value; the value itself when it has no translation.</summary>
     public string Display(string value)
     {
+        if (ValueLabelFor(value) is { } named) return named.Label;
         if (OptionLabels == null) return value;
         if (OptionLabels.TryGetValue(value, out var shown)) return shown;
         // Pack data and the system's own values differ in case ("lawful evil" vs "Lawful Evil").
@@ -115,6 +145,18 @@ public class FieldDefinition
 
     private static readonly System.Text.RegularExpressions.Regex Price =
         new(@"^([\d,]+) (cp|sp|ep|gp|pp)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+}
+
+/// <summary>A name for one stored value of a field: <c>Label</c> alone ("Cantrip"), and <c>PluralLabel</c> where a count goes with it ("Cantrips").</summary>
+public class ValueLabel
+{
+    /// <summary>Required: the name of the value ("Cantrip").</summary>
+    public string Label { get; set; } = string.Empty;
+    /// <summary>The name where a count other than one goes with it ("Cantrips"); the label when unset.</summary>
+    public string? PluralLabel { get; set; }
+
+    /// <summary>The name that fits <paramref name="count"/>: the plural for anything but one, falling back to <see cref="Label"/>.</summary>
+    public string For(int count) => count == 1 || string.IsNullOrWhiteSpace(PluralLabel) ? Label : PluralLabel;
 }
 
 public record GraphEdgeSchema(

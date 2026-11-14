@@ -183,7 +183,7 @@
     private string EntryLegend(string who)
     {
         var names = EntityType is { } type ? Entries?.TypeNames(type) : null;
-        var want = EntryChoiceWords.Wants(Choice, names?.Singular, names?.Plural);
+        var want = EntryChoiceWords.Wants(Choice, names?.Singular, names?.Plural, n => EntityType is { } t ? Entries?.LevelName(t, n) : null);
         return (want.Noun, want.Level) switch
         {
             ({ } noun, { } level) => L["Actor.Choice.TitleLevel", who, want.Count, level, noun].ToString(),

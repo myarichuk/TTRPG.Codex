@@ -213,7 +213,7 @@ entityTypes:
     label: לחש
     pluralLabel: לחשים
     fields:
-      level: { label: דרגה }
+      level: { label: דרגה, valueLabels: { "0": { label: לחשון, pluralLabel: לחשונים } } }
       school:
         label: אסכולה
         options:
