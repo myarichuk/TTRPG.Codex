@@ -101,6 +101,16 @@ public sealed record SheetAction(
     /// <summary>The lowest die face that is a critical hit, from the source's <c>critical</c>; null when it names none or fails.</summary>
     public int? Critical { get; init; }
 
+    /// <summary>The always-on numbers features added to <see cref="AttackBonus"/> and to the damage (<see cref="Damage"/>, each slot's, each
+    /// alternative's), each with its source. Dice amounts are not here: they wait for the roll (<see cref="SheetRuleEngine.Bonuses"/>).</summary>
+    public IReadOnlyList<ActionBonus> Bonuses { get; init; } = Array.Empty<ActionBonus>();
+
+    /// <summary>The <see cref="ActionBonus.Roll"/> of a bonus to the attack roll.</summary>
+    public const string AttackRoll = "attack";
+
+    /// <summary>The <see cref="ActionBonus.Roll"/> of a bonus to the damage.</summary>
+    public const string DamageRoll = "damage";
+
     /// <summary>Whether an expression has dice to roll; a plain number is shown, not rolled.</summary>
     public static bool HasDice(string? expression) => expression != null && expression.Contains('d', StringComparison.OrdinalIgnoreCase);
 }
@@ -163,7 +173,12 @@ public sealed partial class SheetRuleEngine
                     if (reached.Dice != null) dice = reached.Dice.Replace(" ", "");
                 }
 
-                var bonus = (Number(source.DamageBonus, names) ?? 0) + (use.GetValueOrDefault("addAbility") is true ? Number(source.AbilityBonus, names) ?? 0 : 0);
+                var heals = use.GetValueOrDefault("heals") is true;
+                // What features add to this action's attack and damage rolls (docs/ROLL_BONUSES_DESIGN.md): the always-on numbers are worked out here,
+                // the dice wait for the roll. Healing is not damage: the dice of a cure are not a damage roll, so the damage targets leave them alone.
+                var attackSite = attack == null ? RollSiteBonus.None : SiteBonus(result, AttackSiteOf(source, attack, entry.Id));
+                var damageSite = !heals && (dice != null || use.ContainsKey("alternatives")) ? SiteBonus(result, DamageSiteOf(source, attack, entry.Id)) : RollSiteBonus.None;
+                var bonus = (Number(source.DamageBonus, names) ?? 0) + (use.GetValueOrDefault("addAbility") is true ? Number(source.AbilityBonus, names) ?? 0 : 0) + damageSite.Number;
                 var perSlot = use.GetValueOrDefault("perSlot")?.ToString();
 
                 var costs = new List<ActionCost>();
@@ -192,15 +207,17 @@ public sealed partial class SheetRuleEngine
                     : new Dictionary<string, string>();
 
                 result.Actions.Add(new SheetAction(source, entry, level,
-                    attack, attack == null ? null : Number(source.AttackBonus, names),
+                    attack, attack == null ? null : Number(source.AttackBonus, names) is { } toHit ? toHit + attackSite.Number : null,
                     saveAttribute, saveAttribute == null ? null : Number(source.SaveDc, names),
                     dice == null ? null : WithBonus(dice, bonus),
                     use.GetValueOrDefault("damageType")?.ToString(),
-                    use.GetValueOrDefault("heals") is true,
+                    heals,
                     costs, alternatives)
                 {
                     Count = Number(source.Count, names),
-                    Critical = Number(source.Critical, names)
+                    Critical = Number(source.Critical, names),
+                    Bonuses = attackSite.Bonuses.Select(b => new ActionBonus(SheetAction.AttackRoll, b.Source, (int)b.Amount))
+                        .Concat(damageSite.Bonuses.Select(b => new ActionBonus(SheetAction.DamageRoll, b.Source, (int)b.Amount))).ToList()
                 });
             }
         }

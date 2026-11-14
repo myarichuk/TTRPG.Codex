@@ -486,9 +486,15 @@ public sealed partial class SheetRuleEngine
             var rank = list.Now(key.Key);
             var label = rank > 0 ? (string.IsNullOrWhiteSpace(list.Ranks[rank - 1].Label) ? list.Ranks[rank - 1].Key : list.Ranks[rank - 1].Label) : null;
             var rankBonus = ValueOf(list, rank);
+            // What features add to this check or save through the roll targets (docs/ROLL_BONUSES_DESIGN.md): the always-on numbers are in the bonus.
+            var site = SiteBonus(result, list.Target == SkillsTarget ? SkillSite(key.Key) : SaveSite(key.Key));
             return new SkillScore(key.Key, key.Label, key.Attribute ?? string.Empty, rank >= 1, rank >= 2,
-                ModifierOf(sheet, result, key.Attribute ?? string.Empty) + rankBonus, rank, label,
-                list.Sources.TryGetValue(key.Key, out var sources) ? sources : Array.Empty<RankSource>(), list.Own.GetValueOrDefault(key.Key), rankBonus);
+                ModifierOf(sheet, result, key.Attribute ?? string.Empty) + rankBonus + site.Number, rank, label,
+                list.Sources.TryGetValue(key.Key, out var sources) ? sources : Array.Empty<RankSource>(), list.Own.GetValueOrDefault(key.Key), rankBonus)
+            {
+                Extra = site.Number,
+                Bonuses = site.Bonuses
+            };
         }
 
         foreach (var key in skills.Keys) result.Skills.Add(ScoreOf(skills, key));

@@ -591,14 +591,17 @@ public sealed partial class SheetRuleEngine
 
     // ---- Where a modifier lands ----
 
-    private enum TargetKind { Unknown, ArmorClass, HitPoints, Derived, Field }
+    private enum TargetKind { Unknown, ArmorClass, HitPoints, Derived, Field, Roll }
 
+    /// <summary>Where a modifier's target lands. A value the sheet has wins over a roll word of the same name; a roll target (<see cref="RollSiteTargets"/>)
+    /// is read by the roll it names, where the bonus is worked out, so it is neither unknown nor a value of the sheet.</summary>
     private TargetKind KindOf(string target)
     {
         if (Rules?.ArmorClass is { } armor && armor.Key == target) return TargetKind.ArmorClass;
         if (Rules?.HitPoints is { } hitPoints && hitPoints.Key == target) return TargetKind.HitPoints;
         if (Rules?.Derived.Any(d => d.Key == target) == true) return TargetKind.Derived;
-        return system.ActorFields.Any(f => f.Key == target && f.Type == FieldType.Number) ? TargetKind.Field : TargetKind.Unknown;
+        if (system.ActorFields.Any(f => f.Key == target && f.Type == FieldType.Number)) return TargetKind.Field;
+        return RollSiteTargets.IsRollTarget(system, target) ? TargetKind.Roll : TargetKind.Unknown;
     }
 
     /// <summary>A feature's amount (or its counter's maximum) worked out on the sheet as the feature's class sees it; null when
@@ -694,6 +697,9 @@ public sealed partial class SheetRuleEngine
                 foreach (var name in group.Select(x => x.Feature.Name).Distinct()) Warn(name);
                 continue;
             }
+
+            // A roll target is worked out where its roll is made (EvaluateActions, EvaluateSkills, EvaluateChecks): its amounts may be dice.
+            if (kind == TargetKind.Roll) continue;
 
             // A field's amounts are worked out from the same derived values ApplyGranted used, so what is listed is what was applied.
             var amounts = ModifierAmounts(group, kind == TargetKind.Field ? beforeFeatures : derived, Warn);

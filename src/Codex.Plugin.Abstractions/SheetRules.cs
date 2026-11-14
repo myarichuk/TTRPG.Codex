@@ -145,6 +145,18 @@ public class ActionSource
 /// stacks as <c>max</c> (or <c>best</c>) sets a floor ("at least 120"), as <c>min</c> a ceiling ("at most 18"), instead of adding;
 /// <c>highest</c> and <c>lowest</c> add only the largest or smallest bonus of the type. The rule is declared in the system's
 /// <c>modifierTypes</c>; a type it does not name, or none, adds.</item>
+/// <item><c>modifiers</c> on a roll: a <c>target</c> may also name a roll the sheet makes, and the bonus counts where that roll is made. Each roll
+/// reads the targets listed, from general to narrow. A weapon attack (an action that reads the inventory) reads <c>attack</c>, <c>attack.weapon</c>,
+/// <c>attack.melee</c> or <c>attack.ranged</c> (the action's <c>use.attack</c>), <c>attack.weapon.melee</c> or <c>attack.weapon.ranged</c>, and
+/// <c>attack.entry.{entry id}</c>. A spell attack (an action that reads lists) reads the same with <c>spell</c> for <c>weapon</c>. Damage reads
+/// <c>damage</c>, <c>damage.weapon</c> or <c>damage.spell</c>, <c>damage.melee</c> or <c>damage.ranged</c>, and <c>damage.entry.{entry id}</c>; the
+/// dice of healing are not damage. A saving throw reads <c>save</c> and <c>save.{attribute}</c>. An ability check reads <c>check</c> and
+/// <c>check.{attribute}</c>; a skill check reads <c>check</c>, <c>check.{the skill's attribute}</c> and <c>check.skill.{skill key}</c>. A number on
+/// such a target is added where the number is worked out: the action's attack bonus and damage (each slot's too), the skill's, the saving throw's
+/// and the attribute check's bonus. An <c>amount</c> written as dice (<c>1d4</c>, <c>-1d4</c>) is never folded into a number: it waits for the roll,
+/// which appends it to its expression. A modifier with <c>optIn</c> never counts on the sheet: it is a tick box the roll offers (see
+/// <see cref="ModifierDefinition.OptIn"/>), with the id <c>{entry id}#{index}</c>, the index counting every modifier of the entry. A target that
+/// names none of these and no sheet value is a warning.</item>
 /// <item><c>adds</c>: <c>[{ to, entries, level }]</c>: entries put on a pick list (by id or name) or values on a tag list,
 /// from <c>level</c> on. They leave again when the feature does. On a ranked list (<c>to: skills</c> or <c>to: saves</c>, or a rank's own
 /// sheet list; see <see cref="SkillRules.Ranks"/>) an item takes more: <c>rank</c> (a rank key or number; none means the first rank) puts

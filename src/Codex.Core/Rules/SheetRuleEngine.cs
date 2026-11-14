@@ -62,6 +62,13 @@ public sealed record SkillScore(string Key, string Label, string Attribute, bool
     /// <summary>The highest rank a source gives; the player's own ticks at or below it change nothing.</summary>
     public int GrantedRank => Sources is { Count: > 0 } ? Sources.Max(s => s.Rank) : 0;
 
+    /// <summary>What features add to the check or the save through the roll targets (<c>check</c>, <c>check.{attribute}</c>, <c>check.skill.{key}</c>,
+    /// <c>save</c>, <c>save.{attribute}</c>): already in <see cref="Bonus"/>, so the attribute's part of a sum is <c>Bonus - RankBonus - Extra</c>.</summary>
+    public int Extra { get; init; }
+
+    /// <summary>Who gave <see cref="Extra"/>, and how much each.</summary>
+    public IReadOnlyList<RollBonus> Bonuses { get; init; } = Array.Empty<RollBonus>();
+
     /// <summary>The source that locks <paramref name="rank"/> on (the lowest one that gives it or more), or null when the player's own ticks hold it.</summary>
     public RankSource? LockedBy(int rank) => Sources?.Where(s => s.Rank >= rank).OrderBy(s => s.Rank).FirstOrDefault();
 }
@@ -167,6 +174,21 @@ public sealed class SheetEvaluation
 
     /// <summary>What each rank of the skills' and the saving throws' lists is worth now, whether a key holds it or not.</summary>
     public List<RankValue> RankValues { get; } = new();
+
+    /// <summary>What features add to a check of each attribute on its own, by attribute key: the always-on numbers on <c>check</c> and
+    /// <c>check.{attribute}</c> (<see cref="SheetRuleEngine.CheckSite"/>). An attribute with nothing added is not here. The attribute's own modifier
+    /// is not in it: a check rolls the modifier and this.</summary>
+    public Dictionary<string, int> CheckBonuses { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>What the roll targets' numbers came to for each attribute's check, and who gave them; see <see cref="CheckBonuses"/>.</summary>
+    public Dictionary<string, IReadOnlyList<RollBonus>> CheckSources { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The numbers the always-on roll bonuses are worked out with (the derived values as they stand after the features), kept for the rolls
+    /// worked out later in one evaluation.</summary>
+    internal Dictionary<string, double>? SiteNumbers { get; set; }
+
+    /// <summary>The features whose roll bonus could not be worked out, said once each.</summary>
+    internal HashSet<string> SiteWarned { get; } = new(StringComparer.Ordinal);
 
     public List<SkillScore> SavingThrows { get; } = new();
     public List<SkillScore> Skills { get; } = new();
@@ -357,6 +379,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         EvaluateHitPoints(sheet, result);
         EvaluateArmorClass(sheet, result);
         EvaluateSkills(sheet, result);
+        EvaluateChecks(sheet, result);
         EvaluateSpellcasting(sheet, result);
         EvaluateProficiencies(sheet, result);
         EvaluateActions(sheet, result);

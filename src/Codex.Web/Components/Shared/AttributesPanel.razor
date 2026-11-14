@@ -60,7 +60,7 @@
                     @if (ShowTray)
                     {
                         <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="dices" Label="@L["Actor.Skills.Roll", checkLabel]" data-testid="@("roll-" + attr.Key)"
-                                     OnClick="() => OnRoll.InvokeAsync(new RollRequest(checkLabel, modifier ?? 0))" />
+                                     OnClick="() => OnRoll.InvokeAsync(new RollRequest(checkLabel, (modifier ?? 0) + (Evaluation?.CheckBonuses.GetValueOrDefault(attr.Key) ?? 0)))" />
                     }
                 }
                 @if (CanEdit && attributeRules != null && AttrMethod == "standard-array")

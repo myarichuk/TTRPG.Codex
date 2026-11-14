@@ -130,7 +130,7 @@ public static partial class SheetRolls
         return model.OptIns(RollTargets.Of(system, definition)).Select(o => Offer(sheet, o)).ToList();
     }
 
-    private static RollOptIn Offer(IReadOnlyDictionary<string, object> sheet, OptInModifier optIn)
+    internal static RollOptIn Offer(IReadOnlyDictionary<string, object> sheet, OptInModifier optIn)
     {
         RollOptInSpend? spends = null;
         var canPay = true;
