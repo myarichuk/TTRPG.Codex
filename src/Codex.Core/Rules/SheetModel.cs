@@ -787,7 +787,7 @@ public sealed class SheetModel
             }
 
             var source = modifier.Source ?? string.Empty;
-            offered.Add(new OptInModifier(modifier.Id, modifier.OptIn!.Label is { Length: > 0 } label ? label : source, text, source, modifier.OptIn, modifier.Condition));
+            offered.Add(new OptInModifier(modifier.Id, modifier.OptIn!.Label is { Length: > 0 } label ? label : source, text, source, modifier.OptIn, modifier.Condition, modifier.Target));
         }
 
         return offered;

@@ -882,7 +882,9 @@ public sealed record MakeRollCommand(string ActorId, string RollerUserId, Codex.
             Result = string.Join(" ", roll.Kept) + " = " + roll.Total.ToString(System.Globalization.CultureInfo.InvariantCulture),
             Total = (int)Math.Round(roll.Total),
             IsSecret = IsSecret,
-            Label = roll.Label ?? roll.Definition,
+            // The bonuses the roller ticked are said in the label, so the table's log shows what counted.
+            Label = Codex.Core.Rules.RollBonusLabel.Of(roll.Label ?? roll.Definition, roll.Bonuses,
+                runtime.System?.Rolls.FirstOrDefault(r => r.Key == roll.Definition)?.Pool != null),
             Kept = roll.Kept.ToList(),
             Dropped = roll.Dropped.ToList(),
             Modifier = (int)Math.Round(roll.Modifier),

@@ -132,6 +132,21 @@ public static partial class SheetRolls
         return model.OptIns(RollTargets.Of(system, definition)).Select(o => Offer(sheet, o)).ToList();
     }
 
+    /// <summary>The modifiers that always count in the named roll <paramref name="rollKey"/> on <paramref name="sheet"/> for the <paramref name="inputs"/>
+    /// given so far (opt-ins are never in it: see <see cref="OptIns"/>), each with its source, so a page can say why the pool is what it is.</summary>
+    /// <exception cref="RollException">The system has no such roll.</exception>
+    public static IReadOnlyList<RollBonus> Bonuses(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, string rollKey,
+        IReadOnlyDictionary<string, object?> inputs, ILinkedSheets? linked = null)
+    {
+        var definition = Definition(system, rollKey);
+        if (definition.Participants != null) return Array.Empty<RollBonus>();
+        var values = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var declared in definition.Inputs.Where(i => i.Default != null)) values[declared.Key] = SheetModel.Plain(YamlValues.Normalize(declared.Default));
+        foreach (var (key, value) in inputs) values[key] = SheetModel.Plain(YamlValues.Normalize(value));
+        var model = new SheetModel(system, resolver, sheet, values, linked: linked);
+        return model.Bonuses(RollTargets.Of(system, definition)).Where(b => !b.Ticked).ToList();
+    }
+
     internal static RollOptIn Offer(IReadOnlyDictionary<string, object> sheet, OptInModifier optIn)
     {
         RollOptInSpend? spends = null;
@@ -144,7 +159,7 @@ public static partial class SheetRolls
             canPay = key != null && (YamlValues.ToNumber(sheet.GetValueOrDefault(key)) ?? 0) >= amount;
         }
 
-        return new RollOptIn(optIn.Id, optIn.Label, optIn.Amount, optIn.Source, spends, canPay, optIn.Definition.Ends ? optIn.Condition : null);
+        return new RollOptIn(optIn.Id, optIn.Label, optIn.Amount, optIn.Source, spends, canPay, optIn.Definition.Ends ? optIn.Condition : null, optIn.Target);
     }
 
     /// <summary>The sheet key of the pool a spend names: a feature counter's <c>uses_*</c> key, else a track or resource keyed as named; null
