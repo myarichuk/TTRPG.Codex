@@ -453,6 +453,10 @@
   <data name="Actor.Widget.More" xml:space="preserve"><value>{0}: אחד יותר</value></data>
   <data name="Actor.Widget.Name" xml:space="preserve"><value>שם</value></data>
   <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>שום דבר לא מוסיף לו.</value></data>
+  <data name="Actor.Link.NoneNamed" xml:space="preserve"><value>ללא {0}</value></data>
+  <data name="Actor.Link.NotVisible" xml:space="preserve"><value>לא גלוי</value></data>
+  <data name="Actor.Members.Heading" xml:space="preserve"><value>חברים</value></data>
+  <data name="Actor.Members.Empty" xml:space="preserve"><value>אין חברים עדיין</value></data>
   <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>לא נספר: נספר הטוב יותר מאותו סוג</value></data>
   <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} מתוך {1}</value></data>
   <data name="Actor.Widget.Remove" xml:space="preserve"><value>הסרה</value></data>

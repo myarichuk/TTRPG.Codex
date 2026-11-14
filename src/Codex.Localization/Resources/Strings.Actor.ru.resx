@@ -453,6 +453,10 @@
   <data name="Actor.Widget.More" xml:space="preserve"><value>{0}: на один больше</value></data>
   <data name="Actor.Widget.Name" xml:space="preserve"><value>Название</value></data>
   <data name="Actor.Widget.NoModifiers" xml:space="preserve"><value>Ничего не добавляется.</value></data>
+  <data name="Actor.Link.NoneNamed" xml:space="preserve"><value>Нет: {0}</value></data>
+  <data name="Actor.Link.NotVisible" xml:space="preserve"><value>Не виден</value></data>
+  <data name="Actor.Members.Heading" xml:space="preserve"><value>Участники</value></data>
+  <data name="Actor.Members.Empty" xml:space="preserve"><value>Участников пока нет</value></data>
   <data name="Actor.Widget.NotCounted" xml:space="preserve"><value>Не учитывается: учтён лучший того же типа</value></data>
   <data name="Actor.Widget.Of" xml:space="preserve"><value>{0} из {1}</value></data>
   <data name="Actor.Widget.Remove" xml:space="preserve"><value>Убрать</value></data>

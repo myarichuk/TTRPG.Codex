@@ -134,6 +134,8 @@ public sealed class SheetView
         "roll" => _system.Rolls.Any(r => r.Key == widget.Roll),
         "text" => widget.Key != null,
         "modifiers" => widget.Target != null,
+        "link" => widget.Key != null && Kind?.Links.Any(l => l.Key == widget.Key) == true,
+        "members" => Kind != null,
         _ => IsCompiled(widget)
     };
 

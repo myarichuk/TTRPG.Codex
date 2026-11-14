@@ -558,7 +558,7 @@ else
     // and a roll that cannot pay is not made. The ticks it took are cleared; one that did not fit stays.
     private async Task RollWithBonusesAsync(string expression, string label, RollSite? site, bool addNumber)
     {
-        var built = rollBonuses.Build(engine, editSheet, site, expression, label, addNumber);
+        var built = rollBonuses.Build(engine, editSheet, site, expression, label, addNumber, linkedSheets);
         if (!await RollBonusTray.PayAsync(built.Applied, SpendOnSheet))
         {
             flash = Flash.Error(L["Actor.Bonus.CannotPay"]);
@@ -578,7 +578,7 @@ else
         if (engine == null || Rules == null || (Rules.Actions.Count == 0 && Rules.Skills == null)) return Array.Empty<RollOptIn>();
         try
         {
-            return engine.AllOptIns(editSheet);
+            return engine.AllOptIns(editSheet, linkedSheets);
         }
         catch (Exception ex) when (ex is FormulaException or InvalidOperationException)
         {
@@ -646,6 +646,8 @@ else
             && (worked.Counters.Count > 0 || worked.Spenders.Count > 0 || worked.Granted.Count > 0 || worked.Features.Any(f => f.Adds.Count > 0 || (f.OnKind && f.Modifiers.Count > 0))),
         "moments" => system != null && sheetView != null && SystemMoments.Of(system).Any(m => m.Kind == MomentKind.Declared && SystemMoments.Matters(system, editSheet, m.Key)),
         "level-up" => CanEdit && HasLevel,
+        // A vault character belongs to no campaign: there is no actor to link to, and nobody links to it.
+        "link" or "members" => !Vault && sheetView?.Shows(widget) == true,
         _ => sheetView?.Shows(widget) == true
     };
 
@@ -970,7 +972,9 @@ else
                 {
                     <div class="sheet-widget" data-testid="@($"widget-{widget.Widget}-{widget.Key ?? widget.Roll ?? widget.Target}")">
                         <SheetWidget Widget="widget" Definition="system" View="sheetView" Sheet="editSheet" Resolver="resolver" CanEdit="CanEdit" CanRoll="CanEdit"
-                                     Changed="OnRulesInputChanged" Left="SayLeft" OnRoll="RollDefinitionAsync" />
+                                     Changed="OnRulesInputChanged" Left="SayLeft" OnRoll="RollDefinitionAsync"
+                                     Linked="linkedSheets" Actors="noteActors.Values" ActorId="@actor?.Id" CampaignId="@CampaignId" ViewerIsDm="@(access?.IsDm == true)"
+                                     Vault="Vault" LinkChanged="OnLinkChangedAsync" />
                     </div>
                 }
                 break;
@@ -1180,6 +1184,7 @@ else
                     ?? new Dictionary<string, IReadOnlyList<ContentEntry>>();
                 var subclassType = system?.ActorFields.FirstOrDefault(f => f.Key == Rules?.Multiclass?.SubclassField)?.TargetEntityType;
                 subclassCandidates = subclassType == null || resolver == null ? new List<ContentEntry>() : resolver.Candidates(subclassType).ToList();
+                await LoadLinkedSheetsAsync();
                 Reevaluate();
                 baselineSheet = new Dictionary<string, object>(editSheet);
                 SeeOnSetValues();
@@ -1206,6 +1211,27 @@ else
         loading = false;
     }
 
+    // The sheets the actors this sheet links to have (docs/CREW_LINKS_DESIGN.md), for every evaluation, roll and intent on this page. Loaded with the
+    // campaign's own access, not the viewer's: what a link brings never depends on who is looking (only the linked actor's name does).
+    // None for a vault character, or a sheet that links to nobody: then a link is simply absent.
+    private ILinkedSheets? linkedSheets;
+
+    private async Task LoadLinkedSheetsAsync()
+    {
+        linkedSheets = null;
+        if (Vault || access == null || system is not { SheetKinds.Count: > 0 }) return;
+        var ids = ActorLinkedSheets.LinkedIds(editSheet);
+        if (ids.Count == 0) return;
+        linkedSheets = new ActorLinkedSheets(await ActorRepo.GetForRulesAsync(access, ids));
+    }
+
+    /// <summary>The link was changed in the widget: the new linked actor's sheet is loaded before the rules run again on it.</summary>
+    private async Task OnLinkChangedAsync()
+    {
+        await LoadLinkedSheetsAsync();
+        await OnRulesInputChanged();
+    }
+
     /// <summary>Re-runs the rules after any edit: totals, derived values, allowed picker options and violations.</summary>
     private void Reevaluate()
     {
@@ -1215,11 +1241,11 @@ else
             return;
         }
 
-        evaluation = engine.Recompute(editSheet);
+        evaluation = engine.Recompute(editSheet, linkedSheets);
         // The tray's bonuses for the next roll follow the sheet: one whose feature went, or whose pool ran dry, is no longer ticked.
         bonusOffers = OptInsOfSheet();
         rollBonuses.Keep(bonusOffers);
-        sheetView = system is { SheetKinds.Count: > 0 } && resolver != null ? new SheetView(system, resolver, editSheet) : null;
+        sheetView = system is { SheetKinds.Count: > 0 } && resolver != null ? new SheetView(system, resolver, editSheet, linkedSheets) : null;
         fieldOptions = evaluation.AllowedOptions.ToDictionary(
             kv => kv.Key,
             kv => (IReadOnlyList<(string Id, string Name)>)kv.Value.Select(e => (e.Id, Nm(e)!)).ToList());
@@ -1312,7 +1338,7 @@ else
 
         try
         {
-            sheetRoll = SheetRolls.Roll(system, resolver, editSheet, request, new RandomDiceSource());
+            sheetRoll = SheetRolls.Roll(system, resolver, editSheet, request, new RandomDiceSource(), linkedSheets);
         }
         catch (Exception ex) when (ex is RollException or FormulaException or InvalidOperationException)
         {
@@ -1321,7 +1347,7 @@ else
             return;
         }
 
-        var applied = SheetIntents.Apply(system, resolver, editSheet, sheetRoll.AllIntents());
+        var applied = SheetIntents.Apply(system, resolver, editSheet, sheetRoll.AllIntents(), linked: linkedSheets);
         var left = applied.Left.Where(i => i.Kind != SheetEvents.AskKind).ToList();
         if (left.Count > 0) sheetRollNote = L["Actor.Sheet.RollLeft", left.Count];
         await SayLeft(applied.Left);
@@ -1392,7 +1418,7 @@ else
         {
             try
             {
-                var raised = SheetEvents.Raise(system, resolver, editSheet, new SheetEvent(moment, new Dictionary<string, object?>(StringComparer.Ordinal)), actor.Id);
+                var raised = SheetEvents.Raise(system, resolver, editSheet, new SheetEvent(moment, new Dictionary<string, object?>(StringComparer.Ordinal)), actor.Id, linked: linkedSheets);
                 await SayLeft(raised.Applied.Left);
             }
             catch (SheetEventException ex)
@@ -1524,7 +1550,7 @@ else
     {
         if (!CanEdit) return Task.CompletedTask;
         // One route for every change: a row choice also settles the counters of the rows it swaps (onChange).
-        if (engine != null) engine.ChangeChoice(editSheet, edit.Key, edit.Picks);
+        if (engine != null) engine.ChangeChoice(editSheet, edit.Key, edit.Picks, linkedSheets);
         else SheetRuleEngine.SetChoice(editSheet, edit.Key, edit.Picks);
         Reevaluate();
         return Task.CompletedTask;
@@ -1818,7 +1844,7 @@ else
     {
         if (actor == null || access == null || campaign == null) return;
         flash = null; // a message from an earlier attempt must not outlive this one
-        engine?.PruneChoices(editSheet); // picks of an entry that left the sheet are dropped on save, not while it is being edited
+        engine?.PruneChoices(editSheet, linkedSheets); // picks of an entry that left the sheet are dropped on save, not while it is being edited
         Reevaluate();
         if (evaluation is { HasViolations: true })
         {
@@ -2003,7 +2029,7 @@ else
         foreach (var (key, picks) in levelUpPicks) SheetRuleEngine.SetChoice(sheet, key, picks);
         engine.ApplyInherited(sheet);
         engine.ApplyAttributeTotals(sheet);
-        var after = engine.Evaluate(sheet);
+        var after = engine.Evaluate(sheet, linkedSheets);
         var level = YamlValues.GetInt(sheet, LevelField!) ?? CurrentLevel + 1;
 
         ContentEntry? cls;
@@ -2075,7 +2101,7 @@ else
         // A choice left open is not written: it stays pending on the sheet, to make later.
         foreach (var (key, picks) in levelUpPicks)
         {
-            if (engine != null) engine.ChangeChoice(editSheet, key, picks);
+            if (engine != null) engine.ChangeChoice(editSheet, key, picks, linkedSheets);
             else SheetRuleEngine.SetChoice(editSheet, key, picks);
         }
 
