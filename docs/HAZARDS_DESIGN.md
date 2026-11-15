@@ -549,7 +549,35 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   - **Tests:** `WorldBuilderHazardTests` (through the chat's scripted model and the check: a Library hazard, the campaign's own hazard by either key, a homebrew one in range read back through `For`, `Damage`, `NoticeRoutes` and `Problems`, one out of
     range by save DC, by damage alone and too low (warned, on its card, saved as written), no level, a route the loader rejects, a row without a name and an empty one, `higherLevels` bands, an edit that adds nothing, one that adds a number and one that
     breaks the shape, a link of another type, a dangling link, an unticked entry, a trap with no hazard, a system with no hazard type, the prompt, secrecy, and the one-row window).
-  - **Not done:** an edit of a placed hazard's levels or state from the world builder; the homebrew wizard's hazard mode and the book stat block (step 7); the severity item above.
+  - **Not done:** an edit of a placed hazard's levels or state from the world builder; the severity item above.
+
+- **H7 (the homebrew wizard and the book).** Built as 7 and step 7 of 9 have it. What differs, and why:
+  - **The wizard's hazard mode is the type's own steps.** For a type with a `hazard` block (`HomebrewWizard.IsHazard`) the steps are the type's field categories as for any type, but the lists are placed by their
+    role in the block, never by field name: the `methods` rows go beside the disarm routes, the `routine` is a step of its own (`Routine`) and so are the `higherLevels` bands (`Level bands`). Each step is
+    `HazardStepForm`: the plain fields as the schema form draws them, and each list a `HazardRows` editor (a fieldset, one labelled group per row, every control with its own visible label, a remove
+    button that names the row, an add button that names the list). Columns are the fixed row keys of 3.1.1: a route has name, action, check (suggesting the system's skills and attributes), dc, needs, after (a
+    select of the detect routes' ids), id, text, and `successes` and a `triggersOn: [failure]` box on a disarm route, a `passive` box (ticked unless the row says `false`) on a detect route, and `rank` only on a
+    system with ranks. Damage rows are dice, type, count; conditions are a select of the system's conditions (shown translated, stored canonical) and `lasts`; routine rows are name, description and a `strikes` box;
+    a band is `levels`, the numbers of the effect fields beside the save DC and damage (and the severity), and its own damage and `methods` lists. A key a stored row has and the editor has no column for stays in the row.
+  - **Numbers from the guide (7).** The level step has "Fill numbers from the guide": `HazardNumbers.GuideRow(level, system)` (the row `ScalingProblems` measures against) fills the save DC (only when the hazard
+    already has a save, since a DC with no save is a shape problem) and the damage (the first damage row's dice; its type is kept). The note says what was filled; everything stays editable.
+  - **Saving through the same checks.** `HazardNumbers.Problems` (the checks the loader and the world builder use) stops the save: the message is in the alert and the wizard goes to the review step. `ScalingProblems` (H6)
+    only warns. Both are listed as the GM edits, in a polite live region under every step (`hazard-shape`, `hazard-scale`), so a warning never needs an extra "save anyway" click: it never stops the save. Blank rows
+    and empty lists are dropped before the check and the save (`HazardNumbers.Tidy`), so an "add a row" never filled in is not saved. The messages are the checks' own English, as H6's warnings are.
+  - **Not in the editor:** `triggersOn` offers the `failure` box only (`criticalFailure` waits for the degrees roll, P6); the row editors have no reordering; the wizard's preview pane still draws the entry with the
+    generic detail view (rows as name and description).
+  - **The book.** `BookStatBlocks.For` draws a hazard (a type with a `hazard` block) as `{{monster,frame,#hz-KEY ... }}`: the `monster` class so every theme styles it as a stat block and an AI edit keeps it back whole
+    as "a stat block" (its numbers are never sent to a model). Plain lines: the title, one line of type, levels, severity and Complex; the trigger, duration, save (attribute, DC, half or no damage on a save),
+    attack, damage parts (with their count), conditions and every other plain number as `**Label** value`; the effect text and reset; then Detect, Disarm and other-ways routes, the routine (the striking step marked)
+    and each band, as `***Name.*** text` rows. Every label is the system's own field label in the book's language; the few words the book adds are `Campaign.Book.Hazard.*` (en, ru, he). Every value goes through
+    the same `Inline` path as the other blocks. A `triggersOn` word other than `failure` is not printed. **GM edition only:** the function returns null unless the edition is the GM's, and the party and each player's
+    own book are read through the reader that leaves out every type the system does not mark `playerFacing` (a hazard type is not), so a published hazard is in neither; no book prints a place's features at all, so a placed
+    hazard is never in one.
+  - **Strings** (en, ru, he; ru and he need native review): `Wizard.Hazard.*` (`Strings.Wizard`) and `Campaign.Book.Hazard.*` (`Strings.Campaign`); no new resx prefix.
+  - **Tests:** `HomebrewWizardHazardTests` (bUnit, on the real srd5e hazard type: the steps, labelled controls and the saved shape of a route, a failure box and an `after`, a shape problem stops the save, a number off the guide only warns,
+    fill from the guide, blank rows not saved, a band's own damage and a striking step, every step in en, ru and he with no key showing, another type untouched), `HazardEditingTests` (guide row, rows from any store form, tidy), the
+    hazard cases of `BookStatBlocksTests` (the block, ru and he, hostile values, the draft and an AI edit), and `BookSourceTests.APartyOrPlayerBook_NeverCarriesAHazard_ThoughTheGmsBookPrintsIt` (a published hazard and a placed one in
+    the party book, a player's book, what a model is sent; present in the GM's book).
 
 ## 12. H4a: the server-side check service (interface)
 

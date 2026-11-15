@@ -1339,4 +1339,16 @@
   <data name="Campaign.Vault.WillEdit" xml:space="preserve"><value>Changed {0}: {1}</value></data>
   <data name="Campaign.Vault.Next" xml:space="preserve"><value>Next</value></data>
   <data name="Campaign.Vault.Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Campaign.Book.Hazard.Check" xml:space="preserve"><value>{0}, DC {1}</value></data>
+  <data name="Campaign.Book.Hazard.Dc" xml:space="preserve"><value>DC {0}</value></data>
+  <data name="Campaign.Book.Hazard.Needs" xml:space="preserve"><value>needs {0}</value></data>
+  <data name="Campaign.Book.Hazard.After" xml:space="preserve"><value>after {0}</value></data>
+  <data name="Campaign.Book.Hazard.SetsOff" xml:space="preserve"><value>a failure sets it off</value></data>
+  <data name="Campaign.Book.Hazard.Successes" xml:space="preserve"><value>{0} successes needed</value></data>
+  <data name="Campaign.Book.Hazard.NoPassive" xml:space="preserve"><value>not found by passive scores</value></data>
+  <data name="Campaign.Book.Hazard.Rank" xml:space="preserve"><value>rank {0}</value></data>
+  <data name="Campaign.Book.Hazard.HalfOnSave" xml:space="preserve"><value>half damage on a save</value></data>
+  <data name="Campaign.Book.Hazard.NoneOnSave" xml:space="preserve"><value>no damage on a save</value></data>
+  <data name="Campaign.Book.Hazard.Times" xml:space="preserve"><value>{0}, {1} times</value></data>
+  <data name="Campaign.Book.Hazard.Strikes" xml:space="preserve"><value>applies the effect</value></data>
 </root>

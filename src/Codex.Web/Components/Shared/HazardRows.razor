@@ -1,0 +1,234 @@
+@using System.Globalization
+@using Codex.Core.Systems
+
+@* A list of rows of a hazard (its detect and disarm routes, other ways, damage parts, conditions, routine and level bands), one labelled group per row. Every
+   control has its own visible label, so the form reads the same to a screen reader and by keyboard, and nothing depends on colour. The component writes the
+   whole list through ValueChanged and never changes the rows it was given; a key it has no column for stays in its row. *@
+
+<fieldset class="hazard-rows" data-testid="@TestId">
+    <legend class="field-label">@Legend</legend>
+    @if (!string.IsNullOrWhiteSpace(Hint))
+    {
+        <p class="field-hint">@Hint</p>
+    }
+
+    @foreach (var column in Columns.Where(c => c.Suggestions.Count > 0))
+    {
+        <datalist id="@ListId(column)">
+            @foreach (var suggestion in column.Suggestions)
+            {
+                <option value="@suggestion"></option>
+            }
+        </datalist>
+    }
+
+    @{
+        var rows = HazardNumbers.EditableRows(Value);
+    }
+    @for (var i = 0; i < rows.Count; i++)
+    {
+        var index = i;
+        var row = rows[index];
+        var rowId = $"{prefix}-r{index}";
+        <div class="collection-row hazard-row" role="group" aria-labelledby="@(rowId)-title" data-testid="hazard-row">
+            <div class="collection-row-head">
+                <span id="@(rowId)-title" class="label-caps">@Title(index, row)</span>
+                <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Form.RowRemove", RowLabel, index + 1]" OnClick="() => RemoveAsync(index)" />
+            </div>
+            <div class="field-grid">
+                @foreach (var column in Columns)
+                {
+                    var id = $"{rowId}-{column.Key}";
+                    var key = column.Key;
+                    switch (column.Kind)
+                    {
+                        case HazardColumnKind.Flag:
+                        case HazardColumnKind.FlagOnByDefault:
+                        case HazardColumnKind.Word:
+                            <div class="field-check">
+                                <input id="@id" type="checkbox" class="field-box" checked="@IsTicked(column, row)" @onchange="e => TickAsync(index, column, (bool)(e.Value ?? false))" />
+                                <label for="@id">@column.Label</label>
+                            </div>
+                            break;
+
+                        case HazardColumnKind.Rows:
+                            <div class="field-wide">
+                                <HazardRows Legend="@column.Label" RowLabel="@(column.RowLabel ?? column.Label)" AddLabel="@column.AddLabel" Columns="column.Columns"
+                                            Value="@row.GetValueOrDefault(key)" ValueChanged="v => SetAsync(index, key, v)" TestId="@(TestId + "-" + key)" />
+                            </div>
+                            break;
+
+                        default:
+                            <div class="@(column.Wide || column.Kind == HazardColumnKind.Long ? "field-wide" : null)">
+                                <label for="@id" class="field-label">@column.Label</label>
+                                @switch (column.Kind)
+                                {
+                                    case HazardColumnKind.Whole:
+                                        <input id="@id" type="number" step="1" inputmode="numeric" class="field-input" value="@Text(row, key)"
+                                               @onchange="e => SetWholeAsync(index, key, e.Value?.ToString())" />
+                                        break;
+                                    case HazardColumnKind.Long:
+                                        <textarea id="@id" class="field-input" rows="2" @onchange="e => SetAsync(index, key, e.Value?.ToString())">@Text(row, key)</textarea>
+                                        break;
+                                    case HazardColumnKind.Choice:
+                                        <select id="@id" class="field-select" value="@Text(row, key)" @onchange="e => SetAsync(index, key, e.Value?.ToString())">
+                                            <option value="">@L["Actor.Form.None"]</option>
+                                            @foreach (var option in OptionsFor(column, row))
+                                            {
+                                                <option value="@option.Value">@option.Label</option>
+                                            }
+                                        </select>
+                                        break;
+                                    default:
+                                        <input id="@id" type="text" class="field-input" value="@Text(row, key)" list="@(column.Suggestions.Count > 0 ? ListId(column) : null)"
+                                               @onchange="e => SetAsync(index, key, e.Value?.ToString())" />
+                                        break;
+                                }
+                                @if (!string.IsNullOrWhiteSpace(column.Hint))
+                                {
+                                    <div class="field-hint">@column.Hint</div>
+                                }
+                            </div>
+                            break;
+                    }
+                }
+            </div>
+        </div>
+    }
+
+    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AddAsync" data-testid="@(TestId + "-add")">
+        <LucideIcon IconName="plus" Size="14" /> @(AddLabel ?? L["Wizard.Hazard.Add", RowLabel.ToLowerInvariant()])
+    </CodexButton>
+</fieldset>
+
+<ConfirmDialog @ref="confirm" />
+
+@code {
+    /// <summary>The stored list: rows as the entry holds them, in any form the store gave them.</summary>
+    [Parameter] public object? Value { get; set; }
+
+    /// <summary>The whole list after a change, or null when it is empty.</summary>
+    [Parameter] public EventCallback<List<object>?> ValueChanged { get; set; }
+
+    [Parameter, EditorRequired] public IReadOnlyList<HazardColumn> Columns { get; set; } = [];
+    [Parameter, EditorRequired] public string Legend { get; set; } = string.Empty;
+
+    /// <summary>What one row is called, in the singular ("detect route"): the remove button and the add button name it.</summary>
+    [Parameter, EditorRequired] public string RowLabel { get; set; } = string.Empty;
+
+    /// <summary>The add button's own words, when "Add {row}" is not right.</summary>
+    [Parameter] public string? AddLabel { get; set; }
+
+    [Parameter] public string? Hint { get; set; }
+    [Parameter] public string? TestId { get; set; }
+
+    private readonly string prefix = "hr" + Guid.NewGuid().ToString("N")[..6];
+    private ConfirmDialog confirm = null!;
+
+    private string ListId(HazardColumn column) => $"{prefix}-{column.Key}-list";
+
+    private string Title(int index, Dictionary<string, object> row)
+    {
+        var label = RowLabel.Length == 0 ? RowLabel : char.ToUpperInvariant(RowLabel[0]) + RowLabel[1..];
+        var name = row.TryGetValue("name", out var n) ? Convert.ToString(n, CultureInfo.InvariantCulture)?.Trim() : null;
+        return string.IsNullOrEmpty(name) ? $"{label} {index + 1}" : $"{label} {index + 1}: {name}";
+    }
+
+    private static string Text(Dictionary<string, object> row, string key) =>
+        row.TryGetValue(key, out var value) ? Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty : string.Empty;
+
+    private static List<string> WordsOf(object? value) => value switch
+    {
+        null => [],
+        string s => s.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(),
+        System.Collections.IEnumerable items => items.Cast<object?>().Select(i => Convert.ToString(i, CultureInfo.InvariantCulture)?.Trim() ?? string.Empty).Where(s => s.Length > 0).ToList(),
+        _ => []
+    };
+
+    private static bool IsTicked(HazardColumn column, Dictionary<string, object> row)
+    {
+        row.TryGetValue(column.Key, out var value);
+        return column.Kind switch
+        {
+            HazardColumnKind.Word => WordsOf(value).Contains(column.Word ?? string.Empty, StringComparer.OrdinalIgnoreCase),
+            HazardColumnKind.FlagOnByDefault => !(value is bool b ? !b : value != null && bool.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), out var parsed) && !parsed),
+            _ => value is bool flag ? flag : value != null && bool.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), out var on) && on
+        };
+    }
+
+    // The options, and the value the row holds now when the column does not list it, so a select never shows "none" over a value that is still stored.
+    private static IEnumerable<(string Value, string Label)> OptionsFor(HazardColumn column, Dictionary<string, object> row)
+    {
+        var held = Text(row, column.Key);
+        foreach (var option in column.Options) yield return option;
+        if (held.Length > 0 && column.Options.All(o => !string.Equals(o.Value, held, StringComparison.Ordinal))) yield return (held, held);
+    }
+
+    private async Task WriteAsync(List<Dictionary<string, object>> rows) =>
+        await ValueChanged.InvokeAsync(rows.Count == 0 ? null : rows.Cast<object>().ToList());
+
+    private async Task AddAsync()
+    {
+        var rows = HazardNumbers.EditableRows(Value);
+        rows.Add(new Dictionary<string, object>(StringComparer.Ordinal));
+        await WriteAsync(rows);
+    }
+
+    private async Task RemoveAsync(int index)
+    {
+        var rows = HazardNumbers.EditableRows(Value);
+        if (index < 0 || index >= rows.Count) return;
+        if (rows[index].Values.Any(v => !string.IsNullOrWhiteSpace(Convert.ToString(v, CultureInfo.InvariantCulture)))
+            && !await confirm.ShowAsync(L["Actor.Form.RowRemoveTitle"], L["Actor.Form.RowRemoveBody"], L["Common.Remove"], isDestructive: true))
+        {
+            return;
+        }
+
+        rows.RemoveAt(index);
+        await WriteAsync(rows);
+    }
+
+    private async Task SetAsync(int index, string key, object? value)
+    {
+        var rows = HazardNumbers.EditableRows(Value);
+        if (index < 0 || index >= rows.Count) return;
+        var empty = value is null or string { Length: 0 } || (value is string text && text.Trim().Length == 0) || (value is List<object> { Count: 0 });
+        if (empty) rows[index].Remove(key);
+        else rows[index][key] = value is string s ? s.Trim() : value!;
+        await WriteAsync(rows);
+    }
+
+    // A number box that holds no number leaves the value as it was; an emptied one clears it.
+    private async Task SetWholeAsync(int index, string key, string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) await SetAsync(index, key, null);
+        else if (long.TryParse(raw.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var number)) await SetAsync(index, key, number);
+    }
+
+    private async Task TickAsync(int index, HazardColumn column, bool ticked)
+    {
+        var rows = HazardNumbers.EditableRows(Value);
+        if (index < 0 || index >= rows.Count) return;
+        var row = rows[index];
+        switch (column.Kind)
+        {
+            case HazardColumnKind.Word:
+                row.TryGetValue(column.Key, out var held);
+                var words = WordsOf(held).Where(w => !string.Equals(w, column.Word, StringComparison.OrdinalIgnoreCase)).ToList();
+                if (ticked) words.Add(column.Word ?? string.Empty);
+                if (words.Count == 0) row.Remove(column.Key);
+                else row[column.Key] = words.Cast<object>().ToList();
+                break;
+            case HazardColumnKind.FlagOnByDefault:
+                if (ticked) row.Remove(column.Key);
+                else row[column.Key] = false;
+                break;
+            default:
+                if (ticked) row[column.Key] = true;
+                else row.Remove(column.Key);
+                break;
+        }
+
+        await WriteAsync(rows);
+    }
+}

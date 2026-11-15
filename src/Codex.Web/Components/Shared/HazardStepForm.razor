@@ -1,0 +1,214 @@
+@using System.Globalization
+@using Codex.Core
+@using Codex.Core.Rules
+@using Codex.Core.Systems
+@using Codex.Plugin.Abstractions
+
+@* The fields of one step of the homebrew wizard for a hazard (HAZARDS_DESIGN.md 3.1, 7): the plain fields as the schema form draws them, and the lists the
+   engine reads by their role (detect, disarm and other ways, damage, conditions, the routine, the level bands) as row editors with their own columns.
+   The roles come from the type's hazard block, never from a field's name. *@
+
+@if (plain.Count > 0)
+{
+    <SchemaForm Schema="@(new UISchema(Type.Type, PreferredEditor.Form, plain))" Values="Values" ShowGroupHeadings="false" ValuesChanged="ValuesChanged" />
+}
+
+@if (hasLevel)
+{
+    <div class="mt-3">
+        <CodexButton Variant="CodexButtonVariant.Etched" Icon="sparkles" OnClick="FillAsync" data-testid="hazard-fill">@L["Wizard.Hazard.Fill"]</CodexButton>
+        <p class="field-hint mb-0">@L["Wizard.Hazard.Fill.Hint"]</p>
+        <p class="small-muted mb-0" role="status" data-testid="hazard-fill-note">@fillNote</p>
+    </div>
+}
+
+@foreach (var field in special)
+{
+    var role = RoleOf(field)!;
+    var captured = field;
+    <div class="mt-3">
+        <HazardRows Legend="@field.Label" RowLabel="@RowLabelOf(role)" Columns="ColumnsFor(role)" Hint="@field.Description"
+                    Value="@Values.GetValueOrDefault(field.Key)" ValueChanged="v => SetAsync(captured, v)" TestId="@("hazard-" + field.Key)" />
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public ContentTypeDefinition Type { get; set; } = null!;
+
+    /// <summary>The system as the reader sees it (condition names); its <see cref="SystemDefinition.Canonical"/> is what is stored.</summary>
+    [Parameter] public SystemDefinition? System { get; set; }
+
+    /// <summary>The fields of this step, in the type's order.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<FieldDefinition> Fields { get; set; } = [];
+
+    [Parameter, EditorRequired] public Dictionary<string, object> Values { get; set; } = new();
+    [Parameter] public EventCallback<Dictionary<string, object>> ValuesChanged { get; set; }
+
+    private string? fillNote;
+
+    private HazardDefinition Hazard => Type.Hazard!;
+    private List<FieldDefinition> plain => Fields.Where(f => RoleOf(f) == null).ToList();
+    private List<FieldDefinition> special => Fields.Where(f => RoleOf(f) != null).ToList();
+    private bool hasLevel => !string.IsNullOrEmpty(Hazard.Level) && Fields.Any(f => f.Key == Hazard.Level);
+
+    /// <summary>The role of a list field in the hazard block, or null for a field the schema form draws.</summary>
+    public static string? RoleOf(ContentTypeDefinition type, string key)
+    {
+        if (type.Hazard is not { } h) return null;
+        bool Is(string? field) => !string.IsNullOrEmpty(field) && string.Equals(field, key, StringComparison.Ordinal);
+        return Is(h.Notice?.Routes) ? "detect"
+            : Is(h.Disable?.Routes) ? "disarm"
+            : Is(h.Methods) ? "method"
+            : Is(h.Effect?.Damage) ? "damage"
+            : Is(h.Effect?.Conditions) ? "condition"
+            : Is(h.Routine) ? "step"
+            : Is(h.HigherLevels) ? "band"
+            : null;
+    }
+
+    private string? RoleOf(FieldDefinition field) => RoleOf(Type, field.Key);
+
+    private string RowLabelOf(string role) => L["Wizard.Hazard.Row." + role];
+
+    private async Task SetAsync(FieldDefinition field, List<object>? rows)
+    {
+        if (rows == null || rows.Count == 0) Values.Remove(field.Key);
+        else Values[field.Key] = rows;
+        await ValuesChanged.InvokeAsync(Values);
+    }
+
+    // What the system's table says for the hazard's level: the save DC (only when it has a save) and the damage. They stay editable.
+    private async Task FillAsync()
+    {
+        var canonical = System?.Canonical;
+        var level = Values.TryGetValue(Hazard.Level!, out var raw) ? Convert.ToString(raw, CultureInfo.InvariantCulture) : null;
+        if (canonical == null || HazardNumbers.GuideRow(level, canonical) is not { } row)
+        {
+            fillNote = L["Wizard.Hazard.Fill.NeedLevel"];
+            return;
+        }
+
+        var filled = new List<string>();
+        bool Has(string? key) => !string.IsNullOrEmpty(key) && Values.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(Convert.ToString(v, CultureInfo.InvariantCulture));
+        foreach (var (key, text) in row.Where(p => p.Key != "level"))
+        {
+            var field = Type.Fields.FirstOrDefault(f => f.Key == key);
+            if (field == null) continue;
+            if (field.Type == FieldType.Number && long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number))
+            {
+                // A DC with no save is a shape problem, so it waits for the save.
+                if (key == Hazard.Effect?.SaveDc && !Has(Hazard.Effect?.Save)) continue;
+                Values[key] = number;
+            }
+            else if (field.Type == FieldType.Collection && key == Hazard.Effect?.Damage && HazardNumbers.IsDice(text))
+            {
+                var first = HazardNumbers.EditableRows(Values.GetValueOrDefault(key)).FirstOrDefault() ?? new Dictionary<string, object>();
+                first["dice"] = text;
+                Values[key] = new List<object> { first };
+            }
+            else continue;
+
+            filled.Add(field.Label);
+        }
+
+        fillNote = filled.Count == 0 ? L["Wizard.Hazard.Fill.Nothing"] : L["Wizard.Hazard.Fill.Done", level ?? string.Empty, string.Join(", ", filled)];
+        await ValuesChanged.InvokeAsync(Values);
+    }
+
+    private IReadOnlyList<string> Checks
+    {
+        get
+        {
+            var canonical = System?.Canonical;
+            if (canonical == null) return [];
+            return (canonical.SheetRules?.Skills?.List.Select(s => s.Label) ?? []).Concat(canonical.Attributes.Select(a => a.Label))
+                .Where(l => !string.IsNullOrWhiteSpace(l)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+    }
+
+    private bool Ranked => System?.Canonical.SheetRules?.Skills is { Ranks.Count: > 0 };
+
+    private IReadOnlyList<HazardColumn> ColumnsFor(string role) => role switch
+    {
+        "detect" => Route(detect: true, disarm: false),
+        "disarm" => Route(detect: false, disarm: true),
+        "method" => Route(detect: false, disarm: false),
+        "damage" => Damage(),
+        "condition" => Conditions(),
+        "step" => [new("name", L["Wizard.Hazard.Col.Name"]), new("description", L["Wizard.Hazard.Col.Description"], HazardColumnKind.Long), new("strikes", L["Wizard.Hazard.Col.Strikes"], HazardColumnKind.Flag)],
+        "band" => Band(),
+        _ => []
+    };
+
+    private IReadOnlyList<HazardColumn> Route(bool detect, bool disarm)
+    {
+        var columns = new List<HazardColumn>
+        {
+            new("name", L["Wizard.Hazard.Col.Name"]),
+            new("action", L["Wizard.Hazard.Col.Action"]),
+            new("check", L["Wizard.Hazard.Col.Check"]) { Suggestions = Checks },
+            new("dc", L["Wizard.Hazard.Col.Dc"], HazardColumnKind.Whole),
+            new("needs", L["Wizard.Hazard.Col.Needs"])
+        };
+        if (detect || disarm) columns.Add(new("id", L["Wizard.Hazard.Col.Id"]));
+
+        // Any route may wait for a detect route (its id); only detect routes are waited for.
+        columns.Add(new("after", L["Wizard.Hazard.Col.After"], HazardColumnKind.Choice) { Options = DetectIds() });
+
+        if (disarm)
+        {
+            columns.Add(new("successes", L["Wizard.Hazard.Col.Successes"], HazardColumnKind.Whole));
+            columns.Add(new("triggersOn", L["Wizard.Hazard.Col.SetsOff"], HazardColumnKind.Word) { Word = "failure" });
+        }
+
+        if (detect) columns.Add(new("passive", L["Wizard.Hazard.Col.Passive"], HazardColumnKind.FlagOnByDefault));
+        if (Ranked) columns.Add(new("rank", L["Wizard.Hazard.Col.Rank"]));
+        columns.Add(new("text", L["Wizard.Hazard.Col.Text"], HazardColumnKind.Long));
+        return columns;
+    }
+
+    // The detect routes written so far, by their ids: what a route can wait for.
+    private IReadOnlyList<(string Value, string Label)> DetectIds() =>
+        HazardNumbers.EditableRows(Hazard.Notice?.Routes is { } field ? Values.GetValueOrDefault(field) : null)
+            .Select(r => (Id: Convert.ToString(r.GetValueOrDefault("id"), CultureInfo.InvariantCulture)?.Trim() ?? string.Empty, Name: Convert.ToString(r.GetValueOrDefault("name"), CultureInfo.InvariantCulture)?.Trim() ?? string.Empty))
+            .Where(r => r.Id.Length > 0)
+            .Select(r => (r.Id, r.Name.Length > 0 ? $"{r.Name} ({r.Id})" : r.Id))
+            .ToList();
+
+    private IReadOnlyList<HazardColumn> Damage() =>
+        [new("dice", L["Wizard.Hazard.Col.Dice"]), new("type", L["Wizard.Hazard.Col.DamageType"]), new("count", L["Wizard.Hazard.Col.Count"])];
+
+    private IReadOnlyList<HazardColumn> Conditions()
+    {
+        var shown = System;
+        var options = (System?.Canonical.Conditions ?? []).Select(c => (c, shown?.DisplayCondition(c) ?? c)).ToList();
+        return [new("name", L["Wizard.Hazard.Col.Condition"], HazardColumnKind.Choice) { Options = options }, new("lasts", L["Wizard.Hazard.Col.Lasts"])];
+    }
+
+    // A band: its levels, the numbers of the effect it may change (the fields beside the save DC and the damage), the severity, and the lists it restates whole.
+    private IReadOnlyList<HazardColumn> Band()
+    {
+        var columns = new List<HazardColumn> { new("levels", L["Wizard.Hazard.Col.Levels"]) };
+        var effect = Hazard.Effect;
+        var categories = Type.Fields.Where(f => f.Key == effect?.SaveDc || f.Key == effect?.Damage).Select(f => f.Category).ToHashSet();
+        foreach (var field in Type.Fields)
+        {
+            var scaled = field.Key == Hazard.Severity
+                || (categories.Contains(field.Category) && field.Type is FieldType.Number or FieldType.Text && field.Key != effect?.Save && field.Key != effect?.Attack);
+            if (!scaled || field.Key == Hazard.Level) continue;
+            columns.Add(new(field.Key, field.Label, field.Type == FieldType.Number ? HazardColumnKind.Whole : HazardColumnKind.Text));
+        }
+
+        if (Type.Fields.FirstOrDefault(f => f.Key == effect?.Damage) is { } damage)
+        {
+            columns.Add(new(damage.Key, damage.Label, HazardColumnKind.Rows) { Columns = Damage(), RowLabel = RowLabelOf("damage") });
+        }
+
+        if (Type.Fields.FirstOrDefault(f => f.Key == Hazard.Methods) is { } methods)
+        {
+            columns.Add(new(methods.Key, methods.Label, HazardColumnKind.Rows) { Columns = Route(detect: false, disarm: false), RowLabel = RowLabelOf("method") });
+        }
+
+        return columns;
+    }
+}

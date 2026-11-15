@@ -213,6 +213,86 @@ public static class HazardNumbers
         }
     }
 
+    /// <summary>
+    /// The row of the system's <c>hazards.scaling</c> for a level text (<c>5</c>, or a range such as <c>5-10</c>, which reads as its lowest number): the highest
+    /// row at or below the level, or the first. Null when the system has no table or the text has no number. The homebrew wizard fills a new hazard's numbers from it
+    /// and they stay editable; the same reading <see cref="ScalingProblems"/> measures against.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string>? GuideRow(string? levelText, SystemDefinition system)
+    {
+        if (system.Hazards?.Scaling is not { Count: > 0 } scaling || LowestLevel(levelText ?? string.Empty) is not { } level) return null;
+        var rows = scaling
+            .Select(row => (Level: row.TryGetValue("level", out var text) && WholeNumber(text, out var n) ? (long?)n : null, Row: row))
+            .Where(r => r.Level != null)
+            .OrderBy(r => r.Level)
+            .ToList();
+        if (rows.Count == 0) return null;
+        var at = rows.FindLastIndex(r => r.Level <= level);
+        return rows[at < 0 ? 0 : at].Row;
+    }
+
+    /// <summary>The rows of a Collection value as maps the editor can change: each row copied (its lists stay the entry's own, so replace them, never edit them),
+    /// whatever form the store gave them in. Anything that is not a row is left out.</summary>
+    public static List<Dictionary<string, object>> EditableRows(object? value)
+    {
+        var rows = new List<Dictionary<string, object>>();
+        if (value is not System.Collections.IEnumerable items || value is string) return rows;
+        foreach (var item in items)
+        {
+            if (item is IDictionary<string, object> typed) rows.Add(new Dictionary<string, object>(typed, StringComparer.Ordinal));
+            else if (item is IDictionary<object, object> loose)
+            {
+                rows.Add(loose.Where(p => p.Value != null).ToDictionary(p => Convert.ToString(p.Key, CultureInfo.InvariantCulture) ?? string.Empty, p => p.Value, StringComparer.Ordinal));
+            }
+        }
+
+        return rows;
+    }
+
+    /// <summary>
+    /// Takes the blank rows out of the hazard's lists (routes, other ways, damage, conditions, routine and the bands, and the lists inside a band) and drops a list left
+    /// empty, so an "add a row" that was never filled in is not saved as a row the table could not run. A row is blank when every value in it is empty; <c>false</c> is a value.
+    /// Changes <paramref name="properties"/> in place.
+    /// </summary>
+    public static void Tidy(IDictionary<string, object> properties, ContentTypeDefinition type)
+    {
+        if (type.Hazard is not { } hazard) return;
+        foreach (var field in new[] { hazard.Notice?.Routes, hazard.Disable?.Routes, hazard.Methods, hazard.Effect?.Damage, hazard.Effect?.Conditions, hazard.Routine, hazard.HigherLevels })
+        {
+            if (string.IsNullOrEmpty(field) || !properties.TryGetValue(field, out var value)) continue;
+            if (TidyRows(value) is { Count: > 0 } kept) properties[field] = kept;
+            else properties.Remove(field);
+        }
+    }
+
+    private static List<object>? TidyRows(object? value)
+    {
+        if (value is not System.Collections.IEnumerable || value is string) return null;
+        var kept = new List<object>();
+        foreach (var row in EditableRows(value))
+        {
+            foreach (var key in row.Keys.ToList())
+            {
+                if (row[key] is System.Collections.IEnumerable list && row[key] is not string)
+                {
+                    // A list of rows is tidied like the others; a list of words (triggersOn) stays unless it is empty.
+                    var items = list.Cast<object?>().ToList();
+                    if (items.Any(i => i is System.Collections.IDictionary))
+                    {
+                        if (TidyRows(list) is { Count: > 0 } inner) row[key] = inner;
+                        else row.Remove(key);
+                    }
+                    else if (items.Count == 0) row.Remove(key);
+                }
+                else if (row[key] is string text && text.Trim().Length == 0) row.Remove(key);
+            }
+
+            if (row.Count > 0) kept.Add(row);
+        }
+
+        return kept;
+    }
+
     private static long? LowestLevel(string text) =>
         Regex.Match(text ?? string.Empty, @"\d+") is { Success: true } m && long.TryParse(m.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : null;
 

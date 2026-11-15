@@ -152,6 +152,40 @@ public partial class BookSourceTests : IClassFixture<RavenDbFixture>
         Assert.Null(await _reader.ReadAsync(player, BookAudience.Dm));
     }
 
+    // Hazards are the GM's (H7): the system's hazard type is not playerFacing, so a hazard the GM published is still in no party book and no
+    // player's own book, nor is the hazard a place carries; the GM's own book prints it as a stat block and keeps its numbers from a model.
+    [Fact]
+    public async Task APartyOrPlayerBook_NeverCarriesAHazard_ThoughTheGmsBookPrintsIt()
+    {
+        var (dm, _) = await SeedAsync();
+        var system = new BookTestCatalog().GetDefinition("srd5e");
+        var words = new[] { "CANARY_PUBLISHED_HAZARD", "CANARY_HAZARD_DESC", "CANARY_HAZARD_NEEDS", "CANARY_PLACED_HAZARD", "CANARY_FOUND_ROUTE" };
+
+        foreach (var source in new[] { await _reader.ReadAsync(dm, BookAudience.Party), await _reader.ReadForPlayerAsync(dm, PlayerUser) })
+        {
+            Assert.NotNull(source);
+            Assert.DoesNotContain(source.Homebrew, h => h.Type == "hazard");
+            var written = string.Join("\n", BookDraftWriter.Generate(source, "en", null, system).Select(c => c.Markdown));
+            var (sent, draft) = ThroughTheDraft(source);
+            foreach (var word in words)
+            {
+                Assert.DoesNotContain(word, Serialize(source), StringComparison.Ordinal);
+                Assert.DoesNotContain(word, written, StringComparison.Ordinal);
+                Assert.DoesNotContain(word, sent + draft, StringComparison.Ordinal);
+            }
+
+            Assert.DoesNotContain("#hz-", written, StringComparison.Ordinal);
+        }
+
+        var gm = (await _reader.ReadAsync(dm, BookAudience.Dm))!;
+        var homebrew = BookDraftWriter.Generate(gm, "en", null, system).Single(c => c.Section == "homebrew").Markdown;
+        Assert.Contains("{{monster,frame,#hz-", homebrew, StringComparison.Ordinal);
+        Assert.Contains("CANARY_HAZARD_NEEDS", homebrew, StringComparison.Ordinal);
+        var passage = BookDraftEdits.Cut(homebrew, 0, homebrew.Length)!;
+        Assert.DoesNotContain("CANARY_HAZARD_NEEDS", passage.Text, StringComparison.Ordinal);
+        Assert.Contains(passage.Pieces, p => p.Label == "a stat block" && p.Text.Contains("#hz-", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void ABookSourceCanOnlyBeMadeByTheReader()
     {
@@ -370,7 +404,8 @@ public partial class BookSourceTests : IClassFixture<RavenDbFixture>
                 {
                     Id = "l-known", Name = "PUBLIC_Saltmere", Visibility = ActorVisibility.Known,
                     Description = "PUBLIC_SALTMERE_DESC\n\n:::dm\nCANARY_LOC_BLOCK\n:::",
-                    Feature = new PlaceFeature { Container = true, Lock = "CANARY_LOCK", Trap = "CANARY_TRAP", Contents = "CANARY_CONTENTS" },
+                    Feature = new PlaceFeature { Container = true, Lock = "CANARY_LOCK", Trap = "CANARY_TRAP", Contents = "CANARY_CONTENTS",
+                        Hazard = new PlacedHazard { Entry = "hazard/CANARY_PLACED_HAZARD", Found = { "CANARY_FOUND_ROUTE" } } },
                     Metadata = { ["note"] = "CANARY_LOC_META" }
                 },
                 new LocationDocument { Id = "l-hidden", Name = "CANARY_HIDDEN_PLACE", Visibility = ActorVisibility.Hidden, Description = "CANARY_HIDDEN_PLACE_DESC" }
@@ -412,6 +447,18 @@ public partial class BookSourceTests : IClassFixture<RavenDbFixture>
         {
             Id = "h-monster", CampaignId = id, EntryId = "drowned", Type = "monster", Name = "CANARY_PUBLISHED_MONSTER", IsPublished = true, AuthorUserId = DmUser,
             Properties = { ["armorClass"] = 13 }
+        });
+        // A published hazard: the system's hazard type is the GM's (not playerFacing), so it is in no party or player book, whatever its flag says.
+        await _homebrew.SaveAsync(new HomebrewEntryDocument
+        {
+            Id = "h-hazard", CampaignId = id, EntryId = "needle", Type = "hazard", Name = "CANARY_PUBLISHED_HAZARD", Description = "CANARY_HAZARD_DESC", IsPublished = true, AuthorUserId = DmUser,
+            Properties =
+            {
+                ["level"] = "1-4", ["saveAttribute"] = "Constitution", ["saveDc"] = 11,
+                ["detect"] = new List<object> { new Dictionary<string, object> { ["name"] = "Look", ["check"] = "Perception", ["dc"] = 15 } },
+                ["disarm"] = new List<object> { new Dictionary<string, object> { ["name"] = "Cut", ["needs"] = "CANARY_HAZARD_NEEDS" } },
+                ["damage"] = new List<object> { new Dictionary<string, object> { ["dice"] = "1d10", ["type"] = "poison" } }
+            }
         });
         await _encounters.SaveAsync(new EncounterDocument
         {
