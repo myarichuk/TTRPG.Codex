@@ -151,7 +151,9 @@ SRD content:
 
 What stays text among roll bonuses (RB3, considered against the SRD 5.2.1 text):
 
-- Bless, Bane, Guidance, Resistance: another creature's spell. They wait for conditions on a sheet-rules sheet (ROLL_BONUSES_DESIGN.md, decisions).
+- Bless, Bane and Guidance now reach the rolls as spell effects (SHEET_CONDITIONS_DESIGN.md): the GM puts Bless, Bane or Guided on
+  a creature, and it counts while it holds. Guided is a tick box on checks; it does not end itself, since the 5.2.1 text lets it
+  last the whole minute. Resistance stays text: it lowers damage taken, and damage taken has no roll target.
 - Rage Damage: holds only while raging (`state`). Aura of Protection (Paladin): reaches allies and ends when the paladin is Incapacitated (`aura`);
   a grant on the paladin's own saves would hide the part that matters. Two-Weapon Fighting and Great Weapon Fighting: riders on one attack (`rider`).
 - Defense is the Armor Class path already. Magic items' +N to attack, damage, saves or AC are item rules, not features of a character.
@@ -166,6 +168,20 @@ Sheet and table:
   formulas checked by the engine's parser. A feat-like entry, where the whole entry is the feature, gets the same section
   once, after its fields. Not yet: the same editor on the actor sheet, and a `use` editor for spells and weapons.
 - A monster's trait and action rows render inline text, so a `:::dm` block inside one would show raw (GM only).
+
+Conditions (SHEET_CONDITIONS_DESIGN.md, built in C1 to C7):
+
+- A condition's effects reach a character's rolls, armor class, derived values and speed, at the table and on the sheet page.
+  Exhaustion is a condition with a level: −2 per level to attacks, saves, checks and initiative, −5 ft speed per level, one
+  level off per Long Rest, death at 6.
+- The GM raises and lowers a level with − and + at the table. Away from a live table, the GM sets conditions on the sheet page;
+  players see them read-only.
+- Most SRD conditions still change no numbers: they work through advantage, disadvantage, auto-fail or "can't act", which the
+  engine has no word for (Blinded, Frightened, Poisoned, Prone, Restrained and the rest).
+- A monster's numbers are not changed by conditions; its stat block is not evaluated.
+- Only Exhaustion has a badge on the initiative row. A condition set on the sheet page counts at the table but is not shown on
+  the row and cannot be removed there.
+- Raising Exhaustion to 6 on the sheet page does not kill the character; that rule runs only at the table.
 
 Join review:
 

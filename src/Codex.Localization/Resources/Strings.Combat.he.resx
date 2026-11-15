@@ -131,7 +131,7 @@
   <data name="Combat.LowerCondition" xml:space="preserve"><value>הפחתת {0} עבור {1}</value></data>
   <data name="Combat.ConditionValue" xml:space="preserve"><value>{0} {1}</value></data>
   <data name="Combat.SpellEffects" xml:space="preserve"><value>אפקטים של לחשים</value></data>
-  <data name="Combat.ConditionHolds" xml:space="preserve"><value>{0} כבר ברמה {1}. כדי להגביר, לחצו +.</value></data>
+  <data name="Combat.ConditionHolds" xml:space="preserve"><value>{0} כבר בדרגה {1}. כדי להגביר, לחצו +.</value></data>
   <data name="Combat.TurnLabel" xml:space="preserve"><value>תור</value></data>
   <data name="Combat.ActNow" xml:space="preserve"><value>לפעול עכשיו</value></data>
   <data name="Combat.ActsNow" xml:space="preserve"><value>{0} פועל עכשיו</value></data>

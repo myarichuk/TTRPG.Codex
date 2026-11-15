@@ -381,6 +381,31 @@ Machine-chosen Hebrew names where the community glossary was silent. A Hebrew-sp
 | warrior-of-the-open-hand | 11 | Fleet Step | 'צעד זריז' |
 | warrior-of-the-open-hand | 17 | Quivering Palm | 'כף רועדת' |
 
+## Spell effects and condition strings (`content/systems/srd5e/system.he.yaml`, `Strings.*.he.resx`)
+
+Bless and Bane use the spells' names from `srd-5.2.1-he`. "Guided" is the state of having had Guidance cast on you, a coined word.
+
+| English | Hebrew |
+|---|---|
+| Guided | מונחה |
+| Guidance (the chosen skill) | הדרכה (המיומנות שנבחרה) |
+| Raise {0} for {1} | הגברת {0} עבור {1} |
+| Lower {0} for {1} | הפחתת {0} עבור {1} |
+| Spell effects | אפקטים של לחשים |
+| {0} is already {1}. Use + to raise it. | {0} כבר בדרגה {1}. כדי להגביר, לחצו +. |
+| {0} to checks | {0} לבדיקות |
+| Conditions | מצבים |
+| No conditions. | אין מצבים. |
+| While the session runs, the table sets these. | בזמן המפגש, השולחן קובע אותם. |
+| Only the GM sets these. | רק שליט המבוך קובע אותם. |
+| {0}: {1} drops to {2}. (log) | {0}: {1}, דרגה {2}. |
+| {0}: {1} ends. (log) | {0}: ללא {1}. |
+| {0} drops to {1} (inside a rest's line) | {0}: דרגה {1} |
+| {0} ends (inside a rest's line) | ללא {0} |
+
+The log lines avoid verbs, since a condition's name may be feminine (תשישות) or masculine and a verb would have to agree with it.
+They follow the older exhaustion lines ("{0}: דרגת תשישות {1}", "ללא תשישות").
+
 ## Creature, magic item and equipment names
 
 The Sonnet agents coined or transliterated many of these (for example גלימן, בולט, דארקמנטל, אוג׳ר, וויברן). The full English | Hebrew list is in [i18n-he-names.md](i18n-he-names.md) (generated from `srd-5.2.1-he`). Corrections go in `content/systems/srd5e/packs/srd-5.2.1-he/{monster,magic-item,equipment}/`.
