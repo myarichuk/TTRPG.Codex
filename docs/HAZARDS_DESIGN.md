@@ -45,7 +45,7 @@ GM Core, which is not held yet.
 
 | Part | Meaning | srd5e | Pathfinder 2e (later) | BFRD (later) |
 |---|---|---|---|---|
-| **Notice** | A DC to spot it, the check that spots it, optionally a minimum rank | Perception (passive or active) or Investigation vs DC | Perception vs Stealth DC, minimum proficiency rank | as srd5e (check when imported) |
+| **Notice** | Routes: for each, the check and DC or what it needs instead, optionally a minimum rank | Perception (passive or active) or Investigation vs DC | Perception vs Stealth DC, minimum proficiency rank | as srd5e (check when imported) |
 | **Disable** | Routes: for each, the check and DC or what it needs instead, minimum rank, successes needed, which outcomes set it off | Often no check (cut the wire, wedge an Iron Spike); sometimes one check (Sleight of Hand) vs DC | Skill, rank, often 2 successes, crit failure triggers it | as srd5e |
 | **Trigger** | What sets it off | text | text | text |
 | **Effect** | An attack or a save, damage dice and type, conditions | attack bonus or save attribute + DC; damage | same, with degrees of success | same |
@@ -105,7 +105,7 @@ reads a hard-coded property:
 | `trigger` | a field | text |
 | `duration` | a field | text: "Instantaneous", "Until the stone stops rolling" |
 | `initiative` | a Number field | A complex hazard's Initiative bonus, read by H5's actor registration |
-| `effect` | `{ attack, save, saveDc, onSave, damage, conditions, area, text }` | One effect with lists inside it: an optional save (an empty `save` on an entry means none), `onSave` (`half` or `none`: what a passed save does to the damage), `damage` (Collection of `{ dice, type, count }`), `conditions` (Collection of `{ name, lasts }`, applied on a failed save, or always without one), `area` (text); the rest is `text` |
+| `effect` | `{ attack, save, saveDc, onSave, damage, conditions, area, text }` | One effect with lists inside it: an optional save (an empty `save` on an entry means none), `onSave` (`half` or `none`: what a passed save does to the damage; empty means `none`; only with a save, and a save has its DC), `damage` (Collection of `{ dice, type, count }`), `conditions` (Collection of `{ name, lasts }`, applied on a failed save, or always without one), `area` (text); the rest is `text` |
 | `durability` | `{ armorClass, hardness, hitPoints, brokenThreshold, damageThreshold, immunities }` | Any subset. `damageThreshold` is a Number (a hit below it does nothing; not Hardness, not the broken threshold); `immunities` a TagList |
 | `reset` | a field | text |
 | `routine` | a field (`Collection` of `{ name, description }`) | Present only on systems with complex hazards |
@@ -212,7 +212,7 @@ PlaceFeature.Hazard      : { entry: "hazard/spiked-pit", state: hidden | noticed
 
 | Action | What it does |
 |---|---|
-| **Notice** | For each PC in the scene: with `notice.passive`, compares the passive score with the DC; otherwise rolls the sheet's check (the same skill roll the sheet's skill button makes). The same goes for each detect route, with its own check and DC. With a route's `rank`, a PC below the rank cannot try it. The result goes to the GM only: "Notices: Ana (passive 15). Does not: Bo (12)". The GM then marks it noticed for those PCs, which reveals it to them |
+| **Notice** | For each PC in the scene: with `notice.passive`, compares the passive score with the DC; otherwise rolls the sheet's check (the same skill roll the sheet's skill button makes). The same goes for each detect route that has a check, with its own check and DC; a route with no check (Detect Magic) is never done by the sweep. With a route's `rank`, a PC below the rank cannot try it. The result goes to the GM only: "Notices: Ana (passive 15). Does not: Bo (12)". The GM then marks it noticed for those PCs, which reveals it to them |
 | **Disable** | The GM picks the actor who tries. The GM also picks the route (3.1.1); a route with no `check` needs no roll and is marked done. The engine rolls the actor's route check against the route's DC. A success adds one to `successes`; reaching the route's `successes` (default 1) disables it. An outcome whose key is in the route's `triggersOn` sets it off (`failure` for the Poisoned Needle, `criticalFailure` on a system with degrees) |
 | **Trigger** | The GM picks the targets. With `effect.attack`, it rolls the attack against each target's armor class; with `effect.save`, it asks each target's saving throw against `saveDc`. Damage goes through the existing damage event, so resistances and the system's `events: damage` handler apply. Conditions in `effect.text` stay text for the GM to add |
 
@@ -252,7 +252,7 @@ triggers" through a route's `triggersOn` list (outcome keys). Until that roll ex
 
 | System | Pack | What |
 |---|---|---|
-| srd5e | `srd-5.2.1/hazards` | **The SRD's 8 traps** (Gameplay Toolbox, "Traps", pp. 199-201): Collapsing Roof, Falling Net, Fire-Casting Statue, Hidden Pit, Poisoned Darts, Poisoned Needle, Rolling Stone, Spiked Pit. Each has severity and level range, trigger, duration, the effect with its save and damage, Detect and Disarm (sometimes several routes: Fire-Casting Statue has three detect routes, Detect Magic, the glyph and the plate, and three disarm routes, reading the glyph, defacing it and wedging the plate; Poisoned Darts has two of each), the extra methods it needs (Avoid, Escape, Destroy, Slow, Set) and "At Higher Levels" (all but Rolling Stone). Imported by `Srd5eImporter` with the SRD attribution. The importer's source is the 5e-bits JSON, which has no traps, so they come from a reviewed data file, `Data/srd521-traps.yaml`, written from the SRD 5.2.1 document, with a small loader, the way #302 added the invocations (`Data/srd521-invocations.yaml`, `Invocations.cs`). No PDF reading in the importer |
+| srd5e | `srd-5.2.1/hazards` | **The SRD's 8 traps** (Gameplay Toolbox, "Traps", pp. 199-201): Collapsing Roof, Falling Net, Fire-Casting Statue, Hidden Pit, Poisoned Darts, Poisoned Needle, Rolling Stone, Spiked Pit. Each has severity and level range, trigger, duration, the effect with its save and damage, Detect and Disarm (sometimes several routes: Fire-Casting Statue has four detect routes, Detect Magic, the glyph, reading the glyph and the plate, and two disarm routes, defacing the glyph and wedging the plate; Poisoned Darts has two of each), the extra methods it needs (Avoid, Escape, Destroy, Slow, Set) and "At Higher Levels" (all but Rolling Stone). Imported by `Srd5eImporter` with the SRD attribution. The importer's source is the 5e-bits JSON, which has no traps, so they come from a reviewed data file, `Data/srd521-traps.yaml`, written from the SRD 5.2.1 document, with a small loader, the way #302 added the invocations (`Data/srd521-invocations.yaml`, `Invocations.cs`). No PDF reading in the importer |
 | srd5e | `codex-flavor` (the project's own pack) or a new `codex-hazards` pack | Only what the SRD lacks: a complex hazard (a flooding room) and a magical one (a cursed doorway), written by this project with numbers from 3.2. The SRD's traps cover the simple mechanical ones |
 | srd5e | rules, not hazards | The SRD's environmental rules (Burning, Dehydration, Falling, Malnutrition, Suffocation; and Deep Water, Extreme Cold, Extreme Heat, Frigid Water, Heavy Precipitation, High Altitude, Slippery Ice, Strong Wind, Thin Ice) stay `rule` entries. They apply to a whole place, not a placed object. A later step may let a place name one as its environment |
 | fitd-srd | none | Dangers are clocks and consequences. No `hazard` type |
@@ -369,7 +369,7 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     Choosing another hazard resets its state, counts and version. **For H4b:** the table's writes must patch only `Feature.Hazard` on the stored place (a
     repository method of its own, not `UpsertLocationAsync` with a whole copy), and writing back at encounter end must skip a placement whose stored state
     changed after the encounter took its copy. Not built yet; `UpsertLocationAsync` still replaces the whole location.
-  - The loader also refuses: a passive notice without a check, a second hazard type (the picker offers one), a scaling value that is not a whole number
+  - The loader also refuses: a passive notice without routes, a second hazard type (the picker offers one), a scaling value that is not a whole number
     for a Number field, damage that is not dice, and field names that differ in case (with a hint). The content loader reports a scaled row naming a key
     that is not a field of the type (or differs in case), and an other-way row with no name.
   - Check names are stored as the content writes them, as labels (`Perception`, `Dexterity`, `Thieves' Tools`). H4a's lookup finds a check by key or label
@@ -391,8 +391,7 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   Prone, a complex hazard with Initiative +8; Spiked Pit has no save. Invented rows (Avoid, Escape and Destroy where the SRD has none) and the
   invented resets are gone: only the statue and the darts reset. `HazardNumbers` reads the rows as `HazardRoute`, `HazardDamagePart` and
   `HazardCondition`, and `HazardNumbers.Problems` checks the rows per entry (a dc only with a check; a route with no check names what it needs; unique
-  ids; `after` names a detect route; a damage part is dice; a condition is one of the system's). Choices: the statue's reading and defacing of the glyph are
-  separate disarm routes with no `after` between them, the Falling Net restates its `methods` per band, and passive Perception may find a trap
+  ids; `after` names a detect route; a damage part is dice; a condition is one of the system's). Choices: the statue's reading of the glyph is a detect route (after the glyph) and defacing it a disarm route, neither needing the other, the Falling Net restates its `methods` per band, and passive Perception may find a trap
   whose route is a Search action. `docs/schema/system.schema.json` and `SYSTEM_YAML_REFERENCE.md` are regenerated. The Russian and Hebrew labels of the
   new fields need native review.
 
@@ -585,7 +584,7 @@ public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId)
 ### 12.6 What the hazard shape amendment adds to H4a
 
 The signatures above do not change. `CheckRequest` takes `Check`, `Dc`, `Passive` and `Kind` per call, and H4b fills them from one `HazardRoute`
-(`HazardNumbers.NoticeRoutes`, `DisableRoutes`, `Methods`). A route with no `check` never calls the service: H4b records it as done. Nothing in 12
+(`HazardNumbers.NoticeRoutes`, `DisableRoutes`, `Methods`). A route with no `check` never calls the service, and a Notice sweep never completes it: the GM or a player picks it, and H4b then records it as done. Nothing in 12
 reads a `HazardNotice` or `HazardDisable` member.
 
 1. **Passive is per route.** Decision C: passive Perception can find a trap whose detect route is a Search action, so the SRD traps carry no
@@ -595,6 +594,9 @@ reads a `HazardNotice` or `HazardDisable` member.
    keys are not renamed.
 3. **Found routes are recorded per placement (H4b).** A route's `after` needs per-route state. `PlacedHazard.NoticedBy` is per actor, not per route, so
    H4b adds something like `Found: [routeId]`: the statue's deface and read-the-glyph routes are offered only once `glyph` is found, and the plate's
-   wedge once `plate` is. A successful read-the-glyph route (a disarm row that only teaches what the glyph means) must not count as disarming the
-   statue: only a route whose text says so (deface, wedge) does, so H4b needs a way to tell them apart (for example a `disarms: false` row key, or
-   treating a route with `needs` and no check as the disarm).
+   wedge once `plate` is. A detect route may come `after` another detect route (read-the-glyph after the glyph). A successful disarm route always
+   disarms; a successful detect route only marks a route found.
+4. **No-check routes are never done by a Notice sweep.** The sweep covers only routes that have a check (passive where `HasPassive`, else rolled). A
+   no-check route (the statue's Detect Magic, a pit's wedge) is done only when the GM or a player picks it.
+5. **For H5: the Rolling Stone's Crush save applies on other creatures' turns**, whenever a creature enters the stone's space while it rolls, not only on
+   the stone's own initiative count. `routine` rows are not all steps of the hazard's own turn.

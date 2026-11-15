@@ -100,9 +100,9 @@
     detect:
       - { id: aura, name: Detect Magic, needs: A Detect Magic spell, text: "Shows an aura of Evocation magic around the statue." }
       - { id: glyph, name: The glyph, action: Search, check: Perception, dc: 10, text: "From within 5 feet of the statue; finds a tiny glyph on it." }
+      - { id: meaning, name: Read the glyph, action: Study, check: Arcana, dc: 15, after: glyph, text: "Learns that the glyph means fire. Defacing it does not need this." }
       - { id: plate, name: The pressure plate, action: Search, check: Perception, dc: 15, text: "Examining the section of floor that forms the plate." }
     disarm:
-      - { id: meaning, name: Read the glyph, action: Study, check: Arcana, dc: 15, after: glyph, text: "Learns that the glyph means fire." }
       - { id: deface, name: Deface the glyph, action: Action, after: glyph, needs: A sharp tool, text: "Defacing the glyph disarms the trap." }
       - { id: wedge, name: Wedge the plate, after: plate, needs: An Iron Spike or a similar object, text: "The plate can no longer set the trap off." }
     higherLevels:
@@ -220,7 +220,7 @@
     routine:
       - { name: Roll, description: "On its turn the stone moves 60 feet in one direction, changing course if an obstacle redirects it. It stops when it hits a wall or similar barrier, and cannot go around corners." }
       - { name: Through spaces, description: "The stone can move through creatures' spaces and creatures can move through its space, treating it as Difficult Terrain." }
-      - { name: Crush, description: "Whenever the stone enters a creature's space for the first time on a turn, or a creature enters the stone's space while it rolls, that creature makes the save, taking the damage and falling Prone on a failure." }
+      - { name: Crush, description: "On any creature's turn, not only the stone's: whenever the stone enters a creature's space for the first time on a turn, or a creature enters the stone's space while it rolls, that creature makes the save, taking the damage and falling Prone on a failure." }
     detect:
       - { id: plate, name: The pressure plate, action: Study, check: Investigation, dc: 15, text: "Examining the section of floor that forms the plate deduces what it does." }
     disarm:

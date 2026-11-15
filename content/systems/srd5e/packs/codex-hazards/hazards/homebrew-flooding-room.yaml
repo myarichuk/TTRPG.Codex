@@ -14,7 +14,7 @@ properties:
   detect:
   - id: plate
     name: The floor plate
-    action: Search
+    action: Study
     check: Investigation
     dc: 15
     text: Examining the room finds the plate, the lever and the sluices.

@@ -126,7 +126,7 @@ public class Srd5eHazardsTests : IAsyncLifetime
     }
 
     [Fact]
-    public void TheStatue_HasThreeDisarmRoutes_ThatNeedTheirNoticeRoutesFirst()
+    public void TheStatue_HasTwoDisarmRoutes_AndReadingTheGlyphIsADetectRoute()
     {
         var type = System.FindType("hazard")!;
         var statue = Hazards("srd-5.2.1").Single(h => h.Id == "fire-casting-statue");
@@ -135,15 +135,126 @@ public class Srd5eHazardsTests : IAsyncLifetime
         var disarm = HazardNumbers.DisableRoutes(numbers, type.Hazard!);
         var notice = HazardNumbers.NoticeRoutes(numbers, type.Hazard!);
 
-        Assert.Equal(3, disarm.Count);
-        Assert.Equal(new[] { "aura", "glyph", "plate" }, notice.Select(r => r.Id));
-        Assert.Equal(new[] { "glyph", "glyph", "plate" }, disarm.Select(r => r.After));
-        var read = disarm.Single(r => r.Id == "meaning");
-        Assert.Equal(("Arcana", 15, "Study"), (read.Check, read.Dc, read.Action));
-        Assert.All(notice.Where(r => r.Id != "aura"), r => Assert.Equal("Perception", r.Check));
-        Assert.Equal(new int?[] { 10, 15 }, notice.Where(r => r.HasCheck).Select(r => r.Dc));
+        Assert.Equal(new[] { "deface", "wedge" }, disarm.Select(r => r.Id));
+        Assert.Equal(new[] { "glyph", "plate" }, disarm.Select(r => r.After));
+        Assert.Equal(new[] { "aura", "glyph", "meaning", "plate" }, notice.Select(r => r.Id));
+        var read = notice.Single(r => r.Id == "meaning");
+        Assert.Equal(("Arcana", 15, "Study", "glyph"), (read.Check, read.Dc, read.Action, read.After));
+        var aura = notice.Single(r => r.Id == "aura");
+        Assert.False(aura.HasCheck);
+        Assert.Equal("A Detect Magic spell", aura.Needs);
+        Assert.Equal(new int?[] { 10, 15, 15 }, notice.Where(r => r.HasCheck).Select(r => r.Dc));
         Assert.Equal("30-foot Cone", HazardNumbers.For(statue, type, "5-10")["area"]);
         Assert.Equal(15L, Convert.ToInt64(HazardNumbers.For(statue, type, "17-20")["saveDc"]));
+    }
+
+    [Fact]
+    public void RollingStone_DealsNoHalfDamage_KnocksProne_AndHasItsStatBlock()
+    {
+        var type = System.FindType("hazard")!;
+        var stone = Hazards("srd-5.2.1").Single(h => h.Id == "rolling-stone");
+        var numbers = HazardNumbers.For(stone, type, null);
+
+        Assert.Equal("none", stone.Properties["onSave"]);
+        Assert.Equal(new[] { new HazardCondition("Prone", null) }, HazardNumbers.Conditions(numbers, type.Hazard!));
+        Assert.Equal(new[] { new HazardDamagePart("10d10", "bludgeoning", null) }, HazardNumbers.Damage(numbers, type.Hazard!));
+        Assert.Equal((100L, 10L), (stone.Properties["hitPoints"], stone.Properties["damageThreshold"]));
+    }
+
+    [Fact]
+    public void TheWireTraps_HaveATextOnlyDisarm_AndTheRoofSavesAtDc13_AndTheNetRestrains()
+    {
+        var type = System.FindType("hazard")!;
+        foreach (var id in new[] { "collapsing-roof", "falling-net" })
+        {
+            var trap = Hazards("srd-5.2.1").Single(h => h.Id == id);
+            var cut = HazardNumbers.DisableRoutes(HazardNumbers.For(trap, type, null), type.Hazard!).Single();
+            Assert.False(cut.HasCheck);
+            Assert.Null(cut.Needs);
+            Assert.False(string.IsNullOrEmpty(cut.Text));
+            Assert.Equal("wire", cut.After);
+            Assert.Equal(("Perception", 11), (HazardNumbers.NoticeRoutes(HazardNumbers.For(trap, type, null), type.Hazard!).Single().Check, HazardNumbers.NoticeRoutes(HazardNumbers.For(trap, type, null), type.Hazard!).Single().Dc));
+        }
+
+        Assert.Equal(13L, Hazards("srd-5.2.1").Single(h => h.Id == "collapsing-roof").Properties["saveDc"]);
+        var net = Hazards("srd-5.2.1").Single(h => h.Id == "falling-net");
+        Assert.Equal(new[] { new HazardCondition("Restrained", "until it escapes") }, HazardNumbers.Conditions(HazardNumbers.For(net, type, null), type.Hazard!));
+    }
+
+    [Fact]
+    public void TheProblemChecks_ReadBandRows_AndAreaPerEntry()
+    {
+        var type = System.FindType("hazard")!;
+        var entry = Traps.Read("""
+            - id: t
+              name: T
+              properties:
+                saveAttribute: Dexterity
+                onSave: halve
+                damage: 4d10
+                conditions: [Prone]
+                detect: Perception 15
+                disarm:
+                  - { id: a, name: Loop, after: b, text: x }
+                  - { id: b, name: Loop2, after: a, text: x }
+                  - { id: c, name: Self, after: c, text: x }
+                higherLevels:
+                  - levels: 5-10
+                    methods:
+                      - { name: Escape, dc: 12 }
+                      - { name: Slow, check: Athletics, dc: twelve }
+                    damage:
+                      - { dice: 4d1O, type: fire }
+            """).Single();
+
+        var problems = HazardNumbers.Problems(entry, type, System).ToList();
+
+        Assert.Contains(problems, p => p.Contains("band 5-10") && p.Contains("'Escape'") && p.Contains("dc and no check"));
+        Assert.Contains(problems, p => p.Contains("band 5-10") && p.Contains("'Slow'") && p.Contains("not a whole number"));
+        Assert.Contains(problems, p => p.Contains("band 5-10") && p.Contains("'4d1O'"));
+        Assert.Contains(problems, p => p.Contains("damage field") && p.Contains("one value"));
+        Assert.Contains(problems, p => p.Contains("detect field") && p.Contains("one value"));
+        Assert.Contains(problems, p => p.Contains("condition list has 'Prone'"));
+        Assert.Contains(problems, p => p.Contains("onSave is 'halve'"));
+        Assert.Contains(problems, p => p.Contains("save and no save DC"));
+    }
+
+    [Fact]
+    public void ASaveDcWithNoSave_AndAnOnSaveWithNoSave_AreReported()
+    {
+        var type = System.FindType("hazard")!;
+        var entry = Traps.Read("""
+            - id: t
+              name: T
+              properties:
+                saveDc: 12
+                onSave: half
+            """).Single();
+
+        var problems = HazardNumbers.Problems(entry, type, System).ToList();
+
+        Assert.Contains(problems, p => p.Contains("save DC and no save"));
+        Assert.Contains(problems, p => p.Contains("onSave and no save"));
+    }
+
+    [Fact]
+    public void ADetectRoute_CannotWaitForItself_OrInACircle()
+    {
+        var type = System.FindType("hazard")!;
+        var entry = Traps.Read("""
+            - id: t
+              name: T
+              properties:
+                detect:
+                  - { id: a, name: A, after: b, text: x }
+                  - { id: b, name: B, after: a, text: x }
+                  - { id: c, name: C, after: c, text: x }
+            """).Single();
+
+        var problems = HazardNumbers.Problems(entry, type, System).ToList();
+
+        Assert.Contains(problems, p => p.Contains("'c' comes after itself") || p.Contains("'C' comes after itself"));
+        Assert.Contains(problems, p => p.Contains("waits, through other routes, for itself"));
     }
 
     [Fact]

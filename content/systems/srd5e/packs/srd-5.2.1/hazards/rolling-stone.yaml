@@ -31,7 +31,7 @@ properties:
   - name: Through spaces
     description: The stone can move through creatures' spaces and creatures can move through its space, treating it as Difficult Terrain.
   - name: Crush
-    description: Whenever the stone enters a creature's space for the first time on a turn, or a creature enters the stone's space while it rolls, that creature makes the save, taking the damage and falling Prone on a failure.
+    description: "On any creature's turn, not only the stone's: whenever the stone enters a creature's space for the first time on a turn, or a creature enters the stone's space while it rolls, that creature makes the save, taking the damage and falling Prone on a failure."
   detect:
   - id: plate
     name: The pressure plate

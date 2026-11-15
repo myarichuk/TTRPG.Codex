@@ -28,6 +28,13 @@ properties:
     check: Perception
     dc: 10
     text: From within 5 feet of the statue; finds a tiny glyph on it.
+  - id: meaning
+    name: Read the glyph
+    action: Study
+    check: Arcana
+    dc: 15
+    after: glyph
+    text: Learns that the glyph means fire. Defacing it does not need this.
   - id: plate
     name: The pressure plate
     action: Search
@@ -35,13 +42,6 @@ properties:
     dc: 15
     text: Examining the section of floor that forms the plate.
   disarm:
-  - id: meaning
-    name: Read the glyph
-    action: Study
-    check: Arcana
-    dc: 15
-    after: glyph
-    text: Learns that the glyph means fire.
   - id: deface
     name: Deface the glyph
     action: Action

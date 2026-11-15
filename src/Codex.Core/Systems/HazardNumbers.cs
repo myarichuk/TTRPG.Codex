@@ -49,7 +49,7 @@ public static class HazardNumbers
     public static IReadOnlyList<string> Rows(ContentEntry entry, ContentTypeDefinition type) =>
         RowsOf(entry, type).Select(r => Text(r, "levels")).Where(l => l.Length > 0).ToList();
 
-    /// <summary>The entry's properties with the row named <paramref name="levels"/> laid over them. A null or unknown row gives the base numbers.</summary>
+    /// <summary>The entry's properties with the row named <paramref name="levels"/> laid over them. A null or unknown row gives the base numbers. The copy is shallow: the lists and rows inside are the entry's own, so treat them as read only.</summary>
     public static IReadOnlyDictionary<string, object> For(ContentEntry entry, ContentTypeDefinition type, string? levels)
     {
         var numbers = new Dictionary<string, object>(entry.Properties, StringComparer.Ordinal);
@@ -117,43 +117,117 @@ public static class HazardNumbers
             }
         }
 
-        var ranked = system.SheetRules?.Skills is { Ranks.Count: > 0 };
         var entryNumbers = (IReadOnlyDictionary<string, object>)entry.Properties;
-        var noticeIds = RoutesOf(entryNumbers, hazard.Notice?.Routes).Select(r => r.Id).Where(i => !string.IsNullOrEmpty(i)).ToHashSet(StringComparer.Ordinal);
-        foreach (var (label, field) in new[] { ("detect", hazard.Notice?.Routes), ("disarm", hazard.Disable?.Routes), ("other-way", hazard.Methods) })
-        {
-            var seen = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var row in RowsOfField(entryNumbers, field))
-            {
-                var name = Text(row, "name") is { Length: > 0 } n ? n : Text(row, "id") is { Length: > 0 } i ? i : label + " row";
-                var hasCheck = Text(row, "check").Length > 0;
-                if (label == "other-way" && Text(row, "name").Length == 0) yield return "an other-way row has no name.";
-                if (Text(row, "id") is { Length: > 0 } id && !seen.Add(id)) yield return $"{label} route '{name}' repeats the id '{id}'.";
-                if (row.ContainsKey("dc") && !WholeNumber(row["dc"], out _)) yield return $"{label} route '{name}' has a dc that is not a whole number.";
-                if (Text(row, "dc").Length > 0 && !hasCheck) yield return $"{label} route '{name}' has a dc and no check.";
-                if (!hasCheck && Text(row, "needs").Length == 0 && Text(row, "text").Length == 0)
-                {
-                    yield return $"{label} route '{name}' has no check; it needs 'needs' or 'text' to say what it takes.";
-                }
+        foreach (var message in SaveProblems(entryNumbers, hazard)) yield return message;
+        foreach (var message in ListProblems(entryNumbers, entryNumbers, hazard, system, string.Empty)) yield return message;
 
-                if (Text(row, "after") is { Length: > 0 } after && !noticeIds.Contains(after)) yield return $"{label} route '{name}' comes after '{after}', which is no detect route id.";
-                if (Text(row, "rank").Length > 0 && !ranked) yield return $"{label} route '{name}' names a rank; this system declares no ranks in sheetRules.skills.ranks.";
-                if (row.ContainsKey("successes") && (!WholeNumber(row["successes"], out var successes) || successes < 1)) yield return $"{label} route '{name}' needs a whole number of successes, one or more.";
+        // A band restates whole lists (the Falling Net's methods, a pit's damage), so each of its lists is checked like the base's.
+        foreach (var row in RowsOf(entry, type))
+        {
+            var levels = Text(row, "levels");
+            var merged = For(entry, type, levels);
+            var own = merged.Where(p => row.ContainsKey(p.Key) && p.Key != "levels").ToDictionary(p => p.Key, p => p.Value);
+            foreach (var message in ListProblems(own, merged, hazard, system, $"band {levels}: ")) yield return message;
+        }
+    }
+
+    private static readonly string[] OnSaveValues = ["half", "none"];
+
+    // The save, its DC and what a passed save does: one save has all of them; with none, onSave means nothing. An absent onSave is "none".
+    private static IEnumerable<string> SaveProblems(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard)
+    {
+        if (hazard.Effect is not { } effect) yield break;
+        bool Has(string? field) => !string.IsNullOrEmpty(field) && numbers.TryGetValue(field, out var v) && Convert.ToString(v, CultureInfo.InvariantCulture)?.Trim().Length > 0;
+        var save = Has(effect.Save);
+        if (save && !Has(effect.SaveDc)) yield return "it has a save and no save DC.";
+        if (!save && Has(effect.SaveDc)) yield return "it has a save DC and no save.";
+        if (Has(effect.OnSave))
+        {
+            var value = Convert.ToString(numbers[effect.OnSave!], CultureInfo.InvariantCulture)!.Trim();
+            if (!OnSaveValues.Contains(value, StringComparer.Ordinal)) yield return $"onSave is '{value}'; it must be half or none.";
+            if (!save) yield return "it has an onSave and no save.";
+        }
+    }
+
+    // The route, damage and condition lists among `own` (the whole entry, or the keys a band restates). `all` is what a route's `after` is checked against.
+    private static IEnumerable<string> ListProblems(IReadOnlyDictionary<string, object> own, IReadOnlyDictionary<string, object> all, HazardDefinition hazard,
+        SystemDefinition system, string prefix)
+    {
+        var ranked = system.SheetRules?.Skills is { Ranks.Count: > 0 };
+        var noticeRows = RoutesOf(all, hazard.Notice?.Routes);
+        var noticeIds = noticeRows.Select(r => r.Id).Where(i => !string.IsNullOrEmpty(i)).ToHashSet(StringComparer.Ordinal);
+        var lists = new[] { ("detect", hazard.Notice?.Routes), ("disarm", hazard.Disable?.Routes), ("other-way", hazard.Methods), ("damage", hazard.Effect?.Damage), ("condition", hazard.Effect?.Conditions) };
+        foreach (var (label, field) in lists)
+        {
+            if (string.IsNullOrEmpty(field) || !own.TryGetValue(field, out var raw)) continue;
+            if (!IsList(raw))
+            {
+                yield return $"{prefix}the {label} field '{field}' is one value; it needs a list of rows, each a map of keys.";
+                continue;
+            }
+
+            foreach (var item in ((System.Collections.IEnumerable)raw).Cast<object?>().Where(i => i is not System.Collections.IDictionary))
+            {
+                yield return $"{prefix}the {label} list has '{item}', which is not a row of keys (write it as {{ name: ... }}).";
             }
         }
 
-        foreach (var row in RowsOfField(entryNumbers, hazard.Effect?.Damage))
+        foreach (var (label, field) in lists.Take(3))
         {
-            if (!IsDice(Text(row, "dice"))) yield return $"a damage row has dice '{Text(row, "dice")}'; they must be dice such as 2d8.";
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var row in RowsOfField(own, field))
+            {
+                var name = Text(row, "name") is { Length: > 0 } n ? n : Text(row, "id") is { Length: > 0 } i ? i : label + " row";
+                var hasCheck = Text(row, "check").Length > 0;
+                if (label == "other-way" && Text(row, "name").Length == 0) yield return $"{prefix}an other-way row has no name.";
+                if (Text(row, "id") is { Length: > 0 } id && !seen.Add(id)) yield return $"{prefix}{label} route '{name}' repeats the id '{id}'.";
+                if (row.ContainsKey("dc") && !WholeNumber(row["dc"], out _)) yield return $"{prefix}{label} route '{name}' has a dc that is not a whole number.";
+                if (Text(row, "dc").Length > 0 && !hasCheck) yield return $"{prefix}{label} route '{name}' has a dc and no check.";
+                if (!hasCheck && Text(row, "needs").Length == 0 && Text(row, "text").Length == 0)
+                {
+                    yield return $"{prefix}{label} route '{name}' has no check; it needs 'needs' or 'text' to say what it takes.";
+                }
+
+                if (Text(row, "after") is { Length: > 0 } after)
+                {
+                    if (!noticeIds.Contains(after)) yield return $"{prefix}{label} route '{name}' comes after '{after}', which is no detect route id.";
+                    else if (after == Text(row, "id") && label == "detect") yield return $"{prefix}detect route '{name}' comes after itself.";
+                }
+
+                if (Text(row, "rank").Length > 0 && !ranked) yield return $"{prefix}{label} route '{name}' names a rank; this system declares no ranks in sheetRules.skills.ranks.";
+                if (row.ContainsKey("successes") && (!WholeNumber(row["successes"], out var successes) || successes < 1)) yield return $"{prefix}{label} route '{name}' needs a whole number of successes, one or more.";
+            }
+        }
+
+        // A detect route that waits for another must not wait in a circle.
+        var waits = noticeRows.Where(r => r.Id != null && r.After != null).GroupBy(r => r.Id!).ToDictionary(g => g.Key, g => g.First().After!, StringComparer.Ordinal);
+        foreach (var start in waits.Keys.Where(k => waits[k] != k))
+        {
+            var current = start;
+            for (var steps = 0; steps < waits.Count && waits.TryGetValue(current, out var next); steps++)
+            {
+                current = next;
+                if (current == start)
+                {
+                    yield return $"{prefix}detect route '{start}' waits, through other routes, for itself.";
+                    break;
+                }
+            }
+        }
+
+        foreach (var row in RowsOfField(own, hazard.Effect?.Damage))
+        {
+            if (!IsDice(Text(row, "dice"))) yield return $"{prefix}a damage row has dice '{Text(row, "dice")}'; they must be dice such as 2d8.";
             var count = Text(row, "count");
-            if (count.Length > 0 && !IsDice(count) && !WholeNumber(count, out _)) yield return $"a damage row has count '{count}'; it must be dice or a whole number.";
+            if (count.Length > 0 && !IsDice(count) && !WholeNumber(count, out _)) yield return $"{prefix}a damage row has count '{count}'; it must be dice or a whole number.";
         }
 
         var known = new HashSet<string>(system.Conditions, StringComparer.OrdinalIgnoreCase);
-        foreach (var row in RowsOfField(entryNumbers, hazard.Effect?.Conditions))
+        foreach (var row in RowsOfField(own, hazard.Effect?.Conditions))
         {
             var name = Text(row, "name");
-            if (!known.Contains(name)) yield return $"condition '{name}' is not one of the system's conditions.";
+            if (name.Length == 0) yield return $"{prefix}a condition row has no name.";
+            else if (!known.Contains(name)) yield return $"{prefix}condition '{name}' is not one of the system's conditions.";
         }
     }
 
