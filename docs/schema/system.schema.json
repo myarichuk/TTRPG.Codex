@@ -740,7 +740,7 @@
             "number",
             "boolean"
           ],
-          "description": "The field holding what a complex hazard does each round, a collection of `{ name, description }`. Only for systems with hazards that act in initiative."
+          "description": "The field holding what a complex hazard does each round, a collection of `{ name, description, strikes }`. `strikes: true` marks the one row that applies the hazard's effect to the creatures the table names; every other row is a note. Only for systems with hazards that act in initiative."
         },
         "complex": {
           "type": [

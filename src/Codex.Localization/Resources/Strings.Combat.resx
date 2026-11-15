@@ -78,7 +78,7 @@
   <data name="Combat.Hazard.Undo" xml:space="preserve"><value>Undo last change: {0}</value></data>
   <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1} DC {2})</value></data>
   <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (needs {1})</value></data>
-  <data name="Combat.QuickAdd" xml:space="preserve"><value>Quick-add a creature</value></data>
+  <data name="Combat.QuickAdd" xml:space="preserve"><value>Quick-add a creature or a hazard</value></data>
   <data name="Combat.SearchCreatures" xml:space="preserve"><value>Search creatures and hazards</value></data>
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Search creatures and hazards in the Library…</value></data>
   <data name="Combat.Hazard.FromLibrary" xml:space="preserve"><value>Taken from the Library, on no place</value></data>

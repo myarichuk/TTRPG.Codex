@@ -78,7 +78,7 @@
   <data name="Combat.Hazard.Undo" xml:space="preserve"><value>Отменить последнее изменение: {0}</value></data>
   <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1}, СЛ {2})</value></data>
   <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (нужно: {1})</value></data>
-  <data name="Combat.QuickAdd" xml:space="preserve"><value>Быстро добавить существо</value></data>
+  <data name="Combat.QuickAdd" xml:space="preserve"><value>Быстро добавить существо или опасность</value></data>
   <data name="Combat.SearchCreatures" xml:space="preserve"><value>Поиск существ и опасностей</value></data>
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Поиск существ и опасностей в библиотеке…</value></data>
   <data name="Combat.Hazard.FromLibrary" xml:space="preserve"><value>Взята из Библиотеки, ни на каком месте</value></data>

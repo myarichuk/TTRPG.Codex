@@ -10,7 +10,7 @@
    encounters plus everything currently in the cast; for players, the creatures they have met. *@
 
 @{
-    var inPlay = Ctx.Actors.Where(a => a.Kind == ActorKind.Monster).OrderBy(a => a.Name).ToList();
+    var inPlay = Ctx.Actors.Where(a => a.Kind == ActorKind.Monster && a.Hazard == null).OrderBy(a => a.Name).ToList();
 }
 
 <div class="page-header mb-3">

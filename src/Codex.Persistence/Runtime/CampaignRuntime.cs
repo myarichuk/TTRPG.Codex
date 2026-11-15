@@ -41,6 +41,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
     // Actors a command made stale without dirtying them (those that linked to an actor just removed), named in the next StateChanged.
     private readonly HashSet<string> _alsoAffected = new();
     private readonly HashSet<string> _dirtyActorIds = new();
+    // Hazard actors whose encounter ended: retired in the next persist (their documents stay, for the log and the roll history).
+    private readonly HashSet<string> _retireOnPersist = new();
     // Actors whose sheet was replaced by ReplaceActorCommand, so the next persist also writes the
     // editable fields (the value says whether the editor was the DM). Everything else is a State patch.
     private readonly Dictionary<string, bool> _pendingSheetWrites = new();
@@ -625,6 +627,14 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _encounterToPersist = ended;
         _activeEncounter = null;
         Hazards.WriteBack(ended);
+        // A complex hazard's actor lives only as long as its encounter (HAZARDS_DESIGN.md 3.3): it leaves the table now and is retired with the next persist, so the
+        // place offers the hazard again in the next fight and the panel does not pile up rows of old ones.
+        foreach (var hazardId in HazardActorDocs().Select(d => d.Id).ToList())
+        {
+            _retireOnPersist.Add(hazardId);
+            RemoveActor(hazardId);
+        }
+
         return ended;
     }
 
@@ -924,9 +934,12 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
                     await PersistDirtyAsync();
                     await PersistCampaignObjectsAsync();
-                    var hazardNotes = await Hazards.FlushAsync();
+                    var (leftOrReturned, inheritedTurn, inheritor) = Hazards.TakeSyncNotes();
+                    var hazardNotes = leftOrReturned.Concat(await Hazards.FlushAsync()).ToList();
                     await AppendSessionEventAsync(queued.Command);
                     if (hazardNotes.Count > 0) await AppendSessionEventAsync(new HazardNoteCommand(hazardNotes));
+                    // The creature who inherited the turn begins it as "Next turn" would have it: a turn event of its own, which a player sees like any other.
+                    if (inheritedTurn.Count > 0) await AppendSessionEventAsync(new HazardNoteCommand(inheritedTurn, "TurnAdvance", inheritor));
                     await PersistEncounterAsync();
                     PublishSnapshot();
 
@@ -970,6 +983,17 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// </summary>
     private async Task PersistDirtyAsync()
     {
+        foreach (var retiring in _retireOnPersist.ToList())
+        {
+            var at = DateTime.UtcNow;
+            await _actorRepository.UpdateAsync(retiring, doc =>
+            {
+                doc.Retired = true;
+                doc.RetiredAt ??= at;
+            });
+            _retireOnPersist.Remove(retiring);
+        }
+
         if (_dirtyActorIds.Count == 0)
         {
             return;

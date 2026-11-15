@@ -214,7 +214,9 @@
   <data name="Event.Hazard.SetOff" xml:space="preserve"><value>{0}: הניסיון שנכשל מפעיל אותה, על {1}.</value></data>
   <data name="Event.Hazard.Triggered" xml:space="preserve"><value>{0} מופעלת.</value></data>
   <data name="Event.Hazard.Step" xml:space="preserve"><value>{0} מבצעת את השלב שלה: {1}.</value></data>
-  <data name="Event.Hazard.StepOn" xml:space="preserve"><value>{0} מבצעת את השלב שלה: {1}.</value></data>
+  <data name="Event.Hazard.StepOn" xml:space="preserve"><value>{0} מפעילה את השלב שלה על היצורים: {1}.</value></data>
+  <data name="Event.Hazard.Left" xml:space="preserve"><value>{0} יוצאת מסדר היוזמה.</value></data>
+  <data name="Event.Hazard.Returned" xml:space="preserve"><value>{0} חוזרת לסדר היוזמה במקום {1}.</value></data>
   <data name="Event.Hazard.Joined" xml:space="preserve"><value>{0} נכנסת לסדר היוזמה במקום {1}.</value></data>
   <data name="Event.Hazard.Hit" xml:space="preserve"><value>{0}: התקפה {1} מול דרגת שריון {2}, {3} נפגע.</value></data>
   <data name="Event.Hazard.Miss" xml:space="preserve"><value>{0}: התקפה {1} מול דרגת שריון {2}, {3} לא נפגע.</value></data>

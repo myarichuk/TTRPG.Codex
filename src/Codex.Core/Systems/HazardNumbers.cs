@@ -27,8 +27,9 @@ public sealed record HazardRoute(string? Id, string? Name, string? Action, strin
     public string Shown => Name ?? Id ?? Check ?? string.Empty;
 }
 
-/// <summary>One step of a complex hazard's routine: a row of its <c>routine</c> list (a name and what it does on the hazard's turn or on another creature's).</summary>
-public sealed record HazardStep(string Name, string Description);
+/// <summary>One step of a complex hazard's routine: a row of its <c>routine</c> list (a name and what it does on the hazard's turn or on another creature's). <see cref="Strikes"/>
+/// is the row's <c>strikes: true</c>: the one row that applies the hazard's effect to the creatures it names (the Rolling Stone's Crush). Every other row is a note.</summary>
+public sealed record HazardStep(string Name, string Description, bool Strikes = false);
 
 /// <summary>One part of a hazard's damage: dice of one type, hitting <c>Count</c> times (dice or a whole number; one when empty).</summary>
 public sealed record HazardDamagePart(string Dice, string? Type, string? Count);
@@ -60,9 +61,19 @@ public static class HazardNumbers
     /// <summary>A complex hazard's routine, in the order written: each row a name and what it does. The numbers come from the overlaid <paramref name="numbers"/>.</summary>
     public static IReadOnlyList<HazardStep> Routine(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard) =>
         RowsOfField(numbers, hazard.Routine)
-            .Select(r => new HazardStep(Text(r, "name"), Text(r, "description")))
+            .Select(r => new HazardStep(Text(r, "name"), Text(r, "description"), IsTrue(Raw(r, "strikes"))))
             .Where(s => s.Name.Length > 0 || s.Description.Length > 0)
             .ToList();
+
+    /// <summary>True when the hazard has an effect to apply: a save, an attack or a damage row among the overlaid <paramref name="numbers"/> (the entry's own values, not the type's field names).</summary>
+    public static bool HasEffect(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard)
+    {
+        if (hazard.Effect is not { } effect) return false;
+        bool Has(string? field) => !string.IsNullOrEmpty(field) && numbers.TryGetValue(field, out var v) && Convert.ToString(v, CultureInfo.InvariantCulture)?.Trim().Length > 0;
+        return Has(effect.Save) || Has(effect.Attack) || Damage(numbers, hazard).Count > 0;
+    }
+
+    private static bool IsTrue(object? value) => value is bool flag ? flag : bool.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), out var parsed) && parsed;
 
     /// <summary>The <c>levels</c> of each scaled row the entry has, in the order written.</summary>
     public static IReadOnlyList<string> Rows(ContentEntry entry, ContentTypeDefinition type) =>
@@ -138,6 +149,7 @@ public static class HazardNumbers
 
         var entryNumbers = (IReadOnlyDictionary<string, object>)entry.Properties;
         foreach (var message in SaveProblems(entryNumbers, hazard)) yield return message;
+        foreach (var message in RoutineProblems(entryNumbers, hazard)) yield return message;
         foreach (var message in ListProblems(entryNumbers, entryNumbers, hazard, system, string.Empty)) yield return message;
 
         // A band restates whole lists (the Falling Net's methods, a pit's damage), so each of its lists is checked like the base's.
@@ -148,6 +160,28 @@ public static class HazardNumbers
             var own = merged.Where(p => row.ContainsKey(p.Key) && p.Key != "levels").ToDictionary(p => p.Key, p => p.Value);
             foreach (var message in ListProblems(own, merged, hazard, system, $"band {levels}: ")) yield return message;
         }
+    }
+
+    // A routine row's `strikes` is true or false, and only a hazard with an effect has a row that applies it (one row at most).
+    private static IEnumerable<string> RoutineProblems(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard)
+    {
+        var strikes = 0;
+        foreach (var row in RowsOfField(numbers, hazard.Routine))
+        {
+            if (!row.TryGetValue("strikes", out var raw) || raw == null) continue;
+            var name = Text(row, "name") is { Length: > 0 } n ? n : "routine row";
+            if (raw is not bool && !bool.TryParse(Convert.ToString(raw, CultureInfo.InvariantCulture), out _))
+            {
+                yield return $"routine row '{name}' has strikes '{raw}'; it must be true or false.";
+            }
+            else if (IsTrue(raw))
+            {
+                strikes++;
+                if (!HasEffect(numbers, hazard)) yield return $"routine row '{name}' strikes, and the hazard has no effect (no save, attack or damage) to apply.";
+            }
+        }
+
+        if (strikes > 1) yield return "more than one routine row has strikes: true; one row applies the effect.";
     }
 
     private static readonly string[] OnSaveValues = ["half", "none"];

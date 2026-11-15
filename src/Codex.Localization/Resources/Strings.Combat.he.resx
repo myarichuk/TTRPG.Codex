@@ -78,7 +78,7 @@
   <data name="Combat.Hazard.Undo" xml:space="preserve"><value>ביטול השינוי האחרון: {0}</value></data>
   <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1}, דרגת קושי {2})</value></data>
   <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (נדרש: {1})</value></data>
-  <data name="Combat.QuickAdd" xml:space="preserve"><value>הוספה מהירה של יצור</value></data>
+  <data name="Combat.QuickAdd" xml:space="preserve"><value>הוספה מהירה של יצור או של סכנה</value></data>
   <data name="Combat.SearchCreatures" xml:space="preserve"><value>חיפוש יצורים וסכנות</value></data>
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>חיפוש יצורים וסכנות בספרייה…</value></data>
   <data name="Combat.Hazard.FromLibrary" xml:space="preserve"><value>נלקחה מהספרייה, בלי מקום</value></data>

@@ -123,7 +123,7 @@ public sealed record UndoHazardCommand(HazardSite Site) : IRuntimeCommand
 }
 
 /// <summary>A line for the log that the loop adds after a command: what the hazard's write to its place could not do (GM-only messages).</summary>
-internal sealed record HazardNoteCommand(IReadOnlyList<EventMessage> Notes) : IRuntimeCommand
+internal sealed record HazardNoteCommand(IReadOnlyList<EventMessage> Notes, string Type = "Hazard", string? ActorId = null) : IRuntimeCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
@@ -131,7 +131,7 @@ internal sealed record HazardNoteCommand(IReadOnlyList<EventMessage> Notes) : IR
     {
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Hazard", Notes);
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From(Type, Notes, ActorId == null ? null : new[] { ActorId });
 }
 
 /// <summary>How routes are named: by their id, else their name, else their check.</summary>
@@ -447,8 +447,8 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
 
     // ---- Routine ----
 
-    /// <summary>One step of a complex hazard's routine (HAZARDS_DESIGN.md 3.3), named by <see cref="RouteId"/>. Said in the log; with creatures named, the step is the hazard's
-    /// effect on them (the Rolling Stone's Crush), through the same strike as a trigger. It does not depend on whose turn it is: a step such as Crush applies on any creature's
+    /// <summary>One step of a complex hazard's routine (HAZARDS_DESIGN.md 3.3), named by <see cref="RouteId"/>. Said in the log; a step the data marks <c>strikes: true</c>, with
+    /// creatures named, is the hazard's effect on them (the Rolling Stone's Crush), through the same strike as a trigger. It does not depend on whose turn it is: a step such as Crush applies on any creature's
     /// turn (12.6, item 5), so the game master presses it whenever the hazard reaches a creature. A hazard that was disabled does nothing.</summary>
     private bool Routine(CampaignRuntime runtime, PlacedHazard state)
     {
@@ -465,7 +465,8 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
             return false;
         }
 
-        if (ActorIds.Count == 0)
+        // Only the row the data marks `strikes: true` applies the hazard's effect; every other row, with or without creatures named, is said in the log and does nothing more.
+        if (!step.Strikes || ActorIds.Count == 0)
         {
             Say("Step", step.Name);
             return false;

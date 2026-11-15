@@ -19,8 +19,9 @@
 
 @{
     var pcs = Ctx.Actors.Where(a => a.Kind == ActorKind.PlayerCharacter).ToList();
-    var others = Ctx.Actors.Where(a => a.Kind != ActorKind.PlayerCharacter).ToList();
-    var retired = Ctx.IsDm ? Ctx.AllActors.Where(a => a.Retired).OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList() : new List<ActorDocument>();
+    // A complex hazard at the table is an actor too, but it is no cast member: it has its own row in the Hazards panel, and "Show to players" would make a trap known (HAZARDS_DESIGN.md 3.3).
+    var others = Ctx.Actors.Where(a => a.Kind != ActorKind.PlayerCharacter && a.Hazard == null).ToList();
+    var retired = Ctx.IsDm ? Ctx.AllActors.Where(a => a.Retired && a.Hazard == null).OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList() : new List<ActorDocument>();
 }
 
 <div class="page-header mb-3">

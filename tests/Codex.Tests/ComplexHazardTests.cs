@@ -508,4 +508,163 @@ public class ComplexHazardTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         Assert.Equal(ActorVisibility.Hidden, table.Runtime.GetActorDocument(stone.Id)!.Visibility);
         Assert.Contains(table.Session.Events, e => e.Type == "Hazard" && e.Description.Contains("joins the initiative order", StringComparison.OrdinalIgnoreCase));
     }
+
+    // ---- Review of H5 ----
+
+    [Fact]
+    public void TheLibrarysAddToCast_NeverMakesACastMemberOfAHazard_ButStillOfACreature()
+    {
+        var cast = new Codex.Web.Services.CastService(null!, _content, _registry, null!, null!, null!);
+        var campaign = new CampaignDocument { Id = "c", SystemId = "srd5e" };
+        var stone = new Codex.Web.Services.LibraryItem(Entry("rolling-stone"), null, null);
+        var goblin = new Codex.Web.Services.LibraryItem(_content.GetEntries("srd5e", "monster", new HashSet<string> { "srd-5.2.1" }).First(), null, null);
+
+        // The stone is in the actor registry (it can take a turn), but the reader of the cast-from-Library path offers a creature only.
+        Assert.NotNull(_content.GetActor("srd5e:rolling-stone"));
+        Assert.Null(cast.Blueprint(stone, campaign, System));
+        Assert.NotNull(cast.Blueprint(goblin, campaign, System));
+    }
+
+    [Fact]
+    public async Task ARoutineRowThatDoesNotStrike_IsOnlyNoted_EvenWithCreaturesNamed_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var entry = Entry("rolling-stone");
+        var placed = await PlaceAsync(table, StoneAt(entry, "plate"));
+        var site = SiteOf(placed, entry, StoneAt(entry, "plate"));
+        await JoinAsync(table, LinkOf(placed), die: 12);
+        table.Dice.Expressions.Clear();
+
+        var roll = new HazardCommand(site, HazardAction.Routine, new[] { table.Aria.Id }, Gm, "Roll");
+        await table.Runtime.EnqueueAsync(roll);
+
+        Assert.Null(roll.Refused);
+        Assert.Contains("takes its step: Roll", roll.Said!.Description);
+        Assert.Empty(table.Dice.Expressions);
+        Assert.Equal(30, Hp(table, table.Aria));
+    }
+
+    [Fact]
+    public async Task CrushOnACreatureThatNeedsANumber_FinishesWithTheTypedBonus_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var entry = Entry("rolling-stone");
+        var placed = await PlaceAsync(table, StoneAt(entry, "plate"));
+        var site = SiteOf(placed, entry, StoneAt(entry, "plate"));
+        await JoinAsync(table, LinkOf(placed), die: 12);
+        // A printed monster: its save is text the sheet cannot roll.
+        var orc = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = table.Runtime.CampaignId, Name = "Orc", Kind = ActorKind.Monster,
+            Sheet = new Dictionary<string, object> { ["HP"] = 30L, ["HP_Max"] = 30L, [SheetRuleEngine.MethodKey] = SheetRuleEngine.PrintedMethod, ["savingThrows"] = "Dex +2" }
+        };
+        ActorSheetSync.ApplySheetToState(orc, System, _registry);
+        await _actors.SaveAsync(orc);
+        await table.Runtime.EnqueueAsync(new HydrateActorCommand(orc));
+        table.Dice.Faces.Enqueue(20);
+        table.Dice.Faces.Enqueue(3);
+
+        var first = new HazardCommand(site, HazardAction.Routine, new[] { orc.Id }, Gm, "Crush");
+        await table.Runtime.EnqueueAsync(first);
+        Assert.Equal(30, Hp(table, orc));
+
+        // The repeat the panel now sends carries the numbers asked for, so the save is rolled with them and the damage lands.
+        var bonuses = first.Asks.ToDictionary(a => a.Key, _ => 2);
+        table.Dice.Faces.Clear();
+        table.Dice.Faces.Enqueue(20);
+        table.Dice.Faces.Enqueue(3);
+        var again = new HazardCommand(site, HazardAction.Routine, new[] { orc.Id }, Gm, "Crush", null, null, bonuses);
+        await table.Runtime.EnqueueAsync(again);
+
+        Assert.Empty(again.Asks);
+        Assert.True(Hp(table, orc) < 30);
+    }
+
+    [Fact]
+    public async Task ADisarmedHazardLeavingOnItsOwnTurnInAFightUnderWay_PassesTheTurn_SaysSoToTheGmOnly_AndComesBackAtTheSameRoll_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var entry = Entry("rolling-stone");
+        var placed = await PlaceAsync(table, StoneAt(entry, "plate"));
+        var site = SiteOf(placed, entry, StoneAt(entry, "plate"));
+        await table.Runtime.EnqueueAsync(new SetInitiativeCommand(table.Aria.Id, 15));
+        await table.Runtime.EnqueueAsync(new SetInitiativeCommand(table.Brin.Id, 5));
+        var stone = await JoinAsync(table, LinkOf(placed), die: 12);
+        // A full round, and the stone holds the turn at the start of round 2.
+        await table.Runtime.EnqueueAsync(new NextTurnCommand());
+        await table.Runtime.EnqueueAsync(new NextTurnCommand());
+        await table.Runtime.EnqueueAsync(new NextTurnCommand());
+        var encounter = table.Runtime.Snapshot.Encounter!;
+        Assert.Equal((2, stone.Id), (encounter.Round, encounter.Current!.ActorId));
+
+        await table.Runtime.EnqueueAsync(Cmd(site, HazardAction.Disable, new[] { table.Brin.Id }, "wedge"));
+
+        encounter = table.Runtime.Snapshot.Encounter!;
+        Assert.Equal(new[] { table.Aria.Id, table.Brin.Id }, Order(table));
+        Assert.Equal(table.Aria.Id, encounter.Current!.ActorId);
+        Assert.Contains(table.Session.Events, e => e.Description.Contains("Rolling Stone leaves the initiative order", StringComparison.OrdinalIgnoreCase));
+        var visible = new[] { table.Aria, table.Brin };
+        var asPlayer = SessionEventRedactor.ForViewer(table.Session.Events, new CampaignAccess(table.Session.CampaignId, "player-Aria", CampaignRole.Player), visible);
+        Assert.DoesNotContain(asPlayer, e => e.Description.Contains("leaves the initiative order", StringComparison.OrdinalIgnoreCase) || e.Type == "Hazard");
+
+        await table.Runtime.EnqueueAsync(new UndoHazardCommand(site));
+
+        encounter = table.Runtime.Snapshot.Encounter!;
+        Assert.Equal(new[] { stone.Id, table.Aria.Id, table.Brin.Id }, Order(table));
+        Assert.Equal(20, encounter.Participants[0].InitiativeRoll);
+        Assert.Equal(table.Aria.Id, encounter.Current!.ActorId);
+        Assert.Contains(table.Session.Events, e => e.Description.Contains("Rolling Stone returns to the initiative order at 20", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Theory]
+    [InlineData("token")]
+    [InlineData("map")]
+    public async Task TheKeptSeat_IsReadBackAsTheDatabaseReturnsIt_AndTheHazardReturns_Async(string form)
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var entry = Entry("rolling-stone");
+        var placed = await PlaceAsync(table, StoneAt(entry, "plate"));
+        var site = SiteOf(placed, entry, StoneAt(entry, "plate"));
+        await table.Runtime.EnqueueAsync(new SetInitiativeCommand(table.Aria.Id, 15));
+        var stone = await JoinAsync(table, LinkOf(placed), die: 12);
+        await table.Runtime.EnqueueAsync(Cmd(site, HazardAction.Disable, new[] { table.Aria.Id }, "wedge"));
+        var key = HazardLedger.SeatPrefix + stone.Id;
+        var effects = table.Runtime.ActiveEncounter!.ActiveEffects;
+        var seat = (HazardLedger.Seat)effects[key];
+        effects[key] = form == "token"
+            ? Newtonsoft.Json.Linq.JObject.FromObject(seat)
+            : new Dictionary<string, object> { ["InitiativeRoll"] = (long)seat.InitiativeRoll, ["TieBreak"] = (long)seat.TieBreak };
+
+        await table.Runtime.EnqueueAsync(new UndoHazardCommand(site));
+
+        Assert.Equal(new[] { stone.Id, table.Aria.Id }, Order(table));
+        Assert.Equal(20, table.Runtime.Snapshot.Encounter!.Participants[0].InitiativeRoll);
+    }
+
+    [Fact]
+    public async Task TheHazardActor_EndsWithItsEncounter_AndItsPlaceOffersItAgain_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var entry = Entry("rolling-stone");
+        var placed = await PlaceAsync(table, StoneAt(entry, "plate"));
+        await table.Runtime.EnqueueAsync(new SetInitiativeCommand(table.Aria.Id, 15));
+        var stone = await JoinAsync(table, LinkOf(placed), die: 12);
+
+        await table.Runtime.EnqueueAsync(new EndEncounterCommand());
+
+        Assert.False(table.Runtime.HasActor(stone.Id));
+        var dm = TestAccess.Member(_dbService, table.Runtime.CampaignId, Gm, CampaignRole.DM);
+        var stored = (await _actors.GetVisibleAsync(stone.Id, dm))!;
+        Assert.True(stored.Retired);
+        Assert.True(table.Runtime.HasActor(table.Aria.Id));
+        // The place offers it again, as a retired actor no longer holds it.
+        var offers = await HazardOffers.ForPlaceAsync(new[] { placed.Region }, placed.Place.Id, System, HazardType, new[] { stored },
+            p => Task.FromResult<ContentEntry?>(entry));
+        Assert.Single(offers);
+    }
 }

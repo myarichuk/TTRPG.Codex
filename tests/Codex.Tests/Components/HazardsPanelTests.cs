@@ -24,7 +24,8 @@ public class HazardsPanelTests : ComponentTestBase
     private static readonly HazardNeed Need = new("k1", "g1", "Goblin", HazardAskKind.Bonus, "Dexterity");
 
     private IRenderedComponent<HazardsPanel> Draw(string culture = "en", IReadOnlyList<HazardView>? hazards = null, Action<HazardRequest>? onRequest = null,
-        IReadOnlyList<HazardPass>? passes = null, IReadOnlyList<HazardNeed>? needNumber = null, IReadOnlyList<string>? status = null)
+        IReadOnlyList<HazardPass>? passes = null, IReadOnlyList<HazardNeed>? needNumber = null, IReadOnlyList<string>? status = null, string askedFor = "hazard:r/p1|Trigger|",
+        IReadOnlyDictionary<string, int>? suggested = null)
     {
         Services.AddSingleton(Localizer.For(culture));
         return Render<HazardsPanel>(p => p
@@ -34,7 +35,8 @@ public class HazardsPanelTests : ComponentTestBase
             .Add(x => x.Passes, passes ?? Array.Empty<HazardPass>())
             .Add(x => x.PassesFor, passes is { Count: > 0 } ? "hazard:r/p1" : null)
             .Add(x => x.NeedNumber, needNumber ?? Array.Empty<HazardNeed>())
-            .Add(x => x.AskedFor, "hazard:r/p1|Trigger|")
+            .Add(x => x.AskedFor, askedFor)
+            .Add(x => x.Suggested, suggested ?? new Dictionary<string, int>())
             .Add(x => x.Status, status ?? Array.Empty<string>())
             .Add(x => x.OnRequest, (HazardRequest r) => onRequest?.Invoke(r)));
     }
@@ -261,7 +263,7 @@ public class HazardsPanelTests : ComponentTestBase
     private static HazardView Stone(bool inOrder = true, bool itsTurn = false, bool hasEffect = true) =>
         Pit(name: "Rolling Stone") with
         {
-            Turn = new HazardTurn("stone1", new[] { new Codex.Core.Systems.HazardStep("Roll", "Moves 60 feet."), new Codex.Core.Systems.HazardStep("Crush", "On any creature's turn.") }, inOrder, itsTurn, hasEffect)
+            Turn = new HazardTurn("stone1", new[] { new Codex.Core.Systems.HazardStep("Roll", "Moves 60 feet."), new Codex.Core.Systems.HazardStep("Crush", "On any creature's turn.", Strikes: true) }, inOrder, itsTurn, hasEffect)
         };
 
     [Fact]
@@ -292,6 +294,45 @@ public class HazardsPanelTests : ComponentTestBase
 
         Assert.Equal(new[] { (HazardAction.Routine, "Crush", 0), (HazardAction.Routine, "Crush", 1) }, requests.Select(r => (r.Action, r.Route!, r.ActorIds.Count)));
         Assert.Equal(new[] { "a2" }, requests[1].ActorIds);
+    }
+
+    [Fact]
+    public void OnlyTheRowTheDataMarksAsStriking_OffersTheTickedCreatures()
+    {
+        var cut = Draw(hazards: new[] { Stone() });
+
+        // Roll and Crush are both steps; only Crush has `strikes: true`, so only it has the button that applies the effect.
+        Assert.Empty(cut.FindAll("[data-testid=hazard-0-step-0-on]"));
+        Assert.NotEmpty(cut.FindAll("[data-testid=hazard-0-step-0-note]"));
+        Assert.NotEmpty(cut.FindAll("[data-testid=hazard-0-step-1-on]"));
+    }
+
+    [Fact]
+    public void AHazardWithNoEffect_OffersNoStrikeEvenOnAStrikingRow() =>
+        Assert.Empty(Draw(hazards: new[] { Stone(hasEffect: false) }).FindAll("[data-testid=hazard-0-step-1-on]"));
+
+    [Fact]
+    public void CrushOnACreatureThatNeedsANumber_SendsTheTypedNumberWithTheRepeat_AndASuggestedOneStands()
+    {
+        var requests = new List<HazardRequest>();
+        var cut = Draw(hazards: new[] { Stone() }, onRequest: requests.Add, needNumber: new[] { Need, new HazardNeed("k2", "g2", "Orc", HazardAskKind.Bonus, "Dexterity") },
+            askedFor: "hazard:r/p1|Routine|Crush", suggested: new Dictionary<string, int> { ["k2"] = 1 });
+        cut.Find("[data-testid=hazard-number-0]").Change("4");
+        cut.Find("[data-testid=hazard-who-a1]").Change(true);
+
+        cut.Find("[data-testid=hazard-0-step-1-on]").Click();
+
+        var sent = requests.Single();
+        Assert.Equal((HazardAction.Routine, "Crush"), (sent.Action, sent.Route));
+        Assert.Equal(4, sent.Bonuses!["k1"]);
+        Assert.Equal(1, sent.Bonuses["k2"]);
+
+        // The number answers that question once: a note of the same step, and a Crush that was not the one that asked, carry none.
+        cut.Find("[data-testid=hazard-0-step-1-note]").Click();
+        Assert.Null(requests.Last().Bonuses);
+        cut.Render(p => p.Add(x => x.AskedFor, "hazard:r/p1|Trigger|"));
+        cut.Find("[data-testid=hazard-0-step-1-on]").Click();
+        Assert.Null(requests.Last().Bonuses);
     }
 
     [Fact]

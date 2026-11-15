@@ -1,3 +1,4 @@
+using Codex.Core.Rules;
 using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Newtonsoft.Json.Linq;
@@ -197,15 +198,47 @@ public sealed class HazardLedger(CampaignRuntime runtime)
             if (off && inOrder != null)
             {
                 encounter.ActiveEffects[seatKey] = new Seat { InitiativeRoll = inOrder.InitiativeRoll, TieBreak = inOrder.TieBreak };
+                // Leaving on its own turn in a fight under way passes the turn on (RemoveParticipant), and whoever inherits it begins it: the sheet's turnStart events and
+                // the valued conditions that fall at the start of a turn are raised, as "Next turn" raises them.
+                var heldTheTurn = encounter.Participants.IndexOf(inOrder) == encounter.TurnIndex
+                    && (encounter.Round > 1 || inOrder.TurnStarted || encounter.Participants.Any(p => p.HasActed));
                 runtime.RemoveParticipant(doc.Id);
+                _syncNotes.Add(EventMessage.Of("Hazard.Left", EventTerm.GmOnly(doc.Name)));
+                if (heldTheTurn && encounter.Participants.Count > 0)
+                {
+                    var next = encounter.Participants[encounter.TurnIndex].ActorId;
+                    if (TableEvents.Handles(runtime, "turnStart")) _turnNotes.AddRange(TableEvents.Raise(runtime, next, new SheetEvent("turnStart", new Dictionary<string, object?>())).Messages);
+                    _turnNotes.AddRange(runtime.DecreaseConditionsUndoably(next, "turnStart"));
+                    _turnActor = next;
+                }
             }
             else if (!off && inOrder == null && encounter.ActiveEffects.TryGetValue(seatKey, out var seatRaw))
             {
-                if (ReadSeat(seatRaw) is { } seat) runtime.RestoreParticipant(doc.Id, seat.InitiativeRoll, seat.TieBreak);
+                if (ReadSeat(seatRaw) is { } seat && runtime.RestoreParticipant(doc.Id, seat.InitiativeRoll, seat.TieBreak))
+                {
+                    _syncNotes.Add(EventMessage.Of("Hazard.Returned", EventTerm.GmOnly(doc.Name), seat.InitiativeRoll));
+                }
+
                 encounter.ActiveEffects.Remove(seatKey);
                 runtime.MarkEncounterDirty();
             }
         }
+    }
+
+    // What SyncInitiative did, said in the log after the command: GM-only lines (a hazard left or returned) and, apart from them, what the creature who inherited the turn
+    // begins with (a turn event the players see as they see any turn start, never labelled as the hazard's).
+    private readonly List<EventMessage> _syncNotes = new();
+    private readonly List<EventMessage> _turnNotes = new();
+    private string? _turnActor;
+
+    /// <summary>The GM-only lines <see cref="SyncInitiative"/> has to say since the last call, and the turn-start lines of the creature who inherited the turn (with its id); the loop logs each as its own event.</summary>
+    public (IReadOnlyList<EventMessage> GmOnly, IReadOnlyList<EventMessage> TurnStart, string? Actor) TakeSyncNotes()
+    {
+        var taken = (_syncNotes.ToList(), _turnNotes.ToList(), _turnActor);
+        _syncNotes.Clear();
+        _turnNotes.Clear();
+        _turnActor = null;
+        return taken;
     }
 
     private static Seat? ReadSeat(object? raw) => raw switch

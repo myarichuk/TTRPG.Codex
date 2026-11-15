@@ -15,12 +15,15 @@ public sealed class CastService(CampaignRuntimeManager runtimes, IContentRegistr
 {
     public IActorDefinition? Blueprint(LibraryItem item, CampaignDocument campaign, SystemDefinition? system)
     {
+        var type = system?.FindType(item.Entry.Type);
         if (!item.IsHomebrew)
         {
-            return registry.GetActor($"{campaign.SystemId}:{item.Entry.Id}");
+            // A complex hazard is in the actor registry too (HAZARDS_DESIGN.md 3.3) but is no creature: it reaches the table only through the quick-add panel's
+            // "Hazards" group, with its link. Only a type with the ActorBlueprint flag makes a cast member.
+            // With no system to read the flag from, the actor's own `hazard` tag still keeps a hazard out.
+            return type is { ActorBlueprint: false } || registry.GetActor($"{campaign.SystemId}:{item.Entry.Id}") is not { } actor || actor.Tags.Contains("hazard") ? null : actor;
         }
 
-        var type = system?.FindType(item.Entry.Type);
         return type is { ActorBlueprint: true } ? YamlContentPackLoader.ToActorBlueprint(item.Entry, type, system?.PrimaryResource) : null;
     }
 

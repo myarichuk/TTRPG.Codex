@@ -161,7 +161,7 @@
                                                 <div class="d-flex flex-wrap gap-2 mt-1">
                                                     <CodexButton Small="true" Disabled="@(!turn.InOrder)" data-testid="@($"hazard-{at}-step-{stepAt}-note")"
                                                                  OnClick="() => StepAsync(hazard, step, false)">@L["Combat.Hazard.StepNote", step.Name, hazard.Name]</CodexButton>
-                                                    @if (turn.HasEffect)
+                                                    @if (step.Strikes && turn.HasEffect)
                                                     {
                                                         <CodexButton Small="true" Disabled="@(ticked.Count == 0 || !turn.InOrder)" data-testid="@($"hazard-{at}-step-{stepAt}-on")"
                                                                      OnClick="() => StepAsync(hazard, step, true)">@L["Combat.Hazard.StepOn", step.Name, hazard.Name]</CodexButton>
@@ -295,28 +295,34 @@
     {
         var chosen = Chosen();
         var actors = action is HazardAction.Find or HazardAction.Disable ? chosen.Take(1).ToList() : chosen;
-        // A typed number answers one question ("Goblin needs a number") and goes only with the repeat of that request (the same hazard and action), for the creatures
-        // that were asked: never to a later check of another kind (a save bonus used as a Perception bonus, or on another hazard). A number the printed sheet suggests
-        // stands unless the game master typed another.
+        var numbers = NumbersFor(hazard, action, route);
+        typed.Clear();
+        return OnRequest.InvokeAsync(new HazardRequest(hazard, action, actors, route, null, state, numbers));
+    }
+
+    // A typed number answers one question ("Goblin needs a number") and goes only with the repeat of that request (the same hazard, action and route or step), for the
+    // creatures that were asked: never to a later check of another kind (a save bonus used as a Perception bonus, or on another hazard). A number the printed sheet
+    // suggests stands unless the game master typed another.
+    private IReadOnlyDictionary<string, int>? NumbersFor(HazardView hazard, HazardAction action, string? route)
+    {
+        if (AskedFor != $"{hazard.Id}|{action}|{route}") return null;
         var numbers = new Dictionary<string, int>();
-        if (AskedFor == $"{hazard.Id}|{action}|{route}")
+        foreach (var asked in NeedNumber.Select(n => n.Key))
         {
-            foreach (var asked in NeedNumber.Select(n => n.Key))
-            {
-                if (typed.TryGetValue(asked, out var own)) numbers[asked] = own;
-                else if (Suggested.TryGetValue(asked, out var suggestion)) numbers[asked] = suggestion;
-            }
+            if (typed.TryGetValue(asked, out var own)) numbers[asked] = own;
+            else if (Suggested.TryGetValue(asked, out var suggestion)) numbers[asked] = suggestion;
         }
 
-        typed.Clear();
-        return OnRequest.InvokeAsync(new HazardRequest(hazard, action, actors, route, null, state, numbers.Count == 0 ? null : numbers));
+        return numbers.Count == 0 ? null : numbers;
     }
 
     // One step of the hazard's routine: said in the log, or, set off on the ticked creatures, the hazard's effect on them (the Rolling Stone's Crush on any creature's turn).
     private Task StepAsync(HazardView hazard, HazardStep step, bool onTicked)
     {
+        // The repeat of a strike that asked for a number carries it, like a trigger's.
+        var numbers = onTicked ? NumbersFor(hazard, HazardAction.Routine, step.Name) : null;
         typed.Clear();
-        return OnRequest.InvokeAsync(new HazardRequest(hazard, HazardAction.Routine, onTicked ? Chosen() : Array.Empty<string>(), step.Name, null, null, null));
+        return OnRequest.InvokeAsync(new HazardRequest(hazard, HazardAction.Routine, onTicked ? Chosen() : Array.Empty<string>(), step.Name, null, null, numbers));
     }
 
     // The game master marks the characters who passed as having noticed it, and the routes they passed as found.

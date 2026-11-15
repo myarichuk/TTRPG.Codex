@@ -28,7 +28,7 @@ public static class HazardOffers
     {
         var offers = new List<HazardOffer>();
         if (string.IsNullOrEmpty(placeId) || type.Hazard is not { } hazard) return offers;
-        var taken = actors.Where(a => a.Hazard is { IsPlaced: true }).Select(a => (a.Hazard!.RegionId, a.Hazard.LocationId)).ToHashSet();
+        var taken = actors.Where(a => !a.Retired && a.Hazard is { IsPlaced: true }).Select(a => (a.Hazard!.RegionId, a.Hazard.LocationId)).ToHashSet();
         foreach (var region in regions)
         {
             foreach (var place in region.Locations.Where(l => l.Feature?.Hazard != null))

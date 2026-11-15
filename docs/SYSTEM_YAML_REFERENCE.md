@@ -169,7 +169,7 @@ Maps the parts every hazard can have onto the fields of one entity type. Every m
 | `duration` | text (a number is text too) | The field holding how long the effect lasts once set off (text). |
 | `initiative` | text (a number is text too) | The Number field holding a complex hazard's Initiative bonus. |
 | `reset` | text (a number is text too) | The field holding how and when the hazard re-arms (text). Empty: inert after it goes off. |
-| `routine` | text (a number is text too) | The field holding what a complex hazard does each round, a collection of `{ name, description }`. Only for systems with hazards that act in initiative. |
+| `routine` | text (a number is text too) | The field holding what a complex hazard does each round, a collection of `{ name, description, strikes }`. `strikes: true` marks the one row that applies the hazard's effect to the creatures the table names; every other row is a note. Only for systems with hazards that act in initiative. |
 | `complex` | text (a number is text too) | A Boolean field: when true on an entry, the entry is a complex hazard that takes a turn in initiative. |
 | `level` | text (a number is text too) | The field holding what scaling and the world builder read: a number, or a range of levels (`1-4`) where the system prints ranges. |
 | `severity` | text (a number is text too) | The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly). |

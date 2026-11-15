@@ -50,8 +50,9 @@
     private string Under() => (Snapshot.Encounter?.Id ?? string.Empty) + "|" + string.Join(",", Snapshot.LiveHazards.Keys.Order(StringComparer.Ordinal))
         + "|" + string.Join(",", HazardActors().Select(a => a.Id).Order(StringComparer.Ordinal));
 
-    /// <summary>The complex hazards that are actors at the table (3.3): each one's routine shows on the hazard it stands for.</summary>
-    private IEnumerable<ActorDocument> HazardActors() => Actors.Where(a => a.Hazard != null && !a.Retired);
+    /// <summary>The complex hazards that are actors in the encounter running now (3.3): each one's routine shows on the hazard it stands for. A hazard actor ends with its
+    /// encounter (it is retired then), and with no encounter running none is shown.</summary>
+    private IEnumerable<ActorDocument> HazardActors() => Snapshot.Encounter == null ? Enumerable.Empty<ActorDocument>() : Actors.Where(a => a.Hazard != null && !a.Retired);
 
     private ActorDocument? ActorOf(Placement placement) => HazardActors().FirstOrDefault(a => a.Hazard!.IsPlaced
         ? a.Hazard.RegionId == placement.Region.Id && a.Hazard.LocationId == placement.Place.Id
@@ -178,7 +179,7 @@
             {
                 var order = Snapshot.Encounter;
                 turn = new HazardTurn(actor.Id, HazardNumbers.Routine(numbers, hazard), order?.Participants.Any(p => p.ActorId == actor.Id) == true,
-                    order?.Current?.ActorId == actor.Id, hazard.Effect is { } effect && (!string.IsNullOrEmpty(effect.Save) || !string.IsNullOrEmpty(effect.Attack) || !string.IsNullOrEmpty(effect.Damage)));
+                    order?.Current?.ActorId == actor.Id, HazardNumbers.HasEffect(numbers, hazard));
             }
 
             views.Add(new HazardView(key, site, name, placement.Place.Name, state.State, state.Successes, noticed,
