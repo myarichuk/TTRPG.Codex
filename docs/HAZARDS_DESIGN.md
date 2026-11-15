@@ -462,7 +462,10 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     last parameter and sets `runtime.Places`.
   - **The encounter's place.** Nothing set `EncounterDocument.LocationId`, so 4.1's "the encounter's place" did not exist. The panel has a place picker (each place with a hazard in or under
     it; "All places" is the default); while an encounter runs the choice is saved on it by `SetEncounterPlaceCommand` and the snapshot carries it. Outside an encounter the choice is only the
-    page's.
+    page's. **Decision (the user's):** the picker stays as the manual override. The default should be set automatically when an encounter is started from a prepared
+    encounter, which does not exist yet (the app has no encounter builder; encounters are formed at the table through `QuickAddPanel`), so until that builder is built the picker defaults to
+    "All places".
+  - **For P12 (known gap):** repeating an attack for a creature that was waiting for a number re-rolls its attack; only the damage is kept.
   - **Secrecy.** Every message the command writes has `EventTerm.GmOnly(hazard name)` as its first argument, there are no `PlayerParts`, the event type is `Hazard` (`Event.Type.Hazard`),
     every roll entry is secret, damage is not logged through `ApplyDamageCommand.Describe` (which has a players' version), and the panel is drawn only for the GM. Tests check the redactor (both
     views) and `TableVisibility.Rolls` for a player.
