@@ -53,4 +53,13 @@ public sealed record HazardColumn(string Key, string Label, HazardColumnKind Kin
     public bool Wide { get; init; }
 
     public string? Hint { get; init; }
+
+    /// <summary>For <see cref="HazardColumnKind.Choice"/>: adds an "Other..." choice that shows a text box with this label, so a word the list does not hold is stored as written.</summary>
+    public string? OtherLabel { get; init; }
+
+    /// <summary>For <see cref="HazardColumnKind.Choice"/>: the key of the same row whose value is not offered (a route cannot wait for its own id).</summary>
+    public string? NotOwn { get; init; }
+
+    /// <summary>The box holds dice, numbers or ranges: always drawn left to right, so "2d8" and "5-10" keep their order in a right to left page.</summary>
+    public bool Ltr { get; init; }
 }

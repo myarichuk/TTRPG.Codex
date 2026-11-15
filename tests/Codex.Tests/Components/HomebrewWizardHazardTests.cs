@@ -335,7 +335,9 @@ public class HomebrewWizardHazardTests : ComponentTestBase
                 ["disarm"] = new List<object>
                 {
                     Row(("name", "Pick it"), ("check", "Sleight of Hand"), ("dc", 15), ("successes", 2), ("triggersOn", new List<object> { "failure", "criticalFailure" })),
-                    Row(("name", "Wedge it"), ("needs", "An Iron Spike"))
+                    Row(("name", "Wedge it"), ("needs", "An Iron Spike")),
+                    Row(("name", "Pick the lock"), ("check", "Thieves' Tools"), ("dc", 14)),
+                    Row(("name", "Dispel the ward"), ("check", "Spellcasting"), ("dc", 16))
                 },
                 ["methods"] = new List<object> { Row(("name", "Smash it"), ("needs", "A hammer"), ("after", "lock")) },
                 ["damage"] = new List<object> { Row(("dice", "1d10"), ("type", "poison")), Row(("dice", "1d6"), ("type", "piercing"), ("count", "1d3")) },
@@ -358,6 +360,54 @@ public class HomebrewWizardHazardTests : ComponentTestBase
 
         Assert.Equal(before, Canon(_saved!.Properties));
         Assert.Equal("The everything trap", _saved.Name);
+    }
+
+    [Fact]
+    public void ACheckTheSystemDoesNotKnow_IsTypedUnderOther_StoredAsWritten_AndNeverLostByTheSelect()
+    {
+        var cut = Open();
+        GoTo(cut, "Disable");
+        cut.Find("[data-testid=hazard-disarm-add]").Click();
+        Assert.Empty(cut.FindAll("[data-testid=hazard-disarm] > [data-testid=hazard-row] input[id$='-check-other']"));
+
+        var select = Control(cut, "hazard-disarm", "Check");
+        Assert.Contains(select.QuerySelectorAll("option"), o => o.TextContent.Trim() == "Other…");
+        select.Change("\u0001other");
+
+        // The text box has its own visible label, and the select keeps showing Other.
+        var typed = Control(cut, "hazard-disarm", "Check, as written (a typed bonus is asked for at the table)");
+        typed.Change("Spellcasting");
+        Control(cut, "hazard-disarm", "DC").Change("16");
+
+        // Moving the select to a listed check does not lose the word: it stays on offer and can be chosen again.
+        Control(cut, "hazard-disarm", "Check").Change("perception");
+        var word = Control(cut, "hazard-disarm", "Check").QuerySelectorAll("option").First(o => o.GetAttribute("value") == "Spellcasting");
+        Assert.Equal("Spellcasting", word.TextContent.Trim());
+        Control(cut, "hazard-disarm", "Check").Change("Spellcasting");
+        Save(cut);
+
+        var saved = Assert.Single(HazardNumbers.EditableRows(_saved!.Properties["disarm"]));
+        Assert.Equal("Spellcasting", saved["check"]);
+        Assert.Equal(16L, saved["dc"]);
+    }
+
+    [Fact]
+    public void ADiceBoxAndALevelBoxAreLeftToRight_AndARouteCannotWaitForItself()
+    {
+        var cut = Open();
+        GoTo(cut, "Notice");
+        cut.Find("[data-testid=hazard-detect-add]").Click();
+        cut.Find("[data-testid=hazard-detect-add]").Click();
+        Assert.Equal("ltr", Control(cut, "hazard-detect", "DC", 0).GetAttribute("dir"));
+        Control(cut, "hazard-detect", "Short name (for “Only after”)", 0).Change("lock");
+        Control(cut, "hazard-detect", "Short name (for “Only after”)", 1).Change("glyph");
+
+        var first = Control(cut, "hazard-detect", "Only after", 0).QuerySelectorAll("option").Select(o => o.GetAttribute("value")).ToList();
+        Assert.DoesNotContain("lock", first);
+        Assert.Contains("glyph", first);
+        GoTo(cut, "Effect");
+        cut.Find("[data-testid=hazard-damage-add]").Click();
+        Assert.Equal("ltr", Control(cut, "hazard-damage", "Dice (such as 2d8)").GetAttribute("dir"));
     }
 
     // A value as text that does not depend on the collection types the store happens to give: maps by sorted key, lists in order, everything else as invariant text.

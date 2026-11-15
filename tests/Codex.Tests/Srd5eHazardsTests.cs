@@ -152,6 +152,10 @@ public class Srd5eHazardsTests : IAsyncLifetime
                 var seen = measured.GetValueOrDefault((row["severity"], band, column)) ?? new List<double>();
                 Assert.True(seen.Any(v => Math.Abs(v - bounds.Low) < 0.001), $"{row["severity"]} {band} {column}: no trap has the low bound {bounds.Low}.");
                 Assert.True(seen.Any(v => Math.Abs(v - bounds.High) < 0.001), $"{row["severity"]} {band} {column}: no trap has the high bound {bounds.High}.");
+
+                // And no row is narrower than the traps need: the row is exactly the tightest range that holds every trap of that severity at that band.
+                Assert.True(seen.Count == 0 || Math.Abs(seen.Min() - bounds.Low) < 0.001, $"{row["severity"]} {band} {column}: the lowest trap is {seen.Min()}, the row starts at {bounds.Low}.");
+                Assert.True(seen.Count == 0 || Math.Abs(seen.Max() - bounds.High) < 0.001, $"{row["severity"]} {band} {column}: the highest trap is {seen.Max()}, the row ends at {bounds.High}.");
             }
         }
     }

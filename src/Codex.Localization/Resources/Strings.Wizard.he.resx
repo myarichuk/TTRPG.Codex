@@ -85,6 +85,8 @@
   <data name="Wizard.Hazard.Col.Name" xml:space="preserve"><value>שם</value></data>
   <data name="Wizard.Hazard.Col.Action" xml:space="preserve"><value>פעולה (חיפוש, עיון)</value></data>
   <data name="Wizard.Hazard.Col.Check" xml:space="preserve"><value>בדיקה</value></data>
+  <data name="Wizard.Hazard.Col.CheckOther" xml:space="preserve"><value>בדיקה, כפי שנכתבה (את הבונוס מזינים ליד השולחן)</value></data>
+  <data name="Wizard.Hazard.Other" xml:space="preserve"><value>אחר…</value></data>
   <data name="Wizard.Hazard.Col.Dc" xml:space="preserve"><value>דרגת קושי (DC)</value></data>
   <data name="Wizard.Hazard.Col.Needs" xml:space="preserve"><value>נדרש (במקום בדיקה)</value></data>
   <data name="Wizard.Hazard.Col.After" xml:space="preserve"><value>רק אחרי</value></data>

@@ -135,7 +135,9 @@
     }
 
     // A check written as a canonical label or a label ("Perception") shows as the option for its key.
-    private string CheckKey(string held) => System != null && ActorChecks.Resolve(System, held) is { Key.Length: > 0 } spec ? spec.Key : held;
+    // Only a skill or an attribute is an option; any other word (a passive's key, Thieves' Tools) stays as it is written.
+    private string CheckKey(string held) =>
+        System != null && ActorChecks.Resolve(System, held) is { Key.Length: > 0, Kind: CheckKind.Skill or CheckKind.Attribute } spec ? spec.Key : held;
 
     private bool Ranked => System?.Canonical.SheetRules?.Skills is { Ranks.Count: > 0 };
 
@@ -157,14 +159,14 @@
         {
             new("name", L["Wizard.Hazard.Col.Name"]),
             new("action", L["Wizard.Hazard.Col.Action"]),
-            new("check", L["Wizard.Hazard.Col.Check"], HazardColumnKind.Choice) { Options = Checks, Match = CheckKey },
+            new("check", L["Wizard.Hazard.Col.Check"], HazardColumnKind.Choice) { Options = Checks, Match = CheckKey, OtherLabel = L["Wizard.Hazard.Col.CheckOther"] },
             new("dc", L["Wizard.Hazard.Col.Dc"], HazardColumnKind.Whole),
             new("needs", L["Wizard.Hazard.Col.Needs"])
         };
         if (detect || disarm) columns.Add(new("id", L["Wizard.Hazard.Col.Id"]));
 
         // Any route may wait for a detect route (its id); only detect routes are waited for.
-        columns.Add(new("after", L["Wizard.Hazard.Col.After"], HazardColumnKind.Choice) { Options = DetectIds() });
+        columns.Add(new("after", L["Wizard.Hazard.Col.After"], HazardColumnKind.Choice) { Options = DetectIds(), NotOwn = "id" });
 
         if (disarm)
         {
@@ -187,7 +189,7 @@
             .ToList();
 
     private IReadOnlyList<HazardColumn> Damage() =>
-        [new("dice", L["Wizard.Hazard.Col.Dice"]), new("type", L["Wizard.Hazard.Col.DamageType"]), new("count", L["Wizard.Hazard.Col.Count"])];
+        [new("dice", L["Wizard.Hazard.Col.Dice"]) { Ltr = true }, new("type", L["Wizard.Hazard.Col.DamageType"]), new("count", L["Wizard.Hazard.Col.Count"]) { Ltr = true }];
 
     private IReadOnlyList<HazardColumn> Conditions()
     {
@@ -199,7 +201,7 @@
     // A band: its levels, the numbers of the effect it may change (the fields beside the save DC and the damage), the severity, and the lists it restates whole.
     private IReadOnlyList<HazardColumn> Band()
     {
-        var columns = new List<HazardColumn> { new("levels", L["Wizard.Hazard.Col.Levels"]) };
+        var columns = new List<HazardColumn> { new("levels", L["Wizard.Hazard.Col.Levels"]) { Ltr = true } };
         var effect = Hazard.Effect;
         var categories = Type.Fields.Where(f => f.Key == effect?.SaveDc || f.Key == effect?.Damage).Select(f => f.Category).ToHashSet();
         foreach (var field in Type.Fields)

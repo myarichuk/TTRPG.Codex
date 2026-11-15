@@ -85,6 +85,8 @@
   <data name="Wizard.Hazard.Col.Name" xml:space="preserve"><value>Name</value></data>
   <data name="Wizard.Hazard.Col.Action" xml:space="preserve"><value>Action (Search, Study)</value></data>
   <data name="Wizard.Hazard.Col.Check" xml:space="preserve"><value>Check</value></data>
+  <data name="Wizard.Hazard.Col.CheckOther" xml:space="preserve"><value>Check, as written (a typed bonus is asked for at the table)</value></data>
+  <data name="Wizard.Hazard.Other" xml:space="preserve"><value>Other…</value></data>
   <data name="Wizard.Hazard.Col.Dc" xml:space="preserve"><value>DC</value></data>
   <data name="Wizard.Hazard.Col.Needs" xml:space="preserve"><value>Needs (instead of a check)</value></data>
   <data name="Wizard.Hazard.Col.After" xml:space="preserve"><value>Only after</value></data>

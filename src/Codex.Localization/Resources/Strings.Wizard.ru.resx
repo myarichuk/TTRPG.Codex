@@ -85,6 +85,8 @@
   <data name="Wizard.Hazard.Col.Name" xml:space="preserve"><value>Название</value></data>
   <data name="Wizard.Hazard.Col.Action" xml:space="preserve"><value>Действие (Поиск, Изучение)</value></data>
   <data name="Wizard.Hazard.Col.Check" xml:space="preserve"><value>Проверка</value></data>
+  <data name="Wizard.Hazard.Col.CheckOther" xml:space="preserve"><value>Проверка, как написана (бонус за столом вводится вручную)</value></data>
+  <data name="Wizard.Hazard.Other" xml:space="preserve"><value>Другое…</value></data>
   <data name="Wizard.Hazard.Col.Dc" xml:space="preserve"><value>Сложность (Сл)</value></data>
   <data name="Wizard.Hazard.Col.Needs" xml:space="preserve"><value>Требуется (вместо проверки)</value></data>
   <data name="Wizard.Hazard.Col.After" xml:space="preserve"><value>Только после</value></data>

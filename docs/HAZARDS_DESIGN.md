@@ -565,7 +565,7 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   - **Tests:** `WorldBuilderHazardTests` (through the chat's scripted model and the check: a Library hazard, the campaign's own hazard by either key, a homebrew one in range read back through `For`, `Damage`, `NoticeRoutes` and `Problems`, one out of
     range by save DC, by damage alone and too low (warned, on its card, saved as written), no level, a route the loader rejects, a row without a name and an empty one, `higherLevels` bands, an edit that adds nothing, one that adds a number and one that
     breaks the shape, a link of another type, a dangling link, an unticked entry, a trap with no hazard, a system with no hazard type, the prompt, secrecy, and the one-row window).
-  - **Not done:** an edit of a placed hazard's levels or state from the world builder; the homebrew wizard's hazard mode and the book stat block (step 7).
+  - **Not done:** an edit of a placed hazard's levels or state from the world builder; the homebrew wizard's hazard mode and the book stat block (step 7; done in H7).
 
 - **H7 (the homebrew wizard and the book).** Built as 7 and step 7 of 9 have it. What differs, and why:
   - **The wizard's hazard mode is the type's own steps.** For a type with a `hazard` block (`HomebrewWizard.IsHazard`) the steps are the type's field categories as for any type, but the lists are placed by their

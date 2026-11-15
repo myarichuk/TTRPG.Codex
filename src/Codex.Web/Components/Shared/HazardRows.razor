@@ -67,23 +67,33 @@
                                 @switch (column.Kind)
                                 {
                                     case HazardColumnKind.Whole:
-                                        <input id="@id" type="number" step="1" inputmode="numeric" class="field-input" value="@Text(row, key)"
+                                        <input id="@id" type="number" step="1" inputmode="numeric" dir="ltr" class="field-input" value="@Text(row, key)"
                                                @onchange="e => SetWholeAsync(index, key, e.Value?.ToString())" />
                                         break;
                                     case HazardColumnKind.Long:
                                         <textarea id="@id" class="field-input" rows="2" value="@Text(row, key)" @onchange="e => SetAsync(index, key, e.Value?.ToString())"></textarea>
                                         break;
                                     case HazardColumnKind.Choice:
-                                        <select id="@id" class="field-select" value="@Held(column, row)" @onchange="e => SetAsync(index, key, e.Value?.ToString())">
+                                        var otherOn = column.OtherLabel != null && otherOpen.Contains((rowKeys[index], key));
+                                        <select id="@id" class="field-select" value="@(otherOn ? OtherValue : Held(column, row))" @onchange="e => ChooseAsync(index, column, e.Value?.ToString())">
                                             <option value="">@L["Actor.Form.None"]</option>
-                                            @foreach (var option in OptionsFor(column, row))
+                                            @foreach (var option in OptionsFor(column, row, rowKeys[index]))
                                             {
                                                 <option value="@option.Value">@option.Label</option>
                                             }
+                                            @if (column.OtherLabel != null)
+                                            {
+                                                <option value="@OtherValue">@L["Wizard.Hazard.Other"]</option>
+                                            }
                                         </select>
+                                        @if (otherOn)
+                                        {
+                                            <label for="@(id)-other" class="field-label mt-2">@column.OtherLabel</label>
+                                            <input id="@(id)-other" type="text" class="field-input" value="@Text(row, key)" @onchange="e => TypedAsync(index, column, e.Value?.ToString())" />
+                                        }
                                         break;
                                     default:
-                                        <input id="@id" type="text" class="field-input" value="@Text(row, key)" list="@(column.Suggestions.Count > 0 ? ListId(column) : null)"
+                                        <input id="@id" type="text" dir="@(column.Ltr ? "ltr" : null)" class="field-input" value="@Text(row, key)" list="@(column.Suggestions.Count > 0 ? ListId(column) : null)"
                                                @onchange="e => SetAsync(index, key, e.Value?.ToString())" />
                                         break;
                                 }
@@ -175,11 +185,57 @@
         return held.Length > 0 && column.Match != null ? column.Match(held) : held;
     }
 
-    private static IEnumerable<(string Value, string Label)> OptionsFor(HazardColumn column, Dictionary<string, object> row)
+    // A word kept from before ("Spellcasting") stays an option after the select moves to another choice, so it can be chosen again.
+    private IEnumerable<(string Value, string Label)> OptionsFor(HazardColumn column, Dictionary<string, object> row, Guid rowKey)
     {
         var held = Held(column, row);
-        foreach (var option in column.Options) yield return option;
+        var own = column.NotOwn is { } ownKey ? Text(row, ownKey).Trim() : string.Empty;
+        foreach (var option in column.Options)
+        {
+            if (own.Length > 0 && string.Equals(option.Value, own, StringComparison.Ordinal) && !string.Equals(option.Value, held, StringComparison.Ordinal)) continue;
+            yield return option;
+        }
+
         if (held.Length > 0 && column.Options.All(o => !string.Equals(o.Value, held, StringComparison.Ordinal))) yield return (held, held);
+        if (remembered.TryGetValue((rowKey, column.Key), out var word) && word != held && column.Options.All(o => !string.Equals(o.Value, word, StringComparison.Ordinal))) yield return (word, word);
+    }
+
+    private const string OtherValue = "\u0001other";
+
+    // Rows whose Other box is open, and the typed word each row last held, so changing the select never loses it.
+    private readonly HashSet<(Guid Row, string Key)> otherOpen = [];
+    private readonly Dictionary<(Guid Row, string Key), string> remembered = [];
+
+    private async Task ChooseAsync(int index, HazardColumn column, string? value)
+    {
+        if (index < 0 || index >= rowKeys.Count) return;
+        if (value == OtherValue)
+        {
+            otherOpen.Add((rowKeys[index], column.Key));
+            return;
+        }
+
+        otherOpen.Remove((rowKeys[index], column.Key));
+        Remember(index, column, value);
+        await SetAsync(index, column.Key, value);
+    }
+
+    private async Task TypedAsync(int index, HazardColumn column, string? value)
+    {
+        Remember(index, column, value);
+        await SetAsync(index, column.Key, value);
+    }
+
+    private void Remember(int index, HazardColumn column, string? next)
+    {
+        if (column.OtherLabel == null || index >= rowKeys.Count) return;
+        var rows = HazardNumbers.EditableRows(Value);
+        if (index >= rows.Count) return;
+        var held = Held(column, rows[index]);
+        if (held.Length > 0 && !string.Equals(held, next?.Trim(), StringComparison.Ordinal) && column.Options.All(o => !string.Equals(o.Value, held, StringComparison.Ordinal)))
+        {
+            remembered[(rowKeys[index], column.Key)] = held;
+        }
     }
 
     private async Task WriteAsync(List<Dictionary<string, object>> rows) =>
@@ -203,7 +259,13 @@
         }
 
         rows.RemoveAt(index);
-        if (index < rowKeys.Count) rowKeys.RemoveAt(index);
+        if (index < rowKeys.Count)
+        {
+            var gone = rowKeys[index];
+            otherOpen.RemoveWhere(o => o.Row == gone);
+            foreach (var k in remembered.Keys.Where(k => k.Row == gone).ToList()) remembered.Remove(k);
+            rowKeys.RemoveAt(index);
+        }
         await WriteAsync(rows);
     }
 
