@@ -1,0 +1,38 @@
+@using Codex.Core.Rules
+@using Codex.Plugin.Abstractions
+
+@* One stepper per valued condition of the system (Exhaustion 3, Frightened 2): its name, its value in a status span, then − and +. Disabled at 0 and
+   at the condition's highest value. The host decides what a step does (the table sends a command, the sheet page edits the sheet), so this draws
+   and reports. Nothing is drawn for a system with no valued conditions. Layout is flex and logical, so it reads right-to-left too. *@
+@foreach (var valued in Steppers)
+{
+    var slug = SheetConditions.Slug(valued.Name);
+    var shown = Definition?.DisplayCondition(valued.Name) ?? valued.Name;
+    var level = Values.GetValueOrDefault(valued.Key);
+    <div class="condition-stepper d-flex align-items-end gap-1" role="group" aria-label="@shown" data-testid="@($"condition-stepper-{slug}")">
+        <span class="small pb-1"><bdi>@shown</bdi> <span role="status" data-testid="@($"condition-value-{slug}")">@level</span></span>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"condition-down-{slug}")" Disabled="@(level <= 0)"
+                     OnClick="() => OnAdjust.InvokeAsync((valued.Name, -1))" aria-label="@L["Combat.LowerCondition", shown, Name]">−</CodexButton>
+        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="@($"condition-up-{slug}")" Disabled="@(valued.Max is { } max && level >= max)"
+                     OnClick="() => OnAdjust.InvokeAsync((valued.Name, 1))" aria-label="@L["Combat.RaiseCondition", shown, Name]">+</CodexButton>
+    </div>
+}
+
+@code {
+    /// <summary>The system, in the reader's language (its condition names are shown through it).</summary>
+    [Parameter] public SystemDefinition? Definition { get; set; }
+
+    /// <summary>The creature's name, said in each button's label.</summary>
+    [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
+
+    /// <summary>The creature's values by key: the table's pools, or the sheet's numbers.</summary>
+    [Parameter] public IReadOnlyDictionary<string, int> Values { get; set; } = new Dictionary<string, int>();
+
+    /// <summary>The creature's sheet as it holds now, for a maximum that is a formula.</summary>
+    [Parameter] public IReadOnlyDictionary<string, object>? Sheet { get; set; }
+
+    /// <summary>A step: the condition (as the system names it) and -1 or +1.</summary>
+    [Parameter] public EventCallback<(string Condition, int Delta)> OnAdjust { get; set; }
+
+    private IReadOnlyList<ValuedCondition> Steppers => ConditionLines.Valued(Definition, Sheet);
+}

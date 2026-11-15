@@ -197,6 +197,11 @@
   <data name="Actor.Sheet.WorthLook" xml:space="preserve"><value>Worth a look</value></data>
   <data name="Actor.Sheet.NotBlocking" xml:space="preserve"><value>Doesn't block saving</value></data>
   <data name="Actor.Sheet.Dice" xml:space="preserve"><value>Dice</value></data>
+  <data name="Actor.Sheet.Conditions" xml:space="preserve"><value>Conditions</value></data>
+  <data name="Actor.Sheet.ConditionsNone" xml:space="preserve"><value>No conditions.</value></data>
+  <data name="Actor.Sheet.ConditionsAtTable" xml:space="preserve"><value>While the session runs, the table sets these.</value></data>
+  <data name="Actor.Sheet.ConditionsGmOnly" xml:space="preserve"><value>Only the GM sets these.</value></data>
+  <data name="Actor.Sheet.ConditionRemove" xml:space="preserve"><value>Remove {0}</value></data>
   <data name="Actor.Sheet.RollWith" xml:space="preserve"><value>Roll with</value></data>
   <data name="Actor.Sheet.RollNormal" xml:space="preserve"><value>Normal</value></data>
   <data name="Actor.Sheet.RollAdv" xml:space="preserve"><value>Advantage</value></data>
@@ -205,7 +210,7 @@
   <data name="Actor.Sheet.RollShared" xml:space="preserve"><value>Shared with the table.</value></data>
   <data name="Actor.Sheet.RollPrivate" xml:space="preserve"><value>Only you see this: the table is not running.</value></data>
   <data name="Actor.Sheet.NoRolls" xml:space="preserve"><value>No rolls yet.</value></data>
-  <data name="Actor.Sheet.FromFeatures" xml:space="preserve"><value>{0} from features</value></data>
+  <data name="Actor.Sheet.FromFeatures" xml:space="preserve"><value>{0} to checks</value></data>
   <data name="Actor.Skills.SumFeatures" xml:space="preserve"><value>features</value></data>
   <data name="Actor.Bonus.Next" xml:space="preserve"><value>Bonuses for the next roll</value></data>
   <data name="Actor.Bonus.NextHint" xml:space="preserve"><value>Tick the ones that apply. A ticked bonus goes into the next roll it fits, then clears.</value></data>

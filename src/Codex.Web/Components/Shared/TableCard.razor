@@ -277,7 +277,7 @@
             if (value.HasValue) yield return (field?.Abbreviation ?? field?.Label ?? armor.Key, value.Value.ToString());
         }
 
-        if (Definition.ActorFields.FirstOrDefault(f => f.Key == Definition.FieldRoles.Speed) is { } speed && YamlValues.GetInt(Actor.Sheet, speed.Key) is { } distance)
+        if (Definition.ActorFields.FirstOrDefault(f => f.Key == Definition.FieldRoles.Speed) is { } speed && YamlValues.GetInt(WorkedSheet ?? Actor.Sheet, speed.Key) is { } distance)
         {
             var label = speed.Abbreviation ?? System.Text.RegularExpressions.Regex.Replace(speed.Label, @"\s*\([^)]*\)\s*$", "");
             yield return (label, string.IsNullOrEmpty(speed.Unit) ? distance.ToString() : $"{distance} {speed.Unit}");
@@ -310,6 +310,10 @@
             _ => L["Combat.Hp.Healthy"]
         };
     }
+
+    /// <summary>The live sheet <see cref="Evaluation"/> was worked out on, with what conditions and features grant applied (Exhaustion's lowered speed);
+    /// the stored sheet when the host has none.</summary>
+    [Parameter] public IReadOnlyDictionary<string, object>? WorkedSheet { get; set; }
 
     /// <summary>The engine that reads the sheet's roll bonuses; the card has none until the table loads one.</summary>
     [Parameter] public SheetRuleEngine? Engine { get; set; }

@@ -127,8 +127,11 @@
   <data name="Combat.StartOfTurn" xml:space="preserve"><value>בתחילת התור שלהם</value></data>
   <data name="Combat.AddCondition" xml:space="preserve"><value>הוספת מצב</value></data>
   <data name="Combat.AddConditionTo" xml:space="preserve"><value>הוספת מצב ל{0}</value></data>
-  <data name="Combat.RaiseExhaustion" xml:space="preserve"><value>הגברת התשישות של {0}</value></data>
-  <data name="Combat.LowerExhaustion" xml:space="preserve"><value>הפחתת התשישות של {0}</value></data>
+  <data name="Combat.RaiseCondition" xml:space="preserve"><value>הגברת {0} עבור {1}</value></data>
+  <data name="Combat.LowerCondition" xml:space="preserve"><value>הפחתת {0} עבור {1}</value></data>
+  <data name="Combat.ConditionValue" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="Combat.SpellEffects" xml:space="preserve"><value>אפקטים של לחשים</value></data>
+  <data name="Combat.ConditionHolds" xml:space="preserve"><value>{0} כבר ברמה {1}. כדי להגביר, לחצו +.</value></data>
   <data name="Combat.TurnLabel" xml:space="preserve"><value>תור</value></data>
   <data name="Combat.ActNow" xml:space="preserve"><value>לפעול עכשיו</value></data>
   <data name="Combat.ActsNow" xml:space="preserve"><value>{0} פועל עכשיו</value></data>

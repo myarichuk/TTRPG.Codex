@@ -197,6 +197,11 @@
   <data name="Actor.Sheet.WorthLook" xml:space="preserve"><value>שווה מבט</value></data>
   <data name="Actor.Sheet.NotBlocking" xml:space="preserve"><value>לא חוסם שמירה</value></data>
   <data name="Actor.Sheet.Dice" xml:space="preserve"><value>קוביות</value></data>
+  <data name="Actor.Sheet.Conditions" xml:space="preserve"><value>מצבים</value></data>
+  <data name="Actor.Sheet.ConditionsNone" xml:space="preserve"><value>אין מצבים.</value></data>
+  <data name="Actor.Sheet.ConditionsAtTable" xml:space="preserve"><value>בזמן המפגש, השולחן קובע אותם.</value></data>
+  <data name="Actor.Sheet.ConditionsGmOnly" xml:space="preserve"><value>רק שליט המבוך קובע אותם.</value></data>
+  <data name="Actor.Sheet.ConditionRemove" xml:space="preserve"><value>הסרת {0}</value></data>
   <data name="Actor.Sheet.RollWith" xml:space="preserve"><value>הטלה עם</value></data>
   <data name="Actor.Sheet.RollNormal" xml:space="preserve"><value>רגיל</value></data>
   <data name="Actor.Sheet.RollAdv" xml:space="preserve"><value>יתרון</value></data>
@@ -205,7 +210,7 @@
   <data name="Actor.Sheet.RollShared" xml:space="preserve"><value>משותף עם השולחן.</value></data>
   <data name="Actor.Sheet.RollPrivate" xml:space="preserve"><value>רק אתם רואים זאת: השולחן לא פעיל.</value></data>
   <data name="Actor.Sheet.NoRolls" xml:space="preserve"><value>עדיין אין הטלות.</value></data>
-  <data name="Actor.Sheet.FromFeatures" xml:space="preserve"><value>{0} מיכולות</value></data>
+  <data name="Actor.Sheet.FromFeatures" xml:space="preserve"><value>{0} לבדיקות</value></data>
   <data name="Actor.Skills.SumFeatures" xml:space="preserve"><value>יכולות</value></data>
   <data name="Actor.Bonus.Next" xml:space="preserve"><value>בונוסים להטלה הבאה</value></data>
   <data name="Actor.Bonus.NextHint" xml:space="preserve"><value>סמנו את אלה שחלים. בונוס מסומן נכנס להטלה הבאה שמתאימה לו, ואז מתנקה.</value></data>

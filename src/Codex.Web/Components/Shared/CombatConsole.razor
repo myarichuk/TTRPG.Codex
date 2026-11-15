@@ -136,12 +136,6 @@ else
 
                 @if (Access.IsDm && orderOpen)
                 {
-                    <datalist id="conditions-list">
-                        @foreach (var condition in PickableConditions)
-                        {
-                            <option value="@condition" label="@ConditionName(condition)"></option>
-                        }
-                    </datalist>
                     <InitiativeAddPanel Candidates="Actors.Where(a => encounter == null || encounter.Participants.All(p => p.ActorId != a.Id))" InitiativeDice="@InitiativeDice"
                                         BonusText="InitiativeBonusText" OnRoll="RollInitiativeAsync" OnSet="SetInitiativeAsync" OnMessage="OnMessage" />
                 }
@@ -160,7 +154,7 @@ else
                             var actorId = actor.Id;
                             var full = CanSeeExact(actorId);
                             <TableCard @key="actorId" Campaign="Campaign" Actor="actor" State="snapshot.Actor(actorId)" Definition="Definition"
-                                       Evaluation="@(full ? EvaluationOf(actor) : null)" Blueprint="@(Access.IsDm ? BlueprintOf(actor) : null)"
+                                       Evaluation="@(full ? EvaluationOf(actor) : null)" WorkedSheet="@(full ? workedSheets.GetValueOrDefault(actorId) : null)" Blueprint="@(Access.IsDm ? BlueprintOf(actor) : null)"
                                        Full="full" CanAct="CanTrackSlots(actorId)" IsDm="Access.IsDm" Expanded="IsCardOpen(actor)" OnToggle="() => ToggleCard(actorId)"
                                        CurrentUserId="@CurrentUserId" CheckDie="@(Definition?.Dice.Check ?? "1d20")" Send="SendAsync" Engine="@(full ? engine : null)" Linked="@(full ? Linked() : null)" />
                         }
@@ -258,13 +252,6 @@ else
     /// <summary>A rest as the table reads it ("Long Rest"); the rules still get the system's own name.</summary>
     private string RestLabel(string rest) => Definition?.DisplayValue(rest) ?? rest;
 
-    /// <summary>A condition as the table reads it. The stored effect id stays the rules' own word.</summary>
-    private string ConditionName(string condition) => Definition?.DisplayCondition(condition) ?? condition;
-
-    private IEnumerable<string> PickableConditions => (Definition?.Conditions ?? Enumerable.Empty<string>())
-        .Where(c => Vitals?.Exhaustion?.Condition == null || !string.Equals(c, Vitals.Exhaustion.Condition, StringComparison.OrdinalIgnoreCase))
-        .Concat(Vitals?.Concentration is { } concentration ? new[] { concentration.Condition } : Array.Empty<string>())
-        .Distinct(StringComparer.OrdinalIgnoreCase);
     private string InitiativeDice => Definition?.Dice.Initiative ?? "1d20";
     private static readonly DownRules NoDownRules = new();
     private DownRules Down => Vitals?.Down ?? NoDownRules;
@@ -282,6 +269,7 @@ else
     {
         ActorsById = Actors.ToDictionary(a => a.Id);
         evaluations.Clear();
+        workedSheets.Clear();
         campaignLinked = null;
         VisibleActorIds = ActorsById.Keys.ToHashSet();
         if (!subscribedToManager)
@@ -411,6 +399,7 @@ else
             resolver = await CachedEntryResolver.LoadAsync(Library, Campaign, Access, Definition!);
             engine = new SheetRuleEngine(Definition!, resolver);
             evaluations.Clear();
+            workedSheets.Clear();
         }
         catch (Exception)
         {
@@ -437,7 +426,11 @@ else
     {
         if (runtime != null) snapshot = runtime.Snapshot;
         // The runtime names the actors whose sheets link to a changed actor too: their cards are worked out again.
-        foreach (var id in changed) evaluations.Remove(id);
+        foreach (var id in changed)
+        {
+            evaluations.Remove(id);
+            workedSheets.Remove(id);
+        }
         if (snapshot.RosterVersion != rosterSeen && OnActorAdded.HasDelegate)
         {
             // Someone joined or left the table, or the DM revealed or hid them: this viewer's list of who they may see is stale.
@@ -455,6 +448,9 @@ else
     private readonly HashSet<string> toggledCards = new(StringComparer.Ordinal);
     // What the rules make of each sheet, worked out once per load of the actors: a card reads it on every render.
     private readonly Dictionary<string, SheetEvaluation?> evaluations = new(StringComparer.Ordinal);
+
+    // The live sheet each evaluation was worked out on, with what conditions and features grant applied (a lowered speed), for the card's numbers.
+    private readonly Dictionary<string, Dictionary<string, object>> workedSheets = new(StringComparer.Ordinal);
 
     /// <summary>Who has a card: every character of the campaign, and whoever else is in the order, the viewer's own first.</summary>
     private List<ActorDocument> CardActors(EncounterSnapshot? encounter)
@@ -498,7 +494,9 @@ else
         SheetEvaluation? evaluation;
         try
         {
-            evaluation = engine.EvaluateLive(LiveSheetOf(actor), Linked());
+            var live = LiveSheetOf(actor);
+            evaluation = engine.EvaluateLive(live, Linked());
+            workedSheets[actor.Id] = live;
         }
         catch (Exception)
         {

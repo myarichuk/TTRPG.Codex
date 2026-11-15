@@ -127,8 +127,11 @@
   <data name="Combat.StartOfTurn" xml:space="preserve"><value>В начале их хода</value></data>
   <data name="Combat.AddCondition" xml:space="preserve"><value>Добавить состояние</value></data>
   <data name="Combat.AddConditionTo" xml:space="preserve"><value>Добавить состояние: {0}</value></data>
-  <data name="Combat.RaiseExhaustion" xml:space="preserve"><value>Повысить истощение: {0}</value></data>
-  <data name="Combat.LowerExhaustion" xml:space="preserve"><value>Понизить истощение: {0}</value></data>
+  <data name="Combat.RaiseCondition" xml:space="preserve"><value>Повысить «{0}» для {1}</value></data>
+  <data name="Combat.LowerCondition" xml:space="preserve"><value>Понизить «{0}» для {1}</value></data>
+  <data name="Combat.ConditionValue" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="Combat.SpellEffects" xml:space="preserve"><value>Эффекты заклинаний</value></data>
+  <data name="Combat.ConditionHolds" xml:space="preserve"><value>«{0}» уже на уровне {1}. Чтобы повысить, нажмите +.</value></data>
   <data name="Combat.TurnLabel" xml:space="preserve"><value>Ход</value></data>
   <data name="Combat.ActNow" xml:space="preserve"><value>Ходит сейчас</value></data>
   <data name="Combat.ActsNow" xml:space="preserve"><value>{0} ходит сейчас</value></data>
