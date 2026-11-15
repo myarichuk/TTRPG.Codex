@@ -1035,6 +1035,27 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         return (long)Math.Floor(result);
     }
 
+    /// <summary>The highest value of the valued condition <paramref name="condition"/> on <paramref name="sheet"/> (the live view, so a formula reads what the
+    /// table holds now): its <c>value.max</c>, a number or a formula, rounded down. Null when the condition has no value, no maximum, or a maximum that
+    /// cannot be worked out here (the loader has already checked it reads).</summary>
+    public int? ConditionMax(string condition, IReadOnlyDictionary<string, object> sheet)
+    {
+        if (SheetConditions.EffectOf(system, condition)?.Effect.Value?.Max is not { Length: > 0 } max) return null;
+        if (double.TryParse(max, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var number))
+        {
+            return double.IsFinite(number) ? (int)Math.Clamp(Math.Floor(number), 0, int.MaxValue) : null;
+        }
+
+        try
+        {
+            return (int)Math.Clamp(EvaluateFormula(sheet, FormulaContext(sheet), max), 0, int.MaxValue);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
     /// <summary>The sheet's numbers by name, for formulas (attribute scores, numeric fields).</summary>
     private Dictionary<string, double> FormulaContext(IReadOnlyDictionary<string, object> sheet)
     {

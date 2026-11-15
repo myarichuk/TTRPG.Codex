@@ -137,6 +137,53 @@ internal static class TableRules
             ? Run(runtime, actorId, entity, VitalsHandlers.AdjustExhaustion(runtime.System, view, delta))
             : null;
 
+    // ---- Valued conditions ----
+
+    /// <summary>Moves a valued condition's value by <paramref name="delta"/> within 0 and its maximum (a number or a formula, worked out on the live view).
+    /// The exhaustion condition goes through <see cref="VitalsHandlers.AdjustExhaustion"/>, which also kills at the top level. Never writes a status: the value
+    /// is the condition's only record. Null when the system has no such valued condition (or the creature no pools).</summary>
+    public static (string Name, int Level, bool Died)? AdjustCondition(CampaignRuntime runtime, string actorId, Entity entity, string condition, int delta)
+    {
+        if (VitalsHandlers.IsExhaustion(runtime.System, condition))
+        {
+            var name = runtime.System!.Vitals!.Exhaustion!.Condition ?? condition;
+            return AdjustExhaustion(runtime, actorId, entity, delta) is { } o ? (name, o.Level, o.Died) : null;
+        }
+
+        if (runtime.System is not { } system || SheetConditions.EffectOf(system, condition) is not { Effect.Value: { } value } found) return null;
+        var pool = Pools(entity);
+        var key = SheetConditions.KeyOf(found.Name, value);
+        var max = runtime.GetActorDocument(actorId) is { } doc
+            ? new SheetRuleEngine(system, runtime.Resolver).ConditionMax(found.Name, runtime.LiveSheetOf(doc))
+            : null;
+        var level = Math.Clamp(pool.Get(key) + delta, 0, max ?? int.MaxValue);
+        pool.Set(key, level);
+        return (found.Name, level, false);
+    }
+
+    /// <summary>Lowers every valued condition whose <c>decrease.on</c> is <paramref name="moment"/> (<c>turnEnd</c>, <c>turnStart</c>, a rest or a moment) by its
+    /// <c>by</c>, on this creature, never below 0. Returns what happened, in words, for the log: with the creature named (<paramref name="nested"/> false), or
+    /// without it for a line that is already about the creature (a rest). A condition at 0 is left alone.</summary>
+    public static List<EventMessage> DecreaseConditions(CampaignRuntime runtime, string actorId, Entity entity, string moment, bool nested)
+    {
+        var messages = new List<EventMessage>();
+        if (runtime.System is not { } system || !entity.Has<ResourcePoolComponent>()) return messages;
+        var pool = entity.Get<ResourcePoolComponent>();
+        foreach (var (name, key, value) in SheetConditions.Valued(system))
+        {
+            if (value.Decrease is not { } decrease || decrease.By <= 0 || !string.Equals(decrease.On, moment, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!pool.Pools.TryGetValue(key, out var now) || now <= 0) continue;
+            var level = Math.Max(0, now - decrease.By);
+            pool.Set(key, level);
+            var term = EventTerm.Condition(name);
+            messages.Add(nested
+                ? level == 0 ? EventMessage.Of("Rest.ConditionEnds", term) : EventMessage.Of("Rest.ConditionDrops", term, level)
+                : level == 0 ? EventMessage.Of("Condition.Ends", runtime.ActorTerm(actorId), term) : EventMessage.Of("Condition.Drops", runtime.ActorTerm(actorId), term, level));
+        }
+
+        return messages;
+    }
+
     // ---- Hit dice ----
 
     /// <summary>Spends hit dice by the vitals rules (<see cref="VitalsHandlers.SpendHitDice"/>), rolled with the table's dice and

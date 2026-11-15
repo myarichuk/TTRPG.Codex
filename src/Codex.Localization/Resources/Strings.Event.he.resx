@@ -40,6 +40,11 @@
   <data name="Event.Exhaustion.None" xml:space="preserve"><value>{0}: ללא תשישות.</value></data>
   <data name="Event.Exhaustion.Level" xml:space="preserve"><value>{0}: דרגת תשישות {1}.</value></data>
   <data name="Event.Exhaustion.Failed" xml:space="preserve"><value>לא ניתן היה לשנות את התשישות של {0}.</value></data>
+  <data name="Event.Condition.Level" xml:space="preserve"><value>{0}: {1} כעת {2}.</value></data>
+  <data name="Event.Condition.None" xml:space="preserve"><value>{0}: {1} הסתיים.</value></data>
+  <data name="Event.Condition.Failed" xml:space="preserve"><value>לא ניתן היה לשנות את {1} של {0}.</value></data>
+  <data name="Event.Condition.Drops" xml:space="preserve"><value>{0}: {1} יורד ל-{2}.</value></data>
+  <data name="Event.Condition.Ends" xml:space="preserve"><value>{0}: {1} מסתיים.</value></data>
   <data name="Event.HitDice.Spent" xml:space="preserve"><value>{0}: ניצול קוביות חיים: {1} (d{2}: {3}), התאוששות ב-{4} נקודות חיים.</value></data>
   <data name="Event.HitDice.None" xml:space="preserve"><value>ל-{0} לא נותרו קוביות חיים לניצול.</value></data>
   <data name="Event.HitDice.Player" xml:space="preserve"><value>{0}: ניצול קוביות חיים והתאוששות.</value></data>
@@ -101,6 +106,8 @@
   <data name="Event.Rest.ExhaustionGone" xml:space="preserve"><value>התשישות חלפה</value></data>
   <data name="Event.Rest.ExhaustionNow" xml:space="preserve"><value>דרגת התשישות כעת {0}</value></data>
   <data name="Event.Rest.Lifted" xml:space="preserve"><value>הסרה: {0}</value></data>
+  <data name="Event.Rest.ConditionDrops" xml:space="preserve"><value>{0} יורד ל-{1}</value></data>
+  <data name="Event.Rest.ConditionEnds" xml:space="preserve"><value>{0} מסתיים</value></data>
   <data name="Event.Wiki.Revealed" xml:space="preserve"><value>נחשף משהו חדש על {0} בוויקי.</value></data>
   <data name="Event.Actor.ChoiceChanged" xml:space="preserve"><value>{0}: הבחירה ב"{1}" שונתה ל{2}.</value></data>
   <data name="Event.Note.Added" xml:space="preserve"><value>הוספת {0}.</value></data>

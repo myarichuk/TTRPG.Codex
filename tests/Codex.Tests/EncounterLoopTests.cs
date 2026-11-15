@@ -461,7 +461,7 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(5, runtime.Snapshot.Actor(hero.Id)!.Pool("HitDice_Max"));
 
         await runtime.EnqueueAsync(new ApplyDamageCommand(hero.Id, "HP", 20, "ogre"));
-        await runtime.EnqueueAsync(new AdjustExhaustionCommand(hero.Id, 2));
+        await runtime.EnqueueAsync(new AdjustConditionCommand(hero.Id, "Exhaustion", 2));
         Assert.Equal(2, runtime.Snapshot.Actor(hero.Id)!.Pool("Exhaustion"));
 
         // Spending hit dice on a short rest: 1d8 + CON (+2) each, five dice available.
@@ -490,9 +490,9 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         await using var runtime = Runtime(campaignId, session);
         runtime.Hydrate(new[] { hero });
 
-        await runtime.EnqueueAsync(new AdjustExhaustionCommand(hero.Id, 5));
+        await runtime.EnqueueAsync(new AdjustConditionCommand(hero.Id, "Exhaustion", 5));
         Assert.False(Has(runtime, hero.Id, "Dead"));
-        await runtime.EnqueueAsync(new AdjustExhaustionCommand(hero.Id, 1));
+        await runtime.EnqueueAsync(new AdjustConditionCommand(hero.Id, "Exhaustion", 1));
         Assert.True(Has(runtime, hero.Id, "Dead"));
     }
 
