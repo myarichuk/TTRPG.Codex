@@ -42,7 +42,7 @@ A whole game system described as data (`system.yaml`). This is what lets a homeb
 | `modifierTypes` | [ModifierTypesDefinition](#modifiertypesdefinition) | How bonuses of one type combine on one target. |
 | `progressions` | map of text (a number is text too) | Named per-level formulas (`bab.good: "level"`), read by `progression(name, level)`. |
 | `functions` | map of [FunctionDefinition](#functiondefinition) | Named functions, callable from any formula by name. |
-| `widgets` | map of [WidgetDefinition](#widgetdefinition) | Widgets a DLL supplies (`{ type: "Acme.Street.Cyberware, Acme.Street" }`), placed by name in a layout like the host's own (`{ widget: cyberware }`). |
+| `widgets` | map of [WidgetDefinition](#widgetdefinition) | Widgets a DLL supplies (`{ type: "Acme.Street.Implants, Acme.Street" }`), placed by name in a layout like the host's own (`{ widget: implants }`). |
 | `conditionEffects` | map of [ConditionEffectDefinition](#conditioneffectdefinition) | What a condition or a spell effect does while it holds, by its name in Conditions or Effects. |
 | `rolls` | list of [RollDefinition](#rolldefinition) | Named rolls with inputs and outcomes (see Rolls.cs). |
 | `moments` | list of [MomentDefinition](#momentdefinition) | The system's own moments (`downtime`, `loadChosen`): named times at which counters refill and an `events:` handler of the same name runs. Rests (`vitals.rests`), `initiative` and `dawn` are moments too and need no declaring. |
@@ -1010,7 +1010,7 @@ A named function: a one-line Formula (`"(a, b) => a + b"`), a Script export (`ru
 
 ## WidgetDefinition
 
-A widget a DLL supplies: Type names an ICodexWidget (`"Acme.Street.Cyberware, Acme.Street"`).
+A widget a DLL supplies: Type names an ICodexWidget (`"Acme.Street.Implants, Acme.Street"`).
 
 | Key | Type | What it is |
 |---|---|---|

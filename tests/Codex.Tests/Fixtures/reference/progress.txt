@@ -28,34 +28,34 @@ d35.skill-points-cannot-be-overspent
 d35.prestige-prerequisites-are-checked-without-the-prestige-levels
 d35.prestige-prerequisites-met
 d35.prestige-prerequisites-name-each-missing-part
-street.humanity-is-will-less-what-implants-take
+street.composure-is-less-what-implants-strain
 street.armor-is-per-location
-street.a-skill-is-its-stat-plus-its-level
+street.a-skill-is-its-trait-plus-its-level
 # Tagged step 3, passing early: a track's current value is still a number on the sheet, so a value can read it.
-street.emp-follows-current-humanity
+street.rapport-follows-current-composure
 
 # Step 3 (tracks): maxima, slot tracks per class and level, thresholds and bands. Street's thresholds compare against
-# HP_Max, which its rules.js works out, so they passed with step 8 and are listed there.
+# Vigor_Max, which its rules.js works out, so they passed with step 8 and are listed there.
 d35.slots-come-from-the-class-table-plus-bonus-spells
 d35.a-slot-holds-only-a-spell-of-its-class-and-level
 d35.vancian-slots-take-duplicates-but-not-more-than-they-have
 crew.reputation-shrinks-with-turf
 
 # Step 4 (rolls): definitions with inputs, pools, keep, zero dice, explode/implode once, roll-under, outcomes, follow-up
-# rolls, intents and group rolls. street.a-serious-wound-takes-two-from-every-check needs the Seriously wounded threshold,
-# which compares against HP_Max (rules.js), so it is listed under step 8.
+# rolls, intents and group rolls. street.battered-takes-three-from-every-check needs the Battered threshold,
+# which compares against Vigor_Max (rules.js), so it is listed under step 8.
 d35.a-threat-confirmed-is-a-critical
 d35.a-threat-not-confirmed-is-a-hit
 d35.no-threat-below-the-range
 d35.a-natural-one-misses
 d35.a-natural-twenty-hits-and-threatens
 d35.a-condition-modifies-the-roll
-street.a-check-adds-stat-skill-and-die
-street.a-ten-explodes-once
-street.the-second-ten-does-not-explode
+street.a-check-adds-trait-skill-and-die
+street.a-twelve-explodes-once
+street.the-second-twelve-does-not-explode
 street.a-one-implodes-once
-street.a-death-save-is-rolled-under-body
-street.a-death-save-over-body-fails
+street.a-last-stand-is-rolled-under-grit
+street.a-last-stand-over-the-mark-fails
 crew.a-six-is-a-full-success
 crew.four-or-five-is-partial
 crew.one-to-three-is-bad
@@ -81,8 +81,8 @@ crew.a-desperate-roll-marks-experience-in-its-attribute
 crew.session-end-answers-mark-playbook-experience
 crew.helping-costs-the-helper-a-stress
 crew.heat-overflow-raises-wanted-level-and-keeps-the-rest
-street.mortally-wounded-rolls-a-death-save-each-turn
-street.each-death-save-raises-the-penalty
+street.bleeding-out-rolls-a-last-stand-each-turn
+street.each-last-stand-raises-fading
 d35.below-zero-is-dying
 d35.exactly-zero-is-disabled
 d35.minus-ten-is-dead-and-the-track-stops-there
@@ -102,17 +102,17 @@ crew.a-clock-fills-and-says-so
 crew.clock-sizes-are-the-systems
 crew.faction-status-stays-in-range
 
-# Step 8 (scripts): functions and event handlers in rules.js, run by Jint. With them, street's thresholds over HP_Max and the
+# Step 8 (scripts): functions and event handlers in rules.js, run by Jint. With them, street's thresholds over Vigor_Max and the
 # check they hinder.
-street.hit-points-come-from-a-script-function
-street.hit-points-round-the-average-up
-street.half-hit-points-is-seriously-wounded
-street.just-above-half-is-not
+street.vigor-comes-from-a-script-function
+street.vigor-rounds-half-of-grit-up
+street.a-third-of-vigor-is-battered
+street.just-above-a-third-is-not
 street.below-zero-is-both
-street.a-serious-wound-takes-two-from-every-check
+street.battered-takes-three-from-every-check
 street.damage-through-armor-wears-it-down
-street.a-head-hit-doubles-what-gets-through
-street.armor-stops-damage-up-to-its-stopping-power
+street.a-head-hit-adds-three-to-what-gets-through
+street.armor-stops-damage-up-to-its-guard
 street.thresholds-follow-the-intents
-street.advancing-a-skill-spends-improvement-points
+street.advancing-a-skill-spends-experience
 street.advancing-without-the-points-changes-nothing

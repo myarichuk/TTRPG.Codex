@@ -1,0 +1,3 @@
+- { id: jack-socket,  name: Jack socket,  properties: { strain: 5 } }
+- { id: steel-hand,   name: Steel hand,   properties: { strain: 9 } }
+- { id: night-lenses, name: Night lenses, properties: { strain: 4 } }

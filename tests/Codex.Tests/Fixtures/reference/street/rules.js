@@ -7,35 +7,35 @@
 /** @typedef {import("./codex").Context} Context */
 /** @typedef {import("./codex").Intent} Intent */
 
-// Hit points: 10, plus 5 for each point of the average of Body and Will, rounded up.
-/** @param {number} body @param {number} will @returns {import("./codex").Value} */
-export function hitPoints(body, will) {
-  const half = Math.ceil((body + will) / 2);
-  return { value: 10 + 5 * half, parts: [["base", 10], ["5 x half of BODY+WILL, rounded up", 5 * half]] };
+// Vigor: 20, plus twice Might, plus half of Grit rounded up.
+/** @param {number} might @param {number} grit @returns {import("./codex").Value} */
+export function vigor(might, grit) {
+  const half = Math.ceil(grit / 2);
+  return { value: 20 + 2 * might + half, parts: [["base", 20], ["2 x might", 2 * might], ["half of grit, rounded up", half]] };
 }
 
-// Damage to a location: armor stops up to its stopping power; damage that gets through wears the armor down by one.
-// A hit to the head doubles what gets through.
+// Damage to a location: the guard there stops up to its value; damage that gets through wears the guard down by two.
+// A hit to the head adds 3 to what gets through.
 /** @param {Event} ev @param {Sheet} sheet @returns {Intent[]} */
 export function onDamage(ev, sheet) {
-  const sp = sheet.tracks[`SP_${ev.location}`] ?? 0;
-  if (ev.amount <= sp) return [{ log: { key: "damage.stopped", args: [ev.amount, sp] } }];
-  const through = (ev.amount - sp) * (ev.location === "head" ? 2 : 1);
+  const guard = sheet.tracks[`Guard_${ev.location}`] ?? 0;
+  if (ev.amount <= guard) return [{ log: { key: "damage.stopped", args: [ev.amount, guard] } }];
+  const through = ev.amount - guard + (ev.location === "head" ? 3 : 0);
   return [
-    { adjust: { track: "HP", by: -through } },
-    { adjust: { track: `SP_${ev.location}`, by: -1 } },
+    { adjust: { track: "Vigor", by: -through } },
+    { adjust: { track: `Guard_${ev.location}`, by: -2 } },
   ];
 }
 
-// Raising a skill costs 20 improvement points times the new level.
+// Raising a skill costs 10 experience plus 15 times the new level.
 /** @param {Event} ev @param {Sheet} sheet @param {Context} ctx @returns {Intent[]} */
 export function onAdvance(ev, sheet, ctx) {
   const skill = sheet.lists.skills[ev.skill];
   const next = (skill?.level ?? 0) + 1;
   const cost = ctx.call("advanceCost", next);
-  if (sheet.tracks.IP < cost) return [{ log: { key: "advance.notEnoughPoints", args: [ev.skill, cost, sheet.tracks.IP] } }];
+  if (sheet.tracks.XP < cost) return [{ log: { key: "advance.notEnoughPoints", args: [ev.skill, cost, sheet.tracks.XP] } }];
   return [
-    { adjust: { track: "IP", by: -cost } },
+    { adjust: { track: "XP", by: -cost } },
     { set: { list: "skills", key: ev.skill, field: "level", to: next } },
   ];
 }

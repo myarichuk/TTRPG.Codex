@@ -6,7 +6,7 @@ its section 2, written as data.
 | Folder | Shape | What it forces |
 |---|---|---|
 | `d35/` | d20 System Reference Document 3.5 | Per-class progressions summed, typed bonuses that do not stack, three armor classes, skill ranks with class/cross-class costs, synergy, prestige prerequisites, slots that hold spells, hit points below zero, nonlethal damage, damage reduction, threat range and confirmation |
-| `street/` | A street-level homebrew (this project's own numbers) | No levels or classes, a function from a script, a value over a track, thresholds that add up, integer division of odd numbers, explode/implode once, roll-under, armor per location that wears down, advancement by spending points |
+| `street/` | A street-level homebrew (this project's own numbers) | No levels or classes, a function from a script, a value over a track, thresholds that add up, integer division that does not come out even, explode/implode once, roll-under, armor per location that wears down, advancement by spending points |
 | `crew/` | The Forged in the Dark SRD's mechanics | Dice pools, keep highest, zero dice, criticals by pattern, GM-supplied position and effect, group rolls, stress overflowing into trauma, harm in slots that push up, load chosen per job, a second sheet kind, clocks and faction status owned by the campaign |
 
 Each folder has a `system.yaml` in the **proposed** syntax, a pack with just enough content, and a `spec.yaml` of
@@ -63,8 +63,8 @@ expectations:
     expect:
       values: { BAB: 4 }         # derived values; a dotted key reaches into a keyed list (skills.tumble)
       violations: [{ field: skills, key: Actor.Rule.RankMax }]   # exactly these, any order; [] for none
-      warnings: [{ field: HP_Max, key: Actor.Rule.ScriptError }]  # the GM's warnings (what failed to work out), the same way
-      conditions: [Seriously wounded]   # exactly these hold, with no event
+      warnings: [{ field: Vigor_Max, key: Actor.Rule.ScriptError }]  # the GM's warnings (what failed to work out), the same way
+      conditions: [Battered]            # exactly these hold, with no event
       outcome: critical          # a roll's named outcome
       total: 25                  # a roll's total; totals: [26, 16] when one roll leads to another
       kept: [6]                  # dice kept

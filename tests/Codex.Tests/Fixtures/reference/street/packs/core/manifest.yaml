@@ -3,7 +3,7 @@ name: Reference street homebrew content
 version: 0.1.0
 systemId: ref-street
 kind: rules
-description: Implants and armor for the reference sheets in ../../spec.yaml. Numbers are this fixture's own.
+description: Implants and armor for the reference sheets in ../../spec.yaml. Names and numbers are this fixture's own.
 authors: [TTRPG.Codex project]
 license:
   name: CC0-1.0

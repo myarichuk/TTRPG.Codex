@@ -5,9 +5,9 @@ namespace Codex.Plugin.Abstractions;
 // The compiled supplier (overhaul section 4, step 9): a DLL beside system.yaml implements a named function, an event handler or
 // a sheet widget, and system.yaml names its type:
 //
-//   functions: { hitPoints: { type: "Acme.Street.HitPoints, Acme.Street" } }
-//   events:    { damage:    { type: "Acme.Street.OnDamage, Acme.Street" } }
-//   widgets:   { cyberware: { type: "Acme.Street.Cyberware, Acme.Street" } }
+//   functions: { vigor:   { type: "Acme.Street.Vigor, Acme.Street" } }
+//   events:    { damage:  { type: "Acme.Street.OnDamage, Acme.Street" } }
+//   widgets:   { implants: { type: "Acme.Street.Implants, Acme.Street" } }
 //
 // The contract is the script supplier's (rule 1): plain data in, plain data out. A compiled supplier is handed numbers, text,
 // flags, and lists and maps of them, made afresh for each call; it never sees the world, a repository or a live object, and
@@ -18,7 +18,7 @@ namespace Codex.Plugin.Abstractions;
 // A DLL runs with the server's rights: nothing sandboxes it the way a script is. It is installed only by copying it onto the
 // server machine, never uploaded, and the Library says a system with one "contains compiled code".
 
-/// <summary>A named function, callable from formulas like a built-in: <c>hitPoints(BODY, WILL)</c>.</summary>
+/// <summary>A named function, callable from formulas like a built-in: <c>vigor(might, grit)</c>.</summary>
 public interface ICodexFunction
 {
     /// <summary>How many arguments it takes, 0 to 4. Each is a number (<see cref="double"/>), text or a flag.</summary>
@@ -68,7 +68,7 @@ public sealed record CodexIntent(string Kind, IReadOnlyDictionary<string, object
 }
 
 /// <summary>
-/// A sheet widget a layout places by name (<c>{ widget: cyberware }</c>). It says what to show as plain data, and the host
+/// A sheet widget a layout places by name (<c>{ widget: implants }</c>). It says what to show as plain data, and the host
 /// draws it in the sheet's own style; it is never handed the page. An action's intents apply to the sheet as a track widget's
 /// do, so they are the ones a sheet takes on its own: <c>adjust</c>, <c>set</c>, <c>mark</c>, <c>clear</c> and <c>condition</c>.
 /// </summary>

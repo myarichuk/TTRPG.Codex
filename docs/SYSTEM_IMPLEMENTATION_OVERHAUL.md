@@ -65,14 +65,14 @@ assumes 5e's answer.
   duplicates allowed); bonus slots by ability.
 - Prestige class prerequisites (BAB +5, 8 ranks, a feat); threat range 19–20 with a confirmation roll.
 
-**B. A Cyberpunk-RED-shaped homebrew: no levels, no classes.** The fixture uses original mechanics in that shape, no
-R. Talsorian text (`LEGAL.md` records their policy).
-- STAT + skill + 1d10 against a difficulty; a 10 explodes once, a 1 subtracts a second d10.
-- HP = 10 + 5×⌈(BODY+WILL)/2⌉; at half HP every action takes −2; below zero, mortally wounded.
-- Humanity is a track; EMP = ⌊Humanity/10⌋; each cyberware item lowers Humanity (a sum over a list).
-- Armor is SP per location (head, body) and drops by one on each hit that gets through.
-- Death save: roll under BODY with a penalty that grows each time.
-- Advancement by spending Improvement Points, not levels; role abilities have ranks.
+**B. The street fixture: a street-level homebrew with no levels and no classes.** Its names, mechanics and numbers are
+this project's own (`tests/Codex.Tests/Fixtures/reference/street`).
+- Trait + skill + 1d12 against a difficulty; a 12 explodes once, a 1 subtracts a second d12.
+- Vigor = 20 + 2×might + ⌈grit/2⌉, from a script; at a third of vigor every check takes −3; below zero, bleeding out.
+- Composure is a track; rapport = ⌊Composure/6⌋; each implant strains composure (a sum over a list).
+- Armor is a guard per location (head, torso) and drops by two on each hit that gets through.
+- Last stand: roll under grit + 4 with a Fading penalty that grows each time.
+- Advancement by spending experience, not levels.
 
 **C. Blades in the Dark (the Forged in the Dark SRD, CC-BY 3.0, see section 8): the far end.**
 No HP, no modifiers, no level, a second kind of sheet, and state that belongs to the campaign.
@@ -95,10 +95,10 @@ No HP, no modifiers, no level, a second kind of sheet, and state that belongs to
 |---|---|---|
 | Sum/max/count over list items and per-class progressions | A, B, C | List aggregates |
 | Typed bonuses with stacking rules | A | Modifiers |
-| Value of a track feeding a derived value (EMP from Humanity) | B | Values over tracks |
-| Thresholds that apply effects (−2 at half HP, dying below 0) | A, B | Track thresholds |
+| Value of a track feeding a derived value (rapport from Composure) | B | Values over tracks |
+| Thresholds that apply effects (−3 at a third of vigor, dying below 0) | A, B | Track thresholds |
 | Negative tracks, boxes, text slots, overflow into another track | A, C | Tracks |
-| Several numbers for one thing (touch/flat-footed AC; SP per location) | A, B | Values (no singular AC) |
+| Several numbers for one thing (touch/flat-footed AC; a guard per location) | A, B | Values (no singular AC) |
 | Rolls: pools, keep, explode/implode, roll-under, bands, crit by pattern | A, B, C | Rolls |
 | Inputs to a roll from another participant (position/effect, a DC) | C | Roll inputs |
 | A roll joined by several actors | C | Roll inputs (participants) |
@@ -128,7 +128,7 @@ breakdown shows each line ("Dexterity +2 (limited to +2)").
 A track is a resource with a current value: `{ key, max (formula), min (default 0, may be negative), display: number |
 boxes | slots }`.
 - **Thresholds**: `{ atOrBelow | atOrAbove (formula), effect (a condition or modifiers) }`. A threshold is re-checked
-  when the track changes. 3.5's bands, CPR's Seriously Wounded, 5e's Unconscious at 0.
+  when the track changes. 3.5's bands, the street fixture's Battered, 5e's Unconscious at 0.
 - **Overflow**: `{ into: otherTrack, then: reset | keep }`. Blades stress → trauma; nonlethal into lethal.
 - **Slots**: a track whose units hold text (Blades harm, 3.5 Vancian slots holding a spell id), grouped in levels, with
   "push up when full".
@@ -142,7 +142,7 @@ Library entries picked onto the sheet, with the existing `where` / `maxCount` ru
   bab))`.
 - Blades' attribute ratings are `count(actions in group, rating >= 1)`. Actions are a fixed *keyed* list (a dictionary
   of ratings), so a list may have fixed keys as well as picks.
-- CPR cyberware: Humanity max = `WILL*10 - sum(cyberware, humanityLoss)` (homebrew numbers).
+- Street implants: Composure max = `grit * 6 + wits * 2 - sum(implants, strain)`.
 - A property may be a **map** (spell `levels: { Cleric: 1, Ranger: 2 }`), with `levelFor(item, class)` available to
   `where` rules.
 
@@ -171,7 +171,7 @@ never mutates anything.
 | `adjust { track, by }` / `set { track, to }` | Change a track (thresholds and overflow follow) |
 | `mark { track, slot?, text? }` / `clear { track, slot? }` | Boxes and slots |
 | `condition { add \| remove, name, duration? }` | Conditions |
-| `roll { definition, inputs }` | A follow-up roll (death save, confirmation, CPR critical injury) |
+| `roll { definition, inputs }` | A follow-up roll (death save, confirmation, the street fixture's last stand) |
 | `ask { who: gm \| player, choices }` | A choice the host asks for (Blades resist or accept; spend armor) |
 | `log { key, args }` | A message to the session log, as a translation key |
 
@@ -184,7 +184,7 @@ its own values, tracks, lists and layout. `ActorKind` becomes the host's *role* 
 GM-owned), and the sheet kind is system data on the actor.
 
 ### Campaign objects
-Tracks and tables owned by the campaign, not an actor: Blades clocks and faction status, a 3.5 party treasure, a CPR
+Tracks and tables owned by the campaign, not an actor: Blades clocks and faction status, a 3.5 party treasure, a
 reputation track. They have the same track semantics, visibility (GM only or shown to players), and live beside the
 campaign document, in one of their own (step 7 says why).
 
@@ -205,13 +205,13 @@ Revision 1 named a supplier per hook. Revision 2 names one per **function**, and
 
 ```yaml
 functions:
-  hitPoints: { script: rules.js#hitPoints }                      # Jint
+  vigor:     { script: rules.js#vigor }                          # Jint
   derive35:  { type: "Acme.D35.Derive, Acme.D35" }               # compiled
   # sum, max, count, lookup, floor, ceil, mod, levelFor... are built in (C#)
 
 values:
-  - { key: EMP,    formula: "floor(Humanity / 10)" }
-  - { key: HP_Max, formula: "hitPoints(BODY, WILL)" }
+  - { key: rapport,   formula: "floor(Composure / 6)" }
+  - { key: Vigor_Max, formula: "vigor(might, grit)" }
 
 events:
   damage: { script: rules.js#onDamage }                          # returns intents
@@ -219,12 +219,13 @@ events:
 
 ```js
 // rules.js. The host passes plain data and reads plain data back.
-export function hitPoints(body, will) {
-  return { value: 10 + 5 * Math.ceil((body + will) / 2), parts: [["base", 10], ["BODY+WILL", body + will]] };
+export function vigor(might, grit) {
+  return { value: 20 + 2 * might + Math.ceil(grit / 2), parts: [["base", 20], ["2 x might", 2 * might], ["half of grit", Math.ceil(grit / 2)]] };
 }
 export function onDamage(ev, sheet) {
-  const out = [{ adjust: { track: "HP", by: -Math.max(0, ev.amount - sheet[`SP_${ev.location}`]) } }];
-  if (ev.amount > sheet[`SP_${ev.location}`]) out.push({ adjust: { track: `SP_${ev.location}`, by: -1 } });
+  const guard = sheet[`Guard_${ev.location}`];
+  const out = [{ adjust: { track: "Vigor", by: -Math.max(0, ev.amount - guard) } }];
+  if (ev.amount > guard) out.push({ adjust: { track: `Guard_${ev.location}`, by: -2 } });
   return out;
 }
 ```
@@ -244,7 +245,7 @@ in JS or C# is callable from an expression exactly like a built-in.
 5. **Same failure handling.** A timeout, exception or invalid result gives a GM-facing message naming system, function,
    supplier and (for scripts) line, and falls back to the built-in behaviour or no value. It never throws through a
    table command.
-6. **Dependencies are known.** A function declares what it reads (`reads: [BODY, WILL]`), or the host records the
+6. **Dependencies are known.** A function declares what it reads (`reads: [might, grit]`), or the host records the
    reads through the view proxy on first evaluation. Results are cached by the inputs' values, never recomputed per
    render.
 7. **Install rights.** YAML and scripts may be uploaded by a GM or admin; a server setting can turn scripts off. DLLs
@@ -385,7 +386,7 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
    - *The evaluator, done 2026-11-08.* `Codex.Core.Rules.SheetModel` reads the sheet kinds' values, modifiers, lists and
      keyed lists, with `modifierTypes`, `progressions`, `functions` and `conditionEffects`. `SheetRuleEngine.Evaluate`
      runs it for a system that has sheet kinds, so its values land in `Derived` and its rules in `Violations`. Every
-     step-2 expectation passes (22 d35, 3 street, 3 crew), plus `street.emp-follows-current-humanity` (step 3), since a
+     step-2 expectation passes (22 d35, 3 street, 3 crew), plus `street.rapport-follows-current-composure` (step 3), since a
      track's current value is still a number on the sheet. The golden corpus is unchanged. Rather than widening
      `FormulaContext`'s dictionary of doubles, the evaluator gives formulas typed parameters: numbers, strings, and
      lists and items as `DynamicObject`s. DynamicExpresso binds member access dynamically only on a parameter whose
@@ -413,7 +414,7 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      rows, skill proficiency and expertise). Re-expressing them now would translate into primitives and straight back for
      the same panels: churn and corpus risk for no visible change. Step 6 decides what the built-in widgets read, and moves
      them then. So does 5e's `base: best` modifier type (section 3), which only 5e armor class needs.
-3. **Tracks.** Thresholds, negative minimums, overflow, boxes and slots. HP bands for 3.5 and CPR; Blades stress/trauma
+3. **Tracks.** Thresholds, negative minimums, overflow, boxes and slots. HP bands for 3.5, the street fixture's thresholds; Blades stress/trauma
    and harm.
    - *Done 2026-11-09, on the sheet.* `SheetModel` reads `tracks`:
      - maxima as `{key}_Max`;
@@ -424,7 +425,7 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      - slots in levels bringing each filled level's condition (Blades' harm).
 
      The reference runner asks the evaluator for conditions. 33 of 95 pass: every step-3 expectation but street's three
-     thresholds, which compare against `HP_Max`, and street works that out in `rules.js` (step 8). Their step tag is
+     thresholds, which compare against `Vigor_Max`, and street works that out in `rules.js` (step 8). Their step tag is
      early. A named function's parameter that shares a name with a built-in (`bonusSpells(score, …)`) was taken for the
      built-in; parameters are now renamed in the body.
    - *Left for step 5 (events):* overflow (stress into trauma), `whenFull: pushUp` and `beyond` (harm), and the start
@@ -457,7 +458,7 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      - `score(key)` falling back to a value.
 
      The loader warns about malformed roll definitions. 58 of 95 pass: every step-4 expectation but
-     `street.a-serious-wound-takes-two-from-every-check`, which needs street's `HP_Max` threshold (step 8). Its step tag is
+     `street.battered-takes-three-from-every-check`, which needs street's `Vigor_Max` threshold (step 8). Its step tag is
      early, like the step-3 threshold ones.
 5. **Events → intents.** Re-express damage, death saves, concentration and rests in `TableRules` as built-in handlers.
    - *Done 2026-11-09, on the sheet.* `Codex.Core.Rules.SheetEvents` runs the system's `events`:
@@ -565,11 +566,11 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
      83 of 95 pass: every step-7 expectation. One fixture fix: `crew.a-clock-fills-and-says-so` expected only the `log`
      intent, but `expect.intents` is the handler's intents and then what the changes raised, so the `adjust` comes first.
      Every key of the three fixtures' `system.yaml` is read now. The remaining 12 are street's scripted rules (step 8): its
-     functions, the thresholds and checks that read `HP_Max`, and its scripted handlers.
+     functions, the thresholds and checks that read `Vigor_Max`, and its scripted handlers.
    - *Not done, and why:* undo does not cover the campaign's objects (it is per creature, and a clock is no creature; the GM
      ticks back with −). A sheet formula cannot read a clock or a faction's status: nothing in the fixtures asks for it, and
      it would make a sheet's values depend on campaign state the sheet page does not load.
-8. **Jint.** Functions first, then event handlers; `codex.d.ts`; `Codex.SystemCheck`. The CPR fixture's scripted rules
+8. **Jint.** Functions first, then event handlers; `codex.d.ts`; `Codex.SystemCheck`. The street fixture's scripted rules
    go green.
    Moved here from step 6: srd5e's damage, death saves, concentration and rests as built-in handlers returning intents. The
    intent vocabulary grows by what they need and a script handler needs too: ending effects another creature holds
@@ -794,7 +795,7 @@ Each step lands with srd5e unchanged (section 5) and moves at least one referenc
 | System | Licence | What may ship |
 |---|---|---|
 | SRD 3.5 | OGL 1.0a | Fixture now. A content pack later, as a separate download, with the OGL text, Section 15 and designations (section 6). |
-| CPR-shaped homebrew | Own work | Fixture only; mechanics in that shape, no R. Talsorian text, names or trademarks. |
+| The street fixture | Own work | Fixture only; its names, mechanics and numbers are this project's own. |
 | Blades in the Dark | Forged in the Dark SRD (December 2017), CC-BY 3.0 Unported | Fixture now; SRD text may ship later as a pack (see below). Should that not work out, a system in that shape ships rules-only, with a `setting:` block in genre terms (the `crews` fixture shows how). |
 
 Blades / Forged in the Dark, checked 2026-11-08 against the publisher's page (https://bladesinthedark.com/licensing):
