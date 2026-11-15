@@ -476,6 +476,12 @@
     [Parameter, EditorRequired] public IEntryResolver Resolver { get; set; } = null!;
     [Parameter] public bool CanEdit { get; set; }
 
+    /// <summary>The sheet as the table has it (<see cref="SheetConditions.LiveView"/>), which the named rolls' bonuses are worked out on while the actor is at a
+    /// live table. Null: <see cref="Sheet"/>. Only read: every edit goes to <see cref="Sheet"/>, so a table status never reaches what is saved.</summary>
+    [Parameter] public IReadOnlyDictionary<string, object>? LiveSheet { get; set; }
+
+    private IReadOnlyDictionary<string, object> RulesSheet => LiveSheet ?? Sheet;
+
     /// <summary>Whether the roll button may be pressed (a reader who cannot edit may still not roll for someone else's sheet).</summary>
     [Parameter] public bool CanRoll { get; set; }
 
@@ -673,7 +679,7 @@
     {
         try
         {
-            var offered = SheetRolls.OptIns(Definition, Resolver, Sheet, definition.Key, Supplied(definition), Linked);
+            var offered = SheetRolls.OptIns(Definition, Resolver, RulesSheet, definition.Key, Supplied(definition), Linked);
             // A tick whose box went away (the input changed) is not carried to the roll.
             if (ticked.TryGetValue(definition.Key, out var ids)) ids.IntersectWith(offered.Select(o => o.Id));
             return offered;
@@ -689,7 +695,7 @@
     {
         try
         {
-            return SheetRolls.Bonuses(Definition, Resolver, Sheet, definition.Key, Supplied(definition), Linked);
+            return SheetRolls.Bonuses(Definition, Resolver, RulesSheet, definition.Key, Supplied(definition), Linked);
         }
         catch (Exception ex) when (ex is RollException or FormulaException or InvalidOperationException)
         {

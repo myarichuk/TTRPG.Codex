@@ -343,17 +343,12 @@
         tray.Keep(bonusOffers);
     }
 
-    /// <summary>The creature's sheet with its live pools over it (a counter a ticked bonus spends is the table's number, not the sheet's).</summary>
-    private Dictionary<string, object> LiveSheet()
-    {
-        var sheet = new Dictionary<string, object>(Actor.Sheet);
-        if (State?.Pools is { } pools)
-        {
-            foreach (var (key, value) in pools) sheet[key] = (long)value;
-        }
-
-        return sheet;
-    }
+    /// <summary>The creature's sheet as the table has it (<see cref="SheetConditions.LiveView"/>): its live pools over the sheet's numbers (a counter a ticked
+    /// bonus spends is the table's number, not the sheet's), and its statuses and valued conditions in <c>conditions</c>. For working numbers out, never saved.</summary>
+    private Dictionary<string, object> LiveSheet() =>
+        Definition == null
+            ? new Dictionary<string, object>(Actor.Sheet)
+            : SheetConditions.LiveView(Definition, Actor.Sheet, State?.Pools, State?.Effects.Select(e => e.EffectId));
 
     private async Task RollAsync(ActionRoll roll)
     {
