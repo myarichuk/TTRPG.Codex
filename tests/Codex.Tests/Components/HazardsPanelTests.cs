@@ -21,8 +21,10 @@ public class HazardsPanelTests : ComponentTestBase
             new[] { new HazardWay("lid", "The lid (Investigation, DC 15)"), new HazardWay("sign", "A sign") },
             new[] { new HazardWay("wedge", "Wedge the lid (needs a spike)") }, new[] { "Avoid" }, waiting);
 
+    private static readonly HazardNeed Need = new("k1", "g1", "Goblin", HazardAskKind.Bonus, "Dexterity");
+
     private IRenderedComponent<HazardsPanel> Draw(string culture = "en", IReadOnlyList<HazardView>? hazards = null, Action<HazardRequest>? onRequest = null,
-        IReadOnlyList<HazardPass>? passes = null, IReadOnlyList<HazardWho>? needNumber = null, IReadOnlyList<string>? status = null)
+        IReadOnlyList<HazardPass>? passes = null, IReadOnlyList<HazardNeed>? needNumber = null, IReadOnlyList<string>? status = null)
     {
         Services.AddSingleton(Localizer.For(culture));
         return Render<HazardsPanel>(p => p
@@ -31,7 +33,7 @@ public class HazardsPanelTests : ComponentTestBase
             .Add(x => x.Places, new[] { new HazardPlace("p1", "Pit room") })
             .Add(x => x.Passes, passes ?? Array.Empty<HazardPass>())
             .Add(x => x.PassesFor, passes is { Count: > 0 } ? "hazard:r/p1" : null)
-            .Add(x => x.NeedNumber, needNumber ?? Array.Empty<HazardWho>())
+            .Add(x => x.NeedNumber, needNumber ?? Array.Empty<HazardNeed>())
             .Add(x => x.AskedFor, "hazard:r/p1|Trigger|")
             .Add(x => x.Status, status ?? Array.Empty<string>())
             .Add(x => x.OnRequest, (HazardRequest r) => onRequest?.Invoke(r)));
@@ -154,16 +156,16 @@ public class HazardsPanelTests : ComponentTestBase
     public void ACreatureWhoseNumberIsNeeded_GetsALabelledNumberField_AndItsNumberGoesWithTheNextRequest()
     {
         var requests = new List<HazardRequest>();
-        var cut = Draw(onRequest: requests.Add, needNumber: new[] { new HazardWho("g1", "Goblin") });
+        var cut = Draw(onRequest: requests.Add, needNumber: new[] { Need });
 
         var input = cut.Find("input[type=number]");
-        Assert.Equal("Number for Goblin", cut.Find($"label[for='{input.GetAttribute("id")}']").TextContent);
+        Assert.Equal("Goblin: Dexterity bonus", cut.Find($"label[for='{input.GetAttribute("id")}']").TextContent);
         Assert.NotNull(input.GetAttribute("aria-describedby"));
         input.Change("3");
         cut.Find("[data-testid=hazard-who-a1]").Change(true);
         cut.Find("[data-testid=hazard-0-trigger]").Click();
 
-        Assert.Equal(3, requests.Single().Bonuses!["g1"]);
+        Assert.Equal(3, requests.Single().Bonuses!["k1"]);
 
         // A typed number answers that one question: the next request, for anything else, carries none.
         cut.Find("[data-testid=hazard-0-notice]").Click();
@@ -174,9 +176,9 @@ public class HazardsPanelTests : ComponentTestBase
     public void ANumberTypedForSomeoneWhoWasNotAsked_IsNotSent()
     {
         var requests = new List<HazardRequest>();
-        var cut = Draw(onRequest: requests.Add, needNumber: new[] { new HazardWho("g1", "Goblin") });
+        var cut = Draw(onRequest: requests.Add, needNumber: new[] { Need });
         cut.Find("input[type=number]").Change("3");
-        cut.Render(p => p.Add(x => x.NeedNumber, Array.Empty<HazardWho>()));
+        cut.Render(p => p.Add(x => x.NeedNumber, Array.Empty<HazardNeed>()));
         cut.Find("[data-testid=hazard-who-a1]").Change(true);
 
         cut.Find("[data-testid=hazard-0-trigger]").Click();
@@ -185,10 +187,35 @@ public class HazardsPanelTests : ComponentTestBase
     }
 
     [Fact]
+    public void TwoNumbersForOneCreature_AreTwoLabelledFields_AndGoBackUnderTheirOwnKeys()
+    {
+        var requests = new List<HazardRequest>();
+        var cut = Draw(onRequest: requests.Add, needNumber: new[]
+        {
+            new HazardNeed("k-passive", "g1", "Goblin", HazardAskKind.Passive, "Perception"),
+            new HazardNeed("k-bonus", "g1", "Goblin", HazardAskKind.Bonus, "Arcana"),
+            new HazardNeed("k-ac", "g1", "Goblin", HazardAskKind.ArmorClass, string.Empty)
+        });
+
+        var inputs = cut.FindAll("input[type=number]");
+        Assert.Equal(3, inputs.Count);
+        Assert.Equal(new[] { "Goblin: Perception score (passive)", "Goblin: Arcana bonus", "Goblin: armor class" },
+            inputs.Select(i => cut.Find($"label[for='{i.GetAttribute("id")}']").TextContent).ToArray());
+        cut.Find("#hazard-number-0").Change("13");
+        cut.Find("#hazard-number-1").Change("2");
+        cut.Find("#hazard-number-2").Change("15");
+        cut.Find("[data-testid=hazard-who-a1]").Change(true);
+        cut.Find("[data-testid=hazard-0-trigger]").Click();
+
+        var sent = requests.Single().Bonuses!;
+        Assert.Equal((13, 2, 15), (sent["k-passive"], sent["k-bonus"], sent["k-ac"]));
+    }
+
+    [Fact]
     public void ANumberTypedForOneAction_IsNotSentWithAnotherAction_OnlyWithTheRepeatOfTheRequestThatAskedForIt()
     {
         var requests = new List<HazardRequest>();
-        var cut = Draw(onRequest: requests.Add, needNumber: new[] { new HazardWho("g1", "Goblin") });
+        var cut = Draw(onRequest: requests.Add, needNumber: new[] { Need });
         cut.Find("input[type=number]").Change("3");
         cut.Find("[data-testid=hazard-who-a1]").Change(true);
 

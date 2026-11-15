@@ -51,7 +51,9 @@
   <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>«Заметить» и «Сработать» берут всех отмеченных. «Найти» и «Обезвредить» берут первого отмеченного.</value></data>
   <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>Нужно число</value></data>
   <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>Лист напечатан, поэтому введите число: бонус спасброска или КД для атаки. Затем нажмите то же действие ещё раз: оно продолжится только для этих существ с уже брошенным уроном, так что никто не получит урон дважды.</value></data>
-  <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>Число для: {0}</value></data>
+  <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>{0}: бонус, {1}</value></data>
+  <data name="Combat.Hazard.NumberForScore" xml:space="preserve"><value>{0}: {1}, пассивное значение</value></data>
+  <data name="Combat.Hazard.NumberForArmor" xml:space="preserve"><value>{0}: КД</value></data>
   <data name="Combat.Hazard.Result" xml:space="preserve"><value>Последний результат</value></data>
   <data name="Combat.Hazard.State.Hidden" xml:space="preserve"><value>Скрыта</value></data>
   <data name="Combat.Hazard.State.Noticed" xml:space="preserve"><value>Замечена</value></data>

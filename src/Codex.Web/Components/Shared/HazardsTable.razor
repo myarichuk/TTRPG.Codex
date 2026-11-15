@@ -30,7 +30,7 @@
     private string placeId = string.Empty;
     private bool loaded;
     private IReadOnlyList<string> status = Array.Empty<string>();
-    private IReadOnlyList<HazardWho> needNumber = Array.Empty<HazardWho>();
+    private IReadOnlyList<HazardNeed> needNumber = Array.Empty<HazardNeed>();
     private string askedFor = string.Empty;
     private IReadOnlyDictionary<string, int> suggested = new Dictionary<string, int>();
 
@@ -185,7 +185,7 @@
         }
 
         status = command.Said?.Parts.Select(p => p.Render(L)).ToList() ?? new List<string>();
-        needNumber = Array.Empty<HazardWho>();
+        needNumber = Array.Empty<HazardNeed>();
         waiting = null;
         await LoadAsync();
     }
@@ -213,12 +213,14 @@
 
         var names = Actors.ToDictionary(a => a.Id, a => a.Name);
         status = command.Said?.Parts.Select(p => p.Render(L)).ToList() ?? new List<string>();
-        needNumber = command.NeedsNumber.Select(id => new HazardWho(id, names.GetValueOrDefault(id, id))).ToList();
+        needNumber = command.Asks.Select(a => new HazardNeed(a.Key, a.ActorId, names.GetValueOrDefault(a.ActorId, a.ActorId), a.Kind, a.Label)).ToList();
         askedFor = $"{request.Hazard.Id}|{request.Action}|{request.Route}";
         var suggestions = new Dictionary<string, int>();
-        foreach (var (id, spec) in command.NeedsSpecs)
+        foreach (var ask in command.Asks)
         {
-            if (Definition != null && Actors.FirstOrDefault(a => a.Id == id) is { } actor && ActorChecks.Suggest(Definition, actor, spec) is { } number) suggestions[id] = number;
+            // Only a bonus has a printed number to suggest; a passive score or an armor class is typed.
+            if (ask is { Kind: HazardAskKind.Bonus, Spec: { } spec } && Definition != null && Actors.FirstOrDefault(a => a.Id == ask.ActorId) is { } actor
+                && ActorChecks.Suggest(Definition, actor, spec) is { } number) suggestions[ask.Key] = number;
         }
 
         suggested = suggestions;

@@ -13,6 +13,9 @@ public sealed record HazardView(string Id, HazardSite? Site, string Name, string
 /// <summary>A character or creature the game master can name in the panel.</summary>
 public sealed record HazardWho(string Id, string Name);
 
+/// <summary>One number the panel asks for: <see cref="Key"/> names the question (<see cref="HazardAsk.Key"/>), and the label says whose and which.</summary>
+public sealed record HazardNeed(string Key, string ActorId, string ActorName, HazardAskKind Kind, string Label);
+
 /// <summary>A place whose hazards the panel can be narrowed to.</summary>
 public sealed record HazardPlace(string Id, string Label);
 

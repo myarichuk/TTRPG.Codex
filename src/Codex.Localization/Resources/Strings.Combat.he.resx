@@ -51,7 +51,9 @@
   <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>"זיהוי" ו"הפעלה" פועלים על כל המסומנים. "מציאה" ו"נטרול" פועלים על המסומן הראשון.</value></data>
   <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>נדרש מספר</value></data>
   <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>הדף מודפס, לכן יש להקליד את המספר: בונוס ההצלה, או דרגת השריון להתקפה. לאחר מכן ללחוץ שוב על אותה פעולה: היא תימשך רק עבור היצורים האלה, עם הנזק שכבר הוטל, כך שאיש לא ייפגע פעמיים.</value></data>
-  <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>מספר עבור {0}</value></data>
+  <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>{0}: בונוס {1}</value></data>
+  <data name="Combat.Hazard.NumberForScore" xml:space="preserve"><value>{0}: {1}, ציון פסיבי</value></data>
+  <data name="Combat.Hazard.NumberForArmor" xml:space="preserve"><value>{0}: דרגת שריון</value></data>
   <data name="Combat.Hazard.Result" xml:space="preserve"><value>התוצאה האחרונה</value></data>
   <data name="Combat.Hazard.State.Hidden" xml:space="preserve"><value>מוסתרת</value></data>
   <data name="Combat.Hazard.State.Noticed" xml:space="preserve"><value>זוהתה</value></data>

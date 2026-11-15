@@ -51,7 +51,9 @@
   <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>Notice and Trigger use everyone ticked. Find and Disable use the first one ticked.</value></data>
   <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>A number is needed</value></data>
   <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>This sheet is printed, so type the number to use: the save bonus, or the armor class for an attack. Then press the same action again: it goes on for these creatures only, with the damage already rolled, so no one is hit twice.</value></data>
-  <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>Number for {0}</value></data>
+  <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>{0}: {1} bonus</value></data>
+  <data name="Combat.Hazard.NumberForScore" xml:space="preserve"><value>{0}: {1} score (passive)</value></data>
+  <data name="Combat.Hazard.NumberForArmor" xml:space="preserve"><value>{0}: armor class</value></data>
   <data name="Combat.Hazard.Result" xml:space="preserve"><value>Last result</value></data>
   <data name="Combat.Hazard.State.Hidden" xml:space="preserve"><value>Hidden</value></data>
   <data name="Combat.Hazard.State.Noticed" xml:space="preserve"><value>Noticed</value></data>

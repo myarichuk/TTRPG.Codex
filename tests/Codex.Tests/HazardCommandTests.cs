@@ -525,10 +525,98 @@ public class HazardCommandTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         Assert.Equal(7, Hp(table, table.Goblin));
 
         foreach (var face in new[] { 6, 4 }) table.Dice.Faces.Enqueue(face);
-        await RunAsync(table, Cmd(SiteOf(placed, needle, Hidden(needle)), HazardAction.Trigger, new[] { table.Goblin.Id }, bonuses: new Dictionary<string, int> { [table.Goblin.Id] = 1 }));
+        await RunAsync(table, Cmd(SiteOf(placed, needle, Hidden(needle)), HazardAction.Trigger, new[] { table.Goblin.Id }, bonuses: new Dictionary<string, int> { [asked.Asks.Single().Key] = 1 }));
 
         // 4 + 1 = 5 fails DC 11: the whole 6.
         Assert.Equal(1, Hp(table, table.Goblin));
+    }
+
+    [Fact]
+    public async Task ASweepOfAPrintedCreature_AsksForItsPassivePerceptionScoreAndItsArcanaBonusSeparately_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var statue = Trap("fire-casting-statue");
+        var found = Hidden(statue, null, "glyph");
+        var placed = await PlaceAsync(table, found);
+        var site = SiteOf(placed, statue, found);
+
+        var asked = await RunAsync(table, Cmd(site, HazardAction.Notice, new[] { table.Goblin.Id }));
+
+        var passive = Assert.Single(asked.Asks, a => a.Kind == HazardAskKind.Passive);
+        var arcana = Assert.Single(asked.Asks, a => a.Kind == HazardAskKind.Bonus);
+        Assert.NotEqual(passive.Key, arcana.Key);
+        Assert.Equal(2, asked.Asks.Count);
+
+        // A passive score of 16 passes the plate (DC 15); the Arcana bonus of 4 is added to the die. Neither number is used for the other.
+        table.Dice.Faces.Enqueue(9);
+        var sent = await RunAsync(table, Cmd(site, HazardAction.Notice, new[] { table.Goblin.Id }, bonuses: new Dictionary<string, int> { [passive.Key] = 16, [arcana.Key] = 4 }));
+
+        Assert.Empty(sent.Asks);
+        Assert.Contains(sent.Passes, p => p.ActorId == table.Goblin.Id && p.RouteKey == "plate");
+        Assert.Contains("1d20+4", table.Dice.Expressions);
+    }
+
+    [Fact]
+    public async Task AnAttackOnAPrintedCreature_AsksForItsArmorClassAndItsSaveBonusSeparately_Async()
+    {
+        var effect = HazardType.Hazard!.Effect!;
+        effect.Attack = "attackBonus";
+        try
+        {
+            await ArmorAndSaveAsync();
+        }
+        finally
+        {
+            effect.Attack = null;
+        }
+    }
+
+    private async Task ArmorAndSaveAsync()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        // A printed creature with no armor class on its sheet, so the table has to be told.
+        var ogre = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(), CampaignId = table.Runtime.CampaignId, Name = "Ogre", Kind = ActorKind.Monster,
+            Sheet = new Dictionary<string, object> { ["HP"] = 30L, ["HP_Max"] = 30L, [SheetRuleEngine.MethodKey] = SheetRuleEngine.PrintedMethod }
+        };
+        ActorSheetSync.ApplySheetToState(ogre, System, _registry);
+        await _actors.SaveAsync(ogre);
+        table.Runtime.Hydrate(new[] { ogre });
+        var entry = Synthetic("homebrew-dart-wall", new Dictionary<string, object>
+        {
+            ["attackBonus"] = 5L, ["saveAttribute"] = "Dexterity", ["saveDc"] = 12L,
+            ["damage"] = new List<object> { new Dictionary<string, object> { ["dice"] = "1d6", ["type"] = "piercing" } }
+        });
+        var placed = await PlaceAsync(table, Hidden(entry));
+        var site = SiteOf(placed, entry, Hidden(entry));
+        HazardCommand Trigger(Dictionary<string, int>? bonuses = null) => Cmd(site, HazardAction.Trigger, new[] { ogre.Id }, bonuses: bonuses);
+
+        table.Dice.Faces.Enqueue(3);
+        var first = await RunAsync(table, Trigger());
+        var armor = Assert.Single(first.Asks);
+        Assert.Equal(HazardAskKind.ArmorClass, armor.Kind);
+
+        // Armor class 16: the attack (10 + 5 = 15) misses, and no save is asked for.
+        foreach (var face in new[] { 4, 10 }) table.Dice.Faces.Enqueue(face);
+        var miss = await RunAsync(table, Trigger(new Dictionary<string, int> { [armor.Key] = 16 }));
+        Assert.Empty(miss.Asks);
+        Assert.Equal(30, Hp(table, ogre));
+
+        // Armor class 15: it hits, and now the save bonus is its own question.
+        foreach (var face in new[] { 4, 10 }) table.Dice.Faces.Enqueue(face);
+        var hit = await RunAsync(table, Trigger(new Dictionary<string, int> { [armor.Key] = 15 }));
+        var save = Assert.Single(hit.Asks);
+        Assert.Equal(HazardAskKind.Bonus, save.Kind);
+        Assert.NotEqual(armor.Key, save.Key);
+
+        // Save bonus 1 (8 + 1 = 9 against DC 12 fails: the whole 4); had the armor class 15 been used as the bonus, the save would have passed.
+        foreach (var face in new[] { 4, 10, 8 }) table.Dice.Faces.Enqueue(face);
+        await RunAsync(table, Trigger(new Dictionary<string, int> { [armor.Key] = 15, [save.Key] = 1 }));
+        Assert.Equal(26, Hp(table, ogre));
+        Assert.Contains("1d20+1", table.Dice.Expressions);
     }
 
     [Fact]
@@ -707,7 +795,7 @@ public class HazardCommandTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         // The repeat is for the creature that waited, with the damage already rolled: Aria is not touched and no new damage is rolled.
         table.Dice.Faces.Enqueue(12); // the goblin's save: 12 + 1 passes, half of 8
         var repeat = await RunAsync(table, new HazardCommand(SiteOf(placed, needle, await StoredAsync(placed)), HazardAction.Trigger, new[] { table.Goblin.Id }, Gm, null, null, null,
-            new Dictionary<string, int> { [table.Goblin.Id] = 1 }, first.DamageRolled));
+            new Dictionary<string, int> { [first.Asks.Single().Key] = 1 }, first.DamageRolled));
 
         Assert.Empty(repeat.NeedsNumber);
         Assert.Equal((26, 3), (Hp(table, table.Aria), Hp(table, table.Goblin)));

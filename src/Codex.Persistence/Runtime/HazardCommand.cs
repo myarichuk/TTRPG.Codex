@@ -27,6 +27,16 @@ public enum HazardAction
     SetState
 }
 
+/// <summary>What a typed number is: a check's bonus, a passive score (the score itself), or an armor class.</summary>
+public enum HazardAskKind { Bonus, Passive, ArmorClass }
+
+/// <summary>One number the table asks the game master for, for one character and one check. <see cref="Key"/> names the question (character, kind, check); a typed number goes
+/// back under it, so one number never answers a different question of the same character.</summary>
+public sealed record HazardAsk(string Key, string ActorId, HazardAskKind Kind, string Label, CheckSpec? Spec)
+{
+    public static string KeyFor(string actorId, HazardAskKind kind, string check) => $"{actorId}|{kind}|{check}";
+}
+
 /// <summary>One character who passed one detect route in a <see cref="HazardAction.Notice"/> sweep (<see cref="HazardRoutes.KeyOf"/> names the route).</summary>
 public sealed record HazardPass(string ActorId, string RouteKey);
 
@@ -101,7 +111,7 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
     IReadOnlyList<string>? RouteIds = null, HazardState? State = null, IReadOnlyDictionary<string, int>? Bonuses = null, IReadOnlyList<int>? Rolled = null) : IRuntimeCommand
 {
     private readonly List<(string ActorId, object Token)> _damage = new();
-    private readonly Dictionary<string, CheckSpec> _needSpecs = new(StringComparer.Ordinal);
+    private readonly List<HazardAsk> _asks = new();
     private IReadOnlyList<int>? _rolledNow;
 
     /// <summary>Once applied: whether the effect (attack, save, damage) went off on its targets, so a character who needed a number is still waiting for it.</summary>
@@ -111,8 +121,9 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
     /// (<see cref="NeedsNumber"/>) to finish the effect with the same roll: the others were already hit and are not hit twice.</summary>
     public IReadOnlyList<int>? DamageRolled => _rolledNow;
 
-    /// <summary>Once applied: the check each waiting character's number is for, so the panel can prefill it from the printed sheet (4.2).</summary>
-    public IReadOnlyDictionary<string, CheckSpec> NeedsSpecs => _needSpecs;
+    /// <summary>Once applied: each number that was asked for, with the check it is for (so the panel labels it and can prefill it from the printed sheet, 4.2).
+    /// Send the typed numbers back in <c>Bonuses</c> by <see cref="HazardAsk.Key"/>.</summary>
+    public IReadOnlyList<HazardAsk> Asks => _asks;
 
     private readonly List<EventMessage> _parts = new();
     private readonly List<string> _touched = new();
@@ -230,7 +241,7 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
                 // A passive score where the block allows it and the sheet has one for the check; every other check is rolled. Never a no-check route: the sweep skips those.
                 var spec = ActorChecks.Resolve(_system, route.Check!);
                 var passive = _hazard.Notice?.Passive == true && route.Passive != false && spec != null && ActorChecks.HasPassive(_system, spec);
-                var result = Check(runtime, new CheckRequest { ActorId = actorId, Check = route.Check!, Dc = route.Dc, Passive = passive, Bonus = Typed(actorId) });
+                var result = Check(runtime, new CheckRequest { ActorId = actorId, Check = route.Check!, Dc = route.Dc, Passive = passive, Bonus = Typed(AskKey(actorId, route.Check!, null, passive)) });
                 if (result is { Failed: CheckFailure.None, Outcome.Passed: true }) _passes.Add(new HazardPass(actorId, HazardRoutes.KeyOf(route)));
             }
         }
@@ -373,7 +384,7 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
             return true;
         }
 
-        var result = Check(runtime, new CheckRequest { ActorId = actorId, Check = route.Check!, Dc = route.Dc, Passive = passive, Bonus = Typed(actorId) });
+        var result = Check(runtime, new CheckRequest { ActorId = actorId, Check = route.Check!, Dc = route.Dc, Passive = passive, Bonus = Typed(AskKey(actorId, route.Check!, null, passive)) });
         _lastCheck = result;
         return result is { Failed: CheckFailure.None, Outcome.Passed: true };
     }
@@ -432,9 +443,10 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
             var saved = false;
             if (attack is { } bonus)
             {
-                var armor = runtime.Checks.Make(new CheckRequest { ActorId = targetId, Check = ActorChecks.ArmorClassName(_system), Kind = CheckKind.ArmorClass, Bonus = Typed(targetId) }, RollerUserId);
+                var armor = runtime.Checks.Make(new CheckRequest { ActorId = targetId, Check = ActorChecks.ArmorClassName(_system), Kind = CheckKind.ArmorClass, Bonus = Typed(AskKey(targetId, string.Empty, CheckKind.ArmorClass, false)) }, RollerUserId);
                 if (armor.Failed != CheckFailure.None)
                 {
+                    AddAsk(new HazardAsk(AskKey(targetId, string.Empty, CheckKind.ArmorClass, false), targetId, HazardAskKind.ArmorClass, string.Empty, null));
                     NeedNumber(targetId, who);
                     continue;
                 }
@@ -451,7 +463,7 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
 
             if (save.Length > 0)
             {
-                var result = Check(runtime, new CheckRequest { ActorId = targetId, Check = save, Kind = CheckKind.Save, Dc = saveDc, Bonus = Typed(targetId) });
+                var result = Check(runtime, new CheckRequest { ActorId = targetId, Check = save, Kind = CheckKind.Save, Dc = saveDc, Bonus = Typed(AskKey(targetId, save, CheckKind.Save, false)) });
                 if (result.Failed != CheckFailure.None)
                 {
                     NeedNumber(targetId, who);
@@ -507,7 +519,13 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
         _checks.Add(result);
         _parts.Add(CheckMessages.Of(runtime, secret, result));
         if (result.Failed == CheckFailure.NeedsBonus && !_needsNumber.Contains(request.ActorId)) _needsNumber.Add(request.ActorId);
-        if (result.Failed == CheckFailure.NeedsBonus && ActorChecks.Resolve(_system, request.Check, request.Kind) is { } spec) _needSpecs[request.ActorId] = spec;
+        if (result.Failed == CheckFailure.NeedsBonus)
+        {
+            var spec = ActorChecks.Resolve(_system, request.Check, request.Kind);
+            AddAsk(new HazardAsk(AskKey(request.ActorId, request.Check, request.Kind, request.Passive), request.ActorId,
+                request.Passive ? HazardAskKind.Passive : HazardAskKind.Bonus, spec?.Label ?? request.Check, spec));
+        }
+
         return result;
     }
 
@@ -517,7 +535,21 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
         Say("NeedsNumber", who);
     }
 
-    private int? Typed(string actorId) => Bonuses != null && Bonuses.TryGetValue(actorId, out var value) ? value : null;
+    // A typed number belongs to one question: this character, this kind of reading (a bonus, a passive score, an armor class) and this check. A passive Perception
+    // score and an Arcana bonus, or an armor class and a save bonus, are different numbers, so they are asked and sent separately.
+    private string AskKey(string actorId, string check, CheckKind? kind, bool passive)
+    {
+        if (kind == CheckKind.ArmorClass) return HazardAsk.KeyFor(actorId, HazardAskKind.ArmorClass, string.Empty);
+        var spec = ActorChecks.Resolve(_system, check, kind);
+        return HazardAsk.KeyFor(actorId, passive ? HazardAskKind.Passive : HazardAskKind.Bonus, spec?.Key ?? check.Trim().ToLowerInvariant());
+    }
+
+    private int? Typed(string key) => Bonuses != null && Bonuses.TryGetValue(key, out var value) ? value : null;
+
+    private void AddAsk(HazardAsk ask)
+    {
+        if (!_asks.Any(a => a.Key == ask.Key)) _asks.Add(ask);
+    }
 
     private int RollAttack(CampaignRuntime runtime, string targetId, int bonus)
     {
