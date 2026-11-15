@@ -27,6 +27,12 @@ public static class TableVisibility
         return position == 0 ? null : (position, count);
     }
 
+    /// <summary>The roll a player just made for <paramref name="actorId"/>, read back from the shared log: the latest entry of theirs with that label,
+    /// never a secret one and never one another user rolled. A secret check the GM made for the same actor (a hazard's Perception) can land in the log
+    /// between the player's roll and this read; it is not theirs to see.</summary>
+    public static RollLogEntry? OwnLast(IEnumerable<RollLogEntry> log, string actorId, string? label, string rollerUserId) =>
+        log.LastOrDefault(r => r.ActorId == actorId && r.Label == label && !r.IsSecret && r.RollerUserId == rollerUserId);
+
     /// <summary>The latest rolls this viewer may see: no secret rolls, and none made for an actor they cannot see, since a
     /// hidden monster's initiative or attack would announce it, dice and all, the moment the DM rolled for it (as the
     /// session log already avoids).</summary>

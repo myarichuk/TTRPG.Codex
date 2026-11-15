@@ -26,7 +26,8 @@ public sealed record CheckRequest
     /// <summary>As content writes it: "Perception", "perception", "Dexterity", "dex", "Thieves' Tools".</summary>
     public required string Check { get; init; }
 
-    /// <summary>Forces the reading: a hazard's effect.save is a Save of that attribute, never an attribute check.</summary>
+    /// <summary>Forces the reading: a hazard's effect.save is a Save of that attribute, never an attribute check. Passive with a skill's name reads that
+    /// skill's passive (the same as <see cref="Passive"/>).</summary>
     public CheckKind? Kind { get; init; }
 
     public int? Dc { get; init; }
@@ -95,6 +96,13 @@ public static class ActorChecks
         if (kind is null or CheckKind.Passive && rules != null)
         {
             var passive = rules!.Passives.FirstOrDefault(p => Same(p.Key, check) || Same(p.Label, check));
+            // Kind Passive with a skill's name ("Perception") is that skill's passive; a skill with none is not found.
+            if (passive == null && kind == CheckKind.Passive)
+            {
+                var named = rules.List.FirstOrDefault(s => Same(s.Key, check) || Same(s.Label, check) || Same(s.CanonicalLabel, check));
+                passive = named == null ? null : rules.Passives.FirstOrDefault(p => Same(p.Skill, named.Key));
+            }
+
             if (passive != null)
             {
                 var skill = rules.List.FirstOrDefault(s => Same(s.Key, passive.Skill));
@@ -122,17 +130,19 @@ public static class ActorChecks
         };
     }
 
-    /// <summary>Printed iff the actor came from an actorBlueprint entry (BlueprintId set, the system has an actorBlueprint type) and the evaluation has no
-    /// class levels. A cast NPC with a full sheet is evaluated.</summary>
+    /// <summary>Printed iff the sheet was seeded from a stat block (the printed method stamp <see cref="ActorSheetSync.SeedFromBlueprint"/> sets, homebrew
+    /// creatures included, whose <c>BlueprintId</c> is null) and the evaluation has no class levels. A cast NPC with a full sheet is evaluated.</summary>
     public static bool IsPrinted(SystemDefinition system, ActorDocument actor, SheetEvaluation evaluation) =>
-        !string.IsNullOrEmpty(actor.BlueprintId) && system.EntityTypes.Any(t => t.ActorBlueprint) && evaluation.Classes.Count == 0;
+        string.Equals(YamlValues.GetString(actor.Sheet, SheetRuleEngine.MethodKey), SheetRuleEngine.PrintedMethod, StringComparison.OrdinalIgnoreCase)
+        && evaluation.Classes.Count == 0;
 
     /// <summary>Null: no source has it, the caller must supply a typed bonus. Evaluated from the sheet, or (AC only, and every number of a printed
     /// creature's skills and saves is left out) printed. Never typed: that is the request's.</summary>
-    public static CheckBonus? BonusOf(SystemDefinition system, ActorDocument actor, SheetEvaluation live, CheckSpec spec)
+    /// <param name="liveSheet">The sheet as the table has it (<c>LiveSheetOf</c>), where a printed or manual armor class is read; null: the stored one.</param>
+    public static CheckBonus? BonusOf(SystemDefinition system, ActorDocument actor, SheetEvaluation live, CheckSpec spec, IReadOnlyDictionary<string, object>? liveSheet = null)
     {
         var printed = IsPrinted(system, actor, live);
-        if (spec.Kind == CheckKind.ArmorClass) return ArmorClassOf(system, actor, live, printed);
+        if (spec.Kind == CheckKind.ArmorClass) return ArmorClassOf(system, liveSheet ?? actor.Sheet, live, printed);
         // A printed creature's evaluation would come to the bare attribute modifier for a skill or a save, and a passive over it.
         if (printed && spec.Kind is CheckKind.Skill or CheckKind.Save or CheckKind.Passive) return null;
 
@@ -156,12 +166,18 @@ public static class ActorChecks
         }
     }
 
-    private static CheckBonus? ArmorClassOf(SystemDefinition system, ActorDocument actor, SheetEvaluation live, bool printed)
+    private static CheckBonus? ArmorClassOf(SystemDefinition system, IReadOnlyDictionary<string, object> sheet, SheetEvaluation live, bool printed)
     {
         // An armor class the rules work out (auto), else the number the sheet carries: a stat block's, or a manual one.
         if (!printed && live.ArmorClass is { Active: true } worked) return new CheckBonus(worked.Total, CheckBonusSource.Evaluated, Array.Empty<RollBonus>());
+        return PrintedArmorClass(system, sheet);
+    }
+
+    /// <summary>The armor class a sheet carries (a stat block's, or a manual one), read from the live sheet so a status the table put on it counts.</summary>
+    public static CheckBonus? PrintedArmorClass(SystemDefinition system, IReadOnlyDictionary<string, object> sheet)
+    {
         var key = system.SheetRules?.ArmorClass?.Key;
-        return key != null && YamlValues.GetInt(actor.Sheet, key) is { } own ? new CheckBonus(own, CheckBonusSource.Printed, Array.Empty<RollBonus>()) : null;
+        return key != null && YamlValues.GetInt(sheet, key) is { } own ? new CheckBonus(own, CheckBonusSource.Printed, Array.Empty<RollBonus>()) : null;
     }
 
     /// <summary>The prefill for a printed creature: a "Label +N" match of the spec's key or label in the printed text field the system names
@@ -255,33 +271,48 @@ public sealed class CheckService(CampaignRuntime runtime)
         {
             bonus = new CheckBonus(typed, CheckBonusSource.Typed, Array.Empty<RollBonus>());
         }
-        else if (known && Evaluate())
+        else if (known)
         {
-            bonus = ActorChecks.BonusOf(system, actor, live!, spec);
-            if (bonus is { Source: CheckBonusSource.Evaluated } && !reading)
+            if (Evaluate()) bonus = ActorChecks.BonusOf(system, actor, live!, spec, liveSheet);
+            // A printed armor class needs no evaluation, so a sheet the rules cannot work out still has one.
+            else if (spec.Kind == CheckKind.ArmorClass) bonus = ActorChecks.PrintedArmorClass(system, liveSheet ?? actor.Sheet);
+        }
+
+        // What the table adds to a die: ticked boxes and always-on dice (Bane's -1d4 on a save), on a typed number as on an evaluated one.
+        // Read inside the same guard as the evaluation, so a formula that cannot be worked out never fails a MakeAll halfway, after rolls are recorded.
+        if (bonus is { Source: CheckBonusSource.Typed or CheckBonusSource.Evaluated } && !reading && known && Evaluate())
+        {
+            try
             {
                 var site = SiteOf(engine!, spec);
                 var offered = engine!.OptIns(liveSheet!, site, runtime.LinkedFor(actor.Sheet));
                 var chosen = offered.Where(o => request.OptIns.Contains(o.Id, StringComparer.Ordinal)).ToList();
                 var added = 0;
+                var tickedHere = new List<RollBonus>();
+                var diceHere = new List<string>();
                 foreach (var optIn in chosen)
                 {
                     if (int.TryParse(optIn.Amount, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var amount))
                     {
                         added += amount;
-                        ticked.Add(new RollBonus(optIn.Id, optIn.Source, optIn.Label, amount, true));
+                        tickedHere.Add(new RollBonus(optIn.Id, optIn.Source, optIn.Label, amount, true));
                     }
                     else
                     {
                         // Dice (Guidance's 1d4) are rolled with the die, not folded into the number.
-                        extraDice.Add(optIn.Amount.StartsWith('+') || optIn.Amount.StartsWith('-') ? optIn.Amount : "+" + optIn.Amount);
-                        ticked.Add(new RollBonus(optIn.Id, optIn.Source, optIn.Label, 0, true));
+                        diceHere.Add(optIn.Amount.StartsWith('+') || optIn.Amount.StartsWith('-') ? optIn.Amount : "+" + optIn.Amount);
+                        tickedHere.Add(new RollBonus(optIn.Id, optIn.Source, optIn.Label, 0, true));
                     }
                 }
 
-                // What always counts but is dice (Bane's -1d4 on a save) goes with the die too.
-                extraDice.AddRange(engine.Bonuses(liveSheet!, site, runtime.LinkedFor(actor.Sheet)).Dice.Select(d => d.Dice));
-                bonus = bonus with { Value = bonus.Value + added, Parts = bonus.Parts.Concat(ticked).ToList() };
+                diceHere.AddRange(engine.Bonuses(liveSheet!, site, runtime.LinkedFor(actor.Sheet)).Dice.Select(d => d.Dice));
+                ticked.AddRange(tickedHere);
+                extraDice.AddRange(diceHere);
+                bonus = bonus with { Value = bonus.Value + added, Parts = bonus.Parts.Concat(tickedHere).ToList() };
+            }
+            catch (Exception ex) when (ex is FormulaException or InvalidOperationException)
+            {
+                // No tick boxes and no table dice: the number stands on its own.
             }
         }
 

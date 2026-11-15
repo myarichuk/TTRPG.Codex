@@ -69,6 +69,11 @@ public class ActorCheckTests
     [Fact(Skip = "P6: four degrees through dice.checkRoll")]
     public void WhenTheSystemNamesACheckRoll_TheGradeIsItsOutcome()
     {
+        // P6 fills this in. Arrange: srd5e with dice.checkRoll naming a rolls: entry whose inputs are bonus and dc and whose outcomes are
+        // criticalSuccess (total >= input.dc + 10, passes: true), success, failure and criticalFailure. Act: a check rolling 27 against DC 15.
+        // Assert: CheckResult.Outcome is ("criticalSuccess", Passed: true), the RollLogEntry carries Outcome "criticalSuccess", and a pure
+        // Grade on a system with checkRoll agrees with the service (the Web panel and the service must not disagree).
+        Assert.Fail("P6: not built");
     }
 
     [Fact]
@@ -91,13 +96,29 @@ public class ActorCheckTests
         Assert.Null(ActorChecks.Suggest(unnamed, goblin, perception));
     }
 
+    private static ActorDocument Stamped(string? blueprint) => new()
+    {
+        Id = "a", BlueprintId = blueprint, Sheet = new Dictionary<string, object> { [SheetRuleEngine.MethodKey] = SheetRuleEngine.PrintedMethod }
+    };
+
     [Fact]
-    public void IsPrinted_NeedsABlueprint_AndNoClassLevels()
+    public void IsPrinted_ReadsThePrintedMethodStamp_HomebrewCreaturesIncluded_AndNeedsNoClassLevels()
     {
         var evaluation = new SheetEvaluation();
         Assert.False(ActorChecks.IsPrinted(Srd5e, new ActorDocument { Id = "a" }, evaluation));
-        Assert.True(ActorChecks.IsPrinted(Srd5e, new ActorDocument { Id = "a", BlueprintId = "srd5e:goblin" }, evaluation));
-        evaluation.Classes.Add(new ClassLevel("fighter", null, 3, true));
+        // A BlueprintId alone is not enough: a restatted creature (manual method) is evaluated.
         Assert.False(ActorChecks.IsPrinted(Srd5e, new ActorDocument { Id = "a", BlueprintId = "srd5e:goblin" }, evaluation));
+        Assert.True(ActorChecks.IsPrinted(Srd5e, Stamped("srd5e:goblin"), evaluation));
+        Assert.True(ActorChecks.IsPrinted(Srd5e, Stamped(null), evaluation)); // homebrew: CastService leaves BlueprintId null
+        evaluation.Classes.Add(new ClassLevel("fighter", null, 3, true));
+        Assert.False(ActorChecks.IsPrinted(Srd5e, Stamped("srd5e:goblin"), evaluation));
+    }
+
+    [Fact]
+    public void Resolve_PassiveKindWithASkillName_IsThatSkillsPassive_AndASkillWithNoneIsNotFound()
+    {
+        var spec = ActorChecks.Resolve(Srd5e, "Perception", CheckKind.Passive)!;
+        Assert.Equal((CheckKind.Passive, "passivePerception"), (spec.Kind, spec.Key));
+        Assert.Null(ActorChecks.Resolve(Srd5e, "Stealth", CheckKind.Passive));
     }
 }

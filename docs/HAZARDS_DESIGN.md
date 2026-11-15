@@ -401,10 +401,16 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   - **Test 16 changed:** srd5e has Passive Investigation (and Insight), so the "no passive" skill in the tests is Stealth; Investigation does have one.
   - **A typed bonus on a passive or an AC read is the score itself** (`CheckBonus.Value` is "the passive score, or the AC"), not a number added to 10.
   - **Unresolved vs NeedsBonus:** a check the system does not know (Thieves' Tools) with no typed bonus is `NeedsBonus`; with one it rolls, with a `Spec` of the request's own name and an empty key. `Unresolved` is a passive asked of a check with no passive (or an unknown one).
-  - **Printed creatures:** skill, save and passive are `NeedsBonus` without a typed bonus; their attribute check is still evaluated (the printed method makes the score the base score, so the modifier is right), and AC is printed. `IsPrinted` reads "the system has an actorBlueprint type" because the actor holds only `BlueprintId` (`systemId:id`), not the entry's type.
-  - **Opt-ins and dice:** a ticked flat opt-in is added to the bonus (and is in `Parts`); a ticked dice opt-in (Guidance's 1d4) and an always-on dice amount (Bane's -1d4 on a save, `engine.Bonuses(...).Dice`) are appended to the roll expression, not folded into the number. Ticking spends nothing and ends no condition (a GM's roll for a hazard is not the player's roll).
+  - **Printed creatures:** skill, save and passive are `NeedsBonus` without a typed bonus; their attribute check is still evaluated (the printed method makes the score the base score, so the modifier is right), and AC is printed. `IsPrinted` reads the printed method stamp `SeedFromBlueprint` writes (plus no class levels), not `BlueprintId`: a homebrew creature has none (`CastService` leaves it null) and must still be printed. Section 12.2's text said "BlueprintId set"; it now says the stamp. A creature restatted to another method is evaluated.
+  - **Opt-ins and dice:** a ticked flat opt-in is added to the bonus (and is in `Parts`); a ticked dice opt-in (Guidance's 1d4) and an always-on dice amount (Bane's -1d4 on a save, `engine.Bonuses(...).Dice`) are appended to the roll expression, not folded into the number. This holds for a typed bonus too (a printed goblin under Bane with a typed +2 rolls `1d20+2-1d4`; a ticked flat box is added on top of the typed number). Ticking spends nothing and ends no condition (a GM's roll for a hazard is not the player's roll). The tick-box and dice reads share the evaluation's guard: a formula the table cannot work out gives no boxes and no dice, never a throw, so a `MakeAll` is not left half done with rolls recorded.
+  - **AC is read from the live sheet** (`LiveSheetOf`), also for a printed or manual one, and a printed AC does not need the evaluation to succeed.
+  - **Failures:** a passive the sheet has none of is logged by `Check.Unresolved` ("has no passive score, so nothing was read"), not as a missing bonus. `MakeCheckCommand` changes no actor state, so its `AffectedActorIds` is empty (as `RollDiceCommand`'s); an open check's label is a `SystemKind` term.
+  - **`Kind = Passive` with a skill's name** ("Perception") resolves to that skill's passive; a skill with none is not found. H4b may set either.
+  - **Player's own roll:** `ActorSheet` reads its last roll back through `TableVisibility.OwnLast` (own user, never secret), since a secret hazard check on the same actor and label can land in the log between the roll and the read.
+  - **Degrees seam (P6):** `ActorChecks.Grade(total, natural, dc)` takes no system, so P6 adds an overload (or the service branches) and the Web panel must use the same one. The skipped placeholder test describes the target.
+  - **Not done:** the AC label is still the English "Armor Class" in code and an AC read says "passive Armor Class ... vs DC" through `MakeCheckCommand`; the loader does not check `printedSkills`/`printedSaves`; `Suggest` takes the first actorBlueprint type that names the field.
   - **AC:** `Active` auto-AC is the evaluated total; a manual-mode or printed sheet reads `sheet[armorClass.Key]` (source `Printed`). A request with `Kind = ArmorClass` is how `ArmorClassOf` is made.
-  - **`SheetEvaluation.AttributeModifiers`** is filled for every attribute at the start of `EvaluateSkills`, so it exists even for a system without skills.
+  - **`SheetEvaluation.AttributeModifiers`** is filled for every attribute at the start of `EvaluateSkills`, so it exists for a system with `sheetRules` but no skills; a system without `sheetRules` is never evaluated, and its attribute check needs a typed bonus.
   - **`printedSkills` / `printedSaves`** are two new optional properties of an `actorBlueprint` type (`ContentTypeDefinition.PrintedSkills`, `PrintedSaves`), named in srd5e's `monster` type; schema and reference regenerated. The loader does not check that the field exists.
   - **Event strings** (`Strings.Event`, en/ru/he; ru and he need native review): the three of 12.4, plus `Check.Failed` (unknown actor, bad dice) and `Check.Outcome.Success` / `.Failure` / `.Other`, because the outcome word is a part of its own. The event type is `DiceRoll`, so no new type label. A secret check's label is a `GmOnly` term.
   - **Not built (as section 12 says):** `dice.checkRoll` and degrees (P6). A skipped test stands for it.
@@ -503,8 +509,9 @@ public static class ActorChecks
 {
     public static CheckSpec? Resolve(SystemDefinition system, string check, CheckKind? kind = null);
 
-    /// <summary>Printed iff the actor came from an actorBlueprint entry (BlueprintId set, its type has actorBlueprint) and the
-    /// evaluation has no class levels. A cast NPC with a full sheet is evaluated.</summary>
+    /// <summary>Printed iff the actor's sheet was seeded from a stat block (the sheet's method is `printed`, which `SeedFromBlueprint` stamps for
+    /// every blueprint, homebrew ones included: their `BlueprintId` is null) and the evaluation has no class levels. A cast NPC with a full
+    /// sheet is evaluated.</summary>
     public static bool IsPrinted(SystemDefinition system, ActorDocument actor, Codex.Core.Rules.SheetEvaluation evaluation);
 
     /// <summary>Null: no source has it, the caller must supply a typed bonus.</summary>

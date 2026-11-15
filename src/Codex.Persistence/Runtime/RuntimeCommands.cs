@@ -954,7 +954,8 @@ public sealed record MakeRollCommand(string ActorId, string RollerUserId, Codex.
 /// </summary>
 public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId) : IRuntimeCommand
 {
-    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { Request.ActorId };
+    // Changes no actor state (it only records a roll), as RollDiceCommand: the actor is not marked dirty or re-persisted.
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
     private CheckResult? _result;
 
@@ -968,11 +969,15 @@ public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId)
         var actor = runtime.ActorTerm(Request.ActorId);
         var result = _result;
         var label = result?.Spec?.Label ?? Request.Check;
-        object shown = Request.Secret ? EventTerm.GmOnly(label) : label;
+        object shown = Request.Secret ? EventTerm.GmOnly(label) : new EventTerm(EventTerm.SystemKind, label, runtime.System?.DisplayValue(label) ?? label);
         EventMessage message;
         if (result == null || result.Failed is CheckFailure.UnknownActor or CheckFailure.BadDice)
         {
             message = EventMessage.Of("Check.Failed", actor, shown);
+        }
+        else if (result.Failed == CheckFailure.Unresolved)
+        {
+            message = EventMessage.Of("Check.Unresolved", actor, shown);
         }
         else if (result.Failed != CheckFailure.None)
         {

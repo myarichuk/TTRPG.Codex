@@ -116,7 +116,9 @@ public class CheckServiceTests : IClassFixture<RavenDbFixture>, IDisposable
         var heroDoc = await Seed("Aria", ActorKind.PlayerCharacter, Hero(), hero);
         var goblinDoc = await Seed("Goblin", ActorKind.Monster, new Dictionary<string, object>
         {
-            ["HP"] = 7L, ["HP_Max"] = 7L, ["dex"] = 14L, ["wis"] = 8L, ["armorClass"] = 15L, ["skills"] = "History +12, Perception +10"
+            ["HP"] = 7L, ["HP_Max"] = 7L, ["dex"] = 14L, ["wis"] = 8L, ["armorClass"] = 15L, ["skills"] = "History +12, Perception +10",
+            // What ActorSheetSync.SeedFromBlueprint writes for any stat block: the printed method and the printed scores as base scores.
+            [SheetRuleEngine.MethodKey] = SheetRuleEngine.PrintedMethod, [SheetRuleEngine.BasePrefix + "dex"] = 14L, [SheetRuleEngine.BasePrefix + "wis"] = 8L
         }, goblin ?? (d => d.BlueprintId = "srd5e:goblin"));
         var thirdDoc = await Seed("Brin", ActorKind.PlayerCharacter, Hero());
         var session = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Status = SessionStatus.Live, Title = "Live" };
@@ -353,6 +355,126 @@ public class CheckServiceTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(CheckFailure.NeedsBonus, without.Failed);
     }
 
+    // ---- Printed creatures, homebrew included ----
+
+    [Fact]
+    public async Task AHomebrewCreature_WithNoBlueprintId_IsStillPrinted_AndNeedsABonus_Async()
+    {
+        var table = await TableAsync(goblin: d => d.BlueprintId = null);
+        await using var _ = table.Runtime;
+
+        var skill = await MakeAsync(table, Skill(table.Goblin));
+        var save = await MakeAsync(table, new CheckRequest { ActorId = table.Goblin.Id, Check = "Dexterity", Kind = CheckKind.Save, Dc = 12 });
+
+        Assert.Equal((CheckFailure.NeedsBonus, CheckFailure.NeedsBonus), (skill.Failed, save.Failed));
+        Assert.Empty(table.Dice.Expressions);
+        Assert.Empty(table.Session.RollLog);
+    }
+
+    [Fact]
+    public async Task APrintedCreature_HasAnEvaluatedAttributeCheck_ButNoSaveOrPassive_WithoutATypedBonus_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        table.Dice.Faces.Enqueue(10);
+
+        var attribute = await MakeAsync(table, new CheckRequest { ActorId = table.Goblin.Id, Check = "Dexterity", Dc = 12 });
+        var save = await MakeAsync(table, new CheckRequest { ActorId = table.Goblin.Id, Check = "Dexterity", Kind = CheckKind.Save });
+        var passive = await MakeAsync(table, Skill(table.Goblin) with { Passive = true });
+
+        Assert.Equal((CheckFailure.None, "1d20+2", CheckBonusSource.Evaluated), (attribute.Failed, table.Dice.Expressions.Single(), attribute.Bonus!.Source));
+        Assert.Equal(CheckFailure.NeedsBonus, save.Failed);
+        Assert.Equal(CheckFailure.NeedsBonus, passive.Failed);
+    }
+
+    // ---- Typed bonuses keep what the table adds ----
+
+    [Fact]
+    public async Task AlwaysOnDice_AreRolledWithAnEvaluatedBonus_AndWithATypedOne_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        await table.Runtime.EnqueueAsync(new AddStatusEffectCommand(table.Hero.Id, "Bane", "dm", 10, EffectExpiry.EndOfTurn, table.Hero.Id));
+        await table.Runtime.EnqueueAsync(new AddStatusEffectCommand(table.Goblin.Id, "Bane", "dm", 10, EffectExpiry.EndOfTurn, table.Goblin.Id));
+        table.Dice.Faces.Enqueue(10);
+        table.Dice.Faces.Enqueue(10);
+        table.Dice.Faces.Enqueue(10);
+
+        await MakeAsync(table, new CheckRequest { ActorId = table.Hero.Id, Check = "Dexterity", Kind = CheckKind.Save, Dc = 15 });
+        await MakeAsync(table, new CheckRequest { ActorId = table.Goblin.Id, Check = "Dexterity", Kind = CheckKind.Save, Dc = 15, Bonus = 2 });
+        await MakeAsync(table, new CheckRequest { ActorId = table.Hero.Id, Check = "Dexterity", Kind = CheckKind.Save, Dc = 15, Bonus = 7 });
+
+        Assert.Equal(new[] { "1d20+6-1d4", "1d20+2-1d4", "1d20+7-1d4" }, table.Dice.Expressions);
+    }
+
+    [Fact]
+    public async Task ATypedBonus_StillCountsATickedFlatOptIn_Async()
+    {
+        var system = System(s => s.ConditionEffects["Guided"] = new ConditionEffectDefinition
+        {
+            Modifiers = { new ModifierDefinition { Target = "check", Amount = "3", OptIn = new OptInDefinition { Label = "Guidance" } } }
+        });
+        var table = await TableAsync(system);
+        await using var _ = table.Runtime;
+        await table.Runtime.EnqueueAsync(new AddStatusEffectCommand(table.Hero.Id, "Guided", "dm", 10, EffectExpiry.EndOfTurn, table.Hero.Id));
+        var engine = new SheetRuleEngine(system, NullEntryResolver.Instance);
+        var id = engine.OptIns(table.Runtime.LiveSheetOf(table.Hero), engine.SkillSite("perception")).Single().Id;
+        table.Dice.Faces.Enqueue(10);
+
+        var result = await MakeAsync(table, Skill(table.Hero) with { Bonus = 1, OptIns = new[] { id } });
+
+        Assert.Equal(("1d20+4", CheckBonusSource.Typed), (table.Dice.Expressions.Single(), result.Bonus!.Source));
+        Assert.Contains(result.Bonus.Parts, b => b is { Ticked: true, Amount: 3 });
+    }
+
+    [Fact]
+    public async Task ATypedPassiveOrArmorClass_IsTheScoreItself_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+
+        var passive = await MakeAsync(table, Skill(table.Goblin) with { Passive = true, Bonus = 18 });
+        var armor = await MakeAsync(table, new CheckRequest { ActorId = table.Goblin.Id, Check = "AC", Kind = CheckKind.ArmorClass, Dc = 12, Bonus = 12 });
+
+        Assert.Equal((18, CheckBonusSource.Typed, true), (passive.Total, passive.Bonus!.Source, passive.Outcome!.Passed));
+        Assert.Equal((12, CheckKind.ArmorClass, true), (armor.Total, armor.Spec!.Kind, armor.Outcome!.Passed));
+        Assert.Empty(table.Dice.Expressions);
+    }
+
+    [Fact]
+    public async Task AManualArmorClass_IsReadFromTheSheet_Async()
+    {
+        var table = await TableAsync(hero: d => { d.Sheet["acMode"] = "manual"; d.Sheet["armorClass"] = 17L; });
+        await using var _ = table.Runtime;
+
+        var result = table.Runtime.Checks.ArmorClassOf(table.Hero.Id);
+
+        Assert.Equal((17, CheckBonusSource.Printed), (result.Total, result.Bonus!.Source));
+    }
+
+    [Fact]
+    public async Task AFormulaTheTableCannotWorkOut_NeverFailsAMakeAllHalfway_Async()
+    {
+        var system = System(s => s.ConditionEffects["Guided"] = new ConditionEffectDefinition
+        {
+            Modifiers = { new ModifierDefinition { Target = "check", Amount = "((", OptIn = new OptInDefinition { Label = "Guidance" } } }
+        });
+        var table = await TableAsync(system);
+        await using var _ = table.Runtime;
+        await table.Runtime.EnqueueAsync(new AddStatusEffectCommand(table.Third.Id, "Guided", "dm", 10, EffectExpiry.EndOfTurn, table.Third.Id));
+        table.Dice.Faces.Enqueue(1);
+        table.Dice.Faces.Enqueue(2);
+        table.Dice.Faces.Enqueue(3);
+        var command = new MakeAllChecks(new[] { Skill(table.Hero), Skill(table.Third), Skill(table.Hero) });
+
+        await table.Runtime.EnqueueAsync(command);
+
+        Assert.Equal(3, command.Results.Count);
+        Assert.All(command.Results, r => Assert.Equal(CheckFailure.None, r.Failed));
+        Assert.Equal(3, table.Session.RollLog.Count);
+        Assert.Single(table.Session.Events, e => e.Type == "DiceRoll");
+    }
+
     // ---- Logging and the loop ----
 
     [Fact]
@@ -454,6 +576,36 @@ public class CheckServiceTests : IClassFixture<RavenDbFixture>, IDisposable
 
         var asPlayer = SessionEventRedactor.ForPlayers(events, new[] { table.Hero });
         Assert.Equal("Aria: Perception 17 vs DC 15, success", Assert.Single(asPlayer).Description);
+    }
+
+    [Fact]
+    public async Task ASecretPassive_NeedsBonus_Unresolved_AndFailedChecks_AreGmOnlyToo_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+
+        await MakeAsync(table, Skill(table.Hero) with { Passive = true });
+        await MakeAsync(table, Skill(table.Goblin));
+        await MakeAsync(table, Skill(table.Hero, "Stealth") with { Passive = true });
+        await MakeAsync(table, Skill(table.Hero) with { Dice = "bad" });
+
+        var events = table.Session.Events.Where(e => e.Type == "DiceRoll").ToList();
+        Assert.Equal(4, events.Count);
+        Assert.All(events, e => Assert.Contains(e.Parts.Single().Kinds, k => k.StartsWith("gm:", StringComparison.Ordinal)));
+        Assert.Empty(SessionEventRedactor.ForPlayers(events, new[] { table.Hero, table.Goblin }));
+        Assert.Equal("Aria: Stealth has no passive score, so nothing was read.", events[2].Description);
+    }
+
+    [Fact]
+    public void APlayersOwnLastRoll_IsNeverASecretOneTheGmMadeInBetween()
+    {
+        var mine = new RollLogEntry { ActorId = "hero", RollerUserId = "player-1", Label = "Perception", Total = 14, Timestamp = DateTime.UtcNow.AddSeconds(-2) };
+        var secret = new RollLogEntry { ActorId = "hero", RollerUserId = Gm, Label = "Perception", Total = 3, IsSecret = true, Timestamp = DateTime.UtcNow };
+        var open = new RollLogEntry { ActorId = "hero", RollerUserId = Gm, Label = "Perception", Total = 4, Timestamp = DateTime.UtcNow };
+
+        Assert.Same(mine, TableVisibility.OwnLast(new[] { mine, secret }, "hero", "Perception", "player-1"));
+        Assert.Same(mine, TableVisibility.OwnLast(new[] { mine, secret, open }, "hero", "Perception", "player-1"));
+        Assert.Null(TableVisibility.OwnLast(new[] { secret }, "hero", "Perception", "player-1"));
     }
 
     [Fact]
