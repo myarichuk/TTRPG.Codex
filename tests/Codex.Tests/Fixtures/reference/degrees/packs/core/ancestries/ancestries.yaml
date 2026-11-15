@@ -1,0 +1,4 @@
+# An ancestry is one feature: its hit points count once, whatever the level.
+- id: hillfolk
+  name: Hillfolk
+  properties: { modifiers: [{ target: maxHp, amount: 8 }] }

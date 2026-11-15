@@ -1,0 +1,8 @@
+# A class's rows apply from their level. Its hit points count every level; its armor rank is a modifier until P3.
+- id: vanguard
+  name: Vanguard
+  properties:
+    savingThrows: [con, wis]
+    features:
+      - { name: Hardy, level: 1, modifiers: [{ target: maxHp, amount: "8 * level" }] }
+      - { name: Armor training, level: 1, modifiers: [{ target: armorClass, amount: "level + 2", type: proficiency }] }

@@ -21,9 +21,9 @@ public class ReferenceFixtureTests(ITestOutputHelper output)
     private static readonly Lazy<IReadOnlyList<CheckResult>> Results = new(() => ReferenceRunner.RunAll(Host, ReferenceFixtures.Roots()));
 
     [Fact]
-    public void ThereAreThreeReferenceFixtures_OneForEachConstraintSystem()
+    public void ThereAreFourReferenceFixtures_OneForEachConstraintSystem()
     {
-        Assert.Equal(new[] { "crew", "d35", "street" }, ReferenceFixtures.Roots().Select(Path.GetFileName));
+        Assert.Equal(new[] { "crew", "d35", "degrees", "street" }, ReferenceFixtures.Roots().Select(Path.GetFileName));
     }
 
     [Fact]

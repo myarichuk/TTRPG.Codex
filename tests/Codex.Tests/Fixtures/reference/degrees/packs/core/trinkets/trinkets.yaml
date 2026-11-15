@@ -1,0 +1,2 @@
+# Trinkets reach the sheet kind's values through the kind's feature source. Untyped, so a modifier counted twice would show.
+- { id: wind-ribbon, name: Wind ribbon, properties: { modifiers: [{ target: speed, amount: 5 }] } }
