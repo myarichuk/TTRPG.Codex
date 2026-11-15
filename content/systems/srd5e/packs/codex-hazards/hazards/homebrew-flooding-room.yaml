@@ -10,14 +10,27 @@ properties:
   level: 5-10
   complex: true
   trigger: The door shuts, either by weight on the floor plate or by a lever on the far side.
-  noticeCheck: Investigation
-  noticeDc: 15
-  disableCheck: Thieves' Tools
-  disableDc: 15
+  duration: Until the room is full or the sluices are jammed
+  detect:
+  - id: plate
+    name: The floor plate
+    action: Search
+    check: Investigation
+    dc: 15
+    text: Examining the room finds the plate, the lever and the sluices.
+  disarm:
+  - id: jam
+    name: Jam the plate
+    action: Action
+    check: Thieves' Tools
+    dc: 15
+    after: plate
   saveAttribute: Strength
   saveDc: 15
-  damage: 4d10
-  damageType: bludgeoning
+  onSave: half
+  damage:
+  - dice: 4d10
+    type: bludgeoning
   effect: The first rush of water knocks creatures about. Each creature in the room makes the save, taking the damage on a failure and half as much on a success. After that the room acts on its own turn (see the routine) until it is full or the sluices are jammed.
   reset: The water drains through the grates in an hour, and the door lifts again. A lever outside re-arms it.
   routine:

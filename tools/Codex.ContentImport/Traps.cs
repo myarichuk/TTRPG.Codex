@@ -52,17 +52,25 @@ public static class Traps
     private static string? Text(IDictionary<object, object> item, string key) =>
         item.TryGetValue(key, out var value) ? System.Convert.ToString(value, CultureInfo.InvariantCulture) : null;
 
-    /// <summary>A DC is a number; every other value stays as written (a damage of <c>1</c> is text, as a field of dice is). A row of a collection is read the same way.</summary>
-    private static object Value(string key, object? value) => value switch
+    /// <summary>A DC, a success count and the stat-block numbers are numbers, <c>complex</c> is a Boolean; every other value stays as written (the <c>count</c> of a
+    /// damage part is text, as a field of dice is). A row of a collection is read the same way.</summary>
+    private static object Value(string key, object? value)
     {
-        IList<object> rows => rows.Select(row => Value(key, row)).ToList(),
-        IDictionary<object, object> row => row.ToDictionary(
-            p => System.Convert.ToString(p.Key, CultureInfo.InvariantCulture)!,
-            p => Value(System.Convert.ToString(p.Key, CultureInfo.InvariantCulture)!, p.Value)),
-        _ => IsDc(key) && long.TryParse(System.Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Integer, CultureInfo.InvariantCulture, out var number)
-            ? number
-            : System.Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty
-    };
+        if (value is IList<object> rows) return rows.Select(row => Value(key, row)).ToList();
+        if (value is IDictionary<object, object> row)
+        {
+            return row.ToDictionary(
+                p => System.Convert.ToString(p.Key, CultureInfo.InvariantCulture)!,
+                p => Value(System.Convert.ToString(p.Key, CultureInfo.InvariantCulture)!, p.Value));
+        }
 
-    private static bool IsDc(string key) => key.Equals("dc", StringComparison.OrdinalIgnoreCase) || key.EndsWith("Dc", StringComparison.Ordinal);
+        var text = System.Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+        if (IsNumber(key) && long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number)) return number;
+        if (key.Equals("complex", StringComparison.Ordinal) && bool.TryParse(text, out var flag)) return flag;
+        return text;
+    }
+
+    private static readonly HashSet<string> NumberKeys = new(StringComparer.Ordinal) { "dc", "successes", "armorClass", "hitPoints", "damageThreshold", "initiative" };
+
+    private static bool IsNumber(string key) => NumberKeys.Contains(key) || key.EndsWith("Dc", StringComparison.Ordinal);
 }

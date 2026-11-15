@@ -189,7 +189,13 @@ public class HazardDefinition
     /// <summary>The fields holding what it takes to break the hazard. Any subset.</summary>
     public HazardDurability? Durability { get; set; }
 
-    /// <summary>The field holding how and when the hazard re-arms (text).</summary>
+    /// <summary>The field holding how long the effect lasts once set off (text).</summary>
+    public string? Duration { get; set; }
+
+    /// <summary>The Number field holding a complex hazard's Initiative bonus.</summary>
+    public string? Initiative { get; set; }
+
+    /// <summary>The field holding how and when the hazard re-arms (text). Empty: inert after it goes off.</summary>
     public string? Reset { get; set; }
 
     /// <summary>The field holding what a complex hazard does each round, a collection of <c>{ name, description }</c>. Only for systems with hazards that act in initiative.</summary>
@@ -214,36 +220,20 @@ public class HazardDefinition
 /// <summary>The fields that say how a hazard is noticed.</summary>
 public class HazardNotice
 {
-    /// <summary>The field holding the DC (a number).</summary>
-    public string? Dc { get; set; }
+    /// <summary>The Collection field of detect routes. Each row is <c>{ id, name, action, check, dc, needs, after, rank, passive, text }</c>: a way to find the hazard
+    /// (a check and DC, or what it takes instead). The keys are fixed engine words, as in the <c>methods</c> rows.</summary>
+    public string? Routes { get; set; }
 
-    /// <summary>The field holding the check that notices it: a skill key or label.</summary>
-    public string? Check { get; set; }
-
-    /// <summary>The field holding the lowest rank that can notice it. Only on a system whose skills have ranks (<c>sheetRules.skills.ranks</c>).</summary>
-    public string? Rank { get; set; }
-
-    /// <summary>True when a character's passive score for the check may be compared with the DC without a roll.</summary>
+    /// <summary>True when a character's passive score for a route's check may be compared with the DC without a roll (a route can opt out with <c>passive: false</c>).</summary>
     public bool Passive { get; set; }
 }
 
 /// <summary>The fields that say how a hazard is disabled.</summary>
 public class HazardDisable
 {
-    /// <summary>The field holding the DC (a number).</summary>
-    public string? Dc { get; set; }
-
-    /// <summary>The field holding the check that disables it: a skill key, a tool or a label.</summary>
-    public string? Check { get; set; }
-
-    /// <summary>The field holding the lowest rank that can try. Only on a system whose skills have ranks (<c>sheetRules.skills.ranks</c>).</summary>
-    public string? Rank { get; set; }
-
-    /// <summary>The field holding how many successes disable it (a number; one when the entry leaves it empty).</summary>
-    public string? Successes { get; set; }
-
-    /// <summary>The field holding what a critical failure does (text; it sets the hazard off when it says so).</summary>
-    public string? CritFail { get; set; }
+    /// <summary>The Collection field of disarm routes, in the same row shape as the notice routes, plus <c>successes</c> and <c>triggersOn</c> (the outcome keys
+    /// that set the hazard off). A row with no <c>check</c> needs no roll: it names what it takes in <c>needs</c> or <c>text</c>.</summary>
+    public string? Routes { get; set; }
 }
 
 /// <summary>The fields that say what a hazard does to those it catches.</summary>
@@ -258,11 +248,17 @@ public class HazardEffect
     /// <summary>The field holding the saving throw's DC (a number).</summary>
     public string? SaveDc { get; set; }
 
-    /// <summary>The field holding the damage dice (text, <c>4d10</c>).</summary>
+    /// <summary>The field holding what a passed save does to the damage: <c>half</c> or <c>none</c> (text or a Dropdown).</summary>
+    public string? OnSave { get; set; }
+
+    /// <summary>The Collection field of damage parts, each <c>{ dice, type, count }</c>. <c>count</c> is dice or a whole number (how many times the part hits), default 1.</summary>
     public string? Damage { get; set; }
 
-    /// <summary>The field holding the damage type (text).</summary>
-    public string? DamageType { get; set; }
+    /// <summary>The Collection field of conditions, each <c>{ name, lasts }</c>. They apply on a failed save, or always when the hazard has no save.</summary>
+    public string? Conditions { get; set; }
+
+    /// <summary>The field holding the area (text, <c>15-foot Cone</c>).</summary>
+    public string? Area { get; set; }
 
     /// <summary>The field holding everything the numbers do not say (text), such as conditions the game master adds by hand.</summary>
     public string? Text { get; set; }
@@ -282,12 +278,18 @@ public class HazardDurability
 
     /// <summary>The field holding the hit points at which it breaks.</summary>
     public string? BrokenThreshold { get; set; }
+
+    /// <summary>The field holding its damage threshold: a hit that deals less than this does nothing (not hardness, not the broken threshold).</summary>
+    public string? DamageThreshold { get; set; }
+
+    /// <summary>The TagList field holding the damage types and conditions it is immune to.</summary>
+    public string? Immunities { get; set; }
 }
 
 /// <summary>A system's guidance for how hard a hazard of each level is, for the homebrew wizard and the world builder's checks.</summary>
 public class HazardRules
 {
-    /// <summary>Rows by level: each is <c>{ level: 5, noticeDc: 15, damage: 4d10, ... }</c> with the other keys naming fields of the
+    /// <summary>Rows by level: each is <c>{ level: 5, saveDc: 15, damage: 4d10, ... }</c> with the other keys naming fields of the
     /// hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused.</summary>
     public List<Dictionary<string, string>> Scaling { get; set; } = new();
 }

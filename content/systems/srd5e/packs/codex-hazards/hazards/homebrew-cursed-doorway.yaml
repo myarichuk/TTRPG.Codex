@@ -9,14 +9,30 @@ properties:
   severity: Deadly
   level: 5-10
   trigger: A creature passes through the arch without speaking its word aloud.
-  noticeCheck: Arcana
-  noticeDc: 15
-  disableCheck: Arcana
-  disableDc: 17
+  duration: Instantaneous
+  detect:
+  - id: arch
+    name: The pattern
+    action: Study
+    check: Arcana
+    dc: 15
+    text: Examining the arch finds the curse in its carving.
+  disarm:
+  - id: unravel
+    name: Unravel the curse
+    action: Action
+    check: Arcana
+    dc: 17
+    after: arch
   saveAttribute: Wisdom
   saveDc: 15
-  damage: 4d10
-  damageType: psychic
+  onSave: half
+  damage:
+  - dice: 4d10
+    type: psychic
+  conditions:
+  - name: Frightened
+    lasts: until the next dawn
   effect: The creature makes the save. On a failure it takes the damage and is Frightened of the arch until the next dawn; on a success it takes half the damage and is not frightened.
   reset: The curse arms again at the next dawn.
   methods:

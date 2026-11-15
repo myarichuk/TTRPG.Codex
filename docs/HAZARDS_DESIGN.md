@@ -46,7 +46,7 @@ GM Core, which is not held yet.
 | Part | Meaning | srd5e | Pathfinder 2e (later) | BFRD (later) |
 |---|---|---|---|---|
 | **Notice** | A DC to spot it, the check that spots it, optionally a minimum rank | Perception (passive or active) or Investigation vs DC | Perception vs Stealth DC, minimum proficiency rank | as srd5e (check when imported) |
-| **Disable** | The check, DC, minimum rank, successes needed, what a critical failure does | One check (Thieves' Tools, Arcana) vs DC | Skill, rank, often 2 successes, crit failure triggers it | as srd5e |
+| **Disable** | Routes: for each, the check and DC or what it needs instead, minimum rank, successes needed, which outcomes set it off | Often no check (cut the wire, wedge an Iron Spike); sometimes one check (Sleight of Hand) vs DC | Skill, rank, often 2 successes, crit failure triggers it | as srd5e |
 | **Trigger** | What sets it off | text | text | text |
 | **Effect** | An attack or a save, damage dice and type, conditions | attack bonus or save attribute + DC; damage | same, with degrees of success | same |
 | **Durability** | AC, Hardness, HP, broken threshold, immunities | optional AC and HP | AC, Hardness, HP, BT | optional |
@@ -72,23 +72,25 @@ entityTypes:
     fields:
       - { key: kind,          label: Kind,            type: Text, category: Profile }        # trap, environmental, haunt
       - { key: level,         label: Level,           type: Number, category: Profile }
-      - { key: noticeDc,      label: Notice DC,       type: Number, category: Notice }
-      - { key: noticeCheck,   label: Noticed with,    type: Text,   category: Notice }        # a skill key or label
-      - { key: disableDc,     label: Disable DC,      type: Number, category: Disable }
-      - { key: disableCheck,  label: Disabled with,   type: Text,   category: Disable }
+      - { key: detect,        label: Detect,          type: Collection, category: Notice }   # route rows, 3.1.1
+      - { key: disarm,        label: Disarm,          type: Collection, category: Disable }  # route rows
       - { key: trigger,       label: Trigger,         type: LongText, category: Trigger }
+      - { key: duration,      label: Duration,        type: Text,   category: Trigger }
       - { key: attackBonus,   label: Attack bonus,    type: Number, category: Effect }
-      - { key: saveAttribute, label: Save,            type: Text,   category: Effect }
+      - { key: saveAttribute, label: Save,            type: Text,   category: Effect }        # empty: no save
       - { key: saveDc,        label: Save DC,         type: Number, category: Effect }
-      - { key: damage,        label: Damage,          type: Text,   category: Effect }        # dice: 4d10
-      - { key: damageType,    label: Damage type,     type: Text,   category: Effect }
+      - { key: onSave,        label: On a save,       type: Dropdown, category: Effect, options: [half, none] }
+      - { key: damage,        label: Damage,          type: Collection, category: Effect }    # rows { dice, type, count }
+      - { key: conditions,    label: Conditions,      type: Collection, category: Effect }    # rows { name, lasts }
+      - { key: area,          label: Area,            type: Text,   category: Effect }
       - { key: effect,        label: Effect,          type: LongText, category: Effect }
-      - { key: reset,         label: Reset,           type: LongText, category: Reset }
+      - { key: reset,         label: Reset,           type: LongText, category: Reset }       # empty: inert after it goes off
     hazard:
-      notice:  { dc: noticeDc, check: noticeCheck, passive: true }
-      disable: { dc: disableDc, check: disableCheck }
+      notice:  { routes: detect, passive: true }
+      disable: { routes: disarm }
       trigger: trigger
-      effect:  { attack: attackBonus, save: saveAttribute, saveDc: saveDc, damage: damage, damageType: damageType, text: effect }
+      duration: duration
+      effect:  { attack: attackBonus, save: saveAttribute, saveDc: saveDc, onSave: onSave, damage: damage, conditions: conditions, area: area, text: effect }
       reset:   reset
       level:   level
 ```
@@ -98,28 +100,51 @@ reads a hard-coded property:
 
 | Member | Shape | Notes |
 |---|---|---|
-| `notice` | `{ dc, check, rank, passive }` | `check` is a field holding a skill key or label; `rank` a field holding a minimum rank key (systems with ranked skills); `passive: true` lets Notice compare the sheet's passive score (the passive whose `skill` is the check) |
-| `disable` | `{ dc, check, rank, successes, critFail }` | `successes` and `critFail` are fields (a number; a text or `trigger`) |
+| `notice` | `{ routes, passive }` | `routes` is a Collection field of route rows (3.1.1); `passive: true` lets Notice compare the sheet's passive score for a route's check (the passive whose `skill` is the check), unless the route says `passive: false` |
+| `disable` | `{ routes }` | A Collection field of route rows, the same shape. Rank, successes and what a critical failure does are row keys (`rank`, `successes`, `triggersOn`), not fields |
 | `trigger` | a field | text |
-| `effect` | `{ attack, save, saveDc, damage, damageType, text }` | Numbers the console can roll; the rest is `text` |
-| `durability` | `{ armorClass, hardness, hitPoints, brokenThreshold }` | Any subset |
+| `duration` | a field | text: "Instantaneous", "Until the stone stops rolling" |
+| `initiative` | a Number field | A complex hazard's Initiative bonus, read by H5's actor registration |
+| `effect` | `{ attack, save, saveDc, onSave, damage, conditions, area, text }` | One effect with lists inside it: an optional save (an empty `save` on an entry means none), `onSave` (`half` or `none`: what a passed save does to the damage), `damage` (Collection of `{ dice, type, count }`), `conditions` (Collection of `{ name, lasts }`, applied on a failed save, or always without one), `area` (text); the rest is `text` |
+| `durability` | `{ armorClass, hardness, hitPoints, brokenThreshold, damageThreshold, immunities }` | Any subset. `damageThreshold` is a Number (a hit below it does nothing; not Hardness, not the broken threshold); `immunities` a TagList |
 | `reset` | a field | text |
 | `routine` | a field (`Collection` of `{ name, description }`) | Present only on systems with complex hazards |
 | `complex` | a field (`Boolean`) | When true on an entry, the entry is registered as a hazard actor (3.3) |
 | `level` | a field | What scaling and the world builder read: a number, or a level range (`1-4`) where the system prints ranges |
 | `severity` | a field | A system's own words for how dangerous it is (srd5e: Nuisance, Deadly) |
 | `higherLevels` | a field (`Collection` of `{ levels, ...changed fields }`) | The entry's own scaled versions (srd5e's "At Higher Levels"). Placing a hazard picks the row for the party's level, and the table uses that row's numbers. Fields a row does not name keep the base value |
-| `methods` | a field (`Collection` of `{ name, check, dc, text }`) | Extra ways to deal with it beyond notice and disable, each a button at the table: srd5e's Avoid, Escape, Destroy, Slow, Set. A system may also list a second detect or disarm route here |
+| `methods` | a field (`Collection` of route rows, `name` required) | Extra ways to deal with it beyond detect and disarm, each a button at the table: srd5e's Avoid, Escape, Destroy, Slow, Set |
 
-The loader checks that every named field exists on the type, that `rank` is used only on a system with ranked skills, and that a
-type does not have both `actorBlueprint` and `hazard`.
+The loader checks that every named field exists on the type and has the right kind, that an `onSave` Dropdown offers only values the engine
+knows (`half`, `none`), and that a type does not have both `actorBlueprint` and `hazard`. Row contents are checked per entry (3.1.1).
+
+#### 3.1.1 Route rows
+
+`detect`, `disarm` and `methods` rows have fixed keys, engine words like the `routine` and `higherLevels` row keys:
+
+| key | meaning |
+|---|---|
+| `id` | the name other rows refer to by `after`; unique in its list |
+| `name` | what the button says |
+| `action` | the method word, free text: `Search`, `Study`, `Action`, `10 minutes` |
+| `check` | a skill or attribute by key or label; empty means no check is rolled |
+| `dc` | whole number; only with `check` |
+| `needs` | what it takes besides a check, or instead of one ("An Iron Spike or a similar object"). A row with no `check` needs `needs` or `text` |
+| `after` | the `id` of a detect route that must have succeeded first |
+| `triggersOn` | outcome keys (`failure`, later `criticalFailure`) that set the hazard off |
+| `rank`, `successes`, `passive` | minimum rank (ranked systems only), successes needed (default 1), `false` to stop passive scores for this route |
+| `text` | the rest, in the project's words |
+
+`damage` rows are `{ dice, type, count }` (`count` is dice or a whole number, default 1: Poisoned Darts is `1d6 poison` hitting `1d3` times).
+Numbers a higher-levels band changes are top-level fields (`saveDc`, `area`, `depth`, `severity`, `damage`); a band restates a whole list (the pit
+restates both damage parts). A DC that rises with a band inside a list (the Falling Net's Escape) is restated with that band's `methods`.
 
 ### 3.2 Scaling, for the world builder and the homebrew wizard
 
 ```yaml
 hazards:
   scaling:                      # by the hazard's level field; the row with the highest level <= the hazard's applies
-    - { level: 1,  noticeDc: <tbd>, disableDc: <tbd>, attackBonus: <tbd>, saveDc: <tbd>, damage: <tbd> }
+    - { level: 1,  attackBonus: <tbd>, saveDc: <tbd>, damage: <tbd> }
     - { level: 5,  ... }
     - { level: 11, ... }
     - { level: 17, ... }
@@ -127,7 +152,8 @@ hazards:
 
 - **The numbers are not designed yet.** Where they come from depends on the system:
   - **srd5e:** SRD 5.2.1 has no shared trap table, but each of its 8 traps scales itself by level band ("At Higher Levels": rows for
-    levels 5-10, 11-16 and 17-20 over the base 1-4), and several share one damage progression (2d10, 4d10, 10d10, 18d10). Save
+    levels 5-10, 11-16 and 17-20 over the base 1-4), and only Collapsing Roof and Fire-Casting Statue share one damage progression (2d10, 4d10, 10d10, 18d10); Poisoned Needle uses the
+    same dice one band later (2d10 at 5-10), with its own save DCs (11, 13, 15, 17). Save
     DCs rise by band at different rates per trap; detect and disarm DCs are fixed per trap; there are no attack bonuses. So srd5e's
     `hazards.scaling` is **derived from the SRD's own trap progressions** (CC BY 4.0, with the SRD attribution), with damage per
     band and severity (Nuisance, Deadly) as columns, and no attack-bonus column. The derivation is written down beside the table.
@@ -186,8 +212,8 @@ PlaceFeature.Hazard      : { entry: "hazard/spiked-pit", state: hidden | noticed
 
 | Action | What it does |
 |---|---|
-| **Notice** | For each PC in the scene: with `notice.passive`, compares the passive score with the DC; otherwise rolls the sheet's check (the same skill roll the sheet's skill button makes). With `notice.rank`, a PC below the rank cannot notice it. The result goes to the GM only: "Notices: Ana (passive 15). Does not: Bo (12)". The GM then marks it noticed for those PCs, which reveals it to them |
-| **Disable** | The GM picks the actor who tries. The engine rolls the actor's `disable.check` against the DC. A success adds one to `successes`; reaching `disable.successes` (default 1) disables it. A critical failure, where the system has degrees and `critFail` says so, triggers it |
+| **Notice** | For each PC in the scene: with `notice.passive`, compares the passive score with the DC; otherwise rolls the sheet's check (the same skill roll the sheet's skill button makes). The same goes for each detect route, with its own check and DC. With a route's `rank`, a PC below the rank cannot try it. The result goes to the GM only: "Notices: Ana (passive 15). Does not: Bo (12)". The GM then marks it noticed for those PCs, which reveals it to them |
+| **Disable** | The GM picks the actor who tries. The GM also picks the route (3.1.1); a route with no `check` needs no roll and is marked done. The engine rolls the actor's route check against the route's DC. A success adds one to `successes`; reaching the route's `successes` (default 1) disables it. An outcome whose key is in the route's `triggersOn` sets it off (`failure` for the Poisoned Needle, `criticalFailure` on a system with degrees) |
 | **Trigger** | The GM picks the targets. With `effect.attack`, it rolls the attack against each target's armor class; with `effect.save`, it asks each target's saving throw against `saveDc`. Damage goes through the existing damage event, so resistances and the system's `events: damage` handler apply. Conditions in `effect.text` stay text for the GM to add |
 
 Each action is a logged table command (`HazardCommand(placeId, action, actorIds, ...)`); see 4.1 for what can be undone.
@@ -208,7 +234,7 @@ needs a **new roll step**:
 
 Pathfinder Second Edition's disable and save outcomes have four degrees. Those come from the system's `rolls` (the degree roll the
 Pathfinder survey plans to prove first). The hazard command asks the system's roll for its outcome and maps `criticalFailure` to "it
-triggers" through the `critFail` field. Until that roll exists, a system without degrees gets success or failure only.
+triggers" through a route's `triggersOn` list (outcome keys). Until that roll exists, a system without degrees gets success or failure only.
 
 ## 5. Places and the world builder
 
@@ -226,7 +252,7 @@ triggers" through the `critFail` field. Until that roll exists, a system without
 
 | System | Pack | What |
 |---|---|---|
-| srd5e | `srd-5.2.1/hazards` | **The SRD's 8 traps** (Gameplay Toolbox, "Traps", pp. 199-201): Collapsing Roof, Falling Net, Fire-Casting Statue, Hidden Pit, Poisoned Darts, Poisoned Needle, Rolling Stone, Spiked Pit. Each has severity and level range, trigger, duration, the effect with its save and damage, Detect and Disarm (sometimes two routes), the extra methods it needs (Avoid, Escape, Destroy, Slow, Set) and "At Higher Levels" (all but Rolling Stone). Imported by `Srd5eImporter` with the SRD attribution. The importer's source is the 5e-bits JSON, which has no traps, so they come from a reviewed data file, `Data/srd521-traps.yaml`, written from the SRD 5.2.1 document, with a small loader, the way #302 added the invocations (`Data/srd521-invocations.yaml`, `Invocations.cs`). No PDF reading in the importer |
+| srd5e | `srd-5.2.1/hazards` | **The SRD's 8 traps** (Gameplay Toolbox, "Traps", pp. 199-201): Collapsing Roof, Falling Net, Fire-Casting Statue, Hidden Pit, Poisoned Darts, Poisoned Needle, Rolling Stone, Spiked Pit. Each has severity and level range, trigger, duration, the effect with its save and damage, Detect and Disarm (sometimes several routes: Fire-Casting Statue has three detect routes, Detect Magic, the glyph and the plate, and three disarm routes, reading the glyph, defacing it and wedging the plate; Poisoned Darts has two of each), the extra methods it needs (Avoid, Escape, Destroy, Slow, Set) and "At Higher Levels" (all but Rolling Stone). Imported by `Srd5eImporter` with the SRD attribution. The importer's source is the 5e-bits JSON, which has no traps, so they come from a reviewed data file, `Data/srd521-traps.yaml`, written from the SRD 5.2.1 document, with a small loader, the way #302 added the invocations (`Data/srd521-invocations.yaml`, `Invocations.cs`). No PDF reading in the importer |
 | srd5e | `codex-flavor` (the project's own pack) or a new `codex-hazards` pack | Only what the SRD lacks: a complex hazard (a flooding room) and a magical one (a cursed doorway), written by this project with numbers from 3.2. The SRD's traps cover the simple mechanical ones |
 | srd5e | rules, not hazards | The SRD's environmental rules (Burning, Dehydration, Falling, Malnutrition, Suffocation; and Deep Water, Extreme Cold, Extreme Heat, Frigid Water, Heavy Precipitation, High Altitude, Slippery Ice, Strong Wind, Thin Ice) stay `rule` entries. They apply to a whole place, not a placed object. A later step may let a place name one as its environment |
 | fitd-srd | none | Dangers are clocks and consequences. No `hazard` type |
@@ -266,7 +292,7 @@ No new resx prefix.
 | The loader reads `hazard:`; refuses an unknown field, `rank` on a system without ranked skills, and `actorBlueprint` + `hazard` together | `SystemDefinitionLoaderTests` |
 | A complex hazard registers as an actor tagged `hazard`; a simple one does not; neither shows in Bestiary candidates | new `HazardTypeTests` |
 | Notice: passive compare; active roll; a PC below the minimum rank cannot notice | new `HazardCommandTests` |
-| Disable: one success disables; with `successes: 2`, two do; a critical failure triggers when `critFail` says so | same |
+| Disable: one success disables; with `successes: 2`, two do; an outcome in a route's `triggersOn` triggers it | same |
 | Trigger: attack vs AC per target; save vs DC per target; damage reaches the damage event (resistance applies); undoing a target's damage restores its HP | same |
 | The check service rolls a PC's skill, save and passive from its evaluation; a printed creature uses the GM's bonus | new `ActorCheckTests` |
 | Live state in an encounter is written back to the place feature when the encounter ends | `HazardCommandTests` |
@@ -290,8 +316,8 @@ No new resx prefix.
 | 7 | Homebrew wizard hazard mode; book export stat block | S |
 | 8 | Strings en/ru/he (Haiku), accessibility pass | S |
 
-Steps 1-4b give a working feature on srd5e. Step 4a is the largest single piece: it is new, not a reuse. The Pathfinder Second Edition pack adopts it when its own system exists, with `notice.rank`,
-`disable.successes`, `critFail` and degrees (4.3).
+Steps 1-4b give a working feature on srd5e. Step 4a is the largest single piece: it is new, not a reuse. The Pathfinder Second Edition pack adopts it when its own system exists, with the route-row keys `rank`, `successes` and
+`triggersOn: [criticalFailure]` (in place of `notice.rank`, `disable.successes` and `critFail`) and degrees (4.3).
 
 ## 10. Open questions
 
@@ -317,14 +343,14 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   `sheetRules.skills.ranks` is non-empty. `Localize` copies the `hazard` block.
 - **H2.** srd5e's `hazard` type has `level` as **Text** (`1-4`, `5-10`), since the SRD prints ranges; scaling rows use a number, so
   3.2's "lowest level of the range" is the reading for a later check. The type declares `complex` and `routine` (for the flooding room)
-  but nothing reads them until H5. `hazards.scaling` has no `severity` column (3.2 suggested one): its four rows are the numbers of the
-  SRD's Deadly traps (save DC 15, 15, 17, 19; damage 2d10, 4d10, 10d10, 18d10), and detect and disarm DCs are not columns because the
+  but nothing reads them until H5. `hazards.scaling` has no `severity` column (3.2 suggested one): its four rows are Collapsing Roof's
+  progression (save DC 13, 15, 17, 19; damage 2d10, 4d10, 10d10, 18d10), a Deadly trap with a save. Other Deadly traps differ: Fire-Casting Statue
+  keeps DC 15 and scales its cone, Poisoned Darts keeps DC 13 and scales per dart, and the pits have no save and scale depth with d6 and d8 dice. Detect and disarm DCs are not columns because the
   SRD fixes them per trap. The traps carry **no tags**: `kind: trap` is a property, because the shipped-tag test wants a Hebrew and a
   Russian label for every tag. The two homebrew hazards are a new pack, `codex-hazards` (kind world, depends on the SRD pack), not
   `codex-flavor`, which is a text overlay only. Their ids are `homebrew-flooding-room` and `homebrew-cursed-doorway`. The hazard type
   and its field labels are translated in `system.ru.yaml` and `system.he.yaml`; the field descriptions and categories stay English
-  there. **The trap numbers are unreviewed**: `Data/srd521-traps.yaml` was drafted without reading the SRD, every DC and die is marked
-  `# check`, and a person must compare it with the SRD 5.2.1 before release. The pack files in `srd-5.2.1/hazards/` were written by
+  there. The trap data was first drafted from memory and was wrong almost everywhere (see "Hazard shape" below). The pack files in `srd-5.2.1/hazards/` were written by
   running `Traps.Entries()` through `ContentPackExporter`, not by the full importer (which needs the network).
 - **H3.** `PlaceFeature.Hazard` is a `PlacedHazard { Entry: "hazard/<id>", State, Successes, NoticedBy }` with a `HazardState` enum
   (Hidden, Noticed, Disabled, Triggered). `Entry` is `type/id`, so a hazard type with another key also works. A dangling entry is
@@ -347,11 +373,28 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     for a Number field, damage that is not dice, and field names that differ in case (with a hint). The content loader reports a scaled row naming a key
     that is not a field of the type (or differs in case), and an other-way row with no name.
   - Check names are stored as the content writes them, as labels (`Perception`, `Dexterity`, `Thieves' Tools`). H4a's lookup finds a check by key or label
-    ignoring case (decision 2 below). A test lists the checks that need a typed bonus (`Thieves' Tools`, `Spellcasting`, `Attack`); any other value must
-    be a skill or attribute key or label, so a misspelling fails CI. Not changed: the content.
+    ignoring case (decision 2 below). A test lists the checks that need a typed bonus (`Thieves' Tools`, `Spellcasting`: only the homebrew hazards use them now); any other
+    value must be a skill or attribute key or label, so a misspelling fails CI.
   - A test compares the shipped trap files with `Data/srd521-traps.yaml`, so a corrected data file fails until the pack is regenerated.
-  - Tags: `hazard` is not a tag (the type says it); the tag test now reads `codex-hazards` too. The importer still types numbers by key name (`dc`, `*Dc`);
-    a trap with other numeric or Boolean fields needs it typed by the type's fields first.
+  - Tags: `hazard` is not a tag (the type says it); the tag test now reads `codex-hazards` too. The importer types numbers by key name (`dc`, `*Dc`, `successes`,
+    `armorClass`, `hitPoints`, `damageThreshold`, `initiative`) and `complex` as a Boolean, through a fixed key list in `Traps.cs`.
+- **Hazard shape (after reading the SRD).** The data file was checked against the SRD 5.2.1 text (printed pp. 199-201) and the old shape could not hold
+  it. What changed and why: a hazard has **detect and disarm as lists of route rows** (a trap has up to three of each, and most disarms need no
+  check at all: cutting a wire, wedging an Iron Spike, plugging holes), **one effect with an optional save** (the pits have none), **damage as a list of
+  parts** (the Spiked Pit is 1d6 bludgeoning plus 2d8 piercing; the darts are 1d6 poison, 1d3 times), conditions, an area, a duration, a depth,
+  an `onSave` of `half` or `none`, and durability and initiative for the Rolling Stone. The SRD traps no longer use `Thieves' Tools` as a check
+  (only the Falling Net's Set the Trap needs the tools, in `needs`). Values corrected: Collapsing Roof save DC 13 and Perception DC 11, no
+  Restrained; Falling Net Perception DC 11, Athletics Escape that rises with the save DC (10, 12, 14, 16), Set DC 13; Fire-Casting Statue Perception DC
+  10 and 15, Arcana DC 15, the cone grows by band while the DC stays 15; Hidden Pit has no save and is found by Study and Investigation DC 15;
+  Poisoned Darts save DC 13, 1d6 per dart and 1d3 darts, no half; Poisoned Needle Constitution DC 11, 1d10 poison, half on a save, found by Perception DC 15,
+  disarmed by Sleight of Hand DC 15 (a failure sets it off), bands DC 13, 15, 17; Rolling Stone is Deadly at 11-16 and a Nuisance at 17-20, no half,
+  Prone, a complex hazard with Initiative +8; Spiked Pit has no save. Invented rows (Avoid, Escape and Destroy where the SRD has none) and the
+  invented resets are gone: only the statue and the darts reset. `HazardNumbers` reads the rows as `HazardRoute`, `HazardDamagePart` and
+  `HazardCondition`, and `HazardNumbers.Problems` checks the rows per entry (a dc only with a check; a route with no check names what it needs; unique
+  ids; `after` names a detect route; a damage part is dice; a condition is one of the system's). Choices: the statue's reading and defacing of the glyph are
+  separate disarm routes with no `after` between them, the Falling Net restates its `methods` per band, and passive Perception may find a trap
+  whose route is a Search action. `docs/schema/system.schema.json` and `SYSTEM_YAML_REFERENCE.md` are regenerated. The Russian and Hebrew labels of the
+  new fields need native review.
 
 ## 12. H4a: the server-side check service (interface)
 
@@ -388,7 +431,7 @@ Plan row H4a. The new file is `src/Codex.Persistence/Runtime/CheckService.cs`, w
    `dice.check` + bonus against the DC: `success` or `failure`, with the natural die kept. When a system sets `dice.checkRoll` (new and
    optional, the key of a `rolls:` entry with inputs `bonus` and `dc`), the service grades through that named roll's `outcomes` instead.
    Those are already data with `when` formulas (`total >= input.dc + 10`, the natural 20 and 1 shift), so four degrees need no new C# here.
-   P6 adds `checkRoll` and `passes: true` on `RollOutcomeDefinition`. P12 maps `critFail` by outcome key. Neither changes these signatures.
+   P6 adds `checkRoll` and `passes: true` on `RollOutcomeDefinition`. P12 maps `triggersOn: [criticalFailure]` by outcome key (see 12.6: the keys are a content contract). Neither changes these signatures.
 
 ### 12.2 Signatures
 
@@ -417,7 +460,7 @@ public sealed record CheckRequest
     public int? Dc { get; init; }
     /// <summary>The GM's number. Beats everything; required where the check is unresolved or the actor is printed.</summary>
     public int? Bonus { get; init; }
-    /// <summary>Compare the passive score instead of rolling (Notice with notice.passive).</summary>
+    /// <summary>Compare the passive score instead of rolling (a notice route, when notice.passive holds and the route allows it; see ActorChecks.HasPassive in 12.6).</summary>
     public bool Passive { get; init; }
     /// <summary>The dice to roll in place of dice.check, for an edge the data has no word for (the GM picks "2d20kh1"). Null: dice.check.</summary>
     public string? Dice { get; init; }
@@ -533,6 +576,25 @@ public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId)
 13. `MakeCheckCommand` describes itself with a GM-only part when secret. The redactor's player view has no event for it.
 14. Grading: `Grade` gives `success` at total == DC and `failure` one below. A placeholder test marked `Skip` stands for the `checkRoll`
     path ("P6: four degrees through dice.checkRoll"), so P6 has a target in place.
-15. Content (from review 5): every check value in the srd5e hazard packs resolves, or is on the test's list of values that need a
-    typed bonus. (The list test exists today in `Srd5eHazardsTests`, using skill and attribute keys and labels directly; switch it to
-    `ActorChecks.Resolve` when that exists.)
+15. Content (from review 5): every `check` in the `detect`, `disarm` and `methods` rows of the srd5e hazard packs, and every `saveAttribute`,
+    resolves, or is on the test's list of values that need a typed bonus (`Thieves' Tools`, `Spellcasting`: the homebrew hazards only; the SRD
+    traps ask for tools in `needs`). (The list test exists today in `Srd5eHazardsTests`, using skill and attribute keys and labels directly;
+    switch it to `ActorChecks.Resolve` when that exists.)
+16. `ActorChecks.HasPassive`: true for a skill with a passive on the sheet (Perception), false for Investigation, an attribute and a tool.
+
+### 12.6 What the hazard shape amendment adds to H4a
+
+The signatures above do not change. `CheckRequest` takes `Check`, `Dc`, `Passive` and `Kind` per call, and H4b fills them from one `HazardRoute`
+(`HazardNumbers.NoticeRoutes`, `DisableRoutes`, `Methods`). A route with no `check` never calls the service: H4b records it as done. Nothing in 12
+reads a `HazardNotice` or `HazardDisable` member.
+
+1. **Passive is per route.** Decision C: passive Perception can find a trap whose detect route is a Search action, so the SRD traps carry no
+   `passive: false`. But `CheckRequest.Passive` on an Investigation route resolves to `Unresolved` (test 6). Add the pure method
+   `ActorChecks.HasPassive(SystemDefinition system, CheckSpec spec)` so H4b asks for a passive only where the sheet has one and otherwise rolls.
+2. **`CheckOutcome.Key` is a content contract.** A route's `triggersOn` lists outcome keys (`failure` today; P6 and P12 add `criticalFailure`), so the
+   keys are not renamed.
+3. **Found routes are recorded per placement (H4b).** A route's `after` needs per-route state. `PlacedHazard.NoticedBy` is per actor, not per route, so
+   H4b adds something like `Found: [routeId]`: the statue's deface and read-the-glyph routes are offered only once `glyph` is found, and the plate's
+   wedge once `plate` is. A successful read-the-glyph route (a disarm row that only teaches what the glyph means) must not count as disarming the
+   statue: only a route whose text says so (deface, wedge) does, so H4b needs a way to tell them apart (for example a `disarms: false` row key, or
+   treating a route with `needs` and no check as the disarm).

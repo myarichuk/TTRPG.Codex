@@ -156,16 +156,23 @@ entityTypes:
       kind: { label: סוג }
       severity: { label: חומרה }
       level: { label: דרגות }
-      noticeCheck: { label: מזהים בעזרת }
-      noticeDc: { label: דרגת קושי לזיהוי }
-      disableCheck: { label: מנטרלים בעזרת }
-      disableDc: { label: דרגת קושי לנטרול }
+      detect: { label: זיהוי }
+      disarm: { label: נטרול }
       trigger: { label: מה מפעיל אותה }
+      duration: { label: משך }
       saveAttribute: { label: הצלת מגן }
       saveDc: { label: דרגת קושי להצלה }
+      onSave: { label: בהצלה מוצלחת }
       damage: { label: נזק }
-      damageType: { label: סוג נזק }
+      conditions: { label: מצבים }
+      area: { label: שטח }
+      depth: { label: עומק }
       effect: { label: תוצאה }
+      armorClass: { label: דרגת שריון }
+      hitPoints: { label: נקודות חיים }
+      damageThreshold: { label: סף נזק }
+      immunities: { label: חסינויות }
+      initiative: { label: בונוס ליוזמה }
       reset: { label: איפוס }
       complex: { label: מורכבת }
       routine: { label: סדר פעולות }

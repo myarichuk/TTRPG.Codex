@@ -1,33 +1,92 @@
 id: falling-net
 type: hazard
 name: Falling Net
-description: A weighted net hangs folded in the dark above a door or corridor and drops on whoever pulls its cord.
+description: A weighted, 10-foot-square net hangs from the ceiling and drops on the first creature to cross a trip wire.
 properties:
   kind: trap
   severity: Nuisance
   level: 1-4
-  trigger: A tripwire at ankle height.
-  noticeCheck: Perception
-  noticeDc: 10
-  disableCheck: Thieves' Tools
-  disableDc: 10
+  trigger: A creature crosses a trip wire.
+  duration: Instantaneous
   saveAttribute: Dexterity
   saveDc: 10
-  effect: A creature that fails the save is Restrained by the net. It deals no damage.
-  reset: The net must be folded and hung again by hand.
+  onSave: none
+  conditions:
+  - name: Restrained
+    lasts: until it escapes
+  effect: The first creature across the wire has the net fall on it. It deals no damage. A creature that is Huge or larger succeeds on the save automatically.
+  detect:
+  - id: wire
+    name: The trip wire
+    action: Search
+    check: Perception
+    dc: 11
+    text: Examining the area finds the trip wire and the suspended net.
+  disarm:
+  - id: cut
+    name: Cut or avoid the wire
+    after: wire
+    text: Once found, the wire can be cut or stepped over with no check.
   higherLevels:
   - levels: 5-10
     saveDc: 12
+    methods:
+    - name: Escape
+      action: Action
+      check: Athletics
+      dc: 12
+      text: Frees the creature or another creature within its reach.
+    - name: Destroy the Net
+      text: The net has Armor Class 10 and 5 hit points, and is immune to Bludgeoning, Poison and Psychic damage. At 0 hit points it frees anyone caught in it.
+    - name: Set the Trap
+      action: 10 minutes
+      check: Sleight of Hand
+      dc: 13
+      needs: Thieves' Tools and all of the trap's parts, including a Net
+      text: Each attempt takes 10 minutes.
   - levels: 11-16
     saveDc: 14
+    methods:
+    - name: Escape
+      action: Action
+      check: Athletics
+      dc: 14
+      text: Frees the creature or another creature within its reach.
+    - name: Destroy the Net
+      text: The net has Armor Class 10 and 5 hit points, and is immune to Bludgeoning, Poison and Psychic damage. At 0 hit points it frees anyone caught in it.
+    - name: Set the Trap
+      action: 10 minutes
+      check: Sleight of Hand
+      dc: 13
+      needs: Thieves' Tools and all of the trap's parts, including a Net
+      text: Each attempt takes 10 minutes.
   - levels: 17-20
     saveDc: 16
+    methods:
+    - name: Escape
+      action: Action
+      check: Athletics
+      dc: 16
+      text: Frees the creature or another creature within its reach.
+    - name: Destroy the Net
+      text: The net has Armor Class 10 and 5 hit points, and is immune to Bludgeoning, Poison and Psychic damage. At 0 hit points it frees anyone caught in it.
+    - name: Set the Trap
+      action: 10 minutes
+      check: Sleight of Hand
+      dc: 13
+      needs: Thieves' Tools and all of the trap's parts, including a Net
+      text: Each attempt takes 10 minutes.
   methods:
   - name: Escape
-    check: Strength
+    action: Action
+    check: Athletics
     dc: 10
-    text: The restrained creature can try, or it can be cut loose with 5 points of slashing damage to the net (armor class 10).
-  - name: Set
+    text: Frees the creature or another creature within its reach.
+  - name: Destroy the Net
+    text: The net has Armor Class 10 and 5 hit points, and is immune to Bludgeoning, Poison and Psychic damage. At 0 hit points it frees anyone caught in it.
+  - name: Set the Trap
+    action: 10 minutes
     check: Sleight of Hand
-    dc: 10
-    text: Hanging the net again so that it works.
+    dc: 13
+    needs: Thieves' Tools and all of the trap's parts, including a Net
+    text: Each attempt takes 10 minutes.

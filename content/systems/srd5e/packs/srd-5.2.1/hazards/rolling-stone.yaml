@@ -1,28 +1,58 @@
 id: rolling-stone
 type: hazard
 name: Rolling Stone
-description: A great round stone sits in a niche above a sloping passage, and rolls down it when released, crushing anything in the way.
+description: A hidden pressure plate sets loose a 5-foot-radius orb of solid stone, which rolls through the passage and crushes what it meets.
 properties:
   kind: trap
   severity: Deadly
   level: 11-16
-  trigger: A tripwire or a pressure plate at the top of the slope.
-  noticeCheck: Investigation
-  noticeDc: 15
-  disableCheck: Thieves' Tools
-  disableDc: 20
+  trigger: A creature moves onto a hidden pressure plate.
+  duration: Until the stone stops rolling
+  complex: true
+  initiative: 8
   saveAttribute: Dexterity
   saveDc: 15
-  damage: 10d10
-  damageType: bludgeoning
-  effect: The stone rolls the length of the passage. Each creature in its path takes the damage on a failed save, or half as much on a success.
-  reset: The stone must be hauled back up the slope and set in its niche.
-  methods:
-  - name: Slow
-    check: Strength
-    dc: 20
-    text: Several creatures can brace against the stone to stop it short of the creatures behind them.
-  - name: Avoid
-    check: Athletics
+  onSave: none
+  damage:
+  - dice: 10d10
+    type: bludgeoning
+  conditions:
+  - name: Prone
+  effect: 'The stone and every creature nearby roll Initiative, and the stone adds its bonus. A creature the stone catches makes the save (see the routine). A failure takes the damage and falls Prone, and a success takes nothing: there is no half damage.'
+  armorClass: 17
+  hitPoints: 100
+  damageThreshold: 10
+  immunities:
+  - Poison
+  - Psychic
+  routine:
+  - name: Roll
+    description: On its turn the stone moves 60 feet in one direction, changing course if an obstacle redirects it. It stops when it hits a wall or similar barrier, and cannot go around corners.
+  - name: Through spaces
+    description: The stone can move through creatures' spaces and creatures can move through its space, treating it as Difficult Terrain.
+  - name: Crush
+    description: Whenever the stone enters a creature's space for the first time on a turn, or a creature enters the stone's space while it rolls, that creature makes the save, taking the damage and falling Prone on a failure.
+  detect:
+  - id: plate
+    name: The pressure plate
+    action: Study
+    check: Investigation
     dc: 15
-    text: A creature that sees it coming can leap to a side niche.
+    text: Examining the section of floor that forms the plate deduces what it does.
+  disarm:
+  - id: wedge
+    name: Wedge the plate
+    after: plate
+    needs: An Iron Spike or a similar object
+    text: The plate can no longer set the trap off.
+  higherLevels:
+  - levels: 17-20
+    severity: Nuisance
+  methods:
+  - name: Slow the Stone
+    action: Action
+    check: Athletics
+    dc: 20
+    text: One creature tries. On a success the distance the stone moves on its turn drops by 15 feet. At 0 it stops and is no longer a threat.
+  - name: Destroy the Stone
+    text: The stone is a Large object. Its Armor Class, hit points, damage threshold and immunities are in the numbers above.

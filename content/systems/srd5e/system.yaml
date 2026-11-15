@@ -448,12 +448,13 @@ vitals:
     - { name: Short Rest, spendHitDice: true }
     - { name: Long Rest, restores: [HP], clears: [TempHP], hitDiceRegain: half }   # also lowers Exhaustion by 1: see conditionEffects
 
-# How hard a new hazard of each level is, for the homebrew wizard and the world builder's checks. Derived from the SRD's own traps, which share one
-# damage progression (2d10, 4d10, 10d10, 18d10) and raise their save DCs with the level band (1-4, 5-10, 11-16, 17-20). The SRD has no shared
-# table, and none is copied: these are the numbers of its Deadly traps. Detect and disarm DCs are fixed per trap, so they are not columns.
+# How hard a new hazard of each level is, for the homebrew wizard and the world builder's checks. The SRD has no shared table and none is
+# copied. These rows are Collapsing Roof's progression (a Deadly trap with a save): save DC 13, 15, 17, 19 and damage 2d10, 4d10, 10d10,
+# 18d10 by band (1-4, 5-10, 11-16, 17-20). Fire-Casting Statue shares the damage column; Poisoned Needle uses the same dice one band later
+# (1d10, 2d10, 4d10, 10d10). The other traps scale differently. Detect and disarm DCs are fixed per trap, so they are not columns.
 hazards:
   scaling:
-    - { level: 1,  saveDc: 15, damage: 2d10 }
+    - { level: 1,  saveDc: 13, damage: 2d10 }
     - { level: 5,  saveDc: 15, damage: 4d10 }
     - { level: 11, saveDc: 17, damage: 10d10 }
     - { level: 17, saveDc: 19, damage: 18d10 }
@@ -524,26 +525,36 @@ entityTypes:
       - { key: kind,          label: Kind,           type: Text,     category: Profile, description: "Trap, environmental or haunt." }
       - { key: severity,      label: Severity,       type: Text,     category: Profile, description: "Nuisance or Deadly." }
       - { key: level,         label: Levels,         type: Text,     category: Profile, description: "The character levels it suits: a level (5) or a range (1-4)." }
-      - { key: noticeCheck,   label: Noticed with,    type: Text,     category: Notice, description: "A skill: Perception or Investigation." }
-      - { key: noticeDc,      label: Notice DC,       type: Number,   category: Notice }
-      - { key: disableCheck,  label: Disabled with,   type: Text,     category: Disable, description: "A skill or a set of tools." }
-      - { key: disableDc,     label: Disable DC,      type: Number,   category: Disable }
+      - { key: detect,        label: Detect,          type: Collection, category: Notice, description: "Ways to find it: a name, the action (Search, Study), a check and DC, or what it needs instead; after: the route it needs first." }
+      - { key: disarm,        label: Disarm,          type: Collection, category: Disable, description: "Ways to make it safe, the same shape. Most need no check, only an object (an Iron Spike) or a spell." }
       - { key: trigger,       label: Trigger,         type: LongText, category: Trigger, description: "What sets it off." }
-      - { key: saveAttribute, label: Save,            type: Text,     category: Effect, description: "The ability of the saving throw." }
+      - { key: duration,      label: Duration,        type: Text,     category: Trigger, description: "How long the effect lasts once set off." }
+      - { key: saveAttribute, label: Save,            type: Text,     category: Effect, description: "The ability of the saving throw. Empty: no save." }
       - { key: saveDc,        label: Save DC,         type: Number,   category: Effect }
-      - { key: damage,        label: Damage,          type: Text,     category: Effect, description: "Dice, such as 4d10." }
-      - { key: damageType,    label: Damage type,     type: Text,     category: Effect }
+      - { key: onSave,        label: On a save,       type: Dropdown, category: Effect, options: [half, none], description: "What a passed save does to the damage." }
+      - { key: damage,        label: Damage,          type: Collection, category: Effect, description: "One row per part: dice, type, and count (how many hit, such as 1d3 darts)." }
+      - { key: conditions,    label: Conditions,      type: Collection, category: Effect, description: "Conditions on a failed save (or always, with no save): name, and how long it lasts." }
+      - { key: area,          label: Area,            type: Text,     category: Effect }
+      - { key: depth,         label: Depth,           type: Text,     category: Effect, description: "A pit's depth." }
       - { key: effect,        label: Effect,          type: LongText, category: Effect, description: "What happens, including anything the numbers do not say." }
-      - { key: reset,         label: Reset,           type: LongText, category: Reset, description: "How and when it arms again." }
+      - { key: armorClass,    label: Armor Class,     type: Number,   category: Durability }
+      - { key: hitPoints,     label: Hit Points,      type: Number,   category: Durability }
+      - { key: damageThreshold, label: Damage Threshold, type: Number, category: Durability }
+      - { key: immunities,    label: Immunities,      type: TagList,  category: Durability }
+      - { key: initiative,    label: Initiative bonus, type: Number,  category: Profile }
+      - { key: reset,         label: Reset,           type: LongText, category: Reset, description: "How and when it arms again. Empty: inert after it goes off." }
       - { key: complex,       label: Complex,         type: Boolean,  category: Profile, description: "A complex hazard takes a turn in initiative and does its routine each round." }
       - { key: routine,       label: Routine,         type: Collection, category: Profile, description: "A complex hazard's actions each round, a name and a description." }
-      - { key: higherLevels,  label: Higher levels,   type: Collection, category: Profile, description: "Rows of levels (5-10) and the numbers that change there, such as saveDc and damage." }
-      - { key: methods,       label: Other ways,      type: Collection, category: Profile, description: "Ways to deal with it beyond noticing and disabling: a name, a check, a DC and a note." }
+      - { key: higherLevels,  label: Higher levels,   type: Collection, category: Profile, description: "Rows of levels (5-10) and the numbers that change there, such as saveDc, damage, area, depth and severity." }
+      - { key: methods,       label: Other ways,      type: Collection, category: Profile, description: "Ways to deal with it beyond noticing and disarming, in the same row shape as detect: a name, a check, a DC, what it needs and a note." }
     hazard:
-      notice:  { dc: noticeDc, check: noticeCheck, passive: true }
-      disable: { dc: disableDc, check: disableCheck }
+      notice:  { routes: detect, passive: true }
+      disable: { routes: disarm }
       trigger: trigger
-      effect:  { save: saveAttribute, saveDc: saveDc, damage: damage, damageType: damageType, text: effect }
+      duration: duration
+      effect:  { save: saveAttribute, saveDc: saveDc, onSave: onSave, damage: damage, conditions: conditions, area: area, text: effect }
+      durability: { armorClass: armorClass, hitPoints: hitPoints, damageThreshold: damageThreshold, immunities: immunities }
+      initiative: initiative
       reset:   reset
       routine: routine
       complex: complex

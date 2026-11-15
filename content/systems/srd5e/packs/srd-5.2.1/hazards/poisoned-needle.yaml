@@ -1,31 +1,57 @@
 id: poisoned-needle
 type: hazard
 name: Poisoned Needle
-description: A needle no bigger than a thorn waits in a lock or a handle, and pricks the hand of anyone who forces it.
+description: A needle no bigger than a thorn is hidden in a lock, and stabs whoever opens it with anything but the proper key.
 properties:
   kind: trap
   severity: Nuisance
   level: 1-4
-  trigger: Opening the lock or handle without the right key.
-  noticeCheck: Investigation
-  noticeDc: 15
-  disableCheck: Thieves' Tools
-  disableDc: 15
+  trigger: A creature opens the lock with anything but the proper key, or fails to disarm the trap.
+  duration: Instantaneous
   saveAttribute: Constitution
-  saveDc: 15
-  damage: 1
-  damageType: piercing
-  effect: The pricked creature takes the damage and, on a failed save, is Poisoned for an hour.
-  reset: Fresh poison must be put on the needle by hand.
+  saveDc: 11
+  onSave: half
+  damage:
+  - dice: 1d10
+    type: poison
+  conditions:
+  - name: Poisoned
+    lasts: 1 hour
+  effect: The creature makes the save. On a failure it takes the damage and is Poisoned for 1 hour. On a success it takes half as much damage and nothing else.
+  detect:
+  - id: needle
+    name: The needle
+    action: Search
+    check: Perception
+    dc: 15
+    text: Examining the lock finds the needle.
+  disarm:
+  - id: disarm
+    name: Disarm the needle
+    action: Action
+    check: Sleight of Hand
+    dc: 15
+    after: needle
+    triggersOn:
+    - failure
+    text: A failed check sets the trap off.
   higherLevels:
   - levels: 5-10
-    saveDc: 15
+    saveDc: 13
+    damage:
+    - dice: 2d10
+      type: poison
   - levels: 11-16
-    saveDc: 17
+    saveDc: 15
+    damage:
+    - dice: 4d10
+      type: poison
   - levels: 17-20
-    saveDc: 19
+    saveDc: 17
+    damage:
+    - dice: 10d10
+      type: poison
   methods:
   - name: Avoid
-    check: Thieves' Tools
-    dc: 15
-    text: Opening the lock without touching the needle.
+    needs: Knock or similar magic
+    text: The trap does not trigger if the lock is opened with a Knock spell or similar magic.

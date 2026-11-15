@@ -1,38 +1,71 @@
 id: fire-casting-statue
 type: hazard
 name: Fire-Casting Statue
-description: A stone figure with a hollow mouth stands guard in a hall. When someone crosses the floor in front of it, it breathes a gout of flame.
+description: A statue near a pressure plate, carved as anything from a dragon to a wizard, breathes a cone of magical flame over whoever steps on the plate.
 properties:
   kind: trap
   severity: Deadly
   level: 1-4
-  trigger: A pressure plate in the floor in front of the statue.
-  noticeCheck: Investigation
-  noticeDc: 15
-  disableCheck: Arcana
-  disableDc: 15
+  trigger: A creature moves onto the pressure plate for the first time on a turn, or starts its turn there.
+  duration: Instantaneous
+  reset: At the start of the next turn.
   saveAttribute: Dexterity
   saveDc: 15
-  damage: 2d10
-  damageType: fire
-  effect: The fire fills a 15-foot cone in front of the statue. Each creature in it takes the damage on a failed save, or half as much on a success.
-  reset: The statue breathes again each time the plate is pressed, with no limit.
+  onSave: half
+  damage:
+  - dice: 2d10
+    type: fire
+  area: 15-foot Cone
+  effect: Every creature in the Cone makes the save, taking the damage on a failure and half as much on a success.
+  detect:
+  - id: aura
+    name: Detect Magic
+    needs: A Detect Magic spell
+    text: Shows an aura of Evocation magic around the statue.
+  - id: glyph
+    name: The glyph
+    action: Search
+    check: Perception
+    dc: 10
+    text: From within 5 feet of the statue; finds a tiny glyph on it.
+  - id: plate
+    name: The pressure plate
+    action: Search
+    check: Perception
+    dc: 15
+    text: Examining the section of floor that forms the plate.
+  disarm:
+  - id: meaning
+    name: Read the glyph
+    action: Study
+    check: Arcana
+    dc: 15
+    after: glyph
+    text: Learns that the glyph means fire.
+  - id: deface
+    name: Deface the glyph
+    action: Action
+    after: glyph
+    needs: A sharp tool
+    text: Defacing the glyph disarms the trap.
+  - id: wedge
+    name: Wedge the plate
+    after: plate
+    needs: An Iron Spike or a similar object
+    text: The plate can no longer set the trap off.
   higherLevels:
   - levels: 5-10
-    saveDc: 15
-    damage: 4d10
+    damage:
+    - dice: 4d10
+      type: fire
+    area: 30-foot Cone
   - levels: 11-16
-    saveDc: 17
-    damage: 10d10
+    damage:
+    - dice: 10d10
+      type: fire
+    area: 60-foot Cone
   - levels: 17-20
-    saveDc: 19
-    damage: 18d10
-  methods:
-  - name: Destroy
-    check: Attack
-    dc: 15
-    text: The statue is armor class 15 with 20 hit points, and takes only half damage from anything but bludgeoning.
-  - name: Avoid
-    check: Acrobatics
-    dc: 15
-    text: A creature that knows the plate is there can cross without pressing it.
+    damage:
+    - dice: 18d10
+      type: fire
+    area: 120-foot Cone

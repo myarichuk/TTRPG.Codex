@@ -1,38 +1,52 @@
 id: hidden-pit
 type: hazard
 name: Hidden Pit
-description: A shaft in the floor is covered with a thin lid that looks like the rest of the floor and gives way under any weight.
+description: A 10-foot-deep pit under a hinged lid made of the same material as the floor around it.
 properties:
   kind: trap
   severity: Nuisance
   level: 1-4
-  trigger: Weight on the lid.
-  noticeCheck: Perception
-  noticeDc: 10
-  disableCheck: Thieves' Tools
-  disableDc: 10
-  saveAttribute: Dexterity
-  saveDc: 10
-  damage: 1d6
-  damageType: bludgeoning
-  effect: A creature that fails the save falls to the bottom, 10 feet down, and takes the damage. Success catches the edge.
-  reset: The lid is broken for good. The pit stays, and is now easy to see.
+  trigger: A creature moves onto the pit's lid.
+  duration: Instantaneous
+  depth: 10 feet
+  damage:
+  - dice: 1d6
+    type: bludgeoning
+  effect: The lid swings open like a trapdoor and the creature falls into the pit, taking the damage from the fall. There is no save. The lid stays open.
+  detect:
+  - id: lid
+    name: The lid
+    action: Study
+    check: Investigation
+    dc: 15
+    text: Examining the section of floor that forms the lid finds the pit.
+  disarm:
+  - id: wedge
+    name: Wedge the lid
+    after: lid
+    needs: An Iron Spike or a similar object
+    text: Wedged between lid and floor, it keeps the lid shut, so the pit is safe to cross.
+  - id: lock
+    name: Hold the lid shut
+    after: lid
+    needs: Arcane Lock or similar magic
   higherLevels:
   - levels: 5-10
-    saveDc: 12
-    damage: 2d6
+    depth: 30 feet
+    damage:
+    - dice: 3d6
+      type: bludgeoning
   - levels: 11-16
-    saveDc: 14
-    damage: 3d6
+    depth: 60 feet
+    damage:
+    - dice: 6d6
+      type: bludgeoning
   - levels: 17-20
-    saveDc: 16
-    damage: 4d6
+    depth: 120 feet
+    damage:
+    - dice: 12d6
+      type: bludgeoning
   methods:
   - name: Escape
-    check: Athletics
-    dc: 10
-    text: Climbing out of the pit without help.
-  - name: Avoid
-    check: Acrobatics
-    dc: 10
-    text: Jumping across a pit already known.
+    needs: A Climb Speed, climbing gear, or magic such as Spider Climb
+    text: The walls are smooth. Cracks big enough for handholds and footholds make it easier.

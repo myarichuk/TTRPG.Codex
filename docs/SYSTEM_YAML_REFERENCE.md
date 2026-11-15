@@ -164,7 +164,9 @@ Maps the parts every hazard can have onto the fields of one entity type. Every m
 | `trigger` | text (a number is text too) | The field holding what sets the hazard off (text). |
 | `effect` | [HazardEffect](#hazardeffect) | What the hazard does to those it catches: numbers the table can roll, and the rest as text. |
 | `durability` | [HazardDurability](#hazarddurability) | The fields holding what it takes to break the hazard. Any subset. |
-| `reset` | text (a number is text too) | The field holding how and when the hazard re-arms (text). |
+| `duration` | text (a number is text too) | The field holding how long the effect lasts once set off (text). |
+| `initiative` | text (a number is text too) | The Number field holding a complex hazard's Initiative bonus. |
+| `reset` | text (a number is text too) | The field holding how and when the hazard re-arms (text). Empty: inert after it goes off. |
 | `routine` | text (a number is text too) | The field holding what a complex hazard does each round, a collection of `{ name, description }`. Only for systems with hazards that act in initiative. |
 | `complex` | text (a number is text too) | A Boolean field: when true on an entry, the entry is a complex hazard that takes a turn in initiative. |
 | `level` | text (a number is text too) | The field holding what scaling and the world builder read: a number, or a range of levels (`1-4`) where the system prints ranges. |
@@ -178,10 +180,8 @@ The fields that say how a hazard is noticed.
 
 | Key | Type | What it is |
 |---|---|---|
-| `dc` | text (a number is text too) | The field holding the DC (a number). |
-| `check` | text (a number is text too) | The field holding the check that notices it: a skill key or label. |
-| `rank` | text (a number is text too) | The field holding the lowest rank that can notice it. Only on a system whose skills have ranks (`sheetRules.skills.ranks`). |
-| `passive` | true or false | True when a character's passive score for the check may be compared with the DC without a roll. |
+| `routes` | text (a number is text too) | The Collection field of detect routes. Each row is `{ id, name, action, check, dc, needs, after, rank, passive, text }`: a way to find the hazard (a check and DC, or what it takes instead). The keys are fixed engine words, as in the `methods` rows. |
+| `passive` | true or false | True when a character's passive score for a route's check may be compared with the DC without a roll (a route can opt out with `passive: false`). |
 
 ## HazardDisable
 
@@ -189,11 +189,7 @@ The fields that say how a hazard is disabled.
 
 | Key | Type | What it is |
 |---|---|---|
-| `dc` | text (a number is text too) | The field holding the DC (a number). |
-| `check` | text (a number is text too) | The field holding the check that disables it: a skill key, a tool or a label. |
-| `rank` | text (a number is text too) | The field holding the lowest rank that can try. Only on a system whose skills have ranks (`sheetRules.skills.ranks`). |
-| `successes` | text (a number is text too) | The field holding how many successes disable it (a number; one when the entry leaves it empty). |
-| `critFail` | text (a number is text too) | The field holding what a critical failure does (text; it sets the hazard off when it says so). |
+| `routes` | text (a number is text too) | The Collection field of disarm routes, in the same row shape as the notice routes, plus `successes` and `triggersOn` (the outcome keys that set the hazard off). A row with no `check` needs no roll: it names what it takes in `needs` or `text`. |
 
 ## HazardEffect
 
@@ -204,8 +200,10 @@ The fields that say what a hazard does to those it catches.
 | `attack` | text (a number is text too) | The field holding the attack bonus (a number), for a hazard that makes an attack. |
 | `save` | text (a number is text too) | The field holding the attribute of the saving throw (text). |
 | `saveDc` | text (a number is text too) | The field holding the saving throw's DC (a number). |
-| `damage` | text (a number is text too) | The field holding the damage dice (text, `4d10`). |
-| `damageType` | text (a number is text too) | The field holding the damage type (text). |
+| `onSave` | text (a number is text too) | The field holding what a passed save does to the damage: `half` or `none` (text or a Dropdown). |
+| `damage` | text (a number is text too) | The Collection field of damage parts, each `{ dice, type, count }`. `count` is dice or a whole number (how many times the part hits), default 1. |
+| `conditions` | text (a number is text too) | The Collection field of conditions, each `{ name, lasts }`. They apply on a failed save, or always when the hazard has no save. |
+| `area` | text (a number is text too) | The field holding the area (text, `15-foot Cone`). |
 | `text` | text (a number is text too) | The field holding everything the numbers do not say (text), such as conditions the game master adds by hand. |
 
 ## HazardDurability
@@ -218,6 +216,8 @@ The fields that say what it takes to break a hazard apart. Each names a number f
 | `hardness` | text (a number is text too) | The field holding its hardness: damage taken off every hit. |
 | `hitPoints` | text (a number is text too) | The field holding its hit points. |
 | `brokenThreshold` | text (a number is text too) | The field holding the hit points at which it breaks. |
+| `damageThreshold` | text (a number is text too) | The field holding its damage threshold: a hit that deals less than this does nothing (not hardness, not the broken threshold). |
+| `immunities` | text (a number is text too) | The TagList field holding the damage types and conditions it is immune to. |
 
 ## DiceConventions
 
@@ -1119,7 +1119,7 @@ A system's guidance for how hard a hazard of each level is, for the homebrew wiz
 
 | Key | Type | What it is |
 |---|---|---|
-| `scaling` | list of map of text (a number is text too) | Rows by level: each is `{ level: 5, noticeDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused. |
+| `scaling` | list of map of text (a number is text too) | Rows by level: each is `{ level: 5, saveDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused. |
 
 ## RollDefinition
 

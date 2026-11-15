@@ -730,11 +730,10 @@ public static class SystemDefinitionLoader
     /// <summary>The problems with the hazard types and <c>hazards.scaling</c>: every part names a field of the type (a number part a Number
     /// field, <c>complex</c> a Boolean, the row lists Collections), <c>rank</c> only where skills have ranks, a type is not a hazard and an
     /// actor blueprint at once, and each scaling row has a whole-number level and names fields of a hazard type.</summary>
-    private static readonly Regex DiceText = new(@"^\d+d\d+(\s*[+-]\s*(\d+d\d+|\d+))*$", RegexOptions.Compiled);
+    private static readonly string[] KnownOnSave = ["half", "none"];
 
     private static IEnumerable<string> ValidateHazards(SystemDefinition definition)
     {
-        var ranked = definition.SheetRules?.Skills is { Ranks.Count: > 0 };
         var hazardTypes = definition.EntityTypes.Where(t => t.Hazard != null && !string.IsNullOrWhiteSpace(t.Type)).ToList();
 
         foreach (var type in hazardTypes)
@@ -770,6 +769,8 @@ public static class SystemDefinitionLoader
             var parts = new List<IEnumerable<string>>
             {
                 Part("trigger", hazard.Trigger, text),
+                Part("duration", hazard.Duration, text),
+                Part("initiative", hazard.Initiative, number),
                 Part("reset", hazard.Reset, text),
                 Part("severity", hazard.Severity, text),
                 Part("level", hazard.Level, FieldType.Number, FieldType.Text),
@@ -780,18 +781,12 @@ public static class SystemDefinitionLoader
             };
             if (hazard.Notice is { } notice)
             {
-                parts.Add(Part("notice.dc", notice.Dc, number));
-                parts.Add(Part("notice.check", notice.Check, text));
-                parts.Add(Part("notice.rank", notice.Rank, text));
+                parts.Add(Part("notice.routes", notice.Routes, FieldType.Collection));
             }
 
             if (hazard.Disable is { } disable)
             {
-                parts.Add(Part("disable.dc", disable.Dc, number));
-                parts.Add(Part("disable.check", disable.Check, text));
-                parts.Add(Part("disable.rank", disable.Rank, text));
-                parts.Add(Part("disable.successes", disable.Successes, number));
-                parts.Add(Part("disable.critFail", disable.CritFail, text));
+                parts.Add(Part("disable.routes", disable.Routes, FieldType.Collection));
             }
 
             if (hazard.Effect is { } effect)
@@ -799,8 +794,10 @@ public static class SystemDefinitionLoader
                 parts.Add(Part("effect.attack", effect.Attack, number));
                 parts.Add(Part("effect.save", effect.Save, text));
                 parts.Add(Part("effect.saveDc", effect.SaveDc, number));
-                parts.Add(Part("effect.damage", effect.Damage, text));
-                parts.Add(Part("effect.damageType", effect.DamageType, text));
+                parts.Add(Part("effect.onSave", effect.OnSave, text));
+                parts.Add(Part("effect.damage", effect.Damage, FieldType.Collection));
+                parts.Add(Part("effect.conditions", effect.Conditions, FieldType.Collection));
+                parts.Add(Part("effect.area", effect.Area, text));
                 parts.Add(Part("effect.text", effect.Text, text));
             }
 
@@ -810,23 +807,28 @@ public static class SystemDefinitionLoader
                 parts.Add(Part("durability.hardness", durability.Hardness, number));
                 parts.Add(Part("durability.hitPoints", durability.HitPoints, number));
                 parts.Add(Part("durability.brokenThreshold", durability.BrokenThreshold, number));
+                parts.Add(Part("durability.damageThreshold", durability.DamageThreshold, number));
+                parts.Add(Part("durability.immunities", durability.Immunities, FieldType.TagList));
             }
 
             foreach (var error in parts.SelectMany(p => p)) yield return error;
 
-            if (hazard.Notice is { Passive: true } && string.IsNullOrWhiteSpace(hazard.Notice.Check))
+            if (hazard.Notice is { Passive: true } && string.IsNullOrWhiteSpace(hazard.Notice.Routes))
             {
-                yield return $"{where}.notice.passive needs notice.check: a passive score is the passive of that check.";
+                yield return $"{where}.notice.passive needs notice.routes: a passive score is the passive of a route's check.";
             }
 
-            if (!ranked && !string.IsNullOrWhiteSpace(hazard.Notice?.Rank))
+            // A dropdown's options must be values the engine knows how to apply to damage.
+            if (!string.IsNullOrWhiteSpace(hazard.Effect?.OnSave)
+                && type.Fields.FirstOrDefault(f => string.Equals(f.Key, hazard.Effect.OnSave, StringComparison.Ordinal)) is { Type: FieldType.Dropdown } onSave)
             {
-                yield return $"{where}.notice.rank needs ranked skills: this system declares none in sheetRules.skills.ranks.";
-            }
-
-            if (!ranked && !string.IsNullOrWhiteSpace(hazard.Disable?.Rank))
-            {
-                yield return $"{where}.disable.rank needs ranked skills: this system declares none in sheetRules.skills.ranks.";
+                foreach (var option in onSave.Options ?? new List<string>())
+                {
+                    if (!KnownOnSave.Contains(option, StringComparer.Ordinal))
+                    {
+                        yield return $"{where}.effect.onSave names field '{onSave.Key}' with option '{option}'; the engine knows {string.Join(" and ", KnownOnSave)}.";
+                    }
+                }
             }
         }
 
@@ -864,11 +866,15 @@ public static class SystemDefinitionLoader
                 {
                     yield return $"{at} names '{key}', which no hazard type declares as a field.";
                 }
+                else if (field.Type == FieldType.Collection && !hazardTypes.Any(t => string.Equals(t.Hazard?.Effect?.Damage, key, StringComparison.Ordinal)))
+                {
+                    yield return $"{at}.{key} is a Collection; a scaling row can only give a damage field (dice of its first part), not a list of rows.";
+                }
                 else if (field.Type == FieldType.Number && !long.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _))
                 {
                     yield return $"{at}.{key} is '{value}'; the field is a Number, so it needs a whole number.";
                 }
-                else if (hazardTypes.Any(t => string.Equals(t.Hazard?.Effect?.Damage, key, StringComparison.Ordinal)) && !DiceText.IsMatch(value ?? string.Empty))
+                else if (hazardTypes.Any(t => string.Equals(t.Hazard?.Effect?.Damage, key, StringComparison.Ordinal)) && !HazardNumbers.IsDice(value))
                 {
                     yield return $"{at}.{key} is '{value}'; damage is dice such as 4d10.";
                 }

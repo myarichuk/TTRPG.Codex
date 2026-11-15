@@ -156,16 +156,23 @@ entityTypes:
       kind: { label: Вид }
       severity: { label: Тяжесть }
       level: { label: Уровни }
-      noticeCheck: { label: Замечается проверкой }
-      noticeDc: { label: Сложность обнаружения }
-      disableCheck: { label: Обезвреживается проверкой }
-      disableDc: { label: Сложность обезвреживания }
+      detect: { label: Обнаружение }
+      disarm: { label: Обезвреживание }
       trigger: { label: Что её запускает }
+      duration: { label: Длительность }
       saveAttribute: { label: Спасбросок }
       saveDc: { label: Сложность спасброска }
+      onSave: { label: При успешном спасброске }
       damage: { label: Урон }
-      damageType: { label: Вид урона }
+      conditions: { label: Состояния }
+      area: { label: Область }
+      depth: { label: Глубина }
       effect: { label: Действие }
+      armorClass: { label: Класс Брони }
+      hitPoints: { label: Очки здоровья }
+      damageThreshold: { label: Порог урона }
+      immunities: { label: Иммунитеты }
+      initiative: { label: Бонус к инициативе }
       reset: { label: Сброс }
       complex: { label: Сложная }
       routine: { label: Порядок действий }
