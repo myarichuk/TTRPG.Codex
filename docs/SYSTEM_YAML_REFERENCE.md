@@ -172,7 +172,7 @@ Maps the parts every hazard can have onto the fields of one entity type. Every m
 | `routine` | text (a number is text too) | The field holding what a complex hazard does each round, a collection of `{ name, description, strikes }`. `strikes: true` marks the one row that applies the hazard's effect to the creatures the table names; every other row is a note. Only for systems with hazards that act in initiative. |
 | `complex` | text (a number is text too) | A Boolean field: when true on an entry, the entry is a complex hazard that takes a turn in initiative. |
 | `level` | text (a number is text too) | The field holding what scaling and the world builder read: a number, or a range of levels (`1-4`) where the system prints ranges. |
-| `severity` | text (a number is text too) | The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly). |
+| `severity` | text (a number is text too) | The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly). `hazards.scaling` rows with the same word apply to it; a band of `higherLevels` may change it. |
 | `higherLevels` | text (a number is text too) | The field holding the entry's own scaled versions: a collection of `{ levels, ...changed fields }`. A row names only the fields it changes; the others keep the base value. |
 | `methods` | text (a number is text too) | The field holding extra ways to deal with the hazard beyond notice and disable, a collection of `{ name, check, dc, text }`. Each is a button at the table. |
 
@@ -1121,7 +1121,7 @@ A system's guidance for how hard a hazard of each level is, for the homebrew wiz
 
 | Key | Type | What it is |
 |---|---|---|
-| `scaling` | list of map of text (a number is text too) | Rows by level: each is `{ level: 5, saveDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. The homebrew wizard fills a new hazard's numbers from it, and the world builder warns the game master when a proposed hazard's numbers are more than one row away from its level (`HazardNumbers.ScalingProblems`). Guidance only; nothing is refused. |
+| `scaling` | list of map of text (a number is text too) | Rows by level, and by severity where the system has one: each is `{ level: 5, severity: Deadly, saveDc: 13-15, damage: 14-24 }`. `level` (a whole number) and `severity` (the system's own word, matched against the field the hazard type's `severity` names, ignoring case) are row keys; every other key names a field of the hazard type, and its value is a whole number, dice, or a range `low-high` (whole numbers for a Number field, averages for the damage field). A hazard reads the rows of its own severity, or the rows with no severity when it has none or a word no row uses; the row with the highest level not above the hazard's applies. The homebrew wizard fills a new hazard's numbers from it, and the world builder warns the game master when a proposed hazard's numbers are more than one row away from its level (`HazardNumbers.ScalingProblems`). Guidance only; nothing is refused. |
 
 ## RollDefinition
 

@@ -243,6 +243,25 @@ public class HomebrewWizardHazardTests : ComponentTestBase
     }
 
     [Fact]
+    public void FillingFromTheGuide_ReadsTheHazardsSeverityRow_AndFillsAValueInsideItsRange()
+    {
+        var cut = Open();
+        GoTo(cut, "Profile");
+        Field(cut, "Levels").Change("5-10");
+        Field(cut, "Severity").Change("Deadly");
+        GoTo(cut, "Effect");
+        Field(cut, "Save").Change("Dexterity");
+        cut.Find("[data-testid=hazard-fill]").Click();
+
+        // Deadly 5-10 is a save DC of 13 to 15 and an average of 14 to 24: the middle of each, damage as the severity-less row's dice.
+        Assert.Equal("Filled in from the guide for level 5-10: Save DC, Damage.", cut.Find("[data-testid=hazard-fill-note]").TextContent.Trim());
+        Assert.Equal("14", Field(cut, "Save DC").GetAttribute("value"));
+        Assert.Equal("3d10", Control(cut, "hazard-damage", "Dice (such as 2d8)").GetAttribute("value"));
+        Save(cut);
+        Assert.Empty(HazardNumbers.ScalingProblems(_saved!.ToEntry(), Catalog.GetDefinition("srd5e")!.EntityTypes.Single(t => t.Type == "hazard"), Catalog.GetDefinition("srd5e")!));
+    }
+
+    [Fact]
     public void FillingFromTheGuide_KeepsEveryDamagePart_AndNeverReplacesANumberTheGmWrote()
     {
         var entry = new HomebrewEntryDocument

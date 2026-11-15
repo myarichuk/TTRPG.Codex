@@ -448,16 +448,27 @@ vitals:
     - { name: Short Rest, spendHitDice: true }
     - { name: Long Rest, restores: [HP], clears: [TempHP], hitDiceRegain: half }   # also lowers Exhaustion by 1: see conditionEffects
 
-# How hard a new hazard of each level is, for the homebrew wizard and the world builder's checks. The SRD has no shared table and none is
-# copied. These rows are Collapsing Roof's progression (a Deadly trap with a save): save DC 13, 15, 17, 19 and damage 2d10, 4d10, 10d10,
-# 18d10 by band (1-4, 5-10, 11-16, 17-20). Fire-Casting Statue shares the damage column; Poisoned Needle uses the same dice one band later
-# (1d10, 2d10, 4d10, 10d10). The other traps scale differently. Detect and disarm DCs are fixed per trap, so they are not columns.
+# How hard a new hazard of each level is, for the homebrew wizard and the world builder's checks. The SRD has no shared trap table and
+# none is copied: SRD 5.2.1 (CC BY 4.0), "Traps", pp. 199-201, only calls a trap a nuisance or deadly for a level range. The Nuisance
+# and Deadly rows are derived from its eight traps: each cell is the tightest range holding every SRD trap of that severity at that
+# band, damage as an average (dice averaged exactly, parts summed, a dart count of 1d3 as 2). Nuisance: Falling Net, Hidden Pit,
+# Poisoned Needle, and Rolling Stone at 17-20. Deadly: Collapsing Roof, Fire-Casting Statue, Poisoned Darts, Spiked Pit, and Rolling
+# Stone at 11-16. Rows without a severity are Collapsing Roof's progression, read for a hazard whose severity is empty or not one of
+# these. Detect and disarm DCs are fixed per trap, so they are not columns; no SRD trap makes an attack.
 hazards:
   scaling:
     - { level: 1,  saveDc: 13, damage: 2d10 }
     - { level: 5,  saveDc: 15, damage: 4d10 }
     - { level: 11, saveDc: 17, damage: 10d10 }
     - { level: 17, saveDc: 19, damage: 18d10 }
+    - { level: 1,  severity: Nuisance, saveDc: 10-11, damage: 3.5-5.5 }
+    - { level: 5,  severity: Nuisance, saveDc: 12-13, damage: 10.5-11 }
+    - { level: 11, severity: Nuisance, saveDc: 14-15, damage: 21-22 }
+    - { level: 17, severity: Nuisance, saveDc: 15-17, damage: 42-55 }
+    - { level: 1,  severity: Deadly,   saveDc: 13-15, damage: 7-12.5 }
+    - { level: 5,  severity: Deadly,   saveDc: 13-15, damage: 14-24 }
+    - { level: 11, severity: Deadly,   saveDc: 13-17, damage: 28-57 }
+    - { level: 17, severity: Deadly,   saveDc: 13-19, damage: 49-100.5 }
 
 entityTypes:
   - type: class

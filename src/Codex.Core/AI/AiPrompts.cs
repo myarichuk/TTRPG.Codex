@@ -138,8 +138,8 @@ public sealed record WorldChatRequest(
     WorldChatHazards? Hazards = null);
 
 /// <summary>What the chat tells the model about a system's hazards: the homebrew type that is a hazard, its level field, and the fields
-/// <c>hazards.scaling</c> has a column for. Field names only: the table's numbers are not in the prompt, and reach the model only as the range in a warning.</summary>
-public sealed record WorldChatHazards(string Type, string? LevelField, IReadOnlyList<string> ScaledFields);
+/// <c>hazards.scaling</c> has a column for, and the severity field and the words the table uses for it. Names only: the table's numbers are not in the prompt, and reach the model only as the range in a warning.</summary>
+public sealed record WorldChatHazards(string Type, string? LevelField, IReadOnlyList<string> ScaledFields, string? SeverityField = null, IReadOnlyList<string>? Severities = null);
 
 /// <summary>An item a character may carry: its Library id and the name a model knows it by.</summary>
 public sealed record EquipmentOption(string Id, string Name);
@@ -636,6 +636,9 @@ public static class AiPrompts
                       "entry in the same proposal (read homebrew_fields first), and \"trap\" is left for notes. " +
                       (hazards.ScaledFields.Count > 0
                           ? $"Give a homebrew {hazards.Type} a level{(hazards.LevelField != null ? $" in \"{hazards.LevelField}\"" : "")} (ask the game master what level the party is if you do not know) and write its {string.Join(", ", hazards.ScaledFields.Select(f => $"\"{f}\""))} in proportion to a hazard of that level: propose_changes warns when a number is far from the system's guide for that level and gives the guide's range; keep the numbers inside it unless the game master asked otherwise. "
+                          : string.Empty) +
+                      (hazards.SeverityField != null && hazards.Severities is { Count: > 0 } words
+                          ? $"Give it a \"{hazards.SeverityField}\" of {string.Join(", ", words.Take(words.Count - 1))}{(words.Count > 1 ? " or " : string.Empty)}{words[^1]}, and keep its numbers to that severity's guide. "
                           : string.Empty) +
                       "Every row of a detect or disarm list needs a \"name\"; write the trigger and reset as short rules text. A place's text is what players read once it is revealed, so keep the hazard out of it. ");
         }

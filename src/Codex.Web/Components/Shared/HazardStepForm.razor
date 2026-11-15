@@ -86,7 +86,8 @@
     {
         var canonical = System?.Canonical;
         var level = Values.TryGetValue(Hazard.Level!, out var raw) ? Convert.ToString(raw, CultureInfo.InvariantCulture) : null;
-        if (canonical == null || HazardNumbers.GuideRow(level, canonical) is not { } row)
+        var severity = Hazard.Severity is { Length: > 0 } severityField && Values.TryGetValue(severityField, out var word) ? Convert.ToString(word, CultureInfo.InvariantCulture)?.Trim() : null;
+        if (canonical == null || HazardNumbers.GuideRow(level, canonical, severity) is not { } row)
         {
             fillNote = L["Wizard.Hazard.Fill.NeedLevel"];
             return;

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Codex.Core;
 using Codex.Core.AI;
+using Codex.Core.Systems;
 using Codex.Core.WorldBuilder;
 using Codex.Localization;
 using Codex.Persistence;
@@ -34,7 +35,8 @@ public sealed partial class WorldBuilderService
     private static WorldChatHazards? HazardsOf(SystemDefinition? system) =>
         HazardTypeOf(system) is { } key && system!.Canonical.FindType(key) is { Hazard: { } hazard }
             ? new WorldChatHazards(key, hazard.Level,
-                (system.Canonical.Hazards?.Scaling ?? new()).SelectMany(row => row.Keys).Where(k => k != "level").Distinct(StringComparer.Ordinal).ToList())
+                (system.Canonical.Hazards?.Scaling ?? new()).SelectMany(row => row.Keys).Where(k => k != HazardNumbers.ScalingLevelKey && k != HazardNumbers.ScalingSeverityKey).Distinct(StringComparer.Ordinal).ToList(),
+                hazard.Severity, HazardNumbers.Severities(system.Canonical))
             : null;
 
     // The DM's template for each kind of page the builder writes, as the model is shown it.
