@@ -1,6 +1,8 @@
 # Conditions on sheet-rules sheets, with values: design
 
-Status: designed 2026-11-14, open questions decided (see the end), not built. It closes the gap that `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md` (section 1) names as shared by srd5e
+Status: designed 2026-11-14, open questions decided (see the end), built 2026-11-15 (C1 to C7). One change from this text: Guided has no
+`ends`, because the 5.2.1 Guidance lasts its full minute; the `ends` path is tested on a fixture instead. What is still missing is in
+`CHARACTER_FEATURES_GAPS.md` ("Conditions"). It closes the gap that `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md` (section 1) names as shared by srd5e
 and the PF2e pack (P4): a condition that changes numbers on a `sheetRules` sheet, and a condition with a value (Exhaustion 3, frightened 2).
 
 ## What it is
