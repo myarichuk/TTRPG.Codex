@@ -161,8 +161,10 @@ hazards:
     and its generic save DC and attack bonus bands are not in the SRD and must not be copied. The damage progression above is
     usable only because the SRD's own traps print it.
   - **Pathfinder Second Edition:** the DC-by-level table, once GM Core is held and its notice read.
-- The table is guidance: the homebrew wizard fills a new hazard's numbers from it, and the world builder's check (`propose_changes`) refuses a proposed hazard whose number
-  is more than one row away from its level (decided at H6; this said "warns, nothing is ever refused"). A hazard a person writes by hand is never refused.
+- The table is guidance: the homebrew wizard fills a new hazard's numbers from it, and the world builder's check (`propose_changes`) warns when a proposed hazard's number
+  is more than one row away from its level, stating the range. Nothing is ever refused; the game master decides. A hazard a person writes by hand is never checked this way.
+  The warning states the table's rows for that level to the game master and to the model alike; srd5e's rows come from CC BY traps and may be shown. A system whose table
+  comes from a book held under a notice (Pathfinder's GM Core) must decide first whether its numbers may reach a model.
 - `SystemTranslation` needs nothing new: hazard field labels translate like any type's fields.
 
 ### 3.3 Complex hazards in initiative
@@ -243,9 +245,9 @@ triggers" through a route's `triggersOn` list (outcome keys). Until that roll ex
   `WorldBundleParser` resolves it like other links.
 - The world builder can propose a hazard as homebrew (`{ "kind": "homebrew", "type": "hazard", "name": ..., "properties": {...} }`), as
   it already does for monsters and spells. `homebrew_fields(type: hazard)` tells it the fields. Its prompt gains one line on hazards:
-  pick a level from the party's, take the numbers from `hazards.scaling`, write the trigger and reset as short rules text.
-- `CheckAsync` refuses a homebrew hazard whose numbers are more than one scaling row from its level (3.2; see 11, H6, for why this is an error and not
-  a warning), and warns when a feature names a hazard that does not resolve.
+  give the hazard a level (asking the game master the party's level if it does not know it), keep its numbers near the system's guide, write the trigger and reset as short rules text.
+- `CheckAsync` warns when a homebrew hazard's numbers are more than one scaling row from its level (3.2), and when a feature names a hazard that does not resolve (the hazard is
+  dropped and the rest of the feature kept). Problems of shape (a route the table cannot run) are errors.
 - On a system with no hazard type, the world builder keeps writing `"trap": "..."` text, as today.
 
 ## 6. Content
@@ -298,7 +300,7 @@ No new resx prefix.
 | Live state in an encounter is written back to the place feature when the encounter ends | `HazardCommandTests` |
 | `QuickAddPanel` lists complex hazards only in its Hazards group, never among creatures | bUnit |
 | `PlaceFeature.Hazard` round-trips; one Library hazard placed twice keeps two states | persistence tests |
-| World builder: a proposal with a homebrew hazard linked from a feature saves both; a number far from the scaling row warns; an unresolved hazard link is an error | `WorldBundleParserTests`, `WorldBuilderServiceTests` |
+| World builder: a proposal with a homebrew hazard linked from a feature saves both; a number far from the scaling row warns; an unresolved hazard link warns and is dropped | `WorldBundleParserTests`, `WorldBuilderServiceTests` |
 | srd5e golden corpus unchanged | Golden |
 | A reference fixture gains one hazard expectation per part (notice, disable, trigger) | `tests/Codex.Tests/Fixtures/reference` |
 
@@ -521,25 +523,33 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     Search label, placeholder and hint of the quick-add box now name hazards.
 
 - **H6 (the world builder).** Built as 5 and step 6 of 9 have it: `ProposalFeature.Hazard`, homebrew hazards through `kind: homebrew, type: hazard`, a scaling check, one prompt line. What differs, and why:
-  - **The scaling check refuses; it does not warn.** 3.2 and 5 said "warns, nothing is ever refused"; the H6 task asks for a hazard out of range to be refused before the game master can accept it. So
-    `HazardNumbers.ScalingProblems` (pure, for H7's wizard to reuse) feeds **errors** from `WorldBuilderService.CheckAsync`: `propose_changes` answers "Nothing was proposed", the step is marked rejected and the
-    problem is in the step the game master reads in the chat; nothing reaches the review card. The threshold is 3.2's: more than one row away. The `HazardRules` XML doc, the schema and the reference say so. A hazard written by
-    hand in the Library is never checked this way.
+  - **The scaling check warns; it never refuses.** As 3.2 and 5 say. `HazardNumbers.ScalingProblems` (pure, for H7's wizard to reuse) feeds **warnings** from `WorldBuilderService.CheckAsync`: they are in the proposal's warnings (and so in
+    the model's tool result) and on the hazard's own review card (`WorldDraft.Concerns`) and, through the place's "Hazard here" line, on the place that carries it. The game master decides; the entry is saved as written. **Shape problems
+    stay errors** (`HazardNumbers.Problems`: routes, damage dice, conditions, band keys), because the table cannot run such a hazard. An **edit** of an existing homebrew hazard reports only the problems the edit introduced (compared
+    with the entry as stored), so a hand-written number is not nagged about when only the trigger changes.
   - **How it measures.** The level is the lowest whole number of the level field (`5-10` is 5); the row is the highest one at or below it, or the first. For each column of the table the hazard also has (a save DC; `damage`, which
-    is a Collection in srd5e, is the sum of its parts' average dice times their `count`) the value must lie between the row before and the row after, clamped at the ends; below the first row there is no floor, so a Nuisance
-    trap passes. Every `higherLevels` band is read at its own levels. A hazard with scaled numbers and no readable level is an error. The loader's own checks (`HazardNumbers.Problems`: routes, damage dice, conditions) run on the
-    same entry and are errors too, as is a hazard edit (the entry's stored fields with the changed ones laid over them).
-  - **The message names the direction, not the table** ("saveDc is too high for a level 5 hazard ... Lower it."), so the model's numbers stay its own and the system's table is never copied into a prompt or a reply.
-  - **The placement.** A feature's `"hazard"` is a Library `type/id` (checked against the Library), `existing:homebrew:type/id`, or the ref of a homebrew hazard in the same proposal (`DraftFeature.HazardEntry` / `HazardRef`). One that names nothing is
-    dropped with a warning. On a system with no hazard type the hazard is ignored with a warning and the free-text `trap` is kept; on one that has it, a `trap` with no hazard gets a warning that a trap that rolls is a hazard (the text is kept,
-    as 5 says, for notes). A saved placement is `Hidden`, `Levels` null (the entry's base numbers); the homebrew entry is unpublished, the place hidden. If the hazard's homebrew entry is unticked in the review, the place is saved without a hazard.
-  - **A silent drop closed.** `FieldCoercion` drops a Collection row with no `name`; a hazard whose damage rows have none would have lost its damage and passed the scaling check. The parser now warns about dropped rows
-    of any homebrew list, and the prompt line says every row needs a `name`.
-  - **The review** shows one line on a place with a hazard ("Hazard here: ..."); the homebrew hazard shows through the existing fields view. The model reads a place's hazard in `list_places`/`search_world` notes.
-  - **The prompt line** (`WorldChatHazards`: the type, its level field, the table's column names; no numbers) appears only for a system with a hazard type. Strings: `WorldChat.Proposal.Hazard` (en, ru, he; ru and he need native review).
-  - **Tests:** `WorldBuilderHazardTests` (17 cases through the chat's scripted model: a Library hazard, a homebrew one in range with its entry read back through `For`, `Damage`, `NoticeRoutes` and `Problems`, one out of range by save DC, by damage alone and too low, no level,
-    a route the loader rejects, unnamed rows, a dangling link, a system with no hazard type, the prompt, secrecy, and the one-row window).
-  - **Not done:** an edit of a placed hazard's levels or state from the world builder; the homebrew wizard's hazard mode and the book stat block (step 7).
+    is a Collection in srd5e, is the sum of its parts' average dice times their `count`) the value should lie between the row before and the row after, clamped at the ends; below the first row there is no floor. Every `higherLevels`
+    band is read at its own levels. A hazard with scaled numbers and no readable level gets a warning to fill in its level.
+  - **The message states the range**, in the field's label ("Save DC 25 is high for a level 5 hazard; the system's guide gives 13 to 17."), to the game master and the model alike, and does not name the YAML key. The prompt line stays free of the table.
+  - **Not done: severity.** The table has no severity column, so a Nuisance trap is read against the Deadly Collapsing Roof's rows. Five of the eight SRD traps then leave the window for their own bands (Falling Net, Hidden Pit,
+    Poisoned Darts, Spiked Pit, and the Rolling Stone's restated band; the Fire-Casting Statue's base save DC too at 17-20). A test over every shipped trap that expects no warning cannot pass until the table gains per-severity rows,
+    which are numbers the SRD does not print as a table; none were invented. Open question for the owner of `hazards.scaling`.
+  - **The placement.** A feature's `"hazard"` is a Library `type/id` (checked against the Library; an id that is really the campaign's own homebrew entry is placed as homebrew), `existing:homebrew:type/id`, or the ref of a homebrew hazard
+    in the same proposal (`DraftFeature.HazardEntry` / `HazardRef`). **One that names nothing is dropped with a warning, in every form** (a Library id the Library lacks, an existing key that is not there or not a hazard, a ref that is not a
+    hazard), and the rest of the feature is kept; 5 and 8 now agree. On a system with no hazard type the hazard is ignored with a warning and the free-text `trap` is kept; on one that has it, a `trap` with no hazard gets a warning
+    ("if this trap rolls, give the feature a hazard"; the text is kept, as 5 says, for notes). A saved placement is `Hidden`, `Levels` null (the entry's base numbers); the homebrew entry is unpublished, the place hidden. If the hazard's
+    homebrew entry is unticked in the review, the place is saved without a hazard.
+  - **Rows without a name.** `FieldCoercion` drops a Collection row with no `name`, which lost every `higherLevels` band (rows of `levels` and numbers) and every damage row (dice and type). `FieldSpec.RowsNeedName` is now false for a hazard
+    type's `higherLevels` and damage fields, where any row with something in it is kept; every other list keeps the name rule. The parser warns about dropped rows, for a new entry and an edit alike (an edit's used to be thrown away).
+    The prompt no longer says every row needs a name, only the detect and disarm ones.
+  - **The review** shows one line on a place with a hazard ("Hazard here: ...") and the scaling warnings under it; the homebrew hazard shows them above its fields. The model reads a place's hazard in `list_places`/`search_world` notes. The line
+    does not say that unticking the hazard's entry drops it from the place.
+  - **The prompt line** (`WorldChatHazards`: the type, its level field, the table's column names; no numbers) appears only for a system with a hazard type. It asks for a level and says to ask the game master the party's level if unknown (the chat is
+    not given the party's levels), and to keep the hazard out of a place's text, which players read. Strings: `WorldChat.Proposal.Hazard` (en, ru, he; ru and he need native review). The warnings are English, as the other check warnings are.
+  - **Tests:** `WorldBuilderHazardTests` (through the chat's scripted model and the check: a Library hazard, the campaign's own hazard by either key, a homebrew one in range read back through `For`, `Damage`, `NoticeRoutes` and `Problems`, one out of
+    range by save DC, by damage alone and too low (warned, on its card, saved as written), no level, a route the loader rejects, a row without a name and an empty one, `higherLevels` bands, an edit that adds nothing, one that adds a number and one that
+    breaks the shape, a link of another type, a dangling link, an unticked entry, a trap with no hazard, a system with no hazard type, the prompt, secrecy, and the one-row window).
+  - **Not done:** an edit of a placed hazard's levels or state from the world builder; the homebrew wizard's hazard mode and the book stat block (step 7); the severity item above.
 
 ## 12. H4a: the server-side check service (interface)
 

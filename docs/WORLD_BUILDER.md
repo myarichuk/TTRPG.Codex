@@ -51,7 +51,7 @@ from CampaignVault's seeding guidance.) It also asks for two to five tags on eve
 campaign's own.
 
 On a system with a hazard type (srd5e), a place's `feature` also takes `"hazard"`: a Library hazard, an existing homebrew one or the ref of a homebrew hazard in the same proposal. A homebrew
-hazard is checked against the system's `hazards.scaling` and the shape's loader checks before the GM sees the proposal, and is refused with its problem when out of range; a system without a
+hazard is checked against the system's `hazards.scaling` and the shape's loader checks before the GM sees the proposal: a number out of range gets a warning (with the system's range) on the hazard's card, and the GM decides; a hazard the table cannot run is refused. A system without a
 hazard type keeps the free-text `trap`. See HAZARDS_DESIGN.md, section 11 (H6).
 
 Models that cannot call tools get a clear message (`WorldChat.Error.NoTools`).

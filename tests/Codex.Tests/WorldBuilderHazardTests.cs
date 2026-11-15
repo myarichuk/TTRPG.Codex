@@ -64,15 +64,80 @@ public class WorldBuilderHazardTests
     }
 
     [Fact]
-    public async Task ALibraryHazardTheLibraryDoesNotHave_IsAnError_NotADanglingLink()
+    public async Task ALibraryHazardTheLibraryDoesNotHave_IsDroppedWithAWarning_LikeAnyOtherDanglingLink()
     {
         var saving = Hazards();
 
         var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm,
-            """{"entries": [{"ref": "v", "kind": "place", "name": "Vault Door", "text": "A door.", "feature": {"hazard": "hazard/nothing"}}]}""");
+            """{"entries": [{"ref": "v", "kind": "place", "name": "Vault Door", "text": "A door.", "feature": {"hazard": "hazard/nothing", "lock": "DC 10"}}]}""");
 
-        Assert.False(check.Ok);
-        Assert.Contains("not in the Library", Assert.Single(check.Errors));
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Contains("not in the Library", Assert.Single(check.Warnings));
+        var feature = check.Bundle.Drafts.Single().Feature!;
+        Assert.Null(feature.HazardEntry);
+        Assert.Equal("DC 10", feature.Lock);
+    }
+
+    private static HomebrewEntryDocument CollapsingFloor(long saveDc = 19) => new()
+    {
+        Id = "hb-1", Type = "hazard", EntryId = "collapsing-floor", Name = "Collapsing Floor", SystemId = "srd5e", Description = "The floor gives way.",
+        Properties = { ["level"] = "3", ["saveAttribute"] = "Dexterity", ["saveDc"] = saveDc, ["trigger"] = "A creature steps on the rotten boards.", ["damage"] = new List<object> { new Dictionary<string, object> { ["dice"] = "2d10", ["type"] = "bludgeoning" } } }
+    };
+
+    [Theory]
+    [InlineData("hazard/collapsing-floor")] // the Library's form, for an entry that is the campaign's own
+    [InlineData("existing:homebrew:hazard/collapsing-floor")]
+    public async Task APlaceCanCarryTheCampaignsOwnHazard_AndItIsSavedAsHomebrew(string written)
+    {
+        var saving = WorldBuilderTests.ServiceFor(Srd5e, LibraryWithAPit(), null, CollapsingFloor());
+
+        var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{Vault(written)}}]}""");
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Empty(check.Warnings);
+        await saving.Service.SaveAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, check.Bundle);
+
+        var hazard = saving.NewRegions.Single().Locations.Single().Feature!.Hazard!;
+        Assert.Equal(("hazard/collapsing-floor", true, HazardState.Hidden), (hazard.Entry, hazard.IsHomebrew, hazard.State));
+    }
+
+    [Fact]
+    public async Task AnExistingHomebrewLinkOfAnotherType_IsDroppedWithAWarning()
+    {
+        var saving = WorldBuilderTests.ServiceFor(Srd5e, LibraryWithAPit(), null, CollapsingFloor(), new HomebrewEntryDocument { Type = "monster", EntryId = "gull-hag", Name = "Gull Hag", SystemId = "srd5e" });
+
+        var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{Vault("existing:homebrew:monster/gull-hag")}}]}""");
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Contains(check.Warnings, w => w.Contains("is not a hazard homebrew entry"));
+        Assert.Null(check.Bundle.Drafts.Single().Feature);
+    }
+
+    [Fact]
+    public async Task AHazardEntryNotTicked_LeavesThePlaceWithoutIt()
+    {
+        var saving = Hazards();
+        var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{Blades()}}, {{Vault("h")}}]}""");
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        check.Bundle.Drafts.Single(d => d.Kind == DraftKinds.Homebrew).Selected = false;
+
+        await saving.Service.SaveAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, check.Bundle);
+
+        Assert.Empty(saving.Entries);
+        Assert.Null(saving.NewRegions.Single().Locations.Single().Feature?.Hazard);
+    }
+
+    [Fact]
+    public async Task ATrapWithNoHazard_OnASystemWithHazards_WarnsOnlyIfItRolls()
+    {
+        var saving = Hazards();
+
+        var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm,
+            """{"entries": [{"ref": "v", "kind": "place", "name": "Chest", "text": "A chest.", "feature": {"trap": "A poison needle, DC 13 to spot."}}]}""");
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Contains(check.Warnings, w => w.Contains("if this trap rolls"));
+        Assert.Equal("A poison needle, DC 13 to spot.", check.Bundle.Drafts.Single().Feature!.Trap);
     }
 
     [Fact]
@@ -112,32 +177,42 @@ public class WorldBuilderHazardTests
     }
 
     [Theory]
-    [InlineData("25", "4d10", "saveDc is too high")] // the save DC is far above the level 5 row
-    [InlineData("15", "18d10", "damage is too high")] // only the damage is out of range
-    [InlineData("15", "1d4", "damage is too low")]
-    public async Task AHomebrewHazardOutOfRange_IsRefusedWithItsProblem_AndNothingIsHeld(string saveDc, string dice, string problem)
+    [InlineData("25", "4d10", "Save DC 25 is high", 25L)] // the save DC is far above the level 5 row
+    [InlineData("15", "18d10", "Damage averaging 99 is high", 15L)] // only the damage is out of range
+    [InlineData("15", "1d4", "Damage averaging 2.5 is low", 15L)]
+    public async Task AHomebrewHazardOutOfRange_IsWarnedAbout_NotRefused_AndSavedAsTheGameMasterAccepts(string saveDc, string dice, string problem, long expectedDc)
     {
         var saving = Hazards();
         var proposal = Proposal(Blades(saveDc, dice), Vault("h"));
         var model = new WorldBuilderTests.ScriptedModel(
             _ => WorldBuilderTests.Calls("c1", "propose_changes", proposal),
-            _ => new ChatMessage(ChatRole.Assistant, "I will fix the numbers."));
+            _ => new ChatMessage(ChatRole.Assistant, "The numbers are as you asked."));
         var chat = new WorldChat(saving.Service, () => Task.FromResult<IChatClient>(model), WorldBuilderTests.Campaign, WorldBuilderTests.Dm);
         var progress = new List<WorldChatStep>();
 
         await chat.SendAsync("A trapped vault, please.", progress.Add, CancellationToken.None);
 
         var step = progress.Distinct().Single();
-        Assert.True(step.Rejected);
-        Assert.StartsWith("Nothing was proposed", step.Result);
-        Assert.Contains(problem, step.Result);
-        Assert.Contains("level 5", step.Result);
-        Assert.Null(chat.Proposal);
-        Assert.Empty(saving.Entries);
+        Assert.False(step.Rejected);
+        Assert.NotNull(chat.Proposal);
+        var warning = Assert.Single(chat.ProposalWarnings);
+        Assert.Contains(problem, warning);
+        Assert.Contains("level 5", warning);
+        Assert.Contains("the system's guide gives", warning);
+        // The hazard's own card carries it, and the place's "Hazard here" line reads it from there.
+        Assert.Contains(chat.Proposal!.Drafts.Single(d => d.Kind == DraftKinds.Homebrew).Concerns, c => c.Contains(problem));
+
+        await chat.ApplyAsync();
+
+        // The check never changes the entry.
+        var entry = Assert.Single(saving.Entries);
+        Assert.Equal(expectedDc, entry.Properties["saveDc"]);
+        var type = Srd5e.FindType("hazard")!;
+        Assert.Equal(dice, HazardNumbers.Damage(HazardNumbers.For(new ContentEntry { Type = "hazard", Properties = entry.Properties }, type, null), type.Hazard!).Single().Dice);
     }
 
     [Fact]
-    public async Task AHazardWithNumbersAndNoLevel_IsRefused_AsIsOneWhoseRowsTheShapeRejects()
+    public async Task AHazardWithNumbersAndNoLevel_IsWarned_ButOneWhoseRowsTheShapeRejectsIsRefused()
     {
         var saving = Hazards();
         const string noLevel = """{"ref": "h", "kind": "homebrew", "type": "hazard", "name": "Mystery Plate", "text": "A plate.", "properties": {"saveAttribute": "Dexterity", "saveDc": 15}}""";
@@ -146,32 +221,91 @@ public class WorldBuilderHazardTests
         var first = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{noLevel}}]}""");
         var second = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{badRoute}}]}""");
 
-        Assert.Contains("no level to read them against", Assert.Single(first.Errors));
+        Assert.True(first.Ok, string.Join("; ", first.Errors));
+        Assert.Contains("no level to read them against", Assert.Single(first.Warnings));
         Assert.Contains("has a dc and no check", second.Errors.Single(e => e.Contains("dc")));
     }
 
     [Fact]
-    public async Task AListOfUnnamedRows_IsWarnedAbout_NotSilentlyDropped()
+    public async Task ARowWithNoName_IsKept_AndARowWithNothingInIt_IsWarnedAbout()
     {
         var saving = Hazards();
         var unnamed = Blades().Replace("{\"name\": \"Blades\", \"dice\"", "{\"dice\"");
+        var empty = Blades().Replace("\"damage\": [{\"name\": \"Blades\", \"dice\": \"4d10\", \"type\": \"slashing\"}]", "\"damage\": [{}]");
 
-        var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{unnamed}}]}""");
+        var kept = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{unnamed}}]}""");
+        var dropped = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{empty}}]}""");
 
-        Assert.Contains(check.Warnings, w => w.Contains("row(s) of 'damage' have no \"name\""));
+        Assert.Empty(kept.Warnings);
+        Assert.Single((System.Collections.IEnumerable)kept.Bundle.Drafts.Single().Properties["damage"]);
+        Assert.Contains(dropped.Warnings, w => w.Contains("row(s) of 'damage' had nothing in them"));
     }
 
     [Fact]
-    public async Task AHazardLinkThatNamesNothing_IsDropped_WithAWarning()
+    public async Task AProposedHazard_CanCarryLevelBands_ThatReadBackAtTheirLevels()
     {
         var saving = Hazards();
+        const string band = "\"higherLevels\": [{\"levels\": \"11-16\", \"saveDc\": 17, \"damage\": [{\"dice\": \"10d10\", \"type\": \"slashing\"}]}], \"reset\":";
+        var banded = Blades().Replace("\"reset\":", band);
+        Assert.Contains("higherLevels", banded);
 
-        var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{Vault("ghost", ", \"lock\": \"DC 10\"")}}]}""");
+        var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{banded}}]}""");
 
         Assert.True(check.Ok, string.Join("; ", check.Errors));
-        Assert.Contains(check.Warnings, w => w.Contains("hazard 'ghost'"));
-        Assert.Null(check.Bundle.Drafts.Single().Feature!.HazardRef);
-        Assert.Equal("DC 10", check.Bundle.Drafts.Single().Feature!.Lock);
+        Assert.Empty(check.Warnings);
+        await saving.Service.SaveAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, check.Bundle);
+        var entry = new ContentEntry { Type = "hazard", Properties = Assert.Single(saving.Entries).Properties };
+        var type = Srd5e.FindType("hazard")!;
+        Assert.Equal(new[] { "11-16" }, HazardNumbers.Rows(entry, type));
+        var upper = HazardNumbers.For(entry, type, "11-16");
+        Assert.Equal("10d10", HazardNumbers.Damage(upper, type.Hazard!).Single().Dice);
+        Assert.Equal("17", Convert.ToString(upper["saveDc"]));
+        Assert.Equal("4d10", HazardNumbers.Damage(HazardNumbers.For(entry, type, null), type.Hazard!).Single().Dice);
+    }
+
+    [Fact]
+    public async Task EditingAHandWrittenHazard_ReportsOnlyWhatTheEditIntroduced()
+    {
+        var floor = CollapsingFloor(); // level 3, save DC 19: far above the level 1 row's neighbours, written by hand
+        var saving = WorldBuilderTests.ServiceFor(Srd5e, LibraryWithAPit(), null, floor);
+
+        var trigger = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm,
+            """{"entries": [{"ref": "e", "kind": "edit", "target": "existing:homebrew:hazard/collapsing-floor", "properties": {"trigger": "A creature steps on the middle boards."}}]}""");
+        var number = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm,
+            """{"entries": [{"ref": "e", "kind": "edit", "target": "existing:homebrew:hazard/collapsing-floor", "properties": {"saveDc": 25}}]}""");
+        var shape = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm,
+            """{"entries": [{"ref": "e", "kind": "edit", "target": "existing:homebrew:hazard/collapsing-floor", "properties": {"detect": [{"name": "Look", "dc": 12}]}}]}""");
+
+        Assert.True(trigger.Ok, string.Join("; ", trigger.Errors));
+        Assert.Empty(trigger.Warnings);
+        Assert.True(number.Ok, string.Join("; ", number.Errors));
+        Assert.Contains("Save DC 25 is high", Assert.Single(number.Warnings));
+        Assert.False(shape.Ok);
+    }
+
+    [Fact]
+    public async Task AnEditOfUnnamedRows_KeepsThemAndWarnsOfEmptyOnes()
+    {
+        var saving = WorldBuilderTests.ServiceFor(Srd5e, LibraryWithAPit(), null, CollapsingFloor(15));
+
+        var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm,
+            """{"entries": [{"ref": "e", "kind": "edit", "target": "existing:homebrew:hazard/collapsing-floor", "properties": {"damage": [{"dice": "2d10"}, {}]}}]}""");
+
+        Assert.True(check.Ok, string.Join("; ", check.Errors));
+        Assert.Single((System.Collections.IEnumerable)check.Bundle.Drafts.Single().Properties["damage"]);
+        Assert.Contains(check.Warnings, w => w.Contains("had nothing in them"));
+    }
+
+    [Fact]
+    public async Task APlacesPitch_IsNotWhereTheHazardGoes()
+    {
+        var saving = Hazards();
+        var check = await saving.Service.CheckAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, $$"""{"entries": [{{Blades()}}, {{Vault("h")}}]}""");
+        await saving.Service.SaveAsync(WorldBuilderTests.Campaign, WorldBuilderTests.Dm, check.Bundle);
+
+        var place = saving.NewRegions.Single().Locations.Single();
+        Assert.DoesNotContain("blade", place.Description ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("blade", place.Name, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -200,6 +334,8 @@ public class WorldBuilderHazardTests
         Assert.Contains("This system has hazards (type \"hazard\")", withHazards);
         Assert.Contains("\"saveDc\", \"damage\"", withHazards);
         Assert.Contains("\"level\"", withHazards);
+        Assert.Contains("ask the game master what level the party is", withHazards);
+        Assert.DoesNotContain("the party's level", withHazards);
         // Field names, never the table's numbers.
         Assert.DoesNotContain("2d10", withHazards);
         Assert.DoesNotContain("18d10", withHazards);

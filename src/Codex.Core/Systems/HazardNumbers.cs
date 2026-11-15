@@ -167,8 +167,9 @@ public static class HazardNumbers
     /// each scaled number (a column of the table the hazard also has, such as a save DC, or its damage) more than one row away from the row for the
     /// hazard's level, and one when a hazard with scaled numbers has no level to read. The level is the lowest whole number in the entry's level field
     /// (<c>5-10</c> reads as 5); the row is the highest one at or below it, or the first. A band of <c>higherLevels</c> is read at its own levels. The
-    /// window is the row before to the row after; below the first row there is no floor, so a mild trap is not refused. The messages name the direction, not the
-    /// table's numbers, so the model's own numbers stay its own. Nothing here changes the entry. A system with no <c>hazards.scaling</c> has no messages.
+    /// window is the row before to the row after; below the first row there is no floor. These are warnings, never refusals: the game master decides, and
+    /// the messages use the fields' labels and state the range, for the game master and the model alike. Nothing here changes the entry. The table has
+    /// no severity, so a mild hazard is read against the same rows as a deadly one. A system with no <c>hazards.scaling</c> has no messages.
     /// </summary>
     public static IEnumerable<string> ScalingProblems(ContentEntry entry, ContentTypeDefinition type, SystemDefinition system)
     {
@@ -180,6 +181,8 @@ public static class HazardNumbers
             .ToList();
         if (rows.Count == 0) yield break;
         var columns = rows.SelectMany(r => r.Row.Keys).Where(k => k != "level").Distinct(StringComparer.Ordinal).ToList();
+        string LabelOf(string key) => type.Fields.FirstOrDefault(f => f.Key == key)?.Label is { Length: > 0 } label ? label : key;
+        var levelLabel = hazard.Level is { Length: > 0 } levelKey ? LabelOf(levelKey) : "level";
 
         var bands = new List<(string Prefix, string? Levels, string LevelText)> { (string.Empty, null, hazard.Level is { Length: > 0 } field && entry.Properties.TryGetValue(field, out var own) ? Convert.ToString(own, CultureInfo.InvariantCulture) ?? string.Empty : string.Empty) };
         bands.AddRange(Rows(entry, type).Select(levels => ($"band {levels}: ", (string?)levels, levels)));
@@ -190,7 +193,7 @@ public static class HazardNumbers
             if (measured.Count == 0) continue;
             if (LowestLevel(levelText) is not { } level)
             {
-                yield return $"{prefix}it has scaled numbers ({string.Join(", ", measured.Select(m => m.Column))}) and no level to read them against; give it a level, a number such as 5 or a range such as 1-4.";
+                yield return $"{prefix}it has scaled numbers ({string.Join(", ", measured.Select(m => LabelOf(m.Column)))}) and no level to read them against; fill in {levelLabel} with a number such as 5 or a range such as 1-4.";
                 continue;
             }
 
@@ -199,10 +202,13 @@ public static class HazardNumbers
             foreach (var (column, value) in measured)
             {
                 var near = rows.Skip(Math.Max(at - 1, 0)).Take(Math.Min(at + 1, rows.Count - 1) - Math.Max(at - 1, 0) + 1)
-                    .Select(r => ScaledValue(r.Row, column)).Where(v => v != null).Select(v => v!.Value).ToList();
+                    .Select(r => (Text: r.Row.GetValueOrDefault(column) ?? string.Empty, Value: ScaledValue(r.Row, column))).Where(v => v.Value != null).ToList();
                 if (near.Count == 0) continue;
-                if (value > near.Max()) yield return $"{prefix}{column} is too high for a level {level} hazard: more than one row of hazards.scaling above its level. Lower it.";
-                else if (at > 0 && value < near.Min()) yield return $"{prefix}{column} is too low for a level {level} hazard: more than one row of hazards.scaling below its level. Raise it.";
+                var low = near.MinBy(v => v.Value)!;
+                var high = near.MaxBy(v => v.Value)!;
+                var shown = string.Equals(hazard.Effect?.Damage, column, StringComparison.Ordinal) ? $"averaging {value.GetValueOrDefault():0.#}" : $"{value.GetValueOrDefault():0.#}";
+                if (value > high.Value) yield return $"{prefix}{LabelOf(column)} {shown} is high for a level {level} hazard; the system's guide gives {low.Text} to {high.Text}.";
+                else if (at > 0 && value < low.Value) yield return $"{prefix}{LabelOf(column)} {shown} is low for a level {level} hazard; the system's guide gives {low.Text} to {high.Text}.";
             }
         }
     }

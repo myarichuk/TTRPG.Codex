@@ -445,8 +445,8 @@ public class WorldBuilderTests
         Build(CreatureSystem, existingPages, existingRegions, registry, existing);
 
     /// <summary>The same fakes for a game system of the test's own (the hazard tests load srd5e's).</summary>
-    internal static Saving ServiceFor(SystemDefinition system, ContentRegistry registry, IEnumerable<RegionDocument>? existingRegions = null) =>
-        Build(system, null, existingRegions ?? Array.Empty<RegionDocument>(), registry, Array.Empty<HomebrewEntryDocument>());
+    internal static Saving ServiceFor(SystemDefinition system, ContentRegistry registry, IEnumerable<RegionDocument>? existingRegions = null, params HomebrewEntryDocument[] existing) =>
+        Build(system, null, existingRegions ?? Array.Empty<RegionDocument>(), registry, existing);
 
     private static Saving Build(SystemDefinition system, IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, ContentRegistry? registry, HomebrewEntryDocument[] existing)
     {

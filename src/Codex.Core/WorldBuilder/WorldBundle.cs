@@ -212,6 +212,9 @@ public sealed class WorldDraft
     public Dictionary<string, object>? BeforeProperties { get; set; }
     public List<string>? BeforeTags { get; set; }
 
+    /// <summary>What the check found worth the game master's eye on this entry (a homebrew hazard's numbers far from its level), shown on its card. Warnings, not refusals.</summary>
+    public List<string> Concerns { get; set; } = new();
+
     /// <summary>For a tags entry: the keys of the pages and homebrew entries it tags.</summary>
     public List<string> Targets { get; set; } = new();
 
@@ -545,7 +548,7 @@ public static class WorldBundleParser
                         draft.PageKind = OneOf(FieldCoercion.String(element, "pageKind"), PageKinds) ?? "lore";
                         break;
                     case DraftKinds.Edit:
-                        if (!ReadEdit(draft, element, label, pages, rules, bundle, errors, (FieldCoercion.String(element, "text") ?? FieldCoercion.String(element, "description"))?.Length ?? 0)) continue;
+                        if (!ReadEdit(draft, element, label, pages, rules, bundle, errors, warnings, (FieldCoercion.String(element, "text") ?? FieldCoercion.String(element, "description"))?.Length ?? 0)) continue;
                         break;
                     case DraftKinds.Tags:
                         if (!ReadTags(draft, element, label, pages, rules, errors)) continue;
@@ -694,7 +697,7 @@ public static class WorldBundleParser
     /// <summary>Reads an edit: what it targets (which must exist, and be changed only once) and what changes. A page, a place's
     /// description or a cast member's history takes the complete new text; a homebrew entry takes any of a new name, a new rules
     /// text, the fields that change and its complete new tags.</summary>
-    private static bool ReadEdit(WorldDraft draft, JsonElement element, string label, Dictionary<string, string> pages, ProposalRules rules, WorldBundle bundle, List<string> errors, int textLength)
+    private static bool ReadEdit(WorldDraft draft, JsonElement element, string label, Dictionary<string, string> pages, ProposalRules rules, WorldBundle bundle, List<string> errors, List<string> warnings, int textLength)
     {
         var key = FieldCoercion.String(element, "target")?.Trim();
         if (string.IsNullOrEmpty(key))
@@ -812,7 +815,7 @@ public static class WorldBundleParser
         if (kind == EditTarget.Homebrew)
         {
             var type = id.Split('/')[0];
-            ApplyHomebrew(draft, element, rules.HomebrewFields(type), rules.Canonical, label, new List<string>());
+            ApplyHomebrew(draft, element, rules.HomebrewFields(type), rules.Canonical, label, warnings);
             draft.Type = type;
             // Tags only change when the model names them: an edit of the text alone keeps the entry's tags.
             draft.Retag = element.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array;
@@ -946,7 +949,7 @@ public static class WorldBundleParser
             {
                 if (hazardType != null && feature.Trap != null)
                 {
-                    warnings.Add($"{label}: a trap that rolls is a hazard: give the feature \"hazard\" (a Library hazard or a homebrew one in this proposal), and keep \"trap\" for a note.");
+                    warnings.Add($"{label}: if this trap rolls (a save, an attack or damage), give the feature \"hazard\" (a Library hazard or a homebrew one in this proposal) and keep \"trap\" for a note.");
                 }
 
                 continue;
@@ -1035,12 +1038,12 @@ public static class WorldBundleParser
                     properties[spec.Key] = value;
                 }
 
-                // A row of a collection needs a "name" (FieldCoercion drops any without one), so a list of unnamed rows must not vanish unseen.
+                // FieldCoercion drops a row with no "name" (or, where rows have none, nothing in it), so a list of them must not vanish unseen.
                 if (spec.Type == "Collection" && prop.Value.ValueKind == JsonValueKind.Array)
                 {
                     var asked = prop.Value.EnumerateArray().Count(e => e.ValueKind == JsonValueKind.Object);
                     var kept = (value as System.Collections.ICollection)?.Count ?? 0;
-                    if (asked > kept) warnings.Add($"{label}: {asked - kept} row(s) of '{spec.Key}' have no \"name\" and were dropped; every row of a list needs one.");
+                    if (asked > kept) warnings.Add($"{label}: {asked - kept} row(s) of '{spec.Key}' {(spec.RowsNeedName ? "have no \"name\" and were dropped; every row of this list needs one" : "had nothing in them and were dropped")}.");
                 }
             }
         }
