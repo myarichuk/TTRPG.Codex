@@ -42,8 +42,10 @@ public static class RollBonusLive
         if (state == null) return ended;
         foreach (var name in applied.Select(o => o.Ends).OfType<string>())
         {
-            var held = state.Effects.FirstOrDefault(e => string.Equals(e.EffectId, name, StringComparison.OrdinalIgnoreCase));
-            if (held != null && !ended.Contains(held.EffectId, StringComparer.OrdinalIgnoreCase)) ended.Add(held.EffectId);
+            // A status, or a condition set on the sheet before the table ran: the table's remove command takes either off.
+            var held = state.Effects.FirstOrDefault(e => string.Equals(e.EffectId, name, StringComparison.OrdinalIgnoreCase))?.EffectId
+                       ?? state.SheetConditions?.FirstOrDefault(c => string.Equals(c, name, StringComparison.OrdinalIgnoreCase));
+            if (held != null && !ended.Contains(held, StringComparer.OrdinalIgnoreCase)) ended.Add(held);
         }
 
         return ended;

@@ -247,7 +247,7 @@
     /// <summary>The creature's sheet as the table has it (<see cref="SheetConditions.LiveView"/>), for a condition's highest value when that is a formula. Never saved.</summary>
     private Dictionary<string, object>? LiveSheet =>
         Definition != null && ActorsById.GetValueOrDefault(ActorId) is { } doc
-            ? SheetConditions.LiveView(Definition, doc.Sheet, Pools, Snapshot.Actor(ActorId)?.Effects.Select(e => e.EffectId))
+            ? Snapshot.Actor(ActorId)?.LiveView(Definition, doc.Sheet) ?? SheetConditions.LiveView(Definition, doc.Sheet, Pools, null)
             : null;
 
     private IReadOnlyList<PickOption> PickOptions =>

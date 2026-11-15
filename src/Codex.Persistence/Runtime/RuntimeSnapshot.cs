@@ -1,4 +1,6 @@
 using Codex.Core.Components;
+using Codex.Core.Rules;
+using Codex.Plugin.Abstractions;
 
 namespace Codex.Persistence.Runtime;
 
@@ -38,11 +40,35 @@ public sealed record ParticipantSnapshot(string ActorId, int InitiativeRoll, int
 
 /// <summary>One actor's live pools and conditions; <see cref="Pools"/> is null for an actor with no resource pool.
 /// <see cref="UndoKind"/> names the last change the DM can still take back (an event type, "Damage"), or is null (R5).
-/// <see cref="IsDead"/> and <see cref="IsDown"/> are the table rules' own verdicts, so a page never works them out again.</summary>
+/// <see cref="IsDead"/> and <see cref="IsDown"/> are the table rules' own verdicts, so a page never works them out again.
+/// <see cref="SheetConditions"/> is the sheet's own conditions as the table has them (its cached copy of the
+/// sheet's <c>conditions</c>), which a page's copy of the sheet does not follow until it reloads: one the GM removed at the table is gone here at once.
+/// Null when the runtime has no copy of the sheet.</summary>
 public sealed record ActorStateSnapshot(IReadOnlyDictionary<string, int>? Pools, IReadOnlyList<EffectSnapshot> Effects, string? UndoKind = null,
-    bool IsDead = false, bool IsDown = false)
+    bool IsDead = false, bool IsDown = false, IReadOnlyList<string>? SheetConditions = null)
 {
     public int? Pool(string key) => Pools != null && Pools.TryGetValue(key, out var value) ? value : null;
+
+    /// <summary>The sheet's own conditions that the table does not also hold as a status, each once: a condition set on the sheet page before the table ran.</summary>
+    public IReadOnlyList<string> OnlyOnSheet =>
+        (SheetConditions ?? Array.Empty<string>())
+        .Where(c => !Effects.Any(e => string.Equals(e.EffectId, c, StringComparison.OrdinalIgnoreCase)))
+        .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+    /// <summary>The sheet as the table has it (<see cref="Codex.Core.Rules.SheetConditions.LiveView(SystemDefinition, IReadOnlyDictionary{string, object}, IReadOnlyDictionary{string, int}?, IEnumerable{string}?, IEnumerable{string}?)"/>): <paramref name="sheet"/> with its own conditions as the
+    /// table has them, the pools over its numbers and the statuses joined in. A copy, never saved.</summary>
+    public Dictionary<string, object> LiveView(SystemDefinition system, IReadOnlyDictionary<string, object> sheet) =>
+        Codex.Core.Rules.SheetConditions.LiveView(system, WithTableConditions(sheet), Pools, Effects.Select(e => e.EffectId));
+
+    /// <summary><paramref name="sheet"/> with <c>conditions</c> replaced by the table's copy of them, when the table has one.</summary>
+    public IReadOnlyDictionary<string, object> WithTableConditions(IReadOnlyDictionary<string, object> sheet)
+    {
+        if (SheetConditions == null) return sheet;
+        var copy = new Dictionary<string, object>(sheet, StringComparer.Ordinal);
+        if (SheetConditions.Count == 0) copy.Remove(SheetModel.ConditionsKey);
+        else copy[SheetModel.ConditionsKey] = SheetConditions.Cast<object>().ToList();
+        return copy;
+    }
 }
 
 /// <summary>A condition on an actor; <see cref="RoundsRemaining"/> below zero means it lasts until removed.</summary>

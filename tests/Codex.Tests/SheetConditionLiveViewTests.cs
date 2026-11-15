@@ -195,7 +195,7 @@ public class SheetConditionHostsTests : IClassFixture<RavenDbFixture>, IAsyncLif
         public IEnumerable<ContentEntry> Candidates(string type) => registry.GetEntries("srd5e", type);
     }
 
-    private async Task<(CampaignRuntime Runtime, ActorDocument Hero, string CampaignId)> TableAsync()
+    private async Task<(CampaignRuntime Runtime, ActorDocument Hero, string CampaignId)> TableAsync(params string[] sheetConditions)
     {
         var campaignId = Guid.NewGuid().ToString();
         var sheet = new Dictionary<string, object>();
@@ -208,6 +208,7 @@ public class SheetConditionHostsTests : IClassFixture<RavenDbFixture>, IAsyncLif
         sheet["level"] = 5L;
         sheet["inventory"] = new List<object> { "longbow|equipped:1" };
         _engine.Recompute(sheet);
+        if (sheetConditions.Length > 0) sheet[SheetModel.ConditionsKey] = sheetConditions.Cast<object>().ToList();
 
         var hero = new ActorDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "Vex", Kind = ActorKind.PlayerCharacter, Sheet = sheet };
         ActorSheetSync.ApplySheetToState(hero, _system, _components);
@@ -344,5 +345,76 @@ public class SheetConditionHostsTests : IClassFixture<RavenDbFixture>, IAsyncLif
         // And the page's own next recompute agrees.
         _engine.Recompute(stored.Sheet);
         Assert.Equal(30, YamlValues.GetInt(stored.Sheet, "speed"));
+    }
+
+
+    // What a Web host does after this change: the snapshot's own LiveView, which reads the sheet's conditions from the table's copy.
+    private Dictionary<string, object> TableView(CampaignRuntime runtime, ActorDocument page) =>
+        runtime.Snapshot.Actor(page.Id)!.LiveView(_system, page.Sheet);
+
+    [Fact]
+    public async Task AConditionSetOnTheSheet_IsInTheSnapshot_AndCountsAtTheTable()
+    {
+        var (runtime, hero, _) = await TableAsync("Hexed");
+        await using var _ = runtime;
+        await Publish(runtime, hero);
+        var state = runtime.Snapshot.Actor(hero.Id)!;
+
+        Assert.Equal(new[] { "Hexed" }, state.SheetConditions);
+        Assert.Equal(new[] { "Hexed" }, state.OnlyOnSheet);
+        var plain = new Dictionary<string, object>(hero.Sheet);
+        plain.Remove(SheetModel.ConditionsKey);
+        Assert.Equal(LongbowAttack(plain) - 2, LongbowAttack(TableView(runtime, hero)));
+    }
+
+    [Fact]
+    public async Task RemovingASheetSetCondition_AtTheTable_TakesItOffTheSheet_AndUndoPutsItBack()
+    {
+        var (runtime, hero, campaignId) = await TableAsync("Hexed", "Inspired");
+        await using var _ = runtime;
+        // The page's copy of the sheet, which does not reload when the table changes it.
+        var page = new ActorDocument { Id = hero.Id, Sheet = new Dictionary<string, object>(hero.Sheet) };
+        var hexed = LongbowAttack(TableView(runtime, page));
+
+        await runtime.EnqueueAsync(new RemoveStatusEffectCommand(hero.Id, "hexed"));
+
+        var state = runtime.Snapshot.Actor(hero.Id)!;
+        Assert.Equal(new[] { "Inspired" }, state.SheetConditions);
+        Assert.Equal(hexed + 2, LongbowAttack(TableView(runtime, page))); // the page's stale copy still lists Hexed; the table's does not
+        Assert.Equal(new object[] { "Inspired" }, runtime.GetActorDocument(hero.Id)!.Sheet[SheetModel.ConditionsKey]);
+        Assert.Equal("StatusEffectRemoved", state.UndoKind);
+        var stored = (await _actors.GetVisibleAsync(hero.Id, new CampaignAccess(campaignId, "dm", CampaignRole.DM)))!;
+        Assert.Equal(new[] { "Inspired" }, SheetRuleEngine.RawList(stored.Sheet, SheetModel.ConditionsKey));
+
+        await runtime.EnqueueAsync(new UndoLastChangeCommand(hero.Id));
+        Assert.Equal(new[] { "Hexed", "Inspired" }, runtime.Snapshot.Actor(hero.Id)!.SheetConditions);
+        Assert.Equal(hexed, LongbowAttack(TableView(runtime, page)));
+    }
+
+    [Fact]
+    public async Task RemovingTheLastSheetSetCondition_RemovesTheKey()
+    {
+        var (runtime, hero, _) = await TableAsync("Hexed");
+        await using var _ = runtime;
+
+        await runtime.EnqueueAsync(new RemoveStatusEffectCommand(hero.Id, "Hexed"));
+
+        Assert.False(runtime.GetActorDocument(hero.Id)!.Sheet.ContainsKey(SheetModel.ConditionsKey));
+        Assert.Empty(runtime.Snapshot.Actor(hero.Id)!.SheetConditions!);
+    }
+
+    [Fact]
+    public async Task AConditionOnTheSheetAndAsAStatus_IsShownOnce_AndOneRemoveTakesBoth()
+    {
+        var (runtime, hero, _) = await TableAsync("Hexed");
+        await using var _ = runtime;
+        await runtime.EnqueueAsync(new AddStatusEffectCommand(hero.Id, "Hexed", hero.Id, ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, hero.Id));
+        Assert.Empty(runtime.Snapshot.Actor(hero.Id)!.OnlyOnSheet);
+
+        await runtime.EnqueueAsync(new RemoveStatusEffectCommand(hero.Id, "Hexed"));
+
+        var state = runtime.Snapshot.Actor(hero.Id)!;
+        Assert.DoesNotContain(state.Effects, e => e.EffectId == "Hexed");
+        Assert.Empty(state.SheetConditions!);
     }
 }

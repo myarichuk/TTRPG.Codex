@@ -484,7 +484,7 @@ else
         var state = snapshot.Actor(actor.Id);
         return Definition == null
             ? new Dictionary<string, object>(actor.Sheet)
-            : SheetConditions.LiveView(Definition, actor.Sheet, state?.Pools, state?.Effects.Select(e => e.EffectId));
+            : state?.LiveView(Definition, actor.Sheet) ?? SheetConditions.LiveView(Definition, actor.Sheet, null, null);
     }
 
     private SheetEvaluation? EvaluationOf(ActorDocument actor)

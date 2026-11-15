@@ -1,5 +1,6 @@
 using Codex.Core;
 using Codex.Core.Components;
+using Codex.Core.Rules;
 using Codex.Plugin.Abstractions;
 using Codex.Plugin.Abstractions.Dice;
 
@@ -425,6 +426,19 @@ public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) 
                 ? TableRules.EndConcentration(runtime, ActorId, e)
                 : 0;
             runtime.World.RemoveStatus(e, EffectId);
+        }
+
+        // A condition set on the sheet page before the table ran is in the sheet's own list, not a status: it is taken off there too, as a new
+        // list (the undo point holds the old one), and the next persist writes it.
+        if (runtime.GetActorDocument(ActorId) is { } doc)
+        {
+            var own = SheetRuleEngine.RawList(doc.Sheet, SheetModel.ConditionsKey);
+            if (own.RemoveAll(c => string.Equals(c, EffectId, StringComparison.OrdinalIgnoreCase)) > 0)
+            {
+                if (own.Count == 0) doc.Sheet.Remove(SheetModel.ConditionsKey);
+                else doc.Sheet[SheetModel.ConditionsKey] = own.Cast<object>().ToList();
+                runtime.SheetKeyWritten(ActorId, SheetModel.ConditionsKey);
+            }
         }
     }
 

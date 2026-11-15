@@ -1471,7 +1471,7 @@ else
     /// <summary>A copy of the sheet as the table has it, for evaluating; null off the table (the sheet alone counts then). Read from the runtime's snapshot, not its loop-owned state.</summary>
     private Dictionary<string, object>? LiveView() =>
         system != null && actor != null && TableOfActor() is { } live && live.Snapshot.Actor(actor.Id) is { } state
-            ? SheetConditions.LiveView(system, editSheet, state.Pools, state.Effects.Select(e => e.EffectId))
+            ? state.LiveView(system, editSheet)
             : null;
 
     /// <summary>What rolls and bonuses are worked out on: the live view at a live table, else the sheet being edited. Read only.</summary>
