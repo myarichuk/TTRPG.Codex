@@ -279,6 +279,66 @@ else
                 </section>
             }
 
+            @{
+                var held = HeldConditions;
+                var canSetConditions = CanSetConditions;
+            }
+            @if (system != null && Rules != null && (held.Count > 0 || canSetConditions))
+            {
+                @* The conditions and spell effects that hold, with their values. At a live table they are the table's and read-only here; off the
+                   table only the GM sets them (the sheet's conditions key and the valued keys), and a player sees them read-only. *@
+                <section class="panel" aria-labelledby="sheet-conditions-heading" data-testid="sheet-conditions">
+                    <div class="panel-title"><h2 id="sheet-conditions-heading" class="h5">@L["Actor.Sheet.Conditions"]</h2></div>
+                    @if (held.Count == 0)
+                    {
+                        <p class="small-muted mb-2" data-testid="sheet-conditions-none">@L["Actor.Sheet.ConditionsNone"]</p>
+                    }
+                    else
+                    {
+                        <ul class="cond-strip list-unstyled mb-2 mt-0" aria-label="@L["Actor.Sheet.Conditions"]">
+                            @foreach (var line in held)
+                            {
+                                var shown = system.DisplayCondition(line.Name);
+                                <li class="cond-chip" data-testid="sheet-condition" data-condition="@line.Name">
+                                    <bdi>@(line.Value is { } level ? L["Combat.ConditionValue", shown, level] : shown)</bdi>
+                                    @if (canSetConditions && line.Value == null)
+                                    {
+                                        var removed = line.Name;
+                                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Sheet.ConditionRemove", shown]" data-testid="sheet-condition-remove" OnClick="() => RemoveSheetCondition(removed)" />
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                    @if (canSetConditions)
+                    {
+                        <div class="console-row mt-0">
+                            <ConditionSteppers Definition="system" Name="@DisplayName" Values="SheetConditionValues()" Sheet="editSheet"
+                                               OnAdjust="step => AdjustSheetCondition(step.Condition, step.Delta)" />
+                            <div>
+                                <label for="sheet-condition-input" class="field-label">@L["Combat.Condition"]</label>
+                                <input id="sheet-condition-input" class="field-input field-sm w-8" list="sheet-conditions-list" data-testid="sheet-condition-input" @bind="newCondition" @bind:event="oninput" />
+                                <datalist id="sheet-conditions-list">
+                                    @foreach (var option in ConditionLines.Options(system, SheetConditionValues(), L["Combat.SpellEffects"], (name, level) => L["Combat.ConditionValue", name, level]))
+                                    {
+                                        <option value="@option.Shown" label="@option.Value"></option>
+                                    }
+                                </datalist>
+                            </div>
+                            <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="sheet-condition-add" OnClick="AddSheetCondition">@L["Combat.AddCondition"]</CodexButton>
+                        </div>
+                    }
+                    else if (TableOfActor() != null)
+                    {
+                        <p class="field-hint mb-0">@L["Actor.Sheet.ConditionsAtTable"]</p>
+                    }
+                    else
+                    {
+                        <p class="field-hint mb-0">@L["Actor.Sheet.ConditionsGmOnly"]</p>
+                    }
+                </section>
+            }
+
             <nav class="sheet-tabs" aria-label="@L["Actor.Sheet.Sections"]" data-testid="sheet-tabs">
                 @foreach (var tab in Tabs)
                 {
@@ -1416,6 +1476,51 @@ else
 
     /// <summary>What rolls and bonuses are worked out on: the live view at a live table, else the sheet being edited. Read only.</summary>
     private Dictionary<string, object> RulesSheet() => LiveView() ?? editSheet;
+
+    // ---- Conditions and spell effects (docs/SHEET_CONDITIONS_DESIGN.md, "Sheet and table") ----
+
+    private string newCondition = string.Empty;
+
+    /// <summary>The conditions and effects that hold, with their values: the table's while the actor is at a live table, else the sheet's own.</summary>
+    private IReadOnlyList<ConditionLine> HeldConditions => system == null ? Array.Empty<ConditionLine>() : ConditionLines.Holding(system, RulesSheet());
+
+    /// <summary>Only the GM sets conditions on the sheet, and only off the table: at a live table they belong to the table (its statuses and values), and
+    /// a save would be merged over them.</summary>
+    private bool CanSetConditions => access?.IsDm == true && actor != null && TableOfActor() == null;
+
+    /// <summary>Each valued condition's value on the sheet being edited, by key.</summary>
+    private IReadOnlyDictionary<string, int> SheetConditionValues() =>
+        ConditionLines.Valued(system, editSheet).ToDictionary(v => v.Key, v => (int)(YamlValues.ToNumber(editSheet.GetValueOrDefault(v.Key)) ?? 0));
+
+    private void AdjustSheetCondition(string condition, int delta)
+    {
+        if (!CanSetConditions || ConditionLines.ValuedNamed(system, editSheet, condition) is not { } valued) return;
+        var now = (int)(YamlValues.ToNumber(editSheet.GetValueOrDefault(valued.Key)) ?? 0);
+        editSheet[valued.Key] = (long)Math.Clamp(now + delta, 0, valued.Max ?? int.MaxValue);
+        Reevaluate();
+    }
+
+    private void AddSheetCondition()
+    {
+        var name = ConditionLines.Canonical(system, newCondition);
+        newCondition = string.Empty;
+        if (!CanSetConditions || name.Length == 0) return;
+        if (ConditionLines.ValuedNamed(system, editSheet, name) is { } valued)
+        {
+            // A valued condition is its value, never a listed name: adding it starts it at 1.
+            if ((YamlValues.ToNumber(editSheet.GetValueOrDefault(valued.Key)) ?? 0) <= 0) AdjustSheetCondition(valued.Name, 1);
+            return;
+        }
+
+        var raw = SheetRuleEngine.RawList(editSheet, SheetModel.ConditionsKey);
+        if (!raw.Contains(name, StringComparer.OrdinalIgnoreCase)) SetRawList(SheetModel.ConditionsKey, raw.Append(name).ToList());
+    }
+
+    private void RemoveSheetCondition(string name)
+    {
+        if (!CanSetConditions) return;
+        SetRawList(SheetModel.ConditionsKey, SheetRuleEngine.RawList(editSheet, SheetModel.ConditionsKey).Where(c => !string.Equals(c, name, StringComparison.OrdinalIgnoreCase)).ToList());
+    }
 
     /// <summary>A moment (or rest) fired on the sheet: where the table runs it, the table's own command does (so the refill is logged, undoable
     /// and not lost to the merge on save); otherwise it is applied to the sheet being edited, to be saved with it.</summary>

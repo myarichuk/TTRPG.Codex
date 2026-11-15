@@ -197,6 +197,11 @@
   <data name="Actor.Sheet.WorthLook" xml:space="preserve"><value>Стоит обратить внимание</value></data>
   <data name="Actor.Sheet.NotBlocking" xml:space="preserve"><value>Не мешает сохранению</value></data>
   <data name="Actor.Sheet.Dice" xml:space="preserve"><value>Кости</value></data>
+  <data name="Actor.Sheet.Conditions" xml:space="preserve"><value>Состояния</value></data>
+  <data name="Actor.Sheet.ConditionsNone" xml:space="preserve"><value>Состояний нет.</value></data>
+  <data name="Actor.Sheet.ConditionsAtTable" xml:space="preserve"><value>Пока идёт сессия, их задаёт стол.</value></data>
+  <data name="Actor.Sheet.ConditionsGmOnly" xml:space="preserve"><value>Их задаёт только мастер.</value></data>
+  <data name="Actor.Sheet.ConditionRemove" xml:space="preserve"><value>Убрать: {0}</value></data>
   <data name="Actor.Sheet.RollWith" xml:space="preserve"><value>Бросать с</value></data>
   <data name="Actor.Sheet.RollNormal" xml:space="preserve"><value>Обычный</value></data>
   <data name="Actor.Sheet.RollAdv" xml:space="preserve"><value>Преимущество</value></data>
@@ -205,7 +210,7 @@
   <data name="Actor.Sheet.RollShared" xml:space="preserve"><value>Виден всему столу.</value></data>
   <data name="Actor.Sheet.RollPrivate" xml:space="preserve"><value>Это видите только вы: стол не запущен.</value></data>
   <data name="Actor.Sheet.NoRolls" xml:space="preserve"><value>Бросков пока нет.</value></data>
-  <data name="Actor.Sheet.FromFeatures" xml:space="preserve"><value>{0} от особенностей</value></data>
+  <data name="Actor.Sheet.FromFeatures" xml:space="preserve"><value>{0} к проверкам</value></data>
   <data name="Actor.Skills.SumFeatures" xml:space="preserve"><value>особенности</value></data>
   <data name="Actor.Bonus.Next" xml:space="preserve"><value>Бонусы к следующему броску</value></data>
   <data name="Actor.Bonus.NextHint" xml:space="preserve"><value>Отметьте подходящие. Отмеченный бонус войдёт в следующий бросок, к которому он подходит, и снимется.</value></data>

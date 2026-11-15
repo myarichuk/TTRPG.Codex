@@ -1,4 +1,5 @@
 @using Codex.Core.Components
+@using Codex.Core.Rules
 @using Codex.Persistence
 @using Codex.Persistence.Runtime
 @using Codex.Plugin.Abstractions
@@ -103,9 +104,16 @@
     <div class="console-row">
         <div>
             <label for="cond-@ActorId" class="field-label">@L["Combat.Condition"]</label>
-            <input id="cond-@ActorId" class="field-input field-sm w-8" list="conditions-list" data-testid="condition-input"
+            <input id="cond-@ActorId" class="field-input field-sm w-8" list="conditions-@ActorId" data-testid="condition-input"
                    value="@condition"
                    @oninput="e => condition = e.Value?.ToString() ?? string.Empty" />
+            @* A datalist has no groups: the spell effects come after the conditions, each labelled with its group, and a valued condition that holds says its value. *@
+            <datalist id="conditions-@ActorId" data-testid="conditions-list">
+                @foreach (var option in PickOptions)
+                {
+                    <option value="@option.Shown" label="@option.Value"></option>
+                }
+            </datalist>
         </div>
         <div>
             <label for="rounds-@ActorId" class="field-label">@L["Combat.Rounds"]</label>
@@ -140,16 +148,8 @@
             </div>
         }
         <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="condition-add-btn" OnClick="AddConditionAsync" aria-label="@(L["Combat.AddConditionTo", Name])">@L["Combat.AddCondition"]</CodexButton>
-        @if (Vitals?.Exhaustion is { } exhaustion)
-        {
-            var level = Snapshot.Actor(ActorId)?.Pool(exhaustion.Key) ?? 0;
-            var exhaustionName = exhaustion.Condition ?? "Exhaustion";
-            <div class="d-flex align-items-end gap-1">
-                <span class="small pb-1">@(exhaustion.Condition ?? L["Combat.Exhaustion"]) @level</span>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-up" Disabled="@(level >= exhaustion.MaxLevel)" OnClick="() => Send(new AdjustConditionCommand(ActorId, exhaustionName, 1))" aria-label="@(L["Combat.RaiseExhaustion", Name])">+</CodexButton>
-                <CodexButton Variant="CodexButtonVariant.Etched" Small="true" data-testid="exhaustion-down" Disabled="@(level <= 0)" OnClick="() => Send(new AdjustConditionCommand(ActorId, exhaustionName, -1))" aria-label="@(L["Combat.LowerExhaustion", Name])">−</CodexButton>
-            </div>
-        }
+        <ConditionSteppers Definition="Definition" Name="@Name" Values="Pools" Sheet="LiveSheet"
+                           OnAdjust="step => Send(new AdjustConditionCommand(ActorId, step.Condition, step.Delta))" />
     </div>
 
     <div class="console-row">
@@ -238,6 +238,20 @@
     private const string NoSource = "";
 
     private VitalsRules? Vitals => Definition?.Vitals;
+
+    private static readonly IReadOnlyDictionary<string, int> NoPools = new Dictionary<string, int>();
+
+    /// <summary>The creature's pools at the table: where a valued condition keeps its value.</summary>
+    private IReadOnlyDictionary<string, int> Pools => Snapshot.Actor(ActorId)?.Pools ?? NoPools;
+
+    /// <summary>The creature's sheet as the table has it (<see cref="SheetConditions.LiveView"/>), for a condition's highest value when that is a formula. Never saved.</summary>
+    private Dictionary<string, object>? LiveSheet =>
+        Definition != null && ActorsById.GetValueOrDefault(ActorId) is { } doc
+            ? SheetConditions.LiveView(Definition, doc.Sheet, Pools, Snapshot.Actor(ActorId)?.Effects.Select(e => e.EffectId))
+            : null;
+
+    private IReadOnlyList<PickOption> PickOptions =>
+        ConditionLines.Options(Definition, Pools, L["Combat.SpellEffects"], (shown, level) => L["Combat.ConditionValue", shown, level]);
     private string PrimaryKey => SystemDefinition.PrimaryKeyOf(Definition);
     private static readonly DownRules NoDownRules = new();
     private string DeadCondition => (Vitals?.Down ?? NoDownRules).DeadCondition;
@@ -289,10 +303,26 @@
             return;
         }
 
-        var effectId = condition.Trim();
+        // What is typed may be the name in the reader's language (the picker offers those): the rules know it by its own.
+        var effectId = ConditionLines.Canonical(Definition, condition);
         var holder = heldBy;
         condition = string.Empty;
         heldBy = string.Empty;
+
+        // A valued condition is its value and never a status: adding it starts it at 1, and one already held is raised with +.
+        if (ConditionLines.ValuedNamed(Definition, LiveSheet, effectId) is { } valued)
+        {
+            var level = Pools.GetValueOrDefault(valued.Key);
+            if (level > 0)
+            {
+                await OnMessage.InvokeAsync(Flash.Info(L["Combat.ConditionHolds", Definition?.DisplayCondition(valued.Name) ?? valued.Name, level]));
+                return;
+            }
+
+            await Send(new AdjustConditionCommand(ActorId, valued.Name, 1));
+            return;
+        }
+
         await Send(new AddStatusEffectCommand(ActorId, effectId, NoSource, rounds, expiry, ActorId, string.IsNullOrEmpty(holder) ? null : holder));
     }
 }
