@@ -11,7 +11,7 @@ namespace Codex.Core.Rules;
 /// <list type="bullet">
 /// <item><b>Bonus rules</b>, whose kept member is added to the value: <c>sum</c> (the default; every one counts),
 /// <c>highest</c> / <c>lowest</c> (of the bonuses of a type the largest (smallest) counts; penalties of the type are a group of
-/// their own, ruled by <see cref="ModifierTypesDefinition.Penalties"/>: 3.5's dodge stacks, armor does not; Pathfinder's
+/// their own, ruled by <see cref="ModifierTypesDefinition.PenaltyTypes"/> for that type, else <see cref="ModifierTypesDefinition.Penalties"/>: 3.5's dodge stacks, armor does not; Pathfinder's
 /// status bonus is <c>highest</c>: +1 status, +2 status and +1 untyped on 10 make 13).</item>
 /// <item><b>Value rules</b>, whose kept member competes with the value the target starts from and replaces it when it wins:
 /// <c>max</c> keeps the greatest (a floor: Extra Attack 2, 3, 4 on a start of 1 is 4), <c>min</c> keeps the least (a ceiling:
@@ -52,7 +52,7 @@ public static class ModifierStacking
         {
             var members = group.ToList();
             var rule = IsValue(types, group.Key.Type, fallback) ? RuleOf(types, group.Key.Type, fallback)
-                : group.Key.Penalty ? types.Penalties
+                : group.Key.Penalty ? types.PenaltyTypes.GetValueOrDefault(group.Key.Type) ?? types.Penalties
                 : RuleOf(types, group.Key.Type, fallback);
             // By place, not by value: two equal bonuses of a "highest" type are still one that counts and one that does not.
             var counted = rule.ToLowerInvariant() switch

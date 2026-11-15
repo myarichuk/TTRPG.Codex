@@ -310,9 +310,13 @@ public sealed class ModifierTypesDefinition
     /// <summary>The rule for a type <c>types</c> does not name: <c>sum</c> (the default), <c>highest</c>, <c>lowest</c>,
     /// <c>max</c>, <c>min</c> or <c>best</c>.</summary>
     public string Default { get; set; } = "sum";
-    /// <summary>The rule for the penalties (negative amounts) of one type, whatever the type's own rule, except a <c>best</c>
-    /// type. Default <c>sum</c>.</summary>
+    /// <summary>The rule for the penalties (negative amounts) of a type <c>penaltyTypes</c> does not name, whatever the type's own
+    /// rule, except a <c>best</c> type. Default <c>sum</c>.</summary>
     public string Penalties { get; set; } = "sum";
+    /// <summary>Modifier type -> the rule for that type's penalties, over <c>penalties</c>. Pathfinder 2e: <c>penalties: highest</c>
+    /// (a typed type keeps only its worst penalty) and <c>penaltyTypes: { untyped: sum }</c> (untyped penalties all count).
+    /// A type it does not name uses <c>penalties</c>, so a system that writes none behaves as before.</summary>
+    public Dictionary<string, string> PenaltyTypes { get; set; } = new();
     /// <summary>Modifier type -> its rule (<c>dodge: sum</c>, <c>armor: highest</c>, <c>base: max</c>, <c>critFrom: min</c>).</summary>
     public Dictionary<string, string> Types { get; set; } = new();
 }

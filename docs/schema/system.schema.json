@@ -4066,7 +4066,18 @@
             "number",
             "boolean"
           ],
-          "description": "The rule for the penalties (negative amounts) of one type, whatever the type's own rule, except a `best` type. Default `sum`."
+          "description": "The rule for the penalties (negative amounts) of a type `penaltyTypes` does not name, whatever the type's own rule, except a `best` type. Default `sum`."
+        },
+        "penaltyTypes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "Modifier type -> the rule for that type's penalties, over `penalties`. Pathfinder 2e: `penalties: highest` (a typed type keeps only its worst penalty) and `penaltyTypes: { untyped: sum }` (untyped penalties all count). A type it does not name uses `penalties`, so a system that writes none behaves as before."
         },
         "types": {
           "type": "object",

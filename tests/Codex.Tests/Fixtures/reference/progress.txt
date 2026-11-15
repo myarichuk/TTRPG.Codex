@@ -117,8 +117,8 @@ street.thresholds-follow-the-intents
 street.advancing-a-skill-spends-experience
 street.advancing-without-the-points-changes-nothing
 
-# degrees (ranks, typed bonuses, valued conditions, degrees of success): 30 of 34 on the current engine. The two turn-end drops of
-# a valued condition wait for P4b, the untyped stacking one for P2, and the expert Perception one for P3.
+# degrees (ranks, typed bonuses, valued conditions, degrees of success): 31 of 34 on the current engine. The two turn-end drops of
+# a valued condition wait for P4b and the expert Perception one for P3.
 degrees.a-rank-is-the-level-plus-its-step
 degrees.untrained-adds-the-attribute-alone
 degrees.a-rank-grows-with-the-level
@@ -131,6 +131,7 @@ degrees.unarmored-is-ten-plus-dex-and-the-rank
 degrees.typed-bonuses-keep-the-highest-of-each-type
 degrees.a-status-bonus-and-a-status-penalty-both-count
 degrees.typed-penalties-keep-the-worst
+degrees.untyped-penalties-stack
 degrees.frightened-lowers-dcs-and-checks-once
 degrees.frightened-reaches-the-kinds-value-once
 degrees.a-condition-counts-once-on-each-side-of-the-hybrid

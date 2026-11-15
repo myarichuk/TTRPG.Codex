@@ -35,6 +35,19 @@ public class SheetRuleValidationTests
     }
 
     [Fact]
+    public void ModifierTypes_RefuseAnUnknownStackingRule()
+    {
+        var def = new Codex.Plugin.Abstractions.SystemDefinition { Id = "demo", Name = "Demo" };
+        Assert.DoesNotContain(Codex.Core.Systems.SystemDefinitionLoader.Validate(def), e => e.Contains("modifierTypes"));
+        def.ModifierTypes.Penalties = "highest";
+        def.ModifierTypes.PenaltyTypes["untyped"] = "sum";
+        Assert.DoesNotContain(Codex.Core.Systems.SystemDefinitionLoader.Validate(def), e => e.Contains("modifierTypes"));
+        def.ModifierTypes.PenaltyTypes["status"] = "worst";
+        var errors = string.Join("\n", Codex.Core.Systems.SystemDefinitionLoader.Validate(def));
+        Assert.Contains("modifierTypes.penaltyTypes.status has unknown stacking rule 'worst'", errors);
+    }
+
+    [Fact]
     public void SkillsMustUseARealAttribute_AndBeUniqueAndHaveABonusToAdd()
     {
         var errors = Errors("""
