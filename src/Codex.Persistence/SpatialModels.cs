@@ -115,6 +115,7 @@ public enum HazardState
 public class PlacedHazard
 {
     public const int MaxNoticedBy = 50;
+    public const int MaxFound = 30;
 
     /// <summary>The Library entry as <c>type/id</c> (<c>hazard/spiked-pit</c>). Homebrew entries are named the same way.</summary>
     public string Entry { get; set; } = string.Empty;
@@ -134,6 +135,10 @@ public class PlacedHazard
 
     /// <summary>The cast members who have noticed it (<see cref="ActorDocument.Id"/>), before the game master reveals it to everyone.</summary>
     public List<string> NoticedBy { get; set; } = new();
+
+    /// <summary>The ids of the detect routes (<c>HazardRoute.Id</c>) that have succeeded here, so a route that comes <c>after</c> another is offered once
+    /// its route is found. A route with no id is not recorded.</summary>
+    public List<string> Found { get; set; } = new();
 
     /// <summary>The Library type of <see cref="Entry"/>, or empty when it is not <c>type/id</c>.</summary>
     [Newtonsoft.Json.JsonIgnore]
@@ -163,7 +168,8 @@ public class PlacedHazard
             Levels = string.IsNullOrWhiteSpace(hazard.Levels) ? null : hazard.Levels.Trim(),
             State = Enum.IsDefined(hazard.State) ? hazard.State : HazardState.Hidden,
             Successes = Math.Max(0, hazard.Successes),
-            NoticedBy = hazard.NoticedBy.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).Distinct().Take(MaxNoticedBy).ToList()
+            NoticedBy = hazard.NoticedBy.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).Distinct().Take(MaxNoticedBy).ToList(),
+            Found = hazard.Found.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).Distinct().Take(MaxFound).ToList()
         };
         return tidy.Split() == null ? null : tidy;
     }

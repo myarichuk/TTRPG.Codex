@@ -28,6 +28,12 @@ public interface IRegionRepository
     /// <summary>Adds or replaces (by <see cref="LocationDocument.Id"/>) a location within a region. DM only.</summary>
     Task<bool> UpsertLocationAsync(string regionId, LocationDocument location, CampaignAccess access);
 
+    /// <summary>Changes only <see cref="PlaceFeature.Hazard"/> of one place, for the table (HAZARDS_DESIGN.md 4.1, 11): <paramref name="change"/> gets the
+    /// placement as stored now and returns what to store, or null to leave it. Nothing else on the place, the feature or the region is written, so a place
+    /// edited meanwhile keeps its edits. Campaign-scoped, not user-scoped: the table's runtime writes it, and only a DM's table runs. False when the region,
+    /// the place or its hazard is not there, or <paramref name="change"/> left it.</summary>
+    Task<bool> PatchPlacedHazardAsync(string campaignId, string regionId, string locationId, Func<PlacedHazard, PlacedHazard?> change);
+
     /// <summary>Sets a location's visibility - the "Reveal to party" action (2.5). DM only.</summary>
     Task<bool> SetLocationVisibilityAsync(string regionId, string locationId, ActorVisibility visibility, CampaignAccess access);
 

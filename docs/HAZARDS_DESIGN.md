@@ -415,6 +415,58 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   - **Event strings** (`Strings.Event`, en/ru/he; ru and he need native review): the three of 12.4, plus `Check.Failed` (unknown actor, bad dice) and `Check.Outcome.Success` / `.Failure` / `.Other`, because the outcome word is a part of its own. The event type is `DiceRoll`, so no new type label. A secret check's label is a `GmOnly` term.
   - **Not built (as section 12 says):** `dice.checkRoll` and degrees (P6). A skipped test stands for it.
 
+- **H4a gaps closed (before H4b).** The `MakeAll` guard test now really throws inside the tick-box and always-on-dice read (a resolver that throws only from `OptInsReaching`;
+  with the guard removed the test fails, with it restored it passes; the old formula test never reached a throw because the engine swallows bad formulas). A live-versus-stored
+  armor class test (a table status takes 2 off, the stored sheet does not) fails if the evaluation reads the stored sheet. The armor class label is no longer English in code: the
+  spec's label is the system's own label of the armor class field (else its sheet key), `ActorChecks.ArmorClassName(system)` names the request, and an armor class read says
+  itself from `Event.Check.ArmorClass` (en, ru, he), with the GM-only mark of a secret read as an extra argument the sentence does not print. `CheckMessages.Of` is the one place a check's log
+  sentence is made, for `MakeCheckCommand` and the hazard command.
+- **H4b (the hazard command and panel).** Built: `HazardCommand` (`HazardCommand.cs`), the ledger of live state (`HazardLedger.cs`), `IRegionRepository.PatchPlacedHazardAsync`,
+  `SetEncounterPlaceCommand`, and in the Web `HazardsTable` (loads places, entries and the encounter's live copy, sends commands) over the presentational `HazardsPanel`, drawn in the
+  console's GM column. What differs from the design above, and why:
+  - **Six actions, not three.** `Notice` (a sweep: reports only, never records), `Find` (one character, one detect route: a check is rolled, a no-check route is done by what it
+    needs; a success records the route in the placement's `Found` and the character in `NoticedBy`, and a Hidden hazard becomes Noticed), `MarkNoticed` (4.2's "the GM then marks it noticed":
+    adds the characters and the routes that were open when the GM pressed it), `Disable`, `Trigger` and `SetState` (the state picker, a logged command; Hidden also clears successes,
+    noticed-by and found). `PlacedHazard.Found` is new (route ids), carried by `Tidy` and by `PlacedHazardForm`.
+  - **Numbers only through `HazardNumbers.For(entry, type, placement.Levels)`**; checks only through `runtime.Checks` with `Secret = true`. A sweep asks for a passive (`Passive = true`
+    with the route's skill name) only where `notice.passive` holds, the route does not say `passive: false` and `ActorChecks.HasPassive` is true; otherwise it rolls (Arcana). It skips routes
+    with no check and routes whose `after` is not found, and ones already found. `Find` and `Disable` roll actively.
+  - **Disable:** a route with `after` is refused until its route is in `Found`; a route with no check is a success without a roll; each success adds one to `Successes` and
+    reaching the route's `successes` disables (every successful disarm route disarms; a detect route never does). A failed check whose `CheckOutcome.Key` is in the route's
+    `triggersOn` sets the hazard off **on the character who tried** (choice made once: the effect hits the one who tried, state Triggered; the GM can still Trigger on others).
+  - **Trigger/effect:** damage is rolled once per part (a part's `count` is dice or a number) and every die is a secret roll entry; each target does an attack against armor class (when the
+    system's hazard block names an `attack` field; srd5e's has none, so that branch is covered by a test that names one) and/or the save (`Kind = Save`); a passed save takes half or none
+    by `onSave`. Each damage part is applied by `ApplyDamageCommand` through the new `CampaignRuntime.ApplyUndoably`, which the loop now also uses for every undoable command. **Conditions
+    stay text** in the log line for the GM to add (4.2), not applied. A printed creature's save or armor class is `NeedsBonus`: nothing is done for it, the panel shows a number field for it, and
+    the typed number goes with the next request (one number per creature: the save bonus, or the armor class for an attack).
+  - **Undo (a change from 4.1, which said a hazard-scoped undo comes later; the task asks for it now).** Two parts. The damage of a trigger is taken back per creature by the existing
+    Undo button: all of a target's damage parts are one undo point (`CampaignRuntime.ApplyUndoably(actorId, kind, changes)`, which the loop's per-command version now calls too), so a
+    Spiked Pit's two parts come back together. The hazard's own last change (a find, a disarm success, a marking, the state picker) is taken back by `UndoHazardCommand`: the ledger
+    keeps the state just before and just after each hazard's last change, and the undo puts the before back only while the hazard still stands as the change left it (the encounter's live
+    copy, else the placement as the panel just read it); a hazard changed meanwhile, by the table or on the place's page, is refused and logged GM-only. The snapshot lists the hazards
+    that can offer it (`HazardUndo`) and the panel shows "Undo last change: {hazard}". The damage is not touched by this undo, and the hazard's undo is lost when the table restarts.
+  - **Live state.** Kept as `LiveHazard { Taken, Current }` under `hazard:{regionId}/{locationId}` in `EncounterDocument.ActiveEffects` while an encounter runs (read back defensively, since the
+    database returns the object as JSON; a test reloads it), and in the snapshot as `LiveHazards` for the panel. Outside an encounter a change is queued and written after the command. Both
+    writes go through `IRegionRepository.PatchPlacedHazardAsync(campaignId, regionId, locationId, change)`, which loads the region, hands the stored placement to `change` and writes
+    `Feature.Hazard` alone (campaign-scoped, no user access: only a DM's table runs it). At encounter end each changed placement is written **only if the stored one still equals what the
+    encounter took**; a placement whose live copy equals its taken copy is not written at all, and the encounter forgets the keys. `CampaignRuntimeManager` takes `IRegionRepository` as an optional
+    last parameter and sets `runtime.Places`.
+  - **The encounter's place.** Nothing set `EncounterDocument.LocationId`, so 4.1's "the encounter's place" did not exist. The panel has a place picker (each place with a hazard in or under
+    it; "All places" is the default); while an encounter runs the choice is saved on it by `SetEncounterPlaceCommand` and the snapshot carries it. Outside an encounter the choice is only the
+    page's.
+  - **Secrecy.** Every message the command writes has `EventTerm.GmOnly(hazard name)` as its first argument, there are no `PlayerParts`, the event type is `Hazard` (`Event.Type.Hazard`),
+    every roll entry is secret, damage is not logged through `ApplyDamageCommand.Describe` (which has a players' version), and the panel is drawn only for the GM. Tests check the redactor (both
+    views) and `TableVisibility.Rolls` for a player.
+  - **Not built:** `rank` (a route's minimum rank is shown nowhere and not enforced; srd5e has no ranks, so `Hazard.RankTooLow` is not written), the `methods` rows as buttons (the panel lists their
+    names), conditions applied automatically, the encounter-builder "Hazards" group and everything from H5. Rolling Stone's Crush save on any creature's turn is H5's (section 12.6, item 5).
+  - **Strings.** Panel: `Combat.Hazard.*` (`Strings.Combat`); log: `Event.Hazard.*` and `Event.Type.Hazard` (`Strings.Event`), en, ru, he; ru and he need native review. The design's
+    `Hazard.Noticed` ("{0} notices {1} ({2} vs DC {3})") is not used: the check's own line says the roll and DC, and `Hazard.Noticed` says who found which route.
+  - **Panel details.** A number typed for a printed creature goes with the next request only, for the creatures that were asked, and is then cleared (it was a save bonus; it must never become
+    that creature's Perception or another hazard's save). The panel's loaded copy of the places is read again when the encounter running or the hazards it holds change, so it is not stale after an
+    encounter ends and writes back.
+  - **Tests:** `HazardCommandTests` (24), `HazardsPanelTests` (18), `HazardsTableTests` (3), the `PlacedHazard.Found` cases in the persistence and form tests, and the three H4a-gap tests; the whole
+    filtered suite passes.
+
 ## 12. H4a: the server-side check service (interface)
 
 Plan row H4a. The new file is `src/Codex.Persistence/Runtime/CheckService.cs`, with small changes to `CampaignRuntime.cs` and

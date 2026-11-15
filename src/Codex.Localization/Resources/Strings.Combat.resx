@@ -43,6 +43,39 @@
   <data name="Combat.Or" xml:space="preserve"><value>or</value></data>
   <data name="Combat.EnterTotal" xml:space="preserve"><value>Enter total</value></data>
   <data name="Combat.Set" xml:space="preserve"><value>Set</value></data>
+  <data name="Combat.Hazard.Panel" xml:space="preserve"><value>Hazards</value></data>
+  <data name="Combat.Hazard.Place" xml:space="preserve"><value>Place</value></data>
+  <data name="Combat.Hazard.AllPlaces" xml:space="preserve"><value>All places</value></data>
+  <data name="Combat.Hazard.None" xml:space="preserve"><value>No hazard is placed here. Place one on a place's page.</value></data>
+  <data name="Combat.Hazard.Who" xml:space="preserve"><value>Characters</value></data>
+  <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>Notice and Trigger use everyone ticked. Find and Disable use the first one ticked.</value></data>
+  <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>A number is needed</value></data>
+  <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>This sheet is printed, so type the number to use: the save bonus, or the armor class for an attack. Then press the action again.</value></data>
+  <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>Number for {0}</value></data>
+  <data name="Combat.Hazard.Result" xml:space="preserve"><value>Last result</value></data>
+  <data name="Combat.Hazard.State.Hidden" xml:space="preserve"><value>Hidden</value></data>
+  <data name="Combat.Hazard.State.Noticed" xml:space="preserve"><value>Noticed</value></data>
+  <data name="Combat.Hazard.State.Disabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="Combat.Hazard.State.Triggered" xml:space="preserve"><value>Triggered</value></data>
+  <data name="Combat.Hazard.Successes" xml:space="preserve"><value>{0} successes so far</value></data>
+  <data name="Combat.Hazard.NoOne" xml:space="preserve"><value>Nobody has noticed it</value></data>
+  <data name="Combat.Hazard.Noticed" xml:space="preserve"><value>Noticed by {0}</value></data>
+  <data name="Combat.Hazard.Gone" xml:space="preserve"><value>{0} is no longer in the Library.</value></data>
+  <data name="Combat.Hazard.Notice" xml:space="preserve"><value>Notice: {0}</value></data>
+  <data name="Combat.Hazard.Trigger" xml:space="preserve"><value>Trigger: {0}</value></data>
+  <data name="Combat.Hazard.Find" xml:space="preserve"><value>Find: {0}</value></data>
+  <data name="Combat.Hazard.FindWay" xml:space="preserve"><value>Way to find {0}</value></data>
+  <data name="Combat.Hazard.Disable" xml:space="preserve"><value>Disable: {0}</value></data>
+  <data name="Combat.Hazard.DisableWay" xml:space="preserve"><value>Way to disable {0}</value></data>
+  <data name="Combat.Hazard.Waiting" xml:space="preserve"><value>{0} more ways open once another way is found.</value></data>
+  <data name="Combat.Hazard.Others" xml:space="preserve"><value>Other ways</value></data>
+  <data name="Combat.Hazard.MarkNoticed" xml:space="preserve"><value>Mark as noticed: {0}</value></data>
+  <data name="Combat.Hazard.StateOf" xml:space="preserve"><value>State of {0}</value></data>
+  <data name="Combat.Hazard.SetState" xml:space="preserve"><value>Set state: {0}</value></data>
+  <data name="Combat.Hazard.UndoHint" xml:space="preserve"><value>Damage from a trigger is taken back with Undo on each character. Undo here takes back the hazard's own last change.</value></data>
+  <data name="Combat.Hazard.Undo" xml:space="preserve"><value>Undo last change: {0}</value></data>
+  <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1} DC {2})</value></data>
+  <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (needs {1})</value></data>
   <data name="Combat.QuickAdd" xml:space="preserve"><value>Quick-add a creature</value></data>
   <data name="Combat.SearchCreatures" xml:space="preserve"><value>Search creatures</value></data>
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Search creatures in the Library…</value></data>

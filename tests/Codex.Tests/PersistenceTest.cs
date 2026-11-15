@@ -829,7 +829,7 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
             Id = Guid.NewGuid().ToString(), Name = name, Kind = PlaceKind.Feature, Visibility = ActorVisibility.Known,
             Feature = PlaceFeature.Tidy(new PlaceFeature { Hazard = hazard })
         };
-        Assert.True(await _regionRepository.UpsertLocationAsync(region.Id, Pit("North pit", new PlacedHazard { Entry = "hazard/spiked-pit", State = HazardState.Disabled, Successes = 2, NoticedBy = { "actor-1" } }), dmAccess));
+        Assert.True(await _regionRepository.UpsertLocationAsync(region.Id, Pit("North pit", new PlacedHazard { Entry = "hazard/spiked-pit", State = HazardState.Disabled, Successes = 2, NoticedBy = { "actor-1" }, Found = { "needle", "glyph" } }), dmAccess));
         Assert.True(await _regionRepository.UpsertLocationAsync(region.Id, Pit("South pit", new PlacedHazard { Entry = "hazard/spiked-pit" }), dmAccess));
 
         var forDm = (await _regionRepository.GetAsync(region.Id, dmAccess))!;
@@ -839,8 +839,10 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(HazardState.Disabled, north.State);
         Assert.Equal(2, north.Successes);
         Assert.Equal(new[] { "actor-1" }, north.NoticedBy);
+        Assert.Equal(new[] { "needle", "glyph" }, north.Found);
         Assert.Equal(HazardState.Hidden, south.State);
         Assert.Empty(south.NoticedBy);
+        Assert.Empty(south.Found);
 
         var forPlayer = (await _regionRepository.GetAsync(region.Id, Access(campaignId, "player-1", CampaignRole.Player)))!;
         Assert.All(forPlayer.Locations, l => Assert.Null(l.Feature));

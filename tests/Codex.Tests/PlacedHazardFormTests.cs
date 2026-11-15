@@ -36,6 +36,19 @@ public class PlacedHazardFormTests
     }
 
     [Fact]
+    public void ChangingTheState_KeepsTheFoundRoutesOfTheSameEntry_AndAnotherEntryHasNone()
+    {
+        var stored = Pit(HazardState.Noticed, 1);
+        stored.Found.Add("lid");
+        var same = new PlacedHazardForm(Pit()) { State = HazardState.Hidden };
+        var other = new PlacedHazardForm(Pit()) { Key = "hazard/falling-net" };
+
+        Assert.Equal(new[] { "lid" }, same.Result(stored)!.Found);
+        Assert.Empty(other.Result(stored)!.Found);
+        Assert.Equal(new[] { "lid" }, PlacedHazard.Tidy(new PlacedHazard { Entry = "hazard/a", Found = { " lid ", "", "lid" } })!.Found);
+    }
+
+    [Fact]
     public void ChoosingAnotherHazard_StartsOver_StateIncluded()
     {
         var form = new PlacedHazardForm(Pit(HazardState.Disabled, 2));

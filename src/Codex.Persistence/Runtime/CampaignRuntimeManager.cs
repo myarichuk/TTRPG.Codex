@@ -21,6 +21,7 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
     private readonly PluginLoader pluginLoader;
     private readonly ILoggerFactory loggerFactory;
     private readonly ICampaignObjectsRepository? campaignObjects;
+    private readonly IRegionRepository? places;
     private readonly ConcurrentDictionary<string, CampaignRuntime> _runtimes = new();
 
     /// <param name="lifecycle">When given, a campaign's runtime is stopped just before the campaign is
@@ -34,8 +35,10 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
         PluginLoader pluginLoader,
         ILoggerFactory loggerFactory,
         CampaignLifecycleHooks? lifecycle = null,
-        ICampaignObjectsRepository? campaignObjects = null)
+        ICampaignObjectsRepository? campaignObjects = null,
+        IRegionRepository? places = null)
     {
+        this.places = places;
         this.campaignObjects = campaignObjects;
         this.actorRepository = actorRepository;
         this.sessionRepository = sessionRepository;
@@ -130,6 +133,7 @@ public sealed class CampaignRuntimeManager : IAsyncDisposable
                     runtime.Resolver = await EntryResolvers(campaign, dmAccess, definition);
                 }
 
+                runtime.Places = places;
                 runtime.Hydrate((await actorRepository.GetVisibleForCampaignAsync(dmAccess)).Where(a => !a.Retired));
                 if (campaignObjects != null)
                 {

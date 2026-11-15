@@ -43,6 +43,39 @@
   <data name="Combat.Or" xml:space="preserve"><value>או</value></data>
   <data name="Combat.EnterTotal" xml:space="preserve"><value>הזנת סכום</value></data>
   <data name="Combat.Set" xml:space="preserve"><value>קביעה</value></data>
+  <data name="Combat.Hazard.Panel" xml:space="preserve"><value>סכנות</value></data>
+  <data name="Combat.Hazard.Place" xml:space="preserve"><value>מקום</value></data>
+  <data name="Combat.Hazard.AllPlaces" xml:space="preserve"><value>כל המקומות</value></data>
+  <data name="Combat.Hazard.None" xml:space="preserve"><value>אין כאן סכנה. אפשר להציב אחת בדף המקום.</value></data>
+  <data name="Combat.Hazard.Who" xml:space="preserve"><value>דמויות</value></data>
+  <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>"זיהוי" ו"הפעלה" פועלים על כל המסומנים. "מציאה" ו"נטרול" פועלים על המסומן הראשון.</value></data>
+  <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>נדרש מספר</value></data>
+  <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>הדף מודפס, לכן יש להקליד את המספר: בונוס ההצלה, או דרגת השריון להתקפה. לאחר מכן ללחוץ שוב על הפעולה.</value></data>
+  <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>מספר עבור {0}</value></data>
+  <data name="Combat.Hazard.Result" xml:space="preserve"><value>התוצאה האחרונה</value></data>
+  <data name="Combat.Hazard.State.Hidden" xml:space="preserve"><value>מוסתרת</value></data>
+  <data name="Combat.Hazard.State.Noticed" xml:space="preserve"><value>זוהתה</value></data>
+  <data name="Combat.Hazard.State.Disabled" xml:space="preserve"><value>נוטרלה</value></data>
+  <data name="Combat.Hazard.State.Triggered" xml:space="preserve"><value>הופעלה</value></data>
+  <data name="Combat.Hazard.Successes" xml:space="preserve"><value>הצלחות עד כה: {0}</value></data>
+  <data name="Combat.Hazard.NoOne" xml:space="preserve"><value>אף אחד לא זיהה אותה</value></data>
+  <data name="Combat.Hazard.Noticed" xml:space="preserve"><value>זוהתה על ידי {0}</value></data>
+  <data name="Combat.Hazard.Gone" xml:space="preserve"><value>{0} כבר לא בספרייה.</value></data>
+  <data name="Combat.Hazard.Notice" xml:space="preserve"><value>זיהוי: {0}</value></data>
+  <data name="Combat.Hazard.Trigger" xml:space="preserve"><value>הפעלה: {0}</value></data>
+  <data name="Combat.Hazard.Find" xml:space="preserve"><value>מציאה: {0}</value></data>
+  <data name="Combat.Hazard.FindWay" xml:space="preserve"><value>דרך למצוא את {0}</value></data>
+  <data name="Combat.Hazard.Disable" xml:space="preserve"><value>נטרול: {0}</value></data>
+  <data name="Combat.Hazard.DisableWay" xml:space="preserve"><value>דרך לנטרל את {0}</value></data>
+  <data name="Combat.Hazard.Waiting" xml:space="preserve"><value>עוד {0} דרכים ייפתחו לאחר שתימצא דרך אחרת.</value></data>
+  <data name="Combat.Hazard.Others" xml:space="preserve"><value>דרכים אחרות</value></data>
+  <data name="Combat.Hazard.MarkNoticed" xml:space="preserve"><value>סימון כזוהתה: {0}</value></data>
+  <data name="Combat.Hazard.StateOf" xml:space="preserve"><value>מצב: {0}</value></data>
+  <data name="Combat.Hazard.SetState" xml:space="preserve"><value>קביעת מצב: {0}</value></data>
+  <data name="Combat.Hazard.UndoHint" xml:space="preserve"><value>הנזק מהפעלה מבוטל בכפתור הביטול של כל דמות. הכפתור כאן מבטל את השינוי האחרון בסכנה עצמה.</value></data>
+  <data name="Combat.Hazard.Undo" xml:space="preserve"><value>ביטול השינוי האחרון: {0}</value></data>
+  <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1}, דרגת קושי {2})</value></data>
+  <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (נדרש: {1})</value></data>
   <data name="Combat.QuickAdd" xml:space="preserve"><value>הוספה מהירה של יצור</value></data>
   <data name="Combat.SearchCreatures" xml:space="preserve"><value>חיפוש יצורים</value></data>
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>חיפוש יצורים בספרייה…</value></data>

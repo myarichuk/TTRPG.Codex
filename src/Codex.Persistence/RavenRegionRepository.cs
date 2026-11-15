@@ -157,6 +157,20 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
         return true;
     }
 
+    public async Task<bool> PatchPlacedHazardAsync(string campaignId, string regionId, string locationId, Func<PlacedHazard, PlacedHazard?> change)
+    {
+        using var session = dbService.Store.OpenAsyncSession();
+        var region = await session.LoadAsync<RegionDocument>(regionId);
+        var stored = region?.Locations.FirstOrDefault(l => l.Id == locationId)?.Feature;
+        if (region == null || region.CampaignId != campaignId || stored?.Hazard is not { } current) return false;
+
+        if (PlacedHazard.Tidy(change(current)) is not { } changed) return false;
+        stored.Hazard = changed;
+        region.UpdatedAt = DateTime.UtcNow;
+        await session.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<bool> SetLocationVisibilityAsync(string regionId, string locationId, ActorVisibility visibility, CampaignAccess access)
     {
         if (await CampaignAccessResolver.NowAsync(dbService.Store, access) is not { } current) return false;

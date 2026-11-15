@@ -21,6 +21,10 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
     /// <summary>Once applied: the save the creature owes to keep concentrating, or null when it was not concentrating (R4).</summary>
     public int? ConcentrationDc => _outcome.ConcentrationDc;
 
+    /// <summary>Once applied: the damage that reached the creature (after resistance, immunity and temporary hit points), by the table's own rules; 0 when a
+    /// system handler took the damage instead.</summary>
+    public int Dealt => _outcome.Dealt;
+
     // A system with sheet kinds that handles damage itself: what its handler did, instead of the vitals rules.
     private TableEvents.Outcome? _raised;
 
@@ -964,12 +968,19 @@ public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId)
 
     public void Apply(CampaignRuntime runtime) => _result = runtime.Checks.Make(Request, RollerUserId);
 
-    public SessionEvent Describe(CampaignRuntime runtime)
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("DiceRoll", new[] { CheckMessages.Of(runtime, Request, _result) }, new[] { Request.ActorId });
+}
+
+/// <summary>What a check says in the log: the one sentence <see cref="MakeCheckCommand"/> writes, and the hazard commands write for each check they make.
+/// A secret check names its check as a GM-only term, so the players' log leaves the whole message out.</summary>
+internal static class CheckMessages
+{
+    public static EventMessage Of(CampaignRuntime runtime, CheckRequest request, CheckResult? result)
     {
-        var actor = runtime.ActorTerm(Request.ActorId);
-        var result = _result;
-        var label = result?.Spec?.Label ?? Request.Check;
-        object shown = Request.Secret ? EventTerm.GmOnly(label) : new EventTerm(EventTerm.SystemKind, label, runtime.System?.DisplayValue(label) ?? label);
+        var actor = runtime.ActorTerm(request.ActorId);
+        var label = result?.Spec?.Label ?? request.Check;
+        object shown = request.Secret ? EventTerm.GmOnly(label) : new EventTerm(EventTerm.SystemKind, label, runtime.System?.DisplayValue(label) ?? label);
         EventMessage message;
         if (result == null || result.Failed is CheckFailure.UnknownActor or CheckFailure.BadDice)
         {
@@ -985,7 +996,8 @@ public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId)
         }
         else if (result.Spec?.Kind == CheckKind.ArmorClass)
         {
-            message = EventMessage.Of("Check.ArmorClass", actor, result.Total, result.Dc?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-");
+            // The fourth argument is not in the sentence: it carries the GM-only mark of a secret read, so the players' log leaves it out.
+            message = EventMessage.Of("Check.ArmorClass", actor, result.Total, result.Dc?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-", shown);
         }
         else if (result.Spec?.Kind == CheckKind.Passive)
         {
@@ -1003,7 +1015,7 @@ public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId)
             message = EventMessage.Of("Roll.Plain", actor, shown, result.Total);
         }
 
-        return SessionEvent.From("DiceRoll", new[] { message }, new[] { Request.ActorId });
+        return message;
     }
 }
 

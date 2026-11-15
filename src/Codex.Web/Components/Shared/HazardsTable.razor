@@ -1,0 +1,218 @@
+@using Codex.Core.Systems
+@using Codex.Persistence
+@using Codex.Persistence.Runtime
+@using Codex.Plugin.Abstractions
+@inject IRegionRepository RegionRepo
+@inject CampaignLibrary Library
+@inject ILogger<HazardsTable> Logger
+
+@* The Hazards panel at the table (HAZARDS_DESIGN.md 4.1, 11), for the game master only. It reads the placed hazards of the campaign's places and their entries, shows the
+   state the running encounter holds over what is stored, and sends each action as a HazardCommand on the runtime's loop. The panel itself (HazardsPanel) draws and asks. *@
+@if (Type != null && Access.IsDm)
+{
+    <HazardsPanel Hazards="Views()" Who="Who()" Places="places" PlaceId="@placeId" OnPlaceChanged="PlaceChangedAsync" OnRequest="SendAsync" OnUndo="UndoAsync"
+                  Status="status" NeedNumber="needNumber" Passes="passes" PassesFor="@passesFor" />
+}
+
+@code {
+    [Parameter] public CampaignDocument Campaign { get; set; } = null!;
+    [Parameter] public CampaignAccess Access { get; set; } = null!;
+    [Parameter] public string CurrentUserId { get; set; } = string.Empty;
+    [Parameter] public CampaignRuntime Runtime { get; set; } = null!;
+    [Parameter] public RuntimeSnapshot Snapshot { get; set; } = RuntimeSnapshot.Empty;
+    [Parameter] public IEnumerable<ActorDocument> Actors { get; set; } = Enumerable.Empty<ActorDocument>();
+    [Parameter] public SystemDefinition? Definition { get; set; }
+
+    private sealed record Placement(RegionDocument Region, LocationDocument Place, PlacedHazard Stored, LibraryItem? Item);
+
+    private List<Placement> placements = new();
+    private IReadOnlyList<HazardPlace> places = Array.Empty<HazardPlace>();
+    private string placeId = string.Empty;
+    private bool loaded;
+    private IReadOnlyList<string> status = Array.Empty<string>();
+    private IReadOnlyList<HazardWho> needNumber = Array.Empty<HazardWho>();
+    private IReadOnlyList<HazardPass> passes = Array.Empty<HazardPass>();
+    private string? passesFor;
+
+    private ContentTypeDefinition? Type => Definition?.EntityTypes.FirstOrDefault(t => t.Hazard != null);
+
+    // What the page last read the stored places under: the encounter running and the hazards it holds live. When either changes (the encounter ended, and wrote its
+    // hazards back to their places), what was read is out of date, so it is read again.
+    private string loadedUnder = string.Empty;
+
+    private string Under() => (Snapshot.Encounter?.Id ?? string.Empty) + "|" + string.Join(",", Snapshot.LiveHazards.Keys.Order(StringComparer.Ordinal));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Type == null || !Access.IsDm) return;
+        if (!loaded)
+        {
+            loaded = true;
+            placeId = Snapshot.Encounter?.LocationId ?? string.Empty;
+        }
+        else if (loadedUnder == Under())
+        {
+            return;
+        }
+
+        loadedUnder = Under();
+        await LoadAsync();
+    }
+
+    /// <summary>Reads every place that holds a hazard and the entry it names, fresh from the repositories.</summary>
+    private async Task LoadAsync()
+    {
+        var found = new List<Placement>();
+        var regions = (await RegionRepo.GetVisibleForCampaignAsync(Access)).ToList();
+        foreach (var region in regions)
+        {
+            foreach (var place in region.Locations.Where(l => l.Feature?.Hazard != null))
+            {
+                var stored = place.Feature!.Hazard!;
+                LibraryItem? item = null;
+                try
+                {
+                    item = await Library.GetAsync(Campaign, Access, stored.EntryType, stored.EntryId, stored.IsHomebrew);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning(ex, "A placed hazard's entry {Entry} could not be read for the table", stored.Entry);
+                }
+
+                found.Add(new Placement(region, place, stored, item));
+            }
+        }
+
+        placements = found;
+        // The places to narrow to: each place with a hazard in it or under it.
+        var shown = new Dictionary<string, HazardPlace>();
+        foreach (var placement in found)
+        {
+            foreach (var place in Chain(placement.Region, placement.Place))
+            {
+                shown[place.Id] = new HazardPlace(place.Id, regions.Count > 1 ? $"{placement.Region.Name} / {place.Name}" : place.Name);
+            }
+        }
+
+        places = shown.Values.OrderBy(p => p.Label, StringComparer.CurrentCultureIgnoreCase).ToList();
+        if (placeId.Length > 0 && !shown.ContainsKey(placeId)) placeId = string.Empty;
+    }
+
+    /// <summary>The place and the places it is inside, up to the top of its region.</summary>
+    private static IEnumerable<LocationDocument> Chain(RegionDocument region, LocationDocument place)
+    {
+        var seen = new HashSet<string>();
+        for (var at = place; at != null && seen.Add(at.Id); at = string.IsNullOrEmpty(at.ParentId) ? null : region.Locations.FirstOrDefault(l => l.Id == at.ParentId))
+        {
+            yield return at;
+        }
+    }
+
+    private IReadOnlyList<HazardWho> Who()
+    {
+        var inOrder = Snapshot.Encounter?.Participants.Select(p => p.ActorId).ToHashSet() ?? new HashSet<string>();
+        return Actors.Where(a => !a.Retired && (a.Kind == ActorKind.PlayerCharacter || inOrder.Contains(a.Id)))
+            .OrderBy(a => a.Kind == ActorKind.PlayerCharacter ? 0 : 1).ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
+            .Select(a => new HazardWho(a.Id, a.Name)).ToList();
+    }
+
+    private IReadOnlyList<HazardView> Views()
+    {
+        var names = Actors.ToDictionary(a => a.Id, a => a.Name);
+        var views = new List<HazardView>();
+        foreach (var placement in placements.Where(p => placeId.Length == 0 || Chain(p.Region, p.Place).Any(c => c.Id == placeId)))
+        {
+            // The encounter's live copy, when it holds one, over what is stored.
+            var key = HazardLedger.KeyOf(placement.Region.Id, placement.Place.Id);
+            var state = Snapshot.LiveHazards.TryGetValue(key, out var live) ? live : placement.Stored;
+            var name = placement.Item?.Entry.Name ?? placement.Stored.EntryId;
+            var noticed = state.NoticedBy.Select(id => names.GetValueOrDefault(id, id)).ToList();
+            if (placement.Item is not { } item || Type is not { Hazard: { } hazard } type)
+            {
+                views.Add(new HazardView(key, null, name, placement.Place.Name, state.State, state.Successes, noticed, Array.Empty<HazardWay>(), Array.Empty<HazardWay>(), Array.Empty<string>(), 0));
+                continue;
+            }
+
+            var numbers = HazardNumbers.For(item.Entry, type, placement.Stored.Levels);
+            var detect = HazardNumbers.NoticeRoutes(numbers, hazard);
+            var disarm = HazardNumbers.DisableRoutes(numbers, hazard);
+            bool Open(HazardRoute r) => r.After == null || state.Found.Contains(r.After);
+            var site = new HazardSite(placement.Region.Id, placement.Place.Id, name, placement.Stored, item.Entry, type);
+            views.Add(new HazardView(key, site, name, placement.Place.Name, state.State, state.Successes, noticed,
+                detect.Where(Open).Select(r => new HazardWay(HazardRoutes.KeyOf(r), WayLabel(r))).ToList(),
+                disarm.Where(Open).Select(r => new HazardWay(HazardRoutes.KeyOf(r), WayLabel(r))).ToList(),
+                HazardNumbers.Methods(numbers, hazard).Select(m => m.Shown).ToList(),
+                detect.Concat(disarm).Count(r => !Open(r)), Snapshot.HazardUndo.Contains(key)));
+        }
+
+        return views;
+    }
+
+    private string WayLabel(HazardRoute route) =>
+        route.HasCheck ? L["Combat.Hazard.WayCheck", route.Shown, Definition?.DisplayValue(route.Check!) ?? route.Check!, route.Dc?.ToString() ?? "-"]
+        : !string.IsNullOrWhiteSpace(route.Needs) ? L["Combat.Hazard.WayNeeds", route.Shown, route.Needs!]
+        : route.Shown;
+
+    private async Task PlaceChangedAsync(string id)
+    {
+        placeId = id;
+        if (Snapshot.Encounter == null) return;
+        var label = places.FirstOrDefault(p => p.Id == id)?.Label ?? string.Empty;
+        await Runtime.EnqueueAsync(new SetEncounterPlaceCommand(id, label));
+    }
+
+    private async Task UndoAsync(HazardView hazard)
+    {
+        if (hazard.Site is not { } listed) return;
+        var stored = (await RegionRepo.GetAsync(listed.RegionId, Access))?.Locations.FirstOrDefault(l => l.Id == listed.LocationId)?.Feature?.Hazard ?? listed.Stored;
+        var command = new UndoHazardCommand(listed with { Stored = stored });
+        try
+        {
+            await Runtime.EnqueueAsync(command);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Taking back a hazard's last change failed");
+            status = new[] { L["Combat.CommandFailed"] };
+            return;
+        }
+
+        status = command.Said?.Parts.Select(p => p.Render(L)).ToList() ?? new List<string>();
+        needNumber = Array.Empty<HazardWho>();
+        await LoadAsync();
+    }
+
+    private async Task SendAsync(HazardRequest request)
+    {
+        if (request.Hazard.Site is not { } listed) return;
+        // The placement as stored now, not as the page last loaded it: the place's own page may have changed it.
+        var stored = (await RegionRepo.GetAsync(listed.RegionId, Access))?.Locations.FirstOrDefault(l => l.Id == listed.LocationId)?.Feature?.Hazard ?? listed.Stored;
+        var command = new HazardCommand(listed with { Stored = stored }, request.Action, request.ActorIds, CurrentUserId, request.Route, request.Routes, request.State, request.Bonuses);
+        try
+        {
+            await Runtime.EnqueueAsync(command);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "The hazard command {Action} failed", request.Action);
+            status = new[] { L["Combat.CommandFailed"] };
+            return;
+        }
+
+        var names = Actors.ToDictionary(a => a.Id, a => a.Name);
+        status = command.Said?.Parts.Select(p => p.Render(L)).ToList() ?? new List<string>();
+        needNumber = command.NeedsNumber.Select(id => new HazardWho(id, names.GetValueOrDefault(id, id))).ToList();
+        if (request.Action == HazardAction.Notice)
+        {
+            passes = command.Passes;
+            passesFor = request.Hazard.Id;
+        }
+        else if (request.Action == HazardAction.MarkNoticed || passesFor == request.Hazard.Id)
+        {
+            passes = Array.Empty<HazardPass>();
+            passesFor = null;
+        }
+
+        await LoadAsync();
+    }
+}

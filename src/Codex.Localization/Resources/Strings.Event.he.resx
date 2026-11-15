@@ -194,6 +194,37 @@
   <data name="Event.Check.Outcome.Success" xml:space="preserve"><value>הצלחה</value></data>
   <data name="Event.Check.Outcome.Failure" xml:space="preserve"><value>כישלון</value></data>
   <data name="Event.Check.Outcome.Other" xml:space="preserve"><value>{0}</value></data>
+  <data name="Event.Type.Hazard" xml:space="preserve"><value>סכנה</value></data>
+  <data name="Event.Hazard.Where" xml:space="preserve"><value>לוח הסכנות מציג: {0}.</value></data>
+  <data name="Event.Hazard.WhereAll" xml:space="preserve"><value>לוח הסכנות מציג את כל המקומות.</value></data>
+  <data name="Event.Hazard.Undone" xml:space="preserve"><value>{0}: השינוי האחרון בוטל.</value></data>
+  <data name="Event.Hazard.Refused.CannotUndo" xml:space="preserve"><value>{0}: היא השתנתה מאז, ולכן אי אפשר לבטל את השינוי האחרון.</value></data>
+  <data name="Event.Hazard.Sweep" xml:space="preserve"><value>{0}: חיפוש.</value></data>
+  <data name="Event.Hazard.Refused.NothingToTry" xml:space="preserve"><value>{0}: לא נשאר מה לחפש בהטלה.</value></data>
+  <data name="Event.Hazard.Refused.NoRoute" xml:space="preserve"><value>{0}: אין דרך כזו.</value></data>
+  <data name="Event.Hazard.Refused.Locked" xml:space="preserve"><value>{0}: עוד אי אפשר לנסות את "{1}"; קודם צריך למצוא את "{2}".</value></data>
+  <data name="Event.Hazard.Refused.NoActor" xml:space="preserve"><value>{0}: לא נבחר אף אחד.</value></data>
+  <data name="Event.Hazard.Refused.AlreadyDisabled" xml:space="preserve"><value>{0} כבר נוטרלה.</value></data>
+  <data name="Event.Hazard.Noticed" xml:space="preserve"><value>{0}: {1} מוצא אותה ({2}).</value></data>
+  <data name="Event.Hazard.Missed" xml:space="preserve"><value>{0}: {1} לא מוצא אותה ({2}).</value></data>
+  <data name="Event.Hazard.Revealed" xml:space="preserve"><value>{0}: {1} יודע עכשיו על קיומה.</value></data>
+  <data name="Event.Hazard.NoRoll" xml:space="preserve"><value>{0}: {1} עושה זאת בלי הטלה ({2}).</value></data>
+  <data name="Event.Hazard.DisableProgress" xml:space="preserve"><value>{0}: {1} מתוך {2} הצלחות.</value></data>
+  <data name="Event.Hazard.Disabled" xml:space="preserve"><value>{0} נוטרלה.</value></data>
+  <data name="Event.Hazard.SetOff" xml:space="preserve"><value>{0}: הניסיון שנכשל מפעיל אותה, על {1}.</value></data>
+  <data name="Event.Hazard.Triggered" xml:space="preserve"><value>{0} מופעלת.</value></data>
+  <data name="Event.Hazard.Hit" xml:space="preserve"><value>{0}: התקפה {1} מול דרגת שריון {2}, {3} נפגע.</value></data>
+  <data name="Event.Hazard.Miss" xml:space="preserve"><value>{0}: התקפה {1} מול דרגת שריון {2}, {3} לא נפגע.</value></data>
+  <data name="Event.Hazard.NeedsNumber" xml:space="preserve"><value>{0}: עבור {1} צריך להקליד מספר, ולכן לא נעשה דבר.</value></data>
+  <data name="Event.Hazard.SavedHalf" xml:space="preserve"><value>{0}: {1} עובר את ההצלה וסופג חצי.</value></data>
+  <data name="Event.Hazard.SavedNone" xml:space="preserve"><value>{0}: {1} עובר את ההצלה ולא סופג נזק.</value></data>
+  <data name="Event.Hazard.Damage" xml:space="preserve"><value>{0}: {1} סופג {2} נזק.</value></data>
+  <data name="Event.Hazard.DamageTyped" xml:space="preserve"><value>{0}: {1} סופג {2} נזק ({3}).</value></data>
+  <data name="Event.Hazard.Conditions" xml:space="preserve"><value>{0}: {1} מקבל מצב: {2}; יש להוסיף אותו ידנית.</value></data>
+  <data name="Event.Hazard.State.Hidden" xml:space="preserve"><value>{0} מוסתרת עכשיו.</value></data>
+  <data name="Event.Hazard.State.Noticed" xml:space="preserve"><value>{0} זוהתה עכשיו.</value></data>
+  <data name="Event.Hazard.State.Disabled" xml:space="preserve"><value>{0} נוטרלה עכשיו.</value></data>
+  <data name="Event.Hazard.State.Triggered" xml:space="preserve"><value>{0} הופעלה עכשיו.</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>מערכה</value></data>
   <data name="Event.Campaign.ClockChanged" xml:space="preserve"><value>{0}: {1} ← {2} מתוך {3}.</value></data>
   <data name="Event.Campaign.ClockFull" xml:space="preserve"><value>השעון {0} מלא.</value></data>

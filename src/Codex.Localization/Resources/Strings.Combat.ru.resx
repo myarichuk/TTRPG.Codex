@@ -43,6 +43,39 @@
   <data name="Combat.Or" xml:space="preserve"><value>или</value></data>
   <data name="Combat.EnterTotal" xml:space="preserve"><value>Ввести итог</value></data>
   <data name="Combat.Set" xml:space="preserve"><value>Задать</value></data>
+  <data name="Combat.Hazard.Panel" xml:space="preserve"><value>Опасности</value></data>
+  <data name="Combat.Hazard.Place" xml:space="preserve"><value>Место</value></data>
+  <data name="Combat.Hazard.AllPlaces" xml:space="preserve"><value>Все места</value></data>
+  <data name="Combat.Hazard.None" xml:space="preserve"><value>Здесь нет опасностей. Добавьте её на странице места.</value></data>
+  <data name="Combat.Hazard.Who" xml:space="preserve"><value>Персонажи</value></data>
+  <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>«Заметить» и «Сработать» берут всех отмеченных. «Найти» и «Обезвредить» берут первого отмеченного.</value></data>
+  <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>Нужно число</value></data>
+  <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>Лист напечатан, поэтому введите число: бонус спасброска или КД для атаки. Затем нажмите действие ещё раз.</value></data>
+  <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>Число для: {0}</value></data>
+  <data name="Combat.Hazard.Result" xml:space="preserve"><value>Последний результат</value></data>
+  <data name="Combat.Hazard.State.Hidden" xml:space="preserve"><value>Скрыта</value></data>
+  <data name="Combat.Hazard.State.Noticed" xml:space="preserve"><value>Замечена</value></data>
+  <data name="Combat.Hazard.State.Disabled" xml:space="preserve"><value>Обезврежена</value></data>
+  <data name="Combat.Hazard.State.Triggered" xml:space="preserve"><value>Сработала</value></data>
+  <data name="Combat.Hazard.Successes" xml:space="preserve"><value>Успехов пока: {0}</value></data>
+  <data name="Combat.Hazard.NoOne" xml:space="preserve"><value>Никто её не заметил</value></data>
+  <data name="Combat.Hazard.Noticed" xml:space="preserve"><value>Заметили: {0}</value></data>
+  <data name="Combat.Hazard.Gone" xml:space="preserve"><value>«{0}» больше нет в Библиотеке.</value></data>
+  <data name="Combat.Hazard.Notice" xml:space="preserve"><value>Заметить: {0}</value></data>
+  <data name="Combat.Hazard.Trigger" xml:space="preserve"><value>Сработать: {0}</value></data>
+  <data name="Combat.Hazard.Find" xml:space="preserve"><value>Найти: {0}</value></data>
+  <data name="Combat.Hazard.FindWay" xml:space="preserve"><value>Способ найти: {0}</value></data>
+  <data name="Combat.Hazard.Disable" xml:space="preserve"><value>Обезвредить: {0}</value></data>
+  <data name="Combat.Hazard.DisableWay" xml:space="preserve"><value>Способ обезвредить: {0}</value></data>
+  <data name="Combat.Hazard.Waiting" xml:space="preserve"><value>Ещё способов откроется после находки: {0}.</value></data>
+  <data name="Combat.Hazard.Others" xml:space="preserve"><value>Другие способы</value></data>
+  <data name="Combat.Hazard.MarkNoticed" xml:space="preserve"><value>Отметить как замеченную: {0}</value></data>
+  <data name="Combat.Hazard.StateOf" xml:space="preserve"><value>Состояние: {0}</value></data>
+  <data name="Combat.Hazard.SetState" xml:space="preserve"><value>Задать состояние: {0}</value></data>
+  <data name="Combat.Hazard.UndoHint" xml:space="preserve"><value>Урон от срабатывания отменяется кнопкой «Отменить» у каждого персонажа. Кнопка здесь отменяет последнее изменение самой опасности.</value></data>
+  <data name="Combat.Hazard.Undo" xml:space="preserve"><value>Отменить последнее изменение: {0}</value></data>
+  <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1}, СЛ {2})</value></data>
+  <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (нужно: {1})</value></data>
   <data name="Combat.QuickAdd" xml:space="preserve"><value>Быстро добавить существо</value></data>
   <data name="Combat.SearchCreatures" xml:space="preserve"><value>Поиск существ</value></data>
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Поиск существ в библиотеке…</value></data>

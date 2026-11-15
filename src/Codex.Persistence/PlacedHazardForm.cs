@@ -74,7 +74,8 @@ public sealed class PlacedHazardForm
             State = State,
             Levels = Clean(Levels),
             Successes = same ? stored!.Successes : 0,
-            NoticedBy = same ? stored!.NoticedBy.ToList() : new List<string>()
+            NoticedBy = same ? stored!.NoticedBy.ToList() : new List<string>(),
+            Found = same ? stored!.Found.ToList() : new List<string>()
         };
     }
 

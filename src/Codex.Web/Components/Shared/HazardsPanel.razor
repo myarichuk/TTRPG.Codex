@@ -1,0 +1,258 @@
+@using Codex.Persistence
+@using Codex.Persistence.Runtime
+
+@* The game master's Hazards panel (HAZARDS_DESIGN.md 4.1, 7). One list of hazards, each a group with a heading (its name and its state in words, with an icon
+   beside the words) and real buttons whose text names the action and the hazard. Who acts is one fieldset of check boxes. The result of the last action is in a
+   polite status region. Everything here is the game master's: the console never draws it for a player. *@
+<section class="panel" aria-labelledby="hazards-heading" data-testid="hazards-panel">
+    <div class="panel-title"><h3 id="hazards-heading">@L["Combat.Hazard.Panel"]</h3></div>
+
+    @if (Places.Count > 0)
+    {
+        <div class="mb-2">
+            <label for="hazard-place" class="field-label">@L["Combat.Hazard.Place"]</label>
+            <select id="hazard-place" class="field-select field-sm" data-testid="hazard-place" value="@PlaceId" @onchange="PlaceChosenAsync">
+                <option value="">@L["Combat.Hazard.AllPlaces"]</option>
+                @foreach (var place in Places)
+                {
+                    <option value="@place.Id" selected="@(place.Id == PlaceId)">@place.Label</option>
+                }
+            </select>
+        </div>
+    }
+
+    <div class="visually-hidden" role="status" aria-live="polite" data-testid="hazard-status">
+        @foreach (var line in Status)
+        {
+            <p>@line</p>
+        }
+    </div>
+    @if (Status.Count > 0)
+    {
+        <div class="small-muted mb-2" aria-hidden="true" data-testid="hazard-result">
+            <strong>@L["Combat.Hazard.Result"]</strong>
+            @foreach (var line in Status)
+            {
+                <div>@line</div>
+            }
+        </div>
+    }
+
+    @if (Hazards.Count == 0)
+    {
+        <p class="small-muted mb-0" data-testid="hazards-none">@L["Combat.Hazard.None"]</p>
+    }
+    else
+    {
+        <fieldset class="mb-2" data-testid="hazard-who">
+            <legend class="field-label">@L["Combat.Hazard.Who"]</legend>
+            <p class="small-muted mb-1" id="hazard-who-hint">@L["Combat.Hazard.WhoHint"]</p>
+            <div class="d-flex flex-wrap gap-2" aria-describedby="hazard-who-hint">
+                @foreach (var who in Who)
+                {
+                    var id = who.Id;
+                    <CodexCheck Checked="@ticked.Contains(id)" OnChange="e => Tick(id, e)" data-testid="@($"hazard-who-{id}")">@who.Name</CodexCheck>
+                }
+            </div>
+        </fieldset>
+
+        @if (NeedNumber.Count > 0)
+        {
+            <fieldset class="mb-2" data-testid="hazard-numbers">
+                <legend class="field-label">@L["Combat.Hazard.NeedsNumber"]</legend>
+                <p class="small-muted mb-1" id="hazard-number-hint">@L["Combat.Hazard.NeedsNumberHint"]</p>
+                @foreach (var who in NeedNumber)
+                {
+                    var id = who.Id;
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <label for="@($"hazard-number-{id}")" class="field-label mb-0">@L["Combat.Hazard.NumberFor", who.Name]</label>
+                        <input id="@($"hazard-number-{id}")" type="number" class="field-input field-sm" style="max-width: 6rem" aria-describedby="hazard-number-hint"
+                               value="@(typed.TryGetValue(id, out var shownNumber) ? shownNumber.ToString() : null)" @onchange="e => Typed(id, e)" data-testid="@($"hazard-number-{id}")" />
+                    </div>
+                }
+            </fieldset>
+        }
+
+        <ul class="list-unstyled mb-0">
+            @for (var i = 0; i < Hazards.Count; i++)
+            {
+                var hazard = Hazards[i];
+                var at = i;
+                var heading = $"hazard-heading-{at}";
+                <li class="mb-3" data-testid="@($"hazard-{at}")">
+                    <article aria-labelledby="@heading">
+                        <h4 id="@heading" class="h6 mb-1">
+                            @hazard.Name
+                            <span class="pill pill-warning ms-1" data-testid="@($"hazard-{at}-state")"><LucideIcon IconName="@StateIcon(hazard.State)" Size="12" /> @L[$"Combat.Hazard.State.{hazard.State}"]</span>
+                        </h4>
+                        <div class="small-muted mb-1">
+                            @hazard.PlaceName
+                            @if (hazard.Successes > 0)
+                            {
+                                <span> · @L["Combat.Hazard.Successes", hazard.Successes]</span>
+                            }
+                            <span> · @(hazard.NoticedBy.Count == 0 ? L["Combat.Hazard.NoOne"] : L["Combat.Hazard.Noticed", string.Join(", ", hazard.NoticedBy)])</span>
+                        </div>
+
+                        @if (hazard.Site == null)
+                        {
+                            <p class="small-muted mb-0">@L["Combat.Hazard.Gone", hazard.Name]</p>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap gap-2 align-items-end mb-1">
+                                <CodexButton Small="true" Disabled="@(ticked.Count == 0)" data-testid="@($"hazard-{at}-notice")" OnClick="() => SendAsync(hazard, HazardAction.Notice)">@L["Combat.Hazard.Notice", hazard.Name]</CodexButton>
+                                <CodexButton Small="true" Disabled="@(ticked.Count == 0)" data-testid="@($"hazard-{at}-trigger")" OnClick="() => SendAsync(hazard, HazardAction.Trigger)">@L["Combat.Hazard.Trigger", hazard.Name]</CodexButton>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2 align-items-end mb-1">
+                                <div>
+                                    <label for="@($"hazard-{at}-find-way")" class="field-label">@L["Combat.Hazard.FindWay", hazard.Name]</label>
+                                    <select id="@($"hazard-{at}-find-way")" class="field-select field-sm" data-testid="@($"hazard-{at}-find-way")" disabled="@(hazard.Detect.Count == 0)"
+                                            value="@WayOf(detectWay, hazard, hazard.Detect)" @onchange="e => detectWay[hazard.Id] = e.Value?.ToString() ?? string.Empty">
+                                        @foreach (var way in hazard.Detect)
+                                        {
+                                            <option value="@way.Key" selected="@(way.Key == WayOf(detectWay, hazard, hazard.Detect))">@way.Label</option>
+                                        }
+                                    </select>
+                                </div>
+                                <CodexButton Small="true" Disabled="@(ticked.Count == 0 || hazard.Detect.Count == 0)" data-testid="@($"hazard-{at}-find")"
+                                             OnClick="() => SendAsync(hazard, HazardAction.Find, WayOf(detectWay, hazard, hazard.Detect))">@L["Combat.Hazard.Find", hazard.Name]</CodexButton>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2 align-items-end mb-1">
+                                <div>
+                                    <label for="@($"hazard-{at}-disable-way")" class="field-label">@L["Combat.Hazard.DisableWay", hazard.Name]</label>
+                                    <select id="@($"hazard-{at}-disable-way")" class="field-select field-sm" data-testid="@($"hazard-{at}-disable-way")" disabled="@(hazard.Disarm.Count == 0)"
+                                            value="@WayOf(disarmWay, hazard, hazard.Disarm)" @onchange="e => disarmWay[hazard.Id] = e.Value?.ToString() ?? string.Empty">
+                                        @foreach (var way in hazard.Disarm)
+                                        {
+                                            <option value="@way.Key" selected="@(way.Key == WayOf(disarmWay, hazard, hazard.Disarm))">@way.Label</option>
+                                        }
+                                    </select>
+                                </div>
+                                <CodexButton Small="true" Disabled="@(ticked.Count == 0 || hazard.Disarm.Count == 0)" data-testid="@($"hazard-{at}-disable")"
+                                             OnClick="() => SendAsync(hazard, HazardAction.Disable, WayOf(disarmWay, hazard, hazard.Disarm))">@L["Combat.Hazard.Disable", hazard.Name]</CodexButton>
+                            </div>
+
+                            @if (hazard.Waiting > 0)
+                            {
+                                <p class="small-muted mb-1">@L["Combat.Hazard.Waiting", hazard.Waiting]</p>
+                            }
+
+                            @if (hazard.Others.Count > 0)
+                            {
+                                <p class="small-muted mb-1">@L["Combat.Hazard.Others"]: @string.Join(", ", hazard.Others)</p>
+                            }
+
+                            @if (PassesFor == hazard.Id && Passes.Count > 0)
+                            {
+                                <CodexButton Small="true" Variant="CodexButtonVariant.Plaque" data-testid="@($"hazard-{at}-mark")" OnClick="() => MarkAsync(hazard)">
+                                    @L["Combat.Hazard.MarkNoticed", string.Join(", ", Passes.Select(p => NameOf(p.ActorId)).Distinct())]
+                                </CodexButton>
+                            }
+
+                            @if (hazard.CanUndo)
+                            {
+                                <div class="mb-1">
+                                    <CodexButton Small="true" data-testid="@($"hazard-{at}-undo")" OnClick="() => OnUndo.InvokeAsync(hazard)"><LucideIcon IconName="undo-2" Size="14" /> @L["Combat.Hazard.Undo", hazard.Name]</CodexButton>
+                                </div>
+                            }
+
+                            <div class="d-flex flex-wrap gap-2 align-items-end">
+                                <div>
+                                    <label for="@($"hazard-{at}-state-pick")" class="field-label">@L["Combat.Hazard.StateOf", hazard.Name]</label>
+                                    <select id="@($"hazard-{at}-state-pick")" class="field-select field-sm" data-testid="@($"hazard-{at}-state-pick")"
+                                            @onchange="e => stateChoice[hazard.Id] = Enum.Parse<HazardState>(e.Value!.ToString()!)">
+                                        @foreach (var state in Enum.GetValues<HazardState>())
+                                        {
+                                            <option value="@state" selected="@(state == StateChoice(hazard))">@L[$"Combat.Hazard.State.{state}"]</option>
+                                        }
+                                    </select>
+                                </div>
+                                <CodexButton Small="true" data-testid="@($"hazard-{at}-set-state")" OnClick="() => SendAsync(hazard, HazardAction.SetState, null, StateChoice(hazard))">@L["Combat.Hazard.SetState", hazard.Name]</CodexButton>
+                            </div>
+                        }
+                    </article>
+                </li>
+            }
+        </ul>
+        <p class="small-muted mb-0">@L["Combat.Hazard.UndoHint"]</p>
+    }
+</section>
+
+@code {
+    [Parameter] public IReadOnlyList<HazardView> Hazards { get; set; } = Array.Empty<HazardView>();
+    [Parameter] public IReadOnlyList<HazardWho> Who { get; set; } = Array.Empty<HazardWho>();
+    [Parameter] public IReadOnlyList<HazardPlace> Places { get; set; } = Array.Empty<HazardPlace>();
+    [Parameter] public string PlaceId { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnPlaceChanged { get; set; }
+    [Parameter] public EventCallback<HazardRequest> OnRequest { get; set; }
+
+    /// <summary>Takes back the hazard's own last change (not the damage, which each character's Undo takes back).</summary>
+    [Parameter] public EventCallback<HazardView> OnUndo { get; set; }
+
+    /// <summary>What the last action said, line by line, for the status region and the visible result.</summary>
+    [Parameter] public IReadOnlyList<string> Status { get; set; } = Array.Empty<string>();
+
+    /// <summary>Who the last action could do nothing for, for want of a number (a printed creature's save or armor class).</summary>
+    [Parameter] public IReadOnlyList<HazardWho> NeedNumber { get; set; } = Array.Empty<HazardWho>();
+
+    /// <summary>Who passed which route in the last sweep, and the hazard (<see cref="HazardView.Id"/>) it was for.</summary>
+    [Parameter] public IReadOnlyList<HazardPass> Passes { get; set; } = Array.Empty<HazardPass>();
+    [Parameter] public string? PassesFor { get; set; }
+
+    private readonly HashSet<string> ticked = new();
+    private readonly Dictionary<string, int> typed = new();
+    private readonly Dictionary<string, string> detectWay = new();
+    private readonly Dictionary<string, string> disarmWay = new();
+    private readonly Dictionary<string, HazardState> stateChoice = new();
+
+    private string NameOf(string actorId) => Who.FirstOrDefault(w => w.Id == actorId)?.Name ?? actorId;
+
+    private static string StateIcon(HazardState state) => state switch
+    {
+        HazardState.Hidden => "eye-off",
+        HazardState.Noticed => "eye",
+        HazardState.Disabled => "shield-check",
+        _ => "zap"
+    };
+
+    private static string WayOf(Dictionary<string, string> chosen, HazardView hazard, IReadOnlyList<HazardWay> ways) =>
+        chosen.TryGetValue(hazard.Id, out var key) && ways.Any(w => w.Key == key) ? key : ways.FirstOrDefault()?.Key ?? string.Empty;
+
+    private HazardState StateChoice(HazardView hazard) => stateChoice.GetValueOrDefault(hazard.Id, hazard.State);
+
+    private void Tick(string id, ChangeEventArgs e)
+    {
+        if (e.Value is true) ticked.Add(id);
+        else ticked.Remove(id);
+    }
+
+    private void Typed(string id, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var number)) typed[id] = number;
+        else typed.Remove(id);
+    }
+
+    private Task PlaceChosenAsync(ChangeEventArgs e) => OnPlaceChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+
+    // The ticked characters in the order the list shows them: a sweep and a trigger use all of them, a try at one route the first.
+    private List<string> Chosen() => Who.Select(w => w.Id).Where(ticked.Contains).ToList();
+
+    private Task SendAsync(HazardView hazard, HazardAction action, string? route = null, HazardState? state = null)
+    {
+        var chosen = Chosen();
+        var actors = action is HazardAction.Find or HazardAction.Disable ? chosen.Take(1).ToList() : chosen;
+        // A typed number answers one question ("Goblin needs a number") and goes with the next request only, for the creatures that were asked: never to a later
+        // check of another kind (a save bonus used as a Perception bonus, or on another hazard).
+        var asked = NeedNumber.Select(n => n.Id).ToHashSet();
+        var numbers = typed.Where(t => asked.Contains(t.Key)).ToDictionary(t => t.Key, t => t.Value);
+        typed.Clear();
+        return OnRequest.InvokeAsync(new HazardRequest(hazard, action, actors, route, null, state, numbers.Count == 0 ? null : numbers));
+    }
+
+    // The game master marks the characters who passed as having noticed it, and the routes they passed as found.
+    private Task MarkAsync(HazardView hazard) =>
+        OnRequest.InvokeAsync(new HazardRequest(hazard, HazardAction.MarkNoticed, Passes.Select(p => p.ActorId).Distinct().ToList(), null, Passes.Select(p => p.RouteKey).Distinct().ToList()));
+}
