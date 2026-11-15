@@ -168,7 +168,7 @@
       "additionalProperties": {
         "$ref": "#/$defs/WidgetDefinition"
       },
-      "description": "Widgets a DLL supplies (`{ type: \"Acme.Street.Cyberware, Acme.Street\" }`), placed by name in a layout like the host's own (`{ widget: cyberware }`)."
+      "description": "Widgets a DLL supplies (`{ type: \"Acme.Street.Implants, Acme.Street\" }`), placed by name in a layout like the host's own (`{ widget: implants }`)."
     },
     "conditionEffects": {
       "type": "object",
@@ -4125,7 +4125,7 @@
       "additionalProperties": false
     },
     "WidgetDefinition": {
-      "description": "A widget a DLL supplies: Type names an ICodexWidget (`\"Acme.Street.Cyberware, Acme.Street\"`).",
+      "description": "A widget a DLL supplies: Type names an ICodexWidget (`\"Acme.Street.Implants, Acme.Street\"`).",
       "type": "object",
       "properties": {
         "type": {

@@ -538,8 +538,8 @@ public class SystemDefinition
     /// <summary>Named functions, callable from any formula by name.</summary>
     public Dictionary<string, FunctionDefinition> Functions { get; set; } = new();
 
-    /// <summary>Widgets a DLL supplies (<c>{ type: "Acme.Street.Cyberware, Acme.Street" }</c>), placed by name in a layout like
-    /// the host's own (<c>{ widget: cyberware }</c>).</summary>
+    /// <summary>Widgets a DLL supplies (<c>{ type: "Acme.Street.Implants, Acme.Street" }</c>), placed by name in a layout like
+    /// the host's own (<c>{ widget: implants }</c>).</summary>
     public Dictionary<string, WidgetDefinition> Widgets { get; set; } = new();
 
     /// <summary>What a condition or a spell effect does while it holds, by its name in <see cref="Conditions"/> or <see cref="Effects"/>.</summary>

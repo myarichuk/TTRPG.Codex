@@ -2,12 +2,12 @@
 // What a script beside system.yaml is handed and may return. Everything is plain data, made afresh for each call:
 // changing it changes nothing. A script keeps no state between calls, and rolls only through ctx.d.
 
-export type AttributeKey = "BODY" | "WILL" | "REF" | "DEX" | "TECH" | "INT";
-export type TrackKey = "HP" | "Humanity" | "SP_head" | "SP_body" | "DeathPenalty" | "IP" | (string & {});
-export type ValueKey = "HP_Max" | "Humanity_Max" | "EMP" | "SP_head_Max" | "SP_body_Max" | "skills.handgun" | "skills.brawling" | "skills.athletics" | "skills.perception";
-export type ConditionName = "Seriously wounded" | "Mortally wounded";
-export type FunctionName = "hitPoints" | "advanceCost";
-export type RollKey = "check" | "deathSave";
+export type AttributeKey = "might" | "grit" | "speed" | "finesse" | "knack" | "wits";
+export type TrackKey = "Vigor" | "Composure" | "Guard_head" | "Guard_torso" | "Fading" | "XP" | (string & {});
+export type ValueKey = "Vigor_Max" | "Composure_Max" | "rapport" | "Guard_head_Max" | "Guard_torso_Max" | "skills.pistols" | "skills.fistfight" | "skills.running" | "skills.notice";
+export type ConditionName = "Battered" | "Bleeding out";
+export type FunctionName = "vigor" | "advanceCost";
+export type RollKey = "check" | "lastStand";
 export type EventType = "damage" | "turnStart" | "roll" | "advance";
 export type Plain = number | string | boolean | null;
 
@@ -17,15 +17,15 @@ export interface SkillsEntry {
   readonly value?: number;
   readonly [field: string]: Plain | undefined;
 }
-/** One pick of the list "cyberware" (Implants): the entry's id and its per-pick fields. */
-export interface CyberwarePick {
+/** One pick of the list "implants" (Implants): the entry's id and its per-pick fields. */
+export interface ImplantsPick {
   readonly id: string;
   readonly [field: string]: Plain | undefined;
 }
 /** One pick of the list "armor" (Armor): the entry's id and its per-pick fields. */
 export interface ArmorPick {
   readonly id: string;
-  readonly location?: "head" | "body";
+  readonly location?: "head" | "torso";
   readonly [field: string]: Plain | undefined;
 }
 
@@ -37,17 +37,17 @@ export interface Sheet {
   readonly values: { readonly [key in ValueKey]?: number | string };
   /** Each track's current number; a slot track's is what its slots hold. */
   readonly tracks: {
-    readonly HP: number;
-    readonly Humanity: number;
-    readonly SP_head: number;
-    readonly SP_body: number;
-    readonly DeathPenalty: number;
-    readonly IP: number;
+    readonly Vigor: number;
+    readonly Composure: number;
+    readonly Guard_head: number;
+    readonly Guard_torso: number;
+    readonly Fading: number;
+    readonly XP: number;
     readonly [key: string]: number | undefined;
   };
   readonly lists: {
     readonly skills: { readonly [key: string]: SkillsEntry | undefined };
-    readonly cyberware: readonly CyberwarePick[];
+    readonly implants: readonly ImplantsPick[];
     readonly armor: readonly ArmorPick[];
   };
   /** The conditions that hold, those the tracks' thresholds bring included. */
@@ -72,8 +72,8 @@ export type Intent =
   | { mark: { track: TrackKey; by?: number; level?: number; text?: string; actor?: string } }
   | { clear: { track: TrackKey; by?: number; level?: number; text?: string; actor?: string } }
   | { condition: { add: ConditionName; actor?: string } | { remove: ConditionName; actor?: string } }
-  | { set: { list: "skills" | "cyberware" | "armor"; key: string; field: string; to: Plain; actor?: string } }
-  | { adjust: { list: "skills" | "cyberware" | "armor"; key: string; field: string; by: number; actor?: string } }
+  | { set: { list: "skills" | "implants" | "armor"; key: string; field: string; to: Plain; actor?: string } }
+  | { adjust: { list: "skills" | "implants" | "armor"; key: string; field: string; by: number; actor?: string } }
   | { roll: { definition: RollKey; actor?: string; [input: string]: unknown } }
   | { ask: { who: "gm" | "player"; choices: string[] } }
   | { log: { key: string; args?: Plain[] } }
@@ -92,6 +92,6 @@ export type ScriptFunction = (...args: Plain[]) => Value;
 export type Handler = (ev: Event, sheet: Sheet, ctx: Context) => Intent[];
 
 // The exports system.yaml names:
-//   rules.js#hitPoints: function hitPoints (ScriptFunction)
+//   rules.js#vigor: function vigor (ScriptFunction)
 //   rules.js#onDamage: the damage handler (Handler)
 //   rules.js#onAdvance: the advance handler (Handler)

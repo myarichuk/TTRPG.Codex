@@ -2,167 +2,167 @@
 system: ref-street
 
 sheets:
-  edge:
-    kind: operator
-    values: { BODY: 6, WILL: 6, REF: 7, DEX: 6, TECH: 4, INT: 5 }
+  vega:
+    kind: runner
+    values: { might: 7, grit: 6, speed: 7, finesse: 6, knack: 4, wits: 5 }
     lists:
-      skills: { handgun: { level: 4 }, brawling: { level: 3 }, perception: { level: 2 } }
-      cyberware: [{ id: neural-port }, { id: chrome-arm }]
-      armor: [{ id: light-helmet, location: head }, { id: armored-jacket, location: body }]
-    tracks: { HP: 40, Humanity: 39, SP_head: 11, SP_body: 11, DeathPenalty: 0, IP: 120 }
+      skills: { pistols: { level: 4 }, fistfight: { level: 3 }, notice: { level: 2 } }
+      implants: [{ id: jack-socket }, { id: steel-hand }]
+      armor: [{ id: open-helm, location: head }, { id: padded-coat, location: torso }]
+    tracks: { Vigor: 37, Composure: 32, Guard_head: 9, Guard_torso: 9, Fading: 0, XP: 120 }
 
   odd:
-    kind: operator
-    values: { BODY: 5, WILL: 4, REF: 5, DEX: 5, TECH: 5, INT: 5 }
-    tracks: { HP: 35 }
+    kind: runner
+    values: { might: 6, grit: 5, speed: 5, finesse: 5, knack: 5, wits: 5 }
+    tracks: { Vigor: 35 }
 
 expectations:
   # ---- Values (step 2), values over tracks (step 3), a function from a script (step 8) ----
-  - id: street.humanity-is-will-less-what-implants-take
+  - id: street.composure-is-less-what-implants-strain
     step: 2
-    sheet: edge
-    expect: { values: { Humanity_Max: 39 } }
-    why: "Will 6 x 10 = 60, less 7 (neural port) and 14 (chrome arm)."
+    sheet: vega
+    expect: { values: { Composure_Max: 32 } }
+    why: "Grit 6 x 6 + Wits 5 x 2 = 46, less 5 (jack socket) and 9 (steel hand)."
   - id: street.armor-is-per-location
     step: 2
-    sheet: edge
-    expect: { values: { SP_head_Max: 11, SP_body_Max: 11 } }
-  - id: street.a-skill-is-its-stat-plus-its-level
+    sheet: vega
+    expect: { values: { Guard_head_Max: 9, Guard_torso_Max: 9 } }
+  - id: street.a-skill-is-its-trait-plus-its-level
     step: 2
-    sheet: edge
-    expect: { values: { skills.handgun: 11, skills.athletics: 6 } }
-    why: "Reflexes 7 + 4; Athletics untrained: Dexterity 6 + 0."
-  - id: street.emp-follows-current-humanity
+    sheet: vega
+    expect: { values: { skills.pistols: 11, skills.running: 6 } }
+    why: "Speed 7 + 4; Running untrained: Finesse 6 + 0."
+  - id: street.rapport-follows-current-composure
     step: 3
-    sheet: edge
-    with: { tracks: { Humanity: 29 } }
-    expect: { values: { EMP: 2 } }
-    why: "floor(29 / 10). A derived value reads a track's current value, not only the sheet's numbers."
-  - id: street.hit-points-come-from-a-script-function
+    sheet: vega
+    with: { tracks: { Composure: 29 } }
+    expect: { values: { rapport: 4 } }
+    why: "floor(29 / 6). A derived value reads a track's current value, not only the sheet's numbers."
+  - id: street.vigor-comes-from-a-script-function
     step: 8
-    sheet: edge
-    expect: { values: { HP_Max: 40 } }
-    why: "10 + 5 x ceil((6 + 6) / 2) = 40."
-  - id: street.hit-points-round-the-average-up
+    sheet: vega
+    expect: { values: { Vigor_Max: 37 } }
+    why: "20 + 2 x 7 + ceil(6 / 2) = 37."
+  - id: street.vigor-rounds-half-of-grit-up
     step: 8
     sheet: odd
-    expect: { values: { HP_Max: 35 } }
-    why: "10 + 5 x ceil(4.5) = 35."
+    expect: { values: { Vigor_Max: 35 } }
+    why: "20 + 2 x 6 + ceil(2.5) = 35."
 
   # ---- Thresholds that add effects (step 3) ----
-  - id: street.half-hit-points-is-seriously-wounded
+  - id: street.a-third-of-vigor-is-battered
     step: 3
     sheet: odd
-    with: { tracks: { HP: 17 } }
-    expect: { conditions: [Seriously wounded] }
-    why: "div(35, 2) = 17: at or below 17. The half rounds down in every supplier."
-  - id: street.just-above-half-is-not
+    with: { tracks: { Vigor: 11 } }
+    expect: { conditions: [Battered] }
+    why: "div(35, 3) = 11: at or below 11. The third rounds down in every supplier."
+  - id: street.just-above-a-third-is-not
     step: 3
-    requires: [street.half-hit-points-is-seriously-wounded]
+    requires: [street.a-third-of-vigor-is-battered]
     sheet: odd
-    with: { tracks: { HP: 18 } }
+    with: { tracks: { Vigor: 12 } }
     expect: { conditions: [] }
   - id: street.below-zero-is-both
     step: 3
-    sheet: edge
-    with: { tracks: { HP: -1 } }
-    expect: { conditions: [Seriously wounded, Mortally wounded] }
+    sheet: vega
+    with: { tracks: { Vigor: -1 } }
+    expect: { conditions: [Battered, Bleeding out] }
     why: "Thresholds add up; unlike bands, more than one holds at once."
 
-  # ---- Rolls: explode once, implode once, a wound penalty, roll-under (step 4) ----
-  - id: street.a-check-adds-stat-skill-and-die
+  # ---- Rolls: explode once, implode once, a penalty from a state, roll-under (step 4) ----
+  - id: street.a-check-adds-trait-skill-and-die
     step: 4
-    sheet: edge
-    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [7] }
+    sheet: vega
+    roll: { definition: check, inputs: { skill: pistols, difficulty: 15 }, dice: [7] }
     expect: { outcome: success, total: 18 }
-  - id: street.a-ten-explodes-once
+  - id: street.a-twelve-explodes-once
     step: 4
-    sheet: edge
-    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [10, 4] }
-    expect: { outcome: success, total: 25, diceUsed: 2 }
-    why: "11 + 10 + 4."
-  - id: street.the-second-ten-does-not-explode
+    sheet: vega
+    roll: { definition: check, inputs: { skill: pistols, difficulty: 15 }, dice: [12, 4] }
+    expect: { outcome: success, total: 27, diceUsed: 2 }
+    why: "11 + 12 + 4."
+  - id: street.the-second-twelve-does-not-explode
     step: 4
-    sheet: edge
-    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [10, 10, 10] }
-    expect: { outcome: success, total: 31, diceUsed: 2 }
-    why: "11 + 10 + 10; the third die is never rolled."
+    sheet: vega
+    roll: { definition: check, inputs: { skill: pistols, difficulty: 15 }, dice: [12, 12, 12] }
+    expect: { outcome: success, total: 35, diceUsed: 2 }
+    why: "11 + 12 + 12; the third die is never rolled."
   - id: street.a-one-implodes-once
     step: 4
-    sheet: edge
-    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [1, 6] }
+    sheet: vega
+    roll: { definition: check, inputs: { skill: pistols, difficulty: 15 }, dice: [1, 6] }
     expect: { outcome: failure, total: 6, diceUsed: 2 }
     why: "11 + 1 - 6."
-  - id: street.a-serious-wound-takes-two-from-every-check
+  - id: street.battered-takes-three-from-every-check
     step: 4
-    sheet: edge
-    with: { tracks: { HP: 20 } }
-    roll: { definition: check, inputs: { skill: handgun, difficulty: 15 }, dice: [5] }
-    expect: { outcome: failure, total: 14 }
-    why: "HP 20 of 40 is at half: 11 + 5 - 2 = 14."
-  - id: street.a-death-save-is-rolled-under-body
+    sheet: vega
+    with: { tracks: { Vigor: 12 } }
+    roll: { definition: check, inputs: { skill: pistols, difficulty: 15 }, dice: [5] }
+    expect: { outcome: failure, total: 13 }
+    why: "Vigor 12 of 37 is at a third (div(37, 3) = 12): 11 + 5 - 3 = 13."
+  - id: street.a-last-stand-is-rolled-under-grit
     step: 4
-    sheet: edge
-    with: { tracks: { DeathPenalty: 1 } }
-    roll: { definition: deathSave, dice: [5] }
-    expect: { outcome: success, total: 6 }
-    why: "5 + penalty 1 = 6, at or under Body 6."
-  - id: street.a-death-save-over-body-fails
+    sheet: vega
+    with: { tracks: { Fading: 1 } }
+    roll: { definition: lastStand, dice: [9] }
+    expect: { outcome: success, total: 10 }
+    why: "9 + Fading 1 = 10, at or under Grit 6 + 4."
+  - id: street.a-last-stand-over-the-mark-fails
     step: 4
-    sheet: edge
-    with: { tracks: { DeathPenalty: 1 } }
-    roll: { definition: deathSave, dice: [6] }
-    expect: { outcome: failure, total: 7 }
+    sheet: vega
+    with: { tracks: { Fading: 1 } }
+    roll: { definition: lastStand, dice: [10] }
+    expect: { outcome: failure, total: 11 }
 
   # ---- Events: declared handlers (step 5) and scripted ones (step 8) ----
-  - id: street.mortally-wounded-rolls-a-death-save-each-turn
+  - id: street.bleeding-out-rolls-a-last-stand-each-turn
     step: 5
-    sheet: edge
-    with: { tracks: { HP: -2 } }
+    sheet: vega
+    with: { tracks: { Vigor: -2 } }
     event: { type: turnStart }
-    expect: { intents: [{ roll: { definition: deathSave } }] }
-  - id: street.each-death-save-raises-the-penalty
+    expect: { intents: [{ roll: { definition: lastStand } }] }
+  - id: street.each-last-stand-raises-fading
     step: 5
-    sheet: edge
-    with: { tracks: { HP: -2, DeathPenalty: 1 } }
-    event: { type: roll, definition: deathSave, outcome: success }
-    expect: { after: { tracks: { DeathPenalty: 2 } } }
+    sheet: vega
+    with: { tracks: { Vigor: -2, Fading: 1 } }
+    event: { type: roll, definition: lastStand, outcome: success }
+    expect: { after: { tracks: { Fading: 2 } } }
   - id: street.damage-through-armor-wears-it-down
     step: 8
-    sheet: edge
-    event: { type: damage, amount: 15, location: body }
+    sheet: vega
+    event: { type: damage, amount: 15, location: torso }
     expect:
-      intents: [{ adjust: { track: HP, by: -4 } }, { adjust: { track: SP_body, by: -1 } }]
-      after: { tracks: { HP: 36, SP_body: 10 } }
-  - id: street.a-head-hit-doubles-what-gets-through
+      intents: [{ adjust: { track: Vigor, by: -6 } }, { adjust: { track: Guard_torso, by: -2 } }]
+      after: { tracks: { Vigor: 31, Guard_torso: 7 } }
+  - id: street.a-head-hit-adds-three-to-what-gets-through
     step: 8
-    sheet: edge
+    sheet: vega
     event: { type: damage, amount: 15, location: head }
-    expect: { after: { tracks: { HP: 32, SP_head: 10 } } }
-    why: "(15 - 11) x 2 = 8."
-  - id: street.armor-stops-damage-up-to-its-stopping-power
+    expect: { after: { tracks: { Vigor: 28, Guard_head: 7 } } }
+    why: "15 - 9 + 3 = 9."
+  - id: street.armor-stops-damage-up-to-its-guard
     step: 8
-    sheet: edge
-    event: { type: damage, amount: 9, location: body }
-    expect: { intents: [{ log: { key: damage.stopped, args: [9, 11] } }], after: { tracks: { HP: 40, SP_body: 11 } } }
+    sheet: vega
+    event: { type: damage, amount: 8, location: torso }
+    expect: { intents: [{ log: { key: damage.stopped, args: [8, 9] } }], after: { tracks: { Vigor: 37, Guard_torso: 9 } } }
   - id: street.thresholds-follow-the-intents
     step: 8
-    sheet: edge
-    with: { tracks: { HP: 24 } }
-    event: { type: damage, amount: 15, location: body }
-    expect: { after: { tracks: { HP: 20 }, conditions: [Seriously wounded] } }
-    why: "24 - 4 = 20, at half of 40. The script only adjusts HP; the host applies the threshold."
-  - id: street.advancing-a-skill-spends-improvement-points
+    sheet: vega
+    with: { tracks: { Vigor: 18 } }
+    event: { type: damage, amount: 15, location: torso }
+    expect: { after: { tracks: { Vigor: 12 }, conditions: [Battered] } }
+    why: "18 - 6 = 12, at a third of 37. The script only adjusts Vigor; the host applies the threshold."
+  - id: street.advancing-a-skill-spends-experience
     step: 8
-    sheet: edge
-    event: { type: advance, skill: handgun }
-    expect: { after: { tracks: { IP: 20 }, values: { skills.handgun: 12 } } }
-    why: "Handgun 4 to 5 costs 20 x 5 = 100 of 120."
+    sheet: vega
+    event: { type: advance, skill: pistols }
+    expect: { after: { tracks: { XP: 35 }, values: { skills.pistols: 12 } } }
+    why: "Pistols 4 to 5 costs 10 + 15 x 5 = 85 of 120."
   - id: street.advancing-without-the-points-changes-nothing
     step: 8
-    sheet: edge
-    with: { tracks: { IP: 60 } }
-    event: { type: advance, skill: handgun }
+    sheet: vega
+    with: { tracks: { XP: 60 } }
+    event: { type: advance, skill: pistols }
     expect:
-      intents: [{ log: { key: advance.notEnoughPoints, args: [handgun, 100, 60] } }]
-      after: { tracks: { IP: 60 }, values: { skills.handgun: 11 } }
+      intents: [{ log: { key: advance.notEnoughPoints, args: [pistols, 85, 60] } }]
+      after: { tracks: { XP: 60 }, values: { skills.pistols: 11 } }

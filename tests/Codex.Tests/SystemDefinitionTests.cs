@@ -145,7 +145,7 @@ public class SystemDefinitionTests
                 - key: slots
                   combine: { weights: { full: 1 }, roundng: up }
             values:
-              - { key: EMP, formula: "floor(Humanity / 10)", reads: [Humanity] }
+              - { key: rapport, formula: "floor(Composure / 6)", reads: [Composure] }
             """;
         var unknown = new List<string>();
 
@@ -177,13 +177,13 @@ public class SystemDefinitionTests
               slotPools:
                 - { key: slots, combine: { weights: { full: 1, third: 0.33 } } }
             widgets:
-              cyberware: { type: "Acme.Street.Cyberware, Acme.Street", lable: x }
+              implants: { type: "Acme.Street.Implants, Acme.Street", lable: x }
             """;
         var unknown = new List<string>();
 
         SystemDefinitionLoader.Parse(yaml, null, unknown);
 
-        Assert.Equal(new[] { "widgets.cyberware.lable" }, unknown);
+        Assert.Equal(new[] { "widgets.implants.lable" }, unknown);
     }
 
     [Fact]

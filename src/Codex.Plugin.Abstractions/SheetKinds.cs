@@ -532,7 +532,7 @@ public sealed class CampaignTableDefinition
     public string Visibility { get; set; } = "players";
 }
 
-/// <summary>A widget a DLL supplies: <see cref="Type"/> names an <see cref="ICodexWidget"/> (<c>"Acme.Street.Cyberware,
+/// <summary>A widget a DLL supplies: <see cref="Type"/> names an <see cref="ICodexWidget"/> (<c>"Acme.Street.Implants,
 /// Acme.Street"</c>).</summary>
 public sealed class WidgetDefinition
 {

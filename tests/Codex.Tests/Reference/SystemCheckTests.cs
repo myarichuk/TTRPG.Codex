@@ -20,7 +20,7 @@ public class SystemCheckTests
         Assert.Equal(0, exit);
         Assert.DoesNotContain("PROBLEM", output.ToString());
         Assert.Contains("LOADED  ref-street", output.ToString());
-        Assert.Contains("PASS    street.advancing-a-skill-spends-improvement-points", output.ToString());
+        Assert.Contains("PASS    street.advancing-a-skill-spends-experience", output.ToString());
         Assert.EndsWith("24 of 24 expectations pass; 0 fail." + Environment.NewLine, output.ToString());
     }
 
