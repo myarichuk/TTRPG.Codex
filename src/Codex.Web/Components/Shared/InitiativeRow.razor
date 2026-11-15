@@ -105,8 +105,9 @@
     @{
         var effects = (State?.Effects ?? Array.Empty<EffectSnapshot>()).Where(e => !IsVitalsMarker(e.EffectId)).ToList();
         var exhaustion = Vitals?.Exhaustion is { } exhaustionRules ? State?.Pool(exhaustionRules.Key) ?? 0 : 0;
+        var onSheet = OnlyOnSheet;
     }
-    @if (effects.Count > 0 || exhaustion > 0)
+    @if (effects.Count > 0 || exhaustion > 0 || onSheet.Count > 0)
     {
         <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Name])">
             @if (exhaustion > 0)
@@ -128,6 +129,18 @@
                     @if (IsDm)
                     {
                         <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@(L["Combat.RemoveCondition", effectId, Name])" OnClick="() => OnRemoveCondition.InvokeAsync(effectId)" />
+                    }
+                </li>
+            }
+            @* Set on the sheet page before the table ran: it counts at the table, lasts until removed, and the same × takes it off the sheet. *@
+            @foreach (var sheetCondition in onSheet)
+            {
+                <li class="cond-chip" data-testid="condition-badge" data-effect-id="@sheetCondition" data-on-sheet="true" title="@L["Combat.SetOnSheet"]">
+                    <DomainIcon Domain="condition" Key="@sheetCondition" Size="DomainIconSize.Small" />
+                    @ConditionLabel(sheetCondition, ConditionName(sheetCondition))
+                    @if (IsDm)
+                    {
+                        <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@(L["Combat.RemoveCondition", ConditionName(sheetCondition), Name])" OnClick="() => OnRemoveCondition.InvokeAsync(sheetCondition)" />
                     }
                 </li>
             }
@@ -190,6 +203,11 @@
         ActorKind.Monster => "token-monster",
         _ => "token-npc",
     };
+
+    /// <summary>The sheet's own conditions the table holds no status for (set on the sheet page before the table ran), without the row's state markers
+    /// and the valued conditions, which show by their value.</summary>
+    private IReadOnlyList<string> OnlyOnSheet =>
+        (State?.OnlyOnSheet ?? Array.Empty<string>()).Where(c => !IsVitalsMarker(c) && ConditionLines.ValuedNamed(Definition, null, c) == null).ToList();
 
     /// <summary>Dead, stable and down are shown as the row's state, not as conditions in the list.</summary>
     private bool IsVitalsMarker(string effectId) =>

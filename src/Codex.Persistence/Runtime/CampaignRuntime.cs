@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Threading.Channels;
 using Codex.Core;
 using Codex.Core.Components;
+using Codex.Core.Rules;
 using Codex.Plugin.Abstractions;
 using Codex.Plugin.Abstractions.Dice;
 using DefaultEcs;
@@ -1096,7 +1097,10 @@ public sealed class CampaignRuntime : IAsyncDisposable
             IReadOnlyList<EffectSnapshot> effects = entity.Has<ActiveEffectsComponent>()
                 ? entity.Get<ActiveEffectsComponent>().Effects.Select(e => new EffectSnapshot(e.EffectId, e.SourceId, e.RoundsRemaining, e.Expiry, e.HeldBy)).ToArray()
                 : Array.Empty<EffectSnapshot>();
-            actors[actorId] = new ActorStateSnapshot(pools, effects, UndoableKind(actorId, entity), TableRules.IsDead(this, entity), TableRules.IsDown(this, entity));
+            IReadOnlyList<string>? sheetConditions = _actorDocs.TryGetValue(actorId, out var doc)
+                ? SheetRuleEngine.RawList(doc.Sheet, SheetModel.ConditionsKey).ToArray()
+                : null;
+            actors[actorId] = new ActorStateSnapshot(pools, effects, UndoableKind(actorId, entity), TableRules.IsDead(this, entity), TableRules.IsDown(this, entity), sheetConditions);
         }
 
         _snapshot = new RuntimeSnapshot(

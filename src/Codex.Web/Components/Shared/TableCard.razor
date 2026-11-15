@@ -56,7 +56,7 @@
         </div>
     }
 
-    @if (Effects.Count > 0)
+    @if (Effects.Count > 0 || OnlyOnSheet.Count > 0)
     {
         <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Actor.Name])">
             @foreach (var effect in Effects)
@@ -64,6 +64,13 @@
                 <li class="cond-chip" data-testid="table-card-condition">
                     <DomainIcon Domain="condition" Key="@effect.EffectId" Size="DomainIconSize.Small" />
                     @(effect.IsIndefinite ? ConditionName(effect.EffectId) : $"{ConditionName(effect.EffectId)} ({effect.RoundsRemaining})")
+                </li>
+            }
+            @foreach (var sheetCondition in OnlyOnSheet)
+            {
+                <li class="cond-chip" data-testid="table-card-condition" data-on-sheet="true" title="@L["Combat.SetOnSheet"]">
+                    <DomainIcon Domain="condition" Key="@sheetCondition" Size="DomainIconSize.Small" />
+                    @ConditionName(sheetCondition)
                 </li>
             }
         </ul>
@@ -253,6 +260,15 @@
 
     private string ConditionName(string condition) => Definition?.DisplayCondition(condition) ?? condition;
 
+    /// <summary>The sheet's own conditions the table holds no status for (set on the sheet page before the table ran), without the card's state and the
+    /// valued conditions, which the card shows elsewhere.</summary>
+    private List<string> OnlyOnSheet => (State?.OnlyOnSheet ?? Array.Empty<string>())
+        .Where(c => (Vitals?.Down is not { } down || !(string.Equals(c, down.DeadCondition, StringComparison.OrdinalIgnoreCase)
+                                                    || string.Equals(c, down.StableCondition, StringComparison.OrdinalIgnoreCase)
+                                                    || string.Equals(c, down.Condition, StringComparison.OrdinalIgnoreCase)))
+                    && ConditionLines.ValuedNamed(Definition, null, c) == null)
+        .ToList();
+
     /// <summary>The line under the name: the fields the system calls a summary (level, species, class).</summary>
     private string Summary =>
         Definition == null ? string.Empty : string.Join(", ", Definition.FieldRoles.Summary
@@ -352,7 +368,7 @@
     private Dictionary<string, object> LiveSheet() =>
         Definition == null
             ? new Dictionary<string, object>(Actor.Sheet)
-            : SheetConditions.LiveView(Definition, Actor.Sheet, State?.Pools, State?.Effects.Select(e => e.EffectId));
+            : State?.LiveView(Definition, Actor.Sheet) ?? SheetConditions.LiveView(Definition, Actor.Sheet, null, null);
 
     private async Task RollAsync(ActionRoll roll)
     {

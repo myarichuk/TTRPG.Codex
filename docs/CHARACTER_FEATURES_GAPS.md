@@ -179,8 +179,9 @@ Conditions (SHEET_CONDITIONS_DESIGN.md, built in C1 to C7):
 - Most SRD conditions still change no numbers: they work through advantage, disadvantage, auto-fail or "can't act", which the
   engine has no word for (Blinded, Frightened, Poisoned, Prone, Restrained and the rest).
 - A monster's numbers are not changed by conditions; its stat block is not evaluated.
-- Only Exhaustion has a badge on the initiative row. A condition set on the sheet page counts at the table but is not shown on
-  the row and cannot be removed there.
+- A condition set on the sheet page shows on the initiative row and the card, and the GM's × takes it off the sheet too (undoable).
+  The sheet page does not redraw when the table changes; it shows the change on its next render.
+- Only Exhaustion has a level badge on the initiative row; other valued conditions show their level only in the GM's steppers.
 - Raising Exhaustion to 6 on the sheet page does not kill the character; that rule runs only at the table.
 
 Join review:
