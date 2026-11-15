@@ -1121,7 +1121,7 @@ A system's guidance for how hard a hazard of each level is, for the homebrew wiz
 
 | Key | Type | What it is |
 |---|---|---|
-| `scaling` | list of map of text (a number is text too) | Rows by level: each is `{ level: 5, saveDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused. |
+| `scaling` | list of map of text (a number is text too) | Rows by level: each is `{ level: 5, saveDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. The homebrew wizard fills a new hazard's numbers from it, and the world builder refuses a proposed hazard whose numbers are more than one row away from its level (`HazardNumbers.ScalingProblems`); a hazard written by hand is never refused. |
 
 ## RollDefinition
 

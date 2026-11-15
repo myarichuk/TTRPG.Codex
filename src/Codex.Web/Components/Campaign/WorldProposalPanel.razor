@@ -563,6 +563,11 @@
         {
             <p><LucideIcon IconName="tag" Size="14" /> @L["WorldChat.Proposal.BecomesKind", L[$"Campaign.Places.Kind.{char.ToUpperInvariant(d.PlaceKind[0]) + d.PlaceKind[1..]}"]]</p>
         }
+
+        if (d is { Kind: DraftKinds.Place, Feature.HazardName: { } hazardName })
+        {
+            <p data-testid="world-proposal-hazard"><LucideIcon IconName="alert-triangle" Size="14" /> @L["WorldChat.Proposal.Hazard", hazardName]</p>
+        }
     };
 
     // What an edit does to a text: the changes marked word by word, the new text as it will read, or the text as it is now.

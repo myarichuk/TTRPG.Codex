@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Codex.Core;
 using Codex.Core.AI;
+using Codex.Core.Systems;
 using Codex.Core.WorldBuilder;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
@@ -39,7 +40,7 @@ public sealed partial class WorldBuilderService
         var culture = Lang;
         var rules = new ProposalRules(spellings, pages, places, key => fields.GetValueOrDefault(key) ?? Array.Empty<FieldSpec>(),
             system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds, brewKeys,
-            regionNames, factNames);
+            regionNames, factNames, HazardTypeOf(system));
         var check = WorldBundleParser.ParseProposal(json, rules);
 
         await FindStatsAsync(campaign, access, check.Bundle);
@@ -55,6 +56,7 @@ public sealed partial class WorldBuilderService
         }
 
         editErrors.AddRange(await VariantsAsync(campaign, access, check.Bundle));
+        editErrors.AddRange(await HazardsAsync(campaign, access, system, check.Bundle));
         editErrors.AddRange(await PicksAsync(campaign, access, check.Bundle));
         FillTagged(check.Bundle, (await wiki.GetVisibleForCampaignAsync(access)).ToList(), brews);
         var warnings = check.Warnings.ToList();
@@ -68,6 +70,56 @@ public sealed partial class WorldBuilderService
 
     /// <summary>Names each edit after what it changes and keeps that text as it is now, for the review card to show beside the new
     /// one, and notes when players can already read it (applying the edit changes what they see at once).</summary>
+    /// <summary>The system's hazard type (HAZARDS_DESIGN.md 5), or null when it has none: then a place's hazard is ignored and its trap stays text.</summary>
+    internal static string? HazardTypeOf(SystemDefinition? system) => system?.Canonical.EntityTypes.FirstOrDefault(t => t.Hazard != null)?.Type;
+
+    /// <summary>What is wrong with the hazards a proposal makes or places: a homebrew hazard (new, or an edit's result) is held to the shape's loader checks and to
+    /// <c>hazards.scaling</c>, and a Library hazard on a feature must be in the Library. These are errors, so a hazard out of range never reaches the review: the
+    /// model sees the problem (and the game master sees it in the step) and proposes again. Fills the name of a Library hazard for the review card.</summary>
+    private async Task<List<string>> HazardsAsync(CampaignDocument campaign, CampaignAccess access, SystemDefinition? system, WorldBundle bundle)
+    {
+        var errors = new List<string>();
+        if (HazardTypeOf(system) is not { } hazardType || system!.Canonical.FindType(hazardType) is not { } type) return errors;
+
+        void Judge(WorldDraft draft, Dictionary<string, object> properties)
+        {
+            var entry = new ContentEntry { Id = draft.Ref, Type = hazardType, Name = draft.Name, Properties = properties };
+            foreach (var problem in HazardNumbers.Problems(entry, type, system.Canonical).Concat(HazardNumbers.ScalingProblems(entry, type, system.Canonical)))
+            {
+                errors.Add($"{draft.Ref} ({draft.Kind} '{draft.Name}'): {problem}");
+            }
+        }
+
+        foreach (var draft in bundle.Drafts.Where(d => d is { Kind: DraftKinds.Homebrew } && string.Equals(d.Type, hazardType, StringComparison.OrdinalIgnoreCase)))
+        {
+            Judge(draft, draft.Properties);
+        }
+
+        foreach (var draft in bundle.Drafts.Where(d => d is { Kind: DraftKinds.Edit, Properties.Count: > 0, BeforeProperties: not null } && string.Equals(d.Type, hazardType, StringComparison.OrdinalIgnoreCase)))
+        {
+            var merged = new Dictionary<string, object>(draft.BeforeProperties!);
+            foreach (var (key, value) in draft.Properties) merged[key] = value;
+            Judge(draft, merged);
+        }
+
+        foreach (var draft in bundle.Drafts.Where(d => d is { Kind: DraftKinds.Place, Feature.HazardEntry: not null, Feature.HazardIsHomebrew: false }))
+        {
+            var key = draft.Feature!.HazardEntry!;
+            var parts = new[] { hazardType, key.Split('/')[1] };
+            var item = await library.GetAsync(campaign, access, parts[0], parts[1]);
+            if (item == null)
+            {
+                errors.Add($"{draft.Ref} (place '{draft.Name}'): hazard '{key}' is not in the Library; use {hazardType}/<id> as search_library lists it, or propose a homebrew {hazardType} entry and give its ref.");
+                continue;
+            }
+
+            draft.Feature.HazardEntry = $"{parts[0]}/{parts[1]}";
+            draft.Feature.HazardName = (await library.GetAsync(campaign, access, parts[0], parts[1], Lang))?.Entry.Name ?? item.Entry.Name;
+        }
+
+        return errors;
+    }
+
     private async Task<List<string>> FillEditsAsync(WorldBundle bundle, CampaignAccess access)
     {
         var errors = new List<string>();

@@ -576,6 +576,19 @@ public sealed partial class WorldBuilderService
             return new List<(WorldDraft, LocationDocument)>();
         }
 
+        // A hazard made by this proposal is placed once its homebrew entry is stored (homebrew is saved before places); a hazard whose entry was
+        // not ticked (so not made) is left off the place.
+        var madeHazards = ticked.Any(d => d.Feature?.HazardRef != null)
+            ? (await homebrew.GetVisibleForCampaignAsync(access)).GroupBy(h => h.Id).ToDictionary(g => g.Key, g => g.First())
+            : new Dictionary<string, HomebrewEntryDocument>();
+        PlacedHazard? HazardOf(DraftFeature feature)
+        {
+            if (feature.HazardEntry != null) return new PlacedHazard { Entry = feature.HazardEntry, IsHomebrew = feature.HazardIsHomebrew };
+            return feature.HazardRef is { } made && bundle.Find(made) is { } draft && draft.SavedAs.TryGetValue("homebrew", out var id) && madeHazards.TryGetValue(id, out var entry)
+                ? new PlacedHazard { Entry = $"{entry.Type}/{entry.EntryId}", IsHomebrew = true }
+                : null;
+        }
+
         var all = (await regions.GetVisibleForCampaignAsync(access)).ToList();
         var regionOfPlace = all.SelectMany(r => r.Locations.Select(p => (p.Id, Region: r))).GroupBy(p => p.Id).ToDictionary(g => g.Key, g => g.First().Region);
         var existingPlaces = all.SelectMany(r => r.Locations).GroupBy(p => p.Id).ToDictionary(g => g.Key, g => g.First());
@@ -633,7 +646,9 @@ public sealed partial class WorldBuilderService
                     Feature = draft.Feature is { } feature
                         ? PlaceFeature.Tidy(new PlaceFeature
                         {
-                            Container = feature.Container, Lock = feature.Lock, Trap = feature.Trap, Concealment = feature.Concealment, Contents = feature.Contents, Creature = feature.Creature
+                            Container = feature.Container, Lock = feature.Lock, Trap = feature.Trap, Concealment = feature.Concealment, Contents = feature.Contents, Creature = feature.Creature,
+                            // Hidden, as a placement starts (HazardState.Hidden): nothing about it reaches a player.
+                            Hazard = HazardOf(feature)
                         })
                         : null,
                     // The page written for this draft is the place's page.

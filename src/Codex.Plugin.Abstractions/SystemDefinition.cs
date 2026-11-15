@@ -297,7 +297,8 @@ public class HazardDurability
 public class HazardRules
 {
     /// <summary>Rows by level: each is <c>{ level: 5, saveDc: 15, damage: 4d10, ... }</c> with the other keys naming fields of the
-    /// hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused.</summary>
+    /// hazard type. The row with the highest level not above the hazard's applies. The homebrew wizard fills a new hazard's numbers from it, and the world builder
+    /// refuses a proposed hazard whose numbers are more than one row away from its level (<c>HazardNumbers.ScalingProblems</c>); a hazard written by hand is never refused.</summary>
     public List<Dictionary<string, string>> Scaling { get; set; } = new();
 }
 

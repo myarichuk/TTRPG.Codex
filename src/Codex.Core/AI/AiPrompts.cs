@@ -133,7 +133,12 @@ public sealed record WorldChatRequest(
     string? Language = null,
     string Creature = "creature",
     IReadOnlyList<string>? CreatureExamples = null,
-    IReadOnlyDictionary<string, string>? Outlines = null);
+    IReadOnlyDictionary<string, string>? Outlines = null,
+    WorldChatHazards? Hazards = null);
+
+/// <summary>What the chat tells the model about a system's hazards: the homebrew type that is a hazard, its level field, and the fields
+/// <c>hazards.scaling</c> has a column for. Field names only; the table's numbers are never given.</summary>
+public sealed record WorldChatHazards(string Type, string? LevelField, IReadOnlyList<string> ScaledFields);
 
 /// <summary>An item a character may carry: its Library id and the name a model knows it by.</summary>
 public sealed record EquipmentOption(string Id, string Name);
@@ -623,6 +628,17 @@ public static class AiPrompts
         sb.Append($"A person who fights or is fought may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose statistics suit them " +
                   $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as search_library finds it; leave it out when none fits. ");
         if (r.HomebrewTypes.Count > 0) sb.Append($"Homebrew types: {string.Join(", ", r.HomebrewTypes)}. ");
+        if (r.Hazards is { } hazards)
+        {
+            // One line: this system has a hazard shape and a scaling table. Field names only; the numbers stay the model's own and propose_changes keeps them in range.
+            sb.Append($"This system has hazards (type \"{hazards.Type}\"): a trap or other danger the table rolls goes on a feature as \"hazard\", a Library {hazards.Type} as {hazards.Type}/<id> or the ref of a homebrew {hazards.Type} " +
+                      "entry in the same proposal (read homebrew_fields first), and \"trap\" is left for notes. " +
+                      (hazards.ScaledFields.Count > 0
+                          ? $"Give a homebrew {hazards.Type} the party's level{(hazards.LevelField != null ? $" in \"{hazards.LevelField}\"" : "")} and write its {string.Join(", ", hazards.ScaledFields.Select(f => $"\"{f}\""))} in proportion to a hazard of that level: propose_changes refuses numbers far out of range for the level and says which to raise or lower. "
+                          : string.Empty) +
+                      "Every row of a list field (detect, disarm, damage and the like) needs a \"name\"; write the trigger and reset as short rules text. ");
+        }
+
         var language = LanguageName(r.Language);
         sb.Append(language == "English"
             ? Style

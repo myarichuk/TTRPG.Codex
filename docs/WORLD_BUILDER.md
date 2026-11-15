@@ -50,6 +50,10 @@ memories; secrets only where a plot lives in them, each as a `fact` linked to wh
 from CampaignVault's seeding guidance.) It also asks for two to five tags on every new page and homebrew entry, reusing the
 campaign's own.
 
+On a system with a hazard type (srd5e), a place's `feature` also takes `"hazard"`: a Library hazard, an existing homebrew one or the ref of a homebrew hazard in the same proposal. A homebrew
+hazard is checked against the system's `hazards.scaling` and the shape's loader checks before the GM sees the proposal, and is refused with its problem when out of range; a system without a
+hazard type keeps the free-text `trap`. See HAZARDS_DESIGN.md, section 11 (H6).
+
 Models that cannot call tools get a clear message (`WorldChat.Error.NoTools`).
 
 ### Prompt caching

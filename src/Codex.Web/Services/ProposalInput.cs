@@ -120,6 +120,9 @@ public sealed class ProposalFeature
     [JsonPropertyName("trap"), Description("What it does to whoever opens it carelessly, and how to spot and disarm it.")]
     public string? Trap { get; set; }
 
+    [JsonPropertyName("hazard"), Description("Only where the system has a hazard type: a trap or other danger the table can roll. A Library hazard as type/id (as search_library lists it), an existing homebrew one as existing:homebrew:type/id, or the ref of a homebrew hazard entry in this proposal.")]
+    public string? Hazard { get; set; }
+
     [JsonPropertyName("concealment"), Description("How it is hidden (a false wall, an illusion) and how it is found.")]
     public string? Concealment { get; set; }
 

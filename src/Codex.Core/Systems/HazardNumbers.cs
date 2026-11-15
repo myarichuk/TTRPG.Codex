@@ -162,6 +162,87 @@ public static class HazardNumbers
         }
     }
 
+    /// <summary>
+    /// Where a hazard's numbers stand against the system's <c>hazards.scaling</c> (HAZARDS_DESIGN.md 3.2), for a hazard the world builder proposes: one message for
+    /// each scaled number (a column of the table the hazard also has, such as a save DC, or its damage) more than one row away from the row for the
+    /// hazard's level, and one when a hazard with scaled numbers has no level to read. The level is the lowest whole number in the entry's level field
+    /// (<c>5-10</c> reads as 5); the row is the highest one at or below it, or the first. A band of <c>higherLevels</c> is read at its own levels. The
+    /// window is the row before to the row after; below the first row there is no floor, so a mild trap is not refused. The messages name the direction, not the
+    /// table's numbers, so the model's own numbers stay its own. Nothing here changes the entry. A system with no <c>hazards.scaling</c> has no messages.
+    /// </summary>
+    public static IEnumerable<string> ScalingProblems(ContentEntry entry, ContentTypeDefinition type, SystemDefinition system)
+    {
+        if (type.Hazard is not { } hazard || system.Hazards?.Scaling is not { Count: > 0 } scaling) yield break;
+        var rows = scaling
+            .Select(row => (Level: row.TryGetValue("level", out var text) && WholeNumber(text, out var n) ? (long?)n : null, Row: row))
+            .Where(r => r.Level != null)
+            .OrderBy(r => r.Level)
+            .ToList();
+        if (rows.Count == 0) yield break;
+        var columns = rows.SelectMany(r => r.Row.Keys).Where(k => k != "level").Distinct(StringComparer.Ordinal).ToList();
+
+        var bands = new List<(string Prefix, string? Levels, string LevelText)> { (string.Empty, null, hazard.Level is { Length: > 0 } field && entry.Properties.TryGetValue(field, out var own) ? Convert.ToString(own, CultureInfo.InvariantCulture) ?? string.Empty : string.Empty) };
+        bands.AddRange(Rows(entry, type).Select(levels => ($"band {levels}: ", (string?)levels, levels)));
+        foreach (var (prefix, levels, levelText) in bands)
+        {
+            var numbers = For(entry, type, levels);
+            var measured = columns.Select(c => (Column: c, Value: Measure(numbers, c, hazard))).Where(m => m.Value != null).ToList();
+            if (measured.Count == 0) continue;
+            if (LowestLevel(levelText) is not { } level)
+            {
+                yield return $"{prefix}it has scaled numbers ({string.Join(", ", measured.Select(m => m.Column))}) and no level to read them against; give it a level, a number such as 5 or a range such as 1-4.";
+                continue;
+            }
+
+            var at = rows.FindLastIndex(r => r.Level <= level);
+            if (at < 0) at = 0;
+            foreach (var (column, value) in measured)
+            {
+                var near = rows.Skip(Math.Max(at - 1, 0)).Take(Math.Min(at + 1, rows.Count - 1) - Math.Max(at - 1, 0) + 1)
+                    .Select(r => ScaledValue(r.Row, column)).Where(v => v != null).Select(v => v!.Value).ToList();
+                if (near.Count == 0) continue;
+                if (value > near.Max()) yield return $"{prefix}{column} is too high for a level {level} hazard: more than one row of hazards.scaling above its level. Lower it.";
+                else if (at > 0 && value < near.Min()) yield return $"{prefix}{column} is too low for a level {level} hazard: more than one row of hazards.scaling below its level. Raise it.";
+            }
+        }
+    }
+
+    private static long? LowestLevel(string text) =>
+        Regex.Match(text ?? string.Empty, @"\d+") is { Success: true } m && long.TryParse(m.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : null;
+
+    // A table row's value for a column: a whole number, or dice by their average.
+    private static double? ScaledValue(IReadOnlyDictionary<string, string> row, string column) =>
+        row.TryGetValue(column, out var text) ? Number(text) : null;
+
+    // A hazard's own number for a column: the damage field is its parts' average, summed (a part's count multiplies it); any other is a number or dice.
+    private static double? Measure(IReadOnlyDictionary<string, object> numbers, string column, HazardDefinition hazard)
+    {
+        if (string.Equals(hazard.Effect?.Damage, column, StringComparison.Ordinal))
+        {
+            var parts = RowsOfField(numbers, column).Select(r => (Dice: Number(Text(r, "dice")), Count: Text(r, "count"))).Where(p => p.Dice != null).ToList();
+            return parts.Count == 0 ? null : parts.Sum(p => p.Dice!.Value * (p.Count.Length == 0 ? 1 : Number(p.Count) ?? 1));
+        }
+
+        return numbers.TryGetValue(column, out var value) && value is not (System.Collections.IEnumerable and not string) ? Number(Convert.ToString(value, CultureInfo.InvariantCulture)) : null;
+    }
+
+    // A whole number as itself, dice (2d10, 1d6 + 2) as their average; anything else is not a number.
+    private static double? Number(string? text)
+    {
+        var trimmed = text?.Trim() ?? string.Empty;
+        if (long.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var whole)) return whole;
+        if (!IsDice(trimmed)) return null;
+        double sum = 0;
+        foreach (Match term in Regex.Matches(trimmed.Replace(" ", string.Empty), @"([+-]?)(\d+)(?:d(\d+))?"))
+        {
+            var sign = term.Groups[1].Value == "-" ? -1 : 1;
+            var count = double.Parse(term.Groups[2].Value, CultureInfo.InvariantCulture);
+            sum += sign * (term.Groups[3].Success ? count * (double.Parse(term.Groups[3].Value, CultureInfo.InvariantCulture) + 1) / 2 : count);
+        }
+
+        return sum;
+    }
+
     // A routine row's `strikes` is true or false, and only a hazard with an effect has a row that applies it (one row at most).
     private static IEnumerable<string> RoutineProblems(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard)
     {
