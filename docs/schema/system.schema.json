@@ -177,6 +177,10 @@
       },
       "description": "What a condition or a spell effect does while it holds, by its name in Conditions or Effects."
     },
+    "hazards": {
+      "$ref": "#/$defs/HazardRules",
+      "description": "What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type."
+    },
     "rolls": {
       "type": "array",
       "items": {
@@ -654,6 +658,273 @@
         "playerFacing": {
           "type": "boolean",
           "description": "True for types a player may pick on their own sheet (class, species, background...)."
+        },
+        "hazard": {
+          "$ref": "#/$defs/HazardDefinition",
+          "description": "Makes this type a hazard (a trap, an environmental danger, a haunt): says which of its fields hold each part of a hazard. A hazard type may not also be an actor blueprint. None: entries of this type are not hazards."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardDefinition": {
+      "description": "Maps the parts every hazard can have onto the fields of one entity type. Every member names a field of that type (or, inside a group, the group's own members name fields), so the engine never reads a hard-coded property. Every part is optional.",
+      "type": "object",
+      "properties": {
+        "notice": {
+          "$ref": "#/$defs/HazardNotice",
+          "description": "How the hazard is spotted: the DC, the check, and whether a passive score may be used."
+        },
+        "disable": {
+          "$ref": "#/$defs/HazardDisable",
+          "description": "How the hazard is made safe: the DC, the check, the successes needed."
+        },
+        "trigger": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding what sets the hazard off (text)."
+        },
+        "effect": {
+          "$ref": "#/$defs/HazardEffect",
+          "description": "What the hazard does to those it catches: numbers the table can roll, and the rest as text."
+        },
+        "durability": {
+          "$ref": "#/$defs/HazardDurability",
+          "description": "The fields holding what it takes to break the hazard. Any subset."
+        },
+        "reset": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding how and when the hazard re-arms (text)."
+        },
+        "routine": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding what a complex hazard does each round, a collection of `{ name, description }`. Only for systems with hazards that act in initiative."
+        },
+        "complex": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "A Boolean field: when true on an entry, the entry is a complex hazard that takes a turn in initiative."
+        },
+        "level": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding what scaling and the world builder read: a number, or a range of levels (`1-4`) where the system prints ranges."
+        },
+        "severity": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly)."
+        },
+        "higherLevels": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the entry's own scaled versions: a collection of `{ levels, ...changed fields }`. A row names only the fields it changes; the others keep the base value."
+        },
+        "methods": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding extra ways to deal with the hazard beyond notice and disable, a collection of `{ name, check, dc, text }`. Each is a button at the table."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardNotice": {
+      "description": "The fields that say how a hazard is noticed.",
+      "type": "object",
+      "properties": {
+        "dc": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the DC (a number)."
+        },
+        "check": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the check that notices it: a skill key or label."
+        },
+        "rank": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the lowest rank that can notice it. Only on a system whose skills have ranks (`sheetRules.skills.ranks`)."
+        },
+        "passive": {
+          "type": "boolean",
+          "description": "True when a character's passive score for the check may be compared with the DC without a roll."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardDisable": {
+      "description": "The fields that say how a hazard is disabled.",
+      "type": "object",
+      "properties": {
+        "dc": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the DC (a number)."
+        },
+        "check": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the check that disables it: a skill key, a tool or a label."
+        },
+        "rank": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the lowest rank that can try. Only on a system whose skills have ranks (`sheetRules.skills.ranks`)."
+        },
+        "successes": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding how many successes disable it (a number; one when the entry leaves it empty)."
+        },
+        "critFail": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding what a critical failure does (text; it sets the hazard off when it says so)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardEffect": {
+      "description": "The fields that say what a hazard does to those it catches.",
+      "type": "object",
+      "properties": {
+        "attack": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the attack bonus (a number), for a hazard that makes an attack."
+        },
+        "save": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the attribute of the saving throw (text)."
+        },
+        "saveDc": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the saving throw's DC (a number)."
+        },
+        "damage": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the damage dice (text, `4d10`)."
+        },
+        "damageType": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the damage type (text)."
+        },
+        "text": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding everything the numbers do not say (text), such as conditions the game master adds by hand."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardDurability": {
+      "description": "The fields that say what it takes to break a hazard apart. Each names a number field.",
+      "type": "object",
+      "properties": {
+        "armorClass": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding its armor class."
+        },
+        "hardness": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding its hardness: damage taken off every hit."
+        },
+        "hitPoints": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding its hit points."
+        },
+        "brokenThreshold": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the hit points at which it breaks."
         }
       },
       "additionalProperties": false
@@ -4207,6 +4478,27 @@
         "by": {
           "type": "integer",
           "description": "How much it drops by. Default 1."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardRules": {
+      "description": "A system's guidance for how hard a hazard of each level is, for the homebrew wizard and the world builder's checks.",
+      "type": "object",
+      "properties": {
+        "scaling": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          },
+          "description": "Rows by level: each is `{ level: 5, noticeDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused."
         }
       },
       "additionalProperties": false

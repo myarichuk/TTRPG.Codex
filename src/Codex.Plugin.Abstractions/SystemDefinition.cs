@@ -160,8 +160,136 @@ public class ContentTypeDefinition
     /// <summary>True for types a player may pick on their own sheet (class, species, background...).</summary>
     public bool PlayerFacing { get; set; } = true;
 
+    /// <summary>Makes this type a hazard (a trap, an environmental danger, a haunt): says which of its fields hold each part of a hazard.
+    /// A hazard type may not also be an actor blueprint. None: entries of this type are not hazards.</summary>
+    public HazardDefinition? Hazard { get; set; }
+
     public string FolderOrType => string.IsNullOrWhiteSpace(Folder) ? Type : Folder;
     public string PluralOrLabel => string.IsNullOrWhiteSpace(PluralLabel) ? Label : PluralLabel;
+}
+
+/// <summary>
+/// Maps the parts every hazard can have onto the fields of one entity type. Every member names a field of that type
+/// (or, inside a group, the group's own members name fields), so the engine never reads a hard-coded property. Every part is optional.
+/// </summary>
+public class HazardDefinition
+{
+    /// <summary>How the hazard is spotted: the DC, the check, and whether a passive score may be used.</summary>
+    public HazardNotice? Notice { get; set; }
+
+    /// <summary>How the hazard is made safe: the DC, the check, the successes needed.</summary>
+    public HazardDisable? Disable { get; set; }
+
+    /// <summary>The field holding what sets the hazard off (text).</summary>
+    public string? Trigger { get; set; }
+
+    /// <summary>What the hazard does to those it catches: numbers the table can roll, and the rest as text.</summary>
+    public HazardEffect? Effect { get; set; }
+
+    /// <summary>The fields holding what it takes to break the hazard. Any subset.</summary>
+    public HazardDurability? Durability { get; set; }
+
+    /// <summary>The field holding how and when the hazard re-arms (text).</summary>
+    public string? Reset { get; set; }
+
+    /// <summary>The field holding what a complex hazard does each round, a collection of <c>{ name, description }</c>. Only for systems with hazards that act in initiative.</summary>
+    public string? Routine { get; set; }
+
+    /// <summary>A Boolean field: when true on an entry, the entry is a complex hazard that takes a turn in initiative.</summary>
+    public string? Complex { get; set; }
+
+    /// <summary>The field holding what scaling and the world builder read: a number, or a range of levels (<c>1-4</c>) where the system prints ranges.</summary>
+    public string? Level { get; set; }
+
+    /// <summary>The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly).</summary>
+    public string? Severity { get; set; }
+
+    /// <summary>The field holding the entry's own scaled versions: a collection of <c>{ levels, ...changed fields }</c>. A row names only the fields it changes; the others keep the base value.</summary>
+    public string? HigherLevels { get; set; }
+
+    /// <summary>The field holding extra ways to deal with the hazard beyond notice and disable, a collection of <c>{ name, check, dc, text }</c>. Each is a button at the table.</summary>
+    public string? Methods { get; set; }
+}
+
+/// <summary>The fields that say how a hazard is noticed.</summary>
+public class HazardNotice
+{
+    /// <summary>The field holding the DC (a number).</summary>
+    public string? Dc { get; set; }
+
+    /// <summary>The field holding the check that notices it: a skill key or label.</summary>
+    public string? Check { get; set; }
+
+    /// <summary>The field holding the lowest rank that can notice it. Only on a system whose skills have ranks (<c>sheetRules.skills.ranks</c>).</summary>
+    public string? Rank { get; set; }
+
+    /// <summary>True when a character's passive score for the check may be compared with the DC without a roll.</summary>
+    public bool Passive { get; set; }
+}
+
+/// <summary>The fields that say how a hazard is disabled.</summary>
+public class HazardDisable
+{
+    /// <summary>The field holding the DC (a number).</summary>
+    public string? Dc { get; set; }
+
+    /// <summary>The field holding the check that disables it: a skill key, a tool or a label.</summary>
+    public string? Check { get; set; }
+
+    /// <summary>The field holding the lowest rank that can try. Only on a system whose skills have ranks (<c>sheetRules.skills.ranks</c>).</summary>
+    public string? Rank { get; set; }
+
+    /// <summary>The field holding how many successes disable it (a number; one when the entry leaves it empty).</summary>
+    public string? Successes { get; set; }
+
+    /// <summary>The field holding what a critical failure does (text; it sets the hazard off when it says so).</summary>
+    public string? CritFail { get; set; }
+}
+
+/// <summary>The fields that say what a hazard does to those it catches.</summary>
+public class HazardEffect
+{
+    /// <summary>The field holding the attack bonus (a number), for a hazard that makes an attack.</summary>
+    public string? Attack { get; set; }
+
+    /// <summary>The field holding the attribute of the saving throw (text).</summary>
+    public string? Save { get; set; }
+
+    /// <summary>The field holding the saving throw's DC (a number).</summary>
+    public string? SaveDc { get; set; }
+
+    /// <summary>The field holding the damage dice (text, <c>4d10</c>).</summary>
+    public string? Damage { get; set; }
+
+    /// <summary>The field holding the damage type (text).</summary>
+    public string? DamageType { get; set; }
+
+    /// <summary>The field holding everything the numbers do not say (text), such as conditions the game master adds by hand.</summary>
+    public string? Text { get; set; }
+}
+
+/// <summary>The fields that say what it takes to break a hazard apart. Each names a number field.</summary>
+public class HazardDurability
+{
+    /// <summary>The field holding its armor class.</summary>
+    public string? ArmorClass { get; set; }
+
+    /// <summary>The field holding its hardness: damage taken off every hit.</summary>
+    public string? Hardness { get; set; }
+
+    /// <summary>The field holding its hit points.</summary>
+    public string? HitPoints { get; set; }
+
+    /// <summary>The field holding the hit points at which it breaks.</summary>
+    public string? BrokenThreshold { get; set; }
+}
+
+/// <summary>A system's guidance for how hard a hazard of each level is, for the homebrew wizard and the world builder's checks.</summary>
+public class HazardRules
+{
+    /// <summary>Rows by level: each is <c>{ level: 5, noticeDc: 15, damage: 4d10, ... }</c> with the other keys naming fields of the
+    /// hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused.</summary>
+    public List<Dictionary<string, string>> Scaling { get; set; } = new();
 }
 
 /// <summary>Dice conventions the runtime uses when it needs to roll something for a system.</summary>
@@ -545,6 +673,9 @@ public class SystemDefinition
     /// <summary>What a condition or a spell effect does while it holds, by its name in <see cref="Conditions"/> or <see cref="Effects"/>.</summary>
     public Dictionary<string, ConditionEffectDefinition> ConditionEffects { get; set; } = new();
 
+    /// <summary>What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type.</summary>
+    public HazardRules? Hazards { get; set; }
+
     /// <summary>Named rolls with inputs and outcomes (see Rolls.cs).</summary>
     public List<RollDefinition> Rolls { get; set; } = new();
 
@@ -733,7 +864,7 @@ public class SystemDefinition
                 Description = et?.Description ?? e.Description,
                 Fields = e.Fields.Select(f => Field(f, et == null ? null : Find(et.Fields, f.Key))).ToList(),
                 SummaryFields = e.SummaryFields, FilterFields = e.FilterFields, ActorBlueprint = e.ActorBlueprint,
-                HitPointsProperty = e.HitPointsProperty, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing
+                HitPointsProperty = e.HitPointsProperty, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing, Hazard = e.Hazard
             };
         }).ToList();
         copy.Moments = Moments.Select(m => new MomentDefinition { Key = m.Key, OnSet = m.OnSet, Label = t.Moments.TryGetValue(m.Key, out var shown) ? shown : m.Label }).ToList();

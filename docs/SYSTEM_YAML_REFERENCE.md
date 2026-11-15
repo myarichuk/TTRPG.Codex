@@ -44,6 +44,7 @@ A whole game system described as data (`system.yaml`). This is what lets a homeb
 | `functions` | map of [FunctionDefinition](#functiondefinition) | Named functions, callable from any formula by name. |
 | `widgets` | map of [WidgetDefinition](#widgetdefinition) | Widgets a DLL supplies (`{ type: "Acme.Street.Implants, Acme.Street" }`), placed by name in a layout like the host's own (`{ widget: implants }`). |
 | `conditionEffects` | map of [ConditionEffectDefinition](#conditioneffectdefinition) | What a condition or a spell effect does while it holds, by its name in Conditions or Effects. |
+| `hazards` | [HazardRules](#hazardrules) | What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type. |
 | `rolls` | list of [RollDefinition](#rolldefinition) | Named rolls with inputs and outcomes (see Rolls.cs). |
 | `moments` | list of [MomentDefinition](#momentdefinition) | The system's own moments (`downtime`, `loadChosen`): named times at which counters refill and an `events:` handler of the same name runs. Rests (`vitals.rests`), `initiative` and `dawn` are moments too and need no declaring. |
 | `events` | map of any | Event handlers by event name (`damage`, `turnStart`, `roll`): `{ builtin: name, ...options }`, `{ script: file#export }`, or a list of `{ when, intents }` lines. Read as YAML gives it, and parsed by Codex.Core.Rules.SheetEvents, since a handler is written in either shape. |
@@ -150,6 +151,73 @@ One kind of content a system's packs can carry (class, feat, spell, monster, ite
 | `hitPointsProperty` | text (a number is text too) | For actor blueprints: the property holding starting hit points (default "hitPoints"). |
 | `attributeProperties` | map of text (a number is text too) | For actor blueprints: property -> attribute key map (e.g. "strength" -> "str"). |
 | `playerFacing` | true or false | True for types a player may pick on their own sheet (class, species, background...). |
+| `hazard` | [HazardDefinition](#hazarddefinition) | Makes this type a hazard (a trap, an environmental danger, a haunt): says which of its fields hold each part of a hazard. A hazard type may not also be an actor blueprint. None: entries of this type are not hazards. |
+
+## HazardDefinition
+
+Maps the parts every hazard can have onto the fields of one entity type. Every member names a field of that type (or, inside a group, the group's own members name fields), so the engine never reads a hard-coded property. Every part is optional.
+
+| Key | Type | What it is |
+|---|---|---|
+| `notice` | [HazardNotice](#hazardnotice) | How the hazard is spotted: the DC, the check, and whether a passive score may be used. |
+| `disable` | [HazardDisable](#hazarddisable) | How the hazard is made safe: the DC, the check, the successes needed. |
+| `trigger` | text (a number is text too) | The field holding what sets the hazard off (text). |
+| `effect` | [HazardEffect](#hazardeffect) | What the hazard does to those it catches: numbers the table can roll, and the rest as text. |
+| `durability` | [HazardDurability](#hazarddurability) | The fields holding what it takes to break the hazard. Any subset. |
+| `reset` | text (a number is text too) | The field holding how and when the hazard re-arms (text). |
+| `routine` | text (a number is text too) | The field holding what a complex hazard does each round, a collection of `{ name, description }`. Only for systems with hazards that act in initiative. |
+| `complex` | text (a number is text too) | A Boolean field: when true on an entry, the entry is a complex hazard that takes a turn in initiative. |
+| `level` | text (a number is text too) | The field holding what scaling and the world builder read: a number, or a range of levels (`1-4`) where the system prints ranges. |
+| `severity` | text (a number is text too) | The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly). |
+| `higherLevels` | text (a number is text too) | The field holding the entry's own scaled versions: a collection of `{ levels, ...changed fields }`. A row names only the fields it changes; the others keep the base value. |
+| `methods` | text (a number is text too) | The field holding extra ways to deal with the hazard beyond notice and disable, a collection of `{ name, check, dc, text }`. Each is a button at the table. |
+
+## HazardNotice
+
+The fields that say how a hazard is noticed.
+
+| Key | Type | What it is |
+|---|---|---|
+| `dc` | text (a number is text too) | The field holding the DC (a number). |
+| `check` | text (a number is text too) | The field holding the check that notices it: a skill key or label. |
+| `rank` | text (a number is text too) | The field holding the lowest rank that can notice it. Only on a system whose skills have ranks (`sheetRules.skills.ranks`). |
+| `passive` | true or false | True when a character's passive score for the check may be compared with the DC without a roll. |
+
+## HazardDisable
+
+The fields that say how a hazard is disabled.
+
+| Key | Type | What it is |
+|---|---|---|
+| `dc` | text (a number is text too) | The field holding the DC (a number). |
+| `check` | text (a number is text too) | The field holding the check that disables it: a skill key, a tool or a label. |
+| `rank` | text (a number is text too) | The field holding the lowest rank that can try. Only on a system whose skills have ranks (`sheetRules.skills.ranks`). |
+| `successes` | text (a number is text too) | The field holding how many successes disable it (a number; one when the entry leaves it empty). |
+| `critFail` | text (a number is text too) | The field holding what a critical failure does (text; it sets the hazard off when it says so). |
+
+## HazardEffect
+
+The fields that say what a hazard does to those it catches.
+
+| Key | Type | What it is |
+|---|---|---|
+| `attack` | text (a number is text too) | The field holding the attack bonus (a number), for a hazard that makes an attack. |
+| `save` | text (a number is text too) | The field holding the attribute of the saving throw (text). |
+| `saveDc` | text (a number is text too) | The field holding the saving throw's DC (a number). |
+| `damage` | text (a number is text too) | The field holding the damage dice (text, `4d10`). |
+| `damageType` | text (a number is text too) | The field holding the damage type (text). |
+| `text` | text (a number is text too) | The field holding everything the numbers do not say (text), such as conditions the game master adds by hand. |
+
+## HazardDurability
+
+The fields that say what it takes to break a hazard apart. Each names a number field.
+
+| Key | Type | What it is |
+|---|---|---|
+| `armorClass` | text (a number is text too) | The field holding its armor class. |
+| `hardness` | text (a number is text too) | The field holding its hardness: damage taken off every hit. |
+| `hitPoints` | text (a number is text too) | The field holding its hit points. |
+| `brokenThreshold` | text (a number is text too) | The field holding the hit points at which it breaks. |
 
 ## DiceConventions
 
@@ -1044,6 +1112,14 @@ The value a valued condition carries (`conditionEffects.<name>.value`); see docs
 |---|---|---|
 | `on` | text (a number is text too) | Required: `turnEnd`, `turnStart`, a rest of `vitals.rests` or a moment the system declares. |
 | `by` | whole number | How much it drops by. Default 1. |
+
+## HazardRules
+
+A system's guidance for how hard a hazard of each level is, for the homebrew wizard and the world builder's checks.
+
+| Key | Type | What it is |
+|---|---|---|
+| `scaling` | list of map of text (a number is text too) | Rows by level: each is `{ level: 5, noticeDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused. |
 
 ## RollDefinition
 
