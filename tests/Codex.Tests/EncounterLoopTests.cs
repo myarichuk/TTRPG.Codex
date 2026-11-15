@@ -478,7 +478,7 @@ public class EncounterLoopTests : IClassFixture<RavenDbFixture>, IDisposable
         Assert.Equal(30, Hp(resting, hero.Id));
         Assert.Equal(5, resting.Snapshot.Actor(hero.Id)!.Pool("HitDice"));
         Assert.Equal(1, resting.Snapshot.Actor(hero.Id)!.Pool("Exhaustion"));
-        Assert.Contains(session.Events, e => e.Type == "Rest" && e.Description.Contains("Hit Points restored") && e.Description.Contains("2 hit dice regained") && e.Description.Contains("exhaustion now 1"));
+        Assert.Contains(session.Events, e => e.Type == "Rest" && e.Description.Contains("Hit Points restored") && e.Description.Contains("2 hit dice regained") && e.Description.Contains("Exhaustion drops to 1"));
     }
 
     [Fact]

@@ -85,6 +85,41 @@ conditions:
   [Blinded, Charmed, Deafened, Exhaustion, Frightened, Grappled, Incapacitated, Invisible,
    Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious]
 
+# Spell effects the table can put on a creature beside the conditions, each with what it does in conditionEffects. They are named
+# for the effect, not the spell, so one name serves a cast from any source.
+effects: [Bless, Bane, Guided]
+
+# What a condition or a spell effect adds to the sheet while it holds (SRD 5.2.1 rules text, CC BY 4.0).
+# Most conditions work through advantage, disadvantage, auto-fail or "can't act", which this data has no word for, so they stay text.
+conditionEffects:
+  # SRD 5.2.1, Exhaustion: a D20 Test is reduced by 2 times your Exhaustion level, and your Speed by 5 feet times it. A level 6 dies
+  # (vitals.exhaustion). The level, its maximum and its pool key come from vitals.exhaustion; this file writes only what drops it.
+  # A D20 Test is an attack, a saving throw or an ability check (skill checks included); initiative is the derived value.
+  Exhaustion:
+    value: { decrease: { on: Long Rest, by: 1 } }
+    modifiers:
+      - { target: attack,     amount: "-2 * value" }
+      - { target: save,       amount: "-2 * value" }
+      - { target: check,      amount: "-2 * value" }
+      - { target: initiative, amount: "-2 * value" }
+      - { target: speed,      amount: "-5 * value" }
+  # SRD 5.2.1, Bless: add 1d4 to attack rolls and saving throws while it lasts.
+  Bless:
+    modifiers:
+      - { target: attack, amount: 1d4 }
+      - { target: save,   amount: 1d4 }
+  # SRD 5.2.1, Bane: subtract 1d4 from attack rolls and saving throws while it lasts.
+  Bane:
+    modifiers:
+      - { target: attack, amount: -1d4 }
+      - { target: save,   amount: -1d4 }
+  # SRD 5.2.1, Guidance: choose a skill; until the spell ends (concentration, 1 minute), add 1d4 to any ability check using that skill.
+  # A roll does not use it up, so it has no `ends`. The chosen skill is not recorded, so the box is offered on every check and the
+  # player ticks it for the right one.
+  Guided:
+    modifiers:
+      - { target: check, amount: 1d4, optIn: { label: Guidance (the chosen skill) } }
+
 # The actor fields the app reads by what they mean: the level up and the AI's level-up suggestion read the level, class
 # and subclass; the sheet's plate shows the speed; Cast's one-line summary lists these fields.
 fieldRoles:
@@ -411,7 +446,7 @@ vitals:
   concentration: { condition: Concentrating, saveAttribute: con, minimumDc: 10, maximumDc: 30 }
   rests:
     - { name: Short Rest, spendHitDice: true }
-    - { name: Long Rest, restores: [HP], clears: [TempHP], hitDiceRegain: half, exhaustionDelta: -1 }
+    - { name: Long Rest, restores: [HP], clears: [TempHP], hitDiceRegain: half }   # also lowers Exhaustion by 1: see conditionEffects
 
 entityTypes:
   - type: class

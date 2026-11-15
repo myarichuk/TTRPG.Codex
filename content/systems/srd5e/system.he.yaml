@@ -93,6 +93,10 @@ conditions:
   Restrained: מרוסן
   Stunned: המום
   Unconscious: חסר הכרה
+  # Spell effects (the names come from the spells: Bless, Bane, Guidance). "Guided" is the state of having Guidance; for native review.
+  Bless: ברכה
+  Bane: מארה
+  Guided: מונחה
 
 entityTypes:
   class:
@@ -338,6 +342,7 @@ entityTypes:
         description: היסטוריה, דת, פלג, אגדה...
 
 values:
+  Guidance (the chosen skill): הדרכה (המיומנות שנבחרה)
   Barbarian: ברברי
   Bard: פייטן
   Cleric: כוהן

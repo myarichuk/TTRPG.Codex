@@ -93,6 +93,10 @@ conditions:
   Restrained: Опутанный
   Stunned: Ошеломлённый
   Unconscious: Без сознания
+  # Spell effects (the names come from the spells: Bless, Bane, Guidance). "Guided" is the state of having Guidance; for native review.
+  Bless: Благословение
+  Bane: Порча
+  Guided: Под Указанием
 
 entityTypes:
   class:
@@ -338,6 +342,7 @@ entityTypes:
         description: История, религия, фракция, легенда...
 
 values:
+  Guidance (the chosen skill): Указание (выбранный навык)
   Barbarian: Варвар
   Bard: Бард
   Cleric: Жрец

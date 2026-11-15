@@ -33,7 +33,13 @@ public sealed class RollBonusNames
     }
 
     /// <summary>The system's translation of a word (<c>values</c>), read from either copy of the definition; the word itself when there is none.</summary>
-    private string Value(string text) => _definition?.DisplayOption(_culture, string.Empty, text) ?? text;
+    private string Value(string text)
+    {
+        if (_definition == null) return text;
+        var word = _definition.DisplayOption(_culture, string.Empty, text);
+        // A condition or spell effect that gives a bonus (Exhaustion, Guided) is named by the system's condition names.
+        return string.Equals(word, text, StringComparison.Ordinal) ? _definition.DisplayCondition(_culture, text) : word;
+    }
 
     /// <param name="definition">The system as the reader reads it (<see cref="SystemDefinition.Localize"/>), which holds the translated labels.</param>
     public static RollBonusNames For(IContentRegistry? registry, SystemDefinition? definition, string? culture)

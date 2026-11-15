@@ -116,11 +116,12 @@ public class SheetConditionValueTests
         Assert.Empty(SystemDefinitionLoader.Validate(system)); // checking a parsed system again does not take the folded value for a written one
         Assert.Equal(("Exhaustion", "Exhaustion"), (SheetConditions.Valued(system).Single().Condition, SheetConditions.Valued(system).Single().Key));
 
-        // srd5e declares the same vitals, and has no entry yet: it is left as it is.
+        // srd5e declares the same vitals, and its own Exhaustion entry writes only the rest decrease: the key and maximum are folded in from them.
         var srd5e = SystemDefinitionLoader.Load(Path.Combine(TestPaths.ContentRoot, "systems", "srd5e", "system.yaml"));
         Assert.Equal("Exhaustion", srd5e.Vitals!.Exhaustion!.Key);
         Assert.Equal(6, srd5e.Vitals.Exhaustion.MaxLevel);
-        Assert.DoesNotContain("Exhaustion", srd5e.ConditionEffects.Keys);
+        var srdValue = srd5e.ConditionEffects["Exhaustion"].Value!;
+        Assert.Equal(("Exhaustion", "6"), (srdValue.Key, srdValue.Max));
     }
 
     private const string ExhaustionVitals = "vitals:\n  exhaustion: { key: Exhaustion, maxLevel: 6, condition: Exhaustion }\n  rests: [{ name: Long Rest }]";
