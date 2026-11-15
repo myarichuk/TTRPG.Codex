@@ -1,0 +1,38 @@
+id: hidden-pit
+type: hazard
+name: Hidden Pit
+description: A shaft in the floor is covered with a thin lid that looks like the rest of the floor and gives way under any weight.
+properties:
+  kind: trap
+  severity: Nuisance
+  level: 1-4
+  trigger: Weight on the lid.
+  noticeCheck: Perception
+  noticeDc: 10
+  disableCheck: Thieves' Tools
+  disableDc: 10
+  saveAttribute: Dexterity
+  saveDc: 10
+  damage: 1d6
+  damageType: bludgeoning
+  effect: A creature that fails the save falls to the bottom, 10 feet down, and takes the damage. Success catches the edge.
+  reset: The lid is broken for good. The pit stays, and is now easy to see.
+  higherLevels:
+  - levels: 5-10
+    saveDc: 12
+    damage: 2d6
+  - levels: 11-16
+    saveDc: 14
+    damage: 3d6
+  - levels: 17-20
+    saveDc: 16
+    damage: 4d6
+  methods:
+  - name: Escape
+    check: Athletics
+    dc: 10
+    text: Climbing out of the pit without help.
+  - name: Avoid
+    check: Acrobatics
+    dc: 10
+    text: Jumping across a pit already known.

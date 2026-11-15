@@ -1,0 +1,37 @@
+id: homebrew-flooding-room
+type: hazard
+name: Flooding Room
+description: A chamber with one door, sealed from outside, and a floor of iron grates. Once the door shuts, water starts to pour in from the walls.
+tags:
+- homebrew
+- hazard
+properties:
+  kind: trap
+  severity: Deadly
+  level: 5-10
+  complex: true
+  trigger: The door shuts, either by weight on the floor plate or by a lever on the far side.
+  noticeCheck: Investigation
+  noticeDc: 15
+  disableCheck: Thieves' Tools
+  disableDc: 15
+  saveAttribute: Strength
+  saveDc: 15
+  damage: 4d10
+  damageType: bludgeoning
+  effect: The first rush of water knocks creatures about. Each creature in the room makes the save, taking the damage on a failure and half as much on a success. After that the room acts on its own turn (see the routine) until it is full or the sluices are jammed.
+  reset: The water drains through the grates in an hour, and the door lifts again. A lever outside re-arms it.
+  routine:
+  - name: Water rises
+    description: The water climbs by one foot. At chest height, movement costs double. When it is over a creature's head, that creature is swimming or is suffocating by the usual rules.
+  - name: Surge
+    description: Every third round, a surge pushes everything in the room toward the walls. Each creature makes the save again, taking half the damage on a failure and none on a success.
+  methods:
+  - name: Jam the sluices
+    check: Thieves' Tools
+    dc: 15
+    text: Reaching a sluice under the water takes an action and one check. Each jammed sluice, of four, stops one fifth of the water.
+  - name: Break the door
+    check: Strength
+    dc: 20
+    text: The door is iron and heavy. Several creatures can help, one check each.

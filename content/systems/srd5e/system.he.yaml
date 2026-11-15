@@ -149,6 +149,29 @@ entityTypes:
         description: דרגת המקצוע שהיא דורשת.
       repeatable: { label: ניתנת לחזרה }
 
+  hazard:
+    label: סכנה
+    pluralLabel: סכנות
+    fields:
+      kind: { label: סוג }
+      severity: { label: חומרה }
+      level: { label: דרגות }
+      noticeCheck: { label: מזהים בעזרת }
+      noticeDc: { label: דרגת קושי לזיהוי }
+      disableCheck: { label: מנטרלים בעזרת }
+      disableDc: { label: דרגת קושי לנטרול }
+      trigger: { label: מה מפעיל אותה }
+      saveAttribute: { label: הצלת מגן }
+      saveDc: { label: דרגת קושי להצלה }
+      damage: { label: נזק }
+      damageType: { label: סוג נזק }
+      effect: { label: תוצאה }
+      reset: { label: איפוס }
+      complex: { label: מורכבת }
+      routine: { label: סדר פעולות }
+      higherLevels: { label: דרגות גבוהות }
+      methods: { label: דרכים אחרות }
+
   subclass:
     label: תת-מקצוע
     pluralLabel: תתי-מקצועות

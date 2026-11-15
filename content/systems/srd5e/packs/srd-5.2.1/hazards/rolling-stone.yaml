@@ -1,0 +1,28 @@
+id: rolling-stone
+type: hazard
+name: Rolling Stone
+description: A great round stone sits in a niche above a sloping passage, and rolls down it when released, crushing anything in the way.
+properties:
+  kind: trap
+  severity: Deadly
+  level: 11-16
+  trigger: A tripwire or a pressure plate at the top of the slope.
+  noticeCheck: Investigation
+  noticeDc: 15
+  disableCheck: Thieves' Tools
+  disableDc: 20
+  saveAttribute: Dexterity
+  saveDc: 15
+  damage: 10d10
+  damageType: bludgeoning
+  effect: The stone rolls the length of the passage. Each creature in its path takes the damage on a failed save, or half as much on a success.
+  reset: The stone must be hauled back up the slope and set in its niche.
+  methods:
+  - name: Slow
+    check: Strength
+    dc: 20
+    text: Several creatures can brace against the stone to stop it short of the creatures behind them.
+  - name: Avoid
+    check: Athletics
+    dc: 15
+    text: A creature that sees it coming can leap to a side niche.

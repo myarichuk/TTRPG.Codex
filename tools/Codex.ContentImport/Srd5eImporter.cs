@@ -68,6 +68,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             ClassSkills.Apply(entries, system);
             entries.AddRange(Invocations.Entries().Select(e => { e.SystemId = SystemId; return e; }));
             Invocations.AddSlots(entries, columns);
+            entries.AddRange(Traps.Entries().Select(e => { e.SystemId = SystemId; return e; }));
         }
 
         var coverage = _grants.Apply(entries, columns, system);

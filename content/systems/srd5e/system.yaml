@@ -448,6 +448,16 @@ vitals:
     - { name: Short Rest, spendHitDice: true }
     - { name: Long Rest, restores: [HP], clears: [TempHP], hitDiceRegain: half }   # also lowers Exhaustion by 1: see conditionEffects
 
+# How hard a new hazard of each level is, for the homebrew wizard and the world builder's checks. Derived from the SRD's own traps, which share one
+# damage progression (2d10, 4d10, 10d10, 18d10) and raise their save DCs with the level band (1-4, 5-10, 11-16, 17-20). The SRD has no shared
+# table, and none is copied: these are the numbers of its Deadly traps. Detect and disarm DCs are fixed per trap, so they are not columns.
+hazards:
+  scaling:
+    - { level: 1,  saveDc: 15, damage: 2d10 }
+    - { level: 5,  saveDc: 15, damage: 4d10 }
+    - { level: 11, saveDc: 17, damage: 10d10 }
+    - { level: 17, saveDc: 19, damage: 18d10 }
+
 entityTypes:
   - type: class
     label: Class
@@ -499,6 +509,48 @@ entityTypes:
       - { key: prerequisites, label: Prerequisites, type: Text, description: "What else the invocation needs besides its level: another invocation, or a kind of cantrip. The sheet checks the level only." }
       - { key: minLevel,      label: Minimum Level, type: Number, description: "The class level it needs." }
       - { key: repeatable,    label: Repeatable,    type: Boolean }
+
+  # A trap, an environmental danger or a haunt, placed on a place's feature. Notice, disable, trigger and effect are the parts a table rolls;
+  # the rest is text. The pack's traps scale themselves by level band (higherLevels); `hazards.scaling` below is guidance for new ones.
+  - type: hazard
+    label: Hazard
+    pluralLabel: Hazards
+    folder: hazards
+    icon: triangle-alert
+    playerFacing: false
+    summaryFields: [level, severity]
+    filterFields: [kind, severity]
+    fields:
+      - { key: kind,          label: Kind,           type: Text,     category: Profile, description: "Trap, environmental or haunt." }
+      - { key: severity,      label: Severity,       type: Text,     category: Profile, description: "Nuisance or Deadly." }
+      - { key: level,         label: Levels,         type: Text,     category: Profile, description: "The character levels it suits: a level (5) or a range (1-4)." }
+      - { key: noticeCheck,   label: Noticed with,    type: Text,     category: Notice, description: "A skill: Perception or Investigation." }
+      - { key: noticeDc,      label: Notice DC,       type: Number,   category: Notice }
+      - { key: disableCheck,  label: Disabled with,   type: Text,     category: Disable, description: "A skill or a set of tools." }
+      - { key: disableDc,     label: Disable DC,      type: Number,   category: Disable }
+      - { key: trigger,       label: Trigger,         type: LongText, category: Trigger, description: "What sets it off." }
+      - { key: saveAttribute, label: Save,            type: Text,     category: Effect, description: "The ability of the saving throw." }
+      - { key: saveDc,        label: Save DC,         type: Number,   category: Effect }
+      - { key: damage,        label: Damage,          type: Text,     category: Effect, description: "Dice, such as 4d10." }
+      - { key: damageType,    label: Damage type,     type: Text,     category: Effect }
+      - { key: effect,        label: Effect,          type: LongText, category: Effect, description: "What happens, including anything the numbers do not say." }
+      - { key: reset,         label: Reset,           type: LongText, category: Reset, description: "How and when it arms again." }
+      - { key: complex,       label: Complex,         type: Boolean,  category: Profile, description: "A complex hazard takes a turn in initiative and does its routine each round." }
+      - { key: routine,       label: Routine,         type: Collection, category: Profile, description: "A complex hazard's actions each round, a name and a description." }
+      - { key: higherLevels,  label: Higher levels,   type: Collection, category: Profile, description: "Rows of levels (5-10) and the numbers that change there, such as saveDc and damage." }
+      - { key: methods,       label: Other ways,      type: Collection, category: Profile, description: "Ways to deal with it beyond noticing and disabling: a name, a check, a DC and a note." }
+    hazard:
+      notice:  { dc: noticeDc, check: noticeCheck, passive: true }
+      disable: { dc: disableDc, check: disableCheck }
+      trigger: trigger
+      effect:  { save: saveAttribute, saveDc: saveDc, damage: damage, damageType: damageType, text: effect }
+      reset:   reset
+      routine: routine
+      complex: complex
+      level:   level
+      severity: severity
+      higherLevels: higherLevels
+      methods: methods
 
   - type: species
     label: Species

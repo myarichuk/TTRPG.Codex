@@ -1,0 +1,38 @@
+id: fire-casting-statue
+type: hazard
+name: Fire-Casting Statue
+description: A stone figure with a hollow mouth stands guard in a hall. When someone crosses the floor in front of it, it breathes a gout of flame.
+properties:
+  kind: trap
+  severity: Deadly
+  level: 1-4
+  trigger: A pressure plate in the floor in front of the statue.
+  noticeCheck: Investigation
+  noticeDc: 15
+  disableCheck: Arcana
+  disableDc: 15
+  saveAttribute: Dexterity
+  saveDc: 15
+  damage: 2d10
+  damageType: fire
+  effect: The fire fills a 15-foot cone in front of the statue. Each creature in it takes the damage on a failed save, or half as much on a success.
+  reset: The statue breathes again each time the plate is pressed, with no limit.
+  higherLevels:
+  - levels: 5-10
+    saveDc: 15
+    damage: 4d10
+  - levels: 11-16
+    saveDc: 17
+    damage: 10d10
+  - levels: 17-20
+    saveDc: 19
+    damage: 18d10
+  methods:
+  - name: Destroy
+    check: Attack
+    dc: 15
+    text: The statue is armor class 15 with 20 hit points, and takes only half damage from anything but bludgeoning.
+  - name: Avoid
+    check: Acrobatics
+    dc: 15
+    text: A creature that knows the plate is there can cross without pressing it.

@@ -1,0 +1,31 @@
+id: poisoned-needle
+type: hazard
+name: Poisoned Needle
+description: A needle no bigger than a thorn waits in a lock or a handle, and pricks the hand of anyone who forces it.
+properties:
+  kind: trap
+  severity: Nuisance
+  level: 1-4
+  trigger: Opening the lock or handle without the right key.
+  noticeCheck: Investigation
+  noticeDc: 15
+  disableCheck: Thieves' Tools
+  disableDc: 15
+  saveAttribute: Constitution
+  saveDc: 15
+  damage: 1
+  damageType: piercing
+  effect: The pricked creature takes the damage and, on a failed save, is Poisoned for an hour.
+  reset: Fresh poison must be put on the needle by hand.
+  higherLevels:
+  - levels: 5-10
+    saveDc: 15
+  - levels: 11-16
+    saveDc: 17
+  - levels: 17-20
+    saveDc: 19
+  methods:
+  - name: Avoid
+    check: Thieves' Tools
+    dc: 15
+    text: Opening the lock without touching the needle.

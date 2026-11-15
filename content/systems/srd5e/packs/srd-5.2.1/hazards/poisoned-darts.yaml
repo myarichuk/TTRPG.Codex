@@ -1,0 +1,38 @@
+id: poisoned-darts
+type: hazard
+name: Poisoned Darts
+description: Small holes in a wall hide a rack of darts wetted with venom, ready to fly at whoever steps into the line of fire.
+properties:
+  kind: trap
+  severity: Deadly
+  level: 1-4
+  trigger: A pressure plate in the floor or a hidden latch on a chest or door.
+  noticeCheck: Investigation
+  noticeDc: 15
+  disableCheck: Thieves' Tools
+  disableDc: 15
+  saveAttribute: Dexterity
+  saveDc: 15
+  damage: 2d10
+  damageType: poison
+  effect: The darts fly at every creature in the line. Failure takes the damage; success takes half as much.
+  reset: The rack holds one volley. It must be refilled and the holes cleaned by hand.
+  higherLevels:
+  - levels: 5-10
+    saveDc: 15
+    damage: 4d10
+  - levels: 11-16
+    saveDc: 17
+    damage: 10d10
+  - levels: 17-20
+    saveDc: 19
+    damage: 18d10
+  methods:
+  - name: Avoid
+    check: Acrobatics
+    dc: 15
+    text: A creature that knows where the holes are can slip out of the line.
+  - name: Set
+    check: Sleight of Hand
+    dc: 15
+    text: Loading and aiming a fresh rack of darts.

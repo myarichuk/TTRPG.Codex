@@ -149,6 +149,29 @@ entityTypes:
         description: Уровень класса, который ему нужен.
       repeatable: { label: Повторяется }
 
+  hazard:
+    label: Опасность
+    pluralLabel: Опасности
+    fields:
+      kind: { label: Вид }
+      severity: { label: Тяжесть }
+      level: { label: Уровни }
+      noticeCheck: { label: Замечается проверкой }
+      noticeDc: { label: Сложность обнаружения }
+      disableCheck: { label: Обезвреживается проверкой }
+      disableDc: { label: Сложность обезвреживания }
+      trigger: { label: Что её запускает }
+      saveAttribute: { label: Спасбросок }
+      saveDc: { label: Сложность спасброска }
+      damage: { label: Урон }
+      damageType: { label: Вид урона }
+      effect: { label: Действие }
+      reset: { label: Сброс }
+      complex: { label: Сложная }
+      routine: { label: Порядок действий }
+      higherLevels: { label: Высокие уровни }
+      methods: { label: Другие способы }
+
   subclass:
     label: Подкласс
     pluralLabel: Подклассы

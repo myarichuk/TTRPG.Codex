@@ -1,0 +1,38 @@
+id: collapsing-roof
+type: hazard
+name: Collapsing Roof
+description: The ceiling over a corridor or room is held up by little more than a trigger. When something sets it off, tons of stone and timber come down on everyone beneath.
+properties:
+  kind: trap
+  severity: Deadly
+  level: 1-4
+  trigger: A pressure plate in the floor or a tripwire across the way.
+  noticeCheck: Perception
+  noticeDc: 10
+  disableCheck: Thieves' Tools
+  disableDc: 15
+  saveAttribute: Dexterity
+  saveDc: 15
+  damage: 2d10
+  damageType: bludgeoning
+  effect: Everything in the area makes the save. Failure takes the full damage and is buried (Restrained) until it digs free; success takes half and is not buried.
+  reset: It does not rearm on its own. Rebuilding the roof takes a crew a full day.
+  higherLevels:
+  - levels: 5-10
+    saveDc: 15
+    damage: 4d10
+  - levels: 11-16
+    saveDc: 17
+    damage: 10d10
+  - levels: 17-20
+    saveDc: 19
+    damage: 18d10
+  methods:
+  - name: Escape
+    check: Strength
+    dc: 15
+    text: A buried creature, or a friend digging beside it, can make this check to get free.
+  - name: Avoid
+    check: Acrobatics
+    dc: 15
+    text: A creature that knows the trigger is there can step over it.
