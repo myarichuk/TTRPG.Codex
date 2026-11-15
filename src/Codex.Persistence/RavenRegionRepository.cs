@@ -159,16 +159,20 @@ public class RegionRepository(RavenDbService dbService) : IRegionRepository
 
     public async Task<bool> PatchPlacedHazardAsync(string campaignId, string regionId, string locationId, Func<PlacedHazard, PlacedHazard?> change)
     {
-        using var session = dbService.Store.OpenAsyncSession();
-        var region = await session.LoadAsync<RegionDocument>(regionId);
-        var stored = region?.Locations.FirstOrDefault(l => l.Id == locationId)?.Feature;
-        if (region == null || region.CampaignId != campaignId || stored?.Hazard is not { } current) return false;
-
-        if (PlacedHazard.Tidy(change(current)) is not { } changed) return false;
-        stored.Hazard = changed;
-        region.UpdatedAt = DateTime.UtcNow;
-        await session.SaveChangesAsync();
-        return true;
+        // One write under the repo's multi-writer rule (audit O1): the change is applied to a fresh load and saved under
+        // optimistic concurrency, so a save that lands between our load and our save makes us reload and apply it again.
+        var patched = false;
+        var region = await RavenUpdate.RunAsync<RegionDocument>(dbService, regionId, doc =>
+        {
+            patched = false;
+            var stored = doc.Locations.FirstOrDefault(l => l.Id == locationId)?.Feature;
+            if (doc.CampaignId != campaignId || stored?.Hazard is not { } current) return;
+            if (PlacedHazard.Tidy(change(current)) is not { } changed) return;
+            stored.Hazard = changed;
+            doc.UpdatedAt = DateTime.UtcNow;
+            patched = true;
+        });
+        return region != null && patched;
     }
 
     public async Task<bool> SetLocationVisibilityAsync(string regionId, string locationId, ActorVisibility visibility, CampaignAccess access)

@@ -50,7 +50,7 @@
   <data name="Combat.Hazard.Who" xml:space="preserve"><value>Персонажи</value></data>
   <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>«Заметить» и «Сработать» берут всех отмеченных. «Найти» и «Обезвредить» берут первого отмеченного.</value></data>
   <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>Нужно число</value></data>
-  <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>Лист напечатан, поэтому введите число: бонус спасброска или КД для атаки. Затем нажмите действие ещё раз.</value></data>
+  <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>Лист напечатан, поэтому введите число: бонус спасброска или КД для атаки. Затем нажмите то же действие ещё раз: оно продолжится только для этих существ с уже брошенным уроном, так что никто не получит урон дважды.</value></data>
   <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>Число для: {0}</value></data>
   <data name="Combat.Hazard.Result" xml:space="preserve"><value>Последний результат</value></data>
   <data name="Combat.Hazard.State.Hidden" xml:space="preserve"><value>Скрыта</value></data>
@@ -72,7 +72,7 @@
   <data name="Combat.Hazard.MarkNoticed" xml:space="preserve"><value>Отметить как замеченную: {0}</value></data>
   <data name="Combat.Hazard.StateOf" xml:space="preserve"><value>Состояние: {0}</value></data>
   <data name="Combat.Hazard.SetState" xml:space="preserve"><value>Задать состояние: {0}</value></data>
-  <data name="Combat.Hazard.UndoHint" xml:space="preserve"><value>Урон от срабатывания отменяется кнопкой «Отменить» у каждого персонажа. Кнопка здесь отменяет последнее изменение самой опасности.</value></data>
+  <data name="Combat.Hazard.UndoHint" xml:space="preserve"><value>Кнопка здесь отменяет последнее изменение опасности вместе с нанесённым уроном: целиком или никак.</value></data>
   <data name="Combat.Hazard.Undo" xml:space="preserve"><value>Отменить последнее изменение: {0}</value></data>
   <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1}, СЛ {2})</value></data>
   <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (нужно: {1})</value></data>

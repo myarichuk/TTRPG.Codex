@@ -50,7 +50,7 @@
   <data name="Combat.Hazard.Who" xml:space="preserve"><value>Characters</value></data>
   <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>Notice and Trigger use everyone ticked. Find and Disable use the first one ticked.</value></data>
   <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>A number is needed</value></data>
-  <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>This sheet is printed, so type the number to use: the save bonus, or the armor class for an attack. Then press the action again.</value></data>
+  <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>This sheet is printed, so type the number to use: the save bonus, or the armor class for an attack. Then press the same action again: it goes on for these creatures only, with the damage already rolled, so no one is hit twice.</value></data>
   <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>Number for {0}</value></data>
   <data name="Combat.Hazard.Result" xml:space="preserve"><value>Last result</value></data>
   <data name="Combat.Hazard.State.Hidden" xml:space="preserve"><value>Hidden</value></data>
@@ -72,7 +72,7 @@
   <data name="Combat.Hazard.MarkNoticed" xml:space="preserve"><value>Mark as noticed: {0}</value></data>
   <data name="Combat.Hazard.StateOf" xml:space="preserve"><value>State of {0}</value></data>
   <data name="Combat.Hazard.SetState" xml:space="preserve"><value>Set state: {0}</value></data>
-  <data name="Combat.Hazard.UndoHint" xml:space="preserve"><value>Damage from a trigger is taken back with Undo on each character. Undo here takes back the hazard's own last change.</value></data>
+  <data name="Combat.Hazard.UndoHint" xml:space="preserve"><value>Undo here takes back the hazard's last change together with the damage it dealt, all of it or none.</value></data>
   <data name="Combat.Hazard.Undo" xml:space="preserve"><value>Undo last change: {0}</value></data>
   <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1} DC {2})</value></data>
   <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (needs {1})</value></data>

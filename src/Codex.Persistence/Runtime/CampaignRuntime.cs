@@ -472,6 +472,11 @@ public sealed class CampaignRuntime : IAsyncDisposable
         return kind;
     }
 
+    /// <summary>The creature's last change as an identity, while it can still be taken back; null otherwise. A hazard keeps it to know, later, that this damage is still the
+    /// creature's last change (<see cref="HazardLedger.Undo"/>).</summary>
+    internal object? UndoToken(string actorId) =>
+        _actorEntities.TryGetValue(actorId, out var entity) && UndoableKind(actorId, entity) != null ? _undo[actorId] : null;
+
     /// <summary>Applies an undoable command and keeps the creature's state from just before and just after it as its last change (R5), so the undo button
     /// takes it back. The loop does this for every undoable command it runs; a command that makes several changes itself (a hazard hitting each of its
     /// targets) calls it for each of them from inside <see cref="IRuntimeCommand.Apply"/>, so each creature's own undo still works.</summary>
@@ -894,8 +899,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
                     await PersistDirtyAsync();
                     await PersistCampaignObjectsAsync();
-                    await Hazards.FlushAsync();
+                    var hazardNotes = await Hazards.FlushAsync();
                     await AppendSessionEventAsync(queued.Command);
+                    if (hazardNotes.Count > 0) await AppendSessionEventAsync(new HazardNoteCommand(hazardNotes));
                     await PersistEncounterAsync();
                     PublishSnapshot();
 

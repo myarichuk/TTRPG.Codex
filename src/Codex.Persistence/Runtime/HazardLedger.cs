@@ -14,6 +14,7 @@ public sealed class LiveHazard
 {
     public string RegionId { get; set; } = string.Empty;
     public string LocationId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
     public PlacedHazard Taken { get; set; } = new();
     public PlacedHazard Current { get; set; } = new();
 }
@@ -28,7 +29,7 @@ public sealed class HazardLedger(CampaignRuntime runtime)
 {
     public const string KeyPrefix = "hazard:";
 
-    private readonly List<(string RegionId, string LocationId, Func<PlacedHazard, PlacedHazard?> Change)> _pending = new();
+    private readonly List<(string RegionId, string LocationId, string Name, Func<PlacedHazard, PlacedHazard?> Change)> _pending = new();
 
     /// <summary>The key of a place's hazard in <c>EncounterDocument.ActiveEffects</c> and in the snapshot.</summary>
     public static string KeyOf(string regionId, string locationId) => $"{KeyPrefix}{regionId}/{locationId}";
@@ -45,47 +46,65 @@ public sealed class HazardLedger(CampaignRuntime runtime)
         return Copy(site.Stored);
     }
 
-    // The last change to each hazard, as the state just before and just after it: what the hazard's undo puts back while nothing has changed it since.
-    private readonly Dictionary<string, (PlacedHazard Before, PlacedHazard After)> _undo = new(StringComparer.Ordinal);
+    // The last change to each hazard, as the state just before and just after it, with the damage a trigger dealt (each creature and its own undo point): what the
+    // hazard's undo puts back, all of it or none, while nothing has changed it or those creatures since.
+    private sealed record UndoPoint(PlacedHazard Before, PlacedHazard After, IReadOnlyList<(string ActorId, object Token)> Damage);
+
+    private readonly Dictionary<string, UndoPoint> _undo = new(StringComparer.Ordinal);
 
     /// <summary>The keys of the hazards whose last change can still be offered to undo (the panel's button; <see cref="Undo"/> says whether it still can).</summary>
     public IReadOnlyCollection<string> Undoable() => _undo.Keys.ToList();
 
     /// <summary>Keeps <paramref name="changed"/> as the hazard's state: in the running encounter, or written to the place after the command. <paramref name="before"/> is the
-    /// state the command began from, kept with it as the hazard's last change.</summary>
-    public void Commit(HazardSite site, PlacedHazard before, PlacedHazard changed)
+    /// state the command began from, kept with it as the hazard's last change, together with the damage the command dealt (<paramref name="damage"/>). A command that
+    /// <paramref name="joins"/> finishes what an earlier one began (the creatures that were waiting for a number): its damage is added to that change's undo point.</summary>
+    public void Commit(HazardSite site, PlacedHazard before, PlacedHazard changed, IReadOnlyList<(string ActorId, object Token)>? damage = null, bool joins = false)
     {
         var key = KeyOf(site.RegionId, site.LocationId);
-        if (!SameState(before, changed)) _undo[key] = (Copy(before), Copy(changed));
-        Store(site, changed);
+        var hit = damage ?? Array.Empty<(string, object)>();
+        if (joins && hit.Count > 0 && _undo.TryGetValue(key, out var open) && SameState(open.After, before))
+        {
+            _undo[key] = open with { After = Copy(changed), Damage = open.Damage.Concat(hit).ToList() };
+        }
+        else if (!SameState(before, changed) || hit.Count > 0)
+        {
+            _undo[key] = new UndoPoint(Copy(before), Copy(changed), hit.ToList());
+        }
+
+        Store(site, before, changed);
     }
 
-    private void Store(HazardSite site, PlacedHazard changed)
+    private void Store(HazardSite site, PlacedHazard before, PlacedHazard changed)
     {
         if (runtime.ActiveEncounter is { } encounter)
         {
             var key = KeyOf(site.RegionId, site.LocationId);
             var taken = encounter.ActiveEffects.TryGetValue(key, out var raw) && Read(raw) is { } live ? live.Taken : Copy(site.Stored);
-            encounter.ActiveEffects[key] = new LiveHazard { RegionId = site.RegionId, LocationId = site.LocationId, Taken = taken, Current = Copy(changed) };
+            encounter.ActiveEffects[key] = new LiveHazard { RegionId = site.RegionId, LocationId = site.LocationId, Name = site.Name, Taken = taken, Current = Copy(changed) };
             runtime.MarkEncounterDirty();
             return;
         }
 
+        // Written only over the state the command began from: a place changed meanwhile (by another table, or on its page) is not written over.
+        var was = Copy(before);
         var now = Copy(changed);
-        _pending.Add((site.RegionId, site.LocationId, stored => SameEntry(stored, now) ? Merge(stored, now) : null));
+        _pending.Add((site.RegionId, site.LocationId, site.Name, stored => SameState(stored, was) ? Merge(stored, now) : null));
     }
 
-    /// <summary>Takes back the hazard's last change, only while the hazard still stands as that change left it (the encounter's live copy, else <paramref name="site"/>'s
-    /// stored placement): a hazard changed since, by the table or on the place's page, is not put back over. False when there is nothing to take back or it changed.</summary>
-    public bool Undo(HazardSite site)
+    /// <summary>Takes back the hazard's last change and the damage it dealt, as one: only while the hazard still stands as that change left it (the encounter's live copy,
+    /// else <paramref name="site"/>'s stored placement) and every creature it hurt still has that damage as its last change. Otherwise nothing is touched. Null when it was
+    /// taken back, else why not: <c>CannotUndo</c> (nothing to take back, or the hazard changed) or <c>DamageChanged</c> (a creature changed since).</summary>
+    public string? Undo(HazardSite site)
     {
         var key = KeyOf(site.RegionId, site.LocationId);
-        if (!_undo.TryGetValue(key, out var point)) return false;
+        if (!_undo.TryGetValue(key, out var point)) return "CannotUndo";
         var now = Begin(site);
-        if (!SameState(now, point.After)) return false;
+        if (!SameState(now, point.After)) return "CannotUndo";
+        if (point.Damage.Any(d => !ReferenceEquals(runtime.UndoToken(d.ActorId), d.Token))) return "DamageChanged";
+        foreach (var (actorId, _) in point.Damage) runtime.Undo(actorId);
         _undo.Remove(key);
-        Store(site, point.Before);
-        return true;
+        Store(site, point.After, point.Before);
+        return null;
     }
 
     /// <summary>The live copies of the running encounter's hazards, by key, for the snapshot.</summary>
@@ -111,24 +130,38 @@ public sealed class HazardLedger(CampaignRuntime runtime)
             {
                 var taken = live.Taken;
                 var current = live.Current;
-                _pending.Add((live.RegionId, live.LocationId, stored => SameState(stored, taken) ? Merge(stored, current) : null));
+                _pending.Add((live.RegionId, live.LocationId, live.Name, stored => SameState(stored, taken) ? Merge(stored, current) : null));
             }
 
             ended.ActiveEffects.Remove(key);
         }
     }
 
-    /// <summary>Writes what the loop queued, once per command: a patch of each placement, nothing else.</summary>
-    public async Task FlushAsync()
+    /// <summary>Writes what the loop queued, once per command: a patch of each placement, nothing else. Each write stands alone: one that fails or is refused (the place
+    /// changed meanwhile, so the table's state is not written over it) does not stop the others or the command's log, and is said as a GM-only line, returned for the log.</summary>
+    public async Task<IReadOnlyList<EventMessage>> FlushAsync()
     {
-        if (_pending.Count == 0) return;
+        var notes = new List<EventMessage>();
+        if (_pending.Count == 0) return notes;
         var writes = _pending.ToList();
         _pending.Clear();
-        if (runtime.Places is not { } places) return;
-        foreach (var (regionId, locationId, change) in writes)
+        if (runtime.Places is not { } places) return notes;
+        foreach (var (regionId, locationId, name, change) in writes)
         {
-            await places.PatchPlacedHazardAsync(runtime.CampaignId, regionId, locationId, change);
+            try
+            {
+                if (!await places.PatchPlacedHazardAsync(runtime.CampaignId, regionId, locationId, change))
+                {
+                    notes.Add(EventMessage.Of("Hazard.NotWritten", EventTerm.GmOnly(name)));
+                }
+            }
+            catch (Exception)
+            {
+                notes.Add(EventMessage.Of("Hazard.WriteFailed", EventTerm.GmOnly(name)));
+            }
         }
+
+        return notes;
     }
 
     /// <summary>A live hazard as an encounter holds it: the object itself in memory, or what the database returns for it after the encounter is restored.</summary>

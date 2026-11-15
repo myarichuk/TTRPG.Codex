@@ -220,6 +220,18 @@
   <data name="Event.Hazard.SavedNone" xml:space="preserve"><value>{0}: {1} passes the save and takes none.</value></data>
   <data name="Event.Hazard.Damage" xml:space="preserve"><value>{0}: {1} takes {2} damage.</value></data>
   <data name="Event.Hazard.DamageTyped" xml:space="preserve"><value>{0}: {1} takes {2} {3} damage.</value></data>
+  <data name="Event.Hazard.Refused.DamageChanged" xml:space="preserve"><value>{0}: a creature it hurt has changed since, so nothing was taken back.</value></data>
+  <data name="Event.Hazard.NotWritten" xml:space="preserve"><value>{0}: it changed on its place's page meanwhile, so the table's state was not written.</value></data>
+  <data name="Event.Hazard.WriteFailed" xml:space="preserve"><value>{0}: the table's state could not be saved to its place.</value></data>
+  <data name="Event.Hazard.Immune" xml:space="preserve"><value>{0}: {1} is immune to {2} damage.</value></data>
+  <data name="Event.Hazard.Resisted" xml:space="preserve"><value>{0}: {1} resisted the damage.</value></data>
+  <data name="Event.Hazard.Vulnerable" xml:space="preserve"><value>{0}: {1} is vulnerable to the damage.</value></data>
+  <data name="Event.Hazard.Absorbed" xml:space="preserve"><value>{0}: temporary hit points took {2} of the damage to {1}.</value></data>
+  <data name="Event.Hazard.Died" xml:space="preserve"><value>{0}: {1} died.</value></data>
+  <data name="Event.Hazard.Down" xml:space="preserve"><value>{0}: {1} is down.</value></data>
+  <data name="Event.Hazard.HitWhileDown" xml:space="preserve"><value>{0}: {1} was hit while down, adding {2} to the failed death saves.</value></data>
+  <data name="Event.Hazard.ConcentrationLost" xml:space="preserve"><value>{0}: {1} lost concentration.</value></data>
+  <data name="Event.Hazard.ConcentrationSave" xml:space="preserve"><value>{0}: {1} owes a concentration save, DC {2}.</value></data>
   <data name="Event.Hazard.Conditions" xml:space="preserve"><value>{0}: {1} gains {2}; add it by hand.</value></data>
   <data name="Event.Hazard.State.Hidden" xml:space="preserve"><value>{0} is now hidden.</value></data>
   <data name="Event.Hazard.State.Noticed" xml:space="preserve"><value>{0} is now noticed.</value></data>

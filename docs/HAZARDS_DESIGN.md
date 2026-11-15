@@ -438,18 +438,27 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     system's hazard block names an `attack` field; srd5e's has none, so that branch is covered by a test that names one) and/or the save (`Kind = Save`); a passed save takes half or none
     by `onSave`. Each damage part is applied by `ApplyDamageCommand` through the new `CampaignRuntime.ApplyUndoably`, which the loop now also uses for every undoable command. **Conditions
     stay text** in the log line for the GM to add (4.2), not applied. A printed creature's save or armor class is `NeedsBonus`: nothing is done for it, the panel shows a number field for it, and
-    the typed number goes with the next request (one number per creature: the save bonus, or the armor class for an attack).
-  - **Undo (a change from 4.1, which said a hazard-scoped undo comes later; the task asks for it now).** Two parts. The damage of a trigger is taken back per creature by the existing
-    Undo button: all of a target's damage parts are one undo point (`CampaignRuntime.ApplyUndoably(actorId, kind, changes)`, which the loop's per-command version now calls too), so a
-    Spiked Pit's two parts come back together. The hazard's own last change (a find, a disarm success, a marking, the state picker) is taken back by `UndoHazardCommand`: the ledger
-    keeps the state just before and just after each hazard's last change, and the undo puts the before back only while the hazard still stands as the change left it (the encounter's live
-    copy, else the placement as the panel just read it); a hazard changed meanwhile, by the table or on the place's page, is refused and logged GM-only. The snapshot lists the hazards
-    that can offer it (`HazardUndo`) and the panel shows "Undo last change: {hazard}". The damage is not touched by this undo, and the hazard's undo is lost when the table restarts.
+    the typed number goes with the repeat of that request only (same hazard, action and route; one number per creature: the save bonus, or the armor class for an attack), prefilled from
+    the printed sheet when `ActorChecks.Suggest` finds one (the panel's field shows it; the GM can type another). **The repeat only finishes:** a trigger that hit some creatures and waited on others
+    hands back its rolled damage (`DamageRolled`) and who waited (`NeedsNumber`); `HazardsTable` keeps them, and the same action pressed again is sent as `HazardCommand(..., Rolled)` for the waiting
+    creatures alone, with the same roll, so no one is hit twice. What the damage did (immune, resisted, vulnerable, temporary hit points, down, dead, a concentration save owed or lost) is said
+    in the GM-only log line as `Event.Hazard.*`, not only the amount. Still open: inside one command a creature's single typed number serves both its armor class and its save.
+  - **Undo (a change from 4.1, which said a hazard-scoped undo comes later; the task asks for it now).** All of a target's damage parts are one undo point
+    (`CampaignRuntime.ApplyUndoably(actorId, kind, changes)`, which the loop's per-command version now calls too), so a Spiked Pit's two parts come back together, and each creature's own
+    Undo button still takes its damage back. The hazard's last change (a find, a disarm success, a marking, the state picker, **a trigger or a set-off with the damage it dealt**) is taken back
+    by `UndoHazardCommand` as one: the ledger keeps the state just before and just after each hazard's last change and, for a trigger, each hurt creature with its undo point
+    (`CampaignRuntime.UndoToken`). The undo runs only while the hazard still stands as the change left it (the encounter's live copy, else the placement as the panel just read it) **and** each
+    hurt creature still has that damage as its last change; otherwise nothing is touched (never half undone) and the GM-only log says which (`Refused.CannotUndo` or `Refused.DamageChanged`).
+    A second trigger on a hazard already Triggered makes its own undo point. The finishing repeat for the creatures that waited joins the first trigger's point. The snapshot lists the
+    hazards that can offer it (`HazardUndo`) and the panel shows "Undo last change: {hazard}". The hazard's undo is lost when the table restarts.
   - **Live state.** Kept as `LiveHazard { Taken, Current }` under `hazard:{regionId}/{locationId}` in `EncounterDocument.ActiveEffects` while an encounter runs (read back defensively, since the
     database returns the object as JSON; a test reloads it), and in the snapshot as `LiveHazards` for the panel. Outside an encounter a change is queued and written after the command. Both
-    writes go through `IRegionRepository.PatchPlacedHazardAsync(campaignId, regionId, locationId, change)`, which loads the region, hands the stored placement to `change` and writes
-    `Feature.Hazard` alone (campaign-scoped, no user access: only a DM's table runs it). At encounter end each changed placement is written **only if the stored one still equals what the
-    encounter took**; a placement whose live copy equals its taken copy is not written at all, and the encounter forgets the keys. `CampaignRuntimeManager` takes `IRegionRepository` as an optional
+    writes go through `IRegionRepository.PatchPlacedHazardAsync(campaignId, regionId, locationId, change)`, which is one write under the repo's multi-writer rule (`RavenUpdate.RunAsync`: optimistic concurrency, `change` applied to a fresh load and run again when the
+    place was saved in between) that changes `Feature.Hazard` alone (campaign-scoped, no user access: only a DM's table runs it). A place form's own save is still a whole-place save; it can
+    wipe a patch only in the moment between its own load and save. At encounter end each changed placement is written **only if the stored one still equals what the
+    encounter took** (checked inside that same write); a placement whose live copy equals its taken copy is not written at all, and the encounter forgets the keys. Outside an encounter a
+    write goes over **the state the command began from only**, so a second tab that read the same old state does not overwrite the first. A write that is refused, or fails, does not stop the
+    others or the command's log: it is said as a GM-only line (`Event.Hazard.NotWritten`, `Event.Hazard.WriteFailed`), and the failed change is not retried. `CampaignRuntimeManager` takes `IRegionRepository` as an optional
     last parameter and sets `runtime.Places`.
   - **The encounter's place.** Nothing set `EncounterDocument.LocationId`, so 4.1's "the encounter's place" did not exist. The panel has a place picker (each place with a hazard in or under
     it; "All places" is the default); while an encounter runs the choice is saved on it by `SetEncounterPlaceCommand` and the snapshot carries it. Outside an encounter the choice is only the
@@ -464,7 +473,9 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   - **Panel details.** A number typed for a printed creature goes with the next request only, for the creatures that were asked, and is then cleared (it was a save bonus; it must never become
     that creature's Perception or another hazard's save). The panel's loaded copy of the places is read again when the encounter running or the hazards it holds change, so it is not stale after an
     encounter ends and writes back.
-  - **Tests:** `HazardCommandTests` (24), `HazardsPanelTests` (18), `HazardsTableTests` (3), the `PlacedHazard.Found` cases in the persistence and form tests, and the three H4a-gap tests; the whole
+  - **Set-off targets (choice kept, 12.6):** a disarm that sets the hazard off hits the one who tried, as the Poisoned Needle says; an area hazard or a critical failure that should reach more
+    creatures is a content or contract decision for a later step (today the GM presses Trigger for the others, which rolls its own damage).
+  - **Tests:** `HazardCommandTests` (30), `HazardsPanelTests` (19), `HazardsTableTests` (3), the `PlacedHazard.Found` cases in the persistence and form tests, and the three H4a-gap tests; the whole
     filtered suite passes.
 
 ## 12. H4a: the server-side check service (interface)

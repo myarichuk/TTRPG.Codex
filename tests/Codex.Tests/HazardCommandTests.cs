@@ -637,6 +637,148 @@ public class HazardCommandTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         Assert.Equal(changedBefore, (await RegionAsync(changed)).UpdatedAt);
     }
 
+    [Fact]
+    public async Task APlaceFormSave_BetweenTheHazardWritesLoadAndSave_IsNotLost_AndNeitherIsTheHazardChange_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var statue = Trap("fire-casting-statue");
+        var placed = await PlaceAsync(table, Hidden(statue));
+        var calls = 0;
+
+        var patched = await _regions.PatchPlacedHazardAsync(table.Runtime.CampaignId, placed.Region.Id, placed.Place.Id, h =>
+        {
+            // The place form saves now: the hazard write has loaded the place and has not saved it yet.
+            if (calls++ == 0)
+            {
+                Task.Run(async () =>
+                {
+                    using var session = _dbService.Store.OpenAsyncSession();
+                    var region = await session.LoadAsync<RegionDocument>(placed.Region.Id);
+                    region.Locations.Single().Description = "Saved by the place form in between.";
+                    await session.SaveChangesAsync();
+                }).GetAwaiter().GetResult();
+            }
+
+            h.State = HazardState.Noticed;
+            return h;
+        });
+
+        var after = (await RegionAsync(placed)).Locations.Single();
+        Assert.True(patched);
+        Assert.Equal(2, calls);
+        Assert.Equal(("Saved by the place form in between.", HazardState.Noticed), (after.Description, after.Feature!.Hazard!.State));
+    }
+
+    [Fact]
+    public async Task ATablesWriteThatWasReadBeforeAnotherTablesWrite_IsNotWrittenOver_AndTheGmIsTold_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var entry = Synthetic("homebrew-vault", new Dictionary<string, object>
+        {
+            ["disarm"] = new List<object> { new Dictionary<string, object> { ["id"] = "pick", ["name"] = "Pick it", ["check"] = "Sleight of Hand", ["dc"] = 12L, ["successes"] = 2L } }
+        });
+        var placed = await PlaceAsync(table, Hidden(entry));
+        var stale = SiteOf(placed, entry, Hidden(entry));
+        foreach (var face in new[] { 15, 15 }) table.Dice.Faces.Enqueue(face);
+
+        // Two tabs both read no successes; the second one's write would put one success over the first one's.
+        await RunAsync(table, Cmd(stale, HazardAction.Disable, new[] { table.Aria.Id }, "pick"));
+        await RunAsync(table, Cmd(stale, HazardAction.Disable, new[] { table.Brin.Id }, "pick"));
+
+        Assert.Equal(1, (await StoredAsync(placed)).Successes);
+        Assert.Contains(table.Session.Events, e => e.Type == "Hazard" && e.Description.Contains("the table's state was not written"));
+    }
+
+    [Fact]
+    public async Task APrintedCreatureWaitingForANumber_IsFinishedWithTheSameRoll_AndTheOnesAlreadyHitAreNotHitTwice_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var needle = Trap("poisoned-needle");
+        var placed = await PlaceAsync(table, Hidden(needle));
+        // Damage 1d10 = 8 once; Aria's save 12 + 2 passes DC 11 (half: 4).
+        foreach (var face in new[] { 8, 12 }) table.Dice.Faces.Enqueue(face);
+        var first = await RunAsync(table, Cmd(SiteOf(placed, needle, Hidden(needle)), HazardAction.Trigger, new[] { table.Aria.Id, table.Goblin.Id }));
+        Assert.Equal(new[] { table.Goblin.Id }, first.NeedsNumber);
+        Assert.Equal((26, 7), (Hp(table, table.Aria), Hp(table, table.Goblin)));
+
+        // The repeat is for the creature that waited, with the damage already rolled: Aria is not touched and no new damage is rolled.
+        table.Dice.Faces.Enqueue(12); // the goblin's save: 12 + 1 passes, half of 8
+        var repeat = await RunAsync(table, new HazardCommand(SiteOf(placed, needle, await StoredAsync(placed)), HazardAction.Trigger, new[] { table.Goblin.Id }, Gm, null, null, null,
+            new Dictionary<string, int> { [table.Goblin.Id] = 1 }, first.DamageRolled));
+
+        Assert.Empty(repeat.NeedsNumber);
+        Assert.Equal((26, 3), (Hp(table, table.Aria), Hp(table, table.Goblin)));
+        Assert.Equal(1, table.Dice.Expressions.Count(e => e == "1d10"));
+        // Both hits are one undo point for the hazard.
+        var undo = new UndoHazardCommand(SiteOf(placed, needle, await StoredAsync(placed)));
+        await table.Runtime.EnqueueAsync(undo);
+        Assert.True(undo.Done);
+        Assert.Equal((30, 7), (Hp(table, table.Aria), Hp(table, table.Goblin)));
+    }
+
+    [Fact]
+    public async Task TheHazardsUndo_AfterATrigger_TakesBackEveryTargetsDamageWithTheState_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var needle = Trap("poisoned-needle");
+        var placed = await PlaceAsync(table, Hidden(needle));
+        foreach (var face in new[] { 8, 12, 3 }) table.Dice.Faces.Enqueue(face);
+        await RunAsync(table, Cmd(SiteOf(placed, needle, Hidden(needle)), HazardAction.Trigger, new[] { table.Aria.Id, table.Brin.Id }));
+        Assert.Equal((26, 22), (Hp(table, table.Aria), Hp(table, table.Brin)));
+
+        var undo = new UndoHazardCommand(SiteOf(placed, needle, await StoredAsync(placed)));
+        await table.Runtime.EnqueueAsync(undo);
+
+        Assert.True(undo.Done);
+        Assert.Equal((30, 30), (Hp(table, table.Aria), Hp(table, table.Brin)));
+        Assert.Equal(HazardState.Hidden, (await StoredAsync(placed)).State);
+        Assert.DoesNotContain(HazardLedger.KeyOf(placed.Region.Id, placed.Place.Id), table.Runtime.Snapshot.HazardUndo);
+    }
+
+    [Fact]
+    public async Task TheHazardsUndo_AfterAFailedDisarmThatSetItOff_TakesBackTheDamageToo_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var needle = Trap("poisoned-needle");
+        var placed = await PlaceAsync(table, Hidden(needle, null, "needle"));
+        foreach (var face in new[] { 5, 8, 12 }) table.Dice.Faces.Enqueue(face);
+        await RunAsync(table, Cmd(SiteOf(placed, needle, await StoredAsync(placed)), HazardAction.Disable, new[] { table.Aria.Id }, "disarm"));
+        Assert.Equal(26, Hp(table, table.Aria));
+
+        var undo = new UndoHazardCommand(SiteOf(placed, needle, await StoredAsync(placed)));
+        await table.Runtime.EnqueueAsync(undo);
+
+        Assert.True(undo.Done);
+        Assert.Equal(30, Hp(table, table.Aria));
+        Assert.Equal(HazardState.Hidden, (await StoredAsync(placed)).State);
+    }
+
+    [Fact]
+    public async Task TheHazardsUndo_IsRefusedWhole_WhenACreatureItHurtChangedSince_NothingIsLeftHalfUndone_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var needle = Trap("poisoned-needle");
+        var placed = await PlaceAsync(table, Hidden(needle));
+        foreach (var face in new[] { 8, 12, 3 }) table.Dice.Faces.Enqueue(face);
+        await RunAsync(table, Cmd(SiteOf(placed, needle, Hidden(needle)), HazardAction.Trigger, new[] { table.Aria.Id, table.Brin.Id }));
+        // Brin takes another hit after the trap: her last change is no longer the trap's damage.
+        await table.Runtime.EnqueueAsync(new ApplyDamageCommand(table.Brin.Id, "HP", 1, string.Empty));
+
+        var undo = new UndoHazardCommand(SiteOf(placed, needle, await StoredAsync(placed)));
+        await table.Runtime.EnqueueAsync(undo);
+
+        Assert.False(undo.Done);
+        Assert.Equal((26, 21), (Hp(table, table.Aria), Hp(table, table.Brin)));
+        Assert.Equal(HazardState.Triggered, (await StoredAsync(placed)).State);
+        Assert.Contains("has changed since", undo.Said!.Description);
+    }
+
     // ---- Secrecy ----
 
     [Fact]

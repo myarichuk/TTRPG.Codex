@@ -220,6 +220,18 @@
   <data name="Event.Hazard.SavedNone" xml:space="preserve"><value>{0}: {1} עובר את ההצלה ולא סופג נזק.</value></data>
   <data name="Event.Hazard.Damage" xml:space="preserve"><value>{0}: {1} סופג {2} נזק.</value></data>
   <data name="Event.Hazard.DamageTyped" xml:space="preserve"><value>{0}: {1} סופג {2} נזק ({3}).</value></data>
+  <data name="Event.Hazard.Refused.DamageChanged" xml:space="preserve"><value>{0}: יצור שנפגע השתנה מאז, ולכן דבר לא בוטל.</value></data>
+  <data name="Event.Hazard.NotWritten" xml:space="preserve"><value>{0}: היא השתנתה בינתיים בדף המקום, ולכן מצב השולחן לא נכתב.</value></data>
+  <data name="Event.Hazard.WriteFailed" xml:space="preserve"><value>{0}: לא ניתן היה לשמור את מצב השולחן במקום.</value></data>
+  <data name="Event.Hazard.Immune" xml:space="preserve"><value>{0}: {1} חסין לנזק {2}.</value></data>
+  <data name="Event.Hazard.Resisted" xml:space="preserve"><value>{0}: {1} עמיד לנזק הזה.</value></data>
+  <data name="Event.Hazard.Vulnerable" xml:space="preserve"><value>{0}: {1} פגיע לנזק הזה.</value></data>
+  <data name="Event.Hazard.Absorbed" xml:space="preserve"><value>{0}: נקודות חיים זמניות ספגו {2} מהנזק של {1}.</value></data>
+  <data name="Event.Hazard.Died" xml:space="preserve"><value>{0}: {1} מת.</value></data>
+  <data name="Event.Hazard.Down" xml:space="preserve"><value>{0}: {1} נופל.</value></data>
+  <data name="Event.Hazard.HitWhileDown" xml:space="preserve"><value>{0}: {1} נפגע בעודו מחוסר הכרה, ונוספו {2} כשלונות להצלות המוות.</value></data>
+  <data name="Event.Hazard.ConcentrationLost" xml:space="preserve"><value>{0}: {1} מאבד ריכוז.</value></data>
+  <data name="Event.Hazard.ConcentrationSave" xml:space="preserve"><value>{0}: {1} חייב בהצלת ריכוז, דרגת קושי {2}.</value></data>
   <data name="Event.Hazard.Conditions" xml:space="preserve"><value>{0}: {1} מקבל מצב: {2}; יש להוסיף אותו ידנית.</value></data>
   <data name="Event.Hazard.State.Hidden" xml:space="preserve"><value>{0} מוסתרת עכשיו.</value></data>
   <data name="Event.Hazard.State.Noticed" xml:space="preserve"><value>{0} זוהתה עכשיו.</value></data>

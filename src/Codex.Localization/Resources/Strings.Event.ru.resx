@@ -220,6 +220,18 @@
   <data name="Event.Hazard.SavedNone" xml:space="preserve"><value>{0}: {1} проходит спасбросок и не получает урона.</value></data>
   <data name="Event.Hazard.Damage" xml:space="preserve"><value>{0}: {1} получает урон: {2}.</value></data>
   <data name="Event.Hazard.DamageTyped" xml:space="preserve"><value>{0}: {1} получает урон: {2} ({3}).</value></data>
+  <data name="Event.Hazard.Refused.DamageChanged" xml:space="preserve"><value>{0}: существо, получившее урон, с тех пор изменилось, поэтому ничего не отменено.</value></data>
+  <data name="Event.Hazard.NotWritten" xml:space="preserve"><value>{0}: она изменилась на странице места, поэтому состояние стола не записано.</value></data>
+  <data name="Event.Hazard.WriteFailed" xml:space="preserve"><value>{0}: не удалось сохранить состояние стола в месте.</value></data>
+  <data name="Event.Hazard.Immune" xml:space="preserve"><value>{0}: у {1} иммунитет к урону: {2}.</value></data>
+  <data name="Event.Hazard.Resisted" xml:space="preserve"><value>{0}: у {1} сопротивление этому урону.</value></data>
+  <data name="Event.Hazard.Vulnerable" xml:space="preserve"><value>{0}: у {1} уязвимость к этому урону.</value></data>
+  <data name="Event.Hazard.Absorbed" xml:space="preserve"><value>{0}: временные хиты поглотили {2} урона у {1}.</value></data>
+  <data name="Event.Hazard.Died" xml:space="preserve"><value>{0}: {1} погибает.</value></data>
+  <data name="Event.Hazard.Down" xml:space="preserve"><value>{0}: {1} падает без сознания.</value></data>
+  <data name="Event.Hazard.HitWhileDown" xml:space="preserve"><value>{0}: {1} получает урон без сознания, провалов спасбросков смерти добавлено: {2}.</value></data>
+  <data name="Event.Hazard.ConcentrationLost" xml:space="preserve"><value>{0}: {1} теряет концентрацию.</value></data>
+  <data name="Event.Hazard.ConcentrationSave" xml:space="preserve"><value>{0}: у {1} спасбросок концентрации, СЛ {2}.</value></data>
   <data name="Event.Hazard.Conditions" xml:space="preserve"><value>{0}: {1} получает состояние: {2}; добавьте его вручную.</value></data>
   <data name="Event.Hazard.State.Hidden" xml:space="preserve"><value>{0} теперь скрыта.</value></data>
   <data name="Event.Hazard.State.Noticed" xml:space="preserve"><value>{0} теперь замечена.</value></data>

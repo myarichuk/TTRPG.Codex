@@ -32,6 +32,7 @@ public class HazardsPanelTests : ComponentTestBase
             .Add(x => x.Passes, passes ?? Array.Empty<HazardPass>())
             .Add(x => x.PassesFor, passes is { Count: > 0 } ? "hazard:r/p1" : null)
             .Add(x => x.NeedNumber, needNumber ?? Array.Empty<HazardWho>())
+            .Add(x => x.AskedFor, "hazard:r/p1|Trigger|")
             .Add(x => x.Status, status ?? Array.Empty<string>())
             .Add(x => x.OnRequest, (HazardRequest r) => onRequest?.Invoke(r)));
     }
@@ -181,6 +182,21 @@ public class HazardsPanelTests : ComponentTestBase
         cut.Find("[data-testid=hazard-0-trigger]").Click();
 
         Assert.Null(requests.Single().Bonuses);
+    }
+
+    [Fact]
+    public void ANumberTypedForOneAction_IsNotSentWithAnotherAction_OnlyWithTheRepeatOfTheRequestThatAskedForIt()
+    {
+        var requests = new List<HazardRequest>();
+        var cut = Draw(onRequest: requests.Add, needNumber: new[] { new HazardWho("g1", "Goblin") });
+        cut.Find("input[type=number]").Change("3");
+        cut.Find("[data-testid=hazard-who-a1]").Change(true);
+
+        // A Notice is not the Trigger that asked: the number is not sent with it, and is not kept for later either.
+        cut.Find("[data-testid=hazard-0-notice]").Click();
+        Assert.Null(requests.Single().Bonuses);
+        cut.Find("[data-testid=hazard-0-trigger]").Click();
+        Assert.Null(requests.Last().Bonuses);
     }
 
     [Fact]

@@ -21,6 +21,9 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
     /// <summary>Once applied: the save the creature owes to keep concentrating, or null when it was not concentrating (R4).</summary>
     public int? ConcentrationDc => _outcome.ConcentrationDc;
 
+    /// <summary>Once applied: everything the table's rules did with the damage (immunity, temporary hit points, down or dead, concentration).</summary>
+    public Codex.Core.Rules.DamageReport Report => _outcome;
+
     /// <summary>Once applied: the damage that reached the creature (after resistance, immunity and temporary hit points), by the table's own rules; 0 when a
     /// system handler took the damage instead.</summary>
     public int Dealt => _outcome.Dealt;

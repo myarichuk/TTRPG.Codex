@@ -11,7 +11,7 @@
 @if (Type != null && Access.IsDm)
 {
     <HazardsPanel Hazards="Views()" Who="Who()" Places="places" PlaceId="@placeId" OnPlaceChanged="PlaceChangedAsync" OnRequest="SendAsync" OnUndo="UndoAsync"
-                  Status="status" NeedNumber="needNumber" Passes="passes" PassesFor="@passesFor" />
+                  Status="status" NeedNumber="needNumber" AskedFor="@askedFor" Suggested="suggested" Passes="passes" PassesFor="@passesFor" />
 }
 
 @code {
@@ -31,6 +31,13 @@
     private bool loaded;
     private IReadOnlyList<string> status = Array.Empty<string>();
     private IReadOnlyList<HazardWho> needNumber = Array.Empty<HazardWho>();
+    private string askedFor = string.Empty;
+    private IReadOnlyDictionary<string, int> suggested = new Dictionary<string, int>();
+
+    // A trigger that hit some creatures and is waiting on a number for the rest: who is waiting and the damage already rolled.
+    private sealed record Waiting(string HazardId, HazardAction Action, string? Route, IReadOnlyList<string> Ids, IReadOnlyList<int> Rolled);
+
+    private Waiting? waiting;
     private IReadOnlyList<HazardPass> passes = Array.Empty<HazardPass>();
     private string? passesFor;
 
@@ -179,6 +186,7 @@
 
         status = command.Said?.Parts.Select(p => p.Render(L)).ToList() ?? new List<string>();
         needNumber = Array.Empty<HazardWho>();
+        waiting = null;
         await LoadAsync();
     }
 
@@ -187,7 +195,11 @@
         if (request.Hazard.Site is not { } listed) return;
         // The placement as stored now, not as the page last loaded it: the place's own page may have changed it.
         var stored = (await RegionRepo.GetAsync(listed.RegionId, Access))?.Locations.FirstOrDefault(l => l.Id == listed.LocationId)?.Feature?.Hazard ?? listed.Stored;
-        var command = new HazardCommand(listed with { Stored = stored }, request.Action, request.ActorIds, CurrentUserId, request.Route, request.Routes, request.State, request.Bonuses);
+        // The repeat of a trigger that waited for a number finishes it for the waiting creatures only, with the damage already rolled: the others are not hit twice.
+        var again = waiting is { } w && w.HazardId == request.Hazard.Id && w.Action == request.Action && w.Route == request.Route;
+        var actorIds = again ? waiting!.Ids : request.ActorIds;
+        var command = new HazardCommand(listed with { Stored = stored }, request.Action, actorIds, CurrentUserId, request.Route, request.Routes, request.State, request.Bonuses,
+            again ? waiting!.Rolled : null);
         try
         {
             await Runtime.EnqueueAsync(command);
@@ -202,6 +214,17 @@
         var names = Actors.ToDictionary(a => a.Id, a => a.Name);
         status = command.Said?.Parts.Select(p => p.Render(L)).ToList() ?? new List<string>();
         needNumber = command.NeedsNumber.Select(id => new HazardWho(id, names.GetValueOrDefault(id, id))).ToList();
+        askedFor = $"{request.Hazard.Id}|{request.Action}|{request.Route}";
+        var suggestions = new Dictionary<string, int>();
+        foreach (var (id, spec) in command.NeedsSpecs)
+        {
+            if (Definition != null && Actors.FirstOrDefault(a => a.Id == id) is { } actor && ActorChecks.Suggest(Definition, actor, spec) is { } number) suggestions[id] = number;
+        }
+
+        suggested = suggestions;
+        waiting = command.Struck && command.NeedsNumber.Count > 0 && command.DamageRolled != null
+            ? new Waiting(request.Hazard.Id, request.Action, request.Route, command.NeedsNumber.ToList(), command.DamageRolled)
+            : null;
         if (request.Action == HazardAction.Notice)
         {
             passes = command.Passes;

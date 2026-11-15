@@ -44,10 +44,10 @@
     }
     else
     {
-        <fieldset class="mb-2" data-testid="hazard-who">
+        <fieldset class="mb-2" data-testid="hazard-who" aria-describedby="hazard-who-hint">
             <legend class="field-label">@L["Combat.Hazard.Who"]</legend>
             <p class="small-muted mb-1" id="hazard-who-hint">@L["Combat.Hazard.WhoHint"]</p>
-            <div class="d-flex flex-wrap gap-2" aria-describedby="hazard-who-hint">
+            <div class="d-flex flex-wrap gap-2">
                 @foreach (var who in Who)
                 {
                     var id = who.Id;
@@ -67,7 +67,7 @@
                     <div class="d-flex align-items-center gap-2 mb-1">
                         <label for="@($"hazard-number-{id}")" class="field-label mb-0">@L["Combat.Hazard.NumberFor", who.Name]</label>
                         <input id="@($"hazard-number-{id}")" type="number" class="field-input field-sm" style="max-width: 6rem" aria-describedby="hazard-number-hint"
-                               value="@(typed.TryGetValue(id, out var shownNumber) ? shownNumber.ToString() : null)" @onchange="e => Typed(id, e)" data-testid="@($"hazard-number-{id}")" />
+                               value="@(typed.TryGetValue(id, out var shownNumber) ? shownNumber.ToString() : Suggested.TryGetValue(id, out var shownSuggestion) ? shownSuggestion.ToString() : null)" @onchange="e => Typed(id, e)" data-testid="@($"hazard-number-{id}")" />
                     </div>
                 }
             </fieldset>
@@ -189,7 +189,7 @@
     [Parameter] public EventCallback<string> OnPlaceChanged { get; set; }
     [Parameter] public EventCallback<HazardRequest> OnRequest { get; set; }
 
-    /// <summary>Takes back the hazard's own last change (not the damage, which each character's Undo takes back).</summary>
+    /// <summary>Takes back the hazard's own last change with the damage it dealt (all of it or none).</summary>
     [Parameter] public EventCallback<HazardView> OnUndo { get; set; }
 
     /// <summary>What the last action said, line by line, for the status region and the visible result.</summary>
@@ -197,6 +197,12 @@
 
     /// <summary>Who the last action could do nothing for, for want of a number (a printed creature's save or armor class).</summary>
     [Parameter] public IReadOnlyList<HazardWho> NeedNumber { get; set; } = Array.Empty<HazardWho>();
+
+    /// <summary>The request the numbers were asked for (<c>hazard id|action|route</c>): a typed number goes only with the repeat of that one.</summary>
+    [Parameter] public string AskedFor { get; set; } = string.Empty;
+
+    /// <summary>The numbers a printed sheet suggests for the creatures that were asked, by character (4.2); the game master can type another.</summary>
+    [Parameter] public IReadOnlyDictionary<string, int> Suggested { get; set; } = new Dictionary<string, int>();
 
     /// <summary>Who passed which route in the last sweep, and the hazard (<see cref="HazardView.Id"/>) it was for.</summary>
     [Parameter] public IReadOnlyList<HazardPass> Passes { get; set; } = Array.Empty<HazardPass>();
@@ -244,10 +250,19 @@
     {
         var chosen = Chosen();
         var actors = action is HazardAction.Find or HazardAction.Disable ? chosen.Take(1).ToList() : chosen;
-        // A typed number answers one question ("Goblin needs a number") and goes with the next request only, for the creatures that were asked: never to a later
-        // check of another kind (a save bonus used as a Perception bonus, or on another hazard).
-        var asked = NeedNumber.Select(n => n.Id).ToHashSet();
-        var numbers = typed.Where(t => asked.Contains(t.Key)).ToDictionary(t => t.Key, t => t.Value);
+        // A typed number answers one question ("Goblin needs a number") and goes only with the repeat of that request (the same hazard and action), for the creatures
+        // that were asked: never to a later check of another kind (a save bonus used as a Perception bonus, or on another hazard). A number the printed sheet suggests
+        // stands unless the game master typed another.
+        var numbers = new Dictionary<string, int>();
+        if (AskedFor == $"{hazard.Id}|{action}|{route}")
+        {
+            foreach (var asked in NeedNumber.Select(n => n.Id))
+            {
+                if (typed.TryGetValue(asked, out var own)) numbers[asked] = own;
+                else if (Suggested.TryGetValue(asked, out var suggestion)) numbers[asked] = suggestion;
+            }
+        }
+
         typed.Clear();
         return OnRequest.InvokeAsync(new HazardRequest(hazard, action, actors, route, null, state, numbers.Count == 0 ? null : numbers));
     }
