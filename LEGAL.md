@@ -194,9 +194,10 @@ domain under CC0 1.0 by the TTRPG.Codex project.
 - Pre-remaster Pathfinder Second Edition (Core Rulebook, Bestiaries): published under the Open Game
   License 1.0a, which carries its own notice and Product Identity obligations. Not used, to keep
   to a single licence per system.
-- Cyberpunk RED: R. Talsorian Games publishes no open licence, only a Homebrew Content Policy
-  (https://rtalsoriangames.com/homebrew-content-policy/) that requires content to be free and bars
-  reproducing rules text, full stat blocks for monsters or NPCs, and its trademarks, art and trade
-  dress. No Cyberpunk RED content is included. A system definition limited to attributes,
-  resources and formulas, with no rules prose, falls under the policy's allowance for character
-  sheets and generators, and anything beyond that would come from the user's own copy of the books.
+- Games without an open licence: no content from them is included. Where a publisher offers only a
+  fan or homebrew policy, a system definition a user writes for such a game stays limited to
+  attributes, resources and formulas, with no rules prose, stat blocks, trademarks, art or trade
+  dress, and anything beyond that comes from the user's own copy of the books. The reference
+  fixtures under `tests/Codex.Tests/Fixtures/reference` use this project's own words and numbers:
+  `street` is original, `d35` follows the shape of the d20 System Reference Document 3.5 (Open Game
+  License 1.0a), and `crew` follows the Forged in the Dark SRD (CC BY 3.0).
