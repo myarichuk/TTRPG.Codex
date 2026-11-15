@@ -577,7 +577,8 @@
     private RenderFragment Concerns(IReadOnlyList<string>? notes) => __builder =>
     {
         if (notes is not { Count: > 0 }) return;
-        <ul class="small wb-concerns" data-testid="world-proposal-concerns">
+        <p class="small wb-concerns mb-0"><LucideIcon IconName="alert-triangle" Size="12" /> <strong>@L["WorldChat.Proposal.Concerns"]</strong></p>
+        <ul class="small wb-concerns mt-0" aria-label="@L["WorldChat.Proposal.Concerns"]" data-testid="world-proposal-concerns">
             @foreach (var note in notes)
             {
                 <li>@note</li>

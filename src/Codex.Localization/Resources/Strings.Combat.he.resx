@@ -82,7 +82,7 @@
   <data name="Combat.SearchCreatures" xml:space="preserve"><value>חיפוש יצורים וסכנות</value></data>
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>חיפוש יצורים וסכנות בספרייה…</value></data>
   <data name="Combat.Hazard.FromLibrary" xml:space="preserve"><value>נלקחה מהספרייה, בלי מקום</value></data>
-  <data name="Combat.Hazard.Routine" xml:space="preserve"><value>סדר הפעולות של {0}</value></data>
+  <data name="Combat.Hazard.Routine" xml:space="preserve"><value>שגרה של {0}</value></data>
   <data name="Combat.Hazard.InOrder" xml:space="preserve"><value>בסדר היוזמה</value></data>
   <data name="Combat.Hazard.OutOfOrder" xml:space="preserve"><value>מחוץ לסדר היוזמה</value></data>
   <data name="Combat.Hazard.ItsTurn" xml:space="preserve"><value>התור שלה עכשיו</value></data>

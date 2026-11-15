@@ -124,7 +124,7 @@ public static class HazardNumbers
     /// case, which would be ignored without a word) or giving a Collection as something other than a list, a route row with a DC and no check, with
     /// neither a check nor a need, with a repeated id, an <c>after</c> that names no notice route, a rank on a system without ranks or a bad
     /// success count, a damage row whose dice are not dice, a condition the system does not have, and an other-way row with no name.</summary>
-    public static IEnumerable<string> Problems(ContentEntry entry, ContentTypeDefinition type, SystemDefinition system)
+    public static IEnumerable<string> Problems(ContentEntry entry, ContentTypeDefinition type, SystemDefinition system, Func<string, object?[], string>? say = null)
     {
         if (type.Hazard is not { } hazard) yield break;
         var fields = type.Fields.ToDictionary(f => f.Key, f => f, StringComparer.Ordinal);
@@ -137,20 +137,20 @@ public static class HazardNumbers
                 {
                     var near = fields.Keys.FirstOrDefault(f => string.Equals(f, key, StringComparison.OrdinalIgnoreCase));
                     yield return near != null
-                        ? $"scaled row {at} names '{key}'; the field is '{near}', so the row would be ignored."
-                        : $"scaled row {at} names '{key}', which is not a field of {type.Type}.";
+                        ? Say(say, "RowNearKey", at, key, near)
+                        : Say(say, "RowUnknownKey", at, key, type.Type);
                 }
                 else if (field.Type == FieldType.Collection && !IsList(value))
                 {
-                    yield return $"scaled row {at} gives '{key}' as one value; the field is a Collection, so it needs a list of rows.";
+                    yield return Say(say, "RowNotList", at, key);
                 }
             }
         }
 
         var entryNumbers = (IReadOnlyDictionary<string, object>)entry.Properties;
-        foreach (var message in SaveProblems(entryNumbers, hazard)) yield return message;
-        foreach (var message in RoutineProblems(entryNumbers, hazard)) yield return message;
-        foreach (var message in ListProblems(entryNumbers, entryNumbers, hazard, system, string.Empty)) yield return message;
+        foreach (var message in SaveProblems(entryNumbers, hazard, say)) yield return message;
+        foreach (var message in RoutineProblems(entryNumbers, hazard, say)) yield return message;
+        foreach (var message in ListProblems(entryNumbers, entryNumbers, hazard, system, string.Empty, say)) yield return message;
 
         // A band restates whole lists (the Falling Net's methods, a pit's damage), so each of its lists is checked like the base's.
         foreach (var row in RowsOf(entry, type))
@@ -158,9 +158,11 @@ public static class HazardNumbers
             var levels = Text(row, "levels");
             var merged = For(entry, type, levels);
             var own = merged.Where(p => row.ContainsKey(p.Key) && p.Key != "levels").ToDictionary(p => p.Key, p => p.Value);
-            foreach (var message in ListProblems(own, merged, hazard, system, $"band {levels}: ")) yield return message;
+            foreach (var message in ListProblems(own, merged, hazard, system, Say(say, "Band", levels), say)) yield return message;
         }
     }
+
+    private static string Say(Func<string, object?[], string>? say, string key, params object?[] args) => HazardMessages.Say(say, key, args);
 
     /// <summary>The row keys of <c>hazards.scaling</c> that are not columns.</summary>
     public const string ScalingLevelKey = "level";
@@ -254,7 +256,7 @@ public static class HazardNumbers
     /// A cell may be a range, so a bound is the lowest low and the highest high in the window. These are warnings, never refusals: the game master decides, and
     /// the messages use the fields' labels, name the severity and state the bounds, for the game master and the model alike. Nothing here changes the entry. A system with no <c>hazards.scaling</c> has no messages.
     /// </summary>
-    public static IEnumerable<string> ScalingProblems(ContentEntry entry, ContentTypeDefinition type, SystemDefinition system)
+    public static IEnumerable<string> ScalingProblems(ContentEntry entry, ContentTypeDefinition type, SystemDefinition system, Func<string, object?[], string>? say = null)
     {
         if (type.Hazard is not { } hazard || system.Hazards?.Scaling is not { Count: > 0 } scaling) yield break;
         if (ScalingRows(scaling, null, out _).Count == 0) yield break;
@@ -262,10 +264,10 @@ public static class HazardNumbers
         var known = Severities(system);
         var unknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         string LabelOf(string key) => type.Fields.FirstOrDefault(f => f.Key == key)?.Label is { Length: > 0 } label ? label : key;
-        var levelLabel = hazard.Level is { Length: > 0 } levelKey ? LabelOf(levelKey) : "level";
+        var levelLabel = hazard.Level is { Length: > 0 } levelKey ? LabelOf(levelKey) : Say(say, "LevelWord");
 
         var bands = new List<(string Prefix, string? Levels, string LevelText)> { (string.Empty, null, hazard.Level is { Length: > 0 } field && entry.Properties.TryGetValue(field, out var own) ? Convert.ToString(own, CultureInfo.InvariantCulture) ?? string.Empty : string.Empty) };
-        bands.AddRange(Rows(entry, type).Select(levels => ($"band {levels}: ", (string?)levels, levels)));
+        bands.AddRange(Rows(entry, type).Select(levels => (Say(say, "Band", levels), (string?)levels, levels)));
         foreach (var (prefix, levels, levelText) in bands)
         {
             var numbers = For(entry, type, levels);
@@ -273,7 +275,7 @@ public static class HazardNumbers
             if (measured.Count == 0) continue;
             if (LowestLevel(levelText) is not { } level)
             {
-                yield return $"{prefix}it has scaled numbers ({string.Join(", ", measured.Select(m => LabelOf(m.Column)))}) and no level to read them against; fill in {levelLabel} with a number such as 5 or a range such as 1-4.";
+                yield return Say(say, "NoLevel", prefix, string.Join(", ", measured.Select(m => LabelOf(m.Column))), levelLabel);
                 continue;
             }
 
@@ -281,7 +283,7 @@ public static class HazardNumbers
             var rows = ScalingRows(scaling, severity, out var matched);
             if (!matched && severity != null && known.Count > 0 && unknown.Add(severity))
             {
-                yield return $"{prefix}Severity '{severity}' is not one the system's guide has ({string.Join(", ", known)}); its numbers were read against the guide for any severity.";
+                yield return Say(say, "UnknownSeverity", prefix, severity, string.Join(", ", known));
             }
 
             var at = rows.ToList().FindLastIndex(r => r.Level <= level);
@@ -295,10 +297,11 @@ public static class HazardNumbers
                 var low = cells.Select(c => c.Low).MinBy(b => b.Value)!;
                 var high = cells.Select(c => c.High).MaxBy(b => b.Value)!;
                 var isDamage = string.Equals(hazard.Effect?.Damage, column, StringComparison.Ordinal);
-                var shown = isDamage ? $"averaging {value.GetValueOrDefault():0.#}" : $"{value.GetValueOrDefault():0.#}";
-                var gives = isDamage && !IsDice(low.Text) && !IsDice(high.Text) ? $"an average of {low.Text} to {high.Text}" : $"{low.Text} to {high.Text}";
-                if (value > high.Value) yield return $"{prefix}{LabelOf(column)} {shown} is high for a level {level}{named} hazard; the system's guide gives {gives}.";
-                else if (at > 0 && value < low.Value) yield return $"{prefix}{LabelOf(column)} {shown} is low for a level {level}{named} hazard; the system's guide gives {gives}.";
+                var number = value.GetValueOrDefault().ToString("0.#", CultureInfo.InvariantCulture);
+                var shown = isDamage ? Say(say, "Averaging", number) : number;
+                var gives = isDamage && !IsDice(low.Text) && !IsDice(high.Text) ? Say(say, "GivesAverage", low.Text, high.Text) : Say(say, "GivesRange", low.Text, high.Text);
+                if (value > high.Value) yield return Say(say, "High", prefix, LabelOf(column), shown, level, named, gives);
+                else if (at > 0 && value < low.Value) yield return Say(say, "Low", prefix, LabelOf(column), shown, level, named, gives);
             }
         }
     }
@@ -439,48 +442,48 @@ public static class HazardNumbers
     }
 
     // A routine row's `strikes` is true or false, and only a hazard with an effect has a row that applies it (one row at most).
-    private static IEnumerable<string> RoutineProblems(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard)
+    private static IEnumerable<string> RoutineProblems(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard, Func<string, object?[], string>? say)
     {
         var strikes = 0;
         foreach (var row in RowsOfField(numbers, hazard.Routine))
         {
             if (!row.TryGetValue("strikes", out var raw) || raw == null) continue;
-            var name = Text(row, "name") is { Length: > 0 } n ? n : "routine row";
+            var name = Text(row, "name") is { Length: > 0 } n ? n : Say(say, "RoutineRow");
             if (raw is not bool && !bool.TryParse(Convert.ToString(raw, CultureInfo.InvariantCulture), out _))
             {
-                yield return $"routine row '{name}' has strikes '{raw}'; it must be true or false.";
+                yield return Say(say, "StrikesBad", name, raw);
             }
             else if (IsTrue(raw))
             {
                 strikes++;
-                if (!HasEffect(numbers, hazard)) yield return $"routine row '{name}' strikes, and the hazard has no effect (no save, attack or damage) to apply.";
+                if (!HasEffect(numbers, hazard)) yield return Say(say, "StrikesNoEffect", name);
             }
         }
 
-        if (strikes > 1) yield return "more than one routine row has strikes: true; one row applies the effect.";
+        if (strikes > 1) yield return Say(say, "StrikesMany");
     }
 
     private static readonly string[] OnSaveValues = ["half", "none"];
 
     // The save, its DC and what a passed save does: one save has all of them; with none, onSave means nothing. An absent onSave is "none".
-    private static IEnumerable<string> SaveProblems(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard)
+    private static IEnumerable<string> SaveProblems(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard, Func<string, object?[], string>? say)
     {
         if (hazard.Effect is not { } effect) yield break;
         bool Has(string? field) => !string.IsNullOrEmpty(field) && numbers.TryGetValue(field, out var v) && Convert.ToString(v, CultureInfo.InvariantCulture)?.Trim().Length > 0;
         var save = Has(effect.Save);
-        if (save && !Has(effect.SaveDc)) yield return "it has a save and no save DC.";
-        if (!save && Has(effect.SaveDc)) yield return "it has a save DC and no save.";
+        if (save && !Has(effect.SaveDc)) yield return Say(say, "SaveNoDc");
+        if (!save && Has(effect.SaveDc)) yield return Say(say, "DcNoSave");
         if (Has(effect.OnSave))
         {
             var value = Convert.ToString(numbers[effect.OnSave!], CultureInfo.InvariantCulture)!.Trim();
-            if (!OnSaveValues.Contains(value, StringComparer.Ordinal)) yield return $"onSave is '{value}'; it must be half or none.";
-            if (!save) yield return "it has an onSave and no save.";
+            if (!OnSaveValues.Contains(value, StringComparer.Ordinal)) yield return Say(say, "OnSaveBad", value);
+            if (!save) yield return Say(say, "OnSaveNoSave");
         }
     }
 
     // The route, damage and condition lists among `own` (the whole entry, or the keys a band restates). `all` is what a route's `after` is checked against.
     private static IEnumerable<string> ListProblems(IReadOnlyDictionary<string, object> own, IReadOnlyDictionary<string, object> all, HazardDefinition hazard,
-        SystemDefinition system, string prefix)
+        SystemDefinition system, string prefix, Func<string, object?[], string>? say)
     {
         var ranked = system.SheetRules?.Skills is { Ranks.Count: > 0 };
         var noticeRows = RoutesOf(all, hazard.Notice?.Routes);
@@ -491,13 +494,13 @@ public static class HazardNumbers
             if (string.IsNullOrEmpty(field) || !own.TryGetValue(field, out var raw)) continue;
             if (!IsList(raw))
             {
-                yield return $"{prefix}the {label} field '{field}' is one value; it needs a list of rows, each a map of keys.";
+                yield return Say(say, "ListNotRows", prefix, Say(say, "Kind." + label), field);
                 continue;
             }
 
             foreach (var item in ((System.Collections.IEnumerable)raw).Cast<object?>().Where(i => i is not System.Collections.IDictionary))
             {
-                yield return $"{prefix}the {label} list has '{item}', which is not a row of keys (write it as {{ name: ... }}).";
+                yield return Say(say, "ItemNotRow", prefix, Say(say, "Kind." + label), item);
             }
         }
 
@@ -506,25 +509,26 @@ public static class HazardNumbers
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var row in RowsOfField(own, field))
             {
-                var name = Text(row, "name") is { Length: > 0 } n ? n : Text(row, "id") is { Length: > 0 } i ? i : label + " row";
+                var word = Say(say, "Kind." + label);
+                var name = Text(row, "name") is { Length: > 0 } n ? n : Text(row, "id") is { Length: > 0 } i ? i : Say(say, "RowWord", word);
                 var hasCheck = Text(row, "check").Length > 0;
-                if (label == "other-way" && Text(row, "name").Length == 0) yield return $"{prefix}an other-way row has no name.";
-                if (Text(row, "id") is { Length: > 0 } id && !seen.Add(id)) yield return $"{prefix}{label} route '{name}' repeats the id '{id}'.";
-                if (row.ContainsKey("dc") && !WholeNumber(row["dc"], out _)) yield return $"{prefix}{label} route '{name}' has a dc that is not a whole number.";
-                if (Text(row, "dc").Length > 0 && !hasCheck) yield return $"{prefix}{label} route '{name}' has a dc and no check.";
+                if (label == "other-way" && Text(row, "name").Length == 0) yield return Say(say, "OtherWayNoName", prefix);
+                if (Text(row, "id") is { Length: > 0 } id && !seen.Add(id)) yield return Say(say, "RepeatId", prefix, word, name, id);
+                if (row.ContainsKey("dc") && !WholeNumber(row["dc"], out _)) yield return Say(say, "DcNotWhole", prefix, word, name);
+                if (Text(row, "dc").Length > 0 && !hasCheck) yield return Say(say, "DcNoCheck", prefix, word, name);
                 if (!hasCheck && Text(row, "needs").Length == 0 && Text(row, "text").Length == 0)
                 {
-                    yield return $"{prefix}{label} route '{name}' has no check; it needs 'needs' or 'text' to say what it takes.";
+                    yield return Say(say, "NoCheck", prefix, word, name);
                 }
 
                 if (Text(row, "after") is { Length: > 0 } after)
                 {
-                    if (!noticeIds.Contains(after)) yield return $"{prefix}{label} route '{name}' comes after '{after}', which is no detect route id.";
-                    else if (after == Text(row, "id") && label == "detect") yield return $"{prefix}detect route '{name}' comes after itself.";
+                    if (!noticeIds.Contains(after)) yield return Say(say, "AfterNoRoute", prefix, word, name, after);
+                    else if (after == Text(row, "id") && label == "detect") yield return Say(say, "AfterItself", prefix, name);
                 }
 
-                if (Text(row, "rank").Length > 0 && !ranked) yield return $"{prefix}{label} route '{name}' names a rank; this system declares no ranks in sheetRules.skills.ranks.";
-                if (row.ContainsKey("successes") && (!WholeNumber(row["successes"], out var successes) || successes < 1)) yield return $"{prefix}{label} route '{name}' needs a whole number of successes, one or more.";
+                if (Text(row, "rank").Length > 0 && !ranked) yield return Say(say, "RankNone", prefix, word, name);
+                if (row.ContainsKey("successes") && (!WholeNumber(row["successes"], out var successes) || successes < 1)) yield return Say(say, "SuccessesBad", prefix, word, name);
             }
         }
 
@@ -538,7 +542,7 @@ public static class HazardNumbers
                 current = next;
                 if (current == start)
                 {
-                    yield return $"{prefix}detect route '{start}' waits, through other routes, for itself.";
+                    yield return Say(say, "Circle", prefix, start);
                     break;
                 }
             }
@@ -546,17 +550,17 @@ public static class HazardNumbers
 
         foreach (var row in RowsOfField(own, hazard.Effect?.Damage))
         {
-            if (!IsDice(Text(row, "dice"))) yield return $"{prefix}a damage row has dice '{Text(row, "dice")}'; they must be dice such as 2d8.";
+            if (!IsDice(Text(row, "dice"))) yield return Say(say, "DamageDice", prefix, Text(row, "dice"));
             var count = Text(row, "count");
-            if (count.Length > 0 && !IsDice(count) && !WholeNumber(count, out _)) yield return $"{prefix}a damage row has count '{count}'; it must be dice or a whole number.";
+            if (count.Length > 0 && !IsDice(count) && !WholeNumber(count, out _)) yield return Say(say, "DamageCount", prefix, count);
         }
 
         var known = new HashSet<string>(system.Conditions, StringComparer.OrdinalIgnoreCase);
         foreach (var row in RowsOfField(own, hazard.Effect?.Conditions))
         {
             var name = Text(row, "name");
-            if (name.Length == 0) yield return $"{prefix}a condition row has no name.";
-            else if (!known.Contains(name)) yield return $"{prefix}condition '{name}' is not one of the system's conditions.";
+            if (name.Length == 0) yield return Say(say, "ConditionNoName", prefix);
+            else if (!known.Contains(name)) yield return Say(say, "ConditionUnknown", prefix, name);
         }
     }
 

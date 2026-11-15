@@ -2,6 +2,7 @@
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @inject IContentRegistry ContentRegistry
+@inject IJSRuntime JS
 
 @* The DM's search through the system's creatures and complex hazards, to put one at the table. The console makes the actor (OnAdd, OnAddHazard); the box clears once it is
    there. Creatures and hazards are two groups with their own headings (HAZARDS_DESIGN.md 3.3): the registry's actors are split by the `hazard` tag, and a hazard on the
@@ -117,13 +118,38 @@
 
     private static string Bonus(int value) => value >= 0 ? $"+{value}" : value.ToString();
 
+    // The button that was pressed goes away with the search, so focus goes back to the search box: the next thing a keyboard user does is search again.
+    private bool focusSearch;
+
     private async Task AddAsync(IActorDefinition definition)
     {
-        if (await OnAdd(definition)) search = string.Empty;
+        if (await OnAdd(definition))
+        {
+            search = string.Empty;
+            focusSearch = true;
+        }
     }
 
     private async Task AddHazardAsync(HazardOffer offer)
     {
-        if (OnAddHazard != null && await OnAddHazard(offer)) search = string.Empty;
+        if (OnAddHazard != null && await OnAddHazard(offer))
+        {
+            search = string.Empty;
+            focusSearch = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!focusSearch) return;
+        focusSearch = false;
+        try
+        {
+            await JS.InvokeVoidAsync("codex.focusById", "monster-search");
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException)
+        {
+            // No focus to move (prerender or a closed circuit).
+        }
     }
 }

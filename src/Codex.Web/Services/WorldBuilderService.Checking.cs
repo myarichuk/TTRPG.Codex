@@ -99,10 +99,15 @@ public sealed partial class WorldBuilderService
                 errors.Add($"{draft.Ref} ({draft.Kind} '{draft.Name}'): {problem}");
             }
 
-            foreach (var problem in HazardNumbers.ScalingProblems(entry, type, system.Canonical).Where(p => !knownScale.Contains(p)))
+            // The warnings go to the model, in English; the card the game master reads says the same thing in their language, in the same order.
+            var said = Codex.Localization.Localizer.For(Lang);
+            var theirs = HazardNumbers.ScalingProblems(entry, type, system.Canonical, (key, args) => said.Get(key, args)).ToList();
+            var scale = HazardNumbers.ScalingProblems(entry, type, system.Canonical).ToList();
+            for (var i = 0; i < scale.Count; i++)
             {
-                warnings.Add($"{draft.Ref} ({draft.Kind} '{draft.Name}'): {problem}");
-                draft.Concerns.Add(problem);
+                if (knownScale.Contains(scale[i])) continue;
+                warnings.Add($"{draft.Ref} ({draft.Kind} '{draft.Name}'): {scale[i]}");
+                draft.Concerns.Add(i < theirs.Count ? theirs[i] : scale[i]);
             }
         }
 

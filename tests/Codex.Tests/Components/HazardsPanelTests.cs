@@ -350,7 +350,7 @@ public class HazardsPanelTests : ComponentTestBase
 
     [Theory]
     [InlineData("ru", "Порядок действий: Rolling Stone", "Сейчас её ход")]
-    [InlineData("he", "סדר הפעולות של Rolling Stone", "התור שלה עכשיו")]
+    [InlineData("he", "שגרה של Rolling Stone", "התור שלה עכשיו")]
     public void ARoutine_IsTranslated(string culture, string heading, string itsTurn)
     {
         var cut = Draw(culture, new[] { Stone(itsTurn: true) });
@@ -374,6 +374,66 @@ public class HazardsPanelTests : ComponentTestBase
         Assert.Equal(notice, cut.Find("[data-testid=hazard-0-notice]").TextContent.Trim());
         Assert.Contains(state, cut.Find("[data-testid=hazard-0-state]").TextContent);
         Assert.DoesNotContain("Combat.Hazard", cut.Markup);
+    }
+
+    [Fact]
+    public void TheStatusRegion_IsThereBeforeItHasAnythingToSay_AndEveryLineOfAResultIsAnnouncedOnce()
+    {
+        // A screen reader announces what appears in a live region, so the region is in the page empty, and the visible copy of the lines is hidden from it.
+        var empty = Draw();
+        var region = empty.Find("[data-testid=hazard-status]");
+        Assert.Equal("status", region.GetAttribute("role"));
+        Assert.Equal("polite", region.GetAttribute("aria-live"));
+        Assert.Empty(region.QuerySelectorAll("p"));
+        Assert.Empty(empty.FindAll("[data-testid=hazard-result]"));
+
+        empty.Render(p => p.Add(x => x.Status, new[] { "one", "two" }));
+        Assert.Equal(2, empty.Find("[data-testid=hazard-status]").QuerySelectorAll("p").Length);
+        Assert.Equal("true", empty.Find("[data-testid=hazard-result]").GetAttribute("aria-hidden"));
+    }
+
+    [Fact]
+    public void AButtonThatTakesItselfAway_HandsFocusToItsHazardsHeading()
+    {
+        Services.AddSingleton(Localizer.For("en"));
+        var cut = Render<HazardsPanel>(p => p
+            .Add(x => x.Hazards, new[] { Pit() with { CanUndo = true } })
+            .Add(x => x.Who, new[] { Ana })
+            .Add(x => x.OnUndo, (HazardView _) => { }));
+
+        Assert.Equal("-1", cut.Find("#hazard-heading-0").GetAttribute("tabindex"));
+        cut.Find("[data-testid=hazard-0-undo]").Click();
+
+        cut.WaitForAssertion(() => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "codex.focusById" && i.Arguments.Count > 0 && (string?)i.Arguments[0] == "hazard-heading-0"));
+    }
+
+    [Fact]
+    public void AskingForANumber_MovesFocusToTheFirstNumberBox()
+    {
+        var cut = Draw(needNumber: new[] { Need });
+
+        cut.WaitForAssertion(() => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "codex.focusById" && (string?)i.Arguments[0] == "hazard-number-0"));
+        Assert.NotNull(cut.Find("#hazard-number-0"));
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("ru")]
+    [InlineData("he")]
+    public void EveryButtonSelectAndBoxOfThePanel_HasAnAccessibleName_InEveryLanguage(string culture)
+    {
+        var cut = Draw(culture, needNumber: new[] { Need }, status: new[] { "x" });
+
+        foreach (var control in cut.FindAll("input,select,textarea"))
+        {
+            var id = control.GetAttribute("id");
+            var labelled = control.HasAttribute("aria-label") || (id != null && cut.FindAll($"label[for='{id}']").Count == 1) || control.ParentElement?.TagName == "LABEL";
+            Assert.True(labelled, $"{culture}: {control.OuterHtml}");
+        }
+
+        Assert.All(cut.FindAll("button"), b => Assert.False(string.IsNullOrWhiteSpace(b.TextContent) && string.IsNullOrWhiteSpace(b.GetAttribute("aria-label"))));
+        // A state is in words beside its icon, never the icon or a colour alone.
+        Assert.False(string.IsNullOrWhiteSpace(cut.Find("[data-testid=hazard-0-state]").TextContent));
     }
 
     [Fact]

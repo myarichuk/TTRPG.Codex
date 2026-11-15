@@ -392,6 +392,45 @@ public class HomebrewWizardHazardTests : ComponentTestBase
     }
 
     [Fact]
+    public void FocusFollowsTheAction_ANewRowOpensOnItsFirstBox_ARemovedRowHandsFocusToTheAddButton_OtherToItsTextBox()
+    {
+        var cut = Open();
+        GoTo(cut, "Notice");
+        cut.Find("[data-testid=hazard-detect-add]").Click();
+
+        var name = Control(cut, "hazard-detect", "Name");
+        cut.WaitForAssertion(() => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "codex.focusById" && (string?)i.Arguments[0] == name.Id));
+
+        Control(cut, "hazard-detect", "Check").Change("\u0001other");
+        var typed = Control(cut, "hazard-detect", "Check, as written (a typed bonus is asked for at the table)");
+        cut.WaitForAssertion(() => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "codex.focusById" && (string?)i.Arguments[0] == typed.Id));
+
+        var add = cut.Find("[data-testid=hazard-detect-add]");
+        cut.Find("[data-testid=hazard-detect] > [data-testid=hazard-row] .collection-row-head button").Click();
+        cut.WaitForAssertion(() => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "codex.focusById" && (string?)i.Arguments[0] == add.Id));
+    }
+
+    [Theory]
+    [InlineData("ru", "есть Сл, но нет проверки")]
+    [InlineData("he", "יש דרגת קושי אך אין בדיקה")]
+    public void TheShapeCheckOfTheWizard_IsSaidInTheLanguage_InTheLiveRegionAndTheBlockedSave(string culture, string words)
+    {
+        var cut = Open(culture);
+        GoTo(cut, "Notice");
+        var l = Localizer.For(culture);
+        cut.Find("[data-testid=hazard-detect-add]").Click();
+        Control(cut, "hazard-detect", l["Wizard.Hazard.Col.Name"]).Change("Look");
+        Control(cut, "hazard-detect", l["Wizard.Hazard.Col.Dc"]).Change("15");
+
+        Assert.Equal("polite", cut.Find("[data-testid=hazard-checks]").GetAttribute("aria-live"));
+        Assert.Contains(words, cut.Find("[data-testid=hazard-shape]").TextContent);
+        Assert.DoesNotContain("has a dc and no check", cut.Markup);
+
+        cut.Find("form.wizard").Submit();
+        cut.WaitForAssertion(() => Assert.Contains(words, cut.Find("[role=alert]").TextContent));
+    }
+
+    [Fact]
     public void ADiceBoxAndALevelBoxAreLeftToRight_AndARouteCannotWaitForItself()
     {
         var cut = Open();

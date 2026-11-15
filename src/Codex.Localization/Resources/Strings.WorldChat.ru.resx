@@ -162,6 +162,7 @@
   <data name="WorldChat.Proposal.MovesToTop" xml:space="preserve"><value>Выносится на верхний уровень региона</value></data>
   <data name="WorldChat.Proposal.BecomesKind" xml:space="preserve"><value>Становится: {0}</value></data>
   <data name="WorldChat.Proposal.Hazard" xml:space="preserve"><value>Опасность здесь: {0}. Её видите только вы; сначала она скрыта.</value></data>
+  <data name="WorldChat.Proposal.Concerns" xml:space="preserve"><value>Числа, на которые стоит взглянуть</value></data>
   <data name="WorldChat.Proposal.Targets" xml:space="preserve"><value>{0, plural, one{Метки для # страницы или записи} few{Метки для # страниц и записей} many{Метки для # страниц и записей} other{Метки для # страницы или записи}}</value></data>
   <data name="WorldChat.Proposal.OnBestiary" xml:space="preserve"><value>Это существо уже в Бестиарии.</value></data>
   <data name="WorldChat.Proposal.ToBestiary" xml:space="preserve"><value>Добавляет «{0}» в Бестиарий кампании.</value></data>

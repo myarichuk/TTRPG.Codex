@@ -76,7 +76,7 @@
   <data name="Combat.Hazard.SetState" xml:space="preserve"><value>Задать состояние: {0}</value></data>
   <data name="Combat.Hazard.UndoHint" xml:space="preserve"><value>Кнопка здесь отменяет последнее изменение опасности вместе с нанесённым уроном: целиком или никак.</value></data>
   <data name="Combat.Hazard.Undo" xml:space="preserve"><value>Отменить последнее изменение: {0}</value></data>
-  <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1}, СЛ {2})</value></data>
+  <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1}, Сл {2})</value></data>
   <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (нужно: {1})</value></data>
   <data name="Combat.QuickAdd" xml:space="preserve"><value>Быстро добавить существо или опасность</value></data>
   <data name="Combat.SearchCreatures" xml:space="preserve"><value>Поиск существ и опасностей</value></data>

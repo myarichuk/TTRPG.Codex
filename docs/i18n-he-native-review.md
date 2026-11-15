@@ -409,3 +409,50 @@ They follow the older exhaustion lines ("{0}: דרגת תשישות {1}", "לל�
 ## Creature, magic item and equipment names
 
 The Sonnet agents coined or transliterated many of these (for example גלימן, בולט, דארקמנטל, אוג׳ר, וויברן). The full English | Hebrew list is in [i18n-he-names.md](i18n-he-names.md) (generated from `srd-5.2.1-he`). Corrections go in `content/systems/srd5e/packs/srd-5.2.1-he/{monster,magic-item,equipment}/`.
+
+## Hazards (`Strings.Wizard`, `Strings.Combat`, `Strings.Event`, `Strings.Campaign`, `Strings.WorldChat` he and ru; H1-H8)
+
+Every key the hazards track added is in the five areas below, in `.he.resx` and `.ru.resx`. Both languages need a native read; the repo has no separate Russian review list, so this section stands for both, and
+the Russian words are the third column of the term table. The full list is every key that is in `main` nowhere (`git diff main..HEAD -- src/Codex.Localization/Resources`).
+
+| Area and keys | Count | Where it shows |
+|---|---|---|
+| `Strings.Combat` `Combat.Hazard.*`, `Combat.QuickAdd*`, `Combat.AddHazardToOrder*`, `Combat.HazardAdded` | 51 | the Hazards panel, the quick-add hazards group, the routine |
+| `Strings.Event` `Event.Hazard.*`, `Event.Check.*`, `Event.Type.Hazard` | 57 | the log: every line a hazard or a check says |
+| `Strings.Campaign` `Campaign.Places.Feature.Hazard*`, `Campaign.Places.Feature.State.*`, `Campaign.Book.Hazard.*` | 25 | the place page and the stat block in the GM's book |
+| `Strings.Wizard` `Wizard.Hazard.*` | 84 | the homebrew wizard's hazard mode (steps, columns, fill, checks) |
+| `Strings.WorldChat` `WorldChat.Proposal.Hazard`, `WorldChat.Proposal.Concerns` | 2 | the world builder's review card |
+
+One word for each thing, in each language, across the panel, the log, the wizard, the world builder and the book (H8 made the Hebrew and the Russian agree; the old forms are in the last column):
+
+| English | Hebrew | Russian | Changed from |
+|---|---|---|---|
+| hazard | סכנה (feminine: זוהתה, נוטרלה, הופעלה) | опасность | he: מפגע in the wizard and the book |
+| notice, detect | זיהוי, דרך זיהוי | заметить, способ обнаружения | he: איתור in the wizard |
+| find (a way to deal with it) | מציאה | найти | |
+| disable, disarm | נטרול, דרך נטרול | обезвредить, способ обезвреживания | |
+| trigger | הפעלה | сработать | |
+| DC | דרגת קושי | Сл | he: "DC" in the book and the wizard; ru: "СЛ" in the log |
+| passive score | ציון פסיבי | пассивное значение | he: סביל in the log |
+| routine (complex hazard) | שגרה | действия по раундам, шаг действий | he: סדר הפעולות, פעולות בכל סבב |
+| level band | טווח רמות | ступень уровней | |
+| severity | חומרה | тяжесть | |
+
+The check messages the wizard and the world builder's card show (`Wizard.Hazard.Problem.*`, 41 keys, new in H8) are the ones to read most closely: they were English in both languages before, and they carry the
+YAML keys a hazard author sees (`onSave`, `strikes`, `needs`) in Latin letters on purpose. Their Hebrew:
+
+| Key | English | Hebrew |
+|---|---|---|
+| `Problem.High` | {0}{1} {2} is high for a level {3}{4} hazard; the system's guide gives {5}. | {0}{1} {2} גבוה לסכנה ברמה {3}{4}; מדריך המערכת נותן {5}. |
+| `Problem.Low` | {0}{1} {2} is low for a level {3}{4} hazard; the system's guide gives {5}. | {0}{1} {2} נמוך לסכנה ברמה {3}{4}; מדריך המערכת נותן {5}. |
+| `Problem.GivesRange` | {0} to {1} | {0} עד {1} |
+| `Problem.GivesAverage` | an average of {0} to {1} | ממוצע של {0} עד {1} |
+| `Problem.NoLevel` | it has scaled numbers ({1}) and no level to read them against; fill in {2} with a number such as 5 or a range such as 1-4. | יש מספרים התלויים ברמה ({1}), אך אין רמה להשוות אליה; מלאו ״{2}״ במספר כמו 5 או בטווח כמו 1-4. |
+| `Problem.UnknownSeverity` | Severity '{1}' is not one the system's guide has ({2}); its numbers were read against the guide for any severity. | החומרה ״{1}״ אינה במדריך המערכת ({2}); המספרים הושוו למדריך עבור כל חומרה. |
+| `Problem.DcNoCheck` | {1} route '{2}' has a dc and no check. | {1} ״{2}״: יש דרגת קושי אך אין בדיקה. |
+| `Problem.NoCheck` | {1} route '{2}' has no check; it needs 'needs' or 'text' to say what it takes. | {1} ״{2}״: אין בדיקה; מלאו ״נדרש״ או ״הערות״ כדי לומר מה נדרש. |
+| `Problem.AfterNoRoute` | {1} route '{2}' comes after '{3}', which is no detect route id. | {1} ״{2}״: ״רק אחרי״ מציין ״{3}״, שאינה דרך זיהוי. |
+| `Problem.Circle` | detect route '{1}' waits, through other routes, for itself. | דרך הזיהוי ״{1}״ ממתינה לעצמה דרך דרכים אחרות. |
+| `Problem.SaveNoDc` / `Problem.DcNoSave` | it has a save and no save DC. / it has a save DC and no save. | יש הצלה אך אין דרגת קושי להצלה. / יש דרגת קושי להצלה אך אין הצלה. |
+| `Wizard.Hazard.Col.CheckOther` | Check, as written (a typed bonus is asked for at the table) | בדיקה, כפי שנכתבה (את הבונוס מזינים ליד השולחן) |
+| `Wizard.Hazard.Other` | Other… | אחר… |

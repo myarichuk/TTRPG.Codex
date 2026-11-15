@@ -1,5 +1,6 @@
 @using System.Globalization
 @using Codex.Core.Systems
+@inject IJSRuntime JS
 
 @* A list of rows of a hazard (its detect and disarm routes, other ways, damage parts, conditions, routine and level bands), one labelled group per row. Every
    control has its own visible label, so the form reads the same to a screen reader and by keyboard, and nothing depends on colour. The component writes the
@@ -109,7 +110,7 @@
         </div>
     }
 
-    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AddAsync" data-testid="@(TestId + "-add")">
+    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="AddAsync" id="@(prefix + "-add")" data-testid="@(TestId + "-add")">
         <LucideIcon IconName="plus" Size="14" /> @(AddLabel ?? L["Wizard.Hazard.Add", RowLabel.ToLowerInvariant()])
     </CodexButton>
 </fieldset>
@@ -212,6 +213,7 @@
         if (value == OtherValue)
         {
             otherOpen.Add((rowKeys[index], column.Key));
+            focusId = $"{prefix}-r{index}-{column.Key}-other";
             return;
         }
 
@@ -241,10 +243,30 @@
     private async Task WriteAsync(List<Dictionary<string, object>> rows) =>
         await ValueChanged.InvokeAsync(rows.Count == 0 ? null : rows.Cast<object>().ToList());
 
+    // Focus follows what was just done, so a keyboard user is never dropped at the top of the page: a new row opens on its first box, a removed row hands focus to the add
+    // button, and the Other choice of a select hands it to its text box.
+    private string? focusId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusId is not { } id) return;
+        focusId = null;
+        try
+        {
+            await JS.InvokeVoidAsync("codex.focusById", id);
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException)
+        {
+            // No focus to move (prerender or a closed circuit).
+        }
+    }
+
     private async Task AddAsync()
     {
         var rows = HazardNumbers.EditableRows(Value);
         rows.Add(new Dictionary<string, object>(StringComparer.Ordinal));
+        var first = Columns.FirstOrDefault(c => c.Kind is not (HazardColumnKind.Flag or HazardColumnKind.FlagOnByDefault or HazardColumnKind.Word or HazardColumnKind.Rows));
+        if (first != null) focusId = $"{prefix}-r{rows.Count - 1}-{first.Key}";
         await WriteAsync(rows);
     }
 
@@ -266,6 +288,8 @@
             foreach (var k in remembered.Keys.Where(k => k.Row == gone).ToList()) remembered.Remove(k);
             rowKeys.RemoveAt(index);
         }
+
+        focusId = prefix + "-add";
         await WriteAsync(rows);
     }
 

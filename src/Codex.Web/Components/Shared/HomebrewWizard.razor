@@ -357,7 +357,8 @@
         if (draft == null || TypeDef?.Hazard == null || Ctx.System?.Canonical is not { } system) return ([], []);
         var entry = draft.ToEntry();
         HazardNumbers.Tidy(entry.Properties, TypeDef);
-        return (HazardNumbers.Problems(entry, TypeDef, system).ToList(), HazardNumbers.ScalingProblems(entry, TypeDef, system).ToList());
+        string Say(string key, object?[] args) => L.Get(key, args);
+        return (HazardNumbers.Problems(entry, TypeDef, system, Say).ToList(), HazardNumbers.ScalingProblems(entry, TypeDef, system, Say).ToList());
     }
 
     private SystemDefinition? grantSystem;

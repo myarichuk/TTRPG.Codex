@@ -186,9 +186,9 @@
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: השולחן עדיין לא מבצע {1}.</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0}: הטלת {1} — {2} ({3}).</value></data>
   <data name="Event.Check.Made" xml:space="preserve"><value>{0}: {1} {2} מול דרגת קושי {3}, {4}</value></data>
-  <data name="Event.Check.Passive" xml:space="preserve"><value>{0}: {1} סביל {2} מול דרגת קושי {3}</value></data>
+  <data name="Event.Check.Passive" xml:space="preserve"><value>{0}: {1} פסיבי {2} מול דרגת קושי {3}</value></data>
   <data name="Event.Check.NeedsBonus" xml:space="preserve"><value>{0}: {1} — נדרש בונוס שיוקלד, ולכן לא בוצעה הטלה.</value></data>
-  <data name="Event.Check.Unresolved" xml:space="preserve"><value>{0}: ל{1} אין ציון סביל, ולכן לא נקרא דבר.</value></data>
+  <data name="Event.Check.Unresolved" xml:space="preserve"><value>{0}: ל{1} אין ציון פסיבי, ולכן לא נקרא דבר.</value></data>
   <data name="Event.Check.ArmorClass" xml:space="preserve"><value>{0}: דרגת שריון {1} מול דרגת קושי {2}</value></data>
   <data name="Event.Check.Failed" xml:space="preserve"><value>{0}: לא ניתן היה לבצע את {1}.</value></data>
   <data name="Event.Check.Outcome.Success" xml:space="preserve"><value>הצלחה</value></data>

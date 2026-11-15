@@ -602,6 +602,26 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     fill from the guide (every damage row kept, typed numbers kept), removing a row shows no stale text, a saved hazard of every field opened and saved unchanged, blank rows not saved, a band's own damage and a striking step, every step in en, ru and he with no key showing, another type untouched), `HazardEditingTests` (guide row, rows from any store form, tidy), the
     hazard cases of `BookStatBlocksTests` (the block, ru and he, hostile values, the draft and an AI edit), and `BookSourceTests.APartyOrPlayerBook_NeverCarriesAHazard_ThoughTheGmsBookPrintsIt` (a published hazard and a placed one in
     the party book, a player's book, what a model is sent; present in the GM's book).
+- **Review of H7 and the severity rows (fix commit before H8).** The check select of a route has an "Other..." choice with a labelled text box: a word the system cannot roll (Spellcasting, Thieves' Tools) is stored as
+  written and takes a typed bonus at the table; a typed word stays on offer when the select moves, so it is never lost; a passive's key is no longer mapped to a skill option. `after` no longer offers a route's own
+  id, and the dice, count, level and number boxes are `dir="ltr"`. A test holds each severity row to exactly the SRD traps' minimum and maximum at that band, so a hand-narrowed row fails.
+- **H8 (strings and accessibility), built as 8 and step 8 of 9 have it.** Found and fixed:
+  - **English in the check messages.** The shape and guide checks of H6 and H7 (`HazardNumbers.Problems`, `ScalingProblems`) were English in every language. The core has no localizer, so each message is a key and its
+    arguments (`HazardMessages`, the English templates, held equal to the English resource strings by a test); a caller with a localizer passes a function (`HomebrewWizard`, and the world builder's review card, `draft.Concerns`),
+    one with none (the pack loader's log, the model reading a tool result) gets the English. 41 keys `Wizard.Hazard.Problem.*` in en, ru and he. The world builder's warnings to the model stay English, like its other tool feedback.
+  - **One word for each thing.** Hebrew said "מפגע" (wizard, book) for what the panel calls "סכנה", "איתור" for "זיהוי", "DC" for "דרגת קושי", "סביל" and "פסיבי" for one thing, and two names for the routine; Russian
+    had "СЛ" in the log and "Сл" elsewhere. All now agree (the table is in `docs/i18n-he-native-review.md`, with every family of keys for native review). `HazardStringsTests` holds the keys present in en, ru and he as words of
+    that language, and the old forms out.
+  - **Focus.** A button that takes itself away (undo, mark as noticed) hands focus to its hazard's heading (`tabindex="-1"`); asking for a number moves focus to its first box; a new row of a row editor opens on its first
+    box, a removed row hands focus to the add button, "Other..." to its text box; the quick-add panel returns focus to its search box after adding. All through `codex.focusById`, failing silently without a circuit.
+  - **Announcements and meaning.** The panel's polite status region is in the page before it has anything to say (it already was), its visible copy is `aria-hidden` so a line is read once; the wizard's check region is polite
+    and now says its problems in the reader's language; the world builder's card shows its numbers to look at under a visible heading with an icon, not by colour alone.
+  - **Checked and left as they were:** every control of every hazard form and panel has a label (`for`) or a group label, the lists are fieldsets with legends or groups with a title, states are words beside icons, the
+    focus ring is the global `:focus-visible`, no physical left or right class is used, and the place picker is a labelled select inside a fieldset.
+  - **Tests:** `HazardStringsTests` (keys in all three languages as that language's words, the term list, English templates equal to the resource strings, every message keeps its placeholders, the checks said in ru and he),
+    and in the bUnit tests the live region, focus after undo, after asking for a number, after add, remove and Other, a name for every control in en, ru and he, and the wizard's checks in ru and he.
+  - **Not done:** a native read of the ru and he strings (listed in `docs/i18n-he-native-review.md`); the wizard's own Hebrew gloss of `onSave`, `strikes` and `needs` inside messages stays in Latin letters on purpose; the
+    world builder's warnings to the model are not localized.
 
 ## 12. H4a: the server-side check service (interface)
 
