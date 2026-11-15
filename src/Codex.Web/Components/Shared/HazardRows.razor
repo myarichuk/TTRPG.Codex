@@ -25,12 +25,15 @@
     @{
         var rows = HazardNumbers.EditableRows(Value);
     }
+    @{
+        SyncKeys(rows.Count);
+    }
     @for (var i = 0; i < rows.Count; i++)
     {
         var index = i;
         var row = rows[index];
         var rowId = $"{prefix}-r{index}";
-        <div class="collection-row hazard-row" role="group" aria-labelledby="@(rowId)-title" data-testid="hazard-row">
+        <div @key="rowKeys[index]" class="collection-row hazard-row" role="group" aria-labelledby="@(rowId)-title" data-testid="hazard-row">
             <div class="collection-row-head">
                 <span id="@(rowId)-title" class="label-caps">@Title(index, row)</span>
                 <CodexButton Variant="CodexButtonVariant.Rune" Class="cx-blood" Icon="x" Label="@L["Actor.Form.RowRemove", RowLabel, index + 1]" OnClick="() => RemoveAsync(index)" />
@@ -68,10 +71,10 @@
                                                @onchange="e => SetWholeAsync(index, key, e.Value?.ToString())" />
                                         break;
                                     case HazardColumnKind.Long:
-                                        <textarea id="@id" class="field-input" rows="2" @onchange="e => SetAsync(index, key, e.Value?.ToString())">@Text(row, key)</textarea>
+                                        <textarea id="@id" class="field-input" rows="2" value="@Text(row, key)" @onchange="e => SetAsync(index, key, e.Value?.ToString())"></textarea>
                                         break;
                                     case HazardColumnKind.Choice:
-                                        <select id="@id" class="field-select" value="@Text(row, key)" @onchange="e => SetAsync(index, key, e.Value?.ToString())">
+                                        <select id="@id" class="field-select" value="@Held(column, row)" @onchange="e => SetAsync(index, key, e.Value?.ToString())">
                                             <option value="">@L["Actor.Form.None"]</option>
                                             @foreach (var option in OptionsFor(column, row))
                                             {
@@ -125,6 +128,15 @@
     private readonly string prefix = "hr" + Guid.NewGuid().ToString("N")[..6];
     private ConfirmDialog confirm = null!;
 
+    // One key for each row, kept beside the rows, so a row that is removed takes its own elements with it and the rows below keep theirs (never the index).
+    private readonly List<Guid> rowKeys = [];
+
+    private void SyncKeys(int count)
+    {
+        while (rowKeys.Count < count) rowKeys.Add(Guid.NewGuid());
+        if (rowKeys.Count > count) rowKeys.RemoveRange(count, rowKeys.Count - count);
+    }
+
     private string ListId(HazardColumn column) => $"{prefix}-{column.Key}-list";
 
     private string Title(int index, Dictionary<string, object> row)
@@ -157,9 +169,15 @@
     }
 
     // The options, and the value the row holds now when the column does not list it, so a select never shows "none" over a value that is still stored.
-    private static IEnumerable<(string Value, string Label)> OptionsFor(HazardColumn column, Dictionary<string, object> row)
+    private static string Held(HazardColumn column, Dictionary<string, object> row)
     {
         var held = Text(row, column.Key);
+        return held.Length > 0 && column.Match != null ? column.Match(held) : held;
+    }
+
+    private static IEnumerable<(string Value, string Label)> OptionsFor(HazardColumn column, Dictionary<string, object> row)
+    {
+        var held = Held(column, row);
         foreach (var option in column.Options) yield return option;
         if (held.Length > 0 && column.Options.All(o => !string.Equals(o.Value, held, StringComparison.Ordinal))) yield return (held, held);
     }
@@ -185,6 +203,7 @@
         }
 
         rows.RemoveAt(index);
+        if (index < rowKeys.Count) rowKeys.RemoveAt(index);
         await WriteAsync(rows);
     }
 

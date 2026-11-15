@@ -104,7 +104,7 @@
   <data name="Wizard.Hazard.Fill" xml:space="preserve"><value>מילוי מספרים מהמדריך</value></data>
   <data name="Wizard.Hazard.Fill.Hint" xml:space="preserve"><value>מדריך המערכת נותן דרגת קושי להצלת ונזק לכל רמה. אפשר לשנות אותם אחר כך כרצונכם.</value></data>
   <data name="Wizard.Hazard.Fill.NeedLevel" xml:space="preserve"><value>מלאו קודם את הרמות: מספר כמו 5, או טווח כמו 1-4.</value></data>
-  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>אין עדיין מה למלא מהמדריך. דרגת הקושי של ההצלה ממתינה עד שיהיה למפגע הצלה.</value></data>
+  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>אין מה למלא: מספרים שכתבתם נשמרים, ודרגת הקושי של ההצלה ממתינה עד שיהיה למפגע הצלה.</value></data>
   <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>מולא מהמדריך עבור רמה {0}: {1}.</value></data>
   <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>יש לתקן את אלה לפני השמירה</value></data>
   <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>מספרים שכדאי לבדוק (אפשר לשמור בכל זאת)</value></data>

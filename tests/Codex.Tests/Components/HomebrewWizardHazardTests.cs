@@ -24,7 +24,7 @@ public class HomebrewWizardHazardTests : ComponentTestBase
     private readonly IHomebrewRepository _homebrew = Substitute.For<IHomebrewRepository>();
     private HomebrewEntryDocument? _saved;
 
-    private IRenderedComponent<HomebrewWizard> Open(string culture = "en", string type = "hazard")
+    private IRenderedComponent<HomebrewWizard> Open(string culture = "en", string type = "hazard", HomebrewEntryDocument? entry = null)
     {
         Services.AddSingleton(Localizer.For(culture));
         var registry = new ContentRegistry();
@@ -42,7 +42,7 @@ public class HomebrewWizardHazardTests : ComponentTestBase
             Campaign = new CampaignDocument { Id = "c1", SystemId = "srd5e", Name = "Salt" },
             Access = new CampaignAccess("c1", "dm", CampaignRole.DM),
             UserId = "dm",
-            System = Catalog.GetDefinition("srd5e"),
+            System = Catalog.GetLocalizedDefinition("srd5e", culture),
             Actors = [],
             AllActors = [],
             ReloadAsync = () => Task.CompletedTask,
@@ -50,7 +50,7 @@ public class HomebrewWizardHazardTests : ComponentTestBase
             AccessChangedAsync = () => Task.CompletedTask
         };
         var cut = Render<HomebrewWizard>(p => p.AddCascadingValue(context));
-        cut.InvokeAsync(() => cut.Instance.OpenAsync(new HomebrewEntryDocument { CampaignId = "c1", Type = type, Name = "Test pit" })).GetAwaiter().GetResult();
+        cut.InvokeAsync(() => cut.Instance.OpenAsync(entry ?? new HomebrewEntryDocument { CampaignId = "c1", Type = type, Name = "Test pit" })).GetAwaiter().GetResult();
         return cut;
     }
 
@@ -221,17 +221,17 @@ public class HomebrewWizardHazardTests : ComponentTestBase
         var cut = Open();
         GoTo(cut, "Profile");
         Field(cut, "Levels").Change("5-10");
+        // The button is on the step that holds the numbers it fills, so a new hazard is filled where the game master sees it.
+        Assert.Empty(cut.FindAll("[data-testid=hazard-fill]"));
+        GoTo(cut, "Effect");
         cut.Find("[data-testid=hazard-fill]").Click();
         // No save yet, so a DC would be a shape problem: only the damage is filled, and it says so.
         Assert.Equal("Filled in from the guide for level 5-10: Damage.", cut.Find("[data-testid=hazard-fill-note]").TextContent.Trim());
 
-        GoTo(cut, "Effect");
         Field(cut, "Save").Change("Dexterity");
-        GoTo(cut, "Profile");
         cut.Find("[data-testid=hazard-fill]").Click();
-        Assert.Contains("Save DC, Damage", cut.Find("[data-testid=hazard-fill-note]").TextContent);
+        Assert.Equal("Filled in from the guide for level 5-10: Save DC.", cut.Find("[data-testid=hazard-fill-note]").TextContent.Trim());
 
-        GoTo(cut, "Effect");
         Assert.Equal("15", Field(cut, "Save DC").GetAttribute("value"));
         Assert.Equal("4d10", Control(cut, "hazard-damage", "Dice (such as 2d8)").GetAttribute("value"));
         Control(cut, "hazard-damage", "Dice (such as 2d8)").Change("5d10");
@@ -240,6 +240,134 @@ public class HomebrewWizardHazardTests : ComponentTestBase
         Assert.Equal("5d10", HazardNumbers.EditableRows(_saved!.Properties["damage"]).Single()["dice"]);
         Assert.Equal(15L, Convert.ToInt64(_saved.Properties["saveDc"]));
         Assert.Empty(HazardNumbers.ScalingProblems(_saved.ToEntry(), Catalog.GetDefinition("srd5e")!.EntityTypes.Single(t => t.Type == "hazard"), Catalog.GetDefinition("srd5e")!));
+    }
+
+    [Fact]
+    public void FillingFromTheGuide_KeepsEveryDamagePart_AndNeverReplacesANumberTheGmWrote()
+    {
+        var entry = new HomebrewEntryDocument
+        {
+            CampaignId = "c1", Type = "hazard", Name = "Spiked pit",
+            Properties =
+            {
+                ["level"] = "5-10", ["saveAttribute"] = "Dexterity", ["saveDc"] = 12,
+                ["damage"] = new List<object> { Row(("dice", ""), ("type", "bludgeoning")), Row(("dice", "2d10"), ("type", "piercing")) }
+            }
+        };
+        var cut = Open(entry: entry);
+        GoTo(cut, "Effect");
+        cut.Find("[data-testid=hazard-fill]").Click();
+
+        // The empty first part gets the guide's dice and keeps its type; the second part and the typed DC are left alone.
+        Assert.Equal("Filled in from the guide for level 5-10: Damage.", cut.Find("[data-testid=hazard-fill-note]").TextContent.Trim());
+        cut.Find("[data-testid=hazard-fill]").Click();
+        Assert.Contains("nothing to fill in", cut.Find("[data-testid=hazard-fill-note]").TextContent);
+        Save(cut);
+
+        var parts = HazardNumbers.EditableRows(_saved!.Properties["damage"]);
+        Assert.Equal(2, parts.Count);
+        Assert.Equal("4d10", parts[0]["dice"]);
+        Assert.Equal("bludgeoning", parts[0]["type"]);
+        Assert.Equal("2d10", parts[1]["dice"]);
+        Assert.Equal(12L, Convert.ToInt64(_saved.Properties["saveDc"]));
+    }
+
+    private static Dictionary<string, object> Row(params (string Key, object Value)[] pairs) => pairs.ToDictionary(p => p.Key, p => p.Value);
+
+    [Fact]
+    public void RemovingARow_ShowsTheNextRowsOwnText_NeverTheRemovedOnes()
+    {
+        var cut = Open();
+        GoTo(cut, "Notice");
+        for (var i = 0; i < 3; i++) cut.Find("[data-testid=hazard-detect-add]").Click();
+        Control(cut, "hazard-detect", "Name", 0).Change("First");
+        Control(cut, "hazard-detect", "Name", 1).Change("Second");
+        Control(cut, "hazard-detect", "Name", 2).Change("Third");
+        Control(cut, "hazard-detect", "Notes", 0).Change("note of first");
+        Control(cut, "hazard-detect", "Notes", 1).Change("note of second");
+        Control(cut, "hazard-detect", "Notes", 2).Change("note of third");
+
+        cut.FindAll("[data-testid=hazard-detect] > [data-testid=hazard-row] .collection-row-head button")[0].Click();
+        cut.WaitForAssertion(() => cut.Find("[data-testid=confirm-accept]").Click());
+
+        cut.WaitForAssertion(() => Assert.Equal(2, cut.FindAll("[data-testid=hazard-detect] > [data-testid=hazard-row]").Count));
+        Assert.Equal("note of second", Control(cut, "hazard-detect", "Notes", 0).GetAttribute("value"));
+        Assert.Equal("note of third", Control(cut, "hazard-detect", "Notes", 1).GetAttribute("value"));
+        Assert.Equal("Second", Control(cut, "hazard-detect", "Name", 0).GetAttribute("value"));
+    }
+
+    [Fact]
+    public void ASavedHazardOfEveryField_OpensInTheWizard_AndSavesUnchanged()
+    {
+        var entry = new HomebrewEntryDocument
+        {
+            CampaignId = "c1", Type = "hazard", Name = "The everything trap",
+            Properties =
+            {
+                ["kind"] = "trap", ["severity"] = "Deadly", ["level"] = "5-10", ["trigger"] = "Someone opens the lock.", ["duration"] = "1 minute",
+                ["saveAttribute"] = "Constitution", ["saveDc"] = 13, ["onSave"] = "half", ["area"] = "10-foot cone", ["depth"] = "20 feet", ["effect"] = "Gas pours out.",
+                ["armorClass"] = 15, ["hitPoints"] = 20, ["damageThreshold"] = 5, ["immunities"] = new List<object> { "poison", "psychic" },
+                ["initiative"] = 8, ["reset"] = "Resets after a minute.", ["complex"] = true,
+                ["detect"] = new List<object>
+                {
+                    Row(("id", "lock"), ("name", "Inspect the lock"), ("action", "Search"), ("check", "Perception"), ("dc", 15), ("text", "A thin seam."), ("flavour", "kept")),
+                    Row(("name", "Read the glyph"), ("after", "lock"), ("check", "arcana"), ("dc", 15), ("passive", false), ("note", "a key the editor has no column for"))
+                },
+                ["disarm"] = new List<object>
+                {
+                    Row(("name", "Pick it"), ("check", "Sleight of Hand"), ("dc", 15), ("successes", 2), ("triggersOn", new List<object> { "failure", "criticalFailure" })),
+                    Row(("name", "Wedge it"), ("needs", "An Iron Spike"))
+                },
+                ["methods"] = new List<object> { Row(("name", "Smash it"), ("needs", "A hammer"), ("after", "lock")) },
+                ["damage"] = new List<object> { Row(("dice", "1d10"), ("type", "poison")), Row(("dice", "1d6"), ("type", "piercing"), ("count", "1d3")) },
+                ["conditions"] = new List<object> { Row(("name", "Poisoned"), ("lasts", "1 hour")) },
+                ["routine"] = new List<object> { Row(("name", "Crush"), ("description", "The stone rolls."), ("strikes", true)), Row(("name", "Rumble"), ("description", "Dust falls.")) },
+                ["higherLevels"] = new List<object>
+                {
+                    Row(("levels", "11-16"), ("saveDc", 15), ("severity", "Nuisance"), ("area", "20-foot cone"),
+                        ("conditions", new List<object> { Row(("name", "Blinded"), ("lasts", "1 minute")) }),
+                        ("damage", new List<object> { Row(("dice", "2d10"), ("type", "poison")) }),
+                        ("methods", new List<object> { Row(("name", "Cover it"), ("needs", "A sack")) }))
+                }
+            }
+        };
+        var before = Canon(entry.Properties);
+        var cut = Open(entry: entry);
+        foreach (var step in cut.FindAll("[data-testid^='wizard-step-']").Select(s => s.GetAttribute("data-testid")!).ToList()) cut.Find($"[data-testid='{step}']").Click();
+
+        Save(cut);
+
+        Assert.Equal(before, Canon(_saved!.Properties));
+        Assert.Equal("The everything trap", _saved.Name);
+    }
+
+    // A value as text that does not depend on the collection types the store happens to give: maps by sorted key, lists in order, everything else as invariant text.
+    private static string Canon(object? value) => value switch
+    {
+        null => "null",
+        string s => s,
+        System.Collections.IDictionary map => "{" + string.Join(",", map.Keys.Cast<object>().Select(k => (k.ToString() ?? "", map[k])).OrderBy(p => p.Item1, StringComparer.Ordinal).Select(p => p.Item1 + "=" + Canon(p.Item2))) + "}",
+        System.Collections.IEnumerable list => "[" + string.Join(",", list.Cast<object?>().Select(Canon)) + "]",
+        _ => Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty
+    };
+
+    [Theory]
+    [InlineData("en", "Perception")]
+    [InlineData("ru", "Внимательность")]
+    public void TheChecksOnOffer_AreTheSystemsNamesInTheLanguage_AndAreStoredAsTheKey(string culture, string name)
+    {
+        var cut = Open(culture);
+        GoTo(cut, "Notice");
+        cut.Find("[data-testid=hazard-detect-add]").Click();
+
+        var row = cut.Find("[data-testid=hazard-detect] > [data-testid=hazard-row]");
+        var check = row.QuerySelectorAll("select").First(s => s.QuerySelectorAll("option").Any(o => o.GetAttribute("value") == "perception"));
+        var option = check.QuerySelectorAll("option").First(o => o.GetAttribute("value") == "perception");
+        Assert.Equal(name, option.TextContent.Trim());
+        check.Change("perception");
+        Save(cut);
+
+        Assert.Equal("perception", Assert.Single(HazardNumbers.EditableRows(_saved!.Properties["detect"]))["check"]);
     }
 
     [Fact]

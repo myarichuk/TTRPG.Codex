@@ -162,7 +162,7 @@ hazards:
     usable only because the SRD's own traps print it.
   - **Pathfinder Second Edition:** the DC-by-level table, once GM Core is held and its notice read.
 - The table is guidance: the homebrew wizard fills a new hazard's numbers from it, and the world builder's check (`propose_changes`) warns when a proposed hazard's number
-  is more than one row away from its level, stating the range. Nothing is ever refused; the game master decides. A hazard a person writes by hand is never checked this way.
+  is more than one row away from its level, stating the range. Nothing is ever refused; the game master decides. The homebrew wizard shows the same warnings on a hazard a person writes or edits by hand (H7: a deliberate change, advice only, never blocking).
   The warning states the table's rows for that level to the game master and to the model alike; srd5e's rows come from CC BY traps and may be shown. A system whose table
   comes from a book held under a notice (Pathfinder's GM Core) must decide first whether its numbers may reach a model.
 - `SystemTranslation` needs nothing new: hazard field labels translate like any type's fields.
@@ -555,12 +555,19 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   - **The wizard's hazard mode is the type's own steps.** For a type with a `hazard` block (`HomebrewWizard.IsHazard`) the steps are the type's field categories as for any type, but the lists are placed by their
     role in the block, never by field name: the `methods` rows go beside the disarm routes, the `routine` is a step of its own (`Routine`) and so are the `higherLevels` bands (`Level bands`). Each step is
     `HazardStepForm`: the plain fields as the schema form draws them, and each list a `HazardRows` editor (a fieldset, one labelled group per row, every control with its own visible label, a remove
-    button that names the row, an add button that names the list). Columns are the fixed row keys of 3.1.1: a route has name, action, check (suggesting the system's skills and attributes), dc, needs, after (a
+    button that names the row, an add button that names the list). Columns are the fixed row keys of 3.1.1: a route has name, action, check (a select of the system's skills and attributes), dc, needs, after (a
     select of the detect routes' ids), id, text, and `successes` and a `triggersOn: [failure]` box on a disarm route, a `passive` box (ticked unless the row says `false`) on a detect route, and `rank` only on a
     system with ranks. Damage rows are dice, type, count; conditions are a select of the system's conditions (shown translated, stored canonical) and `lasts`; routine rows are name, description and a `strikes` box;
     a band is `levels`, the numbers of the effect fields beside the save DC and damage (and the severity), and its own damage and `methods` lists. A key a stored row has and the editor has no column for stays in the row.
-  - **Numbers from the guide (7).** The level step has "Fill numbers from the guide": `HazardNumbers.GuideRow(level, system)` (the row `ScalingProblems` measures against) fills the save DC (only when the hazard
-    already has a save, since a DC with no save is a shape problem) and the damage (the first damage row's dice; its type is kept). The note says what was filled; everything stays editable.
+  - **Numbers from the guide (7).** The step that holds the save DC and the damage has "Fill numbers from the guide" (it reads the level from any step): `HazardNumbers.GuideRow(level, system)` (the row `ScalingProblems`
+    measures against) fills the save DC (only when the hazard already has a save, since a DC with no save is a shape problem) and the damage (the first damage row's dice; its type and every further part are kept).
+    It fills only what is empty: a number or dice the game master already wrote is never replaced. The note says what was filled; everything stays editable.
+  - **A deliberate change to 3.2 and H6: the wizard warns on a hand-written hazard too.** 3.2 said a hazard a person writes by hand is never checked against the table, and H6 reports only the problems an edit
+    introduced. The wizard instead shows the scaling warnings (`HazardIssues`) on every render of every step, including when the game master opens an existing hand-written hazard to fix something else. This is
+    advice only: it is in a polite live region, it never stops a save, and the shape problems (which do) are separate. It is kept on purpose, so a number that has drifted from its level is visible whoever wrote it.
+  - **Checks are keys.** A check column is a select of the system's skills and attributes, shown in the reader's language and stored as the key (`perception`, `animal-handling`), which `ActorChecks.Resolve` finds in any
+    language; a value stored as a label ("Perception") shows selected as its key. The book prints a route's check as the skill's or attribute's label in the book's language, and an `after` as the name of the detect route it
+    names (its id when it has no name).
   - **Saving through the same checks.** `HazardNumbers.Problems` (the checks the loader and the world builder use) stops the save: the message is in the alert and the wizard goes to the review step. `ScalingProblems` (H6)
     only warns. Both are listed as the GM edits, in a polite live region under every step (`hazard-shape`, `hazard-scale`), so a warning never needs an extra "save anyway" click: it never stops the save. Blank rows
     and empty lists are dropped before the check and the save (`HazardNumbers.Tidy`), so an "add a row" never filled in is not saved. The messages are the checks' own English, as H6's warnings are.
@@ -575,7 +582,7 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     hazard is never in one.
   - **Strings** (en, ru, he; ru and he need native review): `Wizard.Hazard.*` (`Strings.Wizard`) and `Campaign.Book.Hazard.*` (`Strings.Campaign`); no new resx prefix.
   - **Tests:** `HomebrewWizardHazardTests` (bUnit, on the real srd5e hazard type: the steps, labelled controls and the saved shape of a route, a failure box and an `after`, a shape problem stops the save, a number off the guide only warns,
-    fill from the guide, blank rows not saved, a band's own damage and a striking step, every step in en, ru and he with no key showing, another type untouched), `HazardEditingTests` (guide row, rows from any store form, tidy), the
+    fill from the guide (every damage row kept, typed numbers kept), removing a row shows no stale text, a saved hazard of every field opened and saved unchanged, blank rows not saved, a band's own damage and a striking step, every step in en, ru and he with no key showing, another type untouched), `HazardEditingTests` (guide row, rows from any store form, tidy), the
     hazard cases of `BookStatBlocksTests` (the block, ru and he, hostile values, the draft and an AI edit), and `BookSourceTests.APartyOrPlayerBook_NeverCarriesAHazard_ThoughTheGmsBookPrintsIt` (a published hazard and a placed one in
     the party book, a player's book, what a model is sent; present in the GM's book).
 

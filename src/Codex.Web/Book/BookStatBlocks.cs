@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Codex.Core.Systems;
 using Codex.Persistence;
+using Codex.Persistence.Runtime;
 using Codex.Plugin.Abstractions;
 
 namespace Codex.Web.Book;
@@ -138,10 +139,15 @@ public static class BookStatBlocks
         {
             var parts = new List<string>();
             if (route.Action is { } action) parts.Add(I(action));
-            if (route.Check is { } check) parts.Add(route.Dc is { } dc ? words["Campaign.Book.Hazard.Check", I(check), dc] : I(check));
+            // The check as the book's language names it: the skill or attribute the stored key, label or canonical label stands for, else the words as written.
+            if (route.Check is { } check)
+            {
+                var named = I(ActorChecks.Resolve(system, check)?.Label ?? check);
+                parts.Add(route.Dc is { } dc ? words["Campaign.Book.Hazard.Check", named, dc] : named);
+            }
             else if (route.Dc is { } bare) parts.Add(words["Campaign.Book.Hazard.Dc", bare]);
             if (route.Needs is { } needs) parts.Add(words["Campaign.Book.Hazard.Needs", I(needs)]);
-            if (route.After is { } after) parts.Add(words["Campaign.Book.Hazard.After", I(after)]);
+            if (route.After is { } after) parts.Add(words["Campaign.Book.Hazard.After", I(HazardNumbers.NoticeRoutes(numbers, hazard).FirstOrDefault(r => r.Id == after)?.Shown ?? after)]);
             if (route.Successes > 1) parts.Add(words["Campaign.Book.Hazard.Successes", route.Successes]);
             if (route.TriggersOn.Any(w => string.Equals(w, "failure", StringComparison.OrdinalIgnoreCase))) parts.Add(words["Campaign.Book.Hazard.SetsOff"]);
             if (route.Passive == false) parts.Add(words["Campaign.Book.Hazard.NoPassive"]);

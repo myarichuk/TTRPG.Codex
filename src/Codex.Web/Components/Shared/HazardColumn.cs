@@ -34,8 +34,11 @@ public sealed record HazardColumn(string Key, string Label, HazardColumnKind Kin
     /// <summary>For <see cref="HazardColumnKind.Choice"/>: the stored value and what to show.</summary>
     public IReadOnlyList<(string Value, string Label)> Options { get; init; } = [];
 
-    /// <summary>Words a text box suggests (a datalist): the system's skills and attributes for a check.</summary>
+    /// <summary>Words a text box suggests (a datalist).</summary>
     public IReadOnlyList<string> Suggestions { get; init; } = [];
+
+    /// <summary>For <see cref="HazardColumnKind.Choice"/>: names the option a stored value stands for (a skill's canonical label for its key), so a value written in another form still shows selected. Null: the value as stored.</summary>
+    public Func<string, string>? Match { get; init; }
 
     /// <summary>For <see cref="HazardColumnKind.Word"/>: the word the box stands for.</summary>
     public string? Word { get; init; }

@@ -164,7 +164,7 @@ public class BookStatBlocksTests
         Assert.Contains("**Save** Constitution, DC 11, half damage on a save", block);
         Assert.Contains("**Damage** 1d10 poison; 1d6 piercing, 1d3 times", block);
         Assert.Contains("**Conditions** Poisoned (1 hour)", block);
-        Assert.Contains("### Detect\n***Inspect the lock.*** Search; Perception, DC 15\n\n***Read the glyph.*** Arcana, DC 15; after lock; not found by passive scores\n\n", block);
+        Assert.Contains("### Detect\n***Inspect the lock.*** Search; Perception, DC 15\n\n***Read the glyph.*** Arcana, DC 15; after Inspect the lock; not found by passive scores\n\n", block);
         Assert.Contains("### Disarm\n***Pick it.*** Sleight of Hand, DC 15; a failure sets it off\n\n***Wedge it.*** needs An Iron Spike; 2 successes needed\n\n", block);
         Assert.Contains("***Crush.*** The stone rolls. (applies the effect)\n\n***Rumble.*** Dust falls.\n\n", block);
         Assert.Contains("***5-10.*** Save DC 13; Damage 2d10 poison\n}}", block);
@@ -177,7 +177,9 @@ public class BookStatBlocksTests
     {
         var system = Catalog.GetDefinition("srd5e");
         var ru = BookStatBlocks.For(Needle(), system, "ru", "sHZ", Mention, dm: true)!;
-        Assert.Contains("Perception, Сл 15", ru.Replace("Внимательность", "Perception"));
+        // The stored check (a label or a key) prints as the skill's name in the book's language, never the English label.
+        Assert.Contains("Внимательность, Сл 15", ru);
+        Assert.DoesNotContain("Perception", ru);
         Assert.Contains("требуется: An Iron Spike", ru);
         Assert.Contains("половина урона при успехе", ru);
 

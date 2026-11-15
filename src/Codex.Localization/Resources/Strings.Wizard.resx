@@ -104,7 +104,7 @@
   <data name="Wizard.Hazard.Fill" xml:space="preserve"><value>Fill numbers from the guide</value></data>
   <data name="Wizard.Hazard.Fill.Hint" xml:space="preserve"><value>The system's guide gives a save DC and damage for a level. Change them as you like afterwards.</value></data>
   <data name="Wizard.Hazard.Fill.NeedLevel" xml:space="preserve"><value>Fill in the levels first: a number such as 5, or a range such as 1-4.</value></data>
-  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>The guide has nothing to fill in yet. A save DC waits until the hazard has a save.</value></data>
+  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>The guide has nothing to fill in: numbers you wrote are kept, and a save DC waits until the hazard has a save.</value></data>
   <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>Filled in from the guide for level {0}: {1}.</value></data>
   <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>Fix these before saving</value></data>
   <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>Numbers to look at (you can save anyway)</value></data>

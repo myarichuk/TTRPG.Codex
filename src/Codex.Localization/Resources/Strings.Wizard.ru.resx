@@ -104,7 +104,7 @@
   <data name="Wizard.Hazard.Fill" xml:space="preserve"><value>Подставить числа из справочника</value></data>
   <data name="Wizard.Hazard.Fill.Hint" xml:space="preserve"><value>Справочник системы даёт Сл спасброска и урон для уровня. Потом их можно менять как угодно.</value></data>
   <data name="Wizard.Hazard.Fill.NeedLevel" xml:space="preserve"><value>Сначала укажите уровни: число, например 5, или диапазон, например 1-4.</value></data>
-  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>Пока в справочнике нечего подставлять. Сл спасброска ждёт, пока у опасности появится спасбросок.</value></data>
+  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>Подставлять нечего: числа, которые вы уже написали, остаются, а Сл спасброска ждёт, пока у опасности появится спасбросок.</value></data>
   <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>Подставлено из справочника для уровня {0}: {1}.</value></data>
   <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>Исправьте это перед сохранением</value></data>
   <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>Числа, на которые стоит взглянуть (сохранить можно и так)</value></data>
