@@ -85,6 +85,9 @@ public sealed class HazardLedger(CampaignRuntime runtime)
             return;
         }
 
+        // A hazard taken from the Library alone (no place) has nothing to write to.
+        if (site.RegionId.Length == 0) return;
+
         // Written only over the state the command began from: a place changed meanwhile (by another table, or on its page) is not written over.
         var was = Copy(before);
         var now = Copy(changed);
@@ -126,7 +129,7 @@ public sealed class HazardLedger(CampaignRuntime runtime)
     {
         foreach (var key in ended.ActiveEffects.Keys.Where(k => k.StartsWith(KeyPrefix, StringComparison.Ordinal)).ToList())
         {
-            if (Read(ended.ActiveEffects[key]) is { } live && !SameState(live.Current, live.Taken))
+            if (Read(ended.ActiveEffects[key]) is { RegionId.Length: > 0 } live && !SameState(live.Current, live.Taken))
             {
                 var taken = live.Taken;
                 var current = live.Current;
@@ -163,6 +166,55 @@ public sealed class HazardLedger(CampaignRuntime runtime)
 
         return notes;
     }
+
+    /// <summary>The place in the order a complex hazard gave up when it was disarmed or destroyed, kept in <c>EncounterDocument.ActiveEffects</c> under
+    /// <see cref="SeatPrefix"/> and the actor's id so that taking that back puts it in the same place.</summary>
+    public sealed class Seat
+    {
+        public int InitiativeRoll { get; set; }
+        public int TieBreak { get; set; }
+    }
+
+    /// <summary>Not <see cref="KeyPrefix"/>: the write-back at the end of an encounter must not read a seat as a hazard.</summary>
+    public const string SeatPrefix = "hazardseat:";
+
+    /// <summary>The key of a complex hazard actor's live state: its placement's, or, for one taken from the Library alone, one of its own.</summary>
+    public static string KeyOf(ActorDocument actor) =>
+        actor.Hazard is { IsPlaced: true } link ? KeyOf(link.RegionId, link.LocationId) : KeyOf(string.Empty, actor.Id);
+
+    /// <summary>Keeps the initiative order in step with the complex hazards at the table (HAZARDS_DESIGN.md 3.3): one that is disabled (as the encounter holds it live) or
+    /// destroyed (no hit points left, or dead) leaves the order and keeps its place; one that stands again (the disarming or the damage was undone, or the game master set its
+    /// state back) returns to that place. A hazard the game master took out of the order by hand has no kept place and is not put back. Run after every command.</summary>
+    public void SyncInitiative()
+    {
+        if (runtime.ActiveEncounter is not { } encounter) return;
+        foreach (var doc in runtime.HazardActorDocs().ToList())
+        {
+            var inOrder = encounter.Participants.FirstOrDefault(p => p.ActorId == doc.Id);
+            var seatKey = SeatPrefix + doc.Id;
+            var off = (encounter.ActiveEffects.TryGetValue(KeyOf(doc), out var raw) && Read(raw) is { } live && live.Current.State == HazardState.Disabled)
+                || (runtime.GetEntity(doc.Id) is { } entity && TableRules.IsDestroyed(runtime, entity));
+            if (off && inOrder != null)
+            {
+                encounter.ActiveEffects[seatKey] = new Seat { InitiativeRoll = inOrder.InitiativeRoll, TieBreak = inOrder.TieBreak };
+                runtime.RemoveParticipant(doc.Id);
+            }
+            else if (!off && inOrder == null && encounter.ActiveEffects.TryGetValue(seatKey, out var seatRaw))
+            {
+                if (ReadSeat(seatRaw) is { } seat) runtime.RestoreParticipant(doc.Id, seat.InitiativeRoll, seat.TieBreak);
+                encounter.ActiveEffects.Remove(seatKey);
+                runtime.MarkEncounterDirty();
+            }
+        }
+    }
+
+    private static Seat? ReadSeat(object? raw) => raw switch
+    {
+        Seat seat => seat,
+        JToken token => token.ToObject<Seat>(),
+        System.Collections.IDictionary map => JObject.FromObject(map).ToObject<Seat>(),
+        _ => null
+    };
 
     /// <summary>A live hazard as an encounter holds it: the object itself in memory, or what the database returns for it after the encounter is restored.</summary>
     internal static LiveHazard? Read(object? raw) => raw switch

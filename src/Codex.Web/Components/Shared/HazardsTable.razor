@@ -47,7 +47,15 @@
     // hazards back to their places), what was read is out of date, so it is read again.
     private string loadedUnder = string.Empty;
 
-    private string Under() => (Snapshot.Encounter?.Id ?? string.Empty) + "|" + string.Join(",", Snapshot.LiveHazards.Keys.Order(StringComparer.Ordinal));
+    private string Under() => (Snapshot.Encounter?.Id ?? string.Empty) + "|" + string.Join(",", Snapshot.LiveHazards.Keys.Order(StringComparer.Ordinal))
+        + "|" + string.Join(",", HazardActors().Select(a => a.Id).Order(StringComparer.Ordinal));
+
+    /// <summary>The complex hazards that are actors at the table (3.3): each one's routine shows on the hazard it stands for.</summary>
+    private IEnumerable<ActorDocument> HazardActors() => Actors.Where(a => a.Hazard != null && !a.Retired);
+
+    private ActorDocument? ActorOf(Placement placement) => HazardActors().FirstOrDefault(a => a.Hazard!.IsPlaced
+        ? a.Hazard.RegionId == placement.Region.Id && a.Hazard.LocationId == placement.Place.Id
+        : placement.Region.Id.Length == 0 && placement.Place.Id == a.Id);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -90,7 +98,26 @@
             }
         }
 
-        placements = found;
+        // A complex hazard taken from the Library alone stands on no place: it is shown with its own routine, whatever place the panel is narrowed to.
+        var loose = new List<Placement>();
+        foreach (var actor in HazardActors().Where(a => !a.Hazard!.IsPlaced))
+        {
+            var link = actor.Hazard!;
+            var stored = new PlacedHazard { Entry = link.Entry, IsHomebrew = link.IsHomebrew, Levels = link.Levels };
+            LibraryItem? item = null;
+            try
+            {
+                item = await Library.GetAsync(Campaign, Access, stored.EntryType, stored.EntryId, stored.IsHomebrew);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "A hazard actor's entry {Entry} could not be read for the table", stored.Entry);
+            }
+
+            loose.Add(new Placement(new RegionDocument { Id = string.Empty }, new LocationDocument { Id = actor.Id, Name = L["Combat.Hazard.FromLibrary"] }, stored, item));
+        }
+
+        placements = found.Concat(loose).ToList();
         // The places to narrow to: each place with a hazard in it or under it.
         var shown = new Dictionary<string, HazardPlace>();
         foreach (var placement in found)
@@ -118,7 +145,7 @@
     private IReadOnlyList<HazardWho> Who()
     {
         var inOrder = Snapshot.Encounter?.Participants.Select(p => p.ActorId).ToHashSet() ?? new HashSet<string>();
-        return Actors.Where(a => !a.Retired && (a.Kind == ActorKind.PlayerCharacter || inOrder.Contains(a.Id)))
+        return Actors.Where(a => !a.Retired && a.Hazard == null && (a.Kind == ActorKind.PlayerCharacter || inOrder.Contains(a.Id)))
             .OrderBy(a => a.Kind == ActorKind.PlayerCharacter ? 0 : 1).ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
             .Select(a => new HazardWho(a.Id, a.Name)).ToList();
     }
@@ -127,7 +154,7 @@
     {
         var names = Actors.ToDictionary(a => a.Id, a => a.Name);
         var views = new List<HazardView>();
-        foreach (var placement in placements.Where(p => placeId.Length == 0 || Chain(p.Region, p.Place).Any(c => c.Id == placeId)))
+        foreach (var placement in placements.Where(p => p.Region.Id.Length == 0 || placeId.Length == 0 || Chain(p.Region, p.Place).Any(c => c.Id == placeId)))
         {
             // The encounter's live copy, when it holds one, over what is stored.
             var key = HazardLedger.KeyOf(placement.Region.Id, placement.Place.Id);
@@ -145,11 +172,20 @@
             var disarm = HazardNumbers.DisableRoutes(numbers, hazard);
             bool Open(HazardRoute r) => r.After == null || state.Found.Contains(r.After);
             var site = new HazardSite(placement.Region.Id, placement.Place.Id, name, placement.Stored, item.Entry, type);
+            // A complex hazard that is an actor: its routine (read through the same numbers), and where it stands in the order.
+            HazardTurn? turn = null;
+            if (ActorOf(placement) is { } actor)
+            {
+                var order = Snapshot.Encounter;
+                turn = new HazardTurn(actor.Id, HazardNumbers.Routine(numbers, hazard), order?.Participants.Any(p => p.ActorId == actor.Id) == true,
+                    order?.Current?.ActorId == actor.Id, hazard.Effect is { } effect && (!string.IsNullOrEmpty(effect.Save) || !string.IsNullOrEmpty(effect.Attack) || !string.IsNullOrEmpty(effect.Damage)));
+            }
+
             views.Add(new HazardView(key, site, name, placement.Place.Name, state.State, state.Successes, noticed,
                 detect.Where(Open).Select(r => new HazardWay(HazardRoutes.KeyOf(r), WayLabel(r))).ToList(),
                 disarm.Where(Open).Select(r => new HazardWay(HazardRoutes.KeyOf(r), WayLabel(r))).ToList(),
                 HazardNumbers.Methods(numbers, hazard).Select(m => m.Shown).ToList(),
-                detect.Concat(disarm).Count(r => !Open(r)), Snapshot.HazardUndo.Contains(key)));
+                detect.Concat(disarm).Count(r => !Open(r)), Snapshot.HazardUndo.Contains(key), turn));
         }
 
         return views;
@@ -168,10 +204,16 @@
         await Runtime.EnqueueAsync(new SetEncounterPlaceCommand(id, label));
     }
 
+    // The placement as stored now. A hazard taken from the Library alone has no place to read.
+    private async Task<PlacedHazard> StoredAsync(HazardSite site) =>
+        site.RegionId.Length == 0
+            ? site.Stored
+            : (await RegionRepo.GetAsync(site.RegionId, Access))?.Locations.FirstOrDefault(l => l.Id == site.LocationId)?.Feature?.Hazard ?? site.Stored;
+
     private async Task UndoAsync(HazardView hazard)
     {
         if (hazard.Site is not { } listed) return;
-        var stored = (await RegionRepo.GetAsync(listed.RegionId, Access))?.Locations.FirstOrDefault(l => l.Id == listed.LocationId)?.Feature?.Hazard ?? listed.Stored;
+        var stored = await StoredAsync(listed);
         var command = new UndoHazardCommand(listed with { Stored = stored });
         try
         {
@@ -194,7 +236,7 @@
     {
         if (request.Hazard.Site is not { } listed) return;
         // The placement as stored now, not as the page last loaded it: the place's own page may have changed it.
-        var stored = (await RegionRepo.GetAsync(listed.RegionId, Access))?.Locations.FirstOrDefault(l => l.Id == listed.LocationId)?.Feature?.Hazard ?? listed.Stored;
+        var stored = await StoredAsync(listed);
         // The repeat of a trigger that waited for a number finishes it for the waiting creatures only, with the damage already rolled: the others are not hit twice.
         var again = waiting is { } w && w.HazardId == request.Hazard.Id && w.Action == request.Action && w.Route == request.Route;
         var actorIds = again ? waiting!.Ids : request.ActorIds;

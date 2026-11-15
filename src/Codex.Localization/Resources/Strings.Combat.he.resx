@@ -79,11 +79,27 @@
   <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1}, דרגת קושי {2})</value></data>
   <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (נדרש: {1})</value></data>
   <data name="Combat.QuickAdd" xml:space="preserve"><value>הוספה מהירה של יצור</value></data>
-  <data name="Combat.SearchCreatures" xml:space="preserve"><value>חיפוש יצורים</value></data>
-  <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>חיפוש יצורים בספרייה…</value></data>
+  <data name="Combat.SearchCreatures" xml:space="preserve"><value>חיפוש יצורים וסכנות</value></data>
+  <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>חיפוש יצורים וסכנות בספרייה…</value></data>
+  <data name="Combat.Hazard.FromLibrary" xml:space="preserve"><value>נלקחה מהספרייה, בלי מקום</value></data>
+  <data name="Combat.Hazard.Routine" xml:space="preserve"><value>סדר הפעולות של {0}</value></data>
+  <data name="Combat.Hazard.InOrder" xml:space="preserve"><value>בסדר היוזמה</value></data>
+  <data name="Combat.Hazard.OutOfOrder" xml:space="preserve"><value>מחוץ לסדר היוזמה</value></data>
+  <data name="Combat.Hazard.ItsTurn" xml:space="preserve"><value>התור שלה עכשיו</value></data>
+  <data name="Combat.Hazard.RoutineAnyTurn" xml:space="preserve"><value>חלק מהשלבים, כמו ריסוק, קורים בתור של כל יצור. הפעילו אותם כשהסכנה מגיעה ליצור.</value></data>
+  <data name="Combat.Hazard.StepNote" xml:space="preserve"><value>סימון השלב {0} של {1}</value></data>
+  <data name="Combat.Hazard.StepOn" xml:space="preserve"><value>השלב {0} של {1} על היצורים המסומנים</value></data>
+  <data name="Combat.QuickAddCreatures" xml:space="preserve"><value>יצורים</value></data>
+  <data name="Combat.QuickAddNoCreatures" xml:space="preserve"><value>אין יצור שמתאים.</value></data>
+  <data name="Combat.QuickAddHazards" xml:space="preserve"><value>סכנות</value></data>
+  <data name="Combat.QuickAddPlaceHazards" xml:space="preserve"><value>סכנות ב{0}</value></data>
+  <data name="Combat.QuickAddInitiative" xml:space="preserve"><value>(יוזמה {0})</value></data>
+  <data name="Combat.AddHazardToOrder" xml:space="preserve"><value>הוספה לסדר</value></data>
+  <data name="Combat.AddHazardToOrderFor" xml:space="preserve"><value>הוספת {0} לסדר היוזמה</value></data>
+  <data name="Combat.HazardAdded" xml:space="preserve"><value>{0} בסדר היוזמה. רק אתם רואים אותה.</value></data>
   <data name="Combat.AddToEncounterFor" xml:space="preserve"><value>הוספת {0} למפגש הקרב</value></data>
   <data name="Combat.AddToEncounter" xml:space="preserve"><value>הוספה למפגש הקרב</value></data>
-  <data name="Combat.QuickAddHint" xml:space="preserve"><value>הקלידו לחיפוש. יצורים מופיעים מיד בשולחן החי. השחקנים רואים אותם, בלי שם ופרטים, עד שתתנו להם שם או תסתירו אותם.</value></data>
+  <data name="Combat.QuickAddHint" xml:space="preserve"><value>הקלידו לחיפוש. יצורים מופיעים מיד בשולחן החי. השחקנים רואים אותם, בלי שם ופרטים, עד שתתנו להם שם או תסתירו אותם. סכנה נכנסת לסדר היוזמה בלי שאיש יראה: רק אתם רואים אותה.</value></data>
   <data name="Combat.PartyRest" xml:space="preserve"><value>מנוחת הצוות</value></data>
   <data name="Combat.PartyRestHint" xml:space="preserve"><value>כל דמויות השחקנים נחות בבת אחת. קוביות חיים מנוצלות לכל דמות בנפרד מהשורה שלה.</value></data>
   <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} לצוות</value></data>

@@ -480,6 +480,32 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     creatures is a content or contract decision for a later step (today the GM presses Trigger for the others, which rolls its own damage).
   - **Tests:** `HazardCommandTests` (30), `HazardsPanelTests` (19), `HazardsTableTests` (3), the `PlacedHazard.Found` cases in the persistence and form tests, and the three H4a-gap tests; the whole
     filtered suite passes.
+- **H5 (complex hazards in initiative).** Built as 3.3 has it: the loader's per-entry gate (`HazardNumbers.IsComplex`; a hazard type registers the entries whose `complex` field is true, tagged
+  `hazard`, `entryType = "hazard"`, and never sets the `ActorBlueprint` flag), the `ToActorBlueprint(entry, type, hazard, primary)` overload (hit points from `durability.hitPoints`), and the
+  `QuickAddPanel` split by the `hazard` tag. What the design left open, and what differs:
+  - **How an actor stands for a hazard.** `ActorDocument.Hazard` is a `HazardActorLink` (region, place, `type/id`, homebrew flag, level row). The console makes the actor **Hidden** (no player ever sees it;
+    the existing rule that leaves Hidden actors out of a player's list also leaves the row out of their order) and joins it with `JoinInitiativeCommand`: the die is the system's initiative die plus
+    the hazard's `initiative` bonus (`HazardNumbers.InitiativeOf`), the roll is a secret roll-log entry, the log line is GM-only (`Event.Hazard.Joined`). It is not `RollInitiativeCommand`, whose roll and line a player could see.
+  - **A hazard taken from the Library alone** (the quick-add panel's "Hazards" group, no place) has a link with no region and place. Its live state is kept under `hazard:/{actorId}` in the encounter and is never written to a place
+    (`HazardLedger` skips an empty region at write-back and at flush); the Hazards panel shows it as "Taken from the Library". A hazard on the encounter's place keeps the placement's own ledger key, so one state serves the panel and the actor.
+  - **The quick-add panel** shows, with no search, the complex hazards on the encounter's place and its child places first ("Hazards on {place}", `HazardOffers.ForPlaceAsync`: not disabled, not already at the table, a homebrew
+    entry works because the blueprint is built from the placement's entry); with a search, "Creatures" and "Hazards" groups (the Library's complex hazards, minus those already offered from the place).
+    `SrdPackSmokeTests` and the golden corpus now count creatures only (`!tag hazard`).
+  - **The routine.** Its rows are `{ name, description }`, so which one is the effect is not in the data. `HazardAction.Routine` takes a step's name: with no creatures it only says the step in the GM-only log (and refuses an
+    unknown step, or one on a disabled hazard); **with creatures named it is the hazard's effect on them**, through the same `Strike` as Trigger (the check service, `HazardNumbers.For`, the damage event; no second path). The panel gives each
+    step "Note step" and, when the hazard has an effect, "Step ... on the ticked creatures". Nothing ties a step to a turn: **Crush works on any creature's turn** (12.6 item 5), since the GM presses it whenever the stone reaches a creature; the panel
+    shows "Its turn now" when the hazard is the current participant. The panel's characters list no longer includes hazard actors.
+  - **Leaving and returning.** `HazardLedger.SyncInitiative` runs after every command on the loop: a complex hazard whose live state is Disabled, or which is destroyed (no hit points left, or dead; `TableRules.IsDestroyed`), leaves the order and its
+    roll is kept (`hazardseat:{actorId}` in `ActiveEffects`, not read by the write-back); when it stands again (`UndoHazardCommand`, undoing the damage, or the state picker) it returns at the same roll with the turn kept on whoever acts. A hazard the GM
+    took out by hand has no kept place and is not put back. Disabled is read from the encounter's live copy, which every hazard command writes, so a place edited elsewhere while the table runs is not noticed until a command touches it.
+  - **Not built:** a routine step the data marks as "the effect" (needs a row key, a content decision), the rolling stone's movement and its Slow and Destroy methods as buttons, and a prepared encounter that sets the place and adds its hazards by itself.
+  - **Strings** (en, ru, he; ru and he need native review): `Combat.Hazard.Routine`, `.InOrder`, `.OutOfOrder`, `.ItsTurn`, `.RoutineAnyTurn`, `.StepNote`, `.StepOn`, `.FromLibrary`, `Combat.QuickAdd*`, `Combat.AddHazardToOrder*`, `Combat.HazardAdded`; `Event.Hazard.Step`, `.StepOn`, `.Joined`.
+  - **Tests:** `ComplexHazardTests` (15: the gate and overload, the registry-reader pin of 3.3 (a creature list drops the `hazard` tag; no hazard type has the flag), joining with the bonus and secretly, a routine turn, Crush on another creature's turn and
+    a passed save, removal on disarm and its undo, on destruction and its undo, a hand-removed hazard, a Library-only hazard, the place's offers, secrecy including passing the turn to the hidden hazard, the link surviving the console's `TrySaveAsync`),
+    `QuickAddPanelTests` (9), and five more in `HazardsPanelTests`.
+  - **Differences from 3.3 and 7.** "On its turn the table shows its routine": the routine is shown in the GM's Hazards panel, with an "Its turn now" mark while the hazard is the current participant, not in the initiative row (a Hidden actor's row is
+    the GM's only, and the panel is where Crush's targets are ticked). The "encounter builder's Hazards group" of 7 is the quick-add panel's, as there is no builder (see H4b). The golden corpus is unchanged: it now filters out the hazard tag.
+    Search label, placeholder and hint of the quick-add box now name hazards.
 
 ## 12. H4a: the server-side check service (interface)
 

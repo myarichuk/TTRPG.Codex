@@ -445,7 +445,19 @@ public class YamlContentPackLoader : IContentPackLoader
         {
             _registry.RegisterActor(ToActorBlueprint(entry, type, primary), prio);
         }
+        else if (type is { Hazard: { } hazardBlock } && HazardNumbers.IsComplex(entry, type))
+        {
+            // The per-entry gate (HAZARDS_DESIGN.md 3.3): a hazard type registers only the entries whose `complex` field is true. It never sets the ActorBlueprint flag,
+            // so the Bestiary, the homebrew wizard, the book and the world builder never see a hazard.
+            _registry.RegisterActor(ToActorBlueprint(entry, type, hazardBlock, primary), prio);
+        }
     }
+
+    /// <summary>The actor a complex hazard becomes (HAZARDS_DESIGN.md 3.3): tagged <c>hazard</c>, <c>entryType = "hazard"</c>, its hit points read from the hazard block's
+    /// <c>durability.hitPoints</c> field (not <c>HitPointsProperty</c>, which a hazard type does not set). The rest of the entry rides along in <c>Properties</c>, so its
+    /// armor class, <c>initiative</c> and <c>routine</c> are on the sheet.</summary>
+    public static ActorDefinition ToActorBlueprint(ContentEntry entry, ContentTypeDefinition type, HazardDefinition hazard, ResourceDefinition? primary = null) =>
+        BuildActor(entry, "hazard", hazard.Durability?.HitPoints ?? "hitPoints", type.AttributeProperties, primary);
 
     /// <summary>
     /// Projects a creature entry (a monster stat block) onto the <see cref="IActorDefinition"/> shape
@@ -454,7 +466,10 @@ public class YamlContentPackLoader : IContentPackLoader
     /// stat block rides along in <c>Properties</c> untouched. The pool is the system's primary resource
     /// (<paramref name="primary"/>: "Wounds", say); without one it is the conventional "HP".
     /// </summary>
-    public static ActorDefinition ToActorBlueprint(ContentEntry entry, ContentTypeDefinition type, ResourceDefinition? primary = null)
+    public static ActorDefinition ToActorBlueprint(ContentEntry entry, ContentTypeDefinition type, ResourceDefinition? primary = null) =>
+        BuildActor(entry, type.Type, type.HitPointsProperty ?? "hitPoints", type.AttributeProperties, primary);
+
+    private static ActorDefinition BuildActor(ContentEntry entry, string typeTag, string hitPointsProperty, IReadOnlyDictionary<string, string> attributeProperties, ResourceDefinition? primary)
     {
         var actor = new ActorDefinition
         {
@@ -467,9 +482,9 @@ public class YamlContentPackLoader : IContentPackLoader
             Properties = new Dictionary<string, object>(entry.Properties)
         };
 
-        actor.Tags.Insert(0, type.Type);
+        actor.Tags.Insert(0, typeTag);
 
-        var hp = YamlValues.GetInt(entry.Properties, type.HitPointsProperty ?? "hitPoints");
+        var hp = YamlValues.GetInt(entry.Properties, hitPointsProperty);
         if (hp.HasValue)
         {
             actor.Resources[primary?.Key ?? "HP"] = hp.Value;
@@ -479,7 +494,7 @@ public class YamlContentPackLoader : IContentPackLoader
             }
         }
 
-        foreach (var (property, attributeKey) in type.AttributeProperties)
+        foreach (var (property, attributeKey) in attributeProperties)
         {
             var value = YamlValues.GetInt(entry.Properties, property);
             if (value.HasValue)
@@ -488,7 +503,7 @@ public class YamlContentPackLoader : IContentPackLoader
             }
         }
 
-        actor.Metadata["entryType"] = type.Type;
+        actor.Metadata["entryType"] = typeTag;
         return actor;
     }
 

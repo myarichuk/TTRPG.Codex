@@ -27,6 +27,9 @@ public sealed record HazardRoute(string? Id, string? Name, string? Action, strin
     public string Shown => Name ?? Id ?? Check ?? string.Empty;
 }
 
+/// <summary>One step of a complex hazard's routine: a row of its <c>routine</c> list (a name and what it does on the hazard's turn or on another creature's).</summary>
+public sealed record HazardStep(string Name, string Description);
+
 /// <summary>One part of a hazard's damage: dice of one type, hitting <c>Count</c> times (dice or a whole number; one when empty).</summary>
 public sealed record HazardDamagePart(string Dice, string? Type, string? Count);
 
@@ -44,6 +47,22 @@ public static class HazardNumbers
 
     /// <summary>True for dice such as <c>4d10</c> or <c>1d6 + 2</c>.</summary>
     public static bool IsDice(string? text) => DiceText.IsMatch(text ?? string.Empty);
+
+    /// <summary>True when the entry's <c>complex</c> field is true: it is also an actor, with a turn in initiative (HAZARDS_DESIGN.md 3.3). A type with no <c>complex</c> field has none.</summary>
+    public static bool IsComplex(ContentEntry entry, ContentTypeDefinition type) =>
+        type.Hazard?.Complex is { Length: > 0 } field && entry.Properties.TryGetValue(field, out var value)
+        && (value is bool flag ? flag : bool.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), out var parsed) && parsed);
+
+    /// <summary>A complex hazard's initiative bonus (its <c>initiative</c> field), 0 when it has none.</summary>
+    public static int InitiativeOf(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard) =>
+        hazard.Initiative is { Length: > 0 } field && numbers.TryGetValue(field, out var value) && WholeNumber(value, out var bonus) ? (int)bonus : 0;
+
+    /// <summary>A complex hazard's routine, in the order written: each row a name and what it does. The numbers come from the overlaid <paramref name="numbers"/>.</summary>
+    public static IReadOnlyList<HazardStep> Routine(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard) =>
+        RowsOfField(numbers, hazard.Routine)
+            .Select(r => new HazardStep(Text(r, "name"), Text(r, "description")))
+            .Where(s => s.Name.Length > 0 || s.Description.Length > 0)
+            .ToList();
 
     /// <summary>The <c>levels</c> of each scaled row the entry has, in the order written.</summary>
     public static IReadOnlyList<string> Rows(ContentEntry entry, ContentTypeDefinition type) =>

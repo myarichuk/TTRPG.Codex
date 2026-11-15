@@ -79,11 +79,27 @@
   <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1}, СЛ {2})</value></data>
   <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (нужно: {1})</value></data>
   <data name="Combat.QuickAdd" xml:space="preserve"><value>Быстро добавить существо</value></data>
-  <data name="Combat.SearchCreatures" xml:space="preserve"><value>Поиск существ</value></data>
-  <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Поиск существ в библиотеке…</value></data>
+  <data name="Combat.SearchCreatures" xml:space="preserve"><value>Поиск существ и опасностей</value></data>
+  <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Поиск существ и опасностей в библиотеке…</value></data>
+  <data name="Combat.Hazard.FromLibrary" xml:space="preserve"><value>Взята из Библиотеки, ни на каком месте</value></data>
+  <data name="Combat.Hazard.Routine" xml:space="preserve"><value>Порядок действий: {0}</value></data>
+  <data name="Combat.Hazard.InOrder" xml:space="preserve"><value>В порядке инициативы</value></data>
+  <data name="Combat.Hazard.OutOfOrder" xml:space="preserve"><value>Вне порядка инициативы</value></data>
+  <data name="Combat.Hazard.ItsTurn" xml:space="preserve"><value>Сейчас её ход</value></data>
+  <data name="Combat.Hazard.RoutineAnyTurn" xml:space="preserve"><value>Некоторые шаги, например раздавливание, происходят в ход любого существа. Применяйте их, когда опасность настигает существо.</value></data>
+  <data name="Combat.Hazard.StepNote" xml:space="preserve"><value>Отметить шаг «{0}»: {1}</value></data>
+  <data name="Combat.Hazard.StepOn" xml:space="preserve"><value>Шаг «{0}»: {1}, на отмеченных существах</value></data>
+  <data name="Combat.QuickAddCreatures" xml:space="preserve"><value>Существа</value></data>
+  <data name="Combat.QuickAddNoCreatures" xml:space="preserve"><value>Подходящих существ нет.</value></data>
+  <data name="Combat.QuickAddHazards" xml:space="preserve"><value>Опасности</value></data>
+  <data name="Combat.QuickAddPlaceHazards" xml:space="preserve"><value>Опасности места «{0}»</value></data>
+  <data name="Combat.QuickAddInitiative" xml:space="preserve"><value>(инициатива {0})</value></data>
+  <data name="Combat.AddHazardToOrder" xml:space="preserve"><value>В порядок инициативы</value></data>
+  <data name="Combat.AddHazardToOrderFor" xml:space="preserve"><value>Добавить в порядок инициативы: {0}</value></data>
+  <data name="Combat.HazardAdded" xml:space="preserve"><value>{0} в порядке инициативы. Видите только вы.</value></data>
   <data name="Combat.AddToEncounterFor" xml:space="preserve"><value>Добавить в столкновение: {0}</value></data>
   <data name="Combat.AddToEncounter" xml:space="preserve"><value>Добавить в столкновение</value></data>
-  <data name="Combat.QuickAddHint" xml:space="preserve"><value>Начните вводить для поиска. Существа сразу появляются на живом столе. Игроки их видят, но без имени и подробностей, пока вы не назовёте или не скроете их.</value></data>
+  <data name="Combat.QuickAddHint" xml:space="preserve"><value>Начните вводить для поиска. Существа сразу появляются на живом столе. Игроки их видят, но без имени и подробностей, пока вы не назовёте или не скроете их. Опасность входит в порядок инициативы незаметно: видите её только вы.</value></data>
   <data name="Combat.PartyRest" xml:space="preserve"><value>Отдых отряда</value></data>
   <data name="Combat.PartyRestHint" xml:space="preserve"><value>Все персонажи игроков отдыхают одновременно. Кости здоровья тратятся отдельно в строке каждого персонажа.</value></data>
   <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} для отряда</value></data>

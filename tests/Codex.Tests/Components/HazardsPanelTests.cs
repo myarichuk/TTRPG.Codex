@@ -258,6 +258,67 @@ public class HazardsPanelTests : ComponentTestBase
     public void WaitingWays_AreCounted() =>
         Assert.Contains("2 more ways open", Draw(hazards: new[] { Pit(waiting: 2) }).Find("[data-testid=hazard-0]").TextContent);
 
+    private static HazardView Stone(bool inOrder = true, bool itsTurn = false, bool hasEffect = true) =>
+        Pit(name: "Rolling Stone") with
+        {
+            Turn = new HazardTurn("stone1", new[] { new Codex.Core.Systems.HazardStep("Roll", "Moves 60 feet."), new Codex.Core.Systems.HazardStep("Crush", "On any creature's turn.") }, inOrder, itsTurn, hasEffect)
+        };
+
+    [Fact]
+    public void ARoutine_ListsEachStep_NamesTheHazardOnItsButtons_AndSaysWhoseTurnItIs()
+    {
+        var cut = Draw(hazards: new[] { Stone(itsTurn: true) });
+
+        var section = cut.Find("[data-testid=hazard-0-routine]");
+        Assert.Contains("Routine of Rolling Stone", cut.Find("#" + section.GetAttribute("aria-labelledby")).TextContent);
+        Assert.Contains("In the initiative order", cut.Find("[data-testid=hazard-0-order]").TextContent);
+        Assert.Contains("Its turn now", cut.Find("[data-testid=hazard-0-its-turn]").TextContent);
+        Assert.Contains("Moves 60 feet.", cut.Find("[data-testid=hazard-0-step-0]").TextContent);
+        Assert.Equal("Note step Crush of Rolling Stone", cut.Find("[data-testid=hazard-0-step-1-note]").TextContent.Trim());
+        Assert.Equal("Step Crush of Rolling Stone on the ticked creatures", cut.Find("[data-testid=hazard-0-step-1-on]").TextContent.Trim());
+        Assert.Contains("any creature's turn", section.TextContent);
+    }
+
+    [Fact]
+    public void ANoteOfAStep_NamesTheStepAndNoCreatures_AndCrushOnTickedCreatures_NamesThem()
+    {
+        var requests = new List<HazardRequest>();
+        var cut = Draw(hazards: new[] { Stone() }, onRequest: requests.Add);
+        Assert.True(cut.Find("[data-testid=hazard-0-step-1-on]").HasAttribute("disabled"));
+
+        cut.Find("[data-testid=hazard-0-step-1-note]").Click();
+        cut.Find("[data-testid=hazard-who-a2]").Change(true);
+        cut.Find("[data-testid=hazard-0-step-1-on]").Click();
+
+        Assert.Equal(new[] { (HazardAction.Routine, "Crush", 0), (HazardAction.Routine, "Crush", 1) }, requests.Select(r => (r.Action, r.Route!, r.ActorIds.Count)));
+        Assert.Equal(new[] { "a2" }, requests[1].ActorIds);
+    }
+
+    [Fact]
+    public void AHazardOutOfTheOrder_SaysSo_AndOffersNoStep()
+    {
+        var cut = Draw(hazards: new[] { Stone(inOrder: false) });
+
+        Assert.Contains("Out of the initiative order", cut.Find("[data-testid=hazard-0-order]").TextContent);
+        Assert.True(cut.Find("[data-testid=hazard-0-step-0-note]").HasAttribute("disabled"));
+        Assert.DoesNotContain(cut.FindAll("[data-testid=hazard-0-its-turn]"), _ => true);
+    }
+
+    [Fact]
+    public void ASimpleHazard_HasNoRoutine() => Assert.Empty(Draw().FindAll("[data-testid=hazard-0-routine]"));
+
+    [Theory]
+    [InlineData("ru", "Порядок действий: Rolling Stone", "Сейчас её ход")]
+    [InlineData("he", "סדר הפעולות של Rolling Stone", "התור שלה עכשיו")]
+    public void ARoutine_IsTranslated(string culture, string heading, string itsTurn)
+    {
+        var cut = Draw(culture, new[] { Stone(itsTurn: true) });
+
+        Assert.Contains(heading, cut.Find("[data-testid=hazard-0-routine]").TextContent);
+        Assert.Contains(itsTurn, cut.Markup);
+        Assert.DoesNotContain("Combat.Hazard", cut.Markup);
+    }
+
     [Fact]
     public void NoHazards_SaysHowToPlaceOne() =>
         Assert.Contains("Place one on a place's page", Draw(hazards: Array.Empty<HazardView>()).Find("[data-testid=hazards-none]").TextContent);

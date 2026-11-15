@@ -213,6 +213,9 @@
   <data name="Event.Hazard.Disabled" xml:space="preserve"><value>{0} обезврежена.</value></data>
   <data name="Event.Hazard.SetOff" xml:space="preserve"><value>{0}: неудачная попытка запускает её, цель — {1}.</value></data>
   <data name="Event.Hazard.Triggered" xml:space="preserve"><value>{0} срабатывает.</value></data>
+  <data name="Event.Hazard.Step" xml:space="preserve"><value>{0} делает свой шаг: {1}.</value></data>
+  <data name="Event.Hazard.StepOn" xml:space="preserve"><value>{0} делает свой шаг: {1}.</value></data>
+  <data name="Event.Hazard.Joined" xml:space="preserve"><value>{0} вступает в порядок инициативы на {1}.</value></data>
   <data name="Event.Hazard.Hit" xml:space="preserve"><value>{0}: атака {1} против КД {2}, {3} задет(а).</value></data>
   <data name="Event.Hazard.Miss" xml:space="preserve"><value>{0}: атака {1} против КД {2}, {3} не задет(а).</value></data>
   <data name="Event.Hazard.NeedsNumber" xml:space="preserve"><value>{0}: для {1} нужно ввести число, поэтому ничего не сделано.</value></data>

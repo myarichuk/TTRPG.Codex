@@ -676,6 +676,28 @@ public sealed class CampaignRuntime : IAsyncDisposable
         return true;
     }
 
+    /// <summary>The cached documents of the complex hazards that are actors at this table (<see cref="ActorDocument.Hazard"/>).</summary>
+    internal IEnumerable<ActorDocument> HazardActorDocs() => _actorDocs.Values.Where(d => d.Hazard != null);
+
+    /// <summary>Puts a participant back in the order at the roll it had, keeping the turn on whoever is acting (the counterpart of <see cref="RemoveParticipant"/> for a
+    /// complex hazard whose disarming or destruction was taken back). False when they are already in it or no encounter runs.</summary>
+    internal bool RestoreParticipant(string actorId, int initiativeRoll, int tieBreak)
+    {
+        var encounter = _activeEncounter;
+        if (encounter == null || encounter.Participants.Any(p => p.ActorId == actorId))
+        {
+            return false;
+        }
+
+        var underWay = encounter.Round > 1 || encounter.Participants.Any(p => p.HasActed);
+        var current = underWay && encounter.TurnIndex < encounter.Participants.Count ? encounter.Participants[encounter.TurnIndex] : null;
+        encounter.Participants.Add(new EncounterParticipant { ActorId = actorId, InitiativeRoll = initiativeRoll, TieBreak = tieBreak });
+        SortParticipants(encounter);
+        encounter.TurnIndex = current != null ? Math.Max(0, encounter.Participants.IndexOf(current)) : 0;
+        MarkEncounterDirty();
+        return true;
+    }
+
     /// <summary>Moves the turn to the next participant still in the fight (R2, shared by "Next turn" and by removing whoever
     /// is acting): past the end of the order is a new round, the dead are passed over and count as having acted, and the one
     /// it lands on begins their turn. With <paramref name="fromPointer"/> the participant the pointer is on now is the first
@@ -885,6 +907,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
                     // An undoable change keeps the creature's state from just before and just after it (R5).
                     if (queued.Command is IUndoableCommand undoable) ApplyUndoably(undoable);
                     else queued.Command.Apply(this);
+
+                    // A complex hazard that was disarmed or destroyed leaves the order, and comes back when that is taken back (HAZARDS_DESIGN.md 3.3).
+                    Hazards.SyncInitiative();
 
                     foreach (var actorId in queued.Command.AffectedActorIds)
                     {
