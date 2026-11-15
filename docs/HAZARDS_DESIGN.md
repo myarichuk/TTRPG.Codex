@@ -303,3 +303,33 @@ Steps 1-4b give a working feature on srd5e. Step 4a is the largest single piece:
    Automatic reset is later.
 4. **Fitd obstacles.** Should Forged in the Dark get a light "danger" type (a clock plus a harm level) later, or stay with the campaign
    clocks it has?
+
+## 11. Built
+
+Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the sections above:
+
+- **H1.** `HazardDefinition` has the members of 3.1, plus the groups as classes (`HazardNotice`, `HazardDisable`, `HazardEffect`,
+  `HazardDurability`). `hazards.scaling` is `HazardRules.Scaling`, a list of rows read as `Dictionary<string, string>` (a number or dice
+  string each), so the schema generator and the loader need no new type. The loader also checks field kinds, which 3.1 did not list: a
+  DC, attack, successes or durability part must name a Number field; `complex` a Boolean; `routine`, `higherLevels` and `methods` a
+  Collection; the text parts a Text, LongText or Dropdown (`level` may be Number or Text). A scaling row needs a whole-number `level`, no
+  repeated level, and keys that are fields of some hazard type; `hazards.scaling` without a hazard type is an error. "Ranked skills" means
+  `sheetRules.skills.ranks` is non-empty. `Localize` copies the `hazard` block.
+- **H2.** srd5e's `hazard` type has `level` as **Text** (`1-4`, `5-10`), since the SRD prints ranges; scaling rows use a number, so
+  3.2's "lowest level of the range" is the reading for a later check. The type declares `complex` and `routine` (for the flooding room)
+  but nothing reads them until H5. `hazards.scaling` has no `severity` column (3.2 suggested one): its four rows are the numbers of the
+  SRD's Deadly traps (save DC 15, 15, 17, 19; damage 2d10, 4d10, 10d10, 18d10), and detect and disarm DCs are not columns because the
+  SRD fixes them per trap. The traps carry **no tags**: `kind: trap` is a property, because the shipped-tag test wants a Hebrew and a
+  Russian label for every tag. The two homebrew hazards are a new pack, `codex-hazards` (kind world, depends on the SRD pack), not
+  `codex-flavor`, which is a text overlay only. Their ids are `homebrew-flooding-room` and `homebrew-cursed-doorway`. The hazard type
+  and its field labels are translated in `system.ru.yaml` and `system.he.yaml`; the field descriptions and categories stay English
+  there. **The trap numbers are unreviewed**: `Data/srd521-traps.yaml` was drafted without reading the SRD, every DC and die is marked
+  `# check`, and a person must compare it with the SRD 5.2.1 before release. The pack files in `srd-5.2.1/hazards/` were written by
+  running `Traps.Entries()` through `ContentPackExporter`, not by the full importer (which needs the network).
+- **H3.** `PlaceFeature.Hazard` is a `PlacedHazard { Entry: "hazard/<id>", State, Successes, NoticedBy }` with a `HazardState` enum
+  (Hidden, Noticed, Disabled, Triggered). `Entry` is `type/id`, so a hazard type with another key also works. A dangling entry is
+  kept and shown with its id and a "no longer in the Library" option, not dropped. The Places edit form shows the picker only when the
+  system declares a type with a `hazard` block; the notes line shows a pill with the state and a link while the entry is in the Library.
+  The state picker on the form is the manual state control 4.1 asks for; the table's Hazards panel comes with H4b. Strings are in
+  `Strings.Campaign` (`Campaign.Places.Feature.Hazard*` and `.State.*`), not `Strings.Combat` or `Strings.Event`, since they belong to the
+  Places form. The Russian and Hebrew strings need native review. The world builder's `hazard` proposal field (step 6) is not started.

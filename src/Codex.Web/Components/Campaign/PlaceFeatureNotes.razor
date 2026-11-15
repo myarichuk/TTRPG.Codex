@@ -16,6 +16,10 @@
         {
             <span class="pill pill-warning me-1" data-testid="feature-trap"><LucideIcon IconName="alert-triangle" Size="12" /> @L["Campaign.Places.Feature.Trapped"]</span>
         }
+        @if (Feature.Hazard is { } placed)
+        {
+            <span class="pill pill-warning me-1" data-testid="feature-hazard"><LucideIcon IconName="triangle-alert" Size="12" /> @L["Campaign.Places.Feature.Hazard"]: @L[$"Campaign.Places.Feature.State.{placed.State}"]</span>
+        }
         @if (Has(Feature.Concealment))
         {
             <span class="pill me-1" data-testid="feature-concealed"><LucideIcon IconName="eye-off" Size="12" /> @L["Campaign.Places.Feature.Concealed"]</span>
@@ -27,6 +31,25 @@
     </summary>
     <dl class="feature-notes mt-2 mb-0">
         @Note(L["Campaign.Places.Feature.Lock"], Feature.Lock)
+        @if (Feature.Hazard is { } hazard)
+        {
+            <dt>@L["Campaign.Places.Feature.Hazard"]</dt>
+            <dd data-testid="feature-hazard-notes">
+                @if (HazardHref != null)
+                {
+                    <a href="@HazardHref" data-testid="feature-hazard-link">@(HazardName ?? hazard.EntryId)</a>
+                }
+                else
+                {
+                    @(HazardName ?? hazard.EntryId)
+                }
+                <span> · @L[$"Campaign.Places.Feature.State.{hazard.State}"]</span>
+                @if (hazard.Successes > 0)
+                {
+                    <span> · @L["Campaign.Places.Feature.HazardSuccesses", hazard.Successes]</span>
+                }
+            </dd>
+        }
         @Note(L["Campaign.Places.Feature.Trap"], Feature.Trap)
         @Note(L["Campaign.Places.Feature.Concealment"], Feature.Concealment)
         @Note(L["Campaign.Places.Feature.Contents"], Feature.Contents)
@@ -51,6 +74,11 @@
     [Parameter] public ActorDocument? Creature { get; set; }
 
     [Parameter] public string? CreatureHref { get; set; }
+
+    /// <summary>The placed hazard's Library name, and the page it is on when the entry is still in the Library.</summary>
+    [Parameter] public string? HazardName { get; set; }
+
+    [Parameter] public string? HazardHref { get; set; }
 
     private static bool Has(string? note) => !string.IsNullOrWhiteSpace(note);
 

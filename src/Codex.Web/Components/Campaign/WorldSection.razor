@@ -3,6 +3,7 @@
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @inject IRegionRepository RegionRepo
+@inject CampaignLibrary Library
 @inject IContentRegistry Registry
 @inject AiFeatures Ai
 @inject ArtService Art
@@ -103,7 +104,8 @@ else
                                     </div>
                                     @if (Ctx.IsDm && location.Feature is { IsEmpty: false } feature)
                                     {
-                                        <PlaceFeatureNotes Feature="feature" Creature="@CreatureOf(feature)" CreatureHref="@(CreatureOf(feature) is { } creature ? $"{Ctx.BasePath}/actors/{creature.Id}" : null)" />
+                                        <PlaceFeatureNotes Feature="feature" Creature="@CreatureOf(feature)" CreatureHref="@(CreatureOf(feature) is { } creature ? $"{Ctx.BasePath}/actors/{creature.Id}" : null)"
+                                                           HazardName="@HazardNameOf(feature)" HazardHref="@HazardHrefOf(feature)" />
                                     }
                                     @if (!string.IsNullOrWhiteSpace(location.Description))
                                     {
@@ -297,6 +299,40 @@ else
                                     }
                                 </select>
                             }
+                            @if (HazardType != null)
+                            {
+                                <fieldset class="mb-2" data-testid="feature-hazard-fields">
+                                    <legend class="field-label">@L["Campaign.Places.Feature.Hazard"]</legend>
+                                    <div class="field-grid">
+                                        <div>
+                                            <label for="feat-hazard" class="field-label">@L["Campaign.Places.Feature.HazardEntry"]</label>
+                                            <select id="feat-hazard" class="field-select" @bind="editingHazardEntry" data-testid="feature-hazard-select">
+                                                <option value="">@L["Campaign.Places.Feature.NoHazard"]</option>
+                                                @foreach (var option in hazardOptions)
+                                                {
+                                                    <option value="@PlacedHazard.Reference(option.Entry.Type, option.Entry.Id)">@option.Entry.Name</option>
+                                                }
+                                                @if (editingHazardEntry.Length > 0 && hazardOptions.All(o => PlacedHazard.Reference(o.Entry.Type, o.Entry.Id) != editingHazardEntry))
+                                                {
+                                                    <option value="@editingHazardEntry">@L["Campaign.Places.Feature.HazardGone", editingHazardEntry]</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        @if (editingHazardEntry.Length > 0)
+                                        {
+                                            <div>
+                                                <label for="feat-hazard-state" class="field-label">@L["Campaign.Places.Feature.HazardState"]</label>
+                                                <select id="feat-hazard-state" class="field-select" @bind="editingHazardState" data-testid="feature-hazard-state">
+                                                    @foreach (var state in Enum.GetValues<HazardState>())
+                                                    {
+                                                        <option value="@state">@L[$"Campaign.Places.Feature.State.{state}"]</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        }
+                                    </div>
+                                </fieldset>
+                            }
                             <label for="feat-contents" class="field-label">@L["Campaign.Places.Feature.Contents"]</label>
                             <textarea id="feat-contents" class="field-input" rows="3" @bind="editingFeature.Contents" @bind:event="oninput" maxlength="4000" placeholder="@L["Campaign.Places.Feature.ContentsPlaceholder"]" data-testid="feature-contents-input"></textarea>
                         </fieldset>
@@ -340,8 +376,26 @@ else
     private PlaceFeature editingFeature = new();
     private string editingCreatureActorId = string.Empty;
 
+    // The placed hazard, edited as an entry (the select needs a string) and a state; successes and who noticed it are kept as they were.
+    private string editingHazardEntry = string.Empty;
+    private HazardState editingHazardState = HazardState.Hidden;
+    private PlacedHazard? editingHazardKept;
+
+    // The system's hazard type, when it declares one, and the Library's hazards for the picker (DM only).
+    private ContentTypeDefinition? HazardType => Ctx.IsDm ? Ctx.System?.EntityTypes.FirstOrDefault(t => t.Hazard != null) : null;
+    private IReadOnlyList<LibraryItem> hazardOptions = Array.Empty<LibraryItem>();
+
+    private string? HazardNameOf(PlaceFeature feature) =>
+        feature.Hazard == null ? null : hazardOptions.FirstOrDefault(o => PlacedHazard.Reference(o.Entry.Type, o.Entry.Id) == feature.Hazard.Entry)?.Entry.Name ?? feature.Hazard.EntryId;
+
+    private string? HazardHrefOf(PlaceFeature feature) =>
+        feature.Hazard is { EntryType.Length: > 0 } hazard && hazardOptions.Any(o => PlacedHazard.Reference(o.Entry.Type, o.Entry.Id) == hazard.Entry)
+            ? $"{Ctx.BasePath}/library/{hazard.EntryType}/{Uri.EscapeDataString(hazard.EntryId)}"
+            : null;
+
     private string LocationSnapshot() => editingLocation == null ? string.Empty : string.Join('\u0001', editingLocation.Name, editingLocation.Description, editingParentId, editingLocation.Kind,
-        editingFeature.Container, editingFeature.Lock, editingFeature.Trap, editingFeature.Concealment, editingFeature.Contents, editingFeature.Creature, editingCreatureActorId);
+        editingFeature.Container, editingFeature.Lock, editingFeature.Trap, editingFeature.Concealment, editingFeature.Contents, editingFeature.Creature, editingCreatureActorId,
+        editingHazardEntry, editingHazardState);
 
     // Who a feature may really be: anyone on the cast but the players' own characters.
     private IReadOnlyList<ActorDocument> CreatureChoices =>
@@ -349,6 +403,20 @@ else
 
     private ActorDocument? CreatureOf(PlaceFeature feature) =>
         string.IsNullOrEmpty(feature.CreatureActorId) ? null : noteActors.GetValueOrDefault(feature.CreatureActorId);
+
+    /// <summary>The hazard the form now names. The same hazard keeps its successes and who noticed it; another one starts over.</summary>
+    private PlacedHazard? HazardChoice()
+    {
+        if (editingHazardEntry.Length == 0) return null;
+        var same = editingHazardKept?.Entry == editingHazardEntry;
+        return new PlacedHazard
+        {
+            Entry = editingHazardEntry,
+            State = editingHazardState,
+            Successes = same ? editingHazardKept!.Successes : 0,
+            NoticedBy = same ? editingHazardKept!.NoticedBy.ToList() : new List<string>()
+        };
+    }
 
     private bool LocationDirty() => editingLocation != null && LocationSnapshot() != locationSnapshot;
 
@@ -390,6 +458,10 @@ else
         mentionsJson = MentionLinks.Json(noteMentions, Ctx.AllActors);
         wikiPages = (await WikiRepo.GetVisibleForCampaignAsync(Ctx.Access)).ToList();
         templates = Ctx.IsDm ? await TemplateRepo.GetAsync(Ctx.Access, L) : null;
+
+        hazardOptions = HazardType is { } hazardType
+            ? await Library.OptionsAsync(Ctx.Campaign, Ctx.Access, hazardType.Type, L.Culture.Name)
+            : Array.Empty<LibraryItem>();
 
         packLocations = Ctx.IsDm ? Registry.GetLocationsBySystem(Ctx.Campaign.SystemId).OrderBy(l => l.Name).ToList() : new List<ILocationDefinition>();
     }
@@ -556,9 +628,13 @@ else
         var feature = location.Feature ?? new PlaceFeature();
         editingFeature = new PlaceFeature
         {
-            Container = feature.Container, Lock = feature.Lock, Trap = feature.Trap, Concealment = feature.Concealment, Contents = feature.Contents, Creature = feature.Creature
+            Container = feature.Container, Lock = feature.Lock, Trap = feature.Trap, Concealment = feature.Concealment, Contents = feature.Contents, Creature = feature.Creature,
+            Hazard = feature.Hazard
         };
         editingCreatureActorId = feature.CreatureActorId ?? string.Empty;
+        editingHazardKept = feature.Hazard;
+        editingHazardEntry = feature.Hazard?.Entry ?? string.Empty;
+        editingHazardState = feature.Hazard?.State ?? HazardState.Hidden;
         locationSnapshot = LocationSnapshot();
         locationError = null;
         // Escape goes through BackFromLocationAsync, which asks before throwing edits away.
@@ -598,6 +674,7 @@ else
         // The list only offers parents that make no loop; the check stays for a region another tab changed meanwhile.
         editingLocation.ParentId = PlaceTree.CanParent(editingRegion.Locations, editingLocation.Id, editingParentId) && editingParentId.Length > 0 ? editingParentId : null;
         editingFeature.CreatureActorId = editingCreatureActorId.Length > 0 ? editingCreatureActorId : null;
+        editingFeature.Hazard = HazardChoice();
         editingLocation.Feature = PlaceFeature.Tidy(editingFeature);
         var typed = editingLocation.Description;
         editingLocation.Description = typed == null ? null : noteMentions.Encode(typed);
