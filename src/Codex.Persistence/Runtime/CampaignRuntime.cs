@@ -79,6 +79,10 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// the plugin overrides it (SWFFG's narrative dice, eventually).</summary>
     public IDiceRoller DiceRoller { get; }
 
+    /// <summary>Makes checks for a command (a hazard's notice, a GM's ask): call it from inside a command, on the loop only. It rolls and records the
+    /// roll log; the caller writes the event.</summary>
+    public CheckService Checks { get; }
+
     /// <summary>The encounter currently in progress, if any (3.5) - null until the first
     /// initiative roll of a session creates one via <see cref="GetOrCreateEncounter"/>, or the
     /// session's unfinished encounter restored when the table started.</summary>
@@ -146,6 +150,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _encounterRepository = encounterRepository;
         DiceRoller = diceRoller ?? StandardDiceRoller.Instance;
         System = system;
+        Checks = new CheckService(this);
         _activeEncounter = activeEncounter is { EndedAt: null } ? activeEncounter : null;
         PublishSnapshot();
         _loop = Task.Run(RunLoopAsync);

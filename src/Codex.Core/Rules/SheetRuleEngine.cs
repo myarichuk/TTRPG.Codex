@@ -193,6 +193,10 @@ public sealed class SheetEvaluation
     /// <summary>The features whose roll bonus could not be worked out, said once each.</summary>
     internal HashSet<string> SiteWarned { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>Each attribute's modifier as the rules work it out from its final score, by attribute key (what an attribute's check rolls, with
+    /// <see cref="CheckBonuses"/>). Filled with the skills; an attribute whose system gives no modifier is 0.</summary>
+    public Dictionary<string, int> AttributeModifiers { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     public List<SkillScore> SavingThrows { get; } = new();
     public List<SkillScore> Skills { get; } = new();
     public List<PassiveScore> Passives { get; } = new();

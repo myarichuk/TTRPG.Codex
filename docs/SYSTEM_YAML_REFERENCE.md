@@ -149,6 +149,8 @@ One kind of content a system's packs can carry (class, feat, spell, monster, ite
 | `filterFields` | list of text (a number is text too) | Property keys offered as facet filters in the browser (e.g. level, school, class). |
 | `actorBlueprint` | true or false | True when entries of this type describe creatures the DM can drop into an encounter. They are registered as actor blueprints as well as library entries. |
 | `hitPointsProperty` | text (a number is text too) | For actor blueprints: the property holding starting hit points (default "hitPoints"). |
+| `printedSkills` | text (a number is text too) | For actor blueprints: the Text field printing the creature's skill bonuses ("History +12, Perception +10"). The table reads a check's bonus off it only as a suggestion the GM confirms. Left out, none is offered. |
+| `printedSaves` | text (a number is text too) | For actor blueprints: the Text field printing the creature's saving throw bonuses ("DEX +3, WIS +2"); read as PrintedSkills is. |
 | `attributeProperties` | map of text (a number is text too) | For actor blueprints: property -> attribute key map (e.g. "strength" -> "str"). |
 | `playerFacing` | true or false | True for types a player may pick on their own sheet (class, species, background...). |
 | `hazard` | [HazardDefinition](#hazarddefinition) | Makes this type a hazard (a trap, an environmental danger, a haunt): says which of its fields hold each part of a hazard. A hazard type may not also be an actor blueprint. None: entries of this type are not hazards. |

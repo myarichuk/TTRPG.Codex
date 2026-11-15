@@ -410,12 +410,11 @@ public class Srd5eHazardsTests : IAsyncLifetime
     [Fact]
     public void EveryCheckTheHazardsName_IsASkillOrAnAttribute_OrNeedsATypedBonus()
     {
-        var skills = System.SheetRules!.Skills!.List.SelectMany(s => new[] { s.Key, s.Label, s.CanonicalLabel });
-        var names = skills.Concat(System.Attributes.SelectMany(a => new[] { a.Key, a.Label, a.CanonicalLabel })).Where(n => n != null).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var unknown = new List<string>();
         foreach (var hazard in Hazards("srd-5.2.1", "codex-hazards"))
         {
-            unknown.AddRange(ChecksOf(hazard).Where(c => !string.IsNullOrEmpty(c) && !names.Contains(c) && !NeedsTypedBonus.Contains(c)).Select(c => $"{hazard.Id}: {c}"));
+            // The same lookup the table's check service uses, so a name that resolves here resolves there.
+            unknown.AddRange(ChecksOf(hazard).Where(c => !string.IsNullOrEmpty(c) && Codex.Persistence.Runtime.ActorChecks.Resolve(System, c) == null && !NeedsTypedBonus.Contains(c)).Select(c => $"{hazard.Id}: {c}"));
         }
 
         Assert.Empty(unknown);

@@ -394,6 +394,20 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   ids; `after` names a detect route; a damage part is dice; a condition is one of the system's). Choices: the statue's reading of the glyph is a detect route (after the glyph) and defacing it a disarm route, neither needing the other, the Falling Net restates its `methods` per band, and passive Perception may find a trap
   whose route is a Search action. `docs/schema/system.schema.json` and `SYSTEM_YAML_REFERENCE.md` are regenerated. The Russian and Hebrew labels of the
   new fields need native review.
+- **H4a (check service).** Built as section 12 has it: `CheckService.cs` (records, `ActorChecks`, `CheckService`), `runtime.Checks`, `MakeCheckCommand`. What differs:
+  - **`MakeCheckCommand.Result`** is a public property, so a caller or test can read what the check came to (the command is applied once, as `MakeRollCommand.Rolled` is).
+  - **`ActorChecks.PassiveOf`** is added beside `HasPassive` (the passive rule that scores a skill); a Passive request resolves to the passive spec, whose label is the *skill's* ("Perception"), so
+    `Check.Passive` reads "passive Perception 15 vs DC 15".
+  - **Test 16 changed:** srd5e has Passive Investigation (and Insight), so the "no passive" skill in the tests is Stealth; Investigation does have one.
+  - **A typed bonus on a passive or an AC read is the score itself** (`CheckBonus.Value` is "the passive score, or the AC"), not a number added to 10.
+  - **Unresolved vs NeedsBonus:** a check the system does not know (Thieves' Tools) with no typed bonus is `NeedsBonus`; with one it rolls, with a `Spec` of the request's own name and an empty key. `Unresolved` is a passive asked of a check with no passive (or an unknown one).
+  - **Printed creatures:** skill, save and passive are `NeedsBonus` without a typed bonus; their attribute check is still evaluated (the printed method makes the score the base score, so the modifier is right), and AC is printed. `IsPrinted` reads "the system has an actorBlueprint type" because the actor holds only `BlueprintId` (`systemId:id`), not the entry's type.
+  - **Opt-ins and dice:** a ticked flat opt-in is added to the bonus (and is in `Parts`); a ticked dice opt-in (Guidance's 1d4) and an always-on dice amount (Bane's -1d4 on a save, `engine.Bonuses(...).Dice`) are appended to the roll expression, not folded into the number. Ticking spends nothing and ends no condition (a GM's roll for a hazard is not the player's roll).
+  - **AC:** `Active` auto-AC is the evaluated total; a manual-mode or printed sheet reads `sheet[armorClass.Key]` (source `Printed`). A request with `Kind = ArmorClass` is how `ArmorClassOf` is made.
+  - **`SheetEvaluation.AttributeModifiers`** is filled for every attribute at the start of `EvaluateSkills`, so it exists even for a system without skills.
+  - **`printedSkills` / `printedSaves`** are two new optional properties of an `actorBlueprint` type (`ContentTypeDefinition.PrintedSkills`, `PrintedSaves`), named in srd5e's `monster` type; schema and reference regenerated. The loader does not check that the field exists.
+  - **Event strings** (`Strings.Event`, en/ru/he; ru and he need native review): the three of 12.4, plus `Check.Failed` (unknown actor, bad dice) and `Check.Outcome.Success` / `.Failure` / `.Other`, because the outcome word is a part of its own. The event type is `DiceRoll`, so no new type label. A secret check's label is a `GmOnly` term.
+  - **Not built (as section 12 says):** `dice.checkRoll` and degrees (P6). A skipped test stands for it.
 
 ## 12. H4a: the server-side check service (interface)
 

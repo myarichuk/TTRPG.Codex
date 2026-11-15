@@ -947,6 +947,57 @@ public sealed record MakeRollCommand(string ActorId, string RollerUserId, Codex.
     }
 }
 
+/// <summary>
+/// One check on its own, for the GM's "ask for a check" (docs/HAZARDS_DESIGN.md section 12): made through <see cref="CampaignRuntime.Checks"/>, so it
+/// reads the actor's live sheet, rolls the system's check die and records the roll. A secret check is a GM-only line in the log, which the
+/// players' view leaves out whole.
+/// </summary>
+public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = new[] { Request.ActorId };
+
+    private CheckResult? _result;
+
+    /// <summary>Once applied: what the check came to.</summary>
+    public CheckResult? Result => _result;
+
+    public void Apply(CampaignRuntime runtime) => _result = runtime.Checks.Make(Request, RollerUserId);
+
+    public SessionEvent Describe(CampaignRuntime runtime)
+    {
+        var actor = runtime.ActorTerm(Request.ActorId);
+        var result = _result;
+        var label = result?.Spec?.Label ?? Request.Check;
+        object shown = Request.Secret ? EventTerm.GmOnly(label) : label;
+        EventMessage message;
+        if (result == null || result.Failed is CheckFailure.UnknownActor or CheckFailure.BadDice)
+        {
+            message = EventMessage.Of("Check.Failed", actor, shown);
+        }
+        else if (result.Failed != CheckFailure.None)
+        {
+            message = EventMessage.Of("Check.NeedsBonus", actor, shown);
+        }
+        else if (result.Spec?.Kind is CheckKind.Passive or CheckKind.ArmorClass)
+        {
+            message = EventMessage.Of("Check.Passive", actor, shown, result.Total, result.Dc?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-");
+        }
+        else if (result.Outcome is { } outcome)
+        {
+            var said = outcome.Key is ActorChecks.Success or ActorChecks.Failure
+                ? EventMessage.Of("Check.Outcome." + (outcome.Passed ? "Success" : "Failure"))
+                : EventMessage.Of("Check.Outcome.Other", new EventTerm(EventTerm.SystemKind, outcome.Key, runtime.System?.DisplayValue(outcome.Key) ?? outcome.Key));
+            message = EventMessage.Of("Check.Made", actor, shown, result.Total, result.Dc).With(new[] { said });
+        }
+        else
+        {
+            message = EventMessage.Of("Roll.Plain", actor, shown, result.Total);
+        }
+
+        return SessionEvent.From("DiceRoll", new[] { message }, new[] { Request.ActorId });
+    }
+}
+
 /// <summary>Appends a DM/player quick note to the live session (3.7) - reuses the same
 /// <see cref="SessionDocument.Notes"/> list the recap editor (4.1) will read from, rather than a
 /// separate combat-log-only notes concept. With a speaker it is a line of dialogue; the event then names

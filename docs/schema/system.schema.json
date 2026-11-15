@@ -644,6 +644,22 @@
           ],
           "description": "For actor blueprints: the property holding starting hit points (default \"hitPoints\")."
         },
+        "printedSkills": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "For actor blueprints: the Text field printing the creature's skill bonuses (\"History +12, Perception +10\"). The table reads a check's bonus off it only as a suggestion the GM confirms. Left out, none is offered."
+        },
+        "printedSaves": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "For actor blueprints: the Text field printing the creature's saving throw bonuses (\"DEX +3, WIS +2\"); read as PrintedSkills is."
+        },
         "attributeProperties": {
           "type": "object",
           "additionalProperties": {

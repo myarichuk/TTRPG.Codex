@@ -185,6 +185,13 @@
   <data name="Event.Sheet.CounterChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: the table does not do {1} yet.</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} rolled {1}: {2} ({3}).</value></data>
+  <data name="Event.Check.Made" xml:space="preserve"><value>{0}: {1} {2} vs DC {3}, {4}</value></data>
+  <data name="Event.Check.Passive" xml:space="preserve"><value>{0}: passive {1} {2} vs DC {3}</value></data>
+  <data name="Event.Check.NeedsBonus" xml:space="preserve"><value>{0}: {1} needs a bonus typed in, so nothing was rolled.</value></data>
+  <data name="Event.Check.Failed" xml:space="preserve"><value>{0}: {1} could not be made.</value></data>
+  <data name="Event.Check.Outcome.Success" xml:space="preserve"><value>success</value></data>
+  <data name="Event.Check.Outcome.Failure" xml:space="preserve"><value>failure</value></data>
+  <data name="Event.Check.Outcome.Other" xml:space="preserve"><value>{0}</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>Campaign</value></data>
   <data name="Event.Campaign.ClockChanged" xml:space="preserve"><value>{0}: {1} → {2} of {3}.</value></data>
   <data name="Event.Campaign.ClockFull" xml:space="preserve"><value>{0} is full.</value></data>

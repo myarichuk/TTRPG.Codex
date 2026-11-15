@@ -154,6 +154,13 @@ public class ContentTypeDefinition
     /// <summary>For actor blueprints: the property holding starting hit points (default "hitPoints").</summary>
     public string? HitPointsProperty { get; set; }
 
+    /// <summary>For actor blueprints: the Text field printing the creature's skill bonuses ("History +12, Perception +10"). The table reads a
+    /// check's bonus off it only as a suggestion the GM confirms. Left out, none is offered.</summary>
+    public string? PrintedSkills { get; set; }
+
+    /// <summary>For actor blueprints: the Text field printing the creature's saving throw bonuses ("DEX +3, WIS +2"); read as <see cref="PrintedSkills"/> is.</summary>
+    public string? PrintedSaves { get; set; }
+
     /// <summary>For actor blueprints: property -> attribute key map (e.g. "strength" -> "str").</summary>
     public Dictionary<string, string> AttributeProperties { get; set; } = new();
 
@@ -866,7 +873,7 @@ public class SystemDefinition
                 Description = et?.Description ?? e.Description,
                 Fields = e.Fields.Select(f => Field(f, et == null ? null : Find(et.Fields, f.Key))).ToList(),
                 SummaryFields = e.SummaryFields, FilterFields = e.FilterFields, ActorBlueprint = e.ActorBlueprint,
-                HitPointsProperty = e.HitPointsProperty, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing, Hazard = e.Hazard
+                HitPointsProperty = e.HitPointsProperty, PrintedSkills = e.PrintedSkills, PrintedSaves = e.PrintedSaves, AttributeProperties = e.AttributeProperties, PlayerFacing = e.PlayerFacing, Hazard = e.Hazard
             };
         }).ToList();
         copy.Moments = Moments.Select(m => new MomentDefinition { Key = m.Key, OnSet = m.OnSet, Label = t.Moments.TryGetValue(m.Key, out var shown) ? shown : m.Label }).ToList();
