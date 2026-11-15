@@ -110,8 +110,16 @@ public static class ActorChecks
             }
         }
 
-        return kind == CheckKind.ArmorClass && system.SheetRules?.ArmorClass != null ? new CheckSpec(CheckKind.ArmorClass, string.Empty, "Armor Class") : null;
+        return kind == CheckKind.ArmorClass && system.SheetRules?.ArmorClass is { } armor ? new CheckSpec(CheckKind.ArmorClass, string.Empty, ArmorClassLabel(system, armor)) : null;
     }
+
+    /// <summary>The armor class as the system names it: the label of the actor field that holds it, else the sheet key. No word of any language is written here;
+    /// a log line about an armor class read says it from its own string (<c>Event.Check.ArmorClass</c>).</summary>
+    private static string ArmorClassLabel(SystemDefinition system, ArmorClassRules armor) =>
+        system.ActorFields.FirstOrDefault(f => f.Key == armor.Key)?.Label is { Length: > 0 } label ? label : armor.Key;
+
+    /// <summary>The name a request for the armor class uses: the sheet key of the system's armor class.</summary>
+    public static string ArmorClassName(SystemDefinition? system) => system?.SheetRules?.ArmorClass?.Key ?? "armorClass";
 
     /// <summary>Whether the sheet has a passive score for the check (Perception: yes; Investigation, an attribute, a tool: no), so a caller asks for a
     /// passive only where there is one and rolls otherwise.</summary>
@@ -379,7 +387,7 @@ public sealed class CheckService(CampaignRuntime runtime)
     /// <summary>A target's AC for an attack: evaluated, else printed; <see cref="CheckFailure.NeedsBonus"/> when neither (the GM types it).</summary>
     public CheckResult ArmorClassOf(string actorId)
     {
-        var request = new CheckRequest { ActorId = actorId, Check = "Armor Class", Kind = CheckKind.ArmorClass };
+        var request = new CheckRequest { ActorId = actorId, Check = ActorChecks.ArmorClassName(runtime.System), Kind = CheckKind.ArmorClass };
         return Make(request, string.Empty);
     }
 }

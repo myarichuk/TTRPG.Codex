@@ -983,7 +983,11 @@ public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId)
         {
             message = EventMessage.Of("Check.NeedsBonus", actor, shown);
         }
-        else if (result.Spec?.Kind is CheckKind.Passive or CheckKind.ArmorClass)
+        else if (result.Spec?.Kind == CheckKind.ArmorClass)
+        {
+            message = EventMessage.Of("Check.ArmorClass", actor, result.Total, result.Dc?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-");
+        }
+        else if (result.Spec?.Kind == CheckKind.Passive)
         {
             message = EventMessage.Of("Check.Passive", actor, shown, result.Total, result.Dc?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-");
         }

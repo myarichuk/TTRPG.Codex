@@ -453,15 +453,32 @@ public class CheckServiceTests : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
-    public async Task AFormulaTheTableCannotWorkOut_NeverFailsAMakeAllHalfway_Async()
+    public async Task TheLiveArmorClass_NotTheStoredOne_IsRead_WhenATableStatusChangesIt_Async()
     {
-        var system = System(s => s.ConditionEffects["Guided"] = new ConditionEffectDefinition
+        // Shaken is a status the table put on the hero, never on the stored sheet: worked out from the stored sheet the armor class is 13, at the table it is 11.
+        var system = System(s => s.ConditionEffects["Shaken"] = new ConditionEffectDefinition
         {
-            Modifiers = { new ModifierDefinition { Target = "check", Amount = "((", OptIn = new OptInDefinition { Label = "Guidance" } } }
+            Modifiers = { new ModifierDefinition { Target = "armorClass", Amount = "-2" } }
         });
         var table = await TableAsync(system);
         await using var _ = table.Runtime;
-        await table.Runtime.EnqueueAsync(new AddStatusEffectCommand(table.Third.Id, "Guided", "dm", 10, EffectExpiry.EndOfTurn, table.Third.Id));
+        var stored = table.Runtime.Checks.ArmorClassOf(table.Hero.Id);
+        await table.Runtime.EnqueueAsync(new AddStatusEffectCommand(table.Hero.Id, "Shaken", "dm", 10, EffectExpiry.EndOfTurn, table.Hero.Id));
+
+        var live = table.Runtime.Checks.ArmorClassOf(table.Hero.Id);
+
+        Assert.DoesNotContain("Shaken", SheetRuleEngine.RawList(table.Runtime.GetActorDocument(table.Hero.Id)!.Sheet, "conditions"));
+        Assert.Equal((13, 11), (stored.Total, live.Total));
+    }
+
+    [Fact]
+    public async Task AReadThatThrowsInsideTheOptInRead_NeverFailsAMakeAllHalfway_Async()
+    {
+        // The evaluation works (a missing class entry is no error); the tick-box and always-on-dice read then throws for Aria, whose sheet names a class.
+        var resolver = new ThrowsInOptInRead();
+        var table = await TableAsync(hero: d => d.Sheet["class"] = "fighter");
+        await using var _ = table.Runtime;
+        table.Runtime.Resolver = resolver;
         table.Dice.Faces.Enqueue(1);
         table.Dice.Faces.Enqueue(2);
         table.Dice.Faces.Enqueue(3);
@@ -469,10 +486,30 @@ public class CheckServiceTests : IClassFixture<RavenDbFixture>, IDisposable
 
         await table.Runtime.EnqueueAsync(command);
 
+        Assert.Equal(2, resolver.Thrown);
         Assert.Equal(3, command.Results.Count);
         Assert.All(command.Results, r => Assert.Equal(CheckFailure.None, r.Failed));
         Assert.Equal(3, table.Session.RollLog.Count);
         Assert.Single(table.Session.Events, e => e.Type == "DiceRoll");
+    }
+
+    /// <summary>Finds nothing, and throws only when asked from the tick-box read, which the evaluation itself never calls.</summary>
+    private sealed class ThrowsInOptInRead : IEntryResolver
+    {
+        public int Thrown { get; private set; }
+
+        public ContentEntry? Resolve(string type, string id)
+        {
+            if (Environment.StackTrace.Contains("OptInsReaching", StringComparison.Ordinal))
+            {
+                Thrown++;
+                throw new InvalidOperationException("the read fails");
+            }
+
+            return null;
+        }
+
+        public IEnumerable<ContentEntry> Candidates(string type) => Array.Empty<ContentEntry>();
     }
 
     // ---- Logging and the loop ----
@@ -620,5 +657,19 @@ public class CheckServiceTests : IClassFixture<RavenDbFixture>, IDisposable
         var said = table.Session.Events.Where(e => e.Type == "DiceRoll").Select(e => e.Description).ToList();
         Assert.Equal("Aria: passive Perception 15 vs DC 15", said[0]);
         Assert.Equal("Goblin: Perception needs a bonus typed in, so nothing was rolled.", said[1]);
+    }
+
+    [Fact]
+    public async Task AnArmorClassRead_SaysArmorClassFromItsOwnString_InEveryLanguage_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+
+        await MakeAsync(table, new CheckRequest { ActorId = table.Hero.Id, Check = ActorChecks.ArmorClassName(table.System), Kind = CheckKind.ArmorClass, Dc = 12, Secret = false });
+
+        var said = Assert.Single(table.Session.Events, e => e.Type == "DiceRoll");
+        Assert.Equal("Aria: armor class 13 vs DC 12", said.Description);
+        Assert.Contains("класс доспеха 13", said.Text(Codex.Localization.Localizer.For("ru")));
+        Assert.Contains("דרגת שריון 13", said.Text(Codex.Localization.Localizer.For("he")));
     }
 }

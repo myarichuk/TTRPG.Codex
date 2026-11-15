@@ -189,6 +189,7 @@
   <data name="Event.Check.Passive" xml:space="preserve"><value>{0}: пассивная проверка {1} {2} против СЛ {3}</value></data>
   <data name="Event.Check.NeedsBonus" xml:space="preserve"><value>{0}: для проверки «{1}» нужен введённый бонус, бросок не сделан.</value></data>
   <data name="Event.Check.Unresolved" xml:space="preserve"><value>{0}: у проверки «{1}» нет пассивного значения, ничего не считано.</value></data>
+  <data name="Event.Check.ArmorClass" xml:space="preserve"><value>{0}: класс доспеха {1} против СЛ {2}</value></data>
   <data name="Event.Check.Failed" xml:space="preserve"><value>{0}: проверку «{1}» не удалось сделать.</value></data>
   <data name="Event.Check.Outcome.Success" xml:space="preserve"><value>успех</value></data>
   <data name="Event.Check.Outcome.Failure" xml:space="preserve"><value>провал</value></data>
