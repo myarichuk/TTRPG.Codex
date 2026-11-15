@@ -68,6 +68,7 @@ public sealed class Srd5eImporter(string sourceDirectory, string edition = "2024
             ClassSkills.Apply(entries, system);
             entries.AddRange(Invocations.Entries().Select(e => { e.SystemId = SystemId; return e; }));
             Invocations.AddSlots(entries, columns);
+            // The traps are SRD 5.2.1 content; this block is the one that runs only for that edition (the grants file exists only for it).
             entries.AddRange(Traps.Entries().Select(e => { e.SystemId = SystemId; return e; }));
         }
 

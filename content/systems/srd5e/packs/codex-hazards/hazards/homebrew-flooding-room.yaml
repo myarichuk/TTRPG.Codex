@@ -4,7 +4,6 @@ name: Flooding Room
 description: A chamber with one door, sealed from outside, and a floor of iron grates. Once the door shuts, water starts to pour in from the walls.
 tags:
 - homebrew
-- hazard
 properties:
   kind: trap
   severity: Deadly

@@ -18,7 +18,7 @@
         }
         @if (Feature.Hazard is { } placed)
         {
-            <span class="pill pill-warning me-1" data-testid="feature-hazard"><LucideIcon IconName="triangle-alert" Size="12" /> @L["Campaign.Places.Feature.Hazard"]: @L[$"Campaign.Places.Feature.State.{placed.State}"]</span>
+            <span class="pill pill-warning me-1" data-testid="feature-hazard"><LucideIcon IconName="alert-triangle" Size="12" /> @L["Campaign.Places.Feature.Hazard"]: @L[$"Campaign.Places.Feature.State.{placed.State}"]</span>
         }
         @if (Has(Feature.Concealment))
         {

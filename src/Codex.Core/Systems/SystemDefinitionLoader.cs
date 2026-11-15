@@ -730,6 +730,8 @@ public static class SystemDefinitionLoader
     /// <summary>The problems with the hazard types and <c>hazards.scaling</c>: every part names a field of the type (a number part a Number
     /// field, <c>complex</c> a Boolean, the row lists Collections), <c>rank</c> only where skills have ranks, a type is not a hazard and an
     /// actor blueprint at once, and each scaling row has a whole-number level and names fields of a hazard type.</summary>
+    private static readonly Regex DiceText = new(@"^\d+d\d+(\s*[+-]\s*(\d+d\d+|\d+))*$", RegexOptions.Compiled);
+
     private static IEnumerable<string> ValidateHazards(SystemDefinition definition)
     {
         var ranked = definition.SheetRules?.Skills is { Ranks.Count: > 0 };
@@ -747,10 +749,14 @@ public static class SystemDefinitionLoader
             IEnumerable<string> Part(string part, string? field, params FieldType[] allowed)
             {
                 if (string.IsNullOrWhiteSpace(field)) yield break;
-                var declared = type.Fields.FirstOrDefault(f => string.Equals(f.Key, field, StringComparison.OrdinalIgnoreCase));
+                // Ordinal: an entry's property is read by this exact key, so a field that differs in case would never be found.
+                var declared = type.Fields.FirstOrDefault(f => string.Equals(f.Key, field, StringComparison.Ordinal));
                 if (declared == null)
                 {
-                    yield return $"{where}.{part} names field '{field}', which '{type.Type}' does not declare.";
+                    var near = type.Fields.FirstOrDefault(f => string.Equals(f.Key, field, StringComparison.OrdinalIgnoreCase));
+                    yield return near != null
+                        ? $"{where}.{part} names field '{field}', which '{type.Type}' does not declare; did you mean '{near.Key}'?"
+                        : $"{where}.{part} names field '{field}', which '{type.Type}' does not declare.";
                 }
                 else if (allowed.Length > 0 && !allowed.Contains(declared.Type))
                 {
@@ -808,6 +814,11 @@ public static class SystemDefinitionLoader
 
             foreach (var error in parts.SelectMany(p => p)) yield return error;
 
+            if (hazard.Notice is { Passive: true } && string.IsNullOrWhiteSpace(hazard.Notice.Check))
+            {
+                yield return $"{where}.notice.passive needs notice.check: a passive score is the passive of that check.";
+            }
+
             if (!ranked && !string.IsNullOrWhiteSpace(hazard.Notice?.Rank))
             {
                 yield return $"{where}.notice.rank needs ranked skills: this system declares none in sheetRules.skills.ranks.";
@@ -819,6 +830,11 @@ public static class SystemDefinitionLoader
             }
         }
 
+        if (hazardTypes.Count > 1)
+        {
+            yield return $"entity types {string.Join(", ", hazardTypes.Select(t => $"'{t.Type}'"))} all have a hazard block; a system has one hazard type for now.";
+        }
+
         if (definition.Hazards is not { } rules) yield break;
         if (hazardTypes.Count == 0 && rules.Scaling.Count > 0)
         {
@@ -826,7 +842,6 @@ public static class SystemDefinitionLoader
             yield break;
         }
 
-        var known = hazardTypes.SelectMany(t => t.Fields.Select(f => f.Key)).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var seen = new HashSet<int>();
         for (var i = 0; i < rules.Scaling.Count; i++)
         {
@@ -842,9 +857,21 @@ public static class SystemDefinitionLoader
                 yield return $"{at} repeats level {number}.";
             }
 
-            foreach (var key in row.Keys.Where(k => !string.Equals(k, "level", StringComparison.OrdinalIgnoreCase) && !known.Contains(k)))
+            foreach (var (key, value) in row.Where(p => !string.Equals(p.Key, "level", StringComparison.OrdinalIgnoreCase)))
             {
-                yield return $"{at} names '{key}', which no hazard type declares as a field.";
+                var field = hazardTypes.SelectMany(t => t.Fields).FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.Ordinal));
+                if (field == null)
+                {
+                    yield return $"{at} names '{key}', which no hazard type declares as a field.";
+                }
+                else if (field.Type == FieldType.Number && !long.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _))
+                {
+                    yield return $"{at}.{key} is '{value}'; the field is a Number, so it needs a whole number.";
+                }
+                else if (hazardTypes.Any(t => string.Equals(t.Hazard?.Effect?.Damage, key, StringComparison.Ordinal)) && !DiceText.IsMatch(value ?? string.Empty))
+                {
+                    yield return $"{at}.{key} is '{value}'; damage is dice such as 4d10.";
+                }
             }
         }
     }

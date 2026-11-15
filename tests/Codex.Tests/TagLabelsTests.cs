@@ -31,7 +31,8 @@ public class TagLabelsTests
     [Fact]
     public void EveryShippedTag_HasAHebrewAndRussianLabel()
     {
-        var tags = Directory.EnumerateFiles(Path.Combine(TestPaths.ContentRoot, "systems", "srd5e", "packs", "srd-5.2.1"), "*.yaml", SearchOption.AllDirectories)
+        var tags = new[] { "srd-5.2.1", "codex-hazards" }
+            .SelectMany(pack => Directory.EnumerateFiles(Path.Combine(TestPaths.ContentRoot, "systems", "srd5e", "packs", pack), "*.yaml", SearchOption.AllDirectories))
             .SelectMany(File.ReadLines)
             .Select(line => line.TrimEnd())
             .Aggregate((Tags: new HashSet<string>(), InTags: false), (state, line) =>

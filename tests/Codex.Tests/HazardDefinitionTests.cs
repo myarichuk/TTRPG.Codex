@@ -139,6 +139,57 @@ public class HazardDefinitionTests
     }
 
     [Fact]
+    public void ScalingValues_AreCheckedAgainstTheirFields()
+    {
+        var errors = Errors(Yaml("""
+                level: level
+                effect: { damage: damage }
+            """, """
+            hazards:
+              scaling:
+                - { level: 1, noticeDc: fifteen, damage: 4d10 }
+                - { level: 5, noticeDc: 12, damage: lots }
+                - { level: 11, noticeDc: 14, damage: 2d6+3 }
+            """));
+
+        Assert.Contains(errors, e => e.Contains("scaling[0].noticeDc") && e.Contains("whole number"));
+        Assert.Contains(errors, e => e.Contains("scaling[1].damage") && e.Contains("dice"));
+        Assert.DoesNotContain(errors, e => e.Contains("scaling[2]"));
+    }
+
+    [Fact]
+    public void AFieldKeyThatDiffersInCase_IsRefusedWithAHint()
+    {
+        var errors = Errors(Yaml("""
+                notice: { dc: noticedc, check: noticeCheck }
+            """));
+
+        Assert.Contains(errors, e => e.Contains("notice.dc") && e.Contains("did you mean 'noticeDc'"));
+    }
+
+    [Fact]
+    public void APassiveNotice_NeedsACheck()
+    {
+        var errors = Errors(Yaml("""
+                notice: { dc: noticeDc, passive: true }
+            """));
+
+        Assert.Contains(errors, e => e.Contains("notice.passive") && e.Contains("notice.check"));
+    }
+
+    [Fact]
+    public void ASystem_HasOneHazardType()
+    {
+        // A second type, declared after the first one's block in the same entityTypes list.
+        var yaml = Yaml("""
+                trigger: trigger
+            """) + "  - type: haunt\n    label: Haunt\n" + Fields + "    hazard:\n      trigger: trigger\n";
+        var errors = Errors(yaml);
+
+        Assert.Contains(errors, e => e.Contains("one hazard type"));
+    }
+
+    [Fact]
     public void Scaling_NeedsAHazardType()
     {
         var errors = Errors("""

@@ -119,6 +119,14 @@ public class PlacedHazard
     /// <summary>The Library entry as <c>type/id</c> (<c>hazard/spiked-pit</c>). Homebrew entries are named the same way.</summary>
     public string Entry { get; set; } = string.Empty;
 
+    /// <summary>True when <see cref="Entry"/> is the campaign's own homebrew entry, not a pack's. A homebrew entry can keep the id of a pack
+    /// entry it was copied from, so the reference alone does not say which is meant (as <c>BestiaryEntry.IsHomebrew</c>). Absent in old data: a pack entry.</summary>
+    public bool IsHomebrew { get; set; }
+
+    /// <summary>The <c>levels</c> of the entry's own scaled row this placement uses (<c>5-10</c>), chosen when it was placed; null is the entry's base
+    /// numbers. The table reads the numbers through <c>HazardNumbers.For</c>, never the party's level at the moment.</summary>
+    public string? Levels { get; set; }
+
     public HazardState State { get; set; } = HazardState.Hidden;
 
     /// <summary>The successes toward disabling it so far, for a hazard that needs more than one.</summary>
@@ -128,9 +136,11 @@ public class PlacedHazard
     public List<string> NoticedBy { get; set; } = new();
 
     /// <summary>The Library type of <see cref="Entry"/>, or empty when it is not <c>type/id</c>.</summary>
+    [Newtonsoft.Json.JsonIgnore]
     public string EntryType => Split() is { } parts ? parts.Type : string.Empty;
 
     /// <summary>The Library id of <see cref="Entry"/>, or empty when it is not <c>type/id</c>.</summary>
+    [Newtonsoft.Json.JsonIgnore]
     public string EntryId => Split() is { } parts ? parts.Id : string.Empty;
 
     /// <summary>The reference for an entry of the given type and id.</summary>
@@ -149,6 +159,8 @@ public class PlacedHazard
         var tidy = new PlacedHazard
         {
             Entry = hazard.Entry.Trim(),
+            IsHomebrew = hazard.IsHomebrew,
+            Levels = string.IsNullOrWhiteSpace(hazard.Levels) ? null : hazard.Levels.Trim(),
             State = Enum.IsDefined(hazard.State) ? hazard.State : HazardState.Hidden,
             Successes = Math.Max(0, hazard.Successes),
             NoticedBy = hazard.NoticedBy.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).Distinct().Take(MaxNoticedBy).ToList()

@@ -4,7 +4,6 @@ name: Cursed Doorway
 description: A stone arch carved with a pattern of eyes. It hums faintly, and anyone who passes through without the right word feels watched from the other side.
 tags:
 - homebrew
-- hazard
 properties:
   kind: haunt
   severity: Deadly

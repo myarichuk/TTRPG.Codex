@@ -555,6 +555,9 @@
   <data name="Campaign.Places.Feature.Trapped" xml:space="preserve"><value>ממולכד</value></data>
   <data name="Campaign.Places.Feature.Hazard" xml:space="preserve"><value>סכנה</value></data>
   <data name="Campaign.Places.Feature.HazardEntry" xml:space="preserve"><value>סכנה מהספרייה</value></data>
+  <data name="Campaign.Places.Feature.HazardHomebrew" xml:space="preserve"><value>ביתית</value></data>
+  <data name="Campaign.Places.Feature.HazardLevels" xml:space="preserve"><value>גרסה לדרגות</value></data>
+  <data name="Campaign.Places.Feature.HazardBase" xml:space="preserve"><value>כפי שנכתב</value></data>
   <data name="Campaign.Places.Feature.NoHazard" xml:space="preserve"><value>ללא סכנה</value></data>
   <data name="Campaign.Places.Feature.HazardGone" xml:space="preserve"><value>{0} (כבר לא בספרייה)</value></data>
   <data name="Campaign.Places.Feature.HazardState" xml:space="preserve"><value>מצב הסכנה</value></data>

@@ -555,6 +555,9 @@
   <data name="Campaign.Places.Feature.Trapped" xml:space="preserve"><value>Trapped</value></data>
   <data name="Campaign.Places.Feature.Hazard" xml:space="preserve"><value>Hazard</value></data>
   <data name="Campaign.Places.Feature.HazardEntry" xml:space="preserve"><value>Hazard from the Library</value></data>
+  <data name="Campaign.Places.Feature.HazardHomebrew" xml:space="preserve"><value>homebrew</value></data>
+  <data name="Campaign.Places.Feature.HazardLevels" xml:space="preserve"><value>Version for levels</value></data>
+  <data name="Campaign.Places.Feature.HazardBase" xml:space="preserve"><value>As written</value></data>
   <data name="Campaign.Places.Feature.NoHazard" xml:space="preserve"><value>No hazard</value></data>
   <data name="Campaign.Places.Feature.HazardGone" xml:space="preserve"><value>{0} (no longer in the Library)</value></data>
   <data name="Campaign.Places.Feature.HazardState" xml:space="preserve"><value>State of the hazard</value></data>

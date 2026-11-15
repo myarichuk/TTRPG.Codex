@@ -555,6 +555,9 @@
   <data name="Campaign.Places.Feature.Trapped" xml:space="preserve"><value>С ловушкой</value></data>
   <data name="Campaign.Places.Feature.Hazard" xml:space="preserve"><value>Опасность</value></data>
   <data name="Campaign.Places.Feature.HazardEntry" xml:space="preserve"><value>Опасность из Библиотеки</value></data>
+  <data name="Campaign.Places.Feature.HazardHomebrew" xml:space="preserve"><value>своя</value></data>
+  <data name="Campaign.Places.Feature.HazardLevels" xml:space="preserve"><value>Вариант для уровней</value></data>
+  <data name="Campaign.Places.Feature.HazardBase" xml:space="preserve"><value>Как написано</value></data>
   <data name="Campaign.Places.Feature.NoHazard" xml:space="preserve"><value>Без опасности</value></data>
   <data name="Campaign.Places.Feature.HazardGone" xml:space="preserve"><value>{0} (больше нет в Библиотеке)</value></data>
   <data name="Campaign.Places.Feature.HazardState" xml:space="preserve"><value>Состояние опасности</value></data>

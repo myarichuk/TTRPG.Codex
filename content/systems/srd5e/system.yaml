@@ -516,7 +516,7 @@ entityTypes:
     label: Hazard
     pluralLabel: Hazards
     folder: hazards
-    icon: triangle-alert
+    icon: alert-triangle
     playerFacing: false
     summaryFields: [level, severity]
     filterFields: [kind, severity]

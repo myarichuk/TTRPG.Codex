@@ -333,3 +333,206 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   The state picker on the form is the manual state control 4.1 asks for; the table's Hazards panel comes with H4b. Strings are in
   `Strings.Campaign` (`Campaign.Places.Feature.Hazard*` and `.State.*`), not `Strings.Combat` or `Strings.Event`, since they belong to the
   Places form. The Russian and Hebrew strings need native review. The world builder's `hazard` proposal field (step 6) is not started.
+- **After review (H1 to H3).**
+  - A placement carries `IsHomebrew` (as the Bestiary does), so a homebrew entry with a pack entry's id is a different choice. The picker's value is
+    `homebrew:type/id` for the campaign's own entry. H4b looks the entry up with `CampaignLibrary.GetAsync(..., isHomebrew)`.
+  - A placement carries `Levels`: the `levels` of the entry's own scaled row, picked when it is placed (null: the base numbers). Section 3.1 stands:
+    the table reads numbers only through `HazardNumbers.For(entry, type, placement.Levels)` (`Codex.Core/Systems/HazardNumbers.cs`), so a pit placed for
+    level 3 does not turn into 4d10 when the party reaches level 5.
+  - The place form writes a hazard back only when the game master changed it (`PlacedHazardForm`); an untouched one keeps what is stored at save time.
+    Choosing another hazard resets its state, counts and version. **For H4b:** the table's writes must patch only `Feature.Hazard` on the stored place (a
+    repository method of its own, not `UpsertLocationAsync` with a whole copy), and writing back at encounter end must skip a placement whose stored state
+    changed after the encounter took its copy. Not built yet; `UpsertLocationAsync` still replaces the whole location.
+  - The loader also refuses: a passive notice without a check, a second hazard type (the picker offers one), a scaling value that is not a whole number
+    for a Number field, damage that is not dice, and field names that differ in case (with a hint). The content loader reports a scaled row naming a key
+    that is not a field of the type (or differs in case), and an other-way row with no name.
+  - Check names are stored as the content writes them, as labels (`Perception`, `Dexterity`, `Thieves' Tools`). H4a's lookup finds a check by key or label
+    ignoring case (decision 2 below). A test lists the checks that need a typed bonus (`Thieves' Tools`, `Spellcasting`, `Attack`); any other value must
+    be a skill or attribute key or label, so a misspelling fails CI. Not changed: the content.
+  - A test compares the shipped trap files with `Data/srd521-traps.yaml`, so a corrected data file fails until the pack is regenerated.
+  - Tags: `hazard` is not a tag (the type says it); the tag test now reads `codex-hazards` too. The importer still types numbers by key name (`dc`, `*Dc`);
+    a trap with other numeric or Boolean fields needs it typed by the type's fields first.
+
+## 12. H4a: the server-side check service (interface)
+
+Plan row H4a. The new file is `src/Codex.Persistence/Runtime/CheckService.cs`, with small changes to `CampaignRuntime.cs` and
+`SheetRuleEngine`. H4b (`HazardCommand`) is the first caller. A later "the GM asks for a check" feature is the second, through
+`MakeCheckCommand`.
+
+### 12.1 Decisions
+
+1. **The service runs inside a command, never as a command of its own.** `HazardCommand.Apply` makes several checks (Notice for every PC,
+   Trigger for every target) and writes them up as one event. So the service is a method the command calls on the runtime's
+   single-writer loop: `runtime.Checks.Make(...)`. It rolls, records one `RollLogEntry` for each die roll, and returns results. Writing
+   the `SessionEvent` is the caller's job. `MakeCheckCommand` is a thin wrapper for a single check.
+
+   The half that involves no dice (`ActorChecks`: finding the check, working out the bonus, grading) is pure and static. The Web panel
+   can then prefill a number off the loop from the snapshot's live sheet, the way `SheetConditions.LiveView` is used today.
+
+2. **Where the bonus comes from, first source that has one wins:**
+   1. **Typed**: the bonus the GM entered.
+   2. **Evaluated**: the actor's live sheet. That is `runtime.LiveSheetOf(actor)` (stored sheet, plus the table's pools, statuses and
+      valued conditions) through `SheetRuleEngine.EvaluateLive`, so conditions count.
+   3. **Printed**: the creature's own numbers. Only AC is read from these, as `sheet[sheetRules.armorClass.Key]`, because the monster
+      type's `armorClass` property uses that same key.
+   4. **Unresolved**: no source has a bonus. The result is `NeedsBonus` and nothing is rolled.
+
+   A creature with printed numbers never gets an evaluated skill or save. Its evaluation would come to the bare attribute modifier, which
+   is wrong without anyone noticing. A parse of the printed text ("DEX +3, Perception +10") is offered only as the panel's prefill (`Suggest`),
+   never used on its own.
+
+   The check is found by key **or label**, ignoring case, in this order: skill, save (when the caller says it is a save), attribute
+   (an attribute check), passive. Anything else is unresolved: Thieves' Tools, Spellcasting.
+
+3. **Degrees come later as data.** The outcome is a string `Key` plus `Passed`, not an enum of game words. Today the grade is
+   `dice.check` + bonus against the DC: `success` or `failure`, with the natural die kept. When a system sets `dice.checkRoll` (new and
+   optional, the key of a `rolls:` entry with inputs `bonus` and `dc`), the service grades through that named roll's `outcomes` instead.
+   Those are already data with `when` formulas (`total >= input.dc + 10`, the natural 20 and 1 shift), so four degrees need no new C# here.
+   P6 adds `checkRoll` and `passes: true` on `RollOutcomeDefinition`. P12 maps `critFail` by outcome key. Neither changes these signatures.
+
+### 12.2 Signatures
+
+```csharp
+namespace Codex.Persistence.Runtime;
+
+/// <summary>What is rolled or read. Attribute: an attribute's check on its own. Passive: a sheet's passive score, no die.</summary>
+public enum CheckKind { Skill, Save, Attribute, Passive, ArmorClass }
+
+/// <summary>A check the system knows: its kind and its key on the sheet (a skill key, an attribute key, a passive key; empty for AC).</summary>
+public sealed record CheckSpec(CheckKind Kind, string Key, string Label);
+
+public enum CheckBonusSource { Typed, Evaluated, Printed }
+
+/// <summary>The number added to the die (or the passive score, or the AC) and where it came from; Parts are the feature and condition
+/// bonuses that reached it (SkillScore.Bonuses, CheckSources), for the log's "what counted".</summary>
+public sealed record CheckBonus(int Value, CheckBonusSource Source, IReadOnlyList<Codex.Core.Rules.RollBonus> Parts);
+
+public sealed record CheckRequest
+{
+    public required string ActorId { get; init; }
+    /// <summary>As content writes it: "Perception", "perception", "Dexterity", "dex", "Thieves' Tools".</summary>
+    public required string Check { get; init; }
+    /// <summary>Forces the reading: a hazard's effect.save is a Save of that attribute, never an attribute check.</summary>
+    public CheckKind? Kind { get; init; }
+    public int? Dc { get; init; }
+    /// <summary>The GM's number. Beats everything; required where the check is unresolved or the actor is printed.</summary>
+    public int? Bonus { get; init; }
+    /// <summary>Compare the passive score instead of rolling (Notice with notice.passive).</summary>
+    public bool Passive { get; init; }
+    /// <summary>The dice to roll in place of dice.check, for an edge the data has no word for (the GM picks "2d20kh1"). Null: dice.check.</summary>
+    public string? Dice { get; init; }
+    public IReadOnlyCollection<string> OptIns { get; init; } = Array.Empty<string>();
+    /// <summary>GM only: the roll log entry is secret and the result is not for players. Default true for anything a hazard asks.</summary>
+    public bool Secret { get; init; } = true;
+}
+
+/// <summary>The grade: "success" / "failure" today, the named roll's outcome name later. Mark as RollLogEntry.Mark.</summary>
+public sealed record CheckOutcome(string Key, bool Passed, string? Mark = null);
+
+public enum CheckFailure { None, UnknownActor, Unresolved, NeedsBonus, BadDice }
+
+public sealed record CheckResult(
+    string ActorId,
+    CheckSpec? Spec,
+    CheckBonus? Bonus,
+    int? Natural,          // the check die's face; null for a passive or AC read
+    int Total,             // die + bonus, or the passive score, or the AC
+    int? Dc,
+    CheckOutcome? Outcome, // null when there was no DC to grade against
+    RollLogEntry? Logged,  // the entry recorded, null for a passive, an AC read or a failure
+    CheckFailure Failed);
+
+/// <summary>The pure half: no dice, no runtime. Usable by the Web panel on a snapshot.</summary>
+public static class ActorChecks
+{
+    public static CheckSpec? Resolve(SystemDefinition system, string check, CheckKind? kind = null);
+
+    /// <summary>Printed iff the actor came from an actorBlueprint entry (BlueprintId set, its type has actorBlueprint) and the
+    /// evaluation has no class levels. A cast NPC with a full sheet is evaluated.</summary>
+    public static bool IsPrinted(SystemDefinition system, ActorDocument actor, Codex.Core.Rules.SheetEvaluation evaluation);
+
+    /// <summary>Null: no source has it, the caller must supply a typed bonus.</summary>
+    public static CheckBonus? BonusOf(SystemDefinition system, ActorDocument actor, Codex.Core.Rules.SheetEvaluation live, CheckSpec spec);
+
+    /// <summary>The prefill for a printed creature: a "Label +N" match of the spec's key or label in the printed text fields the system
+    /// names (see below). Never used without the GM.</summary>
+    public static int? Suggest(SystemDefinition system, ActorDocument actor, CheckSpec spec);
+
+    /// <summary>The default grade; replaced by the named check roll when dice.checkRoll is set.</summary>
+    public static CheckOutcome Grade(int total, int natural, int dc);
+}
+
+/// <summary>The rolling half, on the command loop only (it reads entities and records rolls). runtime.Checks.</summary>
+public sealed class CheckService(CampaignRuntime runtime)
+{
+    public CheckResult Make(CheckRequest request, string rollerUserId);
+    public IReadOnlyList<CheckResult> MakeAll(IEnumerable<CheckRequest> requests, string rollerUserId);
+
+    /// <summary>A target's AC for an attack: evaluated, else printed; null when neither (the GM types it).</summary>
+    public CheckResult ArmorClassOf(string actorId);
+}
+
+/// <summary>One check on its own, logged ("Check.Made" / "Check.Passive", GM-only parts when Secret). For the GM's "ask for a check".</summary>
+public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId) : IRuntimeCommand;
+```
+
+### 12.3 Changes beside the new file
+
+- **`CampaignRuntime`:** add `public CheckService Checks { get; }`. `LiveSheetOf`, `LinkedFor` and `Resolver` are already there; the
+  service calls `new SheetRuleEngine(System, Resolver).EvaluateLive(LiveSheetOf(doc), LinkedFor(doc.Sheet))` once per actor per `Make`.
+- **`SheetRuleEngine`:** expose the attribute modifier the attributes panel adds. `SheetEvaluation.AttributeModifiers[key]`, filled where
+  `ModifierOf` already runs. Today the panel works it out on its own (`AttributesPanel.razor:68`).
+- **Bonus from an evaluation:**
+  - Skill: `Skills[key].Bonus`. It already includes `Extra` from the roll sites `check.skill.<key>`, `check.<attr>` and `check`, condition
+    modifiers among them.
+  - Save: `SavingThrows[key].Bonus`.
+  - Attribute: `AttributeModifiers[key] + CheckBonuses[key]`.
+  - Passive: the `Passives` entry whose rule's `skill` is the key.
+  - AC: `ArmorClass.Total`.
+  - Opt-ins: requests that name them get the site's tick boxes through `engine.OptIns(live, engine.SkillSite(key))` and friends, added to
+    the bonus.
+- **Printed text for `Suggest`:** reading C# for `savingThrows` or `skills` would put game names in code, so the system says which fields
+  hold them. Add `actorBlueprint` options on the type: `printedSkills: skills` and `printedSaves: savingThrows`, as text fields. Without
+  them, `Suggest` returns null.
+- **Dice:** `runtime.DiceRoller.Roll($"{request.Dice ?? system.Dice.Check}{bonus:+#;-#;+0}")`. Natural is `Kept[CheckDieIndex]`. A
+  `FormatException` becomes `BadDice`, and the loop keeps running.
+
+### 12.4 Logging
+
+- **Each rolled check:** one `RollLogEntry` with `ActorId`, `Label` = the check's label (localized through `Name`, as `MakeRollCommand`
+  does), `Modifier` = the bonus, and `Outcome` and `Mark` from the grade. `IsSecret = request.Secret`. The DC is not in the label: the
+  player-facing log shows only the label, and secret entries are already removed for players (`TableVisibility.cs:34`,
+  `RavenSessionRepository.cs:58`).
+- **A passive or an AC read:** records no roll.
+- **The service writes no `SessionEvent`.** `CheckResult` carries everything the caller's message needs. When `Secret` is set, the
+  caller's parts carry an `EventTerm.GmOnly` term, so `SessionEventRedactor` drops them for players. A Notice therefore never tells a
+  player that a hidden hazard exists.
+- **Strings**, in `Strings.Event`:
+  - `Check.Made`: "{0}: {1} {2} vs DC {3}, {4}"
+  - `Check.Passive`: "{0}: passive {1} {2} vs DC {3}"
+  - `Check.NeedsBonus`
+
+### 12.5 Tests (new `ActorCheckTests`, plus `CheckServiceTests` on a runtime with a scripted `IDiceRoller`)
+
+1. `Resolve` finds a skill by key and by label ignoring case ("Perception", "perception"), an attribute by label ("Dexterity" -> `dex`),
+   a save only when the kind is `Save`, and returns null for "Thieves' Tools" and "Spellcasting".
+2. A PC's skill check rolls `dice.check` + `Skills[key].Bonus`: a scripted d20 of 12 with bonus +5 makes 17, a `success` against DC 15,
+   with `Natural` 12.
+3. A condition that holds at the table (an active effect on the entity, not on the stored sheet) changes the bonus. This proves the live
+   view is read. A valued condition at 0 does not.
+4. An opt-in the request ticks is added; one it does not tick is not.
+5. Save and attribute checks use `SavingThrows` and `AttributeModifiers + CheckBonuses`.
+6. Passive: no die is rolled, no roll is logged, and `Total` is the passive score. A sheet without that passive is `Unresolved`.
+7. AC: a PC reads `ArmorClass.Total` (with a condition that changes AC). A printed creature reads `sheet[armorClass.Key]`.
+8. Printed creature: a skill with no typed bonus is `NeedsBonus`, and nothing is rolled or logged. With `Bonus = 4` it rolls +4.
+   `Suggest` finds +10 in "History +12, Perception +10" only when the type names `printedSkills`.
+9. A typed bonus beats the evaluated one, and `Source` is `Typed`.
+10. `Secret` gives a secret roll entry. Players' snapshot roll logs and the stored session leave it out.
+11. A bad `Dice` override gives `BadDice`, and the runtime still takes the next command.
+12. `MakeAll` with three actors gives three results in order and three log entries.
+13. `MakeCheckCommand` describes itself with a GM-only part when secret. The redactor's player view has no event for it.
+14. Grading: `Grade` gives `success` at total == DC and `failure` one below. A placeholder test marked `Skip` stands for the `checkRoll`
+    path ("P6: four degrees through dice.checkRoll"), so P6 has a target in place.
+15. Content (from review 5): every check value in the srd5e hazard packs resolves, or is on the test's list of values that need a
+    typed bonus. (The list test exists today in `Srd5eHazardsTests`, using skill and attribute keys and labels directly; switch it to
+    `ActorChecks.Resolve` when that exists.)

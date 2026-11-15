@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Codex.Core.Models;
+using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -430,6 +431,14 @@ public class YamlContentPackLoader : IContentPackLoader
         }
 
         _registry.RegisterEntry(entry, prio);
+
+        if (type is { Hazard: not null })
+        {
+            foreach (var message in HazardNumbers.Problems(entry, type))
+            {
+                Problem("Hazard {Type}/{Id} in pack {PackId}: {Message}", entry.Type, entry.Id, entry.PackId, message);
+            }
+        }
 
         if (type is { ActorBlueprint: true })
         {

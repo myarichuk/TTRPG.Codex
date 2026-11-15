@@ -366,6 +366,7 @@ entityTypes:
 
 values:
   Guidance (the chosen skill): Указание (выбранный навык)
+  homebrew: самодельное
   Barbarian: Варвар
   Bard: Бард
   Cleric: Жрец
