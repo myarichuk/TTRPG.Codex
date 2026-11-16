@@ -1,0 +1,62 @@
+# Twelve invented magic items. Equipped, an item's `modifiers` reach the sheet as typed modifiers; item bonuses to one target keep the highest, so two
+# items that raise the same roll never add up. Levels and worth are invented for this project.
+- id: sparrow-band
+  name: Sparrow band
+  tags: [homebrew, magic-items]
+  description: A thin cord ring that makes your steps light on loose stones. While you wear it you gain a +1 item bonus to Stealth checks.
+  properties: { level: 1, worth: 40, modifiers: [{ target: check.skill.stealth, amount: 1, type: item }] }
+- id: thornwood-bracer
+  name: Thornwood bracer
+  tags: [homebrew, magic-items]
+  description: A bracer of pale bark that stiffens when something flies at you. While you wear it you gain a +1 item bonus to Dexterity saves.
+  properties: { level: 2, worth: 75, modifiers: [{ target: save.dex, amount: 1, type: item }] }
+- id: hearth-cloak
+  name: Hearth cloak
+  tags: [homebrew, magic-items]
+  description: A heavy cloak that stays warm however wet it gets. While you wear it you gain a +1 item bonus to Constitution saves.
+  properties: { level: 2, worth: 70, modifiers: [{ target: save.con, amount: 1, type: item }] }
+- id: far-lens
+  name: Far lens
+  tags: [homebrew, magic-items]
+  description: A ground lens on a lanyard. Held to the eye it sharpens distant shapes. While you wear it you gain a +1 item bonus to Perception.
+  properties: { level: 3, worth: 115, modifiers: [{ target: perception, amount: 1, type: item }] }
+- id: steady-glove
+  name: Steady glove
+  tags: [homebrew, magic-items]
+  description: A stitched glove that settles a shaking hand. While you wear it you gain a +1 item bonus to attack rolls with any weapon.
+  properties: { level: 3, worth: 125, modifiers: [{ target: attack, amount: 1, type: item }] }
+- id: silt-glass-charm
+  name: Silt-glass charm
+  tags: [homebrew, magic-items]
+  description: A bead of cloudy glass that warms when you give an order. While you wear it you gain a +1 item bonus to your class DC.
+  properties: { level: 3, worth: 105, modifiers: [{ target: classDc, amount: 1, type: item }] }
+- id: knotted-belt
+  name: Knotted belt
+  tags: [homebrew, magic-items]
+  description: A belt of braided rope, one knot for each heavy lift. While you wear it you gain a +1 item bonus to Athletics checks.
+  properties: { level: 1, worth: 45, modifiers: [{ target: check.skill.athletics, amount: 1, type: item }] }
+- id: chalk-of-marks
+  name: Chalk of marks
+  tags: [homebrew, magic-items]
+  description: A stub of chalk that leaves a line on any surface, wet or dry, and the line fades after a day. It has no numbers; the table decides what a marked line is worth.
+  properties: { level: 1, worth: 15 }
+- id: pocket-lantern
+  name: Pocket lantern
+  tags: [homebrew, magic-items]
+  description: A tin lantern the size of a fist with a flame that needs no fuel. It lights a small room and never burns what it touches.
+  properties: { level: 1, worth: 30 }
+- id: leaning-satchel
+  name: Leaning satchel
+  tags: [homebrew, magic-items]
+  description: A satchel that holds the load of a full pack but weighs as little as a handful of cloth. The table decides what fits.
+  properties: { level: 2, worth: 90 }
+- id: mender-jar
+  name: Mender jar
+  tags: [homebrew, magic-items]
+  description: A clay jar of grey salve. Once between daily preparations, the salve closes a shallow cut; the table works out the healing by hand.
+  properties: { level: 2, worth: 60 }
+- id: echo-whistle
+  name: Echo whistle
+  tags: [homebrew, magic-items]
+  description: A reed whistle whose note comes back from the nearest hollow space, so the blower learns how far a cave or hall runs.
+  properties: { level: 1, worth: 25 }

@@ -431,6 +431,10 @@
   <data name="Actor.Rule.ScoreMax" xml:space="preserve"><value>{0}: значение не может превышать {1}.</value></data>
   <data name="Actor.Rule.ScoreCap" xml:space="preserve"><value>{0}: с «{2}» значение не может превышать {1}.</value></data>
   <data name="Actor.Rule.OneArmor" xml:space="preserve"><value>{0}: одновременно можно носить только один доспех.</value></data>
+  <data name="Actor.Rule.RuneNotFound" xml:space="preserve"><value>{0}: у предмета «{1}» есть руна «{2}», которой нет в Библиотеке.</value></data>
+  <data name="Actor.Rule.RuneWrongItem" xml:space="preserve"><value>{0}: руну «{1}» нельзя нанести на «{2}».</value></data>
+  <data name="Actor.Rule.RuneGroup" xml:space="preserve"><value>{0}: на предмете «{1}» есть и «{2}», и «{3}», а нанести можно только одну из двух.</value></data>
+  <data name="Actor.Rule.RuneSlots" xml:space="preserve"><value>{0}: на предмете «{1}» {2, plural, one{# руна свойства} few{# руны свойств} many{# рун свойств} other{# руны свойств}}, а места хватает на {3}.</value></data>
   <data name="Actor.Rule.OneShield" xml:space="preserve"><value>{0}: в руке можно держать только один щит.</value></data>
   <data name="Actor.Rule.IncNone" xml:space="preserve"><value>{0}: «{1}» не повышает ни одной характеристики.</value></data>
   <data name="Actor.Rule.IncRemaining" xml:space="preserve"><value>{0}: выберите, куда пойдут оставшиеся очки «{1}»: {2}.</value></data>

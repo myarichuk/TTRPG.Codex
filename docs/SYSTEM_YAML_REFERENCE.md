@@ -732,6 +732,7 @@ The items a sheet carries, stored under Key as `"item-id|qty:2,equipped:1"`. Ite
 | `weightProperty` | text (a number is text too) | The item property holding one item's weight; the sheet adds them up, times their quantities. |
 | `weightUnit` | text (a number is text too) | The word the total is shown with ("lb"), translated like the system's other words. None shows the number alone. |
 | `capacity` | text (a number is text too) | A formula for how much a character can carry ("str * 15"); carrying more is a warning. None: no limit. |
+| `runeType` | text (a number is text too) | The entity type of the runes an item may carry (docs/ITEM_RUNES_DESIGN.md). A rune is attached to an inventory pick as the choice `rune.{id}` (`"ledge-axe\|equipped:1,rune.edge-1:1"`). While the item is equipped, the rune's `modifiers` reach the sheet as typed modifiers (on a weapon, `attack` and `damage` reach that weapon alone), its `extraDice` add copies of the weapon's damage dice, and its `slots`, `group` and `appliesTo` are checked. None: the item carries no runes. |
 
 ## SkillRules
 

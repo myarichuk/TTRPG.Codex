@@ -241,6 +241,9 @@ public sealed partial class SheetRuleEngine
         var found = new List<ActiveFeature>();
         var copies = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase); // across every list: a feat in two lists is copy 1 and copy 2
         if (Rules is { Features.Count: > 0 } rules) CollectRuleFeatures(rules, sheet, collected, found, copies);
+        // What equipped items and their runes add (docs/ITEM_RUNES_DESIGN.md), as features of their own so they stack with every other modifier.
+        // Only a system that names a rune type opts in; other systems' items keep the way they already work.
+        if (Rules?.Inventory is { RuneType: not null }) found.AddRange(InventoryFeatures(sheet, ClassViews(sheet, new List<ClassLevel>())[0]));
         // A sheet kind's own sources come after sheetRules': the same selection, over the kind's lists.
         found.AddRange(KindFeatures(system, resolver, sheet, collected, copies, linked));
         return found;

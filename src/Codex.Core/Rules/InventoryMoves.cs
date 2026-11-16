@@ -24,6 +24,7 @@ public static class InventoryMoves
         var lines = raw.Select((line, index) => (Pick: SheetRuleEngine.ParsePick(line), Index: index))
             .Where(l => SameItem(l.Pick.Id, itemId))
             .OrderBy(l => l.Pick.Choices.GetValueOrDefault(rules.EquippedChoice) > 0)
+            .ThenBy(l => SheetRuleEngine.RuneIds(l.Pick.Choices).Count) // plain copies go first; a copy with runes keeps them
             .ToList();
         var left = quantity;
         var emptied = new List<int>();
@@ -34,7 +35,7 @@ public static class InventoryMoves
             var taken = Math.Min(have, left);
             left -= taken;
             if (taken == have) emptied.Add(index);
-            else raw[index] = SheetRuleEngine.FormatItem(rules, pick.Id, have - taken, pick.Choices.GetValueOrDefault(rules.EquippedChoice) > 0);
+            else raw[index] = SheetRuleEngine.FormatItem(rules, pick.Id, have - taken, pick.Choices.GetValueOrDefault(rules.EquippedChoice) > 0, raw[index]);
         }
 
         foreach (var index in emptied.OrderByDescending(i => i)) raw.RemoveAt(index);
@@ -49,7 +50,8 @@ public static class InventoryMoves
         for (var index = 0; index < raw.Count; index++)
         {
             var (id, choices) = SheetRuleEngine.ParsePick(raw[index]);
-            if (!SameItem(id, itemId) || choices.GetValueOrDefault(rules.EquippedChoice) > 0) continue;
+            // A line with runes is one particular item: loose copies never join it.
+            if (!SameItem(id, itemId) || choices.GetValueOrDefault(rules.EquippedChoice) > 0 || SheetRuleEngine.RuneIds(choices).Count > 0) continue;
             raw[index] = SheetRuleEngine.FormatItem(rules, id, QuantityOf(choices, rules) + quantity, false);
             return;
         }

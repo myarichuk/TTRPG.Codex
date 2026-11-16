@@ -758,6 +758,12 @@ public class InventoryRules
 
     /// <summary>A formula for how much a character can carry ("str * 15"); carrying more is a warning. None: no limit.</summary>
     public string? Capacity { get; set; }
+
+    /// <summary>The entity type of the runes an item may carry (docs/ITEM_RUNES_DESIGN.md). A rune is attached to an inventory pick as the
+    /// choice <c>rune.{id}</c> (<c>"ledge-axe|equipped:1,rune.edge-1:1"</c>). While the item is equipped, the rune's <c>modifiers</c> reach the sheet
+    /// as typed modifiers (on a weapon, <c>attack</c> and <c>damage</c> reach that weapon alone), its <c>extraDice</c> add copies of the weapon's
+    /// damage dice, and its <c>slots</c>, <c>group</c> and <c>appliesTo</c> are checked. None: the item carries no runes.</summary>
+    public string? RuneType { get; set; }
 }
 
 /// <summary>How ability scores are generated and adjusted.</summary>

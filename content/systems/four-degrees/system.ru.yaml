@@ -86,6 +86,22 @@ entityTypes:
       weaponCategory: { label: Категория }
       traits: { label: Свойства }
   trinket: { label: Безделушка, pluralLabel: Безделушки }
+  magic-item:
+    label: Волшебный предмет
+    pluralLabel: Волшебные предметы
+    fields:
+      level: { label: Уровень }
+      worth: { label: Цена в серебре }
+  rune:
+    label: Руна
+    pluralLabel: Руны
+    fields:
+      appliesTo: { label: Куда наносится }
+      group: { label: Группа }
+      slots: { label: Места для рун свойств }
+      extraDice: { label: Дополнительные кости оружия }
+      level: { label: Уровень }
+      worth: { label: Цена в серебре }
   hazard:
     label: Опасность
     pluralLabel: Опасности

@@ -59,6 +59,7 @@ public sealed partial class SheetRuleEngine
             var quantity = choices.TryGetValue(rules.QuantityChoice, out var q) ? Math.Max(q, 1) : 1;
             var equipped = choices.TryGetValue(rules.EquippedChoice, out var e) && e > 0;
             result.Inventory.Add(new InventoryItem(index, raw[index], entry, quantity, equipped));
+            CheckRunes(rules, entry, choices, result);
         }
 
         // What it all weighs, and how much the character can carry (F24).

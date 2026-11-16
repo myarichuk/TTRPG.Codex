@@ -431,6 +431,10 @@
   <data name="Actor.Rule.ScoreMax" xml:space="preserve"><value>{0}: הציון לא יכול לעלות על {1}.</value></data>
   <data name="Actor.Rule.ScoreCap" xml:space="preserve"><value>{0}: עם {2} הציון לא יכול לעלות על {1}.</value></data>
   <data name="Actor.Rule.OneArmor" xml:space="preserve"><value>{0}: אפשר ללבוש שריון אחד בלבד בכל פעם.</value></data>
+  <data name="Actor.Rule.RuneNotFound" xml:space="preserve"><value>{0}: על {1} יש רונה "{2}" שאינה בספרייה.</value></data>
+  <data name="Actor.Rule.RuneWrongItem" xml:space="preserve"><value>{0}: אי אפשר לשים את {1} על {2}.</value></data>
+  <data name="Actor.Rule.RuneGroup" xml:space="preserve"><value>{0}: על {1} יש גם {2} וגם {3}, ואפשר להשאיר רק אחת מהשתיים.</value></data>
+  <data name="Actor.Rule.RuneSlots" xml:space="preserve"><value>{0}: על {1} {2, plural, one{רונת תכונה אחת} other{# רונות תכונה}} אבל יש מקום ל-{3}.</value></data>
   <data name="Actor.Rule.OneShield" xml:space="preserve"><value>{0}: אפשר להחזיק ביד מגן אחד בלבד.</value></data>
   <data name="Actor.Rule.IncNone" xml:space="preserve"><value>{0}: {1} אינו מעלה אף ציון.</value></data>
   <data name="Actor.Rule.IncRemaining" xml:space="preserve"><value>{0}: יש לבחור לאן הולכות הנקודות הנותרות של {1}: {2}.</value></data>
