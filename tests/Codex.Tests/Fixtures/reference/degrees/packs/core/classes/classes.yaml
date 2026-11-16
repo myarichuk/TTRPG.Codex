@@ -1,8 +1,10 @@
-# A class's rows apply from their level. Its hit points count every level; its armor rank is a modifier until P3.
+# A class's rows apply from their level. Its hit points per level are a number of its own; its armor rank, and its trained Perception and class DC, are grants to ranked lists.
 - id: vanguard
   name: Vanguard
   properties:
     savingThrows: [con, wis]
+    keyAttribute: str
+    hp: 8
     features:
-      - { name: Hardy, level: 1, modifiers: [{ target: maxHp, amount: "8 * level" }] }
-      - { name: Armor training, level: 1, modifiers: [{ target: armorClass, amount: "level + 2", type: proficiency }] }
+      - { name: Armor training, level: 1, adds: [{ to: armor, entries: [unarmored, light, medium], rank: trained }] }
+      - { name: Watchful, level: 1, adds: [{ to: perception, rank: trained }, { to: classDc, rank: trained }] }

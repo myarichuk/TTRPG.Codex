@@ -19,6 +19,9 @@
   <data name="Actor.Hp.NoteLead" xml:space="preserve"><value> from {0, plural, one{# level} other{# levels}} (hit die + Constitution </value></data>
   <data name="Actor.Hp.NoteExtra" xml:space="preserve"><value> + {0} from {1}</value></data>
   <data name="Actor.Hp.NoteTail" xml:space="preserve"><value> each, first level takes the full die).</value></data>
+  <data name="Actor.Hp.NoteLeadFlat" xml:space="preserve"><value> from {0, plural, one{# level} other{# levels}} (the class's hit points per level + Constitution </value></data>
+  <data name="Actor.Hp.NoteTailFlat" xml:space="preserve"><value> each).</value></data>
+  <data name="Actor.Hp.NoteOnce" xml:space="preserve"><value> Plus {0} from {1}, once.</value></data>
   <data name="Actor.Hp.HowSummary" xml:space="preserve"><value>How this is worked out</value></data>
   <data name="Actor.Hp.TableCaption" xml:space="preserve"><value>Hit points gained at each level</value></data>
   <data name="Actor.Hp.ColLevel" xml:space="preserve"><value>Level</value></data>
@@ -333,6 +336,7 @@
   <data name="Actor.Sheet.LevelHp" xml:space="preserve"><value>Hit points</value></data>
   <data name="Actor.Sheet.LevelHpHow" xml:space="preserve"><value>(d{0}: {1}, modifier {2})</value></data>
   <data name="Actor.Sheet.LevelHpAverage" xml:space="preserve"><value>{0} on average</value></data>
+  <data name="Actor.Sheet.LevelHpFlat" xml:space="preserve"><value>({0} per level, modifier {1})</value></data>
   <data name="Actor.Sheet.LevelRollDie" xml:space="preserve"><value>Roll d{0}</value></data>
   <data name="Actor.Sheet.LevelPb" xml:space="preserve"><value>Proficiency bonus</value></data>
   <data name="Actor.Sheet.LevelChoose" xml:space="preserve"><value>To choose once you take it</value></data>
@@ -402,6 +406,8 @@
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} can only be taken once.</value></data>
   <data name="Actor.Rule.LimitForClass" xml:space="preserve"><value>{0}: {1} for {2}, but {2} allows only {3} at this level.</value></data>
   <data name="Actor.Rule.NoHitDie" xml:space="preserve"><value>{0} has no hit die, so its levels add no hit points.</value></data>
+  <data name="Actor.Rule.NoHitPointsPerLevel" xml:space="preserve"><value>{0} has no hit points per level, so its levels add no hit points.</value></data>
+  <data name="Actor.Rule.NoArmorCategory" xml:space="preserve"><value>{0} has no {1}, so no armor rank counts while it is worn.</value></data>
   <data name="Actor.Rule.NoSpellAbility" xml:space="preserve"><value>{0} has spell slots but names no spellcasting ability, so it has no spell save DC or attack.</value></data>
   <data name="Actor.Rule.NoSpellTable" xml:space="preserve"><value>{0} names a spellcasting ability but has no spellcasting table, so it gets no spell slots or prepared spells.</value></data>
   <data name="Actor.Rule.SkillChoices" xml:space="preserve"><value>{0}: {1} chosen beyond your background, but {2} gives {3}. A species or feat may give more.</value></data>

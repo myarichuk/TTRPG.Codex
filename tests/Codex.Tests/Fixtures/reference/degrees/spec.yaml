@@ -44,14 +44,13 @@ expectations:
     sheet: hero5
     expect: { values: { saves.con: 9, saves.dex: 11, saves.wis: 8 } }
     why: "The class trains Con and Wis saves: 5 + 2, + 2 = 9; 5 + 2, + 1 = 8. Dex is expert on the sheet: 5 + 4, + 2 = 11."
-  # now: fail, P3. Perception has no ranked list of its own (derived value at the trained rank), so an expert Perception is ignored.
-  # `perceptionExpert` is the sheet key P3 is expected to give it; today it is an unread list.
+  # now: pass. Perception is a ranked list of its own; `perceptionExpert` is the sheet key its expert rank gets by default.
   - id: degrees.perception-has-a-rank-of-its-own
     step: 2
     sheet: hero5
     with: { lists: { perceptionExpert: [perception] } }
     expect: { values: { perception: 10 } }
-    why: "Expert Perception: 5 + 4, + Wis 1 = 10. Today the derived formula is trained only: 8."
+    why: "Expert Perception: 5 + 4, + Wis 1 = 10. Trained alone would be 8."
 
   # ---- Hit points and armor class ----
   # now: pass. The ancestry's 8 count once; the class's 8 and Con count every level.
@@ -67,7 +66,7 @@ expectations:
     with: { values: { level: 1 } }
     expect: { values: { maxHp: 18 } }
     why: "8 + (8 + 2) x 1."
-  # now: pass. The armor rank is the class feature's modifier (level + 2) until P3.
+  # now: pass. The armor rank is the armor list's trained rank (level + 2), read for the coat's medium category.
   - id: degrees.armor-class-is-armor-dex-to-its-cap-and-the-rank
     step: 2
     sheet: hero5
