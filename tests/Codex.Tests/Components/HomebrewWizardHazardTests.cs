@@ -431,6 +431,34 @@ public class HomebrewWizardHazardTests : ComponentTestBase
     }
 
     [Fact]
+    public void TheGuideCheckOfTheWizard_NamesTheFieldAndTheSeverity_InTheSystemTranslation()
+    {
+        // The library's types follow the request's culture, as they do for a Hebrew reader.
+        var before = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("he");
+        try
+        {
+            var cut = Open("he");
+            GoTo(cut, "Profile");
+            Field(cut, "דרגות").Change("1-4");
+            Field(cut, "חומרה").Change("Nuisance");
+            GoTo(cut, "Effect");
+            Field(cut, "הצלת מגן").Change("Dexterity");
+            Field(cut, "דרגת קושי להצלה").Change("19");
+
+            var scale = cut.Find("[data-testid=hazard-scale]").TextContent;
+            Assert.Contains("דרגת קושי להצלה", scale);
+            Assert.Contains("מטרד", scale);
+            Assert.DoesNotContain("Nuisance", scale);
+            Assert.DoesNotContain("Save DC", scale);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = before;
+        }
+    }
+
+    [Fact]
     public void ADiceBoxAndALevelBoxAreLeftToRight_AndARouteCannotWaitForItself()
     {
         var cut = Open();
@@ -447,6 +475,24 @@ public class HomebrewWizardHazardTests : ComponentTestBase
         GoTo(cut, "Effect");
         cut.Find("[data-testid=hazard-damage-add]").Click();
         Assert.Equal("ltr", Control(cut, "hazard-damage", "Dice (such as 2d8)").GetAttribute("dir"));
+    }
+
+    [Fact]
+    public void ADisarmRoute_MayWaitForTheDetectRouteThatSharesItsId()
+    {
+        // Ids are unique per list: "disarm the glyph once the glyph is found" is a disarm route `glyph` after the detect route `glyph`.
+        var cut = Open();
+        GoTo(cut, "Notice");
+        cut.Find("[data-testid=hazard-detect-add]").Click();
+        Control(cut, "hazard-detect", "Name").Change("Spot the glyph");
+        Control(cut, "hazard-detect", "Short name (for “Only after”)").Change("glyph");
+        GoTo(cut, "Disable");
+        cut.Find("[data-testid=hazard-disarm-add]").Click();
+        Control(cut, "hazard-disarm", "Name").Change("Erase the glyph");
+        Control(cut, "hazard-disarm", "Short name (for “Only after”)").Change("glyph");
+
+        var offered = Control(cut, "hazard-disarm", "Only after").QuerySelectorAll("option").Select(o => o.GetAttribute("value")).ToList();
+        Assert.Contains("glyph", offered);
     }
 
     // A value as text that does not depend on the collection types the store happens to give: maps by sorted key, lists in order, everything else as invariant text.

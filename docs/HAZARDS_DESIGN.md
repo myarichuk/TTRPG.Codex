@@ -620,8 +620,26 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     focus ring is the global `:focus-visible`, no physical left or right class is used, and the place picker is a labelled select inside a fieldset.
   - **Tests:** `HazardStringsTests` (keys in all three languages as that language's words, the term list, English templates equal to the resource strings, every message keeps its placeholders, the checks said in ru and he),
     and in the bUnit tests the live region, focus after undo, after asking for a number, after add, remove and Other, a name for every control in en, ru and he, and the wizard's checks in ru and he.
-  - **Not done:** a native read of the ru and he strings (listed in `docs/i18n-he-native-review.md`); the wizard's own Hebrew gloss of `onSave`, `strikes` and `needs` inside messages stays in Latin letters on purpose; the
-    world builder's warnings to the model are not localized.
+  - **Not done:** a native read of the ru and he strings (listed in `docs/i18n-he-native-review.md`); `onSave` and `strikes` stay in Latin letters inside the messages on purpose (YAML keys an author types), while
+    `needs` and `text` are named by the wizard's column labels (״נדרש״/״הערות״, «Требуется»/«Примечания»), copied into the message; the world builder's warnings to the model are not localized.
+- **Review of H8 (fix commit).** Found and fixed:
+  - **Hebrew log lines without a gender.** Every `Event.Hazard.*` line in Hebrew is a name, a colon, then a noun or a verbless phrase (the main log's shape: "{0}: {1} — זיהוי מוצלח ({2})", "{0}: הסכנה נוטרלה",
+    "{0}: {1} — מוות"), so neither the creature's nor the hazard's name decides a verb's gender; a pronoun that pointed back at the name (אותה, קיומה, שלה, היא) is now "הסכנה". The panel's "its turn" and "only you see it" too.
+    Russian lines whose participle agreed with "опасность" and not with the name say "{0}: опасность обезврежена" the same way.
+  - **One word, the system's word.** Passive is "קבועה/קבוע" (system.he.yaml: הבחנה קבועה), the routine is "סדר פעולות" / "Порядок действий" (the routine field's label in system.{he,ru}.yaml), a level is "דרגה/דרגות"
+    (the glossary and the level field), and a skill rank is "דירוג", so it no longer shares the level's word.
+  - **No English in a translated warning.** The severity is said through the system translation (`values:` Nuisance, Deadly in system.{he,ru}.yaml; `ScalingProblems` takes the reader's `DisplayValue`), and the world
+    builder's card names fields from the localized hazard type (same fields, same order, so the card still pairs with the model's English list).
+  - **No message glued from fragments.** The route and list messages are one key per kind (`RepeatId.detect`, `ListNotRows.damage`, ...), the guide messages one key per shape (`High`, `High.Average`, `High.Dice`, each
+    with a `.Severity` twin), so each translation words the whole sentence and nothing agrees across a placeholder; the English output is unchanged. The band prefix (`Band`, "band 5-10: ") is the one piece
+    still put in front of a message, as a heading followed by a colon. A row with no name is named once ("שורה ללא שם"), not "דרך זיהוי ״שורה: דרך זיהוי״".
+  - **`after` on a disarm route.** Only a detect route's own id is held out of its "Only after" choices; a disarm route may wait for the detect route that shares its id.
+  - **Tests:** `HazardStringsTests` now fails on a Hebrew hazard string with a gendered verb or adjective after a name placeholder, or a gendered pronoun in a log line (and proves its pattern catches "{1} מוצא אותה" and
+    "{0} נוטרלה"); holds the old words out (פסיבי, סביל, שגרה, רמה, "по раундам", "шаг действий"); checks the wizard's routine and level words against the system translation; requires a translation to have exactly
+    the English placeholders; and says the guide check in ru and he with the translated field label and severity and no English. `HomebrewWizardHazardTests.ADisarmRoute_MayWaitForTheDetectRouteThatSharesItsId`.
+  - **Deferred from review 8:** nits 4, 5, 6, 7, 9 and 11 (the loader/engine key case, the duplicate message's full stop, the single-average damage cell, the misnamed severity field message, the empty band severity,
+    the severity as Text). From review 9: the live region repeating the same line silently, focus on n → m questions, the Other... edges, the concerns heading (`aria-labelledby`), concerns kept in the language of the
+    check after a language switch (acceptable), and the levels box's `dir` in the ltr test.
 
 ## 12. H4a: the server-side check service (interface)
 

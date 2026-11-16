@@ -350,7 +350,7 @@ public class HazardsPanelTests : ComponentTestBase
 
     [Theory]
     [InlineData("ru", "Порядок действий: Rolling Stone", "Сейчас её ход")]
-    [InlineData("he", "שגרה של Rolling Stone", "התור שלה עכשיו")]
+    [InlineData("he", "סדר פעולות: Rolling Stone", "תור הסכנה עכשיו")]
     public void ARoutine_IsTranslated(string culture, string heading, string itsTurn)
     {
         var cut = Draw(culture, new[] { Stone(itsTurn: true) });

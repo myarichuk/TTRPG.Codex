@@ -412,47 +412,81 @@ The Sonnet agents coined or transliterated many of these (for example גלימן
 
 ## Hazards (`Strings.Wizard`, `Strings.Combat`, `Strings.Event`, `Strings.Campaign`, `Strings.WorldChat` he and ru; H1-H8)
 
-Every key the hazards track added is in the five areas below, in `.he.resx` and `.ru.resx`. Both languages need a native read; the repo has no separate Russian review list, so this section stands for both, and
-the Russian words are the third column of the term table. The full list is every key that is in `main` nowhere (`git diff main..HEAD -- src/Codex.Localization/Resources`).
+Every key the hazards track added is in the five areas below, in `.he.resx` and `.ru.resx`. Both languages need a native read; the repo has no separate Russian review list, so this section stands for both:
+the Russian words are the third column of the term table, and the Russian of every key below is the same key in the `.ru.resx` file of its area.
 
 | Area and keys | Count | Where it shows |
 |---|---|---|
-| `Strings.Combat` `Combat.Hazard.*`, `Combat.QuickAdd*`, `Combat.AddHazardToOrder*`, `Combat.HazardAdded` | 51 | the Hazards panel, the quick-add hazards group, the routine |
+| `Strings.Combat` `Combat.Hazard.*`, `Combat.QuickAdd*`, `Combat.AddHazardToOrder*`, `Combat.HazardAdded` | 53 | the Hazards panel, the quick-add hazards group, the routine |
 | `Strings.Event` `Event.Hazard.*`, `Event.Check.*`, `Event.Type.Hazard` | 57 | the log: every line a hazard or a check says |
 | `Strings.Campaign` `Campaign.Places.Feature.Hazard*`, `Campaign.Places.Feature.State.*`, `Campaign.Book.Hazard.*` | 25 | the place page and the stat block in the GM's book |
-| `Strings.Wizard` `Wizard.Hazard.*` | 84 | the homebrew wizard's hazard mode (steps, columns, fill, checks) |
+| `Strings.Wizard` `Wizard.Hazard.*` (68 of them `Wizard.Hazard.Problem.*`) | 110 | the homebrew wizard's hazard mode (steps, columns, fill, checks) and the world builder's card |
 | `Strings.WorldChat` `WorldChat.Proposal.Hazard`, `WorldChat.Proposal.Concerns` | 2 | the world builder's review card |
 
-One word for each thing, in each language, across the panel, the log, the wizard, the world builder and the book (H8 made the Hebrew and the Russian agree; the old forms are in the last column):
+One word for each thing, in each language, across the panel, the log, the wizard, the world builder, the book and the system's own translation (`content/systems/srd5e/system.{he,ru}.yaml`); the old forms are in
+the last column, and `HazardStringsTests` keeps them out:
 
 | English | Hebrew | Russian | Changed from |
 |---|---|---|---|
-| hazard | סכנה (feminine: זוהתה, נוטרלה, הופעלה) | опасность | he: מפגע in the wizard and the book |
+| hazard | סכנה | опасность | he: מפגע in the wizard and the book |
 | notice, detect | זיהוי, דרך זיהוי | заметить, способ обнаружения | he: איתור in the wizard |
 | find (a way to deal with it) | מציאה | найти | |
 | disable, disarm | נטרול, דרך נטרול | обезвредить, способ обезвреживания | |
 | trigger | הפעלה | сработать | |
 | DC | דרגת קושי | Сл | he: "DC" in the book and the wizard; ru: "СЛ" in the log |
-| passive score | ציון פסיבי | пассивное значение | he: סביל in the log |
-| routine (complex hazard) | שגרה | действия по раундам, шаг действий | he: סדר הפעולות, פעולות בכל סבב |
-| level band | טווח רמות | ступень уровней | |
-| severity | חומרה | тяжесть | |
+| passive | קבועה / ציון קבוע (system.he.yaml: הבחנה קבועה) | пассивное значение | he: סביל, then פסיבי |
+| routine (complex hazard) | סדר פעולות; a row is שלב בסדר הפעולות | Порядок действий; a row is шаг порядка действий | he: שגרה, סדר הפעולות, פעולות בכל סבב; ru: действия по раундам, шаг действий |
+| level | דרגה, דרגות (glossary; system.he.yaml `level: דרגות`) | уровень, уровни | he: רמה, רמות in the wizard |
+| level band | טווח דרגות | ступень уровней | he: טווח רמות |
+| rank (of a skill) | דירוג | ранг | he: דרגה, which is the level's word |
+| severity | חומרה; Nuisance מטרד, Deadly קטלנית (system `values:`) | тяжесть; помеха, смертельная | the English word inside the message |
 
-The check messages the wizard and the world builder's card show (`Wizard.Hazard.Problem.*`, 41 keys, new in H8) are the ones to read most closely: they were English in both languages before, and they carry the
-YAML keys a hazard author sees (`onSave`, `strikes`, `needs`) in Latin letters on purpose. Their Hebrew:
+Note for Russian: "Сл" is the app's resx word (Actor, Campaign, Wizard); the ru SRD pack and main's concentration line still write "СЛ". Keep "Сл" here, so the next pass does not "fix" it back.
+
+### What to check
+
+1. **The log lines (`Event.Hazard.*`) must not depend on a gender.** `{0}` is the hazard's *name* (any gender: "בור מוסתר"), and `{1}` (or `{3}` in `Hit`/`Miss`) is a creature's name. Each Hebrew line is a name, a
+   colon, then a noun or a verbless phrase, the way the main log is written (`Event.Damage.Died` "{0}: מוות.", `Event.Condition.Ends` "{0}: ללא {1}."): "{0}: {1} — זיהוי מוצלח ({2})", "{0}: {1} — {2} נזק",
+   "{0}: הסכנה נוטרלה". Where the hazard is the subject, the sentence says "הסכנה" (feminine, and agreeing with it is right), never a pronoun that points back at the name. Check that each line still says what the English says.
+   Russian present-tense verbs are already neutral; the participles that agreed with "опасность" now say "{0}: опасность обезврежена".
+2. **The passive.** `Event.Check.Passive` "{0}: {1} קבועה {2} מול דרגת קושי {3}": `{1}` is the skill's label from the system (הבחנה, תובנה, חקירה, all feminine, as in system.he.yaml's "הבחנה קבועה"). A system whose skill
+   label is masculine would need "קבוע"; the line assumes a feminine label.
+3. **"זיהוי" for notice/detect** matches the panel and system.he.yaml `detect: זיהוי`, but in the app's Hebrew SRD it is also the spell Identify, and "Detect" there is גילוי (גילוי קסם). A native reader may prefer גילוי.
+4. **The check messages (`Wizard.Hazard.Problem.*`)** were English in both languages before H8. Each is now one whole sentence per variant, so nothing in the language's own text has to agree with a placeholder:
+   - the route and list messages have one key per kind of row (`RepeatId.detect`, `.disarm`, `.other-way`; `ListNotRows.detect` … `.condition`), with the kind's noun written into the sentence;
+   - the guide messages have one key per shape: `High`/`Low` (a number), `.Average` (a damage average against averages), `.Dice` (a damage average against dice), each with a `.Severity` twin.
+   - The YAML keys `onSave` and `strikes` and the values `true`, `false`, `half`, `none` stay in Latin letters on purpose: an author types them. `needs` and `text` are not named by key: the Hebrew and Russian `NoCheck.*`
+     name the wizard's column labels instead (״נדרש״, ״הערות״; «Требуется», «Примечания»). These are copies of `Wizard.Hazard.Col.Needs` and `Col.Text`; keep them in step if a column is renamed.
+
+What each placeholder holds:
+
+| Key | Placeholders |
+|---|---|
+| `Band` | `{0}` a band's levels as written ("5-10"); the result ("טווח 5-10: ") is put in front of the other messages as their `{0}`, the one piece still put in front of a message, as a heading ending in a colon |
+| every message with a leading `{0}` | `{0}` the band prefix above, or nothing for the hazard itself |
+| `High*`, `Low*` | `{1}` a field's label from the system translation ("דרגת קושי להצלה", "נזק"), `{2}` the hazard's number (a damage average in `.Average`/`.Dice`), `{3}` the level (a whole number), `{4}` and `{5}` the guide's bounds (numbers, or dice in `.Dice`), `{6}` the severity through the system translation (מטרד, קטלנית) |
+| `NoLevel` | `{1}` field labels joined by ", ", `{2}` the level field's label (דרגות) or `LevelWord` |
+| `UnknownSeverity` | `{1}` the severity as the author wrote it (raw, any language), `{2}` the system's severities joined by ", ", through the system translation |
+| route messages (`RepeatId.*`, `DcNoCheck.*`, …) | `{1}` the row's name, else its id, else `RowWord.*` ("שורה ללא שם"); `{2}` in `RepeatId` the repeated id, in `AfterNoRoute` the raw id the row waits for |
+| `ListNotRows.*`, `ItemNotRow.*` | `{1}` the raw field key (`detect`), or the raw value that is not a row |
+| `RowNearKey`, `RowUnknownKey`, `RowNotList` | `{0}` the band's levels, `{1}` a raw field key, `{2}` the field key it is near, or the type's key (`hazard`), English on purpose: these are for an author |
+| `StrikesBad`, `StrikesNoEffect` | `{0}` a routine row's name or `RoutineRow`, `{1}` the raw value |
+| `ConditionUnknown` | `{1}` a condition name as written |
+
+Some of the Hebrew messages, for a first read:
 
 | Key | English | Hebrew |
 |---|---|---|
-| `Problem.High` | {0}{1} {2} is high for a level {3}{4} hazard; the system's guide gives {5}. | {0}{1} {2} גבוה לסכנה ברמה {3}{4}; מדריך המערכת נותן {5}. |
-| `Problem.Low` | {0}{1} {2} is low for a level {3}{4} hazard; the system's guide gives {5}. | {0}{1} {2} נמוך לסכנה ברמה {3}{4}; מדריך המערכת נותן {5}. |
-| `Problem.GivesRange` | {0} to {1} | {0} עד {1} |
-| `Problem.GivesAverage` | an average of {0} to {1} | ממוצע של {0} עד {1} |
-| `Problem.NoLevel` | it has scaled numbers ({1}) and no level to read them against; fill in {2} with a number such as 5 or a range such as 1-4. | יש מספרים התלויים ברמה ({1}), אך אין רמה להשוות אליה; מלאו ״{2}״ במספר כמו 5 או בטווח כמו 1-4. |
-| `Problem.UnknownSeverity` | Severity '{1}' is not one the system's guide has ({2}); its numbers were read against the guide for any severity. | החומרה ״{1}״ אינה במדריך המערכת ({2}); המספרים הושוו למדריך עבור כל חומרה. |
-| `Problem.DcNoCheck` | {1} route '{2}' has a dc and no check. | {1} ״{2}״: יש דרגת קושי אך אין בדיקה. |
-| `Problem.NoCheck` | {1} route '{2}' has no check; it needs 'needs' or 'text' to say what it takes. | {1} ״{2}״: אין בדיקה; מלאו ״נדרש״ או ״הערות״ כדי לומר מה נדרש. |
-| `Problem.AfterNoRoute` | {1} route '{2}' comes after '{3}', which is no detect route id. | {1} ״{2}״: ״רק אחרי״ מציין ״{3}״, שאינה דרך זיהוי. |
-| `Problem.Circle` | detect route '{1}' waits, through other routes, for itself. | דרך הזיהוי ״{1}״ ממתינה לעצמה דרך דרכים אחרות. |
+| `Problem.High` | {0}{1} {2} is high for a level {3} hazard; the system's guide gives {4} to {5}. | {0}{1}: {2}, מעל מה שמדריך המערכת נותן לסכנה בדרגה {3} ({4} עד {5}). |
+| `Problem.Low.Average.Severity` | {0}{1} averaging {2} is low for a level {3} {6} hazard; the system's guide gives an average of {4} to {5}. | {0}{1}: ממוצע {2}, מתחת למה שמדריך המערכת נותן לסכנה בדרגה {3} ובחומרה ״{6}״ (ממוצע של {4} עד {5}). |
+| `Problem.NoLevel` | {0}it has scaled numbers ({1}) and no level to read them against; fill in {2} with a number such as 5 or a range such as 1-4. | {0}יש מספרים התלויים בדרגה ({1}), אך אין דרגה להשוות אליה; מלאו ״{2}״ במספר כמו 5 או בטווח כמו 1-4. |
+| `Problem.UnknownSeverity` | {0}Severity '{1}' is not one the system's guide has ({2}); its numbers were read against the guide for any severity. | {0}החומרה ״{1}״ אינה במדריך המערכת ({2}); המספרים הושוו למדריך עבור כל חומרה. |
+| `Problem.DcNoCheck.detect` | {0}detect route '{1}' has a dc and no check. | {0}דרך הזיהוי ״{1}״: יש דרגת קושי אך אין בדיקה. |
+| `Problem.NoCheck.disarm` | {0}disarm route '{1}' has no check; it needs 'needs' or 'text' to say what it takes. | {0}דרך הנטרול ״{1}״: אין בדיקה; מלאו ״נדרש״ או ״הערות״ כדי לומר מה נדרש. |
+| `Problem.AfterNoRoute.other-way` | {0}other-way route '{1}' comes after '{2}', which is no detect route id. | {0}הדרך האחרת ״{1}״: ״רק אחרי״ מציין ״{2}״, ואין דרך זיהוי בשם הזה. |
+| `Problem.Circle` | {0}detect route '{1}' waits, through other routes, for itself. | {0}דרך הזיהוי ״{1}״ ממתינה לעצמה דרך דרכים אחרות. |
 | `Problem.SaveNoDc` / `Problem.DcNoSave` | it has a save and no save DC. / it has a save DC and no save. | יש הצלה אך אין דרגת קושי להצלה. / יש דרגת קושי להצלה אך אין הצלה. |
 | `Wizard.Hazard.Col.CheckOther` | Check, as written (a typed bonus is asked for at the table) | בדיקה, כפי שנכתבה (את הבונוס מזינים ליד השולחן) |
 | `Wizard.Hazard.Other` | Other… | אחר… |
+
+The world builder's card (`draft.Concerns`) keeps its messages in the language they were checked in; after a language switch it shows the old language until the next proposal.

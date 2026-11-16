@@ -204,13 +204,13 @@
   <data name="Event.Hazard.Refused.NoRoute" xml:space="preserve"><value>{0}: такого способа нет.</value></data>
   <data name="Event.Hazard.Refused.Locked" xml:space="preserve"><value>{0}: «{1}» пока нельзя пробовать, сначала нужно найти «{2}».</value></data>
   <data name="Event.Hazard.Refused.NoActor" xml:space="preserve"><value>{0}: никто не выбран.</value></data>
-  <data name="Event.Hazard.Refused.AlreadyDisabled" xml:space="preserve"><value>{0} уже обезврежена.</value></data>
+  <data name="Event.Hazard.Refused.AlreadyDisabled" xml:space="preserve"><value>{0}: опасность уже обезврежена.</value></data>
   <data name="Event.Hazard.Noticed" xml:space="preserve"><value>{0}: {1} находит её ({2}).</value></data>
   <data name="Event.Hazard.Missed" xml:space="preserve"><value>{0}: {1} не находит её ({2}).</value></data>
   <data name="Event.Hazard.Revealed" xml:space="preserve"><value>{0}: {1} теперь знает о ней.</value></data>
   <data name="Event.Hazard.NoRoll" xml:space="preserve"><value>{0}: {1} делает это без броска ({2}).</value></data>
   <data name="Event.Hazard.DisableProgress" xml:space="preserve"><value>{0}: успехов {1} из {2}.</value></data>
-  <data name="Event.Hazard.Disabled" xml:space="preserve"><value>{0} обезврежена.</value></data>
+  <data name="Event.Hazard.Disabled" xml:space="preserve"><value>{0}: опасность обезврежена.</value></data>
   <data name="Event.Hazard.SetOff" xml:space="preserve"><value>{0}: неудачная попытка запускает её, цель — {1}.</value></data>
   <data name="Event.Hazard.Triggered" xml:space="preserve"><value>{0} срабатывает.</value></data>
   <data name="Event.Hazard.Step" xml:space="preserve"><value>{0} делает свой шаг: {1}.</value></data>
@@ -238,10 +238,10 @@
   <data name="Event.Hazard.ConcentrationLost" xml:space="preserve"><value>{0}: {1} теряет концентрацию.</value></data>
   <data name="Event.Hazard.ConcentrationSave" xml:space="preserve"><value>{0}: у {1} спасбросок концентрации, Сл {2}.</value></data>
   <data name="Event.Hazard.Conditions" xml:space="preserve"><value>{0}: {1} получает состояние: {2}; добавьте его вручную.</value></data>
-  <data name="Event.Hazard.State.Hidden" xml:space="preserve"><value>{0} теперь скрыта.</value></data>
-  <data name="Event.Hazard.State.Noticed" xml:space="preserve"><value>{0} теперь замечена.</value></data>
-  <data name="Event.Hazard.State.Disabled" xml:space="preserve"><value>{0} теперь обезврежена.</value></data>
-  <data name="Event.Hazard.State.Triggered" xml:space="preserve"><value>{0} теперь сработала.</value></data>
+  <data name="Event.Hazard.State.Hidden" xml:space="preserve"><value>{0}: опасность теперь скрыта.</value></data>
+  <data name="Event.Hazard.State.Noticed" xml:space="preserve"><value>{0}: опасность теперь замечена.</value></data>
+  <data name="Event.Hazard.State.Disabled" xml:space="preserve"><value>{0}: опасность теперь обезврежена.</value></data>
+  <data name="Event.Hazard.State.Triggered" xml:space="preserve"><value>{0}: опасность теперь сработала.</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>Кампания</value></data>
   <data name="Event.Campaign.ClockChanged" xml:space="preserve"><value>{0}: {1} → {2} из {3}.</value></data>
   <data name="Event.Campaign.ClockFull" xml:space="preserve"><value>Часы «{0}» заполнены.</value></data>

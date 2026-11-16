@@ -52,7 +52,7 @@
   <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>נדרש מספר</value></data>
   <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>הדף מודפס, לכן יש להקליד את המספר: בונוס ההצלה, או דרגת השריון להתקפה. לאחר מכן ללחוץ שוב על אותה פעולה: היא תימשך רק עבור היצורים האלה, עם הנזק שכבר הוטל, כך שאיש לא ייפגע פעמיים.</value></data>
   <data name="Combat.Hazard.NumberFor" xml:space="preserve"><value>{0}: בונוס {1}</value></data>
-  <data name="Combat.Hazard.NumberForScore" xml:space="preserve"><value>{0}: {1}, ציון פסיבי</value></data>
+  <data name="Combat.Hazard.NumberForScore" xml:space="preserve"><value>{0}: {1}, ציון קבוע</value></data>
   <data name="Combat.Hazard.NumberForArmor" xml:space="preserve"><value>{0}: דרגת שריון</value></data>
   <data name="Combat.Hazard.Result" xml:space="preserve"><value>התוצאה האחרונה</value></data>
   <data name="Combat.Hazard.State.Hidden" xml:space="preserve"><value>מוסתרת</value></data>
@@ -60,7 +60,7 @@
   <data name="Combat.Hazard.State.Disabled" xml:space="preserve"><value>נוטרלה</value></data>
   <data name="Combat.Hazard.State.Triggered" xml:space="preserve"><value>הופעלה</value></data>
   <data name="Combat.Hazard.Successes" xml:space="preserve"><value>הצלחות עד כה: {0}</value></data>
-  <data name="Combat.Hazard.NoOne" xml:space="preserve"><value>אף אחד לא זיהה אותה</value></data>
+  <data name="Combat.Hazard.NoOne" xml:space="preserve"><value>אף אחד לא זיהה את הסכנה</value></data>
   <data name="Combat.Hazard.Noticed" xml:space="preserve"><value>זוהתה על ידי {0}</value></data>
   <data name="Combat.Hazard.Gone" xml:space="preserve"><value>{0} כבר לא בספרייה.</value></data>
   <data name="Combat.Hazard.Notice" xml:space="preserve"><value>זיהוי: {0}</value></data>
@@ -82,10 +82,10 @@
   <data name="Combat.SearchCreatures" xml:space="preserve"><value>חיפוש יצורים וסכנות</value></data>
   <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>חיפוש יצורים וסכנות בספרייה…</value></data>
   <data name="Combat.Hazard.FromLibrary" xml:space="preserve"><value>נלקחה מהספרייה, בלי מקום</value></data>
-  <data name="Combat.Hazard.Routine" xml:space="preserve"><value>שגרה של {0}</value></data>
+  <data name="Combat.Hazard.Routine" xml:space="preserve"><value>סדר פעולות: {0}</value></data>
   <data name="Combat.Hazard.InOrder" xml:space="preserve"><value>בסדר היוזמה</value></data>
   <data name="Combat.Hazard.OutOfOrder" xml:space="preserve"><value>מחוץ לסדר היוזמה</value></data>
-  <data name="Combat.Hazard.ItsTurn" xml:space="preserve"><value>התור שלה עכשיו</value></data>
+  <data name="Combat.Hazard.ItsTurn" xml:space="preserve"><value>תור הסכנה עכשיו</value></data>
   <data name="Combat.Hazard.RoutineAnyTurn" xml:space="preserve"><value>חלק מהשלבים, כמו ריסוק, קורים בתור של כל יצור. הפעילו אותם כשהסכנה מגיעה ליצור.</value></data>
   <data name="Combat.Hazard.StepNote" xml:space="preserve"><value>סימון השלב {0} של {1}</value></data>
   <data name="Combat.Hazard.StepOn" xml:space="preserve"><value>השלב {0} של {1} על היצורים המסומנים</value></data>
@@ -96,7 +96,7 @@
   <data name="Combat.QuickAddInitiative" xml:space="preserve"><value>(יוזמה {0})</value></data>
   <data name="Combat.AddHazardToOrder" xml:space="preserve"><value>הוספה לסדר</value></data>
   <data name="Combat.AddHazardToOrderFor" xml:space="preserve"><value>הוספת {0} לסדר היוזמה</value></data>
-  <data name="Combat.HazardAdded" xml:space="preserve"><value>{0} בסדר היוזמה. רק אתם רואים אותה.</value></data>
+  <data name="Combat.HazardAdded" xml:space="preserve"><value>{0} בסדר היוזמה. רק אתם רואים את הסכנה.</value></data>
   <data name="Combat.AddToEncounterFor" xml:space="preserve"><value>הוספת {0} למפגש הקרב</value></data>
   <data name="Combat.AddToEncounter" xml:space="preserve"><value>הוספה למפגש הקרב</value></data>
   <data name="Combat.QuickAddHint" xml:space="preserve"><value>הקלידו לחיפוש. יצורים מופיעים מיד בשולחן החי. השחקנים רואים אותם, בלי שם ופרטים, עד שתתנו להם שם או תסתירו אותם. סכנה נכנסת לסדר היוזמה בלי שאיש יראה: רק אתם רואים אותה.</value></data>

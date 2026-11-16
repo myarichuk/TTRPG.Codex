@@ -358,7 +358,7 @@
         var entry = draft.ToEntry();
         HazardNumbers.Tidy(entry.Properties, TypeDef);
         string Say(string key, object?[] args) => L.Get(key, args);
-        return (HazardNumbers.Problems(entry, TypeDef, system, Say).ToList(), HazardNumbers.ScalingProblems(entry, TypeDef, system, Say).ToList());
+        return (HazardNumbers.Problems(entry, TypeDef, system, Say).ToList(), HazardNumbers.ScalingProblems(entry, TypeDef, system, Say, Ctx.System.DisplayValue).ToList());
     }
 
     private SystemDefinition? grantSystem;
