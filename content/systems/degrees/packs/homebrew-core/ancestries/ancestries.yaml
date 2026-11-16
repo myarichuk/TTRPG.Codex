@@ -1,0 +1,12 @@
+# An ancestry's hit points count once, whatever the level. `boosts`: a word is a fixed boost, `a|b` one of those two, `free` any
+# attribute, and a leading minus a flaw.
+- id: marshkin
+  name: Marshkin
+  tags: [homebrew]
+  description: Wading people of the reed flats, quiet on their feet and patient with water, mud and weather.
+  properties: { hp: 6, boosts: [dex, wis, "str|con", free, "-cha"] }
+- id: cliffborn
+  name: Cliffborn
+  tags: [homebrew]
+  description: Climbers raised on high ledges, broad in the shoulder and slow to rattle.
+  properties: { hp: 8, boosts: [str, con, "dex|int", free, "-wis"] }

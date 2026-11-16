@@ -1,0 +1,21 @@
+id: degrees-homebrew-core
+name: Four Degrees homebrew core
+version: 0.1.0
+systemId: degrees
+minAppVersion: 0.0.0
+priority: 0
+description: 'A small homebrew pack for the Four Degrees system: two ancestries, two backgrounds, two classes (levels 1 to 3), a few weapons and armor, and three creatures. Every name, number and line is invented for this project.'
+authors:
+- TTRPG.Codex project
+license:
+  name: ORC
+  url: https://paizo.com/orclicense
+  # PLACEHOLDER. The ORC Notice must be quoted verbatim from the ORC License's own required notice, which is not in this repository.
+  attribution: "PLACEHOLDER - ORC Notice to be quoted verbatim from the ORC License's required notice. This pack is original homebrew written for TTRPG.Codex."
+  modified: false
+  notices:
+  - "PLACEHOLDER - the ORC Notice text, verbatim, goes here."
+  - "Credit for this adaptation: Four Degrees homebrew core, original content by the TTRPG.Codex project, released under the ORC License."
+  - Homebrew. No book, table or stat block was read or copied for this pack; every entry is tagged homebrew.
+kind: rules
+isTranslation: false

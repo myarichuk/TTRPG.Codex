@@ -1,0 +1,361 @@
+# yaml-language-server: $schema=../../../docs/schema/system.schema.json
+# Four Degrees - a data-driven d20 system definition for TTRPG.Codex.
+#
+# A d20 system whose checks come out in four degrees of success, whose proficiency ranks are worth the character's level plus a
+# step, whose bonuses are typed (the highest of a type counts, untyped ones add up), whose conditions carry a value and bring other
+# conditions with them, and whose attack penalty grows with each attack of a turn. It follows the shape of the ORC-licensed
+# rules sets in this project's own words and numbers, and names no game: every name, number and line in this folder is invented
+# (docs/ORC_PF2E_HANDOFF.md, LEGAL.md). The pack in packs/homebrew-core is homebrew, written for this system; no book was read for it.
+id: degrees
+name: Four Degrees
+version: 0.1.0
+compatibility: Four-degree d20
+description: >-
+  A d20 system with four degrees of success. Ranks (trained to legendary) are worth the level plus 2, 4, 6 or 8; attributes are
+  built from boosts; conditions have a value and bring others with them; each further attack in a turn is less likely to hit.
+license:
+  name: ORC
+  url: https://paizo.com/orclicense
+  # PLACEHOLDER. The ORC Notice wording must be copied verbatim from the ORC License's own required-notice text, which is not in this
+  # repository yet. Do not write it from memory. Until it is pasted here (and in packs/homebrew-core/manifest.yaml), this block is incomplete.
+  attribution: "PLACEHOLDER - ORC Notice to be quoted verbatim from the ORC License's required notice. This system's rules text and content are original homebrew written for TTRPG.Codex."
+  modified: false
+  notices:
+    - "PLACEHOLDER - the ORC Notice text, verbatim, goes here."
+    - "Credit for this adaptation: Four Degrees, original homebrew rules and content by the TTRPG.Codex project, released under the ORC License."
+
+attributes:
+  - { key: str, label: Strength,     abbreviation: STR, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: dex, label: Dexterity,    abbreviation: DEX, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: con, label: Constitution, abbreviation: CON, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: int, label: Intelligence, abbreviation: INT, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: wis, label: Wisdom,       abbreviation: WIS, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: cha, label: Charisma,     abbreviation: CHA, default: 10, min: 1, max: 30, modifier: half-minus-five }
+
+resources:
+  - { key: HP, label: Hit Points, maxKey: HP_Max, default: 10, isPrimary: true }
+
+actorFields:
+  - { key: level,       label: Level,       type: Number,          defaultValue: 1, min: 1, max: 20, category: General }
+  - { key: ancestry,    label: Ancestry,    type: EntityReference, targetEntityType: ancestry,   category: General }
+  - { key: background,  label: Background,  type: EntityReference, targetEntityType: background, category: General }
+  - { key: class,       label: Class,       type: EntityReference, targetEntityType: class,      category: General }
+  # The faith shape: a choice from the faith entries (a table may add its own) and two free text lines, one for what the faith asks
+  # and one for what it forbids. There is no alignment: nothing here limits who may follow what.
+  - { key: faith,       label: Faith,       type: EntityReference, targetEntityType: faith,      category: Faith }
+  - { key: faithEdicts, label: Edicts,      type: LongText, category: Faith, description: "What the faith asks of its followers, in your own words." }
+  - { key: faithTaboos, label: Taboos,      type: LongText, category: Faith, description: "What the faith forbids, in your own words." }
+  - { key: armorClass,  label: Armor Class, type: Number,          defaultValue: 10, category: Combat }
+
+fieldRoles:
+  level: level
+  class: class
+  summary: [level, ancestry, class]
+
+entityTypes:
+  - type: ancestry
+    label: Ancestry
+    pluralLabel: Ancestries
+    folder: ancestries
+    fields:
+      - { key: hp,     label: Hit points,     type: Number,  description: "Added to hit points once, whatever the level." }
+      - { key: boosts, label: Attribute boosts, type: TagList, description: "A word is a fixed boost, a|b one of two, free any attribute, a leading minus a flaw." }
+  - type: background
+    label: Background
+    pluralLabel: Backgrounds
+    folder: backgrounds
+  - type: class
+    label: Class
+    pluralLabel: Classes
+    folder: classes
+    fields:
+      - { key: hp,           label: Hit points per level, type: Number }
+      - { key: keyAttribute, label: Key attribute,        type: Text }
+      - { key: boosts,       label: Attribute boosts,     type: TagList }
+      - { key: savingThrows, label: Saves trained,        type: TagList }
+  # A deity-like choice with no names built in. A faith entry holds the same two free lines the sheet has; picking one is optional.
+  - type: faith
+    label: Faith
+    pluralLabel: Faiths
+    folder: faiths
+    fields:
+      - { key: edicts, label: Edicts, type: LongText }
+      - { key: taboos, label: Taboos, type: LongText }
+  - type: feat
+    label: Feat
+    pluralLabel: Feats
+    folder: feats
+  - type: armor
+    label: Armor
+    pluralLabel: Armor
+    folder: armor
+    fields:
+      - { key: armorBase,     label: Armor bonus, type: Number }
+      - { key: armorDexCap,   label: Dexterity cap, type: Number }
+      - { key: armorCategory, label: Category, type: Dropdown, options: [light, medium, heavy] }
+  - type: weapon
+    label: Weapon
+    pluralLabel: Weapons
+    folder: weapons
+    fields:
+      - { key: weaponCategory, label: Category, type: Dropdown, options: [simple, martial, unarmed] }
+      - { key: traits,         label: Traits,   type: TagList }
+  - type: trinket
+    label: Trinket
+    pluralLabel: Trinkets
+    folder: trinkets
+  # A creature: its numbers are printed (sheetRules.printed below), so a condition on it lowers the number the stat block shows.
+  - type: creature
+    label: Creature
+    pluralLabel: Creatures
+    folder: creatures
+    actorBlueprint: true
+    hitPointsProperty: hitPoints
+    playerFacing: false
+    summaryFields: [level, family]
+    filterFields: [family]
+    fields:
+      - { key: level,           label: Level,          type: Number, category: Profile }
+      - { key: family,          label: Family,         type: Text,   category: Profile }
+      - { key: armorClass,      label: Armor Class,    type: Number, category: Defenses }
+      - { key: hitPoints,       label: Hit Points,     type: Number, category: Defenses }
+      - { key: saveCon,         label: Con save,       type: Number, category: Defenses }
+      - { key: saveDex,         label: Dex save,       type: Number, category: Defenses }
+      - { key: saveWis,         label: Wis save,       type: Number, category: Defenses }
+      - { key: perceptionBonus, label: Perception,     type: Number, category: Senses }
+      - { key: classDcValue,    label: Special DC,     type: Number, category: Senses }
+      - { key: str, label: Strength,     type: Number, category: Ability scores }
+      - { key: dex, label: Dexterity,    type: Number, category: Ability scores }
+      - { key: con, label: Constitution, type: Number, category: Ability scores }
+      - { key: int, label: Intelligence, type: Number, category: Ability scores }
+      - { key: wis, label: Wisdom,       type: Number, category: Ability scores }
+      - { key: cha, label: Charisma,     type: Number, category: Ability scores }
+      - { key: strikes,         label: Strikes,        type: Collection, category: Actions, description: "One row per Strike: name, bonus, range (melee or ranged) and damage." }
+      - { key: abilities,       label: Abilities,      type: Collection, category: Actions }
+    attributeProperties: { str: str, dex: dex, con: con, int: int, wis: wis, cha: cha }
+
+# Times the table names, beside the rests. A feature counter refills on one with `recovers: [{ on: dailyPrep }]`.
+moments:
+  - { key: dailyPrep,    label: Daily preparations }
+  - { key: refocus,      label: Refocus }
+  - { key: sessionStart, label: Session start }
+
+conditions: [Shaken, Wobbly, Pinned]
+
+# A spell-like effect beside the conditions. Its bonus is a status bonus, so two copies of it never add.
+effects: [Heartened]
+
+# Shaken lowers every check and every DC by its value, as a status penalty, and drops by 1 at the end of the creature's turn.
+# Wobbly lowers armor class and attacks. Pinned brings Wobbly 2 with it while it holds and slows the creature. Each target belongs to
+# one side (docs/SHEET_CONDITIONS_DESIGN.md): attack, save, check, armorClass, classDc and perception are the rules' own; senseDc and
+# speed are the sheet kind's.
+conditionEffects:
+  Shaken:
+    value: { max: 4, decrease: { on: turnEnd, by: 1 } }
+    modifiers:
+      - { target: attack,     amount: "-value", type: status }
+      - { target: save,       amount: "-value", type: status }
+      - { target: check,      amount: "-value", type: status }
+      - { target: strike,     amount: "-value", type: status }
+      - { target: classDc,    amount: "-value", type: status }
+      - { target: perception, amount: "-value", type: status }
+      - { target: senseDc,    amount: "-value", type: status }
+  Wobbly:
+    value: { max: 4 }
+    modifiers:
+      - { target: armorClass, amount: "-value", type: status }
+      - { target: attack,     amount: "-value", type: status }
+      - { target: strike,     amount: "-value", type: status }
+  Pinned:
+    implies: [{ condition: Wobbly, value: 2 }]
+    modifiers:
+      - { target: speed, amount: -10, type: circumstance }
+  Heartened:
+    modifiers:
+      - { target: attack,  amount: 1, type: status }
+      - { target: strike,  amount: 1, type: status }
+      - { target: classDc, amount: 1, type: status }
+      - { target: senseDc, amount: 1, type: status }
+
+# Status, circumstance and item bonuses keep the highest of their type; untyped ones add up. Penalties of a type keep the worst.
+# Untyped penalties add up: `penaltyTypes` overrides `penalties` for one type.
+modifierTypes:
+  default: sum
+  penalties: highest
+  penaltyTypes:
+    untyped: sum
+  types:
+    status: highest
+    circumstance: highest
+    item: highest
+
+# A d20 check comes to a degree: 3 critical success, 2 success, 1 failure, 0 critical failure. Beating the DC by 10 is one step up, missing
+# it by 10 one step down; a natural 20 then moves the result one step up and a natural 1 one step down, within 0 to 3.
+dice:
+  initiative: 1d20
+  check: 1d20
+  checkRoll: degreeCheck
+
+functions:
+  degree: { formula: "(total, dc, natural) => min(3, max(0, (total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0) + (natural == 20 ? 1 : natural == 1 ? -1 : 0)))" }
+
+sheetRules:
+  enforcement: warn
+  # Hit points: the class's own number per level (no die) plus Constitution, and the ancestry's number once.
+  hitPoints:
+    key: HP_Max
+    currentKey: HP
+    flatProperty: hp
+    attribute: con
+    once: { field: ancestry, property: hp }
+
+  # Attributes: typed in, or built from boosts. Each source gives boosts to different attributes (an ancestry's own, the class's, and
+  # four free ones at levels 5, 10, 15 and 20); a boost is +1 to the modifier, but from +4 it is half of that.
+  attributes:
+    methods: [manual, boosts]
+    default: manual
+    boosts:
+      label: Boosts
+      sources:
+        - { key: ancestry, label: Ancestry, field: ancestry, trade: { fixed: 2, free: 1 } }
+        - { key: class,    label: Class,    field: class }
+        - { key: lvl5,     label: Level 5,  level: 5,  free: 4 }
+        - { key: lvl10,    label: Level 10, level: 10, free: 4 }
+        - { key: lvl15,    label: Level 15, level: 15, free: 4 }
+        - { key: lvl20,    label: Level 20, level: 20, free: 4 }
+
+  inventory:
+    key: inventory
+    label: Gear
+    types: [armor, weapon]
+
+  # Armor: its base and Dexterity up to its cap, then the rank in what is worn (the armor list below).
+  armorClass:
+    key: armorClass
+    unarmored: "10 + mod(dex)"
+    dexAttribute: dex
+    rank: { list: armor, property: armorCategory, unarmored: unarmored }
+
+  # Ranked lists beside the skills, on the skills' ranks (trained to legendary, worth level plus 2 to 8). Perception and the class DC
+  # publish their scores as values under their own keys; armor and weapons hold one rank per category and publish nothing.
+  ranked:
+    - { key: perception, label: Perception, ranksOf: skills, attribute: wis, publish: true }
+    - { key: classDc, label: Class DC, ranksOf: skills, base: 10, attributeFrom: { field: class, property: keyAttribute }, publish: true }
+    - key: armor
+      label: Armor
+      ranksOf: skills
+      list:
+        - { key: unarmored, label: Unarmored }
+        - { key: light,     label: Light armor }
+        - { key: medium,    label: Medium armor }
+        - { key: heavy,     label: Heavy armor }
+    - key: weapons
+      label: Weapons
+      ranksOf: skills
+      list:
+        - { key: unarmed, label: Unarmed }
+        - { key: simple,  label: Simple weapons }
+        - { key: martial, label: Martial weapons }
+
+  # What a character can do with a roll: a Strike with each equipped weapon (its attack bonus is the attribute plus the rank in its category).
+  actions:
+    - key: strike
+      label: Strike
+      inventory: equipped
+      tag: weapons
+      rank: { list: weapons, property: weaponCategory }
+      attackBonus: "abilityMod + rankValue"
+
+  # The multiple attack penalty: what the 1st, 2nd and 3rd or later attack of a turn adds. A weapon with the nimble trait lowers it.
+  multipleAttack:
+    penalties: [0, -5, -10]
+    variants:
+      - { property: traits, has: nimble, penalties: [0, -4, -8] }
+
+  # Ranks: trained, expert, master, legendary, worth the level plus 2, 4, 6, 8. An untrained skill adds its attribute alone.
+  skills:
+    label: Skills
+    list:
+      - { key: athletics, label: Athletics, attribute: str }
+      - { key: arcana,    label: Arcana,    attribute: int }
+      - { key: craft,     label: Craft,     attribute: int }
+      - { key: diplomacy, label: Diplomacy, attribute: cha }
+      - { key: stealth,   label: Stealth,   attribute: dex }
+      - { key: survival,  label: Survival,  attribute: wis }
+    ranks:
+      - { key: trained,   label: Trained,   sheetKey: skillTrained,   value: "level + 2" }
+      - { key: expert,    label: Expert,    sheetKey: skillExpert,    value: "level + 4" }
+      - { key: master,    label: Master,    sheetKey: skillMaster,    value: "level + 6" }
+      - { key: legendary, label: Legendary, sheetKey: skillLegendary, value: "level + 8" }
+    saves:
+      ranks:
+        - { key: trained,   label: Trained,   sheetKey: saveTrained,   value: "level + 2" }
+        - { key: expert,    label: Expert,    sheetKey: saveExpert,    value: "level + 4" }
+        - { key: master,    label: Master,    sheetKey: saveMaster,    value: "level + 6" }
+        - { key: legendary, label: Legendary, sheetKey: saveLegendary, value: "level + 8" }
+
+  # The numbers a printed creature carries as its stat block prints them. A condition's modifiers reach each by its target.
+  printed:
+    - { from: armorClass,      target: armorClass }
+    - { from: saveCon,         target: save.con }
+    - { from: saveDex,         target: save.dex }
+    - { from: saveWis,         target: save.wis }
+    - { from: perceptionBonus, target: perception }
+    - { from: classDcValue,    target: classDc }
+    - { list: strikes, bonus: bonus, range: range, name: name }
+
+  lists:
+    - key: feats
+      label: Feats
+      targetEntityType: feat
+
+  features:
+    - { field: ancestry }
+    - { field: background }
+    - { field: class, property: features, byField: level }
+    - { list: feats }
+
+# The play-time half: a DC and a speed the kind owns, and trinkets whose modifiers reach them through the kind's own feature source.
+sheetKinds:
+  - kind: character
+    label: Character
+    role: player
+    values:
+      - { key: senseDc, label: Sense DC, formula: "10 + level + 2 + mod(wis)", modifiers: senseDc }
+      - { key: speed,   label: Speed,    formula: "25",                        modifiers: speed }
+    lists:
+      - key: trinkets
+        label: Trinkets
+        type: trinket
+    features:
+      - { list: trinkets }
+
+rolls:
+  # A check against a DC, with the bonus given: the four degrees and the natural 20 / 1 shift.
+  - key: degreeCheck
+    label: Check
+    dice: 1d20
+    add: ["bonus"]
+    inputs:
+      - { key: bonus,  from: roller, label: Bonus }
+      - { key: target, from: gm,     label: DC }
+    outcomes:
+      - { name: criticalSuccess, when: "degree(total, target, natural) == 3", mark: critical }
+      - { name: success,         when: "degree(total, target, natural) == 2" }
+      - { name: failure,         when: "degree(total, target, natural) == 1" }
+      - { name: criticalFailure, mark: fumble }
+  # A strike: the same, less the multiple attack penalty of the attack number (an input) and of the weapon's traits (sheetRules.multipleAttack).
+  - key: strike
+    label: Strike
+    dice: 1d20
+    add: ["bonus", "attackPenalty(attackNumber)", "modifiers('strike')"]
+    inputs:
+      - { key: bonus,        from: roller, label: Attack bonus }
+      - { key: target,       from: gm,     label: Armor class }
+      - { key: attackNumber, from: roller, label: Attack this turn, default: 1 }
+      - { key: weapon,       from: roller, label: Weapon, default: "" }
+    outcomes:
+      - { name: criticalSuccess, when: "degree(total, target, natural) == 3", mark: critical }
+      - { name: success,         when: "degree(total, target, natural) == 2" }
+      - { name: failure,         when: "degree(total, target, natural) == 1" }
+      - { name: criticalFailure, mark: fumble }

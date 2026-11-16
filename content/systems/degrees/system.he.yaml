@@ -1,0 +1,69 @@
+name: ארבע דרגות
+compatibility: d20 עם ארבע דרגות הצלחה
+description: >-
+  מערכת d20 עם ארבע דרגות הצלחה. הדרגות (מאומן ועד אגדי) שוות לרמה ועוד 2, 4, 6 או 8;
+  התכונות נבנות מהגברות; לתנאים יש ערך, וחלקם מביאים איתם תנאים אחרים;
+  כל התקפה נוספת באותו תור פחות סבירה לפגוע.
+
+attributes:
+  str: { label: כוח, abbreviation: כוח }
+  dex: { label: זריזות, abbreviation: זרי }
+  con: { label: חוסן, abbreviation: חוס }
+  int: { label: תבונה, abbreviation: תבו }
+  wis: { label: חוכמה, abbreviation: חוכ }
+  cha: { label: כריזמה, abbreviation: כרי }
+
+resources:
+  HP: { label: נקודות חיים }
+
+actorFields:
+  level: { label: דרגה, category: כללי }
+  ancestry: { label: מוצא, category: כללי }
+  background: { label: רקע, category: כללי }
+  class: { label: מקצוע, category: כללי }
+  faith: { label: אמונה, category: אמונה }
+  faithEdicts: { label: ציוויים, category: אמונה, description: מה האמונה דורשת ממאמיניה, במילים שלך. }
+  faithTaboos: { label: איסורים, category: אמונה, description: מה האמונה אוסרת, במילים שלך. }
+  armorClass: { label: דרגת שריון, category: קרב }
+
+maxSuffix: מקס׳
+
+conditions:
+  Shaken: מזועזע
+  Wobbly: מתנודד
+  Pinned: מוצמד
+  Heartened: מעודד
+
+moments:
+  dailyPrep: הכנות יומיות
+  refocus: ריכוז מחדש
+  sessionStart: תחילת מפגש
+
+entityTypes:
+  ancestry: { label: מוצא, pluralLabel: מוצאים }
+  background: { label: רקע, pluralLabel: רקעים }
+  class: { label: מקצוע, pluralLabel: מקצועות }
+  faith: { label: אמונה, pluralLabel: אמונות }
+  feat: { label: כשרון, pluralLabel: כשרונות }
+  armor: { label: שריון, pluralLabel: שריונות }
+  weapon: { label: נשק, pluralLabel: כלי נשק }
+  trinket: { label: תכשיט, pluralLabel: תכשיטים }
+  creature: { label: יצור, pluralLabel: יצורים }
+
+sheetRules:
+  lists:
+    feats: כשרונות
+  skills:
+    athletics: אתלטיקה
+    arcana: כישוף
+    craft: מלאכה
+    diplomacy: דיפלומטיה
+    stealth: התגנבות
+    survival: הישרדות
+  ranks:
+    trained: מיומן
+    expert: מומחה
+    master: אמן
+    legendary: אגדי
+  skillsLabel: מיומנויות
+  inventoryLabel: ציוד

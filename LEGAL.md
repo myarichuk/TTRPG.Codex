@@ -202,3 +202,6 @@ domain under CC0 1.0 by the TTRPG.Codex project.
   `street` is original, `d35` follows the shape of the d20 System Reference Document 3.5 (Open Game
   License 1.0a), `crew` follows the Forged in the Dark SRD (CC BY 3.0), and `degrees` follows the shape
   of the ORC-licensed Remaster rules in this project's own words and numbers, naming no game.
+- `content/systems/degrees` (Four Degrees): an original homebrew system and pack written for this project, using no book's text, tables
+  or stat blocks. Its manifests carry an ORC licence block whose verbatim ORC Notice is still a marked placeholder until the licence's own
+  required-notice text is added; it is not listed in `bundled.txt`, so it ships as its own archive.

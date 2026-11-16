@@ -1,0 +1,29 @@
+# Four invented weapons. A weapon with the nimble trait lowers the multiple attack penalty (sheetRules.multipleAttack).
+- id: reed-spear
+  name: Reed spear
+  tags: [weapons, homebrew]
+  properties:
+    weaponCategory: simple
+    traits: []
+    use: { attack: melee, abilities: [str], damage: 1d6 }
+- id: hook-knife
+  name: Hook knife
+  tags: [weapons, homebrew]
+  properties:
+    weaponCategory: simple
+    traits: [nimble]
+    use: { attack: melee, abilities: [dex], damage: 1d4 }
+- id: ledge-axe
+  name: Ledge axe
+  tags: [weapons, homebrew]
+  properties:
+    weaponCategory: martial
+    traits: []
+    use: { attack: melee, abilities: [str], damage: 1d10 }
+- id: cord-sling
+  name: Cord sling
+  tags: [weapons, homebrew]
+  properties:
+    weaponCategory: simple
+    traits: []
+    use: { attack: ranged, abilities: [dex], damage: 1d4 }
