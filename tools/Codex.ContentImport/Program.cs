@@ -15,6 +15,11 @@ using Codex.ContentImport;
 // attribution statement (CC-BY-4.0), a modification notice, and the 5e-bits MIT notice for the JSON
 // transcription the data was read from.
 
+if (args.Length > 0 && args[0] == "degrees")
+{
+    return Codex.ContentImport.Degrees.DegreesCommand.Run(args[1..], Console.Out, Console.Error);
+}
+
 var options = ImportOptions.Parse(args);
 if (options == null)
 {
