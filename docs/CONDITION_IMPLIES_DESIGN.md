@@ -279,3 +279,33 @@ Dying, wounded and doomed stay their own design. They come after (a), on valued 
    `TableEvents.Change` logs the stay as its own line.
 2. Manual AC on a character takes condition modifiers too (`TableCard.Stats`).
 3. Homebrew saves run the decision 5 warning as well.
+
+## Built (P4b a, b, c)
+
+What was built, and where it differs from the design above.
+
+- **Files.** `SheetConditions.Holding.cs` (`Holding`, `Of`, `Drops`, `Drop`, `IsDropMoment`, `Stays`), `ImplicationChecks.cs` and `PrintedChecks.cs` (the loader checks, as
+  separate files rather than methods of `SystemDefinitionLoader`), `ConditionImplicationConverter.cs`, `SheetRuleEngine.Printed.cs`. `Listed` is the old `Of` body; `LiveView` writes it.
+- **`stays` (decision 1).** An implied item takes `stays: true`, for an unvalued condition only (the loader refuses it on a valued one). The stay is written as a status, once, where a
+  status is taken off: `TableRules.RemoveStatusLeaving` (the card's remove command and a vitals handler's `condition` remove) and `TableEvents.Change` (a script clearing the source).
+  Not covered: a source that ends by its value reaching 0, a timed status that expires, the sheet page's own list, and `Kill`. The log line is the ordinary `Status.Gained` /
+  `Sheet.ConditionAdded`.
+- **Holding.** A formula on an implied `value` is worked out by `SheetModel.Formula`, whose constructor reads what holds; a thread-static guard makes that inner read skip
+  `implies`. An implied value is floored and clamped to `max`; a formula that cannot be worked out brings nothing.
+- **`ConditionLine`** gains `From` and also `Listed` (false: brought by another, so no remove button).
+- **Implied pills** show on `InitiativeRow` as well as `TableCard`. The initiative row, and so part (c), is `InitiativeRow.razor`, not `CombatConsole.razor`/`TableCard.razor`:
+  `CombatConsole` only passes `Printed` down. `TableCard` has the same valued badges as the row. A badge shows the level as held (`ConditionLines.HeldLevels`: the table's
+  pool, or what another condition brings if that is higher), so Shaken stored at 1 and brought to 3 by Dread reads 3; a condition only another brings shows once, as the implied pill with its value. Valued badges keep the test id `exhaustion-badge` for Exhaustion and use `valued-badge` for the rest; both reuse
+  `Combat.ExhaustionTitle` ("{0}, level {1}"). New strings: `Combat.Condition.ImpliedBy`, `Combat.Card.PrintedTitle`, `Wizard.Modifiers.Unreached` (en, ru, he; ru and he need native review).
+- **Decision 5 and 3.** `SheetConditions.UnreachedKindModifiers` runs in `YamlContentPackLoader.RegisterEntry` (a load problem) and live in `HomebrewWizard` (a non-blocking list under a
+  heading; the GM may save). The message is a key and its arguments (`Wizard.Modifiers.UnreachedLine`), English in Core for the pack log and said by the wizard in the reader's language.
+- **Printed (b).** A target may also be a ranked list's published score (Perception, a class DC), as `KindOf` calls `Ranked`, besides the armor class key, a derived value, a Number
+  field, `save.<attribute>` and `check.skill.<key>`. A Strike row is keyed `<list>.<index>`; its range is `ranged` when `row[range]` says so, else melee. `TableCard` lists the printed
+  saves, skills and Strikes that no stat replaced, for whoever sees the card in full.
+- **Manual AC (decision 2).** `SheetRuleEngine.ConditionBonus(live, target)` gives what the conditions add to a number kept by hand; `TableCard.Stats` shows the stored armor class
+  plus it, with the printed-style title, and writes nothing.
+- **The drop.** `SheetConditions.Drop` runs after the event in `SpecRunner` and in the sheet page's moment button, as the table does; `SheetEvents.Raise` does not drop. The two
+  `degrees` turn-end expectations pass (34 of 34).
+- **Schema.** The generated schema offers a bare name or the map form for an `implies` item (`SystemSchema` special-cases `ConditionImplication`).
+- **Goldens.** srd5e and fitd `expected.txt` are byte-identical; no golden sheet holds a condition and printed numbers sit outside `SheetEvaluation`.
+- **srd5e data.** Paralyzed, Petrified and Stunned imply Incapacitated; Unconscious implies Incapacitated and Prone (`stays: true`), each checked against the SRD 5.2.1 condition text.

@@ -59,6 +59,24 @@ public static class ConditionLines
         return lines;
     }
 
+    /// <summary>Each valued condition the creature holds on its own, with its level as held: the table's pool, or what another condition brings when that is
+    /// higher (Shaken stored at 1 and held at 3 by Dread reads 3). One that is only brought by another is not here: it shows as that condition's line.
+    /// <paramref name="live"/> is the live sheet (<see cref="SheetConditions.LiveView"/>); <paramref name="pool"/> reads a pool by key.</summary>
+    public static IReadOnlyList<(ValuedCondition Condition, int Level)> HeldLevels(SystemDefinition? system, IReadOnlyDictionary<string, object> live, Func<string, int?> pool)
+    {
+        var levels = new List<(ValuedCondition, int)>();
+        if (system == null) return levels;
+        var lines = SheetConditions.Holding(system, live);
+        foreach (var valued in Valued(system, null))
+        {
+            var held = lines.FirstOrDefault(h => h.Listed && string.Equals(h.Name, valued.Name, StringComparison.OrdinalIgnoreCase));
+            var level = Math.Max(pool(valued.Key) ?? 0, held == null ? 0 : (int)held.Value);
+            if (level > 0) levels.Add((valued, level));
+        }
+
+        return levels;
+    }
+
     /// <summary>The picker's entries: the system's conditions (and its concentration condition), then its spell effects as their own group. A datalist has
     /// no groups, so an effect says so in its <c>label</c>; a valued condition that holds says its value there too. <paramref name="values"/> is the creature's
     /// value of each valued condition by key (0 when absent). <paramref name="group"/> is the group's name in the reader's language.</summary>

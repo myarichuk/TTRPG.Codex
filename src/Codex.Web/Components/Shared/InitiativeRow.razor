@@ -104,19 +104,20 @@
 
     @{
         var effects = (State?.Effects ?? Array.Empty<EffectSnapshot>()).Where(e => !IsVitalsMarker(e.EffectId)).ToList();
-        var exhaustion = Vitals?.Exhaustion is { } exhaustionRules ? State?.Pool(exhaustionRules.Key) ?? 0 : 0;
-        var onSheet = OnlyOnSheet;
+        var valued = ValuedBadges;
         var implied = Implied;
+        var onSheet = OnlyOnSheet;
     }
-    @if (effects.Count > 0 || exhaustion > 0 || implied.Count > 0 || onSheet.Count > 0)
+    @if (effects.Count > 0 || valued.Count > 0 || implied.Count > 0 || onSheet.Count > 0)
     {
         <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Name])">
-            @if (exhaustion > 0)
+            @* Every valued condition that holds shows its level (Exhaustion 3, Frightened 2), not only Exhaustion. *@
+            @foreach (var (condition, level) in valued)
             {
-                var condition = Vitals!.Exhaustion!.Condition;
-                <li class="cond-chip" data-testid="exhaustion-badge" title="@(L["Combat.ExhaustionTitle", condition ?? L["Combat.Exhaustion"], exhaustion])">
-                    <DomainIcon Domain="condition" Key="@(condition ?? "Exhaustion")" Size="DomainIconSize.Small" />
-                    @ConditionLabel(condition ?? "Exhaustion", $"{condition ?? L["Combat.Exhaustion"]} {exhaustion}")
+                var isExhaustion = Vitals?.Exhaustion is { } exhaustionRules && condition.Key == exhaustionRules.Key;
+                <li class="cond-chip" data-testid="@(isExhaustion ? "exhaustion-badge" : "valued-badge")" data-condition="@condition.Name" data-level="@level" title="@(L["Combat.ExhaustionTitle", ConditionName(condition.Name), level])">
+                    <DomainIcon Domain="condition" Key="@condition.Name" Size="DomainIconSize.Small" />
+                    @ConditionLabel(condition.Name, $"{ConditionName(condition.Name)} {level}")
                 </li>
             }
             @foreach (var effect in effects)
@@ -218,6 +219,12 @@
     /// and the valued conditions, which show by their value.</summary>
     private IReadOnlyList<string> OnlyOnSheet =>
         (State?.OnlyOnSheet ?? Array.Empty<string>()).Where(c => !IsVitalsMarker(c) && ConditionLines.ValuedNamed(Definition, null, c) == null).ToList();
+
+    /// <summary>Each valued condition the creature holds, with its level as held (the table's number, or what another condition brings if higher).</summary>
+    private IReadOnlyList<(ValuedCondition Condition, int Level)> ValuedBadges =>
+        Definition == null || State == null
+            ? Array.Empty<(ValuedCondition, int)>()
+            : ConditionLines.HeldLevels(Definition, State.LiveView(Definition, Actor?.Sheet ?? new Dictionary<string, object>()), State.Pool);
 
     /// <summary>What other conditions bring that the creature does not hold itself (<c>implies</c>), with the conditions that bring each.</summary>
     private IReadOnlyList<ConditionLine> Implied =>

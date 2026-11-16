@@ -56,9 +56,17 @@
         </div>
     }
 
-    @if (Effects.Count > 0 || OnlyOnSheet.Count > 0 || Implied.Count > 0)
+    @if (Effects.Count > 0 || OnlyOnSheet.Count > 0 || Implied.Count > 0 || Valued.Count > 0)
     {
         <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Actor.Name])">
+            @* Every valued condition that holds shows its level (Exhaustion 3, Frightened 2), as held. *@
+            @foreach (var (condition, level) in Valued)
+            {
+                <li class="cond-chip" data-testid="table-card-condition" data-level="@level" data-condition="@condition.Name" title="@(L["Combat.ExhaustionTitle", ConditionName(condition.Name), level])">
+                    <DomainIcon Domain="condition" Key="@condition.Name" Size="DomainIconSize.Small" />
+                    @($"{ConditionName(condition.Name)} {level}")
+                </li>
+            }
             @foreach (var effect in Effects)
             {
                 <li class="cond-chip" data-testid="table-card-condition">
@@ -281,6 +289,10 @@
                                                     || string.Equals(c, down.Condition, StringComparison.OrdinalIgnoreCase)))
                     && ConditionLines.ValuedNamed(Definition, null, c) == null)
         .ToList();
+
+    /// <summary>The valued conditions the creature holds, each with its level as held.</summary>
+    private IReadOnlyList<(ValuedCondition Condition, int Level)> Valued =>
+        Definition == null || State == null ? Array.Empty<(ValuedCondition, int)>() : ConditionLines.HeldLevels(Definition, LiveSheet(), State.Pool);
 
     /// <summary>The conditions the creature holds only because another brings them (<c>implies</c>), with what brings each. Read from the live sheet, never stored.</summary>
     private List<ConditionLine> Implied =>
