@@ -482,9 +482,9 @@ public class DegreesRedactionTests : IDisposable
         Assert.DoesNotContain("orblax", finding.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>The generated packs the CI gate must find. Empty until chapter 1 lands, so the gate asserts "no pack" explicitly instead of passing on nothing;
-    /// each chapter that adds a pack folder adds its name here, and a folder that is not listed fails the test.</summary>
-    private static readonly string[] ExpectedGeneratedPacks = Array.Empty<string>();
+    /// <summary>The generated packs the CI gate must find, so it never passes on nothing; each chapter that adds a pack folder
+    /// adds its name here, and a folder that is not listed fails the test.</summary>
+    private static readonly string[] ExpectedGeneratedPacks = { "rules-core" };
 
     /// <summary>The CI gate over the generated packs: the shipped allowlist and the system's skill and condition keys and labels (trait keys join them when
     /// the system has a trait type) are the only capitalized words allowed, and no denylisted hash appears.</summary>
@@ -510,8 +510,11 @@ public class DegreesRedactionTests : IDisposable
         foreach (var name in ExpectedGeneratedPacks)
         {
             var pack = Path.Combine(packsRoot, name);
-            Assert.Empty(PackWordCheck.CheckAllowlist(pack, terms, deny));
-            Assert.Empty(PackWordCheck.CheckDenylist(pack, deny));
+            // Joined, so a failure lists every finding (xunit shortens a collection to five).
+            var flagged = string.Join("; ", PackWordCheck.CheckAllowlist(pack, terms, deny).Select(f => f.ToString()).Distinct().Order());
+            Assert.True(flagged.Length == 0, flagged);
+            var denied = string.Join("; ", PackWordCheck.CheckDenylist(pack, deny).Select(f => f.ToString()));
+            Assert.True(denied.Length == 0, denied);
         }
     }
 }

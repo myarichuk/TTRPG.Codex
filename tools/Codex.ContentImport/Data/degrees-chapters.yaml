@@ -13,7 +13,7 @@ rows:
     book: pc
     parser: entries
     target: condition
-    approved: false
+    approved: true
     paths:
       - [Conditions Appendix, List of Conditions]
   - chapter: conditions
@@ -21,7 +21,7 @@ rows:
     parser: rules
     target: rule
     category: Conditions
-    approved: false
+    approved: true
     paths:
       - [Conditions Appendix, Condition Values]
       - [Conditions Appendix, Overriding Conditions]

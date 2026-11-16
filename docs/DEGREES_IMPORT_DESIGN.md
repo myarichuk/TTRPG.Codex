@@ -314,3 +314,13 @@ lowercase form is used elsewhere in the pack. Two things move to chapter 1 becau
   opens a column after one that ended in a sidebar. Redaction rows take an optional `book`; a path two bookmarks share fails; an id may not repeat across types; fields, degrees and
   paragraphs render in source order, and a paragraph after a labelled one stays its own paragraph.
 - Not done here: trait keys in the allowlist (chapter 2), the three other parsers, redaction rows, the manifest and the pack (Ch1b).
+
+**Built (step 3, Ch1b):**
+- `packs/rules-core/` holds 42 conditions and 2 rules (44 entries; 46 bookmark children minus 4 sidebars, and 42 entry headers, agree on the 42). Its manifest is
+  `four-degrees-rules`, with the attribution and ORC Notice copied from the system and a Reserved Material notice that designates none of its own.
+- 11 redaction rows, all `replace`: 5 page pointers (the report's `pageReferencesLeft` is 0), and 6 sentences reworded only so the word gate stops flagging an ordinary
+  capital. The gate takes a stop after a contraction's last letter (`wouldn't. If`) for an abbreviation and so reads two sentences as one, and it flags a sentence-opening
+  word whose lowercase form the pack never uses; none of these was a game-term problem, so the allowlist took only game terms (condition names, attributes, saves, actions).
+- The CI gate test pins `rules-core` in `ExpectedGeneratedPacks`, and now lists every flagged word (entry number, field path) rather than the first five.
+- Not done: `degrees-denylist.sha256` is still empty; it is regenerated once every chapter's rows are on the take-list. A few `armor .` style spaces before a stop remain in
+  one entry (a parser gap, to be fixed in the entries stage with its own test).
