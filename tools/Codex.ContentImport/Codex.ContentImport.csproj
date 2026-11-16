@@ -13,6 +13,12 @@
     <EmbeddedResource Include="Data\srd521-grants.yaml" LogicalName="srd521-grants.yaml" />
     <EmbeddedResource Include="Data\srd521-invocations.yaml" LogicalName="srd521-invocations.yaml" />
     <EmbeddedResource Include="Data\srd521-traps.yaml" LogicalName="srd521-traps.yaml" />
+    <EmbeddedResource Include="Data\degrees-books.yaml" LogicalName="degrees-books.yaml" />
+    <EmbeddedResource Include="Data\degrees-fonts.yaml" LogicalName="degrees-fonts.yaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PdfPig" Version="0.1.16" />
   </ItemGroup>
 
   <ItemGroup>

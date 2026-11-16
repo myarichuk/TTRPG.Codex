@@ -53,3 +53,7 @@ tests/Codex.Tests/Golden/**/*.actual.txt
 
 # Embedded RavenDB logs written beside the web project
 src/Codex.Web/RavenServer/
+
+# Local-only book import: the books and everything extracted from them never enter the repository
+tools/**/*.pdf
+.degrees-work/

@@ -1,0 +1,25 @@
+# Font roles for the two local book imports. Rules are tried top to bottom and the first match wins.
+#   family  substrings of the font name, with the six-letter subset tag already removed
+#   size    inclusive point-size range, rounded to a whole point
+#   x       inclusive range for the left edge of the letter, in points
+# A letter that matches no rule is "unclassified" and fails the run, so a new font cannot slip in unnoticed.
+# Roles: icon, opener, furniture, entry-header, block-header, section, display, tag, rules, body.
+# Table rows have no role of their own: the table parser finds them from block-header and body words.
+rules:
+  - { role: icon, family: [Icons] }
+  - { role: opener, family: [TimesNewRoman] }
+  # Page furniture: side tabs, page numbers, the running head and the large tab numeral.
+  - { role: furniture, family: [GoodOT-CondBold], size: [9, 9], x: [530, 700] }
+  - { role: furniture, family: [GoodOT-Bold], size: [12, 12], x: [-1000, 60] }
+  - { role: furniture, family: [GoodOT-Bold], size: [12, 12], x: [555, 1000] }
+  - { role: furniture, family: [Taroca], size: [12, 12] }
+  - { role: furniture, family: [Taroca], size: [32, 32], x: [530, 700] }
+  - { role: entry-header, family: [GoodOT-Bold], size: [13, 13] }
+  - { role: block-header, family: [GoodOT-CondBold], size: [12, 15] }
+  - { role: section, family: [Taroca], size: [14, 22] }
+  - { role: display, family: [Taroca, Palatino, Copperplate] }
+  - { role: display, family: [GoodOT], size: [16, 200] }
+  - { role: tag, family: [GoodOT-CondBold], size: [1, 11] }
+  - { role: rules, family: [Sabon], size: [1, 11] }
+  - { role: display, family: [Sabon] }
+  - { role: body, family: [GoodOT, Helvetica] }
