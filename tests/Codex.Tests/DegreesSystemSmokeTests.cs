@@ -58,12 +58,14 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
     [Fact]
     public void NoFileOfTheSystemNamesAPublisherASettingOrAGame()
     {
-        // Every line of every file, the overlays and comments included. The licence url and attribution are where a publisher's name may
-        // appear once the upstream credit is pasted in, so the url line is skipped; the attribution holds only a placeholder until then.
+        // Every line of every file, the overlays and comments included. The licence lines are the one place the upstream publisher and
+        // product are named (the ORC requires the credit), so lines naming the licence url and the attribution line are skipped.
         var denied = new Regex("pathfinder|paizo|golarion|pf2e|remaster|starfinder|dungeons|d&d|wizards of the coast", RegexOptions.IgnoreCase);
         var hits = Files()
             .SelectMany(f => File.ReadLines(f).Select((line, i) => (File: Path.GetRelativePath(Folder, f), Line: i + 1, Text: line)))
-            .Where(l => !l.Text.Contains("orclicense", StringComparison.Ordinal) && denied.IsMatch(l.Text))
+            .Where(l => !l.Text.Contains("orclicense", StringComparison.Ordinal)
+                && !l.Text.TrimStart().StartsWith("attribution:", StringComparison.Ordinal)
+                && denied.IsMatch(l.Text))
             .Select(l => $"{l.File}:{l.Line}: {l.Text.Trim()}")
             .ToList();
 
@@ -97,7 +99,7 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
         if (hasPlaceholder) Assert.Contains(SystemId, unreleased);
     }
 
-    [Fact(Skip = "The ORC Notice, the upstream attribution and the Reserved Material statement are still PLACEHOLDER text, to be pasted verbatim by the project owner. Remove this Skip (and the line in content/systems/unreleased.txt) when they are in.")]
+    [Fact]
     public void AShippedSystemHasNoPlaceholder()
     {
         var offenders = Files().Where(f => f.EndsWith(".yaml")).Where(f => File.ReadAllText(f).Contains("PLACEHOLDER", StringComparison.Ordinal)).Select(f => Path.GetRelativePath(Folder, f)).ToList();

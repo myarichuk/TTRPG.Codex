@@ -1,4 +1,2 @@
 # Systems under content/systems/ that packaging/pack-systems.sh leaves out of the release archives (one folder name per line).
-# four-degrees: its ORC Notice and upstream attribution are still PLACEHOLDER text; remove the line once the user has supplied them.
-# (Codex.SystemCheck --pack refuses a system whose licence still says PLACEHOLDER, so removing the line early fails the release.)
-four-degrees
+# Codex.SystemCheck --pack refuses a system whose licence still says PLACEHOLDER, so list such a system here until it is filled in.

@@ -16,14 +16,15 @@ description: >-
 license:
   name: ORC
   url: https://paizo.com/orclicense
-  # PLACEHOLDERs. Each must be copied verbatim from the licence or the upstream book's own notice, never written from memory.
-  # Codex.SystemCheck --pack refuses this system while any PLACEHOLDER remains, and content/systems/unreleased.txt keeps it out of releases.
-  attribution: "PLACEHOLDER - the upstream Attribution (credit line and full authors list) from the upstream ORC Notice, verbatim."
+  # The ORC Notice and the upstream credit are copied verbatim from the upstream book's own ORC Notice. The attribution is the one place
+  # the upstream publisher and product are named.
+  attribution: "This product is based on the following Licensed Material: Pathfinder Player Core © 2023 Paizo Inc., Authors: Logan Bonner, Jason Bulmahn, Stephen Radney-MacFarland, and Mark Seifter, with Alexander Augunas, Kate Baker, Carlos Cabrera, Calder CaDavid, James Case, Eleanor Ferron, Steven Hammond, Joan Hong, Vanessa Hoskins, James Jacobs, Jenny Jarzabski, Erik Keith, Dustin Knight, Lyz Liddell, Luis Loza, Patchen Mortimer, Dennis Muldoon, Mikhail Rekun, David N. Ross, Michael Sayre, Kendra Leigh Speedling, Mark Thompson, Clark Valentine, Andrew White, Landon Winkler, and Linda Zayas-Palmer."
   modified: true
   notices:
-    - "PLACEHOLDER - the ORC Notice text, verbatim from the ORC License's own required notice."
-    - "Credit for this adaptation: Four Degrees, an adaptation of ORC-licensed rules with new names, text and creatures by the TTRPG.Codex project, released under the ORC License."
-    - "PLACEHOLDER - Reserved Material statement for this product (what TTRPG.Codex reserves, or that it reserves nothing)."
+    - "ORC Notice: This product is licensed under the ORC License located at the Library of Congress at TX 9-307-067 and available online at various locations including paizo.com/orclicense, azoralaw.com/orclicense, and others. All warranties are disclaimed as set forth therein."
+    - "If you use our Licensed Material in your own published works, please credit us as follows: Four Degrees, © 2026 Michael Yarichuk, the TTRPG.Codex project."
+    - "Reserved Material: Reserved Material elements in this product include, but may not be limited to: the name Four Degrees and every name invented for it (ancestries, backgrounds, classes, creatures, items, runes, hazards and places), with their descriptive and flavour text, and all elements designated as Reserved Material under the ORC License. The rules and numbers are not reserved."
+    - "Expressly Designated Licensed Material: This product contains no Expressly Designated Licensed Material."
     - "Modified from the upstream rules: restated as data in this project's own words, with invented names and content."
 
 attributes:
@@ -106,6 +107,28 @@ entityTypes:
     label: Trinket
     pluralLabel: Trinkets
     folder: trinkets
+  # Worn or carried gear that is not a weapon or armor. Equipped, its `modifiers` reach the sheet as typed modifiers (docs/ITEM_RUNES_DESIGN.md).
+  - type: magic-item
+    label: Magic item
+    pluralLabel: Magic items
+    folder: magic-items
+    fields:
+      - { key: level, label: Level, type: Number }
+      - { key: worth, label: Worth in silver, type: Number }
+  # A mark set on a weapon or on armor. `appliesTo` is the item's type; a rune with a `group` (potency, weight, steadiness) is a fundamental one, held once
+  # per group; a rune with no group is a property rune and takes one of the `slots` the item's potency rune gives. `extraDice` adds that many copies of a
+  # weapon's damage dice.
+  - type: rune
+    label: Rune
+    pluralLabel: Runes
+    folder: runes
+    fields:
+      - { key: appliesTo, label: Goes on, type: Dropdown, options: [weapon, armor] }
+      - { key: group,     label: Group,   type: Text }
+      - { key: slots,     label: Property rune slots, type: Number }
+      - { key: extraDice, label: Extra weapon dice,   type: Number }
+      - { key: level,     label: Level, type: Number }
+      - { key: worth,     label: Worth in silver, type: Number }
   # A trap, a vent or a haunt, placed on a place's feature. Detect and disarm routes name a skill, a DC, a minimum rank and how many successes
   # it takes; `triggersOn` lists the outcomes that set it off (`failure` means a failure or worse, `criticalFailure` that outcome alone).
   - type: hazard
@@ -262,7 +285,8 @@ sheetRules:
   inventory:
     key: inventory
     label: Gear
-    types: [armor, weapon]
+    types: [armor, weapon, magic-item]
+    runeType: rune
 
   # Armor: its base and Dexterity up to its cap, then the rank in what is worn (the armor list below).
   armorClass:

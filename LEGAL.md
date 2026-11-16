@@ -171,19 +171,19 @@ this project's own words with invented names, text and creatures. No text, table
 
 - The system and its pack are released under the ORC License. This folder's data is under the ORC; the code of this repository stays under
   its own licence, since the ORC grants no rights to code.
-- The ORC Notice, the upstream Attribution (credit line and authors list) and the Reserved Material statement are not yet in the
-  manifests: they are marked PLACEHOLDER and must be copied verbatim from the licence and the upstream notice, never written from memory.
-  Until they are, `content/systems/unreleased.txt` keeps the system out of the release archives and `Codex.SystemCheck --pack` refuses it.
-- The system is not named after the upstream game and uses no publisher, setting or deity name; the publisher's name will appear only inside
-  the upstream attribution.
+- The manifests carry the ORC Notice and the upstream Attribution (credit line and authors list), both copied verbatim from the upstream
+  book's own ORC Notice, plus this product's Reserved Material and Expressly Designated Licensed Material statements.
+- The system is not named after the upstream game and uses no publisher, setting or deity name. The publisher and product are named only
+  in the attribution line, which the ORC requires.
 - Not shipped inside the app: like every system other than the 5E one it is released as its own archive, so it can be withdrawn without a
   new release.
 - `tools/Codex.ContentImport/Data/degrees-redactions.yaml` (the replacement texts of the local book importer's redaction step) and
   `degrees-allowlist.txt` (game terms) are ORC data, released with the packs the importer generates, as `Data/srd521-traps.yaml` is CC BY data.
   They hold no source text: a redaction row stores only a hash and length of the span it removes, our own replacement words and a reason.
   `degrees-denylist.sha256` is hashes only. None of the three holds a name.
-- Reserved Material in this pack (names, flavour text, creatures) is whatever the Reserved Material statement above designates; until it
-  is written, treat all of it as reserved.
+- Reserved Material: the name Four Degrees and every name invented for it (ancestries, backgrounds, classes, creatures, items, runes,
+  hazards and places), with their descriptive and flavour text. The rules and numbers are not reserved. The product contains no Expressly
+  Designated Licensed Material.
 
 ### Example content (`content/examples/`)
 

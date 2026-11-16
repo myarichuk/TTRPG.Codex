@@ -127,8 +127,9 @@ public class Phase3ExitCriteriaTests : IClassFixture<AppFixture>
         await ariaRowOnDm.GetByTestId("select-participant").ClickAsync();
         await AddConditionAsync(ariaRowOnDm, "Poisoned", rounds: 3);
         await AddConditionAsync(ariaRowOnDm, "Stunned", rounds: 1);
-        await Assertions.Expect(ariaRowOnDm.GetByTestId("condition-badge").Filter(new() { HasText = "Poisoned" })).ToContainTextAsync("Poisoned (3)");
-        await Assertions.Expect(ariaRowOnDm.GetByTestId("condition-badge").Filter(new() { HasText = "Stunned" })).ToContainTextAsync("Stunned (1)");
+        // Match on the effect id: Stunned also shows an implied "Incapacitated, from Stunned" badge.
+        await Assertions.Expect(ariaRowOnDm.Locator("[data-testid='condition-badge'][data-effect-id='Poisoned']")).ToContainTextAsync("Poisoned (3)");
+        await Assertions.Expect(ariaRowOnDm.Locator("[data-testid='condition-badge'][data-effect-id='Stunned']")).ToContainTextAsync("Stunned (1)");
 
         // ---- Criterion 3 ----
         const int ariaDamagedHp = 8;
