@@ -149,6 +149,10 @@ public class ActorDocument
     public string Name { get; set; } = string.Empty;
     public ActorVisibility Visibility { get; set; } = ActorVisibility.Known;
 
+    /// <summary>Set on a complex hazard that took a turn in initiative (HAZARDS_DESIGN.md 3.3): which Library entry it is and which placement it stands for. Null on every
+    /// other actor. The table keeps the hazard's live state under this link, and takes the actor out of the order when the hazard is disabled or destroyed.</summary>
+    public HazardActorLink? Hazard { get; set; }
+
     /// <summary>Taken out of play (D17): gone from the cast, pickers and the table, but still the actor every mention,
     /// <c>:::for</c> block, knower and linked page names. The DM can bring it back from Cast.</summary>
     public bool Retired { get; set; }

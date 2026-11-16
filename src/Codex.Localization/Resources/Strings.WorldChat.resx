@@ -161,6 +161,8 @@
   <data name="WorldChat.Proposal.MovesTo" xml:space="preserve"><value>Moves inside {0}</value></data>
   <data name="WorldChat.Proposal.MovesToTop" xml:space="preserve"><value>Moves out to the top of its region</value></data>
   <data name="WorldChat.Proposal.BecomesKind" xml:space="preserve"><value>Becomes: {0}</value></data>
+  <data name="WorldChat.Proposal.Hazard" xml:space="preserve"><value>Hazard here: {0}. Only you see it; it starts hidden.</value></data>
+  <data name="WorldChat.Proposal.Concerns" xml:space="preserve"><value>Numbers to look at</value></data>
   <data name="WorldChat.Proposal.Targets" xml:space="preserve"><value>{0, plural, one{Tags # page or entry} other{Tags # pages and entries}}</value></data>
   <data name="WorldChat.Proposal.OnBestiary" xml:space="preserve"><value>This creature is already on the Bestiary.</value></data>
   <data name="WorldChat.Proposal.ToBestiary" xml:space="preserve"><value>Puts {0} on the campaign's Bestiary.</value></data>

@@ -69,4 +69,114 @@
   <data name="Wizard.KeepEditing" xml:space="preserve"><value>המשך עריכה</value></data>
   <data name="Wizard.DeleteTitle" xml:space="preserve"><value>למחוק את ״{0}״?</value></data>
   <data name="Wizard.DeleteBody" xml:space="preserve"><value>היא תיעלם מהספרייה, ואיתה האיור. דמויות ויצורים שכבר נוצרו ממנה ישמרו את הדפים שלהם.</value></data>
+  <data name="Wizard.Hazard.Step.Routine" xml:space="preserve"><value>סדר פעולות</value></data>
+  <data name="Wizard.Hazard.Step.Bands" xml:space="preserve"><value>טווחי דרגות</value></data>
+  <data name="Wizard.Hazard.Intro.Routine" xml:space="preserve"><value>מה סכנה מורכבת עושה בכל סבב. סמנו לכל היותר שלב אחד שמפעיל את אפקט הסכנה על יצורים; שאר השלבים הם הערות.</value></data>
+  <data name="Wizard.Hazard.Intro.Bands" xml:space="preserve"><value>אותה סכנה בדרגות גבוהות יותר. כל טווח מציין את הדרגות שלו ורק את המספרים שמשתנים; כל השאר נשאר כמו בבסיס.</value></data>
+  <data name="Wizard.Hazard.Add" xml:space="preserve"><value>הוספה: {0}</value></data>
+  <data name="Wizard.Hazard.Row.detect" xml:space="preserve"><value>דרך זיהוי</value></data>
+  <data name="Wizard.Hazard.Row.disarm" xml:space="preserve"><value>דרך נטרול</value></data>
+  <data name="Wizard.Hazard.Row.method" xml:space="preserve"><value>דרך אחרת</value></data>
+  <data name="Wizard.Hazard.Row.damage" xml:space="preserve"><value>חלק מהנזק</value></data>
+  <data name="Wizard.Hazard.Row.condition" xml:space="preserve"><value>מצב</value></data>
+  <data name="Wizard.Hazard.Row.step" xml:space="preserve"><value>שלב בסדר הפעולות</value></data>
+  <data name="Wizard.Hazard.Row.band" xml:space="preserve"><value>טווח דרגות</value></data>
+  <data name="Wizard.Hazard.Col.Id" xml:space="preserve"><value>שם קצר (עבור ״רק אחרי״)</value></data>
+  <data name="Wizard.Hazard.Col.Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Wizard.Hazard.Col.Action" xml:space="preserve"><value>פעולה (חיפוש, עיון)</value></data>
+  <data name="Wizard.Hazard.Col.Check" xml:space="preserve"><value>בדיקה</value></data>
+  <data name="Wizard.Hazard.Col.CheckOther" xml:space="preserve"><value>בדיקה, כפי שנכתבה (את הבונוס מזינים ליד השולחן)</value></data>
+  <data name="Wizard.Hazard.Other" xml:space="preserve"><value>אחר…</value></data>
+  <data name="Wizard.Hazard.Col.Dc" xml:space="preserve"><value>דרגת קושי</value></data>
+  <data name="Wizard.Hazard.Col.Needs" xml:space="preserve"><value>נדרש (במקום בדיקה)</value></data>
+  <data name="Wizard.Hazard.Col.After" xml:space="preserve"><value>רק אחרי</value></data>
+  <data name="Wizard.Hazard.Col.Successes" xml:space="preserve"><value>הצלחות נדרשות</value></data>
+  <data name="Wizard.Hazard.Col.SetsOff" xml:space="preserve"><value>כישלון מפעיל את הסכנה</value></data>
+  <data name="Wizard.Hazard.Col.Passive" xml:space="preserve"><value>ציונים קבועים יכולים לזהות את הסכנה</value></data>
+  <data name="Wizard.Hazard.Col.Rank" xml:space="preserve"><value>דירוג מינימלי</value></data>
+  <data name="Wizard.Hazard.Col.Text" xml:space="preserve"><value>הערות</value></data>
+  <data name="Wizard.Hazard.Col.Dice" xml:space="preserve"><value>קוביות (למשל 2d8)</value></data>
+  <data name="Wizard.Hazard.Col.DamageType" xml:space="preserve"><value>סוג נזק</value></data>
+  <data name="Wizard.Hazard.Col.Count" xml:space="preserve"><value>כמה פוגעים (קוביות או מספר)</value></data>
+  <data name="Wizard.Hazard.Col.Condition" xml:space="preserve"><value>מצב</value></data>
+  <data name="Wizard.Hazard.Col.Lasts" xml:space="preserve"><value>כמה זמן נמשך</value></data>
+  <data name="Wizard.Hazard.Col.Description" xml:space="preserve"><value>מה זה עושה</value></data>
+  <data name="Wizard.Hazard.Col.Strikes" xml:space="preserve"><value>מפעיל את אפקט הסכנה על יצורים</value></data>
+  <data name="Wizard.Hazard.Col.Levels" xml:space="preserve"><value>דרגות (למשל 5-10)</value></data>
+  <data name="Wizard.Hazard.Fill" xml:space="preserve"><value>מילוי מספרים מהמדריך</value></data>
+  <data name="Wizard.Hazard.Fill.Hint" xml:space="preserve"><value>מדריך המערכת נותן דרגת קושי להצלה ונזק לכל דרגה. אפשר לשנות אותם אחר כך כרצונכם.</value></data>
+  <data name="Wizard.Hazard.Fill.NeedLevel" xml:space="preserve"><value>מלאו קודם את הדרגות: מספר כמו 5, או טווח כמו 1-4.</value></data>
+  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>אין מה למלא: מספרים שכתבתם נשמרים, ודרגת הקושי של ההצלה ממתינה עד שתהיה לסכנה הצלה.</value></data>
+  <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>מולא מהמדריך עבור דרגה {0}: {1}.</value></data>
+  <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>יש לתקן את אלה לפני השמירה</value></data>
+  <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>מספרים שכדאי לבדוק (אפשר לשמור בכל זאת)</value></data>
+  <data name="Wizard.Hazard.Blocked" xml:space="preserve"><value>השולחן עדיין לא יכול להריץ את הסכנה הזאת. {0}</value></data>
+  <data name="Wizard.Hazard.Problem.Band" xml:space="preserve"><value>טווח {0}: </value></data>
+  <data name="Wizard.Hazard.Problem.LevelWord" xml:space="preserve"><value>דרגה</value></data>
+  <data name="Wizard.Hazard.Problem.RoutineRow" xml:space="preserve"><value>שלב בסדר הפעולות</value></data>
+  <data name="Wizard.Hazard.Problem.RowWord.detect" xml:space="preserve"><value>שורה ללא שם</value></data>
+  <data name="Wizard.Hazard.Problem.RowWord.disarm" xml:space="preserve"><value>שורה ללא שם</value></data>
+  <data name="Wizard.Hazard.Problem.RowWord.other-way" xml:space="preserve"><value>שורה ללא שם</value></data>
+  <data name="Wizard.Hazard.Problem.RowNearKey" xml:space="preserve"><value>בשורת טווח {0} מופיע ״{1}״, אבל השדה נקרא ״{2}״, ולכן השורה לא תילקח בחשבון.</value></data>
+  <data name="Wizard.Hazard.Problem.RowUnknownKey" xml:space="preserve"><value>בשורת טווח {0} מופיע ״{1}״, אך אין שדה כזה בסוג {2}.</value></data>
+  <data name="Wizard.Hazard.Problem.RowNotList" xml:space="preserve"><value>בשורת טווח {0} השדה ״{1}״ ניתן כערך אחד, אבל הוא רשימה; נדרשת רשימת שורות.</value></data>
+  <data name="Wizard.Hazard.Problem.NoLevel" xml:space="preserve"><value>{0}יש מספרים התלויים בדרגה ({1}), אך אין דרגה להשוות אליה; מלאו ״{2}״ במספר כמו 5 או בטווח כמו 1-4.</value></data>
+  <data name="Wizard.Hazard.Problem.UnknownSeverity" xml:space="preserve"><value>{0}החומרה ״{1}״ אינה במדריך המערכת ({2}); המספרים הושוו למדריך עבור כל חומרה.</value></data>
+  <data name="Wizard.Hazard.Problem.High" xml:space="preserve"><value>{0}{1}: {2}, מעל מה שמדריך המערכת נותן לסכנה בדרגה {3} ({4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.High.Severity" xml:space="preserve"><value>{0}{1}: {2}, מעל מה שמדריך המערכת נותן לסכנה בדרגה {3} ובחומרה ״{6}״ ({4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.High.Average" xml:space="preserve"><value>{0}{1}: ממוצע {2}, מעל מה שמדריך המערכת נותן לסכנה בדרגה {3} (ממוצע של {4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.High.Average.Severity" xml:space="preserve"><value>{0}{1}: ממוצע {2}, מעל מה שמדריך המערכת נותן לסכנה בדרגה {3} ובחומרה ״{6}״ (ממוצע של {4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.High.Dice" xml:space="preserve"><value>{0}{1}: ממוצע {2}, מעל מה שמדריך המערכת נותן לסכנה בדרגה {3} ({4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.High.Dice.Severity" xml:space="preserve"><value>{0}{1}: ממוצע {2}, מעל מה שמדריך המערכת נותן לסכנה בדרגה {3} ובחומרה ״{6}״ ({4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.Low" xml:space="preserve"><value>{0}{1}: {2}, מתחת למה שמדריך המערכת נותן לסכנה בדרגה {3} ({4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Severity" xml:space="preserve"><value>{0}{1}: {2}, מתחת למה שמדריך המערכת נותן לסכנה בדרגה {3} ובחומרה ״{6}״ ({4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Average" xml:space="preserve"><value>{0}{1}: ממוצע {2}, מתחת למה שמדריך המערכת נותן לסכנה בדרגה {3} (ממוצע של {4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Average.Severity" xml:space="preserve"><value>{0}{1}: ממוצע {2}, מתחת למה שמדריך המערכת נותן לסכנה בדרגה {3} ובחומרה ״{6}״ (ממוצע של {4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Dice" xml:space="preserve"><value>{0}{1}: ממוצע {2}, מתחת למה שמדריך המערכת נותן לסכנה בדרגה {3} ({4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Dice.Severity" xml:space="preserve"><value>{0}{1}: ממוצע {2}, מתחת למה שמדריך המערכת נותן לסכנה בדרגה {3} ובחומרה ״{6}״ ({4} עד {5}).</value></data>
+  <data name="Wizard.Hazard.Problem.StrikesBad" xml:space="preserve"><value>שלב ״{0}״: הערך של strikes הוא ״{1}״, אך חייב להיות true או false.</value></data>
+  <data name="Wizard.Hazard.Problem.StrikesNoEffect" xml:space="preserve"><value>שלב ״{0}״ מפעיל את האפקט, אך לסכנה אין אפקט (אין הצלה, התקפה או נזק).</value></data>
+  <data name="Wizard.Hazard.Problem.StrikesMany" xml:space="preserve"><value>יותר משלב אחד בסדר הפעולות מפעיל את האפקט; רק שלב אחד יכול להפעילו.</value></data>
+  <data name="Wizard.Hazard.Problem.SaveNoDc" xml:space="preserve"><value>יש הצלה אך אין דרגת קושי להצלה.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNoSave" xml:space="preserve"><value>יש דרגת קושי להצלה אך אין הצלה.</value></data>
+  <data name="Wizard.Hazard.Problem.OnSaveBad" xml:space="preserve"><value>הערך של onSave הוא ״{0}״, אך חייב להיות half או none.</value></data>
+  <data name="Wizard.Hazard.Problem.OnSaveNoSave" xml:space="preserve"><value>יש onSave אך אין הצלה.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.detect" xml:space="preserve"><value>{0}השדה ״{1}״ (דרכי הזיהוי) ניתן כערך אחד; נדרשת רשימת שורות, וכל אחת מהן מפתחות.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.disarm" xml:space="preserve"><value>{0}השדה ״{1}״ (דרכי הנטרול) ניתן כערך אחד; נדרשת רשימת שורות, וכל אחת מהן מפתחות.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.other-way" xml:space="preserve"><value>{0}השדה ״{1}״ (הדרכים האחרות) ניתן כערך אחד; נדרשת רשימת שורות, וכל אחת מהן מפתחות.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.damage" xml:space="preserve"><value>{0}השדה ״{1}״ (חלקי הנזק) ניתן כערך אחד; נדרשת רשימת שורות, וכל אחת מהן מפתחות.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.condition" xml:space="preserve"><value>{0}השדה ״{1}״ (המצבים) ניתן כערך אחד; נדרשת רשימת שורות, וכל אחת מהן מפתחות.</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.detect" xml:space="preserve"><value>{0}ברשימת דרכי הזיהוי יש ״{1}״ במקום שורה של מפתחות (כתבו כך: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.disarm" xml:space="preserve"><value>{0}ברשימת דרכי הנטרול יש ״{1}״ במקום שורה של מפתחות (כתבו כך: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.other-way" xml:space="preserve"><value>{0}ברשימת הדרכים האחרות יש ״{1}״ במקום שורה של מפתחות (כתבו כך: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.damage" xml:space="preserve"><value>{0}ברשימת חלקי הנזק יש ״{1}״ במקום שורה של מפתחות (כתבו כך: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.condition" xml:space="preserve"><value>{0}ברשימת המצבים יש ״{1}״ במקום שורה של מפתחות (כתבו כך: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.OtherWayNoName" xml:space="preserve"><value>{0}לדרך אחרת אין שם.</value></data>
+  <data name="Wizard.Hazard.Problem.RepeatId.detect" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״: השם הקצר ״{2}״ חוזר.</value></data>
+  <data name="Wizard.Hazard.Problem.RepeatId.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: השם הקצר ״{2}״ חוזר.</value></data>
+  <data name="Wizard.Hazard.Problem.RepeatId.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: השם הקצר ״{2}״ חוזר.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNotWhole.detect" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״: דרגת הקושי אינה מספר שלם.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNotWhole.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: דרגת הקושי אינה מספר שלם.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNotWhole.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: דרגת הקושי אינה מספר שלם.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNoCheck.detect" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״: יש דרגת קושי אך אין בדיקה.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNoCheck.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: יש דרגת קושי אך אין בדיקה.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNoCheck.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: יש דרגת קושי אך אין בדיקה.</value></data>
+  <data name="Wizard.Hazard.Problem.NoCheck.detect" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״: אין בדיקה; מלאו ״נדרש״ או ״הערות״ כדי לומר מה נדרש.</value></data>
+  <data name="Wizard.Hazard.Problem.NoCheck.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: אין בדיקה; מלאו ״נדרש״ או ״הערות״ כדי לומר מה נדרש.</value></data>
+  <data name="Wizard.Hazard.Problem.NoCheck.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: אין בדיקה; מלאו ״נדרש״ או ״הערות״ כדי לומר מה נדרש.</value></data>
+  <data name="Wizard.Hazard.Problem.AfterNoRoute.detect" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״: ״רק אחרי״ מציין ״{2}״, ואין דרך זיהוי בשם הזה.</value></data>
+  <data name="Wizard.Hazard.Problem.AfterNoRoute.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: ״רק אחרי״ מציין ״{2}״, ואין דרך זיהוי בשם הזה.</value></data>
+  <data name="Wizard.Hazard.Problem.AfterNoRoute.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: ״רק אחרי״ מציין ״{2}״, ואין דרך זיהוי בשם הזה.</value></data>
+  <data name="Wizard.Hazard.Problem.AfterItself" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״ ממתינה לעצמה.</value></data>
+  <data name="Wizard.Hazard.Problem.RankNone.detect" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״: צוין דירוג, אך במערכת הזאת למיומנויות אין דירוגים.</value></data>
+  <data name="Wizard.Hazard.Problem.RankNone.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: צוין דירוג, אך במערכת הזאת למיומנויות אין דירוגים.</value></data>
+  <data name="Wizard.Hazard.Problem.RankNone.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: צוין דירוג, אך במערכת הזאת למיומנויות אין דירוגים.</value></data>
+  <data name="Wizard.Hazard.Problem.SuccessesBad.detect" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״: מספר ההצלחות חייב להיות שלם, אחד לפחות.</value></data>
+  <data name="Wizard.Hazard.Problem.SuccessesBad.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: מספר ההצלחות חייב להיות שלם, אחד לפחות.</value></data>
+  <data name="Wizard.Hazard.Problem.SuccessesBad.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: מספר ההצלחות חייב להיות שלם, אחד לפחות.</value></data>
+  <data name="Wizard.Hazard.Problem.Circle" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״ ממתינה לעצמה דרך דרכים אחרות.</value></data>
+  <data name="Wizard.Hazard.Problem.DamageDice" xml:space="preserve"><value>{0}בחלק נזק יש קוביות ״{1}״; נדרשות קוביות כמו 2d8.</value></data>
+  <data name="Wizard.Hazard.Problem.DamageCount" xml:space="preserve"><value>{0}בחלק נזק הכמות היא ״{1}״; נדרשות קוביות או מספר שלם.</value></data>
+  <data name="Wizard.Hazard.Problem.ConditionNoName" xml:space="preserve"><value>{0}למצב אין שם.</value></data>
+  <data name="Wizard.Hazard.Problem.ConditionUnknown" xml:space="preserve"><value>{0}המצב ״{1}״ אינו אחד ממצבי המערכת.</value></data>
 </root>

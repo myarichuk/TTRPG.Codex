@@ -24,7 +24,10 @@ public enum HazardAction
     MarkNoticed,
 
     /// <summary>The game master sets the state by hand.</summary>
-    SetState
+    SetState,
+
+    /// <summary>One step of a complex hazard's routine, named by the route id. With creatures named it is the hazard's effect on them (Crush), on any creature's turn.</summary>
+    Routine
 }
 
 /// <summary>What a typed number is: a check's bonus, a passive score (the score itself), or an armor class.</summary>
@@ -57,6 +60,42 @@ public sealed record SetEncounterPlaceCommand(string? PlaceId, string Label) : I
         new[] { string.IsNullOrWhiteSpace(PlaceId) ? EventMessage.Of("Hazard.WhereAll", EventTerm.GmOnly(Label)) : EventMessage.Of("Hazard.Where", EventTerm.GmOnly(Label)) });
 }
 
+/// <summary>A complex hazard takes its place in initiative (HAZARDS_DESIGN.md 3.3): the initiative die with the hazard's own bonus is rolled once, in secret, and the actor
+/// joins the order at the total. GM only like every hazard command: the roll is a secret entry of the roll log, and the log line names the hazard as a GM-only term (a player's
+/// view of the order never lists a Hidden actor either). The bonus is the caller's (<see cref="HazardNumbers.InitiativeOf"/> over the placement's numbers), so numbers still
+/// come only through <see cref="HazardNumbers.For"/>.</summary>
+public sealed record JoinInitiativeCommand(string ActorId, string Expression, string RollerUserId, int TieBreak = 0) : IRuntimeCommand
+{
+    public IReadOnlyCollection<string> AffectedActorIds => _set?.AffectedActorIds ?? Array.Empty<string>();
+
+    private SetInitiativeCommand? _set;
+    private int _total;
+
+    public void Apply(CampaignRuntime runtime)
+    {
+        var result = runtime.DiceRoller.Roll(Expression);
+        _total = result.Total;
+        runtime.RecordRoll(new RollLogEntry
+        {
+            ActorId = ActorId,
+            RollerUserId = RollerUserId,
+            Expression = Expression,
+            Result = result.ToString(),
+            Total = result.Total,
+            Kept = result.Kept.ToList(),
+            Dropped = result.Dropped.ToList(),
+            Modifier = result.Modifier,
+            CheckDieIndex = result.CheckDieIndex,
+            IsSecret = true
+        });
+        _set = new SetInitiativeCommand(ActorId, result.Total, TieBreak, RollerUserId);
+        _set.Apply(runtime);
+    }
+
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Hazard",
+        new[] { EventMessage.Of("Hazard.Joined", EventTerm.GmOnly(runtime.GetActorName(ActorId)), _total) }, new[] { ActorId });
+}
+
 /// <summary>Takes back the last change the table made to a hazard's own state (a Find, a Disable's success, a sweep's marking, the state picker), with what it recorded: the
 /// successes, who noticed it, the routes found, and the damage a trigger dealt (taken back on each creature it hurt, as one with the hazard's state). Only while the hazard
 /// still stands as that change left it and each of those creatures still has that damage as its last change; otherwise nothing is touched and the log says why.
@@ -84,7 +123,7 @@ public sealed record UndoHazardCommand(HazardSite Site) : IRuntimeCommand
 }
 
 /// <summary>A line for the log that the loop adds after a command: what the hazard's write to its place could not do (GM-only messages).</summary>
-internal sealed record HazardNoteCommand(IReadOnlyList<EventMessage> Notes) : IRuntimeCommand
+internal sealed record HazardNoteCommand(IReadOnlyList<EventMessage> Notes, string Type = "Hazard", string? ActorId = null) : IRuntimeCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
@@ -92,7 +131,7 @@ internal sealed record HazardNoteCommand(IReadOnlyList<EventMessage> Notes) : IR
     {
     }
 
-    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From("Hazard", Notes);
+    public SessionEvent Describe(CampaignRuntime runtime) => SessionEvent.From(Type, Notes, ActorId == null ? null : new[] { ActorId });
 }
 
 /// <summary>How routes are named: by their id, else their name, else their check.</summary>
@@ -198,6 +237,7 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
             HazardAction.Disable => Disable(runtime, state),
             HazardAction.Trigger => Trigger(runtime, state),
             HazardAction.MarkNoticed => MarkNoticed(runtime, state),
+            HazardAction.Routine => Routine(runtime, state),
             _ => SetState(runtime, state)
         };
 
@@ -400,6 +440,39 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
         }
 
         Say("Triggered");
+        Strike(runtime, ActorIds);
+        state.State = HazardState.Triggered;
+        return true;
+    }
+
+    // ---- Routine ----
+
+    /// <summary>One step of a complex hazard's routine (HAZARDS_DESIGN.md 3.3), named by <see cref="RouteId"/>. Said in the log; a step the data marks <c>strikes: true</c>, with
+    /// creatures named, is the hazard's effect on them (the Rolling Stone's Crush), through the same strike as a trigger. It does not depend on whose turn it is: a step such as Crush applies on any creature's
+    /// turn (12.6, item 5), so the game master presses it whenever the hazard reaches a creature. A hazard that was disabled does nothing.</summary>
+    private bool Routine(CampaignRuntime runtime, PlacedHazard state)
+    {
+        var step = HazardNumbers.Routine(_numbers, _hazard).FirstOrDefault(s => string.Equals(s.Name, RouteId, StringComparison.OrdinalIgnoreCase));
+        if (step == null)
+        {
+            Refuse("NoRoute");
+            return false;
+        }
+
+        if (state.State == HazardState.Disabled)
+        {
+            Refuse("AlreadyDisabled");
+            return false;
+        }
+
+        // Only the row the data marks `strikes: true` applies the hazard's effect; every other row, with or without creatures named, is said in the log and does nothing more.
+        if (!step.Strikes || ActorIds.Count == 0)
+        {
+            Say("Step", step.Name);
+            return false;
+        }
+
+        Say("StepOn", step.Name);
         Strike(runtime, ActorIds);
         state.State = HazardState.Triggered;
         return true;

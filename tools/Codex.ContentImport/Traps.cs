@@ -52,7 +52,7 @@ public static class Traps
     private static string? Text(IDictionary<object, object> item, string key) =>
         item.TryGetValue(key, out var value) ? System.Convert.ToString(value, CultureInfo.InvariantCulture) : null;
 
-    /// <summary>A DC, a success count and the stat-block numbers are numbers, <c>complex</c> is a Boolean; every other value stays as written (the <c>count</c> of a
+    /// <summary>A DC, a success count and the stat-block numbers are numbers, <c>complex</c> and a routine row's <c>strikes</c> are Booleans; every other value stays as written (the <c>count</c> of a
     /// damage part is text, as a field of dice is). A row of a collection is read the same way.</summary>
     private static object Value(string key, object? value)
     {
@@ -66,7 +66,7 @@ public static class Traps
 
         var text = System.Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
         if (IsNumber(key) && long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number)) return number;
-        if (key.Equals("complex", StringComparison.Ordinal) && bool.TryParse(text, out var flag)) return flag;
+        if (key is "complex" or "strikes" && bool.TryParse(text, out var flag)) return flag;
         return text;
     }
 

@@ -740,7 +740,7 @@
             "number",
             "boolean"
           ],
-          "description": "The field holding what a complex hazard does each round, a collection of `{ name, description }`. Only for systems with hazards that act in initiative."
+          "description": "The field holding what a complex hazard does each round, a collection of `{ name, description, strikes }`. `strikes: true` marks the one row that applies the hazard's effect to the creatures the table names; every other row is a note. Only for systems with hazards that act in initiative."
         },
         "complex": {
           "type": [
@@ -764,7 +764,7 @@
             "number",
             "boolean"
           ],
-          "description": "The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly)."
+          "description": "The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly). `hazards.scaling` rows with the same word apply to it; a band of `higherLevels` may change it."
         },
         "higherLevels": {
           "type": [
@@ -4514,7 +4514,7 @@
               ]
             }
           },
-          "description": "Rows by level: each is `{ level: 5, saveDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused."
+          "description": "Rows by level, and by severity where the system has one: each is `{ level: 5, severity: Deadly, saveDc: 13-15, damage: 14-24 }`. `level` (a whole number) and `severity` (the system's own word, matched against the field the hazard type's `severity` names, ignoring case) are row keys; every other key names a field of the hazard type, and its value is a whole number, dice, or a range `low-high` (whole numbers for a Number field, averages for the damage field). A hazard reads the rows of its own severity, or the rows with no severity when it has none or a word no row uses; the row with the highest level not above the hazard's applies. The homebrew wizard fills a new hazard's numbers from it, and the world builder warns the game master when a proposed hazard's numbers are more than one row away from its level (`HazardNumbers.ScalingProblems`). Guidance only; nothing is refused."
         }
       },
       "additionalProperties": false

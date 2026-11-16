@@ -45,16 +45,119 @@ public class Srd5eHazardsTests : IAsyncLifetime
         Assert.Equal(FieldType.Collection, type.Fields.Single(f => f.Key == "damage").Type);
     }
 
+    private ContentTypeDefinition HazardType => System.FindType("hazard")!;
+
     [Fact]
-    public void TheScaling_FollowsTheSrdDamageProgression_AndRisesWithLevel()
+    public void TheScaling_HasRowsWithoutSeverity_AndANuisanceAndADeadlyRowAtEachBand()
     {
         var rows = System.Hazards!.Scaling;
+        var plain = rows.Where(r => !r.ContainsKey("severity")).ToList();
 
-        Assert.Equal(new[] { "1", "5", "11", "17" }, rows.Select(r => r["level"]));
-        Assert.Equal(new[] { "2d10", "4d10", "10d10", "18d10" }, rows.Select(r => r["damage"]));
-        // Collapsing Roof's progression, a Deadly trap with a save: DC 13, 15, 17, 19.
-        Assert.Equal(new[] { 13, 15, 17, 19 }, rows.Select(r => int.Parse(r["saveDc"])));
-        Assert.Equal(rows.Select(r => int.Parse(r["saveDc"])).OrderBy(d => d), rows.Select(r => int.Parse(r["saveDc"])));
+        // Collapsing Roof's progression, a Deadly trap with a save, stays as the rows for a hazard with no severity.
+        Assert.Equal(new[] { "1", "5", "11", "17" }, plain.Select(r => r["level"]));
+        Assert.Equal(new[] { "2d10", "4d10", "10d10", "18d10" }, plain.Select(r => r["damage"]));
+        Assert.Equal(new[] { 13, 15, 17, 19 }, plain.Select(r => int.Parse(r["saveDc"])));
+
+        // The two severities come from the SRD's own traps: the tightest range holding every trap of that severity at that band.
+        Assert.Equal(new[] { "Nuisance", "Deadly" }, HazardNumbers.Severities(System));
+        string[] nuisanceDc = ["10-11", "12-13", "14-15", "15-17"], nuisanceDamage = ["3.5-5.5", "10.5-11", "21-22", "42-55"];
+        string[] deadlyDc = ["13-15", "13-15", "13-17", "13-19"], deadlyDamage = ["7-12.5", "14-24", "28-57", "49-100.5"];
+        foreach (var (severity, dc, damage) in new[] { ("Nuisance", nuisanceDc, nuisanceDamage), ("Deadly", deadlyDc, deadlyDamage) })
+        {
+            var own = rows.Where(r => r.GetValueOrDefault("severity") == severity).ToList();
+            Assert.Equal(new[] { "1", "5", "11", "17" }, own.Select(r => r["level"]));
+            Assert.Equal(dc, own.Select(r => r["saveDc"]));
+            Assert.Equal(damage, own.Select(r => r["damage"]));
+            // Neither bound falls as the level rises.
+            foreach (var column in new[] { "saveDc", "damage" })
+            {
+                var bounds = own.Select(r => HazardNumbers.Bounds(r[column])!.Value).ToList();
+                Assert.Equal(bounds.Select(b => b.Low).OrderBy(v => v), bounds.Select(b => b.Low));
+                Assert.Equal(bounds.Select(b => b.High).OrderBy(v => v), bounds.Select(b => b.High));
+            }
+        }
+    }
+
+    [Fact]
+    public void EveryShippedTrap_AtEveryBand_GivesNoScalingWarning()
+    {
+        var traps = Hazards("srd-5.2.1").ToList();
+        Assert.Equal(8, traps.Count);
+        foreach (var trap in traps)
+        {
+            Assert.True(!HazardNumbers.ScalingProblems(trap, HazardType, System).Any(), $"{trap.Id}: " + string.Join(" | ", HazardNumbers.ScalingProblems(trap, HazardType, System)));
+        }
+    }
+
+    [Fact]
+    public void TheShippedTraps_WouldWarn_AgainstTheRowsWithoutSeverity()
+    {
+        // The guard that the severity is really read: the same traps with the severity taken out are read against Collapsing Roof's rows, and some leave them.
+        var type = HazardType;
+        var severity = type.Hazard!.Severity!;
+        var bandField = type.Hazard.HigherLevels!;
+        ContentEntry Without(ContentEntry trap)
+        {
+            var properties = new Dictionary<string, object>(trap.Properties);
+            properties.Remove(severity);
+            if (properties.TryGetValue(bandField, out var raw))
+            {
+                properties[bandField] = HazardNumbers.EditableRows(raw).Select(r => { r.Remove(severity); return (object)r; }).ToList();
+            }
+
+            return new ContentEntry { Id = trap.Id, Type = trap.Type, Name = trap.Name, Properties = properties };
+        }
+
+        var warned = Hazards("srd-5.2.1").ToDictionary(t => t.Id, t => HazardNumbers.ScalingProblems(Without(t), type, System).ToList());
+        Assert.NotEmpty(warned["poisoned-darts"]);
+        Assert.NotEmpty(warned["spiked-pit"]);
+        Assert.NotEmpty(warned["hidden-pit"]);
+        Assert.Contains(warned["fire-casting-statue"], m => m.Contains("Save DC 15 is low"));
+    }
+
+    [Fact]
+    public void EachRowsBounds_AreSetByAnSrdTrap()
+    {
+        // No row was widened by hand: each bound is the number some shipped trap has at that band.
+        var type = HazardType;
+        var measured = new Dictionary<(string, string, string), List<double>>();
+        void Add((string, string, string) key, double value)
+        {
+            if (!measured.TryGetValue(key, out var list)) measured[key] = list = [];
+            list.Add(value);
+        }
+
+        void Note(ContentEntry trap, string levels, string? band)
+        {
+            var numbers = HazardNumbers.For(trap, type, band);
+            var severity = Convert.ToString(numbers["severity"]) ?? string.Empty;
+            if (numbers.TryGetValue("saveDc", out var dc) && double.TryParse(Convert.ToString(dc, global::System.Globalization.CultureInfo.InvariantCulture), out var d)) Add((severity, levels, "saveDc"), d);
+            var average = HazardNumbers.Damage(numbers, type.Hazard!).Sum(p => HazardNumbers.Bounds(p.Dice)!.Value.Low * (p.Count == null ? 1 : HazardNumbers.Bounds(p.Count)!.Value.Low));
+            if (average > 0) Add((severity, levels, "damage"), average);
+        }
+
+        foreach (var trap in Hazards("srd-5.2.1"))
+        {
+            Note(trap, Convert.ToString(trap.Properties["level"]) ?? string.Empty, null);
+            foreach (var band in HazardNumbers.Rows(trap, type)) Note(trap, band, band);
+        }
+
+        var rows = System.Hazards!.Scaling.Where(r => r.ContainsKey("severity")).ToList();
+        foreach (var row in rows)
+        {
+            var band = row["level"] switch { "1" => "1-4", "5" => "5-10", "11" => "11-16", _ => "17-20" };
+            foreach (var column in new[] { "saveDc", "damage" })
+            {
+                var bounds = HazardNumbers.Bounds(row[column])!.Value;
+                var seen = measured.GetValueOrDefault((row["severity"], band, column)) ?? new List<double>();
+                Assert.True(seen.Any(v => Math.Abs(v - bounds.Low) < 0.001), $"{row["severity"]} {band} {column}: no trap has the low bound {bounds.Low}.");
+                Assert.True(seen.Any(v => Math.Abs(v - bounds.High) < 0.001), $"{row["severity"]} {band} {column}: no trap has the high bound {bounds.High}.");
+
+                // And no row is narrower than the traps need: the row is exactly the tightest range that holds every trap of that severity at that band.
+                Assert.True(seen.Count == 0 || Math.Abs(seen.Min() - bounds.Low) < 0.001, $"{row["severity"]} {band} {column}: the lowest trap is {seen.Min()}, the row starts at {bounds.Low}.");
+                Assert.True(seen.Count == 0 || Math.Abs(seen.Max() - bounds.High) < 0.001, $"{row["severity"]} {band} {column}: the highest trap is {seen.Max()}, the row ends at {bounds.High}.");
+            }
+        }
     }
 
     [Fact]
@@ -217,6 +320,60 @@ public class Srd5eHazardsTests : IAsyncLifetime
         Assert.Contains(problems, p => p.Contains("condition list has 'Prone'"));
         Assert.Contains(problems, p => p.Contains("onSave is 'halve'"));
         Assert.Contains(problems, p => p.Contains("save and no save DC"));
+    }
+
+    [Fact]
+    public void TheRollingStone_HasExactlyOneStrikingRow_Crush_AndNoOtherRoutineRowStrikes()
+    {
+        var type = System.FindType("hazard")!;
+        var stone = Hazards("srd-5.2.1").Single(h => h.Id == "rolling-stone");
+
+        var routine = HazardNumbers.Routine(HazardNumbers.For(stone, type, null), type.Hazard!);
+
+        Assert.Equal(new[] { "Crush" }, routine.Where(s => s.Strikes).Select(s => s.Name));
+        Assert.True(HazardNumbers.HasEffect(HazardNumbers.For(stone, type, null), type.Hazard!));
+        Assert.Empty(HazardNumbers.Problems(stone, type, System));
+        // The Flooding Room's Surge has its own numbers (half on a failure, none on a success), so none of its rows applies the main effect.
+        var room = Hazards("codex-hazards").Single(h => h.Id == "homebrew-flooding-room");
+        Assert.DoesNotContain(HazardNumbers.Routine(HazardNumbers.For(room, type, null), type.Hazard!), s => s.Strikes);
+    }
+
+    [Fact]
+    public void AStrikesKey_MustBeTrueOrFalse_OnOneRowAtMost_AndOnlyOnAHazardWithAnEffect()
+    {
+        var type = System.FindType("hazard")!;
+        var withEffect = Traps.Read("""
+            - id: a
+              name: A
+              properties:
+                saveAttribute: Dexterity
+                saveDc: 12
+                damage:
+                  - { dice: 2d6, type: fire }
+                routine:
+                  - { name: One, strikes: maybe }
+                  - { name: Two, strikes: true }
+                  - { name: Three, strikes: true }
+            """).Single();
+        var noEffect = Traps.Read("""
+            - id: b
+              name: B
+              properties:
+                routine:
+                  - { name: Wave, strikes: true }
+                  - { name: Idle, strikes: false }
+            """).Single();
+
+        var problems = HazardNumbers.Problems(withEffect, type, System).ToList();
+        var bare = HazardNumbers.Problems(noEffect, type, System).ToList();
+
+        Assert.Contains(problems, p => p.Contains("'One'") && p.Contains("true or false"));
+        Assert.Contains(problems, p => p.Contains("more than one routine row"));
+        Assert.DoesNotContain(problems, p => p.Contains("no effect"));
+        Assert.Contains(bare, p => p.Contains("'Wave'") && p.Contains("has no effect"));
+        Assert.DoesNotContain(bare, p => p.Contains("'Idle'"));
+        // The effect is read from the entry's own values: the type always has the field names, an entry with no save, attack or damage has no effect.
+        Assert.False(HazardNumbers.HasEffect(HazardNumbers.For(noEffect, type, null), type.Hazard!));
     }
 
     [Fact]

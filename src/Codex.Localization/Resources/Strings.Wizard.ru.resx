@@ -69,4 +69,114 @@
   <data name="Wizard.KeepEditing" xml:space="preserve"><value>Продолжить правку</value></data>
   <data name="Wizard.DeleteTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
   <data name="Wizard.DeleteBody" xml:space="preserve"><value>Запись исчезнет из библиотеки вместе с иллюстрацией. Персонажи и существа, уже созданные на её основе, сохранят свои листы.</value></data>
+  <data name="Wizard.Hazard.Step.Routine" xml:space="preserve"><value>Порядок действий</value></data>
+  <data name="Wizard.Hazard.Step.Bands" xml:space="preserve"><value>Ступени уровней</value></data>
+  <data name="Wizard.Hazard.Intro.Routine" xml:space="preserve"><value>Что делает сложная опасность в каждом раунде. Отметьте не больше одного шага, который применяет эффект опасности к существам; остальные шаги — заметки.</value></data>
+  <data name="Wizard.Hazard.Intro.Bands" xml:space="preserve"><value>Та же опасность на более высоких уровнях. Каждая ступень называет свои уровни и только те числа, которые меняются; всё остальное остаётся как в основе.</value></data>
+  <data name="Wizard.Hazard.Add" xml:space="preserve"><value>Добавить: {0}</value></data>
+  <data name="Wizard.Hazard.Row.detect" xml:space="preserve"><value>способ обнаружения</value></data>
+  <data name="Wizard.Hazard.Row.disarm" xml:space="preserve"><value>способ обезвреживания</value></data>
+  <data name="Wizard.Hazard.Row.method" xml:space="preserve"><value>другой способ</value></data>
+  <data name="Wizard.Hazard.Row.damage" xml:space="preserve"><value>часть урона</value></data>
+  <data name="Wizard.Hazard.Row.condition" xml:space="preserve"><value>состояние</value></data>
+  <data name="Wizard.Hazard.Row.step" xml:space="preserve"><value>шаг порядка действий</value></data>
+  <data name="Wizard.Hazard.Row.band" xml:space="preserve"><value>ступень уровней</value></data>
+  <data name="Wizard.Hazard.Col.Id" xml:space="preserve"><value>Короткое имя (для «Только после»)</value></data>
+  <data name="Wizard.Hazard.Col.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Wizard.Hazard.Col.Action" xml:space="preserve"><value>Действие (Поиск, Изучение)</value></data>
+  <data name="Wizard.Hazard.Col.Check" xml:space="preserve"><value>Проверка</value></data>
+  <data name="Wizard.Hazard.Col.CheckOther" xml:space="preserve"><value>Проверка, как написана (бонус за столом вводится вручную)</value></data>
+  <data name="Wizard.Hazard.Other" xml:space="preserve"><value>Другое…</value></data>
+  <data name="Wizard.Hazard.Col.Dc" xml:space="preserve"><value>Сложность (Сл)</value></data>
+  <data name="Wizard.Hazard.Col.Needs" xml:space="preserve"><value>Требуется (вместо проверки)</value></data>
+  <data name="Wizard.Hazard.Col.After" xml:space="preserve"><value>Только после</value></data>
+  <data name="Wizard.Hazard.Col.Successes" xml:space="preserve"><value>Нужно успехов</value></data>
+  <data name="Wizard.Hazard.Col.SetsOff" xml:space="preserve"><value>Провал приводит опасность в действие</value></data>
+  <data name="Wizard.Hazard.Col.Passive" xml:space="preserve"><value>Пассивные значения могут её найти</value></data>
+  <data name="Wizard.Hazard.Col.Rank" xml:space="preserve"><value>Минимальный ранг</value></data>
+  <data name="Wizard.Hazard.Col.Text" xml:space="preserve"><value>Примечания</value></data>
+  <data name="Wizard.Hazard.Col.Dice" xml:space="preserve"><value>Кости (например, 2d8)</value></data>
+  <data name="Wizard.Hazard.Col.DamageType" xml:space="preserve"><value>Тип урона</value></data>
+  <data name="Wizard.Hazard.Col.Count" xml:space="preserve"><value>Сколько попадает (кости или число)</value></data>
+  <data name="Wizard.Hazard.Col.Condition" xml:space="preserve"><value>Состояние</value></data>
+  <data name="Wizard.Hazard.Col.Lasts" xml:space="preserve"><value>Сколько длится</value></data>
+  <data name="Wizard.Hazard.Col.Description" xml:space="preserve"><value>Что делает</value></data>
+  <data name="Wizard.Hazard.Col.Strikes" xml:space="preserve"><value>Применяет эффект опасности к существам</value></data>
+  <data name="Wizard.Hazard.Col.Levels" xml:space="preserve"><value>Уровни (например, 5-10)</value></data>
+  <data name="Wizard.Hazard.Fill" xml:space="preserve"><value>Подставить числа из справочника</value></data>
+  <data name="Wizard.Hazard.Fill.Hint" xml:space="preserve"><value>Справочник системы даёт Сл спасброска и урон для уровня. Потом их можно менять как угодно.</value></data>
+  <data name="Wizard.Hazard.Fill.NeedLevel" xml:space="preserve"><value>Сначала укажите уровни: число, например 5, или диапазон, например 1-4.</value></data>
+  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>Подставлять нечего: числа, которые вы уже написали, остаются, а Сл спасброска ждёт, пока у опасности появится спасбросок.</value></data>
+  <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>Подставлено из справочника для уровня {0}: {1}.</value></data>
+  <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>Исправьте это перед сохранением</value></data>
+  <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>Числа, на которые стоит взглянуть (сохранить можно и так)</value></data>
+  <data name="Wizard.Hazard.Blocked" xml:space="preserve"><value>Стол пока не может запустить эту опасность. {0}</value></data>
+  <data name="Wizard.Hazard.Problem.Band" xml:space="preserve"><value>ступень {0}: </value></data>
+  <data name="Wizard.Hazard.Problem.LevelWord" xml:space="preserve"><value>уровень</value></data>
+  <data name="Wizard.Hazard.Problem.RoutineRow" xml:space="preserve"><value>шаг порядка действий</value></data>
+  <data name="Wizard.Hazard.Problem.RowWord.detect" xml:space="preserve"><value>строка без названия</value></data>
+  <data name="Wizard.Hazard.Problem.RowWord.disarm" xml:space="preserve"><value>строка без названия</value></data>
+  <data name="Wizard.Hazard.Problem.RowWord.other-way" xml:space="preserve"><value>строка без названия</value></data>
+  <data name="Wizard.Hazard.Problem.RowNearKey" xml:space="preserve"><value>строка ступени {0} называет «{1}», а поле называется «{2}», поэтому строка будет проигнорирована.</value></data>
+  <data name="Wizard.Hazard.Problem.RowUnknownKey" xml:space="preserve"><value>строка ступени {0} называет «{1}», но у типа {2} нет такого поля.</value></data>
+  <data name="Wizard.Hazard.Problem.RowNotList" xml:space="preserve"><value>строка ступени {0} задаёт «{1}» одним значением, а поле — список; нужен список строк.</value></data>
+  <data name="Wizard.Hazard.Problem.NoLevel" xml:space="preserve"><value>{0}есть числа, зависящие от уровня ({1}), но нет уровня, с которым их сравнить; заполните «{2}» числом, например 5, или диапазоном, например 1-4.</value></data>
+  <data name="Wizard.Hazard.Problem.UnknownSeverity" xml:space="preserve"><value>{0}Тяжесть «{1}» не встречается в справочнике системы ({2}); числа сравнены со справочником для любой тяжести.</value></data>
+  <data name="Wizard.Hazard.Problem.High" xml:space="preserve"><value>{0}{1}: {2} — выше нормы для опасности уровня {3}; справочник системы указывает: от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.High.Severity" xml:space="preserve"><value>{0}{1}: {2} — выше нормы для опасности уровня {3} с тяжестью «{6}»; справочник системы указывает: от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.High.Average" xml:space="preserve"><value>{0}{1}: в среднем {2} — выше нормы для опасности уровня {3}; справочник системы указывает: в среднем от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.High.Average.Severity" xml:space="preserve"><value>{0}{1}: в среднем {2} — выше нормы для опасности уровня {3} с тяжестью «{6}»; справочник системы указывает: в среднем от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.High.Dice" xml:space="preserve"><value>{0}{1}: в среднем {2} — выше нормы для опасности уровня {3}; справочник системы указывает: от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.High.Dice.Severity" xml:space="preserve"><value>{0}{1}: в среднем {2} — выше нормы для опасности уровня {3} с тяжестью «{6}»; справочник системы указывает: от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.Low" xml:space="preserve"><value>{0}{1}: {2} — ниже нормы для опасности уровня {3}; справочник системы указывает: от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Severity" xml:space="preserve"><value>{0}{1}: {2} — ниже нормы для опасности уровня {3} с тяжестью «{6}»; справочник системы указывает: от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Average" xml:space="preserve"><value>{0}{1}: в среднем {2} — ниже нормы для опасности уровня {3}; справочник системы указывает: в среднем от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Average.Severity" xml:space="preserve"><value>{0}{1}: в среднем {2} — ниже нормы для опасности уровня {3} с тяжестью «{6}»; справочник системы указывает: в среднем от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Dice" xml:space="preserve"><value>{0}{1}: в среднем {2} — ниже нормы для опасности уровня {3}; справочник системы указывает: от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.Low.Dice.Severity" xml:space="preserve"><value>{0}{1}: в среднем {2} — ниже нормы для опасности уровня {3} с тяжестью «{6}»; справочник системы указывает: от {4} до {5}.</value></data>
+  <data name="Wizard.Hazard.Problem.StrikesBad" xml:space="preserve"><value>шаг «{0}»: значение strikes — «{1}», а должно быть true или false.</value></data>
+  <data name="Wizard.Hazard.Problem.StrikesNoEffect" xml:space="preserve"><value>шаг «{0}» применяет эффект, но у опасности нет эффекта (ни спасброска, ни атаки, ни урона).</value></data>
+  <data name="Wizard.Hazard.Problem.StrikesMany" xml:space="preserve"><value>эффект применяет больше одного шага порядка действий; нужен только один.</value></data>
+  <data name="Wizard.Hazard.Problem.SaveNoDc" xml:space="preserve"><value>есть спасбросок, но нет Сл спасброска.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNoSave" xml:space="preserve"><value>есть Сл спасброска, но нет спасброска.</value></data>
+  <data name="Wizard.Hazard.Problem.OnSaveBad" xml:space="preserve"><value>значение onSave — «{0}», а должно быть half или none.</value></data>
+  <data name="Wizard.Hazard.Problem.OnSaveNoSave" xml:space="preserve"><value>есть onSave, но нет спасброска.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.detect" xml:space="preserve"><value>{0}поле «{1}» (способы обнаружения) задано одним значением; нужен список строк, каждая — набор ключей.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.disarm" xml:space="preserve"><value>{0}поле «{1}» (способы обезвреживания) задано одним значением; нужен список строк, каждая — набор ключей.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.other-way" xml:space="preserve"><value>{0}поле «{1}» (другие способы) задано одним значением; нужен список строк, каждая — набор ключей.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.damage" xml:space="preserve"><value>{0}поле «{1}» (части урона) задано одним значением; нужен список строк, каждая — набор ключей.</value></data>
+  <data name="Wizard.Hazard.Problem.ListNotRows.condition" xml:space="preserve"><value>{0}поле «{1}» (состояния) задано одним значением; нужен список строк, каждая — набор ключей.</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.detect" xml:space="preserve"><value>{0}в списке способов обнаружения есть «{1}» вместо строки с ключами (запишите так: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.disarm" xml:space="preserve"><value>{0}в списке способов обезвреживания есть «{1}» вместо строки с ключами (запишите так: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.other-way" xml:space="preserve"><value>{0}в списке других способов есть «{1}» вместо строки с ключами (запишите так: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.damage" xml:space="preserve"><value>{0}в списке частей урона есть «{1}» вместо строки с ключами (запишите так: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.ItemNotRow.condition" xml:space="preserve"><value>{0}в списке состояний есть «{1}» вместо строки с ключами (запишите так: {{ name: ... }}).</value></data>
+  <data name="Wizard.Hazard.Problem.OtherWayNoName" xml:space="preserve"><value>{0}у другого способа нет названия.</value></data>
+  <data name="Wizard.Hazard.Problem.RepeatId.detect" xml:space="preserve"><value>{0}способ обнаружения «{1}»: короткое имя «{2}» повторяется.</value></data>
+  <data name="Wizard.Hazard.Problem.RepeatId.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: короткое имя «{2}» повторяется.</value></data>
+  <data name="Wizard.Hazard.Problem.RepeatId.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: короткое имя «{2}» повторяется.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNotWhole.detect" xml:space="preserve"><value>{0}способ обнаружения «{1}»: Сл не целое число.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNotWhole.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: Сл не целое число.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNotWhole.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: Сл не целое число.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNoCheck.detect" xml:space="preserve"><value>{0}способ обнаружения «{1}»: есть Сл, но нет проверки.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNoCheck.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: есть Сл, но нет проверки.</value></data>
+  <data name="Wizard.Hazard.Problem.DcNoCheck.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: есть Сл, но нет проверки.</value></data>
+  <data name="Wizard.Hazard.Problem.NoCheck.detect" xml:space="preserve"><value>{0}способ обнаружения «{1}»: нет проверки; заполните «Требуется» или «Примечания», чтобы сказать, что для этого нужно.</value></data>
+  <data name="Wizard.Hazard.Problem.NoCheck.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: нет проверки; заполните «Требуется» или «Примечания», чтобы сказать, что для этого нужно.</value></data>
+  <data name="Wizard.Hazard.Problem.NoCheck.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: нет проверки; заполните «Требуется» или «Примечания», чтобы сказать, что для этого нужно.</value></data>
+  <data name="Wizard.Hazard.Problem.AfterNoRoute.detect" xml:space="preserve"><value>{0}способ обнаружения «{1}»: «Только после» называет «{2}», а такого способа обнаружения нет.</value></data>
+  <data name="Wizard.Hazard.Problem.AfterNoRoute.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: «Только после» называет «{2}», а такого способа обнаружения нет.</value></data>
+  <data name="Wizard.Hazard.Problem.AfterNoRoute.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: «Только после» называет «{2}», а такого способа обнаружения нет.</value></data>
+  <data name="Wizard.Hazard.Problem.AfterItself" xml:space="preserve"><value>{0}способ обнаружения «{1}» ждёт сам себя.</value></data>
+  <data name="Wizard.Hazard.Problem.RankNone.detect" xml:space="preserve"><value>{0}способ обнаружения «{1}»: указан ранг, но в этой системе у навыков нет рангов.</value></data>
+  <data name="Wizard.Hazard.Problem.RankNone.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: указан ранг, но в этой системе у навыков нет рангов.</value></data>
+  <data name="Wizard.Hazard.Problem.RankNone.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: указан ранг, но в этой системе у навыков нет рангов.</value></data>
+  <data name="Wizard.Hazard.Problem.SuccessesBad.detect" xml:space="preserve"><value>{0}способ обнаружения «{1}»: число успехов должно быть целым, не меньше одного.</value></data>
+  <data name="Wizard.Hazard.Problem.SuccessesBad.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: число успехов должно быть целым, не меньше одного.</value></data>
+  <data name="Wizard.Hazard.Problem.SuccessesBad.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: число успехов должно быть целым, не меньше одного.</value></data>
+  <data name="Wizard.Hazard.Problem.Circle" xml:space="preserve"><value>{0}способ обнаружения «{1}» через другие способы ждёт сам себя.</value></data>
+  <data name="Wizard.Hazard.Problem.DamageDice" xml:space="preserve"><value>{0}у части урона кости «{1}»; нужны кости вроде 2d8.</value></data>
+  <data name="Wizard.Hazard.Problem.DamageCount" xml:space="preserve"><value>{0}у части урона количество «{1}»; нужны кости или целое число.</value></data>
+  <data name="Wizard.Hazard.Problem.ConditionNoName" xml:space="preserve"><value>{0}у состояния нет названия.</value></data>
+  <data name="Wizard.Hazard.Problem.ConditionUnknown" xml:space="preserve"><value>{0}«{1}» не входит в состояния системы.</value></data>
 </root>

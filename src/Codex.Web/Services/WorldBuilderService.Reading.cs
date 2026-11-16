@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Codex.Core;
 using Codex.Core.AI;
+using Codex.Core.Systems;
 using Codex.Core.WorldBuilder;
 using Codex.Localization;
 using Codex.Persistence;
@@ -26,8 +27,17 @@ public sealed partial class WorldBuilderService
             Lang,
             system?.Canonical.Ai.Creature ?? "creature",
             system?.Canonical.Ai.CreatureExamples,
-            await OutlinesAsync(access));
+            await OutlinesAsync(access),
+            HazardsOf(system));
     }
+
+    // The one line the prompt carries about hazards: the type, its level field and the columns of the system's scaling table (names only).
+    private static WorldChatHazards? HazardsOf(SystemDefinition? system) =>
+        HazardTypeOf(system) is { } key && system!.Canonical.FindType(key) is { Hazard: { } hazard }
+            ? new WorldChatHazards(key, hazard.Level,
+                (system.Canonical.Hazards?.Scaling ?? new()).SelectMany(row => row.Keys).Where(k => k != HazardNumbers.ScalingLevelKey && k != HazardNumbers.ScalingSeverityKey).Distinct(StringComparer.Ordinal).ToList(),
+                hazard.Severity, HazardNumbers.Severities(system.Canonical))
+            : null;
 
     // The DM's template for each kind of page the builder writes, as the model is shown it.
     private async Task<IReadOnlyDictionary<string, string>?> OutlinesAsync(CampaignAccess access)
@@ -205,6 +215,7 @@ public sealed partial class WorldBuilderService
         if (feature.Container) notes.Add("container");
         if (feature.Lock is { Length: > 0 } locked) notes.Add($"lock: {locked}");
         if (feature.Trap is { Length: > 0 } trap) notes.Add($"trap: {trap}");
+        if (feature.Hazard is { } hazard) notes.Add($"hazard: {(hazard.IsHomebrew ? WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix : string.Empty)}{hazard.Entry}");
         if (feature.Concealment is { Length: > 0 } hidden) notes.Add($"hidden: {hidden}");
         if (feature.Creature is { Length: > 0 } creature) notes.Add($"creature: {creature}");
         if (feature.Contents is { Length: > 0 } contents) notes.Add($"contents: {TextFormatting.Summary(contents, 120)}");

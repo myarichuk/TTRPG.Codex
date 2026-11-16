@@ -1,8 +1,12 @@
+@using Codex.Core.Systems
+@using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @inject IContentRegistry ContentRegistry
+@inject IJSRuntime JS
 
-@* The DM's search through the system's creatures, to put one at the table. The console makes the creature (OnAdd);
-   the box clears once it is there. *@
+@* The DM's search through the system's creatures and complex hazards, to put one at the table. The console makes the actor (OnAdd, OnAddHazard); the box clears once it is
+   there. Creatures and hazards are two groups with their own headings (HAZARDS_DESIGN.md 3.3): the registry's actors are split by the `hazard` tag, and a hazard on the
+   encounter's place is offered first, with or without a search. A hazard is the game master's alone: it joins the order unseen. *@
 <section class="panel" aria-labelledby="quick-add-heading">
     <div class="panel-title"><h3 id="quick-add-heading">@L["Combat.QuickAdd"]</h3></div>
     <div class="search mb-2">
@@ -10,19 +14,62 @@
         <label for="monster-search" class="visually-hidden">@L["Combat.SearchCreatures"]</label>
         <input id="monster-search" type="search" class="field-input field-sm" placeholder="@L["Combat.SearchPlaceholder"]" @bind="search" @bind:event="oninput" />
     </div>
-    @if (search.Length > 0)
+
+    @{
+        var onPlace = OnPlace();
+        var hazards = Hazards();
+        var creatures = search.Length > 0 ? Creatures().Take(12).ToList() : new List<IActorDefinition>();
+    }
+
+    @if (onPlace.Count > 0)
     {
-        <ul class="list-unstyled mb-0">
-            @foreach (var definition in Matches().Take(12))
+        <h4 id="quick-add-place-heading" class="h6 mb-1" data-testid="quick-add-place-hazards">@L["Combat.QuickAddPlaceHazards", PlaceName]</h4>
+        <ul class="list-unstyled mb-2" aria-labelledby="quick-add-place-heading">
+            @foreach (var offer in onPlace)
             {
                 <li class="list-row">
-                    <span>@definition.Name</span>
-                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddAsync(definition)" aria-label="@(L["Combat.AddToEncounterFor", definition.Name])">@L["Combat.AddToEncounter"]</CodexButton>
+                    <span>@offer.Definition.Name <span class="small-muted">@L["Combat.QuickAddInitiative", Bonus(offer.Initiative)]</span></span>
+                    <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddHazardAsync(offer)" aria-label="@(L["Combat.AddHazardToOrderFor", offer.Definition.Name])">@L["Combat.AddHazardToOrder"]</CodexButton>
                 </li>
             }
         </ul>
     }
-    else
+
+    @if (search.Length > 0)
+    {
+        <h4 id="quick-add-creatures-heading" class="h6 mb-1" data-testid="quick-add-creatures">@L["Combat.QuickAddCreatures"]</h4>
+        @if (creatures.Count == 0)
+        {
+            <p class="small-muted mb-2">@L["Combat.QuickAddNoCreatures"]</p>
+        }
+        else
+        {
+            <ul class="list-unstyled mb-2" aria-labelledby="quick-add-creatures-heading">
+                @foreach (var definition in creatures)
+                {
+                    <li class="list-row">
+                        <span>@definition.Name</span>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddAsync(definition)" aria-label="@(L["Combat.AddToEncounterFor", definition.Name])">@L["Combat.AddToEncounter"]</CodexButton>
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (hazards.Count > 0)
+        {
+            <h4 id="quick-add-hazards-heading" class="h6 mb-1" data-testid="quick-add-hazards">@L["Combat.QuickAddHazards"]</h4>
+            <ul class="list-unstyled mb-0" aria-labelledby="quick-add-hazards-heading">
+                @foreach (var offer in hazards.Take(12))
+                {
+                    <li class="list-row">
+                        <span>@offer.Definition.Name <span class="small-muted">@L["Combat.QuickAddInitiative", Bonus(offer.Initiative)]</span></span>
+                        <CodexButton Variant="CodexButtonVariant.Etched" Small="true" OnClick="() => AddHazardAsync(offer)" aria-label="@(L["Combat.AddHazardToOrderFor", offer.Definition.Name])">@L["Combat.AddHazardToOrder"]</CodexButton>
+                    </li>
+                }
+            </ul>
+        }
+    }
+    else if (onPlace.Count == 0)
     {
         <p class="small-muted mb-0">@L["Combat.QuickAddHint"]</p>
     }
@@ -34,14 +81,75 @@
     /// <summary>Puts the creature at the table; false when it could not (the console has said why).</summary>
     [Parameter, EditorRequired] public Func<IActorDefinition, Task<bool>> OnAdd { get; set; } = null!;
 
+    /// <summary>Puts a complex hazard at the table, in the initiative order; false when it could not (the console has said why). Without it the hazards group is not shown.</summary>
+    [Parameter] public Func<HazardOffer, Task<bool>>? OnAddHazard { get; set; }
+
+    /// <summary>The system's hazard type, which the Library's complex hazards are read through.</summary>
+    [Parameter] public ContentTypeDefinition? HazardType { get; set; }
+
+    /// <summary>The complex hazards on the encounter's place, offered first; <see cref="PlaceName"/> says where.</summary>
+    [Parameter] public IReadOnlyList<HazardOffer> PlaceHazards { get; set; } = Array.Empty<HazardOffer>();
+
+    [Parameter] public string PlaceName { get; set; } = string.Empty;
+
     private string search = string.Empty;
 
-    private IEnumerable<IActorDefinition> Matches() =>
-        ContentRegistry.GetActorsBySystem(SystemId).Where(a => a.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-            a.Tags.Any(t => t.Contains(search, StringComparison.OrdinalIgnoreCase)));
+    private bool Matches(IActorDefinition a) => a.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                                               a.Tags.Any(t => t.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsHazard(IActorDefinition a) => a.Tags.Contains("hazard", StringComparer.OrdinalIgnoreCase);
+
+    // Creatures as before: every registry actor that is not a hazard.
+    private IEnumerable<IActorDefinition> Creatures() =>
+        ContentRegistry.GetActorsBySystem(SystemId).Where(a => !IsHazard(a) && Matches(a));
+
+    // The Library's complex hazards that match, but not those already offered from the place.
+    private IReadOnlyList<HazardOffer> Hazards()
+    {
+        if (OnAddHazard == null || HazardType == null || search.Length == 0) return Array.Empty<HazardOffer>();
+        var offered = PlaceHazards.Select(o => o.Definition.Id).ToHashSet(StringComparer.Ordinal);
+        return ContentRegistry.GetActorsBySystem(SystemId).Where(a => IsHazard(a) && Matches(a) && !offered.Contains(a.Id))
+            .Select(a => HazardOffers.FromLibrary(a, HazardType)).ToList();
+    }
+
+    // The place's hazards: all of them with no search, those that match with one.
+    private IReadOnlyList<HazardOffer> OnPlace() =>
+        OnAddHazard == null ? Array.Empty<HazardOffer>() : PlaceHazards.Where(o => search.Length == 0 || Matches(o.Definition)).ToList();
+
+    private static string Bonus(int value) => value >= 0 ? $"+{value}" : value.ToString();
+
+    // The button that was pressed goes away with the search, so focus goes back to the search box: the next thing a keyboard user does is search again.
+    private bool focusSearch;
 
     private async Task AddAsync(IActorDefinition definition)
     {
-        if (await OnAdd(definition)) search = string.Empty;
+        if (await OnAdd(definition))
+        {
+            search = string.Empty;
+            focusSearch = true;
+        }
+    }
+
+    private async Task AddHazardAsync(HazardOffer offer)
+    {
+        if (OnAddHazard != null && await OnAddHazard(offer))
+        {
+            search = string.Empty;
+            focusSearch = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!focusSearch) return;
+        focusSearch = false;
+        try
+        {
+            await JS.InvokeVoidAsync("codex.focusById", "monster-search");
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException)
+        {
+            // No focus to move (prerender or a closed circuit).
+        }
     }
 }

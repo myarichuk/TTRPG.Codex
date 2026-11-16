@@ -405,7 +405,7 @@ public class WorldBuilderTests
 
     // ---- Saving ----
 
-    private sealed record Saving(WorldBuilderService Service, List<WikiPageDocument> Pages, List<HomebrewEntryDocument> Entries, List<ActorDocument> Actors, List<FactDocument> Facts)
+    internal sealed record Saving(WorldBuilderService Service, List<WikiPageDocument> Pages, List<HomebrewEntryDocument> Entries, List<ActorDocument> Actors, List<FactDocument> Facts)
     {
         public List<RegionDocument> NewRegions { get; } = new();
         public List<(string RegionId, LocationDocument Place)> AddedPlaces { get; } = new();
@@ -441,7 +441,14 @@ public class WorldBuilderTests
         Service(existingPages, existingRegions, null, existing);
 
     /// <param name="registry">The packs' content, which the Library and the cast both read; empty when null.</param>
-    private static Saving Service(IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, ContentRegistry? registry, params HomebrewEntryDocument[] existing)
+    private static Saving Service(IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, ContentRegistry? registry, params HomebrewEntryDocument[] existing) =>
+        Build(CreatureSystem, existingPages, existingRegions, registry, existing);
+
+    /// <summary>The same fakes for a game system of the test's own (the hazard tests load srd5e's).</summary>
+    internal static Saving ServiceFor(SystemDefinition system, ContentRegistry registry, IEnumerable<RegionDocument>? existingRegions = null, params HomebrewEntryDocument[] existing) =>
+        Build(system, null, existingRegions ?? Array.Empty<RegionDocument>(), registry, existing);
+
+    private static Saving Build(SystemDefinition system, IEnumerable<WikiPageDocument>? existingPages, IEnumerable<RegionDocument> existingRegions, ContentRegistry? registry, HomebrewEntryDocument[] existing)
     {
         registry ??= new ContentRegistry();
         var pages = new List<WikiPageDocument>();
@@ -485,7 +492,7 @@ public class WorldBuilderTests
         actorRepo.GetVisibleForCampaignAsync(Arg.Any<CampaignAccess>()).Returns(_ => actors.ToList().AsEnumerable());
         var catalog = Substitute.For<ISystemCatalog>();
         catalog.GetUISchemas(Arg.Any<string>()).Returns(Enumerable.Empty<UISchema>());
-        catalog.GetDefinition("srd5e").Returns(CreatureSystem);
+        catalog.GetDefinition("srd5e").Returns(system);
         catalog.GetDisplayName(Arg.Any<string>()).Returns("SRD");
         var campaigns = Substitute.For<ICampaignRepository>();
         var library = new CampaignLibrary(registry, homebrew, catalog);
@@ -543,8 +550,8 @@ public class WorldBuilderTests
         Assert.Contains("Kinds of factions: rival criminal gangs", AiPrompts.WorldChat(request));
     }
 
-    private static readonly CampaignDocument Campaign = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
-    private static readonly CampaignAccess Dm = new("c1", "dm", CampaignRole.DM);
+    internal static readonly CampaignDocument Campaign = new() { Id = "c1", SystemId = "srd5e", Name = "Salt and Ash" };
+    internal static readonly CampaignAccess Dm = new("c1", "dm", CampaignRole.DM);
 
     [Fact]
     public async Task Save_StoresTheTickedDraftsHiddenFromPlayers_WithLinksRewritten()
@@ -930,7 +937,7 @@ public class WorldBuilderTests
     // ---- The chat ----
 
     /// <summary>A model that answers each call with the next scripted reply (a tool call or text) and keeps what it was sent.</summary>
-    private sealed class ScriptedModel(params Func<IList<ChatMessage>, ChatMessage>[] replies) : IChatClient
+    internal sealed class ScriptedModel(params Func<IList<ChatMessage>, ChatMessage>[] replies) : IChatClient
     {
         private int next;
         public List<List<ChatMessage>> Calls { get; } = new();
@@ -963,13 +970,13 @@ public class WorldBuilderTests
         public void Dispose() { }
     }
 
-    private static ChatMessage Calls(string id, string tool, string argumentsJson) =>
+    internal static ChatMessage Calls(string id, string tool, string argumentsJson) =>
         new(ChatRole.Assistant, new List<AIContent>
         {
             new FunctionCallContent(id, tool, JsonSerializer.Deserialize<Dictionary<string, object?>>(argumentsJson))
         });
 
-    private static string ToolResult(IList<ChatMessage> sent) =>
+    internal static string ToolResult(IList<ChatMessage> sent) =>
         sent.SelectMany(m => m.Contents).OfType<FunctionResultContent>().Last().Result?.ToString() ?? string.Empty;
 
     [Fact]

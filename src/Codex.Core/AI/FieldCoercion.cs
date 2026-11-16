@@ -69,7 +69,7 @@ internal static class FieldCoercion
                 if (spec.Options == null || spec.Options.Count == 0) return canonical(chosen);
                 return MatchOption(chosen, spec.Options) ?? MatchOption(canonical(chosen), spec.Options);
             case "Collection":
-                return value.ValueKind == JsonValueKind.Array ? Rows(value) : null;
+                return value.ValueKind == JsonValueKind.Array ? Rows(value, spec.RowsNeedName) : null;
             case "Structured":
                 // What the sheet rules read off an entry (use, modifiers, adds, uses): a map or a list of maps, kept as written.
                 return value.ValueKind is JsonValueKind.Object or JsonValueKind.Array ? Plain(value, NestedDepth) : null;
@@ -120,8 +120,9 @@ internal static class FieldCoercion
         return null;
     }
 
-    // A collection is a list of small maps (a creature's actions: name / description); rows without a name are dropped.
-    private static List<object>? Rows(JsonElement array)
+    // A collection is a list of small maps (a creature's actions: name / description); rows without a name are dropped, or, where the rows have none
+    // (a hazard's level bands and damage parts), only a row with nothing in it.
+    private static List<object>? Rows(JsonElement array, bool needName = true)
     {
         var rows = new List<object>();
         foreach (var element in array.EnumerateArray().Where(e => e.ValueKind == JsonValueKind.Object))
@@ -137,7 +138,7 @@ internal static class FieldCoercion
                 }
             }
 
-            if (row.TryGetValue("name", out var name) && name is string { Length: > 0 })
+            if (needName ? row.TryGetValue("name", out var name) && name is string { Length: > 0 } : row.Count > 0)
             {
                 rows.Add(row);
             }

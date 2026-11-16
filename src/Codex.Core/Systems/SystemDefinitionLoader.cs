@@ -844,39 +844,72 @@ public static class SystemDefinitionLoader
             yield break;
         }
 
-        var seen = new HashSet<int>();
+        var seen = new HashSet<(int Level, string Severity)>();
+        var severityField = hazardTypes.Select(t => t.Hazard?.Severity is { Length: > 0 } key ? t.Fields.FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.Ordinal)) : null).FirstOrDefault(f => f != null);
+        var wholeRange = new System.Text.RegularExpressions.Regex(@"^(\d+)\s*-\s*(\d+)$");
+        var averageRange = new System.Text.RegularExpressions.Regex(@"^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$");
+        bool Reversed(System.Text.RegularExpressions.Match range) =>
+            double.Parse(range.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) > double.Parse(range.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
         for (var i = 0; i < rules.Scaling.Count; i++)
         {
             var row = rules.Scaling[i];
             var at = $"hazards.scaling[{i}]";
             var level = row.FirstOrDefault(p => string.Equals(p.Key, "level", StringComparison.OrdinalIgnoreCase)).Value;
+            var hasSeverity = row.Keys.Any(k => string.Equals(k, HazardNumbers.ScalingSeverityKey, StringComparison.OrdinalIgnoreCase));
+            var severity = row.FirstOrDefault(p => string.Equals(p.Key, HazardNumbers.ScalingSeverityKey, StringComparison.OrdinalIgnoreCase)).Value?.Trim() ?? string.Empty;
             if (!int.TryParse(level, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var number))
             {
                 yield return $"{at} needs a whole-number level.";
             }
-            else if (!seen.Add(number))
+            else if (!seen.Add((number, severity.ToLowerInvariant())))
             {
-                yield return $"{at} repeats level {number}.";
+                yield return severity.Length == 0 ? $"{at} repeats level {number} with no severity." : $"{at} repeats level {number} for severity {severity}";
             }
 
-            foreach (var (key, value) in row.Where(p => !string.Equals(p.Key, "level", StringComparison.OrdinalIgnoreCase)))
+            if (hasSeverity)
+            {
+                if (severity.Length == 0) yield return $"{at}.severity is empty; leave it out for a row of any severity.";
+                else if (severityField == null) yield return $"{at} has a severity, but no hazard type names a severity field.";
+                else if (severityField.Type == FieldType.Dropdown && severityField.Options is { Count: > 0 } options && !options.Contains(severity, StringComparer.OrdinalIgnoreCase))
+                {
+                    yield return $"{at}.severity is '{severity}'; the field '{severityField.Key}' offers {string.Join(", ", options)}.";
+                }
+            }
+
+            foreach (var (key, value) in row.Where(p => !string.Equals(p.Key, "level", StringComparison.OrdinalIgnoreCase) && !string.Equals(p.Key, HazardNumbers.ScalingSeverityKey, StringComparison.OrdinalIgnoreCase)))
             {
                 var field = hazardTypes.SelectMany(t => t.Fields).FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.Ordinal));
+                var isDamage = hazardTypes.Any(t => string.Equals(t.Hazard?.Effect?.Damage, key, StringComparison.Ordinal));
+                var text = value?.Trim() ?? string.Empty;
                 if (field == null)
                 {
                     yield return $"{at} names '{key}', which no hazard type declares as a field.";
                 }
-                else if (field.Type == FieldType.Collection && !hazardTypes.Any(t => string.Equals(t.Hazard?.Effect?.Damage, key, StringComparison.Ordinal)))
+                else if (field.Type == FieldType.Collection && !isDamage)
                 {
                     yield return $"{at}.{key} is a Collection; a scaling row can only give a damage field (dice of its first part), not a list of rows.";
                 }
-                else if (field.Type == FieldType.Number && !long.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _))
+                else if (field.Type == FieldType.Number)
                 {
-                    yield return $"{at}.{key} is '{value}'; the field is a Number, so it needs a whole number.";
+                    if (wholeRange.Match(text) is { Success: true } range)
+                    {
+                        if (Reversed(range)) yield return $"{at}.{key} is '{value}'; a range runs low to high.";
+                    }
+                    else if (!long.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _))
+                    {
+                        yield return $"{at}.{key} is '{value}'; the field is a Number, so it needs a whole number or a range of whole numbers such as 13-15.";
+                    }
                 }
-                else if (hazardTypes.Any(t => string.Equals(t.Hazard?.Effect?.Damage, key, StringComparison.Ordinal)) && !HazardNumbers.IsDice(value))
+                else if (isDamage)
                 {
-                    yield return $"{at}.{key} is '{value}'; damage is dice such as 4d10.";
+                    if (averageRange.Match(text) is { Success: true } range)
+                    {
+                        if (Reversed(range)) yield return $"{at}.{key} is '{value}'; a range runs low to high.";
+                    }
+                    else if (!HazardNumbers.IsDice(text))
+                    {
+                        yield return $"{at}.{key} is '{value}'; damage is dice such as 4d10, or a range of averages such as 14-24.";
+                    }
                 }
             }
         }

@@ -161,6 +161,8 @@
   <data name="WorldChat.Proposal.MovesTo" xml:space="preserve"><value>עובר אל תוך {0}</value></data>
   <data name="WorldChat.Proposal.MovesToTop" xml:space="preserve"><value>יוצא אל ראש האזור שלו</value></data>
   <data name="WorldChat.Proposal.BecomesKind" xml:space="preserve"><value>הופך ל: {0}</value></data>
+  <data name="WorldChat.Proposal.Hazard" xml:space="preserve"><value>סכנה כאן: {0}. רק אתם רואים אותה; היא מתחילה מוסתרת.</value></data>
+  <data name="WorldChat.Proposal.Concerns" xml:space="preserve"><value>מספרים שכדאי לבדוק</value></data>
   <data name="WorldChat.Proposal.Targets" xml:space="preserve"><value>{0, plural, one{תגיות לדף או רשומה אחת} two{תגיות ל-# דפים ורשומות} other{תגיות ל-# דפים ורשומות}}</value></data>
   <data name="WorldChat.Proposal.OnBestiary" xml:space="preserve"><value>היצור הזה כבר בספר המפלצות.</value></data>
   <data name="WorldChat.Proposal.ToBestiary" xml:space="preserve"><value>מוסיף את „{0}” לספר המפלצות של המערכה.</value></data>

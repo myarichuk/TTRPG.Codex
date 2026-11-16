@@ -175,6 +175,28 @@ public class PlacedHazard
     }
 }
 
+/// <summary>
+/// What ties a complex hazard's actor to the hazard it stands for (HAZARDS_DESIGN.md 3.3): the placement (<see cref="RegionId"/> and <see cref="LocationId"/>), or,
+/// for a hazard taken straight from the Library, no place (both empty), in which case its live state belongs to the actor alone and is never written to a place.
+/// </summary>
+public class HazardActorLink
+{
+    public string RegionId { get; set; } = string.Empty;
+    public string LocationId { get; set; } = string.Empty;
+
+    /// <summary>The Library entry as <c>type/id</c>.</summary>
+    public string Entry { get; set; } = string.Empty;
+
+    public bool IsHomebrew { get; set; }
+
+    /// <summary>The entry's scaled row the placement uses (<see cref="PlacedHazard.Levels"/>); null: the base numbers.</summary>
+    public string? Levels { get; set; }
+
+    /// <summary>True when the hazard stands on a place; false for one taken from the Library alone.</summary>
+    [Newtonsoft.Json.JsonIgnore]
+    public bool IsPlaced => RegionId.Length > 0 && LocationId.Length > 0;
+}
+
 public class LocationDocument
 {
     public string Id { get; set; } = string.Empty;

@@ -168,6 +168,7 @@
                             {
                                 <p><strong>@L["WorldChat.Proposal.Renamed", current.Rename]</strong></p>
                             }
+                            @Concerns(current.Concerns)
                             @Fields(current, onlyChanged: true)
                             @if (current.Retag)
                             {
@@ -189,6 +190,7 @@
                             {
                                 <p class="wb-callout"><LucideIcon IconName="copy" Size="14" /> @L["WorldChat.Proposal.BasedOn", current.BasedOnName]</p>
                             }
+                            @Concerns(current.Concerns)
                             @Fields(current, onlyChanged: false)
                             @Tags(current.Tags)
                             @if (!string.IsNullOrWhiteSpace(current.Body))
@@ -563,6 +565,25 @@
         {
             <p><LucideIcon IconName="tag" Size="14" /> @L["WorldChat.Proposal.BecomesKind", L[$"Campaign.Places.Kind.{char.ToUpperInvariant(d.PlaceKind[0]) + d.PlaceKind[1..]}"]]</p>
         }
+
+        if (d is { Kind: DraftKinds.Place, Feature.HazardName: { } hazardName })
+        {
+            <p data-testid="world-proposal-hazard"><LucideIcon IconName="alert-triangle" Size="14" /> @L["WorldChat.Proposal.Hazard", hazardName]</p>
+            <text>@Concerns(d.Feature.HazardRef != null ? proposal.Find(d.Feature.HazardRef)?.Concerns : null)</text>
+        }
+    };
+
+    // What the check found worth a look in an entry's numbers: warnings the game master decides on, not refusals.
+    private RenderFragment Concerns(IReadOnlyList<string>? notes) => __builder =>
+    {
+        if (notes is not { Count: > 0 }) return;
+        <p class="small wb-concerns mb-0"><LucideIcon IconName="alert-triangle" Size="12" /> <strong>@L["WorldChat.Proposal.Concerns"]</strong></p>
+        <ul class="small wb-concerns mt-0" aria-label="@L["WorldChat.Proposal.Concerns"]" data-testid="world-proposal-concerns">
+            @foreach (var note in notes)
+            {
+                <li>@note</li>
+            }
+        </ul>
     };
 
     // What an edit does to a text: the changes marked word by word, the new text as it will read, or the text as it is now.

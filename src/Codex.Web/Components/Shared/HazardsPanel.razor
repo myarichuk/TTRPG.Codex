@@ -1,5 +1,7 @@
+@using Codex.Core.Systems
 @using Codex.Persistence
 @using Codex.Persistence.Runtime
+@inject IJSRuntime JS
 
 @* The game master's Hazards panel (HAZARDS_DESIGN.md 4.1, 7). One list of hazards, each a group with a heading (its name and its state in words, with an icon
    beside the words) and real buttons whose text names the action and the hazard. Who acts is one fieldset of check boxes. The result of the last action is in a
@@ -83,7 +85,7 @@
                 var heading = $"hazard-heading-{at}";
                 <li class="mb-3" data-testid="@($"hazard-{at}")">
                     <article aria-labelledby="@heading">
-                        <h4 id="@heading" class="h6 mb-1">
+                        <h4 id="@heading" class="h6 mb-1" tabindex="-1">
                             @hazard.Name
                             <span class="pill pill-warning ms-1" data-testid="@($"hazard-{at}-state")"><LucideIcon IconName="@StateIcon(hazard.State)" Size="12" /> @L[$"Combat.Hazard.State.{hazard.State}"]</span>
                         </h4>
@@ -137,6 +139,41 @@
                                              OnClick="() => SendAsync(hazard, HazardAction.Disable, WayOf(disarmWay, hazard, hazard.Disarm))">@L["Combat.Hazard.Disable", hazard.Name]</CodexButton>
                             </div>
 
+                            @if (hazard.Turn is { } turn)
+                            {
+                                var routineHeading = $"hazard-{at}-routine-heading";
+                                <section class="mb-2" aria-labelledby="@routineHeading" data-testid="@($"hazard-{at}-routine")">
+                                    <h5 id="@routineHeading" class="h6 mb-1">
+                                        @L["Combat.Hazard.Routine", hazard.Name]
+                                        <span class="pill ms-1" data-testid="@($"hazard-{at}-order")">@(turn.InOrder ? L["Combat.Hazard.InOrder"] : L["Combat.Hazard.OutOfOrder"])</span>
+                                        @if (turn.ItsTurn)
+                                        {
+                                            <span class="pill pill-warning ms-1" data-testid="@($"hazard-{at}-its-turn")">@L["Combat.Hazard.ItsTurn"]</span>
+                                        }
+                                    </h5>
+                                    <p class="small-muted mb-1">@L["Combat.Hazard.RoutineAnyTurn"]</p>
+                                    <ul class="list-unstyled mb-0">
+                                        @for (var s = 0; s < turn.Routine.Count; s++)
+                                        {
+                                            var step = turn.Routine[s];
+                                            var stepAt = s;
+                                            <li class="mb-1" data-testid="@($"hazard-{at}-step-{stepAt}")">
+                                                <strong>@step.Name</strong> <span class="small-muted">@step.Description</span>
+                                                <div class="d-flex flex-wrap gap-2 mt-1">
+                                                    <CodexButton Small="true" Disabled="@(!turn.InOrder)" data-testid="@($"hazard-{at}-step-{stepAt}-note")"
+                                                                 OnClick="() => StepAsync(hazard, step, false)">@L["Combat.Hazard.StepNote", step.Name, hazard.Name]</CodexButton>
+                                                    @if (step.Strikes && turn.HasEffect)
+                                                    {
+                                                        <CodexButton Small="true" Disabled="@(ticked.Count == 0 || !turn.InOrder)" data-testid="@($"hazard-{at}-step-{stepAt}-on")"
+                                                                     OnClick="() => StepAsync(hazard, step, true)">@L["Combat.Hazard.StepOn", step.Name, hazard.Name]</CodexButton>
+                                                    }
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                </section>
+                            }
+
                             @if (hazard.Waiting > 0)
                             {
                                 <p class="small-muted mb-1">@L["Combat.Hazard.Waiting", hazard.Waiting]</p>
@@ -149,7 +186,7 @@
 
                             @if (PassesFor == hazard.Id && Passes.Count > 0)
                             {
-                                <CodexButton Small="true" Variant="CodexButtonVariant.Plaque" data-testid="@($"hazard-{at}-mark")" OnClick="() => MarkAsync(hazard)">
+                                <CodexButton Small="true" Variant="CodexButtonVariant.Plaque" data-testid="@($"hazard-{at}-mark")" OnClick="() => MarkAsync(hazard, at)">
                                     @L["Combat.Hazard.MarkNoticed", string.Join(", ", Passes.Select(p => NameOf(p.ActorId)).Distinct())]
                                 </CodexButton>
                             }
@@ -157,7 +194,7 @@
                             @if (hazard.CanUndo)
                             {
                                 <div class="mb-1">
-                                    <CodexButton Small="true" data-testid="@($"hazard-{at}-undo")" OnClick="() => OnUndo.InvokeAsync(hazard)"><LucideIcon IconName="undo-2" Size="14" /> @L["Combat.Hazard.Undo", hazard.Name]</CodexButton>
+                                    <CodexButton Small="true" data-testid="@($"hazard-{at}-undo")" OnClick="() => UndoAsync(hazard, at)"><LucideIcon IconName="undo-2" Size="14" /> @L["Combat.Hazard.Undo", hazard.Name]</CodexButton>
                                 </div>
                             }
 
@@ -259,24 +296,71 @@
     {
         var chosen = Chosen();
         var actors = action is HazardAction.Find or HazardAction.Disable ? chosen.Take(1).ToList() : chosen;
-        // A typed number answers one question ("Goblin needs a number") and goes only with the repeat of that request (the same hazard and action), for the creatures
-        // that were asked: never to a later check of another kind (a save bonus used as a Perception bonus, or on another hazard). A number the printed sheet suggests
-        // stands unless the game master typed another.
+        var numbers = NumbersFor(hazard, action, route);
+        typed.Clear();
+        return OnRequest.InvokeAsync(new HazardRequest(hazard, action, actors, route, null, state, numbers));
+    }
+
+    // A typed number answers one question ("Goblin needs a number") and goes only with the repeat of that request (the same hazard, action and route or step), for the
+    // creatures that were asked: never to a later check of another kind (a save bonus used as a Perception bonus, or on another hazard). A number the printed sheet
+    // suggests stands unless the game master typed another.
+    private IReadOnlyDictionary<string, int>? NumbersFor(HazardView hazard, HazardAction action, string? route)
+    {
+        if (AskedFor != $"{hazard.Id}|{action}|{route}") return null;
         var numbers = new Dictionary<string, int>();
-        if (AskedFor == $"{hazard.Id}|{action}|{route}")
+        foreach (var asked in NeedNumber.Select(n => n.Key))
         {
-            foreach (var asked in NeedNumber.Select(n => n.Key))
-            {
-                if (typed.TryGetValue(asked, out var own)) numbers[asked] = own;
-                else if (Suggested.TryGetValue(asked, out var suggestion)) numbers[asked] = suggestion;
-            }
+            if (typed.TryGetValue(asked, out var own)) numbers[asked] = own;
+            else if (Suggested.TryGetValue(asked, out var suggestion)) numbers[asked] = suggestion;
         }
 
+        return numbers.Count == 0 ? null : numbers;
+    }
+
+    // One step of the hazard's routine: said in the log, or, set off on the ticked creatures, the hazard's effect on them (the Rolling Stone's Crush on any creature's turn).
+    private Task StepAsync(HazardView hazard, HazardStep step, bool onTicked)
+    {
+        // The repeat of a strike that asked for a number carries it, like a trigger's.
+        var numbers = onTicked ? NumbersFor(hazard, HazardAction.Routine, step.Name) : null;
         typed.Clear();
-        return OnRequest.InvokeAsync(new HazardRequest(hazard, action, actors, route, null, state, numbers.Count == 0 ? null : numbers));
+        return OnRequest.InvokeAsync(new HazardRequest(hazard, HazardAction.Routine, onTicked ? Chosen() : Array.Empty<string>(), step.Name, null, null, numbers));
     }
 
     // The game master marks the characters who passed as having noticed it, and the routes they passed as found.
-    private Task MarkAsync(HazardView hazard) =>
-        OnRequest.InvokeAsync(new HazardRequest(hazard, HazardAction.MarkNoticed, Passes.Select(p => p.ActorId).Distinct().ToList(), null, Passes.Select(p => p.RouteKey).Distinct().ToList()));
+    private async Task MarkAsync(HazardView hazard, int at)
+    {
+        focusId = $"hazard-heading-{at}";
+        await OnRequest.InvokeAsync(new HazardRequest(hazard, HazardAction.MarkNoticed, Passes.Select(p => p.ActorId).Distinct().ToList(), null, Passes.Select(p => p.RouteKey).Distinct().ToList()));
+    }
+
+    private async Task UndoAsync(HazardView hazard, int at)
+    {
+        focusId = $"hazard-heading-{at}";
+        await OnUndo.InvokeAsync(hazard);
+    }
+
+    // Focus. A button that takes itself away (undo, mark as noticed) hands focus to its hazard's heading, so a keyboard user is not dropped at the top of the page; a
+    // question for a number moves focus to its first box, since it is the next thing to do.
+    private string? focusId;
+    private int askedCount;
+
+    protected override void OnParametersSet()
+    {
+        if (NeedNumber.Count > 0 && askedCount == 0) focusId = "hazard-number-0";
+        askedCount = NeedNumber.Count;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusId is not { } id) return;
+        focusId = null;
+        try
+        {
+            await JS.InvokeVoidAsync("codex.focusById", id);
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException)
+        {
+            // No focus to move (prerender or a closed circuit): nothing to report.
+        }
+    }
 }

@@ -87,7 +87,7 @@ public class SrdPackSmokeTests : IAsyncLifetime
         Assert.NotNull(goblin);
         Assert.Equal(10, goblin!.Resources["HP"]);
         Assert.Equal(15L, goblin.Properties["dex"]);
-        Assert.Equal(340, _registry.GetActorsBySystem("srd5e").Count(a => a.PackId == "srd-5.2.1"));
+        Assert.Equal(340, _registry.GetActorsBySystem("srd5e").Count(a => a.PackId == "srd-5.2.1" && !a.Tags.Contains("hazard")));
     }
 
     [Fact]
