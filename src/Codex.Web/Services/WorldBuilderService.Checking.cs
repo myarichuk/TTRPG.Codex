@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Codex.Core;
 using Codex.Core.AI;
+using Codex.Core.Systems;
 using Codex.Core.WorldBuilder;
 using Codex.Persistence;
 using Codex.Plugin.Abstractions;
@@ -39,7 +40,7 @@ public sealed partial class WorldBuilderService
         var culture = Lang;
         var rules = new ProposalRules(spellings, pages, places, key => fields.GetValueOrDefault(key) ?? Array.Empty<FieldSpec>(),
             system == null ? null : (key, value) => system.CanonicalOption(culture, key, value), castIds, brewKeys,
-            regionNames, factNames);
+            regionNames, factNames, HazardTypeOf(system));
         var check = WorldBundleParser.ParseProposal(json, rules);
 
         await FindStatsAsync(campaign, access, check.Bundle);
@@ -55,15 +56,89 @@ public sealed partial class WorldBuilderService
         }
 
         editErrors.AddRange(await VariantsAsync(campaign, access, check.Bundle));
+        var (hazardErrors, hazardWarnings) = await HazardsAsync(campaign, access, system, check.Bundle);
+        editErrors.AddRange(hazardErrors);
         editErrors.AddRange(await PicksAsync(campaign, access, check.Bundle));
         FillTagged(check.Bundle, (await wiki.GetVisibleForCampaignAsync(access)).ToList(), brews);
         var warnings = check.Warnings.ToList();
+        warnings.AddRange(hazardWarnings);
         foreach (var draft in check.Bundle.Drafts.Where(d => d is { Kind: DraftKinds.Npc, Stats: null } && d.SuggestedStats != null))
         {
             warnings.Add($"{draft.Ref} (npc '{draft.Name}'): stats '{draft.SuggestedStats}' are not in the Library, so the sheet starts blank; use a name search_library finds.");
         }
 
         return check with { Warnings = warnings, Errors = check.Errors.Concat(editErrors).ToList() };
+    }
+
+    /// <summary>The system's hazard type (HAZARDS_DESIGN.md 5), or null when it has none: then a place's hazard is ignored and its trap stays text.</summary>
+    internal static string? HazardTypeOf(SystemDefinition? system) => system?.Canonical.EntityTypes.FirstOrDefault(t => t.Hazard != null)?.Type;
+
+    /// <summary>What is wrong with the hazards a proposal makes or places. A homebrew hazard (new, or an edit's result) is held to the shape's loader checks,
+    /// whose problems are errors (a hazard the table cannot run); its numbers are read against <c>hazards.scaling</c>, whose problems are warnings, never
+    /// refusals: they go to the proposal's warnings and to the entry's own card, and the game master decides. An edit reports only what the edit introduced,
+    /// so a number the game master wrote by hand is not nagged about when only the trigger changes. A Library hazard on a feature that is not in the Library
+    /// is dropped with a warning, like any other link that names nothing; one that is really a homebrew entry is placed as homebrew. Fills the name of a
+    /// placed hazard for the review card.</summary>
+    private async Task<(List<string> Errors, List<string> Warnings)> HazardsAsync(CampaignDocument campaign, CampaignAccess access, SystemDefinition? system, WorldBundle bundle)
+    {
+        var errors = new List<string>();
+        var warnings = new List<string>();
+        if (HazardTypeOf(system) is not { } hazardType || system!.Canonical.FindType(hazardType) is not { } type) return (errors, warnings);
+
+        ContentEntry EntryOf(WorldDraft draft, Dictionary<string, object> properties) => new() { Id = draft.Ref, Type = hazardType, Name = draft.Name, Properties = properties };
+
+        // `before` is an edited entry's fields as they are now: problems it already had are not the edit's.
+        void Judge(WorldDraft draft, Dictionary<string, object> properties, Dictionary<string, object>? before)
+        {
+            draft.Concerns.Clear();
+            var entry = EntryOf(draft, properties);
+            var knownShape = before == null ? new HashSet<string>() : HazardNumbers.Problems(EntryOf(draft, before), type, system.Canonical).ToHashSet();
+            var knownScale = before == null ? new HashSet<string>() : HazardNumbers.ScalingProblems(EntryOf(draft, before), type, system.Canonical).ToHashSet();
+            foreach (var problem in HazardNumbers.Problems(entry, type, system.Canonical).Where(p => !knownShape.Contains(p)))
+            {
+                errors.Add($"{draft.Ref} ({draft.Kind} '{draft.Name}'): {problem}");
+            }
+
+            foreach (var problem in HazardNumbers.ScalingProblems(entry, type, system.Canonical).Where(p => !knownScale.Contains(p)))
+            {
+                warnings.Add($"{draft.Ref} ({draft.Kind} '{draft.Name}'): {problem}");
+                draft.Concerns.Add(problem);
+            }
+        }
+
+        foreach (var draft in bundle.Drafts.Where(d => d is { Kind: DraftKinds.Homebrew } && string.Equals(d.Type, hazardType, StringComparison.OrdinalIgnoreCase)))
+        {
+            Judge(draft, draft.Properties, null);
+        }
+
+        foreach (var draft in bundle.Drafts.Where(d => d is { Kind: DraftKinds.Edit, Properties.Count: > 0, BeforeProperties: not null } && string.Equals(d.Type, hazardType, StringComparison.OrdinalIgnoreCase)))
+        {
+            var merged = new Dictionary<string, object>(draft.BeforeProperties!);
+            foreach (var (key, value) in draft.Properties) merged[key] = value;
+            Judge(draft, merged, draft.BeforeProperties);
+        }
+
+        foreach (var draft in bundle.Drafts.Where(d => d is { Kind: DraftKinds.Place, Feature.HazardEntry: not null, Feature.HazardIsHomebrew: false }))
+        {
+            var feature = draft.Feature!;
+            var key = feature.HazardEntry!;
+            var id = key.Split('/')[1];
+            var item = await library.GetAsync(campaign, access, hazardType, id, Lang);
+            if (item == null)
+            {
+                warnings.Add($"{draft.Ref} (place '{draft.Name}'): hazard '{key}' is not in the Library, so it was ignored; use {hazardType}/<id> as search_library lists it, or propose a homebrew {hazardType} entry and give its ref.");
+                feature.HazardEntry = null;
+                if (feature is { Container: false, Lock: null, Trap: null, Concealment: null, Contents: null, Creature: null, HazardRef: null }) draft.Feature = null;
+                continue;
+            }
+
+            feature.HazardEntry = $"{hazardType}/{id}";
+            feature.HazardName = item.Entry.Name;
+            // A Library id that is really the campaign's own homebrew entry is placed as homebrew, or the table would look for a pack entry that is not there.
+            feature.HazardIsHomebrew = item.IsHomebrew;
+        }
+
+        return (errors, warnings);
     }
 
     /// <summary>Names each edit after what it changes and keeps that text as it is now, for the review card to show beside the new

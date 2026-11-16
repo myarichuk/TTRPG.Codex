@@ -100,7 +100,9 @@ public sealed partial class WorldBuilderService(ISystemCatalog catalog, Campaign
             };
             // Image prompts feed an image model and stay English, as everywhere else.
             var hint = field.Key == "imagePrompt" ? (field.Description + " Write this one in English.").Trim() : field.Description;
-            specs.Add(new FieldSpec(field.Key, field.Label, field.Type.ToString(), options, field.Min, field.Max, hint));
+            // A hazard's level bands (levels and the numbers that change) and damage parts (dice and type) are rows with no name.
+            var named = field.Key != type.Hazard?.HigherLevels && field.Key != type.Hazard?.Effect?.Damage;
+            specs.Add(new FieldSpec(field.Key, field.Label, field.Type.ToString(), options, field.Min, field.Max, hint, named));
         }
 
         // What the sheet rules read off an entry (use, modifiers...) is not a field of the type, but is kept when written.

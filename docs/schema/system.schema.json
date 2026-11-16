@@ -4514,7 +4514,7 @@
               ]
             }
           },
-          "description": "Rows by level: each is `{ level: 5, saveDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused."
+          "description": "Rows by level: each is `{ level: 5, saveDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. The homebrew wizard fills a new hazard's numbers from it, and the world builder warns the game master when a proposed hazard's numbers are more than one row away from its level (`HazardNumbers.ScalingProblems`). Guidance only; nothing is refused."
         }
       },
       "additionalProperties": false

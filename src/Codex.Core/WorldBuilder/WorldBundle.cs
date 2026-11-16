@@ -69,6 +69,22 @@ public sealed class DraftFeature
     public string? Concealment { get; set; }
     public string? Contents { get; set; }
     public string? Creature { get; set; }
+
+    /// <summary>The hazard as the model wrote it (a Library <c>type/id</c>, <c>existing:homebrew:type/id</c>, or the ref of a homebrew hazard in the proposal).
+    /// The parser turns it into <see cref="HazardEntry"/> or <see cref="HazardRef"/> and clears it when it names nothing.</summary>
+    public string? Hazard { get; set; }
+
+    /// <summary>The Library entry of the hazard, <c>type/id</c>: a pack's, or the campaign's own homebrew one (<see cref="HazardIsHomebrew"/>).</summary>
+    public string? HazardEntry { get; set; }
+
+    /// <summary>True when <see cref="HazardEntry"/> is the campaign's own homebrew entry.</summary>
+    public bool HazardIsHomebrew { get; set; }
+
+    /// <summary>The ref of a homebrew hazard in the same proposal; it becomes the placed hazard when that entry is saved.</summary>
+    public string? HazardRef { get; set; }
+
+    /// <summary>The hazard's name as the review reads it, for an entry the Library has; filled by the check.</summary>
+    public string? HazardName { get; set; }
 }
 
 /// <summary>An item a proposed person would carry: the Library entry, how many, and whether it is worn or held.</summary>
@@ -195,6 +211,9 @@ public sealed class WorldDraft
     /// <see cref="Tags"/> (the changed fields, and the complete new tags when they change), for the review card.</summary>
     public Dictionary<string, object>? BeforeProperties { get; set; }
     public List<string>? BeforeTags { get; set; }
+
+    /// <summary>What the check found worth the game master's eye on this entry (a homebrew hazard's numbers far from its level), shown on its card. Warnings, not refusals.</summary>
+    public List<string> Concerns { get; set; } = new();
 
     /// <summary>For a tags entry: the keys of the pages and homebrew entries it tags.</summary>
     public List<string> Targets { get; set; } = new();
@@ -372,7 +391,8 @@ public sealed record ProposalRules(
     IReadOnlyCollection<string>? ExistingActors = null,
     IReadOnlyDictionary<string, string>? ExistingHomebrew = null,
     IReadOnlyDictionary<string, string>? ExistingRegions = null,
-    IReadOnlyDictionary<string, string>? ExistingFacts = null);
+    IReadOnlyDictionary<string, string>? ExistingFacts = null,
+    string? HazardType = null);
 
 /// <summary>A checked proposal: the entries as they would be saved, and what is wrong with it (nothing is saved while there are
 /// <see cref="Errors"/>) or worth a second look (<see cref="Warnings"/>), each naming the entry it is about.</summary>
@@ -528,7 +548,7 @@ public static class WorldBundleParser
                         draft.PageKind = OneOf(FieldCoercion.String(element, "pageKind"), PageKinds) ?? "lore";
                         break;
                     case DraftKinds.Edit:
-                        if (!ReadEdit(draft, element, label, pages, rules, bundle, errors, (FieldCoercion.String(element, "text") ?? FieldCoercion.String(element, "description"))?.Length ?? 0)) continue;
+                        if (!ReadEdit(draft, element, label, pages, rules, bundle, errors, warnings, (FieldCoercion.String(element, "text") ?? FieldCoercion.String(element, "description"))?.Length ?? 0)) continue;
                         break;
                     case DraftKinds.Tags:
                         if (!ReadTags(draft, element, label, pages, rules, errors)) continue;
@@ -559,7 +579,7 @@ public static class WorldBundleParser
                         draft.Type = type;
                         draft.Bestiary = element.TryGetProperty("bestiary", out var bestiary) && bestiary.ValueKind == JsonValueKind.True;
                         draft.BasedOn = Cut(FieldCoercion.String(element, "basedOn"), MaxStats) is { Length: > 0 } basedOn ? basedOn : null;
-                        ApplyHomebrew(draft, element, rules.HomebrewFields(type), rules.Canonical);
+                        ApplyHomebrew(draft, element, rules.HomebrewFields(type), rules.Canonical, label, warnings);
                         break;
                 }
 
@@ -583,6 +603,8 @@ public static class WorldBundleParser
                 rawLinks[draft] = links;
                 bundle.Drafts.Add(draft);
             }
+
+            ResolveHazards(bundle, rules, warnings);
 
             // Two pages may share a title ("Sister Maren", "Sister Maren"); a link by title reaches the first, as the wiki's does.
             var titles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -675,7 +697,7 @@ public static class WorldBundleParser
     /// <summary>Reads an edit: what it targets (which must exist, and be changed only once) and what changes. A page, a place's
     /// description or a cast member's history takes the complete new text; a homebrew entry takes any of a new name, a new rules
     /// text, the fields that change and its complete new tags.</summary>
-    private static bool ReadEdit(WorldDraft draft, JsonElement element, string label, Dictionary<string, string> pages, ProposalRules rules, WorldBundle bundle, List<string> errors, int textLength)
+    private static bool ReadEdit(WorldDraft draft, JsonElement element, string label, Dictionary<string, string> pages, ProposalRules rules, WorldBundle bundle, List<string> errors, List<string> warnings, int textLength)
     {
         var key = FieldCoercion.String(element, "target")?.Trim();
         if (string.IsNullOrEmpty(key))
@@ -793,7 +815,7 @@ public static class WorldBundleParser
         if (kind == EditTarget.Homebrew)
         {
             var type = id.Split('/')[0];
-            ApplyHomebrew(draft, element, rules.HomebrewFields(type), rules.Canonical);
+            ApplyHomebrew(draft, element, rules.HomebrewFields(type), rules.Canonical, label, warnings);
             draft.Type = type;
             // Tags only change when the model names them: an edit of the text alone keeps the entry's tags.
             draft.Retag = element.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array;
@@ -912,7 +934,72 @@ public static class WorldBundleParser
     }
 
 
-    // A place's "feature": {"container", "lock", "trap", "concealment", "contents", "creature"}; null when it says nothing.
+    // A place's "feature": {"container", "lock", "trap", "hazard", "concealment", "contents", "creature"}; null when it says nothing.
+    // A place's hazard names a Library entry (type/id), a homebrew entry the campaign has (existing:homebrew:type/id) or the ref of a homebrew hazard in
+    // this proposal. One that names nothing is dropped with a warning (never saved dangling); on a system with no hazard type the hazard is ignored, and
+    // its free-text "trap" stays as it always did. A Library entry is looked up by the check, which has the Library.
+    private static void ResolveHazards(WorldBundle bundle, ProposalRules rules, List<string> warnings)
+    {
+        var hazardType = rules.HazardType;
+        foreach (var draft in bundle.Drafts.Where(d => d is { Kind: DraftKinds.Place, Feature: not null }))
+        {
+            var feature = draft.Feature!;
+            var label = $"{draft.Ref} (place '{draft.Name}')";
+            if (feature.Hazard is not { Length: > 0 } written)
+            {
+                if (hazardType != null && feature.Trap != null)
+                {
+                    warnings.Add($"{label}: if this trap rolls (a save, an attack or damage), give the feature \"hazard\" (a Library hazard or a homebrew one in this proposal) and keep \"trap\" for a note.");
+                }
+
+                continue;
+            }
+
+            feature.Hazard = null;
+            if (hazardType == null)
+            {
+                warnings.Add($"{label}: this system has no hazard type, so the hazard '{written}' was ignored; describe the danger in \"trap\".");
+            }
+            else if (written.StartsWith(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var key = written[(WorldBundle.ExistingPrefix + WorldBundle.HomebrewPrefix).Length..];
+                var found = rules.ExistingHomebrew?.Keys.FirstOrDefault(k => string.Equals(k, key, StringComparison.OrdinalIgnoreCase));
+                if (found != null && found.Split('/') is [var type, _] && string.Equals(type, hazardType, StringComparison.OrdinalIgnoreCase))
+                {
+                    feature.HazardEntry = found;
+                    feature.HazardIsHomebrew = true;
+                    feature.HazardName = rules.ExistingHomebrew![found];
+                }
+                else
+                {
+                    warnings.Add($"{label}: hazard '{written}' is not a {hazardType} homebrew entry the campaign has, so it was ignored; use the key search_library lists.");
+                }
+            }
+            else if (bundle.Drafts.FirstOrDefault(d => string.Equals(d.Ref, written, StringComparison.OrdinalIgnoreCase)) is { } made)
+            {
+                if (made is { Kind: DraftKinds.Homebrew } && string.Equals(made.Type, hazardType, StringComparison.OrdinalIgnoreCase))
+                {
+                    feature.HazardRef = made.Ref;
+                    feature.HazardName = made.Name;
+                }
+                else
+                {
+                    warnings.Add($"{label}: hazard '{written}' is not a homebrew {hazardType} entry of this proposal, so it was ignored.");
+                }
+            }
+            else if (written.Split('/') is [var libraryType, { Length: > 0 }] && string.Equals(libraryType, hazardType, StringComparison.OrdinalIgnoreCase))
+            {
+                feature.HazardEntry = written;
+            }
+            else
+            {
+                warnings.Add($"{label}: hazard '{written}' is neither a Library {hazardType} (as {hazardType}/<id>), nor an existing homebrew one, nor the ref of a homebrew {hazardType} in this proposal, so it was ignored.");
+            }
+
+            if (feature is { Container: false, Lock: null, Trap: null, Concealment: null, Contents: null, Creature: null, HazardEntry: null, HazardRef: null }) draft.Feature = null;
+        }
+    }
+
     private static DraftFeature? ReadFeature(JsonElement element)
     {
         if (!element.TryGetProperty("feature", out var f) || f.ValueKind != JsonValueKind.Object) return null;
@@ -923,9 +1010,10 @@ public static class WorldBundleParser
             Trap = Note(FieldCoercion.String(f, "trap"), MaxFeatureNote),
             Concealment = Note(FieldCoercion.String(f, "concealment"), MaxFeatureNote),
             Contents = Note(FieldCoercion.String(f, "contents"), MaxFeatureContents),
-            Creature = Note(FieldCoercion.String(f, "creature"), MaxFeatureNote)
+            Creature = Note(FieldCoercion.String(f, "creature"), MaxFeatureNote),
+            Hazard = Note(FieldCoercion.String(f, "hazard"), MaxFeatureNote)
         };
-        return feature is { Container: false, Lock: null, Trap: null, Concealment: null, Contents: null, Creature: null } ? null : feature;
+        return feature is { Container: false, Lock: null, Trap: null, Concealment: null, Contents: null, Creature: null, Hazard: null } ? null : feature;
 
         static string? Note(string? text, int max) => Cut(text, max) is { Length: > 0 } cut ? cut : null;
     }
@@ -935,7 +1023,7 @@ public static class WorldBundleParser
     /// Values are coerced to their field's type and, through <paramref name="canonical"/> (field key, value written), back to
     /// the stored value of a translated option; unknown keys and values that do not fit are dropped.
     /// </summary>
-    private static void ApplyHomebrew(WorldDraft draft, JsonElement root, IReadOnlyList<FieldSpec> fields, Func<string, string, string>? canonical)
+    private static void ApplyHomebrew(WorldDraft draft, JsonElement root, IReadOnlyList<FieldSpec> fields, Func<string, string, string>? canonical, string label, List<string> warnings)
     {
         var specs = fields.ToDictionary(f => f.Key, StringComparer.OrdinalIgnoreCase);
         var properties = new Dictionary<string, object>();
@@ -948,6 +1036,14 @@ public static class WorldBundleParser
                 if (value != null)
                 {
                     properties[spec.Key] = value;
+                }
+
+                // FieldCoercion drops a row with no "name" (or, where rows have none, nothing in it), so a list of them must not vanish unseen.
+                if (spec.Type == "Collection" && prop.Value.ValueKind == JsonValueKind.Array)
+                {
+                    var asked = prop.Value.EnumerateArray().Count(e => e.ValueKind == JsonValueKind.Object);
+                    var kept = (value as System.Collections.ICollection)?.Count ?? 0;
+                    if (asked > kept) warnings.Add($"{label}: {asked - kept} row(s) of '{spec.Key}' {(spec.RowsNeedName ? "have no \"name\" and were dropped; every row of this list needs one" : "had nothing in them and were dropped")}.");
                 }
             }
         }

@@ -98,8 +98,9 @@ public sealed record LevelUpRequest(
     IReadOnlyList<string>? Choices = null,
     IReadOnlyList<string>? SheetChanges = null);
 
-/// <summary>A field the model fills, described the way a prompt lists it. <paramref name="Hint"/> is the field's own help text.</summary>
-public sealed record FieldSpec(string Key, string Label, string Type, IReadOnlyList<string>? Options, double? Min, double? Max, string? Hint = null);
+/// <summary>A field the model fills, described the way a prompt lists it. <paramref name="Hint"/> is the field's own help text.
+/// <paramref name="RowsNeedName"/>: for a Collection, a row with no "name" is dropped (the default); false where the rows have no name (a hazard's level bands), and any row with something in it stays.</summary>
+public sealed record FieldSpec(string Key, string Label, string Type, IReadOnlyList<string>? Options, double? Min, double? Max, string? Hint = null, bool RowsNeedName = true);
 
 /// <summary>The character the model is asked to make from a concept.</summary>
 /// <param name="Equipment">The items a sheet may carry, or null when the system has no inventory (the reply then has no equipment).</param>
@@ -133,7 +134,12 @@ public sealed record WorldChatRequest(
     string? Language = null,
     string Creature = "creature",
     IReadOnlyList<string>? CreatureExamples = null,
-    IReadOnlyDictionary<string, string>? Outlines = null);
+    IReadOnlyDictionary<string, string>? Outlines = null,
+    WorldChatHazards? Hazards = null);
+
+/// <summary>What the chat tells the model about a system's hazards: the homebrew type that is a hazard, its level field, and the fields
+/// <c>hazards.scaling</c> has a column for. Field names only: the table's numbers are not in the prompt, and reach the model only as the range in a warning.</summary>
+public sealed record WorldChatHazards(string Type, string? LevelField, IReadOnlyList<string> ScaledFields);
 
 /// <summary>An item a character may carry: its Library id and the name a model knows it by.</summary>
 public sealed record EquipmentOption(string Id, string Name);
@@ -623,6 +629,17 @@ public static class AiPrompts
         sb.Append($"A person who fights or is fought may also have \"stats\": the English name of a generic {r.Creature} from the {r.SystemName} rules whose statistics suit them " +
                   $"(such as {string.Join(", ", examples.Take(examples.Count - 1))}{(examples.Count > 1 ? " or " : "")}{examples[^1]}), exactly as search_library finds it; leave it out when none fits. ");
         if (r.HomebrewTypes.Count > 0) sb.Append($"Homebrew types: {string.Join(", ", r.HomebrewTypes)}. ");
+        if (r.Hazards is { } hazards)
+        {
+            // One line: this system has a hazard shape and a scaling table. Field names only; the numbers stay the model's own and propose_changes warns when they are out of range.
+            sb.Append($"This system has hazards (type \"{hazards.Type}\"): a trap or other danger the table rolls goes on a feature as \"hazard\", a Library {hazards.Type} as {hazards.Type}/<id> or the ref of a homebrew {hazards.Type} " +
+                      "entry in the same proposal (read homebrew_fields first), and \"trap\" is left for notes. " +
+                      (hazards.ScaledFields.Count > 0
+                          ? $"Give a homebrew {hazards.Type} a level{(hazards.LevelField != null ? $" in \"{hazards.LevelField}\"" : "")} (ask the game master what level the party is if you do not know) and write its {string.Join(", ", hazards.ScaledFields.Select(f => $"\"{f}\""))} in proportion to a hazard of that level: propose_changes warns when a number is far from the system's guide for that level and gives the guide's range; keep the numbers inside it unless the game master asked otherwise. "
+                          : string.Empty) +
+                      "Every row of a detect or disarm list needs a \"name\"; write the trigger and reset as short rules text. A place's text is what players read once it is revealed, so keep the hazard out of it. ");
+        }
+
         var language = LanguageName(r.Language);
         sb.Append(language == "English"
             ? Style
