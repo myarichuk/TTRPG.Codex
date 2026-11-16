@@ -200,4 +200,5 @@ domain under CC0 1.0 by the TTRPG.Codex project.
   dress, and anything beyond that comes from the user's own copy of the books. The reference
   fixtures under `tests/Codex.Tests/Fixtures/reference` use this project's own words and numbers:
   `street` is original, `d35` follows the shape of the d20 System Reference Document 3.5 (Open Game
-  License 1.0a), and `crew` follows the Forged in the Dark SRD (CC BY 3.0).
+  License 1.0a), `crew` follows the Forged in the Dark SRD (CC BY 3.0), and `degrees` follows the shape
+  of the ORC-licensed Remaster rules in this project's own words and numbers, naming no game.

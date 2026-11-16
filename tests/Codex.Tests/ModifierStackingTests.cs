@@ -59,4 +59,50 @@ public class ModifierStackingTests
         Assert.Equal(16d, result.Values["AC"]);
         Assert.Equal(new[] { ("Unarmored", false), ("Scale mail", true), ("Shield", true) }, result.Modifiers["AC"].Select(m => (m.Source!, m.Counted)));
     }
+
+    private static IReadOnlyList<(string Item, bool Counted)> StackWith(ModifierTypesDefinition types, params (string Type, double Amount, string Item)[] modifiers) =>
+        ModifierStacking.Stack(modifiers, types).Select(m => (m.Item, m.Counted)).ToList();
+
+    private static readonly ModifierTypesDefinition PerTypePenalties = new()
+    {
+        Penalties = "highest",
+        PenaltyTypes = new Dictionary<string, string> { ["untyped"] = "sum" },
+        Types = new Dictionary<string, string> { ["status"] = "highest" }
+    };
+
+    [Fact]
+    public void TypedPenaltiesKeepOnlyTheWorst_AndTypedBonusesOnlyTheBest()
+    {
+        Assert.Equal(new[] { ("p1", false), ("p2", true), ("b1", false), ("b2", true) },
+            StackWith(PerTypePenalties, ("status", -1, "p1"), ("status", -2, "p2"), ("status", 1, "b1"), ("status", 2, "b2")));
+    }
+
+    [Fact]
+    public void OneListWithTypedAndUntypedPenalties_UsesEachTypesOwnRule()
+    {
+        Assert.Equal(new[] { ("s1", false), ("s2", true), ("u1", true), ("u2", true) },
+            StackWith(PerTypePenalties, ("status", -1, "s1"), ("status", -2, "s2"), ("untyped", -1, "u1"), ("untyped", -1, "u2")));
+    }
+
+    [Fact]
+    public void ABlankOrUnknownPenaltyRule_CountsAsSumOrTheDefault()
+    {
+        var types = new ModifierTypesDefinition { Penalties = "highest", PenaltyTypes = new Dictionary<string, string> { ["a"] = "", ["b"] = "worst" } };
+        Assert.Equal(new[] { ("x", false), ("y", true) }, StackWith(types, ("a", -1, "x"), ("a", -2, "y")));
+        Assert.Equal(new[] { ("x", true), ("y", true) }, StackWith(types, ("b", -1, "x"), ("b", -2, "y")));
+    }
+
+    [Fact]
+    public void UntypedPenaltiesAllStack_WhilePenaltyTypesNamesThem()
+    {
+        Assert.Equal(new[] { ("a", true), ("b", true) }, StackWith(PerTypePenalties, ("untyped", -1, "a"), ("untyped", -1, "b")));
+    }
+
+    [Fact]
+    public void WithoutPenaltyTypes_EveryTypeUsesPenalties()
+    {
+        var types = new ModifierTypesDefinition { Penalties = "highest" };
+        Assert.Equal(new[] { ("a", true), ("b", false) }, StackWith(types, ("untyped", -3, "a"), ("untyped", -1, "b")));
+        Assert.Equal(new[] { ("a", true), ("b", true) }, StackWith(new ModifierTypesDefinition(), ("untyped", -3, "a"), ("untyped", -1, "b")));
+    }
 }

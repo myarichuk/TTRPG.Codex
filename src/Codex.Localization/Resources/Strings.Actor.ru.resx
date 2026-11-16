@@ -19,6 +19,9 @@
   <data name="Actor.Hp.NoteLead" xml:space="preserve"><value> за {0, plural, one{# уровень} few{# уровня} many{# уровней} other{# уровня}} (кость хитов + Телосложение </value></data>
   <data name="Actor.Hp.NoteExtra" xml:space="preserve"><value> + {0} от {1}</value></data>
   <data name="Actor.Hp.NoteTail" xml:space="preserve"><value> за каждый, на первом уровне берётся вся кость).</value></data>
+  <data name="Actor.Hp.NoteLeadFlat" xml:space="preserve"><value> за {0, plural, one{# уровень} few{# уровня} many{# уровней} other{# уровня}} (хиты класса за уровень + Телосложение </value></data>
+  <data name="Actor.Hp.NoteTailFlat" xml:space="preserve"><value> за каждый).</value></data>
+  <data name="Actor.Hp.NoteOnce" xml:space="preserve"><value> Ещё {0} от {1}, один раз.</value></data>
   <data name="Actor.Hp.HowSummary" xml:space="preserve"><value>Как это считается</value></data>
   <data name="Actor.Hp.TableCaption" xml:space="preserve"><value>Очки здоровья, полученные на каждом уровне</value></data>
   <data name="Actor.Hp.ColLevel" xml:space="preserve"><value>Уровень</value></data>
@@ -333,6 +336,7 @@
   <data name="Actor.Sheet.LevelHp" xml:space="preserve"><value>Очки здоровья</value></data>
   <data name="Actor.Sheet.LevelHpHow" xml:space="preserve"><value>(d{0}: {1}, модификатор {2})</value></data>
   <data name="Actor.Sheet.LevelHpAverage" xml:space="preserve"><value>{0} в среднем</value></data>
+  <data name="Actor.Sheet.LevelHpFlat" xml:space="preserve"><value>({0} за уровень, модификатор {1})</value></data>
   <data name="Actor.Sheet.LevelRollDie" xml:space="preserve"><value>Бросить d{0}</value></data>
   <data name="Actor.Sheet.LevelPb" xml:space="preserve"><value>Бонус мастерства</value></data>
   <data name="Actor.Sheet.LevelChoose" xml:space="preserve"><value>Выбрать после повышения</value></data>
@@ -402,6 +406,8 @@
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: {1} можно взять только один раз.</value></data>
   <data name="Actor.Rule.LimitForClass" xml:space="preserve"><value>{0}: {1} для класса «{2}», но на этом уровне {2} разрешает только {3}.</value></data>
   <data name="Actor.Rule.NoHitDie" xml:space="preserve"><value>У класса «{0}» нет кости хитов, поэтому его уровни не добавляют хитов.</value></data>
+  <data name="Actor.Rule.NoHitPointsPerLevel" xml:space="preserve"><value>У класса «{0}» не указаны хиты за уровень, поэтому его уровни не добавляют хитов.</value></data>
+  <data name="Actor.Rule.NoArmorCategory" xml:space="preserve"><value>У «{0}» нет свойства «{1}», поэтому, пока доспех надет, ранг брони не учитывается.</value></data>
   <data name="Actor.Rule.NoSpellAbility" xml:space="preserve"><value>У класса «{0}» есть ячейки заклинаний, но не указана заклинательная характеристика, поэтому у него нет СЛ спасброска и атаки заклинанием.</value></data>
   <data name="Actor.Rule.NoSpellTable" xml:space="preserve"><value>Класс «{0}» указывает заклинательную характеристику, но у него нет таблицы заклинаний, поэтому он не получает ячеек и подготовленных заклинаний.</value></data>
   <data name="Actor.Rule.SkillChoices" xml:space="preserve"><value>{0}: сверх предыстории выбрано {1}, но {2} даёт {3}. Вид или черта могут давать больше.</value></data>

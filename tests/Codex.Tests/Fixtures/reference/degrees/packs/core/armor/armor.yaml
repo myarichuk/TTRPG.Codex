@@ -1,0 +1,1 @@
+- { id: scale-coat, name: Scale coat, properties: { armorBase: 13, armorDexCap: 2, armorCategory: medium } }

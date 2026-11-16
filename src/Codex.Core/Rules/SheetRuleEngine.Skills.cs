@@ -41,7 +41,7 @@ public sealed partial class SheetRuleEngine
         if (Rules?.Skills is not { } rules) return;
 
         // Skills and saving throws are ranked lists (SheetRuleEngine.Ranks.cs); what is left here is what reads their result.
-        var ranked = EvaluateRanks(sheet, result, rules);
+        var ranked = EvaluateRanks(sheet, result, BuildRankedLists(rules), rules)!;
 
         // The first class's skill choices (F24): more chosen than it gives, beyond what the background, a feature or a choice grants, is
         // worth a look, not a refusal, since a species or a feat may give more. Only the player's own first-rank ticks count. With a second

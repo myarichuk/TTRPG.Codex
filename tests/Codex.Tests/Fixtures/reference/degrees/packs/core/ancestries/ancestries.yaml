@@ -1,0 +1,4 @@
+# An ancestry's hit points count once, whatever the level.
+- id: hillfolk
+  name: Hillfolk
+  properties: { hp: 8 }

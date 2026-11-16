@@ -17,7 +17,7 @@
     @if (Summary is { Active: true } summary)
     {
         <p class="small mt-2 mb-1" data-testid="hp-max-note">
-            <strong>@summary.Max</strong>@L["Actor.Hp.NoteLead", summary.Levels.Count]<bdi>@Signed(summary.Modifier)@(summary.LevelExtra != 0 ? L["Actor.Hp.NoteExtra", summary.LevelExtra, summary.ExtraSource is { } extra ? Names.Source(extra) : summary.ExtraSource] : "")</bdi>@L["Actor.Hp.NoteTail"]
+            <strong>@summary.Max</strong>@L[Flat ? "Actor.Hp.NoteLeadFlat" : "Actor.Hp.NoteLead", summary.Levels.Count]<bdi>@Signed(summary.Modifier)@(summary.LevelExtra != 0 ? L["Actor.Hp.NoteExtra", summary.LevelExtra, summary.ExtraSource is { } extra ? Names.Source(extra) : summary.ExtraSource] : "")</bdi>@L[Flat ? "Actor.Hp.NoteTailFlat" : "Actor.Hp.NoteTail"]@(summary.Once != 0 ? L["Actor.Hp.NoteOnce", summary.Once, summary.OnceSource is { } once ? Names.Source(once) : summary.OnceSource] : "")
         </p>
         <details>
             <summary class="small">@L["Actor.Hp.HowSummary"]</summary>
@@ -31,9 +31,9 @@
                         <tr>
                             <td>@level.Level</td>
                             <td>@level.ClassName</td>
-                            <td><bdi>d@(level.Die)</bdi></td>
+                            <td><bdi>@(level.Die > 0 ? "d" + level.Die : "—")</bdi></td>
                             <td>
-                                @if (Mode == "rolled" && level.Level > 1 && CanEdit)
+                                @if (Mode == "rolled" && level.Die > 0 && level.Level > 1 && CanEdit)
                                 {
                                     <input type="number" class="field-input field-sm" style="width:5rem" min="1" max="@level.Die" value="@(level.IsRolled ? level.Base : "")" placeholder="@(level.IsRolled ? null : level.Base)"
                                            aria-label="@L["Actor.Hp.RollAria", level.Level]" @onchange="e => SetRollAsync(level.Level, e.Value?.ToString())" data-testid="hp-roll-@level.Level" />
@@ -77,7 +77,9 @@
     private readonly string id = "hp-" + Guid.NewGuid().ToString("N")[..6];
 
     private string Mode => Summary?.Mode ?? (YamlValues.GetString(Sheet, Rules.ModeKey) ?? "manual").ToLowerInvariant();
-    private IEnumerable<string> Modes => Rules.Modes.Contains("manual") ? Rules.Modes : Rules.Modes.Append("manual");
+    /// <summary>Hit points a class gives as a number per level: there is no die, so nothing to roll.</summary>
+    private bool Flat => !string.IsNullOrEmpty(Rules.FlatProperty);
+    private IEnumerable<string> Modes => (Rules.Modes.Contains("manual") ? Rules.Modes : Rules.Modes.Append("manual")).Where(m => !(Flat && m == "rolled"));
 
     private string ModeLabel(string mode) => mode switch
     {

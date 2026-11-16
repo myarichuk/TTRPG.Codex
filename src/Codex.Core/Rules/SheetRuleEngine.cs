@@ -199,6 +199,13 @@ public sealed class SheetEvaluation
 
     public List<SkillScore> SavingThrows { get; } = new();
     public List<SkillScore> Skills { get; } = new();
+
+    /// <summary>The general ranked lists (<c>sheetRules.ranked</c>) by key, each key's score in declaration order. <see cref="SkillScore.RankBonus"/> is the
+    /// rank's value without the attribute.</summary>
+    public Dictionary<string, List<SkillScore>> Ranked { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The sheet keys of the choices the general lists' pass used, so the skills' pass does not give two choices one key.</summary>
+    internal HashSet<string> RankChoiceKeys { get; } = new(StringComparer.Ordinal);
     public List<PassiveScore> Passives { get; } = new();
     public List<SpellcastingScore> Spellcasting { get; } = new();
 
@@ -311,6 +318,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         var views = ClassViews(sheet, result.Classes);
         EvaluateMulticlass(sheet, result);
         EvaluateFeatures(sheet, result, linked);
+        EvaluateRankedLists(sheet, result);
 
         foreach (var constraint in Rules.Constraints)
         {

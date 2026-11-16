@@ -1,0 +1,190 @@
+# Reference fixture `degrees` (step P1 of the hybrid-system plan): a d20 system with four degrees of success, ranks
+# worth the level plus 2, 4, 6 or 8, typed bonuses and valued conditions. It follows the shape of an ORC-licensed rules set in this
+# project's own words and numbers; every entry is invented. It is the first hybrid system: `sheetRules` builds the character (ranks,
+# features, armor class) and one sheet kind carries the play-time numbers (a DC the kind owns, speed, gear that changes them).
+#
+# Unlike the first three fixtures, this file uses only syntax the loader reads today, because ReferenceFixtureTests refuses unknown
+# keys. What the engine cannot do yet is in spec.yaml as expectations that fail, each naming the plan step meant to make it pass.
+id: ref-degrees
+name: Reference four-degrees d20 (test fixture)
+version: 0.1.0
+description: >-
+  Ranks worth level plus a fixed step, four degrees of success with a natural 20 or 1 moving the result one step, typed bonuses that
+  keep the highest, penalties that keep the worst, and conditions with a value that drop at the end of a turn.
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.
+
+attributes:
+  - { key: str, label: Strength,     abbreviation: STR, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: dex, label: Dexterity,    abbreviation: DEX, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: con, label: Constitution, abbreviation: CON, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: int, label: Intelligence, abbreviation: INT, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: wis, label: Wisdom,       abbreviation: WIS, default: 10, min: 1, max: 30, modifier: half-minus-five }
+  - { key: cha, label: Charisma,     abbreviation: CHA, default: 10, min: 1, max: 30, modifier: half-minus-five }
+
+actorFields:
+  - { key: level,      label: Level,       type: Number,          defaultValue: 1, min: 1, max: 20 }
+  - { key: ancestry,   label: Ancestry,    type: EntityReference, targetEntityType: ancestry }
+  - { key: class,      label: Class,       type: EntityReference, targetEntityType: class }
+  - { key: armorClass, label: Armor Class, type: Number,          defaultValue: 10 }
+
+entityTypes:
+  - { type: ancestry, label: Ancestry, folder: ancestries }
+  - { type: class,    label: Class,    folder: classes }
+  - { type: feat,     label: Feat,     folder: feats }
+  - { type: armor,    label: Armor,    folder: armor }
+  - { type: trinket,  label: Trinket,  folder: trinkets }
+
+conditions: [Frightened]
+
+# A spell effect beside the conditions. Its bonus is untyped, which adds up, so counted twice it would show; Frightened's status
+# penalties keep the worst, so a second copy of them would not.
+effects: [Inspired]
+
+# Frightened lowers every check and every DC by its value, as a status penalty, and drops by 1 at the end of the creature's turn.
+# Each target belongs to one side (the hybrid rule, docs/SHEET_CONDITIONS_DESIGN.md): attack, save and check are roll targets and
+# classDc and perception are values of ranked lists, all of sheetRules; senseDc is the sheet kind's value. No named roll below reads
+# modifiers('check'), modifiers('save') or modifiers('attack'): a roll that did would make those names kind targets too, and the
+# loader refuses a target both sides claim.
+conditionEffects:
+  Frightened:
+    value: { max: 4, decrease: { on: turnEnd, by: 1 } }
+    modifiers:
+      - { target: attack,     amount: "-value", type: status }
+      - { target: save,       amount: "-value", type: status }
+      - { target: check,      amount: "-value", type: status }
+      - { target: classDc,    amount: "-value", type: status }
+      - { target: perception, amount: "-value", type: status }
+      - { target: senseDc,    amount: "-value", type: status }
+  Inspired:
+    modifiers:
+      - { target: classDc, amount: 1 }
+      - { target: senseDc, amount: 1 }
+
+# Status, circumstance and item bonuses keep the highest of their type; untyped ones add up. Penalties of a type keep the worst.
+# Untyped penalties add up: `penaltyTypes` overrides `penalties` for one type.
+modifierTypes:
+  default: sum
+  penalties: highest
+  penaltyTypes:
+    untyped: sum
+  types:
+    status: highest
+    circumstance: highest
+    item: highest
+
+# The degree a d20 check comes to: 3 critical success, 2 success, 1 failure, 0 critical failure. Beating the DC by 10 is one step up,
+# missing it by 10 one step down; a natural 20 then moves the result one step up and a natural 1 one step down, within 0 to 3.
+functions:
+  degree: { formula: "(total, dc, natural) => min(3, max(0, (total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0) + (natural == 20 ? 1 : natural == 1 ? -1 : 0)))" }
+
+sheetRules:
+  enforcement: warn
+  # Hit points: the class's own number per level (no die) plus Constitution, and the ancestry's number once.
+  hitPoints:
+    key: maxHp
+    currentKey: hp
+    flatProperty: hp
+    attribute: con
+    once: { field: ancestry, property: hp }
+
+  inventory:
+    key: inventory
+    label: Gear
+    types: [armor]
+
+  # Armor: its base (10 plus its bonus) and Dexterity up to its cap, then the rank in what is worn (the armor list below).
+  armorClass:
+    key: armorClass
+    unarmored: "10 + mod(dex)"
+    dexAttribute: dex
+    rank: { list: armor, property: armorCategory, unarmored: unarmored }
+
+  # Ranked lists beside the skills, on the skills' ranks (trained to legendary, worth level plus 2 to 8). Perception and the class DC
+  # publish their scores as values under their own keys; armor holds one rank per category and publishes nothing.
+  ranked:
+    - { key: perception, label: Perception, ranksOf: skills, attribute: wis, publish: true }
+    - { key: classDc, label: Class DC, ranksOf: skills, base: 10, attributeFrom: { field: class, property: keyAttribute }, publish: true }
+    - key: armor
+      label: Armor
+      ranksOf: skills
+      list:
+        - { key: unarmored, label: Unarmored }
+        - { key: light,     label: Light armor }
+        - { key: medium,    label: Medium armor }
+        - { key: heavy,     label: Heavy armor }
+
+  # Ranks: trained, expert, master, legendary, worth the level plus 2, 4, 6, 8. An untrained skill adds its attribute alone.
+  skills:
+    label: Skills
+    list:
+      - { key: athletics, label: Athletics, attribute: str }
+      - { key: arcana,    label: Arcana,    attribute: int }
+      - { key: stealth,   label: Stealth,   attribute: dex }
+      - { key: survival,  label: Survival,  attribute: wis }
+    ranks:
+      - { key: trained,   label: Trained,   sheetKey: skillTrained,   value: "level + 2" }
+      - { key: expert,    label: Expert,    sheetKey: skillExpert,    value: "level + 4" }
+      - { key: master,    label: Master,    sheetKey: skillMaster,    value: "level + 6" }
+      - { key: legendary, label: Legendary, sheetKey: skillLegendary, value: "level + 8" }
+    saves:
+      ranks:
+        - { key: trained,   label: Trained,   sheetKey: saveTrained,   value: "level + 2" }
+        - { key: expert,    label: Expert,    sheetKey: saveExpert,    value: "level + 4" }
+        - { key: master,    label: Master,    sheetKey: saveMaster,    value: "level + 6" }
+        - { key: legendary, label: Legendary, sheetKey: saveLegendary, value: "level + 8" }
+
+  lists:
+    - key: feats
+      label: Feats
+      targetEntityType: feat
+
+  features:
+    - { field: ancestry }
+    - { field: class, property: features, byField: level }
+    - { list: feats }
+
+# The play-time half: a DC and a speed the kind owns, and trinkets whose modifiers reach them through the kind's own feature source.
+sheetKinds:
+  - kind: character
+    label: Character
+    role: player
+    values:
+      - { key: senseDc, label: Sense DC, formula: "10 + level + 2 + mod(wis)", modifiers: senseDc }
+      - { key: speed,   label: Speed,    formula: "25",                        modifiers: speed }
+    lists:
+      - key: trinkets
+        label: Trinkets
+        type: trinket
+    features:
+      - { list: trinkets }
+
+rolls:
+  # A check against a DC, with the bonus given: the four degrees and the natural 20 / 1 shift.
+  - key: degreeCheck
+    label: Check
+    dice: 1d20
+    add: ["bonus"]
+    inputs:
+      - { key: bonus,  from: roller, label: Bonus }
+      - { key: target, from: gm,     label: DC }
+    outcomes:
+      - { name: criticalSuccess, when: "degree(total, target, natural) == 3", mark: critical }
+      - { name: success,         when: "degree(total, target, natural) == 2" }
+      - { name: failure,         when: "degree(total, target, natural) == 1" }
+      - { name: criticalFailure, mark: fumble }
+  # A strike: the same, less 5 for the second attack of a turn and 10 for the third and later (the attack number is an input).
+  - key: strike
+    label: Strike
+    dice: 1d20
+    add: ["bonus", "attackNumber >= 3 ? -10 : attackNumber == 2 ? -5 : 0"]
+    inputs:
+      - { key: bonus,        from: roller, label: Attack bonus }
+      - { key: target,       from: gm,     label: Armor class }
+      - { key: attackNumber, from: roller, label: Attack this turn, default: 1 }
+    outcomes:
+      - { name: criticalSuccess, when: "degree(total, target, natural) == 3", mark: critical }
+      - { name: success,         when: "degree(total, target, natural) == 2" }
+      - { name: failure,         when: "degree(total, target, natural) == 1" }
+      - { name: criticalFailure, mark: fumble }

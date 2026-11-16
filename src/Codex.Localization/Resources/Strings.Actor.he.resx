@@ -19,6 +19,9 @@
   <data name="Actor.Hp.NoteLead" xml:space="preserve"><value> {0, plural, one{מדרגה אחת} two{מ-# דרגות} other{מ-# דרגות}} (קוביית חיים + חוסן </value></data>
   <data name="Actor.Hp.NoteExtra" xml:space="preserve"><value> + {0} מ-{1}</value></data>
   <data name="Actor.Hp.NoteTail" xml:space="preserve"><value> לכל דרגה, בדרגה הראשונה לוקחים את הקוביה במלואה).</value></data>
+  <data name="Actor.Hp.NoteLeadFlat" xml:space="preserve"><value> מ-{0, plural, one{דרגה #} other{# דרגות}} (נקודות הפגיעה של הכיתה לכל דרגה + חוסן </value></data>
+  <data name="Actor.Hp.NoteTailFlat" xml:space="preserve"><value> לכל דרגה).</value></data>
+  <data name="Actor.Hp.NoteOnce" xml:space="preserve"><value> ועוד {0} מ-{1}, פעם אחת.</value></data>
   <data name="Actor.Hp.HowSummary" xml:space="preserve"><value>איך זה מחושב</value></data>
   <data name="Actor.Hp.TableCaption" xml:space="preserve"><value>נקודות חיים שנוספו בכל דרגה</value></data>
   <data name="Actor.Hp.ColLevel" xml:space="preserve"><value>דרגה</value></data>
@@ -333,6 +336,7 @@
   <data name="Actor.Sheet.LevelHp" xml:space="preserve"><value>נקודות חיים</value></data>
   <data name="Actor.Sheet.LevelHpHow" xml:space="preserve"><value>(d{0}: {1}, מתאם {2})</value></data>
   <data name="Actor.Sheet.LevelHpAverage" xml:space="preserve"><value>{0} בממוצע</value></data>
+  <data name="Actor.Sheet.LevelHpFlat" xml:space="preserve"><value>({0} לכל דרגה, מתאם {1})</value></data>
   <data name="Actor.Sheet.LevelRollDie" xml:space="preserve"><value>הטלת d{0}</value></data>
   <data name="Actor.Sheet.LevelPb" xml:space="preserve"><value>תוסף שליטה</value></data>
   <data name="Actor.Sheet.LevelChoose" xml:space="preserve"><value>לבחור אחרי העלייה</value></data>
@@ -402,6 +406,8 @@
   <data name="Actor.Rule.Once" xml:space="preserve"><value>{0}: אפשר לקחת את {1} פעם אחת בלבד.</value></data>
   <data name="Actor.Rule.LimitForClass" xml:space="preserve"><value>{0}: {1} עבור {2}, אבל {2} מתיר בדרגה הזו רק {3}.</value></data>
   <data name="Actor.Rule.NoHitDie" xml:space="preserve"><value>ל־{0} אין קוביית פגיעה, ולכן הדרגות שלו לא מוסיפות נקודות פגיעה.</value></data>
+  <data name="Actor.Rule.NoHitPointsPerLevel" xml:space="preserve"><value>ל־{0} אין נקודות פגיעה לכל דרגה, ולכן הדרגות שלו לא מוסיפות נקודות פגיעה.</value></data>
+  <data name="Actor.Rule.NoArmorCategory" xml:space="preserve"><value>ל־{0} אין {1}, ולכן דרגת השריון לא נספרת כל עוד הוא לבוש.</value></data>
   <data name="Actor.Rule.NoSpellAbility" xml:space="preserve"><value>ל־{0} יש תאי לחשים אבל אין לו תכונת הטלת לחשים, ולכן אין לו דרגת קושי להצלה או התקפת לחש.</value></data>
   <data name="Actor.Rule.NoSpellTable" xml:space="preserve"><value>{0} מציין תכונת הטלת לחשים אבל אין לו טבלת הטלת לחשים, ולכן אין לו תאי לחשים או לחשים מוכנים.</value></data>
   <data name="Actor.Rule.SkillChoices" xml:space="preserve"><value>{0}: נבחרו {1} מעבר לרקע, אבל {2} נותן {3}. זן או הישג עשויים לתת עוד.</value></data>

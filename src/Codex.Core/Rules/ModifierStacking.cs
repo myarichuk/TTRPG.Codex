@@ -11,7 +11,7 @@ namespace Codex.Core.Rules;
 /// <list type="bullet">
 /// <item><b>Bonus rules</b>, whose kept member is added to the value: <c>sum</c> (the default; every one counts),
 /// <c>highest</c> / <c>lowest</c> (of the bonuses of a type the largest (smallest) counts; penalties of the type are a group of
-/// their own, ruled by <see cref="ModifierTypesDefinition.Penalties"/>: 3.5's dodge stacks, armor does not; Pathfinder's
+/// their own, ruled by <see cref="ModifierTypesDefinition.PenaltyTypes"/> for that type, else <see cref="ModifierTypesDefinition.Penalties"/>: 3.5's dodge stacks, armor does not; Pathfinder's
 /// status bonus is <c>highest</c>: +1 status, +2 status and +1 untyped on 10 make 13).</item>
 /// <item><b>Value rules</b>, whose kept member competes with the value the target starts from and replaces it when it wins:
 /// <c>max</c> keeps the greatest (a floor: Extra Attack 2, 3, 4 on a start of 1 is 4), <c>min</c> keeps the least (a ceiling:
@@ -52,7 +52,7 @@ public static class ModifierStacking
         {
             var members = group.ToList();
             var rule = IsValue(types, group.Key.Type, fallback) ? RuleOf(types, group.Key.Type, fallback)
-                : group.Key.Penalty ? types.Penalties
+                : group.Key.Penalty ? PenaltyRuleOf(types, group.Key.Type)
                 : RuleOf(types, group.Key.Type, fallback);
             // By place, not by value: two equal bonuses of a "highest" type are still one that counts and one that does not.
             var counted = rule.ToLowerInvariant() switch
@@ -67,6 +67,47 @@ public static class ModifierStacking
         }
 
         return result;
+    }
+
+    private static readonly string[] BonusRules = ["sum", "highest", "lowest", "max", "min", "best"];
+    private static readonly string[] PenaltyRules = ["sum", "highest", "lowest"];
+
+    private static bool Known(string? rule, string[] known) => rule != null && known.Contains(rule.ToLowerInvariant());
+
+    /// <summary>The rule for the penalties of a type: <c>penaltyTypes</c> for it, else <c>penalties</c>. A blank rule defers to the
+    /// next, and one that is not <c>sum</c>, <c>highest</c> or <c>lowest</c> counts as <c>sum</c> (<see cref="Problems"/> warns).</summary>
+    public static string PenaltyRuleOf(ModifierTypesDefinition types, string type)
+    {
+        var rule = types.PenaltyTypes.GetValueOrDefault(type);
+        if (string.IsNullOrWhiteSpace(rule)) rule = types.Penalties;
+        return Known(rule, PenaltyRules) ? rule!.ToLowerInvariant() : "sum";
+    }
+
+    /// <summary>What is wrong with a system's <c>modifierTypes</c> that still lets it load: a rule that is not one the engine knows (it
+    /// counts as <c>sum</c>), a penalty rule that is a value rule, and <c>penaltyTypes</c> on a type whose own rule is a value rule
+    /// (its penalties are not a group of their own). A blank rule is not a problem: it means the default.</summary>
+    public static IEnumerable<string> Problems(SystemDefinition system)
+    {
+        var types = system.ModifierTypes;
+        foreach (var (where, rule) in new[] { ("modifierTypes.default", types.Default) }
+                     .Concat(types.Types.Select(t => ($"modifierTypes.types.{t.Key}", t.Value))))
+        {
+            if (!string.IsNullOrWhiteSpace(rule) && !Known(rule, BonusRules))
+                yield return $"{where} is '{rule}', which is not a stacking rule (use {string.Join(", ", BonusRules)}); it counts as sum.";
+        }
+
+        foreach (var (where, rule) in new[] { ("modifierTypes.penalties", types.Penalties) }
+                     .Concat(types.PenaltyTypes.Select(t => ($"modifierTypes.penaltyTypes.{t.Key}", t.Value))))
+        {
+            if (!string.IsNullOrWhiteSpace(rule) && !Known(rule, PenaltyRules))
+                yield return $"{where} is '{rule}', which is not a penalty rule (use {string.Join(", ", PenaltyRules)}); it counts as sum.";
+        }
+
+        foreach (var type in types.PenaltyTypes.Keys)
+        {
+            if (IsValueRule(RuleOf(types, type)))
+                yield return $"modifierTypes.penaltyTypes.{type} is ignored: {type} is a {RuleOf(types, type)} type, and its penalties are not a group of their own.";
+        }
     }
 
     private static bool IsValue(ModifierTypesDefinition types, string type, IReadOnlyDictionary<string, string>? fallback) =>
