@@ -36,20 +36,33 @@ public sealed record DegreesOptions(string Action, string Book, string Pdf, stri
         string? book = null, pdf = null, work = null;
         for (var i = start; i < args.Length; i++)
         {
+            // A value that starts with "--" is the next flag, not a path; a repeated flag is a mistake, not an override.
+            if (args[i] is not ("--book" or "--pdf" or "--work") || i + 1 >= args.Length || args[i + 1].StartsWith("--", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            var value = args[i + 1];
+            var taken = args[i] switch { "--book" => book, "--pdf" => pdf, _ => work };
+            if (taken != null)
+            {
+                return null;
+            }
+
             switch (args[i])
             {
-                case "--book" when i + 1 < args.Length:
-                    book = args[++i];
+                case "--book":
+                    book = value;
                     break;
-                case "--pdf" when i + 1 < args.Length:
-                    pdf = args[++i];
-                    break;
-                case "--work" when i + 1 < args.Length:
-                    work = args[++i];
+                case "--pdf":
+                    pdf = value;
                     break;
                 default:
-                    return null;
+                    work = value;
+                    break;
             }
+
+            i++;
         }
 
         if (book == null || !Books.Contains(book) || string.IsNullOrWhiteSpace(pdf))

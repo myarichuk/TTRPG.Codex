@@ -47,6 +47,9 @@ public class DegreesImportBaseTests : IDisposable
     [InlineData("run", "--book", "player-core", "--pdf", "a.pdf")]
     [InlineData("import", "--book", "pc", "--pdf", "a.pdf")]
     [InlineData("run", "--book", "pc", "--pdf", "a.pdf", "--out", "x")]
+    [InlineData("run", "--book", "pc", "--pdf", "--work", "w")]
+    [InlineData("run", "--book", "pc", "--pdf", "a.pdf", "--pdf", "b.pdf")]
+    [InlineData("run", "--book", "pc", "--pdf", "a.pdf", "--work")]
     public void Options_RejectAnythingElse(params string[] args) => Assert.Null(DegreesOptions.Parse(args));
 
     // ---- path guard
@@ -62,13 +65,124 @@ public class DegreesImportBaseTests : IDisposable
         File.WriteAllText(file, "x");
 
         Assert.Equal(PathGuard.Resolve(tree.FullName), PathGuard.FindGitRoot(inside.FullName));
-        Assert.Throws<InvalidOperationException>(() => PathGuard.EnsureOutsideGitTree(Path.Combine(inside.FullName, "not-yet-made"), "--work"));
+        Assert.Throws<DegreesException>(() => PathGuard.EnsureOutsideGitTree(Path.Combine(inside.FullName, "not-yet-made"), "--work"));
         Assert.Null(PathGuard.FindGitRoot(file));
         PathGuard.EnsureOutsideGitTree(file, "--pdf");
 
         var link = Path.Combine(outside.FullName, "link");
         Directory.CreateSymbolicLink(link, inside.FullName);
-        Assert.Throws<InvalidOperationException>(() => PathGuard.EnsureOutsideGitTree(Path.Combine(link, "out"), "--work"));
+        Assert.Throws<DegreesException>(() => PathGuard.EnsureOutsideGitTree(Path.Combine(link, "out"), "--work"));
+    }
+
+    [Fact]
+    public void PathGuard_FollowsALinkThatPointsThroughAnotherLink()
+    {
+        var repo = Directory.CreateDirectory(Path.Combine(_temp, "repo2"));
+        Directory.CreateDirectory(Path.Combine(repo.FullName, ".git"));
+        Directory.CreateDirectory(Path.Combine(repo.FullName, "a", "x"));
+        var outside = Directory.CreateDirectory(Path.Combine(_temp, "out"));
+        var alias = Path.Combine(outside.FullName, "alias");
+        var second = Path.Combine(outside.FullName, "L");
+        Directory.CreateSymbolicLink(alias, Path.Combine(repo.FullName, "a"));
+        Directory.CreateSymbolicLink(second, Path.Combine(alias, "x"));
+
+        Assert.Throws<DegreesException>(() => PathGuard.EnsureOutsideGitTree(Path.Combine(second, "w"), "--work"));
+        Assert.Throws<DegreesException>(() => PathGuard.EnsureOutsideGitTree(Path.Combine(second, "w", "spine.json"), "An output file"));
+    }
+
+    [Fact]
+    public void PathGuard_AnEndlessLinkLoopIsRefusedNotFollowedForever()
+    {
+        var a = Path.Combine(_temp, "loopA");
+        var b = Path.Combine(_temp, "loopB");
+        Directory.CreateSymbolicLink(a, b);
+        Directory.CreateSymbolicLink(b, a);
+        Assert.Throws<DegreesException>(() => PathGuard.Resolve(Path.Combine(a, "x")));
+    }
+
+    [Fact]
+    public void Stages_ReplaceAPlantedLinkInsteadOfWritingThroughIt()
+    {
+        var victim = Path.Combine(_temp, "victim.txt");
+        File.WriteAllText(victim, "keep");
+        var work = Directory.CreateDirectory(Path.Combine(_temp, "work-planted")).FullName;
+        File.CreateSymbolicLink(Path.Combine(work, "spine.json"), victim);
+
+        using var doc = PdfDocument.Open(TwoColumnBook());
+        Assert.Equal(0, DegreesCommand.RunStages(doc, SpineStage.Run(doc), FontRoles.Parse(TestRoles), work, new StringWriter(), new StringWriter()));
+
+        Assert.Equal("keep", File.ReadAllText(victim));
+        Assert.Null(new FileInfo(Path.Combine(work, "spine.json")).LinkTarget);
+    }
+
+    [Fact]
+    public void Stages_AreDeterministic()
+    {
+        var bytes = TwoColumnBook();
+        var folders = new[] { Path.Combine(_temp, "run1"), Path.Combine(_temp, "run2") };
+        foreach (var folder in folders)
+        {
+            using var doc = PdfDocument.Open(bytes);
+            Assert.Equal(0, DegreesCommand.RunStages(doc, SpineStage.Run(doc), FontRoles.Parse(TestRoles), folder, new StringWriter(), new StringWriter()));
+        }
+
+        foreach (var name in new[] { "spine.json", "layout.json", "blocks.json" })
+        {
+            Assert.Equal(File.ReadAllBytes(Path.Combine(folders[0], name)), File.ReadAllBytes(Path.Combine(folders[1], name)));
+        }
+    }
+
+    [Fact]
+    public void Layout_GivesWordsOutsideThePageBoxTheirOwnRole_AndNeverABlock()
+    {
+        var builder = new PdfDocumentBuilder();
+        var body = builder.AddStandard14Font(UglyToad.PdfPig.Fonts.Standard14Fonts.Standard14Font.Helvetica);
+        var page = builder.AddPage(603, 783);
+        page.AddText("inside", 9, new PdfPoint(60, 700), body);
+        page.AddText("slug", 9, new PdfPoint(60, -20), body);
+
+        using var doc = PdfDocument.Open(builder.Build());
+        var layout = LayoutStage.Run(doc, FontRoles.Parse(TestRoles));
+
+        Assert.Equal(4, layout.LettersByRole[LayoutStage.OffPage]);
+        var blocks = BlocksStage.Run(layout.Pages);
+        Assert.Single(blocks.Blocks);
+        Assert.DoesNotContain(blocks.Blocks, b => b.Lines.Any(l => l.Contains("slug")));
+    }
+
+    [Fact]
+    public void Blocks_FlagAOneColumnPageWithTextOnBothHalves()
+    {
+        var builder = new PdfDocumentBuilder();
+        var body = builder.AddStandard14Font(UglyToad.PdfPig.Fonts.Standard14Fonts.Standard14Font.Helvetica);
+        var page = builder.AddPage(603, 783);
+        for (var i = 0; i < 25; i++)
+        {
+            for (var k = 0; k < 18; k++)
+            {
+                page.AddText("word", 9, new PdfPoint(60 + k * 25, 740 - i * 11), body);
+            }
+        }
+
+        using var doc = PdfDocument.Open(builder.Build());
+        var blocks = BlocksStage.Run(LayoutStage.Run(doc, FontRoles.Parse(TestRoles)).Pages);
+
+        Assert.Equal(new[] { 1 }, blocks.SuspectPages);
+    }
+
+    [Fact]
+    public void TheCommandPrintsNeitherThePdfPathNorALibraryMessage()
+    {
+        var pdf = Path.Combine(_temp, "secret-name-xyz.pdf");
+        File.WriteAllText(pdf, "this is not a pdf");
+
+        using var error = new StringWriter();
+        using var output = new StringWriter();
+        var code = DegreesCommand.Run(new[] { "--book", "pc", "--pdf", pdf, "--work", Path.Combine(_temp, "w") }, output, error);
+
+        Assert.Equal(1, code);
+        Assert.DoesNotContain("secret-name-xyz", error.ToString() + output);
+        Assert.DoesNotContain("secret-name-xyz", DegreesCommand.Run(new[] { "--book", "pc", "--pdf", Path.Combine(_temp, "missing-xyz.pdf") }, output, error).ToString() + error + output);
     }
 
     [Fact]
@@ -106,13 +220,20 @@ public class DegreesImportBaseTests : IDisposable
     {
         // The credit line in degrees-books.yaml is the one place a product name may appear, because the licence requires it.
         var denied = new Regex("pathfinder|paizo|golarion|pf2e|remaster|starfinder|dungeons|d&d|wizards of the coast", RegexOptions.IgnoreCase);
-        var files = Directory.EnumerateFiles(Path.Combine(TestPaths.RepoRoot, "tools", "Codex.ContentImport", "Degrees"), "*.cs")
-            .Append(Path.Combine(TestPaths.RepoRoot, "tools", "Codex.ContentImport", "Data", "degrees-fonts.yaml"))
+        var tool = Path.Combine(TestPaths.RepoRoot, "tools", "Codex.ContentImport");
+        var files = Directory.EnumerateFiles(Path.Combine(tool, "Degrees"), "*.cs")
+            .Append(Path.Combine(tool, "Data", "degrees-fonts.yaml"))
+            .Append(Path.Combine(tool, "Data", "degrees-books.yaml"))
+            .Append(Path.Combine(tool, "Program.cs"))
+            .Append(Path.Combine(tool, "Codex.ContentImport.csproj"))
+            .Append(Path.Combine(TestPaths.RepoRoot, ".gitignore"))
             .Append(Path.Combine(TestPaths.RepoRoot, "docs", "DEGREES_IMPORT_DESIGN.md"))
             .Append(Path.Combine(TestPaths.RepoRoot, "tests", "Codex.Tests", "DegreesImportBaseTests.cs"));
         var hits = files
             .SelectMany(f => File.ReadLines(f).Select((line, i) => (File: Path.GetFileName(f), Line: i + 1, Text: line)))
-            .Where(l => !l.Text.Contains("orclicense", StringComparison.Ordinal) && !l.Text.Contains("denied = new Regex", StringComparison.Ordinal) && denied.IsMatch(l.Text))
+            .Where(l => !l.Text.Contains("orclicense", StringComparison.Ordinal) && !l.Text.Contains("denied = new Regex", StringComparison.Ordinal)
+                && !(l.File == "degrees-books.yaml" && l.Text.TrimStart().StartsWith("- \"", StringComparison.Ordinal))
+                && denied.IsMatch(l.Text))
             .Select(l => $"{l.File}:{l.Line}")
             .ToList();
 
@@ -132,6 +253,34 @@ public class DegreesImportBaseTests : IDisposable
         Assert.False(wrong.Ok);
         Assert.Contains("segment 1 of 2", wrong.Message);
         Assert.DoesNotContain("Alpha", wrong.Message);
+    }
+
+    [Fact]
+    public void Notice_IsAnEquality_ATruncatedOrExtendedCreditFails()
+    {
+        string[] credit = { "Alpha Book © 2023 Someone, Authors: Ann Lee, Bo Cy" };
+        Assert.True(NoticeCheck.Compare("as follows:\nAlpha Book © 2023 Someone, Authors: Ann Lee,\nBo Cy.\nReserved Material: none", credit).Ok);
+        Assert.False(NoticeCheck.Compare("as follows:\nAlpha Book © 2023 Someone, Authors: Ann Lee, Bo Cy, and Di Em.", credit).Ok);
+        Assert.False(NoticeCheck.Compare("as follows:\nAlpha Book © 2023 Someone, Authors: Ann Lee, Bo Cy and Di Em.", credit).Ok);
+        Assert.False(NoticeCheck.Compare("Authors, Alpha Book © 2023 Someone, Authors: Ann Lee, Bo Cy.", credit).Ok);
+        Assert.False(NoticeCheck.Compare("Alpha Book © 2023 Someone, Authors: Ann Lee, Bo Cy.", new[] { "Alpha Book © 2023 Someone, Authors: Ann Lee, Bo Cy", "Zed" }).Ok);
+    }
+
+    [Fact]
+    public void Notice_RunFindsThePageByBookmarkPath()
+    {
+        var book = new BookFingerprint { Notice = { "Back", "Notice" }, Credit = { "Alpha Book © 2023 Someone" } };
+        var spine = new List<SpineNode>
+        {
+            new(0, "Back", new[] { "Back" }, 3, 4, false),
+            new(1, "Notice", new[] { "Back", "Notice" }, 4, 4, false),
+        };
+        string Text(int page) => page == 4 ? "Alpha Book © 2023 Someone." : "unrelated";
+
+        Assert.True(NoticeCheck.Run(Text, 4, spine, book).Ok);
+        Assert.False(NoticeCheck.Run(p => p == 3 ? "Alpha Book © 2023 Someone." : "unrelated", 4, spine, book).Ok);
+        book.Notice[1] = "Missing";
+        Assert.False(NoticeCheck.Run(Text, 4, spine, book).Ok);
     }
 
     // ---- a synthetic book

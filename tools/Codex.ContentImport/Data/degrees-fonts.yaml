@@ -2,24 +2,31 @@
 #   family  substrings of the font name, with the six-letter subset tag already removed
 #   size    inclusive point-size range, rounded to a whole point
 #   x       inclusive range for the left edge of the letter, in points
-# A letter that matches no rule is "unclassified" and fails the run, so a new font cannot slip in unnoticed.
-# Roles: icon, opener, furniture, entry-header, block-header, section, display, tag, rules, body.
+# Every rule has a size range, so a font family seen at a new size matches nothing. A letter that matches no rule is "unclassified"
+# and fails the run, so neither a new font nor a new size can slip in unnoticed. Letters outside the page box get the role "offpage"
+# before these rules run (slug and bleed text).
+# Roles: icon, opener, furniture, meta, entry-header, block-header, section, display, tag, rules, body.
 # Table rows have no role of their own: the table parser finds them from block-header and body words.
 rules:
-  - { role: icon, family: [Icons] }
-  - { role: opener, family: [TimesNewRoman] }
+  - { role: icon, family: [Icons], size: [1, 40] }
+  - { role: opener, family: [TimesNewRoman], size: [1, 20] }
   # Page furniture: side tabs, page numbers, the running head and the large tab numeral.
   - { role: furniture, family: [GoodOT-CondBold], size: [9, 9], x: [530, 700] }
   - { role: furniture, family: [GoodOT-Bold], size: [12, 12], x: [-1000, 60] }
   - { role: furniture, family: [GoodOT-Bold], size: [12, 12], x: [555, 1000] }
   - { role: furniture, family: [Taroca], size: [12, 12] }
   - { role: furniture, family: [Taroca], size: [32, 32], x: [530, 700] }
+  # Production metadata set in a plain sans: never body text.
+  - { role: meta, family: [Helvetica], size: [1, 12] }
   - { role: entry-header, family: [GoodOT-Bold], size: [13, 13] }
   - { role: block-header, family: [GoodOT-CondBold], size: [12, 15] }
   - { role: section, family: [Taroca], size: [14, 22] }
-  - { role: display, family: [Taroca, Palatino, Copperplate] }
-  - { role: display, family: [GoodOT], size: [16, 200] }
+  - { role: display, family: [Taroca], size: [1, 11] }
+  - { role: display, family: [Taroca], size: [13, 13] }
+  - { role: display, family: [Taroca], size: [23, 60] }
+  - { role: display, family: [Palatino, Copperplate], size: [1, 100] }
+  - { role: display, family: [GoodOT], size: [16, 50] }
   - { role: tag, family: [GoodOT-CondBold], size: [1, 11] }
   - { role: rules, family: [Sabon], size: [1, 11] }
-  - { role: display, family: [Sabon] }
-  - { role: body, family: [GoodOT, Helvetica] }
+  - { role: display, family: [Sabon], size: [12, 16] }
+  - { role: body, family: [GoodOT], size: [1, 15] }

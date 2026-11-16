@@ -3,7 +3,8 @@ namespace Codex.ContentImport.Degrees;
 /// <summary>A run of lines of one role inside one column of one page.</summary>
 public sealed record Block(int Page, int Column, string Role, double Left, double Bottom, double Right, double Top, List<string> Lines);
 
-public sealed record BlocksResult(List<Block> Blocks, int OneColumnPages, int TwoColumnPages, int FurnitureWords, Dictionary<string, int> BlocksByRole);
+/// <param name="SuspectPages">One-column pages with plenty of text on both halves: a gutter was probably missed, so reading order may be garbled.</param>
+public sealed record BlocksResult(List<Block> Blocks, int OneColumnPages, int TwoColumnPages, int FurnitureWords, Dictionary<string, int> BlocksByRole, List<int> SuspectPages);
 
 /// <summary>
 /// Stage 3: the words of each page without its furniture, split into columns by the gap between them, cut into lines by baseline,
@@ -14,14 +15,19 @@ public static class BlocksStage
     private const double GutterMin = 8;
     private const double LineTolerance = 2.5;
     private const double BlockGap = 6;
+    private const int SuspectWords = 20;
+
+    /// <summary>Roles that never become blocks: page furniture, slug text outside the page box, and production metadata.</summary>
+    private static readonly HashSet<string> Excluded = new(StringComparer.Ordinal) { "furniture", LayoutStage.OffPage, "meta" };
 
     public static BlocksResult Run(IEnumerable<LayoutPage> pages)
     {
         var blocks = new List<Block>();
         int one = 0, two = 0, furniture = 0;
+        var suspect = new List<int>();
         foreach (var page in pages)
         {
-            var body = page.Words.Where(w => w.Role != "furniture").ToList();
+            var body = page.Words.Where(w => !Excluded.Contains(w.Role)).ToList();
             furniture += page.Words.Count - body.Count;
             if (body.Count == 0)
             {
@@ -32,6 +38,11 @@ public static class BlocksStage
             if (gutter == null)
             {
                 one++;
+                var half = page.Width / 2;
+                if (body.Count(w => Centre(w) < half) >= SuspectWords && body.Count(w => Centre(w) >= half) >= SuspectWords)
+                {
+                    suspect.Add(page.Number);
+                }
             }
             else
             {
@@ -48,7 +59,7 @@ public static class BlocksStage
         }
 
         var byRole = blocks.GroupBy(b => b.Role).ToDictionary(g => g.Key, g => g.Count());
-        return new BlocksResult(blocks, one, two, furniture, byRole);
+        return new BlocksResult(blocks, one, two, furniture, byRole, suspect);
     }
 
     /// <summary>The x of the middle of the widest empty vertical band near the centre of the page, or null when the page has one column.</summary>

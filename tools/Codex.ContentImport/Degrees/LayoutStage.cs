@@ -16,6 +16,9 @@ public sealed record LayoutResult(List<LayoutPage> Pages, int Letters, Dictionar
 /// <summary>Stage 1: every word of the book with its font, size, box and role, and the check that every letter has a role.</summary>
 public static class LayoutStage
 {
+    /// <summary>The role of a word whose centre lies outside the page box (slug and bleed text). It is excluded from blocks like furniture.</summary>
+    public const string OffPage = "offpage";
+
     public static LayoutResult Run(PdfDocument doc, FontRoles roles)
     {
         var pages = new List<LayoutPage>();
@@ -36,11 +39,17 @@ public static class LayoutStage
         for (var n = 1; n <= doc.NumberOfPages; n++)
         {
             var page = doc.GetPage(n);
+            var crop = page.CropBox.Bounds;
+            bool Outside(double left, double right, double bottom, double top) =>
+                (left + right) / 2 < crop.Left || (left + right) / 2 > crop.Right || (bottom + top) / 2 < crop.Bottom || (bottom + top) / 2 > crop.Top;
+
             foreach (var l in page.Letters)
             {
                 letters++;
                 var family = FontRoles.Family(l.FontName);
-                var role = roles.Classify(family, l.PointSize, l.GlyphRectangle.Left);
+                var role = Outside(l.GlyphRectangle.Left, l.GlyphRectangle.Right, l.GlyphRectangle.Bottom, l.GlyphRectangle.Top)
+                    ? OffPage
+                    : roles.Classify(family, l.PointSize, l.GlyphRectangle.Left);
                 if (role != null)
                 {
                     lettersByRole[role] = lettersByRole.GetValueOrDefault(role) + 1;
@@ -56,8 +65,10 @@ public static class LayoutStage
             {
                 var first = w.Letters[0];
                 var family = FontRoles.Family(first.FontName);
-                var role = roles.Classify(family, first.PointSize, first.GlyphRectangle.Left) ?? "unclassified";
                 var box = w.BoundingBox;
+                var role = Outside(box.Left, box.Right, box.Bottom, box.Top)
+                    ? OffPage
+                    : roles.Classify(family, first.PointSize, first.GlyphRectangle.Left) ?? "unclassified";
                 words.Add(new LayoutWord(n, w.Text, family, Math.Round(first.PointSize, 1), box.Left, box.Right, box.Bottom, box.Top, role));
             }
 

@@ -252,6 +252,11 @@ Decided on 2026-11-16: Q2 (opaque keys `pc` and `mc`) and Q7 (local agents may r
 - Tests: an options-parse test, a path-guard test, and a synthetic-PDF test. The synthetic PDF is generated in the test (PdfPig can
   write one) to show furniture and columns are classified. CI never sees a book.
 
+Deferred from section 2 to chapter 1, before any pack output: furniture by page side (P8a uses font and x bands only), splitting out and
+dropping sidebars (P8a only flags the "Sidebar" bookmarks), dropping openers (P8a classifies them as the `opener` role, and they still
+become blocks), rebuilding tables from word boxes, support for more than two columns, and failing on a one-column page inside a taken range
+(P8a only reports such pages). Slug text outside the page box and production metadata get their own roles and never become blocks.
+
 Done when both books fingerprint, every font on every page has a role, and the notice assertion passes locally. The redaction
 mechanism (empty tables, allowlist and denylist tests) is the next step, and chapter 1 (conditions) follows it.
 
