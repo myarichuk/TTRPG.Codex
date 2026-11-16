@@ -5,7 +5,7 @@
     savingThrows: [con, wis]
     keyAttribute: str
     boosts: [str]
-    hp: 8
+    hp: 7
     features:
       - { name: Armor training, level: 1, adds: [{ to: armor, entries: [unarmored, light, medium], rank: trained }] }
       - { name: Watchful, level: 1, adds: [{ to: perception, rank: trained }, { to: classDc, rank: trained }] }

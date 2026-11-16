@@ -8,9 +8,9 @@ its section 2, written as data.
 | `d35/` | d20 System Reference Document 3.5 | Per-class progressions summed, typed bonuses that do not stack, three armor classes, skill ranks with class/cross-class costs, synergy, prestige prerequisites, slots that hold spells, hit points below zero, nonlethal damage, damage reduction, threat range and confirmation |
 | `street/` | A street-level homebrew (this project's own numbers) | No levels or classes, a function from a script, a value over a track, thresholds that add up, integer division that does not come out even, explode/implode once, roll-under, armor per location that wears down, advancement by spending points |
 | `crew/` | The Forged in the Dark SRD's mechanics | Dice pools, keep highest, zero dice, criticals by pattern, GM-supplied position and effect, group rolls, stress overflowing into trauma, harm in slots that push up, load chosen per job, a second sheet kind, clocks and faction status owned by the campaign |
-| `degrees/` | A d20 system with four degrees of success (this project's own numbers) | A hybrid of `sheetRules` and one sheet kind, ranks worth the level plus 2, 4, 6 or 8, four degrees with the natural 20/1 shift, typed bonuses and untyped penalties that stack, a valued condition that drops each turn and counts once on each side, a multiple-attack penalty as a roll input |
+| `degrees/` | A d20 system with four degrees of success (this project's own numbers) | A hybrid of `sheetRules` and one sheet kind, ranks worth the level plus 1, 3, 6 or 9, four degrees with the natural 20/1 shift, typed bonuses and untyped penalties that stack, a valued condition that drops each turn and counts once on each side, a multiple-attack penalty as a roll input |
 
-`degrees/` follows the shape of the ORC-licensed Remaster rules in this project's own words and numbers, naming no game.
+`degrees/` is a d20 four-degree system with this project's own names and numbers, released under CC0 with the rest of the fixtures.
 
 Each folder has a `system.yaml` in the **proposed** syntax, a pack with just enough content, and a `spec.yaml` of
 expectations (`street/` also has `rules.js`, its scripted rules). The words and numbers are this project's own; no
@@ -38,7 +38,7 @@ unread.
 - An expectation that only says what must *not* happen ("no problems", "no conditions") passes on a host that checks
   nothing. So it names, in `requires`, the expectations that show the check exists, and counts only alongside them.
 
-At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58. After step 5: 78. After step 6: 80. After step 7: 83. After step 8: 95. The `degrees/` fixture (added after step 8) passes all 38 of its expectations on the current engine (P6 added four: a trait that lowers the multiple attack penalty, and a condition on a roll's own key).
+At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58. After step 5: 78. After step 6: 80. After step 7: 83. After step 8: 95. The `degrees/` fixture (added after step 8) passes all 45 of its expectations on the current engine (P6 added four: a trait that lowers the multiple attack penalty, and a condition on a roll's own key).
 
 ## spec.yaml
 

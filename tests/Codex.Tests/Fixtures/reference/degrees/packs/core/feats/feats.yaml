@@ -1,8 +1,8 @@
 # Each feat is one feature with one modifier, so a spec can pick the mix it needs.
-- { id: steady-mind, name: Steady Mind, properties: { modifiers: [{ target: classDc, amount: 1, type: status }] } }
-- { id: iron-focus,  name: Iron Focus,  properties: { modifiers: [{ target: classDc, amount: 2, type: status }] } }
-- { id: sharp-wits,  name: Sharp Wits,  properties: { modifiers: [{ target: classDc, amount: 1, type: circumstance }] } }
-- { id: drilled,     name: Drilled,     properties: { modifiers: [{ target: classDc, amount: 1 }] } }
-- { id: jumpy,       name: Jumpy,       properties: { modifiers: [{ target: perception, amount: -1, type: status }] } }
-- { id: old-wound,   name: Old Wound,   properties: { modifiers: [{ target: perception, amount: -1 }] } }
-- { id: bad-knee,    name: Bad Knee,    properties: { modifiers: [{ target: perception, amount: -1 }] } }
+- { id: steady-mind, name: Steady Mind, properties: { modifiers: [{ target: classDc, amount: 2, type: status }] } }
+- { id: iron-focus,  name: Iron Focus,  properties: { modifiers: [{ target: classDc, amount: 3, type: status }] } }
+- { id: sharp-wits,  name: Sharp Wits,  properties: { modifiers: [{ target: classDc, amount: 2, type: circumstance }] } }
+- { id: drilled,     name: Drilled,     properties: { modifiers: [{ target: classDc, amount: 3 }] } }
+- { id: jumpy,       name: Jumpy,       properties: { modifiers: [{ target: perception, amount: -2, type: status }] } }
+- { id: old-wound,   name: Old Wound,   properties: { modifiers: [{ target: perception, amount: -2 }] } }
+- { id: bad-knee,    name: Bad Knee,    properties: { modifiers: [{ target: perception, amount: -3 }] } }
