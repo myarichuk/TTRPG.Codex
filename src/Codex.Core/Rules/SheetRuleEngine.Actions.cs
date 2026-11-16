@@ -161,6 +161,13 @@ public sealed partial class SheetRuleEngine
                 var abilities = AttributesNamedIn(use.GetValueOrDefault("abilities"));
                 names["abilityMod"] = abilities.Count == 0 ? 0 : abilities.Max(a => ModifierOf(sheet, result, a));
                 names["trained"] = Rules.Proficiencies == null || (trainedClass != null && WeaponTrained(entry, trainedClass, Rules.Proficiencies)) ? 1 : 0;
+                if (source.Rank is { } rankLookup)
+                {
+                    var rankKey = Property(entry, rankLookup.Property)?.ToString();
+                    names["rankValue"] = rankKey != null && result.Ranked.TryGetValue(rankLookup.List, out var rankScores)
+                        ? rankScores.FirstOrDefault(s => s.Key.Equals(rankKey, StringComparison.OrdinalIgnoreCase))?.RankBonus ?? 0
+                        : 0;
+                }
 
                 var level = source.LevelProperty == null ? 0 : (int)(ToDouble(Property(entry, source.LevelProperty)) ?? 0);
                 var attack = use.GetValueOrDefault("attack")?.ToString();

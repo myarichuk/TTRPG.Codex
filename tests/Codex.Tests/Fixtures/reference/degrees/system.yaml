@@ -44,7 +44,7 @@ effects: [Inspired]
 
 # Frightened lowers every check and every DC by its value, as a status penalty, and drops by 1 at the end of the creature's turn.
 # Each target belongs to one side (the hybrid rule, docs/SHEET_CONDITIONS_DESIGN.md): attack, save and check are roll targets and
-# classDc, perception are derived values, all of sheetRules; senseDc is the sheet kind's value. No named roll below reads
+# classDc and perception are values of ranked lists, all of sheetRules; senseDc is the sheet kind's value. No named roll below reads
 # modifiers('check'), modifiers('save') or modifiers('attack'): a roll that did would make those names kind targets too, and the
 # loader refuses a target both sides claim.
 conditionEffects:
@@ -82,9 +82,6 @@ functions:
 sheetRules:
   enforcement: warn
   derived:
-    # Class DC and Perception at the trained rank, written as formulas: ranked lists other than skills and saves are plan step P3.
-    - { key: classDc,    label: Class DC,   formula: "10 + level + 2 + mod(str)", signed: false }
-    - { key: perception, label: Perception, formula: "level + 2 + mod(wis)" }
     # Hit points: Constitution per level here; the class adds its own per level and the ancestry its own once (features, below).
     - { key: maxHp,      label: Hit points, formula: "mod(con) * level", signed: false }
 
@@ -93,12 +90,26 @@ sheetRules:
     label: Gear
     types: [armor]
 
-  # Armor: its base (10 plus its bonus) and Dexterity up to its cap. The armor rank is a class feature's modifier until P3 gives
-  # armor its own ranked list.
+  # Armor: its base (10 plus its bonus) and Dexterity up to its cap, then the rank in what is worn (the armor list below).
   armorClass:
     key: armorClass
     unarmored: "10 + mod(dex)"
     dexAttribute: dex
+    rank: { list: armor, property: armorCategory, unarmored: unarmored }
+
+  # Ranked lists beside the skills, on the skills' ranks (trained to legendary, worth level plus 2 to 8). Perception and the class DC
+  # publish their scores as values under their own keys; armor holds one rank per category and publishes nothing.
+  ranked:
+    - { key: perception, label: Perception, ranksOf: skills, attribute: wis, publish: true }
+    - { key: classDc, label: Class DC, ranksOf: skills, base: 10, attributeFrom: { field: class, property: keyAttribute }, publish: true }
+    - key: armor
+      label: Armor
+      ranksOf: skills
+      list:
+        - { key: unarmored, label: Unarmored }
+        - { key: light,     label: Light armor }
+        - { key: medium,    label: Medium armor }
+        - { key: heavy,     label: Heavy armor }
 
   # Ranks: trained, expert, master, legendary, worth the level plus 2, 4, 6, 8. An untrained skill adds its attribute alone.
   skills:

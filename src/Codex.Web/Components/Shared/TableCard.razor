@@ -306,6 +306,14 @@
                 if (Evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, derived.Signed ? Signed(value) : value.ToString() ?? string.Empty);
             }
 
+            foreach (var list in Rules.Ranked.Where(l => l.Publish))
+            {
+                foreach (var key in list.Keys())
+                {
+                    if (Evaluation.Derived.TryGetValue(key.Key, out var published)) yield return (string.IsNullOrEmpty(key.Label) ? key.Key : key.Label, list.Base == 0 ? Signed(published) : published.ToString() ?? string.Empty);
+                }
+            }
+
             foreach (var casting in Evaluation.Spellcasting)
             {
                 yield return (Evaluation.Spellcasting.Count > 1 ? L["Actor.Skills.SpellSaveDcFor", casting.ClassName] : L["Actor.Skills.SpellSaveDc"], casting.SaveDc.ToString());

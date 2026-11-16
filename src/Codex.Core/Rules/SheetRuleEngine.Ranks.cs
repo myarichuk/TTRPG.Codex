@@ -147,13 +147,25 @@ public sealed partial class SheetRuleEngine
     /// (<c>skillExpertise</c>: that rank). Null when <paramref name="to"/> is no ranked list.</summary>
     private (string Target, int? Rank)? RankTargetOf(string to)
     {
-        if (Rules?.Skills is not { } skills) return null;
-        if (to.Equals(SkillsTarget, StringComparison.OrdinalIgnoreCase)) return (SkillsTarget, null);
-        if (to.Equals(SavesTarget, StringComparison.OrdinalIgnoreCase)) return (SavesTarget, null);
-        var skill = skills.SkillRanks().ToList().FindIndex(r => r.SheetKey.Equals(to, StringComparison.OrdinalIgnoreCase));
-        if (skill >= 0) return (SkillsTarget, skill + 1);
-        var save = skills.SaveRanks().ToList().FindIndex(r => r.SheetKey.Equals(to, StringComparison.OrdinalIgnoreCase));
-        return save >= 0 ? (SavesTarget, save + 1) : null;
+        if (Rules is not { } rules) return null;
+        if (rules.Skills is { } skills)
+        {
+            if (to.Equals(SkillsTarget, StringComparison.OrdinalIgnoreCase)) return (SkillsTarget, null);
+            if (to.Equals(SavesTarget, StringComparison.OrdinalIgnoreCase)) return (SavesTarget, null);
+            var skill = skills.SkillRanks().ToList().FindIndex(r => r.SheetKey.Equals(to, StringComparison.OrdinalIgnoreCase));
+            if (skill >= 0) return (SkillsTarget, skill + 1);
+            var save = skills.SaveRanks().ToList().FindIndex(r => r.SheetKey.Equals(to, StringComparison.OrdinalIgnoreCase));
+            if (save >= 0) return (SavesTarget, save + 1);
+        }
+
+        foreach (var list in rules.Ranked)
+        {
+            if (list.Key.Equals(to, StringComparison.OrdinalIgnoreCase)) return (list.Key, null);
+            var index = rules.RanksFor(list).ToList().FindIndex(r => r.SheetKey.Equals(to, StringComparison.OrdinalIgnoreCase));
+            if (index >= 0) return (list.Key, index + 1);
+        }
+
+        return null;
     }
 
     /// <summary>One-time: the entries an earlier version recorded in <c>granted__{rank list}</c> when a feature added them to a rank list on
@@ -257,6 +269,9 @@ public sealed partial class SheetRuleEngine
     {
         public string Target { get; } = target;
         public string Label { get; } = label;
+
+        /// <summary>A general list's base number (10 for a DC); 0 for the skills and the saves.</summary>
+        public int Base { get; init; }
         public IReadOnlyList<RankDefinition> Ranks { get; } = ranks;
         public IReadOnlyList<RankedKey> Keys { get; } = keys;
         public Dictionary<string, int> Own { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -333,9 +348,8 @@ public sealed partial class SheetRuleEngine
     /// are not modifiers, so <c>sheetRules.stacking</c> does not touch them. Fills <see cref="SheetEvaluation.Skills"/>,
     /// <see cref="SheetEvaluation.SavingThrows"/> and the choice lists; returns the skills' list for the checks that follow.
     /// </summary>
-    private RankedList EvaluateRanks(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result, SkillRules rules)
+    private RankedList? EvaluateRanks(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result, IReadOnlyList<RankedList> lists, SkillRules? skillRules)
     {
-        var lists = BuildRankedLists(rules);
         var warned = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var list in lists)
@@ -359,27 +373,31 @@ public sealed partial class SheetRuleEngine
 
             foreach (var (name, sheetKey) in unknown.DistinctBy(u => u.Name, StringComparer.OrdinalIgnoreCase))
             {
-                result.Warnings.Add(new RuleViolation(sheetKey, $"{list.Label}: \"{name}\" is not a {(list.Target == SkillsTarget ? "skill" : "saving throw")} this system has."));
+                var what = list.Target == SkillsTarget ? "a skill this system has" : list.Target == SavesTarget ? "a saving throw this system has" : "on this list";
+                result.Warnings.Add(new RuleViolation(sheetKey, $"{list.Label}: \"{name}\" is not {what}."));
             }
         }
 
-        var skills = lists[0];
-        var saves = lists[1];
+        var skills = lists.FirstOrDefault(l => l.Target == SkillsTarget);
+        var saves = lists.FirstOrDefault(l => l.Target == SavesTarget);
 
         // Fixed sources: the background gives skills, the first class gives saving throws, both at the first rank.
-        if (ReferencedEntry(rules.BackgroundField, sheet) is { } background)
+        if (skillRules is { } rules && skills != null && saves != null)
         {
-            foreach (var name in Names(background.Properties.GetValueOrDefault(rules.BackgroundProperty)))
+            if (ReferencedEntry(rules.BackgroundField, sheet) is { } background)
             {
-                if (skills.Match(name) is { } key) skills.Give(key.Key, 1, RankSourceKinds.Background, background.Name, null, independent: true);
+                foreach (var name in Names(background.Properties.GetValueOrDefault(rules.BackgroundProperty)))
+                {
+                    if (skills.Match(name) is { } key) skills.Give(key.Key, 1, RankSourceKinds.Background, background.Name, null, independent: true);
+                }
             }
-        }
 
-        if (FirstClass(sheet, result, rules.ClassField) is { } firstClass)
-        {
-            foreach (var attribute in AttributesNamedIn(firstClass.Properties.GetValueOrDefault(rules.SavingThrowsProperty)))
+            if (FirstClass(sheet, result, rules.ClassField) is { } firstClass)
             {
-                if (saves.Match(attribute) is { } key) saves.Give(key.Key, 1, RankSourceKinds.Class, firstClass.Name, null, independent: true);
+                foreach (var attribute in AttributesNamedIn(firstClass.Properties.GetValueOrDefault(rules.SavingThrowsProperty)))
+                {
+                    if (saves.Match(attribute) is { } key) saves.Give(key.Key, 1, RankSourceKinds.Class, firstClass.Name, null, independent: true);
+                }
             }
         }
 
@@ -389,6 +407,7 @@ public sealed partial class SheetRuleEngine
         var choices = new List<(RankedList List, ChoiceInstance Choice)>();
         // A row choice of the entry with the same id would share its picks: the keys of the row choices are taken already.
         var keysSeen = result.PendingChoices.Concat(result.MadeChoices).Where(c => c.IsRow).Select(c => c.Key).ToHashSet(StringComparer.Ordinal);
+        keysSeen.UnionWith(result.RankChoiceKeys);
         foreach (var feature in result.Features.Where(f => !f.OnKind)) // a sheet kind's features are read by EvaluateKeyedChoices
         {
             foreach (var add in feature.Adds)
@@ -396,12 +415,15 @@ public sealed partial class SheetRuleEngine
                 if (RankTargetOf(add.To) is not { } target)
                 {
                     // A choice over a list's entries, or of a value, is the entry choices' (EvaluateEntryChoices); any other list is not supported.
-                    if (add.Choice != null && !IsEntryChoice(add) && !add.IsValueChoice && !add.IsMarkOnly) WarnFeature(result, warned, feature.Name);
+                    // Said in the skills' pass when the system has skills, in the general lists' pass when it has none: once either way.
+                    if ((skillRules != null || Rules?.Skills == null) && add.Choice != null && !IsEntryChoice(add) && !add.IsValueChoice && !add.IsMarkOnly)
+                        WarnFeature(result, warned, feature.Name);
                     continue;
                 }
 
+                // A grant to a list the other pass owns is that pass's.
+                if (lists.FirstOrDefault(l => l.Target.Equals(target.Target, StringComparison.OrdinalIgnoreCase)) is not { } list) continue;
                 if (!AddApplies(feature, add)) continue;
-                var list = target.Target == SkillsTarget ? skills : saves;
                 if (add.Raise != 0 && add.Rank != null)
                 {
                     WarnFeature(result, warned, feature.Name); // rank and raise exclude each other
@@ -417,6 +439,7 @@ public sealed partial class SheetRuleEngine
                         continue;
                     }
 
+                    if (skillRules == null) result.RankChoiceKeys.Add(key);
                     choices.Add((list, new ChoiceInstance(feature, add, choice, key)));
                 }
                 else if (add.Raise > 0)
@@ -436,9 +459,12 @@ public sealed partial class SheetRuleEngine
 
         string SourceName(ActiveFeature f) => f.Name.Equals(f.Source.Name, StringComparison.OrdinalIgnoreCase) ? f.Name : $"{f.Source.Name}: {f.Name}";
 
+        // On a list of one key, a grant may leave its entries out: it means that key.
+        IEnumerable<string> EntriesOf(RankedList list, FeatureAdd add) => add.Entries.Count == 0 && list.Keys.Count == 1 ? new[] { list.Keys[0].Key } : add.Entries;
+
         foreach (var (list, feature, add, rank) in fixedRanks)
         {
-            foreach (var name in add.Entries)
+            foreach (var name in EntriesOf(list, add))
             {
                 if (list.Match(name) is { } key) list.Give(key.Key, rank, RankSourceKinds.Feature, SourceName(feature), feature, independent: true);
                 else WarnFeature(result, warned, feature.Name);
@@ -454,7 +480,7 @@ public sealed partial class SheetRuleEngine
 
             foreach (var (_, feature, add) in fixedRaises.Where(r => r.List == list))
             {
-                foreach (var name in add.Entries.Distinct(StringComparer.OrdinalIgnoreCase))
+                foreach (var name in EntriesOf(list, add).Distinct(StringComparer.OrdinalIgnoreCase))
                 {
                     if (list.Match(name) is { } key) list.Raise(key.Key, add.Raise, SourceName(feature), feature);
                     else WarnFeature(result, warned, feature.Name);
@@ -498,18 +524,24 @@ public sealed partial class SheetRuleEngine
             var label = rank > 0 ? (string.IsNullOrWhiteSpace(list.Ranks[rank - 1].Label) ? list.Ranks[rank - 1].Key : list.Ranks[rank - 1].Label) : null;
             var rankBonus = ValueOf(list, rank);
             // What features add to this check or save through the roll targets (docs/ROLL_BONUSES_DESIGN.md): the always-on numbers are in the bonus.
-            var site = SiteBonus(result, list.Target == SkillsTarget ? SkillSite(key.Key) : SaveSite(key.Key));
+            var general = list.Target != SkillsTarget && list.Target != SavesTarget;
+            // A general list has no roll site: its score is read where it is used, and the number is the list's base, the attribute and the rank.
+            var site = general ? null : SiteBonus(result, list.Target == SkillsTarget ? SkillSite(key.Key) : SaveSite(key.Key));
             return new SkillScore(key.Key, key.Label, key.Attribute ?? string.Empty, rank >= 1, rank >= 2,
-                ModifierOf(sheet, result, key.Attribute ?? string.Empty) + rankBonus + site.Number, rank, label,
+                list.Base + ModifierOf(sheet, result, key.Attribute ?? string.Empty) + rankBonus + (site?.Number ?? 0), rank, label,
                 list.Sources.TryGetValue(key.Key, out var sources) ? sources : Array.Empty<RankSource>(), list.Own.GetValueOrDefault(key.Key), rankBonus)
             {
-                Extra = site.Number,
-                Bonuses = site.Bonuses
+                Extra = site?.Number ?? 0,
+                Bonuses = site?.Bonuses ?? Array.Empty<RollBonus>()
             };
         }
 
-        foreach (var key in skills.Keys) result.Skills.Add(ScoreOf(skills, key));
-        foreach (var key in saves.Keys) result.SavingThrows.Add(ScoreOf(saves, key));
+        foreach (var list in lists)
+        {
+            if (list.Target == SkillsTarget) result.Skills.AddRange(list.Keys.Select(k => ScoreOf(list, k)));
+            else if (list.Target == SavesTarget) result.SavingThrows.AddRange(list.Keys.Select(k => ScoreOf(list, k)));
+            else result.Ranked[list.Target] = list.Keys.Select(k => ScoreOf(list, k)).ToList();
+        }
 
         // What each rank is worth now, held or not, so the level-up can say how the numbers move.
         foreach (var list in lists)
@@ -522,6 +554,54 @@ public sealed partial class SheetRuleEngine
         }
 
         return skills;
+    }
+
+    /// <summary>The general ranked lists (<c>sheetRules.ranked</c>), worked out right after the features: their ranks, as the skills' pass works out
+    /// the skills', and each published list's scores as derived values (base + attribute + rank value + the key's own modifiers, which stack once).
+    /// The published value does not read the roll targets (<c>check</c>, <c>save</c>): a condition on perception would count twice. Known limit: a
+    /// feature's amount formula that names a published value sees nothing, since amounts are worked out in <see cref="EvaluateFeatures"/>, first.</summary>
+    private void EvaluateRankedLists(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
+    {
+        if (Rules is not { Ranked.Count: > 0 } rules) return;
+        EvaluateRanks(sheet, result, BuildGeneralLists(sheet, result), null);
+        foreach (var list in rules.Ranked.Where(l => l.Publish))
+        {
+            if (!result.Ranked.TryGetValue(list.Key, out var scores)) continue;
+            foreach (var score in scores)
+            {
+                var pending = result.Pending.GetValueOrDefault(score.Key) ?? new List<(ActiveFeature Feature, string? Type, int Amount)>();
+                result.Derived[score.Key] = (long)WithModifiers(score.Bonus, pending, score.Key, result.Granted);
+                result.DerivedInputs[score.Key] = new Dictionary<string, double>
+                {
+                    ["base"] = list.Base,
+                    ["rank"] = score.RankBonus,
+                    ["attribute"] = score.Bonus - list.Base - score.RankBonus
+                };
+            }
+        }
+    }
+
+    private IReadOnlyList<RankedList> BuildGeneralLists(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
+    {
+        var rules = Rules!;
+        var lists = new List<RankedList>();
+        foreach (var rule in rules.Ranked)
+        {
+            // The attribute a referenced entry names (the class's key attribute), read as the saving throws' property is.
+            string? fromEntry = null;
+            if (rule.AttributeFrom is { } from)
+            {
+                var classField = rules.Multiclass?.ClassField ?? rules.Skills?.ClassField ?? "class";
+                var entry = from.Field == classField ? FirstClass(sheet, result, from.Field) : ReferencedEntry(from.Field, sheet);
+                fromEntry = entry == null ? null : AttributesNamedIn(entry.Properties.GetValueOrDefault(from.Property)).FirstOrDefault();
+            }
+
+            var keys = rule.Keys().Select(k => new RankedKey(k.Key, string.IsNullOrEmpty(k.Label) ? k.Key : k.Label, k.Attribute ?? rule.Attribute ?? fromEntry,
+                new[] { k.Key, k.Label, k.CanonicalLabel ?? k.Label }.Where(n => !string.IsNullOrEmpty(n)).Distinct(StringComparer.OrdinalIgnoreCase).ToList())).ToList();
+            lists.Add(new RankedList(rule.Key, string.IsNullOrEmpty(rule.Label) ? rule.Key : rule.Label, rules.RanksFor(rule), keys) { Base = rule.Base });
+        }
+
+        return lists;
     }
 
     /// <summary>One choice, in its turn: which of the stored picks still fit (the rest are violations: choose again), which keys the player

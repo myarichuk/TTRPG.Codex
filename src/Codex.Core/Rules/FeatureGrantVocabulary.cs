@@ -60,6 +60,16 @@ public sealed class FeatureGrantVocabulary
             if (system.Attributes.Count > 0) lists.Add(new GrantList(SheetRuleEngine.SavesTarget, "Saving throws", null, skills.SaveRanks().Select(Rank).ToList(), system.Attributes.Select(a => new GrantName(a.Key, a.Label)).ToList()));
         }
 
+        // The general ranked lists (sheetRules.ranked) work the same way, by their own key.
+        foreach (var list in rules.Ranked.Where(l => !string.IsNullOrEmpty(l.Key)))
+        {
+            var ranks = rules.RanksFor(list);
+            if (ranks.Count == 0) continue;
+            lists.Add(new GrantList(list.Key, string.IsNullOrWhiteSpace(list.Label) ? list.Key : list.Label, null,
+                ranks.Select(r => new GrantName(r.Key, string.IsNullOrWhiteSpace(r.Label) ? r.Key : r.Label)).ToList(),
+                list.Keys().Select(k => new GrantName(k.Key, string.IsNullOrWhiteSpace(k.Label) ? k.Key : k.Label)).ToList()));
+        }
+
         Lists = lists;
         Rests = (system.Vitals?.Rests.Select(r => r.Name) ?? Enumerable.Empty<string>())
             .Concat(rules.SlotPools.SelectMany(p => p.RecoversOn))
@@ -157,6 +167,7 @@ public sealed class FeatureGrantVocabulary
         if (rules.ArmorClass is { } armor) Add(armor.Key, system.ActorFields.FirstOrDefault(f => f.Key == armor.Key)?.Label);
         if (rules.HitPoints is { } hitPoints) Add(hitPoints.Key, system.Resources.FirstOrDefault(r => r.MaxKey == hitPoints.Key)?.Label);
         foreach (var derived in rules.Derived) Add(derived.Key, derived.Label);
+        foreach (var list in rules.Ranked.Where(l => l.Publish)) foreach (var key in list.Keys()) Add(key.Key, key.Label);
         foreach (var field in system.ActorFields.Where(f => f.Type == FieldType.Number && f.Key != system.FieldRoles.Level && f.Key != rules.ArmorClass?.MiscField)) Add(field.Key, field.Label);
 
         // The rolls the system makes: a modifier on one of these counts where that roll is made (docs/ROLL_BONUSES_DESIGN.md).
@@ -169,6 +180,8 @@ public sealed class FeatureGrantVocabulary
         if (system.FieldRoles.Level is { } level) yield return level;
         if (rules.Multiclass is { } multiclass) yield return multiclass.ClassLevelKey;
         foreach (var derived in rules.Derived) yield return derived.Key;
+        foreach (var list in rules.Ranked.Where(l => l.Publish)) foreach (var key in list.Keys()) yield return key.Key;
+        if (rules.Actions.Any(a => a.Rank != null)) yield return "rankValue";
         foreach (var attribute in system.Attributes) yield return attribute.Key;
     }
 }

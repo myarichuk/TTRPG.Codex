@@ -295,6 +295,18 @@ public sealed partial class SheetRuleEngine
             }
         }
 
+        // The rank in what is worn (a ranked list's value): the worn body armor's category, or the unarmored key. An untrained or unlisted key adds nothing.
+        if (rules.Rank is { } lookup && result.Ranked.TryGetValue(lookup.List, out var rankScores))
+        {
+            var category = body == null ? lookup.Unarmored : Property(body, lookup.Property)?.ToString();
+            if (!string.IsNullOrEmpty(category)
+                && rankScores.FirstOrDefault(s => s.Key.Equals(category, StringComparison.OrdinalIgnoreCase)) is { Rank: > 0 } score)
+            {
+                var listLabel = Rules.Ranked.FirstOrDefault(l => l.Key.Equals(lookup.List, StringComparison.OrdinalIgnoreCase))?.Label is { Length: > 0 } named ? named : lookup.List;
+                candidates.Add((Untyped, score.RankBonus, new ArmorClassLine("rank", $"{listLabel} ({score.RankLabel})", score.RankBonus)));
+            }
+        }
+
         // What features grant: a type the system stacks as best is another base to choose from, the rest add up.
         foreach (var (feature, type, amount) in result.Pending.GetValueOrDefault(rules.Key) ?? new())
         {

@@ -548,6 +548,8 @@ public static class SystemDefinitionLoader
             }
         }
 
+        foreach (var error in RankedListChecks.Problems(definition, fieldKeys, rules.Lists.Select(l => l.Key).ToHashSet(StringComparer.OrdinalIgnoreCase))) yield return error;
+
         if (rules.Spellcasting is { } spellcasting && DerivedKeyError("sheetRules.spellcasting.bonusKey", spellcasting.BonusKey) is { } spellError)
         {
             yield return spellError;
