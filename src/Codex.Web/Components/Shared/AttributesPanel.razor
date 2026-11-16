@@ -57,7 +57,15 @@
                 <div class="attr-label" id="@("attr-" + attr.Key)">@(attr.Abbreviation ?? attr.Label)</div>
                 @if (modifierText != null)
                 {
-                    <div class="attr-mod" aria-label="@(half ? L["Actor.Sheet.BoostHalf", L["Actor.Sheet.Modifier", attr.Label] + " " + modifierText] : L["Actor.Sheet.Modifier", attr.Label])" data-testid="@("attr-mod-" + attr.Key)">@modifierText</div>
+                    @if (half)
+                    {
+                        @* The half step is drawn as ½; a screen reader is told it in words instead. *@
+                        <div class="attr-mod" data-testid="@("attr-mod-" + attr.Key)"><span aria-hidden="true">@modifierText</span><span class="visually-hidden" data-testid="@("attr-mod-spoken-" + attr.Key)">@L["Actor.Sheet.BoostHalf", L["Actor.Sheet.Modifier", attr.Label] + " " + Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier)]</span></div>
+                    }
+                    else
+                    {
+                        <div class="attr-mod" aria-label="@L["Actor.Sheet.Modifier", attr.Label]" data-testid="@("attr-mod-" + attr.Key)">@modifierText</div>
+                    }
                     @* The modifier stays the attribute's own; what features and conditions add to its check is said beside it, so the roll button and the number agree. *@
                     @if (Evaluation?.CheckBonuses.GetValueOrDefault(attr.Key) is { } extra and not 0)
                     {
@@ -108,7 +116,7 @@
             </div>
         }
     </div>
-    <RuleProblemList Problems="Problems" Describe="Describe" TestId="attr-problems" />
+    <RuleProblemList Problems="@(Boosting ? Problems.Where(v => !IsBoostProblem(v)).ToList() : Problems)" Describe="Describe" TestId="attr-problems" />
 
     @if (Boosting && summary?.Boosts is { } boosts)
     {
@@ -138,14 +146,14 @@
                     }
                     @if (source.TradeKey != null && source.Trade != null)
                     {
-                        <div class="mb-2" role="group" aria-label="@L["Actor.Sheet.BoostTrade"]" data-testid="@("boost-trade-" + source.Key)">
-                            <div class="small">@L["Actor.Sheet.BoostTrade"]</div>
+                        <div class="mb-2" role="group" aria-label="@L["Actor.Sheet.BoostTrade", source.Trade.Fixed, source.Trade.Free]" data-testid="@("boost-trade-" + source.Key)">
+                            <div class="small">@L["Actor.Sheet.BoostTrade", source.Trade.Fixed, source.Trade.Free]</div>
                             <div class="d-flex flex-wrap gap-3">
                                 @foreach (var option in source.TradeOptions)
                                 {
                                     var tradeId = $"boost-trade-{source.Key}-{option}";
                                     <div class="form-check">
-                                        <input id="@tradeId" type="checkbox" class="form-check-input" checked="@source.Traded.Contains(option)" data-testid="@tradeId"
+                                        <input id="@tradeId" type="checkbox" class="form-check-input" checked="@source.Given.Contains(option)" data-testid="@tradeId"
                                                @onchange="e => SetTrade(source, option, e.Value is true)" />
                                         <label for="@tradeId" class="form-check-label">@L["Actor.Sheet.BoostTradeGive", AttributeLabel(option)]</label>
                                     </div>
@@ -160,7 +168,7 @@
                             var slot = choices[n];
                             var selectId = $"boost-{source.Key}-{slot.Id}";
                             <div>
-                                <label for="@selectId" class="field-label">@L["Actor.Sheet.BoostChoice", source.Label, n + 1]</label>
+                                <label for="@selectId" class="field-label">@(slot.Kind == BoostKinds.OneOf ? L["Actor.Sheet.BoostChoiceOneOf", source.Label, n + 1, string.Join(L["Actor.Sheet.Or"], slot.Options.Select(AttributeLabel))] : L["Actor.Sheet.BoostChoice", source.Label, n + 1])</label>
                                 <select id="@selectId" class="field-select field-sm" value="@(slot.Picked ?? "")" data-testid="@selectId"
                                         @onchange="e => SetBoost(slot, e.Value?.ToString())">
                                     <option value="">@L["Actor.Sheet.Choose"]</option>
@@ -302,7 +310,10 @@
     private bool Boosting => AttrMethod == SheetRuleEngine.BoostsMethod && Evaluation?.Attributes?.Boosts != null;
 
     /// <summary>The problems with the boosts, from the page's list of the attributes' problems.</summary>
-    private IReadOnlyList<RuleViolation> BoostProblems => Problems.Where(v => v.FieldKey == "boosts" || v.FieldKey.StartsWith(SheetRuleEngine.ChoicePrefix + SheetRuleEngine.BoostEntryPrefix, StringComparison.Ordinal)).ToList();
+    private static bool IsBoostProblem(RuleViolation v) => v.FieldKey == "boosts" || v.FieldKey.StartsWith(SheetRuleEngine.BoostKeyPrefix, StringComparison.Ordinal);
+
+    /// <summary>The boosts' problems, each once: the rules broken, and the boosts still to place (a warning, so a sheet in progress saves).</summary>
+    private IReadOnlyList<RuleViolation> BoostProblems => Problems.Where(IsBoostProblem).Concat(CanEdit ? Evaluation?.Warnings.Where(IsBoostProblem) ?? Enumerable.Empty<RuleViolation>() : Enumerable.Empty<RuleViolation>()).ToList();
 
     private string AttributeLabel(string key) => Definition.Attributes.FirstOrDefault(a => a.Key == key)?.Label ?? key;
 
@@ -316,7 +327,7 @@
     private Task SetTrade(BoostSourceSummary source, string attributeKey, bool on)
     {
         if (source.TradeKey == null || !source.TradeOptions.Contains(attributeKey)) return Task.CompletedTask;
-        var given = source.Traded.ToList();
+        var given = source.Given.ToList();
         if (on) given.Add(attributeKey);
         else given.Remove(attributeKey);
         SheetRuleEngine.SetChoice(Sheet, source.TradeKey, given);

@@ -23,8 +23,8 @@ sheets:
     kind: character
     values: { level: 1, attrMethod: boosts, ancestry: hillfolk, class: vanguard }
     lists:
-      choice__boost-ancestry__b1: [str]
-      choice__boost-ancestry__b2: [dex]
+      boost__ancestry__hillfolk.b1: [str]
+      boost__ancestry__hillfolk.b2: [dex]
 
 expectations:
   # ---- Ranks: level + 2 / 4 / 6 / 8 ----
@@ -276,7 +276,7 @@ expectations:
   - id: degrees.two-fixed-boosts-trade-for-one-free
     step: 2
     sheet: newcomer
-    with: { lists: { choice__boost-ancestry__trade: [con, wis], choice__boost-ancestry__t1: [cha] } }
+    with: { lists: { boost__ancestry__hillfolk.trade: [con, wis], boost__ancestry__hillfolk.t1: [cha] } }
     expect: { values: { con: 10, wis: 10, cha: 12 }, violations: [] }
     why: "Con and Wis are given up (back to 10); the free boost goes to Cha."
   # now: pass. Str: 12 (ancestry), 14 (class), then 16, 18 at levels 5 and 10; at +4 the level 15 boost is a half step.
@@ -285,7 +285,7 @@ expectations:
     sheet: newcomer
     with:
       values: { level: 15 }
-      lists: { choice__boost-lvl5__m1: [str], choice__boost-lvl10__m1: [str], choice__boost-lvl15__m1: [str] }
+      lists: { boost__lvl5__m1: [str], boost__lvl10__m1: [str], boost__lvl15__m1: [str] }
     expect: { values: { str: 19 } }
     why: "Str 18 is +4, so the next boost adds 1 score point: 19, still +4 with half a step stored."
   # now: pass.
@@ -294,7 +294,7 @@ expectations:
     sheet: newcomer
     with:
       values: { level: 20 }
-      lists: { choice__boost-lvl5__m1: [str], choice__boost-lvl10__m1: [str], choice__boost-lvl15__m1: [str], choice__boost-lvl20__m1: [str] }
+      lists: { boost__lvl5__m1: [str], boost__lvl10__m1: [str], boost__lvl15__m1: [str], boost__lvl20__m1: [str] }
     expect: { values: { str: 20 } }
     why: "Two half steps (19, 20) make +5."
   # now: pass. Four boosts at a milestone go to four different attributes; Con is chosen twice.
@@ -303,13 +303,13 @@ expectations:
     sheet: newcomer
     with:
       values: { level: 5 }
-      lists: { choice__boost-lvl5__m1: [str], choice__boost-lvl5__m2: [dex], choice__boost-lvl5__m3: [con], choice__boost-lvl5__m4: [con] }
+      lists: { boost__lvl5__m1: [str], boost__lvl5__m2: [dex], boost__lvl5__m3: [con], boost__lvl5__m4: [con] }
     expect: { violations: [{ field: boosts, key: Actor.Rule.BoostSame }] }
     why: "One violation, naming the source; the scores still show what was chosen."
   # now: pass.
-  - id: degrees.an-open-boost-is-reported
+  - id: degrees.an-open-boost-is-a-warning
     step: 2
     sheet: newcomer
     with: { values: { level: 5 } }
-    expect: { violations: [{ field: boosts, key: Actor.Rule.BoostOpen }] }
-    why: "Level 5 has four free boosts and none is placed."
+    expect: { violations: [], warnings: [{ field: boosts, key: Actor.Rule.BoostOpen }] }
+    why: "Level 5 has four free boosts and none is placed: a warning, so the sheet can still be saved."

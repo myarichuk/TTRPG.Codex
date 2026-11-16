@@ -272,11 +272,11 @@
   <data name="Actor.Sheet.BoostFixed" xml:space="preserve"><value>קבועים: {0}</value></data>
   <data name="Actor.Sheet.BoostFlaw" xml:space="preserve"><value>חולשה: {0}</value></data>
   <data name="Actor.Sheet.BoostChoice" xml:space="preserve"><value>{0}: שיפור {1}</value></data>
-  <data name="Actor.Sheet.BoostTrade" xml:space="preserve"><value>מוותרים על שני שיפורים קבועים תמורת שיפור חופשי</value></data>
+  <data name="Actor.Sheet.BoostChoiceOneOf" xml:space="preserve"><value>{0}: שיפור {1} ({2})</value></data>
+  <data name="Actor.Sheet.BoostTrade" xml:space="preserve"><value>מוותרים על {0} שיפורים קבועים תמורת {1} חופשיים</value></data>
   <data name="Actor.Sheet.BoostNone" xml:space="preserve"><value>אין עדיין שיפורים. בחרו את מה שנותן אותם, כמו מוצא או מקצוע.</value></data>
   <data name="Actor.Sheet.BoostHalf" xml:space="preserve"><value>{0}, חצי צעד לקראת המקדם הבא</value></data>
   <data name="Actor.Sheet.BoostHalfNote" xml:space="preserve"><value>שיפור במקדם +{0} ומעלה נחשב לחצי צעד. שני חצאים הם צעד אחד, וחצי מוצג כ־½.</value></data>
-  <data name="Actor.Sheet.BoostSources" xml:space="preserve"><value>מקורות שיפורים</value></data>
   <data name="Actor.Sheet.BoostTradeGive" xml:space="preserve"><value>מוותרים על: {0}</value></data>
   <data name="Actor.Sheet.PrintedNote" xml:space="preserve"><value>כמו בתיאור: אלה הערכים מתיאור היצור. בונוסי רקע והגדלות תכונה מבחירות אינם מתווספים; בחרו שיטה אחרת כדי להוסיף אותם.</value></data>
   <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>קנייה בנקודות: </value></data>
@@ -438,7 +438,7 @@
   <data name="Actor.Rule.IncCant" xml:space="preserve"><value>{0}: {1} אינו יכול להעלות את {2}.</value></data>
   <data name="Actor.Rule.BoostOpen" xml:space="preserve"><value>{0}: נותרו שיפורים להצבה: {1}.</value></data>
   <data name="Actor.Rule.BoostSame" xml:space="preserve"><value>{0}: כל שיפור הולך לתכונה אחרת, ול{1} יש יותר מאחד.</value></data>
-  <data name="Actor.Rule.BoostCant" xml:space="preserve"><value>{0}: {1} אינו אחת האפשרויות לשיפור הזה.</value></data>
+  <data name="Actor.Rule.BoostCant" xml:space="preserve"><value>{0}: {1} אינה אחת האפשרויות לשיפור הזה.</value></data>
   <data name="Actor.Rule.BoostTrade" xml:space="preserve"><value>{0}: כדי להחליף, ויתרו על {1} שיפורים קבועים בדיוק.</value></data>
   <data name="Actor.Rule.ArmorUntrained" xml:space="preserve"><value>{0}: {1} אינו מאומן ב{2}. ללא אימון יש חיסרון בבדיקות, בהתקפות ובהצלות שמשתמשות בכוח או בזריזות, ואי אפשר להטיל לחשים.</value></data>
   <data name="Actor.Rule.ArmorStrength" xml:space="preserve"><value>{0}: דורש כוח {1}, אחרת המהירות יורדת ב-10 רגל.</value></data>

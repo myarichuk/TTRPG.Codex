@@ -159,4 +159,4 @@ degrees.two-fixed-boosts-trade-for-one-free
 degrees.a-boost-above-plus-four-is-half
 degrees.two-half-boosts-make-a-full-step
 degrees.four-different-boosts-are-required
-degrees.an-open-boost-is-reported
+degrees.an-open-boost-is-a-warning

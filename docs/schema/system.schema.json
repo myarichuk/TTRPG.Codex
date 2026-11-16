@@ -1848,7 +1848,7 @@
             "number",
             "boolean"
           ],
-          "description": "Required, unique: names the source in the sheet's stored choices (`choice__boost-{key}__{slot}`)."
+          "description": "Required, unique: names the source in the sheet's stored choices (`boost__{key}__{slot}`)."
         },
         "label": {
           "type": [

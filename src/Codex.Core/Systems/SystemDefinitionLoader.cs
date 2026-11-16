@@ -460,6 +460,7 @@ public static class SystemDefinitionLoader
                     }
                 }
 
+                if (attributes.Increases != null) yield return "sheetRules.attributes: increases and boosts do not mix; a boost reads the score it lands on.";
                 if (attributes.Bonuses != null) yield return "sheetRules.attributes: bonuses and boosts do not mix; the boosts method replaces bonuses.";
             }
 

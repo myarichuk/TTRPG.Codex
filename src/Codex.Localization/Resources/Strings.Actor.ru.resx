@@ -269,14 +269,14 @@
   <data name="Actor.Sheet.MethodManual" xml:space="preserve"><value>Вручную</value></data>
   <data name="Actor.Sheet.MethodPrinted" xml:space="preserve"><value>Как в описании</value></data>
   <data name="Actor.Sheet.MethodBoosts" xml:space="preserve"><value>Повышения</value></data>
-  <data name="Actor.Sheet.BoostFixed" xml:space="preserve"><value>Постоянные: {0}</value></data>
+  <data name="Actor.Sheet.BoostFixed" xml:space="preserve"><value>Фиксированные: {0}</value></data>
   <data name="Actor.Sheet.BoostFlaw" xml:space="preserve"><value>Слабость: {0}</value></data>
   <data name="Actor.Sheet.BoostChoice" xml:space="preserve"><value>{0}: повышение {1}</value></data>
-  <data name="Actor.Sheet.BoostTrade" xml:space="preserve"><value>Отдать два постоянных повышения за одно свободное</value></data>
+  <data name="Actor.Sheet.BoostChoiceOneOf" xml:space="preserve"><value>{0}: повышение {1} ({2})</value></data>
+  <data name="Actor.Sheet.BoostTrade" xml:space="preserve"><value>Обмен: отдать постоянных повышений: {0}, получить свободных: {1}</value></data>
   <data name="Actor.Sheet.BoostNone" xml:space="preserve"><value>Повышений пока нет. Выберите то, что их даёт: происхождение или класс.</value></data>
   <data name="Actor.Sheet.BoostHalf" xml:space="preserve"><value>{0}, полшага до следующего модификатора</value></data>
   <data name="Actor.Sheet.BoostHalfNote" xml:space="preserve"><value>Повышение при модификаторе +{0} и выше считается за полшага. Два полшага дают один шаг, половина показана как ½.</value></data>
-  <data name="Actor.Sheet.BoostSources" xml:space="preserve"><value>Источники повышений</value></data>
   <data name="Actor.Sheet.BoostTradeGive" xml:space="preserve"><value>Отдать: {0}</value></data>
   <data name="Actor.Sheet.PrintedNote" xml:space="preserve"><value>Как в описании: это значения из описания существа. Бонусы предыстории и увеличения характеристик от выборов не добавляются; выберите другой способ, чтобы их учесть.</value></data>
   <data name="Actor.Sheet.PointBuyLead" xml:space="preserve"><value>Покупка очков: </value></data>

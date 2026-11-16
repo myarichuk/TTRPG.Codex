@@ -470,7 +470,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         BoostSummary? boostSummary = null;
         if (method == BoostsMethod && rules.Boosts is { } boostRules)
         {
-            var (deltas, summary) = EvaluateBoosts(boostRules, sheet, result.Violations);
+            var (deltas, summary) = EvaluateBoosts(boostRules, sheet, result.Violations, result.Warnings);
             foreach (var attribute in system.Attributes)
             {
                 bases[attribute.Key] = attribute.Default;
@@ -658,6 +658,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         if (Rules?.Attributes is not { } rules) return;
         var printed = Method(sheet, rules) == PrintedMethod;
         var boosting = Method(sheet, rules) == BoostsMethod && rules.Boosts != null;
+        if (boosting) PruneBoostChoices(rules.Boosts!, sheet);
         var boostDeltas = boosting ? EvaluateBoosts(rules.Boosts!, sheet, null).Deltas : null;
         var increases = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         if (rules.Increases is { } increaseRules && !printed)

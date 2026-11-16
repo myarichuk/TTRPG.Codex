@@ -971,7 +971,7 @@ public class BoostRules
 /// to different attributes (a flaw is not a boost).</summary>
 public class BoostSource
 {
-    /// <summary>Required, unique: names the source in the sheet's stored choices (<c>choice__boost-{key}__{slot}</c>).</summary>
+    /// <summary>Required, unique: names the source in the sheet's stored choices (<c>boost__{key}__{slot}</c>).</summary>
     public string Key { get; set; } = string.Empty;
 
     /// <summary>The source's name as the sheet shows it, and the word its messages start with.</summary>

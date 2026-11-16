@@ -456,7 +456,7 @@ One source of boosts: the entry a sheet field refers to, or a level milestone wi
 
 | Key | Type | What it is |
 |---|---|---|
-| `key` | text (a number is text too) | Required, unique: names the source in the sheet's stored choices (`choice__boost-{key}__{slot}`). |
+| `key` | text (a number is text too) | Required, unique: names the source in the sheet's stored choices (`boost__{key}__{slot}`). |
 | `label` | text (a number is text too) | The source's name as the sheet shows it, and the word its messages start with. |
 | `field` | text (a number is text too) | An EntityReference actor field whose entry lists the boosts. Give this or Level. |
 | `level` | whole number | A level milestone: from this level the source gives Free free boosts. |

@@ -8,9 +8,9 @@ namespace Codex.Core.Rules;
 public sealed record BoostSlot(string Id, string Kind, IReadOnlyList<string> Options, string? Picked, string? Key);
 
 /// <summary>One source of boosts as the sheet shows it: its slots, its flaws (attribute keys), and the trade, when the source offers one
-/// (<see cref="TradeKey"/> is where the fixed boosts given up are stored; <see cref="Traded"/> which they are).</summary>
+/// (<see cref="TradeKey"/> is where the fixed boosts given up are stored; <see cref="Given"/> is what is stored there and <see cref="Traded"/> what was applied: they differ while the player has ticked too few).</summary>
 public sealed record BoostSourceSummary(string Key, string Label, IReadOnlyList<BoostSlot> Slots, IReadOnlyList<string> Flaws,
-    BoostTrade? Trade, string? TradeKey, IReadOnlyList<string> TradeOptions, IReadOnlyList<string> Traded);
+    BoostTrade? Trade, string? TradeKey, IReadOnlyList<string> TradeOptions, IReadOnlyList<string> Traded, IReadOnlyList<string> Given);
 
 /// <summary>The boosts of a sheet: its sources, and the attributes sitting on half a step (<see cref="Halves"/>).</summary>
 public sealed record BoostSummary(IReadOnlyList<BoostSourceSummary> Sources, IReadOnlySet<string> Halves);
@@ -32,8 +32,9 @@ public sealed partial class SheetRuleEngine
     /// <summary>The attribute method that builds scores from boosts.</summary>
     public const string BoostsMethod = "boosts";
 
-    /// <summary>The "entry id" of a source's stored choices: <c>choice__boost-{source}__{slot}</c>.</summary>
-    public const string BoostEntryPrefix = "boost-";
+    /// <summary>The prefix of every stored boost choice: <c>boost__{source}__{entryId}.{slot}</c> for a source that reads an entry (so a pick
+    /// stops counting when the entry changes), <c>boost__{source}__{slot}</c> for a level milestone.</summary>
+    public const string BoostKeyPrefix = "boost__";
 
     /// <summary>A modifier step is two score points on the half-minus-five scale.</summary>
     private const int BoostStep = 2;
@@ -43,11 +44,27 @@ public sealed partial class SheetRuleEngine
     public const string BoostCantKey = "Actor.Rule.BoostCant";
     public const string BoostTradeKey = "Actor.Rule.BoostTrade";
 
-    private static string BoostChoiceKey(BoostSource source, string slot) => ChoiceKey(BoostEntryPrefix + source.Key, 1, slot);
+    private static string BoostChoiceKey(BoostSource source, string? entryId, string slot) =>
+        BoostKeyPrefix + source.Key + "__" + (entryId == null ? "" : entryId + ".") + slot;
+
+    /// <summary>Takes out the stored picks of sources whose entry is no longer the one they were made for.</summary>
+    private void PruneBoostChoices(BoostRules rules, Dictionary<string, object> sheet)
+    {
+        foreach (var key in sheet.Keys.Where(k => k.StartsWith(BoostKeyPrefix, StringComparison.Ordinal)).ToList())
+        {
+            var source = rules.Sources.FirstOrDefault(s => key.StartsWith(BoostKeyPrefix + s.Key + "__", StringComparison.Ordinal));
+            if (source == null) { sheet.Remove(key); continue; }
+            if (source.Field == null) continue;
+            var rest = key[(BoostKeyPrefix.Length + source.Key.Length + 2)..];
+            var dot = rest.LastIndexOf('.');
+            var current = ReferencedEntry(source.Field, sheet)?.Id;
+            if (dot < 0 || current == null || !string.Equals(rest[..dot], current, StringComparison.OrdinalIgnoreCase)) sheet.Remove(key);
+        }
+    }
 
     /// <summary>Works the boosts out: the score change each attribute gets (from its default), and what the sheet shows. Problems go to
     /// <paramref name="violations"/> when it is given.</summary>
-    private (Dictionary<string, int> Deltas, BoostSummary Summary) EvaluateBoosts(BoostRules rules, IReadOnlyDictionary<string, object> sheet, List<RuleViolation>? violations)
+    private (Dictionary<string, int> Deltas, BoostSummary Summary) EvaluateBoosts(BoostRules rules, IReadOnlyDictionary<string, object> sheet, List<RuleViolation>? violations, List<RuleViolation>? warnings = null)
     {
         var score = system.Attributes.ToDictionary(a => a.Key, a => a.Default);
         var summaries = new List<BoostSourceSummary>();
@@ -82,14 +99,16 @@ public sealed partial class SheetRuleEngine
             else continue;
 
             // The trade: fixed boosts the player gives up (stored as the attributes), for free ones.
+            var entryId = source.Field != null ? ReferencedEntry(source.Field, sheet)?.Id : null;
             string? tradeKey = null;
+            var given = new List<string>();
             var traded = new List<string>();
             var tradeOptions = new List<string>();
             if (source.Trade is { } trade && fixedBoosts.Count >= trade.Fixed)
             {
-                tradeKey = BoostChoiceKey(source, "trade");
+                tradeKey = BoostChoiceKey(source, entryId, "trade");
                 tradeOptions = fixedBoosts.Distinct().ToList();
-                var given = RawList(sheet, tradeKey).Select(MatchAttribute).OfType<AttributeDefinition>().Select(a => a.Key).Distinct().ToList();
+                given = RawList(sheet, tradeKey).Select(MatchAttribute).OfType<AttributeDefinition>().Select(a => a.Key).Distinct().ToList();
                 if (given.Count > 0)
                 {
                     if (given.Count != trade.Fixed || given.Any(g => !fixedBoosts.Contains(g)))
@@ -111,7 +130,7 @@ public sealed partial class SheetRuleEngine
             var open = 0;
             foreach (var (id, kind, options) in slots)
             {
-                var key = BoostChoiceKey(source, id);
+                var key = BoostChoiceKey(source, entryId, id);
                 var raw = RawList(sheet, key).FirstOrDefault();
                 string? picked = null;
                 if (!string.IsNullOrWhiteSpace(raw))
@@ -126,7 +145,7 @@ public sealed partial class SheetRuleEngine
                 shown.Add(new BoostSlot(id, kind, options, picked, key));
             }
 
-            if (open > 0) violations?.Add(new RuleViolation("boosts", $"{source.Label}: {open} boost{(open == 1 ? "" : "s")} still to place.", BoostOpenKey, new object?[] { source.Label, open }));
+            if (open > 0) warnings?.Add(new RuleViolation("boosts", $"{source.Label}: boosts still to place: {open}.", BoostOpenKey, new object?[] { source.Label, open }));
             foreach (var twice in used.GroupBy(u => u).Where(g => g.Count() > 1).Select(g => g.Key))
             {
                 violations?.Add(new RuleViolation("boosts", $"{source.Label}: each boost needs a different attribute, and {Label(twice)} has more than one.", BoostSameKey, new object?[] { source.Label, Label(twice) }));
@@ -134,7 +153,7 @@ public sealed partial class SheetRuleEngine
 
             foreach (var flaw in flaws) score[flaw] -= BoostStep;
             foreach (var attribute in used) score[attribute] += AttributeDefinition.HalfMinusFive(score[attribute]) >= rules.PartialFrom ? 1 : BoostStep;
-            summaries.Add(new BoostSourceSummary(source.Key, source.Label, shown, flaws, source.Trade, tradeKey, tradeOptions, traded));
+            summaries.Add(new BoostSourceSummary(source.Key, source.Label, shown, flaws, source.Trade, tradeKey, tradeOptions, traded, given));
         }
 
         var halves = system.Attributes.Where(a => (score[a.Key] - a.Default) % 2 != 0).Select(a => a.Key).ToHashSet();
