@@ -78,7 +78,7 @@ public class ConditionBadgesTests : ComponentTestBase
         // Frightened stored at 1 and held at 3 by Dread 3 reads 3, and is not also an implied chip.
         var cut = Row(State(new Dictionary<string, int> { ["condition_dread"] = 3, ["condition_frightened"] = 1 }));
 
-        Assert.Equal(new[] { "Dread 3", "Frightened 3" }, cut.FindAll(Id("valued-badge")).Select(Label).Order().ToArray());
+        Assert.Equal(new[] { "Dread 3", "Frightened 3, from Dread" }, cut.FindAll(Id("valued-badge")).Select(Label).Order().ToArray());
         Assert.Empty(cut.FindAll("[data-implied='true']"));
     }
 
@@ -159,7 +159,8 @@ public class ConditionBadgesTests : ComponentTestBase
         var cut = Card(engine.Printed(live), sheet, state, engine);
 
         var ac = cut.FindAll("[data-testid='table-card-stats'] div").Single(d => d.QuerySelector("dt")!.TextContent.Contains("AC")).QuerySelector("dd")!;
-        Assert.Equal("16", ac.TextContent.Trim());
+        Assert.StartsWith("16", ac.TextContent.Trim());
+        Assert.Contains("printed 18; Frightened \u22122", ac.TextContent);
         Assert.Equal("printed 18; Frightened −2", ac.GetAttribute("title"));
     }
 
@@ -173,7 +174,8 @@ public class ConditionBadgesTests : ComponentTestBase
         var cut = Card(null, sheet, State(new Dictionary<string, int> { ["condition_frightened"] = 2 }), engine);
 
         var ac = cut.FindAll("[data-testid='table-card-stats'] div").Single(d => d.QuerySelector("dt")!.TextContent.Contains("AC")).QuerySelector("dd")!;
-        Assert.Equal("12", ac.TextContent.Trim());
+        Assert.StartsWith("12", ac.TextContent.Trim());
+        Assert.Contains("printed 14; Frightened \u22122", ac.TextContent);
         Assert.Equal(14L, sheet["armorClass"]);
     }
 

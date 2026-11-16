@@ -39,6 +39,7 @@ internal static class ImplicationChecks
 
                 var target = SheetConditions.EffectOf(definition, item.Condition)?.Effect;
                 var valued = target?.Value != null;
+                if (item.Stays && effect.Value != null) yield return $"{where}: 'stays' is not allowed under '{name}', which is valued: it ends by its number (a drop or the stepper), and a stay is written only when it is removed.";
                 if (item.Stays && valued) yield return $"{where}: 'stays' is for a condition with no value; '{item.Condition}' is valued.";
                 if (string.IsNullOrWhiteSpace(item.Value)) continue;
                 if (exhaustion != null && string.Equals(item.Condition, exhaustion, StringComparison.OrdinalIgnoreCase))

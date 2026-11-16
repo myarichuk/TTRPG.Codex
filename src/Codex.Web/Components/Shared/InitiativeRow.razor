@@ -112,12 +112,12 @@
     {
         <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Name])">
             @* Every valued condition that holds shows its level (Exhaustion 3, Frightened 2), not only Exhaustion. *@
-            @foreach (var (condition, level) in valued)
+            @foreach (var (condition, level, from) in valued)
             {
                 var isExhaustion = Vitals?.Exhaustion is { } exhaustionRules && condition.Key == exhaustionRules.Key;
                 <li class="cond-chip" data-testid="@(isExhaustion ? "exhaustion-badge" : "valued-badge")" data-condition="@condition.Name" data-level="@level" title="@(L["Combat.ExhaustionTitle", ConditionName(condition.Name), level])">
                     <DomainIcon Domain="condition" Key="@condition.Name" Size="DomainIconSize.Small" />
-                    @ConditionLabel(condition.Name, $"{ConditionName(condition.Name)} {level}")
+                    @ConditionLabel(condition.Name, from.Count > 0 ? L["Combat.Condition.ImpliedBy", $"{ConditionName(condition.Name)} {level}", string.Join(", ", from.Select(ConditionName))] : $"{ConditionName(condition.Name)} {level}")
                 </li>
             }
             @foreach (var effect in effects)
@@ -221,9 +221,9 @@
         (State?.OnlyOnSheet ?? Array.Empty<string>()).Where(c => !IsVitalsMarker(c) && ConditionLines.ValuedNamed(Definition, null, c) == null).ToList();
 
     /// <summary>Each valued condition the creature holds, with its level as held (the table's number, or what another condition brings if higher).</summary>
-    private IReadOnlyList<(ValuedCondition Condition, int Level)> ValuedBadges =>
+    private IReadOnlyList<(ValuedCondition Condition, int Level, IReadOnlyList<string> From)> ValuedBadges =>
         Definition == null || State == null
-            ? Array.Empty<(ValuedCondition, int)>()
+            ? Array.Empty<(ValuedCondition, int, IReadOnlyList<string>)>()
             : ConditionLines.HeldLevels(Definition, State.LiveView(Definition, Actor?.Sheet ?? new Dictionary<string, object>()), State.Pool);
 
     /// <summary>What other conditions bring that the creature does not hold itself (<c>implies</c>), with the conditions that bring each.</summary>

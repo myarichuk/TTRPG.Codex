@@ -18,18 +18,28 @@ public sealed class ConditionImplicationConverter : IYamlTypeConverter
         parser.Consume<MappingStart>();
         while (!parser.TryConsume<MappingEnd>(out _))
         {
-            var key = parser.Consume<Scalar>().Value;
+            var keyScalar = parser.Consume<Scalar>();
+            var key = keyScalar.Value;
             if (!parser.TryConsume<Scalar>(out var value))
             {
-                parser.SkipThisAndNestedEvents();
-                continue;
+                throw new YamlException(keyScalar.Start, keyScalar.End, $"implies: '{key}' needs a single value.");
             }
 
             switch (key.ToLowerInvariant())
             {
                 case "condition": item.Condition = value.Value.Trim(); break;
                 case "value": item.Value = value.Value.Trim(); break;
-                case "stays": item.Stays = value.Value.Trim().Equals("true", StringComparison.OrdinalIgnoreCase); break;
+                case "stays":
+                    var word = value.Value.Trim();
+                    if (!word.Equals("true", StringComparison.OrdinalIgnoreCase) && !word.Equals("false", StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new YamlException(value.Start, value.End, $"implies: 'stays' is true or false, not '{word}'.");
+                    }
+
+                    item.Stays = word.Equals("true", StringComparison.OrdinalIgnoreCase);
+                    break;
+                default:
+                    throw new YamlException(keyScalar.Start, keyScalar.End, $"implies: '{key}' is not a key of an implied condition (condition, value, stays).");
             }
         }
 

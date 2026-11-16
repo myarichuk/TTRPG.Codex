@@ -96,6 +96,10 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
     private Codex.Core.Rules.HealReport _outcome = Codex.Core.Rules.HealReport.Nothing;
 
     private TableEvents.Outcome? _raised;
+    private List<string> _stayed = new();
+
+    private static List<string> StatusNames(DefaultEcs.Entity e) =>
+        e.Has<ActiveEffectsComponent>() ? e.Get<ActiveEffectsComponent>().Effects.Select(x => x.EffectId).ToList() : new List<string>();
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -108,7 +112,10 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
 
         if (runtime.GetEntity(ActorId) is { } e)
         {
+            var before = StatusNames(e);
             _outcome = TableRules.ApplyHealing(runtime, ActorId, e, PoolName, Amount);
+            // Coming up from 0 ends Unconscious and what it leaves behind (Prone) is written: said on its own line.
+            _stayed = StatusNames(e).Except(before, StringComparer.OrdinalIgnoreCase).ToList();
         }
     }
 
@@ -129,6 +136,7 @@ public sealed record ApplyHealingCommand(string ActorId, string PoolName, int Am
             if (_outcome.Revived) parts.Add(EventMessage.Of("Healing.Revived", name));
         }
 
+        foreach (var stayed in _stayed) parts.Add(EventMessage.Of("Status.Gained", name, EventTerm.Condition(stayed)));
         return SessionEvent.From("Healing", parts, new[] { ActorId }, new[] { EventMessage.Of(_outcome.Revived ? "Healing.PlayerRevived" : "Healing.Player", name) });
     }
 }
@@ -401,7 +409,7 @@ public sealed record AdvanceTurnCommand(string ActorId) : IRuntimeCommand
     {
         if (runtime.GetEntity(ActorId) != null)
         {
-            runtime.World.AdvanceTurn(ActorId, EffectExpiry.EndOfTurn);
+            _dropped.AddRange(TableRules.StaysAfterExpiry(runtime, runtime.World.AdvanceTurn(ActorId, EffectExpiry.EndOfTurn)));
             runtime.MarkAllHydratedActorsDirty();
             _dropped.AddRange(runtime.DecreaseConditionsUndoably(ActorId, "turnEnd"));
         }
@@ -443,6 +451,16 @@ public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) 
             var own = SheetRuleEngine.RawList(doc.Sheet, SheetModel.ConditionsKey);
             if (own.RemoveAll(c => string.Equals(c, EffectId, StringComparison.OrdinalIgnoreCase)) > 0)
             {
+                // Set on the sheet before the table ran, so no status was removed above: what it leaves behind (Prone) is written here, as a status.
+                if (runtime.System is { } system && runtime.GetEntity(ActorId) is { } holder && _stayed.Count == 0)
+                {
+                    foreach (var left in SheetConditions.Stays(system, EffectId).Where(c => !CodexWorld.HasStatus(holder, c) && !own.Contains(c, StringComparer.OrdinalIgnoreCase)))
+                    {
+                        runtime.World.AddStatus(holder, left, "rules", ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, ActorId);
+                        _stayed.Add(left);
+                    }
+                }
+
                 if (own.Count == 0) doc.Sheet.Remove(SheetModel.ConditionsKey);
                 else doc.Sheet[SheetModel.ConditionsKey] = own.Cast<object>().ToList();
                 runtime.SheetKeyWritten(ActorId, SheetModel.ConditionsKey);
@@ -564,7 +582,7 @@ public sealed record NextTurnCommand : IRuntimeCommand
         var current = encounter.Participants[encounter.TurnIndex];
         if (runtime.GetEntity(current.ActorId) != null)
         {
-            runtime.World.AdvanceTurn(current.ActorId, EffectExpiry.EndOfTurn);
+            _raised.AddRange(TableRules.StaysAfterExpiry(runtime, runtime.World.AdvanceTurn(current.ActorId, EffectExpiry.EndOfTurn)));
             runtime.MarkAllHydratedActorsDirty();
         }
 

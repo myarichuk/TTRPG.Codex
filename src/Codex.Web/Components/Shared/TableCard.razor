@@ -56,15 +56,19 @@
         </div>
     }
 
-    @if (Effects.Count > 0 || OnlyOnSheet.Count > 0 || Implied.Count > 0 || Valued.Count > 0)
+    @{
+        var valued = Valued;
+        var implied = Implied;
+    }
+    @if (Effects.Count > 0 || OnlyOnSheet.Count > 0 || implied.Count > 0 || valued.Count > 0)
     {
         <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Actor.Name])">
             @* Every valued condition that holds shows its level (Exhaustion 3, Frightened 2), as held. *@
-            @foreach (var (condition, level) in Valued)
+            @foreach (var (condition, level, from) in valued)
             {
                 <li class="cond-chip" data-testid="table-card-condition" data-level="@level" data-condition="@condition.Name" title="@(L["Combat.ExhaustionTitle", ConditionName(condition.Name), level])">
                     <DomainIcon Domain="condition" Key="@condition.Name" Size="DomainIconSize.Small" />
-                    @($"{ConditionName(condition.Name)} {level}")
+                    @(from.Count > 0 ? L["Combat.Condition.ImpliedBy", $"{ConditionName(condition.Name)} {level}", string.Join(", ", from.Select(ConditionName))] : $"{ConditionName(condition.Name)} {level}")
                 </li>
             }
             @foreach (var effect in Effects)
@@ -82,7 +86,7 @@
                 </li>
             }
             @* Brought by another condition: it ends with its source, so there is nothing to remove. *@
-            @foreach (var line in Implied)
+            @foreach (var line in implied)
             {
                 var said = L["Combat.Condition.ImpliedBy", line.Value is { } held ? $"{ConditionName(line.Name)} {held}" : ConditionName(line.Name), string.Join(", ", (line.From ?? Array.Empty<string>()).Select(ConditionName))];
                 <li class="cond-chip" data-testid="table-card-condition" data-implied="true" aria-label="@said">
@@ -101,7 +105,7 @@
             <dl class="table-card-stats" data-testid="table-card-stats">
                 @foreach (var (label, value, title) in stats)
                 {
-                    <div><dt>@label</dt><dd title="@title">@value</dd></div>
+                    <div><dt>@label</dt><dd title="@title">@value@if (title != null) {<span class="small-muted d-block" data-testid="table-card-stat-reason">@title</span>}</dd></div>
                 }
             </dl>
         }
@@ -291,8 +295,8 @@
         .ToList();
 
     /// <summary>The valued conditions the creature holds, each with its level as held.</summary>
-    private IReadOnlyList<(ValuedCondition Condition, int Level)> Valued =>
-        Definition == null || State == null ? Array.Empty<(ValuedCondition, int)>() : ConditionLines.HeldLevels(Definition, LiveSheet(), State.Pool);
+    private IReadOnlyList<(ValuedCondition Condition, int Level, IReadOnlyList<string> From)> Valued =>
+        Definition == null || State == null ? Array.Empty<(ValuedCondition, int, IReadOnlyList<string>)>() : ConditionLines.HeldLevels(Definition, LiveSheet(), State.Pool);
 
     /// <summary>The conditions the creature holds only because another brings them (<c>implies</c>), with what brings each. Read from the live sheet, never stored.</summary>
     private List<ConditionLine> Implied =>
@@ -385,7 +389,8 @@
         // What a printed creature prints beside those: its saves, skills and Strikes, with the conditions applied.
         foreach (var other in (Printed ?? Array.Empty<PrintedNumber>()).Where(p => !shown.Contains(p)))
         {
-            yield return (other.Label, Signed(other.Total), PrintedTitle(other));
+            var isRoll = other.Target.StartsWith("save.", StringComparison.Ordinal) || other.Target.StartsWith("check.skill.", StringComparison.Ordinal) || other.Target == "attack";
+            yield return (other.Label, isRoll ? Signed(other.Total) : other.Total.ToString(), PrintedTitle(other));
         }
     }
 

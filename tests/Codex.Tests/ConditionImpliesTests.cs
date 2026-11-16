@@ -114,6 +114,15 @@ public class ConditionImpliesTests : IClassFixture<RavenDbFixture>, IDisposable
             e => e.Contains("'stays' is for a condition with no value"));
     }
 
+    [Fact]
+    public void AStay_IsRefusedUnderAValuedSource_AndABadKeyOrBooleanIsReported()
+    {
+        Assert.Contains(Errors("conditions: [Prone]\nconditionEffects:\n  Dread: { value: { max: 3 }, implies: [{ condition: Prone, stays: true }] }"),
+            e => e.Contains("conditionEffects.Dread.implies[0]") && e.Contains("'stays' is not allowed"));
+        Assert.Contains(Errors("conditions: [A, B]\nconditionEffects:\n  A: { implies: [{ condition: B, stay: true }] }"), e => e.Contains("'stay' is not a key"));
+        Assert.Contains(Errors("conditions: [A, B]\nconditionEffects:\n  A: { implies: [{ condition: B, stays: yes }] }"), e => e.Contains("'stays' is true or false"));
+    }
+
     // ---- Holding ----
 
     [Fact]

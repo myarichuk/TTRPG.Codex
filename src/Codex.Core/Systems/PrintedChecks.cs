@@ -28,7 +28,7 @@ internal static class PrintedChecks
 
             var target = entry.Target?.Trim() ?? string.Empty;
             if (target.Length == 0) { yield return $"{where}: 'from' needs a 'target', the number the conditions' modifiers aim at."; continue; }
-            if (kindTargets.Contains(target) && SheetRuleEngine.KindOf(definition, target) == SheetRuleEngine.TargetKind.Unknown) yield return $"{where}: the target '{target}' is a sheet kind's; a printed number belongs to the sheet-rules side.";
+            if (kindTargets.Contains(target)) yield return $"{where}: the target '{target}' is a sheet kind's; a printed number belongs to the sheet-rules side.";
             else if (!IsKnown(definition, rules, target)) yield return $"{where}: the target '{target}' is not the armor class, a derived value, a Number field, save.<attribute> or check.skill.<key>.";
         }
     }

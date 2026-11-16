@@ -286,10 +286,11 @@ What was built, and where it differs from the design above.
 
 - **Files.** `SheetConditions.Holding.cs` (`Holding`, `Of`, `Drops`, `Drop`, `IsDropMoment`, `Stays`), `ImplicationChecks.cs` and `PrintedChecks.cs` (the loader checks, as
   separate files rather than methods of `SystemDefinitionLoader`), `ConditionImplicationConverter.cs`, `SheetRuleEngine.Printed.cs`. `Listed` is the old `Of` body; `LiveView` writes it.
-- **`stays` (decision 1).** An implied item takes `stays: true`, for an unvalued condition only (the loader refuses it on a valued one). The stay is written as a status, once, where a
-  status is taken off: `TableRules.RemoveStatusLeaving` (the card's remove command and a vitals handler's `condition` remove) and `TableEvents.Change` (a script clearing the source).
-  Not covered: a source that ends by its value reaching 0, a timed status that expires, the sheet page's own list, and `Kill`. The log line is the ordinary `Status.Gained` /
-  `Sheet.ConditionAdded`.
+- **`stays` (decision 1, after review).** An implied item takes `stays: true`, for an unvalued condition under an unvalued source only: the loader refuses it under a valued source,
+  because that source ends by its number and a stay is written only when something is removed. The stay is written as a status, once, on every end: a removed status
+  (`TableRules.RemoveStatusLeaving`: the card's remove command, a vitals `condition remove`, healing up from 0, `Kill`), a sheet-only source taken off by the card's cross, an
+  expiry (`TableRules.StaysAfterExpiry`: end or start of turn, `ExpireTurnsOf`), a script clearing it (`TableEvents.Change`), and the sheet page's remove. Lines: `Status.Gained`
+  / `Sheet.ConditionAdded`; `Kill` and the start-of-turn expiry write the stay without a line. Undo takes it back where the command is undoable (remove, heal); a turn is not.
 - **Holding.** A formula on an implied `value` is worked out by `SheetModel.Formula`, whose constructor reads what holds; a thread-static guard makes that inner read skip
   `implies`. An implied value is floored and clamped to `max`; a formula that cannot be worked out brings nothing.
 - **`ConditionLine`** gains `From` and also `Listed` (false: brought by another, so no remove button).
@@ -309,3 +310,6 @@ What was built, and where it differs from the design above.
 - **Schema.** The generated schema offers a bare name or the map form for an `implies` item (`SystemSchema` special-cases `ConditionImplication`).
 - **Goldens.** srd5e and fitd `expected.txt` are byte-identical; no golden sheet holds a condition and printed numbers sit outside `SheetEvaluation`.
 - **srd5e data.** Paralyzed, Petrified and Stunned imply Incapacitated; Unconscious implies Incapacitated and Prone (`stays: true`), each checked against the SRD 5.2.1 condition text.
+- **Review fixes.** The sheet page's implied chip says "X, from Y" in text and has no remove button. A printed DC or AC shows unsigned; the reason a printed or manual AC changed is
+  visible text under it. A badge raised by another condition names its source. `PrintedChecks` refuses any target a sheet kind claims. The converter reports an unknown key or a
+  non-boolean `stays`. Not done: translating the Strike fallback label and the type word in the unreached-modifier line; computing `Holding` once per render beyond the card.

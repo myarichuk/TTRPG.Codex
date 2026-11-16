@@ -279,6 +279,26 @@ internal static class TableRules
         return definition.ModifierFor(score ?? definition.Default) ?? 0;
     }
 
+    /// <summary>What a status that just expired leaves behind (<c>stays</c>: Prone after Unconscious), written once as a status on whoever lost it, unless the
+    /// creature still holds the source. Returns the lines for the log, one per stay.</summary>
+    internal static List<EventMessage> StaysAfterExpiry(CampaignRuntime runtime, IEnumerable<(Entity Entity, ActiveEffect Effect)> expired)
+    {
+        var messages = new List<EventMessage>();
+        if (runtime.System is not { } system) return messages;
+        foreach (var (entity, effect) in expired)
+        {
+            if (runtime.ActorIdOf(entity) is not { } owner || CodexWorld.HasStatus(entity, effect.EffectId)) continue;
+            foreach (var left in SheetConditions.Stays(system, effect.EffectId).Where(c => !CodexWorld.HasStatus(entity, c)))
+            {
+                runtime.World.AddStatus(entity, left, "rules", ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, owner);
+                messages.Add(EventMessage.Of("Status.Gained", runtime.ActorTerm(owner), EventTerm.Condition(left)));
+            }
+        }
+
+        if (messages.Count > 0) runtime.MarkAllHydratedActorsDirty();
+        return messages;
+    }
+
     /// <summary>Takes a status off the creature, and writes the conditions it leaves as conditions of their own (<c>stays</c>: Prone after Unconscious) as
     /// statuses, once, unless the creature has them. Returns the ones it wrote, for the log.</summary>
     internal static IReadOnlyList<string> RemoveStatusLeaving(CampaignRuntime runtime, Entity entity, string actorId, string condition)
@@ -307,7 +327,8 @@ internal static class TableRules
             return false;
         }
 
-        runtime.World.RemoveStatus(entity, down.Condition);
+        // Dying ends the down condition like any other end: what it leaves behind (Prone after Unconscious) stays on the body.
+        RemoveStatusLeaving(runtime, entity, actorId, down.Condition);
         runtime.World.RemoveStatus(entity, down.StableCondition);
         ResetDeathSaves(runtime, entity);
         EndConcentration(runtime, actorId, entity);
@@ -325,7 +346,9 @@ internal static class TableRules
     /// order, so those turns will not come (R4). Returns how many ended.</summary>
     public static int ExpireTurnsOf(CampaignRuntime runtime, string actorId)
     {
-        var ended = runtime.World.ExpireAnchoredTo(actorId).Count;
+        var expired = runtime.World.ExpireAnchoredTo(actorId);
+        var ended = expired.Count;
+        StaysAfterExpiry(runtime, expired);
         if (ended > 0)
         {
             runtime.MarkAllHydratedActorsDirty();

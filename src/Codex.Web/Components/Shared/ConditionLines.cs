@@ -62,16 +62,17 @@ public static class ConditionLines
     /// <summary>Each valued condition the creature holds on its own, with its level as held: the table's pool, or what another condition brings when that is
     /// higher (Shaken stored at 1 and held at 3 by Dread reads 3). One that is only brought by another is not here: it shows as that condition's line.
     /// <paramref name="live"/> is the live sheet (<see cref="SheetConditions.LiveView"/>); <paramref name="pool"/> reads a pool by key.</summary>
-    public static IReadOnlyList<(ValuedCondition Condition, int Level)> HeldLevels(SystemDefinition? system, IReadOnlyDictionary<string, object> live, Func<string, int?> pool)
+    public static IReadOnlyList<(ValuedCondition Condition, int Level, IReadOnlyList<string> From)> HeldLevels(SystemDefinition? system, IReadOnlyDictionary<string, object> live, Func<string, int?> pool)
     {
-        var levels = new List<(ValuedCondition, int)>();
+        var levels = new List<(ValuedCondition, int, IReadOnlyList<string>)>();
         if (system == null) return levels;
         var lines = SheetConditions.Holding(system, live);
         foreach (var valued in Valued(system, null))
         {
             var held = lines.FirstOrDefault(h => h.Listed && string.Equals(h.Name, valued.Name, StringComparison.OrdinalIgnoreCase));
             var level = Math.Max(pool(valued.Key) ?? 0, held == null ? 0 : (int)held.Value);
-            if (level > 0) levels.Add((valued, level));
+            // Raised above its own number by another condition: it says which.
+            if (level > 0) levels.Add((valued, level, held != null && level > (pool(valued.Key) ?? 0) ? held.From : Array.Empty<string>()));
         }
 
         return levels;
