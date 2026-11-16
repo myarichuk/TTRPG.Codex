@@ -9,15 +9,14 @@ internal static class EmptySections
 {
     private const string Namespace = "Codex.Plugin.Abstractions";
 
-    private static readonly NullabilityInfoContext Nullability = new();
-
     public static void Fill(object? root)
     {
         if (root == null) return;
-        Walk(root, new HashSet<object>(ReferenceEqualityComparer.Instance));
+        // A NullabilityInfoContext keeps plain dictionaries and is not thread-safe, so each call has its own: systems may load on many threads.
+        Walk(root, new HashSet<object>(ReferenceEqualityComparer.Instance), new NullabilityInfoContext());
     }
 
-    private static void Walk(object value, HashSet<object> seen)
+    private static void Walk(object value, HashSet<object> seen, NullabilityInfoContext nullability)
     {
         if (!seen.Add(value)) return;
         foreach (var property in value.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
@@ -28,7 +27,7 @@ internal static class EmptySections
             if (current == null)
             {
                 // Only a list the type declares as always there: one declared nullable means "none given", which a rule may read.
-                if (Nullability.Create(property).WriteState != NullabilityState.Nullable && type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(List<>) || type.GetGenericTypeDefinition() == typeof(Dictionary<,>)))
+                if (nullability.Create(property).WriteState != NullabilityState.Nullable && type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(List<>) || type.GetGenericTypeDefinition() == typeof(Dictionary<,>)))
                 {
                     property.SetValue(value, Activator.CreateInstance(type));
                 }
@@ -36,24 +35,24 @@ internal static class EmptySections
                 continue;
             }
 
-            Visit(current, seen);
+            Visit(current, seen, nullability);
         }
     }
 
-    private static void Visit(object current, HashSet<object> seen)
+    private static void Visit(object current, HashSet<object> seen, NullabilityInfoContext nullability)
     {
         switch (current)
         {
             case string:
                 return;
             case IDictionary dictionary:
-                foreach (var item in dictionary.Values) if (item != null) Visit(item, seen);
+                foreach (var item in dictionary.Values) if (item != null) Visit(item, seen, nullability);
                 return;
             case IEnumerable list:
-                foreach (var item in list) if (item != null) Visit(item, seen);
+                foreach (var item in list) if (item != null) Visit(item, seen, nullability);
                 return;
         }
 
-        if (current.GetType().Namespace is { } ns && ns.StartsWith(Namespace, StringComparison.Ordinal)) Walk(current, seen);
+        if (current.GetType().Namespace is { } ns && ns.StartsWith(Namespace, StringComparison.Ordinal)) Walk(current, seen, nullability);
     }
 }

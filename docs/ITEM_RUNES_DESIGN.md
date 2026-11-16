@@ -34,6 +34,5 @@ Homebrew magic items and runes for the Four Degrees system. Every name, number a
 - Item and rune modifiers apply only in a system that names a `runeType`; other systems' items (srd5e) keep working as before.
 - Moving or trading a weapon to another sheet (`InventoryMoves.Add`) rebuilds the pick without its runes, and renaming a rune entry does not update picks
   (`SheetReferences` does not track rune ids).
-- The two Four Degrees test classes share an xunit collection (`FourDegreesContent`) because they load the same content folder at once; the attribute is a workaround.
 - A weapon carried twice under one id shares its runes' `attack` and `damage` modifiers between the copies (the roll targets name the entry id).
 - Extra damage dice from a rune do not carry a damage type; the rune's name is the source shown on the roll.

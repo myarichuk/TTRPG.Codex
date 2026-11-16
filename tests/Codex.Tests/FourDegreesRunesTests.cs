@@ -10,7 +10,6 @@ namespace Codex.Tests;
 /// homebrew, and a level 3 character's attack, damage, armor class and saves read what the items and runes on their gear add, with the
 /// system's item bonuses not stacking and the rune-slot limit enforced.
 /// </summary>
-[Collection("FourDegreesContent")]
 public class FourDegreesRunesTests : IAsyncLifetime
 {
     private const string SystemId = "four-degrees";
