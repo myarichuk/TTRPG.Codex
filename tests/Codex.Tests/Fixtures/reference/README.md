@@ -38,7 +38,7 @@ unread.
 - An expectation that only says what must *not* happen ("no problems", "no conditions") passes on a host that checks
   nothing. So it names, in `requires`, the expectations that show the check exists, and counts only alongside them.
 
-At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58. After step 5: 78. After step 6: 80. After step 7: 83. After step 8: 95. The `degrees/` fixture (added after step 8) passes 32 of its 34 on the current engine, and its failures name the plan step meant to fix each.
+At step 1 nothing passed: 0 of 95. After step 2's evaluator: 29 (every step-2 expectation, and one of step 3's). After step 3: 33. After step 4: 58. After step 5: 78. After step 6: 80. After step 7: 83. After step 8: 95. The `degrees/` fixture (added after step 8) passes all 38 of its expectations on the current engine (P6 added four: a trait that lowers the multiple attack penalty, and a condition on a roll's own key).
 
 ## spec.yaml
 

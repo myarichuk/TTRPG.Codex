@@ -184,6 +184,7 @@
   <data name="Event.Sheet.ConcentrationEnded" xml:space="preserve"><value>{0} מפסיק להתרכז; {1} השפעות מוחזקות מסתיימות.</value></data>
   <data name="Event.Sheet.CounterChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: השולחן עדיין לא מבצע {1}.</value></data>
+  <data name="Event.Roll.Degree" xml:space="preserve"><value>{0}: הטלת {1} ({2}) מול {5} — {3} ({4}).</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0}: הטלת {1} — {2} ({3}).</value></data>
   <data name="Event.Check.Made" xml:space="preserve"><value>{0}: {1} {2} מול דרגת קושי {3}, {4}</value></data>
   <data name="Event.Check.Passive" xml:space="preserve"><value>{0}: {1} קבועה {2} מול דרגת קושי {3}</value></data>

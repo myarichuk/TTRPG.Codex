@@ -95,6 +95,18 @@ public sealed record EventTerm(string Kind, string Key, string Text)
     /// <summary>An amount of dice a pool roll's bonus adds (the key is the signed number, <c>+1</c>), said as the reader says it (<c>+1d</c>).</summary>
     public const string DiceKind = "dice";
 
+    /// <summary>A degree of a check (<c>criticalSuccess</c>...): each reader sees the word in their language; the stored text is English.</summary>
+    public const string DegreeKind = "degree";
+
+    public static EventTerm Degree(string outcome) => new(DegreeKind, outcome, outcome switch
+    {
+        "criticalSuccess" => "critical success",
+        "success" => "success",
+        "failure" => "failure",
+        "criticalFailure" => "critical failure",
+        _ => outcome
+    });
+
     /// <summary>A word of the campaign's system: a track's label, an event's or a log line's key (overhaul step 6).</summary>
     public const string SystemKind = "system";
 

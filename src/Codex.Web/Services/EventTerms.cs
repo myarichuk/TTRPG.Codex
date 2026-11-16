@@ -27,6 +27,7 @@ public static class EventTerms
             EventTerm.SlotKind => Slot(system, shown, l, key),
             EventTerm.SystemKind => shown?.DisplayValue(key),
             EventTerm.BonusKind => Bonus(bonuses, key),
+            EventTerm.DegreeKind => l.Has("Actor.Degree." + key) ? l["Actor.Degree." + key] : shown?.DisplayValue(key),
             EventTerm.DiceKind => l["Actor.Bonus.PoolAmount", key],
             _ => null
         };

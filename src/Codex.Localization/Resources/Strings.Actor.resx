@@ -551,6 +551,18 @@
   <data name="Actor.Actions.Damage" xml:space="preserve"><value>Damage</value></data>
   <data name="Actor.Actions.Healing" xml:space="preserve"><value>Healing</value></data>
   <data name="Actor.Actions.RollAttack" xml:space="preserve"><value>{0}: attack</value></data>
+  <data name="Actor.Actions.RollAttackNth" xml:space="preserve"><value>{0}: attack {1}</value></data>
+  <data name="Actor.Actions.AttackNumber" xml:space="preserve"><value>Attack this turn</value></data>
+  <data name="Actor.Actions.AttackOption" xml:space="preserve"><value>Attack {0} ({1})</value></data>
+  <data name="Actor.Actions.AttackOptionLater" xml:space="preserve"><value>Attack {0} or later ({1})</value></data>
+  <data name="Actor.Actions.AttackNoPenalty" xml:space="preserve"><value>no penalty</value></data>
+  <data name="Actor.Actions.AttackNumberHint" xml:space="preserve"><value>The penalty applies to the next attack roll. Set it back to attack 1 when a new turn starts.</value></data>
+  <data name="Actor.Actions.Against" xml:space="preserve"><value>Against (armor class or DC, optional)</value></data>
+  <data name="Actor.Degree.criticalSuccess" xml:space="preserve"><value>Critical success</value></data>
+  <data name="Actor.Dice.Against" xml:space="preserve"><value>against {0}</value></data>
+  <data name="Actor.Degree.success" xml:space="preserve"><value>Success</value></data>
+  <data name="Actor.Degree.failure" xml:space="preserve"><value>Failure</value></data>
+  <data name="Actor.Degree.criticalFailure" xml:space="preserve"><value>Critical failure</value></data>
   <data name="Actor.Actions.RollDamage" xml:space="preserve"><value>{0}: {1} damage</value></data>
   <data name="Actor.Actions.RollDamagePlain" xml:space="preserve"><value>{0}: damage</value></data>
   <data name="Actor.Actions.RollHealing" xml:space="preserve"><value>{0}: healing</value></data>

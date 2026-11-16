@@ -965,6 +965,14 @@
           ],
           "description": "The dice for an ordinary check. The sheet's check buttons roll a d20; the Actions panel reads this die's top face to decide whether an action's `critical` face is worth showing."
         },
+        "checkRoll": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The key of a `rolls:` entry that grades a check against a DC (its inputs `bonus` and `target`): the outcome its `outcomes` reach for the total and the natural die is the check's degree (`criticalSuccess`, `success`...). Null: a check has no degree, and a roll against a DC is only a pass or a miss."
+        },
         "initiativeBonus": {
           "type": [
             "string",
@@ -1633,6 +1641,10 @@
             "$ref": "#/$defs/ActionSource"
           },
           "description": "What a sheet can do with a roll: casting what it picked, attacking with what it holds. Each source names where the entries are and how their attack bonus, save DC and dice are worked out. Empty: the sheet has no actions."
+        },
+        "multipleAttack": {
+          "$ref": "#/$defs/MultipleAttackRules",
+          "description": "The penalty on each attack of a turn after the first. Null: every attack has the same bonus."
         }
       },
       "additionalProperties": false
@@ -3624,6 +3636,54 @@
       },
       "additionalProperties": false
     },
+    "MultipleAttackRules": {
+      "description": "The multiple attack penalty (`sheetRules.multipleAttack`): Penalties is what the 1st, 2nd and 3rd and later attack of a turn add to the attack bonus (`[0, -5, -10]`; the last holds for every later attack). A weapon whose property `property` lists `has` (a trait) uses that variant's numbers instead, so a trait can lower it. The Actions panel passes the attack number, and a roll definition reads the same table with `attackPenalty(attackNumber)`.",
+      "type": "object",
+      "properties": {
+        "penalties": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MultipleAttackVariant"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "MultipleAttackVariant": {
+      "description": "A weapon trait that changes the multiple attack penalty: the first variant whose weapon has it wins.",
+      "type": "object",
+      "properties": {
+        "property": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The weapon's property that holds its traits (a list, or one word)."
+        },
+        "has": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The trait that selects this variant."
+        },
+        "penalties": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "SheetKindDefinition": {
       "description": "A kind of sheet (`character`, `crew`): its values, modifiers, lists and keyed lists.",
       "type": "object",
@@ -5139,6 +5199,10 @@
             "boolean"
           ],
           "description": "How the dice display marks it: `critical`, `fumble` or none. Unset, an outcome named `critical` or `fumble` is marked so."
+        },
+        "passes": {
+          "type": "boolean",
+          "description": "For the roll `dice.checkRoll` names: whether reaching this outcome meets the DC (a success). Unset, an outcome named exactly\\n /// `success` or `criticalSuccess` passes (any other name must say `passes: true`)."
         }
       },
       "additionalProperties": false

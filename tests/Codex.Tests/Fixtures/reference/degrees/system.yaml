@@ -35,6 +35,7 @@ entityTypes:
   - { type: feat,     label: Feat,     folder: feats }
   - { type: armor,    label: Armor,    folder: armor }
   - { type: trinket,  label: Trinket,  folder: trinkets }
+  - { type: weapon,   label: Weapon,   folder: weapons }
 
 conditions: [Frightened]
 
@@ -54,6 +55,9 @@ conditionEffects:
       - { target: attack,     amount: "-value", type: status }
       - { target: save,       amount: "-value", type: status }
       - { target: check,      amount: "-value", type: status }
+      # The named strike roll's own key: its bonus is typed by hand, so this is the one place a condition reaches it. The Actions panel's
+      # Strike reads `attack` above, never this, so an effect with both `attack` and `strike` would count twice on the named roll.
+      - { target: strike,     amount: "-value", type: status }
       - { target: classDc,    amount: "-value", type: status }
       - { target: perception, amount: "-value", type: status }
       - { target: senseDc,    amount: "-value", type: status }
@@ -76,6 +80,10 @@ modifierTypes:
 
 # The degree a d20 check comes to: 3 critical success, 2 success, 1 failure, 0 critical failure. Beating the DC by 10 is one step up,
 # missing it by 10 one step down; a natural 20 then moves the result one step up and a natural 1 one step down, within 0 to 3.
+# Checks against a DC are graded by the roll below: the same four outcomes whether the roll is made from a definition or by the sheet.
+dice:
+  checkRoll: degreeCheck
+
 functions:
   degree: { formula: "(total, dc, natural) => min(3, max(0, (total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0) + (natural == 20 ? 1 : natural == 1 ? -1 : 0)))" }
 
@@ -107,7 +115,7 @@ sheetRules:
   inventory:
     key: inventory
     label: Gear
-    types: [armor]
+    types: [armor, weapon]
 
   # Armor: its base (10 plus its bonus) and Dexterity up to its cap, then the rank in what is worn (the armor list below).
   armorClass:
@@ -129,6 +137,20 @@ sheetRules:
         - { key: light,     label: Light armor }
         - { key: medium,    label: Medium armor }
         - { key: heavy,     label: Heavy armor }
+
+  # What a character can do with a roll: a Strike with each equipped weapon (its attack bonus is the attribute plus level plus 2).
+  actions:
+    - key: strike
+      label: Strike
+      inventory: equipped
+      tag: weapons
+      attackBonus: "abilityMod + level + 2"
+
+  # The multiple attack penalty: what the 1st, 2nd and 3rd or later attack of a turn adds. A weapon with the featherlight trait lowers it.
+  multipleAttack:
+    penalties: [0, -5, -10]
+    variants:
+      - { property: traits, has: featherlight, penalties: [0, -4, -8] }
 
   # Ranks: trained, expert, master, legendary, worth the level plus 2, 4, 6, 8. An untrained skill adds its attribute alone.
   skills:
@@ -189,15 +211,16 @@ rolls:
       - { name: success,         when: "degree(total, target, natural) == 2" }
       - { name: failure,         when: "degree(total, target, natural) == 1" }
       - { name: criticalFailure, mark: fumble }
-  # A strike: the same, less 5 for the second attack of a turn and 10 for the third and later (the attack number is an input).
+  # A strike: the same, less the multiple attack penalty of the attack number (an input) and of the weapon's traits (sheetRules.multipleAttack).
   - key: strike
     label: Strike
     dice: 1d20
-    add: ["bonus", "attackNumber >= 3 ? -10 : attackNumber == 2 ? -5 : 0"]
+    add: ["bonus", "attackPenalty(attackNumber)", "modifiers('strike')"]
     inputs:
       - { key: bonus,        from: roller, label: Attack bonus }
       - { key: target,       from: gm,     label: Armor class }
       - { key: attackNumber, from: roller, label: Attack this turn, default: 1 }
+      - { key: weapon,       from: roller, label: Weapon, default: "" }
     outcomes:
       - { name: criticalSuccess, when: "degree(total, target, natural) == 3", mark: critical }
       - { name: success,         when: "degree(total, target, natural) == 2" }

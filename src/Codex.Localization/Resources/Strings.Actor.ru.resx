@@ -551,6 +551,18 @@
   <data name="Actor.Actions.Damage" xml:space="preserve"><value>Урон</value></data>
   <data name="Actor.Actions.Healing" xml:space="preserve"><value>Лечение</value></data>
   <data name="Actor.Actions.RollAttack" xml:space="preserve"><value>{0}: атака</value></data>
+  <data name="Actor.Actions.RollAttackNth" xml:space="preserve"><value>{0}: атака {1}</value></data>
+  <data name="Actor.Actions.AttackNumber" xml:space="preserve"><value>Атака в этот ход</value></data>
+  <data name="Actor.Actions.AttackOption" xml:space="preserve"><value>Атака {0} ({1})</value></data>
+  <data name="Actor.Actions.AttackOptionLater" xml:space="preserve"><value>Атака {0} и далее ({1})</value></data>
+  <data name="Actor.Actions.AttackNoPenalty" xml:space="preserve"><value>без штрафа</value></data>
+  <data name="Actor.Actions.AttackNumberHint" xml:space="preserve"><value>Штраф применяется к следующему броску атаки. Когда начинается новый ход, верните значение «Атака 1».</value></data>
+  <data name="Actor.Actions.Against" xml:space="preserve"><value>Против (класс доспеха или сложность, по желанию)</value></data>
+  <data name="Actor.Degree.criticalSuccess" xml:space="preserve"><value>Критический успех</value></data>
+  <data name="Actor.Dice.Against" xml:space="preserve"><value>против {0}</value></data>
+  <data name="Actor.Degree.success" xml:space="preserve"><value>Успех</value></data>
+  <data name="Actor.Degree.failure" xml:space="preserve"><value>Провал</value></data>
+  <data name="Actor.Degree.criticalFailure" xml:space="preserve"><value>Критический провал</value></data>
   <data name="Actor.Actions.RollDamage" xml:space="preserve"><value>{0}: урон ({1})</value></data>
   <data name="Actor.Actions.RollDamagePlain" xml:space="preserve"><value>{0}: урон</value></data>
   <data name="Actor.Actions.RollHealing" xml:space="preserve"><value>{0}: лечение</value></data>

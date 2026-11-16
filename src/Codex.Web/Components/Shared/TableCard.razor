@@ -177,7 +177,7 @@
                                         EntryName="@(entryId => Evaluation.Actions.FirstOrDefault(a => a.Entry.Id == entryId) is { } found ? ContentRegistry.Name(found.Entry, L.Culture.Name) : null)" />
                     }
 
-                    <ActionsPanel Evaluation="Evaluation" Definition="Definition" Value="key => State?.Pool(key)" ReadOnly="@(!CanAct)" Bare="true"
+                    <ActionsPanel Evaluation="Evaluation" Definition="Definition" Value="key => State?.Pool(key)" ReadOnly="@(!CanAct)" Bare="true" TurnKey="TurnKey"
                                   EntryName="entry => ContentRegistry.Name(entry, L.Culture.Name)"
                                   Spend="SpendAsync"
                                   OnRoll="RollAsync" />
@@ -224,6 +224,9 @@
 
     /// <summary>The die an attack rolls, before its bonus.</summary>
     [Parameter] public string CheckDie { get; set; } = "1d20";
+
+    /// <summary>The creature's turn as the combat console names it (round and place), or null while it is not their turn. Passed to the Actions panel.</summary>
+    [Parameter] public string? TurnKey { get; set; }
     [Parameter, EditorRequired] public Func<IRuntimeCommand, Task> Send { get; set; } = _ => Task.CompletedTask;
 
     private readonly string id = $"table-card-{Guid.NewGuid():N}";
@@ -470,7 +473,7 @@
         // What a ticked bonus spends is the table's to take; a refused spend rolls nothing.
         if (!await RollBonusTray.PayAsync(built.Applied, SpendAsync, BonusNames)) return;
         tray.Used(built.Applied);
-        await Send(new RollDiceCommand(built.Expression, Actor.Id, CurrentUserId, false, built.Label));
+        await Send(new RollDiceCommand(built.Expression, Actor.Id, CurrentUserId, false, built.Label, roll.Dc));
         // A bonus that ends a condition takes it off the creature, when it has it.
         foreach (var condition in RollBonusLive.ToEnd(built.Applied, State)) await Send(new RemoveStatusEffectCommand(Actor.Id, condition));
     }

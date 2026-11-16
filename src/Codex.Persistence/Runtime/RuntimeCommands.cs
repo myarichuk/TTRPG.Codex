@@ -868,7 +868,7 @@ public sealed record RemoveActorCommand(string ActorId) : IRuntimeCommand
 /// touch ECS state - the roll log lives on the live session, exactly like everything else 3.2
 /// already logs - so <see cref="AffectedActorIds"/> is empty.
 /// </summary>
-public sealed record RollDiceCommand(string Expression, string? ActorId, string RollerUserId, bool IsSecret, string? Label = null) : IRuntimeCommand
+public sealed record RollDiceCommand(string Expression, string? ActorId, string RollerUserId, bool IsSecret, string? Label = null, int? Dc = null) : IRuntimeCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
@@ -879,7 +879,7 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
     public void Apply(CampaignRuntime runtime)
     {
         _result = runtime.DiceRoller.Roll(Expression);
-        runtime.RecordRoll(new RollLogEntry
+        var entry = new RollLogEntry
         {
             ActorId = ActorId,
             RollerUserId = RollerUserId,
@@ -892,14 +892,23 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
             Dropped = _result.Dropped.ToList(),
             Modifier = _result.Modifier,
             CheckDieIndex = _result.CheckDieIndex
-        });
+        };
+        // Against a DC, the roll says its degree (the system's checkRoll); a system without one leaves the entry as it was.
+        // On the sheet as the table has it, so a condition the table holds counts in the grade as it does in the bonus.
+        CheckGrading.Apply(entry, runtime.System, runtime.Resolver, ActorId != null && runtime.GetActorDocument(ActorId) is { } actor ? runtime.LiveSheetOf(actor) : null, Dc);
+        _entry = entry;
+        runtime.RecordRoll(entry);
     }
+
+    private RollLogEntry? _entry;
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         object roller = ActorId != null ? runtime.ActorTerm(ActorId) : EventTerm.User(RollerUserId);
         var message = IsSecret
             ? EventMessage.Of("Roll.Secret", roller, Expression)
+            : _entry is { Outcome: { } degree, Dc: { } against }
+                ? EventMessage.Of("Roll.Degree", roller, Label ?? Expression, Expression, _result?.Total, EventTerm.Degree(degree), against)
             : Label != null
                 ? EventMessage.Of("Roll.Labeled", roller, Label, Expression, _result?.Total)
                 : EventMessage.Of("Roll.Plain", roller, Expression, _result?.Total);

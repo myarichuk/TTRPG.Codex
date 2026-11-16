@@ -21,6 +21,37 @@
             }
         </div>
 
+        @if (!ReadOnly && (MapRules != null || ChecksAgainstDc))
+        {
+            <div class="d-flex flex-wrap align-items-end gap-3 mb-2" data-testid="attack-controls">
+                @if (MapRules != null)
+                {
+                    <div>
+                        <label class="form-label small mb-1" for="@(id)-attack-number">@L["Actor.Actions.AttackNumber"]</label>
+                        <select id="@(id)-attack-number" class="form-select form-select-sm" data-testid="attack-number" aria-describedby="@(id)-attack-hint"
+                                @bind="attackNumber">
+                            @for (var n = 1; n <= MapRules.Penalties.Count; n++)
+                            {
+                                <option value="@n">@AttackOptionText(n)</option>
+                            }
+                        </select>
+                    </div>
+                }
+                @if (ChecksAgainstDc)
+                {
+                    <div>
+                        <label class="form-label small mb-1" for="@(id)-against">@L["Actor.Actions.Against"]</label>
+                        <input id="@(id)-against" type="number" inputmode="numeric" min="0" max="99" class="form-control form-control-sm action-against" data-testid="attack-against"
+                               @bind="against" />
+                    </div>
+                }
+            </div>
+            @if (MapRules != null)
+            {
+                <p class="small-muted" id="@(id)-attack-hint">@L["Actor.Actions.AttackNumberHint"]</p>
+            }
+        }
+
         <ul class="list-unstyled mb-0 action-list">
             @foreach (var action in Actions)
             {
@@ -138,6 +169,45 @@
     private readonly string id = $"actions-{Guid.NewGuid():N}";
     private readonly Dictionary<string, string> chosen = new(StringComparer.Ordinal);
 
+    // Which attack of the turn the next attack roll is (1 is the first), and the number it is against, when the roller gave one.
+    private int attackNumber = 1;
+    private int? against;
+    private string? seenTurn;
+
+    /// <summary>The turn this creature is acting in (the table's round and place in the order), or null when it is not their turn or the panel is not at a table.
+    /// When it changes, the attack number starts over at the first attack and the "against" number is cleared.</summary>
+    [Parameter] public string? TurnKey { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (TurnKey == null || TurnKey == seenTurn) return;
+        seenTurn = TurnKey;
+        attackNumber = 1;
+        against = null;
+    }
+
+    /// <summary>The system's multiple attack penalty, when it has one and the sheet has an attack to make.</summary>
+    private MultipleAttackRules? MapRules =>
+        Definition?.SheetRules?.MultipleAttack is { Penalties.Count: > 0 } rules && Actions.Any(a => a.Attack != null) ? rules : null;
+
+    /// <summary>Whether an attack here can say its degree: the system names a roll that grades checks against a DC.</summary>
+    private bool ChecksAgainstDc => Definition?.Dice.CheckRoll != null && Actions.Any(a => a.Attack != null);
+
+    /// <summary>A signed number kept as one left-to-right run (U+2066 to U+2069), so "−5" stays "−5" inside a right-to-left line (an option cannot hold a bdi).</summary>
+    private static string SignedMinus(int value) => value > 0 ? $"⁦+{value}⁩" : value < 0 ? $"⁦−{-value}⁩" : "0";
+
+    /// <summary>One choice of the attack-number control: "Attack 2 (−5)", and for the last row "Attack 3 or later (−10)".</summary>
+    private string AttackOptionText(int n)
+    {
+        var penalty = MapRules!.Penalties[n - 1];
+        var text = penalty == 0 ? L["Actor.Actions.AttackNoPenalty"] : SignedMinus(penalty);
+        return n == MapRules.Penalties.Count && n > 1 ? L["Actor.Actions.AttackOptionLater", n, text] : L["Actor.Actions.AttackOption", n, text];
+    }
+
+    /// <summary>What the multiple attack penalty adds to this action's attack roll: the table's row for the attack number, or the weapon's variant of it.</summary>
+    private int AttackPenaltyOf(SheetAction action) =>
+        MapRules == null ? 0 : MultipleAttack.Penalty(MapRules, attackNumber, name => action.Entry.Properties.GetValueOrDefault(name));
+
     private IReadOnlyList<SheetAction> Actions =>
         Evaluation?.Actions.OrderBy(a => Evaluation.Actions.FindIndex(x => x.Source == a.Source)).ThenBy(a => a.Level).ThenBy(a => Name(a), StringComparer.CurrentCultureIgnoreCase).ToList()
         ?? (IReadOnlyList<SheetAction>)Array.Empty<SheetAction>();
@@ -202,7 +272,12 @@
 
         if (action.Attack != null)
         {
-            await OnRoll.InvokeAsync(new ActionRoll(L["Actor.Actions.RollAttack", name], action.AttackBonus ?? 0, null, RollKind.WeaponAttack, action));
+            var number = MapRules == null ? 1 : attackNumber;
+            var label = number > 1 ? L["Actor.Actions.RollAttackNth", name, number] : L["Actor.Actions.RollAttack", name];
+            var dc = ChecksAgainstDc ? against : null;
+            // What the roll was against is the next target's to say: the box is emptied once it is used.
+            if (dc != null) against = null;
+            await OnRoll.InvokeAsync(new ActionRoll(label, (action.AttackBonus ?? 0) + AttackPenaltyOf(action), null, RollKind.WeaponAttack, action, number, dc));
         }
         else if ((cost?.Damage ?? action.Damage) is { } dice && SheetAction.HasDice(dice))
         {

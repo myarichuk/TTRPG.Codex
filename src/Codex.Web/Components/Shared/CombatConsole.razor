@@ -157,7 +157,7 @@ else
                             <TableCard @key="actorId" Campaign="Campaign" Actor="actor" State="snapshot.Actor(actorId)" Definition="Definition"
                                        Evaluation="@(full ? EvaluationOf(actor) : null)" WorkedSheet="@(full ? workedSheets.GetValueOrDefault(actorId) : null)" Printed="@(full ? PrintedOf(actor) : null)" Blueprint="@(Access.IsDm ? BlueprintOf(actor) : null)"
                                        Full="full" CanAct="CanTrackSlots(actorId)" IsDm="Access.IsDm" Expanded="IsCardOpen(actor)" OnToggle="() => ToggleCard(actorId)"
-                                       CurrentUserId="@CurrentUserId" CheckDie="@(Definition?.Dice.Check ?? "1d20")" Send="SendAsync" Engine="@(full ? engine : null)" Linked="@(full ? Linked() : null)" />
+                                       CurrentUserId="@CurrentUserId" CheckDie="@(Definition?.Dice.Check ?? "1d20")" TurnKey="@TurnKeyOf(actorId)" Send="SendAsync" Engine="@(full ? engine : null)" Linked="@(full ? Linked() : null)" />
                         }
                     </div>
                 </section>
@@ -634,6 +634,11 @@ else
         return actor?.Name ?? (Access.IsDm ? id : L["Combat.SomeoneUnseen"]);
     }
 
+    /// <summary>Names this actor's turn (round and place in the order) while it is theirs; null otherwise. The Actions panel starts its attack number over when it changes.</summary>
+    private string? TurnKeyOf(string actorId) =>
+        snapshot.Encounter is { } encounter && encounter.TurnIndex >= 0 && encounter.TurnIndex < encounter.Participants.Count
+            && encounter.Participants[encounter.TurnIndex].ActorId == actorId ? $"{encounter.Round}:{encounter.TurnIndex}" : null;
+
     private (int Position, int Count)? TurnPosition(EncounterSnapshot encounter) =>
         TableVisibility.TurnPosition(encounter, Access.IsDm, VisibleActorIds);
 
@@ -891,7 +896,7 @@ else
     }
 
     // A word of the system a roll's line shows on its own (its outcome, a sheet roll's key), in the reader's language.
-    private string RollWord(string word) => Definition?.DisplayOption(L.Culture.Name, string.Empty, word) ?? word;
+    private string RollWord(string word) => DegreeWords.Of(L, Definition, word) ?? Definition?.DisplayOption(L.Culture.Name, string.Empty, word) ?? word;
 
     private IEnumerable<RollLogEntry> VisibleRollLog() =>
         TableVisibility.Rolls(snapshot.RollLog, Access.IsDm, VisibleActorIds);

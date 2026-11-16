@@ -1,0 +1,13 @@
+# Two invented weapons. The knife has a trait the system's multipleAttack rule lowers the penalty for.
+- id: oak-staff
+  name: Oak staff
+  tags: [weapons]
+  properties:
+    traits: []
+    use: { attack: melee, abilities: [str], damage: 1d6 }
+- id: swift-knife
+  name: Swift knife
+  tags: [weapons]
+  properties:
+    traits: [featherlight]
+    use: { attack: melee, abilities: [dex], damage: 1d4 }

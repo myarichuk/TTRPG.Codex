@@ -516,6 +516,9 @@ public class RollLogEntry
     /// <summary>For a roll made from the system's roll definition, its named outcome (<c>partial</c>); null otherwise.</summary>
     public string? Outcome { get; set; }
 
+    /// <summary>The number the roll was graded against (an armor class or DC) when <see cref="Outcome"/> is a degree the roller asked for; null otherwise.</summary>
+    public int? Dc { get; set; }
+
     /// <summary>How <see cref="Outcome"/> is marked: <c>critical</c>, <c>fumble</c> or null. The display marks from this, never
     /// from the dice.</summary>
     public string? Mark { get; set; }

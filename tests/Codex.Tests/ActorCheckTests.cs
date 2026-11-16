@@ -66,7 +66,7 @@ public class ActorCheckTests
         Assert.False(ActorChecks.Grade(14, 20, 15).Passed); // the natural die is kept for a later grade, and does not change this one
     }
 
-    [Fact(Skip = "P6: four degrees through dice.checkRoll")]
+    [Fact(Skip = "P12: hazard checks grade through dice.checkRoll (the sheet side is built, P6)")]
     public void WhenTheSystemNamesACheckRoll_TheGradeIsItsOutcome()
     {
         // P6 fills this in. Arrange: srd5e with dice.checkRoll naming a rolls: entry whose inputs are bonus and dc and whose outcomes are

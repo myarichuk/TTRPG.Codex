@@ -30,7 +30,7 @@
                 }
                 <DiceResult Compact="true" Label="@(RollLabel?.Invoke(entry) ?? entry.Label)" Expression="@Say(entry.Expression)" Kept="entry.Kept" Dropped="entry.Dropped"
                             Modifier="entry.Modifier" CheckDieIndex="entry.CheckDieIndex" Total="entry.Total" Text="@entry.Result" Secret="entry.IsSecret"
-                            Outcome="@(entry.Outcome is { } outcome ? Say(outcome) : null)" Mark="@entry.Mark" />
+                            Outcome="@(entry.Outcome is { } outcome ? Say(outcome) : null)" Mark="@entry.Mark" Dc="entry.Dc" />
             </div>
         }
     </div>
