@@ -799,7 +799,7 @@ else
                     @if (system != null && system.Attributes.Count > 0)
                     {
                         <AttributesPanel Definition="system" Evaluation="evaluation" Sheet="editSheet" CanEdit="CanEdit" IsDm="access?.IsDm == true" ShowTray="ShowTray" ShowSums="showSums"
-                                         Problems="@(Problems(v => !IsIncrease(v) && (system.Attributes.Any(a => a.Key == v.FieldKey) || v.FieldKey == SheetRuleEngine.MethodKey || v.FieldKey.StartsWith(SheetRuleEngine.BonusPrefix, StringComparison.Ordinal))))"
+                                         Problems="@(Problems(v => !IsIncrease(v) && (system.Attributes.Any(a => a.Key == v.FieldKey) || v.FieldKey == SheetRuleEngine.MethodKey || v.FieldKey.StartsWith(SheetRuleEngine.BonusPrefix, StringComparison.Ordinal) || v.FieldKey == "boosts" || v.FieldKey.StartsWith(SheetRuleEngine.BoostKeyPrefix, StringComparison.Ordinal))))"
                                          IncreaseProblems="@(Problems(IsIncrease))" Describe="Describe" Changed="OnRulesInputChanged" OnRoll="RollAsync" />
                     }
 

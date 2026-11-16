@@ -393,7 +393,7 @@ public static class SystemDefinitionLoader
 
         if (rules.Attributes is { } attributes)
         {
-            foreach (var method in attributes.Methods.Where(m => m is not ("point-buy" or "standard-array" or "manual")))
+            foreach (var method in attributes.Methods.Where(m => m is not ("point-buy" or "standard-array" or "manual" or "boosts")))
             {
                 yield return $"sheetRules.attributes.methods: unknown method '{method}'.";
             }
@@ -406,6 +406,62 @@ public static class SystemDefinitionLoader
             if (attributes.Methods.Contains("standard-array") && attributes.StandardArray.Count != definition.Attributes.Count)
             {
                 yield return $"sheetRules.attributes.standardArray must list one score per attribute ({definition.Attributes.Count}).";
+            }
+
+            var offersBoosts = attributes.Methods.Contains("boosts") || attributes.Default.Equals("boosts", StringComparison.OrdinalIgnoreCase);
+            if (offersBoosts && attributes.Boosts is not { } boostRules)
+            {
+                yield return "sheetRules.attributes: boosts is offered but boosts is not defined.";
+            }
+            else if (offersBoosts && attributes.Boosts is { } boosts)
+            {
+                foreach (var attribute in definition.Attributes.Where(a => a.Modifier != AttributeDefinition.HalfMinusFiveRule || a.Default != 10))
+                {
+                    yield return $"sheetRules.attributes.boosts: attribute '{attribute.Key}' must use the half-minus-five modifier and default 10 (a boost is two score points).";
+                }
+
+                if (boosts.Sources.Count == 0) yield return "sheetRules.attributes.boosts.sources: list at least one source.";
+                if (boosts.PartialFrom < 1) yield return "sheetRules.attributes.boosts.partialFrom must be at least 1.";
+                foreach (var duplicate in Duplicates(boosts.Sources.Select(b => b.Key)))
+                {
+                    yield return $"sheetRules.attributes.boosts.sources: duplicate key '{duplicate}'.";
+                }
+
+                foreach (var source in boosts.Sources)
+                {
+                    if (string.IsNullOrWhiteSpace(source.Key) || source.Key.Contains("__") || source.Key.Contains('#'))
+                    {
+                        yield return $"sheetRules.attributes.boosts.sources: '{source.Key}' needs a key without '__' or '#'.";
+                    }
+
+                    if ((source.Field == null) == (source.Level == null))
+                    {
+                        yield return $"sheetRules.attributes.boosts.sources['{source.Key}']: give a field or a level, not both or neither.";
+                    }
+
+                    if (source.Field != null && !referenceFields.Contains(source.Field))
+                    {
+                        yield return $"sheetRules.attributes.boosts.sources['{source.Key}'].field '{source.Field}' is not an EntityReference actor field.";
+                    }
+
+                    if (source.Free < 0 || source.Free > definition.Attributes.Count)
+                    {
+                        yield return $"sheetRules.attributes.boosts.sources['{source.Key}'].free must be from 0 to {definition.Attributes.Count}: a source's boosts go to different attributes.";
+                    }
+
+                    if (source.Free > 0 && source.Level == null)
+                    {
+                        yield return $"sheetRules.attributes.boosts.sources['{source.Key}']: free applies to a level milestone; an entry lists its own free boosts.";
+                    }
+
+                    if (source.Trade is { } trade && (source.Field == null || trade.Fixed < 1 || trade.Free < 1))
+                    {
+                        yield return $"sheetRules.attributes.boosts.sources['{source.Key}'].trade: needs a field source and fixed and free of at least 1.";
+                    }
+                }
+
+                if (attributes.Increases != null) yield return "sheetRules.attributes: increases and boosts do not mix; a boost reads the score it lands on.";
+                if (attributes.Bonuses != null) yield return "sheetRules.attributes: bonuses and boosts do not mix; the boosts method replaces bonuses.";
             }
 
             if (attributes.Bonuses is { } bonuses && !referenceFields.Contains(bonuses.FromField))

@@ -47,7 +47,8 @@
             var bonus = summary?.Bonuses.GetValueOrDefault(attr.Key) ?? 0;
             var increase = summary?.Increases.GetValueOrDefault(attr.Key) ?? 0;
             var modifier = attr.ModifierFor(total);
-            var modifierText = modifier == null ? null : Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier);
+            var half = summary?.Boosts?.Halves.Contains(attr.Key) == true;
+            var modifierText = modifier == null ? null : Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier + (half ? "½" : ""));
             var checkLabel = L["Actor.Skills.Check", attr.Label];
             var inputId = "attr-input-" + attr.Key;
             var testId = "attr-" + attr.Key;
@@ -56,7 +57,15 @@
                 <div class="attr-label" id="@("attr-" + attr.Key)">@(attr.Abbreviation ?? attr.Label)</div>
                 @if (modifierText != null)
                 {
-                    <div class="attr-mod" aria-label="@L["Actor.Sheet.Modifier", attr.Label]">@modifierText</div>
+                    @if (half)
+                    {
+                        @* The half step is drawn as ½; a screen reader is told it in words instead. *@
+                        <div class="attr-mod" data-testid="@("attr-mod-" + attr.Key)"><span aria-hidden="true">@modifierText</span><span class="visually-hidden" data-testid="@("attr-mod-spoken-" + attr.Key)">@L["Actor.Sheet.BoostHalf", L["Actor.Sheet.Modifier", attr.Label] + " " + Bidi.Ltr((modifier >= 0 ? "+" : "") + modifier)]</span></div>
+                    }
+                    else
+                    {
+                        <div class="attr-mod" aria-label="@L["Actor.Sheet.Modifier", attr.Label]" data-testid="@("attr-mod-" + attr.Key)">@modifierText</div>
+                    }
                     @* The modifier stays the attribute's own; what features and conditions add to its check is said beside it, so the roll button and the number agree. *@
                     @if (Evaluation?.CheckBonuses.GetValueOrDefault(attr.Key) is { } extra and not 0)
                     {
@@ -68,7 +77,12 @@
                                      OnClick="() => OnRoll.InvokeAsync(new RollRequest(checkLabel, (modifier ?? 0) + (Evaluation?.CheckBonuses.GetValueOrDefault(attr.Key) ?? 0), RollKind.Check, attr.Key))" />
                     }
                 }
-                @if (CanEdit && attributeRules != null && AttrMethod == "standard-array")
+                @if (Boosting)
+                {
+                    @* The score is what the boosts below make of it. *@
+                    <div class="attr-medallion attr-score" data-testid="@testId">@total</div>
+                }
+                else if (CanEdit && attributeRules != null && AttrMethod == "standard-array")
                 {
                     <div class="attr-medallion">
                     <label for="@inputId" class="visually-hidden">@L["Actor.Sheet.Score", attr.Label]</label>
@@ -95,16 +109,82 @@
                 {
                     <div class="attr-medallion attr-score">@total</div>
                 }
-                @if (attributeRules != null && (bonus != 0 || increase != 0 || CanEdit))
+                @if (attributeRules != null && !Boosting && (bonus != 0 || increase != 0 || CanEdit))
                 {
                     <div class="attr-total small-muted" data-testid="@(testId + "-total")"><bdi>@TotalText(baseScore, bonus, increase, total)</bdi></div>
                 }
             </div>
         }
     </div>
-    <RuleProblemList Problems="Problems" Describe="Describe" TestId="attr-problems" />
+    <RuleProblemList Problems="@(Boosting ? Problems.Where(v => !IsBoostProblem(v)).ToList() : Problems)" Describe="Describe" TestId="attr-problems" />
 
-    @if (attributeRules != null && Printed && (attributeRules.Bonuses != null || attributeRules.Increases != null))
+    @if (Boosting && summary?.Boosts is { } boosts)
+    {
+        <div class="mt-3" data-testid="attr-boosts" data-rule-key="boosts" role="group" aria-labelledby="boosts-heading">
+            <div class="field-label" id="boosts-heading">@attributeRules!.Boosts!.Label</div>
+            <p class="small small-muted mb-2">@L["Actor.Sheet.BoostHalfNote", attributeRules.Boosts.PartialFrom]</p>
+            @* The problems sit in a live region that stays on the page, so a screen reader hears one appear. *@
+            <div role="status" aria-live="polite" data-testid="boost-status">
+                <RuleProblemList Problems="BoostProblems" Describe="Describe" TestId="boost-problems" />
+            </div>
+            @if (boosts.Sources.Count == 0)
+            {
+                <p class="small-muted mb-0">@L["Actor.Sheet.BoostNone"]</p>
+            }
+            @foreach (var source in boosts.Sources)
+            {
+                <fieldset class="mb-3" data-testid="@("boost-source-" + source.Key)" disabled="@(!CanEdit)">
+                    <legend class="small fw-semibold">@source.Label</legend>
+                    @{ var fixedSlots = source.Slots.Where(s => s.Kind == BoostKinds.Fixed).ToList(); }
+                    @if (fixedSlots.Count > 0)
+                    {
+                        <p class="small mb-1">@L["Actor.Sheet.BoostFixed", string.Join(", ", fixedSlots.Select(s => AttributeLabel(s.Picked!)))]</p>
+                    }
+                    @if (source.Flaws.Count > 0)
+                    {
+                        <p class="small mb-1">@L["Actor.Sheet.BoostFlaw", string.Join(", ", source.Flaws.Select(AttributeLabel))]</p>
+                    }
+                    @if (source.TradeKey != null && source.Trade != null)
+                    {
+                        <div class="mb-2" role="group" aria-label="@L["Actor.Sheet.BoostTrade", source.Trade.Fixed, source.Trade.Free]" data-testid="@("boost-trade-" + source.Key)">
+                            <div class="small">@L["Actor.Sheet.BoostTrade", source.Trade.Fixed, source.Trade.Free]</div>
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach (var option in source.TradeOptions)
+                                {
+                                    var tradeId = $"boost-trade-{source.Key}-{option}";
+                                    <div class="form-check">
+                                        <input id="@tradeId" type="checkbox" class="form-check-input" checked="@source.Given.Contains(option)" data-testid="@tradeId"
+                                               @onchange="e => SetTrade(source, option, e.Value is true)" />
+                                        <label for="@tradeId" class="form-check-label">@L["Actor.Sheet.BoostTradeGive", AttributeLabel(option)]</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    <div class="d-flex flex-wrap gap-2">
+                        @{ var choices = source.Slots.Where(s => s.Key != null).ToList(); }
+                        @for (var n = 0; n < choices.Count; n++)
+                        {
+                            var slot = choices[n];
+                            var selectId = $"boost-{source.Key}-{slot.Id}";
+                            <div>
+                                <label for="@selectId" class="field-label">@(slot.Kind == BoostKinds.OneOf ? L["Actor.Sheet.BoostChoiceOneOf", source.Label, n + 1, string.Join(L["Actor.Sheet.Or"], slot.Options.Select(AttributeLabel))] : L["Actor.Sheet.BoostChoice", source.Label, n + 1])</label>
+                                <select id="@selectId" class="field-select field-sm" value="@(slot.Picked ?? "")" data-testid="@selectId"
+                                        @onchange="e => SetBoost(slot, e.Value?.ToString())">
+                                    <option value="">@L["Actor.Sheet.Choose"]</option>
+                                    @foreach (var key in slot.Options)
+                                    {
+                                        <option value="@key">@AttributeLabel(key)</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </div>
+                </fieldset>
+            }
+        </div>
+    }
+    else if (attributeRules != null && Printed && (attributeRules.Bonuses != null || attributeRules.Increases != null))
     {
         @* The pickers would change nothing: a printed sheet's scores are the stat block's. *@
         <p class="small small-muted mt-3 mb-0" data-testid="attr-printed-note">@L["Actor.Sheet.PrintedNote"]</p>
@@ -227,6 +307,32 @@
     private SheetRules? Rules => Definition.SheetRules;
     private string AttrMethod => (YamlValues.GetString(Sheet, SheetRuleEngine.MethodKey) ?? Rules?.Attributes?.Default ?? SheetRuleEngine.ManualMethod).ToLowerInvariant();
     private bool Printed => AttrMethod == SheetRuleEngine.PrintedMethod;
+    private bool Boosting => AttrMethod == SheetRuleEngine.BoostsMethod && Evaluation?.Attributes?.Boosts != null;
+
+    /// <summary>The problems with the boosts, from the page's list of the attributes' problems.</summary>
+    private static bool IsBoostProblem(RuleViolation v) => v.FieldKey == "boosts" || v.FieldKey.StartsWith(SheetRuleEngine.BoostKeyPrefix, StringComparison.Ordinal);
+
+    /// <summary>The boosts' problems, each once: the rules broken, and the boosts still to place (a warning, so a sheet in progress saves).</summary>
+    private IReadOnlyList<RuleViolation> BoostProblems => Problems.Where(IsBoostProblem).Concat(CanEdit ? Evaluation?.Warnings.Where(IsBoostProblem) ?? Enumerable.Empty<RuleViolation>() : Enumerable.Empty<RuleViolation>()).ToList();
+
+    private string AttributeLabel(string key) => Definition.Attributes.FirstOrDefault(a => a.Key == key)?.Label ?? key;
+
+    private Task SetBoost(BoostSlot slot, string? attributeKey)
+    {
+        if (slot.Key == null || (!string.IsNullOrEmpty(attributeKey) && !slot.Options.Contains(attributeKey))) return Task.CompletedTask;
+        SheetRuleEngine.SetChoice(Sheet, slot.Key, string.IsNullOrEmpty(attributeKey) ? Array.Empty<string>() : new[] { attributeKey });
+        return Changed.InvokeAsync();
+    }
+
+    private Task SetTrade(BoostSourceSummary source, string attributeKey, bool on)
+    {
+        if (source.TradeKey == null || !source.TradeOptions.Contains(attributeKey)) return Task.CompletedTask;
+        var given = source.Given.ToList();
+        if (on) given.Add(attributeKey);
+        else given.Remove(attributeKey);
+        SheetRuleEngine.SetChoice(Sheet, source.TradeKey, given);
+        return Changed.InvokeAsync();
+    }
 
     /// <summary>Players pick from the system's methods; the DM may always set scores by hand or as a stat block prints them (no
     /// cap: the way to lift it from a creature imported before stat blocks were marked). A sheet's own method always shows, so a
@@ -245,6 +351,7 @@
     {
         "point-buy" => L["Actor.Sheet.MethodPointBuy"],
         "standard-array" => L["Actor.Sheet.MethodStandardArray"],
+        SheetRuleEngine.BoostsMethod => L["Actor.Sheet.MethodBoosts"],
         SheetRuleEngine.PrintedMethod => L["Actor.Sheet.MethodPrinted"],
         _ => L["Actor.Sheet.MethodManual"]
     };

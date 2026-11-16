@@ -49,7 +49,15 @@ public sealed record LevelUpPlan(
             if (now is { } n && n > (was ?? 0)) choices.Add(new LevelChoice(list.Key, list.Label, n - (was ?? 0)));
         }
 
-        var needsSubclass = rules.Multiclass is { SubclassField: not null } multiclass && cls != null
+        // Attribute boosts a milestone opens are choices of the level too (the key is "boosts:" and the source's key).
+        static int Open(BoostSourceSummary? source) => source?.Slots.Count(s => s.Key != null && s.Picked == null) ?? 0;
+        foreach (var source in after.Attributes?.Boosts?.Sources ?? Array.Empty<BoostSourceSummary>())
+        {
+            var added = Open(source) - Open(before.Attributes?.Boosts?.Sources.FirstOrDefault(s => s.Key == source.Key));
+            if (added > 0) choices.Add(new LevelChoice("boosts:" + source.Key, source.Label, added));
+        }
+
+        var needsSubclass =rules.Multiclass is { SubclassField: not null } multiclass && cls != null
             && classLevel >= multiclass.SubclassLevel && subclass == null;
 
         // What the level itself breaks: a rule the sheet met before and does not after. A limit that grew is a choice, not one.

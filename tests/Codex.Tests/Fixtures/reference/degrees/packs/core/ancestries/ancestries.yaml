@@ -1,4 +1,5 @@
-# An ancestry's hit points count once, whatever the level.
+# An ancestry's hit points count once, whatever the level. `boosts` (sheetRules.attributes.boosts): a word is a fixed boost, `a|b` one of
+# those two, `free` any attribute, and a leading minus a flaw.
 - id: hillfolk
   name: Hillfolk
-  properties: { hp: 8 }
+  properties: { hp: 8, boosts: [con, wis, "str|dex", free, "-int"] }

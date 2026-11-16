@@ -89,6 +89,21 @@ sheetRules:
     attribute: con
     once: { field: ancestry, property: hp }
 
+  # Attributes: typed in, or built from boosts. Each source gives boosts to different attributes (an ancestry's own, the class's, and
+  # four free ones at levels 5, 10, 15 and 20); a boost is +1 to the modifier, but from +4 it is half of that.
+  attributes:
+    methods: [manual, boosts]
+    default: manual
+    boosts:
+      label: Boosts
+      sources:
+        - { key: ancestry, label: Ancestry, field: ancestry, trade: { fixed: 2, free: 1 } }
+        - { key: class,    label: Class,    field: class }
+        - { key: lvl5,     label: Level 5,  level: 5,  free: 4 }
+        - { key: lvl10,    label: Level 10, level: 10, free: 4 }
+        - { key: lvl15,    label: Level 15, level: 15, free: 4 }
+        - { key: lvl20,    label: Level 20, level: 20, free: 4 }
+
   inventory:
     key: inventory
     label: Gear

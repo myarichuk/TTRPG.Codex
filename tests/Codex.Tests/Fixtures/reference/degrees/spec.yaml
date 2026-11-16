@@ -17,6 +17,15 @@ sheets:
       skillLegendary: [survival]
       saveExpert: [dex]
 
+  # A level 1 Vanguard of the Hillfolk built from boosts: every score starts at 10 (+0). The ancestry gives Con and Wis, one of Str or
+  # Dex (Str here), one free (Dex here) and a flaw in Int; the class gives Str.
+  newcomer:
+    kind: character
+    values: { level: 1, attrMethod: boosts, ancestry: hillfolk, class: vanguard }
+    lists:
+      boost__ancestry__hillfolk.b1: [str]
+      boost__ancestry__hillfolk.b2: [dex]
+
 expectations:
   # ---- Ranks: level + 2 / 4 / 6 / 8 ----
   # now: pass. CurrentEngineHost.Values reports `skills.<key>` and `saves.<key>` from the sheet-rules evaluation (added with P1).
@@ -249,3 +258,58 @@ expectations:
     roll: { definition: strike, inputs: { bonus: 9, target: 18, attackNumber: 4 }, dice: [20] }
     expect: { outcome: criticalSuccess, total: 19 }
     why: "20 + 9 - 10 = 19 beats 18, a success; the natural 20 makes it a critical success."
+
+  # ---- Attribute boosts (P5): sheetRules.attributes.boosts ----
+  # now: pass. Boosts are final in the attribute totals, before anything derived reads them.
+  - id: degrees.boosts-raise-scores-from-ten
+    step: 2
+    sheet: newcomer
+    expect: { values: { str: 14, dex: 12, con: 12, wis: 12, cha: 10 }, violations: [] }
+    why: "Str: the ancestry's pick (+1) and the class (+1), 10 + 2 + 2. Dex: the free boost, 12. Con and Wis: fixed, 12. Cha untouched."
+  # now: pass.
+  - id: degrees.a-flaw-lowers-the-score
+    step: 2
+    sheet: newcomer
+    expect: { values: { int: 8 } }
+    why: "The ancestry's flaw takes a full step (2 score points) off Int."
+  # now: pass. The ancestry's two fixed boosts become one free one.
+  - id: degrees.two-fixed-boosts-trade-for-one-free
+    step: 2
+    sheet: newcomer
+    with: { lists: { boost__ancestry__hillfolk.trade: [con, wis], boost__ancestry__hillfolk.t1: [cha] } }
+    expect: { values: { con: 10, wis: 10, cha: 12 }, violations: [] }
+    why: "Con and Wis are given up (back to 10); the free boost goes to Cha."
+  # now: pass. Str: 12 (ancestry), 14 (class), then 16, 18 at levels 5 and 10; at +4 the level 15 boost is a half step.
+  - id: degrees.a-boost-above-plus-four-is-half
+    step: 2
+    sheet: newcomer
+    with:
+      values: { level: 15 }
+      lists: { boost__lvl5__m1: [str], boost__lvl10__m1: [str], boost__lvl15__m1: [str] }
+    expect: { values: { str: 19 } }
+    why: "Str 18 is +4, so the next boost adds 1 score point: 19, still +4 with half a step stored."
+  # now: pass.
+  - id: degrees.two-half-boosts-make-a-full-step
+    step: 2
+    sheet: newcomer
+    with:
+      values: { level: 20 }
+      lists: { boost__lvl5__m1: [str], boost__lvl10__m1: [str], boost__lvl15__m1: [str], boost__lvl20__m1: [str] }
+    expect: { values: { str: 20 } }
+    why: "Two half steps (19, 20) make +5."
+  # now: pass. Four boosts at a milestone go to four different attributes; Con is chosen twice.
+  - id: degrees.four-different-boosts-are-required
+    step: 2
+    sheet: newcomer
+    with:
+      values: { level: 5 }
+      lists: { boost__lvl5__m1: [str], boost__lvl5__m2: [dex], boost__lvl5__m3: [con], boost__lvl5__m4: [con] }
+    expect: { violations: [{ field: boosts, key: Actor.Rule.BoostSame }] }
+    why: "One violation, naming the source; the scores still show what was chosen."
+  # now: pass.
+  - id: degrees.an-open-boost-is-a-warning
+    step: 2
+    sheet: newcomer
+    with: { values: { level: 5 } }
+    expect: { violations: [], warnings: [{ field: boosts, key: Actor.Rule.BoostOpen }] }
+    why: "Level 5 has four free boosts and none is placed: a warning, so the sheet can still be saved."

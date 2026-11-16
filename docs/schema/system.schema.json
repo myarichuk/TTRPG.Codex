@@ -1682,6 +1682,10 @@
         "increases": {
           "$ref": "#/$defs/IncreaseRules",
           "description": "Score increases granted by entries picked in a list (an Ability Score Improvement feat)."
+        },
+        "boosts": {
+          "$ref": "#/$defs/BoostRules",
+          "description": "The rules of the \"boosts\" method; required when `methods` offers it."
         }
       },
       "additionalProperties": false
@@ -1796,6 +1800,98 @@
             "boolean"
           ],
           "description": "Entry property holding the highest score the increase may reach."
+        }
+      },
+      "additionalProperties": false
+    },
+    "BoostRules": {
+      "description": "The `boosts` attribute method (`sheetRules.attributes.boosts`): every attribute starts at its default (a modifier of 0) and sources (an ancestry, a background, a class, a level milestone) each give boosts. A boost adds a full step (+1 to the modifier, 2 score points); at PartialFrom or above it adds half a step, and two halves make one. A flaw takes a full step away. The attributes must use the `half-minus-five` modifier and default 10, so a step is two score points. A referenced entry lists its boosts in its Property: `str` (fixed), `free` (any attribute), `dex|wis` (one of those) and `-con` (a flaw).",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "What the sheet calls the boosts, and the word its messages about them start with. Default \"Boosts\"."
+        },
+        "property": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The entry property holding a source's boosts, a list of words as described on this class. Default `boosts`."
+        },
+        "partialFrom": {
+          "type": "integer",
+          "description": "The modifier at which a boost becomes a half step. Default 4."
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BoostSource"
+          },
+          "description": "The sources, applied in this order (it only matters for the half steps)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "BoostSource": {
+      "description": "One source of boosts: the entry a sheet field refers to, or a level milestone with free boosts. A source's boosts all go to different attributes (a flaw is not a boost).",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Required, unique: names the source in the sheet's stored choices (`boost__{key}__{slot}`)."
+        },
+        "label": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The source's name as the sheet shows it, and the word its messages start with."
+        },
+        "field": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "An EntityReference actor field whose entry lists the boosts. Give this or Level."
+        },
+        "level": {
+          "type": "integer",
+          "description": "A level milestone: from this level the source gives Free free boosts."
+        },
+        "free": {
+          "type": "integer",
+          "description": "How many free boosts a milestone gives. Default 0."
+        },
+        "trade": {
+          "$ref": "#/$defs/BoostTrade",
+          "description": "Optional: the player may give up some of the source's fixed boosts for free ones."
+        }
+      },
+      "additionalProperties": false
+    },
+    "BoostTrade": {
+      "description": "The trade a source allows: give up Fixed of its fixed boosts, get Free free ones.",
+      "type": "object",
+      "properties": {
+        "fixed": {
+          "type": "integer",
+          "description": "How many fixed boosts are given up. Default 2."
+        },
+        "free": {
+          "type": "integer",
+          "description": "How many free boosts come back. Default 1."
         }
       },
       "additionalProperties": false
