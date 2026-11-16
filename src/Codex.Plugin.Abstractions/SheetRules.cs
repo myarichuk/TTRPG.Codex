@@ -32,6 +32,10 @@ public class SheetRules
     /// <see cref="Skills"/> and the saves. See <see cref="RankedListRule"/>.</summary>
     public List<RankedListRule> Ranked { get; set; } = new();
 
+    /// <summary>The numbers a printed creature (a sheet whose <c>attrMethod</c> is <c>printed</c>) carries as the stat block prints them, and which target the
+    /// conditions' modifiers reach them by, so a condition lowers a printed armor class, save or Strike. See <see cref="PrintedNumberDefinition"/>.</summary>
+    public List<PrintedNumberDefinition> Printed { get; set; } = new();
+
     /// <summary>The ranks of a general list: its own <see cref="RankedListRule.Ranks"/>, or those of the list <see cref="RankedListRule.RanksOf"/>
     /// names (the skills, the saves or another ranked list that has ranks of its own). Always new copies, never the source's objects, so a list
     /// sharing a source (or a YAML alias) cannot alter another. A rank's sheet key is the one given, or <see cref="RankedListRule.DefaultSheetKey"/>
@@ -1093,4 +1097,27 @@ public class CountRule
 
     /// <summary>A number on the entry a sheet field references, added once (a species' extra feat).</summary>
     public FieldProperty? FromField { get; set; }
+}
+
+/// <summary>One printed number of a printed creature (<c>sheetRules.printed</c>): either <c>{ from, target }</c>, a sheet key holding the printed number and the
+/// target the condition modifiers aim at it by, or <c>{ list, bonus, range, name }</c>, a list of Strikes on the sheet.</summary>
+public sealed class PrintedNumberDefinition
+{
+    /// <summary>The sheet key that holds the printed number (the armor class key, a derived value, a Number field).</summary>
+    public string? From { get; set; }
+
+    /// <summary>What the number answers to: the armor class key, a derived value, a Number field, <c>save.&lt;attribute&gt;</c> or <c>check.skill.&lt;key&gt;</c>.</summary>
+    public string? Target { get; set; }
+
+    /// <summary>The sheet list of Strikes, each row an attack: read by <see cref="Bonus"/>, <see cref="Range"/> and <see cref="Name"/>.</summary>
+    public string? List { get; set; }
+
+    /// <summary>For a list of Strikes: the key of each row's attack bonus. Required.</summary>
+    public string? Bonus { get; set; }
+
+    /// <summary>For a list of Strikes: the key of each row's range, <c>melee</c> or <c>ranged</c>. A row without one is a melee Strike.</summary>
+    public string? Range { get; set; }
+
+    /// <summary>For a list of Strikes: the key of each row's name.</summary>
+    public string? Name { get; set; }
 }

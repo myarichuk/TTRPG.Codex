@@ -305,6 +305,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in PrintedChecks.Problems(definition))
+        {
+            yield return error;
+        }
+
         foreach (var error in ValidateConditionRouting(definition))
         {
             yield return error;

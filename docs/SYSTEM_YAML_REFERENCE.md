@@ -377,6 +377,7 @@ The rules a system applies to a character sheet, declared in `system.yaml` so a 
 | `constraints` | list of [FieldConstraint](#fieldconstraint) | Conditions a single-pick reference field's chosen entry must satisfy. |
 | `lists` | list of [ListRule](#listrule) | Multi-pick lists of entries on the sheet (spells, feats, knacks...). |
 | `ranked` | list of [RankedListRule](#rankedlistrule) | General ranked lists (a Perception that is trained or expert, armor and weapon training, a class DC), beside the Skills and the saves. See RankedListRule. |
+| `printed` | list of [PrintedNumberDefinition](#printednumberdefinition) | The numbers a printed creature (a sheet whose `attrMethod` is `printed`) carries as the stat block prints them, and which target the conditions' modifiers reach them by, so a condition lowers a printed armor class, save or Strike. See PrintedNumberDefinition. |
 | `multiclass` | [MulticlassRules](#multiclassrules) | Levels split across more than one class. Null: one class only. |
 | `slotPools` | list of [SlotPoolRule](#slotpoolrule) | Expendable slot pools (spell slots, pact slots...) computed from class tables and tracked during play as resources. |
 | `hitPoints` | [HitPointRules](#hitpointrules) | Maximum hit points computed from class hit dice and Constitution. Null: hit points are typed in. |
@@ -565,6 +566,19 @@ One key of a RankedListRule.
 | `label` | text (a number is text too) |  |
 | `canonicalLabel` | text (a number is text too) | The English name, when Label is translated. |
 | `attribute` | text (a number is text too) | The attribute this key adds; overrides the list's. |
+
+## PrintedNumberDefinition
+
+One printed number of a printed creature (`sheetRules.printed`): either `{ from, target }`, a sheet key holding the printed number and the target the condition modifiers aim at it by, or `{ list, bonus, range, name }`, a list of Strikes on the sheet.
+
+| Key | Type | What it is |
+|---|---|---|
+| `from` | text (a number is text too) | The sheet key that holds the printed number (the armor class key, a derived value, a Number field). |
+| `target` | text (a number is text too) | What the number answers to: the armor class key, a derived value, a Number field, `save.<attribute>` or `check.skill.<key>`. |
+| `list` | text (a number is text too) | The sheet list of Strikes, each row an attack: read by Bonus, Range and Name. |
+| `bonus` | text (a number is text too) | For a list of Strikes: the key of each row's attack bonus. Required. |
+| `range` | text (a number is text too) | For a list of Strikes: the key of each row's range, `melee` or `ranged`. A row without one is a melee Strike. |
+| `name` | text (a number is text too) | For a list of Strikes: the key of each row's name. |
 
 ## MulticlassRules
 

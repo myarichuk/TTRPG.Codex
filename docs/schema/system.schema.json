@@ -1571,6 +1571,13 @@
           },
           "description": "General ranked lists (a Perception that is trained or expert, armor and weapon training, a class DC), beside the Skills and the saves. See RankedListRule."
         },
+        "printed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PrintedNumberDefinition"
+          },
+          "description": "The numbers a printed creature (a sheet whose `attrMethod` is `printed`) carries as the stat block prints them, and which target the conditions' modifiers reach them by, so a condition lowers a printed armor class, save or Strike. See PrintedNumberDefinition."
+        },
         "multiclass": {
           "$ref": "#/$defs/MulticlassRules",
           "description": "Levels split across more than one class. Null: one class only."
@@ -2270,6 +2277,61 @@
             "boolean"
           ],
           "description": "The attribute this key adds; overrides the list's."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PrintedNumberDefinition": {
+      "description": "One printed number of a printed creature (`sheetRules.printed`): either `{ from, target }`, a sheet key holding the printed number and the target the condition modifiers aim at it by, or `{ list, bonus, range, name }`, a list of Strikes on the sheet.",
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The sheet key that holds the printed number (the armor class key, a derived value, a Number field)."
+        },
+        "target": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "What the number answers to: the armor class key, a derived value, a Number field, `save.<attribute>` or `check.skill.<key>`."
+        },
+        "list": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The sheet list of Strikes, each row an attack: read by Bonus, Range and Name."
+        },
+        "bonus": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "For a list of Strikes: the key of each row's attack bonus. Required."
+        },
+        "range": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "For a list of Strikes: the key of each row's range, `melee` or `ranged`. A row without one is a melee Strike."
+        },
+        "name": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "For a list of Strikes: the key of each row's name."
         }
       },
       "additionalProperties": false
