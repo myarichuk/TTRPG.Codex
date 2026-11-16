@@ -563,6 +563,8 @@ Maximum hit points from the sheet's classes. Levels are taken first class first,
 | `modeKey` | text (a number is text too) | The sheet key holding the sheet's mode; must not be an actor field. Default `hpMode`. |
 | `rollsKey` | text (a number is text too) | Sheet key holding the player's rolls for levels 2 and up, in level order. |
 | `perLevelBonus` | [FieldProperty](#fieldproperty) | Entries whose number adds to every level's gain (Dwarven Toughness): the sheet field that names the entry and the property holding the bonus. |
+| `flatProperty` | text (a number is text too) | A class entry property holding the hit points a level gives, in place of a hit die (no rolls): every level, the first too, gives that number plus the Attribute modifier (never less than MinimumPerLevel). Null: hit dice, as above. Cannot be combined with FirstLevel or Average written out. A sheet without a mode follows the rules (the Default mode), where a die-based sheet is manual. |
+| `once` | [FieldProperty](#fieldproperty) | With FlatProperty: the hit points an entry adds once, whatever the level (an ancestry's): the sheet field that names the entry and the property holding the number. |
 
 ## ArmorClassRules
 

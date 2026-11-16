@@ -352,4 +352,72 @@ public class GeneralRankedListTests
         var problem = Assert.Single(FeatureGrantCheck.Problems(System, entry));
         Assert.Contains("trained", problem);
     }
+
+    // ---- 11: P3c, hit points from a number of the class ----
+
+    private const string FlatRules = """
+          hitPoints: { key: maxHp, currentKey: hp, flatProperty: hp, attribute: wis, once: { field: ancestry, property: hp } }
+          features: []
+        """;
+
+    private static readonly SystemDefinition FlatSystem = SystemDefinitionLoader.Parse(Header.Replace("  - { key: armorClass,", "  - { key: ancestry, label: Ancestry, type: EntityReference, targetEntityType: ancestry }\n  - { key: armorClass,")
+        .Replace("  - { type: feat, label: Feat }", "  - { type: feat, label: Feat }\n  - { type: ancestry, label: Ancestry }") + "\nsheetRules:\n" + FlatRules);
+
+    private static SheetEvaluation Flat(Dictionary<string, object> sheet, int perLevel = 6)
+    {
+        var warden = Entry("class", "warden", ("hp", (long)perLevel));
+        var folk = Entry("ancestry", "hillfolk", ("hp", 4L));
+        return new SheetRuleEngine(FlatSystem, new Entries(warden, folk)).Recompute(sheet);
+    }
+
+    [Fact]
+    public void FlatHitPoints_AreTheClassNumberPlusTheAttributeEveryLevel_AndTheAncestrysOnce()
+    {
+        var sheet = Sheet(("ancestry", "hillfolk"));
+        var five = Flat(sheet);
+        Assert.True(five.HitPoints!.Active); // a sheet with no mode follows the rules
+        Assert.Equal(4 + (6 + 1) * 5, five.HitPoints.Max); // once + (class + Wis 1) x 5
+        Assert.Equal(4, five.HitPoints.Once);
+        Assert.Equal(5, five.HitPoints.Levels.Count);
+        Assert.All(five.HitPoints.Levels, l => Assert.Equal(0, l.Die));
+
+        sheet["level"] = 1L;
+        Assert.Equal(4 + 7, Flat(sheet).HitPoints!.Max);
+    }
+
+    [Fact]
+    public void FlatHitPoints_CanStillBeManual_AndAClassWithoutTheNumberWarns()
+    {
+        var sheet = Sheet(("ancestry", "hillfolk"), ("hpMode", "manual"));
+        Assert.False(Flat(sheet).HitPoints!.Active);
+
+        var bare = new SheetRuleEngine(FlatSystem, new Entries(Entry("class", "warden"))).Recompute(Sheet());
+        Assert.Contains(bare.Warnings, w => w.Message.Contains("has no hit points per level"));
+    }
+
+    [Fact]
+    public void ApplyingFlatHitPoints_KeepsCurrentHitPointsInStepWithTheMaximum()
+    {
+        var sheet = Sheet(("ancestry", "hillfolk"));
+        var engine = new SheetRuleEngine(FlatSystem, new Entries(Entry("class", "warden", ("hp", 6L)), Entry("ancestry", "hillfolk", ("hp", 4L))));
+        engine.ApplyHitPoints(sheet, engine.Recompute(sheet));
+        Assert.Equal(39L, sheet["maxHp"]);
+        Assert.Equal(39L, sheet["hp"]); // a fresh sheet starts at full health
+
+        sheet["hp"] = 30L;
+        sheet["level"] = 6L;
+        engine.ApplyHitPoints(sheet, engine.Recompute(sheet));
+        Assert.Equal(46L, sheet["maxHp"]);
+        Assert.Equal(37L, sheet["hp"]); // the seven the level gave
+    }
+
+    [Fact]
+    public void TheLoaderRefusesFlatHitPointsMixedWithDice_AndAnOnceFieldThatIsNoReference()
+    {
+        var yaml = Header + "\nsheetRules:\n  hitPoints: { key: maxHp, currentKey: hp, flatProperty: hp, attribute: wis, firstLevel: average, once: { field: level, property: hp } }\n";
+        var errors = Errors(yaml);
+        Assert.Contains("sheetRules.hitPoints: flatProperty and firstLevel/average cannot both be given.", errors);
+        Assert.Contains("sheetRules.hitPoints.once.field 'level' is not an EntityReference actor field.", errors);
+        Assert.DoesNotContain("flatProperty and firstLevel/average", Errors(yaml.Replace("firstLevel: average, ", "")));
+    }
 }

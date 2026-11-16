@@ -81,9 +81,13 @@ functions:
 
 sheetRules:
   enforcement: warn
-  derived:
-    # Hit points: Constitution per level here; the class adds its own per level and the ancestry its own once (features, below).
-    - { key: maxHp,      label: Hit points, formula: "mod(con) * level", signed: false }
+  # Hit points: the class's own number per level (no die) plus Constitution, and the ancestry's number once.
+  hitPoints:
+    key: maxHp
+    currentKey: hp
+    flatProperty: hp
+    attribute: con
+    once: { field: ancestry, property: hp }
 
   inventory:
     key: inventory

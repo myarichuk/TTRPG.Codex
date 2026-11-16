@@ -566,6 +566,17 @@ public static class SystemDefinitionLoader
             yield return $"sheetRules.hitPoints.perLevelBonus field '{perLevel.Field}' is not an EntityReference actor field.";
         }
 
+        if (rules.HitPoints?.Once is { } once && !referenceFields.Contains(once.Field))
+        {
+            yield return $"sheetRules.hitPoints.once.field '{once.Field}' is not an EntityReference actor field.";
+        }
+
+        // Written out (not just the defaults): a flat number per level has no first level of its own and no average.
+        if (rules.HitPoints is { FlatProperty: { Length: > 0 } } flat && (flat.FirstLevel != HitPointRules.FullDie || flat.Average != HitPointRules.HalfPlusOne))
+        {
+            yield return "sheetRules.hitPoints: flatProperty and firstLevel/average cannot both be given.";
+        }
+
         foreach (var duplicate in Duplicates(rules.SlotPools.Select(p => p.Key)))
         {
             yield return $"sheetRules.slotPools key '{duplicate}' is declared more than once.";

@@ -14,7 +14,7 @@ public sealed record HitPointLevel(int Level, string ClassName, int Die, int Bas
 /// or while no class with a hit die is chosen: the sheet's own number stands.</summary>
 /// <param name="Granted">What features add on top of the levels, each with its source (already in <paramref name="Max"/>).</param>
 public sealed record HitPointSummary(string Mode, bool Active, int Max, int Modifier, IReadOnlyList<HitPointLevel> Levels, int LevelExtra = 0, string? ExtraSource = null,
-    IReadOnlyList<GrantedModifier>? Granted = null);
+    IReadOnlyList<GrantedModifier>? Granted = null, int Once = 0, string? OnceSource = null);
 
 /// <summary>One contribution to armor class. <see cref="Kind"/> says what it is (body, dex, unarmored, defense, bonus, misc) so the UI words it in
 /// the reader's language; <see cref="Entry"/> is the item, class or feat behind it, whose name the UI shows translated.</summary>
@@ -138,7 +138,9 @@ public sealed partial class SheetRuleEngine
     {
         if (Rules?.HitPoints is not { } rules) return;
 
-        var requested = (YamlValues.GetString(sheet, rules.ModeKey) ?? "manual").ToLowerInvariant();
+        var flat = !string.IsNullOrEmpty(rules.FlatProperty);
+        // Without hit dice there is nothing to type in by default: a sheet that names no mode follows the rules.
+        var requested = (YamlValues.GetString(sheet, rules.ModeKey) ?? (flat ? rules.Default : "manual")).ToLowerInvariant();
         var mode = requested == "manual" ? "manual" : rules.Modes.Contains(requested) ? requested : rules.Default;
         var modifier = ModifierOf(sheet, rules.Attribute);
         var rolls = RawList(sheet, rules.RollsKey).Select(r => int.TryParse(r, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : 0).ToList();
@@ -150,6 +152,26 @@ public sealed partial class SheetRuleEngine
         var number = 0;
         foreach (var cls in SheetClasses(sheet, result, rules.ClassField, rules.LevelField))
         {
+            if (flat)
+            {
+                // Hit points a level gives are a number of the class entry itself: no die, no roll.
+                var perLevel = cls.Entry != null && cls.Entry.Properties.TryGetValue(rules.FlatProperty!, out var given) ? ToDouble(given) : null;
+                if (perLevel == null && cls.Entry != null)
+                {
+                    result.Warnings.Add(new RuleViolation(rules.Key, $"{cls.Entry.Name} has no hit points per level, so its levels add no hit points."));
+                }
+
+                for (var i = 0; i < cls.Level; i++)
+                {
+                    number++;
+                    if (perLevel == null) continue;
+                    var flatBase = (int)perLevel.Value;
+                    levels.Add(new HitPointLevel(number, cls.Entry!.Name, 0, flatBase, false, modifier, Math.Max(flatBase + modifier + extra, rules.MinimumPerLevel), extra));
+                }
+
+                continue;
+            }
+
             var die = cls.Entry != null && cls.Entry.Properties.TryGetValue(rules.DieProperty, out var raw) ? ParseHitDie(raw) : null;
             if (die == null && cls.Entry != null)
             {
@@ -181,11 +203,15 @@ public sealed partial class SheetRuleEngine
             }
         }
 
-        var fromLevels = levels.Sum(l => l.Gain);
+        // What an entry adds once (an ancestry's hit points), when the class gives a number per level.
+        var onceEntry = flat && levels.Count > 0 && rules.Once != null ? ReferencedEntry(rules.Once.Field, sheet) : null;
+        var once = onceEntry == null ? 0 : (int)(ToDouble(onceEntry.Properties.GetValueOrDefault(rules.Once!.Property)) ?? 0);
+        var fromLevels = levels.Sum(l => l.Gain) + once;
         var granted = new List<GrantedModifier>();
         var max = result.Pending.TryGetValue(rules.Key, out var pending) && levels.Count > 0 ? Math.Max(WithModifiers(fromLevels, pending, rules.Key, granted), 1) : fromLevels;
         result.Granted.AddRange(granted);
-        result.HitPoints = new HitPointSummary(mode, mode != "manual" && levels.Count > 0, max, modifier, levels, extra, extra != 0 ? extraEntry!.Name : null, granted);
+        result.HitPoints = new HitPointSummary(mode, mode != "manual" && levels.Count > 0, max, modifier, levels, extra, extra != 0 ? extraEntry!.Name : null, granted,
+            once, once != 0 ? onceEntry!.Name : null);
     }
 
     /// <summary>

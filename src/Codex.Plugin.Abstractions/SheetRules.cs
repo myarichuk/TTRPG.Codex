@@ -630,6 +630,16 @@ public class HitPointRules
     /// <summary>Entries whose number adds to every level's gain (Dwarven Toughness): the sheet field that
     /// names the entry and the property holding the bonus.</summary>
     public FieldProperty? PerLevelBonus { get; set; }
+
+    /// <summary>A class entry property holding the hit points a level gives, in place of a hit die (no rolls): every level, the first too,
+    /// gives that number plus the <see cref="Attribute"/> modifier (never less than <see cref="MinimumPerLevel"/>). Null: hit dice, as above.
+    /// Cannot be combined with <see cref="FirstLevel"/> or <see cref="Average"/> written out. A sheet without a mode follows the rules
+    /// (the <see cref="Default"/> mode), where a die-based sheet is manual.</summary>
+    public string? FlatProperty { get; set; }
+
+    /// <summary>With <see cref="FlatProperty"/>: the hit points an entry adds once, whatever the level (an ancestry's): the sheet field that names
+    /// the entry and the property holding the number.</summary>
+    public FieldProperty? Once { get; set; }
 }
 
 /// <summary>

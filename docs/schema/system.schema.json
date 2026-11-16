@@ -2325,6 +2325,18 @@
         "perLevelBonus": {
           "$ref": "#/$defs/FieldProperty",
           "description": "Entries whose number adds to every level's gain (Dwarven Toughness): the sheet field that names the entry and the property holding the bonus."
+        },
+        "flatProperty": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "A class entry property holding the hit points a level gives, in place of a hit die (no rolls): every level, the first too, gives that number plus the Attribute modifier (never less than MinimumPerLevel). Null: hit dice, as above. Cannot be combined with FirstLevel or Average written out. A sheet without a mode follows the rules (the Default mode), where a die-based sheet is manual."
+        },
+        "once": {
+          "$ref": "#/$defs/FieldProperty",
+          "description": "With FlatProperty: the hit points an entry adds once, whatever the level (an ancestry's): the sheet field that names the entry and the property holding the number."
         }
       },
       "additionalProperties": false
