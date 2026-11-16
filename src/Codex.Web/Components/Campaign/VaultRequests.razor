@@ -454,7 +454,9 @@
     private string EntryName(ContentEntry entry) => ContentRegistry.Name(entry, L.Culture.Name);
 
     private string ChoiceTargetLabel(string target) =>
-        target == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"] : Ctx.System?.SheetRules?.Skills?.Label ?? target;
+        target == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"]
+        : Ctx.System?.SheetRules?.Ranked.FirstOrDefault(l => l.Key == target) is { } generalList ? (string.IsNullOrEmpty(generalList.Label) ? generalList.Key : generalList.Label)
+        : Ctx.System?.SheetRules?.Skills?.Label ?? target;
 
     private (string Name, string? Description) ChoiceOptionText(PendingChoice choice, ChoiceOption option) =>
         ContentRegistry.Row(choice.Feature.Source, option.Key, L.Culture.Name);

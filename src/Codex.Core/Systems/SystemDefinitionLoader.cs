@@ -130,6 +130,8 @@ public static class SystemDefinitionLoader
                 $"not a valid system definition: {Describe(ex)}");
         }
 
+        EmptySections.Fill(definition);
+
         if (definition == null)
         {
             throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is empty."), "the file is empty.");
@@ -553,6 +555,8 @@ public static class SystemDefinitionLoader
             }
         }
 
+        foreach (var error in RankedListChecks.Problems(definition, fieldKeys, rules.Lists.Select(l => l.Key).ToHashSet(StringComparer.OrdinalIgnoreCase))) yield return error;
+
         if (rules.Spellcasting is { } spellcasting && DerivedKeyError("sheetRules.spellcasting.bonusKey", spellcasting.BonusKey) is { } spellError)
         {
             yield return spellError;
@@ -567,6 +571,22 @@ public static class SystemDefinitionLoader
         if (rules.HitPoints?.PerLevelBonus is { } perLevel && !referenceFields.Contains(perLevel.Field))
         {
             yield return $"sheetRules.hitPoints.perLevelBonus field '{perLevel.Field}' is not an EntityReference actor field.";
+        }
+
+        if (rules.HitPoints?.Once is { } once && !referenceFields.Contains(once.Field))
+        {
+            yield return $"sheetRules.hitPoints.once.field '{once.Field}' is not an EntityReference actor field.";
+        }
+
+        if (rules.HitPoints is { Once: not null, FlatProperty: null or "" })
+        {
+            yield return "sheetRules.hitPoints.once needs flatProperty.";
+        }
+
+        // Written out (not just the defaults): a flat number per level has no first level of its own and no average.
+        if (rules.HitPoints is { FlatProperty: { Length: > 0 } } flat && (flat.FirstLevel != HitPointRules.FullDie || flat.Average != HitPointRules.HalfPlusOne))
+        {
+            yield return "sheetRules.hitPoints: flatProperty and firstLevel/average cannot both be given.";
         }
 
         foreach (var duplicate in Duplicates(rules.SlotPools.Select(p => p.Key)))

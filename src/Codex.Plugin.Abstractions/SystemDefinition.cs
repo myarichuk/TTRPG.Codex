@@ -958,6 +958,17 @@ public class SystemDefinition
             }
             copy.Skills = skills;
         }
+        // The general lists' own ranks, worded the same way (a list that takes the skills' ranks gets them translated through copy.Skills). The lists' labels stay as written.
+        if (t.Ranks.Count > 0 && rules.Ranked.Any(l => l.Ranks.Count > 0))
+        {
+            copy.Ranked = rules.Ranked.Select(l =>
+            {
+                if (l.Ranks.Count == 0) return l;
+                var c = Copy(l);
+                c.Ranks = l.Ranks.Select(r => { var rank = Copy(r); rank.Label = Pick(t.Ranks, r.Key, r.Label); return rank; }).ToList();
+                return c;
+            }).ToList();
+        }
         // The label of a pick among an entry's rows (a feature source's choose), by the choice's id.
         if (t.Choices.Count > 0)
         {

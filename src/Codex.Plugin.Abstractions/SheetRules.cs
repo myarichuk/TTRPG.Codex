@@ -28,6 +28,34 @@ public class SheetRules
     /// <summary>Multi-pick lists of entries on the sheet (spells, feats, knacks...).</summary>
     public List<ListRule> Lists { get; set; } = new();
 
+    /// <summary>General ranked lists (a Perception that is trained or expert, armor and weapon training, a class DC), beside the
+    /// <see cref="Skills"/> and the saves. See <see cref="RankedListRule"/>.</summary>
+    public List<RankedListRule> Ranked { get; set; } = new();
+
+    /// <summary>The ranks of a general list: its own <see cref="RankedListRule.Ranks"/>, or those of the list <see cref="RankedListRule.RanksOf"/>
+    /// names (the skills, the saves or another ranked list that has ranks of its own). Always new copies, never the source's objects, so a list
+    /// sharing a source (or a YAML alias) cannot alter another. A rank's sheet key is the one given, or <see cref="RankedListRule.DefaultSheetKey"/>
+    /// (<c>perceptionTrained</c>): a copy never takes the source's own sheet key, which the source's list owns.</summary>
+    public IReadOnlyList<RankDefinition> RanksFor(RankedListRule list)
+    {
+        IEnumerable<RankDefinition> source = list.Ranks;
+        if (list.Ranks.Count == 0 && !string.IsNullOrEmpty(list.RanksOf))
+        {
+            if (Skills != null && list.RanksOf.Equals("skills", StringComparison.OrdinalIgnoreCase)) source = Skills.SkillRanks();
+            else if (Skills != null && list.RanksOf.Equals("saves", StringComparison.OrdinalIgnoreCase)) source = Skills.SaveRanks();
+            else source = Ranked.FirstOrDefault(o => o != list && o.Key.Equals(list.RanksOf, StringComparison.OrdinalIgnoreCase) && o.Ranks.Count > 0)?.Ranks ?? new List<RankDefinition>();
+        }
+
+        var own = list.Ranks.Count > 0;
+        return source.Where(r => !string.IsNullOrEmpty(r.Key)).Select(r => new RankDefinition
+        {
+            Key = r.Key,
+            Label = r.Label,
+            Value = r.Value,
+            SheetKey = own && !string.IsNullOrEmpty(r.SheetKey) ? r.SheetKey : RankedListRule.DefaultSheetKey(list.Key, r.Key)
+        }).ToList();
+    }
+
     /// <summary>Levels split across more than one class. Null: one class only.</summary>
     public MulticlassRules? Multiclass { get; set; }
 
@@ -129,6 +157,10 @@ public class ActionSource
     /// "×N" when it works out to more than one. Null: not shown. The formulas read the same names as <see cref="AttackBonus"/>.</summary>
     public string? Count { get; set; }
 
+    /// <summary>Reads a rank for each entry: the rank value of the entry's <see cref="RankLookup.Property"/> key in a <c>sheetRules.ranked</c> list
+    /// (a weapon's category), as the name <c>rankValue</c> in this source's formulas (0 when the key has no rank).</summary>
+    public RankLookup? Rank { get; set; }
+
     /// <summary>A derived value or formula for the lowest die face of the system's check die (<c>dice.check</c>) that is a
     /// critical hit (<c>critFrom</c>). The panel shows "crit 19–20" only when it is below the die's top face. Null: not shown.
     /// A critical's extra dice are not rolled.</summary>
@@ -158,7 +190,7 @@ public class ActionSource
 /// <see cref="ModifierDefinition.OptIn"/>), with the id <c>{entry id}#{index}</c>, the index counting every modifier of the entry. A target that
 /// names none of these and no sheet value is a warning.</item>
 /// <item><c>adds</c>: <c>[{ to, entries, level }]</c>: entries put on a pick list (by id or name) or values on a tag list,
-/// from <c>level</c> on. They leave again when the feature does. On a ranked list (<c>to: skills</c> or <c>to: saves</c>, or a rank's own
+/// from <c>level</c> on. They leave again when the feature does. On a ranked list (<c>to: skills</c> or <c>to: saves</c>, or a <c>ranked</c> list's key, or a rank's own
 /// sheet list; see <see cref="SkillRules.Ranks"/>) an item takes more: <c>rank</c> (a rank key or number; none means the first rank) puts
 /// the entries at that rank, locked, with the feature as its source; <c>raise: 1</c> moves them that many ranks up, stopping at the top
 /// (<c>rank</c> and <c>raise</c> exclude each other). Such grants are worked out in the evaluation and never written to the sheet. Instead of
@@ -334,13 +366,82 @@ public class RankDefinition
     /// <summary>The rank's name as the sheet shows it ("Expert"). Default: the key.</summary>
     public string Label { get; set; } = string.Empty;
 
-    /// <summary>Required, unique across every ranked list: the sheet list holding the keys the player set at this rank
+    /// <summary>Required (optional on a <c>ranked</c> list: default list key + rank key), unique across every ranked list: the sheet list holding the keys the player set at this rank
     /// (<c>skillExpertise</c>).</summary>
     public string SheetKey { get; set; } = string.Empty;
 
     /// <summary>What a key at this rank adds to its check: a formula over the sheet's numbers and derived values (<c>proficiencyBonus * 2</c>,
     /// <c>level + 4</c>). Empty: the rank is worth its number (1 for the first rank), which a roll formula can read.</summary>
     public string? Value { get; set; }
+}
+
+/// <summary>
+/// A general ranked list (<c>sheetRules.ranked</c>): a set of keys that each hold one rank, as the skills do. Grants reach it as they reach
+/// the skills: <c>adds: [{ to: armor, entries: [light], rank: trained }]</c>, <c>{ to: perceptionExpert, entries: [perception] }</c> (the
+/// rank's sheet key), <c>{ to: perception, raise: 1 }</c>, or a choice. On a list of one key, <c>entries</c> may be left out.
+/// A list with <see cref="Publish"/> works out each key's score (<see cref="Base"/> + the attribute's modifier + the rank's value) and
+/// publishes it as a derived value under the key, where formulas, modifiers and conditions can reach it.
+/// Known limit: a published value is worked out after the features and the derived values, so a feature's amount or <c>when</c>, and a <c>derived</c> formula, that names one cannot read it (and the writer's guide does not offer it).
+/// </summary>
+public class RankedListRule
+{
+    /// <summary>Required, unique: the list's key, and the <c>to</c> of a grant. With no <see cref="List"/>, also the one key's.</summary>
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>The list's name on the sheet. Default: the key.</summary>
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>The list's own ranks, lowest first (a rank's <see cref="RankDefinition.SheetKey"/> is optional here: default
+    /// <see cref="DefaultSheetKey"/>). Or name <see cref="RanksOf"/>, not both.</summary>
+    public List<RankDefinition> Ranks { get; set; } = new();
+
+    /// <summary>Use the ranks of another list: <c>skills</c>, <c>saves</c> or a ranked list with ranks of its own.</summary>
+    public string? RanksOf { get; set; }
+
+    /// <summary>The keys the list ranks. Empty: one key, <see cref="Key"/> itself.</summary>
+    public List<RankedKeyDefinition> List { get; set; } = new();
+
+    /// <summary>The attribute whose modifier a published score adds; a key's own <see cref="RankedKeyDefinition.Attribute"/> overrides it.</summary>
+    public string? Attribute { get; set; }
+
+    /// <summary>The attribute named by a property of a referenced entry (the class's key attribute), when no fixed one is given.</summary>
+    public FieldProperty? AttributeFrom { get; set; }
+
+    /// <summary>A number added to every published score (10 for a DC).</summary>
+    public int Base { get; set; }
+
+    /// <summary>Each key's score becomes a derived value under the key.</summary>
+    public bool Publish { get; set; }
+
+    /// <summary>The list's keys: <see cref="List"/>, or the one key a list without any stands for.</summary>
+    public IReadOnlyList<RankedKeyDefinition> Keys() =>
+        List.Count > 0 ? List : new[] { new RankedKeyDefinition { Key = Key, Label = string.IsNullOrEmpty(Label) ? Key : Label } };
+
+    /// <summary>The sheet key a rank gets when none is given: the list's key and the rank's, joined (<c>wardcraftNovice</c>).</summary>
+    public static string DefaultSheetKey(string list, string rank) => rank.Length == 0 ? list : list + char.ToUpperInvariant(rank[0]) + rank[1..];
+}
+
+/// <summary>One key of a <see cref="RankedListRule"/>.</summary>
+public class RankedKeyDefinition
+{
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    /// <summary>The English name, when <see cref="Label"/> is translated.</summary>
+    public string? CanonicalLabel { get; set; }
+    /// <summary>The attribute this key adds; overrides the list's.</summary>
+    public string? Attribute { get; set; }
+}
+
+/// <summary>Reads a rank value from a ranked list by a property of an entry: the worn body armor's category for armor class, a weapon's
+/// category for an attack.</summary>
+public class RankLookup
+{
+    /// <summary>Required: the key of a <c>sheetRules.ranked</c> list.</summary>
+    public string List { get; set; } = string.Empty;
+    /// <summary>Required: the entry property naming the key (<c>armorCategory</c>).</summary>
+    public string Property { get; set; } = string.Empty;
+    /// <summary>Armor class only: the key that counts when no body armor is worn.</summary>
+    public string? Unarmored { get; set; }
 }
 
 /// <summary>Saving throws as a ranked list over the system's attributes (the first class's <c>savingThrows</c> put each of its attributes at the
@@ -529,6 +630,16 @@ public class HitPointRules
     /// <summary>Entries whose number adds to every level's gain (Dwarven Toughness): the sheet field that
     /// names the entry and the property holding the bonus.</summary>
     public FieldProperty? PerLevelBonus { get; set; }
+
+    /// <summary>A class entry property holding the hit points a level gives, in place of a hit die (no rolls): every level, the first too,
+    /// gives that number plus the <see cref="Attribute"/> modifier (never less than <see cref="MinimumPerLevel"/>). Null: hit dice, as above.
+    /// Cannot be combined with <see cref="FirstLevel"/> or <see cref="Average"/> written out. A sheet without a mode follows the rules
+    /// (the <see cref="Default"/> mode), where a die-based sheet is manual.</summary>
+    public string? FlatProperty { get; set; }
+
+    /// <summary>With <see cref="FlatProperty"/>: the hit points an entry adds once, whatever the level (an ancestry's): the sheet field that names
+    /// the entry and the property holding the number.</summary>
+    public FieldProperty? Once { get; set; }
 }
 
 /// <summary>
@@ -584,6 +695,10 @@ public class ArmorClassRules
 
     /// <summary>Numeric sheet field for everything else (a spell, a magic effect).</summary>
     public string MiscField { get; set; } = "armorClassMisc";
+
+    /// <summary>Adds the rank value of the worn body armor's category (its <see cref="RankLookup.Property"/>), or of
+    /// <see cref="RankLookup.Unarmored"/> when none is worn, from a <c>sheetRules.ranked</c> list. An untrained or unlisted key adds nothing.</summary>
+    public RankLookup? Rank { get; set; }
 }
 
 /// <summary>

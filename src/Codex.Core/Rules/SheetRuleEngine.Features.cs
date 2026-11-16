@@ -536,7 +536,8 @@ public sealed partial class SheetRuleEngine
                 Text(a, "rank"), ToDouble(Cell(a, "raise")) is { } raise ? (int)raise : 0, ParseChoice(a, name, level),
                 string.Equals(Text(a, "free"), "atWill", StringComparison.OrdinalIgnoreCase) ? null : ParseUses(Cell(a, "free")),
                 string.Equals(Text(a, "free"), "atWill", StringComparison.OrdinalIgnoreCase)))
-            .Where(a => (a.To.Length > 0 || a.Choice != null) && (a.Entries.Count > 0 || a.Choice != null))
+            // No entries is for a ranked list of one key (a rank, a step up, or the rank's own sheet key as the target): the engine reads the key as the list's.
+            .Where(a => a.To.Length > 0 || a.Choice != null)
             .ToList();
         var uses = ParseUses(data.GetValueOrDefault("uses"));
         var spends = data.GetValueOrDefault("spends") is IDictionary<string, object> spend && Text(spend, "key") is { } spendKey
@@ -639,7 +640,7 @@ public sealed partial class SheetRuleEngine
 
     // ---- Where a modifier lands ----
 
-    internal enum TargetKind { Unknown, ArmorClass, HitPoints, Derived, Field, Roll }
+    internal enum TargetKind { Unknown, ArmorClass, HitPoints, Derived, Field, Roll, Ranked }
 
     /// <summary>Where a modifier's target lands. A value the sheet has wins over a roll word of the same name; a roll target (<see cref="RollSiteTargets"/>)
     /// is read by the roll it names, where the bonus is worked out, so it is neither unknown nor a value of the sheet.</summary>
@@ -653,6 +654,7 @@ public sealed partial class SheetRuleEngine
         if (rules.ArmorClass is { } armor && armor.Key == target) return TargetKind.ArmorClass;
         if (rules.HitPoints is { } hitPoints && hitPoints.Key == target) return TargetKind.HitPoints;
         if (rules.Derived.Any(d => d.Key == target)) return TargetKind.Derived;
+        if (rules.Ranked.Any(l => l.Publish && l.Keys().Any(k => k.Key == target))) return TargetKind.Ranked;
         if (system.ActorFields.Any(f => f.Key == target && f.Type == FieldType.Number)) return TargetKind.Field;
         return RollSiteTargets.IsRollTarget(system, target) ? TargetKind.Roll : TargetKind.Unknown;
     }

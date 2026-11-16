@@ -71,7 +71,7 @@
             "dex" when line.DexCap.HasValue => L["Actor.Ac.DexCapped", signed, line.DexCap, DexName(line)],
             "dex" => L["Actor.Ac.Dex", signed, DexName(line)],
             "misc" => $"{L["Actor.Ac.Other"]}: {signed}",
-            "bonus" => $"{name}: {signed}",
+            "bonus" or "rank" => $"{name}: {signed}",
             "unarmored" => $"{L["Actor.Ac.Unarmored"]}: {Bidi.Ltr(line.Value.ToString())}",
             "defense" => $"{L["Actor.Ac.Defense", name]}: {Bidi.Ltr(line.Value.ToString())}",
             _ => $"{name}: {Bidi.Ltr(line.Value.ToString())}"

@@ -1110,6 +1110,14 @@ else
             {
                 if (evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, derived.Signed ? FormatSigned(value) : value.ToString() ?? string.Empty);
             }
+
+            foreach (var list in Rules.Ranked.Where(l => l.Publish))
+            {
+                foreach (var key in list.Keys())
+                {
+                    if (evaluation.Derived.TryGetValue(key.Key, out var published)) yield return (string.IsNullOrEmpty(key.Label) ? key.Key : key.Label, list.Base == 0 ? FormatSigned(published) : published.ToString() ?? string.Empty);
+                }
+            }
         }
 
         if (system?.ActorFields.FirstOrDefault(f => f.Key == system.FieldRoles.Speed) is { } speed && YamlValues.GetInt(editSheet, speed.Key) is { } distance)
@@ -1220,6 +1228,7 @@ else
                     .Concat(system?.SheetRules?.ArmorClass is { } ac ? new[] { ac.Key, ac.ModeKey, ac.MiscField } : Array.Empty<string>())
                     .Concat(system?.SheetRules?.Inventory is { } inv ? new[] { inv.Key } : Array.Empty<string>())
                     .Concat(system?.SheetRules?.Skills is { } sk ? sk.SkillRanks().Concat(sk.SaveRanks()).Select(r => r.SheetKey) : Enumerable.Empty<string>())
+                    .Concat(system?.SheetRules is { } ranked ? ranked.Ranked.SelectMany(l => ranked.RanksFor(l)).Select(r => r.SheetKey) : Enumerable.Empty<string>())
                     .Concat(system?.SheetRules?.Inherits.Select(i => i.AppliedKey) ?? Enumerable.Empty<string>())
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -1646,6 +1655,7 @@ else
     /// <summary>The name of a ranked list a choice picks into, as the sheet shows it.</summary>
     private string ChoiceTargetLabel(string target) =>
         target == SheetRuleEngine.SavesTarget ? L["Actor.Skills.SavingThrows"]
+        : Rules?.Ranked.FirstOrDefault(l => l.Key == target) is { } generalList ? (string.IsNullOrEmpty(generalList.Label) ? generalList.Key : generalList.Label)
         : Rules?.Skills?.Label ?? (system is { SheetKinds.Count: > 0 } ? SheetLayout.KindOf(system, editSheet)?.KeyedLists.FirstOrDefault(l => l.Key == target)?.Label : null) ?? target;
 
     /// <summary>The <c>level</c> field of an entity type, whose values the system may name ("Cantrip" for 0).</summary>
