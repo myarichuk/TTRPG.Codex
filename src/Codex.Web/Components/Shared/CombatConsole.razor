@@ -12,6 +12,7 @@
 @inject ISessionRepository SessionRepo
 @inject ComponentRegistry Components
 @inject CampaignLibrary Library
+@inject IRegionRepository RegionRepo
 @inject ILogger<CombatConsole> Logger
 
 @* The table loop: initiative, hit points, conditions and dice, driven off one live
@@ -170,7 +171,7 @@ else
 
             @if (Access.IsDm)
             {
-                <QuickAddPanel SystemId="@Campaign.SystemId" OnAdd="QuickAddMonsterAsync" />
+                <QuickAddPanel SystemId="@Campaign.SystemId" OnAdd="QuickAddMonsterAsync" OnAddHazard="QuickAddHazardAsync" HazardType="HazardType" PlaceHazards="placeHazards" PlaceName="@placeHazardsName" />
 
                 <HazardsTable Campaign="Campaign" Access="Access" CurrentUserId="@CurrentUserId" Runtime="runtime" Snapshot="snapshot" Actors="Actors" Definition="Definition" />
 
@@ -290,6 +291,8 @@ else
             sessionsLoadedFor = true;
             await LoadOpenSessionsAsync();
         }
+
+        await RefreshPlaceHazardsAsync();
     }
 
     /// <summary>Sessions the DM can run: planned ones, and a live one the last table left behind. The
@@ -440,6 +443,7 @@ else
             await OnActorAdded.InvokeAsync();
         }
 
+        await RefreshPlaceHazardsAsync();
         StateHasChanged();
     });
 
@@ -750,6 +754,72 @@ else
             await OnActorAdded.InvokeAsync();
         }
 
+        return true;
+    }
+
+    // ---- Complex hazards in the quick-add panel (HAZARDS_DESIGN.md 3.3) ----
+
+    private ContentTypeDefinition? HazardType => Definition?.EntityTypes.FirstOrDefault(t => t.Hazard != null);
+
+    // The complex hazards on the encounter's place, offered first; read again when the place or the hazards at the table change.
+    private IReadOnlyList<HazardOffer> placeHazards = Array.Empty<HazardOffer>();
+    private string placeHazardsName = string.Empty;
+    private string placeHazardsFor = string.Empty;
+
+    private async Task RefreshPlaceHazardsAsync()
+    {
+        if (!Access.IsDm || HazardType is not { Hazard: not null } type || Definition is not { } system) return;
+        var placeId = snapshot.Encounter?.LocationId ?? string.Empty;
+        var seen = placeId + "|" + string.Join(",", Actors.Where(a => a.Hazard != null).Select(a => a.Id).Order(StringComparer.Ordinal));
+        if (seen == placeHazardsFor) return;
+        placeHazardsFor = seen;
+        if (placeId.Length == 0)
+        {
+            placeHazards = Array.Empty<HazardOffer>();
+            placeHazardsName = string.Empty;
+            return;
+        }
+
+        try
+        {
+            var regions = (await RegionRepo.GetVisibleForCampaignAsync(Access)).ToList();
+            placeHazards = await HazardOffers.ForPlaceAsync(regions, placeId, system, type, Actors,
+                async stored => (await Library.GetAsync(Campaign, Access, stored.EntryType, stored.EntryId, stored.IsHomebrew))?.Entry);
+            placeHazardsName = regions.SelectMany(r => r.Locations).FirstOrDefault(l => l.Id == placeId)?.Name ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "The hazards on the encounter's place could not be read for the quick-add panel");
+            placeHazards = Array.Empty<HazardOffer>();
+        }
+    }
+
+    /// <summary>A complex hazard takes a turn: its actor is made (Hidden, so no player sees it, with the link to its placement) and rolls its initiative in secret with its own bonus.</summary>
+    private async Task<bool> QuickAddHazardAsync(HazardOffer offer)
+    {
+        var definition = offer.Definition;
+        var actor = new ActorDocument
+        {
+            Id = Guid.NewGuid().ToString(),
+            CampaignId = CampaignId,
+            Kind = ActorKind.Monster,
+            BlueprintId = $"{definition.SystemId}:{definition.Id}",
+            Name = definition.Name,
+            Visibility = ActorVisibility.Hidden,
+            Hazard = offer.Link
+        };
+        ActorSheetSync.SeedFromBlueprint(actor, definition, Definition, Components);
+
+        if (!await RuntimeManager.TryCreateActorAsync(actor, Access))
+        {
+            await OnMessage.InvokeAsync(Flash.Error(L["Combat.DmOnlyCreatures"]));
+            return false;
+        }
+
+        var bonus = offer.Initiative;
+        await SendAsync(new JoinInitiativeCommand(actor.Id, InitiativeDice + (bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString()), CurrentUserId));
+        await OnMessage.InvokeAsync(Flash.Success(L["Combat.HazardAdded", actor.Name]));
+        if (OnActorAdded.HasDelegate) await OnActorAdded.InvokeAsync();
         return true;
     }
 

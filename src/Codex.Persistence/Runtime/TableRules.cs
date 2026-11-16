@@ -260,6 +260,10 @@ internal static class TableRules
     public static bool IsDead(CampaignRuntime runtime, Entity entity) =>
         runtime.System?.Vitals?.Down is { } down && CodexWorld.HasStatus(entity, down.DeadCondition);
 
+    /// <summary>Dead, or a thing with hit points that has none left: a destroyed complex hazard (it has no life track, so it is not "down").</summary>
+    public static bool IsDestroyed(CampaignRuntime runtime, Entity entity) =>
+        IsDead(runtime, entity) || (entity.Has<ResourcePoolComponent>() && entity.Get<ResourcePoolComponent>() is { } pool && pool.Pools.ContainsKey(PrimaryKey(runtime)) && pool.Get(PrimaryKey(runtime)) <= 0);
+
     /// <summary>At zero on the primary resource and not dead.</summary>
     public static bool IsDown(CampaignRuntime runtime, Entity entity) =>
         SystemDefinition.HasLifeTrack(runtime.System) && entity.Has<ResourcePoolComponent>() && entity.Get<ResourcePoolComponent>().Get(PrimaryKey(runtime)) <= 0 && !IsDead(runtime, entity);

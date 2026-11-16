@@ -78,12 +78,28 @@
   <data name="Combat.Hazard.Undo" xml:space="preserve"><value>Undo last change: {0}</value></data>
   <data name="Combat.Hazard.WayCheck" xml:space="preserve"><value>{0} ({1} DC {2})</value></data>
   <data name="Combat.Hazard.WayNeeds" xml:space="preserve"><value>{0} (needs {1})</value></data>
-  <data name="Combat.QuickAdd" xml:space="preserve"><value>Quick-add a creature</value></data>
-  <data name="Combat.SearchCreatures" xml:space="preserve"><value>Search creatures</value></data>
-  <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Search creatures in the Library…</value></data>
+  <data name="Combat.QuickAdd" xml:space="preserve"><value>Quick-add a creature or a hazard</value></data>
+  <data name="Combat.SearchCreatures" xml:space="preserve"><value>Search creatures and hazards</value></data>
+  <data name="Combat.SearchPlaceholder" xml:space="preserve"><value>Search creatures and hazards in the Library…</value></data>
+  <data name="Combat.Hazard.FromLibrary" xml:space="preserve"><value>Taken from the Library, on no place</value></data>
+  <data name="Combat.Hazard.Routine" xml:space="preserve"><value>Routine of {0}</value></data>
+  <data name="Combat.Hazard.InOrder" xml:space="preserve"><value>In the initiative order</value></data>
+  <data name="Combat.Hazard.OutOfOrder" xml:space="preserve"><value>Out of the initiative order</value></data>
+  <data name="Combat.Hazard.ItsTurn" xml:space="preserve"><value>Its turn now</value></data>
+  <data name="Combat.Hazard.RoutineAnyTurn" xml:space="preserve"><value>Some steps, such as a crush, happen on any creature's turn. Use them whenever the hazard reaches a creature.</value></data>
+  <data name="Combat.Hazard.StepNote" xml:space="preserve"><value>Note step {0} of {1}</value></data>
+  <data name="Combat.Hazard.StepOn" xml:space="preserve"><value>Step {0} of {1} on the ticked creatures</value></data>
+  <data name="Combat.QuickAddCreatures" xml:space="preserve"><value>Creatures</value></data>
+  <data name="Combat.QuickAddNoCreatures" xml:space="preserve"><value>No creature matches.</value></data>
+  <data name="Combat.QuickAddHazards" xml:space="preserve"><value>Hazards</value></data>
+  <data name="Combat.QuickAddPlaceHazards" xml:space="preserve"><value>Hazards on {0}</value></data>
+  <data name="Combat.QuickAddInitiative" xml:space="preserve"><value>(initiative {0})</value></data>
+  <data name="Combat.AddHazardToOrder" xml:space="preserve"><value>Add to the order</value></data>
+  <data name="Combat.AddHazardToOrderFor" xml:space="preserve"><value>Add {0} to the initiative order</value></data>
+  <data name="Combat.HazardAdded" xml:space="preserve"><value>{0} is in the initiative order. Only you can see it.</value></data>
   <data name="Combat.AddToEncounterFor" xml:space="preserve"><value>Add {0} to the encounter</value></data>
   <data name="Combat.AddToEncounter" xml:space="preserve"><value>Add to encounter</value></data>
-  <data name="Combat.QuickAddHint" xml:space="preserve"><value>Type to search. Creatures join the live table at once. Players see them, but not their name or details, until you name or hide them.</value></data>
+  <data name="Combat.QuickAddHint" xml:space="preserve"><value>Type to search. Creatures join the live table at once. Players see them, but not their name or details, until you name or hide them. A hazard joins the initiative order unseen: only you see it.</value></data>
   <data name="Combat.PartyRest" xml:space="preserve"><value>Party rest</value></data>
   <data name="Combat.PartyRestHint" xml:space="preserve"><value>Rests every player character at once. Hit dice are spent per character from their row.</value></data>
   <data name="Combat.PartyRestButton" xml:space="preserve"><value>{0} for the party</value></data>

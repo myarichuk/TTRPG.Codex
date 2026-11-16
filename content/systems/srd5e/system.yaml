@@ -544,7 +544,7 @@ entityTypes:
       - { key: initiative,    label: Initiative bonus, type: Number,  category: Profile }
       - { key: reset,         label: Reset,           type: LongText, category: Reset, description: "How and when it arms again. Empty: inert after it goes off." }
       - { key: complex,       label: Complex,         type: Boolean,  category: Profile, description: "A complex hazard takes a turn in initiative and does its routine each round." }
-      - { key: routine,       label: Routine,         type: Collection, category: Profile, description: "A complex hazard's actions each round, a name and a description." }
+      - { key: routine,       label: Routine,         type: Collection, category: Profile, description: "A complex hazard's actions each round: a name, a description, and strikes: true on the one row that applies the hazard's effect to creatures." }
       - { key: higherLevels,  label: Higher levels,   type: Collection, category: Profile, description: "Rows of levels (5-10) and the numbers that change there, such as saveDc, damage, area, depth and severity." }
       - { key: methods,       label: Other ways,      type: Collection, category: Profile, description: "Ways to deal with it beyond noticing and disarming, in the same row shape as detect: a name, a check, a DC, what it needs and a note." }
     hazard:

@@ -220,6 +220,60 @@ public class Srd5eHazardsTests : IAsyncLifetime
     }
 
     [Fact]
+    public void TheRollingStone_HasExactlyOneStrikingRow_Crush_AndNoOtherRoutineRowStrikes()
+    {
+        var type = System.FindType("hazard")!;
+        var stone = Hazards("srd-5.2.1").Single(h => h.Id == "rolling-stone");
+
+        var routine = HazardNumbers.Routine(HazardNumbers.For(stone, type, null), type.Hazard!);
+
+        Assert.Equal(new[] { "Crush" }, routine.Where(s => s.Strikes).Select(s => s.Name));
+        Assert.True(HazardNumbers.HasEffect(HazardNumbers.For(stone, type, null), type.Hazard!));
+        Assert.Empty(HazardNumbers.Problems(stone, type, System));
+        // The Flooding Room's Surge has its own numbers (half on a failure, none on a success), so none of its rows applies the main effect.
+        var room = Hazards("codex-hazards").Single(h => h.Id == "homebrew-flooding-room");
+        Assert.DoesNotContain(HazardNumbers.Routine(HazardNumbers.For(room, type, null), type.Hazard!), s => s.Strikes);
+    }
+
+    [Fact]
+    public void AStrikesKey_MustBeTrueOrFalse_OnOneRowAtMost_AndOnlyOnAHazardWithAnEffect()
+    {
+        var type = System.FindType("hazard")!;
+        var withEffect = Traps.Read("""
+            - id: a
+              name: A
+              properties:
+                saveAttribute: Dexterity
+                saveDc: 12
+                damage:
+                  - { dice: 2d6, type: fire }
+                routine:
+                  - { name: One, strikes: maybe }
+                  - { name: Two, strikes: true }
+                  - { name: Three, strikes: true }
+            """).Single();
+        var noEffect = Traps.Read("""
+            - id: b
+              name: B
+              properties:
+                routine:
+                  - { name: Wave, strikes: true }
+                  - { name: Idle, strikes: false }
+            """).Single();
+
+        var problems = HazardNumbers.Problems(withEffect, type, System).ToList();
+        var bare = HazardNumbers.Problems(noEffect, type, System).ToList();
+
+        Assert.Contains(problems, p => p.Contains("'One'") && p.Contains("true or false"));
+        Assert.Contains(problems, p => p.Contains("more than one routine row"));
+        Assert.DoesNotContain(problems, p => p.Contains("no effect"));
+        Assert.Contains(bare, p => p.Contains("'Wave'") && p.Contains("has no effect"));
+        Assert.DoesNotContain(bare, p => p.Contains("'Idle'"));
+        // The effect is read from the entry's own values: the type always has the field names, an entry with no save, attack or damage has no effect.
+        Assert.False(HazardNumbers.HasEffect(HazardNumbers.For(noEffect, type, null), type.Hazard!));
+    }
+
+    [Fact]
     public void ASaveDcWithNoSave_AndAnOnSaveWithNoSave_AreReported()
     {
         var type = System.FindType("hazard")!;

@@ -88,7 +88,7 @@ public sealed class BookSourceReader(
 
         var reader = audience == BookAudience.Dm ? dm : player != null ? new CampaignAccess(dm.CampaignId, player, CampaignRole.Player) : Stranger(dm.CampaignId);
         var party = audience == BookAudience.Party;
-        var cast = (await actors.GetVisibleForCampaignAsync(reader)).Where(a => !a.Retired).ToList();
+        var cast = (await actors.GetVisibleForCampaignAsync(reader)).Where(a => !a.Retired && a.Hazard == null).ToList();
         IReadOnlySet<string> owned = player == null ? new HashSet<string>()
             : cast.Where(a => a.OwnerUserId == player).Select(a => a.Id).ToHashSet(StringComparer.Ordinal);
         if (player != null && owned.Count == 0)

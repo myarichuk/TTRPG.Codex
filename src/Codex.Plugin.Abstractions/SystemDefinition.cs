@@ -205,7 +205,7 @@ public class HazardDefinition
     /// <summary>The field holding how and when the hazard re-arms (text). Empty: inert after it goes off.</summary>
     public string? Reset { get; set; }
 
-    /// <summary>The field holding what a complex hazard does each round, a collection of <c>{ name, description }</c>. Only for systems with hazards that act in initiative.</summary>
+    /// <summary>The field holding what a complex hazard does each round, a collection of <c>{ name, description, strikes }</c>. <c>strikes: true</c> marks the one row that applies the hazard's effect to the creatures the table names; every other row is a note. Only for systems with hazards that act in initiative.</summary>
     public string? Routine { get; set; }
 
     /// <summary>A Boolean field: when true on an entry, the entry is a complex hazard that takes a turn in initiative.</summary>

@@ -359,7 +359,7 @@ public class Srd5eGoldenCorpusTests : IAsyncLifetime
         sheets["broken-no-class"] = noClass;
 
         // Imported creatures, spread across the bestiary: the stat block as printed, in manual mode.
-        var creatures = _registry.GetActorsBySystem("srd5e").Where(a => a.PackId == "srd-5.2.1").OrderBy(a => a.Id, StringComparer.Ordinal).ToList();
+        var creatures = _registry.GetActorsBySystem("srd5e").Where(a => a.PackId == "srd-5.2.1" && !a.Tags.Contains("hazard")).OrderBy(a => a.Id, StringComparer.Ordinal).ToList();
         for (var i = 0; i < creatures.Count; i += creatures.Count / 9)
         {
             var actor = new ActorDocument();
