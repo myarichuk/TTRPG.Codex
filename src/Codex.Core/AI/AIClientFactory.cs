@@ -19,6 +19,8 @@ public static class AIClientFactory
     public const string OpenAIEndpoint = "https://api.openai.com/v1";
     public const string OllamaEndpoint = "http://localhost:11434/v1";
     public const string AnthropicEndpoint = "https://api.anthropic.com";
+    /// <summary>Google's OpenAI-compatible base URL. The trailing slash is as Google documents it.</summary>
+    public const string GeminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/";
 
     /// <summary>Output budget per reply; Anthropic's API insists on one. Room for a world-building proposal with several entries.</summary>
     public const int AnthropicMaxOutputTokens = 8192;
@@ -33,6 +35,7 @@ public static class AIClientFactory
         new AiProviderPreset("openrouter", "OpenRouter", OpenRouterEndpoint, "openai/gpt-4o-mini", true, "One key, hundreds of models. Get a key at openrouter.ai/keys."),
         new AiProviderPreset("openai", "OpenAI", OpenAIEndpoint, "gpt-4o-mini", true, "Direct OpenAI access with your own key."),
         new AiProviderPreset("anthropic", "Anthropic", AnthropicEndpoint, "claude-haiku-5-5", true, "Claude through Anthropic's own API. Get a key at console.anthropic.com."),
+        new AiProviderPreset("gemini", "Google Gemini", GeminiEndpoint, "gemini-4-hydrogen", true, "Gemini through Google's OpenAI-compatible API. Get a key in Google AI Studio."),
         new AiProviderPreset("ollama", "Ollama (local)", OllamaEndpoint, "llama3.1", false, "A model running on your own machine. No key needed."),
         new AiProviderPreset("lmstudio", "LM Studio (local)", "http://localhost:1234/v1", "local-model", false, "LM Studio's local server. No key needed."),
         new AiProviderPreset("groq", "Groq", "https://api.groq.com/openai/v1", "llama-3.3-70b-versatile", true, "Fast hosted open models."),

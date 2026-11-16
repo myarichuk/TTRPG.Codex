@@ -2,13 +2,45 @@
   // Model ids the AI settings page suggests, per purpose and service (a preset's kind). A suggestion only: the field takes any text.
   // To change them for one server without rebuilding, put a file of this shape named ai-models.json beside the data folder
   // (or point Codex:AiModelsFile at one); each service it lists replaces the list here, the rest are kept.
+  //
+  // Read from the vendors' own model pages on 2026-11-16 (Anthropic: platform.claude.com models overview; OpenAI:
+  // developers.openai.com/api/docs/models and /deprecations; Google: the Gemini API models and OpenAI-compatibility pages).
+  // These move: re-check them against those pages when a vendor ships a model or retires one.
+  //
+  // OpenAI note: every text model below accepts Chat Completions, but OpenAI documents tool calling on GPT-6.1 Sol and Terra
+  // as Responses-API only, and on GPT-6 Luna as Chat Completions only with reasoning_effort "none". The world builder and
+  // character assistant call tools through Chat Completions, so check those before making one of them the working model.
   "text": {
     "anthropic": [
       { "id": "claude-fable-5-2", "label": "Claude Fable 5.2" },
       { "id": "claude-opus-5-5", "label": "Claude Opus 5.5" },
       { "id": "claude-sonnet-5-5", "label": "Claude Sonnet 5.5" },
       { "id": "claude-haiku-5-5", "label": "Claude Haiku 5.5" }
+    ],
+    "openai": [
+      { "id": "gpt-6-astra", "label": "GPT-6 Astra" },
+      { "id": "gpt-6.1-sol", "label": "GPT-6.1 Sol" },
+      { "id": "gpt-6.1-terra", "label": "GPT-6.1 Terra" },
+      { "id": "gpt-6-luna", "label": "GPT-6 Luna" },
+      // The preset's own default, which OpenAI deprecates: it stops working on Jan 14, 2027 (replacement: gpt-6-luna).
+      { "id": "gpt-4o-mini", "label": "GPT-4o mini (deprecated, shuts down Jan 14, 2027)" }
+    ],
+    "gemini": [
+      { "id": "gemini-4-carbon", "label": "Gemini 4 Carbon" },
+      { "id": "gemini-4-argon", "label": "Gemini 4 Argon" },
+      { "id": "gemini-4-hydrogen", "label": "Gemini 4 Hydrogen" },
+      { "id": "gemini-3.8-flash", "label": "Gemini 3.8 Flash" },
+      { "id": "gemini-3.6-flash", "label": "Gemini 3.6 Flash" },
+      { "id": "gemini-3.5-flash-lite", "label": "Gemini 3.5 Flash-Lite" },
+      { "id": "gemini-3.1-flash-lite", "label": "Gemini 3.1 Flash-Lite" }
     ]
   },
-  "image": {}
+  "image": {
+    "openai": [
+      { "id": "gpt-image-2.6-sunburst", "label": "GPT-Image-2.6 Sunburst" },
+      { "id": "gpt-image-2.6-flare", "label": "GPT-Image-2.6 Flare" },
+      { "id": "gpt-image-2.5-sunburst", "label": "GPT-Image-2.5 Sunburst" },
+      { "id": "gpt-image-2.5-flare", "label": "GPT-Image-2.5 Flare" }
+    ]
+  }
 }
