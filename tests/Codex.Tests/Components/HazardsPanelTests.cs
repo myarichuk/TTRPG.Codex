@@ -77,6 +77,30 @@ public class HazardsPanelTests : ComponentTestBase
     }
 
     [Fact]
+    public void NoReachFieldset_ForARouteThatCannotSetItOff() => Assert.Empty(Draw().FindAll("[data-testid=hazard-0-reach]"));
+
+    [Fact]
+    public void TheReachFieldset_ShowsForARouteThatCanSetItOff_GoesWithOneDisable_AndClearsAfterIt()
+    {
+        var sent = new List<HazardRequest>();
+        var armed = Pit() with { Disarm = new[] { new HazardWay("wedge", "Wedge the lid", SetsOff: true) } };
+        var cut = Draw(hazards: new[] { armed }, onRequest: sent.Add);
+        Assert.Equal("Also reached if a try sets it off", cut.Find("fieldset[data-testid=hazard-0-reach] legend").TextContent);
+
+        cut.Find("[data-testid=hazard-who-a1]").Change(true);
+        cut.Find("[data-testid=hazard-0-reach-a2]").Change(true);
+        cut.Find("[data-testid=hazard-0-disable]").Click();
+        Assert.Equal(new[] { "a2" }, sent[^1].Reach);
+
+        // The ticks went with that one try: the next carries none.
+        Assert.False(cut.Find("[data-testid=hazard-0-reach-a2]").HasAttribute("checked"));
+        cut.Find("[data-testid=hazard-0-disable]").Click();
+        Assert.Empty(sent[^1].Reach!);
+        cut.Find("[data-testid=hazard-0-find]").Click();
+        Assert.Null(sent[^1].Reach);
+    }
+
+    [Fact]
     public void TheLastResult_IsInAPoliteStatusRegion_AndShownInWords()
     {
         var cut = Draw(status: new[] { "Spiked Pit: Ana finds it (The lid).", "Ana: Perception 17 vs DC 15, success" });

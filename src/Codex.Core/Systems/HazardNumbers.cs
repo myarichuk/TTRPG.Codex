@@ -531,6 +531,7 @@ public static class HazardNumbers
                 }
 
                 if (Text(row, "rank").Length > 0 && !ranked) yield return Say(say, "RankNone." + label, prefix, name);
+                else if (Text(row, "rank").Length > 0 && RankPlace(system, Text(row, "rank")) == null) yield return Say(say, "RankUnknown." + label, prefix, name, Text(row, "rank"));
                 if (row.ContainsKey("successes") && (!WholeNumber(row["successes"], out var successes) || successes < 1)) yield return Say(say, "SuccessesBad." + label, prefix, name);
             }
         }
@@ -565,6 +566,17 @@ public static class HazardNumbers
             if (name.Length == 0) yield return Say(say, "ConditionNoName", prefix);
             else if (!known.Contains(name)) yield return Say(say, "ConditionUnknown", prefix, name);
         }
+    }
+
+    /// <summary>Where a route's <c>rank</c> stands in <c>sheetRules.skills.ranks</c>, 1-based (the same scale as <see cref="SkillScore.Rank"/>): by the rank's key or label, or as
+    /// that number. Null when the system has no such rank.</summary>
+    public static int? RankPlace(SystemDefinition system, string rank)
+    {
+        var ranks = system.SheetRules?.Skills?.Ranks;
+        if (ranks == null || string.IsNullOrWhiteSpace(rank)) return null;
+        var at = ranks.ToList().FindIndex(r => string.Equals(r.Key, rank.Trim(), StringComparison.OrdinalIgnoreCase) || string.Equals(r.Label, rank.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (at >= 0) return at + 1;
+        return int.TryParse(rank.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number >= 1 && number <= ranks.Count ? number : null;
     }
 
     private static IEnumerable<IDictionary<string, object?>> RowsOf(ContentEntry entry, ContentTypeDefinition type) => Rows(entry.Properties, type.Hazard?.HigherLevels);

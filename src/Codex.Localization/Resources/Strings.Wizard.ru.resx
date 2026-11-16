@@ -170,6 +170,10 @@
   <data name="Wizard.Hazard.Problem.AfterNoRoute.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: «Только после» называет «{2}», а такого способа обнаружения нет.</value></data>
   <data name="Wizard.Hazard.Problem.AfterNoRoute.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: «Только после» называет «{2}», а такого способа обнаружения нет.</value></data>
   <data name="Wizard.Hazard.Problem.AfterItself" xml:space="preserve"><value>{0}способ обнаружения «{1}» ждёт сам себя.</value></data>
+  <data name="Wizard.Hazard.Problem.RankUnknown.detect" xml:space="preserve"><value>{0}способ обнаружения «{1}»: ранга «{2}» нет среди рангов навыков этой системы.</value></data>
+  <data name="Wizard.Hazard.Problem.RankUnknown.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: ранга «{2}» нет среди рангов навыков этой системы.</value></data>
+  <data name="Wizard.Hazard.Problem.RankUnknown.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: ранга «{2}» нет среди рангов навыков этой системы.</value></data>
+  <data name="Wizard.Hazard.Col.SetsOffCritical" xml:space="preserve"><value>Критический провал приводит опасность в действие</value></data>
   <data name="Wizard.Hazard.Problem.RankNone.detect" xml:space="preserve"><value>{0}способ обнаружения «{1}»: указан ранг, но в этой системе у навыков нет рангов.</value></data>
   <data name="Wizard.Hazard.Problem.RankNone.disarm" xml:space="preserve"><value>{0}способ обезвреживания «{1}»: указан ранг, но в этой системе у навыков нет рангов.</value></data>
   <data name="Wizard.Hazard.Problem.RankNone.other-way" xml:space="preserve"><value>{0}другой способ «{1}»: указан ранг, но в этой системе у навыков нет рангов.</value></data>

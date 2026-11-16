@@ -1343,6 +1343,7 @@
   <data name="Campaign.Book.Hazard.Dc" xml:space="preserve"><value>DC {0}</value></data>
   <data name="Campaign.Book.Hazard.Needs" xml:space="preserve"><value>needs {0}</value></data>
   <data name="Campaign.Book.Hazard.After" xml:space="preserve"><value>after {0}</value></data>
+  <data name="Campaign.Book.Hazard.SetsOffCritical" xml:space="preserve"><value>a critical failure sets it off</value></data>
   <data name="Campaign.Book.Hazard.SetsOff" xml:space="preserve"><value>a failure sets it off</value></data>
   <data name="Campaign.Book.Hazard.Successes" xml:space="preserve"><value>{0} successes needed</value></data>
   <data name="Campaign.Book.Hazard.NoPassive" xml:space="preserve"><value>not found by passive scores</value></data>

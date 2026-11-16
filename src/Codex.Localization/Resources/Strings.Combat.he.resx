@@ -48,6 +48,8 @@
   <data name="Combat.Hazard.AllPlaces" xml:space="preserve"><value>כל המקומות</value></data>
   <data name="Combat.Hazard.None" xml:space="preserve"><value>אין כאן סכנה. אפשר להציב אחת בדף המקום.</value></data>
   <data name="Combat.Hazard.Who" xml:space="preserve"><value>דמויות</value></data>
+  <data name="Combat.Hazard.Reach" xml:space="preserve"><value>מי עוד ייפגע אם ניסיון מפעיל אותה</value></data>
+  <data name="Combat.Hazard.ReachHint" xml:space="preserve"><value>רק ל"נטרול". מי שניסה תמיד בטווח, ואין צורך לסמן אותו. סמנו אחרים לסכנה באזור או לכישלון קריטי. הסימונים מתנקים אחרי כל ניסיון.</value></data>
   <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>"זיהוי" ו"הפעלה" פועלים על כל המסומנים. "מציאה" ו"נטרול" פועלים על המסומן הראשון.</value></data>
   <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>נדרש מספר</value></data>
   <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>הדף מודפס, לכן יש להקליד את המספר: בונוס ההצלה, או דרגת השריון להתקפה. לאחר מכן ללחוץ שוב על אותה פעולה: היא תימשך רק עבור היצורים האלה, עם הנזק שכבר הוטל, כך שאיש לא ייפגע פעמיים.</value></data>

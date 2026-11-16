@@ -1343,6 +1343,7 @@
   <data name="Campaign.Book.Hazard.Dc" xml:space="preserve"><value>דרגת קושי {0}</value></data>
   <data name="Campaign.Book.Hazard.Needs" xml:space="preserve"><value>נדרש: {0}</value></data>
   <data name="Campaign.Book.Hazard.After" xml:space="preserve"><value>אחרי: {0}</value></data>
+  <data name="Campaign.Book.Hazard.SetsOffCritical" xml:space="preserve"><value>כישלון קריטי מפעיל את הסכנה</value></data>
   <data name="Campaign.Book.Hazard.SetsOff" xml:space="preserve"><value>כישלון מפעיל את הסכנה</value></data>
   <data name="Campaign.Book.Hazard.Successes" xml:space="preserve"><value>הצלחות נדרשות: {0}</value></data>
   <data name="Campaign.Book.Hazard.NoPassive" xml:space="preserve"><value>ציונים קבועים לא מזהים את הסכנה</value></data>

@@ -86,6 +86,23 @@ entityTypes:
       weaponCategory: { label: Категория }
       traits: { label: Свойства }
   trinket: { label: Безделушка, pluralLabel: Безделушки }
+  hazard:
+    label: Опасность
+    pluralLabel: Опасности
+    fields:
+      kind: { label: Вид }
+      level: { label: Уровень }
+      detect: { label: Обнаружение }
+      disarm: { label: Обезвреживание }
+      trigger: { label: Что её запускает }
+      duration: { label: Длительность }
+      saveAttribute: { label: Спасбросок }
+      saveDc: { label: Сложность спасброска }
+      onSave: { label: При успешном спасброске }
+      damage: { label: Урон }
+      area: { label: Область }
+      effect: { label: Действие }
+      reset: { label: Сброс }
   creature:
     label: Существо
     pluralLabel: Существа

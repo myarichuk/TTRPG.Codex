@@ -212,6 +212,8 @@
   <data name="Event.Hazard.NoRoll" xml:space="preserve"><value>{0}: {1} does it without a roll ({2}).</value></data>
   <data name="Event.Hazard.DisableProgress" xml:space="preserve"><value>{0}: {1} of {2} successes.</value></data>
   <data name="Event.Hazard.Disabled" xml:space="preserve"><value>{0} is disabled.</value></data>
+  <data name="Event.Hazard.SetOffAlso" xml:space="preserve"><value>{0}: it also reaches {1}.</value></data>
+  <data name="Event.Hazard.Refused.RankTooLow" xml:space="preserve"><value>{0}: {1} needs the rank {2}, and {3} does not have it.</value></data>
   <data name="Event.Hazard.SetOff" xml:space="preserve"><value>{0}: the failed attempt sets it off, on {1}.</value></data>
   <data name="Event.Hazard.Triggered" xml:space="preserve"><value>{0} goes off.</value></data>
   <data name="Event.Hazard.Step" xml:space="preserve"><value>{0} takes its step: {1}.</value></data>

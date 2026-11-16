@@ -173,6 +173,8 @@
         {
             columns.Add(new("successes", L["Wizard.Hazard.Col.Successes"], HazardColumnKind.Whole));
             columns.Add(new("triggersOn", L["Wizard.Hazard.Col.SetsOff"], HazardColumnKind.Word) { Word = "failure" });
+            // A system that grades checks in degrees (dice.checkRoll) has a critical failure of its own; "failure" already means a failure or worse.
+            if (System?.Canonical.Dice.CheckRoll != null) columns.Add(new("triggersOn", L["Wizard.Hazard.Col.SetsOffCritical"], HazardColumnKind.Word) { Word = "criticalFailure" });
         }
 
         if (detect) columns.Add(new("passive", L["Wizard.Hazard.Col.Passive"], HazardColumnKind.FlagOnByDefault));

@@ -48,6 +48,8 @@
   <data name="Combat.Hazard.AllPlaces" xml:space="preserve"><value>Все места</value></data>
   <data name="Combat.Hazard.None" xml:space="preserve"><value>Здесь нет опасностей. Добавьте её на странице места.</value></data>
   <data name="Combat.Hazard.Who" xml:space="preserve"><value>Персонажи</value></data>
+  <data name="Combat.Hazard.Reach" xml:space="preserve"><value>Кого ещё заденет, если попытка её запустит</value></data>
+  <data name="Combat.Hazard.ReachHint" xml:space="preserve"><value>Только для «Обезвредить». Тот, кто пытался, затронут всегда, отмечать его не нужно. Отметьте других для опасности с площадью или для критического провала. Отметки сбрасываются после каждой попытки.</value></data>
   <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>«Заметить» и «Сработать» берут всех отмеченных. «Найти» и «Обезвредить» берут первого отмеченного.</value></data>
   <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>Нужно число</value></data>
   <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>Лист напечатан, поэтому введите число: бонус спасброска или КД для атаки. Затем нажмите то же действие ещё раз: оно продолжится только для этих существ с уже брошенным уроном, так что никто не получит урон дважды.</value></data>

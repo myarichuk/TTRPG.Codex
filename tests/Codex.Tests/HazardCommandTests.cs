@@ -620,6 +620,63 @@ public class HazardCommandTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
     }
 
     [Fact]
+    public async Task TheRepeatForACreatureThatWaitedForASaveBonus_KeepsTheAttackItAlreadyRolled_Async()
+    {
+        var effect = HazardType.Hazard!.Effect!;
+        effect.Attack = "attackBonus";
+        try
+        {
+            var table = await TableAsync();
+            await using var _ = table.Runtime;
+            var ogre = new ActorDocument
+            {
+                Id = Guid.NewGuid().ToString(), CampaignId = table.Runtime.CampaignId, Name = "Ogre", Kind = ActorKind.Monster,
+                Sheet = new Dictionary<string, object> { ["HP"] = 30L, ["HP_Max"] = 30L, [SheetRuleEngine.MethodKey] = SheetRuleEngine.PrintedMethod }
+            };
+            ActorSheetSync.ApplySheetToState(ogre, System, _registry);
+            await _actors.SaveAsync(ogre);
+            table.Runtime.Hydrate(new[] { ogre });
+            var entry = Synthetic("homebrew-dart-wall", new Dictionary<string, object>
+            {
+                ["attackBonus"] = 5L, ["saveAttribute"] = "Dexterity", ["saveDc"] = 12L,
+                ["damage"] = new List<object> { new Dictionary<string, object> { ["dice"] = "1d6", ["type"] = "piercing" } }
+            });
+            var placed = await PlaceAsync(table, Hidden(entry));
+            var site = SiteOf(placed, entry, Hidden(entry));
+            var armor = HazardAsk.KeyFor(ogre.Id, HazardAskKind.ArmorClass, string.Empty);
+
+            // The real order of the panel: the armor class is asked, then typed (the attack hits, and the save bonus is asked), then only the save bonus is sent.
+            table.Dice.Faces.Enqueue(4);
+            var asked = await RunAsync(table, Cmd(site, HazardAction.Trigger, new[] { ogre.Id }));
+            Assert.Equal(HazardAskKind.ArmorClass, Assert.Single(asked.Asks).Kind);
+            // Damage 4 again, then the attack (10 + 5 = 15 against armor class 15: a hit).
+            foreach (var face in new[] { 4, 10 }) table.Dice.Faces.Enqueue(face);
+            var first = await RunAsync(table, Cmd(site, HazardAction.Trigger, new[] { ogre.Id }, bonuses: new Dictionary<string, int> { [armor] = 15 }));
+            var save = Assert.Single(first.Asks);
+            Assert.Equal(new[] { ogre.Id }, first.NeedsNumber);
+            Assert.Equal(15, first.AttackRolled[ogre.Id]);
+
+            // The repeat finishes with the same damage and the same attack: only the save is rolled (8 + 1 against DC 12 fails: the whole 4).
+            table.Dice.Faces.Enqueue(8);
+            var attacksBefore = table.Dice.Expressions.Count(e => e == "1d20+5");
+            var repeat = new HazardCommand(site, HazardAction.Trigger, new[] { ogre.Id }, Gm, null, null, null,
+                new Dictionary<string, int> { [save.Key] = 1 }, first.DamageRolled, null, first.AttackRolled);
+            await RunAsync(table, repeat);
+
+            // No armor class asked again, no second attack, no second "Hit" line, and the attack is still kept for a later pass.
+            Assert.Empty(repeat.Asks);
+            Assert.Equal(attacksBefore, table.Dice.Expressions.Count(e => e == "1d20+5"));
+            Assert.DoesNotContain(repeat.Said!.Parts, p => p.Key == "Hazard.Hit");
+            Assert.Equal(15, repeat.AttackRolled[ogre.Id]);
+            Assert.Equal(26, Hp(table, ogre));
+        }
+        finally
+        {
+            effect.Attack = null;
+        }
+    }
+
+    [Fact]
     public async Task TheStatePicker_IsALoggedCommand_AndHiddenStartsOver_Async()
     {
         var table = await TableAsync();

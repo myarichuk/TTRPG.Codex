@@ -1,0 +1,127 @@
+# Three invented hazards. Every name, number and line is written for this project. A route names a skill, a DC, a minimum rank and how many successes
+# it takes; `triggersOn` lists the outcomes that set the hazard off: `failure` means a failure or worse, `criticalFailure` that outcome alone.
+- id: lantern-snare
+  name: Lantern snare
+  tags: [homebrew]
+  description: A bright paper lantern hangs low over a doorway, tied to a cord that runs through the lintel and into a pit of shards.
+  properties:
+    kind: trap
+    level: 1
+    trigger: A creature pulls the lantern down or walks through the cord.
+    duration: Instantaneous
+    reset: The cord has to be retied and the shards swept up, which takes ten minutes.
+    saveAttribute: Dexterity
+    saveDc: 16
+    onSave: half
+    damage:
+      - { dice: 2d6, type: piercing }
+    effect: A hail of glass shards falls on whoever is under the lintel.
+    detect:
+      - id: cord
+        name: Follow the cord
+        action: Search
+        check: Survival
+        dc: 15
+        text: The cord runs up into the lintel; it is too neat to be decoration.
+    disarm:
+      - id: cut
+        name: Cut both ends of the cord
+        action: Action
+        check: Craft
+        dc: 16
+        rank: trained
+        successes: 2
+        after: cord
+        triggersOn: [failure]
+        text: One cut loosens the cord and a second drops the weight. A failure, or worse, tugs it.
+
+- id: cinder-vent
+  name: Cinder vent
+  tags: [homebrew]
+  description: A grate in the floor of a forge-hall breathes out a sullen heat, and a bellows wheel behind the wall turns by itself when anyone nears.
+  properties:
+    kind: environmental
+    level: 2
+    area: The whole of the grate's room.
+    trigger: The bellows wheel is turned, or the grate is walked over.
+    duration: Instantaneous
+    reset: The wheel stops by itself and the vent cools in one minute.
+    saveAttribute: Constitution
+    saveDc: 19
+    onSave: half
+    damage:
+      - { dice: 3d6, type: fire }
+    effect: A gout of cinders fills the room. Everyone inside takes the damage unless they leave the room first.
+    detect:
+      - id: heat
+        name: Feel for the draught
+        action: Search
+        check: Survival
+        dc: 17
+        text: The air over the grate is warmer than the room around it.
+      - id: wheel
+        name: Find the bellows wheel
+        action: Search
+        check: Craft
+        dc: 19
+        rank: trained
+        after: heat
+        text: Behind a loose panel is the wheel that drives the vent.
+    disarm:
+      - id: jam
+        name: Jam the wheel
+        action: Action
+        check: Athletics
+        dc: 19
+        rank: expert
+        successes: 3
+        after: wheel
+        triggersOn: [criticalFailure]
+        text: Each success wedges the wheel a little further. A critical failure spins it and sets the vent off on the whole room.
+      - id: smother
+        name: Smother the grate
+        action: 10 minutes
+        needs: Wet sacking or a few buckets of water for the whole grate
+        after: heat
+        text: The vent cools and cannot breathe out.
+
+- id: gravity-bell
+  name: Gravity bell
+  tags: [homebrew]
+  description: A small bronze bell, no bigger than a fist, hangs from a silver hook in a vaulted ceiling. It does not swing.
+  properties:
+    kind: haunt
+    level: 3
+    trigger: Anyone speaks above a whisper under the bell.
+    duration: Instantaneous
+    reset: The bell tolls once more at the next dusk.
+    saveAttribute: Wisdom
+    saveDc: 21
+    onSave: none
+    damage:
+      - { dice: 4d6, type: force }
+    effect: The bell tolls without being struck, and the floor seems to drop away. Whoever is under the vault is thrown against the flagstones.
+    detect:
+      - id: hook
+        name: Study the hook
+        action: Study
+        check: Arcana
+        dc: 21
+        rank: trained
+        text: The silver hook has been cut with a spiral of tiny glyphs.
+    disarm:
+      - id: stop
+        name: Quiet the bell with the right words
+        action: Action
+        check: Arcana
+        dc: 23
+        rank: expert
+        successes: 2
+        after: hook
+        triggersOn: [failure]
+        text: Two careful words in a row quiet the glyphs. A failure, or worse, is a loud word.
+      - id: muffle
+        name: Muffle the bell
+        action: Action
+        needs: A thick cloth wrapped around the bell, tied with a cord
+        text: A muffled bell has nothing to toll.

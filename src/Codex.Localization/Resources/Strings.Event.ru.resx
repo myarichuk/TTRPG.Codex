@@ -212,6 +212,8 @@
   <data name="Event.Hazard.NoRoll" xml:space="preserve"><value>{0}: {1} делает это без броска ({2}).</value></data>
   <data name="Event.Hazard.DisableProgress" xml:space="preserve"><value>{0}: успехов {1} из {2}.</value></data>
   <data name="Event.Hazard.Disabled" xml:space="preserve"><value>{0}: опасность обезврежена.</value></data>
+  <data name="Event.Hazard.SetOffAlso" xml:space="preserve"><value>{0}: она задевает и цель — {1}.</value></data>
+  <data name="Event.Hazard.Refused.RankTooLow" xml:space="preserve"><value>{0}: для «{1}» нужен ранг «{2}»; ранг ниже — {3}.</value></data>
   <data name="Event.Hazard.SetOff" xml:space="preserve"><value>{0}: неудачная попытка запускает её, цель — {1}.</value></data>
   <data name="Event.Hazard.Triggered" xml:space="preserve"><value>{0} срабатывает.</value></data>
   <data name="Event.Hazard.Step" xml:space="preserve"><value>{0} делает свой шаг: {1}.</value></data>
