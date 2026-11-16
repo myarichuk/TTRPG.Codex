@@ -1,0 +1,13 @@
+# A background trains one skill, through the `adds` any feature source may carry.
+- id: ferry-hand
+  name: Ferry hand
+  tags: [homebrew]
+  description: You worked a flat boat across slow water and learned to haul, haggle and read the current.
+  properties:
+    adds: [{ to: skills, entries: [athletics], rank: trained }]
+- id: lamp-keeper
+  name: Lamp keeper
+  tags: [homebrew]
+  description: You tended the signal lamps of a lonely road and learned to repair what the weather broke.
+  properties:
+    adds: [{ to: skills, entries: [craft], rank: trained }]

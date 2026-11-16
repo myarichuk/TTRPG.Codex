@@ -1,0 +1,76 @@
+# Three invented creatures. Every number is printed as the stat block prints it: armor class, three saves, Perception, a DC and Strikes
+# (each Strike a row of name, bonus, range and damage). A condition on the creature lowers these through sheetRules.printed.
+- id: mire-hound
+  name: Mire hound
+  tags: [homebrew]
+  description: A lean, mud-streaked hunter that circles a camp at dusk.
+  properties:
+    level: 1
+    family: Beast
+    armorClass: 16
+    hitPoints: 18
+    saveCon: 5
+    saveDex: 8
+    saveWis: 6
+    perceptionBonus: 6
+    classDcValue: 14
+    str: 14
+    dex: 16
+    con: 12
+    int: 2
+    wis: 12
+    cha: 6
+    strikes:
+      - { name: Bite, bonus: 8, range: melee, damage: 1d8+1 }
+    abilities:
+      - { name: Mud drag, description: "On a critical hit with its Bite, the target is Pinned until the start of the hound's next turn." }
+- id: ash-sentry
+  name: Ash sentry
+  tags: [homebrew]
+  description: A stiff figure of fused cinders left to guard a doorway.
+  properties:
+    level: 3
+    family: Construct
+    armorClass: 19
+    hitPoints: 48
+    saveCon: 11
+    saveDex: 6
+    saveWis: 7
+    perceptionBonus: 9
+    classDcValue: 18
+    str: 18
+    dex: 10
+    con: 16
+    int: 4
+    wis: 12
+    cha: 6
+    strikes:
+      - { name: Cinder fist, bonus: 11, range: melee, damage: 1d8+5 }
+      - { name: Hurled ember, bonus: 8, range: ranged, damage: 1d6+2 }
+    abilities:
+      - { name: Hold the door, description: "The sentry does not leave the spot it was set to guard." }
+- id: veil-wisp
+  name: Veil wisp
+  tags: [homebrew]
+  description: A drifting pale light that leads travellers off the road.
+  properties:
+    level: 2
+    family: Spirit
+    armorClass: 17
+    hitPoints: 30
+    saveCon: 5
+    saveDex: 10
+    saveWis: 9
+    perceptionBonus: 8
+    classDcValue: 16
+    str: 6
+    dex: 18
+    con: 10
+    int: 10
+    wis: 14
+    cha: 14
+    strikes:
+      - { name: Chilling touch, bonus: 9, range: melee, damage: 1d6+3 }
+      - { name: Lure spark, bonus: 9, range: ranged, damage: 1d4+3 }
+    abilities:
+      - { name: Lead astray, description: "A creature that fails a Wisdom save against the wisp's DC is Shaken 1 and walks toward the light." }

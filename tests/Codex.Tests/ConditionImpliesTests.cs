@@ -282,7 +282,7 @@ public class ConditionImpliesTests : IClassFixture<RavenDbFixture>, IDisposable
 
     private static ContentEntry Trinket(string target) => new()
     {
-        Id = "pebble", Type = "trinket", Name = "Lucky pebble", SystemId = "degrees",
+        Id = "pebble", Type = "trinket", Name = "Lucky pebble", SystemId = "ref-degrees",
         Properties = new Dictionary<string, object> { ["modifiers"] = new List<object> { new Dictionary<string, object> { ["target"] = target, ["amount"] = "1" } } }
     };
 

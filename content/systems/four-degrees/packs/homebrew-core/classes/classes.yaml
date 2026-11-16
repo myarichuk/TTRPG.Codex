@@ -1,0 +1,34 @@
+# A class's rows apply from their level (1 to 3 here). Its hit points per level are a number of its own; its armor, weapon, Perception and
+# class DC ranks are grants to ranked lists; its two trained saves are `savingThrows`.
+- id: warden
+  name: Warden
+  tags: [homebrew]
+  description: A steady front-line fighter who holds a spot and keeps others standing.
+  properties:
+    savingThrows: [con, wis]
+    keyAttribute: str
+    boosts: [str]
+    hp: 9
+    features:
+      - { name: Armor training, level: 1, description: You are trained in light and medium armor and in unarmored defense., adds: [{ to: armor, entries: [unarmored, light, medium], rank: trained }] }
+      - { name: Weapon training, level: 1, description: You are trained in simple and martial weapons and in unarmed Strikes., adds: [{ to: weapons, entries: [unarmed, simple, martial], rank: trained }] }
+      - { name: Watchful, level: 1, description: You are trained in Perception and in your class DC., adds: [{ to: perception, rank: trained }, { to: classDc, rank: trained }] }
+      - { name: Lucky break, level: 1, description: Once per session you may turn a failure on one of your checks into a success., uses: { max: 1, key: luckyBreak, label: Lucky break, recovers: [{ on: sessionStart, amount: all }] } }
+      - { name: Plant your feet, level: 2, description: Once between daily preparations you brace in place; until the end of your next turn your Shaken and Wobbly values are each lowered by 1 (to a minimum of 0); the table applies this by hand., uses: { max: 1, key: plantFeet, label: Plant your feet, recovers: [{ on: dailyPrep, amount: all }] } }
+      - { name: Hardy, level: 3, description: Your Constitution saves become expert., adds: [{ to: saveExpert, entries: [con] }] }
+- id: lorekeeper
+  name: Lorekeeper
+  tags: [homebrew]
+  description: A scholar of odd facts who prepares small tricks at dawn and spends them through the day.
+  properties:
+    savingThrows: [dex, wis]
+    keyAttribute: int
+    boosts: [int]
+    hp: 7
+    features:
+      - { name: Armor training, level: 1, description: You are trained in light armor and in unarmored defense., adds: [{ to: armor, entries: [unarmored, light], rank: trained }] }
+      - { name: Weapon training, level: 1, description: You are trained in simple weapons and in unarmed Strikes., adds: [{ to: weapons, entries: [unarmed, simple], rank: trained }] }
+      - { name: Watchful, level: 1, description: You are trained in Perception and in your class DC., adds: [{ to: perception, rank: trained }, { to: classDc, rank: trained }] }
+      - { name: Prepared trick, level: 1, description: Each daily preparation you ready one small trick of your choice; using it spends the preparation., uses: { max: 1, key: preparedTrick, label: Prepared trick, recovers: [{ on: dailyPrep, amount: all }] } }
+      - { name: Inner reserve, level: 2, description: You hold a single point of reserve. Spending it fuels a stronger trick; a short breather restores it., uses: { max: 1, key: innerReserve, label: Inner reserve, recovers: [{ on: catchBreath, amount: 1 }, { on: dailyPrep, amount: all }] } }
+      - { name: Sharp watch, level: 3, description: Your Perception becomes expert., adds: [{ to: perception, raise: 1 }] }

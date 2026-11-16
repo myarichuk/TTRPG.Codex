@@ -1,0 +1,147 @@
+name: Четыре степени
+compatibility: Д20 с четырьмя степенями успеха
+description: >-
+  Система на d20 с четырьмя степенями успеха. Ранги (от обученного до легендарного) равны уровню плюс 2, 4, 6 или 8;
+  характеристики строятся из повышений; у состояний есть значение, и одни состояния приносят с собой другие;
+  с каждой следующей атакой за ход попасть труднее.
+
+attributes:
+  str: { label: Сила, abbreviation: СИЛ }
+  dex: { label: Ловкость, abbreviation: ЛОВ }
+  con: { label: Телосложение, abbreviation: ТЕЛ }
+  int: { label: Интеллект, abbreviation: ИНТ }
+  wis: { label: Мудрость, abbreviation: МУД }
+  cha: { label: Харизма, abbreviation: ХАР }
+
+resources:
+  HP: { label: Очки здоровья }
+
+actorFields:
+  level: { label: Уровень, category: Общее }
+  ancestry: { label: Происхождение, category: Общее }
+  background: { label: Предыстория, category: Общее }
+  class: { label: Класс, category: Общее }
+  faith: { label: Вера, category: Вера }
+  faithVows: { label: Обеты, category: Вера, description: Чего вера требует от последователей, своими словами. }
+  faithTaboos: { label: Запреты, category: Вера, description: Что вера запрещает, своими словами. }
+  armorClass: { label: Класс брони, category: Бой }
+
+maxSuffix: макс.
+
+categories:
+  General: Общее
+  Faith: Вера
+  Combat: Бой
+  Profile: Профиль
+  Defenses: Защита
+  Senses: Чувства
+  Actions: Действия
+  Ability scores: Характеристики
+
+conditions:
+  Shaken: Потрясённый
+  Wobbly: Пошатнувшийся
+  Pinned: Прижатый
+  Heartened: Воодушевлённый
+
+moments:
+  dailyPrep: Ежедневная подготовка
+  catchBreath: Короткая передышка
+  sessionStart: Начало сессии
+
+entityTypes:
+  ancestry:
+    label: Происхождение
+    pluralLabel: Происхождения
+    fields:
+      hp: { label: Очки здоровья }
+      boosts: { label: Повышения характеристик }
+  background: { label: Предыстория, pluralLabel: Предыстории }
+  class:
+    label: Класс
+    pluralLabel: Классы
+    fields:
+      hp: { label: Очки здоровья за уровень }
+      keyAttribute: { label: Ключевая характеристика }
+      boosts: { label: Повышения характеристик }
+      savingThrows: { label: Обученные спасброски }
+  faith:
+    label: Вера
+    pluralLabel: Веры
+    fields:
+      vows: { label: Обеты }
+      taboos: { label: Запреты }
+  feat: { label: Черта, pluralLabel: Черты }
+  armor:
+    label: Доспех
+    pluralLabel: Доспехи
+    fields:
+      armorBase: { label: Бонус брони }
+      armorDexCap: { label: Предел Ловкости }
+      armorCategory: { label: Категория }
+  weapon:
+    label: Оружие
+    pluralLabel: Оружие
+    fields:
+      weaponCategory: { label: Категория }
+      traits: { label: Свойства }
+  trinket: { label: Безделушка, pluralLabel: Безделушки }
+  creature:
+    label: Существо
+    pluralLabel: Существа
+    fields:
+      level: { label: Уровень }
+      family: { label: Семейство }
+      armorClass: { label: Класс брони }
+      hitPoints: { label: Очки здоровья }
+      saveCon: { label: Спасбросок Телосложения }
+      saveDex: { label: Спасбросок Ловкости }
+      saveWis: { label: Спасбросок Мудрости }
+      perceptionBonus: { label: Внимательность }
+      classDcValue: { label: Особая СЛ }
+      strikes: { label: Удары }
+      abilities: { label: Способности }
+
+values:
+  Perception: Внимательность
+  Class DC: СЛ класса
+  Armor: Доспехи
+  Weapons: Оружие
+  Unarmored: Без доспехов
+  Light armor: Лёгкий доспех
+  Medium armor: Средний доспех
+  Heavy armor: Тяжёлый доспех
+  Unarmed: Безоружный
+  Simple weapons: Простое оружие
+  Martial weapons: Воинское оружие
+  Strike: Удар
+  Sense DC: СЛ восприятия
+  Speed: Скорость
+  Check: Проверка
+  Attack bonus: Бонус атаки
+  Attack this turn: Атака в этом ходу
+  Armor class: Класс брони
+  Weapon: Оружие
+  Bonus: Бонус
+  DC: СЛ
+  Character: Персонаж
+  Trinkets: Безделушки
+  Gear: Снаряжение
+
+sheetRules:
+  lists:
+    feats: Черты
+  skills:
+    athletics: Атлетика
+    arcana: Магия
+    craft: Ремесло
+    diplomacy: Дипломатия
+    stealth: Скрытность
+    survival: Выживание
+  ranks:
+    trained: Обучен
+    expert: Эксперт
+    master: Мастер
+    legendary: Легендарный
+  skillsLabel: Навыки
+  inventoryLabel: Снаряжение
