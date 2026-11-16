@@ -17,6 +17,7 @@ public static class CheckGrading
         {
             if (SheetRolls.Grade(system, resolver, sheet ?? new Dictionary<string, object>(), entry.Total, natural, target) is not { } grade) return;
             entry.Outcome = grade.Outcome;
+            entry.Dc = target;
             entry.Mark = grade.Mark;
         }
         catch (Exception ex) when (ex is RollException or FormulaException or InvalidOperationException)

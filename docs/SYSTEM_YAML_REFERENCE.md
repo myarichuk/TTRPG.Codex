@@ -1319,7 +1319,7 @@ A named result a roll can come to (`critical`, `success`, `partial`); a roll's o
 | `when` | text (a number is text too) | A formula over the dice and total (`natural`, `total`, `kept`, `dice`, `zeroDice`) that must be true. None: always, so it belongs last. |
 | `replacesParent` | true or false | A follow-up roll's outcome that becomes the roll it follows (a confirmed threat is the attack's critical). |
 | `mark` | text (a number is text too) | How the dice display marks it: `critical`, `fumble` or none. Unset, an outcome named `critical` or `fumble` is marked so. |
-| `passes` | true or false | For the roll `dice.checkRoll` names: whether reaching this outcome meets the DC (a success). Unset, an outcome whose name starts with `success` or `criticalSuccess` passes. |
+| `passes` | true or false | For the roll `dice.checkRoll` names: whether reaching this outcome meets the DC (a success). Unset, an outcome named exactly\n /// `success` or `criticalSuccess` passes (any other name must say `passes: true`). |
 
 ## RollFollowUpDefinition
 

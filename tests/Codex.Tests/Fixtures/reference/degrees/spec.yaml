@@ -271,6 +271,13 @@ expectations:
     roll: { definition: strike, inputs: { bonus: 9, target: 18, attackNumber: 3, weapon: swift-knife }, dice: [17] }
     expect: { outcome: success, total: 18 }
     why: "17 + 9 - 8 meets 18. Without the trait it is 16."
+  - id: degrees.a-condition-on-the-rolls-own-key-lowers-the-named-roll-once
+    step: 4
+    sheet: hero5
+    with: { values: { condition_frightened: 2 } }
+    roll: { definition: strike, inputs: { bonus: 9, target: 18 }, dice: [12] }
+    expect: { outcome: success, total: 19 }
+    why: "12 + 9 - 2 (Frightened 2 on the roll's own key, once). Not 17, which would count it on both targets."
   - id: degrees.a-weapon-without-the-trait-keeps-the-full-penalty
     step: 4
     sheet: hero5

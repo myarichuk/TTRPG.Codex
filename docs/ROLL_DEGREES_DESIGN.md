@@ -28,7 +28,9 @@ condition modifiers. Nothing here changes a system that does not name the new ke
    those outcomes for a total, the check die's natural face and a DC, so a roll made through a definition and a roll the sheet makes (an
    attack, a skill check) cannot disagree. `RollOutcomeDefinition.Passes` says whether an outcome meets the DC; unset, `success` and
    `criticalSuccess` do. A system with no `checkRoll` has no degrees, and nothing about its rolls changes.
-2. **A roll with no DC has no degree.** The panel's "against" box is optional. Empty, the roll is made and logged as before; filled, the log
+2. **A roll with no DC has no degree.** The "against" box (on the Actions panel, and in the dice tray for skills, saves and attribute checks) is
+   optional and is emptied once a roll uses it, so the next target is asked for again. The log entry keeps the number (`RollLogEntry.Dc`) and
+   shows "against 18" beside the degree; the session event says it too. Empty, the roll is made and logged as before; filled, the log
    entry carries `Outcome` and `Mark` (the same fields a named roll sets). The grade is worked out where the roll is recorded
    (`CheckGrading`), at the table and off it.
 3. **The multiple attack penalty is a roll input, in one table.** `sheetRules.multipleAttack` is the only place the numbers live.
@@ -47,9 +49,16 @@ condition modifiers. Nothing here changes a system that does not name the new ke
 
 ## Not built
 
-- Hazard checks (`CheckService.Make`) still grade success or failure only; `ActorChecks.Grade` has no system to read `checkRoll` from.
-  The skipped `ActorCheckTests` case stands for it and is P12's (degrees through the outcome keys).
-- The attack number does not advance by itself after a roll; the player sets it, and the panel says to set it back each turn.
+- **Hazard checks keep pass or fail until P12.** `CheckService.Make` has the system, the resolver and the natural die, so reading
+  `checkRoll` there is about five lines (`SheetRolls.Grade(...) is { } g ? new CheckOutcome(g.Outcome, g.Passed, g.Mark) : ActorChecks.Grade(...)`).
+  It waits on a question, not on access: `triggersOn: [failure]` would then stop firing on a `criticalFailure`, and the editor offers only the
+  `failure` box. Until P12 decides which outcome keys set a hazard off, the two graders can disagree: a natural 1 with a total of 15 against
+  DC 15 is `success` in the hazard log and `failure` from a panel's "against" box. The skipped `ActorCheckTests` case stands for it.
+- The attack number does not advance by itself after a roll (`ActionRoll.AttackNumber` is there for H4b to do it). At a table it starts over
+  at the first attack when the creature's turn comes round (the panel's `TurnKey` is the round and place in the order); on the sheet page there
+  is no turn, so the player sets it.
+- A condition aimed at a roll's own key reaches the named roll only. The Actions panel's Strike reads `attack`, so an effect that names both
+  `attack` and the roll's key counts twice on the named roll (its typed `bonus` already holds `attack`). The loader does not warn of it yet.
 
 ## Built
 

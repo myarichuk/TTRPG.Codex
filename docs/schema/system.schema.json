@@ -5202,7 +5202,7 @@
         },
         "passes": {
           "type": "boolean",
-          "description": "For the roll `dice.checkRoll` names: whether reaching this outcome meets the DC (a success). Unset, an outcome whose name starts with `success` or `criticalSuccess` passes."
+          "description": "For the roll `dice.checkRoll` names: whether reaching this outcome meets the DC (a success). Unset, an outcome named exactly\\n /// `success` or `criticalSuccess` passes (any other name must say `passes: true`)."
         }
       },
       "additionalProperties": false

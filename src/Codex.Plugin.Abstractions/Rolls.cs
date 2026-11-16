@@ -129,8 +129,7 @@ public sealed class RollOutcomeDefinition
     /// <c>critical</c> or <c>fumble</c> is marked so.</summary>
     public string? Mark { get; set; }
 
-    /// <summary>For the roll <c>dice.checkRoll</c> names: whether reaching this outcome meets the DC (a success). Unset, an outcome whose name
-    /// starts with <c>success</c> or <c>criticalSuccess</c> passes.</summary>
+    /// <summary>For the roll <c>dice.checkRoll</c> names: whether reaching this outcome meets the DC (a success). Unset, an outcome named exactly\n    /// <c>success</c> or <c>criticalSuccess</c> passes (any other name must say <c>passes: true</c>).</summary>
     public bool? Passes { get; set; }
 }
 

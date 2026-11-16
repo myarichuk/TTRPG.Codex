@@ -894,15 +894,21 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
             CheckDieIndex = _result.CheckDieIndex
         };
         // Against a DC, the roll says its degree (the system's checkRoll); a system without one leaves the entry as it was.
-        CheckGrading.Apply(entry, runtime.System, runtime.Resolver, ActorId == null ? null : runtime.GetActorDocument(ActorId)?.Sheet, Dc);
+        // On the sheet as the table has it, so a condition the table holds counts in the grade as it does in the bonus.
+        CheckGrading.Apply(entry, runtime.System, runtime.Resolver, ActorId != null && runtime.GetActorDocument(ActorId) is { } actor ? runtime.LiveSheetOf(actor) : null, Dc);
+        _entry = entry;
         runtime.RecordRoll(entry);
     }
+
+    private RollLogEntry? _entry;
 
     public SessionEvent Describe(CampaignRuntime runtime)
     {
         object roller = ActorId != null ? runtime.ActorTerm(ActorId) : EventTerm.User(RollerUserId);
         var message = IsSecret
             ? EventMessage.Of("Roll.Secret", roller, Expression)
+            : _entry is { Outcome: { } degree, Dc: { } against }
+                ? EventMessage.Of("Roll.Degree", roller, Label ?? Expression, Expression, _result?.Total, EventTerm.Degree(degree), against)
             : Label != null
                 ? EventMessage.Of("Roll.Labeled", roller, Label, Expression, _result?.Total)
                 : EventMessage.Of("Roll.Plain", roller, Expression, _result?.Total);

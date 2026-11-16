@@ -36,6 +36,7 @@ public static class MultipleAttack
     {
         null => Array.Empty<string>(),
         string text => text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+        IDictionary => Array.Empty<string>(),
         IEnumerable items => items.Cast<object?>().Select(i => i?.ToString()?.Trim() ?? string.Empty).Where(w => w.Length > 0),
         _ => new[] { value.ToString() ?? string.Empty }
     };

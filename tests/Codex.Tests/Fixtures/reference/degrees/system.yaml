@@ -55,6 +55,9 @@ conditionEffects:
       - { target: attack,     amount: "-value", type: status }
       - { target: save,       amount: "-value", type: status }
       - { target: check,      amount: "-value", type: status }
+      # The named strike roll's own key: its bonus is typed by hand, so this is the one place a condition reaches it. The Actions panel's
+      # Strike reads `attack` above, never this, so an effect with both `attack` and `strike` would count twice on the named roll.
+      - { target: strike,     amount: "-value", type: status }
       - { target: classDc,    amount: "-value", type: status }
       - { target: perception, amount: "-value", type: status }
       - { target: senseDc,    amount: "-value", type: status }
@@ -212,7 +215,7 @@ rolls:
   - key: strike
     label: Strike
     dice: 1d20
-    add: ["bonus", "attackPenalty(attackNumber)"]
+    add: ["bonus", "attackPenalty(attackNumber)", "modifiers('strike')"]
     inputs:
       - { key: bonus,        from: roller, label: Attack bonus }
       - { key: target,       from: gm,     label: Armor class }

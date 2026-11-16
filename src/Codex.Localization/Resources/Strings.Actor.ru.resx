@@ -559,6 +559,7 @@
   <data name="Actor.Actions.AttackNumberHint" xml:space="preserve"><value>Штраф применяется к следующему броску атаки. Когда начинается новый ход, верните значение «Атака 1».</value></data>
   <data name="Actor.Actions.Against" xml:space="preserve"><value>Против (класс доспеха или сложность, по желанию)</value></data>
   <data name="Actor.Degree.criticalSuccess" xml:space="preserve"><value>Критический успех</value></data>
+  <data name="Actor.Dice.Against" xml:space="preserve"><value>против {0}</value></data>
   <data name="Actor.Degree.success" xml:space="preserve"><value>Успех</value></data>
   <data name="Actor.Degree.failure" xml:space="preserve"><value>Провал</value></data>
   <data name="Actor.Degree.criticalFailure" xml:space="preserve"><value>Критический провал</value></data>

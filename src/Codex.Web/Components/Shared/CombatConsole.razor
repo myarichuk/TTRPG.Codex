@@ -157,7 +157,7 @@ else
                             <TableCard @key="actorId" Campaign="Campaign" Actor="actor" State="snapshot.Actor(actorId)" Definition="Definition"
                                        Evaluation="@(full ? EvaluationOf(actor) : null)" WorkedSheet="@(full ? workedSheets.GetValueOrDefault(actorId) : null)" Printed="@(full ? PrintedOf(actor) : null)" Blueprint="@(Access.IsDm ? BlueprintOf(actor) : null)"
                                        Full="full" CanAct="CanTrackSlots(actorId)" IsDm="Access.IsDm" Expanded="IsCardOpen(actor)" OnToggle="() => ToggleCard(actorId)"
-                                       CurrentUserId="@CurrentUserId" CheckDie="@(Definition?.Dice.Check ?? "1d20")" Send="SendAsync" Engine="@(full ? engine : null)" Linked="@(full ? Linked() : null)" />
+                                       CurrentUserId="@CurrentUserId" CheckDie="@(Definition?.Dice.Check ?? "1d20")" TurnKey="@TurnKeyOf(actorId)" Send="SendAsync" Engine="@(full ? engine : null)" Linked="@(full ? Linked() : null)" />
                         }
                     </div>
                 </section>
@@ -633,6 +633,11 @@ else
         var actor = ActorsById.GetValueOrDefault(id);
         return actor?.Name ?? (Access.IsDm ? id : L["Combat.SomeoneUnseen"]);
     }
+
+    /// <summary>Names this actor's turn (round and place in the order) while it is theirs; null otherwise. The Actions panel starts its attack number over when it changes.</summary>
+    private string? TurnKeyOf(string actorId) =>
+        snapshot.Encounter is { } encounter && encounter.TurnIndex >= 0 && encounter.TurnIndex < encounter.Participants.Count
+            && encounter.Participants[encounter.TurnIndex].ActorId == actorId ? $"{encounter.Round}:{encounter.TurnIndex}" : null;
 
     private (int Position, int Count)? TurnPosition(EncounterSnapshot encounter) =>
         TableVisibility.TurnPosition(encounter, Access.IsDm, VisibleActorIds);

@@ -153,6 +153,44 @@ public class CheckGradeTests(DegreesContent content)
     }
 
     [Fact]
+    public void ANaturalTwentyOnACriticalFailure_GoesUpToAFailure_AndWithoutACheckDieThereIsNoShift()
+    {
+        Assert.Equal("failure", Grade(10, 20, 30)!.Outcome); // 10 misses 30 by 20, a critical failure; the 20 lifts it one step.
+        var entry = new Codex.Persistence.RollLogEntry { Total = 10, Kept = new List<int> { 20 }, CheckDieIndex = null };
+        Codex.Persistence.Runtime.CheckGrading.Apply(entry, content.System, content.Resolver, DegreesContent.Hero(), 30);
+        Assert.Equal("criticalFailure", entry.Outcome);
+        Assert.Equal(30, entry.Dc);
+    }
+
+    [Fact]
+    public void ACreatureWithAPickThatCarriesTheTrait_GetsTheLowerPenalty_FromThePickOnTheSheet()
+    {
+        var sheet = DegreesContent.Hero();
+        sheet["trinkets"] = new List<object> { new Dictionary<string, object> { ["id"] = "rune-knife" } };
+        double Total(string weapon, int attack) => SheetRolls.Roll(content.System, content.Resolver, sheet, new SheetRollRequest
+        {
+            Definition = "strike",
+            Inputs = new Dictionary<string, object?> { ["bonus"] = 9d, ["target"] = 18d, ["attackNumber"] = (double)attack, ["weapon"] = weapon }
+        }, new FixedDice(10)).Total;
+        Assert.Equal(10 + 9 - 4, Total("rune-knife", 2)); // The knife is a pick on the sheet with the trait.
+        Assert.Equal(10 + 9 - 5, Total("oak-staff", 2));
+    }
+
+    [Fact]
+    public void ACreatureFrightenedByTwo_LowersTheNamedStrikeOnce_AndThePanelsBonusOnce()
+    {
+        var sheet = DegreesContent.Hero(frightened: 2);
+        var request = new SheetRollRequest
+        {
+            Definition = "strike",
+            Inputs = new Dictionary<string, object?> { ["bonus"] = 9d, ["target"] = 18d }
+        };
+        Assert.Equal(10 + 9 - 2, SheetRolls.Roll(content.System, content.Resolver, sheet, request, new FixedDice(10)).Total);
+        // The panel's Strike reads `attack`, not the roll's own key: Frightened 2 on it is the 11 - 2 the evaluation already showed.
+        Assert.Equal(9, content.Evaluate(sheet).Actions.Single(a => a.Entry.Id == "oak-staff").AttackBonus);
+    }
+
+    [Fact]
     public void ACriticalIsMarkedFromItsOutcome()
     {
         Assert.Equal("critical", Grade(25, 18, 15)!.Mark);
@@ -238,7 +276,7 @@ public class ActionsPanelAttackNumberTests : ComponentTestBase
         var cut = Draw("en", new List<ActionRoll>());
         var select = cut.Find(Id("attack-number"));
         Assert.Equal("Attack this turn", cut.Find($"label[for='{select.Id}']").TextContent);
-        Assert.Equal(new[] { "Attack 1 (no penalty)", "Attack 2 (−5)", "Attack 3 or later (−10)" }, select.QuerySelectorAll("option").Select(o => o.TextContent));
+        Assert.Equal(new[] { "Attack 1 (no penalty)", "Attack 2 (⁦−5⁩)", "Attack 3 or later (⁦−10⁩)" }, select.QuerySelectorAll("option").Select(o => o.TextContent));
         Assert.False(string.IsNullOrEmpty(select.GetAttribute("aria-describedby")));
         Assert.NotNull(cut.Find($"#{select.GetAttribute("aria-describedby")}"));
     }
@@ -307,5 +345,98 @@ public class ActionsPanelAttackNumberTests : ComponentTestBase
         var select = cut.Find(Id("attack-number"));
         Assert.Equal(label, cut.Find($"label[for='{select.Id}']").TextContent);
         Assert.DoesNotContain(select.QuerySelectorAll("option"), o => o.TextContent.Contains("Attack"));
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("ru")]
+    [InlineData("he")]
+    public void ThePenaltyInAChoice_IsOneLeftToRightRun_SoItReadsRightInHebrew(string culture)
+    {
+        var cut = Draw(culture, new List<ActionRoll>());
+        var options = cut.Find(Id("attack-number")).QuerySelectorAll("option").Select(o => o.TextContent).ToList();
+        Assert.Contains("⁦−5⁩", options[1]);
+        Assert.Contains("⁦−10⁩", options[2]);
+        // The isolate opens and closes inside the choice, so the sign cannot drift to the other side of the digits.
+        Assert.All(options, o => Assert.Equal(o.Count(c => c == '⁦'), o.Count(c => c == '⁩')));
+    }
+
+    [Fact]
+    public void TheAttackNumberStartsOver_WhenTheCreaturesTurnComesRound_AndNotBefore()
+    {
+        var rolled = new List<ActionRoll>();
+        Services.AddSingleton(Localizer.For("en"));
+        var evaluation = content.Evaluate(DegreesContent.Hero());
+        var cut = Render<ActionsPanel>(p => p.Add(x => x.Evaluation, evaluation).Add(x => x.Value, _ => (int?)null).Add(x => x.Definition, content.System)
+            .Add(x => x.TurnKey, "1:0").Add(x => x.OnRoll, EventCallback.Factory.Create<ActionRoll>(this, r => rolled.Add(r))));
+        cut.Find(Id("attack-number")).Change("3");
+        cut.Find(Id("attack-against")).Change("18");
+
+        // The same turn again (a refresh of the table): nothing changes.
+        cut.Render(p => p.Add(x => x.TurnKey, "1:0"));
+        cut.Find(Id("action-use-weapon-oak-staff")).Click();
+        Assert.Equal((3, 1, (int?)18), (rolled[0].AttackNumber, rolled[0].CheckBonus, rolled[0].Dc));
+
+        // Not their turn (null), then their next turn: back to the first attack. The "against" number was emptied by the roll above, so set it again to see the reset clear it.
+        cut.Find(Id("attack-against")).Change("20");
+        cut.Render(p => p.Add(x => x.TurnKey, null));
+        cut.Render(p => p.Add(x => x.TurnKey, "2:0"));
+        cut.Find(Id("action-use-weapon-oak-staff")).Click();
+        Assert.Equal((1, 11, (int?)null), (rolled[1].AttackNumber, rolled[1].CheckBonus, rolled[1].Dc));
+    }
+
+    [Fact]
+    public void TheNumberAnAttackWasAgainst_IsEmptiedOnceUsed()
+    {
+        var rolled = new List<ActionRoll>();
+        var cut = Draw("en", rolled);
+        cut.Find(Id("attack-against")).Change("18");
+        cut.Find(Id("action-use-weapon-oak-staff")).Click();
+        cut.Find(Id("action-use-weapon-oak-staff")).Click();
+        Assert.Equal(new int?[] { 18, null }, rolled.Select(r => r.Dc));
+    }
+
+    [Fact]
+    public async Task ASystemThatHasNeitherKey_ShowsNoControlAndRollsAsBefore()
+    {
+        var registry = new ContentRegistry();
+        var loader = new PluginLoader(NullLogger<PluginLoader>.Instance, new ComponentRegistry(), new YamlContentPackLoader(registry));
+        await loader.LoadAndInitializeAsync(TestPaths.ContentRoot);
+        var srd5e = loader.GetDefinition("srd5e")!;
+        Assert.Null(srd5e.Dice.CheckRoll);
+        Assert.Null(srd5e.SheetRules!.MultipleAttack);
+
+        var rolled = new List<ActionRoll>();
+        Services.AddSingleton(Localizer.For("en"));
+        var cut = Render<ActionsPanel>(p => p.Add(x => x.Evaluation, content.Evaluate(DegreesContent.Hero())).Add(x => x.Value, _ => (int?)null)
+            .Add(x => x.Definition, srd5e).Add(x => x.OnRoll, EventCallback.Factory.Create<ActionRoll>(this, r => rolled.Add(r))));
+        Assert.Empty(cut.FindAll(Id("attack-controls")));
+        cut.Find(Id("action-use-weapon-oak-staff")).Click();
+        var roll = Assert.Single(rolled);
+        Assert.Equal((11, 1, (int?)null), (roll.CheckBonus, roll.AttackNumber, roll.Dc));
+    }
+
+    [Fact]
+    public void ADegreeIsShownInWords_WithTheNumberItWasAgainst()
+    {
+        Services.AddSingleton(Localizer.For("he"));
+        var cut = Render<DiceResult>(p => p.Add(x => x.Total, 19).Add(x => x.Outcome, "הצלחה").Add(x => x.Mark, (string?)null).Add(x => x.Dc, 18)
+            .Add(x => x.Kept, new List<int> { 12 }));
+        var pill = cut.Find(Id("dice-outcome"));
+        Assert.Equal("הצלחה", pill.TextContent);
+        Assert.False(string.IsNullOrEmpty(pill.GetAttribute("aria-label")));
+        Assert.Contains("18", cut.Find(Id("dice-against")).TextContent);
+    }
+
+    [Fact]
+    public void TheEventFeedSaysADegreeInTheReadersLanguage()
+    {
+        var term = Codex.Persistence.EventTerm.Degree("criticalFailure");
+        Assert.Equal("critical failure", term.Text);
+        foreach (var (culture, words) in new[] { ("en", "Critical failure"), ("ru", "Критический провал"), ("he", "כישלון קריטי") })
+        {
+            var said = Codex.Web.Services.EventTerms.For(content.System, Localizer.For(culture), new Dictionary<string, string>())(term.Kind, term.Key);
+            Assert.Equal(words, said);
+        }
     }
 }

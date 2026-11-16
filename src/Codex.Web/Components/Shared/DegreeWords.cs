@@ -11,6 +11,8 @@ public static class DegreeWords
     public static string? Of(Localizer l, SystemDefinition? system, string? outcome)
     {
         if (outcome == null || system?.Dice.CheckRoll == null) return null;
+        // The system's own word for it, in the reader's language, comes first; the app's four words are what is left.
+        if (system.DisplayOption(l.Culture.Name, string.Empty, outcome) is { } own && own != outcome) return own;
         var key = "Actor.Degree." + outcome;
         return l.Has(key) ? l[key] : null;
     }
