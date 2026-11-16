@@ -19,6 +19,9 @@ public sealed class RedactionRow
     public const string Cut = "cut";
     public const string DropEntry = "drop-entry";
 
+    /// <summary>The book (pc or mc) the row belongs to. Empty means every book; committed rows should name theirs.</summary>
+    public string? Book { get; set; }
+
     public string Entry { get; set; } = string.Empty;
     public string Field { get; set; } = string.Empty;
     public RedactionSpan Span { get; set; } = new();
@@ -71,6 +74,11 @@ public sealed partial class RedactionTable
             if (string.IsNullOrWhiteSpace(row.Entry) || string.IsNullOrWhiteSpace(row.Field))
             {
                 throw new DegreesException($"Redaction row {n}: entry and field are required.");
+            }
+
+            if (row.Book != null && !DegreesOptions.Books.Contains(row.Book))
+            {
+                throw new DegreesException($"Redaction row {n}: book must be one of {string.Join(", ", DegreesOptions.Books)}.");
             }
 
             if (!Sha256Hex().IsMatch(row.Span?.Sha256 ?? string.Empty) || row.Span!.Length <= 0)

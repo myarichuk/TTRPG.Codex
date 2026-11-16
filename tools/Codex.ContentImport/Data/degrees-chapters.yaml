@@ -1,0 +1,27 @@
+# The take-list of the local book importer: which bookmark paths are read into entries, and how. It holds no book text.
+# A row names a book (pc or mc), a chapter key, the bookmark path(s) taken (titles, top level first), the parser, the entity type the entries
+# become and whether the row is approved. A chapter may have several rows. Only an approved row reaches the pack; every row is parsed into
+# the work folder so a reviewer can look at it first.
+#   parser    entries (headers by font, one entry each), rules (the whole range is one entry), statblocks, table, glossary (not built yet)
+#   target    the entity type of the four-degrees system the entries become (its pack folder is the plural unless `folder` says otherwise)
+#   category  the entry's `category` field, in our own words, for a target type that has one
+#   columns   the most columns a page of the row has (two unless stated)
+# Dropped material is never named here: the setting, religion, example-of-play and map sections are simply absent.
+# A path that names anything but a game term does not belong in this file.
+rows:
+  - chapter: conditions
+    book: pc
+    parser: entries
+    target: condition
+    approved: false
+    paths:
+      - [Conditions Appendix, List of Conditions]
+  - chapter: conditions
+    book: pc
+    parser: rules
+    target: rule
+    category: Conditions
+    approved: false
+    paths:
+      - [Conditions Appendix, Condition Values]
+      - [Conditions Appendix, Overriding Conditions]

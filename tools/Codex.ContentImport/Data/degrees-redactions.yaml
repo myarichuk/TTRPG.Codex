@@ -7,7 +7,10 @@
 # and a `reason` in our words that names no names. A row whose hash is not found fails the run.
 # The replacement text is Licensed Material under the ORC and is released with the packs (see LEGAL.md).
 #
-# - entry: some-entry-id
+# A row names its `book` (pc or mc) and applies only to that book's run; a row with no book applies to every run, so committed rows should always name theirs.
+#
+# - book: pc
+#   entry: some-entry-id
 #   field: description
 #   span: { sha256: "<64 lowercase hex digits>", length: 42 }
 #   action: replace

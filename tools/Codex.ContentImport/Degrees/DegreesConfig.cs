@@ -44,6 +44,9 @@ public sealed class FontRule
     public List<string> Family { get; set; } = new();
     public List<double>? Size { get; set; }
     public List<double>? X { get; set; }
+
+    /// <summary>Only pages of this parity: <c>odd</c> or <c>even</c> by PDF page number. Furniture changes sides between the two.</summary>
+    public string? Parity { get; set; }
 }
 
 /// <summary>Maps a letter's font, size and left edge to a role. The first matching rule wins; no match means unclassified.</summary>
@@ -53,19 +56,33 @@ public sealed class FontRoles
 
     public List<FontRule> Rules { get; set; } = new();
 
-    public static FontRoles Parse(string yaml) => BooksConfig.Deserializer.Deserialize<FontRoles>(yaml) ?? new FontRoles();
+    public static FontRoles Parse(string yaml)
+    {
+        var roles = BooksConfig.Deserializer.Deserialize<FontRoles>(yaml) ?? new FontRoles();
+        if (roles.Rules.Any(r => r.Parity is not (null or "odd" or "even")))
+        {
+            throw new DegreesException("A font rule's parity must be odd or even.");
+        }
+
+        return roles;
+    }
 
     public static FontRoles Embedded() => Parse(BooksConfig.EmbeddedYaml("degrees-fonts.yaml"));
 
     /// <summary>The font name without the six-letter subset tag PDF producers put in front of it.</summary>
     public static string Family(string? fontName) => SubsetTag.Replace(fontName ?? "?", string.Empty);
 
-    public string? Classify(string family, double pointSize, double left)
+    public string? Classify(string family, double pointSize, double left, int page = 0)
     {
         var size = Math.Round(pointSize, MidpointRounding.AwayFromZero);
         foreach (var rule in Rules)
         {
             if (!rule.Family.Any(f => family.Contains(f, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            if (rule.Parity != null && (page <= 0 || (rule.Parity == "odd") != (page % 2 == 1)))
             {
                 continue;
             }

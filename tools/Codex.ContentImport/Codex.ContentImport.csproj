@@ -15,9 +15,11 @@
     <EmbeddedResource Include="Data\srd521-traps.yaml" LogicalName="srd521-traps.yaml" />
     <EmbeddedResource Include="Data\degrees-books.yaml" LogicalName="degrees-books.yaml" />
     <EmbeddedResource Include="Data\degrees-fonts.yaml" LogicalName="degrees-fonts.yaml" />
+    <EmbeddedResource Include="Data\degrees-chapters.yaml" LogicalName="degrees-chapters.yaml" />
     <EmbeddedResource Include="Data\degrees-redactions.yaml" LogicalName="degrees-redactions.yaml" />
     <EmbeddedResource Include="Data\degrees-denylist.sha256" LogicalName="degrees-denylist.sha256" />
     <EmbeddedResource Include="Data\degrees-allowlist.txt" LogicalName="degrees-allowlist.txt" />
+    <EmbeddedResource Include="Data\degrees-denylist-waivers.txt" LogicalName="degrees-denylist-waivers.txt" />
   </ItemGroup>
 
   <ItemGroup>

@@ -52,6 +52,13 @@ public static class SpineStage
     public static SpineNode? Find(IEnumerable<SpineNode> nodes, IReadOnlyList<string> path) =>
         nodes.FirstOrDefault(n => n.Path.Length == path.Count && n.Path.Zip(path).All(p => string.Equals(p.First.Trim(), p.Second.Trim(), StringComparison.OrdinalIgnoreCase)));
 
+    /// <summary>The bookmark with exactly this path, or null. A path that two bookmarks share fails the run: the taken range would silently be the first one's.</summary>
+    public static SpineNode? FindUnique(IReadOnlyList<SpineNode> nodes, IReadOnlyList<string> path)
+    {
+        var found = nodes.Where(n => n.Path.Length == path.Count && n.Path.Zip(path).All(p => string.Equals(p.First.Trim(), p.Second.Trim(), StringComparison.OrdinalIgnoreCase))).Take(2).ToList();
+        return found.Count > 1 ? throw new DegreesException($"{found.Count} bookmarks have one path that the take-list names, so the taken range is ambiguous.") : found.FirstOrDefault();
+    }
+
     private static void Walk(BookmarkNode node, int depth, string[] parent, List<(int, string, string[], int)> output)
     {
         var path = parent.Append(node.Title).ToArray();
