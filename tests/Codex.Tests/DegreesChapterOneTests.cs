@@ -508,9 +508,9 @@ public class DegreesChapterOneTests : IDisposable
 
         Assert.Equal(("Strike", "2"), (entry.Name, entry.Actions));
         Assert.Equal(new[] { "Attack", "Fire" }, entry.Traits);
-        Assert.Equal(new[] { "You hit the foe with a long-range blow, a long-range thing, with a pounding noise." }, entry.Paragraphs);
+        Assert.Equal(new[] { "You hit the foe with a long-range blow, a long-range thing, with a pounding noise.", "Nothing at all." }, entry.Paragraphs);
         Assert.Equal(
-            new[] { new LabelledText("Critical Success", "You deal double damage."), new LabelledText("Success", "You deal damage."), new LabelledText("Failure", "Nothing happens.\nNothing at all.") },
+            new[] { new LabelledText("Critical Success", "You deal double damage."), new LabelledText("Success", "You deal damage."), new LabelledText("Failure", "Nothing happens.") },
             entry.Degrees);
         Assert.Equal(
             "You hit the foe with a long-range blow, a long-range thing, with a pounding noise.\n**Critical Success.** You deal double damage.\n**Success.** You deal damage.\n**Failure.** Nothing happens.\nNothing at all.",
@@ -611,16 +611,16 @@ public class DegreesChapterOneTests : IDisposable
     [Fact]
     public void Write_ReplacesTheGeneratedFiles_KeepsTheManifest_AndCheckCatchesAHandEdit()
     {
-        var pack = Path.Combine(_temp, "pack");
+        var pack = OwnPack();
         Directory.CreateDirectory(Path.Combine(pack, "stale"));
         File.WriteAllText(Path.Combine(pack, "stale", "stale.yaml"), "- id: x\n");
-        File.WriteAllText(Path.Combine(pack, "manifest.yaml"), "id: kept\n");
+        File.WriteAllText(Path.Combine(pack, "manifest.yaml"), "id: four-degrees-rules\nname: kept\n");
         var files = PackEmitter.Files(SomeEntries(), SomeReport);
 
         PackEmitter.Write(pack, files);
 
         Assert.False(Directory.Exists(Path.Combine(pack, "stale")));
-        Assert.Equal("id: kept\n", File.ReadAllText(Path.Combine(pack, "manifest.yaml")));
+        Assert.Equal("id: four-degrees-rules\nname: kept\n", File.ReadAllText(Path.Combine(pack, "manifest.yaml")));
         Assert.Empty(PackEmitter.Check(pack, files));
 
         var edited = Path.Combine(pack, "conditions", "conditions.yaml");
@@ -636,7 +636,7 @@ public class DegreesChapterOneTests : IDisposable
     [Fact]
     public void Write_RefusesAFolderThatIsNotAPack_AndTheRootOfAGitTree()
     {
-        var other = Directory.CreateDirectory(Path.Combine(_temp, "other"));
+        var other = Directory.CreateDirectory(Path.Combine(_temp, "four-degrees", "packs", "rules-core"));
         File.WriteAllText(Path.Combine(other.FullName, "notes.txt"), "keep");
         Assert.Throws<DegreesException>(() => PackEmitter.Write(other.FullName, PackEmitter.Files(SomeEntries(), SomeReport)));
         Assert.True(File.Exists(Path.Combine(other.FullName, "notes.txt")));
@@ -644,6 +644,32 @@ public class DegreesChapterOneTests : IDisposable
         var tree = Directory.CreateDirectory(Path.Combine(_temp, "tree"));
         Directory.CreateDirectory(Path.Combine(tree.FullName, ".git"));
         Assert.Throws<DegreesException>(() => PackEmitter.Write(tree.FullName, PackEmitter.Files(SomeEntries(), SomeReport)));
+    }
+
+    [Theory]
+    [InlineData("four-degrees/packs/homebrew-core", "id: four-degrees-core")]
+    [InlineData("srd5e/packs/srd-5.2.1", "id: srd-5.2.1")]
+    [InlineData("four-degrees/packs/rules-core", "id: four-degrees-core")]
+    [InlineData("elsewhere/rules-core", "id: four-degrees-rules")]
+    [InlineData("four-degrees/packs/rules-creatures", "id: four-degrees-rules")]
+    public void Write_OnlyWipesTheImportersOwnPacks_AHandWrittenPackWithAManifestIsRefusedUntouched(string relative, string manifest)
+    {
+        var pack = Directory.CreateDirectory(Path.Combine(_temp, relative.Replace('/', Path.DirectorySeparatorChar)));
+        Directory.CreateDirectory(Path.Combine(pack.FullName, "weapons"));
+        File.WriteAllText(Path.Combine(pack.FullName, "weapons", "weapons.yaml"), "- id: keep\n");
+        File.WriteAllText(Path.Combine(pack.FullName, "manifest.yaml"), manifest + "\n");
+
+        Assert.Throws<DegreesException>(() => PackEmitter.Write(pack.FullName, PackEmitter.Files(SomeEntries(), SomeReport)));
+
+        Assert.Equal("- id: keep\n", File.ReadAllText(Path.Combine(pack.FullName, "weapons", "weapons.yaml")));
+    }
+
+    [Fact]
+    public void Write_AcceptsANewOrEmptyOwnPackFolder()
+    {
+        var fresh = Path.Combine(_temp, "four-degrees", "packs", "rules-creatures");
+        PackEmitter.Write(fresh, PackEmitter.Files(SomeEntries(), SomeReport));
+        Assert.True(File.Exists(Path.Combine(fresh, "conditions", "conditions.yaml")));
     }
 
     // ---- the command's stages with a pack out
@@ -655,7 +681,7 @@ public class DegreesChapterOneTests : IDisposable
         var spine = ChapterSpine();
         var take = TakeList.Parse(TakeYaml);
         var work = Path.Combine(_temp, "work");
-        var pack = Path.Combine(_temp, "pack");
+        var pack = OwnPack();
         int Stages(bool check, StringWriter error) =>
             DegreesCommand.RunStages(doc, spine, FontRoles.Parse(Roles), work, new StringWriter(), error, take, "pc", RedactionTable.Parse(NoRedactions), pack, check);
 
@@ -680,7 +706,7 @@ public class DegreesChapterOneTests : IDisposable
     {
         using var doc = PdfDocument.Open(ChapterBook());
         var take = TakeList.Parse(TakeYaml.Replace("approved: true", "approved: false"));
-        var pack = Path.Combine(_temp, "pack");
+        var pack = OwnPack();
         Directory.CreateDirectory(pack);
         File.WriteAllText(Path.Combine(pack, "manifest.yaml"), "id: x\n");
         File.WriteAllText(Path.Combine(pack, "old.yaml"), "keep");
@@ -709,7 +735,7 @@ public class DegreesChapterOneTests : IDisposable
     // ---- the denylist words
 
     [Fact]
-    public void DenylistWords_AreTheCapitalizedWordsOfWhatIsLeftOut_WithoutCommonWordsGameTermsOrTakenWords()
+    public void DenylistWords_AreTheCapitalizedWordsOfWhatIsLeftOut_WithoutCommonWordsOrWaivedTerms_AndAWordTheTakenTextSaysStaysOnTheList()
     {
         var blocks = new BlocksResult(
             new List<Block>
@@ -723,9 +749,16 @@ public class DegreesChapterOneTests : IDisposable
 
         var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string> { "wizard" });
 
-        Assert.Equal(new[] { "quillon", "zorblax" }, words);
-        Assert.Equal(4, excluded);
+        // "Dazzled" and "Frightened" are in the taken range too, and that is exactly when the gate must be able to fire: only a waiver may let them through.
+        Assert.Equal(new[] { "dazzled", "frightened", "quillon", "zorblax" }, words);
+        Assert.Equal(2, excluded);
+
+        var (waived, _) = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string> { "wizard", "dazzled" });
+        Assert.Equal(new[] { "frightened", "quillon", "zorblax" }, waived);
     }
+
+    [Fact]
+    public void TheCommittedWaiverFileParses_AndStartsEmpty() => Assert.Empty(Waivers.Embedded());
 
     [Fact]
     public void MergeDenylist_KeepsTheHeader_UnionsTheHashesAndSortsThem()
@@ -742,5 +775,167 @@ public class DegreesChapterOneTests : IDisposable
         Assert.Equal("# kept header", lines[0]);
         Assert.Equal(new[] { one, two }.OrderBy(h => h, StringComparer.Ordinal), lines.Skip(1));
         Assert.DoesNotContain("alpha", File.ReadAllText(path));
+    }
+
+[Fact]
+    public void MergeDenylist_RefusesAFileThatIsNotAHashList_AndLeavesItAlone()
+    {
+        var path = Path.Combine(_temp, "notes.txt");
+        File.WriteAllText(path, "# notes\nthis is not a hash\n");
+
+        Assert.Throws<DegreesException>(() => DegreesCommand.MergeDenylist(path, Denylist.Format(new[] { "alpha" }), out _));
+
+        Assert.Equal("# notes\nthis is not a hash\n", File.ReadAllText(path));
+    }
+
+    // ---- review fixes
+
+    /// <summary>A four-degrees system folder with a minimal system.yaml and the importer's own pack folder with its manifest. Returns the pack folder.</summary>
+    private string OwnPack()
+    {
+        var root = Path.Combine(_temp, "four-degrees");
+        var pack = Path.Combine(root, "packs", "rules-core");
+        Directory.CreateDirectory(pack);
+        File.WriteAllText(Path.Combine(root, "system.yaml"), "entityTypes:\n  - type: condition\n    folder: conditions\n  - type: rule\n    folder: rules\n");
+        File.WriteAllText(Path.Combine(pack, "manifest.yaml"), "id: four-degrees-rules\n");
+        return pack;
+    }
+
+    [Fact]
+    public void TakeList_TargetsAndFoldersAreCheckedAgainstTheSystemsOwnTypes()
+    {
+        var system = File.ReadAllText(Path.Combine(TestPaths.ContentRoot, "systems", "four-degrees", "system.yaml"));
+        TakeList.Embedded().CheckAgainstSystem(system);
+
+        var typo = TakeList.Parse(TakeYaml.Replace("target: condition", "target: condtion"));
+        Assert.Contains("declares no entity type", Assert.Throws<DegreesException>(() => typo.CheckAgainstSystem(system)).Message);
+
+        var folder = TakeList.Parse(TakeYaml.Replace("target: condition,", "target: condition, folder: condtions,"));
+        Assert.Contains("not the target type's folder", Assert.Throws<DegreesException>(() => folder.CheckAgainstSystem(system)).Message);
+
+        var shared = TakeYaml.TrimEnd().TrimEnd('}', ' ', '\n') + "}\n  - { chapter: more, book: pc, parser: rules, target: rule, folder: conditions, approved: false, paths: [[Other]] }\n";
+        Assert.Throws<DegreesException>(() => TakeList.Parse(shared));
+    }
+
+    [Fact]
+    public void ADashAtALineEndJoinsWithoutASpace_AndFieldsAndDegreesKeepTheirSourceOrder()
+    {
+        var (blocks, range) = Entries(
+            "entries",
+            Blk(1, 0, "entry-header", "Order"),
+            Lines(
+                "rules",
+                ("Words end here—", 300, string.Empty),
+                ("then more words.", 100, string.Empty),
+                ("Failure Nothing happens.", 100, "Failure"),
+                ("Special Costs one more.", 100, "Special")));
+
+        var entry = Assert.Single(EntriesStage.Run(blocks, new[] { range }, "pc"));
+
+        Assert.Equal("Words end here-then more words.\n**Failure.** Nothing happens.\n**Special.** Costs one more.", entry.Render());
+    }
+
+    [Fact]
+    public void ATwoCellHeaderWithProseUnderIt_IsNotATable_AndIsCountedAsRejected()
+    {
+        var b = new PdfDocumentBuilder();
+        var hel = b.AddStandard14Font(Standard14Font.Helvetica);
+        var helBold = b.AddStandard14Font(Standard14Font.HelveticaBold);
+        var page = b.AddPage(603, 783);
+        page.AddText("Wolf", 11, new PdfPoint(60, 700), helBold);
+        page.AddText("CREATURE 3", 11, new PdfPoint(200, 700), helBold);
+        page.AddText("This prose line runs a long way across the column and well past the second heading cell.", 9, new PdfPoint(60, 688), hel);
+
+        using var doc = PdfDocument.Open(b.Build());
+        var blocks = BlocksStage.Run(LayoutStage.Run(doc, FontRoles.Parse(Roles)).Pages);
+
+        Assert.Equal(0, blocks.Tables);
+        Assert.Equal(1, blocks.RejectedTableHeaders);
+        Assert.Contains(blocks.Blocks, blk => blk.Role == "block-header");
+    }
+
+    [Fact]
+    public void ASidebarPageWithFewerSidebarsThanBookmarks_OrBodyTextAfterAColumnThatEndedInOne_IsFlagged_AndATakenRangeFails()
+    {
+        var spine = ChapterSpine();
+        spine.Insert(3, new SpineNode(2, "Sidebar: second", new[] { "Appendix", "List", "Sidebar: second" }, 2, 2, true));
+        var (blocks, _, rows) = Prepare(ChapterBook(), spine);
+        Assert.Equal(new[] { 2 }, blocks.SidebarProblems);
+        Assert.Contains("sidebar split is not backed", Assert.Throws<DegreesException>(() => ImportPipeline.Run(blocks, spine, rows, RedactionTable.Parse(NoRedactions), "pc")).Message);
+
+        var (fine, _, _) = Prepare(ChapterBook(), ChapterSpine());
+        Assert.Empty(fine.SidebarProblems!);
+
+        var d = new PdfDocumentBuilder();
+        var hel = d.AddStandard14Font(Standard14Font.Helvetica);
+        var helBold = d.AddStandard14Font(Standard14Font.HelveticaBold);
+        var page = d.AddPage(603, 783);
+        page.AddText("SIDE", 11, new PdfPoint(60, 700), helBold);
+        page.AddText("Sidebar words.", 9, new PdfPoint(60, 688), hel);
+        page.AddText("Carried over.", 9, new PdfPoint(330, 700), hel);
+        using var doc = PdfDocument.Open(d.Build());
+        var flagged = BlocksStage.Run(LayoutStage.Run(doc, FontRoles.Parse(Roles)).Pages,
+            new BlocksOptions { SidebarPages = new HashSet<int> { 1 }, SidebarStarts = new Dictionary<int, int> { [1] = 1 } });
+        Assert.Equal(new[] { 1 }, flagged.SidebarProblems);
+    }
+
+    [Fact]
+    public void RedactionRowsAreScopedByBook_AndAnUnmatchedRowStillFailsThePipeline()
+    {
+        var (blocks, spine, rows) = Prepare(ChapterBook(), ChapterSpine());
+        var sentence = "Short text about delta.";
+        string Row(string book, string entry) =>
+            $"normalization: 1\nrows:\n  - book: {book}\n    entry: {entry}\n    field: description\n    span: {{ sha256: \"{RedactionSpan.Of(sentence).Sha256}\", length: {sentence.Length} }}\n    action: cut\n    reason: \"Test row.\"\n";
+
+        var other = ImportPipeline.Run(blocks, spine, rows, RedactionTable.Parse(Row("mc", "no-such-entry")), "pc");
+        Assert.Equal(5, other.Final.Count);
+
+        Assert.Contains("matched no source span", Assert.Throws<DegreesException>(() => ImportPipeline.Run(blocks, spine, rows, RedactionTable.Parse(Row("pc", "no-such-entry")), "pc")).Message);
+        Assert.Throws<DegreesException>(() => RedactionTable.Parse(Row("xx", "delta")));
+    }
+
+    [Fact]
+    public void ARangeFailsWhenTheNextSectionsTitleIsNotABlockOnItsPage()
+    {
+        var spine = new List<SpineNode>
+        {
+            new(0, "Root", new[] { "Root" }, 1, 2, false),
+            new(1, "Sec A", new[] { "Root", "Sec A" }, 1, 1, false),
+            new(1, "Sec C", new[] { "Root", "Sec C" }, 2, 2, false),
+        };
+        var pageStart = Result(new[] { Blk(1, 0, "section", "Sec A"), Blk(1, 0, "entry-header", "One"), Blk(2, 0, "display", "Decor") });
+        Assert.Contains("title is not a block on page 2", Assert.Throws<DegreesException>(() => TakeStage.Resolve(spine, pageStart, new[] { RowFor("entries", "Root", "Sec A") })).Message);
+
+        var samePage = Result(new[] { Blk(1, 0, "section", "Sec A"), Blk(1, 0, "entry-header", "One"), Blk(1, 0, "rules", "x") });
+        Assert.Contains("title is not a block on page 1", Assert.Throws<DegreesException>(() => TakeStage.Resolve(TwoSections, samePage, new[] { RowFor("entries", "Root", "Sec A") })).Message);
+    }
+
+    [Fact]
+    public void ATakenPathThatTwoBookmarksShareIsAmbiguous()
+    {
+        var spine = TwoSections.Concat(new[] { new SpineNode(1, "Sec A", new[] { "Root", "Sec A" }, 3, 3, false) }).ToList();
+        var blocks = Result(new[] { Blk(1, 0, "section", "Sec A"), Blk(1, 0, "section", "Sec B") });
+
+        Assert.Contains("ambiguous", Assert.Throws<DegreesException>(() => TakeStage.Resolve(spine, blocks, new[] { RowFor("rules", "Root", "Sec A") })).Message);
+    }
+
+    [Fact]
+    public void AFontRuleParityMustBeOddOrEven() =>
+        Assert.Throws<DegreesException>(() => FontRoles.Parse("rules:\n  - { role: furniture, family: [X], parity: Odd }\n"));
+
+    [Fact]
+    public void Check_WithNoApprovedRow_ComparesAgainstAnEmptyPack()
+    {
+        using var doc = PdfDocument.Open(ChapterBook());
+        var pack = OwnPack();
+        int Stages(string yaml, bool check, StringWriter error) =>
+            DegreesCommand.RunStages(doc, ChapterSpine(), FontRoles.Parse(Roles), Path.Combine(_temp, "work"), new StringWriter(), error, TakeList.Parse(yaml), "pc", RedactionTable.Parse(NoRedactions), pack, check);
+
+        Assert.Equal(0, Stages(TakeYaml.Replace("approved: true", "approved: false"), true, new StringWriter()));
+
+        Assert.Equal(0, Stages(TakeYaml, false, new StringWriter()));
+        using var error = new StringWriter();
+        Assert.Equal(1, Stages(TakeYaml.Replace("approved: true", "approved: false"), true, error));
+        Assert.Contains("not generated: conditions/conditions.yaml", error.ToString());
     }
 }

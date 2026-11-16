@@ -56,7 +56,16 @@ public sealed class FontRoles
 
     public List<FontRule> Rules { get; set; } = new();
 
-    public static FontRoles Parse(string yaml) => BooksConfig.Deserializer.Deserialize<FontRoles>(yaml) ?? new FontRoles();
+    public static FontRoles Parse(string yaml)
+    {
+        var roles = BooksConfig.Deserializer.Deserialize<FontRoles>(yaml) ?? new FontRoles();
+        if (roles.Rules.Any(r => r.Parity is not (null or "odd" or "even")))
+        {
+            throw new DegreesException("A font rule's parity must be odd or even.");
+        }
+
+        return roles;
+    }
 
     public static FontRoles Embedded() => Parse(BooksConfig.EmbeddedYaml("degrees-fonts.yaml"));
 

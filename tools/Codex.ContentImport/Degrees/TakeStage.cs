@@ -45,6 +45,7 @@ public static class TakeStage
 
         CheckOverlap(ranges);
         CheckOneColumnPages(spine, blocks, rowList);
+        CheckSidebarPages(spine, blocks, rowList);
         foreach (var range in ranges)
         {
             CheckClaimed(blocks, range);
@@ -53,7 +54,7 @@ public static class TakeStage
         return ranges;
     }
 
-    private static SpineNode? PathNode(IReadOnlyList<SpineNode> spine, TakeRow row, List<string> path) => SpineStage.Find(spine, path);
+    private static SpineNode? PathNode(IReadOnlyList<SpineNode> spine, TakeRow row, List<string> path) => SpineStage.FindUnique(spine, path);
 
     private static TakenRange Range(IReadOnlyList<SpineNode> spine, BlocksResult blocks, TakeRow row, int pathNumber, SpineNode node)
     {
@@ -78,7 +79,8 @@ public static class TakeStage
                 end = blocks.Blocks.Count;
             }
 
-            if (FindTitle(blocks.Blocks, after, end) is { } at && Enumerable.Range(end, at - end).Any(i => Claimable.Contains(blocks.Blocks[i].Role)))
+            var at = FindTitle(blocks.Blocks, after, end) ?? throw new DegreesException($"{where}: the next section's title is not a block on page {after.PageStart}, so the end of the range is unknown.");
+            if (Enumerable.Range(end, at - end).Any(i => Claimable.Contains(blocks.Blocks[i].Role)))
             {
                 throw new DegreesException($"{where}: text sits above the next section's title on page {after.PageStart}, so the end of the range is unknown.");
             }
@@ -153,6 +155,19 @@ public static class TakeStage
             if (bad.Count > 0)
             {
                 throw new DegreesException($"Chapter {row.Chapter}: {bad.Count} one-column page(s) in a taken range, so reading order is not known (pages {string.Join(",", bad)}).");
+            }
+        }
+    }
+
+    private static void CheckSidebarPages(IReadOnlyList<SpineNode> spine, BlocksResult blocks, List<TakeRow> rows)
+    {
+        var problems = new HashSet<int>(blocks.SidebarProblems ?? new List<int>());
+        foreach (var row in rows)
+        {
+            var bad = PagesOf(spine, row).Where(problems.Contains).ToList();
+            if (bad.Count > 0)
+            {
+                throw new DegreesException($"Chapter {row.Chapter}: the sidebar split is not backed by the bookmarks on {bad.Count} page(s) of a taken range, so sidebar text may be dropped or kept wrongly (pages {string.Join(",", bad)}).");
             }
         }
     }

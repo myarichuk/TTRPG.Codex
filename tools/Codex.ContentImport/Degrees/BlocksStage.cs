@@ -11,6 +11,8 @@ public sealed record Block(int Page, int Column, string Role, double Left, doubl
 
 /// <param name="SuspectPages">One-column pages with plenty of text on both halves: a gutter was probably missed, so reading order may be garbled.</param>
 /// <param name="Dropped">Sidebar and opener blocks that were split out. They are kept only for the denylist, never parsed.</param>
+/// <param name="SidebarProblems">Sidebar pages where the split is not backed by the bookmarks (too few sidebars) or body text follows a dropped sidebar; a taken range must not contain one.</param>
+/// <param name="RejectedTableHeaders">Two-cell block-header lines whose lines below did not line up as table rows (stat-block headers, mostly): counted, left as ordinary blocks.</param>
 /// <param name="OneColumnPageNumbers">Every page with body text and no gutter; a taken range must not contain one.</param>
 public sealed record BlocksResult(
     List<Block> Blocks,
@@ -24,7 +26,9 @@ public sealed record BlocksResult(
     int ThreeOrMoreColumnPages = 0,
     int SidebarBlocks = 0,
     int OpenerWords = 0,
-    int Tables = 0);
+    int Tables = 0,
+    List<int>? SidebarProblems = null,
+    int RejectedTableHeaders = 0);
 
 /// <summary>What the take-list and the spine tell the blocks stage about pages. Defaults: two columns everywhere and no sidebar pages.</summary>
 public sealed class BlocksOptions
@@ -34,6 +38,9 @@ public sealed class BlocksOptions
 
     /// <summary>Pages covered by a "Sidebar" bookmark. Only there is a block-header run split out as a sidebar and dropped.</summary>
     public IReadOnlySet<int> SidebarPages { get; init; } = new HashSet<int>();
+
+    /// <summary>How many "Sidebar" bookmarks start on each page. A sidebar page that yields fewer sidebars than that is reported in <see cref="BlocksResult.SidebarProblems"/>.</summary>
+    public IReadOnlyDictionary<int, int> SidebarStarts { get; init; } = new Dictionary<int, int>();
 }
 
 /// <summary>
@@ -76,6 +83,8 @@ public static class BlocksStage
         var oneNumbers = new List<int>();
         int one = 0, multi = 0, three = 0, furniture = 0, openerWords = 0, sidebarBlocks = 0;
         var suspect = new List<int>();
+        var problems = new List<int>();
+        var rejected = new int[1];
         foreach (var page in pages)
         {
             var openers = page.Words.Where(w => w.Role == "opener").ToList();
@@ -84,7 +93,7 @@ public static class BlocksStage
             openerWords += openers.Count(w => !string.IsNullOrWhiteSpace(w.Text));
             if (openers.Count > 0)
             {
-                dropped.AddRange(ColumnBlocks(page.Number, 0, openers));
+                dropped.AddRange(ColumnBlocks(page.Number, 0, openers, rejected));
             }
 
             if (body.Count == 0)
@@ -117,27 +126,38 @@ public static class BlocksStage
                 .Select(c => body.Where((_, i) => which[i] == c).ToList())
                 .ToList();
             var sidebarPage = options.SidebarPages.Contains(page.Number);
+            var runs = 0;
+            var bodyAfterSidebar = false;
+            var endedInside = false;
             for (var c = 0; c < columns.Count; c++)
             {
-                var found = ColumnBlocks(page.Number, c, columns[c]).ToList();
+                var found = ColumnBlocks(page.Number, c, columns[c], rejected).ToList();
                 if (sidebarPage)
                 {
-                    var (kept, gone) = SplitSidebars(found);
-                    sidebarBlocks += gone.Count;
-                    dropped.AddRange(gone);
-                    found = kept;
+                    var split = SplitSidebars(found, endedInside);
+                    endedInside = split.EndsInside;
+                    sidebarBlocks += split.Dropped.Count;
+                    dropped.AddRange(split.Dropped);
+                    runs += split.Runs;
+                    bodyAfterSidebar |= split.BodyAfter;
+                    found = split.Kept;
                 }
 
                 blocks.AddRange(found);
             }
+
+            // Every sidebar bookmark that starts on this page must have found at least one sidebar, and body text must not run straight on from one.
+            if (sidebarPage && (bodyAfterSidebar || runs < options.SidebarStarts.GetValueOrDefault(page.Number)))
+            {
+                problems.Add(page.Number);
+            }
         }
 
         var byRole = blocks.GroupBy(b => b.Role).ToDictionary(g => g.Key, g => g.Count());
-        return new BlocksResult(blocks, one, multi, furniture, byRole, suspect, dropped, oneNumbers, three, sidebarBlocks, openerWords, blocks.Count(b => b.Role == "table"));
+        return new BlocksResult(blocks, one, multi, furniture, byRole, suspect, dropped, oneNumbers, three, sidebarBlocks, openerWords, blocks.Count(b => b.Role == "table"), problems, rejected[0]);
     }
 
-    /// <summary>The x of the middle of the widest empty vertical band near the centre of the page, or null when the page has one column.</summary>
-/// <summary>
+    /// <summary>
     /// The column of each word: how many gutters lie left of its centre. A heading in the section or display font that runs across a gutter (a title
     /// centred over both columns) is one line, so all of it goes to the first column it touches.
     /// </summary>
@@ -178,6 +198,7 @@ public static class BlocksStage
         return which;
     }
 
+    /// <summary>The x of the middle of the widest empty vertical band near the centre of the page, or null when the page has one column.</summary>
     public static double? FindGutter(IReadOnlyList<LayoutWord> words, double pageWidth)
     {
         var gap = BestGap(words, pageWidth, pageWidth * 0.3, pageWidth * 0.7);
@@ -298,30 +319,30 @@ public static class BlocksStage
         }).ToList();
     }
 
-    private static IEnumerable<Block> ColumnBlocks(int page, int column, List<LayoutWord> words)
+    private static IEnumerable<Block> ColumnBlocks(int page, int column, List<LayoutWord> words, int[] rejected)
     {
         var lines = Lines(words);
         Block? open = null;
         for (var i = 0; i < lines.Count; i++)
         {
             var line = lines[i];
-            if (line.Role == "block-header" && Cells(line.Words).Count >= 2 && i + 1 < lines.Count && IsRowLine(lines[i], lines[i + 1]))
+            if (line.Role == "block-header" && Cells(line.Words).Count >= 2)
             {
-                if (open != null)
+                var end = TableEnd(lines, i);
+                if (end > 0)
                 {
-                    yield return open;
-                    open = null;
+                    if (open != null)
+                    {
+                        yield return open;
+                        open = null;
+                    }
+
+                    yield return BuildTable(page, column, lines.GetRange(i, end - i));
+                    i = end - 1;
+                    continue;
                 }
 
-                var end = i + 1;
-                while (end < lines.Count && IsRowLine(lines[end - 1], lines[end]))
-                {
-                    end++;
-                }
-
-                yield return BuildTable(page, column, lines.GetRange(i, end - i));
-                i = end - 1;
-                continue;
+                rejected[0]++;
             }
 
             var info = new LineInfo(line.Left, line.Right, line.Label);
@@ -347,25 +368,62 @@ public static class BlocksStage
         }
     }
 
-    /// <summary>A line continues a table when it is close below the line before it and is a body line or a multi-cell header, not a heading of its own.</summary>
-    private static bool IsRowLine(Line above, Line line) =>
-        above.Bottom - line.Top <= TableRowGap && TableRoles.Contains(line.Role) && (line.Role != "block-header" || Cells(line.Words).Count >= 2);
-
-    /// <summary>The cells of a line: its words cut wherever two words are more than <see cref="CellGap"/> apart. Each cell is (left edge, text).</summary>
-    private static List<(double Left, string Text)> Cells(List<LayoutWord> ordered)
+    /// <summary>
+    /// Where the table that starts at the header line <paramref name="start"/> ends (exclusive), or -1 when it is not a table. A line is a row when it is close
+    /// below the line before, is a body line (or a multi-cell header), and its cells line up with the header's: each sits under exactly one header cell
+    /// (so prose that runs across the columns ends the table). A table needs at least one row with two or more cells; a
+    /// stat-block header (a name and a badge) with prose under it is therefore not one, and is counted as rejected.
+    /// </summary>
+    private static int TableEnd(List<Line> lines, int start)
     {
-        var cells = new List<(double, List<string>)>();
+        var starts = Cells(lines[start].Words);
+        var end = start + 1;
+        var multi = false;
+        while (end < lines.Count
+            && lines[end - 1].Bottom - lines[end].Top <= TableRowGap
+            && TableRoles.Contains(lines[end].Role)
+            && (lines[end].Role != "block-header" || Cells(lines[end].Words).Count >= 2)
+            && Aligned(lines[end], starts))
+        {
+            multi |= Cells(lines[end].Words).Count >= 2;
+            end++;
+        }
+
+        return multi ? end : -1;
+    }
+
+    private static bool Aligned(Line line, List<(double Left, double Right, string Text)> header)
+    {
+        // A row cell lines up when it sits under exactly one header cell (centred, left or right aligned alike). Prose that runs across two of them does not.
+        foreach (var cell in Cells(line.Words))
+        {
+            var under = header.Count(h => cell.Left <= h.Right + CellSlack && cell.Right >= h.Left - CellSlack);
+            if (under != 1)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>The cells of a line: its words cut wherever two words are more than <see cref="CellGap"/> apart.</summary>
+    private static List<(double Left, double Right, string Text)> Cells(List<LayoutWord> ordered)
+    {
+        var cells = new List<(double Left, double Right, List<string> Words)>();
         for (var i = 0; i < ordered.Count; i++)
         {
             if (i == 0 || ordered[i].Left - ordered[i - 1].Right > CellGap)
             {
-                cells.Add((ordered[i].Left, new List<string>()));
+                cells.Add((ordered[i].Left, ordered[i].Right, new List<string>()));
             }
 
-            cells[^1].Item2.Add(ordered[i].Text);
+            var last = cells[^1];
+            cells[^1] = (last.Left, ordered[i].Right, last.Words);
+            last.Words.Add(ordered[i].Text);
         }
 
-        return cells.Select(c => (c.Item1, string.Join(' ', c.Item2))).ToList();
+        return cells.Select(c => (c.Left, c.Right, string.Join(' ', c.Words))).ToList();
     }
 
     /// <summary>
@@ -418,15 +476,24 @@ public static class BlocksStage
     /// A sidebar starts at a heading in the block-header font and runs through the structured-text blocks after it, up to the first block of any other role.
     /// It is only looked for on pages a "Sidebar" bookmark covers.
     /// </summary>
-    private static (List<Block> Kept, List<Block> Dropped) SplitSidebars(List<Block> blocks)
+    private static (List<Block> Kept, List<Block> Dropped, int Runs, bool BodyAfter, bool EndsInside) SplitSidebars(List<Block> blocks, bool previousColumnEndedInside)
     {
         var kept = new List<Block>();
         var gone = new List<Block>();
         var inside = false;
+        var runs = 0;
+
+        // A column that opens with body text straight after a column that ended inside a sidebar is that sidebar's continuation, which has no heading to find.
+        var bodyAfter = previousColumnEndedInside && blocks.Count > 0 && blocks[0].Role == "body";
         foreach (var b in blocks)
         {
             if (b.Role == "block-header" || (inside && SidebarRoles.Contains(b.Role)))
             {
+                if (!inside)
+                {
+                    runs++;
+                }
+
                 inside = true;
                 gone.Add(b);
                 continue;
@@ -436,7 +503,7 @@ public static class BlocksStage
             kept.Add(b);
         }
 
-        return (kept, gone);
+        return (kept, gone, runs, bodyAfter, inside);
     }
 
     /// <summary>The bold words a line starts with when it is a labelled paragraph start, such as a degree name. A line that is bold throughout counts only when it is short.</summary>

@@ -128,7 +128,8 @@ public static class DegreesCommand
         Write(work, "blocks.json", blocks.Blocks);
         output.WriteLine($"blocks: {blocks.Blocks.Count} blocks ({string.Join(", ", blocks.BlocksByRole.OrderBy(k => k.Key, StringComparer.Ordinal).Select(k => $"{k.Key} {k.Value}"))}); " +
             $"{blocks.TwoColumnPages} multi-column pages ({blocks.ThreeOrMoreColumnPages} with three or more), {blocks.OneColumnPages} one-column pages, " +
-            $"{blocks.FurnitureWords} furniture or off-page words dropped, {blocks.OpenerWords} opener words and {blocks.SidebarBlocks} sidebar blocks split out");
+            $"{blocks.FurnitureWords} furniture or off-page words dropped, {blocks.OpenerWords} opener words and {blocks.SidebarBlocks} sidebar blocks split out; " +
+            $"{blocks.Tables} table(s) rebuilt, {blocks.RejectedTableHeaders} two-cell header(s) whose lines did not line up were left as blocks");
         if (blocks.SuspectPages.Count > 0)
         {
             output.WriteLine($"warning: {blocks.SuspectPages.Count} one-column page(s) have text on both halves and may read out of order: {string.Join(",", blocks.SuspectPages)}");
@@ -144,6 +145,18 @@ public static class DegreesCommand
             return 0;
         }
 
+        if (packDir != null)
+        {
+            // The pack folder sits at <system>/packs/<pack>, and the system's own declaration decides each target's folder.
+            var systemFile = Path.Combine(Path.GetFullPath(packDir), "..", "..", "system.yaml");
+            if (!File.Exists(systemFile))
+            {
+                throw new DegreesException("--out: no system.yaml two folders above the pack folder, so the take-list's targets cannot be checked.");
+            }
+
+            new TakeList { Rows = rows }.CheckAgainstSystem(File.ReadAllText(systemFile));
+        }
+
         var result = ImportPipeline.Run(blocks, spine, rows, redactions ?? RedactionTable.Embedded(), book);
         Write(work, "entries.json", result.Parsed);
         Write(work, "redacted.json", result.Final);
@@ -157,14 +170,16 @@ public static class DegreesCommand
             return 0;
         }
 
-        if (!result.Final.Any(e => e.Approved))
+        var anyApproved = result.Final.Any(e => e.Approved);
+        if (!anyApproved && !check)
         {
             throw new DegreesException("--out: no approved row has any entry, so there is nothing to write. The pack folder was not touched.");
         }
 
         if (check)
         {
-            var differences = PackEmitter.Check(packDir, files);
+            // With nothing approved the pack should hold no generated file at all, so every file in it is a difference.
+            var differences = PackEmitter.Check(packDir, anyApproved ? files : new SortedDictionary<string, string>(StringComparer.Ordinal));
             if (differences.Count > 0)
             {
                 error.WriteLine($"check failed: the pack differs from a fresh run in {differences.Count} file(s):");
@@ -205,7 +220,7 @@ public static class DegreesCommand
 
         var blocks = BlocksStage.Run(layout.Pages, ImportPipeline.OptionsFor(spine, rows));
         var ranges = TakeStage.Resolve(spine, blocks, rows);
-        var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Allowlist.Embedded());
+        var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Waivers.Embedded());
         var path = options.Out ?? Path.Combine(options.Work, "denylist.sha256");
         if (options.Out == null)
         {
@@ -234,6 +249,11 @@ public static class DegreesCommand
                 }
                 else if (line.Trim().Length > 0)
                 {
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(line.Trim(), "^[0-9a-f]{64}$"))
+                    {
+                        throw new DegreesException("--out names a file that is not a hash list (a line is not a SHA-256 hash); nothing was written.");
+                    }
+
                     existing.Add(line.Trim());
                 }
             }

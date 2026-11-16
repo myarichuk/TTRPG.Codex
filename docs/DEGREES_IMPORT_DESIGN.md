@@ -302,7 +302,15 @@ lowercase form is used elsewhere in the pack. Two things move to chapter 1 becau
 - `--out <pack dir>` writes the generated files of the approved rows and keeps `manifest.yaml`. It refuses a folder that holds other files and no manifest, and the root of a git
   tree. `--check` regenerates into a temp folder and lists differing, missing and unexpected files by path. `import-report.yaml` is written into the pack as a list of mappings
   (so the CI gate can read it) and into the work folder.
-- `degrees denylist --book <k> --pdf <p> [--out <file>]` merges the hashes into the file (default: `denylist.sha256` in the work folder). Excluded as common: a word that appears in
-  lowercase three or more times in the book, any word in a taken range, and the allowlist. Run with only the conditions rows it left 2019 words as hashes, because nearly the whole book
-  counts as left out. It should be regenerated, and committed, once every chapter's rows are on the take-list.
+- `degrees denylist --book <k> --pdf <p> [--out <file>]` merges the hashes into the file (default: `denylist.sha256` in the work folder; a file with a line that is not a hash is refused).
+  Left off the list: one-letter words, a word that appears in lowercase three or more times in the book, and a word in the committed, reviewed `Data/degrees-denylist-waivers.txt`
+  (empty today). A word in a taken range or on the allowlist is NOT left off, so the gate can fire on a name that reached a pack; a real game term that a left-out section also
+  capitalizes needs a waiver line instead of silent exclusion. Run with only the conditions rows it left about 2000 words as hashes, because nearly the whole book counts as left out.
+  It should be regenerated, and committed, once every chapter's rows are on the take-list.
+- After the Opus review: `--out` accepts only `four-degrees/packs/rules-core` and `rules-creatures` (and a manifest there must carry `four-degrees-rules` or `four-degrees-creatures`)
+  and checks the take-list targets and folders against the `system.yaml` two folders above the pack. A table needs a header with two or more cells and at least one row whose cells each sit
+  under one header cell; a two-cell header that fails that (a stat-block header, mostly) stays an ordinary block and is counted in the console line (29 tables, 1396 left as blocks on
+  `pc`: the guard is conservative, and later chapters tune it). A sidebar page fails a taken range when it yields fewer sidebars than the bookmarks that start on it, or when body text
+  opens a column after one that ended in a sidebar. Redaction rows take an optional `book`; a path two bookmarks share fails; an id may not repeat across types; fields, degrees and
+  paragraphs render in source order, and a paragraph after a labelled one stays its own paragraph.
 - Not done here: trait keys in the allowlist (chapter 2), the three other parsers, redaction rows, the manifest and the pack (Ch1b).

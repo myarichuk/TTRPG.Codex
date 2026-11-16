@@ -123,19 +123,62 @@ public static class PackEmitter
     public static void Write(string dir, IReadOnlyDictionary<string, string> files)
     {
         var full = Path.GetFullPath(dir);
+        EnsureOwnPack(full);
+        WriteFiles(full, files);
+    }
+
+    /// <summary>
+    /// The importer wipes what it writes, so it writes only its own packs: the folder must be <c>four-degrees/packs/&lt;name&gt;</c> with a name in
+    /// <see cref="OwnPacks"/>, and a manifest there, if any, must carry that name's pack id. A hand-written pack (the homebrew one) or another system's pack
+    /// is refused before anything is deleted. A folder that holds other files and no manifest is refused too.
+    /// </summary>
+    public static void EnsureOwnPack(string full)
+    {
         if (PathGuard.FindGitRoot(full) is { } root && string.Equals(PathGuard.Resolve(full), root, StringComparison.Ordinal))
         {
             throw new DegreesException("--out names the root of a git work tree; it must name a pack folder.");
         }
 
-        if (Directory.Exists(full))
+        var parts = full.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 3 || parts[^3] != "four-degrees" || parts[^2] != "packs" || !OwnPacks.TryGetValue(parts[^1], out var id))
         {
-            var hasManifest = File.Exists(Path.Combine(full, ManifestFile));
-            if (!hasManifest && Directory.EnumerateFileSystemEntries(full).Any())
+            throw new DegreesException($"--out must be four-degrees/packs/<pack> with the pack one of: {string.Join(", ", OwnPacks.Keys)}.");
+        }
+
+        if (!Directory.Exists(full))
+        {
+            return;
+        }
+
+        var manifest = Path.Combine(full, ManifestFile);
+        if (!File.Exists(manifest))
+        {
+            if (Directory.EnumerateFileSystemEntries(full).Any())
             {
                 throw new DegreesException("--out is a folder with files in it and no manifest.yaml; it is not a pack, so it is not wiped.");
             }
 
+            return;
+        }
+
+        var declared = File.ReadLines(manifest).Select(l => System.Text.RegularExpressions.Regex.Match(l, @"^id:\s*(\S+)\s*$")).FirstOrDefault(m => m.Success)?.Groups[1].Value.Trim('"', '\'');
+        if (declared != id)
+        {
+            throw new DegreesException("--out: the folder's manifest does not carry this importer pack's id, so it is not wiped.");
+        }
+    }
+
+    /// <summary>The importer's own pack folders and the pack id each one's manifest must carry (section 1 of the design).</summary>
+    public static readonly IReadOnlyDictionary<string, string> OwnPacks = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["rules-core"] = "four-degrees-rules",
+        ["rules-creatures"] = "four-degrees-creatures",
+    };
+
+    private static void WriteFiles(string full, IReadOnlyDictionary<string, string> files)
+    {
+        if (Directory.Exists(full))
+        {
             foreach (var sub in Directory.GetDirectories(full))
             {
                 Directory.Delete(sub, recursive: true);
@@ -184,7 +227,7 @@ public static class PackEmitter
         var temp = Path.Combine(Path.GetTempPath(), "codex-degrees-check-" + Guid.NewGuid().ToString("N"));
         try
         {
-            Write(temp, files);
+            WriteFiles(temp, files);
             var fresh = Read(temp);
             var actual = Read(dir);
             var differences = new List<string>();

@@ -62,11 +62,55 @@ public sealed partial class TakeList
 
     public static TakeList Embedded() => Parse(BooksConfig.EmbeddedYaml("degrees-chapters.yaml"));
 
+    private sealed class SystemTypes
+    {
+        public List<SystemType> EntityTypes { get; set; } = new();
+    }
+
+    private sealed class SystemType
+    {
+        public string Type { get; set; } = string.Empty;
+        public string? Folder { get; set; }
+    }
+
+    /// <summary>
+    /// Checks the rows' targets against the system's own <c>entityTypes</c>: each target must be a declared type, and the pack folder must be that type's
+    /// <c>folder</c>, because the loader types a folder by the system's declaration and treats any other name as an undeclared type that shows nowhere.
+    /// </summary>
+    public void CheckAgainstSystem(string systemYaml)
+    {
+        SystemTypes system;
+        try
+        {
+            system = BooksConfig.Deserializer.Deserialize<SystemTypes>(systemYaml) ?? new SystemTypes();
+        }
+        catch (Exception)
+        {
+            throw new DegreesException("system.yaml could not be read for its entity types.");
+        }
+
+        for (var i = 0; i < Rows.Count; i++)
+        {
+            var type = system.EntityTypes.FirstOrDefault(t => t.Type == Rows[i].Target)
+                ?? throw new DegreesException($"Take-list row {i + 1}: the system declares no entity type for the target.");
+            if ((type.Folder ?? type.Type) != Rows[i].FolderName)
+            {
+                throw new DegreesException($"Take-list row {i + 1}: the pack folder is not the target type's folder in the system.");
+            }
+        }
+    }
+
     public IEnumerable<TakeRow> For(string book) => Rows.Where(r => r.Book == book);
 
     public void Validate()
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
+        var other = Rows.GroupBy(r => r.FolderName, StringComparer.Ordinal).FirstOrDefault(g => g.Select(r => r.Target).Distinct().Count() > 1);
+        if (other != null)
+        {
+            throw new DegreesException("Take-list: two different targets share one pack folder, so their entries would merge into one file.");
+        }
+
         for (var i = 0; i < Rows.Count; i++)
         {
             var r = Rows[i];

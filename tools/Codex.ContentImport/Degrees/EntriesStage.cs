@@ -33,12 +33,11 @@ public sealed class ParsedEntry
     public List<LabelledText> Fields { get; set; } = new();
     public List<LabelledText> Degrees { get; set; } = new();
 
-    public string Render()
-    {
-        var parts = new List<string>(Paragraphs);
-        parts.AddRange(Fields.Concat(Degrees).Select(f => $"**{f.Label.TrimEnd('.', ':', ' ')}.** {f.Text}".TrimEnd()));
-        return string.Join('\n', parts);
-    }
+    /// <summary>Every paragraph, field and degree section in source order. An empty label is a plain paragraph.</summary>
+    public List<LabelledText> Parts { get; set; } = new();
+
+    public string Render() =>
+        string.Join('\n', Parts.Select(p => p.Label.Length == 0 ? p.Text : $"**{p.Label.TrimEnd('.', ':', ' ')}.** {p.Text}".TrimEnd()));
 }
 
 /// <summary>An entry after redaction: what the pack file holds.</summary>
@@ -94,10 +93,11 @@ public static partial class EntriesStage
             entries.AddRange(range.Row.Parser == "rules" ? ParseRule(range, slice, book, compounds) : ParseEntries(range, slice, book, compounds));
         }
 
-        var duplicate = entries.GroupBy(e => (e.Type, e.Id)).FirstOrDefault(g => g.Count() > 1);
+        // The redaction rows name an entry by id alone, so an id may not repeat even across types.
+        var duplicate = entries.GroupBy(e => e.Id, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1);
         if (duplicate != null)
         {
-            throw new DegreesException($"{duplicate.Count()} entries of type {duplicate.Key.Type} share one id; ids come from names, so a name is repeated.");
+            throw new DegreesException($"{duplicate.Count()} entries ({string.Join(", ", duplicate.Select(e => e.Type).Distinct())}) share one id; ids come from names, so a name is repeated.");
         }
 
         return entries.OrderBy(e => e.Type, StringComparer.Ordinal).ThenBy(e => e.Id, StringComparer.Ordinal).ToList();
@@ -238,9 +238,10 @@ public static partial class EntriesStage
             {
                 foreach (var line in blocks.Blocks[i].Lines)
                 {
-                    foreach (Match m in Compound().Matches(SpanText.Normalize(line)))
+                    // Matched on the raw line: only a real hyphen makes a compound. A dash (en or em) between two words is not one.
+                    foreach (Match m in Compound().Matches(line))
                     {
-                        set.Add(m.Value.ToLowerInvariant());
+                        set.Add(SpanText.Normalize(m.Value).ToLowerInvariant());
                     }
                 }
             }
@@ -252,7 +253,7 @@ public static partial class EntriesStage
     [GeneratedRegex(@"\s*\((?:see )?pages? \d+(?:\s*(?:-|,|and)\s*\d+)*\)", RegexOptions.IgnoreCase)]
     private static partial Regex PageRef();
 
-    [GeneratedRegex(@"\p{L}+-\p{L}+")]
+    [GeneratedRegex(@"\p{L}+[-‐‑]\p{L}+")]
     private static partial Regex Compound();
 
     /// <summary>Reads the body blocks of one entry into paragraphs, labelled fields and degree sections.</summary>
@@ -336,6 +337,13 @@ public static partial class EntriesStage
                 return;
             }
 
+            // A dash at a line end (en or em) joins with no space: the word after it follows straight on.
+            if (sb[^1] is '–' or '—')
+            {
+                sb.Append(text);
+                return;
+            }
+
             // A hyphen at a line end: a word the book also writes with its hyphen inside a line keeps it, any other is a break in the word and goes.
             if (sb[^1] == '-' && sb.Length >= 2 && char.IsLetter(sb[^2]) && char.IsLower(text[0]))
             {
@@ -371,33 +379,24 @@ public static partial class EntriesStage
 
         public void Finish()
         {
-            string? lastLabel = null;
+            // A paragraph that follows a labelled one stays a paragraph of its own: it is cut by a short line, so it is the closing prose, not the label's text.
             foreach (var (label, sb) in _parts)
             {
                 var text = Clean(sb.ToString());
                 if (label.Length == 0)
                 {
-                    if (text.Length == 0)
-                    {
-                        continue;
-                    }
-
-                    // An unlabelled paragraph after a labelled one belongs to it.
-                    if (lastLabel != null)
-                    {
-                        var list = DegreeNames.Contains(lastLabel.ToLowerInvariant()) ? _entry.Degrees : _entry.Fields;
-                        list[^1] = list[^1] with { Text = list[^1].Text + "\n" + text };
-                    }
-                    else
+                    if (text.Length > 0)
                     {
                         _entry.Paragraphs.Add(text);
+                        _entry.Parts.Add(new LabelledText(string.Empty, text));
                     }
 
                     continue;
                 }
 
-                lastLabel = label;
-                (DegreeNames.Contains(label.ToLowerInvariant()) ? _entry.Degrees : _entry.Fields).Add(new LabelledText(label, text));
+                var part = new LabelledText(label, text);
+                (DegreeNames.Contains(label.ToLowerInvariant()) ? _entry.Degrees : _entry.Fields).Add(part);
+                _entry.Parts.Add(part);
             }
         }
     }
