@@ -52,8 +52,9 @@ reviewed step before the chapter that needs them. The importer never writes syst
   four-degrees entry: it has either the `homebrew` tag or a `source:` line from the importer, never both and never neither.
   A test asserts no id clashes between the packs (the homebrew weapon and armor ids are the likely clashes).
 - **Invented vocabulary versus the book's:** Shaken, Wobbly and Pinned appear in 7 test files and several components.
-  Retiring them is a user decision (section 8, Q3). Until it is made, the book's conditions are Library entries only,
-  and the table keeps the invented ones.
+  The user decided to retire them (section 8, Q3). Chapter 1 still ships the book's conditions as Library entries only,
+  and the table keeps the invented ones. Replacing `conditions:` and `conditionEffects` with the book's is its own reviewed step
+  after chapter 1. It reads the effects from the extracted text, never from memory, and moves the 7 test files.
 - **The new packs' manifests must not reserve imported names.** The homebrew manifest's Reserved Material line ("every
   name invented for it") stays on `homebrew-core` only. The imported packs say they designate no Reserved Material of their
   own, because adding terms to Licensed Material breaks ORC II.b.
@@ -226,20 +227,18 @@ Pack YAML is staged only after the redaction stage reports zero unmatched rows a
 
 ## 8. Questions for the user
 
-Decided on 2026-11-16: Q2 (opaque keys `pc` and `mc`) and Q7 (local agents may read the extracted text; it is inference, not training).
+All seven were decided by the user on 2026-11-16:
 
-1. **First publication.** The chapter 1 commit is the first time book-derived text enters a public repo. Hold the lawyer hour
-   on the terms of use before that commit, or after?
-2. ~~Provenance book key~~: decided, `pc` and `mc`.
-3. **Invented vocabulary:** when the book's conditions and skills land, retire Shaken, Wobbly, Pinned and the six invented skills
-   (moving 7 test files to the `degrees` fixture or to the real conditions)? Or keep both sets, with the invented ones marked homebrew?
-   Recommended: retire, in the vocabulary step before chapter 4.
-4. **Attributes:** four-degrees uses scores (`half-minus-five`), and the homebrew creatures carry `str`-`cha` as scores. The books
-   use modifiers only. Switch to modifiers before chapter 7 (ancestries) and before `mc`? Recommended: yes.
-5. **Homebrew ancestries and classes** next to the imported ones: keep them visible (tagged homebrew), or make `homebrew-core` a
-   pack that is off by default once `rules-core` exists?
-6. **Publisher-coined monster names:** ship them under the working position that they are licensed, or hold `mc` until the lawyer has answered?
-7. ~~Local agents reading extracted text~~: confirmed.
+1. **First publication:** no lawyer step. The project relies on the ORC grant, follows the licence to the letter and uses no trademark.
+2. **Provenance book key:** the opaque keys `pc` and `mc`.
+3. **Invented vocabulary:** retire Shaken, Wobbly, Pinned and the six invented skills when the book's conditions and skills land.
+   The conditions go in their own step after chapter 1, and the skills in the vocabulary step before chapter 4.
+4. **Attributes:** switch to modifiers, as the current core rules are written, before chapter 7 and before `mc`.
+5. **Homebrew ancestries and classes:** `homebrew-core` stays a pack, off by default once imported ancestries exist.
+   A screen with no entries shows a plain empty state that points to homebrew, rather than skipping the step.
+6. **Monster names:** `mc` is Licensed Material and ships. The book's own capitalization decides what is a proper noun, and
+   proper nouns that are Reserved Material are renamed or dropped.
+7. **Local agents reading extracted text:** confirmed. It is inference, not training.
 
 ## 9. First build step: P8a, infrastructure with no pack output
 
@@ -271,3 +270,13 @@ lowercase form is used elsewhere in the pack. Two things move to chapter 1 becau
   silently. Chapter 1 adds its pack there, and adds trait keys to the game terms once the system has a trait type.
 - The `degrees denylist` generator needs the take-list (to know which sections are left out) and a common-word exclusion, so a real run does not hash
   words such as "The". `Denylist.Format` is the core it will call.
+
+## 10. Chapter 1 in three steps
+
+1. **Prerequisite:** `condition` and `rule` entity types in the four-degrees `system.yaml`. `conditions:` and `conditionEffects` do not change.
+2. **Ch1a, the pipeline, with synthetic tests and no pack committed:** the items deferred from P8a (furniture by page side, sidebars split out
+   and dropped, openers dropped, tables rebuilt from word boxes, more than two columns, failing on a one-column page in a taken range), the
+   take-list `Data/degrees-chapters.yaml` and the unclaimed-block failure, stage 4 (`entries.json`), the fixed YAML emitter with `--out` and
+   `--check`, `import-report.yaml`, and the `degrees denylist` generator with its common-word exclusion. Trait keys wait for chapter 2.
+3. **Ch1b, the first pack:** the approved `conditions` row, its redaction rows and allowlist words, `packs/rules-core/` with its manifest,
+   its entry in `ExpectedGeneratedPacks`, `DegreesRulesPackTests` with counts taken two ways from the document, and the LEGAL.md paragraphs.
