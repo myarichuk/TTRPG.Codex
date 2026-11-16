@@ -22,12 +22,12 @@
   name: Weighted blow I
   tags: [homebrew, runes]
   description: The weapon lands as if it were heavier. Its Strikes roll one extra copy of the weapon's damage dice.
-  properties: { appliesTo: weapon, group: striking, extraDice: 1, level: 5, worth: 270 }
+  properties: { appliesTo: weapon, group: weight, extraDice: 1, level: 5, worth: 270 }
 - id: weighted-blow-2
   name: Weighted blow II
   tags: [homebrew, runes]
   description: The weapon lands as if it were far heavier. Its Strikes roll two extra copies of the weapon's damage dice.
-  properties: { appliesTo: weapon, group: striking, extraDice: 2, level: 10, worth: 1850 }
+  properties: { appliesTo: weapon, group: weight, extraDice: 2, level: 10, worth: 1850 }
 
 # --- Weapon runes, property ---
 - id: flaming
@@ -43,7 +43,7 @@
 - id: jagged
   name: Jagged
   tags: [homebrew, runes]
-  description: The weapon's edge is rough and cruel. Its Strikes deal 2 extra damage, a +2 item bonus to the damage roll.
+  description: The weapon's edge is rough and cruel. Its Strikes gain a +2 item bonus to damage.
   properties: { appliesTo: weapon, level: 5, worth: 210, modifiers: [{ target: damage, amount: 2, type: item }] }
 
 # --- Armor runes, fundamental ---
@@ -66,12 +66,12 @@
   name: Steady heart I
   tags: [homebrew, runes]
   description: The armor keeps its wearer calm under strain. It gives a +1 item bonus to all saving throws.
-  properties: { appliesTo: armor, group: resilience, level: 5, worth: 280, modifiers: [{ target: save, amount: 1, type: item }] }
+  properties: { appliesTo: armor, group: steadiness, level: 5, worth: 280, modifiers: [{ target: save, amount: 1, type: item }] }
 - id: steady-heart-2
   name: Steady heart II
   tags: [homebrew, runes]
   description: The armor keeps its wearer calm under great strain. It gives a +2 item bonus to all saving throws.
-  properties: { appliesTo: armor, group: resilience, level: 11, worth: 2300, modifiers: [{ target: save, amount: 2, type: item }] }
+  properties: { appliesTo: armor, group: steadiness, level: 11, worth: 2300, modifiers: [{ target: save, amount: 2, type: item }] }
 
 # --- Armor runes, property ---
 - id: mossy-lining

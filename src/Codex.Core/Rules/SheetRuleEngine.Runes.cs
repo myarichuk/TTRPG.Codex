@@ -40,10 +40,19 @@ public sealed partial class SheetRuleEngine
         return FormatPick(id, choices);
     }
 
-    private IEnumerable<ContentEntry> RunesOf(InventoryRules rules, IReadOnlyDictionary<string, int> choices) =>
-        rules.RuneType == null
-            ? Enumerable.Empty<ContentEntry>()
-            : RuneIds(choices).Select(id => resolver.Resolve(rules.RuneType, id)).OfType<ContentEntry>();
+    /// <summary>The runes of a pick that count: those in the Library that fit the item, the first of each group, and the property runes the room
+    /// allows (in the order the pick lists them). A rune <see cref="CheckRunes"/> reports adds nothing.</summary>
+    private IEnumerable<ContentEntry> RunesOf(InventoryRules rules, ContentEntry item, IReadOnlyDictionary<string, int> choices)
+    {
+        if (rules.RuneType == null) return Enumerable.Empty<ContentEntry>();
+        var fitting = RuneIds(choices).Select(id => resolver.Resolve(rules.RuneType, id)).OfType<ContentEntry>()
+            .Where(r => Property(r, "appliesTo")?.ToString() is not { Length: > 0 } fits || fits.Equals(item.Type, StringComparison.OrdinalIgnoreCase)).ToList();
+        var groups = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var kept = fitting.Where(r => Property(r, "group") is not { } group || groups.Add(group.ToString()!)).ToList();
+        var room = kept.Select(r => (int)(ToDouble(Property(r, "slots")) ?? 0)).DefaultIfEmpty(0).Max();
+        var properties = 0;
+        return kept.Where(r => Property(r, "group") != null || ++properties <= room).ToList();
+    }
 
     /// <summary>Whether an entry is one a weapon action is made with (its damage and attack are its own).</summary>
     private bool IsWeaponEntry(ContentEntry entry) =>
@@ -60,7 +69,7 @@ public sealed partial class SheetRuleEngine
             var item = rules.Types.Select(type => resolver.Resolve(type, id)).FirstOrDefault(e => e != null);
             if (item == null) continue;
             var weapon = IsWeaponEntry(item);
-            foreach (var source in new[] { item }.Concat(RunesOf(rules, choices)))
+            foreach (var source in new[] { item }.Concat(RunesOf(rules, item, choices)))
             {
                 var modifiers = Maps(source.Properties.GetValueOrDefault("modifiers")).Select(m => RuneTarget(m, weapon ? item.Id : null)).ToList();
                 if (modifiers.Count == 0) continue;
@@ -69,13 +78,15 @@ public sealed partial class SheetRuleEngine
         }
     }
 
-    /// <summary>A modifier with its <c>attack</c> and <c>damage</c> targets narrowed to the weapon <paramref name="weaponId"/>, when there is one.</summary>
+    /// <summary>A modifier with every attack and damage target (<c>attack</c>, <c>attack.melee</c>, <c>damage.weapon</c>...) narrowed to the weapon
+    /// <paramref name="weaponId"/>, when there is one; a target already naming an entry stays.</summary>
     private static object RuneTarget(IDictionary<string, object> modifier, string? weaponId)
     {
         var copy = new Dictionary<string, object>(modifier);
-        if (weaponId != null && Text(modifier, "target") is { } target && (target == RollSiteTargets.Attack || target == RollSiteTargets.Damage))
+        if (weaponId != null && Text(modifier, "target") is { } target && !target.Contains($".{RollSiteTargets.Entry}.", StringComparison.Ordinal))
         {
-            copy["target"] = $"{target}.{RollSiteTargets.Entry}.{weaponId}";
+            var root = new[] { RollSiteTargets.Attack, RollSiteTargets.Damage }.FirstOrDefault(r => target == r || target.StartsWith(r + ".", StringComparison.Ordinal));
+            if (root != null) copy["target"] = $"{root}.{RollSiteTargets.Entry}.{weaponId}";
         }
 
         return copy;
@@ -86,12 +97,12 @@ public sealed partial class SheetRuleEngine
     {
         if (Rules?.Inventory is not { } rules || rules.RuneType == null) return dice;
         var extra = result.Inventory.Where(i => i.Equipped && i.Entry.Id.Equals(entry.Id, StringComparison.OrdinalIgnoreCase) && i.Entry.Type == entry.Type)
-            .SelectMany(i => RunesOf(rules, ParsePick(i.Raw).Choices)).Select(r => (int)(ToDouble(Property(r, "extraDice")) ?? 0)).DefaultIfEmpty(0).Max();
+            .SelectMany(i => RunesOf(rules, i.Entry, ParsePick(i.Raw).Choices)).Select(r => (int)(ToDouble(Property(r, "extraDice")) ?? 0)).DefaultIfEmpty(0).Max();
         if (extra <= 0 || LeadingDice.Match(dice) is not { Success: true } lead) return dice;
         return MoreDice(dice, $"{lead.Groups["count"].Value}d{lead.Groups["sides"].Value}", extra);
     }
 
-    /// <summary>The rune checks of one pick: each rune is in the Library and fits the item, a group (potency, striking, resilience) is held once, and
+    /// <summary>The rune checks of one pick: each rune is in the Library and fits the item, a group (potency, weight, steadiness) is held once, and
     /// the runes with no group (the property runes) fit the room the item's runes give (<c>slots</c>, the most among them).</summary>
     private void CheckRunes(InventoryRules rules, ContentEntry item, IReadOnlyDictionary<string, int> choices, SheetEvaluation result)
     {
@@ -116,7 +127,9 @@ public sealed partial class SheetRuleEngine
 
         foreach (var group in runes.Where(r => Property(r, "group") != null).GroupBy(r => Property(r, "group")!.ToString()!, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
         {
-            result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: {item.Name} has more than one {group.Key} rune.", "Actor.Rule.RuneGroup", new object?[] { rules.Label, item.Name, group.Key }));
+            var (first, second) = (group.First(), group.Skip(1).First());
+            result.Violations.Add(new RuleViolation(rules.Key, $"{rules.Label}: {item.Name} has both {first.Name} and {second.Name}, and only one of the two can be on it.", "Actor.Rule.RuneGroup",
+                new object?[] { rules.Label, item.Name, first.Name, second.Name }));
         }
 
         var properties = runes.Count(r => Property(r, "group") == null);

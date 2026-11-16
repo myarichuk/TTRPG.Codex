@@ -9,7 +9,7 @@ Homebrew magic items and runes for the Four Degrees system. Every name, number a
   `ledge-axe|equipped:1,rune.honed-edge-1:1,rune.flaming:1`. `sheetRules.inventory.runeType` names the entity type (`rune`).
 - A rune carries `modifiers` (the same shape as a feature's), and optionally:
   - `appliesTo`: the item's entity type (`weapon` or `armor`); anything else is a violation.
-  - `group`: a fundamental rune (`potency`, `striking`, `resilience`). An item holds one rune per group.
+  - `group`: a fundamental rune (`potency`, `weight`, `steadiness`). An item holds one rune per group.
   - `slots`: places for property runes this rune opens (the potency runes: +1 is one place, +2 two, +3 three).
   - `extraDice`: copies of the weapon's own damage dice added to its Strikes.
   - A rune with no `group` is a property rune and takes one place.
@@ -34,5 +34,12 @@ Homebrew magic items and runes for the Four Degrees system. Every name, number a
 - Item and rune modifiers apply only in a system that names a `runeType`; other systems' items (srd5e) keep working as before.
 - Moving or trading a weapon to another sheet (`InventoryMoves.Add`) rebuilds the pick without its runes, and renaming a rune entry does not update picks
   (`SheetReferences` does not track rune ids).
+- Only the runes that count add anything: a rune that is not in the Library, does not fit the item, repeats a group, or is a property rune past the room is reported and adds nothing.
+- Dice amounts (`1d4`) are listed with their source and never stacked by type, so `type: item` on them does nothing: flaming and icy both add their dice.
+- On a weapon every `attack` and `damage` target (`attack.melee`, `damage.weapon`...) of its runes is narrowed to the weapon; the entry target names the id only, so a
+  spell with the same id would also read it.
+- `extraDice` applies to the weapon's damage and to each of its `alternatives`.
+- A line with runes is one particular item: adding a copy never joins it, and taking copies away takes plain ones first. Runes do not travel with a moved item.
+- Nothing limits how many magic items are worn at once.
 - A weapon carried twice under one id shares its runes' `attack` and `damage` modifiers between the copies (the roll targets name the entry id).
 - Extra damage dice from a rune do not carry a damage type; the rune's name is the source shown on the roll.

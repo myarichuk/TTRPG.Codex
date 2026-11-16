@@ -214,7 +214,7 @@ public sealed partial class SheetRuleEngine
                 }
 
                 var alternatives = use.GetValueOrDefault("alternatives") is Dictionary<string, object> others
-                    ? others.Where(o => o.Value != null).ToDictionary(o => o.Key, o => WithBonus(o.Value.ToString()!.Replace(" ", ""), bonus))
+                    ? others.Where(o => o.Value != null).ToDictionary(o => o.Key, o => WithBonus(source.Inventory == null ? o.Value.ToString()!.Replace(" ", "") : WeaponDice(result, entry, o.Value.ToString()!.Replace(" ", "")), bonus))
                     : new Dictionary<string, string>();
 
                 result.Actions.Add(new SheetAction(source, entry, level,

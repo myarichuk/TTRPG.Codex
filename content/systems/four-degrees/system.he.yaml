@@ -91,7 +91,7 @@ entityTypes:
     pluralLabel: חפצים קסומים
     fields:
       level: { label: רמה }
-      worth: { label: שווי בכסף }
+      worth: { label: שווי במטבעות כסף }
   rune:
     label: רונה
     pluralLabel: רונות
@@ -101,7 +101,7 @@ entityTypes:
       slots: { label: מקומות לרונות תכונה }
       extraDice: { label: קוביות נשק נוספות }
       level: { label: רמה }
-      worth: { label: שווי בכסף }
+      worth: { label: שווי במטבעות כסף }
   hazard:
     label: סכנה
     pluralLabel: סכנות

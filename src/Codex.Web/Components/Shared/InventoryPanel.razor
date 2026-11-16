@@ -120,7 +120,7 @@
     private async Task AddAsync(string entryId)
     {
         var raw = SheetRuleEngine.RawList(Sheet, Rules.Key);
-        var existing = Items.FirstOrDefault(i => i.Entry.Id.Equals(entryId, StringComparison.OrdinalIgnoreCase));
+        var existing = Items.FirstOrDefault(i => i.Entry.Id.Equals(entryId, StringComparison.OrdinalIgnoreCase) && SheetRuleEngine.RuneIds(SheetRuleEngine.ParsePick(i.Raw).Choices).Count == 0);
         if (existing != null) raw[existing.Index] = SheetRuleEngine.FormatItem(Rules, entryId, existing.Quantity + 1, existing.Equipped, existing.Raw);
         else raw.Add(SheetRuleEngine.FormatItem(Rules, entryId, 1, false));
         await StoreAsync(raw);

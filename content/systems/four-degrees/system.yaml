@@ -114,7 +114,7 @@ entityTypes:
     fields:
       - { key: level, label: Level, type: Number }
       - { key: worth, label: Worth in silver, type: Number }
-  # A mark set on a weapon or on armor. `appliesTo` is the item's type; a rune with a `group` (potency, striking, resilience) is a fundamental one, held once
+  # A mark set on a weapon or on armor. `appliesTo` is the item's type; a rune with a `group` (potency, weight, steadiness) is a fundamental one, held once
   # per group; a rune with no group is a property rune and takes one of the `slots` the item's potency rune gives. `extraDice` adds that many copies of a
   # weapon's damage dice.
   - type: rune
