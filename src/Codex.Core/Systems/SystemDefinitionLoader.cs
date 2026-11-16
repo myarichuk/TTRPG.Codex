@@ -130,6 +130,8 @@ public static class SystemDefinitionLoader
                 $"not a valid system definition: {Describe(ex)}");
         }
 
+        EmptySections.Fill(definition);
+
         if (definition == null)
         {
             throw WithErrors(new InvalidDataException($"{sourceName ?? "system.yaml"} is empty."), "the file is empty.");
