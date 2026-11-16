@@ -110,7 +110,7 @@ expectations:
     with: { values: { condition_frightened: 2 }, lists: { feats: [jumpy] } }
     expect: { values: { perception: 6 } }
     why: "Perception 5 + 2 + 1 = 8. Jumpy -1 status and Frightened -2 status: only the -2 counts. 8 - 2 = 6."
-  # now: fail, P2. One `penalties` rule covers every type, untyped too, so only one of the two -1s counts (7).
+  # now: pass. `penaltyTypes: { untyped: sum }` lets both untyped -1s count.
   - id: degrees.untyped-penalties-stack
     step: 2
     sheet: hero5

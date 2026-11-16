@@ -561,7 +561,7 @@ public class PluginLoader(
     /// and compiled code that do not fit. The install check (<see cref="SystemArchive"/>) reports the same.</summary>
     public static IEnumerable<string> ProblemsOf(SystemDefinition definition) =>
         Rules.SheetRolls.Problems(definition).Concat(Rules.SheetEvents.Problems(definition)).Concat(Rules.SheetLayout.Problems(definition))
-            .Concat(Rules.CampaignObjects.DefinitionProblems(definition)).Concat(Rules.SystemScripts.Problems(definition)).Concat(Rules.CompiledSuppliers.Problems(definition));
+            .Concat(Rules.CampaignObjects.DefinitionProblems(definition)).Concat(Rules.SystemScripts.Problems(definition)).Concat(Rules.CompiledSuppliers.Problems(definition)).Concat(Rules.ModifierStacking.Problems(definition));
 
     /// <summary>How many unknown keys a load problem names before it only counts the rest.</summary>
     public const int UnknownKeysListed = 12;

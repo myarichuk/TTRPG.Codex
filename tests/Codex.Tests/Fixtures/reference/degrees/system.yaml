@@ -63,11 +63,12 @@ conditionEffects:
       - { target: senseDc, amount: 1 }
 
 # Status, circumstance and item bonuses keep the highest of their type; untyped ones add up. Penalties of a type keep the worst.
-# The shape wants untyped penalties to add up as well; `penalties` is one rule for every type today, so they keep the worst too.
-# Per-type penalty rules are plan step P2 (spec: degrees.untyped-penalties-stack).
+# Untyped penalties add up: `penaltyTypes` overrides `penalties` for one type.
 modifierTypes:
   default: sum
   penalties: highest
+  penaltyTypes:
+    untyped: sum
   types:
     status: highest
     circumstance: highest
