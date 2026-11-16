@@ -4,6 +4,7 @@
 @using Codex.Persistence
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AiProviderService Providers
+@inject AiModelCatalog Models
 @inject ServerAiUsage Usage
 @inject IUserRepository UserRepo
 @inject AuthenticationStateProvider AuthStateProvider
@@ -128,7 +129,15 @@ else
                     </div>
                     <div class="mb-3">
                         <label for="ai-model" class="field-label">@L["Page.AiSettings.Model"]</label>
-                        <input id="ai-model" class="field-input" @bind="editing.ModelId" placeholder="@(purpose == Purpose.Image ? L["Page.AiSettings.ModelPhImage"] : L["Page.AiSettings.ModelPhText"])" required data-testid="ai-model" aria-invalid="@Invalid("model")" />
+                        @* A combo box: the service's known models are suggested, and anything else can still be typed (a local
+                           server's own names, one of OpenRouter's hundreds). The ids come from AiModelCatalog. *@
+                        <input id="ai-model" class="field-input" @bind="editing.ModelId" list="ai-model-options" autocomplete="off" placeholder="@(purpose == Purpose.Image ? L["Page.AiSettings.ModelPhImage"] : L["Page.AiSettings.ModelPhText"])" required data-testid="ai-model" aria-invalid="@Invalid("model")" />
+                        <datalist id="ai-model-options" data-testid="ai-model-options">
+                            @foreach (var option in Models.For(purpose == Purpose.Image ? AiModelPurpose.Image : AiModelPurpose.Text, editing.Kind))
+                            {
+                                <option value="@option.Id">@option.Label</option>
+                            }
+                        </datalist>
                         @if (editing.Kind == "openrouter")
                         {
                             <div class="field-hint">@(purpose == Purpose.Image

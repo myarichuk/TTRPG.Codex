@@ -254,6 +254,18 @@ builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(Codex.Web.DataProtectionKeys.Directory(dataFolders.Keys))
     .SetApplicationName(Codex.Web.DataProtectionKeys.ApplicationName);
 builder.Services.AddSingleton<ServerAiUsage>();
+// The model ids the AI settings page suggests: the bundled list, with an ai-models.json beside the data folder (or the
+// file Codex:AiModelsFile names) merged over it. A mistake in that file is logged and the bundled list used, never fatal.
+builder.Services.AddSingleton(sp =>
+{
+    var configured = builder.Configuration["Codex:AiModelsFile"];
+    var path = string.IsNullOrWhiteSpace(configured)
+        ? Path.Combine(Path.GetDirectoryName(dataFolders.Data) ?? dataFolders.Data, AiModelCatalog.FileName)
+        : Path.GetFullPath(configured, builder.Environment.ContentRootPath);
+    var catalog = AiModelCatalog.Load(path);
+    if (catalog.Problem != null) sp.GetRequiredService<ILogger<AiModelCatalog>>().LogWarning("{Problem}", catalog.Problem);
+    return catalog;
+});
 builder.Services.AddSingleton<AiProviderService>();
 builder.Services.AddSingleton<AiFeatures>();
 builder.Services.AddSingleton<CharacterAssist>();
