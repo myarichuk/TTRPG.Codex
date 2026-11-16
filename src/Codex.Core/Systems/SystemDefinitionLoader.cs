@@ -19,6 +19,7 @@ public static class SystemDefinitionLoader
     private static readonly IDeserializer Deserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .WithTypeConverter(new RowChooseConverter())
+        .WithTypeConverter(new ConditionImplicationConverter())
         .IgnoreUnmatchedProperties()
         .Build();
 
@@ -295,6 +296,16 @@ public static class SystemDefinitionLoader
         }
 
         foreach (var error in ValidateConditionValues(definition))
+        {
+            yield return error;
+        }
+
+        foreach (var error in ImplicationChecks.Problems(definition))
+        {
+            yield return error;
+        }
+
+        foreach (var error in PrintedChecks.Problems(definition))
         {
             yield return error;
         }

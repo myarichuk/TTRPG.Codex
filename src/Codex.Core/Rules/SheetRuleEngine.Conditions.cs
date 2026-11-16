@@ -18,16 +18,16 @@ public sealed partial class SheetRuleEngine
     {
         if (Rules == null || system.ConditionEffects.Count == 0) return Array.Empty<ConditionModifier>();
         var found = new List<ConditionModifier>();
-        foreach (var held in SheetConditions.Of(system, sheet).Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var holding in SheetConditions.Holding(system, sheet))
         {
-            if (SheetConditions.EffectOf(system, held) is not { } named) continue;
+            if (SheetConditions.EffectOf(system, holding.Name) is not { } named) continue;
             var (name, effect) = named;
             IReadOnlyDictionary<string, object>? view = null;
             for (var index = 0; index < effect.Modifiers.Count; index++)
             {
                 var m = effect.Modifiers[index];
                 if (m.Target.Length == 0 || KindOf(m.Target) == TargetKind.Unknown) continue;
-                view ??= SheetConditions.WithValue(name, effect, sheet);
+                view ??= SheetConditions.WithValue(holding.Value, sheet);
                 var source = string.IsNullOrWhiteSpace(m.Source) ? name : m.Source!;
                 var modifier = new FeatureModifier(m.Target, m.Amount, m.Type, m.When, m.OptIn);
                 var entry = new ContentEntry { Id = OptInIds.Condition(name, index), Type = "condition", Name = source, SystemId = system.Id };

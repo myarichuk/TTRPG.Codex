@@ -300,8 +300,12 @@ else
                             {
                                 var shown = system.DisplayCondition(line.Name);
                                 <li class="cond-chip" data-testid="sheet-condition" data-condition="@line.Name">
-                                    <bdi>@(line.Value is { } level ? L["Combat.ConditionValue", shown, level] : shown)</bdi>
-                                    @if (canSetConditions && line.Value == null)
+                                    @{
+                                        var said = line.Value is { } level ? L["Combat.ConditionValue", shown, level] : shown;
+                                        if (!line.Listed) said = L["Combat.Condition.ImpliedBy", said, string.Join(", ", (line.From ?? Array.Empty<string>()).Select(system.DisplayCondition))];
+                                    }
+                                    <bdi data-implied="@(line.Listed ? null : "true")">@said</bdi>
+                                    @if (canSetConditions && line.Value == null && line.Listed)
                                     {
                                         var removed = line.Name;
                                         <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@L["Actor.Sheet.ConditionRemove", shown]" data-testid="sheet-condition-remove" OnClick="() => RemoveSheetCondition(removed)" />
@@ -1528,7 +1532,10 @@ else
     private void RemoveSheetCondition(string name)
     {
         if (!CanSetConditions) return;
-        SetRawList(SheetModel.ConditionsKey, SheetRuleEngine.RawList(editSheet, SheetModel.ConditionsKey).Where(c => !string.Equals(c, name, StringComparison.OrdinalIgnoreCase)).ToList());
+        var kept = SheetRuleEngine.RawList(editSheet, SheetModel.ConditionsKey).Where(c => !string.Equals(c, name, StringComparison.OrdinalIgnoreCase)).ToList();
+        // What the condition leaves behind when it ends (Prone after Unconscious) stays listed.
+        if (system != null) kept.AddRange(SheetConditions.Stays(system, name).Where(s => !kept.Contains(s, StringComparer.OrdinalIgnoreCase)));
+        SetRawList(SheetModel.ConditionsKey, kept);
     }
 
     /// <summary>A moment (or rest) fired on the sheet: where the table runs it, the table's own command does (so the refill is logged, undoable
@@ -1558,6 +1565,8 @@ else
             }
         }
 
+        // Off the table the sheet page lowers the conditions that fall at this moment itself, as the table does after the event (frightened 2 -> 1).
+        if (flash == null && SheetConditions.IsDropMoment(system, moment)) SheetConditions.Drop(system, editSheet, moment);
         OfferChoicesAfter(moment);
         if (flash == null) SayMoment(moment, before);
         Reevaluate();

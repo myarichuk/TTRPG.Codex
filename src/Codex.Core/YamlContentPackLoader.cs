@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Codex.Core.Models;
+using Codex.Core.Rules;
 using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging;
@@ -438,6 +439,14 @@ public class YamlContentPackLoader : IContentPackLoader
             foreach (var message in HazardNumbers.Problems(entry, type, system))
             {
                 Problem("Hazard {Type}/{Id} in pack {PackId}: {Message}", entry.Type, entry.Id, entry.PackId, message);
+            }
+        }
+
+        if (system != null)
+        {
+            foreach (var message in SheetConditions.UnreachedKindModifiers(system, entry))
+            {
+                Problem("Entry {Type}/{Id} in pack {PackId}: {Message}", entry.Type, entry.Id, entry.PackId, message);
             }
         }
 

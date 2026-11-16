@@ -7,8 +7,10 @@ namespace Codex.Web.Components.Shared;
 /// <summary>A valued condition as a stepper draws it: the name the rules know it by, the pool and sheet key its value lives under, and its highest value.</summary>
 public sealed record ValuedCondition(string Name, string Key, int? Max);
 
-/// <summary>A condition or spell effect that holds, for a list: the rules' name, and its value when it has one (null for an unvalued one).</summary>
-public sealed record ConditionLine(string Name, int? Value);
+/// <summary>A condition or spell effect that holds, for a list: the rules' name, its value when it has one (null for an unvalued one), the conditions that bring
+/// it (<see cref="From"/>: empty for one that only the sheet or the table holds), and whether it is held on its own (<see cref="Listed"/>): one that is not
+/// has no remove button, since it ends when its source does.</summary>
+public sealed record ConditionLine(string Name, int? Value, IReadOnlyList<string>? From = null, bool Listed = true);
 
 /// <summary>One entry of the condition picker: what is typed (the name in the reader's language), what the list says beside it, and whether it is a spell effect.</summary>
 public sealed record PickOption(string Name, string Shown, string Value, bool SpellEffect);
@@ -42,10 +44,10 @@ public static class ConditionLines
     {
         var valued = Valued(system, null).ToDictionary(v => v.Name, v => v.Key, StringComparer.OrdinalIgnoreCase);
         var lines = new List<ConditionLine>();
-        foreach (var name in SheetConditions.Of(system, sheet))
+        foreach (var held in SheetConditions.Holding(system, sheet))
         {
-            int? value = valued.TryGetValue(name, out var key) && YamlValues.ToNumber(sheet.GetValueOrDefault(key)) is { } number ? (int)number : null;
-            lines.Add(new ConditionLine(name, value));
+            int? value = valued.ContainsKey(held.Name) ? (int)held.Value : null;
+            lines.Add(new ConditionLine(held.Name, value, held.From, held.Listed));
         }
 
         // Exhaustion held only by vitals.exhaustion (no conditionEffects entry) is not in Of; its level in the sheet is its record.
@@ -55,6 +57,25 @@ public static class ConditionLines
         }
 
         return lines;
+    }
+
+    /// <summary>Each valued condition the creature holds on its own, with its level as held: the table's pool, or what another condition brings when that is
+    /// higher (Shaken stored at 1 and held at 3 by Dread reads 3). One that is only brought by another is not here: it shows as that condition's line.
+    /// <paramref name="live"/> is the live sheet (<see cref="SheetConditions.LiveView"/>); <paramref name="pool"/> reads a pool by key.</summary>
+    public static IReadOnlyList<(ValuedCondition Condition, int Level, IReadOnlyList<string> From)> HeldLevels(SystemDefinition? system, IReadOnlyDictionary<string, object> live, Func<string, int?> pool)
+    {
+        var levels = new List<(ValuedCondition, int, IReadOnlyList<string>)>();
+        if (system == null) return levels;
+        var lines = SheetConditions.Holding(system, live);
+        foreach (var valued in Valued(system, null))
+        {
+            var held = lines.FirstOrDefault(h => h.Listed && string.Equals(h.Name, valued.Name, StringComparison.OrdinalIgnoreCase));
+            var level = Math.Max(pool(valued.Key) ?? 0, held == null ? 0 : (int)held.Value);
+            // Raised above its own number by another condition: it says which.
+            if (level > 0) levels.Add((valued, level, held != null && level > (pool(valued.Key) ?? 0) ? held.From : Array.Empty<string>()));
+        }
+
+        return levels;
     }
 
     /// <summary>The picker's entries: the system's conditions (and its concentration condition), then its spell effects as their own group. A datalist has

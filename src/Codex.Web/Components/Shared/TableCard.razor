@@ -56,9 +56,21 @@
         </div>
     }
 
-    @if (Effects.Count > 0 || OnlyOnSheet.Count > 0)
+    @{
+        var valued = Valued;
+        var implied = Implied;
+    }
+    @if (Effects.Count > 0 || OnlyOnSheet.Count > 0 || implied.Count > 0 || valued.Count > 0)
     {
         <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Actor.Name])">
+            @* Every valued condition that holds shows its level (Exhaustion 3, Frightened 2), as held. *@
+            @foreach (var (condition, level, from) in valued)
+            {
+                <li class="cond-chip" data-testid="table-card-condition" data-level="@level" data-condition="@condition.Name" title="@(L["Combat.ExhaustionTitle", ConditionName(condition.Name), level])">
+                    <DomainIcon Domain="condition" Key="@condition.Name" Size="DomainIconSize.Small" />
+                    @(from.Count > 0 ? L["Combat.Condition.ImpliedBy", $"{ConditionName(condition.Name)} {level}", string.Join(", ", from.Select(ConditionName))] : $"{ConditionName(condition.Name)} {level}")
+                </li>
+            }
             @foreach (var effect in Effects)
             {
                 <li class="cond-chip" data-testid="table-card-condition">
@@ -73,6 +85,15 @@
                     @ConditionName(sheetCondition)
                 </li>
             }
+            @* Brought by another condition: it ends with its source, so there is nothing to remove. *@
+            @foreach (var line in implied)
+            {
+                var said = L["Combat.Condition.ImpliedBy", line.Value is { } held ? $"{ConditionName(line.Name)} {held}" : ConditionName(line.Name), string.Join(", ", (line.From ?? Array.Empty<string>()).Select(ConditionName))];
+                <li class="cond-chip" data-testid="table-card-condition" data-implied="true" aria-label="@said">
+                    <DomainIcon Domain="condition" Key="@line.Name" Size="DomainIconSize.Small" />
+                    @said
+                </li>
+            }
         </ul>
     }
 
@@ -82,9 +103,9 @@
         @if (stats.Count > 0)
         {
             <dl class="table-card-stats" data-testid="table-card-stats">
-                @foreach (var (label, value) in stats)
+                @foreach (var (label, value, title) in stats)
                 {
-                    <div><dt>@label</dt><dd>@value</dd></div>
+                    <div><dt>@label</dt><dd title="@title">@value@if (title != null) {<span class="small-muted d-block" data-testid="table-card-stat-reason">@title</span>}</dd></div>
                 }
             </dl>
         }
@@ -182,6 +203,10 @@
     /// <summary>What the sheet's rules make of the sheet; null when they are not loaded, and the card then shows less.</summary>
     [Parameter] public SheetEvaluation? Evaluation { get; set; }
 
+    /// <summary>What a printed creature carries with its conditions applied (<see cref="SheetRuleEngine.Printed"/>); empty for any other sheet. The card shows these
+    /// in place of the worked-out numbers.</summary>
+    [Parameter] public IReadOnlyList<PrintedNumber>? Printed { get; set; }
+
     /// <summary>The Library entry a creature was made from, for its stat block.</summary>
     [Parameter] public ContentEntry? Blueprint { get; set; }
 
@@ -269,6 +294,14 @@
                     && ConditionLines.ValuedNamed(Definition, null, c) == null)
         .ToList();
 
+    /// <summary>The valued conditions the creature holds, each with its level as held.</summary>
+    private IReadOnlyList<(ValuedCondition Condition, int Level, IReadOnlyList<string> From)> Valued =>
+        Definition == null || State == null ? Array.Empty<(ValuedCondition, int, IReadOnlyList<string>)>() : ConditionLines.HeldLevels(Definition, LiveSheet(), State.Pool);
+
+    /// <summary>The conditions the creature holds only because another brings them (<c>implies</c>), with what brings each. Read from the live sheet, never stored.</summary>
+    private List<ConditionLine> Implied =>
+        Definition == null ? new List<ConditionLine>() : ConditionLines.Holding(Definition, LiveSheet()).Where(l => !l.Listed && l.From is { Count: > 0 }).ToList();
+
     /// <summary>The line under the name: the fields the system calls a summary (level, species, class).</summary>
     private string Summary =>
         Definition == null ? string.Empty : string.Join(", ", Definition.FieldRoles.Summary
@@ -282,44 +315,95 @@
 
     private static string Signed(object value) => YamlValues.ToNumber(value) is { } number ? (number >= 0 ? "+" : "") + number.ToString(System.Globalization.CultureInfo.InvariantCulture) : value.ToString() ?? string.Empty;
 
-    /// <summary>Armor class, speed, the system's derived values, and spell save DC and attack.</summary>
-    private IEnumerable<(string Label, string Value)> Stats()
+    /// <summary>Armor class, speed, the system's derived values, and spell save DC and attack. A printed creature's numbers come from what it prints with its
+    /// conditions applied (<see cref="Printed"/>), in place of the worked-out ones, never on top of them.</summary>
+    private IEnumerable<(string Label, string Value, string? Title)> Stats()
     {
         if (Definition == null) yield break;
+        var shown = new HashSet<PrintedNumber>();
         if (Rules?.ArmorClass is { } armor)
         {
             var field = Definition.ActorFields.FirstOrDefault(f => f.Key == armor.Key);
-            var value = Evaluation?.ArmorClass is { Active: true } worked ? worked.Total : YamlValues.GetInt(Actor.Sheet, armor.Key);
-            if (value.HasValue) yield return (field?.Abbreviation ?? field?.Label ?? armor.Key, value.Value.ToString());
+            var label = field?.Abbreviation ?? field?.Label ?? armor.Key;
+            if (PrintedAt(armor.Key) is { } printedArmor)
+            {
+                shown.Add(printedArmor);
+                yield return (label, printedArmor.Total.ToString(), PrintedTitle(printedArmor));
+            }
+            else if (Evaluation?.ArmorClass is { Active: true } worked)
+            {
+                yield return (label, worked.Total.ToString(), null);
+            }
+            else if (YamlValues.GetInt(Actor.Sheet, armor.Key) is { } stored)
+            {
+                // A number kept by hand: the conditions that hold still count, shown with the stored one and never written to it.
+                var bonus = Engine?.ConditionBonus(LiveSheet(), armor.Key);
+                yield return (label, (stored + (bonus?.Number ?? 0)).ToString(), bonus is { Number: not 0 } ? PrintedTitle(stored, bonus.Bonuses, bonus.Dice) : null);
+            }
         }
 
         if (Definition.ActorFields.FirstOrDefault(f => f.Key == Definition.FieldRoles.Speed) is { } speed && YamlValues.GetInt(WorkedSheet ?? Actor.Sheet, speed.Key) is { } distance)
         {
             var label = speed.Abbreviation ?? System.Text.RegularExpressions.Regex.Replace(speed.Label, @"\s*\([^)]*\)\s*$", "");
-            yield return (label, string.IsNullOrEmpty(speed.Unit) ? distance.ToString() : $"{distance} {speed.Unit}");
+            yield return (label, string.IsNullOrEmpty(speed.Unit) ? distance.ToString() : $"{distance} {speed.Unit}", null);
         }
 
         if (Rules != null && Evaluation != null)
         {
             foreach (var derived in Rules.Derived)
             {
-                if (Evaluation.Derived.TryGetValue(derived.Key, out var value)) yield return (derived.Label, derived.Signed ? Signed(value) : value.ToString() ?? string.Empty);
+                if (PrintedAt(derived.Key) is { } printedDerived)
+                {
+                    shown.Add(printedDerived);
+                    yield return (derived.Label, derived.Signed ? Signed(printedDerived.Total) : printedDerived.Total.ToString(), PrintedTitle(printedDerived));
+                }
+                else if (Evaluation.Derived.TryGetValue(derived.Key, out var value))
+                {
+                    yield return (derived.Label, derived.Signed ? Signed(value) : value.ToString() ?? string.Empty, null);
+                }
             }
 
             foreach (var list in Rules.Ranked.Where(l => l.Publish))
             {
                 foreach (var key in list.Keys())
                 {
-                    if (Evaluation.Derived.TryGetValue(key.Key, out var published)) yield return (string.IsNullOrEmpty(key.Label) ? key.Key : key.Label, list.Base == 0 ? Signed(published) : published.ToString() ?? string.Empty);
+                    var label = string.IsNullOrEmpty(key.Label) ? key.Key : key.Label;
+                    if (PrintedAt(key.Key) is { } printedRank)
+                    {
+                        shown.Add(printedRank);
+                        yield return (label, list.Base == 0 ? Signed(printedRank.Total) : printedRank.Total.ToString(), PrintedTitle(printedRank));
+                    }
+                    else if (Evaluation.Derived.TryGetValue(key.Key, out var published))
+                    {
+                        yield return (label, list.Base == 0 ? Signed(published) : published.ToString() ?? string.Empty, null);
+                    }
                 }
             }
 
             foreach (var casting in Evaluation.Spellcasting)
             {
-                yield return (Evaluation.Spellcasting.Count > 1 ? L["Actor.Skills.SpellSaveDcFor", casting.ClassName] : L["Actor.Skills.SpellSaveDc"], casting.SaveDc.ToString());
+                yield return (Evaluation.Spellcasting.Count > 1 ? L["Actor.Skills.SpellSaveDcFor", casting.ClassName] : L["Actor.Skills.SpellSaveDc"], casting.SaveDc.ToString(), null);
             }
         }
+
+        // What a printed creature prints beside those: its saves, skills and Strikes, with the conditions applied.
+        foreach (var other in (Printed ?? Array.Empty<PrintedNumber>()).Where(p => !shown.Contains(p)))
+        {
+            var isRoll = other.Target.StartsWith("save.", StringComparison.Ordinal) || other.Target.StartsWith("check.skill.", StringComparison.Ordinal) || other.Target == "attack";
+            yield return (other.Label, isRoll ? Signed(other.Total) : other.Total.ToString(), PrintedTitle(other));
+        }
     }
+
+    /// <summary>The printed number a creature carries for a target (armor class, a derived value), when it prints one.</summary>
+    private PrintedNumber? PrintedAt(string target) => Printed?.FirstOrDefault(p => p.Target == target);
+
+    private string? PrintedTitle(PrintedNumber number) => number.Bonuses.Count == 0 && number.Dice.Count == 0 ? null : PrintedTitle(number.Printed, number.Bonuses, number.Dice);
+
+    /// <summary>"printed 18; Shaken -2": the number as printed, and what each condition did to it.</summary>
+    private string PrintedTitle(int printed, IReadOnlyList<RollBonus> bonuses, IReadOnlyList<RollDice> dice) =>
+        L["Combat.Card.PrintedTitle", printed, string.Join(", ", bonuses.Select(b => $"{ConditionName(b.Source)} {Amount(b.Amount)}").Concat(dice.Select(d => $"{ConditionName(d.Source)} {d.Dice}")))];
+
+    private static string Amount(double amount) => (amount < 0 ? "\u2212" : "+") + Math.Abs(amount).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>Other players never learn exact hit points, only a rough band.</summary>
     private string HpBand(int current, int max)

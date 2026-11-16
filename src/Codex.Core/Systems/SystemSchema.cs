@@ -140,6 +140,12 @@ public static class SystemSchema
 
         if (UnknownYamlKeys.DictionaryValueType(type) is { } value) return new JsonObject { ["type"] = "object", ["additionalProperties"] = SchemaOf(value, model) };
         if (UnknownYamlKeys.ListItemType(type) is { } item) return new JsonObject { ["type"] = "array", ["items"] = SchemaOf(item, model) };
+        // An item of `implies` may be a bare condition name (see ConditionImplicationConverter).
+        if (type == typeof(Codex.Plugin.Abstractions.ConditionImplication))
+        {
+            return new JsonObject { ["anyOf"] = new JsonArray(new JsonObject { ["type"] = "string" }, new JsonObject { ["$ref"] = $"#/$defs/{type.Name}" }) };
+        }
+
         return new JsonObject { ["$ref"] = $"#/$defs/{type.Name}" };
     }
 

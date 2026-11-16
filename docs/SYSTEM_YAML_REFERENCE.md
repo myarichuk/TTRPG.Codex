@@ -377,6 +377,7 @@ The rules a system applies to a character sheet, declared in `system.yaml` so a 
 | `constraints` | list of [FieldConstraint](#fieldconstraint) | Conditions a single-pick reference field's chosen entry must satisfy. |
 | `lists` | list of [ListRule](#listrule) | Multi-pick lists of entries on the sheet (spells, feats, knacks...). |
 | `ranked` | list of [RankedListRule](#rankedlistrule) | General ranked lists (a Perception that is trained or expert, armor and weapon training, a class DC), beside the Skills and the saves. See RankedListRule. |
+| `printed` | list of [PrintedNumberDefinition](#printednumberdefinition) | The numbers a printed creature (a sheet whose `attrMethod` is `printed`) carries as the stat block prints them, and which target the conditions' modifiers reach them by, so a condition lowers a printed armor class, save or Strike. See PrintedNumberDefinition. |
 | `multiclass` | [MulticlassRules](#multiclassrules) | Levels split across more than one class. Null: one class only. |
 | `slotPools` | list of [SlotPoolRule](#slotpoolrule) | Expendable slot pools (spell slots, pact slots...) computed from class tables and tracked during play as resources. |
 | `hitPoints` | [HitPointRules](#hitpointrules) | Maximum hit points computed from class hit dice and Constitution. Null: hit points are typed in. |
@@ -565,6 +566,19 @@ One key of a RankedListRule.
 | `label` | text (a number is text too) |  |
 | `canonicalLabel` | text (a number is text too) | The English name, when Label is translated. |
 | `attribute` | text (a number is text too) | The attribute this key adds; overrides the list's. |
+
+## PrintedNumberDefinition
+
+One printed number of a printed creature (`sheetRules.printed`): either `{ from, target }`, a sheet key holding the printed number and the target the condition modifiers aim at it by, or `{ list, bonus, range, name }`, a list of Strikes on the sheet.
+
+| Key | Type | What it is |
+|---|---|---|
+| `from` | text (a number is text too) | The sheet key that holds the printed number (the armor class key, a derived value, a Number field). |
+| `target` | text (a number is text too) | What the number answers to: the armor class key, a derived value, a Number field, `save.<attribute>` or `check.skill.<key>`. |
+| `list` | text (a number is text too) | The sheet list of Strikes, each row an attack: read by Bonus, Range and Name. |
+| `bonus` | text (a number is text too) | For a list of Strikes: the key of each row's attack bonus. Required. |
+| `range` | text (a number is text too) | For a list of Strikes: the key of each row's range, `melee` or `ranged`. A row without one is a melee Strike. |
+| `name` | text (a number is text too) | For a list of Strikes: the key of each row's name. |
 
 ## MulticlassRules
 
@@ -1138,6 +1152,7 @@ What a condition does while it holds (`conditionEffects.<name>`).
 |---|---|---|
 | `modifiers` | list of [ModifierDefinition](#modifierdefinition) | Modifiers that apply while the condition holds; one without a `source` is credited to the condition. |
 | `value` | [ConditionValueDefinition](#conditionvaluedefinition) | Makes the condition a valued one (Exhaustion 3, frightened 2): it holds while its value is above 0, and its modifiers read the value as `value`. Null: the condition has no value (`value` is 1 in its modifiers). For the condition `vitals.exhaustion` names, the loader fills in `key` and `max` from `vitals.exhaustion`; the file may write only `decrease` there. |
+| `implies` | list of [ConditionImplication](#conditionimplication) | Conditions that hold while this one holds (`implies: [Dazzled, { condition: Shaken, value: 2 }]`); never stored, read on every look at what holds (docs/CONDITION_IMPLIES_DESIGN.md). |
 
 ## ConditionValueDefinition
 
@@ -1157,6 +1172,16 @@ The value a valued condition carries (`conditionEffects.<name>.value`); see docs
 |---|---|---|
 | `on` | text (a number is text too) | Required: `turnEnd`, `turnStart`, a rest of `vitals.rests` or a moment the system declares. |
 | `by` | whole number | How much it drops by. Default 1. |
+
+## ConditionImplication
+
+One item of `implies`: a condition name, or `{ condition, value, stays }`.
+
+| Key | Type | What it is |
+|---|---|---|
+| `condition` | text (a number is text too) |  |
+| `value` | text (a number is text too) | For an implied condition that is valued: a number or a formula, in which `value` is the source's value (1 for a source with no value). Null: 1. |
+| `stays` | true or false | The implied condition is written as a condition of its own when the source ends (Prone after Unconscious). Only for an unvalued one. |
 
 ## HazardRules
 

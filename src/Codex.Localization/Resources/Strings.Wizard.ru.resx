@@ -109,6 +109,8 @@
   <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>Подставлять нечего: числа, которые вы уже написали, остаются, а Сл спасброска ждёт, пока у опасности появится спасбросок.</value></data>
   <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>Подставлено из справочника для уровня {0}: {1}.</value></data>
   <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>Исправьте это перед сохранением</value></data>
+  <data name="Wizard.Modifiers.Unreached" xml:space="preserve"><value>Модификаторы, которые ни на что не влияют (сохранить можно и так)</value></data>
+  <data name="Wizard.Modifiers.UnreachedLine" xml:space="preserve"><value>{0} «{1}»: modifiers[{2}] меняет «{3}», а это число читают только правила листа; особенность вида листа до него не доходит, так что ничего не даёт.</value></data>
   <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>Числа, на которые стоит взглянуть (сохранить можно и так)</value></data>
   <data name="Wizard.Hazard.Blocked" xml:space="preserve"><value>Стол пока не может запустить эту опасность. {0}</value></data>
   <data name="Wizard.Hazard.Problem.Band" xml:space="preserve"><value>ступень {0}: </value></data>

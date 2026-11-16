@@ -182,6 +182,8 @@
   <data name="Combat.LowerCondition" xml:space="preserve"><value>Lower {0} for {1}</value></data>
   <data name="Combat.ConditionValue" xml:space="preserve"><value>{0} {1}</value></data>
   <data name="Combat.SpellEffects" xml:space="preserve"><value>Spell effects</value></data>
+  <data name="Combat.Condition.ImpliedBy" xml:space="preserve"><value>{0}, from {1}</value></data>
+  <data name="Combat.Card.PrintedTitle" xml:space="preserve"><value>printed {0}; {1}</value></data>
   <data name="Combat.SetOnSheet" xml:space="preserve"><value>Set on the character sheet. Until removed.</value></data>
   <data name="Combat.ConditionHolds" xml:space="preserve"><value>{0} is already {1}. Use + to raise it.</value></data>
   <data name="Combat.TurnLabel" xml:space="preserve"><value>Turn</value></data>

@@ -568,6 +568,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// <summary>True once <paramref name="actorId"/> has been hydrated into this runtime; safe from any thread.</summary>
     public bool HasActor(string actorId) => _hydratedIds.ContainsKey(actorId);
 
+    /// <summary>The actor an entity belongs to, or null.</summary>
+    internal string? ActorIdOf(Entity entity) => _actorEntities.FirstOrDefault(p => p.Value.Equals(entity)).Key;
+
     public Entity? GetEntity(string actorId) => _actorEntities.TryGetValue(actorId, out var entity) ? entity : null;
 
     /// <summary>Resolves an actor id to its display name for a command's <see cref="SessionEvent"/>
@@ -761,7 +764,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         participant.TurnStarted = true;
         if (_actorEntities.ContainsKey(participant.ActorId))
         {
-            World.AdvanceTurn(participant.ActorId, EffectExpiry.StartOfTurn);
+            TableRules.StaysAfterExpiry(this, World.AdvanceTurn(participant.ActorId, EffectExpiry.StartOfTurn));
             MarkAllHydratedActorsDirty();
         }
     }

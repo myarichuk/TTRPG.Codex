@@ -306,6 +306,13 @@ internal static class TableEvents
                     runtime.World.RemoveStatus(entity, removed);
                     own.RemoveAll(c => string.Equals(c, removed, StringComparison.OrdinalIgnoreCase));
                     messages.Add(EventMessage.Of("Sheet.ConditionRemoved", name, EventTerm.Condition(removed)));
+                    // What the ended condition leaves behind as a condition of its own (Prone after Unconscious, `stays`): written once, and said on its own line.
+                    foreach (var stayed in SheetConditions.Stays(system, removed).Where(c => !after.Contains(c, StringComparer.OrdinalIgnoreCase) && !own.Contains(c, StringComparer.OrdinalIgnoreCase)))
+                    {
+                        if (!CodexWorld.HasStatus(entity, stayed)) runtime.World.AddStatus(entity, stayed, "rules", ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, actorId);
+                        own.Add(stayed);
+                        messages.Add(EventMessage.Of("Sheet.ConditionAdded", name, EventTerm.Condition(stayed)));
+                    }
                 }
 
                 if (own.Count == 0) doc.Sheet.Remove(SheetModel.ConditionsKey);

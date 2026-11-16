@@ -104,18 +104,20 @@
 
     @{
         var effects = (State?.Effects ?? Array.Empty<EffectSnapshot>()).Where(e => !IsVitalsMarker(e.EffectId)).ToList();
-        var exhaustion = Vitals?.Exhaustion is { } exhaustionRules ? State?.Pool(exhaustionRules.Key) ?? 0 : 0;
+        var valued = ValuedBadges;
+        var implied = Implied;
         var onSheet = OnlyOnSheet;
     }
-    @if (effects.Count > 0 || exhaustion > 0 || onSheet.Count > 0)
+    @if (effects.Count > 0 || valued.Count > 0 || implied.Count > 0 || onSheet.Count > 0)
     {
         <ul class="cond-strip list-unstyled mb-0" aria-label="@(L["Combat.ConditionsOn", Name])">
-            @if (exhaustion > 0)
+            @* Every valued condition that holds shows its level (Exhaustion 3, Frightened 2), not only Exhaustion. *@
+            @foreach (var (condition, level, from) in valued)
             {
-                var condition = Vitals!.Exhaustion!.Condition;
-                <li class="cond-chip" data-testid="exhaustion-badge" title="@(L["Combat.ExhaustionTitle", condition ?? L["Combat.Exhaustion"], exhaustion])">
-                    <DomainIcon Domain="condition" Key="@(condition ?? "Exhaustion")" Size="DomainIconSize.Small" />
-                    @ConditionLabel(condition ?? "Exhaustion", $"{condition ?? L["Combat.Exhaustion"]} {exhaustion}")
+                var isExhaustion = Vitals?.Exhaustion is { } exhaustionRules && condition.Key == exhaustionRules.Key;
+                <li class="cond-chip" data-testid="@(isExhaustion ? "exhaustion-badge" : "valued-badge")" data-condition="@condition.Name" data-level="@level" title="@(L["Combat.ExhaustionTitle", ConditionName(condition.Name), level])">
+                    <DomainIcon Domain="condition" Key="@condition.Name" Size="DomainIconSize.Small" />
+                    @ConditionLabel(condition.Name, from.Count > 0 ? L["Combat.Condition.ImpliedBy", $"{ConditionName(condition.Name)} {level}", string.Join(", ", from.Select(ConditionName))] : $"{ConditionName(condition.Name)} {level}")
                 </li>
             }
             @foreach (var effect in effects)
@@ -142,6 +144,15 @@
                     {
                         <CodexButton Variant="CodexButtonVariant.Rune" Small="true" Icon="x" Label="@(L["Combat.RemoveCondition", ConditionName(sheetCondition), Name])" OnClick="() => OnRemoveCondition.InvokeAsync(sheetCondition)" />
                     }
+                </li>
+            }
+            @* Brought by another condition: it ends with its source, so it has no button to remove it. *@
+            @foreach (var line in implied)
+            {
+                var said = L["Combat.Condition.ImpliedBy", line.Value is { } held ? $"{ConditionName(line.Name)} {held}" : ConditionName(line.Name), string.Join(", ", (line.From ?? Array.Empty<string>()).Select(ConditionName))];
+                <li class="cond-chip" data-testid="condition-badge" data-effect-id="@line.Name" data-implied="true" aria-label="@said">
+                    <DomainIcon Domain="condition" Key="@line.Name" Size="DomainIconSize.Small" />
+                    @ConditionLabel(line.Name, said)
                 </li>
             }
         </ul>
@@ -208,6 +219,18 @@
     /// and the valued conditions, which show by their value.</summary>
     private IReadOnlyList<string> OnlyOnSheet =>
         (State?.OnlyOnSheet ?? Array.Empty<string>()).Where(c => !IsVitalsMarker(c) && ConditionLines.ValuedNamed(Definition, null, c) == null).ToList();
+
+    /// <summary>Each valued condition the creature holds, with its level as held (the table's number, or what another condition brings if higher).</summary>
+    private IReadOnlyList<(ValuedCondition Condition, int Level, IReadOnlyList<string> From)> ValuedBadges =>
+        Definition == null || State == null
+            ? Array.Empty<(ValuedCondition, int, IReadOnlyList<string>)>()
+            : ConditionLines.HeldLevels(Definition, State.LiveView(Definition, Actor?.Sheet ?? new Dictionary<string, object>()), State.Pool);
+
+    /// <summary>What other conditions bring that the creature does not hold itself (<c>implies</c>), with the conditions that bring each.</summary>
+    private IReadOnlyList<ConditionLine> Implied =>
+        Definition == null || Actor == null || State == null
+            ? Array.Empty<ConditionLine>()
+            : ConditionLines.Holding(Definition, State.LiveView(Definition, Actor.Sheet)).Where(l => !l.Listed && l.From is { Count: > 0 }).ToList();
 
     /// <summary>Dead, stable and down are shown as the row's state, not as conditions in the list.</summary>
     private bool IsVitalsMarker(string effectId) =>

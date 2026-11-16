@@ -348,6 +348,23 @@ public sealed class ConditionEffectDefinition
     /// read the value as <c>value</c>. Null: the condition has no value (<c>value</c> is 1 in its modifiers). For the condition
     /// <c>vitals.exhaustion</c> names, the loader fills in <c>key</c> and <c>max</c> from <c>vitals.exhaustion</c>; the file may write only <c>decrease</c> there.</summary>
     public ConditionValueDefinition? Value { get; set; }
+
+    /// <summary>Conditions that hold while this one holds (<c>implies: [Dazzled, { condition: Shaken, value: 2 }]</c>); never stored, read on every look
+    /// at what holds (docs/CONDITION_IMPLIES_DESIGN.md).</summary>
+    public List<ConditionImplication> Implies { get; set; } = new();
+}
+
+/// <summary>One item of <c>implies</c>: a condition name, or <c>{ condition, value, stays }</c>.</summary>
+public sealed class ConditionImplication
+{
+    public string Condition { get; set; } = string.Empty;
+
+    /// <summary>For an implied condition that is valued: a number or a formula, in which <c>value</c> is the source's value (1 for a source with
+    /// no value). Null: 1.</summary>
+    public string? Value { get; set; }
+
+    /// <summary>The implied condition is written as a condition of its own when the source ends (Prone after Unconscious). Only for an unvalued one.</summary>
+    public bool Stays { get; set; }
 }
 
 /// <summary>The value a valued condition carries (<c>conditionEffects.&lt;name&gt;.value</c>); see docs/SHEET_CONDITIONS_DESIGN.md.</summary>
