@@ -153,3 +153,10 @@ degrees.the-second-attack-takes-five
 degrees.the-third-attack-and-later-take-ten
 degrees.frightened-drops-by-one-at-the-end-of-the-turn
 degrees.frightened-ends-at-zero
+degrees.boosts-raise-scores-from-ten
+degrees.a-flaw-lowers-the-score
+degrees.two-fixed-boosts-trade-for-one-free
+degrees.a-boost-above-plus-four-is-half
+degrees.two-half-boosts-make-a-full-step
+degrees.four-different-boosts-are-required
+degrees.an-open-boost-is-reported

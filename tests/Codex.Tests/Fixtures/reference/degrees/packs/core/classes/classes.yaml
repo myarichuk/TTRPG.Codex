@@ -4,6 +4,7 @@
   properties:
     savingThrows: [con, wis]
     keyAttribute: str
+    boosts: [str]
     hp: 8
     features:
       - { name: Armor training, level: 1, adds: [{ to: armor, entries: [unarmored, light, medium], rank: trained }] }

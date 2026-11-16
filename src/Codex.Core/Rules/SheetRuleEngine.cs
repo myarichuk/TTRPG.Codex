@@ -32,7 +32,8 @@ public sealed record AttributeSummary(
     IReadOnlyList<string> EligibleBonusAttributes,
     IReadOnlyDictionary<string, int> Bonuses,
     IReadOnlyDictionary<string, int> Increases,
-    IReadOnlyDictionary<string, int> Totals);
+    IReadOnlyDictionary<string, int> Totals,
+    BoostSummary? Boosts = null);
 
 /// <summary>One entry picked in a list. <see cref="Index"/> is its position in the sheet's raw list
 /// (the same entry can appear twice when the list allows repeats); <see cref="Choices"/> is what the
@@ -466,6 +467,20 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             if (bonus != 0) bonuses[attribute.Key] = bonus;
         }
 
+        BoostSummary? boostSummary = null;
+        if (method == BoostsMethod && rules.Boosts is { } boostRules)
+        {
+            var (deltas, summary) = EvaluateBoosts(boostRules, sheet, result.Violations);
+            foreach (var attribute in system.Attributes)
+            {
+                bases[attribute.Key] = attribute.Default;
+                bonuses.Remove(attribute.Key);
+                if (deltas[attribute.Key] != 0) bonuses[attribute.Key] = deltas[attribute.Key];
+            }
+
+            boostSummary = summary;
+        }
+
         var spent = 0;
         int? budget = null;
         if (method == "point-buy" && rules.PointBuy is { } pointBuy)
@@ -503,7 +518,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         }
 
         var eligible = new List<string>();
-        if (rules.Bonuses is { } bonusRules && !printed)
+        if (rules.Bonuses is { } bonusRules && !printed && method != BoostsMethod)
         {
             eligible = EligibleBonusAttributes(bonusRules, sheet);
             var allocation = bonuses.Values.Where(v => v > 0).OrderByDescending(v => v).ToList();
@@ -562,7 +577,7 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
             a => a.Key,
             a => bases[a.Key] + bonuses.GetValueOrDefault(a.Key) + increases.GetValueOrDefault(a.Key));
 
-        result.Attributes = new AttributeSummary(method, spent, budget, eligible, bonuses, increases, totals);
+        result.Attributes = new AttributeSummary(method, spent, budget, eligible, bonuses, increases, totals, boostSummary);
     }
 
     private IEnumerable<IncreaseGrant> EvaluateIncreases(IncreaseRules rules, IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
@@ -642,6 +657,8 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
     {
         if (Rules?.Attributes is not { } rules) return;
         var printed = Method(sheet, rules) == PrintedMethod;
+        var boosting = Method(sheet, rules) == BoostsMethod && rules.Boosts != null;
+        var boostDeltas = boosting ? EvaluateBoosts(rules.Boosts!, sheet, null).Deltas : null;
         var increases = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         if (rules.Increases is { } increaseRules && !printed)
         {
@@ -659,6 +676,12 @@ public sealed partial class SheetRuleEngine(SystemDefinition system, IEntryResol
         var keepsBases = system.Attributes.Any(a => sheet.ContainsKey(BasePrefix + a.Key));
         foreach (var attribute in system.Attributes)
         {
+            if (boostDeltas != null)
+            {
+                sheet[attribute.Key] = (long)(attribute.Default + boostDeltas[attribute.Key] + increases.GetValueOrDefault(attribute.Key));
+                continue;
+            }
+
             if (!sheet.ContainsKey(BasePrefix + attribute.Key))
             {
                 if (!keepsBases || sheet.ContainsKey(attribute.Key)) continue;

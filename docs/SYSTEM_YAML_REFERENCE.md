@@ -403,6 +403,7 @@ How ability scores are generated and adjusted.
 | `standardArray` | list of whole number | The fixed set of scores to assign, one per attribute, for "standard-array". |
 | `bonuses` | [BonusRules](#bonusrules) | Bonuses granted by a referenced entry (a background's "+2/+1 among these abilities"). |
 | `increases` | [IncreaseRules](#increaserules) | Score increases granted by entries picked in a list (an Ability Score Improvement feat). |
+| `boosts` | [BoostRules](#boostrules) | The rules of the "boosts" method; required when `methods` offers it. |
 
 ## PointBuyRules
 
@@ -437,6 +438,39 @@ Score increases that come from picks in a ListRule: each picked entry whose Prop
 | `property` | text (a number is text too) | Entry property holding how many points the entry grants. |
 | `optionsProperty` | text (a number is text too) | Entry property listing the attributes (keys, abbreviations or labels) the points may go to. |
 | `capProperty` | text (a number is text too) | Entry property holding the highest score the increase may reach. |
+
+## BoostRules
+
+The `boosts` attribute method (`sheetRules.attributes.boosts`): every attribute starts at its default (a modifier of 0) and sources (an ancestry, a background, a class, a level milestone) each give boosts. A boost adds a full step (+1 to the modifier, 2 score points); at PartialFrom or above it adds half a step, and two halves make one. A flaw takes a full step away. The attributes must use the `half-minus-five` modifier and default 10, so a step is two score points. A referenced entry lists its boosts in its Property: `str` (fixed), `free` (any attribute), `dex|wis` (one of those) and `-con` (a flaw).
+
+| Key | Type | What it is |
+|---|---|---|
+| `label` | text (a number is text too) | What the sheet calls the boosts, and the word its messages about them start with. Default "Boosts". |
+| `property` | text (a number is text too) | The entry property holding a source's boosts, a list of words as described on this class. Default `boosts`. |
+| `partialFrom` | whole number | The modifier at which a boost becomes a half step. Default 4. |
+| `sources` | list of [BoostSource](#boostsource) | The sources, applied in this order (it only matters for the half steps). |
+
+## BoostSource
+
+One source of boosts: the entry a sheet field refers to, or a level milestone with free boosts. A source's boosts all go to different attributes (a flaw is not a boost).
+
+| Key | Type | What it is |
+|---|---|---|
+| `key` | text (a number is text too) | Required, unique: names the source in the sheet's stored choices (`choice__boost-{key}__{slot}`). |
+| `label` | text (a number is text too) | The source's name as the sheet shows it, and the word its messages start with. |
+| `field` | text (a number is text too) | An EntityReference actor field whose entry lists the boosts. Give this or Level. |
+| `level` | whole number | A level milestone: from this level the source gives Free free boosts. |
+| `free` | whole number | How many free boosts a milestone gives. Default 0. |
+| `trade` | [BoostTrade](#boosttrade) | Optional: the player may give up some of the source's fixed boosts for free ones. |
+
+## BoostTrade
+
+The trade a source allows: give up Fixed of its fixed boosts, get Free free ones.
+
+| Key | Type | What it is |
+|---|---|---|
+| `fixed` | whole number | How many fixed boosts are given up. Default 2. |
+| `free` | whole number | How many free boosts come back. Default 1. |
 
 ## DerivedField
 

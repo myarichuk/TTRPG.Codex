@@ -258,7 +258,7 @@ public sealed partial class SheetRuleEngine
 
         foreach (var key in stored)
         {
-            if (ParseChoiceKey(key) is not { } parsed) continue;
+            if (ParseChoiceKey(key) is not { } parsed || parsed.EntryId.StartsWith(BoostEntryPrefix, StringComparison.Ordinal)) continue;
             if (held.GetValueOrDefault(parsed.EntryId) < parsed.Copy) sheet.Remove(key);
         }
     }

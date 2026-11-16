@@ -757,6 +757,9 @@ public class AttributeRules
 
     /// <summary>Score increases granted by entries picked in a list (an Ability Score Improvement feat).</summary>
     public IncreaseRules? Increases { get; set; }
+
+    /// <summary>The rules of the "boosts" method; required when <c>methods</c> offers it.</summary>
+    public BoostRules? Boosts { get; set; }
 }
 
 /// <summary>
@@ -939,6 +942,62 @@ public class BonusRules
 
     /// <summary>Allowed distributions, e.g. [[2, 1], [1, 1, 1]]: one bonus per distinct attribute.</summary>
     public List<List<int>> Allocations { get; set; } = new();
+}
+
+/// <summary>
+/// The <c>boosts</c> attribute method (<c>sheetRules.attributes.boosts</c>): every attribute starts at its default (a modifier of 0)
+/// and sources (an ancestry, a background, a class, a level milestone) each give boosts. A boost adds a full step (+1 to the
+/// modifier, 2 score points); at <see cref="PartialFrom"/> or above it adds half a step, and two halves make one. A flaw takes a full step
+/// away. The attributes must use the <c>half-minus-five</c> modifier and default 10, so a step is two score points.
+/// A referenced entry lists its boosts in its <see cref="Property"/>: <c>str</c> (fixed), <c>free</c> (any attribute),
+/// <c>dex|wis</c> (one of those) and <c>-con</c> (a flaw).
+/// </summary>
+public class BoostRules
+{
+    /// <summary>What the sheet calls the boosts, and the word its messages about them start with. Default "Boosts".</summary>
+    public string Label { get; set; } = "Boosts";
+
+    /// <summary>The entry property holding a source's boosts, a list of words as described on this class. Default <c>boosts</c>.</summary>
+    public string Property { get; set; } = "boosts";
+
+    /// <summary>The modifier at which a boost becomes a half step. Default 4.</summary>
+    public int PartialFrom { get; set; } = 4;
+
+    /// <summary>The sources, applied in this order (it only matters for the half steps).</summary>
+    public List<BoostSource> Sources { get; set; } = new();
+}
+
+/// <summary>One source of boosts: the entry a sheet field refers to, or a level milestone with free boosts. A source's boosts all go
+/// to different attributes (a flaw is not a boost).</summary>
+public class BoostSource
+{
+    /// <summary>Required, unique: names the source in the sheet's stored choices (<c>choice__boost-{key}__{slot}</c>).</summary>
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>The source's name as the sheet shows it, and the word its messages start with.</summary>
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>An EntityReference actor field whose entry lists the boosts. Give this or <see cref="Level"/>.</summary>
+    public string? Field { get; set; }
+
+    /// <summary>A level milestone: from this level the source gives <see cref="Free"/> free boosts.</summary>
+    public int? Level { get; set; }
+
+    /// <summary>How many free boosts a milestone gives. Default 0.</summary>
+    public int Free { get; set; }
+
+    /// <summary>Optional: the player may give up some of the source's fixed boosts for free ones.</summary>
+    public BoostTrade? Trade { get; set; }
+}
+
+/// <summary>The trade a source allows: give up <see cref="Fixed"/> of its fixed boosts, get <see cref="Free"/> free ones.</summary>
+public class BoostTrade
+{
+    /// <summary>How many fixed boosts are given up. Default 2.</summary>
+    public int Fixed { get; set; } = 2;
+
+    /// <summary>How many free boosts come back. Default 1.</summary>
+    public int Free { get; set; } = 1;
 }
 
 /// <summary>A read-only number worked out from the sheet (<c>sheetRules.derived</c>): proficiency bonus, initiative.</summary>
