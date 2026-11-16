@@ -229,6 +229,67 @@ public class DegreesRedactionTests : IDisposable
     }
 
     [Fact]
+    public void OverlappingRowsAreNamedByNumber()
+    {
+        var entries = Entries("One; two; three.");
+        var table = Table(Row("alpha", "description", "One; two; three.", "cut"), Row("alpha", "description", "two;", "cut"));
+
+        var ex = Assert.Throws<DegreesException>(() => RedactionStage.Run(entries, table));
+
+        Assert.Contains("rows 1 and 2", ex.Message);
+    }
+
+    [Fact]
+    public void AFailedRunLeavesTheInputUntouched_EvenWhereNormalizationWouldChangeIt()
+    {
+        var entries = Entries("It’s   here.  Stay.");
+        var before = entries[0].Fields["description"];
+
+        Assert.Throws<DegreesException>(() => RedactionStage.Run(entries, Table(Row("alpha", "description", "No such line.", "cut"))));
+        Assert.Equal(before, entries[0].Fields["description"]);
+
+        var overlapping = Table(Row("alpha", "description", "One; two; three.", "cut"), Row("alpha", "description", "two;", "cut"));
+        var more = Entries("It’s  here. One; two; three.");
+        var beforeMore = more[0].Fields["description"];
+        Assert.Throws<DegreesException>(() => RedactionStage.Run(more, overlapping));
+        Assert.Equal(beforeMore, more[0].Fields["description"]);
+    }
+
+    [Fact]
+    public void NormalizationKeepsSuperscriptsAndFractions_ExpandsLigaturesAndDropsInvisibleCharacters()
+    {
+        Assert.Equal("Deal x² and ½ damage, ﬁne.".Replace("ﬁ", "fi"), SpanText.Normalize("Deal x² and ½ damage, ﬁne."));
+        Assert.Equal("ab", SpanText.Normalize("a" + (char)0x200B + "b"));
+        Assert.Equal("ab", SpanText.Normalize("a" + (char)0x00AD + "b" + (char)0xFEFF));
+    }
+
+    [Fact]
+    public void MoreAbbreviationsDoNotEndASentence()
+    {
+        var text = SpanText.Normalize("Ask Mr. Smith, Dr. Jones, St. Ann and so on, etc. Then stop. Roll 3 ft. Away.");
+
+        var sentences = SpanText.Sentences(text).Select(s => text.Substring(s.Start, s.Length)).ToList();
+
+        Assert.Equal(2, sentences.Count);
+    }
+
+    [Fact]
+    public void CuttingTheLastClauseClosesTheSentence_AndCuttingTheFirstCapitalizesTheNext()
+    {
+        var last = Entries("Move; shout. Next.");
+        RedactionStage.Run(last, Table(Row("alpha", "description", "shout.", "cut")));
+        Assert.Equal("Move. Next.", last[0].Fields["description"]);
+
+        var first = Entries("Move; shout. Next.");
+        RedactionStage.Run(first, Table(Row("alpha", "description", "Move;", "cut")));
+        Assert.Equal("Shout. Next.", first[0].Fields["description"]);
+
+        var both = Entries("Move; shout. Next.");
+        RedactionStage.Run(both, Table(Row("alpha", "description", "Move;", "cut"), Row("alpha", "description", "shout.", "cut")));
+        Assert.Equal("Next.", both[0].Fields["description"]);
+    }
+
+    [Fact]
     public void TheReportIsCountsOnlyAndTheRunIsDeterministic()
     {
         string Once()
@@ -262,12 +323,12 @@ public class DegreesRedactionTests : IDisposable
 
     // ---- the allowlist and denylist tests over a generated pack
 
-    private string FixturePack(string entriesYaml)
+    private string FixturePack(string entriesYaml, string file = "things/things.yaml")
     {
         var pack = Path.Combine(_temp, "pack");
-        Directory.CreateDirectory(Path.Combine(pack, "things"));
+        Directory.CreateDirectory(Path.Combine(pack, Path.GetDirectoryName(file) ?? string.Empty));
         File.WriteAllText(Path.Combine(pack, "manifest.yaml"), "id: fixture\nname: Fixture Pack Of Capitals\n");
-        File.WriteAllText(Path.Combine(pack, "things", "things.yaml"), entriesYaml);
+        File.WriteAllText(Path.Combine(pack, file), entriesYaml);
         return pack;
     }
 
@@ -275,7 +336,7 @@ public class DegreesRedactionTests : IDisposable
         - id: ember-ring
           name: Ember Ring
           tags: [Fire]
-          description: The Ember Ring burns. It works with Stealth checks and the Wobbly condition.
+          description: The Ember Ring burns. It works with Stealth checks and the Wobbly condition, so use it with care.
           properties:
             effect: Roll a Craft save; the other Ring answers.
             routes:
@@ -285,74 +346,148 @@ public class DegreesRedactionTests : IDisposable
           description: A stone. Heavy.
         """;
 
-    [Fact]
-    public void ACleanFixturePackPassesTheAllowlist()
-    {
-        var pack = FixturePack(CleanEntries);
-        var terms = new HashSet<string> { "stealth", "wobbly", "craft" };
+    private static readonly HashSet<string> Terms = new() { "ember", "ring", "stealth", "wobbly", "craft", "plain", "stone", "roll", "quick", "heavy" };
 
-        Assert.Empty(PackWordCheck.CheckAllowlist(pack, terms));
-    }
+    private static readonly Denylist NoDenylist = new(Array.Empty<string>());
+
+    private static readonly Denylist DenyZorblax = new(new[] { Denylist.Hash("zorblax") });
+
+    private static List<string> Details(IEnumerable<PackFinding> findings) => findings.Select(f => f.Detail).ToList();
 
     [Fact]
-    public void AnUnlistedCapitalizedWordIsFlaggedByFileEntryAndWord_ButASentenceStartIsNot()
+    public void ACleanFixturePackPassesTheAllowlist() =>
+        Assert.Empty(PackWordCheck.CheckAllowlist(FixturePack(CleanEntries), Terms, NoDenylist));
+
+    [Fact]
+    public void AnUnlistedCapitalizedWordIsFlaggedByFileEntryNumberAndPath_ButAnExemptSentenceStartIsNot()
     {
         var pack = FixturePack(CleanEntries.Replace("A stone. Heavy.", "A stone from Zorblax. Heavy. Zorblax again."));
-        var terms = new HashSet<string> { "stealth", "wobbly", "craft" };
 
-        var finding = Assert.Single(PackWordCheck.CheckAllowlist(pack, terms));
+        var finding = Assert.Single(PackWordCheck.CheckAllowlist(pack, Terms, NoDenylist));
 
         Assert.Equal("things/things.yaml", finding.File);
-        Assert.Equal("plain-stone", finding.Entry);
+        Assert.Equal(2, finding.Entry);
+        Assert.Equal("description", finding.Path);
         Assert.Equal("Zorblax", finding.Detail);
     }
 
     [Fact]
-    public void ANestedValueAndAFlaggedTermAddedToTheAllowlistAreHandled()
+    public void NamesAndEveryOtherWordNeedTheAllowlist_SoWithoutTermsEveryCapitalIsFlagged()
     {
-        var pack = FixturePack(CleanEntries);
-        var flagged = PackWordCheck.CheckAllowlist(pack, new HashSet<string>());
+        var flagged = PackWordCheck.CheckAllowlist(FixturePack(CleanEntries), new HashSet<string>(), NoDenylist);
 
-        Assert.Equal(new[] { "craft", "stealth", "wobbly" }, flagged.Select(f => f.Detail.ToLowerInvariant()).OrderBy(w => w, StringComparer.Ordinal));
-        Assert.All(flagged, f => Assert.Equal("ember-ring", f.Entry));
+        // Every name word counts: nothing is allowed because it appears in an entry name.
+        Assert.Contains("Ember", Details(flagged));
+        Assert.Contains("Plain", Details(flagged));
+        Assert.Contains("Stealth", Details(flagged));
+    }
+
+    [Theory]
+    [InlineData("family: Zorblax")]
+    [InlineData("traits: [Zorblax]")]
+    [InlineData("strikes: [{ name: Zorblax, bonus: 5 }]")]
+    [InlineData("notes: Step 1. Zorblax waits.")]
+    [InlineData("notes: Ask Mr. Zorblax now.")]
+    [InlineData("notes: \"Do it.\\nZorblax is here.\"")]
+    [InlineData("langs: { Zorblaxian: common }")]
+    [InlineData("notes: Zorblax's Ward holds.")]
+    public void EachBypassOfTheFirstWordRuleIsFlagged(string line)
+    {
+        var word = line.Contains("Zorblaxian") ? "Zorblaxian" : "Zorblax";
+        var pack = FixturePack(CleanEntries + "\n- id: extra\n  name: Plain Stone\n  " + line + "\n");
+
+        var flagged = Details(PackWordCheck.CheckAllowlist(pack, Terms, NoDenylist));
+
+        Assert.Contains(word, flagged);
     }
 
     [Fact]
-    public void TheDenylistCheckReportsTheHashNotTheWord_AndSeesNamesIdsAndTags()
+    public void ADenylistedNameIsInTheEntryNameAndIsFlaggedLikeAnyOtherWord()
     {
-        var pack = FixturePack(CleanEntries.Replace("tags: [Fire]", "tags: [Zorblax]").Replace("A stone. Heavy.", "A stone. HEAVY zorblax."));
-        var deny = new Denylist(new[] { Denylist.Hash("zorblax"), Denylist.Hash("absent") });
+        var pack = FixturePack(CleanEntries.Replace("name: Plain Stone", "name: Zorblax's Ward"));
 
-        var findings = PackWordCheck.CheckDenylist(pack, deny);
-
-        Assert.Equal(new[] { "ember-ring", "plain-stone" }, findings.Select(f => f.Entry).ToArray());
-        Assert.All(findings, f =>
-        {
-            Assert.Equal(Denylist.Hash("zorblax"), f.Detail);
-            Assert.DoesNotContain("orblax", f.ToString(), StringComparison.OrdinalIgnoreCase);
-        });
-        Assert.Empty(PackWordCheck.CheckDenylist(pack, new Denylist(Array.Empty<string>())));
+        Assert.Contains("Zorblax", Details(PackWordCheck.CheckAllowlist(pack, Terms, NoDenylist)));
     }
 
     [Fact]
-    public void AWordPassesBecauseItNamesAnEntryOfASecondPack_OrIsASystemSkill()
+    public void ASentenceStartPassesOnlyWhenItsLowercaseFormIsUsedElsewhere()
     {
-        var second = Path.Combine(_temp, "second");
-        Directory.CreateDirectory(second);
-        File.WriteAllText(Path.Combine(second, "things.yaml"), "- id: hush-bell\n  name: Hush Bell\n  description: It rings. Pair it with the Ember Ring while Sneaking.\n");
-        var first = FixturePack(CleanEntries);
-        var terms = new HashSet<string> { "wobbly", "craft", "stealth" };
+        var pack = FixturePack("- id: one\n  name: Plain Stone\n  text: Roll twice. Heavy is a word. Light is a word. Then light it.\n");
 
-        var alone = PackWordCheck.CheckAllowlist(second, terms);
-        var withOther = PackWordCheck.CheckAllowlist(second, terms, new[] { first });
+        var flagged = Details(PackWordCheck.CheckAllowlist(pack, Terms, NoDenylist));
 
-        Assert.Equal(new[] { "Ember", "Ring", "Sneaking" }, alone.Select(f => f.Detail));
-        Assert.Equal(new[] { "Sneaking" }, withOther.Select(f => f.Detail));
+        Assert.Equal(new[] { "Then" }, flagged);
     }
 
-    /// <summary>The CI gate over the generated packs: the shipped allowlist, the system's skills, conditions and attributes (keys and labels) and every
-    /// pack's entry names are the only capitalized words allowed in mid-sentence, and no denylisted hash appears. No pack is generated yet, so this walks
-    /// nothing today; chapter 1 makes it real.</summary>
+    [Theory]
+    [InlineData("zorblax-staff: { description: \"Use it with Zorblax daily.\" }")]
+    [InlineData("- just a string")]
+    [InlineData("- [a, b]")]
+    [InlineData("")]
+    public void AFileShapeTheGatesDoNotUnderstandFailsBothGates(string yaml)
+    {
+        var pack = FixturePack(yaml, "odd.yaml");
+
+        var ex1 = Assert.Throws<DegreesException>(() => PackWordCheck.CheckAllowlist(pack, Terms, NoDenylist));
+        var ex2 = Assert.Throws<DegreesException>(() => PackWordCheck.CheckDenylist(pack, DenyZorblax));
+
+        Assert.Contains("odd.yaml", ex1.Message);
+        Assert.DoesNotContain("Zorblax", ex1.Message + ex2.Message);
+    }
+
+    [Fact]
+    public void InvalidYamlNamesTheFile()
+    {
+        var pack = FixturePack("- id: [unclosed\n", "broken.yaml");
+
+        var ex = Assert.Throws<DegreesException>(() => PackWordCheck.CheckDenylist(pack, NoDenylist));
+
+        Assert.Contains("broken.yaml", ex.Message);
+    }
+
+    [Fact]
+    public void TheDenylistCheckReportsFileEntryNumberFieldPathAndHash_NeverAnIdOrAWord()
+    {
+        var yaml = CleanEntries.Replace("id: ember-ring", "id: zorblax-ring").Replace("tags: [Fire]", "tags: [Zorblax]")
+            .Replace("A stone. Heavy.", "A stone. HEAVY zorblax.") + "\n  langs: { Zorblax: common }\n";
+        var pack = FixturePack(yaml, "things/zorblax-things.yaml");
+
+        var findings = PackWordCheck.CheckDenylist(pack, DenyZorblax);
+
+        Assert.NotEmpty(findings);
+        Assert.Contains(findings, f => f.Entry == 1 && f.Detail == Denylist.Hash("zorblax"));
+        Assert.Contains(findings, f => f.Entry == 2);
+        Assert.Contains(findings, f => f.Kind.StartsWith("file name"));
+        Assert.All(findings, f => Assert.DoesNotContain("orblax", f.ToString(), StringComparison.OrdinalIgnoreCase));
+        Assert.Empty(PackWordCheck.CheckDenylist(pack, NoDenylist));
+    }
+
+    [Fact]
+    public void AnInvisibleCharacterInsideAWordDoesNotHideItFromTheDenylist()
+    {
+        var hidden = "Zor" + (char)0x200B + "blax";
+        var pack = FixturePack("- id: one\n  name: Plain Stone\n  text: A " + hidden + " here.\n");
+
+        Assert.NotEmpty(PackWordCheck.CheckDenylist(pack, DenyZorblax));
+    }
+
+    [Fact]
+    public void ADenylistedWordThatFailsTheAllowlistIsPrintedAsItsHash()
+    {
+        var pack = FixturePack(CleanEntries.Replace("A stone. Heavy.", "A stone from Zorblax. Heavy."));
+
+        var finding = Assert.Single(PackWordCheck.CheckAllowlist(pack, Terms, DenyZorblax));
+
+        Assert.Equal($"[denylisted {Denylist.Hash("zorblax")}]", finding.Detail);
+        Assert.DoesNotContain("orblax", finding.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>The generated packs the CI gate must find. Empty until chapter 1 lands, so the gate asserts "no pack" explicitly instead of passing on nothing;
+    /// each chapter that adds a pack folder adds its name here, and a folder that is not listed fails the test.</summary>
+    private static readonly string[] ExpectedGeneratedPacks = Array.Empty<string>();
+
+    /// <summary>The CI gate over the generated packs: the shipped allowlist and the system's skill and condition keys and labels (trait keys join them when
+    /// the system has a trait type) are the only capitalized words allowed, and no denylisted hash appears.</summary>
     [Fact]
     public async Task TheGeneratedPacksPassBothChecks()
     {
@@ -362,18 +497,20 @@ public class DegreesRedactionTests : IDisposable
         var system = loader.GetDefinition("four-degrees")!;
 
         var terms = Allowlist.Embedded();
-        foreach (var word in system.Conditions.Concat(system.Attributes.SelectMany(a => new[] { a.Key, a.Label }))
-                     .Concat(system.SheetRules?.Skills?.List.SelectMany(s => new[] { s.Key, s.Label }) ?? Enumerable.Empty<string>())
-                     .Concat(system.SheetRules?.Skills?.Ranks.SelectMany(r => new[] { r.Key, r.Label }) ?? Enumerable.Empty<string>()))
+        foreach (var word in system.Conditions.Concat(system.SheetRules?.Skills?.List.SelectMany(s => new[] { s.Key, s.Label }) ?? Enumerable.Empty<string>()))
         {
             terms.UnionWith(PackWordCheck.Words(word).Select(w => w.ToLowerInvariant()));
         }
 
-        var packs = Directory.EnumerateDirectories(Path.Combine(TestPaths.ContentRoot, "systems", "four-degrees", "packs")).OrderBy(d => d, StringComparer.Ordinal).ToList();
+        var packsRoot = Path.Combine(TestPaths.ContentRoot, "systems", "four-degrees", "packs");
+        var generated = Directory.EnumerateDirectories(packsRoot).Select(Path.GetFileName).Where(n => n != "homebrew-core").OrderBy(n => n, StringComparer.Ordinal).ToList();
+        Assert.Equal(ExpectedGeneratedPacks.OrderBy(n => n, StringComparer.Ordinal), generated);
+
         var deny = Denylist.Embedded();
-        foreach (var pack in packs.Where(d => Path.GetFileName(d) is "rules-core" or "rules-creatures"))
+        foreach (var name in ExpectedGeneratedPacks)
         {
-            Assert.Empty(PackWordCheck.CheckAllowlist(pack, terms, packs.Where(p => p != pack)));
+            var pack = Path.Combine(packsRoot, name);
+            Assert.Empty(PackWordCheck.CheckAllowlist(pack, terms, deny));
             Assert.Empty(PackWordCheck.CheckDenylist(pack, deny));
         }
     }

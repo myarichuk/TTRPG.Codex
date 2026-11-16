@@ -47,7 +47,7 @@ public sealed partial class RedactionTable
         }
         catch (Exception)
         {
-            throw new DegreesException("The redaction table is not valid YAML of the expected shape.");
+            throw new DegreesException("degrees-redactions.yaml is not valid YAML of the expected shape.");
         }
 
         table.Validate();
@@ -127,8 +127,11 @@ public sealed class RedactionEntry
 /// <summary>Counts only. Never a span, a replacement or a field value.</summary>
 public sealed record RedactionReport(int Rows, int Replaced, int Cut, int EntriesDropped, int EntriesKept)
 {
+    /// <summary>A run that has any unmatched row throws, so a report always means zero.</summary>
+    public int Unmatched => 0;
+
     public override string ToString() =>
-        $"redaction: {Rows} row(s) applied ({Replaced} replaced, {Cut} cut, {EntriesDropped} entries dropped); {EntriesKept} entries kept, 0 unmatched rows";
+        $"redaction: {Rows} row(s) applied ({Replaced} replaced, {Cut} cut, {EntriesDropped} entries dropped); {EntriesKept} entries kept, {Unmatched} unmatched rows";
 }
 
 /// <summary>
@@ -139,7 +142,7 @@ public sealed record RedactionReport(int Rows, int Replaced, int Cut, int Entrie
 /// </summary>
 public static class RedactionStage
 {
-    private readonly record struct Edit(TextSpan Span, string Replacement);
+    private sealed record Edit(TextSpan Span, string Replacement, int Row, string Original, bool Cut);
 
     public static RedactionReport Run(List<RedactionEntry> entries, RedactionTable table)
     {
@@ -151,10 +154,15 @@ public static class RedactionStage
             {
                 throw new DegreesException("Two entries share an id; redaction rows would be ambiguous.");
             }
+        }
 
-            foreach (var key in e.Fields.Keys.ToList())
+        // Everything below works on normalized copies. The entries are written to only after every check has passed.
+        var texts = new Dictionary<(string Id, string Field), string>();
+        foreach (var e in entries)
+        {
+            foreach (var (field, value) in e.Fields)
             {
-                e.Fields[key] = SpanText.Normalize(e.Fields[key]);
+                texts[(e.Id, field)] = SpanText.Normalize(value);
             }
         }
 
@@ -166,7 +174,7 @@ public static class RedactionStage
         for (var i = 0; i < table.Rows.Count; i++)
         {
             var row = table.Rows[i];
-            if (!byId.TryGetValue(row.Entry, out var entry) || !entry.Fields.TryGetValue(row.Field, out var text))
+            if (!texts.TryGetValue((row.Entry, row.Field), out var text))
             {
                 unmatched.Add(i + 1);
                 continue;
@@ -190,14 +198,15 @@ public static class RedactionStage
                 edits[(row.Entry, row.Field)] = list = new List<Edit>();
             }
 
-            list.AddRange(hits.Select(h => new Edit(h, row.Action == RedactionRow.Replace ? row.Text! : string.Empty)));
-            if (row.Action == RedactionRow.Replace)
+            var isCut = row.Action == RedactionRow.Cut;
+            list.AddRange(hits.Select(h => new Edit(h, isCut ? string.Empty : row.Text!, i + 1, text.Substring(h.Start, h.Length), isCut)));
+            if (isCut)
             {
-                replaced += hits.Count;
+                cut += hits.Count;
             }
             else
             {
-                cut += hits.Count;
+                replaced += hits.Count;
             }
         }
 
@@ -213,25 +222,69 @@ public static class RedactionStage
             {
                 if (ordered[k].Span.Start < ordered[k - 1].Span.End)
                 {
-                    throw new DegreesException("redaction: two rows overlap on one span. Nothing was changed.");
+                    throw new DegreesException($"redaction: rows {ordered[k - 1].Row} and {ordered[k].Row} overlap on one span. Nothing was changed.");
                 }
             }
         }
 
         foreach (var ((id, field), list) in edits)
         {
-            var text = byId[id].Fields[field];
+            var text = texts[(id, field)];
             var sb = new StringBuilder(text);
-            foreach (var edit in list.OrderByDescending(e => e.Span.Start))
+            foreach (var edit in list.Concat(JoinFixes(text, list)).OrderByDescending(e => e.Span.Start))
             {
                 sb.Remove(edit.Span.Start, edit.Span.Length).Insert(edit.Span.Start, edit.Replacement);
             }
 
-            byId[id].Fields[field] = Tidy(sb.ToString());
+            texts[(id, field)] = Tidy(sb.ToString());
+        }
+
+        foreach (var e in entries)
+        {
+            foreach (var field in e.Fields.Keys.ToList())
+            {
+                e.Fields[field] = texts[(e.Id, field)];
+            }
         }
 
         entries.RemoveAll(e => dropped.Contains(e.Id));
         return new RedactionReport(table.Rows.Count, replaced, cut, dropped.Count, entries.Count);
+    }
+
+    /// <summary>
+    /// What a cut clause leaves behind. If it was the last clause of its sentence, the clause before it takes its closing mark ("Move; shout." cut
+    /// "shout." gives "Move."). If it was the first, the next clause starts the sentence and gets a capital. Neither is done where another row's edit is.
+    /// </summary>
+    private static List<Edit> JoinFixes(string text, List<Edit> edits)
+    {
+        bool Touched(int index) => edits.Any(o => index >= o.Span.Start && index < o.Span.End);
+        var fixes = new List<Edit>();
+        foreach (var e in edits.Where(e => e.Cut))
+        {
+            var start = e.Span.Start;
+            if (e.Original.EndsWith('.') || e.Original.EndsWith('!') || e.Original.EndsWith('?'))
+            {
+                if (start >= 2 && text[start - 1] == ' ' && text[start - 2] == ';' && !Touched(start - 1) && !Touched(start - 2))
+                {
+                    fixes.Add(new Edit(new TextSpan(start - 2, 2), e.Original[^1].ToString(), 0, string.Empty, false));
+                }
+            }
+            else if (e.Original.EndsWith(';') && (start == 0 || text[start - 1] == '\n' || (start >= 2 && text[start - 1] == ' ' && ".!?".Contains(text[start - 2]))))
+            {
+                var next = e.Span.End;
+                while (next < text.Length && text[next] == ' ')
+                {
+                    next++;
+                }
+
+                if (next < text.Length && char.IsLower(text[next]) && !Touched(next) && edits.All(o => o.Span.Start != next))
+                {
+                    fixes.Add(new Edit(new TextSpan(next, 1), char.ToUpperInvariant(text[next]).ToString(), 0, string.Empty, false));
+                }
+            }
+        }
+
+        return fixes;
     }
 
     /// <summary>The sentences of a text and the clauses of those sentences that have more than one.</summary>

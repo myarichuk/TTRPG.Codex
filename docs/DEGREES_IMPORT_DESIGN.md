@@ -262,3 +262,12 @@ mechanism (empty tables, allowlist and denylist tests) is the next step, and cha
 
 P8a result, run locally: both books fingerprint, every letter of both has a font role, and the notice assertion passes for both.
 The unclaimed-block failure waits for the take-list, which arrives with chapter 1.
+
+P9 result: the redaction table (empty), the redaction stage, the hashed denylist and the allowlist gate are built and tested on generated fixtures.
+Both gates fail on a pack-file shape they do not understand, name findings by file, entry number and field path (never an id, and a denylisted word
+is printed as its hash), check names, keys, one-word values and list items like any other text, and exempt a sentence-initial word only when its
+lowercase form is used elsewhere in the pack. Two things move to chapter 1 because they need real input:
+- The CI gate test pins the list of generated pack folders (`ExpectedGeneratedPacks`, empty today) and fails on an unlisted folder, so it cannot pass
+  silently. Chapter 1 adds its pack there, and adds trait keys to the game terms once the system has a trait type.
+- The `degrees denylist` generator needs the take-list (to know which sections are left out) and a common-word exclusion, so a real run does not hash
+  words such as "The". `Denylist.Format` is the core it will call.

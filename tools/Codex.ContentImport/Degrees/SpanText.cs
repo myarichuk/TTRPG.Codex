@@ -20,12 +20,28 @@ public static class SpanText
     public const int Version = 1;
 
     /// <summary>Words that end in a period without ending a sentence. A single letter before the period never does either.</summary>
-    private static readonly HashSet<string> Abbreviations = new(StringComparer.OrdinalIgnoreCase) { "vs", "eg", "ie", "cf", "approx", "max", "min" };
+    private static readonly HashSet<string> Abbreviations = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "vs", "eg", "ie", "cf", "approx", "max", "min", "mr", "mrs", "ms", "dr", "st", "ft", "etc", "no", "nos", "sr", "jr", "vol", "ch", "pg", "pp", "lb", "lbs", "oz",
+    };
+
+    /// <summary>Typeset ligatures, written out as letters. Only these are changed: superscripts, fractions and the like are mechanics and stay as printed.</summary>
+    private static readonly Dictionary<char, string> Ligatures = new()
+    {
+        [(char)0xFB00] = "ff",
+        [(char)0xFB01] = "fi",
+        [(char)0xFB02] = "fl",
+        [(char)0xFB03] = "ffi",
+        [(char)0xFB04] = "ffl",
+        [(char)0xFB05] = "st",
+        [(char)0xFB06] = "st",
+    };
 
     private const string Closers = "\"')]";
 
     /// <summary>
-    /// NFKC (which expands ligatures), straight quotes, a plain hyphen for every dash and minus, no soft hyphens, spaces and tabs collapsed
+    /// NFC, ligatures written out (nothing else of NFKC: "x²" and "½" stay), straight quotes, a plain hyphen for every dash and minus, no format
+    /// characters (soft hyphens, zero-width characters), spaces and tabs collapsed
     /// to one space and a line break kept as the paragraph separator (one "\n", with no space beside it).
     /// </summary>
     public static string Normalize(string? text)
@@ -35,20 +51,22 @@ public static class SpanText
             return string.Empty;
         }
 
-        var source = text.Normalize(NormalizationForm.FormKC);
+        var source = text.Normalize(NormalizationForm.FormC);
         var sb = new StringBuilder(source.Length);
         var pendingSpace = false;
         var pendingBreak = false;
         foreach (var raw in source)
         {
-            var c = raw switch
+            var c = (int)raw switch
             {
-                '‘' or '’' or '‚' or '‛' or '′' => '\'',
-                '“' or '”' or '„' or '‟' or '″' => '"',
-                '‐' or '‑' or '‒' or '–' or '—' or '―' or '−' => '-',
+                0x2018 or 0x2019 or 0x201A or 0x201B or 0x2032 => '\'',
+                0x201C or 0x201D or 0x201E or 0x201F or 0x2033 => '"',
+                0x2010 or 0x2011 or 0x2012 or 0x2013 or 0x2014 or 0x2015 or 0x2212 => '-',
                 _ => raw,
             };
-            if (c == '­')
+
+            // Soft hyphens, zero-width characters and byte-order marks are all "format" characters: invisible, and they split a word.
+            if (char.GetUnicodeCategory(c) == UnicodeCategory.Format)
             {
                 continue;
             }
@@ -79,7 +97,7 @@ public static class SpanText
 
             pendingBreak = false;
             pendingSpace = false;
-            sb.Append(c);
+            sb.Append(Ligatures.TryGetValue(c, out var ligature) ? ligature : c.ToString());
         }
 
         return sb.ToString();
