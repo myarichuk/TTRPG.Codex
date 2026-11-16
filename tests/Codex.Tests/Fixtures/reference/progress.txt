@@ -117,7 +117,7 @@ street.thresholds-follow-the-intents
 street.advancing-a-skill-spends-experience
 street.advancing-without-the-points-changes-nothing
 
-# degrees (ranks, typed bonuses, valued conditions, degrees of success): 38 of 38 on the current engine (the two turn-end drops
+# degrees (ranks, typed bonuses, valued conditions, degrees of success): 45 of 45 on the current engine (the two turn-end drops
 # of a valued condition moved into Codex.Core with P4b).
 degrees.a-rank-is-the-level-plus-its-step
 degrees.untrained-adds-the-attribute-alone
@@ -133,34 +133,34 @@ degrees.typed-bonuses-keep-the-highest-of-each-type
 degrees.a-status-bonus-and-a-status-penalty-both-count
 degrees.typed-penalties-keep-the-worst
 degrees.untyped-penalties-stack
-degrees.frightened-lowers-dcs-and-checks-once
-degrees.frightened-reaches-the-kinds-value-once
+degrees.rattled-lowers-dcs-and-checks-once
+degrees.rattled-reaches-the-kinds-value-once
 degrees.a-condition-counts-once-on-each-side-of-the-hybrid
-degrees.frightened-lowers-a-skill-check
+degrees.rattled-lowers-a-skill-check
 degrees.a-kind-features-modifier-counts-once
 degrees.meeting-the-dc-succeeds
 degrees.missing-the-dc-fails
-degrees.beating-the-dc-by-ten-is-a-critical-success
-degrees.missing-by-ten-is-a-critical-failure
-degrees.missing-by-nine-is-only-a-failure
+degrees.beating-the-dc-by-eight-is-a-critical-success
+degrees.missing-by-six-is-a-critical-failure
+degrees.missing-by-five-is-only-a-failure
 degrees.a-natural-twenty-moves-up-one-step
 degrees.a-natural-one-moves-down-one-step
 degrees.a-natural-one-on-a-critical-success-is-a-success
 degrees.a-natural-twenty-cannot-go-above-critical-success
 degrees.a-natural-one-cannot-go-below-critical-failure
 degrees.the-first-attack-has-no-penalty
-degrees.the-second-attack-takes-five
-degrees.the-third-attack-and-later-take-ten
+degrees.the-second-attack-takes-three
+degrees.the-third-attack-and-later-take-seven
 degrees.a-trait-lowers-the-second-attack-penalty
 degrees.a-trait-lowers-the-third-attack-penalty
 degrees.a-weapon-without-the-trait-keeps-the-full-penalty
 degrees.a-condition-on-the-rolls-own-key-lowers-the-named-roll-once
-degrees.frightened-drops-by-one-at-the-end-of-the-turn
-degrees.frightened-ends-at-zero
+degrees.rattled-drops-by-two-at-the-end-of-the-turn
+degrees.rattled-ends-at-zero
 degrees.boosts-raise-scores-from-ten
 degrees.a-flaw-lowers-the-score
 degrees.two-fixed-boosts-trade-for-one-free
 degrees.a-boost-above-plus-four-is-half
 degrees.two-half-boosts-make-a-full-step
-degrees.four-different-boosts-are-required
+degrees.different-boosts-are-required
 degrees.an-open-boost-is-a-warning

@@ -4,10 +4,10 @@
   tags: [weapons]
   properties:
     traits: []
-    use: { attack: melee, abilities: [str], damage: 1d6 }
+    use: { attack: melee, abilities: [str], damage: 1d8 }
 - id: swift-knife
   name: Swift knife
   tags: [weapons]
   properties:
     traits: [featherlight]
-    use: { attack: melee, abilities: [dex], damage: 1d4 }
+    use: { attack: melee, abilities: [dex], damage: 1d6 }

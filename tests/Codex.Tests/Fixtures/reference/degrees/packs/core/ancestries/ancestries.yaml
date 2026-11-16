@@ -2,4 +2,4 @@
 # those two, `free` any attribute, and a leading minus a flaw.
 - id: hillfolk
   name: Hillfolk
-  properties: { hp: 8, boosts: [con, wis, "str|dex", free, "-int"] }
+  properties: { hp: 6, boosts: [con, wis, "str|dex", free, "-int"] }

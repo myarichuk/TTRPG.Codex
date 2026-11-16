@@ -35,7 +35,7 @@ public sealed class DegreesContent : IAsyncLifetime
     public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>The level 5 Vanguard of the degrees spec (Str +4, Dex +2) holding a plain staff and a knife with the featherlight trait.</summary>
-    public static Dictionary<string, object> Hero(int frightened = 0)
+    public static Dictionary<string, object> Hero(int rattled = 0)
     {
         var sheet = new Dictionary<string, object>
         {
@@ -43,7 +43,7 @@ public sealed class DegreesContent : IAsyncLifetime
             ["ancestry"] = "hillfolk", ["class"] = "vanguard", ["acMode"] = "auto",
             ["inventory"] = new List<object> { "scale-coat|equipped:1", "oak-staff|equipped:1", "swift-knife|equipped:1" }
         };
-        if (frightened > 0) sheet["condition_frightened"] = (long)frightened;
+        if (rattled > 0) sheet["condition_rattled"] = (long)rattled;
         return sheet;
     }
 
@@ -61,22 +61,22 @@ public class MultipleAttackTests(DegreesContent content)
 {
     private static MultipleAttackRules Rules => new()
     {
-        Penalties = { 0, -5, -10 },
-        Variants = { new MultipleAttackVariant { Property = "traits", Has = "featherlight", Penalties = { 0, -4, -8 } } }
+        Penalties = { 0, -3, -7 },
+        Variants = { new MultipleAttackVariant { Property = "traits", Has = "featherlight", Penalties = { 0, -2, -5 } } }
     };
 
     [Theory]
     [InlineData(1, 0)]
-    [InlineData(2, -5)]
-    [InlineData(3, -10)]
-    [InlineData(7, -10)]
+    [InlineData(2, -3)]
+    [InlineData(3, -7)]
+    [InlineData(7, -7)]
     [InlineData(0, 0)]
     public void TheTableGivesTheRowOfTheAttackNumber_AndTheLastRowHoldsForLaterOnes(int attack, int expected) =>
         Assert.Equal(expected, MultipleAttack.Penalty(Rules, attack));
 
     [Theory]
-    [InlineData(2, -4)]
-    [InlineData(5, -8)]
+    [InlineData(2, -2)]
+    [InlineData(5, -5)]
     public void AWeaponTraitPicksTheVariantRow(int attack, int expected)
     {
         Assert.Equal(expected, MultipleAttack.Penalty(Rules, attack, name => name == "traits" ? new List<object> { "featherlight" } : null));
@@ -87,7 +87,7 @@ public class MultipleAttackTests(DegreesContent content)
     [Fact]
     public void AWeaponWithoutTheTrait_OrNoRule_KeepsTheTable()
     {
-        Assert.Equal(-5, MultipleAttack.Penalty(Rules, 2, name => name == "traits" ? new List<object> { "reach" } : null));
+        Assert.Equal(-3, MultipleAttack.Penalty(Rules, 2, name => name == "traits" ? new List<object> { "reach" } : null));
         Assert.Equal(0, MultipleAttack.Penalty(null, 3));
     }
 
@@ -95,7 +95,7 @@ public class MultipleAttackTests(DegreesContent content)
     public void ARuleWithNothingToAdd_IsAProblemTheLoaderSays()
     {
         Assert.NotEmpty(MultipleAttack.Problems(new MultipleAttackRules()));
-        Assert.NotEmpty(MultipleAttack.Problems(new MultipleAttackRules { Penalties = { 0, 5 } }));
+        Assert.NotEmpty(MultipleAttack.Problems(new MultipleAttackRules { Penalties = { 0, 3 } }));
         Assert.Empty(MultipleAttack.Problems(Rules));
     }
 
@@ -103,8 +103,8 @@ public class MultipleAttackTests(DegreesContent content)
     public void TheFixtureSaysItInYaml()
     {
         var rules = content.System.SheetRules!.MultipleAttack!;
-        Assert.Equal(new[] { 0, -5, -10 }, rules.Penalties);
-        Assert.Equal(new[] { 0, -4, -8 }, Assert.Single(rules.Variants).Penalties);
+        Assert.Equal(new[] { 0, -3, -7 }, rules.Penalties);
+        Assert.Equal(new[] { 0, -2, -5 }, Assert.Single(rules.Variants).Penalties);
         Assert.Equal("degreeCheck", content.System.Dice.CheckRoll);
         Assert.Empty(SheetRolls.Problems(content.System));
     }
@@ -123,12 +123,12 @@ public class MultipleAttackTests(DegreesContent content)
     {
         var strike = (SheetAction a) => a.Entry.Id;
         var calm = DegreesContent.Hero();
-        var scared = DegreesContent.Hero(frightened: 2);
+        var scared = DegreesContent.Hero(rattled: 3);
         var calmStaff = content.Evaluate(calm).Actions.Single(a => strike(a) == "oak-staff").AttackBonus;
         var scaredStaff = content.Evaluate(scared).Actions.Single(a => strike(a) == "oak-staff").AttackBonus;
-        Assert.Equal(11, calmStaff);
-        Assert.Equal(9, scaredStaff); // Frightened 2, once: not 7.
-        Assert.Equal(9, content.Evaluate(calm).Actions.Single(a => strike(a) == "swift-knife").AttackBonus);
+        Assert.Equal(10, calmStaff);
+        Assert.Equal(7, scaredStaff); // Rattled 3, once: not 4.
+        Assert.Equal(8, content.Evaluate(calm).Actions.Single(a => strike(a) == "swift-knife").AttackBonus);
     }
 }
 
@@ -142,7 +142,8 @@ public class CheckGradeTests(DegreesContent content)
     [InlineData(20, 13, 20, "success", true)]
     [InlineData(19, 12, 20, "failure", false)]
     [InlineData(25, 18, 15, "criticalSuccess", true)]
-    [InlineData(10, 3, 20, "criticalFailure", false)]
+    [InlineData(14, 7, 20, "criticalFailure", false)]
+    [InlineData(15, 8, 20, "failure", false)]
     [InlineData(27, 20, 30, "success", true)]   // A natural 20 moves a failure up one step.
     [InlineData(8, 1, 5, "failure", false)]      // A natural 1 moves a success down one step.
     public void TheSystemsCheckRollGradesTheTotal(double total, int natural, double dc, string outcome, bool passes)
@@ -172,29 +173,29 @@ public class CheckGradeTests(DegreesContent content)
             Definition = "strike",
             Inputs = new Dictionary<string, object?> { ["bonus"] = 9d, ["target"] = 18d, ["attackNumber"] = (double)attack, ["weapon"] = weapon }
         }, new FixedDice(10)).Total;
-        Assert.Equal(10 + 9 - 4, Total("rune-knife", 2)); // The knife is a pick on the sheet with the trait.
-        Assert.Equal(10 + 9 - 5, Total("oak-staff", 2));
+        Assert.Equal(10 + 9 - 2, Total("rune-knife", 2)); // The knife is a pick on the sheet with the trait.
+        Assert.Equal(10 + 9 - 3, Total("oak-staff", 2));
     }
 
     [Fact]
-    public void ACreatureFrightenedByTwo_LowersTheNamedStrikeOnce_AndThePanelsBonusOnce()
+    public void ACreatureRattledByThree_LowersTheNamedStrikeOnce_AndThePanelsBonusOnce()
     {
-        var sheet = DegreesContent.Hero(frightened: 2);
+        var sheet = DegreesContent.Hero(rattled: 3);
         var request = new SheetRollRequest
         {
             Definition = "strike",
             Inputs = new Dictionary<string, object?> { ["bonus"] = 9d, ["target"] = 18d }
         };
-        Assert.Equal(10 + 9 - 2, SheetRolls.Roll(content.System, content.Resolver, sheet, request, new FixedDice(10)).Total);
-        // The panel's Strike reads `attack`, not the roll's own key: Frightened 2 on it is the 11 - 2 the evaluation already showed.
-        Assert.Equal(9, content.Evaluate(sheet).Actions.Single(a => a.Entry.Id == "oak-staff").AttackBonus);
+        Assert.Equal(10 + 9 - 3, SheetRolls.Roll(content.System, content.Resolver, sheet, request, new FixedDice(10)).Total);
+        // The panel's Strike reads `attack`, not the roll's own key: Rattled 3 on it is the 10 - 3 the evaluation already showed.
+        Assert.Equal(7, content.Evaluate(sheet).Actions.Single(a => a.Entry.Id == "oak-staff").AttackBonus);
     }
 
     [Fact]
     public void ACriticalIsMarkedFromItsOutcome()
     {
         Assert.Equal("critical", Grade(25, 18, 15)!.Mark);
-        Assert.Equal("fumble", Grade(10, 3, 20)!.Mark);
+        Assert.Equal("fumble", Grade(14, 7, 20)!.Mark);
         Assert.Null(Grade(20, 13, 20)!.Mark);
     }
 
@@ -276,7 +277,7 @@ public class ActionsPanelAttackNumberTests : ComponentTestBase
         var cut = Draw("en", new List<ActionRoll>());
         var select = cut.Find(Id("attack-number"));
         Assert.Equal("Attack this turn", cut.Find($"label[for='{select.Id}']").TextContent);
-        Assert.Equal(new[] { "Attack 1 (no penalty)", "Attack 2 (⁦−5⁩)", "Attack 3 or later (⁦−10⁩)" }, select.QuerySelectorAll("option").Select(o => o.TextContent));
+        Assert.Equal(new[] { "Attack 1 (no penalty)", "Attack 2 (⁦−3⁩)", "Attack 3 or later (⁦−7⁩)" }, select.QuerySelectorAll("option").Select(o => o.TextContent));
         Assert.False(string.IsNullOrEmpty(select.GetAttribute("aria-describedby")));
         Assert.NotNull(cut.Find($"#{select.GetAttribute("aria-describedby")}"));
     }
@@ -288,7 +289,7 @@ public class ActionsPanelAttackNumberTests : ComponentTestBase
         var cut = Draw("en", rolled);
         cut.Find(Id("action-use-weapon-oak-staff")).Click();
         var roll = Assert.Single(rolled);
-        Assert.Equal(11, roll.CheckBonus);
+        Assert.Equal(10, roll.CheckBonus);
         Assert.Equal(1, roll.AttackNumber);
         Assert.Equal("Oak staff: attack", roll.Label);
     }
@@ -301,14 +302,14 @@ public class ActionsPanelAttackNumberTests : ComponentTestBase
         cut.Find(Id("attack-number")).Change("2");
         cut.Find(Id("action-use-weapon-oak-staff")).Click();
         cut.Find(Id("action-use-weapon-swift-knife")).Click();
-        Assert.Equal(new int?[] { 11 - 5, 9 - 4 }, rolled.Select(r => r.CheckBonus));
+        Assert.Equal(new int?[] { 10 - 3, 8 - 2 }, rolled.Select(r => r.CheckBonus));
         Assert.All(rolled, r => Assert.Equal(2, r.AttackNumber));
         Assert.Equal("Oak staff: attack 2", rolled[0].Label);
 
         cut.Find(Id("attack-number")).Change("3");
         cut.Find(Id("action-use-weapon-oak-staff")).Click();
         cut.Find(Id("action-use-weapon-swift-knife")).Click();
-        Assert.Equal(new int?[] { 11 - 10, 9 - 8 }, rolled.Skip(2).Select(r => r.CheckBonus));
+        Assert.Equal(new int?[] { 10 - 7, 8 - 5 }, rolled.Skip(2).Select(r => r.CheckBonus));
     }
 
     [Fact]
@@ -333,7 +334,7 @@ public class ActionsPanelAttackNumberTests : ComponentTestBase
         var cut = Draw("en", rolled, withSystem: false);
         Assert.Empty(cut.FindAll(Id("attack-controls")));
         cut.Find(Id("action-use-weapon-oak-staff")).Click();
-        Assert.Equal(11, Assert.Single(rolled).CheckBonus);
+        Assert.Equal(10, Assert.Single(rolled).CheckBonus);
     }
 
     [Theory]
@@ -355,8 +356,8 @@ public class ActionsPanelAttackNumberTests : ComponentTestBase
     {
         var cut = Draw(culture, new List<ActionRoll>());
         var options = cut.Find(Id("attack-number")).QuerySelectorAll("option").Select(o => o.TextContent).ToList();
-        Assert.Contains("⁦−5⁩", options[1]);
-        Assert.Contains("⁦−10⁩", options[2]);
+        Assert.Contains("⁦−3⁩", options[1]);
+        Assert.Contains("⁦−7⁩", options[2]);
         // The isolate opens and closes inside the choice, so the sign cannot drift to the other side of the digits.
         Assert.All(options, o => Assert.Equal(o.Count(c => c == '⁦'), o.Count(c => c == '⁩')));
     }
@@ -375,14 +376,14 @@ public class ActionsPanelAttackNumberTests : ComponentTestBase
         // The same turn again (a refresh of the table): nothing changes.
         cut.Render(p => p.Add(x => x.TurnKey, "1:0"));
         cut.Find(Id("action-use-weapon-oak-staff")).Click();
-        Assert.Equal((3, 1, (int?)18), (rolled[0].AttackNumber, rolled[0].CheckBonus, rolled[0].Dc));
+        Assert.Equal((3, 3, (int?)18), (rolled[0].AttackNumber, rolled[0].CheckBonus, rolled[0].Dc));
 
         // Not their turn (null), then their next turn: back to the first attack. The "against" number was emptied by the roll above, so set it again to see the reset clear it.
         cut.Find(Id("attack-against")).Change("20");
         cut.Render(p => p.Add(x => x.TurnKey, null));
         cut.Render(p => p.Add(x => x.TurnKey, "2:0"));
         cut.Find(Id("action-use-weapon-oak-staff")).Click();
-        Assert.Equal((1, 11, (int?)null), (rolled[1].AttackNumber, rolled[1].CheckBonus, rolled[1].Dc));
+        Assert.Equal((1, 10, (int?)null), (rolled[1].AttackNumber, rolled[1].CheckBonus, rolled[1].Dc));
     }
 
     [Fact]
@@ -413,7 +414,7 @@ public class ActionsPanelAttackNumberTests : ComponentTestBase
         Assert.Empty(cut.FindAll(Id("attack-controls")));
         cut.Find(Id("action-use-weapon-oak-staff")).Click();
         var roll = Assert.Single(rolled);
-        Assert.Equal((11, 1, (int?)null), (roll.CheckBonus, roll.AttackNumber, roll.Dc));
+        Assert.Equal((10, 1, (int?)null), (roll.CheckBonus, roll.AttackNumber, roll.Dc));
     }
 
     [Fact]

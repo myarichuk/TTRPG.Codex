@@ -1,6 +1,5 @@
 # Reference fixture `degrees` (step P1 of the hybrid-system plan): a d20 system with four degrees of success, ranks
-# worth the level plus 2, 4, 6 or 8, typed bonuses and valued conditions. It follows the shape of an ORC-licensed rules set in this
-# project's own words and numbers; every entry is invented. It is the first hybrid system: `sheetRules` builds the character (ranks,
+# worth the level plus 1, 3, 6 or 9, typed bonuses and valued conditions. Its names and numbers are this project's own; every entry is invented. It is the first hybrid system: `sheetRules` builds the character (ranks,
 # features, armor class) and one sheet kind carries the play-time numbers (a DC the kind owns, speed, gear that changes them).
 #
 # Unlike the first three fixtures, this file uses only syntax the loader reads today, because ReferenceFixtureTests refuses unknown
@@ -27,7 +26,7 @@ actorFields:
   - { key: level,      label: Level,       type: Number,          defaultValue: 1, min: 1, max: 20 }
   - { key: ancestry,   label: Ancestry,    type: EntityReference, targetEntityType: ancestry }
   - { key: class,      label: Class,       type: EntityReference, targetEntityType: class }
-  - { key: armorClass, label: Armor Class, type: Number,          defaultValue: 10 }
+  - { key: armorClass, label: Armor Class, type: Number,          defaultValue: 12 }
 
 entityTypes:
   - { type: ancestry, label: Ancestry, folder: ancestries }
@@ -37,20 +36,20 @@ entityTypes:
   - { type: trinket,  label: Trinket,  folder: trinkets }
   - { type: weapon,   label: Weapon,   folder: weapons }
 
-conditions: [Frightened]
+conditions: [Rattled]
 
-# A spell effect beside the conditions. Its bonus is untyped, which adds up, so counted twice it would show; Frightened's status
+# A spell effect beside the conditions. Its bonus is untyped, which adds up, so counted twice it would show; Rattled's status
 # penalties keep the worst, so a second copy of them would not.
 effects: [Inspired]
 
-# Frightened lowers every check and every DC by its value, as a status penalty, and drops by 1 at the end of the creature's turn.
+# Rattled lowers every check and every DC by its value, as a status penalty, and drops by 2 at the end of the creature's turn.
 # Each target belongs to one side (the hybrid rule, docs/SHEET_CONDITIONS_DESIGN.md): attack, save and check are roll targets and
 # classDc and perception are values of ranked lists, all of sheetRules; senseDc is the sheet kind's value. No named roll below reads
 # modifiers('check'), modifiers('save') or modifiers('attack'): a roll that did would make those names kind targets too, and the
 # loader refuses a target both sides claim.
 conditionEffects:
-  Frightened:
-    value: { max: 4, decrease: { on: turnEnd, by: 1 } }
+  Rattled:
+    value: { max: 3, decrease: { on: turnEnd, by: 2 } }
     modifiers:
       - { target: attack,     amount: "-value", type: status }
       - { target: save,       amount: "-value", type: status }
@@ -63,8 +62,8 @@ conditionEffects:
       - { target: senseDc,    amount: "-value", type: status }
   Inspired:
     modifiers:
-      - { target: classDc, amount: 1 }
-      - { target: senseDc, amount: 1 }
+      - { target: classDc, amount: 2 }
+      - { target: senseDc, amount: 2 }
 
 # Status, circumstance and item bonuses keep the highest of their type; untyped ones add up. Penalties of a type keep the worst.
 # Untyped penalties add up: `penaltyTypes` overrides `penalties` for one type.
@@ -78,14 +77,14 @@ modifierTypes:
     circumstance: highest
     item: highest
 
-# The degree a d20 check comes to: 3 critical success, 2 success, 1 failure, 0 critical failure. Beating the DC by 10 is one step up,
-# missing it by 10 one step down; a natural 20 then moves the result one step up and a natural 1 one step down, within 0 to 3.
+# The degree a d20 check comes to: 3 critical success, 2 success, 1 failure, 0 critical failure. Beating the DC by 8 is one step up,
+# missing it by 6 one step down; a natural 20 then moves the result one step up and a natural 1 one step down, within 0 to 3.
 # Checks against a DC are graded by the roll below: the same four outcomes whether the roll is made from a definition or by the sheet.
 dice:
   checkRoll: degreeCheck
 
 functions:
-  degree: { formula: "(total, dc, natural) => min(3, max(0, (total >= dc + 10 ? 3 : total >= dc ? 2 : total > dc - 10 ? 1 : 0) + (natural == 20 ? 1 : natural == 1 ? -1 : 0)))" }
+  degree: { formula: "(total, dc, natural) => min(3, max(0, (total >= dc + 8 ? 3 : total >= dc ? 2 : total > dc - 6 ? 1 : 0) + (natural == 20 ? 1 : natural == 1 ? -1 : 0)))" }
 
 sheetRules:
   enforcement: warn
@@ -98,7 +97,7 @@ sheetRules:
     once: { field: ancestry, property: hp }
 
   # Attributes: typed in, or built from boosts. Each source gives boosts to different attributes (an ancestry's own, the class's, and
-  # four free ones at levels 5, 10, 15 and 20); a boost is +1 to the modifier, but from +4 it is half of that.
+  # three free ones at levels 4, 8, 12 and 16); a boost is +1 to the modifier, but from +4 it is half of that.
   attributes:
     methods: [manual, boosts]
     default: manual
@@ -107,28 +106,28 @@ sheetRules:
       sources:
         - { key: ancestry, label: Ancestry, field: ancestry, trade: { fixed: 2, free: 1 } }
         - { key: class,    label: Class,    field: class }
-        - { key: lvl5,     label: Level 5,  level: 5,  free: 4 }
-        - { key: lvl10,    label: Level 10, level: 10, free: 4 }
-        - { key: lvl15,    label: Level 15, level: 15, free: 4 }
-        - { key: lvl20,    label: Level 20, level: 20, free: 4 }
+        - { key: lvl4,     label: Level 4,  level: 4,  free: 3 }
+        - { key: lvl8,     label: Level 8,  level: 8,  free: 3 }
+        - { key: lvl12,    label: Level 12, level: 12, free: 3 }
+        - { key: lvl16,    label: Level 16, level: 16, free: 3 }
 
   inventory:
     key: inventory
     label: Gear
     types: [armor, weapon]
 
-  # Armor: its base (10 plus its bonus) and Dexterity up to its cap, then the rank in what is worn (the armor list below).
+  # Armor: its base and Dexterity up to its cap, then the rank in what is worn (the armor list below).
   armorClass:
     key: armorClass
-    unarmored: "10 + mod(dex)"
+    unarmored: "12 + mod(dex)"
     dexAttribute: dex
     rank: { list: armor, property: armorCategory, unarmored: unarmored }
 
-  # Ranked lists beside the skills, on the skills' ranks (trained to legendary, worth level plus 2 to 8). Perception and the class DC
+  # Ranked lists beside the skills, on the skills' ranks (trained to legendary, worth level plus 1 to 9). Perception and the class DC
   # publish their scores as values under their own keys; armor holds one rank per category and publishes nothing.
   ranked:
     - { key: perception, label: Perception, ranksOf: skills, attribute: wis, publish: true }
-    - { key: classDc, label: Class DC, ranksOf: skills, base: 10, attributeFrom: { field: class, property: keyAttribute }, publish: true }
+    - { key: classDc, label: Class DC, ranksOf: skills, base: 12, attributeFrom: { field: class, property: keyAttribute }, publish: true }
     - key: armor
       label: Armor
       ranksOf: skills
@@ -138,21 +137,21 @@ sheetRules:
         - { key: medium,    label: Medium armor }
         - { key: heavy,     label: Heavy armor }
 
-  # What a character can do with a roll: a Strike with each equipped weapon (its attack bonus is the attribute plus level plus 2).
+  # What a character can do with a roll: a Strike with each equipped weapon (its attack bonus is the attribute plus level plus 1).
   actions:
     - key: strike
       label: Strike
       inventory: equipped
       tag: weapons
-      attackBonus: "abilityMod + level + 2"
+      attackBonus: "abilityMod + level + 1"
 
   # The multiple attack penalty: what the 1st, 2nd and 3rd or later attack of a turn adds. A weapon with the featherlight trait lowers it.
   multipleAttack:
-    penalties: [0, -5, -10]
+    penalties: [0, -3, -7]
     variants:
-      - { property: traits, has: featherlight, penalties: [0, -4, -8] }
+      - { property: traits, has: featherlight, penalties: [0, -2, -5] }
 
-  # Ranks: trained, expert, master, legendary, worth the level plus 2, 4, 6, 8. An untrained skill adds its attribute alone.
+  # Ranks: trained, expert, master, legendary, worth the level plus 1, 3, 6, 9. An untrained skill adds its attribute alone.
   skills:
     label: Skills
     list:
@@ -161,16 +160,16 @@ sheetRules:
       - { key: stealth,   label: Stealth,   attribute: dex }
       - { key: survival,  label: Survival,  attribute: wis }
     ranks:
-      - { key: trained,   label: Trained,   sheetKey: skillTrained,   value: "level + 2" }
-      - { key: expert,    label: Expert,    sheetKey: skillExpert,    value: "level + 4" }
+      - { key: trained,   label: Trained,   sheetKey: skillTrained,   value: "level + 1" }
+      - { key: expert,    label: Expert,    sheetKey: skillExpert,    value: "level + 3" }
       - { key: master,    label: Master,    sheetKey: skillMaster,    value: "level + 6" }
-      - { key: legendary, label: Legendary, sheetKey: skillLegendary, value: "level + 8" }
+      - { key: legendary, label: Legendary, sheetKey: skillLegendary, value: "level + 9" }
     saves:
       ranks:
-        - { key: trained,   label: Trained,   sheetKey: saveTrained,   value: "level + 2" }
-        - { key: expert,    label: Expert,    sheetKey: saveExpert,    value: "level + 4" }
+        - { key: trained,   label: Trained,   sheetKey: saveTrained,   value: "level + 1" }
+        - { key: expert,    label: Expert,    sheetKey: saveExpert,    value: "level + 3" }
         - { key: master,    label: Master,    sheetKey: saveMaster,    value: "level + 6" }
-        - { key: legendary, label: Legendary, sheetKey: saveLegendary, value: "level + 8" }
+        - { key: legendary, label: Legendary, sheetKey: saveLegendary, value: "level + 9" }
 
   lists:
     - key: feats
@@ -188,8 +187,8 @@ sheetKinds:
     label: Character
     role: player
     values:
-      - { key: senseDc, label: Sense DC, formula: "10 + level + 2 + mod(wis)", modifiers: senseDc }
-      - { key: speed,   label: Speed,    formula: "25",                        modifiers: speed }
+      - { key: senseDc, label: Sense DC, formula: "12 + level + 1 + mod(wis)", modifiers: senseDc }
+      - { key: speed,   label: Speed,    formula: "20",                        modifiers: speed }
     lists:
       - key: trinkets
         label: Trinkets

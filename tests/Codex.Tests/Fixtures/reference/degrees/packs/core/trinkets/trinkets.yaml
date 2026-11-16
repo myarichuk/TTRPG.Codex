@@ -1,4 +1,4 @@
 # Trinkets reach the sheet kind's values through the kind's feature source. Untyped, so a modifier counted twice would show.
-- { id: wind-ribbon, name: Wind ribbon, properties: { modifiers: [{ target: speed, amount: 5 }] } }
+- { id: wind-ribbon, name: Wind ribbon, properties: { modifiers: [{ target: speed, amount: 3 }] } }
 # A pick on the sheet that carries the featherlight trait itself (a roll's weapon input finds it on the sheet before the library).
 - { id: rune-knife, name: Rune knife, properties: { traits: [featherlight] } }
