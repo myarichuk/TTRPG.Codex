@@ -460,7 +460,7 @@ A limit on a list (`maxCount`): a constant, a table lookup per class, or both, p
 
 ## RankedListRule
 
-A general ranked list (`sheetRules.ranked`): a set of keys that each hold one rank, as the skills do. Grants reach it as they reach the skills: `adds: [{ to: armor, entries: [light], rank: trained }]`, `{ to: perceptionExpert, entries: [perception] }` (the rank's sheet key), `{ to: perception, raise: 1 }`, or a choice. On a list of one key, `entries` may be left out. A list with Publish works out each key's score (Base + the attribute's modifier + the rank's value) and publishes it as a derived value under the key, where formulas, modifiers and conditions can reach it. Known limit: a feature's amount formula that names a published value sees nothing, since amounts are worked out before the ranks.
+A general ranked list (`sheetRules.ranked`): a set of keys that each hold one rank, as the skills do. Grants reach it as they reach the skills: `adds: [{ to: armor, entries: [light], rank: trained }]`, `{ to: perceptionExpert, entries: [perception] }` (the rank's sheet key), `{ to: perception, raise: 1 }`, or a choice. On a list of one key, `entries` may be left out. A list with Publish works out each key's score (Base + the attribute's modifier + the rank's value) and publishes it as a derived value under the key, where formulas, modifiers and conditions can reach it. Known limit: a published value is worked out after the features and the derived values, so a feature's amount or `when`, and a `derived` formula, that names one cannot read it (and the writer's guide does not offer it).
 
 | Key | Type | What it is |
 |---|---|---|

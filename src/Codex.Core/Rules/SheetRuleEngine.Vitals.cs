@@ -24,7 +24,7 @@ public sealed record ArmorClassLine(string Kind, string Label, int Value, Conten
     public override string ToString() => Kind switch
     {
         "dex" => $"Dexterity: {(Value >= 0 ? "+" : "")}{Value}{(DexCap is > 0 ? $" (limited to +{DexCap})" : string.Empty)}",
-        "bonus" or "misc" => $"{Label}: {(Value >= 0 ? "+" : "")}{Value}",
+        "bonus" or "misc" or "rank" => $"{Label}: {(Value >= 0 ? "+" : "")}{Value}",
         _ => $"{Label}: {Value}"
     };
 }
@@ -142,6 +142,7 @@ public sealed partial class SheetRuleEngine
         // Without hit dice there is nothing to type in by default: a sheet that names no mode follows the rules.
         var requested = (YamlValues.GetString(sheet, rules.ModeKey) ?? (flat ? rules.Default : "manual")).ToLowerInvariant();
         var mode = requested == "manual" ? "manual" : rules.Modes.Contains(requested) ? requested : rules.Default;
+        if (flat && mode == "rolled") mode = "average"; // a number per level has no die to roll
         var modifier = ModifierOf(sheet, rules.Attribute);
         var rolls = RawList(sheet, rules.RollsKey).Select(r => int.TryParse(r, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : 0).ToList();
 
@@ -158,7 +159,7 @@ public sealed partial class SheetRuleEngine
                 var perLevel = cls.Entry != null && cls.Entry.Properties.TryGetValue(rules.FlatProperty!, out var given) ? ToDouble(given) : null;
                 if (perLevel == null && cls.Entry != null)
                 {
-                    result.Warnings.Add(new RuleViolation(rules.Key, $"{cls.Entry.Name} has no hit points per level, so its levels add no hit points."));
+                    result.Warnings.Add(new RuleViolation(rules.Key, $"{cls.Entry.Name} has no hit points per level, so its levels add no hit points.", "Actor.Rule.NoHitPointsPerLevel", new object?[] { cls.Entry }));
                 }
 
                 for (var i = 0; i < cls.Level; i++)
@@ -325,6 +326,11 @@ public sealed partial class SheetRuleEngine
         if (rules.Rank is { } lookup && result.Ranked.TryGetValue(lookup.List, out var rankScores))
         {
             var category = body == null ? lookup.Unarmored : Property(body, lookup.Property)?.ToString();
+            if (body != null && string.IsNullOrEmpty(category))
+            {
+                result.Warnings.Add(new RuleViolation(rules.Key, $"{body.Name} has no {lookup.Property}, so no armor rank counts while it is worn.", "Actor.Rule.NoArmorCategory", new object?[] { body, lookup.Property }));
+            }
+
             if (!string.IsNullOrEmpty(category)
                 && rankScores.FirstOrDefault(s => s.Key.Equals(category, StringComparison.OrdinalIgnoreCase)) is { Rank: > 0 } score)
             {

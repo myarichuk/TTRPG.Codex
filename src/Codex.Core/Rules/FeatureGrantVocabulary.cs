@@ -180,8 +180,8 @@ public sealed class FeatureGrantVocabulary
         if (system.FieldRoles.Level is { } level) yield return level;
         if (rules.Multiclass is { } multiclass) yield return multiclass.ClassLevelKey;
         foreach (var derived in rules.Derived) yield return derived.Key;
-        foreach (var list in rules.Ranked.Where(l => l.Publish)) foreach (var key in list.Keys()) yield return key.Key;
-        if (rules.Actions.Any(a => a.Rank != null)) yield return "rankValue";
+        // A ranked list's published scores and an action's rankValue are not here: amounts and conditions are worked out before the ranks, so a
+        // feature formula that named them could not be read (see RankedListRule).
         foreach (var attribute in system.Attributes) yield return attribute.Key;
     }
 }

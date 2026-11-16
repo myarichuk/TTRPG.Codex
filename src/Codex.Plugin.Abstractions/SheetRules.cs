@@ -381,7 +381,7 @@ public class RankDefinition
 /// rank's sheet key), <c>{ to: perception, raise: 1 }</c>, or a choice. On a list of one key, <c>entries</c> may be left out.
 /// A list with <see cref="Publish"/> works out each key's score (<see cref="Base"/> + the attribute's modifier + the rank's value) and
 /// publishes it as a derived value under the key, where formulas, modifiers and conditions can reach it.
-/// Known limit: a feature's amount formula that names a published value sees nothing, since amounts are worked out before the ranks.
+/// Known limit: a published value is worked out after the features and the derived values, so a feature's amount or <c>when</c>, and a <c>derived</c> formula, that names one cannot read it (and the writer's guide does not offer it).
 /// </summary>
 public class RankedListRule
 {

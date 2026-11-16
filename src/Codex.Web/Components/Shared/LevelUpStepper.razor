@@ -52,12 +52,12 @@
             <dt>@L["Actor.Sheet.LevelHp"]</dt>
             <dd data-testid="levelup-hp">
                 <bdi dir="ltr">+@(hp.Gain + hp.Extra)</bdi>
-                <span class="small-muted">@L["Actor.Sheet.LevelHpHow", hp.Die, hp.IsRolled ? hp.Base.ToString() : L["Actor.Sheet.LevelHpAverage", hp.Base], Bidi.Ltr((hp.Modifier >= 0 ? "+" : "") + hp.Modifier)]@(hp.Extra != 0 ? $" {Bidi.Ltr((hp.Extra > 0 ? "+" : "") + hp.Extra)}" : "")</span>
+                <span class="small-muted">@(hp.Die == 0 ? L["Actor.Sheet.LevelHpFlat", hp.Base, Bidi.Ltr((hp.Modifier >= 0 ? "+" : "") + hp.Modifier)] : L["Actor.Sheet.LevelHpHow", hp.Die, hp.IsRolled ? hp.Base.ToString() : L["Actor.Sheet.LevelHpAverage", hp.Base], Bidi.Ltr((hp.Modifier >= 0 ? "+" : "") + hp.Modifier)])@(hp.Extra != 0 ? $" {Bidi.Ltr((hp.Extra > 0 ? "+" : "") + hp.Extra)}" : "")</span>
                 @if (Plan.HitPointsBefore is { } hpBefore && Plan.HitPointsAfter is { } hpAfter)
                 {
                     <span class="small-muted"> · <bdi dir="ltr">@hpBefore → @hpAfter</bdi></span>
                 }
-                @if (rolledMode)
+                @if (rolledMode && hp.Die > 0)
                 {
                     <span class="d-inline-flex align-items-center gap-2 ms-2">
                         <label for="levelup-roll" class="visually-hidden">@L["Actor.Hp.RollAria", Plan.Level]</label>

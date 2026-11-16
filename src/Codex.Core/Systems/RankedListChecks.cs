@@ -47,7 +47,11 @@ internal static class RankedListChecks
             if (list.Publish) names.AddRange(list.Keys().Select(x => x.Key));
             foreach (var name in names.Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                if (taken.Contains(name) || (list.Publish && !published.Add(name)))
+                if (list.Publish && !published.Add(name))
+                {
+                    yield return $"sheetRules.ranked '{name}' is published by more than one ranked list.";
+                }
+                else if (taken.Contains(name))
                 {
                     yield return $"sheetRules.ranked '{name}' collides with an actor field, a derived value, a sheetRules.lists key, or the armor class or hit point key.";
                 }
@@ -72,7 +76,7 @@ internal static class RankedListChecks
             {
                 if (int.TryParse(rank.Key, out _)) yield return $"{path} key '{rank.Key}' cannot be a number: a grant names a rank by key or by its number.";
                 if (!sheetKeys.Add(rank.SheetKey)) yield return $"{path} sheetKey '{rank.SheetKey}' is used by more than one rank.";
-                else if (fieldKeys.Contains(rank.SheetKey) || listKeys.Contains(rank.SheetKey)) yield return $"{path} sheetKey '{rank.SheetKey}' collides with an actor field or a sheetRules.lists key.";
+                else if (taken.Contains(rank.SheetKey)) yield return $"{path} sheetKey '{rank.SheetKey}' collides with an actor field, a derived value, a sheetRules.lists key, or the armor class or hit point key.";
             }
 
             foreach (var rank in list.Ranks.Where(r => !string.IsNullOrWhiteSpace(r.Value)))

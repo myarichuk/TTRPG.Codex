@@ -346,18 +346,115 @@ public class GeneralRankedListTests
         var armor = vocabulary.Lists.Single(l => l.Key == "armor");
         Assert.Equal(new[] { "trained", "expert", "master" }, armor.Ranks!.Select(r => r.Key));
         Assert.Contains(vocabulary.Targets, t => t.Key == "perception");
-        Assert.Contains("rankValue", vocabulary.FormulaNames);
+        Assert.DoesNotContain("rankValue", vocabulary.FormulaNames); // an action's name, and not a published score: a feature's formula cannot read them
+        Assert.DoesNotContain("perception", vocabulary.FormulaNames);
 
         var entry = Entry("feat", "grand", ("adds", Items(Grant("armor", "grandmaster", entries: new object[] { "light" }))));
         var problem = Assert.Single(FeatureGrantCheck.Problems(System, entry));
         Assert.Contains("trained", problem);
     }
 
+    // ---- review of P3 ----
+
+    [Fact]
+    public void OneChoiceIdToSkillsAndToArmor_IsOneWarningAndOneChoice()
+    {
+        var warden = Warden(Row("Training", 1, Grant("armor", "trained", entries: new object[] { "light", "medium" })));
+        var feat = Entry("feat", "twin", ("adds", Items(
+            Grant("skills", "trained", more: new[] { ("choice", (object)"pick"), ("choose", 1L), ("from", Items("climb")) }),
+            Grant("armor", "expert", more: new[] { ("choice", (object)"pick"), ("choose", 1L), ("minRank", "trained") }))));
+        var evaluation = Evaluate(Sheet(("feats", Items("twin"))), warden, feat);
+        Assert.Single(evaluation.Warnings, w => w.Key == "Actor.Rule.FeatureError");
+        Assert.Single(evaluation.PendingChoices);
+    }
+
+    [Fact]
+    public void AnUnsupportedChoiceAddOnASheetWithSkillsAndRankedLists_WarnsOnce()
+    {
+        var lost = Row("Lost", 1, Grant("nowhere", null, more: new[] { ("choice", (object)"pick"), ("choose", 1L), ("from", Items("a")) }));
+        var evaluation = Evaluate(Sheet(), Warden(lost));
+        Assert.Single(evaluation.Warnings, w => w.Key == "Actor.Rule.FeatureError");
+    }
+
+    [Fact]
+    public void ABadFeatureInBothPasses_IsSaidOnce()
+    {
+        var warden = Warden(Row("Muddled", 1, Grant("perception", "trained", raise: 1), Grant("skills", "trained", raise: 1)));
+        Assert.Single(Evaluate(Sheet(), warden).Warnings, w => w.Key == "Actor.Rule.FeatureError");
+    }
+
+    [Fact]
+    public void ABrokenRankFormulaSharedByListsIsOneWarning()
+    {
+        var system = SystemDefinitionLoader.Parse(Yaml(skills: Skills.Replace("sheetKey: skillTrained, value: \"level + 2\"", "sheetKey: skillTrained, value: \"level + nothere\"")));
+        var evaluation = new SheetRuleEngine(system, new Entries(Warden())).Recompute(Sheet());
+        Assert.Single(evaluation.Warnings, w => w.Message.Contains("Trained") && w.Key != "Actor.Rule.FeatureError" && w.FieldKey == "trained");
+    }
+
+    [Fact]
+    public void AnArmorWithoutACategory_SaysSoAndAddsNoRank()
+    {
+        var warden = Warden(Row("Training", 1, Grant("armor", "trained", entries: new object[] { "medium" })));
+        var odd = Entry("armor", "odd", ("armorBase", 12L));
+        var evaluation = Evaluate(Sheet(("inventory", Items("odd|equipped:1"))), warden, odd);
+        Assert.Contains(evaluation.Warnings, w => w.Key == "Actor.Rule.NoArmorCategory");
+        Assert.DoesNotContain(evaluation.ArmorClass!.Parts, l => l.Kind == "rank");
+    }
+
+    [Fact]
+    public void AGrantWithNoEntriesOnAListOfSeveralKeys_Warns()
+    {
+        var evaluation = Evaluate(Sheet(), Warden(Row("Vague", 1, Grant("armor", "trained"))));
+        Assert.Contains(evaluation.Warnings, w => w.Key == "Actor.Rule.FeatureError");
+    }
+
+    [Fact]
+    public void RankLabelsAreTranslated_OnOwnRanksAndThroughTheSkills()
+    {
+        var system = SystemDefinitionLoader.Parse(Yaml());
+        system.Translations["ru"] = new SystemTranslation { SheetRules = new SheetRulesTranslation { Ranks = { ["trained"] = "Обучен", ["novice"] = "Новичок" } } };
+        var rules = system.Localize("ru").SheetRules!;
+        Assert.Equal("Обучен", rules.RanksFor(rules.Ranked.Single(l => l.Key == "perception"))[0].Label);
+        Assert.Equal("Новичок", rules.RanksFor(rules.Ranked.Single(l => l.Key == "wardcraft"))[0].Label);
+        Assert.Equal("wardcraftNovice", rules.RanksFor(rules.Ranked.Single(l => l.Key == "wardcraft"))[0].SheetKey);
+        Assert.Equal("Trained", system.SheetRules!.RanksFor(system.SheetRules.Ranked.Single(l => l.Key == "perception"))[0].Label); // the original is untouched
+    }
+
+    [Fact]
+    public void ARankSheetKeyCannotTakeADerivedOrArmorClassKey_AndTwoListsCannotPublishOneKey()
+    {
+        var yaml = Header + "\nsheetRules:\n" + Skills + "\n  armorClass: { unarmored: '10', dexAttribute: dex }\n  ranked:\n"
+            + "    - { key: armor, ranks: [{ key: class, value: '1' }], list: [{ key: k }] }\n"
+            + "    - { key: dup, ranksOf: skills, publish: true }\n    - { key: other, ranksOf: skills, publish: true, list: [{ key: dup }] }\n";
+        var errors = Errors(yaml);
+        Assert.Contains("sheetKey 'armorClass' collides with an actor field, a derived value", errors);
+        Assert.Contains("'dup' is published by more than one ranked list.", errors);
+        Assert.Contains("sheetRules.hitPoints.once needs flatProperty.", Errors(Header + "\nsheetRules:\n  hitPoints: { key: maxHp, currentKey: hp, attribute: wis, once: { field: class, property: hp } }\n"));
+    }
+
+    [Fact]
+    public void FlatHitPointsInTheLevelUpPlan_HaveNoDie_AndTheModifierCounts()
+    {
+        var warden = Entry("class", "warden", ("hp", 6L), ("features", Items(Row("Tough", 1).Concat(new[] { KeyValuePair.Create("modifiers", (object)Items(Map(("target", "maxHp"), ("amount", "2")))) }).ToDictionary(p => p.Key, p => p.Value))));
+        var engine = new SheetRuleEngine(FlatSystem, new Entries(warden, Entry("ancestry", "hillfolk", ("hp", 4L))));
+        var four = Sheet(("ancestry", "hillfolk"), ("level", 4L));
+        var five = Sheet(("ancestry", "hillfolk"), ("level", 5L));
+        var plan = LevelUpPlan.Build(FlatSystem.SheetRules!, engine.Recompute(four), engine.Recompute(five), 5, warden, 5, null, null);
+        Assert.Equal(4 + 7 * 4 + 2, plan.HitPointsBefore);
+        Assert.Equal(4 + 7 * 5 + 2, plan.HitPointsAfter);
+        Assert.Equal(0, plan.HitPoints!.Die);
+        Assert.Equal(7, plan.HitPoints.Gain);
+
+        var rolled = engine.Recompute(Sheet(("ancestry", "hillfolk"), ("hpMode", "rolled")));
+        Assert.Equal("average", rolled.HitPoints!.Mode); // nothing to roll
+    }
+
     // ---- 11: P3c, hit points from a number of the class ----
 
     private const string FlatRules = """
           hitPoints: { key: maxHp, currentKey: hp, flatProperty: hp, attribute: wis, once: { field: ancestry, property: hp } }
-          features: []
+          features:
+            - { field: class, property: features, byField: level }
         """;
 
     private static readonly SystemDefinition FlatSystem = SystemDefinitionLoader.Parse(Header.Replace("  - { key: armorClass,", "  - { key: ancestry, label: Ancestry, type: EntityReference, targetEntityType: ancestry }\n  - { key: armorClass,")

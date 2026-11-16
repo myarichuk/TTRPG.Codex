@@ -571,6 +571,11 @@ public static class SystemDefinitionLoader
             yield return $"sheetRules.hitPoints.once.field '{once.Field}' is not an EntityReference actor field.";
         }
 
+        if (rules.HitPoints is { Once: not null, FlatProperty: null or "" })
+        {
+            yield return "sheetRules.hitPoints.once needs flatProperty.";
+        }
+
         // Written out (not just the defaults): a flat number per level has no first level of its own and no average.
         if (rules.HitPoints is { FlatProperty: { Length: > 0 } } flat && (flat.FirstLevel != HitPointRules.FullDie || flat.Average != HitPointRules.HalfPlusOne))
         {

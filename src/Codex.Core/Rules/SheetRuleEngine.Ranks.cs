@@ -338,6 +338,8 @@ public sealed partial class SheetRuleEngine
     private void WarnFeature(SheetEvaluation result, HashSet<string> warned, string name)
     {
         if (!warned.Add(name)) return;
+        // The general lists' pass and the skills' pass each keep a set: a feature with a bad grant in both says it once.
+        if (Rules?.Ranked.Count > 0 && result.Warnings.Any(w => w.Key == "Actor.Rule.FeatureError" && w.Args is { Count: 1 } a && Equals(a[0], name))) return;
         result.Warnings.Add(new RuleViolation("features", $"{name}: what this feature grants can't be worked out, so it is left out. The GM can check the entry.", "Actor.Rule.FeatureError", new object?[] { name }));
     }
 
@@ -460,11 +462,18 @@ public sealed partial class SheetRuleEngine
         string SourceName(ActiveFeature f) => f.Name.Equals(f.Source.Name, StringComparison.OrdinalIgnoreCase) ? f.Name : $"{f.Source.Name}: {f.Name}";
 
         // On a list of one key, a grant may leave its entries out: it means that key.
-        IEnumerable<string> EntriesOf(RankedList list, FeatureAdd add) => add.Entries.Count == 0 && list.Keys.Count == 1 ? new[] { list.Keys[0].Key } : add.Entries;
+        // A grant that names no entry on a list of several keys says nothing about which one: it is said, not guessed.
+        IEnumerable<string> EntriesOf(RankedList list, FeatureAdd add, ActiveFeature feature)
+        {
+            if (add.Entries.Count > 0) return add.Entries;
+            if (list.Keys.Count == 1) return new[] { list.Keys[0].Key };
+            WarnFeature(result, warned, feature.Name);
+            return Array.Empty<string>();
+        }
 
         foreach (var (list, feature, add, rank) in fixedRanks)
         {
-            foreach (var name in EntriesOf(list, add))
+            foreach (var name in EntriesOf(list, add, feature))
             {
                 if (list.Match(name) is { } key) list.Give(key.Key, rank, RankSourceKinds.Feature, SourceName(feature), feature, independent: true);
                 else WarnFeature(result, warned, feature.Name);
@@ -480,7 +489,7 @@ public sealed partial class SheetRuleEngine
 
             foreach (var (_, feature, add) in fixedRaises.Where(r => r.List == list))
             {
-                foreach (var name in EntriesOf(list, add).Distinct(StringComparer.OrdinalIgnoreCase))
+                foreach (var name in EntriesOf(list, add, feature).Distinct(StringComparer.OrdinalIgnoreCase))
                 {
                     if (list.Match(name) is { } key) list.Raise(key.Key, add.Raise, SourceName(feature), feature);
                     else WarnFeature(result, warned, feature.Name);
@@ -510,7 +519,10 @@ public sealed partial class SheetRuleEngine
                 }
                 catch (Exception)
                 {
-                    result.Warnings.Add(FormulaError(definition.Key, string.IsNullOrWhiteSpace(definition.Label) ? definition.Key : definition.Label));
+                    var warning = FormulaError(definition.Key, string.IsNullOrWhiteSpace(definition.Label) ? definition.Key : definition.Label);
+                    // Lists that take another list's ranks share their formulas: one warning for the same words, not one per list.
+                    var repeated = Rules?.Ranked.Count > 0 && result.Warnings.Any(w => w.FieldKey == warning.FieldKey && w.Message == warning.Message);
+                    if (!repeated) result.Warnings.Add(warning);
                     worked = 0;
                 }
             }
@@ -559,7 +571,7 @@ public sealed partial class SheetRuleEngine
     /// <summary>The general ranked lists (<c>sheetRules.ranked</c>), worked out right after the features: their ranks, as the skills' pass works out
     /// the skills', and each published list's scores as derived values (base + attribute + rank value + the key's own modifiers, which stack once).
     /// The published value does not read the roll targets (<c>check</c>, <c>save</c>): a condition on perception would count twice. Known limit: a
-    /// feature's amount formula that names a published value sees nothing, since amounts are worked out in <see cref="EvaluateFeatures"/>, first.</summary>
+    /// feature's amount or <c>when</c>, and a derived formula, that names a published value cannot read it: those are worked out in <see cref="EvaluateFeatures"/> and before it.</summary>
     private void EvaluateRankedLists(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
     {
         if (Rules is not { Ranked.Count: > 0 } rules) return;
