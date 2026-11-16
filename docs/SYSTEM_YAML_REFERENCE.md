@@ -1138,6 +1138,7 @@ What a condition does while it holds (`conditionEffects.<name>`).
 |---|---|---|
 | `modifiers` | list of [ModifierDefinition](#modifierdefinition) | Modifiers that apply while the condition holds; one without a `source` is credited to the condition. |
 | `value` | [ConditionValueDefinition](#conditionvaluedefinition) | Makes the condition a valued one (Exhaustion 3, frightened 2): it holds while its value is above 0, and its modifiers read the value as `value`. Null: the condition has no value (`value` is 1 in its modifiers). For the condition `vitals.exhaustion` names, the loader fills in `key` and `max` from `vitals.exhaustion`; the file may write only `decrease` there. |
+| `implies` | list of [ConditionImplication](#conditionimplication) | Conditions that hold while this one holds (`implies: [Dazzled, { condition: Shaken, value: 2 }]`); never stored, read on every look at what holds (docs/CONDITION_IMPLIES_DESIGN.md). |
 
 ## ConditionValueDefinition
 
@@ -1157,6 +1158,16 @@ The value a valued condition carries (`conditionEffects.<name>.value`); see docs
 |---|---|---|
 | `on` | text (a number is text too) | Required: `turnEnd`, `turnStart`, a rest of `vitals.rests` or a moment the system declares. |
 | `by` | whole number | How much it drops by. Default 1. |
+
+## ConditionImplication
+
+One item of `implies`: a condition name, or `{ condition, value, stays }`.
+
+| Key | Type | What it is |
+|---|---|---|
+| `condition` | text (a number is text too) |  |
+| `value` | text (a number is text too) | For an implied condition that is valued: a number or a formula, in which `value` is the source's value (1 for a source with no value). Null: 1. |
+| `stays` | true or false | The implied condition is written as a condition of its own when the source ends (Prone after Unconscious). Only for an unvalued one. |
 
 ## HazardRules
 

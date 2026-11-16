@@ -173,6 +173,20 @@
                     </div>
                 }
 
+                @if (UnreachedModifiers() is { Count: > 0 } unreached)
+                {
+                    // Not blocking: the GM may save anyway, but the modifier would count for nothing (the content loader says the same when a pack has it).
+                    <div class="mt-3" aria-live="polite" data-testid="unreached-modifiers">
+                        <h4 class="label-caps">@L["Wizard.Modifiers.Unreached"]</h4>
+                        <ul>
+                            @foreach (var warning in unreached)
+                            {
+                                <li>@warning</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
                 @if (error != null)
                 {
                     <p class="text-danger mt-3 mb-0" role="alert">@error</p>
@@ -360,6 +374,10 @@
         string Say(string key, object?[] args) => L.Get(key, args);
         return (HazardNumbers.Problems(entry, TypeDef, system, Say).ToList(), HazardNumbers.ScalingProblems(entry, TypeDef, system, Say, Ctx.System.DisplayValue).ToList());
     }
+
+    /// <summary>Modifiers of the entry that count for nothing on this system (a sheet kind's feature aimed at a number only the sheet rules read).</summary>
+    private List<string> UnreachedModifiers() =>
+        draft == null || Ctx.System?.Canonical is not { } system ? [] : SheetConditions.UnreachedKindModifiers(system, draft.ToEntry(), (key, args) => L.Get(key, args)).ToList();
 
     private SystemDefinition? grantSystem;
     private FeatureGrantVocabulary? grantVocabulary;

@@ -182,6 +182,7 @@
   <data name="Combat.LowerCondition" xml:space="preserve"><value>Понизить «{0}» для {1}</value></data>
   <data name="Combat.ConditionValue" xml:space="preserve"><value>{0} {1}</value></data>
   <data name="Combat.SpellEffects" xml:space="preserve"><value>Эффекты заклинаний</value></data>
+  <data name="Combat.Condition.ImpliedBy" xml:space="preserve"><value>{0}, из-за «{1}»</value></data>
   <data name="Combat.SetOnSheet" xml:space="preserve"><value>Задано в листе персонажа. Пока не снято.</value></data>
   <data name="Combat.ConditionHolds" xml:space="preserve"><value>«{0}» уже на уровне {1}. Чтобы повысить, нажмите +.</value></data>
   <data name="Combat.TurnLabel" xml:space="preserve"><value>Ход</value></data>

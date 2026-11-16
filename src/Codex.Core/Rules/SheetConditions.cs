@@ -8,7 +8,7 @@ namespace Codex.Core.Rules;
 /// <see cref="SheetModel.ConditionsKey"/>, and every valued condition whose value on the sheet is above 0. The one reader both engines
 /// share, so a condition holds the same way for a sheet kind and for sheet rules.
 /// </summary>
-public static class SheetConditions
+public static partial class SheetConditions
 {
     /// <summary>The key a valued condition's value is kept under when <c>value.key</c> is not written: <c>condition_frightened</c>.</summary>
     public static string DefaultKey(string condition) => "condition_" + Slug(condition);
@@ -56,11 +56,15 @@ public static class SheetConditions
         effect.Value is { } value && YamlValues.ToNumber(sheet.GetValueOrDefault(KeyOf(condition, value))) is { } number && number > 0 ? number : 1;
 
     /// <summary>A copy of <paramref name="sheet"/> with <c>value</c> added: what the formulas of the condition's effects are worked out on.</summary>
-    public static IReadOnlyDictionary<string, object> WithValue(string condition, ConditionEffectDefinition effect, IReadOnlyDictionary<string, object> sheet)
+    public static IReadOnlyDictionary<string, object> WithValue(string condition, ConditionEffectDefinition effect, IReadOnlyDictionary<string, object> sheet) =>
+        WithValue(ValueOf(condition, effect, sheet), sheet);
+
+    /// <summary>A copy of <paramref name="sheet"/> with <c>value</c> set to <paramref name="value"/>: the number a condition holds at, stored or brought by another.</summary>
+    public static IReadOnlyDictionary<string, object> WithValue(double value, IReadOnlyDictionary<string, object> sheet)
     {
         var copy = new Dictionary<string, object>(sheet.Count + 1, StringComparer.Ordinal);
-        foreach (var (key, value) in sheet) copy[key] = value;
-        copy[ValueName] = ValueOf(condition, effect, sheet);
+        foreach (var (key, number) in sheet) copy[key] = number;
+        copy[ValueName] = value;
         return copy;
     }
 
@@ -85,6 +89,53 @@ public static class SheetConditions
 
         foreach (var roll in system.Rolls) targets.UnionWith(RollTargets.Of(system, roll));
         return targets;
+    }
+
+    /// <summary>The resource key of <see cref="UnreachedKindModifiers"/>'s message, and its English text (the resource string, word for word: a test holds them together).</summary>
+    public const string UnreachedKey = "Wizard.Modifiers.UnreachedLine";
+    public const string UnreachedEnglish = "{0} '{1}': modifiers[{2}] aims at '{3}', which only the sheet rules read; a sheet kind's feature never reaches it, so it counts for nothing.";
+
+    /// <summary>
+    /// On a hybrid system (sheetRules and sheet kinds): for an entry of a type some sheet kind reads as features and sheetRules does not, each modifier whose
+    /// target the sheet-rules side owns (<see cref="SheetRuleEngine.KindOf(SystemDefinition, string)"/> knows it) and the kind does not (<see cref="KindTargets"/>).
+    /// Such a modifier counts for nothing: the kind's feature never reaches the sheet-rules numbers. One message each (docs/CONDITION_IMPLIES_DESIGN.md).
+    /// </summary>
+    public static IEnumerable<string> UnreachedKindModifiers(SystemDefinition system, ContentEntry entry, Func<string, object?[], string>? say = null)
+    {
+        if (system.SheetRules is not { } rules || system.SheetKinds.Count == 0 || string.IsNullOrWhiteSpace(entry.Type)) yield break;
+        var kindTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kind in system.SheetKinds)
+        {
+            foreach (var source in kind.Features)
+            {
+                var owner = source.Link != null
+                    ? system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, kind.Links.FirstOrDefault(l => l.Key == source.Link)?.Kind, StringComparison.OrdinalIgnoreCase))
+                    : kind;
+                if (source.List != null && owner?.Lists.FirstOrDefault(l => l.Key == source.List)?.Type is { } type) kindTypes.Add(type);
+            }
+        }
+
+        if (!kindTypes.Contains(entry.Type)) yield break;
+        // What sheetRules collects, read from the sources CollectFeatures reads: a list's entry type, and the entry type a field references.
+        var ruleTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var source in rules.Features)
+        {
+            if (source.List != null && rules.Lists.FirstOrDefault(l => l.Key == source.List)?.TargetEntityType is { } listType) ruleTypes.Add(listType);
+            if (source.Field != null && system.ActorFields.FirstOrDefault(f => f.Key == source.Field)?.TargetEntityType is { } fieldType) ruleTypes.Add(fieldType);
+        }
+
+        if (ruleTypes.Contains(entry.Type) || !entry.Properties.TryGetValue("modifiers", out var raw) || YamlValues.Normalize(raw) is not IEnumerable<object> modifiers) yield break;
+        var kindTargets = KindTargets(system);
+        var index = 0;
+        foreach (var modifier in modifiers)
+        {
+            var at = index++;
+            if (YamlValues.Normalize(modifier) is not IDictionary<string, object> map || (map.TryGetValue("target", out var targetValue) ? targetValue?.ToString() : null) is not { Length: > 0 } target) continue;
+            if (kindTargets.Contains(target) || SheetRuleEngine.KindOf(system, target) == SheetRuleEngine.TargetKind.Unknown) continue;
+            var kindName = char.ToUpperInvariant(entry.Type[0]) + entry.Type[1..];
+            object?[] args = { kindName, entry.Name, at, target };
+            yield return say != null ? say(UnreachedKey, args) : string.Format(System.Globalization.CultureInfo.InvariantCulture, UnreachedEnglish, args);
+        }
     }
 
     /// <summary>
@@ -119,13 +170,14 @@ public static class SheetConditions
         var listed = SheetRuleEngine.RawList(sheet, SheetModel.ConditionsKey).Concat(statuses ?? Array.Empty<string>())
             .Distinct(StringComparer.OrdinalIgnoreCase).Cast<object>().ToList();
         live[SheetModel.ConditionsKey] = listed;
-        live[SheetModel.ConditionsKey] = Of(system, live).Cast<object>().ToList();
+        live[SheetModel.ConditionsKey] = Listed(system, live).Cast<object>().ToList();
         return live;
     }
 
-    /// <summary>The conditions that hold on <paramref name="sheet"/>: the ones it lists, and each valued condition whose key on the sheet is above 0.
-    /// A valued condition holds only then, listed or not: one the sheet lists with its value at 0 or unset is left out.</summary>
-    public static List<string> Of(SystemDefinition system, IReadOnlyDictionary<string, object> sheet)
+    /// <summary>What holds on <paramref name="sheet"/> on its own: the conditions it lists, and each valued condition whose key on the sheet is above 0.
+    /// A valued condition holds only then, listed or not: one the sheet lists with its value at 0 or unset is left out. What a held condition
+    /// implies is not here (<see cref="Holding"/>): this is the record a diff reads.</summary>
+    public static List<string> Listed(SystemDefinition system, IReadOnlyDictionary<string, object> sheet)
     {
         var conditions = SheetRuleEngine.RawList(sheet, SheetModel.ConditionsKey);
         foreach (var (name, key, _) in Valued(system))

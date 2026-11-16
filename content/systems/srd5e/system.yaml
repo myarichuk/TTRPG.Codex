@@ -103,6 +103,16 @@ conditionEffects:
       - { target: check,      amount: "-2 * value" }
       - { target: initiative, amount: "-2 * value" }
       - { target: speed,      amount: "-5 * value" }
+  # SRD 5.2.1: Paralyzed, Petrified, Stunned and Unconscious each include Incapacitated, and Unconscious also includes Prone, which it leaves behind
+  # when it ends (`stays`). The rest of those entries is not a number, so they carry only this.
+  Paralyzed:
+    implies: [Incapacitated]
+  Petrified:
+    implies: [Incapacitated]
+  Stunned:
+    implies: [Incapacitated]
+  Unconscious:
+    implies: [Incapacitated, { condition: Prone, stays: true }]
   # SRD 5.2.1, Bless: add 1d4 to attack rolls and saving throws while it lasts.
   Bless:
     modifiers:

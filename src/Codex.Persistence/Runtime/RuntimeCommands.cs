@@ -424,6 +424,7 @@ public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) 
 
     // How many effects the creature's concentration held up, when the condition removed was concentration.
     private int _released;
+    private readonly List<string> _stayed = new();
 
     public void Apply(CampaignRuntime runtime)
     {
@@ -432,7 +433,7 @@ public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) 
             _released = string.Equals(EffectId, TableRules.ConcentrationCondition(runtime), StringComparison.OrdinalIgnoreCase)
                 ? TableRules.EndConcentration(runtime, ActorId, e)
                 : 0;
-            runtime.World.RemoveStatus(e, EffectId);
+            _stayed.AddRange(TableRules.RemoveStatusLeaving(runtime, e, ActorId, EffectId));
         }
 
         // A condition set on the sheet page before the table ran is in the sheet's own list, not a status: it is taken off there too, as a new
@@ -453,6 +454,7 @@ public sealed record RemoveStatusEffectCommand(string ActorId, string EffectId) 
     {
         var parts = new List<EventMessage> { EventMessage.Of("Status.Lost", runtime.ActorTerm(ActorId), EventTerm.Condition(EffectId)) };
         if (_released > 0) parts.Add(EventMessage.Of("Concentration.Released", _released));
+        foreach (var stayed in _stayed) parts.Add(EventMessage.Of("Status.Gained", runtime.ActorTerm(ActorId), EventTerm.Condition(stayed)));
         return SessionEvent.From("StatusEffectRemoved", parts, new[] { ActorId });
     }
 }

@@ -147,8 +147,7 @@ expectations:
     with: { values: { condition_frightened: 2 } }
     expect: { values: { skills.athletics: 9 } }
     why: "11 - 2."
-  # now: fail. The drop at the end of a turn is TableRules.DecreaseConditions in Codex.Persistence (C4); SheetEvents has no turnEnd
-  # handler here, so the host's event changes nothing. Stays failing until P4b moves the decrease into Codex.Core, beside `implies`.
+  # now: pass. The drop at the end of a turn is SheetConditions.Drop in Codex.Core (P4b); the table and this host raise the event, then drop.
   - id: degrees.frightened-drops-by-one-at-the-end-of-the-turn
     step: 5
     sheet: hero5
@@ -156,7 +155,7 @@ expectations:
     event: { type: turnEnd }
     expect: { after: { tracks: { condition_frightened: 1 }, values: { classDc: 20 } } }
     why: "2 drops to 1; class DC 21 - 1."
-  # now: fail, P4b (as above).
+  # now: pass (as above).
   - id: degrees.frightened-ends-at-zero
     step: 5
     sheet: hero5

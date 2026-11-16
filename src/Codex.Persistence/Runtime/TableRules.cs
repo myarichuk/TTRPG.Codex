@@ -56,7 +56,7 @@ internal static class TableRules
                     runtime.World.AddStatus(entity, add, fields.GetValueOrDefault("source")?.ToString() ?? "rules", ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, actorId);
                     break;
                 case "condition" when fields.GetValueOrDefault("remove")?.ToString() is { Length: > 0 } remove:
-                    runtime.World.RemoveStatus(entity, remove);
+                    RemoveStatusLeaving(runtime, entity, actorId, remove);
                     break;
                 case VitalsHandlers.KillKind:
                     Kill(runtime, entity, actorId);
@@ -169,16 +169,13 @@ internal static class TableRules
         var messages = new List<EventMessage>();
         if (runtime.System is not { } system || !entity.Has<ResourcePoolComponent>()) return messages;
         var pool = entity.Get<ResourcePoolComponent>();
-        foreach (var (name, key, value) in SheetConditions.Valued(system))
+        foreach (var drop in SheetConditions.Drops(system, key => pool.Pools.TryGetValue(key, out var now) ? now : null, moment))
         {
-            if (value.Decrease is not { } decrease || decrease.By <= 0 || !string.Equals(decrease.On, moment, StringComparison.OrdinalIgnoreCase)) continue;
-            if (!pool.Pools.TryGetValue(key, out var now) || now <= 0) continue;
-            var level = Math.Max(0, now - decrease.By);
-            pool.Set(key, level);
-            var term = EventTerm.Condition(name);
+            pool.Set(drop.Key, drop.To);
+            var term = EventTerm.Condition(drop.Condition);
             messages.Add(nested
-                ? level == 0 ? EventMessage.Of("Rest.ConditionEnds", term) : EventMessage.Of("Rest.ConditionDrops", term, level)
-                : level == 0 ? EventMessage.Of("Condition.Ends", runtime.ActorTerm(actorId), term) : EventMessage.Of("Condition.Drops", runtime.ActorTerm(actorId), term, level));
+                ? drop.To == 0 ? EventMessage.Of("Rest.ConditionEnds", term) : EventMessage.Of("Rest.ConditionDrops", term, drop.To)
+                : drop.To == 0 ? EventMessage.Of("Condition.Ends", runtime.ActorTerm(actorId), term) : EventMessage.Of("Condition.Drops", runtime.ActorTerm(actorId), term, drop.To));
         }
 
         return messages;
@@ -280,6 +277,24 @@ internal static class TableRules
         int? score = entity.Has<AttributesComponent>() && entity.Get<AttributesComponent>().Values.TryGetValue(attributeKey, out var live) ? live : null;
         score ??= runtime.GetActorDocument(actorId) is { } doc ? YamlValues.GetInt(doc.Sheet, attributeKey) : null;
         return definition.ModifierFor(score ?? definition.Default) ?? 0;
+    }
+
+    /// <summary>Takes a status off the creature, and writes the conditions it leaves as conditions of their own (<c>stays</c>: Prone after Unconscious) as
+    /// statuses, once, unless the creature has them. Returns the ones it wrote, for the log.</summary>
+    internal static IReadOnlyList<string> RemoveStatusLeaving(CampaignRuntime runtime, Entity entity, string actorId, string condition)
+    {
+        var stayed = new List<string>();
+        if (runtime.System is { } system && CodexWorld.HasStatus(entity, condition))
+        {
+            foreach (var left in SheetConditions.Stays(system, condition).Where(c => !CodexWorld.HasStatus(entity, c)))
+            {
+                runtime.World.AddStatus(entity, left, "rules", ActiveEffect.Indefinite, EffectExpiry.EndOfTurn, actorId);
+                stayed.Add(left);
+            }
+        }
+
+        runtime.World.RemoveStatus(entity, condition);
+        return stayed;
     }
 
     /// <summary>Death, by the rules or by the DM's hand (R3): the dead condition, no longer down or stable, the death-save

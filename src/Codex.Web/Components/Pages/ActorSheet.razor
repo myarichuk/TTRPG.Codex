@@ -1558,6 +1558,8 @@ else
             }
         }
 
+        // Off the table the sheet page lowers the conditions that fall at this moment itself, as the table does after the event (frightened 2 -> 1).
+        if (flash == null && SheetConditions.IsDropMoment(system, moment)) SheetConditions.Drop(system, editSheet, moment);
         OfferChoicesAfter(moment);
         if (flash == null) SayMoment(moment, before);
         Reevaluate();

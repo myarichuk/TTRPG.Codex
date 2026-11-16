@@ -78,6 +78,7 @@ public sealed class SheetModel
     private readonly Dictionary<string, List<int>> _rawIndex = new(StringComparer.Ordinal);
     private readonly HashSet<string> _working = new(StringComparer.Ordinal);
     private readonly List<string> _conditions;
+    private readonly IReadOnlyList<HeldCondition> _held;
     private List<Modifier>? _modifiers;
     private readonly SheetModelResult _result = new();
 
@@ -165,7 +166,8 @@ public sealed class SheetModel
         _checkPrerequisites = checkPrerequisites;
         var kind = YamlValues.GetString(sheet, KindKey);
         Kind = system.SheetKinds.FirstOrDefault(k => string.Equals(k.Kind, kind, StringComparison.OrdinalIgnoreCase)) ?? system.SheetKinds.FirstOrDefault();
-        _conditions = SheetConditions.Of(system, sheet);
+        _held = SheetConditions.Holding(system, sheet);
+        _conditions = _held.Select(h => h.Name).ToList();
         if (Kind == null) return;
 
         foreach (var value in Kind.Values) _valueDefinitions.TryAdd(value.Key, value);
@@ -639,7 +641,7 @@ public sealed class SheetModel
             var at = 0;
             foreach (var m in effect.Modifiers)
             {
-                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source ?? condition, m.When, null, OptInIds.Condition(found.Key, at++), m.OptIn, found.Key, SheetConditions.ValueOf(found.Key, effect, _sheet)));
+                modifiers.Add(new Modifier(m.Target, m.Amount, m.Type ?? "untyped", m.Source ?? condition, m.When, null, OptInIds.Condition(found.Key, at++), m.OptIn, found.Key, _held.FirstOrDefault(h => string.Equals(h.Name, found.Key, StringComparison.OrdinalIgnoreCase))?.Value ?? SheetConditions.ValueOf(found.Key, effect, _sheet)));
             }
         }
 

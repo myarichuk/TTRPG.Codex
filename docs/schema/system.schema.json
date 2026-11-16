@@ -4619,6 +4619,20 @@
         "value": {
           "$ref": "#/$defs/ConditionValueDefinition",
           "description": "Makes the condition a valued one (Exhaustion 3, frightened 2): it holds while its value is above 0, and its modifiers read the value as `value`. Null: the condition has no value (`value` is 1 in its modifiers). For the condition `vitals.exhaustion` names, the loader fills in `key` and `max` from `vitals.exhaustion`; the file may write only `decrease` there."
+        },
+        "implies": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/ConditionImplication"
+              }
+            ]
+          },
+          "description": "Conditions that hold while this one holds (`implies: [Dazzled, { condition: Shaken, value: 2 }]`); never stored, read on every look at what holds (docs/CONDITION_IMPLIES_DESIGN.md)."
         }
       },
       "additionalProperties": false
@@ -4665,6 +4679,32 @@
         "by": {
           "type": "integer",
           "description": "How much it drops by. Default 1."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ConditionImplication": {
+      "description": "One item of `implies`: a condition name, or `{ condition, value, stays }`.",
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "For an implied condition that is valued: a number or a formula, in which `value` is the source's value (1 for a source with no value). Null: 1."
+        },
+        "stays": {
+          "type": "boolean",
+          "description": "The implied condition is written as a condition of its own when the source ends (Prone after Unconscious). Only for an unvalued one."
         }
       },
       "additionalProperties": false

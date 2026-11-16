@@ -413,8 +413,11 @@ public sealed class CurrentEngineHost : IReferenceHost
             var after = new Dictionary<string, object>(sheet);
             try
             {
-                var result = SheetEvents.Raise(definition, this, after, new SheetEvent(ev.GetValueOrDefault("type")?.ToString() ?? "", fields), sheetId, campaign,
+                var type = ev.GetValueOrDefault("type")?.ToString() ?? "";
+                var result = SheetEvents.Raise(definition, this, after, new SheetEvent(type, fields), sheetId, campaign,
                     dice == null ? null : new SequenceDiceSource(dice));
+                // The table raises the event and then lowers the conditions that fall at that moment (docs/CONDITION_IMPLIES_DESIGN.md); so does this host.
+                if (SheetConditions.IsDropMoment(definition, type)) SheetConditions.Drop(definition, after, type);
                 return CheckOr<EventCheck>.Of(new EventCheck(result.Intents.Select(Shape).ToList(), after));
             }
             catch (SheetEventException ex)

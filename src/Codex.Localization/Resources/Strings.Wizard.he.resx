@@ -109,6 +109,8 @@
   <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>אין מה למלא: מספרים שכתבתם נשמרים, ודרגת הקושי של ההצלה ממתינה עד שתהיה לסכנה הצלה.</value></data>
   <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>מולא מהמדריך עבור דרגה {0}: {1}.</value></data>
   <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>יש לתקן את אלה לפני השמירה</value></data>
+  <data name="Wizard.Modifiers.Unreached" xml:space="preserve"><value>שינויים שלא ישפיעו על דבר (אפשר לשמור בכל זאת)</value></data>
+  <data name="Wizard.Modifiers.UnreachedLine" xml:space="preserve"><value>{0} '{1}': modifiers[{2}] פונה אל '{3}', שרק כללי הדף קוראים; תכונה של סוג דף לא מגיעה אליו, ולכן אין לה השפעה.</value></data>
   <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>מספרים שכדאי לבדוק (אפשר לשמור בכל זאת)</value></data>
   <data name="Wizard.Hazard.Blocked" xml:space="preserve"><value>השולחן עדיין לא יכול להריץ את הסכנה הזאת. {0}</value></data>
   <data name="Wizard.Hazard.Problem.Band" xml:space="preserve"><value>טווח {0}: </value></data>

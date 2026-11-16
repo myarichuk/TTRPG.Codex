@@ -109,6 +109,8 @@
   <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>The guide has nothing to fill in: numbers you wrote are kept, and a save DC waits until the hazard has a save.</value></data>
   <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>Filled in from the guide for level {0}: {1}.</value></data>
   <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>Fix these before saving</value></data>
+  <data name="Wizard.Modifiers.Unreached" xml:space="preserve"><value>Modifiers that count for nothing (you can save anyway)</value></data>
+  <data name="Wizard.Modifiers.UnreachedLine" xml:space="preserve"><value>{0} '{1}': modifiers[{2}] aims at '{3}', which only the sheet rules read; a sheet kind's feature never reaches it, so it counts for nothing.</value></data>
   <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>Numbers to look at (you can save anyway)</value></data>
   <data name="Wizard.Hazard.Blocked" xml:space="preserve"><value>The table cannot run this hazard yet. {0}</value></data>
   <data name="Wizard.Hazard.Problem.Band" xml:space="preserve"><value>band {0}: </value></data>
