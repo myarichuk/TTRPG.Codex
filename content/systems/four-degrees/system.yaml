@@ -16,14 +16,15 @@ description: >-
 license:
   name: ORC
   url: https://paizo.com/orclicense
-  # PLACEHOLDERs. Each must be copied verbatim from the licence or the upstream book's own notice, never written from memory.
-  # Codex.SystemCheck --pack refuses this system while any PLACEHOLDER remains, and content/systems/unreleased.txt keeps it out of releases.
-  attribution: "PLACEHOLDER - the upstream Attribution (credit line and full authors list) from the upstream ORC Notice, verbatim."
+  # The ORC Notice and the upstream credit are copied verbatim from the upstream book's own ORC Notice. The attribution is the one place
+  # the upstream publisher and product are named.
+  attribution: "This product is based on the following Licensed Material: Pathfinder Player Core © 2023 Paizo Inc., Authors: Logan Bonner, Jason Bulmahn, Stephen Radney-MacFarland, and Mark Seifter, with Alexander Augunas, Kate Baker, Carlos Cabrera, Calder CaDavid, James Case, Eleanor Ferron, Steven Hammond, Joan Hong, Vanessa Hoskins, James Jacobs, Jenny Jarzabski, Erik Keith, Dustin Knight, Lyz Liddell, Luis Loza, Patchen Mortimer, Dennis Muldoon, Mikhail Rekun, David N. Ross, Michael Sayre, Kendra Leigh Speedling, Mark Thompson, Clark Valentine, Andrew White, Landon Winkler, and Linda Zayas-Palmer."
   modified: true
   notices:
-    - "PLACEHOLDER - the ORC Notice text, verbatim from the ORC License's own required notice."
+    - "ORC Notice: This product is licensed under the ORC License located at the Library of Congress at TX 9-307-067 and available online at various locations including paizo.com/orclicense, azoralaw.com/orclicense, and others. All warranties are disclaimed as set forth therein."
     - "Credit for this adaptation: Four Degrees, an adaptation of ORC-licensed rules with new names, text and creatures by the TTRPG.Codex project, released under the ORC License."
-    - "PLACEHOLDER - Reserved Material statement for this product (what TTRPG.Codex reserves, or that it reserves nothing)."
+    - "Reserved Material: Reserved Material elements in this product include the name Four Degrees and every name invented for it (ancestries, backgrounds, classes, creatures, items, runes, hazards and places), with their descriptive and flavour text. The rules and numbers are not reserved."
+    - "Expressly Designated Licensed Material: This product contains no Expressly Designated Licensed Material."
     - "Modified from the upstream rules: restated as data in this project's own words, with invented names and content."
 
 attributes:

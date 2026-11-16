@@ -10,13 +10,14 @@ authors:
 license:
   name: ORC
   url: https://paizo.com/orclicense
-  # PLACEHOLDERs: verbatim from the licence or the upstream notice, never from memory (see ../../system.yaml).
-  attribution: "PLACEHOLDER - the upstream Attribution (credit line and full authors list) from the upstream ORC Notice, verbatim."
+  # Verbatim from the upstream book's own ORC Notice, as in ../../system.yaml.
+  attribution: "This product is based on the following Licensed Material: Pathfinder Player Core © 2023 Paizo Inc., Authors: Logan Bonner, Jason Bulmahn, Stephen Radney-MacFarland, and Mark Seifter, with Alexander Augunas, Kate Baker, Carlos Cabrera, Calder CaDavid, James Case, Eleanor Ferron, Steven Hammond, Joan Hong, Vanessa Hoskins, James Jacobs, Jenny Jarzabski, Erik Keith, Dustin Knight, Lyz Liddell, Luis Loza, Patchen Mortimer, Dennis Muldoon, Mikhail Rekun, David N. Ross, Michael Sayre, Kendra Leigh Speedling, Mark Thompson, Clark Valentine, Andrew White, Landon Winkler, and Linda Zayas-Palmer."
   modified: true
   notices:
-  - "PLACEHOLDER - the ORC Notice text, verbatim from the ORC License's own required notice."
+  - "ORC Notice: This product is licensed under the ORC License located at the Library of Congress at TX 9-307-067 and available online at various locations including paizo.com/orclicense, azoralaw.com/orclicense, and others. All warranties are disclaimed as set forth therein."
   - "Credit for this adaptation: Four Degrees core, an adaptation of ORC-licensed rules with new names, text and creatures by the TTRPG.Codex project, released under the ORC License."
-  - "PLACEHOLDER - Reserved Material statement for this product (what TTRPG.Codex reserves, or that it reserves nothing)."
+  - "Reserved Material: Reserved Material elements in this product include the name Four Degrees and every name invented for it (ancestries, backgrounds, classes, creatures, items, runes, hazards and places), with their descriptive and flavour text. The rules and numbers are not reserved."
+  - "Expressly Designated Licensed Material: This product contains no Expressly Designated Licensed Material."
   - Homebrew. No text, table or stat block from any book is copied; the names, descriptions and creature numbers are written for this project, and every entry is tagged homebrew.
 kind: rules
 isTranslation: false
