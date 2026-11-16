@@ -6,7 +6,7 @@
 #   credit     the upstream credit line, copied from the book's own notice. It is cut at page and column breaks into segments, each of
 #              which must appear in the notice page, in whitespace-insensitive form. It is the one place a product name may appear.
 # A mismatch stops the run: a different printing needs every chapter reviewed again.
-normalization: 1
+normalization: 2
 books:
   pc:
     printing: 1

@@ -220,7 +220,8 @@ public static class DegreesCommand
 
         var blocks = BlocksStage.Run(layout.Pages, ImportPipeline.OptionsFor(spine, rows));
         var ranges = TakeStage.Resolve(spine, blocks, rows);
-        var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Waivers.Embedded());
+        var planned = TakeStage.PlannedRanges(spine, blocks, options.Book, take.Planned);
+        var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Waivers.Embedded(), 3, planned);
         var path = options.Out ?? Path.Combine(options.Work, "denylist.sha256");
         if (options.Out == null)
         {
@@ -229,14 +230,24 @@ public static class DegreesCommand
         }
 
         var before = MergeDenylist(path, Denylist.Format(words), out var total);
-        output.WriteLine($"denylist: {words.Count} word(s) hashed from the sections left out, {excluded} common or game-term word(s) left off; the file now holds {total} hash(es) ({total - before} new)");
+        output.WriteLine($"denylist: {words.Count} word(s) hashed from the sections left out ({planned.Count} planned section(s) are not left out), {excluded} common, waived or book-key word(s) left off; the file now holds {total} hash(es) ({total - before} new)");
+
+        // The book's common lowercase words go beside it, as hashes too: the allowlist gate lets an ordinary word open a sentence.
+        var commonPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-common.sha256");
+        var common = ImportPipeline.CommonWords(blocks);
+        var commonBefore = MergeDenylist(commonPath, Denylist.Format(common), out var commonTotal, CommonHeader);
+        output.WriteLine($"common words: {common.Count} lowercase word(s) of this book hashed; the file now holds {commonTotal} hash(es) ({commonTotal - commonBefore} new)");
         return 0;
     }
 
+    private const string CommonHeader =
+        "# The hashed common words of the local book importer: one lowercase hex SHA-256 of a lowercased word per line, no words.\n" +
+        "# A word is here when the book writes it in lowercase at least three times. The allowlist gate lets such a word open a sentence.\n";
+
     /// <summary>Writes the union of the hashes already in <paramref name="path"/> and <paramref name="hashes"/>, under the file's own comment header. Returns how many were there before.</summary>
-    public static int MergeDenylist(string path, string hashes, out int total)
+    public static int MergeDenylist(string path, string hashes, out int total, string? defaultHeader = null)
     {
-        const string DefaultHeader = "# The hashed denylist of the local book importer: one lowercase hex SHA-256 of a lowercased word per line, no names.\n";
+        var DefaultHeader = defaultHeader ?? "# The hashed denylist of the local book importer: one lowercase hex SHA-256 of a lowercased word per line, no names.\n";
         var header = new StringBuilder();
         var existing = new List<string>();
         if (File.Exists(path))

@@ -1,3 +1,21 @@
 # Denylist waivers of the local book importer: lowercase words a person has reviewed and decided the generated packs may say, although a section the
 # take-list leaves out also capitalizes them. Game terms only: no names of people, places, deities, creatures or products.
 # Without a line here a word stays on the denylist, and the CI gate fails when a pack says it. Add one line per reviewed word, with the review in the commit message.
+# Chapter 1 review (each word is a defence, ability, skill, statistic or action name, or an ordinary word of a condition's rules, not a name):
+ac
+dc
+dcs
+hp
+gm
+acrobatics
+athletics
+thievery
+constitution
+charisma
+hardness
+bulk
+speeds
+crawl
+overriding
+dislikes
+controller

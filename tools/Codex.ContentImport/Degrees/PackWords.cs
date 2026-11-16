@@ -48,6 +48,12 @@ public sealed partial class Denylist
 
     public static Denylist Embedded() => Parse(BooksConfig.EmbeddedYaml("degrees-denylist.sha256"));
 
+    /// <summary>
+    /// The book's common lowercase words as hashes (<c>Data/degrees-common.sha256</c>, the same file shape): every word the book writes in lowercase at least three times.
+    /// The allowlist gate lets a sentence's first word through when it is one of these, since ordinary words open sentences; a name is rarely written in lowercase.
+    /// </summary>
+    public static Denylist EmbeddedCommon() => Parse(BooksConfig.EmbeddedYaml("degrees-common.sha256"));
+
     /// <summary>The file text for a set of words: sorted unique hashes, minus the words in <paramref name="exclude"/> (game terms the packs may use).</summary>
     public static string Format(IEnumerable<string> words, IReadOnlySet<string>? exclude = null)
     {
@@ -100,7 +106,7 @@ public static class PackWordCheck
 
     private sealed record PackFile(string Name, List<EntryItems> Entries);
 
-    public static List<PackFinding> CheckAllowlist(string packDir, IReadOnlySet<string> gameTerms, Denylist denylist)
+    public static List<PackFinding> CheckAllowlist(string packDir, IReadOnlySet<string> gameTerms, Denylist denylist, Denylist? common = null)
     {
         var files = Load(packDir, denylist);
         var lowerUsed = new HashSet<string>(gameTerms, StringComparer.Ordinal);
@@ -120,7 +126,7 @@ public static class PackWordCheck
                 var seen = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var item in entry.Items.Where(i => !i.Structural))
                 {
-                    foreach (var word in CapitalsToCheck(item, lowerUsed))
+                    foreach (var word in CapitalsToCheck(item, lowerUsed, common))
                     {
                         var key = word.ToLowerInvariant();
                         if (!gameTerms.Contains(key) && seen.Add(key))
@@ -204,7 +210,7 @@ public static class PackWordCheck
         return Rune.IsUpper(first) || Rune.GetUnicodeCategory(first) == UnicodeCategory.TitlecaseLetter;
     }
 
-    private static IEnumerable<string> CapitalsToCheck(Item item, HashSet<string> lowerUsed)
+    private static IEnumerable<string> CapitalsToCheck(Item item, HashSet<string> lowerUsed, Denylist? common)
     {
         if (item.IsLabel)
         {
@@ -216,15 +222,50 @@ public static class PackWordCheck
         foreach (var sentence in SpanText.Sentences(text))
         {
             var first = true;
-            foreach (var word in Words(text.Substring(sentence.Start, sentence.Length)))
+            var previous = ' ';
+            var word = new StringBuilder();
+
+            void Finish()
             {
-                if (IsCapital(word) && !(first && lowerUsed.Contains(word.ToLowerInvariant())))
+                if (word.Length == 0)
                 {
-                    result.Add(word);
+                    return;
+                }
+
+                var w = word.ToString();
+                word.Clear();
+
+                // The first word of a sentence is exempt when its lowercase form is used in the pack, or is one of the book's common lowercase words (a hash list, so no
+                // text is kept): an ordinary opening word is not a name.
+                if (IsCapital(w) && !(first && (lowerUsed.Contains(w.ToLowerInvariant()) || (common?.Contains(Denylist.Hash(w)) ?? false))))
+                {
+                    result.Add(w);
                 }
 
                 first = false;
             }
+
+            foreach (var rune in text.Substring(sentence.Start, sentence.Length).EnumerateRunes())
+            {
+                if (Rune.IsLetter(rune))
+                {
+                    word.Append(rune.ToString());
+                    previous = 'a';
+                    continue;
+                }
+
+                Finish();
+
+                // A quotation opens a sentence of its own: a capital right after an opening quote (one that follows a space or an opening bracket) is a sentence start.
+                if (rune.Value == '"' && previous is ' ' or '(' or '[')
+                {
+                    first = true;
+                }
+
+                previous = rune.Value < 0x10000 ? (char)rune.Value : 'a';
+            }
+
+            Finish();
         }
 
         return result;

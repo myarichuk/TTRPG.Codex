@@ -30,7 +30,27 @@ public sealed class TakeRow
     /// <summary>Bookmark paths, top level first. Each path is a section or an entry.</summary>
     public List<List<string>> Paths { get; set; } = new();
 
+    /// <summary>
+    /// Bookmark paths whose OWN text is taken: what sits between the section's title and its first child section (which this row, or another, takes on its own path).
+    /// Used by the <c>rules</c> parser, one entry per path, named by <see cref="OwnName"/>. It is never dropped silently: a section's intro is either here or fails nothing, so
+    /// leaving it out is a decision the take-list shows.
+    /// </summary>
+    public List<List<string>> Own { get; set; } = new();
+
+    /// <summary>The name, in our own words, of the entry made from an <see cref="Own"/> path (its title is not the entry's name). Defaults to the path's last title.</summary>
+    public string? OwnName { get; set; }
+
+    /// <summary>The bookmark path of a taken range, whichever list it came from.</summary>
+    public List<string> PathOf(TakenRange range) => range.Own ? Own[range.PathNumber - Paths.Count - 1] : Paths[range.PathNumber - 1];
+
     public string FolderName => Folder ?? (Target.EndsWith('y') ? Target[..^1] + "ies" : Target + "s");
+}
+
+/// <summary>The planned bookmark paths of one book (see <see cref="TakeList.Planned"/>).</summary>
+public sealed class PlannedRow
+{
+    public string Book { get; set; } = string.Empty;
+    public List<List<string>> Paths { get; set; } = new();
 }
 
 public sealed partial class TakeList
@@ -41,6 +61,12 @@ public sealed partial class TakeList
     public static readonly string[] BuiltParsers = { "entries", "rules" };
 
     public List<TakeRow> Rows { get; set; } = new();
+
+    /// <summary>
+    /// Sections of a book that a later chapter will take. A planned path is not read, parsed or approved: it only tells the denylist generator that the section is not
+    /// left out, so its words are not hashed as if they were setting material. Anything on neither list is left out.
+    /// </summary>
+    public List<PlannedRow> Planned { get; set; } = new();
 
     private static readonly IDeserializer Strict = new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
 
@@ -146,6 +172,37 @@ public sealed partial class TakeList
                 {
                     throw new DegreesException($"Take-list row {n}: a bookmark path is taken twice.");
                 }
+            }
+
+            if (r.Own.Count > 0 && r.Parser != "rules")
+            {
+                throw new DegreesException($"Take-list row {n}: own-text paths belong to the rules parser.");
+            }
+
+            if (r.Own.Any(p => p.Count == 0 || p.Any(string.IsNullOrWhiteSpace)) || (r.Own.Count > 0 && string.IsNullOrWhiteSpace(r.OwnName)))
+            {
+                throw new DegreesException($"Take-list row {n}: an own-text path needs titles and the row needs an ownName.");
+            }
+
+            foreach (var path in r.Own)
+            {
+                if (!seen.Add("own\n" + r.Book + "\n" + string.Join("\n", path.Select(t => t.Trim().ToLowerInvariant()))))
+                {
+                    throw new DegreesException($"Take-list row {n}: an own-text path is taken twice.");
+                }
+            }
+        }
+
+        foreach (var planned in Planned)
+        {
+            if (!DegreesOptions.Books.Contains(planned.Book) || planned.Paths.Count == 0 || planned.Paths.Any(p => p.Count == 0 || p.Any(string.IsNullOrWhiteSpace)))
+            {
+                throw new DegreesException("Take-list: a planned entry needs a book and bookmark paths with no empty title.");
+            }
+
+            if (planned.Paths.Any(p => Rows.Any(r => r.Book == planned.Book && r.Paths.Any(t => t.SequenceEqual(p, StringComparer.OrdinalIgnoreCase)))))
+            {
+                throw new DegreesException("Take-list: a planned path is also taken.");
             }
         }
     }

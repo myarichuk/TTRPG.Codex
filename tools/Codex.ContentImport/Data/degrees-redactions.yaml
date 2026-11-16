@@ -1,11 +1,12 @@
-# The redaction table of the local book importer. It holds no source text.
+# The redaction table of the local book importer. A row stores only the hash and length of the span it changes, never the span; a `replace`
+# row's text is a redacted form of the book's sentence, so it is Licensed Material taken from the book (see LEGAL.md).
 # Each row names an entry id and a field, then the SHA-256 and the character length of ONE exact normalized source span (a sentence, or one
 # semicolon clause of a sentence; see SpanText.cs for the normalization and the splitter), then an action:
 #   replace    swap the span for `text`, our own words (one line, already normalized)
 #   cut        remove the span
 #   drop-entry leave the whole entry out of the pack
 # and a `reason` in our words that names no names. A row whose hash is not found fails the run.
-# The replacement text is Licensed Material under the ORC and is released with the packs (see LEGAL.md).
+# The replacement text is Licensed Material under the ORC and is released with the packs.
 #
 # A row names its `book` (pc or mc) and applies only to that book's run; a row with no book applies to every run, so committed rows should always name theirs.
 #
@@ -16,5 +17,40 @@
 #   action: replace
 #   text: "Our own wording of the mechanic."
 #   reason: "A sentence that carried a proper noun; the mechanic is kept."
-normalization: 1
-rows: []
+normalization: 2
+rows:
+  - book: pc
+    entry: fatigued
+    field: description
+    span: { sha256: "b30403719fb91e9b6e5f92a67643c5b6e6de1eccd6b13ba1fe3a844d951cef87", length: 95 }
+    action: replace
+    text: "You can't use exploration activities performed while traveling."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: hidden
+    field: description
+    span: { sha256: "3fdd4b07517e1f2c77d28ce1a3b7aebdc713362cad5eb23c35db27efccff44c1", length: 96 }
+    action: replace
+    text: "A creature might be able to use the Seek action to try to observe you."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: prone
+    field: description
+    span: { sha256: "e1a39f7e81575bcbe96ef0a174cccf0f7b01c0fd90e54af66b013c05642cad6b", length: 112 }
+    action: replace
+    text: "If you would be knocked prone while you're Climbing or Flying, you fall."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: undetected
+    field: description
+    span: { sha256: "2efbe8c62f417a1128034128181ae2a20744d00f13ee1a3d310f5d3faf36aa60", length: 299 }
+    action: replace
+    text: "This works like targeting a hidden creature (requiring a DC 11 flat check), but the flat check and attack roll are rolled in secret by the GM, who doesn't reveal whether the attack missed due to failing the flat check, failing the attack roll, or choosing the wrong square."
+    reason: "A sentence with a page pointer inside a parenthesis; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: undetected
+    field: description
+    span: { sha256: "43d45d22e9b858b5717c0ce7fe0c24e65a87a9c08058a89ce8f3f98971be22fd", length: 59 }
+    action: replace
+    text: "They can Seek to try to find you."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."

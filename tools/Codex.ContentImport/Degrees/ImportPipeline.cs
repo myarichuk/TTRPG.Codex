@@ -101,18 +101,11 @@ public static partial class ImportPipeline
     [GeneratedRegex(@"\bpages? \d+", RegexOptions.IgnoreCase)]
     private static partial Regex PageReference();
 
-    /// <summary>
-    /// The lowercase words whose hashes go on the denylist: the capitalized words of everything the take-list leaves out (blocks no range takes, dropped sidebars
-    /// and openers), minus the common ones. A word is common, and left off, when it also appears in lowercase at least <paramref name="commonAfter"/> times anywhere in
-    /// the book's text. One-letter words are left off. Nothing else is, except a word in <paramref name="waivers"/> (<c>Data/degrees-denylist-waivers.txt</c>): a game term
-    /// a person has reviewed and decided the packs may say.
-    /// </summary>
-    public static (List<string> Words, int Excluded) DenylistWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlySet<string> waivers, int commonAfter = 3)
+    /// <summary>The lowercase words the book writes in lowercase at least <paramref name="commonAfter"/> times anywhere in its text (taken, left out, planned, dropped).</summary>
+    public static List<string> CommonWords(BlocksResult blocks, int commonAfter = 3)
     {
-        var leftOut = TakeStage.LeftOut(blocks, ranges).ToList();
-        var taken = Enumerable.Range(0, blocks.Blocks.Count).Where(i => ranges.Any(r => i >= r.Start && i < r.End)).Select(i => blocks.Blocks[i]);
         var lower = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var block in leftOut.Concat(taken))
+        foreach (var block in blocks.Blocks.Concat(blocks.Dropped ?? new List<Block>()))
         {
             foreach (var word in block.Lines.SelectMany(PackWordCheck.Words).Where(w => !char.IsUpper(w[0])).Select(w => w.ToLowerInvariant()))
             {
@@ -120,10 +113,24 @@ public static partial class ImportPipeline
             }
         }
 
-        // Only common words and waived game terms stay off the list. A word that is in a taken range is NOT left off: if the packs say it and the book
+        return lower.Where(kv => kv.Value >= commonAfter).Select(kv => kv.Key).OrderBy(w => w, StringComparer.Ordinal).ToList();
+    }
+
+    /// <summary>
+    /// The lowercase words whose hashes go on the denylist: the capitalized words of everything the take-list leaves out (blocks no range takes, dropped sidebars
+    /// and openers), minus the common ones. A word is common, and left off, when it also appears in lowercase at least <paramref name="commonAfter"/> times anywhere in
+    /// the book's text. One-letter words are left off. Nothing else is, except a word in <paramref name="waivers"/> (<c>Data/degrees-denylist-waivers.txt</c>): a game term
+    /// a person has reviewed and decided the packs may say.
+    /// </summary>
+    public static (List<string> Words, int Excluded) DenylistWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlySet<string> waivers, int commonAfter = 3, IReadOnlyList<(int Start, int End)>? planned = null)
+    {
+        var leftOut = TakeStage.LeftOut(blocks, ranges, planned).ToList();
+
+        // Only common words, the book keys and waived game terms stay off the list. A word that is in a taken range is NOT left off: if the packs say it and the book
         // keeps it in a left-out section too, the gate must fire, and a person decides in the waiver file whether it is a game term.
         var exclude = new HashSet<string>(waivers, StringComparer.Ordinal);
-        exclude.UnionWith(lower.Where(kv => kv.Value >= commonAfter).Select(kv => kv.Key));
+        exclude.UnionWith(CommonWords(blocks, commonAfter));
+        exclude.UnionWith(DegreesOptions.Books); // the book keys are in every `source:` line, and are not names
         var candidates = leftOut.SelectMany(b => b.Lines).SelectMany(PackWordCheck.Words).Where(w => w.Length > 1 && char.IsUpper(w[0]))
             .Select(w => w.ToLowerInvariant()).Distinct(StringComparer.Ordinal).ToList();
         var words = candidates.Where(w => !exclude.Contains(w)).OrderBy(w => w, StringComparer.Ordinal).ToList();

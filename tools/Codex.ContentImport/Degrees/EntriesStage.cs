@@ -65,6 +65,9 @@ public static partial class EntriesStage
 {
     private const double ShortLine = 12;
 
+    /// <summary>How far a line must start to the right of its block's left edge to be a paragraph's first line (the books indent by about nine points).</summary>
+    private const double Indent = 4;
+
     private static readonly string[] DegreeNames = { "critical success", "success", "failure", "critical failure" };
 
     /// <summary>Field labels that start a paragraph even when the line before it ran to the edge. Other bold runs start one only after a short line.</summary>
@@ -105,7 +108,7 @@ public static partial class EntriesStage
 
     private static List<ParsedEntry> ParseRule(TakenRange range, List<Block> slice, string book, HashSet<string> compounds)
     {
-        var name = range.Row.Paths[range.PathNumber - 1][^1];
+        var name = range.Own ? range.Row.OwnName! : range.Row.PathOf(range)[^1];
         var entry = NewEntry(range, book, Clean(name), compounds);
         new BodyReader(entry, compounds).ReadAll(slice);
         return new List<ParsedEntry> { entry };
@@ -171,7 +174,7 @@ public static partial class EntriesStage
             Type = range.Row.Target,
             Folder = range.Row.FolderName,
             Chapter = range.Row.Chapter,
-            Source = book + " > " + string.Join(" > ", range.Row.Paths[range.PathNumber - 1]),
+            Source = book + " > " + string.Join(" > ", range.Row.PathOf(range)),
             Category = range.Row.Category,
             Approved = range.Row.Approved,
             RowNumber = range.RowNumber,
@@ -218,6 +221,9 @@ public static partial class EntriesStage
 
         t = PageRef().Replace(t, string.Empty);
         t = Regex.Replace(t, " {2,}", " ").Trim();
+
+        // A space the extraction leaves before a stop, comma, semicolon or colon (after an italic run, say) is not in the book's text.
+        t = SpaceBeforeStop().Replace(t, "$1");
         var unmapped = Regex.Matches(t, @"\[[a-z]+(?:-[a-z]+)*-actions?\]").Count(m => !Icons.Values.Any(i => i.Text == m.Value));
         var unreadable = t.Count(c => (char.IsControl(c) && c != '\n') || char.GetUnicodeCategory(c) == UnicodeCategory.PrivateUse);
         if (unmapped + unreadable > 0)
@@ -252,6 +258,9 @@ public static partial class EntriesStage
 
     [GeneratedRegex(@"\s*\((?:see )?pages? \d+(?:\s*(?:-|,|and)\s*\d+)*\)", RegexOptions.IgnoreCase)]
     private static partial Regex PageRef();
+
+    [GeneratedRegex(@" +([.,;:])")]
+    private static partial Regex SpaceBeforeStop();
 
     [GeneratedRegex(@"\p{L}+[-‐‑]\p{L}+")]
     private static partial Regex Compound();
@@ -302,7 +311,9 @@ public static partial class EntriesStage
                 var info = block.Info?[i] ?? new LineInfo(block.Left, block.Right, string.Empty);
                 var text = block.Lines[i];
                 var label = SpanText.Normalize(info.Label).TrimEnd('.', ':', ' ');
-                var startsParagraph = _parts.Count == 0 || text.StartsWith('•') || (i == 0 ? samePlace || _previousShort : _previousShort);
+                // A first-line indent starts a paragraph even after a line that ran to the edge. A bullet's own wrapped lines are not read this way.
+                var indented = _parts.Count > 0 && info.Left - block.Left > Indent && !_parts[^1].Text.ToString().StartsWith('•');
+                var startsParagraph = _parts.Count == 0 || text.StartsWith('•') || indented || (i == 0 ? samePlace || _previousShort : _previousShort);
                 if (label.Length > 0 && KnownLabels.Contains(label.ToLowerInvariant()))
                 {
                     Start(label);

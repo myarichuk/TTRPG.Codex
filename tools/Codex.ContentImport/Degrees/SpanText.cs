@@ -17,7 +17,7 @@ public readonly record struct TextSpan(int Start, int Length)
 /// </summary>
 public static class SpanText
 {
-    public const int Version = 1;
+    public const int Version = 2;
 
     /// <summary>Words that end in a period without ending a sentence. A single letter before the period never does either.</summary>
     private static readonly HashSet<string> Abbreviations = new(StringComparer.OrdinalIgnoreCase)
@@ -40,7 +40,7 @@ public static class SpanText
     private const string Closers = "\"')]";
 
     /// <summary>
-    /// NFC, ligatures written out (nothing else of NFKC: "x²" and "½" stay), straight quotes, a plain hyphen for every dash and minus, no format
+    /// NFC, ligatures written out (nothing else of NFKC: "x²" and "½" stay), straight quotes, a plain hyphen for every hyphen, en dash and minus sign (an em dash stays an em dash: it joins no words), no format
     /// characters (soft hyphens, zero-width characters), spaces and tabs collapsed
     /// to one space and a line break kept as the paragraph separator (one "\n", with no space beside it).
     /// </summary>
@@ -61,7 +61,7 @@ public static class SpanText
             {
                 0x2018 or 0x2019 or 0x201A or 0x201B or 0x2032 => '\'',
                 0x201C or 0x201D or 0x201E or 0x201F or 0x2033 => '"',
-                0x2010 or 0x2011 or 0x2012 or 0x2013 or 0x2014 or 0x2015 or 0x2212 => '-',
+                0x2010 or 0x2011 or 0x2012 or 0x2013 or 0x2212 => '-',
                 _ => raw,
             };
 
@@ -201,6 +201,9 @@ public static class SpanText
         }
 
         var word = text[begin..period];
-        return word.Length == 1 || Abbreviations.Contains(word);
+
+        // A single letter is an initial only when it stands alone: the last letter of a contraction ("wouldn't.") is a word's end, not an initial.
+        var alone = begin == paragraphStart || text[begin - 1] != '\'';
+        return (word.Length == 1 && alone) || Abbreviations.Contains(word);
     }
 }
