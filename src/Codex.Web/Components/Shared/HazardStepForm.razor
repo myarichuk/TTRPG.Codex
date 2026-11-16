@@ -165,8 +165,9 @@
         };
         if (detect || disarm) columns.Add(new("id", L["Wizard.Hazard.Col.Id"]));
 
-        // Any route may wait for a detect route (its id); only detect routes are waited for.
-        columns.Add(new("after", L["Wizard.Hazard.Col.After"], HazardColumnKind.Choice) { Options = DetectIds(), NotOwn = "id" });
+        // Any route may wait for a detect route (its id); only detect routes are waited for. Ids are unique per list, so only a detect route's own id is its own:
+        // a disarm route may share an id with the detect route it waits for ("disarm the glyph once the glyph is found").
+        columns.Add(new("after", L["Wizard.Hazard.Col.After"], HazardColumnKind.Choice) { Options = DetectIds(), NotOwn = detect ? "id" : null });
 
         if (disarm)
         {

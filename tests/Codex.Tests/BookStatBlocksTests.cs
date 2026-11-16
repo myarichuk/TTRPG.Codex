@@ -186,7 +186,7 @@ public class BookStatBlocksTests
         var he = BookStatBlocks.For(Needle(), system, "he", "sHZ", Mention, dm: true)!;
         Assert.Contains("נדרש: An Iron Spike", he);
         Assert.Contains("חצי נזק בהצלחה", he);
-        Assert.Contains("כישלון מפעיל את המפגע", he);
+        Assert.Contains("כישלון מפעיל את הסכנה", he);
         // Each is one block: opened once, closed once, nothing in it a Markdown reader takes for a block of its own.
         foreach (var block in new[] { ru, he })
         {

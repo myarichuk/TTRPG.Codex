@@ -392,6 +392,73 @@ public class HomebrewWizardHazardTests : ComponentTestBase
     }
 
     [Fact]
+    public void FocusFollowsTheAction_ANewRowOpensOnItsFirstBox_ARemovedRowHandsFocusToTheAddButton_OtherToItsTextBox()
+    {
+        var cut = Open();
+        GoTo(cut, "Notice");
+        cut.Find("[data-testid=hazard-detect-add]").Click();
+
+        var name = Control(cut, "hazard-detect", "Name");
+        cut.WaitForAssertion(() => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "codex.focusById" && (string?)i.Arguments[0] == name.Id));
+
+        Control(cut, "hazard-detect", "Check").Change("\u0001other");
+        var typed = Control(cut, "hazard-detect", "Check, as written (a typed bonus is asked for at the table)");
+        cut.WaitForAssertion(() => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "codex.focusById" && (string?)i.Arguments[0] == typed.Id));
+
+        var add = cut.Find("[data-testid=hazard-detect-add]");
+        cut.Find("[data-testid=hazard-detect] > [data-testid=hazard-row] .collection-row-head button").Click();
+        cut.WaitForAssertion(() => Assert.Contains(JSInterop.Invocations, i => i.Identifier == "codex.focusById" && (string?)i.Arguments[0] == add.Id));
+    }
+
+    [Theory]
+    [InlineData("ru", "есть Сл, но нет проверки")]
+    [InlineData("he", "יש דרגת קושי אך אין בדיקה")]
+    public void TheShapeCheckOfTheWizard_IsSaidInTheLanguage_InTheLiveRegionAndTheBlockedSave(string culture, string words)
+    {
+        var cut = Open(culture);
+        GoTo(cut, "Notice");
+        var l = Localizer.For(culture);
+        cut.Find("[data-testid=hazard-detect-add]").Click();
+        Control(cut, "hazard-detect", l["Wizard.Hazard.Col.Name"]).Change("Look");
+        Control(cut, "hazard-detect", l["Wizard.Hazard.Col.Dc"]).Change("15");
+
+        Assert.Equal("polite", cut.Find("[data-testid=hazard-checks]").GetAttribute("aria-live"));
+        Assert.Contains(words, cut.Find("[data-testid=hazard-shape]").TextContent);
+        Assert.DoesNotContain("has a dc and no check", cut.Markup);
+
+        cut.Find("form.wizard").Submit();
+        cut.WaitForAssertion(() => Assert.Contains(words, cut.Find("[role=alert]").TextContent));
+    }
+
+    [Fact]
+    public void TheGuideCheckOfTheWizard_NamesTheFieldAndTheSeverity_InTheSystemTranslation()
+    {
+        // The library's types follow the request's culture, as they do for a Hebrew reader.
+        var before = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("he");
+        try
+        {
+            var cut = Open("he");
+            GoTo(cut, "Profile");
+            Field(cut, "דרגות").Change("1-4");
+            Field(cut, "חומרה").Change("Nuisance");
+            GoTo(cut, "Effect");
+            Field(cut, "הצלת מגן").Change("Dexterity");
+            Field(cut, "דרגת קושי להצלה").Change("19");
+
+            var scale = cut.Find("[data-testid=hazard-scale]").TextContent;
+            Assert.Contains("דרגת קושי להצלה", scale);
+            Assert.Contains("מטרד", scale);
+            Assert.DoesNotContain("Nuisance", scale);
+            Assert.DoesNotContain("Save DC", scale);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = before;
+        }
+    }
+
+    [Fact]
     public void ADiceBoxAndALevelBoxAreLeftToRight_AndARouteCannotWaitForItself()
     {
         var cut = Open();
@@ -408,6 +475,24 @@ public class HomebrewWizardHazardTests : ComponentTestBase
         GoTo(cut, "Effect");
         cut.Find("[data-testid=hazard-damage-add]").Click();
         Assert.Equal("ltr", Control(cut, "hazard-damage", "Dice (such as 2d8)").GetAttribute("dir"));
+    }
+
+    [Fact]
+    public void ADisarmRoute_MayWaitForTheDetectRouteThatSharesItsId()
+    {
+        // Ids are unique per list: "disarm the glyph once the glyph is found" is a disarm route `glyph` after the detect route `glyph`.
+        var cut = Open();
+        GoTo(cut, "Notice");
+        cut.Find("[data-testid=hazard-detect-add]").Click();
+        Control(cut, "hazard-detect", "Name").Change("Spot the glyph");
+        Control(cut, "hazard-detect", "Short name (for “Only after”)").Change("glyph");
+        GoTo(cut, "Disable");
+        cut.Find("[data-testid=hazard-disarm-add]").Click();
+        Control(cut, "hazard-disarm", "Name").Change("Erase the glyph");
+        Control(cut, "hazard-disarm", "Short name (for “Only after”)").Change("glyph");
+
+        var offered = Control(cut, "hazard-disarm", "Only after").QuerySelectorAll("option").Select(o => o.GetAttribute("value")).ToList();
+        Assert.Contains("glyph", offered);
     }
 
     // A value as text that does not depend on the collection types the store happens to give: maps by sorted key, lists in order, everything else as invariant text.

@@ -373,6 +373,9 @@ entityTypes:
 
 values:
   Guidance (the chosen skill): Указание (выбранный навык)
+  # A hazard's severity (the words of hazards.scaling), as the guide's warnings name it.
+  Nuisance: помеха
+  Deadly: смертельная
   homebrew: самодельное
   Barbarian: Варвар
   Bard: Бард

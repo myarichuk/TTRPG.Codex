@@ -85,6 +85,9 @@ public sealed partial class WorldBuilderService
         var warnings = new List<string>();
         if (HazardTypeOf(system) is not { } hazardType || system!.Canonical.FindType(hazardType) is not { } type) return (errors, warnings);
 
+        var said = Codex.Localization.Localizer.For(Lang);
+        var shown = system.Canonical.Localize(Lang);
+        var shownType = shown.FindType(hazardType) ?? type;
         ContentEntry EntryOf(WorldDraft draft, Dictionary<string, object> properties) => new() { Id = draft.Ref, Type = hazardType, Name = draft.Name, Properties = properties };
 
         // `before` is an edited entry's fields as they are now: problems it already had are not the edit's.
@@ -99,10 +102,15 @@ public sealed partial class WorldBuilderService
                 errors.Add($"{draft.Ref} ({draft.Kind} '{draft.Name}'): {problem}");
             }
 
-            foreach (var problem in HazardNumbers.ScalingProblems(entry, type, system.Canonical).Where(p => !knownScale.Contains(p)))
+            // The warnings go to the model, in English; the card the game master reads says the same thing in their language, in the same order.
+            // The card's messages name the fields and the severity through the reader's system translation; the localized type keeps the same fields in the same order.
+            var theirs = HazardNumbers.ScalingProblems(entry, shownType, system.Canonical, (key, args) => said.Get(key, args), shown.DisplayValue).ToList();
+            var scale = HazardNumbers.ScalingProblems(entry, type, system.Canonical).ToList();
+            for (var i = 0; i < scale.Count; i++)
             {
-                warnings.Add($"{draft.Ref} ({draft.Kind} '{draft.Name}'): {problem}");
-                draft.Concerns.Add(problem);
+                if (knownScale.Contains(scale[i])) continue;
+                warnings.Add($"{draft.Ref} ({draft.Kind} '{draft.Name}'): {scale[i]}");
+                draft.Concerns.Add(i < theirs.Count ? theirs[i] : scale[i]);
             }
         }
 
