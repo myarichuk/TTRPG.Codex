@@ -7,7 +7,7 @@
   droppedSidebarBlocks: 21
   droppedOpenerBlocks: 1
   pageReferencesLeft: 0
-  redactionRows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+  redactionRows: [1, 2, 3, 4, 5]
   ids:
     - "blinded"
     - "broken"
@@ -54,11 +54,12 @@
 - chapter: "conditions"
   parser: "rules"
   target: "rule"
-  entries: 2
+  entries: 3
   droppedSidebarBlocks: 0
   droppedOpenerBlocks: 0
   pageReferencesLeft: 0
   redactionRows: []
   ids:
     - "condition-values"
+    - "conditions"
     - "overriding-conditions"

@@ -1,7 +1,8 @@
 namespace Codex.ContentImport.Degrees;
 
 /// <summary>The blocks of one taken bookmark path: <c>[Start, End)</c> in <see cref="BlocksResult.Blocks"/>.</summary>
-public sealed record TakenRange(TakeRow Row, int PathNumber, SpineNode Node, int Start, int End, int RowNumber = 0);
+/// <param name="Own">The range is a section's own text before its first child (<see cref="TakeRow.Own"/>); <paramref name="PathNumber"/> then counts on after the row's <see cref="TakeRow.Paths"/>.</param>
+public sealed record TakenRange(TakeRow Row, int PathNumber, SpineNode Node, int Start, int End, int RowNumber = 0, bool Own = false);
 
 /// <summary>
 /// Turns take-list rows into block ranges. A path's range runs from just after its own title block to its next sibling's (or ancestor's) title block,
@@ -22,7 +23,55 @@ public static class TakeStage
 
     /// <summary>The pages a row covers, for the page-level checks that run before the blocks exist: columns and one-column pages.</summary>
     public static List<int> PagesOf(IReadOnlyList<SpineNode> spine, TakeRow row) =>
-        row.Paths.SelectMany(p => PathNode(spine, row, p) is { } n ? Enumerable.Range(n.PageStart, n.PageEnd - n.PageStart + 1) : Enumerable.Empty<int>()).Distinct().OrderBy(p => p).ToList();
+        row.Paths.SelectMany(p => PathNode(spine, row, p) is { } n ? Enumerable.Range(n.PageStart, n.PageEnd - n.PageStart + 1) : Enumerable.Empty<int>())
+            .Concat(row.Own.Select(p => PathNode(spine, row, p)).Where(n => n != null).Select(n => n!.PageStart)) // own text sits on the section's first page
+            .Distinct().OrderBy(p => p).ToList();
+
+    /// <summary>The blocks of a section's own text: from after its title block to the title block of its first child section.</summary>
+    private static TakenRange OwnRange(IReadOnlyList<SpineNode> spine, BlocksResult blocks, TakeRow row, int pathNumber, SpineNode node)
+    {
+        var where = $"Chapter {row.Chapter}, own-text path {pathNumber - row.Paths.Count}";
+        var title = FindTitle(blocks.Blocks, node, 0) ?? throw new DegreesException($"{where}: no block on page {node.PageStart} has the bookmark's title.");
+        var child = spine.Skip(IndexOf(spine, node) + 1).FirstOrDefault();
+        if (child == null || child.Depth != node.Depth + 1)
+        {
+            throw new DegreesException($"{where}: the section has no child section, so it has no 'own text before the first child'.");
+        }
+
+        var end = FindTitle(blocks.Blocks, child, title + 1) ?? throw new DegreesException($"{where}: the first child's title is not a block on page {child.PageStart}.");
+        return new TakenRange(row, pathNumber, node, title + 1, Math.Max(title + 1, end), 0, true);
+    }
+
+    /// <summary>The block ranges of planned paths (<see cref="TakeList.Planned"/>): the whole section, children included. They are only read for the denylist.</summary>
+    public static List<(int Start, int End)> PlannedRanges(IReadOnlyList<SpineNode> spine, BlocksResult blocks, string book, IEnumerable<PlannedRow> planned)
+    {
+        var result = new List<(int, int)>();
+        var row = new TakeRow { Chapter = "planned", Book = book };
+        foreach (var path in planned.Where(p => p.Book == book).SelectMany(p => p.Paths))
+        {
+            var node = SpineStage.FindUnique(spine, path) ?? throw new DegreesException("A planned bookmark path is not in the book.");
+            try
+            {
+                var range = Range(spine, blocks, row, 0, node);
+                result.Add((range.Start, range.End));
+            }
+            catch (DegreesException)
+            {
+                // The section's edges are not exact blocks (the next title is not found, say). A planned section is not parsed, so whole pages up to the page the next
+                // section starts on will do: a page the two share is left out, which only hashes more words, never fewer.
+                var next = spine.Skip(IndexOf(spine, node) + 1).FirstOrDefault(n => n.Depth <= node.Depth);
+                var stop = next?.PageStart ?? int.MaxValue;
+                var first = blocks.Blocks.FindIndex(b => b.Page >= node.PageStart && b.Page < stop);
+                var last = blocks.Blocks.FindLastIndex(b => b.Page >= node.PageStart && b.Page < stop);
+                if (first >= 0)
+                {
+                    result.Add((first, last + 1));
+                }
+            }
+        }
+
+        return result;
+    }
 
     public static List<TakenRange> Resolve(IReadOnlyList<SpineNode> spine, BlocksResult blocks, IEnumerable<TakeRow> rows)
     {
@@ -40,6 +89,13 @@ public static class TakeStage
             {
                 var node = PathNode(spine, row, row.Paths[p]) ?? throw new DegreesException($"Chapter {row.Chapter}, path {p + 1}: no bookmark has that path.");
                 ranges.Add(Range(spine, blocks, row, p + 1, node) with { RowNumber = r + 1 });
+            }
+
+            for (var o = 0; o < row.Own.Count; o++)
+            {
+                var number = row.Paths.Count + o + 1;
+                var node = PathNode(spine, row, row.Own[o]) ?? throw new DegreesException($"Chapter {row.Chapter}, own-text path {o + 1}: no bookmark has that path.");
+                ranges.Add(OwnRange(spine, blocks, row, number, node) with { RowNumber = r + 1 });
             }
         }
 
@@ -192,6 +248,7 @@ public static class TakeStage
     }
 
     /// <summary>Every block that no range takes, with the dropped sidebar and opener blocks: the text the denylist is made from.</summary>
-    public static IEnumerable<Block> LeftOut(BlocksResult blocks, IReadOnlyList<TakenRange> ranges) =>
-        blocks.Blocks.Where((_, i) => !ranges.Any(r => i >= r.Start && i < r.End)).Concat(blocks.Dropped ?? new List<Block>());
+    public static IEnumerable<Block> LeftOut(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned = null) =>
+        blocks.Blocks.Where((_, i) => !ranges.Any(r => i >= r.Start && i < r.End) && !(planned ?? Array.Empty<(int Start, int End)>()).Any(r => i >= r.Start && i < r.End))
+            .Concat(blocks.Dropped ?? new List<Block>());
 }

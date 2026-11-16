@@ -77,7 +77,7 @@ public class DegreesRedactionTests : IDisposable
     {
         var hash = SpanText.Sha256("Some span.");
         var table = RedactionTable.Parse($$"""
-            normalization: 1
+            normalization: 2
             rows:
               - entry: alpha
                 field: description
@@ -419,6 +419,47 @@ public class DegreesRedactionTests : IDisposable
         Assert.Equal(new[] { "Then" }, flagged);
     }
 
+    [Fact]
+    public void ACommonWordOfTheBookMayOpenASentence_ButAnUnknownWordMayNot()
+    {
+        var common = new Denylist(new[] { Denylist.Hash("then") });
+        var pack = FixturePack("- id: one\n  name: Plain Stone\n  text: Roll twice. Then use it. Zorblax came.\n");
+
+        Assert.Equal(new[] { "Then", "Zorblax" }, Details(PackWordCheck.CheckAllowlist(pack, Terms, NoDenylist)));
+        Assert.Equal(new[] { "Zorblax" }, Details(PackWordCheck.CheckAllowlist(pack, Terms, NoDenylist, common)));
+
+        // The common list only exempts a sentence's first word; the same word in the middle of a sentence is still flagged.
+        var middle = FixturePack("- id: one\n  name: Plain Stone\n  text: Roll twice and then Then again.\n");
+        Assert.Equal(new[] { "Then" }, Details(PackWordCheck.CheckAllowlist(middle, Terms, NoDenylist, common)));
+    }
+
+    [Fact]
+    public void ACapitalAfterAnOpeningQuoteIsASentenceStart_ButAfterAClosingQuoteOrAWordItIsNot()
+    {
+        // One fixture folder is reused, so each text is checked before the next is written.
+        Assert.Empty(PackWordCheck.CheckAllowlist(FixturePack("- id: one\n  name: Plain Stone\n  text: 'Roll twice and say that light is bright, as in \"Light is bright\" said twice.'\n"), Terms, NoDenylist));
+        Assert.Equal(new[] { "Light" }, Details(PackWordCheck.CheckAllowlist(FixturePack("- id: one\n  name: Plain Stone\n  text: 'Roll twice and say that light is bright, as in Light is bright said twice.'\n"), Terms, NoDenylist)));
+        Assert.Equal(new[] { "Light" }, Details(PackWordCheck.CheckAllowlist(FixturePack("- id: one\n  name: Plain Stone\n  text: 'Roll twice and say that light is bright, in the \"light,\"Light is bright.'\n"), Terms, NoDenylist)));
+    }
+
+    [Fact]
+    public void TheTakeListNamesOnlyGameTerms_ItsTitlesPassTheAllowlistOrAreCommonWordsOfTheBook()
+    {
+        var take = TakeList.Embedded();
+        var terms = Allowlist.Embedded();
+        var common = Denylist.EmbeddedCommon();
+        var titles = take.Rows.SelectMany(r => r.Paths.Concat(r.Own).SelectMany(p => p).Concat(new[] { r.OwnName ?? string.Empty, r.Category ?? string.Empty }))
+            .Concat(take.Planned.SelectMany(p => p.Paths).SelectMany(p => p))
+            .Where(t => t.Length > 0)
+            .ToList();
+
+        Assert.NotEmpty(titles);
+        var flagged = titles.SelectMany(PackWordCheck.Words).Where(PackWordCheck.IsCapital)
+            .Where(w => !terms.Contains(w.ToLowerInvariant()) && !common.Contains(Denylist.Hash(w)))
+            .Distinct().ToList();
+        Assert.True(flagged.Count == 0, string.Join(", ", flagged));
+    }
+
     [Theory]
     [InlineData("zorblax-staff: { description: \"Use it with Zorblax daily.\" }")]
     [InlineData("- just a string")]
@@ -511,7 +552,7 @@ public class DegreesRedactionTests : IDisposable
         {
             var pack = Path.Combine(packsRoot, name);
             // Joined, so a failure lists every finding (xunit shortens a collection to five).
-            var flagged = string.Join("; ", PackWordCheck.CheckAllowlist(pack, terms, deny).Select(f => f.ToString()).Distinct().Order());
+            var flagged = string.Join("; ", PackWordCheck.CheckAllowlist(pack, terms, deny, Denylist.EmbeddedCommon()).Select(f => f.ToString()).Distinct().Order());
             Assert.True(flagged.Length == 0, flagged);
             var denied = string.Join("; ", PackWordCheck.CheckDenylist(pack, deny).Select(f => f.ToString()));
             Assert.True(denied.Length == 0, denied);

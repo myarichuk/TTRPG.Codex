@@ -315,12 +315,23 @@ lowercase form is used elsewhere in the pack. Two things move to chapter 1 becau
   paragraphs render in source order, and a paragraph after a labelled one stays its own paragraph.
 - Not done here: trait keys in the allowlist (chapter 2), the three other parsers, redaction rows, the manifest and the pack (Ch1b).
 
-**Built (step 3, Ch1b):**
-- `packs/rules-core/` holds 42 conditions and 2 rules (44 entries; 46 bookmark children minus 4 sidebars, and 42 entry headers, agree on the 42). Its manifest is
-  `four-degrees-rules`, with the attribution and ORC Notice copied from the system and a Reserved Material notice that designates none of its own.
-- 11 redaction rows, all `replace`: 5 page pointers (the report's `pageReferencesLeft` is 0), and 6 sentences reworded only so the word gate stops flagging an ordinary
-  capital. The gate takes a stop after a contraction's last letter (`wouldn't. If`) for an abbreviation and so reads two sentences as one, and it flags a sentence-opening
-  word whose lowercase form the pack never uses; none of these was a game-term problem, so the allowlist took only game terms (condition names, attributes, saves, actions).
-- The CI gate test pins `rules-core` in `ExpectedGeneratedPacks`, and now lists every flagged word (entry number, field path) rather than the first five.
-- Not done: `degrees-denylist.sha256` is still empty; it is regenerated once every chapter's rows are on the take-list. A few `armor .` style spaces before a stop remain in
-  one entry (a parser gap, to be fixed in the entries stage with its own test).
+**Built (step 3, Ch1b), as reviewed:**
+- `packs/rules-core/` holds 42 conditions and 3 rules (45 entries). The conditions are 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range, which agree.
+  The rules are the appendix's own intro rule (an `own` path: the text between a section's title and its first child section, one entry named by the row's `ownName`, so
+  that no section's intro is dropped silently) and its two rule sections. The manifest is `four-degrees-rules`, with the attribution and ORC Notice copied from the system and a
+  Reserved Material notice that designates none of its own.
+- 5 redaction rows, all `replace`, all removing a page pointer (the report's `pageReferencesLeft` is 0). The review's six rewordings were deleted: the gates were fixed instead.
+  - The sentence splitter no longer reads a contraction's last letter and stop as an initial. Normalization is version 2, and an em dash stays an em dash (only the hyphen,
+    en dash and minus sign become `-`).
+  - The gate treats a capital after an opening quote as a sentence start, and lets a sentence open with a word the book writes in lowercase at least three times. Those words are
+    committed as hashes only (`degrees-common.sha256`, written by `degrees denylist` beside the denylist); a name is rarely written in lowercase, so it stays flagged.
+- Text fidelity: a space the extraction leaves before a stop, comma, semicolon or colon is removed, and a first-line indent (more than four points right of the block's edge, outside
+  a bullet) starts a paragraph, so paragraph breaks no longer depend on a short last line.
+- The denylist is committed and the gate no longer passes trivially. `degrees-chapters.yaml` has a `planned:` list (paths only: later chapters' depth-0 titles and three of chapter 1's
+  rules sections), so "left out" means only material on neither list, plus dropped openers and sidebars. The book keys are never hashed. A planned section whose edges are not
+  blocks falls back to whole pages up to the page the next section starts on (a shared page is left out, which hashes more, never fewer). The glossary is not planned yet: its
+  words would flag as untaken until its chapter lands. 17 reviewed game terms and ordinary words are in `degrees-denylist-waivers.txt`. A test runs the allowlist gate (with the common
+  words) over every title in the take-list.
+- The CI gate test pins `rules-core` in `ExpectedGeneratedPacks`, and lists every flagged word (entry number, field path).
+- Not done: the report does not yet compute the bookmark-children and header counts itself (they are pinned in `DegreesRulesPackTests`); rules sidebars of the conditions list are dropped
+  with the other sidebars (a later `rules` row can take a named one); trailing and parenthesized page pointers are still removed by redaction rows, not by a parser rule.

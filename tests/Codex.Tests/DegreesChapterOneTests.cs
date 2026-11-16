@@ -40,7 +40,7 @@ public class DegreesChapterOneTests : IDisposable
           - { chapter: things, book: pc, parser: entries, target: condition, approved: true, paths: [[Appendix, List]] }
         """;
 
-    private const string NoRedactions = "normalization: 1\nrows: []\n";
+    private const string NoRedactions = "normalization: 2\nrows: []\n";
 
     private static List<SpineNode> ChapterSpine(bool sidebar = true) => new()
     {
@@ -464,7 +464,7 @@ public class DegreesChapterOneTests : IDisposable
     {
         var (blocks, spine, rows) = Prepare(ChapterBook(), ChapterSpine());
         var sentence = "Short text about delta.";
-        var table = RedactionTable.Parse($"normalization: 1\nrows:\n  - entry: delta\n    field: description\n    span: {{ sha256: \"{RedactionSpan.Of(sentence).Sha256}\", length: {sentence.Length} }}\n    action: replace\n    text: \"Our own words.\"\n    reason: \"Test row.\"\n");
+        var table = RedactionTable.Parse($"normalization: 2\nrows:\n  - entry: delta\n    field: description\n    span: {{ sha256: \"{RedactionSpan.Of(sentence).Sha256}\", length: {sentence.Length} }}\n    action: replace\n    text: \"Our own words.\"\n    reason: \"Test row.\"\n");
 
         var result = ImportPipeline.Run(blocks, spine, rows, table, "pc");
 
@@ -758,7 +758,25 @@ public class DegreesChapterOneTests : IDisposable
     }
 
     [Fact]
-    public void TheCommittedWaiverFileParses_AndStartsEmpty() => Assert.Empty(Waivers.Embedded());
+    public void TheCommittedWaiverFileHoldsOnlyReviewedSingleLowercaseWords()
+    {
+        var waivers = Waivers.Embedded();
+
+        Assert.NotEmpty(waivers);
+        Assert.All(waivers, w => Assert.Matches("^[a-z]+$", w));
+
+        // A waived word is one the packs say, so the denylist must not hold its hash, and the committed denylist must hold no hash of a book key.
+        var deny = Denylist.Embedded();
+        Assert.All(waivers, w => Assert.False(deny.Contains(Denylist.Hash(w)), w));
+        Assert.All(DegreesOptions.Books, k => Assert.False(deny.Contains(Denylist.Hash(k)), k));
+    }
+
+    [Fact]
+    public void TheCommittedDenylistAndCommonWordListAreNotEmpty_SoTheGatesCannotPassTrivially()
+    {
+        Assert.True(Denylist.Embedded().Count > 100);
+        Assert.True(Denylist.EmbeddedCommon().Count > 1000);
+    }
 
     [Fact]
     public void MergeDenylist_KeepsTheHeader_UnionsTheHashesAndSortsThem()
@@ -832,7 +850,152 @@ public class DegreesChapterOneTests : IDisposable
 
         var entry = Assert.Single(EntriesStage.Run(blocks, new[] { range }, "pc"));
 
-        Assert.Equal("Words end here-then more words.\n**Failure.** Nothing happens.\n**Special.** Costs one more.", entry.Render());
+        Assert.Equal("Words end here—then more words.\n**Failure.** Nothing happens.\n**Special.** Costs one more.", entry.Render());
+    }
+
+    // ---- Ch1b review: fidelity of the text
+
+    [Fact]
+    public void Normalize_WritesAHyphenForAHyphenEnDashAndMinus_ButKeepsAnEmDash()
+    {
+        Assert.Equal("a-b c-d - 4 e—f", SpanText.Normalize("a‐b c–d − 4 e—f"));
+        Assert.Equal(2, SpanText.Version);
+    }
+
+    [Fact]
+    public void ASingleLetterAfterAnApostropheIsTheEndOfAContraction_NotAnInitial()
+    {
+        Assert.Equal(2, SpanText.Sentences("You said you wouldn't. If you do, then go.").Count);
+        Assert.Equal(2, SpanText.Sentences("It isn't mine. Take it.").Count);
+
+        // A lone initial is still no sentence end, as before.
+        Assert.Single(SpanText.Sentences("Ask J. Smith about it."));
+    }
+
+    [Fact]
+    public void ASpaceBeforeAStopCommaSemicolonOrColon_IsNotKept()
+    {
+        var (blocks, range) = Entries("entries", Blk(1, 0, "entry-header", "Spaces"), Blk(1, 0, "rules", "A heavy armor , a light armor ; and more : done ."));
+
+        var entry = Assert.Single(EntriesStage.Run(blocks, new[] { range }, "pc"));
+
+        Assert.Equal("A heavy armor, a light armor; and more: done.", entry.Render());
+    }
+
+    [Fact]
+    public void AFirstLineIndentStartsAParagraph_EvenAfterALineThatRanToTheEdge_ButABulletsWrappedLinesStayInTheBullet()
+    {
+        static Block Indented(params (string Text, double Left, double Right)[] lines) =>
+            new(1, 0, "rules", 60, 0, 300, 100, lines.Select(l => l.Text).ToList(), lines.Select(l => new LineInfo(l.Left, l.Right, string.Empty)).ToList());
+
+        var (blocks, range) = Entries(
+            "entries",
+            Blk(1, 0, "entry-header", "Indents"),
+            Indented(
+                ("First paragraph, first line,", 69, 300),
+                ("and its second line, which runs to the edge.", 60, 300),
+                ("Second paragraph starts indented", 69, 300),
+                ("and wraps.", 60, 120),
+                ("• A bullet that wraps", 60, 300),
+                ("onto an indented line.", 69, 150)));
+
+        var entry = Assert.Single(EntriesStage.Run(blocks, new[] { range }, "pc"));
+
+        Assert.Equal(
+            new[] { "First paragraph, first line, and its second line, which runs to the edge.", "Second paragraph starts indented and wraps.", "• A bullet that wraps onto an indented line." },
+            entry.Paragraphs);
+    }
+
+    // ---- Ch1b review: a section's own text, planned sections and the denylist
+
+    private static readonly TakeRow OwnRow = new()
+    {
+        Chapter = "c", Book = "pc", Parser = "rules", Target = "rule", Approved = true,
+        Paths = { new List<string> { "Root", "Sec A" } },
+        Own = { new List<string> { "Root" } },
+        OwnName = "Intro",
+    };
+
+    [Fact]
+    public void ASectionsOwnTextBeforeItsFirstChildIsTaken_AsAnEntryNamedByTheRow_AndIsNeverDroppedSilently()
+    {
+        var blocks = Result(new[]
+        {
+            Blk(1, 0, "section", "Root"),
+            Blk(1, 0, "rules", "The intro rule."),
+            Blk(1, 0, "section", "Sec A"),
+            Blk(1, 0, "rules", "The first child."),
+            Blk(1, 0, "section", "Sec B"),
+        });
+
+        var ranges = TakeStage.Resolve(TwoSections, blocks, new[] { OwnRow });
+        var entries = EntriesStage.Run(blocks, ranges, "pc");
+
+        Assert.Equal(new[] { (1, 2, true), (3, 4, false) }, ranges.OrderBy(r => r.Start).Select(r => (r.Start, r.End, r.Own)));
+        Assert.Equal(new[] { ("intro", "pc > Root", "The intro rule."), ("sec-a", "pc > Root > Sec A", "The first child.") }, entries.Select(e => (e.Id, e.Source, e.Render())));
+
+        // Without the own path the intro block is simply in no range: the take-list shows what is left out.
+        var without = new TakeRow { Chapter = "c", Book = "pc", Parser = "rules", Target = "rule", Approved = true, Paths = { new List<string> { "Root", "Sec A" } } };
+        Assert.Equal(1, TakeStage.Resolve(TwoSections, blocks, new[] { without }).Count);
+    }
+
+    [Fact]
+    public void AnOwnTextPathNeedsAChild_ARulesParser_AndAName()
+    {
+        var blocks = Result(new[] { Blk(1, 0, "section", "Root"), Blk(1, 0, "rules", "x"), Blk(1, 0, "section", "Sec A"), Blk(1, 0, "section", "Sec B") });
+        var leaf = new TakeRow { Chapter = "c", Book = "pc", Parser = "rules", Target = "rule", Approved = true, Paths = { new List<string> { "Root", "Sec B" } }, Own = { new List<string> { "Root", "Sec B" } }, OwnName = "X" };
+
+        Assert.Contains("no child section", Assert.Throws<DegreesException>(() => TakeStage.Resolve(TwoSections, blocks, new[] { leaf })).Message);
+        Assert.Throws<DegreesException>(() => TakeList.Parse("rows:\n  - { chapter: c, book: pc, parser: entries, target: condition, paths: [[A]], own: [[A]], ownName: X }\n"));
+        Assert.Throws<DegreesException>(() => TakeList.Parse("rows:\n  - { chapter: c, book: pc, parser: rules, target: rule, paths: [[A]], own: [[A]] }\n"));
+        Assert.Single(TakeList.Parse("rows:\n  - { chapter: c, book: pc, parser: rules, target: rule, paths: [[A, B]], own: [[A]], ownName: X }\n").Rows);
+    }
+
+    [Fact]
+    public void PlannedPathsAreNotLeftOut_TheBookKeysNeverGoOnTheDenylist_AndTheCommonWordsAreTheOnesUsedThreeTimes()
+    {
+        var blocks = Result(new[]
+        {
+            Blk(1, 0, "section", "Sec A"),
+            Blk(1, 0, "rules", "Planty grows. Zorblax and PC wander. elves elves elves rest."),
+            Blk(1, 0, "section", "Sec B"),
+        });
+        var planned = TakeStage.PlannedRanges(TwoSections, blocks, "pc", new[] { new PlannedRow { Book = "pc", Paths = { new List<string> { "Root", "Sec A" } } } });
+        Assert.Equal(new[] { (1, 2) }, planned);
+
+        // Section titles are left out; the planned section's text is not, so "Planty" is not hashed. Another book's planned rows are ignored.
+        var (withPlan, _) = ImportPipeline.DenylistWords(blocks, Array.Empty<TakenRange>(), new HashSet<string>(), 3, planned);
+        var (without, _) = ImportPipeline.DenylistWords(blocks, Array.Empty<TakenRange>(), new HashSet<string>());
+        Assert.Equal(new[] { "sec" }, withPlan);
+        Assert.Equal(new[] { "planty", "sec", "zorblax" }, without);
+        Assert.Empty(TakeStage.PlannedRanges(TwoSections, blocks, "mc", new[] { new PlannedRow { Book = "pc", Paths = { new List<string> { "Root", "Sec A" } } } }));
+
+        Assert.Equal(new[] { "elves" }, ImportPipeline.CommonWords(blocks));
+    }
+
+    [Fact]
+    public void APlannedSectionWhoseEdgesAreNotBlocksFallsBackToWholePages_AndAMissingPathFails()
+    {
+        var spine = new List<SpineNode>
+        {
+            new SpineNode(0, "Root", new[] { "Root" }, 1, 3, false),
+            new SpineNode(0, "Next", new[] { "Next" }, 3, 3, false),
+        };
+        var blocks = Result(new[] { Blk(1, 0, "rules", "a"), Blk(2, 0, "rules", "b"), Blk(3, 0, "rules", "c") });
+
+        var planned = TakeStage.PlannedRanges(spine, blocks, "pc", new[] { new PlannedRow { Book = "pc", Paths = { new List<string> { "Root" } } } });
+
+        Assert.Equal(new[] { (0, 2) }, planned);
+        Assert.Throws<DegreesException>(() => TakeStage.PlannedRanges(spine, blocks, "pc", new[] { new PlannedRow { Book = "pc", Paths = { new List<string> { "Nope" } } } }));
+    }
+
+    [Fact]
+    public void ThePlannedListIsValidated_AndAPlannedPathMayNotAlsoBeTaken()
+    {
+        Assert.Single(TakeList.Parse("rows: []\nplanned:\n  - { book: pc, paths: [[A]] }\n").Planned);
+        Assert.Throws<DegreesException>(() => TakeList.Parse("rows: []\nplanned:\n  - { book: xx, paths: [[A]] }\n"));
+        Assert.Throws<DegreesException>(() => TakeList.Parse("rows: []\nplanned:\n  - { book: pc, paths: [] }\n"));
+        Assert.Throws<DegreesException>(() => TakeList.Parse("rows:\n  - { chapter: c, book: pc, parser: rules, target: rule, paths: [[A]] }\nplanned:\n  - { book: pc, paths: [[a]] }\n"));
     }
 
     [Fact]
@@ -885,7 +1048,7 @@ public class DegreesChapterOneTests : IDisposable
         var (blocks, spine, rows) = Prepare(ChapterBook(), ChapterSpine());
         var sentence = "Short text about delta.";
         string Row(string book, string entry) =>
-            $"normalization: 1\nrows:\n  - book: {book}\n    entry: {entry}\n    field: description\n    span: {{ sha256: \"{RedactionSpan.Of(sentence).Sha256}\", length: {sentence.Length} }}\n    action: cut\n    reason: \"Test row.\"\n";
+            $"normalization: 2\nrows:\n  - book: {book}\n    entry: {entry}\n    field: description\n    span: {{ sha256: \"{RedactionSpan.Of(sentence).Sha256}\", length: {sentence.Length} }}\n    action: cut\n    reason: \"Test row.\"\n";
 
         var other = ImportPipeline.Run(blocks, spine, rows, RedactionTable.Parse(Row("mc", "no-such-entry")), "pc");
         Assert.Equal(5, other.Final.Count);

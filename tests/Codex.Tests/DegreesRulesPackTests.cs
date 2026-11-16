@@ -10,7 +10,7 @@ namespace Codex.Tests;
 /// its counts, its required fields, its provenance lines, its licence block and that it does not clash with the homebrew pack. The pack is the
 /// importer's output, so none of its text is pinned here; the counts come from the document, not from the importer, two ways: the bookmark
 /// children of the taken section (46, of which 4 are sidebars) and the entry-header-font count in the taken range (42) agree on the 42 conditions,
-/// and the two rule sections hold one entry each.
+///. The rules are the appendix's own intro rule (taken by an `own` path, never dropped) and its two rule sections: 3.
 /// </summary>
 public class DegreesRulesPackTests : IAsyncLifetime
 {
@@ -51,7 +51,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
 
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
-    [InlineData("rule", 2)]       // condition values, overriding conditions
+    [InlineData("rule", 3)]       // the appendix's own intro rule, condition values, overriding conditions
     public void ThePackHasItsCounts_AndRequiredFields(string type, int expected)
     {
         var entries = Entries(type, PackId).ToList();
@@ -69,13 +69,12 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        Assert.Equal(44, AllEntries(PackId).Count());
+        Assert.Equal(45, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.
         var report = File.ReadAllText(Path.Combine(PackFolder, "import-report.yaml"));
         var reported = Regex.Matches(report, @"^  entries: (\d+)$", RegexOptions.Multiline).Sum(m => int.Parse(m.Groups[1].Value));
-        Assert.Equal(44, reported);
-        Assert.Matches(@"(?m)^  pageReferencesLeft: 0$", report);
+        Assert.Equal(45, reported);
         Assert.DoesNotMatch(@"(?m)^  pageReferencesLeft: [1-9]", report);
     }
 
@@ -84,7 +83,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     {
         Assert.All(AllEntries(PackId), e =>
         {
-            Assert.StartsWith("pc > Conditions Appendix > ", e.Source, StringComparison.Ordinal);
+            Assert.Matches(@"^pc > Conditions Appendix( > [A-Za-z ]+)?$", e.Source!); // chapter 1 only; a later chapter widens this
             Assert.DoesNotContain("homebrew", e.Tags);
             Assert.DoesNotMatch(@"\d", e.Source!); // no page numbers
         });
@@ -125,8 +124,11 @@ public class DegreesRulesPackTests : IAsyncLifetime
         Assert.True(license.Modified);
         Assert.Equal(_system.License!.Attribution, license.Attribution); // copied from the system's, which is copied from the book's notice
         Assert.StartsWith("This product is based on the following Licensed Material: ", license.Attribution);
-        Assert.Contains(license.Notices, n => n.StartsWith("ORC Notice: This product is licensed under the ORC License", StringComparison.Ordinal));
-        Assert.Contains(license.Notices, n => n.StartsWith("Expressly Designated Licensed Material: This product contains no", StringComparison.Ordinal));
+        foreach (var prefix in new[] { "ORC Notice:", "Expressly Designated Licensed Material:" })
+        {
+            Assert.Equal(_system.License.Notices.Single(n => n.StartsWith(prefix, StringComparison.Ordinal)), license.Notices.Single(n => n.StartsWith(prefix, StringComparison.Ordinal)));
+        }
+
         Assert.Contains(license.Notices, n => n.StartsWith("Reserved Material:", StringComparison.Ordinal) && n.Contains("designates no Reserved Material of its own"));
         Assert.DoesNotContain(license.Notices, n => n.Contains("homebrew", StringComparison.OrdinalIgnoreCase));
     }

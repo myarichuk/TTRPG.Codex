@@ -1,11 +1,12 @@
-# The redaction table of the local book importer. It holds no source text.
+# The redaction table of the local book importer. A row stores only the hash and length of the span it changes, never the span; a `replace`
+# row's text is a redacted form of the book's sentence, so it is Licensed Material taken from the book (see LEGAL.md).
 # Each row names an entry id and a field, then the SHA-256 and the character length of ONE exact normalized source span (a sentence, or one
 # semicolon clause of a sentence; see SpanText.cs for the normalization and the splitter), then an action:
 #   replace    swap the span for `text`, our own words (one line, already normalized)
 #   cut        remove the span
 #   drop-entry leave the whole entry out of the pack
 # and a `reason` in our words that names no names. A row whose hash is not found fails the run.
-# The replacement text is Licensed Material under the ORC and is released with the packs (see LEGAL.md).
+# The replacement text is Licensed Material under the ORC and is released with the packs.
 #
 # A row names its `book` (pc or mc) and applies only to that book's run; a row with no book applies to every run, so committed rows should always name theirs.
 #
@@ -16,7 +17,7 @@
 #   action: replace
 #   text: "Our own wording of the mechanic."
 #   reason: "A sentence that carried a proper noun; the mechanic is kept."
-normalization: 1
+normalization: 2
 rows:
   - book: pc
     entry: fatigued
@@ -53,45 +54,3 @@ rows:
     action: replace
     text: "They can Seek to try to find you."
     reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
-  - book: pc
-    entry: indifferent
-    field: description
-    span: { sha256: "78ea54ed8dc94dc099033896e5e63e3a46eaf41ee5c28ac6db881ea956bc24f7", length: 92 }
-    action: replace
-    text: "A creature's attitude to a given character is indifferent unless specified otherwise."
-    reason: "The sentence opened with an ordinary verb that the word gate flags; reworded to open with a word the pack already uses, same rule."
-  - book: pc
-    entry: drained
-    field: description
-    span: { sha256: "b9708f66bf746b8a2846c0a49ba877620553f5db1ff5cbdd37de8b89c7f9865e", length: 55 }
-    action: replace
-    text: "The loss of these Hit Points doesn't count as taking damage."
-    reason: "The sentence opened with an ordinary word that the word gate flags; reworded, same rule."
-  - book: pc
-    entry: unconscious
-    field: description
-    span: { sha256: "9539d4ce8d3eba2b413e182b6878eac9bbeee751aa5161a9b15ca8ff8dbf249d", length: 39 }
-    action: replace
-    text: "• A loud noise around you might wake you."
-    reason: "The list item opened with an ordinary word that the word gate flags; reworded, same rule."
-  - book: pc
-    entry: prone
-    field: description
-    span: { sha256: "f579b57e6d72502d6d09d3d5afe1fc8ef424de91fbf1ac15f3e741698df7fae5", length: 37 }
-    action: replace
-    text: "The prone condition ends when you stand up."
-    reason: "The sentence opened with an ordinary word that the word gate flags; reworded, same rule."
-  - book: pc
-    entry: unconscious
-    field: description
-    span: { sha256: "a32330de37c30a4baa46c06cdc637c33a141835f50d7a4d955b6dd31ee9435b1", length: 256 }
-    action: replace
-    text: "When you gain this condition, you fall prone and drop items you're holding unless the effect states otherwise or the GM determines you're positioned so you would not. If you're unconscious because you're dying, you can't wake up while you have 0 Hit Points."
-    reason: "The word gate reads a contraction's final letter and stop as an abbreviation and so joins two sentences; the contraction is written out, same rules."
-  - book: pc
-    entry: off-guard
-    field: description
-    span: { sha256: "8c7176f4b742c1f338b8fc56f52e51d358cfb2a6c297790bdca57715c665bf10", length: 145 }
-    action: replace
-    text: "If a rule doesn't specify that the condition applies only to certain circumstances, it applies to all of them."
-    reason: "A quoted example began with a capitalized ordinary word that the word gate flags; the example is dropped, the rule is kept."

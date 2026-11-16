@@ -6,6 +6,8 @@
 #   target    the entity type of the four-degrees system the entries become (its pack folder is the plural unless `folder` says otherwise)
 #   category  the entry's `category` field, in our own words, for a target type that has one
 #   columns   the most columns a page of the row has (two unless stated)
+#   own       paths (rules parser) whose own text, between the section's title and its first child section, becomes one entry named by ownName
+#   planned   (below the rows) sections a later chapter takes: not read, only not counted as "left out" by the denylist generator
 # Dropped material is never named here: the setting, religion, example-of-play and map sections are simply absent.
 # A path that names anything but a game term does not belong in this file.
 rows:
@@ -25,3 +27,22 @@ rows:
     paths:
       - [Conditions Appendix, Condition Values]
       - [Conditions Appendix, Overriding Conditions]
+    # The appendix's own intro rule, before its first child section, is its own rule entry named by ownName (our word). It is never dropped silently.
+    own:
+      - [Conditions Appendix]
+    ownName: Conditions
+# Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
+# Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
+planned:
+  - book: pc
+    paths:
+      - ["Chapter 1: Introduction", Basics of Play]
+      - ["Chapter 1: Introduction", Playing the Game]
+      - ["Chapter 1: Introduction", Character Creation]
+      - ["Chapter 2: Ancestries & Backgrounds"]
+      - ["Chapter 3: Classes"]
+      - ["Chapter 4: Skills"]
+      - ["Chapter 5: Feats"]
+      - ["Chapter 6: Equipment"]
+      - ["Chapter 7: Spells"]
+      - ["Chapter 8: Playing the Game"]
