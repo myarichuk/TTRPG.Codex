@@ -53,6 +53,17 @@ var quiet = args.Contains("--quiet");
 var code = SystemCheck.Run(Path.GetFullPath(folder), args.Contains("--types"), quiet, Console.Out);
 if (code != 0 || pack == null) return code;
 
+// A licence notice that is still a marked placeholder must never reach an archive someone installs.
+var unfinished = Directory.EnumerateFiles(folder, "*.yaml", SearchOption.AllDirectories)
+    .Where(f => Path.GetFileName(f) is "system.yaml" or "manifest.yaml")
+    .Where(f => File.ReadLines(f).Any(l => l.Contains("PLACEHOLDER", StringComparison.Ordinal) && !l.TrimStart().StartsWith('#')))
+    .ToList();
+if (unfinished.Count > 0)
+{
+    foreach (var file in unfinished) Console.WriteLine($"FAILED  {Path.GetRelativePath(folder, file)} still has a PLACEHOLDER licence text; it cannot be packed");
+    return 1;
+}
+
 using (var output = File.Create(pack))
 {
     if (SystemArchive.Write(folder, output) is { Count: > 0 } refused)

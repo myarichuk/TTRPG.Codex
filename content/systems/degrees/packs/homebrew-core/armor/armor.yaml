@@ -1,4 +1,0 @@
-# Three invented sets of armor, one per category.
-- { id: quilted-vest, name: Quilted vest, tags: [homebrew], properties: { armorBase: 12, armorDexCap: 3, armorCategory: light } }
-- { id: lacquered-scale, name: Lacquered scale, tags: [homebrew], properties: { armorBase: 14, armorDexCap: 1, armorCategory: medium } }
-- { id: plated-mantle, name: Plated mantle, tags: [homebrew], properties: { armorBase: 16, armorDexCap: 0, armorCategory: heavy } }

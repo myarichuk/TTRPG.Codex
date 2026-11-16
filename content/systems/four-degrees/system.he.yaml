@@ -1,0 +1,147 @@
+name: ארבע רמות הצלחה
+compatibility: d20 עם ארבע רמות הצלחה
+description: >-
+  מערכת d20 עם ארבע רמות הצלחה. רמות המיומנות (ממיומן ועד אגדי) שוות לדרגה ועוד 2, 4, 6 או 8;
+  התכונות נבנות מהגברות; לתנאים יש ערך, וחלקם מביאים איתם תנאים אחרים;
+  כל התקפה נוספת באותו תור פחות סבירה לפגוע.
+
+attributes:
+  str: { label: כוח, abbreviation: כוח }
+  dex: { label: זריזות, abbreviation: זרי }
+  con: { label: חוסן, abbreviation: חוס }
+  int: { label: תבונה, abbreviation: תבו }
+  wis: { label: חוכמה, abbreviation: חוכ }
+  cha: { label: כריזמה, abbreviation: כרי }
+
+resources:
+  HP: { label: נקודות חיים }
+
+actorFields:
+  level: { label: דרגה, category: כללי }
+  ancestry: { label: מוצא, category: כללי }
+  background: { label: רקע, category: כללי }
+  class: { label: מקצוע, category: כללי }
+  faith: { label: אמונה, category: אמונה }
+  faithVows: { label: נדרים, category: אמונה, description: מה האמונה דורשת ממאמיניה, במילים שלך. }
+  faithTaboos: { label: איסורים, category: אמונה, description: מה האמונה אוסרת, במילים שלך. }
+  armorClass: { label: דרגת שריון, category: קרב }
+
+maxSuffix: מקס׳
+
+categories:
+  General: כללי
+  Faith: אמונה
+  Combat: קרב
+  Profile: פרופיל
+  Defenses: הגנות
+  Senses: חושים
+  Actions: פעולות
+  Ability scores: ציוני תכונות
+
+conditions:
+  Shaken: מזועזע
+  Wobbly: מתנודד
+  Pinned: מוצמד
+  Heartened: מעודד
+
+moments:
+  dailyPrep: הכנות יומיות
+  catchBreath: הפוגה קצרה
+  sessionStart: תחילת מפגש
+
+entityTypes:
+  ancestry:
+    label: מוצא
+    pluralLabel: מוצאים
+    fields:
+      hp: { label: נקודות חיים }
+      boosts: { label: הגברות תכונה }
+  background: { label: רקע, pluralLabel: רקעים }
+  class:
+    label: מקצוע
+    pluralLabel: מקצועות
+    fields:
+      hp: { label: נקודות חיים לדרגה }
+      keyAttribute: { label: תכונת מפתח }
+      boosts: { label: הגברות תכונה }
+      savingThrows: { label: הצלות מיומנות }
+  faith:
+    label: אמונה
+    pluralLabel: אמונות
+    fields:
+      vows: { label: נדרים }
+      taboos: { label: איסורים }
+  feat: { label: כשרון, pluralLabel: כשרונות }
+  armor:
+    label: שריון
+    pluralLabel: שריונות
+    fields:
+      armorBase: { label: בונוס שריון }
+      armorDexCap: { label: תקרת זריזות }
+      armorCategory: { label: קטגוריה }
+  weapon:
+    label: נשק
+    pluralLabel: כלי נשק
+    fields:
+      weaponCategory: { label: קטגוריה }
+      traits: { label: תכונות נשק }
+  trinket: { label: קמע, pluralLabel: קמעות }
+  creature:
+    label: יצור
+    pluralLabel: יצורים
+    fields:
+      level: { label: דרגה }
+      family: { label: משפחה }
+      armorClass: { label: דרגת שריון }
+      hitPoints: { label: נקודות חיים }
+      saveCon: { label: הצלת חוסן }
+      saveDex: { label: הצלת זריזות }
+      saveWis: { label: הצלת חוכמה }
+      perceptionBonus: { label: תפיסה }
+      classDcValue: { label: דרגת קושי מיוחדת }
+      strikes: { label: מכות }
+      abilities: { label: יכולות }
+
+values:
+  Perception: תפיסה
+  Class DC: דרגת קושי של המקצוע
+  Armor: שריון
+  Weapons: כלי נשק
+  Unarmored: ללא שריון
+  Light armor: שריון קל
+  Medium armor: שריון בינוני
+  Heavy armor: שריון כבד
+  Unarmed: לא חמוש
+  Simple weapons: נשק פשוט
+  Martial weapons: נשק צבאי
+  Strike: מכה
+  Sense DC: דרגת קושי חושית
+  Speed: מהירות
+  Check: בדיקה
+  Attack bonus: בונוס תקיפה
+  Attack this turn: תקיפה בתור זה
+  Armor class: דרגת שריון
+  Weapon: נשק
+  Bonus: בונוס
+  DC: דרגת קושי
+  Character: דמות
+  Trinkets: קמעות
+  Gear: ציוד
+
+sheetRules:
+  lists:
+    feats: כשרונות
+  skills:
+    athletics: אתלטיקה
+    arcana: מאגיה
+    craft: מלאכה
+    diplomacy: דיפלומטיה
+    stealth: התגנבות
+    survival: הישרדות
+  ranks:
+    trained: מיומן
+    expert: מומחה
+    master: אמן
+    legendary: אגדי
+  skillsLabel: מיומנויות
+  inventoryLabel: ציוד

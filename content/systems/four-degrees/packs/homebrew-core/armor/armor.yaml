@@ -1,0 +1,4 @@
+# Three sets of armor, one per category, with numbers written for this project.
+- { id: quilted-vest, name: Quilted vest, tags: [homebrew], properties: { armorBase: 11, armorDexCap: 4, armorCategory: light } }
+- { id: lacquered-scale, name: Lacquered scale, tags: [homebrew], properties: { armorBase: 15, armorDexCap: 1, armorCategory: medium } }
+- { id: plated-mantle, name: Plated mantle, tags: [homebrew], properties: { armorBase: 17, armorDexCap: 0, armorCategory: heavy } }

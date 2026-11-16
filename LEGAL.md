@@ -164,6 +164,23 @@ Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by
 - Not shipped inside the app: like every system other than the 5E one it is released as its own
   archive (`content/systems/bundled.txt`), so it can be withdrawn without a new release.
 
+### Four Degrees (`content/systems/four-degrees`, pack `packs/homebrew-core`)
+
+An adaptation of ORC-licensed rules (the data structure restates their mechanics, which the ORC treats as Adapted Material), written in
+this project's own words with invented names, text and creatures. No text, table or stat block from any book is copied.
+
+- The system and its pack are released under the ORC License. This folder's data is under the ORC; the code of this repository stays under
+  its own licence, since the ORC grants no rights to code.
+- The ORC Notice, the upstream Attribution (credit line and authors list) and the Reserved Material statement are not yet in the
+  manifests: they are marked PLACEHOLDER and must be copied verbatim from the licence and the upstream notice, never written from memory.
+  Until they are, `content/systems/unreleased.txt` keeps the system out of the release archives and `Codex.SystemCheck --pack` refuses it.
+- The system is not named after the upstream game and uses no publisher, setting or deity name; the publisher's name will appear only inside
+  the upstream attribution.
+- Not shipped inside the app: like every system other than the 5E one it is released as its own archive, so it can be withdrawn without a
+  new release.
+- Reserved Material in this pack (names, flavour text, creatures) is whatever the Reserved Material statement above designates; until it
+  is written, treat all of it as reserved.
+
 ### Example content (`content/examples/`)
 
 The `simple-d6` example system and the `homebrew-world` example setting are released to the public
@@ -202,6 +219,3 @@ domain under CC0 1.0 by the TTRPG.Codex project.
   `street` is original, `d35` follows the shape of the d20 System Reference Document 3.5 (Open Game
   License 1.0a), `crew` follows the Forged in the Dark SRD (CC BY 3.0), and `degrees` follows the shape
   of the ORC-licensed Remaster rules in this project's own words and numbers, naming no game.
-- `content/systems/degrees` (Four Degrees): an original homebrew system and pack written for this project, using no book's text, tables
-  or stat blocks. Its manifests carry an ORC licence block whose verbatim ORC Notice is still a marked placeholder until the licence's own
-  required-notice text is added; it is not listed in `bundled.txt`, so it ships as its own archive.

@@ -1,4 +1,4 @@
-# Four invented weapons. A weapon with the nimble trait lowers the multiple attack penalty (sheetRules.multipleAttack).
+# Four invented weapons. A weapon with the featherlight trait lowers the multiple attack penalty (sheetRules.multipleAttack).
 - id: reed-spear
   name: Reed spear
   tags: [weapons, homebrew]
@@ -11,7 +11,7 @@
   tags: [weapons, homebrew]
   properties:
     weaponCategory: simple
-    traits: [nimble]
+    traits: [featherlight]
     use: { attack: melee, abilities: [dex], damage: 1d4 }
 - id: ledge-axe
   name: Ledge axe

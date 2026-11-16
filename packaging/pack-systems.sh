@@ -13,10 +13,14 @@ out="${1:?usage: pack-systems.sh <out folder>}"
 mkdir -p "$out"
 bundled="$(sed -e 's/#.*//' -e 's/[[:space:]]//g' "$repo/content/systems/bundled.txt" | grep -v '^$' || true)"
 
+unreleased=""
+[ -f "$repo/content/systems/unreleased.txt" ] && unreleased="$(sed -e 's/#.*//' -e 's/[[:space:]]//g' "$repo/content/systems/unreleased.txt" | grep -v '^$' || true)"
+
 dotnet build "$repo/tools/Codex.SystemCheck" -c Release -v q -nologo >/dev/null
 for dir in "$repo"/content/systems/*/; do
     name="$(basename "$dir")"
     grep -qxF "$name" <<<"$bundled" && continue
+    grep -qxF "$name" <<<"$unreleased" && { echo "skipping $name (listed in unreleased.txt)"; continue; }
     [ -f "$dir/system.yaml" ] || continue
 
     archive="$out/.$name.zip"

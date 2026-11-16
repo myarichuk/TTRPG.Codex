@@ -7,13 +7,13 @@
   properties:
     level: 1
     family: Beast
-    armorClass: 15
-    hitPoints: 20
-    saveCon: 6
-    saveDex: 7
-    saveWis: 4
-    perceptionBonus: 7
-    classDcValue: 13
+    armorClass: 16
+    hitPoints: 18
+    saveCon: 5
+    saveDex: 8
+    saveWis: 6
+    perceptionBonus: 6
+    classDcValue: 14
     str: 14
     dex: 16
     con: 12
@@ -21,9 +21,9 @@
     wis: 12
     cha: 6
     strikes:
-      - { name: Bite, bonus: 7, range: melee, damage: 1d6+2 }
+      - { name: Bite, bonus: 8, range: melee, damage: 1d8+1 }
     abilities:
-      - { name: Circle, description: "When the hound has a creature flanked it deals 1d4 extra damage with its Bite." }
+      - { name: Mud drag, description: "On a critical hit with its Bite, the target is Pinned until the start of the hound's next turn." }
 - id: ash-sentry
   name: Ash sentry
   tags: [homebrew]
