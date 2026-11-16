@@ -1,0 +1,347 @@
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace Codex.ContentImport.Degrees;
+
+/// <summary>
+/// The hashed denylist: one lowercase hex SHA-256 of a lowercased word per line (<c>Data/degrees-denylist.sha256</c>), `#` lines are comments.
+/// It holds the capitalized words of the sections the take-list leaves out, as hashes, so the file names no names. A pack is checked by hashing
+/// each of its words; a match is reported by file, entry and hash, never by the word.
+/// </summary>
+public sealed partial class Denylist
+{
+    private readonly HashSet<string> _hashes;
+
+    public Denylist(IEnumerable<string> hashes) => _hashes = new HashSet<string>(hashes, StringComparer.Ordinal);
+
+    public int Count => _hashes.Count;
+
+    public static string Hash(string word) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(word.Normalize(NormalizationForm.FormC).ToLowerInvariant()))).ToLowerInvariant();
+
+    public bool Contains(string hash) => _hashes.Contains(hash);
+
+    public static Denylist Parse(string text)
+    {
+        var hashes = new List<string>();
+        var number = 0;
+        foreach (var raw in text.Split('\n'))
+        {
+            number++;
+            var line = raw.Trim();
+            if (line.Length == 0 || line.StartsWith('#'))
+            {
+                continue;
+            }
+
+            if (!HexLine().IsMatch(line))
+            {
+                throw new DegreesException($"degrees-denylist.sha256 has a line that is not a SHA-256 hash (line {number}).");
+            }
+
+            hashes.Add(line);
+        }
+
+        return new Denylist(hashes);
+    }
+
+    public static Denylist Embedded() => Parse(BooksConfig.EmbeddedYaml("degrees-denylist.sha256"));
+
+    /// <summary>The file text for a set of words: sorted unique hashes, minus the words in <paramref name="exclude"/> (game terms the packs may use).</summary>
+    public static string Format(IEnumerable<string> words, IReadOnlySet<string>? exclude = null)
+    {
+        var hashes = words
+            .Where(w => w.Length > 0 && (exclude == null || !exclude.Contains(w.ToLowerInvariant())))
+            .Select(Hash)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(h => h, StringComparer.Ordinal);
+        return string.Concat(hashes.Select(h => h + "\n"));
+    }
+
+    [GeneratedRegex("^[0-9a-f]{64}$")]
+    private static partial Regex HexLine();
+}
+
+/// <summary>The game-term allowlist (<c>Data/degrees-allowlist.txt</c>): one term per line, `#` lines are comments, compared without case.</summary>
+public static class Allowlist
+{
+    public static HashSet<string> Parse(string text) =>
+        text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith('#')).Select(l => l.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
+
+    public static HashSet<string> Embedded() => Parse(BooksConfig.EmbeddedYaml("degrees-allowlist.txt"));
+}
+
+/// <summary>
+/// One finding of a pack gate. It is located by file, entry number (its position in the file, from 1) and field path, never by entry id, since ids are
+/// slugs of names. A file name, a path segment or a word that is on the denylist is printed as its hash.
+/// </summary>
+public sealed record PackFinding(string File, int Entry, string Path, string Kind, string Detail)
+{
+    public override string ToString() => $"{File} entry #{Entry} {Path} {Kind}: {Detail}";
+}
+
+/// <summary>
+/// The CI gates over a generated pack folder. Both gates read every YAML entry file (the manifest at the pack's root is not one) and fail with an
+/// error, not a finding, on any file shape they do not understand: the root must be a list of mappings.
+/// Allowlist: every capitalized word must be a game term (the allowlist plus the system's skill, condition and trait keys, lowercase). That includes
+/// entry names, mapping keys, one-word values and list items. The first word of a sentence in a prose value (two words or more, ending in a stop) is
+/// exempt only when its lowercase form is also used lowercase somewhere in the pack, so a name after "Mr." or "Step 1." is still flagged.
+/// Denylist: every word of every key, value, id, tag and file name is hashed; a match is reported by hash.
+/// </summary>
+public static class PackWordCheck
+{
+    /// <summary>Top-level entry keys whose values are structure, not prose (the id, the tags and the source line). The denylist gate still reads them.</summary>
+    private static readonly HashSet<string> StructuralKeys = new(StringComparer.Ordinal) { "id", "tags", "source" };
+
+    private sealed record Item(string Path, string Text, bool IsKey, bool IsLabel, bool Structural);
+
+    private sealed record EntryItems(int Number, List<Item> Items);
+
+    private sealed record PackFile(string Name, List<EntryItems> Entries);
+
+    public static List<PackFinding> CheckAllowlist(string packDir, IReadOnlySet<string> gameTerms, Denylist denylist)
+    {
+        var files = Load(packDir, denylist);
+        var lowerUsed = new HashSet<string>(gameTerms, StringComparer.Ordinal);
+        foreach (var item in files.SelectMany(f => f.Entries).SelectMany(e => e.Items).Where(i => !i.IsKey))
+        {
+            foreach (var word in Words(item.Text).Where(w => !IsCapital(w)))
+            {
+                lowerUsed.Add(word.ToLowerInvariant());
+            }
+        }
+
+        var findings = new List<PackFinding>();
+        foreach (var file in files)
+        {
+            foreach (var entry in file.Entries)
+            {
+                var seen = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var item in entry.Items.Where(i => !i.Structural))
+                {
+                    foreach (var word in CapitalsToCheck(item, lowerUsed))
+                    {
+                        var key = word.ToLowerInvariant();
+                        if (!gameTerms.Contains(key) && seen.Add(key))
+                        {
+                            findings.Add(new PackFinding(file.Name, entry.Number, item.Path, "capitalized word not in the allowlist", Safe(word, denylist)));
+                        }
+                    }
+                }
+            }
+        }
+
+        return findings;
+    }
+
+    public static List<PackFinding> CheckDenylist(string packDir, Denylist denylist)
+    {
+        var findings = new List<PackFinding>();
+        foreach (var file in Load(packDir, denylist))
+        {
+            // The raw relative path of the file is read again here only to hash it; it is never printed.
+            foreach (var entry in file.Entries)
+            {
+                var seen = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var item in entry.Items)
+                {
+                    foreach (var word in Words(item.Text))
+                    {
+                        var hash = Denylist.Hash(word);
+                        if (denylist.Contains(hash) && seen.Add(hash))
+                        {
+                            findings.Add(new PackFinding(file.Name, entry.Number, item.Path, "word on the denylist", hash));
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach (var rel in PackFiles(packDir).Select(f => Path.GetRelativePath(packDir, f)))
+        {
+            foreach (var word in Words(rel))
+            {
+                var hash = Denylist.Hash(word);
+                if (denylist.Contains(hash))
+                {
+                    findings.Add(new PackFinding(Safe(rel.Replace('\\', '/'), denylist), 0, string.Empty, "file name has a word on the denylist", hash));
+                }
+            }
+        }
+
+        return findings;
+    }
+
+    /// <summary>The letter runs of a text after normalization (invisible characters are gone), including letters outside the BMP.</summary>
+    public static IEnumerable<string> Words(string text)
+    {
+        var current = new StringBuilder();
+        foreach (var rune in SpanText.Normalize(text).EnumerateRunes())
+        {
+            if (Rune.IsLetter(rune))
+            {
+                current.Append(rune.ToString());
+                continue;
+            }
+
+            if (current.Length > 0)
+            {
+                yield return current.ToString();
+                current.Clear();
+            }
+        }
+
+        if (current.Length > 0)
+        {
+            yield return current.ToString();
+        }
+    }
+
+    public static bool IsCapital(string word)
+    {
+        var first = Rune.GetRuneAt(word, 0);
+        return Rune.IsUpper(first) || Rune.GetUnicodeCategory(first) == UnicodeCategory.TitlecaseLetter;
+    }
+
+    private static IEnumerable<string> CapitalsToCheck(Item item, HashSet<string> lowerUsed)
+    {
+        if (item.IsLabel)
+        {
+            return Words(item.Text).Where(IsCapital);
+        }
+
+        var text = SpanText.Normalize(item.Text);
+        var result = new List<string>();
+        foreach (var sentence in SpanText.Sentences(text))
+        {
+            var first = true;
+            foreach (var word in Words(text.Substring(sentence.Start, sentence.Length)))
+            {
+                if (IsCapital(word) && !(first && lowerUsed.Contains(word.ToLowerInvariant())))
+                {
+                    result.Add(word);
+                }
+
+                first = false;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>A prose value has two words or more and ends a sentence with a stop (or has several sentences). Anything else is a label.</summary>
+    private static bool IsProse(string text)
+    {
+        var normalized = SpanText.Normalize(text);
+        if (Words(normalized).Count() < 2)
+        {
+            return false;
+        }
+
+        var trimmed = normalized.TrimEnd('"', '\'', ')', ']');
+        return SpanText.Sentences(normalized).Count > 1 || trimmed.EndsWith('.') || trimmed.EndsWith('!') || trimmed.EndsWith('?');
+    }
+
+    /// <summary>The text itself, or the hash of its first denylisted word.</summary>
+    private static string Safe(string text, Denylist? denylist)
+    {
+        if (denylist == null)
+        {
+            return text;
+        }
+
+        foreach (var word in Words(text))
+        {
+            var hash = Denylist.Hash(word);
+            if (denylist.Contains(hash))
+            {
+                return $"[denylisted {hash}]";
+            }
+        }
+
+        return text;
+    }
+
+    private static IEnumerable<string> PackFiles(string packDir) =>
+        Directory.EnumerateFiles(packDir, "*.yaml", SearchOption.AllDirectories)
+            .Where(f => !string.Equals(Path.GetRelativePath(packDir, f), "manifest.yaml", StringComparison.Ordinal))
+            .OrderBy(f => f, StringComparer.Ordinal);
+
+    private static List<PackFile> Load(string packDir, Denylist? denylist)
+    {
+        var result = new List<PackFile>();
+        foreach (var path in PackFiles(packDir))
+        {
+            var name = Safe(Path.GetRelativePath(packDir, path).Replace('\\', '/'), denylist);
+            object? root;
+            try
+            {
+                root = BooksConfig.Deserializer.Deserialize<object>(File.ReadAllText(path));
+            }
+            catch (Exception)
+            {
+                throw new DegreesException($"Pack file {name} is not valid YAML.");
+            }
+
+            if (root is not List<object> list)
+            {
+                throw new DegreesException($"Pack file {name} is not a list of entries (its root is not a sequence).");
+            }
+
+            var entries = new List<EntryItems>();
+            for (var i = 0; i < list.Count; i++)
+            {
+                if (list[i] is not IDictionary<object, object> map)
+                {
+                    throw new DegreesException($"Pack file {name}: entry #{i + 1} is not a mapping.");
+                }
+
+                var items = new List<Item>();
+                Walk(map, string.Empty, string.Empty, false, items, denylist);
+                entries.Add(new EntryItems(i + 1, items));
+            }
+
+            result.Add(new PackFile(name, entries));
+        }
+
+        return result;
+    }
+
+    /// <summary>Every mapping key and every string value, with its field path. Keys are items too.</summary>
+    private static void Walk(object? node, string path, string topKey, bool inList, List<Item> items, Denylist? denylist)
+    {
+        switch (node)
+        {
+            case IDictionary<object, object> map:
+                foreach (var kv in map)
+                {
+                    var key = Convert.ToString(kv.Key) ?? string.Empty;
+                    var child = path.Length == 0 ? Safe(key, denylist) : path + "." + Safe(key, denylist);
+                    items.Add(new Item(child, key, true, true, false));
+                    Walk(kv.Value, child, path.Length == 0 ? key : topKey, false, items, denylist);
+                }
+
+                break;
+            case List<object> list:
+                for (var i = 0; i < list.Count; i++)
+                {
+                    Walk(list[i], $"{path}[{i}]", topKey, true, items, denylist);
+                }
+
+                break;
+            case string s when s.Length > 0:
+                items.Add(new Item(path, s, false, inList || !IsProse(s), StructuralKeys.Contains(topKey)));
+                break;
+            case null:
+                break;
+            default:
+                if (node is not (IFormattable or bool))
+                {
+                    throw new DegreesException("A pack file holds a value of a kind the gates do not read.");
+                }
+
+                break;
+        }
+    }
+}

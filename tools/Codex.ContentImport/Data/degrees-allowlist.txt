@@ -1,0 +1,3 @@
+# Game terms the generated packs may capitalize in the middle of a sentence, one per line, compared without case.
+# Game terms only: no names of people, places, deities, creatures or products. These words are Licensed Material under the ORC.
+# A word the allowlist test flags is either a game term (add it here) or is redacted. It is never ignored.

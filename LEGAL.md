@@ -177,6 +177,10 @@ this project's own words with invented names, text and creatures. No text, table
   in the attribution line, which the ORC requires.
 - Not shipped inside the app: like every system other than the 5E one it is released as its own archive, so it can be withdrawn without a
   new release.
+- `tools/Codex.ContentImport/Data/degrees-redactions.yaml` (the replacement texts of the local book importer's redaction step) and
+  `degrees-allowlist.txt` (game terms) are ORC data, released with the packs the importer generates, as `Data/srd521-traps.yaml` is CC BY data.
+  They hold no source text: a redaction row stores only a hash and length of the span it removes, our own replacement words and a reason.
+  `degrees-denylist.sha256` is hashes only. None of the three holds a name.
 - Reserved Material: the name Four Degrees and every name invented for it (ancestries, backgrounds, classes, creatures, items, runes,
   hazards and places), with their descriptive and flavour text. The rules and numbers are not reserved. The product contains no Expressly
   Designated Licensed Material.
