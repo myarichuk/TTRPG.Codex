@@ -38,13 +38,30 @@ public class SheetRuleValidationTests
     public void ModifierTypes_RefuseAnUnknownStackingRule()
     {
         var def = new Codex.Plugin.Abstractions.SystemDefinition { Id = "demo", Name = "Demo" };
-        Assert.DoesNotContain(Codex.Core.Systems.SystemDefinitionLoader.Validate(def), e => e.Contains("modifierTypes"));
-        def.ModifierTypes.Penalties = "highest";
+        Assert.Empty(Codex.Core.Rules.ModifierStacking.Problems(def));
+        def.ModifierTypes.Penalties = "Highest";
         def.ModifierTypes.PenaltyTypes["untyped"] = "sum";
-        Assert.DoesNotContain(Codex.Core.Systems.SystemDefinitionLoader.Validate(def), e => e.Contains("modifierTypes"));
-        def.ModifierTypes.PenaltyTypes["status"] = "worst";
-        var errors = string.Join("\n", Codex.Core.Systems.SystemDefinitionLoader.Validate(def));
-        Assert.Contains("modifierTypes.penaltyTypes.status has unknown stacking rule 'worst'", errors);
+        def.ModifierTypes.PenaltyTypes["luck"] = "";
+        def.ModifierTypes.Types["luck"] = "";
+        def.ModifierTypes.Types["status"] = "HIGHEST";
+        Assert.Empty(Codex.Core.Rules.ModifierStacking.Problems(def));
+        Assert.Empty(Codex.Core.Systems.SystemDefinitionLoader.Validate(def));
+
+        def.ModifierTypes.Default = "none";
+        def.ModifierTypes.Types["dodge"] = "worst";
+        def.ModifierTypes.Penalties = "best";
+        def.ModifierTypes.PenaltyTypes["status"] = "min";
+        def.ModifierTypes.Types["base"] = "max";
+        def.ModifierTypes.PenaltyTypes["base"] = "sum";
+        var warnings = string.Join("\n", Codex.Core.Rules.ModifierStacking.Problems(def));
+        Assert.Contains("modifierTypes.default is 'none'", warnings);
+        Assert.Contains("modifierTypes.types.dodge is 'worst'", warnings);
+        Assert.Contains("modifierTypes.penalties is 'best'", warnings);
+        Assert.Contains("modifierTypes.penaltyTypes.status is 'min'", warnings);
+        Assert.Contains("modifierTypes.penaltyTypes.base is ignored", warnings);
+        // A warning, not a refusal: the system still validates, and the loader reports the same problems.
+        Assert.Empty(Codex.Core.Systems.SystemDefinitionLoader.Validate(def));
+        Assert.Contains(Codex.Core.PluginLoader.ProblemsOf(def), p => p.Contains("modifierTypes.default"));
     }
 
     [Fact]

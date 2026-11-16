@@ -178,8 +178,6 @@ public static class SystemDefinitionLoader
             yield return "name is required.";
         }
 
-        foreach (var error in ValidateModifierTypes(definition.ModifierTypes)) yield return error;
-
         foreach (var duplicate in Duplicates(definition.Attributes.Select(a => a.Key)))
         {
             yield return $"attribute key '{duplicate}' is declared more than once.";
@@ -726,20 +724,6 @@ public static class SystemDefinitionLoader
 
     /// <summary>The problems with the modifiers a system writes itself (a sheet kind's own, and a condition's effects): opt-ins (<c>ends</c> only on a
     /// condition's effect, a whole number to spend) and a dice amount on a target a pool roll reads.</summary>
-    private static readonly string[] StackingRules = ["sum", "highest", "lowest", "max", "min", "best"];
-
-    private static IEnumerable<string> ValidateModifierTypes(ModifierTypesDefinition types)
-    {
-        var rules = new List<(string Where, string Rule)> { ("modifierTypes.default", types.Default), ("modifierTypes.penalties", types.Penalties) };
-        rules.AddRange(types.Types.Select(t => ($"modifierTypes.types.{t.Key}", t.Value)));
-        rules.AddRange(types.PenaltyTypes.Select(t => ($"modifierTypes.penaltyTypes.{t.Key}", t.Value)));
-        foreach (var (where, rule) in rules)
-        {
-            if (rule == null || !StackingRules.Contains(rule.ToLowerInvariant()))
-                yield return $"{where} has unknown stacking rule '{rule}' (use {string.Join(", ", StackingRules)}).";
-        }
-    }
-
     private static IEnumerable<string> ValidateModifiers(SystemDefinition definition)
     {
         foreach (var kind in definition.SheetKinds)

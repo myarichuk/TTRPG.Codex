@@ -78,6 +78,21 @@ public class ModifierStackingTests
     }
 
     [Fact]
+    public void OneListWithTypedAndUntypedPenalties_UsesEachTypesOwnRule()
+    {
+        Assert.Equal(new[] { ("s1", false), ("s2", true), ("u1", true), ("u2", true) },
+            StackWith(PerTypePenalties, ("status", -1, "s1"), ("status", -2, "s2"), ("untyped", -1, "u1"), ("untyped", -1, "u2")));
+    }
+
+    [Fact]
+    public void ABlankOrUnknownPenaltyRule_CountsAsSumOrTheDefault()
+    {
+        var types = new ModifierTypesDefinition { Penalties = "highest", PenaltyTypes = new Dictionary<string, string> { ["a"] = "", ["b"] = "worst" } };
+        Assert.Equal(new[] { ("x", false), ("y", true) }, StackWith(types, ("a", -1, "x"), ("a", -2, "y")));
+        Assert.Equal(new[] { ("x", true), ("y", true) }, StackWith(types, ("b", -1, "x"), ("b", -2, "y")));
+    }
+
+    [Fact]
     public void UntypedPenaltiesAllStack_WhilePenaltyTypesNamesThem()
     {
         Assert.Equal(new[] { ("a", true), ("b", true) }, StackWith(PerTypePenalties, ("untyped", -1, "a"), ("untyped", -1, "b")));

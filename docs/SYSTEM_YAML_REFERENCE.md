@@ -994,8 +994,8 @@ Stacking by modifier type: the modifiers of a type form a group that keeps one m
 | Key | Type | What it is |
 |---|---|---|
 | `default` | text (a number is text too) | The rule for a type `types` does not name: `sum` (the default), `highest`, `lowest`, `max`, `min` or `best`. |
-| `penalties` | text (a number is text too) | The rule for the penalties (negative amounts) of a type `penaltyTypes` does not name, whatever the type's own rule, except a `best` type. Default `sum`. |
-| `penaltyTypes` | map of text (a number is text too) | Modifier type -> the rule for that type's penalties, over `penalties`. Pathfinder 2e: `penalties: highest` (a typed type keeps only its worst penalty) and `penaltyTypes: { untyped: sum }` (untyped penalties all count). A type it does not name uses `penalties`, so a system that writes none behaves as before. |
+| `penalties` | text (a number is text too) | The rule for the penalties (negative amounts) of a type `penaltyTypes` does not name: `sum` (the default), `highest` (only the worst counts) or `lowest`. Not for a value type (`max`, `min`, `best`). |
+| `penaltyTypes` | map of text (a number is text too) | Modifier type -> the rule for that type's penalties, over `penalties`. Pathfinder 2e: `penalties: highest` (a typed type keeps only its worst penalty) and `penaltyTypes: { untyped: sum }` (untyped penalties all count). A type it does not name uses `penalties`, so a system that writes none behaves as before. Ignored for a value type (`max`, `min`, `best`), whose penalties are not a group of their own. |
 | `types` | map of text (a number is text too) | Modifier type -> its rule (`dodge: sum`, `armor: highest`, `base: max`, `critFrom: min`). |
 
 ## FunctionDefinition

@@ -47,7 +47,7 @@ public sealed class SheetModelResult
 /// Modifiers come from the sheet kind's own list, from picks whose entries carry them (<c>modifiersFrom</c>) and from the
 /// conditions on the sheet (<c>conditionEffects</c>). On one target they combine by type: each type's bonuses by its
 /// stacking rule (<c>sum</c>, <c>highest</c>, <c>lowest</c>; <see cref="ModifierTypesDefinition"/>), penalties by
-/// <see cref="ModifierTypesDefinition.Penalties"/>.
+/// <see cref="ModifierTypesDefinition.PenaltyTypes"/> for that type, else <see cref="ModifierTypesDefinition.Penalties"/>.
 /// </para>
 /// </summary>
 public sealed class SheetModel
