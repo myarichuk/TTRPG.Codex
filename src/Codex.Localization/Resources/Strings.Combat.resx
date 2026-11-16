@@ -48,6 +48,8 @@
   <data name="Combat.Hazard.AllPlaces" xml:space="preserve"><value>All places</value></data>
   <data name="Combat.Hazard.None" xml:space="preserve"><value>No hazard is placed here. Place one on a place's page.</value></data>
   <data name="Combat.Hazard.Who" xml:space="preserve"><value>Characters</value></data>
+  <data name="Combat.Hazard.Reach" xml:space="preserve"><value>Also reached if a try sets it off</value></data>
+  <data name="Combat.Hazard.ReachHint" xml:space="preserve"><value>Used by Disable only. When a failed try sets the hazard off, it hits the one who tried; tick more characters here for an area hazard or a critical failure. Leave them all clear for a trap that hits only the one who tried.</value></data>
   <data name="Combat.Hazard.WhoHint" xml:space="preserve"><value>Notice and Trigger use everyone ticked. Find and Disable use the first one ticked.</value></data>
   <data name="Combat.Hazard.NeedsNumber" xml:space="preserve"><value>A number is needed</value></data>
   <data name="Combat.Hazard.NeedsNumberHint" xml:space="preserve"><value>This sheet is printed, so type the number to use: the save bonus, or the armor class for an attack. Then press the same action again: it goes on for these creatures only, with the damage already rolled, so no one is hit twice.</value></data>

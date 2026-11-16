@@ -58,6 +58,21 @@
             </div>
         </fieldset>
 
+        @if (Hazards.Any(h => h.Disarm.Count > 0))
+        {
+            <fieldset class="mb-2" data-testid="hazard-reach" aria-describedby="hazard-reach-hint">
+                <legend class="field-label">@L["Combat.Hazard.Reach"]</legend>
+                <p class="small-muted mb-1" id="hazard-reach-hint">@L["Combat.Hazard.ReachHint"]</p>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var who in Who)
+                    {
+                        var id = who.Id;
+                        <CodexCheck Checked="@reached.Contains(id)" OnChange="e => TickReach(id, e)" data-testid="@($"hazard-reach-{id}")">@who.Name</CodexCheck>
+                    }
+                </div>
+            </fieldset>
+        }
+
         @if (NeedNumber.Count > 0)
         {
             <fieldset class="mb-2" data-testid="hazard-numbers">
@@ -255,6 +270,7 @@
     [Parameter] public string? PassesFor { get; set; }
 
     private readonly HashSet<string> ticked = new();
+    private readonly HashSet<string> reached = new();
     private readonly Dictionary<string, int> typed = new();
     private readonly Dictionary<string, string> detectWay = new();
     private readonly Dictionary<string, string> disarmWay = new();
@@ -281,6 +297,12 @@
         else ticked.Remove(id);
     }
 
+    private void TickReach(string id, ChangeEventArgs e)
+    {
+        if (e.Value is true) reached.Add(id);
+        else reached.Remove(id);
+    }
+
     private void Typed(string id, ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var number)) typed[id] = number;
@@ -298,7 +320,9 @@
         var actors = action is HazardAction.Find or HazardAction.Disable ? chosen.Take(1).ToList() : chosen;
         var numbers = NumbersFor(hazard, action, route);
         typed.Clear();
-        return OnRequest.InvokeAsync(new HazardRequest(hazard, action, actors, route, null, state, numbers));
+        // Who else a set-off reaches is chosen before the roll, and goes only with a Disable.
+        var reach = action == HazardAction.Disable ? Who.Select(w => w.Id).Where(reached.Contains).ToList() : null;
+        return OnRequest.InvokeAsync(new HazardRequest(hazard, action, actors, route, null, state, numbers, reach));
     }
 
     // A typed number answers one question ("Goblin needs a number") and goes only with the repeat of that request (the same hazard, action and route or step), for the

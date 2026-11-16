@@ -170,6 +170,10 @@
   <data name="Wizard.Hazard.Problem.AfterNoRoute.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: ״רק אחרי״ מציין ״{2}״, ואין דרך זיהוי בשם הזה.</value></data>
   <data name="Wizard.Hazard.Problem.AfterNoRoute.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: ״רק אחרי״ מציין ״{2}״, ואין דרך זיהוי בשם הזה.</value></data>
   <data name="Wizard.Hazard.Problem.AfterItself" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״ ממתינה לעצמה.</value></data>
+  <data name="Wizard.Hazard.Problem.RankUnknown.detect" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״: הדירוג ״{2}״ אינו בין דירוגי המיומנויות של המערכת הזאת.</value></data>
+  <data name="Wizard.Hazard.Problem.RankUnknown.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: הדירוג ״{2}״ אינו בין דירוגי המיומנויות של המערכת הזאת.</value></data>
+  <data name="Wizard.Hazard.Problem.RankUnknown.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: הדירוג ״{2}״ אינו בין דירוגי המיומנויות של המערכת הזאת.</value></data>
+  <data name="Wizard.Hazard.Col.SetsOffCritical" xml:space="preserve"><value>כישלון קריטי מפעיל את הסכנה</value></data>
   <data name="Wizard.Hazard.Problem.RankNone.detect" xml:space="preserve"><value>{0}דרך הזיהוי ״{1}״: צוין דירוג, אך במערכת הזאת למיומנויות אין דירוגים.</value></data>
   <data name="Wizard.Hazard.Problem.RankNone.disarm" xml:space="preserve"><value>{0}דרך הנטרול ״{1}״: צוין דירוג, אך במערכת הזאת למיומנויות אין דירוגים.</value></data>
   <data name="Wizard.Hazard.Problem.RankNone.other-way" xml:space="preserve"><value>{0}הדרך האחרת ״{1}״: צוין דירוג, אך במערכת הזאת למיומנויות אין דירוגים.</value></data>

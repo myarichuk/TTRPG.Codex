@@ -49,6 +49,7 @@ condition modifiers. Nothing here changes a system that does not name the new ke
 
 ## Not built
 
+- **Done in P12 (see HAZARDS_DESIGN.md 11):** hazard checks now grade through `checkRoll` (`ActorChecks.Grade(system, ...)`), `triggersOn: [failure]` means failure or worse, and the skipped test is built. The text below is what stood before.
 - **Hazard checks keep pass or fail until P12.** `CheckService.Make` has the system, the resolver and the natural die, so reading
   `checkRoll` there is about five lines (`SheetRolls.Grade(...) is { } g ? new CheckOutcome(g.Outcome, g.Passed, g.Mark) : ActorChecks.Grade(...)`).
   It waits on a question, not on access: `triggersOn: [failure]` would then stop firing on a `criticalFailure`, and the editor offers only the

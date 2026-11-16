@@ -31,4 +31,4 @@ public sealed record HazardPlace(string Id, string Label);
 
 /// <summary>What the panel asks for: the console sends it as a <see cref="HazardCommand"/>.</summary>
 public sealed record HazardRequest(HazardView Hazard, HazardAction Action, IReadOnlyList<string> ActorIds, string? Route = null,
-    IReadOnlyList<string>? Routes = null, HazardState? State = null, IReadOnlyDictionary<string, int>? Bonuses = null);
+    IReadOnlyList<string>? Routes = null, HazardState? State = null, IReadOnlyDictionary<string, int>? Bonuses = null, IReadOnlyList<string>? Reach = null);

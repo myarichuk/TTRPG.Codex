@@ -224,6 +224,26 @@ public static class ActorChecks
     /// <summary>The default grade: a total at or above the DC passes. Replaced by the named check roll when <c>dice.checkRoll</c> is set (P6);
     /// <paramref name="natural"/> is for that, and is not read here.</summary>
     public static CheckOutcome Grade(int total, int natural, int dc) => total >= dc ? new CheckOutcome(Success, true) : new CheckOutcome(Failure, false);
+
+    /// <summary>The grade a check gets on this system: the roll <c>dice.checkRoll</c> names grades it (<see cref="SheetRolls.Grade"/>, the one place a degree is
+    /// worked out, so a hazard's check and the Actions panel always agree); a system with none, or one whose check roll cannot be worked out, keeps pass or fail
+    /// (<see cref="Grade(int, int, int)"/>). <paramref name="natural"/> is null for a passive score or an armor class (no die).</summary>
+    public static CheckOutcome Grade(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, int total, int? natural, int dc)
+    {
+        if (system.Dice.CheckRoll != null)
+        {
+            try
+            {
+                if (SheetRolls.Grade(system, resolver, sheet, total, natural, dc) is { } grade) return new CheckOutcome(grade.Outcome, grade.Passed, grade.Mark);
+            }
+            catch (Exception ex) when (ex is RollException or FormulaException or InvalidOperationException)
+            {
+                // A check roll that cannot be worked out is the system's to fix (the loader says so); the check still has its pass or fail.
+            }
+        }
+
+        return Grade(total, natural ?? 0, dc);
+    }
 }
 
 /// <summary>The rolling half, on the command loop only (it reads entities and records rolls). <c>runtime.Checks</c>. It writes no
@@ -329,7 +349,7 @@ public sealed class CheckService(CampaignRuntime runtime)
         if (reading)
         {
             // No die: the score is the passive (or the AC), compared to the DC.
-            var outcome = request.Dc is { } readDc ? ActorChecks.Grade(bonus.Value, 0, readDc) : null;
+            var outcome = request.Dc is { } readDc ? ActorChecks.Grade(system, runtime.Resolver, liveSheet ?? actor.Sheet, bonus.Value, null, readDc) : null;
             return new CheckResult(request.ActorId, spec, bonus, null, bonus.Value, request.Dc, outcome, null, CheckFailure.None);
         }
 
@@ -345,7 +365,7 @@ public sealed class CheckService(CampaignRuntime runtime)
         }
 
         int? natural = rolled.CheckDieIndex is { } at && at >= 0 && at < rolled.Kept.Count ? rolled.Kept[at] : null;
-        var graded = request.Dc is { } dc ? ActorChecks.Grade(rolled.Total, natural ?? 0, dc) : null;
+        var graded = request.Dc is { } dc ? ActorChecks.Grade(system, runtime.Resolver, liveSheet ?? actor.Sheet, rolled.Total, natural, dc) : null;
         var label = ticked.Count == 0 ? spec.Label : RollBonusLabel.Of(spec.Label, ticked, false);
         var entry = new RollLogEntry
         {
@@ -367,6 +387,26 @@ public sealed class CheckService(CampaignRuntime runtime)
         };
         runtime.RecordRoll(entry);
         return new CheckResult(request.ActorId, spec, bonus, natural, rolled.Total, request.Dc, graded, entry, CheckFailure.None);
+    }
+
+    /// <summary>The actor's rank in the skill the check is (or the skill a passive score is over), as the 1-based place in <c>sheetRules.skills.ranks</c> (0: untrained).
+    /// Null when it cannot be known: the system has no ranks, the check is no skill, or the sheet is a printed stat block. A route's minimum rank is then the game master's call.</summary>
+    public int? RankOf(string actorId, string check)
+    {
+        var system = runtime.System;
+        if (system?.SheetRules?.Skills is not { Ranks.Count: > 0 } || runtime.GetActorDocument(actorId) is not { } actor || ActorChecks.Resolve(system, check) is not { } spec) return null;
+        var skill = spec.Kind switch { CheckKind.Skill => spec.Key, CheckKind.Passive => ActorChecks.PassiveOf(system, spec)?.Skill ?? spec.Key, _ => null };
+        if (skill == null) return null;
+        try
+        {
+            var live = new SheetRuleEngine(system, runtime.Resolver).EvaluateLive(runtime.LiveSheetOf(actor), runtime.LinkedFor(actor.Sheet));
+            if (ActorChecks.IsPrinted(system, actor, live)) return null;
+            return live.Skills.FirstOrDefault(s => string.Equals(s.Key, skill, StringComparison.OrdinalIgnoreCase))?.Rank;
+        }
+        catch (Exception ex) when (ex is FormulaException or InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     /// <summary>The roll site the check's tick boxes and always-on dice are read at.</summary>

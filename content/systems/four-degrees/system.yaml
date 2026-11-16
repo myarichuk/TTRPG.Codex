@@ -106,6 +106,39 @@ entityTypes:
     label: Trinket
     pluralLabel: Trinkets
     folder: trinkets
+  # A trap, a vent or a haunt, placed on a place's feature. Detect and disarm routes name a skill, a DC, a minimum rank and how many successes
+  # it takes; `triggersOn` lists the outcomes that set it off (`failure` means a failure or worse, `criticalFailure` that outcome alone).
+  - type: hazard
+    label: Hazard
+    pluralLabel: Hazards
+    folder: hazards
+    icon: alert-triangle
+    playerFacing: false
+    summaryFields: [level, kind]
+    filterFields: [level, kind]
+    fields:
+      - { key: kind,          label: Kind,         type: Text,       category: Profile, description: "Trap, environmental or haunt." }
+      - { key: level,         label: Level,        type: Number,     category: Profile }
+      - { key: detect,        label: Detect,       type: Collection, category: Notice, description: "Ways to find it: a name, the action, a skill, a DC and a minimum rank." }
+      - { key: disarm,        label: Disarm,       type: Collection, category: Disable, description: "Ways to make it safe, the same shape, plus successes (how many it takes) and triggersOn (the outcomes that set it off)." }
+      - { key: trigger,       label: Trigger,      type: LongText,   category: Trigger }
+      - { key: duration,      label: Duration,     type: Text,       category: Trigger }
+      - { key: saveAttribute, label: Save,         type: Text,       category: Effect, description: "The attribute of the saving throw. Empty: no save." }
+      - { key: saveDc,        label: Save DC,      type: Number,     category: Effect }
+      - { key: onSave,        label: On a save,    type: Dropdown,   category: Effect, options: [half, none] }
+      - { key: damage,        label: Damage,       type: Collection, category: Effect, description: "One row per part: dice, type, and count." }
+      - { key: area,          label: Area,         type: Text,       category: Effect }
+      - { key: effect,        label: Effect,       type: LongText,   category: Effect }
+      - { key: reset,         label: Reset,        type: LongText,   category: Reset }
+    hazard:
+      notice:  { routes: detect, passive: false }
+      disable: { routes: disarm }
+      trigger: trigger
+      duration: duration
+      effect:  { save: saveAttribute, saveDc: saveDc, onSave: onSave, damage: damage, area: area, text: effect }
+      reset:   reset
+      level:   level
+
   # A creature: its numbers are printed (sheetRules.printed below), so a condition on it lowers the number the stat block shows.
   - type: creature
     label: Creature

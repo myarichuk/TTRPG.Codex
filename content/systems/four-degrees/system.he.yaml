@@ -86,6 +86,23 @@ entityTypes:
       weaponCategory: { label: קטגוריה }
       traits: { label: תכונות נשק }
   trinket: { label: קמע, pluralLabel: קמעות }
+  hazard:
+    label: סכנה
+    pluralLabel: סכנות
+    fields:
+      kind: { label: סוג }
+      level: { label: דרגה }
+      detect: { label: זיהוי }
+      disarm: { label: נטרול }
+      trigger: { label: מה מפעיל אותה }
+      duration: { label: משך }
+      saveAttribute: { label: הצלה }
+      saveDc: { label: דרגת קושי להצלה }
+      onSave: { label: בהצלה מוצלחת }
+      damage: { label: נזק }
+      area: { label: אזור }
+      effect: { label: השפעה }
+      reset: { label: איפוס }
   creature:
     label: יצור
     pluralLabel: יצורים

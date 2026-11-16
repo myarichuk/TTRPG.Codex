@@ -66,14 +66,21 @@ public class ActorCheckTests
         Assert.False(ActorChecks.Grade(14, 20, 15).Passed); // the natural die is kept for a later grade, and does not change this one
     }
 
-    [Fact(Skip = "P12: hazard checks grade through dice.checkRoll (the sheet side is built, P6)")]
+    [Fact]
     public void WhenTheSystemNamesACheckRoll_TheGradeIsItsOutcome()
     {
-        // P6 fills this in. Arrange: srd5e with dice.checkRoll naming a rolls: entry whose inputs are bonus and dc and whose outcomes are
-        // criticalSuccess (total >= input.dc + 10, passes: true), success, failure and criticalFailure. Act: a check rolling 27 against DC 15.
-        // Assert: CheckResult.Outcome is ("criticalSuccess", Passed: true), the RollLogEntry carries Outcome "criticalSuccess", and a pure
-        // Grade on a system with checkRoll agrees with the service (the Web panel and the service must not disagree).
-        Assert.Fail("P6: not built");
+        var degrees = SystemDefinitionLoader.Load(Path.Combine(TestPaths.ContentRoot, "systems", "four-degrees", "system.yaml"));
+        var sheet = new Dictionary<string, object>();
+
+        // 27 against DC 15 is ten or more over: a critical success. Beating the DC by less is a success, missing it a failure.
+        Assert.Equal(new CheckOutcome("criticalSuccess", true, "critical"), ActorChecks.Grade(degrees, NullEntryResolver.Instance, sheet, 27, 12, 15));
+        Assert.Equal(("success", true), ActorChecks.Grade(degrees, NullEntryResolver.Instance, sheet, 17, 12, 15) is { } ok ? (ok.Key, ok.Passed) : default);
+        // A natural 1 moves the degree down one step: 15 against DC 15 is a failure here, and a success on a system that grades pass or fail.
+        Assert.Equal(("failure", false), ActorChecks.Grade(degrees, NullEntryResolver.Instance, sheet, 15, 1, 15) is { } low ? (low.Key, low.Passed) : default);
+        Assert.Equal(("criticalFailure", false), ActorChecks.Grade(degrees, NullEntryResolver.Instance, sheet, 4, 2, 15) is { } worst ? (worst.Key, worst.Passed) : default);
+        Assert.Equal(new CheckOutcome("success", true), ActorChecks.Grade(Srd5e, NullEntryResolver.Instance, sheet, 15, 1, 15));
+        // A passive score has no die: the degree is read without a natural face.
+        Assert.Equal("success", ActorChecks.Grade(degrees, NullEntryResolver.Instance, sheet, 16, null, 15).Key);
     }
 
     [Fact]

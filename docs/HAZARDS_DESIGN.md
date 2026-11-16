@@ -641,6 +641,34 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     the severity as Text). From review 9: the live region repeating the same line silently, focus on n → m questions, the Other... edges, the concerns heading (`aria-labelledby`), concerns kept in the language of the
     check after a language switch (acceptable), and the levels box's `dir` in the ltr test.
 
+- **P12 (degrees, ranks and set-off targets on the four-degrees system).** Built; this closes the "For P12" and "Not built: `rank`" notes above, and the set-off choice kept above.
+  - **Degrees.** `ActorChecks.Grade(system, resolver, sheet, total, natural, dc)` grades through `SheetRolls.Grade` when the system has `dice.checkRoll` and falls back to pass or fail
+    (the old three-number `Grade`) when it has none or the roll cannot be worked out. `CheckService.Make` uses it for a rolled check and for a passive or armor-class read (no natural die,
+    so no natural 1 or 20 shift). The roll log entry carries the key (`criticalSuccess`, ...) and the mark. So a natural 1 with a total of 15 against DC 15 is a failure on a hazard and from the
+    Actions panel alike (`ActorCheckTests.WhenTheSystemNamesACheckRoll_TheGradeIsItsOutcome`, no longer skipped). srd5e has no `checkRoll`: nothing changes there.
+    A route still passes when the outcome's `Passed` is true (`passes: true` on the roll's outcomes, else success and criticalSuccess), so a critical success disarms like a success.
+  - **`rank` and `successes`.** Both were in the route shape and the loader; now the table uses them. `rank` is a key or label of `sheetRules.skills.ranks`, or its 1-based place
+    (`HazardNumbers.RankPlace`); the loader says `RankUnknown.*` for one the system lacks (new, en, ru, he). `CheckService.RankOf(actor, check)` reads the actor's rank in the skill (or the skill
+    a passive is over). Find and Disable are refused with `Refused.RankTooLow` before any roll; a sweep skips such a route without a word. **Unknown rank is not a refusal:** a printed stat
+    block, a check that is no skill and a system with no ranks cannot say, so the game master's call stands. `successes` counts in `PlacedHazard.Successes` as before (one per passed
+    check, a critical success counts as one too, a progress line says "n of m").
+  - **Decision: `failure` means failure or worse.** `HazardRoutes.SetsOff(route, outcome)`: a passed outcome never sets anything off; an outcome whose key is listed does; and
+    `criticalFailure` also fires on a route that lists `failure`. `triggersOn: [criticalFailure]` fires on that outcome alone, so a plain failure leaves the hazard quiet. The
+    homebrew vent uses that; the two others list `failure`. On a system with no degrees only `failure` ever happens, so srd5e is unchanged. The wizard's route row gets a second box
+    "A critical failure sets the hazard off" (only on a system with `checkRoll`), the book's route line says "a critical failure sets it off" for a route that lists only that.
+  - **Decision: who a set-off reaches.** The set-off still hits the one who tried (the Poisoned Needle). The Hazards panel has a new fieldset, "Also reached if a try sets it off" (a labelled
+    group of check boxes with a hint, en, ru, he, keyboard as any check box), chosen **before** the roll and sent with a Disable only (`HazardRequest.Reach` -> `HazardCommand.Reach`).
+    If the try sets the hazard off, the damage and the save go to the roller and to everyone ticked, in that order, one log line each (`Hazard.SetOffAlso`); none ticked is the old behaviour.
+    The choice is the game master's, not the data's: an area hazard or a critical failure on a disable differs table to table, so a route does not say who is reached.
+  - **The attack-repeat gap.** `HazardCommand.AttackRolled` (attack total per target) goes back as `Attacked` with `Rolled`, so a creature that hit and waited for its save bonus is not attacked
+    again; `HazardsTable` keeps it with the waiting record. Tested on a system whose hazard block names an attack.
+  - **Content.** The four-degrees system gains a `hazard` type (no passive scores, no complex hazards, no scaling table; ru and he labels) and the pack three invented hazards,
+    `lantern-snare` (level 1, trained Craft, two successes, `failure` sets it off), `cinder-vent` (level 2, an area hazard, expert Athletics, three successes, `criticalFailure` sets it off,
+    a no-check smother route) and `gravity-bell` (level 3, trained and expert Arcana, two successes). Every name, number and line is invented.
+  - **Not built:** the rank field of the wizard's route row is still free text (the loader checks it); a critical success counting as two successes; conditions on the four-degrees hazard type.
+  - **Tests:** `HazardDegreesTests` (graded check agreeing with the pure grade, rank refusal with no roll, successes counted, `failure` firing on a critical failure, `criticalFailure` alone,
+    a reach of one and none, the pack's hazards using all three features), one `HazardCommandTests` case for the attack repeat, the un-skipped `ActorCheckTests` case.
+
 ## 12. H4a: the server-side check service (interface)
 
 Plan row H4a. The new file is `src/Codex.Persistence/Runtime/CheckService.cs`, with small changes to `CampaignRuntime.cs` and

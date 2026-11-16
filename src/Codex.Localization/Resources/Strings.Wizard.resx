@@ -170,6 +170,10 @@
   <data name="Wizard.Hazard.Problem.AfterNoRoute.disarm" xml:space="preserve"><value>{0}disarm route '{1}' comes after '{2}', which is no detect route id.</value></data>
   <data name="Wizard.Hazard.Problem.AfterNoRoute.other-way" xml:space="preserve"><value>{0}other-way route '{1}' comes after '{2}', which is no detect route id.</value></data>
   <data name="Wizard.Hazard.Problem.AfterItself" xml:space="preserve"><value>{0}detect route '{1}' comes after itself.</value></data>
+  <data name="Wizard.Hazard.Problem.RankUnknown.detect" xml:space="preserve"><value>{0}detect route '{1}' names the rank '{2}', which is not in this system's sheetRules.skills.ranks.</value></data>
+  <data name="Wizard.Hazard.Problem.RankUnknown.disarm" xml:space="preserve"><value>{0}disarm route '{1}' names the rank '{2}', which is not in this system's sheetRules.skills.ranks.</value></data>
+  <data name="Wizard.Hazard.Problem.RankUnknown.other-way" xml:space="preserve"><value>{0}other-way route '{1}' names the rank '{2}', which is not in this system's sheetRules.skills.ranks.</value></data>
+  <data name="Wizard.Hazard.Col.SetsOffCritical" xml:space="preserve"><value>A critical failure sets the hazard off</value></data>
   <data name="Wizard.Hazard.Problem.RankNone.detect" xml:space="preserve"><value>{0}detect route '{1}' names a rank; this system declares no ranks in sheetRules.skills.ranks.</value></data>
   <data name="Wizard.Hazard.Problem.RankNone.disarm" xml:space="preserve"><value>{0}disarm route '{1}' names a rank; this system declares no ranks in sheetRules.skills.ranks.</value></data>
   <data name="Wizard.Hazard.Problem.RankNone.other-way" xml:space="preserve"><value>{0}other-way route '{1}' names a rank; this system declares no ranks in sheetRules.skills.ranks.</value></data>

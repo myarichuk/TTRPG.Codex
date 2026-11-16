@@ -1343,6 +1343,7 @@
   <data name="Campaign.Book.Hazard.Dc" xml:space="preserve"><value>Сл {0}</value></data>
   <data name="Campaign.Book.Hazard.Needs" xml:space="preserve"><value>требуется: {0}</value></data>
   <data name="Campaign.Book.Hazard.After" xml:space="preserve"><value>после: {0}</value></data>
+  <data name="Campaign.Book.Hazard.SetsOffCritical" xml:space="preserve"><value>критический провал приводит опасность в действие</value></data>
   <data name="Campaign.Book.Hazard.SetsOff" xml:space="preserve"><value>провал приводит опасность в действие</value></data>
   <data name="Campaign.Book.Hazard.Successes" xml:space="preserve"><value>нужно успехов: {0}</value></data>
   <data name="Campaign.Book.Hazard.NoPassive" xml:space="preserve"><value>пассивные значения её не находят</value></data>

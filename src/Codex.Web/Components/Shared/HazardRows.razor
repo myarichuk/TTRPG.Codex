@@ -42,7 +42,8 @@
             <div class="field-grid">
                 @foreach (var column in Columns)
                 {
-                    var id = $"{rowId}-{column.Key}";
+                    // Two boxes may stand for different words of one list (triggersOn: failure, criticalFailure), so a word is part of the id.
+                    var id = column.Kind == HazardColumnKind.Word ? $"{rowId}-{column.Key}-{column.Word}" : $"{rowId}-{column.Key}";
                     var key = column.Key;
                     switch (column.Kind)
                     {

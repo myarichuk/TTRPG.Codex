@@ -150,6 +150,7 @@ public static class BookStatBlocks
             if (route.After is { } after) parts.Add(words["Campaign.Book.Hazard.After", I(HazardNumbers.NoticeRoutes(numbers, hazard).FirstOrDefault(r => r.Id == after)?.Shown ?? after)]);
             if (route.Successes > 1) parts.Add(words["Campaign.Book.Hazard.Successes", route.Successes]);
             if (route.TriggersOn.Any(w => string.Equals(w, "failure", StringComparison.OrdinalIgnoreCase))) parts.Add(words["Campaign.Book.Hazard.SetsOff"]);
+            else if (route.TriggersOn.Any(w => string.Equals(w, HazardRoutes.CriticalFailure, StringComparison.OrdinalIgnoreCase))) parts.Add(words["Campaign.Book.Hazard.SetsOffCritical"]);
             if (route.Passive == false) parts.Add(words["Campaign.Book.Hazard.NoPassive"]);
             if (route.Rank is { } rank) parts.Add(words["Campaign.Book.Hazard.Rank", I(rank)]);
             if (route.Text is { } text) parts.Add(I(text));

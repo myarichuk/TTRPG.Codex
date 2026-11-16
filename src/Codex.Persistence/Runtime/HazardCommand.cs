@@ -138,6 +138,19 @@ internal sealed record HazardNoteCommand(IReadOnlyList<EventMessage> Notes, stri
 public static class HazardRoutes
 {
     public static string KeyOf(HazardRoute route) => route.Id ?? route.Name ?? route.Check ?? string.Empty;
+
+    /// <summary>The outcome key a hazard's own check set off for critical failure. The key is a content contract (the system's check roll names it).</summary>
+    public const string CriticalFailure = "criticalFailure";
+
+    /// <summary>Whether the outcome sets the hazard off. A route lists the keys that do: <c>criticalFailure</c> names that outcome alone, and <c>failure</c> means a failure or
+    /// worse, so it also fires on a critical failure (a route that wants only the plain failure lists no <c>criticalFailure</c> and none of the system's other keys). A passed
+    /// outcome never sets anything off.</summary>
+    public static bool SetsOff(HazardRoute route, CheckOutcome outcome)
+    {
+        if (outcome.Passed) return false;
+        if (route.TriggersOn.Contains(outcome.Key, StringComparer.OrdinalIgnoreCase)) return true;
+        return string.Equals(outcome.Key, CriticalFailure, StringComparison.OrdinalIgnoreCase) && route.TriggersOn.Contains(ActorChecks.Failure, StringComparer.OrdinalIgnoreCase);
+    }
 }
 
 /// <summary>
@@ -147,8 +160,16 @@ public static class HazardRoutes
 /// learns the hazard exists. A trigger's damage goes through <see cref="ApplyDamageCommand"/> for each target, each taken back by that creature's own undo.
 /// </summary>
 public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOnlyList<string> ActorIds, string RollerUserId, string? RouteId = null,
-    IReadOnlyList<string>? RouteIds = null, HazardState? State = null, IReadOnlyDictionary<string, int>? Bonuses = null, IReadOnlyList<int>? Rolled = null) : IRuntimeCommand
+    IReadOnlyList<string>? RouteIds = null, HazardState? State = null, IReadOnlyDictionary<string, int>? Bonuses = null, IReadOnlyList<int>? Rolled = null,
+    IReadOnlyList<string>? Reach = null, IReadOnlyDictionary<string, int>? Attacked = null) : IRuntimeCommand
 {
+    // The attack each target rolled (by actor id), kept so the repeat for a creature that waited for a number does not roll it again.
+    private readonly Dictionary<string, int> _attacks = new();
+
+    /// <summary>Once applied: the attack total each target rolled. Send it back as <c>Attacked</c> with <c>Rolled</c>, so a creature that waited for a number (its save bonus,
+    /// after the attack hit) is not attacked a second time.</summary>
+    public IReadOnlyDictionary<string, int> AttackRolled => _attacks;
+
     private readonly List<(string ActorId, object Token)> _damage = new();
     private readonly List<HazardAsk> _asks = new();
     private IReadOnlyList<int>? _rolledNow;
@@ -278,6 +299,8 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
         {
             foreach (var route in routes)
             {
+                // A character without the route's rank does not try it (a sweep says nothing of what it skips).
+                if (RankShort(runtime, route, actorId) != null) continue;
                 // A passive score where the block allows it and the sheet has one for the check; every other check is rolled. Never a no-check route: the sweep skips those.
                 var spec = ActorChecks.Resolve(_system, route.Check!);
                 var passive = _hazard.Notice?.Passive == true && route.Passive != false && spec != null && ActorChecks.HasPassive(_system, spec);
@@ -312,6 +335,12 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
 
         var actorId = ActorIds[0];
         var who = Actor(runtime, actorId);
+        if (RankShort(runtime, route, actorId) is { } needed)
+        {
+            Refuse("RankTooLow", route.Shown, needed, who);
+            return false;
+        }
+
         if (!Succeeds(runtime, route, actorId, who, passive: false))
         {
             if (!_needsNumber.Contains(actorId)) Say("Missed", who, route.Shown);
@@ -382,6 +411,12 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
 
         var actorId = ActorIds[0];
         var who = Actor(runtime, actorId);
+        if (RankShort(runtime, route, actorId) is { } needed)
+        {
+            Refuse("RankTooLow", route.Shown, needed, who);
+            return false;
+        }
+
         if (Succeeds(runtime, route, actorId, who, passive: false))
         {
             state.Successes++;
@@ -399,16 +434,28 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
             return true;
         }
 
-        if (_lastCheck is { Failed: CheckFailure.None, Outcome: { } outcome } && route.TriggersOn.Contains(outcome.Key, StringComparer.OrdinalIgnoreCase))
+        if (_lastCheck is { Failed: CheckFailure.None, Outcome: { } outcome } && HazardRoutes.SetsOff(route, outcome))
         {
-            // The outcome sets it off: on the one who tried.
+            // The outcome sets it off: on the one who tried, and on whoever the game master ticked before the roll (an area hazard, a critical failure).
+            var reached = new List<string> { actorId };
+            foreach (var other in (Reach ?? Array.Empty<string>()).Where(runtime.HasActor)) AddOnce(reached, other);
             Say("SetOff", who);
-            Strike(runtime, new[] { actorId });
+            foreach (var other in reached.Skip(1)) Say("SetOffAlso", Actor(runtime, other));
+            Strike(runtime, reached);
             state.State = HazardState.Triggered;
             return true;
         }
 
         return false;
+    }
+
+    /// <summary>The name of the rank a route needs when the actor has not got it; null when it can try (no rank asked, or the sheet cannot say: a printed stat block is the game master's call).</summary>
+    private string? RankShort(CampaignRuntime runtime, HazardRoute route, string actorId)
+    {
+        if (route.Rank == null || !route.HasCheck || HazardNumbers.RankPlace(_system, route.Rank) is not { } needed) return null;
+        if (runtime.Checks.RankOf(actorId, route.Check!) is not { } has || has >= needed) return null;
+        var rank = _system.SheetRules!.Skills!.Ranks[needed - 1];
+        return string.IsNullOrWhiteSpace(rank.Label) ? rank.Key : rank.Label;
     }
 
     private CheckResult? _lastCheck;
@@ -524,7 +571,9 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
                     continue;
                 }
 
-                var total = RollAttack(runtime, targetId, bonus);
+                // The repeat for a creature that waited for a number keeps the attack it already rolled: only the damage and the save are finished.
+                var total = Attacked != null && Attacked.TryGetValue(targetId, out var already) ? already : RollAttack(runtime, targetId, bonus);
+                _attacks[targetId] = total;
                 if (total < armor.Total)
                 {
                     Say("Miss", total, armor.Total, who);

@@ -35,7 +35,7 @@
     private IReadOnlyDictionary<string, int> suggested = new Dictionary<string, int>();
 
     // A trigger that hit some creatures and is waiting on a number for the rest: who is waiting and the damage already rolled.
-    private sealed record Waiting(string HazardId, HazardAction Action, string? Route, IReadOnlyList<string> Ids, IReadOnlyList<int> Rolled);
+    private sealed record Waiting(string HazardId, HazardAction Action, string? Route, IReadOnlyList<string> Ids, IReadOnlyList<int> Rolled, IReadOnlyDictionary<string, int> Attacks);
 
     private Waiting? waiting;
     private IReadOnlyList<HazardPass> passes = Array.Empty<HazardPass>();
@@ -242,7 +242,7 @@
         var again = waiting is { } w && w.HazardId == request.Hazard.Id && w.Action == request.Action && w.Route == request.Route;
         var actorIds = again ? waiting!.Ids : request.ActorIds;
         var command = new HazardCommand(listed with { Stored = stored }, request.Action, actorIds, CurrentUserId, request.Route, request.Routes, request.State, request.Bonuses,
-            again ? waiting!.Rolled : null);
+            again ? waiting!.Rolled : null, request.Reach, again ? waiting!.Attacks : null);
         try
         {
             await Runtime.EnqueueAsync(command);
@@ -268,7 +268,7 @@
 
         suggested = suggestions;
         waiting = command.Struck && command.NeedsNumber.Count > 0 && command.DamageRolled != null
-            ? new Waiting(request.Hazard.Id, request.Action, request.Route, command.NeedsNumber.ToList(), command.DamageRolled)
+            ? new Waiting(request.Hazard.Id, request.Action, request.Route, command.NeedsNumber.ToList(), command.DamageRolled, command.AttackRolled)
             : null;
         if (request.Action == HazardAction.Notice)
         {
