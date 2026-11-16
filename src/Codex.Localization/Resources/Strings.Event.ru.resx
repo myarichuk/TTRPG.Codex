@@ -185,6 +185,58 @@
   <data name="Event.Sheet.CounterChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: стол пока не умеет «{1}».</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} бросает «{1}»: {2} ({3}).</value></data>
+  <data name="Event.Check.Made" xml:space="preserve"><value>{0}: {1} {2} против СЛ {3}, {4}</value></data>
+  <data name="Event.Check.Passive" xml:space="preserve"><value>{0}: пассивная проверка {1} {2} против СЛ {3}</value></data>
+  <data name="Event.Check.NeedsBonus" xml:space="preserve"><value>{0}: для проверки «{1}» нужен введённый бонус, бросок не сделан.</value></data>
+  <data name="Event.Check.Unresolved" xml:space="preserve"><value>{0}: у проверки «{1}» нет пассивного значения, ничего не считано.</value></data>
+  <data name="Event.Check.ArmorClass" xml:space="preserve"><value>{0}: класс доспеха {1} против СЛ {2}</value></data>
+  <data name="Event.Check.Failed" xml:space="preserve"><value>{0}: проверку «{1}» не удалось сделать.</value></data>
+  <data name="Event.Check.Outcome.Success" xml:space="preserve"><value>успех</value></data>
+  <data name="Event.Check.Outcome.Failure" xml:space="preserve"><value>провал</value></data>
+  <data name="Event.Check.Outcome.Other" xml:space="preserve"><value>{0}</value></data>
+  <data name="Event.Type.Hazard" xml:space="preserve"><value>Опасность</value></data>
+  <data name="Event.Hazard.Where" xml:space="preserve"><value>Панель опасностей показывает: {0}.</value></data>
+  <data name="Event.Hazard.WhereAll" xml:space="preserve"><value>Панель опасностей показывает все места.</value></data>
+  <data name="Event.Hazard.Undone" xml:space="preserve"><value>{0}: последнее изменение отменено.</value></data>
+  <data name="Event.Hazard.Refused.CannotUndo" xml:space="preserve"><value>{0}: с тех пор она изменилась, поэтому последнее изменение отменить нельзя.</value></data>
+  <data name="Event.Hazard.Sweep" xml:space="preserve"><value>{0}: поиск.</value></data>
+  <data name="Event.Hazard.Refused.NothingToTry" xml:space="preserve"><value>{0}: искать броском больше нечего.</value></data>
+  <data name="Event.Hazard.Refused.NoRoute" xml:space="preserve"><value>{0}: такого способа нет.</value></data>
+  <data name="Event.Hazard.Refused.Locked" xml:space="preserve"><value>{0}: «{1}» пока нельзя пробовать, сначала нужно найти «{2}».</value></data>
+  <data name="Event.Hazard.Refused.NoActor" xml:space="preserve"><value>{0}: никто не выбран.</value></data>
+  <data name="Event.Hazard.Refused.AlreadyDisabled" xml:space="preserve"><value>{0} уже обезврежена.</value></data>
+  <data name="Event.Hazard.Noticed" xml:space="preserve"><value>{0}: {1} находит её ({2}).</value></data>
+  <data name="Event.Hazard.Missed" xml:space="preserve"><value>{0}: {1} не находит её ({2}).</value></data>
+  <data name="Event.Hazard.Revealed" xml:space="preserve"><value>{0}: {1} теперь знает о ней.</value></data>
+  <data name="Event.Hazard.NoRoll" xml:space="preserve"><value>{0}: {1} делает это без броска ({2}).</value></data>
+  <data name="Event.Hazard.DisableProgress" xml:space="preserve"><value>{0}: успехов {1} из {2}.</value></data>
+  <data name="Event.Hazard.Disabled" xml:space="preserve"><value>{0} обезврежена.</value></data>
+  <data name="Event.Hazard.SetOff" xml:space="preserve"><value>{0}: неудачная попытка запускает её, цель — {1}.</value></data>
+  <data name="Event.Hazard.Triggered" xml:space="preserve"><value>{0} срабатывает.</value></data>
+  <data name="Event.Hazard.Hit" xml:space="preserve"><value>{0}: атака {1} против КД {2}, {3} задет(а).</value></data>
+  <data name="Event.Hazard.Miss" xml:space="preserve"><value>{0}: атака {1} против КД {2}, {3} не задет(а).</value></data>
+  <data name="Event.Hazard.NeedsNumber" xml:space="preserve"><value>{0}: для {1} нужно ввести число, поэтому ничего не сделано.</value></data>
+  <data name="Event.Hazard.SavedHalf" xml:space="preserve"><value>{0}: {1} проходит спасбросок и получает половину.</value></data>
+  <data name="Event.Hazard.SavedNone" xml:space="preserve"><value>{0}: {1} проходит спасбросок и не получает урона.</value></data>
+  <data name="Event.Hazard.Damage" xml:space="preserve"><value>{0}: {1} получает урон: {2}.</value></data>
+  <data name="Event.Hazard.DamageTyped" xml:space="preserve"><value>{0}: {1} получает урон: {2} ({3}).</value></data>
+  <data name="Event.Hazard.Refused.DamageChanged" xml:space="preserve"><value>{0}: существо, получившее урон, с тех пор изменилось, поэтому ничего не отменено.</value></data>
+  <data name="Event.Hazard.NotWritten" xml:space="preserve"><value>{0}: она изменилась на странице места, поэтому состояние стола не записано.</value></data>
+  <data name="Event.Hazard.WriteFailed" xml:space="preserve"><value>{0}: не удалось сохранить состояние стола в месте.</value></data>
+  <data name="Event.Hazard.Immune" xml:space="preserve"><value>{0}: у {1} иммунитет к урону: {2}.</value></data>
+  <data name="Event.Hazard.Resisted" xml:space="preserve"><value>{0}: у {1} сопротивление этому урону.</value></data>
+  <data name="Event.Hazard.Vulnerable" xml:space="preserve"><value>{0}: у {1} уязвимость к этому урону.</value></data>
+  <data name="Event.Hazard.Absorbed" xml:space="preserve"><value>{0}: временные хиты поглотили {2} урона у {1}.</value></data>
+  <data name="Event.Hazard.Died" xml:space="preserve"><value>{0}: {1} погибает.</value></data>
+  <data name="Event.Hazard.Down" xml:space="preserve"><value>{0}: {1} падает без сознания.</value></data>
+  <data name="Event.Hazard.HitWhileDown" xml:space="preserve"><value>{0}: {1} получает урон без сознания, провалов спасбросков смерти добавлено: {2}.</value></data>
+  <data name="Event.Hazard.ConcentrationLost" xml:space="preserve"><value>{0}: {1} теряет концентрацию.</value></data>
+  <data name="Event.Hazard.ConcentrationSave" xml:space="preserve"><value>{0}: у {1} спасбросок концентрации, СЛ {2}.</value></data>
+  <data name="Event.Hazard.Conditions" xml:space="preserve"><value>{0}: {1} получает состояние: {2}; добавьте его вручную.</value></data>
+  <data name="Event.Hazard.State.Hidden" xml:space="preserve"><value>{0} теперь скрыта.</value></data>
+  <data name="Event.Hazard.State.Noticed" xml:space="preserve"><value>{0} теперь замечена.</value></data>
+  <data name="Event.Hazard.State.Disabled" xml:space="preserve"><value>{0} теперь обезврежена.</value></data>
+  <data name="Event.Hazard.State.Triggered" xml:space="preserve"><value>{0} теперь сработала.</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>Кампания</value></data>
   <data name="Event.Campaign.ClockChanged" xml:space="preserve"><value>{0}: {1} → {2} из {3}.</value></data>
   <data name="Event.Campaign.ClockFull" xml:space="preserve"><value>Часы «{0}» заполнены.</value></data>

@@ -1,0 +1,59 @@
+id: poisoned-darts
+type: hazard
+name: Poisoned Darts
+description: Poisoned darts shoot from tubes in the walls, through holes hidden by dust and cobwebs or by carvings and paintings.
+properties:
+  kind: trap
+  severity: Deadly
+  level: 1-4
+  trigger: A creature moves onto a pressure plate for the first time on a turn.
+  duration: Instantaneous
+  reset: At the start of the next turn, if it has activated fewer than three times.
+  saveAttribute: Dexterity
+  saveDc: 13
+  onSave: none
+  damage:
+  - dice: 1d6
+    type: poison
+    count: 1d3
+  effect: Each creature in the darts' path makes the save. On a failure it is struck by 1d3 darts and takes the damage for each one. On a success no dart hits.
+  detect:
+  - id: holes
+    name: The holes
+    action: Search
+    check: Perception
+    dc: 15
+    text: Examining the walls finds the holes the darts fly from.
+  - id: plate
+    name: The pressure plate
+    action: Search
+    check: Perception
+    dc: 15
+    text: Examining the section of floor that forms the plate.
+  disarm:
+  - id: plug
+    name: Plug the holes
+    after: holes
+    needs: Wax, cloth or detritus for every hole
+    text: With every hole plugged the darts cannot fire.
+  - id: wedge
+    name: Wedge the plate
+    after: plate
+    needs: An Iron Spike or a similar object
+    text: The plate can no longer set the trap off.
+  higherLevels:
+  - levels: 5-10
+    damage:
+    - dice: 2d6
+      type: poison
+      count: 1d3
+  - levels: 11-16
+    damage:
+    - dice: 4d6
+      type: poison
+      count: 1d3
+  - levels: 17-20
+    damage:
+    - dice: 7d6
+      type: poison
+      count: 1d3

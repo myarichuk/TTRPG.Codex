@@ -37,6 +37,7 @@ public sealed partial class SheetRuleEngine
 
     private void EvaluateSkills(IReadOnlyDictionary<string, object> sheet, SheetEvaluation result)
     {
+        foreach (var attribute in system.Attributes) result.AttributeModifiers[attribute.Key] = ModifierOf(sheet, result, attribute.Key);
         if (Rules?.Skills is not { } rules) return;
 
         // Skills and saving throws are ranked lists (SheetRuleEngine.Ranks.cs); what is left here is what reads their result.

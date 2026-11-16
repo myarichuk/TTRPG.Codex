@@ -20,8 +20,17 @@ public sealed record RuntimeSnapshot(
     IReadOnlyList<SessionNote> Notes,
     IReadOnlyDictionary<string, ActorStateSnapshot> Actors,
     int RosterVersion = 0,
-    IReadOnlyDictionary<string, object>? Campaign = null)
+    IReadOnlyDictionary<string, object>? Campaign = null,
+    IReadOnlyDictionary<string, PlacedHazard>? Hazards = null,
+    IReadOnlyCollection<string>? UndoableHazards = null)
 {
+    /// <summary>The hazards (<see cref="HazardLedger.KeyOf"/>) whose last change the table made and can offer to take back.</summary>
+    public IReadOnlyCollection<string> HazardUndo => UndoableHazards ?? Array.Empty<string>();
+
+    /// <summary>The state of the hazards the running encounter holds (<see cref="HazardLedger.KeyOf"/>), as copies; empty outside an encounter. GM-only: a page
+    /// shows it to the GM alone.</summary>
+    public IReadOnlyDictionary<string, PlacedHazard> LiveHazards => Hazards ?? new Dictionary<string, PlacedHazard>();
+
     public static RuntimeSnapshot Empty { get; } = new(
         null,
         Array.Empty<RollLogEntry>(),
@@ -31,7 +40,7 @@ public sealed record RuntimeSnapshot(
     public ActorStateSnapshot? Actor(string actorId) => Actors.GetValueOrDefault(actorId);
 }
 
-public sealed record EncounterSnapshot(string Id, int Round, int TurnIndex, IReadOnlyList<ParticipantSnapshot> Participants)
+public sealed record EncounterSnapshot(string Id, int Round, int TurnIndex, IReadOnlyList<ParticipantSnapshot> Participants, string? LocationId = null)
 {
     public ParticipantSnapshot? Current => Participants.Count > 0 && TurnIndex >= 0 && TurnIndex < Participants.Count ? Participants[TurnIndex] : null;
 }

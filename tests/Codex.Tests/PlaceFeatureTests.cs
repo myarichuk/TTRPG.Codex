@@ -63,6 +63,34 @@ public class PlaceFeatureTests
     }
 
     [Fact]
+    public void Tidy_KeepsAHazardAlone_AndCleansItsPlacement()
+    {
+        var tidy = PlaceFeature.Tidy(new PlaceFeature
+        {
+            Hazard = new PlacedHazard { Entry = " hazard/spiked-pit ", State = (HazardState)99, Successes = -3, NoticedBy = { "a", " a ", "", "b" } }
+        })!;
+
+        Assert.Equal("hazard/spiked-pit", tidy.Hazard!.Entry);
+        Assert.Equal("hazard", tidy.Hazard.EntryType);
+        Assert.Equal("spiked-pit", tidy.Hazard.EntryId);
+        Assert.Equal(HazardState.Hidden, tidy.Hazard.State);
+        Assert.Equal(0, tidy.Hazard.Successes);
+        Assert.Equal(new[] { "a", "b" }, tidy.Hazard.NoticedBy);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("spiked-pit")]
+    [InlineData("hazard/")]
+    [InlineData("/spiked-pit")]
+    public void Tidy_DropsAHazardThatNamesNoEntry(string entry) =>
+        Assert.Null(PlaceFeature.Tidy(new PlaceFeature { Hazard = new PlacedHazard { Entry = entry } }));
+
+    [Fact]
+    public void AFeatureWithOnlyAHazard_IsNotEmpty() =>
+        Assert.False(new PlaceFeature { Hazard = new PlacedHazard { Entry = "hazard/a" } }.IsEmpty);
+
+    [Fact]
     public void ParseProposal_WarnsAboutAnUnknownRegionKind()
     {
         var check = WorldBundleParser.ParseProposal("""{"regionKind": "spaceship", "entries": [{"kind": "place", "name": "Bridge", "text": "x"}]}""", WorldBuilderTests.Rules());

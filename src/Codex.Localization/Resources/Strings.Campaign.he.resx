@@ -553,6 +553,19 @@
   <data name="Campaign.Places.Feature.Container" xml:space="preserve"><value>מכל</value></data>
   <data name="Campaign.Places.Feature.Locked" xml:space="preserve"><value>נעול</value></data>
   <data name="Campaign.Places.Feature.Trapped" xml:space="preserve"><value>ממולכד</value></data>
+  <data name="Campaign.Places.Feature.Hazard" xml:space="preserve"><value>סכנה</value></data>
+  <data name="Campaign.Places.Feature.HazardEntry" xml:space="preserve"><value>סכנה מהספרייה</value></data>
+  <data name="Campaign.Places.Feature.HazardHomebrew" xml:space="preserve"><value>ביתית</value></data>
+  <data name="Campaign.Places.Feature.HazardLevels" xml:space="preserve"><value>גרסה לדרגות</value></data>
+  <data name="Campaign.Places.Feature.HazardBase" xml:space="preserve"><value>כפי שנכתב</value></data>
+  <data name="Campaign.Places.Feature.NoHazard" xml:space="preserve"><value>ללא סכנה</value></data>
+  <data name="Campaign.Places.Feature.HazardGone" xml:space="preserve"><value>{0} (כבר לא בספרייה)</value></data>
+  <data name="Campaign.Places.Feature.HazardState" xml:space="preserve"><value>מצב הסכנה</value></data>
+  <data name="Campaign.Places.Feature.HazardSuccesses" xml:space="preserve"><value>הצלחות עד כה: {0}</value></data>
+  <data name="Campaign.Places.Feature.State.Hidden" xml:space="preserve"><value>מוסתרת</value></data>
+  <data name="Campaign.Places.Feature.State.Noticed" xml:space="preserve"><value>זוהתה</value></data>
+  <data name="Campaign.Places.Feature.State.Disabled" xml:space="preserve"><value>נוטרלה</value></data>
+  <data name="Campaign.Places.Feature.State.Triggered" xml:space="preserve"><value>הופעלה</value></data>
   <data name="Campaign.Places.Feature.Concealed" xml:space="preserve"><value>מוסתר</value></data>
   <data name="Campaign.Places.Feature.HasCreature" xml:space="preserve"><value>יצור</value></data>
   <data name="Campaign.Places.Feature.Lock" xml:space="preserve"><value>מנעול</value></data>

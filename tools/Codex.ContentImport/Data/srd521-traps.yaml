@@ -1,0 +1,259 @@
+# The eight traps of the System Reference Document 5.2.1 (CC BY 4.0), "Traps" in the Gameplay Toolbox (printed pages 199-201). The 5e-bits
+# transcription the rest of the pack is read from has no traps, so they are kept here, in this project's own words, and the importer writes each
+# as an entry of type hazard.
+#
+# Every DC, die, severity, level band, area, depth and route below was checked against the SRD text. The shape is the hazard type's in
+# content/systems/srd5e/system.yaml (docs/HAZARDS_DESIGN.md 3.1): detect and disarm are lists of routes ({ id, name, action, check, dc, needs,
+# after, triggersOn, text }; a route with no check is done by what it needs), damage is a list of parts ({ dice, type, count }), and conditions
+# are rows of { name, lasts }. higherLevels rows name only the fields they change and restate a list whole; the rest keep the base value. The SRD
+# calls a trap "otherwise inert after activation", so only the two traps that reset say so in `reset`.
+#
+# Fields: id, name, description (the trap in one short paragraph, shown above the numbers), and properties.
+
+- id: collapsing-roof
+  name: Collapsing Roof
+  description: |-
+    A trip wire pulls two weak supports out from under an unstable section of ceiling, and the ceiling comes down.
+  properties:
+    kind: trap
+    severity: Deadly
+    level: 1-4
+    trigger: A creature crosses a trip wire.
+    duration: Instantaneous
+    saveAttribute: Dexterity
+    saveDc: 13
+    onSave: half
+    damage:
+      - { dice: 2d10, type: bludgeoning }
+    effect: "The first creature across the wire brings the ceiling down. Each creature beneath the unstable section makes the save, taking the damage on a failure and half as much on a success. The rubble turns the area into Difficult Terrain."
+    detect:
+      - { id: wire, name: The trip wire, action: Search, check: Perception, dc: 11, text: "Examining the area finds the trip wire and the unstable section of ceiling." }
+    disarm:
+      - { id: cut, name: Cut or avoid the wire, after: wire, text: "Once found, the wire can be cut or stepped over with no check." }
+    higherLevels:
+      - { levels: 5-10, saveDc: 15, damage: [ { dice: 4d10, type: bludgeoning } ] }
+      - { levels: 11-16, saveDc: 17, damage: [ { dice: 10d10, type: bludgeoning } ] }
+      - { levels: 17-20, saveDc: 19, damage: [ { dice: 18d10, type: bludgeoning } ] }
+
+- id: falling-net
+  name: Falling Net
+  description: |-
+    A weighted, 10-foot-square net hangs from the ceiling and drops on the first creature to cross a trip wire.
+  properties:
+    kind: trap
+    severity: Nuisance
+    level: 1-4
+    trigger: A creature crosses a trip wire.
+    duration: Instantaneous
+    saveAttribute: Dexterity
+    saveDc: 10
+    onSave: none
+    conditions:
+      - { name: Restrained, lasts: until it escapes }
+    effect: "The first creature across the wire has the net fall on it. It deals no damage. A creature that is Huge or larger succeeds on the save automatically."
+    detect:
+      - { id: wire, name: The trip wire, action: Search, check: Perception, dc: 11, text: "Examining the area finds the trip wire and the suspended net." }
+    disarm:
+      - { id: cut, name: Cut or avoid the wire, after: wire, text: "Once found, the wire can be cut or stepped over with no check." }
+    higherLevels:
+      - levels: 5-10
+        saveDc: 12
+        methods:
+          - { name: Escape, action: Action, check: Athletics, dc: 12, text: "Frees the creature or another creature within its reach." }
+          - { name: Destroy the Net, text: "The net has Armor Class 10 and 5 hit points, and is immune to Bludgeoning, Poison and Psychic damage. At 0 hit points it frees anyone caught in it." }
+          - { name: Set the Trap, action: 10 minutes, check: Sleight of Hand, dc: 13, needs: "Thieves' Tools and all of the trap's parts, including a Net", text: "Each attempt takes 10 minutes." }
+      - levels: 11-16
+        saveDc: 14
+        methods:
+          - { name: Escape, action: Action, check: Athletics, dc: 14, text: "Frees the creature or another creature within its reach." }
+          - { name: Destroy the Net, text: "The net has Armor Class 10 and 5 hit points, and is immune to Bludgeoning, Poison and Psychic damage. At 0 hit points it frees anyone caught in it." }
+          - { name: Set the Trap, action: 10 minutes, check: Sleight of Hand, dc: 13, needs: "Thieves' Tools and all of the trap's parts, including a Net", text: "Each attempt takes 10 minutes." }
+      - levels: 17-20
+        saveDc: 16
+        methods:
+          - { name: Escape, action: Action, check: Athletics, dc: 16, text: "Frees the creature or another creature within its reach." }
+          - { name: Destroy the Net, text: "The net has Armor Class 10 and 5 hit points, and is immune to Bludgeoning, Poison and Psychic damage. At 0 hit points it frees anyone caught in it." }
+          - { name: Set the Trap, action: 10 minutes, check: Sleight of Hand, dc: 13, needs: "Thieves' Tools and all of the trap's parts, including a Net", text: "Each attempt takes 10 minutes." }
+    methods:
+      - { name: Escape, action: Action, check: Athletics, dc: 10, text: "Frees the creature or another creature within its reach." }
+      - { name: Destroy the Net, text: "The net has Armor Class 10 and 5 hit points, and is immune to Bludgeoning, Poison and Psychic damage. At 0 hit points it frees anyone caught in it." }
+      - { name: Set the Trap, action: 10 minutes, check: Sleight of Hand, dc: 13, needs: "Thieves' Tools and all of the trap's parts, including a Net", text: "Each attempt takes 10 minutes." }
+
+- id: fire-casting-statue
+  name: Fire-Casting Statue
+  description: |-
+    A statue near a pressure plate, carved as anything from a dragon to a wizard, breathes a cone of magical flame over whoever steps on the plate.
+  properties:
+    kind: trap
+    severity: Deadly
+    level: 1-4
+    trigger: A creature moves onto the pressure plate for the first time on a turn, or starts its turn there.
+    duration: Instantaneous
+    reset: At the start of the next turn.
+    saveAttribute: Dexterity
+    saveDc: 15
+    onSave: half
+    damage:
+      - { dice: 2d10, type: fire }
+    area: 15-foot Cone
+    effect: "Every creature in the Cone makes the save, taking the damage on a failure and half as much on a success."
+    detect:
+      - { id: aura, name: Detect Magic, needs: A Detect Magic spell, text: "Shows an aura of Evocation magic around the statue." }
+      - { id: glyph, name: The glyph, action: Search, check: Perception, dc: 10, text: "From within 5 feet of the statue; finds a tiny glyph on it." }
+      - { id: meaning, name: Read the glyph, action: Study, check: Arcana, dc: 15, after: glyph, text: "Learns that the glyph means fire. Defacing it does not need this." }
+      - { id: plate, name: The pressure plate, action: Search, check: Perception, dc: 15, text: "Examining the section of floor that forms the plate." }
+    disarm:
+      - { id: deface, name: Deface the glyph, action: Action, after: glyph, needs: A sharp tool, text: "Defacing the glyph disarms the trap." }
+      - { id: wedge, name: Wedge the plate, after: plate, needs: An Iron Spike or a similar object, text: "The plate can no longer set the trap off." }
+    higherLevels:
+      - { levels: 5-10, damage: [ { dice: 4d10, type: fire } ], area: 30-foot Cone }
+      - { levels: 11-16, damage: [ { dice: 10d10, type: fire } ], area: 60-foot Cone }
+      - { levels: 17-20, damage: [ { dice: 18d10, type: fire } ], area: 120-foot Cone }
+
+- id: hidden-pit
+  name: Hidden Pit
+  description: |-
+    A 10-foot-deep pit under a hinged lid made of the same material as the floor around it.
+  properties:
+    kind: trap
+    severity: Nuisance
+    level: 1-4
+    trigger: A creature moves onto the pit's lid.
+    duration: Instantaneous
+    depth: 10 feet
+    damage:
+      - { dice: 1d6, type: bludgeoning }
+    effect: "The lid swings open like a trapdoor and the creature falls into the pit, taking the damage from the fall. There is no save. The lid stays open."
+    detect:
+      - { id: lid, name: The lid, action: Study, check: Investigation, dc: 15, text: "Examining the section of floor that forms the lid finds the pit." }
+    disarm:
+      - { id: wedge, name: Wedge the lid, after: lid, needs: An Iron Spike or a similar object, text: "Wedged between lid and floor, it keeps the lid shut, so the pit is safe to cross." }
+      - { id: lock, name: Hold the lid shut, after: lid, needs: Arcane Lock or similar magic }
+    higherLevels:
+      - { levels: 5-10, depth: 30 feet, damage: [ { dice: 3d6, type: bludgeoning } ] }
+      - { levels: 11-16, depth: 60 feet, damage: [ { dice: 6d6, type: bludgeoning } ] }
+      - { levels: 17-20, depth: 120 feet, damage: [ { dice: 12d6, type: bludgeoning } ] }
+    methods:
+      - { name: Escape, needs: "A Climb Speed, climbing gear, or magic such as Spider Climb", text: "The walls are smooth. Cracks big enough for handholds and footholds make it easier." }
+
+- id: poisoned-darts
+  name: Poisoned Darts
+  description: |-
+    Poisoned darts shoot from tubes in the walls, through holes hidden by dust and cobwebs or by carvings and paintings.
+  properties:
+    kind: trap
+    severity: Deadly
+    level: 1-4
+    trigger: A creature moves onto a pressure plate for the first time on a turn.
+    duration: Instantaneous
+    reset: At the start of the next turn, if it has activated fewer than three times.
+    saveAttribute: Dexterity
+    saveDc: 13
+    onSave: none
+    damage:
+      - { dice: 1d6, type: poison, count: 1d3 }
+    effect: "Each creature in the darts' path makes the save. On a failure it is struck by 1d3 darts and takes the damage for each one. On a success no dart hits."
+    detect:
+      - { id: holes, name: The holes, action: Search, check: Perception, dc: 15, text: "Examining the walls finds the holes the darts fly from." }
+      - { id: plate, name: The pressure plate, action: Search, check: Perception, dc: 15, text: "Examining the section of floor that forms the plate." }
+    disarm:
+      - { id: plug, name: Plug the holes, after: holes, needs: "Wax, cloth or detritus for every hole", text: "With every hole plugged the darts cannot fire." }
+      - { id: wedge, name: Wedge the plate, after: plate, needs: An Iron Spike or a similar object, text: "The plate can no longer set the trap off." }
+    higherLevels:
+      - { levels: 5-10, damage: [ { dice: 2d6, type: poison, count: 1d3 } ] }
+      - { levels: 11-16, damage: [ { dice: 4d6, type: poison, count: 1d3 } ] }
+      - { levels: 17-20, damage: [ { dice: 7d6, type: poison, count: 1d3 } ] }
+
+- id: poisoned-needle
+  name: Poisoned Needle
+  description: |-
+    A needle no bigger than a thorn is hidden in a lock, and stabs whoever opens it with anything but the proper key.
+  properties:
+    kind: trap
+    severity: Nuisance
+    level: 1-4
+    trigger: A creature opens the lock with anything but the proper key, or fails to disarm the trap.
+    duration: Instantaneous
+    saveAttribute: Constitution
+    saveDc: 11
+    onSave: half
+    damage:
+      - { dice: 1d10, type: poison }
+    conditions:
+      - { name: Poisoned, lasts: 1 hour }
+    effect: "The creature makes the save. On a failure it takes the damage and is Poisoned for 1 hour. On a success it takes half as much damage and nothing else."
+    detect:
+      - { id: needle, name: The needle, action: Search, check: Perception, dc: 15, text: "Examining the lock finds the needle." }
+    disarm:
+      - { id: disarm, name: Disarm the needle, action: Action, check: Sleight of Hand, dc: 15, after: needle, triggersOn: [failure], text: "A failed check sets the trap off." }
+    higherLevels:
+      - { levels: 5-10, saveDc: 13, damage: [ { dice: 2d10, type: poison } ] }
+      - { levels: 11-16, saveDc: 15, damage: [ { dice: 4d10, type: poison } ] }
+      - { levels: 17-20, saveDc: 17, damage: [ { dice: 10d10, type: poison } ] }
+    methods:
+      - { name: Avoid, needs: Knock or similar magic, text: "The trap does not trigger if the lock is opened with a Knock spell or similar magic." }
+
+- id: rolling-stone
+  name: Rolling Stone
+  description: |-
+    A hidden pressure plate sets loose a 5-foot-radius orb of solid stone, which rolls through the passage and crushes what it meets.
+  properties:
+    kind: trap
+    severity: Deadly
+    level: 11-16
+    trigger: A creature moves onto a hidden pressure plate.
+    duration: Until the stone stops rolling
+    complex: true
+    initiative: 8
+    saveAttribute: Dexterity
+    saveDc: 15
+    onSave: none
+    damage:
+      - { dice: 10d10, type: bludgeoning }
+    conditions:
+      - { name: Prone }
+    effect: "The stone and every creature nearby roll Initiative, and the stone adds its bonus. A creature the stone catches makes the save (see the routine). A failure takes the damage and falls Prone, and a success takes nothing: there is no half damage."
+    armorClass: 17
+    hitPoints: 100
+    damageThreshold: 10
+    immunities: [Poison, Psychic]
+    routine:
+      - { name: Roll, description: "On its turn the stone moves 60 feet in one direction, changing course if an obstacle redirects it. It stops when it hits a wall or similar barrier, and cannot go around corners." }
+      - { name: Through spaces, description: "The stone can move through creatures' spaces and creatures can move through its space, treating it as Difficult Terrain." }
+      - { name: Crush, description: "On any creature's turn, not only the stone's: whenever the stone enters a creature's space for the first time on a turn, or a creature enters the stone's space while it rolls, that creature makes the save, taking the damage and falling Prone on a failure." }
+    detect:
+      - { id: plate, name: The pressure plate, action: Study, check: Investigation, dc: 15, text: "Examining the section of floor that forms the plate deduces what it does." }
+    disarm:
+      - { id: wedge, name: Wedge the plate, after: plate, needs: An Iron Spike or a similar object, text: "The plate can no longer set the trap off." }
+    higherLevels:
+      - { levels: 17-20, severity: Nuisance }
+    methods:
+      - { name: Slow the Stone, action: Action, check: Athletics, dc: 20, text: "One creature tries. On a success the distance the stone moves on its turn drops by 15 feet. At 0 it stops and is no longer a threat." }
+      - { name: Destroy the Stone, text: "The stone is a Large object. Its Armor Class, hit points, damage threshold and immunities are in the numbers above." }
+
+- id: spiked-pit
+  name: Spiked Pit
+  description: |-
+    A 10-foot pit under a hinged lid made to match the floor, with sharpened wooden or metal spikes at the bottom.
+  properties:
+    kind: trap
+    severity: Deadly
+    level: 1-4
+    trigger: A creature moves onto the pit's lid.
+    duration: Instantaneous
+    depth: 10 feet
+    damage:
+      - { dice: 1d6, type: bludgeoning }
+      - { dice: 2d8, type: piercing }
+    effect: "The lid swings open and the creature falls to the bottom, taking the bludgeoning damage from the fall and the piercing damage from the spikes. There is no save. The lid stays open."
+    detect:
+      - { id: lid, name: The lid, action: Study, check: Investigation, dc: 15, text: "Examining the section of floor that forms the lid finds the pit." }
+    disarm:
+      - { id: wedge, name: Wedge the lid, after: lid, needs: An Iron Spike or a similar object, text: "Wedged between lid and floor, it keeps the lid shut, so the pit is safe to cross." }
+      - { id: lock, name: Hold the lid shut, after: lid, needs: Arcane Lock or similar magic }
+    higherLevels:
+      - { levels: 5-10, depth: 30 feet, damage: [ { dice: 3d6, type: bludgeoning }, { dice: 3d8, type: piercing } ] }
+      - { levels: 11-16, depth: 60 feet, damage: [ { dice: 6d6, type: bludgeoning }, { dice: 8d8, type: piercing } ] }
+      - { levels: 17-20, depth: 120 feet, damage: [ { dice: 12d6, type: bludgeoning }, { dice: 13d8, type: piercing } ] }
+    methods:
+      - { name: Escape, needs: "A Climb Speed, climbing gear, or magic such as Spider Climb", text: "The walls are smooth. Cracks big enough for handholds and footholds make it easier." }

@@ -1,0 +1,71 @@
+id: fire-casting-statue
+type: hazard
+name: Fire-Casting Statue
+description: A statue near a pressure plate, carved as anything from a dragon to a wizard, breathes a cone of magical flame over whoever steps on the plate.
+properties:
+  kind: trap
+  severity: Deadly
+  level: 1-4
+  trigger: A creature moves onto the pressure plate for the first time on a turn, or starts its turn there.
+  duration: Instantaneous
+  reset: At the start of the next turn.
+  saveAttribute: Dexterity
+  saveDc: 15
+  onSave: half
+  damage:
+  - dice: 2d10
+    type: fire
+  area: 15-foot Cone
+  effect: Every creature in the Cone makes the save, taking the damage on a failure and half as much on a success.
+  detect:
+  - id: aura
+    name: Detect Magic
+    needs: A Detect Magic spell
+    text: Shows an aura of Evocation magic around the statue.
+  - id: glyph
+    name: The glyph
+    action: Search
+    check: Perception
+    dc: 10
+    text: From within 5 feet of the statue; finds a tiny glyph on it.
+  - id: meaning
+    name: Read the glyph
+    action: Study
+    check: Arcana
+    dc: 15
+    after: glyph
+    text: Learns that the glyph means fire. Defacing it does not need this.
+  - id: plate
+    name: The pressure plate
+    action: Search
+    check: Perception
+    dc: 15
+    text: Examining the section of floor that forms the plate.
+  disarm:
+  - id: deface
+    name: Deface the glyph
+    action: Action
+    after: glyph
+    needs: A sharp tool
+    text: Defacing the glyph disarms the trap.
+  - id: wedge
+    name: Wedge the plate
+    after: plate
+    needs: An Iron Spike or a similar object
+    text: The plate can no longer set the trap off.
+  higherLevels:
+  - levels: 5-10
+    damage:
+    - dice: 4d10
+      type: fire
+    area: 30-foot Cone
+  - levels: 11-16
+    damage:
+    - dice: 10d10
+      type: fire
+    area: 60-foot Cone
+  - levels: 17-20
+    damage:
+    - dice: 18d10
+      type: fire
+    area: 120-foot Cone

@@ -553,6 +553,19 @@
   <data name="Campaign.Places.Feature.Container" xml:space="preserve"><value>Хранилище</value></data>
   <data name="Campaign.Places.Feature.Locked" xml:space="preserve"><value>Заперто</value></data>
   <data name="Campaign.Places.Feature.Trapped" xml:space="preserve"><value>С ловушкой</value></data>
+  <data name="Campaign.Places.Feature.Hazard" xml:space="preserve"><value>Опасность</value></data>
+  <data name="Campaign.Places.Feature.HazardEntry" xml:space="preserve"><value>Опасность из Библиотеки</value></data>
+  <data name="Campaign.Places.Feature.HazardHomebrew" xml:space="preserve"><value>своя</value></data>
+  <data name="Campaign.Places.Feature.HazardLevels" xml:space="preserve"><value>Вариант для уровней</value></data>
+  <data name="Campaign.Places.Feature.HazardBase" xml:space="preserve"><value>Как написано</value></data>
+  <data name="Campaign.Places.Feature.NoHazard" xml:space="preserve"><value>Без опасности</value></data>
+  <data name="Campaign.Places.Feature.HazardGone" xml:space="preserve"><value>{0} (больше нет в Библиотеке)</value></data>
+  <data name="Campaign.Places.Feature.HazardState" xml:space="preserve"><value>Состояние опасности</value></data>
+  <data name="Campaign.Places.Feature.HazardSuccesses" xml:space="preserve"><value>Успехов пока: {0}</value></data>
+  <data name="Campaign.Places.Feature.State.Hidden" xml:space="preserve"><value>Скрыта</value></data>
+  <data name="Campaign.Places.Feature.State.Noticed" xml:space="preserve"><value>Замечена</value></data>
+  <data name="Campaign.Places.Feature.State.Disabled" xml:space="preserve"><value>Обезврежена</value></data>
+  <data name="Campaign.Places.Feature.State.Triggered" xml:space="preserve"><value>Сработала</value></data>
   <data name="Campaign.Places.Feature.Concealed" xml:space="preserve"><value>Скрыто</value></data>
   <data name="Campaign.Places.Feature.HasCreature" xml:space="preserve"><value>Существо</value></data>
   <data name="Campaign.Places.Feature.Lock" xml:space="preserve"><value>Замок</value></data>

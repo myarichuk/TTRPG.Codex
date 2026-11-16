@@ -149,6 +149,36 @@ entityTypes:
         description: דרגת המקצוע שהיא דורשת.
       repeatable: { label: ניתנת לחזרה }
 
+  hazard:
+    label: סכנה
+    pluralLabel: סכנות
+    fields:
+      kind: { label: סוג }
+      severity: { label: חומרה }
+      level: { label: דרגות }
+      detect: { label: זיהוי }
+      disarm: { label: נטרול }
+      trigger: { label: מה מפעיל אותה }
+      duration: { label: משך }
+      saveAttribute: { label: הצלת מגן }
+      saveDc: { label: דרגת קושי להצלה }
+      onSave: { label: בהצלה מוצלחת }
+      damage: { label: נזק }
+      conditions: { label: מצבים }
+      area: { label: שטח }
+      depth: { label: עומק }
+      effect: { label: תוצאה }
+      armorClass: { label: דרגת שריון }
+      hitPoints: { label: נקודות חיים }
+      damageThreshold: { label: סף נזק }
+      immunities: { label: חסינויות }
+      initiative: { label: בונוס ליוזמה }
+      reset: { label: איפוס }
+      complex: { label: מורכבת }
+      routine: { label: סדר פעולות }
+      higherLevels: { label: דרגות גבוהות }
+      methods: { label: דרכים אחרות }
+
   subclass:
     label: תת-מקצוע
     pluralLabel: תתי-מקצועות
@@ -343,6 +373,7 @@ entityTypes:
 
 values:
   Guidance (the chosen skill): הדרכה (המיומנות שנבחרה)
+  homebrew: ביתי
   Barbarian: ברברי
   Bard: פייטן
   Cleric: כוהן

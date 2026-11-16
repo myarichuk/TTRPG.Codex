@@ -177,6 +177,10 @@
       },
       "description": "What a condition or a spell effect does while it holds, by its name in Conditions or Effects."
     },
+    "hazards": {
+      "$ref": "#/$defs/HazardRules",
+      "description": "What the system says about hazards beyond the type's own fields: how hard a hazard of each level is. Absent on a system with no hazard type."
+    },
     "rolls": {
       "type": "array",
       "items": {
@@ -640,6 +644,22 @@
           ],
           "description": "For actor blueprints: the property holding starting hit points (default \"hitPoints\")."
         },
+        "printedSkills": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "For actor blueprints: the Text field printing the creature's skill bonuses (\"History +12, Perception +10\"). The table reads a check's bonus off it only as a suggestion the GM confirms. Left out, none is offered."
+        },
+        "printedSaves": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "For actor blueprints: the Text field printing the creature's saving throw bonuses (\"DEX +3, WIS +2\"); read as PrintedSkills is."
+        },
         "attributeProperties": {
           "type": "object",
           "additionalProperties": {
@@ -654,6 +674,273 @@
         "playerFacing": {
           "type": "boolean",
           "description": "True for types a player may pick on their own sheet (class, species, background...)."
+        },
+        "hazard": {
+          "$ref": "#/$defs/HazardDefinition",
+          "description": "Makes this type a hazard (a trap, an environmental danger, a haunt): says which of its fields hold each part of a hazard. A hazard type may not also be an actor blueprint. None: entries of this type are not hazards."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardDefinition": {
+      "description": "Maps the parts every hazard can have onto the fields of one entity type. Every member names a field of that type (or, inside a group, the group's own members name fields), so the engine never reads a hard-coded property. Every part is optional.",
+      "type": "object",
+      "properties": {
+        "notice": {
+          "$ref": "#/$defs/HazardNotice",
+          "description": "How the hazard is spotted: the DC, the check, and whether a passive score may be used."
+        },
+        "disable": {
+          "$ref": "#/$defs/HazardDisable",
+          "description": "How the hazard is made safe: the DC, the check, the successes needed."
+        },
+        "trigger": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding what sets the hazard off (text)."
+        },
+        "effect": {
+          "$ref": "#/$defs/HazardEffect",
+          "description": "What the hazard does to those it catches: numbers the table can roll, and the rest as text."
+        },
+        "durability": {
+          "$ref": "#/$defs/HazardDurability",
+          "description": "The fields holding what it takes to break the hazard. Any subset."
+        },
+        "duration": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding how long the effect lasts once set off (text)."
+        },
+        "initiative": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The Number field holding a complex hazard's Initiative bonus."
+        },
+        "reset": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding how and when the hazard re-arms (text). Empty: inert after it goes off."
+        },
+        "routine": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding what a complex hazard does each round, a collection of `{ name, description }`. Only for systems with hazards that act in initiative."
+        },
+        "complex": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "A Boolean field: when true on an entry, the entry is a complex hazard that takes a turn in initiative."
+        },
+        "level": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding what scaling and the world builder read: a number, or a range of levels (`1-4`) where the system prints ranges."
+        },
+        "severity": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly)."
+        },
+        "higherLevels": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the entry's own scaled versions: a collection of `{ levels, ...changed fields }`. A row names only the fields it changes; the others keep the base value."
+        },
+        "methods": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding extra ways to deal with the hazard beyond notice and disable, a collection of `{ name, check, dc, text }`. Each is a button at the table."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardNotice": {
+      "description": "The fields that say how a hazard is noticed.",
+      "type": "object",
+      "properties": {
+        "routes": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The Collection field of detect routes. Each row is `{ id, name, action, check, dc, needs, after, rank, passive, text }`: a way to find the hazard (a check and DC, or what it takes instead). The keys are fixed engine words, as in the `methods` rows."
+        },
+        "passive": {
+          "type": "boolean",
+          "description": "True when a character's passive score for a route's check may be compared with the DC without a roll (a route can opt out with `passive: false`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardDisable": {
+      "description": "The fields that say how a hazard is disabled.",
+      "type": "object",
+      "properties": {
+        "routes": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The Collection field of disarm routes, in the same row shape as the notice routes, plus `successes` and `triggersOn` (the outcome keys that set the hazard off). A row with no `check` needs no roll: it names what it takes in `needs` or `text`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardEffect": {
+      "description": "The fields that say what a hazard does to those it catches.",
+      "type": "object",
+      "properties": {
+        "attack": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the attack bonus (a number), for a hazard that makes an attack."
+        },
+        "save": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the attribute of the saving throw (text)."
+        },
+        "saveDc": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the saving throw's DC (a number)."
+        },
+        "onSave": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding what a passed save does to the damage: `half` or `none` (text or a Dropdown)."
+        },
+        "damage": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The Collection field of damage parts, each `{ dice, type, count }`. `count` is dice or a whole number (how many times the part hits), default 1."
+        },
+        "conditions": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The Collection field of conditions, each `{ name, lasts }`. They apply on a failed save, or always when the hazard has no save."
+        },
+        "area": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the area (text, `15-foot Cone`)."
+        },
+        "text": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding everything the numbers do not say (text), such as conditions the game master adds by hand."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardDurability": {
+      "description": "The fields that say what it takes to break a hazard apart. Each names a number field.",
+      "type": "object",
+      "properties": {
+        "armorClass": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding its armor class."
+        },
+        "hardness": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding its hardness: damage taken off every hit."
+        },
+        "hitPoints": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding its hit points."
+        },
+        "brokenThreshold": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding the hit points at which it breaks."
+        },
+        "damageThreshold": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The field holding its damage threshold: a hit that deals less than this does nothing (not hardness, not the broken threshold)."
+        },
+        "immunities": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The TagList field holding the damage types and conditions it is immune to."
         }
       },
       "additionalProperties": false
@@ -4207,6 +4494,27 @@
         "by": {
           "type": "integer",
           "description": "How much it drops by. Default 1."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HazardRules": {
+      "description": "A system's guidance for how hard a hazard of each level is, for the homebrew wizard and the world builder's checks.",
+      "type": "object",
+      "properties": {
+        "scaling": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          },
+          "description": "Rows by level: each is `{ level: 5, saveDc: 15, damage: 4d10, ... }` with the other keys naming fields of the hazard type. The row with the highest level not above the hazard's applies. Guidance only; nothing is refused."
         }
       },
       "additionalProperties": false

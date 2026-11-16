@@ -21,6 +21,13 @@ public sealed record ApplyDamageCommand(string ActorId, string PoolName, int Amo
     /// <summary>Once applied: the save the creature owes to keep concentrating, or null when it was not concentrating (R4).</summary>
     public int? ConcentrationDc => _outcome.ConcentrationDc;
 
+    /// <summary>Once applied: everything the table's rules did with the damage (immunity, temporary hit points, down or dead, concentration).</summary>
+    public Codex.Core.Rules.DamageReport Report => _outcome;
+
+    /// <summary>Once applied: the damage that reached the creature (after resistance, immunity and temporary hit points), by the table's own rules; 0 when a
+    /// system handler took the damage instead.</summary>
+    public int Dealt => _outcome.Dealt;
+
     // A system with sheet kinds that handles damage itself: what its handler did, instead of the vitals rules.
     private TableEvents.Outcome? _raised;
 
@@ -944,6 +951,74 @@ public sealed record MakeRollCommand(string ActorId, string RollerUserId, Codex.
         else if (_outcome.Failed != null) parts.AddRange(_outcome.Messages);
         return SessionEvent.From("DiceRoll", parts.Count > 0 ? parts : new[] { EventMessage.Of("Sheet.Nothing", roller, Request.Definition) },
             _outcome.Touched.Count > 0 ? _outcome.Touched.Distinct().ToArray() : new[] { ActorId });
+    }
+}
+
+/// <summary>
+/// One check on its own, for the GM's "ask for a check" (docs/HAZARDS_DESIGN.md section 12): made through <see cref="CampaignRuntime.Checks"/>, so it
+/// reads the actor's live sheet, rolls the system's check die and records the roll. A secret check is a GM-only line in the log, which the
+/// players' view leaves out whole.
+/// </summary>
+public sealed record MakeCheckCommand(CheckRequest Request, string RollerUserId) : IRuntimeCommand
+{
+    // Changes no actor state (it only records a roll), as RollDiceCommand: the actor is not marked dirty or re-persisted.
+    public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
+
+    private CheckResult? _result;
+
+    /// <summary>Once applied: what the check came to.</summary>
+    public CheckResult? Result => _result;
+
+    public void Apply(CampaignRuntime runtime) => _result = runtime.Checks.Make(Request, RollerUserId);
+
+    public SessionEvent Describe(CampaignRuntime runtime) =>
+        SessionEvent.From("DiceRoll", new[] { CheckMessages.Of(runtime, Request, _result) }, new[] { Request.ActorId });
+}
+
+/// <summary>What a check says in the log: the one sentence <see cref="MakeCheckCommand"/> writes, and the hazard commands write for each check they make.
+/// A secret check names its check as a GM-only term, so the players' log leaves the whole message out.</summary>
+internal static class CheckMessages
+{
+    public static EventMessage Of(CampaignRuntime runtime, CheckRequest request, CheckResult? result)
+    {
+        var actor = runtime.ActorTerm(request.ActorId);
+        var label = result?.Spec?.Label ?? request.Check;
+        object shown = request.Secret ? EventTerm.GmOnly(label) : new EventTerm(EventTerm.SystemKind, label, runtime.System?.DisplayValue(label) ?? label);
+        EventMessage message;
+        if (result == null || result.Failed is CheckFailure.UnknownActor or CheckFailure.BadDice)
+        {
+            message = EventMessage.Of("Check.Failed", actor, shown);
+        }
+        else if (result.Failed == CheckFailure.Unresolved)
+        {
+            message = EventMessage.Of("Check.Unresolved", actor, shown);
+        }
+        else if (result.Failed != CheckFailure.None)
+        {
+            message = EventMessage.Of("Check.NeedsBonus", actor, shown);
+        }
+        else if (result.Spec?.Kind == CheckKind.ArmorClass)
+        {
+            // The fourth argument is not in the sentence: it carries the GM-only mark of a secret read, so the players' log leaves it out.
+            message = EventMessage.Of("Check.ArmorClass", actor, result.Total, result.Dc?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-", shown);
+        }
+        else if (result.Spec?.Kind == CheckKind.Passive)
+        {
+            message = EventMessage.Of("Check.Passive", actor, shown, result.Total, result.Dc?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-");
+        }
+        else if (result.Outcome is { } outcome)
+        {
+            var said = outcome.Key is ActorChecks.Success or ActorChecks.Failure
+                ? EventMessage.Of("Check.Outcome." + (outcome.Passed ? "Success" : "Failure"))
+                : EventMessage.Of("Check.Outcome.Other", new EventTerm(EventTerm.SystemKind, outcome.Key, runtime.System?.DisplayValue(outcome.Key) ?? outcome.Key));
+            message = EventMessage.Of("Check.Made", actor, shown, result.Total, result.Dc).With(new[] { said });
+        }
+        else
+        {
+            message = EventMessage.Of("Roll.Plain", actor, shown, result.Total);
+        }
+
+        return message;
     }
 }
 

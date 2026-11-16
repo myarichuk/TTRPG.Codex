@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Codex.Core.Models;
+using Codex.Core.Systems;
 using Codex.Plugin.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -176,7 +177,7 @@ public class YamlContentPackLoader : IContentPackLoader
             foreach (var file in Directory.GetFiles(folder, "*.yaml", SearchOption.AllDirectories))
             {
                 var yaml = await File.ReadAllTextAsync(file);
-                DeserializeAndRegister<ContentEntry>(yaml, manifest, (entry, prio) => RegisterEntry(entry, typeKey, type, system?.PrimaryResource, prio), file);
+                DeserializeAndRegister<ContentEntry>(yaml, manifest, (entry, prio) => RegisterEntry(entry, typeKey, type, system, prio), file);
             }
         }
 
@@ -393,8 +394,9 @@ public class YamlContentPackLoader : IContentPackLoader
         _registry.RegisterActor(item, prio);
     }
 
-    private void RegisterEntry(ContentEntry entry, string typeKey, ContentTypeDefinition? type, ResourceDefinition? primary, int prio)
+    private void RegisterEntry(ContentEntry entry, string typeKey, ContentTypeDefinition? type, SystemDefinition? system, int prio)
     {
+        var primary = system?.PrimaryResource;
         if (string.IsNullOrWhiteSpace(entry.Type))
         {
             entry.Type = typeKey;
@@ -430,6 +432,14 @@ public class YamlContentPackLoader : IContentPackLoader
         }
 
         _registry.RegisterEntry(entry, prio);
+
+        if (type is { Hazard: not null } && system != null)
+        {
+            foreach (var message in HazardNumbers.Problems(entry, type, system))
+            {
+                Problem("Hazard {Type}/{Id} in pack {PackId}: {Message}", entry.Type, entry.Id, entry.PackId, message);
+            }
+        }
 
         if (type is { ActorBlueprint: true })
         {
@@ -517,7 +527,7 @@ public class YamlContentPackLoader : IContentPackLoader
                 {
                     var type = system?.FindType(firstSegment);
                     var typeKey = type?.Type ?? firstSegment.ToLowerInvariant();
-                    DeserializeAndRegister<ContentEntry>(yaml, manifest, (item, prio) => RegisterEntry(item, typeKey, type, system?.PrimaryResource, prio), entry.FullName);
+                    DeserializeAndRegister<ContentEntry>(yaml, manifest, (item, prio) => RegisterEntry(item, typeKey, type, system, prio), entry.FullName);
                     break;
                 }
             }

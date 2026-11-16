@@ -818,6 +818,37 @@ public class PersistenceTest : IClassFixture<RavenDbFixture>, IDisposable
     }
 
     [Fact]
+    public async Task RegionRepository_KeepsOneStatePerPlacement_OfTheSameLibraryHazard_AndHidesThemFromPlayers_Async()
+    {
+        var campaignId = Guid.NewGuid().ToString();
+        var dmAccess = Access(campaignId, "dm-user", CampaignRole.DM);
+        var region = new RegionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Name = "The Sunken Vault" };
+        Assert.True(await _regionRepository.SaveAsync(region, dmAccess));
+        LocationDocument Pit(string name, PlacedHazard hazard) => new()
+        {
+            Id = Guid.NewGuid().ToString(), Name = name, Kind = PlaceKind.Feature, Visibility = ActorVisibility.Known,
+            Feature = PlaceFeature.Tidy(new PlaceFeature { Hazard = hazard })
+        };
+        Assert.True(await _regionRepository.UpsertLocationAsync(region.Id, Pit("North pit", new PlacedHazard { Entry = "hazard/spiked-pit", State = HazardState.Disabled, Successes = 2, NoticedBy = { "actor-1" }, Found = { "needle", "glyph" } }), dmAccess));
+        Assert.True(await _regionRepository.UpsertLocationAsync(region.Id, Pit("South pit", new PlacedHazard { Entry = "hazard/spiked-pit" }), dmAccess));
+
+        var forDm = (await _regionRepository.GetAsync(region.Id, dmAccess))!;
+        var north = forDm.Locations.Single(l => l.Name == "North pit").Feature!.Hazard!;
+        var south = forDm.Locations.Single(l => l.Name == "South pit").Feature!.Hazard!;
+        Assert.Equal("spiked-pit", north.EntryId);
+        Assert.Equal(HazardState.Disabled, north.State);
+        Assert.Equal(2, north.Successes);
+        Assert.Equal(new[] { "actor-1" }, north.NoticedBy);
+        Assert.Equal(new[] { "needle", "glyph" }, north.Found);
+        Assert.Equal(HazardState.Hidden, south.State);
+        Assert.Empty(south.NoticedBy);
+        Assert.Empty(south.Found);
+
+        var forPlayer = (await _regionRepository.GetAsync(region.Id, Access(campaignId, "player-1", CampaignRole.Player)))!;
+        Assert.All(forPlayer.Locations, l => Assert.Null(l.Feature));
+    }
+
+    [Fact]
     public async Task ActorRepository_MovesItems_TheDmAnywhere_APlayerOnlyTheirOwnToAnotherPlayer_Async()
     {
         var campaignId = Guid.NewGuid().ToString();

@@ -172,6 +172,8 @@ else
             {
                 <QuickAddPanel SystemId="@Campaign.SystemId" OnAdd="QuickAddMonsterAsync" />
 
+                <HazardsTable Campaign="Campaign" Access="Access" CurrentUserId="@CurrentUserId" Runtime="runtime" Snapshot="snapshot" Actors="Actors" Definition="Definition" />
+
                 @if (Rests.Count > 0 || PartyMoments.Count > 0)
                 {
                     <section class="panel" aria-labelledby="party-rest-heading">

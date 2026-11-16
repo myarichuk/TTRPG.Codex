@@ -149,6 +149,36 @@ entityTypes:
         description: Уровень класса, который ему нужен.
       repeatable: { label: Повторяется }
 
+  hazard:
+    label: Опасность
+    pluralLabel: Опасности
+    fields:
+      kind: { label: Вид }
+      severity: { label: Тяжесть }
+      level: { label: Уровни }
+      detect: { label: Обнаружение }
+      disarm: { label: Обезвреживание }
+      trigger: { label: Что её запускает }
+      duration: { label: Длительность }
+      saveAttribute: { label: Спасбросок }
+      saveDc: { label: Сложность спасброска }
+      onSave: { label: При успешном спасброске }
+      damage: { label: Урон }
+      conditions: { label: Состояния }
+      area: { label: Область }
+      depth: { label: Глубина }
+      effect: { label: Действие }
+      armorClass: { label: Класс Брони }
+      hitPoints: { label: Очки здоровья }
+      damageThreshold: { label: Порог урона }
+      immunities: { label: Иммунитеты }
+      initiative: { label: Бонус к инициативе }
+      reset: { label: Сброс }
+      complex: { label: Сложная }
+      routine: { label: Порядок действий }
+      higherLevels: { label: Высокие уровни }
+      methods: { label: Другие способы }
+
   subclass:
     label: Подкласс
     pluralLabel: Подклассы
@@ -343,6 +373,7 @@ entityTypes:
 
 values:
   Guidance (the chosen skill): Указание (выбранный навык)
+  homebrew: самодельное
   Barbarian: Варвар
   Bard: Бард
   Cleric: Жрец

@@ -185,6 +185,58 @@
   <data name="Event.Sheet.CounterChanged" xml:space="preserve"><value>{0}: {1} {2} → {3}.</value></data>
   <data name="Event.Sheet.NotDone" xml:space="preserve"><value>{0}: the table does not do {1} yet.</value></data>
   <data name="Event.Roll.Outcome" xml:space="preserve"><value>{0} rolled {1}: {2} ({3}).</value></data>
+  <data name="Event.Check.Made" xml:space="preserve"><value>{0}: {1} {2} vs DC {3}, {4}</value></data>
+  <data name="Event.Check.Passive" xml:space="preserve"><value>{0}: passive {1} {2} vs DC {3}</value></data>
+  <data name="Event.Check.NeedsBonus" xml:space="preserve"><value>{0}: {1} needs a bonus typed in, so nothing was rolled.</value></data>
+  <data name="Event.Check.Unresolved" xml:space="preserve"><value>{0}: {1} has no passive score, so nothing was read.</value></data>
+  <data name="Event.Check.ArmorClass" xml:space="preserve"><value>{0}: armor class {1} vs DC {2}</value></data>
+  <data name="Event.Check.Failed" xml:space="preserve"><value>{0}: {1} could not be made.</value></data>
+  <data name="Event.Check.Outcome.Success" xml:space="preserve"><value>success</value></data>
+  <data name="Event.Check.Outcome.Failure" xml:space="preserve"><value>failure</value></data>
+  <data name="Event.Check.Outcome.Other" xml:space="preserve"><value>{0}</value></data>
+  <data name="Event.Type.Hazard" xml:space="preserve"><value>Hazard</value></data>
+  <data name="Event.Hazard.Where" xml:space="preserve"><value>The hazards panel looks at {0}.</value></data>
+  <data name="Event.Hazard.WhereAll" xml:space="preserve"><value>The hazards panel looks at every place.</value></data>
+  <data name="Event.Hazard.Undone" xml:space="preserve"><value>{0}: the last change is taken back.</value></data>
+  <data name="Event.Hazard.Refused.CannotUndo" xml:space="preserve"><value>{0}: it has changed since, so the last change cannot be taken back.</value></data>
+  <data name="Event.Hazard.Sweep" xml:space="preserve"><value>{0}: looking for it.</value></data>
+  <data name="Event.Hazard.Refused.NothingToTry" xml:space="preserve"><value>{0}: there is nothing left to look for with a roll.</value></data>
+  <data name="Event.Hazard.Refused.NoRoute" xml:space="preserve"><value>{0}: there is no such way to deal with it.</value></data>
+  <data name="Event.Hazard.Refused.Locked" xml:space="preserve"><value>{0}: {1} cannot be tried yet; it comes after {2}.</value></data>
+  <data name="Event.Hazard.Refused.NoActor" xml:space="preserve"><value>{0}: nobody was chosen.</value></data>
+  <data name="Event.Hazard.Refused.AlreadyDisabled" xml:space="preserve"><value>{0} is already disabled.</value></data>
+  <data name="Event.Hazard.Noticed" xml:space="preserve"><value>{0}: {1} finds it ({2}).</value></data>
+  <data name="Event.Hazard.Missed" xml:space="preserve"><value>{0}: {1} does not find it ({2}).</value></data>
+  <data name="Event.Hazard.Revealed" xml:space="preserve"><value>{0}: {1} now knows of it.</value></data>
+  <data name="Event.Hazard.NoRoll" xml:space="preserve"><value>{0}: {1} does it without a roll ({2}).</value></data>
+  <data name="Event.Hazard.DisableProgress" xml:space="preserve"><value>{0}: {1} of {2} successes.</value></data>
+  <data name="Event.Hazard.Disabled" xml:space="preserve"><value>{0} is disabled.</value></data>
+  <data name="Event.Hazard.SetOff" xml:space="preserve"><value>{0}: the failed attempt sets it off, on {1}.</value></data>
+  <data name="Event.Hazard.Triggered" xml:space="preserve"><value>{0} goes off.</value></data>
+  <data name="Event.Hazard.Hit" xml:space="preserve"><value>{0}: attack {1} vs armor class {2}, {3} is hit.</value></data>
+  <data name="Event.Hazard.Miss" xml:space="preserve"><value>{0}: attack {1} vs armor class {2}, {3} is missed.</value></data>
+  <data name="Event.Hazard.NeedsNumber" xml:space="preserve"><value>{0}: {1} needs a number typed in, so nothing was done for them.</value></data>
+  <data name="Event.Hazard.SavedHalf" xml:space="preserve"><value>{0}: {1} passes the save and takes half.</value></data>
+  <data name="Event.Hazard.SavedNone" xml:space="preserve"><value>{0}: {1} passes the save and takes none.</value></data>
+  <data name="Event.Hazard.Damage" xml:space="preserve"><value>{0}: {1} takes {2} damage.</value></data>
+  <data name="Event.Hazard.DamageTyped" xml:space="preserve"><value>{0}: {1} takes {2} {3} damage.</value></data>
+  <data name="Event.Hazard.Refused.DamageChanged" xml:space="preserve"><value>{0}: a creature it hurt has changed since, so nothing was taken back.</value></data>
+  <data name="Event.Hazard.NotWritten" xml:space="preserve"><value>{0}: it changed on its place's page meanwhile, so the table's state was not written.</value></data>
+  <data name="Event.Hazard.WriteFailed" xml:space="preserve"><value>{0}: the table's state could not be saved to its place.</value></data>
+  <data name="Event.Hazard.Immune" xml:space="preserve"><value>{0}: {1} is immune to {2} damage.</value></data>
+  <data name="Event.Hazard.Resisted" xml:space="preserve"><value>{0}: {1} resisted the damage.</value></data>
+  <data name="Event.Hazard.Vulnerable" xml:space="preserve"><value>{0}: {1} is vulnerable to the damage.</value></data>
+  <data name="Event.Hazard.Absorbed" xml:space="preserve"><value>{0}: temporary hit points took {2} of the damage to {1}.</value></data>
+  <data name="Event.Hazard.Died" xml:space="preserve"><value>{0}: {1} died.</value></data>
+  <data name="Event.Hazard.Down" xml:space="preserve"><value>{0}: {1} is down.</value></data>
+  <data name="Event.Hazard.HitWhileDown" xml:space="preserve"><value>{0}: {1} was hit while down, adding {2} to the failed death saves.</value></data>
+  <data name="Event.Hazard.ConcentrationLost" xml:space="preserve"><value>{0}: {1} lost concentration.</value></data>
+  <data name="Event.Hazard.ConcentrationSave" xml:space="preserve"><value>{0}: {1} owes a concentration save, DC {2}.</value></data>
+  <data name="Event.Hazard.Conditions" xml:space="preserve"><value>{0}: {1} gains {2}; add it by hand.</value></data>
+  <data name="Event.Hazard.State.Hidden" xml:space="preserve"><value>{0} is now hidden.</value></data>
+  <data name="Event.Hazard.State.Noticed" xml:space="preserve"><value>{0} is now noticed.</value></data>
+  <data name="Event.Hazard.State.Disabled" xml:space="preserve"><value>{0} is now disabled.</value></data>
+  <data name="Event.Hazard.State.Triggered" xml:space="preserve"><value>{0} is now triggered.</value></data>
   <data name="Event.Type.Campaign" xml:space="preserve"><value>Campaign</value></data>
   <data name="Event.Campaign.ClockChanged" xml:space="preserve"><value>{0}: {1} → {2} of {3}.</value></data>
   <data name="Event.Campaign.ClockFull" xml:space="preserve"><value>{0} is full.</value></data>

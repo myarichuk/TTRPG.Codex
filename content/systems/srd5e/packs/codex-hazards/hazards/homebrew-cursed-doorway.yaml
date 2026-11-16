@@ -1,0 +1,46 @@
+id: homebrew-cursed-doorway
+type: hazard
+name: Cursed Doorway
+description: A stone arch carved with a pattern of eyes. It hums faintly, and anyone who passes through without the right word feels watched from the other side.
+tags:
+- homebrew
+properties:
+  kind: haunt
+  severity: Deadly
+  level: 5-10
+  trigger: A creature passes through the arch without speaking its word aloud.
+  duration: Instantaneous
+  detect:
+  - id: arch
+    name: The pattern
+    action: Study
+    check: Arcana
+    dc: 15
+    text: Examining the arch finds the curse in its carving.
+  disarm:
+  - id: unravel
+    name: Unravel the curse
+    action: Action
+    check: Arcana
+    dc: 17
+    after: arch
+  saveAttribute: Wisdom
+  saveDc: 15
+  onSave: half
+  damage:
+  - dice: 4d10
+    type: psychic
+  conditions:
+  - name: Frightened
+    lasts: until the next dawn
+  effect: The creature makes the save. On a failure it takes the damage and is Frightened of the arch until the next dawn; on a success it takes half the damage and is not frightened.
+  reset: The curse arms again at the next dawn.
+  methods:
+  - name: Speak the word
+    check: History
+    dc: 15
+    text: Someone who has studied the people who built it can work out the word, or it may be found elsewhere in the ruin. Then the arch is harmless.
+  - name: Dispel it
+    check: Spellcasting
+    dc: 17
+    text: A spell that ends magic, cast on the arch, ends the curse for good.

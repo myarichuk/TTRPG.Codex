@@ -272,6 +272,11 @@ public static class SystemDefinitionLoader
             yield return error;
         }
 
+        foreach (var error in ValidateHazards(definition))
+        {
+            yield return error;
+        }
+
         foreach (var error in ValidateKindFeatures(definition))
         {
             yield return error;
@@ -718,6 +723,161 @@ public static class SystemDefinitionLoader
             if (!string.IsNullOrWhiteSpace(moment.OnSet) && !inputs.Contains(moment.OnSet))
             {
                 yield return $"moment '{moment.Key}': onSet '{moment.OnSet}' is not an input value of any sheet kind.";
+            }
+        }
+    }
+
+    /// <summary>The problems with the hazard types and <c>hazards.scaling</c>: every part names a field of the type (a number part a Number
+    /// field, <c>complex</c> a Boolean, the row lists Collections), <c>rank</c> only where skills have ranks, a type is not a hazard and an
+    /// actor blueprint at once, and each scaling row has a whole-number level and names fields of a hazard type.</summary>
+    private static readonly string[] KnownOnSave = ["half", "none"];
+
+    private static IEnumerable<string> ValidateHazards(SystemDefinition definition)
+    {
+        var hazardTypes = definition.EntityTypes.Where(t => t.Hazard != null && !string.IsNullOrWhiteSpace(t.Type)).ToList();
+
+        foreach (var type in hazardTypes)
+        {
+            var hazard = type.Hazard!;
+            var where = $"entity type '{type.Type}' hazard";
+            if (type.ActorBlueprint)
+            {
+                yield return $"entity type '{type.Type}' is both an actorBlueprint and a hazard; a complex hazard is registered by its 'complex' field instead.";
+            }
+
+            IEnumerable<string> Part(string part, string? field, params FieldType[] allowed)
+            {
+                if (string.IsNullOrWhiteSpace(field)) yield break;
+                // Ordinal: an entry's property is read by this exact key, so a field that differs in case would never be found.
+                var declared = type.Fields.FirstOrDefault(f => string.Equals(f.Key, field, StringComparison.Ordinal));
+                if (declared == null)
+                {
+                    var near = type.Fields.FirstOrDefault(f => string.Equals(f.Key, field, StringComparison.OrdinalIgnoreCase));
+                    yield return near != null
+                        ? $"{where}.{part} names field '{field}', which '{type.Type}' does not declare; did you mean '{near.Key}'?"
+                        : $"{where}.{part} names field '{field}', which '{type.Type}' does not declare.";
+                }
+                else if (allowed.Length > 0 && !allowed.Contains(declared.Type))
+                {
+                    yield return $"{where}.{part} names field '{field}', which is {declared.Type}; it must be {string.Join(" or ", allowed)}.";
+                }
+            }
+
+            FieldType[] text = [FieldType.Text, FieldType.LongText, FieldType.Dropdown];
+            FieldType[] number = [FieldType.Number];
+
+            var parts = new List<IEnumerable<string>>
+            {
+                Part("trigger", hazard.Trigger, text),
+                Part("duration", hazard.Duration, text),
+                Part("initiative", hazard.Initiative, number),
+                Part("reset", hazard.Reset, text),
+                Part("severity", hazard.Severity, text),
+                Part("level", hazard.Level, FieldType.Number, FieldType.Text),
+                Part("complex", hazard.Complex, FieldType.Boolean),
+                Part("routine", hazard.Routine, FieldType.Collection),
+                Part("higherLevels", hazard.HigherLevels, FieldType.Collection),
+                Part("methods", hazard.Methods, FieldType.Collection)
+            };
+            if (hazard.Notice is { } notice)
+            {
+                parts.Add(Part("notice.routes", notice.Routes, FieldType.Collection));
+            }
+
+            if (hazard.Disable is { } disable)
+            {
+                parts.Add(Part("disable.routes", disable.Routes, FieldType.Collection));
+            }
+
+            if (hazard.Effect is { } effect)
+            {
+                parts.Add(Part("effect.attack", effect.Attack, number));
+                parts.Add(Part("effect.save", effect.Save, text));
+                parts.Add(Part("effect.saveDc", effect.SaveDc, number));
+                parts.Add(Part("effect.onSave", effect.OnSave, text));
+                parts.Add(Part("effect.damage", effect.Damage, FieldType.Collection));
+                parts.Add(Part("effect.conditions", effect.Conditions, FieldType.Collection));
+                parts.Add(Part("effect.area", effect.Area, text));
+                parts.Add(Part("effect.text", effect.Text, text));
+            }
+
+            if (hazard.Durability is { } durability)
+            {
+                parts.Add(Part("durability.armorClass", durability.ArmorClass, number));
+                parts.Add(Part("durability.hardness", durability.Hardness, number));
+                parts.Add(Part("durability.hitPoints", durability.HitPoints, number));
+                parts.Add(Part("durability.brokenThreshold", durability.BrokenThreshold, number));
+                parts.Add(Part("durability.damageThreshold", durability.DamageThreshold, number));
+                parts.Add(Part("durability.immunities", durability.Immunities, FieldType.TagList));
+            }
+
+            foreach (var error in parts.SelectMany(p => p)) yield return error;
+
+            if (hazard.Notice is { Passive: true } && string.IsNullOrWhiteSpace(hazard.Notice.Routes))
+            {
+                yield return $"{where}.notice.passive needs notice.routes: a passive score is the passive of a route's check.";
+            }
+
+            // A dropdown's options must be values the engine knows how to apply to damage.
+            if (!string.IsNullOrWhiteSpace(hazard.Effect?.OnSave)
+                && type.Fields.FirstOrDefault(f => string.Equals(f.Key, hazard.Effect.OnSave, StringComparison.Ordinal)) is { Type: FieldType.Dropdown } onSave)
+            {
+                foreach (var option in onSave.Options ?? new List<string>())
+                {
+                    if (!KnownOnSave.Contains(option, StringComparer.Ordinal))
+                    {
+                        yield return $"{where}.effect.onSave names field '{onSave.Key}' with option '{option}'; the engine knows {string.Join(" and ", KnownOnSave)}.";
+                    }
+                }
+            }
+        }
+
+        if (hazardTypes.Count > 1)
+        {
+            yield return $"entity types {string.Join(", ", hazardTypes.Select(t => $"'{t.Type}'"))} all have a hazard block; a system has one hazard type for now.";
+        }
+
+        if (definition.Hazards is not { } rules) yield break;
+        if (hazardTypes.Count == 0 && rules.Scaling.Count > 0)
+        {
+            yield return "hazards.scaling needs an entity type with a hazard block; this system declares none.";
+            yield break;
+        }
+
+        var seen = new HashSet<int>();
+        for (var i = 0; i < rules.Scaling.Count; i++)
+        {
+            var row = rules.Scaling[i];
+            var at = $"hazards.scaling[{i}]";
+            var level = row.FirstOrDefault(p => string.Equals(p.Key, "level", StringComparison.OrdinalIgnoreCase)).Value;
+            if (!int.TryParse(level, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var number))
+            {
+                yield return $"{at} needs a whole-number level.";
+            }
+            else if (!seen.Add(number))
+            {
+                yield return $"{at} repeats level {number}.";
+            }
+
+            foreach (var (key, value) in row.Where(p => !string.Equals(p.Key, "level", StringComparison.OrdinalIgnoreCase)))
+            {
+                var field = hazardTypes.SelectMany(t => t.Fields).FirstOrDefault(f => string.Equals(f.Key, key, StringComparison.Ordinal));
+                if (field == null)
+                {
+                    yield return $"{at} names '{key}', which no hazard type declares as a field.";
+                }
+                else if (field.Type == FieldType.Collection && !hazardTypes.Any(t => string.Equals(t.Hazard?.Effect?.Damage, key, StringComparison.Ordinal)))
+                {
+                    yield return $"{at}.{key} is a Collection; a scaling row can only give a damage field (dice of its first part), not a list of rows.";
+                }
+                else if (field.Type == FieldType.Number && !long.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _))
+                {
+                    yield return $"{at}.{key} is '{value}'; the field is a Number, so it needs a whole number.";
+                }
+                else if (hazardTypes.Any(t => string.Equals(t.Hazard?.Effect?.Damage, key, StringComparison.Ordinal)) && !HazardNumbers.IsDice(value))
+                {
+                    yield return $"{at}.{key} is '{value}'; damage is dice such as 4d10.";
+                }
             }
         }
     }

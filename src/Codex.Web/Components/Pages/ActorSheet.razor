@@ -656,7 +656,7 @@ else
         if (live?.ActiveSession != null)
         {
             await live.EnqueueAsync(new RollDiceCommand(expression, actor.Id, currentUserId, false, request.Label));
-            lastRoll = live.Snapshot.RollLog.LastOrDefault(r => r.ActorId == actor.Id && r.Label == request.Label);
+            lastRoll = TableVisibility.OwnLast(live.Snapshot.RollLog, actor.Id, request.Label, currentUserId);
             lastRollShared = lastRoll != null;
         }
         if (lastRoll == null || !lastRollShared)

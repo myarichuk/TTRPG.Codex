@@ -1,0 +1,16 @@
+id: codex-hazards
+name: TTRPG.Codex homebrew hazards
+version: 1.0.0
+systemId: srd5e
+minAppVersion: 0.0.0
+priority: 1
+kind: world
+dependencies:
+- srd-5.2.1
+description: 'Two hazards the SRD does not have: a complex one that acts in initiative (a flooding room) and a magical one (a cursed doorway). Written by this project, with numbers taken from the system''s hazard scaling. Tagged homebrew.'
+authors:
+- TTRPG.Codex contributors
+license:
+  name: MIT
+  url: https://opensource.org/licenses/MIT
+  attribution: These hazards are original work by TTRPG.Codex contributors, released under the MIT License (https://opensource.org/licenses/MIT), independent of the repository licence.

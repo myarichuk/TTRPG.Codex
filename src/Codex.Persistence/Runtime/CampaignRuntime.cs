@@ -79,6 +79,18 @@ public sealed class CampaignRuntime : IAsyncDisposable
     /// the plugin overrides it (SWFFG's narrative dice, eventually).</summary>
     public IDiceRoller DiceRoller { get; }
 
+    /// <summary>Makes checks for a command (a hazard's notice, a GM's ask): call it from inside a command, on the loop only. It rolls and records the
+    /// roll log; the caller writes the event.</summary>
+    public CheckService Checks { get; }
+
+    /// <summary>The live state of the hazards the table has worked on, and what is written back to the places (HAZARDS_DESIGN.md 4.1): in the encounter's
+    /// <c>ActiveEffects</c> while one runs, to the place at once otherwise. A command on the loop only.</summary>
+    internal HazardLedger Hazards { get; }
+
+    /// <summary>Where a hazard's state is written back to its place (a patch of the placement alone, never the place); set by the host when the table starts.
+    /// None: hazard state changes at the table and is not stored.</summary>
+    public IRegionRepository? Places { get; set; }
+
     /// <summary>The encounter currently in progress, if any (3.5) - null until the first
     /// initiative roll of a session creates one via <see cref="GetOrCreateEncounter"/>, or the
     /// session's unfinished encounter restored when the table started.</summary>
@@ -146,6 +158,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
         _encounterRepository = encounterRepository;
         DiceRoller = diceRoller ?? StandardDiceRoller.Instance;
         System = system;
+        Checks = new CheckService(this);
+        Hazards = new HazardLedger(this);
         _activeEncounter = activeEncounter is { EndedAt: null } ? activeEncounter : null;
         PublishSnapshot();
         _loop = Task.Run(RunLoopAsync);
@@ -458,6 +472,35 @@ public sealed class CampaignRuntime : IAsyncDisposable
         return kind;
     }
 
+    /// <summary>The creature's last change as an identity, while it can still be taken back; null otherwise. A hazard keeps it to know, later, that this damage is still the
+    /// creature's last change (<see cref="HazardLedger.Undo"/>).</summary>
+    internal object? UndoToken(string actorId) =>
+        _actorEntities.TryGetValue(actorId, out var entity) && UndoableKind(actorId, entity) != null ? _undo[actorId] : null;
+
+    /// <summary>Applies an undoable command and keeps the creature's state from just before and just after it as its last change (R5), so the undo button
+    /// takes it back. The loop does this for every undoable command it runs; a command that makes several changes itself (a hazard hitting each of its
+    /// targets) calls it for each of them from inside <see cref="IRuntimeCommand.Apply"/>, so each creature's own undo still works.</summary>
+    internal void ApplyUndoably(IUndoableCommand command) => ApplyUndoably(command.ActorId, command.UndoKind, () => command.Apply(this));
+
+    /// <summary>Runs <paramref name="changes"/> (any number of changes to one creature) as one undoable change of kind <paramref name="kind"/>: the state from before the first
+    /// and after the last is the creature's last change, so the undo button takes all of them back together (a hazard's two damage parts).</summary>
+    internal void ApplyUndoably(string actorId, string kind, Action changes)
+    {
+        var target = GetEntity(actorId);
+        var before = target is { } t ? ActorState.Of(t, GetActorDocument(actorId)) : null;
+        changes();
+        if (target is { IsAlive: true } changed && before != null)
+        {
+            var after = ActorState.Of(changed, GetActorDocument(actorId));
+            if (!after.SameAs(before) || after.SheetKeysChangedFrom(before).Count > 0)
+            {
+                _undo[actorId] = new UndoPoint(kind, before, after);
+            }
+        }
+
+        _dirtyActorIds.Add(actorId);
+    }
+
     /// <summary>Lowers the valued conditions of one creature that fall at <paramref name="moment"/> (<c>turnEnd</c>, <c>turnStart</c>;
     /// <see cref="TableRules.DecreaseConditions"/>), and keeps what it changed as the creature's last change, so the undo button takes the drop back.
     /// A turn is not an undoable command itself, so the drop makes its own undo point (kind <c>TurnAdvance</c>). What it logged, or nothing.</summary>
@@ -581,6 +624,7 @@ public sealed class CampaignRuntime : IAsyncDisposable
         ended.EndedAt = DateTime.UtcNow;
         _encounterToPersist = ended;
         _activeEncounter = null;
+        Hazards.WriteBack(ended);
         return ended;
     }
 
@@ -839,18 +883,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
                 try
                 {
                     // An undoable change keeps the creature's state from just before and just after it (R5).
-                    var undoable = queued.Command as IUndoableCommand;
-                    var target = undoable != null ? GetEntity(undoable.ActorId) : null;
-                    var before = target is { } t ? ActorState.Of(t, GetActorDocument(undoable!.ActorId)) : null;
-                    queued.Command.Apply(this);
-                    if (undoable != null && target is { IsAlive: true } changed && before != null)
-                    {
-                        var after = ActorState.Of(changed, GetActorDocument(undoable.ActorId));
-                        if (!after.SameAs(before) || after.SheetKeysChangedFrom(before).Count > 0)
-                        {
-                            _undo[undoable.ActorId] = new UndoPoint(undoable.UndoKind, before, after);
-                        }
-                    }
+                    if (queued.Command is IUndoableCommand undoable) ApplyUndoably(undoable);
+                    else queued.Command.Apply(this);
 
                     foreach (var actorId in queued.Command.AffectedActorIds)
                     {
@@ -865,7 +899,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
 
                     await PersistDirtyAsync();
                     await PersistCampaignObjectsAsync();
+                    var hazardNotes = await Hazards.FlushAsync();
                     await AppendSessionEventAsync(queued.Command);
+                    if (hazardNotes.Count > 0) await AppendSessionEventAsync(new HazardNoteCommand(hazardNotes));
                     await PersistEncounterAsync();
                     PublishSnapshot();
 
@@ -1085,7 +1121,8 @@ public sealed class CampaignRuntime : IAsyncDisposable
                 live.Id,
                 live.Round,
                 live.TurnIndex,
-                live.Participants.Select(p => new ParticipantSnapshot(p.ActorId, p.InitiativeRoll, p.TieBreak, p.State, p.HasActed)).ToArray());
+                live.Participants.Select(p => new ParticipantSnapshot(p.ActorId, p.InitiativeRoll, p.TieBreak, p.State, p.HasActed)).ToArray(),
+                live.LocationId);
         }
 
         var actors = new Dictionary<string, ActorStateSnapshot>(_actorEntities.Count);
@@ -1109,7 +1146,9 @@ public sealed class CampaignRuntime : IAsyncDisposable
             _activeSession?.Notes.ToArray() ?? Array.Empty<SessionNote>(),
             actors,
             _rosterVersion,
-            Codex.Core.Rules.CampaignObjects.Copy(_campaignObjects));
+            Codex.Core.Rules.CampaignObjects.Copy(_campaignObjects),
+            Hazards.Live(),
+            Hazards.Undoable());
     }
 
     /// <summary>Write-through for the initiative tracker (3.5), mirroring

@@ -1,0 +1,45 @@
+id: collapsing-roof
+type: hazard
+name: Collapsing Roof
+description: A trip wire pulls two weak supports out from under an unstable section of ceiling, and the ceiling comes down.
+properties:
+  kind: trap
+  severity: Deadly
+  level: 1-4
+  trigger: A creature crosses a trip wire.
+  duration: Instantaneous
+  saveAttribute: Dexterity
+  saveDc: 13
+  onSave: half
+  damage:
+  - dice: 2d10
+    type: bludgeoning
+  effect: The first creature across the wire brings the ceiling down. Each creature beneath the unstable section makes the save, taking the damage on a failure and half as much on a success. The rubble turns the area into Difficult Terrain.
+  detect:
+  - id: wire
+    name: The trip wire
+    action: Search
+    check: Perception
+    dc: 11
+    text: Examining the area finds the trip wire and the unstable section of ceiling.
+  disarm:
+  - id: cut
+    name: Cut or avoid the wire
+    after: wire
+    text: Once found, the wire can be cut or stepped over with no check.
+  higherLevels:
+  - levels: 5-10
+    saveDc: 15
+    damage:
+    - dice: 4d10
+      type: bludgeoning
+  - levels: 11-16
+    saveDc: 17
+    damage:
+    - dice: 10d10
+      type: bludgeoning
+  - levels: 17-20
+    saveDc: 19
+    damage:
+    - dice: 18d10
+      type: bludgeoning
