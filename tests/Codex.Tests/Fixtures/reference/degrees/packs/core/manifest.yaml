@@ -1,0 +1,10 @@
+id: ref-degrees-core
+name: Reference four-degrees content
+version: 0.1.0
+systemId: ref-degrees
+kind: rules
+description: Just enough ancestries, classes, feats, armor and trinkets for the reference sheets in ../../spec.yaml. Every entry is invented.
+authors: [TTRPG.Codex project]
+license:
+  name: CC0-1.0
+  attribution: Test fixture released to the public domain by the TTRPG.Codex project.

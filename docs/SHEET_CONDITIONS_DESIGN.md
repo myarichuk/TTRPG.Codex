@@ -31,7 +31,7 @@ conditionEffects:
       - { target: initiative, amount: "-2 * value" }   # a D20 Test, but in srd5e a derived value, not a roll site
       - { target: speed,      amount: "-5 * value" }   # the Number actor field
 
-# A Pathfinder-style valued condition (the PF2e pack, and the pf2 reference fixture)
+# A Pathfinder-style valued condition (the PF2e pack, and the `degrees` reference fixture)
 conditionEffects:
   Frightened:
     value: { max: 4, decrease: { on: turnEnd, by: 1 } }
@@ -202,7 +202,7 @@ sheet being built, where table conditions do not apply.
 - **Turn-end decrease** on srd5e, which has no `events:`: frightened 2 is 1 after its turn, and gone after the next.
 - **Sheet and table agree:** a value raised at the table shows on the sheet page after the save, and two edits merge by delta.
 - **The `ends` path from #315 is reachable:** Guided offers +1d4 on a check, and rolling with it ticked removes Guided.
-- **Hybrid:** in the pf2 fixture, frightened 2 lowers a skill check and the class DC by 2, counted once
+- **Hybrid:** in the `degrees` fixture, frightened 2 lowers a skill check and the class DC by 2, counted once
   (`PF2E_HAZARDS_IMPLEMENTATION_PLAN.md`, P1). A target claimed by both sides is a load error.
 - **Hosts:** a character's table card attack bonus drops while the character is exhausted (a runtime test over `LiveView`, since there
   is no bUnit).
@@ -247,5 +247,5 @@ Every brief starts with the Serena line in `PF2E_HAZARDS_IMPLEMENTATION_PLAN.md`
      - Guided: +1d4 to one check, as a tick box with `ends`.
    - C1 parses and checks the list, and C6 adds the picker group. Each entry is translated like a condition (`SystemTranslation.Conditions`).
 2. **No umbrella roll target for now.** Data writes `attack`, `save` and `check` as separate modifiers. An umbrella word is
-   considered again only if the pf2 fixture reads badly without one.
+   considered again only if the `degrees` fixture reads badly without one.
 3. **Off the table, only the GM sets conditions and values on the sheet page.** Players see them read-only, as with damage today.
