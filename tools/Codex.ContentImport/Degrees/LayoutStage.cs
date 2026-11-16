@@ -49,7 +49,7 @@ public static class LayoutStage
                 var family = FontRoles.Family(l.FontName);
                 var role = Outside(l.GlyphRectangle.Left, l.GlyphRectangle.Right, l.GlyphRectangle.Bottom, l.GlyphRectangle.Top)
                     ? OffPage
-                    : roles.Classify(family, l.PointSize, l.GlyphRectangle.Left);
+                    : roles.Classify(family, l.PointSize, l.GlyphRectangle.Left, n);
                 if (role != null)
                 {
                     lettersByRole[role] = lettersByRole.GetValueOrDefault(role) + 1;
@@ -68,7 +68,7 @@ public static class LayoutStage
                 var box = w.BoundingBox;
                 var role = Outside(box.Left, box.Right, box.Bottom, box.Top)
                     ? OffPage
-                    : roles.Classify(family, first.PointSize, first.GlyphRectangle.Left) ?? "unclassified";
+                    : roles.Classify(family, first.PointSize, first.GlyphRectangle.Left, n) ?? "unclassified";
                 words.Add(new LayoutWord(n, w.Text, family, Math.Round(first.PointSize, 1), box.Left, box.Right, box.Bottom, box.Top, role));
             }
 

@@ -2,6 +2,7 @@
 #   family  substrings of the font name, with the six-letter subset tag already removed
 #   size    inclusive point-size range, rounded to a whole point
 #   x       inclusive range for the left edge of the letter, in points
+#   parity  odd or even: only pages with an odd (or even) PDF page number. Furniture changes sides between the two.
 # Every rule has a size range, so a font family seen at a new size matches nothing. A letter that matches no rule is "unclassified"
 # and fails the run, so neither a new font nor a new size can slip in unnoticed. Letters outside the page box get the role "offpage"
 # before these rules run (slug and bleed text).
@@ -11,11 +12,12 @@ rules:
   - { role: icon, family: [Icons], size: [1, 40] }
   - { role: opener, family: [TimesNewRoman], size: [1, 20] }
   # Page furniture: side tabs, page numbers, the running head and the large tab numeral.
-  - { role: furniture, family: [GoodOT-CondBold], size: [9, 9], x: [530, 700] }
-  - { role: furniture, family: [GoodOT-Bold], size: [12, 12], x: [-1000, 60] }
-  - { role: furniture, family: [GoodOT-Bold], size: [12, 12], x: [555, 1000] }
+  # Side tabs and the large tab numeral sit on the right edge of even pages only; the page number is on the outer edge of each page.
+  - { role: furniture, family: [GoodOT-CondBold], size: [9, 9], x: [530, 700], parity: even }
+  - { role: furniture, family: [GoodOT-Bold], size: [12, 12], x: [-1000, 60], parity: odd }
+  - { role: furniture, family: [GoodOT-Bold], size: [12, 12], x: [555, 1000], parity: even }
   - { role: furniture, family: [Taroca], size: [12, 12] }
-  - { role: furniture, family: [Taroca], size: [32, 32], x: [530, 700] }
+  - { role: furniture, family: [Taroca], size: [32, 32], x: [530, 700], parity: even }
   # Production metadata set in a plain sans: never body text.
   - { role: meta, family: [Helvetica], size: [1, 12] }
   - { role: entry-header, family: [GoodOT-Bold], size: [13, 13] }

@@ -280,3 +280,29 @@ lowercase form is used elsewhere in the pack. Two things move to chapter 1 becau
    `--check`, `import-report.yaml`, and the `degrees denylist` generator with its common-word exclusion. Trait keys wait for chapter 2.
 3. **Ch1b, the first pack:** the approved `conditions` row, its redaction rows and allowlist words, `packs/rules-core/` with its manifest,
    its entry in `ExpectedGeneratedPacks`, `DegreesRulesPackTests` with counts taken two ways from the document, and the LEGAL.md paragraphs.
+
+**Built (steps 1 and 2), and what differs from the text above:**
+- Step 1: `condition` (no fields) and `rule` (one `category` text field) are declared in four-degrees `system.yaml`, modelled on srd5e. Nothing else there changed.
+- Furniture by page side is a `parity: odd|even` key on a font rule (PDF page number), so the side tabs and the tab numeral are even pages only and the page number
+  sits on the outer edge of each side. Both books still classify every letter.
+- Openers are dropped as before but are kept in `BlocksResult.Dropped` (with the dropped sidebars) so the denylist can hash their words. A heading in the section or display font
+  that runs across a gutter is one block in the first column. Three or more columns are split only for rows that say `columns: 3` or more.
+- A sidebar is a block-header block and the body blocks after it, split out only on pages a "Sidebar" bookmark covers. A table is a block-header line with two or more
+  cells (words more than 10pt apart) and the lines under it; columns come from the header cells, a line with no word in the first column continues the row above.
+  Whitespace-only words, which the word extractor yields for each space, are dropped before lines are cut.
+- The take-list holds one row per parser and target, with several paths per row. A path's range runs from after its title block to the next bookmark of the same or a higher level.
+  If that bookmark starts on a page of its own the range ends at the page boundary (as the spine's page ranges do) and fails if parser-readable text sits above that page's title block.
+  The conditions list has 46 bookmark children; 4 of them are sidebar bookmarks, and the 42 left match the 42 entry headers.
+- Failures print counts, roles and page/column positions only: a path not in the book, a title block not on its page, a one-column page in a taken range (unless the row says
+  `columns: 1`), two rows taking the same blocks, a block no parser claims, a parser not built (`statblocks`, `table`, `glossary`).
+- Stage 4: the `entries` and `rules` parsers. A paragraph ends at a short line, and a bold run at a line start that is a known field label (the four degree names and a short fixed list)
+  starts one. Labelled fields and degree sections are rendered into the description as `**Label.** text` because the new types have no fields for them. The trait line and the header's
+  action icon are read into `entries.json` but not written to the pack: traits wait for chapter 2, and the type has no `actions` field. Parenthesized page references are dropped; other
+  page references stay and are counted as `pageReferencesLeft` in the report, for redaction rows.
+- `--out <pack dir>` writes the generated files of the approved rows and keeps `manifest.yaml`. It refuses a folder that holds other files and no manifest, and the root of a git
+  tree. `--check` regenerates into a temp folder and lists differing, missing and unexpected files by path. `import-report.yaml` is written into the pack as a list of mappings
+  (so the CI gate can read it) and into the work folder.
+- `degrees denylist --book <k> --pdf <p> [--out <file>]` merges the hashes into the file (default: `denylist.sha256` in the work folder). Excluded as common: a word that appears in
+  lowercase three or more times in the book, any word in a taken range, and the allowlist. Run with only the conditions rows it left 2019 words as hashes, because nearly the whole book
+  counts as left out. It should be regenerated, and committed, once every chapter's rows are on the take-list.
+- Not done here: trait keys in the allowlist (chapter 2), the three other parsers, redaction rows, the manifest and the pack (Ch1b).
