@@ -117,7 +117,7 @@ street.thresholds-follow-the-intents
 street.advancing-a-skill-spends-experience
 street.advancing-without-the-points-changes-nothing
 
-# degrees (ranks, typed bonuses, valued conditions, degrees of success): 34 of 34 on the current engine (the two turn-end drops
+# degrees (ranks, typed bonuses, valued conditions, degrees of success): 37 of 37 on the current engine (the two turn-end drops
 # of a valued condition moved into Codex.Core with P4b).
 degrees.a-rank-is-the-level-plus-its-step
 degrees.untrained-adds-the-attribute-alone
@@ -151,6 +151,9 @@ degrees.a-natural-one-cannot-go-below-critical-failure
 degrees.the-first-attack-has-no-penalty
 degrees.the-second-attack-takes-five
 degrees.the-third-attack-and-later-take-ten
+degrees.a-trait-lowers-the-second-attack-penalty
+degrees.a-trait-lowers-the-third-attack-penalty
+degrees.a-weapon-without-the-trait-keeps-the-full-penalty
 degrees.frightened-drops-by-one-at-the-end-of-the-turn
 degrees.frightened-ends-at-zero
 degrees.boosts-raise-scores-from-ten

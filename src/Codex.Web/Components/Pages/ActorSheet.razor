@@ -181,7 +181,7 @@ else
         @if (lastRoll != null)
         {
             <div class="plate-roll" data-testid="plate-roll">
-                <DiceResult Compact="true" Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" CheckDieIndex="lastRoll.CheckDieIndex" Total="lastRoll.Total" Text="@lastRoll.Result" />
+                <DiceResult Compact="true" Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" CheckDieIndex="lastRoll.CheckDieIndex" Total="lastRoll.Total" Text="@lastRoll.Result" Outcome="@LastRollOutcome" Mark="@lastRoll.Mark" />
             </div>
         }
         @* Inside the sticky plate so a result is seen wherever the page is scrolled to. *@
@@ -268,7 +268,7 @@ else
                     <div aria-live="polite">
                         @if (lastRoll != null)
                         {
-                            <DiceResult Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" CheckDieIndex="lastRoll.CheckDieIndex" Total="lastRoll.Total" Text="@lastRoll.Result" />
+                            <DiceResult Label="@lastRoll.Label" Expression="@lastRoll.Expression" Kept="lastRoll.Kept" Dropped="lastRoll.Dropped" Modifier="lastRoll.Modifier" CheckDieIndex="lastRoll.CheckDieIndex" Total="lastRoll.Total" Text="@lastRoll.Result" Outcome="@LastRollOutcome" Mark="@lastRoll.Mark" />
                             <p class="field-hint mb-0" data-testid="roll-where">@(lastRollShared ? L["Actor.Sheet.RollShared"] : L["Actor.Sheet.RollPrivate"])</p>
                         }
                         else
@@ -613,14 +613,17 @@ else
         RollWithBonusesAsync(rollMode + Plus(request.Bonus), request.Label, RollBonusTray.SiteOf(engine, request.Kind, request.Key, null), request.AddSiteNumber);
 
     /// <summary>An action's roll: an attack is a check like any other (the sheet's roll mode counts); damage is its own dice.</summary>
+    /// <summary>The last roll's degree in words (against a DC, by the system's check roll); null when it has none.</summary>
+    private string? LastRollOutcome => lastRoll?.Outcome is { } outcome ? DegreeWords.Of(L, system, outcome) ?? system?.DisplayOption(L.Culture.Name, string.Empty, outcome) ?? outcome : null;
+
     private Task RollActionAsync(ActionRoll roll) =>
-        RollWithBonusesAsync(roll.Expression ?? rollMode + Plus(roll.CheckBonus ?? 0), roll.Label, RollBonusTray.SiteOf(engine, roll.Kind, null, roll.Action), false);
+        RollWithBonusesAsync(roll.Expression ?? rollMode + Plus(roll.CheckBonus ?? 0), roll.Label, RollBonusTray.SiteOf(engine, roll.Kind, null, roll.Action), false, roll.Dc);
 
     private static string Plus(int bonus) => bonus == 0 ? "" : bonus > 0 ? $"+{bonus}" : bonus.ToString();
 
     // The sheet's bonuses for the next roll (the tray's ticks) and the always-on dice join the roll; what a ticked one spends is paid first,
     // and a roll that cannot pay is not made. The ticks it took are cleared; one that did not fit stays.
-    private async Task RollWithBonusesAsync(string expression, string label, RollSite? site, bool addNumber)
+    private async Task RollWithBonusesAsync(string expression, string label, RollSite? site, bool addNumber, int? dc = null)
     {
         var built = rollBonuses.Build(engine, RulesSheet(), site, expression, label, addNumber, linkedSheets, BonusNames);
         if (!await RollBonusTray.PayAsync(built.Applied, SpendOnSheet, BonusNames))
@@ -633,7 +636,7 @@ else
         // What a ticked bonus spent may have emptied its pool: the boxes say so now, not at the next edit.
         bonusOffers = OptInsOfSheet();
         rollBonuses.Keep(bonusOffers);
-        await RollExpressionAsync(built.Expression, built.Label);
+        await RollExpressionAsync(built.Expression, built.Label, dc);
         await EndBonusConditionsAsync(built.Applied);
     }
 
@@ -651,7 +654,7 @@ else
         }
     }
 
-    private async Task RollExpressionAsync(string expression, string label)
+    private async Task RollExpressionAsync(string expression, string label, int? dc = null)
     {
         if (actor == null || currentUserId == null) return;
         var request = new RollRequest(label, 0);
@@ -659,7 +662,7 @@ else
         var live = RuntimeManager.TryGet(CampaignId);
         if (live?.ActiveSession != null)
         {
-            await live.EnqueueAsync(new RollDiceCommand(expression, actor.Id, currentUserId, false, request.Label));
+            await live.EnqueueAsync(new RollDiceCommand(expression, actor.Id, currentUserId, false, request.Label, dc));
             lastRoll = TableVisibility.OwnLast(live.Snapshot.RollLog, actor.Id, request.Label, currentUserId);
             lastRollShared = lastRoll != null;
         }
@@ -667,6 +670,7 @@ else
         {
             var result = RuntimeManager.DiceRollerFor(campaign?.SystemId ?? string.Empty).Roll(expression);
             lastRoll = new RollLogEntry { ActorId = actor.Id, RollerUserId = currentUserId, Expression = expression, Result = result.ToString(), Total = result.Total, Label = request.Label, Kept = result.Kept.ToList(), Dropped = result.Dropped.ToList(), Modifier = result.Modifier, CheckDieIndex = result.CheckDieIndex };
+            CheckGrading.Apply(lastRoll, system, resolver ?? NullEntryResolver.Instance, editSheet, dc);
             lastRollShared = false;
         }
     }

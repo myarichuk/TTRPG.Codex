@@ -267,6 +267,32 @@ public sealed class SheetModel
         }
     }
 
+    /// <summary>What <c>attackPenalty(n)</c> says: the system's multiple attack penalty for the <paramref name="attackNumber"/>th attack, lowered by a trait
+    /// of the roll's <c>weapon</c> input when the rule names one (zero when the system has no such rule).</summary>
+    public double AttackPenalty(object? attackNumber)
+    {
+        var number = (int)Math.Max(1, Math.Floor(SheetFormulas.Number(attackNumber)));
+        var rules = _system.SheetRules?.MultipleAttack;
+        if (rules == null) return 0;
+        var weapon = _input.Get("weapon")?.ToString() is { Length: > 0 } id ? Weapon(id) : null;
+        return MultipleAttack.Penalty(rules, number, weapon == null ? null : name => weapon.Get(name));
+    }
+
+    /// <summary>The item a roll's <c>weapon</c> input names: a pick on the sheet, or failing that the library's entry of a type the sheet kind lists or the
+    /// sheet's inventory holds. Null when there is no such item.</summary>
+    public FormulaItem? Weapon(string id)
+    {
+        if (Item(id) is { } item) return item;
+        var types = (Kind?.Lists.Select(l => l.Type).OfType<string>() ?? Enumerable.Empty<string>())
+            .Concat(_system.SheetRules?.Inventory?.Types ?? new List<string>()).Distinct();
+        foreach (var type in types)
+        {
+            if (_resolver.Resolve(type, id) is { } entry) return new FormulaItem(name => name == "id" ? entry.Id : name == "name" ? entry.Name : entry.Properties.GetValueOrDefault(name));
+        }
+
+        return null;
+    }
+
     /// <summary>The pick on the sheet with this id, in any of its lists (the weapon a roll is made with), or null.</summary>
     public FormulaItem? Item(string id)
     {

@@ -868,7 +868,7 @@ public sealed record RemoveActorCommand(string ActorId) : IRuntimeCommand
 /// touch ECS state - the roll log lives on the live session, exactly like everything else 3.2
 /// already logs - so <see cref="AffectedActorIds"/> is empty.
 /// </summary>
-public sealed record RollDiceCommand(string Expression, string? ActorId, string RollerUserId, bool IsSecret, string? Label = null) : IRuntimeCommand
+public sealed record RollDiceCommand(string Expression, string? ActorId, string RollerUserId, bool IsSecret, string? Label = null, int? Dc = null) : IRuntimeCommand
 {
     public IReadOnlyCollection<string> AffectedActorIds { get; } = Array.Empty<string>();
 
@@ -879,7 +879,7 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
     public void Apply(CampaignRuntime runtime)
     {
         _result = runtime.DiceRoller.Roll(Expression);
-        runtime.RecordRoll(new RollLogEntry
+        var entry = new RollLogEntry
         {
             ActorId = ActorId,
             RollerUserId = RollerUserId,
@@ -892,7 +892,10 @@ public sealed record RollDiceCommand(string Expression, string? ActorId, string 
             Dropped = _result.Dropped.ToList(),
             Modifier = _result.Modifier,
             CheckDieIndex = _result.CheckDieIndex
-        });
+        };
+        // Against a DC, the roll says its degree (the system's checkRoll); a system without one leaves the entry as it was.
+        CheckGrading.Apply(entry, runtime.System, runtime.Resolver, ActorId == null ? null : runtime.GetActorDocument(ActorId)?.Sheet, Dc);
+        runtime.RecordRoll(entry);
     }
 
     public SessionEvent Describe(CampaignRuntime runtime)

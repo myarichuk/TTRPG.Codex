@@ -97,6 +97,34 @@ public class SheetRules
     /// <summary>What a sheet can do with a roll: casting what it picked, attacking with what it holds. Each source names
     /// where the entries are and how their attack bonus, save DC and dice are worked out. Empty: the sheet has no actions.</summary>
     public List<ActionSource> Actions { get; set; } = new();
+
+    /// <summary>The penalty on each attack of a turn after the first. Null: every attack has the same bonus.</summary>
+    public MultipleAttackRules? MultipleAttack { get; set; }
+}
+
+/// <summary>
+/// The multiple attack penalty (<c>sheetRules.multipleAttack</c>): <see cref="Penalties"/> is what the 1st, 2nd and 3rd and later attack of a
+/// turn add to the attack bonus (<c>[0, -5, -10]</c>; the last holds for every later attack). A weapon whose property <c>property</c> lists
+/// <c>has</c> (a trait) uses that variant's numbers instead, so a trait can lower it. The Actions panel passes the attack number, and a roll
+/// definition reads the same table with <c>attackPenalty(attackNumber)</c>.
+/// </summary>
+public class MultipleAttackRules
+{
+    public List<int> Penalties { get; set; } = new();
+
+    public List<MultipleAttackVariant> Variants { get; set; } = new();
+}
+
+/// <summary>A weapon trait that changes the multiple attack penalty: the first variant whose weapon has it wins.</summary>
+public class MultipleAttackVariant
+{
+    /// <summary>The weapon's property that holds its traits (a list, or one word).</summary>
+    public string Property { get; set; } = string.Empty;
+
+    /// <summary>The trait that selects this variant.</summary>
+    public string Has { get; set; } = string.Empty;
+
+    public List<int> Penalties { get; set; } = new();
 }
 
 /// <summary>

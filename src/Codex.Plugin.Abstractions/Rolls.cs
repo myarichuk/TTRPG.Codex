@@ -128,6 +128,10 @@ public sealed class RollOutcomeDefinition
     /// <summary>How the dice display marks it: <c>critical</c>, <c>fumble</c> or none. Unset, an outcome named
     /// <c>critical</c> or <c>fumble</c> is marked so.</summary>
     public string? Mark { get; set; }
+
+    /// <summary>For the roll <c>dice.checkRoll</c> names: whether reaching this outcome meets the DC (a success). Unset, an outcome whose name
+    /// starts with <c>success</c> or <c>criticalSuccess</c> passes.</summary>
+    public bool? Passes { get; set; }
 }
 
 /// <summary><c>{ when, roll }</c> or <c>{ when, intents }</c>.</summary>

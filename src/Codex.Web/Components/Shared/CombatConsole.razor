@@ -891,7 +891,7 @@ else
     }
 
     // A word of the system a roll's line shows on its own (its outcome, a sheet roll's key), in the reader's language.
-    private string RollWord(string word) => Definition?.DisplayOption(L.Culture.Name, string.Empty, word) ?? word;
+    private string RollWord(string word) => DegreeWords.Of(L, Definition, word) ?? Definition?.DisplayOption(L.Culture.Name, string.Empty, word) ?? word;
 
     private IEnumerable<RollLogEntry> VisibleRollLog() =>
         TableVisibility.Rolls(snapshot.RollLog, Access.IsDm, VisibleActorIds);

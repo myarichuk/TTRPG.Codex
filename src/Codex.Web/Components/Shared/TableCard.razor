@@ -470,7 +470,7 @@
         // What a ticked bonus spends is the table's to take; a refused spend rolls nothing.
         if (!await RollBonusTray.PayAsync(built.Applied, SpendAsync, BonusNames)) return;
         tray.Used(built.Applied);
-        await Send(new RollDiceCommand(built.Expression, Actor.Id, CurrentUserId, false, built.Label));
+        await Send(new RollDiceCommand(built.Expression, Actor.Id, CurrentUserId, false, built.Label, roll.Dc));
         // A bonus that ends a condition takes it off the creature, when it has it.
         foreach (var condition in RollBonusLive.ToEnd(built.Applied, State)) await Send(new RemoveStatusEffectCommand(Actor.Id, condition));
     }

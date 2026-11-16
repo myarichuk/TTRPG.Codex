@@ -116,6 +116,30 @@ public static partial class SheetRolls
         return new Roller(system, resolver, request.Participants, request.OptIns.ToHashSet(StringComparer.Ordinal), linked).Make(Definition(system, request.Definition), sheet, supplied, parent: null, dice, depth: 0);
     }
 
+    /// <summary>How a check against a DC came out, graded by the roll <c>dice.checkRoll</c> names: the first of its outcomes whose <c>when</c> holds for
+    /// the <paramref name="total"/> and the check die's <paramref name="natural"/> face (the roll's own inputs: <c>target</c> is the DC, <c>bonus</c> is
+    /// what the total added to the die). Null when the system names no such roll. This is the one place a degree is worked out: a roll made through
+    /// a definition and a roll the sheet makes (an attack, a skill check) agree because both read the same outcomes.</summary>
+    /// <exception cref="RollException">The system's <c>checkRoll</c> is not a roll it defines.</exception>
+    public static CheckGrade? Grade(SystemDefinition system, IEntryResolver resolver, IReadOnlyDictionary<string, object> sheet, double total, int? natural, double dc,
+        ILinkedSheets? linked = null)
+    {
+        if (system.Dice.CheckRoll is not { Length: > 0 } key) return null;
+        var definition = Definition(system, key);
+        var face = natural ?? 0;
+        var values = new Dictionary<string, object?>(StringComparer.Ordinal) { ["target"] = dc, ["bonus"] = total - face };
+        var model = new SheetModel(system, resolver, sheet, values, null, linked);
+        var names = new Dictionary<string, object>(StringComparer.Ordinal)
+        {
+            ["target"] = dc, ["bonus"] = total - face, ["natural"] = (double)face, ["kept"] = (double)face, ["total"] = total,
+            ["dice"] = new FormulaList(new List<FormulaItem> { new FormulaNumber(face) }), ["zeroDice"] = false
+        };
+        var outcome = Roller.Outcome(definition, model, names);
+        if (outcome == null) return null;
+        var passes = outcome.Passes ?? outcome.Name.ToLowerInvariant() is "success" or "criticalsuccess";
+        return new CheckGrade(outcome.Name, Roller.Mark(outcome), passes);
+    }
+
     /// <summary>The tick boxes the named roll <paramref name="rollKey"/> offers on <paramref name="sheet"/> for the <paramref name="inputs"/> given so far:
     /// every opt-in modifier whose target the roll reads (<see cref="RollTargets.Of"/>) and whose <c>when</c> holds. Inputs not given take
     /// the definition's default, and a <c>when</c> that reads one nobody gave does not hold. A group roll offers none.</summary>
@@ -215,6 +239,17 @@ public static partial class SheetRolls
             }
         }
 
+        if (system.Dice.CheckRoll is { Length: > 0 } checkRoll)
+        {
+            var graded = system.Rolls.FirstOrDefault(r => r.Key == checkRoll);
+            if (graded == null) problems.Add($"dice.checkRoll names \"{checkRoll}\", which is not a roll the system defines.");
+            else if (graded.Outcomes.Count == 0 || !new[] { "bonus", "target" }.All(i => graded.Inputs.Any(x => x.Key == i)))
+            {
+                problems.Add($"dice.checkRoll \"{checkRoll}\" needs the inputs bonus and target, and outcomes to grade by.");
+            }
+        }
+
+        if (system.SheetRules?.MultipleAttack is { } multiple) problems.AddRange(MultipleAttack.Problems(multiple));
         return problems;
     }
 
@@ -429,13 +464,7 @@ public static partial class SheetRolls
         private FormulaItem? Weapon(SheetModel model, Dictionary<string, RollInput> inputs)
         {
             if (inputs.GetValueOrDefault("weapon")?.Value?.ToString() is not { Length: > 0 } id) return null;
-            if (model.Item(id) is { } item) return item;
-            foreach (var type in model.Kind?.Lists.Select(l => l.Type).OfType<string>().Distinct() ?? Enumerable.Empty<string>())
-            {
-                if (resolver.Resolve(type, id) is { } entry) return new FormulaItem(name => name == "id" ? entry.Id : name == "name" ? entry.Name : entry.Properties.GetValueOrDefault(name));
-            }
-
-            return null;
+            return model.Weapon(id);
         }
 
         // ---- Dice ----
@@ -534,10 +563,10 @@ public static partial class SheetRolls
 
         // ---- Outcomes and intents ----
 
-        private static RollOutcomeDefinition? Outcome(RollDefinition definition, SheetModel model, Dictionary<string, object> names) =>
+        internal static RollOutcomeDefinition? Outcome(RollDefinition definition, SheetModel model, Dictionary<string, object> names) =>
             definition.Outcomes.FirstOrDefault(o => Holds(model, definition, $"the outcome \"{o.Name}\"", o.When, names));
 
-        private static string? Mark(RollOutcomeDefinition? outcome) =>
+        internal static string? Mark(RollOutcomeDefinition? outcome) =>
             outcome?.Mark ?? (outcome?.Name.ToLowerInvariant() is "critical" or "fumble" ? outcome.Name.ToLowerInvariant() : null);
 
         private static SheetIntent Intent(RollDefinition definition, SheetModel model, Dictionary<string, RollInput> inputs, Dictionary<string, object> names,
@@ -610,3 +639,6 @@ public static partial class SheetRolls
 
     private static string Name(RollDefinition definition) => definition.Label ?? definition.Key;
 }
+
+/// <summary>A check graded against a DC: the outcome key (<c>criticalSuccess</c>), how the dice display marks it, and whether it meets the DC.</summary>
+public sealed record CheckGrade(string Outcome, string? Mark, bool Passed);

@@ -315,6 +315,11 @@ public class DiceConventions
     /// to decide whether an action's <c>critical</c> face is worth showing.</summary>
     public string Check { get; set; } = "1d20";
 
+    /// <summary>The key of a <c>rolls:</c> entry that grades a check against a DC (its inputs <c>bonus</c> and <c>target</c>): the outcome its
+    /// <c>outcomes</c> reach for the total and the natural die is the check's degree (<c>criticalSuccess</c>, <c>success</c>...). Null: a check
+    /// has no degree, and a roll against a DC is only a pass or a miss.</summary>
+    public string? CheckRoll { get; set; }
+
     /// <summary>The top face of <see cref="Check"/> (20 for <c>1d20</c>), or null when it is not written as dice (<c>NdS</c>).</summary>
     public int? CheckTopFace() =>
         System.Text.RegularExpressions.Regex.Match(Check ?? string.Empty, @"^\s*\d*[dD](?<faces>\d+)").Groups["faces"] is { Success: true } faces

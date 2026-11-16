@@ -229,6 +229,7 @@ Dice conventions the runtime uses when it needs to roll something for a system.
 |---|---|---|
 | `initiative` | text (a number is text too) | The dice the combat console rolls for initiative. Default `1d20`. |
 | `check` | text (a number is text too) | The dice for an ordinary check. The sheet's check buttons roll a d20; the Actions panel reads this die's top face to decide whether an action's `critical` face is worth showing. |
+| `checkRoll` | text (a number is text too) | The key of a `rolls:` entry that grades a check against a DC (its inputs `bonus` and `target`): the outcome its `outcomes` reach for the total and the natural die is the check's degree (`criticalSuccess`, `success`...). Null: a check has no degree, and a roll against a DC is only a pass or a miss. |
 | `initiativeBonus` | text (a number is text too) | The derived field (see `sheetRules.derived`) added to an initiative roll, e.g. an `initiative` field with the formula `mod(dex)`. Null: the bare die. |
 | `initiativeTieBreak` | text (a number is text too) | Attribute whose score breaks initiative ties (higher first). Null: ties fall to actor id. |
 
@@ -389,6 +390,7 @@ The rules a system applies to a character sheet, declared in `system.yaml` so a 
 | `inherits` | list of [InheritRule](#inheritrule) | Values copied from a referenced entry onto the sheet when the reference changes (a species' speed and size). Null: nothing is copied. |
 | `features` | list of [FeatureSource](#featuresource) | Where a sheet's features come from (a class's and a subclass's feature rows, a species' traits, the feats picked), so what a feature says it grants reaches the sheet: numbers it changes, entries it adds to a list, and a counter of its uses. Empty: features are text only. |
 | `actions` | list of [ActionSource](#actionsource) | What a sheet can do with a roll: casting what it picked, attacking with what it holds. Each source names where the entries are and how their attack bonus, save DC and dice are worked out. Empty: the sheet has no actions. |
+| `multipleAttack` | [MultipleAttackRules](#multipleattackrules) | The penalty on each attack of a turn after the first. Null: every attack has the same bonus. |
 
 ## AttributeRules
 
@@ -868,6 +870,25 @@ One kind of action and the entries that give it: the entries picked in Lists, or
 | `rank` | [RankLookup](#ranklookup) | Reads a rank for each entry: the rank value of the entry's Property key in a `sheetRules.ranked` list (a weapon's category), as the name `rankValue` in this source's formulas (0 when the key has no rank). |
 | `critical` | text (a number is text too) | A derived value or formula for the lowest die face of the system's check die (`dice.check`) that is a critical hit (`critFrom`). The panel shows "crit 19–20" only when it is below the die's top face. Null: not shown. A critical's extra dice are not rolled. |
 
+## MultipleAttackRules
+
+The multiple attack penalty (`sheetRules.multipleAttack`): Penalties is what the 1st, 2nd and 3rd and later attack of a turn add to the attack bonus (`[0, -5, -10]`; the last holds for every later attack). A weapon whose property `property` lists `has` (a trait) uses that variant's numbers instead, so a trait can lower it. The Actions panel passes the attack number, and a roll definition reads the same table with `attackPenalty(attackNumber)`.
+
+| Key | Type | What it is |
+|---|---|---|
+| `penalties` | list of whole number |  |
+| `variants` | list of [MultipleAttackVariant](#multipleattackvariant) |  |
+
+## MultipleAttackVariant
+
+A weapon trait that changes the multiple attack penalty: the first variant whose weapon has it wins.
+
+| Key | Type | What it is |
+|---|---|---|
+| `property` | text (a number is text too) | The weapon's property that holds its traits (a list, or one word). |
+| `has` | text (a number is text too) | The trait that selects this variant. |
+| `penalties` | list of whole number |  |
+
 ## SheetKindDefinition
 
 A kind of sheet (`character`, `crew`): its values, modifiers, lists and keyed lists.
@@ -1298,6 +1319,7 @@ A named result a roll can come to (`critical`, `success`, `partial`); a roll's o
 | `when` | text (a number is text too) | A formula over the dice and total (`natural`, `total`, `kept`, `dice`, `zeroDice`) that must be true. None: always, so it belongs last. |
 | `replacesParent` | true or false | A follow-up roll's outcome that becomes the roll it follows (a confirmed threat is the attack's critical). |
 | `mark` | text (a number is text too) | How the dice display marks it: `critical`, `fumble` or none. Unset, an outcome named `critical` or `fumble` is marked so. |
+| `passes` | true or false | For the roll `dice.checkRoll` names: whether reaching this outcome meets the DC (a success). Unset, an outcome whose name starts with `success` or `criticalSuccess` passes. |
 
 ## RollFollowUpDefinition
 

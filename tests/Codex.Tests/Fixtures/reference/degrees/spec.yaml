@@ -239,8 +239,8 @@ expectations:
     expect: { outcome: criticalFailure, total: 1 }
 
   # ---- The multiple attack penalty as a roll input ----
-  # now: pass. On the sheet-rules Actions panel (a Strike that passes the attack number) it is P6; the spec format rolls
-  # named rolls only, so that half is in NOTES.md, not here.
+  # now: pass. The table is sheetRules.multipleAttack, read by the strike roll's attackPenalty(). The Actions panel reads the same table
+  # (P6); the spec format rolls named rolls only, so that half is in ActionsPanelAttackNumberTests.
   - id: degrees.the-first-attack-has-no-penalty
     step: 4
     sheet: hero5
@@ -258,6 +258,24 @@ expectations:
     roll: { definition: strike, inputs: { bonus: 9, target: 18, attackNumber: 4 }, dice: [20] }
     expect: { outcome: criticalSuccess, total: 19 }
     why: "20 + 9 - 10 = 19 beats 18, a success; the natural 20 makes it a critical success."
+  # now: pass (P6). The weapon is an input; its featherlight trait picks the variant row of sheetRules.multipleAttack.
+  - id: degrees.a-trait-lowers-the-second-attack-penalty
+    step: 4
+    sheet: hero5
+    roll: { definition: strike, inputs: { bonus: 9, target: 18, attackNumber: 2, weapon: swift-knife }, dice: [13] }
+    expect: { outcome: success, total: 18 }
+    why: "13 + 9 - 4 meets 18. Without the trait the same die gives 17, a failure."
+  - id: degrees.a-trait-lowers-the-third-attack-penalty
+    step: 4
+    sheet: hero5
+    roll: { definition: strike, inputs: { bonus: 9, target: 18, attackNumber: 3, weapon: swift-knife }, dice: [17] }
+    expect: { outcome: success, total: 18 }
+    why: "17 + 9 - 8 meets 18. Without the trait it is 16."
+  - id: degrees.a-weapon-without-the-trait-keeps-the-full-penalty
+    step: 4
+    sheet: hero5
+    roll: { definition: strike, inputs: { bonus: 9, target: 18, attackNumber: 2, weapon: oak-staff }, dice: [13] }
+    expect: { outcome: failure, total: 17 }
 
   # ---- Attribute boosts (P5): sheetRules.attributes.boosts ----
   # now: pass. Boosts are final in the attribute totals, before anything derived reads them.

@@ -551,6 +551,17 @@
   <data name="Actor.Actions.Damage" xml:space="preserve"><value>נזק</value></data>
   <data name="Actor.Actions.Healing" xml:space="preserve"><value>ריפוי</value></data>
   <data name="Actor.Actions.RollAttack" xml:space="preserve"><value>{0}: התקפה</value></data>
+  <data name="Actor.Actions.RollAttackNth" xml:space="preserve"><value>{0}: התקפה {1}</value></data>
+  <data name="Actor.Actions.AttackNumber" xml:space="preserve"><value>התקפה בתור הזה</value></data>
+  <data name="Actor.Actions.AttackOption" xml:space="preserve"><value>התקפה {0} ({1})</value></data>
+  <data name="Actor.Actions.AttackOptionLater" xml:space="preserve"><value>התקפה {0} ואילך ({1})</value></data>
+  <data name="Actor.Actions.AttackNoPenalty" xml:space="preserve"><value>ללא קנס</value></data>
+  <data name="Actor.Actions.AttackNumberHint" xml:space="preserve"><value>הקנס חל על הטלת ההתקפה הבאה. כשמתחיל תור חדש, החזירו ל״התקפה 1״.</value></data>
+  <data name="Actor.Actions.Against" xml:space="preserve"><value>נגד (דרגת שריון או רמת קושי, אופציונלי)</value></data>
+  <data name="Actor.Degree.criticalSuccess" xml:space="preserve"><value>הצלחה קריטית</value></data>
+  <data name="Actor.Degree.success" xml:space="preserve"><value>הצלחה</value></data>
+  <data name="Actor.Degree.failure" xml:space="preserve"><value>כישלון</value></data>
+  <data name="Actor.Degree.criticalFailure" xml:space="preserve"><value>כישלון קריטי</value></data>
   <data name="Actor.Actions.RollDamage" xml:space="preserve"><value>{0}: נזק ({1})</value></data>
   <data name="Actor.Actions.RollDamagePlain" xml:space="preserve"><value>{0}: נזק</value></data>
   <data name="Actor.Actions.RollHealing" xml:space="preserve"><value>{0}: ריפוי</value></data>

@@ -10,5 +10,6 @@ public sealed record RollRequest(string Label, int Bonus, RollKind? Kind = null,
 
 /// <summary>A roll an action asks for (ActionsPanel): the check die with <see cref="CheckBonus"/> (an attack), or the dice of
 /// <see cref="Expression"/> (damage, healing). <paramref name="Kind"/> and <paramref name="Action"/> say which roll of which action it is, so the host can
-/// add what features give it.</summary>
-public sealed record ActionRoll(string Label, int? CheckBonus, string? Expression, RollKind? Kind = null, SheetAction? Action = null);
+/// add what features give it. <paramref name="CheckBonus"/> already carries the multiple attack penalty of <paramref name="AttackNumber"/>; <paramref name="Dc"/> is
+/// the number the attack is against (armor class), when the roller gave one, so the roll can say its degree.</summary>
+public sealed record ActionRoll(string Label, int? CheckBonus, string? Expression, RollKind? Kind = null, SheetAction? Action = null, int? AttackNumber = null, int? Dc = null);
