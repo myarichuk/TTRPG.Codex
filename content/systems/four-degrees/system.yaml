@@ -162,6 +162,25 @@ entityTypes:
       reset:   reset
       level:   level
 
+  # A condition's text for the Library. Its name and effects are engine modelling (`conditions:` and `conditionEffects` below); this entry is the rules text only.
+  - type: condition
+    label: Condition
+    pluralLabel: Conditions
+    folder: conditions
+    icon: skull
+    fields: []
+
+  # A rules section that is not a game object: a procedure, a definition, a table's explanation. `category` groups it in the Library.
+  - type: rule
+    label: Rule
+    pluralLabel: Rules Glossary
+    folder: rules
+    icon: book-open
+    summaryFields: [category]
+    filterFields: [category]
+    fields:
+      - { key: category, label: Category, type: Text }
+
   # A creature: its numbers are printed (sheetRules.printed below), so a condition on it lowers the number the stat block shows.
   - type: creature
     label: Creature
