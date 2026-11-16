@@ -1,0 +1,159 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@* A text field that suggests models: type to narrow the list, pick one, or keep what was typed (a local server's own names, a
+   model that is not listed). The keyboard and ARIA behaviour is @github/combobox-nav (wwwroot/lib/model-combobox); this renders
+   the field and its options and filters them. *@
+<div class="model-combobox" @ref="root">
+    <input id="@Id" class="field-input model-combobox-input" type="text" dir="auto" autocomplete="off" spellcheck="false" autocapitalize="off"
+           value="@initialValue" @oninput="OnInputAsync" placeholder="@Placeholder" required="@Required" aria-invalid="@Invalid"
+           aria-describedby="@DescribedBy" data-testid="@TestId" />
+    <span class="model-combobox-chevron" aria-hidden="true"><LucideIcon IconName="chevron-down" Size="16" /></span>
+    <ul id="@ListId" class="model-combobox-list" role="listbox" aria-label="@L["Page.AiSettings.ModelListLabel"]" data-testid="@(TestId + "-list")" hidden>
+        @{ var shown = ModelFilter.Apply(Options, query, Limit, out var total); }
+        @for (var i = 0; i < shown.Count; i++)
+        {
+            var option = shown[i];
+            <li @key="option.Id" id="@(ListId + "-" + i)" role="option" class="model-combobox-option" data-value="@option.Id">
+                <span class="model-combobox-main">
+                    <span class="model-combobox-name" dir="auto">@(option.Label ?? option.Id)</span>
+                    @if (option.Label != null && option.Label != option.Id)
+                    {
+                        <span class="model-combobox-id" dir="ltr">@option.Id</span>
+                    }
+                </span>
+                @if (option.Detail != null)
+                {
+                    <span class="model-combobox-detail">@option.Detail</span>
+                }
+                @if (option.Tools)
+                {
+                    <span class="pill pill-arcane" title="@L["Page.AiSettings.ModelToolsHint"]">@L["Page.AiSettings.ModelTools"]</span>
+                }
+            </li>
+        }
+        @if (Loading)
+        {
+            <li role="presentation" class="model-combobox-note" data-note data-testid="@(TestId + "-loading")">@L["Page.AiSettings.ModelListLoading"]</li>
+        }
+        else if (shown.Count == 0 && Options.Count > 0)
+        {
+            <li role="presentation" class="model-combobox-note" data-note>@L["Page.AiSettings.ModelNoMatch"]</li>
+        }
+        else if (Failed && Options.Count == 0)
+        {
+            <li role="presentation" class="model-combobox-note" data-note data-testid="@(TestId + "-failed")">@L["Page.AiSettings.ModelListFailed"]</li>
+        }
+
+        @if (total > shown.Count)
+        {
+            <li role="presentation" class="model-combobox-note" data-note>@L["Page.AiSettings.ModelMore", shown.Count, total]</li>
+        }
+    </ul>
+</div>
+
+@code {
+    /// <summary>How many options are drawn at once; the rest are reached by typing.</summary>
+    private const int Limit = 60;
+
+    [Parameter, EditorRequired] public string Id { get; set; } = string.Empty;
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    /// <summary>Called when a model is picked from the list (not when text is typed), with the option picked.</summary>
+    [Parameter] public EventCallback<ModelOption> OnPick { get; set; }
+    [Parameter] public IReadOnlyList<ModelOption> Options { get; set; } = [];
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public string? Invalid { get; set; }
+    [Parameter] public string? DescribedBy { get; set; }
+    /// <summary>The options are still on their way: say so in the list.</summary>
+    [Parameter] public bool Loading { get; set; }
+    /// <summary>The options could not be fetched: say so in the list, and that the id can be typed.</summary>
+    [Parameter] public bool Failed { get; set; }
+
+    private ElementReference root;
+    private IJSObjectReference? module;
+    private IJSObjectReference? handle;
+    private DotNetObjectReference<ModelCombobox>? self;
+    // What narrows the list: what the user typed, not the field's value. A field that already holds a model shows the whole list
+    // when opened, and only typing narrows it.
+    private string? query;
+    // The field's text is the browser's while someone types: the server answers each keystroke a moment later, and if its answer
+    // put the text it last heard back into the field, whatever was typed in between was lost ("acme" came out "ame"). So the
+    // text is rendered into the field once, here, and never again. What the browser holds is tracked in domValue, and the server
+    // changes it only when the value was changed from outside (another service picked, the form reset): see OnAfterRenderAsync.
+    private string? initialValue;
+    private string? domValue;
+
+    private string ListId => Id + "-list";
+
+    protected override void OnInitialized() => domValue = initialValue = Value;
+
+    private async Task OnInputAsync(ChangeEventArgs e)
+    {
+        var text = e.Value?.ToString();
+        query = text;
+        Value = domValue = text;
+        await ValueChanged.InvokeAsync(text);
+    }
+
+    /// <summary>Called from the browser when an option is chosen, by click or by key.</summary>
+    [JSInvokable]
+    public async Task PickAsync(string id)
+    {
+        query = null;
+        Value = domValue = id;
+        await ValueChanged.InvokeAsync(id);
+        var option = Options.FirstOrDefault(o => o.Id == id);
+        if (option != null) await OnPick.InvokeAsync(option);
+    }
+
+    protected override void OnParametersSet()
+    {
+        // The value was changed from outside (another service chosen, a model picked): what was typed no longer applies.
+        if (query != null && query != Value) query = null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            if (firstRender)
+            {
+                module = await JS.InvokeAsync<IJSObjectReference>("import", "/" + Assets["lib/model-combobox/model-combobox.js"]);
+                self = DotNetObjectReference.Create(this);
+                handle = await module.InvokeAsync<IJSObjectReference>("attach", root, self);
+            }
+
+            // The value was changed from outside, not typed or picked (those keep domValue in step): put it in the field. The
+            // browser applies it only if the field still holds what the server last knew, so it never overwrites later typing.
+            if (handle != null && (Value ?? string.Empty) != (domValue ?? string.Empty))
+            {
+                var expected = domValue ?? string.Empty;
+                domValue = Value;
+                await handle.InvokeVoidAsync("setValue", Value ?? string.Empty, expected);
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit went away before the field was wired: nothing to wire.
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (handle != null) await handle.InvokeVoidAsync("dispose");
+            if (handle != null) await handle.DisposeAsync();
+            if (module != null) await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // Closing the page is how this usually ends.
+        }
+
+        self?.Dispose();
+    }
+}

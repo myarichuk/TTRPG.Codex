@@ -184,8 +184,20 @@
   <data name="Page.AiSettings.Model" xml:space="preserve"><value>מודל</value></data>
   <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>למשל gpt-image-2.5-flare</value></data>
   <data name="Page.AiSettings.ModelPhText" xml:space="preserve"><value>למשל openai/gpt-4o-mini</value></data>
-  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>כל מודל תמונות מ-openrouter.ai/models, למשל google/gemini-2.5-flash-image או qwen/qwen-image-2.1-turbo.</value></data>
-  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>כל מזהה מ-openrouter.ai/models, למשל anthropic/claude-sonnet-4, google/gemini-2.5-flash.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>בחרו ממודלי התמונות של OpenRouter, או הקלידו כל מזהה מ-openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>בחרו מהרשימה העדכנית של OpenRouter, או הקלידו כל מזהה מ-openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.ModelListLabel" xml:space="preserve"><value>מודלים מוצעים</value></data>
+  <data name="Page.AiSettings.ModelTools" xml:space="preserve"><value>כלים</value></data>
+  <data name="Page.AiSettings.ModelToolsHint" xml:space="preserve"><value>יכול לקרוא לכלים, שהם נחוצים לצ'אט העולם ולעוזר הדמויות.</value></data>
+  <data name="Page.AiSettings.ModelListLoading" xml:space="preserve"><value>טוען את המודלים של OpenRouter…</value></data>
+  <data name="Page.AiSettings.ModelListFailed" xml:space="preserve"><value>לא ניתן היה לטעון את הרשימה של OpenRouter. אפשר להקליד את מזהה המודל.</value></data>
+  <data name="Page.AiSettings.ModelNoMatch" xml:space="preserve"><value>אין מודל ברשימה שמתאים. הטקסט שהקלדתם ישמש כמזהה המודל.</value></data>
+  <data name="Page.AiSettings.ModelMore" xml:space="preserve"><value>מוצגים {0} מתוך {1}. המשיכו להקליד כדי לצמצם את הרשימה.</value></data>
+  <data name="Page.AiSettings.ModelDetailContext" xml:space="preserve"><value>הקשר {0}</value></data>
+  <data name="Page.AiSettings.ModelDetailText" xml:space="preserve"><value>הקשר {0} · קלט {1} / פלט {2} למיליון אסימונים</value></data>
+  <data name="Page.AiSettings.ModelDetailFree" xml:space="preserve"><value>הקשר {0} · חינם</value></data>
+  <data name="Page.AiSettings.ModelDetailImage" xml:space="preserve"><value>{0} לתמונה</value></data>
+  <data name="Page.AiSettings.PricesAutofilled" xml:space="preserve"><value>מולא לפי הרשימה של OpenRouter עבור מודל זה. כדאי לבדוק מול התוכנית שלכם; אפשר לשנות כל ערך.</value></data>
   <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>מפתח API</value></data>
   <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(השאירו ריק כדי לשמור את המפתח הקיים)</value></data>
   <data name="Page.AiSettings.KeyPhLocal" xml:space="preserve"><value>לא נדרש לשרת מקומי</value></data>

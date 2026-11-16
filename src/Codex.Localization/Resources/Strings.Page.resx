@@ -184,8 +184,20 @@
   <data name="Page.AiSettings.Model" xml:space="preserve"><value>Model</value></data>
   <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>e.g. gpt-image-2.5-flare</value></data>
   <data name="Page.AiSettings.ModelPhText" xml:space="preserve"><value>e.g. openai/gpt-4o-mini</value></data>
-  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Any image model from openrouter.ai/models, e.g. google/gemini-2.5-flash-image or qwen/qwen-image-2.1-turbo.</value></data>
-  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Any id from openrouter.ai/models, e.g. anthropic/claude-sonnet-4, google/gemini-2.5-flash.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Pick from OpenRouter's image models, or type any id from openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Pick from OpenRouter's current list, or type any id from openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.ModelListLabel" xml:space="preserve"><value>Suggested models</value></data>
+  <data name="Page.AiSettings.ModelTools" xml:space="preserve"><value>Tools</value></data>
+  <data name="Page.AiSettings.ModelToolsHint" xml:space="preserve"><value>Can call tools, which the world chat and the character assistant need.</value></data>
+  <data name="Page.AiSettings.ModelListLoading" xml:space="preserve"><value>Loading OpenRouter's models…</value></data>
+  <data name="Page.AiSettings.ModelListFailed" xml:space="preserve"><value>OpenRouter's list could not be loaded. Type the model id instead.</value></data>
+  <data name="Page.AiSettings.ModelNoMatch" xml:space="preserve"><value>No listed model matches. What you typed will be used as the model id.</value></data>
+  <data name="Page.AiSettings.ModelMore" xml:space="preserve"><value>Showing {0} of {1}. Keep typing to narrow the list.</value></data>
+  <data name="Page.AiSettings.ModelDetailContext" xml:space="preserve"><value>{0} context</value></data>
+  <data name="Page.AiSettings.ModelDetailText" xml:space="preserve"><value>{0} context · in {1} / out {2} per 1M tokens</value></data>
+  <data name="Page.AiSettings.ModelDetailFree" xml:space="preserve"><value>{0} context · free</value></data>
+  <data name="Page.AiSettings.ModelDetailImage" xml:space="preserve"><value>{0} per image</value></data>
+  <data name="Page.AiSettings.PricesAutofilled" xml:space="preserve"><value>Filled in from OpenRouter's list for this model. Check them against your plan; you can change any of them.</value></data>
   <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>API key</value></data>
   <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(leave blank to keep the stored key)</value></data>
   <data name="Page.AiSettings.KeyPhLocal" xml:space="preserve"><value>Not needed for a local server</value></data>

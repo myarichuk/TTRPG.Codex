@@ -184,8 +184,20 @@
   <data name="Page.AiSettings.Model" xml:space="preserve"><value>Модель</value></data>
   <data name="Page.AiSettings.ModelPhImage" xml:space="preserve"><value>например, gpt-image-2.5-flare</value></data>
   <data name="Page.AiSettings.ModelPhText" xml:space="preserve"><value>например, openai/gpt-4o-mini</value></data>
-  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Любая модель изображений с openrouter.ai/models, например google/gemini-2.5-flash-image или qwen/qwen-image-2.1-turbo.</value></data>
-  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Любой идентификатор с openrouter.ai/models, например anthropic/claude-sonnet-4, google/gemini-2.5-flash.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterImage" xml:space="preserve"><value>Выберите из списка моделей изображений OpenRouter или введите любой идентификатор с openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.HintOpenRouterText" xml:space="preserve"><value>Выберите из актуального списка OpenRouter или введите любой идентификатор с openrouter.ai/models.</value></data>
+  <data name="Page.AiSettings.ModelListLabel" xml:space="preserve"><value>Подсказки моделей</value></data>
+  <data name="Page.AiSettings.ModelTools" xml:space="preserve"><value>Инструменты</value></data>
+  <data name="Page.AiSettings.ModelToolsHint" xml:space="preserve"><value>Умеет вызывать инструменты, которые нужны чату мира и помощнику по персонажу.</value></data>
+  <data name="Page.AiSettings.ModelListLoading" xml:space="preserve"><value>Загружаю модели OpenRouter…</value></data>
+  <data name="Page.AiSettings.ModelListFailed" xml:space="preserve"><value>Не удалось загрузить список OpenRouter. Введите идентификатор модели вручную.</value></data>
+  <data name="Page.AiSettings.ModelNoMatch" xml:space="preserve"><value>В списке нет подходящих моделей. Введённый текст будет использован как идентификатор модели.</value></data>
+  <data name="Page.AiSettings.ModelMore" xml:space="preserve"><value>Показано {0} из {1}. Продолжайте вводить, чтобы сузить список.</value></data>
+  <data name="Page.AiSettings.ModelDetailContext" xml:space="preserve"><value>контекст {0}</value></data>
+  <data name="Page.AiSettings.ModelDetailText" xml:space="preserve"><value>контекст {0} · вход {1} / выход {2} за 1 млн токенов</value></data>
+  <data name="Page.AiSettings.ModelDetailFree" xml:space="preserve"><value>контекст {0} · бесплатно</value></data>
+  <data name="Page.AiSettings.ModelDetailImage" xml:space="preserve"><value>{0} за изображение</value></data>
+  <data name="Page.AiSettings.PricesAutofilled" xml:space="preserve"><value>Заполнено по списку OpenRouter для этой модели. Сверьте со своим тарифом; любое значение можно изменить.</value></data>
   <data name="Page.AiSettings.ApiKey" xml:space="preserve"><value>API-ключ</value></data>
   <data name="Page.AiSettings.ApiKeyKeep" xml:space="preserve"><value>(оставьте пустым, чтобы сохранить текущий ключ)</value></data>
   <data name="Page.AiSettings.KeyPhLocal" xml:space="preserve"><value>Для локального сервера не нужен</value></data>

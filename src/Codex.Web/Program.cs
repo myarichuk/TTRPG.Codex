@@ -266,6 +266,7 @@ builder.Services.AddSingleton(sp =>
     if (catalog.Problem != null) sp.GetRequiredService<ILogger<AiModelCatalog>>().LogWarning("{Problem}", catalog.Problem);
     return catalog;
 });
+builder.Services.AddSingleton<OpenRouterModels>(sp => new OpenRouterModels(sp.GetRequiredService<IHttpClientFactory>(), log: sp.GetRequiredService<ILogger<OpenRouterModels>>(), baseUrl: builder.Configuration["Codex:OpenRouterModelsUrl"]));
 builder.Services.AddSingleton<AiProviderService>();
 builder.Services.AddSingleton<AiFeatures>();
 builder.Services.AddSingleton<CharacterAssist>();
