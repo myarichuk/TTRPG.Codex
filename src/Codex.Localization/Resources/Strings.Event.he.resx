@@ -212,8 +212,8 @@
   <data name="Event.Hazard.NoRoll" xml:space="preserve"><value>{0}: {1} — הצלחה בלי הטלה ({2}).</value></data>
   <data name="Event.Hazard.DisableProgress" xml:space="preserve"><value>{0}: {1} מתוך {2} הצלחות.</value></data>
   <data name="Event.Hazard.Disabled" xml:space="preserve"><value>{0}: הסכנה נוטרלה.</value></data>
-  <data name="Event.Hazard.SetOffAlso" xml:space="preserve"><value>{0}: פגיעה גם ב{1}.</value></data>
-  <data name="Event.Hazard.Refused.RankTooLow" xml:space="preserve"><value>{0}: ״{1}״ — נדרש דירוג ״{2}״ ({3}: דירוג נמוך יותר).</value></data>
+  <data name="Event.Hazard.SetOffAlso" xml:space="preserve"><value>{0}: גם {1} בטווח.</value></data>
+  <data name="Event.Hazard.Refused.RankTooLow" xml:space="preserve"><value>{0}: ״{1}״ — נדרש דירוג ״{2}״ ; הדירוג נמוך יותר אצל: {3}.</value></data>
   <data name="Event.Hazard.SetOff" xml:space="preserve"><value>{0}: הניסיון שנכשל מפעיל את הסכנה, על {1}.</value></data>
   <data name="Event.Hazard.Triggered" xml:space="preserve"><value>{0}: הפעלה.</value></data>
   <data name="Event.Hazard.Step" xml:space="preserve"><value>{0}: ביצוע השלב ״{1}״.</value></data>

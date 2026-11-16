@@ -665,6 +665,15 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   - **Content.** The four-degrees system gains a `hazard` type (no passive scores, no complex hazards, no scaling table; ru and he labels) and the pack three invented hazards,
     `lantern-snare` (level 1, trained Craft, two successes, `failure` sets it off), `cinder-vent` (level 2, an area hazard, expert Athletics, three successes, `criticalFailure` sets it off,
     a no-check smother route) and `gravity-bell` (level 3, trained and expert Arcana, two successes). Every name, number and line is invented.
+  - **Review fixes.** (a) The repeat for a creature that hit and waited for a number skips the armor class and the attack (`Attacked` has it), keeps it in `AttackRolled` for a
+    later pass and says no second "Hit". (b) **One `Successes` counter per placed hazard, shared by all its disarm routes** (not per route; two check routes with different counts
+    would share progress, so write such hazards with one counted route). It starts over whenever the hazard is not Disabled after a command that began Disabled, when the state
+    picker names any state but Disabled, and when a set-off goes off. A critical success is still one success. (c) `RankOf` also reads a ranked list that takes the skills' ranks
+    (`Perception`, `classDc`) by key or label. `ActorChecks.Resolve` still cannot roll Perception on four-degrees (it is a derived score, not a check), so such a route takes a typed
+    bonus, but its rank is enforced. (d) The reach fieldset is per hazard, shown only while the chosen disarm route has `triggersOn`, and its ticks clear after each try. The command
+    reaches only loaded, not retired, non-hazard actors and names them in the event's `ActorIds`. (e) A read with no die (passive score, armor class) shows the check roll's outcomes
+    a neutral face of 10 (`ActorChecks.NeutralFace`), never a 1, a 20 or a 0, so an outcome that reads `natural` does not fire on it; the margin decides. (f) A misspelled `rank` is a
+    loader problem (`RankUnknown`), tested.
   - **Not built:** the rank field of the wizard's route row is still free text (the loader checks it); a critical success counting as two successes; conditions on the four-degrees hazard type.
   - **Tests:** `HazardDegreesTests` (graded check agreeing with the pure grade, rank refusal with no roll, successes counted, `failure` firing on a critical failure, `criticalFailure` alone,
     a reach of one and none, the pack's hazards using all three features), one `HazardCommandTests` case for the attack repeat, the un-skipped `ActorCheckTests` case.

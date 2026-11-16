@@ -58,21 +58,6 @@
             </div>
         </fieldset>
 
-        @if (Hazards.Any(h => h.Disarm.Count > 0))
-        {
-            <fieldset class="mb-2" data-testid="hazard-reach" aria-describedby="hazard-reach-hint">
-                <legend class="field-label">@L["Combat.Hazard.Reach"]</legend>
-                <p class="small-muted mb-1" id="hazard-reach-hint">@L["Combat.Hazard.ReachHint"]</p>
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach (var who in Who)
-                    {
-                        var id = who.Id;
-                        <CodexCheck Checked="@reached.Contains(id)" OnChange="e => TickReach(id, e)" data-testid="@($"hazard-reach-{id}")">@who.Name</CodexCheck>
-                    }
-                </div>
-            </fieldset>
-        }
-
         @if (NeedNumber.Count > 0)
         {
             <fieldset class="mb-2" data-testid="hazard-numbers">
@@ -153,6 +138,22 @@
                                 <CodexButton Small="true" Disabled="@(ticked.Count == 0 || hazard.Disarm.Count == 0)" data-testid="@($"hazard-{at}-disable")"
                                              OnClick="() => SendAsync(hazard, HazardAction.Disable, WayOf(disarmWay, hazard, hazard.Disarm))">@L["Combat.Hazard.Disable", hazard.Name]</CodexButton>
                             </div>
+
+                            @if (hazard.Disarm.FirstOrDefault(w => w.Key == WayOf(disarmWay, hazard, hazard.Disarm))?.SetsOff == true)
+                            {
+                                var reachHint = $"hazard-{at}-reach-hint";
+                                <fieldset class="mb-2" data-testid="@($"hazard-{at}-reach")" aria-describedby="@reachHint">
+                                    <legend class="field-label">@L["Combat.Hazard.Reach"]</legend>
+                                    <p class="small-muted mb-1" id="@reachHint">@L["Combat.Hazard.ReachHint"]</p>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var who in Who)
+                                        {
+                                            var id = who.Id;
+                                            <CodexCheck Checked="@ReachOf(hazard).Contains(id)" OnChange="e => TickReach(hazard, id, e)" data-testid="@($"hazard-{at}-reach-{id}")">@who.Name</CodexCheck>
+                                        }
+                                    </div>
+                                </fieldset>
+                            }
 
                             @if (hazard.Turn is { } turn)
                             {
@@ -270,7 +271,10 @@
     [Parameter] public string? PassesFor { get; set; }
 
     private readonly HashSet<string> ticked = new();
-    private readonly HashSet<string> reached = new();
+    // Who a set-off also reaches, per hazard: cleared after each try at that hazard, so a tick never leaks into another hazard or a later press.
+    private readonly Dictionary<string, HashSet<string>> reached = new();
+
+    private HashSet<string> ReachOf(HazardView hazard) => reached.TryGetValue(hazard.Id, out var set) ? set : new HashSet<string>();
     private readonly Dictionary<string, int> typed = new();
     private readonly Dictionary<string, string> detectWay = new();
     private readonly Dictionary<string, string> disarmWay = new();
@@ -297,10 +301,11 @@
         else ticked.Remove(id);
     }
 
-    private void TickReach(string id, ChangeEventArgs e)
+    private void TickReach(HazardView hazard, string id, ChangeEventArgs e)
     {
-        if (e.Value is true) reached.Add(id);
-        else reached.Remove(id);
+        if (!reached.TryGetValue(hazard.Id, out var set)) reached[hazard.Id] = set = new HashSet<string>();
+        if (e.Value is true) set.Add(id);
+        else set.Remove(id);
     }
 
     private void Typed(string id, ChangeEventArgs e)
@@ -321,7 +326,15 @@
         var numbers = NumbersFor(hazard, action, route);
         typed.Clear();
         // Who else a set-off reaches is chosen before the roll, and goes only with a Disable.
-        var reach = action == HazardAction.Disable ? Who.Select(w => w.Id).Where(reached.Contains).ToList() : null;
+        List<string>? reach = null;
+        if (action == HazardAction.Disable)
+        {
+            var ticks = ReachOf(hazard);
+            reach = Who.Select(w => w.Id).Where(ticks.Contains).ToList();
+        }
+
+        // The ticks go with this one try and are then cleared (as a typed number is).
+        reached.Remove(hazard.Id);
         return OnRequest.InvokeAsync(new HazardRequest(hazard, action, actors, route, null, state, numbers, reach));
     }
 

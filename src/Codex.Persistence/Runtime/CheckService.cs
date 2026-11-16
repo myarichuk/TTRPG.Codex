@@ -71,6 +71,9 @@ public static class ActorChecks
     public const string Success = "success";
     public const string Failure = "failure";
 
+    /// <summary>The face a check roll's outcomes see when the read has no die: neither a natural 1 nor a natural 20, so only the margin over the DC decides.</summary>
+    public const int NeutralFace = 10;
+
     private static bool Same(string? a, string? b) =>
         !string.IsNullOrWhiteSpace(a) && !string.IsNullOrWhiteSpace(b) && string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase);
 
@@ -234,7 +237,8 @@ public static class ActorChecks
         {
             try
             {
-                if (SheetRolls.Grade(system, resolver, sheet, total, natural, dc) is { } grade) return new CheckOutcome(grade.Outcome, grade.Passed, grade.Mark);
+                // A read with no die (a passive score, an armor class) shows the outcomes an ordinary middle face, never a 1 or a 20 (or a 0): only the margin decides.
+                if (SheetRolls.Grade(system, resolver, sheet, total, natural ?? NeutralFace, dc) is { } grade) return new CheckOutcome(grade.Outcome, grade.Passed, grade.Mark);
             }
             catch (Exception ex) when (ex is RollException or FormulaException or InvalidOperationException)
             {
@@ -394,13 +398,23 @@ public sealed class CheckService(CampaignRuntime runtime)
     public int? RankOf(string actorId, string check)
     {
         var system = runtime.System;
-        if (system?.SheetRules?.Skills is not { Ranks.Count: > 0 } || runtime.GetActorDocument(actorId) is not { } actor || ActorChecks.Resolve(system, check) is not { } spec) return null;
-        var skill = spec.Kind switch { CheckKind.Skill => spec.Key, CheckKind.Passive => ActorChecks.PassiveOf(system, spec)?.Skill ?? spec.Key, _ => null };
-        if (skill == null) return null;
+        if (system?.SheetRules?.Skills is not { Ranks.Count: > 0 } || runtime.GetActorDocument(actorId) is not { } actor) return null;
+        // A list beside the skills that takes the skills' ranks (four-degrees' Perception and class DC) is named by its key or label.
+        var list = system.SheetRules.Ranked.FirstOrDefault(l => !string.IsNullOrEmpty(l.RanksOf)
+            && (string.Equals(l.Key, check?.Trim(), StringComparison.OrdinalIgnoreCase) || string.Equals(l.Label, check?.Trim(), StringComparison.OrdinalIgnoreCase)));
+        string? skill = null;
+        if (list == null)
+        {
+            if (ActorChecks.Resolve(system, check ?? string.Empty) is not { } spec) return null;
+            skill = spec.Kind switch { CheckKind.Skill => spec.Key, CheckKind.Passive => ActorChecks.PassiveOf(system, spec)?.Skill ?? spec.Key, _ => null };
+            if (skill == null) return null;
+        }
+
         try
         {
             var live = new SheetRuleEngine(system, runtime.Resolver).EvaluateLive(runtime.LiveSheetOf(actor), runtime.LinkedFor(actor.Sheet));
             if (ActorChecks.IsPrinted(system, actor, live)) return null;
+            if (list != null) return live.Ranked.TryGetValue(list.Key, out var scores) ? scores.FirstOrDefault()?.Rank : null;
             return live.Skills.FirstOrDefault(s => string.Equals(s.Key, skill, StringComparison.OrdinalIgnoreCase))?.Rank;
         }
         catch (Exception ex) when (ex is FormulaException or InvalidOperationException)

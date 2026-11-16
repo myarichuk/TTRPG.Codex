@@ -113,7 +113,7 @@ public class HazardDegreesTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
         }
 
         var aria = await Seed("Aria", Hero());
-        var brin = await Seed("Brin", Hero(("skillTrained", "craft"), ("skillTrained", "arcana"), ("skillExpert", "athletics")));
+        var brin = await Seed("Brin", Hero(("skillTrained", "craft"), ("skillTrained", "arcana"), ("skillExpert", "athletics"), ("perceptionExpert", "perception")));
         var session = new SessionDocument { Id = Guid.NewGuid().ToString(), CampaignId = campaignId, Status = SessionStatus.Live, Title = "Live" };
         await _sessions.SaveAsync(session);
         var dice = new ScriptedRoller();
@@ -267,8 +267,81 @@ public class HazardDegreesTests : IClassFixture<RavenDbFixture>, IAsyncLifetime,
     }
 
     [Fact]
+    public async Task SettingTheStateBackToNoticed_OrASetOff_StartsTheSuccessesOver_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var snare = Hazard("lantern-snare");
+        var placed = await PlaceAsync(table, Hidden(snare, "cord"));
+
+        foreach (var f in new[] { 12, 12 }) { table.Dice.Faces.Enqueue(f); await DisableAsync(table, placed, snare, "cut", table.Brin); }
+        Assert.Equal((HazardState.Disabled, 2), ((await StoredAsync(placed)).State, (await StoredAsync(placed)).Successes));
+
+        await table.Runtime.EnqueueAsync(new HazardCommand(SiteOf(placed, snare, await StoredAsync(placed)), HazardAction.SetState, Array.Empty<string>(), Gm, State: HazardState.Noticed));
+        Assert.Equal((HazardState.Noticed, 0), ((await StoredAsync(placed)).State, (await StoredAsync(placed)).Successes));
+
+        // One success is progress, not a disarm; a set-off then wipes that progress.
+        table.Dice.Faces.Enqueue(12);
+        await DisableAsync(table, placed, snare, "cut", table.Brin);
+        Assert.Equal((HazardState.Noticed, 1), ((await StoredAsync(placed)).State, (await StoredAsync(placed)).Successes));
+        foreach (var f in new[] { 1, 9, 3 }) table.Dice.Faces.Enqueue(f);
+        await DisableAsync(table, placed, snare, "cut", table.Brin);
+        Assert.Equal((HazardState.Triggered, 0), ((await StoredAsync(placed)).State, (await StoredAsync(placed)).Successes));
+    }
+
+    [Fact]
+    public async Task AReach_HitsEachCreatureOnce_IgnoresUnknownAndRetiredOnes_AndNamesThemInTheEvent_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+        var vent = Hazard("cinder-vent");
+        var placed = await PlaceAsync(table, Hidden(vent, "heat", "wheel"));
+        // The check (a natural 1: critical failure), the damage, then a save for Brin and one for Aria (Brin is also ticked: hit once).
+        foreach (var f in new[] { 1, 10, 2, 2 }) table.Dice.Faces.Enqueue(f);
+        var site = SiteOf(placed, vent, await StoredAsync(placed));
+
+        var command = new HazardCommand(site, HazardAction.Disable, new[] { table.Brin.Id }, Gm, "jam", null, null, null, null,
+            new[] { table.Brin.Id, table.Aria.Id, table.Aria.Id, "nobody" });
+        await table.Runtime.EnqueueAsync(command);
+
+        Assert.Equal((20, 20), (Hp(table, table.Brin), Hp(table, table.Aria)));
+        Assert.Contains(table.Aria.Id, command.Said!.ActorIds);
+    }
+
+    [Fact]
+    public async Task ARankOnPerception_IsReadFromTheRankedList_Async()
+    {
+        var table = await TableAsync();
+        await using var _ = table.Runtime;
+
+        // Brin is expert in Perception (the second rank), Aria has no rank in it.
+        Assert.Equal(2, table.Runtime.Checks.RankOf(table.Brin.Id, "Perception"));
+        Assert.True((table.Runtime.Checks.RankOf(table.Aria.Id, "Perception") ?? 0) < 2);
+        Assert.Equal(1, table.Runtime.Checks.RankOf(table.Brin.Id, "Craft"));
+    }
+
+    [Fact]
+    public void AMisspelledRank_IsALoaderProblem_AndARankByLabelOrNumberIsFound()
+    {
+        var entry = new ContentEntry
+        {
+            Id = "typo", Type = "hazard", Name = "typo", Description = string.Empty, PackId = "test",
+            Properties = new Dictionary<string, object>
+            {
+                ["disarm"] = new List<object> { new Dictionary<string, object> { ["id"] = "x", ["name"] = "X", ["check"] = "Craft", ["dc"] = 15L, ["rank"] = "expret" } }
+            }
+        };
+
+        Assert.Contains(HazardNumbers.Problems(entry, HazardType, System), p => p.Contains("expret", StringComparison.Ordinal));
+        Assert.Equal((2, 2, 4), (HazardNumbers.RankPlace(System, "Expert")!.Value, HazardNumbers.RankPlace(System, "2")!.Value, HazardNumbers.RankPlace(System, "legendary")!.Value));
+        Assert.Null(HazardNumbers.RankPlace(System, "5"));
+    }
+
+    [Fact]
     public void ThePacksHazards_LoadWithNoProblem_AndUseRanksSuccessesAndACriticalFailureTrigger()
     {
+        foreach (var id in new[] { "lantern-snare", "cinder-vent", "gravity-bell" }) Assert.Empty(HazardNumbers.Problems(Hazard(id), HazardType, System));
+
         var routes = new[] { "lantern-snare", "cinder-vent", "gravity-bell" }
             .SelectMany(id => HazardNumbers.NoticeRoutes(HazardNumbers.For(Hazard(id), HazardType, null), HazardType.Hazard!).Concat(HazardNumbers.DisableRoutes(HazardNumbers.For(Hazard(id), HazardType, null), HazardType.Hazard!)))
             .ToList();

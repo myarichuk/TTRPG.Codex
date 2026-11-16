@@ -166,6 +166,9 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
     // The attack each target rolled (by actor id), kept so the repeat for a creature that waited for a number does not roll it again.
     private readonly Dictionary<string, int> _attacks = new();
 
+    // The creatures a set-off reached beside the one who tried, named in the event's actor ids.
+    private readonly List<string> _reached = new();
+
     /// <summary>Once applied: the attack total each target rolled. Send it back as <c>Attacked</c> with <c>Rolled</c>, so a creature that waited for a number (its save bonus,
     /// after the attack hit) is not attacked a second time.</summary>
     public IReadOnlyDictionary<string, int> AttackRolled => _attacks;
@@ -233,7 +236,7 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
     public void Apply(CampaignRuntime runtime)
     {
         Run(runtime);
-        _said = SessionEvent.From("Hazard", _parts, ActorIds.Where(runtime.HasActor).Distinct());
+        _said = SessionEvent.From("Hazard", _parts, ActorIds.Concat(_reached).Where(runtime.HasActor).Distinct());
     }
 
     private void Run(CampaignRuntime runtime)
@@ -262,6 +265,8 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
             _ => SetState(runtime, state)
         };
 
+        // Progress toward a disarm belongs to the hazard while it stands armed: leaving Disabled (a reset, a set-off, the state picker) starts the count over.
+        if (before.State == HazardState.Disabled && state.State != HazardState.Disabled) state.Successes = 0;
         Result = state;
         if (changed) runtime.Hazards.Commit(Site, before, state, _damage, joins: Rolled != null);
     }
@@ -438,11 +443,15 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
         {
             // The outcome sets it off: on the one who tried, and on whoever the game master ticked before the roll (an area hazard, a critical failure).
             var reached = new List<string> { actorId };
-            foreach (var other in (Reach ?? Array.Empty<string>()).Where(runtime.HasActor)) AddOnce(reached, other);
+            // Only characters and creatures at the table: loaded, not retired, not a hazard's own actor (the same people the panel offers).
+            foreach (var other in (Reach ?? Array.Empty<string>()).Where(id => runtime.GetActorDocument(id) is { Retired: false, Hazard: null })) AddOnce(reached, other);
             Say("SetOff", who);
             foreach (var other in reached.Skip(1)) Say("SetOffAlso", Actor(runtime, other));
+            _reached.AddRange(reached.Skip(1));
             Strike(runtime, reached);
             state.State = HazardState.Triggered;
+            // Going off ends the attempt: the next try at it starts the count over.
+            state.Successes = 0;
             return true;
         }
 
@@ -529,6 +538,8 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
     {
         var to = State ?? HazardState.Hidden;
         state.State = to;
+        // Only Disabled keeps its count; any other state is an armed hazard, with nothing disarmed yet.
+        if (to != HazardState.Disabled) state.Successes = 0;
         if (to == HazardState.Hidden)
         {
             // Back to hidden is back to the start: nobody has found it and nothing is counted.
@@ -561,7 +572,12 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
         {
             var who = Actor(runtime, targetId);
             var saved = false;
-            if (attack is { } bonus)
+            if (attack is { } bonus && Attacked != null && Attacked.TryGetValue(targetId, out var already))
+            {
+                // The repeat for a creature that hit and waited for a number: only a hit waits for its save, so the armor class and the attack are not read or rolled again.
+                _attacks[targetId] = already;
+            }
+            else if (attack is { } bonus2)
             {
                 var armor = runtime.Checks.Make(new CheckRequest { ActorId = targetId, Check = ActorChecks.ArmorClassName(_system), Kind = CheckKind.ArmorClass, Bonus = Typed(AskKey(targetId, string.Empty, CheckKind.ArmorClass, false)) }, RollerUserId);
                 if (armor.Failed != CheckFailure.None)
@@ -571,8 +587,7 @@ public sealed record HazardCommand(HazardSite Site, HazardAction Action, IReadOn
                     continue;
                 }
 
-                // The repeat for a creature that waited for a number keeps the attack it already rolled: only the damage and the save are finished.
-                var total = Attacked != null && Attacked.TryGetValue(targetId, out var already) ? already : RollAttack(runtime, targetId, bonus);
+                var total = RollAttack(runtime, targetId, bonus2);
                 _attacks[targetId] = total;
                 if (total < armor.Total)
                 {

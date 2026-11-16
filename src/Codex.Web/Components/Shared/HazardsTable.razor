@@ -184,7 +184,7 @@
 
             views.Add(new HazardView(key, site, name, placement.Place.Name, state.State, state.Successes, noticed,
                 detect.Where(Open).Select(r => new HazardWay(HazardRoutes.KeyOf(r), WayLabel(r))).ToList(),
-                disarm.Where(Open).Select(r => new HazardWay(HazardRoutes.KeyOf(r), WayLabel(r))).ToList(),
+                disarm.Where(Open).Select(r => new HazardWay(HazardRoutes.KeyOf(r), WayLabel(r), r.TriggersOn.Count > 0)).ToList(),
                 HazardNumbers.Methods(numbers, hazard).Select(m => m.Shown).ToList(),
                 detect.Concat(disarm).Count(r => !Open(r)), Snapshot.HazardUndo.Contains(key), turn));
         }
