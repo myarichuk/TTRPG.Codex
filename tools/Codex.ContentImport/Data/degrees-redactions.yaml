@@ -1,0 +1,17 @@
+# The redaction table of the local book importer. It holds no source text.
+# Each row names an entry id and a field, then the SHA-256 and the character length of ONE exact normalized source span (a sentence, or one
+# semicolon clause of a sentence; see SpanText.cs for the normalization and the splitter), then an action:
+#   replace    swap the span for `text`, our own words (one line, already normalized)
+#   cut        remove the span
+#   drop-entry leave the whole entry out of the pack
+# and a `reason` in our words that names no names. A row whose hash is not found fails the run.
+# The replacement text is Licensed Material under the ORC and is released with the packs (see LEGAL.md).
+#
+# - entry: some-entry-id
+#   field: description
+#   span: { sha256: "<64 lowercase hex digits>", length: 42 }
+#   action: replace
+#   text: "Our own wording of the mechanic."
+#   reason: "A sentence that carried a proper noun; the mechanic is kept."
+normalization: 1
+rows: []

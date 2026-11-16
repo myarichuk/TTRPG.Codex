@@ -178,6 +178,10 @@ this project's own words with invented names, text and creatures. No text, table
   the upstream attribution.
 - Not shipped inside the app: like every system other than the 5E one it is released as its own archive, so it can be withdrawn without a
   new release.
+- `tools/Codex.ContentImport/Data/degrees-redactions.yaml` (the replacement texts of the local book importer's redaction step) and
+  `degrees-allowlist.txt` (game terms) are ORC data, released with the packs the importer generates, as `Data/srd521-traps.yaml` is CC BY data.
+  They hold no source text: a redaction row stores only a hash and length of the span it removes, our own replacement words and a reason.
+  `degrees-denylist.sha256` is hashes only. None of the three holds a name.
 - Reserved Material in this pack (names, flavour text, creatures) is whatever the Reserved Material statement above designates; until it
   is written, treat all of it as reserved.
 

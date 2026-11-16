@@ -32,6 +32,10 @@ public static class DegreesCommand
             }
 
             var config = BooksConfig.Embedded();
+            // The committed redaction, denylist and allowlist files are validated before anything is read, so a malformed one fails the run here.
+            RedactionTable.Embedded();
+            Denylist.Embedded();
+            Allowlist.Embedded();
             var book = config.Books.GetValueOrDefault(options.Book) ?? throw new DegreesException($"No fingerprint is committed for book {options.Book}.");
             PdfDocument doc;
             try
