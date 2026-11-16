@@ -1339,4 +1339,16 @@
   <data name="Campaign.Vault.WillEdit" xml:space="preserve"><value>שונה {0}: {1}</value></data>
   <data name="Campaign.Vault.Next" xml:space="preserve"><value>הבא</value></data>
   <data name="Campaign.Vault.Back" xml:space="preserve"><value>חזרה</value></data>
+  <data name="Campaign.Book.Hazard.Check" xml:space="preserve"><value>{0}, DC {1}</value></data>
+  <data name="Campaign.Book.Hazard.Dc" xml:space="preserve"><value>DC {0}</value></data>
+  <data name="Campaign.Book.Hazard.Needs" xml:space="preserve"><value>נדרש: {0}</value></data>
+  <data name="Campaign.Book.Hazard.After" xml:space="preserve"><value>אחרי: {0}</value></data>
+  <data name="Campaign.Book.Hazard.SetsOff" xml:space="preserve"><value>כישלון מפעיל את המפגע</value></data>
+  <data name="Campaign.Book.Hazard.Successes" xml:space="preserve"><value>הצלחות נדרשות: {0}</value></data>
+  <data name="Campaign.Book.Hazard.NoPassive" xml:space="preserve"><value>ציונים פסיביים לא מגלים אותו</value></data>
+  <data name="Campaign.Book.Hazard.Rank" xml:space="preserve"><value>דרגה: {0}</value></data>
+  <data name="Campaign.Book.Hazard.HalfOnSave" xml:space="preserve"><value>חצי נזק בהצלחה</value></data>
+  <data name="Campaign.Book.Hazard.NoneOnSave" xml:space="preserve"><value>אין נזק בהצלחה</value></data>
+  <data name="Campaign.Book.Hazard.Times" xml:space="preserve"><value>{0}, {1} פעמים</value></data>
+  <data name="Campaign.Book.Hazard.Strikes" xml:space="preserve"><value>מפעיל את האפקט</value></data>
 </root>

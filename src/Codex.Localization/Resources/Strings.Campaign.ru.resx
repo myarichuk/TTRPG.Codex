@@ -1339,4 +1339,16 @@
   <data name="Campaign.Vault.WillEdit" xml:space="preserve"><value>Изменено — {0}: {1}</value></data>
   <data name="Campaign.Vault.Next" xml:space="preserve"><value>Далее</value></data>
   <data name="Campaign.Vault.Back" xml:space="preserve"><value>Назад</value></data>
+  <data name="Campaign.Book.Hazard.Check" xml:space="preserve"><value>{0}, Сл {1}</value></data>
+  <data name="Campaign.Book.Hazard.Dc" xml:space="preserve"><value>Сл {0}</value></data>
+  <data name="Campaign.Book.Hazard.Needs" xml:space="preserve"><value>требуется: {0}</value></data>
+  <data name="Campaign.Book.Hazard.After" xml:space="preserve"><value>после: {0}</value></data>
+  <data name="Campaign.Book.Hazard.SetsOff" xml:space="preserve"><value>провал приводит опасность в действие</value></data>
+  <data name="Campaign.Book.Hazard.Successes" xml:space="preserve"><value>нужно успехов: {0}</value></data>
+  <data name="Campaign.Book.Hazard.NoPassive" xml:space="preserve"><value>пассивные значения её не находят</value></data>
+  <data name="Campaign.Book.Hazard.Rank" xml:space="preserve"><value>ранг: {0}</value></data>
+  <data name="Campaign.Book.Hazard.HalfOnSave" xml:space="preserve"><value>половина урона при успехе</value></data>
+  <data name="Campaign.Book.Hazard.NoneOnSave" xml:space="preserve"><value>нет урона при успехе</value></data>
+  <data name="Campaign.Book.Hazard.Times" xml:space="preserve"><value>{0}, раз: {1}</value></data>
+  <data name="Campaign.Book.Hazard.Strikes" xml:space="preserve"><value>применяет эффект</value></data>
 </root>

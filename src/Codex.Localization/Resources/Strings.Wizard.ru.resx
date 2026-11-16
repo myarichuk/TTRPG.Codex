@@ -69,4 +69,46 @@
   <data name="Wizard.KeepEditing" xml:space="preserve"><value>Продолжить правку</value></data>
   <data name="Wizard.DeleteTitle" xml:space="preserve"><value>Удалить «{0}»?</value></data>
   <data name="Wizard.DeleteBody" xml:space="preserve"><value>Запись исчезнет из библиотеки вместе с иллюстрацией. Персонажи и существа, уже созданные на её основе, сохранят свои листы.</value></data>
+  <data name="Wizard.Hazard.Step.Routine" xml:space="preserve"><value>Действия по раундам</value></data>
+  <data name="Wizard.Hazard.Step.Bands" xml:space="preserve"><value>Ступени уровней</value></data>
+  <data name="Wizard.Hazard.Intro.Routine" xml:space="preserve"><value>Что делает сложная опасность в каждом раунде. Отметьте не больше одного шага, который применяет эффект опасности к существам; остальные шаги — заметки.</value></data>
+  <data name="Wizard.Hazard.Intro.Bands" xml:space="preserve"><value>Та же опасность на более высоких уровнях. Каждая ступень называет свои уровни и только те числа, которые меняются; всё остальное остаётся как в основе.</value></data>
+  <data name="Wizard.Hazard.Add" xml:space="preserve"><value>Добавить: {0}</value></data>
+  <data name="Wizard.Hazard.Row.detect" xml:space="preserve"><value>способ обнаружения</value></data>
+  <data name="Wizard.Hazard.Row.disarm" xml:space="preserve"><value>способ обезвреживания</value></data>
+  <data name="Wizard.Hazard.Row.method" xml:space="preserve"><value>другой способ</value></data>
+  <data name="Wizard.Hazard.Row.damage" xml:space="preserve"><value>часть урона</value></data>
+  <data name="Wizard.Hazard.Row.condition" xml:space="preserve"><value>состояние</value></data>
+  <data name="Wizard.Hazard.Row.step" xml:space="preserve"><value>шаг действий</value></data>
+  <data name="Wizard.Hazard.Row.band" xml:space="preserve"><value>ступень уровней</value></data>
+  <data name="Wizard.Hazard.Col.Id" xml:space="preserve"><value>Короткое имя (для «Только после»)</value></data>
+  <data name="Wizard.Hazard.Col.Name" xml:space="preserve"><value>Название</value></data>
+  <data name="Wizard.Hazard.Col.Action" xml:space="preserve"><value>Действие (Поиск, Изучение)</value></data>
+  <data name="Wizard.Hazard.Col.Check" xml:space="preserve"><value>Проверка</value></data>
+  <data name="Wizard.Hazard.Col.CheckOther" xml:space="preserve"><value>Проверка, как написана (бонус за столом вводится вручную)</value></data>
+  <data name="Wizard.Hazard.Other" xml:space="preserve"><value>Другое…</value></data>
+  <data name="Wizard.Hazard.Col.Dc" xml:space="preserve"><value>Сложность (Сл)</value></data>
+  <data name="Wizard.Hazard.Col.Needs" xml:space="preserve"><value>Требуется (вместо проверки)</value></data>
+  <data name="Wizard.Hazard.Col.After" xml:space="preserve"><value>Только после</value></data>
+  <data name="Wizard.Hazard.Col.Successes" xml:space="preserve"><value>Нужно успехов</value></data>
+  <data name="Wizard.Hazard.Col.SetsOff" xml:space="preserve"><value>Провал приводит опасность в действие</value></data>
+  <data name="Wizard.Hazard.Col.Passive" xml:space="preserve"><value>Пассивные значения могут её найти</value></data>
+  <data name="Wizard.Hazard.Col.Rank" xml:space="preserve"><value>Минимальный ранг</value></data>
+  <data name="Wizard.Hazard.Col.Text" xml:space="preserve"><value>Примечания</value></data>
+  <data name="Wizard.Hazard.Col.Dice" xml:space="preserve"><value>Кости (например, 2d8)</value></data>
+  <data name="Wizard.Hazard.Col.DamageType" xml:space="preserve"><value>Тип урона</value></data>
+  <data name="Wizard.Hazard.Col.Count" xml:space="preserve"><value>Сколько попадает (кости или число)</value></data>
+  <data name="Wizard.Hazard.Col.Condition" xml:space="preserve"><value>Состояние</value></data>
+  <data name="Wizard.Hazard.Col.Lasts" xml:space="preserve"><value>Сколько длится</value></data>
+  <data name="Wizard.Hazard.Col.Description" xml:space="preserve"><value>Что делает</value></data>
+  <data name="Wizard.Hazard.Col.Strikes" xml:space="preserve"><value>Применяет эффект опасности к существам</value></data>
+  <data name="Wizard.Hazard.Col.Levels" xml:space="preserve"><value>Уровни (например, 5-10)</value></data>
+  <data name="Wizard.Hazard.Fill" xml:space="preserve"><value>Подставить числа из справочника</value></data>
+  <data name="Wizard.Hazard.Fill.Hint" xml:space="preserve"><value>Справочник системы даёт Сл спасброска и урон для уровня. Потом их можно менять как угодно.</value></data>
+  <data name="Wizard.Hazard.Fill.NeedLevel" xml:space="preserve"><value>Сначала укажите уровни: число, например 5, или диапазон, например 1-4.</value></data>
+  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>Подставлять нечего: числа, которые вы уже написали, остаются, а Сл спасброска ждёт, пока у опасности появится спасбросок.</value></data>
+  <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>Подставлено из справочника для уровня {0}: {1}.</value></data>
+  <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>Исправьте это перед сохранением</value></data>
+  <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>Числа, на которые стоит взглянуть (сохранить можно и так)</value></data>
+  <data name="Wizard.Hazard.Blocked" xml:space="preserve"><value>Стол пока не может запустить эту опасность. {0}</value></data>
 </root>

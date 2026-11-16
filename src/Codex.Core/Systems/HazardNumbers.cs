@@ -162,25 +162,105 @@ public static class HazardNumbers
         }
     }
 
+    /// <summary>The row keys of <c>hazards.scaling</c> that are not columns.</summary>
+    public const string ScalingLevelKey = "level";
+
+    /// <inheritdoc cref="ScalingLevelKey"/>
+    public const string ScalingSeverityKey = "severity";
+
+    private static readonly Regex RangeText = new(@"^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$", RegexOptions.Compiled);
+
+    /// <summary>A scaling cell as a range: a whole number or dice (by their average) as low = high, or <c>low-high</c>. Null when it is none of these.</summary>
+    public static (double Low, double High)? Bounds(string? text)
+    {
+        var trimmed = text?.Trim() ?? string.Empty;
+        if (RangeText.Match(trimmed) is { Success: true } range)
+        {
+            return (double.Parse(range.Groups[1].Value, CultureInfo.InvariantCulture), double.Parse(range.Groups[2].Value, CultureInfo.InvariantCulture));
+        }
+
+        return Number(trimmed) is { } single ? (single, single) : null;
+    }
+
+    /// <summary>The severity words the system's scaling rows use, in the order written; empty for a table without severities.</summary>
+    public static IReadOnlyList<string> Severities(SystemDefinition system) =>
+        (system.Hazards?.Scaling ?? []).Select(SeverityOfRow).Where(s => s.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+    private static string SeverityOfRow(IReadOnlyDictionary<string, string> row) =>
+        row.TryGetValue(ScalingSeverityKey, out var text) ? text?.Trim() ?? string.Empty : string.Empty;
+
+    // One bound of a cell with the words it is shown in: a single cell keeps its own text (2d10), a range is shown as its numbers.
+    private sealed record Bound(double Value, string Text);
+
+    private sealed record GuideCell(Bound Low, Bound High);
+
+    private sealed record GuideLevel(long Level, string Severity, Dictionary<string, GuideCell> Cells);
+
+    private static string Shown(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
+
+    // The rows a hazard of this severity reads, by level: the rows of its severity (ignoring case); else, when it has none or the table does not use the word, the
+    // rows with no severity; else every row. Rows at one level merge per column (lowest low, highest high), which only matters in the last case.
+    private static IReadOnlyList<GuideLevel> ScalingRows(IEnumerable<Dictionary<string, string>> scaling, string? severity, out bool matched)
+    {
+        var parsed = scaling
+            .Select(row => (Level: row.TryGetValue(ScalingLevelKey, out var text) && WholeNumber(text, out var n) ? (long?)n : null, Severity: SeverityOfRow(row), Row: row))
+            .Where(r => r.Level != null)
+            .ToList();
+        var chosen = parsed.Where(r => !string.IsNullOrEmpty(severity) && string.Equals(r.Severity, severity, StringComparison.OrdinalIgnoreCase)).ToList();
+        matched = chosen.Count > 0;
+        if (!matched)
+        {
+            chosen = parsed.Where(r => r.Severity.Length == 0).ToList();
+            if (chosen.Count == 0) chosen = parsed;
+        }
+
+        var levels = new List<GuideLevel>();
+        foreach (var group in chosen.GroupBy(r => r.Level!.Value).OrderBy(g => g.Key))
+        {
+            var cells = new Dictionary<string, GuideCell>(StringComparer.Ordinal);
+            foreach (var (_, _, row) in group)
+            {
+                foreach (var (column, text) in row.Where(p => p.Key != ScalingLevelKey && p.Key != ScalingSeverityKey))
+                {
+                    if (Bounds(text) is not { } b) continue;
+                    var single = text.Trim();
+                    var cell = b.Low == b.High && !RangeText.IsMatch(single)
+                        ? new GuideCell(new Bound(b.Low, single), new Bound(b.High, single))
+                        : new GuideCell(new Bound(b.Low, Shown(b.Low)), new Bound(b.High, Shown(b.High)));
+                    cells[column] = cells.TryGetValue(column, out var held)
+                        ? new GuideCell(held.Low.Value <= cell.Low.Value ? held.Low : cell.Low, held.High.Value >= cell.High.Value ? held.High : cell.High)
+                        : cell;
+                }
+            }
+
+            levels.Add(new GuideLevel(group.Key, matched ? group.First().Severity : string.Empty, cells));
+        }
+
+        return levels;
+    }
+
+    // The severity word the numbers of one band carry (the entry's own, with the band laid over it), or null.
+    private static string? SeverityOf(IReadOnlyDictionary<string, object> numbers, HazardDefinition hazard) =>
+        hazard.Severity is { Length: > 0 } field && numbers.TryGetValue(field, out var value) && value is not (System.Collections.IEnumerable and not string)
+            && Convert.ToString(value, CultureInfo.InvariantCulture)?.Trim() is { Length: > 0 } word ? word : null;
+
     /// <summary>
-    /// Where a hazard's numbers stand against the system's <c>hazards.scaling</c> (HAZARDS_DESIGN.md 3.2), for a hazard the world builder proposes: one message for
+    /// Where a hazard's numbers stand against the system's <c>hazards.scaling</c> (HAZARDS_DESIGN.md 3.2), for a hazard the world builder proposes or the wizard edits: one message for
     /// each scaled number (a column of the table the hazard also has, such as a save DC, or its damage) more than one row away from the row for the
     /// hazard's level, and one when a hazard with scaled numbers has no level to read. The level is the lowest whole number in the entry's level field
-    /// (<c>5-10</c> reads as 5); the row is the highest one at or below it, or the first. A band of <c>higherLevels</c> is read at its own levels. The
-    /// window is the row before to the row after; below the first row there is no floor. These are warnings, never refusals: the game master decides, and
-    /// the messages use the fields' labels and state the range, for the game master and the model alike. Nothing here changes the entry. The table has
-    /// no severity, so a mild hazard is read against the same rows as a deadly one. A system with no <c>hazards.scaling</c> has no messages.
+    /// (<c>5-10</c> reads as 5); the row is the highest one at or below it, or the first. A band of <c>higherLevels</c> is read at its own levels, and at its own severity
+    /// (<see cref="For"/> lays the band over the entry). The rows are those of the band's severity; a hazard with none reads the rows with no severity, silently, and one with a
+    /// word the table does not use reads the same rows with one warning. The window is the row before to the row after, among those rows; below the first row there is no floor.
+    /// A cell may be a range, so a bound is the lowest low and the highest high in the window. These are warnings, never refusals: the game master decides, and
+    /// the messages use the fields' labels, name the severity and state the bounds, for the game master and the model alike. Nothing here changes the entry. A system with no <c>hazards.scaling</c> has no messages.
     /// </summary>
     public static IEnumerable<string> ScalingProblems(ContentEntry entry, ContentTypeDefinition type, SystemDefinition system)
     {
         if (type.Hazard is not { } hazard || system.Hazards?.Scaling is not { Count: > 0 } scaling) yield break;
-        var rows = scaling
-            .Select(row => (Level: row.TryGetValue("level", out var text) && WholeNumber(text, out var n) ? (long?)n : null, Row: row))
-            .Where(r => r.Level != null)
-            .OrderBy(r => r.Level)
-            .ToList();
-        if (rows.Count == 0) yield break;
-        var columns = rows.SelectMany(r => r.Row.Keys).Where(k => k != "level").Distinct(StringComparer.Ordinal).ToList();
+        if (ScalingRows(scaling, null, out _).Count == 0) yield break;
+        var columns = scaling.SelectMany(r => r.Keys).Where(k => k != ScalingLevelKey && k != ScalingSeverityKey).Distinct(StringComparer.Ordinal).ToList();
+        var known = Severities(system);
+        var unknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         string LabelOf(string key) => type.Fields.FirstOrDefault(f => f.Key == key)?.Label is { Length: > 0 } label ? label : key;
         var levelLabel = hazard.Level is { Length: > 0 } levelKey ? LabelOf(levelKey) : "level";
 
@@ -197,28 +277,137 @@ public static class HazardNumbers
                 continue;
             }
 
-            var at = rows.FindLastIndex(r => r.Level <= level);
+            var severity = SeverityOf(numbers, hazard);
+            var rows = ScalingRows(scaling, severity, out var matched);
+            if (!matched && severity != null && known.Count > 0 && unknown.Add(severity))
+            {
+                yield return $"{prefix}Severity '{severity}' is not one the system's guide has ({string.Join(", ", known)}); its numbers were read against the guide for any severity.";
+            }
+
+            var at = rows.ToList().FindLastIndex(r => r.Level <= level);
             if (at < 0) at = 0;
+            var window = rows.Skip(Math.Max(at - 1, 0)).Take(Math.Min(at + 1, rows.Count - 1) - Math.Max(at - 1, 0) + 1).ToList();
+            var named = matched ? " " + rows[at].Severity : string.Empty;
             foreach (var (column, value) in measured)
             {
-                var near = rows.Skip(Math.Max(at - 1, 0)).Take(Math.Min(at + 1, rows.Count - 1) - Math.Max(at - 1, 0) + 1)
-                    .Select(r => (Text: r.Row.GetValueOrDefault(column) ?? string.Empty, Value: ScaledValue(r.Row, column))).Where(v => v.Value != null).ToList();
-                if (near.Count == 0) continue;
-                var low = near.MinBy(v => v.Value)!;
-                var high = near.MaxBy(v => v.Value)!;
-                var shown = string.Equals(hazard.Effect?.Damage, column, StringComparison.Ordinal) ? $"averaging {value.GetValueOrDefault():0.#}" : $"{value.GetValueOrDefault():0.#}";
-                if (value > high.Value) yield return $"{prefix}{LabelOf(column)} {shown} is high for a level {level} hazard; the system's guide gives {low.Text} to {high.Text}.";
-                else if (at > 0 && value < low.Value) yield return $"{prefix}{LabelOf(column)} {shown} is low for a level {level} hazard; the system's guide gives {low.Text} to {high.Text}.";
+                var cells = window.Select(r => r.Cells.GetValueOrDefault(column)).OfType<GuideCell>().ToList();
+                if (cells.Count == 0) continue;
+                var low = cells.Select(c => c.Low).MinBy(b => b.Value)!;
+                var high = cells.Select(c => c.High).MaxBy(b => b.Value)!;
+                var isDamage = string.Equals(hazard.Effect?.Damage, column, StringComparison.Ordinal);
+                var shown = isDamage ? $"averaging {value.GetValueOrDefault():0.#}" : $"{value.GetValueOrDefault():0.#}";
+                var gives = isDamage && !IsDice(low.Text) && !IsDice(high.Text) ? $"an average of {low.Text} to {high.Text}" : $"{low.Text} to {high.Text}";
+                if (value > high.Value) yield return $"{prefix}{LabelOf(column)} {shown} is high for a level {level}{named} hazard; the system's guide gives {gives}.";
+                else if (at > 0 && value < low.Value) yield return $"{prefix}{LabelOf(column)} {shown} is low for a level {level}{named} hazard; the system's guide gives {gives}.";
             }
         }
     }
 
+    /// <summary>
+    /// The row of the system's <c>hazards.scaling</c> for a level text (<c>5</c>, or a range such as <c>5-10</c>, which reads as its lowest number) and a severity: the highest
+    /// row at or below the level among the rows of that severity, or among those with none. Null when the system has no table or the text has no number. A cell that is a
+    /// range gives one value inside it: its middle, as dice of the die the severity-less row uses for the column when it has dice. The homebrew wizard fills a new hazard's
+    /// numbers from it and they stay editable; it is the reading <see cref="ScalingProblems"/> measures against.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string>? GuideRow(string? levelText, SystemDefinition system, string? severity = null)
+    {
+        if (system.Hazards?.Scaling is not { Count: > 0 } scaling || LowestLevel(levelText ?? string.Empty) is not { } level) return null;
+        var plain = ScalingRows(scaling, null, out _);
+        var chosen = ScalingRows(scaling, severity, out _);
+        if (chosen.Count == 0) return null;
+        static GuideLevel RowAt(IReadOnlyList<GuideLevel> rows, long level) => rows[Math.Max(rows.ToList().FindLastIndex(r => r.Level <= level), 0)];
+        var row = RowAt(chosen, level);
+        var fallback = plain.Count == 0 ? null : RowAt(plain, level);
+        var result = new Dictionary<string, string>(StringComparer.Ordinal) { [ScalingLevelKey] = row.Level.ToString(CultureInfo.InvariantCulture) };
+        foreach (var (column, cell) in row.Cells)
+        {
+            if (cell.Low.Value == cell.High.Value) result[column] = cell.Low.Text;
+            else if (MiddleOf(cell, fallback?.Cells.GetValueOrDefault(column)?.Low.Text) is { } text) result[column] = text;
+        }
+
+        return result;
+    }
+
+    // A value inside a range cell: dice of the single-value row's die when it has one (the nearest count to the middle, kept inside the range), else the middle as a whole number.
+    private static string? MiddleOf(GuideCell cell, string? singleValueText)
+    {
+        var middle = (cell.Low.Value + cell.High.Value) / 2;
+        if (Regex.Match(singleValueText ?? string.Empty, @"^\d+d(\d+)$") is { Success: true } die)
+        {
+            var average = (double.Parse(die.Groups[1].Value, CultureInfo.InvariantCulture) + 1) / 2;
+            var count = Math.Max(1, (int)Math.Round(middle / average, MidpointRounding.AwayFromZero));
+            var total = count * average;
+            return total >= cell.Low.Value && total <= cell.High.Value ? $"{count}d{die.Groups[1].Value}" : null;
+        }
+
+        var whole = Math.Round(middle, MidpointRounding.AwayFromZero);
+        return whole >= cell.Low.Value && whole <= cell.High.Value && cell.Low.Value % 1 == 0 && cell.High.Value % 1 == 0 ? Shown(whole) : null;
+    }
+
+    /// <summary>The rows of a Collection value as maps the editor can change: each row copied (its lists stay the entry's own, so replace them, never edit them),
+    /// whatever form the store gave them in. Anything that is not a row is left out.</summary>
+    public static List<Dictionary<string, object>> EditableRows(object? value)
+    {
+        var rows = new List<Dictionary<string, object>>();
+        if (value is not System.Collections.IEnumerable items || value is string) return rows;
+        foreach (var item in items)
+        {
+            if (item is IDictionary<string, object> typed) rows.Add(new Dictionary<string, object>(typed, StringComparer.Ordinal));
+            else if (item is IDictionary<object, object> loose)
+            {
+                rows.Add(loose.Where(p => p.Value != null).ToDictionary(p => Convert.ToString(p.Key, CultureInfo.InvariantCulture) ?? string.Empty, p => p.Value, StringComparer.Ordinal));
+            }
+        }
+
+        return rows;
+    }
+
+    /// <summary>
+    /// Takes the blank rows out of the hazard's lists (routes, other ways, damage, conditions, routine and the bands, and the lists inside a band) and drops a list left
+    /// empty, so an "add a row" that was never filled in is not saved as a row the table could not run. A row is blank when every value in it is empty; <c>false</c> is a value.
+    /// Changes <paramref name="properties"/> in place.
+    /// </summary>
+    public static void Tidy(IDictionary<string, object> properties, ContentTypeDefinition type)
+    {
+        if (type.Hazard is not { } hazard) return;
+        foreach (var field in new[] { hazard.Notice?.Routes, hazard.Disable?.Routes, hazard.Methods, hazard.Effect?.Damage, hazard.Effect?.Conditions, hazard.Routine, hazard.HigherLevels })
+        {
+            if (string.IsNullOrEmpty(field) || !properties.TryGetValue(field, out var value)) continue;
+            if (TidyRows(value) is { Count: > 0 } kept) properties[field] = kept;
+            else properties.Remove(field);
+        }
+    }
+
+    private static List<object>? TidyRows(object? value)
+    {
+        if (value is not System.Collections.IEnumerable || value is string) return null;
+        var kept = new List<object>();
+        foreach (var row in EditableRows(value))
+        {
+            foreach (var key in row.Keys.ToList())
+            {
+                if (row[key] is System.Collections.IEnumerable list && row[key] is not string)
+                {
+                    // A list of rows is tidied like the others; a list of words (triggersOn) stays unless it is empty.
+                    var items = list.Cast<object?>().ToList();
+                    if (items.Any(i => i is System.Collections.IDictionary))
+                    {
+                        if (TidyRows(list) is { Count: > 0 } inner) row[key] = inner;
+                        else row.Remove(key);
+                    }
+                    else if (items.Count == 0) row.Remove(key);
+                }
+                else if (row[key] is string text && text.Trim().Length == 0) row.Remove(key);
+            }
+
+            if (row.Count > 0) kept.Add(row);
+        }
+
+        return kept;
+    }
+
     private static long? LowestLevel(string text) =>
         Regex.Match(text ?? string.Empty, @"\d+") is { Success: true } m && long.TryParse(m.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : null;
-
-    // A table row's value for a column: a whole number, or dice by their average.
-    private static double? ScaledValue(IReadOnlyDictionary<string, string> row, string column) =>
-        row.TryGetValue(column, out var text) ? Number(text) : null;
 
     // A hazard's own number for a column: the damage field is its parts' average, summed (a part's count multiplies it); any other is a number or dice.
     private static double? Measure(IReadOnlyDictionary<string, object> numbers, string column, HazardDefinition hazard)

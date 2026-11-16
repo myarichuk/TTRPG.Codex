@@ -143,26 +143,37 @@ restates both damage parts). A DC that rises with a band inside a list (the Fall
 
 ```yaml
 hazards:
-  scaling:                      # by the hazard's level field; the row with the highest level <= the hazard's applies
-    - { level: 1,  attackBonus: <tbd>, saveDc: <tbd>, damage: <tbd> }
-    - { level: 5,  ... }
-    - { level: 11, ... }
-    - { level: 17, ... }
+  scaling:                      # by the hazard's level field, and by its severity where the system has one
+    - { level: 1,  saveDc: 13, damage: 2d10 }                          # a row with no severity: for a hazard with none
+    - { level: 1,  severity: Nuisance, saveDc: 10-11, damage: 3.5-5.5 } # a cell may be a range, damage as an average
+    - { level: 1,  severity: Deadly,   saveDc: 13-15, damage: 7-12.5 }
+    - ...
 ```
 
-- **The numbers are not designed yet.** Where they come from depends on the system:
-  - **srd5e:** SRD 5.2.1 has no shared trap table, but each of its 8 traps scales itself by level band ("At Higher Levels": rows for
-    levels 5-10, 11-16 and 17-20 over the base 1-4), and only Collapsing Roof and Fire-Casting Statue share one damage progression (2d10, 4d10, 10d10, 18d10); Poisoned Needle uses the
-    same dice one band later (2d10 at 5-10), with its own save DCs (11, 13, 15, 17). Save
-    DCs rise by band at different rates per trap; detect and disarm DCs are fixed per trap; there are no attack bonuses. So srd5e's
-    `hazards.scaling` is **derived from the SRD's own trap progressions** (CC BY 4.0, with the SRD attribution), with damage per
-    band and severity (Nuisance, Deadly) as columns, and no attack-bonus column. The derivation is written down beside the table.
-  - **Not from any book we do not license.** The 5e Dungeon Master's Guide's generic severity table (setback, dangerous, deadly)
+- **Rows.** `level` (a whole number) and `severity` (the system's own word) are row keys. Every other key is a field of the hazard
+  type, holding a whole number, dice, or a range `low-high`: whole numbers for a Number field, averages for the damage field. A
+  hazard reads the rows of its own severity, taken from the band being read (`For`), so Rolling Stone's 17-20 band reads Nuisance.
+  When the severity is empty, or a word no row uses, the hazard reads the rows with no severity, or every row if there are none; an
+  unknown word also gets one warning. A system with no severity writes no `severity` key, and its table works as before.
+- **srd5e.** SRD 5.2.1 has no shared trap table. Its only guidance by severity is qualitative ("Parts of a Trap", p. 199: a nuisance
+  trap is unlikely to seriously harm characters of its levels, a deadly one can grievously damage them). Each of its 8 traps scales
+  itself by level band. So srd5e's rows are **derived from the traps' own numbers** (CC BY 4.0, with the SRD attribution): for
+  Nuisance and Deadly at each band (1-4, 5-10, 11-16, 17-20), the tightest range holding every SRD trap of that severity at that band,
+  damage as the exact average (parts summed, a 1d3 dart count as 2). Every severity and band has SRD traps behind it. The derivation
+  and which trap sets each bound are written beside the table.
+  - Nuisance: DC 10-11, 12-13, 14-15, 15-17; damage 3.5-5.5, 10.5-11, 21-22, 42-55 (Falling Net, Hidden Pit, Poisoned Needle; Rolling
+    Stone at 17-20).
+  - Deadly: DC 13-15, 13-15, 13-17, 13-19; damage 7-12.5, 14-24, 28-57, 49-100.5 (Collapsing Roof, Fire-Casting Statue, Poisoned Darts,
+    Spiked Pit; Rolling Stone at 11-16).
+
+  The rows with no severity stay Collapsing Roof's progression (DC 13, 15, 17, 19; 2d10, 4d10, 10d10, 18d10). There is no attack
+  column: no SRD trap makes an attack.
+- **Not from any book we do not license.** The 5e Dungeon Master's Guide's generic severity table (setback, dangerous, deadly)
     and its generic save DC and attack bonus bands are not in the SRD and must not be copied. The damage progression above is
     usable only because the SRD's own traps print it.
   - **Pathfinder Second Edition:** the DC-by-level table, once GM Core is held and its notice read.
 - The table is guidance: the homebrew wizard fills a new hazard's numbers from it, and the world builder's check (`propose_changes`) warns when a proposed hazard's number
-  is more than one row away from its level, stating the range. Nothing is ever refused; the game master decides. A hazard a person writes by hand is never checked this way.
+  is more than one row away from its level, among its severity's rows, stating the range. Nothing is ever refused; the game master decides. The homebrew wizard shows the same warnings on a hazard a person writes or edits by hand (H7: a deliberate change, advice only, never blocking).
   The warning states the table's rows for that level to the game master and to the model alike; srd5e's rows come from CC BY traps and may be shown. A system whose table
   comes from a book held under a notice (Pathfinder's GM Core) must decide first whether its numbers may reach a model.
 - `SystemTranslation` needs nothing new: hazard field labels translate like any type's fields.
@@ -246,7 +257,7 @@ triggers" through a route's `triggersOn` list (outcome keys). Until that roll ex
 - The world builder can propose a hazard as homebrew (`{ "kind": "homebrew", "type": "hazard", "name": ..., "properties": {...} }`), as
   it already does for monsters and spells. `homebrew_fields(type: hazard)` tells it the fields. Its prompt gains one line on hazards:
   give the hazard a level (asking the game master the party's level if it does not know it), keep its numbers near the system's guide, write the trigger and reset as short rules text.
-- `CheckAsync` warns when a homebrew hazard's numbers are more than one scaling row from its level (3.2), and when a feature names a hazard that does not resolve (the hazard is
+- `CheckAsync` warns when a homebrew hazard's numbers are more than one scaling row from its level, among its severity's rows (3.2), and when a feature names a hazard that does not resolve (the hazard is
   dropped and the rest of the feature kept). Problems of shape (a route the table cannot run) are errors.
 - On a system with no hazard type, the world builder keeps writing `"trap": "..."` text, as today.
 
@@ -345,8 +356,9 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   `sheetRules.skills.ranks` is non-empty. `Localize` copies the `hazard` block.
 - **H2.** srd5e's `hazard` type has `level` as **Text** (`1-4`, `5-10`), since the SRD prints ranges; scaling rows use a number, so
   3.2's "lowest level of the range" is the reading for a later check. The type declares `complex` and `routine` (for the flooding room)
-  but nothing reads them until H5. `hazards.scaling` has no `severity` column (3.2 suggested one): its four rows are Collapsing Roof's
-  progression (save DC 13, 15, 17, 19; damage 2d10, 4d10, 10d10, 18d10), a Deadly trap with a save. Other Deadly traps differ: Fire-Casting Statue
+  but nothing reads them until H5. `hazards.scaling` first had no `severity` column: its four rows were Collapsing Roof's progression (save DC 13, 15, 17, 19; damage
+  2d10, 4d10, 10d10, 18d10), a Deadly trap with a save. They stay as the rows for a hazard with no severity; the Nuisance and Deadly
+  rows came later (see H6). Other Deadly traps differ: Fire-Casting Statue
   keeps DC 15 and scales its cone, Poisoned Darts keeps DC 13 and scales per dart, and the pits have no save and scale depth with d6 and d8 dice. Detect and disarm DCs are not columns because the
   SRD fixes them per trap. The traps carry **no tags**: `kind: trap` is a property, because the shipped-tag test wants a Hebrew and a
   Russian label for every tag. The two homebrew hazards are a new pack, `codex-hazards` (kind world, depends on the SRD pack), not
@@ -531,9 +543,13 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
     is a Collection in srd5e, is the sum of its parts' average dice times their `count`) the value should lie between the row before and the row after, clamped at the ends; below the first row there is no floor. Every `higherLevels`
     band is read at its own levels. A hazard with scaled numbers and no readable level gets a warning to fill in its level.
   - **The message states the range**, in the field's label ("Save DC 25 is high for a level 5 hazard; the system's guide gives 13 to 17."), to the game master and the model alike, and does not name the YAML key. The prompt line stays free of the table.
-  - **Not done: severity.** The table has no severity column, so a Nuisance trap is read against the Deadly Collapsing Roof's rows. Five of the eight SRD traps then leave the window for their own bands (Falling Net, Hidden Pit,
-    Poisoned Darts, Spiked Pit, and the Rolling Stone's restated band; the Fire-Casting Statue's base save DC too at 17-20). A test over every shipped trap that expects no warning cannot pass until the table gains per-severity rows,
-    which are numbers the SRD does not print as a table; none were invented. Open question for the owner of `hazards.scaling`.
+  - **Severity.** The table has rows per severity: the four rows with no severity (Collapsing Roof's progression) and, for Nuisance
+    and Deadly at each band, the tightest range holding every SRD trap of that severity at that band (3.2). A cell may be a range
+    (`13-15`, damage `14-24` as averages). A hazard reads its own severity's rows, per band through `For` (Rolling Stone's 17-20 band
+    reads Nuisance). One with no severity reads the rows without one, silently. One with a word the table does not use gets one
+    warning and the same rows. The window is still the row before to the row after, within those rows. The loader keys a row on
+    (level, severity) and checks a range runs low to high. Every shipped trap, at every band, gives no scaling warning
+    (`Srd5eHazardsTests`). The prompt line names the severity words.
   - **The placement.** A feature's `"hazard"` is a Library `type/id` (checked against the Library; an id that is really the campaign's own homebrew entry is placed as homebrew), `existing:homebrew:type/id`, or the ref of a homebrew hazard
     in the same proposal (`DraftFeature.HazardEntry` / `HazardRef`). **One that names nothing is dropped with a warning, in every form** (a Library id the Library lacks, an existing key that is not there or not a hazard, a ref that is not a
     hazard), and the rest of the feature is kept; 5 and 8 now agree. On a system with no hazard type the hazard is ignored with a warning and the free-text `trap` is kept; on one that has it, a `trap` with no hazard gets a warning
@@ -549,7 +565,43 @@ Steps 1 to 3 (H1 to H3) are built on `feat/hazards`. What differs from the secti
   - **Tests:** `WorldBuilderHazardTests` (through the chat's scripted model and the check: a Library hazard, the campaign's own hazard by either key, a homebrew one in range read back through `For`, `Damage`, `NoticeRoutes` and `Problems`, one out of
     range by save DC, by damage alone and too low (warned, on its card, saved as written), no level, a route the loader rejects, a row without a name and an empty one, `higherLevels` bands, an edit that adds nothing, one that adds a number and one that
     breaks the shape, a link of another type, a dangling link, an unticked entry, a trap with no hazard, a system with no hazard type, the prompt, secrecy, and the one-row window).
-  - **Not done:** an edit of a placed hazard's levels or state from the world builder; the homebrew wizard's hazard mode and the book stat block (step 7); the severity item above.
+  - **Not done:** an edit of a placed hazard's levels or state from the world builder; the homebrew wizard's hazard mode and the book stat block (step 7; done in H7).
+
+- **H7 (the homebrew wizard and the book).** Built as 7 and step 7 of 9 have it. What differs, and why:
+  - **The wizard's hazard mode is the type's own steps.** For a type with a `hazard` block (`HomebrewWizard.IsHazard`) the steps are the type's field categories as for any type, but the lists are placed by their
+    role in the block, never by field name: the `methods` rows go beside the disarm routes, the `routine` is a step of its own (`Routine`) and so are the `higherLevels` bands (`Level bands`). Each step is
+    `HazardStepForm`: the plain fields as the schema form draws them, and each list a `HazardRows` editor (a fieldset, one labelled group per row, every control with its own visible label, a remove
+    button that names the row, an add button that names the list). Columns are the fixed row keys of 3.1.1: a route has name, action, check (a select of the system's skills and attributes), dc, needs, after (a
+    select of the detect routes' ids), id, text, and `successes` and a `triggersOn: [failure]` box on a disarm route, a `passive` box (ticked unless the row says `false`) on a detect route, and `rank` only on a
+    system with ranks. Damage rows are dice, type, count; conditions are a select of the system's conditions (shown translated, stored canonical) and `lasts`; routine rows are name, description and a `strikes` box;
+    a band is `levels`, the numbers of the effect fields beside the save DC and damage (and the severity), and its own damage and `methods` lists. A key a stored row has and the editor has no column for stays in the row.
+  - **Numbers from the guide (7).** The step that holds the save DC and the damage has "Fill numbers from the guide" (it reads the level from any step): `HazardNumbers.GuideRow(level, system)` (the row `ScalingProblems`
+    measures against, for the hazard's severity; a range cell gives a value in its middle, the damage as dice of the severity-less row's die) fills the save DC (only when the hazard already has a save, since a DC with no
+    save is a shape problem) and the damage (the first damage row's dice; its type and every further part are kept).
+    It fills only what is empty: a number or dice the game master already wrote is never replaced. The note says what was filled; everything stays editable.
+  - **A deliberate change to 3.2 and H6: the wizard warns on a hand-written hazard too.** 3.2 said a hazard a person writes by hand is never checked against the table, and H6 reports only the problems an edit
+    introduced. The wizard instead shows the scaling warnings (`HazardIssues`) on every render of every step, including when the game master opens an existing hand-written hazard to fix something else. This is
+    advice only: it is in a polite live region, it never stops a save, and the shape problems (which do) are separate. It is kept on purpose, so a number that has drifted from its level is visible whoever wrote it.
+  - **Checks are keys.** A check column is a select of the system's skills and attributes, shown in the reader's language and stored as the key (`perception`, `animal-handling`), which `ActorChecks.Resolve` finds in any
+    language; a value stored as a label ("Perception") shows selected as its key. The book prints a route's check as the skill's or attribute's label in the book's language, and an `after` as the name of the detect route it
+    names (its id when it has no name).
+  - **Saving through the same checks.** `HazardNumbers.Problems` (the checks the loader and the world builder use) stops the save: the message is in the alert and the wizard goes to the review step. `ScalingProblems` (H6)
+    only warns. Both are listed as the GM edits, in a polite live region under every step (`hazard-shape`, `hazard-scale`), so a warning never needs an extra "save anyway" click: it never stops the save. Blank rows
+    and empty lists are dropped before the check and the save (`HazardNumbers.Tidy`), so an "add a row" never filled in is not saved. The messages are the checks' own English, as H6's warnings are.
+  - **Not in the editor:** `triggersOn` offers the `failure` box only (`criticalFailure` waits for the degrees roll, P6); the row editors have no reordering; the wizard's preview pane still draws the entry with the
+    generic detail view (rows as name and description).
+  - **The book.** `BookStatBlocks.For` draws a hazard (a type with a `hazard` block) as `{{monster,frame,#hz-KEY ... }}`: the `monster` class so every theme styles it as a stat block and an AI edit keeps it back whole
+    as "a stat block" (its numbers are never sent to a model). Plain lines: the title, one line of type, levels, severity and Complex; the trigger, duration, save (attribute, DC, half or no damage on a save),
+    attack, damage parts (with their count), conditions and every other plain number as `**Label** value`; the effect text and reset; then Detect, Disarm and other-ways routes, the routine (the striking step marked)
+    and each band, as `***Name.*** text` rows. Every label is the system's own field label in the book's language; the few words the book adds are `Campaign.Book.Hazard.*` (en, ru, he). Every value goes through
+    the same `Inline` path as the other blocks. A `triggersOn` word other than `failure` is not printed. **GM edition only:** the function returns null unless the edition is the GM's, and the party and each player's
+    own book are read through the reader that leaves out every type the system does not mark `playerFacing` (a hazard type is not), so a published hazard is in neither; no book prints a place's features at all, so a placed
+    hazard is never in one.
+  - **Strings** (en, ru, he; ru and he need native review): `Wizard.Hazard.*` (`Strings.Wizard`) and `Campaign.Book.Hazard.*` (`Strings.Campaign`); no new resx prefix.
+  - **Tests:** `HomebrewWizardHazardTests` (bUnit, on the real srd5e hazard type: the steps, labelled controls and the saved shape of a route, a failure box and an `after`, a shape problem stops the save, a number off the guide only warns,
+    fill from the guide (every damage row kept, typed numbers kept), removing a row shows no stale text, a saved hazard of every field opened and saved unchanged, blank rows not saved, a band's own damage and a striking step, every step in en, ru and he with no key showing, another type untouched), `HazardEditingTests` (guide row, rows from any store form, tidy), the
+    hazard cases of `BookStatBlocksTests` (the block, ru and he, hostile values, the draft and an AI edit), and `BookSourceTests.APartyOrPlayerBook_NeverCarriesAHazard_ThoughTheGmsBookPrintsIt` (a published hazard and a placed one in
+    the party book, a player's book, what a model is sent; present in the GM's book).
 
 ## 12. H4a: the server-side check service (interface)
 

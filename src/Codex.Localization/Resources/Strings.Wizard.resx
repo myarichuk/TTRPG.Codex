@@ -69,4 +69,46 @@
   <data name="Wizard.KeepEditing" xml:space="preserve"><value>Keep editing</value></data>
   <data name="Wizard.DeleteTitle" xml:space="preserve"><value>Delete “{0}”?</value></data>
   <data name="Wizard.DeleteBody" xml:space="preserve"><value>It disappears from the Library, and its art with it. Characters and creatures already made from it keep their sheets.</value></data>
+  <data name="Wizard.Hazard.Step.Routine" xml:space="preserve"><value>Routine</value></data>
+  <data name="Wizard.Hazard.Step.Bands" xml:space="preserve"><value>Level bands</value></data>
+  <data name="Wizard.Hazard.Intro.Routine" xml:space="preserve"><value>What a complex hazard does each round. Mark at most one step that applies the hazard's effect to creatures; the other steps are notes.</value></data>
+  <data name="Wizard.Hazard.Intro.Bands" xml:space="preserve"><value>The same hazard at higher levels. Each band names its levels and only the numbers that change; everything else keeps the base value.</value></data>
+  <data name="Wizard.Hazard.Add" xml:space="preserve"><value>Add {0}</value></data>
+  <data name="Wizard.Hazard.Row.detect" xml:space="preserve"><value>detect route</value></data>
+  <data name="Wizard.Hazard.Row.disarm" xml:space="preserve"><value>disarm route</value></data>
+  <data name="Wizard.Hazard.Row.method" xml:space="preserve"><value>other way</value></data>
+  <data name="Wizard.Hazard.Row.damage" xml:space="preserve"><value>damage part</value></data>
+  <data name="Wizard.Hazard.Row.condition" xml:space="preserve"><value>condition</value></data>
+  <data name="Wizard.Hazard.Row.step" xml:space="preserve"><value>routine step</value></data>
+  <data name="Wizard.Hazard.Row.band" xml:space="preserve"><value>level band</value></data>
+  <data name="Wizard.Hazard.Col.Id" xml:space="preserve"><value>Short name (for “Only after”)</value></data>
+  <data name="Wizard.Hazard.Col.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Wizard.Hazard.Col.Action" xml:space="preserve"><value>Action (Search, Study)</value></data>
+  <data name="Wizard.Hazard.Col.Check" xml:space="preserve"><value>Check</value></data>
+  <data name="Wizard.Hazard.Col.CheckOther" xml:space="preserve"><value>Check, as written (a typed bonus is asked for at the table)</value></data>
+  <data name="Wizard.Hazard.Other" xml:space="preserve"><value>Other…</value></data>
+  <data name="Wizard.Hazard.Col.Dc" xml:space="preserve"><value>DC</value></data>
+  <data name="Wizard.Hazard.Col.Needs" xml:space="preserve"><value>Needs (instead of a check)</value></data>
+  <data name="Wizard.Hazard.Col.After" xml:space="preserve"><value>Only after</value></data>
+  <data name="Wizard.Hazard.Col.Successes" xml:space="preserve"><value>Successes needed</value></data>
+  <data name="Wizard.Hazard.Col.SetsOff" xml:space="preserve"><value>A failure sets the hazard off</value></data>
+  <data name="Wizard.Hazard.Col.Passive" xml:space="preserve"><value>Passive scores can find it</value></data>
+  <data name="Wizard.Hazard.Col.Rank" xml:space="preserve"><value>Minimum rank</value></data>
+  <data name="Wizard.Hazard.Col.Text" xml:space="preserve"><value>Notes</value></data>
+  <data name="Wizard.Hazard.Col.Dice" xml:space="preserve"><value>Dice (such as 2d8)</value></data>
+  <data name="Wizard.Hazard.Col.DamageType" xml:space="preserve"><value>Damage type</value></data>
+  <data name="Wizard.Hazard.Col.Count" xml:space="preserve"><value>How many hit (dice or a number)</value></data>
+  <data name="Wizard.Hazard.Col.Condition" xml:space="preserve"><value>Condition</value></data>
+  <data name="Wizard.Hazard.Col.Lasts" xml:space="preserve"><value>How long it lasts</value></data>
+  <data name="Wizard.Hazard.Col.Description" xml:space="preserve"><value>What it does</value></data>
+  <data name="Wizard.Hazard.Col.Strikes" xml:space="preserve"><value>Applies the hazard's effect to creatures</value></data>
+  <data name="Wizard.Hazard.Col.Levels" xml:space="preserve"><value>Levels (such as 5-10)</value></data>
+  <data name="Wizard.Hazard.Fill" xml:space="preserve"><value>Fill numbers from the guide</value></data>
+  <data name="Wizard.Hazard.Fill.Hint" xml:space="preserve"><value>The system's guide gives a save DC and damage for a level. Change them as you like afterwards.</value></data>
+  <data name="Wizard.Hazard.Fill.NeedLevel" xml:space="preserve"><value>Fill in the levels first: a number such as 5, or a range such as 1-4.</value></data>
+  <data name="Wizard.Hazard.Fill.Nothing" xml:space="preserve"><value>The guide has nothing to fill in: numbers you wrote are kept, and a save DC waits until the hazard has a save.</value></data>
+  <data name="Wizard.Hazard.Fill.Done" xml:space="preserve"><value>Filled in from the guide for level {0}: {1}.</value></data>
+  <data name="Wizard.Hazard.Check.Shape" xml:space="preserve"><value>Fix these before saving</value></data>
+  <data name="Wizard.Hazard.Check.Scale" xml:space="preserve"><value>Numbers to look at (you can save anyway)</value></data>
+  <data name="Wizard.Hazard.Blocked" xml:space="preserve"><value>The table cannot run this hazard yet. {0}</value></data>
 </root>

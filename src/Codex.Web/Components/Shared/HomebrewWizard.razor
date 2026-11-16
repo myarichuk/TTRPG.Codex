@@ -2,6 +2,7 @@
 @using Codex.Core
 @using Codex.Core.AI
 @using Codex.Core.Rules
+@using Codex.Core.Systems
 @using Codex.Persistence
 @using Codex.Plugin.Abstractions
 @using Codex.Web.Components.Campaign
@@ -130,12 +131,46 @@
                         break;
 
                     default:
-                        @if (StepSchema(CurrentStep) is { } stepSchema)
+                        @if (IsHazard && StepFields(CurrentStep) is { Count: > 0 } hazardFields)
+                        {
+                            <HazardStepForm Type="TypeDef!" System="Ctx.System" Fields="hazardFields" Values="draft.Properties" ValuesChanged="OnValuesChanged" />
+                        }
+                        else if (StepSchema(CurrentStep) is { } stepSchema)
                         {
                             <SchemaForm Schema="stepSchema" Values="draft.Properties" ReferenceOptions="referenceOptions" ShowGroupHeadings="false" ValuesChanged="OnValuesChanged"
                                         FeatureGrants="grants" FeatureRowKeys="grantRows" FeatureWholeEntry="@(grantWhole && IsGrantStep(CurrentStep))" />
                         }
                         break;
+                }
+
+                @if (IsHazard)
+                {
+                    // What the table cannot run stops the save; numbers off the system's guide are said, and the GM saves anyway. The region exists
+                    // before it has anything to say, so a screen reader announces what appears in it.
+                    var (shape, scale) = HazardIssues();
+                    <div class="hazard-checks mt-3" aria-live="polite" data-testid="hazard-checks">
+                        @if (shape.Count > 0)
+                        {
+                            <h4 class="label-caps">@L["Wizard.Hazard.Check.Shape"]</h4>
+                            <ul data-testid="hazard-shape">
+                                @foreach (var problem in shape)
+                                {
+                                    <li>@problem</li>
+                                }
+                            </ul>
+                        }
+
+                        @if (scale.Count > 0)
+                        {
+                            <h4 class="label-caps">@L["Wizard.Hazard.Check.Scale"]</h4>
+                            <ul data-testid="hazard-scale">
+                                @foreach (var warning in scale)
+                                {
+                                    <li>@warning</li>
+                                }
+                            </ul>
+                        }
+                    </div>
                 }
 
                 @if (error != null)
@@ -244,6 +279,7 @@
 
     private ContentTypeDefinition? TypeDef => draft == null ? null : types.FirstOrDefault(t => string.Equals(t.Type, draft.Type, StringComparison.OrdinalIgnoreCase));
     private bool IsCreature => TypeDef?.ActorBlueprint == true;
+    private bool IsHazard => TypeDef?.Hazard != null;
     private bool BasicsValid => draft != null && !string.IsNullOrWhiteSpace(draft.Type) && !string.IsNullOrWhiteSpace(draft.Name);
 
     /// <summary>Basics, Description, one step per field category of the type, Art, Review.</summary>
@@ -258,11 +294,15 @@
             };
 
             var categories = (TypeDef?.Fields ?? new List<FieldDefinition>())
-                .Select(f => f.Category ?? "General").Where(c => c != LoreCategory).Distinct().ToList();
+                .Select(StepCategoryOf).Where(c => c != LoreCategory).Distinct().ToList();
             foreach (var category in categories)
             {
-                var label = category == "General" ? (categories.Count == 1 ? L["Wizard.Step.Details"] : L["Wizard.Step.General"]) : category;
-                steps.Add(new Step("cat-" + category, label, StepIcon(category), null, category));
+                var label = category == "General" ? (categories.Count == 1 ? L["Wizard.Step.Details"] : L["Wizard.Step.General"])
+                    : category == RoutineStep ? L["Wizard.Hazard.Step.Routine"]
+                    : category == BandsStep ? L["Wizard.Hazard.Step.Bands"]
+                    : category;
+                var intro = category == RoutineStep ? L["Wizard.Hazard.Intro.Routine"] : category == BandsStep ? L["Wizard.Hazard.Intro.Bands"] : null;
+                steps.Add(new Step("cat-" + category, label, StepIcon(category), intro, category));
             }
 
             steps.Add(new Step("art", IsCreature ? L["Wizard.Portrait"] : L["Wizard.Art"], "image", L["Wizard.Intro.Art"]));
@@ -280,8 +320,45 @@
         "ability scores" => "dices",
         "senses and skills" => "eye",
         "traits and actions" => "swords",
+        "notice" => "eye",
+        "disable" => "shield",
+        "trigger" => "zap",
+        "effect" => "flame",
+        "durability" => "shield",
+        "reset" => "refresh-cw",
+        RoutineStep => "list",
+        BandsStep => "layers",
         _ => "sliders-horizontal"
     };
+
+    private const string RoutineStep = "hazard:routine";
+    private const string BandsStep = "hazard:bands";
+
+    /// <summary>A hazard's lists are placed by their role in the type's hazard block: the other ways beside the disarm routes, the routine and the level bands each a step
+    /// of their own. Any other field is in the category its type gives it.</summary>
+    private string StepCategoryOf(FieldDefinition field)
+    {
+        if (IsHazard && HazardStepForm.RoleOf(TypeDef!, field.Key) is { } role)
+        {
+            if (role == "step") return RoutineStep;
+            if (role == "band") return BandsStep;
+            if (role == "method" && TypeDef!.Fields.FirstOrDefault(f => f.Key == TypeDef.Hazard!.Disable?.Routes) is { } disarm) return disarm.Category ?? "General";
+        }
+
+        return field.Category ?? "General";
+    }
+
+    private List<FieldDefinition> StepFields(Step step) =>
+        TypeDef == null || step.Category == null ? [] : TypeDef.EditorFields().Where(f => StepCategoryOf(f) == step.Category).ToList();
+
+    /// <summary>What the table cannot run (it stops the save) and what the system's guide says is off (it never does), for the hazard as it stands.</summary>
+    private (List<string> Shape, List<string> Scale) HazardIssues()
+    {
+        if (draft == null || TypeDef?.Hazard == null || Ctx.System?.Canonical is not { } system) return ([], []);
+        var entry = draft.ToEntry();
+        HazardNumbers.Tidy(entry.Properties, TypeDef);
+        return (HazardNumbers.Problems(entry, TypeDef, system).ToList(), HazardNumbers.ScalingProblems(entry, TypeDef, system).ToList());
+    }
 
     private SystemDefinition? grantSystem;
     private FeatureGrantVocabulary? grantVocabulary;
@@ -310,9 +387,8 @@
 
     private UISchema? StepSchema(Step step)
     {
-        if (TypeDef == null || step.Category == null) return null;
-        var fields = TypeDef.EditorFields().Where(f => (f.Category ?? "General") == step.Category).ToList();
-        return fields.Count == 0 ? null : new UISchema(TypeDef.Type, PreferredEditor.Form, fields);
+        var fields = StepFields(step);
+        return fields.Count == 0 ? null : new UISchema(TypeDef!.Type, PreferredEditor.Form, fields);
     }
 
     private bool StepDone(Step step) => step.Key switch
@@ -425,6 +501,19 @@
         {
             error = string.Join(" ", grantProblems);
             return;
+        }
+
+        // A hazard the table cannot run is not saved (the same checks the content loader makes); numbers off the system's guide never stop it.
+        if (IsHazard)
+        {
+            HazardNumbers.Tidy(draft.Properties, TypeDef!);
+            var (shape, _) = HazardIssues();
+            if (shape.Count > 0)
+            {
+                error = L["Wizard.Hazard.Blocked", string.Join(" ", shape)];
+                current = Steps.Count - 1;
+                return;
+            }
         }
 
         saving = true;

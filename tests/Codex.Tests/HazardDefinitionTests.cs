@@ -144,6 +144,70 @@ public class HazardDefinitionTests
     }
 
     [Fact]
+    public void AScalingRow_MayNameASeverity_AndGiveRanges()
+    {
+        var good = SystemDefinitionLoader.Parse(Yaml("""
+                level: level
+                severity: summary
+                effect: { damage: damage }
+            """, """
+            hazards:
+              scaling:
+                - { level: 5, severity: A, saveDc: 13-15, damage: 7-12.5 }
+                - { level: 5, severity: B, saveDc: 16, damage: 4d10 }
+                - { level: 5, saveDc: 14, damage: 3d10 }
+            """));
+        Assert.Equal(3, good.Hazards!.Scaling.Count);
+        Assert.Equal(new[] { "A", "B" }, HazardNumbers.Severities(good));
+
+        var bad = Errors(Yaml("""
+                level: level
+                severity: summary
+                effect: { damage: damage }
+            """, """
+            hazards:
+              scaling:
+                - { level: 5, severity: A, saveDc: 13 }
+                - { level: 5, severity: a, saveDc: 14 }
+                - { level: 11, severity: A, saveDc: 15-13 }
+                - { level: 17, severity: A, saveDc: 13.5-15 }
+                - { level: 1, severity: A, damage: x-y }
+                - { level: 2, severity: A, damage: 9-3 }
+                - { level: 3, severity: ' ', saveDc: 10 }
+            """));
+        Assert.Contains(bad, e => e.Contains("scaling[1]") && e.Contains("repeats level 5 for severity a"));
+        Assert.Contains(bad, e => e.Contains("scaling[2].saveDc") && e.Contains("runs low to high"));
+        Assert.Contains(bad, e => e.Contains("scaling[3].saveDc") && e.Contains("whole number"));
+        Assert.Contains(bad, e => e.Contains("scaling[4].damage") && e.Contains("range of averages"));
+        Assert.Contains(bad, e => e.Contains("scaling[5].damage") && e.Contains("runs low to high"));
+        Assert.Contains(bad, e => e.Contains("scaling[6].severity is empty"));
+
+        var none = Errors(Yaml("""
+                level: level
+                effect: { damage: damage }
+            """, """
+            hazards:
+              scaling:
+                - { level: 5, severity: A, saveDc: 13 }
+            """));
+        Assert.Contains(none, e => e.Contains("scaling[0]") && e.Contains("no hazard type names a severity field"));
+
+        // A dropdown severity field offers words; a row's word is one of them.
+        var dropdown = Errors(Yaml("""
+                level: level
+                severity: onSave
+                effect: { damage: damage }
+            """, """
+            hazards:
+              scaling:
+                - { level: 5, severity: half, saveDc: 13 }
+                - { level: 5, severity: bogus, saveDc: 13 }
+            """));
+        Assert.DoesNotContain(dropdown, e => e.Contains("scaling[0]"));
+        Assert.Contains(dropdown, e => e.Contains("scaling[1].severity is 'bogus'") && e.Contains("half, none"));
+    }
+
+    [Fact]
     public void AScalingRow_MayGiveTheDamageDiceButNoOtherList()
     {
         var errors = Errors(Yaml("""

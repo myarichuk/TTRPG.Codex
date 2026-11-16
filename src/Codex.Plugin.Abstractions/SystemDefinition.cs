@@ -214,7 +214,7 @@ public class HazardDefinition
     /// <summary>The field holding what scaling and the world builder read: a number, or a range of levels (<c>1-4</c>) where the system prints ranges.</summary>
     public string? Level { get; set; }
 
-    /// <summary>The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly).</summary>
+    /// <summary>The field holding the system's own words for how dangerous the hazard is (Nuisance, Deadly). <c>hazards.scaling</c> rows with the same word apply to it; a band of <c>higherLevels</c> may change it.</summary>
     public string? Severity { get; set; }
 
     /// <summary>The field holding the entry's own scaled versions: a collection of <c>{ levels, ...changed fields }</c>. A row names only the fields it changes; the others keep the base value.</summary>
@@ -296,9 +296,13 @@ public class HazardDurability
 /// <summary>A system's guidance for how hard a hazard of each level is, for the homebrew wizard and the world builder's checks.</summary>
 public class HazardRules
 {
-    /// <summary>Rows by level: each is <c>{ level: 5, saveDc: 15, damage: 4d10, ... }</c> with the other keys naming fields of the
-    /// hazard type. The row with the highest level not above the hazard's applies. The homebrew wizard fills a new hazard's numbers from it, and the world builder
-    /// warns the game master when a proposed hazard's numbers are more than one row away from its level (<c>HazardNumbers.ScalingProblems</c>). Guidance only; nothing is refused.</summary>
+    /// <summary>Rows by level, and by severity where the system has one: each is <c>{ level: 5, severity: Deadly, saveDc: 13-15, damage: 14-24 }</c>.
+    /// <c>level</c> (a whole number) and <c>severity</c> (the system's own word, matched against the field the hazard type's <c>severity</c> names,
+    /// ignoring case) are row keys; every other key names a field of the hazard type, and its value is a whole number, dice, or a range <c>low-high</c>
+    /// (whole numbers for a Number field, averages for the damage field). A hazard reads the rows of its own severity, or the rows with no severity when
+    /// it has none or a word no row uses; the row with the highest level not above the hazard's applies. The homebrew wizard fills a new hazard's numbers
+    /// from it, and the world builder warns the game master when a proposed hazard's numbers are more than one row away from its level
+    /// (<c>HazardNumbers.ScalingProblems</c>). Guidance only; nothing is refused.</summary>
     public List<Dictionary<string, string>> Scaling { get; set; } = new();
 }
 

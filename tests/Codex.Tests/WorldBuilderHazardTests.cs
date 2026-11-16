@@ -335,6 +335,7 @@ public class WorldBuilderHazardTests
         Assert.Contains("\"saveDc\", \"damage\"", withHazards);
         Assert.Contains("\"level\"", withHazards);
         Assert.Contains("ask the game master what level the party is", withHazards);
+        Assert.Contains("\"severity\" of Nuisance or Deadly", withHazards);
         Assert.DoesNotContain("the party's level", withHazards);
         // Field names, never the table's numbers.
         Assert.DoesNotContain("2d10", withHazards);
@@ -364,4 +365,87 @@ public class WorldBuilderHazardTests
 
         Assert.Equal(problems, HazardNumbers.ScalingProblems(entry, type, Srd5e).Count());
     }
+
+    private static ContentEntry Hazard(string level, string? severity, long saveDc, string dice, params (string Levels, string? Severity, long? SaveDc)[] bands)
+    {
+        var entry = new ContentEntry
+        {
+            Type = "hazard",
+            Properties = new Dictionary<string, object>
+            {
+                ["level"] = level, ["saveAttribute"] = "Dexterity", ["saveDc"] = saveDc,
+                ["damage"] = new List<object> { new Dictionary<string, object> { ["name"] = "Blades", ["dice"] = dice } }
+            }
+        };
+        if (severity != null) entry.Properties["severity"] = severity;
+        if (bands.Length > 0)
+        {
+            entry.Properties["higherLevels"] = bands.Select(b =>
+            {
+                var row = new Dictionary<string, object> { ["levels"] = b.Levels };
+                if (b.Severity != null) row["severity"] = b.Severity;
+                if (b.SaveDc != null) row["saveDc"] = b.SaveDc.Value;
+                return (object)row;
+            }).ToList();
+        }
+
+        return entry;
+    }
+
+    private static List<string> Scaling(ContentEntry entry) => HazardNumbers.ScalingProblems(entry, Srd5e.FindType("hazard")!, Srd5e).ToList();
+
+    [Theory]
+    [InlineData("1-4", "Deadly", 15, "2d10", 0)] // inside Deadly 1-4
+    [InlineData("1-4", "Nuisance", 15, "2d10", 1)] // the DC is above Nuisance's 13; the damage 11 is inside; severity matters
+    [InlineData("17-20", "Nuisance", 19, "10d10", 1)] // DC 19 above Nuisance 17-20's 17
+    [InlineData("11-16", "Deadly", 17, "2d10", 1)] // damage 11 below Deadly 11-16's 14
+    [InlineData("17-20", "deadly", 13, "9d10", 0)] // the word is matched ignoring case; DC 13 and 49.5 are inside Deadly 17-20
+    public void TheScalingCheck_ReadsTheHazardsOwnSeverity(string level, string severity, long saveDc, string dice, int warnings)
+    {
+        Assert.Equal(warnings, Scaling(Hazard(level, severity, saveDc, dice)).Count);
+    }
+
+    [Fact]
+    public void TheMessages_NameTheSeverity_AndPrintTheBounds()
+    {
+        var dc = Assert.Single(Scaling(Hazard("1-4", "Nuisance", 19, "1d6")));
+        Assert.Equal("Save DC 19 is high for a level 1 Nuisance hazard; the system's guide gives 10 to 13.", dc);
+
+        var damage = Assert.Single(Scaling(Hazard("11-16", "Deadly", 15, "2d10")));
+        Assert.Equal("Damage averaging 11 is low for a level 11 Deadly hazard; the system's guide gives an average of 14 to 100.5.", damage);
+    }
+
+    [Fact]
+    public void AHazardWithNoSeverity_ReadsTheRowsWithoutOne_Silently()
+    {
+        // The same DC 15 at 1-4 is fine for no severity (13 to 15 across its window) and too high for a Nuisance one.
+        Assert.Empty(Scaling(Hazard("1-4", null, 15, "2d10")));
+        Assert.Single(Scaling(Hazard("1-4", "Nuisance", 15, "2d10")));
+        var unworded = Assert.Single(Scaling(Hazard("11-16", null, 13, "10d10")));
+        Assert.Contains("level 11 hazard", unworded);
+    }
+
+    [Fact]
+    public void AnUnknownSeverity_IsWarnedOnce_AndReadAsNoSeverity()
+    {
+        var warnings = Scaling(Hazard("5-10", "Dangerous", 15, "4d10"));
+
+        var warning = Assert.Single(warnings);
+        Assert.Contains("'Dangerous'", warning);
+        Assert.Contains("Nuisance, Deadly", warning);
+        // And it said once even when a band keeps the word.
+        Assert.Single(Scaling(Hazard("5-10", "Dangerous", 15, "4d10", ("11-16", null, 17))));
+    }
+
+    [Fact]
+    public void ARollingStoneLikeHazard_ReadsEachBandAtItsOwnSeverity()
+    {
+        var warned = Assert.Single(Scaling(Hazard("11-16", "Deadly", 15, "10d10", ("17-20", "Nuisance", 19))));
+        Assert.StartsWith("band 17-20: ", warned);
+        Assert.Contains("Nuisance", warned);
+        Assert.Contains("14 to 17", warned);
+
+        Assert.Empty(Scaling(Hazard("11-16", "Deadly", 15, "10d10", ("17-20", "Nuisance", 17))));
+    }
 }
+
