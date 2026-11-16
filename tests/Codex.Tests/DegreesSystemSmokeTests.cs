@@ -11,6 +11,7 @@ namespace Codex.Tests;
 /// warning, no publisher, setting or deity word is anywhere in its files, the ORC licence block is there, the pack has its counts and required
 /// fields, a character builds to level 3 in both attribute methods, and a printed creature's numbers read the conditions that hold.
 /// </summary>
+[Collection("FourDegreesContent")]
 public class DegreesSystemSmokeTests : IAsyncLifetime
 {
     private const string SystemId = "four-degrees";

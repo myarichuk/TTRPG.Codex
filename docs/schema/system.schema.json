@@ -3025,6 +3025,14 @@
             "boolean"
           ],
           "description": "A formula for how much a character can carry (\"str * 15\"); carrying more is a warning. None: no limit."
+        },
+        "runeType": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "The entity type of the runes an item may carry (docs/ITEM_RUNES_DESIGN.md). A rune is attached to an inventory pick as the choice `rune.{id}` (`\"ledge-axe|equipped:1,rune.edge-1:1\"`). While the item is equipped, the rune's `modifiers` reach the sheet as typed modifiers (on a weapon, `attack` and `damage` reach that weapon alone), its `extraDice` add copies of the weapon's damage dice, and its `slots`, `group` and `appliesTo` are checked. None: the item carries no runes."
         }
       },
       "additionalProperties": false

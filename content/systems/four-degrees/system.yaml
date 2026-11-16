@@ -106,6 +106,28 @@ entityTypes:
     label: Trinket
     pluralLabel: Trinkets
     folder: trinkets
+  # Worn or carried gear that is not a weapon or armor. Equipped, its `modifiers` reach the sheet as typed modifiers (docs/ITEM_RUNES_DESIGN.md).
+  - type: magic-item
+    label: Magic item
+    pluralLabel: Magic items
+    folder: magic-items
+    fields:
+      - { key: level, label: Level, type: Number }
+      - { key: worth, label: Worth in silver, type: Number }
+  # A mark set on a weapon or on armor. `appliesTo` is the item's type; a rune with a `group` (potency, striking, resilience) is a fundamental one, held once
+  # per group; a rune with no group is a property rune and takes one of the `slots` the item's potency rune gives. `extraDice` adds that many copies of a
+  # weapon's damage dice.
+  - type: rune
+    label: Rune
+    pluralLabel: Runes
+    folder: runes
+    fields:
+      - { key: appliesTo, label: Goes on, type: Dropdown, options: [weapon, armor] }
+      - { key: group,     label: Group,   type: Text }
+      - { key: slots,     label: Property rune slots, type: Number }
+      - { key: extraDice, label: Extra weapon dice,   type: Number }
+      - { key: level,     label: Level, type: Number }
+      - { key: worth,     label: Worth in silver, type: Number }
   # A trap, a vent or a haunt, placed on a place's feature. Detect and disarm routes name a skill, a DC, a minimum rank and how many successes
   # it takes; `triggersOn` lists the outcomes that set it off (`failure` means a failure or worse, `criticalFailure` that outcome alone).
   - type: hazard
@@ -262,7 +284,8 @@ sheetRules:
   inventory:
     key: inventory
     label: Gear
-    types: [armor, weapon]
+    types: [armor, weapon, magic-item]
+    runeType: rune
 
   # Armor: its base and Dexterity up to its cap, then the rank in what is worn (the armor list below).
   armorClass:

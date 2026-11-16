@@ -86,6 +86,22 @@ entityTypes:
       weaponCategory: { label: קטגוריה }
       traits: { label: תכונות נשק }
   trinket: { label: קמע, pluralLabel: קמעות }
+  magic-item:
+    label: חפץ קסום
+    pluralLabel: חפצים קסומים
+    fields:
+      level: { label: רמה }
+      worth: { label: שווי בכסף }
+  rune:
+    label: רונה
+    pluralLabel: רונות
+    fields:
+      appliesTo: { label: על מה אפשר לשים }
+      group: { label: קבוצה }
+      slots: { label: מקומות לרונות תכונה }
+      extraDice: { label: קוביות נשק נוספות }
+      level: { label: רמה }
+      worth: { label: שווי בכסף }
   hazard:
     label: סכנה
     pluralLabel: סכנות

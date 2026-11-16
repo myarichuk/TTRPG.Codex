@@ -182,6 +182,8 @@ public sealed partial class SheetRuleEngine
                     if (reached.Dice != null) dice = reached.Dice.Replace(" ", "");
                 }
 
+                if (dice != null && source.Inventory != null) dice = WeaponDice(result, entry, dice);
+
                 var heals = use.GetValueOrDefault("heals") is true;
                 // What features add to this action's attack and damage rolls (docs/ROLL_BONUSES_DESIGN.md): the always-on numbers are worked out here,
                 // the dice wait for the roll. Healing is not damage: the dice of a cure are not a damage roll, so the damage targets leave them alone.

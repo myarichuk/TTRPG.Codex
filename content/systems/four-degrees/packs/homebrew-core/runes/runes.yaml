@@ -1,0 +1,86 @@
+# Invented runes. Attach one to a weapon or armor as the choice `rune.{id}` on its inventory pick ("ledge-axe|equipped:1,rune.honed-edge-1:1").
+# A rune with a `group` is fundamental: an item holds one per group, and the potency runes give `slots` places for property runes. A rune without a
+# group is a property rune and takes one place. On a weapon the targets `attack` and `damage` reach that weapon alone. Every number is invented.
+
+# --- Weapon runes, fundamental ---
+- id: honed-edge-1
+  name: Honed edge I
+  tags: [homebrew, runes]
+  description: The weapon is balanced for its wielder. It gives a +1 item bonus to attack rolls and has room for one property rune.
+  properties: { appliesTo: weapon, group: potency, slots: 1, level: 3, worth: 72, modifiers: [{ target: attack, amount: 1, type: item }] }
+- id: honed-edge-2
+  name: Honed edge II
+  tags: [homebrew, runes]
+  description: The weapon is balanced for its wielder. It gives a +2 item bonus to attack rolls and has room for two property runes.
+  properties: { appliesTo: weapon, group: potency, slots: 2, level: 7, worth: 480, modifiers: [{ target: attack, amount: 2, type: item }] }
+- id: honed-edge-3
+  name: Honed edge III
+  tags: [homebrew, runes]
+  description: The weapon is balanced for its wielder. It gives a +3 item bonus to attack rolls and has room for three property runes.
+  properties: { appliesTo: weapon, group: potency, slots: 3, level: 12, worth: 3300, modifiers: [{ target: attack, amount: 3, type: item }] }
+- id: weighted-blow-1
+  name: Weighted blow I
+  tags: [homebrew, runes]
+  description: The weapon lands as if it were heavier. Its Strikes roll one extra copy of the weapon's damage dice.
+  properties: { appliesTo: weapon, group: striking, extraDice: 1, level: 5, worth: 270 }
+- id: weighted-blow-2
+  name: Weighted blow II
+  tags: [homebrew, runes]
+  description: The weapon lands as if it were far heavier. Its Strikes roll two extra copies of the weapon's damage dice.
+  properties: { appliesTo: weapon, group: striking, extraDice: 2, level: 10, worth: 1850 }
+
+# --- Weapon runes, property ---
+- id: flaming
+  name: Flaming
+  tags: [homebrew, runes]
+  description: Heat shimmers along the weapon. Its Strikes deal 1d4 extra fire damage.
+  properties: { appliesTo: weapon, level: 6, worth: 365, modifiers: [{ target: damage, amount: 1d4, type: item }] }
+- id: icy
+  name: Icy
+  tags: [homebrew, runes]
+  description: Frost rimes the weapon. Its Strikes deal 1d4 extra cold damage.
+  properties: { appliesTo: weapon, level: 6, worth: 365, modifiers: [{ target: damage, amount: 1d4, type: item }] }
+- id: jagged
+  name: Jagged
+  tags: [homebrew, runes]
+  description: The weapon's edge is rough and cruel. Its Strikes deal 2 extra damage, a +2 item bonus to the damage roll.
+  properties: { appliesTo: weapon, level: 5, worth: 210, modifiers: [{ target: damage, amount: 2, type: item }] }
+
+# --- Armor runes, fundamental ---
+- id: padded-ward-1
+  name: Padded ward I
+  tags: [homebrew, runes]
+  description: The armor sits closer and turns more. It gives a +1 item bonus to Armor Class and has room for one property rune.
+  properties: { appliesTo: armor, group: potency, slots: 1, level: 3, worth: 85, modifiers: [{ target: armorClass, amount: 1, type: item }] }
+- id: padded-ward-2
+  name: Padded ward II
+  tags: [homebrew, runes]
+  description: The armor sits closer and turns more. It gives a +2 item bonus to Armor Class and has room for two property runes.
+  properties: { appliesTo: armor, group: potency, slots: 2, level: 8, worth: 620, modifiers: [{ target: armorClass, amount: 2, type: item }] }
+- id: padded-ward-3
+  name: Padded ward III
+  tags: [homebrew, runes]
+  description: The armor sits closer and turns more. It gives a +3 item bonus to Armor Class and has room for three property runes.
+  properties: { appliesTo: armor, group: potency, slots: 3, level: 13, worth: 4100, modifiers: [{ target: armorClass, amount: 3, type: item }] }
+- id: steady-heart-1
+  name: Steady heart I
+  tags: [homebrew, runes]
+  description: The armor keeps its wearer calm under strain. It gives a +1 item bonus to all saving throws.
+  properties: { appliesTo: armor, group: resilience, level: 5, worth: 280, modifiers: [{ target: save, amount: 1, type: item }] }
+- id: steady-heart-2
+  name: Steady heart II
+  tags: [homebrew, runes]
+  description: The armor keeps its wearer calm under great strain. It gives a +2 item bonus to all saving throws.
+  properties: { appliesTo: armor, group: resilience, level: 11, worth: 2300, modifiers: [{ target: save, amount: 2, type: item }] }
+
+# --- Armor runes, property ---
+- id: mossy-lining
+  name: Mossy lining
+  tags: [homebrew, runes]
+  description: A living lining of grey moss grows inside the armor and tells you what the ground holds. It gives a +1 item bonus to Survival checks.
+  properties: { appliesTo: armor, level: 4, worth: 175, modifiers: [{ target: check.skill.survival, amount: 1, type: item }] }
+- id: warded-mind
+  name: Warded mind
+  tags: [homebrew, runes]
+  description: A faint hum keeps stray thoughts out. It gives a +1 item bonus to Wisdom saves.
+  properties: { appliesTo: armor, level: 4, worth: 185, modifiers: [{ target: save.wis, amount: 1, type: item }] }

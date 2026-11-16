@@ -4,7 +4,7 @@ version: 0.1.0
 systemId: four-degrees
 minAppVersion: 0.0.0
 priority: 0
-description: 'A small homebrew pack for the Four Degrees system: two ancestries, two backgrounds, two classes (levels 1 to 3), a few weapons and armor, and three creatures. Every name, number and line is invented for this project.'
+description: 'A small homebrew pack for the Four Degrees system: two ancestries, two backgrounds, two classes (levels 1 to 3), a few weapons and armor, twelve magic items, fifteen runes, and three creatures. Every name, number and line is invented for this project.'
 authors:
 - TTRPG.Codex project
 license:

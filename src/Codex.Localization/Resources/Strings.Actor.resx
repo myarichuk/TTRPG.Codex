@@ -431,6 +431,10 @@
   <data name="Actor.Rule.ScoreMax" xml:space="preserve"><value>{0}: scores can't exceed {1}.</value></data>
   <data name="Actor.Rule.ScoreCap" xml:space="preserve"><value>{0}: scores can't exceed {1} with {2}.</value></data>
   <data name="Actor.Rule.OneArmor" xml:space="preserve"><value>{0}: only one suit of armor can be worn at a time.</value></data>
+  <data name="Actor.Rule.RuneNotFound" xml:space="preserve"><value>{0}: {1} has a rune "{2}" that is not in the Library.</value></data>
+  <data name="Actor.Rule.RuneWrongItem" xml:space="preserve"><value>{0}: {1} can't be put on {2}.</value></data>
+  <data name="Actor.Rule.RuneGroup" xml:space="preserve"><value>{0}: {1} has more than one {2} rune.</value></data>
+  <data name="Actor.Rule.RuneSlots" xml:space="preserve"><value>{0}: {1} has {2} property runes but room for {3}.</value></data>
   <data name="Actor.Rule.OneShield" xml:space="preserve"><value>{0}: only one shield can be carried in hand.</value></data>
   <data name="Actor.Rule.IncNone" xml:space="preserve"><value>{0}: {1} doesn't raise any score.</value></data>
   <data name="Actor.Rule.IncRemaining" xml:space="preserve"><value>{0}: choose where {1}'s {2, plural, one{# remaining point goes} other{# remaining points go}}.</value></data>

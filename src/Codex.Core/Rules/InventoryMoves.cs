@@ -34,7 +34,7 @@ public static class InventoryMoves
             var taken = Math.Min(have, left);
             left -= taken;
             if (taken == have) emptied.Add(index);
-            else raw[index] = SheetRuleEngine.FormatItem(rules, pick.Id, have - taken, pick.Choices.GetValueOrDefault(rules.EquippedChoice) > 0);
+            else raw[index] = SheetRuleEngine.FormatItem(rules, pick.Id, have - taken, pick.Choices.GetValueOrDefault(rules.EquippedChoice) > 0, raw[index]);
         }
 
         foreach (var index in emptied.OrderByDescending(i => i)) raw.RemoveAt(index);
