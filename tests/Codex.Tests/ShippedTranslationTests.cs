@@ -10,6 +10,7 @@ public class ShippedTranslationTests
     [
         ["systems/srd5e"],
         ["examples/simple-d6"],
+        ["systems/four-degrees"],
     ];
 
     [Theory]

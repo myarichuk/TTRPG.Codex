@@ -20,12 +20,34 @@ public static class SpineStage
             }
         }
 
+        return Build(flat, doc.NumberOfPages);
+    }
+
+    /// <summary>The nodes of a flattened bookmark tree (depth, title, path and the page each points at), with their page ranges. The part of <see cref="Run"/> that needs no PDF.</summary>
+    public static List<SpineNode> Build(List<(int Depth, string Title, string[] Path, int Page)> flat, int numberOfPages)
+    {
+        flat = flat.ToList();
+        // A section's bookmark may point past the page its title and first child are on (an ancestry's points at its statistics page, one after its flavor page): it starts on the earliest page of itself and its children.
+        for (var i = 0; i < flat.Count; i++)
+        {
+            var first = flat[i].Page;
+            for (var j = i + 1; j < flat.Count && flat[j].Depth > flat[i].Depth; j++)
+            {
+                if (flat[j].Page > 0 && flat[j].Page < first)
+                {
+                    first = flat[j].Page;
+                }
+            }
+
+            flat[i] = flat[i] with { Page = first };
+        }
+
         var nodes = new List<SpineNode>(flat.Count);
         for (var i = 0; i < flat.Count; i++)
         {
             var node = flat[i];
             var next = flat.Skip(i + 1).FirstOrDefault(f => f.Depth <= node.Depth);
-            var end = next.Title == null ? doc.NumberOfPages : (next.Page > node.Page ? next.Page - 1 : node.Page);
+            var end = next.Title == null ? numberOfPages : (next.Page > node.Page ? next.Page - 1 : node.Page);
             nodes.Add(new SpineNode(node.Depth, node.Title, node.Path, node.Page, Math.Max(end, node.Page), node.Title.StartsWith("Sidebar", StringComparison.OrdinalIgnoreCase)));
         }
 

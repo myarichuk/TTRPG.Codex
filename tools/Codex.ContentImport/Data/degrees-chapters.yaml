@@ -31,6 +31,9 @@
 #   readPast / foldChildren / readPastChildren / proseBoxes (rules parser) readPast claims a section's blocks and makes no entry; foldChildren makes the child sections whose titles are in the entry-header font paragraphs
 #             of one entry (counted against the bookmark children, and the names in readPastChildren leave their text out); proseBoxes reads a box of body text that opens with a bold heading as prose, not as a table
 #   own       paths (rules parser) whose own text, between the section's title and its first child section, becomes one entry named by ownName
+#   ancestries (parser) one ancestry's whole range: its lore is read past (and hashed as left-out text), its statistics box (the book floats it at the top of the second column of one of its pages) becomes
+#             the `ancestry` entry's fields and special abilities, each heading in the entry-header font under its heritages section a `heritage` entry, and each feat under a level band a `feat` entry whose
+#             level must be the band's. The bookmark children, the level bands, the feat headers, the trait lines and the level markers are counted, and the table of contents' list of ancestries is compared as a set
 #   planned   (below the rows) sections a later chapter takes: not read, only not counted as "left out" by the denylist generator
 # Dropped material is never named here: the setting, religion, example-of-play and map sections are simply absent.
 # A path that names anything but a game term does not belong in this file.
@@ -542,6 +545,35 @@ rows:
       - ["Chapter 6: Equipment", Gear, Alchemical Gear, Elixirs]
       - ["Chapter 6: Equipment", Gear, Alchemical Gear, Alchemical Tools]
       - ["Chapter 6: Equipment", Gear, Assistive Items]
+  # Chapter 7a: the general rules of an ancestry's entry (its nine children are paragraphs of one rule, as the statistics columns of the equipment chapter are).
+  - chapter: ancestries
+    book: pc
+    parser: rules
+    target: rule
+    category: Ancestries
+    approved: true
+    foldChildren: true
+    paths:
+      - ["Chapter 2: Ancestries & Backgrounds", Ancestry Entries]
+  # The eight ancestries, one range each: the lore is read past, the statistics box and the heritages and ancestry feats under it are the entries.
+  # The last page of the human feats holds a feat set around a piece of art, with a gap in every line that is wider than the gutter, so the gutter is pinned there.
+  - chapter: ancestries
+    book: pc
+    parser: ancestries
+    target: ancestry
+    approved: true
+    countsDiffer: The book prints no list of its ancestry feats or heritages. The table of contents lists the ancestries, and that list is compared as a set; the feats are counted by headers, trait lines, level markers and level bands, and the heritages by their bookmarks.
+    gutterAt:
+      66: 288
+    paths:
+      - ["Chapter 2: Ancestries & Backgrounds", Dwarf]
+      - ["Chapter 2: Ancestries & Backgrounds", Elf]
+      - ["Chapter 2: Ancestries & Backgrounds", Gnome]
+      - ["Chapter 2: Ancestries & Backgrounds", Goblin]
+      - ["Chapter 2: Ancestries & Backgrounds", Halfling]
+      - ["Chapter 2: Ancestries & Backgrounds", Human]
+      - ["Chapter 2: Ancestries & Backgrounds", Leshy]
+      - ["Chapter 2: Ancestries & Backgrounds", Orc]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -550,6 +582,8 @@ planned:
       - ["Chapter 1: Introduction", Basics of Play]
       - ["Chapter 1: Introduction", Playing the Game]
       - ["Chapter 1: Introduction", Character Creation]
-      - ["Chapter 2: Ancestries & Backgrounds"]
+      - ["Chapter 2: Ancestries & Backgrounds", Versatile Heritages]
+      - ["Chapter 2: Ancestries & Backgrounds", Backgrounds]
+      - ["Chapter 2: Ancestries & Backgrounds", Languages]
       - ["Chapter 3: Classes"]
       - ["Chapter 8: Playing the Game"]

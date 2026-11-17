@@ -24,11 +24,23 @@ public static partial class ImportPipeline
     public static BlocksOptions OptionsFor(IReadOnlyList<SpineNode> spine, IEnumerable<TakeRow> rows)
     {
         var columns = new Dictionary<int, int>();
+        var pinned = new Dictionary<int, double>();
         foreach (var row in rows)
         {
-            foreach (var page in TakeStage.PagesOf(spine, row))
+            var pages = TakeStage.PagesOf(spine, row);
+            foreach (var page in pages)
             {
                 columns[page] = Math.Max(columns.GetValueOrDefault(page), row.Columns);
+            }
+
+            foreach (var (page, x) in row.GutterAt)
+            {
+                if (!pages.Contains(page) || x <= 0 || pinned.ContainsKey(page) || row.Columns != 2)
+                {
+                    throw new DegreesException($"Take-list row for chapter {row.Chapter}: gutterAt names a page the row does not cover or another row pins already, a row that does not have two columns, or an x that is not on a page (the blocks stage also holds x to the page's width).");
+                }
+
+                pinned[page] = x;
             }
         }
 
@@ -89,6 +101,7 @@ public static partial class ImportPipeline
         {
             TakenSidebarKeys = takenSidebars,
             MaxColumns = page => columns.GetValueOrDefault(page, 2),
+            PinnedGutters = pinned,
             SidebarPages = sidebars,
             SidebarStarts = starts,
             SidebarTitles = titles,
@@ -123,6 +136,8 @@ public static partial class ImportPipeline
         CheckTableLabels(spine, blocks, rows);
         var parsed = EntriesStage.Run(blocks, ranges, book, shippedIds, spine);
         CheckItemCounts(spine, blocks, ranges, parsed);
+        CheckAncestryCounts(spine, blocks, ranges, parsed);
+        CheckAncestryList(blocks, parsed);
         CheckActionCounts(spine, blocks, ranges, parsed);
         CheckSpellCounts(blocks, ranges, parsed);
         CheckSpellDegrees(blocks, ranges, parsed);
@@ -133,9 +148,12 @@ public static partial class ImportPipeline
         var redactable = parsed.Select(e => new RedactionEntry(e.Id, e.RedactionFields())).ToList();
         var report = RedactionStage.Run(redactable, scoped);
         var kept = redactable.ToDictionary(e => e.Id, StringComparer.Ordinal);
+        // A redaction row that replaces an entry's whole name (a name the setting coined, said in plain words) gives the entry the id of its new name: an id is a slug of the name, and the old one would
+        // carry the word the row takes out. Rows name an entry by its parsed id, so this only happens here, after them.
+        string FinalId(ParsedEntry e) => kept[e.Id].Fields["name"] == e.Name ? e.Id : EntriesStage.Slug(kept[e.Id].Fields["name"]);
         var final = parsed.Where(e => kept.ContainsKey(e.Id)).Select(e => new FinalEntry
         {
-            Id = e.Id,
+            Id = FinalId(e),
             Type = e.Type,
             Folder = e.Folder,
             Chapter = e.Chapter,
@@ -156,6 +174,18 @@ public static partial class ImportPipeline
             Tags = e.Tags.ToList(),
             Raw = e.Raw.ToList(),
         }).ToList();
+
+        if (final.GroupBy(e => e.Id, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1) is { } repeated)
+        {
+            throw new DegreesException($"{repeated.Count()} entries share one id ({repeated.Key}) after a redaction row renamed one of them.");
+        }
+
+        // A heritage names its ancestry by the id the ancestry had when the stage ran: if a redaction row has renamed the ancestry since, the link would match nothing, with no error.
+        var ancestryIds = final.Where(e => e.Type == "ancestry").Select(e => e.Id).ToHashSet(StringComparer.Ordinal);
+        if (final.Where(e => e.Type == "heritage").Any(h => !ancestryIds.Contains(h.Raw.Single(r => r.Label == "ancestry").Text.Trim('"'))))
+        {
+            throw new DegreesException("A heritage names an ancestry whose final id is another (a redaction row renamed the ancestry), so the link would match nothing.");
+        }
 
         return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final, ranges));
     }
@@ -700,7 +730,8 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
             var readPast = mineRanges.Sum(r => (r.LeadStart >= 0 ? r.Start - r.LeadStart : 0) + (r.TailEnd >= 0 ? r.TailEnd - r.End : 0))
                 + mineRanges.Where(r => r.Row.Parser == "actions").Sum(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks)).Count)
                 + mineRanges.Where(r => r.Row.Parser == "entries").Sum(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks)).Count)
-                + mineRanges.Where(r => r.Row.Parser == "spelllists").Sum(r => r.Indexes.Count());
+                + mineRanges.Where(r => r.Row.Parser == "spelllists").Sum(r => r.Indexes.Count())
+                + mineRanges.Where(r => r.Row.Parser == "ancestries").Sum(r => EntriesStage.AncestryFlavor(r.BlocksIn(blocks)).Count);
 
             // One report row for each type the row wrote (an actions row also writes rules), the row's own target first. The row's counts of dropped blocks go on the first.
             var types = mine.Select(e => e.Type).Distinct().OrderBy(t => t == row.Target ? 0 : 1).ThenBy(t => t, StringComparer.Ordinal).ToList();
@@ -822,9 +853,9 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
 
         var spans = RedactionStage.SourceSpans(entries, scoped);
         var spanWords = spans
-            .SelectMany(s => PackWordCheck.Words(s.Text).Skip(1))
-            .Where(w => w.Length > 1 && PackWordCheck.IsCapital(w))
-            .Select(w => w.ToLowerInvariant())
+            // A capitalized word the row's replacement says again (a name of a game term inside a sentence that was reworded) is not taken out.
+            .SelectMany(s => PackWordCheck.Words(s.Text).Skip(1).Where(w => w.Length > 1 && PackWordCheck.IsCapital(w)).Select(w => w.ToLowerInvariant())
+                .Where(w => !(s.Row.Action == RedactionRow.Replace && s.Row.Text != null && PackWordCheck.Words(s.Row.Text).Any(k => k.Equals(w, StringComparison.OrdinalIgnoreCase)))))
             // Every word a row takes out, in any case: a coined word written in lowercase is as reserved as a capitalized one. A word that stays in the row's replacement is not removed.
             // The ordinary words among them (the book writes them in lowercase at least three times) are left off the denylist with the other common words.
             .Concat(spans.SelectMany(s => RemovedWords(s.Row, s.Text)))
@@ -833,6 +864,25 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
             .SelectMany(s => PackWordCheck.Words(parsed.First(e => e.Id == s.Id).Name))
             .Select(w => w.ToLowerInvariant()).Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
         return (spanWords, names);
+    }
+
+    /// <summary>
+    /// The pairs of adjacent capitalized words (see <see cref="PackWordCheck.CapitalPairs"/>) of every source span a redaction row matches, except a pair the row's replacement says again. A name of two ordinary
+    /// words that a row took out (an emblem of the setting) passes the word gates one by one, so the pair is what a later chapter's entry that says it would be caught by.
+    /// </summary>
+    public static List<(string First, string Second)> RedactedPairs(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, RedactionTable redactions, string book, IReadOnlyList<SpineNode>? spine = null, IReadOnlyDictionary<string, string>? shippedIds = null)
+    {
+        var parsed = EntriesStage.Run(blocks, ranges, book, shippedIds, spine);
+        var entries = parsed.Select(e => new RedactionEntry(e.Id, e.RedactionFields())).ToList();
+        var scoped = new RedactionTable { Normalization = redactions.Normalization, Rows = redactions.Rows.Where(r => r.Book == null || r.Book == book).ToList() };
+        return RedactionStage.SourceSpans(entries, scoped)
+            .Where(s => s.Row.Action != RedactionRow.DropEntry)
+            .SelectMany(s =>
+            {
+                var kept = s.Row.Action == RedactionRow.Replace && s.Row.Text != null ? PackWordCheck.CapitalPairs(s.Row.Text).ToHashSet() : new HashSet<(string, string)>();
+                return PackWordCheck.CapitalPairs(s.Text).Where(p => !kept.Contains(p));
+            })
+            .Distinct().ToList();
     }
 
     /// <summary>The lowercase words of a redacted span that the row takes out: all of them for a cut or a drop, those not in the replacement text for a replace.</summary>
@@ -858,16 +908,17 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
     /// <summary>
     /// The hashed pairs of capitalized words of the left-out text (see <see cref="PackWordCheck.CapitalPairs"/>), for the pair gate: a name of two words whose words pass the word gates one by one
     /// (an ordinary word and a game term) is still caught. A pair is left off when either of its words is on the word denylist already (<paramref name="deniedWords"/>), when it is in a title
-    /// of the take-list (every `source:` line says it), or when the waiver file waives the pair. Being game text of a taken range is no reason to leave a pair off.
+    /// of the take-list (every `source:` line says it), or when the waiver file waives the pair. Being game text of a taken range is no reason to leave a pair off. The pairs of the spans the redaction
+    /// rows take out (<see cref="RedactedPairs"/>) are candidates too: a redacted sentence is left-out text although it sits in a taken range.
     /// </summary>
-    public static List<string> DenylistPairs(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned, IReadOnlyCollection<string> deniedWords, IReadOnlySet<string>? waivers = null)
+    public static List<string> DenylistPairs(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned, IReadOnlyCollection<string> deniedWords, IReadOnlySet<string>? waivers = null, IEnumerable<(string First, string Second)>? redactedPairs = null)
     {
         var leftOut = LeftOutLines(blocks, ranges, planned);
         // A pair is NOT left off because the taken text says it too: the day a setting's name reaches a taken range, a regeneration must not silently remove its pair. A game pair that the
         // left-out text also capitalizes is waived by name in the waiver file, with its reason.
         var game = ranges.SelectMany(r => r.Row.Paths.Concat(r.Row.Own)).SelectMany(p => p).SelectMany(PackWordCheck.CapitalPairs).ToHashSet();
         var denied = deniedWords.ToHashSet(StringComparer.Ordinal);
-        return leftOut.SelectMany(PackWordCheck.CapitalPairs).Distinct()
+        return leftOut.SelectMany(PackWordCheck.CapitalPairs).Concat(redactedPairs ?? Enumerable.Empty<(string, string)>()).Distinct()
             .Where(p => !game.Contains(p) && !denied.Contains(p.First) && !denied.Contains(p.Second) && !(waivers?.Contains(p.First + " " + p.Second) ?? false)) // a waiver line of two words waives that pair
             .Select(p => Denylist.PairHash(p.First, p.Second)).Distinct(StringComparer.Ordinal).OrderBy(h => h, StringComparer.Ordinal).ToList();
     }
@@ -876,7 +927,8 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
         TakeStage.LeftOut(blocks, ranges, planned).SelectMany(b => b.Lines)
             .Concat(ranges.Where(r => r.Row.Parser == "glossary").SelectMany(r => EntriesStage.ScanGlossary(r.BlocksIn(blocks), new HashSet<string>(StringComparer.Ordinal)).Dropped))
             .Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
-            .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines));
+            .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines))
+            .Concat(ranges.Where(r => r.Row.Parser == "ancestries").SelectMany(r => EntriesStage.AncestryFlavor(r.BlocksIn(blocks))).SelectMany(b => b.Lines));
 
     /// <summary>
     /// The pair hashes a regeneration may drop without a waiver: the pairs in a take-list title (every `source:` line says them) and the pairs that have a word on the word denylist (the pair
@@ -974,7 +1026,9 @@ private static HashSet<(string Name, string Proficiency)>? OverviewTableActions(
             .Concat(r.TailEnd >= 0 ? Enumerable.Range(r.End, r.TailEnd - r.End) : Enumerable.Empty<int>())).Select(i => blocks.Blocks[i].Page).ToHashSet();
         var legacy = (blocks.LegacyDropped ?? new List<Block>()).Where(b => !takenPages.Contains(b.Page)).SelectMany(b => b.Lines);
         var boxes = legacy.Concat(ranges.Where(r => r.Row.Parser == "actions").SelectMany(r => EntriesStage.ExampleBoxes(r.BlocksIn(blocks))).SelectMany(b => b.Lines))
-            .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines));
+            .Concat(ranges.Where(r => r.Row.Parser == "entries").SelectMany(r => EntriesStage.ReadPastBoxBlocks(r.Row, r.BlocksIn(blocks))).SelectMany(b => b.Lines))
+            // An ancestry's lore is read past inside a taken range, and so is the list of languages its box offers: both are left-out text.
+            .Concat(ranges.Where(r => r.Row.Parser == "ancestries").SelectMany(r => EntriesStage.AncestryFlavor(r.BlocksIn(blocks))).SelectMany(b => b.Lines));
         var candidates = leftOut.SelectMany(b => b.Lines).Concat(glossaryLeftOut).Concat(boxes).SelectMany(PackWordCheck.Words).Where(w => w.Length > 1 && char.IsUpper(w[0]))
             .Select(w => w.ToLowerInvariant()).Concat(redacted?.SpanWords ?? Array.Empty<string>()).Distinct(StringComparer.Ordinal).ToList();
         var words = candidates.Where(w => !exclude.Contains(w)).ToList();

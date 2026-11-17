@@ -67,6 +67,12 @@ public sealed class BlocksOptions
     /// <summary>By page, the keys (see <see cref="SidebarTitleSet.Key"/>) of the titles of sidebars the take-list takes as rules, only on the pages of the bookmark it names (a sidebar of the same title elsewhere is not taken): their blocks are kept apart (<see cref="BlocksResult.TakenSidebars"/>) and not dropped.</summary>
     public IReadOnlyDictionary<int, IReadOnlySet<string>> TakenSidebarKeys { get; init; } = new Dictionary<int, IReadOnlySet<string>>();
 
+    /// <summary>
+    /// Pages whose one gutter a take-list row pins by its x (see <see cref="TakeRow.GutterAt"/>): a page whose text has a wider empty band than the real gutter (a feat set around a piece of art, with a gap in
+    /// every line) would otherwise be cut there and merge the two real columns' lines.
+    /// </summary>
+    public IReadOnlyDictionary<int, double> PinnedGutters { get; init; } = new Dictionary<int, double>();
+
     /// <summary>The pages whose gear tables are carved out (see <see cref="GearTables"/>), with the column label lists a header row there may carry and whether the table is set in two panels.</summary>
     public IReadOnlyDictionary<int, GearPage> GearTablePages { get; init; } = new Dictionary<int, GearPage>();
 }
@@ -246,7 +252,12 @@ public static class BlocksStage
                 continue;
             }
 
-            var gutters = FindGutters(body, page.Width, options.MaxColumns(page.Number));
+            if (options.PinnedGutters.TryGetValue(page.Number, out var pin) && pin >= page.Width)
+            {
+                throw new DegreesException($"A gutter is pinned at x {pin} on page {page.Number}, which is {page.Width} points wide.");
+            }
+
+            var gutters = options.PinnedGutters.TryGetValue(page.Number, out var pinned) ? new List<double> { pinned } : FindGutters(body, page.Width, options.MaxColumns(page.Number));
             if (gutters.Count == 0)
             {
                 one++;

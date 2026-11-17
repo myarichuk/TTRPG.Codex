@@ -332,3 +332,29 @@ traveler
 bulk hands
 item price
 gm the
+# Chapter 7a review (ancestry feats): ordinary English words that a left-out section capitalizes. `scar` is the second word of a place name there (the pair of both words stays hashed) and an ordinary noun in the feat named for scars;
+# `aiding` is a gerund of the Aid action that the index capitalizes; `ferocious` is an ordinary adjective that a title and a list capitalize. One feat name that a left-out section capitalizes as the name of a group of the setting's people was renamed and not waived.
+scar
+aiding
+ferocious
+# Also from the left-out lore of the ancestries (the words that open a bullet or a sentence, and a language name the book sets in capitals in a list): `appreciate`, `eagerly`, `thanks`, `brutal`, `issuing`, `felling`, `encourage` and `tune` are ordinary
+# English words of the feats' text; `gnomish`, `orcish` and `draconic` are ordinary adjectives (the languages' names in the box's list of choices are left out, and none of the names of the setting's own languages is waived).
+appreciate
+eagerly
+thanks
+brutal
+issuing
+felling
+encourage
+tune
+gnomish
+orcish
+draconic
+# Pairs that meet across a label or a sentence: `halfling luck` is the name of a feat, `strike if` and `trigger you` are a word of a labelled line meeting the next sentence's first word, and `alternate ancestry` and `ancestry boosts` are the label of an ancestry rule.
+halfling luck
+strike if
+trigger you
+alternate ancestry
+ancestry boosts
+# Found when the pairs of the redacted spans were hashed (chapter 7a review): `skills key` is two words of a `source` line that meet across its separator (the section Skills, then the rule Key Attribute); a redacted sentence of the skills chapter said both.
+skills key

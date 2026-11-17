@@ -1060,3 +1060,222 @@ rows:
     action: replace
     text: "See Wearing Toolkits for details."
     reason: "A sentence that sent the reader to a page of the book; the pointer by title stays, as the rule is in the pack."
+  - book: pc
+    entry: animal-accomplice
+    field: description
+    span: { sha256: "36a34e055c0134b45f174dedfab774309f45f56bcdf36a4b10cb623126a3cd0c", length: 48 }
+    action: replace
+    text: "You gain a familiar."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: cling
+    field: description
+    span: { sha256: "90f74f322ca561dae56b430032817076b2275830a5617340dba6d2b32e81fc4a", length: 187 }
+    action: replace
+    text: "Attempts to Escape from a Cling are made against your Acrobatics DC, but they end the Cling instead of the conditions normally ended by the Escape action."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: multitalented
+    field: description
+    span: { sha256: "d980609f8d5a17d6fc327d2076f686adcd903fabd973684a45d399b4315d7f22", length: 215 }
+    action: replace
+    text: "You gain a 2nd-level multiclass dedication feat, even if you normally couldn't take another dedication feat until you take more feats from your current archetype."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: multitalented
+    field: description
+    span: { sha256: "cfe5daa15dcd1d5779b6261fe991dfebeafecf46815adaf1ca8b60751cfa3030", length: 112 }
+    action: cut
+    reason: "A sentence that named a kind of being or a people the setting coined; the rest of the sentence is kept."
+  - book: pc
+    entry: titan-slinger
+    field: description
+    span: { sha256: "5dc62c2866f1719c06b7ddd433f7830dd344f4e7cf9f41728510862916fb63d1", length: 223 }
+    action: replace
+    text: "When you hit on an attack with a weapon of the sling group against a Large or larger creature, increase the size of the weapon damage die by one step."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: sensate-gnome
+    field: description
+    span: { sha256: "4b7d1090ce836187b58761d5538b2aeb06e8f7026ea2f57ef01084ffa2b05ffc", length: 116 }
+    action: replace
+    text: "This means you can use your sense of smell to determine the exact location of a creature."
+    reason: "A sentence that sent the reader to a page of the book; the mechanic is kept and the pointer goes."
+  - book: pc
+    entry: ancestry-entries
+    field: description
+    span: { sha256: "8ec3be4ff845e630ca906be1daf0f522097140f07d2bfefb1cf65e97cdb84f0d", length: 81 }
+    action: cut
+    reason: "A sentence that was only a pointer to a page of the book."
+  - book: pc
+    entry: ancestry-entries
+    field: description
+    span: { sha256: "129e4a1e8af1854934cacdab24b6ab289d374fb8e32417fae27df6928c9f9a75", length: 55 }
+    action: cut
+    reason: "A sentence that was only a pointer to a page of the book."
+  - book: pc
+    entry: ancestry-entries
+    field: description
+    span: { sha256: "36e76ef9c3b025ae6e66a8d6a92f66a5a7b0007359e55afc7b630d7faa8fd90d", length: 45 }
+    action: cut
+    reason: "A sentence that was only a pointer to a page of the book."
+  - book: pc
+    entry: umbral-gnome
+    field: description
+    span: { sha256: "958d828a3ebf561d9033a3823d8ef5f743796c4e1ccc56cbc4bc93dd04fbd33c", length: 156 }
+    action: replace
+    text: "Whether from a connection to dark or shadowy fey or from another source, you can see in complete darkness."
+    reason: "A sentence that named a kind of being or a people the setting coined; the rest of the sentence is kept."
+  - book: pc
+    entry: fey-touched-gnome
+    field: description
+    span: { sha256: "83c28c49abb47833f1e74d117d44bd8a3c16763a99f2abcf1b78cd4351ad884e", length: 195 }
+    action: replace
+    text: "You can change this cantrip to a different one from the same list once per day by meditating to realign yourself with the fey realm; this is a 10-minute activity that has the concentrate trait."
+    reason: "A sentence that named the realm of the fey by the setting's own name; the mechanic is kept and the realm is said in plain words."
+  - book: pc
+    entry: chameleon-gnome
+    field: description
+    span: { sha256: "e3d5867057bb3795327b2adf9d662dd6695fa183999c4b4dfba6b93f454b2f87", length: 131 }
+    action: replace
+    text: "The color of your hair and skin is mutable, possibly due to latent magic from fey influences or lingering illusion effects."
+    reason: "A sentence that named the realm of the fey by the setting's own name; the mechanic is kept and the realm is said in plain words."
+  - book: pc
+    entry: fey-fellowship
+    field: description
+    span: { sha256: "70e225ff84c428cfe579d264914e91dc03e4a61e199f49e18acd176a25a1ac2f", length: 226 }
+    action: replace
+    text: "Your enhanced fey connection (either through your blood or via prolonged contact with their kind) affords you a warmer reception from fey creatures as well as tools to foil their tricks or withstand their magic."
+    reason: "A sentence that named the realm of the fey by the setting's own name; the mechanic is kept and the realm is said in plain words."
+  - book: pc
+    entry: vivacious-conduit
+    field: description
+    span: { sha256: "12f4bab48cb423edb7af2ad8eac30f6b29df1a056a49b9776bd1ced94674fd47", length: 90 }
+    action: replace
+    text: "Your connection to the fey realm has grown, and its vital energy flows into you rapidly."
+    reason: "A sentence that named the realm of the fey by the setting's own name; the mechanic is kept and the realm is said in plain words."
+  - book: pc
+    entry: homeward-bound
+    field: description
+    span: { sha256: "453aa562a8eba1a25ba0181936c403cde9d9204de87d9e9c7955f1a386eb4cb5", length: 190 }
+    action: replace
+    text: "The connection between you and the fey realm resonates within your body stronger than it does for most gnomes, allowing you to cross the threshold between this world and the fey realm."
+    reason: "A sentence that named the realm of the fey by the setting's own name; the mechanic is kept and the realm is said in plain words."
+  - book: pc
+    entry: homeward-bound
+    field: description
+    span: { sha256: "5b6d782c4f19ae644abced8c64a617c9cf3c2f9042a1a9e8fe7c642a955d63fb", length: 88 }
+    action: replace
+    text: "This can be used only to travel back and forth between this world and the fey realm."
+    reason: "A sentence that named the realm of the fey by the setting's own name; the mechanic is kept and the realm is said in plain words."
+  - book: pc
+    entry: mountain-strategy
+    field: description
+    span: { sha256: "a72ae3dcaccf73d5d2b242c46b0b95c11e1f98317263fd5b37fa2aa7490d4741", length: 140 }
+    action: replace
+    text: "You gain a +1 circumstance bonus to damage with weapons and unarmed attacks against creatures with the giant, goblin, or orc trait."
+    reason: "A sentence that named a kind of being or a people the setting coined; the rest of the sentence is kept."
+  - book: pc
+    entryHash: "f39789059c819faa24161b676764a133b0b6c5570408a2cf8a0765ee55835b81"
+    field: description
+    span: { sha256: "1dff8509a631033a74a954716c25f24d58fa3c1c65b4e6ae28e30be7bd79c1c1", length: 96 }
+    action: replace
+    text: "Your connection to the fey realm grants you a primal innate spell, much like those of the fey."
+    reason: "A sentence that named the realm of the fey by the setting's own name; the mechanic is kept and the realm is said in plain words."
+  - book: pc
+    entry: hold-mark
+    field: description
+    span: { sha256: "b9c85aa164375f6438b122b396b81d1c34ca554db6290f1e3dc6188a19ce1a4e", length: 219 }
+    action: replace
+    text: "You gain a large brand or tattoo in the shape of the chosen emblem or a similar concept, such as a fiery symbol."
+    reason: "A sentence whose example named two emblems of the setting's orc communities; the mechanic is kept, with an example of our own."
+  - book: pc
+    entry: hold-mark
+    field: description
+    span: { sha256: "d46e645563ce945c5d08014430c470e20b5def7470743f678dd51c7ac9772858", length: 28 }
+    action: replace
+    text: "Fire symbol Diplomacy Arcane"
+    reason: "A row of the table whose emblem is a name of one of the setting's orc communities; the emblem is said by the symbol it is, and its skill and tradition are kept."
+  - book: pc
+    entry: hold-mark
+    field: description
+    span: { sha256: "0ee6294a0146968479c94b33240900849b80dd84bc11493567d0dc379bfe64ae", length: 28 }
+    action: replace
+    text: "Skull Survival Primal"
+    reason: "A row of the table whose emblem is a name of one of the setting's orc communities; the emblem is said by the symbol it is, and its skill and tradition are kept."
+  - book: pc
+    entry: hold-mark
+    field: description
+    span: { sha256: "63a4036d0797e5527abd0065977d1b2186b050d65fc0238e705b5be525c70098", length: 30 }
+    action: replace
+    text: "Corpse Religion Divine"
+    reason: "A row of the table whose emblem is a name of one of the setting's orc communities; the emblem is said by the symbol it is, and its skill and tradition are kept."
+  - book: pc
+    entry: hold-mark
+    field: description
+    span: { sha256: "37628b02ca37e9563dc49a351d131cc05b658899e1871081954b0bcbb6761ed0", length: 30 }
+    action: replace
+    text: "Open hand Intimidation Occult"
+    reason: "A row of the table whose emblem is a name of one of the setting's orc communities; the emblem is said by the symbol it is, and its skill and tradition are kept."
+  - book: pc
+    entryHash: "f39789059c819faa24161b676764a133b0b6c5570408a2cf8a0765ee55835b81"
+    field: name
+    span: { sha256: "a590a2df5edc2a7ceaae2fcb54d779c860cad9d88b57f0a419e51d8e54819cfa", length: 17 }
+    action: replace
+    text: "Fey Realm Magic"
+    reason: "A name that held the setting's own name for the realm of the fey; the mechanic stands without it."
+  - book: pc
+    entryHash: "26372b303fec2fb8b5fd20a3467ab9fe4cdcddb88522d6d3da566d0de4c6eeda"
+    field: name
+    span: { sha256: "c0fd092d52d3aa8bb355f3b022d558ea8840663af864c3a7a5c42066b6dcad2b", length: 17 }
+    action: replace
+    text: "Fey Realm Adept"
+    reason: "A name that held the setting's own name for the realm of the fey; the mechanic stands without it."
+  - book: pc
+    entryHash: "325fb36971ddb10d5214dbe6ff81dfd545e271be097cba341bc5283c8fa024f6"
+    field: name
+    span: { sha256: "b48b71b4f86585e15b7509903898b25bd1ec6b7a2c8da7a27949e694bccbd2b4", length: 7 }
+    action: replace
+    text: "Mournful"
+    reason: "A name the setting uses for a group of its people; the mechanic is a bonus against emotion effects and stands without it."
+  - book: pc
+    entryHash: "8abff8393c712bf14ad44a0186e57430cb060c1a60ed28eb3e79b0de41124742"
+    field: name
+    span: { sha256: "37a5088a08ac6245cc4b9379c6ab4d7c1a4cdecb16de57872257a17cb4ed294d", length: 17 }
+    action: replace
+    text: "Jawed Goblin"
+    reason: "A name the setting coined from two ordinary words for a goblin family; the mechanic stands without it, so the heritage is said by what it does."
+  - book: pc
+    entryHash: "05916e9a277427ad581844590facf296a453170b45f4f2969c3c05e1379b1b54"
+    field: name
+    span: { sha256: "0adb53e9953657376b67d46b133f3ba52d020e8da892db1f31a347b8cc3b9330", length: 15 }
+    action: replace
+    text: "Fire-Resistant Goblin"
+    reason: "A name the setting coined from two ordinary words for a goblin family; the mechanic stands without it, so the heritage is said by what it does."
+  - book: pc
+    entryHash: "0c8e9a27c709d134f1bb09c79b751c50402ab9e8075be4fb7e8a9afef6f97708"
+    field: name
+    span: { sha256: "1e7d961dfbb5d208e4ee69077c8eedbc4cd0c1223efad806a4e0dcd1507a49f5", length: 14 }
+    action: replace
+    text: "Strong-Stomached Goblin"
+    reason: "A name the setting coined from two ordinary words for a goblin family; the mechanic stands without it, so the heritage is said by what it does."
+  - book: pc
+    entry: city-scavenger
+    field: special
+    span: { sha256: "2cdc64d8a775f06c1edc212fe8df8e461f2f03fd632ad91a1bd968a5718d173d", length: 68 }
+    action: replace
+    text: "If you have the strong-stomached goblin heritage, increase the bonuses to +2."
+    reason: "A line that named a heritage by its coined name; the heritage is said by what it does, as its entry now says."
+  - book: pc
+    entry: stonewalker
+    field: description
+    span: { sha256: "e90cc0aae70f9e29e92dd90b76caead6ff026962e0da2e964e1cd5e773226729", length: 138 }
+    action: replace
+    text: "If you have the Stonemason's Eye feat, you can attempt to find unusual stonework and stonework traps that require legendary proficiency in Perception."
+    reason: "A sentence the page layout cut in two paragraphs at a line set short beside a picture; the two halves are one sentence again, in the book's own words."
+  - book: pc
+    entry: stonewalker
+    field: description
+    span: { sha256: "28c7491333f2de5b6aeb9ec67f5a23d1f9de439a5a08dde34ee140c18f26bef7", length: 11 }
+    action: cut
+    reason: "A sentence the page layout cut in two paragraphs at a line set short beside a picture; the two halves are one sentence again, in the book's own words."

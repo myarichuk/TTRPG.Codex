@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace Codex.ContentImport.Degrees;
@@ -37,6 +38,10 @@ public sealed class ParsedEntry
 
     /// <summary>For an entry of a row with groups (<see cref="TakeRow.Groups"/>): the title of the group heading it sits under, as the book prints it.</summary>
     public string? Group { get; set; }
+
+    /// <summary>For a heritage or an ancestry feat the <c>ancestries</c> parser read: the ancestry entry it sits under. A heritage names that ancestry's id once the ids are final (a name that is also a trait id takes a suffix).</summary>
+    [JsonIgnore]
+    public ParsedEntry? Owner { get; set; }
 
     /// <summary>For a spell: the traditions its labelled line lists, in lowercase, in the book's order.</summary>
     public List<string> Traditions { get; set; } = new();
@@ -172,6 +177,7 @@ public static partial class EntriesStage
                 "items" => ParseItems(range, slice, blocks, spine ?? throw new DegreesException("The items parser needs the book's bookmarks."), book, compounds),
                 "glossary" => ParseGlossary(range, slice, book, compounds),
                 "actions" => ParseActions(range, slice, book, compounds),
+                "ancestries" => ParseAncestries(range, slice, book, compounds),
                 // The tradition lists make no entry: they are read past, and counted against the spells (ImportPipeline.CheckSpellCounts).
                 "spelllists" => new List<ParsedEntry>(),
                 _ => ParseEntries(range, slice, book, compounds),
@@ -202,6 +208,12 @@ public static partial class EntriesStage
             {
                 entry.Id += entry.Type switch { "action" => ActionIdSuffix, "spell" => SpellIdSuffix, var other => "-" + other };
             }
+        }
+
+        // A heritage names its ancestry by id, and that id is final only now (an ancestry named like a shipped trait took a suffix above).
+        foreach (var heritage in entries.Where(e => e.Type == "heritage" && e.Owner != null))
+        {
+            heritage.Raw.Add(new LabelledText("ancestry", "\"" + heritage.Owner!.Id + "\""));
         }
 
         // The redaction rows name an entry by id alone, so an id may not repeat even across types.

@@ -178,6 +178,13 @@ public static class DegreesCommand
                 $"the overview table lists {counts.TableNames} (name, proficiency) pairs, and the parsed actions have the same");
         }
 
+        if (result.Ranges.Any(r => r.Row.Parser == "ancestries"))
+        {
+            var ancestries = ImportPipeline.CheckAncestryCounts(spine, blocks, result.Ranges, result.Parsed);
+            output.WriteLine($"ancestries: {ancestries.Count} read, and the table of contents lists the same {ImportPipeline.CheckAncestryList(blocks, result.Parsed)}; per ancestry (lore headings, heritages, level bands, feats): " +
+                string.Join("; ", ancestries.Select(a => $"{a.LoreHeadings}, {a.Heritages}, {a.Bands}, {a.Feats}")) + $"; feat headers = trait lines = level markers in each ({ancestries.Sum(a => a.FeatHeaders)} in all)");
+        }
+
         if (packDir != null)
         {
             // An imported id may not equal an id of the homebrew pack beside it (in any type): the run fails, the ids are named (they are our own invented ids or a book's item names, never a reserved word).
@@ -276,6 +283,7 @@ public static class DegreesCommand
         var ranges = TakeStage.Resolve(spine, blocks, rows);
         var planned = TakeStage.PlannedRanges(spine, blocks, options.Book, take.Planned);
         var redacted = ImportPipeline.RedactedWords(blocks, ranges, RedactionTable.Embedded(), options.Book, spine, StableIds(options.Pack));
+        var redactedPairs = ImportPipeline.RedactedPairs(blocks, ranges, RedactionTable.Embedded(), options.Book, spine, StableIds(options.Pack));
         var (words, excluded) = ImportPipeline.DenylistWords(blocks, ranges, Waivers.Embedded(), 3, planned, redacted);
         var path = options.Out ?? Path.Combine(options.Work, "denylist.sha256");
         if (options.Out == null)
@@ -287,7 +295,7 @@ public static class DegreesCommand
         // A waiver lifts a hash only when this book's own left-out text would hash the word without it, and never a reserved name (see ImportPipeline.LiftedWaivers).
         var withoutWaivers = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string>(StringComparer.Ordinal), 3, planned, redacted).Words;
         var liftedWords = ImportPipeline.LiftedWaivers(Waivers.Embedded(), redacted.Names, withoutWaivers);
-        var liftedPairs = ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal)));
+        var liftedPairs = ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal), redactedPairs));
         var pairsFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-pairs.sha256");
         var commonFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-common.sha256");
         if (options.Fresh)
@@ -299,7 +307,7 @@ public static class DegreesCommand
             var reviews = new[]
             {
                 ImportPipeline.ReviewFresh("denylist", ReadHashes(path), words.Select(Denylist.Hash).ToList(), liftedWords, never, null),
-                ImportPipeline.ReviewFresh("pairs", ReadHashes(pairsFile), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded()), liftedPairs, new HashSet<string>(StringComparer.Ordinal),
+                ImportPipeline.ReviewFresh("pairs", ReadHashes(pairsFile), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded(), redactedPairs), liftedPairs, new HashSet<string>(StringComparer.Ordinal),
                     ImportPipeline.ExplainedPairs(blocks, ranges, planned, words)),
                 ImportPipeline.ReviewFresh("common", ReadHashes(commonFile), Denylist.Format(ImportPipeline.CommonWords(blocks).Concat(ImportPipeline.OpenerWords(blocks, ranges)).Concat(Waivers.Embedded())).Split('\n', StringSplitOptions.RemoveEmptyEntries), Array.Empty<string>(),
                     new HashSet<string>(StringComparer.Ordinal), null),
@@ -315,9 +323,9 @@ public static class DegreesCommand
 
         // The pairs of capitalized words go beside it too: a name of two words that each pass the word gates (see ImportPipeline.DenylistPairs).
         var pairsPath = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, "degrees-pairs.sha256");
-        var pairs = ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded());
+        var pairs = ImportPipeline.DenylistPairs(blocks, ranges, planned, words, Waivers.Embedded(), redactedPairs);
         var pairsBefore = MergeDenylist(pairsPath, string.Concat(pairs.Select(h => h + "\n")), out var pairsTotal, PairsHeader,
-            ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal))), options.Fresh);
+            ImportPipeline.LiftedPairWaivers(Waivers.Embedded(), ImportPipeline.DenylistPairs(blocks, ranges, planned, words, new HashSet<string>(StringComparer.Ordinal), redactedPairs)), options.Fresh);
         output.WriteLine($"pairs: {pairs.Count} pair(s) of capitalized words hashed from the sections left out; the file now holds {pairsTotal} hash(es){(options.Fresh ? string.Empty : $" ({pairsTotal - pairsBefore} new)")}");
 
         // The book's common lowercase words go beside it, as hashes too: the allowlist gate lets an ordinary word open a sentence.

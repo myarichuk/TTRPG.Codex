@@ -27,6 +27,12 @@ public sealed class TakeRow
     /// <summary>The most columns a page of this row may have. Two unless stated.</summary>
     public int Columns { get; set; } = 2;
 
+    /// <summary>
+    /// A page of the row (its number) and the x of its one gutter, in points. Only for a page whose text holds a wider empty band than the real gutter (a feat set around a piece of art, with a gap in every
+    /// line), so the gutter search would cut the page there. The page then has two columns, cut at that x. A page the row does not cover fails the run.
+    /// </summary>
+    public Dictionary<int, double> GutterAt { get; set; } = new();
+
     /// <summary>Bookmark paths, top level first. Each path is a section or an entry.</summary>
     public List<List<string>> Paths { get; set; } = new();
 
@@ -229,10 +235,10 @@ public sealed class PlannedRow
 
 public sealed partial class TakeList
 {
-    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists", "items" };
+    public static readonly string[] Parsers = { "entries", "statblocks", "table", "glossary", "rules", "actions", "spelllists", "items", "ancestries" };
 
     /// <summary>The parsers that exist. Any other parser in the list fails the run, so a row cannot silently take nothing.</summary>
-    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists", "items" };
+    public static readonly string[] BuiltParsers = { "entries", "rules", "glossary", "actions", "spelllists", "items", "ancestries" };
 
     public List<TakeRow> Rows { get; set; } = new();
 
@@ -303,6 +309,19 @@ public sealed partial class TakeList
             if (Rows[i].Parser == "actions" && (ruleType == null || (ruleType.Folder ?? ruleType.Type) != "rules"))
             {
                 throw new DegreesException($"Take-list row {i + 1}: the actions parser also writes rule entries, and the system declares no rule type with the folder rules.");
+            }
+
+            // The ancestries parser also writes the heritages and the ancestry feats of the ancestries it reads.
+            if (Rows[i].Parser == "ancestries")
+            {
+                foreach (var (also, folder) in new[] { ("heritage", "heritages"), ("feat", "feats") })
+                {
+                    var declared = system.EntityTypes.FirstOrDefault(t => t.Type == also);
+                    if (declared == null || (declared.Folder ?? declared.Type) != folder)
+                    {
+                        throw new DegreesException($"Take-list row {i + 1}: the ancestries parser also writes {also} entries, and the system declares no {also} type with the folder {folder}.");
+                    }
+                }
             }
         }
     }

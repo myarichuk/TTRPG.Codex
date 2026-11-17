@@ -158,6 +158,39 @@ public class DegreesGlossaryTests
     }
 
     [Fact]
+    public void ThePairsOfARedactedSpanAreHashedToo_EvenWhenBothWordsAreCommon_ExceptThoseTheReplacementSaysAgain()
+    {
+        var (blocks, ranges) = CountFixture(null, Gloss(1, 0, 700,
+            ("wisp (trait) Wisps drift over the Calm Harbor and the Old Pier. 3", "wisp", 60),
+            ("fume (trait) The calm harbor is a calm harbor with a calm harbor and an old pier, an old pier and an old pier. 4", "fume", 60)));
+        var sentence = "Wisps drift over the Calm Harbor and the Old Pier.";
+        var table = RedactionTable.Parse(
+            "normalization: 2\nrows:\n" +
+            $"  - {{ book: pc, entry: wisp, field: description, span: {{ sha256: \"{SpanText.Sha256(sentence)}\", length: {sentence.Length} }}, action: replace, text: \"Wisps drift over the Old Pier.\", reason: \"A name.\" }}\n");
+
+        var redacted = ImportPipeline.RedactedWords(blocks, ranges, table, "pc");
+        var (words, _) = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string>(), 3, null, redacted);
+        var pairs = ImportPipeline.RedactedPairs(blocks, ranges, table, "pc");
+
+        // Both words are ordinary (written in lowercase three times or more), so the word list leaves them off ...
+        Assert.DoesNotContain("calm", words);
+        Assert.DoesNotContain("harbor", words);
+        // ... and the pair that the row took out is the guard. The pair the replacement says again is not taken out.
+        Assert.Equal(new[] { ("calm", "harbor") }, pairs);
+        Assert.Contains(Denylist.PairHash("calm", "harbor"), ImportPipeline.DenylistPairs(blocks, ranges, null, words, null, pairs));
+        Assert.DoesNotContain(Denylist.PairHash("calm", "harbor"), ImportPipeline.DenylistPairs(blocks, ranges, null, words, null));
+        Assert.DoesNotContain(Denylist.PairHash("old", "pier"), ImportPipeline.DenylistPairs(blocks, ranges, null, words, null, pairs));
+    }
+
+    [Fact]
+    public void APossessiveDoesNotBreakAPairOfCapitalizedWords()
+    {
+        Assert.Equal(new[] { ("weeping", "queen"), ("queen", "court") }, PackWordCheck.CapitalPairs("the Weeping Queen's Court"));
+        Assert.Equal(new[] { ("grim", "head") }, PackWordCheck.CapitalPairs("a Grim's Head and a tale"));
+        Assert.Empty(PackWordCheck.CapitalPairs("the queen's Court of s")); // a lowercase word before the apostrophe is no capital to pair with
+    }
+
+    [Fact]
     public void AWordARowTakesOutIsReservedInAnyCase_ButAWordTheReplacementKeepsIsNot_AndACommonWordIsLeftOff()
     {
         var (blocks, ranges) = CountFixture(null, Gloss(1, 0, 700,
