@@ -46,7 +46,7 @@ public class DegreesChapterOneTests : IDisposable
     {
         new SpineNode(0, "Appendix", new[] { "Appendix" }, 1, 2, false),
         new SpineNode(1, "List", new[] { "Appendix", "List" }, 1, 2, false),
-        new SpineNode(2, "Sidebar: side", new[] { "Appendix", "List", "Sidebar: side" }, 2, 2, sidebar),
+        new SpineNode(2, "Sidebar: side title", new[] { "Appendix", "List", "Sidebar: side title" }, 2, 2, sidebar),
         new SpineNode(0, "Next", new[] { "Next" }, 3, 3, false),
     };
 

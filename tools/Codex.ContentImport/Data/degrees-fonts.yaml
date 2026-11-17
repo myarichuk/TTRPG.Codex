@@ -10,7 +10,10 @@
 # Table rows have no role of their own: the table parser finds them from block-header and body words.
 rules:
   - { role: icon, family: [Icons], size: [1, 40] }
-  - { role: opener, family: [TimesNewRoman], size: [1, 20] }
+  - { role: opener, family: [TimesNewRomanPS-BoldItalic], size: [1, 20] }
+  # The same family in bold roman is the run-in heading of a list item in the body text (an action's name), at body size; at the larger size it is a chapter opener.
+  - { role: rules, family: [TimesNewRomanPS-BoldMT], size: [1, 11] }
+  - { role: opener, family: [TimesNewRomanPS-BoldMT], size: [12, 20] }
   # Page furniture: side tabs, page numbers, the running head and the large tab numeral.
   # Side tabs and the large tab numeral sit on the right edge of even pages only; the page number is on the outer edge of each page.
   - { role: furniture, family: [GoodOT-CondBold], size: [9, 9], x: [530, 700], parity: even }

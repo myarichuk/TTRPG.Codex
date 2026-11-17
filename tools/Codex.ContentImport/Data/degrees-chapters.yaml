@@ -6,6 +6,12 @@
 #   target    the entity type of the four-degrees system the entries become (its pack folder is the plural unless `folder` says otherwise)
 #   category  the entry's `category` field, in our own words, for a target type that has one
 #   columns   the most columns a page of the row has (two unless stated)
+#   actions   (parser) a skills chapter: headings in the section font are skills, entry-headers ending in "(Trained)" or "(Untrained)" introduce a general skill action, one ending in
+#             "Trained Action(s)" switches a skill to its trained actions, and any other heading is a subsection; the range's prose becomes `rule` entries (the row's `category`) and its
+#             action headings (an action icon, or a trait line below) become the target type's entries, with the skill and the least proficiency as fields
+#   leadName  (actions parser) the name, in our own words, of the one rule made from the range's prose before its first heading
+#   tailFromHeader  (rules parser) the range ends at the first heading in the block-header font; what follows in the section (overview tables) is read past
+#   tableRows       a block of mostly multi-cell lines, or one that opens with a bold label line, is a table the extraction did not rebuild: one row to a line
 #   own       paths (rules parser) whose own text, between the section's title and its first child section, becomes one entry named by ownName
 #   planned   (below the rows) sections a later chapter takes: not read, only not counted as "left out" by the denylist generator
 # Dropped material is never named here: the setting, religion, example-of-play and map sections are simply absent.
@@ -52,6 +58,74 @@ rows:
     approved: true
     paths:
       - ["Chapter 5: Feats"]
+  # The skills chapter. Its rules prose is `rule` entries of the category Skills (one per section, so nothing is dropped silently); a skill's own text, the skills' actions
+  # and the general skill actions are `action` entries, and the rules text between them is rules too (a skill's description, a subsection). The actions have no bookmarks of
+  # their own: the `actions` parser reads the headings in order. Sidebars are all left out.
+  - chapter: skills
+    book: pc
+    parser: rules
+    target: rule
+    category: Skills
+    approved: true
+    tableRows: true
+    # The chapter's own introduction, before its first section.
+    own:
+      - ["Chapter 4: Skills"]
+    ownName: Skills
+  - chapter: skills
+    book: pc
+    parser: rules
+    target: rule
+    category: Skills
+    approved: true
+    tableRows: true
+    own:
+      - ["Chapter 4: Skills", Skill Checks and DCs]
+    ownName: Skill Checks and DCs
+  - chapter: skills
+    book: pc
+    parser: rules
+    target: rule
+    category: Skills
+    approved: true
+    tableRows: true
+    paths:
+      - ["Chapter 4: Skills", Key Attribute]
+      - ["Chapter 4: Skills", Skill Actions]
+      - ["Chapter 4: Skills", Skill Checks and DCs, Armor and Skills]
+      - ["Chapter 4: Skills", Skill Checks and DCs, Secret Checks]
+  # The last section of the checks has two overview tables after its text (page numbers, and the actions of each skill): they are read past, and the actions are counted from them.
+  - chapter: skills
+    book: pc
+    parser: rules
+    target: rule
+    category: Skills
+    approved: true
+    tableRows: true
+    tailFromHeader: true
+    paths:
+      - ["Chapter 4: Skills", Skill Checks and DCs, Exploration and Downtime Activities]
+  - chapter: skills
+    book: pc
+    parser: actions
+    target: action
+    category: Skills
+    approved: true
+    tableRows: true
+    countsDiffer: Two jumps have an action icon and no trait line, and the actions that take no set number of actions (exploration, downtime and the like) have no action icon (some have exploration or downtime for a trait, some neither), so the headings, trait lines and icons are counted three ways that differ by those; every heading has an icon or a trait line, or it would not be a heading.
+    paths:
+      - ["Chapter 4: Skills", General Skill Actions]
+  - chapter: skills
+    book: pc
+    parser: actions
+    target: action
+    category: Skills
+    approved: true
+    tableRows: true
+    leadName: Skill Descriptions
+    countsDiffer: Two jumps have an action icon and no trait line, and the actions that take no set number of actions (exploration, downtime and the like) have no action icon (some have exploration or downtime for a trait, some neither), so the headings, trait lines and icons are counted three ways that differ by those; every heading has an icon or a trait line, or it would not be a heading.
+    paths:
+      - ["Chapter 4: Skills", Skills]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -62,7 +136,6 @@ planned:
       - ["Chapter 1: Introduction", Character Creation]
       - ["Chapter 2: Ancestries & Backgrounds"]
       - ["Chapter 3: Classes"]
-      - ["Chapter 4: Skills"]
       - ["Chapter 6: Equipment"]
       - ["Chapter 7: Spells"]
       - ["Chapter 8: Playing the Game"]

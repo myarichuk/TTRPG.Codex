@@ -1,7 +1,10 @@
 namespace Codex.ContentImport.Degrees;
 
 /// <summary>Where one line of a block sits, and the bold run it starts with (a field label such as a degree name), or empty.</summary>
-public sealed record LineInfo(double Left, double Right, string Label);
+public sealed record LineInfo(double Left, double Right, string Label, List<LineCell>? Cells = null);
+
+/// <summary>One cell of a line that has more than one: the words between two gaps wider than a word space, and where the cell starts.</summary>
+public sealed record LineCell(double Left, string Text);
 
 /// <summary>
 /// A run of lines of one role inside one column of one page. A <c>table</c> block has <see cref="Rows"/> (the first row is the header) and its
@@ -13,6 +16,7 @@ public sealed record Block(int Page, int Column, string Role, double Left, doubl
 /// <param name="Dropped">Sidebar and opener blocks that were split out. They are kept only for the denylist, never parsed.</param>
 /// <param name="SidebarProblems">Sidebar pages where the split is not backed by the bookmarks (too few sidebars) or body text follows a dropped sidebar; a taken range must not contain one.</param>
 /// <param name="RejectedTableHeaders">Two-cell block-header lines whose lines below did not line up as table rows (stat-block headers, mostly): counted, left as ordinary blocks.</param>
+/// <param name="LegacyDropped">Blocks the old sidebar rule (every heading in the block-header font starts a sidebar) would have dropped on a page the new, title-based rule keeps whole. Only for the denylist, and only on pages no row takes.</param>
 /// <param name="OneColumnPageNumbers">Every page with body text and no gutter; a taken range must not contain one.</param>
 public sealed record BlocksResult(
     List<Block> Blocks,
@@ -28,7 +32,8 @@ public sealed record BlocksResult(
     int OpenerWords = 0,
     int Tables = 0,
     List<int>? SidebarProblems = null,
-    int RejectedTableHeaders = 0);
+    int RejectedTableHeaders = 0,
+    List<Block>? LegacyDropped = null);
 
 /// <summary>What the take-list and the spine tell the blocks stage about pages. Defaults: two columns everywhere and no sidebar pages.</summary>
 public sealed class BlocksOptions
@@ -41,6 +46,13 @@ public sealed class BlocksOptions
 
     /// <summary>How many "Sidebar" bookmarks start on each page. A sidebar page that yields fewer sidebars than that is reported in <see cref="BlocksResult.SidebarProblems"/>.</summary>
     public IReadOnlyDictionary<int, int> SidebarStarts { get; init; } = new Dictionary<int, int>();
+
+    /// <summary>
+    /// The titles of the sidebars that start on each page, one per sidebar: a bookmark called "Sidebars: X &amp; Y" is two. A page that has titles is split by them (see
+    /// <see cref="BlocksStage"/>): a heading is a sidebar's only if it matches one, so an action's or a table's heading on the same page is not taken for one.
+    /// A page without titles falls back to treating every heading in the block-header font as a sidebar's.
+    /// </summary>
+    public IReadOnlyDictionary<int, IReadOnlyList<string>> SidebarTitles { get; init; } = new Dictionary<int, IReadOnlyList<string>>();
 }
 
 /// <summary>
@@ -75,11 +87,90 @@ public static class BlocksStage
 
     private static readonly HashSet<string> SidebarRoles = new(StringComparer.Ordinal) { "block-header", "body", "tag", "icon", "display" };
 
+    /// <summary>Body text this far (in points) left of a sidebar's own text is no longer inside it.</summary>
+    private const double SidebarIndent = 4;
+
+    /// <summary>The bold labels, in lowercase, that open a line of an action's text: the four degrees of success and the labelled lines. A sidebar of rules never starts a line with one.</summary>
+    private static readonly HashSet<string> ActionLabels = new(StringComparer.Ordinal)
+    {
+        "critical success", "success", "failure", "critical failure", "requirements", "trigger", "frequency",
+    };
+
+    /// <summary>A block cut before its line <paramref name="at"/>: the lines above, and the lines from there on.</summary>
+    private static (Block Head, Block Tail) CutBlock(Block b, int at)
+    {
+        var info = b.Info!;
+        Block Part(int from, int to) => b with
+        {
+            Lines = b.Lines.GetRange(from, to - from),
+            Info = info.GetRange(from, to - from),
+            Left = info.Skip(from).Take(to - from).Min(x => x.Left),
+            Right = info.Skip(from).Take(to - from).Max(x => x.Right),
+        };
+
+        return (Part(0, at), Part(at, b.Lines.Count));
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex ActionIcon = new(@"\[(?:(?:one|two|three|free)-actions?|reaction)\]", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// The sidebars a page is known to have from the bookmarks (one title each) and which of them a heading has been found for. A heading matches a title when its letters are
+    /// the title's, within two typos, or a part of it at either end (a title set across a gutter is two headings, one in each column).
+    /// </summary>
+    internal sealed class SidebarTitleSet
+    {
+        private readonly List<string> _keys;
+        private readonly HashSet<int> _matched = new();
+
+        public SidebarTitleSet(IEnumerable<string> titles) => _keys = titles.Select(Key).ToList();
+
+        /// <summary>How many of the page's sidebars no heading was found for.</summary>
+        public int Missing => _keys.Count - _matched.Count;
+
+        public bool Match(Block heading)
+        {
+            var key = Key(string.Join(' ', heading.Lines));
+            for (var i = 0; i < _keys.Count; i++)
+            {
+                var title = _keys[i];
+                if (key == title || (key.Length >= 8 && title.Length >= 8 && Distance(key, title) <= 2)
+                    || (key.Length >= 4 && key.Length < title.Length && (title.StartsWith(key, StringComparison.Ordinal) || title.EndsWith(key, StringComparison.Ordinal))))
+                {
+                    _matched.Add(i);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static string Key(string text) => new(SpanText.Normalize(text).Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
+
+        private static int Distance(string a, string b)
+        {
+            var row = Enumerable.Range(0, b.Length + 1).ToArray();
+            for (var i = 1; i <= a.Length; i++)
+            {
+                var diagonal = row[0];
+                row[0] = i;
+                for (var j = 1; j <= b.Length; j++)
+                {
+                    var above = row[j];
+                    row[j] = Math.Min(Math.Min(row[j] + 1, row[j - 1] + 1), diagonal + (a[i - 1] == b[j - 1] ? 0 : 1));
+                    diagonal = above;
+                }
+            }
+
+            return row[b.Length];
+        }
+    }
+
     public static BlocksResult Run(IEnumerable<LayoutPage> pages, BlocksOptions? options = null)
     {
         options ??= new BlocksOptions();
         var blocks = new List<Block>();
         var dropped = new List<Block>();
+        var legacy = new List<Block>();
         var oneNumbers = new List<int>();
         int one = 0, multi = 0, three = 0, furniture = 0, openerWords = 0, sidebarBlocks = 0;
         var suspect = new List<int>();
@@ -126,35 +217,64 @@ public static class BlocksStage
                 .Select(c => body.Where((_, i) => which[i] == c).ToList())
                 .ToList();
             var sidebarPage = options.SidebarPages.Contains(page.Number);
-            var runs = 0;
-            var bodyAfterSidebar = false;
-            var endedInside = false;
-            for (var c = 0; c < columns.Count; c++)
+            var titles = options.SidebarTitles.TryGetValue(page.Number, out var pageTitles) && pageTitles.Count > 0 ? new SidebarTitleSet(pageTitles) : null;
+            var pageColumns = columns.Select((words, c) => ColumnBlocks(page.Number, c, words, rejected).ToList()).ToList();
+
+            // The split of the page's columns, by the sidebars' titles when the page has them, or by the old rule (every heading in the block-header font starts one).
+            (List<Block> Kept, List<Block> Dropped, int Runs, bool BodyAfter) SplitPage(SidebarTitleSet? by)
             {
-                var found = ColumnBlocks(page.Number, c, columns[c], rejected).ToList();
-                if (sidebarPage)
+                var kept = new List<Block>();
+                var gone = new List<Block>();
+                var runs = 0;
+                var bodyAfter = false;
+                var endedInside = false;
+                foreach (var found in pageColumns)
                 {
-                    var split = SplitSidebars(found, endedInside);
+                    var split = SplitSidebars(found, endedInside, by);
                     endedInside = split.EndsInside;
-                    sidebarBlocks += split.Dropped.Count;
-                    dropped.AddRange(split.Dropped);
+                    gone.AddRange(split.Dropped);
                     runs += split.Runs;
-                    bodyAfterSidebar |= split.BodyAfter;
-                    found = split.Kept;
+                    bodyAfter |= split.BodyAfter;
+                    kept.AddRange(split.Kept);
                 }
 
-                blocks.AddRange(found);
+                return (kept, gone, runs, bodyAfter);
             }
 
-            // Every sidebar bookmark that starts on this page must have found at least one sidebar, and body text must not run straight on from one.
-            if (sidebarPage && (bodyAfterSidebar || runs < options.SidebarStarts.GetValueOrDefault(page.Number)))
+            if (!sidebarPage)
+            {
+                blocks.AddRange(pageColumns.SelectMany(c => c));
+                continue;
+            }
+
+            var result = SplitPage(titles);
+            var flagged = result.BodyAfter || (titles != null ? titles.Missing > 0 : result.Runs < options.SidebarStarts.GetValueOrDefault(page.Number));
+            if (titles != null && titles.Missing > 0)
+            {
+                // A heading did not match its sidebar's title (a title that differs from its heading): the page is flagged, so no taken range may hold it, and its sidebars are
+                // split out by the old rule, which hashes more of the left-out text for the denylist, never less.
+                result = SplitPage(null);
+            }
+            else if (titles != null)
+            {
+                // What the old rule would have dropped from this page is kept for the denylist: a sidebar or a box that no bookmark names, on a page no row takes, must still be
+                // hashed as left-out text (the split by titles keeps it as the page's own).
+                legacy.AddRange(SplitPage(null).Dropped);
+            }
+
+            blocks.AddRange(result.Kept);
+            dropped.AddRange(result.Dropped);
+            sidebarBlocks += result.Dropped.Count;
+
+            // Every sidebar bookmark that starts on this page must have found a heading, and body text must not run straight on from one.
+            if (flagged)
             {
                 problems.Add(page.Number);
             }
         }
 
         var byRole = blocks.GroupBy(b => b.Role).ToDictionary(g => g.Key, g => g.Count());
-        return new BlocksResult(blocks, one, multi, furniture, byRole, suspect, dropped, oneNumbers, three, sidebarBlocks, openerWords, blocks.Count(b => b.Role == "table"), problems, rejected[0]);
+        return new BlocksResult(blocks, one, multi, furniture, byRole, suspect, dropped, oneNumbers, three, sidebarBlocks, openerWords, blocks.Count(b => b.Role == "table"), problems, rejected[0], legacy);
     }
 
     /// <summary>
@@ -345,7 +465,8 @@ public static class BlocksStage
                 rejected[0]++;
             }
 
-            var info = new LineInfo(line.Left, line.Right, line.Label);
+            var lineCells = Cells(line.Words);
+            var info = new LineInfo(line.Left, line.Right, line.Label, lineCells.Count >= 2 ? lineCells.Select(c => new LineCell(c.Left, c.Text)).ToList() : null);
             if (open != null && open.Role == line.Role && open.Bottom - line.Top <= BlockGap)
             {
                 open.Lines.Add(line.Text);
@@ -476,25 +597,107 @@ public static class BlocksStage
     /// A sidebar starts at a heading in the block-header font and runs through the structured-text blocks after it, up to the first block of any other role.
     /// It is only looked for on pages a "Sidebar" bookmark covers.
     /// </summary>
-    private static (List<Block> Kept, List<Block> Dropped, int Runs, bool BodyAfter, bool EndsInside) SplitSidebars(List<Block> blocks, bool previousColumnEndedInside)
+    private static (List<Block> Kept, List<Block> Dropped, int Runs, bool BodyAfter, bool EndsInside) SplitSidebars(List<Block> blocks, bool previousColumnEndedInside, SidebarTitleSet? titles)
     {
         var kept = new List<Block>();
         var gone = new List<Block>();
         var inside = false;
         var runs = 0;
+        var left = double.NaN;
 
         // A column that opens with body text straight after a column that ended inside a sidebar is that sidebar's continuation, which has no heading to find.
         var bodyAfter = previousColumnEndedInside && blocks.Count > 0 && blocks[0].Role == "body";
-        foreach (var b in blocks)
+        for (var i = 0; i < blocks.Count; i++)
         {
-            if (b.Role == "block-header" || (inside && SidebarRoles.Contains(b.Role)))
+            var b = blocks[i];
+            if (titles == null)
             {
-                if (!inside)
+                // No sidebar title is known for the page: every heading in the block-header font starts a sidebar, which runs on through structured text.
+                if (b.Role == "block-header" || (inside && SidebarRoles.Contains(b.Role)))
                 {
-                    runs++;
+                    if (!inside)
+                    {
+                        runs++;
+                    }
+
+                    inside = true;
+                    gone.Add(b);
+                    continue;
                 }
 
-                inside = true;
+                inside = false;
+                kept.Add(b);
+                continue;
+            }
+
+            // With the sidebars' titles known, a heading is a sidebar's only when it matches one of them. Any other heading in the block-header font is the page's own: an action's
+            // (an action icon in the line, or a trait line right below), a table's or a subsection's. A sidebar's own subheadings are not title matches but sit inside it.
+            var next = i + 1 < blocks.Count ? blocks[i + 1].Role : string.Empty;
+            if (b.Role == "block-header")
+            {
+                // An action's heading is the page's own whatever its letters are: tested before the titles, so a short action name that is part of a sidebar's title is not taken for it.
+                if (IsActionHeader(blocks, i))
+                {
+                    inside = false;
+                    kept.Add(b);
+                    continue;
+                }
+
+                if (titles.Match(b))
+                {
+                    inside = true;
+                    left = double.NaN;
+                    gone.Add(b);
+                    continue;
+                }
+
+                // A sidebar's subheadings are set in title case; the page's own headings (an action's, a table's caption) and the sidebars' titles are set in capitals.
+                if (inside && !IsActionHeader(blocks, i) && b.Lines.Any(l => l.Any(char.IsLower)) && next is "body" or "block-header" or "")
+                {
+                    gone.Add(b); // a subheading of the sidebar
+                    continue;
+                }
+
+                inside = false;
+                kept.Add(b);
+                continue;
+            }
+
+            if (inside && SidebarRoles.Contains(b.Role))
+            {
+                // A body line that opens with a bold label an action's text has (a degree of success, a requirements line) is the page's own text going on after the sidebar,
+                // even when the sidebar's text is set at the column's edge too (so the indent test cannot see the end). The block is cut there.
+                var setIn = b.Role == "body" && !double.IsNaN(left) && b.Left < left - SidebarIndent; // already at the page's own edge: the indent test below ends the sidebar before this block
+                var label = b.Role == "body" && b.Info != null && !setIn ? Enumerable.Range(0, b.Lines.Count).Where(k => ActionLabels.Contains(SpanText.Normalize(b.Info[k].Label).Trim().ToLowerInvariant())).Cast<int?>().FirstOrDefault() : null;
+                if (label is { } at)
+                {
+                    inside = false;
+                    if (at > 0)
+                    {
+                        var (head, tail) = CutBlock(b, at);
+                        gone.Add(head);
+                        kept.Add(tail);
+                    }
+                    else
+                    {
+                        kept.Add(b);
+                    }
+
+                    continue;
+                }
+
+                if (double.IsNaN(left) && b.Role == "body")
+                {
+                    left = b.Left;
+                }
+                else if (b.Role == "body" && b.Left < left - SidebarIndent)
+                {
+                    // Body text at the column's edge, left of where the sidebar's text is set in: the page's own text going on after the sidebar.
+                    inside = false;
+                    kept.Add(b);
+                    continue;
+                }
+
                 gone.Add(b);
                 continue;
             }
@@ -506,17 +709,28 @@ public static class BlocksStage
         return (kept, gone, runs, bodyAfter, inside);
     }
 
+    /// <summary>
+    /// True for the heading of an action: a heading in the block-header font with an action icon in it, or with a trait line (a block in the tag font) right below it.
+    /// A sidebar's heading has neither.
+    /// </summary>
+    internal static bool IsActionHeader(IReadOnlyList<Block> blocks, int index) =>
+        blocks[index].Role == "block-header"
+        && (blocks[index].Lines.Any(l => ActionIcon.IsMatch(l)) || (index + 1 < blocks.Count && blocks[index + 1].Role == "tag"));
+
     /// <summary>The bold words a line starts with when it is a labelled paragraph start, such as a degree name. A line that is bold throughout counts only when it is short.</summary>
     private static string LeadingLabel(List<LayoutWord> ordered)
     {
         bool Plain(LayoutWord w) => w.Role is "rules" or "body";
-        var run = ordered.TakeWhile(w => Plain(w) && w.Font.Contains("Bold", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (run.Count == 0 || (run.Count == ordered.Count && run.Count > 3))
+
+        // A list item's bullet is set in a plain face before the bold heading that runs in: the bullet is part of the label.
+        var bullet = ordered.Count > 1 && ordered[0].Text == "•" && Plain(ordered[0]) && !ordered[0].Font.Contains("Bold", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+        var run = ordered.Skip(bullet).TakeWhile(w => Plain(w) && w.Font.Contains("Bold", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (run.Count == 0 || (run.Count == ordered.Count - bullet && run.Count > 3))
         {
             return string.Empty;
         }
 
-        return string.Join(' ', run.Select(w => w.Text));
+        return (bullet == 1 ? "• " : string.Empty) + string.Join(' ', run.Select(w => w.Text));
     }
 
     /// <summary>The role most of the line's letters have. Icons are ignored unless the line has nothing else.</summary>

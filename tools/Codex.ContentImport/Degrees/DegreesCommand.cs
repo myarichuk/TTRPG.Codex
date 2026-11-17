@@ -130,6 +130,12 @@ public static class DegreesCommand
             $"{blocks.TwoColumnPages} multi-column pages ({blocks.ThreeOrMoreColumnPages} with three or more), {blocks.OneColumnPages} one-column pages, " +
             $"{blocks.FurnitureWords} furniture or off-page words dropped, {blocks.OpenerWords} opener words and {blocks.SidebarBlocks} sidebar blocks split out; " +
             $"{blocks.Tables} table(s) rebuilt, {blocks.RejectedTableHeaders} two-cell header(s) whose lines did not line up were left as blocks");
+        if (blocks.SidebarProblems is { Count: > 0 })
+        {
+            // Pages where a sidebar bookmark's heading was not found (or body text follows a sidebar): its text is kept as the page's own. Harmless in text no row takes, but the denylist hashes less.
+            output.WriteLine($"warning: {blocks.SidebarProblems.Count} sidebar page(s) where the split is not backed by the bookmarks: {string.Join(",", blocks.SidebarProblems)}");
+        }
+
         if (blocks.SuspectPages.Count > 0)
         {
             output.WriteLine($"warning: {blocks.SuspectPages.Count} one-column page(s) have text on both halves and may read out of order: {string.Join(",", blocks.SuspectPages)}");
@@ -164,6 +170,12 @@ public static class DegreesCommand
         WriteText(work, PackEmitter.ReportFile, files[PackEmitter.ReportFile]);
         output.WriteLine($"take-list: {result.Ranges.Count} range(s) in {rows.Count} row(s), {rows.Count(r => r.Approved)} approved; every block in them is claimed");
         output.WriteLine($"entries: {result.Parsed.Count} parsed, {result.Final.Count} after redaction ({result.Final.Count(e => e.Approved)} approved); " + result.Redaction);
+        if (result.Ranges.Any(r => r.Row.Parser == "actions"))
+        {
+            var counts = ImportPipeline.CheckActionCounts(spine, blocks, result.Ranges, result.Parsed);
+            output.WriteLine($"actions: {counts.Children} bookmark children = {counts.Units} headings in the ranges; {counts.Headers} action headings, {counts.TraitLines} trait lines, {counts.Icons} action icons; " +
+                $"the overview table lists {counts.TableNames} (name, proficiency) pairs, and the parsed actions have the same");
+        }
 
         if (packDir == null)
         {

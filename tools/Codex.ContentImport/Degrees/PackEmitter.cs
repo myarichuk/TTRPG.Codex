@@ -4,7 +4,7 @@ using System.Text;
 namespace Codex.ContentImport.Degrees;
 
 /// <summary>What one approved row did, for <c>import-report.yaml</c>: counts and ids only, never a field value.</summary>
-public sealed record ReportRow(string Chapter, string Parser, string Target, int Entries, List<string> Ids, int Sidebars, int Openers, List<int> RedactionRows, int PageReferencesLeft);
+public sealed record ReportRow(string Chapter, string Parser, string Target, int Entries, List<string> Ids, int Sidebars, int Openers, List<int> RedactionRows, int PageReferencesLeft, int ReadPastBlocks = 0);
 
 /// <summary>
 /// The fixed YAML writer for the generated pack and the only code that writes it. It does not use a serializer: every scalar is double-quoted (or a
@@ -59,6 +59,17 @@ public static class PackEmitter
                     properties.Append("    traits: [").Append(string.Join(", ", e.Traits.Select(t => Scalar(t, 6)))).Append("]\n");
                 }
 
+                // An action's skill and least proficiency come after its traits, and before its labelled lines.
+                if (e.Skill != null)
+                {
+                    properties.Append("    skill: ").Append(Scalar(e.Skill, 6)).Append('\n');
+                }
+
+                if (e.Proficiency != null)
+                {
+                    properties.Append("    proficiency: ").Append(Scalar(e.Proficiency, 6)).Append('\n');
+                }
+
                 foreach (var x in e.Extracted)
                 {
                     properties.Append("    ").Append(x.Label).Append(": ").Append(Scalar(x.Text, 6)).Append('\n');
@@ -90,6 +101,12 @@ public static class PackEmitter
             sb.Append("  droppedSidebarBlocks: ").Append(r.Sidebars.ToString(CultureInfo.InvariantCulture)).Append('\n');
             sb.Append("  droppedOpenerBlocks: ").Append(r.Openers.ToString(CultureInfo.InvariantCulture)).Append('\n');
             sb.Append("  pageReferencesLeft: ").Append(r.PageReferencesLeft.ToString(CultureInfo.InvariantCulture)).Append('\n');
+            if (r.ReadPastBlocks > 0)
+            {
+                // Blocks of a taken section that the row reads past (overview tables, boxes of examples): counted here, since they are in no entry.
+                sb.Append("  readPastBlocks: ").Append(r.ReadPastBlocks.ToString(CultureInfo.InvariantCulture)).Append('\n');
+            }
+
             sb.Append("  redactionRows: [").Append(string.Join(", ", r.RedactionRows.OrderBy(n => n).Select(n => n.ToString(CultureInfo.InvariantCulture)))).Append("]\n");
             sb.Append("  ids:\n");
             foreach (var id in r.Ids.OrderBy(i => i, StringComparer.Ordinal))
