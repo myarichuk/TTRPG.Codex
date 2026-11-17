@@ -111,6 +111,12 @@ entityTypes:
       vows: { label: Обеты }
       taboos: { label: Запреты }
   feat: { label: Черта, pluralLabel: Черты }
+  action:
+    label: Действие
+    pluralLabel: Действия
+    fields:
+      skill: { label: Навык }
+      proficiency: { label: Мастерство }
   armor:
     label: Доспех
     pluralLabel: Доспехи

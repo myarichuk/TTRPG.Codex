@@ -102,6 +102,23 @@ entityTypes:
       - { key: requirements,  label: Requirements,  type: LongText }
       - { key: cost,          label: Cost,          type: Text }
       - { key: special,       label: Special,       type: LongText }
+  # A skill action: what a skill lets a character do with a roll. `skill` is the skill the action belongs to; empty is a general skill action that several skills can use.
+  # `proficiency` is the least rank the action needs. The entry's text holds the rest, with its degrees of success.
+  - type: action
+    label: Action
+    pluralLabel: Actions
+    folder: actions
+    icon: zap
+    summaryFields: [skill, actions]
+    filterFields: [skill, proficiency]
+    fields:
+      - { key: actions,      label: Actions,      type: Dropdown, options: [one, two, three, reaction, free], description: "The action cost. Empty: not a timed action (an activity that takes minutes, hours or days of downtime)." }
+      - { key: traits,       label: Traits,       type: TagList, description: "Trait keys, as the Library's trait entries name them." }
+      - { key: skill,        label: Skill,        type: Dropdown, options: [acrobatics, arcana, athletics, crafting, deception, diplomacy, intimidation, lore, medicine, nature, occultism, performance, religion, society, stealth, survival, thievery], description: "The skill the action belongs to. Empty: a general skill action that several skills can use." }
+      - { key: proficiency,  label: Proficiency,  type: Dropdown, options: [untrained, trained], description: "The least rank in the skill that the action needs." }
+      - { key: frequency,    label: Frequency,    type: Text }
+      - { key: trigger,      label: Trigger,      type: LongText }
+      - { key: requirements, label: Requirements, type: LongText }
   - type: armor
     label: Armor
     pluralLabel: Armor
