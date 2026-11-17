@@ -254,7 +254,7 @@ public class ContentRegistry : IContentRegistry
 
             return bySystem.Values
                 .Where(v => string.Equals(v.Entry.Type, type, StringComparison.OrdinalIgnoreCase))
-                .Where(v => packIds == null || packIds.Count == 0 || packIds.Contains(v.PackId))
+                .Where(v => packIds == null || packIds.Contains(v.PackId))
                 .Select(v => v.Entry)
                 .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -281,7 +281,7 @@ public class ContentRegistry : IContentRegistry
 
             candidates = bySystem.Values
                 .Where(v => type == null || string.Equals(v.Entry.Type, type, StringComparison.OrdinalIgnoreCase))
-                .Where(v => packIds == null || packIds.Count == 0 || packIds.Contains(v.PackId))
+                .Where(v => packIds == null || packIds.Contains(v.PackId))
                 .Select(v => v.Entry)
                 .ToList();
         }

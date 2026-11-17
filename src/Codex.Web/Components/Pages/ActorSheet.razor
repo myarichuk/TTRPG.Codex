@@ -552,6 +552,9 @@ else
 
     private bool loading = true;
     private CampaignDocument? campaign;
+
+    /// <summary>Where an empty picker's links go: the campaign. A vault character has no campaign, no GM and no Settings, so nothing to link to.</summary>
+    private string? EmptyBasePath => string.IsNullOrEmpty(CampaignId) ? null : $"/campaigns/{CampaignId}";
     // Usernames for the DM's "Played by" picker.
     private Dictionary<string, string> memberNames = new();
     private ActorDocument? actor;
@@ -757,7 +760,11 @@ else
                     @if (schema != null)
                     {
                         <SchemaForm Schema="schema" Values="editSheet" ReferenceOptions="referenceOptions" FieldOptions="fieldOptions" HiddenKeys="HiddenNow" ReadOnly="@(!CanEdit)" ValuesChanged="OnSheetChanged" Secrets="@access.IsDm" Preview="PreviewMentions"
-                                    Problems="FieldProblems" />
+                                    Problems="FieldProblems">
+                            <EmptyReference>
+                                <EmptyEntries SystemId="@campaign!.SystemId" EntryType="@context" Campaign="campaign" BasePath="@EmptyBasePath" CanManage="access!.IsDm" />
+                            </EmptyReference>
+                        </SchemaForm>
                     }
                     else if (editSheet.Count > 0)
                     {
@@ -913,7 +920,11 @@ else
                                     : L["Actor.Sheet.Carried", Weight(evaluation.CarriedWeight, inventoryRules)])</p>
                             }
                             <InventoryPanel Rules="inventoryRules" Items="evaluation.Inventory" Options="inventoryOptions" FindType="type => system?.FindType(type)" Sheet="editSheet" CanEdit="CanEdit"
-                                            LibraryPath="@LibraryPath" Changed="OnRulesInputChanged" />
+                                            LibraryPath="@LibraryPath" Changed="OnRulesInputChanged">
+                                <EmptyFor>
+                                    <EmptyEntries SystemId="@campaign!.SystemId" EntryType="@context" Campaign="campaign" BasePath="@EmptyBasePath" CanManage="access!.IsDm" />
+                                </EmptyFor>
+                            </InventoryPanel>
                         </div>
                     }
                 break;
@@ -1962,6 +1973,12 @@ else
                 .Concat(actor?.Carried.Where(c => string.Equals(c.Type, target, StringComparison.OrdinalIgnoreCase)).Select(c => (c.EntryId, c.Name)) ?? Enumerable.Empty<(string, string)>())
                 .DistinctBy(o => o.Item1)
                 .ToList();
+
+            // What the sheet already holds stays listed by its own name when its pack is off: only the offers are narrowed to the
+            // active packs, never what a character already has.
+            var heldIds = schema.Fields.Where(f => f.Type == FieldType.EntityReference && string.Equals(f.TargetEntityType, target, StringComparison.OrdinalIgnoreCase))
+                .Select(f => YamlValues.GetString(editSheet, f.Key));
+            referenceOptions[target] = await Library.WithHeldAsync(campaign, access, target, referenceOptions[target], heldIds, L.Culture.Name);
         }
     }
 

@@ -50,7 +50,11 @@
                 else
                 {
                     <EntryBrowser Options="creatureOptions" Type="creatureType" Label="@L["WorldBuilder.Drafts.Stats.Creatures"]" TestId="promote-stats-browser" AddLabel="@L["WorldBuilder.Drafts.Stats.Use"]"
-                                  EmptyText="@L["WorldBuilder.Drafts.Stats.None"]" OnAdd="Pick" />
+                                  EmptyText="@L["WorldBuilder.Drafts.Stats.None"]" OnAdd="Pick">
+                        <EmptyContent>
+                            <EmptyEntries SystemId="@Ctx.Campaign.SystemId" EntryType="@(creatureType?.Type ?? "monster")" Campaign="Ctx.Campaign" BasePath="@Ctx.BasePath" CanManage="Ctx.IsDm" />
+                        </EmptyContent>
+                    </EntryBrowser>
                 }
             }
 

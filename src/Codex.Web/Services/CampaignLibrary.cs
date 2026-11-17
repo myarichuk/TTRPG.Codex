@@ -48,14 +48,17 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         return entry;
     }
 
-    public IReadOnlySet<string>? ActivePacks(CampaignDocument campaign) =>
-        campaign.ActivePacks.Count == 0 ? null : campaign.ActivePacks.ToHashSet(StringComparer.OrdinalIgnoreCase);
+    /// <summary>The packs pickers, search and the Library list are narrowed to; null when nothing is narrowed. The rule lives in
+    /// <see cref="PackSelection"/>. A reference the campaign already holds does not go through this (see <see cref="GetAsync(CampaignDocument, CampaignAccess, string, string, string?)"/>).</summary>
+    public IReadOnlySet<string>? ActivePacks(CampaignDocument campaign) => registry.Active(campaign);
 
     /// <param name="culture">The language to show pack entries in ("ru", "he-IL"); null returns the entries exactly as the packs
     /// define them, which is what rules code must use, since translated names would no longer match the data that refers to them.</param>
-    public async Task<IReadOnlyList<LibraryItem>> SearchAsync(CampaignDocument campaign, CampaignAccess access, string query, string? type, int limit = 200, string? culture = null)
+    /// <param name="onlyActivePacks">True (the default) narrows pack entries to the campaign's active packs, as every picker and list does.
+    /// False returns every pack's entries: for resolving something the campaign already holds.</param>
+    public async Task<IReadOnlyList<LibraryItem>> SearchAsync(CampaignDocument campaign, CampaignAccess access, string query, string? type, int limit = 200, string? culture = null, bool onlyActivePacks = true)
     {
-        var packItems = registry.Search(campaign.SystemId, query, type, ActivePacks(campaign), limit, culture)
+        var packItems = registry.Search(campaign.SystemId, query, type, onlyActivePacks ? ActivePacks(campaign) : null, limit, culture)
             .Select(e => new LibraryItem(e, registry.GetPack(e.PackId), null));
 
         var brews = (await homebrew.GetVisibleForCampaignAsync(access))
@@ -109,7 +112,9 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
         }
 
         var entry = registry.GetEntry(campaign.SystemId, type, id);
-        if (entry != null && (ActivePacks(campaign) is not { } packs || packs.Contains(entry.PackId)))
+        // Resolves whatever the campaign's packs say: a character's ancestry or a creature in an encounter must still open when
+        // its pack has been switched off. Only SearchAsync (pickers, the Library list) narrows to the active packs.
+        if (entry != null)
         {
             return new LibraryItem(registry.Localize(entry, culture), registry.GetPack(entry.PackId), null);
         }
@@ -140,8 +145,37 @@ public sealed class CampaignLibrary(IContentRegistry registry, IHomebrewReposito
     }
 
     /// <summary>Options for an EntityReference picker: every entry of the target type, homebrew included.</summary>
-    public async Task<IReadOnlyList<LibraryItem>> OptionsAsync(CampaignDocument campaign, CampaignAccess access, string type, string? culture = null) =>
-        await SearchAsync(campaign, access, string.Empty, type, limit: 2000, culture);
+    public async Task<IReadOnlyList<LibraryItem>> OptionsAsync(CampaignDocument campaign, CampaignAccess access, string type, string? culture = null, bool onlyActivePacks = true) =>
+        await SearchAsync(campaign, access, string.Empty, type, limit: 2000, culture, onlyActivePacks);
+
+    /// <summary>Whether this item is one a picker offers: homebrew always, a pack entry when its pack is on for the campaign.</summary>
+    public bool IsOffered(CampaignDocument campaign, LibraryItem item) => item.IsHomebrew || ActivePacks(campaign).IsOffered(item.Entry);
+
+    /// <summary>Whether a resolved entry may be proposed as a new pick: see <see cref="CampaignPacks.IsOffered"/>.</summary>
+    public bool IsOffered(CampaignDocument campaign, ContentEntry entry) => ActivePacks(campaign).IsOffered(entry);
+
+    /// <summary>An entry an AI tool may read or propose as a NEW pick: <see cref="GetAsync(CampaignDocument, CampaignAccess, string, string, string?)"/>
+    /// but only from a pack that is on. A tool checking something the campaign already holds uses GetAsync, which resolves whatever the packs say.</summary>
+    public async Task<LibraryItem?> GetOfferedAsync(CampaignDocument campaign, CampaignAccess access, string type, string id, string? culture = null)
+    {
+        var item = await GetAsync(campaign, access, type, id, culture);
+        return item != null && IsOffered(campaign, item) ? item : null;
+    }
+
+    /// <summary>The options for a reference picker with what the sheet already holds added: a held entry whose pack is off stays listed
+    /// under its own name instead of reading as missing.</summary>
+    public async Task<IReadOnlyList<(string Id, string Name)>> WithHeldAsync(CampaignDocument campaign, CampaignAccess access, string type,
+        IReadOnlyList<(string Id, string Name)> options, IEnumerable<string?> heldIds, string? culture = null)
+    {
+        var result = options.ToList();
+        foreach (var held in heldIds.Where(h => !string.IsNullOrEmpty(h)).Distinct())
+        {
+            if (result.Any(o => o.Id == held)) continue;
+            if (await GetAsync(campaign, access, type, held!, culture) is { } item) result.Add((item.Entry.Id, item.Entry.Name));
+        }
+
+        return result;
+    }
 
     public static string Humanize(string type) =>
         string.Join(' ', type.Split('-', '_').Select(part => part.Length == 0 ? part : char.ToUpperInvariant(part[0]) + part[1..]));

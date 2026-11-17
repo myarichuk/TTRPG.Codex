@@ -237,6 +237,8 @@ All seven were decided by the user on 2026-11-16:
 4. **Attributes:** switch to modifiers, as the current core rules are written, before chapter 7 and before `mc`.
 5. **Homebrew ancestries and classes:** `homebrew-core` stays a pack, off by default once imported ancestries exist.
    A screen with no entries shows a plain empty state that points to homebrew, rather than skipping the step.
+   **Done:** the manifest flag `activeByDefault: false` (documented in `CONTENT_PACKS.md`) is set on `homebrew-core`, and the
+   empty state is built.
 6. **Monster names:** `mc` is Licensed Material and ships. The book's own capitalization decides what is a proper noun, and
    proper nouns that are Reserved Material are renamed or dropped.
 7. **Local agents reading extracted text:** confirmed. It is inference, not training.

@@ -35,6 +35,11 @@ else
                             }
                         </label>
                         @RenderField(field, controlId)
+                        @if (ShowsEmpty(field))
+                        {
+                            @* A picker with nothing to pick from says so, rather than showing a lone "None"; the select is described by it. *@
+                            <div id="@(controlId)-empty">@EmptyReference!(field.TargetEntityType!)</div>
+                        }
                         <FieldError Id="@(controlId + "-error")" Message="@problem" TestId="@("field-problem-" + field.Key)" />
                         @if (!string.IsNullOrWhiteSpace(field.Description))
                         {
@@ -73,6 +78,11 @@ else
     /// chosen class, the feat a background grants...).</summary>
     [Parameter]
     public IReadOnlyDictionary<string, IReadOnlyList<(string Id, string Name)>>? FieldOptions { get; set; }
+
+    /// <summary>What to show under a reference picker that has no options at all, given the type it points at (the host knows the
+    /// campaign: <see cref="EmptyEntries"/>). Nothing is shown when it is not set.</summary>
+    [Parameter]
+    public RenderFragment<string>? EmptyReference { get; set; }
 
     /// <summary>Field keys rendered elsewhere (e.g. attributes drawn as a grid) and skipped here.</summary>
     [Parameter]
@@ -133,8 +143,20 @@ else
         await ValuesChanged.InvokeAsync(Values);
     }
 
-    private string? Describe(FieldDefinition field, string controlId) =>
-        string.IsNullOrWhiteSpace(field.Description) ? null : $"{controlId}-help";
+    private string? Describe(FieldDefinition field, string controlId)
+    {
+        var ids = new List<string>();
+        if (!string.IsNullOrWhiteSpace(field.Description)) ids.Add($"{controlId}-help");
+        if (ShowsEmpty(field)) ids.Add($"{controlId}-empty");
+        return ids.Count == 0 ? null : string.Join(' ', ids);
+    }
+
+    /// <summary>A reference picker with no options at all gets <see cref="EmptyReference"/> under it. Not a field the rules narrow
+    /// (<see cref="FieldOptions"/>, such as the heritages of an ancestry): an empty narrowed list is the rules' doing, not a missing pack,
+    /// so it keeps its lone "None".</summary>
+    private bool ShowsEmpty(FieldDefinition field) =>
+        EmptyReference != null && !ReadOnly && field.Type == FieldType.EntityReference && field.TargetEntityType != null
+        && (FieldOptions == null || !FieldOptions.ContainsKey(field.Key)) && OptionsFor(field).Count == 0;
 
     private RenderFragment RenderField(FieldDefinition field, string controlId) => field.Type switch
     {

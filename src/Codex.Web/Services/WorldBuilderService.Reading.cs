@@ -254,7 +254,7 @@ public sealed partial class WorldBuilderService
             return $"\"{key}\" is not an entry key; give type/id as search_library lists it (\"spell/fireball\").";
         }
 
-        var item = homebrewKey ? await library.GetAsync(campaign, access, type, id, isHomebrew: true) : await library.GetAsync(campaign, access, type, id);
+        var item = homebrewKey ? await library.GetAsync(campaign, access, type, id, isHomebrew: true) : await library.GetOfferedAsync(campaign, access, type, id);
         if (item == null) return $"There is no Library entry {type}/{id}. Use search_library to find one.";
 
         var sb = new StringBuilder($"# {item.Entry.Name}\n");

@@ -61,7 +61,8 @@
         }
 
         <EntryBrowser @key="browseType" Options="@(browseType != null && Options.TryGetValue(browseType, out var browsable) ? browsable : Array.Empty<ContentEntry>())" Type="TypeOf(browseType)" Label="@((TypeOf(browseType)?.PluralLabel ?? L["Actor.Inv.Items"]))"
-                      TestId="inventory" EmptyText="@L["Actor.Inv.NoneInLibrary"]" OnAdd="AddAsync" />
+                      TestId="inventory" EmptyText="@L["Actor.Inv.NoneInLibrary"]" OnAdd="AddAsync"
+                      EmptyContent="@(EmptyFor != null && browseType != null ? EmptyFor(browseType) : null)" />
     }
 </section>
 
@@ -76,6 +77,9 @@
     [Parameter] public bool CanEdit { get; set; }
     [Parameter] public string LibraryPath { get; set; } = string.Empty;
     [Parameter] public EventCallback Changed { get; set; }
+
+    /// <summary>What to show when the browsed type has no entries in the active packs, given that type (<see cref="EmptyEntries"/>).</summary>
+    [Parameter] public RenderFragment<string>? EmptyFor { get; set; }
 
     private readonly string id = "inv-" + Guid.NewGuid().ToString("N")[..6];
     private string? browseType;

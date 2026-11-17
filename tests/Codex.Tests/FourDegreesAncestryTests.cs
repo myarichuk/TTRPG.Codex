@@ -177,5 +177,23 @@ public class FourDegreesAncestryTests : IAsyncLifetime
         if (ancestry.EndsWith("-ancestry", StringComparison.Ordinal)) Assert.Equal(speed, Convert.ToDouble(Entry("ancestry", ancestry).Properties["speed"], CultureInfo.InvariantCulture));
     }
 
+    /// <summary>A new sheet has no ancestry and so no <c>ancestrySpeed</c>: the speed is the fallback of 25, with no warning, as the formula is written.</summary>
+    [Theory]
+    [InlineData(false)] // the key absent, as a sheet that was never given an ancestry holds it
+    [InlineData(true)]  // the key at its default of 0
+    public void ANewSheetWithNoAncestry_HasASpeedOfTwentyFive_AndNoWarning(bool keyAtDefault)
+    {
+        // As the app starts one: every field's default, then the rules' own starting values.
+        var sheet = new Dictionary<string, object>();
+        foreach (var field in _system.ActorFields.Where(f => f.DefaultValue != null)) sheet[field.Key] = YamlValues.SeedOf(field)!;
+        if (!keyAtDefault) sheet.Remove("ancestrySpeed");
+        new SheetRuleEngine(_system, NullEntryResolver.Instance).InitializeSheet(sheet);
+        Engine().Recompute(sheet);
+
+        var model = new SheetModel(_system, new PackResolver(_registry), sheet).Evaluate();
+        Assert.True(model.Warnings.Count == 0, string.Join("|", model.Warnings.Select(w => w.Message)));
+        Assert.Equal(25d, model.Values["speed"]);
+    }
+
     private static List<RuleViolation> Problems(SheetEvaluation evaluation) => evaluation.Violations.Concat(evaluation.Warnings).ToList();
 }

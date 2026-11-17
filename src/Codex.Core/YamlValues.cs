@@ -85,6 +85,20 @@ public static class YamlValues
     /// <c>object</c> back as its own lazy number type (a level saved as 4.0), which is neither a
     /// <c>double</c> nor a <c>string</c>, so anything unrecognised is read through its text.
     /// </summary>
+    /// <summary>The value a new sheet starts a field with: its default, a whole number as a long. A Number field whose default the system's YAML
+    /// read as text ("0") starts as the number, so a formula that compares it (<c>ancestrySpeed &gt; 0</c>) works before anything is chosen.</summary>
+    public static object? SeedOf(Codex.Plugin.Abstractions.FieldDefinition field)
+    {
+        if (field.DefaultValue is null) return null;
+        if (field.DefaultValue is int i) return (long)i;
+        if (field.Type == Codex.Plugin.Abstractions.FieldType.Number && field.DefaultValue is string && ToNumber(field.DefaultValue) is { } number)
+        {
+            return number == Math.Floor(number) ? (long)number : number;
+        }
+
+        return field.DefaultValue;
+    }
+
     public static double? ToNumber(object? value) => value switch
     {
         null => null,

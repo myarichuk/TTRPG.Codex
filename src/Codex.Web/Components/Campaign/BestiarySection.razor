@@ -132,6 +132,11 @@ else
                 {
                     <LoadingSkeleton Rows="3" />
                 }
+                else if (results.Count == 0 && string.IsNullOrWhiteSpace(query))
+                {
+                    @* No creatures at all in the active packs (not a search that missed): say so and where to get some. *@
+                    <EmptyEntries SystemId="@Ctx.Campaign.SystemId" EntryType="@CreatureTypes.First()" Campaign="Ctx.Campaign" BasePath="@Ctx.BasePath" CanManage="Ctx.IsDm" />
+                }
                 else if (results.Count == 0)
                 {
                     <p class="small-muted mb-0">@L["Campaign.Bestiary.NoMatch"]</p>

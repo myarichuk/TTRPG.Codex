@@ -60,6 +60,10 @@ public class PackManifest
     /// descriptions, lore) keyed by the original entry ids, and never replaces the entries it translates.</summary>
     public string? TranslationOf { get; set; }
 
+    /// <summary>Whether a campaign that has never chosen its packs (an empty <c>ActivePacks</c> list) uses this one. A pack that
+    /// stays available but should be switched on deliberately sets <c>activeByDefault: false</c>. See <see cref="PackSelection"/>.</summary>
+    public bool ActiveByDefault { get; set; } = true;
+
     public bool IsTranslation => !string.IsNullOrWhiteSpace(Locale) && !string.IsNullOrWhiteSpace(TranslationOf);
 
     public bool IsAppVersionCompatible(string currentAppVersion)

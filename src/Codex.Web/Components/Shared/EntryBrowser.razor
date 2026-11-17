@@ -38,7 +38,14 @@
         <ul class="list-unstyled mb-0 mt-1 picker-results" data-testid="@TestId-options">
             @if (matches.Count == 0)
             {
-                <li class="small-muted">@(Options.Count == 0 ? EmptyTextValue : L["Library.Entries.NoMatch"])</li>
+                @if (Options.Count == 0 && EmptyContent != null)
+                {
+                    <li>@EmptyContent</li>
+                }
+                else
+                {
+                    <li class="small-muted">@(Options.Count == 0 ? EmptyTextValue : L["Library.Entries.NoMatch"])</li>
+                }
             }
             @foreach (var option in shown)
             {
@@ -67,6 +74,9 @@
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public string? DisabledText { get; set; }
     [Parameter] public string? EmptyText { get; set; }
+
+    /// <summary>Shown instead of <see cref="EmptyText"/> when there is nothing to choose from (see <see cref="EmptyEntries"/>).</summary>
+    [Parameter] public RenderFragment? EmptyContent { get; set; }
     [Parameter] public string? AddLabel { get; set; }
 
     // The entries as the reader sees them (names, and the properties a translation pack words), made once per list of options.

@@ -63,8 +63,9 @@ public sealed class VaultService(
         });
     }
 
-    /// <summary>What a vault character is built against: the server's packs for its system, no campaign's homebrew.</summary>
-    public static CampaignDocument CampaignFor(string systemId) => new() { Id = string.Empty, SystemId = systemId };
+    /// <summary>What a vault character is built against: all of the server's packs for its system (the vault has no GM and no Settings to
+    /// switch one on, so a pack that is off by default is on here), no campaign's homebrew.</summary>
+    public static CampaignDocument CampaignFor(string systemId) => new() { Id = string.Empty, SystemId = systemId, AllPacks = true };
 
     /// <summary>What <paramref name="character"/> uses that the campaign does not have, named as the vault's Library names it.
     /// Empty when the campaign's system is not the character's: that is refused before anything is listed.</summary>

@@ -29,6 +29,11 @@
   <data name="Library.Entries.Add" xml:space="preserve"><value>Добавить</value></data>
   <data name="Library.Entries.Disabled" xml:space="preserve"><value>Ничего нельзя добавить</value></data>
   <data name="Library.Entries.Empty" xml:space="preserve"><value>Выбирать не из чего.</value></data>
+  <data name="Library.Empty.None" xml:space="preserve"><value>Раздел «{0}» в наборах этого мира пока пуст.</value></data>
+  <data name="Library.Empty.Settings" xml:space="preserve"><value>Включите набор в настройках</value></data>
+  <data name="Library.Empty.AddOwn" xml:space="preserve"><value>Добавьте свои</value></data>
+  <data name="Library.Empty.NoneAtAll" xml:space="preserve"><value>Раздел «{0}» в наборах этой системы пока пуст.</value></data>
+  <data name="Library.Empty.AskGm" xml:space="preserve"><value>Попросите мастера включить набор или добавить свои записи.</value></data>
   <data name="Library.Ai.Description" xml:space="preserve"><value>Описание</value></data>
   <data name="Library.Ai.Writing" xml:space="preserve"><value>Пишу…</value></data>
   <data name="Library.Ai.Write" xml:space="preserve"><value>Написать с помощью ИИ</value></data>

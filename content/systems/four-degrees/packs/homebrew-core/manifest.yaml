@@ -20,4 +20,6 @@ license:
   - "Expressly Designated Licensed Material: This product contains no Expressly Designated Licensed Material."
   - Homebrew. No text, table or stat block from any book is copied; the names, descriptions and creature numbers are written for this project, and every entry is tagged homebrew.
 kind: rules
+# Off until a campaign switches it on in Settings: the imported ancestries and classes are the default content.
+activeByDefault: false
 isTranslation: false
