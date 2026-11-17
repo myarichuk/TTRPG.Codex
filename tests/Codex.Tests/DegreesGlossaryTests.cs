@@ -158,6 +158,26 @@ public class DegreesGlossaryTests
     }
 
     [Fact]
+    public void AWordARowTakesOutIsReservedInAnyCase_ButAWordTheReplacementKeepsIsNot_AndACommonWordIsLeftOff()
+    {
+        var (blocks, ranges) = CountFixture(null, Gloss(1, 0, 700,
+            ("wisp (trait) Wisps drift over the zorbly reeds and the water. 3", "wisp", 60),
+            ("fume (trait) The water is the water of the water. 4", "fume", 60)));
+        var sentence = "Wisps drift over the zorbly reeds and the water.";
+        var table = RedactionTable.Parse(
+            "normalization: 2\nrows:\n" +
+            $"  - {{ book: pc, entry: wisp, field: description, span: {{ sha256: \"{SpanText.Sha256(sentence)}\", length: {sentence.Length} }}, action: replace, text: \"Wisps drift over the reeds.\", reason: \"A coined word.\" }}\n");
+
+        var redacted = ImportPipeline.RedactedWords(blocks, ranges, table, "pc");
+        var (words, _) = ImportPipeline.DenylistWords(blocks, ranges, new HashSet<string>(), 3, null, redacted);
+
+        Assert.Contains("zorbly", words);        // taken out, written in lowercase
+        Assert.DoesNotContain("reeds", words);   // stays in the replacement
+        Assert.DoesNotContain("wisps", words);
+        Assert.DoesNotContain("water", words);   // written in lowercase more than three times in the book: an ordinary word
+    }
+
+    [Fact]
     public void ARedactionRowNeedsExactlyOneOfEntryAndEntryHash()
     {
         const string Span = "span: { sha256: \"0000000000000000000000000000000000000000000000000000000000000000\", length: 3 }, action: drop-entry, reason: \"r\"";

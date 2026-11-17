@@ -3,8 +3,12 @@ namespace Codex.ContentImport.Degrees;
 /// <summary>The blocks of one taken bookmark path: <c>[Start, End)</c> in <see cref="BlocksResult.Blocks"/>.</summary>
 /// <param name="Own">The range is a section's own text before its first child (<see cref="TakeRow.Own"/>); <paramref name="PathNumber"/> then counts on after the row's <see cref="TakeRow.Paths"/>.</param>
 /// <param name="Extra">Indexes of blocks outside <c>[Start, End)</c> that belong to the range too: the top of the page a row says its section spills onto (<see cref="TakeRow.SpillsOnto"/>).</param>
-public sealed record TakenRange(TakeRow Row, int PathNumber, SpineNode Node, int Start, int End, int RowNumber = 0, bool Own = false, IReadOnlyList<int>? Extra = null)
+/// <param name="LeadStart">For a row that starts at its first entry header: the index of the first block after the section's title, which the row reads past (an introduction and overview tables). Negative when there is no such lead.</param>
+public sealed record TakenRange(TakeRow Row, int PathNumber, SpineNode Node, int Start, int End, int RowNumber = 0, bool Own = false, IReadOnlyList<int>? Extra = null, int LeadStart = -1)
 {
+    /// <summary>True for a block of the lead: read past, not an entry's text, and not setting material either (it sits in the taken section).</summary>
+    public bool InLead(int index) => LeadStart >= 0 && index >= LeadStart && index < Start;
+
     /// <summary>The indexes of every block of the range, in order.</summary>
     public IEnumerable<int> Indexes => Enumerable.Range(Start, End - Start).Concat(Extra ?? Array.Empty<int>());
 
@@ -110,7 +114,7 @@ public static class TakeStage
         }
 
         CheckOverlap(ranges);
-        CheckOneColumnPages(spine, blocks, rowList);
+        CheckOneColumnPages(spine, blocks, rowList, ranges);
         CheckSidebarPages(spine, blocks, rowList);
         foreach (var range in ranges)
         {
@@ -124,9 +128,22 @@ public static class TakeStage
 
     private static TakenRange Range(IReadOnlyList<SpineNode> spine, BlocksResult blocks, TakeRow row, int pathNumber, SpineNode node)
     {
+        var taken = RangeFromTitle(spine, blocks, row, pathNumber, node);
+        if (row.LevelWord == null)
+        {
+            return taken;
+        }
+
+        var first = Enumerable.Range(taken.Start, Math.Max(0, taken.End - taken.Start)).Where(i => row.IsHeader(blocks.Blocks[i])).Cast<int?>().FirstOrDefault()
+            ?? throw new DegreesException($"Chapter {row.Chapter}, path {pathNumber}: no block of the range has an entry header's shape, so the first entry is unknown.");
+        return taken with { Start = first, LeadStart = taken.Start };
+    }
+
+    private static TakenRange RangeFromTitle(IReadOnlyList<SpineNode> spine, BlocksResult blocks, TakeRow row, int pathNumber, SpineNode node)
+    {
         var where = $"Chapter {row.Chapter}, path {pathNumber}";
         var title = FindTitle(blocks.Blocks, node, 0) ?? throw new DegreesException($"{where}: no block on page {node.PageStart} has the bookmark's title.");
-        var start = blocks.Blocks[title].Role == "entry-header" ? title : title + 1;
+        var start = blocks.Blocks[title].Role == (row.HeaderRole ?? "entry-header") ? title : title + 1;
 
         var index = IndexOf(spine, node);
         var after = spine.Skip(index + 1).FirstOrDefault(n => n.Depth <= node.Depth);
@@ -227,6 +244,20 @@ public static class TakeStage
             {
                 return i;
             }
+
+            // A chapter's title is two blocks in the section font ("CHAPTER 5:" above "FEATS"): a run of them matches, and the last of the run is the title block.
+            if (blocks[i].Page == node.PageStart && blocks[i].Role == "section")
+            {
+                var text = string.Empty;
+                for (var j = i; j < blocks.Count && blocks[j].Page == node.PageStart && blocks[j].Role == "section"; j++)
+                {
+                    text += string.Join(' ', blocks[j].Lines);
+                    if (j > i && Key(text) == want)
+                    {
+                        return j;
+                    }
+                }
+            }
         }
 
         return null;
@@ -248,12 +279,14 @@ public static class TakeStage
         }
     }
 
-    private static void CheckOneColumnPages(IReadOnlyList<SpineNode> spine, BlocksResult blocks, List<TakeRow> rows)
+    private static void CheckOneColumnPages(IReadOnlyList<SpineNode> spine, BlocksResult blocks, List<TakeRow> rows, List<TakenRange> ranges)
     {
         var one = new HashSet<int>(blocks.OneColumnPageNumbers ?? new List<int>());
         foreach (var row in rows.Where(r => r.Columns > 1))
         {
-            var bad = PagesOf(spine, row).Where(one.Contains).ToList();
+            // The pages of a lead (the introduction before the first entry) are read past, so their reading order does not matter.
+            var firstEntryPage = ranges.Where(r => r.Row == row && r.LeadStart >= 0).Select(r => blocks.Blocks[r.Start].Page).DefaultIfEmpty(0).Min();
+            var bad = PagesOf(spine, row).Where(p => p >= firstEntryPage && one.Contains(p)).ToList();
             if (bad.Count > 0)
             {
                 throw new DegreesException($"Chapter {row.Chapter}: {bad.Count} one-column page(s) in a taken range, so reading order is not known (pages {string.Join(",", bad)}).");
@@ -276,12 +309,14 @@ public static class TakeStage
 
     private static void CheckClaimed(BlocksResult blocks, TakenRange range)
     {
-        var allowed = Claims[range.Row.Parser];
+        var allowed = Claims[range.Row.Parser].Concat(range.Row.HeaderRole == null ? Array.Empty<string>() : new[] { range.Row.HeaderRole }).ToArray();
         var stray = new List<string>();
         foreach (var i in range.Indexes)
         {
             var b = blocks.Blocks[i];
-            if (!allowed.Contains(b.Role) || (i == range.Start && range.Row.Parser == "entries" && b.Role != "entry-header"))
+            // With a header role shared with other things (the block-header font), a block of that role that is not a header's shape belongs to no entry.
+            if (!allowed.Contains(b.Role) || (b.Role == range.Row.HeaderRole && b.Role != "entry-header" && !range.Row.IsHeader(b))
+                || (i == range.Start && range.Row.Parser == "entries" && !range.Row.IsHeader(b)))
             {
                 stray.Add($"{b.Role} on page {b.Page} column {b.Column}");
             }
@@ -295,6 +330,6 @@ public static class TakeStage
 
     /// <summary>Every block that no range takes, with the dropped sidebar and opener blocks: the text the denylist is made from.</summary>
     public static IEnumerable<Block> LeftOut(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, IReadOnlyList<(int Start, int End)>? planned = null) =>
-        blocks.Blocks.Where((_, i) => !ranges.Any(r => r.Contains(i)) && !(planned ?? Array.Empty<(int Start, int End)>()).Any(r => i >= r.Start && i < r.End))
+        blocks.Blocks.Where((_, i) => !ranges.Any(r => r.Contains(i) || r.InLead(i)) && !(planned ?? Array.Empty<(int Start, int End)>()).Any(r => i >= r.Start && i < r.End))
             .Concat(blocks.Dropped ?? new List<Block>());
 }

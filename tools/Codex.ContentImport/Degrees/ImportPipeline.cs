@@ -42,11 +42,12 @@ public static partial class ImportPipeline
         var ranges = TakeStage.Resolve(spine, blocks, rows);
         CheckEntryCounts(spine, blocks, ranges);
         CheckGlossaryCounts(blocks, ranges);
+        CheckLevelCounts(blocks, ranges);
         var parsed = EntriesStage.Run(blocks, ranges, book);
 
         // Only this book's rows apply, so one book's rows are never "unmatched" in the other's run.
         var scoped = new RedactionTable { Normalization = redactions.Normalization, Rows = redactions.Rows.Where(r => r.Book == null || r.Book == book).ToList() };
-        var redactable = parsed.Select(e => new RedactionEntry(e.Id, new Dictionary<string, string> { ["name"] = e.Name, ["description"] = e.Render() })).ToList();
+        var redactable = parsed.Select(e => new RedactionEntry(e.Id, e.RedactionFields())).ToList();
         var report = RedactionStage.Run(redactable, scoped);
         var kept = redactable.ToDictionary(e => e.Id, StringComparer.Ordinal);
         var final = parsed.Where(e => kept.ContainsKey(e.Id)).Select(e => new FinalEntry
@@ -61,6 +62,10 @@ public static partial class ImportPipeline
             RowNumber = e.RowNumber,
             Name = kept[e.Id].Fields["name"],
             Description = kept[e.Id].Fields["description"],
+            Level = e.Level,
+            Actions = e.Actions,
+            Traits = e.Traits.ToList(),
+            Extracted = e.Extracted.Select(x => new LabelledText(x.Label, kept[e.Id].Fields[x.Label])).ToList(),
         }).ToList();
 
         return new PipelineOutput(ranges, parsed, final, report, ReportRows(blocks, spine, rows, redactions, book, parsed, final));
@@ -115,6 +120,82 @@ public static partial class ImportPipeline
         return compared;
     }
 
+    /// <summary>
+    /// Counts the entries of every taken <c>entries</c> range whose headers end in a word and a level (<see cref="TakeRow.LevelWord"/>) three ways, from the document, because such a section has
+    /// no child bookmarks: the header-font blocks of the header shape, the trait-line blocks (one follows each header), and the lines in the range that end in the capitalized word and a number
+    /// (the level markers, read line by line, whatever block they sit in). They must agree, or the row says why in <see cref="TakeRow.CountsDiffer"/>; otherwise the run fails with the three counts.
+    /// Returns the (headers, trait lines, level markers) of each range.
+    /// </summary>
+    public static List<(int Headers, int TraitLines, int Markers, int TableRows)> CheckLevelCounts(BlocksResult blocks, IEnumerable<TakenRange> ranges)
+    {
+        var compared = new List<(int, int, int, int)>();
+        foreach (var range in ranges.Where(r => !r.Own && r.Row.Parser == "entries" && r.Row.LevelWord != null))
+        {
+            var slice = range.BlocksIn(blocks);
+            var marker = new Regex(@"\s" + Regex.Escape(range.Row.LevelWord!.ToUpperInvariant()) + @"\s+\d+$", RegexOptions.CultureInvariant);
+            var headers = slice.Count(range.Row.IsHeader);
+            var traitLines = slice.Count(b => b.Role == "tag");
+            var markers = slice.SelectMany(b => b.Lines).Count(l => marker.IsMatch(SpanText.Normalize(l)));
+
+            // The overview tables before the first header list every entry with its level: a count that no header, trait line or classification step touches. Not every chapter has them.
+            var table = LeadTableRows(blocks, range);
+            var pairs = slice.Where(range.Row.IsHeader).Select(b => HeaderPair(b, range.Row)).ToHashSet();
+            var tableRows = table.Count;
+            var tableAgrees = tableRows == 0 || table.SetEquals(pairs);
+            compared.Add((headers, traitLines, markers, tableRows));
+            if ((headers != traitLines || headers != markers || !tableAgrees) && string.IsNullOrWhiteSpace(range.Row.CountsDiffer))
+            {
+                throw new DegreesException($"Chapter {range.Row.Chapter}, path {range.PathNumber}: the range has {headers} header blocks, {traitLines} trait-line blocks and {markers} level markers, " +
+                    $"and its overview tables list {tableRows} entries ({table.Except(pairs).Count()} not among the headers, {pairs.Except(table).Count()} headers not in the tables), and the row gives no countsDiffer reason.");
+            }
+        }
+
+        return compared;
+    }
+
+    /// <summary>(name in title case, level) of a header block.</summary>
+    private static (string Name, int Level) HeaderPair(Block header, TakeRow row)
+    {
+        var m = Regex.Match(Regex.Replace(EntriesStage.Clean(string.Join(' ', header.Lines)), @"\s*\[[^\]]+\]", string.Empty), @"^(?<name>.+?)\s+" + Regex.Escape(row.LevelWord!) + @"\s+(?<level>\d+)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        return (EntriesStage.TitleCase(m.Groups["name"].Value), int.Parse(m.Groups["level"].Value, System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>
+    /// The (name, level) of every row of the overview tables in a range's lead: a line at its block's left edge that is a name (every word capitalized, or a small joining word) then a level.
+    /// A row's continuation lines are set in from the edge, and the text columns are not names, so neither is read.
+    /// </summary>
+    private static HashSet<(string Name, int Level)> LeadTableRows(BlocksResult blocks, TakenRange range)
+    {
+        var rows = new HashSet<(string, int)>();
+        if (range.LeadStart < 0)
+        {
+            return rows;
+        }
+
+        var name = new Regex(@"^(?<name>[A-Z][^0-9]*?) (?<level>\d{1,2})(?: |$)", RegexOptions.CultureInvariant);
+        for (var i = range.LeadStart; i < range.Start; i++)
+        {
+            var block = blocks.Blocks[i];
+            if (block.Role != "body" || block.Info == null)
+            {
+                continue;
+            }
+
+            for (var k = 0; k < block.Lines.Count; k++)
+            {
+                var line = SpanText.Normalize(block.Lines[k]);
+                var m = name.Match(line);
+                if (block.Info[k].Left - block.Left <= 2 && m.Success && !line.Contains(" Level ", StringComparison.Ordinal)
+                    && m.Groups["name"].Value.Split(' ').All(w => EntriesStage.IsNameWord(w)))
+                {
+                    rows.Add((m.Groups["name"].Value, int.Parse(m.Groups["level"].Value, System.Globalization.CultureInfo.InvariantCulture)));
+                }
+            }
+        }
+
+        return rows;
+    }
+
     private static List<ReportRow> ReportRows(BlocksResult blocks, IReadOnlyList<SpineNode> spine, IReadOnlyList<TakeRow> rows, RedactionTable redactions, string book, List<ParsedEntry> parsed, List<FinalEntry> final)
     {
         var result = new List<ReportRow>();
@@ -143,7 +224,7 @@ public static partial class ImportPipeline
                 dropped.Count(b => b.Role != "opener"),
                 dropped.Count(b => b.Role == "opener"),
                 redactions.Rows.Select((r, n) => (r, n)).Where(x => (x.r.Book == null || x.r.Book == book) && ids.Any(x.r.Names)).Select(x => x.n + 1).ToList(),
-                mine.Count(e => PageReference().IsMatch(e.Description))));
+                mine.Count(e => PageReference().IsMatch(e.Description) || e.Extracted.Any(x => PageReference().IsMatch(x.Text)))));
         }
 
         return result;
@@ -233,17 +314,35 @@ public static partial class ImportPipeline
     public static (List<string> SpanWords, List<string> Names) RedactedWords(BlocksResult blocks, IReadOnlyList<TakenRange> ranges, RedactionTable redactions, string book)
     {
         var parsed = EntriesStage.Run(blocks, ranges, book);
-        var entries = parsed.Select(e => new RedactionEntry(e.Id, new Dictionary<string, string> { ["name"] = e.Name, ["description"] = e.Render() })).ToList();
+        var entries = parsed.Select(e => new RedactionEntry(e.Id, e.RedactionFields())).ToList();
         var scoped = new RedactionTable { Normalization = redactions.Normalization, Rows = redactions.Rows.Where(r => r.Book == null || r.Book == book).ToList() };
         var spans = RedactionStage.SourceSpans(entries, scoped);
         var spanWords = spans
             .SelectMany(s => PackWordCheck.Words(s.Text).Skip(1))
             .Where(w => w.Length > 1 && PackWordCheck.IsCapital(w))
-            .Select(w => w.ToLowerInvariant()).Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
+            .Select(w => w.ToLowerInvariant())
+            // Every word a row takes out, in any case: a coined word written in lowercase is as reserved as a capitalized one. A word that stays in the row's replacement is not removed.
+            // The ordinary words among them (the book writes them in lowercase at least three times) are left off the denylist with the other common words.
+            .Concat(spans.SelectMany(s => RemovedWords(s.Row, s.Text)))
+            .Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
         var names = spans.Where(s => s.Row.Action == RedactionRow.DropEntry)
             .SelectMany(s => PackWordCheck.Words(parsed.First(e => e.Id == s.Id).Name))
             .Select(w => w.ToLowerInvariant()).Distinct(StringComparer.Ordinal).OrderBy(w => w, StringComparer.Ordinal).ToList();
         return (spanWords, names);
+    }
+
+    /// <summary>The lowercase words of a redacted span that the row takes out: all of them for a cut or a drop, those not in the replacement text for a replace.</summary>
+    public static IEnumerable<string> RemovedWords(RedactionRow row, string span)
+    {
+        if (row.Action == RedactionRow.DropEntry)
+        {
+            return Enumerable.Empty<string>(); // the entry's name is hashed by the caller; the rest of that sentence stays what it was
+        }
+
+        var kept = row.Action == RedactionRow.Replace && row.Text != null
+            ? PackWordCheck.Words(row.Text).Select(w => w.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal)
+            : new HashSet<string>(StringComparer.Ordinal);
+        return PackWordCheck.Words(span).Select(w => w.ToLowerInvariant()).Where(w => w.Length > 1 && !kept.Contains(w));
     }
 
     /// <summary>

@@ -35,9 +35,38 @@ public static class PackEmitter
                     sb.Append("  description: ").Append(Scalar(e.Description, 4)).Append('\n');
                 }
 
+                var properties = new StringBuilder();
                 if (e.Category != null)
                 {
-                    sb.Append("  properties:\n    category: ").Append(Scalar(e.Category, 6)).Append('\n');
+                    properties.Append("    category: ").Append(Scalar(e.Category, 6)).Append('\n');
+                }
+
+                // A type's own fields, in the system's order: level, actions, traits, then the extracted labelled fields (their keys are the type's).
+                if (e.Level != null)
+                {
+                    properties.Append("    level: ").Append(e.Level.Value.ToString(CultureInfo.InvariantCulture)).Append('\n');
+                }
+
+                if (e.Actions != null)
+                {
+                    // The system's dropdown names the costs in words (a bare 1 would be read back as a number).
+                    var cost = e.Actions switch { "1" => "one", "2" => "two", "3" => "three", var other => other };
+                    properties.Append("    actions: ").Append(Scalar(cost, 6)).Append('\n');
+                }
+
+                if (e.Traits.Count > 0)
+                {
+                    properties.Append("    traits: [").Append(string.Join(", ", e.Traits.Select(t => Scalar(t, 6)))).Append("]\n");
+                }
+
+                foreach (var x in e.Extracted)
+                {
+                    properties.Append("    ").Append(x.Label).Append(": ").Append(Scalar(x.Text, 6)).Append('\n');
+                }
+
+                if (properties.Length > 0)
+                {
+                    sb.Append("  properties:\n").Append(properties);
                 }
             }
 

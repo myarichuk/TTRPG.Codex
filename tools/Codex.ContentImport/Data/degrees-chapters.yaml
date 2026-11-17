@@ -41,6 +41,17 @@ rows:
     spillsOnto: 464
     paths:
       - ["Glossary & Index"]
+  # The feats chapter has no child bookmarks, so its entries are found by the entry-header font alone.
+  - chapter: feats
+    book: pc
+    parser: entries
+    target: feat
+    # The feats' headers are in the block-header font, set in capitals and ending in the word and the level; the chapter's introduction and overview tables come before the first one.
+    headerRole: block-header
+    levelWord: feat
+    approved: true
+    paths:
+      - ["Chapter 5: Feats"]
 # Sections a later chapter takes. They are not read: the denylist generator only counts them as "not left out", so their words are not hashed as setting material.
 # Anything on neither list (the setting, map, religion and example-of-play sections, front matter, sheets) is left out and hashed. Plain game-term titles only.
 planned:
@@ -52,7 +63,6 @@ planned:
       - ["Chapter 2: Ancestries & Backgrounds"]
       - ["Chapter 3: Classes"]
       - ["Chapter 4: Skills"]
-      - ["Chapter 5: Feats"]
       - ["Chapter 6: Equipment"]
       - ["Chapter 7: Spells"]
       - ["Chapter 8: Playing the Game"]
