@@ -199,6 +199,11 @@ public static partial class PackWordCheck
         string? previous = null;
         foreach (var word in Words(text))
         {
+            if (word == "s")
+            {
+                continue; // the possessive's letter after an apostrophe: "Smith's Hammer" is the pair smith, hammer
+            }
+
             if (word.Length > 1 && IsCapital(word))
             {
                 if (previous != null)

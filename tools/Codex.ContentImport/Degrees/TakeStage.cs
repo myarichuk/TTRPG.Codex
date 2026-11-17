@@ -39,6 +39,8 @@ public static class TakeStage
         ["spelllists"] = new[] { "entry-header", "body", "tag", "table" },
         // A skill's heading (section), a general action's or subsection's title (entry-header), an action's or table caption's heading (block-header) and its text.
         ["actions"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon", "table" },
+        // An ancestry's pages: its flavor (entry-header and rules), the titles of its two sections, its heritages (entry-header), the level bands and feats (block-header, tag, body) and its statistics box.
+        ["ancestries"] = new[] { "section", "entry-header", "block-header", "rules", "body", "tag", "icon" },
     };
 
     private static readonly string[] Claimable = { "entry-header", "rules", "body", "tag", "table" };

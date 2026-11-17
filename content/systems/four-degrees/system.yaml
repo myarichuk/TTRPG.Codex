@@ -42,6 +42,7 @@ resources:
 actorFields:
   - { key: level,       label: Level,       type: Number,          defaultValue: 1, min: 1, max: 20, category: General }
   - { key: ancestry,    label: Ancestry,    type: EntityReference, targetEntityType: ancestry,   category: General }
+  - { key: heritage,    label: Heritage,    type: EntityReference, targetEntityType: heritage,   category: General }
   - { key: background,  label: Background,  type: EntityReference, targetEntityType: background, category: General }
   - { key: class,       label: Class,       type: EntityReference, targetEntityType: class,      category: General }
   # The faith shape: a choice from the faith entries (a table may add its own) and two free text lines, one for what the faith asks
@@ -50,6 +51,7 @@ actorFields:
   - { key: faithVows,   label: Vows,        type: LongText, category: Faith, description: "What the faith asks of its followers, in your own words." }
   - { key: faithTaboos, label: Taboos,      type: LongText, category: Faith, description: "What the faith forbids, in your own words." }
   - { key: armorClass,  label: Armor Class, type: Number,          defaultValue: 10, category: Combat }
+  - { key: ancestrySpeed, label: Ancestry speed, type: Number,     defaultValue: 0, category: Combat, description: "Copied from your ancestry when you choose it, in feet; 0 when the ancestry gives none (the speed is then 25)." }
 
 fieldRoles:
   level: level
@@ -64,6 +66,22 @@ entityTypes:
     fields:
       - { key: hp,     label: Hit points,     type: Number,  description: "Added to hit points once, whatever the level." }
       - { key: boosts, label: Attribute boosts, type: TagList, description: "A word is a fixed boost, a|b one of two, free any attribute, a leading minus a flaw." }
+      - { key: size,   label: Size,           type: Text,    description: "As the book prints it: Small or Medium." }
+      - { key: speed,  label: Speed,          type: Number,  description: "The feet one action of movement covers." }
+      - { key: languages,      label: Languages,       type: TagList, description: "The languages every member speaks, each as a lowercase word." }
+      - { key: extraLanguages, label: Extra languages, type: Number,  description: "How many more languages to choose: this number, plus the Intelligence modifier when it is positive." }
+      - { key: traits, label: Traits,         type: TagList, description: "Trait keys, as the Library's trait entries name them." }
+      - { key: specialAbilities, label: Special abilities, type: TagList, description: "The names of the senses and abilities every member has, as keys. Their text is in the description." }
+  # What an ancestry offers at 1st level besides its own numbers: one heritage, picked from those that name the ancestry. The sheet's heritage field is limited to them (sheetRules.constraints).
+  - type: heritage
+    label: Heritage
+    pluralLabel: Heritages
+    folder: heritages
+    summaryFields: [ancestry]
+    filterFields: [ancestry]
+    fields:
+      - { key: ancestry, label: Ancestry, type: EntityReference, targetEntityType: ancestry, description: "The ancestry this heritage can be picked with." }
+      - { key: traits,   label: Traits,   type: TagList, description: "Trait keys, as the Library's trait entries name them; the rarity word is one." }
   - type: background
     label: Background
     pluralLabel: Backgrounds
@@ -526,6 +544,11 @@ functions:
 
 sheetRules:
   enforcement: warn
+  # A heritage is picked from those of the chosen ancestry.
+  constraints:
+    - field: heritage
+      where:
+        - { property: ancestry, equalsField: ancestry, message: "that heritage belongs to another ancestry." }
   # Hit points: the class's own number per level (no die) plus Constitution, and the ancestry's number once.
   hitPoints:
     key: HP_Max
@@ -535,7 +558,7 @@ sheetRules:
     once: { field: ancestry, property: hp }
 
   # Attributes: typed in, or built from boosts. Each source gives boosts to different attributes (an ancestry's own, the class's, and
-  # four free ones at levels 5, 10, 15 and 20); a boost is +1 to the modifier, but from +4 it is half of that.
+  # four free ones at levels 1, 5, 10, 15 and 20); a boost is +1 to the modifier, but from +4 it is half of that.
   attributes:
     methods: [manual, boosts]
     default: manual
@@ -544,10 +567,18 @@ sheetRules:
       sources:
         - { key: ancestry, label: Ancestry, field: ancestry, trade: { fixed: 2, free: 1 } }
         - { key: class,    label: Class,    field: class }
+        # The step that finishes the 1st-level build: four free boosts, each to a different modifier. The background's two boosts come with the backgrounds.
+        - { key: lvl1,     label: Level 1,  level: 1,  free: 4 }
         - { key: lvl5,     label: Level 5,  level: 5,  free: 4 }
         - { key: lvl10,    label: Level 10, level: 10, free: 4 }
         - { key: lvl15,    label: Level 15, level: 15, free: 4 }
         - { key: lvl20,    label: Level 20, level: 20, free: 4 }
+
+  # Choosing an ancestry copies its speed onto the sheet once; the character's speed reads it. Only the ancestry's own number: a heritage's or a feat's change to it is not modelled.
+  inherits:
+    - field: ancestry
+      appliedKey: ancestryApplied
+      copy: { speed: ancestrySpeed }
 
   inventory:
     key: inventory
@@ -651,6 +682,7 @@ sheetRules:
 
   features:
     - { field: ancestry }
+    - { field: heritage }
     - { field: background }
     - { field: class, property: features, byField: level }
     - { list: feats }
@@ -662,7 +694,7 @@ sheetKinds:
     role: player
     values:
       - { key: senseDc, label: Sense DC, formula: "10 + level + 2 + mod(wis)", modifiers: senseDc }
-      - { key: speed,   label: Speed,    formula: "25",                        modifiers: speed }
+      - { key: speed,   label: Speed,    formula: "ancestrySpeed > 0 ? ancestrySpeed : 25", modifiers: speed }
     lists:
       - key: trinkets
         label: Trinkets

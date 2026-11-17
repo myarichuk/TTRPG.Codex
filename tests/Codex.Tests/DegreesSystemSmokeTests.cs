@@ -195,6 +195,8 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
         foreach (var key in new[] { "str", "dex", "con", "int", "wis", "cha" }) sheet.Remove(SheetRuleEngine.BasePrefix + key);
         sheet["boost__ancestry__marshkin.b1"] = new List<object> { "str" }; // the "str|con" choice
         sheet["boost__ancestry__marshkin.b2"] = new List<object> { "con" }; // the free boost
+        // The four free boosts that finish the 1st-level build, each to a different modifier.
+        foreach (var (slot, key) in new[] { ("m1", "int"), ("m2", "cha"), ("m3", "con"), ("m4", "wis") }) sheet[$"boost__lvl1__{slot}"] = new List<object> { key };
         foreach (var level in new[] { 5, 10, 15 })
         {
             foreach (var (slot, key) in new[] { ("m1", "str"), ("m2", "dex"), ("m3", "wis"), ("m4", "con") }) sheet[$"boost__lvl{level}__{slot}"] = new List<object> { key };
@@ -202,15 +204,16 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
 
         var evaluation = engine.Recompute(sheet);
 
-        // Ancestry: +1 Dexterity and Wisdom (fixed), Strength and Constitution (picked), -1 Charisma; class: +1 Strength; then +1 on four attributes at each of levels 5, 10 and 15.
-        Assert.Equal(-1L, sheet["cha"]);
+        // Ancestry: +1 Dexterity and Wisdom (fixed), Strength and Constitution (picked), -1 Charisma; class: +1 Strength; the 1st-level free boosts: Intelligence, Charisma,
+        // Constitution, Wisdom; then +1 on four attributes at each of levels 5, 10 and 15.
+        Assert.Equal(0L, sheet["cha"]);
         Assert.Equal(4L, sheet["str"]);
         Assert.Equal(4L, sheet["dex"]);
         Assert.Equal(4L, sheet["con"]);
         Assert.Equal(4L, sheet["wis"]);
-        Assert.Equal(0L, sheet["int"]);
-        // Strength reached +4 at level 10, so its level-15 boost is the pending partial one.
-        Assert.Equal(new[] { "str" }, evaluation.Attributes!.Boosts!.Halves.ToArray());
+        Assert.Equal(1L, sheet["int"]);
+        // Strength, Constitution and Wisdom reached +4 at level 10, so their level-15 boosts are the pending partial ones (Dexterity got there at level 15).
+        Assert.Equal(new[] { "con", "str", "wis" }, evaluation.Attributes!.Boosts!.Halves.OrderBy(h => h, StringComparer.Ordinal).ToArray());
         Assert.Empty(evaluation.Violations);
     }
 
@@ -223,6 +226,7 @@ public class DegreesSystemSmokeTests : IAsyncLifetime
         foreach (var key in new[] { "str", "dex", "con", "int", "wis", "cha" }) sheet.Remove(SheetRuleEngine.BasePrefix + key);
         sheet["boost__ancestry__marshkin.b1"] = new List<object> { "str" }; // the "str|con" choice
         sheet["boost__ancestry__marshkin.b2"] = new List<object> { "con" }; // the free boost
+        foreach (var (slot, key) in new[] { ("m1", "str"), ("m2", "dex"), ("m3", "int"), ("m4", "cha") }) sheet[$"boost__lvl1__{slot}"] = new List<object> { key }; // the 1st-level free boosts
 
         var evaluation = engine.Recompute(sheet);
 

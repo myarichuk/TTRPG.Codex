@@ -19,12 +19,14 @@ resources:
 actorFields:
   level: { label: Уровень, category: Общее }
   ancestry: { label: Происхождение, category: Общее }
+  heritage: { label: Наследие, category: Общее }
   background: { label: Предыстория, category: Общее }
   class: { label: Класс, category: Общее }
   faith: { label: Вера, category: Вера }
   faithVows: { label: Обеты, category: Вера, description: Чего вера требует от последователей, своими словами. }
   faithTaboos: { label: Запреты, category: Вера, description: Что вера запрещает, своими словами. }
   armorClass: { label: Класс брони, category: Бой }
+  ancestrySpeed: { label: Скорость происхождения, category: Бой, description: Копируется из происхождения при выборе, в футах; 0, если происхождение её не даёт (тогда скорость 25). }
 
 maxSuffix: макс.
 
@@ -37,6 +39,8 @@ categories:
   Senses: Чувства
   Actions: Действия
   Attribute modifiers: Модификаторы характеристик
+  Attributes: Характеристики
+  Resources: Ресурсы
 
 conditions:
   Blinded: Слеп
@@ -95,6 +99,18 @@ entityTypes:
     fields:
       hp: { label: Очки здоровья }
       boosts: { label: Повышения характеристик }
+      size: { label: Размер }
+      speed: { label: Скорость }
+      languages: { label: Языки }
+      extraLanguages: { label: Дополнительные языки }
+      traits: { label: Свойства }
+      specialAbilities: { label: Особые способности }
+  heritage:
+    label: Наследие
+    pluralLabel: Наследия
+    fields:
+      ancestry: { label: Происхождение }
+      traits: { label: Свойства }
   background: { label: Предыстория, pluralLabel: Предыстории }
   class:
     label: Класс
@@ -111,6 +127,9 @@ entityTypes:
       vows: { label: Обеты }
       taboos: { label: Запреты }
   feat: { label: Черта, pluralLabel: Черты }
+  condition: { label: Состояние, pluralLabel: Состояния }
+  trait: { label: Свойство, pluralLabel: Свойства }
+  rule: { label: Правило, pluralLabel: Правила }
   action:
     label: Действие
     pluralLabel: Действия
@@ -255,6 +274,8 @@ values:
 sheetRules:
   lists:
     feats: Черты
+  messages:
+    "that heritage belongs to another ancestry.": это наследие принадлежит другому происхождению.
   skills:
     acrobatics: Акробатика
     arcana: Магия

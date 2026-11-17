@@ -202,6 +202,7 @@ public static class PackEmitter
     {
         var sb = new StringBuilder(Banner).Append('\n');
         sb.Append("# Counts and ids only. A redaction row is named by its number in the redaction table.\n");
+        sb.Append("# A row that writes several types (an actions row also writes rules, an ancestries row also writes heritages and feats) lists the redaction rows of all its types on its first line, the row's own target.\n");
         foreach (var r in rows.OrderBy(r => r.Chapter, StringComparer.Ordinal).ThenBy(r => r.Parser, StringComparer.Ordinal).ThenBy(r => r.Target, StringComparer.Ordinal))
         {
             sb.Append("- chapter: ").Append(Scalar(r.Chapter, 4)).Append('\n');

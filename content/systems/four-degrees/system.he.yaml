@@ -19,12 +19,14 @@ resources:
 actorFields:
   level: { label: דרגה, category: כללי }
   ancestry: { label: מוצא, category: כללי }
+  heritage: { label: מורשת, category: כללי }
   background: { label: רקע, category: כללי }
   class: { label: מקצוע, category: כללי }
   faith: { label: אמונה, category: אמונה }
   faithVows: { label: נדרים, category: אמונה, description: מה האמונה דורשת ממאמיניה, במילים שלך. }
   faithTaboos: { label: איסורים, category: אמונה, description: מה האמונה אוסרת, במילים שלך. }
   armorClass: { label: דרגת שריון, category: קרב }
+  ancestrySpeed: { label: מהירות המוצא, category: קרב, description: מועתק מהמוצא בעת הבחירה, ברגליים; 0 אם המוצא לא קובע מהירות (אז המהירות 25). }
 
 maxSuffix: מקס׳
 
@@ -37,6 +39,8 @@ categories:
   Senses: חושים
   Actions: פעולות
   Attribute modifiers: מתאמי תכונות
+  Attributes: תכונות
+  Resources: משאבים
 
 conditions:
   Blinded: עיוור
@@ -95,6 +99,18 @@ entityTypes:
     fields:
       hp: { label: נקודות חיים }
       boosts: { label: הגברות תכונה }
+      size: { label: גודל }
+      speed: { label: מהירות }
+      languages: { label: שפות }
+      extraLanguages: { label: שפות נוספות }
+      traits: { label: תכונות }
+      specialAbilities: { label: יכולות מיוחדות }
+  heritage:
+    label: מורשת
+    pluralLabel: מורשות
+    fields:
+      ancestry: { label: מוצא }
+      traits: { label: תכונות }
   background: { label: רקע, pluralLabel: רקעים }
   class:
     label: מקצוע
@@ -111,6 +127,9 @@ entityTypes:
       vows: { label: נדרים }
       taboos: { label: איסורים }
   feat: { label: כשרון, pluralLabel: כשרונות }
+  condition: { label: מצב, pluralLabel: מצבים }
+  trait: { label: מאפיין, pluralLabel: מאפיינים }
+  rule: { label: חוק, pluralLabel: חוקים }
   action:
     label: פעולה
     pluralLabel: פעולות
@@ -255,6 +274,8 @@ values:
 sheetRules:
   lists:
     feats: כשרונות
+  messages:
+    "that heritage belongs to another ancestry.": המורשת הזו שייכת למוצא אחר.
   skills:
     acrobatics: אקרובטיקה
     arcana: מאגיה

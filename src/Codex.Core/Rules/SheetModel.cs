@@ -239,7 +239,9 @@ public sealed class SheetModel
         if (name.EndsWith(MaxSuffix, StringComparison.Ordinal) && Tracks().FirstOrDefault(t => t.Key + MaxSuffix == name) is { } track && track.Definition.Max != name) return TrackMax(track);
         if (name == "input") return _input;
         if (_system.Attributes.FirstOrDefault(a => a.Key == name) is { } attribute) return ScoreOf(attribute);
-        return _sheet.TryGetValue(name, out var raw) ? Plain(raw) : null;
+        if (_sheet.TryGetValue(name, out var raw)) return Plain(raw);
+        // A sheet that has never held an actor field (one copied from an entry only when the entry has the property) reads the field's own default.
+        return _system.ActorFields.FirstOrDefault(f => f.Key == name)?.DefaultValue is { } fallback ? (YamlValues.ToNumber(fallback) is { } number ? number : Plain(fallback)) : null;
     }
 
     /// <summary>Runs one formula on the sheet, its names read from <paramref name="numbers"/> first. For the formulas of

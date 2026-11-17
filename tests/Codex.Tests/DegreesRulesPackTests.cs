@@ -54,7 +54,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Theory]
     [InlineData("condition", 42)] // 46 bookmark children minus 4 sidebars, and 42 entry headers in the taken range
     [InlineData("gear", 124)]     // chapter 6b: 124 rows of the gear tables (counted again in EveryGearEntryCarriesItsStatisticsAndTheCountsAreThePinnedOnes)
-    [InlineData("rule", 132)]     // chapter 6b adds 16 (the gear's section texts, price tables and the one sidebar the take-list names: 15 sections and the wheelchair rules); chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
+    [InlineData("rule", 133)]     // chapter 7a adds 1 (the general rules of an ancestry's entry: its nine children are paragraphs of one rule); chapter 6b adds 16 (the gear's section texts, price tables and the one sidebar the take-list names: 15 sections and the wheelchair rules); chapter 6a adds 38 (see EveryArmorShieldAndWeaponCarriesItsStatisticsAndTheCountsAreThePinnedOnes): the chapter's own text, 7 more sections' own text (5 with children, Shields and Attack Rolls), 12 of their
                                   // children, Price, Item Level and Shoddy Items, 3 armor rules, the 3 statistics sections (their children are paragraphs), 6 of the weapon rules, the weapon traits and the kinds of ammunition. Before that: chapter 1: the appendix's own intro rule, condition values, overriding conditions (3); chapter 4: the chapter's own introduction, the checks' own text, 4 sections of the checks,
                                   // 17 skills' descriptions, the lead of the skills, 2 subsections of Performance, 4 of the general actions, one of Crafting and the income table (33); chapter 7: the chapter's
                                   // own introduction, the 15 spellcasting sections (6 of them with their own text before their children), their 17 children, and two boxes among the spells (35); and the
@@ -65,7 +65,8 @@ public class DegreesRulesPackTests : IAsyncLifetime
                                   // 48 trait lines and 29 action icons (two jumps have no trait line, the activities have no icon), and the overview table of actions lists the same 50 (name, proficiency) pairs
     [InlineData("armor", 16)]     // chapter 6a: 12 suits of armor (13 rows of the two armor tables, less the row for wearing none, against 12 descriptions) and 4 shields (4 rows, 4 descriptions)
     [InlineData("weapon", 83)]    // chapter 6a: 84 rows of the weapon tables, less the alchemical bomb (the gear chapter's) = 83; 87 descriptions, less the bomb and the 4 kinds of ammunition, plus the fist's row, which has none = 83
-    [InlineData("feat", 126)]     // chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
+    [InlineData("heritage", 45)]  // chapter 7a: the bookmark children of the eight heritages sections (5, 6, 5, 5, 6, 2, 9 and 7) are the heritage headings of their ranges, and the entries parsed
+    [InlineData("feat", 269)]     // chapter 7a adds the 143 ancestry feats (EveryAncestryFeatSitsUnderItsLevelBand_AndTheCountsAreThePinnedOnes); chapter 3: Chapter 5 of the book has no child bookmarks, so its entries are counted from the document three ways: the 126 header-font blocks that end in the
                                   // type's word and a level, the 126 trait-line blocks (one follows each header) and the 126 level markers read line by line. They agree, so no countsDiffer reason.
     [InlineData("trait", 125)]    // chapter 2: the glossary's trait definitions. The importer finds 129 definitions and 24 trait lines that only point to a page or another book
                                   // (153), and reads 153 occurrences of the trait mark in the range: the two counts agree, so no countsDiffer reason is needed.
@@ -87,9 +88,11 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void EveryFeatCarriesItsLevelAndTraits_AndTheLevelsAreThePinnedOnes()
     {
-        var feats = Entries("feat", PackId).ToList();
+        // The feats of chapter 5; the ancestry feats of chapter 2 have their own test.
+        var feats = Entries("feat", PackId).Where(f => f.Source!.StartsWith("pc > Chapter 5", StringComparison.Ordinal)).ToList();
         var traitKeys = Entries("trait", PackId).Select(e => e.Id).ToHashSet();
 
+        Assert.Equal(126, feats.Count);
         Assert.All(feats, f =>
         {
             Assert.True(f.Properties.TryGetValue("level", out var level) && level is long and >= 1, f.Id);
@@ -109,6 +112,114 @@ public class DegreesRulesPackTests : IAsyncLifetime
 
         // A trait line names shipped traits, except the ones the glossary has no definition for (one word on one feat).
         Assert.Single(feats.SelectMany(f => ((IEnumerable<object>)f.Properties["traits"]).Select(t => (string)t)).Where(t => !traitKeys.Contains(t)).Distinct());
+    }
+
+    private static readonly string[] AncestryKeys = { "dwarf", "elf", "gnome", "goblin", "halfling", "human", "leshy", "orc" };
+
+    private static string[] Words(ContentEntry e, string key) => ((IEnumerable<object>)e.Properties[key]).Select(o => (string)o).ToArray();
+
+    /// <summary>
+    /// The eight ancestries (chapter 7a): the book's table of contents names the same eight, which the importer compares as a set. An ancestry whose name is a shipped trait's id takes the suffix of its type (all eight do).
+    /// The numbers are the statistics box of each, as the generated file holds them; the box's list of languages to choose from is left out (the names are the languages chapter's), so only the fixed languages and
+    /// the count of extra ones are fields.
+    /// </summary>
+    [Fact]
+    public void EveryAncestryCarriesItsStatistics_AndTheCountsAreThePinnedOnes()
+    {
+        var ancestries = Entries("ancestry", PackId).OrderBy(e => e.Id, StringComparer.Ordinal).ToList();
+        Assert.Equal(AncestryKeys.Select(k => k + "-ancestry"), ancestries.Select(a => a.Id));
+        Assert.All(ancestries, a => Assert.Equal($"pc > Chapter 2: Ancestries & Backgrounds > {a.Name}", a.Source));
+
+        var expected = new (long Hp, string Size, long Speed, string[] Boosts, string[] Languages, long Extra, string[] Traits, string[] Specials)[]
+        {
+            (10, "Medium", 20, new[] { "con", "wis", "free", "-cha" }, new[] { "common", "dwarven" }, 0, new[] { "dwarf", "humanoid" }, new[] { "darkvision", "clan-dagger" }),
+            (6, "Medium", 30, new[] { "dex", "int", "free", "-con" }, new[] { "common", "elven" }, 0, new[] { "elf", "humanoid" }, new[] { "low-light-vision" }),
+            (8, "Small", 25, new[] { "con", "cha", "free", "-str" }, new[] { "common", "fey", "gnomish" }, 0, new[] { "gnome", "humanoid" }, new[] { "low-light-vision" }),
+            (6, "Small", 25, new[] { "dex", "cha", "free", "-wis" }, new[] { "common", "goblin" }, 0, new[] { "goblin", "humanoid" }, new[] { "darkvision" }),
+            (6, "Small", 25, new[] { "dex", "wis", "free", "-str" }, new[] { "common", "halfling" }, 0, new[] { "halfling", "humanoid" }, new[] { "keen-eyes" }),
+            (8, "Medium", 25, new[] { "free", "free" }, new[] { "common" }, 1, new[] { "human", "humanoid" }, Array.Empty<string>()),
+            (8, "Small", 25, new[] { "con", "wis", "free", "-int" }, new[] { "common", "fey" }, 0, new[] { "leshy", "plant" }, new[] { "low-light-vision", "plant-nourishment" }),
+            (10, "Medium", 25, new[] { "free", "free" }, new[] { "common", "orcish" }, 0, new[] { "orc", "humanoid" }, new[] { "darkvision" }),
+        };
+        for (var i = 0; i < ancestries.Count; i++)
+        {
+            var (hp, size, speed, boosts, languages, extra, traits, specials) = expected[i];
+            var a = ancestries[i];
+            Assert.Equal(hp, Convert.ToInt64(a.Properties["hp"]));
+            Assert.Equal(size, (string)a.Properties["size"]);
+            Assert.Equal(speed, Convert.ToInt64(a.Properties["speed"]));
+            Assert.Equal(boosts, Words(a, "boosts"));
+            Assert.Equal(languages, Words(a, "languages"));
+            Assert.Equal(extra, Convert.ToInt64(a.Properties["extraLanguages"]));
+            Assert.Equal(traits, Words(a, "traits"));
+            if (specials.Length == 0)
+            {
+                Assert.False(a.Properties.ContainsKey("specialAbilities"));
+                Assert.True(string.IsNullOrWhiteSpace(a.Description)); // the human box prints no ability: the description holds only rules text
+            }
+            else
+            {
+                Assert.Equal(specials, Words(a, "specialAbilities"));
+                Assert.All(specials, s => Assert.Contains("**", a.Description!)); // each ability is a bold run-in heading of the description
+            }
+        }
+
+        // The boosts are the engine's shape: a flaw has a leading minus, and every ancestry has two boosts or three and a flaw.
+        Assert.All(ancestries, a => Assert.Contains(Words(a, "boosts").Length, new[] { 2, 4 }));
+        Assert.Equal(6, ancestries.Count(a => Words(a, "boosts").Count(b => b.StartsWith('-')) == 1));
+    }
+
+    /// <summary>The heritages (chapter 7a): 5, 6, 5, 5, 6, 2, 9 and 7 under the eight ancestries, as the bookmark children of the heritages sections count them.</summary>
+    [Fact]
+    public void EveryHeritageNamesItsAncestry_AndTheCountsAreThePinnedOnes()
+    {
+        var heritages = Entries("heritage", PackId).ToList();
+        var ancestries = Entries("ancestry", PackId).Select(a => a.Id).ToHashSet();
+
+        Assert.Equal(45, heritages.Count);
+        // The heritage's ancestry is an ancestry entry's id (after the suffix pass), so the sheet's filter (property ancestry equals the sheet's ancestry) finds it.
+        Assert.All(heritages, h => Assert.Contains((string)h.Properties["ancestry"], ancestries));
+        Assert.Equal(new[] { 5, 6, 5, 5, 6, 2, 9, 7 }, AncestryKeys.Select(k => heritages.Count(h => (string)h.Properties["ancestry"] == k + "-ancestry")));
+        Assert.All(heritages, h => Assert.Matches(@"^pc > Chapter 2: Ancestries & Backgrounds > \w+ > \w+ Heritages$", h.Source!));
+
+        // The one heritage the book marks uncommon carries the rarity word as its trait; no other heritage has a trait.
+        Assert.Equal(new[] { "jinxed-halfling" }, heritages.Where(h => h.Properties.ContainsKey("traits")).Select(h => h.Id));
+        Assert.Equal(new[] { "uncommon" }, Words(heritages.Single(h => h.Id == "jinxed-halfling"), "traits"));
+
+        // The three goblin heritages named by words the setting coined, and the three feats renamed for the same reason, say their new names in plain words.
+        Assert.Equal(new[] { "fire-resistant-goblin", "jawed-goblin", "strong-stomached-goblin" }, heritages.Select(h => h.Id).Intersect(new[] { "jawed-goblin", "fire-resistant-goblin", "strong-stomached-goblin" }).Order());
+        Assert.Equal(new[] { "fey-realm-adept", "fey-realm-magic", "mournful" }, Entries("feat", PackId).Select(f => f.Id).Intersect(new[] { "fey-realm-magic", "fey-realm-adept", "mournful" }).Order());
+    }
+
+    /// <summary>
+    /// The ancestry feats (chapter 7a): 143, counted from the document as the feat headers, the trait lines and the level markers of each ancestry (equal in all eight), and the level bands, which are
+    /// the bookmark children of each feats section (5 in each). A feat's trait line names its ancestry's key, and its level is the band it sits under (the importer fails on a feat whose printed level is not its band's).
+    /// </summary>
+    [Fact]
+    public void EveryAncestryFeatSitsUnderItsLevelBand_AndTheCountsAreThePinnedOnes()
+    {
+        var feats = Entries("feat", PackId).Where(f => f.Source!.StartsWith("pc > Chapter 2", StringComparison.Ordinal)).ToList();
+        var traitKeys = Entries("trait", PackId).Select(e => e.Id).ToHashSet();
+
+        Assert.Equal(143, feats.Count);
+        Assert.All(feats, f => Assert.Matches(@"^pc > Chapter 2: Ancestries & Backgrounds > \w+ > (\w+ )?Ancestry Feats$", f.Source!));
+        Assert.All(feats, f => Assert.Single(Words(f, "traits").Intersect(AncestryKeys)));
+        Assert.All(feats, f => Assert.Contains((long)f.Properties["level"], new long[] { 1, 5, 9, 13, 17 }));
+
+        // By ancestry (in the order of the ancestries: dwarf, elf, gnome, goblin, halfling, human, leshy, orc) and by level (1, 5, 9, 13, 17).
+        var perAncestry = new[] { new[] { 7, 3, 4, 2, 2 }, new[] { 7, 3, 4, 2, 1 }, new[] { 8, 2, 4, 1, 1 }, new[] { 9, 3, 3, 1, 1 }, new[] { 10, 2, 4, 2, 1 }, new[] { 7, 3, 5, 3, 1 }, new[] { 7, 4, 4, 2, 2 }, new[] { 8, 4, 2, 3, 1 } };
+        for (var i = 0; i < AncestryKeys.Length; i++)
+        {
+            var own = feats.Where(f => Words(f, "traits").Contains(AncestryKeys[i])).ToList();
+            Assert.Equal(perAncestry[i], new long[] { 1, 5, 9, 13, 17 }.Select(l => own.Count(f => (long)f.Properties["level"] == l)));
+        }
+
+        Assert.Equal(new[] { 63, 24, 30, 16, 10 }, new long[] { 1, 5, 9, 13, 17 }.Select(l => feats.Count(f => (long)f.Properties["level"] == l)));
+        // 12 with one action, 4 with two, 8 reactions, 6 free actions; the others (113) are not activities.
+        Assert.Equal(new[] { 12, 4, 0, 8, 6 }, new[] { "one", "two", "three", "reaction", "free" }.Select(c => feats.Count(f => f.Properties.TryGetValue("actions", out var a) && (string)a == c)));
+        Assert.Equal(new[] { 32, 15, 14, 4, 0, 6 }, new[] { "prerequisites", "frequency", "trigger", "requirements", "cost", "special" }.Select(k => feats.Count(f => f.Properties.ContainsKey(k))));
+        // The trait lines name shipped traits, except three words the glossary has no definition for: the rarity word and two that other chapters' entries use too.
+        Assert.Equal(new[] { "fortune", "polymorph", "uncommon" }, feats.SelectMany(f => Words(f, "traits")).Where(t => !traitKeys.Contains(t)).Distinct().Order());
     }
 
     [Fact]
@@ -540,7 +651,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     [Fact]
     public void ThePackHoldsNothingElse_AndTheReportAgrees()
     {
-        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124; // the last two: the gear's 16 rules and 124 gear entries (chapter 6b)
+        const int total = 45 + 125 + 126 + 33 + 50 + 324 + 35 + 147 + 19 + 7 + 38 + 16 + 83 + 16 + 124 + 1 + 8 + 45 + 143; // 16 gear rules and 124 gear entries (chapter 6b); then the ancestry rules, 8 ancestries, 45 heritages and 143 ancestry feats (chapter 7a)
         Assert.Equal(total, AllEntries(PackId).Count());
 
         // import-report.yaml holds counts and ids only; its totals are the importer's own and must match what loaded.
@@ -555,7 +666,7 @@ public class DegreesRulesPackTests : IAsyncLifetime
     {
         Assert.All(AllEntries(PackId), e =>
         {
-            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9: ]+( > [A-Za-z: ,'-]+){0,4})$", e.Source!); // chapters 1 to 6a (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
+            Assert.Matches(@"^pc > (Conditions Appendix( > [A-Za-z ]+)?|Glossary & Index|Chapter [A-Za-z0-9:& ]+( > [A-Za-z: ,'-]+){0,4})$", e.Source!); // chapters 1 to 7a (the ancestries chapter's title has an ampersand) (the chapter title is the book's, with its number, then up to a section and a skill or a child section, and the rituals' rules are four deep; a title may have a comma or a hyphen); a later chapter widens this
             Assert.DoesNotContain("homebrew", e.Tags);
             Assert.DoesNotMatch(@"(?<!Chapter )\d", e.Source!); // no page numbers (a chapter's own number is not one)
         });
